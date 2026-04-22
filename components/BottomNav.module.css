@@ -1,0 +1,82 @@
+/* Only visible on mobile */
+.bottomNav {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .bottomNav {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 200;
+    background: rgba(13, 11, 20, 0.92);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-top: 1px solid rgba(139, 47, 201, 0.25);
+    padding: 0.5rem 0 calc(0.5rem + env(safe-area-inset-bottom));
+    justify-content: space-around;
+    align-items: flex-start;
+  }
+
+  .tab {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+    flex: 1;
+    padding: 0.25rem 0.5rem;
+    text-decoration: none;
+    color: rgba(255, 255, 255, 0.45);
+    transition: color 0.2s ease;
+    min-width: 0;
+  }
+
+  .tab.active {
+    color: #c084fc;
+  }
+
+  .tab:active {
+    opacity: 0.7;
+  }
+
+  .iconWrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 32px;
+  }
+
+  .tab.active .iconWrap {
+    /* Subtle pill highlight behind icon */
+    background: rgba(139, 47, 201, 0.18);
+    border-radius: 999px;
+  }
+
+  .activeDot {
+    position: absolute;
+    bottom: -2px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: #c084fc;
+    box-shadow: 0 0 6px #c084fc;
+  }
+
+  .label {
+    font-size: 0.65rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    line-height: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+  }
+}

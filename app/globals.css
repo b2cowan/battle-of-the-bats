@@ -423,8 +423,16 @@ tbody tr:hover { background: var(--white-10); }
 
 /* ─── Responsive ─────────────────────────────────────────────────────────────── */
 @media (max-width: 768px) {
+  :root { --bottom-nav-height: 72px; }
   .section { padding: 3rem 0; }
   .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
   .form-row-2, .form-row-3 { grid-template-columns: 1fr; }
   .modal { padding: 1.25rem; }
+
+  /* Push page content above the bottom nav */
+  main { padding-bottom: var(--bottom-nav-height); }
+
+  /* Hide footer on mobile — bottom nav covers navigation */
+  footer { padding-bottom: calc(var(--bottom-nav-height) + 1rem); }
 }
+
