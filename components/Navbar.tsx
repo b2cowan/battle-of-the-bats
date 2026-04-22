@@ -2,15 +2,15 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Menu, X, Shield } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
 import styles from './Navbar.module.css';
 
 const NAV_LINKS = [
-  { href: '/schedule',  label: 'Schedule'  },
-  { href: '/results',   label: 'Results'   },
-  { href: '/teams',     label: 'Teams'     },
-  { href: '/rules',     label: 'Rules'     },
-  { href: '/news',      label: 'News'      },
+  { href: '/schedule', label: 'Schedule' },
+  { href: '/results',  label: 'Results'  },
+  { href: '/teams',    label: 'Teams'    },
+  { href: '/rules',    label: 'Rules'    },
+  { href: '/news',     label: 'News'     },
 ];
 
 export default function Navbar() {
@@ -52,12 +52,8 @@ export default function Navbar() {
           ))}
         </div>
 
-        {/* Admin button */}
+        {/* Hamburger (mobile only) */}
         <div className={styles.actions}>
-          <Link href="/admin" className="btn btn-primary btn-sm" id="nav-admin-btn">
-            <Shield size={14} />
-            Admin
-          </Link>
           <button
             className={styles.hamburger}
             onClick={() => setOpen(o => !o)}
@@ -81,9 +77,6 @@ export default function Navbar() {
               {l.label}
             </Link>
           ))}
-          <Link href="/admin" className={`btn btn-primary ${styles.mobileAdmin}`}>
-            <Shield size={15} /> Admin Panel
-          </Link>
         </div>
       )}
     </nav>

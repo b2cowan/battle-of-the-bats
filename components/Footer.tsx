@@ -51,7 +51,6 @@ export default function Footer() {
           <span className={styles.copy}>
             &copy; {new Date().getFullYear()} Milton Bats — Battle of the Bats. All rights reserved.
           </span>
-          <Link href="/admin" className={styles.adminLink}>Admin Panel</Link>
         </div>
       </div>
     </footer>
