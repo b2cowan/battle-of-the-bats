@@ -12,7 +12,12 @@
   min-width: 0;
 }
 
-@media (max-width: 768px) {
+/* ── Mobile: hide sidebar, use bottom nav instead ── */
+@media (max-width: 900px) {
   .adminShell { flex-direction: column; }
-  .adminMain { padding: 1rem; }
+
+  .adminMain {
+    padding: 1rem 1rem calc(80px + env(safe-area-inset-bottom));
+  }
 }
+

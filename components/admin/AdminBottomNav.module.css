@@ -1,0 +1,140 @@
+/* Only on mobile */
+.bottomNav { display: none; }
+
+@media (max-width: 900px) {
+  .bottomNav {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 300;
+    background: rgba(20, 16, 31, 0.97);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-top: 1px solid rgba(139, 47, 201, 0.3);
+    padding: 0.4rem 0 calc(0.4rem + env(safe-area-inset-bottom));
+    justify-content: space-around;
+    align-items: flex-start;
+  }
+
+  /* ── Tab button ──────────────────────────────────── */
+  .tab {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.2rem;
+    flex: 1;
+    padding: 0.25rem 0.25rem;
+    text-decoration: none;
+    background: none;
+    border: none;
+    font-family: inherit;
+    color: rgba(255, 255, 255, 0.4);
+    transition: color 0.18s ease;
+    cursor: pointer;
+    min-width: 0;
+  }
+
+  .tab.active { color: #c084fc; }
+  .tab:active { opacity: 0.65; }
+
+  .iconWrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 46px;
+    height: 30px;
+    border-radius: 999px;
+    transition: background 0.18s ease;
+  }
+
+  .tab.active .iconWrap {
+    background: rgba(139, 47, 201, 0.2);
+  }
+
+  .activeDot {
+    position: absolute;
+    bottom: 1px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: #c084fc;
+    box-shadow: 0 0 6px #c084fc;
+  }
+
+  .label {
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+  }
+
+  /* ── More wrapper ────────────────────────────────── */
+  .moreWrap {
+    position: relative;
+    flex: 1;
+    display: flex;
+    justify-content: center;
+  }
+
+  /* ── Upward dropdown ─────────────────────────────── */
+  .dropdown {
+    position: absolute;
+    bottom: calc(100% + 0.75rem);
+    right: 0;
+    min-width: 200px;
+    background: #1A1530;
+    border: 1px solid rgba(139, 47, 201, 0.35);
+    border-radius: 14px;
+    box-shadow: 0 -8px 32px rgba(0,0,0,0.6), 0 0 20px rgba(139,47,201,0.15);
+    overflow: hidden;
+    animation: slideUpMenu 0.18s ease;
+  }
+
+  .dropItem {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.875rem 1.125rem;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.75);
+    text-decoration: none;
+    background: none;
+    border: none;
+    width: 100%;
+    text-align: left;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+
+  .dropItem:hover { background: rgba(139, 47, 201, 0.12); color: #fff; }
+
+  .dropActive {
+    background: rgba(139, 47, 201, 0.15);
+    color: #c084fc;
+  }
+
+  .dropDivider {
+    height: 1px;
+    background: rgba(255, 255, 255, 0.07);
+    margin: 0.25rem 0;
+  }
+
+  .dropLogout { color: #f87171; }
+  .dropLogout:hover { background: rgba(239, 68, 68, 0.1); color: #f87171; }
+
+  @keyframes slideUpMenu {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+}
