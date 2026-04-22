@@ -1,0 +1,114 @@
+.footer {
+  position: relative;
+  background: var(--bg-2);
+  border-top: 1px solid var(--border);
+  padding: 4rem 0 2rem;
+  overflow: hidden;
+}
+
+.glow {
+  position: absolute;
+  bottom: -60px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 600px;
+  height: 200px;
+  background: radial-gradient(ellipse, rgba(139,47,201,0.15) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr;
+  gap: 3rem;
+  margin-bottom: 3rem;
+}
+
+.brand { }
+
+.logoRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.trophy { color: var(--purple-light); }
+
+.name {
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  color: var(--white);
+}
+
+.tagline {
+  color: var(--white-60);
+  font-size: 0.9375rem;
+  line-height: 1.7;
+  max-width: 320px;
+}
+
+.tagline strong { color: var(--purple-light); }
+
+.colTitle {
+  font-family: var(--font-display);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--purple-light);
+  margin-bottom: 1rem;
+}
+
+.linkList { display: flex; flex-direction: column; gap: 0.5rem; }
+
+.link {
+  color: var(--white-60);
+  font-size: 0.9375rem;
+  transition: var(--transition);
+}
+
+.link:hover { color: var(--white); padding-left: 4px; }
+
+.contactList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.contactList li {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--white-60);
+  font-size: 0.9375rem;
+}
+
+.contactList svg { color: var(--purple-light); flex-shrink: 0; }
+
+.bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 2rem;
+  border-top: 1px solid var(--border-2);
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.copy { color: var(--white-30); font-size: 0.875rem; }
+
+.adminLink {
+  color: var(--white-30);
+  font-size: 0.8rem;
+  letter-spacing: 0.05em;
+  transition: var(--transition);
+}
+
+.adminLink:hover { color: var(--purple-light); }
+
+@media (max-width: 768px) {
+  .grid { grid-template-columns: 1fr; gap: 2rem; }
+}

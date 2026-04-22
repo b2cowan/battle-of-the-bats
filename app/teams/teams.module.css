@@ -1,0 +1,97 @@
+.pageHeader {
+  background: linear-gradient(180deg, var(--bg-2) 0%, var(--bg) 100%);
+  border-bottom: 1px solid var(--border);
+  padding: calc(var(--nav-height) + 3rem) 0 3rem;
+}
+
+.pageHeader h1 { color: var(--white); margin: 0.5rem 0; }
+
+.teamGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.25rem;
+}
+
+.teamCard { display: flex; flex-direction: column; gap: 1rem; }
+
+.teamHeader { display: flex; align-items: center; gap: 1rem; }
+
+.teamAvatar {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--purple), var(--purple-light));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 900;
+  color: var(--white);
+  flex-shrink: 0;
+  box-shadow: var(--glow-sm);
+}
+
+.teamInfo { flex: 1; }
+
+.teamName {
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: var(--white);
+  margin-bottom: 0.2rem;
+}
+
+.coachLabel {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.8rem;
+  color: var(--white-60);
+}
+
+.playerCount { text-align: center; }
+
+.playerNum {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 1.75rem;
+  font-weight: 900;
+  color: var(--purple-light);
+  line-height: 1;
+}
+
+.playerLabel {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--white-60);
+}
+
+.rosterToggle {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  background: var(--white-10);
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius-sm);
+  color: var(--white-60);
+  font-size: 0.875rem;
+  font-weight: 600;
+  transition: var(--transition);
+}
+
+.rosterToggle:hover { background: var(--purple-faint); color: var(--purple-light); }
+
+.rosterTable { animation: fadeInUp 0.25s ease; }
+
+.jerseyNum {
+  display: inline-block;
+  min-width: 28px;
+  text-align: center;
+  font-family: var(--font-display);
+  font-weight: 700;
+  color: var(--purple-light);
+}

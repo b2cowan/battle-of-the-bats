@@ -1,0 +1,18 @@
+.adminShell {
+  display: flex;
+  min-height: 100vh;
+  background: var(--bg);
+  padding-top: var(--nav-height);
+}
+
+.adminMain {
+  flex: 1;
+  padding: 2rem;
+  overflow-y: auto;
+  min-width: 0;
+}
+
+@media (max-width: 768px) {
+  .adminShell { flex-direction: column; }
+  .adminMain { padding: 1rem; }
+}

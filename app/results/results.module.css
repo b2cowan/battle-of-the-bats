@@ -1,0 +1,90 @@
+.pageHeader {
+  background: linear-gradient(180deg, var(--bg-2) 0%, var(--bg) 100%);
+  border-bottom: 1px solid var(--border);
+  padding: calc(var(--nav-height) + 3rem) 0 3rem;
+}
+
+.pageHeader h1 { color: var(--white); margin: 0.5rem 0; }
+
+.resultsList { display: flex; flex-direction: column; gap: 1rem; }
+
+.resultCard { display: flex; flex-direction: column; gap: 1rem; }
+
+.resultMeta {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.resultDate {
+  font-size: 0.85rem;
+  color: var(--white-60);
+  margin-left: auto;
+}
+
+.scoreRow {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.teamScore {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 1;
+}
+
+.away {
+  flex-direction: row-reverse;
+}
+
+.scoreName {
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: var(--white-60);
+  flex: 1;
+}
+
+.away .scoreName { text-align: right; }
+
+.score {
+  font-family: var(--font-display);
+  font-size: 2.5rem;
+  font-weight: 900;
+  color: var(--white-60);
+  min-width: 52px;
+  text-align: center;
+}
+
+.winner .scoreName { color: var(--white); }
+.winner .score {
+  color: var(--purple-light);
+  text-shadow: 0 0 20px rgba(168,85,247,0.5);
+}
+
+.winIcon { color: var(--warning); flex-shrink: 0; }
+
+.scoreDash {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  color: var(--white-30);
+}
+
+.tieLabel {
+  text-align: center;
+  font-family: var(--font-display);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--white-60);
+  text-transform: uppercase;
+}
+
+@media (max-width: 600px) {
+  .scoreRow { gap: 0.75rem; }
+  .scoreName { font-size: 1rem; }
+  .score { font-size: 1.75rem; }
+}

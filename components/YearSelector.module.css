@@ -1,0 +1,58 @@
+.wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.label {
+  font-family: var(--font-display);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--white-60);
+  white-space: nowrap;
+}
+
+.tabs {
+  display: flex;
+  gap: 0.375rem;
+  flex-wrap: wrap;
+}
+
+.tab {
+  position: relative;
+  padding: 0.35rem 0.875rem;
+  border-radius: 999px;
+  font-family: var(--font-display);
+  font-size: 0.875rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  border: 1px solid var(--border-2);
+  background: var(--white-10);
+  color: var(--white-60);
+  transition: var(--transition);
+  cursor: pointer;
+}
+
+.tab:hover { color: var(--white); background: var(--white-30); }
+
+.tab.active {
+  background: linear-gradient(135deg, var(--purple), var(--purple-light));
+  border-color: transparent;
+  color: var(--white);
+  box-shadow: var(--glow-sm);
+}
+
+.liveDot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--success);
+  margin-left: 5px;
+  vertical-align: middle;
+  box-shadow: 0 0 6px var(--success);
+}
