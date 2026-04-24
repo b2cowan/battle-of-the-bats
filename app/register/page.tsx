@@ -11,6 +11,7 @@ export default function RegisterPage() {
   const [ageGroups, setAgeGroups]     = useState<AgeGroup[]>([]);
   const [contacts, setContacts]       = useState<Contact[]>([]);
   const [tournament, setTournament]   = useState<Tournament | null>(null);
+  const [stats, setStats]             = useState<Record<string, number>>({});
   const [step, setStep]               = useState<Step>('form');
   const [errorMsg, setErrorMsg]       = useState('');
   const [form, setForm] = useState({
@@ -21,16 +22,24 @@ export default function RegisterPage() {
     setAgeGroups(getAgeGroups());
     setContacts(getContacts());
     setTournament(getActiveTournament());
+    
+    // Fetch stats
+    fetch('/api/public/stats')
+      .then(r => r.json())
+      .then(data => setStats(data))
+      .catch(console.error);
   }, []);
-
-  const selectedGroup = ageGroups.find(g => g.id === form.ageGroupId);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!selectedGroup || !tournament) return;
-
-    setStep('submitting');
     try {
+      const selectedGroup = ageGroups.find(g => g.id === form.ageGroupId);
+      if (!selectedGroup) throw new Error("Invalid division");
+
+      const count = stats[selectedGroup.id] || 0;
+      const isWaitlist = selectedGroup.capacity && count >= selectedGroup.capacity;
+
+      setStep('submitting');
       const res = await fetch('/api/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -41,7 +50,8 @@ export default function RegisterPage() {
           ageGroupId:     form.ageGroupId,
           ageGroupName:   selectedGroup.name,
           contactEmail:   contacts.find(c => c.id === selectedGroup.contactId)?.email,
-          tournamentName: tournament.name,
+          tournamentName: tournament?.name,
+          status:         isWaitlist ? 'waitlist' : 'pending',
         }),
       });
 
@@ -58,6 +68,11 @@ export default function RegisterPage() {
   }
 
   const notOpen = !tournament || ageGroups.length === 0;
+
+  const selectedGroup = ageGroups.find(g => g.id === form.ageGroupId);
+  const isClosed = selectedGroup?.isClosed;
+  const count = selectedGroup ? stats[selectedGroup.id] || 0 : 0;
+  const isWaitlist = selectedGroup?.capacity && count >= selectedGroup.capacity;
 
   return (
     <div className="page-content">
@@ -163,38 +178,41 @@ export default function RegisterPage() {
                     </div>
                     <div className="form-group">
                       <label className="form-label">Division *</label>
-                      <div className={styles.selectWrap}>
-                        <select
-                          className="form-select"
-                          value={form.ageGroupId}
-                          onChange={e => setForm(f => ({ ...f, ageGroupId: e.target.value }))}
-                          required
-                          disabled={step === 'submitting'}
-                          id="reg-division"
-                        >
-                          <option value="">Select age group…</option>
+                      <div className="select-wrapper">
+                        <select className="form-input" value={form.ageGroupId} onChange={e => setForm(f => ({ ...f, ageGroupId: e.target.value }))} required>
+                          <option value="" disabled>Select a division</option>
                           {ageGroups.map(g => (
-                            <option key={g.id} value={g.id}>{g.name} (Ages {g.minAge}–{g.maxAge})</option>
+                            <option key={g.id} value={g.id}>{g.name} (Ages {g.minAge}-{g.maxAge}) {g.isClosed ? '- CLOSED' : ''}</option>
                           ))}
                         </select>
-                        <ChevronDown size={15} className={styles.selectIcon} />
+                        <ChevronDown size={16} className="select-icon" />
                       </div>
                     </div>
                   </div>
 
-                  <div className={styles.notice}>
-                    <AlertCircle size={14} style={{ flexShrink: 0, marginTop: 2 }} />
-                    <p>Registration is <strong>not guaranteed</strong> until accepted by the tournament coordinator. You will receive a confirmation email at the address provided. Payment via Interac E-Transfer will be required upon acceptance.</p>
-                  </div>
+                  {isClosed && (
+                    <div className="alert alert-danger" style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem', background: 'rgba(239, 68, 68, 0.1)', color: '#fca5a5', padding: '1rem', borderRadius: 8, border: '1px solid rgba(239,68,68,0.2)' }}>
+                      <AlertCircle size={20} />
+                      <p style={{ margin: 0, fontSize: '0.9rem' }}>Registration for this division is officially closed. You cannot submit a registration.</p>
+                    </div>
+                  )}
+
+                  {isWaitlist && !isClosed && (
+                    <div className="alert alert-warning" style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem', background: 'rgba(245, 158, 11, 0.1)', color: '#fbbf24', padding: '1rem', borderRadius: 8, border: '1px solid rgba(245,158,11,0.2)' }}>
+                      <AlertCircle size={20} />
+                      <p style={{ margin: 0, fontSize: '0.9rem' }}>This division is currently full. Submitting this form will place your team on the <strong>Waitlist</strong>.</p>
+                    </div>
+                  )}
 
                   <button
                     type="submit"
                     className="btn btn-primary"
-                    style={{ width: '100%', justifyContent: 'center', marginTop: '1rem', padding: '0.875rem' }}
-                    disabled={step === 'submitting'}
-                    id="reg-submit-btn"
+                    disabled={step === 'submitting' || isClosed}
+                    style={{ width: '100%', padding: '0.875rem' }}
                   >
-                    {step === 'submitting' ? 'Submitting…' : <><UserPlus size={16} /> Submit Registration</>}
+                    {step === 'submitting' ? (
+                      <><RefreshCw size={18} className="spinner" /> Submitting…</>
+                    ) : isWaitlist ? 'Join Waitlist' : 'Submit Registration'}
                   </button>
                 </form>
               </div>

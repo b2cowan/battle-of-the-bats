@@ -12,7 +12,7 @@ export default function AgeGroupsPage() {
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [modal, setModal] = useState<ModalMode>(null);
   const [editing, setEditing] = useState<AgeGroup | null>(null);
-  const [form, setForm] = useState({ name: '', minAge: '', maxAge: '', order: '', contactId: '' });
+  const [form, setForm] = useState({ name: '', minAge: '', maxAge: '', order: '', contactId: '', capacity: '', isClosed: false });
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
   function refresh() { 
@@ -22,25 +22,31 @@ export default function AgeGroupsPage() {
   useEffect(refresh, []);
 
   function openAdd() {
-    setForm({ name: '', minAge: '', maxAge: '', order: String(groups.length + 1), contactId: '' });
+    setForm({ name: '', minAge: '', maxAge: '', order: String(groups.length + 1), contactId: '', capacity: '', isClosed: false });
     setEditing(null);
     setModal('add');
   }
 
   function openEdit(g: AgeGroup) {
-    setForm({ name: g.name, minAge: String(g.minAge), maxAge: String(g.maxAge), order: String(g.order), contactId: g.contactId || '' });
+    setForm({ 
+      name: g.name, minAge: String(g.minAge), maxAge: String(g.maxAge), 
+      order: String(g.order), contactId: g.contactId || '',
+      capacity: g.capacity ? String(g.capacity) : '', isClosed: !!g.isClosed
+    });
     setEditing(g);
     setModal('edit');
   }
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    const data = { 
+    const data: Omit<AgeGroup, 'id'> = { 
       name: form.name.trim(), 
       minAge: Number(form.minAge), 
       maxAge: Number(form.maxAge), 
       order: Number(form.order),
-      contactId: form.contactId || undefined
+      contactId: form.contactId || undefined,
+      capacity: form.capacity ? Number(form.capacity) : undefined,
+      isClosed: form.isClosed
     };
     if (modal === 'add') saveAgeGroup(data);
     else if (editing) updateAgeGroup(editing.id, data);
@@ -75,6 +81,8 @@ export default function AgeGroupsPage() {
               <th>Min Age</th>
               <th>Max Age</th>
               <th>Display Order</th>
+              <th>Capacity</th>
+              <th>Status</th>
               <th>Contact</th>
               <th>Actions</th>
             </tr>
@@ -88,6 +96,10 @@ export default function AgeGroupsPage() {
                 <td>{g.minAge}</td>
                 <td>{g.maxAge}</td>
                 <td>{g.order}</td>
+                <td>{g.capacity || '—'}</td>
+                <td>
+                  {g.isClosed ? <span className="badge badge-danger">Closed</span> : <span className="badge badge-success">Open</span>}
+                </td>
                 <td>
                   <span style={{ fontSize: '0.85rem', color: 'var(--white-60)' }}>
                     {contacts.find(c => c.id === g.contactId)?.name || '—'}
@@ -139,13 +151,32 @@ export default function AgeGroupsPage() {
               <div className="form-row form-row-2" style={{ marginBottom: '1.5rem' }}>
                 <div className="form-group">
                   <label className="form-label">Min Age *</label>
-                  <input className="form-input" type="number" min="0" value={form.minAge}
+                  <input className="form-input" type="number" value={form.minAge}
                     onChange={e => setForm(f => ({ ...f, minAge: e.target.value }))} required />
                 </div>
                 <div className="form-group">
                   <label className="form-label">Max Age *</label>
-                  <input className="form-input" type="number" min="0" value={form.maxAge}
+                  <input className="form-input" type="number" value={form.maxAge}
                     onChange={e => setForm(f => ({ ...f, maxAge: e.target.value }))} required />
+                </div>
+              </div>
+              <div className="form-row form-row-2" style={{ marginBottom: '1.5rem' }}>
+                <div className="form-group">
+                  <label className="form-label">Capacity (Max Teams)</label>
+                  <input className="form-input" type="number" placeholder="e.g. 8" value={form.capacity}
+                    onChange={e => setForm(f => ({ ...f, capacity: e.target.value }))} />
+                  <p className="form-help" style={{ fontSize: '0.75rem', color: 'var(--white-30)', marginTop: '0.25rem' }}>
+                    If set, teams will automatically be waitlisted once this threshold is reached.
+                  </p>
+                </div>
+                <div className="form-group" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', marginTop: '1rem' }}>
+                    <input type="checkbox" checked={form.isClosed} onChange={e => setForm(f => ({ ...f, isClosed: e.target.checked }))} style={{ width: 16, height: 16 }} />
+                    <span style={{ fontWeight: 500 }}>Close Registration</span>
+                  </label>
+                  <p className="form-help" style={{ fontSize: '0.75rem', color: 'var(--white-30)', marginTop: '0.25rem', marginLeft: '1.5rem' }}>
+                    Disable public registration for this division entirely.
+                  </p>
                 </div>
               </div>
               <div className="modal-footer">

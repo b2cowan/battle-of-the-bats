@@ -27,6 +27,8 @@ export interface AgeGroup {
   maxAge: number;
   order: number;
   contactId?: string; // links to a managed Contact
+  isClosed?: boolean; // if true, public registration is disabled
+  capacity?: number;  // threshold for waitlist
 }
 
 export interface Player {

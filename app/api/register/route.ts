@@ -5,7 +5,7 @@ import { sendEmail, registrationConfirmationHtml, adminNotificationHtml, ADMIN_E
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { teamName, coachName, email, ageGroupId, ageGroupName, tournamentName, contactEmail } = body;
+    const { teamName, coachName, email, ageGroupId, ageGroupName, tournamentName, contactEmail, status } = body;
 
     if (!teamName || !coachName || !email || !ageGroupId || !ageGroupName || !tournamentName) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
@@ -14,7 +14,15 @@ export async function POST(req: NextRequest) {
     // Save to Supabase
     const { data, error } = await supabase
       .from('registrations')
-      .insert({ team_name: teamName, coach_name: coachName, email, age_group_id: ageGroupId, age_group_name: ageGroupName, tournament_name: tournamentName })
+      .insert({ 
+        team_name: teamName, 
+        coach_name: coachName, 
+        email, 
+        age_group_id: ageGroupId, 
+        age_group_name: ageGroupName, 
+        tournament_name: tournamentName,
+        status: status || 'pending'
+      })
       .select()
       .single();
 
