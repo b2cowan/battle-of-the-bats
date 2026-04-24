@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
-import { ClipboardList, Check, X, CreditCard, RefreshCw, Mail, ChevronDown, ChevronUp } from 'lucide-react';
+import { ClipboardList, Check, X, CreditCard, RefreshCw, Mail, ChevronDown, ChevronUp, AlertCircle } from 'lucide-react';
 import { saveTeam, deleteTeam, getTeams } from '@/lib/storage';
 import { useTournament } from '@/lib/tournament-context';
 import styles from './registrations-admin.module.css';
@@ -27,13 +27,22 @@ export default function AdminRegistrationsPage() {
   const [tab, setTab]         = useState<Tab>('pending');
   const [working, setWorking] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
+    setErrorMsg(null);
     try {
       const res = await fetch('/api/registrations');
       const data = await res.json();
-      setRegs(Array.isArray(data) ? data : []);
+      if (!res.ok) {
+        setErrorMsg(JSON.stringify(data, null, 2));
+        setRegs([]);
+      } else {
+        setRegs(Array.isArray(data) ? data : []);
+      }
+    } catch (e: any) {
+      setErrorMsg(e.message);
     } finally {
       setLoading(false);
     }
@@ -115,7 +124,15 @@ export default function AdminRegistrationsPage() {
         </button>
       </div>
 
-      {loading ? (
+      {errorMsg ? (
+        <div className="empty-state" style={{ color: 'var(--danger)', textAlign: 'left' }}>
+          <AlertCircle size={40} style={{ margin: '0 auto 1rem', opacity: 0.8 }} />
+          <p style={{ textAlign: 'center', marginBottom: '1rem' }}>Backend Error (500)</p>
+          <pre style={{ background: 'rgba(0,0,0,0.5)', padding: '1rem', borderRadius: 8, fontSize: '0.8rem', whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
+            {errorMsg}
+          </pre>
+        </div>
+      ) : loading ? (
         <div className="empty-state"><RefreshCw size={32} style={{ opacity: 0.4 }} /><p>Loading…</p></div>
       ) : filtered.length === 0 ? (
         <div className="empty-state">
