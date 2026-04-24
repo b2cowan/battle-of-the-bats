@@ -112,3 +112,92 @@
   padding-top: 1rem;
   border-top: 1px solid var(--border-2);
 }
+
+.controlsRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.filterGroup {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.filterGroup label {
+  font-size: 0.85rem;
+  color: var(--white-60);
+  font-weight: 500;
+}
+
+.summaryGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.summaryCard {
+  background: var(--white-5);
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius-sm);
+  padding: 1rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.summaryCard:hover {
+  background: var(--white-10);
+  border-color: var(--purple-faint);
+  transform: translateY(-2px);
+}
+
+.selectedSummary {
+  border-color: var(--purple-light);
+  background: var(--purple-faint);
+}
+
+.summaryHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.summaryHeader strong {
+  font-size: 1rem;
+  color: var(--white);
+}
+
+.capacityBadge, .fullBadge {
+  font-size: 0.75rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 99px;
+}
+
+.capacityBadge {
+  background: var(--white-10);
+  color: var(--white-60);
+}
+
+.fullBadge {
+  background: var(--danger-faint);
+  color: var(--danger-light);
+  border: 1px solid var(--danger-faint);
+}
+
+.summaryStats {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.summaryStats span {
+  font-size: 0.8rem;
+  color: var(--white-30);
+}
+

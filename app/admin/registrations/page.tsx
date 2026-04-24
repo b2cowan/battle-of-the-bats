@@ -1,8 +1,9 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
 import { ClipboardList, Check, X, CreditCard, RefreshCw, Mail, ChevronDown, ChevronUp, AlertCircle } from 'lucide-react';
-import { saveTeam, deleteTeam, getTeams } from '@/lib/db';
+import { saveTeam, deleteTeam, getTeams, getAgeGroups } from '@/lib/db';
 import { useTournament } from '@/lib/tournament-context';
+import { AgeGroup } from '@/lib/types';
 import styles from './registrations-admin.module.css';
 
 interface Registration {
@@ -25,9 +26,18 @@ export default function AdminRegistrationsPage() {
   const [regs, setRegs]       = useState<Registration[]>([]);
   const [loading, setLoading] = useState(true);
   const [tab, setTab]         = useState<Tab>('pending');
+  const [ageGroups, setAgeGroups] = useState<AgeGroup[]>([]);
+  const [selectedAgeGroupId, setSelectedAgeGroupId] = useState<string>('all');
   const [working, setWorking] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  const loadAgeGroups = useCallback(async () => {
+    if (currentTournament) {
+      const groups = await getAgeGroups(currentTournament.id);
+      setAgeGroups(groups);
+    }
+  }, [currentTournament]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -48,7 +58,7 @@ export default function AdminRegistrationsPage() {
     }
   }, []);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => { load(); loadAgeGroups(); }, [load, loadAgeGroups]);
 
   async function patch(id: string, updates: Record<string, string>, reg?: Registration) {
     setWorking(id);
@@ -97,7 +107,10 @@ export default function AdminRegistrationsPage() {
   const acceptedCount = regs.filter(r => r.status === 'accepted').length;
   const waitlistCount = regs.filter(r => r.status === 'waitlist').length;
 
-  const filtered = regs.filter(r => tab === 'all' || r.status === tab);
+  const filteredByStatus = regs.filter(r => tab === 'all' || r.status === tab);
+  const filtered = selectedAgeGroupId === 'all' 
+    ? filteredByStatus 
+    : filteredByStatus.filter(r => r.age_group_id === selectedAgeGroupId);
 
   // Group by age group
   const grouped = filtered.reduce((acc, r) => {
@@ -125,19 +138,69 @@ export default function AdminRegistrationsPage() {
         </button>
       </div>
 
-      <div className="tabs" style={{ marginBottom: '1.5rem' }}>
-        <button className={`tab-btn ${tab === 'pending'  ? 'active' : ''}`} onClick={() => setTab('pending')}>
-          Pending {pendingCount > 0 && <span className={styles.tabBadge}>{pendingCount}</span>}
-        </button>
-        <button className={`tab-btn ${tab === 'waitlist' ? 'active' : ''}`} onClick={() => setTab('waitlist')}>
-          Waitlist {waitlistCount > 0 && <span className={styles.tabBadge}>{waitlistCount}</span>}
-        </button>
-        <button className={`tab-btn ${tab === 'accepted' ? 'active' : ''}`} onClick={() => setTab('accepted')}>
-          Accepted {acceptedCount > 0 && <span className={styles.tabBadge}>{acceptedCount}</span>}
-        </button>
-        <button className={`tab-btn ${tab === 'all'      ? 'active' : ''}`} onClick={() => setTab('all')}>
-          All ({regs.length})
-        </button>
+      <div className={styles.controlsRow}>
+        <div className="tabs">
+          <button className={`tab-btn ${tab === 'pending'  ? 'active' : ''}`} onClick={() => setTab('pending')}>
+            Pending {pendingCount > 0 && <span className={styles.tabBadge}>{pendingCount}</span>}
+          </button>
+          <button className={`tab-btn ${tab === 'waitlist' ? 'active' : ''}`} onClick={() => setTab('waitlist')}>
+            Waitlist {waitlistCount > 0 && <span className={styles.tabBadge}>{waitlistCount}</span>}
+          </button>
+          <button className={`tab-btn ${tab === 'accepted' ? 'active' : ''}`} onClick={() => setTab('accepted')}>
+            Accepted {acceptedCount > 0 && <span className={styles.tabBadge}>{acceptedCount}</span>}
+          </button>
+          <button className={`tab-btn ${tab === 'all'      ? 'active' : ''}`} onClick={() => setTab('all')}>
+            All ({regs.length})
+          </button>
+        </div>
+
+        <div className={styles.filterGroup}>
+          <label htmlFor="age-group-filter">Filter by Division:</label>
+          <select 
+            id="age-group-filter"
+            className="form-input" 
+            value={selectedAgeGroupId} 
+            onChange={e => setSelectedAgeGroupId(e.target.value)}
+            style={{ minWidth: '150px' }}
+          >
+            <option value="all">All Divisions</option>
+            {ageGroups.map(g => (
+              <option key={g.id} value={g.id}>{g.name}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      <div className={styles.summaryGrid}>
+        {ageGroups.map(g => {
+          const groupRegs = regs.filter(r => r.age_group_id === g.id);
+          const accepted = groupRegs.filter(r => r.status === 'accepted').length;
+          const pending = groupRegs.filter(r => r.status === 'pending').length;
+          const waitlist = groupRegs.filter(r => r.status === 'waitlist').length;
+          const capacity = g.capacity || 0;
+          const isFull = capacity > 0 && accepted >= capacity;
+
+          return (
+            <div 
+              key={g.id} 
+              className={`${styles.summaryCard} ${selectedAgeGroupId === g.id ? styles.selectedSummary : ''}`}
+              onClick={() => setSelectedAgeGroupId(g.id)}
+            >
+              <div className={styles.summaryHeader}>
+                <strong>{g.name}</strong>
+                {capacity > 0 && (
+                  <span className={isFull ? styles.fullBadge : styles.capacityBadge}>
+                    {accepted} / {capacity}
+                  </span>
+                )}
+              </div>
+              <div className={styles.summaryStats}>
+                <span>{pending} Pending</span>
+                <span>{waitlist} Waitlist</span>
+              </div>
+            </div>
+          );
+        })}
       </div>
 
       {errorMsg ? (

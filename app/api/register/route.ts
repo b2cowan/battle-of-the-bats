@@ -11,6 +11,34 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
+    // 1. Get Age Group capacity
+    const { data: ageGroup, error: agError } = await supabase
+      .from('age_groups')
+      .select('capacity')
+      .eq('id', ageGroupId)
+      .single();
+
+    if (agError) {
+      console.error('Error fetching age group capacity:', agError);
+    }
+
+    // 2. Get current registration count (non-rejected)
+    const { count: regCount, error: countError } = await supabase
+      .from('registrations')
+      .select('*', { count: 'exact', head: true })
+      .eq('age_group_id', ageGroupId)
+      .neq('status', 'rejected');
+
+    if (countError) {
+      console.error('Error counting registrations:', countError);
+    }
+
+    // 3. Determine status
+    let finalStatus = status || 'pending';
+    if (ageGroup?.capacity && (regCount || 0) >= ageGroup.capacity) {
+      finalStatus = 'waitlist';
+    }
+
     // Save to Supabase
     const { data, error } = await supabase
       .from('registrations')
@@ -22,7 +50,7 @@ export async function POST(req: NextRequest) {
         age_group_name: ageGroupName, 
         tournament_id: tournamentId,
         tournament_name: tournamentName,
-        status: status || 'pending'
+        status: finalStatus
       })
       .select()
       .single();
