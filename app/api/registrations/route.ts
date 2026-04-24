@@ -4,11 +4,23 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
-  const { data, error } = await supabaseAdmin
-    .from('registrations')
-    .select('*')
-    .order('registered_at', { ascending: false });
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('registrations')
+      .select('*')
+      .order('registered_at', { ascending: false });
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json(data);
+    if (error) {
+      console.error('Supabase GET error:', error);
+      return NextResponse.json({ error: error.message, details: error }, { status: 500 });
+    }
+    return NextResponse.json(data);
+  } catch (err: any) {
+    console.error('Registrations Route Catch:', err);
+    return NextResponse.json({ 
+      error: 'Exception thrown', 
+      message: err?.message,
+      stack: err?.stack 
+    }, { status: 500 });
+  }
 }
