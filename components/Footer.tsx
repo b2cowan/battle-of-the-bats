@@ -46,7 +46,7 @@ export default function Footer() {
             <h4 className={styles.colTitle}>Contact</h4>
             <ul className={styles.contactList}>
               <li><MapPin size={14} /> Milton, Ontario</li>
-              <li><Mail size={14} /> info@miltonbats.ca</li>
+              <li><Mail size={14} /> info@b2cowan.com</li>
               <li><Phone size={14} /> (905) 555-0123</li>
             </ul>
           </div>

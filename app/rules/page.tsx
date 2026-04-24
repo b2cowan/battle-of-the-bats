@@ -132,7 +132,7 @@ export default function RulesPage() {
             <p>
               <strong>Note:</strong> These rules are subject to change at the discretion of the tournament
               director. Updates will be posted on the News & Announcements page. For questions or
-              clarifications, contact the tournament office at <a href="mailto:info@miltonbats.ca">info@miltonbats.ca</a>.
+              clarifications, contact the tournament office at <a href="mailto:info@b2cowan.com">info@b2cowan.com</a>.
             </p>
           </div>
         </div>
