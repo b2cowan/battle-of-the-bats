@@ -4,7 +4,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { LayoutDashboard, Users, Calendar, Trophy, Megaphone, Tag, LogOut, Home, ChevronRight, MapPin, RefreshCw, ClipboardList, BookUser } from 'lucide-react';
 import { logout } from '@/lib/auth';
 import { useTournament } from '@/lib/tournament-context';
-import { setActiveTournament } from '@/lib/storage';
+import { setActiveTournament } from '@/lib/db';
 import styles from './AdminSidebar.module.css';
 
 const NAV = [
@@ -35,9 +35,9 @@ export default function AdminSidebar() {
     if (t) setCurrentTournament(t);
   }
 
-  function handleSetActive() {
+  async function handleSetActive() {
     if (!currentTournament) return;
-    setActiveTournament(currentTournament.id);
+    await setActiveTournament(currentTournament.id);
     refresh();
   }
 

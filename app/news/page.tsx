@@ -1,16 +1,12 @@
-'use client';
-import { useState, useEffect } from 'react';
 import { Megaphone, Star, Calendar } from 'lucide-react';
-import { getAnnouncements } from '@/lib/storage';
+import { getAnnouncements } from '@/lib/db';
 import { Announcement } from '@/lib/types';
 import styles from './news.module.css';
 
-export default function NewsPage() {
-  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+export const dynamic = 'force-dynamic';
 
-  useEffect(() => {
-    setAnnouncements(getAnnouncements());
-  }, []);
+export default async function NewsPage() {
+  const announcements = await getAnnouncements();
 
   function formatDate(d: string) {
     return new Date(d).toLocaleDateString('en-CA', {

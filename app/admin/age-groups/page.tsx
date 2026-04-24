@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { Tag, Plus, Pencil, Trash2, X, Check } from 'lucide-react';
-import { getAgeGroups, saveAgeGroup, updateAgeGroup, deleteAgeGroup, getContacts } from '@/lib/storage';
+import { getAgeGroups, saveAgeGroup, updateAgeGroup, deleteAgeGroup, getContacts } from '@/lib/db';
 import { AgeGroup, Contact } from '@/lib/types';
 import styles from './admin-page.module.css';
 
@@ -15,11 +15,11 @@ export default function AgeGroupsPage() {
   const [form, setForm] = useState({ name: '', minAge: '', maxAge: '', order: '', contactId: '', capacity: '', isClosed: false });
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
-  function refresh() { 
-    setGroups(getAgeGroups()); 
-    setContacts(getContacts());
+  async function refresh() { 
+    setGroups(await getAgeGroups()); 
+    setContacts(await getContacts());
   }
-  useEffect(refresh, []);
+  useEffect(() => { refresh(); }, []);
 
   function openAdd() {
     setForm({ name: '', minAge: '', maxAge: '', order: String(groups.length + 1), contactId: '', capacity: '', isClosed: false });
@@ -37,7 +37,7 @@ export default function AgeGroupsPage() {
     setModal('edit');
   }
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const data: Omit<AgeGroup, 'id'> = { 
       name: form.name.trim(), 
@@ -48,14 +48,14 @@ export default function AgeGroupsPage() {
       capacity: form.capacity ? Number(form.capacity) : undefined,
       isClosed: form.isClosed
     };
-    if (modal === 'add') saveAgeGroup(data);
-    else if (editing) updateAgeGroup(editing.id, data);
+    if (modal === 'add') await saveAgeGroup(data);
+    else if (editing) await updateAgeGroup(editing.id, data);
     setModal(null);
     refresh();
   }
 
-  function handleDelete() {
-    if (deleteId) { deleteAgeGroup(deleteId); setDeleteId(null); refresh(); }
+  async function handleDelete() {
+    if (deleteId) { await deleteAgeGroup(deleteId); setDeleteId(null); refresh(); }
   }
 
   return (

@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { Calendar, Plus, Pencil, Trash2, X, Check } from 'lucide-react';
-import { getGames, saveGame, updateGame, deleteGame, getTeams, getAgeGroups, getDiamonds } from '@/lib/storage';
+import { getGames, saveGame, updateGame, deleteGame, getTeams, getAgeGroups, getDiamonds } from '@/lib/db';
 import { useTournament } from '@/lib/tournament-context';
 import { Game, Team, AgeGroup, Diamond } from '@/lib/types';
 import styles from './schedule-admin.module.css';
@@ -25,14 +25,13 @@ export default function AdminSchedulePage() {
   const [form, setForm]         = useState(emptyForm);
   const [filterGroup, setFilterGroup] = useState('all');
 
-  function refresh() {
-    setGames(getGames(currentTournament?.id));
-    // teams filtered to this tournament for team selection
-    setTeams(getTeams(currentTournament?.id));
-    setAgeGroups(getAgeGroups());
-    setDiamonds(getDiamonds());
+  async function refresh() {
+    setGames(await getGames(currentTournament?.id));
+    setTeams(await getTeams(currentTournament?.id));
+    setAgeGroups(await getAgeGroups());
+    setDiamonds(await getDiamonds());
   }
-  useEffect(() => { refresh(); }, [currentTournament?.id]); // eslint-disable-line
+  useEffect(() => { refresh(); }, [currentTournament?.id]);
 
   const groupTeams   = (id: string) => teams.filter(t => t.ageGroupId === id);
   const getTeamName  = (id: string) => teams.find(t => t.id === id)?.name ?? 'TBD';
@@ -60,7 +59,7 @@ export default function AdminSchedulePage() {
     setModal('edit');
   }
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const data: Omit<Game, 'id'> = {
       tournamentId: currentTournament?.id ?? '',
@@ -74,8 +73,8 @@ export default function AdminSchedulePage() {
       notes:       form.notes || undefined,
       status:      'scheduled',
     };
-    if (modal === 'add') saveGame(data);
-    else if (editing) updateGame(editing.id, data);
+    if (modal === 'add') await saveGame(data);
+    else if (editing) await updateGame(editing.id, data);
     setModal(null);
     refresh();
   }
@@ -229,7 +228,7 @@ export default function AdminSchedulePage() {
             <p style={{ color: 'var(--white-60)' }}>This will permanently remove the game from the schedule.</p>
             <div className="modal-footer">
               <button className="btn btn-ghost" onClick={() => setDeleteId(null)}>Cancel</button>
-              <button className="btn btn-danger" onClick={() => { deleteGame(deleteId); setDeleteId(null); refresh(); }}>
+              <button className="btn btn-danger" onClick={async () => { await deleteGame(deleteId); setDeleteId(null); refresh(); }}>
                 <Trash2 size={14} /> Delete
               </button>
             </div>

@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { Trophy, Check, X, AlertCircle } from 'lucide-react';
-import { getGames, updateGame, getTeams, getAgeGroups } from '@/lib/storage';
+import { getGames, updateGame, getTeams, getAgeGroups } from '@/lib/db';
 import { useTournament } from '@/lib/tournament-context';
 import { Game, Team, AgeGroup } from '@/lib/types';
 import styles from './results-admin.module.css';
@@ -15,12 +15,12 @@ export default function AdminResultsPage() {
   const [scores, setScores]     = useState({ home: '', away: '' });
   const [filterGroup, setFilterGroup] = useState('all');
 
-  function refresh() {
-    setGames(getGames(currentTournament?.id));
-    setTeams(getTeams(currentTournament?.id));
-    setAgeGroups(getAgeGroups());
+  async function refresh() {
+    setGames(await getGames(currentTournament?.id));
+    setTeams(await getTeams(currentTournament?.id));
+    setAgeGroups(await getAgeGroups());
   }
-  useEffect(() => { refresh(); }, [currentTournament?.id]); // eslint-disable-line
+  useEffect(() => { refresh(); }, [currentTournament?.id]);
 
   const getTeamName  = (id: string) => teams.find(t => t.id === id)?.name ?? 'TBD';
   const getGroupName = (id: string) => ageGroups.find(g => g.id === id)?.name ?? '—';
@@ -30,15 +30,15 @@ export default function AdminResultsPage() {
     setModal(g);
   }
 
-  function handleSave() {
+  async function handleSave() {
     if (!modal) return;
-    updateGame(modal.id, { homeScore: Number(scores.home), awayScore: Number(scores.away), status: 'completed' });
+    await updateGame(modal.id, { homeScore: Number(scores.home), awayScore: Number(scores.away), status: 'completed' });
     setModal(null);
     refresh();
   }
 
-  function markCancelled(id: string) { updateGame(id, { status: 'cancelled' }); refresh(); }
-  function markScheduled(id: string) { updateGame(id, { status: 'scheduled', homeScore: undefined, awayScore: undefined }); refresh(); }
+  async function markCancelled(id: string) { await updateGame(id, { status: 'cancelled' }); refresh(); }
+  async function markScheduled(id: string) { await updateGame(id, { status: 'scheduled', homeScore: undefined, awayScore: undefined }); refresh(); }
 
   const allGames = filterGroup === 'all' ? games : games.filter(g => g.ageGroupId === filterGroup);
 

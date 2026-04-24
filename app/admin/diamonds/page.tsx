@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { MapPin, Plus, Pencil, Trash2, X, Check, ExternalLink } from 'lucide-react';
-import { getDiamonds, saveDiamond, updateDiamond, deleteDiamond } from '@/lib/storage';
+import { getDiamonds, saveDiamond, updateDiamond, deleteDiamond } from '@/lib/db';
 import { Diamond } from '@/lib/types';
 import { getMapsUrl } from '@/components/LocationLink';
 import styles from './diamonds-admin.module.css';
@@ -17,8 +17,8 @@ export default function AdminDiamondsPage() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [form, setForm]         = useState(emptyForm);
 
-  function refresh() { setDiamonds(getDiamonds()); }
-  useEffect(refresh, []);
+  async function refresh() { setDiamonds(await getDiamonds()); }
+  useEffect(() => { refresh(); }, []);
 
   function openAdd() {
     setForm(emptyForm);
@@ -32,11 +32,11 @@ export default function AdminDiamondsPage() {
     setModal('edit');
   }
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const data = { name: form.name.trim(), address: form.address.trim(), notes: form.notes.trim() || undefined };
-    if (modal === 'add') saveDiamond(data);
-    else if (editing) updateDiamond(editing.id, data);
+    if (modal === 'add') await saveDiamond(data);
+    else if (editing) await updateDiamond(editing.id, data);
     setModal(null);
     refresh();
   }
@@ -184,7 +184,7 @@ export default function AdminDiamondsPage() {
               <button
                 className="btn btn-danger"
                 id="confirm-delete-diamond"
-                onClick={() => { deleteDiamond(deleteId); setDeleteId(null); refresh(); }}
+                onClick={async () => { await deleteDiamond(deleteId); setDeleteId(null); refresh(); }}
               >
                 <Trash2 size={14} /> Delete
               </button>

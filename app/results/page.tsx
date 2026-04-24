@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { Trophy, Filter } from 'lucide-react';
-import { getGames, getTeams, getAgeGroups, getDiamonds, getTournaments, getActiveTournament } from '@/lib/storage';
+import { getGames, getTeams, getAgeGroups, getDiamonds, getTournaments } from '@/lib/db';
 import { Game, Team, AgeGroup, Diamond, Tournament } from '@/lib/types';
 import LocationLink from '@/components/LocationLink';
 import YearSelector from '@/components/YearSelector';
@@ -17,18 +17,24 @@ export default function ResultsPage() {
   const [activeGroup, setActiveGroup] = useState<string>('all');
 
   useEffect(() => {
-    const ts = getTournaments();
-    setTournaments(ts);
-    const active = getActiveTournament();
-    setSelectedTournament(active ?? ts[0] ?? null);
-    setAgeGroups(getAgeGroups());
-    setDiamonds(getDiamonds());
+    async function init() {
+      const ts = await getTournaments();
+      setTournaments(ts);
+      const active = ts.find(t => t.isActive);
+      setSelectedTournament(active ?? ts[0] ?? null);
+      setAgeGroups(await getAgeGroups());
+      setDiamonds(await getDiamonds());
+    }
+    init();
   }, []);
 
   useEffect(() => {
     if (!selectedTournament) return;
-    setGames(getGames(selectedTournament.id));
-    setTeams(getTeams(selectedTournament.id));
+    async function fetchResults() {
+      setGames(await getGames(selectedTournament!.id));
+      setTeams(await getTeams(selectedTournament!.id));
+    }
+    fetchResults();
   }, [selectedTournament]);
 
   const getTeamName = (id: string) => teams.find(t => t.id === id)?.name ?? 'TBD';

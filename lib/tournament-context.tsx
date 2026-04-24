@@ -1,7 +1,7 @@
 'use client';
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { Tournament } from './types';
-import { getTournaments, getActiveTournament } from './storage';
+import { getTournaments } from './db';
 
 interface TournamentContextType {
   /** All available tournaments, newest first */
@@ -9,14 +9,14 @@ interface TournamentContextType {
   /** Tournament admin is currently editing (may differ from the public active one) */
   currentTournament: Tournament | null;
   setCurrentTournament: (t: Tournament) => void;
-  refresh: () => void;
+  refresh: () => Promise<void>;
 }
 
 const TournamentContext = createContext<TournamentContextType>({
   tournaments: [],
   currentTournament: null,
   setCurrentTournament: () => {},
-  refresh: () => {},
+  refresh: async () => {},
 });
 
 const ADMIN_T_KEY = 'botb_admin_tournament_id';
@@ -25,12 +25,12 @@ export function TournamentProvider({ children }: { children: ReactNode }) {
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
   const [currentTournament, setCurrentState] = useState<Tournament | null>(null);
 
-  const refresh = useCallback(() => {
-    const ts = getTournaments();
+  const refresh = useCallback(async () => {
+    const ts = await getTournaments();
     setTournaments(ts);
     const savedId = typeof window !== 'undefined' ? localStorage.getItem(ADMIN_T_KEY) : null;
     const saved   = savedId ? ts.find(t => t.id === savedId) : null;
-    const active  = getActiveTournament();
+    const active  = ts.find(t => t.isActive);
     setCurrentState(saved ?? active ?? ts[0] ?? null);
   }, []);
 

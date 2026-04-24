@@ -9,7 +9,7 @@ import {
 } from 'lucide-react';
 import { logout } from '@/lib/auth';
 import { useTournament } from '@/lib/tournament-context';
-import { setActiveTournament } from '@/lib/storage';
+import { setActiveTournament } from '@/lib/db';
 import styles from './AdminBottomNav.module.css';
 
 const PRIMARY_TABS = [
@@ -59,9 +59,9 @@ export default function AdminBottomNav() {
     if (t) setCurrentTournament(t);
   }
 
-  function handleSetLive() {
+  async function handleSetLive() {
     if (!currentTournament) return;
-    setActiveTournament(currentTournament.id);
+    await setActiveTournament(currentTournament.id);
     refresh();
   }
 

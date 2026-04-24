@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { Users, ChevronDown, ChevronUp, User } from 'lucide-react';
-import { getTeams, getAgeGroups, getTournaments, getActiveTournament } from '@/lib/storage';
+import { getTeams, getAgeGroups, getTournaments } from '@/lib/db';
 import { Team, AgeGroup, Tournament } from '@/lib/types';
 import YearSelector from '@/components/YearSelector';
 import styles from './teams.module.css';
@@ -15,16 +15,22 @@ export default function TeamsPage() {
   const [expanded, setExpanded]   = useState<Set<string>>(new Set());
 
   useEffect(() => {
-    const ts = getTournaments();
-    setTournaments(ts);
-    const active = getActiveTournament();
-    setSelectedTournament(active ?? ts[0] ?? null);
-    setAgeGroups(getAgeGroups());
+    async function init() {
+      const ts = await getTournaments();
+      setTournaments(ts);
+      const active = ts.find(t => t.isActive);
+      setSelectedTournament(active ?? ts[0] ?? null);
+      setAgeGroups(await getAgeGroups());
+    }
+    init();
   }, []);
 
   useEffect(() => {
     if (!selectedTournament) return;
-    setTeams(getTeams(selectedTournament.id));
+    async function fetchTeams() {
+      setTeams(await getTeams(selectedTournament!.id));
+    }
+    fetchTeams();
   }, [selectedTournament]);
 
   const filtered = activeGroup === 'all' ? teams : teams.filter(t => t.ageGroupId === activeGroup);

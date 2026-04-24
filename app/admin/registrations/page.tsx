@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
 import { ClipboardList, Check, X, CreditCard, RefreshCw, Mail, ChevronDown, ChevronUp, AlertCircle } from 'lucide-react';
-import { saveTeam, deleteTeam, getTeams } from '@/lib/storage';
+import { saveTeam, deleteTeam, getTeams } from '@/lib/db';
 import { useTournament } from '@/lib/tournament-context';
 import styles from './registrations-admin.module.css';
 
@@ -65,9 +65,10 @@ export default function AdminRegistrationsPage() {
       }
 
       if (updates.status === 'accepted' && reg && currentTournament) {
-        const existing = getTeams().find(t => t.id === reg.id);
+        const teams = await getTeams(currentTournament.id);
+        const existing = teams.find(t => t.id === reg.id);
         if (!existing) {
-          saveTeam({
+          await saveTeam({
             id: reg.id,
             name: reg.team_name,
             coach: reg.coach_name,
@@ -78,7 +79,7 @@ export default function AdminRegistrationsPage() {
           });
         }
       } else if (updates.status === 'rejected' && reg) {
-        deleteTeam(reg.id);
+        await deleteTeam(reg.id);
       }
     } catch (e: any) {
       setErrorMsg(`Update failed: ${e.message}`);

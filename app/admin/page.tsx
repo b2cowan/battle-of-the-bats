@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { LayoutDashboard, Users, Calendar, Trophy, Megaphone, Tag } from 'lucide-react';
 import Link from 'next/link';
-import { getTeams, getGames, getAnnouncements, getAgeGroups } from '@/lib/storage';
+import { getTeams, getGames, getAnnouncements, getAgeGroups } from '@/lib/db';
 import styles from './dashboard.module.css';
 
 export default function AdminDashboard() {
@@ -11,14 +11,20 @@ export default function AdminDashboard() {
   });
 
   useEffect(() => {
-    const games = getGames();
-    setStats({
-      ageGroups: getAgeGroups().length,
-      teams: getTeams().length,
-      scheduled: games.filter(g => g.status === 'scheduled').length,
-      completed: games.filter(g => g.status === 'completed').length,
-      announcements: getAnnouncements().length,
-    });
+    async function fetchStats() {
+      const games = await getGames();
+      const ageGroups = await getAgeGroups();
+      const teams = await getTeams();
+      const announcements = await getAnnouncements();
+      setStats({
+        ageGroups: ageGroups.length,
+        teams: teams.length,
+        scheduled: games.filter(g => g.status === 'scheduled').length,
+        completed: games.filter(g => g.status === 'completed').length,
+        announcements: announcements.length,
+      });
+    }
+    fetchStats();
   }, []);
 
   const cards = [

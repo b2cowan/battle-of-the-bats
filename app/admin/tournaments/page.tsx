@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { RefreshCw, Plus, Check, X, Trash2, Pencil, Star } from 'lucide-react';
-import { getTournaments, saveTournament, updateTournament, deleteTournament, setActiveTournament } from '@/lib/storage';
+import { getTournaments, saveTournament, updateTournament, deleteTournament, setActiveTournament } from '@/lib/db';
 import { useTournament } from '@/lib/tournament-context';
 import { Tournament } from '@/lib/types';
 import styles from './tournaments-admin.module.css';
@@ -16,11 +16,11 @@ export default function AdminTournamentsPage() {
   const [form, setForm]         = useState({ year: String(new Date().getFullYear()), name: '', isActive: false });
   const { refresh: refreshCtx } = useTournament();
 
-  function refresh() {
-    setTournaments(getTournaments());
-    refreshCtx();
+  async function refresh() {
+    setTournaments(await getTournaments());
+    await refreshCtx();
   }
-  useEffect(refresh, []); // eslint-disable-line
+  useEffect(() => { refresh(); }, []); // eslint-disable-line
 
   function openAdd() {
     const nextYear = new Date().getFullYear();
@@ -35,25 +35,25 @@ export default function AdminTournamentsPage() {
     setModal('edit');
   }
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const data = { year: Number(form.year), name: form.name.trim(), isActive: form.isActive };
-    if (modal === 'add') saveTournament(data);
-    else if (editing) updateTournament(editing.id, data);
+    if (modal === 'add') await saveTournament(data);
+    else if (editing) await updateTournament(editing.id, data);
     setModal(null);
     refresh();
   }
 
-  function handleSetActive(id: string) {
-    setActiveTournament(id);
+  async function handleSetActive(id: string) {
+    await setActiveTournament(id);
     refresh();
   }
 
-  function handleDelete() {
+  async function handleDelete() {
     if (!deleteId) return;
     const t = tournaments.find(x => x.id === deleteId);
     if (t?.isActive) return; // safety: can't delete the active tournament
-    deleteTournament(deleteId);
+    await deleteTournament(deleteId);
     setDeleteId(null);
     refresh();
   }

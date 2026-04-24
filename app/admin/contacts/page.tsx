@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { BookUser, Plus, Pencil, Trash2, X, Check, Mail, Phone } from 'lucide-react';
-import { getContacts, saveContact, updateContact, deleteContact } from '@/lib/storage';
+import { getContacts, saveContact, updateContact, deleteContact } from '@/lib/db';
 import { Contact } from '@/lib/types';
 import styles from '../age-groups/admin-page.module.css'; // Reuse styles
 
@@ -14,8 +14,8 @@ export default function AdminContactsPage() {
   const [form, setForm] = useState({ name: '', email: '', phone: '', role: '' });
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
-  function refresh() { setContacts(getContacts()); }
-  useEffect(refresh, []);
+  async function refresh() { setContacts(await getContacts()); }
+  useEffect(() => { refresh(); }, []);
 
   function openAdd() {
     setForm({ name: '', email: '', phone: '', role: '' });
@@ -29,7 +29,7 @@ export default function AdminContactsPage() {
     setModal('edit');
   }
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const data = {
       name: form.name.trim(),
@@ -37,14 +37,14 @@ export default function AdminContactsPage() {
       phone: form.phone.trim() || undefined,
       role: form.role.trim() || undefined,
     };
-    if (modal === 'add') saveContact(data);
-    else if (editing) updateContact(editing.id, data);
+    if (modal === 'add') await saveContact(data);
+    else if (editing) await updateContact(editing.id, data);
     setModal(null);
     refresh();
   }
 
-  function handleDelete() {
-    if (deleteId) { deleteContact(deleteId); setDeleteId(null); refresh(); }
+  async function handleDelete() {
+    if (deleteId) { await deleteContact(deleteId); setDeleteId(null); refresh(); }
   }
 
   return (

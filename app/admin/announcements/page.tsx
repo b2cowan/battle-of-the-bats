@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { Megaphone, Plus, Pencil, Trash2, X, Check, Star } from 'lucide-react';
-import { getAnnouncements, saveAnnouncement, updateAnnouncement, deleteAnnouncement } from '@/lib/storage';
+import { getAnnouncements, saveAnnouncement, updateAnnouncement, deleteAnnouncement } from '@/lib/db';
 import { Announcement } from '@/lib/types';
 import styles from './announcements-admin.module.css';
 
@@ -14,8 +14,8 @@ export default function AdminAnnouncementsPage() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [form, setForm] = useState({ title: '', body: '', pinned: false });
 
-  function refresh() { setItems(getAnnouncements()); }
-  useEffect(refresh, []);
+  async function refresh() { setItems(await getAnnouncements()); }
+  useEffect(() => { refresh(); }, []);
 
   function openAdd() {
     setForm({ title: '', body: '', pinned: false });
@@ -29,17 +29,17 @@ export default function AdminAnnouncementsPage() {
     setModal('edit');
   }
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const data = { ...form, title: form.title.trim(), body: form.body.trim(), date: editing?.date ?? new Date().toISOString() };
-    if (modal === 'add') saveAnnouncement(data);
-    else if (editing) updateAnnouncement(editing.id, data);
+    if (modal === 'add') await saveAnnouncement(data);
+    else if (editing) await updateAnnouncement(editing.id, data);
     setModal(null);
     refresh();
   }
 
-  function togglePin(id: string, pinned: boolean) {
-    updateAnnouncement(id, { pinned: !pinned });
+  async function togglePin(id: string, pinned: boolean) {
+    await updateAnnouncement(id, { pinned: !pinned });
     refresh();
   }
 
@@ -134,7 +134,7 @@ export default function AdminAnnouncementsPage() {
             <p style={{ color: 'var(--white-60)' }}>This will permanently remove this announcement.</p>
             <div className="modal-footer">
               <button className="btn btn-ghost" onClick={() => setDeleteId(null)}>Cancel</button>
-              <button className="btn btn-danger" onClick={() => { deleteAnnouncement(deleteId); setDeleteId(null); refresh(); }}><Trash2 size={14} /> Delete</button>
+              <button className="btn btn-danger" onClick={async () => { await deleteAnnouncement(deleteId); setDeleteId(null); refresh(); }}><Trash2 size={14} /> Delete</button>
             </div>
           </div>
         </div>

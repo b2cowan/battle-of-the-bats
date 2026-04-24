@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { UserPlus, CheckCircle, AlertCircle, ChevronDown, RefreshCw } from 'lucide-react';
-import { getAgeGroups, getActiveTournament, getContacts } from '@/lib/storage';
+import { getAgeGroups, getTournaments, getContacts } from '@/lib/db';
 import { AgeGroup, Tournament, Contact } from '@/lib/types';
 import styles from './register.module.css';
 
@@ -19,9 +19,13 @@ export default function RegisterPage() {
   });
 
   useEffect(() => {
-    setAgeGroups(getAgeGroups());
-    setContacts(getContacts());
-    setTournament(getActiveTournament());
+    async function init() {
+      setAgeGroups(await getAgeGroups());
+      setContacts(await getContacts());
+      const ts = await getTournaments();
+      setTournament(ts.find(t => t.isActive) ?? null);
+    }
+    init();
     
     // Fetch stats
     fetch('/api/public/stats')

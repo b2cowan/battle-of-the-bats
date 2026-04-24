@@ -1,35 +1,28 @@
-'use client';
-import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Calendar, Trophy, Users, ChevronRight, Megaphone, Star } from 'lucide-react';
-import { seedDefaultData, getAnnouncements, getGames, getTeams, getAgeGroups, getDiamonds, getActiveTournament } from '@/lib/storage';
-import { Announcement, Game, Team, AgeGroup, Diamond } from '@/lib/types';
+import { getAnnouncements, getGames, getTeams, getAgeGroups, getDiamonds, getTournaments } from '@/lib/db';
 import LocationLink from '@/components/LocationLink';
 import styles from './Home.module.css';
 
-export default function HomePage() {
-  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
-  const [upcomingGames, setUpcomingGames] = useState<Game[]>([]);
-  const [teams, setTeams] = useState<Team[]>([]);
-  const [ageGroups, setAgeGroups] = useState<AgeGroup[]>([]);
-  const [diamonds, setDiamonds] = useState<Diamond[]>([]);
-  const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
+export const dynamic = 'force-dynamic';
 
-  useEffect(() => {
-    seedDefaultData();
-    setAnnouncements(getAnnouncements().slice(0, 3));
-    const activeTournament = getActiveTournament();
-    setCurrentYear(activeTournament?.year ?? new Date().getFullYear());
-    const now = new Date().toISOString().split('T')[0];
-    setUpcomingGames(
-      getGames(activeTournament?.id)
-        .filter(g => g.status === 'scheduled' && g.date >= now)
-        .slice(0, 4)
-    );
-    setTeams(getTeams(activeTournament?.id));
-    setAgeGroups(getAgeGroups());
-    setDiamonds(getDiamonds());
-  }, []);
+export default async function HomePage() {
+  const tournaments = await getTournaments();
+  const activeTournament = tournaments.find(t => t.isActive);
+  const currentYear = activeTournament?.year ?? new Date().getFullYear();
+
+  const allAnnouncements = await getAnnouncements();
+  const announcements = allAnnouncements.slice(0, 3);
+
+  const allGames = await getGames(activeTournament?.id);
+  const now = new Date().toISOString().split('T')[0];
+  const upcomingGames = allGames
+    .filter(g => g.status === 'scheduled' && g.date >= now)
+    .slice(0, 4);
+
+  const teams = await getTeams(activeTournament?.id);
+  const ageGroups = await getAgeGroups();
+  const diamonds = await getDiamonds();
 
   const getTeamName    = (id: string) => teams.find(t => t.id === id)?.name ?? 'TBD';
   const getAgeGroupName = (id: string) => ageGroups.find(g => g.id === id)?.name ?? '';

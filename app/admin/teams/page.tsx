@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { Users, Plus, Pencil, Trash2, X, Check, UserPlus, UserMinus } from 'lucide-react';
-import { getTeams, saveTeam, updateTeam, deleteTeam, getAgeGroups } from '@/lib/storage';
+import { getTeams, saveTeam, updateTeam, deleteTeam, getAgeGroups } from '@/lib/db';
 import { useTournament } from '@/lib/tournament-context';
 import { Team, AgeGroup, Player } from '@/lib/types';
 import styles from './teams-admin.module.css';
@@ -22,9 +22,9 @@ export default function AdminTeamsPage() {
   const [filterGroup, setFilterGroup] = useState<string>('all');
   const [form, setForm] = useState({ name: '', coach: '', email: '', ageGroupId: '', players: [makePlayer()] });
 
-  function refresh() {
-    setTeams(getTeams(currentTournament?.id));
-    const gs = getAgeGroups();
+  async function refresh() {
+    setTeams(await getTeams(currentTournament?.id));
+    const gs = await getAgeGroups();
     setAgeGroups(gs);
     if (gs.length && !form.ageGroupId) setForm(f => ({ ...f, ageGroupId: gs[0].id }));
   }
@@ -42,7 +42,7 @@ export default function AdminTeamsPage() {
     setModal('edit');
   }
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const cleanPlayers = form.players.filter(p => p.name.trim());
     const data = {
@@ -50,8 +50,8 @@ export default function AdminTeamsPage() {
       ageGroupId: form.ageGroupId, players: cleanPlayers,
       tournamentId: currentTournament?.id ?? '',
     };
-    if (modal === 'add') saveTeam(data);
-    else if (editing) updateTeam(editing.id, data);
+    if (modal === 'add') await saveTeam(data);
+    else if (editing) await updateTeam(editing.id, data);
     setModal(null);
     refresh();
   }
@@ -195,7 +195,7 @@ export default function AdminTeamsPage() {
             <p style={{ color: 'var(--white-60)' }}>This action cannot be undone.</p>
             <div className="modal-footer">
               <button className="btn btn-ghost" onClick={() => setDeleteId(null)}>Cancel</button>
-              <button className="btn btn-danger" onClick={() => { deleteTeam(deleteId); setDeleteId(null); refresh(); }}><Trash2 size={14} /> Delete</button>
+              <button className="btn btn-danger" onClick={async () => { await deleteTeam(deleteId); setDeleteId(null); refresh(); }}><Trash2 size={14} /> Delete</button>
             </div>
           </div>
         </div>
