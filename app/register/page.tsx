@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { UserPlus, CheckCircle, AlertCircle, ChevronDown } from 'lucide-react';
+import { UserPlus, CheckCircle, AlertCircle, ChevronDown, RefreshCw } from 'lucide-react';
 import { getAgeGroups, getActiveTournament, getContacts } from '@/lib/storage';
 import { AgeGroup, Tournament, Contact } from '@/lib/types';
 import styles from './register.module.css';
