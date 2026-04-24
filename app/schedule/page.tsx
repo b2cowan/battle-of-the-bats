@@ -22,8 +22,6 @@ export default function SchedulePage() {
       setTournaments(ts);
       const active = ts.find(t => t.isActive);
       setSelectedTournament(active ?? ts[0] ?? null);
-      setAgeGroups(await getAgeGroups());
-      setDiamonds(await getDiamonds());
     }
     init();
   }, []);
@@ -33,6 +31,8 @@ export default function SchedulePage() {
     async function fetchGames() {
       setGames(await getGames(selectedTournament!.id));
       setTeams(await getTeams(selectedTournament!.id));
+      setAgeGroups(await getAgeGroups(selectedTournament!.id));
+      setDiamonds(await getDiamonds(selectedTournament!.id));
     }
     fetchGames();
   }, [selectedTournament]);

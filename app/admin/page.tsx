@@ -3,19 +3,22 @@ import { useState, useEffect } from 'react';
 import { LayoutDashboard, Users, Calendar, Trophy, Megaphone, Tag } from 'lucide-react';
 import Link from 'next/link';
 import { getTeams, getGames, getAnnouncements, getAgeGroups } from '@/lib/db';
+import { useTournament } from '@/lib/tournament-context';
 import styles from './dashboard.module.css';
 
 export default function AdminDashboard() {
+  const { currentTournament } = useTournament();
   const [stats, setStats] = useState({
     ageGroups: 0, teams: 0, scheduled: 0, completed: 0, announcements: 0,
   });
 
   useEffect(() => {
     async function fetchStats() {
-      const games = await getGames();
-      const ageGroups = await getAgeGroups();
-      const teams = await getTeams();
-      const announcements = await getAnnouncements();
+      const tid = currentTournament?.id;
+      const games = await getGames(tid);
+      const ageGroups = await getAgeGroups(tid);
+      const teams = await getTeams(tid);
+      const announcements = await getAnnouncements(tid);
       setStats({
         ageGroups: ageGroups.length,
         teams: teams.length,
@@ -25,7 +28,7 @@ export default function AdminDashboard() {
       });
     }
     fetchStats();
-  }, []);
+  }, [currentTournament?.id]);
 
   const cards = [
     { label: 'Age Groups', value: stats.ageGroups, icon: Tag,        href: '/admin/age-groups',    color: 'purple' },

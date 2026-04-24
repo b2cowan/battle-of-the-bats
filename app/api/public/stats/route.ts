@@ -3,11 +3,16 @@ import { supabase } from '@/lib/supabase';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
-    const { data, error } = await supabase
-      .from('registrations')
-      .select('age_group_id, status');
+    const { searchParams } = new URL(req.url);
+    const tournamentId = searchParams.get('tournament_id');
+
+    let query = supabase.from('registrations').select('age_group_id, status');
+    if (tournamentId) {
+      query = query.eq('tournament_id', tournamentId);
+    }
+    const { data, error } = await query;
 
     if (error) {
       console.error('Stats query error:', error);

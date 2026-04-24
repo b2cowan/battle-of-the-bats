@@ -2,20 +2,22 @@
 import { useState, useEffect } from 'react';
 import { Megaphone, Plus, Pencil, Trash2, X, Check, Star } from 'lucide-react';
 import { getAnnouncements, saveAnnouncement, updateAnnouncement, deleteAnnouncement } from '@/lib/db';
+import { useTournament } from '@/lib/tournament-context';
 import { Announcement } from '@/lib/types';
 import styles from './announcements-admin.module.css';
 
 type ModalMode = 'add' | 'edit' | null;
 
 export default function AdminAnnouncementsPage() {
+  const { currentTournament } = useTournament();
   const [items, setItems] = useState<Announcement[]>([]);
   const [modal, setModal] = useState<ModalMode>(null);
   const [editing, setEditing] = useState<Announcement | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [form, setForm] = useState({ title: '', body: '', pinned: false });
 
-  async function refresh() { setItems(await getAnnouncements()); }
-  useEffect(() => { refresh(); }, []);
+  async function refresh() { setItems(await getAnnouncements(currentTournament?.id)); }
+  useEffect(() => { refresh(); }, [currentTournament?.id]);
 
   function openAdd() {
     setForm({ title: '', body: '', pinned: false });
@@ -31,7 +33,8 @@ export default function AdminAnnouncementsPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    const data = { ...form, title: form.title.trim(), body: form.body.trim(), date: editing?.date ?? new Date().toISOString() };
+    if (!currentTournament) return;
+    const data = { tournamentId: currentTournament.id, ...form, title: form.title.trim(), body: form.body.trim(), date: editing?.date ?? new Date().toISOString() };
     if (modal === 'add') await saveAnnouncement(data);
     else if (editing) await updateAnnouncement(editing.id, data);
     setModal(null);
@@ -53,7 +56,7 @@ export default function AdminAnnouncementsPage() {
             <p className={styles.pageSub}>Post news and updates for tournament participants</p>
           </div>
         </div>
-        <button className="btn btn-primary" onClick={openAdd} id="ann-add-btn"><Plus size={16} /> New Announcement</button>
+        <button className="btn btn-primary" onClick={openAdd} id="ann-add-btn" disabled={!currentTournament}><Plus size={16} /> New Announcement</button>
       </div>
 
       <div className={styles.annList}>

@@ -7,6 +7,7 @@ export interface Tournament {
 
 export interface Diamond {
   id: string;
+  tournamentId: string;
   name: string;     // e.g. "Diamond 1 — Lions Park"
   address: string;  // full address for Google Maps
   notes?: string;   // parking info, field notes, etc.
@@ -14,6 +15,7 @@ export interface Diamond {
 
 export interface Contact {
   id: string;
+  tournamentId: string;
   name: string;
   email: string;
   phone?: string;
@@ -22,6 +24,7 @@ export interface Contact {
 
 export interface AgeGroup {
   id: string;
+  tournamentId: string;
   name: string; // e.g. "U11"
   minAge: number;
   maxAge: number;
@@ -68,6 +71,7 @@ export interface Game {
 
 export interface Announcement {
   id: string;
+  tournamentId: string;
   title: string;
   body: string;
   date: string; // ISO date string

@@ -31,18 +31,30 @@ export async function setActiveTournament(id: string): Promise<void> {
 }
 
 // --- Diamonds ---
-export async function getDiamonds(): Promise<Diamond[]> {
-  const { data, error } = await supabase.from('diamonds').select('*').order('name', { ascending: true });
+export async function getDiamonds(tournamentId?: string): Promise<Diamond[]> {
+  let query = supabase.from('diamonds').select('*').order('name', { ascending: true });
+  if (tournamentId) query = query.eq('tournament_id', tournamentId);
+  const { data, error } = await query;
   if (error) { console.error('getDiamonds error', error); return []; }
-  return data.map(d => ({ id: d.id, name: d.name, address: d.address, notes: d.notes }));
+  return data.map(d => ({ id: d.id, tournamentId: d.tournament_id, name: d.name, address: d.address, notes: d.notes }));
 }
 
 export async function saveDiamond(d: Omit<Diamond, 'id'>): Promise<void> {
-  await supabase.from('diamonds').insert(d);
+  await supabase.from('diamonds').insert({
+    tournament_id: d.tournamentId,
+    name: d.name,
+    address: d.address,
+    notes: d.notes
+  });
 }
 
 export async function updateDiamond(id: string, d: Partial<Diamond>): Promise<void> {
-  await supabase.from('diamonds').update(d).eq('id', id);
+  const updates: any = {};
+  if (d.tournamentId !== undefined) updates.tournament_id = d.tournamentId;
+  if (d.name !== undefined) updates.name = d.name;
+  if (d.address !== undefined) updates.address = d.address;
+  if (d.notes !== undefined) updates.notes = d.notes;
+  await supabase.from('diamonds').update(updates).eq('id', id);
 }
 
 export async function deleteDiamond(id: string): Promise<void> {
@@ -50,18 +62,39 @@ export async function deleteDiamond(id: string): Promise<void> {
 }
 
 // --- Contacts ---
-export async function getContacts(): Promise<Contact[]> {
-  const { data, error } = await supabase.from('contacts').select('*').order('name', { ascending: true });
+export async function getContacts(tournamentId?: string): Promise<Contact[]> {
+  let query = supabase.from('contacts').select('*').order('name', { ascending: true });
+  if (tournamentId) query = query.eq('tournament_id', tournamentId);
+  const { data, error } = await query;
   if (error) { console.error('getContacts error', error); return []; }
-  return data; // fields match
+  return data.map(c => ({
+    id: c.id,
+    tournamentId: c.tournament_id,
+    name: c.name,
+    email: c.email,
+    phone: c.phone,
+    role: c.role
+  }));
 }
 
 export async function saveContact(c: Omit<Contact, 'id'>): Promise<void> {
-  await supabase.from('contacts').insert(c);
+  await supabase.from('contacts').insert({
+    tournament_id: c.tournamentId,
+    name: c.name,
+    email: c.email,
+    phone: c.phone,
+    role: c.role
+  });
 }
 
 export async function updateContact(id: string, c: Partial<Contact>): Promise<void> {
-  await supabase.from('contacts').update(c).eq('id', id);
+  const updates: any = {};
+  if (c.tournamentId !== undefined) updates.tournament_id = c.tournamentId;
+  if (c.name !== undefined) updates.name = c.name;
+  if (c.email !== undefined) updates.email = c.email;
+  if (c.phone !== undefined) updates.phone = c.phone;
+  if (c.role !== undefined) updates.role = c.role;
+  await supabase.from('contacts').update(updates).eq('id', id);
 }
 
 export async function deleteContact(id: string): Promise<void> {
@@ -69,11 +102,14 @@ export async function deleteContact(id: string): Promise<void> {
 }
 
 // --- Age Groups ---
-export async function getAgeGroups(): Promise<AgeGroup[]> {
-  const { data, error } = await supabase.from('age_groups').select('*').order('display_order', { ascending: true });
+export async function getAgeGroups(tournamentId?: string): Promise<AgeGroup[]> {
+  let query = supabase.from('age_groups').select('*').order('display_order', { ascending: true });
+  if (tournamentId) query = query.eq('tournament_id', tournamentId);
+  const { data, error } = await query;
   if (error) { console.error('getAgeGroups error', error); return []; }
   return data.map(g => ({
     id: g.id,
+    tournamentId: g.tournament_id,
     name: g.name,
     minAge: g.min_age,
     maxAge: g.max_age,
@@ -86,6 +122,7 @@ export async function getAgeGroups(): Promise<AgeGroup[]> {
 
 export async function saveAgeGroup(g: Omit<AgeGroup, 'id'>): Promise<void> {
   await supabase.from('age_groups').insert({
+    tournament_id: g.tournamentId,
     name: g.name,
     min_age: g.minAge,
     max_age: g.maxAge,
@@ -98,6 +135,7 @@ export async function saveAgeGroup(g: Omit<AgeGroup, 'id'>): Promise<void> {
 
 export async function updateAgeGroup(id: string, g: Partial<AgeGroup>): Promise<void> {
   const updates: any = {};
+  if (g.tournamentId !== undefined) updates.tournament_id = g.tournamentId;
   if (g.name !== undefined) updates.name = g.name;
   if (g.minAge !== undefined) updates.min_age = g.minAge;
   if (g.maxAge !== undefined) updates.max_age = g.maxAge;
@@ -219,13 +257,16 @@ export async function deleteGame(id: string): Promise<void> {
 }
 
 // --- Announcements ---
-export async function getAnnouncements(): Promise<Announcement[]> {
-  const { data, error } = await supabase.from('announcements').select('*')
+export async function getAnnouncements(tournamentId?: string): Promise<Announcement[]> {
+  let query = supabase.from('announcements').select('*')
     .order('pinned', { ascending: false })
     .order('published_at', { ascending: false });
+  if (tournamentId) query = query.eq('tournament_id', tournamentId);
+  const { data, error } = await query;
   if (error) { console.error('getAnnouncements error', error); return []; }
   return data.map(a => ({
     id: a.id,
+    tournamentId: a.tournament_id,
     title: a.title,
     body: a.body,
     date: a.published_at,
@@ -235,6 +276,7 @@ export async function getAnnouncements(): Promise<Announcement[]> {
 
 export async function saveAnnouncement(a: Omit<Announcement, 'id'>): Promise<void> {
   await supabase.from('announcements').insert({
+    tournament_id: a.tournamentId,
     title: a.title,
     body: a.body,
     published_at: a.date,
@@ -244,6 +286,7 @@ export async function saveAnnouncement(a: Omit<Announcement, 'id'>): Promise<voi
 
 export async function updateAnnouncement(id: string, a: Partial<Announcement>): Promise<void> {
   const updates: any = {};
+  if (a.tournamentId !== undefined) updates.tournament_id = a.tournamentId;
   if (a.title !== undefined) updates.title = a.title;
   if (a.body !== undefined) updates.body = a.body;
   if (a.date !== undefined) updates.published_at = a.date;

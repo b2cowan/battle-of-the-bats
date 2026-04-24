@@ -2,20 +2,22 @@
 import { useState, useEffect } from 'react';
 import { BookUser, Plus, Pencil, Trash2, X, Check, Mail, Phone } from 'lucide-react';
 import { getContacts, saveContact, updateContact, deleteContact } from '@/lib/db';
+import { useTournament } from '@/lib/tournament-context';
 import { Contact } from '@/lib/types';
 import styles from '../age-groups/admin-page.module.css'; // Reuse styles
 
 type ModalMode = 'add' | 'edit' | null;
 
 export default function AdminContactsPage() {
+  const { currentTournament } = useTournament();
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [modal, setModal] = useState<ModalMode>(null);
   const [editing, setEditing] = useState<Contact | null>(null);
   const [form, setForm] = useState({ name: '', email: '', phone: '', role: '' });
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
-  async function refresh() { setContacts(await getContacts()); }
-  useEffect(() => { refresh(); }, []);
+  async function refresh() { setContacts(await getContacts(currentTournament?.id)); }
+  useEffect(() => { refresh(); }, [currentTournament?.id]);
 
   function openAdd() {
     setForm({ name: '', email: '', phone: '', role: '' });
@@ -31,7 +33,9 @@ export default function AdminContactsPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (!currentTournament) return;
     const data = {
+      tournamentId: currentTournament.id,
       name: form.name.trim(),
       email: form.email.trim(),
       phone: form.phone.trim() || undefined,
@@ -57,7 +61,7 @@ export default function AdminContactsPage() {
             <p className={styles.pageSub}>Manage tournament coordinators and contacts</p>
           </div>
         </div>
-        <button className="btn btn-primary" onClick={openAdd}>
+        <button className="btn btn-primary" onClick={openAdd} disabled={!currentTournament}>
           <Plus size={16} /> Add Contact
         </button>
       </div>

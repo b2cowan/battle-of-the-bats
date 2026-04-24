@@ -1,12 +1,14 @@
 import { Megaphone, Star, Calendar } from 'lucide-react';
-import { getAnnouncements } from '@/lib/db';
+import { getAnnouncements, getTournaments } from '@/lib/db';
 import { Announcement } from '@/lib/types';
 import styles from './news.module.css';
 
 export const dynamic = 'force-dynamic';
 
 export default async function NewsPage() {
-  const announcements = await getAnnouncements();
+  const tournaments = await getTournaments();
+  const activeTournament = tournaments.find(t => t.isActive);
+  const announcements = await getAnnouncements(activeTournament?.id);
 
   function formatDate(d: string) {
     return new Date(d).toLocaleDateString('en-CA', {

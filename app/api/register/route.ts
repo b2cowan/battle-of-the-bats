@@ -5,9 +5,9 @@ import { sendEmail, registrationConfirmationHtml, adminNotificationHtml, ADMIN_E
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { teamName, coachName, email, ageGroupId, ageGroupName, tournamentName, contactEmail, status } = body;
+    const { teamName, coachName, email, ageGroupId, ageGroupName, tournamentId, tournamentName, contactEmail, status } = body;
 
-    if (!teamName || !coachName || !email || !ageGroupId || !ageGroupName || !tournamentName) {
+    if (!teamName || !coachName || !email || !ageGroupId || !ageGroupName || !tournamentId || !tournamentName) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
@@ -20,6 +20,7 @@ export async function POST(req: NextRequest) {
         email, 
         age_group_id: ageGroupId, 
         age_group_name: ageGroupName, 
+        tournament_id: tournamentId,
         tournament_name: tournamentName,
         status: status || 'pending'
       })

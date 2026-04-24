@@ -2,12 +2,14 @@
 import { useState, useEffect } from 'react';
 import { Tag, Plus, Pencil, Trash2, X, Check } from 'lucide-react';
 import { getAgeGroups, saveAgeGroup, updateAgeGroup, deleteAgeGroup, getContacts } from '@/lib/db';
+import { useTournament } from '@/lib/tournament-context';
 import { AgeGroup, Contact } from '@/lib/types';
 import styles from './admin-page.module.css';
 
 type ModalMode = 'add' | 'edit' | null;
 
 export default function AgeGroupsPage() {
+  const { currentTournament } = useTournament();
   const [groups, setGroups] = useState<AgeGroup[]>([]);
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [modal, setModal] = useState<ModalMode>(null);
@@ -16,10 +18,10 @@ export default function AgeGroupsPage() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
   async function refresh() { 
-    setGroups(await getAgeGroups()); 
-    setContacts(await getContacts());
+    setGroups(await getAgeGroups(currentTournament?.id)); 
+    setContacts(await getContacts(currentTournament?.id));
   }
-  useEffect(() => { refresh(); }, []);
+  useEffect(() => { refresh(); }, [currentTournament?.id]);
 
   function openAdd() {
     setForm({ name: '', minAge: '', maxAge: '', order: String(groups.length + 1), contactId: '', capacity: '', isClosed: false });
@@ -39,7 +41,9 @@ export default function AgeGroupsPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (!currentTournament) return;
     const data: Omit<AgeGroup, 'id'> = { 
+      tournamentId: currentTournament.id,
       name: form.name.trim(), 
       minAge: Number(form.minAge), 
       maxAge: Number(form.maxAge), 
@@ -68,7 +72,7 @@ export default function AgeGroupsPage() {
             <p className={styles.pageSub}>Manage tournament age divisions</p>
           </div>
         </div>
-        <button className="btn btn-primary" onClick={openAdd} id="age-group-add-btn">
+        <button className="btn btn-primary" onClick={openAdd} id="age-group-add-btn" disabled={!currentTournament}>
           <Plus size={16} /> Add Age Group
         </button>
       </div>

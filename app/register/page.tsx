@@ -20,18 +20,25 @@ export default function RegisterPage() {
 
   useEffect(() => {
     async function init() {
-      setAgeGroups(await getAgeGroups());
-      setContacts(await getContacts());
       const ts = await getTournaments();
-      setTournament(ts.find(t => t.isActive) ?? null);
+      const activeTournament = ts.find(t => t.isActive) ?? null;
+      setTournament(activeTournament);
+      if (activeTournament) {
+        setAgeGroups(await getAgeGroups(activeTournament.id));
+        setContacts(await getContacts(activeTournament.id));
+        fetchStats(activeTournament.id);
+      }
     }
     init();
     
-    // Fetch stats
-    fetch('/api/public/stats')
-      .then(r => r.json())
-      .then(data => setStats(data))
-      .catch(console.error);
+    async function fetchStats(tid: string) {
+      try {
+        const res = await fetch(`/api/public/stats?tournament_id=${tid}`);
+        setStats(await res.json());
+      } catch (e) {
+        console.error(e);
+      }
+    }
   }, []);
 
   async function handleSubmit(e: React.FormEvent) {
@@ -54,6 +61,7 @@ export default function RegisterPage() {
           ageGroupId:     form.ageGroupId,
           ageGroupName:   selectedGroup.name,
           contactEmail:   contacts.find(c => c.id === selectedGroup.contactId)?.email,
+          tournamentId:   tournament?.id,
           tournamentName: tournament?.name,
           status:         isWaitlist ? 'waitlist' : 'pending',
         }),

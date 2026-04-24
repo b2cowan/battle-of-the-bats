@@ -20,7 +20,6 @@ export default function TeamsPage() {
       setTournaments(ts);
       const active = ts.find(t => t.isActive);
       setSelectedTournament(active ?? ts[0] ?? null);
-      setAgeGroups(await getAgeGroups());
     }
     init();
   }, []);
@@ -29,6 +28,7 @@ export default function TeamsPage() {
     if (!selectedTournament) return;
     async function fetchTeams() {
       setTeams(await getTeams(selectedTournament!.id));
+      setAgeGroups(await getAgeGroups(selectedTournament!.id));
     }
     fetchTeams();
   }, [selectedTournament]);

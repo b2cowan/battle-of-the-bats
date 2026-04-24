@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { MapPin, Plus, Pencil, Trash2, X, Check, ExternalLink } from 'lucide-react';
 import { getDiamonds, saveDiamond, updateDiamond, deleteDiamond } from '@/lib/db';
+import { useTournament } from '@/lib/tournament-context';
 import { Diamond } from '@/lib/types';
 import { getMapsUrl } from '@/components/LocationLink';
 import styles from './diamonds-admin.module.css';
@@ -11,14 +12,15 @@ type ModalMode = 'add' | 'edit' | null;
 const emptyForm = { name: '', address: '', notes: '' };
 
 export default function AdminDiamondsPage() {
+  const { currentTournament } = useTournament();
   const [diamonds, setDiamonds] = useState<Diamond[]>([]);
   const [modal, setModal]       = useState<ModalMode>(null);
   const [editing, setEditing]   = useState<Diamond | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [form, setForm]         = useState(emptyForm);
 
-  async function refresh() { setDiamonds(await getDiamonds()); }
-  useEffect(() => { refresh(); }, []);
+  async function refresh() { setDiamonds(await getDiamonds(currentTournament?.id)); }
+  useEffect(() => { refresh(); }, [currentTournament?.id]);
 
   function openAdd() {
     setForm(emptyForm);
@@ -34,7 +36,8 @@ export default function AdminDiamondsPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    const data = { name: form.name.trim(), address: form.address.trim(), notes: form.notes.trim() || undefined };
+    if (!currentTournament) return;
+    const data = { tournamentId: currentTournament.id, name: form.name.trim(), address: form.address.trim(), notes: form.notes.trim() || undefined };
     if (modal === 'add') await saveDiamond(data);
     else if (editing) await updateDiamond(editing.id, data);
     setModal(null);
@@ -51,7 +54,7 @@ export default function AdminDiamondsPage() {
             <p className={styles.pageSub}>Manage playing fields — names, addresses, and notes</p>
           </div>
         </div>
-        <button className="btn btn-primary" onClick={openAdd} id="diamond-add-btn">
+        <button className="btn btn-primary" onClick={openAdd} id="diamond-add-btn" disabled={!currentTournament}>
           <Plus size={16} /> Add Diamond
         </button>
       </div>

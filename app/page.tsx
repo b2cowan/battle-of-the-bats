@@ -11,7 +11,7 @@ export default async function HomePage() {
   const activeTournament = tournaments.find(t => t.isActive);
   const currentYear = activeTournament?.year ?? new Date().getFullYear();
 
-  const allAnnouncements = await getAnnouncements();
+  const allAnnouncements = await getAnnouncements(activeTournament?.id);
   const announcements = allAnnouncements.slice(0, 3);
 
   const allGames = await getGames(activeTournament?.id);
@@ -21,8 +21,8 @@ export default async function HomePage() {
     .slice(0, 4);
 
   const teams = await getTeams(activeTournament?.id);
-  const ageGroups = await getAgeGroups();
-  const diamonds = await getDiamonds();
+  const ageGroups = await getAgeGroups(activeTournament?.id);
+  const diamonds = await getDiamonds(activeTournament?.id);
 
   const getTeamName    = (id: string) => teams.find(t => t.id === id)?.name ?? 'TBD';
   const getAgeGroupName = (id: string) => ageGroups.find(g => g.id === id)?.name ?? '';
