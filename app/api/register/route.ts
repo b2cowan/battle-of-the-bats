@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
 
     if (error) {
       console.error('Supabase insert error:', error);
-      return NextResponse.json({ error: 'Failed to save registration' }, { status: 500 });
+      return NextResponse.json({ error: `Database error: ${error.message}` }, { status: 500 });
     }
 
     // Fire emails (non-blocking — don't fail the request if email fails)
