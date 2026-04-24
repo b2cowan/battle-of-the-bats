@@ -26,12 +26,17 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ id: str
     if (status)         updates.status         = status;
     if (payment_status) updates.payment_status = payment_status;
 
-    const { error: updateErr } = await supabase
+    const { data: updatedRow, error: updateErr } = await supabase
       .from('registrations')
       .update(updates)
-      .eq('id', id);
+      .eq('id', id)
+      .select()
+      .single();
 
-    if (updateErr) return NextResponse.json({ error: updateErr.message }, { status: 500 });
+    if (updateErr) {
+      console.error('Supabase update silent failure check:', updateErr);
+      return NextResponse.json({ error: 'Database update failed (check RLS policies): ' + updateErr.message }, { status: 500 });
+    }
 
     const p = {
       teamName:      current.team_name,
