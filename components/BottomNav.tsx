@@ -1,15 +1,15 @@
 'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Calendar, Trophy, Users, BookOpen, Megaphone } from 'lucide-react';
+import { Calendar, Trophy, Users, UserPlus, Megaphone } from 'lucide-react';
 import styles from './BottomNav.module.css';
 
 const TABS = [
-  { href: '/schedule', icon: Calendar,  label: 'Schedule' },
-  { href: '/results',  icon: Trophy,    label: 'Results'  },
-  { href: '/teams',    icon: Users,     label: 'Teams'    },
-  { href: '/rules',    icon: BookOpen,  label: 'Rules'    },
-  { href: '/news',     icon: Megaphone, label: 'News'     },
+  { href: '/schedule',  icon: Calendar,  label: 'Schedule' },
+  { href: '/results',   icon: Trophy,    label: 'Results'  },
+  { href: '/teams',     icon: Users,     label: 'Teams'    },
+  { href: '/register',  icon: UserPlus,  label: 'Register' },
+  { href: '/news',      icon: Megaphone, label: 'News'     },
 ];
 
 export default function BottomNav() {

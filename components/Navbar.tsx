@@ -52,8 +52,11 @@ export default function Navbar() {
           ))}
         </div>
 
-        {/* Hamburger (mobile only) */}
+        {/* Register CTA + Hamburger */}
         <div className={styles.actions}>
+          <Link href="/register" className="btn btn-primary btn-sm" id="nav-register-btn">
+            Register
+          </Link>
           <button
             className={styles.hamburger}
             onClick={() => setOpen(o => !o)}
@@ -77,6 +80,9 @@ export default function Navbar() {
               {l.label}
             </Link>
           ))}
+          <Link href="/register" className={`btn btn-primary ${styles.mobileRegister}`} id="mobile-register-btn">
+            Register Your Team
+          </Link>
         </div>
       )}
     </nav>

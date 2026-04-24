@@ -5,7 +5,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import {
   Users, Calendar, Trophy, Megaphone,
   MoreHorizontal, LayoutDashboard, Tag, MapPin,
-  RefreshCw, LogOut, X, ChevronRight,
+  RefreshCw, LogOut, X, ChevronRight, ClipboardList,
 } from 'lucide-react';
 import { logout } from '@/lib/auth';
 import { useTournament } from '@/lib/tournament-context';
@@ -20,10 +20,11 @@ const PRIMARY_TABS = [
 ];
 
 const MORE_ITEMS = [
-  { href: '/admin',             icon: LayoutDashboard, label: 'Dashboard'   },
-  { href: '/admin/tournaments', icon: RefreshCw,       label: 'Tournaments' },
-  { href: '/admin/age-groups',  icon: Tag,             label: 'Age Groups'  },
-  { href: '/admin/diamonds',    icon: MapPin,          label: 'Diamonds'    },
+  { href: '/admin',               icon: LayoutDashboard, label: 'Dashboard'     },
+  { href: '/admin/registrations', icon: ClipboardList,   label: 'Registrations' },
+  { href: '/admin/tournaments',   icon: RefreshCw,       label: 'Tournaments'   },
+  { href: '/admin/age-groups',    icon: Tag,             label: 'Age Groups'    },
+  { href: '/admin/diamonds',      icon: MapPin,          label: 'Diamonds'      },
 ];
 
 export default function AdminBottomNav() {

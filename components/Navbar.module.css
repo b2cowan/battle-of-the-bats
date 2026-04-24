@@ -160,7 +160,7 @@
 .mobileLink:hover { color: var(--white); background: var(--white-10); }
 .mobileActive { color: var(--white) !important; background: var(--purple-faint) !important; }
 
-.mobileAdmin { margin-top: 0.5rem; justify-content: center; }
+.mobileRegister { margin-top: 0.5rem; justify-content: center; }
 
 /* Responsive */
 @media (max-width: 900px) {

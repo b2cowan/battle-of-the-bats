@@ -1,21 +1,22 @@
 'use client';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { LayoutDashboard, Users, Calendar, Trophy, Megaphone, Tag, LogOut, Home, ChevronRight, MapPin, RefreshCw } from 'lucide-react';
+import { LayoutDashboard, Users, Calendar, Trophy, Megaphone, Tag, LogOut, Home, ChevronRight, MapPin, RefreshCw, ClipboardList } from 'lucide-react';
 import { logout } from '@/lib/auth';
 import { useTournament } from '@/lib/tournament-context';
 import { setActiveTournament } from '@/lib/storage';
 import styles from './AdminSidebar.module.css';
 
 const NAV = [
-  { href: '/admin',               icon: LayoutDashboard, label: 'Dashboard'     },
-  { href: '/admin/tournaments',   icon: RefreshCw,       label: 'Tournaments'   },
-  { href: '/admin/age-groups',    icon: Tag,             label: 'Age Groups'    },
-  { href: '/admin/teams',         icon: Users,           label: 'Teams'         },
-  { href: '/admin/diamonds',      icon: MapPin,          label: 'Diamonds'      },
-  { href: '/admin/schedule',      icon: Calendar,        label: 'Schedule'      },
-  { href: '/admin/results',       icon: Trophy,          label: 'Results'       },
-  { href: '/admin/announcements', icon: Megaphone,       label: 'Announcements' },
+  { href: '/admin',                 icon: LayoutDashboard, label: 'Dashboard'     },
+  { href: '/admin/tournaments',     icon: RefreshCw,       label: 'Tournaments'   },
+  { href: '/admin/registrations',   icon: ClipboardList,   label: 'Registrations' },
+  { href: '/admin/age-groups',      icon: Tag,             label: 'Age Groups'    },
+  { href: '/admin/teams',           icon: Users,           label: 'Teams'         },
+  { href: '/admin/diamonds',        icon: MapPin,          label: 'Diamonds'      },
+  { href: '/admin/schedule',        icon: Calendar,        label: 'Schedule'      },
+  { href: '/admin/results',         icon: Trophy,          label: 'Results'       },
+  { href: '/admin/announcements',   icon: Megaphone,       label: 'Announcements' },
 ];
 
 export default function AdminSidebar() {

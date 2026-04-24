@@ -1,0 +1,108 @@
+.pageHeader {
+  background: linear-gradient(180deg, rgba(139,47,201,0.12) 0%, transparent 100%);
+  border-bottom: 1px solid var(--border);
+  padding: 4rem 0 3rem;
+}
+
+.profileWrap {
+  max-width: 680px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* Status banners */
+.banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  border-radius: var(--radius);
+  padding: 1.25rem 1.5rem;
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  animation: fadeInUp 0.3s ease;
+}
+
+.banner strong { display: block; font-size: 1rem; margin-bottom: 0.3rem; }
+.banner p { margin: 0.25rem 0 0; color: rgba(255,255,255,0.75); }
+.banner svg { flex-shrink: 0; margin-top: 2px; }
+
+.bannerPending  { background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.3); color: var(--warning); }
+.bannerPending strong { color: var(--warning); }
+
+.bannerPayment  { background: rgba(59,130,246,0.1); border: 2px solid rgba(59,130,246,0.4); color: #60a5fa; }
+.bannerPayment strong { color: #93c5fd; }
+
+.bannerSuccess  { background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.35); color: var(--success); }
+.bannerSuccess strong { color: var(--success); }
+
+.bannerRejected { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); color: var(--danger); }
+.bannerRejected strong { color: var(--danger); }
+.bannerRejected a { color: var(--purple-light); }
+
+/* Payment details */
+.paymentDetails {
+  background: rgba(0,0,0,0.25);
+  border-radius: 8px;
+  padding: 0.875rem 1rem;
+  margin: 0.75rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.paymentRow {
+  display: flex;
+  gap: 0.75rem;
+  font-size: 0.9rem;
+}
+
+.paymentRow span { color: rgba(255,255,255,0.5); min-width: 90px; }
+.paymentRow strong { color: #fff; }
+.paymentNote { font-size: 0.8rem; color: rgba(255,255,255,0.5); margin-top: 0.5rem !important; }
+
+/* Info card */
+.infoCard { animation: fadeInUp 0.35s ease; }
+
+.infoTitle {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--white);
+  margin: 0 0 1.25rem;
+}
+
+.infoGrid { display: flex; flex-direction: column; gap: 0.875rem; }
+
+.infoItem {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding-bottom: 0.875rem;
+  border-bottom: 1px solid var(--border-2);
+}
+
+.infoItem:last-child { border-bottom: none; padding-bottom: 0; }
+
+.infoLabel {
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--white-30);
+  min-width: 100px;
+}
+
+.infoValue { color: var(--white-90); font-size: 0.9375rem; }
+
+/* Contact note */
+.contactNote {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: var(--white-30);
+}
+
+.contactNote a { color: var(--purple-light); }
