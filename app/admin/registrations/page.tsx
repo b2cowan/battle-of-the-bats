@@ -52,31 +52,40 @@ export default function AdminRegistrationsPage() {
 
   async function patch(id: string, updates: Record<string, string>, reg?: Registration) {
     setWorking(id);
-    await fetch(`/api/registrations/${id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(updates),
-    });
+    try {
+      const res = await fetch(`/api/registrations/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates),
+      });
 
-    if (updates.status === 'accepted' && reg && currentTournament) {
-      const existing = getTeams().find(t => t.id === reg.id);
-      if (!existing) {
-        saveTeam({
-          id: reg.id,
-          name: reg.team_name,
-          coach: reg.coach_name,
-          email: reg.email,
-          ageGroupId: reg.age_group_id,
-          tournamentId: currentTournament.id,
-          players: [],
-        });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Failed to update registration');
       }
-    } else if (updates.status === 'rejected' && reg) {
-      deleteTeam(reg.id);
-    }
 
-    await load();
-    setWorking(null);
+      if (updates.status === 'accepted' && reg && currentTournament) {
+        const existing = getTeams().find(t => t.id === reg.id);
+        if (!existing) {
+          saveTeam({
+            id: reg.id,
+            name: reg.team_name,
+            coach: reg.coach_name,
+            email: reg.email,
+            ageGroupId: reg.age_group_id,
+            tournamentId: currentTournament.id,
+            players: [],
+          });
+        }
+      } else if (updates.status === 'rejected' && reg) {
+        deleteTeam(reg.id);
+      }
+    } catch (e: any) {
+      setErrorMsg(`Update failed: ${e.message}`);
+    } finally {
+      await load();
+      setWorking(null);
+    }
   }
 
   function toggle(id: string) {
