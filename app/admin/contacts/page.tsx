@@ -128,7 +128,7 @@ export default function AdminContactsPage() {
               <div className="form-row form-row-2" style={{ marginBottom: '1.5rem' }}>
                 <div className="form-group">
                   <label className="form-label">Email *</label>
-                  <input className="form-input" type="email" placeholder="jane@miltonbats.com" value={form.email}
+                  <input className="form-input" type="email" placeholder="jane@b2cowan.com" value={form.email}
                     onChange={e => setForm(f => ({ ...f, email: e.target.value }))} required />
                 </div>
                 <div className="form-group">
