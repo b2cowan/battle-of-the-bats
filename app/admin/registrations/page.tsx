@@ -92,8 +92,6 @@ export default function AdminRegistrationsPage() {
     setExpanded(prev => { const s = new Set(prev); s.has(id) ? s.delete(id) : s.add(id); return s; });
   }
 
-  const filtered = regs.filter(r => {
-    if (tab === 'pending')  return r.status === 'pending';
   const pendingCount  = regs.filter(r => r.status === 'pending').length;
   const acceptedCount = regs.filter(r => r.status === 'accepted').length;
   const waitlistCount = regs.filter(r => r.status === 'waitlist').length;
