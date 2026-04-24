@@ -12,13 +12,21 @@ export interface Diamond {
   notes?: string;   // parking info, field notes, etc.
 }
 
+export interface Contact {
+  id: string;
+  name: string;
+  email: string;
+  phone?: string;
+  role?: string;
+}
+
 export interface AgeGroup {
   id: string;
   name: string; // e.g. "U11"
   minAge: number;
   maxAge: number;
   order: number;
-  contactEmail?: string; // specific email for division notifications
+  contactId?: string; // links to a managed Contact
 }
 
 export interface Player {

@@ -1,30 +1,34 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { Tag, Plus, Pencil, Trash2, X, Check } from 'lucide-react';
-import { getAgeGroups, saveAgeGroup, updateAgeGroup, deleteAgeGroup } from '@/lib/storage';
-import { AgeGroup } from '@/lib/types';
+import { getAgeGroups, saveAgeGroup, updateAgeGroup, deleteAgeGroup, getContacts } from '@/lib/storage';
+import { AgeGroup, Contact } from '@/lib/types';
 import styles from './admin-page.module.css';
 
 type ModalMode = 'add' | 'edit' | null;
 
 export default function AgeGroupsPage() {
   const [groups, setGroups] = useState<AgeGroup[]>([]);
+  const [contacts, setContacts] = useState<Contact[]>([]);
   const [modal, setModal] = useState<ModalMode>(null);
   const [editing, setEditing] = useState<AgeGroup | null>(null);
-  const [form, setForm] = useState({ name: '', minAge: '', maxAge: '', order: '', contactEmail: '' });
+  const [form, setForm] = useState({ name: '', minAge: '', maxAge: '', order: '', contactId: '' });
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
-  function refresh() { setGroups(getAgeGroups()); }
+  function refresh() { 
+    setGroups(getAgeGroups()); 
+    setContacts(getContacts());
+  }
   useEffect(refresh, []);
 
   function openAdd() {
-    setForm({ name: '', minAge: '', maxAge: '', order: String(groups.length + 1), contactEmail: '' });
+    setForm({ name: '', minAge: '', maxAge: '', order: String(groups.length + 1), contactId: '' });
     setEditing(null);
     setModal('add');
   }
 
   function openEdit(g: AgeGroup) {
-    setForm({ name: g.name, minAge: String(g.minAge), maxAge: String(g.maxAge), order: String(g.order), contactEmail: g.contactEmail || '' });
+    setForm({ name: g.name, minAge: String(g.minAge), maxAge: String(g.maxAge), order: String(g.order), contactId: g.contactId || '' });
     setEditing(g);
     setModal('edit');
   }
@@ -36,7 +40,7 @@ export default function AgeGroupsPage() {
       minAge: Number(form.minAge), 
       maxAge: Number(form.maxAge), 
       order: Number(form.order),
-      contactEmail: form.contactEmail.trim() || undefined
+      contactId: form.contactId || undefined
     };
     if (modal === 'add') saveAgeGroup(data);
     else if (editing) updateAgeGroup(editing.id, data);
@@ -71,7 +75,7 @@ export default function AgeGroupsPage() {
               <th>Min Age</th>
               <th>Max Age</th>
               <th>Display Order</th>
-              <th>Contact Email</th>
+              <th>Contact</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -84,7 +88,11 @@ export default function AgeGroupsPage() {
                 <td>{g.minAge}</td>
                 <td>{g.maxAge}</td>
                 <td>{g.order}</td>
-                <td><span style={{ fontSize: '0.85rem', color: 'var(--white-60)' }}>{g.contactEmail || '—'}</span></td>
+                <td>
+                  <span style={{ fontSize: '0.85rem', color: 'var(--white-60)' }}>
+                    {contacts.find(c => c.id === g.contactId)?.name || '—'}
+                  </span>
+                </td>
                 <td>
                   <div className="flex gap-1">
                     <button className="btn btn-ghost btn-sm" onClick={() => openEdit(g)} id={`edit-age-group-${g.id}`}><Pencil size={13} /></button>
@@ -119,11 +127,13 @@ export default function AgeGroupsPage() {
                 </div>
               </div>
               <div className="form-group" style={{ marginBottom: '1rem' }}>
-                <label className="form-label">Contact Email (Optional)</label>
-                <input className="form-input" type="email" placeholder="e.g. division@miltonbats.com" value={form.contactEmail}
-                  onChange={e => setForm(f => ({ ...f, contactEmail: e.target.value }))} />
+                <label className="form-label">Division Contact (Optional)</label>
+                <select className="form-select" value={form.contactId} onChange={e => setForm(f => ({ ...f, contactId: e.target.value }))}>
+                  <option value="">Default Admin Email</option>
+                  {contacts.map(c => <option key={c.id} value={c.id}>{c.name} ({c.email})</option>)}
+                </select>
                 <p className="form-help" style={{ fontSize: '0.75rem', color: 'var(--white-30)', marginTop: '0.25rem' }}>
-                  If provided, new team registration notifications for this division will be sent here instead of the default admin email.
+                  If selected, new team registration notifications for this division will be sent to this contact instead of the default admin email.
                 </p>
               </div>
               <div className="form-row form-row-2" style={{ marginBottom: '1.5rem' }}>

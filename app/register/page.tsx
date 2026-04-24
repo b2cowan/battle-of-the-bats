@@ -1,14 +1,15 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { UserPlus, CheckCircle, AlertCircle, ChevronDown } from 'lucide-react';
-import { getAgeGroups, getActiveTournament } from '@/lib/storage';
-import { AgeGroup, Tournament } from '@/lib/types';
+import { getAgeGroups, getActiveTournament, getContacts } from '@/lib/storage';
+import { AgeGroup, Tournament, Contact } from '@/lib/types';
 import styles from './register.module.css';
 
 type Step = 'form' | 'submitting' | 'success' | 'error';
 
 export default function RegisterPage() {
   const [ageGroups, setAgeGroups]     = useState<AgeGroup[]>([]);
+  const [contacts, setContacts]       = useState<Contact[]>([]);
   const [tournament, setTournament]   = useState<Tournament | null>(null);
   const [step, setStep]               = useState<Step>('form');
   const [errorMsg, setErrorMsg]       = useState('');
@@ -18,6 +19,7 @@ export default function RegisterPage() {
 
   useEffect(() => {
     setAgeGroups(getAgeGroups());
+    setContacts(getContacts());
     setTournament(getActiveTournament());
   }, []);
 
@@ -38,7 +40,7 @@ export default function RegisterPage() {
           email:          form.email.trim().toLowerCase(),
           ageGroupId:     form.ageGroupId,
           ageGroupName:   selectedGroup.name,
-          contactEmail:   selectedGroup.contactEmail,
+          contactEmail:   contacts.find(c => c.id === selectedGroup.contactId)?.email,
           tournamentName: tournament.name,
         }),
       });

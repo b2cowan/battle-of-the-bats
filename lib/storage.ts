@@ -1,4 +1,4 @@
-import { AgeGroup, Team, Game, Announcement, Diamond, Tournament } from './types';
+import { AgeGroup, Team, Game, Announcement, Diamond, Tournament, Contact } from './types';
 
 const KEYS = {
   AGE_GROUPS:    'botb_age_groups',
@@ -7,6 +7,7 @@ const KEYS = {
   ANNOUNCEMENTS: 'botb_announcements',
   DIAMONDS:      'botb_diamonds',
   TOURNAMENTS:   'botb_tournaments',
+  CONTACTS:      'botb_contacts',
 } as const;
 
 function read<T>(key: string): T[] {
@@ -184,6 +185,28 @@ export function updateDiamond(id: string, updates: Partial<Omit<Diamond, 'id'>>)
 
 export function deleteDiamond(id: string): void {
   write(KEYS.DIAMONDS, read<Diamond>(KEYS.DIAMONDS).filter(d => d.id !== id));
+}
+
+// ─── Contacts ──────────────────────────────────────────────────────────────────
+
+export function getContacts(): Contact[] {
+  return read<Contact>(KEYS.CONTACTS).sort((a, b) => a.name.localeCompare(b.name));
+}
+
+export function saveContact(contact: Omit<Contact, 'id'>): Contact {
+  const contacts = getContacts();
+  const newContact: Contact = { ...contact, id: generateId() };
+  write(KEYS.CONTACTS, [...contacts, newContact]);
+  return newContact;
+}
+
+export function updateContact(id: string, updates: Partial<Omit<Contact, 'id'>>): void {
+  const contacts = read<Contact>(KEYS.CONTACTS);
+  write(KEYS.CONTACTS, contacts.map(c => c.id === id ? { ...c, ...updates } : c));
+}
+
+export function deleteContact(id: string): void {
+  write(KEYS.CONTACTS, read<Contact>(KEYS.CONTACTS).filter(c => c.id !== id));
 }
 
 // ─── Seed Data ─────────────────────────────────────────────────────────────────
