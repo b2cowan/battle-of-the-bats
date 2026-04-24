@@ -8,8 +8,68 @@ export async function getTournaments(): Promise<Tournament[]> {
   return data.map(t => ({ id: t.id, year: t.year, name: t.name, isActive: t.is_active }));
 }
 
-export async function saveTournament(t: Omit<Tournament, 'id'>): Promise<void> {
-  await supabase.from('tournaments').insert({ year: t.year, name: t.name, is_active: t.isActive });
+export async function saveTournament(t: Omit<Tournament, 'id'>): Promise<Tournament | null> {
+  const { data, error } = await supabase
+    .from('tournaments')
+    .insert({ year: t.year, name: t.name, is_active: t.isActive })
+    .select()
+    .single();
+  
+  if (error) {
+    console.error('saveTournament error', error);
+    return null;
+  }
+  
+  return { id: data.id, year: data.year, name: data.name, isActive: data.is_active };
+}
+
+export async function cloneContacts(targetTid: string, sourceContacts: Contact[]): Promise<void> {
+  if (sourceContacts.length === 0) return;
+  const rows = sourceContacts.map(c => ({
+    tournament_id: targetTid,
+    name: c.name,
+    email: c.email,
+    phone: c.phone,
+    role: c.role
+  }));
+  await supabase.from('contacts').insert(rows);
+}
+
+export async function cloneDiamonds(targetTid: string, sourceDiamonds: Diamond[]): Promise<void> {
+  if (sourceDiamonds.length === 0) return;
+  const rows = sourceDiamonds.map(d => ({
+    tournament_id: targetTid,
+    name: d.name,
+    address: d.address,
+    notes: d.notes
+  }));
+  await supabase.from('diamonds').insert(rows);
+}
+
+export async function initializeAgeGroups(targetTid: string, selectedDivisions: string[]): Promise<void> {
+  if (selectedDivisions.length === 0) return;
+  
+  const defaults: Record<string, { min: number, max: number, order: number }> = {
+    'U11': { min: 9, max: 11, order: 1 },
+    'U13': { min: 11, max: 13, order: 2 },
+    'U15': { min: 13, max: 15, order: 3 },
+    'U17': { min: 15, max: 17, order: 4 },
+    'U19': { min: 17, max: 19, order: 5 },
+  };
+
+  const rows = selectedDivisions.map(name => {
+    const config = defaults[name] || { min: 0, max: 99, order: 10 };
+    return {
+      tournament_id: targetTid,
+      name,
+      min_age: config.min,
+      max_age: config.max,
+      display_order: config.order,
+      is_closed: false
+    };
+  });
+  
+  await supabase.from('age_groups').insert(rows);
 }
 
 export async function updateTournament(id: string, t: Partial<Tournament>): Promise<void> {

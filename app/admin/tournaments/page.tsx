@@ -1,9 +1,12 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { RefreshCw, Plus, Check, X, Trash2, Pencil, Star } from 'lucide-react';
-import { getTournaments, saveTournament, updateTournament, deleteTournament, setActiveTournament } from '@/lib/db';
+import { 
+  getTournaments, saveTournament, updateTournament, deleteTournament, setActiveTournament,
+  getContacts, getDiamonds, cloneContacts, cloneDiamonds, initializeAgeGroups, saveAnnouncement
+} from '@/lib/db';
 import { useTournament } from '@/lib/tournament-context';
-import { Tournament } from '@/lib/types';
+import { Tournament, Contact } from '@/lib/types';
 import styles from './tournaments-admin.module.css';
 
 type ModalMode = 'add' | 'edit' | null;
@@ -16,16 +19,44 @@ export default function AdminTournamentsPage() {
   const [form, setForm]         = useState({ year: String(new Date().getFullYear()), name: '', isActive: false });
   const { refresh: refreshCtx } = useTournament();
 
+  // Migration / Initialization states
+  const [sourceTournamentId, setSourceTournamentId] = useState<string>('');
+  const [sourceContacts, setSourceContacts]         = useState<Contact[]>([]);
+  const [selectedContactIds, setSelectedContactIds] = useState<Set<string>>(new Set());
+  const [migrateDiamonds, setMigrateDiamonds]       = useState(false);
+  const [selectedDivisions, setSelectedDivisions]   = useState<Set<string>>(new Set(['U11', 'U13', 'U15', 'U17', 'U19']));
+  const [useWelcomeMsg, setUseWelcomeMsg]           = useState(true);
+  const [welcomeMsg, setWelcomeMsg]                 = useState('Welcome to the Battle of the Bats tournament! We are excited to have you join us for another great season of competitive youth softball.');
+
   async function refresh() {
     setTournaments(await getTournaments());
     await refreshCtx();
   }
   useEffect(() => { refresh(); }, []); // eslint-disable-line
 
+  useEffect(() => {
+    async function fetchSourceContacts() {
+      if (sourceTournamentId && modal === 'add') {
+        const contacts = await getContacts(sourceTournamentId);
+        setSourceContacts(contacts);
+        setSelectedContactIds(new Set(contacts.map(c => c.id)));
+      } else {
+        setSourceContacts([]);
+        setSelectedContactIds(new Set());
+      }
+    }
+    fetchSourceContacts();
+  }, [sourceTournamentId, modal]);
+
   function openAdd() {
     const nextYear = new Date().getFullYear();
     setForm({ year: String(nextYear), name: `Battle of the Bats ${nextYear}`, isActive: false });
     setEditing(null);
+    setSourceTournamentId('');
+    setMigrateDiamonds(false);
+    setSelectedDivisions(new Set(['U11', 'U13', 'U15', 'U17', 'U19']));
+    setUseWelcomeMsg(true);
+    setWelcomeMsg('Welcome to the Battle of the Bats tournament! We are excited to have you join us for another great season of competitive youth softball.');
     setModal('add');
   }
 
@@ -38,10 +69,60 @@ export default function AdminTournamentsPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const data = { year: Number(form.year), name: form.name.trim(), isActive: form.isActive };
-    if (modal === 'add') await saveTournament(data);
-    else if (editing) await updateTournament(editing.id, data);
+    
+    if (modal === 'add') {
+      const newTournament = await saveTournament(data);
+      if (newTournament) {
+        const tid = newTournament.id;
+        
+        // 1. Migration
+        if (sourceTournamentId) {
+          if (selectedContactIds.size > 0) {
+            const contactsToClone = sourceContacts.filter(c => selectedContactIds.has(c.id));
+            await cloneContacts(tid, contactsToClone);
+          }
+          if (migrateDiamonds) {
+            const sourceDiamonds = await getDiamonds(sourceTournamentId);
+            await cloneDiamonds(tid, sourceDiamonds);
+          }
+        }
+        
+        // 2. Age Groups
+        if (selectedDivisions.size > 0) {
+          await initializeAgeGroups(tid, Array.from(selectedDivisions));
+        }
+        
+        // 3. Welcome Announcement
+        if (useWelcomeMsg && welcomeMsg.trim()) {
+          await saveAnnouncement({
+            tournamentId: tid,
+            title: 'Welcome!',
+            body: welcomeMsg.trim(),
+            date: new Date().toISOString(),
+            pinned: true
+          });
+        }
+      }
+    } else if (editing) {
+      await updateTournament(editing.id, data);
+    }
+    
     setModal(null);
     refresh();
+  }
+
+  function toggleContact(id: string) {
+    const next = new Set(selectedContactIds);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    setSelectedContactIds(next);
+  }
+
+  function toggleDivision(name: string) {
+    const next = new Set(selectedDivisions);
+    if (next.has(name)) next.delete(name);
+    else next.add(name);
+    setSelectedDivisions(next);
   }
 
   async function handleSetActive(id: string) {
@@ -189,6 +270,100 @@ export default function AdminTournamentsPage() {
                   <Star size={13} /> Set as the live (public) tournament
                 </label>
               </div>
+
+              {modal === 'add' && (
+                <div className={styles.migrationSection}>
+                  <div className={styles.migrationHeader}>
+                    <RefreshCw size={16} />
+                    <h4>Migration & Setup</h4>
+                  </div>
+
+                  <div className="form-group" style={{ marginTop: '0.5rem' }}>
+                    <label className="form-label">Migrate data from past tournament (optional)</label>
+                    <select 
+                      className="form-input" 
+                      value={sourceTournamentId}
+                      onChange={e => setSourceTournamentId(e.target.value)}
+                    >
+                      <option value="">-- No Migration --</option>
+                      {tournaments.map(t => (
+                        <option key={t.id} value={t.id}>{t.name} ({t.year})</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {sourceTournamentId && (
+                    <div className={styles.migrationOptions}>
+                      <div className={styles.checkboxGroup}>
+                        <label className={styles.checkboxLabel}>
+                          <input 
+                            type="checkbox" 
+                            checked={migrateDiamonds} 
+                            onChange={e => setMigrateDiamonds(e.target.checked)} 
+                          />
+                          Migrate all diamond locations
+                        </label>
+                      </div>
+
+                      {sourceContacts.length > 0 && (
+                        <div className={styles.contactPicker}>
+                          <label className="form-label">Select contacts to migrate:</label>
+                          <div className={styles.contactList}>
+                            {sourceContacts.map(c => (
+                              <label key={c.id} className={styles.checkboxLabel}>
+                                <input 
+                                  type="checkbox" 
+                                  checked={selectedContactIds.has(c.id)}
+                                  onChange={() => toggleContact(c.id)}
+                                />
+                                {c.name} ({c.role})
+                              </label>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  <div className={styles.setupGroup}>
+                    <label className="form-label">Initialize age divisions:</label>
+                    <div className={styles.divisionCheckboxes}>
+                      {['U11', 'U13', 'U15', 'U17', 'U19'].map(div => (
+                        <label key={div} className={styles.checkboxLabel}>
+                          <input 
+                            type="checkbox" 
+                            checked={selectedDivisions.has(div)}
+                            onChange={() => toggleDivision(div)}
+                          />
+                          {div}
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className={styles.setupGroup}>
+                    <div className={styles.checkboxGroup}>
+                      <label className={styles.checkboxLabel}>
+                        <input 
+                          type="checkbox" 
+                          checked={useWelcomeMsg} 
+                          onChange={e => setUseWelcomeMsg(e.target.checked)} 
+                        />
+                        Create default welcome announcement
+                      </label>
+                    </div>
+                    {useWelcomeMsg && (
+                      <textarea 
+                        className="form-textarea"
+                        rows={3}
+                        value={welcomeMsg}
+                        onChange={e => setWelcomeMsg(e.target.value)}
+                        placeholder="Enter welcome message..."
+                      />
+                    )}
+                  </div>
+                </div>
+              )}
               <div className="modal-footer">
                 <button type="button" className="btn btn-ghost" onClick={() => setModal(null)}>Cancel</button>
                 <button type="submit" className="btn btn-primary" id="tournament-save-btn">
