@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabaseAdmin } from '@/lib/supabase-admin';
+import { supabase } from '@/lib/supabase';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
   try {
-    const { data, error } = await supabaseAdmin
+    const { data, error } = await supabase
       .from('registrations')
       .select('*')
       .order('registered_at', { ascending: false });

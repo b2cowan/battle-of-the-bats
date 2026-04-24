@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabaseAdmin } from '@/lib/supabase-admin';
+import { supabase } from '@/lib/supabase';
 import {
   sendEmail,
   acceptanceHtml, rejectionHtml, paymentConfirmationHtml,
@@ -13,7 +13,7 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ id: str
     const { status, payment_status } = body;
 
     // Fetch current record
-    const { data: current, error: fetchErr } = await supabaseAdmin
+    const { data: current, error: fetchErr } = await supabase
       .from('registrations')
       .select('*')
       .eq('id', id)
@@ -26,7 +26,7 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ id: str
     if (status)         updates.status         = status;
     if (payment_status) updates.payment_status = payment_status;
 
-    const { error: updateErr } = await supabaseAdmin
+    const { error: updateErr } = await supabase
       .from('registrations')
       .update(updates)
       .eq('id', id);
@@ -61,7 +61,7 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ id: str
 
 export async function GET(req: NextRequest, props: { params: Promise<{ id: string }> }) {
   const { id } = await props.params;
-  const { data, error } = await supabaseAdmin
+  const { data, error } = await supabase
     .from('registrations')
     .select('*')
     .eq('id', id)
