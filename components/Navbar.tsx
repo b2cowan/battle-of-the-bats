@@ -6,11 +6,11 @@ import { Menu, X } from 'lucide-react';
 import styles from './Navbar.module.css';
 
 const NAV_LINKS = [
+  { href: '/news',     label: 'News'     },
   { href: '/schedule', label: 'Schedule' },
   { href: '/results',  label: 'Results'  },
   { href: '/teams',    label: 'Teams'    },
   { href: '/rules',    label: 'Rules'    },
-  { href: '/news',     label: 'News'     },
 ];
 
 export default function Navbar() {
@@ -26,6 +26,8 @@ export default function Navbar() {
 
   // Close menu on route change
   useEffect(() => { setOpen(false); }, [pathname]);
+
+  if (pathname.startsWith('/admin')) return null;
 
   return (
     <nav className={`${styles.nav} ${scrolled ? styles.scrolled : ''}`}>

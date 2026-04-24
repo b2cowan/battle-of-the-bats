@@ -18,6 +18,7 @@ export interface AgeGroup {
   minAge: number;
   maxAge: number;
   order: number;
+  contactEmail?: string; // specific email for division notifications
 }
 
 export interface Player {
@@ -33,6 +34,7 @@ export interface Team {
   ageGroupId: string;
   name: string;
   coach: string;
+  email?: string;
   players: Player[];
 }
 

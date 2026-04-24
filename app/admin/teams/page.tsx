@@ -20,7 +20,7 @@ export default function AdminTeamsPage() {
   const [editing, setEditing]   = useState<Team | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [filterGroup, setFilterGroup] = useState<string>('all');
-  const [form, setForm] = useState({ name: '', coach: '', ageGroupId: '', players: [makePlayer()] });
+  const [form, setForm] = useState({ name: '', coach: '', email: '', ageGroupId: '', players: [makePlayer()] });
 
   function refresh() {
     setTeams(getTeams(currentTournament?.id));
@@ -31,13 +31,13 @@ export default function AdminTeamsPage() {
   useEffect(() => { refresh(); }, [currentTournament?.id]); // eslint-disable-line
 
   function openAdd() {
-    setForm({ name: '', coach: '', ageGroupId: ageGroups[0]?.id ?? '', players: [makePlayer()] });
+    setForm({ name: '', coach: '', email: '', ageGroupId: ageGroups[0]?.id ?? '', players: [makePlayer()] });
     setEditing(null);
     setModal('add');
   }
 
   function openEdit(t: Team) {
-    setForm({ name: t.name, coach: t.coach, ageGroupId: t.ageGroupId, players: t.players.length ? t.players : [makePlayer()] });
+    setForm({ name: t.name, coach: t.coach, email: t.email || '', ageGroupId: t.ageGroupId, players: t.players.length ? t.players : [makePlayer()] });
     setEditing(t);
     setModal('edit');
   }
@@ -46,7 +46,7 @@ export default function AdminTeamsPage() {
     e.preventDefault();
     const cleanPlayers = form.players.filter(p => p.name.trim());
     const data = {
-      name: form.name.trim(), coach: form.coach.trim(),
+      name: form.name.trim(), coach: form.coach.trim(), email: form.email.trim() || undefined,
       ageGroupId: form.ageGroupId, players: cleanPlayers,
       tournamentId: currentTournament?.id ?? '',
     };
@@ -97,7 +97,7 @@ export default function AdminTeamsPage() {
       <div className="table-wrap">
         <table>
           <thead>
-            <tr><th>Team Name</th><th>Division</th><th>Coach</th><th>Players</th><th>Actions</th></tr>
+            <tr><th>Team Name</th><th>Division</th><th>Coach</th><th>Email</th><th>Players</th><th>Actions</th></tr>
           </thead>
           <tbody>
             {filtered.length === 0 ? (
@@ -109,6 +109,7 @@ export default function AdminTeamsPage() {
                 <td><strong>{t.name}</strong></td>
                 <td><span className="badge badge-purple">{getGroupName(t.ageGroupId)}</span></td>
                 <td>{t.coach || '—'}</td>
+                <td><span style={{ fontSize: '0.85rem', color: 'var(--white-60)' }}>{t.email || '—'}</span></td>
                 <td>{t.players.length}</td>
                 <td>
                   <div className="flex gap-1">
@@ -139,6 +140,12 @@ export default function AdminTeamsPage() {
                   <label className="form-label">Coach</label>
                   <input className="form-input" value={form.coach} onChange={e => setForm(f => ({ ...f, coach: e.target.value }))} />
                 </div>
+                <div className="form-group">
+                  <label className="form-label">Contact Email</label>
+                  <input className="form-input" type="email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} />
+                </div>
+              </div>
+              <div className="form-row form-row-2" style={{ marginBottom: '1rem' }}>
                 <div className="form-group">
                   <label className="form-label">Age Group *</label>
                   <select className="form-select" value={form.ageGroupId} onChange={e => setForm(f => ({ ...f, ageGroupId: e.target.value }))} required>

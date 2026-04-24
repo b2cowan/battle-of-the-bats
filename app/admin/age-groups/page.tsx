@@ -11,27 +11,33 @@ export default function AgeGroupsPage() {
   const [groups, setGroups] = useState<AgeGroup[]>([]);
   const [modal, setModal] = useState<ModalMode>(null);
   const [editing, setEditing] = useState<AgeGroup | null>(null);
-  const [form, setForm] = useState({ name: '', minAge: '', maxAge: '', order: '' });
+  const [form, setForm] = useState({ name: '', minAge: '', maxAge: '', order: '', contactEmail: '' });
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
   function refresh() { setGroups(getAgeGroups()); }
   useEffect(refresh, []);
 
   function openAdd() {
-    setForm({ name: '', minAge: '', maxAge: '', order: String(groups.length + 1) });
+    setForm({ name: '', minAge: '', maxAge: '', order: String(groups.length + 1), contactEmail: '' });
     setEditing(null);
     setModal('add');
   }
 
   function openEdit(g: AgeGroup) {
-    setForm({ name: g.name, minAge: String(g.minAge), maxAge: String(g.maxAge), order: String(g.order) });
+    setForm({ name: g.name, minAge: String(g.minAge), maxAge: String(g.maxAge), order: String(g.order), contactEmail: g.contactEmail || '' });
     setEditing(g);
     setModal('edit');
   }
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    const data = { name: form.name.trim(), minAge: Number(form.minAge), maxAge: Number(form.maxAge), order: Number(form.order) };
+    const data = { 
+      name: form.name.trim(), 
+      minAge: Number(form.minAge), 
+      maxAge: Number(form.maxAge), 
+      order: Number(form.order),
+      contactEmail: form.contactEmail.trim() || undefined
+    };
     if (modal === 'add') saveAgeGroup(data);
     else if (editing) updateAgeGroup(editing.id, data);
     setModal(null);
@@ -65,6 +71,7 @@ export default function AgeGroupsPage() {
               <th>Min Age</th>
               <th>Max Age</th>
               <th>Display Order</th>
+              <th>Contact Email</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -77,6 +84,7 @@ export default function AgeGroupsPage() {
                 <td>{g.minAge}</td>
                 <td>{g.maxAge}</td>
                 <td>{g.order}</td>
+                <td><span style={{ fontSize: '0.85rem', color: 'var(--white-60)' }}>{g.contactEmail || '—'}</span></td>
                 <td>
                   <div className="flex gap-1">
                     <button className="btn btn-ghost btn-sm" onClick={() => openEdit(g)} id={`edit-age-group-${g.id}`}><Pencil size={13} /></button>
@@ -109,6 +117,14 @@ export default function AgeGroupsPage() {
                   <input className="form-input" type="number" min="1" value={form.order}
                     onChange={e => setForm(f => ({ ...f, order: e.target.value }))} required />
                 </div>
+              </div>
+              <div className="form-group" style={{ marginBottom: '1rem' }}>
+                <label className="form-label">Contact Email (Optional)</label>
+                <input className="form-input" type="email" placeholder="e.g. division@miltonbats.com" value={form.contactEmail}
+                  onChange={e => setForm(f => ({ ...f, contactEmail: e.target.value }))} />
+                <p className="form-help" style={{ fontSize: '0.75rem', color: 'var(--white-30)', marginTop: '0.25rem' }}>
+                  If provided, new team registration notifications for this division will be sent here instead of the default admin email.
+                </p>
               </div>
               <div className="form-row form-row-2" style={{ marginBottom: '1.5rem' }}>
                 <div className="form-group">

@@ -96,9 +96,10 @@ export function getTeams(tournamentId?: string): Team[] {
   return teams.filter(t => t.tournamentId === tournamentId);
 }
 
-export function saveTeam(team: Omit<Team, 'id'>): Team {
+export function saveTeam(team: Omit<Team, 'id'> & { id?: string }): Team {
   const teams = read<Team>(KEYS.TEAMS);
-  const newTeam: Team = { ...team, id: generateId() };
+  const newTeam: Team = { id: generateId(), ...team };
+  if (team.id) newTeam.id = team.id;
   write(KEYS.TEAMS, [...teams, newTeam]);
   return newTeam;
 }

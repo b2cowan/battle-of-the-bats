@@ -1,6 +1,8 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
 import { ClipboardList, Check, X, CreditCard, RefreshCw, Mail, ChevronDown, ChevronUp } from 'lucide-react';
+import { saveTeam, deleteTeam, getTeams } from '@/lib/storage';
+import { useTournament } from '@/lib/tournament-context';
 import styles from './registrations-admin.module.css';
 
 interface Registration {
@@ -8,6 +10,7 @@ interface Registration {
   team_name: string;
   coach_name: string;
   email: string;
+  age_group_id: string;
   age_group_name: string;
   tournament_name: string;
   status: 'pending' | 'accepted' | 'rejected';
@@ -18,6 +21,7 @@ interface Registration {
 type Tab = 'pending' | 'accepted' | 'all';
 
 export default function AdminRegistrationsPage() {
+  const { currentTournament } = useTournament();
   const [regs, setRegs]       = useState<Registration[]>([]);
   const [loading, setLoading] = useState(true);
   const [tab, setTab]         = useState<Tab>('pending');
@@ -37,13 +41,31 @@ export default function AdminRegistrationsPage() {
 
   useEffect(() => { load(); }, [load]);
 
-  async function patch(id: string, updates: Record<string, string>) {
+  async function patch(id: string, updates: Record<string, string>, reg?: Registration) {
     setWorking(id);
     await fetch(`/api/registrations/${id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(updates),
     });
+
+    if (updates.status === 'accepted' && reg && currentTournament) {
+      const existing = getTeams().find(t => t.id === reg.id);
+      if (!existing) {
+        saveTeam({
+          id: reg.id,
+          name: reg.team_name,
+          coach: reg.coach_name,
+          email: reg.email,
+          ageGroupId: reg.age_group_id,
+          tournamentId: currentTournament.id,
+          players: [],
+        });
+      }
+    } else if (updates.status === 'rejected' && reg) {
+      deleteTeam(reg.id);
+    }
+
     await load();
     setWorking(null);
   }
@@ -154,15 +176,16 @@ export default function AdminRegistrationsPage() {
                     <>
                       <button
                         className="btn btn-primary btn-sm"
-                        onClick={() => patch(r.id, { status: 'accepted' })}
-                        disabled={busy}
+                        onClick={() => patch(r.id, { status: 'accepted' }, r)}
+                        disabled={busy || !currentTournament}
+                        title={!currentTournament ? "No active tournament set" : ""}
                         id={`accept-${r.id}`}
                       >
                         <Check size={13} /> {busy ? 'Processing…' : 'Accept & Email'}
                       </button>
                       <button
                         className="btn btn-danger btn-sm"
-                        onClick={() => patch(r.id, { status: 'rejected' })}
+                        onClick={() => patch(r.id, { status: 'rejected' }, r)}
                         disabled={busy}
                         id={`reject-${r.id}`}
                       >

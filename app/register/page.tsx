@@ -38,6 +38,7 @@ export default function RegisterPage() {
           email:          form.email.trim().toLowerCase(),
           ageGroupId:     form.ageGroupId,
           ageGroupName:   selectedGroup.name,
+          contactEmail:   selectedGroup.contactEmail,
           tournamentName: tournament.name,
         }),
       });

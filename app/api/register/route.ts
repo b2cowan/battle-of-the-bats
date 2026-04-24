@@ -5,7 +5,7 @@ import { sendEmail, registrationConfirmationHtml, adminNotificationHtml, ADMIN_E
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { teamName, coachName, email, ageGroupId, ageGroupName, tournamentName } = body;
+    const { teamName, coachName, email, ageGroupId, ageGroupName, tournamentName, contactEmail } = body;
 
     if (!teamName || !coachName || !email || !ageGroupId || !ageGroupName || !tournamentName) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
@@ -23,12 +23,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: `Database error: ${error.message}` }, { status: 500 });
     }
 
+    const adminEmailToUse = contactEmail || ADMIN_EMAIL;
+
     // Fire emails (non-blocking — don't fail the request if email fails)
     await Promise.allSettled([
       sendEmail(email, `Registration Received — ${teamName}`,
         registrationConfirmationHtml({ teamName, coachName, ageGroupName, tournamentName })
       ),
-      sendEmail(ADMIN_EMAIL, `New Registration: ${teamName} (${ageGroupName})`,
+      sendEmail(adminEmailToUse, `New Registration: ${teamName} (${ageGroupName})`,
         adminNotificationHtml({ teamName, coachName, email, ageGroupName, tournamentName })
       ),
     ]);
