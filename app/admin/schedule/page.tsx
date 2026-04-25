@@ -263,7 +263,7 @@ export default function AdminSchedulePage() {
 
       {showGenerator && currentTournament && (
         <ScheduleGenerator 
-          tournamentId={currentTournament.id}
+          tournament={currentTournament}
           ageGroups={ageGroups}
           teams={teams}
           diamonds={diamonds}

@@ -158,3 +158,27 @@
   align-items: center;
   gap: 0.5rem;
 }
+
+.dateSlotList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+  padding: 1rem;
+  background: var(--black-20);
+  border-radius: var(--radius-sm);
+}
+
+.dateSlotRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  background: var(--white-5);
+  padding: 0.75rem;
+  border-radius: var(--radius-xs);
+  border: 1px solid var(--border-2);
+}
+
+.dateSlotRow .formGroup {
+  margin-bottom: 0;
+}
