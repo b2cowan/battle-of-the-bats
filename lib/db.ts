@@ -439,6 +439,10 @@ export async function seedTournamentData(tid: string, options: {
     const teamNames = ['Milton Bats', 'Oakville Angels', 'Burlington Bulls', 'Mississauga Tigers', 'Hamilton Heat', 'Brampton Blazers', 'Toronto Titans', 'Guelph Gryphons'];
     const coaches = ['Coach Bob', 'Coach Alice', 'Coach Charlie', 'Coach Diana', 'Coach Ed', 'Coach Fiona', 'Coach Greg', 'Coach Heather'];
     
+    // Get tournament name for denormalized column
+    const { data: tnt } = await supabase.from('tournaments').select('name').eq('id', tid).single();
+    const tName = tnt?.name || 'Seeded Tournament';
+
     for (const group of ageGroups) {
       const rows = teamNames.map((name, i) => {
         const teamPool = group.poolCount && group.poolCount > 1 
@@ -461,15 +465,14 @@ export async function seedTournamentData(tid: string, options: {
         throw teamError;
       }
       
-      // Also add registrations records if table exists, 
-      // but in this system teams ARE the registrations when accepted.
-      // Let's also insert into registrations table to be safe
       const regRows = teamNames.map((name, i) => ({
         tournament_id: tid,
+        tournament_name: tName,
         team_name: `${name} ${group.name}`,
         coach_name: coaches[i],
         email: `coach${i}@example.com`,
         age_group_id: group.id,
+        age_group_name: group.name,
         status: 'accepted',
         payment_status: 'paid',
         registered_at: new Date().toISOString()
@@ -478,20 +481,24 @@ export async function seedTournamentData(tid: string, options: {
       // Add 2 waitlist teams per division
       regRows.push({
         tournament_id: tid,
+        tournament_name: tName,
         team_name: `Waitlist Team 1 ${group.name}`,
         coach_name: 'Waitlist Coach 1',
         email: `waitlist1@example.com`,
         age_group_id: group.id,
+        age_group_name: group.name,
         status: 'waitlist',
         payment_status: 'pending',
         registered_at: new Date().toISOString()
       });
       regRows.push({
         tournament_id: tid,
+        tournament_name: tName,
         team_name: `Waitlist Team 2 ${group.name}`,
         coach_name: 'Waitlist Coach 2',
         email: `waitlist2@example.com`,
         age_group_id: group.id,
+        age_group_name: group.name,
         status: 'waitlist',
         payment_status: 'pending',
         registered_at: new Date().toISOString()
