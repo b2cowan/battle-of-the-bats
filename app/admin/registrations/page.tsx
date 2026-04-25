@@ -35,6 +35,7 @@ export default function AdminRegistrationsPage() {
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [bulkWorking, setBulkWorking] = useState(false);
+  const [showSummary, setShowSummary] = useState(true);
 
   const loadAgeGroups = useCallback(async () => {
     if (currentTournament) {
@@ -214,96 +215,101 @@ export default function AdminRegistrationsPage() {
       </div>
 
       <div className={styles.controlsRow}>
-        <div className={styles.statusFilters}>
-          {(['pending', 'accepted', 'waitlist', 'rejected'] as Status[]).map(s => {
-            const count = regs.filter(r => r.status === s).length;
-            const isActive = selectedStatuses.includes(s);
+        <div className={styles.controlsLeft}>
+          <div className={styles.statusFilters}>
+            {(['pending', 'accepted', 'waitlist', 'rejected'] as Status[]).map(s => {
+              const count = regs.filter(r => r.status === s).length;
+              const isActive = selectedStatuses.includes(s);
+              return (
+                <button 
+                  key={s}
+                  className={`${styles.filterChip} ${isActive ? styles.chipActive : ''}`}
+                  onClick={() => toggleStatus(s)}
+                >
+                  {s.toUpperCase()} ({count})
+                </button>
+              );
+            })}
+          </div>
+          <button 
+            className="btn btn-ghost btn-sm" 
+            onClick={() => setShowSummary(!showSummary)}
+            style={{ color: 'var(--white-40)' }}
+          >
+            {showSummary ? 'Hide Stats' : 'Show Stats'}
+          </button>
+        </div>
+
+        <div className={styles.controlsRight}>
+          <div className={styles.searchBar}>
+            <input 
+              type="text" 
+              placeholder="Search..." 
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className="form-input"
+            />
+          </div>
+
+          <div className={styles.filterGroup}>
+            <select 
+              id="age-group-filter"
+              className="form-input" 
+              value={selectedAgeGroupId} 
+              onChange={e => setSelectedAgeGroupId(e.target.value)}
+              style={{ minWidth: '150px' }}
+            >
+              <option value="all">All Divs</option>
+              {ageGroups.map(g => (
+                <option key={g.id} value={g.id}>{g.name}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+      </div>
+
+      {showSummary && (
+        <div className={styles.summaryGrid}>
+          {ageGroups.map(g => {
+            const groupRegs = regs.filter(r => r.age_group_id === g.id);
+            const accepted = groupRegs.filter(r => r.status === 'accepted').length;
+            const pending = groupRegs.filter(r => r.status === 'pending').length;
+            const capacity = g.capacity || 0;
+            const isFull = capacity > 0 && accepted >= capacity;
+
             return (
-              <button 
-                key={s}
-                className={`${styles.filterChip} ${isActive ? styles.chipActive : ''}`}
-                onClick={() => toggleStatus(s)}
+              <div 
+                key={g.id} 
+                className={`${styles.summaryCard} ${selectedAgeGroupId === g.id ? styles.selectedSummary : ''}`}
+                onClick={() => setSelectedAgeGroupId(g.id)}
               >
-                {s.toUpperCase()} ({count})
-              </button>
+                <div className={styles.summaryHeader}>
+                  <strong>{g.name}</strong>
+                  {capacity > 0 && (
+                    <span className={isFull ? styles.fullBadge : styles.capacityBadge}>
+                      {accepted}/{capacity}
+                    </span>
+                  )}
+                </div>
+                <div className={styles.summaryStats}>
+                  <span>{pending} P • {groupRegs.filter(r => r.status === 'waitlist').length} W</span>
+                </div>
+              </div>
             );
           })}
         </div>
-
-        <div className={styles.searchBar}>
-          <input 
-            type="text" 
-            placeholder="Search teams or coaches..." 
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            className="form-input"
-          />
-        </div>
-
-        <div className={styles.filterGroup}>
-          <select 
-            id="age-group-filter"
-            className="form-input" 
-            value={selectedAgeGroupId} 
-            onChange={e => setSelectedAgeGroupId(e.target.value)}
-            style={{ minWidth: '180px' }}
-          >
-            <option value="all">All Divisions</option>
-            {ageGroups.map(g => (
-              <option key={g.id} value={g.id}>{g.name}</option>
-            ))}
-          </select>
-        </div>
-      </div>
+      )}
 
       {selectedRegIds.size > 0 && (
         <div className={styles.bulkActions}>
           <span>{selectedRegIds.size} selected</span>
           <div className="flex gap-1">
-            <button className="btn btn-primary btn-sm" onClick={() => handleBulkAction('accepted')} disabled={bulkWorking}>
-              Accept Selected
-            </button>
-            <button className="btn btn-outline btn-sm" onClick={() => handleBulkAction('paid')} disabled={bulkWorking}>
-              Mark Paid
-            </button>
-            <button className="btn btn-danger btn-sm" onClick={() => handleBulkAction('rejected')} disabled={bulkWorking}>
-              Reject Selected
-            </button>
+            <button className="btn btn-primary btn-sm" onClick={() => handleBulkAction('accepted')} disabled={bulkWorking}>Accept</button>
+            <button className="btn btn-outline btn-sm" onClick={() => handleBulkAction('paid')} disabled={bulkWorking}>Mark Paid</button>
+            <button className="btn btn-danger btn-sm" onClick={() => handleBulkAction('rejected')} disabled={bulkWorking}>Reject</button>
           </div>
         </div>
       )}
-
-      <div className={styles.summaryGrid}>
-        {ageGroups.map(g => {
-          const groupRegs = regs.filter(r => r.age_group_id === g.id);
-          const accepted = groupRegs.filter(r => r.status === 'accepted').length;
-          const pending = groupRegs.filter(r => r.status === 'pending').length;
-          const waitlist = groupRegs.filter(r => r.status === 'waitlist').length;
-          const capacity = g.capacity || 0;
-          const isFull = capacity > 0 && accepted >= capacity;
-
-          return (
-            <div 
-              key={g.id} 
-              className={`${styles.summaryCard} ${selectedAgeGroupId === g.id ? styles.selectedSummary : ''}`}
-              onClick={() => setSelectedAgeGroupId(g.id)}
-            >
-              <div className={styles.summaryHeader}>
-                <strong>{g.name}</strong>
-                {capacity > 0 && (
-                  <span className={isFull ? styles.fullBadge : styles.capacityBadge}>
-                    {accepted} / {capacity}
-                  </span>
-                )}
-              </div>
-              <div className={styles.summaryStats}>
-                <span>{pending} Pending</span>
-                <span>{waitlist} Waitlist</span>
-              </div>
-            </div>
-          );
-        })}
-      </div>
 
       {errorMsg ? (
         <div className="empty-state" style={{ color: 'var(--danger)', textAlign: 'left' }}>
@@ -321,145 +327,99 @@ export default function AdminRegistrationsPage() {
           <p>No registrations found.</p>
         </div>
       ) : (
-        <div className={styles.cards}>
+        <div className={styles.compactList}>
           {Object.entries(grouped).map(([ageGroup, groupRegs]) => (
-            <div key={ageGroup} style={{ marginBottom: '2rem' }}>
-              <h3 style={{ fontSize: '1.25rem', color: 'var(--white)', marginBottom: '1rem', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '0.5rem' }}>
-                {ageGroup} <span className="badge badge-purple" style={{ marginLeft: '0.5rem' }}>{groupRegs.length} Teams</span>
-              </h3>
+            <div key={ageGroup} className={styles.groupSection}>
+              <div className={styles.groupHeader}>
+                <strong>{ageGroup}</strong>
+                <span className="badge badge-purple">{groupRegs.length} Teams</span>
+              </div>
               
+              <div className={styles.tableHeader}>
+                <div style={{ width: '40px' }} />
+                <div style={{ flex: 2 }}>Team</div>
+                <div style={{ flex: 1.5 }}>Coach</div>
+                <div style={{ width: '100px' }}>Status</div>
+                <div style={{ width: '100px' }}>Payment</div>
+                <div style={{ width: '80px' }} />
+              </div>
+
               {groupRegs.map(r => {
                 const isExpanded = expanded.has(r.id);
                 const isSelected = selectedRegIds.has(r.id);
                 const busy = working === r.id;
                 return (
-                  <div key={r.id} className={`card ${styles.regCard} ${isSelected ? styles.rowSelected : ''}`}>
-                    {/* Header row */}
-                    <div className={styles.cardHeader}>
-                      <div className={styles.cardLeft}>
+                  <div key={r.id} className={`${styles.row} ${isSelected ? styles.rowSelected : ''}`}>
+                    <div className={styles.rowMain}>
+                      <div style={{ width: '40px', display: 'flex', justifyContent: 'center' }}>
                         <input 
                           type="checkbox" 
                           checked={isSelected}
                           onChange={() => toggleSelect(r.id)}
                           className={styles.rowCheck}
                         />
-                        <div className={styles.teamNameRow}>
-                          <strong className={styles.teamName}>{r.team_name}</strong>
-                          {r.status === 'pending'  && <span className="badge badge-warning">Pending</span>}
-                          {r.status === 'waitlist' && <span className="badge badge-danger" style={{ background: 'rgba(245,158,11,0.2)', color: '#fbbf24', border: '1px solid rgba(245,158,11,0.3)' }}>Waitlist</span>}
-                          {r.status === 'accepted' && <span className="badge badge-success">Accepted</span>}
-                          {r.status === 'rejected' && <span className="badge badge-danger">Rejected</span>}
-                        </div>
-                        <div className={styles.cardMeta}>
-                          <span className={styles.metaItem}>{r.tournament_name}</span>
-                          <span className={styles.metaItem}>{formatDate(r.registered_at)}</span>
-                        </div>
                       </div>
-                      <button className="btn btn-ghost btn-sm" onClick={() => toggle(r.id)} aria-label="Toggle details">
-                        {isExpanded ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
-                      </button>
+                      
+                      <div style={{ flex: 2 }} className={styles.primaryCell}>
+                        <strong className={styles.teamName}>{r.team_name}</strong>
+                      </div>
+
+                      <div style={{ flex: 1.5 }} className={styles.secondaryCell}>
+                        {r.coach_name}
+                      </div>
+
+                      <div style={{ width: '100px' }}>
+                        {r.status === 'pending'  && <span className="badge badge-warning">Pending</span>}
+                        {r.status === 'waitlist' && <span className="badge" style={{ background: 'rgba(245,158,11,0.1)', color: '#fbbf24', fontSize: '0.7rem' }}>Waitlist</span>}
+                        {r.status === 'accepted' && <span className="badge badge-success">Accepted</span>}
+                        {r.status === 'rejected' && <span className="badge badge-danger">Rejected</span>}
+                      </div>
+
+                      <div style={{ width: '100px' }}>
+                        {r.status === 'accepted' ? (
+                          r.payment_status === 'paid' 
+                            ? <span className="badge badge-success">Paid</span>
+                            : <span className="badge badge-warning">Unpaid</span>
+                        ) : '-'}
+                      </div>
+
+                      <div style={{ width: '80px', display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
+                        <button className={styles.iconBtn} onClick={() => toggle(r.id)}>
+                          {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                        </button>
+                      </div>
                     </div>
 
-                    {/* Expanded details */}
                     {isExpanded && (
-                      <div className={styles.details}>
-                        <div className={styles.detailGrid}>
-                          <div className={styles.detailItem}><span>Coach</span><strong>{r.coach_name}</strong></div>
-                          <div className={styles.detailItem}><span>Email</span>
-                            <a href={`mailto:${r.email}`} className={styles.emailLink}>
-                              <Mail size={12} />{r.email}
-                            </a>
+                      <div className={styles.expandedRow}>
+                        <div className={styles.expandedContent}>
+                          <div className={styles.expandedInfo}>
+                            <span>Email: <a href={`mailto:${r.email}`}>{r.email}</a></span>
+                            <span>Registered: {formatDate(r.registered_at)}</span>
                           </div>
-                          {r.status === 'accepted' && (
-                            <div className={styles.detailItem}><span>Payment</span>
-                              {r.payment_status === 'paid'
-                                ? <span className="badge badge-success">Paid ✓</span>
-                                : <span className="badge badge-warning">Pending</span>}
-                            </div>
-                          )}
+                          <div className={styles.expandedActions}>
+                            {r.status === 'pending' && (
+                              <>
+                                <button className="btn btn-primary btn-xs" onClick={() => patch(r.id, { status: 'accepted' }, r)} disabled={busy}>Accept</button>
+                                <button className="btn btn-warning btn-xs" onClick={() => patch(r.id, { status: 'waitlist' }, r)} disabled={busy}>Waitlist</button>
+                                <button className="btn btn-danger btn-xs" onClick={() => patch(r.id, { status: 'rejected' }, r)} disabled={busy}>Reject</button>
+                              </>
+                            )}
+                            {r.status === 'accepted' && (
+                              <>
+                                <button className="btn btn-outline btn-xs" onClick={() => patch(r.id, { payment_status: r.payment_status === 'paid' ? 'pending' : 'paid' })} disabled={busy}>
+                                  {r.payment_status === 'paid' ? 'Mark Unpaid' : 'Mark Paid'}
+                                </button>
+                                <a href={`/teams/${r.id}`} target="_blank" rel="noreferrer" className="btn btn-ghost btn-xs">Profile ↗</a>
+                              </>
+                            )}
+                            {(r.status === 'waitlist' || r.status === 'rejected') && (
+                              <button className="btn btn-ghost btn-xs" onClick={() => patch(r.id, { status: 'pending' })} disabled={busy}>Restore</button>
+                            )}
+                          </div>
                         </div>
                       </div>
                     )}
-
-                    {/* Action buttons */}
-                    <div className={styles.actions}>
-                      {r.status === 'pending' && (
-                        <>
-                          <button
-                            className="btn btn-primary btn-sm"
-                            onClick={() => patch(r.id, { status: 'accepted' }, r)}
-                            disabled={busy || !currentTournament}
-                            title={!currentTournament ? "No active tournament set" : ""}
-                            id={`accept-${r.id}`}
-                          >
-                            <Check size={13} /> {busy ? 'Processing…' : 'Accept & Email'}
-                          </button>
-                          <button
-                            className="btn btn-warning btn-sm"
-                            onClick={() => patch(r.id, { status: 'waitlist' }, r)}
-                            disabled={busy}
-                          >
-                            Waitlist
-                          </button>
-                          <button
-                            className="btn btn-danger btn-sm"
-                            onClick={() => patch(r.id, { status: 'rejected' }, r)}
-                            disabled={busy}
-                            id={`reject-${r.id}`}
-                          >
-                            <X size={13} /> Reject
-                          </button>
-                        </>
-                      )}
-                      {r.status === 'waitlist' && (
-                        <button
-                          className="btn btn-primary btn-sm"
-                          onClick={() => patch(r.id, { status: 'pending' }, r)}
-                          disabled={busy}
-                        >
-                          Restore to Pending
-                        </button>
-                      )}
-                      {r.status === 'accepted' && r.payment_status === 'pending' && (
-                        <button
-                          className="btn btn-outline btn-sm"
-                          onClick={() => patch(r.id, { payment_status: 'paid' })}
-                          disabled={busy}
-                          id={`paid-${r.id}`}
-                        >
-                          <CreditCard size={13} /> {busy ? 'Processing…' : 'Mark as Paid'}
-                        </button>
-                      )}
-                      {r.status === 'accepted' && r.payment_status === 'paid' && (
-                        <button
-                          className="btn btn-ghost btn-sm"
-                          onClick={() => patch(r.id, { payment_status: 'pending' })}
-                          disabled={busy}
-                          id={`unpaid-${r.id}`}
-                        >
-                          Undo Payment
-                        </button>
-                      )}
-                      {r.status === 'rejected' && (
-                        <button
-                          className="btn btn-ghost btn-sm"
-                          onClick={() => patch(r.id, { status: 'pending' })}
-                          disabled={busy}
-                        >
-                          Restore to Pending
-                        </button>
-                      )}
-                      {r.status === 'accepted' && (
-                        <a
-                          href={`/teams/${r.id}`}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="btn btn-ghost btn-sm"
-                        >
-                          View Profile ↗
-                        </a>
-                      )}
-                    </div>
                   </div>
                 );
               })}
