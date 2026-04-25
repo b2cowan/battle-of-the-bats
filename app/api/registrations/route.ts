@@ -5,25 +5,23 @@ export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
   try {
-    const { data, error } = await supabase
-      .from('registrations')
-      .select(`
-        *,
-        age_groups ( name ),
-        tournaments ( name )
-      `)
-      .order('registered_at', { ascending: false });
+    // Fetch all needed data separately since foreign key relationships might not be defined
+    const [regsRes, groupsRes, tournsRes] = await Promise.all([
+      supabase.from('registrations').select('*').order('registered_at', { ascending: false }),
+      supabase.from('age_groups').select('id, name'),
+      supabase.from('tournaments').select('id, name')
+    ]);
 
-    if (error) {
-      console.error('Supabase GET error:', error);
-      return NextResponse.json({ error: error.message, details: error }, { status: 500 });
-    }
+    if (regsRes.error) throw regsRes.error;
+    
+    const groupsMap = new Map((groupsRes.data || []).map(g => [g.id, g.name]));
+    const tournsMap = new Map((tournsRes.data || []).map(t => [t.id, t.name]));
 
     // Flatten names for the frontend
-    const flattened = data?.map((r: any) => ({
+    const flattened = regsRes.data?.map((r: any) => ({
       ...r,
-      age_group_name: r.age_groups?.name || 'Unknown Division',
-      tournament_name: r.tournaments?.name || 'Unknown Tournament'
+      age_group_name: groupsMap.get(r.age_group_id) || 'Unknown Division',
+      tournament_name: tournsMap.get(r.tournament_id) || 'Unknown Tournament'
     }));
 
     return NextResponse.json(flattened);
