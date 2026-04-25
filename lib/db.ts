@@ -97,7 +97,11 @@ export async function initializeAgeGroups(targetTid: string, selectedDivisions: 
     };
   });
   
-  await supabase.from('age_groups').insert(rows);
+  const { error } = await supabase.from('age_groups').insert(rows);
+  if (error) {
+    console.error('initializeAgeGroups error:', error);
+    throw error;
+  }
 }
 
 export async function updateTournament(id: string, t: Partial<Tournament>): Promise<void> {
@@ -451,7 +455,11 @@ export async function seedTournamentData(tid: string, options: {
           pool: teamPool
         };
       });
-      await supabase.from('teams').insert(rows);
+      const { error: teamError } = await supabase.from('teams').insert(rows);
+      if (teamError) {
+        console.error('Team seeding error:', teamError);
+        throw teamError;
+      }
       
       // Also add registrations records if table exists, 
       // but in this system teams ARE the registrations when accepted.
@@ -489,7 +497,11 @@ export async function seedTournamentData(tid: string, options: {
         registered_at: new Date().toISOString()
       });
 
-      await supabase.from('registrations').insert(regRows);
+      const { error: regError } = await supabase.from('registrations').insert(regRows);
+      if (regError) {
+        console.error('Registration seeding error:', regError);
+        throw regError;
+      }
     }
   }
 
