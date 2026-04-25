@@ -71,7 +71,7 @@ export async function cloneDiamonds(targetTid: string, sourceDiamonds: Diamond[]
   await supabase.from('diamonds').insert(rows);
 }
 
-export async function initializeAgeGroups(targetTid: string, selectedDivisions: { name: string, capacity: number, poolCount: number }[]): Promise<void> {
+export async function initializeAgeGroups(targetTid: string, selectedDivisions: { name: string, capacity: number, poolCount: number, requiresPoolSelection: boolean }[]): Promise<void> {
   if (selectedDivisions.length === 0) return;
   
   const defaults: Record<string, { min: number, max: number, order: number }> = {
@@ -92,7 +92,8 @@ export async function initializeAgeGroups(targetTid: string, selectedDivisions: 
       display_order: config.order,
       is_closed: false,
       capacity: div.capacity,
-      pool_count: div.poolCount
+      pool_count: div.poolCount,
+      requires_pool_selection: div.requiresPoolSelection
     };
   });
   
@@ -211,7 +212,8 @@ export async function getAgeGroups(tournamentId?: string): Promise<AgeGroup[]> {
     contactId: g.contact_id,
     isClosed: g.is_closed,
     capacity: g.capacity,
-    poolCount: g.pool_count
+    poolCount: g.pool_count,
+    requiresPoolSelection: g.requires_pool_selection
   }));
 }
 
@@ -239,6 +241,7 @@ export async function updateAgeGroup(id: string, g: Partial<AgeGroup>): Promise<
   if (g.isClosed !== undefined) updates.is_closed = g.isClosed;
   if (g.capacity !== undefined) updates.capacity = g.capacity;
   if (g.poolCount !== undefined) updates.pool_count = g.poolCount;
+  if (g.requiresPoolSelection !== undefined) updates.requires_pool_selection = g.requiresPoolSelection;
   await supabase.from('age_groups').update(updates).eq('id', id);
 }
 
@@ -460,8 +463,29 @@ export async function seedTournamentData(tid: string, options: {
         email: `coach${i}@example.com`,
         age_group_id: group.id,
         status: 'accepted',
-        payment_status: i % 2 === 0 ? 'paid' : 'pending'
+        payment_status: 'paid'
       }));
+      
+      // Add 2 waitlist teams per division
+      regRows.push({
+        tournament_id: tid,
+        team_name: `Waitlist Team 1 ${group.name}`,
+        coach_name: 'Waitlist Coach 1',
+        email: `waitlist1@example.com`,
+        age_group_id: group.id,
+        status: 'waitlist',
+        payment_status: 'pending'
+      });
+      regRows.push({
+        tournament_id: tid,
+        team_name: `Waitlist Team 2 ${group.name}`,
+        coach_name: 'Waitlist Coach 2',
+        email: `waitlist2@example.com`,
+        age_group_id: group.id,
+        status: 'waitlist',
+        payment_status: 'pending'
+      });
+
       await supabase.from('registrations').insert(regRows);
     }
   }

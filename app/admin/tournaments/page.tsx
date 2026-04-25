@@ -38,6 +38,9 @@ export default function AdminTournamentsPage() {
   const [divisionPools, setDivisionPools]           = useState<Record<string, number>>({
     'U11': 1, 'U13': 1, 'U15': 1, 'U17': 1, 'U19': 1
   });
+  const [divisionRequiresPool, setDivisionRequiresPool] = useState<Record<string, boolean>>({
+    'U11': false, 'U13': false, 'U15': false, 'U17': false, 'U19': false
+  });
   const [useWelcomeMsg, setUseWelcomeMsg]           = useState(true);
   const [welcomeMsg, setWelcomeMsg]                 = useState('Welcome to the Battle of the Bats tournament! We are excited to have you join us for another great season of competitive youth softball.');
   const [seedData, setSeedData]                     = useState({
@@ -83,6 +86,7 @@ export default function AdminTournamentsPage() {
     setSelectedDivisions(new Set(['U11', 'U13', 'U15', 'U17', 'U19']));
     setDivisionCapacities({ 'U11': 8, 'U13': 8, 'U15': 8, 'U17': 8, 'U19': 8 });
     setDivisionPools({ 'U11': 1, 'U13': 1, 'U15': 1, 'U17': 1, 'U19': 1 });
+    setDivisionRequiresPool({ 'U11': false, 'U13': false, 'U15': false, 'U17': false, 'U19': false });
     setUseWelcomeMsg(true);
     setWelcomeMsg('Welcome to the Battle of the Bats tournament! We are excited to have you join us for another great season of competitive youth softball.');
     setSeedData({
@@ -139,7 +143,8 @@ export default function AdminTournamentsPage() {
           const divs = Array.from(selectedDivisions).map(name => ({
             name,
             capacity: divisionCapacities[name] || 8,
-            poolCount: divisionPools[name] || 1
+            poolCount: divisionPools[name] || 1,
+            requiresPoolSelection: divisionRequiresPool[name] || false
           }));
           await initializeAgeGroups(tid, divs);
         }
@@ -186,6 +191,9 @@ export default function AdminTournamentsPage() {
       if (!(name in divisionPools)) {
         setDivisionPools(prev => ({ ...prev, [name]: 1 }));
       }
+      if (!(name in divisionRequiresPool)) {
+        setDivisionRequiresPool(prev => ({ ...prev, [name]: false }));
+      }
     }
     setSelectedDivisions(next);
   }
@@ -196,6 +204,10 @@ export default function AdminTournamentsPage() {
 
   function updatePools(name: string, count: number) {
     setDivisionPools(prev => ({ ...prev, [name]: count }));
+  }
+
+  function updateRequiresPool(name: string, req: boolean) {
+    setDivisionRequiresPool(prev => ({ ...prev, [name]: req }));
   }
 
   async function handleSetActive(id: string) {
@@ -464,6 +476,16 @@ export default function AdminTournamentsPage() {
                                   className="form-input"
                                 />
                               </div>
+                              {divisionPools[div] > 1 && (
+                                <div className={styles.subCheck}>
+                                  <label>User Selects Pool:</label>
+                                  <input 
+                                    type="checkbox" 
+                                    checked={divisionRequiresPool[div] || false}
+                                    onChange={e => updateRequiresPool(div, e.target.checked)}
+                                  />
+                                </div>
+                              )}
                             </div>
                           )}
                         </div>

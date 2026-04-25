@@ -35,6 +35,7 @@ export interface AgeGroup {
   isClosed?: boolean; // if true, public registration is disabled
   capacity?: number;  // threshold for waitlist
   poolCount?: number; // how many pools to split into
+  requiresPoolSelection?: boolean; // if true, user picks pool during registration
 }
 
 export interface Player {
