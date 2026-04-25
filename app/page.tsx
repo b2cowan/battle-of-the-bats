@@ -84,7 +84,7 @@ export default async function HomePage() {
             BATS
           </h1>
           <p className={styles.heroSub}>
-            The premier youth softball tournament hosted by the <strong>Milton Bats</strong> . {ageRange} age divisions. Elite competition, lifelong memories.
+            The premier youth softball tournament hosted by the <strong>Milton Bats</strong>. {ageRange} age divisions. Elite competition, lifelong memories.
           </p>
           <div className={styles.heroCta}>
             <Link href="/schedule" className="btn btn-primary btn-lg" id="hero-schedule-btn">
