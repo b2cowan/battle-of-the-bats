@@ -9,6 +9,11 @@ export async function getTournaments(): Promise<Tournament[]> {
 }
 
 export async function saveTournament(t: Omit<Tournament, 'id'>): Promise<Tournament | null> {
+  if (t.isActive) {
+    // Ensure only one is active
+    await supabase.from('tournaments').update({ is_active: false }).neq('id', '00000000-0000-0000-0000-000000000000');
+  }
+
   const { data, error } = await supabase
     .from('tournaments')
     .insert({ year: t.year, name: t.name, is_active: t.isActive })
@@ -73,6 +78,11 @@ export async function initializeAgeGroups(targetTid: string, selectedDivisions: 
 }
 
 export async function updateTournament(id: string, t: Partial<Tournament>): Promise<void> {
+  if (t.isActive) {
+    // Ensure only one is active
+    await supabase.from('tournaments').update({ is_active: false }).neq('id', '00000000-0000-0000-0000-000000000000');
+  }
+
   const updates: any = {};
   if (t.year !== undefined) updates.year = t.year;
   if (t.name !== undefined) updates.name = t.name;
