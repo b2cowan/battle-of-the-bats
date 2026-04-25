@@ -155,6 +155,13 @@
   gap: 1.25rem;
 }
 
+.divisionControls {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.5rem;
+}
+
 .subInput {
   display: flex;
   align-items: center;

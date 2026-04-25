@@ -454,27 +454,29 @@ export default function AdminTournamentsPage() {
                             {div}
                           </label>
                           {selectedDivisions.has(div) && (
-                            <div className={styles.capInputWrap}>
-                              <div className={styles.subInput}>
-                                <label>Capacity:</label>
-                                <input 
-                                  type="number" 
-                                  min="1" 
-                                  value={divisionCapacities[div] || 8}
-                                  onChange={e => updateCapacity(div, Number(e.target.value))}
-                                  className="form-input"
-                                />
-                              </div>
-                              <div className={styles.subInput}>
-                                <label>Pools:</label>
-                                <input 
-                                  type="number" 
-                                  min="1" 
-                                  max="4"
-                                  value={divisionPools[div] || 1}
-                                  onChange={e => updatePools(div, Number(e.target.value))}
-                                  className="form-input"
-                                />
+                            <div className={styles.divisionControls}>
+                              <div className={styles.capInputWrap}>
+                                <div className={styles.subInput}>
+                                  <label>Capacity:</label>
+                                  <input 
+                                    type="number" 
+                                    min="1" 
+                                    value={divisionCapacities[div] || 8}
+                                    onChange={e => updateCapacity(div, Number(e.target.value))}
+                                    className="form-input"
+                                  />
+                                </div>
+                                <div className={styles.subInput}>
+                                  <label>Pools:</label>
+                                  <input 
+                                    type="number" 
+                                    min="1" 
+                                    max="4"
+                                    value={divisionPools[div] || 1}
+                                    onChange={e => updatePools(div, Number(e.target.value))}
+                                    className="form-input"
+                                  />
+                                </div>
                               </div>
                               {divisionPools[div] > 1 && (
                                 <div className={styles.subCheck}>
