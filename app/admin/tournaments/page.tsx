@@ -120,53 +120,74 @@ export default function AdminTournamentsPage() {
       startDate: form.startDate || undefined,
       endDate: form.endDate || undefined
     };
-    
-    if (modal === 'add') {
-      const newTournament = await saveTournament(data);
-      if (newTournament) {
-        const tid = newTournament.id;
-        
-        // 1. Migration
-        if (sourceTournamentId) {
-          if (selectedContactIds.size > 0) {
-            const contactsToClone = sourceContacts.filter(c => selectedContactIds.has(c.id));
-            await cloneContacts(tid, contactsToClone);
-          }
-          if (migrateDiamonds) {
-            const sourceDiamonds = await getDiamonds(sourceTournamentId);
-            await cloneDiamonds(tid, sourceDiamonds);
-          }
-        }
-        
-        // 2. Age Groups
-        if (selectedDivisions.size > 0) {
-          const divs = Array.from(selectedDivisions).map(name => ({
-            name,
-            capacity: divisionCapacities[name] || 8,
-            poolCount: divisionPools[name] || 1,
-            requiresPoolSelection: divisionRequiresPool[name] || false
-          }));
-          await initializeAgeGroups(tid, divs);
-        }
-        
-        // 3. Welcome Announcement
-        if (useWelcomeMsg && welcomeMsg.trim()) {
-          await saveAnnouncement({
-            tournamentId: tid,
-            title: 'Welcome!',
-            body: welcomeMsg.trim(),
-            date: new Date().toISOString(),
-            pinned: true
-          });
-        }
 
-        // 4. Seed Data
-        if (Object.values(seedData).some(v => v)) {
-          await seedTournamentData(tid, seedData);
+    try {
+      if (modal === 'add') {
+        const newTournament = await saveTournament(data);
+        if (newTournament) {
+          const tid = newTournament.id;
+          
+          // 1. Migration
+          if (sourceTournamentId) {
+            try {
+              if (selectedContactIds.size > 0) {
+                const contactsToClone = sourceContacts.filter(c => selectedContactIds.has(c.id));
+                await cloneContacts(tid, contactsToClone);
+              }
+              if (migrateDiamonds) {
+                const sourceDiamonds = await getDiamonds(sourceTournamentId);
+                await cloneDiamonds(tid, sourceDiamonds);
+              }
+            } catch (err) {
+              console.error('Migration failed:', err);
+            }
+          }
+          
+          // 2. Age Groups
+          if (selectedDivisions.size > 0) {
+            try {
+              const divs = Array.from(selectedDivisions).map(name => ({
+                name,
+                capacity: divisionCapacities[name] || 8,
+                poolCount: divisionPools[name] || 1,
+                requiresPoolSelection: divisionRequiresPool[name] || false
+              }));
+              await initializeAgeGroups(tid, divs);
+            } catch (err) {
+              console.error('Age group initialization failed:', err);
+            }
+          }
+          
+          // 3. Welcome Announcement
+          if (useWelcomeMsg && welcomeMsg.trim()) {
+            try {
+              await saveAnnouncement({
+                tournamentId: tid,
+                title: 'Welcome!',
+                body: welcomeMsg.trim(),
+                date: new Date().toISOString(),
+                pinned: true
+              });
+            } catch (err) {
+              console.error('Welcome announcement failed:', err);
+            }
+          }
+
+          // 4. Seed Data
+          if (Object.values(seedData).some(v => v)) {
+            try {
+              await seedTournamentData(tid, seedData);
+            } catch (err) {
+              console.error('Seeding failed:', err);
+            }
+          }
         }
+      } else if (editing) {
+        await updateTournament(editing.id, data);
       }
-    } else if (editing) {
-      await updateTournament(editing.id, data);
+    } catch (err) {
+      console.error('Tournament operation failed:', err);
+      alert('There was an error saving the tournament. Check the console for details.');
     }
     
     setModal(null);

@@ -463,7 +463,8 @@ export async function seedTournamentData(tid: string, options: {
         email: `coach${i}@example.com`,
         age_group_id: group.id,
         status: 'accepted',
-        payment_status: 'paid'
+        payment_status: 'paid',
+        registered_at: new Date().toISOString()
       }));
       
       // Add 2 waitlist teams per division
@@ -474,7 +475,8 @@ export async function seedTournamentData(tid: string, options: {
         email: `waitlist1@example.com`,
         age_group_id: group.id,
         status: 'waitlist',
-        payment_status: 'pending'
+        payment_status: 'pending',
+        registered_at: new Date().toISOString()
       });
       regRows.push({
         tournament_id: tid,
@@ -483,7 +485,8 @@ export async function seedTournamentData(tid: string, options: {
         email: `waitlist2@example.com`,
         age_group_id: group.id,
         status: 'waitlist',
-        payment_status: 'pending'
+        payment_status: 'pending',
+        registered_at: new Date().toISOString()
       });
 
       await supabase.from('registrations').insert(regRows);
