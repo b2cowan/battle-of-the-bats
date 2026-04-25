@@ -20,18 +20,21 @@ interface Registration {
   registered_at: string;
 }
 
-type Tab = 'pending' | 'accepted' | 'waitlist' | 'all';
+type Status = 'pending' | 'accepted' | 'rejected' | 'waitlist';
 
 export default function AdminRegistrationsPage() {
   const { currentTournament } = useTournament();
   const [regs, setRegs]       = useState<Registration[]>([]);
   const [loading, setLoading] = useState(true);
-  const [tab, setTab]         = useState<Tab>('pending');
+  const [selectedStatuses, setSelectedStatuses] = useState<Status[]>(['pending', 'accepted', 'waitlist']);
+  const [search, setSearch]   = useState('');
+  const [selectedRegIds, setSelectedRegIds] = useState<Set<string>>(new Set());
   const [ageGroups, setAgeGroups] = useState<AgeGroup[]>([]);
   const [selectedAgeGroupId, setSelectedAgeGroupId] = useState<string>('all');
   const [working, setWorking] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [bulkWorking, setBulkWorking] = useState(false);
 
   const loadAgeGroups = useCallback(async () => {
     if (currentTournament) {
@@ -104,17 +107,68 @@ export default function AdminRegistrationsPage() {
     setExpanded(prev => { const s = new Set(prev); s.has(id) ? s.delete(id) : s.add(id); return s; });
   }
 
-  const pendingCount  = regs.filter(r => r.status === 'pending').length;
-  const acceptedCount = regs.filter(r => r.status === 'accepted').length;
-  const waitlistCount = regs.filter(r => r.status === 'waitlist').length;
+  function toggleSelect(id: string) {
+    setSelectedRegIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
 
-  const filteredByStatus = regs.filter(r => tab === 'all' || r.status === tab);
-  const filtered = selectedAgeGroupId === 'all' 
-    ? filteredByStatus 
-    : filteredByStatus.filter(r => r.age_group_id === selectedAgeGroupId);
+  function toggleStatus(status: Status) {
+    setSelectedStatuses(prev => 
+      prev.includes(status) ? prev.filter(s => s !== status) : [...prev, status]
+    );
+  }
+
+  async function handleBulkAction(action: 'accepted' | 'paid' | 'rejected') {
+    if (selectedRegIds.size === 0) return;
+    setBulkWorking(true);
+    const ids = Array.from(selectedRegIds);
+    
+    try {
+      for (const id of ids) {
+        const reg = regs.find(r => r.id === id);
+        if (!reg) continue;
+        
+        const updates: any = {};
+        if (action === 'accepted' || action === 'rejected') updates.status = action;
+        if (action === 'paid') updates.payment_status = 'paid';
+        
+        await patch(id, updates, reg);
+      }
+      setSelectedRegIds(new Set());
+    } finally {
+      setBulkWorking(false);
+    }
+  }
+
+  const filtered = regs.filter(r => {
+    const matchesStatus = selectedStatuses.length === 0 || selectedStatuses.includes(r.status);
+    const matchesDivision = selectedAgeGroupId === 'all' || r.age_group_id === selectedAgeGroupId;
+    const matchesSearch = search === '' || 
+      r.team_name.toLowerCase().includes(search.toLowerCase()) || 
+      r.coach_name.toLowerCase().includes(search.toLowerCase());
+    return matchesStatus && matchesDivision && matchesSearch;
+  });
+
+  const statusOrder: Record<Status, number> = {
+    accepted: 1,
+    pending: 2,
+    waitlist: 3,
+    rejected: 4
+  };
+
+  const sorted = [...filtered].sort((a, b) => {
+    if (statusOrder[a.status] !== statusOrder[b.status]) {
+      return statusOrder[a.status] - statusOrder[b.status];
+    }
+    return new Date(b.registered_at).getTime() - new Date(a.registered_at).getTime();
+  });
 
   // Group by age group
-  const grouped = filtered.reduce((acc, r) => {
+  const grouped = sorted.reduce((acc, r) => {
     if (!acc[r.age_group_name]) acc[r.age_group_name] = [];
     acc[r.age_group_name].push(r);
     return acc;
@@ -160,29 +214,39 @@ export default function AdminRegistrationsPage() {
       </div>
 
       <div className={styles.controlsRow}>
-        <div className="tabs">
-          <button className={`tab-btn ${tab === 'pending'  ? 'active' : ''}`} onClick={() => setTab('pending')}>
-            Pending {pendingCount > 0 && <span className={styles.tabBadge}>{pendingCount}</span>}
-          </button>
-          <button className={`tab-btn ${tab === 'waitlist' ? 'active' : ''}`} onClick={() => setTab('waitlist')}>
-            Waitlist {waitlistCount > 0 && <span className={styles.tabBadge}>{waitlistCount}</span>}
-          </button>
-          <button className={`tab-btn ${tab === 'accepted' ? 'active' : ''}`} onClick={() => setTab('accepted')}>
-            Accepted {acceptedCount > 0 && <span className={styles.tabBadge}>{acceptedCount}</span>}
-          </button>
-          <button className={`tab-btn ${tab === 'all'      ? 'active' : ''}`} onClick={() => setTab('all')}>
-            All ({regs.length})
-          </button>
+        <div className={styles.statusFilters}>
+          {(['pending', 'accepted', 'waitlist', 'rejected'] as Status[]).map(s => {
+            const count = regs.filter(r => r.status === s).length;
+            const isActive = selectedStatuses.includes(s);
+            return (
+              <button 
+                key={s}
+                className={`${styles.filterChip} ${isActive ? styles.chipActive : ''}`}
+                onClick={() => toggleStatus(s)}
+              >
+                {s.toUpperCase()} ({count})
+              </button>
+            );
+          })}
+        </div>
+
+        <div className={styles.searchBar}>
+          <input 
+            type="text" 
+            placeholder="Search teams or coaches..." 
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            className="form-input"
+          />
         </div>
 
         <div className={styles.filterGroup}>
-          <label htmlFor="age-group-filter">Filter by Division:</label>
           <select 
             id="age-group-filter"
             className="form-input" 
             value={selectedAgeGroupId} 
             onChange={e => setSelectedAgeGroupId(e.target.value)}
-            style={{ minWidth: '150px' }}
+            style={{ minWidth: '180px' }}
           >
             <option value="all">All Divisions</option>
             {ageGroups.map(g => (
@@ -191,6 +255,23 @@ export default function AdminRegistrationsPage() {
           </select>
         </div>
       </div>
+
+      {selectedRegIds.size > 0 && (
+        <div className={styles.bulkActions}>
+          <span>{selectedRegIds.size} selected</span>
+          <div className="flex gap-1">
+            <button className="btn btn-primary btn-sm" onClick={() => handleBulkAction('accepted')} disabled={bulkWorking}>
+              Accept Selected
+            </button>
+            <button className="btn btn-outline btn-sm" onClick={() => handleBulkAction('paid')} disabled={bulkWorking}>
+              Mark Paid
+            </button>
+            <button className="btn btn-danger btn-sm" onClick={() => handleBulkAction('rejected')} disabled={bulkWorking}>
+              Reject Selected
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className={styles.summaryGrid}>
         {ageGroups.map(g => {
@@ -249,12 +330,19 @@ export default function AdminRegistrationsPage() {
               
               {groupRegs.map(r => {
                 const isExpanded = expanded.has(r.id);
+                const isSelected = selectedRegIds.has(r.id);
                 const busy = working === r.id;
                 return (
-                  <div key={r.id} className={`card ${styles.regCard}`}>
+                  <div key={r.id} className={`card ${styles.regCard} ${isSelected ? styles.rowSelected : ''}`}>
                     {/* Header row */}
                     <div className={styles.cardHeader}>
                       <div className={styles.cardLeft}>
+                        <input 
+                          type="checkbox" 
+                          checked={isSelected}
+                          onChange={() => toggleSelect(r.id)}
+                          className={styles.rowCheck}
+                        />
                         <div className={styles.teamNameRow}>
                           <strong className={styles.teamName}>{r.team_name}</strong>
                           {r.status === 'pending'  && <span className="badge badge-warning">Pending</span>}
