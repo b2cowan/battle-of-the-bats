@@ -24,7 +24,7 @@ export default function AdminTeamsPage() {
 
   async function refresh() {
     setTeams(await getTeams(currentTournament?.id));
-    const gs = await getAgeGroups();
+    const gs = await getAgeGroups(currentTournament?.id);
     setAgeGroups(gs);
     if (gs.length && !form.ageGroupId) setForm(f => ({ ...f, ageGroupId: gs[0].id }));
   }

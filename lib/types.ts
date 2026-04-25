@@ -3,6 +3,8 @@ export interface Tournament {
   year: number;        // e.g. 2026
   name: string;        // e.g. "Battle of the Bats 2026"
   isActive: boolean;   // the tournament shown on the public site
+  startDate?: string;  // YYYY-MM-DD
+  endDate?: string;    // YYYY-MM-DD
 }
 
 export interface Diamond {

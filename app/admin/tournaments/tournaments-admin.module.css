@@ -132,11 +132,39 @@
   border-radius: var(--radius-xs);
 }
 
-.divisionCheckboxes {
+.divisionGrid {
   display: flex;
-  flex-wrap: wrap;
-  gap: 1.25rem;
+  flex-direction: column;
+  gap: 0.75rem;
   margin-top: 0.5rem;
+}
+
+.divisionRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem;
+  background: var(--black-20);
+  border-radius: var(--radius-xs);
+  border: 1px solid var(--border-2);
+}
+
+.capInputWrap {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.capInputWrap label {
+  font-size: 0.75rem;
+  color: var(--white-30);
+  text-transform: uppercase;
+}
+
+.capInputWrap input {
+  width: 60px;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.9rem;
 }
 
 .migrationSection textarea {

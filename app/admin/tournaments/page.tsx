@@ -16,7 +16,13 @@ export default function AdminTournamentsPage() {
   const [modal, setModal]       = useState<ModalMode>(null);
   const [editing, setEditing]   = useState<Tournament | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
-  const [form, setForm]         = useState({ year: String(new Date().getFullYear()), name: '', isActive: false });
+  const [form, setForm]         = useState({ 
+    year: String(new Date().getFullYear()), 
+    name: '', 
+    isActive: false,
+    startDate: '',
+    endDate: ''
+  });
   const { refresh: refreshCtx } = useTournament();
 
   // Migration / Initialization states
@@ -25,6 +31,9 @@ export default function AdminTournamentsPage() {
   const [selectedContactIds, setSelectedContactIds] = useState<Set<string>>(new Set());
   const [migrateDiamonds, setMigrateDiamonds]       = useState(false);
   const [selectedDivisions, setSelectedDivisions]   = useState<Set<string>>(new Set(['U11', 'U13', 'U15', 'U17', 'U19']));
+  const [divisionCapacities, setDivisionCapacities] = useState<Record<string, number>>({
+    'U11': 8, 'U13': 8, 'U15': 8, 'U17': 8, 'U19': 8
+  });
   const [useWelcomeMsg, setUseWelcomeMsg]           = useState(true);
   const [welcomeMsg, setWelcomeMsg]                 = useState('Welcome to the Battle of the Bats tournament! We are excited to have you join us for another great season of competitive youth softball.');
 
@@ -50,25 +59,44 @@ export default function AdminTournamentsPage() {
 
   function openAdd() {
     const nextYear = new Date().getFullYear();
-    setForm({ year: String(nextYear), name: `Battle of the Bats ${nextYear}`, isActive: false });
+    setForm({ 
+      year: String(nextYear), 
+      name: `Battle of the Bats ${nextYear}`, 
+      isActive: false,
+      startDate: '',
+      endDate: ''
+    });
     setEditing(null);
     setSourceTournamentId('');
     setMigrateDiamonds(false);
     setSelectedDivisions(new Set(['U11', 'U13', 'U15', 'U17', 'U19']));
+    setDivisionCapacities({ 'U11': 8, 'U13': 8, 'U15': 8, 'U17': 8, 'U19': 8 });
     setUseWelcomeMsg(true);
     setWelcomeMsg('Welcome to the Battle of the Bats tournament! We are excited to have you join us for another great season of competitive youth softball.');
     setModal('add');
   }
 
   function openEdit(t: Tournament) {
-    setForm({ year: String(t.year), name: t.name, isActive: t.isActive });
+    setForm({ 
+      year: String(t.year), 
+      name: t.name, 
+      isActive: t.isActive,
+      startDate: t.startDate || '',
+      endDate: t.endDate || ''
+    });
     setEditing(t);
     setModal('edit');
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    const data = { year: Number(form.year), name: form.name.trim(), isActive: form.isActive };
+    const data = { 
+      year: Number(form.year), 
+      name: form.name.trim(), 
+      isActive: form.isActive,
+      startDate: form.startDate || undefined,
+      endDate: form.endDate || undefined
+    };
     
     if (modal === 'add') {
       const newTournament = await saveTournament(data);
@@ -89,7 +117,11 @@ export default function AdminTournamentsPage() {
         
         // 2. Age Groups
         if (selectedDivisions.size > 0) {
-          await initializeAgeGroups(tid, Array.from(selectedDivisions));
+          const divs = Array.from(selectedDivisions).map(name => ({
+            name,
+            capacity: divisionCapacities[name] || 8
+          }));
+          await initializeAgeGroups(tid, divs);
         }
         
         // 3. Welcome Announcement
@@ -121,8 +153,17 @@ export default function AdminTournamentsPage() {
   function toggleDivision(name: string) {
     const next = new Set(selectedDivisions);
     if (next.has(name)) next.delete(name);
-    else next.add(name);
+    else {
+      next.add(name);
+      if (!(name in divisionCapacities)) {
+        setDivisionCapacities(prev => ({ ...prev, [name]: 8 }));
+      }
+    }
     setSelectedDivisions(next);
+  }
+
+  function updateCapacity(name: string, cap: number) {
+    setDivisionCapacities(prev => ({ ...prev, [name]: cap }));
   }
 
   async function handleSetActive(id: string) {
@@ -259,6 +300,29 @@ export default function AdminTournamentsPage() {
                   />
                 </div>
               </div>
+
+              <div className="form-row form-row-2" style={{ marginBottom: '1rem' }}>
+                <div className="form-group">
+                  <label className="form-label">Start Date (Optional)</label>
+                  <input
+                    className="form-input"
+                    type="date"
+                    value={form.startDate}
+                    onChange={e => setForm(f => ({ ...f, startDate: e.target.value }))}
+                    id="tournament-start-date"
+                  />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">End Date (Optional)</label>
+                  <input
+                    className="form-input"
+                    type="date"
+                    value={form.endDate}
+                    onChange={e => setForm(f => ({ ...f, endDate: e.target.value }))}
+                    id="tournament-end-date"
+                  />
+                </div>
+              </div>
               <div className={styles.activeToggle}>
                 <input
                   type="checkbox"
@@ -326,17 +390,31 @@ export default function AdminTournamentsPage() {
                   )}
 
                   <div className={styles.setupGroup}>
-                    <label className="form-label">Initialize age divisions:</label>
-                    <div className={styles.divisionCheckboxes}>
+                    <label className="form-label">Initialize age divisions & capacities:</label>
+                    <div className={styles.divisionGrid}>
                       {['U11', 'U13', 'U15', 'U17', 'U19'].map(div => (
-                        <label key={div} className={styles.checkboxLabel}>
-                          <input 
-                            type="checkbox" 
-                            checked={selectedDivisions.has(div)}
-                            onChange={() => toggleDivision(div)}
-                          />
-                          {div}
-                        </label>
+                        <div key={div} className={styles.divisionRow}>
+                          <label className={styles.checkboxLabel}>
+                            <input 
+                              type="checkbox" 
+                              checked={selectedDivisions.has(div)}
+                              onChange={() => toggleDivision(div)}
+                            />
+                            {div}
+                          </label>
+                          {selectedDivisions.has(div) && (
+                            <div className={styles.capInputWrap}>
+                              <label>Capacity:</label>
+                              <input 
+                                type="number" 
+                                min="1" 
+                                value={divisionCapacities[div] || 8}
+                                onChange={e => updateCapacity(div, Number(e.target.value))}
+                                className="form-input"
+                              />
+                            </div>
+                          )}
+                        </div>
                       ))}
                     </div>
                   </div>

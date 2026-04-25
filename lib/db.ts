@@ -5,7 +5,14 @@ import { Tournament, Diamond, Contact, AgeGroup, Team, Game, Announcement } from
 export async function getTournaments(): Promise<Tournament[]> {
   const { data, error } = await supabase.from('tournaments').select('*').order('year', { ascending: false });
   if (error) { console.error('getTournaments error', error); return []; }
-  return data.map(t => ({ id: t.id, year: t.year, name: t.name, isActive: t.is_active }));
+  return data.map(t => ({ 
+    id: t.id, 
+    year: t.year, 
+    name: t.name, 
+    isActive: t.is_active,
+    startDate: t.start_date,
+    endDate: t.end_date
+  }));
 }
 
 export async function saveTournament(t: Omit<Tournament, 'id'>): Promise<Tournament | null> {
@@ -16,7 +23,13 @@ export async function saveTournament(t: Omit<Tournament, 'id'>): Promise<Tournam
 
   const { data, error } = await supabase
     .from('tournaments')
-    .insert({ year: t.year, name: t.name, is_active: t.isActive })
+    .insert({ 
+      year: t.year, 
+      name: t.name, 
+      is_active: t.isActive,
+      start_date: t.startDate,
+      end_date: t.endDate
+    })
     .select()
     .single();
   
@@ -25,7 +38,14 @@ export async function saveTournament(t: Omit<Tournament, 'id'>): Promise<Tournam
     return null;
   }
   
-  return { id: data.id, year: data.year, name: data.name, isActive: data.is_active };
+  return { 
+    id: data.id, 
+    year: data.year, 
+    name: data.name, 
+    isActive: data.is_active,
+    startDate: data.start_date,
+    endDate: data.end_date
+  };
 }
 
 export async function cloneContacts(targetTid: string, sourceContacts: Contact[]): Promise<void> {
@@ -51,7 +71,7 @@ export async function cloneDiamonds(targetTid: string, sourceDiamonds: Diamond[]
   await supabase.from('diamonds').insert(rows);
 }
 
-export async function initializeAgeGroups(targetTid: string, selectedDivisions: string[]): Promise<void> {
+export async function initializeAgeGroups(targetTid: string, selectedDivisions: { name: string, capacity: number }[]): Promise<void> {
   if (selectedDivisions.length === 0) return;
   
   const defaults: Record<string, { min: number, max: number, order: number }> = {
@@ -62,15 +82,16 @@ export async function initializeAgeGroups(targetTid: string, selectedDivisions: 
     'U19': { min: 17, max: 19, order: 5 },
   };
 
-  const rows = selectedDivisions.map(name => {
-    const config = defaults[name] || { min: 0, max: 99, order: 10 };
+  const rows = selectedDivisions.map(div => {
+    const config = defaults[div.name] || { min: 0, max: 99, order: 10 };
     return {
       tournament_id: targetTid,
-      name,
+      name: div.name,
       min_age: config.min,
       max_age: config.max,
       display_order: config.order,
-      is_closed: false
+      is_closed: false,
+      capacity: div.capacity
     };
   });
   
@@ -87,6 +108,8 @@ export async function updateTournament(id: string, t: Partial<Tournament>): Prom
   if (t.year !== undefined) updates.year = t.year;
   if (t.name !== undefined) updates.name = t.name;
   if (t.isActive !== undefined) updates.is_active = t.isActive;
+  if (t.startDate !== undefined) updates.start_date = t.startDate;
+  if (t.endDate !== undefined) updates.end_date = t.endDate;
   await supabase.from('tournaments').update(updates).eq('id', id);
 }
 

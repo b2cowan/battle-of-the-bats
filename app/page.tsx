@@ -24,6 +24,24 @@ export default async function HomePage() {
   const ageGroups = await getAgeGroups(activeTournament?.id);
   const diamonds = await getDiamonds(activeTournament?.id);
 
+  const startDate = activeTournament?.startDate;
+  const endDate = activeTournament?.endDate;
+  
+  function formatLongDate(d: string) {
+    return new Date(d + 'T12:00:00').toLocaleDateString('en-CA', { 
+      month: 'long', day: 'numeric', year: 'numeric' 
+    });
+  }
+
+  const dateDisplay = (startDate && endDate)
+    ? `${formatLongDate(startDate)} – ${formatLongDate(endDate)}`
+    : 'Dates To Be Determined';
+
+  const sortedAgeGroups = [...ageGroups].sort((a, b) => a.order - b.order);
+  const ageRange = sortedAgeGroups.length > 0 
+    ? `${sortedAgeGroups[0].name} – ${sortedAgeGroups[sortedAgeGroups.length - 1].name}`
+    : 'U11 – U19';
+
   const getTeamName    = (id: string) => teams.find(t => t.id === id)?.name ?? 'TBD';
   const getAgeGroupName = (id: string) => ageGroups.find(g => g.id === id)?.name ?? '';
   const getDiamond      = (id?: string) => id ? diamonds.find(d => d.id === id) ?? null : null;
@@ -46,7 +64,7 @@ export default async function HomePage() {
         <div className={`container ${styles.heroContent}`}>
           <div className={styles.heroBadge}>
             <Star size={12} fill="currentColor" />
-            {currentYear} Tournament Season
+            {currentYear} Tournament • {dateDisplay}
           </div>
           <h1 className={`display-xl ${styles.heroTitle}`}>
             BATTLE<br />
@@ -55,7 +73,7 @@ export default async function HomePage() {
           </h1>
           <p className={styles.heroSub}>
             The premier youth softball tournament hosted by the <strong>Milton Bats</strong>.
-            U11 – U19 age divisions. Elite competition, lifelong memories.
+            {ageRange} age divisions. Elite competition, lifelong memories.
           </p>
           <div className={styles.heroCta}>
             <Link href="/schedule" className="btn btn-primary btn-lg" id="hero-schedule-btn">
@@ -79,7 +97,7 @@ export default async function HomePage() {
             </div>
             <div className={styles.statDivider} />
             <div className={styles.stat}>
-              <span className={styles.statNum}>U11–U19</span>
+              <span className={styles.statNum}>{ageRange}</span>
               <span className={styles.statLabel}>Divisions</span>
             </div>
           </div>
