@@ -1,8 +1,10 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { Calendar, Plus, Pencil, Trash2, X, Check } from 'lucide-react';
+import { Calendar, Plus, Pencil, Trash2, X, Check, Download, Sparkles } from 'lucide-react';
 import { getGames, saveGame, updateGame, deleteGame, getTeams, getAgeGroups, getDiamonds } from '@/lib/db';
+import { downloadCSV } from '@/lib/utils';
 import { useTournament } from '@/lib/tournament-context';
+import ScheduleGenerator from './Generator';
 import { Game, Team, AgeGroup, Diamond } from '@/lib/types';
 import styles from './schedule-admin.module.css';
 
@@ -24,6 +26,7 @@ export default function AdminSchedulePage() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [form, setForm]         = useState(emptyForm);
   const [filterGroup, setFilterGroup] = useState('all');
+  const [showGenerator, setShowGenerator] = useState(false);
 
   async function refresh() {
     setGames(await getGames(currentTournament?.id));
@@ -86,6 +89,20 @@ export default function AdminSchedulePage() {
     return new Date(d + 'T12:00:00').toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' });
   }
 
+  function exportToCSV() {
+    const headers = ['Date', 'Time', 'Division', 'Home Team', 'Away Team', 'Location'];
+    const rows = filtered.map(g => [
+      g.date,
+      g.time,
+      getGroupName(g.ageGroupId),
+      getTeamName(g.homeTeamId),
+      getTeamName(g.awayTeamId),
+      g.diamondId ? getDiamondName(g.diamondId) : g.location
+    ]);
+    const filename = `schedule-${currentTournament?.year || 'all'}-${new Date().toISOString().split('T')[0]}.csv`;
+    downloadCSV(filename, headers, rows);
+  }
+
   return (
     <div className={styles.page}>
       <div className={styles.pageHeader}>
@@ -100,9 +117,17 @@ export default function AdminSchedulePage() {
             </p>
           </div>
         </div>
-        <button className="btn btn-primary" onClick={openAdd} id="schedule-add-btn" disabled={!currentTournament}>
-          <Plus size={16} /> Add Game
-        </button>
+        <div className="flex gap-1">
+          <button className="btn btn-outline btn-sm" onClick={exportToCSV} id="schedule-export-btn" disabled={filtered.length === 0}>
+            <Download size={14} /> Export CSV
+          </button>
+          <button className="btn btn-ghost btn-sm" onClick={() => setShowGenerator(true)} disabled={!currentTournament || ageGroups.length === 0}>
+            <Sparkles size={14} /> Generate Schedule
+          </button>
+          <button className="btn btn-primary btn-sm" onClick={openAdd} id="schedule-add-btn" disabled={!currentTournament}>
+            <Plus size={16} /> Add Game
+          </button>
+        </div>
       </div>
 
       <div className="tabs" style={{ marginBottom: '1.5rem' }}>
@@ -234,6 +259,20 @@ export default function AdminSchedulePage() {
             </div>
           </div>
         </div>
+      )}
+
+      {showGenerator && currentTournament && (
+        <ScheduleGenerator 
+          tournamentId={currentTournament.id}
+          ageGroups={ageGroups}
+          teams={teams}
+          diamonds={diamonds}
+          onCancel={() => setShowGenerator(false)}
+          onComplete={() => {
+            setShowGenerator(false);
+            refresh();
+          }}
+        />
       )}
     </div>
   );

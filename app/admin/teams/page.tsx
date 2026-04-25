@@ -1,7 +1,8 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { Users, Plus, Pencil, Trash2, X, Check, UserPlus, UserMinus } from 'lucide-react';
+import { Users, Plus, Pencil, Trash2, X, Check, UserPlus, UserMinus, Download } from 'lucide-react';
 import { getTeams, saveTeam, updateTeam, deleteTeam, getAgeGroups } from '@/lib/db';
+import { downloadCSV } from '@/lib/utils';
 import { useTournament } from '@/lib/tournament-context';
 import { Team, AgeGroup } from '@/lib/types';
 import styles from './teams-admin.module.css';
@@ -61,6 +62,18 @@ export default function AdminTeamsPage() {
   const filtered = filterGroup === 'all' ? teams : teams.filter(t => t.ageGroupId === filterGroup);
   const getGroupName = (id: string) => ageGroups.find(g => g.id === id)?.name ?? '—';
 
+  function exportToCSV() {
+    const headers = ['Team Name', 'Division', 'Coach', 'Email'];
+    const rows = filtered.map(t => [
+      t.name,
+      getGroupName(t.ageGroupId),
+      t.coach,
+      t.email
+    ]);
+    const filename = `teams-${currentTournament?.year || 'all'}-${new Date().toISOString().split('T')[0]}.csv`;
+    downloadCSV(filename, headers, rows);
+  }
+
   return (
     <div className={styles.page}>
       <div className={styles.pageHeader}>
@@ -75,9 +88,14 @@ export default function AdminTeamsPage() {
             </p>
           </div>
         </div>
-        <button className="btn btn-primary" onClick={openAdd} id="team-add-btn" disabled={!currentTournament}>
-          <Plus size={16} /> Add Team
-        </button>
+        <div className="flex gap-1">
+          <button className="btn btn-outline btn-sm" onClick={exportToCSV} id="teams-export-btn" disabled={filtered.length === 0}>
+            <Download size={14} /> Export CSV
+          </button>
+          <button className="btn btn-primary btn-sm" onClick={openAdd} id="team-add-btn" disabled={!currentTournament}>
+            <Plus size={16} /> Add Team
+          </button>
+        </div>
       </div>
 
       <div className="tabs" style={{ marginBottom: '1.5rem' }}>

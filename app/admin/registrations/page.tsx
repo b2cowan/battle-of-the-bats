@@ -1,7 +1,8 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
-import { ClipboardList, Check, X, CreditCard, RefreshCw, Mail, ChevronDown, ChevronUp, AlertCircle } from 'lucide-react';
+import { ClipboardList, Check, X, CreditCard, RefreshCw, Mail, ChevronDown, ChevronUp, AlertCircle, Download } from 'lucide-react';
 import { saveTeam, deleteTeam, getTeams, getAgeGroups } from '@/lib/db';
+import { downloadCSV } from '@/lib/utils';
 import { useTournament } from '@/lib/tournament-context';
 import { AgeGroup } from '@/lib/types';
 import styles from './registrations-admin.module.css';
@@ -119,6 +120,21 @@ export default function AdminRegistrationsPage() {
     return acc;
   }, {} as Record<string, Registration[]>);
 
+  function exportToCSV() {
+    const headers = ['Team Name', 'Coach', 'Email', 'Division', 'Tournament', 'Status', 'Payment', 'Registered At'];
+    const rows = regs.map(r => [
+      r.team_name,
+      r.coach_name,
+      r.email,
+      r.age_group_name,
+      r.tournament_name,
+      r.status.toUpperCase(),
+      r.payment_status.toUpperCase(),
+      r.registered_at
+    ]);
+    downloadCSV(`registrations-${new Date().toISOString().split('T')[0]}.csv`, headers, rows);
+  }
+
   function formatDate(d: string) {
     return new Date(d).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' });
   }
@@ -133,9 +149,14 @@ export default function AdminRegistrationsPage() {
             <p className={styles.pageSub}>Review and manage team registration requests</p>
           </div>
         </div>
-        <button className="btn btn-ghost btn-sm" onClick={load} id="reg-refresh-btn">
-          <RefreshCw size={14} /> Refresh
-        </button>
+        <div className="flex gap-1">
+          <button className="btn btn-outline btn-sm" onClick={exportToCSV} id="reg-export-btn" disabled={regs.length === 0}>
+            <Download size={14} /> Export CSV
+          </button>
+          <button className="btn btn-ghost btn-sm" onClick={load} id="reg-refresh-btn">
+            <RefreshCw size={14} /> Refresh
+          </button>
+        </div>
       </div>
 
       <div className={styles.controlsRow}>
