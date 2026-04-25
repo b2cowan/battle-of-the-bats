@@ -336,7 +336,18 @@ export default function AdminTournamentsPage() {
                     className="form-input"
                     type="date"
                     value={form.startDate}
-                    onChange={e => setForm(f => ({ ...f, startDate: e.target.value }))}
+                    onChange={e => {
+                      const start = e.target.value;
+                      setForm(f => {
+                        const updates: any = { startDate: start };
+                        if (start) {
+                          const date = new Date(start + 'T12:00:00');
+                          date.setDate(date.getDate() + 2);
+                          updates.endDate = date.toISOString().split('T')[0];
+                        }
+                        return { ...f, ...updates };
+                      });
+                    }}
                     id="tournament-start-date"
                   />
                 </div>
