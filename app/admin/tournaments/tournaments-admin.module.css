@@ -152,17 +152,24 @@
 .capInputWrap {
   display: flex;
   align-items: center;
+  gap: 1.25rem;
+}
+
+.subInput {
+  display: flex;
+  align-items: center;
   gap: 0.5rem;
 }
 
-.capInputWrap label {
+.subInput label {
   font-size: 0.75rem;
   color: var(--white-30);
   text-transform: uppercase;
+  white-space: nowrap;
 }
 
-.capInputWrap input {
-  width: 60px;
+.subInput input {
+  width: 55px;
   padding: 0.25rem 0.5rem;
   font-size: 0.9rem;
 }

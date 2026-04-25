@@ -24,9 +24,9 @@ export default function ScheduleGenerator({ tournament, ageGroups, teams, diamon
   const [selectedGroupId, setSelectedGroupId] = useState(ageGroups[0]?.id || '');
   const [gameLength, setGameLength] = useState(90); // minutes
   const [breakLength, setBreakLength] = useState(15); // minutes
+  const [gamesPerTeam, setGamesPerTeam] = useState(3);
   const [selectedDiamonds, setSelectedDiamonds] = useState<Set<string>>(new Set(diamonds.map(d => d.id)));
   
-  // Multiple dates state
   const [dateSlots, setDateSlots] = useState<DateSlot[]>([
     { date: tournament.startDate || '', startTime: '09:00', endTime: '20:30' }
   ]);
@@ -35,7 +35,6 @@ export default function ScheduleGenerator({ tournament, ageGroups, teams, diamon
   const [committing, setCommitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Helper to get all dates in tournament range
   const availableDates = useMemo(() => {
     if (!tournament.startDate || !tournament.endDate) return [];
     const start = new Date(tournament.startDate + 'T12:00:00');
@@ -50,7 +49,6 @@ export default function ScheduleGenerator({ tournament, ageGroups, teams, diamon
   }, [tournament.startDate, tournament.endDate]);
 
   function addDateSlot() {
-    // Default to the next available date in range that isn't already selected, if possible
     let nextDate = '';
     if (availableDates.length > 0) {
       nextDate = availableDates.find(d => !dateSlots.some(s => s.date === d)) || availableDates[0];
@@ -79,57 +77,71 @@ export default function ScheduleGenerator({ tournament, ageGroups, teams, diamon
     const diamondList = diamonds.filter(d => selectedDiamonds.has(d.id));
     if (diamondList.length === 0) { setError('Select at least one diamond'); return; }
 
-    // 1. Generate Matchups (Round Robin)
-    const teamsPool = [...groupTeams];
-    if (teamsPool.length % 2 !== 0) {
-      teamsPool.push({ id: 'BYE', name: 'BYE' } as any);
-    }
-    
-    const n = teamsPool.length;
-    const rounds = n - 1;
-    const gamesPerRound = n / 2;
-    const matchups: { home: Team, away: Team }[] = [];
+    // 1. Group teams by pool
+    const pools: Record<string, Team[]> = {};
+    groupTeams.forEach(t => {
+      const p = t.pool || 'Default';
+      if (!pools[p]) pools[p] = [];
+      pools[p].push(t);
+    });
 
-    for (let round = 0; round < rounds; round++) {
-      for (let i = 0; i < gamesPerRound; i++) {
-        const home = teamsPool[i];
-        const away = teamsPool[n - 1 - i];
-        if (home.id !== 'BYE' && away.id !== 'BYE') {
-          matchups.push({ home, away });
-        }
+    const allMatchups: { home: Team, away: Team }[] = [];
+
+    // 2. Generate Round Robin Matchups for each pool
+    Object.values(pools).forEach(poolTeams => {
+      if (poolTeams.length < 2) return;
+
+      const teamsPool = [...poolTeams];
+      if (teamsPool.length % 2 !== 0) {
+        teamsPool.push({ id: 'BYE', name: 'BYE' } as any);
       }
-      teamsPool.splice(1, 0, teamsPool.pop()!);
+      
+      const n = teamsPool.length;
+      const totalRounds = n - 1;
+      const roundsToGenerate = Math.min(gamesPerTeam, totalRounds);
+      const gamesPerRound = n / 2;
+
+      for (let round = 0; round < roundsToGenerate; round++) {
+        for (let i = 0; i < gamesPerRound; i++) {
+          const home = teamsPool[i];
+          const away = teamsPool[n - 1 - i];
+          if (home.id !== 'BYE' && away.id !== 'BYE') {
+            allMatchups.push({ home, away });
+          }
+        }
+        // Rotate
+        teamsPool.splice(1, 0, teamsPool.pop()!);
+      }
+    });
+
+    if (allMatchups.length === 0) {
+      setError('No matchups could be generated. Check your pool assignments.');
+      return;
     }
 
-    // 2. Generate Available Time Slots
+    // 3. Generate Available Time Slots
     const totalSlots: { date: string, time: string, diamond: Diamond }[] = [];
-    
-    // Sort dateSlots by date
     const sortedDates = [...dateSlots].sort((a, b) => a.date.localeCompare(b.date));
 
     sortedDates.forEach(slot => {
       let current = new Date(`${slot.date}T${slot.startTime}`);
       const end = new Date(`${slot.date}T${slot.endTime}`);
-      
       while (current.getTime() + (gameLength * 60000) <= end.getTime()) {
         const timeStr = current.toTimeString().slice(0, 5);
-        
         diamondList.forEach(diamond => {
           totalSlots.push({ date: slot.date, time: timeStr, diamond });
         });
-
-        // Move to next slot
         current = new Date(current.getTime() + (gameLength + breakLength) * 60000);
       }
     });
 
-    if (totalSlots.length < matchups.length) {
-      setError(`Not enough time slots to schedule ${matchups.length} games. Need ${matchups.length} slots, but only have ${totalSlots.length} available.`);
+    if (totalSlots.length < allMatchups.length) {
+      setError(`Not enough time slots to schedule ${allMatchups.length} games. Need ${allMatchups.length} slots, but only have ${totalSlots.length} available.`);
       return;
     }
 
-    // 3. Assign Matchups to Slots
-    const newGames: Omit<Game, 'id'>[] = matchups.map((match, idx) => {
+    // 4. Assign Matchups to Slots
+    const newGames: Omit<Game, 'id'>[] = allMatchups.map((match, idx) => {
       const slot = totalSlots[idx];
       return {
         tournamentId: tournament.id,
@@ -178,11 +190,24 @@ export default function ScheduleGenerator({ tournament, ageGroups, teams, diamon
 
         {generatedGames.length === 0 ? (
           <div className={styles.generatorForm}>
-            <div className="form-group" style={{ marginBottom: '1.5rem' }}>
-              <label className="form-label">Division to Schedule</label>
-              <select className="form-select" value={selectedGroupId} onChange={e => setSelectedGroupId(e.target.value)}>
-                {ageGroups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
-              </select>
+            <div className="form-row form-row-2" style={{ marginBottom: '1.5rem' }}>
+              <div className="form-group">
+                <label className="form-label">Division</label>
+                <select className="form-select" value={selectedGroupId} onChange={e => setSelectedGroupId(e.target.value)}>
+                  {ageGroups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
+                </select>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Games per Team</label>
+                <input 
+                  type="number" 
+                  className="form-input" 
+                  min="1" 
+                  max="10" 
+                  value={gamesPerTeam} 
+                  onChange={e => setGamesPerTeam(Number(e.target.value))} 
+                />
+              </div>
             </div>
 
             <div className="form-group">
@@ -262,18 +287,23 @@ export default function ScheduleGenerator({ tournament, ageGroups, teams, diamon
             <div className={styles.previewTableWrap}>
               <table>
                 <thead>
-                  <tr><th>Date & Time</th><th>Matchup</th><th>Diamond</th></tr>
+                  <tr><th>Date & Time</th><th>Matchup</th><th>Pool</th><th>Diamond</th></tr>
                 </thead>
                 <tbody>
-                  {generatedGames.map((g, i) => (
-                    <tr key={i}>
-                      <td style={{ fontSize: '0.8rem' }}>
-                        {new Date(g.date + 'T12:00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} at <strong>{g.time}</strong>
-                      </td>
-                      <td>{teams.find(t => t.id === g.homeTeamId)?.name} vs {teams.find(t => t.id === g.awayTeamId)?.name}</td>
-                      <td>{g.location}</td>
-                    </tr>
-                  ))}
+                  {generatedGames.map((g, i) => {
+                    const homeTeam = teams.find(t => t.id === g.homeTeamId);
+                    const awayTeam = teams.find(t => t.id === g.awayTeamId);
+                    return (
+                      <tr key={i}>
+                        <td style={{ fontSize: '0.8rem' }}>
+                          {new Date(g.date + 'T12:00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} at <strong>{g.time}</strong>
+                        </td>
+                        <td>{homeTeam?.name} vs {awayTeam?.name}</td>
+                        <td><span className="badge badge-neutral">{homeTeam?.pool || 'Default'}</span></td>
+                        <td>{g.location}</td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>

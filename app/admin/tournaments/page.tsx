@@ -35,6 +35,9 @@ export default function AdminTournamentsPage() {
   const [divisionCapacities, setDivisionCapacities] = useState<Record<string, number>>({
     'U11': 8, 'U13': 8, 'U15': 8, 'U17': 8, 'U19': 8
   });
+  const [divisionPools, setDivisionPools]           = useState<Record<string, number>>({
+    'U11': 1, 'U13': 1, 'U15': 1, 'U17': 1, 'U19': 1
+  });
   const [useWelcomeMsg, setUseWelcomeMsg]           = useState(true);
   const [welcomeMsg, setWelcomeMsg]                 = useState('Welcome to the Battle of the Bats tournament! We are excited to have you join us for another great season of competitive youth softball.');
   const [seedData, setSeedData]                     = useState({
@@ -79,6 +82,7 @@ export default function AdminTournamentsPage() {
     setMigrateDiamonds(false);
     setSelectedDivisions(new Set(['U11', 'U13', 'U15', 'U17', 'U19']));
     setDivisionCapacities({ 'U11': 8, 'U13': 8, 'U15': 8, 'U17': 8, 'U19': 8 });
+    setDivisionPools({ 'U11': 1, 'U13': 1, 'U15': 1, 'U17': 1, 'U19': 1 });
     setUseWelcomeMsg(true);
     setWelcomeMsg('Welcome to the Battle of the Bats tournament! We are excited to have you join us for another great season of competitive youth softball.');
     setSeedData({
@@ -134,7 +138,8 @@ export default function AdminTournamentsPage() {
         if (selectedDivisions.size > 0) {
           const divs = Array.from(selectedDivisions).map(name => ({
             name,
-            capacity: divisionCapacities[name] || 8
+            capacity: divisionCapacities[name] || 8,
+            poolCount: divisionPools[name] || 1
           }));
           await initializeAgeGroups(tid, divs);
         }
@@ -178,12 +183,19 @@ export default function AdminTournamentsPage() {
       if (!(name in divisionCapacities)) {
         setDivisionCapacities(prev => ({ ...prev, [name]: 8 }));
       }
+      if (!(name in divisionPools)) {
+        setDivisionPools(prev => ({ ...prev, [name]: 1 }));
+      }
     }
     setSelectedDivisions(next);
   }
 
   function updateCapacity(name: string, cap: number) {
     setDivisionCapacities(prev => ({ ...prev, [name]: cap }));
+  }
+
+  function updatePools(name: string, count: number) {
+    setDivisionPools(prev => ({ ...prev, [name]: count }));
   }
 
   async function handleSetActive(id: string) {
@@ -424,14 +436,27 @@ export default function AdminTournamentsPage() {
                           </label>
                           {selectedDivisions.has(div) && (
                             <div className={styles.capInputWrap}>
-                              <label>Capacity:</label>
-                              <input 
-                                type="number" 
-                                min="1" 
-                                value={divisionCapacities[div] || 8}
-                                onChange={e => updateCapacity(div, Number(e.target.value))}
-                                className="form-input"
-                              />
+                              <div className={styles.subInput}>
+                                <label>Capacity:</label>
+                                <input 
+                                  type="number" 
+                                  min="1" 
+                                  value={divisionCapacities[div] || 8}
+                                  onChange={e => updateCapacity(div, Number(e.target.value))}
+                                  className="form-input"
+                                />
+                              </div>
+                              <div className={styles.subInput}>
+                                <label>Pools:</label>
+                                <input 
+                                  type="number" 
+                                  min="1" 
+                                  max="4"
+                                  value={divisionPools[div] || 1}
+                                  onChange={e => updatePools(div, Number(e.target.value))}
+                                  className="form-input"
+                                />
+                              </div>
                             </div>
                           )}
                         </div>

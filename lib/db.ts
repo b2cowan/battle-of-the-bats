@@ -71,7 +71,7 @@ export async function cloneDiamonds(targetTid: string, sourceDiamonds: Diamond[]
   await supabase.from('diamonds').insert(rows);
 }
 
-export async function initializeAgeGroups(targetTid: string, selectedDivisions: { name: string, capacity: number }[]): Promise<void> {
+export async function initializeAgeGroups(targetTid: string, selectedDivisions: { name: string, capacity: number, poolCount: number }[]): Promise<void> {
   if (selectedDivisions.length === 0) return;
   
   const defaults: Record<string, { min: number, max: number, order: number }> = {
@@ -91,7 +91,8 @@ export async function initializeAgeGroups(targetTid: string, selectedDivisions: 
       max_age: config.max,
       display_order: config.order,
       is_closed: false,
-      capacity: div.capacity
+      capacity: div.capacity,
+      pool_count: div.poolCount
     };
   });
   
@@ -209,7 +210,8 @@ export async function getAgeGroups(tournamentId?: string): Promise<AgeGroup[]> {
     order: g.display_order,
     contactId: g.contact_id,
     isClosed: g.is_closed,
-    capacity: g.capacity
+    capacity: g.capacity,
+    poolCount: g.pool_count
   }));
 }
 
@@ -236,6 +238,7 @@ export async function updateAgeGroup(id: string, g: Partial<AgeGroup>): Promise<
   if (g.contactId !== undefined) updates.contact_id = g.contactId;
   if (g.isClosed !== undefined) updates.is_closed = g.isClosed;
   if (g.capacity !== undefined) updates.capacity = g.capacity;
+  if (g.poolCount !== undefined) updates.pool_count = g.poolCount;
   await supabase.from('age_groups').update(updates).eq('id', id);
 }
 
@@ -256,7 +259,8 @@ export async function getTeams(tournamentId?: string): Promise<Team[]> {
     name: t.name,
     coach: t.coach,
     email: t.email,
-    players: t.players || []
+    players: t.players || [],
+    pool: t.pool
   }));
 }
 
@@ -267,7 +271,8 @@ export async function saveTeam(t: Omit<Team, 'id'> & { id?: string }): Promise<v
     name: t.name,
     coach: t.coach,
     email: t.email,
-    players: t.players || []
+    players: t.players || [],
+    pool: t.pool
   };
   if (t.id) payload.id = t.id;
   await supabase.from('teams').insert(payload);
@@ -281,6 +286,7 @@ export async function updateTeam(id: string, t: Partial<Team>): Promise<void> {
   if (t.coach !== undefined) updates.coach = t.coach;
   if (t.email !== undefined) updates.email = t.email;
   if (t.players !== undefined) updates.players = t.players;
+  if (t.pool !== undefined) updates.pool = t.pool;
   await supabase.from('teams').update(updates).eq('id', id);
 }
 
@@ -427,14 +433,21 @@ export async function seedTournamentData(tid: string, options: {
     const coaches = ['Coach Bob', 'Coach Alice', 'Coach Charlie', 'Coach Diana', 'Coach Ed', 'Coach Fiona', 'Coach Greg', 'Coach Heather'];
     
     for (const group of ageGroups) {
-      const rows = teamNames.map((name, i) => ({
-        tournament_id: tid,
-        age_group_id: group.id,
-        name: `${name} ${group.name}`,
-        coach: coaches[i],
-        email: `coach${i}@example.com`,
-        players: []
-      }));
+      const rows = teamNames.map((name, i) => {
+        const teamPool = group.poolCount && group.poolCount > 1 
+          ? String.fromCharCode(65 + (i % group.poolCount)) // A, B, C...
+          : undefined;
+
+        return {
+          tournament_id: tid,
+          age_group_id: group.id,
+          name: `${name} ${group.name}${teamPool ? ' (' + teamPool + ')' : ''}`,
+          coach: coaches[i],
+          email: `coach${i}@example.com`,
+          players: [],
+          pool: teamPool
+        };
+      });
       await supabase.from('teams').insert(rows);
       
       // Also add registrations records if table exists, 

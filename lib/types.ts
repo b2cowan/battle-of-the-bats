@@ -34,6 +34,7 @@ export interface AgeGroup {
   contactId?: string; // links to a managed Contact
   isClosed?: boolean; // if true, public registration is disabled
   capacity?: number;  // threshold for waitlist
+  poolCount?: number; // how many pools to split into
 }
 
 export interface Player {
@@ -51,6 +52,7 @@ export interface Team {
   coach: string;
   email?: string;
   players: Player[];
+  pool?: string; // pool name/index e.g. "A"
 }
 
 export type GameStatus = 'scheduled' | 'completed' | 'cancelled';
