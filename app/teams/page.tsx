@@ -49,8 +49,8 @@ export default function TeamsPage() {
       <div className={styles.pageHeader}>
         <div className="container">
           <span className="eyebrow"><Users size={12} /> Teams</span>
-          <h1 className="display-lg">Team Rosters</h1>
-          <p className="text-muted">Browse registered teams and player rosters by age group.</p>
+          <h1 className="display-lg">Registered Teams</h1>
+          <p className="text-muted">Browse participating teams by age division.</p>
         </div>
       </div>
 
@@ -93,47 +93,9 @@ export default function TeamsPage() {
                         {team.coach && <span className={styles.coach}>Coach: {team.coach}</span>}
                       </div>
                     </div>
-                    <button
-                      className={`btn btn-ghost btn-sm ${styles.expandBtn}`}
-                      onClick={() => toggle(team.id)}
-                      id={`team-expand-${team.id}`}
-                      aria-label="Toggle roster"
-                    >
-                      {expanded.has(team.id) ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-                    </button>
                   </div>
 
-                  {expanded.has(team.id) && team.players.length > 0 && (
-                    <div className={styles.roster}>
-                      <table>
-                        <thead>
-                          <tr>
-                            <th>#</th>
-                            <th>Name</th>
-                            <th>Position</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {team.players.map(p => (
-                            <tr key={p.id}>
-                              <td style={{ fontFamily: 'var(--font-display)', fontWeight: 700, color: 'var(--purple-light)', width: 40 }}>{p.number || '—'}</td>
-                              <td>
-                                <div className={styles.playerName}>
-                                  <User size={12} />
-                                  {p.name}
-                                </div>
-                              </td>
-                              <td style={{ color: 'var(--white-60)' }}>{p.position || '—'}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
 
-                  {expanded.has(team.id) && team.players.length === 0 && (
-                    <div className={styles.noPlayers}>No players added yet.</div>
-                  )}
                 </div>
               ))}
             </div>

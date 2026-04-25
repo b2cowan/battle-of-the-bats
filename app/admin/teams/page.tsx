@@ -3,14 +3,12 @@ import { useState, useEffect } from 'react';
 import { Users, Plus, Pencil, Trash2, X, Check, UserPlus, UserMinus } from 'lucide-react';
 import { getTeams, saveTeam, updateTeam, deleteTeam, getAgeGroups } from '@/lib/db';
 import { useTournament } from '@/lib/tournament-context';
-import { Team, AgeGroup, Player } from '@/lib/types';
+import { Team, AgeGroup } from '@/lib/types';
 import styles from './teams-admin.module.css';
 
 type ModalMode = 'add' | 'edit' | null;
 
-function makePlayer(): Player {
-  return { id: `p-${Date.now()}-${Math.random().toString(36).slice(2,6)}`, name: '', number: '', position: '' };
-}
+
 
 export default function AdminTeamsPage() {
   const { currentTournament } = useTournament();
@@ -20,7 +18,7 @@ export default function AdminTeamsPage() {
   const [editing, setEditing]   = useState<Team | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [filterGroup, setFilterGroup] = useState<string>('all');
-  const [form, setForm] = useState({ name: '', coach: '', email: '', ageGroupId: '', players: [makePlayer()] });
+  const [form, setForm] = useState({ name: '', coach: '', email: '', ageGroupId: '' });
 
   async function refresh() {
     setTeams(await getTeams(currentTournament?.id));
@@ -31,23 +29,25 @@ export default function AdminTeamsPage() {
   useEffect(() => { refresh(); }, [currentTournament?.id]); // eslint-disable-line
 
   function openAdd() {
-    setForm({ name: '', coach: '', email: '', ageGroupId: ageGroups[0]?.id ?? '', players: [makePlayer()] });
+    setForm({ name: '', coach: '', email: '', ageGroupId: ageGroups[0]?.id ?? '' });
     setEditing(null);
     setModal('add');
   }
 
   function openEdit(t: Team) {
-    setForm({ name: t.name, coach: t.coach, email: t.email || '', ageGroupId: t.ageGroupId, players: t.players.length ? t.players : [makePlayer()] });
+    setForm({ name: t.name, coach: t.coach, email: t.email || '', ageGroupId: t.ageGroupId });
     setEditing(t);
     setModal('edit');
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    const cleanPlayers = form.players.filter(p => p.name.trim());
     const data = {
-      name: form.name.trim(), coach: form.coach.trim(), email: form.email.trim() || undefined,
-      ageGroupId: form.ageGroupId, players: cleanPlayers,
+      name: form.name.trim(), 
+      coach: form.coach.trim(), 
+      email: form.email.trim() || undefined,
+      ageGroupId: form.ageGroupId, 
+      players: [], // Rosters removed
       tournamentId: currentTournament?.id ?? '',
     };
     if (modal === 'add') await saveTeam(data);
@@ -56,13 +56,7 @@ export default function AdminTeamsPage() {
     refresh();
   }
 
-  function updatePlayer(idx: number, field: keyof Player, val: string) {
-    setForm(f => {
-      const players = [...f.players];
-      players[idx] = { ...players[idx], [field]: val };
-      return { ...f, players };
-    });
-  }
+
 
   const filtered = filterGroup === 'all' ? teams : teams.filter(t => t.ageGroupId === filterGroup);
   const getGroupName = (id: string) => ageGroups.find(g => g.id === id)?.name ?? '—';
@@ -97,7 +91,7 @@ export default function AdminTeamsPage() {
       <div className="table-wrap">
         <table>
           <thead>
-            <tr><th>Team Name</th><th>Division</th><th>Coach</th><th>Email</th><th>Players</th><th>Actions</th></tr>
+            <tr><th>Team Name</th><th>Division</th><th>Coach</th><th>Email</th><th>Actions</th></tr>
           </thead>
           <tbody>
             {filtered.length === 0 ? (
@@ -110,7 +104,6 @@ export default function AdminTeamsPage() {
                 <td><span className="badge badge-purple">{getGroupName(t.ageGroupId)}</span></td>
                 <td>{t.coach || '—'}</td>
                 <td><span style={{ fontSize: '0.85rem', color: 'var(--white-60)' }}>{t.email || '—'}</span></td>
-                <td>{t.players.length}</td>
                 <td>
                   <div className="flex gap-1">
                     <button className="btn btn-ghost btn-sm" onClick={() => openEdit(t)} id={`edit-team-${t.id}`}><Pencil size={13} /></button>
@@ -144,36 +137,12 @@ export default function AdminTeamsPage() {
                   <label className="form-label">Contact Email</label>
                   <input className="form-input" type="email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} />
                 </div>
-              </div>
-              <div className="form-row form-row-2" style={{ marginBottom: '1rem' }}>
                 <div className="form-group">
                   <label className="form-label">Age Group *</label>
                   <select className="form-select" value={form.ageGroupId} onChange={e => setForm(f => ({ ...f, ageGroupId: e.target.value }))} required>
                     <option value="">Select...</option>
                     {ageGroups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
                   </select>
-                </div>
-              </div>
-              <div className={styles.rosterSection}>
-                <div className={styles.rosterHeader}>
-                  <label className="form-label" style={{ margin: 0 }}>Player Roster</label>
-                  <button type="button" className="btn btn-ghost btn-sm"
-                    onClick={() => setForm(f => ({ ...f, players: [...f.players, makePlayer()] }))}>
-                    <UserPlus size={13} /> Add Player
-                  </button>
-                </div>
-                <div className={styles.playerList}>
-                  {form.players.map((p, i) => (
-                    <div key={p.id} className={styles.playerRow}>
-                      <input className="form-input" placeholder="Name" value={p.name} onChange={e => updatePlayer(i, 'name', e.target.value)} />
-                      <input className="form-input" placeholder="#" value={p.number} onChange={e => updatePlayer(i, 'number', e.target.value)} style={{ width: 70 }} />
-                      <input className="form-input" placeholder="Position" value={p.position} onChange={e => updatePlayer(i, 'position', e.target.value)} style={{ width: 120 }} />
-                      <button type="button" className="btn btn-danger btn-sm"
-                        onClick={() => setForm(f => ({ ...f, players: f.players.filter((_, j) => j !== i) }))}>
-                        <UserMinus size={13} />
-                      </button>
-                    </div>
-                  ))}
                 </div>
               </div>
               <div className="modal-footer">

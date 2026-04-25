@@ -34,7 +34,19 @@ export default async function HomePage() {
   }
 
   const dateDisplay = (startDate && endDate)
-    ? `${formatLongDate(startDate)} – ${formatLongDate(endDate)}`
+    ? (() => {
+        const s = new Date(startDate + 'T12:00:00');
+        const e = new Date(endDate + 'T12:00:00');
+        const sMonthDay = s.toLocaleDateString('en-CA', { month: 'long', day: 'numeric' });
+        const eMonthDay = e.toLocaleDateString('en-CA', { month: 'long', day: 'numeric' });
+        const eYear = e.getFullYear();
+        
+        if (s.getFullYear() === e.getFullYear()) {
+          return `${sMonthDay} – ${eMonthDay}, ${eYear}`;
+        } else {
+          return `${sMonthDay}, ${s.getFullYear()} – ${eMonthDay}, ${eYear}`;
+        }
+      })()
     : 'Dates To Be Determined';
 
   const sortedAgeGroups = [...ageGroups].sort((a, b) => a.order - b.order);
@@ -72,15 +84,14 @@ export default async function HomePage() {
             BATS
           </h1>
           <p className={styles.heroSub}>
-            The premier youth softball tournament hosted by the <strong>Milton Bats</strong>.
-            {ageRange} age divisions. Elite competition, lifelong memories.
+            The premier youth softball tournament hosted by the <strong>Milton Bats</strong> . {ageRange} age divisions. Elite competition, lifelong memories.
           </p>
           <div className={styles.heroCta}>
             <Link href="/schedule" className="btn btn-primary btn-lg" id="hero-schedule-btn">
               <Calendar size={18} /> View Schedule
             </Link>
-            <Link href="/teams" className="btn btn-outline btn-lg" id="hero-teams-btn">
-              <Users size={18} /> Team Rosters
+            <Link href="/news" className="btn btn-outline btn-lg" id="hero-news-btn">
+              <Megaphone size={18} /> Announcements
             </Link>
           </div>
 
@@ -200,7 +211,7 @@ export default async function HomePage() {
           <div className={styles.ctaContent}>
             <Trophy size={40} className={styles.ctaIcon} />
             <h2 className="display-md">Ready to Compete?</h2>
-            <p>Check out the full schedule, browse team rosters, and review the tournament rules before game day.</p>
+            <p>Check out the full schedule, browse teams, and review the tournament rules before game day.</p>
             <div className={styles.ctaButtons}>
               <Link href="/rules" className="btn btn-primary btn-lg" id="cta-rules-btn">Tournament Rules</Link>
               <Link href="/results" className="btn btn-ghost btn-lg" id="cta-results-btn">View Results</Link>
