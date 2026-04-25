@@ -64,6 +64,55 @@ export default async function HomePage() {
     });
   }
 
+  if (!activeTournament) {
+    return (
+      <div className={styles.page}>
+        <section className={styles.hero}>
+          <div className={styles.heroBg}>
+            <div className={styles.heroOrb1} />
+            <div className={styles.heroOrb2} />
+            <div className={styles.heroGrid} />
+          </div>
+          <div className={`container ${styles.heroContent}`}>
+            <div className={styles.heroBadge}>
+              <Star size={12} fill="currentColor" />
+              Next Season Coming Soon
+            </div>
+            <h1 className={`display-xl ${styles.heroTitle}`}>
+              BATTLE<br />
+              <span className={styles.heroAccent}>OF THE</span><br />
+              BATS
+            </h1>
+            <p className={styles.heroSub}>
+              The diamonds are resting, but the bats are warming up. We are currently preparing for the next spectacular season of elite youth softball in Milton.
+            </p>
+            <div className={styles.heroCta}>
+              <Link href="/news" className="btn btn-primary btn-lg" id="hero-news-btn">
+                <Megaphone size={18} /> Latest News
+              </Link>
+              <Link href="/rules" className="btn btn-outline btn-lg" id="hero-rules-btn">
+                Tournament Rules
+              </Link>
+            </div>
+          </div>
+        </section>
+
+        <section className="section container">
+          <div className="empty-state" style={{ minHeight: '40vh' }}>
+            <Calendar size={60} style={{ color: 'var(--purple-light)', marginBottom: '1.5rem', opacity: 0.5 }} />
+            <h2 className="display-sm">Nothing Scheduled... Yet</h2>
+            <p style={{ maxWidth: '500px', margin: '0 auto', color: 'var(--white-60)' }}>
+              We&apos;re putting the finishing touches on the upcoming schedule. Check back soon to see divisions, teams, and the full lineup for the next Battle of the Bats!
+            </p>
+            <div style={{ marginTop: '2rem' }}>
+              <Link href="/register" className="btn btn-outline">Registration Info</Link>
+            </div>
+          </div>
+        </section>
+      </div>
+    );
+  }
+
   return (
     <div className={styles.page}>
       {/* Hero */}

@@ -20,7 +20,7 @@ export default function AdminTournamentsPage() {
   const [form, setForm]         = useState({ 
     year: String(new Date().getFullYear()), 
     name: '', 
-    isActive: false,
+    isActive: true,
     startDate: '',
     endDate: ''
   });
@@ -73,7 +73,7 @@ export default function AdminTournamentsPage() {
     setForm({ 
       year: String(nextYear), 
       name: `Battle of the Bats ${nextYear}`, 
-      isActive: false,
+      isActive: true,
       startDate: '',
       endDate: ''
     });
@@ -205,8 +205,6 @@ export default function AdminTournamentsPage() {
 
   async function handleDelete() {
     if (!deleteId) return;
-    const t = tournaments.find(x => x.id === deleteId);
-    if (t?.isActive) return; // safety: can't delete the active tournament
     await deleteTournament(deleteId);
     setDeleteId(null);
     refresh();
@@ -281,11 +279,9 @@ export default function AdminTournamentsPage() {
                     <button className="btn btn-ghost btn-sm" onClick={() => openEdit(t)} id={`edit-tournament-${t.id}`}>
                       <Pencil size={13} />
                     </button>
-                    {!t.isActive && (
-                      <button className="btn btn-danger btn-sm" onClick={() => setDeleteId(t.id)} id={`delete-tournament-${t.id}`}>
-                        <Trash2 size={13} />
-                      </button>
-                    )}
+                    <button className="btn btn-danger btn-sm" onClick={() => setDeleteId(t.id)} id={`delete-tournament-${t.id}`}>
+                      <Trash2 size={13} />
+                    </button>
                   </div>
                 </td>
               </tr>
