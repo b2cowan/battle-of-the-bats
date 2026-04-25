@@ -10,6 +10,7 @@ import styles from './AdminSidebar.module.css';
 const NAV = [
   { href: '/admin',                 icon: LayoutDashboard, label: 'Dashboard'     },
   { href: '/admin/tournaments',     icon: RefreshCw,       label: 'Tournaments'   },
+  { href: '/admin/announcements',   icon: Megaphone,       label: 'Announcements' },
   { href: '/admin/contacts',        icon: BookUser,        label: 'Contacts'      },
   { href: '/admin/registrations',   icon: ClipboardList,   label: 'Registrations' },
   { href: '/admin/age-groups',      icon: Tag,             label: 'Age Groups'    },
@@ -17,7 +18,6 @@ const NAV = [
   { href: '/admin/diamonds',        icon: MapPin,          label: 'Diamonds'      },
   { href: '/admin/schedule',        icon: Calendar,        label: 'Schedule'      },
   { href: '/admin/results',         icon: Trophy,          label: 'Results'       },
-  { href: '/admin/announcements',   icon: Megaphone,       label: 'Announcements' },
 ];
 
 export default function AdminSidebar() {

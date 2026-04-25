@@ -1,9 +1,10 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { RefreshCw, Plus, Check, X, Trash2, Pencil, Star } from 'lucide-react';
+import { RefreshCw, Plus, Check, X, Trash2, Pencil, Star, Sparkles } from 'lucide-react';
 import { 
   getTournaments, saveTournament, updateTournament, deleteTournament, setActiveTournament,
-  getContacts, getDiamonds, cloneContacts, cloneDiamonds, initializeAgeGroups, saveAnnouncement
+  getContacts, getDiamonds, cloneContacts, cloneDiamonds, initializeAgeGroups, saveAnnouncement,
+  seedTournamentData
 } from '@/lib/db';
 import { useTournament } from '@/lib/tournament-context';
 import { Tournament, Contact } from '@/lib/types';
@@ -36,6 +37,13 @@ export default function AdminTournamentsPage() {
   });
   const [useWelcomeMsg, setUseWelcomeMsg]           = useState(true);
   const [welcomeMsg, setWelcomeMsg]                 = useState('Welcome to the Battle of the Bats tournament! We are excited to have you join us for another great season of competitive youth softball.');
+  const [seedData, setSeedData]                     = useState({
+    contacts: false,
+    diamonds: false,
+    registrations: false,
+    schedule: false,
+    results: false
+  });
 
   async function refresh() {
     setTournaments(await getTournaments());
@@ -73,6 +81,13 @@ export default function AdminTournamentsPage() {
     setDivisionCapacities({ 'U11': 8, 'U13': 8, 'U15': 8, 'U17': 8, 'U19': 8 });
     setUseWelcomeMsg(true);
     setWelcomeMsg('Welcome to the Battle of the Bats tournament! We are excited to have you join us for another great season of competitive youth softball.');
+    setSeedData({
+      contacts: false,
+      diamonds: false,
+      registrations: false,
+      schedule: false,
+      results: false
+    });
     setModal('add');
   }
 
@@ -133,6 +148,11 @@ export default function AdminTournamentsPage() {
             date: new Date().toISOString(),
             pinned: true
           });
+        }
+
+        // 4. Seed Data
+        if (Object.values(seedData).some(v => v)) {
+          await seedTournamentData(tid, seedData);
         }
       }
     } else if (editing) {
@@ -439,6 +459,35 @@ export default function AdminTournamentsPage() {
                         placeholder="Enter welcome message..."
                       />
                     )}
+                  </div>
+
+                  <div className={styles.setupGroup}>
+                    <div className={styles.migrationHeader}>
+                      <Sparkles size={16} />
+                      <h4>Seed Random Data (Testing)</h4>
+                    </div>
+                    <div className={styles.seedGrid}>
+                      <label className={styles.checkboxLabel}>
+                        <input type="checkbox" checked={seedData.contacts} onChange={e => setSeedData(s => ({ ...s, contacts: e.target.checked }))} />
+                        Contacts
+                      </label>
+                      <label className={styles.checkboxLabel}>
+                        <input type="checkbox" checked={seedData.diamonds} onChange={e => setSeedData(s => ({ ...s, diamonds: e.target.checked }))} />
+                        Diamonds
+                      </label>
+                      <label className={styles.checkboxLabel}>
+                        <input type="checkbox" checked={seedData.registrations} onChange={e => setSeedData(s => ({ ...s, registrations: e.target.checked }))} />
+                        Registrations
+                      </label>
+                      <label className={styles.checkboxLabel}>
+                        <input type="checkbox" checked={seedData.schedule} onChange={e => setSeedData(s => ({ ...s, schedule: e.target.checked }))} />
+                        Schedule
+                      </label>
+                      <label className={styles.checkboxLabel}>
+                        <input type="checkbox" checked={seedData.results} onChange={e => setSeedData(s => ({ ...s, results: e.target.checked }))} />
+                        Results
+                      </label>
+                    </div>
                   </div>
                 </div>
               )}

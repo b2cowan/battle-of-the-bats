@@ -390,3 +390,103 @@ export async function updateAnnouncement(id: string, a: Partial<Announcement>): 
 export async function deleteAnnouncement(id: string): Promise<void> {
   await supabase.from('announcements').delete().eq('id', id);
 }
+
+// --- Seeding ---
+export async function seedTournamentData(tid: string, options: { 
+  contacts?: boolean, diamonds?: boolean, registrations?: boolean, schedule?: boolean, results?: boolean 
+}) {
+  const ageGroups = await getAgeGroups(tid);
+  if (ageGroups.length === 0) return;
+
+  if (options.contacts) {
+    const roles = ['Tournament Director', 'Registrar', 'Head Umpire', 'Diamond Manager', 'Volunteer Coordinator'];
+    const names = ['John Smith', 'Sarah Jenkins', 'Mike Miller', 'Lisa Wong', 'David Chen'];
+    const rows = names.map((name, i) => ({
+      tournament_id: tid,
+      name,
+      email: `${name.toLowerCase().replace(' ', '.')}@example.com`,
+      phone: `555-010${i}`,
+      role: roles[i]
+    }));
+    await supabase.from('contacts').insert(rows);
+  }
+
+  if (options.diamonds) {
+    const names = ['Memorial Park D1', 'Memorial Park D2', 'Lions Field', 'South Common', 'Milton Sports Center'];
+    const rows = names.map((name, i) => ({
+      tournament_id: tid,
+      name,
+      address: `${100 + i} Main St, Milton, ON`,
+      notes: i % 2 === 0 ? 'Lighted field' : ''
+    }));
+    await supabase.from('diamonds').insert(rows);
+  }
+
+  if (options.registrations) {
+    const teamNames = ['Milton Bats', 'Oakville Angels', 'Burlington Bulls', 'Mississauga Tigers', 'Hamilton Heat', 'Brampton Blazers', 'Toronto Titans', 'Guelph Gryphons'];
+    const coaches = ['Coach Bob', 'Coach Alice', 'Coach Charlie', 'Coach Diana', 'Coach Ed', 'Coach Fiona', 'Coach Greg', 'Coach Heather'];
+    
+    for (const group of ageGroups) {
+      const rows = teamNames.map((name, i) => ({
+        tournament_id: tid,
+        age_group_id: group.id,
+        name: `${name} ${group.name}`,
+        coach: coaches[i],
+        email: `coach${i}@example.com`,
+        players: []
+      }));
+      await supabase.from('teams').insert(rows);
+      
+      // Also add registrations records if table exists, 
+      // but in this system teams ARE the registrations when accepted.
+      // Let's also insert into registrations table to be safe
+      const regRows = teamNames.map((name, i) => ({
+        tournament_id: tid,
+        team_name: `${name} ${group.name}`,
+        coach_name: coaches[i],
+        email: `coach${i}@example.com`,
+        age_group_id: group.id,
+        status: 'accepted',
+        payment_status: i % 2 === 0 ? 'paid' : 'pending'
+      }));
+      await supabase.from('registrations').insert(regRows);
+    }
+  }
+
+  if (options.schedule || options.results) {
+    const teams = await getTeams(tid);
+    const diamonds = await getDiamonds(tid);
+    if (teams.length < 2 || diamonds.length === 0) return;
+
+    const gameRows = [];
+    const tnt = await supabase.from('tournaments').select('*').eq('id', tid).single();
+    const baseDate = tnt.data?.start_date || new Date().toISOString().split('T')[0];
+
+    for (const group of ageGroups) {
+      const groupTeams = teams.filter(t => t.ageGroupId === group.id);
+      if (groupTeams.length < 2) continue;
+
+      // Simple 2 games per division for seed
+      for (let i = 0; i < 2; i++) {
+        const home = groupTeams[i % groupTeams.length];
+        const away = groupTeams[(i + 1) % groupTeams.length];
+        const diamond = diamonds[i % diamonds.length];
+        
+        gameRows.push({
+          tournament_id: tid,
+          age_group_id: group.id,
+          home_team_id: home.id,
+          away_team_id: away.id,
+          game_date: baseDate,
+          game_time: `${9 + i}:00`,
+          location: diamond.name,
+          diamond_id: diamond.id,
+          status: options.results ? 'final' : 'scheduled',
+          home_score: options.results ? Math.floor(Math.random() * 10) : null,
+          away_score: options.results ? Math.floor(Math.random() * 10) : null
+        });
+      }
+    }
+    await supabase.from('games').insert(gameRows);
+  }
+}

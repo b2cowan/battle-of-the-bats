@@ -172,3 +172,12 @@
   width: 100%;
 }
 
+.seedGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  padding: 0.75rem;
+  background: var(--black-20);
+  border-radius: var(--radius-xs);
+}
