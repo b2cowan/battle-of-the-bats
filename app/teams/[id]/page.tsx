@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { use } from 'react';
-import { Users, CheckCircle, Clock, CreditCard, AlertTriangle, Mail } from 'lucide-react';
+import { Users, CheckCircle, Clock, CreditCard, AlertTriangle, Mail, MapPin } from 'lucide-react';
 import styles from './team-profile.module.css';
 
 interface Registration {
