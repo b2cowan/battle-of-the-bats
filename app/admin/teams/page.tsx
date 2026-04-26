@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
 import { Users, Check, X, CreditCard, RefreshCw, Mail, ChevronDown, ChevronUp, AlertCircle, Download, Plus, Trash2, MapPin } from 'lucide-react';
-import { saveTeam, updateTeam, deleteTeam, getTeams, getAgeGroups, saveRegistration } from '@/lib/db';
+import { saveTeam, updateTeam, deleteTeam, getTeams, getAgeGroups, saveRegistration, savePool } from '@/lib/db';
 import { downloadCSV } from '@/lib/utils';
 import { useTournament } from '@/lib/tournament-context';
 import { AgeGroup, Team } from '@/lib/types';
@@ -69,15 +69,37 @@ export default function UnifiedTeamsPage() {
 
       const merged = (Array.isArray(rData) ? rData : []).map((r: Registration) => ({
         ...r,
-        pool: teamMap.get(r.id)?.pool
+        pool: teamMap.get(r.id)?.pool,
+        poolId: teamMap.get(r.id)?.poolId
       }));
 
       setRegs(merged);
 
-      // ONE-TIME MIGRATION: Link teams (regs) to real Pool IDs
+      // ONE-TIME MIGRATION: 
+      // 1. Ensure pools exist in the 'pools' table
+      const groups = await getAgeGroups(currentTournament?.id);
+      setAgeGroups(groups);
+      
+      let migrationHappened = false;
+      for (const g of groups) {
+        if ((g.poolCount || 0) > 1 && (!g.pools || g.pools.length === 0)) {
+          console.log(`Migrating legacy pools for ${g.name}...`);
+          const names = (g.poolNames || '').split(',').map(n => n.trim());
+          for (let i = 0; i < (g.poolCount || 1); i++) {
+            const name = names[i] || String.fromCharCode(65 + i);
+            await savePool({ ageGroupId: g.id, name, order: i });
+          }
+          migrationHappened = true;
+        }
+      }
+      if (migrationHappened) {
+        setAgeGroups(await getAgeGroups(currentTournament?.id));
+      }
+
+      // 2. Link teams (regs) to real Pool IDs
       for (const r of merged) {
         if (r.status === 'accepted' && r.pool && !r.poolId) {
-          const g = ageGroups.find(x => x.id === r.age_group_id);
+          const g = groups.find(x => x.id === r.age_group_id);
           const p = g?.pools?.find(x => x.name === r.pool);
           if (p) {
             console.log(`Linking team ${r.team_name} to pool ${p.name}...`);
@@ -109,7 +131,7 @@ export default function UnifiedTeamsPage() {
     } finally {
       setLoading(false);
     }
-  }, [currentTournament?.id, stableSortedIds.length]);
+  }, [currentTournament?.id, stableSortedIds.length, ageGroups.length]);
 
   useEffect(() => { load(); loadAgeGroups(); }, [load, loadAgeGroups]);
 
@@ -135,9 +157,6 @@ export default function UnifiedTeamsPage() {
       const isAccepted = (updates.status === 'accepted') || (r.status === 'accepted' && updates.status !== 'rejected');
       
       if (isAccepted) {
-        const teams = await getTeams(currentTournament?.id);
-        const existing = teams.find(t => t.id === id);
-        
         const teamData = {
           id: id,
           name: updates.team_name || r.team_name,
@@ -145,9 +164,13 @@ export default function UnifiedTeamsPage() {
           email: updates.email || r.email,
           ageGroupId: updates.age_group_id || r.age_group_id,
           tournamentId: currentTournament?.id || '',
-          pool: updates.pool !== undefined ? updates.pool : (existing?.pool || undefined),
-          players: existing?.players || []
+          pool: updates.pool !== undefined ? updates.pool : r.pool,
+          poolId: updates.poolId !== undefined ? updates.poolId : r.poolId,
+          players: []
         };
+
+        const tRes = await getTeams(currentTournament?.id);
+        const existing = tRes.find(t => t.id === id);
 
         if (existing) {
           await updateTeam(id, teamData);
@@ -162,6 +185,35 @@ export default function UnifiedTeamsPage() {
     } finally {
       await load();
       setWorking(null);
+    }
+  }
+
+  async function handleBulk(action: 'accept' | 'pay' | 'delete') {
+    if (selectedIds.size === 0) return;
+    setBulkWorking(true);
+    try {
+      const ids = Array.from(selectedIds);
+      for (const id of ids) {
+        const r = regs.find(x => x.id === id);
+        if (!r) continue;
+
+        if (action === 'accept') {
+          await patch(id, { status: 'accepted' }, r);
+        } else if (action === 'pay') {
+          await patch(id, { payment_status: 'paid' }, r);
+        } else if (action === 'delete') {
+          if (confirm(`Are you sure you want to delete ${r.team_name}?`)) {
+            await fetch(`/api/registrations/${id}`, { method: 'DELETE' });
+            await deleteTeam(id);
+          }
+        }
+      }
+      setSelectedIds(new Set());
+    } catch (e: any) {
+      setErrorMsg(`Bulk action failed: ${e.message}`);
+    } finally {
+      setBulkWorking(false);
+      load();
     }
   }
 
@@ -253,6 +305,27 @@ export default function UnifiedTeamsPage() {
         </div>
       </div>
 
+      {/* Bulk Actions Bar */}
+      {selectedIds.size > 0 && (
+        <div className={styles.bulkBar}>
+          <div className={styles.bulkInfo}>
+            <strong>{selectedIds.size}</strong> selected
+            <button className="btn btn-ghost btn-xs" onClick={() => setSelectedIds(new Set())} style={{ color: 'var(--white-40)' }}>Deselect All</button>
+          </div>
+          <div className={styles.bulkButtons}>
+            <button className="btn btn-primary btn-sm" onClick={() => handleBulk('accept')} disabled={bulkWorking}>
+              {bulkWorking ? <RefreshCw className="spin" size={14} /> : <Check size={14} />} Accept
+            </button>
+            <button className="btn btn-outline btn-sm" onClick={() => handleBulk('pay')} disabled={bulkWorking}>
+              <CreditCard size={14} /> Mark Paid
+            </button>
+            <button className="btn btn-danger btn-sm" onClick={() => handleBulk('delete')} disabled={bulkWorking}>
+              <Trash2 size={14} /> Delete
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Controls */}
       <div className={styles.controlsRow}>
         <div className={styles.controlsLeft}>
@@ -291,18 +364,17 @@ export default function UnifiedTeamsPage() {
                   <div style={{ marginBottom: '0.25rem' }}>{groupRegs.filter(r => r.status === 'pending').length} Pending • {groupRegs.filter(r => r.status === 'waitlist').length} Waitlist</div>
                   <div className={styles.poolBreakdown}>
                     {(() => {
-                      if (!g.poolCount || g.poolCount <= 0) return null;
-                      const names = g.poolNames ? g.poolNames.split(',').map(n => n.trim()) : [];
-                      const unassigned = groupRegs.filter(r => r.status === 'accepted' && !r.pool).length;
+                      if (!g.poolCount || g.poolCount <= 1) return null;
+                      const poolsList = g.pools || [];
+                      const unassigned = groupRegs.filter(r => r.status === 'accepted' && !r.poolId).length;
                       
                       return (
                         <>
-                          {Array.from({ length: g.poolCount }).map((_, i) => {
-                            const name = names[i] || String.fromCharCode(65 + i);
-                            const count = groupRegs.filter(r => r.pool === name).length;
+                          {poolsList.map((p) => {
+                            const count = groupRegs.filter(r => r.poolId === p.id).length;
                             return (
-                              <span key={name} className={styles.poolStatBadge}>
-                                {name}: <strong>{count}</strong>
+                              <span key={p.id} className={styles.poolStatBadge}>
+                                {p.name}: <strong>{count}</strong>
                               </span>
                             );
                           })}
