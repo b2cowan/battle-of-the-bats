@@ -19,7 +19,7 @@ export default function AdminTeamsPage() {
   const [editing, setEditing]   = useState<Team | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [filterGroup, setFilterGroup] = useState<string>('all');
-  const [form, setForm] = useState({ name: '', coach: '', email: '', ageGroupId: '' });
+  const [form, setForm] = useState({ name: '', coach: '', email: '', ageGroupId: '', pool: '' });
 
   async function refresh() {
     setTeams(await getTeams(currentTournament?.id));
@@ -30,13 +30,13 @@ export default function AdminTeamsPage() {
   useEffect(() => { refresh(); }, [currentTournament?.id]); // eslint-disable-line
 
   function openAdd() {
-    setForm({ name: '', coach: '', email: '', ageGroupId: ageGroups[0]?.id ?? '' });
+    setForm({ name: '', coach: '', email: '', ageGroupId: ageGroups[0]?.id ?? '', pool: '' });
     setEditing(null);
     setModal('add');
   }
 
   function openEdit(t: Team) {
-    setForm({ name: t.name, coach: t.coach, email: t.email || '', ageGroupId: t.ageGroupId });
+    setForm({ name: t.name, coach: t.coach, email: t.email || '', ageGroupId: t.ageGroupId, pool: t.pool || '' });
     setEditing(t);
     setModal('edit');
   }
@@ -48,7 +48,8 @@ export default function AdminTeamsPage() {
       coach: form.coach.trim(), 
       email: form.email.trim() || undefined,
       ageGroupId: form.ageGroupId, 
-      players: [], // Rosters removed
+      pool: form.pool || undefined,
+      players: [], 
       tournamentId: currentTournament?.id ?? '',
     };
     if (modal === 'add') await saveTeam(data);
@@ -109,7 +110,7 @@ export default function AdminTeamsPage() {
       <div className="table-wrap">
         <table>
           <thead>
-            <tr><th>Team Name</th><th>Division</th><th>Coach</th><th>Email</th><th>Actions</th></tr>
+            <tr><th>Team Name</th><th>Division</th><th>Pool</th><th>Coach</th><th>Email</th><th>Actions</th></tr>
           </thead>
           <tbody>
             {filtered.length === 0 ? (
@@ -120,6 +121,7 @@ export default function AdminTeamsPage() {
               <tr key={t.id}>
                 <td><strong>{t.name}</strong></td>
                 <td><span className="badge badge-purple">{getGroupName(t.ageGroupId)}</span></td>
+                <td>{t.pool || '—'}</td>
                 <td>{t.coach || '—'}</td>
                 <td><span style={{ fontSize: '0.85rem', color: 'var(--white-60)' }}>{t.email || '—'}</span></td>
                 <td>
@@ -160,6 +162,22 @@ export default function AdminTeamsPage() {
                   <select className="form-select" value={form.ageGroupId} onChange={e => setForm(f => ({ ...f, ageGroupId: e.target.value }))} required>
                     <option value="">Select...</option>
                     {ageGroups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Pool</label>
+                  <select className="form-select" value={form.pool} onChange={e => setForm(f => ({ ...f, pool: e.target.value }))}>
+                    <option value="">No Pool</option>
+                    {(() => {
+                      const group = ageGroups.find(g => g.id === form.ageGroupId);
+                      if (!group || !group.poolCount || group.poolCount <= 1) return null;
+                      
+                      const names = group.poolNames ? group.poolNames.split(',').map(n => n.trim()) : [];
+                      return Array.from({ length: group.poolCount }).map((_, i) => {
+                        const val = names[i] || String.fromCharCode(65 + i);
+                        return <option key={val} value={val}>{val}</option>;
+                      });
+                    })()}
                   </select>
                 </div>
               </div>

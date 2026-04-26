@@ -6,48 +6,116 @@
 
 .pageHeader h1 { color: var(--white); margin: 0.5rem 0; }
 
-.teamGrid {
+.divisionLayout {
+  display: flex;
+  flex-direction: column;
+  gap: 4rem;
+  margin-top: 2rem;
+}
+
+.groupSection {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.groupTitle {
+  font-family: var(--font-display);
+  font-size: 2.25rem;
+  font-weight: 900;
+  color: var(--white);
+  border-bottom: 1px solid var(--border-2);
+  padding-bottom: 1rem;
+}
+
+.poolGrid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.5rem;
+}
+
+.poolCard {
+  background: var(--white-5);
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius-md);
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
   gap: 1.25rem;
 }
 
-.teamCard { display: flex; flex-direction: column; gap: 1rem; }
+.poolName {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--purple-light);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
 
-.teamHeader { display: flex; align-items: center; gap: 1rem; }
+.teamList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.teamRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem;
+  background: var(--white-5);
+  border-radius: var(--radius-sm);
+  transition: all 0.2s ease;
+}
+
+.teamRow:hover {
+  background: var(--white-10);
+  transform: translateX(4px);
+}
+
+.teamMain {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
 
 .teamAvatar {
-  width: 52px;
-  height: 52px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, var(--purple), var(--purple-light));
+  width: 36px;
+  height: 36px;
+  background: var(--purple-faint);
+  color: var(--purple-light);
+  border: 1px solid var(--border);
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: var(--font-display);
-  font-size: 1.5rem;
-  font-weight: 900;
-  color: var(--white);
-  flex-shrink: 0;
-  box-shadow: var(--glow-sm);
+  font-weight: 800;
+  font-size: 1rem;
 }
-
-.teamInfo { flex: 1; }
 
 .teamName {
-  font-family: var(--font-display);
-  font-size: 1.2rem;
-  font-weight: 800;
+  font-size: 1rem;
+  font-weight: 700;
   color: var(--white);
-  margin-bottom: 0.2rem;
+  margin-bottom: 0.15rem;
 }
 
-.coachLabel {
-  display: flex;
-  align-items: center;
-  gap: 0.3rem;
-  font-size: 0.8rem;
-  color: var(--white-60);
+.coach {
+  font-size: 0.75rem;
+  color: var(--white-30);
+}
+
+.viewLink {
+  font-size: 0.75rem;
+  color: var(--purple-light);
+  font-weight: 600;
+  opacity: 0.6;
+  transition: opacity 0.2s ease;
+}
+
+.viewLink:hover {
+  opacity: 1;
 }
 
 .playerCount { text-align: center; }

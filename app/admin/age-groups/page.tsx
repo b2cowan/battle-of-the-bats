@@ -14,7 +14,10 @@ export default function AgeGroupsPage() {
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [modal, setModal] = useState<ModalMode>(null);
   const [editing, setEditing] = useState<AgeGroup | null>(null);
-  const [form, setForm] = useState({ name: '', minAge: '', maxAge: '', order: '', contactId: '', capacity: '', isClosed: false });
+  const [form, setForm] = useState({ 
+    name: '', minAge: '', maxAge: '', order: '', contactId: '', 
+    capacity: '', isClosed: false, poolCount: '1', poolNames: '' 
+  });
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
   async function refresh() { 
@@ -24,7 +27,10 @@ export default function AgeGroupsPage() {
   useEffect(() => { refresh(); }, [currentTournament?.id]);
 
   function openAdd() {
-    setForm({ name: '', minAge: '', maxAge: '', order: String(groups.length + 1), contactId: '', capacity: '', isClosed: false });
+    setForm({ 
+      name: '', minAge: '', maxAge: '', order: String(groups.length + 1), 
+      contactId: '', capacity: '', isClosed: false, poolCount: '1', poolNames: '' 
+    });
     setEditing(null);
     setModal('add');
   }
@@ -33,7 +39,8 @@ export default function AgeGroupsPage() {
     setForm({ 
       name: g.name, minAge: String(g.minAge), maxAge: String(g.maxAge), 
       order: String(g.order), contactId: g.contactId || '',
-      capacity: g.capacity ? String(g.capacity) : '', isClosed: !!g.isClosed
+      capacity: g.capacity ? String(g.capacity) : '', isClosed: !!g.isClosed,
+      poolCount: String(g.poolCount || 1), poolNames: g.poolNames || ''
     });
     setEditing(g);
     setModal('edit');
@@ -50,7 +57,9 @@ export default function AgeGroupsPage() {
       order: Number(form.order),
       contactId: form.contactId || undefined,
       capacity: form.capacity ? Number(form.capacity) : undefined,
-      isClosed: form.isClosed
+      isClosed: form.isClosed,
+      poolCount: Number(form.poolCount),
+      poolNames: form.poolNames.trim() || undefined
     };
     if (modal === 'add') await saveAgeGroup(data);
     else if (editing) await updateAgeGroup(editing.id, data);
@@ -166,21 +175,31 @@ export default function AgeGroupsPage() {
               </div>
               <div className="form-row form-row-2" style={{ marginBottom: '1.5rem' }}>
                 <div className="form-group">
+                  <label className="form-label">Number of Pools</label>
+                  <input className="form-input" type="number" min="1" value={form.poolCount}
+                    onChange={e => setForm(f => ({ ...f, poolCount: e.target.value }))} />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Custom Pool Names (Optional)</label>
+                  <input className="form-input" placeholder="e.g. Gold, Silver, Bronze" value={form.poolNames}
+                    onChange={e => setForm(f => ({ ...f, poolNames: e.target.value }))} />
+                  <p className="form-help" style={{ fontSize: '0.75rem', color: 'var(--white-30)', marginTop: '0.25rem' }}>
+                    Separate names with commas. Defaults to A, B, C...
+                  </p>
+                </div>
+              </div>
+
+              <div className="form-row form-row-2" style={{ marginBottom: '1.5rem' }}>
+                <div className="form-group">
                   <label className="form-label">Capacity (Max Teams)</label>
                   <input className="form-input" type="number" placeholder="e.g. 8" value={form.capacity}
                     onChange={e => setForm(f => ({ ...f, capacity: e.target.value }))} />
-                  <p className="form-help" style={{ fontSize: '0.75rem', color: 'var(--white-30)', marginTop: '0.25rem' }}>
-                    If set, teams will automatically be waitlisted once this threshold is reached.
-                  </p>
                 </div>
                 <div className="form-group" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
                   <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', marginTop: '1rem' }}>
                     <input type="checkbox" checked={form.isClosed} onChange={e => setForm(f => ({ ...f, isClosed: e.target.checked }))} style={{ width: 16, height: 16 }} />
                     <span style={{ fontWeight: 500 }}>Close Registration</span>
                   </label>
-                  <p className="form-help" style={{ fontSize: '0.75rem', color: 'var(--white-30)', marginTop: '0.25rem', marginLeft: '1.5rem' }}>
-                    Disable public registration for this division entirely.
-                  </p>
                 </div>
               </div>
               <div className="modal-footer">

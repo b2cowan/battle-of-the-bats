@@ -71,7 +71,7 @@ export async function cloneDiamonds(targetTid: string, sourceDiamonds: Diamond[]
   await supabase.from('diamonds').insert(rows);
 }
 
-export async function initializeAgeGroups(targetTid: string, selectedDivisions: { name: string, capacity: number, poolCount: number, requiresPoolSelection: boolean }[]): Promise<void> {
+export async function initializeAgeGroups(targetTid: string, selectedDivisions: { name: string, capacity: number, poolCount: number, poolNames?: string, requiresPoolSelection: boolean }[]): Promise<void> {
   if (selectedDivisions.length === 0) return;
   
   const defaults: Record<string, { min: number, max: number, order: number }> = {
@@ -93,6 +93,7 @@ export async function initializeAgeGroups(targetTid: string, selectedDivisions: 
       is_closed: false,
       capacity: div.capacity,
       pool_count: div.poolCount,
+      pool_names: div.poolNames,
       requires_pool_selection: div.requiresPoolSelection
     };
   });
@@ -217,6 +218,7 @@ export async function getAgeGroups(tournamentId?: string): Promise<AgeGroup[]> {
     isClosed: g.is_closed,
     capacity: g.capacity,
     poolCount: g.pool_count,
+    poolNames: g.pool_names,
     requiresPoolSelection: g.requires_pool_selection
   }));
 }

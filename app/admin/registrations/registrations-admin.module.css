@@ -325,29 +325,89 @@
 
 .expandedRow {
   background: var(--black-20);
-  padding: 1rem 1rem 1rem 3.5rem;
+  padding: 1rem 1rem 1.25rem 3.5rem;
   border-top: 1px solid var(--border-1);
 }
 
 .expandedContent {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  gap: 2rem;
+  align-items: flex-start;
+  gap: 2.5rem;
 }
 
 .expandedInfo {
+  flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
-  font-size: 0.8rem;
+  gap: 1rem;
 }
 
-.expandedInfo span { color: var(--white-40); }
-.expandedInfo a { color: var(--purple-light); }
+.infoLine {
+  display: flex;
+  align-items: center;
+  font-size: 0.85rem;
+}
+
+.infoLine span { color: var(--white-40); }
+.infoLine a { color: var(--purple-light); }
+
+.notesArea {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.notesArea label, .transferGroup label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  font-weight: 800;
+  color: var(--white-20);
+  letter-spacing: 0.05em;
+}
+
+.notesArea textarea {
+  background: var(--black-20);
+  border: 1px solid var(--border-2);
+  border-radius: 6px;
+  color: var(--white-60);
+  padding: 0.75rem;
+  font-size: 0.85rem;
+  min-height: 80px;
+  width: 100%;
+  resize: vertical;
+}
+
+.notesArea textarea:focus {
+  border-color: var(--purple-light);
+  outline: none;
+}
 
 .expandedActions {
   display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  min-width: 200px;
+}
+
+.transferGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.transferGroup select {
+  background: var(--black-20);
+  border: 1px solid var(--border-2);
+  color: var(--white-80);
+  padding: 0.4rem;
+  border-radius: 4px;
+  font-size: 0.85rem;
+}
+
+.buttonGroup {
+  display: flex;
+  flex-wrap: wrap;
   gap: 0.5rem;
 }
 

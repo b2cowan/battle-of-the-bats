@@ -34,7 +34,8 @@ export interface AgeGroup {
   contactId?: string; // links to a managed Contact
   isClosed?: boolean; // if true, public registration is disabled
   capacity?: number;  // threshold for waitlist
-  poolCount?: number; // how many pools to split into
+  poolCount?: number;
+  poolNames?: string; // Comma separated
   requiresPoolSelection?: boolean; // if true, user picks pool during registration
 }
 

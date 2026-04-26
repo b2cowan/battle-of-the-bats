@@ -18,6 +18,7 @@ interface Registration {
   status: 'pending' | 'accepted' | 'rejected' | 'waitlist';
   payment_status: 'pending' | 'paid';
   registered_at: string;
+  admin_notes?: string;
 }
 
 type Status = 'pending' | 'accepted' | 'rejected' | 'waitlist';
@@ -394,28 +395,61 @@ export default function AdminRegistrationsPage() {
                       <div className={styles.expandedRow}>
                         <div className={styles.expandedContent}>
                           <div className={styles.expandedInfo}>
-                            <span>Email: <a href={`mailto:${r.email}`}>{r.email}</a></span>
-                            <span>Registered: {formatDate(r.registered_at)}</span>
+                            <div className={styles.infoLine}>
+                              <span>Email: <a href={`mailto:${r.email}`}>{r.email}</a></span>
+                              <span style={{ marginLeft: '1rem' }}>Registered: {formatDate(r.registered_at)}</span>
+                            </div>
+                            
+                            <div className={styles.notesArea}>
+                              <label>Admin Notes</label>
+                              <textarea 
+                                placeholder="Add private notes here..."
+                                defaultValue={r.admin_notes || ''}
+                                onBlur={(e) => {
+                                  if (e.target.value !== (r.admin_notes || '')) {
+                                    patch(r.id, { admin_notes: e.target.value });
+                                  }
+                                }}
+                              />
+                            </div>
                           </div>
+
                           <div className={styles.expandedActions}>
-                            {r.status === 'pending' && (
-                              <>
-                                <button className="btn btn-primary btn-xs" onClick={() => patch(r.id, { status: 'accepted' }, r)} disabled={busy}>Accept</button>
-                                <button className="btn btn-warning btn-xs" onClick={() => patch(r.id, { status: 'waitlist' }, r)} disabled={busy}>Waitlist</button>
-                                <button className="btn btn-danger btn-xs" onClick={() => patch(r.id, { status: 'rejected' }, r)} disabled={busy}>Reject</button>
-                              </>
-                            )}
-                            {r.status === 'accepted' && (
-                              <>
-                                <button className="btn btn-outline btn-xs" onClick={() => patch(r.id, { payment_status: r.payment_status === 'paid' ? 'pending' : 'paid' })} disabled={busy}>
-                                  {r.payment_status === 'paid' ? 'Mark Unpaid' : 'Mark Paid'}
-                                </button>
-                                <a href={`/teams/${r.id}`} target="_blank" rel="noreferrer" className="btn btn-ghost btn-xs">Profile ↗</a>
-                              </>
-                            )}
-                            {(r.status === 'waitlist' || r.status === 'rejected') && (
-                              <button className="btn btn-ghost btn-xs" onClick={() => patch(r.id, { status: 'pending' })} disabled={busy}>Restore</button>
-                            )}
+                            <div className={styles.transferGroup}>
+                              <label>Move to Division</label>
+                              <select 
+                                value={r.age_group_id} 
+                                onChange={(e) => patch(r.id, { 
+                                  age_group_id: e.target.value,
+                                  age_group_name: ageGroups.find(g => g.id === e.target.value)?.name || ''
+                                })}
+                              >
+                                {ageGroups.map(g => (
+                                  <option key={g.id} value={g.id}>{g.name}</option>
+                                ))}
+                              </select>
+                            </div>
+
+                            <div className={styles.buttonGroup}>
+                              {r.status === 'pending' && (
+                                <>
+                                  <button className="btn btn-primary btn-xs" onClick={() => patch(r.id, { status: 'accepted' }, r)} disabled={busy}>Accept</button>
+                                  <button className="btn btn-warning btn-xs" onClick={() => patch(r.id, { status: 'waitlist' }, r)} disabled={busy}>Waitlist</button>
+                                  <button className="btn btn-danger btn-xs" onClick={() => patch(r.id, { status: 'rejected' }, r)} disabled={busy}>Reject</button>
+                                </>
+                              )}
+                              {r.status === 'accepted' && (
+                                <>
+                                  <button className="btn btn-outline btn-xs" onClick={() => patch(r.id, { payment_status: r.payment_status === 'paid' ? 'pending' : 'paid' })} disabled={busy}>
+                                    {r.payment_status === 'paid' ? 'Mark Unpaid' : 'Mark Paid'}
+                                  </button>
+                                  <a href={`/teams/${r.id}`} target="_blank" rel="noreferrer" className="btn btn-ghost btn-xs">Profile ↗</a>
+                                </>
+                              )}
+                              {(r.status === 'waitlist' || r.status === 'rejected') && (
+                                <button className="btn btn-ghost btn-xs" onClick={() => patch(r.id, { status: 'pending' })} disabled={busy}>Restore</button>
+                              )}
+                            </div>
                           </div>
                         </div>
                       </div>

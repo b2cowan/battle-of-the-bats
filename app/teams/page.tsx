@@ -79,25 +79,51 @@ export default function TeamsPage() {
               <p>No teams registered yet.</p>
             </div>
           ) : (
-            <div className={styles.teamGrid}>
-              {filtered.map(team => (
-                <div key={team.id} className={`card ${styles.teamCard}`}>
-                  <div className={styles.teamHeader}>
-                    <div className={styles.teamAvatar}>
-                      {team.name.charAt(0).toUpperCase()}
-                    </div>
-                    <div className={styles.teamInfo}>
-                      <h3 className={styles.teamName}>{team.name}</h3>
-                      <div className={styles.teamMeta}>
-                        <span className="badge badge-purple">{getGroupName(team.ageGroupId)}</span>
-                        {team.coach && <span className={styles.coach}>Coach: {team.coach}</span>}
-                      </div>
+            <div className={styles.divisionLayout}>
+              {ageGroups.filter(g => activeGroup === 'all' || g.id === activeGroup).map(group => {
+                const groupTeams = filtered.filter(t => t.ageGroupId === group.id);
+                if (groupTeams.length === 0) return null;
+
+                // Group teams by pool
+                const pools: Record<string, Team[]> = groupTeams.reduce((acc, t) => {
+                  const p = t.pool || 'General';
+                  if (!acc[p]) acc[p] = [];
+                  acc[p].push(t);
+                  return acc;
+                }, {} as Record<string, Team[]>);
+
+                const sortedPools = Object.keys(pools).sort();
+
+                return (
+                  <div key={group.id} className={styles.groupSection}>
+                    <h2 className={styles.groupTitle}>{group.name}</h2>
+                    
+                    <div className={styles.poolGrid}>
+                      {sortedPools.map(poolName => (
+                        <div key={poolName} className={styles.poolCard}>
+                          {sortedPools.length > 1 && (
+                            <h3 className={styles.poolName}>Pool {poolName}</h3>
+                          )}
+                          <div className={styles.teamList}>
+                            {pools[poolName].map(team => (
+                              <div key={team.id} className={styles.teamRow}>
+                                <div className={styles.teamMain}>
+                                  <div className={styles.teamAvatar}>{team.name.charAt(0).toUpperCase()}</div>
+                                  <div>
+                                    <h4 className={styles.teamName}>{team.name}</h4>
+                                    {team.coach && <span className={styles.coach}>Coach: {team.coach}</span>}
+                                  </div>
+                                </div>
+                                <a href={`/teams/${team.id}`} className={styles.viewLink}>Profile →</a>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   </div>
-
-
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
