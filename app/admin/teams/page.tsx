@@ -111,17 +111,26 @@ export default function UnifiedTeamsPage() {
       // Initialize stable order if not set
       if (stableSortedIds.length === 0) {
         const initialSorted = [...merged].sort((a: any, b: any) => {
-          const aNeedsPool = a.status === 'accepted' && !a.pool;
-          const bNeedsPool = b.status === 'accepted' && !b.pool;
-          if (aNeedsPool && !bNeedsPool) return -1;
-          if (!aNeedsPool && bNeedsPool) return 1;
-          if (a.status === 'accepted' && b.status === 'accepted') {
-            if (a.pool && b.pool) return a.pool.localeCompare(b.pool);
-            if (a.pool) return -1;
-            if (b.pool) return 1;
-          }
-          const statusOrder: any = { accepted: 1, pending: 2, waitlist: 3, rejected: 4 };
+          // 1. Status (Accepted > Waitlist > Pending > Rejected)
+          const statusOrder: any = { accepted: 1, waitlist: 2, pending: 3, rejected: 4 };
           if (statusOrder[a.status] !== statusOrder[b.status]) return statusOrder[a.status] - statusOrder[b.status];
+          
+          // 2. Payment (Paid > Pending)
+          if (a.payment_status !== b.payment_status) {
+            return a.payment_status === 'paid' ? -1 : 1;
+          }
+
+          // 3. Pool (Needs Pool first, then alphabetically)
+          if (a.status === 'accepted') {
+            if (!a.poolId && b.poolId) return -1;
+            if (a.poolId && !b.poolId) return 1;
+            if (a.poolId && b.poolId) {
+              const ap = ageGroups.find(g => g.id === a.age_group_id)?.pools?.find(p => p.id === a.poolId);
+              const bp = ageGroups.find(g => g.id === b.age_group_id)?.pools?.find(p => p.id === b.poolId);
+              return (ap?.name || '').localeCompare(bp?.name || '');
+            }
+          }
+
           return new Date(b.registered_at).getTime() - new Date(a.registered_at).getTime();
         });
         setStableSortedIds(initialSorted.map((x: any) => x.id));
@@ -131,7 +140,7 @@ export default function UnifiedTeamsPage() {
     } finally {
       setLoading(false);
     }
-  }, [currentTournament?.id, stableSortedIds.length, ageGroups.length]);
+  }, [currentTournament?.id, stableSortedIds.length, ageGroups]);
 
   useEffect(() => { load(); loadAgeGroups(); }, [load, loadAgeGroups]);
 

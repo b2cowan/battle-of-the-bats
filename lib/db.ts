@@ -104,18 +104,27 @@ export async function initializeAgeGroups(targetTid: string, selectedDivisions: 
     throw error;
   }
 
-  // Create real pool records for each group
-  if (groups) {
+  // 3. Create real pool records for each group (Batch)
+  if (groups && groups.length > 0) {
+    const poolRows: any[] = [];
     for (const g of groups) {
       const pCount = g.pool_count || 1;
-      const names = (g.pool_names || '').split(',').map((n: string) => n.trim());
+      const names = (g.pool_names || '').split(',').map((n: string) => n.trim()).filter(Boolean);
       for (let i = 0; i < pCount; i++) {
         const name = names[i] || String.fromCharCode(65 + i);
-        await supabase.from('pools').insert({
+        poolRows.push({
           age_group_id: g.id,
-          name,
+          name: name.startsWith('Pool ') ? name.replace('Pool ', '') : name, // Normalize: store 'A' instead of 'Pool A'
           display_order: i
         });
+      }
+    }
+
+    if (poolRows.length > 0) {
+      const { error: poolError } = await supabase.from('pools').insert(poolRows);
+      if (poolError) {
+        console.error('Pool initialization error:', poolError);
+        throw poolError;
       }
     }
   }
