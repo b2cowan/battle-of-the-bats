@@ -173,20 +173,40 @@ export default function AgeGroupsPage() {
                     onChange={e => setForm(f => ({ ...f, maxAge: e.target.value }))} required />
                 </div>
               </div>
-              <div className="form-row form-row-2" style={{ marginBottom: '1.5rem' }}>
-                <div className="form-group">
-                  <label className="form-label">Number of Pools</label>
-                  <input className="form-input" type="number" min="1" value={form.poolCount}
-                    onChange={e => setForm(f => ({ ...f, poolCount: e.target.value }))} />
+              <div className="form-group" style={{ marginBottom: '1.5rem' }}>
+                <label className="form-label">Number of Pools</label>
+                <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
+                  <input className="form-input" type="number" min="1" max="10" value={form.poolCount}
+                    onChange={e => setForm(f => ({ ...f, poolCount: e.target.value }))} style={{ width: '80px' }} />
+                  
+                  <div style={{ flex: 1, display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '0.5rem' }}>
+                    {Array.from({ length: Number(form.poolCount) || 1 }).map((_, i) => {
+                      const names = form.poolNames.split(',').map(n => n.trim());
+                      const currentName = names[i] || '';
+                      const defaultChar = String.fromCharCode(65 + i);
+                      
+                      return (
+                        <div key={i} className="form-group">
+                          <label className="form-label" style={{ fontSize: '0.65rem' }}>Pool {defaultChar} Name</label>
+                          <input 
+                            className="form-input" 
+                            placeholder={`Pool ${defaultChar}`}
+                            value={currentName}
+                            onChange={e => {
+                              const newNames = [...names];
+                              while (newNames.length < (i + 1)) newNames.push('');
+                              newNames[i] = e.target.value;
+                              setForm(f => ({ ...f, poolNames: newNames.join(',') }));
+                            }}
+                          />
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
-                <div className="form-group">
-                  <label className="form-label">Custom Pool Names (Optional)</label>
-                  <input className="form-input" placeholder="e.g. Gold, Silver, Bronze" value={form.poolNames}
-                    onChange={e => setForm(f => ({ ...f, poolNames: e.target.value }))} />
-                  <p className="form-help" style={{ fontSize: '0.75rem', color: 'var(--white-30)', marginTop: '0.25rem' }}>
-                    Separate names with commas. Defaults to A, B, C...
-                  </p>
-                </div>
+                <p className="form-help" style={{ fontSize: '0.75rem', color: 'var(--white-30)', marginTop: '0.5rem' }}>
+                  Leave blank to use default (Pool A, Pool B, etc.)
+                </p>
               </div>
 
               <div className="form-row form-row-2" style={{ marginBottom: '1.5rem' }}>

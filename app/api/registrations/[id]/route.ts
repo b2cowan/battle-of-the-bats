@@ -10,7 +10,7 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ id: str
   try {
     const { id } = await props.params;
     const body = await req.json();
-    const { status, payment_status } = body;
+    const { status, payment_status, admin_notes, age_group_id, age_group_name } = body;
 
     // Fetch current record
     const { data: current, error: fetchErr } = await supabase
@@ -21,10 +21,16 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ id: str
 
     if (fetchErr || !current) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
-    // Build update payload
-    const updates: Record<string, string> = {};
-    if (status)         updates.status         = status;
-    if (payment_status) updates.payment_status = payment_status;
+    // Build update payload - only add fields that are provided
+    const updates: any = {};
+    if (status !== undefined)         updates.status         = status;
+    if (payment_status !== undefined) updates.payment_status = payment_status;
+    if (admin_notes !== undefined)    updates.admin_notes    = admin_notes;
+    if (age_group_id !== undefined)   updates.age_group_id   = age_group_id;
+    if (age_group_name !== undefined) updates.age_group_name = age_group_name;
+
+    // If no updates provided, just return success
+    if (Object.keys(updates).length === 0) return NextResponse.json({ ok: true });
 
     const { data: updatedRow, error: updateErr } = await supabase
       .from('registrations')

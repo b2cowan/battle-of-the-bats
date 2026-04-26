@@ -252,7 +252,33 @@ export default function UnifiedTeamsPage() {
                   {capacity > 0 && <span className={accepted >= capacity ? styles.fullBadge : styles.capacityBadge}>{accepted}/{capacity}</span>}
                 </div>
                 <div className={styles.summaryStats}>
-                  <span>{groupRegs.filter(r => r.status === 'pending').length} Pending • {groupRegs.filter(r => r.status === 'waitlist').length} Waitlist</span>
+                  <div style={{ marginBottom: '0.25rem' }}>{groupRegs.filter(r => r.status === 'pending').length} Pending • {groupRegs.filter(r => r.status === 'waitlist').length} Waitlist</div>
+                  <div className={styles.poolBreakdown}>
+                    {(() => {
+                      if (!g.poolCount || g.poolCount <= 0) return null;
+                      const names = g.poolNames ? g.poolNames.split(',').map(n => n.trim()) : [];
+                      const unassigned = groupRegs.filter(r => r.status === 'accepted' && !r.pool).length;
+                      
+                      return (
+                        <>
+                          {Array.from({ length: g.poolCount }).map((_, i) => {
+                            const name = names[i] || String.fromCharCode(65 + i);
+                            const count = groupRegs.filter(r => r.pool === name).length;
+                            return (
+                              <span key={name} className={styles.poolStatBadge}>
+                                {name}: <strong>{count}</strong>
+                              </span>
+                            );
+                          })}
+                          {unassigned > 0 && (
+                            <span className={styles.poolStatBadge} style={{ color: 'var(--danger-light)', background: 'var(--danger-faint)' }}>
+                              Unassigned: <strong>{unassigned}</strong>
+                            </span>
+                          )}
+                        </>
+                      );
+                    })()}
+                  </div>
                 </div>
               </div>
             );
@@ -274,6 +300,7 @@ export default function UnifiedTeamsPage() {
                 <div style={{ width: 40 }} />
                 <div style={{ flex: 2 }}>Team Name</div>
                 <div style={{ flex: 1.5 }}>Coach</div>
+                <div style={{ flex: 1 }}>Pool</div>
                 <div style={{ width: 100 }}>Status</div>
                 <div style={{ width: 100 }}>Payment</div>
                 <div style={{ width: 80 }} />
@@ -287,6 +314,17 @@ export default function UnifiedTeamsPage() {
                       <div style={{ width: 40, textAlign: 'center' }}><input type="checkbox" checked={selectedIds.has(r.id)} onChange={() => setSelectedIds(prev => { const n = new Set(prev); n.has(r.id) ? n.delete(r.id) : n.add(r.id); return n; })} /></div>
                       <div style={{ flex: 2 }} className={styles.primaryCell}><strong>{r.team_name}</strong></div>
                       <div style={{ flex: 1.5 }} className={styles.secondaryCell}>{r.coach_name}</div>
+                      
+                      <div style={{ flex: 1 }}>
+                        {r.status === 'accepted' ? (
+                          r.pool ? (
+                            <span className="badge badge-purple" style={{ opacity: 0.8 }}>Pool {r.pool}</span>
+                          ) : (
+                            <span className="badge badge-danger" style={{ fontSize: '0.65rem' }}>Needs Pool</span>
+                          )
+                        ) : '-'}
+                      </div>
+
                       <div style={{ width: 100 }}>
                         <span className={`badge badge-${r.status === 'accepted' ? 'success' : r.status === 'rejected' ? 'danger' : 'warning'}`}>{r.status}</span>
                       </div>

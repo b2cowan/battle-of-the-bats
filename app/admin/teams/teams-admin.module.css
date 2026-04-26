@@ -84,6 +84,26 @@
 
 .summaryStats { font-size: 0.8rem; color: var(--white-30); }
 
+.poolBreakdown {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.5rem;
+}
+
+.poolStatBadge {
+  font-size: 0.65rem;
+  background: var(--white-5);
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+  color: var(--white-40);
+  border: 1px solid var(--border-1);
+}
+
+.poolStatBadge strong {
+  color: var(--white);
+}
+
 .compactList { display: flex; flex-direction: column; gap: 2.5rem; }
 
 .groupSection {
