@@ -40,6 +40,7 @@ export default function UnifiedTeamsPage() {
   const [showSummary, setShowSummary] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
   const [addForm, setAddForm] = useState({ name: '', coach: '', email: '', ageGroupId: '', pool: '' });
+  const [stableSortedIds, setStableSortedIds] = useState<string[]>([]);
 
   const loadAgeGroups = useCallback(async () => {
     if (currentTournament) {
@@ -71,12 +72,31 @@ export default function UnifiedTeamsPage() {
       }));
 
       setRegs(merged);
+
+      // Initialize stable order if not set
+      if (stableSortedIds.length === 0) {
+        const initialSorted = [...merged].sort((a: any, b: any) => {
+          const aNeedsPool = a.status === 'accepted' && !a.pool;
+          const bNeedsPool = b.status === 'accepted' && !b.pool;
+          if (aNeedsPool && !bNeedsPool) return -1;
+          if (!aNeedsPool && bNeedsPool) return 1;
+          if (a.status === 'accepted' && b.status === 'accepted') {
+            if (a.pool && b.pool) return a.pool.localeCompare(b.pool);
+            if (a.pool) return -1;
+            if (b.pool) return 1;
+          }
+          const statusOrder: any = { accepted: 1, pending: 2, waitlist: 3, rejected: 4 };
+          if (statusOrder[a.status] !== statusOrder[b.status]) return statusOrder[a.status] - statusOrder[b.status];
+          return new Date(b.registered_at).getTime() - new Date(a.registered_at).getTime();
+        });
+        setStableSortedIds(initialSorted.map((x: any) => x.id));
+      }
     } catch (e: any) {
       setErrorMsg(e.message);
     } finally {
       setLoading(false);
     }
-  }, [currentTournament?.id]);
+  }, [currentTournament?.id, stableSortedIds.length]);
 
   useEffect(() => { load(); loadAgeGroups(); }, [load, loadAgeGroups]);
 
@@ -182,29 +202,16 @@ export default function UnifiedTeamsPage() {
     return matchesStatus && matchesDivision && matchesSearch;
   });
 
-  const sorted = [...filtered].sort((a, b) => {
-    // 1. Priority: Accepted teams without a pool (Needs Assignment)
-    const aNeedsPool = a.status === 'accepted' && !a.pool;
-    const bNeedsPool = b.status === 'accepted' && !b.pool;
-    if (aNeedsPool && !bNeedsPool) return -1;
-    if (!aNeedsPool && bNeedsPool) return 1;
+  // Use the stable order for rendering
+  const sorted = stableSortedIds
+    .map(id => filtered.find(r => r.id === id))
+    .filter(Boolean) as Registration[];
 
-    // 2. Secondary: Group by Pool Name for accepted teams
-    if (a.status === 'accepted' && b.status === 'accepted') {
-      if (a.pool && b.pool) return a.pool.localeCompare(b.pool);
-      if (a.pool) return -1;
-      if (b.pool) return 1;
-    }
+  // Add any new teams (that weren't in the stable order yet)
+  const newTeams = filtered.filter(r => !stableSortedIds.includes(r.id));
+  const finalDisplay = [...sorted, ...newTeams];
 
-    // 3. Tertiary: Status order
-    const statusOrder: Record<Status, number> = { accepted: 1, pending: 2, waitlist: 3, rejected: 4 };
-    if (statusOrder[a.status] !== statusOrder[b.status]) return statusOrder[a.status] - statusOrder[b.status];
-    
-    // 4. Final: Registration date
-    return new Date(b.registered_at).getTime() - new Date(a.registered_at).getTime();
-  });
-
-  const grouped = sorted.reduce((acc, r) => {
+  const grouped = finalDisplay.reduce((acc, r) => {
     if (!acc[r.age_group_name]) acc[r.age_group_name] = [];
     acc[r.age_group_name].push(r);
     return acc;
@@ -316,7 +323,10 @@ export default function UnifiedTeamsPage() {
                 <div style={{ width: 40 }} />
                 <div style={{ flex: 2 }}>Team Name</div>
                 <div style={{ flex: 1.5 }}>Coach</div>
-                <div style={{ flex: 1 }}>Pool</div>
+                {(() => {
+                  const g = ageGroups.find(x => x.name === ageGroup);
+                  return (g?.poolCount || 0) > 1 && <div style={{ flex: 1 }}>Pool</div>;
+                })()}
                 <div style={{ width: 100 }}>Status</div>
                 <div style={{ width: 100 }}>Payment</div>
                 <div style={{ width: 80 }} />
@@ -331,15 +341,21 @@ export default function UnifiedTeamsPage() {
                       <div style={{ flex: 2 }} className={styles.primaryCell}><strong>{r.team_name}</strong></div>
                       <div style={{ flex: 1.5 }} className={styles.secondaryCell}>{r.coach_name}</div>
                       
-                      <div style={{ flex: 1 }}>
-                        {r.status === 'accepted' ? (
-                          r.pool ? (
-                            <span className="badge badge-purple" style={{ opacity: 0.8 }}>Pool {r.pool}</span>
-                          ) : (
-                            <span className="badge badge-danger" style={{ fontSize: '0.65rem' }}>Needs Pool</span>
-                          )
-                        ) : '-'}
-                      </div>
+                      {(() => {
+                        const g = ageGroups.find(x => x.id === r.age_group_id);
+                        if (!g || (g.poolCount || 0) <= 1) return null;
+                        return (
+                          <div style={{ flex: 1 }}>
+                            {r.status === 'accepted' ? (
+                              r.pool ? (
+                                <span className="badge badge-purple" style={{ opacity: 0.8 }}>Pool {r.pool}</span>
+                              ) : (
+                                <span className="badge badge-danger" style={{ fontSize: '0.65rem' }}>Needs Pool</span>
+                              )
+                            ) : '-'}
+                          </div>
+                        );
+                      })()}
 
                       <div style={{ width: 100 }}>
                         <span className={`badge badge-${r.status === 'accepted' ? 'success' : r.status === 'rejected' ? 'danger' : 'warning'}`}>{r.status}</span>
@@ -355,21 +371,25 @@ export default function UnifiedTeamsPage() {
                             <div className={styles.notesArea}><label>Admin Notes</label><textarea placeholder="Private notes..." defaultValue={r.admin_notes} onBlur={e => e.target.value !== r.admin_notes && patch(r.id, { admin_notes: e.target.value })} /></div>
                           </div>
                           <div className={styles.expandedActions}>
-                            <div className={styles.transferGroup}><label>Pool Assignment</label>
-                              <select value={r.pool || ''} onChange={e => patch(r.id, { pool: e.target.value })}>
-                                <option value="" style={{ background: '#111', color: '#fff' }}>No Pool</option>
-                                {(() => {
-                                  const g = ageGroups.find(x => x.id === r.age_group_id);
-                                  const pCount = Number(g?.poolCount || 0);
-                                  if (!g || pCount <= 0) return null;
-                                  const names = g.poolNames ? g.poolNames.split(',').map(n => n.trim()) : [];
-                                  return Array.from({ length: pCount }).map((_, i) => {
-                                    const v = names[i] || String.fromCharCode(65 + i);
-                                    return <option key={v} value={v} style={{ background: '#111', color: '#fff' }}>Pool {v}</option>;
-                                  });
-                                })()}
-                              </select>
-                            </div>
+                            {(() => {
+                              const g = ageGroups.find(x => x.id === r.age_group_id);
+                              if (!g || (g.poolCount || 0) <= 1) return null;
+                              return (
+                                <div className={styles.transferGroup}><label>Pool Assignment</label>
+                                  <select value={r.pool || ''} onChange={e => patch(r.id, { pool: e.target.value })}>
+                                    <option value="" style={{ background: '#111', color: '#fff' }}>No Pool</option>
+                                    {(() => {
+                                      const pCount = Number(g.poolCount || 0);
+                                      const names = g.poolNames ? g.poolNames.split(',').map(n => n.trim()) : [];
+                                      return Array.from({ length: pCount }).map((_, i) => {
+                                        const v = names[i] || String.fromCharCode(65 + i);
+                                        return <option key={v} value={v} style={{ background: '#111', color: '#fff' }}>Pool {v}</option>;
+                                      });
+                                    })()}
+                                  </select>
+                                </div>
+                              );
+                            })()}
                             <div className={styles.buttonGroup}>
                               {r.status === 'pending' && <><button className="btn btn-primary btn-xs" onClick={() => patch(r.id, { status: 'accepted' }, r)} disabled={busy}>Accept</button><button className="btn btn-danger btn-xs" onClick={() => patch(r.id, { status: 'rejected' }, r)} disabled={busy}>Reject</button></>}
                               {r.status === 'accepted' && <><button className="btn btn-outline btn-xs" onClick={() => patch(r.id, { payment_status: r.payment_status === 'paid' ? 'pending' : 'paid' })} disabled={busy}>{r.payment_status === 'paid' ? 'Unpay' : 'Pay'}</button><a href={`/teams/${r.id}`} target="_blank" className="btn btn-ghost btn-xs">Profile ↗</a></>}
