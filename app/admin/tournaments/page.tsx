@@ -41,6 +41,9 @@ export default function AdminTournamentsPage() {
   const [divisionRequiresPool, setDivisionRequiresPool] = useState<Record<string, boolean>>({
     'U11': false, 'U13': false, 'U15': false, 'U17': false, 'U19': false
   });
+  const [divisionPoolNames, setDivisionPoolNames] = useState<Record<string, string[]>>({
+    'U11': ['Pool A'], 'U13': ['Pool A'], 'U15': ['Pool A'], 'U17': ['Pool A'], 'U19': ['Pool A']
+  });
   const [useWelcomeMsg, setUseWelcomeMsg]           = useState(true);
   const [welcomeMsg, setWelcomeMsg]                 = useState('Welcome to the Battle of the Bats tournament! We are excited to have you join us for another great season of competitive youth softball.');
   const [seedData, setSeedData]                     = useState({
@@ -150,6 +153,7 @@ export default function AdminTournamentsPage() {
                 name,
                 capacity: divisionCapacities[name] || 8,
                 poolCount: divisionPools[name] || 1,
+                poolNames: (divisionPoolNames[name] || []).join(','),
                 requiresPoolSelection: divisionRequiresPool[name] || false
               }));
               await initializeAgeGroups(tid, divs);
@@ -225,6 +229,19 @@ export default function AdminTournamentsPage() {
 
   function updatePools(name: string, count: number) {
     setDivisionPools(prev => ({ ...prev, [name]: count }));
+    setDivisionPoolNames(prev => {
+      const existing = prev[name] || [];
+      const next = Array.from({ length: count }).map((_, i) => existing[i] || `Pool ${String.fromCharCode(65 + i)}`);
+      return { ...prev, [name]: next };
+    });
+  }
+
+  function updatePoolName(divName: string, poolIdx: number, newName: string) {
+    setDivisionPoolNames(prev => {
+      const next = [...(prev[divName] || [])];
+      next[poolIdx] = newName;
+      return { ...prev, [divName]: next };
+    });
   }
 
   function updateRequiresPool(name: string, req: boolean) {
@@ -500,14 +517,29 @@ export default function AdminTournamentsPage() {
                                 </div>
                               </div>
                               {divisionPools[div] > 1 && (
-                                <div className={styles.subCheck}>
-                                  <label>User Selects Pool:</label>
-                                  <input 
-                                    type="checkbox" 
-                                    checked={divisionRequiresPool[div] || false}
-                                    onChange={e => updateRequiresPool(div, e.target.checked)}
-                                  />
-                                </div>
+                                <>
+                                  <div className={styles.subCheck}>
+                                    <label>User Selects Pool:</label>
+                                    <input 
+                                      type="checkbox" 
+                                      checked={divisionRequiresPool[div] || false}
+                                      onChange={e => updateRequiresPool(div, e.target.checked)}
+                                    />
+                                  </div>
+                                  <div className={styles.poolNamesList}>
+                                    {Array.from({ length: divisionPools[div] }).map((_, i) => (
+                                      <div key={i} className={styles.poolNameItem}>
+                                        <label>{String.fromCharCode(65 + i)} Name:</label>
+                                        <input 
+                                          className="form-input" 
+                                          value={divisionPoolNames[div]?.[i] || ''} 
+                                          onChange={e => updatePoolName(div, i, e.target.value)}
+                                          placeholder={`e.g. Gold`}
+                                        />
+                                      </div>
+                                    ))}
+                                  </div>
+                                </>
                               )}
                             </div>
                           )}

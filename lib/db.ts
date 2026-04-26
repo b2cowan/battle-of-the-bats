@@ -98,10 +98,26 @@ export async function initializeAgeGroups(targetTid: string, selectedDivisions: 
     };
   });
   
-  const { error } = await supabase.from('age_groups').insert(rows);
+  const { data: groups, error } = await supabase.from('age_groups').insert(rows).select();
   if (error) {
     console.error('initializeAgeGroups error:', error);
     throw error;
+  }
+
+  // Create real pool records for each group
+  if (groups) {
+    for (const g of groups) {
+      const pCount = g.pool_count || 1;
+      const names = (g.pool_names || '').split(',').map((n: string) => n.trim());
+      for (let i = 0; i < pCount; i++) {
+        const name = names[i] || String.fromCharCode(65 + i);
+        await supabase.from('pools').insert({
+          age_group_id: g.id,
+          name,
+          display_order: i
+        });
+      }
+    }
   }
 }
 
