@@ -14,19 +14,50 @@ interface Registration {
   status: 'pending' | 'accepted' | 'rejected';
   payment_status: 'pending' | 'paid';
   registered_at: string;
+  pool?: string;
+}
+
+interface Game {
+  id: string;
+  home_team_name: string;
+  away_team_name: string;
+  home_score: number | null;
+  away_score: number | null;
+  date: string;
+  time: string;
+  location: string;
+  status: string;
 }
 
 export default function TeamProfilePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const [reg, setReg]       = useState<Registration | null>(null);
+  const [games, setGames]   = useState<Game[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError]   = useState('');
 
   useEffect(() => {
-    fetch(`/api/registrations/${id}`)
-      .then(r => r.ok ? r.json() : Promise.reject('Not found'))
-      .then(data => { setReg(data); setLoading(false); })
-      .catch(() => { setError('Team not found.'); setLoading(false); });
+    async function load() {
+      try {
+        const [rRes, gRes] = await Promise.all([
+          fetch(`/api/registrations/${id}`),
+          fetch(`/api/public/stats?teamId=${id}`)
+        ]);
+        
+        if (!rRes.ok) throw new Error('Not found');
+        
+        const rData = await rRes.json();
+        const gData = await gRes.json();
+        
+        setReg(rData);
+        setGames(gData.games || []);
+      } catch (e: any) {
+        setError('Team not found.');
+      } finally {
+        setLoading(false);
+      }
+    }
+    load();
   }, [id]);
 
   if (loading) return (
@@ -45,104 +76,124 @@ export default function TeamProfilePage({ params }: { params: Promise<{ id: stri
     </div>
   );
 
-  const isPending  = reg.status === 'pending';
-  const isAccepted = reg.status === 'accepted';
-  const isRejected = reg.status === 'rejected';
-  const paymentDue = isAccepted && reg.payment_status === 'pending';
-  const paid       = isAccepted && reg.payment_status === 'paid';
+  const stats = games.reduce((acc, g) => {
+    if (g.home_score === null || g.away_score === null) return acc;
+    const isHome = g.home_team_name === reg.team_name;
+    const myScore = isHome ? g.home_score : g.away_score;
+    const oppScore = isHome ? g.away_score : g.home_score;
+    
+    if (myScore > oppScore) acc.w++;
+    else if (myScore < oppScore) acc.l++;
+    else acc.t++;
+    
+    acc.ra += oppScore;
+    return acc;
+  }, { w: 0, l: 0, t: 0, ra: 0 });
 
   return (
     <div className="page-content">
       <div className={styles.pageHeader}>
         <div className="container">
-          <span className="eyebrow"><Users size={12} /> Team Profile</span>
+          <div className="flex items-center gap-2 mb-4">
+            <span className="badge badge-purple">{reg.age_group_name}</span>
+            {reg.pool && <span className="badge">Pool {reg.pool}</span>}
+          </div>
           <h1 className="display-lg">{reg.team_name}</h1>
-          <p className="text-muted">{reg.tournament_name} — {reg.age_group_name}</p>
+          <p className="text-muted">{reg.tournament_name}</p>
         </div>
       </div>
 
       <div className="section">
         <div className="container">
-          <div className={styles.profileWrap}>
-
-            {/* Status Banner */}
-            {isPending && (
-              <div className={`${styles.banner} ${styles.bannerPending}`}>
-                <Clock size={20} />
-                <div>
-                  <strong>Registration Pending Review</strong>
-                  <p>Your registration has been received and is awaiting approval from the tournament coordinator. You'll receive an email when your status is updated.</p>
+          <div className={styles.profileLayout}>
+            
+            {/* Stats Sidebar */}
+            <div className={styles.statsSidebar}>
+              <div className={`card ${styles.statsCard}`}>
+                <h3 className={styles.cardTitle}>Record</h3>
+                <div className={styles.recordDisplay}>
+                  <div className={styles.recordMain}>{stats.w}-{stats.l}-{stats.t}</div>
+                  <div className={styles.recordSub}>{stats.ra} Runs Allowed</div>
                 </div>
               </div>
-            )}
 
-            {paymentDue && (
-              <div className={`${styles.banner} ${styles.bannerPayment}`}>
-                <CreditCard size={20} style={{ flexShrink: 0, marginTop: 2 }} />
-                <div>
-                  <strong>Payment Required to Secure Your Spot</strong>
-                  <p>Your team has been accepted! Please send your registration fee via <strong>Interac E-Transfer</strong> to confirm your spot:</p>
-                  <div className={styles.paymentDetails}>
-                    <div className={styles.paymentRow}><span>Send to:</span><strong>b2cowan@gmail.com</strong></div>
-                    <div className={styles.paymentRow}><span>Message:</span><strong>{reg.team_name} — {reg.age_group_name} — {reg.tournament_name}</strong></div>
+              <div className={`card ${styles.infoCard}`}>
+                <h3 className={styles.cardTitle}>Information</h3>
+                <div className={styles.infoList}>
+                  <div className={styles.infoItem}>
+                    <label>Coach</label>
+                    <strong>{reg.coach_name}</strong>
                   </div>
-                  <p className={styles.paymentNote}>Your registration will be fully confirmed once payment is received.</p>
-                </div>
-              </div>
-            )}
-
-            {paid && (
-              <div className={`${styles.banner} ${styles.bannerSuccess}`}>
-                <CheckCircle size={20} />
-                <div>
-                  <strong>Registration Complete!</strong>
-                  <p>Your payment has been received and your team is fully registered for {reg.tournament_name}. We'll see you on the diamond!</p>
-                </div>
-              </div>
-            )}
-
-            {isRejected && (
-              <div className={`${styles.banner} ${styles.bannerRejected}`}>
-                <AlertTriangle size={20} />
-                <div>
-                  <strong>Registration Not Accepted</strong>
-                  <p>Unfortunately we were unable to accommodate your team in this tournament. Please contact us at <a href="mailto:b2cowan@gmail.com">b2cowan@gmail.com</a> for more information.</p>
-                </div>
-              </div>
-            )}
-
-            {/* Team Info Card */}
-            <div className={`card ${styles.infoCard}`}>
-              <h3 className={styles.infoTitle}>Registration Details</h3>
-              <div className={styles.infoGrid}>
-                <div className={styles.infoItem}><span className={styles.infoLabel}>Team</span><span className={styles.infoValue}>{reg.team_name}</span></div>
-                <div className={styles.infoItem}><span className={styles.infoLabel}>Coach</span><span className={styles.infoValue}>{reg.coach_name}</span></div>
-                <div className={styles.infoItem}><span className={styles.infoLabel}>Division</span><span className={styles.infoValue}><span className="badge badge-purple">{reg.age_group_name}</span></span></div>
-                <div className={styles.infoItem}><span className={styles.infoLabel}>Tournament</span><span className={styles.infoValue}>{reg.tournament_name}</span></div>
-                <div className={styles.infoItem}><span className={styles.infoLabel}>Status</span>
-                  <span className={styles.infoValue}>
-                    {isPending  && <span className="badge badge-warning">Pending</span>}
-                    {isAccepted && <span className="badge badge-success">Accepted</span>}
-                    {isRejected && <span className="badge badge-danger">Not Accepted</span>}
-                  </span>
-                </div>
-                {isAccepted && (
-                  <div className={styles.infoItem}><span className={styles.infoLabel}>Payment</span>
-                    <span className={styles.infoValue}>
-                      {paid      ? <span className="badge badge-success">Paid ✓</span>
-                                 : <span className="badge badge-warning">Pending</span>}
-                    </span>
+                  <div className={styles.infoItem}>
+                    <label>Division</label>
+                    <strong>{reg.age_group_name}</strong>
                   </div>
-                )}
-                <div className={styles.infoItem}><span className={styles.infoLabel}>Registered</span>
-                  <span className={styles.infoValue}>{new Date(reg.registered_at).toLocaleDateString('en-CA', { month: 'long', day: 'numeric', year: 'numeric' })}</span>
+                  {reg.pool && (
+                    <div className={styles.infoItem}>
+                      <label>Pool</label>
+                      <strong>{reg.pool}</strong>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
 
-            <div className={styles.contactNote}>
-              <Mail size={14} />
-              <span>Questions about your registration? Email <a href="mailto:b2cowan@gmail.com">b2cowan@gmail.com</a></span>
+            {/* Schedule & Results */}
+            <div className={styles.mainContent}>
+              <div className={`card ${styles.scheduleCard}`}>
+                <h3 className={styles.cardTitle}>Schedule & Results</h3>
+                {games.length === 0 ? (
+                  <div className={styles.emptyGames}>
+                    <Clock size={32} style={{ opacity: 0.3 }} />
+                    <p>No games scheduled yet.</p>
+                  </div>
+                ) : (
+                  <div className={styles.gameList}>
+                    {games.map(g => {
+                      const isHome = g.home_team_name === reg.team_name;
+                      const opponent = isHome ? g.away_team_name : g.home_team_name;
+                      const hasResult = g.home_score !== null;
+                      const myScore = isHome ? g.home_score : g.away_score;
+                      const oppScore = isHome ? g.away_score : g.home_score;
+                      const won = hasResult && myScore! > oppScore!;
+                      const lost = hasResult && myScore! < oppScore!;
+                      const tied = hasResult && myScore! === oppScore!;
+
+                      return (
+                        <div key={g.id} className={styles.gameRow}>
+                          <div className={styles.gameDate}>
+                            <strong>{new Date(g.date + 'T12:00:00').toLocaleDateString('en-CA', { month: 'short', day: 'numeric' })}</strong>
+                            <span>{g.time}</span>
+                          </div>
+                          
+                          <div className={styles.gameMatchup}>
+                            <div className={styles.opponentWrap}>
+                              <span className={styles.vs}>{isHome ? 'vs' : 'at'}</span>
+                              <span className={styles.opponentName}>{opponent}</span>
+                            </div>
+                            <div className={styles.location}>
+                              <MapPin size={12} /> {g.location}
+                            </div>
+                          </div>
+
+                          <div className={styles.gameResult}>
+                            {hasResult ? (
+                              <div className={styles.resultBadge}>
+                                <span className={won ? styles.resW : lost ? styles.resL : styles.resT}>
+                                  {won ? 'W' : lost ? 'L' : 'T'}
+                                </span>
+                                <strong>{myScore} - {oppScore}</strong>
+                              </div>
+                            ) : (
+                              <span className={styles.upcomingBadge}>Upcoming</span>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>

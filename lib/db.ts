@@ -299,6 +299,11 @@ export async function updateTeam(id: string, t: Partial<Team>): Promise<void> {
   await supabase.from('teams').update(updates).eq('id', id);
 }
 
+export async function saveRegistration(r: any): Promise<void> {
+  const { error } = await supabase.from('registrations').insert(r);
+  if (error) throw error;
+}
+
 export async function deleteTeam(id: string): Promise<void> {
   await supabase.from('teams').delete().eq('id', id);
 }

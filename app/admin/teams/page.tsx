@@ -1,207 +1,354 @@
 'use client';
-import { useState, useEffect } from 'react';
-import { Users, Plus, Pencil, Trash2, X, Check, UserPlus, UserMinus, Download } from 'lucide-react';
-import { getTeams, saveTeam, updateTeam, deleteTeam, getAgeGroups } from '@/lib/db';
+import { useState, useEffect, useCallback } from 'react';
+import { Users, Check, X, CreditCard, RefreshCw, Mail, ChevronDown, ChevronUp, AlertCircle, Download, Plus, Trash2, MapPin } from 'lucide-react';
+import { saveTeam, updateTeam, deleteTeam, getTeams, getAgeGroups, saveRegistration } from '@/lib/db';
 import { downloadCSV } from '@/lib/utils';
 import { useTournament } from '@/lib/tournament-context';
-import { Team, AgeGroup } from '@/lib/types';
+import { AgeGroup, Team } from '@/lib/types';
 import styles from './teams-admin.module.css';
 
-type ModalMode = 'add' | 'edit' | null;
+interface Registration {
+  id: string;
+  team_name: string;
+  coach_name: string;
+  email: string;
+  age_group_id: string;
+  age_group_name: string;
+  tournament_name: string;
+  status: 'pending' | 'accepted' | 'rejected' | 'waitlist';
+  payment_status: 'pending' | 'paid';
+  registered_at: string;
+  admin_notes?: string;
+  pool?: string;
+}
 
+type Status = 'pending' | 'accepted' | 'rejected' | 'waitlist';
 
-
-export default function AdminTeamsPage() {
+export default function UnifiedTeamsPage() {
   const { currentTournament } = useTournament();
-  const [teams, setTeams]       = useState<Team[]>([]);
+  const [regs, setRegs]       = useState<Registration[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedStatuses, setSelectedStatuses] = useState<Status[]>(['pending', 'accepted', 'waitlist']);
+  const [search, setSearch]   = useState('');
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [ageGroups, setAgeGroups] = useState<AgeGroup[]>([]);
-  const [modal, setModal]       = useState<ModalMode>(null);
-  const [editing, setEditing]   = useState<Team | null>(null);
-  const [deleteId, setDeleteId] = useState<string | null>(null);
-  const [filterGroup, setFilterGroup] = useState<string>('all');
-  const [form, setForm] = useState({ name: '', coach: '', email: '', ageGroupId: '', pool: '' });
+  const [selectedAgeGroupId, setSelectedAgeGroupId] = useState<string>('all');
+  const [working, setWorking] = useState<string | null>(null);
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [bulkWorking, setBulkWorking] = useState(false);
+  const [showSummary, setShowSummary] = useState(true);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [addForm, setAddForm] = useState({ name: '', coach: '', email: '', ageGroupId: '', pool: '' });
 
-  async function refresh() {
-    setTeams(await getTeams(currentTournament?.id));
-    const gs = await getAgeGroups(currentTournament?.id);
-    setAgeGroups(gs);
-    if (gs.length && !form.ageGroupId) setForm(f => ({ ...f, ageGroupId: gs[0].id }));
+  const loadAgeGroups = useCallback(async () => {
+    if (currentTournament) {
+      const groups = await getAgeGroups(currentTournament.id);
+      setAgeGroups(groups);
+      if (groups.length && !addForm.ageGroupId) setAddForm(f => ({ ...f, ageGroupId: groups[0].id }));
+    }
+  }, [currentTournament, addForm.ageGroupId]);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    setErrorMsg(null);
+    try {
+      // Fetch registrations and teams to merge them
+      const [rRes, tRes] = await Promise.all([
+        fetch('/api/registrations'),
+        getTeams(currentTournament?.id)
+      ]);
+      
+      const rData = await rRes.json();
+      if (!rRes.ok) throw new Error(rData.error || 'Failed to load data');
+
+      // Create a map of team data (pools) by ID
+      const teamMap = new Map(tRes.map(t => [t.id, t]));
+
+      const merged = (Array.isArray(rData) ? rData : []).map((r: Registration) => ({
+        ...r,
+        pool: teamMap.get(r.id)?.pool
+      }));
+
+      setRegs(merged);
+    } catch (e: any) {
+      setErrorMsg(e.message);
+    } finally {
+      setLoading(false);
+    }
+  }, [currentTournament?.id]);
+
+  useEffect(() => { load(); loadAgeGroups(); }, [load, loadAgeGroups]);
+
+  async function patch(id: string, updates: any, reg?: Registration) {
+    setWorking(id);
+    try {
+      // 1. Update Registration Table
+      const res = await fetch(`/api/registrations/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Failed to update registration');
+      }
+
+      // 2. Sync to Teams Table if needed
+      const r = reg || regs.find(x => x.id === id);
+      if (!r) return;
+
+      const isAccepted = (updates.status === 'accepted') || (r.status === 'accepted' && updates.status !== 'rejected');
+      
+      if (isAccepted) {
+        const teams = await getTeams(currentTournament?.id);
+        const existing = teams.find(t => t.id === id);
+        
+        const teamData = {
+          id: id,
+          name: updates.team_name || r.team_name,
+          coach: updates.coach_name || r.coach_name,
+          email: updates.email || r.email,
+          ageGroupId: updates.age_group_id || r.age_group_id,
+          tournamentId: currentTournament?.id || '',
+          pool: updates.pool !== undefined ? updates.pool : (existing?.pool || undefined),
+          players: existing?.players || []
+        };
+
+        if (existing) {
+          await updateTeam(id, teamData);
+        } else {
+          await saveTeam(teamData);
+        }
+      } else if (updates.status === 'rejected' || updates.status === 'waitlist') {
+        await deleteTeam(id);
+      }
+    } catch (e: any) {
+      setErrorMsg(`Update failed: ${e.message}`);
+    } finally {
+      await load();
+      setWorking(null);
+    }
   }
-  useEffect(() => { refresh(); }, [currentTournament?.id]); // eslint-disable-line
 
-  function openAdd() {
-    setForm({ name: '', coach: '', email: '', ageGroupId: ageGroups[0]?.id ?? '', pool: '' });
-    setEditing(null);
-    setModal('add');
-  }
-
-  function openEdit(t: Team) {
-    setForm({ name: t.name, coach: t.coach, email: t.email || '', ageGroupId: t.ageGroupId, pool: t.pool || '' });
-    setEditing(t);
-    setModal('edit');
-  }
-
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleAddTeam(e: React.FormEvent) {
     e.preventDefault();
-    const data = {
-      name: form.name.trim(), 
-      coach: form.coach.trim(), 
-      email: form.email.trim() || undefined,
-      ageGroupId: form.ageGroupId, 
-      pool: form.pool || undefined,
-      players: [], 
-      tournamentId: currentTournament?.id ?? '',
-    };
-    if (modal === 'add') await saveTeam(data);
-    else if (editing) await updateTeam(editing.id, data);
-    setModal(null);
-    refresh();
+    if (!currentTournament) return;
+    setWorking('new');
+    try {
+      const id = crypto.randomUUID();
+      // 1. Save Registration (Auto-accepted)
+      await saveRegistration({
+        id,
+        tournament_id: currentTournament.id,
+        team_name: addForm.name,
+        coach_name: addForm.coach,
+        email: addForm.email,
+        age_group_id: addForm.ageGroupId,
+        status: 'accepted',
+        payment_status: 'paid',
+        registered_at: new Date().toISOString()
+      } as any);
+
+      // 2. Save Team
+      await saveTeam({
+        id,
+        name: addForm.name,
+        coach: addForm.coach,
+        email: addForm.email,
+        ageGroupId: addForm.ageGroupId,
+        tournamentId: currentTournament.id,
+        pool: addForm.pool || undefined,
+        players: []
+      });
+
+      setShowAddModal(false);
+      setAddForm({ name: '', coach: '', email: '', ageGroupId: ageGroups[0]?.id || '', pool: '' });
+      load();
+    } catch (e: any) {
+      setErrorMsg(e.message);
+    } finally {
+      setWorking(null);
+    }
   }
 
+  const filtered = regs.filter(r => {
+    const matchesStatus = selectedStatuses.length === 0 || selectedStatuses.includes(r.status);
+    const matchesDivision = selectedAgeGroupId === 'all' || r.age_group_id === selectedAgeGroupId;
+    const matchesSearch = search === '' || 
+      r.team_name.toLowerCase().includes(search.toLowerCase()) || 
+      r.coach_name.toLowerCase().includes(search.toLowerCase());
+    return matchesStatus && matchesDivision && matchesSearch;
+  });
 
+  const sorted = [...filtered].sort((a, b) => {
+    const statusOrder: Record<Status, number> = { accepted: 1, pending: 2, waitlist: 3, rejected: 4 };
+    if (statusOrder[a.status] !== statusOrder[b.status]) return statusOrder[a.status] - statusOrder[b.status];
+    return new Date(b.registered_at).getTime() - new Date(a.registered_at).getTime();
+  });
 
-  const filtered = filterGroup === 'all' ? teams : teams.filter(t => t.ageGroupId === filterGroup);
-  const getGroupName = (id: string) => ageGroups.find(g => g.id === id)?.name ?? '—';
+  const grouped = sorted.reduce((acc, r) => {
+    if (!acc[r.age_group_name]) acc[r.age_group_name] = [];
+    acc[r.age_group_name].push(r);
+    return acc;
+  }, {} as Record<string, Registration[]>);
 
-  function exportToCSV() {
-    const headers = ['Team Name', 'Division', 'Coach', 'Email'];
-    const rows = filtered.map(t => [
-      t.name,
-      getGroupName(t.ageGroupId),
-      t.coach,
-      t.email
-    ]);
-    const filename = `teams-${currentTournament?.year || 'all'}-${new Date().toISOString().split('T')[0]}.csv`;
-    downloadCSV(filename, headers, rows);
+  function exportCSV() {
+    const headers = ['Team', 'Coach', 'Email', 'Division', 'Pool', 'Status', 'Payment'];
+    const rows = filtered.map(r => [r.team_name, r.coach_name, r.email, r.age_group_name, r.pool || '-', r.status, r.payment_status]);
+    downloadCSV(`teams-regs-${new Date().toISOString().split('T')[0]}.csv`, headers, rows);
   }
 
   return (
     <div className={styles.page}>
+      {/* Header */}
       <div className={styles.pageHeader}>
         <div className={styles.headerLeft}>
           <div className={styles.headerIcon}><Users size={20} /></div>
           <div>
-            <h1 className={styles.pageTitle}>Teams</h1>
-            <p className={styles.pageSub}>
-              {currentTournament
-                ? <>Rosters for <strong style={{ color: 'var(--purple-light)' }}>{currentTournament.name}</strong></>
-                : 'Manage team registrations and rosters'}
-            </p>
+            <h1 className={styles.pageTitle}>Teams & Registrations</h1>
+            <p className={styles.pageSub}>Manage all teams and signups in one place</p>
           </div>
         </div>
         <div className="flex gap-1">
-          <button className="btn btn-outline btn-sm" onClick={exportToCSV} id="teams-export-btn" disabled={filtered.length === 0}>
-            <Download size={14} /> Export CSV
-          </button>
-          <button className="btn btn-primary btn-sm" onClick={openAdd} id="team-add-btn" disabled={!currentTournament}>
-            <Plus size={16} /> Add Team
-          </button>
+          <button className="btn btn-outline btn-sm" onClick={exportCSV} disabled={regs.length === 0}><Download size={14} /> Export</button>
+          <button className="btn btn-primary btn-sm" onClick={() => setShowAddModal(true)} disabled={!currentTournament}><Plus size={16} /> Add Team</button>
         </div>
       </div>
 
-      <div className="tabs" style={{ marginBottom: '1.5rem' }}>
-        <button className={`tab-btn ${filterGroup === 'all' ? 'active' : ''}`} onClick={() => setFilterGroup('all')}>All</button>
-        {ageGroups.map(g => (
-          <button key={g.id} className={`tab-btn ${filterGroup === g.id ? 'active' : ''}`}
-            onClick={() => setFilterGroup(g.id)}>{g.name}</button>
-        ))}
-      </div>
-
-      <div className="table-wrap">
-        <table>
-          <thead>
-            <tr><th>Team Name</th><th>Division</th><th>Pool</th><th>Coach</th><th>Email</th><th>Actions</th></tr>
-          </thead>
-          <tbody>
-            {filtered.length === 0 ? (
-              <tr><td colSpan={5} style={{ textAlign: 'center', color: 'var(--white-30)', padding: '2rem' }}>
-                {currentTournament ? 'No teams for this tournament.' : 'No tournament selected.'}
-              </td></tr>
-            ) : filtered.map(t => (
-              <tr key={t.id}>
-                <td><strong>{t.name}</strong></td>
-                <td><span className="badge badge-purple">{getGroupName(t.ageGroupId)}</span></td>
-                <td>{t.pool || '—'}</td>
-                <td>{t.coach || '—'}</td>
-                <td><span style={{ fontSize: '0.85rem', color: 'var(--white-60)' }}>{t.email || '—'}</span></td>
-                <td>
-                  <div className="flex gap-1">
-                    <button className="btn btn-ghost btn-sm" onClick={() => openEdit(t)} id={`edit-team-${t.id}`}><Pencil size={13} /></button>
-                    <button className="btn btn-danger btn-sm" onClick={() => setDeleteId(t.id)} id={`delete-team-${t.id}`}><Trash2 size={13} /></button>
-                  </div>
-                </td>
-              </tr>
+      {/* Controls */}
+      <div className={styles.controlsRow}>
+        <div className={styles.controlsLeft}>
+          <div className={styles.statusFilters}>
+            {(['pending', 'accepted', 'waitlist', 'rejected'] as Status[]).map(s => (
+              <button key={s} className={`${styles.filterChip} ${selectedStatuses.includes(s) ? styles.chipActive : ''}`} onClick={() => setSelectedStatuses(prev => prev.includes(s) ? prev.filter(x => x !== s) : [...prev, s])}>
+                {s.toUpperCase()} ({regs.filter(r => r.status === s).length})
+              </button>
             ))}
-          </tbody>
-        </table>
+          </div>
+          <button className="btn btn-ghost btn-sm" onClick={() => setShowSummary(!showSummary)} style={{ color: 'var(--white-40)' }}>{showSummary ? 'Hide Stats' : 'Show Stats'}</button>
+        </div>
+        <div className={styles.controlsRight}>
+          <input type="text" placeholder="Search..." value={search} onChange={e => setSearch(e.target.value)} className="form-input" />
+          <select className="form-input" value={selectedAgeGroupId} onChange={e => setSelectedAgeGroupId(e.target.value)} style={{ minWidth: 140 }}>
+            <option value="all">All Divisions</option>
+            {ageGroups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
+          </select>
+        </div>
       </div>
 
-      {modal && (
-        <div className="modal-overlay" onClick={() => setModal(null)}>
-          <div className="modal modal-lg" onClick={e => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3>{modal === 'add' ? 'Add Team' : 'Edit Team'}</h3>
-              <button className="btn btn-ghost btn-sm" onClick={() => setModal(null)}><X size={16} /></button>
-            </div>
-            <form onSubmit={handleSubmit}>
-              <div className="form-row form-row-3" style={{ marginBottom: '1rem' }}>
-                <div className="form-group">
-                  <label className="form-label">Team Name *</label>
-                  <input className="form-input" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} required />
+      {/* Summary */}
+      {showSummary && (
+        <div className={styles.summaryGrid}>
+          {ageGroups.map(g => {
+            const groupRegs = regs.filter(r => r.age_group_id === g.id);
+            const accepted = groupRegs.filter(r => r.status === 'accepted').length;
+            const capacity = g.capacity || 0;
+            return (
+              <div key={g.id} className={`${styles.summaryCard} ${selectedAgeGroupId === g.id ? styles.selectedSummary : ''}`} onClick={() => setSelectedAgeGroupId(g.id)}>
+                <div className={styles.summaryHeader}>
+                  <strong>{g.name}</strong>
+                  {capacity > 0 && <span className={accepted >= capacity ? styles.fullBadge : styles.capacityBadge}>{accepted}/{capacity}</span>}
                 </div>
-                <div className="form-group">
-                  <label className="form-label">Coach</label>
-                  <input className="form-input" value={form.coach} onChange={e => setForm(f => ({ ...f, coach: e.target.value }))} />
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Contact Email</label>
-                  <input className="form-input" type="email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} />
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Age Group *</label>
-                  <select className="form-select" value={form.ageGroupId} onChange={e => setForm(f => ({ ...f, ageGroupId: e.target.value }))} required>
-                    <option value="">Select...</option>
-                    {ageGroups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Pool</label>
-                  <select className="form-select" value={form.pool} onChange={e => setForm(f => ({ ...f, pool: e.target.value }))}>
-                    <option value="">No Pool</option>
-                    {(() => {
-                      const group = ageGroups.find(g => g.id === form.ageGroupId);
-                      if (!group || !group.poolCount || group.poolCount <= 1) return null;
-                      
-                      const names = group.poolNames ? group.poolNames.split(',').map(n => n.trim()) : [];
-                      return Array.from({ length: group.poolCount }).map((_, i) => {
-                        const val = names[i] || String.fromCharCode(65 + i);
-                        return <option key={val} value={val}>{val}</option>;
-                      });
-                    })()}
-                  </select>
+                <div className={styles.summaryStats}>
+                  <span>{groupRegs.filter(r => r.status === 'pending').length} Pending • {groupRegs.filter(r => r.status === 'waitlist').length} Waitlist</span>
                 </div>
               </div>
-              <div className="modal-footer">
-                <button type="button" className="btn btn-ghost" onClick={() => setModal(null)}>Cancel</button>
-                <button type="submit" className="btn btn-primary" id="team-save-btn"><Check size={14} /> Save Team</button>
-              </div>
-            </form>
-          </div>
+            );
+          })}
         </div>
       )}
 
-      {deleteId && (
-        <div className="modal-overlay" onClick={() => setDeleteId(null)}>
-          <div className="modal" style={{ maxWidth: 400 }} onClick={e => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3>Delete Team?</h3>
-              <button className="btn btn-ghost btn-sm" onClick={() => setDeleteId(null)}><X size={16} /></button>
+      {/* List */}
+      {loading ? (
+        <div className="empty-state"><RefreshCw size={32} className="spin" style={{ opacity: 0.4 }} /><p>Loading data…</p></div>
+      ) : Object.keys(grouped).length === 0 ? (
+        <div className="empty-state"><Users size={40} style={{ opacity: 0.2 }} /><p>No teams matching filters.</p></div>
+      ) : (
+        <div className={styles.compactList}>
+          {Object.entries(grouped).map(([ageGroup, groupRegs]) => (
+            <div key={ageGroup} className={styles.groupSection}>
+              <div className={styles.groupHeader}><strong>{ageGroup}</strong> <span className="badge badge-purple">{groupRegs.length} Teams</span></div>
+              <div className={styles.tableHeader}>
+                <div style={{ width: 40 }} />
+                <div style={{ flex: 2 }}>Team Name</div>
+                <div style={{ flex: 1.5 }}>Coach</div>
+                <div style={{ width: 100 }}>Status</div>
+                <div style={{ width: 100 }}>Payment</div>
+                <div style={{ width: 80 }} />
+              </div>
+              {groupRegs.map(r => {
+                const isExpanded = expanded.has(r.id);
+                const busy = working === r.id;
+                return (
+                  <div key={r.id} className={`${styles.row} ${selectedIds.has(r.id) ? styles.rowSelected : ''}`}>
+                    <div className={styles.rowMain}>
+                      <div style={{ width: 40, textAlign: 'center' }}><input type="checkbox" checked={selectedIds.has(r.id)} onChange={() => setSelectedIds(prev => { const n = new Set(prev); n.has(r.id) ? n.delete(r.id) : n.add(r.id); return n; })} /></div>
+                      <div style={{ flex: 2 }} className={styles.primaryCell}><strong>{r.team_name}</strong></div>
+                      <div style={{ flex: 1.5 }} className={styles.secondaryCell}>{r.coach_name}</div>
+                      <div style={{ width: 100 }}>
+                        <span className={`badge badge-${r.status === 'accepted' ? 'success' : r.status === 'rejected' ? 'danger' : 'warning'}`}>{r.status}</span>
+                      </div>
+                      <div style={{ width: 100 }}>{r.status === 'accepted' ? <span className={`badge badge-${r.payment_status === 'paid' ? 'success' : 'warning'}`}>{r.payment_status}</span> : '-'}</div>
+                      <div style={{ width: 80, textAlign: 'right' }}><button className={styles.iconBtn} onClick={() => setExpanded(prev => { const s = new Set(prev); s.has(r.id) ? s.delete(r.id) : s.add(r.id); return s; })}>{isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}</button></div>
+                    </div>
+                    {isExpanded && (
+                      <div className={styles.expandedRow}>
+                        <div className={styles.expandedContent}>
+                          <div className={styles.expandedInfo}>
+                            <div className={styles.infoLine}><span>Email: <a href={`mailto:${r.email}`}>{r.email}</a></span><span style={{ marginLeft: '1rem' }}>Reg: {new Date(r.registered_at).toLocaleDateString()}</span></div>
+                            <div className={styles.notesArea}><label>Admin Notes</label><textarea placeholder="Private notes..." defaultValue={r.admin_notes} onBlur={e => e.target.value !== r.admin_notes && patch(r.id, { admin_notes: e.target.value })} /></div>
+                          </div>
+                          <div className={styles.expandedActions}>
+                            <div className={styles.transferGroup}><label>Pool Assignment</label>
+                              <select value={r.pool || ''} onChange={e => patch(r.id, { pool: e.target.value })}>
+                                <option value="">No Pool</option>
+                                {(() => {
+                                  const g = ageGroups.find(x => x.id === r.age_group_id);
+                                  if (!g || !g.poolCount) return null;
+                                  const names = g.poolNames ? g.poolNames.split(',').map(n => n.trim()) : [];
+                                  return Array.from({ length: g.poolCount }).map((_, i) => {
+                                    const v = names[i] || String.fromCharCode(65 + i);
+                                    return <option key={v} value={v}>Pool {v}</option>;
+                                  });
+                                })()}
+                              </select>
+                            </div>
+                            <div className={styles.buttonGroup}>
+                              {r.status === 'pending' && <><button className="btn btn-primary btn-xs" onClick={() => patch(r.id, { status: 'accepted' }, r)} disabled={busy}>Accept</button><button className="btn btn-danger btn-xs" onClick={() => patch(r.id, { status: 'rejected' }, r)} disabled={busy}>Reject</button></>}
+                              {r.status === 'accepted' && <><button className="btn btn-outline btn-xs" onClick={() => patch(r.id, { payment_status: r.payment_status === 'paid' ? 'pending' : 'paid' })} disabled={busy}>{r.payment_status === 'paid' ? 'Unpay' : 'Pay'}</button><a href={`/teams/${r.id}`} target="_blank" className="btn btn-ghost btn-xs">Profile ↗</a></>}
+                              {(r.status === 'rejected' || r.status === 'waitlist') && <button className="btn btn-ghost btn-xs" onClick={() => patch(r.id, { status: 'pending' })} disabled={busy}>Restore</button>}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
-            <p style={{ color: 'var(--white-60)' }}>This action cannot be undone.</p>
-            <div className="modal-footer">
-              <button className="btn btn-ghost" onClick={() => setDeleteId(null)}>Cancel</button>
-              <button className="btn btn-danger" onClick={async () => { await deleteTeam(deleteId); setDeleteId(null); refresh(); }}><Trash2 size={14} /> Delete</button>
-            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Add Modal */}
+      {showAddModal && (
+        <div className="modal-overlay" onClick={() => setShowAddModal(false)}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
+            <div className="modal-header"><h3>Add Team Manually</h3><button className="btn btn-ghost btn-sm" onClick={() => setShowAddModal(false)}><X size={16} /></button></div>
+            <form onSubmit={handleAddTeam}>
+              <div className="form-group"><label className="form-label">Team Name *</label><input className="form-input" value={addForm.name} onChange={e => setAddForm(f => ({ ...f, name: e.target.value }))} required /></div>
+              <div className="form-row form-row-2" style={{ marginTop: '1rem' }}>
+                <div className="form-group"><label className="form-label">Coach</label><input className="form-input" value={addForm.coach} onChange={e => setAddForm(f => ({ ...f, coach: e.target.value }))} /></div>
+                <div className="form-group"><label className="form-label">Email</label><input className="form-input" value={addForm.email} onChange={e => setAddForm(f => ({ ...f, email: e.target.value }))} /></div>
+              </div>
+              <div className="form-row form-row-2" style={{ marginTop: '1rem' }}>
+                <div className="form-group"><label className="form-label">Division *</label><select className="form-select" value={addForm.ageGroupId} onChange={e => setAddForm(f => ({ ...f, ageGroupId: e.target.value }))} required>{ageGroups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}</select></div>
+                <div className="form-group"><label className="form-label">Pool</label><select className="form-select" value={addForm.pool} onChange={e => setAddForm(f => ({ ...f, pool: e.target.value }))}><option value="">None</option>{(() => { const g = ageGroups.find(x => x.id === addForm.ageGroupId); if (!g || !g.poolCount) return null; const names = g.poolNames ? g.poolNames.split(',').map(n => n.trim()) : []; return Array.from({ length: g.poolCount }).map((_, i) => { const v = names[i] || String.fromCharCode(65 + i); return <option key={v} value={v}>Pool {v}</option>; }); })()}</select></div>
+              </div>
+              <div className="modal-footer"><button type="button" className="btn btn-ghost" onClick={() => setShowAddModal(false)}>Cancel</button><button type="submit" className="btn btn-primary" disabled={!!working}>Save Team</button></div>
+            </form>
           </div>
         </div>
       )}
