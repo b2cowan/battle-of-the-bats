@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { Tag, Plus, Pencil, Trash2, X, Check } from 'lucide-react';
-import { getAgeGroups, saveAgeGroup, updateAgeGroup, deleteAgeGroup, getContacts } from '@/lib/db';
+import { getAgeGroups, saveAgeGroup, updateAgeGroup, deleteAgeGroup, getContacts, migratePoolTeams } from '@/lib/db';
 import { useTournament } from '@/lib/tournament-context';
 import { AgeGroup, Contact } from '@/lib/types';
 import styles from './admin-page.module.css';
@@ -62,7 +62,26 @@ export default function AgeGroupsPage() {
       poolNames: form.poolNames.trim() || undefined
     };
     if (modal === 'add') await saveAgeGroup(data);
-    else if (editing) await updateAgeGroup(editing.id, data);
+    else if (editing) {
+      // If pool names changed, migrate teams
+      const oldNames = (editing.poolNames || '').split(',').map(n => n.trim());
+      const newNames = (data.poolNames || '').split(',').map(n => n.trim());
+      const pCount = editing.poolCount || 1;
+      
+      for (let i = 0; i < pCount; i++) {
+        const oldP = oldNames[i] || String.fromCharCode(65 + i);
+        const newP = newNames[i] || String.fromCharCode(65 + i);
+        if (oldP !== newP) {
+          try {
+            await migratePoolTeams(editing.id, oldP, newP);
+          } catch (err) {
+            console.error('Pool migration failed', err);
+          }
+        }
+      }
+
+      await updateAgeGroup(editing.id, data);
+    }
     setModal(null);
     refresh();
   }
