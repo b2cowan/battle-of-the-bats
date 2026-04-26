@@ -118,6 +118,50 @@
   opacity: 1;
 }
 
+/* --- Mobile Responsiveness --- */
+
+@media (max-width: 768px) {
+  .divisionLayout {
+    gap: 2.5rem;
+  }
+
+  .groupTitle {
+    font-size: 1.75rem;
+    padding-bottom: 0.75rem;
+  }
+
+  .poolGrid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .poolCard {
+    padding: 1rem;
+  }
+
+  .poolName {
+    font-size: 1.1rem;
+  }
+
+  .teamRow {
+    padding: 0.6rem;
+  }
+
+  .teamAvatar {
+    width: 32px;
+    height: 32px;
+    font-size: 0.85rem;
+  }
+
+  .teamName {
+    font-size: 0.9rem;
+  }
+
+  .viewLink {
+    font-size: 0.7rem;
+  }
+}
+
 .playerCount { text-align: center; }
 
 .playerNum {
