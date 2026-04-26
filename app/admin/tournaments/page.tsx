@@ -126,72 +126,51 @@ export default function AdminTournamentsPage() {
 
     try {
       if (modal === 'add') {
-        const newTournament = await saveTournament(data);
-        if (newTournament) {
-          const tid = newTournament.id;
-          
-          // 1. Migration
-          if (sourceTournamentId) {
-            try {
-              if (selectedContactIds.size > 0) {
-                const contactsToClone = sourceContacts.filter(c => selectedContactIds.has(c.id));
-                await cloneContacts(tid, contactsToClone);
-              }
-              if (migrateDiamonds) {
-                const sourceDiamonds = await getDiamonds(sourceTournamentId);
-                await cloneDiamonds(tid, sourceDiamonds);
-              }
-            } catch (err) {
-              console.error('Migration failed:', err);
-            }
-          }
-          
-          // 2. Age Groups
-          if (selectedDivisions.size > 0) {
-            try {
-              const divs = Array.from(selectedDivisions).map(name => ({
-                name,
-                capacity: divisionCapacities[name] || 8,
-                poolCount: divisionPools[name] || 1,
-                poolNames: (divisionPoolNames[name] || []).join(','),
-                requiresPoolSelection: divisionRequiresPool[name] || false
-              }));
-              await initializeAgeGroups(tid, divs);
-            } catch (err) {
-              console.error('Age group initialization failed:', err);
-            }
-          }
-          
-          // 3. Welcome Announcement
-          if (useWelcomeMsg && welcomeMsg.trim()) {
-            try {
-              await saveAnnouncement({
-                tournamentId: tid,
-                title: 'Welcome!',
-                body: welcomeMsg.trim(),
-                date: new Date().toISOString(),
-                pinned: true
-              });
-            } catch (err) {
-              console.error('Welcome announcement failed:', err);
-            }
-          }
+        const setupData = {
+          tournament: data,
+          divisions: Array.from(selectedDivisions).map(name => ({
+            name,
+            capacity: divisionCapacities[name] || 8,
+            poolCount: divisionPools[name] || 1,
+            poolNames: (divisionPoolNames[name] || []).join(','),
+            requiresPoolSelection: divisionRequiresPool[name] || false
+          })),
+          announcement: useWelcomeMsg ? { body: welcomeMsg } : null,
+          seedData: Object.values(seedData).some(v => v) ? seedData : null
+        };
 
-          // 4. Seed Data
-          if (Object.values(seedData).some(v => v)) {
-            try {
-              await seedTournamentData(tid, seedData);
-            } catch (err) {
-              console.error('Seeding failed:', err);
+        const res = await fetch('/api/admin/setup-tournament', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(setupData)
+        });
+
+        const result = await res.json();
+        if (!res.ok) throw new Error(result.error || 'Setup failed');
+
+        // Note: Migration (contacts/diamonds) still happens client-side if needed, 
+        // as it uses existing get/save helpers.
+        if (sourceTournamentId) {
+          const tid = result.id;
+          try {
+            if (selectedContactIds.size > 0) {
+              const contactsToClone = sourceContacts.filter(c => selectedContactIds.has(c.id));
+              await cloneContacts(tid, contactsToClone);
             }
+            if (migrateDiamonds) {
+              const sourceDiamonds = await getDiamonds(sourceTournamentId);
+              await cloneDiamonds(tid, sourceDiamonds);
+            }
+          } catch (err) {
+            console.error('Migration failed:', err);
           }
         }
       } else if (editing) {
         await updateTournament(editing.id, data);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Tournament operation failed:', err);
-      alert('There was an error saving the tournament. Check the console for details.');
+      alert(`There was an error saving the tournament: ${err.message}`);
     }
     
     setModal(null);
