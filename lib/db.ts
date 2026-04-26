@@ -1,5 +1,5 @@
 import { supabase } from './supabase';
-import { Tournament, Diamond, Contact, AgeGroup, Team, Game, Announcement } from './types';
+import { Tournament, Diamond, Contact, AgeGroup, Pool, Team, Game, Announcement } from './types';
 
 // --- Tournaments ---
 export async function getTournaments(): Promise<Tournament[]> {

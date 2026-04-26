@@ -106,7 +106,6 @@ export default function AgeGroupsPage() {
       // Manage the Pools table
       const newPoolCount = Number(form.poolCount);
       const existingPools = editing.pools || [];
-      const newNames = (data.poolNames || '').split(',').map(n => n.trim());
 
       // 1. Update/Add
       for (let i = 0; i < newPoolCount; i++) {

@@ -20,6 +20,7 @@ interface Registration {
   registered_at: string;
   admin_notes?: string;
   pool?: string;
+  poolId?: string;
 }
 
 type Status = 'pending' | 'accepted' | 'rejected' | 'waitlist';
