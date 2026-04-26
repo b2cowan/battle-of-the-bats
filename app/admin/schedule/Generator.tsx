@@ -77,12 +77,17 @@ export default function ScheduleGenerator({ tournament, ageGroups, teams, diamon
     const diamondList = diamonds.filter(d => selectedDiamonds.has(d.id));
     if (diamondList.length === 0) { setError('Select at least one diamond'); return; }
 
-    // 1. Group teams by pool
+    // 1. Group teams by pool record
     const pools: Record<string, Team[]> = {};
+    const currentGroup = ageGroups.find(g => g.id === selectedGroupId);
+    
     groupTeams.forEach(t => {
-      const p = t.pool || 'Default';
-      if (!pools[p]) pools[p] = [];
-      pools[p].push(t);
+      // Priority: use the real pool record if it exists
+      const poolRecord = currentGroup?.pools?.find(p => p.id === t.poolId);
+      const poolKey = poolRecord ? poolRecord.id : (t.pool || 'Default');
+      
+      if (!pools[poolKey]) pools[poolKey] = [];
+      pools[poolKey].push(t);
     });
 
     const allMatchups: { home: Team, away: Team }[] = [];
@@ -299,7 +304,14 @@ export default function ScheduleGenerator({ tournament, ageGroups, teams, diamon
                           {new Date(g.date + 'T12:00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} at <strong>{g.time}</strong>
                         </td>
                         <td>{homeTeam?.name} vs {awayTeam?.name}</td>
-                        <td><span className="badge badge-neutral">{homeTeam?.pool || 'Default'}</span></td>
+                        <td>
+                          {(() => {
+                            const currentGroup = ageGroups.find(g => g.id === selectedGroupId);
+                            const poolRecord = currentGroup?.pools?.find(p => p.id === homeTeam?.poolId);
+                            const name = poolRecord ? poolRecord.name : (homeTeam?.pool || 'Default');
+                            return <span className="badge badge-neutral">{name}</span>;
+                          })()}
+                        </td>
                         <td>{g.location}</td>
                       </tr>
                     );

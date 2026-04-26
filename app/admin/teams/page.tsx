@@ -73,6 +73,18 @@ export default function UnifiedTeamsPage() {
 
       setRegs(merged);
 
+      // ONE-TIME MIGRATION: Link teams (regs) to real Pool IDs
+      for (const r of merged) {
+        if (r.status === 'accepted' && r.pool && !r.poolId) {
+          const g = ageGroups.find(x => x.id === r.age_group_id);
+          const p = g?.pools?.find(x => x.name === r.pool);
+          if (p) {
+            console.log(`Linking team ${r.team_name} to pool ${p.name}...`);
+            await patch(r.id, { poolId: p.id });
+          }
+        }
+      }
+
       // Initialize stable order if not set
       if (stableSortedIds.length === 0) {
         const initialSorted = [...merged].sort((a: any, b: any) => {
@@ -344,11 +356,14 @@ export default function UnifiedTeamsPage() {
                       {(() => {
                         const g = ageGroups.find(x => x.id === r.age_group_id);
                         if (!g || (g.poolCount || 0) <= 1) return null;
+                        const poolRecord = g.pools?.find(p => p.id === r.poolId);
+                        const displayPoolName = poolRecord ? poolRecord.name : r.pool; // Fallback to legacy string
+
                         return (
                           <div style={{ flex: 1 }}>
                             {r.status === 'accepted' ? (
-                              r.pool ? (
-                                <span className="badge badge-purple" style={{ opacity: 0.8 }}>Pool {r.pool}</span>
+                              displayPoolName ? (
+                                <span className="badge badge-purple" style={{ opacity: 0.8 }}>Pool {displayPoolName}</span>
                               ) : (
                                 <span className="badge badge-danger" style={{ fontSize: '0.65rem' }}>Needs Pool</span>
                               )
@@ -376,16 +391,11 @@ export default function UnifiedTeamsPage() {
                               if (!g || (g.poolCount || 0) <= 1) return null;
                               return (
                                 <div className={styles.transferGroup}><label>Pool Assignment</label>
-                                  <select value={r.pool || ''} onChange={e => patch(r.id, { pool: e.target.value })}>
+                                  <select value={r.poolId || ''} onChange={e => patch(r.id, { poolId: e.target.value })}>
                                     <option value="" style={{ background: '#111', color: '#fff' }}>No Pool</option>
-                                    {(() => {
-                                      const pCount = Number(g.poolCount || 0);
-                                      const names = g.poolNames ? g.poolNames.split(',').map(n => n.trim()) : [];
-                                      return Array.from({ length: pCount }).map((_, i) => {
-                                        const v = names[i] || String.fromCharCode(65 + i);
-                                        return <option key={v} value={v} style={{ background: '#111', color: '#fff' }}>Pool {v}</option>;
-                                      });
-                                    })()}
+                                    {(g.pools || []).map(p => (
+                                      <option key={p.id} value={p.id} style={{ background: '#111', color: '#fff' }}>Pool {p.name}</option>
+                                    ))}
                                   </select>
                                 </div>
                               );

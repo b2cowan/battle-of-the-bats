@@ -35,8 +35,16 @@ export interface AgeGroup {
   isClosed?: boolean; // if true, public registration is disabled
   capacity?: number;  // threshold for waitlist
   poolCount?: number;
-  poolNames?: string; // Comma separated
+  poolNames?: string; // (Legacy) Comma separated
   requiresPoolSelection?: boolean; // if true, user picks pool during registration
+  pools?: Pool[]; // The new way
+}
+
+export interface Pool {
+  id: string;
+  ageGroupId: string;
+  name: string;
+  order: number;
 }
 
 export interface Player {
@@ -54,7 +62,8 @@ export interface Team {
   coach: string;
   email?: string;
   players: Player[];
-  pool?: string; // pool name/index e.g. "A"
+  pool?: string; // (Legacy) pool name e.g. "A"
+  poolId?: string; // The new way (link to pools table)
 }
 
 export type GameStatus = 'scheduled' | 'completed' | 'cancelled';

@@ -1,7 +1,10 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { Tag, Plus, Pencil, Trash2, X, Check } from 'lucide-react';
-import { getAgeGroups, saveAgeGroup, updateAgeGroup, deleteAgeGroup, getContacts, migratePoolTeams } from '@/lib/db';
+import { 
+  getAgeGroups, saveAgeGroup, updateAgeGroup, deleteAgeGroup, getContacts, 
+  migratePoolTeams, savePool, updatePool, deletePool 
+} from '@/lib/db';
 import { useTournament } from '@/lib/tournament-context';
 import { AgeGroup, Contact } from '@/lib/types';
 import styles from './admin-page.module.css';
@@ -21,8 +24,26 @@ export default function AgeGroupsPage() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
   async function refresh() { 
-    setGroups(await getAgeGroups(currentTournament?.id)); 
+    const groups = await getAgeGroups(currentTournament?.id);
+    setGroups(groups); 
     setContacts(await getContacts(currentTournament?.id));
+
+    // ONE-TIME MIGRATION CHECK:
+    // If we have poolNames/poolCount but no real pool records, migrate them.
+    for (const g of groups) {
+      if ((g.poolCount || 0) > 0 && (!g.pools || g.pools.length === 0)) {
+        console.log(`Migrating legacy pools for ${g.name}...`);
+        const names = (g.poolNames || '').split(',').map(n => n.trim());
+        for (let i = 0; i < (g.poolCount || 1); i++) {
+          const name = names[i] || String.fromCharCode(65 + i);
+          await savePool({ ageGroupId: g.id, name, order: i });
+        }
+      }
+    }
+    // Re-fetch if migration happened to get IDs
+    if (groups.some(g => (g.poolCount || 0) > 0 && (!g.pools || g.pools.length === 0))) {
+      setGroups(await getAgeGroups(currentTournament?.id));
+    }
   }
   useEffect(() => { refresh(); }, [currentTournament?.id]);
 
@@ -81,6 +102,29 @@ export default function AgeGroupsPage() {
       }
 
       await updateAgeGroup(editing.id, data);
+
+      // Manage the Pools table
+      const newPoolCount = Number(form.poolCount);
+      const existingPools = editing.pools || [];
+      const newNames = (data.poolNames || '').split(',').map(n => n.trim());
+
+      // 1. Update/Add
+      for (let i = 0; i < newPoolCount; i++) {
+        const name = newNames[i] || String.fromCharCode(65 + i);
+        if (existingPools[i]) {
+          if (existingPools[i].name !== name) {
+            await updatePool(existingPools[i].id, name);
+          }
+        } else {
+          await savePool({ ageGroupId: editing.id, name, order: i });
+        }
+      }
+      // 2. Remove extra
+      if (existingPools.length > newPoolCount) {
+        for (let i = newPoolCount; i < existingPools.length; i++) {
+          await deletePool(existingPools[i].id);
+        }
+      }
     }
     setModal(null);
     refresh();

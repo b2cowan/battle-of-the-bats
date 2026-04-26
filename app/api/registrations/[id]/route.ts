@@ -10,7 +10,7 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ id: str
   try {
     const { id } = await props.params;
     const body = await req.json();
-    const { status, payment_status, admin_notes, age_group_id, age_group_name } = body;
+    const { status, payment_status, admin_notes, age_group_id, age_group_name, poolId } = body;
 
     // Fetch current record
     const { data: current, error: fetchErr } = await supabase
@@ -28,6 +28,7 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ id: str
     if (admin_notes !== undefined)    updates.admin_notes    = admin_notes;
     if (age_group_id !== undefined)   updates.age_group_id   = age_group_id;
     if (age_group_name !== undefined) updates.age_group_name = age_group_name;
+    if (poolId !== undefined)         updates.pool_id        = poolId;
 
     // If no updates provided, just return success
     if (Object.keys(updates).length === 0) return NextResponse.json({ ok: true });
@@ -74,10 +75,17 @@ export async function GET(req: NextRequest, props: { params: Promise<{ id: strin
   const { id } = await props.params;
   const { data, error } = await supabase
     .from('registrations')
-    .select('*')
+    .select('*, pool_id(name)')
     .eq('id', id)
     .single();
 
   if (error) return NextResponse.json({ error: 'Not found' }, { status: 404 });
-  return NextResponse.json(data);
+  
+  // Flatten pool name
+  const result = {
+    ...data,
+    pool: data.pool_id?.name || data.pool // Use centralized name if available, else fallback to legacy
+  };
+
+  return NextResponse.json(result);
 }

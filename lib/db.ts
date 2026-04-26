@@ -203,7 +203,7 @@ export async function deleteContact(id: string): Promise<void> {
 
 // --- Age Groups ---
 export async function getAgeGroups(tournamentId?: string): Promise<AgeGroup[]> {
-  let query = supabase.from('age_groups').select('*').order('display_order', { ascending: true });
+  let query = supabase.from('age_groups').select('*, pools(*)').order('display_order', { ascending: true });
   if (tournamentId) query = query.eq('tournament_id', tournamentId);
   const { data, error } = await query;
   if (error) { console.error('getAgeGroups error', error); return []; }
@@ -219,7 +219,13 @@ export async function getAgeGroups(tournamentId?: string): Promise<AgeGroup[]> {
     capacity: g.capacity,
     poolCount: g.pool_count,
     poolNames: g.pool_names,
-    requiresPoolSelection: g.requires_pool_selection
+    requiresPoolSelection: g.requires_pool_selection,
+    pools: (g.pools || []).map((p: any) => ({
+      id: p.id,
+      ageGroupId: p.age_group_id,
+      name: p.name,
+      order: p.display_order
+    })).sort((a: any, b: any) => a.order - b.order)
   }));
 }
 
@@ -258,6 +264,40 @@ export async function deleteAgeGroup(id: string): Promise<void> {
   await supabase.from('age_groups').delete().eq('id', id);
 }
 
+// --- Pools ---
+export async function getPools(ageGroupId: string): Promise<Pool[]> {
+  const { data, error } = await supabase
+    .from('pools')
+    .select('*')
+    .eq('age_group_id', ageGroupId)
+    .order('display_order', { ascending: true });
+  if (error) return [];
+  return data.map(p => ({
+    id: p.id,
+    ageGroupId: p.age_group_id,
+    name: p.name,
+    order: p.display_order
+  }));
+}
+
+export async function savePool(p: Omit<Pool, 'id'>): Promise<string> {
+  const { data, error } = await supabase.from('pools').insert({
+    age_group_id: p.ageGroupId,
+    name: p.name,
+    display_order: p.order
+  }).select().single();
+  if (error) throw error;
+  return data.id;
+}
+
+export async function updatePool(id: string, name: string): Promise<void> {
+  await supabase.from('pools').update({ name }).eq('id', id);
+}
+
+export async function deletePool(id: string): Promise<void> {
+  await supabase.from('pools').delete().eq('id', id);
+}
+
 // --- Teams ---
 export async function getTeams(tournamentId?: string): Promise<Team[]> {
   let query = supabase.from('teams').select('*').order('name', { ascending: true });
@@ -272,7 +312,8 @@ export async function getTeams(tournamentId?: string): Promise<Team[]> {
     coach: t.coach,
     email: t.email,
     players: t.players || [],
-    pool: t.pool
+    pool: t.pool,
+    poolId: t.pool_id
   }));
 }
 
@@ -284,7 +325,8 @@ export async function saveTeam(t: Omit<Team, 'id'> & { id?: string }): Promise<v
     coach: t.coach,
     email: t.email,
     players: t.players || [],
-    pool: t.pool
+    pool: t.pool,
+    pool_id: t.poolId
   };
   if (t.id) payload.id = t.id;
   await supabase.from('teams').insert(payload);
@@ -299,6 +341,7 @@ export async function updateTeam(id: string, t: Partial<Team>): Promise<void> {
   if (t.email !== undefined) updates.email = t.email;
   if (t.players !== undefined) updates.players = t.players;
   if (t.pool !== undefined) updates.pool = t.pool;
+  if (t.poolId !== undefined) updates.pool_id = t.poolId;
   await supabase.from('teams').update(updates).eq('id', id);
 }
 
