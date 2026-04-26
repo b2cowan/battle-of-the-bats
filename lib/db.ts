@@ -232,7 +232,9 @@ export async function saveAgeGroup(g: Omit<AgeGroup, 'id'>): Promise<void> {
     display_order: g.order,
     contact_id: g.contactId,
     is_closed: g.isClosed || false,
-    capacity: g.capacity
+    capacity: g.capacity,
+    pool_count: g.poolCount || 1,
+    pool_names: g.poolNames
   });
 }
 
@@ -247,6 +249,7 @@ export async function updateAgeGroup(id: string, g: Partial<AgeGroup>): Promise<
   if (g.isClosed !== undefined) updates.is_closed = g.isClosed;
   if (g.capacity !== undefined) updates.capacity = g.capacity;
   if (g.poolCount !== undefined) updates.pool_count = g.poolCount;
+  if (g.poolNames !== undefined) updates.pool_names = g.poolNames;
   if (g.requiresPoolSelection !== undefined) updates.requires_pool_selection = g.requiresPoolSelection;
   await supabase.from('age_groups').update(updates).eq('id', id);
 }
