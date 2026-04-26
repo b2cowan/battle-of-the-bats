@@ -404,7 +404,7 @@ export default function UnifiedTeamsPage() {
       )}
 
       {/* List */}
-      {loading ? (
+      {loading && regs.length === 0 ? (
         <div className="empty-state"><RefreshCw size={32} className="spin" style={{ opacity: 0.4 }} /><p>Loading data…</p></div>
       ) : Object.keys(grouped).length === 0 ? (
         <div className="empty-state"><Users size={40} style={{ opacity: 0.2 }} /><p>No teams matching filters.</p></div>
