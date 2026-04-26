@@ -183,8 +183,24 @@ export default function UnifiedTeamsPage() {
   });
 
   const sorted = [...filtered].sort((a, b) => {
+    // 1. Priority: Accepted teams without a pool (Needs Assignment)
+    const aNeedsPool = a.status === 'accepted' && !a.pool;
+    const bNeedsPool = b.status === 'accepted' && !b.pool;
+    if (aNeedsPool && !bNeedsPool) return -1;
+    if (!aNeedsPool && bNeedsPool) return 1;
+
+    // 2. Secondary: Group by Pool Name for accepted teams
+    if (a.status === 'accepted' && b.status === 'accepted') {
+      if (a.pool && b.pool) return a.pool.localeCompare(b.pool);
+      if (a.pool) return -1;
+      if (b.pool) return 1;
+    }
+
+    // 3. Tertiary: Status order
     const statusOrder: Record<Status, number> = { accepted: 1, pending: 2, waitlist: 3, rejected: 4 };
     if (statusOrder[a.status] !== statusOrder[b.status]) return statusOrder[a.status] - statusOrder[b.status];
+    
+    // 4. Final: Registration date
     return new Date(b.registered_at).getTime() - new Date(a.registered_at).getTime();
   });
 
@@ -344,11 +360,12 @@ export default function UnifiedTeamsPage() {
                                 <option value="">No Pool</option>
                                 {(() => {
                                   const g = ageGroups.find(x => x.id === r.age_group_id);
-                                  if (!g || !g.poolCount) return null;
+                                  const pCount = Number(g?.poolCount || 0);
+                                  if (!g || pCount <= 0) return null;
                                   const names = g.poolNames ? g.poolNames.split(',').map(n => n.trim()) : [];
-                                  return Array.from({ length: g.poolCount }).map((_, i) => {
+                                  return Array.from({ length: pCount }).map((_, i) => {
                                     const v = names[i] || String.fromCharCode(65 + i);
-                                    return <option key={v} value={v}>Pool {v}</option>;
+                                    return <option key={v} value={v} style={{ background: 'var(--bg-dark)', color: 'var(--white)' }}>Pool {v}</option>;
                                   });
                                 })()}
                               </select>
