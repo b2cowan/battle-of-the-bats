@@ -357,7 +357,7 @@ export default function UnifiedTeamsPage() {
                           <div className={styles.expandedActions}>
                             <div className={styles.transferGroup}><label>Pool Assignment</label>
                               <select value={r.pool || ''} onChange={e => patch(r.id, { pool: e.target.value })}>
-                                <option value="">No Pool</option>
+                                <option value="" style={{ background: '#111', color: '#fff' }}>No Pool</option>
                                 {(() => {
                                   const g = ageGroups.find(x => x.id === r.age_group_id);
                                   const pCount = Number(g?.poolCount || 0);
@@ -365,7 +365,7 @@ export default function UnifiedTeamsPage() {
                                   const names = g.poolNames ? g.poolNames.split(',').map(n => n.trim()) : [];
                                   return Array.from({ length: pCount }).map((_, i) => {
                                     const v = names[i] || String.fromCharCode(65 + i);
-                                    return <option key={v} value={v} style={{ background: 'var(--bg-dark)', color: 'var(--white)' }}>Pool {v}</option>;
+                                    return <option key={v} value={v} style={{ background: '#111', color: '#fff' }}>Pool {v}</option>;
                                   });
                                 })()}
                               </select>
