@@ -165,11 +165,32 @@ export default function ScheduleGenerator({ tournament, ageGroups, teams, diamon
   }
 
   async function commit() {
+    if (!confirm('This will save the generated schedule and clear any existing games for this division. Continue?')) return;
+    
     setCommitting(true);
     try {
-      for (const g of generatedGames) {
-        await saveGame(g);
-      }
+      // 1. Clear existing games for this division
+      await fetch('/api/admin/games', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'delete-division-games', ageGroupId: selectedGroupId })
+      });
+
+      // 2. Bulk save new games
+      const res = await fetch('/api/admin/games', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          action: 'bulk-save', 
+          games: generatedGames,
+          tournamentId: tournament.id,
+          ageGroupId: selectedGroupId 
+        })
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to save games');
+
       onComplete();
     } catch (e: any) {
       setError(`Failed to save games: ${e.message}`);
