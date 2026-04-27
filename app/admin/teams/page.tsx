@@ -42,6 +42,7 @@ export default function UnifiedTeamsPage() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [addForm, setAddForm] = useState({ name: '', coach: '', email: '', ageGroupId: '', pool: '' });
   const [stableSortedIds, setStableSortedIds] = useState<string[]>([]);
+  const [hasLoadedInitial, setHasLoadedInitial] = useState(false);
 
   const loadAgeGroups = useCallback(async () => {
     if (currentTournament) {
