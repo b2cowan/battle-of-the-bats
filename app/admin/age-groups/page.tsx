@@ -73,7 +73,7 @@ export default function AgeGroupsPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!currentTournament) return;
-    const data: Omit<AgeGroup, 'id'> = { 
+    const data: any = { 
       tournamentId: currentTournament.id,
       name: form.name.trim(), 
       minAge: Number(form.minAge), 
@@ -86,55 +86,41 @@ export default function AgeGroupsPage() {
       poolNames: form.poolNames.trim() || undefined,
       requiresPoolSelection: form.requiresPoolSelection
     };
-    if (modal === 'add') await saveAgeGroup(data);
-    else if (editing) {
-      // If pool names changed, migrate teams
-      const oldNames = (editing.poolNames || '').split(',').map(n => n.trim());
-      const newNames = (data.poolNames || '').split(',').map(n => n.trim());
-      const pCount = editing.poolCount || 1;
+
+    try {
+      const res = await fetch('/api/admin/age-groups', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          action: modal === 'add' ? 'save' : 'update',
+          id: editing?.id,
+          data 
+        })
+      });
+      const resData = await res.json();
+      if (!res.ok) throw new Error(resData.error || 'Failed to save');
       
-      for (let i = 0; i < pCount; i++) {
-        const oldP = oldNames[i] || String.fromCharCode(65 + i);
-        const newP = newNames[i] || String.fromCharCode(65 + i);
-        if (oldP !== newP) {
-          try {
-            await migratePoolTeams(editing.id, oldP, newP);
-          } catch (err) {
-            console.error('Pool migration failed', err);
-          }
-        }
-      }
-
-      await updateAgeGroup(editing.id, data);
-
-      // Manage the Pools table
-      const newPoolCount = Number(form.poolCount);
-      const existingPools = editing.pools || [];
-
-      // 1. Update/Add
-      for (let i = 0; i < newPoolCount; i++) {
-        const name = newNames[i] || String.fromCharCode(65 + i);
-        if (existingPools[i]) {
-          if (existingPools[i].name !== name) {
-            await updatePool(existingPools[i].id, name);
-          }
-        } else {
-          await savePool({ ageGroupId: editing.id, name, order: i });
-        }
-      }
-      // 2. Remove extra
-      if (existingPools.length > newPoolCount) {
-        for (let i = newPoolCount; i < existingPools.length; i++) {
-          await deletePool(existingPools[i].id);
-        }
-      }
+      setModal(null);
+      refresh();
+    } catch (err: any) {
+      alert("Error saving: " + err.message);
     }
-    setModal(null);
-    refresh();
   }
 
   async function handleDelete() {
-    if (deleteId) { await deleteAgeGroup(deleteId); setDeleteId(null); refresh(); }
+    if (!deleteId) return;
+    try {
+      const res = await fetch('/api/admin/age-groups', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'delete', id: deleteId })
+      });
+      if (!res.ok) throw new Error('Failed to delete');
+      setDeleteId(null); 
+      refresh();
+    } catch (err: any) {
+      alert("Error deleting: " + err.message);
+    }
   }
 
   return (
