@@ -123,18 +123,22 @@ export default function TeamsPage() {
                             </h3>
                           )}
                           <div className={styles.teamList}>
-                            {pg.teams.map(team => (
-                              <div key={team.id} className={styles.teamRow}>
-                                <div className={styles.teamMain}>
-                                  <div className={styles.teamAvatar}>{team.name.charAt(0).toUpperCase()}</div>
-                                  <div>
-                                    <h4 className={styles.teamName}>{team.name}</h4>
-                                    {team.coach && <span className={styles.coach}>Coach: {team.coach}</span>}
+                            {pg.teams.map(team => {
+                              // Clean team name (remove anything in brackets like "(Gold)")
+                              const cleanName = team.name.replace(/\s*\(.*?\)\s*/g, '').trim();
+                              
+                              return (
+                                <div key={team.id} className={styles.teamRow}>
+                                  <div className={styles.teamMain}>
+                                    <div>
+                                      <h4 className={styles.teamName}>{cleanName}</h4>
+                                      {team.coach && <span className={styles.coach}>Coach: {team.coach}</span>}
+                                    </div>
                                   </div>
+                                  <a href={`/teams/${team.id}`} className={styles.viewLink}>Profile →</a>
                                 </div>
-                                <a href={`/teams/${team.id}`} className={styles.viewLink}>Profile →</a>
-                              </div>
-                            ))}
+                              );
+                            })}
                           </div>
                         </div>
                       ))}

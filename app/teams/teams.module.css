@@ -29,8 +29,8 @@
 }
 
 .poolGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  display: flex;
+  flex-direction: column;
   gap: 1.5rem;
 }
 
@@ -80,19 +80,7 @@
   gap: 1rem;
 }
 
-.teamAvatar {
-  width: 36px;
-  height: 36px;
-  background: var(--purple-faint);
-  color: var(--purple-light);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 800;
-  font-size: 1rem;
-}
+
 
 .teamName {
   font-size: 1rem;
@@ -147,11 +135,7 @@
     padding: 0.6rem;
   }
 
-  .teamAvatar {
-    width: 32px;
-    height: 32px;
-    font-size: 0.85rem;
-  }
+
 
   .teamName {
     font-size: 0.9rem;
