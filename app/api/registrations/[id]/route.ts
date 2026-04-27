@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
+import { createClient } from '@supabase/supabase-js';
 import {
   sendEmail,
   acceptanceHtml, rejectionHtml, paymentConfirmationHtml,
@@ -72,20 +73,38 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ id: str
 }
 
 export async function GET(req: NextRequest, props: { params: Promise<{ id: string }> }) {
-  const { id } = await props.params;
-  const { data, error } = await supabase
-    .from('registrations')
-    .select('*, pool_id(name)')
-    .eq('id', id)
-    .single();
+  try {
+    const { id } = await props.params;
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-  if (error) return NextResponse.json({ error: 'Not found' }, { status: 404 });
-  
-  // Flatten pool name
-  const result = {
-    ...data,
-    pool: data.pool_id?.name || data.pool // Use centralized name if available, else fallback to legacy
-  };
+    if (!url || !key) {
+      throw new Error("Missing environment variables");
+    }
 
-  return NextResponse.json(result);
+    const supabaseAdmin = createClient(url, key);
+    const { data, error } = await supabaseAdmin
+      .from('registrations')
+      .select('*, pool_id(name)')
+      .eq('id', id)
+      .single();
+
+    if (error || !data) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+    
+    // Safety check: Only show accepted teams to the public
+    if (data.status !== 'accepted') {
+      return NextResponse.json({ error: 'Team not yet active' }, { status: 403 });
+    }
+
+    // Flatten pool name
+    const result = {
+      ...data,
+      pool: data.pool_id?.name || data.pool // Use centralized name if available, else fallback to legacy
+    };
+
+    return NextResponse.json(result);
+  } catch (e: any) {
+    console.error('GET registration error:', e);
+    return NextResponse.json({ error: 'Server error' }, { status: 500 });
+  }
 }
