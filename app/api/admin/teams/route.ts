@@ -47,6 +47,37 @@ export async function POST(req: Request) {
 
     if (updateErr) throw updateErr;
 
+    // 2.5 Sync with 'teams' table for Accepted teams
+    // If we updated status, pool, or team_name, we need to sync
+    for (const current of currents) {
+      const isAccepted = updates.status === 'accepted' || (current.status === 'accepted' && updates.status !== 'rejected');
+      
+      if (isAccepted) {
+        // Prepare team data
+        const teamData = {
+          id: current.id,
+          name: updates.team_name || current.team_name,
+          coach: updates.coach_name || current.coach_name,
+          email: updates.email || current.email,
+          age_group_id: updates.age_group_id || current.age_group_id,
+          tournament_id: current.tournament_id,
+          pool_id: dbUpdates.pool_id !== undefined ? dbUpdates.pool_id : current.pool_id,
+          pool: updates.pool !== undefined ? updates.pool : current.pool
+        };
+
+        // Check if team exists
+        const { data: existing } = await supabase.from('teams').select('id').eq('id', current.id).single();
+        
+        if (existing) {
+          await supabase.from('teams').update(teamData).eq('id', current.id);
+        } else {
+          await supabase.from('teams').insert(teamData);
+        }
+      } else if (updates.status === 'rejected' || updates.status === 'waitlist') {
+        await supabase.from('teams').delete().eq('id', current.id);
+      }
+    }
+
     // 3. Handle Emails (Side effects)
     // For simplicity in bulk, we'll iterate and check for changes
     for (const current of currents) {

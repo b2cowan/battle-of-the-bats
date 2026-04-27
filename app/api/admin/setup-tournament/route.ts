@@ -28,6 +28,11 @@ export async function POST(req: Request) {
 
     const { tournament, divisions, announcement, seedData } = body;
 
+    // 0. If this new tournament is active, deactivate ALL others first
+    if (tournament.isActive) {
+      await supabase.from('tournaments').update({ is_active: false }).neq('id', '00000000-0000-0000-0000-000000000000');
+    }
+
     // 1. Create Tournament
     const { data: newTnt, error: tntError } = await supabase
       .from('tournaments')

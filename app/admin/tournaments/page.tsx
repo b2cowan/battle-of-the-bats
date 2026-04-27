@@ -148,8 +148,6 @@ export default function AdminTournamentsPage() {
         const result = await res.json();
         if (!res.ok) throw new Error(result.error || 'Setup failed');
 
-        // Note: Migration (contacts/diamonds) still happens client-side if needed, 
-        // as it uses existing get/save helpers.
         if (sourceTournamentId) {
           const tid = result.id;
           try {
@@ -166,15 +164,20 @@ export default function AdminTournamentsPage() {
           }
         }
       } else if (editing) {
-        await updateTournament(editing.id, data);
+        const res = await fetch('/api/admin/tournaments', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'update', id: editing.id, data })
+        });
+        if (!res.ok) throw new Error('Update failed');
       }
+      
+      setModal(null);
+      refresh();
     } catch (err: any) {
       console.error('Tournament operation failed:', err);
       alert(`There was an error saving the tournament: ${err.message}`);
     }
-    
-    setModal(null);
-    refresh();
   }
 
   function toggleContact(id: string) {
@@ -228,15 +231,33 @@ export default function AdminTournamentsPage() {
   }
 
   async function handleSetActive(id: string) {
-    await setActiveTournament(id);
-    refresh();
+    try {
+      const res = await fetch('/api/admin/tournaments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'set-active', id })
+      });
+      if (!res.ok) throw new Error('Activation failed');
+      refresh();
+    } catch (err: any) {
+      alert("Error: " + err.message);
+    }
   }
 
   async function handleDelete() {
     if (!deleteId) return;
-    await deleteTournament(deleteId);
-    setDeleteId(null);
-    refresh();
+    try {
+      const res = await fetch('/api/admin/tournaments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'delete', id: deleteId })
+      });
+      if (!res.ok) throw new Error('Delete failed');
+      setDeleteId(null);
+      refresh();
+    } catch (err: any) {
+      alert("Error: " + err.message);
+    }
   }
 
   return (
