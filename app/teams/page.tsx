@@ -84,28 +84,46 @@ export default function TeamsPage() {
                 const groupTeams = filtered.filter(t => t.ageGroupId === group.id);
                 if (groupTeams.length === 0) return null;
 
-                // Group teams by pool
-                const pools: Record<string, Team[]> = groupTeams.reduce((acc, t) => {
-                  const p = t.pool || 'General';
-                  if (!acc[p]) acc[p] = [];
-                  acc[p].push(t);
-                  return acc;
-                }, {} as Record<string, Team[]>);
+                // 1. Get official pools for this group
+                const groupPools = group.pools || [];
+                const poolIds = groupPools.map(p => p.id);
+                
+                // 2. Group teams by pool_id
+                const poolGroups: { name: string, teams: Team[] }[] = [];
+                
+                if (groupPools.length > 1) {
+                  // Multiple pools: Group by pool_id
+                  groupPools.forEach(p => {
+                    const teamsInPool = groupTeams.filter(t => t.poolId === p.id);
+                    if (teamsInPool.length > 0) {
+                      poolGroups.push({ name: p.name, teams: teamsInPool });
+                    }
+                  });
 
-                const sortedPools = Object.keys(pools).sort();
+                  // Add any "Unassigned" teams
+                  const unassigned = groupTeams.filter(t => !t.poolId || !poolIds.includes(t.poolId));
+                  if (unassigned.length > 0) {
+                    poolGroups.push({ name: 'Awaiting Assignment', teams: unassigned });
+                  }
+                } else {
+                  // Single pool or no pools: Just one group
+                  poolGroups.push({ name: '', teams: groupTeams });
+                }
 
                 return (
                   <div key={group.id} className={styles.groupSection}>
                     <h2 className={styles.groupTitle}>{group.name}</h2>
                     
                     <div className={styles.poolGrid}>
-                      {sortedPools.map(poolName => (
-                        <div key={poolName} className={styles.poolCard}>
-                          {sortedPools.length > 1 && (
-                            <h3 className={styles.poolName}>Pool {poolName}</h3>
+                      {poolGroups.map(pg => (
+                        <div key={pg.name} className={styles.poolCard}>
+                          {pg.name && (
+                            <h3 className={styles.poolName}>
+                              {pg.name.length <= 1 ? `Pool ${pg.name}` : pg.name}
+                            </h3>
                           )}
                           <div className={styles.teamList}>
-                            {pools[poolName].map(team => (
+                            {pg.teams.map(team => (
                               <div key={team.id} className={styles.teamRow}>
                                 <div className={styles.teamMain}>
                                   <div className={styles.teamAvatar}>{team.name.charAt(0).toUpperCase()}</div>
