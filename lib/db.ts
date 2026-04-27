@@ -538,7 +538,7 @@ export async function seedTournamentData(tid: string, options: {
     const coaches = ['Coach Bob', 'Coach Alice', 'Coach Charlie', 'Coach Diana', 'Coach Ed', 'Coach Fiona', 'Coach Greg', 'Coach Heather'];
     
     for (const group of ageGroups) {
-      const teamRows = teamNames.map((name, i) => {
+      const teamRows: any[] = teamNames.map((name, i) => {
         const teamPool = group.poolCount && group.poolCount > 1 
           ? String.fromCharCode(65 + (i % group.poolCount)) 
           : undefined;
@@ -550,8 +550,8 @@ export async function seedTournamentData(tid: string, options: {
           coach: coaches[i],
           email: `coach${i}@example.com`,
           players: [],
-          status: 'accepted' as const,
-          payment_status: 'paid' as const,
+          status: 'accepted',
+          payment_status: 'paid',
           registered_at: new Date().toISOString(),
           pool: teamPool
         };
@@ -565,8 +565,8 @@ export async function seedTournamentData(tid: string, options: {
         coach: 'Waitlist Coach 1',
         email: `waitlist1@example.com`,
         players: [],
-        status: 'waitlist' as const,
-        payment_status: 'pending' as const,
+        status: 'waitlist',
+        payment_status: 'pending',
         registered_at: new Date().toISOString()
       });
 
