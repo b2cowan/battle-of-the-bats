@@ -151,82 +151,68 @@ export default function UnifiedTeamsPage() {
   async function patch(id: string, updates: any, reg?: Registration) {
     setWorking(id);
     try {
-      // 1. Update Registration Table
-      const res = await fetch(`/api/registrations/${id}`, {
-        method: 'PATCH',
+      const res = await fetch(`/api/admin/teams`, {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updates),
+        body: JSON.stringify({ 
+          action: 'update',
+          ids: [id],
+          updates
+        }),
       });
-
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || 'Failed to update registration');
-      }
-
-      // 2. Sync to Teams Table if needed
-      const r = reg || regs.find(x => x.id === id);
-      if (!r) return;
-
-      const isAccepted = (updates.status === 'accepted') || (r.status === 'accepted' && updates.status !== 'rejected');
+      if (!res.ok) throw new Error('Update failed');
       
-      if (isAccepted) {
-        const teamData = {
-          id: id,
-          name: updates.team_name || r.team_name,
-          coach: updates.coach_name || r.coach_name,
-          email: updates.email || r.email,
-          ageGroupId: updates.age_group_id || r.age_group_id,
-          tournamentId: currentTournament?.id || '',
-          pool: updates.pool !== undefined ? updates.pool : r.pool,
-          poolId: updates.poolId !== undefined ? updates.poolId : r.poolId,
-          players: []
-        };
-
-        const tRes = await getTeams(currentTournament?.id);
-        const existing = tRes.find(t => t.id === id);
-
-        if (existing) {
-          await updateTeam(id, teamData);
-        } else {
-          await saveTeam(teamData);
-        }
-      } else if (updates.status === 'rejected' || updates.status === 'waitlist') {
-        await deleteTeam(id);
-      }
+      // Update local state immediately
+      setRegs(prev => prev.map(r => r.id === id ? { ...r, ...updates } : r));
     } catch (e: any) {
-      setErrorMsg(`Update failed: ${e.message}`);
+      alert("Error: " + e.message);
     } finally {
-      await load();
       setWorking(null);
     }
   }
 
-  async function handleBulk(action: 'accept' | 'pay' | 'delete') {
-    if (selectedIds.size === 0) return;
+  async function handleBulk(actionType: 'status' | 'payment', value: string) {
+    const ids = Array.from(selectedIds);
     setBulkWorking(true);
     try {
-      const ids = Array.from(selectedIds);
-      for (const id of ids) {
-        const r = regs.find(x => x.id === id);
-        if (!r) continue;
+      const updates: any = {};
+      if (actionType === 'status') updates.status = value;
+      else updates.payment_status = value;
 
-        if (action === 'accept') {
-          await patch(id, { status: 'accepted' }, r);
-        } else if (action === 'pay') {
-          await patch(id, { payment_status: 'paid' }, r);
-        } else if (action === 'delete') {
-          if (confirm(`Are you sure you want to delete ${r.team_name}?`)) {
-            await fetch(`/api/registrations/${id}`, { method: 'DELETE' });
-            await deleteTeam(id);
-          }
-        }
-      }
+      const res = await fetch('/api/admin/teams', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'update', ids, updates })
+      });
+
+      if (!res.ok) throw new Error('Bulk update failed');
+      
       setSelectedIds(new Set());
+      load();
     } catch (e: any) {
-      setErrorMsg(`Bulk action failed: ${e.message}`);
+      alert(e.message);
     } finally {
       setBulkWorking(false);
+    }
+  }
+
+  async function handleDeleteBulk() {
+    if (!confirm(`Delete ${selectedIds.size} teams forever?`)) return;
+    const ids = Array.from(selectedIds);
+    setBulkWorking(true);
+    try {
+      const res = await fetch('/api/admin/teams', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids })
+      });
+      if (!res.ok) throw new Error('Delete failed');
+      setSelectedIds(new Set());
       load();
+    } catch (e: any) {
+      alert(e.message);
+    } finally {
+      setBulkWorking(false);
     }
   }
 
