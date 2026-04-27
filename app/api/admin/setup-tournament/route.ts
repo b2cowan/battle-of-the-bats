@@ -98,7 +98,86 @@ export async function POST(req: Request) {
       }
     }
 
-    // 4. Announcement
+    // 4. Seed Data
+    if (seedData && Object.values(seedData).some(v => v)) {
+      const { data: ageGroups } = await supabase.from('age_groups').select('*, pools(*)').eq('tournament_id', tid);
+      
+      if (ageGroups && ageGroups.length > 0) {
+        if (seedData.contacts) {
+          const roles = ['Tournament Director', 'Registrar', 'Head Umpire', 'Diamond Manager', 'Volunteer Coordinator'];
+          const names = ['John Smith', 'Sarah Jenkins', 'Mike Miller', 'Lisa Wong', 'David Chen'];
+          const rows = names.map((name, i) => ({
+            tournament_id: tid,
+            name,
+            email: `${name.toLowerCase().replace(' ', '.')}@example.com`,
+            phone: `555-010${i}`,
+            role: roles[i]
+          }));
+          await supabase.from('contacts').insert(rows);
+        }
+
+        if (seedData.diamonds) {
+          const names = ['Memorial Park D1', 'Memorial Park D2', 'Lions Field', 'South Common', 'Milton Sports Center'];
+          const rows = names.map((name, i) => ({
+            tournament_id: tid,
+            name,
+            address: `${100 + i} Main St, Milton, ON`,
+            notes: i % 2 === 0 ? 'Lighted field' : ''
+          }));
+          await supabase.from('diamonds').insert(rows);
+        }
+
+        if (seedData.registrations) {
+          const teamNames = ['Milton Bats', 'Oakville Angels', 'Burlington Bulls', 'Mississauga Tigers', 'Hamilton Heat', 'Brampton Blazers', 'Toronto Titans', 'Guelph Gryphons'];
+          const coaches = ['Coach Bob', 'Coach Alice', 'Coach Charlie', 'Coach Diana', 'Coach Ed', 'Coach Fiona', 'Coach Greg', 'Coach Heather'];
+          
+          for (const group of ageGroups) {
+            const groupPools = group.pools || [];
+            
+            const teamRows = teamNames.map((name, i) => {
+              const poolObj = groupPools.length > 0 ? groupPools[i % groupPools.length] : null;
+              return {
+                tournament_id: tid,
+                age_group_id: group.id,
+                name: `${name} ${group.name}${poolObj ? ' (' + poolObj.name + ')' : ''}`,
+                coach: coaches[i],
+                email: `coach${i}@example.com`,
+                players: [],
+                pool_id: poolObj?.id
+              };
+            });
+            await supabase.from('teams').insert(teamRows);
+            
+            const regRows = teamNames.map((name, i) => ({
+              tournament_id: tid,
+              team_name: `${name} ${group.name}`,
+              coach_name: coaches[i],
+              email: `coach${i}@example.com`,
+              age_group_id: group.id,
+              status: 'accepted',
+              payment_status: 'paid',
+              registered_at: new Date().toISOString()
+            }));
+            
+            // Add 2 waitlist teams
+            regRows.push({
+              tournament_id: tid,
+              team_name: `Waitlist Team 1 ${group.name}`,
+              coach_name: 'Waitlist Coach 1',
+              email: `waitlist1@example.com`,
+              age_group_id: group.id,
+              status: 'waitlist',
+              payment_status: 'pending',
+              registered_at: new Date().toISOString()
+            });
+            
+            await supabase.from('registrations').insert(regRows);
+          }
+        }
+      }
+    }
+
+    // 5. Announcement
     if (announcement) {
       await supabase.from('announcements').insert({
         tournament_id: tid,
