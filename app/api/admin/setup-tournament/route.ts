@@ -7,13 +7,26 @@ export async function POST(req: Request) {
     const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
     if (!url || !key) {
-      return NextResponse.json({ 
-        error: "Missing environment variables: SUPABASE_SERVICE_ROLE_KEY is required for tournament setup." 
-      }, { status: 500 });
+      console.error("Setup API Error: Missing environment variables", { url: !!url, key: !!key });
+      return new Response(JSON.stringify({ 
+        error: `Environment variables missing on server. URL: ${!!url}, KEY: ${!!key}. Please check Amplify settings.` 
+      }), { 
+        status: 500,
+        headers: { 'Content-Type': 'application/json' }
+      });
     }
 
     const supabase = createClient(url, key);
-    const { tournament, divisions, announcement, seedData } = await req.json();
+    const body = await req.json().catch(() => null);
+    
+    if (!body) {
+      return new Response(JSON.stringify({ error: "Invalid JSON body" }), { 
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    const { tournament, divisions, announcement, seedData } = body;
 
     // 1. Create Tournament
     const { data: newTnt, error: tntError } = await supabase
@@ -96,9 +109,15 @@ export async function POST(req: Request) {
       });
     }
 
-    return NextResponse.json({ success: true, id: tid });
+    return new Response(JSON.stringify({ success: true, id: tid }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' }
+    });
   } catch (err: any) {
     console.error('Setup Tournament Error:', err);
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    return new Response(JSON.stringify({ error: err.message || "Unknown server error" }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' }
+    });
   }
 }
