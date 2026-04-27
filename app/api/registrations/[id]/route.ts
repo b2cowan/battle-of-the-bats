@@ -83,26 +83,50 @@ export async function GET(req: NextRequest, props: { params: Promise<{ id: strin
     }
 
     const supabaseAdmin = createClient(url, key);
-    const { data, error } = await supabaseAdmin
+    
+    // 1. Try Registrations first
+    const { data: reg, error: regError } = await supabaseAdmin
       .from('registrations')
-      .select('*, pool_id(name)')
+      .select('*, pool_id(name), age_groups(name), tournaments(name)')
       .eq('id', id)
       .single();
 
-    if (error || !data) return NextResponse.json({ error: 'Not found' }, { status: 404 });
-    
-    // Safety check: Only show accepted teams to the public
-    if (data.status !== 'accepted') {
-      return NextResponse.json({ error: 'Team not yet active' }, { status: 403 });
+    if (!regError && reg) {
+      // Safety check: Only show accepted teams to the public
+      if (reg.status !== 'accepted') {
+        return NextResponse.json({ error: 'Team not yet active' }, { status: 403 });
+      }
+
+      return NextResponse.json({
+        ...reg,
+        age_group_name: reg.age_groups?.name || reg.age_group_name,
+        tournament_name: reg.tournaments?.name || reg.tournament_name,
+        pool: reg.pool_id?.name || reg.pool
+      });
     }
 
-    // Flatten pool name
-    const result = {
-      ...data,
-      pool: data.pool_id?.name || data.pool // Use centralized name if available, else fallback to legacy
-    };
+    // 2. Fallback to Teams table if registration not found (for legacy/manual teams)
+    const { data: team, error: teamError } = await supabaseAdmin
+      .from('teams')
+      .select('*, pool_id(name), age_groups(name), tournaments(name)')
+      .eq('id', id)
+      .single();
 
-    return NextResponse.json(result);
+    if (!teamError && team) {
+      return NextResponse.json({
+        id: team.id,
+        team_name: team.name,
+        coach_name: team.coach,
+        email: team.email,
+        age_group_name: team.age_groups?.name || 'Division',
+        tournament_name: team.tournaments?.name || 'Tournament',
+        status: 'accepted',
+        payment_status: 'paid',
+        pool: team.pool_id?.name || team.pool
+      });
+    }
+
+    return NextResponse.json({ error: 'Team not found' }, { status: 404 });
   } catch (e: any) {
     console.error('GET registration error:', e);
     return NextResponse.json({ error: 'Server error' }, { status: 500 });

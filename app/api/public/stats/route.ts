@@ -1,17 +1,25 @@
 import { NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@supabase/supabase-js';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: Request) {
   try {
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+    if (!url || !key) {
+      throw new Error("Missing environment variables");
+    }
+
+    const supabaseAdmin = createClient(url, key);
     const { searchParams } = new URL(req.url);
     const tournamentId = searchParams.get('tournament_id');
     const teamId = searchParams.get('teamId');
 
     if (teamId) {
       // Fetch games for a specific team
-      const { data: games, error } = await supabase
+      const { data: games, error } = await supabaseAdmin
         .from('games')
         .select(`
           id, 
@@ -41,7 +49,7 @@ export async function GET(req: Request) {
       });
     }
 
-    let query = supabase.from('registrations').select('age_group_id, status');
+    let query = supabaseAdmin.from('registrations').select('age_group_id, status');
     if (tournamentId) {
       query = query.eq('tournament_id', tournamentId);
     }
@@ -62,6 +70,7 @@ export async function GET(req: Request) {
 
     return NextResponse.json(counts);
   } catch (e: any) {
+    console.error('Public Stats API Error:', e);
     return NextResponse.json({ error: e.message }, { status: 500 });
   }
 }
