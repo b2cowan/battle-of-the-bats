@@ -312,13 +312,13 @@ export default function UnifiedTeamsPage() {
             <button className="btn btn-ghost btn-xs" onClick={() => setSelectedIds(new Set())} style={{ color: 'var(--white-40)' }}>Deselect All</button>
           </div>
           <div className={styles.bulkButtons}>
-            <button className="btn btn-primary btn-sm" onClick={() => handleBulk('accept')} disabled={bulkWorking}>
+            <button className="btn btn-primary btn-sm" onClick={() => handleBulk('status', 'accepted')} disabled={bulkWorking}>
               {bulkWorking ? <RefreshCw className="spin" size={14} /> : <Check size={14} />} Accept
             </button>
-            <button className="btn btn-outline btn-sm" onClick={() => handleBulk('pay')} disabled={bulkWorking}>
+            <button className="btn btn-outline btn-sm" onClick={() => handleBulk('payment', 'paid')} disabled={bulkWorking}>
               <CreditCard size={14} /> Mark Paid
             </button>
-            <button className="btn btn-danger btn-sm" onClick={() => handleBulk('delete')} disabled={bulkWorking}>
+            <button className="btn btn-danger btn-sm" onClick={handleDeleteBulk} disabled={bulkWorking}>
               <Trash2 size={14} /> Delete
             </button>
           </div>
