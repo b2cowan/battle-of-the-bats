@@ -42,30 +42,28 @@ export default function UnifiedTeamsPage() {
   const [stableSortedIds, setStableSortedIds] = useState<string[]>([]);
   const [hasLoadedInitial, setHasLoadedInitial] = useState(false);
 
-  const loadAgeGroups = useCallback(async () => {
-    if (currentTournament) {
-      const groups = await getAgeGroups(currentTournament.id);
-      setAgeGroups(groups);
-      if (groups.length && !addForm.ageGroupId) setAddForm(f => ({ ...f, ageGroupId: groups[0].id }));
-    }
-  }, [currentTournament, addForm.ageGroupId]);
-
   const load = useCallback(async () => {
+    if (!currentTournament) return;
     setLoading(true);
     setErrorMsg(null);
     try {
-      // Fetch registrations and teams to merge them
-      const [rRes, tRes] = await Promise.all([
+      // 1. Fetch all data in parallel
+      const [rRes, tRes, groups] = await Promise.all([
         fetch('/api/registrations'),
-        getTeams(currentTournament?.id)
+        getTeams(currentTournament.id),
+        getAgeGroups(currentTournament.id)
       ]);
       
       const rData = await rRes.json();
-      if (!rRes.ok) throw new Error(rData.error || 'Failed to load data');
+      if (!rRes.ok) throw new Error(rData.error || 'Failed to load registrations');
 
-      // Create a map of team data (pools) by ID
+      setAgeGroups(groups);
+      if (groups.length && !addForm.ageGroupId) {
+        setAddForm(f => ({ ...f, ageGroupId: groups[0].id }));
+      }
+
+      // 2. Merge registrations with team data (pools)
       const teamMap = new Map(tRes.map(t => [t.id, t]));
-
       const merged = (Array.isArray(rData) ? rData : []).map((r: Registration) => ({
         ...r,
         pool: teamMap.get(r.id)?.pool,
@@ -74,64 +72,22 @@ export default function UnifiedTeamsPage() {
 
       setRegs(merged);
 
-      // ONE-TIME MIGRATION: 
-      // 1. Ensure pools exist in the 'pools' table
-      const groups = await getAgeGroups(currentTournament?.id);
-      setAgeGroups(groups);
-      
-      let migrationHappened = false;
-      for (const g of groups) {
-        if ((g.poolCount || 0) > 1 && (!g.pools || g.pools.length === 0)) {
-          console.log(`Migrating legacy pools for ${g.name}...`);
-          const names = (g.poolNames || '').split(',').map(n => n.trim());
-          for (let i = 0; i < (g.poolCount || 1); i++) {
-            const name = names[i] || String.fromCharCode(65 + i);
-            await savePool({ ageGroupId: g.id, name, order: i });
-          }
-          migrationHappened = true;
-        }
-      }
-      if (migrationHappened) {
-        setAgeGroups(await getAgeGroups(currentTournament?.id));
-      }
-
-      setRegs(merged);
-
-      // --- Lazy Migration: If they have a 'pool' string but no 'poolId', link them now ---
-      for (const r of merged) {
-        if (r.status === 'accepted' && r.pool && !r.poolId) {
-          const g = ageGroups.find(x => x.id === r.age_group_id);
-          const p = g?.pools?.find(x => x.name === r.pool);
-          if (p) {
-            console.log(`Linking team ${r.team_name} to pool ${p.name}...`);
-            await patch(r.id, { pool_id: p.id });
-          }
-        }
-      }
-
-      // Initialize stable order if not set
+      // 3. Initialize stable order if not set
       if (stableSortedIds.length === 0) {
         const initialSorted = [...merged].sort((a: any, b: any) => {
-          // 1. Status (Accepted > Waitlist > Pending > Rejected)
           const statusOrder: any = { accepted: 1, waitlist: 2, pending: 3, rejected: 4 };
           if (statusOrder[a.status] !== statusOrder[b.status]) return statusOrder[a.status] - statusOrder[b.status];
+          if (a.payment_status !== b.payment_status) return a.payment_status === 'paid' ? -1 : 1;
           
-          // 2. Payment (Paid > Pending)
-          if (a.payment_status !== b.payment_status) {
-            return a.payment_status === 'paid' ? -1 : 1;
-          }
-
-          // 3. Pool (Needs Pool first, then alphabetically)
           if (a.status === 'accepted') {
             if (!a.poolId && b.poolId) return -1;
             if (a.poolId && !b.poolId) return 1;
             if (a.poolId && b.poolId) {
-              const ap = ageGroups.find(g => g.id === a.age_group_id)?.pools?.find(p => p.id === a.poolId);
-              const bp = ageGroups.find(g => g.id === b.age_group_id)?.pools?.find(p => p.id === b.poolId);
+              const ap = groups.find(g => g.id === a.age_group_id)?.pools?.find(p => p.id === a.poolId);
+              const bp = groups.find(g => g.id === b.age_group_id)?.pools?.find(p => p.id === b.poolId);
               return (ap?.name || '').localeCompare(bp?.name || '');
             }
           }
-
           return new Date(b.registered_at).getTime() - new Date(a.registered_at).getTime();
         });
         setStableSortedIds(initialSorted.map((x: any) => x.id));
@@ -142,9 +98,9 @@ export default function UnifiedTeamsPage() {
       setLoading(false);
       setHasLoadedInitial(true);
     }
-  }, [currentTournament?.id, stableSortedIds.length, ageGroups]);
+  }, [currentTournament?.id, stableSortedIds.length, addForm.ageGroupId]);
 
-  useEffect(() => { load(); loadAgeGroups(); }, [load, loadAgeGroups]);
+  useEffect(() => { load(); }, [load]);
 
   async function patch(id: string, updates: any, reg?: Registration) {
     setWorking(id);
