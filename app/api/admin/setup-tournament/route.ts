@@ -1,14 +1,18 @@
 import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
 
-// Use the Service Role Key to bypass RLS for administrative setup
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
-
 export async function POST(req: Request) {
   try {
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+    if (!url || !key) {
+      return NextResponse.json({ 
+        error: "Missing environment variables: SUPABASE_SERVICE_ROLE_KEY is required for tournament setup." 
+      }, { status: 500 });
+    }
+
+    const supabase = createClient(url, key);
     const { tournament, divisions, announcement, seedData } = await req.json();
 
     // 1. Create Tournament
