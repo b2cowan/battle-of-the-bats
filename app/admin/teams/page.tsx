@@ -96,14 +96,16 @@ export default function UnifiedTeamsPage() {
         setAgeGroups(await getAgeGroups(currentTournament?.id));
       }
 
-      // 2. Link teams (regs) to real Pool IDs
+      setRegs(merged);
+
+      // --- Lazy Migration: If they have a 'pool' string but no 'poolId', link them now ---
       for (const r of merged) {
         if (r.status === 'accepted' && r.pool && !r.poolId) {
-          const g = groups.find(x => x.id === r.age_group_id);
+          const g = ageGroups.find(x => x.id === r.age_group_id);
           const p = g?.pools?.find(x => x.name === r.pool);
           if (p) {
             console.log(`Linking team ${r.team_name} to pool ${p.name}...`);
-            await patch(r.id, { poolId: p.id });
+            await patch(r.id, { pool_id: p.id });
           }
         }
       }
@@ -139,6 +141,7 @@ export default function UnifiedTeamsPage() {
       setErrorMsg(e.message);
     } finally {
       setLoading(false);
+      setHasLoadedInitial(true);
     }
   }, [currentTournament?.id, stableSortedIds.length, ageGroups]);
 
@@ -404,7 +407,7 @@ export default function UnifiedTeamsPage() {
       )}
 
       {/* List */}
-      {loading && regs.length === 0 ? (
+      {!hasLoadedInitial ? (
         <div className="empty-state"><RefreshCw size={32} className="spin" style={{ opacity: 0.4 }} /><p>Loading data…</p></div>
       ) : Object.keys(grouped).length === 0 ? (
         <div className="empty-state"><Users size={40} style={{ opacity: 0.2 }} /><p>No teams matching filters.</p></div>
