@@ -4,16 +4,15 @@ import { use } from 'react';
 import { Users, CheckCircle, Clock, CreditCard, AlertTriangle, Mail, MapPin } from 'lucide-react';
 import styles from './team-profile.module.css';
 
-interface Registration {
+interface TeamProfile {
   id: string;
   team_name: string;
   coach_name: string;
   email: string;
   age_group_name: string;
   tournament_name: string;
-  status: 'pending' | 'accepted' | 'rejected';
+  status: 'pending' | 'accepted' | 'rejected' | 'waitlist';
   payment_status: 'pending' | 'paid';
-  registered_at: string;
   pool?: string;
 }
 
@@ -31,7 +30,7 @@ interface Game {
 
 export default function TeamProfilePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
-  const [reg, setReg]       = useState<Registration | null>(null);
+  const [team, setTeam]       = useState<TeamProfile | null>(null);
   const [games, setGames]   = useState<Game[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError]   = useState('');
@@ -49,7 +48,7 @@ export default function TeamProfilePage({ params }: { params: Promise<{ id: stri
         const rData = await rRes.json();
         const gData = await gRes.json();
         
-        setReg(rData);
+        setTeam(rData);
         setGames(gData.games || []);
       } catch (e: any) {
         setError('Team not found.');
@@ -68,7 +67,7 @@ export default function TeamProfilePage({ params }: { params: Promise<{ id: stri
     </div>
   );
 
-  if (error || !reg) return (
+  if (error || !team) return (
     <div className="page-content">
       <div className="section"><div className="container">
         <div className="empty-state"><AlertTriangle size={40} /><p>{error || 'Team not found.'}</p></div>
@@ -78,7 +77,7 @@ export default function TeamProfilePage({ params }: { params: Promise<{ id: stri
 
   const stats = games.reduce((acc, g) => {
     if (g.home_score === null || g.away_score === null) return acc;
-    const isHome = g.home_team_name === reg.team_name;
+    const isHome = g.home_team_name === team.team_name;
     const myScore = isHome ? g.home_score : g.away_score;
     const oppScore = isHome ? g.away_score : g.home_score;
     
@@ -95,11 +94,11 @@ export default function TeamProfilePage({ params }: { params: Promise<{ id: stri
       <div className={styles.pageHeader}>
         <div className="container">
           <div className="flex items-center gap-2 mb-4">
-            <span className="badge badge-purple">{reg.age_group_name}</span>
-            {reg.pool && <span className="badge">Pool {reg.pool}</span>}
+            <span className="badge badge-purple">{team.age_group_name}</span>
+            {team.pool && <span className="badge">Pool {team.pool}</span>}
           </div>
-          <h1 className="display-lg">{reg.team_name}</h1>
-          <p className="text-muted">{reg.tournament_name}</p>
+          <h1 className="display-lg">{team.team_name}</h1>
+          <p className="text-muted">{team.tournament_name}</p>
         </div>
       </div>
 
@@ -122,16 +121,16 @@ export default function TeamProfilePage({ params }: { params: Promise<{ id: stri
                 <div className={styles.infoList}>
                   <div className={styles.infoItem}>
                     <label>Coach</label>
-                    <strong>{reg.coach_name}</strong>
+                    <strong>{team.coach_name}</strong>
                   </div>
                   <div className={styles.infoItem}>
                     <label>Division</label>
-                    <strong>{reg.age_group_name}</strong>
+                    <strong>{team.age_group_name}</strong>
                   </div>
-                  {reg.pool && (
+                  {team.pool && (
                     <div className={styles.infoItem}>
                       <label>Pool</label>
-                      <strong>{reg.pool}</strong>
+                      <strong>{team.pool}</strong>
                     </div>
                   )}
                 </div>
@@ -150,7 +149,7 @@ export default function TeamProfilePage({ params }: { params: Promise<{ id: stri
                 ) : (
                   <div className={styles.gameList}>
                     {games.map(g => {
-                      const isHome = g.home_team_name === reg.team_name;
+                      const isHome = g.home_team_name === team.team_name;
                       const opponent = isHome ? g.away_team_name : g.home_team_name;
                       const hasResult = g.home_score !== null;
                       const myScore = isHome ? g.home_score : g.away_score;

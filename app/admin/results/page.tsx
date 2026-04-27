@@ -17,7 +17,8 @@ export default function AdminResultsPage() {
 
   async function refresh() {
     setGames(await getGames(currentTournament?.id));
-    setTeams(await getTeams(currentTournament?.id));
+    const allTeams = await getTeams(currentTournament?.id);
+    setTeams(allTeams.filter(t => t.status === 'accepted'));
     setAgeGroups(await getAgeGroups());
   }
   useEffect(() => { refresh(); }, [currentTournament?.id]);

@@ -337,6 +337,10 @@ export async function getTeams(tournamentId?: string): Promise<Team[]> {
     coach: t.coach,
     email: t.email,
     players: t.players || [],
+    status: t.status || 'accepted',
+    paymentStatus: t.payment_status || 'paid',
+    registeredAt: t.registered_at,
+    adminNotes: t.admin_notes,
     pool: t.pool,
     poolId: t.pool_id
   }));
@@ -350,24 +354,34 @@ export async function saveTeam(t: Omit<Team, 'id'> & { id?: string }): Promise<v
     coach: t.coach,
     email: t.email,
     players: t.players || [],
+    status: t.status || 'accepted',
+    payment_status: t.paymentStatus || 'paid',
+    registered_at: t.registeredAt || new Date().toISOString(),
+    admin_notes: t.adminNotes,
     pool: t.pool,
     pool_id: t.poolId
   };
   if (t.id) payload.id = t.id;
-  await supabase.from('teams').insert(payload);
+  const { error } = await supabase.from('teams').insert(payload);
+  if (error) throw error;
 }
 
 export async function updateTeam(id: string, t: Partial<Team>): Promise<void> {
   const updates: any = {};
   if (t.tournamentId !== undefined) updates.tournament_id = t.tournamentId;
-  if (t.ageGroupId !== undefined) updates.age_group_id = t.ageGroupId;
-  if (t.name !== undefined) updates.name = t.name;
-  if (t.coach !== undefined) updates.coach = t.coach;
-  if (t.email !== undefined) updates.email = t.email;
-  if (t.players !== undefined) updates.players = t.players;
-  if (t.pool !== undefined) updates.pool = t.pool;
-  if (t.poolId !== undefined) updates.pool_id = t.poolId;
-  await supabase.from('teams').update(updates).eq('id', id);
+  if (t.ageGroupId !== undefined)   updates.age_group_id = t.ageGroupId;
+  if (t.name !== undefined)         updates.name = t.name;
+  if (t.coach !== undefined)        updates.coach = t.coach;
+  if (t.email !== undefined)        updates.email = t.email;
+  if (t.players !== undefined)      updates.players = t.players;
+  if (t.status !== undefined)       updates.status = t.status;
+  if (t.paymentStatus !== undefined) updates.payment_status = t.paymentStatus;
+  if (t.registeredAt !== undefined) updates.registered_at = t.registeredAt;
+  if (t.adminNotes !== undefined)    updates.admin_notes = t.adminNotes;
+  if (t.pool !== undefined)         updates.pool = t.pool;
+  if (t.poolId !== undefined)       updates.pool_id = t.poolId;
+  const { error } = await supabase.from('teams').update(updates).eq('id', id);
+  if (error) throw error;
 }
 
 export async function migratePoolTeams(ageGroupId: string, oldPool: string, newPool: string): Promise<void> {
@@ -379,10 +393,7 @@ export async function migratePoolTeams(ageGroupId: string, oldPool: string, newP
   if (error) throw error;
 }
 
-export async function saveRegistration(r: any): Promise<void> {
-  const { error } = await supabase.from('registrations').insert(r);
-  if (error) throw error;
-}
+
 
 export async function deleteTeam(id: string): Promise<void> {
   await supabase.from('teams').delete().eq('id', id);
@@ -527,9 +538,9 @@ export async function seedTournamentData(tid: string, options: {
     const coaches = ['Coach Bob', 'Coach Alice', 'Coach Charlie', 'Coach Diana', 'Coach Ed', 'Coach Fiona', 'Coach Greg', 'Coach Heather'];
     
     for (const group of ageGroups) {
-      const rows = teamNames.map((name, i) => {
+      const teamRows = teamNames.map((name, i) => {
         const teamPool = group.poolCount && group.poolCount > 1 
-          ? String.fromCharCode(65 + (i % group.poolCount)) // A, B, C...
+          ? String.fromCharCode(65 + (i % group.poolCount)) 
           : undefined;
 
         return {
@@ -539,52 +550,30 @@ export async function seedTournamentData(tid: string, options: {
           coach: coaches[i],
           email: `coach${i}@example.com`,
           players: [],
+          status: 'accepted' as const,
+          payment_status: 'paid' as const,
+          registered_at: new Date().toISOString(),
           pool: teamPool
         };
       });
-      const { error: teamError } = await supabase.from('teams').insert(rows);
-      if (teamError) {
-        console.error('Team seeding error:', teamError);
-        throw teamError;
-      }
-      
-      const regRows = teamNames.map((name, i) => ({
-        tournament_id: tid,
-        team_name: `${name} ${group.name}`,
-        coach_name: coaches[i],
-        email: `coach${i}@example.com`,
-        age_group_id: group.id,
-        status: 'accepted',
-        payment_status: 'paid',
-        registered_at: new Date().toISOString()
-      }));
-      
+
       // Add 2 waitlist teams per division
-      regRows.push({
+      teamRows.push({
         tournament_id: tid,
-        team_name: `Waitlist Team 1 ${group.name}`,
-        coach_name: 'Waitlist Coach 1',
+        age_group_id: group.id,
+        name: `Waitlist Team 1 ${group.name}`,
+        coach: 'Waitlist Coach 1',
         email: `waitlist1@example.com`,
-        age_group_id: group.id,
-        status: 'waitlist',
-        payment_status: 'pending',
-        registered_at: new Date().toISOString()
-      });
-      regRows.push({
-        tournament_id: tid,
-        team_name: `Waitlist Team 2 ${group.name}`,
-        coach_name: 'Waitlist Coach 2',
-        email: `waitlist2@example.com`,
-        age_group_id: group.id,
-        status: 'waitlist',
-        payment_status: 'pending',
+        players: [],
+        status: 'waitlist' as const,
+        payment_status: 'pending' as const,
         registered_at: new Date().toISOString()
       });
 
-      const { error: regError } = await supabase.from('registrations').insert(regRows);
-      if (regError) {
-        console.error('Registration seeding error:', regError);
-        throw regError;
+      const { error: teamError } = await supabase.from('teams').insert(teamRows);
+      if (teamError) {
+        console.error('Team seeding error:', teamError);
+        throw teamError;
       }
     }
   }

@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
 
     // 2. Get current registration count (non-rejected)
     const { count: regCount, error: countError } = await supabase
-      .from('registrations')
+      .from('teams')
       .select('*', { count: 'exact', head: true })
       .eq('age_group_id', ageGroupId)
       .neq('status', 'rejected');
@@ -41,16 +41,16 @@ export async function POST(req: NextRequest) {
 
     // Save to Supabase
     const { data, error } = await supabase
-      .from('registrations')
+      .from('teams')
       .insert({ 
-        team_name: teamName, 
-        coach_name: coachName, 
+        name: teamName, 
+        coach: coachName, 
         email, 
         age_group_id: ageGroupId, 
-        age_group_name: ageGroupName, 
         tournament_id: tournamentId,
-        tournament_name: tournamentName,
-        status: finalStatus
+        status: finalStatus,
+        payment_status: 'pending',
+        registered_at: new Date().toISOString()
       })
       .select()
       .single();

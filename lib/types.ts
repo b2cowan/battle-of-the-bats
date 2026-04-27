@@ -56,12 +56,16 @@ export interface Player {
 
 export interface Team {
   id: string;
-  tournamentId: string; // which tournament year this roster belongs to
+  tournamentId: string;
   ageGroupId: string;
   name: string;
   coach: string;
-  email?: string;
+  email: string;
   players: Player[];
+  status: 'pending' | 'accepted' | 'waitlist' | 'rejected';
+  paymentStatus: 'pending' | 'paid';
+  registeredAt: string;
+  adminNotes?: string;
   pool?: string; // (Legacy) pool name e.g. "A"
   poolId?: string; // The new way (link to pools table)
 }

@@ -18,7 +18,7 @@ export async function POST(req: Request) {
     }
 
     const supabase = createClient(url, key);
-    const { action, ids, updates } = await req.json();
+    const { ids, updates } = await req.json();
 
     if (!ids || !Array.isArray(ids) || ids.length === 0) {
       return new Response(JSON.stringify({ error: "No IDs provided" }), { status: 400 });
@@ -26,77 +26,49 @@ export async function POST(req: Request) {
 
     // 1. Fetch current records for email comparison
     const { data: currents } = await supabase
-      .from('registrations')
+      .from('teams')
       .select('*')
       .in('id', ids);
 
     if (!currents) throw new Error("Could not find records to update");
 
     // 2. Perform Update
-    // Map internal 'poolId' to 'pool_id' column if present
     const dbUpdates = { ...updates };
     if (dbUpdates.poolId !== undefined) {
       dbUpdates.pool_id = dbUpdates.poolId;
       delete dbUpdates.poolId;
     }
+    if (dbUpdates.paymentStatus !== undefined) {
+      dbUpdates.payment_status = dbUpdates.paymentStatus;
+      delete dbUpdates.paymentStatus;
+    }
 
     const { error: updateErr } = await supabase
-      .from('registrations')
+      .from('teams')
       .update(dbUpdates)
       .in('id', ids);
 
     if (updateErr) throw updateErr;
 
-    // 2.5 Sync with 'teams' table for Accepted teams
-    // If we updated status, pool, or team_name, we need to sync
-    for (const current of currents) {
-      const isAccepted = updates.status === 'accepted' || (current.status === 'accepted' && updates.status !== 'rejected');
-      
-      if (isAccepted) {
-        // Prepare team data
-        const teamData = {
-          id: current.id,
-          name: updates.team_name || current.team_name,
-          coach: updates.coach_name || current.coach_name,
-          email: updates.email || current.email,
-          age_group_id: updates.age_group_id || current.age_group_id,
-          tournament_id: current.tournament_id,
-          pool_id: dbUpdates.pool_id !== undefined ? dbUpdates.pool_id : current.pool_id,
-          pool: updates.pool !== undefined ? updates.pool : current.pool
-        };
-
-        // Check if team exists
-        const { data: existing } = await supabase.from('teams').select('id').eq('id', current.id).single();
-        
-        if (existing) {
-          await supabase.from('teams').update(teamData).eq('id', current.id);
-        } else {
-          await supabase.from('teams').insert(teamData);
-        }
-      } else if (updates.status === 'rejected' || updates.status === 'waitlist') {
-        await supabase.from('teams').delete().eq('id', current.id);
-      }
-    }
-
-    // 3. Handle Emails (Side effects)
-    // For simplicity in bulk, we'll iterate and check for changes
+    // 3. Handle Emails
     for (const current of currents) {
       const p = {
-        teamName:      current.team_name,
-        coachName:     current.coach_name,
-        ageGroupName:  current.age_group_name,
-        tournamentName: current.tournament_name,
+        teamName:      current.name,
+        coachName:     current.coach,
+        ageGroupName:  'Division',
+        tournamentName: 'Tournament',
         teamId:        current.id,
       };
 
       if (updates.status === 'accepted' && current.status !== 'accepted') {
-        await sendEmail(current.email, `Your Team Has Been Accepted — ${current.team_name}`, acceptanceHtml(p));
+        await sendEmail(current.email, `Your Team Has Been Accepted — ${current.name}`, acceptanceHtml(p));
       }
       if (updates.status === 'rejected' && current.status !== 'rejected') {
-        await sendEmail(current.email, `Registration Update — ${current.team_name}`, rejectionHtml(p));
+        await sendEmail(current.email, `Registration Update — ${current.name}`, rejectionHtml(p));
       }
-      if (updates.payment_status === 'paid' && current.payment_status !== 'paid') {
-        await sendEmail(current.email, `Payment Confirmed — ${current.team_name}`, paymentConfirmationHtml(p));
+      if (updates.payment_status === 'paid' && current.payment_status !== 'paid' || 
+          updates.paymentStatus === 'paid' && current.payment_status !== 'paid') {
+        await sendEmail(current.email, `Payment Confirmed — ${current.name}`, paymentConfirmationHtml(p));
       }
     }
 
@@ -121,7 +93,7 @@ export async function DELETE(req: Request) {
     const supabase = createClient(url!, key!);
     const { ids } = await req.json();
 
-    const { error } = await supabase.from('registrations').delete().in('id', ids);
+    const { error } = await supabase.from('teams').delete().in('id', ids);
     if (error) throw error;
 
     return new Response(JSON.stringify({ success: true }), { status: 200 });

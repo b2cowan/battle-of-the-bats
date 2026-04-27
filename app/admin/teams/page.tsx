@@ -7,10 +7,10 @@ import { useTournament } from '@/lib/tournament-context';
 import { AgeGroup, Team } from '@/lib/types';
 import styles from './teams-admin.module.css';
 
-interface Registration {
+interface TeamRecord {
   id: string;
-  team_name: string;
-  coach_name: string;
+  name: string;
+  coach: string;
   email: string;
   age_group_id: string;
   age_group_name: string;
@@ -27,7 +27,7 @@ type Status = 'pending' | 'accepted' | 'rejected' | 'waitlist';
 
 export default function UnifiedTeamsPage() {
   const { currentTournament } = useTournament();
-  const [regs, setRegs]       = useState<Registration[]>([]);
+  const [regs, setRegs]       = useState<TeamRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedStatuses, setSelectedStatuses] = useState<Status[]>(['pending', 'accepted', 'waitlist']);
   const [search, setSearch]   = useState('');
@@ -48,43 +48,34 @@ export default function UnifiedTeamsPage() {
     setErrorMsg(null);
     try {
       // 1. Fetch all data in parallel
-      const [rRes, tRes, groups] = await Promise.all([
+      const [rRes, groups] = await Promise.all([
         fetch('/api/registrations'),
-        getTeams(currentTournament.id),
         getAgeGroups(currentTournament.id)
       ]);
       
       const rData = await rRes.json();
-      if (!rRes.ok) throw new Error(rData.error || 'Failed to load registrations');
+      if (!rRes.ok) throw new Error(rData.error || 'Failed to load teams');
 
       setAgeGroups(groups);
       if (groups.length && !addForm.ageGroupId) {
         setAddForm(f => ({ ...f, ageGroupId: groups[0].id }));
       }
 
-      // 2. Merge registrations with team data (pools)
-      const teamMap = new Map(tRes.map(t => [t.id, t]));
-      const merged = (Array.isArray(rData) ? rData : []).map((r: Registration) => ({
-        ...r,
-        pool: teamMap.get(r.id)?.pool,
-        poolId: teamMap.get(r.id)?.poolId
-      }));
+      setRegs(rData);
 
-      setRegs(merged);
-
-      // 3. Initialize stable order if not set
+      // 2. Initialize stable order if not set
       if (stableSortedIds.length === 0) {
-        const initialSorted = [...merged].sort((a: any, b: any) => {
+        const initialSorted = [...rData].sort((a: any, b: any) => {
           const statusOrder: any = { accepted: 1, waitlist: 2, pending: 3, rejected: 4 };
           if (statusOrder[a.status] !== statusOrder[b.status]) return statusOrder[a.status] - statusOrder[b.status];
           if (a.payment_status !== b.payment_status) return a.payment_status === 'paid' ? -1 : 1;
           
           if (a.status === 'accepted') {
-            if (!a.poolId && b.poolId) return -1;
-            if (a.poolId && !b.poolId) return 1;
-            if (a.poolId && b.poolId) {
-              const ap = groups.find(g => g.id === a.age_group_id)?.pools?.find(p => p.id === a.poolId);
-              const bp = groups.find(g => g.id === b.age_group_id)?.pools?.find(p => p.id === b.poolId);
+            if (!a.pool_id && b.pool_id) return -1;
+            if (a.pool_id && !b.pool_id) return 1;
+            if (a.pool_id && b.pool_id) {
+              const ap = groups.find(g => g.id === a.age_group_id)?.pools?.find(p => p.id === a.pool_id);
+              const bp = groups.find(g => g.id === b.age_group_id)?.pools?.find(p => p.id === b.pool_id);
               return (ap?.name || '').localeCompare(bp?.name || '');
             }
           }
@@ -102,21 +93,15 @@ export default function UnifiedTeamsPage() {
 
   useEffect(() => { load(); }, [load]);
 
-  async function patch(id: string, updates: any, reg?: Registration) {
+  async function patch(id: string, updates: any) {
     setWorking(id);
     try {
       const res = await fetch(`/api/admin/teams`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          action: 'update',
-          ids: [id],
-          updates
-        }),
+        body: JSON.stringify({ ids: [id], updates }),
       });
       if (!res.ok) throw new Error('Update failed');
-      
-      // Update local state immediately
       setRegs(prev => prev.map(r => r.id === id ? { ...r, ...updates } : r));
     } catch (e: any) {
       alert("Error: " + e.message);
@@ -125,28 +110,12 @@ export default function UnifiedTeamsPage() {
     }
   }
 
-
-
   async function handleAddTeam(e: React.FormEvent) {
     e.preventDefault();
     if (!currentTournament) return;
     setWorking('new');
     try {
       const id = crypto.randomUUID();
-      // 1. Save Registration (Auto-accepted)
-      await saveRegistration({
-        id,
-        tournament_id: currentTournament.id,
-        team_name: addForm.name,
-        coach_name: addForm.coach,
-        email: addForm.email,
-        age_group_id: addForm.ageGroupId,
-        status: 'accepted',
-        payment_status: 'paid',
-        registered_at: new Date().toISOString()
-      } as any);
-
-      // 2. Save Team
       await saveTeam({
         id,
         name: addForm.name,
@@ -154,7 +123,9 @@ export default function UnifiedTeamsPage() {
         email: addForm.email,
         ageGroupId: addForm.ageGroupId,
         tournamentId: currentTournament.id,
-        pool: addForm.pool || undefined,
+        status: 'accepted',
+        paymentStatus: 'paid',
+        registeredAt: new Date().toISOString(),
         players: []
       });
 
@@ -172,17 +143,15 @@ export default function UnifiedTeamsPage() {
     const matchesStatus = selectedStatuses.length === 0 || selectedStatuses.includes(r.status);
     const matchesDivision = selectedAgeGroupId === 'all' || r.age_group_id === selectedAgeGroupId;
     const matchesSearch = search === '' || 
-      r.team_name.toLowerCase().includes(search.toLowerCase()) || 
-      r.coach_name.toLowerCase().includes(search.toLowerCase());
+      r.name.toLowerCase().includes(search.toLowerCase()) || 
+      r.coach.toLowerCase().includes(search.toLowerCase());
     return matchesStatus && matchesDivision && matchesSearch;
   });
 
-  // Use the stable order for rendering
   const sorted = stableSortedIds
     .map(id => filtered.find(r => r.id === id))
-    .filter(Boolean) as Registration[];
+    .filter(Boolean) as TeamRecord[];
 
-  // Add any new teams (that weren't in the stable order yet)
   const newTeams = filtered.filter(r => !stableSortedIds.includes(r.id));
   const finalDisplay = [...sorted, ...newTeams];
 
@@ -190,17 +159,16 @@ export default function UnifiedTeamsPage() {
     if (!acc[r.age_group_name]) acc[r.age_group_name] = [];
     acc[r.age_group_name].push(r);
     return acc;
-  }, {} as Record<string, Registration[]>);
+  }, {} as Record<string, TeamRecord[]>);
 
   function exportCSV() {
     const headers = ['Team', 'Coach', 'Email', 'Division', 'Pool', 'Status', 'Payment'];
-    const rows = filtered.map(r => [r.team_name, r.coach_name, r.email, r.age_group_name, r.pool || '-', r.status, r.payment_status]);
+    const rows = filtered.map(r => [r.name, r.coach, r.email, r.age_group_name, r.pool || '-', r.status, r.payment_status]);
     downloadCSV(`teams-regs-${new Date().toISOString().split('T')[0]}.csv`, headers, rows);
   }
 
   return (
     <div className={styles.page}>
-      {/* Header */}
       <div className={styles.pageHeader}>
         <div className={styles.headerLeft}>
           <div className={styles.headerIcon}><Users size={20} /></div>
@@ -215,9 +183,6 @@ export default function UnifiedTeamsPage() {
         </div>
       </div>
 
-
-
-      {/* Controls */}
       <div className={styles.controlsRow}>
         <div className={styles.controlsLeft}>
           <div className={styles.statusFilters}>
@@ -238,7 +203,6 @@ export default function UnifiedTeamsPage() {
         </div>
       </div>
 
-      {/* Summary */}
       {showSummary && (
         <div className={styles.summaryGrid}>
           {ageGroups.map(g => {
@@ -253,31 +217,6 @@ export default function UnifiedTeamsPage() {
                 </div>
                 <div className={styles.summaryStats}>
                   <div style={{ marginBottom: '0.25rem' }}>{groupRegs.filter(r => r.status === 'pending').length} Pending • {groupRegs.filter(r => r.status === 'waitlist').length} Waitlist</div>
-                  <div className={styles.poolBreakdown}>
-                    {(() => {
-                      if (!g.poolCount || g.poolCount <= 1) return null;
-                      const poolsList = g.pools || [];
-                      const unassigned = groupRegs.filter(r => r.status === 'accepted' && !r.poolId).length;
-                      
-                      return (
-                        <>
-                          {poolsList.map((p) => {
-                            const count = groupRegs.filter(r => r.poolId === p.id).length;
-                            return (
-                              <span key={p.id} className={styles.poolStatBadge}>
-                                {p.name}: <strong>{count}</strong>
-                              </span>
-                            );
-                          })}
-                          {unassigned > 0 && (
-                            <span className={styles.poolStatBadge} style={{ color: 'var(--danger-light)', background: 'var(--danger-faint)' }}>
-                              Unassigned: <strong>{unassigned}</strong>
-                            </span>
-                          )}
-                        </>
-                      );
-                    })()}
-                  </div>
                 </div>
               </div>
             );
@@ -285,7 +224,6 @@ export default function UnifiedTeamsPage() {
         </div>
       )}
 
-      {/* List */}
       {!hasLoadedInitial ? (
         <div className="empty-state"><RefreshCw size={32} className="spin" style={{ opacity: 0.4 }} /><p>Loading data…</p></div>
       ) : Object.keys(grouped).length === 0 ? (
@@ -299,10 +237,6 @@ export default function UnifiedTeamsPage() {
                 <div style={{ width: 12 }} />
                 <div style={{ flex: 2 }}>Team Name</div>
                 <div style={{ flex: 1.5 }}>Coach</div>
-                {(() => {
-                  const g = ageGroups.find(x => x.name === ageGroup);
-                  return (g?.poolCount || 0) > 1 && <div style={{ flex: 1 }}>Pool</div>;
-                })()}
                 <div style={{ width: 100 }}>Status</div>
                 <div style={{ width: 100 }}>Payment</div>
                 <div style={{ width: 80 }} />
@@ -314,14 +248,13 @@ export default function UnifiedTeamsPage() {
                   <div key={r.id} className={styles.row}>
                     <div className={styles.rowMain}>
                       <div style={{ width: 12 }} />
-                      <div style={{ flex: 2 }} className={styles.primaryCell}><strong>{r.team_name}</strong></div>
-                      <div style={{ flex: 1.5 }} className={styles.secondaryCell}>{r.coach_name}</div>
-                      
+                      <div style={{ flex: 2 }} className={styles.primaryCell}><strong>{r.name}</strong></div>
+                      <div style={{ flex: 1.5 }} className={styles.secondaryCell}>{r.coach}</div>
                       {(() => {
                         const g = ageGroups.find(x => x.id === r.age_group_id);
                         if (!g || (g.poolCount || 0) <= 1) return null;
                         const poolRecord = g.pools?.find(p => p.id === r.poolId);
-                        const displayPoolName = poolRecord ? poolRecord.name : r.pool; // Fallback to legacy string
+                        const displayPoolName = poolRecord ? poolRecord.name : r.pool;
 
                         return (
                           <div style={{ flex: 1 }}>
@@ -365,8 +298,8 @@ export default function UnifiedTeamsPage() {
                               );
                             })()}
                             <div className={styles.buttonGroup}>
-                              {r.status === 'pending' && <><button className="btn btn-primary btn-xs" onClick={() => patch(r.id, { status: 'accepted' }, r)} disabled={busy}>Accept</button><button className="btn btn-danger btn-xs" onClick={() => patch(r.id, { status: 'rejected' }, r)} disabled={busy}>Reject</button></>}
-                              {r.status === 'accepted' && <><button className="btn btn-outline btn-xs" onClick={() => patch(r.id, { payment_status: r.payment_status === 'paid' ? 'pending' : 'paid' })} disabled={busy}>{r.payment_status === 'paid' ? 'Unpay' : 'Pay'}</button><a href={`/teams/${r.id}`} target="_blank" className="btn btn-ghost btn-xs">Profile ↗</a></>}
+                              {r.status === 'pending' && <><button className="btn btn-primary btn-xs" onClick={() => patch(r.id, { status: 'accepted' })} disabled={busy}>Accept</button><button className="btn btn-danger btn-xs" onClick={() => patch(r.id, { status: 'rejected' })} disabled={busy}>Reject</button></>}
+                              {r.status === 'accepted' && <><button className="btn btn-outline btn-xs" onClick={() => patch(r.id, { paymentStatus: r.payment_status === 'paid' ? 'pending' : 'paid' })} disabled={busy}>{r.payment_status === 'paid' ? 'Unpay' : 'Pay'}</button><a href={`/teams/${r.id}`} target="_blank" className="btn btn-ghost btn-xs">Profile ↗</a></>}
                               {(r.status === 'rejected' || r.status === 'waitlist') && <button className="btn btn-ghost btn-xs" onClick={() => patch(r.id, { status: 'pending' })} disabled={busy}>Restore</button>}
                             </div>
                           </div>
@@ -381,7 +314,6 @@ export default function UnifiedTeamsPage() {
         </div>
       )}
 
-      {/* Add Modal */}
       {showAddModal && (
         <div className="modal-overlay" onClick={() => setShowAddModal(false)}>
           <div className="modal" onClick={e => e.stopPropagation()}>
@@ -394,7 +326,6 @@ export default function UnifiedTeamsPage() {
               </div>
               <div className="form-row form-row-2" style={{ marginTop: '1rem' }}>
                 <div className="form-group"><label className="form-label">Division *</label><select className="form-select" value={addForm.ageGroupId} onChange={e => setAddForm(f => ({ ...f, ageGroupId: e.target.value }))} required>{ageGroups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}</select></div>
-                <div className="form-group"><label className="form-label">Pool</label><select className="form-select" value={addForm.pool} onChange={e => setAddForm(f => ({ ...f, pool: e.target.value }))}><option value="">None</option>{(() => { const g = ageGroups.find(x => x.id === addForm.ageGroupId); if (!g || !g.poolCount) return null; const names = g.poolNames ? g.poolNames.split(',').map(n => n.trim()) : []; return Array.from({ length: g.poolCount }).map((_, i) => { const v = names[i] || String.fromCharCode(65 + i); return <option key={v} value={v}>Pool {v}</option>; }); })()}</select></div>
               </div>
               <div className="modal-footer"><button type="button" className="btn btn-ghost" onClick={() => setShowAddModal(false)}>Cancel</button><button type="submit" className="btn btn-primary" disabled={!!working}>Save Team</button></div>
             </form>

@@ -11,63 +11,58 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ id: str
   try {
     const { id } = await props.params;
     const body = await req.json();
-    const { status, payment_status, admin_notes, age_group_id, age_group_name, poolId } = body;
+    const { status, payment_status, admin_notes, age_group_id, poolId } = body;
 
     // Fetch current record
     const { data: current, error: fetchErr } = await supabase
-      .from('registrations')
+      .from('teams')
       .select('*')
       .eq('id', id)
       .single();
 
     if (fetchErr || !current) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
-    // Build update payload - only add fields that are provided
+    // Build update payload
     const updates: any = {};
     if (status !== undefined)         updates.status         = status;
     if (payment_status !== undefined) updates.payment_status = payment_status;
     if (admin_notes !== undefined)    updates.admin_notes    = admin_notes;
     if (age_group_id !== undefined)   updates.age_group_id   = age_group_id;
-    if (age_group_name !== undefined) updates.age_group_name = age_group_name;
     if (poolId !== undefined)         updates.pool_id        = poolId;
 
-    // If no updates provided, just return success
     if (Object.keys(updates).length === 0) return NextResponse.json({ ok: true });
 
-    const { data: updatedRow, error: updateErr } = await supabase
-      .from('registrations')
+    const { error: updateErr } = await supabase
+      .from('teams')
       .update(updates)
-      .eq('id', id)
-      .select()
-      .single();
+      .eq('id', id);
 
     if (updateErr) {
-      console.error('Supabase update silent failure check:', updateErr);
-      return NextResponse.json({ error: 'Database update failed (check RLS policies): ' + updateErr.message }, { status: 500 });
+      return NextResponse.json({ error: updateErr.message }, { status: 500 });
     }
 
+    // Send emails if status changed
     const p = {
-      teamName:      current.team_name,
-      coachName:     current.coach_name,
-      ageGroupName:  current.age_group_name,
-      tournamentName: current.tournament_name,
+      teamName:      current.name,
+      coachName:     current.coach,
+      ageGroupName:  'Division', // Simplified for now, or fetch from DB
+      tournamentName: 'Tournament',
       teamId:        id,
     };
 
-    // Send status-change emails
     if (status === 'accepted' && current.status !== 'accepted') {
-      await sendEmail(current.email, `Your Team Has Been Accepted — ${current.team_name}`, acceptanceHtml(p));
+      await sendEmail(current.email, `Your Team Has Been Accepted — ${current.name}`, acceptanceHtml(p));
     }
     if (status === 'rejected' && current.status !== 'rejected') {
-      await sendEmail(current.email, `Registration Update — ${current.team_name}`, rejectionHtml(p));
+      await sendEmail(current.email, `Registration Update — ${current.name}`, rejectionHtml(p));
     }
     if (payment_status === 'paid' && current.payment_status !== 'paid') {
-      await sendEmail(current.email, `Payment Confirmed — ${current.team_name}`, paymentConfirmationHtml(p));
+      await sendEmail(current.email, `Payment Confirmed — ${current.name}`, paymentConfirmationHtml(p));
     }
 
     return NextResponse.json({ ok: true });
   } catch (e) {
-    console.error('PATCH registration error:', e);
+    console.error('PATCH team error:', e);
     return NextResponse.json({ error: 'Server error' }, { status: 500 });
   }
 }
@@ -78,57 +73,36 @@ export async function GET(req: NextRequest, props: { params: Promise<{ id: strin
     const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-    if (!url || !key) {
-      throw new Error("Missing environment variables");
-    }
+    if (!url || !key) throw new Error("Missing environment variables");
 
     const supabaseAdmin = createClient(url, key);
-    
-    // 1. Try Registrations first
-    const { data: reg, error: regError } = await supabaseAdmin
-      .from('registrations')
-      .select('*, pool_id(name), age_groups(name), tournaments(name)')
-      .eq('id', id)
-      .single();
-
-    if (!regError && reg) {
-      // Safety check: Only show accepted teams to the public
-      if (reg.status !== 'accepted') {
-        return NextResponse.json({ error: 'Team not yet active' }, { status: 403 });
-      }
-
-      return NextResponse.json({
-        ...reg,
-        age_group_name: reg.age_groups?.name || reg.age_group_name,
-        tournament_name: reg.tournaments?.name || reg.tournament_name,
-        pool: reg.pool_id?.name || reg.pool
-      });
-    }
-
-    // 2. Fallback to Teams table if registration not found (for legacy/manual teams)
-    const { data: team, error: teamError } = await supabaseAdmin
+    const { data: team, error } = await supabaseAdmin
       .from('teams')
       .select('*, pool_id(name), age_groups(name), tournaments(name)')
       .eq('id', id)
       .single();
 
-    if (!teamError && team) {
-      return NextResponse.json({
-        id: team.id,
-        team_name: team.name,
-        coach_name: team.coach,
-        email: team.email,
-        age_group_name: team.age_groups?.name || 'Division',
-        tournament_name: team.tournaments?.name || 'Tournament',
-        status: 'accepted',
-        payment_status: 'paid',
-        pool: team.pool_id?.name || team.pool
-      });
+    if (error || !team) return NextResponse.json({ error: 'Team not found' }, { status: 404 });
+
+    // Safety check: Only show accepted teams to the public
+    if (team.status !== 'accepted') {
+      return NextResponse.json({ error: 'Team not yet active' }, { status: 403 });
     }
 
-    return NextResponse.json({ error: 'Team not found' }, { status: 404 });
+    return NextResponse.json({
+      id: team.id,
+      team_name: team.name,
+      coach_name: team.coach,
+      email: team.email,
+      age_group_name: team.age_groups?.name || 'Division',
+      tournament_name: team.tournaments?.name || 'Tournament',
+      status: team.status,
+      payment_status: team.payment_status,
+      pool: team.pool_id?.name || team.pool,
+      players: team.players || []
+    });
   } catch (e: any) {
-    console.error('GET registration error:', e);
+    console.error('GET team error:', e);
     return NextResponse.json({ error: 'Server error' }, { status: 500 });
   }
 }

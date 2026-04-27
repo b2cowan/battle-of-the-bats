@@ -27,7 +27,8 @@ export default function TeamsPage() {
   useEffect(() => {
     if (!selectedTournament) return;
     async function fetchTeams() {
-      setTeams(await getTeams(selectedTournament!.id));
+      const allTeams = await getTeams(selectedTournament!.id);
+      setTeams(allTeams.filter(t => t.status === 'accepted'));
       setAgeGroups(await getAgeGroups(selectedTournament!.id));
     }
     fetchTeams();
