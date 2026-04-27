@@ -31,13 +31,11 @@ export default function UnifiedTeamsPage() {
   const [loading, setLoading] = useState(true);
   const [selectedStatuses, setSelectedStatuses] = useState<Status[]>(['pending', 'accepted', 'waitlist']);
   const [search, setSearch]   = useState('');
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [ageGroups, setAgeGroups] = useState<AgeGroup[]>([]);
   const [selectedAgeGroupId, setSelectedAgeGroupId] = useState<string>('all');
   const [working, setWorking] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [bulkWorking, setBulkWorking] = useState(false);
   const [showSummary, setShowSummary] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
   const [addForm, setAddForm] = useState({ name: '', coach: '', email: '', ageGroupId: '', pool: '' });
@@ -171,50 +169,7 @@ export default function UnifiedTeamsPage() {
     }
   }
 
-  async function handleBulk(actionType: 'status' | 'payment', value: string) {
-    const ids = Array.from(selectedIds);
-    setBulkWorking(true);
-    try {
-      const updates: any = {};
-      if (actionType === 'status') updates.status = value;
-      else updates.payment_status = value;
 
-      const res = await fetch('/api/admin/teams', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'update', ids, updates })
-      });
-
-      if (!res.ok) throw new Error('Bulk update failed');
-      
-      setSelectedIds(new Set());
-      load();
-    } catch (e: any) {
-      alert(e.message);
-    } finally {
-      setBulkWorking(false);
-    }
-  }
-
-  async function handleDeleteBulk() {
-    if (!confirm(`Delete ${selectedIds.size} teams forever?`)) return;
-    const ids = Array.from(selectedIds);
-    setBulkWorking(true);
-    try {
-      const res = await fetch('/api/admin/teams', {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ids })
-      });
-      if (!res.ok) throw new Error('Delete failed');
-      setSelectedIds(new Set());
-      load();
-    } catch (e: any) {
-      alert(e.message);
-    } finally {
-      setBulkWorking(false);
-    }
-  }
 
   async function handleAddTeam(e: React.FormEvent) {
     e.preventDefault();
@@ -304,26 +259,7 @@ export default function UnifiedTeamsPage() {
         </div>
       </div>
 
-      {/* Bulk Actions Bar */}
-      {selectedIds.size > 0 && (
-        <div className={styles.bulkBar}>
-          <div className={styles.bulkInfo}>
-            <strong>{selectedIds.size}</strong> selected
-            <button className="btn btn-ghost btn-xs" onClick={() => setSelectedIds(new Set())} style={{ color: 'var(--white-40)' }}>Deselect All</button>
-          </div>
-          <div className={styles.bulkButtons}>
-            <button className="btn btn-primary btn-sm" onClick={() => handleBulk('status', 'accepted')} disabled={bulkWorking}>
-              {bulkWorking ? <RefreshCw className="spin" size={14} /> : <Check size={14} />} Accept
-            </button>
-            <button className="btn btn-outline btn-sm" onClick={() => handleBulk('payment', 'paid')} disabled={bulkWorking}>
-              <CreditCard size={14} /> Mark Paid
-            </button>
-            <button className="btn btn-danger btn-sm" onClick={handleDeleteBulk} disabled={bulkWorking}>
-              <Trash2 size={14} /> Delete
-            </button>
-          </div>
-        </div>
-      )}
+
 
       {/* Controls */}
       <div className={styles.controlsRow}>
@@ -404,7 +340,7 @@ export default function UnifiedTeamsPage() {
             <div key={ageGroup} className={styles.groupSection}>
               <div className={styles.groupHeader}><strong>{ageGroup}</strong> <span className="badge badge-purple">{groupRegs.length} Teams</span></div>
               <div className={styles.tableHeader}>
-                <div style={{ width: 40 }} />
+                <div style={{ width: 12 }} />
                 <div style={{ flex: 2 }}>Team Name</div>
                 <div style={{ flex: 1.5 }}>Coach</div>
                 {(() => {
@@ -419,9 +355,9 @@ export default function UnifiedTeamsPage() {
                 const isExpanded = expanded.has(r.id);
                 const busy = working === r.id;
                 return (
-                  <div key={r.id} className={`${styles.row} ${selectedIds.has(r.id) ? styles.rowSelected : ''}`}>
+                  <div key={r.id} className={styles.row}>
                     <div className={styles.rowMain}>
-                      <div style={{ width: 40, textAlign: 'center' }}><input type="checkbox" checked={selectedIds.has(r.id)} onChange={() => setSelectedIds(prev => { const n = new Set(prev); n.has(r.id) ? n.delete(r.id) : n.add(r.id); return n; })} /></div>
+                      <div style={{ width: 12 }} />
                       <div style={{ flex: 2 }} className={styles.primaryCell}><strong>{r.team_name}</strong></div>
                       <div style={{ flex: 1.5 }} className={styles.secondaryCell}>{r.coach_name}</div>
                       
