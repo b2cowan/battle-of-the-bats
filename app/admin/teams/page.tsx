@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
 import { Users, Check, X, CreditCard, RefreshCw, Mail, ChevronDown, ChevronUp, AlertCircle, Download, Plus, Trash2, MapPin } from 'lucide-react';
-import { saveTeam, updateTeam, deleteTeam, getTeams, getAgeGroups, saveRegistration, savePool } from '@/lib/db';
+import { saveTeam, updateTeam, deleteTeam, getTeams, getAgeGroups, savePool } from '@/lib/db';
 import { downloadCSV } from '@/lib/utils';
 import { useTournament } from '@/lib/tournament-context';
 import { AgeGroup, Team } from '@/lib/types';
