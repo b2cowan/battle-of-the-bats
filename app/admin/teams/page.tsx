@@ -166,7 +166,7 @@ export default function UnifiedTeamsPage() {
           }
 
           const shuffled = [...acceptedTeams].sort(() => Math.random() - 0.5);
-          const pools = group.pools;
+          const pools = group.pools || [];
           
           for (let i = 0; i < shuffled.length; i++) {
             const team = shuffled[i];

@@ -87,7 +87,7 @@ export default function ResultsPage() {
   }
 
   function getWinner(game: Game): 'home' | 'away' | 'tie' | null {
-    if (game.homeScore === undefined || game.awayScore === undefined) return null;
+    if (game.homeScore == null || game.awayScore == null) return null;
     if (game.homeScore > game.awayScore) return 'home';
     if (game.awayScore > game.homeScore) return 'away';
     return 'tie';

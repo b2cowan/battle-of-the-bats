@@ -26,7 +26,7 @@ export interface Contact {
 
 export interface PlayoffConfig {
   type: 'single';
-  crossover: 'standard' | 'top-bottom' | 'none';
+  crossover: 'standard' | 'reseed' | 'none';
   hasThirdPlace: boolean;
   teamsQualifying: number;
   tieBreakers: ('h2h' | 'rf' | 'ra' | 'rd')[];

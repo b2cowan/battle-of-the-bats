@@ -223,7 +223,7 @@ export default function PlayoffWizard({ ageGroup, tournamentId, onClose, onCompl
           bracketCode: p.code,
           homePlaceholder: p.home,
           awayPlaceholder: p.away,
-          notes: null
+          notes: undefined
         });
       }
       onComplete();

@@ -125,7 +125,7 @@ export default function AdminSchedulePage() {
     });
   }
 
-  const scheduled = games.filter(g => g.status !== 'deleted');
+  const scheduled = games;
   const filtered  = scheduled.filter(g => {
     const matchesDivision = g.ageGroupId === filterGroup;
     const matchesView = viewMode === 'playoff' ? g.isPlayoff : !g.isPlayoff;
@@ -332,7 +332,7 @@ export default function AdminSchedulePage() {
               </div>
               <div className="form-group" style={{ marginBottom: '0.5rem' }}>
                 <label className="form-label">Notes (optional)</label>
-                <input className="form-input" placeholder="Any additional info" value={form.notes}
+                <input className="form-input" placeholder="Any additional info" value={form.notes || ''}
                   onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} />
               </div>
               <div className="modal-footer">

@@ -312,7 +312,7 @@ export default function GameList({
     );
   };
 
-  const firstGameGroupId = games[0]?.ageGroupId || games[0]?.age_group_id;
+  const firstGameGroupId = games[0]?.ageGroupId;
   const currentAgeGroup = ageGroups.find(g => g.id === firstGameGroupId);
   const ageGroupName = currentAgeGroup?.name || 'All Games';
   const pools = currentAgeGroup?.pools || [];
