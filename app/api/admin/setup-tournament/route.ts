@@ -26,10 +26,18 @@ export async function POST(req: Request) {
       });
     }
 
-    const { tournament, divisions, announcement, seedData } = body;
+    const debug: string[] = [];
+    const log = (msg: string, data?: any) => {
+      const line = data ? `${msg} ${JSON.stringify(data)}` : msg;
+      console.log(`[Setup API] ${line}`);
+      debug.push(line);
+    };
+
+    const { tournament, divisions, announcement, seedData, scheduleParams, migration } = body;
 
     // 0. If this new tournament is active, deactivate ALL others first
     if (tournament.isActive) {
+      log('Deactivating other tournaments');
       await supabase.from('tournaments').update({ is_active: false }).neq('id', '00000000-0000-0000-0000-000000000000');
     }
 
@@ -46,8 +54,12 @@ export async function POST(req: Request) {
       .select()
       .single();
 
-    if (tntError) throw tntError;
+    if (tntError) {
+      log('Tournament Create Error', tntError);
+      throw tntError;
+    }
     const tid = newTnt.id;
+    log('Created Tournament', tid);
 
     // 2. Initialize Divisions & Pools
     if (divisions && divisions.length > 0) {
@@ -98,13 +110,62 @@ export async function POST(req: Request) {
 
         if (poolRows.length > 0) {
           const { error: poolError } = await supabase.from('pools').insert(poolRows);
-          if (poolError) throw poolError;
+          if (poolError) {
+            log('Pool Insert Error', poolError);
+            throw poolError;
+          }
+          log(`Initialized ${poolRows.length} pools`);
+        }
+      }
+    }
+
+    // 3.5 Handle Migration
+    if (migration && migration.sourceTournamentId) {
+      console.log('Handling migration from tournament:', migration.sourceTournamentId);
+      
+      if (migration.migrateDiamonds) {
+        const { data: sourceDiamonds } = await supabase
+          .from('diamonds')
+          .select('*')
+          .eq('tournament_id', migration.sourceTournamentId);
+        
+        if (sourceDiamonds && sourceDiamonds.length > 0) {
+          const rows = sourceDiamonds.map(d => ({
+            tournament_id: tid,
+            name: d.name,
+            address: d.address,
+            notes: d.notes
+          }));
+          const { error: dErr } = await supabase.from('diamonds').insert(rows);
+          if (dErr) console.error('Migration Error: Failed to clone diamonds', dErr);
+          else console.log(`Migrated ${rows.length} diamonds`);
+        }
+      }
+
+      if (migration.contactIds && migration.contactIds.length > 0) {
+        const { data: sourceContacts } = await supabase
+          .from('contacts')
+          .select('*')
+          .in('id', migration.contactIds);
+        
+        if (sourceContacts && sourceContacts.length > 0) {
+          const rows = sourceContacts.map(c => ({
+            tournament_id: tid,
+            name: c.name,
+            email: c.email,
+            phone: c.phone,
+            role: c.role
+          }));
+          const { error: cErr } = await supabase.from('contacts').insert(rows);
+          if (cErr) console.error('Migration Error: Failed to clone contacts', cErr);
+          else console.log(`Migrated ${rows.length} contacts`);
         }
       }
     }
 
     // 4. Seed Data
     if (seedData && Object.values(seedData).some(v => v)) {
+      log('Seeding Data', seedData);
       const { data: ageGroups } = await supabase.from('age_groups').select('*, pools(*)').eq('tournament_id', tid);
       
       if (ageGroups && ageGroups.length > 0) {
@@ -144,39 +205,196 @@ export async function POST(req: Request) {
               return {
                 tournament_id: tid,
                 age_group_id: group.id,
-                name: `${name} ${group.name}${poolObj ? ' (' + poolObj.name + ')' : ''}`,
+                name: `${name} ${group.name}`,
                 coach: coaches[i],
                 email: `coach${i}@example.com`,
                 players: [],
                 pool_id: poolObj?.id
               };
             });
-            await supabase.from('teams').insert(teamRows);
+            const { error: insertError } = await supabase.from('teams').insert(teamRows);
+            if (insertError) console.error(`Error inserting teams for group ${group.name}:`, insertError);
+          }
+        }
+
+        if (seedData.schedule || seedData.results) {
+          log('Seeding schedule/results for tournament:', tid);
+          
+          // 1. Fetch teams that were just created
+          const { data: allTeams, error: teamsFetchError } = await supabase
+            .from('teams')
+            .select('*')
+            .eq('tournament_id', tid);
+          
+          if (teamsFetchError) {
+            log('Teams Fetch Error', teamsFetchError);
+          }
+
+          // 2. Fetch diamonds
+          const { data: diamonds, error: diamondsFetchError } = await supabase
+            .from('diamonds')
+            .select('*')
+            .eq('tournament_id', tid);
             
-            const regRows = teamNames.map((name, i) => ({
-              tournament_id: tid,
-              team_name: `${name} ${group.name}`,
-              coach_name: coaches[i],
-              email: `coach${i}@example.com`,
-              age_group_id: group.id,
-              status: 'accepted',
-              payment_status: 'paid',
-              registered_at: new Date().toISOString()
-            }));
+          if (diamondsFetchError) {
+            log('Diamonds Fetch Error', diamondsFetchError);
+          }
+          
+          log(`Schedule Seed: Found ${allTeams?.length || 0} teams and ${diamonds?.length || 0} diamonds`);
+
+          if (allTeams && allTeams.length >= 2 && diamonds && diamonds.length > 0) {
+            log('Starting schedule generation');
+            const gameRows: any[] = [];
+            const duration = scheduleParams?.gameDuration || 90;
+            const turnover = scheduleParams?.turnoverTime || 15;
+            const gamesPerTeam = scheduleParams?.gamesPerTeam || 3;
             
-            // Add 2 waitlist teams
-            regRows.push({
-              tournament_id: tid,
-              team_name: `Waitlist Team 1 ${group.name}`,
-              coach_name: 'Waitlist Coach 1',
-              email: `waitlist1@example.com`,
-              age_group_id: group.id,
-              status: 'waitlist',
-              payment_status: 'pending',
-              registered_at: new Date().toISOString()
+            const scheduleStartStr = scheduleParams?.startDate || tournament.startDate || new Date().toISOString().split('T')[0];
+            const dayStartStr = scheduleParams?.startTime || '08:00';
+            const dayEndStr = scheduleParams?.endTime || '20:30';
+
+            const [startHour, startMin] = dayStartStr.split(':').map(Number);
+            const [endHour, endMin] = dayEndStr.split(':').map(Number);
+            const dailyLimitMinutes = (endHour * 60 + endMin) || (20 * 60 + 30);
+            
+            if (duration <= 0) {
+              log('Error: Invalid game duration', duration);
+              throw new Error('Invalid game duration');
+            }
+
+            let currentMinute = (startHour * 60 + startMin);
+            let diamondIdx = 0;
+            let currentDayOffset = 0;
+            const teamBusySlots = new Map<string, Set<string>>(); // teamId -> Set<date + time>
+
+            for (const group of ageGroups) {
+              const groupPools = group.pools || [];
+              const groupTeams = allTeams.filter(t => t.age_group_id === group.id);
+              if (groupTeams.length < 2) continue;
+
+              log(`Seeding matches for ${group.name}...`);
+
+              // We'll iterate through pools. If no pools, we treat it as one big pool.
+              const poolsToProcess = groupPools.length > 0 ? groupPools : [{ id: null, name: 'General' }];
+              const selectedPairs: [any, any][] = [];
+              const teamGameCounts = new Map<string, number>();
+
+              for (const pool of poolsToProcess) {
+                const pTeams = pool.id 
+                  ? groupTeams.filter(t => t.pool_id === pool.id)
+                  : groupTeams;
+                
+                if (pTeams.length < 2) continue;
+
+                log(`Pool ${pool.name || 'All'}: ${pTeams.length} teams`);
+
+                // Generate limited matchups
+                for (let i = 0; i < pTeams.length; i++) {
+                  for (let j = i + 1; j < pTeams.length; j++) {
+                    const t1 = pTeams[i];
+                    const t2 = pTeams[j];
+                    
+                    const c1 = teamGameCounts.get(t1.id) || 0;
+                    const c2 = teamGameCounts.get(t2.id) || 0;
+
+                    if (c1 < gamesPerTeam && c2 < gamesPerTeam) {
+                      selectedPairs.push([t1, t2]);
+                      teamGameCounts.set(t1.id, c1 + 1);
+                      teamGameCounts.set(t2.id, c2 + 1);
+                    }
+                  }
+                }
+              }
+
+              // Shuffle pairs to spread them out naturally
+              for (let i = selectedPairs.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [selectedPairs[i], selectedPairs[j]] = [selectedPairs[j], selectedPairs[i]];
+              }
+
+              const lastTeamTime = new Map<string, number>();
+
+              for (const [home, away] of selectedPairs) {
+                let slotFound = false;
+                let attempts = 0;
+
+                while (!slotFound && attempts < 200) {
+                  attempts++;
+                  
+                  if (currentMinute + duration > dailyLimitMinutes) {
+                    currentDayOffset++;
+                    currentMinute = (startHour * 60 + startMin);
+                    diamondIdx = 0;
+                  }
+
+                  const hour = Math.floor(currentMinute / 60);
+                  const min = currentMinute % 60;
+                  const timeStr = `${hour.toString().padStart(2, '0')}:${min.toString().padStart(2, '0')}`;
+                  const diamond = diamonds[diamondIdx % diamonds.length];
+
+                  const gameDate = new Date(scheduleStartStr + 'T12:00:00');
+                  gameDate.setDate(gameDate.getDate() + currentDayOffset);
+                  const dateStr = gameDate.toISOString().split('T')[0];
+                  const timeKey = `${dateStr} ${timeStr}`;
+                  const absoluteMinute = (currentDayOffset * 24 * 60) + currentMinute;
+
+                  const isHomeBusy = teamBusySlots.get(home.id)?.has(timeKey);
+                  const isAwayBusy = teamBusySlots.get(away.id)?.has(timeKey);
+                  
+                  // Back-to-back check: Must have at least ONE slot gap
+                  // (currentMinute - lastTime) must be > (duration + turnover)
+                  const lastH = lastTeamTime.get(home.id) ?? -9999;
+                  const lastA = lastTeamTime.get(away.id) ?? -9999;
+                  const hasGapH = absoluteMinute > lastH + (duration + turnover);
+                  const hasGapA = absoluteMinute > lastA + (duration + turnover);
+
+                  if (!isHomeBusy && !isAwayBusy && hasGapH && hasGapA) {
+                    gameRows.push({
+                      tournament_id: tid,
+                      age_group_id: group.id,
+                      home_team_id: home.id,
+                      away_team_id: away.id,
+                      game_date: dateStr,
+                      game_time: timeStr,
+                      location: diamond.name,
+                      diamond_id: diamond.id,
+                      status: seedData.results ? 'completed' : 'scheduled',
+                      home_score: seedData.results ? Math.floor(Math.random() * 8) : null,
+                      away_score: seedData.results ? Math.floor(Math.random() * 8) : null
+                    });
+
+                    if (!teamBusySlots.has(home.id)) teamBusySlots.set(home.id, new Set());
+                    if (!teamBusySlots.has(away.id)) teamBusySlots.set(away.id, new Set());
+                    teamBusySlots.get(home.id)!.add(timeKey);
+                    teamBusySlots.get(away.id)!.add(timeKey);
+                    
+                    lastTeamTime.set(home.id, absoluteMinute);
+                    lastTeamTime.set(away.id, absoluteMinute);
+
+                    slotFound = true;
+                  }
+
+                  diamondIdx++;
+                  if (diamondIdx % diamonds.length === 0) {
+                    currentMinute += (duration + turnover);
+                  }
+                }
+              }
+            }
+
+            if (gameRows.length > 0) {
+              log(`Inserting ${gameRows.length} games...`);
+              const { error: gameError } = await supabase.from('games').insert(gameRows);
+              if (gameError) log('Game Insert Error', gameError);
+              else log('Games inserted successfully');
+            } else {
+              log('No games generated for any group');
+            }
+          } else {
+            log('Skipping schedule seed: not enough teams/diamonds', { 
+              teamCount: allTeams?.length, 
+              diamondCount: diamonds?.length 
             });
-            
-            await supabase.from('registrations').insert(regRows);
           }
         }
       }
@@ -193,7 +411,7 @@ export async function POST(req: Request) {
       });
     }
 
-    return new Response(JSON.stringify({ success: true, id: tid }), {
+    return new Response(JSON.stringify({ success: true, id: tid, debug }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' }
     });

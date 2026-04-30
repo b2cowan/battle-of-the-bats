@@ -36,7 +36,7 @@ export default function AdminTournamentsPage() {
     'U11': 8, 'U13': 8, 'U15': 8, 'U17': 8, 'U19': 8
   });
   const [divisionPools, setDivisionPools]           = useState<Record<string, number>>({
-    'U11': 1, 'U13': 1, 'U15': 1, 'U17': 1, 'U19': 1
+    'U11': 0, 'U13': 0, 'U15': 0, 'U17': 0, 'U19': 0
   });
   const [divisionRequiresPool, setDivisionRequiresPool] = useState<Record<string, boolean>>({
     'U11': false, 'U13': false, 'U15': false, 'U17': false, 'U19': false
@@ -52,6 +52,15 @@ export default function AdminTournamentsPage() {
     registrations: false,
     schedule: false,
     results: false
+  });
+  const [scheduleParams, setScheduleParams] = useState({
+    gameDuration: 90,
+    turnoverTime: 15,
+    gamesPerTeam: 3,
+    startDate: '',
+    endDate: '',
+    startTime: '08:00',
+    endTime: '20:30'
   });
 
   async function refresh() {
@@ -88,7 +97,7 @@ export default function AdminTournamentsPage() {
     setMigrateDiamonds(false);
     setSelectedDivisions(new Set(['U11', 'U13', 'U15', 'U17', 'U19']));
     setDivisionCapacities({ 'U11': 8, 'U13': 8, 'U15': 8, 'U17': 8, 'U19': 8 });
-    setDivisionPools({ 'U11': 1, 'U13': 1, 'U15': 1, 'U17': 1, 'U19': 1 });
+    setDivisionPools({ 'U11': 0, 'U13': 0, 'U15': 0, 'U17': 0, 'U19': 0 });
     setDivisionRequiresPool({ 'U11': false, 'U13': false, 'U15': false, 'U17': false, 'U19': false });
     setUseWelcomeMsg(true);
     setWelcomeMsg('Welcome to the Battle of the Bats tournament! We are excited to have you join us for another great season of competitive youth softball.');
@@ -98,6 +107,15 @@ export default function AdminTournamentsPage() {
       registrations: false,
       schedule: false,
       results: false
+    });
+    setScheduleParams({
+      gameDuration: 90,
+      turnoverTime: 15,
+      gamesPerTeam: 3,
+      startDate: '',
+      endDate: '',
+      startTime: '08:00',
+      endTime: '20:30'
     });
     setModal('add');
   }
@@ -136,7 +154,17 @@ export default function AdminTournamentsPage() {
             requiresPoolSelection: divisionRequiresPool[name] || false
           })),
           announcement: useWelcomeMsg ? { body: welcomeMsg } : null,
-          seedData: Object.values(seedData).some(v => v) ? seedData : null
+          seedData: seedData,
+          scheduleParams: seedData.schedule ? {
+            ...scheduleParams,
+            startDate: scheduleParams.startDate || data.startDate,
+            endDate: scheduleParams.endDate || data.endDate
+          } : null,
+          migration: sourceTournamentId ? {
+            sourceTournamentId,
+            migrateDiamonds,
+            contactIds: Array.from(selectedContactIds)
+          } : null
         };
 
         const res = await fetch('/api/admin/setup-tournament', {
@@ -146,23 +174,10 @@ export default function AdminTournamentsPage() {
         });
 
         const result = await res.json();
-        if (!res.ok) throw new Error(result.error || 'Setup failed');
-
-        if (sourceTournamentId) {
-          const tid = result.id;
-          try {
-            if (selectedContactIds.size > 0) {
-              const contactsToClone = sourceContacts.filter(c => selectedContactIds.has(c.id));
-              await cloneContacts(tid, contactsToClone);
-            }
-            if (migrateDiamonds) {
-              const sourceDiamonds = await getDiamonds(sourceTournamentId);
-              await cloneDiamonds(tid, sourceDiamonds);
-            }
-          } catch (err) {
-            console.error('Migration failed:', err);
-          }
+        if (result.debug) {
+          console.log('Setup API Debug Logs:', result.debug);
         }
+        if (!res.ok) throw new Error(result.error || 'Setup failed');
       } else if (editing) {
         const res = await fetch('/api/admin/tournaments', {
           method: 'POST',
@@ -196,7 +211,7 @@ export default function AdminTournamentsPage() {
         setDivisionCapacities(prev => ({ ...prev, [name]: 8 }));
       }
       if (!(name in divisionPools)) {
-        setDivisionPools(prev => ({ ...prev, [name]: 1 }));
+        setDivisionPools(prev => ({ ...prev, [name]: 0 }));
       }
       if (!(name in divisionRequiresPool)) {
         setDivisionRequiresPool(prev => ({ ...prev, [name]: false }));
@@ -216,6 +231,15 @@ export default function AdminTournamentsPage() {
       const next = Array.from({ length: count }).map((_, i) => existing[i] || `Pool ${String.fromCharCode(65 + i)}`);
       return { ...prev, [name]: next };
     });
+  }
+
+  function togglePoolsForDiv(name: string, enabled: boolean) {
+    if (enabled) {
+      updatePools(name, 2);
+    } else {
+      updatePools(name, 0);
+      updateRequiresPool(name, false);
+    }
   }
 
   function updatePoolName(divName: string, poolIdx: number, newName: string) {
@@ -504,19 +528,32 @@ export default function AdminTournamentsPage() {
                                     className="form-input"
                                   />
                                 </div>
-                                <div className={styles.subInput}>
-                                  <label>Pools:</label>
-                                  <input 
-                                    type="number" 
-                                    min="1" 
-                                    max="4"
-                                    value={divisionPools[div] || 1}
-                                    onChange={e => updatePools(div, Number(e.target.value))}
-                                    className="form-input"
-                                  />
+                                <div className={styles.subCheck} style={{ marginLeft: '1rem', borderLeft: '1px solid var(--white-10)', paddingLeft: '1rem' }}>
+                                  <label style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                    <input 
+                                      type="checkbox" 
+                                      checked={(divisionPools[div] || 0) >= 2}
+                                      onChange={e => togglePoolsForDiv(div, e.target.checked)}
+                                    />
+                                    Use Pools
+                                  </label>
                                 </div>
+                                {(divisionPools[div] || 0) >= 2 && (
+                                  <div className={styles.subInput} style={{ marginLeft: '1rem' }}>
+                                    <label>Count:</label>
+                                    <input 
+                                      type="number" 
+                                      min="2" 
+                                      max="4"
+                                      value={divisionPools[div]}
+                                      onChange={e => updatePools(div, Number(e.target.value))}
+                                      className="form-input"
+                                      style={{ width: '60px' }}
+                                    />
+                                  </div>
+                                )}
                               </div>
-                              {divisionPools[div] > 1 && (
+                              {(divisionPools[div] || 0) >= 2 && (
                                 <>
                                   <div className={styles.subCheck}>
                                     <label>User Selects Pool:</label>
@@ -597,6 +634,86 @@ export default function AdminTournamentsPage() {
                         Results
                       </label>
                     </div>
+
+                    {seedData.schedule && (
+                      <div className={styles.scheduleParamsPanel}>
+                        <p style={{ fontSize: '0.75rem', color: 'var(--white-30)', marginBottom: '0.75rem' }}>
+                          Parameters for generated schedule:
+                        </p>
+                        
+                        <div className="form-row form-row-2" style={{ marginBottom: '0.75rem' }}>
+                          <div className="form-group">
+                            <label className="form-label" style={{ fontSize: '0.7rem' }}>Scheduling Start Date</label>
+                            <input 
+                              type="date" 
+                              className="form-input" 
+                              value={scheduleParams.startDate || form.startDate} 
+                              onChange={e => setScheduleParams(p => ({ ...p, startDate: e.target.value }))}
+                            />
+                          </div>
+                          <div className="form-group">
+                            <label className="form-label" style={{ fontSize: '0.7rem' }}>Scheduling End Date</label>
+                            <input 
+                              type="date" 
+                              className="form-input" 
+                              value={scheduleParams.endDate || form.endDate} 
+                              onChange={e => setScheduleParams(p => ({ ...p, endDate: e.target.value }))}
+                            />
+                          </div>
+                        </div>
+
+                        <div className="form-row form-row-2" style={{ marginBottom: '0.75rem' }}>
+                          <div className="form-group">
+                            <label className="form-label" style={{ fontSize: '0.7rem' }}>Daily Start Time</label>
+                            <input 
+                              type="time" 
+                              className="form-input" 
+                              value={scheduleParams.startTime} 
+                              onChange={e => setScheduleParams(p => ({ ...p, startTime: e.target.value }))}
+                            />
+                          </div>
+                          <div className="form-group">
+                            <label className="form-label" style={{ fontSize: '0.7rem' }}>Daily End Time</label>
+                            <input 
+                              type="time" 
+                              className="form-input" 
+                              value={scheduleParams.endTime} 
+                              onChange={e => setScheduleParams(p => ({ ...p, endTime: e.target.value }))}
+                            />
+                          </div>
+                        </div>
+
+                        <div className="form-row form-row-3">
+                          <div className="form-group">
+                            <label className="form-label" style={{ fontSize: '0.7rem' }}>Game Length (min)</label>
+                            <input 
+                              type="number" 
+                              className="form-input" 
+                              value={scheduleParams.gameDuration} 
+                              onChange={e => setScheduleParams(p => ({ ...p, gameDuration: Number(e.target.value) }))}
+                            />
+                          </div>
+                          <div className="form-group">
+                            <label className="form-label" style={{ fontSize: '0.7rem' }}>Turnover (min)</label>
+                            <input 
+                              type="number" 
+                              className="form-input" 
+                              value={scheduleParams.turnoverTime} 
+                              onChange={e => setScheduleParams(p => ({ ...p, turnoverTime: Number(e.target.value) }))}
+                            />
+                          </div>
+                          <div className="form-group">
+                            <label className="form-label" style={{ fontSize: '0.7rem' }}>Games / Team</label>
+                            <input 
+                              type="number" 
+                              className="form-input" 
+                              value={scheduleParams.gamesPerTeam} 
+                              onChange={e => setScheduleParams(p => ({ ...p, gamesPerTeam: Number(e.target.value) }))}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}

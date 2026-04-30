@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { use } from 'react';
 import { Users, CheckCircle, Clock, CreditCard, AlertTriangle, Mail, MapPin } from 'lucide-react';
+import { formatTime } from '@/lib/utils';
 import styles from './team-profile.module.css';
 
 interface TeamProfile {
@@ -13,7 +14,7 @@ interface TeamProfile {
   tournament_name: string;
   status: 'pending' | 'accepted' | 'rejected' | 'waitlist';
   payment_status: 'pending' | 'paid';
-  pool?: string;
+  pool: string;
 }
 
 interface Game {
@@ -162,7 +163,7 @@ export default function TeamProfilePage({ params }: { params: Promise<{ id: stri
                         <div key={g.id} className={styles.gameRow}>
                           <div className={styles.gameDate}>
                             <strong>{new Date(g.date + 'T12:00:00').toLocaleDateString('en-CA', { month: 'short', day: 'numeric' })}</strong>
-                            <span>{g.time}</span>
+                            <span>{formatTime(g.time)}</span>
                           </div>
                           
                           <div className={styles.gameMatchup}>

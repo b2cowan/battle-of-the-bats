@@ -12,11 +12,11 @@ const NAV = [
   { href: '/admin/tournaments',     icon: RefreshCw,       label: 'Tournaments'   },
   { href: '/admin/announcements',   icon: Megaphone,       label: 'Announcements' },
   { href: '/admin/contacts',        icon: BookUser,        label: 'Contacts'      },
-  { href: '/admin/teams',           icon: Users,           label: 'Teams & Regs'  },
   { href: '/admin/age-groups',      icon: Tag,             label: 'Age Groups'    },
-  { href: '/admin/diamonds',        icon: MapPin,          label: 'Diamonds'      },
+  { href: '/admin/teams',           icon: Users,           label: 'Registrations'  },
   { href: '/admin/schedule',        icon: Calendar,        label: 'Schedule'      },
   { href: '/admin/results',         icon: Trophy,          label: 'Results'       },
+  { href: '/admin/diamonds',        icon: MapPin,          label: 'Diamonds'      },
 ];
 
 export default function AdminSidebar() {

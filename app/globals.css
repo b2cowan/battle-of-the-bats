@@ -225,7 +225,10 @@ h1, h2, h3, h4, h5, h6 {
 .form-input::placeholder,
 .form-textarea::placeholder { color: var(--white-30); }
 
-.form-select option { background: var(--bg-2); }
+select option { 
+  background: var(--bg-2); 
+  color: var(--white); 
+}
 
 .form-textarea { resize: vertical; min-height: 100px; }
 
@@ -297,6 +300,37 @@ h1, h2, h3, h4, h5, h6 {
 .tab-btn:hover { color: var(--white); background: var(--white-10); }
 
 .tab-btn.active {
+  background: linear-gradient(135deg, var(--purple), var(--purple-light));
+  color: var(--white);
+  box-shadow: var(--glow-sm);
+}
+
+/* ─── Segmented Control ──────────────────────────────────────────────────────── */
+.segmented-control {
+  display: inline-flex;
+  padding: 0.25rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  gap: 0.25rem;
+}
+
+.segment {
+  padding: 0.375rem 1rem;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-display);
+  font-size: 0.875rem;
+  font-weight: 700;
+  border: none;
+  background: transparent;
+  color: var(--white-60);
+  transition: var(--transition);
+  white-space: nowrap;
+}
+
+.segment:hover { color: var(--white); background: var(--white-10); }
+
+.segment.active {
   background: linear-gradient(135deg, var(--purple), var(--purple-light));
   color: var(--white);
   box-shadow: var(--glow-sm);

@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { Tag, Plus, Pencil, Trash2, X, Check } from 'lucide-react';
 import { 
   getAgeGroups, saveAgeGroup, updateAgeGroup, deleteAgeGroup, getContacts, 
-  migratePoolTeams, savePool, updatePool, deletePool 
+  savePool, updatePool, deletePool 
 } from '@/lib/db';
 import { useTournament } from '@/lib/tournament-context';
 import { AgeGroup, Contact } from '@/lib/types';
@@ -19,8 +19,8 @@ export default function AgeGroupsPage() {
   const [editing, setEditing] = useState<AgeGroup | null>(null);
   const [form, setForm] = useState({ 
     name: '', minAge: '', maxAge: '', order: '', contactId: '', 
-    capacity: '', isClosed: false, poolCount: '1', poolNames: '',
-    requiresPoolSelection: false
+    capacity: '', isClosed: false, poolCount: '0', poolNames: '',
+    requiresPoolSelection: false, usePools: false
   });
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
@@ -32,10 +32,10 @@ export default function AgeGroupsPage() {
     // ONE-TIME MIGRATION CHECK:
     // If we have poolNames/poolCount but no real pool records, migrate them.
     for (const g of groups) {
-      if ((g.poolCount || 0) > 0 && (!g.pools || g.pools.length === 0)) {
+      if ((g.poolCount || 0) >= 2 && (!g.pools || g.pools.length === 0)) {
         console.log(`Migrating legacy pools for ${g.name}...`);
         const names = (g.poolNames || '').split(',').map(n => n.trim());
-        for (let i = 0; i < (g.poolCount || 1); i++) {
+        for (let i = 0; i < (g.poolCount || 0); i++) {
           const name = names[i] || String.fromCharCode(65 + i);
           await savePool({ ageGroupId: g.id, name, order: i });
         }
@@ -51,8 +51,8 @@ export default function AgeGroupsPage() {
   function openAdd() {
     setForm({ 
       name: '', minAge: '', maxAge: '', order: String(groups.length + 1), 
-      contactId: '', capacity: '', isClosed: false, poolCount: '1', poolNames: '',
-      requiresPoolSelection: false
+      contactId: '', capacity: '', isClosed: false, poolCount: '0', poolNames: '',
+      requiresPoolSelection: false, usePools: false
     });
     setEditing(null);
     setModal('add');
@@ -63,8 +63,9 @@ export default function AgeGroupsPage() {
       name: g.name, minAge: String(g.minAge), maxAge: String(g.maxAge), 
       order: String(g.order), contactId: g.contactId || '',
       capacity: g.capacity ? String(g.capacity) : '', isClosed: !!g.isClosed,
-      poolCount: String(g.poolCount || 1), poolNames: g.poolNames || '',
-      requiresPoolSelection: !!g.requiresPoolSelection
+      poolCount: String(g.poolCount || 0), poolNames: g.poolNames || '',
+      requiresPoolSelection: !!g.requiresPoolSelection,
+      usePools: (g.poolCount || 0) >= 2
     });
     setEditing(g);
     setModal('edit');
@@ -159,7 +160,7 @@ export default function AgeGroupsPage() {
               <tr key={g.id}>
                 <td><span className="badge badge-purple" style={{ fontSize: '0.875rem' }}>{g.name}</span></td>
                 <td>
-                  {g.pools && g.pools.length > 0 ? (
+                  {(g.poolCount || 0) >= 2 && g.pools && g.pools.length > 0 ? (
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem' }}>
                       {g.pools.map(p => (
                         <span key={p.id} className="badge badge-neutral" style={{ fontSize: '0.65rem', textTransform: 'none' }}>
@@ -174,7 +175,7 @@ export default function AgeGroupsPage() {
                 <td>{g.minAge}</td>
                 <td>{g.maxAge}</td>
                 <td>{g.order}</td>
-                <td>{g.capacity || '—'}</td>
+                <td>{g.capacity || ''}</td>
                 <td>
                   {g.isClosed ? <span className="badge badge-danger">Closed</span> : <span className="badge badge-success">Open</span>}
                 </td>
@@ -234,47 +235,55 @@ export default function AgeGroupsPage() {
                 </div>
               </div>
               <div className="form-group" style={{ marginBottom: '1.5rem', background: 'var(--white-5)', padding: '1rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-2)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                  <label className="form-label" style={{ margin: 0 }}>Pool Configuration</label>
-                  <div className="subCheck">
-                    <label style={{ fontSize: '0.7rem', color: 'var(--white-30)', textTransform: 'uppercase', fontWeight: 800 }}>User Selects Pool:</label>
-                    <input type="checkbox" checked={form.requiresPoolSelection} onChange={e => setForm(f => ({ ...f, requiresPoolSelection: e.target.checked }))} />
-                  </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: form.usePools ? '1rem' : 0 }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                    <input type="checkbox" checked={form.usePools} onChange={e => setForm(f => ({ ...f, usePools: e.target.checked, poolCount: e.target.checked ? (Number(f.poolCount) < 2 ? '2' : f.poolCount) : '0' }))} />
+                    <span style={{ fontWeight: 600 }}>Enable Pools for this Division</span>
+                  </label>
+                  
+                  {form.usePools && (
+                    <div className="subCheck">
+                      <label style={{ fontSize: '0.7rem', color: 'var(--white-30)', textTransform: 'uppercase', fontWeight: 800 }}>User Selects Pool:</label>
+                      <input type="checkbox" checked={form.requiresPoolSelection} onChange={e => setForm(f => ({ ...f, requiresPoolSelection: e.target.checked }))} />
+                    </div>
+                  )}
                 </div>
 
-                <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
-                  <div className="form-group">
-                    <label className="form-label" style={{ fontSize: '0.65rem' }}>Count</label>
-                    <input className="form-input" type="number" min="1" max="10" value={form.poolCount}
-                      onChange={e => setForm(f => ({ ...f, poolCount: e.target.value }))} style={{ width: '70px' }} />
+                {form.usePools && (
+                  <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
+                    <div className="form-group">
+                      <label className="form-label" style={{ fontSize: '0.65rem' }}>Count (Min 2)</label>
+                      <input className="form-input" type="number" min="2" max="10" value={form.poolCount}
+                        onChange={e => setForm(f => ({ ...f, poolCount: e.target.value }))} style={{ width: '70px' }} />
+                    </div>
+                    
+                    <div style={{ flex: 1, display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '0.75rem' }}>
+                      {Array.from({ length: Number(form.poolCount) || 2 }).map((_, i) => {
+                        const names = form.poolNames.split(',').map(n => n.trim());
+                        const currentName = names[i] || '';
+                        const defaultChar = String.fromCharCode(65 + i);
+                        
+                        return (
+                          <div key={i} className="form-group">
+                            <label className="form-label" style={{ fontSize: '0.65rem' }}>{defaultChar} Label</label>
+                            <input 
+                              className="form-input" 
+                              placeholder={`e.g. Gold`}
+                              value={currentName}
+                              style={{ height: '32px', fontSize: '0.85rem' }}
+                              onChange={e => {
+                                const newNames = [...names];
+                                while (newNames.length < (i + 1)) newNames.push('');
+                                newNames[i] = e.target.value;
+                                setForm(f => ({ ...f, poolNames: newNames.join(',') }));
+                              }}
+                            />
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
-                  
-                  <div style={{ flex: 1, display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '0.75rem' }}>
-                    {Array.from({ length: Number(form.poolCount) || 1 }).map((_, i) => {
-                      const names = form.poolNames.split(',').map(n => n.trim());
-                      const currentName = names[i] || '';
-                      const defaultChar = String.fromCharCode(65 + i);
-                      
-                      return (
-                        <div key={i} className="form-group">
-                          <label className="form-label" style={{ fontSize: '0.65rem' }}>{defaultChar} Label</label>
-                          <input 
-                            className="form-input" 
-                            placeholder={`e.g. Gold`}
-                            value={currentName}
-                            style={{ height: '32px', fontSize: '0.85rem' }}
-                            onChange={e => {
-                              const newNames = [...names];
-                              while (newNames.length < (i + 1)) newNames.push('');
-                              newNames[i] = e.target.value;
-                              setForm(f => ({ ...f, poolNames: newNames.join(',') }));
-                            }}
-                          />
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
+                )}
               </div>
 
               <div className="form-row form-row-2" style={{ marginBottom: '1.5rem' }}>

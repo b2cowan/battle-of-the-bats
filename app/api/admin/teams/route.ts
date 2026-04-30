@@ -32,10 +32,9 @@ export async function POST(req: Request) {
 
     if (!currents) throw new Error("Could not find records to update");
 
-    // 2. Perform Update
     const dbUpdates = { ...updates };
     if (dbUpdates.poolId !== undefined) {
-      dbUpdates.pool_id = dbUpdates.poolId;
+      dbUpdates.pool_id = dbUpdates.poolId || null;
       delete dbUpdates.poolId;
     }
     if (dbUpdates.paymentStatus !== undefined) {

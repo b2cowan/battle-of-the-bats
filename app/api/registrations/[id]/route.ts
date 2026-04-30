@@ -78,7 +78,12 @@ export async function GET(req: NextRequest, props: { params: Promise<{ id: strin
     const supabaseAdmin = createClient(url, key);
     const { data: team, error } = await supabaseAdmin
       .from('teams')
-      .select('*, pool_id(name), age_groups(name), tournaments(name)')
+      .select(`
+        *,
+        age_groups!teams_age_group_id_fkey (name),
+        tournaments!teams_tournament_id_fkey (name),
+        pools:pool_id (name)
+      `)
       .eq('id', id)
       .single();
 
@@ -94,11 +99,11 @@ export async function GET(req: NextRequest, props: { params: Promise<{ id: strin
       team_name: team.name,
       coach_name: team.coach,
       email: team.email,
-      age_group_name: team.age_groups?.name || 'Division',
-      tournament_name: team.tournaments?.name || 'Tournament',
+      age_group_name: (team.age_groups as any)?.name || 'Division',
+      tournament_name: (team.tournaments as any)?.name || 'Tournament',
       status: team.status,
       payment_status: team.payment_status,
-      pool: team.pool_id?.name || team.pool,
+      pool: (team.pools as any)?.name || '',
       players: team.players || []
     });
   } catch (e: any) {

@@ -50,25 +50,33 @@ export async function POST(req: Request) {
       if (agError) throw agError;
 
       // 2. Manage Pools
-      const newPoolCount = data.poolCount || 1;
+      const newPoolCount = data.poolCount || 0;
       const newNames = (data.poolNames || '').split(',').map((n: string) => n.trim());
       
       const { data: existingPools } = await supabase.from('pools').select('*').eq('age_group_id', id).order('display_order', { ascending: true });
       const pools = existingPools || [];
 
-      // Update/Add
-      for (let i = 0; i < newPoolCount; i++) {
-        const name = newNames[i] || String.fromCharCode(65 + i);
-        if (pools[i]) {
-          await supabase.from('pools').update({ name, display_order: i }).eq('id', pools[i].id);
-        } else {
-          await supabase.from('pools').insert({ age_group_id: id, name, display_order: i });
+      if (newPoolCount < 2) {
+        // If pools are disabled, delete all existing pools
+        if (pools.length > 0) {
+          const toDelete = pools.map(p => p.id);
+          await supabase.from('pools').delete().in('id', toDelete);
         }
-      }
-      // Remove extra
-      if (pools.length > newPoolCount) {
-        const toDelete = pools.slice(newPoolCount).map(p => p.id);
-        await supabase.from('pools').delete().in('id', toDelete);
+      } else {
+        // Update/Add
+        for (let i = 0; i < newPoolCount; i++) {
+          const name = newNames[i] || String.fromCharCode(65 + i);
+          if (pools[i]) {
+            await supabase.from('pools').update({ name, display_order: i }).eq('id', pools[i].id);
+          } else {
+            await supabase.from('pools').insert({ age_group_id: id, name, display_order: i });
+          }
+        }
+        // Remove extra
+        if (pools.length > newPoolCount) {
+          const toDelete = pools.slice(newPoolCount).map(p => p.id);
+          await supabase.from('pools').delete().in('id', toDelete);
+        }
       }
     }
 

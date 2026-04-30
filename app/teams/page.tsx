@@ -86,13 +86,13 @@ export default function TeamsPage() {
                 if (groupTeams.length === 0) return null;
 
                 // 1. Get official pools for this group
-                const groupPools = group.pools || [];
+                const groupPools = (group.poolCount || 0) >= 2 ? (group.pools || []) : [];
                 const poolIds = groupPools.map(p => p.id);
                 
                 // 2. Group teams by pool_id
                 const poolGroups: { name: string, teams: Team[] }[] = [];
                 
-                if (groupPools.length > 1) {
+                if (groupPools.length >= 2) {
                   // Multiple pools: Group by pool_id
                   groupPools.forEach(p => {
                     const teamsInPool = groupTeams.filter(t => t.poolId === p.id);
@@ -107,7 +107,7 @@ export default function TeamsPage() {
                     poolGroups.push({ name: 'Awaiting Assignment', teams: unassigned });
                   }
                 } else {
-                  // Single pool or no pools: Just one group
+                  // No pools: Just one group with no header
                   poolGroups.push({ name: '', teams: groupTeams });
                 }
 

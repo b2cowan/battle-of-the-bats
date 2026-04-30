@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { Calendar, Trophy, Users, ChevronRight, Megaphone, Star } from 'lucide-react';
 import { getAnnouncements, getGames, getTeams, getAgeGroups, getDiamonds, getTournaments } from '@/lib/db';
+import { formatTime } from '@/lib/utils';
 import LocationLink from '@/components/LocationLink';
 import styles from './Home.module.css';
 
@@ -59,6 +60,7 @@ export default async function HomePage() {
   const getDiamond      = (id?: string) => id ? diamonds.find(d => d.id === id) ?? null : null;
 
   function formatDate(dateStr: string) {
+    if (!dateStr) return 'TBD';
     return new Date(dateStr + 'T12:00:00').toLocaleDateString('en-CA', {
       weekday: 'short', month: 'short', day: 'numeric',
     });
@@ -192,7 +194,16 @@ export default async function HomePage() {
                     </span>
                   </div>
                   <h3 className={styles.annTitle}>{ann.title}</h3>
-                  <p className={styles.annBody}>{ann.body.slice(0, 200)}{ann.body.length > 200 ? '…' : ''}</p>
+                  <p className={styles.annBody}>
+                    {ann.body ? (
+                      <>
+                        {ann.body.slice(0, 200)}
+                        {ann.body.length > 200 ? '…' : ''}
+                      </>
+                    ) : (
+                      'No content provided.'
+                    )}
+                  </p>
                 </div>
               ))}
             </div>
@@ -226,7 +237,7 @@ export default async function HomePage() {
                 <div key={game.id} className={`card ${styles.gameCard}`}>
                   <div className={styles.gameHeader}>
                     <span className="badge badge-purple">{getAgeGroupName(game.ageGroupId)}</span>
-                    <span className={styles.gameDate}>{formatDate(game.date)} • {game.time}</span>
+                    <span className={styles.gameDate}>{formatDate(game.date)} • {formatTime(game.time)}</span>
                   </div>
                   <div className={styles.matchup}>
                     <span className={styles.teamName}>{getTeamName(game.homeTeamId)}</span>

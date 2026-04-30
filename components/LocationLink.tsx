@@ -1,3 +1,4 @@
+'use client';
 import { MapPin, ExternalLink } from 'lucide-react';
 import { Diamond } from '@/lib/types';
 

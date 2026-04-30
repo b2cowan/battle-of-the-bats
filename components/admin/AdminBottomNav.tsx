@@ -13,17 +13,16 @@ import { setActiveTournament } from '@/lib/db';
 import styles from './AdminBottomNav.module.css';
 
 const PRIMARY_TABS = [
-  { href: '/admin/teams',         icon: Users,     label: 'Teams & Regs' },
+  { href: '/admin/teams',         icon: Users,     label: 'Registrations' },
   { href: '/admin/schedule',      icon: Calendar,  label: 'Schedule' },
-  { href: '/admin/results',       icon: Trophy,    label: 'Results'  },
-  { href: '/admin/announcements', icon: Megaphone, label: 'News'     },
+  { href: '/admin/results',       icon: Trophy,    label: 'Results' },
 ];
 
 const MORE_ITEMS = [
   { href: '/admin',               icon: LayoutDashboard, label: 'Dashboard'     },
-  { href: '/admin/contacts',      icon: BookUser,        label: 'Contacts'      },
-
   { href: '/admin/tournaments',   icon: RefreshCw,       label: 'Tournaments'   },
+  { href: '/admin/announcements', icon: Megaphone,       label: 'Announcements' },
+  { href: '/admin/contacts',      icon: BookUser,        label: 'Contacts'      },
   { href: '/admin/age-groups',    icon: Tag,             label: 'Age Groups'    },
   { href: '/admin/diamonds',      icon: MapPin,          label: 'Diamonds'      },
 ];

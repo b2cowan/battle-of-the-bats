@@ -45,7 +45,6 @@
   font-size: 1.3rem;
   font-weight: 800;
   color: var(--white-60);
-  flex: 1;
 }
 
 .away .scoreName { text-align: right; }
@@ -87,4 +86,71 @@
   .scoreRow { gap: 0.75rem; }
   .scoreName { font-size: 1rem; }
   .score { font-size: 1.75rem; }
+}
+
+.summarySection {
+  margin-top: 2rem;
+  margin-bottom: 3rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 1.5rem;
+  overflow: hidden;
+  box-shadow: 0 10px 30px -10px rgba(0,0,0,0.3);
+}
+
+.summaryHeader {
+  padding: 1.25rem 1.5rem;
+  background: rgba(168,85,247,0.05);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.standingsTable {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.standingsTable th {
+  text-align: left;
+  padding: 1rem 1.5rem;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--white-40);
+  background: rgba(255,255,255,0.02);
+  border-bottom: 1px solid var(--border);
+}
+
+.standingsTable td {
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid var(--border-subtle);
+  font-size: 0.95rem;
+  color: var(--white-80);
+}
+
+.standingsTable tr:last-child td { border-bottom: none; }
+
+.teamCell {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-weight: 700;
+  color: var(--white);
+}
+
+.statValue {
+  font-family: var(--font-display);
+  font-weight: 800;
+  color: var(--white);
+}
+
+.poolLabel {
+  color: var(--white-40);
+  font-size: 0.8rem;
+  font-weight: 500;
+  background: var(--white-5);
+  padding: 0.2rem 0.6rem;
+  border-radius: 2rem;
 }

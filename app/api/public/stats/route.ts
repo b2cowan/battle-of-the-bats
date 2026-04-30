@@ -27,29 +27,31 @@ export async function GET(req: Request) {
           away_team_id, 
           home_score, 
           away_score, 
-          date, 
-          time, 
+          game_date, 
+          game_time, 
           location, 
           status,
-          home_team:home_team_id(name),
-          away_team:away_team_id(name)
+          home_team:teams!games_home_team_id_fkey (name),
+          away_team:teams!games_away_team_id_fkey (name)
         `)
         .or(`home_team_id.eq.${teamId},away_team_id.eq.${teamId}`)
-        .order('date', { ascending: true })
-        .order('time', { ascending: true });
+        .order('game_date', { ascending: true })
+        .order('game_time', { ascending: true });
 
       if (error) throw error;
 
       return NextResponse.json({
         games: games.map(g => ({
           ...g,
+          date: g.game_date,
+          time: g.game_time,
           home_team_name: (g.home_team as any)?.name || 'TBD',
           away_team_name: (g.away_team as any)?.name || 'TBD'
         }))
       });
     }
 
-    let query = supabaseAdmin.from('registrations').select('age_group_id, status');
+    let query = supabaseAdmin.from('teams').select('age_group_id, status');
     if (tournamentId) {
       query = query.eq('tournament_id', tournamentId);
     }

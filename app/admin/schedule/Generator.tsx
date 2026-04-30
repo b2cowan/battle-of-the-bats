@@ -3,6 +3,7 @@ import { useState, useMemo } from 'react';
 import { Sparkles, Calendar, Clock, MapPin, Check, X, RefreshCw, AlertCircle, Plus, Trash2 } from 'lucide-react';
 import { Team, AgeGroup, Diamond, Game, Tournament } from '@/lib/types';
 import { saveGame } from '@/lib/db';
+import { formatTime } from '@/lib/utils';
 import styles from './schedule-admin.module.css';
 
 interface DateSlot {
@@ -33,6 +34,7 @@ export default function ScheduleGenerator({ tournament, ageGroups, teams, diamon
 
   const [generatedGames, setGeneratedGames] = useState<Omit<Game, 'id'>[]>([]);
   const [committing, setCommitting] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const availableDates = useMemo(() => {
@@ -82,9 +84,10 @@ export default function ScheduleGenerator({ tournament, ageGroups, teams, diamon
     const currentGroup = ageGroups.find(g => g.id === selectedGroupId);
     
     groupTeams.forEach(t => {
-      // Priority: use the real pool record if it exists
-      const poolRecord = currentGroup?.pools?.find(p => p.id === t.poolId);
-      const poolKey = poolRecord ? poolRecord.id : (t.pool || 'Default');
+      // Priority: use the real pool record if it exists and pools are enabled
+      const usePools = (currentGroup?.poolCount || 0) >= 2;
+      const poolRecord = usePools ? currentGroup?.pools?.find(p => p.id === t.poolId) : null;
+      const poolKey = poolRecord ? poolRecord.id : 'Default';
       
       if (!pools[poolKey]) pools[poolKey] = [];
       pools[poolKey].push(t);
@@ -124,19 +127,28 @@ export default function ScheduleGenerator({ tournament, ageGroups, teams, diamon
       return;
     }
 
-    // 3. Generate Available Time Slots
+    // 3. Generate Available Time Slots (Rounding to nearest 5 mins)
     const totalSlots: { date: string, time: string, diamond: Diamond }[] = [];
     const sortedDates = [...dateSlots].sort((a, b) => a.date.localeCompare(b.date));
 
+    const roundTo5 = (date: Date) => {
+      const ms = 1000 * 60 * 5;
+      return new Date(Math.ceil(date.getTime() / ms) * ms);
+    };
+
     sortedDates.forEach(slot => {
-      let current = new Date(`${slot.date}T${slot.startTime}`);
+      let current = roundTo5(new Date(`${slot.date}T${slot.startTime}`));
       const end = new Date(`${slot.date}T${slot.endTime}`);
+      
       while (current.getTime() + (gameLength * 60000) <= end.getTime()) {
         const timeStr = current.toTimeString().slice(0, 5);
         diamondList.forEach(diamond => {
           totalSlots.push({ date: slot.date, time: timeStr, diamond });
         });
-        current = new Date(current.getTime() + (gameLength + breakLength) * 60000);
+        
+        // Calculate next game start and round it up
+        const nextRaw = new Date(current.getTime() + (gameLength + breakLength) * 60000);
+        current = roundTo5(nextRaw);
       }
     });
 
@@ -145,27 +157,54 @@ export default function ScheduleGenerator({ tournament, ageGroups, teams, diamon
       return;
     }
 
-    // 4. Assign Matchups to Slots
-    const newGames: Omit<Game, 'id'>[] = allMatchups.map((match, idx) => {
-      const slot = totalSlots[idx];
-      return {
-        tournamentId: tournament.id,
-        ageGroupId: selectedGroupId,
-        homeTeamId: match.home.id,
-        awayTeamId: match.away.id,
-        date: slot.date,
-        time: slot.time,
-        location: slot.diamond.name,
-        diamondId: slot.diamond.id,
-        status: 'scheduled'
-      };
-    });
+    // 4. Assign Matchups to Slots (Checking for team double-booking)
+    const newGames: Omit<Game, 'id'>[] = [];
+    const busyTeams: Record<string, Set<string>> = {}; // "dateTtime" -> Set of team IDs
+    const availableSlots = [...totalSlots];
+
+    for (const match of allMatchups) {
+      let assigned = false;
+      for (let i = 0; i < availableSlots.length; i++) {
+        const slot = availableSlots[i];
+        const timeKey = `${slot.date}T${slot.time}`;
+        
+        if (!busyTeams[timeKey]) busyTeams[timeKey] = new Set();
+        
+        const isHomeBusy = busyTeams[timeKey].has(match.home.id);
+        const isAwayBusy = busyTeams[timeKey].has(match.away.id);
+
+        if (!isHomeBusy && !isAwayBusy) {
+          newGames.push({
+            tournamentId: tournament.id,
+            ageGroupId: selectedGroupId,
+            homeTeamId: match.home.id,
+            awayTeamId: match.away.id,
+            date: slot.date,
+            time: slot.time,
+            location: slot.diamond.name,
+            diamondId: slot.diamond.id,
+            status: 'scheduled'
+          });
+          
+          busyTeams[timeKey].add(match.home.id);
+          busyTeams[timeKey].add(match.away.id);
+          availableSlots.splice(i, 1); // Slot is now taken
+          assigned = true;
+          break;
+        }
+      }
+
+      if (!assigned) {
+        setError(`Conflict detected: Could not find a free time slot for ${match.home.name} vs ${match.away.name} without double-booking a team. Try adding more dates or diamonds.`);
+        return;
+      }
+    }
 
     setGeneratedGames(newGames);
   }
 
   async function commit() {
-    if (!confirm('This will save the generated schedule and clear any existing games for this division. Continue?')) return;
+    setShowConfirm(false);
     
     setCommitting(true);
     try {
@@ -322,14 +361,15 @@ export default function ScheduleGenerator({ tournament, ageGroups, teams, diamon
                     return (
                       <tr key={i}>
                         <td style={{ fontSize: '0.8rem' }}>
-                          {new Date(g.date + 'T12:00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} at <strong>{g.time}</strong>
+                          {new Date(g.date + 'T12:00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} at <strong>{formatTime(g.time)}</strong>
                         </td>
                         <td>{homeTeam?.name} vs {awayTeam?.name}</td>
                         <td>
                           {(() => {
                             const currentGroup = ageGroups.find(g => g.id === selectedGroupId);
-                            const poolRecord = currentGroup?.pools?.find(p => p.id === homeTeam?.poolId);
-                            const name = poolRecord ? poolRecord.name : (homeTeam?.pool || 'Default');
+                            const usePools = (currentGroup?.poolCount || 0) >= 2;
+                            const poolRecord = usePools ? currentGroup?.pools?.find(p => p.id === homeTeam?.poolId) : null;
+                            const name = poolRecord ? poolRecord.name : (usePools ? 'Unassigned' : 'None');
                             return <span className="badge badge-neutral">{name}</span>;
                           })()}
                         </td>
@@ -345,13 +385,35 @@ export default function ScheduleGenerator({ tournament, ageGroups, teams, diamon
 
             <div className={styles.previewFooter}>
               <button className="btn btn-ghost" onClick={() => setGeneratedGames([])} disabled={committing}>Cancel</button>
-              <button className="btn btn-primary" onClick={commit} disabled={committing}>
+              <button className="btn btn-primary" onClick={() => setShowConfirm(true)} disabled={committing}>
                 {committing ? <><RefreshCw className="spin" size={14} /> Saving Games…</> : <><Check size={14} /> Commit Schedule</>}
               </button>
             </div>
           </div>
         )}
       </div>
+
+      {showConfirm && (
+        <div className="modal-overlay" style={{ zIndex: 1000 }} onClick={() => setShowConfirm(false)}>
+          <div className="modal" style={{ maxWidth: 450, padding: '2rem' }} onClick={e => e.stopPropagation()}>
+            <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
+              <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'var(--white-5)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1rem', color: 'var(--purple-light)' }}>
+                <AlertCircle size={24} />
+              </div>
+              <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '0.5rem' }}>Commit Schedule?</h3>
+              <p style={{ color: 'var(--white-60)', fontSize: '0.95rem', lineHeight: 1.5 }}>
+                This will save the generated schedule and <strong style={{ color: 'var(--danger)' }}>permanently clear</strong> any existing games for the <strong>{ageGroups.find(g => g.id === selectedGroupId)?.name}</strong> division.
+              </p>
+            </div>
+            <div className="flex gap-1" style={{ justifyContent: 'center' }}>
+              <button className="btn btn-ghost" onClick={() => setShowConfirm(false)}>Cancel</button>
+              <button className="btn btn-primary" onClick={commit}>
+                <Check size={14} /> Confirm & Save
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

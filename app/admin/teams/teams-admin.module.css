@@ -1,14 +1,7 @@
-.page { max-width: 1000px; margin: 0 auto; }
+/* ─── Teams-Specific Styles ───────────────────────────────────────────────── */
+/* Common styles live in ../admin-common.module.css                           */
 
-.pageHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 2rem;
-  flex-wrap: wrap;
-  gap: 1.5rem;
-}
-
+/* ─── Bulk Action Bar ─────────────────────────────────────────────────────── */
 .bulkBar {
   position: sticky;
   top: 1rem;
@@ -35,72 +28,28 @@
 .bulkButtons .btn { border-color: rgba(255, 255, 255, 0.2); }
 .bulkButtons .btn:hover { background: rgba(255, 255, 255, 0.1); }
 
-
-.headerLeft { display: flex; align-items: center; gap: 1rem; }
-.headerIcon { 
-  width: 48px; 
-  height: 48px; 
-  background: var(--purple-faint); 
-  border-radius: 12px; 
-  display: flex; 
-  align-items: center; 
-  justify-content: center; 
-  color: var(--purple-light);
-}
-
-.pageTitle { font-family: var(--font-display); font-size: 1.75rem; font-weight: 900; color: var(--white); margin: 0; }
-.pageSub { font-size: 0.9rem; color: var(--white-30); margin: 0.25rem 0 0 0; }
-
-.controlsRow {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+/* ─── Summary Dashboard Modal ─────────────────────────────────────────────── */
+.summaryGridModal {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
   gap: 1.5rem;
-  margin-bottom: 1.5rem;
-  background: var(--black-20);
-  padding: 1rem;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--border-2);
 }
 
-.controlsLeft, .controlsRight { display: flex; align-items: center; gap: 1rem; }
-
-.statusFilters { display: flex; gap: 0.5rem; flex-wrap: wrap; }
-
-.filterChip {
-  padding: 0.4rem 0.8rem;
-  border-radius: 20px;
-  font-size: 0.75rem;
-  font-weight: 700;
-  background: var(--white-5);
-  border: 1px solid var(--border-2);
-  color: var(--white-40);
+.summaryCardModal {
+  background: var(--black-30);
+  border: 1px solid var(--white-10);
+  border-radius: 16px;
+  padding: 1.5rem;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.chipActive { background: var(--purple); border-color: var(--purple-light); color: var(--white); }
-
-.summaryGrid {
-  display: flex;
-  gap: 0.75rem;
-  margin-bottom: 2rem;
-  overflow-x: auto;
-  padding-bottom: 0.75rem;
+.summaryCardModal:hover {
+  background: var(--black-40);
+  border-color: var(--purple-light);
+  transform: translateY(-4px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
 }
-
-.summaryCard {
-  flex: 0 0 180px;
-  background: var(--black-20);
-  border: 1px solid var(--border-2);
-  border-radius: 12px;
-  padding: 1rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.summaryCard:hover { border-color: var(--white-20); transform: translateY(-2px); }
-.selectedSummary { border-color: var(--purple-light); background: rgba(124, 58, 237, 0.05); }
 
 .summaryHeader { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; }
 .summaryHeader strong { font-size: 0.9rem; color: var(--white); }
@@ -111,88 +60,7 @@
 
 .summaryStats { font-size: 0.8rem; color: var(--white-30); }
 
-.poolBreakdown {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.35rem;
-  margin-top: 0.5rem;
-}
-
-.poolStatBadge {
-  font-size: 0.65rem;
-  background: var(--white-5);
-  padding: 0.15rem 0.4rem;
-  border-radius: 4px;
-  color: var(--white-40);
-  border: 1px solid var(--border-1);
-}
-
-.poolStatBadge strong {
-  color: var(--white);
-}
-
-.compactList { display: flex; flex-direction: column; gap: 2.5rem; }
-
-.groupSection {
-  background: var(--black-10);
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--border-2);
-  overflow: hidden;
-}
-
-.groupHeader {
-  padding: 1rem 1.5rem;
-  background: var(--black-20);
-  border-bottom: 1px solid var(--border-2);
-  display: flex;
-  align-items: center;
-  gap: 1.5rem;
-}
-
-.groupHeader strong { font-family: var(--font-display); font-size: 1.25rem; font-weight: 900; color: var(--purple-light); }
-
-.tableHeader {
-  display: flex;
-  padding: 0.75rem 1.5rem;
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  color: var(--white-20);
-  font-weight: 800;
-  letter-spacing: 0.1em;
-  background: var(--black-10);
-}
-
-.row { border-bottom: 1px solid var(--border-1); transition: background 0.2s ease; }
-.row:last-child { border-bottom: none; }
-.rowSelected { background: rgba(124, 58, 237, 0.05); }
-
-.rowMain { display: flex; align-items: center; padding: 0.75rem 1.5rem; min-height: 56px; }
-
-.primaryCell { font-size: 1rem; color: var(--white); font-weight: 700; }
-.secondaryCell { font-size: 0.9rem; color: var(--white-30); }
-
-.iconBtn {
-  background: none;
-  border: none;
-  color: var(--white-20);
-  cursor: pointer;
-  padding: 8px;
-  border-radius: 8px;
-  transition: all 0.2s ease;
-}
-
-.iconBtn:hover { background: var(--white-10); color: var(--white); }
-
-.expandedRow {
-  background: var(--black-20);
-  padding: 1.5rem 2.5rem 2rem 4rem;
-  border-top: 1px solid var(--border-1);
-}
-
-.expandedContent { display: flex; justify-content: space-between; align-items: flex-start; gap: 4rem; }
-
-.expandedInfo { flex: 1; display: flex; flex-direction: column; gap: 1.5rem; }
-
+/* ─── Expanded Row Details ────────────────────────────────────────────────── */
 .infoLine { display: flex; align-items: center; gap: 2rem; font-size: 0.9rem; }
 .infoLine span { color: var(--white-40); }
 .infoLine a { color: var(--purple-light); font-weight: 600; text-decoration: underline; }
@@ -215,8 +83,6 @@
 
 .notesArea textarea:focus { border-color: var(--purple-light); outline: none; }
 
-.expandedActions { display: flex; flex-direction: column; gap: 2rem; min-width: 240px; }
-
 .transferGroup select {
   background: #111111;
   border: 1px solid var(--border-2);
@@ -230,7 +96,7 @@
   background-repeat: no-repeat;
   background-position: right 0.75rem center;
   padding-right: 2.5rem;
-  color-scheme: dark; /* Force browser to use dark UI for options if possible */
+  color-scheme: dark;
 }
 
 .transferGroup select:hover {
@@ -245,15 +111,3 @@
 }
 
 .buttonGroup { display: flex; flex-wrap: wrap; gap: 0.75rem; }
-
-/* Mobile Adjustments */
-@media (max-width: 768px) {
-  .controlsRow { flex-direction: column; align-items: stretch; }
-  .controlsRight { flex-direction: column; align-items: stretch; }
-  .tableHeader { display: none; }
-  .rowMain { padding: 1rem; align-items: flex-start; flex-wrap: wrap; }
-  .secondaryCell { display: none; }
-  .expandedRow { padding: 1.5rem; }
-  .expandedContent { flex-direction: column; gap: 2rem; }
-  .expandedActions { width: 100%; min-width: 0; }
-}

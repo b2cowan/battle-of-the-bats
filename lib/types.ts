@@ -24,6 +24,40 @@ export interface Contact {
   role?: string;
 }
 
+export interface PlayoffConfig {
+  type: 'single';
+  crossover: 'standard' | 'top-bottom' | 'none';
+  hasThirdPlace: boolean;
+  teamsQualifying: number;
+  tieBreakers: ('h2h' | 'rf' | 'ra' | 'rd')[];
+}
+
+export interface BracketSlot {
+  id: string;
+  seedLabel: string;       // "Seed #1", "1st Pool A", or team name
+  teamId?: string;         // Resolved team ID (null until seeded)
+  isBye: boolean;
+}
+
+export interface BracketMatchup {
+  id: string;
+  roundIndex: number;
+  position: number;        // Vertical position within the round
+  bracketCode: string;     // "QF1", "SF2", "FIN", etc.
+  homeSlot: BracketSlot;
+  awaySlot: BracketSlot;
+  winnersTo?: string;      // bracketCode of next matchup for winner
+  losersTo?: string;       // bracketCode for consolation/3rd place
+}
+
+export interface BracketConfig {
+  rounds: {
+    name: string;          // "Quarterfinals", "Semifinals", etc.
+    matchups: BracketMatchup[];
+  }[];
+  consolation: BracketMatchup[];  // 3rd place / consolation bracket
+}
+
 export interface AgeGroup {
   id: string;
   tournamentId: string;
@@ -38,6 +72,7 @@ export interface AgeGroup {
   poolNames?: string; // (Legacy) Comma separated
   requiresPoolSelection?: boolean; // if true, user picks pool during registration
   pools?: Pool[]; // The new way
+  playoffConfig?: PlayoffConfig;
 }
 
 export interface Pool {
@@ -66,7 +101,6 @@ export interface Team {
   paymentStatus: 'pending' | 'paid';
   registeredAt: string;
   adminNotes?: string;
-  pool?: string; // (Legacy) pool name e.g. "A"
   poolId?: string; // The new way (link to pools table)
 }
 
@@ -82,9 +116,14 @@ export interface Game {
   time: string; // HH:MM
   location: string;      // display name (kept for backward compat)
   diamondId?: string;    // links to a managed Diamond record
-  homeScore?: number;
-  awayScore?: number;
+  homeScore?: number | null;
+  awayScore?: number | null;
   status: GameStatus;
+  isPlayoff?: boolean;
+  bracketId?: string;
+  bracketCode?: string;
+  homePlaceholder?: string;
+  awayPlaceholder?: string;
   notes?: string;
 }
 

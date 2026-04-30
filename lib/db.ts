@@ -4,7 +4,10 @@ import { Tournament, Diamond, Contact, AgeGroup, Pool, Team, Game, Announcement 
 // --- Tournaments ---
 export async function getTournaments(): Promise<Tournament[]> {
   const { data, error } = await supabase.from('tournaments').select('*').order('year', { ascending: false });
-  if (error) { console.error('getTournaments error', error); return []; }
+  if (error || !data) { 
+    if (error) console.error('getTournaments error', error); 
+    return []; 
+  }
   return data.map(t => ({ 
     id: t.id, 
     year: t.year, 
@@ -13,6 +16,22 @@ export async function getTournaments(): Promise<Tournament[]> {
     startDate: t.start_date,
     endDate: t.end_date
   }));
+}
+
+export async function getTournament(id: string): Promise<Tournament | null> {
+  const { data, error } = await supabase.from('tournaments').select('*').eq('id', id).single();
+  if (error || !data) { 
+    if (error) console.error('getTournament error', error); 
+    return null; 
+  }
+  return { 
+    id: data.id, 
+    year: data.year, 
+    name: data.name, 
+    isActive: data.is_active,
+    startDate: data.start_date,
+    endDate: data.end_date
+  };
 }
 
 export async function saveTournament(t: Omit<Tournament, 'id'>): Promise<Tournament | null> {
@@ -160,7 +179,10 @@ export async function getDiamonds(tournamentId?: string): Promise<Diamond[]> {
   let query = supabase.from('diamonds').select('*').order('name', { ascending: true });
   if (tournamentId) query = query.eq('tournament_id', tournamentId);
   const { data, error } = await query;
-  if (error) { console.error('getDiamonds error', error); return []; }
+  if (error || !data) { 
+    if (error) console.error('getDiamonds error', error); 
+    return []; 
+  }
   return data.map(d => ({ id: d.id, tournamentId: d.tournament_id, name: d.name, address: d.address, notes: d.notes }));
 }
 
@@ -191,7 +213,10 @@ export async function getContacts(tournamentId?: string): Promise<Contact[]> {
   let query = supabase.from('contacts').select('*').order('name', { ascending: true });
   if (tournamentId) query = query.eq('tournament_id', tournamentId);
   const { data, error } = await query;
-  if (error) { console.error('getContacts error', error); return []; }
+  if (error || !data) { 
+    if (error) console.error('getContacts error', error); 
+    return []; 
+  }
   return data.map(c => ({
     id: c.id,
     tournamentId: c.tournament_id,
@@ -231,7 +256,10 @@ export async function getAgeGroups(tournamentId?: string): Promise<AgeGroup[]> {
   let query = supabase.from('age_groups').select('*, pools(*)').order('display_order', { ascending: true });
   if (tournamentId) query = query.eq('tournament_id', tournamentId);
   const { data, error } = await query;
-  if (error) { console.error('getAgeGroups error', error); return []; }
+  if (error || !data) { 
+    if (error) console.error('getAgeGroups error', error); 
+    return []; 
+  }
   return data.map(g => ({
     id: g.id,
     tournamentId: g.tournament_id,
@@ -245,6 +273,7 @@ export async function getAgeGroups(tournamentId?: string): Promise<AgeGroup[]> {
     poolCount: g.pool_count,
     poolNames: g.pool_names,
     requiresPoolSelection: g.requires_pool_selection,
+    playoffConfig: g.playoff_config,
     pools: (g.pools || []).map((p: any) => ({
       id: p.id,
       ageGroupId: p.age_group_id,
@@ -265,7 +294,8 @@ export async function saveAgeGroup(g: Omit<AgeGroup, 'id'>): Promise<void> {
     is_closed: g.isClosed || false,
     capacity: g.capacity,
     pool_count: g.poolCount || 1,
-    pool_names: g.poolNames
+    pool_names: g.poolNames,
+    playoff_config: g.playoffConfig || { type: 'single', crossover: 'standard', hasThirdPlace: false, teamsQualifying: 4 }
   });
 }
 
@@ -282,6 +312,7 @@ export async function updateAgeGroup(id: string, g: Partial<AgeGroup>): Promise<
   if (g.poolCount !== undefined) updates.pool_count = g.poolCount;
   if (g.poolNames !== undefined) updates.pool_names = g.poolNames;
   if (g.requiresPoolSelection !== undefined) updates.requires_pool_selection = g.requiresPoolSelection;
+  if (g.playoffConfig !== undefined) updates.playoff_config = g.playoffConfig;
   await supabase.from('age_groups').update(updates).eq('id', id);
 }
 
@@ -296,7 +327,7 @@ export async function getPools(ageGroupId: string): Promise<Pool[]> {
     .select('*')
     .eq('age_group_id', ageGroupId)
     .order('display_order', { ascending: true });
-  if (error) return [];
+  if (error || !data) return [];
   return data.map(p => ({
     id: p.id,
     ageGroupId: p.age_group_id,
@@ -328,7 +359,10 @@ export async function getTeams(tournamentId?: string): Promise<Team[]> {
   let query = supabase.from('teams').select('*').order('name', { ascending: true });
   if (tournamentId) query = query.eq('tournament_id', tournamentId);
   const { data, error } = await query;
-  if (error) { console.error('getTeams error', error); return []; }
+  if (error || !data) { 
+    if (error) console.error('getTeams error', error); 
+    return []; 
+  }
   return data.map(t => ({
     id: t.id,
     tournamentId: t.tournament_id,
@@ -339,9 +373,9 @@ export async function getTeams(tournamentId?: string): Promise<Team[]> {
     players: t.players || [],
     status: t.status || 'accepted',
     paymentStatus: t.payment_status || 'paid',
+    registered_at: t.registered_at, // Map to registeredAt if needed
     registeredAt: t.registered_at,
     adminNotes: t.admin_notes,
-    pool: t.pool,
     poolId: t.pool_id
   }));
 }
@@ -358,7 +392,6 @@ export async function saveTeam(t: Omit<Team, 'id'> & { id?: string }): Promise<v
     payment_status: t.paymentStatus || 'paid',
     registered_at: t.registeredAt || new Date().toISOString(),
     admin_notes: t.adminNotes,
-    pool: t.pool,
     pool_id: t.poolId
   };
   if (t.id) payload.id = t.id;
@@ -378,22 +411,10 @@ export async function updateTeam(id: string, t: Partial<Team>): Promise<void> {
   if (t.paymentStatus !== undefined) updates.payment_status = t.paymentStatus;
   if (t.registeredAt !== undefined) updates.registered_at = t.registeredAt;
   if (t.adminNotes !== undefined)    updates.admin_notes = t.adminNotes;
-  if (t.pool !== undefined)         updates.pool = t.pool;
-  if (t.poolId !== undefined)       updates.pool_id = t.poolId;
+  if (t.poolId !== undefined)       updates.pool_id        = t.poolId;
   const { error } = await supabase.from('teams').update(updates).eq('id', id);
   if (error) throw error;
 }
-
-export async function migratePoolTeams(ageGroupId: string, oldPool: string, newPool: string): Promise<void> {
-  const { error } = await supabase
-    .from('teams')
-    .update({ pool: newPool })
-    .eq('age_group_id', ageGroupId)
-    .eq('pool', oldPool);
-  if (error) throw error;
-}
-
-
 
 export async function deleteTeam(id: string): Promise<void> {
   await supabase.from('teams').delete().eq('id', id);
@@ -404,7 +425,10 @@ export async function getGames(tournamentId?: string): Promise<Game[]> {
   let query = supabase.from('games').select('*').order('game_date', { ascending: true }).order('game_time', { ascending: true });
   if (tournamentId) query = query.eq('tournament_id', tournamentId);
   const { data, error } = await query;
-  if (error) { console.error('getGames error', error); return []; }
+  if (error || !data) { 
+    if (error) console.error('getGames error', error); 
+    return []; 
+  }
   return data.map(g => ({
     id: g.id,
     tournamentId: g.tournament_id,
@@ -418,6 +442,11 @@ export async function getGames(tournamentId?: string): Promise<Game[]> {
     homeScore: g.home_score,
     awayScore: g.away_score,
     status: g.status,
+    isPlayoff: g.is_playoff,
+    bracketId: g.bracket_id,
+    bracketCode: g.bracket_code,
+    homePlaceholder: g.home_placeholder,
+    awayPlaceholder: g.away_placeholder,
     notes: g.notes
   }));
 }
@@ -435,6 +464,11 @@ export async function saveGame(g: Omit<Game, 'id'>): Promise<void> {
     home_score: g.homeScore,
     away_score: g.awayScore,
     status: g.status || 'scheduled',
+    is_playoff: g.isPlayoff || false,
+    bracket_id: g.bracketId,
+    bracket_code: g.bracketCode,
+    home_placeholder: g.homePlaceholder,
+    away_placeholder: g.awayPlaceholder,
     notes: g.notes
   });
 }
@@ -452,12 +486,146 @@ export async function updateGame(id: string, g: Partial<Game>): Promise<void> {
   if (g.homeScore !== undefined) updates.home_score = g.homeScore;
   if (g.awayScore !== undefined) updates.away_score = g.awayScore;
   if (g.status !== undefined) updates.status = g.status;
+  if (g.isPlayoff !== undefined) updates.is_playoff = g.isPlayoff;
+  if (g.bracketId !== undefined) updates.bracket_id = g.bracketId;
+  if (g.bracketCode !== undefined) updates.bracket_code = g.bracketCode;
+  if (g.homePlaceholder !== undefined) updates.home_placeholder = g.homePlaceholder;
+  if (g.awayPlaceholder !== undefined) updates.away_placeholder = g.awayPlaceholder;
   if (g.notes !== undefined) updates.notes = g.notes;
-  await supabase.from('games').update(updates).eq('id', id);
+  
+  const { error } = await supabase.from('games').update(updates).eq('id', id);
+  if (error) throw error;
+
+  // Trigger advancement
+  if (g.status === 'completed' || (g.homeScore !== undefined && g.awayScore !== undefined)) {
+    const fullGame = (await getGames()).find(x => x.id === id);
+    if (fullGame) await advancePlayoffs(fullGame);
+  }
 }
 
 export async function deleteGame(id: string): Promise<void> {
   await supabase.from('games').delete().eq('id', id);
+}
+
+export async function getStandings(ageGroupId: string, config?: PlayoffConfig) {
+  const games = await getGames();
+  const teams = await getTeams();
+  const groupTeams = teams.filter(t => t.ageGroupId === ageGroupId && t.status === 'accepted');
+  const groupGames = games.filter(g => g.ageGroupId === ageGroupId && g.status === 'completed' && !g.isPlayoff);
+
+  const teamStats = groupTeams.map(t => {
+    const teamGames = groupGames.filter(g => g.homeTeamId === t.id || g.awayTeamId === t.id);
+    let wins = 0, losses = 0, ties = 0, rf = 0, ra = 0;
+
+    teamGames.forEach(g => {
+      const isHome = g.homeTeamId === t.id;
+      const tScore = isHome ? (g.homeScore || 0) : (g.awayScore || 0);
+      const oScore = isHome ? (g.awayScore || 0) : (g.homeScore || 0);
+      
+      rf += tScore;
+      ra += oScore;
+      if (tScore > oScore) wins++;
+      else if (tScore < oScore) losses++;
+      else ties++;
+    });
+
+    return {
+      teamId: t.id,
+      teamName: t.name,
+      poolId: t.poolId,
+      gp: teamGames.length,
+      w: wins,
+      l: losses,
+      t: ties,
+      pts: (wins * 2) + ties,
+      rf,
+      ra,
+      rd: rf - ra
+    };
+  });
+
+  const breakers = config?.tieBreakers || ['h2h', 'rd', 'rf', 'ra'];
+
+  function breakTies(tiedTeams: any[], breakerIndex: number): any[] {
+    if (tiedTeams.length <= 1 || breakerIndex >= breakers.length) return tiedTeams;
+
+    const breaker = breakers[breakerIndex];
+    
+    // Skip H2H if 3+ teams are tied
+    if (breaker === 'h2h' && tiedTeams.length >= 3) {
+      return breakTies(tiedTeams, breakerIndex + 1);
+    }
+
+    let sorted = [...tiedTeams];
+    if (breaker === 'h2h') {
+      // Compare the two teams directly
+      const t1 = tiedTeams[0];
+      const t2 = tiedTeams[1];
+      const h2hGames = groupGames.filter(g => 
+        (g.homeTeamId === t1.teamId && g.awayTeamId === t2.teamId) ||
+        (g.homeTeamId === t2.teamId && g.awayTeamId === t1.teamId)
+      );
+      let t1Wins = 0, t2Wins = 0;
+      h2hGames.forEach(g => {
+        const t1Score = g.homeTeamId === t1.teamId ? (g.homeScore || 0) : (g.awayScore || 0);
+        const t2Score = g.homeTeamId === t2.teamId ? (g.homeScore || 0) : (g.awayScore || 0);
+        if (t1Score > t2Score) t1Wins++;
+        else if (t2Score > t1Score) t2Wins++;
+      });
+      if (t1Wins !== t2Wins) {
+        return t1Wins > t2Wins ? [t1, t2] : [t2, t1];
+      }
+    } else if (breaker === 'rf') {
+      sorted.sort((a, b) => b.rf - a.rf);
+    } else if (breaker === 'ra') {
+      sorted.sort((a, b) => a.ra - b.ra);
+    } else if (breaker === 'rd') {
+      sorted.sort((a, b) => b.rd - a.rd);
+    }
+
+    // After sorting by current breaker, group them again if still tied
+    const results: any[] = [];
+    let i = 0;
+    while (i < sorted.length) {
+      const current = sorted[i];
+      const subGroup = [current];
+      let j = i + 1;
+      while (j < sorted.length) {
+        const next = sorted[j];
+        const stillTied = breaker === 'h2h' ? false : (
+          breaker === 'rf' ? next.rf === current.rf :
+          breaker === 'ra' ? next.ra === current.ra :
+          next.rd === current.rd
+        );
+        if (stillTied) {
+          subGroup.push(next);
+          j++;
+        } else break;
+      }
+      
+      if (subGroup.length > 1) {
+        results.push(...breakTies(subGroup, breakerIndex + 1));
+      } else {
+        results.push(current);
+      }
+      i = j;
+    }
+    return results;
+  }
+
+  // Initial sort by Points
+  const byPoints: Record<number, any[]> = {};
+  teamStats.forEach(s => {
+    if (!byPoints[s.pts]) byPoints[s.pts] = [];
+    byPoints[s.pts].push(s);
+  });
+
+  const finalStandings: any[] = [];
+  Object.keys(byPoints).sort((a, b) => Number(b) - Number(a)).forEach(pts => {
+    finalStandings.push(...breakTies(byPoints[Number(pts)], 0));
+  });
+
+  return finalStandings;
 }
 
 // --- Announcements ---
@@ -467,7 +635,10 @@ export async function getAnnouncements(tournamentId?: string): Promise<Announcem
     .order('published_at', { ascending: false });
   if (tournamentId) query = query.eq('tournament_id', tournamentId);
   const { data, error } = await query;
-  if (error) { console.error('getAnnouncements error', error); return []; }
+  if (error || !data) { 
+    if (error) console.error('getAnnouncements error', error); 
+    return []; 
+  }
   return data.map(a => ({
     id: a.id,
     tournamentId: a.tournament_id,
@@ -534,41 +705,45 @@ export async function seedTournamentData(tid: string, options: {
   }
 
   if (options.registrations) {
-    const teamNames = ['Milton Bats', 'Oakville Angels', 'Burlington Bulls', 'Mississauga Tigers', 'Hamilton Heat', 'Brampton Blazers', 'Toronto Titans', 'Guelph Gryphons'];
-    const coaches = ['Coach Bob', 'Coach Alice', 'Coach Charlie', 'Coach Diana', 'Coach Ed', 'Coach Fiona', 'Coach Greg', 'Coach Heather'];
+    const defaultTeamNames = ['Milton Bats', 'Oakville Angels', 'Burlington Bulls', 'Mississauga Tigers', 'Hamilton Heat', 'Brampton Blazers', 'Toronto Titans', 'Guelph Gryphons', 'Kitchener Panthers', 'London Badgers', 'Windsor Selects', 'Whitby Eagles'];
+    const defaultCoaches = ['Coach Bob', 'Coach Alice', 'Coach Charlie', 'Coach Diana', 'Coach Ed', 'Coach Fiona', 'Coach Greg', 'Coach Heather', 'Coach Ian', 'Coach Jack', 'Coach Ken', 'Coach Leo'];
     
     for (const group of ageGroups) {
-      const teamRows: any[] = teamNames.map((name, i) => {
-        const teamPool = group.poolCount && group.poolCount > 1 
-          ? String.fromCharCode(65 + (i % group.poolCount)) 
-          : undefined;
-
-        return {
+      const capacity = group.capacity || 8;
+      const teamRows: any[] = [];
+      
+      // Seed up to capacity
+      for (let i = 0; i < capacity; i++) {
+        const nameBase = defaultTeamNames[i % defaultTeamNames.length];
+        const coachBase = defaultCoaches[i % defaultCoaches.length];
+        
+        teamRows.push({
           tournament_id: tid,
           age_group_id: group.id,
-          name: `${name} ${group.name}${teamPool ? ' (' + teamPool + ')' : ''}`,
-          coach: coaches[i],
+          name: `${nameBase} ${group.name} ${i + 1}`,
+          coach: coachBase,
           email: `coach${i}@example.com`,
           players: [],
           status: 'accepted',
           payment_status: 'paid',
-          registered_at: new Date().toISOString(),
-          pool: teamPool
-        };
-      });
+          registered_at: new Date().toISOString()
+        });
+      }
 
       // Add 2 waitlist teams per division
-      teamRows.push({
-        tournament_id: tid,
-        age_group_id: group.id,
-        name: `Waitlist Team 1 ${group.name}`,
-        coach: 'Waitlist Coach 1',
-        email: `waitlist1@example.com`,
-        players: [],
-        status: 'waitlist',
-        payment_status: 'pending',
-        registered_at: new Date().toISOString()
-      });
+      for (let i = 0; i < 2; i++) {
+        teamRows.push({
+          tournament_id: tid,
+          age_group_id: group.id,
+          name: `Waitlist Team ${i + 1} ${group.name}`,
+          coach: `Waitlist Coach ${i + 1}`,
+          email: `waitlist${i + 1}@example.com`,
+          players: [],
+          status: 'waitlist',
+          payment_status: 'pending',
+          registered_at: new Date().toISOString()
+        });
+      }
 
       const { error: teamError } = await supabase.from('teams').insert(teamRows);
       if (teamError) {
@@ -613,5 +788,76 @@ export async function seedTournamentData(tid: string, options: {
       }
     }
     await supabase.from('games').insert(gameRows);
+  }
+}
+
+export async function advancePlayoffs(game: Game) {
+  if (game.status !== 'completed') return;
+
+  const games = await getGames(game.tournamentId);
+  const playoffGames = games.filter(g => g.isPlayoff && g.ageGroupId === game.ageGroupId);
+  
+  if (playoffGames.length === 0) return;
+
+  // 1. Advance winners/losers within the bracket
+  if (game.isPlayoff && game.bracketCode) {
+    const winnerId = (game.homeScore || 0) > (game.awayScore || 0) ? game.homeTeamId : game.awayTeamId;
+    const loserId = (game.homeScore || 0) > (game.awayScore || 0) ? game.awayTeamId : game.homeTeamId;
+
+    for (const pg of playoffGames) {
+      const updates: Partial<Game> = {};
+      if (pg.homePlaceholder === 'Winner ' + game.bracketCode) updates.homeTeamId = winnerId;
+      if (pg.awayPlaceholder === 'Winner ' + game.bracketCode) updates.awayTeamId = winnerId;
+      if (pg.homePlaceholder === 'Loser ' + game.bracketCode) updates.homeTeamId = loserId;
+      if (pg.awayPlaceholder === 'Loser ' + game.bracketCode) updates.awayTeamId = loserId;
+
+      if (Object.keys(updates).length > 0) {
+        await updateGame(pg.id, updates);
+      }
+    }
+  }
+
+  // 2. Check if all pool games are done to fill initial seeds
+  const poolGames = games.filter(g => g.ageGroupId === game.ageGroupId && !g.isPlayoff);
+  const allPoolDone = poolGames.every(g => g.status === 'completed');
+
+  if (allPoolDone && poolGames.length > 0) {
+    const ageGroup = (await getAgeGroups(game.tournamentId)).find(g => g.id === game.ageGroupId);
+    const standings = await getStandings(game.ageGroupId, ageGroup?.playoffConfig);
+    const pools = ageGroup?.pools || [];
+
+    for (const pg of playoffGames) {
+      const updates: Partial<Game> = {};
+      
+      const resolvePlaceholder = (ph?: string) => {
+        if (!ph) return null;
+        
+        if (ph.startsWith('Seed #')) {
+          const rank = parseInt(ph.replace('Seed #', ''));
+          return standings[rank - 1]?.teamId;
+        }
+
+        const match = ph.match(/(\d+)\w+ Pool (.+)/);
+        if (match) {
+          const rank = parseInt(match[1]);
+          const poolName = match[2];
+          const pool = pools.find(p => p.name === poolName);
+          const poolStandings = standings.filter(s => s.poolId === pool?.id);
+          return poolStandings[rank - 1]?.teamId;
+        }
+        
+        return null;
+      };
+
+      const hId = resolvePlaceholder(pg.homePlaceholder);
+      const aId = resolvePlaceholder(pg.awayPlaceholder);
+      
+      if (hId) updates.homeTeamId = hId;
+      if (aId) updates.awayTeamId = aId;
+
+      if (Object.keys(updates).length > 0) {
+        await updateGame(pg.id, updates);
+      }
+    }
   }
 }
