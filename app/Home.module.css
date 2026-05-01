@@ -72,6 +72,12 @@
   animation: fadeInUp 0.6s ease;
 }
 
+.countdown {
+  font-weight: 800;
+  color: var(--white);
+  margin-left: 0.25rem;
+}
+
 .heroTitle {
   color: var(--white);
   margin-bottom: 0.5rem;
@@ -131,6 +137,10 @@
   font-weight: 900;
   color: var(--white);
   line-height: 1;
+}
+
+.ageRangeText {
+  font-size: clamp(1rem, 3vw, 2rem);
 }
 
 .statLabel {
@@ -304,6 +314,16 @@
 @keyframes scrollPulse {
   0%, 100% { opacity: 1; transform: scaleY(1); }
   50%       { opacity: 0.4; transform: scaleY(0.6); }
+}
+
+@media (max-width: 600px) {
+  .stats {
+    grid-template-columns: 1fr 1fr 1fr;
+    display: grid;
+    gap: 1rem;
+    padding: 1rem;
+  }
+  .statDivider { display: none; }
 }
 
 @media (max-width: 768px) {

@@ -18,6 +18,7 @@ export default function SchedulePage() {
   const [activeGroup, setActiveGroup] = useState<string>('');
   const [viewMode, setViewMode]     = useState<'pool' | 'playoff'>('pool');
   const [groupByPool, setGroupByPool] = useState<boolean>(true);
+  const [loading, setLoading]       = useState(true);
 
   useEffect(() => {
     async function init() {
@@ -37,12 +38,14 @@ export default function SchedulePage() {
   useEffect(() => {
     if (!selectedTournament) return;
     async function fetchGames() {
+      setLoading(true);
       setGames(await getGames(selectedTournament!.id));
       setTeams(await getTeams(selectedTournament!.id));
       setDiamonds(await getDiamonds(selectedTournament!.id));
       const groups = await getAgeGroups(selectedTournament!.id);
       setAgeGroups(groups);
       if (!activeGroup && groups.length > 0) setActiveGroup(groups[0].id);
+      setLoading(false);
     }
     fetchGames();
   }, [selectedTournament]);
@@ -77,6 +80,8 @@ export default function SchedulePage() {
   });
   const sortedDates = Object.keys(byDate).sort();
 
+  const today = new Date().toISOString().split('T')[0];
+
   return (
     <div className="page-content">
       <div className={styles.pageHeader}>
@@ -95,8 +100,8 @@ export default function SchedulePage() {
             onSelect={t => { setSelectedTournament(t); }}
           />
 
-          <div className="flex gap-2 mb-4" style={{ flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div className="tabs" style={{ flex: 1, minWidth: 200 }}>
+          <div className={styles.filterRow}>
+            <div className="tabs">
               {ageGroups.map(g => (
                 <button key={g.id}
                   className={`tab-btn ${activeGroup === g.id ? 'active' : ''}`}
@@ -105,7 +110,7 @@ export default function SchedulePage() {
               ))}
             </div>
 
-            <div className="flex gap-2">
+            <div className={styles.controlsRow}>
               <div className="segmented-control">
                 <button className={`segment ${viewMode === 'pool' ? 'active' : ''}`} onClick={() => setViewMode('pool')}>Pool Play</button>
                 <button className={`segment ${viewMode === 'playoff' ? 'active' : ''}`} onClick={() => setViewMode('playoff')}>Playoffs</button>
@@ -147,7 +152,13 @@ export default function SchedulePage() {
             </div>
           </div>
 
-          {sortedDates.length === 0 ? (
+          {loading ? (
+            <div className={styles.skeletonContainer}>
+              <div className={`${styles.skeleton} ${styles.skeletonPulse}`}></div>
+              <div className={`${styles.skeleton} ${styles.skeletonPulse}`}></div>
+              <div className={`${styles.skeleton} ${styles.skeletonPulse}`}></div>
+            </div>
+          ) : sortedDates.length === 0 ? (
             <div className="empty-state">
               <Calendar size={48} />
               <p>No scheduled {viewMode === 'playoff' ? 'playoff ' : ''}games found. Check back soon!</p>
@@ -180,10 +191,11 @@ export default function SchedulePage() {
                       </div>
                       
                       {poolSortedDates.map(date => (
-                        <div key={date} className={styles.dateGroup}>
+                        <div key={date} className={`${styles.dateGroup} ${date === today ? styles.todayGroup : ''}`}>
                           <div className={styles.dateLabel}>
                             <Calendar size={14} />
                             {formatDate(date)}
+                            {date === today && <span className={styles.todayBadge}>Today</span>}
                           </div>
                           <div className={styles.gamesList}>
                             {poolDateGroups[date].map(game => (
@@ -216,10 +228,11 @@ export default function SchedulePage() {
 
               // Default / Playoff View
               return sortedDates.map(date => (
-                <div key={date} className={styles.dateGroup}>
+                <div key={date} className={`${styles.dateGroup} ${date === today ? styles.todayGroup : ''}`}>
                   <div className={styles.dateLabel}>
                     <Calendar size={14} />
                     {formatDate(date)}
+                    {date === today && <span className={styles.todayBadge}>Today</span>}
                   </div>
                   <div className={styles.gamesList}>
                     {byDate[date].map(game => (

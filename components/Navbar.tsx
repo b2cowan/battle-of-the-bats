@@ -6,6 +6,7 @@ import { Menu, X } from 'lucide-react';
 import styles from './Navbar.module.css';
 
 const NAV_LINKS = [
+  { href: '/',         label: 'Home'     },
   { href: '/news',     label: 'News'     },
   { href: '/schedule', label: 'Schedule' },
   { href: '/results',  label: 'Results'  },
@@ -27,6 +28,16 @@ export default function Navbar() {
   // Close menu on route change
   useEffect(() => { setOpen(false); }, [pathname]);
 
+  // Lock body scroll when mobile menu is open
+  useEffect(() => {
+    if (open) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => { document.body.style.overflow = ''; };
+  }, [open]);
+
   if (pathname.startsWith('/admin')) return null;
 
   return (
@@ -43,15 +54,18 @@ export default function Navbar() {
 
         {/* Desktop links */}
         <div className={styles.links}>
-          {NAV_LINKS.map(l => (
-            <Link
-              key={l.href}
-              href={l.href}
-              className={`${styles.link} ${pathname.startsWith(l.href) ? styles.active : ''}`}
-            >
-              {l.label}
-            </Link>
-          ))}
+          {NAV_LINKS.map(l => {
+            const isActive = l.href === '/' ? pathname === '/' : pathname.startsWith(l.href);
+            return (
+              <Link
+                key={l.href}
+                href={l.href}
+                className={`${styles.link} ${isActive ? styles.active : ''}`}
+              >
+                {l.label}
+              </Link>
+            );
+          })}
         </div>
 
         {/* Register CTA + Hamburger */}
@@ -73,15 +87,18 @@ export default function Navbar() {
       {/* Mobile menu */}
       {open && (
         <div className={styles.mobileMenu}>
-          {NAV_LINKS.map(l => (
-            <Link
-              key={l.href}
-              href={l.href}
-              className={`${styles.mobileLink} ${pathname.startsWith(l.href) ? styles.mobileActive : ''}`}
-            >
-              {l.label}
-            </Link>
-          ))}
+          {NAV_LINKS.map(l => {
+            const isActive = l.href === '/' ? pathname === '/' : pathname.startsWith(l.href);
+            return (
+              <Link
+                key={l.href}
+                href={l.href}
+                className={`${styles.mobileLink} ${isActive ? styles.mobileActive : ''}`}
+              >
+                {l.label}
+              </Link>
+            );
+          })}
           <Link href="/register" className={`btn btn-primary ${styles.mobileRegister}`} id="mobile-register-btn">
             Register Your Team
           </Link>

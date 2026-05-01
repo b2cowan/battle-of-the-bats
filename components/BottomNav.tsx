@@ -1,15 +1,15 @@
 'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Calendar, Trophy, Users, UserPlus, Megaphone } from 'lucide-react';
+import { Calendar, Trophy, Users, Home, Megaphone } from 'lucide-react';
 import styles from './BottomNav.module.css';
 
 const TABS = [
+  { href: '/',          icon: Home,      label: 'Home'     },
   { href: '/news',      icon: Megaphone, label: 'News'     },
   { href: '/schedule',  icon: Calendar,  label: 'Schedule' },
   { href: '/results',   icon: Trophy,    label: 'Results'  },
   { href: '/teams',     icon: Users,     label: 'Teams'    },
-  { href: '/register',  icon: UserPlus,  label: 'Register' },
 ];
 
 export default function BottomNav() {
@@ -21,7 +21,7 @@ export default function BottomNav() {
   return (
     <nav className={styles.bottomNav} aria-label="Mobile navigation">
       {TABS.map(({ href, icon: Icon, label }) => {
-        const active = pathname === href || pathname.startsWith(href + '/');
+        const active = href === '/' ? pathname === '/' : (pathname === href || pathname.startsWith(href + '/'));
         return (
           <Link
             key={href}
