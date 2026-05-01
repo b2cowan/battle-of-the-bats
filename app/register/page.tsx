@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { UserPlus, CheckCircle, AlertCircle, ChevronDown, RefreshCw } from 'lucide-react';
+import { UserPlus, CheckCircle, AlertCircle, ChevronDown, RefreshCw, Send, ShieldCheck, CreditCard } from 'lucide-react';
 import { getAgeGroups, getTournaments, getContacts } from '@/lib/db';
 import { AgeGroup, Tournament, Contact } from '@/lib/types';
 import styles from './register.module.css';
@@ -111,17 +111,58 @@ export default function RegisterPage() {
               </div>
             )}
 
+            {(step === 'form' || step === 'submitting') && !notOpen && (
+              <div className={styles.steps}>
+                <div className={`${styles.step} ${styles.stepActive}`}>
+                  <div className={styles.stepNum}>1</div>
+                  <span className={styles.stepText}>Info</span>
+                </div>
+                <div className={styles.stepLine}></div>
+                <div className={styles.step}>
+                  <div className={styles.stepNum}>2</div>
+                  <span className={styles.stepText}>Review</span>
+                </div>
+                <div className={styles.stepLine}></div>
+                <div className={styles.step}>
+                  <div className={styles.stepNum}>3</div>
+                  <span className={styles.stepText}>Payment</span>
+                </div>
+              </div>
+            )}
+
             {step === 'success' && (
               <div className={`card ${styles.successCard}`}>
-                <CheckCircle size={48} style={{ color: 'var(--success)', margin: '0 auto 1rem', display: 'block' }} />
-                <h2 className={styles.successTitle}>Registration Submitted!</h2>
+                <CheckCircle size={56} style={{ color: 'var(--success)', margin: '0 auto 1.5rem', display: 'block' }} />
+                <h2 className={styles.successTitle}>Registration Received!</h2>
                 <p className={styles.successText}>
-                  Thank you for registering <strong>{form.teamName}</strong>. A confirmation has been sent to <strong>{form.email}</strong>.
+                  Your entry for <strong>{form.teamName}</strong> has been successfully submitted.
                 </p>
-                <div className={styles.successInfo}>
-                  <p>Your registration is <strong>pending review</strong>. Once accepted, you'll receive an email with payment instructions to secure your spot via Interac E-Transfer.</p>
+                
+                <div className={styles.successSteps}>
+                  <div className={styles.successItem}>
+                    <div className={styles.successIcon}><Send size={20} /></div>
+                    <div>
+                      <span className={styles.successTitleInner}>Confirmation Sent</span>
+                      <p className={styles.successDescInner}>Check <strong>{form.email}</strong> for your registration summary and next steps.</p>
+                    </div>
+                  </div>
+                  <div className={styles.successItem}>
+                    <div className={styles.successIcon}><ShieldCheck size={20} /></div>
+                    <div>
+                      <span className={styles.successTitleInner}>Admin Review</span>
+                      <p className={styles.successDescInner}>Our tournament director will review your team. This typically takes 24-48 hours.</p>
+                    </div>
+                  </div>
+                  <div className={styles.successItem}>
+                    <div className={styles.successIcon}><CreditCard size={20} /></div>
+                    <div>
+                      <span className={styles.successTitleInner}>Secure Your Spot</span>
+                      <p className={styles.successDescInner}>Once approved, you'll receive a payment link. Spots are first-come, first-served based on payment.</p>
+                    </div>
+                  </div>
                 </div>
-                <button className="btn btn-outline" onClick={() => { setStep('form'); setForm({ teamName: '', coachName: '', email: '', ageGroupId: '' }); }}>
+
+                <button className="btn btn-outline" style={{ marginTop: '1rem' }} onClick={() => { setStep('form'); setForm({ teamName: '', coachName: '', email: '', ageGroupId: '' }); }}>
                   Register Another Team
                 </button>
               </div>
@@ -132,7 +173,7 @@ export default function RegisterPage() {
                 <AlertCircle size={40} style={{ color: 'var(--danger)', margin: '0 auto 1rem', display: 'block' }} />
                 <h3>Registration Failed</h3>
                 <p>{errorMsg}</p>
-                <button className="btn btn-outline" onClick={() => setStep('form')}>Try Again</button>
+                <button className="btn btn-primary" onClick={() => setStep('form')}>Try Again</button>
               </div>
             )}
 
@@ -193,14 +234,42 @@ export default function RegisterPage() {
                       <div className="select-wrapper">
                         <select className="form-input" value={form.ageGroupId} onChange={e => setForm(f => ({ ...f, ageGroupId: e.target.value }))} required>
                           <option value="" disabled>Select a division</option>
-                          {ageGroups.map(g => (
-                            <option key={g.id} value={g.id}>{g.name} (Ages {g.minAge}-{g.maxAge}) {g.isClosed ? '- CLOSED' : ''}</option>
-                          ))}
+                          {ageGroups.map(g => {
+                            const filled = stats[g.id] || 0;
+                            const remaining = g.capacity ? Math.max(0, g.capacity - filled) : null;
+                            const waitlistLabel = g.capacity && filled >= g.capacity ? ' (WAITLIST)' : '';
+                            const spotsLabel = remaining !== null && remaining > 0 ? ` (${remaining} left)` : '';
+                            return (
+                              <option key={g.id} value={g.id}>
+                                {g.name} Ages {g.minAge}-{g.maxAge} {g.isClosed ? '- CLOSED' : (waitlistLabel || spotsLabel)}
+                              </option>
+                            );
+                          })}
                         </select>
                         <ChevronDown size={16} className="select-icon" />
                       </div>
                     </div>
                   </div>
+
+                  {selectedGroup && selectedGroup.capacity && !selectedGroup.isClosed && (
+                    <div className={styles.spotsCard}>
+                      <div className={styles.spotsHeader}>
+                        <span className={styles.spotsLabel}>Division Availability</span>
+                        <span className={styles.spotsCount}>
+                          {isWaitlist ? 'Waitlist Active' : `${Math.max(0, selectedGroup.capacity - count)} of ${selectedGroup.capacity} spots left`}
+                        </span>
+                      </div>
+                      <div className={styles.progressBar}>
+                        <div 
+                          className={styles.progressFill} 
+                          style={{ 
+                            width: `${Math.min(100, (count / selectedGroup.capacity) * 100)}%`,
+                            background: isWaitlist ? 'var(--warning)' : (count / selectedGroup.capacity > 0.8 ? 'var(--danger)' : 'linear-gradient(to right, var(--purple), var(--purple-light))')
+                          }} 
+                        />
+                      </div>
+                    </div>
+                  )}
 
                   {isClosed && (
                     <div className="alert alert-danger" style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem', background: 'rgba(239, 68, 68, 0.1)', color: '#fca5a5', padding: '1rem', borderRadius: 8, border: '1px solid rgba(239,68,68,0.2)' }}>

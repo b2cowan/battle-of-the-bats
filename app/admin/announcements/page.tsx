@@ -69,9 +69,9 @@ export default function AdminAnnouncementsPage() {
           <div key={ann.id} className={`card ${styles.annCard} ${ann.pinned ? styles.pinned : ''}`}>
             <div className={styles.annHeader}>
               <div className={styles.annMeta}>
-                {ann.pinned && <span className="badge badge-purple"><Star size={9} fill="currentColor" /> Pinned</span>}
+                {ann.pinned && <span className="badge badge-purple"><Star size={9} fill="currentColor" />&nbsp;Pinned</span>}
                 <span className={styles.annDate}>
-                  {new Date(ann.date).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' })}
+                  {new Date((ann.date.includes('T') ? ann.date.split('T')[0] : ann.date) + 'T12:00:00').toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' })}
                 </span>
               </div>
               <div className="flex gap-1">
@@ -106,10 +106,10 @@ export default function AdminAnnouncementsPage() {
                 <input className="form-input" placeholder="Announcement title" value={form.title}
                   onChange={e => setForm(f => ({ ...f, title: e.target.value }))} required />
               </div>
-              <div className="form-group" style={{ marginBottom: '1rem' }}>
+              <div className="form-group" style={{ marginBottom: '1.5rem' }}>
                 <label className="form-label">Body *</label>
-                <textarea className="form-textarea" placeholder="Write your announcement here..." rows={6} value={form.body}
-                  onChange={e => setForm(f => ({ ...f, body: e.target.value }))} required />
+                <textarea className="form-textarea" placeholder="Write your announcement here..." rows={12} value={form.body}
+                  onChange={e => setForm(f => ({ ...f, body: e.target.value }))} required style={{ fontSize: '1rem', lineHeight: '1.6' }} />
               </div>
               <div className={styles.pinnedToggle}>
                 <input type="checkbox" id="ann-pinned" checked={form.pinned}

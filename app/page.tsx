@@ -160,11 +160,6 @@ export default async function HomePage() {
             <Link href="/schedule" className="btn btn-primary btn-lg" id="hero-schedule-btn">
               <Calendar size={18} /> View Schedule
             </Link>
-            {isRegistrationOpen && (
-              <Link href="/register" className="btn btn-outline btn-lg" id="hero-register-btn">
-                Register Your Team
-              </Link>
-            )}
             <Link href="/news" className="btn btn-outline btn-lg" id="hero-news-btn">
               <Megaphone size={18} /> Announcements
             </Link>
@@ -212,7 +207,7 @@ export default async function HomePage() {
               {announcements.map((ann, i) => (
                 <div key={ann.id} className={`card ${styles.annCard} ${i === 0 ? styles.annFeatured : ''}`}>
                   <div className={styles.annHeader}>
-                    {ann.pinned && <span className="badge badge-purple"><Star size={10} fill="currentColor" /> Pinned</span>}
+                    {ann.pinned && <span className="badge badge-purple"><Star size={10} fill="currentColor" />&nbsp;Pinned</span>}
                     <span className={styles.annDate}>
                       {new Date(ann.date).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' })}
                     </span>

@@ -238,10 +238,12 @@
 .announcementsSection { background: var(--bg-2); }
 
 .annGrid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+  display: flex;
+  flex-direction: column;
   gap: 1.25rem;
   margin-bottom: 2rem;
+  max-width: 900px;
+  margin-inline: auto;
 }
 
 .annCard { display: flex; flex-direction: column; gap: 0.75rem; }

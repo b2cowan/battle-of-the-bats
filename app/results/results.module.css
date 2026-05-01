@@ -23,6 +23,11 @@
   margin-left: auto;
 }
 
+.resultTime {
+  font-size: 0.85rem;
+  color: var(--white-60);
+}
+
 .scoreRow {
   display: flex;
   align-items: center;
@@ -104,7 +109,18 @@
   border-bottom: 1px solid var(--border);
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+}
+
+.rulesInfo {
+  font-size: 0.65rem;
+  color: var(--white-60);
+  background: var(--white-10);
+  padding: 0.35rem 0.75rem;
+  border-radius: 4px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  border: 1px solid var(--white-10);
 }
 
 .standingsTable {
@@ -153,4 +169,21 @@
   background: var(--white-5);
   padding: 0.2rem 0.6rem;
   border-radius: 2rem;
+}
+
+.stickyCol {
+  position: sticky;
+  left: 0;
+  background: var(--surface);
+  z-index: 1;
+  box-shadow: 2px 0 8px rgba(0,0,0,0.3);
+}
+
+.topRow td {
+  background: rgba(250, 204, 21, 0.05);
+  border-bottom: 1px solid rgba(250, 204, 21, 0.2);
+}
+
+.topRow td:first-child {
+  border-left: 3px solid rgba(250, 204, 21, 0.5);
 }

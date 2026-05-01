@@ -2,11 +2,10 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Menu, X } from 'lucide-react';
+import { Check } from 'lucide-react'; // Removing Menu, X as they are no longer used
 import styles from './Navbar.module.css';
 
 const NAV_LINKS = [
-  { href: '/',         label: 'Home'     },
   { href: '/news',     label: 'News'     },
   { href: '/schedule', label: 'Schedule' },
   { href: '/results',  label: 'Results'  },
@@ -16,7 +15,6 @@ const NAV_LINKS = [
 
 export default function Navbar() {
   const pathname = usePathname();
-  const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
@@ -24,19 +22,6 @@ export default function Navbar() {
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
-
-  // Close menu on route change
-  useEffect(() => { setOpen(false); }, [pathname]);
-
-  // Lock body scroll when mobile menu is open
-  useEffect(() => {
-    if (open) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
-    return () => { document.body.style.overflow = ''; };
-  }, [open]);
 
   if (pathname.startsWith('/admin')) return null;
 
@@ -73,37 +58,10 @@ export default function Navbar() {
           <Link href="/register" className="btn btn-primary btn-sm" id="nav-register-btn">
             Register
           </Link>
-          <button
-            className={styles.hamburger}
-            onClick={() => setOpen(o => !o)}
-            aria-label="Toggle menu"
-            id="nav-hamburger"
-          >
-            {open ? <X size={22} /> : <Menu size={22} />}
-          </button>
         </div>
       </div>
 
-      {/* Mobile menu */}
-      {open && (
-        <div className={styles.mobileMenu}>
-          {NAV_LINKS.map(l => {
-            const isActive = l.href === '/' ? pathname === '/' : pathname.startsWith(l.href);
-            return (
-              <Link
-                key={l.href}
-                href={l.href}
-                className={`${styles.mobileLink} ${isActive ? styles.mobileActive : ''}`}
-              >
-                {l.label}
-              </Link>
-            );
-          })}
-          <Link href="/register" className={`btn btn-primary ${styles.mobileRegister}`} id="mobile-register-btn">
-            Register Your Team
-          </Link>
-        </div>
-      )}
+
     </nav>
   );
 }

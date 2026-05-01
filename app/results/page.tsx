@@ -5,6 +5,7 @@ import { getGames, getTeams, getAgeGroups, getDiamonds, getTournaments, getStand
 import { Game, Team, AgeGroup, Diamond, Tournament } from '@/lib/types';
 import LocationLink from '@/components/LocationLink';
 import YearSelector from '@/components/YearSelector';
+import { formatTime } from '@/lib/utils';
 import styles from './results.module.css';
 
 export default function ResultsPage() {
@@ -134,17 +135,23 @@ export default function ResultsPage() {
                 return (
                   <div key={pool.id} className={styles.summarySection} style={{ margin: 0 }}>
                     <div className={styles.summaryHeader}>
-                      <Trophy size={18} style={{ color: 'var(--purple-light)' }} />
-                      <h2 style={{ fontSize: '1.1rem', fontWeight: 700 }}>
-                        Standings Summary {pools.length >= 2 ? `— ${pool.name}` : ''}
-                      </h2>
+                      <div className="flex-between" style={{ width: '100%' }}>
+                        <div className="flex gap-2">
+                          <Trophy size={18} style={{ color: 'var(--purple-light)' }} />
+                          <h2 style={{ fontSize: '1.1rem', fontWeight: 700 }}>
+                            Standings Summary {pools.length >= 2 ? `— ${/^[A-Z]$/.test(pool.name) ? `Pool ${pool.name}` : pool.name}` : ''}
+                          </h2>
+                        </div>
+                        <div className={styles.rulesInfo} title="Tie-Breaker Hierarchy">
+                          Tie Breaker: {(currentGroup?.playoffConfig?.tieBreakers || ['h2h', 'rd', 'rf', 'ra']).map(b => b.toUpperCase()).join(' → ')}
+                        </div>
+                      </div>
                     </div>
                     <div className="table-wrap" style={{ border: 'none', borderRadius: 0 }}>
                       <table className={styles.standingsTable}>
                         <thead>
                           <tr>
-                            <th>Team</th>
-                            {pools.length >= 2 && <th>Pool</th>}
+                            <th className={styles.stickyCol}>Team</th>
                             <th style={{ textAlign: 'center' }}>W</th>
                             <th style={{ textAlign: 'center' }}>L</th>
                             <th style={{ textAlign: 'center' }}>T</th>
@@ -155,18 +162,18 @@ export default function ResultsPage() {
                           </tr>
                         </thead>
                         <tbody>
-                          {poolStandings.map(team => (
-                            <tr key={team.id}>
-                              <td>
-                                <div className={styles.teamCell}>{team.name}</div>
-                              </td>
-                              {pools.length >= 2 && (
-                                <td>
-                                  <span className={styles.poolLabel}>
-                                    {pools.find(p => p.id === team.poolId)?.name || '—'}
-                                  </span>
+                          {poolStandings.map((team, idx) => {
+                            const gamesStarted = poolStandings.some(s => s.gp > 0);
+                            const isFirst = idx === 0 && gamesStarted;
+                            
+                            return (
+                              <tr key={team.id} className={isFirst ? styles.topRow : ''}>
+                                <td className={styles.stickyCol}>
+                                  <div className={styles.teamCell}>
+                                    {isFirst && <Trophy size={14} style={{ color: 'var(--warning)' }} />}
+                                    {team.name}
+                                  </div>
                                 </td>
-                              )}
                               <td style={{ textAlign: 'center' }} className={styles.statValue}>{team.w}</td>
                               <td style={{ textAlign: 'center' }} className={styles.statValue}>{team.l}</td>
                               <td style={{ textAlign: 'center' }} className={styles.statValue}>{team.t}</td>
@@ -179,7 +186,8 @@ export default function ResultsPage() {
                                 <span className="badge badge-purple">{team.pts}</span>
                               </td>
                             </tr>
-                          ))}
+                          );
+                        })}
                         </tbody>
                       </table>
                     </div>
@@ -234,6 +242,7 @@ export default function ResultsPage() {
                     <div className={styles.resultMeta}>
                       <span className="badge badge-success">Final</span>
                       <span className={styles.resultDate}>{formatDate(game.date)}</span>
+                      {game.time && <span className={styles.resultTime}>{formatTime(game.time)}</span>}
                       <span className="badge badge-purple">
                         {ageGroups.find(g => g.id === game.ageGroupId)?.name}
                       </span>

@@ -93,3 +93,146 @@
 .errorCard h3, .closedCard h3 { font-family: var(--font-display); font-size: 1.5rem; color: var(--white); margin: 0 0 0.75rem; }
 .errorCard p, .closedCard p { color: var(--white-60); margin: 0 0 1.5rem; }
 .closedCard a { color: var(--purple-light); }
+
+/* Steps Indicator */
+.steps {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 2.5rem;
+}
+
+.step {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  opacity: 0.3;
+  transition: var(--transition);
+}
+
+.stepActive { opacity: 1; }
+.stepDone { opacity: 0.6; }
+
+.stepNum {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: var(--white);
+}
+
+.stepActive .stepNum {
+  background: var(--purple);
+  border-color: var(--purple-light);
+  box-shadow: var(--glow-sm);
+}
+
+.stepDone .stepNum {
+  background: var(--success);
+  border-color: var(--success);
+}
+
+.stepText {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.stepLine {
+  flex: 1;
+  height: 1px;
+  background: var(--border-2);
+  max-width: 40px;
+}
+
+/* Division Spots Card */
+.spotsCard {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius-sm);
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  animation: slideDown 0.2s ease;
+}
+
+.spotsHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.spotsLabel {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--white-60);
+}
+
+.spotsCount {
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: var(--white);
+}
+
+.progressBar {
+  height: 6px;
+  background: var(--surface-2);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  background: linear-gradient(to right, var(--purple), var(--purple-light));
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Success State Refinements */
+.successSteps {
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin: 1.5rem 0;
+}
+
+.successItem {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.successIcon {
+  margin-top: 0.2rem;
+  color: var(--purple-light);
+  flex-shrink: 0;
+}
+
+.successTitleInner {
+  font-weight: 700;
+  color: var(--white);
+  margin-bottom: 0.15rem;
+  display: block;
+}
+
+.successDescInner {
+  font-size: 0.85rem;
+  color: var(--white-60);
+  line-height: 1.4;
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+

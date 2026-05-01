@@ -17,7 +17,6 @@ export default function SchedulePage() {
   const [selectedTournament, setSelectedTournament] = useState<Tournament | null>(null);
   const [activeGroup, setActiveGroup] = useState<string>('');
   const [viewMode, setViewMode]     = useState<'pool' | 'playoff'>('pool');
-  const [groupByPool, setGroupByPool] = useState<boolean>(true);
   const [loading, setLoading]       = useState(true);
 
   useEffect(() => {
@@ -100,55 +99,20 @@ export default function SchedulePage() {
             onSelect={t => { setSelectedTournament(t); }}
           />
 
-          <div className={styles.filterRow}>
-            <div className="tabs">
+          <div className="tabs flex-between" style={{ padding: '0.375rem 0.75rem', marginBottom: '2rem' }}>
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
               {ageGroups.map(g => (
                 <button key={g.id}
                   className={`tab-btn ${activeGroup === g.id ? 'active' : ''}`}
                   onClick={() => setActiveGroup(g.id)}
+                  style={{ marginBottom: 0 }}
                   id={`schedule-tab-${g.name}`}>{g.name}</button>
               ))}
             </div>
 
-            <div className={styles.controlsRow}>
-              <div className="segmented-control">
-                <button className={`segment ${viewMode === 'pool' ? 'active' : ''}`} onClick={() => setViewMode('pool')}>Pool Play</button>
-                <button className={`segment ${viewMode === 'playoff' ? 'active' : ''}`} onClick={() => setViewMode('playoff')}>Playoffs</button>
-              </div>
-
-              {viewMode === 'pool' && (() => {
-                const group = ageGroups.find(g => g.id === activeGroup);
-                const pools = group?.pools || [];
-                if (pools.length < 2) return null;
-                return (
-                  <div style={{ 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    gap: '0.75rem', 
-                    padding: '0.25rem 1rem', 
-                    background: 'var(--surface)', 
-                    border: '1px solid var(--border)',
-                    borderRadius: 'var(--radius)',
-                    fontSize: '0.875rem',
-                    fontWeight: 600,
-                    color: 'var(--white-60)'
-                  }}>
-                    <label htmlFor="pool-toggle" style={{ cursor: 'pointer', userSelect: 'none' }}>Break Out</label>
-                    <input 
-                      type="checkbox" 
-                      id="pool-toggle" 
-                      checked={groupByPool} 
-                      onChange={e => setGroupByPool(e.target.checked)}
-                      style={{ 
-                        cursor: 'pointer',
-                        accentColor: 'var(--purple-light)',
-                        width: '16px',
-                        height: '16px'
-                      }}
-                    />
-                  </div>
-                );
-              })()}
+            <div className="segmented-control" style={{ border: 'none', background: 'var(--white-10)', padding: '0.15rem' }}>
+              <button className={`segment ${viewMode === 'pool' ? 'active' : ''}`} onClick={() => setViewMode('pool')} style={{ padding: '0.35rem 0.75rem', fontSize: '0.75rem' }}>Pool Play</button>
+              <button className={`segment ${viewMode === 'playoff' ? 'active' : ''}`} onClick={() => setViewMode('playoff')} style={{ padding: '0.35rem 0.75rem', fontSize: '0.75rem' }}>Playoffs</button>
             </div>
           </div>
 
@@ -168,7 +132,7 @@ export default function SchedulePage() {
               const activeG = ageGroups.find(g => g.id === activeGroup);
               const pools = activeG?.pools || [];
 
-              if (viewMode === 'pool' && groupByPool && pools.length >= 2) {
+              if (viewMode === 'pool' && pools.length >= 2) {
                 return pools.map(pool => {
                   const poolTeams = teams.filter(t => t.poolId === pool.id).map(t => t.id);
                   const poolGames = filtered.filter(g => poolTeams.includes(g.homeTeamId) || poolTeams.includes(g.awayTeamId));
@@ -186,7 +150,9 @@ export default function SchedulePage() {
                     <div key={pool.id} className={styles.poolSection} style={{ marginBottom: '3rem' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
                         <div style={{ height: '1px', flex: 1, background: 'linear-gradient(to right, transparent, var(--purple-main))' }}></div>
-                        <h2 className="display-sm" style={{ color: 'var(--purple-light)' }}>Pool {pool.name}</h2>
+                        <h2 className="display-sm" style={{ color: 'var(--purple-light)' }}>
+                          {/^[A-Z]$/.test(pool.name) ? `Pool ${pool.name}` : pool.name}
+                        </h2>
                         <div style={{ height: '1px', flex: 1, background: 'linear-gradient(to left, transparent, var(--purple-main))' }}></div>
                       </div>
                       

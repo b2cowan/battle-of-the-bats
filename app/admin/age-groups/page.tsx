@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { Tag, Plus, Pencil, Trash2, X, Check } from 'lucide-react';
+import { Tag, Plus, Pencil, Trash2, X, Check, ChevronUp, ChevronDown, Trophy } from 'lucide-react';
 import { 
   getAgeGroups, saveAgeGroup, updateAgeGroup, deleteAgeGroup, getContacts, 
   savePool, updatePool, deletePool 
@@ -20,7 +20,8 @@ export default function AgeGroupsPage() {
   const [form, setForm] = useState({ 
     name: '', minAge: '', maxAge: '', order: '', contactId: '', 
     capacity: '', isClosed: false, poolCount: '0', poolNames: '',
-    requiresPoolSelection: false, usePools: false
+    requiresPoolSelection: false, usePools: false,
+    tieBreakers: ['h2h', 'rd', 'rf', 'ra']
   });
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
@@ -52,7 +53,8 @@ export default function AgeGroupsPage() {
     setForm({ 
       name: '', minAge: '', maxAge: '', order: String(groups.length + 1), 
       contactId: '', capacity: '', isClosed: false, poolCount: '0', poolNames: '',
-      requiresPoolSelection: false, usePools: false
+      requiresPoolSelection: false, usePools: false,
+      tieBreakers: ['h2h', 'rd', 'rf', 'ra']
     });
     setEditing(null);
     setModal('add');
@@ -65,7 +67,8 @@ export default function AgeGroupsPage() {
       capacity: g.capacity ? String(g.capacity) : '', isClosed: !!g.isClosed,
       poolCount: String(g.poolCount || 0), poolNames: g.poolNames || '',
       requiresPoolSelection: !!g.requiresPoolSelection,
-      usePools: (g.poolCount || 0) >= 2
+      usePools: (g.poolCount || 0) >= 2,
+      tieBreakers: g.playoffConfig?.tieBreakers || ['h2h', 'rd', 'rf', 'ra']
     });
     setEditing(g);
     setModal('edit');
@@ -85,7 +88,11 @@ export default function AgeGroupsPage() {
       isClosed: form.isClosed,
       poolCount: Number(form.poolCount),
       poolNames: form.poolNames.trim() || undefined,
-      requiresPoolSelection: form.requiresPoolSelection
+      requiresPoolSelection: form.requiresPoolSelection,
+      playoffConfig: {
+        ...(editing?.playoffConfig || { type: 'single', crossover: 'reseed', hasThirdPlace: false, teamsQualifying: 4 }),
+        tieBreakers: form.tieBreakers
+      }
     };
 
     try {
@@ -122,6 +129,24 @@ export default function AgeGroupsPage() {
     } catch (err: any) {
       alert("Error deleting: " + err.message);
     }
+  }
+
+  const breakerLabels: Record<string, string> = {
+    h2h: 'Head-to-Head',
+    rd: 'Run Diff',
+    rf: 'Runs For',
+    ra: 'Runs Against'
+  };
+
+  function moveBreaker(index: number, direction: 'up' | 'down') {
+    const newBreakers = [...form.tieBreakers];
+    const targetIndex = direction === 'up' ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= newBreakers.length) return;
+    
+    const temp = newBreakers[index];
+    newBreakers[index] = newBreakers[targetIndex];
+    newBreakers[targetIndex] = temp;
+    setForm(f => ({ ...f, tieBreakers: newBreakers }));
   }
 
   return (
@@ -299,6 +324,44 @@ export default function AgeGroupsPage() {
                   </label>
                 </div>
               </div>
+
+              {/* Tie Breakers Section */}
+              <div className="form-group" style={{ marginBottom: '1.5rem', borderTop: '1px solid var(--border-2)', paddingTop: '1.5rem' }}>
+                <label className="form-label" style={{ marginBottom: '0.75rem', opacity: 0.8, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <Trophy size={14} /> Standing Tie-Breaker Hierarchy
+                </label>
+                <p className="form-help" style={{ fontSize: '0.7rem', color: 'var(--white-30)', marginBottom: '1rem' }}>
+                  Drag to reorder. These rules are used to rank teams in the standings and determine playoff seeding.
+                </p>
+                
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', maxWidth: '400px' }}>
+                  {form.tieBreakers.map((b, i) => (
+                    <div key={b} style={{ 
+                      display: 'flex', 
+                      justifyContent: 'space-between', 
+                      alignItems: 'center',
+                      background: 'var(--white-5)', 
+                      padding: '0.5rem 0.75rem', 
+                      borderRadius: 'var(--radius-sm)', 
+                      border: '1px solid var(--border-2)' 
+                    }}>
+                      <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+                        <span style={{ fontSize: '0.75rem', fontWeight: 900, color: 'var(--purple-light)', minWidth: '15px' }}>{i + 1}</span>
+                        <span style={{ fontWeight: 600, fontSize: '0.85rem' }}>{breakerLabels[b]}</span>
+                      </div>
+                      <div style={{ display: 'flex', gap: '0.25rem' }}>
+                        <button type="button" className="btn btn-ghost btn-sm" style={{ padding: '0.15rem' }} onClick={() => moveBreaker(i, 'up')} disabled={i === 0}>
+                          <ChevronUp size={14} />
+                        </button>
+                        <button type="button" className="btn btn-ghost btn-sm" style={{ padding: '0.15rem' }} onClick={() => moveBreaker(i, 'down')} disabled={i === form.tieBreakers.length - 1}>
+                          <ChevronDown size={14} />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
               <div className="modal-footer">
                 <button type="button" className="btn btn-ghost" onClick={() => setModal(null)}>Cancel</button>
                 <button type="submit" className="btn btn-primary" id="age-group-save-btn"><Check size={14} /> Save</button>

@@ -13,6 +13,47 @@
   margin-top: 2rem;
 }
 
+.searchRow {
+  position: relative;
+  max-width: 400px;
+  margin-bottom: 1rem;
+}
+
+.searchIcon {
+  position: absolute;
+  left: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--white-40);
+  pointer-events: none;
+}
+
+.searchInput {
+  width: 100%;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  padding: 0.6rem 1rem 0.6rem 2.5rem;
+  color: var(--white);
+  font-size: 0.9rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.searchInput:focus {
+  outline: none;
+  border-color: var(--purple);
+  box-shadow: 0 0 0 2px rgba(168,85,247,0.2);
+}
+
+.tabCount {
+  opacity: 0.65;
+  font-size: 0.7rem;
+  background: var(--white-10);
+  padding: 1px 6px;
+  border-radius: 999px;
+  margin-left: 4px;
+}
+
 .groupSection {
   display: flex;
   flex-direction: column;

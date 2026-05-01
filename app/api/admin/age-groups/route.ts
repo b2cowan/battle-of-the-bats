@@ -28,7 +28,8 @@ export async function POST(req: Request) {
         capacity: data.capacity,
         pool_count: data.poolCount,
         pool_names: data.poolNames,
-        requires_pool_selection: data.requiresPoolSelection
+        requires_pool_selection: data.requiresPoolSelection,
+        playoff_config: data.playoffConfig
       });
       if (error) throw error;
     } 
@@ -45,7 +46,8 @@ export async function POST(req: Request) {
         capacity: data.capacity,
         pool_count: data.poolCount,
         pool_names: data.poolNames,
-        requires_pool_selection: data.requiresPoolSelection
+        requires_pool_selection: data.requiresPoolSelection,
+        playoff_config: data.playoffConfig
       }).eq('id', id);
       if (agError) throw agError;
 
