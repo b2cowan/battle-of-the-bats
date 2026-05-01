@@ -145,8 +145,15 @@ export default async function HomePage() {
         <div className={`container ${styles.heroContent}`}>
           <div className={styles.heroBadge}>
             <Star size={12} fill="currentColor" />
-            {currentYear} Tournament • {dateDisplay}
-            {countdownText && <span className={styles.countdown}> • {countdownText}</span>}
+            <div className={styles.badgeText}>
+              <span>{currentYear} Tournament • {dateDisplay}</span>
+              {countdownText && (
+                <span className={styles.countdown}>
+                  <span className={styles.badgeSeparator}> • </span>
+                  ⏳ {countdownText}
+                </span>
+              )}
+            </div>
           </div>
           <h1 className={`display-xl ${styles.heroTitle}`}>
             BATTLE<br />
