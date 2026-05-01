@@ -1,18 +1,9 @@
 'use client';
 import { useTournament } from '@/lib/tournament-context';
 import RulesAdmin from './RulesAdmin';
-import { RefreshCw } from 'lucide-react';
 
 export default function RulesAdminPage() {
-  const { currentTournament, loading } = useTournament();
-
-  if (loading) {
-    return (
-      <div className="flex-center" style={{ height: '80vh' }}>
-        <RefreshCw className="spin" size={32} />
-      </div>
-    );
-  }
+  const { currentTournament } = useTournament();
 
   if (!currentTournament) {
     return (

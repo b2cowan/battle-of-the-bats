@@ -332,7 +332,7 @@ export default function RulesAdmin({ tournament }: Props) {
       try {
         setSaving(true);
         for (let i = 0; i < newArray.length; i++) {
-          if (newArray[i].display_order !== i) {
+          if (newArray[i].order !== i) {
             await updateResource(newArray[i].id, { order: i });
           }
         }
