@@ -8,7 +8,12 @@
 
 .resultsList { display: flex; flex-direction: column; gap: 1rem; }
 
-.resultCard { display: flex; flex-direction: column; gap: 1rem; }
+.resultCard { 
+  display: flex; 
+  flex-direction: column; 
+  gap: 1rem; 
+  overflow: hidden; 
+}
 
 .resultMeta {
   display: flex;
@@ -39,6 +44,7 @@
   align-items: center;
   gap: 0.75rem;
   flex: 1;
+  min-width: 0;
 }
 
 .away {
@@ -46,10 +52,13 @@
 }
 
 .scoreName {
-  font-family: var(--font-display);
+  font-family: var(--font-display, sans-serif);
   font-size: 1.3rem;
   font-weight: 800;
   color: var(--white-60);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .away .scoreName { text-align: right; }
@@ -61,6 +70,7 @@
   color: var(--white-60);
   min-width: 52px;
   text-align: center;
+  flex-shrink: 0;
 }
 
 .winner .scoreName { color: var(--white); }
@@ -174,9 +184,18 @@
 .stickyCol {
   position: sticky;
   left: 0;
-  background: var(--surface);
-  z-index: 1;
-  box-shadow: 2px 0 8px rgba(0,0,0,0.3);
+  background: var(--bg-card);
+  z-index: 10;
+  box-shadow: 2px 0 8px rgba(0,0,0,0.4);
+}
+
+.standingsTable th.stickyCol {
+  background: var(--bg-3);
+  z-index: 11;
+}
+
+.topRow .stickyCol {
+  background: #1a1528; /* Solid dark color to prevent transparency issues */
 }
 
 .topRow td {

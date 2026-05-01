@@ -141,7 +141,7 @@ export default function TeamsPage() {
                         <div key={pg.name} className={styles.poolCard}>
                           {pg.name && (
                             <h3 className={styles.poolName}>
-                              {/^[A-Z]$/.test(pg.name) ? `Pool ${pg.name}` : pg.name}
+                              {pg.name.replace(/^Pool\s+/i, '').trim()} Pool
                             </h3>
                           )}
                           <div className={styles.teamList}>

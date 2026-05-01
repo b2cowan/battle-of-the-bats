@@ -96,7 +96,7 @@ export default function TeamProfilePage({ params }: { params: Promise<{ id: stri
         <div className="container">
           <div className="flex items-center gap-2 mb-4">
             <span className="badge badge-purple">{team.age_group_name}</span>
-            {team.pool && <span className="badge">Pool {team.pool}</span>}
+            {team.pool && <span className="badge">{team.pool.replace(/^Pool\s+/i, '').trim()} Pool</span>}
           </div>
           <h1 className="display-lg">{team.team_name}</h1>
           <p className="text-muted">{team.tournament_name}</p>

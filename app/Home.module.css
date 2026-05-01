@@ -56,8 +56,7 @@
 
 .heroBadge {
   display: inline-flex;
-  align-items: flex-start;
-  gap: 0.6rem;
+  align-items: center;
   padding: 0.5rem 1.25rem;
   background: var(--purple-faint);
   border: 1px solid var(--border);
@@ -70,12 +69,20 @@
   color: var(--purple-light);
   margin-bottom: 2rem;
   animation: fadeInUp 0.6s ease;
-  text-align: left;
+  text-align: center;
+}
+
+.dateLine {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
 }
 
 .badgeText {
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: 0.15rem;
 }
 
@@ -98,7 +105,11 @@
     align-items: center;
     gap: 0;
   }
-  .badgeSeparator { display: inline; }
+  .badgeSeparator { 
+    display: inline; 
+    padding: 0 0.5rem;
+    opacity: 0.6;
+  }
 }
 
 .heroTitle {

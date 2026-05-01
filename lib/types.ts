@@ -30,6 +30,7 @@ export interface PlayoffConfig {
   hasThirdPlace: boolean;
   teamsQualifying: number;
   tieBreakers: ('h2h' | 'rf' | 'ra' | 'rd')[];
+  splitConfigs?: Record<string, { teamsQualifying: number; hasThirdPlace: boolean }>;
 }
 
 export interface BracketSlot {
@@ -134,4 +135,28 @@ export interface Announcement {
   body: string;
   date: string; // ISO date string
   pinned: boolean;
+}
+
+export interface RuleSection {
+  id: string;
+  tournamentId: string;
+  title: string;
+  icon?: string;
+  order: number;
+  items: RuleItem[];
+}
+
+export interface RuleItem {
+  id: string;
+  ruleId: string;
+  content: string;
+  order: number;
+}
+
+export interface Resource {
+  id: string;
+  tournamentId: string;
+  label: string;
+  url: string;
+  order: number;
 }

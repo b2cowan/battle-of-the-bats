@@ -10,6 +10,7 @@
 - **Deployment Strategy**: 
   - `dev` branch for local development and testing.
   - `master` branch for production (Amplify deployment).
+  - **CRITICAL**: Never push or commit to the `master` branch automatically. Deployment to `master` must only occur when explicitly requested by the USER.
   - `.npmrc` configured to automatically approve built dependencies (e.g., `sharp`) for seamless Amplify builds.
 - **Testing Protocol**:
   - The user is responsible for all visual verification and browser-based testing unless explicitly requested otherwise.

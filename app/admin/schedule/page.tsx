@@ -1,6 +1,7 @@
 'use client';
 import React, { useState, useEffect } from 'react';
 import { Calendar, Plus, Pencil, Trash2, X, Check, Download, Sparkles, Trophy, MapPin, Clock, Search } from 'lucide-react';
+import { formatPoolName } from '@/lib/utils';
 import { getGames, saveGame, updateGame, deleteGame, getTeams, getAgeGroups, getDiamonds } from '@/lib/db';
 import { downloadCSV, formatTime } from '@/lib/utils';
 import { useTournament } from '@/lib/tournament-context';
@@ -17,6 +18,7 @@ type ModalMode = 'add' | 'edit' | null;
 const emptyForm = {
   ageGroupId: '', homeTeamId: '', awayTeamId: '',
   date: '', time: '09:00', location: '', diamondId: '', notes: null as string | null,
+  bracketCode: '',
 };
 
 export default function AdminSchedulePage() {
@@ -81,9 +83,15 @@ export default function AdminSchedulePage() {
 
   function openEdit(g: Game) {
     setForm({
-      ageGroupId: g.ageGroupId, homeTeamId: g.homeTeamId, awayTeamId: g.awayTeamId,
-      date: g.date, time: g.time, location: g.location,
-      diamondId: g.diamondId ?? '', notes: g.notes ?? '',
+      ageGroupId: g.ageGroupId,
+      homeTeamId: g.homeTeamId ?? '',
+      awayTeamId: g.awayTeamId ?? '',
+      date: g.date ?? '',
+      time: g.time ?? '09:00',
+      location: g.location ?? '',
+      diamondId: g.diamondId ?? '',
+      notes: g.notes ?? '',
+      bracketCode: g.bracketCode ?? '',
     });
     setEditing(g);
     setModal('edit');
@@ -102,6 +110,7 @@ export default function AdminSchedulePage() {
       diamondId:   form.diamondId || undefined,
       notes:       form.notes || undefined,
       status:      editing?.status || 'scheduled',
+      bracketCode: form.bracketCode || undefined,
     };
     if (modal === 'add') await saveGame(data);
     else if (editing) await updateGame(editing.id, data);
@@ -236,10 +245,11 @@ export default function AdminSchedulePage() {
       </div>
 
       {viewMode === 'playoff' && layoutMode === 'bracket' ? (
-        <PlayoffBracketView 
-          games={filtered} 
-          teams={teams} 
-          onEdit={openEdit} 
+        <PlayoffBracketView
+          games={filtered}
+          teams={teams}
+          ageGroup={ageGroups.find(g => g.id === filterGroup)}
+          onEdit={openEdit}
           onDelete={handleDeleteRequest}
           getGroupName={getGroupName}
           formatDate={formatDate}
@@ -253,13 +263,14 @@ export default function AdminSchedulePage() {
               <p>{currentTournament ? 'No games found for this division.' : 'No tournament selected.'}</p>
             </div>
           ) : (
-            <GameList 
+            <GameList
               games={filtered}
               teams={teams}
               ageGroups={ageGroups}
               diamonds={diamonds}
               viewMode={viewMode}
               groupByPool={groupMode === 'pools'}
+              pools={ageGroups.find(g => g.id === filterGroup)?.pools}
               onEdit={openEdit}
               onDelete={handleDeleteRequest}
               onCancel={markCancelled}
@@ -330,11 +341,33 @@ export default function AdminSchedulePage() {
                     onChange={e => setForm(f => ({ ...f, location: e.target.value }))} required />
                 </div>
               </div>
-              <div className="form-group" style={{ marginBottom: '0.5rem' }}>
-                <label className="form-label">Notes (optional)</label>
-                <input className="form-input" placeholder="Any additional info" value={form.notes || ''}
-                  onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} />
-              </div>
+              {viewMode === 'playoff' && (
+                <div className="form-row form-row-2" style={{ marginBottom: '1rem' }}>
+                  <div className="form-group">
+                    <label className="form-label">Abbreviation</label>
+                    <input
+                      className="form-input"
+                      placeholder="e.g. SF1, FIN"
+                      value={form.bracketCode}
+                      maxLength={3}
+                      onChange={e => setForm(f => ({ ...f, bracketCode: e.target.value.toUpperCase() }))}
+                      style={{ fontFamily: 'var(--font-display)', letterSpacing: '0.05em', textTransform: 'uppercase' }}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Notes (optional)</label>
+                    <input className="form-input" placeholder="Any additional info" value={form.notes || ''}
+                      onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} />
+                  </div>
+                </div>
+              )}
+              {viewMode !== 'playoff' && (
+                <div className="form-group" style={{ marginBottom: '0.5rem' }}>
+                  <label className="form-label">Notes (optional)</label>
+                  <input className="form-input" placeholder="Any additional info" value={form.notes || ''}
+                    onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} />
+                </div>
+              )}
               <div className="modal-footer">
                 <button type="button" className="btn btn-ghost" onClick={() => setModal(null)}>Cancel</button>
                 <button type="submit" className="btn btn-primary" id="schedule-save-btn"><Check size={14} /> Save Game</button>
@@ -378,81 +411,140 @@ export default function AdminSchedulePage() {
   );
 }
 
-function PlayoffBracketView({ games, teams, onEdit, onDelete, getGroupName, formatDate, statusBadge }: any) {
-  const standardRounds = [
-    { title: 'Opening Rounds', pattern: /^R1|^R2|^R3|^G[0-9]$/ },
-    { title: 'Quarterfinals', pattern: /^QF/ },
-    { title: 'Semifinals', pattern: /^SF/ },
-    { title: 'Finals', pattern: /^FIN$|^IF$|^3RD$/ }
-  ];
+function inferGamePool(game: any, allGames: any[], pools: any[]): string | null {
+  // Direct: placeholder contains "Pool X"
+  for (const pool of pools) {
+    const bare = pool.name.replace(/^Pool\s+/i, '').trim();
+    const tag = `Pool ${bare}`;
+    if (game.homePlaceholder?.includes(tag) || game.awayPlaceholder?.includes(tag)) {
+      return pool.name;
+    }
+  }
+  // Transitive: "Winner SF1" → find that game's pool.
+  // Match by bracketId (set per-pool in executeCreate) to avoid code collisions.
+  const ph = game.homePlaceholder || game.awayPlaceholder || '';
+  const winnerCode = ph.match(/Winner (\w+)/)?.[1];
+  if (winnerCode) {
+    const source = allGames.find((g: any) =>
+      g.bracketCode === winnerCode &&
+      g.isPlayoff &&
+      g.id !== game.id &&
+      (game.bracketId ? g.bracketId === game.bracketId : true)
+    );
+    if (source) return inferGamePool(source, allGames, pools);
+  }
+  // BracketId sibling fallback: for manually-added rounds with no placeholder,
+  // find any sibling game in the same bracketId group that has a direct pool match.
+  if (game.bracketId) {
+    for (const sibling of allGames) {
+      if (sibling.id === game.id || sibling.bracketId !== game.bracketId || !sibling.isPlayoff) continue;
+      for (const pool of pools) {
+        const bare = pool.name.replace(/^Pool\s+/i, '').trim();
+        const tag = `Pool ${bare}`;
+        if (sibling.homePlaceholder?.includes(tag) || sibling.awayPlaceholder?.includes(tag)) {
+          return pool.name;
+        }
+      }
+    }
+  }
+  return null;
+}
 
-  const getTeamName = (id: string) => teams.find((t: any) => t.id === id)?.name ?? '';
+// Detect split mode from game data: any playoff game whose placeholder names a pool
+function hasSplitPoolGames(games: any[], pools: any[]): boolean {
+  return pools.length >= 2 && games.some(g =>
+    pools.some((p: any) => {
+      const bare = p.name.replace(/^Pool\s+/i, '').trim();
+      const tag = `Pool ${bare}`;
+      return g.homePlaceholder?.includes(tag) || g.awayPlaceholder?.includes(tag);
+    })
+  );
+}
+
+function buildBracketColumns(games: any[]) {
+  const standardRounds = [
+    { title: 'Quarterfinals', pattern: /^QF/i },
+    { title: 'Semifinals', pattern: /^SF/i },
+    { title: 'Finals', pattern: /^(FIN|IF|3RD)$/i }
+  ];
 
   const columns = standardRounds.map(r => ({
     ...r,
     games: games
       .filter((g: any) => r.pattern.test(g.bracketCode || ''))
       .sort((a: any, b: any) => {
-        if (a.bracketCode?.startsWith('FIN') && b.bracketCode?.startsWith('3RD')) return -1;
-        if (a.bracketCode?.startsWith('3RD') && b.bracketCode?.startsWith('FIN')) return 1;
-        return 0;
+        if (/^FIN/i.test(a.bracketCode) && /^3RD/i.test(b.bracketCode)) return -1;
+        if (/^3RD/i.test(a.bracketCode) && /^FIN/i.test(b.bracketCode)) return 1;
+        return (a.bracketCode || '').localeCompare(b.bracketCode || '');
       })
   })).filter(c => c.games.length > 0);
 
-  // Catch-all for custom bracket codes from the Bracket Builder
-  const matchedGameIds = new Set(columns.flatMap(c => c.games.map((g: any) => g.id)));
-  const customGames = games.filter((g: any) => !matchedGameIds.has(g.id));
-  
-  if (customGames.length > 0) {
-    columns.push({
-      title: 'Additional Matchups',
-      pattern: /.*/,
-      games: customGames.sort((a: any, b: any) => (a.bracketCode || '').localeCompare(b.bracketCode || ''))
+  // Group non-standard codes into individual columns, one per unique round
+  // (identified by shared bracketCode prefix). Maintains wizard round order
+  // and shows the bracketCode as the column title.
+  const matchedIds = new Set(columns.flatMap(c => c.games.map((g: any) => g.id)));
+  const custom = games.filter((g: any) => !matchedIds.has(g.id));
+  if (custom.length > 0) {
+    const byCode: Record<string, any[]> = {};
+    custom.forEach((g: any) => {
+      const key = g.bracketCode || 'EXTRA';
+      if (!byCode[key]) byCode[key] = [];
+      byCode[key].push(g);
+    });
+    Object.entries(byCode).forEach(([code, cGames]) => {
+      columns.push({
+        title: code,
+        pattern: new RegExp(`^${code}$`, 'i'),
+        games: cGames
+      });
     });
   }
+  return columns;
+}
 
-  if (games.length === 0) {
-    return (
-      <div className="empty-state" style={{ padding: '4rem' }}>
-        <Trophy size={48} />
-        <p>No playoff games scheduled for this division.</p>
-        <p className="text-sm text-muted">Use the Playoff Wizard to generate brackets.</p>
-      </div>
-    );
-  }
-
+function BracketColumns({ columns, onEdit, onDelete, formatDate }: any) {
+  const [titles, setTitles] = React.useState<Record<number, string>>(() =>
+    Object.fromEntries(columns.map((c: any, i: number) => [i, c.title]))
+  );
   return (
-    <div style={{ 
-      display: 'flex', 
-      gap: '2.5rem', 
-      overflowX: 'auto', 
-      padding: '2rem 0.75rem',
-      minHeight: '500px',
-      background: 'radial-gradient(circle at 50% 50%, rgba(139, 92, 246, 0.04) 0%, transparent 70%)'
+    <div style={{
+      display: 'flex',
+      gap: '2.5rem',
+      overflowX: 'auto',
+      padding: '1.5rem 0',
+      minHeight: '300px',
     }}>
-      {columns.map((col, idx) => (
-        <div key={idx} style={{ 
-          display: 'flex', 
-          flexDirection: 'column', 
-          width: '210px',
-          flexShrink: 0
-        }}>
-          <h3 style={{ 
-            textAlign: 'center', 
-            color: 'var(--purple-light)', 
-            fontFamily: 'var(--font-display)',
-            fontSize: '0.8rem',
-            fontWeight: 900,
-            textTransform: 'uppercase',
-            letterSpacing: '0.12em',
-            marginBottom: '1.5rem',
-            opacity: 0.7
-          }}>{col.title}</h3>
-          
-          <div style={{ 
-            display: 'flex', 
-            flexDirection: 'column', 
-            justifyContent: col.title === 'Finals' ? 'center' : 'space-around', 
+      {columns.map((col: any, idx: number) => (
+        <div key={idx} style={{ display: 'flex', flexDirection: 'column', width: '210px', flexShrink: 0 }}>
+          <input
+            value={titles[idx] ?? col.title}
+            onChange={e => setTitles(prev => ({ ...prev, [idx]: e.target.value }))}
+            style={{
+              textAlign: 'center',
+              color: 'var(--purple-light)',
+              fontFamily: 'var(--font-display)',
+              fontSize: '0.8rem',
+              fontWeight: 900,
+              textTransform: 'uppercase',
+              letterSpacing: '0.12em',
+              marginBottom: '1.5rem',
+              opacity: 0.7,
+              background: 'transparent',
+              border: 'none',
+              borderBottom: '1px dashed transparent',
+              outline: 'none',
+              width: '100%',
+              cursor: 'text',
+              padding: '2px 4px',
+            }}
+            onFocus={e => { e.target.style.borderBottomColor = 'rgba(139,92,246,0.4)'; e.target.style.opacity = '1'; }}
+            onBlur={e => { e.target.style.borderBottomColor = 'transparent'; e.target.style.opacity = '0.7'; }}
+          />
+
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: col.title === 'Finals' ? 'center' : 'space-around',
             flex: 1,
             gap: col.title === 'Finals' ? '2.5rem' : '1.5rem'
           }}>
@@ -460,85 +552,71 @@ function PlayoffBracketView({ games, teams, onEdit, onDelete, getGroupName, form
               <div key={g.id} style={{ position: 'relative' }}>
                 {idx < columns.length - 1 && (
                   <div style={{
-                    position: 'absolute',
-                    right: '-2.5rem',
-                    top: '50%',
-                    width: '2.5rem',
-                    height: '1px',
-                    background: 'var(--purple-main)',
-                    opacity: 0.15,
-                    zIndex: 0
+                    position: 'absolute', right: '-2.5rem', top: '50%',
+                    width: '2.5rem', height: '1px',
+                    background: 'var(--purple-main)', opacity: 0.15, zIndex: 0
                   }} />
                 )}
-
-                <div className="card" style={{ 
-                  padding: '0.75rem', 
+                <div className="card" style={{
+                  padding: '0.75rem',
                   border: '1px solid var(--white-10)',
                   background: 'rgba(15, 15, 20, 0.98)',
                   backdropFilter: 'blur(20px)',
-                  position: 'relative',
-                  zIndex: 1,
+                  position: 'relative', zIndex: 1,
                   boxShadow: '0 10px 25px rgba(0,0,0,0.4)',
                   borderRadius: '10px'
                 }}>
                   <div className="flex-between" style={{ marginBottom: '7px' }}>
-                    <div style={{ 
-                      fontSize: '0.6rem', 
-                      fontWeight: 900, 
-                      color: 'var(--purple-light)',
-                      background: 'rgba(139, 92, 246, 0.1)',
-                      padding: '2px 8px',
-                      borderRadius: '4px',
-                      border: '1px solid rgba(139, 92, 246, 0.2)',
-                      letterSpacing: '0.02em'
+                    <div style={{
+                      fontSize: '0.6rem', fontWeight: 900, color: 'var(--purple-light)',
+                      background: 'rgba(139, 92, 246, 0.1)', padding: '2px 8px',
+                      borderRadius: '4px', border: '1px solid rgba(139, 92, 246, 0.2)', letterSpacing: '0.02em'
                     }}>{g.bracketCode}</div>
                     <div className="flex gap-1.5">
-                      <button className="btn btn-ghost btn-sm" onClick={() => onEdit(g)} title="Edit" style={{ 
+                      <button className="btn btn-ghost btn-sm" onClick={() => onEdit(g)} title="Edit" style={{
                         height: '24px', width: '24px', padding: 0,
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
                         background: 'rgba(255,255,255,0.03)'
                       }}><Pencil size={11} /></button>
-                      <button className="btn btn-ghost btn-sm text-danger" onClick={() => onDelete(g.id)} title="Delete" style={{ 
+                      <button className="btn btn-ghost btn-sm text-danger" onClick={() => onDelete(g.id)} title="Delete" style={{
                         height: '24px', width: '24px', padding: 0,
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
                         background: 'rgba(255,255,255,0.03)'
                       }}><Trash2 size={11} /></button>
                     </div>
                   </div>
-                  
+
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '0.75rem' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <div style={{ 
+                      <div style={{
                         width: '28px', fontSize: '0.55rem', fontWeight: 900, color: 'var(--purple-light)',
                         textAlign: 'center', background: 'rgba(139, 92, 246, 0.1)', padding: '1px 0',
                         borderRadius: '3px', border: '1px solid rgba(139, 92, 246, 0.2)', letterSpacing: '0.02em'
                       }}>VIS</div>
-                      <div style={{ 
+                      <div style={{
                         fontWeight: '700', fontSize: '0.85rem', color: '#ffffff',
                         flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
                       }}>
-                        {getTeamName(g.awayTeamId) || g.awayPlaceholder || 'TBD'}
+                        {g.awayPlaceholder || 'TBD'}
                       </div>
                     </div>
-
                     <div style={{ height: '1px', background: 'rgba(255,255,255,0.03)' }} />
-
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <div style={{ 
+                      <div style={{
                         width: '28px', fontSize: '0.55rem', fontWeight: 900, color: 'var(--purple-light)',
                         textAlign: 'center', background: 'rgba(139, 92, 246, 0.1)', padding: '1px 0',
                         borderRadius: '3px', border: '1px solid rgba(139, 92, 246, 0.2)', letterSpacing: '0.02em'
                       }}>HOM</div>
-                      <div style={{ 
+                      <div style={{
                         fontWeight: '700', fontSize: '0.85rem', color: '#ffffff',
                         flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
                       }}>
-                        {getTeamName(g.homeTeamId) || g.homePlaceholder || 'TBD'}
+                        {g.homePlaceholder || 'TBD'}
                       </div>
                     </div>
                   </div>
 
-                  <div style={{ 
+                  <div style={{
                     display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: '0.4rem',
                     paddingTop: '0.6rem', borderTop: '1px solid rgba(255,255,255,0.05)',
                     fontSize: '0.7rem', color: 'var(--white-40)'
@@ -553,6 +631,76 @@ function PlayoffBracketView({ games, teams, onEdit, onDelete, getGroupName, form
           </div>
         </div>
       ))}
+    </div>
+  );
+}
+
+function PlayoffBracketView({ games, teams, ageGroup, onEdit, onDelete, getGroupName, formatDate, statusBadge }: any) {
+  if (games.length === 0) {
+    return (
+      <div className="empty-state" style={{ padding: '4rem' }}>
+        <Trophy size={48} />
+        <p>No playoff games scheduled for this division.</p>
+        <p className="text-sm text-muted">Use the Playoff Wizard to generate brackets.</p>
+      </div>
+    );
+  }
+
+  const pools = ageGroup?.pools || [];
+  const isSplitMode = hasSplitPoolGames(games, pools);
+
+  if (isSplitMode) {
+    return (
+      <div style={{
+        display: 'flex', flexDirection: 'column', gap: '3rem',
+        padding: '2rem 0.75rem',
+        background: 'radial-gradient(circle at 50% 50%, rgba(139, 92, 246, 0.04) 0%, transparent 70%)'
+      }}>
+        {pools.map((pool: any) => {
+          const poolGames = games.filter((g: any) => inferGamePool(g, games, pools) === pool.name);
+          if (poolGames.length === 0) return null;
+          const columns = buildBracketColumns(poolGames);
+          return (
+            <div key={pool.id}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.25rem' }}>
+                <Trophy size={16} style={{ color: 'var(--purple-light)' }} />
+                <h3 style={{ color: 'var(--purple-light)', fontFamily: 'var(--font-display)', fontSize: '0.85rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em', margin: 0 }}>
+                  {formatPoolName(pool.name)} Playoffs
+                </h3>
+                <div style={{ flex: 1, height: '1px', background: 'linear-gradient(to right, var(--purple-main), transparent)' }} />
+              </div>
+              <BracketColumns columns={columns} onEdit={onEdit} onDelete={onDelete} formatDate={formatDate} />
+            </div>
+          );
+        })}
+        {(() => {
+          const unassigned = games.filter((g: any) => inferGamePool(g, games, pools) === null);
+          if (unassigned.length === 0) return null;
+          return (
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.25rem' }}>
+                <h3 style={{ color: 'var(--white-40)', fontSize: '0.85rem', fontWeight: 700, textTransform: 'uppercase', margin: 0 }}>Other</h3>
+              </div>
+              <BracketColumns columns={buildBracketColumns(unassigned)} onEdit={onEdit} onDelete={onDelete} formatDate={formatDate} />
+            </div>
+          );
+        })()}
+      </div>
+    );
+  }
+
+  // Standard flat layout
+  const columns = buildBracketColumns(games);
+  return (
+    <div style={{
+      display: 'flex',
+      gap: '2.5rem',
+      overflowX: 'auto',
+      padding: '2rem 0.75rem',
+      minHeight: '500px',
+      background: 'radial-gradient(circle at 50% 50%, rgba(139, 92, 246, 0.04) 0%, transparent 70%)'
+    }}>
+      <BracketColumns columns={columns} onEdit={onEdit} onDelete={onDelete} formatDate={formatDate} />
     </div>
   );
 }

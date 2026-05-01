@@ -5,7 +5,8 @@ import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, us
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Plus, Trash2, GripVertical } from 'lucide-react';
+import { Plus, Trash2, GripVertical, Trophy } from 'lucide-react';
+import { formatPoolName } from '@/lib/utils';
 import styles from './BracketBuilder.module.css';
 
 interface Slot {
@@ -21,6 +22,7 @@ export interface Matchup {
   date: string;
   time: string;
   diamondId: string;
+  pool?: string;
 }
 
 interface Round {
@@ -37,16 +39,17 @@ interface BracketBuilderProps {
   templatePreview: any[];
   baseOptions: string[];
   onPreviewChange: (preview: any[]) => void;
+  crossover?: string;
 }
 
-function SortableMatchup({ matchup, options, usedOptions, diamonds, onUpdateCode, onUpdate, onDelete }: { 
-  matchup: Matchup, 
+function SortableMatchup({ matchup, options, usedOptions, diamonds, onUpdateCode, onUpdate, onDelete }: {
+  matchup: Matchup,
   options: string[],
   usedOptions: Set<string>,
-  diamonds: Diamond[], 
+  diamonds: Diamond[],
   onUpdateCode: (newCode: string) => void,
   onUpdate: (m: Matchup) => void,
-  onDelete: () => void 
+  onDelete: () => void
 }) {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: matchup.id });
 
@@ -65,9 +68,9 @@ function SortableMatchup({ matchup, options, usedOptions, diamonds, onUpdateCode
           <div {...attributes} {...listeners} className={styles.dragHandle}>
             <GripVertical size={14} />
           </div>
-          <input 
-            type="text" 
-            value={matchup.code} 
+          <input
+            type="text"
+            value={matchup.code}
             onChange={e => onUpdateCode(e.target.value)}
             className={styles.codeInput}
             placeholder="Code (e.g. QF1)"
@@ -79,24 +82,24 @@ function SortableMatchup({ matchup, options, usedOptions, diamonds, onUpdateCode
       <div className={styles.matchupBody}>
         <div className={styles.teamRow}>
           <span className={styles.teamLabel}>Home</span>
-          <select 
-            value={matchup.home.label} 
+          <select
+            value={matchup.home.label}
             onChange={e => onUpdate({ ...matchup, home: { label: e.target.value } })}
             className={styles.teamInput}
           >
             <option value="">Select Team...</option>
-            {homeOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+            {homeOptions.map((opt, i) => <option key={`${opt}-${i}`} value={opt}>{opt}</option>)}
           </select>
         </div>
         <div className={styles.teamRow}>
           <span className={styles.teamLabel}>Away</span>
-          <select 
-            value={matchup.away.label} 
+          <select
+            value={matchup.away.label}
             onChange={e => onUpdate({ ...matchup, away: { label: e.target.value } })}
             className={styles.teamInput}
           >
             <option value="">Select Team...</option>
-            {awayOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+            {awayOptions.map((opt, i) => <option key={`${opt}-${i}`} value={opt}>{opt}</option>)}
           </select>
         </div>
       </div>
@@ -113,7 +116,7 @@ function SortableMatchup({ matchup, options, usedOptions, diamonds, onUpdateCode
   );
 }
 
-export default function BracketBuilder({ ageGroup, teams, diamonds, defaultDate, templatePreview, baseOptions, onPreviewChange }: BracketBuilderProps) {
+export default function BracketBuilder({ ageGroup, teams, diamonds, defaultDate, templatePreview, baseOptions, onPreviewChange, crossover }: BracketBuilderProps) {
   const [rounds, setRounds] = useState<Round[]>([]);
 
   // Convert templatePreview to rounds when templatePreview changes
@@ -135,7 +138,8 @@ export default function BracketBuilder({ ageGroup, teams, diamonds, defaultDate,
         away: { label: p.away },
         date: p.date || defaultDate || '',
         time: p.time || '',
-        diamondId: p.diamondId || ''
+        diamondId: p.diamondId || '',
+        pool: p.pool
       }))
     }));
     setRounds(initialRounds);
@@ -147,8 +151,7 @@ export default function BracketBuilder({ ageGroup, teams, diamonds, defaultDate,
   );
 
   useEffect(() => {
-    // Flatten rounds into preview array
-    const preview = rounds.flatMap(r => 
+    const preview = rounds.flatMap(r =>
       r.matchups.map(m => ({
         round: r.name,
         home: m.home.label,
@@ -156,7 +159,8 @@ export default function BracketBuilder({ ageGroup, teams, diamonds, defaultDate,
         code: m.code,
         date: m.date,
         time: m.time,
-        diamondId: m.diamondId
+        diamondId: m.diamondId,
+        pool: m.pool
       }))
     );
     onPreviewChange(preview);
@@ -175,7 +179,31 @@ export default function BracketBuilder({ ageGroup, teams, diamonds, defaultDate,
             away: { label: '' },
             date: defaultDate || '',
             time: '',
-            diamondId: ''
+            diamondId: '',
+            pool: r.matchups[0]?.pool
+          }]
+        };
+      }
+      return r;
+    }));
+  };
+
+  const addMatchupForPool = (roundId: string, poolName: string) => {
+    setRounds(rounds.map(r => {
+      if (r.id === roundId) {
+        const poolMatchups = r.matchups.filter(m => m.pool === poolName);
+        return {
+          ...r,
+          matchups: [...r.matchups, {
+            id: crypto.randomUUID(),
+            code: `${r.name.substring(0, 2).toUpperCase()}${poolMatchups.length + 1}`,
+            roundName: r.name,
+            home: { label: '' },
+            away: { label: '' },
+            date: defaultDate || '',
+            time: '',
+            diamondId: '',
+            pool: poolName
           }]
         };
       }
@@ -184,11 +212,45 @@ export default function BracketBuilder({ ageGroup, teams, diamonds, defaultDate,
   };
 
   const addRound = () => {
-    setRounds([{ id: `r${crypto.randomUUID()}`, name: `Round ${rounds.length + 1}`, matchups: [] }, ...rounds]);
+    setRounds(prev => [...prev, { id: `r${crypto.randomUUID()}`, name: `Round ${prev.length + 1}`, matchups: [] }]);
+  };
+
+  const addRoundForPool = (poolName: string) => {
+    const newRound: Round = {
+      id: `r${crypto.randomUUID()}`,
+      name: `Round ${rounds.length + 1}`,
+      matchups: [{
+        id: crypto.randomUUID(),
+        code: `R${rounds.length + 1}`,
+        roundName: `Round ${rounds.length + 1}`,
+        home: { label: '' },
+        away: { label: '' },
+        date: defaultDate || '',
+        time: '',
+        diamondId: '',
+        pool: poolName
+      }]
+    };
+    setRounds(prev => [...prev, newRound]);
   };
 
   const deleteRound = (roundId: string) => {
     setRounds(rounds.filter(r => r.id !== roundId));
+  };
+
+  // In split mode: remove only this pool's matchups from the round.
+  // If the round has no matchups left globally, remove it entirely.
+  const deleteRoundForPool = (roundId: string, poolName: string) => {
+    setRounds(prev => {
+      return prev.reduce<Round[]>((acc, r) => {
+        if (r.id !== roundId) { acc.push(r); return acc; }
+        const remaining = r.matchups.filter(m => m.pool !== poolName);
+        if (remaining.length > 0) {
+          acc.push({ ...r, matchups: remaining });
+        }
+        return acc;
+      }, []);
+    });
   };
 
   const updateMatchupCode = (matchupId: string, oldCode: string, newCode: string) => {
@@ -198,12 +260,11 @@ export default function BracketBuilder({ ageGroup, teams, diamonds, defaultDate,
         if (m.id === matchupId) {
           return { ...m, code: newCode };
         }
-        // Cascade update to dependents
-        const homeLabel = m.home.label === `Winner ${oldCode}` ? `Winner ${newCode}` 
-                        : m.home.label === `Loser ${oldCode}` ? `Loser ${newCode}` 
+        const homeLabel = m.home.label === `Winner ${oldCode}` ? `Winner ${newCode}`
+                        : m.home.label === `Loser ${oldCode}` ? `Loser ${newCode}`
                         : m.home.label;
-        const awayLabel = m.away.label === `Winner ${oldCode}` ? `Winner ${newCode}` 
-                        : m.away.label === `Loser ${oldCode}` ? `Loser ${newCode}` 
+        const awayLabel = m.away.label === `Winner ${oldCode}` ? `Winner ${newCode}`
+                        : m.away.label === `Loser ${oldCode}` ? `Loser ${newCode}`
                         : m.away.label;
         return { ...m, home: { label: homeLabel }, away: { label: awayLabel } };
       })
@@ -213,7 +274,7 @@ export default function BracketBuilder({ ageGroup, teams, diamonds, defaultDate,
   const updateMatchup = (roundId: string, matchup: Matchup) => {
     setRounds(rounds.map(r => {
       if (r.id === roundId) {
-        return { ...r, matchups: r.matchups.map(m => m.id === matchup.id ? matchup : m) };
+        return { ...r, matchups: r.matchups.map(m => m.id === matchup.id ? { ...matchup, pool: m.pool } : m) };
       }
       return r;
     }));
@@ -242,67 +303,153 @@ export default function BracketBuilder({ ageGroup, teams, diamonds, defaultDate,
     }
   };
 
-  // Calculate all used options across all rounds
   const allUsedOptions = new Set(rounds.flatMap(r => r.matchups.flatMap(m => [m.home.label, m.away.label].filter(l => l))));
+
+  const isSplitMode = crossover === 'none' && (ageGroup.pools?.length || 0) > 0;
+  const poolNames = ageGroup.pools?.map(p => p.name) || [];
 
   return (
     <div className={styles.builderContainer}>
-      <div className={styles.canvas}>
-        <div className={styles.addRoundColLeft}>
-          <button className={styles.addRoundBtnSimple} onClick={addRound} title="Add Round Before">
-            <Plus size={20} />
-          </button>
-        </div>
-        {rounds.map((round, index) => {
-          // Calculate options available for THIS round
-          // Round 0: Only baseOptions
-          // Round > 0: baseOptions + winners/losers from prev rounds
-          const previousMatchups = rounds.slice(0, index).flatMap(r => r.matchups);
-          const previousOptions = previousMatchups.flatMap(m => m.code ? [`Winner ${m.code}`, `Loser ${m.code}`] : []);
-          const roundOptions = [...baseOptions, ...previousOptions];
+      {isSplitMode ? (
+        <div className={styles.splitBrackets}>
+          {poolNames.map(poolName => {
+            const poolRounds = rounds.map(r => ({
+              ...r,
+              matchups: r.matchups.filter(m => m.pool === poolName)
+            })).filter(r => r.matchups.length > 0);
 
-          return (
-            <div key={round.id} className={styles.roundColumn}>
-              <div className={styles.roundHeader}>
-                <div style={{ display: 'flex', alignItems: 'center', width: '100%', gap: '0.5rem' }}>
-                  <input 
-                    type="text" 
-                    value={round.name} 
-                    onChange={e => setRounds(rounds.map(r => r.id === round.id ? { ...r, name: e.target.value } : r))}
-                    className={styles.roundTitleInput}
-                  />
-                  <button className={styles.deleteBtn} onClick={() => deleteRound(round.id)} title="Delete Round" style={{ padding: '0.25rem', opacity: 0.3 }}>
-                    <Trash2 size={14} />
+            const bareName = poolName.replace(/^Pool\s+/i, '').trim();
+
+            return (
+              <div key={poolName} className={styles.poolSection}>
+                <div className={styles.poolHeader}>
+                  <Trophy size={18} />
+                  <span>{formatPoolName(poolName)} Playoffs</span>
+                </div>
+
+                <div className={styles.canvas}>
+                  {poolRounds.map((round) => {
+                    const previousMatchups = poolRounds.slice(0, poolRounds.indexOf(round)).flatMap(r => r.matchups);
+                    const previousOptions = previousMatchups.flatMap(m => m.code ? [`Winner ${m.code}`, `Loser ${m.code}`] : []);
+                    const roundOptions = Array.from(new Set([
+                      ...baseOptions.filter(opt => opt.includes(`Pool ${bareName}`)),
+                      ...previousOptions
+                    ]));
+
+                    return (
+                      <div key={round.id} className={styles.roundColumn}>
+                        <div className={styles.roundHeader}>
+                          <div style={{ display: 'flex', alignItems: 'center', width: '100%', gap: '0.5rem' }}>
+                            <input
+                              type="text"
+                              value={round.name}
+                              onChange={e => setRounds(rounds.map(r => r.id === round.id ? { ...r, name: e.target.value } : r))}
+                              className={styles.roundTitleInput}
+                            />
+                            <button
+                              className={styles.deleteBtn}
+                              onClick={() => deleteRoundForPool(round.id, poolName)}
+                              title="Delete Round"
+                              style={{ padding: '0.25rem', opacity: 0.3 }}
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className={styles.matchupList}>
+                          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={(e) => handleDragEnd(e, round.id)}>
+                            <SortableContext items={round.matchups} strategy={verticalListSortingStrategy}>
+                              {round.matchups.map(m => (
+                                <SortableMatchup
+                                  key={m.id}
+                                  matchup={m}
+                                  options={roundOptions}
+                                  usedOptions={allUsedOptions}
+                                  diamonds={diamonds}
+                                  onUpdateCode={(newCode) => updateMatchupCode(m.id, m.code, newCode)}
+                                  onUpdate={(newM) => updateMatchup(round.id, newM)}
+                                  onDelete={() => deleteMatchup(round.id, m.id)}
+                                />
+                              ))}
+                            </SortableContext>
+                          </DndContext>
+
+                          <button className={styles.addBtn} onClick={() => addMatchupForPool(round.id, poolName)}>
+                            <Plus size={16} /> Add Matchup
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <button
+                  className={styles.addBtn}
+                  onClick={() => addRoundForPool(poolName)}
+                  style={{ marginTop: '1rem', alignSelf: 'flex-start' }}
+                >
+                  <Plus size={16} /> Add Round
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      ) : (
+        <div className={styles.canvas}>
+          {rounds.map((round, index) => {
+            const previousMatchups = rounds.slice(0, index).flatMap(r => r.matchups);
+            const previousOptions = previousMatchups.flatMap(m => m.code ? [`Winner ${m.code}`, `Loser ${m.code}`] : []);
+            const roundOptions = Array.from(new Set([...baseOptions, ...previousOptions]));
+
+            return (
+              <div key={round.id} className={styles.roundColumn}>
+                <div className={styles.roundHeader}>
+                  <div style={{ display: 'flex', alignItems: 'center', width: '100%', gap: '0.5rem' }}>
+                    <input
+                      type="text"
+                      value={round.name}
+                      onChange={e => setRounds(rounds.map(r => r.id === round.id ? { ...r, name: e.target.value } : r))}
+                      className={styles.roundTitleInput}
+                    />
+                    <button className={styles.deleteBtn} onClick={() => deleteRound(round.id)} title="Delete Round" style={{ padding: '0.25rem', opacity: 0.3 }}>
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                </div>
+
+                <div className={styles.matchupList}>
+                  <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={(e) => handleDragEnd(e, round.id)}>
+                    <SortableContext items={round.matchups} strategy={verticalListSortingStrategy}>
+                      {round.matchups.map(m => (
+                        <SortableMatchup
+                          key={m.id}
+                          matchup={m}
+                          options={roundOptions}
+                          usedOptions={allUsedOptions}
+                          diamonds={diamonds}
+                          onUpdateCode={(newCode) => updateMatchupCode(m.id, m.code, newCode)}
+                          onUpdate={(newM) => updateMatchup(round.id, newM)}
+                          onDelete={() => deleteMatchup(round.id, m.id)}
+                        />
+                      ))}
+                    </SortableContext>
+                  </DndContext>
+
+                  <button className={styles.addBtn} onClick={() => addMatchup(round.id)}>
+                    <Plus size={16} /> Add Matchup
                   </button>
                 </div>
               </div>
-              
-              <div className={styles.matchupList}>
-                <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={(e) => handleDragEnd(e, round.id)}>
-                  <SortableContext items={round.matchups} strategy={verticalListSortingStrategy}>
-                    {round.matchups.map(m => (
-                      <SortableMatchup 
-                        key={m.id} 
-                        matchup={m} 
-                        options={roundOptions}
-                        usedOptions={allUsedOptions}
-                        diamonds={diamonds} 
-                        onUpdateCode={(newCode) => updateMatchupCode(m.id, m.code, newCode)}
-                        onUpdate={(newM) => updateMatchup(round.id, newM)}
-                        onDelete={() => deleteMatchup(round.id, m.id)}
-                      />
-                    ))}
-                  </SortableContext>
-                </DndContext>
-                
-                <button className={styles.addBtn} onClick={() => addMatchup(round.id)}>
-                  <Plus size={16} /> Add Matchup
-                </button>
-              </div>
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+          <div className={styles.addRoundColLeft}>
+            <button className={styles.addRoundBtnSimple} onClick={addRound} title="Add Round">
+              <Plus size={20} />
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

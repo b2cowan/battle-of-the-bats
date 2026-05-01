@@ -144,9 +144,11 @@ export default async function HomePage() {
         </div>
         <div className={`container ${styles.heroContent}`}>
           <div className={styles.heroBadge}>
-            <Star size={12} fill="currentColor" />
             <div className={styles.badgeText}>
-              <span>{currentYear} Tournament • {dateDisplay}</span>
+              <span className={styles.dateLine}>
+                <Star size={12} fill="currentColor" />
+                {currentYear} Tournament • {dateDisplay}
+              </span>
               {countdownText && (
                 <span className={styles.countdown}>
                   <span className={styles.badgeSeparator}> • </span>

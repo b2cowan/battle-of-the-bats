@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { LayoutDashboard, Users, Calendar, Trophy, Megaphone, Tag, LogOut, Home, ChevronRight, MapPin, RefreshCw, ClipboardList, BookUser } from 'lucide-react';
+import { LayoutDashboard, Users, Calendar, Trophy, Megaphone, Tag, LogOut, Home, ChevronRight, MapPin, RefreshCw, ClipboardList, BookUser, BookOpen } from 'lucide-react';
 import { logout } from '@/lib/auth';
 import { useTournament } from '@/lib/tournament-context';
 import { setActiveTournament } from '@/lib/db';
@@ -16,6 +16,7 @@ const NAV = [
   { href: '/admin/teams',           icon: Users,           label: 'Registrations'  },
   { href: '/admin/schedule',        icon: Calendar,        label: 'Schedule'      },
   { href: '/admin/results',         icon: Trophy,          label: 'Results'       },
+  { href: '/admin/rules',           icon: BookOpen,        label: 'Rules & Resources' },
   { href: '/admin/diamonds',        icon: MapPin,          label: 'Diamonds'      },
 ];
 

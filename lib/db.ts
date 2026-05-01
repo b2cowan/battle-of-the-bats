@@ -1,5 +1,5 @@
 import { supabase } from './supabase';
-import { Tournament, Diamond, Contact, AgeGroup, Pool, Team, Game, Announcement, PlayoffConfig } from './types';
+import { Tournament, Diamond, Contact, AgeGroup, Pool, Team, Game, Announcement, PlayoffConfig, RuleSection, RuleItem, Resource } from './types';
 
 // --- Tournaments ---
 export async function getTournaments(): Promise<Tournament[]> {
@@ -859,5 +859,271 @@ export async function advancePlayoffs(game: Game) {
         await updateGame(pg.id, updates);
       }
     }
+  }
+}
+
+// --- Rules ---
+export async function getRules(tournamentId: string): Promise<RuleSection[]> {
+  const { data, error } = await supabase
+    .from('rules')
+    .select('*, rule_items(*)')
+    .eq('tournament_id', tournamentId)
+    .order('display_order', { ascending: true });
+  
+  if (error || !data) return [];
+
+  return data.map(r => ({
+    id: r.id,
+    tournamentId: r.tournament_id,
+    title: r.title,
+    icon: r.icon,
+    order: r.display_order,
+    items: (r.rule_items || []).map((i: any) => ({
+      id: i.id,
+      ruleId: i.rule_id,
+      content: i.content,
+      order: i.display_order
+    })).sort((a: any, b: any) => a.order - b.order)
+  }));
+}
+
+export async function saveRuleSection(r: Omit<RuleSection, 'id' | 'items'>): Promise<string | null> {
+  const { data, error } = await supabase
+    .from('rules')
+    .insert({
+      tournament_id: r.tournamentId,
+      title: r.title,
+      icon: r.icon,
+      display_order: r.order
+    })
+    .select()
+    .single();
+  
+  if (error) {
+    console.error('saveRuleSection error', error);
+    return null;
+  }
+  return data.id;
+}
+
+export async function updateRuleSection(id: string, r: Partial<RuleSection>): Promise<void> {
+  const updates: any = {};
+  if (r.title !== undefined) updates.title = r.title;
+  if (r.icon !== undefined) updates.icon = r.icon;
+  if (r.order !== undefined) updates.display_order = r.order;
+  await supabase.from('rules').update(updates).eq('id', id);
+}
+
+export async function deleteRuleSection(id: string): Promise<void> {
+  await supabase.from('rules').delete().eq('id', id);
+}
+
+export async function saveRuleItem(item: Omit<RuleItem, 'id'>): Promise<void> {
+  await supabase.from('rule_items').insert({
+    rule_id: item.ruleId,
+    content: item.content,
+    display_order: item.order
+  });
+}
+
+export async function updateRuleItem(id: string, item: Partial<RuleItem>): Promise<void> {
+  const updates: any = {};
+  if (item.content !== undefined) updates.content = item.content;
+  if (item.order !== undefined) updates.display_order = item.order;
+  await supabase.from('rule_items').update(updates).eq('id', id);
+}
+
+export async function deleteRuleItem(id: string): Promise<void> {
+  await supabase.from('rule_items').delete().eq('id', id);
+}
+
+// --- Resources ---
+export async function getResources(tournamentId: string): Promise<Resource[]> {
+  const { data, error } = await supabase
+    .from('resources')
+    .select('*')
+    .eq('tournament_id', tournamentId)
+    .order('display_order', { ascending: true });
+  
+  if (error || !data) return [];
+
+  return data.map(r => ({
+    id: r.id,
+    tournamentId: r.tournament_id,
+    label: r.label,
+    url: r.url,
+    order: r.display_order
+  }));
+}
+
+export async function saveResource(r: Omit<Resource, 'id'>): Promise<void> {
+  await supabase.from('resources').insert({
+    tournament_id: r.tournamentId,
+    label: r.label,
+    url: r.url,
+    display_order: r.order
+  });
+}
+
+export async function updateResource(id: string, r: Partial<Resource>): Promise<void> {
+  const updates: any = {};
+  if (r.label !== undefined) updates.label = r.label;
+  if (r.url !== undefined) updates.url = r.url;
+  if (r.order !== undefined) updates.display_order = r.order;
+  await supabase.from('resources').update(updates).eq('id', id);
+}
+
+export async function deleteResource(id: string): Promise<void> {
+  // Get the resource first to see if it has a file to delete
+  const { data: res } = await supabase.from('resources').select('*').eq('id', id).single();
+  
+  if (res && res.url.includes('supabase.co')) {
+    try {
+      // Extract filename from public URL
+      // Format: .../public/resources/filename.ext
+      const parts = res.url.split('/');
+      const fileName = parts[parts.length - 1].split('?')[0]; // Remove query params
+      
+      await supabase.storage.from('resources').remove([fileName]);
+    } catch (err) {
+      console.error('Error removing file from storage:', err);
+    }
+  }
+
+  const { error } = await supabase.from('resources').delete().eq('id', id);
+  if (error) throw error;
+}
+
+export async function uploadResourceFile(file: File): Promise<string | null> {
+  try {
+    const fileExt = file.name.split('.').pop();
+    // Use original name + timestamp to ensure uniqueness but keep it readable
+    const cleanName = file.name.replace(/[^\w\s\.\-]/gi, '').replace(/\s+/g, '_');
+    const fileName = `${Date.now()}-${cleanName}`;
+    // Path within the bucket
+    const filePath = fileName; 
+
+    const { error, data } = await supabase.storage
+      .from('resources')
+      .upload(filePath, file, {
+        cacheControl: '3600',
+        upsert: false
+      });
+
+    if (error) {
+      console.error('Supabase Storage Error:', error);
+      throw error;
+    }
+
+    const { data: { publicUrl } } = supabase.storage
+      .from('resources')
+      .getPublicUrl(filePath);
+
+    return publicUrl;
+  } catch (err) {
+    console.error('uploadResourceFile catch:', err);
+    return null;
+  }
+}
+
+export async function seedRulesAndResources(tournamentId: string) {
+  console.log('Seeding rules for tournament:', tournamentId);
+  // Hardcoded data from app/rules/page.tsx
+  const RULES_SECTIONS = [
+    {
+      icon: 'Shield',
+      title: 'General Tournament Rules',
+      items: [
+        'All games are governed by Softball Canada official rules unless otherwise specified.',
+        'Each team must provide 1 scorekeeper and 1 base umpire per game.',
+        'A minimum of 8 players are required to start a game; fewer than 8 results in a forfeit.',
+        'Teams must be ready to play 10 minutes before their scheduled game time.',
+        'A 10-run mercy rule applies after 4 innings (3.5 innings if home team is ahead).',
+        'Games are 6 innings or 90 minutes maximum. No new inning starts after time expires.',
+        'Protests must be filed with the tournament director before the end of the disputed game.',
+      ],
+    },
+    {
+      icon: 'BookOpen',
+      title: 'Eligibility & Age Divisions',
+      items: [
+        'Players must meet the age requirement for their division as of January 1st of the tournament year.',
+        'U11: Ages 9–11 | U13: Ages 11–13 | U15: Ages 13–15 | U17: Ages 15–17 | U19: Ages 17–19',
+        'Each player may only be registered on one team per division.',
+        'Proof of age (birth certificate or government ID) may be requested at any time.',
+        'Player callups from lower divisions require tournament director approval.',
+        'Overage players are not permitted under any circumstances.',
+      ],
+    },
+    {
+      icon: 'AlertCircle',
+      title: 'Code of Conduct',
+      items: [
+        'Respect for all players, coaches, umpires, and spectators is mandatory.',
+        'Any player, coach, or spectator ejected from a game may not return to the facility that day.',
+        'Aggressive or threatening behaviour will result in immediate removal from the tournament.',
+        'Consumption of alcohol or use of tobacco/cannabis is strictly prohibited in the playing area.',
+        'All disputes must be handled through official channels — no confrontations with umpires.',
+        'Coaches are responsible for the behaviour of their players and spectators.',
+      ],
+    },
+    {
+      icon: 'CheckCircle',
+      title: 'Equipment & Uniforms',
+      items: [
+        'All bats must be certified for play under current Softball Canada regulations.',
+        'Players must wear matching team uniforms with visible numbers.',
+        'Helmets with face guards are mandatory for all batters and base runners.',
+        'Catchers must wear full protective equipment (helmet, chest protector, shin guards).',
+        'Cleats with metal spikes are NOT permitted for U11 and U13 divisions.',
+        'Teams must supply their own game balls — one new ball per game minimum.',
+      ],
+    },
+  ];
+
+  const RESOURCES = [
+    { label: 'Softball Canada Official Rules (PDF)', url: 'https://www.softball.ca/en/rules' },
+    { label: 'Tournament Bracket Format', url: '#' },
+    { label: 'Field Map & Directions', url: '#' },
+    { label: 'Player Registration Form', url: '#' },
+    { label: 'Medical Waiver Form', url: '#' },
+  ];
+
+  try {
+    // Seed Rules
+    for (let i = 0; i < RULES_SECTIONS.length; i++) {
+      const s = RULES_SECTIONS[i];
+      const ruleId = await saveRuleSection({
+        tournamentId,
+        title: s.title,
+        icon: s.icon,
+        order: i
+      });
+      console.log('Saved section:', s.title, 'ID:', ruleId);
+      if (ruleId) {
+        for (let j = 0; j < s.items.length; j++) {
+          await saveRuleItem({
+            ruleId,
+            content: s.items[j],
+            order: j
+          });
+        }
+      }
+    }
+
+    // Seed Resources
+    for (let i = 0; i < RESOURCES.length; i++) {
+      const r = RESOURCES[i];
+      await saveResource({
+        tournamentId,
+        label: r.label,
+        url: r.url,
+        order: i
+      });
+    }
+    console.log('Seeding complete');
+  } catch (err) {
+    console.error('Seeding error:', err);
+    throw err;
   }
 }
