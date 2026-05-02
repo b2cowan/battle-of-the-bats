@@ -1,30 +1,34 @@
 'use client';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useParams } from 'next/navigation';
 import { Calendar, Trophy, Users, Megaphone, FileText } from 'lucide-react';
 import styles from './BottomNav.module.css';
 
-const TABS = [
-  { href: '/news',      icon: Megaphone, label: 'News'     },
-  { href: '/schedule',  icon: Calendar,  label: 'Schedule' },
-  { href: '/results',   icon: Trophy,    label: 'Results'  },
-  { href: '/teams',     icon: Users,     label: 'Teams'    },
-  { href: '/rules',     icon: FileText,  label: 'Rules'    },
+const TAB_KEYS = [
+  { key: 'news',     icon: Megaphone, label: 'News'     },
+  { key: 'schedule', icon: Calendar,  label: 'Schedule' },
+  { key: 'results',  icon: Trophy,    label: 'Results'  },
+  { key: 'teams',    icon: Users,     label: 'Teams'    },
+  { key: 'rules',    icon: FileText,  label: 'Rules'    },
 ];
 
 export default function BottomNav() {
   const pathname = usePathname();
+  const params   = useParams();
+  const orgSlug  = (params?.orgSlug as string) || 'milton-bats';
 
-  // Hide on admin pages
-  if (pathname.startsWith('/admin')) return null;
+  // Hide on any /[orgSlug]/admin/* route
+  const isAdmin = /^\/[^/]+\/admin(\/|$)/.test(pathname) || pathname.startsWith('/admin');
+  if (isAdmin) return null;
 
   return (
     <nav className={styles.bottomNav} aria-label="Mobile navigation">
-      {TABS.map(({ href, icon: Icon, label }) => {
-        const active = href === '/' ? pathname === '/' : (pathname === href || pathname.startsWith(href + '/'));
+      {TAB_KEYS.map(({ key, icon: Icon, label }) => {
+        const href   = `/${orgSlug}/${key}`;
+        const active = pathname.startsWith(href);
         return (
           <Link
-            key={href}
+            key={key}
             href={href}
             className={`${styles.tab} ${active ? styles.active : ''}`}
             id={`bottom-nav-${label.toLowerCase()}`}

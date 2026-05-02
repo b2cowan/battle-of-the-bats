@@ -8,28 +8,31 @@ import {
   RefreshCw, LogOut, X, ChevronRight, ClipboardList, BookUser,
 } from 'lucide-react';
 import { signOut } from '@/lib/auth';
+import { useOrg } from '@/lib/org-context';
 import { useTournament } from '@/lib/tournament-context';
 import { setActiveTournament } from '@/lib/db';
 import styles from './AdminBottomNav.module.css';
 
-const PRIMARY_TABS = [
-  { href: '/admin/teams',         icon: Users,     label: 'Registrations' },
-  { href: '/admin/schedule',      icon: Calendar,  label: 'Schedule' },
-  { href: '/admin/results',       icon: Trophy,    label: 'Results' },
+const PRIMARY_KEYS = [
+  { key: 'teams',    icon: Users,    label: 'Registrations' },
+  { key: 'schedule', icon: Calendar, label: 'Schedule'      },
+  { key: 'results',  icon: Trophy,   label: 'Results'       },
 ];
 
-const MORE_ITEMS = [
-  { href: '/admin',               icon: LayoutDashboard, label: 'Dashboard'     },
-  { href: '/admin/tournaments',   icon: RefreshCw,       label: 'Tournaments'   },
-  { href: '/admin/announcements', icon: Megaphone,       label: 'Announcements' },
-  { href: '/admin/contacts',      icon: BookUser,        label: 'Contacts'      },
-  { href: '/admin/age-groups',    icon: Tag,             label: 'Age Groups'    },
-  { href: '/admin/diamonds',      icon: MapPin,          label: 'Diamonds'      },
+const MORE_KEYS = [
+  { key: '',              icon: LayoutDashboard, label: 'Dashboard'     },
+  { key: 'tournaments',   icon: RefreshCw,       label: 'Tournaments'   },
+  { key: 'announcements', icon: Megaphone,       label: 'Announcements' },
+  { key: 'contacts',      icon: BookUser,        label: 'Contacts'      },
+  { key: 'age-groups',    icon: Tag,             label: 'Age Groups'    },
+  { key: 'diamonds',      icon: MapPin,          label: 'Diamonds'      },
 ];
 
 export default function AdminBottomNav() {
   const pathname  = usePathname();
   const router    = useRouter();
+  const { currentOrg } = useOrg();
+  const base = `/${currentOrg?.slug ?? 'milton-bats'}/admin`;
   const [moreOpen, setMoreOpen] = useState(false);
   const moreRef   = useRef<HTMLDivElement>(null);
   const { tournaments, currentTournament, setCurrentTournament, refresh } = useTournament();
@@ -64,17 +67,19 @@ export default function AdminBottomNav() {
     refresh();
   }
 
-  const isMoreActive = MORE_ITEMS.some(item =>
-    pathname === item.href || pathname.startsWith(item.href + '/')
-  );
+  const isMoreActive = MORE_KEYS.some(item => {
+    const href = item.key ? `${base}/${item.key}` : base;
+    return pathname === href || pathname.startsWith(href + '/');
+  });
 
   return (
     <nav className={styles.bottomNav} aria-label="Admin mobile navigation">
-      {PRIMARY_TABS.map(({ href, icon: Icon, label }) => {
+      {PRIMARY_KEYS.map(({ key, icon: Icon, label }) => {
+        const href   = `${base}/${key}`;
         const active = pathname === href || pathname.startsWith(href + '/');
         return (
           <Link
-            key={href}
+            key={key}
             href={href}
             className={`${styles.tab} ${active ? styles.active : ''}`}
             id={`admin-mob-${label.toLowerCase()}`}
@@ -141,11 +146,14 @@ export default function AdminBottomNav() {
             <div className={styles.dropDivider} />
 
             {/* Nav items */}
-            {MORE_ITEMS.map(({ href, icon: Icon, label }) => {
-              const active = pathname === href || pathname.startsWith(href + '/');
+            {MORE_KEYS.map(({ key, icon: Icon, label }) => {
+              const href   = key ? `${base}/${key}` : base;
+              const active = key === ''
+                ? pathname === base
+                : pathname === href || pathname.startsWith(href + '/');
               return (
                 <Link
-                  key={href}
+                  key={key}
                   href={href}
                   className={`${styles.dropItem} ${active ? styles.dropActive : ''}`}
                   role="menuitem"

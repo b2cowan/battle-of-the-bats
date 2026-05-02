@@ -31,34 +31,25 @@ export async function middleware(request: NextRequest) {
 
   const { pathname } = request.nextUrl;
 
-  // Protect /admin/* — unauthenticated users go to /auth/login
-  // Allow /admin/login through so the redirect page itself renders
-  const isProtectedAdmin =
-    pathname.startsWith('/admin') && pathname !== '/admin/login';
+  // Protect /[orgSlug]/admin/* routes — second path segment must be 'admin'
+  const segments = pathname.split('/').filter(Boolean);
+  const isOrgAdmin = segments.length >= 2 && segments[1] === 'admin';
 
-  if (isProtectedAdmin && !user) {
+  if (isOrgAdmin && !user) {
     const url = request.nextUrl.clone();
     url.pathname = '/auth/login';
     url.searchParams.set('next', pathname);
     return NextResponse.redirect(url);
   }
 
-  // Bounce authenticated users away from auth pages back to admin
-  const isAuthPage =
-    pathname.startsWith('/auth/login') ||
-    pathname.startsWith('/auth/signup') ||
-    pathname === '/admin/login';
-
-  if (isAuthPage && user) {
-    const url = request.nextUrl.clone();
-    url.pathname = '/admin';
-    url.searchParams.delete('next');
-    return NextResponse.redirect(url);
+  // Pass org slug downstream so server components can read it without re-parsing the URL
+  if (segments.length >= 1) {
+    supabaseResponse.headers.set('x-org-slug', segments[0]);
   }
 
   return supabaseResponse;
 }
 
 export const config = {
-  matcher: ['/admin/:path*', '/auth/:path*'],
+  matcher: ['/:slug/admin/:path*', '/auth/:path*'],
 };

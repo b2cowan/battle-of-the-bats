@@ -1,0 +1,22 @@
+.adminShell {
+  display: flex;
+  min-height: 100vh;
+  background: var(--bg);
+}
+
+.adminMain {
+  flex: 1;
+  padding: 2rem;
+  overflow-y: auto;
+  min-width: 0;
+}
+
+/* ── Mobile: hide sidebar, use bottom nav instead ── */
+@media (max-width: 900px) {
+  .adminShell { flex-direction: column; }
+
+  .adminMain {
+    padding: 1rem 1rem calc(80px + env(safe-area-inset-bottom));
+  }
+}
+

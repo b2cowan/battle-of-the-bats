@@ -1,0 +1,208 @@
+.pageHeader {
+  background: linear-gradient(180deg, var(--bg-2) 0%, var(--bg) 100%);
+  border-bottom: 1px solid var(--border);
+  padding: calc(var(--nav-height) + 3rem) 0 3rem;
+}
+
+.pageHeader h1 { color: var(--white); margin: 0.5rem 0; }
+
+.resultsList { display: flex; flex-direction: column; gap: 1rem; }
+
+.resultCard { 
+  display: flex; 
+  flex-direction: column; 
+  gap: 1rem; 
+  overflow: hidden; 
+}
+
+.resultMeta {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.resultDate {
+  font-size: 0.85rem;
+  color: var(--white-60);
+  margin-left: auto;
+}
+
+.resultTime {
+  font-size: 0.85rem;
+  color: var(--white-60);
+}
+
+.scoreRow {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.teamScore {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.away {
+  flex-direction: row-reverse;
+}
+
+.scoreName {
+  font-family: var(--font-display, sans-serif);
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: var(--white-60);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.away .scoreName { text-align: right; }
+
+.score {
+  font-family: var(--font-display);
+  font-size: 2.5rem;
+  font-weight: 900;
+  color: var(--white-60);
+  min-width: 52px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.winner .scoreName { color: var(--white); }
+.winner .score {
+  color: var(--purple-light);
+  text-shadow: 0 0 20px rgba(168,85,247,0.5);
+}
+
+.winIcon { color: var(--warning); flex-shrink: 0; }
+
+.scoreDash {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  color: var(--white-30);
+}
+
+.tieLabel {
+  text-align: center;
+  font-family: var(--font-display);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--white-60);
+  text-transform: uppercase;
+}
+
+@media (max-width: 600px) {
+  .scoreRow { gap: 0.75rem; }
+  .scoreName { font-size: 1rem; }
+  .score { font-size: 1.75rem; }
+}
+
+.summarySection {
+  margin-top: 2rem;
+  margin-bottom: 3rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 1.5rem;
+  overflow: hidden;
+  box-shadow: 0 10px 30px -10px rgba(0,0,0,0.3);
+}
+
+.summaryHeader {
+  padding: 1.25rem 1.5rem;
+  background: rgba(168,85,247,0.05);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+}
+
+.rulesInfo {
+  font-size: 0.65rem;
+  color: var(--white-60);
+  background: var(--white-10);
+  padding: 0.35rem 0.75rem;
+  border-radius: 4px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  border: 1px solid var(--white-10);
+}
+
+.standingsTable {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.standingsTable th {
+  text-align: left;
+  padding: 1rem 1.5rem;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--white-40);
+  background: rgba(255,255,255,0.02);
+  border-bottom: 1px solid var(--border);
+}
+
+.standingsTable td {
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid var(--border-subtle);
+  font-size: 0.95rem;
+  color: var(--white-80);
+}
+
+.standingsTable tr:last-child td { border-bottom: none; }
+
+.teamCell {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-weight: 700;
+  color: var(--white);
+}
+
+.statValue {
+  font-family: var(--font-display);
+  font-weight: 800;
+  color: var(--white);
+}
+
+.poolLabel {
+  color: var(--white-40);
+  font-size: 0.8rem;
+  font-weight: 500;
+  background: var(--white-5);
+  padding: 0.2rem 0.6rem;
+  border-radius: 2rem;
+}
+
+.stickyCol {
+  position: sticky;
+  left: 0;
+  background: var(--bg-card);
+  z-index: 10;
+  box-shadow: 2px 0 8px rgba(0,0,0,0.4);
+}
+
+.standingsTable th.stickyCol {
+  background: var(--bg-3);
+  z-index: 11;
+}
+
+.topRow .stickyCol {
+  background: #1a1528; /* Solid dark color to prevent transparency issues */
+}
+
+.topRow td {
+  background: rgba(250, 204, 21, 0.05);
+  border-bottom: 1px solid rgba(250, 204, 21, 0.2);
+}
+
+.topRow td:first-child {
+  border-left: 3px solid rgba(250, 204, 21, 0.5);
+}

@@ -4,6 +4,7 @@ import { Users, Check, X, CreditCard, RefreshCw, Mail, ChevronDown, ChevronUp, A
 import { saveTeam, updateTeam, deleteTeam, getTeams, getAgeGroups, savePool } from '@/lib/db';
 import { downloadCSV, formatPoolName } from '@/lib/utils';
 import { useTournament } from '@/lib/tournament-context';
+import { useOrg } from '@/lib/org-context';
 import { AgeGroup, Team } from '@/lib/types';
 import s from '../admin-common.module.css';
 import styles from './teams-admin.module.css';
@@ -28,6 +29,7 @@ type Status = 'pending' | 'accepted' | 'rejected' | 'waitlist';
 
 export default function UnifiedTeamsPage() {
   const { currentTournament } = useTournament();
+  const { currentOrg } = useOrg();
   const [regs, setRegs]       = useState<TeamRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedStatuses, setSelectedStatuses] = useState<Status[]>(['pending', 'accepted', 'waitlist']);
@@ -373,7 +375,7 @@ export default function UnifiedTeamsPage() {
                     <Trash2 size={14} />
                   </button>
                   {r.status === 'accepted' && (
-                    <a href={`/teams/${r.id}`} target="_blank" className="btn btn-ghost btn-xs">Profile ↗</a>
+                    <a href={`/${currentOrg?.slug ?? 'milton-bats'}/teams/${r.id}`} target="_blank" className="btn btn-ghost btn-xs">Profile ↗</a>
                   )}
                 </div>
               </div>

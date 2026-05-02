@@ -1,20 +1,22 @@
 'use client';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useParams } from 'next/navigation';
 import { Check } from 'lucide-react'; // Removing Menu, X as they are no longer used
 import styles from './Navbar.module.css';
 
-const NAV_LINKS = [
-  { href: '/news',     label: 'News'     },
-  { href: '/schedule', label: 'Schedule' },
-  { href: '/results',  label: 'Results'  },
-  { href: '/teams',    label: 'Teams'    },
-  { href: '/rules',    label: 'Rules'    },
+const NAV_KEYS = [
+  { key: 'news',     label: 'News'     },
+  { key: 'schedule', label: 'Schedule' },
+  { key: 'results',  label: 'Results'  },
+  { key: 'teams',    label: 'Teams'    },
+  { key: 'rules',    label: 'Rules'    },
 ];
 
 export default function Navbar() {
   const pathname = usePathname();
+  const params   = useParams();
+  const orgSlug  = (params?.orgSlug as string) || 'milton-bats';
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
@@ -23,13 +25,15 @@ export default function Navbar() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  if (pathname.startsWith('/admin')) return null;
+  // Hide on any /[orgSlug]/admin/* route
+  const isAdmin = /^\/[^/]+\/admin(\/|$)/.test(pathname) || pathname.startsWith('/admin');
+  if (isAdmin) return null;
 
   return (
     <nav className={`${styles.nav} ${scrolled ? styles.scrolled : ''}`}>
       <div className={`container ${styles.inner}`}>
         {/* Logo */}
-        <Link href="/" className={styles.logo}>
+        <Link href={`/${orgSlug}`} className={styles.logo}>
           <img src="/logo.png" alt="Milton Bats Logo" className={styles.logoImg} />
           <div className={styles.logoText}>
             <span className={styles.logoMain}>BATTLE</span>
@@ -39,12 +43,13 @@ export default function Navbar() {
 
         {/* Desktop links */}
         <div className={styles.links}>
-          {NAV_LINKS.map(l => {
-            const isActive = l.href === '/' ? pathname === '/' : pathname.startsWith(l.href);
+          {NAV_KEYS.map(l => {
+            const href = `/${orgSlug}/${l.key}`;
+            const isActive = pathname.startsWith(href);
             return (
               <Link
-                key={l.href}
-                href={l.href}
+                key={l.key}
+                href={href}
                 className={`${styles.link} ${isActive ? styles.active : ''}`}
               >
                 {l.label}
@@ -53,9 +58,9 @@ export default function Navbar() {
           })}
         </div>
 
-        {/* Register CTA + Hamburger */}
+        {/* Register CTA */}
         <div className={styles.actions}>
-          <Link href="/register" className="btn btn-primary btn-sm" id="nav-register-btn">
+          <Link href={`/${orgSlug}/register`} className="btn btn-primary btn-sm" id="nav-register-btn">
             Register
           </Link>
         </div>

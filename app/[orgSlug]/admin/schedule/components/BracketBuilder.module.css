@@ -1,0 +1,288 @@
+.builderContainer {
+  width: 100%;
+  overflow-x: auto;
+  padding: 1rem 0;
+}
+
+.canvas {
+  display: flex;
+  gap: 1.5rem;
+  width: max-content;
+  margin: 0 auto;
+}
+
+.roundColumn {
+  width: 220px;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.roundHeader {
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid var(--white-10);
+}
+
+.roundTitleInput {
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--purple-light);
+  font-family: var(--font-display);
+  font-size: 0.9rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  width: 100%;
+  padding: 0.25rem;
+  border-radius: var(--radius-sm);
+  text-align: center;
+  transition: border-color 0.2s ease;
+}
+
+.roundTitleInput:hover, .roundTitleInput:focus {
+  border-color: var(--purple-light);
+  outline: none;
+  background: var(--white-5);
+}
+
+.matchupList {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  flex: 1;
+  justify-content: center;
+}
+
+.matchupCard {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+}
+
+.matchupHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.4rem 0.5rem;
+  background: var(--black-20);
+  border-bottom: 1px solid var(--border);
+  border-top-left-radius: var(--radius-md);
+  border-top-right-radius: var(--radius-md);
+}
+
+.dragHandle {
+  cursor: grab;
+  color: var(--white-40);
+  padding: 0.25rem;
+  border-radius: var(--radius-sm);
+}
+
+.dragHandle:active {
+  cursor: grabbing;
+}
+
+.dragHandle:hover {
+  background: var(--white-10);
+  color: var(--white);
+}
+
+.codeInput {
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--white);
+  font-size: 0.75rem;
+  font-weight: 700;
+  width: 50px;
+  padding: 0.1rem 0.2rem;
+  border-radius: 4px;
+}
+
+.codeInput:focus {
+  border-color: var(--purple-light);
+  outline: none;
+  background: var(--black-40);
+}
+
+.deleteBtn {
+  background: transparent;
+  border: none;
+  color: var(--danger-light);
+  opacity: 0.5;
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 4px;
+  transition: opacity 0.2s ease;
+}
+
+.deleteBtn:hover {
+  opacity: 1;
+  background: var(--danger-faint);
+}
+
+.matchupBody {
+  padding: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.teamRow {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.teamLabel {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  color: var(--white-40);
+  font-weight: 800;
+  width: 35px;
+}
+
+.teamInput {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+  background: var(--black-30);
+  border: 1px solid var(--border-2);
+  border-radius: 4px;
+  padding: 0.2rem 0.4rem;
+  color: var(--white);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.teamInput:focus {
+  border-color: var(--purple-light);
+  outline: none;
+}
+
+.matchupFooter {
+  padding: 0.5rem;
+  border-top: 1px solid var(--border);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+  background: var(--black-10);
+  border-bottom-left-radius: var(--radius-md);
+  border-bottom-right-radius: var(--radius-md);
+}
+
+.dateInput, .timeInput, .fieldSelect {
+  width: 100%;
+  min-width: 0;
+  background: var(--black-30);
+  border: 1px solid var(--border-2);
+  border-radius: 4px;
+  padding: 0.15rem 0.25rem;
+  color: var(--white-80);
+  font-size: 0.7rem;
+}
+
+.fieldSelect {
+  grid-column: span 2;
+}
+
+.addBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.5rem;
+  background: var(--white-5);
+  border: 1px dashed var(--white-20);
+  border-radius: var(--radius-md);
+  color: var(--white-60);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.addBtn:hover {
+  background: var(--white-10);
+  border-color: var(--purple-light);
+  color: var(--purple-light);
+}
+
+.addRoundColLeft {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  padding-right: 0.5rem;
+}
+
+.addRoundBtnSimple {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: transparent;
+  border: 2px dashed var(--white-20);
+  border-radius: 50%;
+  color: var(--white-40);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.addRoundBtnSimple:hover {
+  border-color: var(--purple-light);
+  color: var(--purple-light);
+  background: var(--white-10);
+}
+
+.poolGroupHeader {
+  display: none; /* Replaced by the new sectional layout */
+}
+
+.splitBrackets {
+  display: flex;
+  flex-direction: column;
+  gap: 3rem;
+  width: 100%;
+}
+
+.poolSection {
+  background: var(--black-20);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  width: max-content;
+  min-width: 100%;
+}
+
+.poolHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 2rem;
+  color: var(--purple-light);
+}
+
+.poolHeader span {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: 1.1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.roundTitleText {
+  color: var(--purple-light);
+  font-family: var(--font-display);
+  font-size: 0.9rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  display: block;
+  text-align: center;
+  width: 100%;
+  padding: 0.25rem;
+}

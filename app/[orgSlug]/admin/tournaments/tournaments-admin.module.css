@@ -1,0 +1,255 @@
+.page { max-width: 820px; }
+
+.pageHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.headerLeft { display: flex; align-items: center; gap: 1rem; }
+
+.headerIcon {
+  width: 48px;
+  height: 48px;
+  background: var(--purple-faint);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--purple-light);
+}
+
+.pageTitle { font-family: var(--font-display); font-size: 1.75rem; font-weight: 900; color: var(--white); }
+.pageSub   { color: var(--white-60); font-size: 0.9rem; max-width: 440px; }
+
+.infoCard {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  background: rgba(139,47,201,0.07);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.infoCard p { font-size: 0.875rem; color: var(--white-60); line-height: 1.6; }
+.infoCard strong { color: var(--white); }
+
+.activeToggle {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  background: var(--white-10);
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius-sm);
+  margin-bottom: 0.5rem;
+}
+
+.activeToggle input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--purple);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.activeToggle label {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.9rem;
+  color: var(--white-60);
+  cursor: pointer;
+}
+
+.migrationSection {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border);
+}
+
+.migrationHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--purple-light);
+  margin-bottom: 1rem;
+}
+
+.migrationHeader h4 {
+  font-size: 1rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.migrationOptions, .setupGroup {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: var(--white-5);
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius-sm);
+}
+
+.checkboxGroup {
+  margin-bottom: 0.5rem;
+}
+
+.checkboxLabel {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  color: var(--white-80);
+  cursor: pointer;
+  padding: 0.25rem 0;
+}
+
+.checkboxLabel input {
+  accent-color: var(--purple);
+}
+
+.contactPicker {
+  margin-top: 1rem;
+  border-top: 1px solid var(--border-2);
+  padding-top: 0.75rem;
+}
+
+.contactList {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 0.5rem;
+  max-height: 150px;
+  overflow-y: auto;
+  margin-top: 0.5rem;
+  padding: 0.5rem;
+  background: var(--black-20);
+  border-radius: var(--radius-xs);
+}
+
+.divisionGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.divisionRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem;
+  background: var(--black-20);
+  border-radius: var(--radius-xs);
+  border: 1px solid var(--border-2);
+}
+
+.capInputWrap {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.divisionControls {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.5rem;
+}
+
+.subInput {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.subInput label {
+  font-size: 0.75rem;
+  color: var(--white-30);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.subInput input {
+  width: 55px;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.9rem;
+}
+
+.subCheck {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.subCheck label {
+  font-size: 0.75rem;
+  color: var(--white-30);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.subCheck input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--purple);
+}
+
+.migrationSection textarea {
+  margin-top: 0.5rem;
+  width: 100%;
+}
+
+.seedGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.scheduleParamsPanel {
+  margin-top: 1.5rem;
+  padding: 1rem;
+  background: rgba(168,85,247,0.05);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+.poolNamesList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  width: 100%;
+  margin-top: 0.25rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--border-1);
+}
+
+.poolNameItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.poolNameItem label {
+  font-size: 0.7rem;
+  color: var(--white-20);
+  text-transform: uppercase;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.poolNameItem input {
+  flex: 1;
+  max-width: 140px;
+  padding: 0.2rem 0.5rem;
+  font-size: 0.85rem;
+  height: 28px;
+}
+

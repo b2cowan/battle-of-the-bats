@@ -1,0 +1,113 @@
+/* ─── Teams-Specific Styles ───────────────────────────────────────────────── */
+/* Common styles live in ../admin-common.module.css                           */
+
+/* ─── Bulk Action Bar ─────────────────────────────────────────────────────── */
+.bulkBar {
+  position: sticky;
+  top: 1rem;
+  z-index: 100;
+  background: var(--purple);
+  border-radius: var(--radius-lg);
+  padding: 1rem 1.5rem;
+  margin-bottom: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+  border: 1px solid var(--purple-light);
+  animation: slideDown 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideDown {
+  from { transform: translateY(-20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.bulkInfo { display: flex; align-items: center; gap: 1rem; color: var(--white); font-size: 1rem; }
+.bulkButtons { display: flex; align-items: center; gap: 0.75rem; }
+.bulkButtons .btn { border-color: rgba(255, 255, 255, 0.2); }
+.bulkButtons .btn:hover { background: rgba(255, 255, 255, 0.1); }
+
+/* ─── Summary Dashboard Modal ─────────────────────────────────────────────── */
+.summaryGridModal {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1.5rem;
+}
+
+.summaryCardModal {
+  background: var(--black-30);
+  border: 1px solid var(--white-10);
+  border-radius: 16px;
+  padding: 1.5rem;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.summaryCardModal:hover {
+  background: var(--black-40);
+  border-color: var(--purple-light);
+  transform: translateY(-4px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.summaryHeader { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; }
+.summaryHeader strong { font-size: 0.9rem; color: var(--white); }
+
+.capacityBadge, .fullBadge { font-size: 0.75rem; padding: 0.2rem 0.6rem; border-radius: 99px; font-weight: 700; }
+.capacityBadge { background: var(--white-10); color: var(--white-60); }
+.fullBadge { background: var(--danger-faint); color: var(--danger-light); border: 1px solid var(--danger-faint); }
+
+.summaryStats { font-size: 0.8rem; color: var(--white-30); }
+
+/* ─── Expanded Row Details ────────────────────────────────────────────────── */
+.infoLine { display: flex; align-items: center; gap: 2rem; font-size: 0.9rem; }
+.infoLine span { color: var(--white-40); }
+.infoLine a { color: var(--purple-light); font-weight: 600; text-decoration: underline; }
+
+.notesArea, .transferGroup { display: flex; flex-direction: column; gap: 0.75rem; }
+.notesArea label, .transferGroup label { font-size: 0.75rem; text-transform: uppercase; font-weight: 900; color: var(--white-20); letter-spacing: 0.1em; }
+
+.notesArea textarea {
+  background: var(--black-30);
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius-md);
+  color: var(--white-80);
+  padding: 1rem;
+  font-size: 0.95rem;
+  min-height: 100px;
+  width: 100%;
+  resize: vertical;
+  transition: border-color 0.2s ease;
+}
+
+.notesArea textarea:focus { border-color: var(--purple-light); outline: none; }
+
+.transferGroup select {
+  background: #111111;
+  border: 1px solid var(--border-2);
+  color: #ffffff;
+  padding: 0.75rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.95rem;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  padding-right: 2.5rem;
+  color-scheme: dark;
+}
+
+.transferGroup select:hover {
+  border-color: var(--white-20);
+  background-color: var(--black-20);
+}
+
+.transferGroup select:focus {
+  outline: none;
+  border-color: var(--purple-light);
+  box-shadow: 0 0 0 2px var(--purple-faint);
+}
+
+.buttonGroup { display: flex; flex-wrap: wrap; gap: 0.75rem; }

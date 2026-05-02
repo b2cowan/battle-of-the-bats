@@ -3,26 +3,29 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { LayoutDashboard, Users, Calendar, Trophy, Megaphone, Tag, LogOut, Home, ChevronRight, MapPin, RefreshCw, ClipboardList, BookUser, BookOpen } from 'lucide-react';
 import { signOut } from '@/lib/auth';
+import { useOrg } from '@/lib/org-context';
 import { useTournament } from '@/lib/tournament-context';
 import { setActiveTournament } from '@/lib/db';
 import styles from './AdminSidebar.module.css';
 
-const NAV = [
-  { href: '/admin',                 icon: LayoutDashboard, label: 'Dashboard'     },
-  { href: '/admin/tournaments',     icon: RefreshCw,       label: 'Tournaments'   },
-  { href: '/admin/announcements',   icon: Megaphone,       label: 'Announcements' },
-  { href: '/admin/contacts',        icon: BookUser,        label: 'Contacts'      },
-  { href: '/admin/age-groups',      icon: Tag,             label: 'Age Groups'    },
-  { href: '/admin/teams',           icon: Users,           label: 'Registrations'  },
-  { href: '/admin/schedule',        icon: Calendar,        label: 'Schedule'      },
-  { href: '/admin/results',         icon: Trophy,          label: 'Results'       },
-  { href: '/admin/rules',           icon: BookOpen,        label: 'Rules & Resources' },
-  { href: '/admin/diamonds',        icon: MapPin,          label: 'Diamonds'      },
+const NAV_KEYS = [
+  { key: '',               icon: LayoutDashboard, label: 'Dashboard'         },
+  { key: 'tournaments',    icon: RefreshCw,       label: 'Tournaments'       },
+  { key: 'announcements',  icon: Megaphone,       label: 'Announcements'     },
+  { key: 'contacts',       icon: BookUser,        label: 'Contacts'          },
+  { key: 'age-groups',     icon: Tag,             label: 'Age Groups'        },
+  { key: 'teams',          icon: Users,           label: 'Registrations'     },
+  { key: 'schedule',       icon: Calendar,        label: 'Schedule'          },
+  { key: 'results',        icon: Trophy,          label: 'Results'           },
+  { key: 'rules',          icon: BookOpen,        label: 'Rules & Resources' },
+  { key: 'diamonds',       icon: MapPin,          label: 'Diamonds'          },
 ];
 
 export default function AdminSidebar() {
   const pathname = usePathname();
   const router   = useRouter();
+  const { currentOrg } = useOrg();
+  const base = `/${currentOrg?.slug ?? 'milton-bats'}/admin`;
   const { tournaments, currentTournament, setCurrentTournament, refresh } = useTournament();
 
   async function handleLogout() {
@@ -81,12 +84,15 @@ export default function AdminSidebar() {
 
       {/* Nav */}
       <nav className={styles.nav}>
-        {NAV.map(item => {
-          const active = pathname === item.href || (item.href !== '/admin' && pathname.startsWith(item.href));
+        {NAV_KEYS.map(item => {
+          const href   = item.key ? `${base}/${item.key}` : base;
+          const active = item.key === ''
+            ? pathname === base
+            : pathname.startsWith(`${base}/${item.key}`);
           return (
             <Link
-              key={item.href}
-              href={item.href}
+              key={item.key}
+              href={href}
               className={`${styles.navItem} ${active ? styles.navActive : ''}`}
               id={`admin-nav-${item.label.toLowerCase().replace(/\s/g, '-')}`}
             >
@@ -100,7 +106,7 @@ export default function AdminSidebar() {
 
       {/* Footer */}
       <div className={styles.footer}>
-        <Link href="/" className={styles.footerLink} id="admin-back-site">
+        <Link href={`/${currentOrg?.slug ?? 'milton-bats'}`} className={styles.footerLink} id="admin-back-site">
           <Home size={15} /> Back to Site
         </Link>
         <button onClick={handleLogout} className={styles.logoutBtn} id="admin-logout">

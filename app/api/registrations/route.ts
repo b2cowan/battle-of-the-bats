@@ -38,10 +38,8 @@ export async function GET(req: NextRequest) {
 
     const flattened = teamsRes.data?.map((r: any) => ({
       ...r,
-      team_name: r.name,
-      coach_name: r.coach,
       age_group_name: groupsMap.get(r.age_group_id) || 'Unknown Division',
-      tournament_name: tournsMap.get(r.tournament_id) || 'Unknown Tournament',
+      tournament_name: r.tournament_id ? tournsMap.get(r.tournament_id) : 'Internal',
     }));
 
     return NextResponse.json(flattened);

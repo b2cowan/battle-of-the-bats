@@ -1176,6 +1176,11 @@ export async function getTournamentsByOrg(orgId: string): Promise<Tournament[]> 
   return (data || []).map(mapTournament);
 }
 
+export async function getActiveTournamentByOrg(orgId: string): Promise<Tournament | null> {
+  const ts = await getTournamentsByOrg(orgId);
+  return ts.find(t => t.isActive) ?? null;
+}
+
 // Server-side only (uses service role key) ────────────────────────────────────
 
 export async function createOrganization(

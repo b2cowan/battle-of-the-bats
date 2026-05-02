@@ -1,0 +1,234 @@
+.pageHeader {
+  background: linear-gradient(180deg, var(--bg-2) 0%, var(--bg) 100%);
+  border-bottom: 1px solid var(--border);
+  padding: calc(var(--nav-height) + 3rem) 0 3rem;
+}
+
+.pageHeader h1 { color: var(--white); margin: 0.5rem 0; }
+
+.divisionLayout {
+  display: flex;
+  flex-direction: column;
+  gap: 4rem;
+  margin-top: 2rem;
+}
+
+.searchRow {
+  position: relative;
+  max-width: 400px;
+  margin-bottom: 1rem;
+}
+
+.searchIcon {
+  position: absolute;
+  left: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--white-40);
+  pointer-events: none;
+}
+
+.searchInput {
+  width: 100%;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  padding: 0.6rem 1rem 0.6rem 2.5rem;
+  color: var(--white);
+  font-size: 0.9rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.searchInput:focus {
+  outline: none;
+  border-color: var(--purple);
+  box-shadow: 0 0 0 2px rgba(168,85,247,0.2);
+}
+
+.tabCount {
+  opacity: 0.65;
+  font-size: 0.7rem;
+  background: var(--white-10);
+  padding: 1px 6px;
+  border-radius: 999px;
+  margin-left: 4px;
+}
+
+.groupSection {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.groupTitle {
+  font-family: var(--font-display, sans-serif);
+  font-size: 2.25rem;
+  font-weight: 900;
+  color: var(--white);
+  border-bottom: 1px solid var(--border-2);
+  padding-bottom: 1rem;
+}
+
+.poolGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.poolCard {
+  background: var(--white-5);
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius-md);
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.poolName {
+  font-family: var(--font-display, sans-serif);
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--purple-light);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.teamList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.teamRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem;
+  background: var(--white-5);
+  border-radius: var(--radius-sm);
+  transition: all 0.2s ease;
+}
+
+.teamRow:hover {
+  background: var(--white-10);
+  transform: translateX(4px);
+}
+
+.teamMain {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+
+
+.teamName {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--white);
+  margin-bottom: 0.15rem;
+}
+
+.coach {
+  font-size: 0.75rem;
+  color: var(--white-30);
+}
+
+.viewLink {
+  font-size: 0.75rem;
+  color: var(--purple-light);
+  font-weight: 600;
+  opacity: 0.6;
+  transition: opacity 0.2s ease;
+}
+
+.viewLink:hover {
+  opacity: 1;
+}
+
+/* --- Mobile Responsiveness --- */
+
+@media (max-width: 768px) {
+  .divisionLayout {
+    gap: 2.5rem;
+  }
+
+  .groupTitle {
+    font-size: 1.75rem;
+    padding-bottom: 0.75rem;
+  }
+
+  .poolGrid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .poolCard {
+    padding: 1rem;
+  }
+
+  .poolName {
+    font-size: 1.1rem;
+  }
+
+  .teamRow {
+    padding: 0.6rem;
+  }
+
+
+
+  .teamName {
+    font-size: 0.9rem;
+  }
+
+  .viewLink {
+    font-size: 0.7rem;
+  }
+}
+
+.playerCount { text-align: center; }
+
+.playerNum {
+  display: block;
+  font-family: var(--font-display, sans-serif);
+  font-size: 1.75rem;
+  font-weight: 900;
+  color: var(--purple-light);
+  line-height: 1;
+}
+
+.playerLabel {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--white-60);
+}
+
+.rosterToggle {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  background: var(--white-10);
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius-sm);
+  color: var(--white-60);
+  font-size: 0.875rem;
+  font-weight: 600;
+  transition: var(--transition);
+}
+
+.rosterToggle:hover { background: var(--purple-faint); color: var(--purple-light); }
+
+.rosterTable { animation: fadeInUp 0.25s ease; }
+
+.jerseyNum {
+  display: inline-block;
+  min-width: 28px;
+  text-align: center;
+  font-family: var(--font-display);
+  font-weight: 700;
+  color: var(--purple-light);
+}

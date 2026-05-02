@@ -1,0 +1,100 @@
+.pageHeader {
+  background: linear-gradient(180deg, var(--bg-2) 0%, var(--bg) 100%);
+  border-bottom: 1px solid var(--border);
+  padding: calc(var(--nav-height) + 3rem) 0 3rem;
+}
+
+.pageHeader h1 { color: var(--white); margin: 0.5rem 0; }
+.pageHeader p { max-width: 640px; }
+
+.rulesGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.ruleCard { display: flex; flex-direction: column; gap: 1.25rem; }
+
+.ruleCardHeader { display: flex; align-items: center; gap: 0.875rem; }
+
+.ruleIcon {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background: var(--purple-faint);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--purple-light);
+  flex-shrink: 0;
+}
+
+.ruleTitle {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--white);
+}
+
+.ruleList { display: flex; flex-direction: column; gap: 0.625rem; }
+
+.ruleItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  font-size: 0.9375rem;
+  color: var(--white-60);
+  line-height: 1.6;
+}
+
+.ruleBullet {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--purple);
+  flex-shrink: 0;
+  margin-top: 0.55em;
+}
+
+.resourcesCard { margin-bottom: 1.5rem; }
+
+.resourcesList { display: flex; flex-direction: column; gap: 0.5rem; }
+
+.resourceItem {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.75rem 1rem;
+  background: var(--white-10);
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius-sm);
+  color: var(--purple-light);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  transition: var(--transition);
+}
+
+.resourceItem:hover {
+  background: var(--purple-faint);
+  border-color: var(--purple);
+  padding-left: 1.25rem;
+}
+
+.disclaimerCard {
+  background: rgba(139,47,201,0.06);
+  border-color: var(--border);
+}
+
+.disclaimerCard p {
+  font-size: 0.9rem;
+  color: var(--white-60);
+  line-height: 1.7;
+}
+
+.disclaimerCard a { color: var(--purple-light); text-decoration: underline; }
+
+@media (max-width: 768px) {
+  .rulesGrid { grid-template-columns: 1fr; }
+}

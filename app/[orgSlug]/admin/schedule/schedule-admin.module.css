@@ -1,0 +1,214 @@
+/* ─── Schedule-Specific Styles ────────────────────────────────────────────── */
+/* Common styles live in ../admin-common.module.css                           */
+
+/* ─── Generator Overlay & Modal ───────────────────────────────────────────── */
+.generatorOverlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.85);
+  backdrop-filter: blur(8px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.generatorModal {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  width: 100%;
+  max-width: 700px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.generatorHeader {
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.generatorHeader h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--white);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.generatorForm, .generatorPreview {
+  padding: 1.5rem;
+  overflow-y: auto;
+}
+
+.diamondGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+  padding: 1rem;
+  background: var(--black-20);
+  border-radius: var(--radius-sm);
+}
+
+.diamondCheck {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  color: var(--white-80);
+  cursor: pointer;
+}
+
+.diamondCheck input {
+  accent-color: var(--purple);
+}
+
+.previewStats {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  background: var(--white-5);
+  border-radius: var(--radius-sm);
+  font-size: 0.9rem;
+}
+
+.previewTableWrap {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  margin-bottom: 1.5rem;
+}
+
+.previewTableWrap table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.previewTableWrap th {
+  background: var(--white-5);
+  text-align: left;
+  padding: 0.75rem;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--white-40);
+}
+
+.previewTableWrap td {
+  padding: 0.75rem;
+  border-top: 1px solid var(--border);
+  font-size: 0.9rem;
+  color: var(--white-80);
+}
+
+.previewFooter {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 1rem;
+  padding: 1.25rem 1.5rem;
+  border-top: 1px solid var(--border);
+  margin-top: auto;
+}
+
+.errorBanner {
+  background: rgba(239,68,68,0.1);
+  border: 1px solid rgba(239,68,68,0.3);
+  color: #f87171;
+  padding: 0.75rem;
+  border-radius: var(--radius-sm);
+  margin-bottom: 1rem;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.dateSlotList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+  padding: 1rem;
+  background: var(--black-20);
+  border-radius: var(--radius-sm);
+}
+
+.dateSlotRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  background: var(--white-5);
+  padding: 0.75rem;
+  border-radius: var(--radius-xs);
+  border: 1px solid var(--border-2);
+}
+
+.dateSlotRow .formGroup {
+  margin-bottom: 0;
+}
+
+/* ─── Score Entry (shared with Results) ───────────────────────────────────── */
+.scoreInputArea {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  padding: 2rem 1rem;
+}
+
+.scoreTeam { text-align: center; }
+
+.scoreTeamName {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--white);
+  margin-bottom: 0.75rem;
+  max-width: 140px;
+  word-break: break-word;
+}
+
+.scoreInput {
+  width: 90px !important;
+  text-align: center;
+  font-family: var(--font-display);
+  font-size: 2rem !important;
+  font-weight: 900;
+  color: var(--purple-light) !important;
+}
+
+.scoreTeamLabel {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--white-60);
+  margin-top: 0.5rem;
+}
+
+.scoreSep {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  font-weight: 900;
+  color: var(--white-30);
+  padding-top: 1.5rem;
+}
+
+/* ─── Game Row Cell ───────────────────────────────────────────────────────── */
+.cell {
+  font-size: 0.95rem;
+  color: var(--white-90);
+}
+
+.expanded {
+  background: var(--white-5);
+}
