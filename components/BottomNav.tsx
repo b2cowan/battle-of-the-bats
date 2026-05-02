@@ -17,9 +17,10 @@ export default function BottomNav() {
   const params   = useParams();
   const orgSlug  = (params?.orgSlug as string) || 'milton-bats';
 
-  // Hide on any /[orgSlug]/admin/* route
+  // Hide on admin routes and marketing/auth pages
   const isAdmin = /^\/[^/]+\/admin(\/|$)/.test(pathname) || pathname.startsWith('/admin');
-  if (isAdmin) return null;
+  const isMarketing = pathname === '/' || pathname.startsWith('/discover') || pathname.startsWith('/auth');
+  if (isAdmin || isMarketing) return null;
 
   return (
     <nav className={styles.bottomNav} aria-label="Mobile navigation">
