@@ -41,6 +41,36 @@
 ## Future Considerations
 - **Double Elimination Brackets**: The playoff system currently supports single elimination only. Double elimination (with a losers bracket and cross-connections) should be revisited once the custom bracket builder is stable. This would require extending the bracket canvas to render a parallel losers bracket with merge points back into the winners bracket.
 
+## Multi-Tenancy Implementation Status (as of May 2026)
+
+### Completed
+- **Phase 1 — Auth Foundation**: Supabase Auth replaces hardcoded credentials. `middleware.ts` guards `/admin/*`. `OrgProvider` context. `/auth/login` and `/auth/signup` pages. `/api/auth/signup` route creates user + org + member atomically.
+- **Phase 2 — API Security + RLS**: `lib/api-auth.ts` shared helper guards all `/api/admin/*` routes. `supabase/migrations/002_rls.sql` enables RLS on all 11 tables with public-read + org-member-write policies. Registrations endpoint scoped to org. Plan limit enforced on tournament creation.
+- **RLS Bug Fix**: `getOrganizationByUserId` used anon client which can't read `organization_members` under RLS. Fixed: `api-auth.ts` uses `supabaseAdmin`; `org-context.tsx` uses browser client (JWT attached).
+
+### Branch State
+- `master`: Phase 1 + Phase 2 (without 401 fix — the fix is on dev only)
+- `dev`: Everything above including the 401 fix. **Deploy dev → master before starting Phase 3.**
+
+### Manual Steps Still Required
+- Run `supabase/migrations/002_rls.sql` in Supabase SQL Editor if not yet done (enables RLS)
+- Confirm registrations page loads after 401 fix is deployed to master
+
+### Next: Phase 3 — Multi-Org Routing & Page Migration
+See `MULTI_TENANT_ARCHITECTURE.md` Section 8, Phase 3 for full task list. Summary:
+- Add `[orgSlug]` dynamic segment: all public pages move under `app/[orgSlug]/`
+- New `app/[orgSlug]/layout.tsx` resolves slug → org via DB, provides OrgContext
+- Add 301 redirects: `/schedule` → `/milton-softball/schedule`, etc.
+- Update middleware to attach `x-org-id` header from slug
+- Move admin pages to `app/[orgSlug]/admin/` (protected by org membership)
+- Update `lib/db.ts` calls to accept and filter by `orgId`
+- Backward-compat: Milton Softball slug is `milton-softball`
+
+### Key Org Data
+- Organization name: Milton Softball Association
+- Organization slug: `milton-softball` (set during signup or migration)
+- All existing tournaments linked to this org via `organization_id`
+
 ## Workspace State (as of April 2026)
 - The unified database migration is complete and verified.
 - Deployment issues regarding pnpm script approvals are resolved via `.npmrc`.
