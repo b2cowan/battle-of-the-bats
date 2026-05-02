@@ -1,16 +1,20 @@
 import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
+import { getAuthContext, unauthorized } from '@/lib/api-auth';
 
 export async function POST(req: Request) {
+  const auth = await getAuthContext();
+  if (!auth) return unauthorized();
+
   try {
     const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
     if (!url || !key) {
       console.error("Setup API Error: Missing environment variables", { url: !!url, key: !!key });
-      return new Response(JSON.stringify({ 
-        error: `Environment variables missing on server. URL: ${!!url}, KEY: ${!!key}. Please check Amplify settings.` 
-      }), { 
+      return new Response(JSON.stringify({
+        error: `Environment variables missing on server. URL: ${!!url}, KEY: ${!!key}. Please check Amplify settings.`
+      }), {
         status: 500,
         headers: { 'Content-Type': 'application/json' }
       });
@@ -35,10 +39,24 @@ export async function POST(req: Request) {
 
     const { tournament, divisions, announcement, seedData, scheduleParams, migration } = body;
 
-    // 0. If this new tournament is active, deactivate ALL others first
+    // 0a. Plan limit: count existing tournaments for this org
+    const { count: existingCount } = await supabase
+      .from('tournaments')
+      .select('*', { count: 'exact', head: true })
+      .eq('organization_id', auth.org.id);
+
+    if ((existingCount ?? 0) >= auth.org.tournamentLimit) {
+      return new Response(JSON.stringify({
+        error: `You've reached your ${auth.org.tournamentLimit} tournament limit. Upgrade your plan to create more.`
+      }), { status: 403, headers: { 'Content-Type': 'application/json' } });
+    }
+
+    // 0b. If this new tournament is active, deactivate org's others first
     if (tournament.isActive) {
       log('Deactivating other tournaments');
-      await supabase.from('tournaments').update({ is_active: false }).neq('id', '00000000-0000-0000-0000-000000000000');
+      await supabase.from('tournaments')
+        .update({ is_active: false })
+        .eq('organization_id', auth.org.id);
     }
 
     // 1. Create Tournament
@@ -49,7 +67,8 @@ export async function POST(req: Request) {
         name: tournament.name,
         is_active: tournament.isActive,
         start_date: tournament.startDate,
-        end_date: tournament.endDate
+        end_date: tournament.endDate,
+        organization_id: auth.org.id,
       })
       .select()
       .single();

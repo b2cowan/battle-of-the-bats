@@ -1,7 +1,11 @@
 import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
+import { getAuthContext, unauthorized } from '@/lib/api-auth';
 
 export async function POST(req: Request) {
+  const auth = await getAuthContext();
+  if (!auth) return unauthorized();
+
   try {
     const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
