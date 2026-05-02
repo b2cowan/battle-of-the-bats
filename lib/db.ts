@@ -1,5 +1,6 @@
 import { supabase } from './supabase';
-import { Tournament, Diamond, Contact, AgeGroup, Pool, Team, Game, Announcement, PlayoffConfig, RuleSection, RuleItem, Resource } from './types';
+import { supabaseAdmin } from './supabase-admin';
+import { Tournament, Diamond, Contact, AgeGroup, Pool, Team, Game, Announcement, PlayoffConfig, RuleSection, RuleItem, Resource, Organization, OrganizationMember, OrgPlan, OrgRole } from './types';
 
 // --- Tournaments ---
 export async function getTournaments(): Promise<Tournament[]> {
@@ -1126,4 +1127,123 @@ export async function seedRulesAndResources(tournamentId: string) {
     console.error('Seeding error:', err);
     throw err;
   }
+}
+
+// ── Organizations ─────────────────────────────────────────────────────────────
+
+export async function getOrganizationBySlug(slug: string): Promise<Organization | null> {
+  const { data, error } = await supabase
+    .from('organizations')
+    .select('*')
+    .eq('slug', slug)
+    .single();
+  if (error || !data) return null;
+  return mapOrg(data);
+}
+
+export async function getOrganizationByUserId(userId: string): Promise<Organization | null> {
+  const { data, error } = await supabase
+    .from('organization_members')
+    .select('organizations(*)')
+    .eq('user_id', userId)
+    .single();
+  if (error || !data) return null;
+  const org = (data as any).organizations;
+  return org ? mapOrg(org) : null;
+}
+
+export async function getOrgMembership(
+  userId: string,
+  orgId: string
+): Promise<OrganizationMember | null> {
+  const { data, error } = await supabase
+    .from('organization_members')
+    .select('*')
+    .eq('user_id', userId)
+    .eq('organization_id', orgId)
+    .single();
+  if (error || !data) return null;
+  return mapMember(data);
+}
+
+export async function getTournamentsByOrg(orgId: string): Promise<Tournament[]> {
+  const { data, error } = await supabase
+    .from('tournaments')
+    .select('*')
+    .eq('organization_id', orgId)
+    .order('year', { ascending: false });
+  if (error) return [];
+  return (data || []).map(mapTournament);
+}
+
+// Server-side only (uses service role key) ────────────────────────────────────
+
+export async function createOrganization(
+  name: string,
+  slug: string,
+  planId: OrgPlan = 'starter'
+): Promise<Organization> {
+  const limit = planId === 'elite' ? 999 : planId === 'pro' ? 5 : 1;
+  const { data, error } = await supabaseAdmin
+    .from('organizations')
+    .insert({ name, slug, plan_id: planId, tournament_limit: limit })
+    .select()
+    .single();
+  if (error) throw new Error(error.message);
+  return mapOrg(data);
+}
+
+export async function createOrganizationMember(
+  orgId: string,
+  userId: string,
+  role: OrgRole = 'owner'
+): Promise<OrganizationMember> {
+  const { data, error } = await supabaseAdmin
+    .from('organization_members')
+    .insert({ organization_id: orgId, user_id: userId, role, accepted_at: new Date().toISOString() })
+    .select()
+    .single();
+  if (error) throw new Error(error.message);
+  return mapMember(data);
+}
+
+// ── Row mappers ───────────────────────────────────────────────────────────────
+
+function mapOrg(r: any): Organization {
+  return {
+    id:                   r.id,
+    name:                 r.name,
+    slug:                 r.slug,
+    logoUrl:              r.logo_url ?? undefined,
+    planId:               r.plan_id,
+    stripeCustomerId:     r.stripe_customer_id ?? undefined,
+    stripeSubscriptionId: r.stripe_subscription_id ?? undefined,
+    subscriptionStatus:   r.subscription_status ?? 'active',
+    tournamentLimit:      r.tournament_limit ?? 1,
+    isPublic:             r.is_public ?? true,
+    createdAt:            r.created_at,
+  };
+}
+
+function mapMember(r: any): OrganizationMember {
+  return {
+    id:             r.id,
+    organizationId: r.organization_id,
+    userId:         r.user_id,
+    role:           r.role,
+    invitedAt:      r.invited_at,
+    acceptedAt:     r.accepted_at ?? undefined,
+  };
+}
+
+function mapTournament(r: any): Tournament {
+  return {
+    id:             r.id,
+    organizationId: r.organization_id ?? undefined,
+    year:           r.year,
+    name:           r.name,
+    isActive:       r.is_active,
+    startDate:      r.start_date ?? undefined,
+    endDate:        r.end_date ?? undefined,
+  };
 }

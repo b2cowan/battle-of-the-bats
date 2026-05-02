@@ -59,7 +59,7 @@ interface BracketColumnsProps {
 
 function PublicBracketColumns({ columns, getTeamDisplay, formatDateShort }: BracketColumnsProps) {
   return (
-    <div style={{ display: 'flex', gap: '2rem', padding: '0.5rem 0', minHeight: '240px' }}>
+    <div style={{ display: 'flex', gap: '2rem', padding: '0.5rem 0', minHeight: '240px', minWidth: 'max-content', margin: '0 auto' }}>
       {columns.map((col, idx) => (
         <div key={idx} style={{ display: 'flex', flexDirection: 'column', width: '200px', flexShrink: 0 }}>
           <div style={{
@@ -374,10 +374,11 @@ export default function SchedulePage() {
 
                 const bracketWrap = {
                   display: 'flex',
-                  justifyContent: 'center',
+                  justifyContent: 'flex-start',
                   overflowX: 'auto' as const,
-                  padding: '1.5rem 0',
+                  padding: '1.5rem',
                   background: 'radial-gradient(circle at 50% 50%, rgba(139,92,246,0.04) 0%, transparent 70%)',
+                  WebkitOverflowScrolling: 'touch' as const,
                 };
 
                 if (hasPoolPlaceholders) {
