@@ -63,24 +63,26 @@ CREATE POLICY "org_members_update_own_org"
 -- organization_members
 -- =============================================================================
 
--- Members can see who else is in their org
+-- Direct column check avoids self-referential recursion (42P17)
 CREATE POLICY "org_members_read_own"
   ON organization_members FOR SELECT
-  USING (organization_id IN (
-    SELECT organization_id FROM organization_members WHERE user_id = auth.uid()
-  ));
+  USING (user_id = auth.uid());
 
--- Only owners can add/remove/change members
+-- SECURITY DEFINER bypasses RLS internally so the subquery doesn't recurse
+CREATE OR REPLACE FUNCTION is_org_owner(org_id uuid)
+RETURNS boolean AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM organization_members
+    WHERE organization_id = org_id
+      AND user_id = auth.uid()
+      AND role = 'owner'
+  );
+$$ LANGUAGE sql SECURITY DEFINER STABLE;
+
 CREATE POLICY "owners_manage_members"
   ON organization_members FOR ALL
-  USING (organization_id IN (
-    SELECT organization_id FROM organization_members
-    WHERE user_id = auth.uid() AND role = 'owner'
-  ))
-  WITH CHECK (organization_id IN (
-    SELECT organization_id FROM organization_members
-    WHERE user_id = auth.uid() AND role = 'owner'
-  ));
+  USING (is_org_owner(organization_id))
+  WITH CHECK (is_org_owner(organization_id));
 
 -- =============================================================================
 -- tournaments
