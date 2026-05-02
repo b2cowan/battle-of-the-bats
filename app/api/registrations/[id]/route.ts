@@ -1,20 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { supabaseAdmin } from '@/lib/supabase-admin';
 import { createClient } from '@supabase/supabase-js';
 import {
   sendEmail,
   acceptanceHtml, rejectionHtml, paymentConfirmationHtml,
-  ADMIN_EMAIL,
 } from '@/lib/email';
+import { getAuthContext, unauthorized } from '@/lib/api-auth';
 
 export async function PATCH(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const auth = await getAuthContext();
+  if (!auth) return unauthorized();
+
   try {
     const { id } = await props.params;
     const body = await req.json();
     const { status, payment_status, admin_notes, age_group_id, poolId } = body;
 
-    // Fetch current record
-    const { data: current, error: fetchErr } = await supabase
+    // Fetch current record using admin client (bypasses RLS for the lookup)
+    const { data: current, error: fetchErr } = await supabaseAdmin
       .from('teams')
       .select('*')
       .eq('id', id)
@@ -32,7 +35,7 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ id: str
 
     if (Object.keys(updates).length === 0) return NextResponse.json({ ok: true });
 
-    const { error: updateErr } = await supabase
+    const { error: updateErr } = await supabaseAdmin
       .from('teams')
       .update(updates)
       .eq('id', id);
@@ -41,13 +44,12 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ id: str
       return NextResponse.json({ error: updateErr.message }, { status: 500 });
     }
 
-    // Send emails if status changed
     const p = {
-      teamName:      current.name,
-      coachName:     current.coach,
-      ageGroupName:  'Division', // Simplified for now, or fetch from DB
+      teamName:       current.name,
+      coachName:      current.coach,
+      ageGroupName:   'Division',
       tournamentName: 'Tournament',
-      teamId:        id,
+      teamId:         id,
     };
 
     if (status === 'accepted' && current.status !== 'accepted') {
@@ -67,6 +69,7 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ id: str
   }
 }
 
+// Public GET — used by the team lookup page; only returns accepted teams
 export async function GET(req: NextRequest, props: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await props.params;
@@ -75,8 +78,8 @@ export async function GET(req: NextRequest, props: { params: Promise<{ id: strin
 
     if (!url || !key) throw new Error("Missing environment variables");
 
-    const supabaseAdmin = createClient(url, key);
-    const { data: team, error } = await supabaseAdmin
+    const client = createClient(url, key);
+    const { data: team, error } = await client
       .from('teams')
       .select(`
         *,
@@ -89,7 +92,6 @@ export async function GET(req: NextRequest, props: { params: Promise<{ id: strin
 
     if (error || !team) return NextResponse.json({ error: 'Team not found' }, { status: 404 });
 
-    // Safety check: Only show accepted teams to the public
     if (team.status !== 'accepted') {
       return NextResponse.json({ error: 'Team not yet active' }, { status: 403 });
     }
@@ -104,7 +106,7 @@ export async function GET(req: NextRequest, props: { params: Promise<{ id: strin
       status: team.status,
       payment_status: team.payment_status,
       pool: (team.pools as any)?.name || '',
-      players: team.players || []
+      players: team.players || [],
     });
   } catch (e: any) {
     console.error('GET team error:', e);

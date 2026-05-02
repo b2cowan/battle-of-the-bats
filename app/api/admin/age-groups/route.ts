@@ -1,7 +1,11 @@
 import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
+import { getAuthContext, unauthorized } from '@/lib/api-auth';
 
 export async function POST(req: Request) {
+  const auth = await getAuthContext();
+  if (!auth) return unauthorized();
+
   try {
     const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -28,7 +32,8 @@ export async function POST(req: Request) {
         capacity: data.capacity,
         pool_count: data.poolCount,
         pool_names: data.poolNames,
-        requires_pool_selection: data.requiresPoolSelection
+        requires_pool_selection: data.requiresPoolSelection,
+        playoff_config: data.playoffConfig
       });
       if (error) throw error;
     } 
@@ -45,7 +50,8 @@ export async function POST(req: Request) {
         capacity: data.capacity,
         pool_count: data.poolCount,
         pool_names: data.poolNames,
-        requires_pool_selection: data.requiresPoolSelection
+        requires_pool_selection: data.requiresPoolSelection,
+        playoff_config: data.playoffConfig
       }).eq('id', id);
       if (agError) throw agError;
 

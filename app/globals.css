@@ -37,8 +37,8 @@
   --glow:        0 0 32px rgba(139,47,201,0.4);
   --glow-sm:     0 0 16px rgba(139,47,201,0.25);
 
-  --font-sans:    var(--font-sans), system-ui, sans-serif;
-  --font-display: var(--font-display), sans-serif;
+  --font-sans:    system-ui, sans-serif;
+  --font-display: sans-serif;
 
   --nav-height:  72px;
   --transition:  all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
@@ -50,7 +50,7 @@
 html { scroll-behavior: smooth; -webkit-font-smoothing: antialiased; }
 
 body {
-  font-family: var(--font-sans);
+  font-family: var(--font-sans, system-ui, sans-serif);
   background: var(--bg);
   color: var(--white);
   min-height: 100vh;
@@ -65,7 +65,7 @@ ul, ol { list-style: none; }
 
 /* ─── Typography ────────────────────────────────────────────────────────────── */
 h1, h2, h3, h4, h5, h6 {
-  font-family: var(--font-display);
+  font-family: var(--font-display, sans-serif);
   line-height: 1.15;
   letter-spacing: 0.01em;
   font-weight: 800;
@@ -121,7 +121,7 @@ h1, h2, h3, h4, h5, h6 {
   gap: 0.5rem;
   padding: 0.625rem 1.25rem;
   border-radius: var(--radius-sm);
-  font-family: var(--font-display);
+  font-family: var(--font-display, sans-serif);
   font-size: 1rem;
   font-weight: 700;
   letter-spacing: 0.04em;
@@ -244,7 +244,7 @@ select option {
 
 .section-header .eyebrow {
   display: inline-block;
-  font-family: var(--font-display);
+  font-family: var(--font-display, sans-serif);
   font-size: 0.85rem;
   font-weight: 700;
   letter-spacing: 0.15em;
@@ -287,7 +287,7 @@ select option {
 .tab-btn {
   padding: 0.5rem 1.25rem;
   border-radius: var(--radius-sm);
-  font-family: var(--font-display);
+  font-family: var(--font-display, sans-serif);
   font-size: 0.9375rem;
   font-weight: 700;
   letter-spacing: 0.04em;
@@ -318,7 +318,7 @@ select option {
 .segment {
   padding: 0.375rem 1rem;
   border-radius: var(--radius-sm);
-  font-family: var(--font-display);
+  font-family: var(--font-display, sans-serif);
   font-size: 0.875rem;
   font-weight: 700;
   border: none;
@@ -356,7 +356,7 @@ thead tr { background: var(--surface-2); }
 th {
   padding: 0.875rem 1rem;
   text-align: left;
-  font-family: var(--font-display);
+  font-family: var(--font-display, sans-serif);
   font-size: 0.8rem;
   font-weight: 700;
   letter-spacing: 0.1em;
@@ -411,7 +411,7 @@ tbody tr:hover { background: var(--white-10); }
   margin-bottom: 1.5rem;
 }
 
-.modal-header h3 { font-family: var(--font-display); font-size: 1.5rem; font-weight: 800; }
+.modal-header h3 { font-family: var(--font-display, sans-serif); font-size: 1.5rem; font-weight: 800; }
 
 .modal-footer {
   display: flex;

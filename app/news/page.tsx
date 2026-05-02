@@ -11,7 +11,10 @@ export default async function NewsPage() {
   const announcements = await getAnnouncements(activeTournament?.id);
 
   function formatDate(d: string) {
-    return new Date(d).toLocaleDateString('en-CA', {
+    if (!d) return '';
+    // Extract date part if ISO string, then add T12:00:00 to avoid timezone shift
+    const datePart = d.includes('T') ? d.split('T')[0] : d;
+    return new Date(datePart + 'T12:00:00').toLocaleDateString('en-CA', {
       weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
     });
   }
@@ -86,12 +89,13 @@ function AnnouncementCard({
         <div className={styles.annMeta}>
           {pinned && (
             <span className="badge badge-purple">
-              <Star size={9} fill="currentColor" /> Pinned
+              <Star size={9} fill="currentColor" />&nbsp;Pinned
             </span>
           )}
           <span className={styles.annDate}>{formatDate(ann.date)}</span>
         </div>
       </div>
+      
       <h2 className={styles.annTitle}>{ann.title}</h2>
       <p className={styles.annBody}>{ann.body}</p>
     </div>

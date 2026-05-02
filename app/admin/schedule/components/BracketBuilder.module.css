@@ -237,3 +237,52 @@
   color: var(--purple-light);
   background: var(--white-10);
 }
+
+.poolGroupHeader {
+  display: none; /* Replaced by the new sectional layout */
+}
+
+.splitBrackets {
+  display: flex;
+  flex-direction: column;
+  gap: 3rem;
+  width: 100%;
+}
+
+.poolSection {
+  background: var(--black-20);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  width: max-content;
+  min-width: 100%;
+}
+
+.poolHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 2rem;
+  color: var(--purple-light);
+}
+
+.poolHeader span {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: 1.1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.roundTitleText {
+  color: var(--purple-light);
+  font-family: var(--font-display);
+  font-size: 0.9rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  display: block;
+  text-align: center;
+  width: 100%;
+  padding: 0.25rem;
+}

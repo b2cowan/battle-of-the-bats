@@ -1,6 +1,10 @@
 import { createClient } from '@supabase/supabase-js';
+import { getAuthContext, unauthorized } from '@/lib/api-auth';
 
 export async function POST(req: Request) {
+  const auth = await getAuthContext();
+  if (!auth) return unauthorized();
+
   try {
     const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -16,18 +20,18 @@ export async function POST(req: Request) {
     const { action, id, data } = await req.json();
 
     if (action === 'set-active' && id) {
-      // 1. Deactivate ALL (except maybe the dummy one if it exists)
-      await supabase.from('tournaments').update({ is_active: false }).neq('id', '00000000-0000-0000-0000-000000000000');
-      
+      // 1. Deactivate all of this org's tournaments
+      await supabase.from('tournaments').update({ is_active: false }).eq('organization_id', auth.org.id);
+
       // 2. Activate specific one
       const { error } = await supabase.from('tournaments').update({ is_active: true }).eq('id', id);
       if (error) throw error;
     }
 
     else if (action === 'update' && id) {
-      // If setting to active, deactivate others first
+      // If setting to active, deactivate org's others first
       if (data.isActive) {
-        await supabase.from('tournaments').update({ is_active: false }).neq('id', '00000000-0000-0000-0000-000000000000');
+        await supabase.from('tournaments').update({ is_active: false }).eq('organization_id', auth.org.id);
       }
 
       const { error } = await supabase.from('tournaments').update({

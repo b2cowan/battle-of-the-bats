@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Trophy, Check, X, Calendar, MapPin, Clock, AlertCircle, ChevronUp, ChevronDown } from 'lucide-react';
 import { getStandings, getDiamonds, saveGame, getTournament, getGames, deleteGame, getTeams } from '@/lib/db';
 import { AgeGroup, Team, Diamond, PlayoffConfig, Game, Tournament } from '@/lib/types';
-import { formatTime } from '@/lib/utils';
+import { formatTime, formatPoolName } from '@/lib/utils';
 import BracketBuilder from './components/BracketBuilder';
 import builderStyles from './components/BracketBuilder.module.css';
 import FeedbackModal from '@/components/FeedbackModal';
@@ -49,6 +49,8 @@ export default function PlayoffWizard({ ageGroup, tournamentId, onClose, onCompl
     }
   }, [ageGroup.pools?.length]);
 
+
+
   const breakerLabels: Record<string, string> = {
     h2h: 'Head-to-Head',
     rd: 'Run Diff',
@@ -75,38 +77,53 @@ export default function PlayoffWizard({ ageGroup, tournamentId, onClose, onCompl
     // 1. No Crossover (Split Pool Championships)
     if (crossover === 'none' && pools.length >= 2) {
       pools.forEach(pool => {
-        const count = Math.min(teamsQualifying, 4); // Usually 2 or 4 per pool
-        if (count === 2) {
-          games.push({ round: 'Championship', pool: pool.name, home: `1st Pool ${pool.name}`, away: `2nd Pool ${pool.name}`, code: `${pool.name}-FIN` });
+        const poolConfig = config.splitConfigs?.[pool.id] || { teamsQualifying: config.teamsQualifying, hasThirdPlace: config.hasThirdPlace };
+        const qTeams = poolConfig.teamsQualifying;
+        const pHasThird = poolConfig.hasThirdPlace;
+
+        if (qTeams === 2) {
+          games.push({ round: 'Championship', pool: pool.name, home: `1st Pool ${pool.name}`, away: `2nd Pool ${pool.name}`, code: `FIN` });
+        } else if (qTeams === 8) {
+          for (let i = 1; i <= 4; i++) {
+            games.push({ round: 'Quarterfinal', pool: pool.name, home: `${i}${['st','nd','rd','th'][i-1] || 'th'} Pool ${pool.name}`, away: `${9-i}${['st','nd','rd','th'][8-i] || 'th'} Pool ${pool.name}`, code: `QF${i}` });
+          }
+          games.push({ round: 'Semifinal', pool: pool.name, home: `Winner QF1`, away: `Winner QF4`, code: `SF1` });
+          games.push({ round: 'Semifinal', pool: pool.name, home: `Winner QF2`, away: `Winner QF3`, code: `SF2` });
+          games.push({ round: 'Championship', pool: pool.name, home: `Winner SF1`, away: `Winner SF2`, code: `FIN` });
+          if (pHasThird) games.push({ round: '3rd Place', pool: pool.name, home: `Loser SF1`, away: `Loser SF2`, code: `3RD` });
         } else {
-          games.push({ round: 'Semifinal', pool: pool.name, home: `1st Pool ${pool.name}`, away: `4th Pool ${pool.name}`, code: `${pool.name}-SF1` });
-          games.push({ round: 'Semifinal', pool: pool.name, home: `2nd Pool ${pool.name}`, away: `3rd Pool ${pool.name}`, code: `${pool.name}-SF2` });
-          games.push({ round: 'Championship', pool: pool.name, home: `Winner ${pool.name}-SF1`, away: `Winner ${pool.name}-SF2`, code: `${pool.name}-FIN` });
-          if (hasThirdPlace) {
-            games.push({ round: '3rd Place', pool: pool.name, home: `Loser ${pool.name}-SF1`, away: `Loser ${pool.name}-SF2`, code: `${pool.name}-3RD` });
+          // Default to 4 teams
+          games.push({ round: 'Semifinal', pool: pool.name, home: `1st Pool ${pool.name}`, away: `4th Pool ${pool.name}`, code: `SF1` });
+          games.push({ round: 'Semifinal', pool: pool.name, home: `2nd Pool ${pool.name}`, away: `3rd Pool ${pool.name}`, code: `SF2` });
+          games.push({ round: 'Championship', pool: pool.name, home: `Winner SF1`, away: `Winner SF2`, code: `FIN` });
+          if (pHasThird) {
+            games.push({ round: '3rd Place', pool: pool.name, home: `Loser SF1`, away: `Loser SF2`, code: `3RD` });
           }
         }
       });
     } 
     // 2. Standard Crossover (A vs B) - Only works for 2 pools
     else if (crossover === 'standard' && pools.length === 2) {
+      const p1 = pools[0].name;
+      const p2 = pools[1].name;
+      
       if (teamsQualifying === 4) {
-        games.push({ round: 'Semifinal', home: '1st Pool A', away: '2nd Pool B', code: 'SF1' });
-        games.push({ round: 'Semifinal', home: '1st Pool B', away: '2nd Pool A', code: 'SF2' });
+        games.push({ round: 'Semifinal', home: `1st Pool ${p1}`, away: `2nd Pool ${p2}`, code: 'SF1' });
+        games.push({ round: 'Semifinal', home: `1st Pool ${p2}`, away: `2nd Pool ${p1}`, code: 'SF2' });
         games.push({ round: 'Championship', home: 'Winner SF1', away: 'Winner SF2', code: 'FIN' });
         if (hasThirdPlace) games.push({ round: '3rd Place', home: 'Loser SF1', away: 'Loser SF2', code: '3RD' });
       } else if (teamsQualifying === 8) {
-        games.push({ round: 'Quarterfinal', home: '1st Pool A', away: '4th Pool B', code: 'QF1' });
-        games.push({ round: 'Quarterfinal', home: '2nd Pool A', away: '3rd Pool B', code: 'QF2' });
-        games.push({ round: 'Quarterfinal', home: '2nd Pool B', away: '3rd Pool A', code: 'QF3' });
-        games.push({ round: 'Quarterfinal', home: '1st Pool B', away: '4th Pool A', code: 'QF4' });
+        games.push({ round: 'Quarterfinal', home: `1st Pool ${p1}`, away: `4th Pool ${p2}`, code: 'QF1' });
+        games.push({ round: 'Quarterfinal', home: `2nd Pool ${p1}`, away: `3rd Pool ${p2}`, code: 'QF2' });
+        games.push({ round: 'Quarterfinal', home: `2nd Pool ${p2}`, away: `3rd Pool ${p1}`, code: 'QF3' });
+        games.push({ round: 'Quarterfinal', home: `1st Pool ${p2}`, away: `4th Pool ${p1}`, code: 'QF4' });
         games.push({ round: 'Semifinal', home: 'Winner QF1', away: 'Winner QF3', code: 'SF1' });
         games.push({ round: 'Semifinal', home: 'Winner QF2', away: 'Winner QF4', code: 'SF2' });
         games.push({ round: 'Championship', home: 'Winner SF1', away: 'Winner SF2', code: 'FIN' });
         if (hasThirdPlace) games.push({ round: '3rd Place', home: 'Loser SF1', away: 'Loser SF2', code: '3RD' });
       } else {
         // 2 Teams
-        games.push({ round: 'Championship', home: '1st Pool A', away: '1st Pool B', code: 'FIN' });
+        games.push({ round: 'Championship', home: `1st Pool ${p1}`, away: `1st Pool ${p2}`, code: 'FIN' });
       }
     }
     // 3. Reseed (Global Seeding 1 vs Last) - Default for > 2 pools or 'reseed' logic
@@ -131,7 +148,7 @@ export default function PlayoffWizard({ ageGroup, tournamentId, onClose, onCompl
     }
 
     setTemplatePreview(games.map(g => {
-      const existing = preview.find(p => p.code === g.code);
+      const existing = preview.find(p => p.code === g.code && p.pool === g.pool);
       // Prioritize tournament end date, fallback to today ONLY if we have no tournament info at all
       const tournamentEnd = tournament?.endDate;
       const today = new Date().toISOString().split('T')[0];
@@ -155,6 +172,18 @@ export default function PlayoffWizard({ ageGroup, tournamentId, onClose, onCompl
   }
 
   const baseOptions = React.useMemo(() => {
+    if (config.crossover === 'none' && ageGroup.pools && ageGroup.pools.length > 0) {
+      const options: string[] = [];
+      const suffix = ['st', 'nd', 'rd', 'th', 'th', 'th', 'th', 'th'];
+      ageGroup.pools.forEach(pool => {
+        const pConfig = config.splitConfigs?.[pool.id] || { teamsQualifying: config.teamsQualifying, hasThirdPlace: config.hasThirdPlace };
+        const perPool = pConfig.teamsQualifying;
+        for (let i = 1; i <= perPool; i++) {
+          options.push(`${i}${suffix[i-1] || 'th'} Pool ${pool.name}`);
+        }
+      });
+      return options;
+    }
     if (config.crossover === 'standard' && ageGroup.pools && ageGroup.pools.length > 0) {
       const options: string[] = [];
       const numPools = ageGroup.pools.length;
@@ -169,7 +198,7 @@ export default function PlayoffWizard({ ageGroup, tournamentId, onClose, onCompl
     }
     const numSeeds = ageGroup.capacity || teams.length || 16;
     return Array.from({length: numSeeds}, (_, i) => `Seed #${i + 1}`);
-  }, [config.crossover, config.teamsQualifying, ageGroup.pools, ageGroup.capacity, teams.length]);
+  }, [config.crossover, config.teamsQualifying, config.splitConfigs, ageGroup.pools, ageGroup.capacity, teams.length]);
 
   function proceedAfterWarning() {
     setShowWarning(false);
@@ -206,8 +235,23 @@ export default function PlayoffWizard({ ageGroup, tournamentId, onClose, onCompl
         await deleteGame(g.id);
       }
 
-      const bracketId = crypto.randomUUID();
+      // In No Crossover mode each pool gets its own bracketId so transitive
+      // pool inference (FIN → Winner SF1 → SF1) can match by bracketId and
+      // avoid code collisions between pools that share identical codes.
+      const poolBracketIds: Record<string, string> = {};
+      const defaultBracketId = crypto.randomUUID();
+      if (config.crossover === 'none') {
+        for (const p of preview) {
+          if (p.pool && !poolBracketIds[p.pool]) {
+            poolBracketIds[p.pool] = crypto.randomUUID();
+          }
+        }
+      }
+
       for (const p of preview) {
+        const bracketId = (config.crossover === 'none' && p.pool && poolBracketIds[p.pool])
+          ? poolBracketIds[p.pool]
+          : defaultBracketId;
         await saveGame({
           tournamentId,
           ageGroupId: ageGroup.id,
@@ -266,14 +310,6 @@ export default function PlayoffWizard({ ageGroup, tournamentId, onClose, onCompl
               <h4 className="text-label" style={{ marginBottom: '1rem', opacity: 0.5 }}>1. Bracket Configuration</h4>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.5rem' }}>
                 <div className="form-group">
-                  <label className="form-label">Qualified Teams</label>
-                  <select className="form-select" value={config.teamsQualifying} onChange={e => setConfig({...config, teamsQualifying: Number(e.target.value)})}>
-                    <option value={2}>Top 2 Teams (Final Only)</option>
-                    <option value={4}>Top 4 Teams (SF + Final)</option>
-                    <option value={8}>Top 8 Teams (QF + SF + Final)</option>
-                  </select>
-                </div>
-                <div className="form-group">
                   <label className="form-label">Crossover Rules</label>
                   <select className="form-select" value={config.crossover} onChange={e => setConfig({...config, crossover: e.target.value as any})}>
                     {(ageGroup.pools?.length || 0) === 2 && <option value="standard">Standard (First A vs. Last B)</option>}
@@ -281,13 +317,75 @@ export default function PlayoffWizard({ ageGroup, tournamentId, onClose, onCompl
                     <option value="none">No Crossover (Split Pool Championship)</option>
                   </select>
                 </div>
-                <div className="form-group" style={{ justifyContent: 'center' }}>
-                   <label className="flex items-center gap-3 cursor-pointer">
-                    <input type="checkbox" checked={config.hasThirdPlace} onChange={e => setConfig({...config, hasThirdPlace: e.target.checked})} style={{ width: '18px', height: '18px', accentColor: 'var(--purple)' }} />
-                    <span className="text-sm font-bold">Include 3rd Place / Consolidation Game</span>
-                  </label>
-                </div>
+                
+                {config.crossover !== 'none' ? (
+                  <>
+                    <div className="form-group">
+                      <label className="form-label">Qualified Teams</label>
+                      <select className="form-select" value={config.teamsQualifying} onChange={e => setConfig({...config, teamsQualifying: Number(e.target.value)})}>
+                        <option value={2}>Top 2 Teams (Final Only)</option>
+                        <option value={4}>Top 4 Teams (SF + Final)</option>
+                        <option value={8}>Top 8 Teams (QF + SF + Final)</option>
+                      </select>
+                    </div>
+                    <div className="form-group" style={{ justifyContent: 'center' }}>
+                       <label className="flex items-center gap-3 cursor-pointer">
+                        <input type="checkbox" checked={config.hasThirdPlace} onChange={e => setConfig({...config, hasThirdPlace: e.target.checked})} style={{ width: '18px', height: '18px', accentColor: 'var(--purple)' }} />
+                        <span className="text-sm font-bold">Include 3rd Place / Consolidation Game</span>
+                      </label>
+                    </div>
+                  </>
+                ) : null}
               </div>
+
+              {config.crossover === 'none' && ageGroup.pools && (
+                <div style={{ marginTop: '1.5rem', background: 'var(--black-20)', padding: '1.5rem', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border)' }}>
+                  <h5 className="font-bold text-sm mb-4" style={{ color: 'var(--purple-light)' }}>Per-Pool Independent Brackets</h5>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                    {ageGroup.pools.map(pool => {
+                      const pConfig = config.splitConfigs?.[pool.id] || { teamsQualifying: 4, hasThirdPlace: false };
+                      return (
+                        <div key={pool.id} style={{ display: 'grid', gridTemplateColumns: '1fr 2fr 1fr', gap: '2rem', alignItems: 'center', padding: '0.75rem', background: 'var(--surface)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)' }}>
+                          <span className="font-bold">{formatPoolName(pool.name)}</span>
+                          <div className="flex gap-4 items-center">
+                            <span className="text-xs text-muted">Qualifying:</span>
+                            <select 
+                              className="form-select form-select-sm" 
+                              value={pConfig.teamsQualifying} 
+                              onChange={e => setConfig({
+                                ...config, 
+                                splitConfigs: { 
+                                  ...(config.splitConfigs || {}), 
+                                  [pool.id]: { ...pConfig, teamsQualifying: Number(e.target.value) } 
+                                }
+                              })}
+                            >
+                              <option value={2}>Top 2 Teams</option>
+                              <option value={4}>Top 4 Teams</option>
+                              <option value={8}>Top 8 Teams</option>
+                            </select>
+                          </div>
+                          <label className="flex items-center gap-2 cursor-pointer">
+                            <input 
+                              type="checkbox" 
+                              checked={pConfig.hasThirdPlace} 
+                              onChange={e => setConfig({
+                                ...config, 
+                                splitConfigs: { 
+                                  ...(config.splitConfigs || {}), 
+                                  [pool.id]: { ...pConfig, hasThirdPlace: e.target.checked } 
+                                }
+                              })}
+                              style={{ width: '16px', height: '16px', accentColor: 'var(--purple)' }} 
+                            />
+                            <span className="text-xs font-bold">3rd Place</span>
+                          </label>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </section>
 
             <div className="divider" style={{ margin: '0.5rem 0' }}></div>
@@ -358,6 +456,7 @@ export default function PlayoffWizard({ ageGroup, tournamentId, onClose, onCompl
                   templatePreview={templatePreview}
                   baseOptions={baseOptions}
                   onPreviewChange={setPreview} 
+                  crossover={config.crossover}
                 />
               )}
             </section>

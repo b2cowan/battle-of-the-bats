@@ -50,6 +50,24 @@ export default async function HomePage() {
       })()
     : 'Dates To Be Determined';
 
+  let countdownText = '';
+  if (startDate && endDate) {
+    const today = new Date().toISOString().split('T')[0];
+    if (today < startDate) {
+      const msPerDay = 24 * 60 * 60 * 1000;
+      const startMs = new Date(startDate + 'T00:00:00').getTime();
+      const todayMs = new Date(today + 'T00:00:00').getTime();
+      const diffDays = Math.ceil((startMs - todayMs) / msPerDay);
+      countdownText = `${diffDays} days to go`;
+    } else if (today >= startDate && today <= endDate) {
+      countdownText = "Tournament in Progress! 🔥";
+    } else {
+      countdownText = "See you next year!";
+    }
+  }
+
+  const isRegistrationOpen = ageGroups.some(g => !g.isClosed);
+
   const sortedAgeGroups = [...ageGroups].sort((a, b) => a.order - b.order);
   const ageRange = sortedAgeGroups.length > 0 
     ? `${sortedAgeGroups[0].name} – ${sortedAgeGroups[sortedAgeGroups.length - 1].name}`
@@ -126,8 +144,18 @@ export default async function HomePage() {
         </div>
         <div className={`container ${styles.heroContent}`}>
           <div className={styles.heroBadge}>
-            <Star size={12} fill="currentColor" />
-            {currentYear} Tournament • {dateDisplay}
+            <div className={styles.badgeText}>
+              <span className={styles.dateLine}>
+                <Star size={12} fill="currentColor" />
+                {currentYear} Tournament • {dateDisplay}
+              </span>
+              {countdownText && (
+                <span className={styles.countdown}>
+                  <span className={styles.badgeSeparator}> • </span>
+                  ⏳ {countdownText}
+                </span>
+              )}
+            </div>
           </div>
           <h1 className={`display-xl ${styles.heroTitle}`}>
             BATTLE<br />
@@ -159,7 +187,7 @@ export default async function HomePage() {
             </div>
             <div className={styles.statDivider} />
             <div className={styles.stat}>
-              <span className={styles.statNum}>{ageRange}</span>
+              <span className={`${styles.statNum} ${styles.ageRangeText}`}>{ageRange}</span>
               <span className={styles.statLabel}>Divisions</span>
             </div>
           </div>
@@ -188,7 +216,7 @@ export default async function HomePage() {
               {announcements.map((ann, i) => (
                 <div key={ann.id} className={`card ${styles.annCard} ${i === 0 ? styles.annFeatured : ''}`}>
                   <div className={styles.annHeader}>
-                    {ann.pinned && <span className="badge badge-purple"><Star size={10} fill="currentColor" /> Pinned</span>}
+                    {ann.pinned && <span className="badge badge-purple"><Star size={10} fill="currentColor" />&nbsp;Pinned</span>}
                     <span className={styles.annDate}>
                       {new Date(ann.date).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' })}
                     </span>
@@ -236,7 +264,9 @@ export default async function HomePage() {
               {upcomingGames.map(game => (
                 <div key={game.id} className={`card ${styles.gameCard}`}>
                   <div className={styles.gameHeader}>
-                    <span className="badge badge-purple">{getAgeGroupName(game.ageGroupId)}</span>
+                    <span className="badge badge-purple">
+                      {game.isPlayoff && game.bracketCode ? game.bracketCode : getAgeGroupName(game.ageGroupId)}
+                    </span>
                     <span className={styles.gameDate}>{formatDate(game.date)} • {formatTime(game.time)}</span>
                   </div>
                   <div className={styles.matchup}>

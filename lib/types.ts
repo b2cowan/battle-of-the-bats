@@ -1,5 +1,33 @@
+export type OrgPlan = 'starter' | 'pro' | 'elite';
+export type OrgRole = 'owner' | 'admin' | 'staff';
+export type SubscriptionStatus = 'active' | 'trialing' | 'past_due' | 'canceled';
+
+export interface Organization {
+  id: string;
+  name: string;
+  slug: string;
+  logoUrl?: string;
+  planId: OrgPlan;
+  stripeCustomerId?: string;
+  stripeSubscriptionId?: string;
+  subscriptionStatus: SubscriptionStatus;
+  tournamentLimit: number;
+  isPublic: boolean;
+  createdAt: string;
+}
+
+export interface OrganizationMember {
+  id: string;
+  organizationId: string;
+  userId: string;
+  role: OrgRole;
+  invitedAt: string;
+  acceptedAt?: string;
+}
+
 export interface Tournament {
   id: string;
+  organizationId?: string;   // FK → organizations (nullable during migration)
   year: number;        // e.g. 2026
   name: string;        // e.g. "Battle of the Bats 2026"
   isActive: boolean;   // the tournament shown on the public site
@@ -30,6 +58,7 @@ export interface PlayoffConfig {
   hasThirdPlace: boolean;
   teamsQualifying: number;
   tieBreakers: ('h2h' | 'rf' | 'ra' | 'rd')[];
+  splitConfigs?: Record<string, { teamsQualifying: number; hasThirdPlace: boolean }>;
 }
 
 export interface BracketSlot {
@@ -134,4 +163,28 @@ export interface Announcement {
   body: string;
   date: string; // ISO date string
   pinned: boolean;
+}
+
+export interface RuleSection {
+  id: string;
+  tournamentId: string;
+  title: string;
+  icon?: string;
+  order: number;
+  items: RuleItem[];
+}
+
+export interface RuleItem {
+  id: string;
+  ruleId: string;
+  content: string;
+  order: number;
+}
+
+export interface Resource {
+  id: string;
+  tournamentId: string;
+  label: string;
+  url: string;
+  order: number;
 }

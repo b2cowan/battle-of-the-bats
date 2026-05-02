@@ -7,7 +7,7 @@ import {
   MoreHorizontal, LayoutDashboard, Tag, MapPin,
   RefreshCw, LogOut, X, ChevronRight, ClipboardList, BookUser,
 } from 'lucide-react';
-import { logout } from '@/lib/auth';
+import { signOut } from '@/lib/auth';
 import { useTournament } from '@/lib/tournament-context';
 import { setActiveTournament } from '@/lib/db';
 import styles from './AdminBottomNav.module.css';
@@ -48,9 +48,9 @@ export default function AdminBottomNav() {
   // Close on route change
   useEffect(() => { setMoreOpen(false); }, [pathname]);
 
-  function handleLogout() {
-    logout();
-    router.push('/admin/login');
+  async function handleLogout() {
+    await signOut();
+    router.push('/auth/login');
   }
 
   function handleTournamentChange(id: string) {

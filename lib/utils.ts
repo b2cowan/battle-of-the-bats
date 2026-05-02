@@ -24,6 +24,11 @@ export function downloadCSV(filename: string, headers: string[], rows: (string |
   }
 }
 
+export function formatPoolName(name: string): string {
+  const bare = name.replace(/^Pool\s+/i, '').trim();
+  return `${bare} Pool`;
+}
+
 export function formatTime(timeStr: string): string {
   if (!timeStr) return '';
   // Handle formats like "18:00", "18:00:00", or "6:00 PM" (if already formatted)

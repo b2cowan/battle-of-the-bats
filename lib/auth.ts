@@ -1,33 +1,39 @@
-const AUTH_KEY = 'botb_admin_session';
-const ADMIN_USERNAME = 'admin';
-const ADMIN_PASSWORD = 'miltonbats2025';
+import { createClient } from './supabase-browser';
 
-export function login(username: string, password: string): boolean {
-  if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(AUTH_KEY, JSON.stringify({ loggedIn: true, ts: Date.now() }));
-    }
-    return true;
-  }
-  return false;
+export async function signIn(
+  email: string,
+  password: string
+): Promise<{ error: string | null }> {
+  const supabase = createClient();
+  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  return { error: error?.message ?? null };
 }
 
-export function logout(): void {
-  if (typeof window !== 'undefined') {
-    localStorage.removeItem(AUTH_KEY);
-  }
+export async function signOut(): Promise<void> {
+  const supabase = createClient();
+  await supabase.auth.signOut();
 }
 
-export function isAuthenticated(): boolean {
-  if (typeof window === 'undefined') return false;
-  try {
-    const raw = localStorage.getItem(AUTH_KEY);
-    if (!raw) return false;
-    const session = JSON.parse(raw);
-    // Session expires after 8 hours
-    const eightHours = 8 * 60 * 60 * 1000;
-    return session.loggedIn === true && (Date.now() - session.ts) < eightHours;
-  } catch {
-    return false;
-  }
+export async function getUser() {
+  const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  return user;
 }
+
+export async function getSession() {
+  const supabase = createClient();
+  const { data: { session } } = await supabase.auth.getSession();
+  return session;
+}
+
+// ── Legacy stubs — kept so any remaining callers compile during the transition ─
+// Auth is now handled by middleware + Supabase session cookies.
+
+/** @deprecated Use signIn() instead */
+export function login(_u: string, _p: string): boolean { return false; }
+
+/** @deprecated Use signOut() instead */
+export function logout(): void {}
+
+/** @deprecated Auth is enforced by middleware */
+export function isAuthenticated(): boolean { return false; }

@@ -1,12 +1,16 @@
 import { createClient } from '@supabase/supabase-js';
+import { getAuthContext, unauthorized } from '@/lib/api-auth';
 
 export async function POST(req: Request) {
+  const auth = await getAuthContext();
+  if (!auth) return unauthorized();
+
   try {
     const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
     if (!url || !key) {
-      return new Response(JSON.stringify({ error: "Environment variables missing on server." }), { 
+      return new Response(JSON.stringify({ error: "Environment variables missing on server." }), {
         status: 500,
         headers: { 'Content-Type': 'application/json' }
       });

@@ -1,8 +1,9 @@
 'use client';
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { ChevronDown, ChevronUp, MapPin, Trophy, Pencil, X, AlertCircle, Trash2, MoreVertical } from 'lucide-react';
 import { Game, Team, AgeGroup, Diamond } from '@/lib/types';
-import { formatTime } from '@/lib/utils';
+import { formatTime, formatPoolName } from '@/lib/utils';
+import { Pool } from '@/lib/types';
 import s from '@/app/admin/admin-common.module.css';
 import styles from '../schedule-admin.module.css';
 
@@ -13,6 +14,7 @@ interface GameListProps {
   diamonds: Diamond[];
   viewMode: 'pool' | 'playoff';
   groupByPool: boolean;
+  pools?: Pool[];
   onEdit?: (g: Game) => void;
   onScore?: (g: Game) => void;
   onDelete?: (id: string) => void;
@@ -22,14 +24,13 @@ interface GameListProps {
 }
 
 export default function GameList({
-  games, teams, ageGroups, diamonds, viewMode, groupByPool,
+  games, teams, ageGroups, diamonds, viewMode, groupByPool, pools: poolsProp,
   onEdit, onScore, onDelete, onCancel, onSchedule, mode
 }: GameListProps) {
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [openMenu, setOpenMenu] = useState<string | null>(null);
 
   const getTeamName = (id: string) => teams.find(t => t.id === id)?.name ?? 'TBD';
-  const getGroupName = (id: string) => ageGroups.find(g => g.id === id)?.name ?? '—';
   const getDiamondName = (id?: string) => id ? (diamonds.find(d => d.id === id)?.name ?? '') : '';
 
   function toggleExpand(id: string) {
@@ -47,11 +48,11 @@ export default function GameList({
 
   const getPlayoffPriority = (code?: string) => {
     if (!code) return 99;
-    if (/^FIN/.test(code)) return 5;
-    if (/^3RD/.test(code)) return 4;
-    if (/^SF/.test(code)) return 3;
-    if (/^QF/.test(code)) return 2;
-    return 1; // Opening rounds
+    if (/^FIN/i.test(code)) return 4;
+    if (/^3RD/i.test(code)) return 3;
+    if (/^SF/i.test(code)) return 2;
+    if (/^QF/i.test(code)) return 1;
+    return 5; // Custom/manually-added rounds appear after standard rounds
   };
 
   const sortedGames = [...games].sort((a, b) => {
@@ -327,34 +328,100 @@ export default function GameList({
       <div className={s.compactListContent}>
         {/* Playoff View */}
         {viewMode === 'playoff' && (() => {
-          const rounds: Record<string, Game[]> = {};
-          const roundOrder = ['QF', 'SF', '3RD', 'FIN', 'CON'];
-          const roundNames: Record<string, string> = {
-            'QF': 'Quarterfinals',
-            'SF': 'Semifinals',
-            '3RD': 'Consolation / 3rd Place',
-            'FIN': 'Championship',
-            'CON': 'Consolation'
-          };
+          function groupByRound(gList: Game[]) {
+            const rounds: Record<string, Game[]> = {};
+            gList.forEach(g => {
+              const code = g.bracketCode || 'OTHER';
+              let prefix: string;
+              if (/^QF/i.test(code)) prefix = 'QF';
+              else if (/^SF/i.test(code)) prefix = 'SF';
+              else if (/^(FIN|IF|3RD)$/i.test(code)) prefix = 'FIN';
+              else if (code === 'OTHER') prefix = 'OTHER';
+              else prefix = code;
+              if (!rounds[prefix]) rounds[prefix] = [];
+              rounds[prefix].push(g);
+            });
+            const standardOrder = ['QF', 'SF', 'FIN'];
+            const standardLabels: Record<string, string> = { QF: 'Quarterfinals', SF: 'Semifinals', FIN: 'Finals' };
+            const activeStandard = standardOrder.filter(r => rounds[r]);
+            const customKeys = Object.keys(rounds).filter(k => !standardOrder.includes(k) && k !== 'OTHER');
+            return [
+              ...activeStandard.map(r => ({ key: r, label: standardLabels[r], games: rounds[r] })),
+              ...customKeys.map(k => ({ key: k, label: k, games: rounds[k] })),
+              ...(rounds['OTHER'] ? [{ key: 'OTHER', label: 'Additional Games', games: rounds['OTHER'] }] : []),
+            ];
+          }
 
-          sortedGames.forEach(g => {
-            const code = g.bracketCode || 'OTHER';
-            const prefix = roundOrder.find(p => code.startsWith(p)) || 'OTHER';
-            if (!rounds[prefix]) rounds[prefix] = [];
-            rounds[prefix].push(g);
-          });
+          // Detect pool-split bracket from placeholder data + per-pool bracketIds
+          const activePools = poolsProp || [];
+          const hasPoolPlaceholders = activePools.length >= 2 && sortedGames.some(g =>
+            activePools.some(p => {
+              const bare = p.name.replace(/^Pool\s+/i, '').trim();
+              const tag = `Pool ${bare}`;
+              return g.homePlaceholder?.includes(tag) || g.awayPlaceholder?.includes(tag);
+            })
+          );
 
-          const activeRounds = roundOrder.filter(r => rounds[r]);
-          if (rounds['OTHER']) activeRounds.push('OTHER');
+          if (hasPoolPlaceholders) {
+            // Group games by bracketId; infer pool name from direct placeholders
+            const byBracketId: Record<string, Game[]> = {};
+            sortedGames.forEach(g => {
+              const bid = g.bracketId || 'default';
+              if (!byBracketId[bid]) byBracketId[bid] = [];
+              byBracketId[bid].push(g);
+            });
 
-          return activeRounds.map(r => (
-            <div key={r} className={s.poolSubSection}>
+            const poolSections: Array<{ poolName: string; games: Game[] }> = [];
+            Object.entries(byBracketId).forEach(([, bGames]) => {
+              let poolName: string | null = null;
+              for (const g of bGames) {
+                for (const p of activePools) {
+                  const bare = p.name.replace(/^Pool\s+/i, '').trim();
+                  if (g.homePlaceholder?.includes(`Pool ${bare}`) || g.awayPlaceholder?.includes(`Pool ${bare}`)) {
+                    poolName = p.name;
+                    break;
+                  }
+                }
+                if (poolName) break;
+              }
+              poolSections.push({ poolName: poolName || 'Other', games: bGames });
+            });
+
+            // Sort by pool name then render
+            poolSections.sort((a, b) => a.poolName.localeCompare(b.poolName));
+
+            return poolSections.map(({ poolName, games: poolGames }) => (
+              <div key={poolName}>
+                <div className={s.poolSubHeader} style={{ marginTop: '1rem' }}>
+                  <div className={s.poolDot} style={{ background: 'var(--purple-light)' }} />
+                  <span className={s.poolSubLabel} style={{ color: 'var(--purple-light)', fontSize: '0.7rem' }}>
+                    {formatPoolName(poolName)} PLAYOFFS
+                  </span>
+                  <span className={s.poolSubCount}>({poolGames.length})</span>
+                </div>
+                {groupByRound(poolGames).map(({ key, label, games: rGames }) => (
+                  <div key={key} className={s.poolSubSection}>
+                    <div className={s.poolSubHeader} style={{ paddingLeft: '1.5rem' }}>
+                      <div className={s.poolDot} style={{ background: 'var(--white-20)' }} />
+                      <span className={s.poolSubLabel}>{label}</span>
+                      <span className={s.poolSubCount}>({rGames.length})</span>
+                    </div>
+                    {rGames.map(g => renderRow(g))}
+                  </div>
+                ))}
+              </div>
+            ));
+          }
+
+          // Flat playoff view (standard/reseed crossover)
+          return groupByRound(sortedGames).map(({ key, label, games: rGames }) => (
+            <div key={key} className={s.poolSubSection}>
               <div className={s.poolSubHeader}>
                 <div className={s.poolDot} style={{ background: 'var(--purple-light)' }} />
-                <span className={s.poolSubLabel}>{roundNames[r] || 'Additional Games'}</span>
-                <span className={s.poolSubCount}>({rounds[r].length})</span>
+                <span className={s.poolSubLabel}>{label}</span>
+                <span className={s.poolSubCount}>({rGames.length})</span>
               </div>
-              {rounds[r].map(g => renderRow(g))}
+              {rGames.map(g => renderRow(g))}
             </div>
           ));
         })()}
@@ -380,7 +447,7 @@ export default function GameList({
                 <div className={s.poolSubHeader}>
                   <div className={s.poolDot} style={{ background: p.id === 'unassigned' ? 'var(--danger-light)' : 'var(--purple-light)' }} />
                   <span className={s.poolSubLabel} style={{ color: p.id === 'unassigned' ? 'var(--danger-light)' : undefined }}>
-                    {p.id === 'unassigned' ? 'UNASSIGNED' : `POOL ${p.name}`}
+                    {p.id === 'unassigned' ? 'UNASSIGNED' : `${p.name.replace(/^Pool\s+/i, '').trim().toUpperCase()} POOL`}
                   </span>
                   <span className={s.poolSubCount}>({poolGames.length})</span>
                 </div>

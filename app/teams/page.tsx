@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { Users, ChevronDown, ChevronUp, User } from 'lucide-react';
+import Link from 'next/link';
+import { Users, ChevronDown, ChevronUp, User, Search } from 'lucide-react';
 import { getTeams, getAgeGroups, getTournaments } from '@/lib/db';
 import { Team, AgeGroup, Tournament } from '@/lib/types';
 import YearSelector from '@/components/YearSelector';
@@ -12,6 +13,7 @@ export default function TeamsPage() {
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
   const [selectedTournament, setSelectedTournament] = useState<Tournament | null>(null);
   const [activeGroup, setActiveGroup] = useState<string>('all');
+  const [search, setSearch]       = useState('');
   const [expanded, setExpanded]   = useState<Set<string>>(new Set());
 
   useEffect(() => {
@@ -34,8 +36,12 @@ export default function TeamsPage() {
     fetchTeams();
   }, [selectedTournament]);
 
-  const filtered = activeGroup === 'all' ? teams : teams.filter(t => t.ageGroupId === activeGroup);
+  const filtered = (activeGroup === 'all' ? teams : teams.filter(t => t.ageGroupId === activeGroup))
+    .filter(t => t.name.toLowerCase().includes(search.toLowerCase()));
   const getGroupName = (id: string) => ageGroups.find(g => g.id === id)?.name ?? '—';
+  
+  const countByGroup = Object.fromEntries(ageGroups.map(g => [g.id, teams.filter(t => t.ageGroupId === g.id).length]));
+  const totalCount = teams.length;
 
   function toggle(id: string) {
     setExpanded(prev => {
@@ -60,17 +66,32 @@ export default function TeamsPage() {
           <YearSelector
             tournaments={tournaments}
             selected={selectedTournament}
-            onSelect={t => { setSelectedTournament(t); setActiveGroup('all'); }}
+            onSelect={t => { setSelectedTournament(t); setActiveGroup('all'); setSearch(''); }}
           />
+
+          <div className={styles.searchRow}>
+            <Search size={16} className={styles.searchIcon} />
+            <input 
+              type="text" 
+              placeholder="Search teams..." 
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className={styles.searchInput}
+            />
+          </div>
 
           <div className="tabs" style={{ marginBottom: '1.5rem' }}>
             <button className={`tab-btn ${activeGroup === 'all' ? 'active' : ''}`}
-              onClick={() => setActiveGroup('all')} id="teams-tab-all">All</button>
+              onClick={() => setActiveGroup('all')} id="teams-tab-all">
+              All <span className={styles.tabCount}>{totalCount}</span>
+            </button>
             {ageGroups.map(g => (
               <button key={g.id}
                 className={`tab-btn ${activeGroup === g.id ? 'active' : ''}`}
                 onClick={() => setActiveGroup(g.id)}
-                id={`teams-tab-${g.name}`}>{g.name}</button>
+                id={`teams-tab-${g.name}`}>
+                {g.name} <span className={styles.tabCount}>{countByGroup[g.id] || 0}</span>
+              </button>
             ))}
           </div>
 
@@ -120,7 +141,7 @@ export default function TeamsPage() {
                         <div key={pg.name} className={styles.poolCard}>
                           {pg.name && (
                             <h3 className={styles.poolName}>
-                              {pg.name.length <= 1 ? `Pool ${pg.name}` : pg.name}
+                              {pg.name.replace(/^Pool\s+/i, '').trim()} Pool
                             </h3>
                           )}
                           <div className={styles.teamList}>
@@ -136,7 +157,7 @@ export default function TeamsPage() {
                                       {team.coach && <span className={styles.coach}>Coach: {team.coach}</span>}
                                     </div>
                                   </div>
-                                  <a href={`/teams/${team.id}`} className={styles.viewLink}>Profile →</a>
+                                  <Link href={`/teams/${team.id}`} className={styles.viewLink}>Profile →</Link>
                                 </div>
                               );
                             })}

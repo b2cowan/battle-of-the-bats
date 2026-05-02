@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Users, Check, X, CreditCard, RefreshCw, Mail, ChevronDown, ChevronUp, AlertCircle, Download, Plus, Trash2, MapPin, Search, LayoutDashboard } from 'lucide-react';
 import { saveTeam, updateTeam, deleteTeam, getTeams, getAgeGroups, savePool } from '@/lib/db';
-import { downloadCSV } from '@/lib/utils';
+import { downloadCSV, formatPoolName } from '@/lib/utils';
 import { useTournament } from '@/lib/tournament-context';
 import { AgeGroup, Team } from '@/lib/types';
 import s from '../admin-common.module.css';
@@ -277,7 +277,7 @@ export default function UnifiedTeamsPage() {
                 const displayPoolName = poolRecord ? poolRecord.name : null;
 
                 if (r.status !== 'accepted') return '-';
-                if (displayPoolName) return <span className="badge badge-purple" style={{ opacity: 0.8 }}>Pool {displayPoolName}</span>;
+                if (displayPoolName) return <span className="badge badge-purple" style={{ opacity: 0.8 }}>{formatPoolName(displayPoolName)}</span>;
                 return <span className="badge badge-danger" style={{ fontSize: '0.65rem' }}>Needs Pool</span>;
               })()}
             </div>
@@ -305,7 +305,7 @@ export default function UnifiedTeamsPage() {
                       <select value={r.poolId || ''} onChange={e => patch(r.id, { poolId: e.target.value })}>
                         <option value="" style={{ background: '#111', color: '#fff' }}>No Pool</option>
                         {(g.pools || []).map(p => (
-                          <option key={p.id} value={p.id} style={{ background: '#111', color: '#fff' }}>Pool {p.name}</option>
+                          <option key={p.id} value={p.id} style={{ background: '#111', color: '#fff' }}>{formatPoolName(p.name)}</option>
                         ))}
                       </select>
                     </div>
@@ -450,7 +450,7 @@ export default function UnifiedTeamsPage() {
                         <div key={p.id} className={s.poolSubSection}>
                           <div className={s.poolSubHeader}>
                             <div className={s.poolDot} style={{ background: p.id === 'unassigned' ? 'var(--danger-light)' : 'var(--purple-light)' }} />
-                            <span className={s.poolSubLabel} style={{ color: p.id === 'unassigned' ? 'var(--danger-light)' : undefined }}>{p.id === 'unassigned' ? 'UNASSIGNED' : `POOL ${p.name}`}</span>
+                            <span className={s.poolSubLabel} style={{ color: p.id === 'unassigned' ? 'var(--danger-light)' : undefined }}>{p.id === 'unassigned' ? 'UNASSIGNED' : `${p.name.replace(/^Pool\s+/i, '').trim().toUpperCase()} POOL`}</span>
                             <span className={s.poolSubCount}>({teamsInPool.length})</span>
                           </div>
                           {teamsInPool.map(r => renderRow(r, true))}
