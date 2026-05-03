@@ -81,7 +81,7 @@
 }
 
 .pillActive {
-  background: var(--primary-faint));
+  background: var(--primary-faint);
   border-color: var(--primary-light);
   color: var(--white-90, #f0f0f0);
 }
