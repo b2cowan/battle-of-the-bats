@@ -1,142 +1,390 @@
-.page {
-  --background: #fafafa;
-  --foreground: #fff;
-
-  --text-primary: #000;
-  --text-secondary: #666;
-
-  --button-primary-hover: #383838;
-  --button-secondary-hover: #f2f2f2;
-  --button-secondary-border: #ebebeb;
-
+/* ── Hero ────────────────────────────────────────────────────────────── */
+.hero {
+  min-height: 100vh;
   display: flex;
-  flex: 1;
-  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  font-family: var(--font-geist-sans);
-  background-color: var(--background);
+  position: relative;
+  overflow: hidden;
+  padding: calc(var(--nav-height) + 4rem) 0 6rem;
 }
 
-.main {
-  display: flex;
-  flex: 1;
-  width: 100%;
-  max-width: 800px;
-  flex-direction: column;
-  align-items: flex-start;
-  justify-content: space-between;
-  background-color: var(--foreground);
-  padding: 120px 60px;
+.heroBg {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 80% 55% at 50% -5%, rgba(139,47,201,0.35) 0%, transparent 65%),
+    var(--bg);
+  z-index: 0;
 }
 
-.intro {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  text-align: left;
-  gap: 24px;
+.heroGrid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(139,47,201,0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(139,47,201,0.06) 1px, transparent 1px);
+  background-size: 64px 64px;
+  z-index: 0;
 }
 
-.intro h1 {
-  max-width: 320px;
-  font-size: 40px;
+.heroContent {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  max-width: 820px;
+  margin: 0 auto;
+}
+
+.heroBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.375rem 1rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--purple-faint);
+  color: var(--purple-light);
+  font-size: 0.8rem;
   font-weight: 600;
-  line-height: 48px;
-  letter-spacing: -2.4px;
-  text-wrap: balance;
-  color: var(--text-primary);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 1.75rem;
 }
 
-.intro p {
-  max-width: 440px;
-  font-size: 18px;
-  line-height: 32px;
-  text-wrap: balance;
-  color: var(--text-secondary);
+.heroTitle {
+  font-family: var(--font-display);
+  font-size: clamp(2.75rem, 7.5vw, 5.5rem);
+  font-weight: 900;
+  line-height: 1.0;
+  letter-spacing: -0.01em;
+  margin-bottom: 1.5rem;
 }
 
-.intro a {
-  font-weight: 500;
-  color: var(--text-primary);
+.heroAccent {
+  background: linear-gradient(135deg, var(--purple-light) 0%, #C084FC 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
-.ctas {
+.heroSub {
+  font-size: 1.2rem;
+  color: var(--white-60);
+  max-width: 540px;
+  margin: 0 auto 2.5rem;
+  line-height: 1.65;
+}
+
+.heroActions {
   display: flex;
-  flex-direction: row;
-  width: 100%;
-  max-width: 440px;
-  gap: 16px;
-  font-size: 14px;
-}
-
-.ctas a {
-  display: flex;
+  gap: 1rem;
   justify-content: center;
+  flex-wrap: wrap;
+}
+
+/* ── Section shared ──────────────────────────────────────────────────── */
+.sectionHead {
+  text-align: center;
+  margin-bottom: 3.5rem;
+}
+
+.eyebrow {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--purple-light);
+  margin-bottom: 0.75rem;
+}
+
+.sectionTitle {
+  font-family: var(--font-display);
+  font-size: clamp(1.75rem, 4vw, 2.75rem);
+  font-weight: 800;
+  margin-bottom: 0.75rem;
+}
+
+.sectionSub {
+  font-size: 1.05rem;
+  color: var(--white-60);
+  max-width: 520px;
+  margin: 0 auto;
+  line-height: 1.6;
+}
+
+/* ── Features ────────────────────────────────────────────────────────── */
+.features {
+  padding: 6rem 0;
+  background: var(--bg-2);
+  border-top: 1px solid var(--border-2);
+  border-bottom: 1px solid var(--border-2);
+}
+
+.featureGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.5rem;
+}
+
+.featureCard {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 2rem;
+  transition: var(--transition);
+}
+
+.featureCard:hover {
+  border-color: var(--purple);
+  box-shadow: var(--glow-sm);
+  transform: translateY(-2px);
+}
+
+.featureIcon {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius);
+  background: var(--purple-faint);
+  border: 1px solid var(--border);
+  display: flex;
   align-items: center;
-  height: 40px;
-  padding: 0 16px;
-  border-radius: 128px;
-  border: 1px solid transparent;
-  transition: 0.2s;
-  cursor: pointer;
-  width: fit-content;
-  font-weight: 500;
+  justify-content: center;
+  color: var(--purple-light);
+  margin-bottom: 1.25rem;
+  flex-shrink: 0;
 }
 
-a.primary {
-  background: var(--text-primary);
-  color: var(--background);
-  gap: 8px;
+.featureTitle {
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  font-weight: 800;
+  margin-bottom: 0.5rem;
 }
 
-a.secondary {
-  border-color: var(--button-secondary-border);
+.featureDesc {
+  color: var(--white-60);
+  font-size: 0.95rem;
+  line-height: 1.65;
 }
 
-/* Enable hover only on non-touch devices */
-@media (hover: hover) and (pointer: fine) {
-  a.primary:hover {
-    background: var(--button-primary-hover);
-    border-color: transparent;
-  }
+/* ── Pricing ─────────────────────────────────────────────────────────── */
+.pricing {
+  padding: 6rem 0;
+}
 
-  a.secondary:hover {
-    background: var(--button-secondary-hover);
-    border-color: transparent;
+.pricingGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+  align-items: start;
+}
+
+.planCard {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 2rem;
+  position: relative;
+}
+
+.planHighlight {
+  border-color: var(--purple);
+  box-shadow: var(--glow-sm);
+  background: linear-gradient(180deg, rgba(139,47,201,0.1) 0%, var(--surface) 60%);
+}
+
+.popularBadge {
+  position: absolute;
+  top: -13px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(135deg, var(--purple), var(--purple-light));
+  color: var(--white);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 0.25rem 0.9rem;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.planName {
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  margin-bottom: 0.75rem;
+}
+
+.planPrice {
+  display: flex;
+  align-items: baseline;
+  gap: 0.2rem;
+  margin-bottom: 0.3rem;
+}
+
+.planAmount {
+  font-family: var(--font-display);
+  font-size: 3rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.planPeriod {
+  color: var(--white-60);
+  font-size: 1rem;
+}
+
+.planNote {
+  color: var(--white-60);
+  font-size: 0.8rem;
+  margin-bottom: 1.5rem;
+  min-height: 1.2em;
+}
+
+.planDivider {
+  border: none;
+  border-top: 1px solid var(--border-2);
+  margin: 1.5rem 0;
+}
+
+.planFeatures {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-bottom: 1.75rem;
+}
+
+.planRow {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.875rem;
+}
+
+.rowCheck { color: var(--success); flex-shrink: 0; }
+.rowCross { color: var(--white-30); flex-shrink: 0; }
+.rowMuted { color: var(--white-30); }
+
+/* ── Showcase ────────────────────────────────────────────────────────── */
+.showcase {
+  padding: 6rem 0;
+  background: var(--bg-2);
+  border-top: 1px solid var(--border-2);
+  border-bottom: 1px solid var(--border-2);
+}
+
+.showcaseCard {
+  background: var(--surface);
+  border: 1px solid var(--purple);
+  border-radius: var(--radius-xl);
+  padding: 3rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2.5rem;
+  box-shadow: var(--glow-sm);
+  position: relative;
+  overflow: hidden;
+}
+
+.showcaseCard::before {
+  content: '';
+  position: absolute;
+  top: -60px;
+  right: -60px;
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle, rgba(139,47,201,0.2) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.showcaseText h2 {
+  font-family: var(--font-display);
+  font-size: clamp(1.5rem, 3vw, 2.25rem);
+  font-weight: 800;
+  margin-bottom: 0.75rem;
+}
+
+.showcaseText p {
+  color: var(--white-60);
+  font-size: 1rem;
+  line-height: 1.65;
+  max-width: 440px;
+}
+
+.showcaseActions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  flex-shrink: 0;
+}
+
+/* ── Bottom CTA ──────────────────────────────────────────────────────── */
+.ctaSection {
+  padding: 7rem 0;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.ctaBg {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 60% 80% at 50% 50%, rgba(139,47,201,0.14) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.ctaTitle {
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 5vw, 3.75rem);
+  font-weight: 900;
+  margin-bottom: 1rem;
+  position: relative;
+}
+
+.ctaSub {
+  color: var(--white-60);
+  font-size: 1.1rem;
+  margin-bottom: 2.25rem;
+  position: relative;
+}
+
+.ctaActions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+  position: relative;
+}
+
+/* ── Responsive ──────────────────────────────────────────────────────── */
+@media (max-width: 900px) {
+  .pricingGrid {
+    grid-template-columns: 1fr;
+    max-width: 420px;
+    margin: 0 auto;
   }
 }
 
-@media (max-width: 600px) {
-  .main {
-    padding: 48px 24px;
+@media (max-width: 768px) {
+  .featureGrid {
+    grid-template-columns: 1fr;
   }
 
-  .intro {
-    gap: 16px;
+  .showcaseCard {
+    flex-direction: column;
+    text-align: center;
+    padding: 2rem;
   }
 
-  .intro h1 {
-    font-size: 32px;
-    line-height: 40px;
-    letter-spacing: -1.92px;
-  }
-}
+  .showcaseText p { max-width: none; }
 
-@media (prefers-color-scheme: dark) {
-  .logo {
-    filter: invert();
-  }
-
-  .page {
-    --background: #000;
-    --foreground: #000;
-
-    --text-primary: #ededed;
-    --text-secondary: #999;
-
-    --button-primary-hover: #ccc;
-    --button-secondary-hover: #1a1a1a;
-    --button-secondary-border: #1a1a1a;
+  .showcaseActions {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
   }
 }

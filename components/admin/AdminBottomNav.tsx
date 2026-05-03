@@ -5,7 +5,8 @@ import { usePathname, useRouter } from 'next/navigation';
 import {
   Users, Calendar, Trophy, Megaphone,
   MoreHorizontal, LayoutDashboard, Tag, MapPin,
-  RefreshCw, LogOut, X, ChevronRight, ClipboardList, BookUser,
+  RefreshCw, LogOut, X, ChevronRight, BookUser,
+  Settings, Users2,
 } from 'lucide-react';
 import { signOut } from '@/lib/auth';
 import { useOrg } from '@/lib/org-context';
@@ -19,7 +20,7 @@ const PRIMARY_KEYS = [
   { key: 'results',  icon: Trophy,   label: 'Results'       },
 ];
 
-const MORE_KEYS = [
+const BASE_MORE_KEYS = [
   { key: '',              icon: LayoutDashboard, label: 'Dashboard'     },
   { key: 'tournaments',   icon: RefreshCw,       label: 'Tournaments'   },
   { key: 'announcements', icon: Megaphone,       label: 'Announcements' },
@@ -28,11 +29,19 @@ const MORE_KEYS = [
   { key: 'diamonds',      icon: MapPin,          label: 'Diamonds'      },
 ];
 
+const OWNER_MORE_KEYS = [
+  { key: 'settings', icon: Settings, label: 'Settings' },
+  { key: 'members',  icon: Users2,   label: 'Members'  },
+];
+
 export default function AdminBottomNav() {
   const pathname  = usePathname();
   const router    = useRouter();
-  const { currentOrg } = useOrg();
+  const { currentOrg, userRole } = useOrg();
   const base = `/${currentOrg?.slug ?? 'milton-bats'}/admin`;
+  const MORE_KEYS = userRole === 'owner'
+    ? [...BASE_MORE_KEYS, ...OWNER_MORE_KEYS]
+    : BASE_MORE_KEYS;
   const [moreOpen, setMoreOpen] = useState(false);
   const moreRef   = useRef<HTMLDivElement>(null);
   const { tournaments, currentTournament, setCurrentTournament, refresh } = useTournament();

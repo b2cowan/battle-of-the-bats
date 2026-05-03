@@ -138,6 +138,11 @@
 
 .navChevron { margin-left: auto; color: var(--purple-light); }
 
+.billingSection {
+  padding: 0.5rem 0.75rem;
+  border-top: 1px solid var(--border);
+}
+
 .footer {
   padding: 1rem 0.75rem;
   border-top: 1px solid var(--border);

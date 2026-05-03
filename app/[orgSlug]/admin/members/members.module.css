@@ -1,0 +1,320 @@
+.page {
+  max-width: 900px;
+}
+
+.pageHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+  gap: 1rem;
+}
+
+.headerLeft {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.headerIcon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: var(--purple-faint, rgba(139, 92, 246, 0.12));
+  color: var(--purple-light, #a78bfa);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.pageTitle {
+  font-size: 1.75rem;
+  font-weight: 900;
+  font-family: var(--font-display, sans-serif);
+  margin: 0;
+  color: var(--white-90, #f0f0f0);
+  line-height: 1.1;
+}
+
+.pageSub {
+  margin: 0.25rem 0 0;
+  color: var(--white-40, rgba(255,255,255,0.4));
+  font-size: 0.9rem;
+}
+
+/* ── Seat banner ─────────────────────────────── */
+.seatBanner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  border-radius: 10px;
+  background: var(--surface, rgba(255,255,255,0.04));
+  border: 1px solid var(--border, rgba(255,255,255,0.08));
+  margin-bottom: 1.25rem;
+  font-size: 0.875rem;
+  gap: 1rem;
+}
+
+.seatCount {
+  color: var(--white-60, rgba(255,255,255,0.6));
+}
+
+.seatCount strong {
+  color: var(--white-90, #f0f0f0);
+}
+
+.upgradeLink {
+  font-size: 0.82rem;
+  color: var(--purple-light, #a78bfa);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.upgradeLink:hover {
+  text-decoration: underline;
+}
+
+/* ── Table ───────────────────────────────────── */
+.tableWrap {
+  border-radius: 12px;
+  background: var(--surface, rgba(255,255,255,0.04));
+  border: 1px solid var(--border, rgba(255,255,255,0.08));
+  overflow: hidden;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.table th {
+  text-align: left;
+  padding: 0.75rem 1rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--white-30, rgba(255,255,255,0.3));
+  border-bottom: 1px solid var(--border, rgba(255,255,255,0.08));
+}
+
+.table td {
+  padding: 0.875rem 1rem;
+  color: var(--white-80, rgba(255,255,255,0.8));
+  border-bottom: 1px solid var(--border, rgba(255,255,255,0.06));
+  vertical-align: middle;
+}
+
+.table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.table tbody tr:hover td {
+  background: var(--white-4, rgba(255,255,255,0.025));
+}
+
+.emailCell {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 500;
+}
+
+.youBadge {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--purple-light, #a78bfa);
+  background: var(--purple-faint, rgba(139,92,246,0.12));
+  border-radius: 4px;
+  padding: 0.15rem 0.4rem;
+}
+
+.statusAccepted {
+  color: var(--success, #4ade80);
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.statusPending {
+  color: var(--warning, #f59e0b);
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.dimCell {
+  color: var(--white-30, rgba(255,255,255,0.3)) !important;
+  font-size: 0.82rem !important;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.roleSelect {
+  background: var(--bg-3, rgba(255,255,255,0.06));
+  border: 1px solid var(--border, rgba(255,255,255,0.08));
+  border-radius: 6px;
+  color: var(--white-80, rgba(255,255,255,0.8));
+  font-size: 0.8rem;
+  padding: 0.3rem 0.5rem;
+  cursor: pointer;
+}
+
+.roleSelect:focus {
+  outline: none;
+  border-color: var(--purple, #7c3aed);
+}
+
+.removeBtn {
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: var(--white-30, rgba(255,255,255,0.3));
+  padding: 0.3rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  transition: all 0.15s;
+}
+
+.removeBtn:hover {
+  color: var(--danger, #ef4444);
+  background: rgba(239,68,68,0.1);
+  border-color: rgba(239,68,68,0.2);
+}
+
+/* ── Modal ───────────────────────────────────── */
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 1rem;
+}
+
+.modal {
+  background: var(--bg-2, #1a1a2e);
+  border: 1px solid var(--border, rgba(255,255,255,0.08));
+  border-radius: 14px;
+  padding: 1.5rem;
+  width: 100%;
+  max-width: 420px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+}
+
+.modalHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+  color: var(--purple-light, #a78bfa);
+}
+
+.modalHeader h3 {
+  font-size: 1.1rem;
+  font-weight: 800;
+  margin: 0;
+  color: var(--white-90, #f0f0f0);
+}
+
+.confirmText {
+  font-size: 0.9rem;
+  color: var(--white-60, rgba(255,255,255,0.6));
+  margin: 0 0 1.5rem;
+  line-height: 1.5;
+}
+
+.confirmText strong {
+  color: var(--white-90, #f0f0f0);
+}
+
+.field {
+  margin-bottom: 1rem;
+}
+
+.label {
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--white-60, rgba(255,255,255,0.6));
+  margin-bottom: 0.35rem;
+}
+
+.input {
+  width: 100%;
+  background: var(--bg-3, rgba(255,255,255,0.06));
+  border: 1px solid var(--border, rgba(255,255,255,0.08));
+  border-radius: 8px;
+  color: var(--white, #fff);
+  font-size: 0.875rem;
+  padding: 0.6rem 0.75rem;
+  box-sizing: border-box;
+  transition: border-color 0.15s;
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--purple, #7c3aed);
+}
+
+.modalFooter {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+/* ── Access denied ───────────────────────────── */
+.accessDenied {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  text-align: center;
+  color: var(--white-40, rgba(255,255,255,0.4));
+  gap: 0.75rem;
+}
+
+.accessDeniedIcon {
+  color: var(--white-20, rgba(255,255,255,0.2));
+}
+
+.accessDenied h2 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--white-60, rgba(255,255,255,0.6));
+  margin: 0;
+}
+
+.accessDenied p {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.muted {
+  color: var(--white-40, rgba(255,255,255,0.4));
+}
+
+/* ── Responsive ──────────────────────────────── */
+@media (max-width: 640px) {
+  .pageHeader {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .table th:nth-child(4),
+  .table td:nth-child(4) {
+    display: none;
+  }
+}
