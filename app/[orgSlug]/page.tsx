@@ -1,4 +1,4 @@
-import Link from 'next/link';
+﻿import Link from 'next/link';
 import { Calendar, Trophy, Users, ChevronRight, Megaphone, Star } from 'lucide-react';
 import { getAnnouncements, getGames, getTeams, getAgeGroups, getDiamonds, getOrganizationBySlug, getActiveTournamentByOrg } from '@/lib/db';
 import { formatTime } from '@/lib/utils';
@@ -85,15 +85,27 @@ export default async function HomePage({ params }: { params: Promise<{ orgSlug: 
     });
   }
 
+  const heroBanner = org?.heroBannerUrl ?? null;
+
   if (!activeTournament) {
     return (
       <div className={styles.page}>
         <section className={styles.hero}>
-          <div className={styles.heroBg}>
-            <div className={styles.heroOrb1} />
-            <div className={styles.heroOrb2} />
-            <div className={styles.heroGrid} />
-          </div>
+          {heroBanner ? (
+            <>
+              <div
+                className={styles.heroBanner}
+                style={{ backgroundImage: `url(${heroBanner})` }}
+              />
+              <div className={styles.heroBannerOverlay} />
+            </>
+          ) : (
+            <div className={styles.heroBg}>
+              <div className={styles.heroOrb1} />
+              <div className={styles.heroOrb2} />
+              <div className={styles.heroGrid} />
+            </div>
+          )}
           <div className={`container ${styles.heroContent}`}>
             <div className={styles.heroBadge}>
               <Star size={12} fill="currentColor" />
@@ -120,7 +132,7 @@ export default async function HomePage({ params }: { params: Promise<{ orgSlug: 
 
         <section className="section container">
           <div className="empty-state" style={{ minHeight: '40vh' }}>
-            <Calendar size={60} style={{ color: 'var(--purple-light)', marginBottom: '1.5rem', opacity: 0.5 }} />
+            <Calendar size={60} style={{ color: 'var(--primary-light)', marginBottom: '1.5rem', opacity: 0.5 }} />
             <h2 className="display-sm">Nothing Scheduled... Yet</h2>
             <p style={{ maxWidth: '500px', margin: '0 auto', color: 'var(--white-60)' }}>
               We&apos;re putting the finishing touches on the upcoming schedule. Check back soon to see divisions, teams, and the full lineup for the next Battle of the Bats!
@@ -138,11 +150,21 @@ export default async function HomePage({ params }: { params: Promise<{ orgSlug: 
     <div className={styles.page}>
       {/* Hero */}
       <section className={styles.hero}>
-        <div className={styles.heroBg}>
-          <div className={styles.heroOrb1} />
-          <div className={styles.heroOrb2} />
-          <div className={styles.heroGrid} />
-        </div>
+        {heroBanner ? (
+          <>
+            <div
+              className={styles.heroBanner}
+              style={{ backgroundImage: `url(${heroBanner})` }}
+            />
+            <div className={styles.heroBannerOverlay} />
+          </>
+        ) : (
+          <div className={styles.heroBg}>
+            <div className={styles.heroOrb1} />
+            <div className={styles.heroOrb2} />
+            <div className={styles.heroGrid} />
+          </div>
+        )}
         <div className={`container ${styles.heroContent}`}>
           <div className={styles.heroBadge}>
             <div className={styles.badgeText}>
@@ -217,7 +239,7 @@ export default async function HomePage({ params }: { params: Promise<{ orgSlug: 
               {announcements.map((ann, i) => (
                 <div key={ann.id} className={`card ${styles.annCard} ${i === 0 ? styles.annFeatured : ''}`}>
                   <div className={styles.annHeader}>
-                    {ann.pinned && <span className="badge badge-purple"><Star size={10} fill="currentColor" />&nbsp;Pinned</span>}
+                    {ann.pinned && <span className="badge badge-primary"><Star size={10} fill="currentColor" />&nbsp;Pinned</span>}
                     <span className={styles.annDate}>
                       {new Date(ann.date).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' })}
                     </span>
@@ -265,7 +287,7 @@ export default async function HomePage({ params }: { params: Promise<{ orgSlug: 
               {upcomingGames.map(game => (
                 <div key={game.id} className={`card ${styles.gameCard}`}>
                   <div className={styles.gameHeader}>
-                    <span className="badge badge-purple">
+                    <span className="badge badge-primary">
                       {game.isPlayoff && game.bracketCode ? game.bracketCode : getAgeGroupName(game.ageGroupId)}
                     </span>
                     <span className={styles.gameDate}>{formatDate(game.date)} • {formatTime(game.time)}</span>

@@ -1,4 +1,4 @@
-.pageHeader {
+﻿.pageHeader {
   background: linear-gradient(180deg, var(--bg-2) 0%, var(--bg) 100%);
   border-bottom: 1px solid var(--border);
   padding: calc(var(--nav-height) + 3rem) 0 3rem;
@@ -17,7 +17,7 @@
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--purple-light);
+  color: var(--primary-light);
   margin-bottom: 1.25rem;
   padding-bottom: 0.75rem;
   border-bottom: 1px solid var(--border);
@@ -28,8 +28,8 @@
 .annCard { display: flex; flex-direction: column; gap: 0.875rem; max-width: 800px; }
 
 .pinnedCard {
-  background: linear-gradient(135deg, rgba(139,47,201,0.1), var(--surface));
-  border-color: var(--purple);
+  background: linear-gradient(135deg, rgba(var(--primary-rgb),0.1), var(--surface));
+  border-color: var(--primary);
   box-shadow: var(--glow-sm);
 }
 
@@ -91,7 +91,7 @@
   top: 0.75rem;
   right: 0.75rem;
   z-index: 2;
-  background: var(--purple-light);
+  background: var(--primary-light);
   color: var(--white);
   padding: 0.35rem 0.85rem;
   border-radius: var(--radius-sm);

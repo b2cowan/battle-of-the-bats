@@ -1,4 +1,4 @@
-.pageHeader {
+﻿.pageHeader {
   background: linear-gradient(180deg, var(--bg-2) 0%, var(--bg) 100%);
   border-bottom: 1px solid var(--border);
   padding: calc(var(--nav-height) + 3rem) 0 3rem;
@@ -75,7 +75,7 @@
 
 .winner .scoreName { color: var(--white); }
 .winner .score {
-  color: var(--purple-light);
+  color: var(--primary-light);
   text-shadow: 0 0 20px rgba(168,85,247,0.5);
 }
 

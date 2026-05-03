@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 import { useState, useEffect } from 'react';
 import { BookUser, Plus, Pencil, Trash2, X, Check, Mail, Phone } from 'lucide-react';
 import { getContacts, saveContact, updateContact, deleteContact } from '@/lib/db';
@@ -83,7 +83,7 @@ export default function AdminContactsPage() {
             ) : contacts.map(c => (
               <tr key={c.id}>
                 <td><strong>{c.name}</strong></td>
-                <td>{c.role ? <span className="badge badge-purple">{c.role}</span> : '—'}</td>
+                <td>{c.role ? <span className="badge badge-primary">{c.role}</span> : '—'}</td>
                 <td>
                   <a href={`mailto:${c.email}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, color: 'var(--white-60)' }}>
                     <Mail size={12} /> {c.email}

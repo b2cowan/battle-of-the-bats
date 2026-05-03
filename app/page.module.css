@@ -1,4 +1,4 @@
-/* ── Hero ────────────────────────────────────────────────────────────── */
+﻿/* ── Hero ────────────────────────────────────────────────────────────── */
 .hero {
   min-height: 100vh;
   display: flex;
@@ -12,7 +12,7 @@
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(ellipse 80% 55% at 50% -5%, rgba(139,47,201,0.35) 0%, transparent 65%),
+    radial-gradient(ellipse 80% 55% at 50% -5%, rgba(var(--primary-rgb),0.35) 0%, transparent 65%),
     var(--bg);
   z-index: 0;
 }
@@ -21,8 +21,8 @@
   position: absolute;
   inset: 0;
   background-image:
-    linear-gradient(rgba(139,47,201,0.06) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(139,47,201,0.06) 1px, transparent 1px);
+    linear-gradient(rgba(var(--primary-rgb),0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(var(--primary-rgb),0.06) 1px, transparent 1px);
   background-size: 64px 64px;
   z-index: 0;
 }
@@ -42,8 +42,8 @@
   padding: 0.375rem 1rem;
   border-radius: 999px;
   border: 1px solid var(--border);
-  background: var(--purple-faint);
-  color: var(--purple-light);
+  background: var(--primary-faint);
+  color: var(--primary-light);
   font-size: 0.8rem;
   font-weight: 600;
   letter-spacing: 0.08em;
@@ -61,7 +61,7 @@
 }
 
 .heroAccent {
-  background: linear-gradient(135deg, var(--purple-light) 0%, #C084FC 100%);
+  background: linear-gradient(135deg, var(--primary-light) 0%, #C084FC 100%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -93,7 +93,7 @@
   font-weight: 600;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--purple-light);
+  color: var(--primary-light);
   margin-bottom: 0.75rem;
 }
 
@@ -135,7 +135,7 @@
 }
 
 .featureCard:hover {
-  border-color: var(--purple);
+  border-color: var(--primary);
   box-shadow: var(--glow-sm);
   transform: translateY(-2px);
 }
@@ -144,12 +144,12 @@
   width: 48px;
   height: 48px;
   border-radius: var(--radius);
-  background: var(--purple-faint);
+  background: var(--primary-faint);
   border: 1px solid var(--border);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--purple-light);
+  color: var(--primary-light);
   margin-bottom: 1.25rem;
   flex-shrink: 0;
 }
@@ -188,9 +188,9 @@
 }
 
 .planHighlight {
-  border-color: var(--purple);
+  border-color: var(--primary);
   box-shadow: var(--glow-sm);
-  background: linear-gradient(180deg, rgba(139,47,201,0.1) 0%, var(--surface) 60%);
+  background: linear-gradient(180deg, rgba(var(--primary-rgb),0.1) 0%, var(--surface) 60%);
 }
 
 .popularBadge {
@@ -198,7 +198,7 @@
   top: -13px;
   left: 50%;
   transform: translateX(-50%);
-  background: linear-gradient(135deg, var(--purple), var(--purple-light));
+  background: linear-gradient(135deg, var(--primary), var(--primary-light));
   color: var(--white);
   font-size: 0.68rem;
   font-weight: 700;
@@ -278,7 +278,7 @@
 
 .showcaseCard {
   background: var(--surface);
-  border: 1px solid var(--purple);
+  border: 1px solid var(--primary);
   border-radius: var(--radius-xl);
   padding: 3rem;
   display: flex;
@@ -297,7 +297,7 @@
   right: -60px;
   width: 300px;
   height: 300px;
-  background: radial-gradient(circle, rgba(139,47,201,0.2) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(var(--primary-rgb),0.2) 0%, transparent 70%);
   pointer-events: none;
 }
 
@@ -333,7 +333,7 @@
 .ctaBg {
   position: absolute;
   inset: 0;
-  background: radial-gradient(ellipse 60% 80% at 50% 50%, rgba(139,47,201,0.14) 0%, transparent 70%);
+  background: radial-gradient(ellipse 60% 80% at 50% 50%, rgba(var(--primary-rgb),0.14) 0%, transparent 70%);
   pointer-events: none;
 }
 

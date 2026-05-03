@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 import { useState, useEffect } from 'react';
 import { Calendar, Clock, MapPin, Trophy, List, LayoutTemplate } from 'lucide-react';
 import { getGames, getTeams, getAgeGroups, getDiamonds, getTournaments } from '@/lib/db';
@@ -64,7 +64,7 @@ function PublicBracketColumns({ columns, getTeamDisplay, formatDateShort }: Brac
         <div key={idx} style={{ display: 'flex', flexDirection: 'column', width: '200px', flexShrink: 0 }}>
           <div style={{
             textAlign: 'center',
-            color: 'var(--purple-light)',
+            color: 'var(--primary-light)',
             fontFamily: 'var(--font-display)',
             fontSize: '0.75rem',
             fontWeight: 900,
@@ -87,7 +87,7 @@ function PublicBracketColumns({ columns, getTeamDisplay, formatDateShort }: Brac
                   <div style={{
                     position: 'absolute', right: '-2rem', top: '50%',
                     width: '2rem', height: '1px',
-                    background: 'var(--purple-main)', opacity: 0.15, zIndex: 0,
+                    background: 'var(--primary)', opacity: 0.15, zIndex: 0,
                   }} />
                 )}
                 <div className="card" style={{
@@ -102,9 +102,9 @@ function PublicBracketColumns({ columns, getTeamDisplay, formatDateShort }: Brac
                   {/* code badge */}
                   <div style={{ marginBottom: '6px' }}>
                     <span style={{
-                      fontSize: '0.55rem', fontWeight: 900, color: 'var(--purple-light)',
-                      background: 'rgba(139,92,246,0.1)', padding: '2px 7px',
-                      borderRadius: '4px', border: '1px solid rgba(139,92,246,0.2)',
+                      fontSize: '0.55rem', fontWeight: 900, color: 'var(--primary-light)',
+                      background: 'rgba(var(--primary-rgb),0.1)', padding: '2px 7px',
+                      borderRadius: '4px', border: '1px solid rgba(var(--primary-rgb),0.2)',
                       letterSpacing: '0.02em',
                     }}>{g.bracketCode || '—'}</span>
                   </div>
@@ -114,9 +114,9 @@ function PublicBracketColumns({ columns, getTeamDisplay, formatDateShort }: Brac
                     {[false, true].map(isHome => (
                       <div key={String(isHome)} style={{ display: 'flex', alignItems: 'center', gap: '7px' }}>
                         <div style={{
-                          width: '26px', fontSize: '0.5rem', fontWeight: 900, color: 'var(--purple-light)',
-                          textAlign: 'center', background: 'rgba(139,92,246,0.1)', padding: '1px 0',
-                          borderRadius: '3px', border: '1px solid rgba(139,92,246,0.2)',
+                          width: '26px', fontSize: '0.5rem', fontWeight: 900, color: 'var(--primary-light)',
+                          textAlign: 'center', background: 'rgba(var(--primary-rgb),0.1)', padding: '1px 0',
+                          borderRadius: '3px', border: '1px solid rgba(var(--primary-rgb),0.2)',
                           flexShrink: 0,
                         }}>{isHome ? 'HOM' : 'VIS'}</div>
                         <div style={{
@@ -134,15 +134,15 @@ function PublicBracketColumns({ columns, getTeamDisplay, formatDateShort }: Brac
                     fontSize: '0.65rem', color: 'var(--white-40)',
                   }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                      <Calendar size={9} style={{ color: 'var(--purple-light)', opacity: 0.5 }} />
+                      <Calendar size={9} style={{ color: 'var(--primary-light)', opacity: 0.5 }} />
                       {g.date ? formatDateShort(g.date) : 'TBD'}
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '4px', justifyContent: 'flex-end' }}>
-                      <Clock size={9} style={{ color: 'var(--purple-light)', opacity: 0.5 }} />
+                      <Clock size={9} style={{ color: 'var(--primary-light)', opacity: 0.5 }} />
                       {g.time ? formatTime(g.time) : 'TBD'}
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '4px', gridColumn: 'span 2' }}>
-                      <MapPin size={9} style={{ color: 'var(--purple-light)', opacity: 0.5 }} />
+                      <MapPin size={9} style={{ color: 'var(--primary-light)', opacity: 0.5 }} />
                       {g.location || 'TBD'}
                     </div>
                   </div>
@@ -283,9 +283,9 @@ export default function SchedulePage() {
   // ── pool-section header ────────────────────────────────────────────────────
   const PoolHeader = ({ name }: { name: string }) => (
     <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
-      <div style={{ height: '1px', flex: 1, background: 'linear-gradient(to right, transparent, var(--purple-main))' }} />
-      <h2 className="display-sm" style={{ color: 'var(--purple-light)' }}>{name}</h2>
-      <div style={{ height: '1px', flex: 1, background: 'linear-gradient(to left, transparent, var(--purple-main))' }} />
+      <div style={{ height: '1px', flex: 1, background: 'linear-gradient(to right, transparent, var(--primary))' }} />
+      <h2 className="display-sm" style={{ color: 'var(--primary-light)' }}>{name}</h2>
+      <div style={{ height: '1px', flex: 1, background: 'linear-gradient(to left, transparent, var(--primary))' }} />
     </div>
   );
 
@@ -377,7 +377,7 @@ export default function SchedulePage() {
                   justifyContent: 'flex-start',
                   overflowX: 'auto' as const,
                   padding: '1.5rem',
-                  background: 'radial-gradient(circle at 50% 50%, rgba(139,92,246,0.04) 0%, transparent 70%)',
+                  background: 'radial-gradient(circle at 50% 50%, rgba(var(--primary-rgb),0.04) 0%, transparent 70%)',
                   WebkitOverflowScrolling: 'touch' as const,
                 };
 
@@ -448,7 +448,7 @@ export default function SchedulePage() {
                                   <span className={styles.teamB}>{getTeamDisplay(game, false)}</span>
                                 </div>
                                 <div className={styles.gameMeta}>
-                                  <span className="badge badge-purple">{activeG?.name ?? ''}</span>
+                                  <span className="badge badge-primary">{activeG?.name ?? ''}</span>
                                   <LocationLink location={game.location} diamond={getDiamond(game.diamondId)} size="sm" />
                                 </div>
                                 {game.notes && <p className={styles.gameNotes}>{game.notes}</p>}
@@ -495,7 +495,7 @@ export default function SchedulePage() {
                                       <span className={styles.teamB}>{getTeamDisplay(game, false)}</span>
                                     </div>
                                     <div className={styles.gameMeta}>
-                                      <span className="badge badge-purple">{game.bracketCode || 'Playoff'}</span>
+                                      <span className="badge badge-primary">{game.bracketCode || 'Playoff'}</span>
                                       <LocationLink location={game.location} diamond={getDiamond(game.diamondId)} size="sm" />
                                     </div>
                                     {game.notes && <p className={styles.gameNotes}>{game.notes}</p>}
@@ -529,7 +529,7 @@ export default function SchedulePage() {
                           <span className={styles.teamB}>{getTeamDisplay(game, false)}</span>
                         </div>
                         <div className={styles.gameMeta}>
-                          <span className="badge badge-purple">
+                          <span className="badge badge-primary">
                             {game.isPlayoff ? (game.bracketCode || 'Playoff') : (ageGroups.find(g => g.id === game.ageGroupId)?.name ?? '')}
                           </span>
                           <LocationLink location={game.location} diamond={getDiamond(game.diamondId)} size="sm" />

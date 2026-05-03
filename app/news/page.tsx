@@ -1,4 +1,4 @@
-import { Megaphone, Star, Calendar } from 'lucide-react';
+﻿import { Megaphone, Star, Calendar } from 'lucide-react';
 import { getAnnouncements, getTournaments } from '@/lib/db';
 import { Announcement } from '@/lib/types';
 import styles from './news.module.css';
@@ -88,7 +88,7 @@ function AnnouncementCard({
       <div className={styles.annHeader}>
         <div className={styles.annMeta}>
           {pinned && (
-            <span className="badge badge-purple">
+            <span className="badge badge-primary">
               <Star size={9} fill="currentColor" />&nbsp;Pinned
             </span>
           )}

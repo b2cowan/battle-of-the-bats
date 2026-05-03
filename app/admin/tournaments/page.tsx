@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 import { useState, useEffect } from 'react';
 import { RefreshCw, Plus, Check, X, Trash2, Pencil, Star, Sparkles } from 'lucide-react';
 import { 
@@ -301,7 +301,7 @@ export default function AdminTournamentsPage() {
 
       {/* Info card */}
       <div className={styles.infoCard}>
-        <Star size={14} style={{ color: 'var(--purple-light)', flexShrink: 0, marginTop: 2 }} />
+        <Star size={14} style={{ color: 'var(--primary-light)', flexShrink: 0, marginTop: 2 }} />
         <p>
           The <strong>Live</strong> tournament is shown on the public site. Switch between tournaments in the sidebar
           to manage teams, schedules, and results for a specific year without affecting other seasons.
@@ -332,7 +332,7 @@ export default function AdminTournamentsPage() {
                   <strong>{t.name}</strong>
                 </td>
                 <td>
-                  <span className="badge badge-purple">{t.year}</span>
+                  <span className="badge badge-primary">{t.year}</span>
                 </td>
                 <td>
                   {t.isActive

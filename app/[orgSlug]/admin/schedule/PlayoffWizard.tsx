@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 import React, { useState, useEffect } from 'react';
 import { Trophy, Check, X, Calendar, MapPin, Clock, AlertCircle, ChevronUp, ChevronDown } from 'lucide-react';
 import { getStandings, getDiamonds, saveGame, getTournament, getGames, deleteGame, getTeams } from '@/lib/db';
@@ -287,12 +287,12 @@ export default function PlayoffWizard({ ageGroup, tournamentId, onClose, onCompl
         <div style={{ padding: '1.5rem 2rem', borderBottom: '1px solid var(--border)', background: 'var(--surface-2)' }}>
           <div className="flex-between">
             <div className="flex gap-3">
-              <div className="flex-center" style={{ width: '40px', height: '40px', background: 'var(--purple-faint)', borderRadius: '10px', color: 'var(--purple-light)', border: '1px solid var(--border)' }}>
+              <div className="flex-center" style={{ width: '40px', height: '40px', background: 'var(--primary-faint)', borderRadius: '10px', color: 'var(--primary-light)', border: '1px solid var(--border)' }}>
                 <Trophy size={20} />
               </div>
               <div>
                 <h3 style={{ margin: 0 }}>Playoff Bracket Generator</h3>
-                <p className="text-label" style={{ color: 'var(--purple-light)', marginTop: '0.25rem' }}>{ageGroup.name} Division</p>
+                <p className="text-label" style={{ color: 'var(--primary-light)', marginTop: '0.25rem' }}>{ageGroup.name} Division</p>
               </div>
             </div>
             <button className="btn btn-ghost btn-sm" onClick={onClose} style={{ padding: '0.5rem' }}>
@@ -330,7 +330,7 @@ export default function PlayoffWizard({ ageGroup, tournamentId, onClose, onCompl
                     </div>
                     <div className="form-group" style={{ justifyContent: 'center' }}>
                        <label className="flex items-center gap-3 cursor-pointer">
-                        <input type="checkbox" checked={config.hasThirdPlace} onChange={e => setConfig({...config, hasThirdPlace: e.target.checked})} style={{ width: '18px', height: '18px', accentColor: 'var(--purple)' }} />
+                        <input type="checkbox" checked={config.hasThirdPlace} onChange={e => setConfig({...config, hasThirdPlace: e.target.checked})} style={{ width: '18px', height: '18px', accentColor: 'var(--primary)' }} />
                         <span className="text-sm font-bold">Include 3rd Place / Consolidation Game</span>
                       </label>
                     </div>
@@ -340,12 +340,12 @@ export default function PlayoffWizard({ ageGroup, tournamentId, onClose, onCompl
 
               {config.crossover === 'none' && ageGroup.pools && (
                 <div style={{ marginTop: '1.5rem', background: 'var(--black-20)', padding: '1.5rem', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border)' }}>
-                  <h5 className="font-bold text-sm mb-4" style={{ color: 'var(--purple-light)' }}>Per-Pool Independent Brackets</h5>
+                  <h5 className="font-bold text-sm mb-4" style={{ color: 'var(--primary-light)' }}>Per-Pool Independent Brackets</h5>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                     {ageGroup.pools.map(pool => {
                       const pConfig = config.splitConfigs?.[pool.id] || { teamsQualifying: 4, hasThirdPlace: false };
                       return (
-                        <div key={pool.id} style={{ display: 'grid', gridTemplateColumns: '1fr 2fr 1fr', gap: '2rem', alignItems: 'center', padding: '0.75rem', background: 'var(--surface)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)' }}>
+                        <div key={pool.id} style={{ display: 'grid', gridTemplateColumns: '1fr 2fr 1fr', gap: '2rem', alignItems: 'center', padding: '0.75rem', background: 'var(--surface)', borderRadius: 'var(--radius)', border: '1px solid var(--border)' }}>
                           <span className="font-bold">{formatPoolName(pool.name)}</span>
                           <div className="flex gap-4 items-center">
                             <span className="text-xs text-muted">Qualifying:</span>
@@ -376,7 +376,7 @@ export default function PlayoffWizard({ ageGroup, tournamentId, onClose, onCompl
                                   [pool.id]: { ...pConfig, hasThirdPlace: e.target.checked } 
                                 }
                               })}
-                              style={{ width: '16px', height: '16px', accentColor: 'var(--purple)' }} 
+                              style={{ width: '16px', height: '16px', accentColor: 'var(--primary)' }} 
                             />
                             <span className="text-xs font-bold">3rd Place</span>
                           </label>
@@ -401,7 +401,7 @@ export default function PlayoffWizard({ ageGroup, tournamentId, onClose, onCompl
                       <span style={{ 
                         fontSize: '0.75rem', 
                         fontWeight: 900, 
-                        color: 'var(--purple-light)',
+                        color: 'var(--primary-light)',
                         minWidth: '14px'
                       }}>{i + 1}</span>
                       <span className="font-bold" style={{ fontSize: '0.9rem' }}>{breakerLabels[b]}</span>
@@ -421,9 +421,9 @@ export default function PlayoffWizard({ ageGroup, tournamentId, onClose, onCompl
                 Note: If 3 or more teams are tied, Head-to-Head is automatically skipped.
               </p>
 
-              <div style={{ marginTop: '2rem', padding: '1.25rem', background: 'var(--purple-faint)', borderRadius: 'var(--radius-md)', border: '1px solid var(--purple-10)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ marginTop: '2rem', padding: '1.25rem', background: 'var(--primary-faint)', borderRadius: 'var(--radius)', border: '1px solid var(--primary-faint)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
-                  <h4 className="font-bold text-sm text-purple-light" style={{ marginBottom: '0.25rem' }}>Configure Brackets</h4>
+                  <h4 className="font-bold text-sm text-primary-light" style={{ marginBottom: '0.25rem' }}>Configure Brackets</h4>
                   <p className="text-muted text-xs">Generate the initial bracket layout based on your selections above. <br/><strong>Warning:</strong> Clicking this will reset the Custom Builder canvas.</p>
                 </div>
                 <button className="btn btn-primary" onClick={generatePreview}>Configure Brackets</button>
@@ -436,7 +436,7 @@ export default function PlayoffWizard({ ageGroup, tournamentId, onClose, onCompl
             <section>
               <div className="flex-between" style={{ marginBottom: '1.5rem' }}>
                 <h4 className="text-label" style={{ opacity: 0.5 }}>3. Game Slots & Scheduling</h4>
-                <span className="badge badge-purple">{preview.length} Games</span>
+                <span className="badge badge-primary">{preview.length} Games</span>
               </div>
 
               {templatePreview.length === 0 ? (

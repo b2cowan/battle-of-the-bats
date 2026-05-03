@@ -49,6 +49,8 @@ export async function getAuthContext(): Promise<AuthContext | null> {
     planId: orgRow.plan_id as OrgPlan,
     tournamentLimit: orgRow.tournament_limit,
     subscriptionStatus: orgRow.subscription_status,
+    stripeCustomerId: orgRow.stripe_customer_id ?? undefined,
+    stripeSubscriptionId: orgRow.stripe_subscription_id ?? undefined,
     isPublic: orgRow.is_public,
     createdAt: orgRow.created_at,
   };

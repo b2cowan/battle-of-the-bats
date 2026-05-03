@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Building2, Eye, EyeOff, Sparkles } from 'lucide-react';
@@ -87,7 +87,7 @@ export default function SignupPage() {
               autoComplete="organization"
             />
             <p style={{ fontSize: '0.75rem', color: 'var(--white-40)', marginTop: '0.35rem' }}>
-              Your public URL: <span style={{ color: 'var(--purple-light)' }}>/{previewSlug}</span>
+              Your public URL: <span style={{ color: 'var(--primary-light)' }}>/{previewSlug}</span>
             </p>
           </div>
 

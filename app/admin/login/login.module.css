@@ -1,4 +1,4 @@
-.page {
+﻿.page {
   min-height: 100vh;
   display: flex;
   align-items: center;
@@ -21,7 +21,7 @@
   right: -10%;
   width: 500px;
   height: 500px;
-  background: radial-gradient(circle, rgba(139,47,201,0.3) 0%, transparent 65%);
+  background: radial-gradient(circle, rgba(var(--primary-rgb),0.3) 0%, transparent 65%);
 }
 
 .orb2 {
@@ -52,7 +52,7 @@
   width: 60px;
   height: 60px;
   border-radius: 16px;
-  background: linear-gradient(135deg, var(--purple), var(--purple-light));
+  background: linear-gradient(135deg, var(--primary), var(--primary-light));
   display: flex;
   align-items: center;
   justify-content: center;

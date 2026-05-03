@@ -1,4 +1,4 @@
-/* ─── Schedule-Specific Styles ────────────────────────────────────────────── */
+﻿/* ─── Schedule-Specific Styles ────────────────────────────────────────────── */
 /* Common styles live in ../admin-common.module.css                           */
 
 /* ─── Generator Overlay & Modal ───────────────────────────────────────────── */
@@ -68,7 +68,7 @@
 }
 
 .diamondCheck input {
-  accent-color: var(--purple);
+  accent-color: var(--primary);
 }
 
 .previewStats {
@@ -184,7 +184,7 @@
   font-family: var(--font-display);
   font-size: 2rem !important;
   font-weight: 900;
-  color: var(--purple-light) !important;
+  color: var(--primary-light) !important;
 }
 
 .scoreTeamLabel {

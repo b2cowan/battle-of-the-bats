@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 import { useState, useMemo } from 'react';
 import { Sparkles, Calendar, Clock, MapPin, Check, X, RefreshCw, AlertCircle, Plus, Trash2 } from 'lucide-react';
 import { Team, AgeGroup, Diamond, Game, Tournament } from '@/lib/types';
@@ -278,7 +278,7 @@ export default function ScheduleGenerator({ tournament, ageGroups, teams, diamon
             <div className="form-group">
               <label className="form-label" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 Available Scheduling Dates
-                <button type="button" className="btn btn-ghost btn-sm" onClick={addDateSlot} style={{ color: 'var(--purple-light)' }}>
+                <button type="button" className="btn btn-ghost btn-sm" onClick={addDateSlot} style={{ color: 'var(--primary-light)' }}>
                   <Plus size={14} /> Add Date
                 </button>
               </label>
@@ -397,7 +397,7 @@ export default function ScheduleGenerator({ tournament, ageGroups, teams, diamon
         <div className="modal-overlay" style={{ zIndex: 1000 }} onClick={() => setShowConfirm(false)}>
           <div className="modal" style={{ maxWidth: 450, padding: '2rem' }} onClick={e => e.stopPropagation()}>
             <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
-              <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'var(--white-5)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1rem', color: 'var(--purple-light)' }}>
+              <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'var(--white-5)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1rem', color: 'var(--primary-light)' }}>
                 <AlertCircle size={24} />
               </div>
               <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '0.5rem' }}>Commit Schedule?</h3>

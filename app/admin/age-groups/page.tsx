@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 import { useState, useEffect } from 'react';
 import { Tag, Plus, Pencil, Trash2, X, Check, ChevronUp, ChevronDown, Trophy } from 'lucide-react';
 import { 
@@ -183,7 +183,7 @@ export default function AgeGroupsPage() {
               <tr><td colSpan={5} style={{ textAlign: 'center', color: 'var(--white-30)', padding: '2rem' }}>No age groups yet. Add one to get started.</td></tr>
             ) : groups.map(g => (
               <tr key={g.id}>
-                <td><span className="badge badge-purple" style={{ fontSize: '0.875rem' }}>{g.name}</span></td>
+                <td><span className="badge badge-primary" style={{ fontSize: '0.875rem' }}>{g.name}</span></td>
                 <td>
                   {(g.poolCount || 0) >= 2 && g.pools && g.pools.length > 0 ? (
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem' }}>
@@ -346,7 +346,7 @@ export default function AgeGroupsPage() {
                       border: '1px solid var(--border-2)' 
                     }}>
                       <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
-                        <span style={{ fontSize: '0.75rem', fontWeight: 900, color: 'var(--purple-light)', minWidth: '15px' }}>{i + 1}</span>
+                        <span style={{ fontSize: '0.75rem', fontWeight: 900, color: 'var(--primary-light)', minWidth: '15px' }}>{i + 1}</span>
                         <span style={{ fontWeight: 600, fontSize: '0.85rem' }}>{breakerLabels[b]}</span>
                       </div>
                       <div style={{ display: 'flex', gap: '0.25rem' }}>

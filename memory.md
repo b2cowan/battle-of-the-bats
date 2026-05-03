@@ -75,3 +75,4 @@ See `MULTI_TENANT_ARCHITECTURE.md` Section 8, Phase 3 for full task list. Summar
 - The unified database migration is complete and verified.
 - Deployment issues regarding pnpm script approvals are resolved via `.npmrc`.
 - API routes for profiles and stats are optimized for the unified schema and robust against relationship ambiguity.
+- **Task Tracking**: A [TODO.md](file:///c:/Users/Robert%20Cowan/Documents/tournament-website/TODO.md) file is maintained in the root to track active development tasks across model sessions.

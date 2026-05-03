@@ -14,6 +14,12 @@ export interface Organization {
   tournamentLimit: number;
   isPublic: boolean;
   createdAt: string;
+  themePreset?: string;
+  themePrimary?: string;
+  themeAccent?: string;
+  heroBannerUrl?: string;
+  themeFont?: string;       // 'system' | 'inter' | 'barlow' | 'dm-serif'
+  themeCardStyle?: string;  // 'default' | 'glass' | 'outlined' | 'flat'
 }
 
 export interface OrganizationMember {

@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 import { useState, useEffect } from 'react';
 import { MapPin, Plus, Pencil, Trash2, X, Check, ExternalLink } from 'lucide-react';
 import { getDiamonds, saveDiamond, updateDiamond, deleteDiamond } from '@/lib/db';
@@ -81,7 +81,7 @@ export default function AdminDiamondsPage() {
               <tr key={d.id}>
                 <td>
                   <div className={styles.diamondName}>
-                    <MapPin size={13} style={{ color: 'var(--purple-light)', flexShrink: 0 }} />
+                    <MapPin size={13} style={{ color: 'var(--primary-light)', flexShrink: 0 }} />
                     <strong>{d.name}</strong>
                   </div>
                 </td>

@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Users, Check, X, CreditCard, RefreshCw, Mail, ChevronDown, ChevronUp, AlertCircle, Download, Plus, Trash2, MapPin, Search, LayoutDashboard } from 'lucide-react';
 import { saveTeam, updateTeam, deleteTeam, getTeams, getAgeGroups, savePool } from '@/lib/db';
@@ -319,7 +319,7 @@ export default function UnifiedTeamsPage() {
                 const displayPoolName = poolRecord ? poolRecord.name : null;
 
                 if (r.status !== 'accepted') return '-';
-                if (displayPoolName) return <span className="badge badge-purple" style={{ opacity: 0.8 }}>{formatPoolName(displayPoolName)}</span>;
+                if (displayPoolName) return <span className="badge badge-primary" style={{ opacity: 0.8 }}>{formatPoolName(displayPoolName)}</span>;
                 return <span className="badge badge-danger" style={{ fontSize: '0.65rem' }}>Needs Pool</span>;
               })()}
             </div>
@@ -412,10 +412,10 @@ export default function UnifiedTeamsPage() {
 
       <div className={s.controlsBar}>
         <div className={s.controlsLeft}>
-          <button className="btn btn-ghost btn-sm" onClick={() => setShowSummaryModal(true)} style={{ color: 'var(--purple-light)', gap: '0.5rem' }}>
+          <button className="btn btn-ghost btn-sm" onClick={() => setShowSummaryModal(true)} style={{ color: 'var(--primary-light)', gap: '0.5rem' }}>
             <LayoutDashboard size={14} /> Summary Dashboard
           </button>
-          <button className="btn btn-ghost btn-sm" onClick={randomizePools} disabled={loading || !selectedAgeGroupId} style={{ color: 'var(--purple-light)', gap: '0.5rem' }}>
+          <button className="btn btn-ghost btn-sm" onClick={randomizePools} disabled={loading || !selectedAgeGroupId} style={{ color: 'var(--primary-light)', gap: '0.5rem' }}>
             <RefreshCw size={14} className={working === 'randomizing' ? 'spin' : ''} /> Randomize Pools
           </button>
         </div>
@@ -492,7 +492,7 @@ export default function UnifiedTeamsPage() {
         <div className={s.compactList}>
           {Object.entries(grouped).map(([ageGroup, groupRegs]) => (
             <div key={ageGroup} className={s.groupSection}>
-              <div className={s.groupHeader}><strong>{ageGroup}</strong> <span className="badge badge-purple">{groupRegs.length} Teams</span></div>
+              <div className={s.groupHeader}><strong>{ageGroup}</strong> <span className="badge badge-primary">{groupRegs.length} Teams</span></div>
               
               {viewMode === 'flat' ? (
                 <>
@@ -519,7 +519,7 @@ export default function UnifiedTeamsPage() {
                       return (
                         <div key={p.id} className={s.poolSubSection}>
                           <div className={s.poolSubHeader}>
-                            <div className={s.poolDot} style={{ background: p.id === 'unassigned' ? 'var(--danger-light)' : 'var(--purple-light)' }} />
+                            <div className={s.poolDot} style={{ background: p.id === 'unassigned' ? 'var(--danger-light)' : 'var(--primary-light)' }} />
                             <span className={s.poolSubLabel} style={{ color: p.id === 'unassigned' ? 'var(--danger-light)' : undefined }}>{p.id === 'unassigned' ? 'UNASSIGNED' : `${p.name.replace(/^Pool\s+/i, '').trim().toUpperCase()} POOL`}</span>
                             <span className={s.poolSubCount}>({teamsInPool.length})</span>
                           </div>

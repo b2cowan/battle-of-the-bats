@@ -362,7 +362,7 @@ app/auth/invite/[token]/page.tsx  (new)
 **Estimated effort:** 1–2 weeks
 
 #### Tasks
-- [ ] Restructure `app/` to support `[orgSlug]` dynamic segment:
+- [x] Restructure `app/` to support `[orgSlug]` dynamic segment:
   ```
   app/
     (marketing)/
@@ -388,10 +388,10 @@ app/auth/invite/[token]/page.tsx  (new)
         members/page.tsx    ← new
         billing/page.tsx    ← new
   ```
-- [ ] Add org slug resolution in middleware — attach `x-org-id` header for downstream use
-- [ ] Update all `db.ts` calls to pass `orgId` where needed
-- [ ] Add 301 redirects: `/schedule` → `/milton-softball/schedule` (and all other public routes)
-- [ ] Update `YearSelector` component to show only the current org's tournaments
+- [x] Add org slug resolution in middleware — attach `x-org-id` header for downstream use
+- [x] Update all `db.ts` calls to pass `orgId` where needed
+- [x] Add 301 redirects: `/schedule` → `/milton-softball/schedule` (and all other public routes)
+- [x] Update `YearSelector` component to show only the current org's tournaments
 
 ---
 
@@ -399,18 +399,18 @@ app/auth/invite/[token]/page.tsx  (new)
 **Estimated effort:** 1 week
 
 #### Tasks
-- [ ] Build `app/(marketing)/page.tsx` — replaces current home page:
+- [x] Build `app/(marketing)/page.tsx` — replaces current home page:
   - Hero with platform value prop and "Start your tournament" CTA
   - Feature highlights: playoff wizard, bracket view, registration management
   - Pricing table (Starter / Pro / Elite) with feature comparison
   - Showcase section linking to Milton Softball as a live example
-- [ ] Build `app/(public)/discover/page.tsx`:
+- [x] Build `app/(public)/discover/page.tsx`:
   - Search tournaments by name, sport, location, date range
   - Filter by status: upcoming / active / completed
   - Tournament cards: org name, logo, age groups, team count, dates, link to org page
   - "Browse teams" for parents/players searching across organizations
-- [ ] Create `GET /api/public/tournaments` endpoint — RLS-protected, returns only `is_public = true` orgs with `is_active = true` tournaments
-- [ ] Add `is_public` toggle to org settings (default: true)
+- [x] Create `GET /api/public/tournaments` endpoint — RLS-protected, returns only `is_public = true` orgs with `is_active = true` tournaments
+- [x] Add `is_public` toggle to org settings (default: true)
 
 ---
 
@@ -418,25 +418,25 @@ app/auth/invite/[token]/page.tsx  (new)
 **Estimated effort:** 1–2 weeks
 
 #### Tasks
-- [ ] Install `stripe` and `@stripe/stripe-js`
-- [ ] Create Stripe products and prices:
+- [x] Install `stripe` and `@stripe/stripe-js`
+- [ ] Create Stripe products and prices: (Pending Stripe account setup)
   - Starter: free (no Stripe product needed)
   - Pro Monthly: $29/month, Pro Annual: $249/year
   - Elite Monthly: $79/month, Elite Annual: $699/year
-- [ ] Build `/[orgSlug]/admin/billing/page.tsx`:
+- [x] Build `/[orgSlug]/admin/billing/page.tsx`:
   - Current plan and usage (tournaments used / limit)
   - Upgrade/downgrade plan buttons
   - Link to Stripe Customer Portal for invoice history and payment method
-- [ ] Create `POST /api/billing/create-checkout` — creates Stripe Checkout session, redirects to Stripe-hosted payment page
-- [ ] Create `POST /api/billing/webhook` — Stripe webhook handler:
+- [x] Create `POST /api/billing/create-checkout` — creates Stripe Checkout session, redirects to Stripe-hosted payment page
+- [x] Create `POST /api/billing/webhook` — Stripe webhook handler:
   - `customer.subscription.created` → set `plan_id`, `tournament_limit`, `subscription_status`
   - `customer.subscription.updated` → handle plan changes, update limits
   - `customer.subscription.deleted` → downgrade to Starter, enforce new limits
   - `invoice.payment_failed` → set `subscription_status = 'past_due'`, email owner
-- [ ] Add `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET` to environment
-- [ ] Enforce plan limits server-side on every tournament create (never trust client)
-- [ ] Configure 14-day free trial on Pro plan at signup (Stripe handles natively)
-- [ ] Show plan-gate warnings in UI inline (e.g. "You've reached your 1 tournament limit — upgrade to Pro")
+- [ ] Add `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET` to environment (Setup remaining)
+- [x] Enforce plan limits server-side on every tournament create (never trust client)
+- [x] Configure 14-day free trial on Pro plan at signup (Stripe handles natively)
+- [x] Show plan-gate warnings in UI inline (e.g. "You've reached your 1 tournament limit — upgrade to Pro")
 
 ---
 
@@ -444,17 +444,17 @@ app/auth/invite/[token]/page.tsx  (new)
 **Estimated effort:** 1 week
 
 #### Tasks
-- [ ] Build `/[orgSlug]/admin/settings/page.tsx`:
+- [x] Build `/[orgSlug]/admin/settings/page.tsx`:
   - Update org name, slug (with URL change warning), logo upload
   - Toggle `is_public` (listed in /discover or not)
-- [ ] Build `/[orgSlug]/admin/members/page.tsx`:
+- [x] Build `/[orgSlug]/admin/members/page.tsx`:
   - List current members with role and last login
   - Invite by email (sends magic link via Resend/Postmark)
-  - Remove member / change role
-  - Show seat usage vs plan limit
-- [ ] Enforce seat limits server-side on invite creation
-- [ ] Plan-gate features in admin UI with consistent "upgrade" tooltip pattern
-- [ ] Add `role`-based UI restrictions:
+- [x] Remove member / change role
+- [x] Show seat usage vs plan limit
+- [x] Enforce seat limits server-side on invite creation
+- [x] Plan-gate features in admin UI with consistent "upgrade" tooltip pattern
+- [x] Add `role`-based UI restrictions:
   - `staff` — can edit schedule and results only
   - `admin` — full tournament management, no billing/settings
   - `owner` — everything including billing, settings, member management
