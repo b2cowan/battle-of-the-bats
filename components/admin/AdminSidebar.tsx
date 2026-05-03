@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { LayoutDashboard, Users, Calendar, Trophy, Megaphone, Tag, LogOut, Home, ChevronRight, MapPin, RefreshCw, ClipboardList, BookUser, BookOpen } from 'lucide-react';
+import { LayoutDashboard, Users, Calendar, Trophy, Megaphone, Tag, LogOut, Home, ChevronRight, MapPin, RefreshCw, BookUser, BookOpen, CreditCard, Settings, Users2 } from 'lucide-react';
 import { signOut } from '@/lib/auth';
 import { useOrg } from '@/lib/org-context';
 import { useTournament } from '@/lib/tournament-context';
@@ -24,7 +24,7 @@ const NAV_KEYS = [
 export default function AdminSidebar() {
   const pathname = usePathname();
   const router   = useRouter();
-  const { currentOrg } = useOrg();
+  const { currentOrg, userRole } = useOrg();
   const base = `/${currentOrg?.slug ?? 'milton-bats'}/admin`;
   const { tournaments, currentTournament, setCurrentTournament, refresh } = useTournament();
 
@@ -103,6 +103,39 @@ export default function AdminSidebar() {
           );
         })}
       </nav>
+
+      {/* Billing, Settings, Members — owner only */}
+      {userRole === 'owner' && (
+        <div className={styles.billingSection}>
+          <Link
+            href={`${base}/billing`}
+            className={`${styles.navItem} ${pathname.startsWith(`${base}/billing`) ? styles.navActive : ''}`}
+            id="admin-nav-billing"
+          >
+            <CreditCard size={17} />
+            <span>Billing</span>
+            {pathname.startsWith(`${base}/billing`) && <ChevronRight size={14} className={styles.navChevron} />}
+          </Link>
+          <Link
+            href={`${base}/settings`}
+            className={`${styles.navItem} ${pathname.startsWith(`${base}/settings`) ? styles.navActive : ''}`}
+            id="admin-nav-settings"
+          >
+            <Settings size={17} />
+            <span>Settings</span>
+            {pathname.startsWith(`${base}/settings`) && <ChevronRight size={14} className={styles.navChevron} />}
+          </Link>
+          <Link
+            href={`${base}/members`}
+            className={`${styles.navItem} ${pathname.startsWith(`${base}/members`) ? styles.navActive : ''}`}
+            id="admin-nav-members"
+          >
+            <Users2 size={17} />
+            <span>Members</span>
+            {pathname.startsWith(`${base}/members`) && <ChevronRight size={14} className={styles.navChevron} />}
+          </Link>
+        </div>
+      )}
 
       {/* Footer */}
       <div className={styles.footer}>

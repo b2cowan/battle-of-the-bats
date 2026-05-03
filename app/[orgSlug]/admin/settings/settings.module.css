@@ -1,0 +1,204 @@
+.page {
+  max-width: 720px;
+}
+
+.pageHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 2rem;
+}
+
+.headerLeft {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.headerIcon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: var(--purple-faint, rgba(139, 92, 246, 0.12));
+  color: var(--purple-light, #a78bfa);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.pageTitle {
+  font-size: 1.75rem;
+  font-weight: 900;
+  font-family: var(--font-display, sans-serif);
+  margin: 0;
+  color: var(--white-90, #f0f0f0);
+  line-height: 1.1;
+}
+
+.pageSub {
+  margin: 0.25rem 0 0;
+  color: var(--white-40, rgba(255,255,255,0.4));
+  font-size: 0.9rem;
+}
+
+.card {
+  padding: 1.5rem;
+  border-radius: 12px;
+  background: var(--surface, rgba(255,255,255,0.04));
+  border: 1px solid var(--border, rgba(255,255,255,0.08));
+  margin-bottom: 1.25rem;
+}
+
+.sectionTitle {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--white-40, rgba(255,255,255,0.4));
+  margin: 0 0 1.25rem;
+}
+
+/* ── Logo ──────────────────────────────────── */
+.logoRow {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.logoPreview {
+  width: 80px;
+  height: 80px;
+  border-radius: 12px;
+  background: var(--bg-3, rgba(255,255,255,0.06));
+  border: 1px solid var(--border, rgba(255,255,255,0.08));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.logoImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.logoPlaceholder {
+  font-size: 2rem;
+}
+
+.logoActions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.logoHint {
+  font-size: 0.78rem;
+  color: var(--white-30, rgba(255,255,255,0.3));
+  margin: 0;
+}
+
+/* ── Form fields ────────────────────────────── */
+.field {
+  margin-bottom: 1.25rem;
+}
+
+.field:last-child {
+  margin-bottom: 0;
+}
+
+.label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--white-60, rgba(255,255,255,0.6));
+  margin-bottom: 0.4rem;
+}
+
+.input {
+  width: 100%;
+  background: var(--bg-3, rgba(255,255,255,0.06));
+  border: 1px solid var(--border, rgba(255,255,255,0.08));
+  border-radius: 8px;
+  color: var(--white, #fff);
+  font-size: 0.9rem;
+  padding: 0.6rem 0.75rem;
+  box-sizing: border-box;
+  transition: border-color 0.15s;
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--purple, #7c3aed);
+}
+
+.hint {
+  font-size: 0.78rem;
+  color: var(--white-30, rgba(255,255,255,0.3));
+  margin: 0.35rem 0 0;
+}
+
+.slugWarning {
+  font-size: 0.82rem;
+  color: var(--warning, #f59e0b);
+  margin: 0.4rem 0 0;
+  font-weight: 600;
+}
+
+.toggleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  gap: 1rem;
+}
+
+.toggle {
+  width: 1.1rem;
+  height: 1.1rem;
+  accent-color: var(--purple, #7c3aed);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+/* ── Footer ─────────────────────────────────── */
+.formFooter {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 0.25rem;
+}
+
+/* ── Access denied ──────────────────────────── */
+.accessDenied {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  text-align: center;
+  color: var(--white-40, rgba(255,255,255,0.4));
+  gap: 0.75rem;
+}
+
+.accessDeniedIcon {
+  color: var(--white-20, rgba(255,255,255,0.2));
+}
+
+.accessDenied h2 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--white-60, rgba(255,255,255,0.6));
+  margin: 0;
+}
+
+.accessDenied p {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.muted {
+  color: var(--white-40, rgba(255,255,255,0.4));
+}
