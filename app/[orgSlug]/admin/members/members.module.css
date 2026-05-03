@@ -20,7 +20,7 @@
   width: 48px;
   height: 48px;
   border-radius: 12px;
-  background: var(--primary-faint));
+  background: var(--primary-faint);
   color: var(--primary-light);
   display: flex;
   align-items: center;
@@ -129,7 +129,7 @@
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--primary-light);
-  background: var(--primary-faint));
+  background: var(--primary-faint);
   border-radius: 4px;
   padding: 0.15rem 0.4rem;
 }
