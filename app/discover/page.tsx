@@ -173,7 +173,7 @@ export default function DiscoverPage() {
                             <p className={styles.cardOrgName}>{org.name}</p>
                             {org.tournament && (
                               <p className={styles.cardTournamentName}>
-                                {org.tournament.name} {org.tournament.year}
+                                {org.tournament.name}
                               </p>
                             )}
                           </div>

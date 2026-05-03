@@ -14,7 +14,8 @@ export async function GET() {
     const { data: orgs, error: orgsError } = await supabase
       .from('organizations')
       .select('id, name, slug, logo_url')
-      .eq('is_public', true);
+      .eq('is_public', true)
+      .order('name', { ascending: true });
 
     if (orgsError) throw orgsError;
     if (!orgs?.length) return NextResponse.json({ orgs: [] });
