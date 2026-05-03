@@ -1,4 +1,4 @@
-.page { overflow-x: hidden; }
+﻿.page { overflow-x: hidden; }
 
 /* ── Hero ─────────────────────────────────────────────────────────────────── */
 .hero {
@@ -22,7 +22,7 @@
   right: -10%;
   width: 600px;
   height: 600px;
-  background: radial-gradient(circle, rgba(139,47,201,0.35) 0%, transparent 65%);
+  background: radial-gradient(circle, rgba(var(--primary-rgb),0.35) 0%, transparent 65%);
   animation: float 8s ease-in-out infinite;
 }
 
@@ -40,8 +40,8 @@
   position: absolute;
   inset: 0;
   background-image:
-    linear-gradient(rgba(139,47,201,0.06) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(139,47,201,0.06) 1px, transparent 1px);
+    linear-gradient(rgba(var(--primary-rgb),0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(var(--primary-rgb),0.06) 1px, transparent 1px);
   background-size: 60px 60px;
   mask-image: radial-gradient(ellipse at center, black 30%, transparent 80%);
 }
@@ -58,7 +58,7 @@
   display: inline-flex;
   align-items: center;
   padding: 0.5rem 1.25rem;
-  background: var(--purple-faint);
+  background: var(--primary-faint);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   font-family: var(--font-display);
@@ -66,7 +66,7 @@
   font-weight: 700;
   letter-spacing: 0.05em;
   text-transform: uppercase;
-  color: var(--purple-light);
+  color: var(--primary-light);
   margin-bottom: 2rem;
   animation: fadeInUp 0.6s ease;
   text-align: center;
@@ -116,11 +116,11 @@
   color: var(--white);
   margin-bottom: 0.5rem;
   animation: fadeInUp 0.7s ease 0.1s both;
-  text-shadow: 0 0 80px rgba(139,47,201,0.5);
+  text-shadow: 0 0 80px rgba(var(--primary-rgb),0.5);
 }
 
 .heroAccent {
-  background: linear-gradient(135deg, var(--purple), var(--purple-light));
+  background: linear-gradient(135deg, var(--primary), var(--primary-light));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -135,7 +135,7 @@
   animation: fadeInUp 0.7s ease 0.2s both;
 }
 
-.heroSub strong { color: var(--purple-light); }
+.heroSub strong { color: var(--primary-light); }
 
 .heroCta {
   display: flex;
@@ -204,7 +204,7 @@
 .scrollLine {
   width: 1px;
   height: 60px;
-  background: linear-gradient(to bottom, var(--purple), transparent);
+  background: linear-gradient(to bottom, var(--primary), transparent);
   margin: 0 auto;
   animation: scrollPulse 2s ease-in-out infinite;
 }
@@ -254,10 +254,10 @@
   font-family: var(--font-display);
   font-size: 0.875rem;
   font-weight: 900;
-  color: var(--purple-light);
+  color: var(--primary-light);
   letter-spacing: 0.1em;
   padding: 0.25rem 0.5rem;
-  background: var(--purple-faint);
+  background: var(--primary-faint);
   border-radius: 4px;
   flex-shrink: 0;
 }
@@ -284,8 +284,8 @@
 
 .annFeatured {
   grid-column: 1 / -1;
-  background: linear-gradient(135deg, rgba(139,47,201,0.12), rgba(26,21,48,0.8));
-  border-color: var(--purple);
+  background: linear-gradient(135deg, rgba(var(--primary-rgb),0.12), rgba(26,21,48,0.8));
+  border-color: var(--primary);
 }
 
 .annHeader { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
@@ -320,7 +320,7 @@
 .ctaBg {
   position: absolute;
   inset: 0;
-  background: radial-gradient(ellipse at center, rgba(139,47,201,0.2) 0%, transparent 70%);
+  background: radial-gradient(ellipse at center, rgba(var(--primary-rgb),0.2) 0%, transparent 70%);
 }
 
 .ctaContent {
@@ -331,9 +331,9 @@
 }
 
 .ctaIcon {
-  color: var(--purple-light);
+  color: var(--primary-light);
   margin: 0 auto 1.5rem;
-  filter: drop-shadow(0 0 16px var(--purple));
+  filter: drop-shadow(0 0 16px var(--primary));
 }
 
 .ctaContent h2 { color: var(--white); margin-bottom: 1rem; }

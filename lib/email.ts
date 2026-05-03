@@ -1,4 +1,4 @@
-const RESEND_API = 'https://api.resend.com/emails';
+﻿const RESEND_API = 'https://api.resend.com/emails';
 const FROM = process.env.RESEND_FROM ?? 'Battle of the Bats <onboarding@resend.dev>';
 const ADMIN_EMAIL = 'b2cowan@gmail.com';
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000';
@@ -26,7 +26,7 @@ export { ADMIN_EMAIL, SITE_URL };
 // ── Email templates ────────────────────────────────────────────────────────────
 
 const wrap = (content: string) => `
-<div style="font-family:Inter,sans-serif;background:#0D0B14;color:#fff;max-width:600px;margin:0 auto;padding:2rem;border-radius:12px;border:1px solid rgba(139,47,201,0.3);">
+<div style="font-family:Inter,sans-serif;background:#0D0B14;color:#fff;max-width:600px;margin:0 auto;padding:2rem;border-radius:12px;border:1px solid rgba(var(--primary-rgb),0.3);">
   <div style="margin-bottom:1.5rem;">
     <span style="font-size:1.75rem;font-weight:900;color:#A855F7;letter-spacing:0.04em;">⚾ BATTLE OF THE BATS</span>
   </div>
@@ -45,7 +45,7 @@ export function registrationConfirmationHtml(p: {
     <h2 style="color:#fff;font-size:1.4rem;margin:0 0 1rem;">Registration Received!</h2>
     <p>Hi <strong>${p.coachName}</strong>,</p>
     <p>We've received your registration for <strong>${p.teamName}</strong> in the <strong>${p.ageGroupName}</strong> division for <strong>${p.tournamentName}</strong>.</p>
-    <div style="background:#1A1530;border:1px solid rgba(139,47,201,0.3);border-radius:8px;padding:1.25rem;margin:1.5rem 0;">
+    <div style="background:#1A1530;border:1px solid rgba(var(--primary-rgb),0.3);border-radius:8px;padding:1.25rem;margin:1.5rem 0;">
       <p style="margin:0 0 0.5rem;font-weight:700;color:#A855F7;">Registration Details</p>
       <p style="margin:0;line-height:1.8;">
         Team: <strong>${p.teamName}</strong><br>
@@ -65,7 +65,7 @@ export function adminNotificationHtml(p: {
   return wrap(`
     <h2 style="color:#fff;font-size:1.4rem;margin:0 0 1rem;">📋 New Team Registration</h2>
     <p>A new team has registered for <strong>${p.tournamentName}</strong>:</p>
-    <div style="background:#1A1530;border:1px solid rgba(139,47,201,0.3);border-radius:8px;padding:1.25rem;margin:1rem 0;">
+    <div style="background:#1A1530;border:1px solid rgba(var(--primary-rgb),0.3);border-radius:8px;padding:1.25rem;margin:1rem 0;">
       <p style="margin:0;line-height:1.8;">
         Team: <strong>${p.teamName}</strong><br>
         Coach: <strong>${p.coachName}</strong><br>

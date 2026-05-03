@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 import { useState, useEffect } from 'react';
 import { 
   BookOpen, FileText, Shield, AlertCircle, CheckCircle, 
@@ -362,7 +362,7 @@ export default function RulesAdmin({ tournament }: Props) {
       <div className={styles.page}>
         <div className="flex-center" style={{ height: '400px' }}>
           <div className="flex flex-col items-center gap-4">
-            <RefreshCw className="spin text-purple-light" size={48} />
+            <RefreshCw className="spin text-primary-light" size={48} />
             <p className="text-white-40 font-bold tracking-widest uppercase text-xs">Loading Rules...</p>
           </div>
         </div>
@@ -546,23 +546,23 @@ export default function RulesAdmin({ tournament }: Props) {
         .icon-preview-box {
           width: 32px;
           height: 32px;
-          background: var(--purple-faint);
+          background: var(--primary-faint);
           border: 1px solid var(--border);
           border-radius: 8px;
           display: flex;
           align-items: center;
           justify-content: center;
-          color: var(--purple-light);
+          color: var(--primary-light);
           flex-shrink: 0;
         }
         .icon-select { background: var(--bg-3); border: 1px solid var(--border); color: var(--white); border-radius: 6px; padding: 2px 6px; font-size: 0.8rem; }
         
         .card-title-text { font-family: var(--font-display); font-size: 1rem; font-weight: 800; color: var(--white); margin: 0; }
-        .inline-title-input { background: var(--black-20); border: 1px solid var(--purple); outline: none; color: var(--white); font-family: var(--font-display); font-size: 1rem; font-weight: 800; padding: 2px 8px; border-radius: 4px; width: 100%; }
+        .inline-title-input { background: var(--black-20); border: 1px solid var(--primary); outline: none; color: var(--white); font-family: var(--font-display); font-size: 1rem; font-weight: 800; padding: 2px 8px; border-radius: 4px; width: 100%; }
 
         .edit-pencil-btn { background: none; border: none; color: var(--white-20); cursor: pointer; padding: 4px; opacity: 0; transition: opacity 0.2s; }
         .group:hover .edit-pencil-btn { opacity: 1; }
-        .edit-pencil-btn:hover { color: var(--purple-light); }
+        .edit-pencil-btn:hover { color: var(--primary-light); }
 
         .delete-btn-mini { background: none; border: none; color: var(--white-10); cursor: pointer; padding: 6px; transition: color 0.2s; }
         .delete-btn-mini:hover { color: var(--danger); }
@@ -578,11 +578,11 @@ export default function RulesAdmin({ tournament }: Props) {
 
         .resource-list-stack { display: flex; flex-direction: column; gap: 0.5rem; }
         .resource-edit-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 0.6rem; padding: 0.5rem 0.75rem; transition: transform 0.1s; }
-        .resource-edit-card.dragging { background: var(--bg-3); border-color: var(--purple); }
+        .resource-edit-card.dragging { background: var(--bg-3); border-color: var(--primary); }
         
         .resource-header { display: flex; align-items: center; gap: 0.75rem; }
         
-        .resource-icon-box { width: 30px; height: 30px; background: var(--white-05); border-radius: 6px; display: flex; align-items: center; justify-content: center; color: var(--purple-light); flex-shrink: 0; }
+        .resource-icon-box { width: 30px; height: 30px; background: var(--white-05); border-radius: 6px; display: flex; align-items: center; justify-content: center; color: var(--primary-light); flex-shrink: 0; }
         .resource-meta { flex: 1; display: flex; flex-direction: column; min-width: 0; }
         .resource-display-label { color: var(--white); font-weight: 700; font-size: 0.9rem; }
         .resource-display-url { color: var(--white-20); font-size: 0.65rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -603,7 +603,7 @@ export default function RulesAdmin({ tournament }: Props) {
           justify-content: center;
           transition: color 0.2s;
         }
-        .drag-handle-right:active { cursor: grabbing; color: var(--purple-light); }
+        .drag-handle-right:active { cursor: grabbing; color: var(--primary-light); }
         .resource-edit-card:hover .drag-handle-right { color: var(--white-30); }
 
         .icon-btn-ghost { background: none; border: none; color: var(--white-10); cursor: pointer; padding: 4px; border-radius: 4px; display: flex; align-items: center; justify-content: center; }

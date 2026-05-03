@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 import { useState, useEffect } from 'react';
 import { UserPlus, CheckCircle, AlertCircle, ChevronDown, RefreshCw, Send, ShieldCheck, CreditCard } from 'lucide-react';
 import { useParams } from 'next/navigation';
@@ -268,7 +268,7 @@ export default function RegisterPage() {
                           className={styles.progressFill} 
                           style={{ 
                             width: `${Math.min(100, (count / selectedGroup.capacity) * 100)}%`,
-                            background: isWaitlist ? 'var(--warning)' : (count / selectedGroup.capacity > 0.8 ? 'var(--danger)' : 'linear-gradient(to right, var(--purple), var(--purple-light))')
+                            background: isWaitlist ? 'var(--warning)' : (count / selectedGroup.capacity > 0.8 ? 'var(--danger)' : 'linear-gradient(to right, var(--primary), var(--primary-light))')
                           }} 
                         />
                       </div>

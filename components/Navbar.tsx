@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useParams } from 'next/navigation';
+import { useOrgNav } from './OrgNavContext';
 import styles from './Navbar.module.css';
 
 const NAV_KEYS = [
@@ -24,6 +25,7 @@ export default function Navbar() {
   const pathname = usePathname();
   const params   = useParams();
   const orgSlug  = (params?.orgSlug as string) || 'milton-bats';
+  const { logoUrl, orgName } = useOrgNav();
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
@@ -77,11 +79,17 @@ export default function Navbar() {
     <nav className={navClass}>
       <div className={`container ${styles.inner}`}>
         <Link href={`/${orgSlug}`} className={styles.logo}>
-          <img src="/logo.png" alt="Milton Bats Logo" className={styles.logoImg} />
-          <div className={styles.logoText}>
-            <span className={styles.logoMain}>BATTLE</span>
-            <span className={styles.logoSub}>OF THE BATS</span>
-          </div>
+          {logoUrl ? (
+            <img src={logoUrl} alt={orgName || 'Organization logo'} className={styles.logoImg} />
+          ) : (
+            <>
+              <img src="/logo.png" alt="BOTB Platform logo" className={styles.logoImg} />
+              <div className={styles.logoText}>
+                <span className={styles.logoMain}>BATTLE</span>
+                <span className={styles.logoSub}>OF THE BATS</span>
+              </div>
+            </>
+          )}
         </Link>
 
         <div className={styles.links}>

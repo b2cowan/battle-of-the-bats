@@ -1,4 +1,4 @@
-.pageHeader {
+﻿.pageHeader {
   background: var(--bg-dark);
   padding: 4rem 0;
   border-bottom: 1px solid var(--border-2);
@@ -43,7 +43,7 @@
   font-family: var(--font-display);
   font-size: 3.5rem;
   font-weight: 900;
-  color: var(--purple-light);
+  color: var(--primary-light);
   line-height: 1;
   margin-bottom: 0.5rem;
 }
@@ -102,7 +102,7 @@
 
 .gameRow:hover {
   background: var(--white-10);
-  border-color: var(--purple-faint);
+  border-color: var(--primary-faint);
 }
 
 .gameDate {
@@ -189,9 +189,9 @@
 .upcomingBadge {
   font-size: 0.75rem;
   font-weight: 700;
-  color: var(--purple-light);
+  color: var(--primary-light);
   text-transform: uppercase;
-  background: var(--purple-faint);
+  background: var(--primary-faint);
   padding: 0.4rem 0.8rem;
   border-radius: 20px;
 }
@@ -217,6 +217,6 @@
 }
 
 .contactNote a {
-  color: var(--purple-light);
+  color: var(--primary-light);
   font-weight: 600;
 }

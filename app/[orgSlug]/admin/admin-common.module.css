@@ -1,4 +1,4 @@
-/* ─── Shared Admin Styles ─────────────────────────────────────────────────── */
+﻿/* ─── Shared Admin Styles ─────────────────────────────────────────────────── */
 /* Used by Teams, Schedule, and Results admin pages                           */
 
 /* ─── Page Layout ─────────────────────────────────────────────────────────── */
@@ -18,12 +18,12 @@
 .headerIcon {
   width: 48px;
   height: 48px;
-  background: var(--purple-faint);
+  background: var(--primary-faint);
   border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--purple-light);
+  color: var(--primary-light);
   border: 1px solid var(--border);
 }
 
@@ -100,7 +100,7 @@
 }
 
 .toggleActive {
-  background: var(--purple);
+  background: var(--primary);
   color: var(--white);
 }
 
@@ -129,7 +129,7 @@
 }
 
 .filterChip:hover { background: var(--white-10); color: var(--white-60); }
-.chipActive { background: var(--purple); border-color: var(--purple-light); color: var(--white); }
+.chipActive { background: var(--primary); border-color: var(--primary-light); color: var(--white); }
 
 /* ─── Search ──────────────────────────────────────────────────────────────── */
 .searchWrapper {
@@ -161,9 +161,9 @@
 
 .searchInput:focus {
   outline: none;
-  border-color: var(--purple-light);
+  border-color: var(--primary-light);
   background: var(--black-30);
-  box-shadow: 0 0 0 2px var(--purple-faint);
+  box-shadow: 0 0 0 2px var(--primary-faint);
 }
 
 /* ─── Group Sections (Division/Pool headers) ──────────────────────────────── */
@@ -192,7 +192,7 @@
   gap: 1.5rem;
 }
 
-.groupHeader strong { font-family: var(--font-display); font-size: 1.25rem; font-weight: 900; color: var(--purple-light); }
+.groupHeader strong { font-family: var(--font-display); font-size: 1.25rem; font-weight: 900; color: var(--primary-light); }
 
 /* ─── Pool Sub-Sections (used inside group sections) ──────────────────────── */
 .poolSubSection {

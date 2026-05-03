@@ -1227,6 +1227,12 @@ function mapOrg(r: any): Organization {
     tournamentLimit:      r.tournament_limit ?? 1,
     isPublic:             r.is_public ?? true,
     createdAt:            r.created_at,
+    themePreset:          r.theme_preset ?? undefined,
+    themePrimary:         r.theme_primary ?? undefined,
+    themeAccent:          r.theme_accent ?? undefined,
+    heroBannerUrl:        r.hero_banner_url ?? undefined,
+    themeFont:            r.theme_font ?? 'system',
+    themeCardStyle:       r.theme_card_style ?? 'default',
   };
 }
 

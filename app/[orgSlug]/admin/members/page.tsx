@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Users2, UserPlus, Trash2, ShieldCheck } from 'lucide-react';
@@ -25,7 +25,7 @@ const ROLE_LABELS: Record<OrgRole, string> = {
 };
 
 const ROLE_BADGE: Record<OrgRole, string> = {
-  owner: 'badge-purple',
+  owner: 'badge-primary',
   admin: 'badge-success',
   staff: 'badge-neutral',
 };

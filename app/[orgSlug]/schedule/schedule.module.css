@@ -1,4 +1,4 @@
-.pageHeader {
+﻿.pageHeader {
   background: linear-gradient(180deg, var(--bg-2) 0%, var(--bg) 100%);
   border-bottom: 1px solid var(--border);
   padding: calc(var(--nav-height) + 3rem) 0 3rem;
@@ -17,19 +17,19 @@
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--purple-light);
+  color: var(--primary-light);
   margin-bottom: 1rem;
   padding-bottom: 0.5rem;
   border-bottom: 1px solid var(--border);
 }
 
 .todayGroup .dateLabel {
-  border-left: 3px solid var(--purple);
+  border-left: 3px solid var(--primary);
   padding-left: 0.5rem;
 }
 
 .todayBadge {
-  background: var(--purple);
+  background: var(--primary);
   color: var(--white);
   font-size: 0.7rem;
   padding: 0.1rem 0.5rem;
@@ -80,8 +80,8 @@
   font-family: var(--font-display);
   font-size: 0.75rem;
   font-weight: 900;
-  color: var(--purple-light);
-  background: var(--purple-faint);
+  color: var(--primary-light);
+  background: var(--primary-faint);
   border: 1px solid var(--border);
   border-radius: 4px;
   padding: 0.2rem 0.5rem;

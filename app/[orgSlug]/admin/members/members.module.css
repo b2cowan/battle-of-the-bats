@@ -1,4 +1,4 @@
-.page {
+﻿.page {
   max-width: 900px;
 }
 
@@ -20,8 +20,8 @@
   width: 48px;
   height: 48px;
   border-radius: 12px;
-  background: var(--purple-faint, rgba(139, 92, 246, 0.12));
-  color: var(--purple-light, #a78bfa);
+  background: var(--primary-faint));
+  color: var(--primary-light);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -67,7 +67,7 @@
 
 .upgradeLink {
   font-size: 0.82rem;
-  color: var(--purple-light, #a78bfa);
+  color: var(--primary-light);
   font-weight: 600;
   white-space: nowrap;
 }
@@ -128,8 +128,8 @@
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--purple-light, #a78bfa);
-  background: var(--purple-faint, rgba(139,92,246,0.12));
+  color: var(--primary-light);
+  background: var(--primary-faint));
   border-radius: 4px;
   padding: 0.15rem 0.4rem;
 }
@@ -169,7 +169,7 @@
 
 .roleSelect:focus {
   outline: none;
-  border-color: var(--purple, #7c3aed);
+  border-color: var(--primary);
 }
 
 .removeBtn {
@@ -217,7 +217,7 @@
   align-items: center;
   gap: 0.75rem;
   margin-bottom: 1.25rem;
-  color: var(--purple-light, #a78bfa);
+  color: var(--primary-light);
 }
 
 .modalHeader h3 {
@@ -264,7 +264,7 @@
 
 .input:focus {
   outline: none;
-  border-color: var(--purple, #7c3aed);
+  border-color: var(--primary);
 }
 
 .modalFooter {

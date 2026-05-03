@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 import { useState, useEffect } from 'react';
 import { use } from 'react';
 import { Users, CheckCircle, Clock, CreditCard, AlertTriangle, Mail, MapPin } from 'lucide-react';
@@ -95,7 +95,7 @@ export default function TeamProfilePage({ params }: { params: Promise<{ id: stri
       <div className={styles.pageHeader}>
         <div className="container">
           <div className="flex items-center gap-2 mb-4">
-            <span className="badge badge-purple">{team.age_group_name}</span>
+            <span className="badge badge-primary">{team.age_group_name}</span>
             {team.pool && <span className="badge">{team.pool.replace(/^Pool\s+/i, '').trim()} Pool</span>}
           </div>
           <h1 className="display-lg">{team.team_name}</h1>

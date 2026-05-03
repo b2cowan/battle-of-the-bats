@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 import { useState } from 'react';
 import { ChevronDown, ChevronUp, MapPin, Trophy, Pencil, X, AlertCircle, Trash2, MoreVertical } from 'lucide-react';
 import { Game, Team, AgeGroup, Diamond } from '@/lib/types';
@@ -322,7 +322,7 @@ export default function GameList({
     <div className={s.groupSection}>
       <div className={s.groupHeader}>
         <strong>{ageGroupName}</strong>
-        <span className="badge badge-purple">{sortedGames.length} Game{sortedGames.length !== 1 ? 's' : ''}</span>
+        <span className="badge badge-primary">{sortedGames.length} Game{sortedGames.length !== 1 ? 's' : ''}</span>
       </div>
 
       <div className={s.compactListContent}>
@@ -393,8 +393,8 @@ export default function GameList({
             return poolSections.map(({ poolName, games: poolGames }) => (
               <div key={poolName}>
                 <div className={s.poolSubHeader} style={{ marginTop: '1rem' }}>
-                  <div className={s.poolDot} style={{ background: 'var(--purple-light)' }} />
-                  <span className={s.poolSubLabel} style={{ color: 'var(--purple-light)', fontSize: '0.7rem' }}>
+                  <div className={s.poolDot} style={{ background: 'var(--primary-light)' }} />
+                  <span className={s.poolSubLabel} style={{ color: 'var(--primary-light)', fontSize: '0.7rem' }}>
                     {formatPoolName(poolName)} PLAYOFFS
                   </span>
                   <span className={s.poolSubCount}>({poolGames.length})</span>
@@ -417,7 +417,7 @@ export default function GameList({
           return groupByRound(sortedGames).map(({ key, label, games: rGames }) => (
             <div key={key} className={s.poolSubSection}>
               <div className={s.poolSubHeader}>
-                <div className={s.poolDot} style={{ background: 'var(--purple-light)' }} />
+                <div className={s.poolDot} style={{ background: 'var(--primary-light)' }} />
                 <span className={s.poolSubLabel}>{label}</span>
                 <span className={s.poolSubCount}>({rGames.length})</span>
               </div>
@@ -445,7 +445,7 @@ export default function GameList({
             return (
               <div key={p.id} className={s.poolSubSection}>
                 <div className={s.poolSubHeader}>
-                  <div className={s.poolDot} style={{ background: p.id === 'unassigned' ? 'var(--danger-light)' : 'var(--purple-light)' }} />
+                  <div className={s.poolDot} style={{ background: p.id === 'unassigned' ? 'var(--danger-light)' : 'var(--primary-light)' }} />
                   <span className={s.poolSubLabel} style={{ color: p.id === 'unassigned' ? 'var(--danger-light)' : undefined }}>
                     {p.id === 'unassigned' ? 'UNASSIGNED' : `${p.name.replace(/^Pool\s+/i, '').trim().toUpperCase()} POOL`}
                   </span>

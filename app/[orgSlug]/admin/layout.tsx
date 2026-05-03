@@ -4,6 +4,7 @@ import { TournamentProvider } from '@/lib/tournament-context';
 import { OrgProvider } from '@/lib/org-context';
 import AdminSidebar from '@/components/admin/AdminSidebar';
 import AdminBottomNav from '@/components/admin/AdminBottomNav';
+import DevPlanSwitcher from '@/components/DevPlanSwitcher';
 import styles from './admin.module.css';
 
 export default async function AdminLayout({
@@ -35,6 +36,7 @@ export default async function AdminLayout({
           </main>
         </div>
         <AdminBottomNav />
+        {process.env.NODE_ENV === 'development' && <DevPlanSwitcher />}
       </TournamentProvider>
     </OrgProvider>
   );

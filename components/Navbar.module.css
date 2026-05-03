@@ -36,7 +36,7 @@
   height: 44px;
   object-fit: contain;
   border-radius: 50%;
-  border: 2px solid var(--purple);
+  border: 2px solid var(--primary);
   box-shadow: var(--glow-sm);
 }
 
@@ -59,7 +59,7 @@
   font-size: 0.6rem;
   font-weight: 700;
   letter-spacing: 0.2em;
-  color: var(--purple-light);
+  color: var(--primary-light);
   text-transform: uppercase;
 }
 
@@ -93,7 +93,7 @@
   transform: translateX(-50%);
   width: 0;
   height: 2px;
-  background: var(--purple-light);
+  background: var(--primary-light);
   border-radius: 999px;
   transition: width 0.2s ease;
 }
@@ -103,7 +103,7 @@
 
 .link.active {
   color: var(--white);
-  background: var(--purple-faint);
+  background: var(--primary-faint);
 }
 
 .link.active::after { width: 60%; }
@@ -158,7 +158,7 @@
 }
 
 .mobileLink:hover { color: var(--white); background: var(--white-10); }
-.mobileActive { color: var(--white) !important; background: var(--purple-faint) !important; }
+.mobileActive { color: var(--white) !important; background: var(--primary-faint) !important; }
 
 .mobileRegister { margin-top: 0.5rem; justify-content: center; }
 

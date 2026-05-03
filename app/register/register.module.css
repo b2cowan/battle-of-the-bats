@@ -1,5 +1,5 @@
-.pageHeader {
-  background: linear-gradient(180deg, rgba(139,47,201,0.12) 0%, transparent 100%);
+﻿.pageHeader {
+  background: linear-gradient(180deg, rgba(var(--primary-rgb),0.12) 0%, transparent 100%);
   border-bottom: 1px solid var(--border);
   padding: 4rem 0 3rem;
 }
@@ -25,13 +25,13 @@
 .formIcon {
   width: 48px;
   height: 48px;
-  background: var(--purple-faint);
+  background: var(--primary-faint);
   border: 1px solid var(--border);
   border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--purple-light);
+  color: var(--primary-light);
   flex-shrink: 0;
 }
 
@@ -43,7 +43,7 @@
   margin: 0;
 }
 
-.formSub { color: var(--purple-light); font-size: 0.875rem; margin: 0; }
+.formSub { color: var(--primary-light); font-size: 0.875rem; margin: 0; }
 
 .selectWrap { position: relative; }
 .selectIcon {
@@ -92,7 +92,7 @@
 .errorCard, .closedCard { text-align: center; padding: 3rem 2rem; }
 .errorCard h3, .closedCard h3 { font-family: var(--font-display); font-size: 1.5rem; color: var(--white); margin: 0 0 0.75rem; }
 .errorCard p, .closedCard p { color: var(--white-60); margin: 0 0 1.5rem; }
-.closedCard a { color: var(--purple-light); }
+.closedCard a { color: var(--primary-light); }
 
 /* Steps Indicator */
 .steps {
@@ -129,8 +129,8 @@
 }
 
 .stepActive .stepNum {
-  background: var(--purple);
-  border-color: var(--purple-light);
+  background: var(--primary);
+  border-color: var(--primary-light);
   box-shadow: var(--glow-sm);
 }
 
@@ -193,7 +193,7 @@
 
 .progressFill {
   height: 100%;
-  background: linear-gradient(to right, var(--purple), var(--purple-light));
+  background: linear-gradient(to right, var(--primary), var(--primary-light));
   transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -214,7 +214,7 @@
 
 .successIcon {
   margin-top: 0.2rem;
-  color: var(--purple-light);
+  color: var(--primary-light);
   flex-shrink: 0;
 }
 

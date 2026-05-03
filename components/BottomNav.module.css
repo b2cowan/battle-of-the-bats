@@ -14,7 +14,7 @@
     background: rgba(13, 11, 20, 0.92);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-    border-top: 1px solid rgba(139, 47, 201, 0.25);
+    border-top: 1px solid var(--border);
     padding: 0.5rem 0 calc(0.5rem + env(safe-area-inset-bottom));
     justify-content: space-around;
     align-items: flex-start;
@@ -34,7 +34,7 @@
   }
 
   .tab.active {
-    color: #c084fc;
+    color: var(--primary-light);
   }
 
   .tab:active {
@@ -52,7 +52,7 @@
 
   .tab.active .iconWrap {
     /* Subtle pill highlight behind icon */
-    background: rgba(139, 47, 201, 0.18);
+    background: rgba(var(--primary-rgb), 0.18);
     border-radius: 999px;
   }
 
@@ -64,8 +64,8 @@
     width: 4px;
     height: 4px;
     border-radius: 50%;
-    background: #c084fc;
-    box-shadow: 0 0 6px #c084fc;
+    background: var(--primary-light);
+    box-shadow: 0 0 6px var(--primary-light);
   }
 
   .label {

@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 import { useState, useEffect } from 'react';
 import { Megaphone, Plus, Pencil, Trash2, X, Check, Star } from 'lucide-react';
 import { getAnnouncements, saveAnnouncement, updateAnnouncement, deleteAnnouncement } from '@/lib/db';
@@ -69,7 +69,7 @@ export default function AdminAnnouncementsPage() {
           <div key={ann.id} className={`card ${styles.annCard} ${ann.pinned ? styles.pinned : ''}`}>
             <div className={styles.annHeader}>
               <div className={styles.annMeta}>
-                {ann.pinned && <span className="badge badge-purple"><Star size={9} fill="currentColor" />&nbsp;Pinned</span>}
+                {ann.pinned && <span className="badge badge-primary"><Star size={9} fill="currentColor" />&nbsp;Pinned</span>}
                 <span className={styles.annDate}>
                   {new Date((ann.date.includes('T') ? ann.date.split('T')[0] : ann.date) + 'T12:00:00').toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' })}
                 </span>

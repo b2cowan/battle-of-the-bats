@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 import { useState, useEffect } from 'react';
 import { Trophy } from 'lucide-react';
 import { useParams } from 'next/navigation';
@@ -141,7 +141,7 @@ export default function ResultsPage() {
                     <div className={styles.summaryHeader}>
                       <div className="flex-between" style={{ width: '100%' }}>
                         <div className="flex gap-2">
-                          <Trophy size={18} style={{ color: 'var(--purple-light)' }} />
+                          <Trophy size={18} style={{ color: 'var(--primary-light)' }} />
                           <h2 style={{ fontSize: '1.1rem', fontWeight: 700 }}>
                             Standings Summary {pools.length >= 2 ? `— ${formatPoolName(pool.name)}` : ''}
                           </h2>
@@ -187,7 +187,7 @@ export default function ResultsPage() {
                                 {team.rd > 0 ? `+${team.rd}` : team.rd}
                               </td>
                               <td style={{ textAlign: 'center' }}>
-                                <span className="badge badge-purple">{team.pts}</span>
+                                <span className="badge badge-primary">{team.pts}</span>
                               </td>
                             </tr>
                           );
@@ -250,7 +250,7 @@ export default function ResultsPage() {
                     return (
                       <div key={pool.id} className={styles.summarySection} style={{ margin: 0 }}>
                         <div className={styles.summaryHeader}>
-                          <Trophy size={18} style={{ color: 'var(--purple-light)' }} />
+                          <Trophy size={18} style={{ color: 'var(--primary-light)' }} />
                           <h2 style={{ fontSize: '1.1rem', fontWeight: 700 }}>{formatPoolName(pool.name)} Playoff Results</h2>
                         </div>
                         <div className={styles.resultsList} style={{ padding: '1rem' }}>
@@ -262,7 +262,7 @@ export default function ResultsPage() {
                                   <span className="badge badge-success">Final</span>
                                   <span className={styles.resultDate}>{formatDate(game.date)}</span>
                                   {game.time && <span className={styles.resultTime}>{formatTime(game.time)}</span>}
-                                  <span className="badge badge-purple">{game.bracketCode || 'Playoff'}</span>
+                                  <span className="badge badge-primary">{game.bracketCode || 'Playoff'}</span>
                                 </div>
                                 <div className={styles.scoreRow}>
                                   <div className={`${styles.teamScore} ${winner === 'home' ? styles.winner : ''}`}>
@@ -292,7 +292,7 @@ export default function ResultsPage() {
             return (
               <div className={styles.summarySection} style={{ marginTop: '2rem' }}>
                 <div className={styles.summaryHeader}>
-                  <Trophy size={18} style={{ color: 'var(--purple-light)' }} />
+                  <Trophy size={18} style={{ color: 'var(--primary-light)' }} />
                   <h2 style={{ fontSize: '1.1rem', fontWeight: 700 }}>Playoff Results</h2>
                 </div>
                 <div className={styles.resultsList} style={{ padding: '1rem' }}>
@@ -304,7 +304,7 @@ export default function ResultsPage() {
                           <span className="badge badge-success">Final</span>
                           <span className={styles.resultDate}>{formatDate(game.date)}</span>
                           {game.time && <span className={styles.resultTime}>{formatTime(game.time)}</span>}
-                          <span className="badge badge-purple">{game.bracketCode || 'Playoff'}</span>
+                          <span className="badge badge-primary">{game.bracketCode || 'Playoff'}</span>
                         </div>
                         <div className={styles.scoreRow}>
                           <div className={`${styles.teamScore} ${winner === 'home' ? styles.winner : ''}`}>
@@ -362,7 +362,7 @@ export default function ResultsPage() {
                       <span className="badge badge-success">Final</span>
                       <span className={styles.resultDate}>{formatDate(game.date)}</span>
                       {game.time && <span className={styles.resultTime}>{formatTime(game.time)}</span>}
-                      <span className="badge badge-purple">
+                      <span className="badge badge-primary">
                         {ageGroups.find(g => g.id === game.ageGroupId)?.name}
                       </span>
                       <LocationLink location={game.location} diamond={getDiamond(game.diamondId)} size="sm" />
