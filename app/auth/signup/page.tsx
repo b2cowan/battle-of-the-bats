@@ -67,7 +67,7 @@ export default function SignupPage() {
               <path d="M3 21h18M9 21V7l3-3 3 3v14M9 12h6" />
             </svg>
           </div>
-          <h1 className={styles.title}>Initialize Organization</h1>
+          <h1 className={styles.title}>Create Your Organization</h1>
           <p className={styles.sub}>FieldLogic — Tournament Management Platform</p>
         </div>
 
@@ -133,7 +133,7 @@ export default function SignupPage() {
             disabled={loading}
             id="signup-submit"
           >
-            {loading ? 'Initializing…' : 'Create Organization'}
+            {loading ? 'Creating…' : 'Create Organization'}
           </button>
 
           <p style={{ fontFamily: 'var(--font-data)', fontSize: '0.65rem', letterSpacing: '0.06em', color: 'var(--data-gray)', textAlign: 'center' }}>
