@@ -8,6 +8,7 @@ import LocationLink from '@/components/LocationLink';
 import { formatTime, formatPoolName } from '@/lib/utils';
 import YearSelector from '@/components/YearSelector';
 import styles from './schedule.module.css';
+import { LogicSyncBracket } from '@/components/bracket/LogicSyncBracket';
 
 // ── bracket helpers ───────────────────────────────────────────────────────────
 
@@ -214,6 +215,13 @@ export default function SchedulePage() {
 
   const getDiamond = (id?: string) => id ? diamonds.find(d => d.id === id) ?? null : null;
 
+  // bracket view needs completed games too (shows scores) — separate from list-view filtered
+  const bracketGames = games.filter(g =>
+    g.ageGroupId === activeGroup &&
+    g.status !== 'cancelled' &&
+    !!g.isPlayoff
+  );
+
   const filtered = games
     .filter(g =>
       g.ageGroupId === activeGroup &&
@@ -367,7 +375,7 @@ export default function SchedulePage() {
             (() => {
               // ── BRACKET VIEW ─────────────────────────────────────────────
               if (viewMode === 'playoff' && bracketLayout === 'bracket') {
-                if (filtered.length === 0) {
+                if (bracketGames.length === 0) {
                   return (
                     <div className="empty-state">
                       <Trophy size={48} />
@@ -376,31 +384,27 @@ export default function SchedulePage() {
                   );
                 }
 
-                const bracketWrap = {
-                  display: 'flex',
-                  justifyContent: 'flex-start',
-                  overflowX: 'auto' as const,
-                  padding: '1.5rem',
-                  background: 'radial-gradient(circle at 50% 50%, rgba(var(--primary-rgb),0.04) 0%, transparent 70%)',
-                  WebkitOverflowScrolling: 'touch' as const,
-                };
+                const bracketHasPools = pools.length >= 2 && bracketGames.some(g =>
+                  pools.some(p => {
+                    const bare = p.name.replace(/^Pool\s+/i, '').trim();
+                    return g.homePlaceholder?.includes(`Pool ${bare}`) || g.awayPlaceholder?.includes(`Pool ${bare}`);
+                  })
+                );
 
-                if (hasPoolPlaceholders) {
+                if (bracketHasPools) {
                   return (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '3rem' }}>
                       {pools.map(pool => {
-                        const poolGames = filtered.filter(g => inferPool(g, filtered) === pool.name);
+                        const poolGames = bracketGames.filter(g => inferPool(g, bracketGames) === pool.name);
                         if (poolGames.length === 0) return null;
                         return (
                           <div key={pool.id}>
                             <PoolHeader name={`${formatPoolName(pool.name)} Playoffs`} />
-                            <div style={bracketWrap}>
-                              <PublicBracketColumns
-                                columns={buildBracketColumns(poolGames)}
-                                getTeamDisplay={getTeamDisplay}
-                                formatDateShort={formatDateShort}
-                              />
-                            </div>
+                            <LogicSyncBracket
+                              games={poolGames}
+                              teams={teams}
+                              tournamentId={selectedTournament!.id}
+                            />
                           </div>
                         );
                       })}
@@ -408,15 +412,12 @@ export default function SchedulePage() {
                   );
                 }
 
-                // single flat bracket
                 return (
-                  <div style={bracketWrap}>
-                    <PublicBracketColumns
-                      columns={buildBracketColumns(filtered)}
-                      getTeamDisplay={getTeamDisplay}
-                      formatDateShort={formatDateShort}
-                    />
-                  </div>
+                  <LogicSyncBracket
+                    games={bracketGames}
+                    teams={teams}
+                    tournamentId={selectedTournament!.id}
+                  />
                 );
               }
 

@@ -21,8 +21,8 @@ This file tracks the ongoing tasks for the tournament website project. AI models
 *Full implementation plan: [FIELDLOGIC_IMPLEMENTATION_PLAN.md](file:///c:/Users/Robert%20Cowan/Documents/tournament-website/FIELDLOGIC_IMPLEMENTATION_PLAN.md)*
 
 - [ ] **Phase 1: Foundation** — Update `tailwind.config.ts`, `globals.css`, and global typography.
-- [ ] **Phase 2: Admin HUD** — Rebuild Admin Dashboard into a "Technical Command Center."
-- [ ] **Phase 3: Logic-Sync Bracket** — SVG-based blueprint brackets with real-time pulse.
+- [ ] **Sprint 2: Admin HUD + Live Logic Rail** — Phases 2 and 8 (see [SPRINT2_PLAN.md](SPRINT2_PLAN.md))
+- [ ] **Sprint 3: Phase 3 — Logic-Sync Bracket** — SVG blueprint bracket with Realtime score pulse (see [SPRINT3_PLAN.md](SPRINT3_PLAN.md))
 - [ ] **Phase 4: Tactical HUD** — High-contrast mobile scorekeeper for officials.
 - [ ] **Phase 5: Digital Ledger** — Historical archives and immutable tournament snapshots.
 
