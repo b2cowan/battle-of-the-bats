@@ -1,0 +1,10 @@
+{
+  "name": "FieldLogic Tactical HUD",
+  "short_name": "FL Tactical",
+  "start_url": "/",
+  "display": "fullscreen",
+  "background_color": "#000000",
+  "theme_color": "#000000",
+  "orientation": "portrait",
+  "icons": []
+}
