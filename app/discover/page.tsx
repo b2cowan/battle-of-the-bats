@@ -150,50 +150,57 @@ export default function DiscoverPage() {
                 Find public tournaments happening across organizations on this platform.
               </p>
             </div>
+          </div>
+        </div>
+      </div>
 
-            <div className={styles.controls}>
-              {/* Search */}
-              <div className={styles.searchWrap}>
-                <Search size={15} className={styles.searchIcon} />
-                <input
-                  type="text"
-                  placeholder="Search by tournament or org name…"
-                  value={search}
-                  onChange={e => setSearch(e.target.value)}
-                  className={styles.searchInput}
-                />
-              </div>
+      {/* ── Sticky filter bar ── */}
+      <div className={styles.filterBar}>
+        <div className="container">
+          <div className={styles.controls}>
+            {/* Search */}
+            <div className={styles.searchWrap}>
+              <Search size={15} className={styles.searchIcon} />
+              <input
+                type="text"
+                placeholder="Search by tournament or org name…"
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                className={styles.searchInput}
+              />
+            </div>
 
-              {/* Status filters */}
-              <div className={styles.filters}>
-                {(['all', 'active', 'upcoming', 'completed'] as StatusFilter[]).map(s => (
-                  <button
-                    key={s}
-                    onClick={() => setFilter(s)}
-                    className={`${styles.filterBtn} ${filter === s ? styles.filterActive : ''}`}
-                  >
-                    {s === 'all' ? 'All' : STATUS_LABELS[s]}
-                  </button>
-                ))}
-              </div>
-
-              {/* View toggle */}
-              <div className={styles.viewToggle}>
+            {/* Status filters */}
+            <div className={styles.filters}>
+              {(['all', 'active', 'upcoming', 'completed'] as StatusFilter[]).map(s => (
                 <button
-                  onClick={() => setViewMode('grid')}
-                  className={`${styles.viewBtn} ${viewMode === 'grid' ? styles.viewBtnActive : ''}`}
-                  title="Grid view"
+                  key={s}
+                  onClick={() => setFilter(s)}
+                  className={`${styles.filterBtn} ${filter === s ? styles.filterActive : ''}`}
                 >
-                  <LayoutGrid size={15} />
+                  {s === 'all' ? 'All' : STATUS_LABELS[s]}
                 </button>
-                <button
-                  onClick={() => setViewMode('list')}
-                  className={`${styles.viewBtn} ${viewMode === 'list' ? styles.viewBtnActive : ''}`}
-                  title="List view"
-                >
-                  <List size={15} />
-                </button>
-              </div>
+              ))}
+            </div>
+
+            {/* View toggle */}
+            <div className={styles.viewToggle}>
+              <button
+                onClick={() => setViewMode('grid')}
+                className={`${styles.viewBtn} ${viewMode === 'grid' ? styles.viewBtnActive : ''}`}
+                title="Grid view"
+                aria-label="Grid view"
+              >
+                <LayoutGrid size={15} />
+              </button>
+              <button
+                onClick={() => setViewMode('list')}
+                className={`${styles.viewBtn} ${viewMode === 'list' ? styles.viewBtnActive : ''}`}
+                title="List view"
+                aria-label="List view"
+              >
+                <List size={15} />
+              </button>
             </div>
           </div>
         </div>
@@ -209,6 +216,11 @@ export default function DiscoverPage() {
             </div>
           ) : filtered.length === 0 ? (
             <div className={styles.empty}>
+              <div className={styles.ghostCards} aria-hidden="true">
+                <div className={styles.ghostCard} />
+                <div className={styles.ghostCard} />
+                <div className={styles.ghostCard} />
+              </div>
               <div className={styles.emptyIcon}><Trophy size={24} /></div>
               <p className={styles.emptyTitle}>
                 {isFiltering ? 'No matches found' : 'No tournaments yet'}
@@ -314,7 +326,7 @@ export default function DiscoverPage() {
                   <button
                     onClick={() => fetchBatch(offset, true)}
                     disabled={loadingMore}
-                    className={`btn btn-outline ${styles.loadMoreBtn}`}
+                    className={styles.loadMoreBtn}
                   >
                     {loadingMore ? (
                       <><div className={styles.spinnerSm} />Loading…</>

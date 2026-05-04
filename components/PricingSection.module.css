@@ -1,0 +1,179 @@
+/* ── Toggle ───────────────────────────────────────────────────────────── */
+.toggleWrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-bottom: 3rem;
+}
+
+.togglePill {
+  display: inline-flex;
+  padding: 2px;
+  background: var(--hud-surface);
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.4);
+  border-radius: 0;
+  gap: 2px;
+}
+
+.toggleBtn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1.25rem;
+  border-radius: 0;
+  border: none;
+  background: transparent;
+  color: var(--data-gray);
+  font-family: var(--font-data);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  transition: all 0.15s;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.toggleBtn:hover {
+  color: var(--fl-text);
+}
+
+.toggleActive {
+  background: var(--blueprint-blue);
+  color: var(--fl-text);
+}
+
+.saveBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.15rem 0.55rem;
+  border-radius: 0;
+  background: rgba(var(--logic-lime-rgb), 0.1);
+  color: var(--logic-lime);
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.3);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  line-height: 1;
+}
+
+/* ── Pricing grid ─────────────────────────────────────────────────────── */
+.pricingGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+  align-items: start;
+}
+
+/* ── Plan cards ───────────────────────────────────────────────────────── */
+.planWrapper {
+  display: flex;
+  flex-direction: column;
+}
+
+.popularBadge {
+  text-align: center;
+  color: var(--logic-lime);
+  font-family: var(--font-data);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 0.25rem 0.75rem;
+  border: 1px solid var(--logic-lime);
+  border-bottom: none;
+  background: rgba(var(--logic-lime-rgb), 0.05);
+  white-space: nowrap;
+}
+
+.planCard {
+  background: var(--hud-surface);
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.4);
+  border-radius: 0;
+  padding: 2rem;
+  flex: 1;
+}
+
+.planHighlight {
+  border-color: var(--logic-lime);
+  box-shadow: 0 0 0 1px var(--logic-lime), 0 0 16px rgba(var(--logic-lime-rgb), 0.25);
+}
+
+.planName {
+  font-family: var(--font-data);
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--blueprint-blue);
+  margin-bottom: 0.75rem;
+}
+
+.planPrice {
+  display: flex;
+  align-items: baseline;
+  gap: 0.2rem;
+  margin-bottom: 0.3rem;
+}
+
+.planAmount {
+  font-family: var(--font-data);
+  font-size: 2.75rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--fl-text);
+}
+
+.planHighlight .planAmount {
+  color: var(--logic-lime);
+}
+
+.planPeriod {
+  color: var(--data-gray);
+  font-family: var(--font-data);
+  font-size: 0.8rem;
+}
+
+.planNote {
+  color: var(--data-gray);
+  font-family: var(--font-data);
+  font-size: 0.7rem;
+  margin-bottom: 1.5rem;
+  min-height: 1.2em;
+}
+
+.planDivider {
+  border: none;
+  border-top: 1px solid rgba(var(--blueprint-blue-rgb), 0.2);
+  margin: 1.5rem 0;
+}
+
+.planFeatures {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-bottom: 1.75rem;
+}
+
+.planRow {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-family: var(--font-data);
+  font-size: 0.75rem;
+}
+
+.rowCheck { color: var(--logic-lime); flex-shrink: 0; }
+.rowCross { color: rgba(255,255,255,0.15); flex-shrink: 0; }
+.rowMuted { color: rgba(255,255,255,0.2); }
+
+/* ── Responsive ───────────────────────────────────────────────────────── */
+@media (max-width: 900px) {
+  .pricingGrid {
+    grid-template-columns: 1fr;
+    max-width: 420px;
+    margin: 0 auto;
+  }
+}

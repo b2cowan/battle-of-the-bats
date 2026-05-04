@@ -17,13 +17,24 @@ This file tracks the ongoing tasks for the tournament website project. AI models
 
 ---
 
+## 🏗️ FieldLogic Rebrand (The Architect)
+*Full implementation plan: [FIELDLOGIC_IMPLEMENTATION_PLAN.md](file:///c:/Users/Robert%20Cowan/Documents/tournament-website/FIELDLOGIC_IMPLEMENTATION_PLAN.md)*
+
+- [ ] **Phase 1: Foundation** — Update `tailwind.config.ts`, `globals.css`, and global typography.
+- [ ] **Phase 2: Admin HUD** — Rebuild Admin Dashboard into a "Technical Command Center."
+- [ ] **Phase 3: Logic-Sync Bracket** — SVG-based blueprint brackets with real-time pulse.
+- [ ] **Phase 4: Tactical HUD** — High-contrast mobile scorekeeper for officials.
+- [ ] **Phase 5: Digital Ledger** — Historical archives and immutable tournament snapshots.
+
+---
+
 ## 🎨 Design System Overhaul
 *Full implementation plan: [DESIGN_SYSTEM_PLAN.md](file:///c:/Users/Robert%20Cowan/Documents/tournament-website/DESIGN_SYSTEM_PLAN.md)*
 
 - [x] **Item 1** — Generalized design token refactor (`globals.css` + all CSS modules)
 - [x] **Item 2** — Per-org color scheme selection (DB migration, `lib/themes.ts`, admin settings UI)
 - [x] **Item 3** — Additional org customization: logo, hero banner, font preset, card style
-- [ ] **Item 4** — Platform page polish: landing page and discover page improvements
+- [x] **Item 4** — Platform page polish: landing page and discover page improvements
 - [ ] **Item 5** — Color scheme demo pages at `/demo/themes`
 
 ---
