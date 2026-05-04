@@ -1,5 +1,5 @@
 export type OrgPlan = 'starter' | 'pro' | 'elite';
-export type OrgRole = 'owner' | 'admin' | 'staff';
+export type OrgRole = 'owner' | 'admin' | 'staff' | 'official';
 export type SubscriptionStatus = 'active' | 'trialing' | 'past_due' | 'canceled';
 
 export interface Organization {
@@ -20,6 +20,7 @@ export interface Organization {
   heroBannerUrl?: string;
   themeFont?: string;       // 'system' | 'inter' | 'barlow' | 'dm-serif'
   themeCardStyle?: string;  // 'default' | 'glass' | 'outlined' | 'flat'
+  requireScoreFinalization?: boolean;
 }
 
 export interface OrganizationMember {
@@ -139,7 +140,7 @@ export interface Team {
   poolId?: string; // The new way (link to pools table)
 }
 
-export type GameStatus = 'scheduled' | 'completed' | 'cancelled';
+export type GameStatus = 'scheduled' | 'submitted' | 'completed' | 'cancelled';
 
 export interface Game {
   id: string;
@@ -193,4 +194,27 @@ export interface Resource {
   label: string;
   url: string;
   order: number;
+}
+
+export interface TournamentArchive {
+  id: string;
+  tournamentId: string | null;  // null if source tournament was deleted post-seal
+  orgId: string;
+  tournamentName: string;
+  season: string;               // String year, e.g. "2026"
+  division?: string;            // Comma-separated age group names
+  finalSnapshot: {
+    tournament: Tournament;
+    ageGroups: AgeGroup[];
+    teams: Team[];
+    games: Game[];
+  };
+  winnerTeamId?: string;
+  winnerTeamName?: string;
+  runnerUpName?: string;
+  totalTeams?: number;
+  totalGames?: number;
+  integrityHash: string;
+  sealedAt: string;
+  sealedBy?: string;
 }

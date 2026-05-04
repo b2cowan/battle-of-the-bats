@@ -94,6 +94,14 @@ export async function PATCH(req: Request, { params }: Params) {
     return NextResponse.json({ error: 'Member not found' }, { status: 404 });
   }
 
+  // Officials cannot be promoted — they must be removed and re-invited with the desired role
+  if (target.role === 'official') {
+    return NextResponse.json(
+      { error: 'Field officials cannot be promoted. Remove and re-invite them with the desired role.' },
+      { status: 400 }
+    );
+  }
+
   // Prevent demoting the last owner (target.role may be 'owner'; new role is always admin/staff)
   if (target.role === 'owner' && (await ownerCount(org.id)) <= 1) {
     return NextResponse.json(

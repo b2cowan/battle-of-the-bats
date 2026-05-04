@@ -10,7 +10,7 @@ import s from '../admin-common.module.css';
 import styles from '../schedule/schedule-admin.module.css';
 import FeedbackModal from '@/components/FeedbackModal';
 
-type ResultsFilter = 'pending' | 'completed';
+type ResultsFilter = 'pending' | 'submitted' | 'completed';
 
 export default function AdminResultsPage() {
   const { currentTournament } = useTournament();
@@ -25,7 +25,7 @@ export default function AdminResultsPage() {
   const [showErrors, setShowErrors] = useState(false);
 
   const [filterGroup, setFilterGroup] = useState('');
-  const [selectedStatuses, setSelectedStatuses] = useState<ResultsFilter[]>(['pending']);
+  const [selectedStatuses, setSelectedStatuses] = useState<ResultsFilter[]>(['pending', 'submitted']);
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'pool' | 'playoff'>('pool');
   const [groupMode, setGroupMode] = useState<'flat' | 'pools'>('pools');
@@ -106,19 +106,29 @@ export default function AdminResultsPage() {
     });
   }
 
+  async function finalizeGame(id: string) {
+    await updateGame(id, { status: 'completed' });
+    refresh();
+  }
+
   // Compute counts for filter chips
   const divisionGames = games.filter(g => {
     const matchesGroup = g.ageGroupId === filterGroup;
     const matchesView = viewMode === 'pool' ? !g.isPlayoff : g.isPlayoff;
     return matchesGroup && matchesView;
   });
-  const pendingCount = divisionGames.filter(g => g.status !== 'completed').length;
+  const pendingCount   = divisionGames.filter(g => g.status === 'scheduled').length;
+  const submittedCount = divisionGames.filter(g => g.status === 'submitted').length;
   const completedCount = divisionGames.filter(g => g.status === 'completed').length;
 
   const filtered = games.filter(g => {
     const matchesGroup = g.ageGroupId === filterGroup;
-    const matchesStatus = selectedStatuses.length === 0 || 
-      selectedStatuses.some(sf => sf === 'pending' ? g.status !== 'completed' : g.status === 'completed');
+    const matchesStatus = selectedStatuses.length === 0 ||
+      selectedStatuses.some(sf =>
+        sf === 'pending'    ? g.status === 'scheduled' :
+        sf === 'submitted'  ? g.status === 'submitted' :
+        g.status === 'completed'
+      );
 
     const hName = getTeamName(g.homeTeamId).toLowerCase();
     const aName = getTeamName(g.awayTeamId).toLowerCase();
@@ -191,8 +201,9 @@ export default function AdminResultsPage() {
       <div className={s.filtersRow}>
         <div className={s.statusFilters}>
           {([
-            { key: 'pending' as ResultsFilter, label: 'TO BE SCORED', count: pendingCount },
-            { key: 'completed' as ResultsFilter, label: 'COMPLETED', count: completedCount },
+            { key: 'pending'   as ResultsFilter, label: 'TO BE SCORED',    count: pendingCount },
+            { key: 'submitted' as ResultsFilter, label: 'PENDING REVIEW',  count: submittedCount },
+            { key: 'completed' as ResultsFilter, label: 'COMPLETED',       count: completedCount },
           ]).map(({ key, label, count }) => (
             <button key={key} className={`${s.filterChip} ${selectedStatuses.includes(key) ? s.chipActive : ''}`} onClick={() => setSelectedStatuses(prev => prev.includes(key) ? prev.filter(x => x !== key) : [...prev, key])}>
               {label} ({count})
@@ -222,6 +233,7 @@ export default function AdminResultsPage() {
             viewMode={viewMode}
             groupByPool={groupMode === 'pools'}
             onScore={openScore}
+            onFinalize={finalizeGame}
             onSchedule={markScheduled}
             mode="scoring"
           />

@@ -22,12 +22,14 @@ const ROLE_LABELS: Record<OrgRole, string> = {
   owner: 'Owner',
   admin: 'Admin',
   staff: 'Staff',
+  official: 'Official',
 };
 
 const ROLE_BADGE: Record<OrgRole, string> = {
   owner: 'badge-primary',
   admin: 'badge-success',
   staff: 'badge-neutral',
+  official: 'badge-warning',
 };
 
 function formatDate(iso: string | null): string {
@@ -48,7 +50,7 @@ export default function MembersPage() {
   // Invite modal state
   const [inviteOpen, setInviteOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState('');
-  const [inviteRole, setInviteRole] = useState<'admin' | 'staff'>('staff');
+  const [inviteRole, setInviteRole] = useState<'admin' | 'staff' | 'official'>('staff');
   const [inviting, setInviting] = useState(false);
 
   // Remove confirmation
@@ -102,7 +104,7 @@ export default function MembersPage() {
       if (!res.ok) throw new Error(data.error ?? 'Invite failed');
       setInviteOpen(false);
       setInviteEmail('');
-      setInviteRole('staff');
+      setInviteRole('staff' as 'admin' | 'staff' | 'official');
       showSuccess(data.added
         ? `${inviteEmail} has been added to the organization.`
         : `Invite sent to ${inviteEmail}.`
@@ -210,62 +212,109 @@ export default function MembersPage() {
         ) : members.length === 0 ? (
           <p className={styles.muted} style={{ padding: '1.5rem' }}>No members yet.</p>
         ) : (
-          <table className={styles.table}>
-            <thead>
-              <tr>
-                <th>Email</th>
-                <th>Role</th>
-                <th>Status</th>
-                <th>Last Sign In</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {members.map(m => {
-                const isSelf = m.userId === user?.id;
-                return (
-                  <tr key={m.id}>
-                    <td className={styles.emailCell}>
-                      {m.email}
-                      {isSelf && <span className={styles.youBadge}>you</span>}
-                    </td>
-                    <td>
-                      <span className={`badge ${ROLE_BADGE[m.role]}`}>{ROLE_LABELS[m.role]}</span>
-                    </td>
-                    <td>
-                      <span className={m.acceptedAt ? styles.statusAccepted : styles.statusPending}>
-                        {m.acceptedAt ? 'Accepted' : 'Pending'}
-                      </span>
-                    </td>
-                    <td className={styles.dimCell}>{formatDate(m.lastSignIn)}</td>
-                    <td>
-                      {!isSelf && m.role !== 'owner' && (
-                        <div className={styles.actions}>
-                          <select
-                            className={styles.roleSelect}
-                            value={m.role}
-                            onChange={e => handleRoleChange(m.id, e.target.value as 'admin' | 'staff')}
-                            aria-label={`Change role for ${m.email}`}
-                          >
-                            <option value="admin">Admin</option>
-                            <option value="staff">Staff</option>
-                          </select>
-                          <button
-                            className={styles.removeBtn}
-                            onClick={() => setRemoveTarget(m)}
-                            aria-label={`Remove ${m.email}`}
-                            title="Remove member"
-                          >
-                            <Trash2 size={14} />
-                          </button>
-                        </div>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+          <>
+            <table className={styles.table}>
+              <thead>
+                <tr>
+                  <th>Email</th>
+                  <th>Role</th>
+                  <th>Status</th>
+                  <th>Last Sign In</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {members.filter(m => m.role !== 'official').map(m => {
+                  const isSelf = m.userId === user?.id;
+                  return (
+                    <tr key={m.id}>
+                      <td className={styles.emailCell}>
+                        {m.email}
+                        {isSelf && <span className={styles.youBadge}>you</span>}
+                      </td>
+                      <td>
+                        <span className={`badge ${ROLE_BADGE[m.role]}`}>{ROLE_LABELS[m.role]}</span>
+                      </td>
+                      <td>
+                        <span className={m.acceptedAt ? styles.statusAccepted : styles.statusPending}>
+                          {m.acceptedAt ? 'Accepted' : 'Pending'}
+                        </span>
+                      </td>
+                      <td className={styles.dimCell}>{formatDate(m.lastSignIn)}</td>
+                      <td>
+                        {!isSelf && m.role !== 'owner' && (
+                          <div className={styles.actions}>
+                            <select
+                              className={styles.roleSelect}
+                              value={m.role}
+                              onChange={e => handleRoleChange(m.id, e.target.value as 'admin' | 'staff')}
+                              aria-label={`Change role for ${m.email}`}
+                            >
+                              <option value="admin">Admin</option>
+                              <option value="staff">Staff</option>
+                            </select>
+                            <button
+                              className={styles.removeBtn}
+                              onClick={() => setRemoveTarget(m)}
+                              aria-label={`Remove ${m.email}`}
+                              title="Remove member"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+
+            {members.some(m => m.role === 'official') && (
+              <div style={{ marginTop: '2rem' }}>
+                <h2 className={styles.pageTitle} style={{ fontSize: '1rem', marginBottom: '0.75rem' }}>Field Officials</h2>
+                <table className={styles.table}>
+                  <thead>
+                    <tr>
+                      <th>Email</th>
+                      <th>Role</th>
+                      <th>Status</th>
+                      <th>Last Sign In</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {members.filter(m => m.role === 'official').map(m => (
+                      <tr key={m.id}>
+                        <td className={styles.emailCell}>{m.email}</td>
+                        <td>
+                          <span className={`badge ${ROLE_BADGE[m.role]}`}>{ROLE_LABELS[m.role]}</span>
+                        </td>
+                        <td>
+                          <span className={m.acceptedAt ? styles.statusAccepted : styles.statusPending}>
+                            {m.acceptedAt ? 'Accepted' : 'Pending'}
+                          </span>
+                        </td>
+                        <td className={styles.dimCell}>{formatDate(m.lastSignIn)}</td>
+                        <td>
+                          <div className={styles.actions}>
+                            <button
+                              className={styles.removeBtn}
+                              onClick={() => setRemoveTarget(m)}
+                              aria-label={`Remove ${m.email}`}
+                              title="Remove official"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </>
         )}
       </div>
 
@@ -297,10 +346,11 @@ export default function MembersPage() {
                   id="invite-role"
                   className={styles.input}
                   value={inviteRole}
-                  onChange={e => setInviteRole(e.target.value as 'admin' | 'staff')}
+                  onChange={e => setInviteRole(e.target.value as 'admin' | 'staff' | 'official')}
                 >
                   <option value="admin">Admin</option>
                   <option value="staff">Staff</option>
+                  <option value="official">Field Official (scorekeeper)</option>
                 </select>
               </div>
               <div className={styles.modalFooter}>

@@ -23,8 +23,8 @@ This file tracks the ongoing tasks for the tournament website project. AI models
 - [ ] **Phase 1: Foundation** — Update `tailwind.config.ts`, `globals.css`, and global typography.
 - [ ] **Sprint 2: Admin HUD + Live Logic Rail** — Phases 2 and 8 (see [SPRINT2_PLAN.md](SPRINT2_PLAN.md))
 - [ ] **Sprint 3: Phase 3 — Logic-Sync Bracket** — SVG blueprint bracket with Realtime score pulse (see [SPRINT3_PLAN.md](SPRINT3_PLAN.md))
-- [ ] **Phase 4: Official Accounts** — Lightweight "official" role with scoped access to score entry only; replaces Tactical HUD concept (deferred — requires auth/role design)
-- [ ] **Phase 5: Digital Ledger** — Historical archives and immutable tournament snapshots.
+- [ ] **Phase 4: Official Accounts** — Lightweight "official" role with scoped score-entry access; invite-based auth, mobile UI (see [SPRINT4_PLAN.md](SPRINT4_PLAN.md))
+- [ ] **Phase 5: Digital Ledger** — Immutable tournament archives, seal button, SHA-256 integrity hash, public ledger + detail pages (see [SPRINT5_PLAN.md](SPRINT5_PLAN.md))
 
 ---
 

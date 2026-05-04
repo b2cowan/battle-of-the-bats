@@ -5,6 +5,8 @@ import { OrgProvider } from '@/lib/org-context';
 import AdminSidebar from '@/components/admin/AdminSidebar';
 import AdminBottomNav from '@/components/admin/AdminBottomNav';
 import DevPlanSwitcher from '@/components/DevPlanSwitcher';
+import { LiveLogicProvider } from '@/components/live-logic/LiveLogicProvider';
+import { LiveLogicRail } from '@/components/live-logic/LiveLogicRail';
 import styles from './admin.module.css';
 
 export default async function AdminLayout({
@@ -29,14 +31,17 @@ export default async function AdminLayout({
   return (
     <OrgProvider>
       <TournamentProvider>
-        <div className={styles.adminShell}>
-          <AdminSidebar />
-          <main className={styles.adminMain}>
-            {children}
-          </main>
-        </div>
-        <AdminBottomNav />
-        {process.env.NODE_ENV === 'development' && <DevPlanSwitcher />}
+        <LiveLogicProvider>
+          <div className={styles.adminShell}>
+            <AdminSidebar />
+            <main className={styles.adminMain}>
+              {children}
+            </main>
+          </div>
+          <AdminBottomNav />
+          {process.env.NODE_ENV === 'development' && <DevPlanSwitcher />}
+          <LiveLogicRail />
+        </LiveLogicProvider>
       </TournamentProvider>
     </OrgProvider>
   );

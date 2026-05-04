@@ -1,6 +1,6 @@
 import { supabase } from './supabase';
 import { supabaseAdmin } from './supabase-admin';
-import { Tournament, Diamond, Contact, AgeGroup, Pool, Team, Game, Announcement, PlayoffConfig, RuleSection, RuleItem, Resource, Organization, OrganizationMember, OrgPlan, OrgRole } from './types';
+import { Tournament, Diamond, Contact, AgeGroup, Pool, Team, Game, Announcement, PlayoffConfig, RuleSection, RuleItem, Resource, Organization, OrganizationMember, OrgPlan, OrgRole, TournamentArchive } from './types';
 
 // --- Tournaments ---
 export async function getTournaments(): Promise<Tournament[]> {
@@ -512,7 +512,11 @@ export async function getStandings(ageGroupId: string, config?: PlayoffConfig) {
   const games = await getGames();
   const teams = await getTeams();
   const groupTeams = teams.filter(t => t.ageGroupId === ageGroupId && t.status === 'accepted');
-  const groupGames = games.filter(g => g.ageGroupId === ageGroupId && g.status === 'completed' && !g.isPlayoff);
+  const groupGames = games.filter(g =>
+    g.ageGroupId === ageGroupId &&
+    (g.status === 'completed' || g.status === 'submitted') &&
+    !g.isPlayoff
+  );
 
   const teamStats = groupTeams.map(t => {
     const teamGames = groupGames.filter(g => g.homeTeamId === t.id || g.awayTeamId === t.id);
@@ -541,7 +545,8 @@ export async function getStandings(ageGroupId: string, config?: PlayoffConfig) {
       pts: (wins * 2) + ties,
       rf,
       ra,
-      rd: rf - ra
+      rd: rf - ra,
+      hasPendingGame: teamGames.some(g => g.status === 'submitted'),
     };
   });
 
@@ -1257,4 +1262,52 @@ function mapTournament(r: any): Tournament {
     startDate:      r.start_date ?? undefined,
     endDate:        r.end_date ?? undefined,
   };
+}
+
+function mapArchive(r: any): TournamentArchive {
+  return {
+    id:              r.id,
+    tournamentId:    r.tournament_id ?? null,
+    orgId:           r.org_id,
+    tournamentName:  r.tournament_name,
+    season:          r.season,
+    division:        r.division ?? undefined,
+    finalSnapshot:   r.final_snapshot,
+    winnerTeamId:    r.winner_team_id ?? undefined,
+    winnerTeamName:  r.winner_team_name ?? undefined,
+    runnerUpName:    r.runner_up_name ?? undefined,
+    totalTeams:      r.total_teams ?? undefined,
+    totalGames:      r.total_games ?? undefined,
+    integrityHash:   r.integrity_hash,
+    sealedAt:        r.sealed_at,
+    sealedBy:        r.sealed_by ?? undefined,
+  };
+}
+
+// ── Tournament Archives ───────────────────────────────────────────────────────
+
+export async function getArchivesByOrg(orgId: string): Promise<TournamentArchive[]> {
+  const { data, error } = await supabase
+    .from('tournament_archives')
+    .select('*')
+    .eq('org_id', orgId)
+    .order('sealed_at', { ascending: false });
+  if (error || !data) {
+    if (error) console.error('getArchivesByOrg error', error);
+    return [];
+  }
+  return data.map(mapArchive);
+}
+
+export async function getArchiveById(id: string): Promise<TournamentArchive | null> {
+  const { data, error } = await supabase
+    .from('tournament_archives')
+    .select('*')
+    .eq('id', id)
+    .single();
+  if (error || !data) {
+    if (error) console.error('getArchiveById error', error);
+    return null;
+  }
+  return mapArchive(data);
 }

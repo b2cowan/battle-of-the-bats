@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { LayoutDashboard, Users, Calendar, Trophy, Megaphone, Tag, LogOut, Home, ChevronRight, MapPin, RefreshCw, BookUser, BookOpen, CreditCard, Settings, Users2 } from 'lucide-react';
+import { LayoutDashboard, Users, Calendar, Trophy, Megaphone, Tag, LogOut, Home, ChevronRight, MapPin, RefreshCw, BookUser, BookOpen, CreditCard, Settings, Users2, Archive } from 'lucide-react';
 import { signOut } from '@/lib/auth';
 import { useOrg } from '@/lib/org-context';
 import { useTournament } from '@/lib/tournament-context';
@@ -103,6 +103,21 @@ export default function AdminSidebar() {
           );
         })}
       </nav>
+
+      {/* Archives — all roles, public page */}
+      <div className={styles.billingSection}>
+        <Link
+          href={`/${currentOrg?.slug ?? 'milton-bats'}/archives`}
+          className={`${styles.navItem} ${pathname.startsWith(`/${currentOrg?.slug ?? 'milton-bats'}/archives`) ? styles.navActive : ''}`}
+          id="admin-nav-archives"
+        >
+          <Archive size={17} />
+          <span>Archives</span>
+          {pathname.startsWith(`/${currentOrg?.slug ?? 'milton-bats'}/archives`) && (
+            <ChevronRight size={14} className={styles.navChevron} />
+          )}
+        </Link>
+      </div>
 
       {/* Billing, Settings, Members — owner only */}
       {userRole === 'owner' && (

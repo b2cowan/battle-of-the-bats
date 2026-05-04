@@ -55,7 +55,7 @@ export default function ResultsPage() {
   const getTeamName = (id: string) => teams.find(t => t.id === id)?.name ?? 'TBD';
   const getDiamond  = (id?: string): Diamond | null => id ? diamonds.find(d => d.id === id) ?? null : null;
 
-  const completed = games.filter(g => g.status === 'completed');
+  const completed = games.filter(g => g.status === 'completed' || g.status === 'submitted');
   const groupResults = completed.filter(g => g.ageGroupId === activeGroup);
   
   // Filtering by pool
@@ -169,13 +169,13 @@ export default function ResultsPage() {
                           {poolStandings.map((team, idx) => {
                             const gamesStarted = poolStandings.some(s => s.gp > 0);
                             const isFirst = idx === 0 && gamesStarted;
-                            
+
                             return (
                               <tr key={team.id} className={isFirst ? styles.topRow : ''}>
                                 <td className={styles.stickyCol}>
                                   <div className={styles.teamCell}>
                                     {isFirst && <Trophy size={14} style={{ color: 'var(--warning)' }} />}
-                                    {team.name}
+                                    {team.name}{team.hasPendingGame ? ' *' : ''}
                                   </div>
                                 </td>
                               <td style={{ textAlign: 'center' }} className={styles.statValue}>{team.w}</td>
@@ -195,6 +195,11 @@ export default function ResultsPage() {
                         </tbody>
                       </table>
                     </div>
+                    {poolStandings.some(s => s.hasPendingGame) && (
+                      <p style={{ fontSize: '0.75rem', color: 'var(--white-40)', padding: '0.5rem 1rem 0.75rem', margin: 0 }}>
+                        * Standings include scores pending admin finalization. Stats may change.
+                      </p>
+                    )}
                   </div>
                 );
               })}
@@ -259,7 +264,9 @@ export default function ResultsPage() {
                             return (
                               <div key={game.id} className={`card ${styles.resultCard}`}>
                                 <div className={styles.resultMeta}>
-                                  <span className="badge badge-success">Final</span>
+                                  <span className={`badge ${game.status === 'submitted' ? 'badge-warning' : 'badge-success'}`}>
+                                    {game.status === 'submitted' ? 'Pending' : 'Final'}
+                                  </span>
                                   <span className={styles.resultDate}>{formatDate(game.date)}</span>
                                   {game.time && <span className={styles.resultTime}>{formatTime(game.time)}</span>}
                                   <span className="badge badge-primary">{game.bracketCode || 'Playoff'}</span>
@@ -359,7 +366,9 @@ export default function ResultsPage() {
                 return (
                   <div key={game.id} className={`card ${styles.resultCard}`}>
                     <div className={styles.resultMeta}>
-                      <span className="badge badge-success">Final</span>
+                      <span className={`badge ${game.status === 'submitted' ? 'badge-warning' : 'badge-success'}`}>
+                        {game.status === 'submitted' ? 'Pending' : 'Final'}
+                      </span>
                       <span className={styles.resultDate}>{formatDate(game.date)}</span>
                       {game.time && <span className={styles.resultTime}>{formatTime(game.time)}</span>}
                       <span className="badge badge-primary">
