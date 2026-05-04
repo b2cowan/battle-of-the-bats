@@ -4,6 +4,7 @@ import './globals.css';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import BottomNav from '@/components/BottomNav';
+import { OrgNavProvider } from '@/components/OrgNavContext';
 
 const inter = Inter({ 
   subsets: ['latin'],
@@ -35,11 +36,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className={`${inter.variable} ${barlow.variable} ${ibmPlexMono.variable}`} data-scroll-behavior="smooth">
       <body>
-        <a href="#main-content" className="skip-link">Skip to content</a>
-        <Navbar />
-        <main id="main-content">{children}</main>
-        <Footer />
-        <BottomNav />
+        <OrgNavProvider>
+          <a href="#main-content" className="skip-link">Skip to content</a>
+          <Navbar />
+          <main id="main-content">{children}</main>
+          <Footer />
+          <BottomNav />
+        </OrgNavProvider>
       </body>
     </html>
   );

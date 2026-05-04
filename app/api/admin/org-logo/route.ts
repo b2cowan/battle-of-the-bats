@@ -84,3 +84,37 @@ export async function POST(req: Request) {
 
   return NextResponse.json({ logoUrl });
 }
+
+export async function DELETE(req: Request) {
+  const ctx = await getAuthContext();
+  if (!ctx) return unauthorized();
+
+  const { user, org } = ctx;
+
+  const { data: membership } = await supabaseAdmin
+    .from('organization_members')
+    .select('role')
+    .eq('organization_id', org.id)
+    .eq('user_id', user.id)
+    .single();
+
+  if (membership?.role !== 'owner') {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  }
+
+  // Remove from storage (best-effort — ignore errors if file doesn't exist)
+  for (const ext of ['jpg', 'png', 'webp']) {
+    await supabaseAdmin.storage.from(BUCKET).remove([`${org.id}/logo.${ext}`]);
+  }
+
+  const { error: dbError } = await supabaseAdmin
+    .from('organizations')
+    .update({ logo_url: null })
+    .eq('id', org.id);
+
+  if (dbError) {
+    return NextResponse.json({ error: dbError.message }, { status: 500 });
+  }
+
+  return NextResponse.json({ ok: true });
+}

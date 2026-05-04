@@ -98,17 +98,12 @@ export default function Navbar() {
     <nav className={navClass}>
       <div className={`container ${styles.inner}`}>
         <Link href={`/${orgSlug}`} className={styles.logo}>
-          {logoUrl ? (
+          {logoUrl && (
             <img src={logoUrl} alt={orgName || 'Organization logo'} className={styles.logoImg} />
-          ) : (
-            <>
-              <img src="/logo.png" alt="BOTB Platform logo" className={styles.logoImg} />
-              <div className={styles.logoText}>
-                <span className={styles.logoMain}>BATTLE</span>
-                <span className={styles.logoSub}>OF THE BATS</span>
-              </div>
-            </>
           )}
+          {orgName ? (
+            <span className={styles.orgName}>{orgName}</span>
+          ) : null}
         </Link>
 
         <div className={styles.links}>
