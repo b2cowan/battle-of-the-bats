@@ -1,6 +1,18 @@
+import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { getAuthContextWithRole } from '@/lib/api-auth';
+import { getOrganizationBySlug } from '@/lib/db';
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ orgSlug: string }>;
+}): Promise<Metadata> {
+  const { orgSlug } = await params;
+  const org = await getOrganizationBySlug(orgSlug);
+  return { title: org?.name ?? 'FieldLogic' };
+}
 
 export default async function OfficialLayout({
   params,

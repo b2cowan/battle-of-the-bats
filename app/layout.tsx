@@ -24,9 +24,11 @@ const ibmPlexMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'Battle of the Bats | Milton Bats Softball Tournament',
-  description: 'Official website for the Battle of the Bats softball tournament hosted by the Milton Bats. Schedules, results, team rosters, and more.',
-  keywords: 'softball, tournament, Milton Bats, Battle of the Bats, youth softball',
+  title: {
+    default: 'FieldLogic',
+    template: '%s | FieldLogic',
+  },
+  description: 'Tournament management platform for youth and amateur sports organizations.',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

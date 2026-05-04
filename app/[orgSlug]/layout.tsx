@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { Inter, Barlow_Condensed, DM_Serif_Display, DM_Sans } from 'next/font/google';
-import { getOrganizationBySlug } from '@/lib/db';
+import { getOrganizationBySlug, getActiveTournamentByOrg } from '@/lib/db';
 import { resolveTheme } from '@/lib/themes';
 import { OrgNavProvider } from '@/components/OrgNavContext';
 
@@ -38,8 +38,9 @@ export async function generateMetadata({
   const { orgSlug } = await params;
   const org = await getOrganizationBySlug(orgSlug);
   if (!org) return {};
+  const activeTournament = await getActiveTournamentByOrg(org.id);
   return {
-    title: org.name,
+    title: activeTournament?.name ?? org.name,
     openGraph: org.logoUrl ? { images: [{ url: org.logoUrl }] } : undefined,
   };
 }
