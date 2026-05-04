@@ -14,9 +14,12 @@ interface GameRow {
   bracket_code: string | null;
   home_placeholder: string | null;
   away_placeholder: string | null;
-  home_team: { id: string; name: string } | null;
-  away_team: { id: string; name: string } | null;
-  age_groups: { name: string } | null;
+  home_team_id: string | null;
+  away_team_id: string | null;
+  age_group_id: string | null;
+  home_team_name: string | null;
+  away_team_name: string | null;
+  division_name: string | null;
 }
 
 const PERIODS = ['1', '2', 'OT'];
@@ -39,24 +42,43 @@ export default function TacticalHUD() {
 
   useEffect(() => {
     const supabase = createClient();
+
     supabase
       .from('games')
-      .select(`
-        id, home_score, away_score, status, game_time, bracket_code,
-        home_placeholder, away_placeholder,
-        home_team:teams!home_team_id(id, name),
-        away_team:teams!away_team_id(id, name),
-        age_groups(name)
-      `)
+      .select('id, home_score, away_score, status, game_time, bracket_code, home_placeholder, away_placeholder, home_team_id, away_team_id, age_group_id')
       .eq('id', gameId)
       .single()
-      .then(({ data, error }) => {
-        if (error || !data) {
+      .then(async ({ data: g, error }) => {
+        if (error || !g) {
           setNotFound(true);
           setLoading(false);
           return;
         }
-        const row = data as unknown as GameRow;
+
+        // Parallel lookups for team names and division name
+        const [teamsRes, divRes] = await Promise.all([
+          g.home_team_id || g.away_team_id
+            ? supabase
+                .from('teams')
+                .select('id, name')
+                .in('id', [g.home_team_id, g.away_team_id].filter(Boolean) as string[])
+            : Promise.resolve({ data: [] }),
+          g.age_group_id
+            ? supabase.from('age_groups').select('name').eq('id', g.age_group_id).single()
+            : Promise.resolve({ data: null }),
+        ]);
+
+        const teamMap: Record<string, string> = {};
+        ((teamsRes as { data: { id: string; name: string }[] | null }).data ?? [])
+          .forEach((t: { id: string; name: string }) => { teamMap[t.id] = t.name; });
+
+        const row: GameRow = {
+          ...g,
+          home_team_name: g.home_team_id ? (teamMap[g.home_team_id] ?? null) : null,
+          away_team_name: g.away_team_id ? (teamMap[g.away_team_id] ?? null) : null,
+          division_name: (divRes as { data: { name: string } | null }).data?.name ?? null,
+        };
+
         setGame(row);
         const h = row.home_score ?? 0;
         const a = row.away_score ?? 0;
@@ -92,8 +114,8 @@ export default function TacticalHUD() {
   async function handleFinal() {
     if (finalized || finalizing) return;
     const { home, away } = pendingRef.current;
-    const homeName = game?.home_team?.name ?? game?.home_placeholder ?? 'Home';
-    const awayName = game?.away_team?.name ?? game?.away_placeholder ?? 'Away';
+    const homeName = game?.home_team_name ?? game?.home_placeholder ?? 'Home';
+    const awayName = game?.away_team_name ?? game?.away_placeholder ?? 'Away';
     const confirmed = window.confirm(
       `Mark game FINAL?\n\n${homeName}  ${home}  —  ${away}  ${awayName}\n\nThis will record the result and advance the bracket.`
     );
@@ -110,9 +132,9 @@ export default function TacticalHUD() {
     }
   }
 
-  const homeName = game?.home_team?.name ?? game?.home_placeholder ?? '—';
-  const awayName = game?.away_team?.name ?? game?.away_placeholder ?? '—';
-  const division = game?.age_groups?.name ?? '';
+  const homeName = game?.home_team_name ?? game?.home_placeholder ?? '—';
+  const awayName = game?.away_team_name ?? game?.away_placeholder ?? '—';
+  const division = game?.division_name ?? '';
   const round = game?.bracket_code ?? '';
   const gameTime = game?.game_time ? game.game_time.slice(0, 5) : '';
 
