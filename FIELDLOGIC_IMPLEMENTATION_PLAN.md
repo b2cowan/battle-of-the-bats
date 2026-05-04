@@ -1473,17 +1473,15 @@ useEffect(() => {
 
 #### Phase 3 Checklist
 
-- [ ] **Pre-implementation:** Locate the public bracket view component. Read it to determine if it already has Realtime subscriptions.
-  - If yes: styling pass only — apply Blueprint Blue/Logic Lime colors and IBM Plex Mono scores
-  - If no: add Supabase subscription to existing component first, then consider SVG rewrite
-- [ ] Create `lib/types/bracket.ts`
-- [ ] Create `components/bracket/LogicSyncBracket.tsx` (main SVG container)
-- [ ] Create `components/bracket/MatchNode.tsx` (extracted)
-- [ ] Create `components/bracket/ConnectorPath.tsx` (extracted)
-- [ ] Add Realtime subscription inside bracket component
-- [ ] Replace existing bracket component at public bracket view route (confirm path before replacing)
-- [ ] Enable Realtime on `games` table (if not done in Phase 2)
-- [ ] **Do not modify** `app/[orgSlug]/admin/schedule/components/BracketBuilder.tsx`
+- [x] **Pre-implementation:** Locate the public bracket view component. Confirmed in `app/[orgSlug]/schedule/page.tsx` — no Realtime; bracket rendered via `PublicBracketColumns` helper inline in that file.
+- [x] Create `lib/types/bracket.ts` — `BracketNode` interface with `isLive` transient flag
+- [x] Create `components/bracket/LogicSyncBracket.tsx` — main SVG container with column builder, node renderer, and connector paths all inline (MatchNode and ConnectorPath were not extracted to separate files — kept inline by implementation choice)
+- [x] ~~Create `components/bracket/MatchNode.tsx`~~ — implemented inline in `LogicSyncBracket.tsx`
+- [x] ~~Create `components/bracket/ConnectorPath.tsx`~~ — implemented inline in `LogicSyncBracket.tsx`
+- [x] Add Realtime subscription inside bracket component — `postgres_changes` on `games` table filtered by `tournament_id`; 5s `isLive` flash on update
+- [x] Replace existing bracket component at public bracket view route — `LogicSyncBracket` imported and rendered in `app/[orgSlug]/schedule/page.tsx`
+- [x] Enable Realtime on `games` table — verified working via subscription (Supabase dashboard config confirmed by functioning implementation)
+- [x] **Did not modify** `app/[orgSlug]/admin/schedule/components/BracketBuilder.tsx` — last commit to that file predates Sprint 3
 
 ---
 
