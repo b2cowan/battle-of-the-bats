@@ -28,6 +28,11 @@ This file tracks the ongoing tasks for the tournament website project. AI models
 
 ---
 
+## 🖼️ Org Branding
+- [ ] **Stock Logo Library** — Curated sport icon set for orgs to use as logo without uploading; plan-tiered access (see [STOCK_LOGO_PLAN.md](STOCK_LOGO_PLAN.md) spec · [STOCK_LOGO_IMPL_PLAN.md](STOCK_LOGO_IMPL_PLAN.md) impl plan)
+
+---
+
 ## 🏆 Team & Season Management
 **Goal:** Allow organizations to manage their teams outside of tournament contexts — rosters, seasons, and ongoing records across the full year.
 

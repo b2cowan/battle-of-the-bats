@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation';
 import { Inter, Barlow_Condensed, DM_Serif_Display, DM_Sans } from 'next/font/google';
 import { getOrganizationBySlug, getActiveTournamentByOrg } from '@/lib/db';
 import { resolveTheme } from '@/lib/themes';
-import { OrgNavProvider } from '@/components/OrgNavContext';
+import { OrgNavSync } from '@/components/OrgNavSync';
 
 // Pre-load all font options at module level (next/font requirement).
 // Each uses a unique CSS variable so they don't conflict with the root layout fonts.
@@ -80,7 +80,8 @@ export default async function OrgLayout({
   ].join(' ');
 
   return (
-    <OrgNavProvider logoUrl={org.logoUrl ?? null} orgName={org.name}>
+    <>
+      <OrgNavSync logoUrl={org.logoUrl ?? null} orgName={org.name} />
       {/* Sets vars on :root so globally-mounted components (Navbar, BottomNav) inherit the org theme */}
       <style dangerouslySetInnerHTML={{ __html: `:root { ${cssVars} }` }} />
       <div
@@ -89,7 +90,7 @@ export default async function OrgLayout({
       >
         {children}
       </div>
-    </OrgNavProvider>
+    </>
   );
 }
 

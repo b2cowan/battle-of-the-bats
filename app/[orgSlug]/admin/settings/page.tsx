@@ -1,8 +1,10 @@
 'use client';
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { Settings, Upload, Lock, Check, Image } from 'lucide-react';
+import { Settings, Upload, Lock, Check, Image, AlertTriangle, Library, X } from 'lucide-react';
+import { STOCK_LOGOS, STOCK_LOGO_CATEGORIES, isStockLogoUnlocked } from '@/lib/stock-logos';
 import { useOrg } from '@/lib/org-context';
+import { useOrgNav } from '@/components/OrgNavContext';
 import FeedbackModal from '@/components/FeedbackModal';
 import { PRESETS, FONT_OPTIONS, CARD_STYLE_OPTIONS, resolveTheme } from '@/lib/themes';
 import styles from './settings.module.css';
@@ -24,35 +26,38 @@ interface OrgSettings {
 export default function OrgSettingsPage() {
   const router = useRouter();
   const { currentOrg, userRole, loading, refresh } = useOrg();
+  const { setOrgNav } = useOrgNav();
 
   const [settings, setSettings] = useState<OrgSettings | null>(null);
   const [form, setForm] = useState({ name: '', slug: '', isPublic: false });
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const [stockLogoOpen, setStockLogoOpen] = useState(false);
+  const [stockLogoSelected, setStockLogoSelected] = useState<string | null>(null);
+  const [stockLogoSaving, setStockLogoSaving] = useState(false);
+  const [stockLogoLockedCta, setStockLogoLockedCta] = useState<string | null>(null);
 
   const [presetKey, setPresetKey]         = useState<string>('platform');
   const [customPrimary, setCustomPrimary] = useState<string>('#8B2FC9');
   const [customAccent, setCustomAccent]   = useState<string>('#A855F7');
-  const [themeSaving, setThemeSaving]     = useState(false);
 
   const [heroBannerPreview, setHeroBannerPreview] = useState<string | null>(null);
   const [bannerUploading, setBannerUploading]     = useState(false);
   const bannerInputRef = useRef<HTMLInputElement>(null);
 
-  const [fontKey, setFontKey]             = useState<string>('system');
-  const [fontSaving, setFontSaving]       = useState(false);
-
-  const [cardStyle, setCardStyle]         = useState<string>('default');
-  const [cardStyleSaving, setCardStyleSaving] = useState(false);
-
+  const [fontKey, setFontKey]   = useState<string>('system');
+  const [cardStyle, setCardStyle] = useState<string>('default');
   const [requireFinalization, setRequireFinalization] = useState(false);
-  const [finalizationSaving, setFinalizationSaving]   = useState(false);
 
   const [successOpen, setSuccessOpen] = useState(false);
   const [successMsg, setSuccessMsg]   = useState('');
   const [errorOpen, setErrorOpen]     = useState(false);
   const [errorMsg, setErrorMsg]       = useState('');
+
+  // Navigation guard
+  const [navGuardOpen, setNavGuardOpen]     = useState(false);
+  const [pendingNavHref, setPendingNavHref] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -79,6 +84,69 @@ export default function OrgSettingsPage() {
       .catch(() => showError('Failed to load org settings'));
   }, [currentOrg]);
 
+  const isDirty = useMemo(() => {
+    if (!settings) return false;
+    const savedPresetKey = settings.themePrimary ? 'custom' : (settings.themePreset ?? 'platform');
+    const presetChanged = presetKey !== savedPresetKey ||
+      (presetKey === 'custom' && savedPresetKey === 'custom' && (
+        customPrimary !== (settings.themePrimary ?? '#8B2FC9') ||
+        customAccent  !== (settings.themeAccent  ?? '#A855F7')
+      ));
+    return (
+      form.name  !== settings.name  ||
+      form.slug  !== settings.slug  ||
+      form.isPublic !== settings.isPublic ||
+      presetChanged ||
+      fontKey !== (settings.themeFont     ?? 'system')  ||
+      cardStyle !== (settings.themeCardStyle ?? 'default') ||
+      requireFinalization !== (settings.requireScoreFinalization ?? false)
+    );
+  }, [settings, form, presetKey, customPrimary, customAccent, fontKey, cardStyle, requireFinalization]);
+
+  // Warn on browser refresh / tab close when dirty
+  useEffect(() => {
+    if (!isDirty) return;
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = '';
+    };
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, [isDirty]);
+
+  // Intercept client-side link clicks and browser back when dirty
+  useEffect(() => {
+    if (!isDirty) return;
+
+    // Intercept <a> clicks in capture phase (fires before Next.js router handler)
+    const handleClick = (e: MouseEvent) => {
+      const anchor = (e.target as HTMLElement).closest('a[href]') as HTMLAnchorElement | null;
+      if (!anchor) return;
+      const href = anchor.getAttribute('href') ?? '';
+      // Ignore same-page anchors, external links, and the current path
+      if (!href || href.startsWith('#') || href.startsWith('http') || href === window.location.pathname) return;
+      e.preventDefault();
+      e.stopPropagation();
+      setPendingNavHref(href);
+      setNavGuardOpen(true);
+    };
+
+    // Intercept browser back/forward button
+    window.history.pushState(null, '', window.location.href);
+    const handlePopState = () => {
+      window.history.pushState(null, '', window.location.href);
+      setPendingNavHref(null); // back-button destination unknown; just show guard
+      setNavGuardOpen(true);
+    };
+
+    document.addEventListener('click', handleClick, true);
+    window.addEventListener('popstate', handlePopState);
+    return () => {
+      document.removeEventListener('click', handleClick, true);
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, [isDirty]);
+
   function showError(msg: string) {
     setErrorMsg(msg);
     setErrorOpen(true);
@@ -93,11 +161,14 @@ export default function OrgSettingsPage() {
     return resolveTheme(presetKey, null, null);
   }, [presetKey, customPrimary, customAccent]);
 
-  async function handleSave(e: React.FormEvent) {
-    e.preventDefault();
-    if (!currentOrg) return;
+  async function handleSaveAll(): Promise<boolean> {
+    if (!currentOrg || saving) return false;
     setSaving(true);
     try {
+      const themeBody = presetKey === 'custom'
+        ? { themePreset: 'platform', themePrimary: customPrimary, themeAccent: customAccent }
+        : { themePreset: presetKey, themePrimary: null, themeAccent: null };
+
       const res = await fetch('/api/admin/org-settings', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -105,49 +176,69 @@ export default function OrgSettingsPage() {
           name:     form.name,
           slug:     form.slug,
           isPublic: form.isPublic,
+          ...themeBody,
+          themeFont:                fontKey,
+          themeCardStyle:           cardStyle,
+          requireScoreFinalization: requireFinalization,
         }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? 'Save failed');
 
-      setSuccessMsg('Settings saved successfully.');
+      setSettings(prev => prev ? {
+        ...prev,
+        name: form.name,
+        slug: form.slug,
+        isPublic: form.isPublic,
+        ...themeBody,
+        themeFont:                fontKey,
+        themeCardStyle:           cardStyle,
+        requireScoreFinalization: requireFinalization,
+      } : null);
+
+      setSuccessMsg('Settings saved.');
       setSuccessOpen(true);
       refresh();
 
       if (data.slug && data.slug !== currentOrg.slug) {
         router.push(`/${data.slug}/admin/settings`);
       }
+      return true;
     } catch (err: any) {
       showError(err.message ?? 'Something went wrong');
+      return false;
     } finally {
       setSaving(false);
     }
   }
 
-  async function handleSaveTheme() {
-    if (!currentOrg) return;
-    setThemeSaving(true);
-    try {
-      const body = presetKey === 'custom'
-        ? { themePreset: 'platform', themePrimary: customPrimary, themeAccent: customAccent }
-        : { themePreset: presetKey, themePrimary: null, themeAccent: null };
-
-      const res = await fetch('/api/admin/org-settings', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? 'Save failed');
-
-      setSuccessMsg('Theme saved.');
-      setSuccessOpen(true);
-      refresh();
-    } catch (err: any) {
-      showError(err.message ?? 'Something went wrong');
-    } finally {
-      setThemeSaving(false);
+  function discardChanges() {
+    if (!settings) return;
+    setForm({ name: settings.name, slug: settings.slug, isPublic: settings.isPublic });
+    const savedPresetKey = settings.themePrimary ? 'custom' : (settings.themePreset ?? 'platform');
+    setPresetKey(savedPresetKey);
+    if (savedPresetKey === 'custom') {
+      setCustomPrimary(settings.themePrimary ?? '#8B2FC9');
+      setCustomAccent(settings.themeAccent   ?? '#A855F7');
     }
+    setFontKey(settings.themeFont        ?? 'system');
+    setCardStyle(settings.themeCardStyle ?? 'default');
+    setRequireFinalization(settings.requireScoreFinalization ?? false);
+  }
+
+  async function handleNavGuardSave() {
+    const ok = await handleSaveAll();
+    if (!ok) return; // save failed — stay on page, error modal already shown
+    setNavGuardOpen(false);
+    if (pendingNavHref) router.push(pendingNavHref);
+    setPendingNavHref(null);
+  }
+
+  function handleNavGuardDiscard() {
+    discardChanges();
+    setNavGuardOpen(false);
+    if (pendingNavHref) router.push(pendingNavHref);
+    setPendingNavHref(null);
   }
 
   async function handleHeroBannerChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -162,6 +253,7 @@ export default function OrgSettingsPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? 'Upload failed');
       setHeroBannerPreview(data.heroBannerUrl);
+      setSettings(prev => prev ? { ...prev, heroBannerUrl: data.heroBannerUrl } : null);
       setSuccessMsg('Hero banner updated.');
       setSuccessOpen(true);
       refresh();
@@ -180,6 +272,7 @@ export default function OrgSettingsPage() {
       const res = await fetch('/api/admin/org-hero-banner', { method: 'DELETE' });
       if (!res.ok) throw new Error('Remove failed');
       setHeroBannerPreview(null);
+      setSettings(prev => prev ? { ...prev, heroBannerUrl: null } : null);
       setSuccessMsg('Hero banner removed.');
       setSuccessOpen(true);
       refresh();
@@ -190,80 +283,10 @@ export default function OrgSettingsPage() {
     }
   }
 
-  async function handleSaveFont() {
-    if (!currentOrg) return;
-    setFontSaving(true);
-    try {
-      const res = await fetch('/api/admin/org-settings', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ themeFont: fontKey }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? 'Save failed');
-      setSuccessMsg('Font saved.');
-      setSuccessOpen(true);
-      refresh();
-    } catch (err: any) {
-      showError(err.message ?? 'Something went wrong');
-    } finally {
-      setFontSaving(false);
-    }
-  }
-
-  async function handleSaveCardStyle() {
-    if (!currentOrg) return;
-    setCardStyleSaving(true);
-    try {
-      const res = await fetch('/api/admin/org-settings', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ themeCardStyle: cardStyle }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? 'Save failed');
-      setSuccessMsg('Card style saved.');
-      setSuccessOpen(true);
-      refresh();
-    } catch (err: any) {
-      showError(err.message ?? 'Something went wrong');
-    } finally {
-      setCardStyleSaving(false);
-    }
-  }
-
-  async function handleSaveFinalization(value: boolean) {
-    if (!currentOrg) return;
-    setFinalizationSaving(true);
-    try {
-      const res = await fetch('/api/admin/org-settings', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ requireScoreFinalization: value }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? 'Save failed');
-      setRequireFinalization(value);
-      setSuccessMsg(value
-        ? 'Score finalization enabled. Official submissions will require admin review.'
-        : 'Score finalization disabled. Official submissions are immediately final.'
-      );
-      setSuccessOpen(true);
-      refresh();
-    } catch (err: any) {
-      showError(err.message ?? 'Something went wrong');
-    } finally {
-      setFinalizationSaving(false);
-    }
-  }
-
   async function handleLogoChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
-
-    const objectUrl = URL.createObjectURL(file);
-    setLogoPreview(objectUrl);
-
+    setLogoPreview(URL.createObjectURL(file));
     setUploading(true);
     try {
       const fd = new FormData();
@@ -272,6 +295,8 @@ export default function OrgSettingsPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? 'Upload failed');
       setLogoPreview(data.logoUrl);
+      setSettings(prev => prev ? { ...prev, logoUrl: data.logoUrl } : null);
+      setOrgNav(data.logoUrl, currentOrg?.name ?? '');
       setSuccessMsg('Logo updated.');
       setSuccessOpen(true);
       refresh();
@@ -282,6 +307,58 @@ export default function OrgSettingsPage() {
       setUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
     }
+  }
+
+  async function handleRemoveLogo() {
+    setUploading(true);
+    try {
+      const res = await fetch('/api/admin/org-logo', { method: 'DELETE' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? 'Remove failed');
+      setLogoPreview(null);
+      setSettings(prev => prev ? { ...prev, logoUrl: null } : null);
+      setOrgNav(null, currentOrg?.name ?? '');
+      setSuccessMsg('Logo removed.');
+      setSuccessOpen(true);
+      refresh();
+    } catch (err: any) {
+      showError(err.message ?? 'Remove failed');
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  async function handleStockLogoConfirm() {
+    if (!stockLogoSelected || !currentOrg) return;
+    setStockLogoSaving(true);
+    try {
+      const res = await fetch('/api/admin/org-logo-stock', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ stockPath: stockLogoSelected }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? 'Failed to set logo');
+      setLogoPreview(data.logoUrl);
+      setSettings(prev => prev ? { ...prev, logoUrl: data.logoUrl } : null);
+      setOrgNav(data.logoUrl, currentOrg.name);
+      setStockLogoOpen(false);
+      setStockLogoSelected(null);
+      setStockLogoLockedCta(null);
+      setSuccessMsg('Logo updated.');
+      setSuccessOpen(true);
+      refresh();
+    } catch (err: any) {
+      showError(err.message ?? 'Something went wrong');
+    } finally {
+      setStockLogoSaving(false);
+    }
+  }
+
+  function closeStockModal() {
+    setStockLogoOpen(false);
+    setStockLogoSelected(null);
+    setStockLogoLockedCta(null);
   }
 
   if (loading) {
@@ -312,7 +389,7 @@ export default function OrgSettingsPage() {
         </div>
       </div>
 
-      {/* Logo upload */}
+      {/* ── Organization Logo ─────────────────────────────────────────────────── */}
       <div className={styles.card}>
         <h2 className={styles.sectionTitle}>Organization Logo</h2>
         <div className={styles.logoRow}>
@@ -331,8 +408,29 @@ export default function OrgSettingsPage() {
               id="settings-logo-upload-btn"
             >
               <Upload size={15} />
-              {uploading ? 'Uploading…' : 'Upload Logo'}
+              {uploading ? 'Uploading…' : logoPreview ? 'Replace Logo' : 'Upload Logo'}
             </button>
+            <button
+              type="button"
+              className="btn btn-outline"
+              onClick={() => setStockLogoOpen(true)}
+              disabled={uploading}
+              id="settings-logo-stock-btn"
+            >
+              <Library size={15} />
+              Browse Stock Logos
+            </button>
+            {logoPreview && (
+              <button
+                type="button"
+                className="btn btn-ghost"
+                onClick={handleRemoveLogo}
+                disabled={uploading}
+                id="settings-logo-remove-btn"
+              >
+                Remove
+              </button>
+            )}
             <p className={styles.logoHint}>JPG, PNG, or WebP — max 2 MB</p>
           </div>
         </div>
@@ -346,7 +444,65 @@ export default function OrgSettingsPage() {
         />
       </div>
 
-      {/* Theme picker */}
+      {/* ── Organization Details ──────────────────────────────────────────────── */}
+      <div className={styles.card}>
+        <h2 className={styles.sectionTitle}>Organization Details</h2>
+
+        <div className={styles.field}>
+          <label className={styles.label} htmlFor="settings-name">Organization Name</label>
+          <input
+            id="settings-name"
+            type="text"
+            className={styles.input}
+            value={form.name}
+            onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+            required
+            maxLength={40}
+          />
+          <div className={styles.charCountRow}>
+            <p className={styles.hint}>Shown in the navigation bar and on public pages.</p>
+            <span className={`${styles.charCount} ${form.name.length > 34 ? styles.charCountWarn : ''}`}>
+              {form.name.length} / 40
+            </span>
+          </div>
+        </div>
+
+        <div className={styles.field}>
+          <label className={styles.label} htmlFor="settings-slug">URL Slug</label>
+          <input
+            id="settings-slug"
+            type="text"
+            className={styles.input}
+            value={form.slug}
+            onChange={e => setForm(f => ({ ...f, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '') }))}
+            required
+            maxLength={60}
+            pattern="[a-z0-9-]+"
+          />
+          {form.slug !== currentOrg?.slug && (
+            <p className={styles.slugWarning}>
+              ⚠ Changing your slug will change all your public URLs — existing links will break.
+            </p>
+          )}
+          <p className={styles.hint}>Only lowercase letters, numbers, and hyphens.</p>
+        </div>
+
+        <div className={styles.field}>
+          <label className={styles.toggleRow} htmlFor="settings-public">
+            <span className={styles.label} style={{ margin: 0 }}>Listed on /discover</span>
+            <input
+              id="settings-public"
+              type="checkbox"
+              className={styles.toggle}
+              checked={form.isPublic}
+              onChange={e => setForm(f => ({ ...f, isPublic: e.target.checked }))}
+            />
+          </label>
+          <p className={styles.hint}>When enabled, your organization appears in the public discover directory.</p>
+        </div>
+      </div>
+
+      {/* ── Color Theme ───────────────────────────────────────────────────────── */}
       <div className={styles.card}>
         <h2 className={styles.sectionTitle}>Color Theme</h2>
 
@@ -440,21 +596,9 @@ export default function OrgSettingsPage() {
             <span className={styles.previewBadge}>Badge</span>
           </div>
         </div>
-
-        <div className={styles.themeFooter}>
-          <button
-            type="button"
-            className="btn btn-primary"
-            onClick={handleSaveTheme}
-            disabled={themeSaving}
-            id="settings-theme-save-btn"
-          >
-            {themeSaving ? 'Saving…' : 'Save Theme'}
-          </button>
-        </div>
       </div>
 
-      {/* Hero Banner */}
+      {/* ── Hero Banner ───────────────────────────────────────────────────────── */}
       <div className={styles.card}>
         <div className={styles.sectionTitleRow}>
           <h2 className={styles.sectionTitle}>Hero Banner</h2>
@@ -465,6 +609,9 @@ export default function OrgSettingsPage() {
 
         {isCustomPlan ? (
           <>
+            <p className={styles.bannerDesc}>
+              Displayed as a full-width image at the top of your public tournament home page.
+            </p>
             {heroBannerPreview && (
               <div className={styles.bannerPreview}>
                 <img src={heroBannerPreview} alt="Hero banner preview" className={styles.bannerImg} />
@@ -491,7 +638,7 @@ export default function OrgSettingsPage() {
                 </button>
               )}
             </div>
-            <p className={styles.logoHint}>JPG, PNG, or WebP — max 4 MB. Recommended 16:5 ratio.</p>
+            <p className={styles.bannerHint}>JPG, PNG, or WebP — max 4 MB. Recommended 16:5 ratio.</p>
             <input
               ref={bannerInputRef}
               type="file"
@@ -505,7 +652,7 @@ export default function OrgSettingsPage() {
         )}
       </div>
 
-      {/* Font Family */}
+      {/* ── Font Family ───────────────────────────────────────────────────────── */}
       <div className={styles.card}>
         <div className={styles.sectionTitleRow}>
           <h2 className={styles.sectionTitle}>Font Family</h2>
@@ -534,20 +681,9 @@ export default function OrgSettingsPage() {
             );
           })}
         </div>
-
-        <div className={styles.themeFooter}>
-          <button
-            type="button"
-            className="btn btn-primary"
-            onClick={handleSaveFont}
-            disabled={fontSaving || (!isCustomPlan && fontKey !== 'system')}
-          >
-            {fontSaving ? 'Saving…' : 'Save Font'}
-          </button>
-        </div>
       </div>
 
-      {/* Card Style */}
+      {/* ── Card Style ────────────────────────────────────────────────────────── */}
       <div className={styles.card}>
         <h2 className={styles.sectionTitle}>Card Style</h2>
 
@@ -569,19 +705,26 @@ export default function OrgSettingsPage() {
           ))}
         </div>
 
-        <div className={styles.themeFooter}>
-          <button
-            type="button"
-            className="btn btn-primary"
-            onClick={handleSaveCardStyle}
-            disabled={cardStyleSaving}
-          >
-            {cardStyleSaving ? 'Saving…' : 'Save Card Style'}
-          </button>
+        {/* Live card preview */}
+        <div
+          className={`${styles.cardPreviewSample} ${styles[`cardPreview_${cardStyle}`]}`}
+          style={{
+            '--primary':       previewTheme.primary,
+            '--primary-light': previewTheme.primaryLight,
+            '--primary-rgb':   previewTheme.primaryRgb,
+            '--border':        `rgba(${previewTheme.primaryRgb}, 0.25)`,
+          } as React.CSSProperties}
+        >
+          <p className={styles.themePreviewLabel} style={{ margin: '0 0 0.5rem' }}>Preview</p>
+          <div className={styles.cardPreviewHeader}>
+            <span className={styles.cardPreviewTitle}>Diamond 1 · U12 Division</span>
+            <span className={styles.cardPreviewBadge}>Active</span>
+          </div>
+          <div className={styles.cardPreviewMeta}>Sat Jun 14 · 9:00 AM · Lions Park</div>
         </div>
       </div>
 
-      {/* Scoring */}
+      {/* ── Scoring ───────────────────────────────────────────────────────────── */}
       <div className={styles.card}>
         <h2 className={styles.sectionTitle}>Scoring</h2>
 
@@ -593,8 +736,7 @@ export default function OrgSettingsPage() {
               type="checkbox"
               className={styles.toggle}
               checked={requireFinalization}
-              disabled={finalizationSaving}
-              onChange={e => handleSaveFinalization(e.target.checked)}
+              onChange={e => setRequireFinalization(e.target.checked)}
             />
           </label>
           <p className={styles.hint}>
@@ -606,70 +748,141 @@ export default function OrgSettingsPage() {
         </div>
       </div>
 
-      {/* Org settings form */}
-      <form onSubmit={handleSave}>
-        <div className={styles.card}>
-          <h2 className={styles.sectionTitle}>Organization Details</h2>
+      {/* ── Save footer ───────────────────────────────────────────────────────── */}
+      <div className={styles.formFooter}>
+        {isDirty && <span className={styles.unsavedLabel}>Unsaved changes</span>}
+        <button
+          type="button"
+          className="btn btn-primary"
+          onClick={handleSaveAll}
+          disabled={saving || !isDirty}
+          id="settings-save-btn"
+        >
+          {saving ? 'Saving…' : 'Save Changes'}
+        </button>
+      </div>
 
-          <div className={styles.field}>
-            <label className={styles.label} htmlFor="settings-name">Organization Name</label>
-            <input
-              id="settings-name"
-              type="text"
-              className={styles.input}
-              value={form.name}
-              onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-              required
-              maxLength={100}
-            />
-          </div>
+      {/* ── Stock logo picker modal ─────────────────────────────────────────── */}
+      {stockLogoOpen && (
+        <div className={styles.modalOverlay}>
+          <div className={styles.stockModal}>
+            <div className={styles.stockModalHeader}>
+              <h3>Choose a Stock Logo</h3>
+              <button type="button" className={styles.stockModalClose} onClick={closeStockModal} aria-label="Close">
+                <X size={18} />
+              </button>
+            </div>
+            <p className={styles.stockModalSubtitle}>Select an icon to represent your organization.</p>
 
-          <div className={styles.field}>
-            <label className={styles.label} htmlFor="settings-slug">URL Slug</label>
-            <input
-              id="settings-slug"
-              type="text"
-              className={styles.input}
-              value={form.slug}
-              onChange={e => setForm(f => ({ ...f, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '') }))}
-              required
-              maxLength={60}
-              pattern="[a-z0-9-]+"
-            />
-            {form.slug !== currentOrg?.slug && (
-              <p className={styles.slugWarning}>
-                ⚠ Changing your slug will change all your public URLs — existing links will break.
-              </p>
+            {STOCK_LOGO_CATEGORIES.map(category => {
+              const icons = STOCK_LOGOS.filter(l => l.category === category);
+              if (!icons.length) return null;
+              return (
+                <div key={category}>
+                  <p className={styles.stockCategoryLabel}>{category}</p>
+                  <div className={styles.stockGrid}>
+                    {icons.map(logo => {
+                      const unlocked = currentOrg ? isStockLogoUnlocked(logo, currentOrg.planId) : false;
+                      const isSelected = stockLogoSelected === logo.file;
+                      return (
+                        <button
+                          key={logo.id}
+                          type="button"
+                          aria-label={logo.label}
+                          aria-pressed={isSelected}
+                          className={[
+                            styles.stockTile,
+                            isSelected ? styles.stockTileActive : '',
+                            !unlocked ? styles.stockTileLocked : '',
+                          ].join(' ')}
+                          onClick={() => {
+                            if (!unlocked) {
+                              setStockLogoLockedCta(logo.minPlan);
+                              return;
+                            }
+                            setStockLogoLockedCta(null);
+                            setStockLogoSelected(logo.file);
+                          }}
+                        >
+                          <img src={logo.file} alt={logo.label} className={styles.stockTileImg} />
+                          <span className={styles.stockTileLabel}>{logo.label}</span>
+                          {isSelected && (
+                            <span className={styles.stockTileCheck}><Check size={11} strokeWidth={3} /></span>
+                          )}
+                          {!unlocked && (
+                            <span className={styles.stockLockBadge}><Lock size={9} /></span>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
+
+            {stockLogoLockedCta && (
+              <div className={styles.stockUpgradeCta}>
+                <Lock size={14} />
+                Upgrade to {stockLogoLockedCta.charAt(0).toUpperCase() + stockLogoLockedCta.slice(1)} to unlock this icon.
+              </div>
             )}
-            <p className={styles.hint}>Only lowercase letters, numbers, and hyphens.</p>
-          </div>
 
-          <div className={styles.field}>
-            <label className={styles.toggleRow} htmlFor="settings-public">
-              <span className={styles.label} style={{ margin: 0 }}>Listed on /discover</span>
-              <input
-                id="settings-public"
-                type="checkbox"
-                className={styles.toggle}
-                checked={form.isPublic}
-                onChange={e => setForm(f => ({ ...f, isPublic: e.target.checked }))}
-              />
-            </label>
-            <p className={styles.hint}>When enabled, your organization appears in the public discover directory.</p>
+            <div className={styles.stockModalFooter}>
+              <button type="button" className="btn btn-ghost" onClick={closeStockModal}>
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={handleStockLogoConfirm}
+                disabled={!stockLogoSelected || stockLogoSaving}
+              >
+                {stockLogoSaving ? 'Saving…' : 'Use This Logo'}
+              </button>
+            </div>
           </div>
         </div>
+      )}
 
-        <div className={styles.formFooter}>
-          <button
-            type="submit"
-            className="btn btn-primary"
-            disabled={saving}
-            id="settings-save-btn"
-          >
-            {saving ? 'Saving…' : 'Save Changes'}
-          </button>
+      {/* ── Navigation guard modal ──────────────────────────────────────────── */}
+      {navGuardOpen && (
+        <div className={styles.modalOverlay}>
+          <div className={styles.modal}>
+            <div className={styles.modalHeader}>
+              <AlertTriangle size={20} />
+              <h3>Unsaved Changes</h3>
+            </div>
+            <p className={styles.modalBody}>
+              You have unsaved changes that will be lost if you navigate away.
+              Would you like to save before leaving?
+            </p>
+            <div className={styles.modalFooter}>
+              <button
+                type="button"
+                className="btn btn-outline"
+                onClick={() => { setNavGuardOpen(false); setPendingNavHref(null); }}
+              >
+                Stay on Page
+              </button>
+              <button
+                type="button"
+                className="btn btn-ghost"
+                onClick={handleNavGuardDiscard}
+              >
+                Discard & Leave
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={handleNavGuardSave}
+                disabled={saving}
+              >
+                {saving ? 'Saving…' : 'Save & Continue'}
+              </button>
+            </div>
+          </div>
         </div>
-      </form>
+      )}
 
       <FeedbackModal
         isOpen={successOpen}
