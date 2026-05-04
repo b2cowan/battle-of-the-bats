@@ -300,7 +300,8 @@ export function LogicSyncBracket({ games, teams, tournamentId }: LogicSyncBracke
   const maxFirstCol = columns.length > 0 ? columns[0].games.length : 1;
   const totalH      = maxFirstCol * (NODE_HEIGHT + NODE_GAP);
   const svgHeight   = totalH + V_PAD * 2;
-  const svgWidth    = columns.length * ROUND_WIDTH + NODE_WIDTH + 60;
+  // last node ends at (cols-1)*ROUND_WIDTH + 20 (left pad) + NODE_WIDTH; add 20px right pad
+  const svgWidth    = (columns.length - 1) * ROUND_WIDTH + NODE_WIDTH + 40;
 
   // ── render ────────────────────────────────────────────────────────────────
 
