@@ -58,6 +58,7 @@ export function OrgProvider({ children }: { children: ReactNode }) {
         subscriptionStatus: orgRow.subscription_status,
         isPublic: orgRow.is_public,
         createdAt: orgRow.created_at,
+        requireScoreFinalization: orgRow.require_score_finalization ?? false,
       });
       setUserRole((memberData as any)?.role ?? null);
     }

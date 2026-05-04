@@ -1,7 +1,7 @@
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { supabaseAdmin } from './supabase-admin';
-import type { Organization, OrgPlan } from './types';
+import type { Organization, OrgPlan, OrgRole } from './types';
 import type { User } from '@supabase/supabase-js';
 
 export interface AuthContext {
@@ -53,9 +53,25 @@ export async function getAuthContext(): Promise<AuthContext | null> {
     stripeSubscriptionId: orgRow.stripe_subscription_id ?? undefined,
     isPublic: orgRow.is_public,
     createdAt: orgRow.created_at,
+    requireScoreFinalization: orgRow.require_score_finalization ?? false,
   };
 
   return { user, org };
+}
+
+export async function getAuthContextWithRole(): Promise<(AuthContext & { role: OrgRole }) | null> {
+  const ctx = await getAuthContext();
+  if (!ctx) return null;
+
+  const { data } = await supabaseAdmin
+    .from('organization_members')
+    .select('role')
+    .eq('organization_id', ctx.org.id)
+    .eq('user_id', ctx.user.id)
+    .single();
+
+  if (!data) return null;
+  return { ...ctx, role: data.role as OrgRole };
 }
 
 export function unauthorized() {

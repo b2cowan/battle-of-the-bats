@@ -45,7 +45,7 @@ export async function POST(req: Request) {
 
   const body = await req.json();
   const email: string = String(body.email ?? '').trim().toLowerCase();
-  const role: OrgRole = body.role === 'admin' ? 'admin' : 'staff';
+  const role: OrgRole = body.role === 'admin' ? 'admin' : body.role === 'official' ? 'official' : 'staff';
 
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return NextResponse.json({ error: 'Valid email required' }, { status: 400 });
@@ -88,12 +88,13 @@ export async function POST(req: Request) {
 
   // User doesn't exist — generate Supabase invite link
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://battleofthebats.ca';
+  const redirectTo = role === 'official'
+    ? `${appUrl}/${org.slug}/official/score`
+    : `${appUrl}/${org.slug}/admin`;
   const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
     type: 'invite',
     email,
-    options: {
-      redirectTo: `${appUrl}/${org.slug}/admin`,
-    },
+    options: { redirectTo },
   });
 
   if (linkError || !linkData) {
@@ -118,6 +119,10 @@ export async function POST(req: Request) {
   const inviteUrl = (linkData as any).properties?.action_link ?? linkData.properties?.action_link;
 
   const fromDomain = new URL(appUrl).hostname;
+  const roleLabel = role === 'official' ? 'field official (scorekeeper)' : `team ${role}`;
+  const officialNote = role === 'official'
+    ? `<p>As a field official, you'll have access to the score entry app to submit game results from your assigned diamonds.</p>`
+    : '';
   await getResend().emails.send({
     from: `noreply@${fromDomain}`,
     to: email,
@@ -127,7 +132,8 @@ export async function POST(req: Request) {
 <html>
 <body style="font-family: sans-serif; max-width: 480px; margin: 0 auto; padding: 2rem; color: #1a1a2e;">
   <h2 style="margin-top: 0;">You're invited!</h2>
-  <p>You've been invited to join <strong>${org.name}</strong> on <strong>Battle of the Bats</strong> as a team ${role}.</p>
+  <p>You've been invited to join <strong>${org.name}</strong> on <strong>Battle of the Bats</strong> as a ${roleLabel}.</p>
+  ${officialNote}
   <p>Click the button below to accept your invitation and set up your account:</p>
   <p style="margin: 1.5rem 0;">
     <a href="${inviteUrl}"

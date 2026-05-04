@@ -21,10 +21,10 @@ This file tracks the ongoing tasks for the tournament website project. AI models
 *Full implementation plan: [FIELDLOGIC_IMPLEMENTATION_PLAN.md](file:///c:/Users/Robert%20Cowan/Documents/tournament-website/FIELDLOGIC_IMPLEMENTATION_PLAN.md)*
 
 - [ ] **Phase 1: Foundation** — Update `tailwind.config.ts`, `globals.css`, and global typography.
-- [ ] **Phase 2: Admin HUD** — Rebuild Admin Dashboard into a "Technical Command Center."
-- [ ] **Phase 3: Logic-Sync Bracket** — SVG-based blueprint brackets with real-time pulse.
-- [ ] **Phase 4: Tactical HUD** — High-contrast mobile scorekeeper for officials.
-- [ ] **Phase 5: Digital Ledger** — Historical archives and immutable tournament snapshots.
+- [ ] **Sprint 2: Admin HUD + Live Logic Rail** — Phases 2 and 8 (see [SPRINT2_PLAN.md](SPRINT2_PLAN.md))
+- [ ] **Sprint 3: Phase 3 — Logic-Sync Bracket** — SVG blueprint bracket with Realtime score pulse (see [SPRINT3_PLAN.md](SPRINT3_PLAN.md))
+- [ ] **Phase 4: Official Accounts** — Lightweight "official" role with scoped score-entry access; invite-based auth, mobile UI (see [SPRINT4_PLAN.md](SPRINT4_PLAN.md))
+- [ ] **Phase 5: Digital Ledger** — Immutable tournament archives, seal button, SHA-256 integrity hash, public ledger + detail pages (see [SPRINT5_PLAN.md](SPRINT5_PLAN.md))
 
 ---
 
@@ -46,6 +46,13 @@ This file tracks the ongoing tasks for the tournament website project. AI models
 - [x] **Phase 4**: Discovery Portal & Search
 - [ ] **Phase 5**: Billing & Subscriptions (Stripe account setup and testing remaining)
 - [x] **Phase 6**: Org Admin UX & Seat Management
+
+---
+
+## 🏆 Team & Season Management
+**Goal:** Allow organizations to manage their teams outside of tournament contexts — rosters, seasons, and ongoing records across the full year.
+
+- [ ] **Team Management MVP** — Design and implement a team management feature allowing orgs to create, edit, and archive teams independently of any tournament (see plan file TBD)
 
 ---
 

@@ -17,6 +17,7 @@ interface GameListProps {
   pools?: Pool[];
   onEdit?: (g: Game) => void;
   onScore?: (g: Game) => void;
+  onFinalize?: (id: string) => void;
   onDelete?: (id: string) => void;
   onCancel?: (id: string) => void;
   onSchedule?: (id: string) => void;
@@ -25,7 +26,7 @@ interface GameListProps {
 
 export default function GameList({
   games, teams, ageGroups, diamonds, viewMode, groupByPool, pools: poolsProp,
-  onEdit, onScore, onDelete, onCancel, onSchedule, mode
+  onEdit, onScore, onFinalize, onDelete, onCancel, onSchedule, mode
 }: GameListProps) {
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [openMenu, setOpenMenu] = useState<string | null>(null);
@@ -66,8 +67,9 @@ export default function GameList({
 
   function statusBadge(status: string) {
     if (status === 'completed') return <span className="badge badge-success">Final</span>;
+    if (status === 'submitted') return <span className="badge badge-warning">Pending Review</span>;
     if (status === 'cancelled') return <span className="badge badge-danger">Cancelled</span>;
-    return <span className="badge badge-warning">Scheduled</span>;
+    return <span className="badge badge-neutral">Scheduled</span>;
   }
 
   const renderActions = (g: Game, isMobile: boolean) => (
@@ -216,15 +218,25 @@ export default function GameList({
 
           <div className="flex justify-end items-center gap-2">
             {mode === 'scoring' ? (
-              <div className="flex items-center">
+              <div className="flex items-center gap-2">
                 {onScore && (
                   <button
                     className="btn btn-primary btn-sm"
                     onClick={(e) => { e.stopPropagation(); onScore(g); }}
-                    title={g.status === 'completed' ? 'Edit Score' : 'Enter Score'}
-                    style={{ padding: '8px', borderRadius: '8px', width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginRight: '30px' }}
+                    title={g.status === 'completed' ? 'Edit Score' : g.status === 'submitted' ? 'Edit Submitted Score' : 'Enter Score'}
+                    style={{ padding: '8px', borderRadius: '8px', width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                   >
                     <Trophy size={16} />
+                  </button>
+                )}
+                {onFinalize && g.status === 'submitted' && (
+                  <button
+                    className="btn btn-success btn-sm"
+                    onClick={(e) => { e.stopPropagation(); onFinalize(g.id); }}
+                    title="Finalize Score"
+                    style={{ fontSize: '0.7rem', padding: '4px 8px' }}
+                  >
+                    Finalize
                   </button>
                 )}
                 <div style={{ width: '90px', display: 'flex', justifyContent: 'center' }}>

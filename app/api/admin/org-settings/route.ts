@@ -16,7 +16,7 @@ export async function GET() {
 
   const { data, error } = await supabaseAdmin
     .from('organizations')
-    .select('name, slug, logo_url, is_public, theme_preset, theme_primary, theme_accent, hero_banner_url, theme_font, theme_card_style')
+    .select('name, slug, logo_url, is_public, theme_preset, theme_primary, theme_accent, hero_banner_url, theme_font, theme_card_style, require_score_finalization')
     .eq('id', org.id)
     .single();
 
@@ -25,16 +25,17 @@ export async function GET() {
   }
 
   return NextResponse.json({
-    name:           data.name,
-    slug:           data.slug,
-    logoUrl:        data.logo_url         ?? null,
-    isPublic:       data.is_public,
-    themePreset:    data.theme_preset     ?? 'platform',
-    themePrimary:   data.theme_primary    ?? null,
-    themeAccent:    data.theme_accent     ?? null,
-    heroBannerUrl:  data.hero_banner_url  ?? null,
-    themeFont:      data.theme_font       ?? 'system',
-    themeCardStyle: data.theme_card_style ?? 'default',
+    name:                     data.name,
+    slug:                     data.slug,
+    logoUrl:                  data.logo_url                  ?? null,
+    isPublic:                 data.is_public,
+    themePreset:              data.theme_preset              ?? 'platform',
+    themePrimary:             data.theme_primary             ?? null,
+    themeAccent:              data.theme_accent              ?? null,
+    heroBannerUrl:            data.hero_banner_url           ?? null,
+    themeFont:                data.theme_font                ?? 'system',
+    themeCardStyle:           data.theme_card_style          ?? 'default',
+    requireScoreFinalization: data.require_score_finalization ?? false,
   });
 }
 
@@ -150,6 +151,10 @@ export async function PATCH(req: Request) {
     updates.theme_card_style = VALID_CARD_STYLES.has(style) ? style : 'default';
   }
 
+  if (body.requireScoreFinalization !== undefined) {
+    updates.require_score_finalization = Boolean(body.requireScoreFinalization);
+  }
+
   if (Object.keys(updates).length === 0) {
     return NextResponse.json({ error: 'Nothing to update' }, { status: 400 });
   }
@@ -158,7 +163,7 @@ export async function PATCH(req: Request) {
     .from('organizations')
     .update(updates)
     .eq('id', org.id)
-    .select('name, slug, logo_url, is_public, theme_preset, theme_primary, theme_accent, hero_banner_url, theme_font, theme_card_style')
+    .select('name, slug, logo_url, is_public, theme_preset, theme_primary, theme_accent, hero_banner_url, theme_font, theme_card_style, require_score_finalization')
     .single();
 
   if (error) {
@@ -166,15 +171,16 @@ export async function PATCH(req: Request) {
   }
 
   return NextResponse.json({
-    name:           updated.name,
-    slug:           updated.slug,
-    logoUrl:        updated.logo_url         ?? null,
-    isPublic:       updated.is_public,
-    themePreset:    updated.theme_preset     ?? 'platform',
-    themePrimary:   updated.theme_primary    ?? null,
-    themeAccent:    updated.theme_accent     ?? null,
-    heroBannerUrl:  updated.hero_banner_url  ?? null,
-    themeFont:      updated.theme_font       ?? 'system',
-    themeCardStyle: updated.theme_card_style ?? 'default',
+    name:                     updated.name,
+    slug:                     updated.slug,
+    logoUrl:                  updated.logo_url                  ?? null,
+    isPublic:                 updated.is_public,
+    themePreset:              updated.theme_preset              ?? 'platform',
+    themePrimary:             updated.theme_primary             ?? null,
+    themeAccent:              updated.theme_accent              ?? null,
+    heroBannerUrl:            updated.hero_banner_url           ?? null,
+    themeFont:                updated.theme_font                ?? 'system',
+    themeCardStyle:           updated.theme_card_style          ?? 'default',
+    requireScoreFinalization: updated.require_score_finalization ?? false,
   });
 }

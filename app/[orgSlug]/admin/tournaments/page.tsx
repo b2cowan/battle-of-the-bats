@@ -4,11 +4,12 @@ import { RefreshCw, Plus, Check, X, Trash2, Pencil, Star, Sparkles } from 'lucid
 import {
   getTournamentsByOrg, saveTournament, updateTournament, deleteTournament, setActiveTournament,
   getContacts, getDiamonds, cloneContacts, cloneDiamonds, initializeAgeGroups, saveAnnouncement,
-  seedTournamentData
+  seedTournamentData, getArchivesByOrg
 } from '@/lib/db';
 import { useTournament } from '@/lib/tournament-context';
 import { useOrg } from '@/lib/org-context';
 import { Tournament, Contact } from '@/lib/types';
+import FeedbackModal from '@/components/FeedbackModal';
 import styles from './tournaments-admin.module.css';
 
 type ModalMode = 'add' | 'edit' | null;
@@ -18,6 +19,15 @@ export default function AdminTournamentsPage() {
   const [modal, setModal]       = useState<ModalMode>(null);
   const [editing, setEditing]   = useState<Tournament | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [sealedTournamentIds, setSealedTournamentIds] = useState<Set<string>>(new Set());
+  const [feedback, setFeedback] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    type: 'primary' | 'danger' | 'warning' | 'success' | 'info';
+    confirmText?: string;
+    onConfirm?: () => void;
+  }>({ isOpen: false, title: '', message: '', type: 'warning' });
   const [form, setForm]         = useState({ 
     year: String(new Date().getFullYear()), 
     name: '', 
@@ -66,7 +76,14 @@ export default function AdminTournamentsPage() {
   });
 
   async function refresh() {
-    if (currentOrg) setTournaments(await getTournamentsByOrg(currentOrg.id));
+    if (currentOrg) {
+      const [ts, archives] = await Promise.all([
+        getTournamentsByOrg(currentOrg.id),
+        getArchivesByOrg(currentOrg.id),
+      ]);
+      setTournaments(ts);
+      setSealedTournamentIds(new Set(archives.map(a => a.tournamentId).filter(Boolean) as string[]));
+    }
     await refreshCtx();
   }
   useEffect(() => { refresh(); }, []); // eslint-disable-line
@@ -270,6 +287,39 @@ export default function AdminTournamentsPage() {
     }
   }
 
+  function openSealConfirm(t: Tournament) {
+    setFeedback({
+      isOpen: true,
+      title: 'Seal Tournament?',
+      message: `This will create a permanent, immutable archive record for "${t.name}". The snapshot cannot be modified after sealing. This action cannot be undone.`,
+      type: 'warning',
+      confirmText: 'Seal Tournament',
+      onConfirm: () => handleSeal(t.id),
+    });
+  }
+
+  async function handleSeal(id: string) {
+    try {
+      const res = await fetch('/api/admin/seal-tournament', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tournamentId: id }),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || 'Seal failed');
+      }
+      refresh();
+    } catch (err: any) {
+      setFeedback({
+        isOpen: true,
+        title: 'Seal Failed',
+        message: err.message,
+        type: 'danger',
+      });
+    }
+  }
+
   async function handleDelete() {
     if (!deleteId) return;
     try {
@@ -342,7 +392,7 @@ export default function AdminTournamentsPage() {
                     : <span className="badge badge-neutral">Archived</span>}
                 </td>
                 <td>
-                  <div className="flex gap-1">
+                  <div className="flex gap-1 flex-wrap">
                     {!t.isActive && (
                       <button
                         className="btn btn-outline btn-sm"
@@ -350,6 +400,20 @@ export default function AdminTournamentsPage() {
                         id={`set-live-${t.id}`}
                       >
                         Set Live
+                      </button>
+                    )}
+                    {sealedTournamentIds.has(t.id) ? (
+                      <span className="badge badge-neutral" title="This tournament has been sealed to the Digital Ledger">
+                        SEALED
+                      </span>
+                    ) : (
+                      <button
+                        className="btn btn-outline btn-sm"
+                        onClick={() => openSealConfirm(t)}
+                        id={`seal-tournament-${t.id}`}
+                        title="Create an immutable archive record for this tournament"
+                      >
+                        Seal
                       </button>
                     )}
                     <button className="btn btn-ghost btn-sm" onClick={() => openEdit(t)} id={`edit-tournament-${t.id}`}>
@@ -729,6 +793,11 @@ export default function AdminTournamentsPage() {
           </div>
         </div>
       )}
+
+      <FeedbackModal
+        {...feedback}
+        onClose={() => setFeedback(f => ({ ...f, isOpen: false, onConfirm: undefined }))}
+      />
 
       {/* Delete Confirm */}
       {deleteId && (

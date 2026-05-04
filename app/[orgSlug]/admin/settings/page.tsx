@@ -18,6 +18,7 @@ interface OrgSettings {
   heroBannerUrl: string | null;
   themeFont: string;
   themeCardStyle: string;
+  requireScoreFinalization: boolean;
 }
 
 export default function OrgSettingsPage() {
@@ -45,6 +46,9 @@ export default function OrgSettingsPage() {
   const [cardStyle, setCardStyle]         = useState<string>('default');
   const [cardStyleSaving, setCardStyleSaving] = useState(false);
 
+  const [requireFinalization, setRequireFinalization] = useState(false);
+  const [finalizationSaving, setFinalizationSaving]   = useState(false);
+
   const [successOpen, setSuccessOpen] = useState(false);
   const [successMsg, setSuccessMsg]   = useState('');
   const [errorOpen, setErrorOpen]     = useState(false);
@@ -63,6 +67,7 @@ export default function OrgSettingsPage() {
         setHeroBannerPreview(data.heroBannerUrl);
         setFontKey(data.themeFont ?? 'system');
         setCardStyle(data.themeCardStyle ?? 'default');
+        setRequireFinalization(data.requireScoreFinalization ?? false);
         if (data.themePrimary) {
           setPresetKey('custom');
           setCustomPrimary(data.themePrimary);
@@ -224,6 +229,31 @@ export default function OrgSettingsPage() {
       showError(err.message ?? 'Something went wrong');
     } finally {
       setCardStyleSaving(false);
+    }
+  }
+
+  async function handleSaveFinalization(value: boolean) {
+    if (!currentOrg) return;
+    setFinalizationSaving(true);
+    try {
+      const res = await fetch('/api/admin/org-settings', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ requireScoreFinalization: value }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? 'Save failed');
+      setRequireFinalization(value);
+      setSuccessMsg(value
+        ? 'Score finalization enabled. Official submissions will require admin review.'
+        : 'Score finalization disabled. Official submissions are immediately final.'
+      );
+      setSuccessOpen(true);
+      refresh();
+    } catch (err: any) {
+      showError(err.message ?? 'Something went wrong');
+    } finally {
+      setFinalizationSaving(false);
     }
   }
 
@@ -548,6 +578,31 @@ export default function OrgSettingsPage() {
           >
             {cardStyleSaving ? 'Saving…' : 'Save Card Style'}
           </button>
+        </div>
+      </div>
+
+      {/* Scoring */}
+      <div className={styles.card}>
+        <h2 className={styles.sectionTitle}>Scoring</h2>
+
+        <div className={styles.field}>
+          <label className={styles.toggleRow} htmlFor="settings-require-finalization">
+            <span className={styles.label} style={{ margin: 0 }}>Require admin finalization</span>
+            <input
+              id="settings-require-finalization"
+              type="checkbox"
+              className={styles.toggle}
+              checked={requireFinalization}
+              disabled={finalizationSaving}
+              onChange={e => handleSaveFinalization(e.target.checked)}
+            />
+          </label>
+          <p className={styles.hint}>
+            When enabled, scores submitted by field officials are visible to the public immediately
+            but are not marked final until an admin reviews and finalizes them in the Results page.
+            Officials can correct a submitted score until it is finalized.
+            When disabled, an official&apos;s submission is immediately final.
+          </p>
         </div>
       </div>
 
