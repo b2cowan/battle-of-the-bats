@@ -85,7 +85,7 @@ export default function Navbar() {
               href="/auth/signup"
               className="font-mono text-xs uppercase tracking-widest font-bold bg-logic-lime text-pitch-black px-4 py-2 hover:bg-white transition-colors"
             >
-              Initialize
+              Get Started
             </Link>
           </div>
         </div>

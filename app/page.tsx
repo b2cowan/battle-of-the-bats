@@ -4,27 +4,27 @@ import AnimateIn from '@/components/AnimateIn';
 import PricingSection from '@/components/PricingSection';
 
 const CAPABILITIES = [
-  { id: 'CAP-01', name: 'Playoff Wizard',      spec: 'Bracket Generation Algorithm',       status: 'ACTIVE' },
-  { id: 'CAP-02', name: 'Live Bracket Sync',   spec: 'Supabase Realtime · <50ms latency',  status: 'ACTIVE' },
-  { id: 'CAP-03', name: 'Registration Engine', spec: 'Multi-tier capacity management',      status: 'ACTIVE' },
-  { id: 'CAP-04', name: 'Digital Ledger',      spec: 'Immutable tournament archives',       status: 'BETA'   },
+  { id: '01', name: 'Bracket Builder',    spec: 'Generate single or double-elimination brackets in seconds',         status: 'ACTIVE' },
+  { id: '02', name: 'Live Brackets',      spec: 'Scores update for coaches and parents the moment you enter them',   status: 'ACTIVE' },
+  { id: '03', name: 'Team Registration',  spec: 'Custom registration forms with waitlist management built in',       status: 'ACTIVE' },
+  { id: '04', name: 'Tournament Archive', spec: 'Every result sealed and searchable after the final whistle',        status: 'BETA'   },
 ];
 
 const STEPS = [
   {
     num: '01',
-    label: 'CONFIGURE NODE',
+    label: 'SET UP YOUR ORGANIZATION',
     desc: 'Create your organization. Define age groups, field layout, and schedule format.',
   },
   {
     num: '02',
-    label: 'OPEN INGESTION',
-    desc: 'Activate public registration endpoint. Teams enroll; waitlist logic executes automatically.',
+    label: 'OPEN REGISTRATION',
+    desc: 'Share your registration link. Teams sign up, and waitlist management runs automatically.',
   },
   {
     num: '03',
-    label: 'EXECUTE TOURNAMENT',
-    desc: 'Enter scores via admin panel. Bracket advances in real-time. Final state sealed to the Digital Ledger.',
+    label: 'RUN YOUR TOURNAMENT',
+    desc: 'Enter scores from the sideline. Brackets advance live. Results are archived when it\'s over.',
   },
 ];
 
@@ -42,6 +42,7 @@ const OPERATOR_LOGS = [
     entry: 'Waitlist automation eliminated manual team-management overhead. Seat releases execute without staff intervention.',
   },
 ];
+// id field kept for React key only — not rendered
 
 export default function HomePage() {
   return (
@@ -55,11 +56,11 @@ export default function HomePage() {
             <div className="flex items-center gap-3 mb-8 justify-center">
               <span className="font-mono text-xs text-logic-lime uppercase tracking-widest flex items-center gap-2">
                 <span className="inline-block w-1.5 h-1.5 rounded-full bg-logic-lime animate-pulse" />
-                System Operational
+                Live
               </span>
               <span className="font-mono text-xs text-data-gray/40">·</span>
               <span className="font-mono text-xs text-data-gray uppercase tracking-widest">
-                Multi-tenant · v2.0
+                50+ Organizations Running
               </span>
             </div>
 
@@ -69,9 +70,9 @@ export default function HomePage() {
             </h1>
 
             <p className={styles.heroSub}>
-              A high-precision tournament management layer for sports organizations
-              that demand structural integrity in their operations.
-              Real-time brackets. Immutable records. Zero spreadsheets.
+              Everything you need to run a tournament — registration, brackets,
+              and live scores — without the spreadsheets. Built for the organizers who
+              take it seriously.
             </p>
 
             <div className={styles.heroActions}>
@@ -79,13 +80,13 @@ export default function HomePage() {
                 href="/auth/signup"
                 className="font-mono text-sm font-bold uppercase tracking-widest bg-logic-lime text-pitch-black px-8 py-4 hover:bg-white transition-colors"
               >
-                Initialize Your Organization
+                Start Your Organization
               </Link>
               <Link
                 href="/discover"
                 className="font-mono text-sm uppercase tracking-widest text-data-gray border border-blueprint-blue/40 px-8 py-4 hover:border-blueprint-blue hover:text-fl-text transition-colors"
               >
-                View Live Systems →
+                See Live Tournaments →
               </Link>
             </div>
           </div>
@@ -117,19 +118,19 @@ export default function HomePage() {
         <div className="container">
           <AnimateIn>
             <div className={styles.sectionHead}>
-              <p className={styles.eyebrow}>System Capabilities</p>
-              <h2 className={styles.sectionTitle}>Infrastructure for competition</h2>
+              <p className={styles.eyebrow}>Platform Features</p>
+              <h2 className={styles.sectionTitle}>Everything a tournament needs</h2>
               <p className={styles.sectionSub}>
-                Every module built for tournament operations that cannot afford to fail.
+                From first registration to final bracket — every tool in one place.
               </p>
             </div>
           </AnimateIn>
           <AnimateIn>
             <div className="border border-blueprint-blue/30 overflow-hidden">
               <div className="grid grid-cols-4 border-b border-blueprint-blue/20 bg-blueprint-blue/5 px-6 py-3">
-                <span className="hud-label">ID</span>
-                <span className="hud-label">Capability</span>
-                <span className="hud-label">Specification</span>
+                <span className="hud-label">#</span>
+                <span className="hud-label">Feature</span>
+                <span className="hud-label">What it does</span>
                 <span className="hud-label text-right">Status</span>
               </div>
               {CAPABILITIES.map((cap, i) => (
@@ -155,10 +156,10 @@ export default function HomePage() {
         <div className="container">
           <AnimateIn>
             <div className={styles.sectionHead}>
-              <p className={styles.eyebrow}>Initialization Sequence</p>
-              <h2 className={styles.sectionTitle}>Operational in a single session</h2>
+              <p className={styles.eyebrow}>How It Works</p>
+              <h2 className={styles.sectionTitle}>Up and running in a day</h2>
               <p className={styles.sectionSub}>
-                No training required. Define parameters, open the endpoint, execute.
+                No manual needed. Set up your organization, open registration, run your tournament.
               </p>
             </div>
           </AnimateIn>
@@ -183,10 +184,10 @@ export default function HomePage() {
         <div className="container">
           <AnimateIn>
             <div className={styles.sectionHead}>
-              <p className={styles.eyebrow}>Access Tiers</p>
-              <h2 className={styles.sectionTitle}>Select your operational level</h2>
+              <p className={styles.eyebrow}>Pricing</p>
+              <h2 className={styles.sectionTitle}>Simple pricing. Start free.</h2>
               <p className={styles.sectionSub}>
-                Start at no cost. Upgrade as your organization scales. Every tier includes full platform access.
+                Start for free — no credit card needed. Upgrade as you grow.
               </p>
             </div>
           </AnimateIn>
@@ -199,8 +200,8 @@ export default function HomePage() {
         <div className="container">
           <AnimateIn>
             <div className={styles.sectionHead}>
-              <p className={styles.eyebrow}>Operator Reports</p>
-              <h2 className={styles.sectionTitle}>Field-verified performance</h2>
+              <p className={styles.eyebrow}>From the Field</p>
+              <h2 className={styles.sectionTitle}>Real results, real organizers</h2>
             </div>
           </AnimateIn>
           <div className={styles.testimonialGrid}>
@@ -208,7 +209,7 @@ export default function HomePage() {
               <AnimateIn key={id} delay={i * 120}>
                 <div className="border-l-2 border-blueprint-blue bg-hud-surface p-6 flex flex-col gap-4">
                   <div className="font-mono text-[10px] text-data-gray/50 uppercase tracking-widest">
-                    {id} · {operator} · {org}
+                    {operator} · {org}
                   </div>
                   <p className="font-mono text-xs text-fl-text/80 leading-relaxed">{entry}</p>
                 </div>
@@ -257,14 +258,14 @@ export default function HomePage() {
             <span className={styles.heroAccent}>a real platform.</span>
           </h2>
           <p className={styles.ctaSub}>
-            Join organizations that have moved from spreadsheets to structured infrastructure.
+            Join organizers who have moved on from spreadsheets.
           </p>
           <div className={styles.ctaActions}>
             <Link
               href="/auth/signup"
               className="font-mono text-sm font-bold uppercase tracking-widest bg-logic-lime text-pitch-black px-8 py-4 hover:bg-white transition-colors"
             >
-              Initialize Your Organization
+              Start Your Organization
             </Link>
             <Link
               href="/discover"

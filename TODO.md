@@ -15,27 +15,6 @@ This file tracks the ongoing tasks for the tournament website project. AI models
     - [ ] Document the process for pointing the Dev environment to Stripe Test products/keys and the Prod environment to Stripe Live products/keys (branch-specific environment variables).
 - [ ] **Live Dev Environment**: Create the live development environment on AWS (likely via AWS Amplify `dev` branch) once the research above is finalized.
 
----
-
-## 🏗️ FieldLogic Rebrand (The Architect)
-*Full implementation plan: [FIELDLOGIC_IMPLEMENTATION_PLAN.md](file:///c:/Users/Robert%20Cowan/Documents/tournament-website/FIELDLOGIC_IMPLEMENTATION_PLAN.md)*
-
-- [ ] **Phase 1: Foundation** — Update `tailwind.config.ts`, `globals.css`, and global typography.
-- [ ] **Sprint 2: Admin HUD + Live Logic Rail** — Phases 2 and 8 (see [SPRINT2_PLAN.md](SPRINT2_PLAN.md))
-- [ ] **Sprint 3: Phase 3 — Logic-Sync Bracket** — SVG blueprint bracket with Realtime score pulse (see [SPRINT3_PLAN.md](SPRINT3_PLAN.md))
-- [ ] **Phase 4: Official Accounts** — Lightweight "official" role with scoped score-entry access; invite-based auth, mobile UI (see [SPRINT4_PLAN.md](SPRINT4_PLAN.md))
-- [ ] **Phase 5: Digital Ledger** — Immutable tournament archives, seal button, SHA-256 integrity hash, public ledger + detail pages (see [SPRINT5_PLAN.md](SPRINT5_PLAN.md))
-
----
-
-## 🎨 Design System Overhaul
-*Full implementation plan: [DESIGN_SYSTEM_PLAN.md](file:///c:/Users/Robert%20Cowan/Documents/tournament-website/DESIGN_SYSTEM_PLAN.md)*
-
-- [x] **Item 1** — Generalized design token refactor (`globals.css` + all CSS modules)
-- [x] **Item 2** — Per-org color scheme selection (DB migration, `lib/themes.ts`, admin settings UI)
-- [x] **Item 3** — Additional org customization: logo, hero banner, font preset, card style
-- [x] **Item 4** — Platform page polish: landing page and discover page improvements
-- [ ] **Item 5** — Color scheme demo pages at `/demo/themes`
 
 ---
 
@@ -68,6 +47,7 @@ This file tracks the ongoing tasks for the tournament website project. AI models
 
 ## ✅ Completed Tasks
 
+- [x] **Brand Pivot — Copy Layer Revision**: Replaced software-deployment language with sports-authority voice across landing page, auth pages, and navbar. Visual system unchanged. (see BRAND_PIVOT_PLAN.md)
 - [x] **Initial Auth Foundation**: Supabase Auth integration and organization signup flow.
 - [x] **Security & RLS**: Scoped all data to `organization_id` and implemented RLS policies.
 - [x] **RLS Recursion Fix**: Resolved 500 error in `organization_members` policy.
