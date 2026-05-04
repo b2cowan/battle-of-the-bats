@@ -1,10 +1,9 @@
 'use client';
 import React, { useState, useEffect } from 'react';
-import { Trophy, X, Check, Search, RefreshCw, Users, Download, Smartphone } from 'lucide-react';
+import { Trophy, X, Check, Search, RefreshCw, Users, Download } from 'lucide-react';
 import { getGames, updateGame, getTeams, getAgeGroups, getDiamonds } from '@/lib/db';
 import { downloadCSV, formatTime } from '@/lib/utils';
 import { useTournament } from '@/lib/tournament-context';
-import { useParams } from 'next/navigation';
 import { Game, Team, AgeGroup, Diamond } from '@/lib/types';
 import GameList from '../schedule/components/GameList';
 import s from '../admin-common.module.css';
@@ -14,7 +13,6 @@ import FeedbackModal from '@/components/FeedbackModal';
 type ResultsFilter = 'pending' | 'completed';
 
 export default function AdminResultsPage() {
-  const { orgSlug } = useParams<{ orgSlug: string }>();
   const { currentTournament } = useTournament();
   const [games, setGames] = useState<Game[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
@@ -279,16 +277,6 @@ export default function AdminResultsPage() {
             </div>
             <div className="modal-footer">
               <button className="btn btn-ghost" onClick={() => setEditing(null)}>Cancel</button>
-              <a
-                href={`/${orgSlug}/games/${editing.id}/score`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="btn btn-outline btn-sm"
-                title="Open Tactical HUD — anyone with this link can score the game"
-                style={{ display: 'inline-flex', alignItems: 'center', gap: '0.375rem' }}
-              >
-                <Smartphone size={14} /> HUD ↗
-              </a>
               <button className="btn btn-primary" onClick={handleSaveScore}>
                 <Check size={14} /> Save Result
               </button>
