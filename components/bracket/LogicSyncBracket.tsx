@@ -202,7 +202,10 @@ interface LogicSyncBracketProps {
 }
 
 export function LogicSyncBracket({ games, teams, tournamentId }: LogicSyncBracketProps) {
-  const supabase   = createClient();
+  // stable client ref — createClient() from @supabase/ssr creates a new instance on every
+  // render, so calling it at component body level and including it in useEffect deps causes
+  // infinite re-subscription loops. useRef ensures one instance per component mount.
+  const supabase   = useRef(createClient()).current;
   const liveTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
 
   const [columns, setColumns] = useState<{ title: string; games: Game[] }[]>([]);
@@ -219,8 +222,12 @@ export function LogicSyncBracket({ games, teams, tournamentId }: LogicSyncBracke
   useEffect(() => {
     if (!tournamentId) return;
 
+    // unique suffix prevents "already joined" errors when the component remounts
+    // (React StrictMode double-invokes effects; the old channel may still be joining
+    // when the second effect runs, causing Supabase to throw on .on() calls)
+    const chName  = `bracket-${tournamentId}-${Math.random().toString(36).slice(2, 8)}`;
     const channel = supabase
-      .channel(`bracket-${tournamentId}`)
+      .channel(chName)
       .on(
         'postgres_changes',
         { event: 'UPDATE', schema: 'public', table: 'games', filter: `tournament_id=eq.${tournamentId}` },
@@ -263,7 +270,7 @@ export function LogicSyncBracket({ games, teams, tournamentId }: LogicSyncBracke
       Object.values(liveTimers.current).forEach(clearTimeout);
       liveTimers.current = {};
     };
-  }, [tournamentId, supabase]);
+  }, [tournamentId]); // supabase is stable via useRef — intentionally omitted from deps
 
   if (games.length === 0) {
     return (
