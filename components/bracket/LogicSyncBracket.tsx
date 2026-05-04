@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Trophy } from 'lucide-react';
 import { createClient } from '@/lib/supabase-browser';
-import { HudSkeleton } from '@/components/ui/HudSkeleton';
 import type { Game, Team } from '@/lib/types';
 import type { BracketNode } from '@/lib/types/bracket';
 
@@ -97,71 +96,85 @@ function nodeY(position: number, colCount: number, totalH: number): number {
   return V_PAD + position * slotH + slotH / 2 - NODE_HEIGHT / 2;
 }
 
-// ── SVG sub-components ────────────────────────────────────────────────────────
+// ── SVG sub-components — use org CSS variables, not FieldLogic tokens ────────
 
 function MatchNode({ node, x, y }: { node: BracketNode; x: number; y: number }) {
-  const isHomeWin  = node.winnerId === node.homeTeam?.id;
-  const isAwayWin  = node.winnerId === node.awayTeam?.id;
-  const border     = node.isLive ? '#D9F99D' : '#1E3A8A';
-  const glowFilter = node.isLive ? 'url(#glow-lime)' : undefined;
+  const isHomeWin = node.winnerId === node.homeTeam?.id;
+  const isAwayWin = node.winnerId === node.awayTeam?.id;
 
   return (
     <g transform={`translate(${x},${y})`}>
       {/* card background */}
       <rect
-        width={NODE_WIDTH} height={NODE_HEIGHT}
-        fill="#111827" stroke={border} strokeWidth="1"
-        filter={glowFilter}
+        width={NODE_WIDTH} height={NODE_HEIGHT} rx={8}
+        style={{
+          fill:        'var(--surface)',
+          stroke:      node.isLive ? 'var(--primary)' : 'rgba(var(--primary-rgb), 0.45)',
+          strokeWidth: '1',
+          filter:      node.isLive ? 'url(#glow-primary)' : undefined,
+        }}
       />
       {/* divider */}
       <line x1="0" y1={NODE_HEIGHT / 2} x2={NODE_WIDTH} y2={NODE_HEIGHT / 2}
-        stroke="#1E3A8A" strokeWidth="1" />
+        style={{ stroke: 'rgba(var(--primary-rgb), 0.2)', strokeWidth: '1' }} />
 
       {/* home team name */}
-      <text x="10" y="24"
-        fill={isHomeWin ? '#D9F99D' : '#F1F5F9'}
-        fontFamily="'IBM Plex Mono', monospace" fontSize="11" fontWeight="700">
+      <text x="10" y="24" fontSize="11" fontWeight="700"
+        style={{
+          fill:       isHomeWin ? 'var(--primary-light)' : 'rgba(255,255,255,0.9)',
+          fontFamily: 'var(--font-sans)',
+        }}>
         {(node.homeTeam?.name ?? 'TBD').slice(0, 20)}
       </text>
       {node.homeScore !== null && (
         <text x={NODE_WIDTH - 10} y="24"
-          fill="#D9F99D" fontFamily="'IBM Plex Mono', monospace"
-          fontSize="13" fontWeight="700" textAnchor="end">
+          fontSize="14" fontWeight="900" textAnchor="end"
+          style={{ fill: 'var(--primary-light)', fontFamily: 'var(--font-display)' }}>
           {node.homeScore}
         </text>
       )}
 
       {/* away team name */}
-      <text x="10" y={NODE_HEIGHT - 14}
-        fill={isAwayWin ? '#D9F99D' : '#F1F5F9'}
-        fontFamily="'IBM Plex Mono', monospace" fontSize="11" fontWeight="700">
+      <text x="10" y={NODE_HEIGHT - 14} fontSize="11" fontWeight="700"
+        style={{
+          fill:       isAwayWin ? 'var(--primary-light)' : 'rgba(255,255,255,0.9)',
+          fontFamily: 'var(--font-sans)',
+        }}>
         {(node.awayTeam?.name ?? 'TBD').slice(0, 20)}
       </text>
       {node.awayScore !== null && (
         <text x={NODE_WIDTH - 10} y={NODE_HEIGHT - 14}
-          fill="#D9F99D" fontFamily="'IBM Plex Mono', monospace"
-          fontSize="13" fontWeight="700" textAnchor="end">
+          fontSize="14" fontWeight="900" textAnchor="end"
+          style={{ fill: 'var(--primary-light)', fontFamily: 'var(--font-display)' }}>
           {node.awayScore}
         </text>
       )}
 
-      {/* bracket code badge (on divider) */}
-      <rect x="8" y={NODE_HEIGHT / 2 - 6} width="30" height="12"
-        fill="rgba(30,58,138,0.25)" stroke="rgba(30,58,138,0.5)" strokeWidth="0.5" />
-      <text x="23" y={NODE_HEIGHT / 2 + 4}
-        fill="#94A3B8" fontFamily="'IBM Plex Mono', monospace"
-        fontSize="6.5" fontWeight="700" textAnchor="middle" letterSpacing="0.08em">
+      {/* bracket code badge (sits on the divider line) */}
+      <rect x="8" y={NODE_HEIGHT / 2 - 7} width="32" height="13" rx={3}
+        style={{
+          fill:        'rgba(var(--primary-rgb), 0.15)',
+          stroke:      'rgba(var(--primary-rgb), 0.35)',
+          strokeWidth: '0.5',
+        }} />
+      <text x="24" y={NODE_HEIGHT / 2 + 3.5}
+        fontSize="6.5" fontWeight="700" textAnchor="middle"
+        style={{ fill: 'rgba(255,255,255,0.45)', fontFamily: 'var(--font-sans)', letterSpacing: '0.06em' }}>
         {node.bracketCode.toUpperCase()}
       </text>
 
-      {/* LIVE badge — only while isLive */}
+      {/* LIVE badge — visible for 5s after a Realtime score update */}
       {node.isLive && (
         <g>
-          <rect x={NODE_WIDTH - 38} y="3" width="34" height="13"
-            fill="rgba(217,249,157,0.12)" stroke="#D9F99D" strokeWidth="0.5" />
-          <text x={NODE_WIDTH - 21} y="12.5"
-            fill="#D9F99D" fontFamily="'IBM Plex Mono', monospace"
-            fontSize="7" fontWeight="700" textAnchor="middle" letterSpacing="0.12em">
+          <rect x={NODE_WIDTH - 38} y="4" width="33" height="13" rx={3}
+            style={{
+              fill:        'rgba(var(--primary-rgb), 0.2)',
+              stroke:      'var(--primary)',
+              strokeWidth: '0.5',
+            }} />
+          <text x={NODE_WIDTH - 21.5} y="13.5"
+            fontSize="7" fontWeight="700" textAnchor="middle"
+            style={{ fill: 'var(--primary-light)', fontFamily: 'var(--font-sans)', letterSpacing: '0.1em' }}>
             LIVE
           </text>
         </g>
@@ -181,13 +194,12 @@ function ConnectorPath({
   const d    = `M ${fromX} ${fromY} H ${midX} V ${toY} H ${toX}`;
   return (
     <g>
-      <path d={d} stroke="#1E3A8A" strokeWidth="1" fill="none" opacity="0.5" />
+      <path d={d} fill="none"
+        style={{ stroke: 'rgba(var(--primary-rgb), 0.3)', strokeWidth: '1' }} />
       {active && (
-        <path d={d}
-          stroke="#D9F99D" strokeWidth="1.5" fill="none"
-          strokeDasharray="8 4"
+        <path d={d} fill="none" strokeDasharray="8 4"
           className="animate-data-flow"
-        />
+          style={{ stroke: 'var(--primary)', strokeWidth: '1.5' }} />
       )}
     </g>
   );
@@ -274,18 +286,14 @@ export function LogicSyncBracket({ games, teams, tournamentId }: LogicSyncBracke
 
   if (games.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-16">
-        <Trophy size={48} className="mb-4 opacity-20 text-data-gray" />
-        <p className="font-mono text-xs text-data-gray/50 uppercase tracking-widest">
-          No playoff games scheduled yet.
-        </p>
+      <div className="empty-state">
+        <Trophy size={48} />
+        <p>No playoff games scheduled yet. Check back soon!</p>
       </div>
     );
   }
 
-  if (nodes.length === 0) {
-    return <HudSkeleton message="COMPUTING BRACKET MATRIX..." rows={4} />;
-  }
+  if (nodes.length === 0) return null;
 
   // ── SVG layout dimensions ─────────────────────────────────────────────────
 
@@ -297,27 +305,21 @@ export function LogicSyncBracket({ games, teams, tournamentId }: LogicSyncBracke
   // ── render ────────────────────────────────────────────────────────────────
 
   return (
-    <div
-      style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}
-      className="py-4"
-    >
+    // outer: clips overflow and enables horizontal scroll
+    // inner: width:fit-content + margin:auto centers when it fits the viewport,
+    //        and naturally left-aligns when the scroll kicks in
+    <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }} className="py-4">
+      <div style={{ width: 'fit-content', margin: '0 auto' }}>
       <svg
         width={svgWidth}
         height={svgHeight}
         viewBox={`0 0 ${svgWidth} ${svgHeight}`}
-        className="block"
+        style={{ display: 'block' }}
       >
-        {/* ── glow filters ── */}
+        {/* ── glow filter — uses primary color blur for live nodes ── */}
         <defs>
-          <filter id="glow-lime" x="-30%" y="-30%" width="160%" height="160%">
+          <filter id="glow-primary" x="-30%" y="-30%" width="160%" height="160%">
             <feGaussianBlur stdDeviation="3" result="blur" />
-            <feMerge>
-              <feMergeNode in="blur" />
-              <feMergeNode in="SourceGraphic" />
-            </feMerge>
-          </filter>
-          <filter id="glow-blue" x="-20%" y="-20%" width="140%" height="140%">
-            <feGaussianBlur stdDeviation="2" result="blur" />
             <feMerge>
               <feMergeNode in="blur" />
               <feMergeNode in="SourceGraphic" />
@@ -331,12 +333,14 @@ export function LogicSyncBracket({ games, teams, tournamentId }: LogicSyncBracke
             key={`lbl-${ci}`}
             x={ci * ROUND_WIDTH + NODE_WIDTH / 2 + 20}
             y={V_PAD - 12}
-            fill="#94A3B8"
-            fontFamily="'IBM Plex Mono', monospace"
-            fontSize="9"
+            fontSize="10"
             fontWeight="700"
             textAnchor="middle"
-            letterSpacing="0.1em"
+            style={{
+              fill:        'rgba(255,255,255,0.45)',
+              fontFamily:  'var(--font-display)',
+              letterSpacing: '0.1em',
+            }}
           >
             {col.title.toUpperCase()}
           </text>
@@ -381,6 +385,7 @@ export function LogicSyncBracket({ games, teams, tournamentId }: LogicSyncBracke
           })
         )}
       </svg>
+      </div>
     </div>
   );
 }
