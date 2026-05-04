@@ -142,20 +142,20 @@
 
 ### Landing page (`app/page.tsx` + `app/page.module.css`)
 
-- [ ] **Stats bar**: Full-width stripe between hero and features. Static copy: `50+ tournaments · 2,000+ teams · 300+ age divisions`. `--surface` background, `text-label` size, `--white-60` for labels, `--primary-light` for numbers.
-- [ ] **"How it works" section**: 3 steps between features and pricing. Large step numerals (4rem, `--primary-faint` color), icon, heading, one-line description. 3-col grid → 1-col on mobile.
-- [ ] **Social proof section**: After pricing. 2–3 quote cards. Silhouette avatar + name + role + quote. Placeholder copy until real testimonials collected.
-- [ ] **Scroll-triggered animations**: `AnimateIn` client component using `IntersectionObserver` — adds `.visible` class on section entry. `globals.css` `.visible` triggers `animation: fadeInUp 0.5s ease forwards`. No external library.
-- [ ] **Annual pricing toggle**: `'monthly' | 'annual'` client state. Toggle above pricing grid. Annual display: Pro → `$20.75/mo`, Elite → `$58.25/mo`. "Save 26%" badge.
-- [ ] **Mobile hero fix**: At `max-width: 480px`, `heroSub` font-size `1rem`; CTA buttons `width: 100%`, stacked vertically.
-- [ ] **Accessibility**: Skip-to-content link in `app/layout.tsx`. `:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }` in `globals.css`.
+- [x] **Stats bar**: Full-width stripe between hero and features. Static copy: `50+ tournaments · 2,000+ teams · 300+ age divisions`. `--surface` background, `text-label` size, `--white-60` for labels, `--primary-light` for numbers.
+- [x] **"How it works" section**: 3 steps between features and pricing. Large step numerals (4rem, `--primary-faint` color), icon, heading, one-line description. 3-col grid → 1-col on mobile.
+- [x] **Social proof section**: After pricing. 2–3 quote cards. Silhouette avatar + name + role + quote. Placeholder copy until real testimonials collected.
+- [x] **Scroll-triggered animations**: `AnimateIn` client component using `IntersectionObserver` — adds `.visible` class on section entry. `globals.css` `.visible` triggers `animation: fadeInUp 0.5s ease forwards`. No external library.
+- [x] **Annual pricing toggle**: `'monthly' | 'annual'` client state. Toggle above pricing grid. Annual display: Pro → `$20.75/mo`, Elite → `$58.25/mo`. "Save 26%" badge.
+- [x] **Mobile hero fix**: At `max-width: 480px`, `heroSub` font-size `1rem`; CTA buttons `width: 100%`, stacked vertically.
+- [x] **Accessibility**: Skip-to-content link in `app/layout.tsx`. `:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }` in `globals.css`.
 
 ### Discover page (`app/discover/page.tsx` + CSS module)
 
-- [ ] **Header gradient**: Subtle `radial-gradient` behind header (matches landing hero style).
-- [ ] **Empty state**: Replace plain icon with composed empty state (stacked ghost cards or inline SVG).
-- [ ] **Sticky filter bar**: `position: sticky; top: var(--nav-height); backdrop-filter: blur(16px)` when scrolled past header.
-- [ ] **Accessibility**: `aria-label="Grid view"` / `aria-label="List view"` on view toggle buttons.
+- [x] **Header gradient**: Subtle `radial-gradient` behind header (matches landing hero style).
+- [x] **Empty state**: Replace plain icon with composed empty state (stacked ghost cards or inline SVG).
+- [x] **Sticky filter bar**: `position: sticky; top: var(--nav-height); backdrop-filter: blur(16px)` when scrolled past header.
+- [x] **Accessibility**: `aria-label="Grid view"` / `aria-label="List view"` on view toggle buttons.
 
 ---
 

@@ -1,19 +1,27 @@
 'use client';
 import { useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Shield, Eye, EyeOff, LogIn } from 'lucide-react';
+import { Eye, EyeOff } from 'lucide-react';
 import Link from 'next/link';
 import { signIn } from '@/lib/auth';
+import { HudSkeleton } from '@/components/ui/HudSkeleton';
 import styles from '../auth.module.css';
+
+const AUTH_ERRORS: Record<string, string> = {
+  'invalid_credentials': 'Incorrect email or password. Please try again.',
+  'email_not_confirmed': 'Please verify your email before signing in. Check your inbox for a confirmation link.',
+  'too_many_requests':   'Too many sign-in attempts. Please wait a moment and try again.',
+  'user_not_found':      'No account found for this email address.',
+};
 
 function LoginForm() {
   const router       = useRouter();
   const searchParams = useSearchParams();
-  const [email, setEmail]     = useState('');
+  const [email, setEmail]       = useState('');
   const [password, setPassword] = useState('');
-  const [showPw, setShowPw]   = useState(false);
-  const [error, setError]     = useState('');
-  const [loading, setLoading] = useState(false);
+  const [showPw, setShowPw]     = useState(false);
+  const [error, setError]       = useState('');
+  const [loading, setLoading]   = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -21,7 +29,7 @@ function LoginForm() {
     setLoading(true);
     const { error: err } = await signIn(email, password);
     if (err) {
-      setError(err);
+      setError(AUTH_ERRORS[err] ?? err);
       setLoading(false);
     } else {
       const next = searchParams.get('next') ?? '/admin';
@@ -33,9 +41,13 @@ function LoginForm() {
   return (
     <div className={styles.card}>
       <div className={styles.header}>
-        <div className={styles.iconWrap}><Shield size={28} /></div>
+        <div className={styles.iconWrap}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+          </svg>
+        </div>
         <h1 className={styles.title}>Sign In</h1>
-        <p className={styles.sub}>Battle of the Bats — Tournament Management</p>
+        <p className={styles.sub}>FieldLogic — Tournament Management Platform</p>
       </div>
 
       <form onSubmit={handleSubmit} className={styles.form}>
@@ -67,7 +79,7 @@ function LoginForm() {
               autoComplete="current-password"
             />
             <button type="button" className={styles.pwToggle} onClick={() => setShowPw(s => !s)}>
-              {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
+              {showPw ? <EyeOff size={15} /> : <Eye size={15} />}
             </button>
           </div>
         </div>
@@ -76,12 +88,11 @@ function LoginForm() {
 
         <button
           type="submit"
-          className="btn btn-primary"
-          style={{ width: '100%', justifyContent: 'center' }}
+          className={styles.submitBtn}
           disabled={loading}
           id="login-submit"
         >
-          {loading ? 'Signing in…' : <><LogIn size={16} /> Sign In</>}
+          {loading ? 'Authenticating…' : 'Sign In'}
         </button>
       </form>
 
@@ -98,16 +109,9 @@ function LoginForm() {
 export default function LoginPage() {
   return (
     <div className={styles.page}>
-      <div className={styles.bg}>
-        <div className={styles.orb1} />
-        <div className={styles.orb2} />
-      </div>
-
       <Suspense fallback={
         <div className={styles.card}>
-          <div className="flex-center" style={{ minHeight: '300px' }}>
-            <p className="text-white-40 uppercase tracking-widest text-xs font-bold">Loading Login...</p>
-          </div>
+          <HudSkeleton message="VERIFYING CREDENTIALS..." rows={3} />
         </div>
       }>
         <LoginForm />

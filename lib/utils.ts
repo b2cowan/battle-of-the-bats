@@ -1,3 +1,10 @@
+import { clsx, type ClassValue } from 'clsx';
+import { twMerge } from 'tailwind-merge';
+
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
+
 export function downloadCSV(filename: string, headers: string[], rows: (string | number | undefined | null)[][]) {
   const content = [
     headers.join(','),

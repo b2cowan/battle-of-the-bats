@@ -1,7 +1,7 @@
-﻿'use client';
+'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Building2, Eye, EyeOff, Sparkles } from 'lucide-react';
+import { Eye, EyeOff } from 'lucide-react';
 import Link from 'next/link';
 import { signIn } from '@/lib/auth';
 import styles from '../auth.module.css';
@@ -47,7 +47,6 @@ export default function SignupPage() {
       return;
     }
 
-    // Sign in now that the account exists
     const { error: signInErr } = await signIn(email, password);
     if (signInErr) {
       setError(signInErr);
@@ -61,16 +60,15 @@ export default function SignupPage() {
 
   return (
     <div className={styles.page}>
-      <div className={styles.bg}>
-        <div className={styles.orb1} />
-        <div className={styles.orb2} />
-      </div>
-
       <div className={styles.card}>
         <div className={styles.header}>
-          <div className={styles.iconWrap}><Building2 size={28} /></div>
-          <h1 className={styles.title}>Create Account</h1>
-          <p className={styles.sub}>Set up your organization and first tournament</p>
+          <div className={styles.iconWrap}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <path d="M3 21h18M9 21V7l3-3 3 3v14M9 12h6" />
+            </svg>
+          </div>
+          <h1 className={styles.title}>Initialize Organization</h1>
+          <p className={styles.sub}>FieldLogic — Tournament Management Platform</p>
         </div>
 
         <form onSubmit={handleSubmit} className={styles.form}>
@@ -86,12 +84,12 @@ export default function SignupPage() {
               required
               autoComplete="organization"
             />
-            <p style={{ fontSize: '0.75rem', color: 'var(--white-40)', marginTop: '0.35rem' }}>
-              Your public URL: <span style={{ color: 'var(--primary-light)' }}>/{previewSlug}</span>
+            <p style={{ fontFamily: 'var(--font-data)', fontSize: '0.65rem', letterSpacing: '0.06em', color: 'var(--data-gray)', marginTop: '0.35rem' }}>
+              Public URL: <span style={{ color: 'var(--logic-lime)' }}>/{previewSlug}</span>
             </p>
           </div>
 
-          <div className={styles.divider}>account details</div>
+          <div className={styles.divider}>account credentials</div>
 
           <div className="form-group">
             <label className="form-label" htmlFor="signup-email">Email</label>
@@ -122,7 +120,7 @@ export default function SignupPage() {
                 autoComplete="new-password"
               />
               <button type="button" className={styles.pwToggle} onClick={() => setShowPw(s => !s)}>
-                {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
+                {showPw ? <EyeOff size={15} /> : <Eye size={15} />}
               </button>
             </div>
           </div>
@@ -131,15 +129,14 @@ export default function SignupPage() {
 
           <button
             type="submit"
-            className="btn btn-primary"
-            style={{ width: '100%', justifyContent: 'center' }}
+            className={styles.submitBtn}
             disabled={loading}
             id="signup-submit"
           >
-            {loading ? 'Creating account…' : <><Sparkles size={16} /> Create Organization</>}
+            {loading ? 'Initializing…' : 'Create Organization'}
           </button>
 
-          <p style={{ fontSize: '0.75rem', color: 'var(--white-40)', textAlign: 'center' }}>
+          <p style={{ fontFamily: 'var(--font-data)', fontSize: '0.65rem', letterSpacing: '0.06em', color: 'var(--data-gray)', textAlign: 'center' }}>
             Starts on the free Starter plan. No credit card required.
           </p>
         </form>

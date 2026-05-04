@@ -5,7 +5,11 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { PLAN_CONFIG } from '@/lib/plan-config';
 import type { OrgRole } from '@/lib/types';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+let _resend: import('resend').Resend | null = null;
+function getResend() {
+  if (!_resend) _resend = new Resend(process.env.RESEND_API_KEY);
+  return _resend;
+}
 
 export async function POST(req: Request) {
   const ctx = await getAuthContext();
@@ -114,7 +118,7 @@ export async function POST(req: Request) {
   const inviteUrl = (linkData as any).properties?.action_link ?? linkData.properties?.action_link;
 
   const fromDomain = new URL(appUrl).hostname;
-  await resend.emails.send({
+  await getResend().emails.send({
     from: `noreply@${fromDomain}`,
     to: email,
     subject: `You've been invited to ${org.name} on Battle of the Bats`,

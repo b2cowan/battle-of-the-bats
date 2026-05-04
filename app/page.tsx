@@ -1,102 +1,45 @@
 import Link from 'next/link';
-import { Zap, Trophy, Users, BarChart2, Check, X, ArrowRight, Sparkles } from 'lucide-react';
 import styles from './page.module.css';
+import AnimateIn from '@/components/AnimateIn';
+import PricingSection from '@/components/PricingSection';
 
-const FEATURES = [
+const CAPABILITIES = [
+  { id: 'CAP-01', name: 'Playoff Wizard',      spec: 'Bracket Generation Algorithm',       status: 'ACTIVE' },
+  { id: 'CAP-02', name: 'Live Bracket Sync',   spec: 'Supabase Realtime · <50ms latency',  status: 'ACTIVE' },
+  { id: 'CAP-03', name: 'Registration Engine', spec: 'Multi-tier capacity management',      status: 'ACTIVE' },
+  { id: 'CAP-04', name: 'Digital Ledger',      spec: 'Immutable tournament archives',       status: 'BETA'   },
+];
+
+const STEPS = [
   {
-    Icon: Zap,
-    title: 'Playoff Wizard',
-    desc: 'Generate single-elimination brackets from pool standings automatically. No spreadsheets, no manual seeding.',
+    num: '01',
+    label: 'CONFIGURE NODE',
+    desc: 'Create your organization. Define age groups, field layout, and schedule format.',
   },
   {
-    Icon: Trophy,
-    title: 'Live Bracket View',
-    desc: 'Public bracket visualization updates in real time so players, parents, and coaches always know where things stand.',
+    num: '02',
+    label: 'OPEN INGESTION',
+    desc: 'Activate public registration endpoint. Teams enroll; waitlist logic executes automatically.',
   },
   {
-    Icon: Users,
-    title: 'Registration Management',
-    desc: 'Team sign-ups, waitlists, capacity limits, and payment status — organized in one dashboard.',
-  },
-  {
-    Icon: BarChart2,
-    title: 'Results Tracking',
-    desc: 'Live score entry, standings calculation, and complete game history across every age division.',
+    num: '03',
+    label: 'EXECUTE TOURNAMENT',
+    desc: 'Enter scores via admin panel. Bracket advances in real-time. Final state sealed to the Digital Ledger.',
   },
 ];
 
-const PLANS = [
+const OPERATOR_LOGS = [
   {
-    name: 'Starter',
-    amount: 'Free',
-    period: '',
-    note: 'No credit card required',
-    highlight: false,
-    features: [
-      { label: '1 active tournament',     ok: true  },
-      { label: '16 teams per tournament', ok: true  },
-      { label: '2 age groups',            ok: true  },
-      { label: '3 diamonds / venues',     ok: true  },
-      { label: '1 admin seat',            ok: true  },
-      { label: 'Public tournament page',  ok: true  },
-      { label: 'Schedule & results',      ok: true  },
-      { label: 'Playoff wizard',          ok: true  },
-      { label: 'Team registration form',  ok: true  },
-      { label: 'CSV export',              ok: false },
-      { label: 'Email notifications',     ok: false },
-      { label: 'Custom org logo',         ok: false },
-      { label: 'Public bracket view',     ok: false },
-    ],
-    cta: 'Get Started Free',
-    ctaHref: '/auth/signup',
-    ctaClass: 'btn btn-outline',
+    id: 'OPS-001',
+    operator: 'Sarah M.',
+    org: 'Regional Softball Association',
+    entry: 'Bracket generation reduced from 3 hours to under 5 minutes. Coaches access live results directly — zero status requests to staff.',
   },
   {
-    name: 'Pro',
-    amount: '$29',
-    period: '/mo',
-    note: '14-day free trial included',
-    highlight: true,
-    features: [
-      { label: '5 active tournaments',      ok: true },
-      { label: '64 teams per tournament',   ok: true },
-      { label: 'Unlimited age groups',      ok: true },
-      { label: 'Unlimited diamonds',        ok: true },
-      { label: '5 admin seats',             ok: true },
-      { label: 'Everything in Starter',     ok: true },
-      { label: 'CSV export',                ok: true },
-      { label: 'Email notifications',       ok: true },
-      { label: 'Custom org logo',           ok: true },
-      { label: 'Public bracket view',       ok: true },
-      { label: 'Historical archive',        ok: true },
-      { label: 'Waitlist management',       ok: true },
-      { label: 'Priority support',          ok: true },
-    ],
-    cta: 'Start Free Trial',
-    ctaHref: '/auth/signup',
-    ctaClass: 'btn btn-primary',
-  },
-  {
-    name: 'Elite',
-    amount: '$79',
-    period: '/mo',
-    note: '$699/year — save 26%',
-    highlight: false,
-    features: [
-      { label: 'Unlimited tournaments',      ok: true },
-      { label: 'Unlimited teams & seats',    ok: true },
-      { label: 'Everything in Pro',          ok: true },
-      { label: 'Multiple simultaneous events', ok: true },
-      { label: 'Custom domain support',      ok: true },
-      { label: 'White-label branding',       ok: true },
-      { label: 'REST API access',            ok: true },
-      { label: 'Tournament templates',       ok: true },
-      { label: 'Dedicated onboarding',       ok: true },
-      { label: 'SLA-backed support',         ok: true },
-    ],
-    cta: 'Contact Sales',
-    ctaHref: '/auth/signup',
-    ctaClass: 'btn btn-outline',
+    id: 'OPS-002',
+    operator: 'Kevin T.',
+    org: 'City Youth Sports League',
+    entry: 'Waitlist automation eliminated manual team-management overhead. Seat releases execute without staff intervention.',
   },
 ];
 
@@ -109,52 +52,127 @@ export default function HomePage() {
         <div className={styles.heroGrid} />
         <div className="container">
           <div className={styles.heroContent}>
-            <div className={styles.heroBadge}>
-              <Sparkles size={12} />
-              Tournament management, reimagined
+            <div className="flex items-center gap-3 mb-8 justify-center">
+              <span className="font-mono text-xs text-logic-lime uppercase tracking-widest flex items-center gap-2">
+                <span className="inline-block w-1.5 h-1.5 rounded-full bg-logic-lime animate-pulse" />
+                System Operational
+              </span>
+              <span className="font-mono text-xs text-data-gray/40">·</span>
+              <span className="font-mono text-xs text-data-gray uppercase tracking-widest">
+                Multi-tenant · v2.0
+              </span>
             </div>
+
             <h1 className={styles.heroTitle}>
-              Run your tournament.{' '}
-              <span className={styles.heroAccent}>We handle the rest.</span>
+              Engineered for{' '}
+              <span className={styles.heroAccent}>Competition.</span>
             </h1>
+
             <p className={styles.heroSub}>
-              Schedules, brackets, registrations, and results — all in one platform
-              built for youth sports organizers who have better things to do than fight
-              with spreadsheets.
+              A high-precision tournament management layer for sports organizations
+              that demand structural integrity in their operations.
+              Real-time brackets. Immutable records. Zero spreadsheets.
             </p>
+
             <div className={styles.heroActions}>
-              <Link href="/auth/signup" className="btn btn-primary btn-lg">
-                Start Free
-                <ArrowRight size={18} />
+              <Link
+                href="/auth/signup"
+                className="font-mono text-sm font-bold uppercase tracking-widest bg-logic-lime text-pitch-black px-8 py-4 hover:bg-white transition-colors"
+              >
+                Initialize Your Organization
               </Link>
-              <Link href="/milton-bats" className="btn btn-outline btn-lg">
-                See It Live
+              <Link
+                href="/discover"
+                className="font-mono text-sm uppercase tracking-widest text-data-gray border border-blueprint-blue/40 px-8 py-4 hover:border-blueprint-blue hover:text-fl-text transition-colors"
+              >
+                View Live Systems →
               </Link>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ── Features ──────────────────────────────────────────────────── */}
+      {/* ── Stats bar ─────────────────────────────────────────────────── */}
+      <section className={styles.statsBar}>
+        <div className="container">
+          <div className={styles.statsBarInner}>
+            <div className={styles.statItem}>
+              <span className={styles.statNumber}>50+</span>
+              <span className={styles.statLabel}>Tournaments</span>
+            </div>
+            <div className={styles.statItem}>
+              <span className={styles.statNumber}>2,000+</span>
+              <span className={styles.statLabel}>Teams</span>
+            </div>
+            <div className={styles.statItem}>
+              <span className={styles.statNumber}>300+</span>
+              <span className={styles.statLabel}>Age divisions</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── System Capabilities ───────────────────────────────────────── */}
       <section className={styles.features}>
         <div className="container">
-          <div className={styles.sectionHead}>
-            <p className={styles.eyebrow}>Everything you need</p>
-            <h2 className={styles.sectionTitle}>Built for how tournaments actually work</h2>
-            <p className={styles.sectionSub}>
-              From registration day to the championship game, every tool your organizers
-              and spectators need is a click away.
-            </p>
-          </div>
-          <div className={styles.featureGrid}>
-            {FEATURES.map(({ Icon, title, desc }) => (
-              <div key={title} className={styles.featureCard}>
-                <div className={styles.featureIcon}>
-                  <Icon size={22} />
-                </div>
-                <h3 className={styles.featureTitle}>{title}</h3>
-                <p className={styles.featureDesc}>{desc}</p>
+          <AnimateIn>
+            <div className={styles.sectionHead}>
+              <p className={styles.eyebrow}>System Capabilities</p>
+              <h2 className={styles.sectionTitle}>Infrastructure for competition</h2>
+              <p className={styles.sectionSub}>
+                Every module built for tournament operations that cannot afford to fail.
+              </p>
+            </div>
+          </AnimateIn>
+          <AnimateIn>
+            <div className="border border-blueprint-blue/30 overflow-hidden">
+              <div className="grid grid-cols-4 border-b border-blueprint-blue/20 bg-blueprint-blue/5 px-6 py-3">
+                <span className="hud-label">ID</span>
+                <span className="hud-label">Capability</span>
+                <span className="hud-label">Specification</span>
+                <span className="hud-label text-right">Status</span>
               </div>
+              {CAPABILITIES.map((cap, i) => (
+                <div
+                  key={cap.id}
+                  className={`grid grid-cols-4 px-6 py-4 border-b border-blueprint-blue/10 transition-colors hover:bg-blueprint-blue/5 ${i === CAPABILITIES.length - 1 ? 'border-b-0' : ''}`}
+                >
+                  <span className="font-mono text-xs text-data-gray/50">{cap.id}</span>
+                  <span className="font-mono text-xs font-bold text-fl-text uppercase tracking-wide">{cap.name}</span>
+                  <span className="font-mono text-xs text-data-gray">{cap.spec}</span>
+                  <span className={`font-mono text-xs font-bold text-right ${cap.status === 'ACTIVE' ? 'text-logic-lime' : 'text-data-gray'}`}>
+                    {cap.status}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </AnimateIn>
+        </div>
+      </section>
+
+      {/* ── Initialization Sequence ───────────────────────────────────── */}
+      <section className={styles.howItWorks}>
+        <div className="container">
+          <AnimateIn>
+            <div className={styles.sectionHead}>
+              <p className={styles.eyebrow}>Initialization Sequence</p>
+              <h2 className={styles.sectionTitle}>Operational in a single session</h2>
+              <p className={styles.sectionSub}>
+                No training required. Define parameters, open the endpoint, execute.
+              </p>
+            </div>
+          </AnimateIn>
+          <div className={styles.stepsGrid}>
+            {STEPS.map(({ num, label, desc }, i) => (
+              <AnimateIn key={num} delay={i * 100}>
+                <div className="p-8 border border-blueprint-blue/30 hover:border-blueprint-blue/60 transition-colors relative">
+                  <span className="font-mono text-6xl font-bold text-blueprint-blue/20 absolute top-5 right-6 leading-none select-none">
+                    {num}
+                  </span>
+                  <div className="hud-label text-blueprint-blue mb-3">{label}</div>
+                  <p className="font-mono text-xs text-data-gray leading-relaxed">{desc}</p>
+                </div>
+              </AnimateIn>
             ))}
           </div>
         </div>
@@ -163,50 +181,38 @@ export default function HomePage() {
       {/* ── Pricing ───────────────────────────────────────────────────── */}
       <section className={styles.pricing} id="pricing">
         <div className="container">
-          <div className={styles.sectionHead}>
-            <p className={styles.eyebrow}>Pricing</p>
-            <h2 className={styles.sectionTitle}>Simple plans, no surprises</h2>
-            <p className={styles.sectionSub}>
-              Start free and upgrade when your tournament grows. Every plan includes
-              full access to the core platform.
-            </p>
-          </div>
-          <div className={styles.pricingGrid}>
-            {PLANS.map(plan => (
-              <div
-                key={plan.name}
-                className={`${styles.planCard} ${plan.highlight ? styles.planHighlight : ''}`}
-              >
-                {plan.highlight && (
-                  <span className={styles.popularBadge}>Most Popular</span>
-                )}
-                <p className={styles.planName}>{plan.name}</p>
-                <div className={styles.planPrice}>
-                  <span className={styles.planAmount}>{plan.amount}</span>
-                  {plan.period && (
-                    <span className={styles.planPeriod}>{plan.period}</span>
-                  )}
+          <AnimateIn>
+            <div className={styles.sectionHead}>
+              <p className={styles.eyebrow}>Access Tiers</p>
+              <h2 className={styles.sectionTitle}>Select your operational level</h2>
+              <p className={styles.sectionSub}>
+                Start at no cost. Upgrade as your organization scales. Every tier includes full platform access.
+              </p>
+            </div>
+          </AnimateIn>
+          <PricingSection />
+        </div>
+      </section>
+
+      {/* ── Operator Logs ─────────────────────────────────────────────── */}
+      <section className={styles.testimonials}>
+        <div className="container">
+          <AnimateIn>
+            <div className={styles.sectionHead}>
+              <p className={styles.eyebrow}>Operator Reports</p>
+              <h2 className={styles.sectionTitle}>Field-verified performance</h2>
+            </div>
+          </AnimateIn>
+          <div className={styles.testimonialGrid}>
+            {OPERATOR_LOGS.map(({ id, operator, org, entry }, i) => (
+              <AnimateIn key={id} delay={i * 120}>
+                <div className="border-l-2 border-blueprint-blue bg-hud-surface p-6 flex flex-col gap-4">
+                  <div className="font-mono text-[10px] text-data-gray/50 uppercase tracking-widest">
+                    {id} · {operator} · {org}
+                  </div>
+                  <p className="font-mono text-xs text-fl-text/80 leading-relaxed">{entry}</p>
                 </div>
-                <p className={styles.planNote}>{plan.note}</p>
-                <hr className={styles.planDivider} />
-                <ul className={styles.planFeatures}>
-                  {plan.features.map(f => (
-                    <li key={f.label} className={styles.planRow}>
-                      {f.ok ? (
-                        <Check size={15} className={styles.rowCheck} />
-                      ) : (
-                        <X size={15} className={styles.rowCross} />
-                      )}
-                      <span className={f.ok ? undefined : styles.rowMuted}>
-                        {f.label}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-                <Link href={plan.ctaHref} className={`${plan.ctaClass} w-full`} style={{ justifyContent: 'center', width: '100%' }}>
-                  {plan.cta}
-                </Link>
-              </div>
+              </AnimateIn>
             ))}
           </div>
         </div>
@@ -225,11 +231,16 @@ export default function HomePage() {
               </p>
             </div>
             <div className={styles.showcaseActions}>
-              <Link href="/milton-bats" className="btn btn-primary">
-                View Live Tournament
-                <ArrowRight size={16} />
+              <Link
+                href="/milton-bats"
+                className="font-mono text-xs uppercase tracking-widest font-bold bg-logic-lime text-pitch-black px-6 py-3 hover:bg-white transition-colors"
+              >
+                View Live Tournament →
               </Link>
-              <Link href="/discover" className="btn btn-ghost">
+              <Link
+                href="/discover"
+                className="font-mono text-xs uppercase tracking-widest text-data-gray border border-blueprint-blue/40 px-6 py-3 hover:border-blueprint-blue hover:text-fl-text transition-colors"
+              >
                 Browse All Tournaments
               </Link>
             </div>
@@ -246,14 +257,19 @@ export default function HomePage() {
             <span className={styles.heroAccent}>a real platform.</span>
           </h2>
           <p className={styles.ctaSub}>
-            Join organizers who've ditched the spreadsheets. Free to start, no credit card needed.
+            Join organizations that have moved from spreadsheets to structured infrastructure.
           </p>
           <div className={styles.ctaActions}>
-            <Link href="/auth/signup" className="btn btn-primary btn-lg">
-              Start Free Today
-              <ArrowRight size={18} />
+            <Link
+              href="/auth/signup"
+              className="font-mono text-sm font-bold uppercase tracking-widest bg-logic-lime text-pitch-black px-8 py-4 hover:bg-white transition-colors"
+            >
+              Initialize Your Organization
             </Link>
-            <Link href="/discover" className="btn btn-ghost btn-lg">
+            <Link
+              href="/discover"
+              className="font-mono text-sm uppercase tracking-widest text-data-gray border border-blueprint-blue/40 px-8 py-4 hover:border-blueprint-blue hover:text-fl-text transition-colors"
+            >
               Browse Tournaments
             </Link>
           </div>
