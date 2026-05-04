@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Trophy } from 'lucide-react';
 import { createClient } from '@/lib/supabase-browser';
+import { formatPoolName } from '@/lib/utils';
 import type { Game, Team } from '@/lib/types';
 import type { BracketNode } from '@/lib/types/bracket';
 
@@ -57,9 +58,20 @@ function buildColumns(games: Game[]): { title: string; games: Game[] }[] {
 const NIL_UUID = '00000000-0000-0000-0000-000000000000';
 const isReal = (id: string) => !!id && id !== NIL_UUID;
 
+// "1st Pool Gold"   → "1st Gold Pool"
+// "1st Pool Pool B" → "1st B Pool"   (fixes double-Pool from raw DB pool names)
+// "Winner SF1"      → "Winner SF1"   (passthrough)
+function cleanPlaceholder(text: string): string {
+  const m = text.match(/^(\d+(?:st|nd|rd|th))\s+Pool\s+(.+)$/i);
+  if (!m) return text;
+  return `${m[1]} ${formatPoolName(m[2])}`;
+}
+
 function makeNode(game: Game, round: number, position: number, teams: Team[]): BracketNode {
   const resolveName = (id: string, placeholder: string | undefined) =>
-    isReal(id) ? (teams.find(t => t.id === id)?.name ?? placeholder ?? 'TBD') : (placeholder ?? 'TBD');
+    isReal(id)
+      ? (teams.find(t => t.id === id)?.name ?? placeholder ?? 'TBD')
+      : cleanPlaceholder(placeholder ?? 'TBD');
 
   const homeName = resolveName(game.homeTeamId, game.homePlaceholder);
   const awayName = resolveName(game.awayTeamId, game.awayPlaceholder);
