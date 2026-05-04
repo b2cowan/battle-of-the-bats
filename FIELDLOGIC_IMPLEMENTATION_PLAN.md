@@ -111,7 +111,7 @@ Platform pages — use Tailwind FL classes + .hud-* utilities directly
 | Sprint | Phases | Status |
 |--------|--------|--------|
 | Sprint 1 — Visual Foundation | 1, 6, 7, 9 | ✅ Complete — all phases shipped, build passing |
-| Sprint 2 — Admin Command Center | 2, 8 | ⬜ Ready to start |
+| Sprint 2 — Admin Command Center | 2, 8 | ✅ Complete — code shipped; Realtime requires manual Supabase config (user) |
 | Sprint 3 — Bracket & Field | 4, 3 | ⬜ Blocked (needs Sprint 2) |
 | Sprint 4 — Digital Ledger | 5 | ⬜ Blocked (needs Sprint 3) |
 | Sprint 5 — Premium & Polish | 10 | ⬜ Deferred |
@@ -1180,16 +1180,16 @@ export function CommandMenu({ orgSlug }: { orgSlug: string }) {
 
 #### Phase 2 Checklist
 
-- [ ] Enable Realtime replication on `games` and `registrations` in Supabase dashboard
-- [ ] Update `app/[orgSlug]/admin/dashboard.module.css` — HUD styling pass (stat cards, action cards)
-- [ ] Remove per-color CSS classes (`.purple`, `.blue`, `.amber`, `.green`, `.pink`) from `dashboard.module.css` and from the `cards` array in `admin/page.tsx`
-- [ ] Replace `pageHeader` section in `admin/page.tsx` with system identity header strip
-- [ ] Create `components/admin/LiveEventLog.tsx`
-- [ ] Add "Recent Events" section to `admin/page.tsx` below Quick Actions
-- [ ] Create `components/admin/StatusMatrix.tsx` *(optional — used by LiveEventLog sidebar if desired)*
-- [ ] Create `components/admin/ProgressBar.tsx` *(optional — useful utility for future panels)*
-- [ ] Create `components/admin/CommandMenu.tsx` *(optional — add as a Quick Actions replacement if desired)*
-- [ ] Confirm `org_id` column exists on `games` table (filter requirement for Realtime)
+- [ ] Enable Realtime replication on `games` and `registrations` in Supabase dashboard — **manual step: user must enable in Supabase Dashboard → Database → Replication**
+- [x] Update `app/[orgSlug]/admin/dashboard.module.css` — HUD styling pass (stat cards, action cards)
+- [x] Remove per-color CSS classes (`.purple`, `.blue`, `.amber`, `.green`, `.pink`) from `dashboard.module.css` and from the `cards` array in `admin/page.tsx`
+- [x] Replace `pageHeader` section in `admin/page.tsx` with system identity header strip
+- [x] Create `components/admin/LiveEventLog.tsx`
+- [x] Add "Recent Events" section to `admin/page.tsx` below Quick Actions
+- [ ] Create `components/admin/StatusMatrix.tsx` *(optional — deferred to Sprint 3)*
+- [ ] Create `components/admin/ProgressBar.tsx` *(optional — deferred to Sprint 3)*
+- [ ] Create `components/admin/CommandMenu.tsx` *(optional — deferred to Sprint 3)*
+- [ ] Confirm `org_id` column exists on `games` table (filter requirement for Realtime) — **user must verify in Supabase Table Editor**
 
 ---
 
@@ -1311,11 +1311,11 @@ export function LiveLogicRail() {
 
 #### Phase 8 Checklist
 
-- [ ] Create `components/live-logic/LiveLogicProvider.tsx`
-- [ ] Create `components/live-logic/LiveLogicRail.tsx`
-- [ ] Wire both into `app/[orgSlug]/admin/layout.tsx`
-- [ ] Verify `games` table has `team_a_name`, `team_b_name`, `winner_team_name` columns — if not, handle in payload by joining team names separately
-- [ ] Test: trigger score update in Supabase dashboard → notification appears in admin UI within 1s
+- [x] Create `components/live-logic/LiveLogicProvider.tsx`
+- [x] Create `components/live-logic/LiveLogicRail.tsx`
+- [x] Wire both into `app/[orgSlug]/admin/layout.tsx` — `orgId` passed from `authCtx.org.id` in Server Component layout
+- [ ] Verify `games` table has `team_a_name`, `team_b_name`, `winner_team_name` columns — if absent, provider falls back to `'Team A'`/`'Team B'`/`'Winner'` (no crash) — **user must verify**
+- [ ] Test: trigger score update in Supabase dashboard → notification appears in admin UI within 1s — **requires Realtime replication enabled first**
 
 ---
 
@@ -1487,127 +1487,38 @@ useEffect(() => {
 
 ---
 
-### Phase 4 — Tactical HUD: Mobile Scorekeeper
+### Phase 4 — Official Accounts: Field Scoring Access
 
-> **Highest-priority functional feature.** No existing scorekeeper exists — this is entirely additive. Officials currently enter scores through the desktop admin results page, which is not designed for outdoor field use. This phase solves a real, specific problem without touching any existing code.
+> **Deferred — requires auth/role design.** The original Tactical HUD concept (a shareable anonymous scorekeeper link) was prototyped and removed. The access model was not well-defined: field officials are not admins and have no accounts, but an open link with no authentication is too loose for reliable tournament operations.
 
-**Goal:** Purpose-built full-screen scorekeeper for field officials. Max contrast, huge tap targets, IBM Plex Mono digits.
+**Decision:** Scorekeeper access will be gated by a lightweight **"official" role** — an invite-only account type that can log in to a scoped interface giving them score-entry access only, with no visibility into admin functions (registrations, billing, team management, etc.).
 
-#### 4.1 — Design Constraints
+#### 4.1 — Planned Scope
 
-- Background: `#000000` (pure black — maximum OLED contrast)
-- Score digits: `IBM Plex Mono`, `7rem`, Logic Lime
-- Increment buttons: `h-36` minimum (144px tap target)
-- No global nav/header — suppress via layout file
+- New `OrgRole` value: `'official'` (alongside existing `'owner' | 'admin' | 'staff'`)
+- Invite flow: admins invite officials by email from the Members section; officials receive a Supabase auth invite link
+- Scoped route: `app/[orgSlug]/official/` — separate from `app/[orgSlug]/admin/`; protected by role check, not full admin privileges
+- Score entry UI: purpose-built for mobile field use (large tap targets, high contrast); wraps the same `updateGame` write path used by the desktop results page
+- Officials see only: today's games for their assigned diamond/division; no other admin data
 
-#### 4.2 — Layout
+#### 4.2 — What Was Learned from the Prototype
 
-**File:** `app/[orgSlug]/games/[gameId]/score/layout.tsx` — suppress global nav:
-```tsx
-export default function ScoreLayout({ children }: { children: React.ReactNode }) {
-  return <>{children}</>;
-}
-```
-
-**File:** `app/[orgSlug]/games/[gameId]/score/page.tsx`:
-```tsx
-'use client';
-// ... state: scoreA, scoreB, period
-
-return (
-  <div className="min-h-screen bg-black text-white flex flex-col">
-    {/* Identity strip */}
-    <div className="flex justify-between items-center px-4 py-2 border-b border-white/10">
-      <span className="font-mono text-xs text-white/50 uppercase tracking-widest">{division} · {round}</span>
-      <span className="font-mono text-xs text-logic-lime animate-pulse-lime">● LIVE</span>
-      <span className="font-mono text-xs text-white/50">{gameTime}</span>
-    </div>
-
-    {/* Scores */}
-    <div className="flex flex-1">
-      {/* Team A */}
-      <div className="flex-1 flex flex-col border-r border-white/10">
-        <div className="flex-1 flex flex-col items-center justify-center py-8">
-          <div className="font-mono text-xs text-white/40 uppercase tracking-widest mb-2">{teamA.name}</div>
-          <div className="font-mono font-bold text-[7rem] leading-none text-logic-lime tabular-nums">{scoreA}</div>
-        </div>
-        <button onClick={() => handleScore('a', 1)}
-          className="h-36 bg-blueprint-blue/20 border-t border-blueprint-blue font-mono text-3xl
-                     text-logic-lime font-bold active:bg-blueprint-blue/50 transition-colors
-                     select-none flex items-center justify-center"
-          aria-label="Add point for Team A">+ 1</button>
-        <button onClick={() => handleScore('a', -1)}
-          className="h-16 border-t border-white/10 font-mono text-sm text-white/30
-                     active:bg-white/5 transition-colors select-none flex items-center justify-center"
-          aria-label="Undo point for Team A">UNDO</button>
-      </div>
-
-      {/* Team B — mirror */}
-      <div className="flex-1 flex flex-col">{/* same structure */}</div>
-    </div>
-
-    {/* Controls */}
-    <div className="border-t border-white/10 p-4 flex justify-between items-center">
-      <button className="font-mono text-xs text-white/40 uppercase tracking-widest border border-white/20 px-4 py-2">
-        PERIOD {period}
-      </button>
-      <button onClick={handleFinal}
-        className="font-mono text-xs text-logic-lime uppercase tracking-widest border border-logic-lime px-6 py-2">
-        FINAL
-      </button>
-    </div>
-  </div>
-);
-```
-
-Score write-back (optimistic → broadcast → persist):
-```tsx
-async function handleScore(team: 'a' | 'b', delta: number) {
-  if (team === 'a') setScoreA(s => Math.max(0, s + delta));
-  else setScoreB(s => Math.max(0, s + delta));
-
-  await supabase.channel(`game-${gameId}`)
-    .send({ type: 'broadcast', event: 'score_update',
-      payload: team === 'a' ? { score_a: Math.max(0, scoreA + delta) } : { score_b: Math.max(0, scoreB + delta) } });
-
-  await supabase.from('games')
-    .update(team === 'a' ? { score_a: Math.max(0, scoreA + delta) } : { score_b: Math.max(0, scoreB + delta) })
-    .eq('id', gameId);
-}
-```
-
-#### 4.3 — PWA Manifest
-
-**File:** `public/manifest.json`:
-```json
-{
-  "name": "FieldLogic Tactical HUD",
-  "short_name": "FL Tactical",
-  "start_url": "/",
-  "display": "fullscreen",
-  "background_color": "#000000",
-  "theme_color": "#000000",
-  "orientation": "portrait"
-}
-```
-
-Add to `app/layout.tsx` `<head>`:
-```tsx
-<link rel="manifest" href="/manifest.json" />
-<meta name="apple-mobile-web-app-capable" content="yes" />
-<meta name="apple-mobile-web-app-status-bar-style" content="black" />
-```
+The Tactical HUD implementation confirmed the following about the write path:
+- `updateGame()` in `lib/db.ts` is server-side only; score taps should use the browser Supabase client for optimistic writes, with a server action reserved for the FINAL status change (which triggers `advancePlayoffs`)
+- Game status enum is `'completed'` — not `'final'`
+- Score fields are `homeScore` / `awayScore` (camelCase in the `Game` type; `home_score` / `away_score` in the DB)
+- Supabase FK join syntax (`!column_name`) requires explicit FK constraints; this project uses plain UUID columns — use separate parallel queries instead
+- `postgres_changes` on the games table already propagates score updates to `LogicSyncBracket`; a separate Realtime broadcast channel is unnecessary
 
 #### Phase 4 Checklist
 
-- [ ] Create `app/[orgSlug]/games/[gameId]/score/layout.tsx` (nav suppression)
-- [ ] Create `app/[orgSlug]/games/[gameId]/score/page.tsx` (full scorekeeper UI)
-- [ ] Implement Team B column (mirror of Team A)
-- [ ] Implement optimistic state + Realtime broadcast + DB write-back
-- [ ] Handle `handleFinal` → update game status to `'final'`
-- [ ] Add `manifest.json` to `/public`
-- [ ] Add manifest + apple meta tags to `app/layout.tsx`
-- [ ] Physical device test: 100% brightness, outdoor glare simulation
+- [ ] Add `'official'` to `OrgRole` type and DB enum
+- [ ] DB migration: update `organization_members.role` check constraint to include `'official'`
+- [ ] Invite flow: admin can invite an official by email (reuse existing invite infrastructure)
+- [ ] Auth guard: `app/[orgSlug]/official/layout.tsx` — allow `'official'`, `'admin'`, `'owner'`; redirect others
+- [ ] Score entry page: `app/[orgSlug]/official/score/page.tsx` — mobile-first, shows games filterable by diamond/division
+- [ ] FINAL action: server action calling `updateGame({ status: 'completed' })` to trigger `advancePlayoffs`
+- [ ] Members admin UI: display officials separately from staff/admin in the members list
 
 ---
 
@@ -1892,14 +1803,14 @@ Secondary CTA:   "View Live Systems"
 | Phase 9 — Error States | Low | Rebrand | 404/500 tone change; auth errors stay plain-language | 1 |
 | Phase 2 — Admin HUD | Low–Med | Cosmetic + Additive | Existing dashboard preserved; HUD styling + event feed | 2 |
 | Phase 8 — Live Logic | Medium | Additive | Lightweight toast rail; no page restructuring | 2 |
-| Phase 4 — Tactical HUD | Medium | Net-new Feature | No existing scorekeeper; solves real field UX gap | 3 |
+| Phase 4 — Official Accounts | Medium | Auth + Net-new Feature | Requires role design; deferred until after bracket complete | 4 |
 | Phase 3 — Bracket | High | Additive/Replace | Confirm public bracket view exists + assess before building | 3 |
-| Phase 5 — Archives | Medium | Net-new Feature | Additive DB + UI; no existing functionality replaced | 4 |
-| Phase 10 — White-Label | Low | Additive | Deferred — infrastructure already exists; build on demand | 5 |
+| Phase 5 — Archives | Medium | Net-new Feature | Additive DB + UI; no existing functionality replaced | 5 |
+| Phase 10 — White-Label | Low | Additive | Deferred — infrastructure already exists; build on demand | 6 |
 
 **Sprint 1 is non-breaking and purely cosmetic.** No DB changes. No new API routes. Can ship as a standalone PR with confidence.
 
-**Sprint 3 ordering note:** Phase 4 (Tactical HUD) is listed first because it is the higher-value net-new feature with no unknowns. Phase 3 (Bracket) requires a pre-implementation step — read the existing public bracket view before committing to scope.
+**Sprint 3 ordering note:** Phase 3 (Bracket) is the remaining Sprint 3 item. Phase 4 (Official Accounts) is deferred to Sprint 4 — it requires auth/role design work that benefits from the bracket and live scoring infrastructure being stable first.
 
 ---
 
