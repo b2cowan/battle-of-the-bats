@@ -1,5 +1,7 @@
+import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { getAuthContext } from '@/lib/api-auth';
+import { getOrganizationBySlug } from '@/lib/db';
 import { TournamentProvider } from '@/lib/tournament-context';
 import { OrgProvider } from '@/lib/org-context';
 import AdminSidebar from '@/components/admin/AdminSidebar';
@@ -8,6 +10,16 @@ import DevPlanSwitcher from '@/components/DevPlanSwitcher';
 import { LiveLogicProvider } from '@/components/live-logic/LiveLogicProvider';
 import { LiveLogicRail } from '@/components/live-logic/LiveLogicRail';
 import styles from './admin.module.css';
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ orgSlug: string }>;
+}): Promise<Metadata> {
+  const { orgSlug } = await params;
+  const org = await getOrganizationBySlug(orgSlug);
+  return { title: org?.name ?? 'Admin' };
+}
 
 export default async function AdminLayout({
   params,
