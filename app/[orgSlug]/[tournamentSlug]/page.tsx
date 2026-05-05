@@ -1,63 +1,53 @@
-﻿import Link from 'next/link';
-import { redirect } from 'next/navigation';
-import { Calendar, Trophy, Users, ChevronRight, Megaphone, Star } from 'lucide-react';
-import { getAnnouncements, getGames, getTeams, getAgeGroups, getDiamonds, getOrganizationBySlug, getTournamentsByOrg } from '@/lib/db';
+import Link from 'next/link';
+import { Calendar, Trophy, ChevronRight, Megaphone, Star } from 'lucide-react';
+import { getAnnouncements, getGames, getTeams, getAgeGroups, getDiamonds, getOrganizationBySlug, getTournamentBySlug } from '@/lib/db';
 import { formatTime } from '@/lib/utils';
 import LocationLink from '@/components/LocationLink';
-import styles from './Home.module.css';
+import styles from '../Home.module.css';
 
 export const dynamic = 'force-dynamic';
 
-export default async function HomePage({ params }: { params: Promise<{ orgSlug: string }> }) {
-  const { orgSlug } = await params;
+export default async function TournamentHomePage({
+  params,
+}: {
+  params: Promise<{ orgSlug: string; tournamentSlug: string }>;
+}) {
+  const { orgSlug, tournamentSlug } = await params;
   const org = await getOrganizationBySlug(orgSlug);
+  if (!org) return null; // layout handles 404
 
-  const allTournaments = org ? await getTournamentsByOrg(org.id) : [];
-  const activeTournaments = allTournaments.filter(t => t.status === 'active');
+  const tournament = await getTournamentBySlug(org.id, tournamentSlug);
+  if (!tournament) return null; // layout handles 404
 
-  // Single active tournament → go straight to its home page
-  if (activeTournaments.length === 1) {
-    redirect(`/${orgSlug}/${activeTournaments[0].slug}`);
-  }
+  const currentYear = tournament.year;
 
-  const activeTournament = activeTournaments[0] ?? null;
-  const currentYear = activeTournament?.year ?? new Date().getFullYear();
-
-  const allAnnouncements = await getAnnouncements(activeTournament?.id);
+  const allAnnouncements = await getAnnouncements(tournament.id);
   const announcements = allAnnouncements.slice(0, 3);
 
-  const allGames = await getGames(activeTournament?.id);
+  const allGames = await getGames(tournament.id);
   const now = new Date().toISOString().split('T')[0];
   const upcomingGames = allGames
     .filter(g => g.status === 'scheduled' && g.date >= now)
     .slice(0, 4);
 
-  const teams = await getTeams(activeTournament?.id);
-  const ageGroups = await getAgeGroups(activeTournament?.id);
-  const diamonds = await getDiamonds(activeTournament?.id);
+  const teams     = await getTeams(tournament.id);
+  const ageGroups = await getAgeGroups(tournament.id);
+  const diamonds  = await getDiamonds(tournament.id);
 
-  const startDate = activeTournament?.startDate;
-  const endDate = activeTournament?.endDate;
-  
-  function formatLongDate(d: string) {
-    return new Date(d + 'T12:00:00').toLocaleDateString('en-CA', { 
-      month: 'long', day: 'numeric', year: 'numeric' 
-    });
-  }
+  const startDate = tournament.startDate;
+  const endDate   = tournament.endDate;
 
   const dateDisplay = (startDate && endDate)
     ? (() => {
         const s = new Date(startDate + 'T12:00:00');
-        const e = new Date(endDate + 'T12:00:00');
+        const e = new Date(endDate   + 'T12:00:00');
         const sMonthDay = s.toLocaleDateString('en-CA', { month: 'long', day: 'numeric' });
         const eMonthDay = e.toLocaleDateString('en-CA', { month: 'long', day: 'numeric' });
         const eYear = e.getFullYear();
-        
         if (s.getFullYear() === e.getFullYear()) {
           return `${sMonthDay} – ${eMonthDay}, ${eYear}`;
-        } else {
-          return `${sMonthDay}, ${s.getFullYear()} – ${eMonthDay}, ${eYear}`;
         }
+        return `${sMonthDay}, ${s.getFullYear()} – ${eMonthDay}, ${eYear}`;
       })()
     : 'Dates To Be Determined';
 
@@ -66,27 +56,25 @@ export default async function HomePage({ params }: { params: Promise<{ orgSlug: 
     const today = new Date().toISOString().split('T')[0];
     if (today < startDate) {
       const msPerDay = 24 * 60 * 60 * 1000;
-      const startMs = new Date(startDate + 'T00:00:00').getTime();
-      const todayMs = new Date(today + 'T00:00:00').getTime();
-      const diffDays = Math.ceil((startMs - todayMs) / msPerDay);
+      const diffDays = Math.ceil(
+        (new Date(startDate + 'T00:00:00').getTime() - new Date(today + 'T00:00:00').getTime()) / msPerDay
+      );
       countdownText = `${diffDays} days to go`;
     } else if (today >= startDate && today <= endDate) {
-      countdownText = "Tournament in Progress! 🔥";
+      countdownText = 'Tournament in Progress! 🔥';
     } else {
-      countdownText = "See you next year!";
+      countdownText = 'See you next year!';
     }
   }
 
-  const isRegistrationOpen = ageGroups.some(g => !g.isClosed);
-
   const sortedAgeGroups = [...ageGroups].sort((a, b) => a.order - b.order);
-  const ageRange = sortedAgeGroups.length > 0 
+  const ageRange = sortedAgeGroups.length > 0
     ? `${sortedAgeGroups[0].name} – ${sortedAgeGroups[sortedAgeGroups.length - 1].name}`
     : 'U11 – U19';
 
-  const getTeamName    = (id: string) => teams.find(t => t.id === id)?.name ?? 'TBD';
+  const getTeamName     = (id: string) => teams.find(t => t.id === id)?.name ?? 'TBD';
   const getAgeGroupName = (id: string) => ageGroups.find(g => g.id === id)?.name ?? '';
-  const getDiamond      = (id?: string) => id ? diamonds.find(d => d.id === id) ?? null : null;
+  const getDiamond      = (id?: string) => id ? (diamonds.find(d => d.id === id) ?? null) : null;
 
   function formatDate(dateStr: string) {
     if (!dateStr) return 'TBD';
@@ -95,66 +83,7 @@ export default async function HomePage({ params }: { params: Promise<{ orgSlug: 
     });
   }
 
-  const heroBanner = org?.heroBannerUrl ?? null;
-
-  if (!activeTournament) {
-    return (
-      <div className={styles.page}>
-        <section className={styles.hero}>
-          {heroBanner ? (
-            <>
-              <div
-                className={styles.heroBanner}
-                style={{ backgroundImage: `url(${heroBanner})` }}
-              />
-              <div className={styles.heroBannerOverlay} />
-            </>
-          ) : (
-            <div className={styles.heroBg}>
-              <div className={styles.heroOrb1} />
-              <div className={styles.heroOrb2} />
-              <div className={styles.heroGrid} />
-            </div>
-          )}
-          <div className={`container ${styles.heroContent}`}>
-            <div className={styles.heroBadge}>
-              <Star size={12} fill="currentColor" />
-              Next Season Coming Soon
-            </div>
-            <h1 className={`display-xl ${styles.heroTitle}`}>
-              BATTLE<br />
-              <span className={styles.heroAccent}>OF THE</span><br />
-              BATS
-            </h1>
-            <p className={styles.heroSub}>
-              The diamonds are resting, but the bats are warming up. We are currently preparing for the next spectacular season of elite youth softball in Milton.
-            </p>
-            <div className={styles.heroCta}>
-              <Link href={`/${orgSlug}/news`} className="btn btn-primary btn-lg" id="hero-news-btn">
-                <Megaphone size={18} /> Latest News
-              </Link>
-              <Link href={`/${orgSlug}/rules`} className="btn btn-outline btn-lg" id="hero-rules-btn">
-                Tournament Rules
-              </Link>
-            </div>
-          </div>
-        </section>
-
-        <section className="section container">
-          <div className="empty-state" style={{ minHeight: '40vh' }}>
-            <Calendar size={60} style={{ color: 'var(--primary-light)', marginBottom: '1.5rem', opacity: 0.5 }} />
-            <h2 className="display-sm">Nothing Scheduled... Yet</h2>
-            <p style={{ maxWidth: '500px', margin: '0 auto', color: 'var(--white-60)' }}>
-              We&apos;re putting the finishing touches on the upcoming schedule. Check back soon to see divisions, teams, and the full lineup for the next Battle of the Bats!
-            </p>
-            <div style={{ marginTop: '2rem' }}>
-              <Link href={`/${orgSlug}/register`} className="btn btn-outline">Registration Info</Link>
-            </div>
-          </div>
-        </section>
-      </div>
-    );
-  }
+  const heroBanner = org.heroBannerUrl ?? null;
 
   return (
     <div className={styles.page}>
@@ -162,10 +91,7 @@ export default async function HomePage({ params }: { params: Promise<{ orgSlug: 
       <section className={styles.hero}>
         {heroBanner ? (
           <>
-            <div
-              className={styles.heroBanner}
-              style={{ backgroundImage: `url(${heroBanner})` }}
-            />
+            <div className={styles.heroBanner} style={{ backgroundImage: `url(${heroBanner})` }} />
             <div className={styles.heroBannerOverlay} />
           </>
         ) : (
@@ -175,6 +101,7 @@ export default async function HomePage({ params }: { params: Promise<{ orgSlug: 
             <div className={styles.heroGrid} />
           </div>
         )}
+
         <div className={`container ${styles.heroContent}`}>
           <div className={styles.heroBadge}>
             <div className={styles.badgeText}>
@@ -190,19 +117,22 @@ export default async function HomePage({ params }: { params: Promise<{ orgSlug: 
               )}
             </div>
           </div>
+
           <h1 className={`display-xl ${styles.heroTitle}`}>
             BATTLE<br />
             <span className={styles.heroAccent}>OF THE</span><br />
             BATS
           </h1>
           <p className={styles.heroSub}>
-            The premier youth softball tournament hosted by the <strong>Milton Bats</strong>. {ageRange} age divisions. Elite competition, lifelong memories.
+            The premier youth softball tournament hosted by the <strong>{org.name}</strong>.{' '}
+            {ageRange} age divisions. Elite competition, lifelong memories.
           </p>
+
           <div className={styles.heroCta}>
-            <Link href={activeTournament ? `/${orgSlug}/${activeTournament.slug}/schedule` : `/${orgSlug}/schedule`} className="btn btn-primary btn-lg" id="hero-schedule-btn">
+            <Link href={`/${orgSlug}/${tournamentSlug}/schedule`} className="btn btn-primary btn-lg" id="hero-schedule-btn">
               <Calendar size={18} /> View Schedule
             </Link>
-            <Link href={activeTournament ? `/${orgSlug}/${activeTournament.slug}/news` : `/${orgSlug}/news`} className="btn btn-outline btn-lg" id="hero-news-btn">
+            <Link href={`/${orgSlug}/${tournamentSlug}/news`} className="btn btn-outline btn-lg" id="hero-news-btn">
               <Megaphone size={18} /> Announcements
             </Link>
           </div>
@@ -249,7 +179,9 @@ export default async function HomePage({ params }: { params: Promise<{ orgSlug: 
               {announcements.map((ann, i) => (
                 <div key={ann.id} className={`card ${styles.annCard} ${i === 0 ? styles.annFeatured : ''}`}>
                   <div className={styles.annHeader}>
-                    {ann.pinned && <span className="badge badge-primary"><Star size={10} fill="currentColor" />&nbsp;Pinned</span>}
+                    {ann.pinned && (
+                      <span className="badge badge-primary"><Star size={10} fill="currentColor" />&nbsp;Pinned</span>
+                    )}
                     <span className={styles.annDate}>
                       {new Date(ann.date).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' })}
                     </span>
@@ -257,10 +189,7 @@ export default async function HomePage({ params }: { params: Promise<{ orgSlug: 
                   <h3 className={styles.annTitle}>{ann.title}</h3>
                   <p className={styles.annBody}>
                     {ann.body ? (
-                      <>
-                        {ann.body.slice(0, 200)}
-                        {ann.body.length > 200 ? '…' : ''}
-                      </>
+                      <>{ann.body.slice(0, 200)}{ann.body.length > 200 ? '…' : ''}</>
                     ) : (
                       'No content provided.'
                     )}
@@ -271,7 +200,7 @@ export default async function HomePage({ params }: { params: Promise<{ orgSlug: 
           )}
 
           <div className="text-center mt-3">
-            <Link href={activeTournament ? `/${orgSlug}/${activeTournament.slug}/news` : `/${orgSlug}/news`} className="btn btn-outline" id="home-all-news-btn">
+            <Link href={`/${orgSlug}/${tournamentSlug}/news`} className="btn btn-outline" id="home-all-news-btn">
               All Announcements <ChevronRight size={16} />
             </Link>
           </div>
@@ -308,11 +237,7 @@ export default async function HomePage({ params }: { params: Promise<{ orgSlug: 
                     <span className={styles.teamName}>{getTeamName(game.awayTeamId)}</span>
                   </div>
                   <div className={styles.gameLocation}>
-                    <LocationLink
-                      location={game.location}
-                      diamond={getDiamond(game.diamondId)}
-                      size="sm"
-                    />
+                    <LocationLink location={game.location} diamond={getDiamond(game.diamondId)} size="sm" />
                   </div>
                 </div>
               ))}
@@ -320,14 +245,14 @@ export default async function HomePage({ params }: { params: Promise<{ orgSlug: 
           )}
 
           <div className="text-center mt-3">
-            <Link href={activeTournament ? `/${orgSlug}/${activeTournament.slug}/schedule` : `/${orgSlug}/schedule`} className="btn btn-outline" id="home-all-schedule-btn">
+            <Link href={`/${orgSlug}/${tournamentSlug}/schedule`} className="btn btn-outline" id="home-all-schedule-btn">
               Full Schedule <ChevronRight size={16} />
             </Link>
           </div>
         </div>
       </section>
 
-      {/* CTA Section */}
+      {/* CTA */}
       <section className={styles.ctaSection}>
         <div className={styles.ctaBg} />
         <div className="container">
@@ -336,8 +261,12 @@ export default async function HomePage({ params }: { params: Promise<{ orgSlug: 
             <h2 className="display-md">Ready to Compete?</h2>
             <p>Check out the full schedule, browse teams, and review the tournament rules before game day.</p>
             <div className={styles.ctaButtons}>
-              <Link href={activeTournament ? `/${orgSlug}/${activeTournament.slug}/rules` : `/${orgSlug}/rules`} className="btn btn-primary btn-lg" id="cta-rules-btn">Tournament Rules</Link>
-              <Link href={activeTournament ? `/${orgSlug}/${activeTournament.slug}/standings` : `/${orgSlug}/standings`} className="btn btn-ghost btn-lg" id="cta-results-btn">View Results</Link>
+              <Link href={`/${orgSlug}/${tournamentSlug}/rules`} className="btn btn-primary btn-lg" id="cta-rules-btn">
+                Tournament Rules
+              </Link>
+              <Link href={`/${orgSlug}/${tournamentSlug}/standings`} className="btn btn-ghost btn-lg" id="cta-results-btn">
+                View Results
+              </Link>
             </div>
           </div>
         </div>
