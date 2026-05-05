@@ -68,7 +68,7 @@ export default function SignupPage() {
             </svg>
           </div>
           <h1 className={styles.title}>Create Your Organization</h1>
-          <p className={styles.sub}>FieldLogic — Tournament Management Platform</p>
+          <p className={styles.sub}>FieldLogicHQ — Tournament Management Platform</p>
         </div>
 
         <form onSubmit={handleSubmit} className={styles.form}>

@@ -18,7 +18,7 @@ export default async function ArchivesPage({
       style={{
         minHeight: '100vh',
         background: 'var(--pitch-black, #0A0A0A)',
-        padding: '2rem',
+        padding: 'calc(var(--nav-height) + 2rem) 2rem 2rem',
         fontFamily: 'var(--font-data, "IBM Plex Mono", monospace)',
       }}
     >

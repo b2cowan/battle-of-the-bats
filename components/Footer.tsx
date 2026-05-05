@@ -50,7 +50,7 @@ export default function Footer() {
 
         <div className="border-t border-blueprint-blue/20 pt-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-2">
           <div className="font-mono text-xs text-data-gray/40">
-            &copy; {new Date().getFullYear()} FieldLogic. All rights reserved.
+            &copy; {new Date().getFullYear()} FieldLogicHQ. All rights reserved.
           </div>
           <div className="font-mono text-xs text-data-gray/40 tracking-widest">
             BUILD: STABLE · NODE: PRODUCTION

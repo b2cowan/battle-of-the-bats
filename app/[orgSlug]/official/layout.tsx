@@ -11,7 +11,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { orgSlug } = await params;
   const org = await getOrganizationBySlug(orgSlug);
-  return { title: org?.name ?? 'FieldLogic' };
+  return { title: org?.name ?? 'FieldLogicHQ' };
 }
 
 export default async function OfficialLayout({
@@ -104,6 +104,7 @@ export default async function OfficialLayout({
         <div style={{ fontFamily: 'var(--font-data)', fontWeight: 700, fontSize: '1rem', letterSpacing: '-0.03em' }}>
           <span style={{ color: '#F1F5F9' }}>FIELD</span>
           <span style={{ color: '#D9F99D' }}>LOGIC</span>
+          <span style={{ color: 'rgba(148,163,184,0.5)' }}>HQ</span>
           <span style={{ color: '#94A3B8', fontWeight: 400, fontSize: '0.7rem', letterSpacing: '0.1em', marginLeft: '0.75rem', textTransform: 'uppercase' }}>
             {authCtx.org.name}
           </span>

@@ -4,6 +4,8 @@ This file tracks the ongoing tasks for the tournament website project. AI models
 
 ## 🚀 Active Tasks
 
+- [ ] **Schedule/Results Revamp** — Unified schedule page (all statuses + inline scores + team filter), new `/standings` page, `/results` → `/standings` redirect, navbar update (see [SCHEDULE_RESULTS_REVAMP_PLAN.md](SCHEDULE_RESULTS_REVAMP_PLAN.md))
+
 - [ ] **Add RESEND_API_KEY to Amplify environment variables** (AWS console → App settings → Environment variables) — required for invite emails to work in production.
 - [ ] **Add NEXT_PUBLIC_APP_URL to Amplify environment variables** — set to production domain (e.g. `https://battleofthebats.ca`); used for invite email redirect and Resend `from` address.
 - [ ] **Email Strategy Investigation**: 

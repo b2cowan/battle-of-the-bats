@@ -1,6 +1,6 @@
-﻿'use client';
+'use client';
 import { useState, useEffect } from 'react';
-import { Calendar, Clock, MapPin, Trophy, List, LayoutTemplate } from 'lucide-react';
+import { Calendar, Clock, Trophy, List, LayoutTemplate } from 'lucide-react';
 import { useParams } from 'next/navigation';
 import { getGames, getTeams, getAgeGroups, getDiamonds, getOrganizationBySlug, getTournamentsByOrg } from '@/lib/db';
 import { Game, Team, AgeGroup, Diamond, Tournament } from '@/lib/types';
@@ -53,110 +53,7 @@ function buildBracketColumns(games: Game[]) {
   return columns;
 }
 
-interface BracketColumnsProps {
-  columns: ReturnType<typeof buildBracketColumns>;
-  getTeamDisplay: (game: Game, isHome: boolean) => string;
-  formatDateShort: (d: string) => string;
-}
-
-function PublicBracketColumns({ columns, getTeamDisplay, formatDateShort }: BracketColumnsProps) {
-  return (
-    <div style={{ display: 'flex', gap: '2rem', padding: '0.5rem 0', minHeight: '240px', minWidth: 'max-content', margin: '0 auto' }}>
-      {columns.map((col, idx) => (
-        <div key={idx} style={{ display: 'flex', flexDirection: 'column', width: '200px', flexShrink: 0 }}>
-          <div style={{
-            textAlign: 'center',
-            color: 'var(--primary-light)',
-            fontFamily: 'var(--font-display)',
-            fontSize: '0.75rem',
-            fontWeight: 900,
-            textTransform: 'uppercase',
-            letterSpacing: '0.12em',
-            marginBottom: '1.25rem',
-            opacity: 0.7,
-          }}>{col.title}</div>
-
-          <div style={{
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: col.title === 'Finals' ? 'center' : 'space-around',
-            flex: 1,
-            gap: col.title === 'Finals' ? '2rem' : '1.25rem',
-          }}>
-            {col.games.map((g, gi) => (
-              <div key={g.id} style={{ position: 'relative' }}>
-                {idx < columns.length - 1 && (
-                  <div style={{
-                    position: 'absolute', right: '-2rem', top: '50%',
-                    width: '2rem', height: '1px',
-                    background: 'var(--primary)', opacity: 0.15, zIndex: 0,
-                  }} />
-                )}
-                <div className="card" style={{
-                  padding: '0.65rem',
-                  border: '1px solid var(--white-10)',
-                  background: 'rgba(15,15,20,0.98)',
-                  backdropFilter: 'blur(20px)',
-                  position: 'relative', zIndex: 1,
-                  boxShadow: '0 8px 20px rgba(0,0,0,0.4)',
-                  borderRadius: '10px',
-                }}>
-                  {/* code badge */}
-                  <div style={{ marginBottom: '6px' }}>
-                    <span style={{
-                      fontSize: '0.55rem', fontWeight: 900, color: 'var(--primary-light)',
-                      background: 'rgba(var(--primary-rgb),0.1)', padding: '2px 7px',
-                      borderRadius: '4px', border: '1px solid rgba(var(--primary-rgb),0.2)',
-                      letterSpacing: '0.02em',
-                    }}>{g.bracketCode || '—'}</span>
-                  </div>
-
-                  {/* teams */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginBottom: '0.6rem' }}>
-                    {[false, true].map(isHome => (
-                      <div key={String(isHome)} style={{ display: 'flex', alignItems: 'center', gap: '7px' }}>
-                        <div style={{
-                          width: '26px', fontSize: '0.5rem', fontWeight: 900, color: 'var(--primary-light)',
-                          textAlign: 'center', background: 'rgba(var(--primary-rgb),0.1)', padding: '1px 0',
-                          borderRadius: '3px', border: '1px solid rgba(var(--primary-rgb),0.2)',
-                          flexShrink: 0,
-                        }}>{isHome ? 'HOM' : 'VIS'}</div>
-                        <div style={{
-                          fontWeight: 700, fontSize: '0.8rem', color: '#fff',
-                          flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-                        }}>{getTeamDisplay(g, isHome)}</div>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* meta */}
-                  <div style={{
-                    display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.3rem',
-                    paddingTop: '0.5rem', borderTop: '1px solid rgba(255,255,255,0.05)',
-                    fontSize: '0.65rem', color: 'var(--white-40)',
-                  }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                      <Calendar size={9} style={{ color: 'var(--primary-light)', opacity: 0.5 }} />
-                      {g.date ? formatDateShort(g.date) : 'TBD'}
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px', justifyContent: 'flex-end' }}>
-                      <Clock size={9} style={{ color: 'var(--primary-light)', opacity: 0.5 }} />
-                      {g.time ? formatTime(g.time) : 'TBD'}
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px', gridColumn: 'span 2' }}>
-                      <MapPin size={9} style={{ color: 'var(--primary-light)', opacity: 0.5 }} />
-                      {g.location || 'TBD'}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
+const NIL_UUID = '00000000-0000-0000-0000-000000000000';
 
 // ── page component ────────────────────────────────────────────────────────────
 
@@ -169,14 +66,17 @@ export default function SchedulePage() {
   const [diamonds, setDiamonds]   = useState<Diamond[]>([]);
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
   const [selectedTournament, setSelectedTournament] = useState<Tournament | null>(null);
-  const [activeGroup, setActiveGroup]   = useState<string>('');
-  const [viewMode, setViewMode]         = useState<'pool' | 'playoff'>('pool');
+  const [activeGroup, setActiveGroup]     = useState<string>('');
+  const [viewMode, setViewMode]           = useState<'pool' | 'playoff'>('pool');
   const [bracketLayout, setBracketLayout] = useState<'list' | 'bracket'>('list');
-  const [loading, setLoading]           = useState(true);
+  const [loading, setLoading]             = useState(true);
+  const [requireFinalization, setRequireFinalization] = useState(true);
+  const [selectedTeamId, setSelectedTeamId] = useState<string>('');
 
   useEffect(() => {
     async function init() {
       const org = await getOrganizationBySlug(orgSlug);
+      if (org) setRequireFinalization(org.requireScoreFinalization ?? true);
       const ts  = org ? await getTournamentsByOrg(org.id) : [];
       setTournaments(ts);
       const active = ts.find(t => t.isActive);
@@ -204,10 +104,17 @@ export default function SchedulePage() {
     fetchGames();
   }, [selectedTournament]);
 
+  // Reset team filter when switching age groups
+  useEffect(() => {
+    setSelectedTeamId('');
+  }, [activeGroup]);
+
+  // ── helper fns ─────────────────────────────────────────────────────────────
+
   const getTeamDisplay = (game: Game, isHome: boolean) => {
     const id = isHome ? game.homeTeamId : game.awayTeamId;
     const ph = isHome ? game.homePlaceholder : game.awayPlaceholder;
-    if (id && id !== '00000000-0000-0000-0000-000000000000') {
+    if (id && id !== NIL_UUID) {
       return teams.find(t => t.id === id)?.name ?? 'TBD';
     }
     return ph || 'TBD';
@@ -215,17 +122,26 @@ export default function SchedulePage() {
 
   const getDiamond = (id?: string) => id ? diamonds.find(d => d.id === id) ?? null : null;
 
-  // bracket view needs completed games too (shows scores) — separate from list-view filtered
+  function getWinner(game: Game): 'home' | 'away' | 'tie' | null {
+    if (game.homeScore == null || game.awayScore == null) return null;
+    if (game.homeScore > game.awayScore) return 'home';
+    if (game.awayScore > game.homeScore) return 'away';
+    return 'tie';
+  }
+
+  // ── derived data ───────────────────────────────────────────────────────────
+
+  // bracket view uses all non-cancelled playoff games (scores shown via LogicSyncBracket)
   const bracketGames = games.filter(g =>
     g.ageGroupId === activeGroup &&
     g.status !== 'cancelled' &&
     !!g.isPlayoff
   );
 
+  // all games for the active group + view mode, all statuses
   const filtered = games
     .filter(g =>
       g.ageGroupId === activeGroup &&
-      g.status === 'scheduled' &&
       (viewMode === 'playoff' ? g.isPlayoff : !g.isPlayoff)
     )
     .sort((a, b) => {
@@ -234,6 +150,11 @@ export default function SchedulePage() {
       if (pd !== 0) return pd;
       return (a.time || '').localeCompare(b.time || '');
     });
+
+  // apply team filter (empty string = no filter)
+  const teamFiltered = selectedTeamId
+    ? filtered.filter(g => g.homeTeamId === selectedTeamId || g.awayTeamId === selectedTeamId)
+    : filtered;
 
   function formatDate(d: string) {
     return new Date(d + 'T12:00:00').toLocaleDateString('en-CA', {
@@ -245,7 +166,7 @@ export default function SchedulePage() {
   }
 
   const byDate: Record<string, Game[]> = {};
-  filtered.forEach(g => {
+  teamFiltered.forEach(g => {
     if (!byDate[g.date]) byDate[g.date] = [];
     byDate[g.date].push(g);
   });
@@ -284,6 +205,7 @@ export default function SchedulePage() {
     return null;
   }
 
+  // uses full `filtered` (not teamFiltered) so pool-split layout doesn't collapse when filter active
   const hasPoolPlaceholders = pools.length >= 2 && filtered.some(g =>
     pools.some(p => {
       const bare = p.name.replace(/^Pool\s+/i, '').trim();
@@ -292,7 +214,18 @@ export default function SchedulePage() {
     })
   );
 
-  // ── pool-section header ────────────────────────────────────────────────────
+  // Teams visible in the active age group (derived from games, excludes TBD placeholders)
+  const ageGroupTeamIds = new Set(
+    games
+      .filter(g => g.ageGroupId === activeGroup)
+      .flatMap(g => [g.homeTeamId, g.awayTeamId])
+      .filter((id): id is string => !!id && id !== NIL_UUID)
+  );
+  const ageGroupTeams = teams
+    .filter(t => ageGroupTeamIds.has(t.id))
+    .sort((a, b) => a.name.localeCompare(b.name));
+
+  // ── pool section header ────────────────────────────────────────────────────
   const PoolHeader = ({ name }: { name: string }) => (
     <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
       <div style={{ height: '1px', flex: 1, background: 'linear-gradient(to right, transparent, var(--primary))' }} />
@@ -301,6 +234,74 @@ export default function SchedulePage() {
     </div>
   );
 
+  // ── game card renderer ─────────────────────────────────────────────────────
+  // `typeLabel` is the right-side badge (bracketCode for playoffs; null for pool play).
+  function renderGameCard(game: Game, extraClass: string, typeLabel: React.ReactNode) {
+    const hasScore = (game.status === 'completed' || game.status === 'submitted') &&
+      game.homeScore != null && game.awayScore != null;
+    const winner = getWinner(game);
+
+    // Per-team class: winner = bright white, loser = dimmed, tie/scheduled = default
+    const homeClass = winner === 'home' ? styles.winTeam : winner === 'away' ? styles.loseTeam : '';
+    const awayClass = winner === 'away' ? styles.winTeam : winner === 'home' ? styles.loseTeam : '';
+
+    // Status label + CSS class for the inline badge above the score
+    const statusLabel =
+      game.status === 'completed' ? 'Final'
+      : game.status === 'submitted' ? (requireFinalization ? 'Pending' : 'Final')
+      : null;
+    const statusCls =
+      game.status === 'completed' || (game.status === 'submitted' && !requireFinalization)
+        ? 'badge-success'
+        : 'badge-warning';
+
+    return (
+      <div key={game.id} className={`card ${styles.gameRow} ${extraClass}`}>
+        <div className={styles.gameTime}><Clock size={13} />{formatTime(game.time)}</div>
+
+        <div className={styles.teams}>
+          {hasScore ? (
+            <>
+              <span className={`${styles.teamA} ${homeClass}`}>
+                {winner === 'home' && <Trophy size={12} className={styles.winIcon} />}
+                {getTeamDisplay(game, true)}
+              </span>
+              <div className={styles.scoreChip}>
+                <span className={`badge ${statusCls} ${styles.statusBadgeInline}`}>{statusLabel}</span>
+                <div className={styles.scoreNumbers}>
+                  <span className={winner === 'home' ? styles.scoreWin : ''}>{game.homeScore}</span>
+                  <span className={styles.scoreSep}>–</span>
+                  <span className={winner === 'away' ? styles.scoreWin : ''}>{game.awayScore}</span>
+                </div>
+              </div>
+              <span className={`${styles.teamB} ${awayClass}`}>
+                {getTeamDisplay(game, false)}
+                {winner === 'away' && <Trophy size={12} className={styles.winIcon} />}
+              </span>
+            </>
+          ) : (
+            <>
+              <span className={styles.teamA}>{getTeamDisplay(game, true)}</span>
+              {game.status === 'cancelled' ? (
+                <span className={`badge ${styles.badgeCancelled}`}>Cancelled</span>
+              ) : (
+                <span className={styles.vsChip}>VS</span>
+              )}
+              <span className={styles.teamB}>{getTeamDisplay(game, false)}</span>
+            </>
+          )}
+        </div>
+
+        <div className={styles.gameMeta}>
+          {typeLabel}
+          <LocationLink location={game.location} diamond={getDiamond(game.diamondId)} size="sm" />
+        </div>
+
+        {game.notes && <p className={styles.gameNotes}>{game.notes}</p>}
+      </div>
+    );
+  }
+
   // ── render ─────────────────────────────────────────────────────────────────
   return (
     <div className="page-content">
@@ -308,7 +309,7 @@ export default function SchedulePage() {
         <div className="container">
           <span className="eyebrow"><Calendar size={12} /> Schedule</span>
           <h1 className="display-lg">Tournament Schedule</h1>
-          <p className="text-muted">View upcoming games by age group. All times are local.</p>
+          <p className="text-muted">View games by age group. All times are local.</p>
         </div>
       </div>
 
@@ -320,8 +321,8 @@ export default function SchedulePage() {
             onSelect={t => { setSelectedTournament(t); }}
           />
 
-          {/* ── tab bar ── */}
-          <div className="tabs flex-between" style={{ padding: '0.375rem 0.75rem', marginBottom: viewMode === 'playoff' ? '0.75rem' : '2rem' }}>
+          {/* ── age group tab bar ── */}
+          <div className="tabs flex-between" style={{ padding: '0.375rem 0.75rem', marginBottom: '0.75rem' }}>
             <div style={{ display: 'flex', gap: '0.5rem' }}>
               {ageGroups.map(g => (
                 <button key={g.id}
@@ -337,9 +338,26 @@ export default function SchedulePage() {
             </div>
           </div>
 
-          {/* ── list / bracket toggle (playoffs only) ── */}
-          {viewMode === 'playoff' && (
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1.5rem', padding: '0 0.75rem' }}>
+          {/* ── team filter + list/bracket toggle row ── */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 0.75rem', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '0.75rem' }}>
+            <div className={styles.teamFilter}>
+              <select
+                className="form-select form-select-sm"
+                value={selectedTeamId}
+                onChange={e => setSelectedTeamId(e.target.value)}
+                style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', minWidth: '160px' }}
+              >
+                <option value="">All Teams</option>
+                {ageGroupTeams.map(t => (
+                  <option key={t.id} value={t.id}>{t.name}</option>
+                ))}
+              </select>
+              {selectedTeamId && (
+                <button className={styles.clearFilter} onClick={() => setSelectedTeamId('')}>×</button>
+              )}
+            </div>
+
+            {viewMode === 'playoff' ? (
               <div className="segmented-control" style={{ border: 'none', background: 'var(--white-10)', padding: '0.15rem' }}>
                 <button
                   className={`segment ${bracketLayout === 'list' ? 'active' : ''}`}
@@ -356,7 +374,14 @@ export default function SchedulePage() {
                   <LayoutTemplate size={12} /> Bracket
                 </button>
               </div>
-            </div>
+            ) : <div />}
+          </div>
+
+          {/* Team filter active label */}
+          {selectedTeamId && (
+            <p className={styles.filterLabel}>
+              Showing games for: <strong>{teams.find(t => t.id === selectedTeamId)?.name}</strong>
+            </p>
           )}
 
           {/* ── main content ── */}
@@ -366,10 +391,14 @@ export default function SchedulePage() {
               <div className={`${styles.skeleton} ${styles.skeletonPulse}`} />
               <div className={`${styles.skeleton} ${styles.skeletonPulse}`} />
             </div>
-          ) : sortedDates.length === 0 && !(viewMode === 'playoff' && bracketLayout === 'bracket') ? (
+          ) : sortedDates.length === 0 && !(viewMode === 'playoff' && bracketLayout === 'bracket') && !(viewMode === 'pool' && pools.length >= 2) && !(viewMode === 'playoff' && hasPoolPlaceholders) ? (
             <div className="empty-state">
               <Calendar size={48} />
-              <p>No scheduled {viewMode === 'playoff' ? 'playoff ' : ''}games found. Check back soon!</p>
+              <p>
+                {selectedTeamId
+                  ? 'No games found for the selected team.'
+                  : `No ${viewMode === 'playoff' ? 'playoff ' : ''}games found. Check back soon!`}
+              </p>
             </div>
           ) : (
             (() => {
@@ -404,6 +433,7 @@ export default function SchedulePage() {
                               games={poolGames}
                               teams={teams}
                               tournamentId={selectedTournament!.id}
+                              highlightTeamId={selectedTeamId || undefined}
                             />
                           </div>
                         );
@@ -417,6 +447,7 @@ export default function SchedulePage() {
                     games={bracketGames}
                     teams={teams}
                     tournamentId={selectedTournament!.id}
+                    highlightTeamId={selectedTeamId || undefined}
                   />
                 );
               }
@@ -425,7 +456,9 @@ export default function SchedulePage() {
               if (viewMode === 'pool' && pools.length >= 2) {
                 return pools.map(pool => {
                   const poolTeams = teams.filter(t => t.poolId === pool.id).map(t => t.id);
-                  const poolGames = filtered.filter(g => poolTeams.includes(g.homeTeamId) || poolTeams.includes(g.awayTeamId));
+                  const poolGames = teamFiltered.filter(g =>
+                    poolTeams.includes(g.homeTeamId) || poolTeams.includes(g.awayTeamId)
+                  );
                   if (poolGames.length === 0) return null;
                   const poolDateGroups: Record<string, Game[]> = {};
                   poolGames.forEach(g => {
@@ -444,21 +477,7 @@ export default function SchedulePage() {
                             {date === today && <span className={styles.todayBadge}>Today</span>}
                           </div>
                           <div className={styles.gamesList}>
-                            {poolDateGroups[date].map(game => (
-                              <div key={game.id} className={`card ${styles.gameRow}`}>
-                                <div className={styles.gameTime}><Clock size={13} />{formatTime(game.time)}</div>
-                                <div className={styles.teams}>
-                                  <span className={styles.teamA}>{getTeamDisplay(game, true)}</span>
-                                  <span className={styles.vsChip}>VS</span>
-                                  <span className={styles.teamB}>{getTeamDisplay(game, false)}</span>
-                                </div>
-                                <div className={styles.gameMeta}>
-                                  <span className="badge badge-primary">{activeG?.name ?? ''}</span>
-                                  <LocationLink location={game.location} diamond={getDiamond(game.diamondId)} size="sm" />
-                                </div>
-                                {game.notes && <p className={styles.gameNotes}>{game.notes}</p>}
-                              </div>
-                            ))}
+                            {poolDateGroups[date].map(game => renderGameCard(game, '', null))}
                           </div>
                         </div>
                       ))}
@@ -472,7 +491,7 @@ export default function SchedulePage() {
                 return (
                   <>
                     {pools.map(pool => {
-                      const poolGames = filtered.filter(g => inferPool(g, filtered) === pool.name);
+                      const poolGames = teamFiltered.filter(g => inferPool(g, teamFiltered) === pool.name);
                       if (poolGames.length === 0) return null;
                       const poolDateGroups: Record<string, Game[]> = {};
                       poolGames.forEach(g => {
@@ -491,20 +510,10 @@ export default function SchedulePage() {
                                 {date === today && <span className={styles.todayBadge}>Today</span>}
                               </div>
                               <div className={styles.gamesList}>
-                                {poolDateGroups[date].map(game => (
-                                  <div key={game.id} className={`card ${styles.gameRow} ${styles.playoffRow}`}>
-                                    <div className={styles.gameTime}><Clock size={13} />{formatTime(game.time)}</div>
-                                    <div className={styles.teams}>
-                                      <span className={styles.teamA}>{getTeamDisplay(game, true)}</span>
-                                      <span className={styles.vsChip}>VS</span>
-                                      <span className={styles.teamB}>{getTeamDisplay(game, false)}</span>
-                                    </div>
-                                    <div className={styles.gameMeta}>
-                                      <span className="badge badge-primary">{game.bracketCode || 'Playoff'}</span>
-                                      <LocationLink location={game.location} diamond={getDiamond(game.diamondId)} size="sm" />
-                                    </div>
-                                    {game.notes && <p className={styles.gameNotes}>{game.notes}</p>}
-                                  </div>
+                                {poolDateGroups[date].map(game => renderGameCard(
+                                  game,
+                                  styles.playoffRow,
+                                  <span className="badge badge-primary">{game.bracketCode || 'Playoff'}</span>
                                 ))}
                               </div>
                             </div>
@@ -525,22 +534,12 @@ export default function SchedulePage() {
                     {date === today && <span className={styles.todayBadge}>Today</span>}
                   </div>
                   <div className={styles.gamesList}>
-                    {byDate[date].map(game => (
-                      <div key={game.id} className={`card ${styles.gameRow} ${game.isPlayoff ? styles.playoffRow : ''}`}>
-                        <div className={styles.gameTime}><Clock size={13} />{formatTime(game.time)}</div>
-                        <div className={styles.teams}>
-                          <span className={styles.teamA}>{getTeamDisplay(game, true)}</span>
-                          <span className={styles.vsChip}>VS</span>
-                          <span className={styles.teamB}>{getTeamDisplay(game, false)}</span>
-                        </div>
-                        <div className={styles.gameMeta}>
-                          <span className="badge badge-primary">
-                            {game.isPlayoff ? (game.bracketCode || 'Playoff') : (ageGroups.find(g => g.id === game.ageGroupId)?.name ?? '')}
-                          </span>
-                          <LocationLink location={game.location} diamond={getDiamond(game.diamondId)} size="sm" />
-                        </div>
-                        {game.notes && <p className={styles.gameNotes}>{game.notes}</p>}
-                      </div>
+                    {byDate[date].map(game => renderGameCard(
+                      game,
+                      game.isPlayoff ? styles.playoffRow : '',
+                      game.isPlayoff
+                        ? <span className="badge badge-primary">{game.bracketCode || 'Playoff'}</span>
+                        : null
                     ))}
                   </div>
                 </div>

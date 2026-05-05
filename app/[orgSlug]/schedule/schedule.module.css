@@ -44,7 +44,7 @@
   grid-template-columns: 80px 1fr auto;
   align-items: center;
   gap: 1.5rem;
-  padding: 1rem 1.5rem;
+  padding: 0.625rem 1.25rem;
 }
 
 .gameRow:hover { transform: translateX(4px); }
@@ -67,14 +67,21 @@
 }
 
 .teamA, .teamB {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
   font-family: var(--font-display);
-  font-size: 1.2rem;
+  font-size: 1rem;
   font-weight: 800;
   color: var(--white);
   flex: 1;
+  min-width: 0;
 }
 
-.teamB { text-align: right; }
+.teamB {
+  justify-content: flex-end;
+  text-align: right;
+}
 
 .vsChip {
   font-family: var(--font-display);
@@ -93,7 +100,7 @@
   flex-direction: column;
   align-items: flex-end;
   gap: 0.4rem;
-  min-width: 140px;
+  min-width: 100px;
 }
 
 .location {
@@ -178,4 +185,99 @@
     align-items: center;
     width: 100%;
   }
+}
+
+/* ── Status badge (cancelled only — success/warning are global) ── */
+.badgeCancelled {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--white-40);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+  padding: 0.15rem 0.6rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+/* ── Score display ── */
+.scoreChip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  flex-shrink: 0;
+}
+
+.scoreNumbers {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 900;
+  color: var(--white-60);
+  white-space: nowrap;
+}
+
+.scoreWin {
+  color: var(--primary-light);
+  text-shadow: 0 0 16px rgba(168, 85, 247, 0.4);
+}
+
+.scoreSep {
+  color: var(--white-30);
+  font-size: 0.9rem;
+}
+
+/* Inline status badge sitting above the score numbers */
+.statusBadgeInline {
+  font-size: 0.6rem !important;
+  padding: 0.1rem 0.5rem !important;
+  letter-spacing: 0.08em;
+}
+
+/* ── Winner / loser / trophy treatments ── */
+.winTeam {
+  color: var(--white) !important;
+}
+
+.loseTeam {
+  color: var(--white-50) !important;
+}
+
+.winIcon {
+  color: var(--warning);
+  flex-shrink: 0;
+}
+
+/* ── Team filter control ── */
+.teamFilter {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.clearFilter {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--white-60);
+  border-radius: 4px;
+  padding: 0.1rem 0.45rem;
+  cursor: pointer;
+  font-size: 1rem;
+  line-height: 1.2;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.clearFilter:hover {
+  color: var(--white);
+  border-color: var(--primary);
+}
+
+.filterLabel {
+  font-size: 0.8rem;
+  color: var(--white-60);
+  margin-bottom: 1.25rem;
+  padding: 0 0.75rem;
 }

@@ -9,7 +9,7 @@ import styles from './Navbar.module.css';
 const NAV_KEYS = [
   { key: 'news',     label: 'News'     },
   { key: 'schedule', label: 'Schedule' },
-  { key: 'results',  label: 'Results'  },
+  { key: 'standings', label: 'Standings' },
   { key: 'teams',    label: 'Teams'    },
   { key: 'rules',    label: 'Rules'    },
 ];
@@ -54,6 +54,7 @@ export default function Navbar() {
           <Link href="/" className="flex items-center font-mono font-bold text-xl tracking-tighter">
             <span className="text-fl-text">FIELD</span>
             <span className="text-logic-lime">LOGIC</span>
+            <span className="text-data-gray/50">HQ</span>
           </Link>
 
           <div className="hidden md:flex items-center gap-8">

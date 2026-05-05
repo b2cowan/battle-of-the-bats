@@ -110,12 +110,25 @@ function nodeY(position: number, colCount: number, totalH: number): number {
 
 // ── SVG sub-components — use org CSS variables, not FieldLogic tokens ────────
 
-function MatchNode({ node, x, y }: { node: BracketNode; x: number; y: number }) {
+function MatchNode({
+  node, x, y, isHighlighted = true, showHighlightRing = false,
+}: {
+  node: BracketNode; x: number; y: number;
+  isHighlighted?: boolean;
+  showHighlightRing?: boolean;
+}) {
   const isHomeWin = node.winnerId === node.homeTeam?.id;
   const isAwayWin = node.winnerId === node.awayTeam?.id;
 
   return (
-    <g transform={`translate(${x},${y})`}>
+    <g
+      transform={`translate(${x},${y})`}
+      style={{
+        opacity: isHighlighted ? 1 : 0.25,
+        filter:  isHighlighted ? undefined : 'saturate(0)',
+        transition: 'opacity 0.2s, filter 0.2s',
+      }}
+    >
       {/* card background */}
       <rect
         width={NODE_WIDTH} height={NODE_HEIGHT} rx={8}
@@ -126,6 +139,17 @@ function MatchNode({ node, x, y }: { node: BracketNode; x: number; y: number }) 
           filter:      node.isLive ? 'url(#glow-primary)' : undefined,
         }}
       />
+      {/* highlight ring when team is selected */}
+      {showHighlightRing && (
+        <rect
+          width={NODE_WIDTH} height={NODE_HEIGHT} rx={8}
+          style={{
+            fill:        'none',
+            stroke:      'var(--primary-light)',
+            strokeWidth: '2',
+          }}
+        />
+      )}
       {/* divider */}
       <line x1="0" y1={NODE_HEIGHT / 2} x2={NODE_WIDTH} y2={NODE_HEIGHT / 2}
         style={{ stroke: 'rgba(var(--primary-rgb), 0.2)', strokeWidth: '1' }} />
@@ -223,9 +247,10 @@ interface LogicSyncBracketProps {
   games: Game[];
   teams: Team[];
   tournamentId: string;
+  highlightTeamId?: string;
 }
 
-export function LogicSyncBracket({ games, teams, tournamentId }: LogicSyncBracketProps) {
+export function LogicSyncBracket({ games, teams, tournamentId, highlightTeamId }: LogicSyncBracketProps) {
   // stable client ref — createClient() from @supabase/ssr creates a new instance on every
   // render, so calling it at component body level and including it in useEffect deps causes
   // infinite re-subscription loops. useRef ensures one instance per component mount.
@@ -387,12 +412,17 @@ export function LogicSyncBracket({ games, teams, tournamentId }: LogicSyncBracke
           col.games.map((_, pi) => {
             const node = nodes.find(n => n.round === ci && n.position === pi);
             if (!node) return null;
+            const nodeMatchesTeam = !!highlightTeamId && (
+              node.homeTeam?.id === highlightTeamId || node.awayTeam?.id === highlightTeamId
+            );
             return (
               <MatchNode
                 key={node.id}
                 node={node}
                 x={ci * ROUND_WIDTH + 20}
                 y={nodeY(pi, col.games.length, totalH)}
+                isHighlighted={!highlightTeamId || nodeMatchesTeam}
+                showHighlightRing={nodeMatchesTeam}
               />
             );
           })

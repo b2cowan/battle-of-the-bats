@@ -26,8 +26,8 @@ const ibmPlexMono = IBM_Plex_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: 'FieldLogic',
-    template: '%s | FieldLogic',
+    default: 'FieldLogicHQ',
+    template: '%s | FieldLogicHQ',
   },
   description: 'Tournament management platform for youth and amateur sports organizations.',
 };
