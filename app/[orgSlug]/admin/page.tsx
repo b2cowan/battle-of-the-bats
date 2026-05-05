@@ -46,14 +46,14 @@ export default function AdminDashboard() {
     <div className={styles.page}>
       <header className="flex items-center justify-between border-b border-blueprint-blue/60 pb-4 mb-8">
         <div>
-          <div className="hud-label mb-1">System Node</div>
+          <div className="hud-label mb-1">Admin</div>
           <h1 className="font-sans font-extrabold text-2xl uppercase tracking-tighter text-fl-text">
             {currentOrg?.name ?? 'Admin'}
           </h1>
         </div>
         <div className="hidden md:flex items-center gap-6 font-mono text-xs text-data-gray">
-          <span className="live-dot text-logic-lime font-bold">SYNC: ACTIVE</span>
-          <span>NODE: {currentOrg?.slug}</span>
+          <span className="live-dot text-logic-lime font-bold">LIVE</span>
+          <span>{currentOrg?.slug}</span>
         </div>
       </header>
 

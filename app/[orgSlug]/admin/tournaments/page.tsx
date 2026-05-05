@@ -617,7 +617,7 @@ export default function AdminTournamentsPage() {
                   )}
 
                   <div className={styles.setupGroup}>
-                    <label className="form-label">Initialize age divisions & capacities:</label>
+                    <label className="form-label">Age divisions & capacities:</label>
                     <div className={styles.divisionGrid}>
                       {['U11', 'U13', 'U15', 'U17', 'U19'].map(div => (
                         <div key={div} className={styles.divisionRow}>
