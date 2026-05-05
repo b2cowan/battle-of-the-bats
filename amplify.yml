@@ -8,6 +8,9 @@ frontend:
     build:
       commands:
         - echo "SUPABASE_SERVICE_ROLE_KEY=$SUPABASE_SERVICE_ROLE_KEY" >> .env.production
+        - echo "RESEND_API_KEY=$RESEND_API_KEY" >> .env.production
+        - echo "RESEND_FROM=$RESEND_FROM" >> .env.production
+        - echo "PLATFORM_ADMIN_EMAILS=$PLATFORM_ADMIN_EMAILS" >> .env.production
         - pnpm run build
   artifacts:
     baseDirectory: .next
