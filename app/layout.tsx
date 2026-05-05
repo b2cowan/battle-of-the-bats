@@ -30,6 +30,7 @@ export const metadata: Metadata = {
     template: '%s | FieldLogicHQ',
   },
   description: 'Tournament management platform for youth and amateur sports organizations.',
+  manifest: '/manifest.json',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
