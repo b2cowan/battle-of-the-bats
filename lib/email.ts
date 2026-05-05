@@ -100,6 +100,27 @@ export function acceptanceHtml(p: {
   `);
 }
 
+export function waitlistConfirmationHtml(p: {
+  teamName: string; coachName: string; ageGroupName: string; tournamentName: string;
+}) {
+  return wrap(`
+    <h2 style="color:#F59E0B;font-size:1.4rem;margin:0 0 1rem;">You're on the Waitlist</h2>
+    <p>Hi <strong>${p.coachName}</strong>,</p>
+    <p>Thanks for registering <strong>${p.teamName}</strong> for the <strong>${p.ageGroupName}</strong> division of <strong>${p.tournamentName}</strong>.</p>
+    <div style="background:#1A1530;border:1px solid rgba(245,158,11,0.3);border-radius:8px;padding:1.25rem;margin:1.5rem 0;">
+      <p style="margin:0 0 0.5rem;font-weight:700;color:#F59E0B;">Waitlist Status</p>
+      <p style="margin:0;line-height:1.8;">
+        Team: <strong>${p.teamName}</strong><br>
+        Coach: <strong>${p.coachName}</strong><br>
+        Division: <strong>${p.ageGroupName}</strong><br>
+        Tournament: <strong>${p.tournamentName}</strong>
+      </p>
+    </div>
+    <p style="color:rgba(255,255,255,0.7);">The <strong>${p.ageGroupName}</strong> division is currently full. Your team has been added to the waitlist and you will be notified by email if a spot becomes available.</p>
+    <p style="color:rgba(255,255,255,0.7);">Questions? Reply to this email or reach out to <a href="mailto:b2cowan@gmail.com" style="color:#A855F7;">b2cowan@gmail.com</a>.</p>
+  `);
+}
+
 export function rejectionHtml(p: {
   teamName: string; coachName: string; ageGroupName: string; tournamentName: string;
 }) {

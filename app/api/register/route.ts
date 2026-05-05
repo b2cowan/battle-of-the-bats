@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
-import { sendEmail, registrationConfirmationHtml, adminNotificationHtml, ADMIN_EMAIL } from '@/lib/email';
+import { sendEmail, registrationConfirmationHtml, waitlistConfirmationHtml, adminNotificationHtml, ADMIN_EMAIL } from '@/lib/email';
 
 export async function POST(req: NextRequest) {
   try {
@@ -63,11 +63,18 @@ export async function POST(req: NextRequest) {
     const adminEmailToUse = contactEmail || ADMIN_EMAIL;
 
     // Fire emails (non-blocking — don't fail the request if email fails)
+    const isWaitlist = finalStatus === 'waitlist';
     await Promise.allSettled([
-      sendEmail(email, `Registration Received — ${teamName}`,
-        registrationConfirmationHtml({ teamName, coachName, ageGroupName, tournamentName })
+      sendEmail(
+        email,
+        isWaitlist ? `Waitlist Confirmation — ${teamName}` : `Registration Received — ${teamName}`,
+        isWaitlist
+          ? waitlistConfirmationHtml({ teamName, coachName, ageGroupName, tournamentName })
+          : registrationConfirmationHtml({ teamName, coachName, ageGroupName, tournamentName })
       ),
-      sendEmail(adminEmailToUse, `New Registration: ${teamName} (${ageGroupName})`,
+      sendEmail(
+        adminEmailToUse,
+        `New Registration: ${teamName} (${ageGroupName})${isWaitlist ? ' — Waitlist' : ''}`,
         adminNotificationHtml({ teamName, coachName, email, ageGroupName, tournamentName })
       ),
     ]);
