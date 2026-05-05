@@ -4,8 +4,9 @@ This file tracks the ongoing tasks for the tournament website project. AI models
 
 ## 🚀 Active Tasks
 
-- [ ] **Add RESEND_API_KEY to Amplify environment variables** (AWS console → App settings → Environment variables) — required for invite emails to work in production.
-- [ ] **Add NEXT_PUBLIC_APP_URL to Amplify environment variables** — set to production domain (e.g. `https://battleofthebats.ca`); used for invite email redirect and Resend `from` address.
+- [x] **Add RESEND_API_KEY to Amplify environment variables** — resolved; key was present but not written to `.env.production` in `amplify.yml`.
+- [x] **Add NEXT_PUBLIC_APP_URL to Amplify environment variables** — confirmed present, set to `https://www.fieldlogichq.ca`.
+- [ ] **Tournament notification contact** — per-tournament contact email in coach-facing email footers; set from Contacts admin page (see EMAIL_CONTACT_PLAN.md). **Requires DB migration:** `ALTER TABLE tournaments ADD COLUMN contact_email TEXT;`
 - [ ] **Email Strategy Investigation**: 
     - [ ] Investigate best-of-breed providers (Resend, Postmark, AWS SES) for system notifications.
     - [ ] Define the architecture for a "Contact Us" inquiry system.

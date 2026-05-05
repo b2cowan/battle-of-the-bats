@@ -90,6 +90,18 @@ export async function POST(req: Request) {
       if (error) throw error;
     }
 
+    // ── set-contact-email ─────────────────────────────────────────────────────
+    else if (action === 'set-contact-email' && id) {
+      const contactEmail = data?.contactEmail ?? null;
+      const { error } = await supabase
+        .from('tournaments')
+        .update({ contact_email: contactEmail })
+        .eq('id', id)
+        .eq('organization_id', auth.org.id);
+
+      if (error) throw error;
+    }
+
     // ── delete ────────────────────────────────────────────────────────────────
     else if (action === 'delete' && id) {
       const { error } = await supabase

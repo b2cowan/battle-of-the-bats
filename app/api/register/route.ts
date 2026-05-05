@@ -11,12 +11,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    // 1. Get Age Group capacity
-    const { data: ageGroup, error: agError } = await supabase
-      .from('age_groups')
-      .select('capacity')
-      .eq('id', ageGroupId)
-      .single();
+    // 1. Get Age Group capacity and tournament contact email
+    const [{ data: ageGroup, error: agError }, { data: tournament }] = await Promise.all([
+      supabase.from('age_groups').select('capacity').eq('id', ageGroupId).single(),
+      supabase.from('tournaments').select('contact_email').eq('id', tournamentId).single(),
+    ]);
 
     if (agError) {
       console.error('Error fetching age group capacity:', agError);
@@ -64,13 +63,14 @@ export async function POST(req: NextRequest) {
 
     // Fire emails (non-blocking — don't fail the request if email fails)
     const isWaitlist = finalStatus === 'waitlist';
+    const contactEmail = tournament?.contact_email ?? undefined;
     await Promise.allSettled([
       sendEmail(
         email,
         isWaitlist ? `Waitlist Confirmation — ${teamName}` : `Registration Received — ${teamName}`,
         isWaitlist
-          ? waitlistConfirmationHtml({ teamName, coachName, ageGroupName, tournamentName })
-          : registrationConfirmationHtml({ teamName, coachName, ageGroupName, tournamentName })
+          ? waitlistConfirmationHtml({ teamName, coachName, ageGroupName, tournamentName, contactEmail })
+          : registrationConfirmationHtml({ teamName, coachName, ageGroupName, tournamentName, contactEmail })
       ),
       sendEmail(
         adminEmailToUse,

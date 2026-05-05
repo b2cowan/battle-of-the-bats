@@ -41,8 +41,9 @@ export interface Tournament {
   slug: string;        // URL-safe identifier; unique per org among non-archived
   status: TournamentStatus;
   isActive: boolean;   // derived: status === 'active'. Kept for compatibility.
-  startDate?: string;  // YYYY-MM-DD
-  endDate?: string;    // YYYY-MM-DD
+  startDate?: string;    // YYYY-MM-DD
+  endDate?: string;      // YYYY-MM-DD
+  contactEmail?: string; // shown in coach-facing email footers
 }
 
 export interface Diamond {

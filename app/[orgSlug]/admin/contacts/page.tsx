@@ -1,6 +1,6 @@
 ﻿'use client';
 import { useState, useEffect } from 'react';
-import { BookUser, Plus, Pencil, Trash2, X, Check, Mail, Phone } from 'lucide-react';
+import { BookUser, Plus, Pencil, Trash2, X, Check, Mail, Phone, Bell, BellOff } from 'lucide-react';
 import { getContacts, saveContact, updateContact, deleteContact } from '@/lib/db';
 import { useTournament } from '@/lib/tournament-context';
 import { Contact } from '@/lib/types';
@@ -15,9 +15,28 @@ export default function AdminContactsPage() {
   const [editing, setEditing] = useState<Contact | null>(null);
   const [form, setForm] = useState({ name: '', email: '', phone: '', role: '' });
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [settingNotif, setSettingNotif] = useState<string | null>(null);
 
   async function refresh() { setContacts(await getContacts(currentTournament?.id)); }
   useEffect(() => { refresh(); }, [currentTournament?.id]);
+
+  async function setNotificationContact(email: string | null) {
+    if (!currentTournament) return;
+    setSettingNotif(email ?? 'clear');
+    await fetch('/api/admin/tournaments', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'set-contact-email',
+        id: currentTournament.id,
+        data: { contactEmail: email },
+      }),
+    });
+    setSettingNotif(null);
+    // Optimistically update local tournament context isn't possible here,
+    // but the value is persisted — reload will reflect it.
+    window.location.reload();
+  }
 
   function openAdd() {
     setForm({ name: '', email: '', phone: '', role: '' });
@@ -74,13 +93,16 @@ export default function AdminContactsPage() {
               <th>Role</th>
               <th>Email</th>
               <th>Phone</th>
+              <th>Notifications</th>
               <th>Actions</th>
             </tr>
           </thead>
           <tbody>
             {contacts.length === 0 ? (
-              <tr><td colSpan={5} style={{ textAlign: 'center', color: 'var(--white-30)', padding: '2rem' }}>No contacts added yet.</td></tr>
-            ) : contacts.map(c => (
+              <tr><td colSpan={6} style={{ textAlign: 'center', color: 'var(--white-30)', padding: '2rem' }}>No contacts added yet.</td></tr>
+            ) : contacts.map(c => {
+              const isNotifContact = currentTournament?.contactEmail === c.email;
+              return (
               <tr key={c.id}>
                 <td><strong>{c.name}</strong></td>
                 <td>{c.role ? <span className="badge badge-primary">{c.role}</span> : '—'}</td>
@@ -97,13 +119,36 @@ export default function AdminContactsPage() {
                   ) : '—'}
                 </td>
                 <td>
+                  {isNotifContact ? (
+                    <button
+                      className="btn btn-primary btn-sm"
+                      title="Currently used for email notifications — click to clear"
+                      disabled={settingNotif !== null}
+                      onClick={() => setNotificationContact(null)}
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}
+                    >
+                      <Bell size={12} /> Active
+                    </button>
+                  ) : (
+                    <button
+                      className="btn btn-ghost btn-sm"
+                      title="Use this contact's email in coach-facing email footers"
+                      disabled={settingNotif !== null}
+                      onClick={() => setNotificationContact(c.email)}
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: 4, color: 'var(--white-40)' }}
+                    >
+                      <BellOff size={12} /> Set
+                    </button>
+                  )}
+                </td>
+                <td>
                   <div className="flex gap-1">
                     <button className="btn btn-ghost btn-sm" onClick={() => openEdit(c)}><Pencil size={13} /></button>
                     <button className="btn btn-danger btn-sm" onClick={() => setDeleteId(c.id)}><Trash2 size={13} /></button>
                   </div>
                 </td>
               </tr>
-            ))}
+            );})}
           </tbody>
         </table>
       </div>
@@ -159,7 +204,7 @@ export default function AdminContactsPage() {
               <button className="btn btn-ghost btn-sm" onClick={() => setDeleteId(null)}><X size={16} /></button>
             </div>
             <p style={{ color: 'var(--white-60)', marginBottom: '0.5rem' }}>
-              This will permanently delete this contact. If this contact is assigned to any age groups, they will revert to the default admin email.
+              This will permanently delete this contact. If this contact is the notification contact for email footers, emails will revert to the default admin address.
             </p>
             <div className="modal-footer">
               <button className="btn btn-ghost" onClick={() => setDeleteId(null)}>Cancel</button>

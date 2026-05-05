@@ -16,10 +16,14 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ id: str
     const body = await req.json();
     const { status, payment_status, admin_notes, age_group_id, poolId } = body;
 
-    // Fetch current record using admin client (bypasses RLS for the lookup)
+    // Fetch current record with joined names and tournament contact email
     const { data: current, error: fetchErr } = await supabaseAdmin
       .from('teams')
-      .select('*')
+      .select(`
+        *,
+        age_groups!teams_age_group_id_fkey (name),
+        tournaments!teams_tournament_id_fkey (name, contact_email)
+      `)
       .eq('id', id)
       .single();
 
@@ -47,8 +51,9 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ id: str
     const p = {
       teamName:       current.name,
       coachName:      current.coach,
-      ageGroupName:   'Division',
-      tournamentName: 'Tournament',
+      ageGroupName:   (current.age_groups as any)?.name ?? 'Division',
+      tournamentName: (current.tournaments as any)?.name ?? 'Tournament',
+      contactEmail:   (current.tournaments as any)?.contact_email ?? undefined,
       teamId:         id,
     };
 

@@ -1288,6 +1288,7 @@ function mapTournament(r: any): Tournament {
     isActive:       status === 'active',
     startDate:      r.start_date ?? undefined,
     endDate:        r.end_date ?? undefined,
+    contactEmail:   r.contact_email ?? undefined,
   };
 }
 

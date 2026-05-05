@@ -25,7 +25,7 @@ export { ADMIN_EMAIL, SITE_URL };
 
 // ── Email templates ────────────────────────────────────────────────────────────
 
-const wrap = (content: string) => `
+const wrap = (content: string, contactEmail = ADMIN_EMAIL) => `
 <div style="font-family:Inter,sans-serif;background:#0D0B14;color:#fff;max-width:600px;margin:0 auto;padding:2rem;border-radius:12px;border:1px solid rgba(var(--primary-rgb),0.3);">
   <div style="margin-bottom:1.5rem;">
     <span style="font-size:1.75rem;font-weight:900;color:#A855F7;letter-spacing:0.04em;">⚾ BATTLE OF THE BATS</span>
@@ -34,12 +34,13 @@ const wrap = (content: string) => `
   <hr style="border:none;border-top:1px solid rgba(255,255,255,0.08);margin:2rem 0;" />
   <p style="color:rgba(255,255,255,0.4);font-size:0.8rem;margin:0;">
     Questions? Reply to this email or contact
-    <a href="mailto:b2cowan@gmail.com" style="color:#A855F7;">b2cowan@gmail.com</a>
+    <a href="mailto:${contactEmail}" style="color:#A855F7;">${contactEmail}</a>
   </p>
 </div>`;
 
 export function registrationConfirmationHtml(p: {
   teamName: string; coachName: string; ageGroupName: string; tournamentName: string;
+  contactEmail?: string;
 }) {
   return wrap(`
     <h2 style="color:#fff;font-size:1.4rem;margin:0 0 1rem;">Registration Received!</h2>
@@ -55,7 +56,7 @@ export function registrationConfirmationHtml(p: {
       </p>
     </div>
     <p style="color:rgba(255,255,255,0.7);">Your registration is currently <strong style="color:#F59E0B;">pending review</strong>. You'll receive another email once your team has been accepted, including payment instructions to secure your spot.</p>
-  `);
+  `, p.contactEmail);
 }
 
 export function adminNotificationHtml(p: {
@@ -79,6 +80,7 @@ export function adminNotificationHtml(p: {
 
 export function acceptanceHtml(p: {
   teamName: string; coachName: string; ageGroupName: string; tournamentName: string; teamId: string;
+  contactEmail?: string;
 }) {
   const profileUrl = `${SITE_URL}/teams/${p.teamId}`;
   return wrap(`
@@ -97,11 +99,12 @@ export function acceptanceHtml(p: {
       <p style="margin:1rem 0 0;color:rgba(255,255,255,0.5);font-size:0.85rem;">Your registration will be fully confirmed once payment is received.</p>
     </div>
     <a href="${profileUrl}" style="display:inline-block;background:#8B2FC9;color:#fff;padding:0.75rem 1.75rem;border-radius:8px;text-decoration:none;font-weight:700;">View Team Profile →</a>
-  `);
+  `, p.contactEmail);
 }
 
 export function waitlistConfirmationHtml(p: {
   teamName: string; coachName: string; ageGroupName: string; tournamentName: string;
+  contactEmail?: string;
 }) {
   return wrap(`
     <h2 style="color:#F59E0B;font-size:1.4rem;margin:0 0 1rem;">You're on the Waitlist</h2>
@@ -117,29 +120,31 @@ export function waitlistConfirmationHtml(p: {
       </p>
     </div>
     <p style="color:rgba(255,255,255,0.7);">The <strong>${p.ageGroupName}</strong> division is currently full. Your team has been added to the waitlist and you will be notified by email if a spot becomes available.</p>
-    <p style="color:rgba(255,255,255,0.7);">Questions? Reply to this email or reach out to <a href="mailto:b2cowan@gmail.com" style="color:#A855F7;">b2cowan@gmail.com</a>.</p>
-  `);
+  `, p.contactEmail);
 }
 
 export function rejectionHtml(p: {
   teamName: string; coachName: string; ageGroupName: string; tournamentName: string;
+  contactEmail?: string;
 }) {
+  const contact = p.contactEmail ?? ADMIN_EMAIL;
   return wrap(`
     <h2 style="color:#EF4444;font-size:1.4rem;margin:0 0 1rem;">Registration Update</h2>
     <p>Hi <strong>${p.coachName}</strong>,</p>
     <p>Thank you for your interest in <strong>${p.tournamentName}</strong>. Unfortunately, we are unable to accommodate <strong>${p.teamName}</strong> in the <strong>${p.ageGroupName}</strong> division at this time.</p>
     <p style="color:rgba(255,255,255,0.7);">This may be due to division capacity or eligibility requirements. Please contact us if you have any questions.</p>
-    <a href="mailto:b2cowan@gmail.com" style="display:inline-block;background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.4);color:#f87171;padding:0.75rem 1.75rem;border-radius:8px;text-decoration:none;font-weight:700;margin-top:0.5rem;">Contact Us</a>
-  `);
+    <a href="mailto:${contact}" style="display:inline-block;background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.4);color:#f87171;padding:0.75rem 1.75rem;border-radius:8px;text-decoration:none;font-weight:700;margin-top:0.5rem;">Contact Us</a>
+  `, contact);
 }
 
 export function paymentConfirmationHtml(p: {
   teamName: string; coachName: string; ageGroupName: string; tournamentName: string;
+  contactEmail?: string;
 }) {
   return wrap(`
     <h2 style="color:#22C55E;font-size:1.4rem;margin:0 0 1rem;">✅ Payment Confirmed!</h2>
     <p>Hi <strong>${p.coachName}</strong>,</p>
     <p>Your payment for <strong>${p.teamName}</strong> has been received and confirmed. Your registration for the <strong>${p.ageGroupName}</strong> division of <strong>${p.tournamentName}</strong> is now <strong style="color:#22C55E;">complete</strong>!</p>
     <p style="color:rgba(255,255,255,0.7);">Stay tuned for schedule announcements. We look forward to seeing you on the diamond!</p>
-  `);
+  `, p.contactEmail);
 }
