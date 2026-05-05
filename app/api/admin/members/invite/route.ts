@@ -118,13 +118,12 @@ export async function POST(req: Request) {
   // Send invite email via Resend
   const inviteUrl = (linkData as any).properties?.action_link ?? linkData.properties?.action_link;
 
-  const fromDomain = new URL(appUrl).hostname;
   const roleLabel = role === 'official' ? 'field official (scorekeeper)' : `team ${role}`;
   const officialNote = role === 'official'
     ? `<p>As a field official, you'll have access to the score entry app to submit game results from your assigned diamonds.</p>`
     : '';
   await getResend().emails.send({
-    from: `noreply@${fromDomain}`,
+    from: process.env.RESEND_FROM ?? 'noreply@fieldlogichq.ca',
     to: email,
     subject: `You've been invited to ${org.name} on Battle of the Bats`,
     html: `
