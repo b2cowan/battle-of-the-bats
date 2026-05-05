@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { sendEmail, registrationConfirmationHtml, waitlistConfirmationHtml, adminNotificationHtml, ADMIN_EMAIL } from '@/lib/email';
+import { getOrgOwnerEmail } from '@/lib/supabase-admin';
 
 export async function POST(req: NextRequest) {
   try {
@@ -14,7 +15,7 @@ export async function POST(req: NextRequest) {
     // 1. Get Age Group capacity and tournament contact email
     const [{ data: ageGroup, error: agError }, { data: tournament }] = await Promise.all([
       supabase.from('age_groups').select('capacity').eq('id', ageGroupId).single(),
-      supabase.from('tournaments').select('contact_email').eq('id', tournamentId).single(),
+      supabase.from('tournaments').select('contact_email, organization_id').eq('id', tournamentId).single(),
     ]);
 
     if (agError) {
@@ -63,7 +64,9 @@ export async function POST(req: NextRequest) {
 
     // Fire emails (non-blocking — don't fail the request if email fails)
     const isWaitlist = finalStatus === 'waitlist';
-    const contactEmail = tournament?.contact_email ?? undefined;
+    const contactEmail = tournament?.contact_email
+      || (tournament?.organization_id ? await getOrgOwnerEmail(tournament.organization_id) : undefined)
+      || undefined;
     await Promise.allSettled([
       sendEmail(
         email,

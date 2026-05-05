@@ -6,6 +6,7 @@ import {
   acceptanceHtml, rejectionHtml, paymentConfirmationHtml,
 } from '@/lib/email';
 import { getAuthContext, unauthorized } from '@/lib/api-auth';
+import { getOrgOwnerEmail } from '@/lib/supabase-admin';
 
 export async function PATCH(req: NextRequest, props: { params: Promise<{ id: string }> }) {
   const auth = await getAuthContext();
@@ -22,7 +23,7 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ id: str
       .select(`
         *,
         age_groups!teams_age_group_id_fkey (name),
-        tournaments!teams_tournament_id_fkey (name, contact_email)
+        tournaments!teams_tournament_id_fkey (name, contact_email, organization_id)
       `)
       .eq('id', id)
       .single();
@@ -48,12 +49,18 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ id: str
       return NextResponse.json({ error: updateErr.message }, { status: 500 });
     }
 
+    const tournamentData = current.tournaments as any;
+    const orgOwnerId = tournamentData?.organization_id;
+    const contactEmail = tournamentData?.contact_email
+      || (orgOwnerId ? await getOrgOwnerEmail(orgOwnerId) : undefined)
+      || undefined;
+
     const p = {
       teamName:       current.name,
       coachName:      current.coach,
       ageGroupName:   (current.age_groups as any)?.name ?? 'Division',
-      tournamentName: (current.tournaments as any)?.name ?? 'Tournament',
-      contactEmail:   (current.tournaments as any)?.contact_email ?? undefined,
+      tournamentName: tournamentData?.name ?? 'Tournament',
+      contactEmail,
       teamId:         id,
     };
 
