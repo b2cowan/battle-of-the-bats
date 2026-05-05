@@ -30,9 +30,9 @@ export async function middleware(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
 
   const { pathname } = request.nextUrl;
+  const segments = pathname.split('/').filter(Boolean);
 
   // Protect /[orgSlug]/admin/* routes — second path segment must be 'admin'
-  const segments = pathname.split('/').filter(Boolean);
   const isOrgAdmin = segments.length >= 2 && segments[1] === 'admin';
 
   if (isOrgAdmin && !user) {
@@ -40,6 +40,21 @@ export async function middleware(request: NextRequest) {
     url.pathname = '/auth/login';
     url.searchParams.set('next', pathname);
     return NextResponse.redirect(url);
+  }
+
+  // Protect /platform-admin/* — platform operator only (email allowlist)
+  if (segments[0] === 'platform-admin') {
+    if (!user) {
+      const url = request.nextUrl.clone();
+      url.pathname = '/auth/login';
+      url.searchParams.set('next', pathname);
+      return NextResponse.redirect(url);
+    }
+    const adminEmails = (process.env.PLATFORM_ADMIN_EMAILS ?? '')
+      .split(',').map(e => e.trim().toLowerCase()).filter(Boolean);
+    if (!user.email || !adminEmails.includes(user.email.toLowerCase())) {
+      return new NextResponse('Forbidden', { status: 403 });
+    }
   }
 
   // Pass org slug downstream so server components can read it without re-parsing the URL
@@ -51,5 +66,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/:slug/admin/:path*', '/auth/:path*'],
+  matcher: ['/:slug/admin/:path*', '/auth/:path*', '/platform-admin', '/platform-admin/:path*'],
 };
