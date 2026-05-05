@@ -170,6 +170,7 @@ export interface Announcement {
   body: string;
   date: string; // ISO date string
   pinned: boolean;
+  ageGroupIds?: string[] | null; // null = all divisions
 }
 
 export interface RuleSection {
@@ -179,6 +180,7 @@ export interface RuleSection {
   icon?: string;
   order: number;
   items: RuleItem[];
+  ageGroupIds?: string[] | null; // null = all divisions
 }
 
 export interface RuleItem {

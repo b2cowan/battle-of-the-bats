@@ -4,6 +4,8 @@ This file tracks the ongoing tasks for the tournament website project. AI models
 
 ## 🚀 Active Tasks
 
+- [ ] **Age Group Preference Persistence & Content Filtering** — Cookie-based tab persistence across Schedule/Standings/Teams (Phase A); division tagging for News/Rules with admin UI and DB migration (Phase B) (see [AGE_GROUP_FILTER_PLAN.md](AGE_GROUP_FILTER_PLAN.md))
+
 - [ ] **Schedule/Results Revamp** — Unified schedule page (all statuses + inline scores + team filter), new `/standings` page, `/results` → `/standings` redirect, navbar update (see [SCHEDULE_RESULTS_REVAMP_PLAN.md](SCHEDULE_RESULTS_REVAMP_PLAN.md))
 
 - [ ] **Add RESEND_API_KEY to Amplify environment variables** (AWS console → App settings → Environment variables) — required for invite emails to work in production.

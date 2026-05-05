@@ -1,9 +1,9 @@
 ﻿'use client';
 import { useState, useEffect } from 'react';
 import { Megaphone, Plus, Pencil, Trash2, X, Check, Star } from 'lucide-react';
-import { getAnnouncements, saveAnnouncement, updateAnnouncement, deleteAnnouncement } from '@/lib/db';
+import { getAnnouncements, saveAnnouncement, updateAnnouncement, deleteAnnouncement, getAgeGroups } from '@/lib/db';
 import { useTournament } from '@/lib/tournament-context';
-import { Announcement } from '@/lib/types';
+import { Announcement, AgeGroup } from '@/lib/types';
 import styles from './announcements-admin.module.css';
 
 type ModalMode = 'add' | 'edit' | null;
@@ -11,22 +11,28 @@ type ModalMode = 'add' | 'edit' | null;
 export default function AdminAnnouncementsPage() {
   const { currentTournament } = useTournament();
   const [items, setItems] = useState<Announcement[]>([]);
+  const [ageGroups, setAgeGroups] = useState<AgeGroup[]>([]);
   const [modal, setModal] = useState<ModalMode>(null);
   const [editing, setEditing] = useState<Announcement | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
-  const [form, setForm] = useState({ title: '', body: '', pinned: false });
+  const [form, setForm] = useState<{ title: string; body: string; pinned: boolean; ageGroupIds: string[] | null }>({
+    title: '', body: '', pinned: false, ageGroupIds: null,
+  });
 
   async function refresh() { setItems(await getAnnouncements(currentTournament?.id)); }
   useEffect(() => { refresh(); }, [currentTournament?.id]);
+  useEffect(() => {
+    if (currentTournament?.id) getAgeGroups(currentTournament.id).then(setAgeGroups);
+  }, [currentTournament?.id]);
 
   function openAdd() {
-    setForm({ title: '', body: '', pinned: false });
+    setForm({ title: '', body: '', pinned: false, ageGroupIds: null });
     setEditing(null);
     setModal('add');
   }
 
   function openEdit(a: Announcement) {
-    setForm({ title: a.title, body: a.body, pinned: a.pinned });
+    setForm({ title: a.title, body: a.body, pinned: a.pinned, ageGroupIds: a.ageGroupIds ?? null });
     setEditing(a);
     setModal('edit');
   }
@@ -34,7 +40,14 @@ export default function AdminAnnouncementsPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!currentTournament) return;
-    const data = { tournamentId: currentTournament.id, ...form, title: form.title.trim(), body: form.body.trim(), date: editing?.date ?? new Date().toISOString() };
+    const data = {
+      tournamentId: currentTournament.id,
+      ...form,
+      title: form.title.trim(),
+      body: form.body.trim(),
+      date: editing?.date ?? new Date().toISOString(),
+      ageGroupIds: form.ageGroupIds?.length ? form.ageGroupIds : null,
+    };
     if (modal === 'add') await saveAnnouncement(data);
     else if (editing) await updateAnnouncement(editing.id, data);
     setModal(null);
@@ -111,6 +124,40 @@ export default function AdminAnnouncementsPage() {
                 <textarea className="form-textarea" placeholder="Write your announcement here..." rows={12} value={form.body}
                   onChange={e => setForm(f => ({ ...f, body: e.target.value }))} required style={{ fontSize: '1rem', lineHeight: '1.6' }} />
               </div>
+              {ageGroups.length > 0 && (
+                <div className="form-group" style={{ marginBottom: '1.5rem' }}>
+                  <label className="form-label">Division Visibility</label>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', marginTop: '0.5rem' }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.9rem' }}>
+                      <input
+                        type="checkbox"
+                        checked={!form.ageGroupIds?.length}
+                        onChange={() => setForm(f => ({ ...f, ageGroupIds: null }))}
+                      />
+                      All divisions <span style={{ color: 'var(--white-40)', fontSize: '0.75rem' }}>(default)</span>
+                    </label>
+                    {ageGroups.map(g => (
+                      <label key={g.id} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.9rem' }}>
+                        <input
+                          type="checkbox"
+                          checked={form.ageGroupIds?.includes(g.id) ?? false}
+                          onChange={e => {
+                            setForm(f => {
+                              const ids = f.ageGroupIds ? [...f.ageGroupIds] : [];
+                              const next = e.target.checked
+                                ? [...ids, g.id]
+                                : ids.filter(id => id !== g.id);
+                              return { ...f, ageGroupIds: next.length ? next : null };
+                            });
+                          }}
+                        />
+                        {g.name}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               <div className={styles.pinnedToggle}>
                 <input type="checkbox" id="ann-pinned" checked={form.pinned}
                   onChange={e => setForm(f => ({ ...f, pinned: e.target.checked }))} />

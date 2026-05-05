@@ -1,12 +1,10 @@
+import { cookies } from 'next/headers';
 import { BookOpen, FileText, Shield, AlertCircle, CheckCircle, Download, ExternalLink } from 'lucide-react';
-import type { Metadata } from 'next';
-import { getOrganizationBySlug, getActiveTournamentByOrg, getRules, getResources } from '@/lib/db';
+import { getOrganizationBySlug, getActiveTournamentByOrg, getRules, getResources, getAgeGroups } from '@/lib/db';
+import DivisionFilterBar from '@/components/DivisionFilterBar';
 import styles from './rules.module.css';
 
-export const metadata: Metadata = {
-  title: 'Rules & Resources | Battle of the Bats',
-  description: 'Tournament rules, code of conduct, and resources for the Battle of the Bats softball tournament.',
-};
+export const dynamic = 'force-dynamic';
 
 const ICON_MAP: Record<string, any> = {
   Shield: Shield,
@@ -75,20 +73,44 @@ const FALLBACK_RESOURCES = [
   { label: 'Medical Waiver Form', url: '#' },
 ];
 
-export default async function RulesPage({ params }: { params: Promise<{ orgSlug: string }> }) {
+export default async function RulesPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ orgSlug: string }>;
+  searchParams: Promise<{ view?: string }>;
+}) {
   const { orgSlug } = await params;
+  const { view } = await searchParams;
+
+  const cookieStore = await cookies();
+  const prefName = cookieStore.get(`fl_agpref_${orgSlug}`)?.value ?? null;
+
   const org = await getOrganizationBySlug(orgSlug);
   const active = org ? await getActiveTournamentByOrg(org.id) : null;
-  
-  let rules: any[] = [];
+
+  let allRules: any[] = [];
   let resources: any[] = [];
-  
+  let ageGroups: any[] = [];
+
   if (active) {
-    rules = await getRules(active.id);
-    resources = await getResources(active.id);
+    [allRules, resources, ageGroups] = await Promise.all([
+      getRules(active.id),
+      getResources(active.id),
+      getAgeGroups(active.id),
+    ]);
   }
 
-  const displayRules = rules.length > 0 ? rules : FALLBACK_RULES;
+  const preferredGroup = prefName ? ageGroups.find((g: any) => g.name === prefName) : null;
+  const hasTaggedContent = allRules.some((r: any) => r.ageGroupIds?.length);
+  const isFiltering = !!preferredGroup && view !== 'all' && hasTaggedContent;
+
+  const displayRules = allRules.length > 0
+    ? (isFiltering
+        ? allRules.filter((r: any) => !r.ageGroupIds?.length || r.ageGroupIds.includes(preferredGroup!.id))
+        : allRules)
+    : FALLBACK_RULES;
+
   const displayResources = resources.length > 0 ? resources : FALLBACK_RESOURCES;
 
   return (
@@ -98,7 +120,7 @@ export default async function RulesPage({ params }: { params: Promise<{ orgSlug:
           <span className="eyebrow"><BookOpen size={12} /> Rules & Resources</span>
           <h1 className="display-lg">Tournament Rules</h1>
           <p className="text-muted">
-            Official rules, conduct guidelines, and resources for the Battle of the Bats. All participants
+            Official rules, conduct guidelines, and resources for the tournament. All participants
             are expected to have read and understood these rules before game day.
           </p>
         </div>
@@ -106,8 +128,19 @@ export default async function RulesPage({ params }: { params: Promise<{ orgSlug:
 
       <div className="section">
         <div className="container">
+          {hasTaggedContent && prefName && ageGroups.length > 0 && (
+            <DivisionFilterBar
+              orgSlug={orgSlug}
+              ageGroups={ageGroups}
+              activeName={prefName}
+              isFiltering={isFiltering}
+              viewAllHref={`/${orgSlug}/rules?view=all`}
+              backHref={`/${orgSlug}/rules`}
+            />
+          )}
+
           <div className={styles.rulesGrid}>
-            {displayRules.map(section => {
+            {displayRules.map((section: any) => {
               const Icon = ICON_MAP[section.icon || 'Shield'] || Shield;
               return (
                 <div key={section.title} className={`card ${styles.ruleCard}`}>
@@ -130,7 +163,6 @@ export default async function RulesPage({ params }: { params: Promise<{ orgSlug:
             })}
           </div>
 
-          {/* Resources */}
           <div className={`card ${styles.resourcesCard}`}>
             <div className={styles.ruleCardHeader}>
               <div className={styles.ruleIcon}>
@@ -141,16 +173,15 @@ export default async function RulesPage({ params }: { params: Promise<{ orgSlug:
             <div className={styles.resourcesList} style={{ marginTop: '1.5rem' }}>
               {displayResources.map((r: any) => {
                 const isSupabase = r.url.includes('supabase.co');
-                // Force download only for Supabase files
                 const downloadUrl = isSupabase ? `${r.url}?download=` : r.url;
                 const isExternal = !isSupabase && r.url.startsWith('http');
-                
+
                 return (
                   <a
                     key={r.label}
                     href={downloadUrl}
                     download={isSupabase ? r.label : undefined}
-                    target={isExternal ? "_blank" : undefined}
+                    target={isExternal ? '_blank' : undefined}
                     rel="noopener noreferrer"
                     className={styles.resourceItem}
                   >

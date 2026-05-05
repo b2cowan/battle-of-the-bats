@@ -3,18 +3,24 @@
 import { useEffect, useRef, useState } from 'react';
 import { Trophy } from 'lucide-react';
 import { createClient } from '@/lib/supabase-browser';
-import { formatPoolName } from '@/lib/utils';
+import { formatPoolName, formatTime } from '@/lib/utils';
 import type { Game, Team } from '@/lib/types';
 import type { BracketNode } from '@/lib/types/bracket';
 
 // ── layout constants ───────────────────────────────────────────────────────────
 
-const ROUND_WIDTH    = 240;
-const NODE_HEIGHT    = 80;
+const ROUND_WIDTH    = 260;
+const NODE_HEIGHT    = 104;
 const NODE_GAP       = 24;
-const NODE_WIDTH     = 200;
+const NODE_WIDTH     = 220;
 const CONNECTOR_STUB = 40;
 const V_PAD          = 32;
+
+// ── meta strip layout constants ────────────────────────────────────────────────
+const META_H      = 18;   // height of the top date/status strip
+const HOME_TEXT_Y = 38;   // baseline of home team text
+const DIVIDER_Y   = 60;   // center divider line y
+const AWAY_TEXT_Y = 82;   // baseline of away team text
 
 // ── column builder (mirrors schedule/page.tsx bracketPriority + buildBracketColumns) ──
 
@@ -94,6 +100,9 @@ function makeNode(game: Game, round: number, position: number, teams: Team[]): B
     winnerId,
     bracketCode: game.bracketCode ?? '',
     isLive: false,
+    date: game.date ?? '',
+    time: game.time ?? '',
+    status: (game.status ?? 'scheduled') as BracketNode['status'],
   };
 }
 
@@ -108,17 +117,69 @@ function nodeY(position: number, colCount: number, totalH: number): number {
   return V_PAD + position * slotH + slotH / 2 - NODE_HEIGHT / 2;
 }
 
+// ── SVG trophy icon (mirrors lucide Trophy at small scale) ───────────────────
+
+function TrophyIcon({ x, y, size = 12, color = 'var(--primary-light)' }: {
+  x: number; y: number; size?: number; color?: string;
+}) {
+  const scale = size / 24;
+  const s: React.CSSProperties = { fill: 'none', stroke: color, strokeWidth: 2, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const };
+  return (
+    <g transform={`translate(${x},${y}) scale(${scale})`}>
+      <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" style={s} />
+      <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" style={s} />
+      <path d="M4 22h16" style={s} />
+      <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22" style={s} />
+      <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22" style={s} />
+      <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z" style={s} />
+    </g>
+  );
+}
+
 // ── SVG sub-components — use org CSS variables, not FieldLogic tokens ────────
 
 function MatchNode({
-  node, x, y, isHighlighted = true, showHighlightRing = false,
+  node, x, y, isHighlighted = true, showHighlightRing = false, requireFinalization = true,
 }: {
   node: BracketNode; x: number; y: number;
   isHighlighted?: boolean;
   showHighlightRing?: boolean;
+  requireFinalization?: boolean;
 }) {
-  const isHomeWin = node.winnerId === node.homeTeam?.id;
-  const isAwayWin = node.winnerId === node.awayTeam?.id;
+  // guard against null === null when both winnerId and teamId are null
+  const isHomeWin = node.winnerId !== null && node.winnerId === node.homeTeam?.id;
+  const isAwayWin = node.winnerId !== null && node.winnerId === node.awayTeam?.id;
+
+  const homeScoreColor = node.winnerId
+    ? (isHomeWin ? 'var(--primary-light)' : 'rgba(255,255,255,0.35)')
+    : 'var(--primary-light)';
+  const awayScoreColor = node.winnerId
+    ? (isAwayWin ? 'var(--primary-light)' : 'rgba(255,255,255,0.35)')
+    : 'var(--primary-light)';
+
+  // date/time meta
+  const dateText = node.date
+    ? new Date(node.date + 'T12:00:00').toLocaleDateString('en-CA', { month: 'short', day: 'numeric' })
+    : '';
+  const timeText = node.time ? formatTime(node.time) : '';
+  const metaText = [dateText, timeText].filter(Boolean).join(' · ');
+
+  // status badge
+  const statusLabel =
+    node.status === 'completed' ? 'Final'
+    : node.status === 'submitted' ? (requireFinalization ? 'Pending' : 'Final')
+    : node.status === 'cancelled' ? 'Cancelled'
+    : null;
+  const statusColor =
+    statusLabel === 'Final'     ? '#4ade80'
+    : statusLabel === 'Pending'   ? '#fbbf24'
+    : statusLabel === 'Cancelled' ? 'rgba(255,255,255,0.35)'
+    : null;
+
+  // team name truncation (shorter when trophy icon precedes)
+  const homeName = (node.homeTeam?.name ?? 'TBD').slice(0, isHomeWin ? 17 : 20);
+  const awayName = (node.awayTeam?.name ?? 'TBD').slice(0, isAwayWin ? 17 : 20);
+  const TROPHY_W = 14; // horizontal space reserved for the trophy icon
 
   return (
     <g
@@ -139,82 +200,89 @@ function MatchNode({
           filter:      node.isLive ? 'url(#glow-primary)' : undefined,
         }}
       />
+      {/* meta strip background */}
+      <rect width={NODE_WIDTH} height={META_H} rx={8}
+        style={{ fill: 'rgba(var(--primary-rgb), 0.08)' }} />
+      <rect width={NODE_WIDTH} y={META_H / 2} height={META_H / 2}
+        style={{ fill: 'rgba(var(--primary-rgb), 0.08)' }} />
+
+      {/* meta: date · time */}
+      {metaText && (
+        <text x="9" y={META_H - 4} fontSize="8.5"
+          style={{ fill: 'rgba(255,255,255,0.45)', fontFamily: 'var(--font-sans)' }}>
+          {metaText}
+        </text>
+      )}
+      {/* meta: status badge */}
+      {statusLabel && (
+        <text x={NODE_WIDTH - 9} y={META_H - 4} fontSize="8.5" fontWeight="700" textAnchor="end"
+          style={{ fill: statusColor ?? undefined, fontFamily: 'var(--font-sans)' }}>
+          {statusLabel}
+        </text>
+      )}
+
+      {/* meta separator */}
+      <line x1="0" y1={META_H} x2={NODE_WIDTH} y2={META_H}
+        style={{ stroke: 'rgba(var(--primary-rgb), 0.15)', strokeWidth: '0.5' }} />
+
       {/* highlight ring when team is selected */}
       {showHighlightRing && (
         <rect
           width={NODE_WIDTH} height={NODE_HEIGHT} rx={8}
-          style={{
-            fill:        'none',
-            stroke:      'var(--primary-light)',
-            strokeWidth: '2',
-          }}
+          style={{ fill: 'none', stroke: 'var(--primary-light)', strokeWidth: '2' }}
         />
       )}
-      {/* divider */}
-      <line x1="0" y1={NODE_HEIGHT / 2} x2={NODE_WIDTH} y2={NODE_HEIGHT / 2}
+
+      {/* center divider */}
+      <line x1="0" y1={DIVIDER_Y} x2={NODE_WIDTH} y2={DIVIDER_Y}
         style={{ stroke: 'rgba(var(--primary-rgb), 0.2)', strokeWidth: '1' }} />
 
       {/* home team name */}
-      <text x="10" y="24" fontSize="11" fontWeight="700"
+      {isHomeWin && <TrophyIcon x={9} y={HOME_TEXT_Y - 10} size={12} />}
+      <text x={isHomeWin ? 9 + TROPHY_W : 10} y={HOME_TEXT_Y} fontSize="11" fontWeight="700"
         style={{
           fill:       isHomeWin ? 'var(--primary-light)' : 'rgba(255,255,255,0.9)',
           fontFamily: 'var(--font-sans)',
         }}>
-        {(node.homeTeam?.name ?? 'TBD').slice(0, 20)}
+        {homeName}
       </text>
       {node.homeScore !== null && (
-        <text x={NODE_WIDTH - 10} y="24"
+        <text x={NODE_WIDTH - 10} y={HOME_TEXT_Y}
           fontSize="14" fontWeight="900" textAnchor="end"
-          style={{ fill: 'var(--primary-light)', fontFamily: 'var(--font-display)' }}>
+          style={{ fill: homeScoreColor, fontFamily: 'var(--font-display)' }}>
           {node.homeScore}
         </text>
       )}
 
       {/* away team name */}
-      <text x="10" y={NODE_HEIGHT - 14} fontSize="11" fontWeight="700"
+      {isAwayWin && <TrophyIcon x={9} y={AWAY_TEXT_Y - 10} size={12} />}
+      <text x={isAwayWin ? 9 + TROPHY_W : 10} y={AWAY_TEXT_Y} fontSize="11" fontWeight="700"
         style={{
           fill:       isAwayWin ? 'var(--primary-light)' : 'rgba(255,255,255,0.9)',
           fontFamily: 'var(--font-sans)',
         }}>
-        {(node.awayTeam?.name ?? 'TBD').slice(0, 20)}
+        {awayName}
       </text>
       {node.awayScore !== null && (
-        <text x={NODE_WIDTH - 10} y={NODE_HEIGHT - 14}
+        <text x={NODE_WIDTH - 10} y={AWAY_TEXT_Y}
           fontSize="14" fontWeight="900" textAnchor="end"
-          style={{ fill: 'var(--primary-light)', fontFamily: 'var(--font-display)' }}>
+          style={{ fill: awayScoreColor, fontFamily: 'var(--font-display)' }}>
           {node.awayScore}
         </text>
       )}
 
-      {/* bracket code badge (sits on the divider line) */}
-      <rect x="8" y={NODE_HEIGHT / 2 - 7} width="32" height="13" rx={3}
+      {/* bracket code badge (sits on the center divider) */}
+      <rect x="8" y={DIVIDER_Y - 7} width="32" height="13" rx={3}
         style={{
           fill:        'rgba(var(--primary-rgb), 0.15)',
           stroke:      'rgba(var(--primary-rgb), 0.35)',
           strokeWidth: '0.5',
         }} />
-      <text x="24" y={NODE_HEIGHT / 2 + 3.5}
+      <text x="24" y={DIVIDER_Y + 3.5}
         fontSize="6.5" fontWeight="700" textAnchor="middle"
         style={{ fill: 'rgba(255,255,255,0.45)', fontFamily: 'var(--font-sans)', letterSpacing: '0.06em' }}>
         {node.bracketCode.toUpperCase()}
       </text>
-
-      {/* LIVE badge — visible for 5s after a Realtime score update */}
-      {node.isLive && (
-        <g>
-          <rect x={NODE_WIDTH - 38} y="4" width="33" height="13" rx={3}
-            style={{
-              fill:        'rgba(var(--primary-rgb), 0.2)',
-              stroke:      'var(--primary)',
-              strokeWidth: '0.5',
-            }} />
-          <text x={NODE_WIDTH - 21.5} y="13.5"
-            fontSize="7" fontWeight="700" textAnchor="middle"
-            style={{ fill: 'var(--primary-light)', fontFamily: 'var(--font-sans)', letterSpacing: '0.1em' }}>
-            LIVE
-          </text>
-        </g>
-      )}
     </g>
   );
 }
@@ -248,9 +316,10 @@ interface LogicSyncBracketProps {
   teams: Team[];
   tournamentId: string;
   highlightTeamId?: string;
+  requireFinalization?: boolean;
 }
 
-export function LogicSyncBracket({ games, teams, tournamentId, highlightTeamId }: LogicSyncBracketProps) {
+export function LogicSyncBracket({ games, teams, tournamentId, highlightTeamId, requireFinalization = true }: LogicSyncBracketProps) {
   // stable client ref — createClient() from @supabase/ssr creates a new instance on every
   // render, so calling it at component body level and including it in useEffect deps causes
   // infinite re-subscription loops. useRef ensures one instance per component mount.
@@ -287,6 +356,7 @@ export function LogicSyncBracket({ games, teams, tournamentId, highlightTeamId }
             away_score: number | null;
             home_team_id: string;
             away_team_id: string;
+            status: string;
           };
 
           const hs = g.home_score ?? null;
@@ -300,7 +370,7 @@ export function LogicSyncBracket({ games, teams, tournamentId, highlightTeamId }
           setNodes(prev =>
             prev.map(n =>
               n.id === g.id
-                ? { ...n, homeScore: hs, awayScore: as, winnerId, isLive: true }
+                ? { ...n, homeScore: hs, awayScore: as, winnerId, isLive: true, status: g.status as BracketNode['status'] }
                 : n
             )
           );
@@ -423,6 +493,7 @@ export function LogicSyncBracket({ games, teams, tournamentId, highlightTeamId }
                 y={nodeY(pi, col.games.length, totalH)}
                 isHighlighted={!highlightTeamId || nodeMatchesTeam}
                 showHighlightRing={nodeMatchesTeam}
+                requireFinalization={requireFinalization}
               />
             );
           })

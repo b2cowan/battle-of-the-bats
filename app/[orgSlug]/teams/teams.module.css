@@ -1,7 +1,7 @@
 ﻿.pageHeader {
   background: linear-gradient(180deg, var(--bg-2) 0%, var(--bg) 100%);
   border-bottom: 1px solid var(--border);
-  padding: calc(var(--nav-height) + 3rem) 0 3rem;
+  padding: 2rem 0 2.5rem;
 }
 
 .pageHeader h1 { color: var(--white); margin: 0.5rem 0; }
@@ -9,7 +9,7 @@
 .divisionLayout {
   display: flex;
   flex-direction: column;
-  gap: 4rem;
+  gap: 3rem;
   margin-top: 2rem;
 }
 
@@ -61,12 +61,18 @@
 }
 
 .groupTitle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
   font-family: var(--font-display, sans-serif);
-  font-size: 2.25rem;
-  font-weight: 900;
-  color: var(--white);
-  border-bottom: 1px solid var(--border-2);
-  padding-bottom: 1rem;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--primary-light);
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 0;
 }
 
 .poolGrid {
@@ -76,22 +82,37 @@
 }
 
 .poolCard {
-  background: var(--white-5);
-  border: 1px solid var(--border-2);
-  border-radius: var(--radius-md);
-  padding: 1.5rem;
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
+  gap: 0.75rem;
 }
 
 .poolName {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
   font-family: var(--font-display, sans-serif);
-  font-size: 1.25rem;
+  font-size: 1.1rem;
   font-weight: 800;
-  color: var(--primary-light);
-  text-transform: uppercase;
   letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--primary-light);
+  margin-bottom: 1rem;
+  white-space: nowrap;
+}
+
+.poolName::before {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(to right, transparent, var(--primary));
+}
+
+.poolName::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(to left, transparent, var(--primary));
 }
 
 .teamList {
@@ -154,22 +175,8 @@
     gap: 2.5rem;
   }
 
-  .groupTitle {
-    font-size: 1.75rem;
-    padding-bottom: 0.75rem;
-  }
-
   .poolGrid {
-    grid-template-columns: 1fr;
     gap: 1rem;
-  }
-
-  .poolCard {
-    padding: 1rem;
-  }
-
-  .poolName {
-    font-size: 1.1rem;
   }
 
   .teamRow {

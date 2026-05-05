@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { Users, ChevronDown, ChevronUp, User, Search } from 'lucide-react';
 import { useParams } from 'next/navigation';
 import { getTeams, getAgeGroups, getOrganizationBySlug, getTournamentsByOrg } from '@/lib/db';
+import { getAgPref, setAgPref } from '@/lib/age-group-cookie';
 import { Team, AgeGroup, Tournament } from '@/lib/types';
 import YearSelector from '@/components/YearSelector';
 import styles from './teams.module.css';
@@ -35,7 +36,11 @@ export default function TeamsPage() {
     async function fetchTeams() {
       const allTeams = await getTeams(selectedTournament!.id);
       setTeams(allTeams.filter(t => t.status === 'accepted'));
-      setAgeGroups(await getAgeGroups(selectedTournament!.id));
+      const groups = await getAgeGroups(selectedTournament!.id);
+      setAgeGroups(groups);
+      const pref = getAgPref(orgSlug);
+      const preferred = pref ? groups.find(g => g.name === pref) : null;
+      if (preferred) setActiveGroup(preferred.id);
     }
     fetchTeams();
   }, [selectedTournament]);
@@ -92,7 +97,7 @@ export default function TeamsPage() {
             {ageGroups.map(g => (
               <button key={g.id}
                 className={`tab-btn ${activeGroup === g.id ? 'active' : ''}`}
-                onClick={() => setActiveGroup(g.id)}
+                onClick={() => { setActiveGroup(g.id); setAgPref(orgSlug, g.name); }}
                 id={`teams-tab-${g.name}`}>
                 {g.name} <span className={styles.tabCount}>{countByGroup[g.id] || 0}</span>
               </button>

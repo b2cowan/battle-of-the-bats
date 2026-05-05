@@ -1,6 +1,13 @@
 import { supabase } from './supabase';
 import { supabaseAdmin } from './supabase-admin';
+import { createClient as createBrowserSupabaseClient } from './supabase-browser';
 import { Tournament, Diamond, Contact, AgeGroup, Pool, Team, Game, Announcement, PlayoffConfig, RuleSection, RuleItem, Resource, Organization, OrganizationMember, OrgPlan, OrgRole, TournamentArchive } from './types';
+
+// Use the SSR browser client (cookie-based session) for writes that need auth;
+// falls back to anon client on the server where there is no window.
+function authClient() {
+  return typeof window !== 'undefined' ? createBrowserSupabaseClient() : supabase;
+}
 
 // --- Tournaments ---
 export async function getTournaments(): Promise<Tournament[]> {
@@ -651,7 +658,8 @@ export async function getAnnouncements(tournamentId?: string): Promise<Announcem
     title: a.title,
     body: a.body,
     date: a.published_at,
-    pinned: a.pinned
+    pinned: a.pinned,
+    ageGroupIds: a.age_group_ids ?? null,
   }));
 }
 
@@ -661,7 +669,8 @@ export async function saveAnnouncement(a: Omit<Announcement, 'id'>): Promise<voi
     title: a.title,
     body: a.body,
     published_at: a.date,
-    pinned: a.pinned || false
+    pinned: a.pinned || false,
+    age_group_ids: a.ageGroupIds?.length ? a.ageGroupIds : null,
   });
 }
 
@@ -672,7 +681,9 @@ export async function updateAnnouncement(id: string, a: Partial<Announcement>): 
   if (a.body !== undefined) updates.body = a.body;
   if (a.date !== undefined) updates.published_at = a.date;
   if (a.pinned !== undefined) updates.pinned = a.pinned;
-  await supabase.from('announcements').update(updates).eq('id', id);
+  if (a.ageGroupIds !== undefined) updates.age_group_ids = a.ageGroupIds?.length ? a.ageGroupIds : null;
+  const { error } = await authClient().from('announcements').update(updates).eq('id', id);
+  if (error) throw error;
 }
 
 export async function deleteAnnouncement(id: string): Promise<void> {
@@ -889,7 +900,8 @@ export async function getRules(tournamentId: string): Promise<RuleSection[]> {
       ruleId: i.rule_id,
       content: i.content,
       order: i.display_order
-    })).sort((a: any, b: any) => a.order - b.order)
+    })).sort((a: any, b: any) => a.order - b.order),
+    ageGroupIds: r.age_group_ids ?? null,
   }));
 }
 
@@ -900,7 +912,8 @@ export async function saveRuleSection(r: Omit<RuleSection, 'id' | 'items'>): Pro
       tournament_id: r.tournamentId,
       title: r.title,
       icon: r.icon,
-      display_order: r.order
+      display_order: r.order,
+      age_group_ids: r.ageGroupIds?.length ? r.ageGroupIds : null,
     })
     .select()
     .single();
@@ -917,7 +930,9 @@ export async function updateRuleSection(id: string, r: Partial<RuleSection>): Pr
   if (r.title !== undefined) updates.title = r.title;
   if (r.icon !== undefined) updates.icon = r.icon;
   if (r.order !== undefined) updates.display_order = r.order;
-  await supabase.from('rules').update(updates).eq('id', id);
+  if (r.ageGroupIds !== undefined) updates.age_group_ids = r.ageGroupIds?.length ? r.ageGroupIds : null;
+  const { error } = await authClient().from('rules').update(updates).eq('id', id);
+  if (error) throw error;
 }
 
 export async function deleteRuleSection(id: string): Promise<void> {

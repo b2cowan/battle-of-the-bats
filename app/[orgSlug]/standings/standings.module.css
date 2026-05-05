@@ -1,7 +1,7 @@
 .pageHeader {
   background: linear-gradient(180deg, var(--bg-2) 0%, var(--bg) 100%);
   border-bottom: 1px solid var(--border);
-  padding: calc(var(--nav-height) + 3rem) 0 3rem;
+  padding: 2rem 0 2.5rem;
 }
 
 .pageHeader h1 { color: var(--white); margin: 0.5rem 0; }

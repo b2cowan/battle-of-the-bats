@@ -6,6 +6,7 @@ import { getGames, getTeams, getAgeGroups, getDiamonds, getOrganizationBySlug, g
 import { Game, Team, AgeGroup, Diamond, Tournament } from '@/lib/types';
 import LocationLink from '@/components/LocationLink';
 import { formatTime, formatPoolName } from '@/lib/utils';
+import { getAgPref, setAgPref } from '@/lib/age-group-cookie';
 import YearSelector from '@/components/YearSelector';
 import styles from './schedule.module.css';
 import { LogicSyncBracket } from '@/components/bracket/LogicSyncBracket';
@@ -84,7 +85,11 @@ export default function SchedulePage() {
       setSelectedTournament(tourn);
       const groups = await getAgeGroups(tourn?.id);
       setAgeGroups(groups);
-      if (groups.length > 0) setActiveGroup(groups[0].id);
+      if (groups.length > 0) {
+        const pref = getAgPref(orgSlug);
+        const preferred = pref ? groups.find(g => g.name === pref) : null;
+        setActiveGroup((preferred ?? groups[0]).id);
+      }
     }
     init();
   }, [orgSlug]);
@@ -98,7 +103,11 @@ export default function SchedulePage() {
       setDiamonds(await getDiamonds(selectedTournament!.id));
       const groups = await getAgeGroups(selectedTournament!.id);
       setAgeGroups(groups);
-      if (!activeGroup && groups.length > 0) setActiveGroup(groups[0].id);
+      if (groups.length > 0) {
+        const pref = getAgPref(orgSlug);
+        const preferred = pref ? groups.find(g => g.name === pref) : null;
+        setActiveGroup((preferred ?? groups[0]).id);
+      }
       setLoading(false);
     }
     fetchGames();
@@ -327,7 +336,7 @@ export default function SchedulePage() {
               {ageGroups.map(g => (
                 <button key={g.id}
                   className={`tab-btn ${activeGroup === g.id ? 'active' : ''}`}
-                  onClick={() => setActiveGroup(g.id)}
+                  onClick={() => { setActiveGroup(g.id); setAgPref(orgSlug, g.name); }}
                   style={{ marginBottom: 0 }}
                   id={`schedule-tab-${g.name}`}>{g.name}</button>
               ))}
@@ -434,6 +443,7 @@ export default function SchedulePage() {
                               teams={teams}
                               tournamentId={selectedTournament!.id}
                               highlightTeamId={selectedTeamId || undefined}
+                              requireFinalization={requireFinalization}
                             />
                           </div>
                         );
@@ -448,6 +458,7 @@ export default function SchedulePage() {
                     teams={teams}
                     tournamentId={selectedTournament!.id}
                     highlightTeamId={selectedTeamId || undefined}
+                    requireFinalization={requireFinalization}
                   />
                 );
               }

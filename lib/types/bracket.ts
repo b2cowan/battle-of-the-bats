@@ -9,4 +9,7 @@ export interface BracketNode {
   winnerId: string | null;  // computed from scores — not a DB column
   bracketCode: string;
   isLive: boolean;          // transient client state — 5s flash on Realtime update
+  date: string;
+  time: string;
+  status: 'scheduled' | 'submitted' | 'completed' | 'cancelled';
 }

@@ -1,19 +1,43 @@
-﻿import { Megaphone, Star, Calendar } from 'lucide-react';
-import { getAnnouncements, getOrganizationBySlug, getActiveTournamentByOrg } from '@/lib/db';
+import { cookies } from 'next/headers';
+import { Megaphone, Star, Calendar } from 'lucide-react';
+import { getAnnouncements, getOrganizationBySlug, getActiveTournamentByOrg, getAgeGroups } from '@/lib/db';
 import { Announcement } from '@/lib/types';
+import DivisionFilterBar from '@/components/DivisionFilterBar';
 import styles from './news.module.css';
 
 export const dynamic = 'force-dynamic';
 
-export default async function NewsPage({ params }: { params: Promise<{ orgSlug: string }> }) {
+export default async function NewsPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ orgSlug: string }>;
+  searchParams: Promise<{ view?: string }>;
+}) {
   const { orgSlug } = await params;
+  const { view } = await searchParams;
+
+  const cookieStore = await cookies();
+  const prefName = cookieStore.get(`fl_agpref_${orgSlug}`)?.value ?? null;
+
   const org = await getOrganizationBySlug(orgSlug);
   const activeTournament = org ? await getActiveTournamentByOrg(org.id) : null;
-  const announcements = await getAnnouncements(activeTournament?.id);
+
+  const [allAnnouncements, ageGroups] = await Promise.all([
+    getAnnouncements(activeTournament?.id),
+    activeTournament ? getAgeGroups(activeTournament.id) : Promise.resolve([]),
+  ]);
+
+  const preferredGroup = prefName ? ageGroups.find(g => g.name === prefName) : null;
+  const hasTaggedContent = allAnnouncements.some(a => a.ageGroupIds?.length);
+  const isFiltering = !!preferredGroup && view !== 'all' && hasTaggedContent;
+
+  const announcements = isFiltering
+    ? allAnnouncements.filter(a => !a.ageGroupIds?.length || a.ageGroupIds.includes(preferredGroup!.id))
+    : allAnnouncements;
 
   function formatDate(d: string) {
     if (!d) return '';
-    // Extract date part if ISO string, then add T12:00:00 to avoid timezone shift
     const datePart = d.includes('T') ? d.split('T')[0] : d;
     return new Date(datePart + 'T12:00:00').toLocaleDateString('en-CA', {
       weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
@@ -29,16 +53,27 @@ export default async function NewsPage({ params }: { params: Promise<{ orgSlug: 
         <div className="container">
           <span className="eyebrow"><Megaphone size={12} /> News</span>
           <h1 className="display-lg">News & Announcements</h1>
-          <p className="text-muted">Stay up to date with the latest tournament news, schedule changes, and announcements from the Milton Bats.</p>
+          <p className="text-muted">Stay up to date with the latest tournament news, schedule changes, and announcements.</p>
         </div>
       </div>
 
       <div className="section">
         <div className="container">
+          {hasTaggedContent && prefName && ageGroups.length > 0 && (
+            <DivisionFilterBar
+              orgSlug={orgSlug}
+              ageGroups={ageGroups}
+              activeName={prefName}
+              isFiltering={isFiltering}
+              viewAllHref={`/${orgSlug}/news?view=all`}
+              backHref={`/${orgSlug}/news`}
+            />
+          )}
+
           {announcements.length === 0 ? (
             <div className="empty-state">
               <Megaphone size={48} />
-              <p>No announcements yet. Check back soon!</p>
+              <p>{isFiltering ? `No announcements for ${prefName}.` : 'No announcements yet. Check back soon!'}</p>
             </div>
           ) : (
             <>
@@ -96,7 +131,7 @@ function AnnouncementCard({
           <span className={styles.annDate}>{formatDate(ann.date)}</span>
         </div>
       </div>
-      
+
       <h2 className={styles.annTitle}>{ann.title}</h2>
       <p className={styles.annBody}>{ann.body}</p>
     </div>

@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { Trophy } from 'lucide-react';
 import { useParams } from 'next/navigation';
 import { getAgeGroups, getStandings, getOrganizationBySlug, getTournamentsByOrg } from '@/lib/db';
+import { getAgPref, setAgPref } from '@/lib/age-group-cookie';
 import { AgeGroup, Tournament } from '@/lib/types';
 import YearSelector from '@/components/YearSelector';
 import { formatPoolName } from '@/lib/utils';
@@ -28,7 +29,11 @@ export default function StandingsPage() {
       setSelectedTournament(tourn);
       const groups = await getAgeGroups(tourn?.id);
       setAgeGroups(groups);
-      if (groups.length > 0) setActiveGroup(groups[0].id);
+      if (groups.length > 0) {
+        const pref = getAgPref(orgSlug);
+        const preferred = pref ? groups.find(g => g.name === pref) : null;
+        setActiveGroup((preferred ?? groups[0]).id);
+      }
     }
     init();
   }, [orgSlug]);
@@ -38,7 +43,11 @@ export default function StandingsPage() {
     async function fetchGroups() {
       const groups = await getAgeGroups(selectedTournament!.id);
       setAgeGroups(groups);
-      if (groups.length > 0) setActiveGroup(groups[0].id);
+      if (groups.length > 0) {
+        const pref = getAgPref(orgSlug);
+        const preferred = pref ? groups.find(g => g.name === pref) : null;
+        setActiveGroup((preferred ?? groups[0]).id);
+      }
     }
     fetchGroups();
   }, [selectedTournament]);
@@ -80,7 +89,7 @@ export default function StandingsPage() {
                 <button
                   key={g.id}
                   className={`tab-btn ${activeGroup === g.id ? 'active' : ''}`}
-                  onClick={() => setActiveGroup(g.id)}
+                  onClick={() => { setActiveGroup(g.id); setAgPref(orgSlug, g.name); }}
                   id={`standings-tab-${g.name}`}
                 >
                   {g.name}
