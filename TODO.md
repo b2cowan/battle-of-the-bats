@@ -25,7 +25,7 @@ This file tracks the ongoing tasks for the tournament website project. AI models
 - [x] **Phase 2** — TypeScript: update `Tournament` type, `mapTournament`, fix multi-tenant `is_active` bug, add `getTournamentBySlug`
 - [x] **Phase 3** — Admin UI: status transitions (Draft/Active/Completed/Archived), slug field, active-limit enforcement in API
 - [x] **Phase 4** — Billing: usage meter counts active-only; update plan-config `tournamentLimit` semantics and Pro limit
-- [ ] **Phase 5** — URL restructuring: `/[orgSlug]/[tournamentSlug]/` route tree, redirect wrappers for flat URLs, OrgNavContext + TournamentNavSync, Navbar updates, YearSelector → URL-based navigation
+- [x] **Phase 5** — URL restructuring: `/[orgSlug]/[tournamentSlug]/` route tree, redirect wrappers for flat URLs, OrgNavContext + TournamentNavSync, Navbar updates, YearSelector → URL-based navigation
 
 ---
 
@@ -45,6 +45,11 @@ This file tracks the ongoing tasks for the tournament website project. AI models
 **Goal:** Allow organizations to manage their teams outside of tournament contexts — rosters, seasons, and ongoing records across the full year.
 
 - [ ] **Team Management MVP** — Design and implement a team management feature allowing orgs to create, edit, and archive teams independently of any tournament (see plan file TBD)
+
+---
+
+## 📖 Admin UX & Documentation
+- [ ] **In-app role/permissions documentation** — Add a help section in the Members admin area showing a human-readable breakdown of what each role (Owner, Admin, Member, etc.) can and cannot do; surface as a collapsible panel or tooltip-driven reference table
 
 ---
 
