@@ -39,35 +39,17 @@ export async function POST(req: Request) {
 
     const { tournament, divisions, announcement, seedData, scheduleParams, migration } = body;
 
-    // 0a. Plan limit: count existing tournaments for this org
-    const { count: existingCount } = await supabase
-      .from('tournaments')
-      .select('*', { count: 'exact', head: true })
-      .eq('organization_id', auth.org.id);
-
-    if ((existingCount ?? 0) >= auth.org.tournamentLimit) {
-      return new Response(JSON.stringify({
-        error: `You've reached your ${auth.org.tournamentLimit} tournament limit. Upgrade your plan to create more.`
-      }), { status: 403, headers: { 'Content-Type': 'application/json' } });
-    }
-
-    // 0b. If this new tournament is active, deactivate org's others first
-    if (tournament.isActive) {
-      log('Deactivating other tournaments');
-      await supabase.from('tournaments')
-        .update({ is_active: false })
-        .eq('organization_id', auth.org.id);
-    }
-
-    // 1. Create Tournament
+    // 1. Create Tournament (always starts as draft; activate explicitly from the Tournaments page)
     const { data: newTnt, error: tntError } = await supabase
       .from('tournaments')
       .insert({
-        year: tournament.year,
-        name: tournament.name,
-        is_active: tournament.isActive,
-        start_date: tournament.startDate,
-        end_date: tournament.endDate,
+        year:            tournament.year,
+        name:            tournament.name,
+        slug:            tournament.slug,
+        status:          'draft',
+        is_active:       false,
+        start_date:      tournament.startDate,
+        end_date:        tournament.endDate,
         organization_id: auth.org.id,
       })
       .select()

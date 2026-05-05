@@ -1,7 +1,7 @@
 import { supabase } from './supabase';
 import { supabaseAdmin } from './supabase-admin';
 import { createClient as createBrowserSupabaseClient } from './supabase-browser';
-import { Tournament, Diamond, Contact, AgeGroup, Pool, Team, Game, Announcement, PlayoffConfig, RuleSection, RuleItem, Resource, Organization, OrganizationMember, OrgPlan, OrgRole, TournamentArchive } from './types';
+import { Tournament, TournamentStatus, Diamond, Contact, AgeGroup, Pool, Team, Game, Announcement, PlayoffConfig, RuleSection, RuleItem, Resource, Organization, OrganizationMember, OrgPlan, OrgRole, TournamentArchive } from './types';
 
 // Use the SSR browser client (cookie-based session) for writes that need auth;
 // falls back to anon client on the server where there is no window.
@@ -12,67 +12,49 @@ function authClient() {
 // --- Tournaments ---
 export async function getTournaments(): Promise<Tournament[]> {
   const { data, error } = await supabase.from('tournaments').select('*').order('year', { ascending: false });
-  if (error || !data) { 
-    if (error) console.error('getTournaments error', error); 
-    return []; 
+  if (error || !data) {
+    if (error) console.error('getTournaments error', error);
+    return [];
   }
-  return data.map(t => ({ 
-    id: t.id, 
-    year: t.year, 
-    name: t.name, 
-    isActive: t.is_active,
-    startDate: t.start_date,
-    endDate: t.end_date
-  }));
+  return data.map(mapTournament);
 }
 
 export async function getTournament(id: string): Promise<Tournament | null> {
   const { data, error } = await supabase.from('tournaments').select('*').eq('id', id).single();
-  if (error || !data) { 
-    if (error) console.error('getTournament error', error); 
-    return null; 
+  if (error || !data) {
+    if (error) console.error('getTournament error', error);
+    return null;
   }
-  return { 
-    id: data.id, 
-    year: data.year, 
-    name: data.name, 
-    isActive: data.is_active,
-    startDate: data.start_date,
-    endDate: data.end_date
-  };
+  return mapTournament(data);
 }
 
 export async function saveTournament(t: Omit<Tournament, 'id'>): Promise<Tournament | null> {
-  if (t.isActive) {
-    // Ensure only one is active
-    await supabase.from('tournaments').update({ is_active: false }).neq('id', '00000000-0000-0000-0000-000000000000');
+  if (t.isActive && t.organizationId) {
+    await supabase.from('tournaments')
+      .update({ is_active: false, status: 'completed' })
+      .eq('organization_id', t.organizationId);
   }
 
   const { data, error } = await supabase
     .from('tournaments')
-    .insert({ 
-      year: t.year, 
-      name: t.name, 
+    .insert({
+      year: t.year,
+      name: t.name,
+      slug: t.slug,
+      status: t.status ?? (t.isActive ? 'active' : 'draft'),
       is_active: t.isActive,
       start_date: t.startDate,
-      end_date: t.endDate
+      end_date: t.endDate,
     })
     .select()
     .single();
-  
+
   if (error) {
     console.error('saveTournament error', error);
     return null;
   }
-  
-  return { 
-    id: data.id, 
-    year: data.year, 
-    name: data.name, 
-    isActive: data.is_active,
-    startDate: data.start_date,
-    endDate: data.end_date
-  };
+
+  return mapTournament(data);
 }
 
 export async function cloneContacts(targetTid: string, sourceContacts: Contact[]): Promise<void> {
@@ -159,13 +141,20 @@ export async function initializeAgeGroups(targetTid: string, selectedDivisions: 
 
 export async function updateTournament(id: string, t: Partial<Tournament>): Promise<void> {
   if (t.isActive) {
-    // Ensure only one is active
-    await supabase.from('tournaments').update({ is_active: false }).neq('id', '00000000-0000-0000-0000-000000000000');
+    const { data: existing } = await supabase.from('tournaments').select('organization_id').eq('id', id).single();
+    if (existing?.organization_id) {
+      await supabase.from('tournaments')
+        .update({ is_active: false, status: 'completed' })
+        .eq('organization_id', existing.organization_id)
+        .neq('id', id);
+    }
   }
 
   const updates: any = {};
   if (t.year !== undefined) updates.year = t.year;
   if (t.name !== undefined) updates.name = t.name;
+  if (t.slug !== undefined) updates.slug = t.slug;
+  if (t.status !== undefined) { updates.status = t.status; updates.is_active = t.status === 'active'; }
   if (t.isActive !== undefined) updates.is_active = t.isActive;
   if (t.startDate !== undefined) updates.start_date = t.startDate;
   if (t.endDate !== undefined) updates.end_date = t.endDate;
@@ -177,9 +166,14 @@ export async function deleteTournament(id: string): Promise<void> {
 }
 
 export async function setActiveTournament(id: string): Promise<void> {
-  // Set all to false, then set one to true
-  await supabase.from('tournaments').update({ is_active: false }).neq('id', '00000000-0000-0000-0000-000000000000');
-  await supabase.from('tournaments').update({ is_active: true }).eq('id', id);
+  const { data: t } = await supabase.from('tournaments').select('organization_id').eq('id', id).single();
+  if (t?.organization_id) {
+    await supabase.from('tournaments')
+      .update({ is_active: false, status: 'completed' })
+      .eq('organization_id', t.organization_id)
+      .neq('id', id);
+  }
+  await supabase.from('tournaments').update({ is_active: true, status: 'active' }).eq('id', id);
 }
 
 // --- Diamonds ---
@@ -1198,7 +1192,22 @@ export async function getTournamentsByOrg(orgId: string): Promise<Tournament[]> 
 
 export async function getActiveTournamentByOrg(orgId: string): Promise<Tournament | null> {
   const ts = await getTournamentsByOrg(orgId);
-  return ts.find(t => t.isActive) ?? null;
+  return ts.find(t => t.status === 'active') ?? null;
+}
+
+export async function getTournamentBySlug(orgId: string, slug: string): Promise<Tournament | null> {
+  const { data, error } = await supabase
+    .from('tournaments')
+    .select('*')
+    .eq('organization_id', orgId)
+    .eq('slug', slug)
+    .neq('status', 'archived')
+    .single();
+  if (error || !data) {
+    if (error) console.error('getTournamentBySlug error', error);
+    return null;
+  }
+  return mapTournament(data);
 }
 
 // Server-side only (uses service role key) ────────────────────────────────────
@@ -1208,7 +1217,7 @@ export async function createOrganization(
   slug: string,
   planId: OrgPlan = 'starter'
 ): Promise<Organization> {
-  const limit = planId === 'elite' ? 999 : planId === 'pro' ? 5 : 1;
+  const limit = planId === 'elite' ? 999 : planId === 'pro' ? 2 : 1;
   const { data, error } = await supabaseAdmin
     .from('organizations')
     .insert({ name, slug, plan_id: planId, tournament_limit: limit })
@@ -1268,12 +1277,15 @@ function mapMember(r: any): OrganizationMember {
 }
 
 function mapTournament(r: any): Tournament {
+  const status: TournamentStatus = r.status ?? (r.is_active ? 'active' : 'completed');
   return {
     id:             r.id,
     organizationId: r.organization_id ?? undefined,
     year:           r.year,
     name:           r.name,
-    isActive:       r.is_active,
+    slug:           r.slug ?? '',
+    status,
+    isActive:       status === 'active',
     startDate:      r.start_date ?? undefined,
     endDate:        r.end_date ?? undefined,
   };

@@ -3,6 +3,7 @@ import type { OrgPlan } from './types';
 export interface PlanConfig {
   label: string;
   monthlyPrice: number;
+  // Max number of simultaneously ACTIVE tournaments. Completed/archived do not count.
   tournamentLimit: number;
   seatLimit: number;
   priceId?: string;
@@ -18,7 +19,7 @@ export const PLAN_CONFIG: Record<OrgPlan, PlanConfig> = {
   pro: {
     label: 'Pro',
     monthlyPrice: 29,
-    tournamentLimit: 5,
+    tournamentLimit: 2,
     seatLimit: 5,
     priceId: process.env.STRIPE_PRICE_PRO_MONTHLY,
   },

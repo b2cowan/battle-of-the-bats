@@ -1,6 +1,7 @@
 export type OrgPlan = 'starter' | 'pro' | 'elite';
 export type OrgRole = 'owner' | 'admin' | 'staff' | 'official';
 export type SubscriptionStatus = 'active' | 'trialing' | 'past_due' | 'canceled';
+export type TournamentStatus = 'draft' | 'active' | 'completed' | 'archived';
 
 export interface Organization {
   id: string;
@@ -37,7 +38,9 @@ export interface Tournament {
   organizationId?: string;   // FK → organizations (nullable during migration)
   year: number;        // e.g. 2026
   name: string;        // e.g. "Battle of the Bats 2026"
-  isActive: boolean;   // the tournament shown on the public site
+  slug: string;        // URL-safe identifier; unique per org among non-archived
+  status: TournamentStatus;
+  isActive: boolean;   // derived: status === 'active'. Kept for compatibility.
   startDate?: string;  // YYYY-MM-DD
   endDate?: string;    // YYYY-MM-DD
 }

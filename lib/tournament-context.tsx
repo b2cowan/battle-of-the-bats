@@ -30,7 +30,7 @@ export function TournamentProvider({ children }: { children: ReactNode }) {
     setTournaments(ts);
     const savedId = typeof window !== 'undefined' ? localStorage.getItem(ADMIN_T_KEY) : null;
     const saved   = savedId ? ts.find(t => t.id === savedId) : null;
-    const active  = ts.find(t => t.isActive);
+    const active  = ts.find(t => t.status === 'active');
     setCurrentState(saved ?? active ?? ts[0] ?? null);
   }, []);
 

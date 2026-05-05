@@ -87,7 +87,7 @@ export default function BillingPage() {
   const currentPlanKey  = currentOrg.planId;
   const currentPlan     = PLAN_CONFIG[currentPlanKey];
   const status          = currentOrg.subscriptionStatus;
-  const usageCount      = tournaments.length;
+  const usageCount      = tournaments.filter(t => t.status === 'active').length;
   const usageLimit      = currentOrg.tournamentLimit;
   const usagePct        = usageLimit >= 9999 ? 0 : Math.min(100, Math.round((usageCount / usageLimit) * 100));
   const upgradePlans    = PLAN_ORDER.filter(p => PLAN_ORDER.indexOf(p) > PLAN_ORDER.indexOf(currentPlanKey));
@@ -124,7 +124,7 @@ export default function BillingPage() {
       {/* Usage meter */}
       <div className={styles.usageCard}>
         <div className={styles.usageHeader}>
-          <span className={styles.usageLabel}>Tournaments used</span>
+          <span className={styles.usageLabel}>Active tournaments</span>
           <span className={styles.usageCount}>
             {usageCount} / {usageLimit >= 9999 ? 'Unlimited' : usageLimit}
           </span>
@@ -175,7 +175,11 @@ export default function BillingPage() {
                   <ul className={styles.featureList}>
                     <li>
                       <CheckCircle size={13} />
-                      {plan.tournamentLimit >= 9999 ? 'Unlimited tournaments' : `Up to ${plan.tournamentLimit} tournaments`}
+                      {plan.tournamentLimit >= 9999
+                        ? 'Unlimited active tournaments'
+                        : plan.tournamentLimit === 2
+                          ? 'Run summer and fall ball simultaneously'
+                          : `Up to ${plan.tournamentLimit} active tournaments`}
                     </li>
                     <li>
                       <CheckCircle size={13} />

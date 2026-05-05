@@ -8,7 +8,11 @@ import {
 } from '@/lib/db';
 import { useTournament } from '@/lib/tournament-context';
 import { useOrg } from '@/lib/org-context';
-import { Tournament, Contact } from '@/lib/types';
+import { Tournament, TournamentStatus, Contact } from '@/lib/types';
+
+function generateSlug(name: string): string {
+  return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+}
 import FeedbackModal from '@/components/FeedbackModal';
 import styles from './tournaments-admin.module.css';
 
@@ -28,13 +32,14 @@ export default function AdminTournamentsPage() {
     confirmText?: string;
     onConfirm?: () => void;
   }>({ isOpen: false, title: '', message: '', type: 'warning' });
-  const [form, setForm]         = useState({ 
-    year: String(new Date().getFullYear()), 
-    name: '', 
-    isActive: true,
+  const [form, setForm]         = useState({
+    year: String(new Date().getFullYear()),
+    name: '',
+    slug: '',
     startDate: '',
-    endDate: ''
+    endDate: '',
   });
+  const [slugEdited, setSlugEdited] = useState(false);
   const { refresh: refreshCtx } = useTournament();
   const { currentOrg } = useOrg();
 
@@ -104,12 +109,14 @@ export default function AdminTournamentsPage() {
 
   function openAdd() {
     const nextYear = new Date().getFullYear();
-    setForm({ 
-      year: String(nextYear), 
-      name: `Battle of the Bats ${nextYear}`, 
-      isActive: true,
+    const defaultName = `Battle of the Bats ${nextYear}`;
+    setSlugEdited(false);
+    setForm({
+      year: String(nextYear),
+      name: defaultName,
+      slug: generateSlug(defaultName),
       startDate: '',
-      endDate: ''
+      endDate: '',
     });
     setEditing(null);
     setSourceTournamentId('');
@@ -140,12 +147,13 @@ export default function AdminTournamentsPage() {
   }
 
   function openEdit(t: Tournament) {
-    setForm({ 
-      year: String(t.year), 
-      name: t.name, 
-      isActive: t.isActive,
+    setSlugEdited(true);
+    setForm({
+      year: String(t.year),
+      name: t.name,
+      slug: t.slug,
       startDate: t.startDate || '',
-      endDate: t.endDate || ''
+      endDate: t.endDate || '',
     });
     setEditing(t);
     setModal('edit');
@@ -153,18 +161,18 @@ export default function AdminTournamentsPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    const data = { 
-      year: Number(form.year), 
-      name: form.name.trim(), 
-      isActive: form.isActive,
+    const data = {
+      year:      Number(form.year),
+      name:      form.name.trim(),
+      slug:      form.slug || generateSlug(form.name.trim()),
       startDate: form.startDate || undefined,
-      endDate: form.endDate || undefined
+      endDate:   form.endDate || undefined,
     };
 
     try {
       if (modal === 'add') {
         const setupData = {
-          tournament: data,
+          tournament: { year: data.year, name: data.name, slug: data.slug, startDate: data.startDate, endDate: data.endDate },
           divisions: Array.from(selectedDivisions).map(name => ({
             name,
             capacity: divisionCapacities[name] || 8,
@@ -273,17 +281,26 @@ export default function AdminTournamentsPage() {
     setDivisionRequiresPool(prev => ({ ...prev, [name]: req }));
   }
 
-  async function handleSetActive(id: string) {
+  async function handleSetStatus(id: string, status: TournamentStatus) {
     try {
       const res = await fetch('/api/admin/tournaments', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'set-active', id })
+        body: JSON.stringify({ action: 'set-status', id, data: { status } }),
       });
-      if (!res.ok) throw new Error('Activation failed');
+      const result = await res.json();
+      if (!res.ok) {
+        setFeedback({
+          isOpen: true,
+          title: 'Status Change Failed',
+          message: result.error ?? 'Something went wrong.',
+          type: 'danger',
+        });
+        return;
+      }
       refresh();
     } catch (err: any) {
-      alert("Error: " + err.message);
+      alert('Error: ' + err.message);
     }
   }
 
@@ -355,9 +372,9 @@ export default function AdminTournamentsPage() {
       <div className={styles.infoCard}>
         <Star size={14} style={{ color: 'var(--primary-light)', flexShrink: 0, marginTop: 2 }} />
         <p>
-          The <strong>Live</strong> tournament is shown on the public site. Switch between tournaments in the sidebar
-          to manage teams, schedules, and results for a specific year without affecting other seasons.
-          Age groups and diamond locations are shared across all tournaments.
+          <strong>Draft</strong> tournaments are invisible to the public — set up age groups and schedule before going live.
+          <strong> Activate</strong> to publish. <strong>Complete</strong> when the season ends to free your active slot.
+          <strong> Archive</strong> to retire a tournament while keeping its history accessible.
         </p>
       </div>
 
@@ -387,20 +404,32 @@ export default function AdminTournamentsPage() {
                   <span className="badge badge-primary">{t.year}</span>
                 </td>
                 <td>
-                  {t.isActive
-                    ? <span className="badge badge-success">● Live</span>
-                    : <span className="badge badge-neutral">Archived</span>}
+                  {t.status === 'active'    && <span className="badge badge-success">● Live</span>}
+                  {t.status === 'draft'     && <span className="badge badge-neutral">Draft</span>}
+                  {t.status === 'completed' && <span className="badge badge-primary">Completed</span>}
+                  {t.status === 'archived'  && <span className="badge badge-neutral">Archived</span>}
                 </td>
                 <td>
                   <div className="flex gap-1 flex-wrap">
-                    {!t.isActive && (
-                      <button
-                        className="btn btn-outline btn-sm"
-                        onClick={() => handleSetActive(t.id)}
-                        id={`set-live-${t.id}`}
-                      >
-                        Set Live
+                    {t.status === 'draft' && (
+                      <button className="btn btn-outline btn-sm" onClick={() => handleSetStatus(t.id, 'active')} id={`activate-${t.id}`}>
+                        Activate
                       </button>
+                    )}
+                    {t.status === 'active' && (
+                      <button className="btn btn-outline btn-sm" onClick={() => handleSetStatus(t.id, 'completed')} id={`complete-${t.id}`}>
+                        Complete
+                      </button>
+                    )}
+                    {t.status === 'completed' && (
+                      <>
+                        <button className="btn btn-outline btn-sm" onClick={() => handleSetStatus(t.id, 'active')} id={`activate-${t.id}`}>
+                          Activate
+                        </button>
+                        <button className="btn btn-ghost btn-sm" onClick={() => handleSetStatus(t.id, 'archived')} id={`archive-${t.id}`}>
+                          Archive
+                        </button>
+                      </>
                     )}
                     {sealedTournamentIds.has(t.id) ? (
                       <span className="badge badge-neutral" title="This tournament has been sealed to the Digital Ledger">
@@ -419,9 +448,11 @@ export default function AdminTournamentsPage() {
                     <button className="btn btn-ghost btn-sm" onClick={() => openEdit(t)} id={`edit-tournament-${t.id}`}>
                       <Pencil size={13} />
                     </button>
-                    <button className="btn btn-danger btn-sm" onClick={() => setDeleteId(t.id)} id={`delete-tournament-${t.id}`}>
-                      <Trash2 size={13} />
-                    </button>
+                    {t.status !== 'active' && (
+                      <button className="btn btn-danger btn-sm" onClick={() => setDeleteId(t.id)} id={`delete-tournament-${t.id}`}>
+                        <Trash2 size={13} />
+                      </button>
+                    )}
                   </div>
                 </td>
               </tr>
@@ -450,7 +481,10 @@ export default function AdminTournamentsPage() {
                     value={form.year}
                     onChange={e => {
                       const y = e.target.value;
-                      setForm(f => ({ ...f, year: y, name: f.name.includes('Battle') ? `Battle of the Bats ${y}` : f.name }));
+                      setForm(f => {
+                        const newName = f.name.includes('Battle') ? `Battle of the Bats ${y}` : f.name;
+                        return { ...f, year: y, name: newName, ...(!slugEdited && { slug: generateSlug(newName) }) };
+                      });
                     }}
                     required
                     id="tournament-year-input"
@@ -462,7 +496,10 @@ export default function AdminTournamentsPage() {
                     className="form-input"
                     placeholder="Battle of the Bats 2026"
                     value={form.name}
-                    onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+                    onChange={e => {
+                      const name = e.target.value;
+                      setForm(f => ({ ...f, name, ...(!slugEdited && { slug: generateSlug(name) }) }));
+                    }}
                     required
                     id="tournament-name-input"
                   />
@@ -502,16 +539,27 @@ export default function AdminTournamentsPage() {
                   />
                 </div>
               </div>
-              <div className={styles.activeToggle}>
+              <div className="form-group" style={{ marginBottom: '1rem' }}>
+                <label className="form-label">URL Slug *</label>
                 <input
-                  type="checkbox"
-                  id="tournament-active"
-                  checked={form.isActive}
-                  onChange={e => setForm(f => ({ ...f, isActive: e.target.checked }))}
+                  className="form-input"
+                  placeholder="battle-of-the-bats-2026"
+                  value={form.slug}
+                  onChange={e => {
+                    setSlugEdited(true);
+                    setForm(f => ({ ...f, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '') }));
+                  }}
+                  required
+                  id="tournament-slug-input"
                 />
-                <label htmlFor="tournament-active">
-                  <Star size={13} /> Set as the live (public) tournament
-                </label>
+                <p style={{ fontSize: '0.7rem', color: 'var(--white-30)', marginTop: '0.25rem' }}>
+                  Used in the public URL — /{'{orgSlug}'}/{form.slug || '…'}/schedule
+                  {modal === 'edit' && (
+                    <span style={{ color: 'var(--warning, #f59e0b)', marginLeft: '0.5rem' }}>
+                      Changing this will break existing links to this tournament.
+                    </span>
+                  )}
+                </p>
               </div>
 
               {modal === 'add' && (

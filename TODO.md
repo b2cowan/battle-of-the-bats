@@ -4,10 +4,6 @@ This file tracks the ongoing tasks for the tournament website project. AI models
 
 ## 🚀 Active Tasks
 
-- [ ] **Age Group Preference Persistence & Content Filtering** — Cookie-based tab persistence across Schedule/Standings/Teams (Phase A); division tagging for News/Rules with admin UI and DB migration (Phase B) (see [AGE_GROUP_FILTER_PLAN.md](AGE_GROUP_FILTER_PLAN.md))
-
-- [ ] **Schedule/Results Revamp** — Unified schedule page (all statuses + inline scores + team filter), new `/standings` page, `/results` → `/standings` redirect, navbar update (see [SCHEDULE_RESULTS_REVAMP_PLAN.md](SCHEDULE_RESULTS_REVAMP_PLAN.md))
-
 - [ ] **Add RESEND_API_KEY to Amplify environment variables** (AWS console → App settings → Environment variables) — required for invite emails to work in production.
 - [ ] **Add NEXT_PUBLIC_APP_URL to Amplify environment variables** — set to production domain (e.g. `https://battleofthebats.ca`); used for invite email redirect and Resend `from` address.
 - [ ] **Email Strategy Investigation**: 
@@ -22,6 +18,17 @@ This file tracks the ongoing tasks for the tournament website project. AI models
 
 ---
 
+## 🏗️ Tournament Redesign
+*Detailed plan in [TOURNAMENT_REDESIGN_PLAN.md](TOURNAMENT_REDESIGN_PLAN.md)*
+
+- [x] **Phase 1** — DB schema: add `status` + `slug` columns to `tournaments`, partial unique index
+- [x] **Phase 2** — TypeScript: update `Tournament` type, `mapTournament`, fix multi-tenant `is_active` bug, add `getTournamentBySlug`
+- [x] **Phase 3** — Admin UI: status transitions (Draft/Active/Completed/Archived), slug field, active-limit enforcement in API
+- [x] **Phase 4** — Billing: usage meter counts active-only; update plan-config `tournamentLimit` semantics and Pro limit
+- [ ] **Phase 5** — URL restructuring: `/[orgSlug]/[tournamentSlug]/` route tree, redirect wrappers for flat URLs, OrgNavContext + TournamentNavSync, Navbar updates, YearSelector → URL-based navigation
+
+---
+
 ## ⏳ Multi-Tenancy Backlog
 *Detailed tasks located in [MULTI_TENANT_ARCHITECTURE.md](file:///c:/Users/Robert%20Cowan/Documents/tournament-website/MULTI_TENANT_ARCHITECTURE.md)*
 
@@ -31,9 +38,6 @@ This file tracks the ongoing tasks for the tournament website project. AI models
 - [x] **Phase 6**: Org Admin UX & Seat Management
 
 ---
-
-## 🖼️ Org Branding
-- [ ] **Stock Logo Library** — Curated sport icon set for orgs to use as logo without uploading; plan-tiered access (see [STOCK_LOGO_PLAN.md](STOCK_LOGO_PLAN.md) spec · [STOCK_LOGO_IMPL_PLAN.md](STOCK_LOGO_IMPL_PLAN.md) impl plan)
 
 ---
 
@@ -47,11 +51,7 @@ This file tracks the ongoing tasks for the tournament website project. AI models
 ## 🛠️ Platform Administration (Super Admin)
 **Goal:** Create a secure, restricted area for platform-wide management.
 
-- [ ] **Site Admin Dashboard**:
-    - [ ] Create `/platform-admin` route protected by specific super-user role/email check.
-    - [ ] **Org Management**: View all organizations, manually override `plan_id` (free/discounted subscriptions).
-    - [ ] **User Management**: View all users, trigger manual password resets via Supabase.
-    - [ ] **Global Stats**: View platform-wide metrics (total orgs, total tournaments, total teams).
+- [ ] **Site Admin Dashboard** — Email-allowlist auth guard, org plan override, user password reset, global stats (see [PLATFORM_ADMIN_PLAN.md](PLATFORM_ADMIN_PLAN.md))
 
 
 ## ✅ Completed Tasks
@@ -68,3 +68,6 @@ This file tracks the ongoing tasks for the tournament website project. AI models
 - [x] **Generalized Design System plan**: Written and approved. See `DESIGN_SYSTEM_PLAN.md`.
 - [x] **Phase 3: Multi-Org Routing**: Pages moved under `/[orgSlug]` with middleware resolution.
 - [x] **Phase 4: Discovery & Marketing**: Built platform landing page and `/discover` portal.
+- [x] **Age Group Preference Persistence** — Cookie-based tab persistence across Schedule/Standings/Teams.
+- [x] **Schedule/Results Revamp** — Unified schedule page with inline scores, team filter, bracket view, new `/standings` page, navbar update.
+- [x] **Stock Logo Library** — Curated sport icon set for orgs to use as logo without uploading; plan-tiered access.

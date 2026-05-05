@@ -5,7 +5,6 @@ import { LayoutDashboard, Users, Calendar, Trophy, Megaphone, Tag, LogOut, Home,
 import { signOut } from '@/lib/auth';
 import { useOrg } from '@/lib/org-context';
 import { useTournament } from '@/lib/tournament-context';
-import { setActiveTournament } from '@/lib/db';
 import styles from './AdminSidebar.module.css';
 
 const NAV_KEYS = [
@@ -26,7 +25,7 @@ export default function AdminSidebar() {
   const router   = useRouter();
   const { currentOrg, userRole } = useOrg();
   const base = `/${currentOrg?.slug ?? 'milton-bats'}/admin`;
-  const { tournaments, currentTournament, setCurrentTournament, refresh } = useTournament();
+  const { tournaments, currentTournament, setCurrentTournament } = useTournament();
 
   async function handleLogout() {
     await signOut();
@@ -36,12 +35,6 @@ export default function AdminSidebar() {
   function handleTournamentChange(id: string) {
     const t = tournaments.find(x => x.id === id);
     if (t) setCurrentTournament(t);
-  }
-
-  async function handleSetActive() {
-    if (!currentTournament) return;
-    await setActiveTournament(currentTournament.id);
-    refresh();
   }
 
   return (
@@ -67,18 +60,14 @@ export default function AdminSidebar() {
           >
             {tournaments.map(t => (
               <option key={t.id} value={t.id}>
-                {t.name}{t.isActive ? ' ✓' : ''}
+                {t.name}
               </option>
             ))}
           </select>
-          {currentTournament && !currentTournament.isActive && (
-            <button className={styles.setActiveBtn} onClick={handleSetActive} id="set-active-tournament-btn">
-              Set as Live
-            </button>
-          )}
-          {currentTournament?.isActive && (
-            <span className={styles.activePill}>● Live</span>
-          )}
+          {currentTournament?.status === 'active'    && <span className={styles.activePill}>● Live</span>}
+          {currentTournament?.status === 'draft'     && <span className={styles.activePill} style={{ opacity: 0.5 }}>Draft</span>}
+          {currentTournament?.status === 'completed' && <span className={styles.activePill} style={{ opacity: 0.5 }}>Completed</span>}
+          {currentTournament?.status === 'archived'  && <span className={styles.activePill} style={{ opacity: 0.4 }}>Archived</span>}
         </div>
       )}
 
