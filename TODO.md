@@ -26,6 +26,7 @@ This file tracks the ongoing tasks for the tournament website project. AI models
 - [x] **Phase 3** — Admin UI: status transitions (Draft/Active/Completed/Archived), slug field, active-limit enforcement in API
 - [x] **Phase 4** — Billing: usage meter counts active-only; update plan-config `tournamentLimit` semantics and Pro limit
 - [x] **Phase 5** — URL restructuring: `/[orgSlug]/[tournamentSlug]/` route tree, redirect wrappers for flat URLs, OrgNavContext + TournamentNavSync, Navbar updates, YearSelector → URL-based navigation
+- [ ] **Tournament Landing Page Review** — Polish `app/[orgSlug]/[tournamentSlug]/page.tsx`: make hero title dynamic from `org.name` (replace hardcoded "BATTLE OF THE BATS"), review copy/layout for multi-tenant correctness, consider adding a registration CTA when registration is open
 
 ---
 
