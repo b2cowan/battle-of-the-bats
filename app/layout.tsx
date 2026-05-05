@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { Inter, Barlow_Condensed, IBM_Plex_Mono } from 'next/font/google';
 import './globals.css';
-import Navbar from '@/components/Navbar';
+import SiteChrome from '@/components/SiteChrome';
 import Footer from '@/components/Footer';
 import BottomNav from '@/components/BottomNav';
 import { OrgNavProvider } from '@/components/OrgNavContext';
@@ -39,7 +39,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         <OrgNavProvider>
           <a href="#main-content" className="skip-link">Skip to content</a>
-          <Navbar />
+          <SiteChrome />
           <main id="main-content">{children}</main>
           <Footer />
           <BottomNav />

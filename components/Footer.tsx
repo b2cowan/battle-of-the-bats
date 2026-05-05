@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 export default function Footer() {
   const pathname = usePathname();
   const isAdmin = /^\/[^/]+\/admin(\/|$)/.test(pathname) || pathname.startsWith('/admin');
-  if (isAdmin) return null;
+  if (isAdmin || pathname.startsWith('/platform-admin')) return null;
 
   return (
     <footer className="border-t border-blueprint-blue/30 bg-pitch-black mt-24">

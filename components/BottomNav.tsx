@@ -20,7 +20,7 @@ export default function BottomNav() {
   // Hide on admin routes and marketing/auth pages
   const isAdmin = /^\/[^/]+\/admin(\/|$)/.test(pathname) || pathname.startsWith('/admin');
   const isMarketing = pathname === '/' || pathname.startsWith('/discover') || pathname.startsWith('/auth');
-  if (isAdmin || isMarketing) return null;
+  if (isAdmin || isMarketing || pathname.startsWith('/platform-admin')) return null;
 
   return (
     <nav className={styles.bottomNav} aria-label="Mobile navigation">
