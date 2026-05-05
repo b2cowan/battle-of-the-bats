@@ -7,9 +7,6 @@ This file tracks the ongoing tasks for the tournament website project. AI models
 - [x] **Add RESEND_API_KEY to Amplify environment variables** — resolved; key was present but not written to `.env.production` in `amplify.yml`.
 - [x] **Add NEXT_PUBLIC_APP_URL to Amplify environment variables** — confirmed present, set to `https://www.fieldlogichq.ca`.
 - [ ] **Tournament notification contact** — per-tournament contact email in coach-facing email footers; set from Contacts admin page (see EMAIL_CONTACT_PLAN.md). **Requires DB migration:** `ALTER TABLE tournaments ADD COLUMN contact_email TEXT;`
-- [ ] **Email Strategy Investigation**: 
-    - [ ] Investigate best-of-breed providers (Resend, Postmark, AWS SES) for system notifications.
-    - [ ] Define the architecture for a "Contact Us" inquiry system.
 - [ ] **AWS Amplify Hosting Strategy**:
     - [ ] Research proper hosting for parallel Dev and Production environments on AWS Amplify.
     - [ ] Evaluate URL options: using a subdomain (e.g., `dev.battleofthebats.ca`) vs. a separate domain.
@@ -62,6 +59,8 @@ This file tracks the ongoing tasks for the tournament website project. AI models
 
 
 ## ✅ Completed Tasks
+
+- [x] **Email stack — full investigation and fixes**: RESEND_API_KEY not reaching runtime (fixed via `amplify.yml`), invite route using unowned domain (fixed to use `RESEND_FROM`), waitlist coaches receiving wrong email (new waitlist template), hardcoded admin emails removed from templates (org owner email fallback), per-tournament notification contact via Contacts admin page.
 
 - [x] **Brand Pivot — Copy Layer Revision**: Replaced software-deployment language with sports-authority voice across landing page, auth pages, and navbar. Visual system unchanged. (see BRAND_PIVOT_PLAN.md)
 - [x] **Initial Auth Foundation**: Supabase Auth integration and organization signup flow.
