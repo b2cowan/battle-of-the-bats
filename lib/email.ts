@@ -1,6 +1,6 @@
 ﻿const RESEND_API = 'https://api.resend.com/emails';
 const FROM = process.env.RESEND_FROM ?? 'Battle of the Bats <onboarding@resend.dev>';
-const ADMIN_EMAIL = 'b2cowan@gmail.com';
+const ADMIN_EMAIL = 'fieldlogichq@gmail.com';
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000';
 
 export async function sendEmail(to: string, subject: string, html: string): Promise<void> {
