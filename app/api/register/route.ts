@@ -64,7 +64,7 @@ export async function POST(req: NextRequest) {
 
     // Fire emails (non-blocking — don't fail the request if email fails)
     const isWaitlist = finalStatus === 'waitlist';
-    const contactEmail = tournament?.contact_email
+    const footerContactEmail = tournament?.contact_email
       || (tournament?.organization_id ? await getOrgOwnerEmail(tournament.organization_id) : undefined)
       || undefined;
     await Promise.allSettled([
@@ -72,8 +72,8 @@ export async function POST(req: NextRequest) {
         email,
         isWaitlist ? `Waitlist Confirmation — ${teamName}` : `Registration Received — ${teamName}`,
         isWaitlist
-          ? waitlistConfirmationHtml({ teamName, coachName, ageGroupName, tournamentName, contactEmail })
-          : registrationConfirmationHtml({ teamName, coachName, ageGroupName, tournamentName, contactEmail })
+          ? waitlistConfirmationHtml({ teamName, coachName, ageGroupName, tournamentName, contactEmail: footerContactEmail })
+          : registrationConfirmationHtml({ teamName, coachName, ageGroupName, tournamentName, contactEmail: footerContactEmail })
       ),
       sendEmail(
         adminEmailToUse,
