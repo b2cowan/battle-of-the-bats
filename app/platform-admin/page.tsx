@@ -31,7 +31,7 @@ export default async function PlatformOverviewPage() {
   return (
     <div className={styles.page}>
       <header className={styles.header}>
-        <div className={styles.headerLabel}>Platform Node</div>
+        <div className={styles.headerLabel}>FieldLogicHQ</div>
         <h1 className={styles.title}>Overview</h1>
       </header>
       <div className={styles.grid}>

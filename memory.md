@@ -1,6 +1,7 @@
 # Tournament Management System: Battle of the Bats
 
 ## Business Overview
+- **Platform name**: **FieldLogicHQ** (previously "FieldLogic" — do not use the old name in copy, UI labels, or documentation)
 - **Tournament**: "Battle of the Bats," a youth softball tournament hosted by the Milton Bats.
 - **Goal**: A professional, high-performance platform for team registrations, scheduling, results tracking, and public engagement across multiple age divisions (U11-U19).
 

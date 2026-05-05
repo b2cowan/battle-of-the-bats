@@ -5,7 +5,7 @@ import { LayoutDashboard, Building2, Users } from 'lucide-react';
 import { getPlatformAuthContext } from '@/lib/platform-auth';
 import styles from './platform-admin.module.css';
 
-export const metadata: Metadata = { title: 'Platform Admin — FieldLogic' };
+export const metadata: Metadata = { title: 'Platform Admin — FieldLogicHQ' };
 
 const NAV = [
   { href: '/platform-admin',       label: 'Overview',       Icon: LayoutDashboard },
@@ -27,8 +27,8 @@ export default async function PlatformAdminLayout({
     <div className={styles.shell}>
       <aside className={styles.sidebar}>
         <div className={styles.sidebarHeader}>
-          <div className={styles.platformBadge}>PLATFORM NODE</div>
-          <div className={styles.platformSub}>FieldLogic Operator</div>
+          <div className={styles.platformBadge}>PLATFORM ADMIN</div>
+          <div className={styles.platformSub}>FieldLogicHQ</div>
         </div>
         <nav className={styles.nav}>
           {NAV.map(({ href, label, Icon }) => (

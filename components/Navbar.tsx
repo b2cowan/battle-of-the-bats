@@ -26,7 +26,7 @@ export default function Navbar() {
   const pathname = usePathname();
   const params   = useParams();
   const orgSlug        = (params?.orgSlug as string) || 'milton-bats';
-  const { logoUrl, orgName, tournamentSlug } = useOrgNav();
+  const { logoUrl, orgName, tournamentSlug, tournamentName } = useOrgNav();
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
@@ -98,12 +98,12 @@ export default function Navbar() {
   return (
     <nav className={navClass}>
       <div className={`container ${styles.inner}`}>
-        <Link href={`/${orgSlug}`} className={styles.logo}>
+        <Link href={tournamentSlug ? `/${orgSlug}/${tournamentSlug}` : `/${orgSlug}`} className={styles.logo}>
           {logoUrl && (
-            <img src={logoUrl} alt={orgName || 'Organization logo'} className={styles.logoImg} />
+            <img src={logoUrl} alt={tournamentName || orgName || 'Tournament logo'} className={styles.logoImg} />
           )}
-          {orgName ? (
-            <span className={styles.orgName}>{orgName}</span>
+          {(tournamentName || orgName) ? (
+            <span className={styles.orgName}>{tournamentName || orgName}</span>
           ) : null}
         </Link>
 

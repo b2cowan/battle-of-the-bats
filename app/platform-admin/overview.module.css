@@ -1,7 +1,7 @@
 .page { max-width: 900px; }
 
 .header {
-  border-bottom: 1px solid rgba(245, 158, 11, 0.3);
+  border-bottom: 1px solid rgba(var(--logic-lime-rgb), 0.3);
   padding-bottom: 1rem;
   margin-bottom: 2rem;
 }
@@ -12,7 +12,7 @@
   font-weight: 700;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: #f59e0b;
+  color: var(--logic-lime);
   margin-bottom: 0.25rem;
 }
 
@@ -36,19 +36,19 @@
   gap: 1rem;
   padding: 1.25rem;
   background: var(--hud-surface);
-  border: 1px solid rgba(245, 158, 11, 0.3);
-  box-shadow: 0 0 14px rgba(245, 158, 11, 0.06);
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.3);
+  box-shadow: var(--glow-lime);
 }
 
 .iconWrap {
   width: 44px;
   height: 44px;
-  background: rgba(245, 158, 11, 0.08);
-  border: 1px solid rgba(245, 158, 11, 0.25);
+  background: rgba(var(--logic-lime-rgb), 0.08);
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.25);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #f59e0b;
+  color: var(--logic-lime);
   flex-shrink: 0;
 }
 
@@ -57,7 +57,7 @@
   font-size: 2rem;
   font-weight: 700;
   letter-spacing: -0.03em;
-  color: #f59e0b;
+  color: var(--logic-lime);
   line-height: 1;
 }
 

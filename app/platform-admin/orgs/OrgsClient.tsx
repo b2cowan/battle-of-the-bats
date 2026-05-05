@@ -87,7 +87,7 @@ export default function OrgsClient({ orgs, planDefaults }: Props) {
   return (
     <div className={styles.page}>
       <header className={styles.header}>
-        <div className={styles.headerLabel}>Platform Node</div>
+        <div className={styles.headerLabel}>FieldLogicHQ</div>
         <h1 className={styles.title}>Organizations</h1>
         <div className={styles.count}>{orgs.length} total</div>
       </header>

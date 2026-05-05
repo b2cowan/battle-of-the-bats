@@ -7,15 +7,15 @@
 .sidebar {
   width: 220px;
   flex-shrink: 0;
-  border-right: 1px solid rgba(245, 158, 11, 0.25);
-  background: rgba(10, 5, 0, 0.6);
+  border-right: 1px solid rgba(var(--logic-lime-rgb), 0.25);
+  background: rgba(5, 10, 5, 0.6);
   display: flex;
   flex-direction: column;
 }
 
 .sidebarHeader {
   padding: 1.5rem 1.25rem 1.25rem;
-  border-bottom: 1px solid rgba(245, 158, 11, 0.15);
+  border-bottom: 1px solid rgba(var(--logic-lime-rgb), 0.15);
 }
 
 .platformBadge {
@@ -24,7 +24,7 @@
   font-weight: 700;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: #f59e0b;
+  color: var(--logic-lime);
 }
 
 .platformSub {
@@ -59,14 +59,14 @@
 }
 
 .navLink:hover {
-  color: #f59e0b;
-  border-color: rgba(245, 158, 11, 0.25);
-  background: rgba(245, 158, 11, 0.04);
+  color: var(--logic-lime);
+  border-color: rgba(var(--logic-lime-rgb), 0.25);
+  background: rgba(var(--logic-lime-rgb), 0.04);
 }
 
 .sidebarFooter {
   padding: 1rem 1.25rem 1.5rem;
-  border-top: 1px solid rgba(245, 158, 11, 0.15);
+  border-top: 1px solid rgba(var(--logic-lime-rgb), 0.15);
 }
 
 .sessionLabel {
@@ -75,7 +75,7 @@
   font-weight: 700;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: rgba(245, 158, 11, 0.5);
+  color: rgba(var(--logic-lime-rgb), 0.5);
   margin-bottom: 0.3rem;
 }
 
@@ -95,7 +95,7 @@
   min-width: 0;
   background: var(--pitch-black);
   background-image:
-    linear-gradient(to right, rgba(245, 158, 11, 0.035) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(245, 158, 11, 0.035) 1px, transparent 1px);
+    linear-gradient(to right, rgba(var(--logic-lime-rgb), 0.03) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(var(--logic-lime-rgb), 0.03) 1px, transparent 1px);
   background-size: 40px 40px;
 }

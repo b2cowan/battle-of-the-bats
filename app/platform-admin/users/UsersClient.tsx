@@ -62,7 +62,7 @@ export default function UsersClient({ users }: Props) {
   return (
     <div className={styles.page}>
       <header className={styles.header}>
-        <div className={styles.headerLabel}>Platform Node</div>
+        <div className={styles.headerLabel}>FieldLogicHQ</div>
         <h1 className={styles.title}>Users</h1>
         <div className={styles.count}>{users.length} total</div>
       </header>
