@@ -1,6 +1,7 @@
 ﻿import Link from 'next/link';
+import { redirect } from 'next/navigation';
 import { Calendar, Trophy, Users, ChevronRight, Megaphone, Star } from 'lucide-react';
-import { getAnnouncements, getGames, getTeams, getAgeGroups, getDiamonds, getOrganizationBySlug, getActiveTournamentByOrg } from '@/lib/db';
+import { getAnnouncements, getGames, getTeams, getAgeGroups, getDiamonds, getOrganizationBySlug, getTournamentsByOrg } from '@/lib/db';
 import { formatTime } from '@/lib/utils';
 import LocationLink from '@/components/LocationLink';
 import styles from './Home.module.css';
@@ -10,7 +11,16 @@ export const dynamic = 'force-dynamic';
 export default async function HomePage({ params }: { params: Promise<{ orgSlug: string }> }) {
   const { orgSlug } = await params;
   const org = await getOrganizationBySlug(orgSlug);
-  const activeTournament = org ? await getActiveTournamentByOrg(org.id) : null;
+
+  const allTournaments = org ? await getTournamentsByOrg(org.id) : [];
+  const activeTournaments = allTournaments.filter(t => t.status === 'active');
+
+  // Single active tournament → go straight to its schedule
+  if (activeTournaments.length === 1) {
+    redirect(`/${orgSlug}/${activeTournaments[0].slug}/schedule`);
+  }
+
+  const activeTournament = activeTournaments[0] ?? null;
   const currentYear = activeTournament?.year ?? new Date().getFullYear();
 
   const allAnnouncements = await getAnnouncements(activeTournament?.id);
@@ -189,10 +199,10 @@ export default async function HomePage({ params }: { params: Promise<{ orgSlug: 
             The premier youth softball tournament hosted by the <strong>Milton Bats</strong>. {ageRange} age divisions. Elite competition, lifelong memories.
           </p>
           <div className={styles.heroCta}>
-            <Link href={`/${orgSlug}/schedule`} className="btn btn-primary btn-lg" id="hero-schedule-btn">
+            <Link href={activeTournament ? `/${orgSlug}/${activeTournament.slug}/schedule` : `/${orgSlug}/schedule`} className="btn btn-primary btn-lg" id="hero-schedule-btn">
               <Calendar size={18} /> View Schedule
             </Link>
-            <Link href={`/${orgSlug}/news`} className="btn btn-outline btn-lg" id="hero-news-btn">
+            <Link href={activeTournament ? `/${orgSlug}/${activeTournament.slug}/news` : `/${orgSlug}/news`} className="btn btn-outline btn-lg" id="hero-news-btn">
               <Megaphone size={18} /> Announcements
             </Link>
           </div>
@@ -261,7 +271,7 @@ export default async function HomePage({ params }: { params: Promise<{ orgSlug: 
           )}
 
           <div className="text-center mt-3">
-            <Link href={`/${orgSlug}/news`} className="btn btn-outline" id="home-all-news-btn">
+            <Link href={activeTournament ? `/${orgSlug}/${activeTournament.slug}/news` : `/${orgSlug}/news`} className="btn btn-outline" id="home-all-news-btn">
               All Announcements <ChevronRight size={16} />
             </Link>
           </div>
@@ -310,7 +320,7 @@ export default async function HomePage({ params }: { params: Promise<{ orgSlug: 
           )}
 
           <div className="text-center mt-3">
-            <Link href={`/${orgSlug}/schedule`} className="btn btn-outline" id="home-all-schedule-btn">
+            <Link href={activeTournament ? `/${orgSlug}/${activeTournament.slug}/schedule` : `/${orgSlug}/schedule`} className="btn btn-outline" id="home-all-schedule-btn">
               Full Schedule <ChevronRight size={16} />
             </Link>
           </div>
@@ -326,8 +336,8 @@ export default async function HomePage({ params }: { params: Promise<{ orgSlug: 
             <h2 className="display-md">Ready to Compete?</h2>
             <p>Check out the full schedule, browse teams, and review the tournament rules before game day.</p>
             <div className={styles.ctaButtons}>
-              <Link href={`/${orgSlug}/rules`} className="btn btn-primary btn-lg" id="cta-rules-btn">Tournament Rules</Link>
-              <Link href={`/${orgSlug}/results`} className="btn btn-ghost btn-lg" id="cta-results-btn">View Results</Link>
+              <Link href={activeTournament ? `/${orgSlug}/${activeTournament.slug}/rules` : `/${orgSlug}/rules`} className="btn btn-primary btn-lg" id="cta-rules-btn">Tournament Rules</Link>
+              <Link href={activeTournament ? `/${orgSlug}/${activeTournament.slug}/standings` : `/${orgSlug}/standings`} className="btn btn-ghost btn-lg" id="cta-results-btn">View Results</Link>
             </div>
           </div>
         </div>
