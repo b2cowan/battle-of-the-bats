@@ -1,14 +1,16 @@
 'use client';
+import Link from 'next/link';
 import { Tournament } from '@/lib/types';
 import styles from './YearSelector.module.css';
 
 interface Props {
   tournaments: Tournament[];
-  selected: Tournament | null;
-  onSelect: (t: Tournament) => void;
+  orgSlug: string;
+  currentTournamentSlug: string;
+  currentPage: string;
 }
 
-export default function YearSelector({ tournaments, selected, onSelect }: Props) {
+export default function YearSelector({ tournaments, orgSlug, currentTournamentSlug, currentPage }: Props) {
   if (tournaments.length <= 1) return null;
 
   return (
@@ -16,15 +18,15 @@ export default function YearSelector({ tournaments, selected, onSelect }: Props)
       <span className={styles.label}>Season:</span>
       <div className={styles.tabs}>
         {tournaments.map(t => (
-          <button
+          <Link
             key={t.id}
-            className={`${styles.tab} ${selected?.id === t.id ? styles.active : ''}`}
-            onClick={() => onSelect(t)}
+            href={`/${orgSlug}/${t.slug}/${currentPage}`}
+            className={`${styles.tab} ${t.slug === currentTournamentSlug ? styles.active : ''}`}
             id={`year-tab-${t.year}`}
           >
             {t.year}
-            {t.isActive && <span className={styles.liveDot} title="Current season" />}
-          </button>
+            {t.status === 'active' && <span className={styles.liveDot} title="Current season" />}
+          </Link>
         ))}
       </div>
     </div>

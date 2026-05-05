@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation';
+import { getOrganizationBySlug, getActiveTournamentByOrg } from '@/lib/db';
 
 export default async function ResultsRedirect({
   params,
@@ -6,5 +7,8 @@ export default async function ResultsRedirect({
   params: Promise<{ orgSlug: string }>;
 }) {
   const { orgSlug } = await params;
-  redirect(`/${orgSlug}/standings`);
+  const org = await getOrganizationBySlug(orgSlug);
+  const active = org ? await getActiveTournamentByOrg(org.id) : null;
+  if (active?.slug) redirect(`/${orgSlug}/${active.slug}/standings`);
+  redirect(`/${orgSlug}`);
 }

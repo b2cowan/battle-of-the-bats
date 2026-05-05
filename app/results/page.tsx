@@ -4,7 +4,6 @@ import { Trophy } from 'lucide-react';
 import { getGames, getTeams, getAgeGroups, getDiamonds, getTournaments, getStandings } from '@/lib/db';
 import { Game, Team, AgeGroup, Diamond, Tournament } from '@/lib/types';
 import LocationLink from '@/components/LocationLink';
-import YearSelector from '@/components/YearSelector';
 import { formatTime, formatPoolName } from '@/lib/utils';
 import styles from './results.module.css';
 
@@ -106,11 +105,6 @@ export default function ResultsPage() {
 
       <div className="section">
         <div className="container">
-          <YearSelector
-            tournaments={tournaments}
-            selected={selectedTournament}
-            onSelect={t => { setSelectedTournament(t); }}
-          />
 
           <div className="flex gap-2 mb-2" style={{ flexWrap: 'wrap', alignItems: 'center' }}>
             <div className="tabs" style={{ flex: 1, display: 'flex', gap: '8px' }}>

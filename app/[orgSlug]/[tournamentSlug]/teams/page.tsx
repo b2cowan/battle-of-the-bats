@@ -1,36 +1,47 @@
 'use client';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Users, ChevronDown, ChevronUp, User, Search } from 'lucide-react';
-import { getTeams, getAgeGroups, getTournaments } from '@/lib/db';
+import { Users, Search } from 'lucide-react';
+import { useParams } from 'next/navigation';
+import { getTeams, getAgeGroups, getOrganizationBySlug, getTournamentsByOrg } from '@/lib/db';
+import { getAgPref, setAgPref } from '@/lib/age-group-cookie';
 import { Team, AgeGroup, Tournament } from '@/lib/types';
-import styles from './teams.module.css';
+import YearSelector from '@/components/YearSelector';
+import styles from '../../teams/teams.module.css';
 
 export default function TeamsPage() {
-  const [teams, setTeams]         = useState<Team[]>([]);
-  const [ageGroups, setAgeGroups] = useState<AgeGroup[]>([]);
-  const [tournaments, setTournaments] = useState<Tournament[]>([]);
+  const params         = useParams();
+  const orgSlug        = params.orgSlug as string;
+  const tournamentSlug = params.tournamentSlug as string;
+
+  const [teams, setTeams]           = useState<Team[]>([]);
+  const [ageGroups, setAgeGroups]   = useState<AgeGroup[]>([]);
+  const [allTournaments, setAllTournaments] = useState<Tournament[]>([]);
   const [selectedTournament, setSelectedTournament] = useState<Tournament | null>(null);
   const [activeGroup, setActiveGroup] = useState<string>('all');
-  const [search, setSearch]       = useState('');
-  const [expanded, setExpanded]   = useState<Set<string>>(new Set());
+  const [search, setSearch]         = useState('');
 
   useEffect(() => {
     async function init() {
-      const ts = await getTournaments();
-      setTournaments(ts);
-      const active = ts.find(t => t.isActive);
-      setSelectedTournament(active ?? ts[0] ?? null);
+      const org = await getOrganizationBySlug(orgSlug);
+      const ts  = org ? await getTournamentsByOrg(org.id) : [];
+      setAllTournaments(ts.filter(t => t.status !== 'archived'));
+      const current = ts.find(t => t.slug === tournamentSlug) ?? null;
+      setSelectedTournament(current);
     }
     init();
-  }, []);
+  }, [orgSlug, tournamentSlug]);
 
   useEffect(() => {
     if (!selectedTournament) return;
     async function fetchTeams() {
       const allTeams = await getTeams(selectedTournament!.id);
       setTeams(allTeams.filter(t => t.status === 'accepted'));
-      setAgeGroups(await getAgeGroups(selectedTournament!.id));
+      const groups = await getAgeGroups(selectedTournament!.id);
+      setAgeGroups(groups);
+      const pref = getAgPref(orgSlug);
+      const preferred = pref ? groups.find(g => g.name === pref) : null;
+      if (preferred) setActiveGroup(preferred.id);
     }
     fetchTeams();
   }, [selectedTournament]);
@@ -38,17 +49,9 @@ export default function TeamsPage() {
   const filtered = (activeGroup === 'all' ? teams : teams.filter(t => t.ageGroupId === activeGroup))
     .filter(t => t.name.toLowerCase().includes(search.toLowerCase()));
   const getGroupName = (id: string) => ageGroups.find(g => g.id === id)?.name ?? '—';
-  
+
   const countByGroup = Object.fromEntries(ageGroups.map(g => [g.id, teams.filter(t => t.ageGroupId === g.id).length]));
   const totalCount = teams.length;
-
-  function toggle(id: string) {
-    setExpanded(prev => {
-      const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
-      return next;
-    });
-  }
 
   return (
     <div className="page-content">
@@ -62,12 +65,18 @@ export default function TeamsPage() {
 
       <div className="section">
         <div className="container">
+          <YearSelector
+            tournaments={allTournaments}
+            orgSlug={orgSlug}
+            currentTournamentSlug={tournamentSlug}
+            currentPage="teams"
+          />
 
           <div className={styles.searchRow}>
             <Search size={16} className={styles.searchIcon} />
-            <input 
-              type="text" 
-              placeholder="Search teams..." 
+            <input
+              type="text"
+              placeholder="Search teams..."
               value={search}
               onChange={e => setSearch(e.target.value)}
               className={styles.searchInput}
@@ -82,7 +91,7 @@ export default function TeamsPage() {
             {ageGroups.map(g => (
               <button key={g.id}
                 className={`tab-btn ${activeGroup === g.id ? 'active' : ''}`}
-                onClick={() => setActiveGroup(g.id)}
+                onClick={() => { setActiveGroup(g.id); setAgPref(orgSlug, g.name); }}
                 id={`teams-tab-${g.name}`}>
                 {g.name} <span className={styles.tabCount}>{countByGroup[g.id] || 0}</span>
               </button>
@@ -100,36 +109,30 @@ export default function TeamsPage() {
                 const groupTeams = filtered.filter(t => t.ageGroupId === group.id);
                 if (groupTeams.length === 0) return null;
 
-                // 1. Get official pools for this group
                 const groupPools = (group.poolCount || 0) >= 2 ? (group.pools || []) : [];
                 const poolIds = groupPools.map(p => p.id);
-                
-                // 2. Group teams by pool_id
+
                 const poolGroups: { name: string, teams: Team[] }[] = [];
-                
+
                 if (groupPools.length >= 2) {
-                  // Multiple pools: Group by pool_id
                   groupPools.forEach(p => {
                     const teamsInPool = groupTeams.filter(t => t.poolId === p.id);
                     if (teamsInPool.length > 0) {
                       poolGroups.push({ name: p.name, teams: teamsInPool });
                     }
                   });
-
-                  // Add any "Unassigned" teams
                   const unassigned = groupTeams.filter(t => !t.poolId || !poolIds.includes(t.poolId));
                   if (unassigned.length > 0) {
                     poolGroups.push({ name: 'Awaiting Assignment', teams: unassigned });
                   }
                 } else {
-                  // No pools: Just one group with no header
                   poolGroups.push({ name: '', teams: groupTeams });
                 }
 
                 return (
                   <div key={group.id} className={styles.groupSection}>
                     <h2 className={styles.groupTitle}>{group.name}</h2>
-                    
+
                     <div className={styles.poolGrid}>
                       {poolGroups.map(pg => (
                         <div key={pg.name} className={styles.poolCard}>
@@ -140,9 +143,7 @@ export default function TeamsPage() {
                           )}
                           <div className={styles.teamList}>
                             {pg.teams.map(team => {
-                              // Clean team name (remove anything in brackets like "(Gold)")
                               const cleanName = team.name.replace(/\s*\(.*?\)\s*/g, '').trim();
-                              
                               return (
                                 <div key={team.id} className={styles.teamRow}>
                                   <div className={styles.teamMain}>
@@ -151,7 +152,7 @@ export default function TeamsPage() {
                                       {team.coach && <span className={styles.coach}>Coach: {team.coach}</span>}
                                     </div>
                                   </div>
-                                  <Link href={`/teams/${team.id}`} className={styles.viewLink}>Profile →</Link>
+                                  <Link href={`/${orgSlug}/${tournamentSlug}/teams/${team.id}`} className={styles.viewLink}>Profile →</Link>
                                 </div>
                               );
                             })}
