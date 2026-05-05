@@ -25,8 +25,8 @@ function isMarketingPath(pathname: string) {
 export default function Navbar() {
   const pathname = usePathname();
   const params   = useParams();
-  const orgSlug  = (params?.orgSlug as string) || 'milton-bats';
-  const { logoUrl, orgName } = useOrgNav();
+  const orgSlug        = (params?.orgSlug as string) || 'milton-bats';
+  const { logoUrl, orgName, tournamentSlug } = useOrgNav();
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
@@ -109,7 +109,9 @@ export default function Navbar() {
 
         <div className={styles.links}>
           {NAV_KEYS.map(l => {
-            const href = `/${orgSlug}/${l.key}`;
+            const href = tournamentSlug
+              ? `/${orgSlug}/${tournamentSlug}/${l.key}`
+              : `/${orgSlug}/${l.key}`;
             const isActive = pathname.startsWith(href);
             return (
               <Link
@@ -124,7 +126,11 @@ export default function Navbar() {
         </div>
 
         <div className={styles.actions}>
-          <Link href={`/${orgSlug}/register`} className="btn btn-primary btn-sm" id="nav-register-btn">
+          <Link
+            href={tournamentSlug ? `/${orgSlug}/${tournamentSlug}/register` : `/${orgSlug}/register`}
+            className="btn btn-primary btn-sm"
+            id="nav-register-btn"
+          >
             Register
           </Link>
         </div>
