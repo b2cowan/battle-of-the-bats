@@ -14,13 +14,13 @@
 .headerIcon {
   width: 48px;
   height: 48px;
-  background: var(--primary-faint);
-  border: 1px solid var(--border);
+  background: rgba(var(--blueprint-blue-rgb), 0.12);
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.3);
   border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--primary-light);
+  color: var(--logic-lime);
 }
 
 .pageTitle { font-family: var(--font-display); font-size: 1.75rem; font-weight: 900; color: var(--white); }
@@ -31,9 +31,9 @@
 .annCard { display: flex; flex-direction: column; gap: 0.75rem; }
 
 .pinned {
-  border-color: var(--primary);
-  background: linear-gradient(135deg, rgba(var(--primary-rgb),0.08), var(--surface));
-  box-shadow: var(--glow-sm);
+  border-color: var(--blueprint-blue);
+  background: linear-gradient(135deg, rgba(var(--blueprint-blue-rgb), 0.08), var(--surface));
+  box-shadow: var(--glow-blue);
 }
 
 .annHeader {
@@ -75,7 +75,7 @@
 .pinnedToggle input[type="checkbox"] {
   width: 16px;
   height: 16px;
-  accent-color: var(--primary);
+  accent-color: var(--blueprint-blue);
   cursor: pointer;
   flex-shrink: 0;
 }

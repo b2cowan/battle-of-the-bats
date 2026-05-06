@@ -370,11 +370,13 @@ export default function AdminTournamentsPage() {
 
       {/* Info card */}
       <div className={styles.infoCard}>
-        <Star size={14} style={{ color: 'var(--primary-light)', flexShrink: 0, marginTop: 2 }} />
+        <Star size={14} style={{ color: 'var(--logic-lime)', flexShrink: 0, marginTop: 2 }} />
         <p>
           <strong>Draft</strong> tournaments are invisible to the public — set up age groups and schedule before going live.
-          <strong> Activate</strong> to publish. <strong>Complete</strong> when the season ends to free your active slot.
+          <strong> Activate</strong> to publish and open registration.
+          <strong> Complete</strong> when the season ends to free your active slot.
           <strong> Archive</strong> to retire a tournament while keeping its history accessible.
+          <strong> Seal</strong> to create a permanent, tamper-proof snapshot of the final results — this cannot be undone.
         </p>
       </div>
 

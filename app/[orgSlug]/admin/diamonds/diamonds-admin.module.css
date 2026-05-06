@@ -14,13 +14,13 @@
 .headerIcon {
   width: 48px;
   height: 48px;
-  background: var(--primary-faint);
-  border: 1px solid var(--border);
+  background: rgba(var(--blueprint-blue-rgb), 0.12);
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.3);
   border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--primary-light);
+  color: var(--logic-lime);
 }
 
 .pageTitle { font-family: var(--font-display); font-size: 1.75rem; font-weight: 900; color: var(--white); }

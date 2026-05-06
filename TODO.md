@@ -46,15 +46,25 @@ This file tracks the ongoing tasks for the tournament website project. AI models
 
 ---
 
+## 🎛️ Admin Design & Architecture
+*Detailed plan in [ADMIN_DESIGN_ARCHITECTURE_PLAN.md](ADMIN_DESIGN_ARCHITECTURE_PLAN.md)*
+
+- [x] **Phase 1 — Sidebar restructure**: Split nav into labeled Tournament / Organization sections, Contacts in Tournament, Diamonds in Organization, fix hardcoded "Battle of the Bats" in sidebar logo
+- [x] **Phase 2 — Admin theme cleanup**: Replace `--primary` token leakage in admin content page CSS with HUD tokens (blueprint-blue / logic-lime); complete Option B separation from org palette
+- [ ] **Member roles & tournament assignment** — Owners need to assign members to specific tournaments (e.g., a scorekeeper assigned only to U12); requires tournament-scoped role model: org-level owners/admins vs. tournament-level organizers/staff/officials (see plan file TBD)
+
+---
+
 ## 📖 Admin UX & Documentation
-- [ ] **In-app role/permissions documentation** — Add a help section in the Members admin area showing a human-readable breakdown of what each role (Owner, Admin, Member, etc.) can and cannot do; surface as a collapsible panel or tooltip-driven reference table
+- [x] **In-app role/permissions documentation** — Collapsible Role Guide panel on Members page with full permission matrix; role description hints in invite modal
+- [x] **Admin help gaps — second pass** — Billing: Past Due / Canceled status alerts; Settings: expanded slug-change warning; Teams: improved Randomize copy with algorithm and re-run note; Results: Pending Review / Completed legend when finalization is enabled
 
 ---
 
 ## 🛠️ Platform Administration (Super Admin)
 **Goal:** Create a secure, restricted area for platform-wide management.
 
-- [ ] **Site Admin Dashboard** — Email-allowlist auth guard, org plan override, user password reset, global stats (see [PLATFORM_ADMIN_PLAN.md](PLATFORM_ADMIN_PLAN.md))
+- [x] **Site Admin Dashboard** — Email-allowlist auth guard, org plan override, user password reset, global stats (see [PLATFORM_ADMIN_PLAN.md](PLATFORM_ADMIN_PLAN.md))
 
 
 ## ✅ Completed Tasks

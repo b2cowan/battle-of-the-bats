@@ -20,18 +20,21 @@ const PRIMARY_KEYS = [
   { key: 'results',  icon: Trophy,   label: 'Results'       },
 ];
 
-const BASE_MORE_KEYS = [
+const TOURNAMENT_MORE = [
   { key: '',              icon: LayoutDashboard, label: 'Dashboard'     },
   { key: 'tournaments',   icon: RefreshCw,       label: 'Tournaments'   },
   { key: 'announcements', icon: Megaphone,       label: 'Announcements' },
   { key: 'contacts',      icon: BookUser,        label: 'Contacts'      },
   { key: 'age-groups',    icon: Tag,             label: 'Age Groups'    },
-  { key: 'diamonds',      icon: MapPin,          label: 'Diamonds'      },
 ];
 
-const OWNER_MORE_KEYS = [
-  { key: 'settings', icon: Settings, label: 'Settings' },
+const ORG_MORE = [
+  { key: 'diamonds', icon: MapPin, label: 'Diamonds' },
+];
+
+const OWNER_ORG_MORE = [
   { key: 'members',  icon: Users2,   label: 'Members'  },
+  { key: 'settings', icon: Settings, label: 'Settings' },
 ];
 
 export default function AdminBottomNav() {
@@ -39,14 +42,21 @@ export default function AdminBottomNav() {
   const router    = useRouter();
   const { currentOrg, userRole } = useOrg();
   const base = `/${currentOrg?.slug ?? 'milton-bats'}/admin`;
-  const MORE_KEYS = userRole === 'owner'
-    ? [...BASE_MORE_KEYS, ...OWNER_MORE_KEYS]
-    : BASE_MORE_KEYS;
   const [moreOpen, setMoreOpen] = useState(false);
   const moreRef   = useRef<HTMLDivElement>(null);
   const { tournaments, currentTournament, setCurrentTournament, refresh } = useTournament();
 
-  // Close dropdown when tapping outside
+  const allMoreKeys = [
+    ...TOURNAMENT_MORE,
+    ...ORG_MORE,
+    ...(userRole === 'owner' ? OWNER_ORG_MORE : []),
+  ];
+
+  const isMoreActive = allMoreKeys.some(item => {
+    const href = item.key ? `${base}/${item.key}` : base;
+    return pathname === href || pathname.startsWith(href + '/');
+  });
+
   useEffect(() => {
     function handleClick(e: MouseEvent) {
       if (moreRef.current && !moreRef.current.contains(e.target as Node)) {
@@ -57,7 +67,6 @@ export default function AdminBottomNav() {
     return () => document.removeEventListener('mousedown', handleClick);
   }, [moreOpen]);
 
-  // Close on route change
   useEffect(() => { setMoreOpen(false); }, [pathname]);
 
   async function handleLogout() {
@@ -76,10 +85,27 @@ export default function AdminBottomNav() {
     refresh();
   }
 
-  const isMoreActive = MORE_KEYS.some(item => {
-    const href = item.key ? `${base}/${item.key}` : base;
-    return pathname === href || pathname.startsWith(href + '/');
-  });
+  function dropNavItems(items: typeof TOURNAMENT_MORE) {
+    return items.map(({ key, icon: Icon, label }) => {
+      const href   = key ? `${base}/${key}` : base;
+      const active = key === ''
+        ? pathname === base
+        : pathname === href || pathname.startsWith(href + '/');
+      return (
+        <Link
+          key={key || '_dashboard'}
+          href={href}
+          className={`${styles.dropItem} ${active ? styles.dropActive : ''}`}
+          role="menuitem"
+          id={`admin-mob-more-${label.toLowerCase().replace(/\s/g, '-')}`}
+        >
+          <Icon size={17} />
+          <span>{label}</span>
+          <ChevronRight size={14} className={styles.dropChevron} />
+        </Link>
+      );
+    });
+  }
 
   return (
     <nav className={styles.bottomNav} aria-label="Admin mobile navigation">
@@ -121,7 +147,6 @@ export default function AdminBottomNav() {
           <span className={styles.label}>More</span>
         </button>
 
-        {/* Upward dropdown */}
         {moreOpen && (
           <div className={styles.dropdown} role="menu">
 
@@ -154,26 +179,16 @@ export default function AdminBottomNav() {
 
             <div className={styles.dropDivider} />
 
-            {/* Nav items */}
-            {MORE_KEYS.map(({ key, icon: Icon, label }) => {
-              const href   = key ? `${base}/${key}` : base;
-              const active = key === ''
-                ? pathname === base
-                : pathname === href || pathname.startsWith(href + '/');
-              return (
-                <Link
-                  key={key}
-                  href={href}
-                  className={`${styles.dropItem} ${active ? styles.dropActive : ''}`}
-                  role="menuitem"
-                  id={`admin-mob-more-${label.toLowerCase().replace(/\s/g, '-')}`}
-                >
-                  <Icon size={17} />
-                  <span>{label}</span>
-                  <ChevronRight size={14} className={styles.dropChevron} />
-                </Link>
-              );
-            })}
+            {/* Tournament nav group */}
+            <div className={styles.dropSectionLabel}>Tournament</div>
+            {dropNavItems(TOURNAMENT_MORE)}
+
+            <div className={styles.dropDivider} />
+
+            {/* Organization nav group */}
+            <div className={styles.dropSectionLabel}>Organization</div>
+            {dropNavItems(ORG_MORE)}
+            {userRole === 'owner' && dropNavItems(OWNER_ORG_MORE)}
 
             <div className={styles.dropDivider} />
 

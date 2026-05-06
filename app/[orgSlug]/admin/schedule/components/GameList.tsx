@@ -405,8 +405,8 @@ export default function GameList({
             return poolSections.map(({ poolName, games: poolGames }) => (
               <div key={poolName}>
                 <div className={s.poolSubHeader} style={{ marginTop: '1rem' }}>
-                  <div className={s.poolDot} style={{ background: 'var(--primary-light)' }} />
-                  <span className={s.poolSubLabel} style={{ color: 'var(--primary-light)', fontSize: '0.7rem' }}>
+                  <div className={s.poolDot} style={{ background: 'var(--logic-lime)' }} />
+                  <span className={s.poolSubLabel} style={{ color: 'var(--logic-lime)', fontSize: '0.7rem' }}>
                     {formatPoolName(poolName)} PLAYOFFS
                   </span>
                   <span className={s.poolSubCount}>({poolGames.length})</span>
@@ -429,7 +429,7 @@ export default function GameList({
           return groupByRound(sortedGames).map(({ key, label, games: rGames }) => (
             <div key={key} className={s.poolSubSection}>
               <div className={s.poolSubHeader}>
-                <div className={s.poolDot} style={{ background: 'var(--primary-light)' }} />
+                <div className={s.poolDot} style={{ background: 'var(--logic-lime)' }} />
                 <span className={s.poolSubLabel}>{label}</span>
                 <span className={s.poolSubCount}>({rGames.length})</span>
               </div>
@@ -457,7 +457,7 @@ export default function GameList({
             return (
               <div key={p.id} className={s.poolSubSection}>
                 <div className={s.poolSubHeader}>
-                  <div className={s.poolDot} style={{ background: p.id === 'unassigned' ? 'var(--danger-light)' : 'var(--primary-light)' }} />
+                  <div className={s.poolDot} style={{ background: p.id === 'unassigned' ? 'var(--danger-light)' : 'var(--logic-lime)' }} />
                   <span className={s.poolSubLabel} style={{ color: p.id === 'unassigned' ? 'var(--danger-light)' : undefined }}>
                     {p.id === 'unassigned' ? 'UNASSIGNED' : `${p.name.replace(/^Pool\s+/i, '').trim().toUpperCase()} POOL`}
                   </span>

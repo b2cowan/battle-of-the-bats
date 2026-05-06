@@ -23,7 +23,7 @@
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: rgba(var(--blueprint-blue-rgb), 0.6);
+  color: rgba(148, 163, 184, 0.6);
 }
 
 .switcherSelect {
@@ -75,7 +75,7 @@
   text-transform: uppercase;
 }
 
-
+/* Logo */
 .logo {
   display: flex;
   align-items: center;
@@ -114,11 +114,31 @@
   text-transform: uppercase;
 }
 
+/* Nav Sections */
+.navSection {
+  display: flex;
+  flex-direction: column;
+}
+
+.orgSection {
+  border-top: 1px solid rgba(var(--blueprint-blue-rgb), 0.3);
+}
+
+.sectionHeader {
+  font-family: var(--font-data);
+  font-size: 0.5625rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(148, 163, 184, 0.55);
+  padding: 0.625rem 1.25rem 0.125rem;
+}
+
 .nav {
   display: flex;
   flex-direction: column;
   gap: 0;
-  padding: 0.75rem 0;
+  padding: 0 0 0.5rem;
 }
 
 .navItem {
@@ -153,12 +173,9 @@
 
 .navChevron { margin-left: auto; color: var(--logic-lime); opacity: 0.5; }
 
-.billingSection {
-  padding: 0.5rem 0;
-  border-top: 1px solid rgba(var(--blueprint-blue-rgb), 0.3);
-}
-
+/* Footer — pushed to bottom */
 .footer {
+  margin-top: auto;
   padding: 0.75rem 0;
   border-top: 1px solid rgba(var(--blueprint-blue-rgb), 0.3);
   display: flex;

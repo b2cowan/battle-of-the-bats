@@ -581,24 +581,24 @@ export default function RulesAdmin({ tournament }: Props) {
 
         .rules-stack { display: flex; flex-direction: column; gap: 1.5rem; }
         .rule-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 1rem; overflow: hidden; transition: border-color 0.2s; }
-        .rule-card-dirty { border-color: var(--primary-light); }
-        .dirty-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--primary-light); flex-shrink: 0; }
+        .rule-card-dirty { border-color: var(--logic-lime); }
+        .dirty-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--logic-lime); flex-shrink: 0; }
         .rule-card-header { padding: 0.75rem 1.25rem; background: var(--white-05); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
         .rule-card-title-group { display: flex; align-items: center; gap: 1rem; flex: 1; }
-        .icon-preview-box { width: 32px; height: 32px; background: var(--primary-faint); border: 1px solid var(--border); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: var(--primary-light); flex-shrink: 0; }
+        .icon-preview-box { width: 32px; height: 32px; background: rgba(var(--blueprint-blue-rgb), 0.1); border: 1px solid rgba(var(--blueprint-blue-rgb), 0.3); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: var(--logic-lime); flex-shrink: 0; }
         .icon-select { background: var(--bg-3); border: 1px solid var(--border); color: var(--white); border-radius: 6px; padding: 2px 6px; font-size: 0.8rem; }
         .card-title-text { font-family: var(--font-display); font-size: 1rem; font-weight: 800; color: var(--white); margin: 0; }
-        .inline-title-input { background: var(--black-20); border: 1px solid var(--primary); outline: none; color: var(--white); font-family: var(--font-display); font-size: 1rem; font-weight: 800; padding: 2px 8px; border-radius: 4px; width: 100%; }
+        .inline-title-input { background: var(--black-20); border: 1px solid var(--blueprint-blue); outline: none; color: var(--white); font-family: var(--font-display); font-size: 1rem; font-weight: 800; padding: 2px 8px; border-radius: 4px; width: 100%; }
         .edit-pencil-btn { background: none; border: none; color: var(--white-20); cursor: pointer; padding: 4px; opacity: 0; transition: opacity 0.2s; }
         .group:hover .edit-pencil-btn { opacity: 1; }
-        .edit-pencil-btn:hover { color: var(--primary-light); }
+        .edit-pencil-btn:hover { color: var(--logic-lime); }
         .delete-btn-mini { background: none; border: none; color: var(--white-10); cursor: pointer; padding: 6px; transition: color 0.2s; }
         .delete-btn-mini:hover { color: var(--danger); }
 
         .applies-to-row { display: flex; align-items: center; gap: 0.75rem; padding: 0.4rem 1.25rem; background: var(--white-03); border-bottom: 1px solid var(--border); flex-wrap: wrap; }
         .applies-to-label { font-size: 0.7rem; font-weight: 700; color: var(--white-40); text-transform: uppercase; letter-spacing: 0.05em; white-space: nowrap; }
         .applies-to-check { display: flex; align-items: center; gap: 0.3rem; font-size: 0.8rem; color: var(--white-60); cursor: pointer; }
-        .applies-to-check input[type="checkbox"] { accent-color: var(--primary-light); }
+        .applies-to-check input[type="checkbox"] { accent-color: var(--blueprint-blue); }
 
         .rule-items-list { padding: 1rem 1.25rem; display: flex; flex-direction: column; gap: 0.4rem; }
         .rule-item-row { display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.3rem; border-radius: 6px; }
@@ -611,9 +611,9 @@ export default function RulesAdmin({ tournament }: Props) {
 
         .resource-list-stack { display: flex; flex-direction: column; gap: 0.5rem; }
         .resource-edit-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 0.6rem; padding: 0.5rem 0.75rem; transition: transform 0.1s; }
-        .resource-edit-card.dragging { background: var(--bg-3); border-color: var(--primary); }
+        .resource-edit-card.dragging { background: var(--bg-3); border-color: var(--blueprint-blue); }
         .resource-header { display: flex; align-items: center; gap: 0.75rem; }
-        .resource-icon-box { width: 30px; height: 30px; background: var(--white-05); border-radius: 6px; display: flex; align-items: center; justify-content: center; color: var(--primary-light); flex-shrink: 0; }
+        .resource-icon-box { width: 30px; height: 30px; background: var(--white-05); border-radius: 6px; display: flex; align-items: center; justify-content: center; color: var(--logic-lime); flex-shrink: 0; }
         .resource-meta { flex: 1; display: flex; flex-direction: column; min-width: 0; }
         .resource-display-label { color: var(--white); font-weight: 700; font-size: 0.9rem; }
         .resource-display-url { color: var(--white-20); font-size: 0.65rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -622,7 +622,7 @@ export default function RulesAdmin({ tournament }: Props) {
         .form-input.sm { padding: 3px 6px; font-size: 0.8rem; background: var(--black-20); }
         .resource-actions { display: flex; align-items: center; gap: 0.1rem; flex-shrink: 0; position: relative; z-index: 20; }
         .drag-handle-right { color: var(--white-10); cursor: grab; padding: 8px; margin-right: -4px; display: flex; align-items: center; justify-content: center; transition: color 0.2s; }
-        .drag-handle-right:active { cursor: grabbing; color: var(--primary-light); }
+        .drag-handle-right:active { cursor: grabbing; color: var(--logic-lime); }
         .resource-edit-card:hover .drag-handle-right { color: var(--white-30); }
         .icon-btn-ghost { background: none; border: none; color: var(--white-10); cursor: pointer; padding: 4px; border-radius: 4px; display: flex; align-items: center; justify-content: center; }
         .icon-btn-ghost:hover { background: var(--white-10); color: var(--white); }

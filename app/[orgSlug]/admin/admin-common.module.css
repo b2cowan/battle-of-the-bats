@@ -18,13 +18,13 @@
 .headerIcon {
   width: 48px;
   height: 48px;
-  background: var(--primary-faint);
+  background: rgba(var(--blueprint-blue-rgb), 0.12);
   border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--primary-light);
-  border: 1px solid var(--border);
+  color: var(--logic-lime);
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.3);
 }
 
 .pageTitle { font-family: var(--font-display); font-size: 1.75rem; font-weight: 900; color: var(--white); margin: 0; }
@@ -100,7 +100,7 @@
 }
 
 .toggleActive {
-  background: var(--primary);
+  background: var(--blueprint-blue);
   color: var(--white);
 }
 
@@ -129,7 +129,7 @@
 }
 
 .filterChip:hover { background: var(--white-10); color: var(--white-60); }
-.chipActive { background: var(--primary); border-color: var(--primary-light); color: var(--white); }
+.chipActive { background: var(--blueprint-blue); border-color: var(--logic-lime); color: var(--white); }
 
 /* ─── Search ──────────────────────────────────────────────────────────────── */
 .searchWrapper {
@@ -161,9 +161,9 @@
 
 .searchInput:focus {
   outline: none;
-  border-color: var(--primary-light);
+  border-color: var(--blueprint-blue);
   background: var(--black-30);
-  box-shadow: 0 0 0 2px var(--primary-faint);
+  box-shadow: 0 0 0 2px rgba(var(--blueprint-blue-rgb), 0.15);
 }
 
 /* ─── Group Sections (Division/Pool headers) ──────────────────────────────── */
@@ -192,7 +192,7 @@
   gap: 1.5rem;
 }
 
-.groupHeader strong { font-family: var(--font-display); font-size: 1.25rem; font-weight: 900; color: var(--primary-light); }
+.groupHeader strong { font-family: var(--font-display); font-size: 1.25rem; font-weight: 900; color: var(--logic-lime); }
 
 /* ─── Pool Sub-Sections (used inside group sections) ──────────────────────── */
 .poolSubSection {
@@ -248,7 +248,7 @@
 /* ─── Row Layout ──────────────────────────────────────────────────────────── */
 .row { border-bottom: 1px solid var(--border-1); transition: background 0.2s ease; }
 .row:last-child { border-bottom: none; }
-.rowSelected { background: rgba(124, 58, 237, 0.05); }
+.rowSelected { background: rgba(var(--blueprint-blue-rgb), 0.05); }
 
 .rowMain { display: flex; align-items: center; padding: 0.75rem 1.5rem; min-height: 56px; }
 
@@ -308,7 +308,7 @@
   top: 100%;
   right: 0;
   background: var(--surface-2);
-  border: 1px solid var(--border);
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.3);
   border-radius: var(--radius-sm);
   box-shadow: 0 4px 12px rgba(0,0,0,0.5);
   z-index: 100;

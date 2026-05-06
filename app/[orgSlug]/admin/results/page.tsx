@@ -4,6 +4,7 @@ import { Trophy, X, Check, Search, RefreshCw, Users, Download } from 'lucide-rea
 import { getGames, updateGame, getTeams, getAgeGroups, getDiamonds } from '@/lib/db';
 import { downloadCSV, formatTime } from '@/lib/utils';
 import { useTournament } from '@/lib/tournament-context';
+import { useOrg } from '@/lib/org-context';
 import { Game, Team, AgeGroup, Diamond } from '@/lib/types';
 import GameList from '../schedule/components/GameList';
 import s from '../admin-common.module.css';
@@ -14,6 +15,8 @@ type ResultsFilter = 'pending' | 'submitted' | 'completed';
 
 export default function AdminResultsPage() {
   const { currentTournament } = useTournament();
+  const { currentOrg } = useOrg();
+  const requiresFinalization = currentOrg?.requireScoreFinalization ?? false;
   const [games, setGames] = useState<Game[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
   const [ageGroups, setAgeGroups] = useState<AgeGroup[]>([]);
@@ -215,6 +218,13 @@ export default function AdminResultsPage() {
           <input type="text" placeholder="Search teams..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className={s.searchInput} />
         </div>
       </div>
+
+      {requiresFinalization && (
+        <p style={{ fontSize: '0.78rem', color: 'var(--white-30)', margin: '0.5rem 0 1rem', lineHeight: 1.5 }}>
+          <strong style={{ color: 'var(--warning, #f59e0b)' }}>Pending Review</strong> — score submitted by a field official; visible to the public but not yet final. Use <em>Finalize</em> to mark it complete.
+          {' '}<strong style={{ color: 'var(--success, #4ade80)' }}>Completed</strong> — score is final and locked.
+        </p>
+      )}
 
       {loading ? (
         <div className="empty-state"><RefreshCw size={32} className="spin opacity-40" /><p>Loading games...</p></div>

@@ -76,18 +76,18 @@
 }
 
 .pill:hover {
-  border-color: var(--primary-light);
+  border-color: var(--blueprint-blue);
   color: var(--white-90, #f0f0f0);
 }
 
 .pillActive {
-  background: var(--primary-faint);
-  border-color: var(--primary-light);
+  background: rgba(var(--blueprint-blue-rgb), 0.12);
+  border-color: var(--blueprint-blue);
   color: var(--white-90, #f0f0f0);
 }
 
 .pillActive svg {
-  color: var(--primary-light);
+  color: var(--logic-lime);
 }
 
 .hint {

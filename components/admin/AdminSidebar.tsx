@@ -7,17 +7,20 @@ import { useOrg } from '@/lib/org-context';
 import { useTournament } from '@/lib/tournament-context';
 import styles from './AdminSidebar.module.css';
 
-const NAV_KEYS = [
-  { key: '',               icon: LayoutDashboard, label: 'Dashboard'         },
-  { key: 'tournaments',    icon: RefreshCw,       label: 'Tournaments'       },
-  { key: 'announcements',  icon: Megaphone,       label: 'Announcements'     },
-  { key: 'contacts',       icon: BookUser,        label: 'Contacts'          },
-  { key: 'age-groups',     icon: Tag,             label: 'Age Groups'        },
-  { key: 'teams',          icon: Users,           label: 'Registrations'     },
-  { key: 'schedule',       icon: Calendar,        label: 'Schedule'          },
-  { key: 'results',        icon: Trophy,          label: 'Results'           },
-  { key: 'rules',          icon: BookOpen,        label: 'Rules & Resources' },
-  { key: 'diamonds',       icon: MapPin,          label: 'Diamonds'          },
+const TOURNAMENT_NAV = [
+  { key: '',              icon: LayoutDashboard, label: 'Dashboard'         },
+  { key: 'tournaments',   icon: RefreshCw,       label: 'Tournaments'       },
+  { key: 'announcements', icon: Megaphone,       label: 'Announcements'     },
+  { key: 'contacts',      icon: BookUser,        label: 'Contacts'          },
+  { key: 'age-groups',    icon: Tag,             label: 'Age Groups'        },
+  { key: 'teams',         icon: Users,           label: 'Registrations'     },
+  { key: 'schedule',      icon: Calendar,        label: 'Schedule'          },
+  { key: 'results',       icon: Trophy,          label: 'Results'           },
+  { key: 'rules',         icon: BookOpen,        label: 'Rules & Resources' },
+];
+
+const ORG_NAV = [
+  { key: 'diamonds', icon: MapPin, label: 'Diamonds' },
 ];
 
 export default function AdminSidebar() {
@@ -37,14 +40,30 @@ export default function AdminSidebar() {
     if (t) setCurrentTournament(t);
   }
 
+  function navLink(key: string, icon: React.ElementType, label: string, href: string, active: boolean) {
+    const Icon = icon;
+    return (
+      <Link
+        key={key}
+        href={href}
+        className={`${styles.navItem} ${active ? styles.navActive : ''}`}
+        id={`admin-nav-${label.toLowerCase().replace(/[\s&]+/g, '-')}`}
+      >
+        <Icon size={17} />
+        <span>{label}</span>
+        {active && <ChevronRight size={14} className={styles.navChevron} />}
+      </Link>
+    );
+  }
+
   return (
     <aside className={styles.sidebar}>
       {/* Logo */}
       <div className={styles.logo}>
         <div className={styles.logoIcon}>⚾</div>
         <div>
-          <div className={styles.logoMain}>Admin Panel</div>
-          <div className={styles.logoSub}>Battle of the Bats</div>
+          <div className={styles.logoMain}>FieldLogicHQ</div>
+          <div className={styles.logoSub}>{currentOrg?.name ?? 'Admin'}</div>
         </div>
       </div>
 
@@ -71,75 +90,49 @@ export default function AdminSidebar() {
         </div>
       )}
 
-      {/* Nav */}
-      <nav className={styles.nav}>
-        {NAV_KEYS.map(item => {
-          const href   = item.key ? `${base}/${item.key}` : base;
-          const active = item.key === ''
-            ? pathname === base
-            : pathname.startsWith(`${base}/${item.key}`);
-          return (
-            <Link
-              key={item.key}
-              href={href}
-              className={`${styles.navItem} ${active ? styles.navActive : ''}`}
-              id={`admin-nav-${item.label.toLowerCase().replace(/\s/g, '-')}`}
-            >
-              <item.icon size={17} />
-              <span>{item.label}</span>
-              {active && <ChevronRight size={14} className={styles.navChevron} />}
-            </Link>
-          );
-        })}
-      </nav>
-
-      {/* Archives — all roles, public page */}
-      <div className={styles.billingSection}>
-        <Link
-          href={`/${currentOrg?.slug ?? 'milton-bats'}/archives`}
-          className={`${styles.navItem} ${pathname.startsWith(`/${currentOrg?.slug ?? 'milton-bats'}/archives`) ? styles.navActive : ''}`}
-          id="admin-nav-archives"
-        >
-          <Archive size={17} />
-          <span>Archives</span>
-          {pathname.startsWith(`/${currentOrg?.slug ?? 'milton-bats'}/archives`) && (
-            <ChevronRight size={14} className={styles.navChevron} />
-          )}
-        </Link>
+      {/* Tournament Section */}
+      <div className={styles.navSection}>
+        <div className={styles.sectionHeader}>Tournament</div>
+        <nav className={styles.nav}>
+          {TOURNAMENT_NAV.map(item => {
+            const href   = item.key ? `${base}/${item.key}` : base;
+            const active = item.key === ''
+              ? pathname === base
+              : pathname.startsWith(`${base}/${item.key}`);
+            return navLink(item.key || '_dashboard', item.icon, item.label, href, active);
+          })}
+        </nav>
       </div>
 
-      {/* Billing, Settings, Members — owner only */}
-      {userRole === 'owner' && (
-        <div className={styles.billingSection}>
-          <Link
-            href={`${base}/billing`}
-            className={`${styles.navItem} ${pathname.startsWith(`${base}/billing`) ? styles.navActive : ''}`}
-            id="admin-nav-billing"
-          >
-            <CreditCard size={17} />
-            <span>Billing</span>
-            {pathname.startsWith(`${base}/billing`) && <ChevronRight size={14} className={styles.navChevron} />}
-          </Link>
-          <Link
-            href={`${base}/settings`}
-            className={`${styles.navItem} ${pathname.startsWith(`${base}/settings`) ? styles.navActive : ''}`}
-            id="admin-nav-settings"
-          >
-            <Settings size={17} />
-            <span>Settings</span>
-            {pathname.startsWith(`${base}/settings`) && <ChevronRight size={14} className={styles.navChevron} />}
-          </Link>
-          <Link
-            href={`${base}/members`}
-            className={`${styles.navItem} ${pathname.startsWith(`${base}/members`) ? styles.navActive : ''}`}
-            id="admin-nav-members"
-          >
-            <Users2 size={17} />
-            <span>Members</span>
-            {pathname.startsWith(`${base}/members`) && <ChevronRight size={14} className={styles.navChevron} />}
-          </Link>
-        </div>
-      )}
+      {/* Organization Section */}
+      <div className={`${styles.navSection} ${styles.orgSection}`}>
+        <div className={styles.sectionHeader}>Organization</div>
+        <nav className={styles.nav}>
+          {ORG_NAV.map(item => {
+            const href   = `${base}/${item.key}`;
+            const active = pathname.startsWith(`${base}/${item.key}`);
+            return navLink(item.key, item.icon, item.label, href, active);
+          })}
+
+          {/* Archives — all roles, links outside admin base */}
+          {navLink(
+            'archives',
+            Archive,
+            'Archives',
+            `/${currentOrg?.slug ?? 'milton-bats'}/archives`,
+            pathname.startsWith(`/${currentOrg?.slug ?? 'milton-bats'}/archives`),
+          )}
+
+          {/* Owner-only: Members, Billing, Settings */}
+          {userRole === 'owner' && (
+            <>
+              {navLink('members',  Users2,     'Members',  `${base}/members`,  pathname.startsWith(`${base}/members`))}
+              {navLink('billing',  CreditCard, 'Billing',  `${base}/billing`,  pathname.startsWith(`${base}/billing`))}
+              {navLink('settings', Settings,   'Settings', `${base}/settings`, pathname.startsWith(`${base}/settings`))}
+            </>
+          )}
+        </nav>
+      </div>
 
       {/* Footer */}
       <div className={styles.footer}>

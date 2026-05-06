@@ -20,8 +20,9 @@
   width: 48px;
   height: 48px;
   border-radius: 12px;
-  background: var(--primary-faint);
-  color: var(--primary-light);
+  background: rgba(var(--blueprint-blue-rgb), 0.12);
+  color: var(--logic-lime);
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.3);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -67,7 +68,7 @@
 
 .upgradeLink {
   font-size: 0.82rem;
-  color: var(--primary-light);
+  color: var(--logic-lime);
   font-weight: 600;
   white-space: nowrap;
 }
@@ -128,8 +129,8 @@
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--primary-light);
-  background: var(--primary-faint);
+  color: var(--logic-lime);
+  background: rgba(var(--blueprint-blue-rgb), 0.12);
   border-radius: 4px;
   padding: 0.15rem 0.4rem;
 }
@@ -169,7 +170,7 @@
 
 .roleSelect:focus {
   outline: none;
-  border-color: var(--primary);
+  border-color: var(--blueprint-blue);
 }
 
 .removeBtn {
@@ -217,7 +218,7 @@
   align-items: center;
   gap: 0.75rem;
   margin-bottom: 1.25rem;
-  color: var(--primary-light);
+  color: var(--logic-lime);
 }
 
 .modalHeader h3 {
@@ -264,7 +265,7 @@
 
 .input:focus {
   outline: none;
-  border-color: var(--primary);
+  border-color: var(--blueprint-blue);
 }
 
 .modalFooter {
@@ -304,6 +305,95 @@
 
 .muted {
   color: var(--white-40, rgba(255,255,255,0.4));
+}
+
+/* ── Role reference panel ────────────────────── */
+.roleRef {
+  border-radius: 10px;
+  background: var(--surface, rgba(255,255,255,0.04));
+  border: 1px solid var(--border, rgba(255,255,255,0.08));
+  margin-bottom: 1.25rem;
+  overflow: hidden;
+}
+
+.roleRefSummary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--white-50, rgba(255,255,255,0.5));
+  user-select: none;
+  list-style: none;
+  gap: 0.5rem;
+  transition: color 0.15s;
+}
+
+.roleRefSummary::-webkit-details-marker { display: none; }
+
+.roleRefSummary:hover { color: var(--white-80, rgba(255,255,255,0.8)); }
+
+.roleRefSummaryLeft {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--logic-lime);
+}
+
+.roleRefSummaryLeft span { color: var(--white-50, rgba(255,255,255,0.5)); }
+
+.roleRefBody { padding: 0 1rem 1rem; }
+
+.roleMatrix {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.78rem;
+  margin-bottom: 0.875rem;
+}
+
+.roleMatrix th {
+  text-align: left;
+  padding: 0.4rem 0.5rem;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--white-30, rgba(255,255,255,0.3));
+  border-bottom: 1px solid var(--border, rgba(255,255,255,0.08));
+}
+
+.roleMatrix th:not(:first-child) { text-align: center; }
+
+.roleMatrix td {
+  padding: 0.45rem 0.5rem;
+  color: var(--white-70, rgba(255,255,255,0.7));
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+
+.roleMatrix td:not(:first-child) { text-align: center; }
+
+.roleMatrix tbody tr:last-child td { border-bottom: none; }
+
+.matrixCheck { color: var(--success, #4ade80); font-weight: 700; }
+.matrixDash  { color: var(--white-15, rgba(255,255,255,0.15)); }
+
+.roleRefNote {
+  font-size: 0.74rem;
+  color: var(--white-30, rgba(255,255,255,0.3));
+  line-height: 1.55;
+  margin: 0;
+  border-top: 1px solid rgba(255,255,255,0.05);
+  padding-top: 0.75rem;
+}
+
+/* ── Invite role hint ────────────────────────── */
+.roleHint {
+  font-size: 0.78rem;
+  color: var(--white-40, rgba(255,255,255,0.4));
+  margin: 0.4rem 0 0;
+  line-height: 1.45;
 }
 
 /* ── Responsive ──────────────────────────────── */

@@ -189,7 +189,7 @@ export default function UnifiedTeamsPage() {
     setFeedback({
       isOpen: true,
       title: 'Randomize Pools?',
-      message: `Randomize pool assignments for all ACCEPTED teams in ${group.name}? This will overwrite existing assignments.`,
+      message: `Randomly distribute all accepted teams in ${group.name} across ${group.pools.length} pools, overwriting any existing assignments. Pool sizes will be balanced as evenly as possible. You can re-run this to shuffle again, or adjust assignments manually afterward.`,
       type: 'primary',
       onConfirm: async () => {
         setWorking('randomizing');
@@ -412,10 +412,10 @@ export default function UnifiedTeamsPage() {
 
       <div className={s.controlsBar}>
         <div className={s.controlsLeft}>
-          <button className="btn btn-ghost btn-sm" onClick={() => setShowSummaryModal(true)} style={{ color: 'var(--primary-light)', gap: '0.5rem' }}>
+          <button className="btn btn-ghost btn-sm" onClick={() => setShowSummaryModal(true)} style={{ color: 'var(--logic-lime)', gap: '0.5rem' }}>
             <LayoutDashboard size={14} /> Summary Dashboard
           </button>
-          <button className="btn btn-ghost btn-sm" onClick={randomizePools} disabled={loading || !selectedAgeGroupId} style={{ color: 'var(--primary-light)', gap: '0.5rem' }}>
+          <button className="btn btn-ghost btn-sm" onClick={randomizePools} disabled={loading || !selectedAgeGroupId} style={{ color: 'var(--logic-lime)', gap: '0.5rem' }}>
             <RefreshCw size={14} className={working === 'randomizing' ? 'spin' : ''} /> Randomize Pools
           </button>
         </div>
@@ -438,7 +438,7 @@ export default function UnifiedTeamsPage() {
           <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 800 }}>
             <div className="modal-header">
               <div className="flex items-center gap-2">
-                <LayoutDashboard size={20} className="text-primary" />
+                <LayoutDashboard size={20} style={{ color: 'var(--logic-lime)' }} />
                 <h3 style={{ margin: 0 }}>Tournament Summary</h3>
               </div>
               <button className="btn btn-ghost btn-sm" onClick={() => setShowSummaryModal(false)}><X size={16} /></button>
@@ -519,7 +519,7 @@ export default function UnifiedTeamsPage() {
                       return (
                         <div key={p.id} className={s.poolSubSection}>
                           <div className={s.poolSubHeader}>
-                            <div className={s.poolDot} style={{ background: p.id === 'unassigned' ? 'var(--danger-light)' : 'var(--primary-light)' }} />
+                            <div className={s.poolDot} style={{ background: p.id === 'unassigned' ? 'var(--danger-light)' : 'var(--logic-lime)' }} />
                             <span className={s.poolSubLabel} style={{ color: p.id === 'unassigned' ? 'var(--danger-light)' : undefined }}>{p.id === 'unassigned' ? 'UNASSIGNED' : `${p.name.replace(/^Pool\s+/i, '').trim().toUpperCase()} POOL`}</span>
                             <span className={s.poolSubCount}>({teamsInPool.length})</span>
                           </div>

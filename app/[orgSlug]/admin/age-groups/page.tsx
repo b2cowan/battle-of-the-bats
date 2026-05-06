@@ -267,8 +267,8 @@ export default function AgeGroupsPage() {
                   </label>
                   
                   {form.usePools && (
-                    <div className="subCheck">
-                      <label style={{ fontSize: '0.7rem', color: 'var(--white-30)', textTransform: 'uppercase', fontWeight: 800 }}>User Selects Pool:</label>
+                    <div className="subCheck" title="When enabled, registrants choose their own pool on the signup form. When disabled, you assign pools manually from the Teams page.">
+                      <label style={{ fontSize: '0.7rem', color: 'var(--white-30)', textTransform: 'uppercase', fontWeight: 800 }}>Registrant picks pool:</label>
                       <input type="checkbox" checked={form.requiresPoolSelection} onChange={e => setForm(f => ({ ...f, requiresPoolSelection: e.target.checked }))} />
                     </div>
                   )}
@@ -316,12 +316,18 @@ export default function AgeGroupsPage() {
                   <label className="form-label">Capacity (Max Teams)</label>
                   <input className="form-input" type="number" placeholder="e.g. 8" value={form.capacity}
                     onChange={e => setForm(f => ({ ...f, capacity: e.target.value }))} />
+                  <p style={{ fontSize: '0.72rem', color: 'var(--white-30)', marginTop: '0.3rem', lineHeight: 1.4 }}>
+                    When accepted teams reach this number, new registrations go to the waitlist automatically. Leave blank for no limit.
+                  </p>
                 </div>
-                <div className="form-group" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', marginTop: '1rem' }}>
+                <div className="form-group" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'flex-start' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', marginTop: '1.5rem' }}>
                     <input type="checkbox" checked={form.isClosed} onChange={e => setForm(f => ({ ...f, isClosed: e.target.checked }))} style={{ width: 16, height: 16 }} />
                     <span style={{ fontWeight: 500 }}>Close Registration</span>
                   </label>
+                  <p style={{ fontSize: '0.72rem', color: 'var(--white-30)', marginTop: '0.3rem', lineHeight: 1.4 }}>
+                    Blocks all new registrations for this division on the public form immediately.
+                  </p>
                 </div>
               </div>
 
@@ -346,7 +352,7 @@ export default function AgeGroupsPage() {
                       border: '1px solid var(--border-2)' 
                     }}>
                       <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
-                        <span style={{ fontSize: '0.75rem', fontWeight: 900, color: 'var(--primary-light)', minWidth: '15px' }}>{i + 1}</span>
+                        <span style={{ fontSize: '0.75rem', fontWeight: 900, color: 'var(--logic-lime)', minWidth: '15px' }}>{i + 1}</span>
                         <span style={{ fontWeight: 600, fontSize: '0.85rem' }}>{breakerLabels[b]}</span>
                       </div>
                       <div style={{ display: 'flex', gap: '0.25rem' }}>
