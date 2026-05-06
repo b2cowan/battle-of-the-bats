@@ -41,12 +41,23 @@ export default function BillingPage() {
   const [successOpen, setSuccessOpen]     = useState(false);
   const [errorOpen, setErrorOpen]         = useState(false);
   const [errorMsg, setErrorMsg]           = useState('');
+  const [seatUsage, setSeatUsage]         = useState<{
+    billed: number; officials: number; limit: number; officialsFree: boolean;
+  } | null>(null);
 
   useEffect(() => {
     if (searchParams.get('success') === '1') {
       setSuccessOpen(true);
     }
   }, [searchParams]);
+
+  useEffect(() => {
+    if (!currentOrg) return;
+    fetch('/api/admin/members/count')
+      .then(r => r.ok ? r.json() : null)
+      .then(data => { if (data) setSeatUsage(data); })
+      .catch(() => {});
+  }, [currentOrg]);
 
   async function handleUpgrade(planKey: 'pro' | 'elite') {
     setLoading(planKey);
@@ -153,6 +164,41 @@ export default function BillingPage() {
           </div>
         )}
       </div>
+
+      {/* Seat usage meter */}
+      {seatUsage && (
+        <div className={styles.usageCard}>
+          <div className={styles.usageHeader}>
+            <span className={styles.usageLabel}>
+              Staff seats
+              {seatUsage.officialsFree && seatUsage.officials > 0 && (
+                <span style={{ marginLeft: '0.5rem', fontWeight: 400, color: 'var(--white-30)' }}>
+                  · {seatUsage.officials} official{seatUsage.officials === 1 ? '' : 's'} free
+                </span>
+              )}
+            </span>
+            <span className={styles.usageCount}>
+              {seatUsage.billed} / {seatUsage.limit >= 9999 ? 'Unlimited' : seatUsage.limit}
+            </span>
+          </div>
+          {seatUsage.limit < 9999 && (
+            <div className={styles.usageBar}>
+              {(() => {
+                const pct = Math.min(100, Math.round((seatUsage.billed / seatUsage.limit) * 100));
+                return (
+                  <div
+                    className={styles.usageFill}
+                    style={{
+                      width: `${pct}%`,
+                      background: pct >= 100 ? 'var(--danger)' : pct >= 80 ? 'var(--warning, #f59e0b)' : 'var(--logic-lime)',
+                    }}
+                  />
+                );
+              })()}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Manage subscription (paid plans) */}
       {hasPaidPlan && (

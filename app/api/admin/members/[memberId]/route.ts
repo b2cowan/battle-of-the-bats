@@ -78,9 +78,11 @@ export async function PATCH(req: Request, { params }: Params) {
 
   const hasRoleUpdate = 'role' in body;
   const hasCapabilitiesUpdate = 'capabilities' in body;
+  const hasStatusUpdate = 'status' in body;
 
-  // Capabilities writes are owner-only — admins cannot modify overrides
+  // Capabilities and status changes are owner-only
   if (hasCapabilitiesUpdate && ctx.role !== 'owner') return forbidden();
+  if (hasStatusUpdate && ctx.role !== 'owner') return forbidden();
 
   const { data: target } = await supabaseAdmin
     .from('organization_members')
@@ -101,6 +103,14 @@ export async function PATCH(req: Request, { params }: Params) {
     );
   }
 
+  // Owners cannot be suspended
+  if (hasStatusUpdate && target.role === 'owner') {
+    return NextResponse.json(
+      { error: 'Cannot suspend an organization owner' },
+      { status: 400 }
+    );
+  }
+
   const update: Record<string, unknown> = {};
 
   if (hasRoleUpdate) {
@@ -110,6 +120,13 @@ export async function PATCH(req: Request, { params }: Params) {
       : body.role === 'staff' ? 'staff'
       : body.role === 'official' ? 'official'
       : 'staff';
+  }
+
+  if (hasStatusUpdate) {
+    // Only 'active' and 'suspended' are settable via this endpoint; 'invited' is set by the invite route.
+    if (body.status === 'suspended' || body.status === 'active') {
+      update.status = body.status;
+    }
   }
 
   if (hasCapabilitiesUpdate) {

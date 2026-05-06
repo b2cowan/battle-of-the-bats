@@ -99,6 +99,7 @@ export async function POST(req: Request) {
         organization_id: org.id,
         user_id: existingUser.id,
         role,
+        status: 'active',
         invited_at: new Date().toISOString(),
         accepted_at: new Date().toISOString(),
       });
@@ -163,6 +164,7 @@ If you weren't expecting this, you can safely ignore this email.`,
         organization_id: org.id,
         user_id: newUserId,
         role,
+        status: 'invited',
         invited_at: new Date().toISOString(),
       });
   }

@@ -41,10 +41,12 @@ export async function getAuthContext(): Promise<AuthContext | null> {
   if (!user) return null;
 
   // Use admin client — anon client can't read organization_members under RLS
+  // Suspended members are treated as unauthenticated — all routes return 401.
   const { data: memberData } = await supabaseAdmin
     .from('organization_members')
     .select('organizations(*)')
     .eq('user_id', user.id)
+    .neq('status', 'suspended')
     .single();
 
   const orgRow = (memberData as any)?.organizations;
