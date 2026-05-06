@@ -63,7 +63,7 @@ export async function POST(req: Request) {
   const existingUser = usersData?.users.find(u => u.email?.toLowerCase() === email);
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://fieldlogichq.ca';
-  const fromAddress = `noreply@${new URL(appUrl).hostname}`;
+  const fromAddress = process.env.RESEND_FROM ?? 'noreply@fieldlogichq.ca';
 
   if (existingUser) {
     // Check they're not already in THIS org
