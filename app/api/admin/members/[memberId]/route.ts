@@ -1,19 +1,14 @@
 import { NextResponse } from 'next/server';
-import { getAuthContext, unauthorized } from '@/lib/api-auth';
+import { getAuthContextWithRole, unauthorized, forbidden } from '@/lib/api-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { ROLE_DEFAULTS, hasCapability } from '@/lib/roles';
 import type { OrgRole } from '@/lib/types';
 
-type Params = { params: Promise<{ memberId: string }> };
+const VALID_CAPABILITIES = new Set<string>(
+  Object.values(ROLE_DEFAULTS).flatMap(s => [...s] as string[])
+);
 
-async function verifyOwner(orgId: string, userId: string): Promise<boolean> {
-  const { data } = await supabaseAdmin
-    .from('organization_members')
-    .select('role')
-    .eq('organization_id', orgId)
-    .eq('user_id', userId)
-    .single();
-  return data?.role === 'owner';
-}
+type Params = { params: Promise<{ memberId: string }> };
 
 async function ownerCount(orgId: string): Promise<number> {
   const { count } = await supabaseAdmin
@@ -25,17 +20,14 @@ async function ownerCount(orgId: string): Promise<number> {
 }
 
 export async function DELETE(_req: Request, { params }: Params) {
-  const ctx = await getAuthContext();
+  const ctx = await getAuthContextWithRole();
   if (!ctx) return unauthorized();
 
-  const { user, org } = ctx;
+  if (!hasCapability(ctx.role, ctx.capabilities, 'manage_members')) return forbidden();
+
+  const { org } = ctx;
   const { memberId } = await params;
 
-  if (!(await verifyOwner(org.id, user.id))) {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-  }
-
-  // Fetch the member to check their role
   const { data: target } = await supabaseAdmin
     .from('organization_members')
     .select('id, role')
@@ -69,20 +61,22 @@ export async function DELETE(_req: Request, { params }: Params) {
 }
 
 export async function PATCH(req: Request, { params }: Params) {
-  const ctx = await getAuthContext();
+  const ctx = await getAuthContextWithRole();
   if (!ctx) return unauthorized();
 
-  const { user, org } = ctx;
+  if (!hasCapability(ctx.role, ctx.capabilities, 'manage_members')) return forbidden();
+
+  const { org } = ctx;
   const { memberId } = await params;
 
-  if (!(await verifyOwner(org.id, user.id))) {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-  }
-
   const body = await req.json();
-  const role: OrgRole = body.role === 'admin' ? 'admin' : body.role === 'staff' ? 'staff' : 'staff';
 
-  // Fetch target to check current role
+  const hasRoleUpdate = 'role' in body;
+  const hasCapabilitiesUpdate = 'capabilities' in body;
+
+  // Capabilities writes are owner-only — admins cannot modify overrides
+  if (hasCapabilitiesUpdate && ctx.role !== 'owner') return forbidden();
+
   const { data: target } = await supabaseAdmin
     .from('organization_members')
     .select('id, role')
@@ -94,25 +88,47 @@ export async function PATCH(req: Request, { params }: Params) {
     return NextResponse.json({ error: 'Member not found' }, { status: 404 });
   }
 
-  // Officials cannot be promoted — they must be removed and re-invited with the desired role
-  if (target.role === 'official') {
-    return NextResponse.json(
-      { error: 'Field officials cannot be promoted. Remove and re-invite them with the desired role.' },
-      { status: 400 }
-    );
-  }
-
-  // Prevent demoting the last owner (target.role may be 'owner'; new role is always admin/staff)
-  if (target.role === 'owner' && (await ownerCount(org.id)) <= 1) {
+  // Prevent demoting the last owner
+  if (hasRoleUpdate && target.role === 'owner' && (await ownerCount(org.id)) <= 1) {
     return NextResponse.json(
       { error: 'Cannot demote the last owner of the organization' },
       { status: 400 }
     );
   }
 
+  const update: Record<string, unknown> = {};
+
+  if (hasRoleUpdate) {
+    // Accept admin | staff | official; never allow promoting to owner via this endpoint
+    update.role =
+      body.role === 'admin' ? 'admin'
+      : body.role === 'staff' ? 'staff'
+      : body.role === 'official' ? 'official'
+      : 'staff';
+  }
+
+  if (hasCapabilitiesUpdate) {
+    if (body.capabilities === null) {
+      update.capabilities = null;
+    } else if (typeof body.capabilities === 'object') {
+      const sanitized: Record<string, boolean> = {};
+      for (const [key, val] of Object.entries(body.capabilities as Record<string, unknown>)) {
+        if (VALID_CAPABILITIES.has(key) && typeof val === 'boolean') {
+          sanitized[key] = val;
+        }
+      }
+      // Empty object → null (no overrides stored)
+      update.capabilities = Object.keys(sanitized).length > 0 ? sanitized : null;
+    }
+  }
+
+  if (Object.keys(update).length === 0) {
+    return NextResponse.json({ ok: true });
+  }
+
   const { error } = await supabaseAdmin
     .from('organization_members')
-    .update({ role })
+    .update(update)
     .eq('id', memberId)
     .eq('organization_id', org.id);
 
@@ -120,5 +136,5 @@ export async function PATCH(req: Request, { params }: Params) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  return NextResponse.json({ ok: true, role });
+  return NextResponse.json({ ok: true, ...(hasRoleUpdate ? { role: update.role } : {}) });
 }

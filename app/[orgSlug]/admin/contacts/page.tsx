@@ -80,7 +80,7 @@ export default function AdminContactsPage() {
             <p className={styles.pageSub}>Manage tournament coordinators and contacts</p>
           </div>
         </div>
-        <button className="btn btn-primary" onClick={openAdd} disabled={!currentTournament}>
+        <button className="btn btn-primary btn-sm" onClick={openAdd} disabled={!currentTournament}>
           <Plus size={16} /> Add Contact
         </button>
       </div>

@@ -8,10 +8,9 @@ export async function GET() {
 
   const { org } = ctx;
 
-  // Fetch all members for this org
   const { data: members, error: membersError } = await supabaseAdmin
     .from('organization_members')
-    .select('id, user_id, role, invited_at, accepted_at')
+    .select('id, user_id, role, capabilities, invited_at, accepted_at')
     .eq('organization_id', org.id);
 
   if (membersError) {
@@ -31,18 +30,34 @@ export async function GET() {
     return NextResponse.json({ error: usersError.message }, { status: 500 });
   }
 
+  // Batch-fetch tournament assignments for all members
+  const memberIds = members.map(m => m.id);
+  const { data: allAssignments } = await supabaseAdmin
+    .from('org_member_tournament_assignments')
+    .select('org_member_id, tournament_id')
+    .in('org_member_id', memberIds);
+
+  const assignmentMap = new Map<string, string[]>();
+  for (const a of allAssignments ?? []) {
+    const arr = assignmentMap.get(a.org_member_id) ?? [];
+    arr.push(a.tournament_id);
+    assignmentMap.set(a.org_member_id, arr);
+  }
+
   const userMap = new Map(usersData.users.map(u => [u.id, u]));
 
   const result = members.map(m => {
     const authUser = userMap.get(m.user_id);
     return {
-      id: m.id,
-      userId: m.user_id,
-      email: authUser?.email ?? '(unknown)',
-      role: m.role,
-      invitedAt: m.invited_at,
-      acceptedAt: m.accepted_at ?? null,
-      lastSignIn: authUser?.last_sign_in_at ?? null,
+      id:                   m.id,
+      userId:               m.user_id,
+      email:                authUser?.email ?? '(unknown)',
+      role:                 m.role,
+      capabilities:         (m.capabilities as Record<string, boolean> | null) ?? null,
+      invitedAt:            m.invited_at,
+      acceptedAt:           m.accepted_at ?? null,
+      lastSignIn:           authUser?.last_sign_in_at ?? null,
+      assignedTournamentIds: assignmentMap.get(m.id) ?? [],
     };
   });
 

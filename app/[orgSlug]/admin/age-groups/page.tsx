@@ -159,7 +159,7 @@ export default function AgeGroupsPage() {
             <p className={styles.pageSub}>Manage tournament age divisions</p>
           </div>
         </div>
-        <button className="btn btn-primary" onClick={openAdd} id="age-group-add-btn" disabled={!currentTournament}>
+        <button className="btn btn-primary btn-sm" onClick={openAdd} id="age-group-add-btn" disabled={!currentTournament}>
           <Plus size={16} /> Add Age Group
         </button>
       </div>

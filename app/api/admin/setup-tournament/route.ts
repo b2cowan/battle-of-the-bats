@@ -1,10 +1,13 @@
 import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
-import { getAuthContext, unauthorized } from '@/lib/api-auth';
+import { getAuthContext, unauthorized, requireCapability } from '@/lib/api-auth';
 
 export async function POST(req: Request) {
   const auth = await getAuthContext();
   if (!auth) return unauthorized();
+
+  const denied = await requireCapability(auth, 'create_tournaments');
+  if (denied) return denied;
 
   try {
     const url = process.env.NEXT_PUBLIC_SUPABASE_URL;

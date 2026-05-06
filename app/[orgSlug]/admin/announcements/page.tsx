@@ -69,7 +69,7 @@ export default function AdminAnnouncementsPage() {
             <p className={styles.pageSub}>Post news and updates for tournament participants</p>
           </div>
         </div>
-        <button className="btn btn-primary" onClick={openAdd} id="ann-add-btn" disabled={!currentTournament}><Plus size={16} /> New Announcement</button>
+        <button className="btn btn-primary btn-sm" onClick={openAdd} id="ann-add-btn" disabled={!currentTournament}><Plus size={16} /> New Announcement</button>
       </div>
 
       <div className={styles.annList}>
