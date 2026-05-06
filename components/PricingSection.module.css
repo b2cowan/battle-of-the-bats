@@ -88,6 +88,13 @@
   white-space: nowrap;
 }
 
+.popularSpacer {
+  padding: 0.25rem 0.75rem;
+  border: 1px solid transparent;
+  font-size: 0.6rem;
+  visibility: hidden;
+}
+
 .planCard {
   background: var(--hud-surface);
   border: 1px solid rgba(var(--blueprint-blue-rgb), 0.4);
@@ -128,6 +135,16 @@
 
 .planHighlight .planAmount {
   color: var(--logic-lime);
+}
+
+.planCurrency {
+  font-family: var(--font-data);
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--data-gray);
+  align-self: flex-start;
+  padding-top: 0.35rem;
 }
 
 .planPeriod {

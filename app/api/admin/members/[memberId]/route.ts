@@ -30,7 +30,7 @@ export async function DELETE(_req: Request, { params }: Params) {
 
   const { data: target } = await supabaseAdmin
     .from('organization_members')
-    .select('id, role')
+    .select('id, role, user_id')
     .eq('id', memberId)
     .eq('organization_id', org.id)
     .single();
@@ -47,14 +47,19 @@ export async function DELETE(_req: Request, { params }: Params) {
     );
   }
 
-  const { error } = await supabaseAdmin
-    .from('organization_members')
-    .delete()
-    .eq('id', memberId)
-    .eq('organization_id', org.id);
+  // Prevent self-removal via this endpoint
+  if (target.user_id === ctx.user.id) {
+    return NextResponse.json(
+      { error: 'You cannot remove yourself from the organization.' },
+      { status: 400 }
+    );
+  }
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  // Delete the auth user — ON DELETE CASCADE removes the organization_members row
+  // and transitively the org_member_tournament_assignments rows. Hard-delete (default).
+  const { error: authError } = await supabaseAdmin.auth.admin.deleteUser(target.user_id);
+  if (authError) {
+    return NextResponse.json({ error: authError.message }, { status: 500 });
   }
 
   return NextResponse.json({ ok: true });

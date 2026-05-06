@@ -406,46 +406,37 @@ export default function AdminTournamentsPage() {
                   <span className="badge badge-primary">{t.year}</span>
                 </td>
                 <td>
-                  {t.status === 'active'    && <span className="badge badge-success">● Live</span>}
-                  {t.status === 'draft'     && <span className="badge badge-neutral">Draft</span>}
-                  {t.status === 'completed' && <span className="badge badge-primary">Completed</span>}
-                  {t.status === 'archived'  && <span className="badge badge-neutral">Archived</span>}
+                  <select
+                    className="form-input"
+                    style={{ padding: '0.25rem 0.5rem', fontSize: '0.8rem', minWidth: '120px' }}
+                    value={t.status}
+                    disabled={sealedTournamentIds.has(t.id)}
+                    onChange={e => handleSetStatus(t.id, e.target.value as TournamentStatus)}
+                    id={`status-select-${t.id}`}
+                  >
+                    <option value="draft">Draft</option>
+                    <option value="active">● Live</option>
+                    <option value="completed">Completed</option>
+                    <option value="archived">Archived</option>
+                  </select>
                 </td>
                 <td>
                   <div className="flex gap-1 flex-wrap">
-                    {t.status === 'draft' && (
-                      <button className="btn btn-outline btn-sm" onClick={() => handleSetStatus(t.id, 'active')} id={`activate-${t.id}`}>
-                        Activate
-                      </button>
-                    )}
-                    {t.status === 'active' && (
-                      <button className="btn btn-outline btn-sm" onClick={() => handleSetStatus(t.id, 'completed')} id={`complete-${t.id}`}>
-                        Complete
-                      </button>
-                    )}
                     {t.status === 'completed' && (
-                      <>
-                        <button className="btn btn-outline btn-sm" onClick={() => handleSetStatus(t.id, 'active')} id={`activate-${t.id}`}>
-                          Activate
+                      sealedTournamentIds.has(t.id) ? (
+                        <span className="badge badge-neutral" title="This tournament has been sealed to the Digital Ledger">
+                          SEALED
+                        </span>
+                      ) : (
+                        <button
+                          className="btn btn-outline btn-sm"
+                          onClick={() => openSealConfirm(t)}
+                          id={`seal-tournament-${t.id}`}
+                          title="Create an immutable archive record for this tournament"
+                        >
+                          Seal
                         </button>
-                        <button className="btn btn-ghost btn-sm" onClick={() => handleSetStatus(t.id, 'archived')} id={`archive-${t.id}`}>
-                          Archive
-                        </button>
-                      </>
-                    )}
-                    {sealedTournamentIds.has(t.id) ? (
-                      <span className="badge badge-neutral" title="This tournament has been sealed to the Digital Ledger">
-                        SEALED
-                      </span>
-                    ) : (
-                      <button
-                        className="btn btn-outline btn-sm"
-                        onClick={() => openSealConfirm(t)}
-                        id={`seal-tournament-${t.id}`}
-                        title="Create an immutable archive record for this tournament"
-                      >
-                        Seal
-                      </button>
+                      )
                     )}
                     <button className="btn btn-ghost btn-sm" onClick={() => openEdit(t)} id={`edit-tournament-${t.id}`}>
                       <Pencil size={13} />

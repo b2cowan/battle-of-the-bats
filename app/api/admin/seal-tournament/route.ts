@@ -35,6 +35,13 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Tournament not found' }, { status: 404 });
   }
 
+  if (tournament.status !== 'completed' && tournament.status !== 'archived') {
+    return NextResponse.json(
+      { error: 'Tournament must be completed or archived before sealing.' },
+      { status: 400 }
+    );
+  }
+
   // Check if already sealed — unique constraint would reject anyway, but give a clear 409
   const { data: existing } = await supabaseAdmin
     .from('tournament_archives')

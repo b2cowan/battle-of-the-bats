@@ -14,8 +14,9 @@ interface PlanFeature {
 
 interface Plan {
   name: string;
-  monthlyAmount: string;
-  annualAmount: string | null;
+  monthlyPrice: string;
+  annualPrice: string | null;
+  currency: string | null;
   period: string;
   monthlyNote: string;
   annualNote: string;
@@ -29,8 +30,9 @@ interface Plan {
 const PLANS: Plan[] = [
   {
     name: 'Starter',
-    monthlyAmount: 'Free',
-    annualAmount: null,
+    monthlyPrice: 'Free',
+    annualPrice: null,
+    currency: null,
     period: '',
     monthlyNote: 'No credit card required',
     annualNote: 'No credit card required',
@@ -56,11 +58,12 @@ const PLANS: Plan[] = [
   },
   {
     name: 'Pro',
-    monthlyAmount: '$29',
-    annualAmount: '$20.75',
+    monthlyPrice: '$39',
+    annualPrice: '$29',
+    currency: 'CAD',
     period: '/mo',
     monthlyNote: '14-day free trial included',
-    annualNote: 'billed $249/year — save 26%',
+    annualNote: 'billed $349 CAD/year — save 25%',
     highlight: true,
     features: [
       { label: '5 active tournaments',    ok: true },
@@ -83,11 +86,12 @@ const PLANS: Plan[] = [
   },
   {
     name: 'Elite',
-    monthlyAmount: '$79',
-    annualAmount: '$58.25',
+    monthlyPrice: '$99',
+    annualPrice: '$79',
+    currency: 'CAD',
     period: '/mo',
-    monthlyNote: '$699/year — save 26%',
-    annualNote: 'billed $699/year — save 26%',
+    monthlyNote: '$949 CAD/year — save 20%',
+    annualNote: 'billed $949 CAD/year — save 20%',
     highlight: false,
     features: [
       { label: 'Unlimited tournaments',         ok: true },
@@ -129,7 +133,7 @@ export default function PricingSection() {
           >
             Annual
             {billing === 'monthly' && (
-              <span className={styles.saveBadge}>Save 26%</span>
+              <span className={styles.saveBadge}>Save 25%</span>
             )}
           </button>
         </div>
@@ -138,20 +142,23 @@ export default function PricingSection() {
       {/* Plan cards */}
       <div className={styles.pricingGrid}>
         {PLANS.map(plan => {
-          const amount = billing === 'annual' && plan.annualAmount
-            ? plan.annualAmount
-            : plan.monthlyAmount;
+          const price = billing === 'annual' && plan.annualPrice
+            ? plan.annualPrice
+            : plan.monthlyPrice;
           const note = billing === 'annual' ? plan.annualNote : plan.monthlyNote;
 
           return (
             <div key={plan.name} className={styles.planWrapper}>
-              {plan.highlight && (
-                <div className={styles.popularBadge}>Most Popular</div>
-              )}
+              {plan.highlight
+                ? <div className={styles.popularBadge}>Most Popular</div>
+                : <div className={styles.popularSpacer} aria-hidden />}
               <div className={`${styles.planCard} ${plan.highlight ? styles.planHighlight : ''}`}>
               <p className={styles.planName}>{plan.name}</p>
               <div className={styles.planPrice}>
-                <span className={styles.planAmount}>{amount}</span>
+                <span className={styles.planAmount}>{price}</span>
+                {plan.currency && (
+                  <span className={styles.planCurrency}>{plan.currency}</span>
+                )}
                 {plan.period && (
                   <span className={styles.planPeriod}>{plan.period}</span>
                 )}
