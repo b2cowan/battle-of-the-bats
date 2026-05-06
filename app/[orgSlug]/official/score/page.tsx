@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase-browser';
-import { getGames, getTeams, getDiamonds, getAgeGroups, updateGame, getOrganizationBySlug, getTournamentsByOrg } from '@/lib/db';
+import { getGames, getTeams, getDiamonds, getAgeGroups, getOrganizationBySlug, getTournamentsByOrg } from '@/lib/db';
 import type { Game, Team, Diamond, AgeGroup } from '@/lib/types';
 import { formatTime } from '@/lib/utils';
 
@@ -22,7 +22,6 @@ export default function OfficialScorePage() {
 
   const [cards, setCards]                         = useState<GameCard[]>([]);
   const [loading, setLoading]                     = useState(true);
-  const [requireFinalization, setRequireFinalization] = useState(false);
 
   // Filters
   const [diamonds, setDiamonds]     = useState<Diamond[]>([]);
@@ -49,8 +48,6 @@ export default function OfficialScorePage() {
     try {
       const org = await getOrganizationBySlug(orgSlug);
       if (!org) throw new Error('Organization not found');
-
-      setRequireFinalization(org.requireScoreFinalization ?? false);
 
       const tournaments = await getTournamentsByOrg(org.id);
       const activeTournament = tournaments.find(t => t.isActive) ?? tournaments[0] ?? null;
@@ -144,16 +141,24 @@ export default function OfficialScorePage() {
     if (!editing) return;
     setScoreState('saving');
     try {
-      const newStatus = requireFinalization ? 'submitted' : 'completed';
-      await updateGame(editing.id, {
-        homeScore: Number(home),
-        awayScore: Number(away),
-        status: newStatus as any,
+      const res = await fetch('/api/admin/games', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'submit-score',
+          id: editing.id,
+          homeScore: Number(home),
+          awayScore: Number(away),
+        }),
       });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error ?? 'Failed to save score');
+      }
       setEditing(null);
       setScoreState('idle');
-    } catch {
-      setErrorMsg('Failed to save score. Please try again.');
+    } catch (err: any) {
+      setErrorMsg(err.message ?? 'Failed to save score. Please try again.');
       setScoreState('entering');
     }
   }

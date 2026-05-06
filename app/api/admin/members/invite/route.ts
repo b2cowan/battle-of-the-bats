@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { Resend } from 'resend';
-import { getAuthContext, unauthorized } from '@/lib/api-auth';
+import { getAuthContext, unauthorized, requireCapability } from '@/lib/api-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { PLAN_CONFIG } from '@/lib/plan-config';
 import type { OrgRole } from '@/lib/types';
@@ -17,17 +17,8 @@ export async function POST(req: Request) {
 
   const { user, org } = ctx;
 
-  // Verify caller is owner
-  const { data: membership } = await supabaseAdmin
-    .from('organization_members')
-    .select('role')
-    .eq('organization_id', org.id)
-    .eq('user_id', user.id)
-    .single();
-
-  if (membership?.role !== 'owner') {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-  }
+  const denied = await requireCapability(ctx, 'manage_members');
+  if (denied) return denied;
 
   // Enforce seat limit
   const { count: seatCount } = await supabaseAdmin

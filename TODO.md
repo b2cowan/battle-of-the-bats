@@ -54,7 +54,9 @@ This file tracks the ongoing tasks for the tournament website project. AI models
 
 - [x] **Phase 1 — Sidebar restructure**: Split nav into labeled Tournament / Organization sections, Contacts in Tournament, Diamonds in Organization, fix hardcoded "Battle of the Bats" in sidebar logo
 - [x] **Phase 2 — Admin theme cleanup**: Replace `--primary` token leakage in admin content page CSS with HUD tokens (blueprint-blue / logic-lime); complete Option B separation from org palette
-- [ ] **Member roles & tournament assignment** — Audit complete; see [USER_ROLE_ARCHITECTURE.md](USER_ROLE_ARCHITECTURE.md) for gap list, permission recommendation (hybrid roles + capability overrides), and tournament-assignment schema + file map
+- [x] **Member roles — Phase 0** — API capability gates, score finalization enforcement, official promotion unblocked (see [USER_ROLE_ARCHITECTURE.md](USER_ROLE_ARCHITECTURE.md))
+- [x] **Member roles — Phase 1** — Migration 008: `capabilities` column + `org_member_tournament_assignments` table; `getAuthContextWithScope()` + `scopeGuard()`; tournament scoping on all CRUD routes; assignment UI on members page (see [USER_ROLE_ARCHITECTURE.md](USER_ROLE_ARCHITECTURE.md))
+- [x] **Member roles — Phase 2** — RLS activation: `009_rls_policies.sql` with `can_access_tournament()` helper + all table policies; `lib/db.ts` mutations switched to `authClient()` (see [USER_ROLE_ARCHITECTURE.md](USER_ROLE_ARCHITECTURE.md))
 
 ---
 

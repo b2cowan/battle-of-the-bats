@@ -3,10 +3,19 @@ import { cookies } from 'next/headers';
 import { supabaseAdmin } from './supabase-admin';
 import type { Organization, OrgPlan, OrgRole } from './types';
 import type { User } from '@supabase/supabase-js';
+import { hasCapability } from './roles';
+import type { Capability } from './roles';
 
 export interface AuthContext {
   user: User;
   org: Organization;
+}
+
+export interface AuthContextWithScope extends AuthContext {
+  role: OrgRole;
+  capabilities: Record<string, boolean> | null;
+  /** null = unrestricted (owner, or user with zero assignment rows) */
+  assignedTournamentIds: string[] | null;
 }
 
 /**
@@ -59,19 +68,62 @@ export async function getAuthContext(): Promise<AuthContext | null> {
   return { user, org };
 }
 
-export async function getAuthContextWithRole(): Promise<(AuthContext & { role: OrgRole }) | null> {
+export async function getAuthContextWithRole(): Promise<(AuthContext & { role: OrgRole; capabilities: Record<string, boolean> | null }) | null> {
   const ctx = await getAuthContext();
   if (!ctx) return null;
 
   const { data } = await supabaseAdmin
     .from('organization_members')
-    .select('role')
+    .select('role, capabilities')
     .eq('organization_id', ctx.org.id)
     .eq('user_id', ctx.user.id)
     .single();
 
   if (!data) return null;
-  return { ...ctx, role: data.role as OrgRole };
+  return {
+    ...ctx,
+    role: data.role as OrgRole,
+    capabilities: (data.capabilities as Record<string, boolean> | null) ?? null,
+  };
+}
+
+/**
+ * Full scope context: role + capabilities + tournament assignment list.
+ * assignedTournamentIds === null means the user is unrestricted (owner, or no assignment rows).
+ * Routes that filter by tournament must use this instead of getAuthContext().
+ */
+export async function getAuthContextWithScope(): Promise<AuthContextWithScope | null> {
+  const ctx = await getAuthContext();
+  if (!ctx) return null;
+
+  const { data: member } = await supabaseAdmin
+    .from('organization_members')
+    .select('id, role, capabilities')
+    .eq('organization_id', ctx.org.id)
+    .eq('user_id', ctx.user.id)
+    .single();
+
+  if (!member) return null;
+
+  const role = member.role as OrgRole;
+  const capabilities = (member.capabilities as Record<string, boolean> | null) ?? null;
+
+  // Owners are always unrestricted — skip the assignments query
+  if (role === 'owner') {
+    return { ...ctx, role, capabilities, assignedTournamentIds: null };
+  }
+
+  const { data: assignments } = await supabaseAdmin
+    .from('org_member_tournament_assignments')
+    .select('tournament_id')
+    .eq('org_member_id', member.id);
+
+  // No assignment rows = unrestricted (absence-means-unrestricted semantics)
+  const assignedTournamentIds = assignments?.length
+    ? assignments.map(a => a.tournament_id as string)
+    : null;
+
+  return { ...ctx, role, capabilities, assignedTournamentIds };
 }
 
 export function unauthorized() {
@@ -79,4 +131,40 @@ export function unauthorized() {
     status: 401,
     headers: { 'Content-Type': 'application/json' },
   });
+}
+
+export function forbidden() {
+  return new Response(JSON.stringify({ error: 'Forbidden' }), {
+    status: 403,
+    headers: { 'Content-Type': 'application/json' },
+  });
+}
+
+/**
+ * Returns a 403 if the calling user does not have the required capability.
+ * Now reads capabilities column (Phase 1+).
+ */
+export async function requireCapability(ctx: AuthContext, cap: Capability): Promise<Response | null> {
+  const { data } = await supabaseAdmin
+    .from('organization_members')
+    .select('role, capabilities')
+    .eq('organization_id', ctx.org.id)
+    .eq('user_id', ctx.user.id)
+    .single();
+
+  if (!data || !hasCapability(data.role as OrgRole, (data.capabilities as Record<string, boolean> | null) ?? null, cap)) {
+    return forbidden();
+  }
+  return null;
+}
+
+/**
+ * Returns a 403 if the user has a non-null assignment list that does not include tournamentId.
+ * null assignedTournamentIds = unrestricted; always passes.
+ */
+export function scopeGuard(ctx: AuthContextWithScope, tournamentId: string): Response | null {
+  if (ctx.assignedTournamentIds !== null && !ctx.assignedTournamentIds.includes(tournamentId)) {
+    return forbidden();
+  }
+  return null;
 }

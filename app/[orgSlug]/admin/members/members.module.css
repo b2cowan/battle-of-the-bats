@@ -388,6 +388,89 @@
   padding-top: 0.75rem;
 }
 
+/* ── Edit (neutral) icon button ─────────────── */
+.editBtn {
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: var(--white-30, rgba(255,255,255,0.3));
+  padding: 0.3rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  transition: all 0.15s;
+}
+
+.editBtn:hover {
+  color: var(--logic-lime);
+  background: rgba(var(--blueprint-blue-rgb), 0.12);
+  border-color: rgba(var(--blueprint-blue-rgb), 0.3);
+}
+
+/* ── Wide modal variant ──────────────────────── */
+.modalWide {
+  max-width: 560px;
+}
+
+/* ── Capability override table ───────────────── */
+.capTableWrap {
+  max-height: 380px;
+  overflow-y: auto;
+  border-radius: 8px;
+  border: 1px solid var(--border, rgba(255,255,255,0.08));
+}
+
+.capTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+}
+
+.capTable th {
+  padding: 0.45rem 0.75rem;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--white-30, rgba(255,255,255,0.3));
+  border-bottom: 1px solid var(--border, rgba(255,255,255,0.08));
+  background: var(--bg-3, rgba(255,255,255,0.04));
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.capTable td {
+  padding: 0.5rem 0.75rem;
+  color: var(--white-70, rgba(255,255,255,0.7));
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  vertical-align: middle;
+}
+
+.capTable tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.capTable tbody tr:hover td {
+  background: rgba(255,255,255,0.02);
+}
+
+.capSelect {
+  background: var(--bg-3, rgba(255,255,255,0.06));
+  border: 1px solid var(--border, rgba(255,255,255,0.08));
+  border-radius: 5px;
+  color: var(--white-80, rgba(255,255,255,0.8));
+  font-size: 0.75rem;
+  padding: 0.25rem 0.4rem;
+  cursor: pointer;
+  min-width: 110px;
+}
+
+.capSelect:focus {
+  outline: none;
+  border-color: var(--blueprint-blue);
+}
+
 /* ── Invite role hint ────────────────────────── */
 .roleHint {
   font-size: 0.78rem;

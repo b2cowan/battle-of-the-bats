@@ -1,23 +1,14 @@
 import { NextResponse } from 'next/server';
 import { createHash } from 'crypto';
-import { getAuthContext, unauthorized } from '@/lib/api-auth';
+import { getAuthContextWithScope, unauthorized, scopeGuard } from '@/lib/api-auth';
+import { hasCapability } from '@/lib/roles';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 
 export async function POST(req: Request) {
-  const ctx = await getAuthContext();
+  const ctx = await getAuthContextWithScope();
   if (!ctx) return unauthorized();
 
-  const { user, org } = ctx;
-
-  // Seal requires admin or owner role
-  const { data: membership } = await supabaseAdmin
-    .from('organization_members')
-    .select('role')
-    .eq('organization_id', org.id)
-    .eq('user_id', user.id)
-    .single();
-
-  if (!membership || !['admin', 'owner'].includes(membership.role)) {
+  if (!hasCapability(ctx.role, ctx.capabilities, 'seal_tournaments')) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
@@ -28,12 +19,16 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'tournamentId is required' }, { status: 400 });
   }
 
+  // Scope check: scoped users may only seal their assigned tournaments
+  const scopeDenied = scopeGuard(ctx, tournamentId);
+  if (scopeDenied) return scopeDenied;
+
   // Verify the tournament belongs to this org
   const { data: tournament } = await supabaseAdmin
     .from('tournaments')
     .select('*')
     .eq('id', tournamentId)
-    .eq('organization_id', org.id)
+    .eq('organization_id', ctx.org.id)
     .single();
 
   if (!tournament) {
@@ -78,7 +73,6 @@ export async function POST(req: Request) {
   const teams = teamsRes.data ?? [];
   const games = gamesRes.data ?? [];
 
-  // Build the immutable snapshot
   const snapshot = {
     tournament: {
       id:             tournament.id,
@@ -102,45 +96,44 @@ export async function POST(req: Request) {
       poolCount:              ag.pool_count,
       playoffConfig:          ag.playoff_config ?? null,
       pools: (ag.pools ?? []).map((p: any) => ({
-        id:          p.id,
-        ageGroupId:  p.age_group_id,
-        name:        p.name,
-        order:       p.display_order,
+        id:         p.id,
+        ageGroupId: p.age_group_id,
+        name:       p.name,
+        order:      p.display_order,
       })),
     })),
     teams: teams.map((t: any) => ({
-      id:             t.id,
-      tournamentId:   t.tournament_id,
-      ageGroupId:     t.age_group_id,
-      name:           t.name,
-      coach:          t.coach,
-      email:          t.email,
-      status:         t.status,
-      paymentStatus:  t.payment_status,
-      registeredAt:   t.registered_at,
-      poolId:         t.pool_id ?? null,
+      id:            t.id,
+      tournamentId:  t.tournament_id,
+      ageGroupId:    t.age_group_id,
+      name:          t.name,
+      coach:         t.coach,
+      email:         t.email,
+      status:        t.status,
+      paymentStatus: t.payment_status,
+      registeredAt:  t.registered_at,
+      poolId:        t.pool_id ?? null,
     })),
     games: games.map((g: any) => ({
-      id:               g.id,
-      tournamentId:     g.tournament_id,
-      ageGroupId:       g.age_group_id,
-      homeTeamId:       g.home_team_id,
-      awayTeamId:       g.away_team_id,
-      date:             g.game_date,
-      time:             g.game_time,
-      location:         g.location,
-      diamondId:        g.diamond_id ?? null,
-      homeScore:        g.home_score ?? null,
-      awayScore:        g.away_score ?? null,
-      status:           g.status,
-      isPlayoff:        g.is_playoff,
-      bracketCode:      g.bracket_code ?? null,
-      homePlaceholder:  g.home_placeholder ?? null,
-      awayPlaceholder:  g.away_placeholder ?? null,
+      id:              g.id,
+      tournamentId:    g.tournament_id,
+      ageGroupId:      g.age_group_id,
+      homeTeamId:      g.home_team_id,
+      awayTeamId:      g.away_team_id,
+      date:            g.game_date,
+      time:            g.game_time,
+      location:        g.location,
+      diamondId:       g.diamond_id ?? null,
+      homeScore:       g.home_score ?? null,
+      awayScore:       g.away_score ?? null,
+      status:          g.status,
+      isPlayoff:       g.is_playoff,
+      bracketCode:     g.bracket_code ?? null,
+      homePlaceholder: g.home_placeholder ?? null,
+      awayPlaceholder: g.away_placeholder ?? null,
     })),
   };
 
-  // Derive summary fields
   const season = String(tournament.year);
   const division = ageGroups.length > 0
     ? ageGroups.map((ag: any) => ag.name).join(', ')
@@ -150,7 +143,6 @@ export async function POST(req: Request) {
     g.status === 'completed' || g.status === 'submitted'
   ).length;
 
-  // Derive champion from the FIN playoff game
   let winnerTeamId: string | null = null;
   let winnerTeamName: string | null = null;
   let runnerUpName: string | null = null;
@@ -173,17 +165,15 @@ export async function POST(req: Request) {
     runnerUpName   = loserTeam?.name ?? null;
   }
 
-  // SHA-256 integrity hash
   const integrityHash = createHash('sha256')
     .update(JSON.stringify(snapshot))
     .digest('hex');
 
-  // Insert the archive record via supabaseAdmin (bypasses RLS)
   const { data: archive, error: insertError } = await supabaseAdmin
     .from('tournament_archives')
     .insert({
       tournament_id:    tournamentId,
-      org_id:           org.id,
+      org_id:           ctx.org.id,
       tournament_name:  tournament.name,
       season,
       division,
@@ -194,7 +184,7 @@ export async function POST(req: Request) {
       total_teams:      totalTeams,
       total_games:      totalGames,
       integrity_hash:   integrityHash,
-      sealed_by:        user.id,
+      sealed_by:        ctx.user.id,
     })
     .select()
     .single();

@@ -1,29 +1,20 @@
-import { createClient } from '@supabase/supabase-js';
-import { NextResponse } from 'next/server';
 import {
   sendEmail,
   acceptanceHtml, rejectionHtml, paymentConfirmationHtml,
 } from '@/lib/email';
-import { getAuthContext, unauthorized } from '@/lib/api-auth';
+import { getAuthContextWithScope, unauthorized, forbidden, scopeGuard } from '@/lib/api-auth';
+import { hasCapability } from '@/lib/roles';
+import { supabaseAdmin } from '@/lib/supabase-admin';
 
 export async function POST(req: Request) {
-  const auth = await getAuthContext();
-  if (!auth) return unauthorized();
+  const ctx = await getAuthContextWithScope();
+  if (!ctx) return unauthorized();
+
+  if (!hasCapability(ctx.role, ctx.capabilities, 'create_tournaments')) return forbidden();
 
   try {
-    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-    if (!url || !key) {
-      return new Response(JSON.stringify({ error: "Environment variables missing on server." }), { 
-        status: 500,
-        headers: { 'Content-Type': 'application/json' }
-      });
-    }
-
-    const supabase = createClient(url, key);
     const body = await req.json();
-    
+
     let items: { id: string; updates: any }[] = [];
     if (body.ids && body.updates) {
       items = body.ids.map((id: string) => ({ id, updates: body.updates }));
@@ -32,21 +23,27 @@ export async function POST(req: Request) {
     }
 
     if (items.length === 0) {
-      return new Response(JSON.stringify({ error: "No updates provided" }), { status: 400 });
+      return new Response(JSON.stringify({ error: 'No updates provided' }), { status: 400 });
     }
 
     const ids = items.map(i => i.id);
 
-    // 1. Fetch current records for email comparison
-    const { data: currents } = await supabase
+    // Fetch current records for email comparison and scope enforcement
+    const { data: currents } = await supabaseAdmin
       .from('teams')
       .select('*')
       .in('id', ids);
 
-    if (!currents) throw new Error("Could not find records to update");
+    if (!currents) throw new Error('Could not find records to update');
 
-    // 2. Perform Updates
-    // We can use upsert for heterogeneous updates if we have the IDs
+    // Scope check: all teams must belong to an assigned tournament
+    if (ctx.assignedTournamentIds !== null) {
+      for (const team of currents) {
+        const denied = scopeGuard(ctx, team.tournament_id);
+        if (denied) return denied;
+      }
+    }
+
     const upsertData = items.map(item => {
       const dbUpdates: any = { id: item.id, ...item.updates };
       if (dbUpdates.poolId !== undefined) {
@@ -60,23 +57,20 @@ export async function POST(req: Request) {
       return dbUpdates;
     });
 
-    const { error: updateErr } = await supabase
-      .from('teams')
-      .upsert(upsertData);
-
+    const { error: updateErr } = await supabaseAdmin.from('teams').upsert(upsertData);
     if (updateErr) throw updateErr;
 
-    // 3. Handle Emails
+    // Handle Emails
     for (const item of items) {
-      const current = currents.find(c => c.id === item.id);
+      const current = currents.find((c: any) => c.id === item.id);
       if (!current) continue;
 
       const p = {
-        teamName:      current.name,
-        coachName:     current.coach,
-        ageGroupName:  'Division',
+        teamName:       current.name,
+        coachName:      current.coach,
+        ageGroupName:   'Division',
         tournamentName: 'Tournament',
-        teamId:        current.id,
+        teamId:         current.id,
       };
 
       const updates = item.updates;
@@ -93,29 +87,41 @@ export async function POST(req: Request) {
 
     return new Response(JSON.stringify({ success: true, count: items.length }), {
       status: 200,
-      headers: { 'Content-Type': 'application/json' }
+      headers: { 'Content-Type': 'application/json' },
     });
 
   } catch (err: any) {
     console.error('Admin Teams API Error:', err);
-    return new Response(JSON.stringify({ error: err.message || "Unknown server error" }), {
+    return new Response(JSON.stringify({ error: err.message || 'Unknown server error' }), {
       status: 500,
-      headers: { 'Content-Type': 'application/json' }
+      headers: { 'Content-Type': 'application/json' },
     });
   }
 }
 
 export async function DELETE(req: Request) {
-  const auth = await getAuthContext();
-  if (!auth) return unauthorized();
+  const ctx = await getAuthContextWithScope();
+  if (!ctx) return unauthorized();
+
+  if (!hasCapability(ctx.role, ctx.capabilities, 'create_tournaments')) return forbidden();
 
   try {
-    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-    const supabase = createClient(url!, key!);
     const { ids } = await req.json();
 
-    const { error } = await supabase.from('teams').delete().in('id', ids);
+    // Scope check: look up the teams to verify tournament membership
+    if (ctx.assignedTournamentIds !== null && ids?.length) {
+      const { data: teams } = await supabaseAdmin
+        .from('teams')
+        .select('tournament_id')
+        .in('id', ids);
+
+      for (const team of teams ?? []) {
+        const denied = scopeGuard(ctx, team.tournament_id);
+        if (denied) return denied;
+      }
+    }
+
+    const { error } = await supabaseAdmin.from('teams').delete().in('id', ids);
     if (error) throw error;
 
     return new Response(JSON.stringify({ success: true }), { status: 200 });

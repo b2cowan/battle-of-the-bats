@@ -363,7 +363,7 @@ export default function AdminTournamentsPage() {
             <p className={styles.pageSub}>Manage tournament years — create a new season and set which one is live</p>
           </div>
         </div>
-        <button className="btn btn-primary" onClick={openAdd} id="tournament-add-btn">
+        <button className="btn btn-primary btn-sm" onClick={openAdd} id="tournament-add-btn">
           <Plus size={16} /> New Tournament
         </button>
       </div>

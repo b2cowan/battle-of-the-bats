@@ -1,10 +1,44 @@
 import { createClient } from '@supabase/supabase-js';
-import { getAuthContext, unauthorized } from '@/lib/api-auth';
+import {
+  getAuthContextWithScope,
+  unauthorized,
+  forbidden,
+  scopeGuard,
+} from '@/lib/api-auth';
+import { hasCapability } from '@/lib/roles';
 import type { TournamentStatus } from '@/lib/types';
+import { supabaseAdmin } from '@/lib/supabase-admin';
+
+/**
+ * GET /api/admin/tournaments
+ * Returns tournaments for the calling user's org, filtered by their assignment scope.
+ * Owners and unscoped users (no assignment rows) receive all tournaments.
+ */
+export async function GET() {
+  const ctx = await getAuthContextWithScope();
+  if (!ctx) return unauthorized();
+
+  let query = supabaseAdmin
+    .from('tournaments')
+    .select('*')
+    .eq('organization_id', ctx.org.id)
+    .order('year', { ascending: false });
+
+  if (ctx.assignedTournamentIds !== null) {
+    query = query.in('id', ctx.assignedTournamentIds);
+  }
+
+  const { data, error } = await query;
+  if (error) {
+    return Response.json({ error: error.message }, { status: 500 });
+  }
+
+  return Response.json(data ?? []);
+}
 
 export async function POST(req: Request) {
-  const auth = await getAuthContext();
-  if (!auth) return unauthorized();
+  const ctx = await getAuthContextWithScope();
+  if (!ctx) return unauthorized();
 
   try {
     const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -20,19 +54,27 @@ export async function POST(req: Request) {
     const supabase = createClient(url, key);
     const { action, id, data } = await req.json();
 
+    // Mutating actions require create_tournaments capability
+    if (action !== 'check-slug' && !hasCapability(ctx.role, ctx.capabilities, 'create_tournaments')) {
+      return forbidden();
+    }
+
     // ── set-status ────────────────────────────────────────────────────────────
     if (action === 'set-status' && id && data?.status) {
+      const denied = scopeGuard(ctx, id);
+      if (denied) return denied;
+
       const newStatus: TournamentStatus = data.status;
 
       if (newStatus === 'active') {
         const { count } = await supabase
           .from('tournaments')
           .select('*', { count: 'exact', head: true })
-          .eq('organization_id', auth.org.id)
+          .eq('organization_id', ctx.org.id)
           .eq('status', 'active')
           .neq('id', id);
 
-        const limit: number = auth.org.tournamentLimit;
+        const limit: number = ctx.org.tournamentLimit;
         if (limit < 999 && (count ?? 0) >= limit) {
           return new Response(
             JSON.stringify({
@@ -47,25 +89,25 @@ export async function POST(req: Request) {
         .from('tournaments')
         .update({ status: newStatus, is_active: newStatus === 'active' })
         .eq('id', id)
-        .eq('organization_id', auth.org.id);
+        .eq('organization_id', ctx.org.id);
 
       if (error) throw error;
     }
 
     // ── check-slug ────────────────────────────────────────────────────────────
     else if (action === 'check-slug' && data?.slug) {
-      let query = supabase
+      let slugQuery = supabase
         .from('tournaments')
         .select('*', { count: 'exact', head: true })
-        .eq('organization_id', auth.org.id)
+        .eq('organization_id', ctx.org.id)
         .eq('slug', data.slug)
         .neq('status', 'archived');
 
       if (data.excludeId) {
-        query = query.neq('id', data.excludeId);
+        slugQuery = slugQuery.neq('id', data.excludeId);
       }
 
-      const { count } = await query;
+      const { count } = await slugQuery;
       return new Response(JSON.stringify({ available: (count ?? 0) === 0 }), {
         status: 200,
         headers: { 'Content-Type': 'application/json' },
@@ -74,6 +116,9 @@ export async function POST(req: Request) {
 
     // ── update ────────────────────────────────────────────────────────────────
     else if (action === 'update' && id) {
+      const denied = scopeGuard(ctx, id);
+      if (denied) return denied;
+
       const updates: Record<string, unknown> = {};
       if (data.year      !== undefined) updates.year       = data.year;
       if (data.name      !== undefined) updates.name       = data.name;
@@ -85,18 +130,21 @@ export async function POST(req: Request) {
         .from('tournaments')
         .update(updates)
         .eq('id', id)
-        .eq('organization_id', auth.org.id);
+        .eq('organization_id', ctx.org.id);
 
       if (error) throw error;
     }
 
     // ── delete ────────────────────────────────────────────────────────────────
     else if (action === 'delete' && id) {
+      const denied = scopeGuard(ctx, id);
+      if (denied) return denied;
+
       const { error } = await supabase
         .from('tournaments')
         .delete()
         .eq('id', id)
-        .eq('organization_id', auth.org.id);
+        .eq('organization_id', ctx.org.id);
 
       if (error) throw error;
     }
