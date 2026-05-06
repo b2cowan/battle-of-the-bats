@@ -43,7 +43,7 @@ export function TournamentProvider({ children }: { children: ReactNode }) {
     // Use the scoped API endpoint — server enforces org filter + assignment filter
     const res = await fetch('/api/admin/tournaments');
     const rows: any[] = res.ok ? await res.json() : [];
-    const ts = rows.map(mapRow);
+    const ts = rows.map(mapRow).filter(t => t.status !== 'archived');
 
     setTournaments(ts);
     const savedId = typeof window !== 'undefined' ? localStorage.getItem(ADMIN_T_KEY) : null;

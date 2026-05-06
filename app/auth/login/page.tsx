@@ -86,6 +86,12 @@ function LoginForm() {
 
         {error && <div className={styles.error}>{error}</div>}
 
+        <div style={{ textAlign: 'right', marginTop: '-0.5rem' }}>
+          <Link href="/auth/forgot-password" className={styles.footerLink} style={{ fontSize: '0.7rem' }}>
+            Forgot your password?
+          </Link>
+        </div>
+
         <button
           type="submit"
           className={styles.submitBtn}

@@ -108,6 +108,9 @@ export default function MembersPage() {
   const [removeTarget, setRemoveTarget] = useState<Member | null>(null);
   const [removing, setRemoving] = useState(false);
 
+  // Resend invite state
+  const [reinviting, setReinviting] = useState<string | null>(null);
+
   // Assignment modal state
   const [assignTarget, setAssignTarget] = useState<Member | null>(null);
   const [assignSelected, setAssignSelected] = useState<string[]>([]);
@@ -167,6 +170,12 @@ export default function MembersPage() {
 
   async function handleInvite(e: React.FormEvent) {
     e.preventDefault();
+    // Client-side seat guard: block non-officials when at the billable seat limit.
+    const isOfficial = inviteRole === 'official';
+    if (atLimit && !(isOfficial && planCfg.officialsFreeSeats)) {
+      showError(`Seat limit reached (${seatLimit} seat${seatLimit === 1 ? '' : 's'}). Upgrade to add more members.`);
+      return;
+    }
     setInviting(true);
     try {
       const res = await fetch('/api/admin/members/invite', {
@@ -220,6 +229,20 @@ export default function MembersPage() {
       showError(err.message);
     } finally {
       setRemoving(false);
+    }
+  }
+
+  async function handleReinvite(member: Member) {
+    setReinviting(member.id);
+    try {
+      const res = await fetch(`/api/admin/members/${member.id}/reinvite`, { method: 'POST' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? 'Resend failed');
+      showSuccess(`Invite resent to ${member.email}.`);
+    } catch (err: any) {
+      showError(err.message);
+    } finally {
+      setReinviting(null);
     }
   }
 
@@ -320,8 +343,13 @@ export default function MembersPage() {
     );
   }
 
-  const seatLimit = currentOrg ? PLAN_CONFIG[currentOrg.planId].seatLimit : 1;
-  const seatCount = members.length;
+  const planCfg = currentOrg ? PLAN_CONFIG[currentOrg.planId] : PLAN_CONFIG.starter;
+  const seatLimit = planCfg.seatLimit;
+  const billableMembers = planCfg.officialsFreeSeats
+    ? members.filter(m => m.role !== 'official')
+    : members;
+  const seatCount = billableMembers.length;
+  const officialCount = members.length - billableMembers.length;
   const atLimit = seatCount >= seatLimit;
 
   function renderAssignmentBadge(member: Member) {
@@ -362,8 +390,10 @@ export default function MembersPage() {
             return (
               <tr key={m.id}>
                 <td className={styles.emailCell}>
-                  {m.email}
-                  {isSelf && <span className={styles.youBadge}>you</span>}
+                  <div className={styles.emailCellInner}>
+                    {m.email}
+                    {isSelf && <span className={styles.youBadge}>you</span>}
+                  </div>
                 </td>
                 <td>
                   <span className={`badge ${ROLE_BADGE[m.role]}`}>{ROLE_LABELS[m.role]}</span>
@@ -414,6 +444,17 @@ export default function MembersPage() {
                           <Settings2 size={14} />
                         </button>
                       )}
+                      {!m.acceptedAt && (
+                        <button
+                          className={styles.editBtn}
+                          onClick={() => handleReinvite(m)}
+                          disabled={reinviting === m.id}
+                          aria-label={`Resend invite to ${m.email}`}
+                          title="Resend invite"
+                        >
+                          {reinviting === m.id ? '…' : <UserPlus size={14} />}
+                        </button>
+                      )}
                       <button
                         className={styles.removeBtn}
                         onClick={() => setRemoveTarget(m)}
@@ -449,7 +490,6 @@ export default function MembersPage() {
         <button
           className="btn btn-primary btn-sm"
           onClick={() => setInviteOpen(true)}
-          disabled={atLimit}
           id="members-invite-btn"
         >
           <UserPlus size={15} />
@@ -504,7 +544,12 @@ export default function MembersPage() {
       {/* Seat usage */}
       <div className={styles.seatBanner}>
         <span className={styles.seatCount}>
-          <strong>{seatCount}</strong> of <strong>{seatLimit >= 9999 ? 'Unlimited' : seatLimit}</strong> seats used
+          <strong>{seatCount}</strong> of <strong>{seatLimit >= 9999 ? 'Unlimited' : seatLimit}</strong> staff seats used
+          {planCfg.officialsFreeSeats && officialCount > 0 && (
+            <span style={{ marginLeft: '0.5rem', color: 'var(--text-muted)', fontWeight: 400 }}>
+              · {officialCount} official{officialCount === 1 ? '' : 's'} (free on this plan)
+            </span>
+          )}
         </span>
         {atLimit && (
           <Link

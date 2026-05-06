@@ -114,7 +114,7 @@ export default function BillingPage() {
             <div className={styles.planPrice}>
               {currentPlan.monthlyPrice === 0
                 ? 'Free forever'
-                : `$${currentPlan.monthlyPrice} / month`}
+                : `$${currentPlan.monthlyPrice} CAD / month`}
             </div>
           </div>
         </div>
@@ -181,7 +181,7 @@ export default function BillingPage() {
                   <div className={styles.planCardIcon}>{PLAN_ICONS[planKey]}</div>
                   <div className={styles.planCardName}>{plan.label}</div>
                   <div className={styles.planCardPrice}>
-                    <span className={styles.priceAmount}>${plan.monthlyPrice}</span>
+                    <span className={styles.priceAmount}>${plan.monthlyPrice} CAD</span>
                     <span className={styles.priceUnit}>/mo</span>
                   </div>
                   <ul className={styles.featureList}>

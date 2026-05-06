@@ -118,10 +118,13 @@
 }
 
 .emailCell {
+  font-weight: 500;
+}
+
+.emailCellInner {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  font-weight: 500;
 }
 
 .youBadge {

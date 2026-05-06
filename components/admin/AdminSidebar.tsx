@@ -20,7 +20,8 @@ const TOURNAMENT_NAV = [
 ];
 
 const ORG_NAV = [
-  { key: 'diamonds', icon: MapPin, label: 'Diamonds' },
+  { key: 'diamonds', icon: MapPin,    label: 'Diamonds' },
+  { key: 'archives', icon: Archive,   label: 'Archives'  },
 ];
 
 export default function AdminSidebar() {
@@ -113,15 +114,6 @@ export default function AdminSidebar() {
             const active = pathname.startsWith(`${base}/${item.key}`);
             return navLink(item.key, item.icon, item.label, href, active);
           })}
-
-          {/* Archives — all roles, links outside admin base */}
-          {navLink(
-            'archives',
-            Archive,
-            'Archives',
-            `/${currentOrg?.slug ?? 'milton-bats'}/archives`,
-            pathname.startsWith(`/${currentOrg?.slug ?? 'milton-bats'}/archives`),
-          )}
 
           {/* Owner-only: Members, Billing, Settings */}
           {userRole === 'owner' && (

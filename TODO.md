@@ -4,17 +4,31 @@ This file tracks the ongoing tasks for the tournament website project. AI models
 
 ## 🚀 Active Tasks
 
+- [ ] **Platform Improvements — Phase 1** — Forgot password, officials seat exclusion, invite branding fix, re-invite, existing-user notification email (see [PLATFORM_IMPROVEMENTS_PLAN.md](PLATFORM_IMPROVEMENTS_PLAN.md))
+- [ ] **Platform Improvements — Phase 2** — Member suspension state, officials overview page, seat meter on billing, 80% upgrade nudge (see [PLATFORM_IMPROVEMENTS_PLAN.md](PLATFORM_IMPROVEMENTS_PLAN.md))
+- [ ] **Platform Improvements — Phase 3+** — Module-level capabilities, onboarding flow, audit log, display names, ownership transfer (see [PLATFORM_IMPROVEMENTS_PLAN.md](PLATFORM_IMPROVEMENTS_PLAN.md); several items gated on business decisions)
+
 - [ ] **Add RESEND_API_KEY to Amplify environment variables** (AWS console → App settings → Environment variables) — required for invite emails to work in production.
-- [ ] **Add NEXT_PUBLIC_APP_URL to Amplify environment variables** — set to production domain (e.g. `https://battleofthebats.ca`); used for invite email redirect and Resend `from` address.
+- [ ] **Add NEXT_PUBLIC_APP_URL to Amplify environment variables** — set to production domain (e.g. `https://fieldlogichq.ca`); used for invite email redirect and Resend `from` address.
 - [ ] **Email Strategy Investigation**: 
     - [ ] Investigate best-of-breed providers (Resend, Postmark, AWS SES) for system notifications.
     - [ ] Define the architecture for a "Contact Us" inquiry system.
 - [ ] **AWS Amplify Hosting Strategy**:
     - [ ] Research proper hosting for parallel Dev and Production environments on AWS Amplify.
-    - [ ] Evaluate URL options: using a subdomain (e.g., `dev.battleofthebats.ca`) vs. a separate domain.
+    - [ ] Evaluate URL options: using a subdomain (e.g., `dev.fieldlogichq.ca`) vs. a separate domain.
     - [ ] Document the process for pointing the Dev environment to Stripe Test products/keys and the Prod environment to Stripe Live products/keys (branch-specific environment variables).
 - [ ] **Live Dev Environment**: Create the live development environment on AWS (likely via AWS Amplify `dev` branch) once the research above is finalized.
 
+
+---
+
+## 🔄 Tournament Lifecycle Cleanup
+*Detailed plan in [TOURNAMENT_LIFECYCLE_PLAN.md](TOURNAMENT_LIFECYCLE_PLAN.md)*
+
+- [x] **Item 1** — All status transitions (draft/live/completed) freely selectable via dropdown
+- [x] **Item 2** — Seal button gated to completed status only (UI + server guard)
+- [x] **Item 3** — Archived tournaments hidden from admin switcher and context
+- [ ] **Item 4** — Admin archives page, sidebar wiring, and public ledger improvements (see [ARCHIVES_EXPANSION_PLAN.md](ARCHIVES_EXPANSION_PLAN.md))
 
 ---
 
@@ -46,6 +60,12 @@ This file tracks the ongoing tasks for the tournament website project. AI models
 **Goal:** Allow organizations to manage their teams outside of tournament contexts — rosters, seasons, and ongoing records across the full year.
 
 - [ ] **Team Management MVP** — Design and implement a team management feature allowing orgs to create, edit, and archive teams independently of any tournament (see plan file TBD)
+
+---
+
+## 🔒 Auth & Membership Constraints
+
+- [ ] **One-user-one-org enforcement** — Delete auth user on member removal; cross-org invite guard (see [ONE_ORG_CONSTRAINT_PLAN.md](ONE_ORG_CONSTRAINT_PLAN.md))
 
 ---
 
