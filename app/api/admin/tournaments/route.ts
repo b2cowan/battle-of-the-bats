@@ -142,7 +142,7 @@ export async function POST(req: Request) {
         .from('tournaments')
         .update({ contact_email: contactEmail })
         .eq('id', id)
-        .eq('organization_id', auth.org.id);
+        .eq('organization_id', ctx.org.id);
 
       if (error) throw error;
     }
