@@ -135,6 +135,18 @@ export async function POST(req: Request) {
       if (error) throw error;
     }
 
+    // ── set-contact-email ─────────────────────────────────────────────────────
+    else if (action === 'set-contact-email' && id) {
+      const contactEmail = data?.contactEmail ?? null;
+      const { error } = await supabase
+        .from('tournaments')
+        .update({ contact_email: contactEmail })
+        .eq('id', id)
+        .eq('organization_id', ctx.org.id);
+
+      if (error) throw error;
+    }
+
     // ── delete ────────────────────────────────────────────────────────────────
     else if (action === 'delete' && id) {
       const denied = scopeGuard(ctx, id);
