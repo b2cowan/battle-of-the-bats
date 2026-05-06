@@ -79,7 +79,7 @@ Reference files: `app/api/admin/members/invite/route.ts`, `app/api/admin/members
 
 ### 2B — User Suspension
 
-- [ ] **2B.1** Migration: add `status` column to `organization_members`  
+- [x] **2B.1** Migration: add `status` column to `organization_members`  
   New file: `supabase/migrations/010_member_status.sql`
   ```sql
   ALTER TABLE organization_members
@@ -90,21 +90,21 @@ Reference files: `app/api/admin/members/invite/route.ts`, `app/api/admin/members
   UPDATE organization_members SET status = 'invited' WHERE accepted_at IS NULL;
   ```
 
-- [ ] **2B.2** Update invite route to set `status = 'invited'` on new pending rows  
+- [x] **2B.2** Update invite route to set `status = 'invited'` on new pending rows  
   File: `app/api/admin/members/invite/route.ts` line ~117  
   Add `status: 'invited'` to the insert for new users; add `status: 'active'` to the existing-user insert.
 
-- [ ] **2B.3** Update `getAuthContext()` to reject suspended members  
+- [x] **2B.3** Update `getAuthContext()` to reject suspended members  
   File: `lib/api-auth.ts`  
   In the `organization_members` query, add `.neq('status', 'suspended')` so suspended users get a null auth context and all API routes naturally return 401.
 
-- [ ] **2B.4** Add suspend/reinstate PATCH action to `app/api/admin/members/[memberId]/route.ts`  
+- [x] **2B.4** Add suspend/reinstate PATCH action to `app/api/admin/members/[memberId]/route.ts`  
   Accept `{ status: 'suspended' | 'active' }` in the PATCH body alongside role/capabilities. Owner-only. Cannot suspend the last owner.
 
-- [ ] **2B.5** Add suspend/reinstate UI to members page  
+- [x] **2B.5** Add suspend/reinstate UI to members page  
   Replace the remove button with a dropdown or context menu per member row: `Suspend | Reinstate | Remove`. Show "Suspended" status badge alongside "Pending / Accepted". Suspended members appear in a distinct row style (muted, strikethrough email, or greyed-out badge).
 
-- [ ] **2B.6** Update `Member` interface in `page.tsx` to include `status: string`  
+- [x] **2B.6** Update `Member` interface in `page.tsx` to include `status: string`  
   Update `/api/admin/members` GET route to return the new status field.
 
 ### 2C — Self-Serve Onboarding
@@ -169,7 +169,7 @@ Reference files: `app/api/admin/members/invite/route.ts`, `app/api/admin/members
   File: `app/[orgSlug]/admin/members/page.tsx`  
   For members where `acceptedAt === null`, show "Resend Invite" button alongside the remove button. Calls the new reinvite endpoint. Show success/error via existing FeedbackModal pattern.
 
-- [ ] **3.5** Create officials overview page  
+- [x] **3.5** Create officials overview page  
   File: `app/[orgSlug]/official/page.tsx` (new)  
   - Authenticated, official-role only (redirect to login if not authenticated)
   - Shows: org name, list of assigned tournaments (from `org_member_tournament_assignments`), "Open Scorekeeper" button per tournament linking to `/{orgSlug}/official/score`
@@ -253,7 +253,7 @@ Reference files: `app/api/admin/members/invite/route.ts`, `app/api/admin/members
   File: `app/[orgSlug]/admin/members/page.tsx`  
   The button is currently `disabled={atLimit}`. On Pro/Elite, it should never be disabled when inviting an official. Either: (a) remove `disabled` from the button and move the limit check to the invite submit handler (where you can inspect the selected role), or (b) split into two conditions. Option (a) is cleaner.
 
-- [ ] **4.5** Add seat usage meter to Billing page  
+- [x] **4.5** Add seat usage meter to Billing page  
   File: `app/[orgSlug]/admin/billing/page.tsx`  
   Add a second usage card below the tournament meter, showing seat usage (with the same official-exclusion logic). Fetch member count from `/api/admin/members` or add a new lightweight `/api/admin/members/count` endpoint that returns `{ billed: number, officials: number, limit: number }`.
 
@@ -327,7 +327,7 @@ Reference files: `app/api/admin/members/invite/route.ts`, `app/api/admin/members
 
 ### 5F — Upgrade Prompts at 80% Usage
 
-- [ ] **5F.1** Add 80% seat nudge to Members page  
+- [x] **5F.1** Add 80% seat nudge to Members page  
   File: `app/[orgSlug]/admin/members/page.tsx`  
   When `seatCount / seatLimit >= 0.8` and not yet at limit, show a subtle amber info banner below the seat banner: "You're using X of Y seats. [Upgrade to add more →]". Link to billing page.
 
@@ -349,11 +349,11 @@ Reference files: `app/api/admin/members/invite/route.ts`, `app/api/admin/members
 
 ### Tasks
 
-- [ ] **6.1** Simplify members table columns  
+- [x] **6.1** Simplify members table columns  
   File: `app/[orgSlug]/admin/members/page.tsx`  
   Reduce the table to four data columns: **Email**, **Role** (badge only, no dropdown), **Status**, **Last Sign In**. Add a single **Manage** button (or kebab/three-dot icon) at the end of each non-owner row. Remove the Tournaments column from the table view entirely.
 
-- [ ] **6.2** Create consolidated "Manage Member" modal  
+- [x] **6.2** Create consolidated "Manage Member" modal  
   File: `app/[orgSlug]/admin/members/page.tsx` (same file — new modal state)  
   Triggered by the Manage button. A wider modal (`styles.modalWide`) with clearly separated sections:  
   - **Role** — dropdown to change role (current inline dropdown behavior, moved here)  

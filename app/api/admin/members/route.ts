@@ -10,7 +10,7 @@ export async function GET() {
 
   const { data: members, error: membersError } = await supabaseAdmin
     .from('organization_members')
-    .select('id, user_id, role, capabilities, invited_at, accepted_at')
+    .select('id, user_id, role, capabilities, invited_at, accepted_at, status')
     .eq('organization_id', org.id);
 
   if (membersError) {
@@ -53,6 +53,7 @@ export async function GET() {
       userId:               m.user_id,
       email:                authUser?.email ?? '(unknown)',
       role:                 m.role,
+      status:               (m.status as 'invited' | 'active' | 'suspended') ?? 'active',
       capabilities:         (m.capabilities as Record<string, boolean> | null) ?? null,
       invitedAt:            m.invited_at,
       acceptedAt:           m.accepted_at ?? null,

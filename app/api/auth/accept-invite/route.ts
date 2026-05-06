@@ -48,7 +48,7 @@ export async function POST(_req: Request) {
 
   const { error } = await supabaseAdmin
     .from('organization_members')
-    .update({ accepted_at: new Date().toISOString() })
+    .update({ accepted_at: new Date().toISOString(), status: 'active' })
     .eq('id', member.id);
 
   if (error) {

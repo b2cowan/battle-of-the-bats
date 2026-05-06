@@ -482,6 +482,102 @@
   line-height: 1.45;
 }
 
+/* ── Manage button ───────────────────────────── */
+.manageBtn {
+  font-size: 0.78rem;
+  padding: 0.25rem 0.65rem;
+  white-space: nowrap;
+}
+
+/* ── Suspended row ───────────────────────────── */
+.suspendedRow td {
+  opacity: 0.5;
+}
+
+/* ── 80% seat nudge banner ───────────────────── */
+.nudgeBanner {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  padding: 0.65rem 1rem;
+  border-radius: 10px;
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px solid rgba(245, 158, 11, 0.25);
+  margin-bottom: 1.25rem;
+  font-size: 0.82rem;
+  color: var(--warning, #f59e0b);
+}
+
+.nudgeLink {
+  font-weight: 600;
+  color: var(--warning, #f59e0b);
+  text-decoration: none;
+}
+
+.nudgeLink:hover {
+  text-decoration: underline;
+}
+
+/* ── Manage modal body + sections ────────────── */
+.modalBody {
+  max-height: 62vh;
+  overflow-y: auto;
+  margin: 0 -1.5rem;
+  padding: 0 1.5rem;
+}
+
+.modalSection {
+  border-top: 1px solid var(--border, rgba(255,255,255,0.08));
+  padding-top: 1rem;
+  margin-top: 1rem;
+}
+
+.modalSection:first-child {
+  border-top: none;
+  padding-top: 0;
+  margin-top: 0;
+}
+
+.modalSectionTitle {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--white-30, rgba(255,255,255,0.3));
+  margin-bottom: 0.6rem;
+}
+
+/* ── Suspend button (amber/warning style) ────── */
+.suspendBtn {
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  color: var(--warning, #f59e0b);
+}
+
+.suspendBtn:hover {
+  background: rgba(245, 158, 11, 0.2);
+  border-color: rgba(245, 158, 11, 0.5);
+}
+
+/* ── Inline remove confirm ───────────────────── */
+.inlineConfirm {
+  padding: 0.75rem;
+  border-radius: 8px;
+  background: rgba(239,68,68,0.06);
+  border: 1px solid rgba(239,68,68,0.2);
+}
+
+.inlineConfirmText {
+  font-size: 0.82rem;
+  color: var(--white-60, rgba(255,255,255,0.6));
+  line-height: 1.4;
+}
+
+.inlineConfirmText strong {
+  color: var(--white-90, #f0f0f0);
+}
+
 /* ── Responsive ──────────────────────────────── */
 @media (max-width: 640px) {
   .pageHeader {

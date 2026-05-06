@@ -25,13 +25,13 @@ export default async function OfficialLayout({
 
   const authCtx = await getAuthContextWithRole();
   if (!authCtx) {
-    redirect(`/auth/login?next=/${orgSlug}/official/score`);
+    redirect(`/auth/login?next=/${orgSlug}/official`);
   }
 
   if (authCtx.org.slug !== orgSlug) {
     // User belongs to a different org — send them to their own official page
     if (authCtx.role === 'official') {
-      redirect(`/${authCtx.org.slug}/official/score`);
+      redirect(`/${authCtx.org.slug}/official`);
     }
     redirect(`/${authCtx.org.slug}/admin`);
   }
