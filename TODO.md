@@ -54,7 +54,7 @@ This file tracks the ongoing tasks for the tournament website project. AI models
 
 - [x] **Phase 1 — Sidebar restructure**: Split nav into labeled Tournament / Organization sections, Contacts in Tournament, Diamonds in Organization, fix hardcoded "Battle of the Bats" in sidebar logo
 - [x] **Phase 2 — Admin theme cleanup**: Replace `--primary` token leakage in admin content page CSS with HUD tokens (blueprint-blue / logic-lime); complete Option B separation from org palette
-- [ ] **Member roles & tournament assignment** — Owners need to assign members to specific tournaments (e.g., a scorekeeper assigned only to U12); requires tournament-scoped role model: org-level owners/admins vs. tournament-level organizers/staff/officials (see plan file TBD)
+- [ ] **Member roles & tournament assignment** — Audit complete; see [USER_ROLE_ARCHITECTURE.md](USER_ROLE_ARCHITECTURE.md) for gap list, permission recommendation (hybrid roles + capability overrides), and tournament-assignment schema + file map
 
 ---
 
