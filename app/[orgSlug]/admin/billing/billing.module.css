@@ -19,8 +19,9 @@
   width: 48px;
   height: 48px;
   border-radius: 12px;
-  background: var(--primary-faint);
-  color: var(--primary-light);
+  background: rgba(var(--blueprint-blue-rgb), 0.12);
+  color: var(--logic-lime);
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.3);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -64,8 +65,8 @@
   width: 40px;
   height: 40px;
   border-radius: 10px;
-  background: var(--primary-faint);
-  color: var(--primary-light);
+  background: rgba(var(--blueprint-blue-rgb), 0.12);
+  color: var(--logic-lime);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -82,6 +83,28 @@
   font-size: 0.85rem;
   color: var(--white-40, rgba(255,255,255,0.4));
   margin-top: 0.15rem;
+}
+
+/* ── Status note ─────────────────────────────────────── */
+.statusNote {
+  font-size: 0.82rem;
+  line-height: 1.5;
+  margin: 0 0 1rem;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  border-left: 3px solid;
+}
+
+.statusNoteWarning {
+  background: rgba(245, 158, 11, 0.08);
+  border-color: var(--warning, #f59e0b);
+  color: rgba(245, 158, 11, 0.85);
+}
+
+.statusNoteDanger {
+  background: rgba(239, 68, 68, 0.08);
+  border-color: var(--danger, #ef4444);
+  color: rgba(239, 68, 68, 0.85);
 }
 
 /* ── Usage card ──────────────────────────────────────── */
@@ -170,8 +193,8 @@
   width: 36px;
   height: 36px;
   border-radius: 8px;
-  background: var(--primary-faint);
-  color: var(--primary-light);
+  background: rgba(var(--blueprint-blue-rgb), 0.12);
+  color: var(--logic-lime);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -220,6 +243,6 @@
 }
 
 .featureList li svg {
-  color: var(--primary-light);
+  color: var(--logic-lime);
   flex-shrink: 0;
 }

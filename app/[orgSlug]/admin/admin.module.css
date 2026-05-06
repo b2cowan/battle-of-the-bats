@@ -25,3 +25,48 @@
   }
 }
 
+/* ── Override global utility classes within admin shell ── */
+/* Scoped so public org pages are unaffected */
+.adminShell :global(.btn-primary) {
+  background: var(--blueprint-blue);
+  box-shadow: var(--glow-blue);
+}
+.adminShell :global(.btn-primary:hover) {
+  background: rgba(var(--blueprint-blue-rgb), 0.85);
+  box-shadow: var(--glow-blue);
+}
+
+.adminShell :global(.btn-outline) {
+  color: var(--logic-lime);
+  border-color: rgba(var(--blueprint-blue-rgb), 0.6);
+}
+.adminShell :global(.btn-outline:hover) {
+  background: rgba(var(--blueprint-blue-rgb), 0.12);
+  color: var(--logic-lime);
+}
+
+.adminShell :global(.badge-primary),
+.adminShell :global(.badge-purple) {
+  background: rgba(var(--blueprint-blue-rgb), 0.15);
+  color: var(--logic-lime);
+  border-color: rgba(var(--blueprint-blue-rgb), 0.3);
+}
+
+.adminShell :global(.form-input:focus),
+.adminShell :global(.form-select:focus),
+.adminShell :global(.form-textarea:focus) {
+  border-color: var(--blueprint-blue);
+  box-shadow: 0 0 0 3px rgba(var(--blueprint-blue-rgb), 0.2);
+}
+
+.adminShell :global(.card:hover) {
+  border-color: rgba(var(--blueprint-blue-rgb), 0.4);
+  box-shadow: var(--glow-blue);
+}
+
+.adminShell :global(.text-primary),
+.adminShell :global(.text-primary-light),
+.adminShell :global(.text-purple) {
+  color: var(--logic-lime);
+}
+

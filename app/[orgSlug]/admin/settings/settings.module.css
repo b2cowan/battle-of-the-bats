@@ -19,8 +19,9 @@
   width: 48px;
   height: 48px;
   border-radius: 12px;
-  background: var(--primary-faint);
-  color: var(--primary-light);
+  background: rgba(var(--blueprint-blue-rgb), 0.12);
+  color: var(--logic-lime);
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.3);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -145,7 +146,7 @@
 
 .input:focus {
   outline: none;
-  border-color: var(--primary);
+  border-color: var(--blueprint-blue);
 }
 
 .hint {
@@ -198,7 +199,7 @@
 .toggle {
   width: 1.1rem;
   height: 1.1rem;
-  accent-color: var(--primary);
+  accent-color: var(--blueprint-blue);
   cursor: pointer;
   flex-shrink: 0;
 }
@@ -480,12 +481,12 @@
 }
 
 .fontBtn:hover:not(:disabled) {
-  border-color: var(--primary);
+  border-color: var(--blueprint-blue);
 }
 
 .fontBtnActive {
-  border-color: var(--primary);
-  background: rgba(var(--primary-rgb), 0.1);
+  border-color: var(--blueprint-blue);
+  background: rgba(var(--blueprint-blue-rgb), 0.1);
 }
 
 .fontBtnLocked {
@@ -541,12 +542,12 @@
 }
 
 .cardStyleBtn:hover {
-  border-color: var(--primary);
+  border-color: var(--blueprint-blue);
 }
 
 .cardStyleBtnActive {
-  border-color: var(--primary);
-  background: rgba(var(--primary-rgb), 0.1);
+  border-color: var(--blueprint-blue);
+  background: rgba(var(--blueprint-blue-rgb), 0.1);
 }
 
 .cardStyleThumb {

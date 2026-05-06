@@ -1,12 +1,31 @@
 ﻿'use client';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Users2, UserPlus, Trash2, ShieldCheck } from 'lucide-react';
+import { Users2, UserPlus, Trash2, ShieldCheck, BookOpen, ChevronDown } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { PLAN_CONFIG } from '@/lib/plan-config';
 import FeedbackModal from '@/components/FeedbackModal';
 import type { OrgRole } from '@/lib/types';
 import styles from './members.module.css';
+
+const ROLE_INVITE_DESCRIPTIONS: Record<'admin' | 'staff' | 'official', string> = {
+  admin: 'Full tournament management — can create tournaments, manage registrations, schedule games, post announcements, and send communications. Cannot access org settings or member management.',
+  staff: 'Same access as Admin. Use this for assistants or co-coordinators who need full management capabilities but are not the account owner.',
+  official: 'Score entry only. Officials receive a direct link to the scorekeeper app and can submit results from their assigned diamonds. They do not access the main admin area.',
+};
+
+const ROLE_MATRIX: { label: string; owner: boolean; admin: boolean; staff: boolean; official: boolean }[] = [
+  { label: 'Manage tournaments',         owner: true,  admin: true,  staff: true,  official: false },
+  { label: 'Manage registrations',       owner: true,  admin: true,  staff: true,  official: false },
+  { label: 'Manage schedule & brackets', owner: true,  admin: true,  staff: true,  official: false },
+  { label: 'Submit & finalize scores',   owner: true,  admin: true,  staff: true,  official: true  },
+  { label: 'Manage contacts & diamonds', owner: true,  admin: true,  staff: true,  official: false },
+  { label: 'Post announcements & rules', owner: true,  admin: true,  staff: true,  official: false },
+  { label: 'Send communications',        owner: true,  admin: true,  staff: true,  official: false },
+  { label: 'Org settings & branding',    owner: true,  admin: false, staff: false, official: false },
+  { label: 'Manage members',             owner: true,  admin: false, staff: false, official: false },
+  { label: 'Billing & subscription',     owner: true,  admin: false, staff: false, official: false },
+];
 
 interface Member {
   id: string;
@@ -190,6 +209,46 @@ export default function MembersPage() {
         </button>
       </div>
 
+      {/* Role reference panel */}
+      <details className={styles.roleRef}>
+        <summary className={styles.roleRefSummary}>
+          <span className={styles.roleRefSummaryLeft}>
+            <BookOpen size={14} />
+            <span>Role Guide</span>
+          </span>
+          <ChevronDown size={14} />
+        </summary>
+        <div className={styles.roleRefBody}>
+          <table className={styles.roleMatrix}>
+            <thead>
+              <tr>
+                <th>Capability</th>
+                <th>Owner</th>
+                <th>Admin</th>
+                <th>Staff</th>
+                <th>Official</th>
+              </tr>
+            </thead>
+            <tbody>
+              {ROLE_MATRIX.map(row => (
+                <tr key={row.label}>
+                  <td>{row.label}</td>
+                  <td><span className={styles.matrixCheck}>✓</span></td>
+                  <td>{row.admin  ? <span className={styles.matrixCheck}>✓</span> : <span className={styles.matrixDash}>—</span>}</td>
+                  <td>{row.staff  ? <span className={styles.matrixCheck}>✓</span> : <span className={styles.matrixDash}>—</span>}</td>
+                  <td>{row.official ? <span className={styles.matrixCheck}>✓</span> : <span className={styles.matrixDash}>—</span>}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <p className={styles.roleRefNote}>
+            <strong>Owner</strong> is assigned at org creation and cannot be transferred here — contact support to transfer ownership.
+            {' '}<strong>Admin</strong> and <strong>Staff</strong> have identical system access; the distinction is organizational.
+            {' '}<strong>Officials</strong> receive a separate scorekeeper link on acceptance and are not expected to use the admin area.
+          </p>
+        </div>
+      </details>
+
       {/* Seat usage */}
       <div className={styles.seatBanner}>
         <span className={styles.seatCount}>
@@ -352,6 +411,7 @@ export default function MembersPage() {
                   <option value="staff">Staff</option>
                   <option value="official">Field Official (scorekeeper)</option>
                 </select>
+                <p className={styles.roleHint}>{ROLE_INVITE_DESCRIPTIONS[inviteRole]}</p>
               </div>
               <div className={styles.modalFooter}>
                 <button

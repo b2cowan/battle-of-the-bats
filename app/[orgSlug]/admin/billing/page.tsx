@@ -121,6 +121,18 @@ export default function BillingPage() {
         <span className={`badge ${STATUS_BADGE[status]}`}>{STATUS_LABEL[status]}</span>
       </div>
 
+      {/* Subscription status alerts */}
+      {status === 'past_due' && (
+        <p className={`${styles.statusNote} ${styles.statusNoteWarning}`}>
+          Your last payment failed. Your access remains active during the grace period — please update your payment method via <strong>Manage Subscription</strong> below to avoid service interruption.
+        </p>
+      )}
+      {status === 'canceled' && (
+        <p className={`${styles.statusNote} ${styles.statusNoteDanger}`}>
+          Your subscription has been canceled. You retain access until the end of the current billing period, after which your plan will revert to Starter (1 active tournament, 1 seat).
+        </p>
+      )}
+
       {/* Usage meter */}
       <div className={styles.usageCard}>
         <div className={styles.usageHeader}>
@@ -135,7 +147,7 @@ export default function BillingPage() {
               className={styles.usageFill}
               style={{
                 width: `${usagePct}%`,
-                background: usagePct >= 100 ? 'var(--danger)' : usagePct >= 80 ? 'var(--warning, #f59e0b)' : 'var(--primary-light)',
+                background: usagePct >= 100 ? 'var(--danger)' : usagePct >= 80 ? 'var(--warning, #f59e0b)' : 'var(--logic-lime)',
               }}
             />
           </div>

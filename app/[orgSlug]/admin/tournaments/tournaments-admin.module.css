@@ -14,13 +14,13 @@
 .headerIcon {
   width: 48px;
   height: 48px;
-  background: var(--primary-faint);
-  border: 1px solid var(--border);
+  background: rgba(var(--blueprint-blue-rgb), 0.12);
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.3);
   border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--primary-light);
+  color: var(--logic-lime);
 }
 
 .pageTitle { font-family: var(--font-display); font-size: 1.75rem; font-weight: 900; color: var(--white); }
@@ -30,8 +30,8 @@
   display: flex;
   align-items: flex-start;
   gap: 0.75rem;
-  background: rgba(var(--primary-rgb),0.07);
-  border: 1px solid var(--border);
+  background: rgba(var(--blueprint-blue-rgb), 0.07);
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.25);
   border-radius: var(--radius);
   padding: 1rem 1.25rem;
   margin-bottom: 1.5rem;
@@ -54,7 +54,7 @@
 .activeToggle input[type="checkbox"] {
   width: 16px;
   height: 16px;
-  accent-color: var(--primary);
+  accent-color: var(--blueprint-blue);
   cursor: pointer;
   flex-shrink: 0;
 }
@@ -78,7 +78,7 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  color: var(--primary-light);
+  color: var(--logic-lime);
   margin-bottom: 1rem;
 }
 
@@ -111,7 +111,7 @@
 }
 
 .checkboxLabel input {
-  accent-color: var(--primary);
+  accent-color: var(--blueprint-blue);
 }
 
 .contactPicker {
@@ -197,7 +197,7 @@
 .subCheck input {
   width: 16px;
   height: 16px;
-  accent-color: var(--primary);
+  accent-color: var(--blueprint-blue);
 }
 
 .migrationSection textarea {
@@ -215,8 +215,8 @@
 .scheduleParamsPanel {
   margin-top: 1.5rem;
   padding: 1rem;
-  background: rgba(168,85,247,0.05);
-  border: 1px solid var(--border);
+  background: rgba(var(--blueprint-blue-rgb), 0.05);
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.25);
   border-radius: var(--radius-sm);
 }
 

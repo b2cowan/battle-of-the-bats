@@ -81,7 +81,7 @@ export default function AdminDiamondsPage() {
               <tr key={d.id}>
                 <td>
                   <div className={styles.diamondName}>
-                    <MapPin size={13} style={{ color: 'var(--primary-light)', flexShrink: 0 }} />
+                    <MapPin size={13} style={{ color: 'var(--logic-lime)', flexShrink: 0 }} />
                     <strong>{d.name}</strong>
                   </div>
                 </td>

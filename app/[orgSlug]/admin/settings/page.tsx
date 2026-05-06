@@ -481,7 +481,7 @@ export default function OrgSettingsPage() {
           />
           {form.slug !== currentOrg?.slug && (
             <p className={styles.slugWarning}>
-              ⚠ Changing your slug will change all your public URLs — existing links will break.
+              ⚠ Changing your slug will immediately break all existing links to your organization — including your schedule, standings, registration form, team profile pages, and any direct URLs sent to coaches in past emails or posted publicly.
             </p>
           )}
           <p className={styles.hint}>Only lowercase letters, numbers, and hyphens.</p>
