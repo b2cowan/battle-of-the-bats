@@ -123,6 +123,9 @@ export async function POST(req: Request) {
   const officialNote = role === 'official'
     ? `<p>As a field official, you'll have access to the score entry app to submit game results from your assigned diamonds.</p>`
     : '';
+  const officialNoteText = role === 'official'
+    ? `As a field official, you'll have access to the score entry app to submit game results from your assigned diamonds.\n\n`
+    : '';
   await getResend().emails.send({
     from: `noreply@${fromDomain}`,
     to: email,
@@ -145,6 +148,15 @@ export async function POST(req: Request) {
   <p style="font-size: 0.85rem; color: #666;">This link will expire in 24 hours.</p>
 </body>
 </html>`,
+    text: `You're invited!
+
+You've been invited to join ${org.name} on Battle of the Bats as a ${roleLabel}.
+
+${officialNoteText}Accept your invitation here:
+${inviteUrl}
+
+If you weren't expecting this invitation, you can safely ignore this email.
+This link will expire in 24 hours.`,
   });
 
   return NextResponse.json({ ok: true, added: false });
