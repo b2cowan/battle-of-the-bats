@@ -521,7 +521,7 @@ function BracketColumns({ columns, onEdit, onDelete, formatDate }: any) {
             onChange={e => setTitles(prev => ({ ...prev, [idx]: e.target.value }))}
             style={{
               textAlign: 'center',
-              color: 'var(--primary-light)',
+              color: 'var(--logic-lime)',
               fontFamily: 'var(--font-display)',
               fontSize: '0.8rem',
               fontWeight: 900,
@@ -537,7 +537,7 @@ function BracketColumns({ columns, onEdit, onDelete, formatDate }: any) {
               cursor: 'text',
               padding: '2px 4px',
             }}
-            onFocus={e => { e.target.style.borderBottomColor = 'rgba(var(--primary-rgb),0.4)'; e.target.style.opacity = '1'; }}
+            onFocus={e => { e.target.style.borderBottomColor = 'rgba(var(--blueprint-blue-rgb),0.4)'; e.target.style.opacity = '1'; }}
             onBlur={e => { e.target.style.borderBottomColor = 'transparent'; e.target.style.opacity = '0.7'; }}
           />
 
@@ -554,7 +554,7 @@ function BracketColumns({ columns, onEdit, onDelete, formatDate }: any) {
                   <div style={{
                     position: 'absolute', right: '-2.5rem', top: '50%',
                     width: '2.5rem', height: '1px',
-                    background: 'var(--primary)', opacity: 0.15, zIndex: 0
+                    background: 'var(--blueprint-blue)', opacity: 0.3, zIndex: 0
                   }} />
                 )}
                 <div className="card" style={{
@@ -568,9 +568,9 @@ function BracketColumns({ columns, onEdit, onDelete, formatDate }: any) {
                 }}>
                   <div className="flex-between" style={{ marginBottom: '7px' }}>
                     <div style={{
-                      fontSize: '0.6rem', fontWeight: 900, color: 'var(--primary-light)',
-                      background: 'rgba(var(--primary-rgb), 0.1)', padding: '2px 8px',
-                      borderRadius: '4px', border: '1px solid rgba(var(--primary-rgb), 0.2)', letterSpacing: '0.02em'
+                      fontSize: '0.6rem', fontWeight: 900, color: 'var(--logic-lime)',
+                      background: 'rgba(var(--blueprint-blue-rgb), 0.1)', padding: '2px 8px',
+                      borderRadius: '4px', border: '1px solid rgba(var(--blueprint-blue-rgb), 0.2)', letterSpacing: '0.02em'
                     }}>{g.bracketCode}</div>
                     <div className="flex gap-1.5">
                       <button className="btn btn-ghost btn-sm" onClick={() => onEdit(g)} title="Edit" style={{
@@ -589,9 +589,9 @@ function BracketColumns({ columns, onEdit, onDelete, formatDate }: any) {
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '0.75rem' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <div style={{
-                        width: '28px', fontSize: '0.55rem', fontWeight: 900, color: 'var(--primary-light)',
-                        textAlign: 'center', background: 'rgba(var(--primary-rgb), 0.1)', padding: '1px 0',
-                        borderRadius: '3px', border: '1px solid rgba(var(--primary-rgb), 0.2)', letterSpacing: '0.02em'
+                        width: '28px', fontSize: '0.55rem', fontWeight: 900, color: 'var(--logic-lime)',
+                        textAlign: 'center', background: 'rgba(var(--blueprint-blue-rgb), 0.1)', padding: '1px 0',
+                        borderRadius: '3px', border: '1px solid rgba(var(--blueprint-blue-rgb), 0.2)', letterSpacing: '0.02em'
                       }}>VIS</div>
                       <div style={{
                         fontWeight: '700', fontSize: '0.85rem', color: '#ffffff',
@@ -603,9 +603,9 @@ function BracketColumns({ columns, onEdit, onDelete, formatDate }: any) {
                     <div style={{ height: '1px', background: 'rgba(255,255,255,0.03)' }} />
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <div style={{
-                        width: '28px', fontSize: '0.55rem', fontWeight: 900, color: 'var(--primary-light)',
-                        textAlign: 'center', background: 'rgba(var(--primary-rgb), 0.1)', padding: '1px 0',
-                        borderRadius: '3px', border: '1px solid rgba(var(--primary-rgb), 0.2)', letterSpacing: '0.02em'
+                        width: '28px', fontSize: '0.55rem', fontWeight: 900, color: 'var(--logic-lime)',
+                        textAlign: 'center', background: 'rgba(var(--blueprint-blue-rgb), 0.1)', padding: '1px 0',
+                        borderRadius: '3px', border: '1px solid rgba(var(--blueprint-blue-rgb), 0.2)', letterSpacing: '0.02em'
                       }}>HOM</div>
                       <div style={{
                         fontWeight: '700', fontSize: '0.85rem', color: '#ffffff',
@@ -654,7 +654,7 @@ function PlayoffBracketView({ games, teams, ageGroup, onEdit, onDelete, getGroup
       <div style={{
         display: 'flex', flexDirection: 'column', gap: '3rem',
         padding: '2rem 0.75rem',
-        background: 'radial-gradient(circle at 50% 50%, rgba(var(--primary-rgb), 0.04) 0%, transparent 70%)'
+        background: 'radial-gradient(circle at 50% 50%, rgba(var(--blueprint-blue-rgb), 0.06) 0%, transparent 70%)'
       }}>
         {pools.map((pool: any) => {
           const poolGames = games.filter((g: any) => inferGamePool(g, games, pools) === pool.name);
@@ -663,11 +663,11 @@ function PlayoffBracketView({ games, teams, ageGroup, onEdit, onDelete, getGroup
           return (
             <div key={pool.id}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.25rem' }}>
-                <Trophy size={16} style={{ color: 'var(--primary-light)' }} />
-                <h3 style={{ color: 'var(--primary-light)', fontFamily: 'var(--font-display)', fontSize: '0.85rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em', margin: 0 }}>
+                <Trophy size={16} style={{ color: 'var(--logic-lime)' }} />
+                <h3 style={{ color: 'var(--logic-lime)', fontFamily: 'var(--font-display)', fontSize: '0.85rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em', margin: 0 }}>
                   {formatPoolName(pool.name)} Playoffs
                 </h3>
-                <div style={{ flex: 1, height: '1px', background: 'linear-gradient(to right, var(--primary), transparent)' }} />
+                <div style={{ flex: 1, height: '1px', background: 'linear-gradient(to right, var(--blueprint-blue), transparent)' }} />
               </div>
               <BracketColumns columns={columns} onEdit={onEdit} onDelete={onDelete} formatDate={formatDate} />
             </div>
@@ -698,7 +698,7 @@ function PlayoffBracketView({ games, teams, ageGroup, onEdit, onDelete, getGroup
       overflowX: 'auto',
       padding: '2rem 0.75rem',
       minHeight: '500px',
-      background: 'radial-gradient(circle at 50% 50%, rgba(var(--primary-rgb), 0.04) 0%, transparent 70%)'
+      background: 'radial-gradient(circle at 50% 50%, rgba(var(--blueprint-blue-rgb), 0.06) 0%, transparent 70%)'
     }}>
       <BracketColumns columns={columns} onEdit={onEdit} onDelete={onDelete} formatDate={formatDate} />
     </div>
