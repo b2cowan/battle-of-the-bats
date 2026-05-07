@@ -21,34 +21,28 @@ function AcceptInviteForm() {
   const [errorMsg, setErrorMsg] = useState('');
 
   useEffect(() => {
-    // If there's no invite code in the URL at all, show expired immediately.
-    // PKCE puts the code in query params; implicit flow puts token in the hash.
-    const hasCode = searchParams.has('code');
-    const hasHashToken = typeof window !== 'undefined' && window.location.hash.includes('access_token');
-
-    if (!hasCode && !hasHashToken) {
-      setPageState('expired');
-      return;
-    }
-
     const supabase = createClient();
+
+    // The /auth/callback page handles token exchange (PKCE or implicit flow) and
+    // redirects here with a clean URL once the session is in cookies. We rely on
+    // INITIAL_SESSION firing with the established session rather than checking for
+    // raw tokens in the URL.
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (session && (event === 'SIGNED_IN' || event === 'INITIAL_SESSION')) {
         setPageState('ready');
       }
     });
 
-    // Fallback timeout — if the token exchange stalls or the token is invalid,
-    // surface the expired state rather than leaving the user on a blank screen.
+    // Fallback: if no session arrives within 5s, the link is expired or invalid.
     const timer = setTimeout(() => {
       setPageState(prev => prev === 'waiting' ? 'expired' : prev);
-    }, 6000);
+    }, 5000);
 
     return () => {
       subscription.unsubscribe();
       clearTimeout(timer);
     };
-  }, [searchParams]);
+  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
