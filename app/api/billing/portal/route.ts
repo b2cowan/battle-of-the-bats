@@ -11,7 +11,7 @@ export async function POST() {
   // ── Dev mock: redirect to local mock portal ───────────────────────────────
   if (DEV_MODE) {
     return new Response(
-      JSON.stringify({ url: `${appUrl}/${auth.org.slug}/admin/billing/mock-portal` }),
+      JSON.stringify({ url: `${appUrl}/${auth.org.slug}/admin/org/billing/mock-portal` }),
       { status: 200, headers: { 'Content-Type': 'application/json' } }
     );
   }
@@ -27,7 +27,7 @@ export async function POST() {
   const { stripe } = await import('@/lib/stripe');
   const session = await stripe.billingPortal.sessions.create({
     customer: auth.org.stripeCustomerId,
-    return_url: `${appUrl}/${auth.org.slug}/admin/billing`,
+    return_url: `${appUrl}/${auth.org.slug}/admin/org/billing`,
   });
 
   return new Response(JSON.stringify({ url: session.url }), {

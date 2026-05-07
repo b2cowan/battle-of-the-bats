@@ -33,7 +33,7 @@ export async function POST(req: Request) {
       .eq('id', auth.org.id);
 
     return new Response(
-      JSON.stringify({ url: `${appUrl}/${auth.org.slug}/admin/billing?success=1` }),
+      JSON.stringify({ url: `${appUrl}/${auth.org.slug}/admin/org/billing?success=1` }),
       { status: 200, headers: { 'Content-Type': 'application/json' } }
     );
   }
@@ -65,8 +65,8 @@ export async function POST(req: Request) {
     mode: 'subscription',
     customer: customerId,
     line_items: [{ price: plan.priceId, quantity: 1 }],
-    success_url: `${appUrl}/${auth.org.slug}/admin/billing?success=1`,
-    cancel_url: `${appUrl}/${auth.org.slug}/admin/billing`,
+    success_url: `${appUrl}/${auth.org.slug}/admin/org/billing?success=1`,
+    cancel_url: `${appUrl}/${auth.org.slug}/admin/org/billing`,
   });
 
   return new Response(JSON.stringify({ url: session.url }), {

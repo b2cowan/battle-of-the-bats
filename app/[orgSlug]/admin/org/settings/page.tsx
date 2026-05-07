@@ -207,7 +207,7 @@ export default function OrgSettingsPage() {
       refresh();
 
       if (data.slug && data.slug !== currentOrg.slug) {
-        router.push(`/${data.slug}/admin/settings`);
+        router.push(`/${data.slug}/admin/org/settings`);
       }
       return true;
     } catch (err: any) {

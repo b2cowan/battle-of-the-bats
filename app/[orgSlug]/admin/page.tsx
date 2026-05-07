@@ -1,98 +1,80 @@
 'use client';
-import { useState, useEffect } from 'react';
-import { Users, Calendar, Trophy, Megaphone, Tag } from 'lucide-react';
+import { useEffect } from 'react';
 import Link from 'next/link';
-import { getTeams, getGames, getAnnouncements, getAgeGroups } from '@/lib/db';
-import { useTournament } from '@/lib/tournament-context';
+import { useRouter } from 'next/navigation';
+import { Trophy, Building2 } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
-import { LiveEventLog } from '@/components/admin/LiveEventLog';
-import styles from './dashboard.module.css';
+import { hasCapability } from '@/lib/roles';
 
-export default function AdminDashboard() {
-  const { currentTournament } = useTournament();
-  const { currentOrg } = useOrg();
-  const base = `/${currentOrg?.slug ?? 'milton-bats'}/admin`;
-  const [stats, setStats] = useState({
-    ageGroups: 0, teams: 0, scheduled: 0, completed: 0, announcements: 0,
-  });
+export default function AdminHub() {
+  const router = useRouter();
+  const { currentOrg, userRole, userCapabilities, loading } = useOrg();
+  const base = `/${currentOrg?.slug ?? ''}/admin`;
 
+  const canSeeTournaments = !loading && userRole
+    ? hasCapability(userRole, userCapabilities, 'module_tournaments')
+    : false;
+
+  const canSeeOrgAdmin = !loading && userRole
+    ? userRole === 'owner' || hasCapability(userRole, userCapabilities, 'module_members')
+    : false;
+
+  // Auto-forward single-module users who only have tournament access
   useEffect(() => {
-    async function fetchStats() {
-      const tid = currentTournament?.id;
-      const games = await getGames(tid);
-      const ageGroups = await getAgeGroups(tid);
-      const teams = await getTeams(tid);
-      const announcements = await getAnnouncements(tid);
-      setStats({
-        ageGroups: ageGroups.length,
-        teams: teams.length,
-        scheduled: games.filter(g => g.status === 'scheduled').length,
-        completed: games.filter(g => g.status === 'completed').length,
-        announcements: announcements.length,
-      });
+    if (loading || !userRole || !currentOrg) return;
+    if (canSeeTournaments && !canSeeOrgAdmin) {
+      router.replace(`${base}/tournaments`);
     }
-    fetchStats();
-  }, [currentTournament?.id]);
+  }, [loading, userRole, currentOrg, canSeeTournaments, canSeeOrgAdmin, base, router]);
 
-  const cards = [
-    { label: 'Age Groups', value: stats.ageGroups,      icon: Tag,       key: 'age-groups'    },
-    { label: 'Teams',      value: stats.teams,          icon: Users,     key: 'teams'         },
-    { label: 'Scheduled',  value: stats.scheduled,      icon: Calendar,  key: 'schedule'      },
-    { label: 'Completed',  value: stats.completed,      icon: Trophy,    key: 'results'       },
-    { label: 'News Posts', value: stats.announcements,  icon: Megaphone, key: 'announcements' },
-  ];
+  if (loading || !userRole) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <span className="hud-label">Loading…</span>
+      </div>
+    );
+  }
+
+  const tiles = [
+    canSeeTournaments && {
+      label: 'Tournament Management',
+      desc: 'Schedule, results, registrations, and day-to-day tournament operations',
+      icon: Trophy,
+      href: `${base}/tournaments`,
+    },
+    canSeeOrgAdmin && {
+      label: 'Organization Admin',
+      desc: 'Members, billing, settings, diamonds, and tournament records',
+      icon: Building2,
+      href: `${base}/org/members`,
+    },
+  ].filter(Boolean) as { label: string; desc: string; icon: React.ElementType; href: string }[];
 
   return (
-    <div className={styles.page}>
-      <header className="flex items-center justify-between border-b border-blueprint-blue/60 pb-4 mb-8">
-        <div>
-          <div className="hud-label mb-1">Admin</div>
-          <h1 className="font-sans font-extrabold text-2xl uppercase tracking-tighter text-fl-text">
-            {currentOrg?.name ?? 'Admin'}
-          </h1>
-        </div>
-        <div className="hidden md:flex items-center gap-6 font-mono text-xs text-data-gray">
-          <span className="live-dot text-logic-lime font-bold">LIVE</span>
-          <span>{currentOrg?.slug}</span>
-        </div>
+    <div className="p-8 max-w-4xl">
+      <header className="border-b border-blueprint-blue/60 pb-4 mb-8">
+        <div className="hud-label mb-1">Admin</div>
+        <h1 className="font-sans font-extrabold text-2xl uppercase tracking-tighter text-fl-text">
+          {currentOrg?.name ?? 'Admin'}
+        </h1>
       </header>
 
-      <div className={styles.statsGrid}>
-        {cards.map(card => (
-          <Link key={card.label} href={`${base}/${card.key}`} className={`card ${styles.statCard}`} id={`dashboard-${card.label.toLowerCase().replace(/\s/g, '-')}`}>
-            <div className={styles.statIcon}><card.icon size={22} /></div>
+      <div className="grid gap-4 sm:grid-cols-2">
+        {tiles.map(({ label, desc, icon: Icon, href }) => (
+          <Link
+            key={label}
+            href={href}
+            className="card p-6 flex gap-4 items-start hover:border-blueprint-blue transition-colors"
+          >
+            <div className="text-blueprint-blue mt-0.5">
+              <Icon size={28} />
+            </div>
             <div>
-              <div className={styles.statNum}>{card.value}</div>
-              <div className={styles.statLabel}>{card.label}</div>
+              <div className="font-sans font-bold text-fl-text text-base uppercase tracking-wide">{label}</div>
+              <div className="text-data-gray text-sm mt-1">{desc}</div>
             </div>
           </Link>
         ))}
-      </div>
-
-      <div className={styles.quickLinks}>
-        <h2 className={styles.sectionTitle}>Quick Actions</h2>
-        <div className={styles.actionsGrid}>
-          {[
-            { key: 'age-groups',    label: 'Manage Age Groups',    desc: 'Add, edit, or remove age divisions', icon: Tag       },
-            { key: 'teams',         label: 'Manage Teams',         desc: 'Add teams and edit player rosters',  icon: Users     },
-            { key: 'schedule',      label: 'Schedule Games',       desc: 'Create and manage game schedule',    icon: Calendar  },
-            { key: 'results',       label: 'Post Results',         desc: 'Enter scores for completed games',   icon: Trophy    },
-            { key: 'announcements', label: 'Post Announcement',    desc: 'Share news with participants',       icon: Megaphone },
-          ].map(a => (
-            <Link key={a.key} href={`${base}/${a.key}`} className={`card ${styles.actionCard}`}>
-              <div className={styles.actionIcon}><a.icon size={18} /></div>
-              <div>
-                <div className={styles.actionLabel}>{a.label}</div>
-                <div className={styles.actionDesc}>{a.desc}</div>
-              </div>
-            </Link>
-          ))}
-        </div>
-      </div>
-
-      <div className={styles.recentEvents}>
-        <h2 className={styles.sectionTitle}>Recent Events</h2>
-        <LiveEventLog tournamentId={currentTournament?.id ?? ''} />
       </div>
     </div>
   );

@@ -1,15 +1,19 @@
 'use client';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { LayoutDashboard, Users, Calendar, Trophy, Megaphone, Tag, LogOut, Home, ChevronRight, MapPin, RefreshCw, BookUser, BookOpen, CreditCard, Settings, Users2, Archive } from 'lucide-react';
+import {
+  LayoutDashboard, Users, Calendar, Trophy, Megaphone, Tag, LogOut, Home,
+  ChevronRight, MapPin, RefreshCw, BookUser, BookOpen, CreditCard, Settings,
+  Users2, Archive, ArrowLeft, Mail,
+} from 'lucide-react';
 import { signOut } from '@/lib/auth';
 import { useOrg } from '@/lib/org-context';
 import { useTournament } from '@/lib/tournament-context';
+import { hasCapability } from '@/lib/roles';
 import styles from './AdminSidebar.module.css';
 
 const TOURNAMENT_NAV = [
-  { key: '',              icon: LayoutDashboard, label: 'Dashboard'         },
-  { key: 'tournaments',   icon: RefreshCw,       label: 'Tournaments'       },
+  { key: 'dashboard',     icon: LayoutDashboard, label: 'Dashboard'         },
   { key: 'announcements', icon: Megaphone,       label: 'Announcements'     },
   { key: 'contacts',      icon: BookUser,        label: 'Contacts'          },
   { key: 'age-groups',    icon: Tag,             label: 'Age Groups'        },
@@ -17,19 +21,23 @@ const TOURNAMENT_NAV = [
   { key: 'schedule',      icon: Calendar,        label: 'Schedule'          },
   { key: 'results',       icon: Trophy,          label: 'Results'           },
   { key: 'rules',         icon: BookOpen,        label: 'Rules & Resources' },
-];
-
-const ORG_NAV = [
-  { key: 'diamonds', icon: MapPin,    label: 'Diamonds' },
-  { key: 'archives', icon: Archive,   label: 'Archives'  },
+  { key: 'communication', icon: Mail,            label: 'Communication'     },
+  { key: 'archives',      icon: Archive,         label: 'Past Tournaments'  },
 ];
 
 export default function AdminSidebar() {
   const pathname = usePathname();
   const router   = useRouter();
-  const { currentOrg, userRole } = useOrg();
+  const { currentOrg, userRole, userCapabilities } = useOrg();
   const base = `/${currentOrg?.slug ?? 'milton-bats'}/admin`;
   const { tournaments, currentTournament, setCurrentTournament } = useTournament();
+
+  const isHub      = pathname === base;
+  const isOrgAdmin = pathname.startsWith(`${base}/org`);
+
+  const canSeeMembersNav = userRole
+    ? userRole === 'owner' || hasCapability(userRole, userCapabilities, 'module_members')
+    : false;
 
   async function handleLogout() {
     await signOut();
@@ -57,6 +65,13 @@ export default function AdminSidebar() {
     );
   }
 
+  const backLink = (
+    <Link href={base} className={`${styles.navItem} ${styles.backLink}`} id="admin-nav-all-sections">
+      <ArrowLeft size={15} />
+      <span>All Sections</span>
+    </Link>
+  );
+
   return (
     <aside className={styles.sidebar}>
       {/* Logo */}
@@ -68,69 +83,88 @@ export default function AdminSidebar() {
         </div>
       </div>
 
-      {/* Tournament Switcher */}
-      {tournaments.length > 0 && (
-        <div className={styles.tournamentSwitcher}>
-          <label className={styles.switcherLabel}>Editing Tournament</label>
-          <select
-            className={styles.switcherSelect}
-            value={currentTournament?.id ?? ''}
-            onChange={e => handleTournamentChange(e.target.value)}
-            id="admin-tournament-select"
-          >
-            {tournaments.map(t => (
-              <option key={t.id} value={t.id}>
-                {t.name}
-              </option>
-            ))}
-          </select>
-          {currentTournament?.status === 'active'    && <span className={styles.activePill}>● Live</span>}
-          {currentTournament?.status === 'draft'     && <span className={styles.activePill} style={{ opacity: 0.5 }}>Draft</span>}
-          {currentTournament?.status === 'completed' && <span className={styles.activePill} style={{ opacity: 0.5 }}>Completed</span>}
-          {currentTournament?.status === 'archived'  && <span className={styles.activePill} style={{ opacity: 0.4 }}>Archived</span>}
-        </div>
+      {/* Org Admin mode */}
+      {isOrgAdmin && (
+        <>
+          {backLink}
+          <div className={styles.navSection}>
+            <div className={styles.sectionHeader}>Organization Admin</div>
+            <nav className={styles.nav}>
+              {navLink(
+                'org/tournaments', RefreshCw, 'Tournament Records',
+                `${base}/org/tournaments`,
+                pathname.startsWith(`${base}/org/tournaments`),
+              )}
+              {canSeeMembersNav && navLink(
+                'org/members', Users2, 'Members',
+                `${base}/org/members`,
+                pathname.startsWith(`${base}/org/members`),
+              )}
+              {navLink(
+                'org/diamonds', MapPin, 'Diamonds',
+                `${base}/org/diamonds`,
+                pathname.startsWith(`${base}/org/diamonds`),
+              )}
+              {userRole === 'owner' && navLink(
+                'org/billing', CreditCard, 'Billing',
+                `${base}/org/billing`,
+                pathname.startsWith(`${base}/org/billing`),
+              )}
+              {userRole === 'owner' && navLink(
+                'org/settings', Settings, 'Settings',
+                `${base}/org/settings`,
+                pathname.startsWith(`${base}/org/settings`),
+              )}
+            </nav>
+          </div>
+        </>
       )}
 
-      {/* Tournament Section */}
-      <div className={styles.navSection}>
-        <div className={styles.sectionHeader}>Tournament</div>
-        <nav className={styles.nav}>
-          {TOURNAMENT_NAV.map(item => {
-            const href   = item.key ? `${base}/${item.key}` : base;
-            const active = item.key === ''
-              ? pathname === base
-              : pathname.startsWith(`${base}/${item.key}`);
-            return navLink(item.key || '_dashboard', item.icon, item.label, href, active);
-          })}
-        </nav>
-      </div>
-
-      {/* Organization Section */}
-      <div className={`${styles.navSection} ${styles.orgSection}`}>
-        <div className={styles.sectionHeader}>Organization</div>
-        <nav className={styles.nav}>
-          {ORG_NAV.map(item => {
-            const href   = `${base}/${item.key}`;
-            const active = pathname.startsWith(`${base}/${item.key}`);
-            return navLink(item.key, item.icon, item.label, href, active);
-          })}
-
-          {/* Owner-only: Members, Billing, Settings */}
-          {userRole === 'owner' && (
-            <>
-              {navLink('members',  Users2,     'Members',  `${base}/members`,  pathname.startsWith(`${base}/members`))}
-              {navLink('billing',  CreditCard, 'Billing',  `${base}/billing`,  pathname.startsWith(`${base}/billing`))}
-              {navLink('settings', Settings,   'Settings', `${base}/settings`, pathname.startsWith(`${base}/settings`))}
-            </>
+      {/* Tournament operations mode */}
+      {!isHub && !isOrgAdmin && (
+        <>
+          {backLink}
+          {tournaments.length > 0 && (
+            <div className={styles.tournamentSwitcher}>
+              <label className={styles.switcherLabel}>Editing Tournament</label>
+              <select
+                className={styles.switcherSelect}
+                value={currentTournament?.id ?? ''}
+                onChange={e => handleTournamentChange(e.target.value)}
+                id="admin-tournament-select"
+              >
+                {tournaments.map(t => (
+                  <option key={t.id} value={t.id}>
+                    {t.name}
+                  </option>
+                ))}
+              </select>
+              {currentTournament?.status === 'active'    && <span className={styles.activePill}>● Live</span>}
+              {currentTournament?.status === 'draft'     && <span className={styles.activePill} style={{ opacity: 0.5 }}>Draft</span>}
+              {currentTournament?.status === 'completed' && <span className={styles.activePill} style={{ opacity: 0.5 }}>Completed</span>}
+              {currentTournament?.status === 'archived'  && <span className={styles.activePill} style={{ opacity: 0.4 }}>Archived</span>}
+            </div>
           )}
-        </nav>
-      </div>
+          <div className={styles.navSection}>
+            <div className={styles.sectionHeader}>Tournament</div>
+            <nav className={styles.nav}>
+              {TOURNAMENT_NAV.map(item => {
+                const href   = `${base}/${item.key}`;
+                const active = pathname.startsWith(href);
+                return navLink(item.key, item.icon, item.label, href, active);
+              })}
+            </nav>
+          </div>
+        </>
+      )}
 
       {/* Footer */}
       <div className={styles.footer}>
-        <Link href={`/${currentOrg?.slug ?? 'milton-bats'}`} className={styles.footerLink} id="admin-back-site">
-          <Home size={15} /> Back to Site
-        </Link>
+        {!isOrgAdmin && (
+          <Link href={`/${currentOrg?.slug ?? 'milton-bats'}`} className={styles.footerLink} id="admin-back-site">
+            <Home size={15} /> Back to Site
+          </Link>
+        )}
         <button onClick={handleLogout} className={styles.logoutBtn} id="admin-logout">
           <LogOut size={15} /> Logout
         </button>

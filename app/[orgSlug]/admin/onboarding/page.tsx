@@ -69,7 +69,7 @@ export default function OnboardingPage() {
               Get started for free. Upgrade when you&apos;re ready for more seats and advanced features.
             </div>
           </div>
-          <Link href={`/${currentOrg.slug}/admin/billing`} className={`${styles.stepCta} ${styles.stepCtaSecondary}`}>
+          <Link href={`/${currentOrg.slug}/admin/org/billing`} className={`${styles.stepCta} ${styles.stepCtaSecondary}`}>
             View plans <ArrowRight size={13} />
           </Link>
         </div>
@@ -86,7 +86,7 @@ export default function OnboardingPage() {
             </div>
           </div>
           {!memberDone && (
-            <Link href={`/${currentOrg.slug}/admin/members`} className={styles.stepCta}>
+            <Link href={`/${currentOrg.slug}/admin/org/members`} className={styles.stepCta}>
               Invite a member <ArrowRight size={13} />
             </Link>
           )}
@@ -104,7 +104,7 @@ export default function OnboardingPage() {
             </div>
           </div>
           {!tournamentDone && (
-            <Link href={`/${currentOrg.slug}/admin/tournaments`} className={styles.stepCta}>
+            <Link href={`/${currentOrg.slug}/admin/org/tournaments`} className={styles.stepCta}>
               Create a tournament <ArrowRight size={13} />
             </Link>
           )}
