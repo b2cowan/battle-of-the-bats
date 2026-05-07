@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Users2, UserPlus, ShieldCheck, BookOpen, ChevronDown, Settings2 } from 'lucide-react';
+import { Users2, UserPlus, ShieldCheck, BookOpen, ChevronDown, Settings2, Mail, Trash2 } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { PLAN_CONFIG } from '@/lib/plan-config';
 import FeedbackModal from '@/components/FeedbackModal';
@@ -125,9 +125,9 @@ export default function MembersPage() {
   const [manageDraftAssignments, setManageDraftAssignments] = useState<string[]>([]);
   const [manageSaving, setManageSaving] = useState(false);
   const [manageSuspending, setManageSuspending] = useState(false);
-  const [manageRemoving, setManageRemoving] = useState(false);
-  const [showRemoveConfirm, setShowRemoveConfirm] = useState(false);
-  const [reinviting, setReinviting] = useState(false);
+  const [reinvitingId, setReinvitingId] = useState<string | null>(null);
+  const [confirmRemoveId, setConfirmRemoveId] = useState<string | null>(null);
+  const [removingId, setRemovingId] = useState<string | null>(null);
   const [capDraft, setCapDraft] = useState<Record<string, boolean>>({});
   const [capSaving, setCapSaving] = useState(false);
 
@@ -208,12 +208,10 @@ export default function MembersPage() {
     setManageDraftDisplayName(member.displayName ?? '');
     setManageDraftAssignments([...member.assignedTournamentIds]);
     setCapDraft(member.capabilities ? { ...member.capabilities } : {});
-    setShowRemoveConfirm(false);
   }
 
   function closeManage() {
     setManageTarget(null);
-    setShowRemoveConfirm(false);
   }
 
   function toggleAssignment(tid: string) {
@@ -341,33 +339,30 @@ export default function MembersPage() {
     setManageSuspending(false);
   }
 
-  async function handleRemove() {
-    if (!manageTarget) return;
-    setManageRemoving(true);
-    const res = await fetch(`/api/admin/members/${manageTarget.id}`, { method: 'DELETE' });
+  async function handleRemove(member: Member) {
+    setRemovingId(member.id);
+    const res = await fetch(`/api/admin/members/${member.id}`, { method: 'DELETE' });
     const data = await res.json();
     if (!res.ok) {
       showError(data.error ?? 'Remove failed');
-      setManageRemoving(false);
     } else {
-      const removedEmail = manageTarget.email;
-      closeManage();
-      showSuccess(`${removedEmail} has been removed.`);
+      setConfirmRemoveId(null);
+      showSuccess(`${member.email} has been removed.`);
       loadMembers();
     }
+    setRemovingId(null);
   }
 
-  async function handleReinvite() {
-    if (!manageTarget) return;
-    setReinviting(true);
-    const res = await fetch(`/api/admin/members/${manageTarget.id}/reinvite`, { method: 'POST' });
+  async function handleReinvite(member: Member) {
+    setReinvitingId(member.id);
+    const res = await fetch(`/api/admin/members/${member.id}/reinvite`, { method: 'POST' });
     const data = await res.json();
     if (!res.ok) {
       showError(data.error ?? 'Resend failed');
     } else {
-      showSuccess(`Invite resent to ${manageTarget.email}.`);
+      showSuccess(`Invite resent to ${member.email}.`);
     }
-    setReinviting(false);
+    setReinvitingId(null);
   }
 
   if (loading) {
@@ -435,12 +430,51 @@ export default function MembersPage() {
                 <td className={styles.dimCell}>{formatDate(m.lastSignIn)}</td>
                 <td>
                   {!isSelf && m.role !== 'owner' && (
-                    <button
-                      className={`btn btn-outline btn-sm ${styles.manageBtn}`}
-                      onClick={() => openManage(m)}
-                    >
-                      Manage
-                    </button>
+                    <div className={styles.actionGroup}>
+                      {m.status === 'invited' && (
+                        <button
+                          className={styles.iconBtn}
+                          title="Resend invite"
+                          onClick={() => handleReinvite(m)}
+                          disabled={reinvitingId === m.id}
+                        >
+                          <Mail size={15} />
+                        </button>
+                      )}
+                      {confirmRemoveId === m.id ? (
+                        <span className={styles.inlineConfirmRow}>
+                          <button
+                            className="btn btn-danger btn-sm"
+                            style={{ fontSize: '0.72rem', padding: '0.2rem 0.5rem' }}
+                            onClick={() => handleRemove(m)}
+                            disabled={removingId === m.id}
+                          >
+                            {removingId === m.id ? '…' : 'Remove'}
+                          </button>
+                          <button
+                            className="btn btn-outline btn-sm"
+                            style={{ fontSize: '0.72rem', padding: '0.2rem 0.5rem' }}
+                            onClick={() => setConfirmRemoveId(null)}
+                          >
+                            Cancel
+                          </button>
+                        </span>
+                      ) : (
+                        <button
+                          className={styles.iconBtnDanger}
+                          title="Remove member"
+                          onClick={() => setConfirmRemoveId(m.id)}
+                        >
+                          <Trash2 size={15} />
+                        </button>
+                      )}
+                      <button
+                        className={`btn btn-outline btn-sm ${styles.manageBtn}`}
+                        onClick={() => openManage(m)}
+                      >
+                        Manage
+                      </button>
+                    </div>
                   )}
                 </td>
               </tr>
@@ -757,76 +791,31 @@ export default function MembersPage() {
                 </div>
               )}
 
-              {/* Actions */}
-              <div className={styles.modalSection}>
-                <div className={styles.modalSectionTitle}>Actions</div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                  {manageTarget.status === 'invited' && (
+              {/* Suspend / Reinstate — owner only, active members only */}
+              {userRole === 'owner' && manageTarget.status !== 'invited' && (
+                <div className={styles.modalSection}>
+                  <div className={styles.modalSectionTitle}>Actions</div>
+                  {manageTarget.status === 'suspended' ? (
                     <button
                       type="button"
                       className="btn btn-outline btn-sm"
-                      onClick={handleReinvite}
-                      disabled={reinviting}
+                      onClick={handleSuspend}
+                      disabled={manageSuspending}
                     >
-                      {reinviting ? 'Sending…' : 'Resend Invite'}
-                    </button>
-                  )}
-                  {userRole === 'owner' && manageTarget.status !== 'invited' && (
-                    manageTarget.status === 'suspended' ? (
-                      <button
-                        type="button"
-                        className="btn btn-outline btn-sm"
-                        onClick={handleSuspend}
-                        disabled={manageSuspending}
-                      >
-                        {manageSuspending ? 'Reinstating…' : 'Reinstate Member'}
-                      </button>
-                    ) : (
-                      <button
-                        type="button"
-                        className={`btn btn-sm ${styles.suspendBtn}`}
-                        onClick={handleSuspend}
-                        disabled={manageSuspending}
-                      >
-                        {manageSuspending ? 'Suspending…' : 'Suspend Member'}
-                      </button>
-                    )
-                  )}
-                  {!showRemoveConfirm ? (
-                    <button
-                      type="button"
-                      className="btn btn-danger btn-sm"
-                      onClick={() => setShowRemoveConfirm(true)}
-                    >
-                      Remove Member
+                      {manageSuspending ? 'Reinstating…' : 'Reinstate Member'}
                     </button>
                   ) : (
-                    <div className={styles.inlineConfirm}>
-                      <span className={styles.inlineConfirmText}>
-                        Remove <strong>{manageTarget.email}</strong>? This cannot be undone.
-                      </span>
-                      <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
-                        <button
-                          type="button"
-                          className="btn btn-outline btn-sm"
-                          onClick={() => setShowRemoveConfirm(false)}
-                        >
-                          Cancel
-                        </button>
-                        <button
-                          type="button"
-                          className="btn btn-danger btn-sm"
-                          onClick={handleRemove}
-                          disabled={manageRemoving}
-                          id="remove-confirm-btn"
-                        >
-                          {manageRemoving ? 'Removing…' : 'Confirm Remove'}
-                        </button>
-                      </div>
-                    </div>
+                    <button
+                      type="button"
+                      className={`btn btn-sm ${styles.suspendBtn}`}
+                      onClick={handleSuspend}
+                      disabled={manageSuspending}
+                    >
+                      {manageSuspending ? 'Suspending…' : 'Suspend Member'}
+                    </button>
                   )}
                 </div>
-              </div>
+              )}
 
             </div>{/* end modalBody */}
 

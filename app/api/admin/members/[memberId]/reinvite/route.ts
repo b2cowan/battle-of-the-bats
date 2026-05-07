@@ -46,6 +46,42 @@ export async function POST(_req: Request, { params }: Params) {
   const role = member.role as string;
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://fieldlogichq.ca';
+  const fromAddress = process.env.RESEND_FROM ?? 'noreply@fieldlogichq.ca';
+
+  // If the Supabase user is already confirmed, generateLink({ type: 'invite' }) will
+  // fail with "already registered". Send a sign-in nudge instead and fix the member row.
+  if (authUser.email_confirmed_at) {
+    await supabaseAdmin
+      .from('organization_members')
+      .update({ accepted_at: new Date().toISOString() })
+      .eq('id', memberId)
+      .is('accepted_at', null);
+
+    const roleLabel = role === 'official' ? 'field official (scorekeeper)' : `team ${role}`;
+    await getResend().emails.send({
+      from: fromAddress,
+      to: email,
+      subject: `You have access to ${org.name} on FieldLogicHQ`,
+      html: `
+<!DOCTYPE html>
+<html>
+<body style="font-family: sans-serif; max-width: 480px; margin: 0 auto; padding: 2rem; color: #1a1a2e;">
+  <h2 style="margin-top: 0;">You're all set</h2>
+  <p>You already have a FieldLogicHQ account. You've been added to <strong>${org.name}</strong> as a ${roleLabel}.</p>
+  <p>Sign in to get started:</p>
+  <p style="margin: 1.5rem 0;">
+    <a href="${appUrl}/auth/login"
+       style="background: #7c3aed; color: #fff; padding: 0.75rem 1.5rem; border-radius: 8px; text-decoration: none; font-weight: 700; display: inline-block;">
+      Sign In
+    </a>
+  </p>
+</body>
+</html>`,
+      text: `You already have a FieldLogicHQ account. Sign in at ${appUrl}/auth/login to access ${org.name}.`,
+    });
+    return NextResponse.json({ ok: true });
+  }
+
   const next = encodeURIComponent(`/auth/accept-invite?org=${org.slug}`);
   const redirectTo = `${appUrl}/auth/callback?next=${next}`;
 
@@ -66,7 +102,6 @@ export async function POST(_req: Request, { params }: Params) {
     .eq('id', memberId);
 
   const inviteUrl = (linkData as any).properties?.action_link ?? linkData.properties?.action_link;
-  const fromAddress = process.env.RESEND_FROM ?? 'noreply@fieldlogichq.ca';
   const roleLabel = role === 'official' ? 'field official (scorekeeper)' : `team ${role}`;
   const officialNote = role === 'official'
     ? `<p>As a field official, you'll have access to the score entry app to submit game results from your assigned diamonds.</p>`
