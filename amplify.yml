@@ -4,6 +4,7 @@ frontend:
     preBuild:
       commands:
         - npm install -g pnpm
+        - rm -rf node_modules
         - pnpm install
     build:
       commands:
@@ -20,5 +21,4 @@ frontend:
   cache:
     paths:
       - .pnpm-store/**/*
-      - node_modules/**/*
       - .next/cache/**/*
