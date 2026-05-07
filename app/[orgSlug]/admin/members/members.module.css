@@ -489,6 +489,63 @@
   white-space: nowrap;
 }
 
+/* ── Inline action group in table rows ───────── */
+.actionGroup {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  justify-content: flex-end;
+}
+
+.iconBtn {
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: var(--white-30, rgba(255,255,255,0.3));
+  padding: 0.3rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  transition: all 0.15s;
+  flex-shrink: 0;
+}
+
+.iconBtn:hover:not(:disabled) {
+  color: var(--logic-lime);
+  background: rgba(var(--blueprint-blue-rgb), 0.12);
+  border-color: rgba(var(--blueprint-blue-rgb), 0.3);
+}
+
+.iconBtn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.iconBtnDanger {
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: var(--white-30, rgba(255,255,255,0.3));
+  padding: 0.3rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  transition: all 0.15s;
+  flex-shrink: 0;
+}
+
+.iconBtnDanger:hover {
+  color: var(--danger, #ef4444);
+  background: rgba(239,68,68,0.1);
+  border-color: rgba(239,68,68,0.2);
+}
+
+.inlineConfirmRow {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
 /* ── Suspended row ───────────────────────────── */
 .suspendedRow td {
   opacity: 0.5;
