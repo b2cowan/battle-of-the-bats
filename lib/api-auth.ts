@@ -65,6 +65,7 @@ export async function getAuthContext(): Promise<AuthContext | null> {
     isPublic: orgRow.is_public,
     createdAt: orgRow.created_at,
     requireScoreFinalization: orgRow.require_score_finalization ?? false,
+    onboardingCompletedAt: orgRow.onboarding_completed_at ?? null,
   };
 
   return { user, org };

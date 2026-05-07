@@ -578,6 +578,27 @@
   color: var(--white-90, #f0f0f0);
 }
 
+/* ── Display name in member rows ─────────────── */
+.displayName {
+  font-weight: 600;
+  color: var(--white-90, #f0f0f0);
+  font-size: 0.875rem;
+  line-height: 1.2;
+}
+
+.emailSecondary {
+  font-size: 0.75rem;
+  color: var(--white-30, rgba(255,255,255,0.3));
+  margin-top: 0.1rem;
+}
+
+.optional {
+  font-weight: 400;
+  color: var(--white-30, rgba(255,255,255,0.3));
+  font-size: 0.75rem;
+  margin-left: 0.25rem;
+}
+
 /* ── Responsive ──────────────────────────────── */
 @media (max-width: 640px) {
   .pageHeader {

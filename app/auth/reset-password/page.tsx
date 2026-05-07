@@ -50,7 +50,20 @@ export default function ResetPasswordPage() {
       setLoading(false);
     } else {
       setPageState('success');
-      setTimeout(() => router.push('/admin'), 2000);
+      // Determine the role-aware destination before redirecting.
+      let dest = '/admin';
+      try {
+        const res = await fetch('/api/auth/me');
+        if (res.ok) {
+          const { orgSlug, role } = await res.json();
+          if (orgSlug) {
+            dest = role === 'official' ? `/${orgSlug}/official` : `/${orgSlug}/admin`;
+          }
+        }
+      } catch {
+        // Non-fatal — fall back to generic /admin
+      }
+      setTimeout(() => { router.push(dest); router.refresh(); }, 1500);
     }
   }
 

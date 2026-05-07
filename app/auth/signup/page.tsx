@@ -54,7 +54,8 @@ export default function SignupPage() {
       return;
     }
 
-    router.push('/admin');
+    const dest = json.orgSlug ? `/${json.orgSlug}/admin/onboarding` : '/admin';
+    router.push(dest);
     router.refresh();
   }
 

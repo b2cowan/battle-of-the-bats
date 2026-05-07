@@ -16,6 +16,7 @@ function AcceptInviteForm() {
 
   const [pageState, setPageState] = useState<PageState>('waiting');
   const [password, setPassword] = useState('');
+  const [displayName, setDisplayName] = useState('');
   const [showPw, setShowPw] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
@@ -67,7 +68,11 @@ function AcceptInviteForm() {
     }
 
     // Mark accepted_at and get the org/role for the final redirect.
-    const res = await fetch('/api/auth/accept-invite', { method: 'POST' });
+    const res = await fetch('/api/auth/accept-invite', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ displayName: displayName.trim() || null }),
+    });
     const data = await res.json();
 
     const slug = data.orgSlug ?? orgSlugParam;
@@ -135,6 +140,20 @@ function AcceptInviteForm() {
           </p>
           <form onSubmit={handleSubmit} className={styles.form}>
             <div className="form-group">
+              <label className="form-label" htmlFor="accept-name">Your Name <span style={{ fontWeight: 400, color: 'var(--data-gray)', fontSize: '0.75em' }}>(optional)</span></label>
+              <input
+                id="accept-name"
+                type="text"
+                className="form-input"
+                value={displayName}
+                onChange={e => setDisplayName(e.target.value)}
+                placeholder="e.g. Alex Smith"
+                maxLength={60}
+                autoComplete="name"
+                autoFocus
+              />
+            </div>
+            <div className="form-group">
               <label className="form-label" htmlFor="accept-password">Password</label>
               <div className={styles.pwWrap}>
                 <input
@@ -147,7 +166,6 @@ function AcceptInviteForm() {
                   required
                   minLength={8}
                   autoComplete="new-password"
-                  autoFocus
                 />
                 <button type="button" className={styles.pwToggle} onClick={() => setShowPw(s => !s)}>
                   {showPw ? <EyeOff size={15} /> : <Eye size={15} />}

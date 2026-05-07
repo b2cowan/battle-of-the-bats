@@ -55,12 +55,24 @@ export async function DELETE(_req: Request, { params }: Params) {
     );
   }
 
+  // Capture email before deleting the auth user (record is gone after deleteUser)
+  const { data: { user: targetAuthUser } } = await supabaseAdmin.auth.admin.getUserById(target.user_id);
+  const targetEmail = targetAuthUser?.email ?? null;
+
   // Delete the auth user — ON DELETE CASCADE removes the organization_members row
   // and transitively the org_member_tournament_assignments rows. Hard-delete (default).
   const { error: authError } = await supabaseAdmin.auth.admin.deleteUser(target.user_id);
   if (authError) {
     return NextResponse.json({ error: authError.message }, { status: 500 });
   }
+
+  void supabaseAdmin.from('org_audit_log').insert({
+    org_id: org.id,
+    actor_id: ctx.user.id,
+    target_id: target.user_id,
+    action: 'member_removed',
+    payload: { email: targetEmail, role: target.role },
+  });
 
   return NextResponse.json({ ok: true });
 }
@@ -84,9 +96,11 @@ export async function PATCH(req: Request, { params }: Params) {
   if (hasCapabilitiesUpdate && ctx.role !== 'owner') return forbidden();
   if (hasStatusUpdate && ctx.role !== 'owner') return forbidden();
 
+  const hasDisplayNameUpdate = 'displayName' in body;
+
   const { data: target } = await supabaseAdmin
     .from('organization_members')
-    .select('id, role')
+    .select('id, role, user_id, capabilities, status')
     .eq('id', memberId)
     .eq('organization_id', org.id)
     .single();
@@ -144,6 +158,11 @@ export async function PATCH(req: Request, { params }: Params) {
     }
   }
 
+  if (hasDisplayNameUpdate) {
+    const raw = typeof body.displayName === 'string' ? body.displayName.trim().slice(0, 60) : '';
+    update.display_name = raw || null;
+  }
+
   if (Object.keys(update).length === 0) {
     return NextResponse.json({ ok: true });
   }
@@ -156,6 +175,28 @@ export async function PATCH(req: Request, { params }: Params) {
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  // Audit log — one row per logical change type
+  if (hasRoleUpdate && update.role !== target.role) {
+    void supabaseAdmin.from('org_audit_log').insert({
+      org_id: org.id, actor_id: ctx.user.id, target_id: target.user_id,
+      action: 'role_changed', payload: { before: target.role, after: update.role },
+    });
+  }
+  if (hasCapabilitiesUpdate) {
+    void supabaseAdmin.from('org_audit_log').insert({
+      org_id: org.id, actor_id: ctx.user.id, target_id: target.user_id,
+      action: 'capabilities_changed',
+      payload: { before: target.capabilities ?? null, after: update.capabilities ?? null },
+    });
+  }
+  if (hasStatusUpdate && update.status !== target.status) {
+    void supabaseAdmin.from('org_audit_log').insert({
+      org_id: org.id, actor_id: ctx.user.id, target_id: target.user_id,
+      action: update.status === 'suspended' ? 'member_suspended' : 'member_reinstated',
+      payload: {},
+    });
   }
 
   return NextResponse.json({ ok: true, ...(hasRoleUpdate ? { role: update.role } : {}) });

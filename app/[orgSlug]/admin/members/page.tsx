@@ -36,6 +36,7 @@ interface Member {
   id: string;
   userId: string;
   email: string;
+  displayName: string | null;
   role: OrgRole;
   status: 'invited' | 'active' | 'suspended';
   capabilities: Record<string, boolean> | null;
@@ -120,6 +121,7 @@ export default function MembersPage() {
   // Manage modal — replaces the separate assignment, cap-override, remove, and reinvite modals
   const [manageTarget, setManageTarget] = useState<Member | null>(null);
   const [manageDraftRole, setManageDraftRole] = useState<OrgRole>('staff');
+  const [manageDraftDisplayName, setManageDraftDisplayName] = useState('');
   const [manageDraftAssignments, setManageDraftAssignments] = useState<string[]>([]);
   const [manageSaving, setManageSaving] = useState(false);
   const [manageSuspending, setManageSuspending] = useState(false);
@@ -203,6 +205,7 @@ export default function MembersPage() {
   function openManage(member: Member) {
     setManageTarget(member);
     setManageDraftRole(member.role);
+    setManageDraftDisplayName(member.displayName ?? '');
     setManageDraftAssignments([...member.assignedTournamentIds]);
     setCapDraft(member.capabilities ? { ...member.capabilities } : {});
     setShowRemoveConfirm(false);
@@ -242,22 +245,27 @@ export default function MembersPage() {
     const errors: string[] = [];
 
     const roleChanged = manageDraftRole !== manageTarget.role;
+    const displayNameChanged = manageDraftDisplayName.trim() !== (manageTarget.displayName ?? '');
     const assignmentsChanged =
       JSON.stringify([...manageDraftAssignments].sort()) !==
       JSON.stringify([...manageTarget.assignedTournamentIds].sort());
 
-    if (roleChanged) {
+    if (roleChanged || displayNameChanged) {
+      const patchBody: Record<string, unknown> = {};
+      if (roleChanged) patchBody.role = manageDraftRole;
+      if (displayNameChanged) patchBody.displayName = manageDraftDisplayName.trim() || null;
       const res = await fetch(`/api/admin/members/${manageTarget.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ role: manageDraftRole }),
+        body: JSON.stringify(patchBody),
       });
       if (!res.ok) {
         const d = await res.json();
         errors.push(d.error ?? 'Role update failed');
       } else {
+        const newDisplayName = displayNameChanged ? (manageDraftDisplayName.trim() || null) : manageTarget.displayName;
         setMembers(prev => prev.map(m =>
-          m.id === manageTarget.id ? { ...m, role: manageDraftRole } : m
+          m.id === manageTarget.id ? { ...m, role: manageDraftRole, displayName: newDisplayName } : m
         ));
       }
     }
@@ -407,7 +415,14 @@ export default function MembersPage() {
               <tr key={m.id} className={m.status === 'suspended' ? styles.suspendedRow : undefined}>
                 <td className={styles.emailCell}>
                   <div className={styles.emailCellInner}>
-                    {m.email}
+                    <div>
+                      {m.displayName && (
+                        <div className={styles.displayName}>{m.displayName}</div>
+                      )}
+                      <div className={m.displayName ? styles.emailSecondary : undefined}>
+                        {m.email}
+                      </div>
+                    </div>
                     {isSelf && <span className={styles.youBadge}>you</span>}
                   </div>
                 </td>
@@ -632,6 +647,20 @@ export default function MembersPage() {
                   <option value="staff">Staff</option>
                   <option value="official">Official</option>
                 </select>
+                <div className={styles.field} style={{ marginTop: '0.75rem', marginBottom: 0 }}>
+                  <label className={styles.label}>
+                    Display Name
+                    <span className={styles.optional}>(optional)</span>
+                  </label>
+                  <input
+                    type="text"
+                    className={styles.input}
+                    value={manageDraftDisplayName}
+                    onChange={e => setManageDraftDisplayName(e.target.value)}
+                    maxLength={60}
+                    placeholder="Shown in place of email in the member list"
+                  />
+                </div>
               </div>
 
               {/* Tournament Access */}

@@ -108,6 +108,11 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: insertError.message }, { status: 500 });
     }
 
+    void supabaseAdmin.from('org_audit_log').insert({
+      org_id: org.id, actor_id: user.id, target_id: existingUser.id,
+      action: 'member_invited', payload: { email, role },
+    });
+
     // Notify the existing user that they now have access to this org.
     const roleLabel = role === 'official' ? 'field official (scorekeeper)' : `team ${role}`;
     await getResend().emails.send({
@@ -142,9 +147,10 @@ If you weren't expecting this, you can safely ignore this email.`,
   }
 
   // User doesn't exist — generate Supabase invite link.
-  // All roles land on the accept-invite page to set their password first;
-  // that page does the role-aware final redirect after acceptance.
-  const redirectTo = `${appUrl}/auth/accept-invite?org=${org.slug}`;
+  // Route through /auth/callback so the PKCE code is exchanged server-side
+  // before the accept-invite page renders. The callback then redirects to next.
+  const next = encodeURIComponent(`/auth/accept-invite?org=${org.slug}`);
+  const redirectTo = `${appUrl}/auth/callback?next=${next}`;
   const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
     type: 'invite',
     email,
@@ -167,6 +173,11 @@ If you weren't expecting this, you can safely ignore this email.`,
         status: 'invited',
         invited_at: new Date().toISOString(),
       });
+
+    void supabaseAdmin.from('org_audit_log').insert({
+      org_id: org.id, actor_id: user.id, target_id: newUserId,
+      action: 'member_invited', payload: { email, role },
+    });
   }
 
   // Send invite email via Resend

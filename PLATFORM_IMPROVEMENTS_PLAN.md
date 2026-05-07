@@ -111,13 +111,13 @@ Reference files: `app/api/admin/members/invite/route.ts`, `app/api/admin/members
 
 [! Business decision D-2 and D-3 must be resolved first]
 
-- [ ] **2C.1** Add `onboarding_completed_at` column to `organizations`  
+- [x] **2C.1** Add `onboarding_completed_at` column to `organizations`  
   New migration file: `supabase/migrations/011_org_onboarding.sql`
   ```sql
   ALTER TABLE organizations ADD COLUMN IF NOT EXISTS onboarding_completed_at timestamptz;
   ```
 
-- [ ] **2C.2** Create onboarding page  
+- [x] **2C.2** Create onboarding page  
   File: `app/[orgSlug]/admin/onboarding/page.tsx` (new)  
   Three-step checklist:
   1. "Choose your plan" — link to billing page; check complete if planId != 'starter' OR owner has explicitly clicked "Continue on free plan" (stored as a separate flag or treated as complete after viewing)
@@ -125,14 +125,14 @@ Reference files: `app/api/admin/members/invite/route.ts`, `app/api/admin/members
   3. "Create your first tournament" — check complete if org has >= 1 tournament
   Each item shows a CTA button and a green checkmark when complete. A "Skip setup" link at the bottom sets `onboarding_completed_at` without completing steps. Page is owner-only.
 
-- [ ] **2C.3** Redirect new signups to onboarding  
+- [x] **2C.3** Redirect new signups to onboarding  
   File: `app/auth/signup/page.tsx` and/or `app/api/auth/signup/route.ts`  
   After successful signup + auto-sign-in, redirect to `/${orgSlug}/admin/onboarding` instead of `/admin`.
 
-- [ ] **2C.4** Skip onboarding for returning owners  
+- [x] **2C.4** Skip onboarding for returning owners  
   In the onboarding page, if `org.onboarding_completed_at` is not null, redirect to `/admin` immediately.
 
-- [ ] **2C.5** Update `Organization` type and `org-context.tsx` to expose `onboardingCompletedAt`
+- [x] **2C.5** Update `Organization` type and `org-context.tsx` to expose `onboardingCompletedAt`
 
 ---
 
@@ -199,6 +199,15 @@ Reference files: `app/api/admin/members/invite/route.ts`, `app/api/admin/members
 - [x] **3.8** Update `redirectTo` in invite and reinvite routes  
   Files: `app/api/admin/members/invite/route.ts`, `app/api/admin/members/[memberId]/reinvite/route.ts`  
   Change all `redirectTo` values from `${appUrl}/${org.slug}/admin` and `${appUrl}/${org.slug}/official/score` to `${appUrl}/auth/accept-invite?org=${org.slug}` so every new invitee lands on the password-setup page regardless of role. Role-aware final routing is handled by the accept-invite page after password creation.
+
+- [x] **3.9** Fix invite link redirecting to home page instead of accept-invite page  
+  **Root cause (two issues):**  
+  1. `https://www.fieldlogichq.ca/auth/accept-invite` is not in Supabase Auth → URL Configuration → Redirect URLs allowlist. When an unlisted URL is used as `redirectTo`, Supabase silently falls back to the configured Site URL (the home page). Fix: add the path to the allowlist in the Supabase dashboard.  
+  2. No PKCE callback route exists (`app/auth/callback/route.ts`). With Next.js App Router + `@supabase/ssr`, the recommended practice is a server-side `/auth/callback` route that calls `supabase.auth.exchangeCodeForSession(code)` and then redirects to the final destination, rather than relying on the browser client to auto-exchange the code.  
+  **Fix:**  
+  - Add `https://www.fieldlogichq.ca/auth/accept-invite` (and a dev wildcard if a dev environment is configured) to Supabase dashboard → Auth → Redirect URLs.  
+  - Create `app/auth/callback/route.ts` — GET handler that reads `code` from searchParams, calls `supabase.auth.exchangeCodeForSession(code)`, and redirects to `next` query param (defaulting to `/auth/accept-invite`).  
+  - Update `redirectTo` in the invite and reinvite routes to route through the callback: `${appUrl}/auth/callback?next=/auth/accept-invite?org=${org.slug}` — this ensures the PKCE code is exchanged server-side before the client page renders.
 
 ---
 
@@ -284,7 +293,7 @@ Reference files: `app/api/admin/members/invite/route.ts`, `app/api/admin/members
 
 ### 5C — Audit Log
 
-- [ ] **5C.1** Migration: create `org_audit_log` table  
+- [x] **5C.1** Migration: create `org_audit_log` table  
   File: `supabase/migrations/012_audit_log.sql`
   ```sql
   CREATE TABLE IF NOT EXISTS org_audit_log (
@@ -299,10 +308,10 @@ Reference files: `app/api/admin/members/invite/route.ts`, `app/api/admin/members
   CREATE INDEX IF NOT EXISTS idx_audit_org ON org_audit_log(org_id, created_at DESC);
   ```
 
-- [ ] **5C.2** Append audit rows in invite route  
+- [x] **5C.2** Append audit rows in invite route  
   After successful insert in both path A and path B, insert to `org_audit_log`.
 
-- [ ] **5C.3** Append audit rows in `[memberId]/route.ts` DELETE and PATCH handlers
+- [x] **5C.3** Append audit rows in `[memberId]/route.ts` DELETE and PATCH handlers
 
 - [ ] **5C.4** (Optional, deferred) Admin audit log view  
   A read-only table at `/admin/members/audit` showing recent member changes for the org. Owner-only. Defer until the table has data worth displaying.
@@ -315,15 +324,15 @@ Reference files: `app/api/admin/members/invite/route.ts`, `app/api/admin/members
 
 ### 5E — Display Names
 
-- [ ] **5E.1** Migration: add `display_name` to `organization_members`  
+- [x] **5E.1** Migration: add `display_name` to `organization_members`  
   File: new migration
   ```sql
   ALTER TABLE organization_members ADD COLUMN IF NOT EXISTS display_name text;
   ```
 
-- [ ] **5E.2** Surface `display_name` in the members list — show as primary identifier when set, email as secondary. Allow owner/admin to edit inline.
+- [x] **5E.2** Surface `display_name` in the members list — show as primary identifier when set, email as secondary. Allow owner/admin to edit inline.
 
-- [ ] **5E.3** Capture display name during invite acceptance — Supabase invite flow can pre-populate `user_metadata.full_name` if passed via `generateLink` options, or collect it on the reset/accept page.
+- [x] **5E.3** Capture display name during invite acceptance — Supabase invite flow can pre-populate `user_metadata.full_name` if passed via `generateLink` options, or collect it on the reset/accept page.
 
 ### 5F — Upgrade Prompts at 80% Usage
 
@@ -335,7 +344,7 @@ Reference files: `app/api/admin/members/invite/route.ts`, `app/api/admin/members
 
 [! Business decision D-6 must be resolved first]
 
-- [ ] **5G.1** (Minimal path) Add "Request Account Deletion" to Org Settings  
+- [x] **5G.1** (Minimal path) Add "Request Account Deletion" to Org Settings  
   A form that sends an email to the platform support address. No automated deletion. Satisfies the user expectation that a path exists, even if manual.
 
 - [ ] **5G.2** (Full path, deferred) Automated org deletion  
@@ -366,14 +375,14 @@ Reference files: `app/api/admin/members/invite/route.ts`, `app/api/admin/members
 
 ## Business Decisions Required
 
-| ID | Decision | Blocking | Default if not resolved |
-|----|----------|----------|-------------------------|
-| D-1 | After password reset, redirect officials to generic `/admin` or detect role and redirect to `/{orgSlug}/official`? | Task 1.3 (partial) | Generic `/admin` — officials see access-denied for admin sections, acceptable friction |
-| D-2 | Is there a plan selection step during signup, or do all orgs always start on Starter? | Task 2C.2 (onboarding step 1 design) | Always start Starter, upgrade from billing |
-| D-3 | Track onboarding completion in DB (`onboarding_completed_at` column) or client-side (localStorage)? | Task 2C.1 | DB column — more durable, required for server-side skip |
-| D-4 | Should ownership transfer be self-serve (in-product) or support-only? | Task 5B.1 | Support-only (current behavior) |
-| D-5 | Do pending (not yet accepted) invites count toward the seat limit? | Task 5D.1 | Yes — current behavior; no change needed if this stays |
-| D-6 | Self-serve automated org deletion or manual support-process deletion? | Task 5G | Manual support-process (lower risk) |
+| ID | Decision | Status | Resolution |
+|----|----------|--------|------------|
+| D-1 | After password reset, redirect officials to generic `/admin` or role-aware `/{orgSlug}/official`? | ✅ Resolved | Role-aware redirect. Create `/api/auth/me` GET endpoint, update reset-password page to call it post-reset. |
+| D-2 | Plan selection step during signup, or always start on Starter? | ✅ Resolved | Always Starter. Onboarding Step 1 is informational ("You're on Starter — Upgrade →"), not a picker. |
+| D-3 | Track onboarding completion in DB or localStorage? | ✅ Resolved | DB column (`onboarding_completed_at` on `organizations`). Migration 011. |
+| D-4 | Ownership transfer: self-serve or support-only? | ✅ Resolved | Support-only. Current "contact support" note in Role Guide stands. 5B.1 deferred. |
+| D-5 | Do pending (not yet accepted) invites count toward seat limit? | ✅ Resolved | Yes — keep current behavior. 5D.1 is a no-op. |
+| D-6 | Self-serve automated org deletion or manual support-process? | ✅ Resolved | Manual. "Request Account Deletion" form in Org Settings sends email to `fieldlogichq@gmail.com`. |
 
 ---
 

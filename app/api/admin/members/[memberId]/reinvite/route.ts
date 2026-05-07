@@ -46,7 +46,8 @@ export async function POST(_req: Request, { params }: Params) {
   const role = member.role as string;
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://fieldlogichq.ca';
-  const redirectTo = `${appUrl}/auth/accept-invite?org=${org.slug}`;
+  const next = encodeURIComponent(`/auth/accept-invite?org=${org.slug}`);
+  const redirectTo = `${appUrl}/auth/callback?next=${next}`;
 
   const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
     type: 'invite',
@@ -65,7 +66,7 @@ export async function POST(_req: Request, { params }: Params) {
     .eq('id', memberId);
 
   const inviteUrl = (linkData as any).properties?.action_link ?? linkData.properties?.action_link;
-  const fromAddress = `noreply@${new URL(appUrl).hostname}`;
+  const fromAddress = process.env.RESEND_FROM ?? 'noreply@fieldlogichq.ca';
   const roleLabel = role === 'official' ? 'field official (scorekeeper)' : `team ${role}`;
   const officialNote = role === 'official'
     ? `<p>As a field official, you'll have access to the score entry app to submit game results from your assigned diamonds.</p>`

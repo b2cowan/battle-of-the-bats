@@ -22,6 +22,7 @@ export interface Organization {
   themeFont?: string;       // 'system' | 'inter' | 'barlow' | 'dm-serif'
   themeCardStyle?: string;  // 'default' | 'glass' | 'outlined' | 'flat'
   requireScoreFinalization?: boolean;
+  onboardingCompletedAt?: string | null;
 }
 
 export interface OrganizationMember {
