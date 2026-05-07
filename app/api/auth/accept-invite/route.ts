@@ -35,7 +35,7 @@ export async function POST(req: Request) {
     .from('organization_members')
     .select('id, role, organization_id, organizations(slug)')
     .eq('user_id', user.id)
-    .is('accepted_at', null)
+    .eq('status', 'invited')
     .maybeSingle();
 
   if (!member) {
