@@ -21,7 +21,7 @@ const PRIMARY_KEYS = [
 ];
 
 const TOURNAMENT_MORE = [
-  { key: '',              icon: LayoutDashboard, label: 'Dashboard'     },
+  { key: 'dashboard',     icon: LayoutDashboard, label: 'Dashboard'     },
   { key: 'tournaments',   icon: RefreshCw,       label: 'Tournaments'   },
   { key: 'announcements', icon: Megaphone,       label: 'Announcements' },
   { key: 'contacts',      icon: BookUser,        label: 'Contacts'      },
@@ -29,12 +29,12 @@ const TOURNAMENT_MORE = [
 ];
 
 const ORG_MORE = [
-  { key: 'diamonds', icon: MapPin, label: 'Diamonds' },
+  { key: 'org/diamonds', icon: MapPin, label: 'Diamonds' },
 ];
 
 const OWNER_ORG_MORE = [
-  { key: 'members',  icon: Users2,   label: 'Members'  },
-  { key: 'settings', icon: Settings, label: 'Settings' },
+  { key: 'org/members',  icon: Users2,   label: 'Members'  },
+  { key: 'org/settings', icon: Settings, label: 'Settings' },
 ];
 
 export default function AdminBottomNav() {

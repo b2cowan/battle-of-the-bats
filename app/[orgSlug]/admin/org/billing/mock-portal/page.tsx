@@ -44,7 +44,7 @@ export default function MockPortalPage() {
 
   function handleReturn() {
     if (!currentOrg) return;
-    router.push(`/${currentOrg.slug}/admin/billing`);
+    router.push(`/${currentOrg.slug}/admin/org/billing`);
   }
 
   if (!currentOrg) return null;

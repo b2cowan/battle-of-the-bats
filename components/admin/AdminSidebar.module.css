@@ -217,6 +217,20 @@
 
 .logoutBtn:hover { background: rgba(239, 68, 68, 0.08); color: #ef4444; }
 
+/* Back-to-hub link */
+.backLink {
+  border-bottom: 1px solid rgba(var(--blueprint-blue-rgb), 0.2);
+  color: rgba(148, 163, 184, 0.65) !important;
+  font-size: 0.625rem;
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
+}
+
+.backLink:hover {
+  color: var(--fl-text) !important;
+  border-left-color: rgba(var(--blueprint-blue-rgb), 0.3) !important;
+}
+
 /* Hide sidebar on mobile — AdminBottomNav takes over */
 @media (max-width: 900px) {
   .sidebar { display: none; }

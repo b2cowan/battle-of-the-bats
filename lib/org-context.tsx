@@ -10,6 +10,7 @@ interface OrgContextType {
   user: User | null;
   currentOrg: Organization | null;
   userRole: OrgRole | null;
+  userCapabilities: Record<string, boolean> | null;
   loading: boolean;
   refresh: () => Promise<void>;
 }
@@ -18,6 +19,7 @@ const OrgContext = createContext<OrgContextType>({
   user: null,
   currentOrg: null,
   userRole: null,
+  userCapabilities: null,
   loading: true,
   refresh: async () => {},
 });
@@ -26,6 +28,7 @@ export function OrgProvider({ children }: { children: ReactNode }) {
   const [user, setUser]           = useState<User | null>(null);
   const [currentOrg, setCurrentOrg] = useState<Organization | null>(null);
   const [userRole, setUserRole]   = useState<OrgRole | null>(null);
+  const [userCapabilities, setUserCapabilities] = useState<Record<string, boolean> | null>(null);
   const [loading, setLoading]     = useState(true);
 
   const load = useCallback(async (authUser: User | null) => {
@@ -33,6 +36,7 @@ export function OrgProvider({ children }: { children: ReactNode }) {
       setUser(null);
       setCurrentOrg(null);
       setUserRole(null);
+      setUserCapabilities(null);
       setLoading(false);
       return;
     }
@@ -42,7 +46,7 @@ export function OrgProvider({ children }: { children: ReactNode }) {
     const supabase = createClient();
     const { data: memberData } = await supabase
       .from('organization_members')
-      .select('role, organizations(*)')
+      .select('role, capabilities, organizations(*)')
       .eq('user_id', authUser.id)
       .single();
 
@@ -62,6 +66,7 @@ export function OrgProvider({ children }: { children: ReactNode }) {
         onboardingCompletedAt: orgRow.onboarding_completed_at ?? null,
       });
       setUserRole((memberData as any)?.role ?? null);
+      setUserCapabilities((memberData as any)?.capabilities ?? null);
     }
     setLoading(false);
   }, []);
@@ -89,7 +94,7 @@ export function OrgProvider({ children }: { children: ReactNode }) {
   }, [load]);
 
   return (
-    <OrgContext.Provider value={{ user, currentOrg, userRole, loading, refresh }}>
+    <OrgContext.Provider value={{ user, currentOrg, userRole, userCapabilities, loading, refresh }}>
       {children}
     </OrgContext.Provider>
   );

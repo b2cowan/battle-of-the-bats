@@ -8,6 +8,11 @@ This file tracks the ongoing tasks for the tournament website project. AI models
 - [x] **Platform Improvements — Phase 2** — Members page UX cleanup, member suspension state, officials overview page, seat meter on billing, 80% upgrade nudge (see [PLATFORM_IMPROVEMENTS_PLAN.md](PLATFORM_IMPROVEMENTS_PLAN.md))
 - [x] **Platform Improvements — Phase 3** — Audit log, display names, onboarding flow, role-aware reset redirect, invite callback fix, org offboarding form (see [PLATFORM_IMPROVEMENTS_PLAN.md](PLATFORM_IMPROVEMENTS_PLAN.md))
 - [ ] **Platform Improvements — Phase 4** — Module-level capabilities (implement when first new module is built), ownership transfer (support-only for now), automated org deletion (deferred) (see [PLATFORM_IMPROVEMENTS_PLAN.md](PLATFORM_IMPROVEMENTS_PLAN.md))
+- [x] **Module-Level Capabilities — Phase A (foundation)** — Establishes the access control infrastructure for all 7 platform modules: extends the `Capability` type, wires module caps into the member override UI (grouped by module vs. action), and exposes the user's capabilities to the client-side context so sidebar and page guards can work. No migrations, no breaking changes — ~65 minutes of work. (see [MODULE_CAPABILITIES_PLAN.md](MODULE_CAPABILITIES_PLAN.md))
+    - [x] **2A.1** — Extend `Capability` union (all 7 module caps) + update `ROLE_DEFAULTS` (default-on modules only) in `lib/roles.ts`
+    - [x] **2A.2** — Add module cap labels + grouped "Module Access / Action Capabilities" sections to cap override table; update page-level guard to use `hasCapability` in `app/[orgSlug]/admin/members/page.tsx`
+    - [x] **2A.4.a** — Expose `userCapabilities` in `lib/org-context.tsx` (fetch `capabilities` column, add to context type + provider value)
+- [ ] **Module-Level Capabilities — Phase B (per-module pattern)** — Not a discrete build task: this is the three-layer checklist (route handler gate, page access-denied guard, sidebar nav item) applied each time a new module is added. All three layers are required; the pattern and a testing guide are documented in `MODULE_CAPABILITIES_PLAN.md` Phase B. (see [MODULE_CAPABILITIES_PLAN.md](MODULE_CAPABILITIES_PLAN.md))
 
 - [x] **Add RESEND_API_KEY to Amplify environment variables** — resolved; key was present but not written to `.env.production` in `amplify.yml`.
 - [x] **Add NEXT_PUBLIC_APP_URL to Amplify environment variables** — confirmed present, set to `https://www.fieldlogichq.ca`.
@@ -57,10 +62,13 @@ This file tracks the ongoing tasks for the tournament website project. AI models
 
 ---
 
-## 🏆 Team & Season Management
-**Goal:** Allow organizations to manage their teams outside of tournament contexts — rosters, seasons, and ongoing records across the full year.
+## 🏆 Future Product Modules (add-ons)
+*Recommended build order: Public Site → Accounting → House League → Rep Teams. Each module requires its own detailed plan file before implementation begins; define functionality before pricing/tier decisions. Five cross-cutting architectural decisions (C1–C5: plan entitlements, role model expansion, communications architecture, file storage, public registration forms) must each be resolved at the trigger point documented in [MODULE_CAPABILITIES_PLAN.md](MODULE_CAPABILITIES_PLAN.md) before the module that first needs them is built.*
 
-- [ ] **Team Management MVP** — Design and implement a team management feature allowing orgs to create, edit, and archive teams independently of any tournament (see plan file TBD)
+- [ ] **Public Website Module (`module_public_site`)** — Org-branded public landing page editor: custom hero, tournament listings, registration CTAs, social links. Lowest complexity of the add-ons — no new roles, uses existing org data, editor lives in the admin shell. Requires plan file before implementation.
+- [ ] **Accounting Module (`module_accounting`)** — The org's own financial management: income/expense tracking, invoicing teams for fees (rep teams, house league), registration payment reconciliation. Distinct from the `billing` cap (Stripe subscription between org and FieldLogicHQ). Will serve as the financial backbone for house league and rep team modules. Requires plan file; scoping questions about standalone vs. integrated with other modules must be answered first.
+- [ ] **House League Module (`module_house_league`)** — Season-long recreational league management: individual player registration, waitlists, team placement/draft, league scheduling, standings, results. Different model from tournaments (ongoing seasons, individual registrants, not team-entry). May require new roles (league registrar); connects to accounting for registration fee collection. Requires plan file.
+- [ ] **Rep Team Module (`module_rep_teams`)** — Competitive team program management: coaches portal (separate UX from admin shell), team rosters, tryout management, player documents (waivers, medical), season scheduling, accounting integration for team invoicing. Most complex module — introduces a `coach` role, module-scoped team assignments, and triggers the Site User Admin evolution. Requires plan file; D-M3/D-M4 decisions must be resolved before planning begins.
 
 ---
 
@@ -72,6 +80,8 @@ This file tracks the ongoing tasks for the tournament website project. AI models
 
 ## 🎛️ Admin Design & Architecture
 *Detailed plan in [ADMIN_DESIGN_ARCHITECTURE_PLAN.md](ADMIN_DESIGN_ARCHITECTURE_PLAN.md)*
+
+- [x] **Admin Hub Navigation** — Restructure admin shell into a section-aware hub: org landing tile grid, `/admin/org/` prefix for org admin pages (members, billing, settings, diamonds, archives, tournament management), smart tournament entry redirect, section-aware sidebar with back-to-hub link. Foundation for all future module sections. (see [ADMIN_HUB_NAVIGATION_PLAN.md](ADMIN_HUB_NAVIGATION_PLAN.md))
 
 - [x] **Phase 1 — Sidebar restructure**: Split nav into labeled Tournament / Organization sections, Contacts in Tournament, Diamonds in Organization, fix hardcoded "Battle of the Bats" in sidebar logo
 - [x] **Phase 2 — Admin theme cleanup**: Replace `--primary` token leakage in admin content page CSS with HUD tokens (blueprint-blue / logic-lime); complete Option B separation from org palette

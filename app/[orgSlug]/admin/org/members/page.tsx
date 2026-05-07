@@ -1,11 +1,11 @@
 'use client';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Users2, UserPlus, ShieldCheck, BookOpen, ChevronDown, Settings2, Mail, Trash2 } from 'lucide-react';
+import { Users2, UserPlus, ShieldCheck, BookOpen, ChevronDown, Settings2, Mail, Trash2, ScrollText } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { PLAN_CONFIG } from '@/lib/plan-config';
 import FeedbackModal from '@/components/FeedbackModal';
-import { ROLE_DEFAULTS } from '@/lib/roles';
+import { ROLE_DEFAULTS, hasCapability } from '@/lib/roles';
 import type { OrgRole } from '@/lib/types';
 import type { Capability } from '@/lib/roles';
 import styles from './members.module.css';
@@ -79,6 +79,15 @@ const STATUS_BADGE: Record<'invited' | 'active' | 'suspended', string> = {
 };
 
 const CAPABILITY_LABELS: Record<Capability, string> = {
+  // --- Module access ---
+  module_tournaments:    'Tournament management access',
+  module_communications: 'Communications access',
+  module_members:        'Member management access',
+  module_public_site:    'Public website access',
+  module_accounting:     'Accounting access',
+  module_house_league:   'House league management access',
+  module_rep_teams:      'Rep team management access',
+  // --- Action capabilities ---
   create_tournaments:        'Create / delete tournaments',
   manage_registrations:      'Manage registrations',
   manage_schedule_structure: 'Manage schedule & brackets',
@@ -94,7 +103,16 @@ const CAPABILITY_LABELS: Record<Capability, string> = {
   billing:                   'Billing & subscription',
 };
 
-const CAPABILITY_KEYS = Object.keys(CAPABILITY_LABELS) as Capability[];
+const MODULE_CAP_KEYS: Capability[] = [
+  'module_tournaments', 'module_communications', 'module_members',
+  'module_public_site', 'module_accounting', 'module_house_league', 'module_rep_teams',
+];
+const ACTION_CAP_KEYS: Capability[] = [
+  'create_tournaments', 'manage_registrations', 'manage_schedule_structure',
+  'update_schedule', 'submit_scores', 'manage_contacts', 'post_announcements',
+  'post_rules', 'send_communications', 'seal_tournaments', 'manage_members',
+  'org_settings', 'billing',
+];
 
 function formatDate(iso: string | null): string {
   if (!iso) return '—';
@@ -106,7 +124,7 @@ function formatDate(iso: string | null): string {
 }
 
 export default function MembersPage() {
-  const { currentOrg, userRole, user, loading } = useOrg();
+  const { currentOrg, userRole, userCapabilities, user, loading } = useOrg();
 
   const [members, setMembers] = useState<Member[]>([]);
   const [tournaments, setTournaments] = useState<TournamentOption[]>([]);
@@ -369,7 +387,7 @@ export default function MembersPage() {
     return <div className={styles.page}><p className={styles.muted}>Loading…</p></div>;
   }
 
-  if (userRole !== 'owner' && userRole !== 'admin') {
+  if (!loading && !hasCapability(userRole ?? 'official', userCapabilities, 'module_members')) {
     return (
       <div className={styles.page}>
         <div className={styles.accessDenied}>
@@ -498,14 +516,26 @@ export default function MembersPage() {
             <p className={styles.pageSub}>Manage who has access to your organization</p>
           </div>
         </div>
-        <button
-          className="btn btn-primary btn-sm"
-          onClick={() => setInviteOpen(true)}
-          id="members-invite-btn"
-        >
-          <UserPlus size={15} />
-          Invite Member
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          {userRole === 'owner' && (
+            <Link
+              href={`/${currentOrg?.slug}/admin/org/members/audit`}
+              className="btn btn-outline btn-sm"
+              style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}
+            >
+              <ScrollText size={14} />
+              Audit Log
+            </Link>
+          )}
+          <button
+            className="btn btn-primary btn-sm"
+            onClick={() => setInviteOpen(true)}
+            id="members-invite-btn"
+          >
+            <UserPlus size={15} />
+            Invite Member
+          </button>
+        </div>
       </div>
 
       {/* Role reference panel */}
@@ -564,7 +594,7 @@ export default function MembersPage() {
           )}
         </span>
         {atLimit && (
-          <Link href={`/${currentOrg?.slug}/admin/billing`} className={styles.upgradeLink}>
+          <Link href={`/${currentOrg?.slug}/admin/org/billing`} className={styles.upgradeLink}>
             Upgrade to add more members →
           </Link>
         )}
@@ -574,7 +604,7 @@ export default function MembersPage() {
       {nearLimit && (
         <div className={styles.nudgeBanner}>
           You're using {seatCount} of {seatLimit} seats.{' '}
-          <Link href={`/${currentOrg?.slug}/admin/billing`} className={styles.nudgeLink}>
+          <Link href={`/${currentOrg?.slug}/admin/org/billing`} className={styles.nudgeLink}>
             Upgrade to add more →
           </Link>
         </div>
@@ -744,7 +774,53 @@ export default function MembersPage() {
                         </tr>
                       </thead>
                       <tbody>
-                        {CAPABILITY_KEYS.map(cap => {
+                        {/* Section: Module Access */}
+                        <tr>
+                          <td colSpan={3} style={{ padding: '0.35rem 0.75rem', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--white-20)', background: 'var(--bg-3, rgba(255,255,255,0.03))', borderTop: '1px solid var(--border)' }}>
+                            Module Access
+                          </td>
+                        </tr>
+                        {MODULE_CAP_KEYS.map(cap => {
+                          const roleDefault = ROLE_DEFAULTS[manageDraftRole as OrgRole]?.has(cap);
+                          const currentValue = getCapValue(cap);
+                          return (
+                            <tr key={cap}>
+                              <td>
+                                {CAPABILITY_LABELS[cap]}
+                                {cap === 'module_tournaments' && currentValue === 'revoke' && (
+                                  <div style={{ fontSize: '0.7rem', color: 'var(--warning)', marginTop: '0.2rem' }}>
+                                    Removes access to all tournament pages for this member.
+                                  </div>
+                                )}
+                              </td>
+                              <td style={{ textAlign: 'center' }}>
+                                {roleDefault
+                                  ? <span className={styles.matrixCheck}>✓</span>
+                                  : <span className={styles.matrixDash}>—</span>}
+                              </td>
+                              <td style={{ textAlign: 'right' }}>
+                                <select
+                                  className={styles.capSelect}
+                                  value={currentValue}
+                                  onChange={e => setCapValue(cap, e.target.value as 'grant' | 'revoke' | 'default')}
+                                  aria-label={`Override ${CAPABILITY_LABELS[cap]}`}
+                                >
+                                  <option value="default">Role default</option>
+                                  <option value="grant">Grant</option>
+                                  <option value="revoke">Revoke</option>
+                                </select>
+                              </td>
+                            </tr>
+                          );
+                        })}
+
+                        {/* Section: Action Capabilities */}
+                        <tr>
+                          <td colSpan={3} style={{ padding: '0.35rem 0.75rem', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--white-20)', background: 'var(--bg-3, rgba(255,255,255,0.03))', borderTop: '1px solid var(--border)' }}>
+                            Action Capabilities
+                          </td>
+                        </tr>
+                        {ACTION_CAP_KEYS.map(cap => {
                           const roleDefault = ROLE_DEFAULTS[manageDraftRole as OrgRole]?.has(cap);
                           const currentValue = getCapValue(cap);
                           return (

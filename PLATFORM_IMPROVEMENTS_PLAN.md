@@ -313,8 +313,8 @@ Reference files: `app/api/admin/members/invite/route.ts`, `app/api/admin/members
 
 - [x] **5C.3** Append audit rows in `[memberId]/route.ts` DELETE and PATCH handlers
 
-- [ ] **5C.4** (Optional, deferred) Admin audit log view  
-  A read-only table at `/admin/members/audit` showing recent member changes for the org. Owner-only. Defer until the table has data worth displaying.
+- [x] **5C.4** Admin audit log view  
+  A read-only table at `/[orgSlug]/admin/members/audit` showing recent member changes for the org. Owner-only. Paginated (25/page). Actor/target email resolution with deleted-user fallback.
 
 ### 5D — Pending Invites and Seat Limits
 
