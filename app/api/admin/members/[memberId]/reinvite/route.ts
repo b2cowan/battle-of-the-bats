@@ -23,7 +23,7 @@ export async function POST(_req: Request, { params }: Params) {
 
   const { data: member } = await supabaseAdmin
     .from('organization_members')
-    .select('id, role, user_id, accepted_at')
+    .select('id, role, user_id, status, accepted_at')
     .eq('id', memberId)
     .eq('organization_id', org.id)
     .single();
@@ -32,7 +32,7 @@ export async function POST(_req: Request, { params }: Params) {
     return NextResponse.json({ error: 'Member not found' }, { status: 404 });
   }
 
-  if (member.accepted_at) {
+  if (member.status !== 'invited') {
     return NextResponse.json({ error: 'This member has already accepted their invitation' }, { status: 400 });
   }
 
