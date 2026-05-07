@@ -3,7 +3,7 @@ import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 
-export async function POST(_req: Request) {
+export async function POST(req: Request) {
   const cookieStore = await cookies();
 
   const supabase = createServerClient(
@@ -21,6 +21,12 @@ export async function POST(_req: Request) {
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
+
+  const body = await req.json().catch(() => ({}));
+  const displayName: string | null =
+    typeof body.displayName === 'string' && body.displayName.trim()
+      ? body.displayName.trim().slice(0, 60)
+      : null;
 
   // Find the pending member row for this user.
   // Use supabaseAdmin to bypass RLS — the user's session may not yet have
@@ -46,9 +52,15 @@ export async function POST(_req: Request) {
     return NextResponse.json({ ok: true, orgSlug, role, alreadyAccepted: true });
   }
 
+  const memberUpdate: Record<string, unknown> = {
+    accepted_at: new Date().toISOString(),
+    status: 'active',
+  };
+  if (displayName) memberUpdate.display_name = displayName;
+
   const { error } = await supabaseAdmin
     .from('organization_members')
-    .update({ accepted_at: new Date().toISOString(), status: 'active' })
+    .update(memberUpdate)
     .eq('id', member.id);
 
   if (error) {

@@ -55,6 +55,12 @@ export default function OrgSettingsPage() {
   const [errorOpen, setErrorOpen]     = useState(false);
   const [errorMsg, setErrorMsg]       = useState('');
 
+  // Danger zone — deletion request
+  const [deletionConfirmOpen, setDeletionConfirmOpen] = useState(false);
+  const [deletionReason, setDeletionReason]           = useState('');
+  const [deletionSending, setDeletionSending]         = useState(false);
+  const [deletionSent, setDeletionSent]               = useState(false);
+
   // Navigation guard
   const [navGuardOpen, setNavGuardOpen]     = useState(false);
   const [pendingNavHref, setPendingNavHref] = useState<string | null>(null);
@@ -359,6 +365,29 @@ export default function OrgSettingsPage() {
     setStockLogoOpen(false);
     setStockLogoSelected(null);
     setStockLogoLockedCta(null);
+  }
+
+  async function handleRequestDeletion() {
+    setDeletionSending(true);
+    try {
+      const res = await fetch('/api/admin/org/request-deletion', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reason: deletionReason }),
+      });
+      if (!res.ok) {
+        const d = await res.json();
+        showError(d.error ?? 'Failed to send deletion request');
+      } else {
+        setDeletionSent(true);
+        setDeletionConfirmOpen(false);
+        setDeletionReason('');
+      }
+    } catch {
+      showError('Something went wrong. Please try again.');
+    } finally {
+      setDeletionSending(false);
+    }
   }
 
   if (loading) {
@@ -760,6 +789,67 @@ export default function OrgSettingsPage() {
         >
           {saving ? 'Saving…' : 'Save Changes'}
         </button>
+      </div>
+
+      {/* ── Danger Zone ──────────────────────────────────────────────────────── */}
+      <div className={styles.card} style={{ borderColor: 'rgba(239,68,68,0.2)', marginTop: '1.5rem' }}>
+        <h2 className={styles.sectionTitle} style={{ color: '#f87171' }}>Danger Zone</h2>
+
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '1.5rem', flexWrap: 'wrap' }}>
+          <div>
+            <p style={{ margin: '0 0 0.25rem', fontWeight: 600, fontSize: '0.9rem', color: 'var(--white-80, rgba(255,255,255,0.8))' }}>
+              Delete Organization
+            </p>
+            <p className={styles.hint} style={{ margin: 0 }}>
+              Permanently remove your organization and all associated data. This action cannot be undone.
+            </p>
+          </div>
+
+          {deletionSent ? (
+            <p style={{ fontSize: '0.85rem', color: '#4ade80', flexShrink: 0 }}>
+              ✓ Request sent — we'll be in touch.
+            </p>
+          ) : !deletionConfirmOpen ? (
+            <button
+              type="button"
+              className="btn btn-danger btn-sm"
+              style={{ flexShrink: 0 }}
+              onClick={() => setDeletionConfirmOpen(true)}
+            >
+              Request Account Deletion
+            </button>
+          ) : (
+            <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              <textarea
+                className={styles.input}
+                value={deletionReason}
+                onChange={e => setDeletionReason(e.target.value)}
+                placeholder="Reason for leaving (optional)"
+                rows={3}
+                maxLength={1000}
+                style={{ resize: 'vertical' }}
+              />
+              <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+                <button
+                  type="button"
+                  className="btn btn-outline btn-sm"
+                  onClick={() => { setDeletionConfirmOpen(false); setDeletionReason(''); }}
+                  disabled={deletionSending}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-danger btn-sm"
+                  onClick={handleRequestDeletion}
+                  disabled={deletionSending}
+                >
+                  {deletionSending ? 'Sending…' : 'Send Deletion Request'}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* ── Stock logo picker modal ─────────────────────────────────────────── */}

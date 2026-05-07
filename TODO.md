@@ -6,7 +6,8 @@ This file tracks the ongoing tasks for the tournament website project. AI models
 
 - [x] **Platform Improvements — Phase 1** — Forgot password, officials seat exclusion, invite branding fix, re-invite, existing-user notification email, invite acceptance flow (see [PLATFORM_IMPROVEMENTS_PLAN.md](PLATFORM_IMPROVEMENTS_PLAN.md))
 - [x] **Platform Improvements — Phase 2** — Members page UX cleanup, member suspension state, officials overview page, seat meter on billing, 80% upgrade nudge (see [PLATFORM_IMPROVEMENTS_PLAN.md](PLATFORM_IMPROVEMENTS_PLAN.md))
-- [ ] **Platform Improvements — Phase 3+** — Module-level capabilities, onboarding flow, audit log, display names, ownership transfer (see [PLATFORM_IMPROVEMENTS_PLAN.md](PLATFORM_IMPROVEMENTS_PLAN.md); several items gated on business decisions)
+- [x] **Platform Improvements — Phase 3** — Audit log, display names, onboarding flow, role-aware reset redirect, invite callback fix, org offboarding form (see [PLATFORM_IMPROVEMENTS_PLAN.md](PLATFORM_IMPROVEMENTS_PLAN.md))
+- [ ] **Platform Improvements — Phase 4** — Module-level capabilities (implement when first new module is built), ownership transfer (support-only for now), automated org deletion (deferred) (see [PLATFORM_IMPROVEMENTS_PLAN.md](PLATFORM_IMPROVEMENTS_PLAN.md))
 
 - [x] **Add RESEND_API_KEY to Amplify environment variables** — confirmed present in Amplify environment.
 - [x] **Add NEXT_PUBLIC_APP_URL to Amplify environment variables** — confirmed present, set to `https://www.fieldlogichq.ca`.
