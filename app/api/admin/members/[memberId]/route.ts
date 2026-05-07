@@ -1,12 +1,10 @@
 import { NextResponse } from 'next/server';
 import { getAuthContextWithRole, unauthorized, forbidden } from '@/lib/api-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { ROLE_DEFAULTS, hasCapability } from '@/lib/roles';
+import { ALL_CAPABILITY_KEYS, hasCapability } from '@/lib/roles';
 import type { OrgRole } from '@/lib/types';
 
-const VALID_CAPABILITIES = new Set<string>(
-  Object.values(ROLE_DEFAULTS).flatMap(s => [...s] as string[])
-);
+const VALID_CAPABILITIES = new Set<string>(ALL_CAPABILITY_KEYS);
 
 type Params = { params: Promise<{ memberId: string }> };
 
