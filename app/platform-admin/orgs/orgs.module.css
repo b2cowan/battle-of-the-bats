@@ -176,3 +176,158 @@
   color: #f87171;
   margin-top: 0.3rem;
 }
+
+/* Actions cell group */
+.actionGroup {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.noteIndicator {
+  display: inline-block;
+  margin-left: 0.4rem;
+  font-size: 0.45rem;
+  color: var(--logic-lime);
+  opacity: 0.6;
+  vertical-align: middle;
+}
+
+.viewLink {
+  font-family: var(--font-data);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--logic-lime);
+  text-decoration: none;
+  padding: 0.35rem 0.6rem;
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.35);
+  transition: background 0.15s, border-color 0.15s;
+  white-space: nowrap;
+}
+
+.viewLink:hover {
+  background: rgba(var(--logic-lime-rgb), 0.08);
+  border-color: var(--logic-lime);
+}
+
+.adminLink {
+  font-family: var(--font-data);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--data-gray);
+  text-decoration: none;
+  padding: 0.35rem 0.6rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: color 0.15s, border-color 0.15s;
+  white-space: nowrap;
+}
+
+.adminLink:hover {
+  color: var(--fl-text);
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+/* Add-ons sub-row */
+.addonsRow td {
+  padding: 0 0.75rem 0.75rem;
+  border-bottom: 1px solid rgba(var(--logic-lime-rgb), 0.08);
+}
+
+.addonsRow:hover td { background: transparent; }
+
+.addonsInner {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.addonsLabel {
+  font-family: var(--font-data);
+  font-size: 0.55rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--data-gray);
+  white-space: nowrap;
+  min-width: 4rem;
+}
+
+.addonChips {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.addonChip {
+  font-family: var(--font-data);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.2rem 0.6rem;
+  border: 1px solid;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  white-space: nowrap;
+}
+
+.addonChipOn {
+  color: var(--logic-lime);
+  border-color: rgba(var(--logic-lime-rgb), 0.5);
+  background: rgba(var(--logic-lime-rgb), 0.08);
+}
+
+.addonChipOn:hover {
+  background: rgba(var(--logic-lime-rgb), 0.04);
+  border-color: rgba(var(--logic-lime-rgb), 0.3);
+}
+
+.addonChipOff {
+  color: var(--data-gray);
+  border-color: rgba(255, 255, 255, 0.1);
+  background: transparent;
+}
+
+.addonChipOff:hover {
+  color: var(--fl-text);
+  border-color: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.addonSaveBtn {
+  font-family: var(--font-data);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.25rem 0.65rem;
+  background: rgba(var(--logic-lime-rgb), 0.08);
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.4);
+  color: var(--logic-lime);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.addonSaveBtn:hover:not(:disabled) {
+  background: rgba(var(--logic-lime-rgb), 0.16);
+  border-color: var(--logic-lime);
+}
+
+.addonSaveBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.addonsSavedStatic {
+  font-family: var(--font-data);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--logic-lime);
+  opacity: 0.7;
+}

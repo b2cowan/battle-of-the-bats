@@ -1,7 +1,7 @@
 import { supabase } from './supabase';
 import { supabaseAdmin } from './supabase-admin';
 import { createClient as createBrowserSupabaseClient } from './supabase-browser';
-import { Tournament, TournamentStatus, Diamond, Contact, AgeGroup, Pool, Team, Game, Announcement, PlayoffConfig, RuleSection, RuleItem, Resource, Organization, OrganizationMember, OrgPlan, OrgRole, TournamentArchive } from './types';
+import { Tournament, TournamentStatus, Diamond, Contact, AgeGroup, Pool, Team, Game, Announcement, PlayoffConfig, RuleSection, RuleItem, Resource, Organization, OrganizationMember, OrgPlan, OrgRole, TournamentArchive, OrgPublicSiteContent, AccountingLedger, AccountingEntry, LedgerSummary, AccountingEntryStatus, AccountingEntryType } from './types';
 
 // Use the SSR browser client (cookie-based session) for writes that need auth;
 // falls back to anon client on the server where there is no window.
@@ -933,6 +933,56 @@ export async function deleteRuleSection(id: string): Promise<void> {
   await authClient().from('rules').delete().eq('id', id);
 }
 
+// ── Public Site Module ────────────────────────────────────────────────────────
+
+export async function getOrgPublicSiteContent(orgId: string): Promise<OrgPublicSiteContent | null> {
+  const { data } = await supabase
+    .from('org_public_site_content')
+    .select('*')
+    .eq('org_id', orgId)
+    .maybeSingle();
+  if (!data) return null;
+  return {
+    id:                       data.id,
+    orgId:                    data.org_id,
+    tagline:                  data.tagline             ?? null,
+    description:              data.description         ?? null,
+    contactEmail:             data.contact_email       ?? null,
+    socialInstagram:          data.social_instagram    ?? null,
+    socialFacebook:           data.social_facebook     ?? null,
+    socialX:                  data.social_x            ?? null,
+    socialWebsite:            data.social_website      ?? null,
+    showUpcomingTournaments:  data.show_upcoming_tournaments,
+    showArchivesLink:         data.show_archives_link,
+    createdAt:                data.created_at,
+    updatedAt:                data.updated_at,
+  };
+}
+
+export async function upsertOrgPublicSiteContent(
+  orgId: string,
+  content: Partial<Omit<OrgPublicSiteContent, 'id' | 'orgId' | 'createdAt' | 'updatedAt'>>,
+): Promise<void> {
+  await supabaseAdmin
+    .from('org_public_site_content')
+    .upsert(
+      {
+        org_id:                   orgId,
+        tagline:                  content.tagline             ?? null,
+        description:              content.description         ?? null,
+        contact_email:            content.contactEmail        ?? null,
+        social_instagram:         content.socialInstagram     ?? null,
+        social_facebook:          content.socialFacebook      ?? null,
+        social_x:                 content.socialX             ?? null,
+        social_website:           content.socialWebsite       ?? null,
+        show_upcoming_tournaments: content.showUpcomingTournaments ?? true,
+        show_archives_link:        content.showArchivesLink   ?? true,
+        updated_at:               new Date().toISOString(),
+      },
+      { onConflict: 'org_id' },
+    );
+}
+
 export async function saveRuleItem(item: Omit<RuleItem, 'id'>): Promise<void> {
   await authClient().from('rule_items').insert({
     rule_id: item.ruleId,
@@ -1262,6 +1312,7 @@ function mapOrg(r: any): Organization {
     heroBannerUrl:        r.hero_banner_url ?? undefined,
     themeFont:            r.theme_font ?? 'system',
     themeCardStyle:       r.theme_card_style ?? 'default',
+    enabledAddons:        r.enabled_addons ?? [],
   };
 }
 
@@ -1338,4 +1389,198 @@ export async function getArchiveById(id: string): Promise<TournamentArchive | nu
     return null;
   }
   return mapArchive(data);
+}
+
+// ── Accounting Module ─────────────────────────────────────────────────────────
+
+export async function getOrgLedger(orgId: string): Promise<AccountingLedger | null> {
+  const { data } = await supabaseAdmin
+    .from('accounting_ledgers')
+    .select('*')
+    .eq('org_id', orgId)
+    .eq('entity_type', 'org')
+    .is('entity_id', null)
+    .maybeSingle();
+  return data ? mapLedger(data) : null;
+}
+
+export async function getOrCreateOrgLedger(orgId: string, orgName: string): Promise<AccountingLedger> {
+  const existing = await getOrgLedger(orgId);
+  if (existing) return existing;
+  const { data } = await supabaseAdmin
+    .from('accounting_ledgers')
+    .insert({ org_id: orgId, entity_type: 'org', entity_id: null, name: `${orgName} — General` })
+    .select()
+    .single();
+  return mapLedger(data!);
+}
+
+export async function getOrgAllLedgers(orgId: string): Promise<AccountingLedger[]> {
+  const { data } = await supabaseAdmin
+    .from('accounting_ledgers')
+    .select('*')
+    .eq('org_id', orgId)
+    .eq('is_archived', false)
+    .order('created_at', { ascending: true });
+  return (data ?? []).map(mapLedger);
+}
+
+export async function getLedgerById(ledgerId: string, orgId: string): Promise<AccountingLedger | null> {
+  const { data } = await supabaseAdmin
+    .from('accounting_ledgers')
+    .select('*')
+    .eq('id', ledgerId)
+    .eq('org_id', orgId)
+    .maybeSingle();
+  return data ? mapLedger(data) : null;
+}
+
+export async function getOrCreateTournamentLedger(
+  orgId: string,
+  tournamentId: string,
+  tournamentName: string
+): Promise<AccountingLedger> {
+  const { data: existing } = await supabaseAdmin
+    .from('accounting_ledgers')
+    .select('*')
+    .eq('org_id', orgId)
+    .eq('entity_type', 'tournament')
+    .eq('entity_id', tournamentId)
+    .maybeSingle();
+  if (existing) return mapLedger(existing);
+  const { data } = await supabaseAdmin
+    .from('accounting_ledgers')
+    .insert({ org_id: orgId, entity_type: 'tournament', entity_id: tournamentId, name: tournamentName })
+    .select()
+    .single();
+  return mapLedger(data!);
+}
+
+export async function getLedgerEntries(
+  ledgerId: string,
+  opts: { status?: AccountingEntryStatus; limit?: number; offset?: number } = {}
+): Promise<AccountingEntry[]> {
+  let q = supabaseAdmin
+    .from('accounting_entries')
+    .select('*')
+    .eq('ledger_id', ledgerId)
+    .order('entry_date', { ascending: false })
+    .order('created_at', { ascending: false });
+  if (opts.status) q = q.eq('status', opts.status);
+  if (opts.limit)  q = q.limit(opts.limit);
+  if (opts.offset) q = q.range(opts.offset, opts.offset + (opts.limit ?? 50) - 1);
+  const { data } = await q;
+  return (data ?? []).map(mapEntry);
+}
+
+export async function createEntry(
+  ledgerId: string,
+  input: Pick<AccountingEntry, 'entryDate' | 'description' | 'amount' | 'entryType' | 'status' | 'category'>,
+  createdBy: string
+): Promise<AccountingEntry> {
+  const { data } = await supabaseAdmin
+    .from('accounting_entries')
+    .insert({
+      ledger_id:   ledgerId,
+      entry_date:  input.entryDate,
+      description: input.description,
+      amount:      input.amount,
+      entry_type:  input.entryType,
+      status:      input.status,
+      category:    input.category ?? null,
+      created_by:  createdBy,
+    })
+    .select()
+    .single();
+  return mapEntry(data!);
+}
+
+export async function updateEntry(
+  entryId: string,
+  ledgerId: string,
+  input: Partial<Pick<AccountingEntry, 'entryDate' | 'description' | 'amount' | 'entryType' | 'status' | 'category'>>
+): Promise<void> {
+  await supabaseAdmin
+    .from('accounting_entries')
+    .update({
+      ...(input.entryDate   !== undefined && { entry_date:  input.entryDate }),
+      ...(input.description !== undefined && { description: input.description }),
+      ...(input.amount      !== undefined && { amount:      input.amount }),
+      ...(input.entryType   !== undefined && { entry_type:  input.entryType }),
+      ...(input.status      !== undefined && { status:      input.status }),
+      ...(input.category    !== undefined && { category:    input.category }),
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', entryId)
+    .eq('ledger_id', ledgerId);
+}
+
+export async function voidEntry(entryId: string, ledgerId: string): Promise<void> {
+  await supabaseAdmin
+    .from('accounting_entries')
+    .update({ status: 'void', updated_at: new Date().toISOString() })
+    .eq('id', entryId)
+    .eq('ledger_id', ledgerId);
+}
+
+export async function getLedgerSummary(
+  ledger: AccountingLedger,
+  opts: { from?: string; to?: string } = {}
+): Promise<LedgerSummary> {
+  let q = supabaseAdmin
+    .from('accounting_entries')
+    .select('entry_type, status, amount')
+    .eq('ledger_id', ledger.id)
+    .neq('status', 'void');
+  if (opts.from) q = q.gte('entry_date', opts.from);
+  if (opts.to)   q = q.lte('entry_date', opts.to);
+  const { data } = await q;
+  const rows: { entry_type: string; status: string; amount: number }[] = (data ?? []) as any;
+  const sum = (type: AccountingEntryType, status: AccountingEntryStatus) =>
+    rows.filter(r => r.entry_type === type && r.status === status)
+        .reduce((acc: number, r) => acc + Number(r.amount), 0);
+  const postedIncome   = sum('income',  'posted') + sum('transfer_in',  'posted');
+  const postedExpenses = sum('expense', 'posted') + sum('transfer_out', 'posted');
+  return {
+    ledger,
+    postedIncome,
+    postedExpenses,
+    pendingIncome:   sum('income',  'pending'),
+    pendingExpenses: sum('expense', 'pending'),
+    netPosted:       postedIncome - postedExpenses,
+    incomeOnly:      sum('income',  'posted'),
+    expensesOnly:    sum('expense', 'posted'),
+  };
+}
+
+function mapLedger(row: any): AccountingLedger {
+  return {
+    id:         row.id,
+    orgId:      row.org_id,
+    entityType: row.entity_type,
+    entityId:   row.entity_id ?? null,
+    name:       row.name,
+    currency:   row.currency,
+    isArchived: row.is_archived,
+    createdAt:  row.created_at,
+  };
+}
+
+function mapEntry(row: any): AccountingEntry {
+  return {
+    id:             row.id,
+    ledgerId:       row.ledger_id,
+    entryDate:      row.entry_date,
+    description:    row.description,
+    amount:         Number(row.amount),
+    entryType:      row.entry_type,
+    status:         row.status,
+    category:       row.category ?? null,
+    linkedEntryId:  row.linked_entry_id ?? null,
+    sourceModule:   row.source_module ?? null,
+    sourceEntityId: row.source_entity_id ?? null,
+    createdBy:      row.created_by,
+    createdAt:      row.created_at,
+    updatedAt:      row.updated_at,
+  };
 }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getPlatformAuthContext } from '@/lib/platform-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { writePlatformAuditLog } from '@/lib/platform-audit';
 
 export async function POST(
   req: NextRequest,
@@ -31,6 +32,8 @@ export async function POST(
     console.error('[platform-admin] generateLink error:', error);
     return NextResponse.json({ error: 'Failed to generate reset link' }, { status: 500 });
   }
+
+  await writePlatformAuditLog(user.email!, null, 'generate_reset_link', 'email', null, email);
 
   return NextResponse.json({ link: data.properties.action_link });
 }

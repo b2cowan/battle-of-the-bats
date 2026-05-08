@@ -2,6 +2,8 @@ import { notFound } from 'next/navigation';
 import { getOrganizationBySlug, getTournamentBySlug } from '@/lib/db';
 import TournamentNavSync from '@/components/TournamentNavSync';
 
+export const dynamic = 'force-dynamic';
+
 export default async function TournamentLayout({
   params,
   children,

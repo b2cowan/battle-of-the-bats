@@ -2,7 +2,7 @@
 import { useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Trophy, Building2 } from 'lucide-react';
+import { Trophy, Building2, Globe, DollarSign } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { hasCapability } from '@/lib/roles';
 
@@ -17,6 +17,14 @@ export default function AdminHub() {
 
   const canSeeOrgAdmin = !loading && userRole
     ? userRole === 'owner' || hasCapability(userRole, userCapabilities, 'module_members')
+    : false;
+
+  const canSeePublicSite = !loading && userRole
+    ? hasCapability(userRole, userCapabilities, 'module_public_site')
+    : false;
+
+  const canSeeAccounting = !loading && userRole
+    ? hasCapability(userRole, userCapabilities, 'module_accounting')
     : false;
 
   // Auto-forward single-module users who only have tournament access
@@ -47,6 +55,18 @@ export default function AdminHub() {
       desc: 'Members, billing, settings, diamonds, and tournament records',
       icon: Building2,
       href: `${base}/org/members`,
+    },
+    canSeePublicSite && {
+      label: 'Public Site',
+      desc: 'Edit your org-branded public page: tagline, description, and social links',
+      icon: Globe,
+      href: `${base}/public-site`,
+    },
+    canSeeAccounting && {
+      label: 'Accounting',
+      desc: 'Track income, expenses, and financial activity across the org and each tournament',
+      icon: DollarSign,
+      href: `${base}/accounting`,
     },
   ].filter(Boolean) as { label: string; desc: string; icon: React.ElementType; href: string }[];
 

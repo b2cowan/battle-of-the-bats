@@ -1,3 +1,5 @@
+> **DEPRECATED** — Superseded by [PLATFORM_ROADMAP.md](../../PLATFORM_ROADMAP.md). All tasks complete. This file is retained for historical context only.
+
 # Admin Hub Navigation Plan
 
 Restructures the admin shell from a flat mixed sidebar into a section-aware hub architecture: an org landing page that routes users to their relevant area, with each section (Org Admin, Tournament Operations, and future modules) getting its own URL prefix and sidebar nav.

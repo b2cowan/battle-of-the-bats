@@ -23,6 +23,7 @@ export interface Organization {
   themeCardStyle?: string;  // 'default' | 'glass' | 'outlined' | 'flat'
   requireScoreFinalization?: boolean;
   onboardingCompletedAt?: string | null;
+  enabledAddons: string[];
 }
 
 export interface OrganizationMember {
@@ -201,6 +202,67 @@ export interface Resource {
   label: string;
   url: string;
   order: number;
+}
+
+export interface OrgPublicSiteContent {
+  id: string;
+  orgId: string;
+  tagline: string | null;
+  description: string | null;
+  contactEmail: string | null;
+  socialInstagram: string | null;
+  socialFacebook: string | null;
+  socialX: string | null;
+  socialWebsite: string | null;
+  showUpcomingTournaments: boolean;
+  showArchivesLink: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// ── Accounting Module ─────────────────────────────────────────────────────────
+
+export type AccountingEntityType = 'org' | 'tournament' | 'team' | 'league_season';
+export type AccountingEntryType  = 'income' | 'expense' | 'transfer_in' | 'transfer_out';
+export type AccountingEntryStatus = 'pending' | 'posted' | 'void';
+
+export interface AccountingLedger {
+  id: string;
+  orgId: string;
+  entityType: AccountingEntityType;
+  entityId: string | null;
+  name: string;
+  currency: string;
+  isArchived: boolean;
+  createdAt: string;
+}
+
+export interface AccountingEntry {
+  id: string;
+  ledgerId: string;
+  entryDate: string;          // ISO date string YYYY-MM-DD
+  description: string;
+  amount: number;             // always positive; entry_type gives direction
+  entryType: AccountingEntryType;
+  status: AccountingEntryStatus;
+  category: string | null;
+  linkedEntryId: string | null;
+  sourceModule: string | null;
+  sourceEntityId: string | null;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface LedgerSummary {
+  ledger: AccountingLedger;
+  postedIncome: number;
+  postedExpenses: number;
+  pendingIncome: number;
+  pendingExpenses: number;
+  netPosted: number;
+  incomeOnly: number;    // income entries only — for org-level totals that exclude inter-ledger transfers
+  expensesOnly: number;  // expense entries only — counterpart to incomeOnly
 }
 
 export interface TournamentArchive {
