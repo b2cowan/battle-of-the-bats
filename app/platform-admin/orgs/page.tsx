@@ -5,7 +5,7 @@ import OrgsClient from './OrgsClient';
 async function getOrgs() {
   const { data, error } = await supabaseAdmin
     .from('organizations')
-    .select('id, name, slug, plan_id, tournament_limit, subscription_status, created_at')
+    .select('id, name, slug, plan_id, tournament_limit, subscription_status, created_at, enabled_addons, internal_notes')
     .order('created_at', { ascending: false });
 
   if (error || !data) return [];
@@ -18,6 +18,8 @@ async function getOrgs() {
     tournamentLimit:    r.tournament_limit as number,
     subscriptionStatus: r.subscription_status as string,
     createdAt:          r.created_at as string,
+    enabledAddons:      (r.enabled_addons as string[]) ?? [],
+    internalNotes:      (r.internal_notes as string | null) ?? null,
   }));
 }
 

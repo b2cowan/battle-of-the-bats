@@ -1,5 +1,6 @@
 'use client';
-import { useState } from 'react';
+import { Fragment, useState } from 'react';
+import Link from 'next/link';
 import styles from './orgs.module.css';
 
 interface OrgRow {
@@ -10,6 +11,8 @@ interface OrgRow {
   tournamentLimit: number;
   subscriptionStatus: string;
   createdAt: string;
+  enabledAddons: string[];
+  internalNotes: string | null;
 }
 
 interface EditState {
@@ -24,6 +27,13 @@ interface Props {
 
 const PLANS = ['starter', 'pro', 'elite'] as const;
 
+const ADDON_CAPS = [
+  { cap: 'module_public_site',  label: 'Public Site'  },
+  { cap: 'module_accounting',   label: 'Accounting'   },
+  { cap: 'module_house_league', label: 'House League' },
+  { cap: 'module_rep_teams',    label: 'Rep Teams'    },
+] as const;
+
 function fmtDate(iso: string) {
   return new Date(iso).toLocaleDateString('en-CA', {
     year: 'numeric', month: 'short', day: 'numeric',
@@ -37,7 +47,13 @@ function statusClass(status: string) {
   return styles.badgeMuted;
 }
 
+function addonsDirty(committed: string[], current: string[]) {
+  if (committed.length !== current.length) return true;
+  return [...committed].sort().join() !== [...current].sort().join();
+}
+
 export default function OrgsClient({ orgs, planDefaults }: Props) {
+  // Plan / limit state
   const [edits, setEdits] = useState<Record<string, EditState>>(
     Object.fromEntries(
       orgs.map(o => [o.id, { planId: o.planId, tournamentLimit: o.tournamentLimit }])
@@ -46,6 +62,17 @@ export default function OrgsClient({ orgs, planDefaults }: Props) {
   const [saving, setSaving] = useState<Record<string, boolean>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [saved,  setSaved]  = useState<Record<string, boolean>>({});
+
+  // Add-ons state — committed tracks last saved value so isDirty computes correctly
+  const [addonEdits,     setAddonEdits]     = useState<Record<string, string[]>>(
+    Object.fromEntries(orgs.map(o => [o.id, [...o.enabledAddons]]))
+  );
+  const [addonCommitted, setAddonCommitted] = useState<Record<string, string[]>>(
+    Object.fromEntries(orgs.map(o => [o.id, [...o.enabledAddons]]))
+  );
+  const [addonSaving, setAddonSaving] = useState<Record<string, boolean>>({});
+  const [addonErrors, setAddonErrors] = useState<Record<string, string>>({});
+  const [addonSaved,  setAddonSaved]  = useState<Record<string, boolean>>({});
 
   function handlePlanChange(id: string, planId: string) {
     setEdits(e => ({ ...e, [id]: { planId, tournamentLimit: planDefaults[planId] ?? 1 } }));
@@ -63,7 +90,6 @@ export default function OrgsClient({ orgs, planDefaults }: Props) {
     setSaving(s => ({ ...s, [id]: true }));
     setErrors(e => ({ ...e, [id]: '' }));
     setSaved(s => ({ ...s, [id]: false }));
-
     const { planId, tournamentLimit } = edits[id];
     try {
       const res = await fetch(`/api/platform-admin/orgs/${id}/plan`, {
@@ -81,6 +107,42 @@ export default function OrgsClient({ orgs, planDefaults }: Props) {
       setErrors(e => ({ ...e, [id]: 'Network error' }));
     } finally {
       setSaving(s => ({ ...s, [id]: false }));
+    }
+  }
+
+  function handleAddonToggle(id: string, cap: string) {
+    setAddonEdits(prev => {
+      const current = prev[id] ?? [];
+      const next = current.includes(cap)
+        ? current.filter(c => c !== cap)
+        : [...current, cap];
+      return { ...prev, [id]: next };
+    });
+    setAddonSaved(s => ({ ...s, [id]: false }));
+  }
+
+  async function handleAddonSave(id: string) {
+    setAddonSaving(s => ({ ...s, [id]: true }));
+    setAddonErrors(e => ({ ...e, [id]: '' }));
+    setAddonSaved(s => ({ ...s, [id]: false }));
+    const enabledAddons = addonEdits[id] ?? [];
+    try {
+      const res = await fetch(`/api/platform-admin/orgs/${id}/addons`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ enabledAddons }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setAddonErrors(e => ({ ...e, [id]: (data as any).error ?? 'Save failed' }));
+      } else {
+        setAddonCommitted(prev => ({ ...prev, [id]: [...enabledAddons] }));
+        setAddonSaved(s => ({ ...s, [id]: true }));
+      }
+    } catch {
+      setAddonErrors(e => ({ ...e, [id]: 'Network error' }));
+    } finally {
+      setAddonSaving(s => ({ ...s, [id]: false }));
     }
   }
 
@@ -107,49 +169,113 @@ export default function OrgsClient({ orgs, planDefaults }: Props) {
           </thead>
           <tbody>
             {orgs.map(org => {
-              const edit = edits[org.id] ?? { planId: org.planId, tournamentLimit: org.tournamentLimit };
+              const edit         = edits[org.id] ?? { planId: org.planId, tournamentLimit: org.tournamentLimit };
+              const currentAddons   = addonEdits[org.id]     ?? org.enabledAddons;
+              const committedAddons = addonCommitted[org.id]  ?? org.enabledAddons;
+              const isDirty         = addonsDirty(committedAddons, currentAddons);
+
               return (
-                <tr key={org.id}>
-                  <td><span className={styles.orgName}>{org.name}</span></td>
-                  <td><span className={styles.slug}>{org.slug}</span></td>
-                  <td>
-                    <select
-                      className={styles.planSelect}
-                      value={edit.planId}
-                      onChange={e => handlePlanChange(org.id, e.target.value)}
-                    >
-                      {PLANS.map(p => <option key={p} value={p}>{p}</option>)}
-                    </select>
-                  </td>
-                  <td>
-                    <input
-                      type="number"
-                      className={styles.limitInput}
-                      value={edit.tournamentLimit}
-                      min={0}
-                      max={9999}
-                      onChange={e => handleLimitChange(org.id, e.target.value)}
-                    />
-                  </td>
-                  <td>
-                    <span className={`${styles.badge} ${statusClass(org.subscriptionStatus)}`}>
-                      {org.subscriptionStatus}
-                    </span>
-                  </td>
-                  <td className={styles.dateCell}>{fmtDate(org.createdAt)}</td>
-                  <td className={styles.actionsCell}>
-                    <button
-                      className={styles.saveBtn}
-                      onClick={() => handleSave(org.id)}
-                      disabled={saving[org.id]}
-                    >
-                      {saving[org.id] ? 'Saving…' : saved[org.id] ? 'Saved ✓' : 'Save'}
-                    </button>
-                    {errors[org.id] && (
-                      <div className={styles.rowError}>{errors[org.id]}</div>
-                    )}
-                  </td>
-                </tr>
+                <Fragment key={org.id}>
+                  <tr>
+                    <td>
+                      <span className={styles.orgName}>{org.name}</span>
+                      {org.internalNotes && (
+                        <span className={styles.noteIndicator} title="Has internal note">●</span>
+                      )}
+                    </td>
+                    <td><span className={styles.slug}>{org.slug}</span></td>
+                    <td>
+                      <select
+                        className={styles.planSelect}
+                        value={edit.planId}
+                        onChange={e => handlePlanChange(org.id, e.target.value)}
+                      >
+                        {PLANS.map(p => <option key={p} value={p}>{p}</option>)}
+                      </select>
+                    </td>
+                    <td>
+                      <input
+                        type="number"
+                        className={styles.limitInput}
+                        value={edit.tournamentLimit}
+                        min={0}
+                        max={9999}
+                        onChange={e => handleLimitChange(org.id, e.target.value)}
+                      />
+                    </td>
+                    <td>
+                      <span className={`${styles.badge} ${statusClass(org.subscriptionStatus)}`}>
+                        {org.subscriptionStatus}
+                      </span>
+                    </td>
+                    <td className={styles.dateCell}>{fmtDate(org.createdAt)}</td>
+                    <td className={styles.actionsCell}>
+                      <div className={styles.actionGroup}>
+                        <button
+                          className={styles.saveBtn}
+                          onClick={() => handleSave(org.id)}
+                          disabled={saving[org.id]}
+                        >
+                          {saving[org.id] ? 'Saving…' : saved[org.id] ? 'Saved ✓' : 'Save'}
+                        </button>
+                        <Link
+                          href={`/platform-admin/orgs/${org.id}`}
+                          className={styles.viewLink}
+                        >
+                          View →
+                        </Link>
+                        <Link
+                          href={`/${org.slug}/admin`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className={styles.adminLink}
+                        >
+                          ↗ Admin
+                        </Link>
+                      </div>
+                      {errors[org.id] && (
+                        <div className={styles.rowError}>{errors[org.id]}</div>
+                      )}
+                    </td>
+                  </tr>
+
+                  <tr className={styles.addonsRow}>
+                    <td colSpan={7}>
+                      <div className={styles.addonsInner}>
+                        <span className={styles.addonsLabel}>Add-ons</span>
+                        <div className={styles.addonChips}>
+                          {ADDON_CAPS.map(({ cap, label }) => {
+                            const on = currentAddons.includes(cap);
+                            return (
+                              <button
+                                key={cap}
+                                className={`${styles.addonChip} ${on ? styles.addonChipOn : styles.addonChipOff}`}
+                                onClick={() => handleAddonToggle(org.id, cap)}
+                              >
+                                {on ? '✓ ' : ''}{label}
+                              </button>
+                            );
+                          })}
+                        </div>
+                        {isDirty && (
+                          <button
+                            className={styles.addonSaveBtn}
+                            onClick={() => handleAddonSave(org.id)}
+                            disabled={addonSaving[org.id]}
+                          >
+                            {addonSaving[org.id] ? 'Saving…' : 'Save Add-ons'}
+                          </button>
+                        )}
+                        {!isDirty && addonSaved[org.id] && (
+                          <span className={styles.addonsSavedStatic}>Saved ✓</span>
+                        )}
+                        {addonErrors[org.id] && (
+                          <span className={styles.rowError}>{addonErrors[org.id]}</span>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                </Fragment>
               );
             })}
           </tbody>

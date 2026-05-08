@@ -1,0 +1,467 @@
+.page { max-width: 1000px; }
+
+/* ── Back + header ─────────────────────────────────────────────── */
+.backRow { margin-bottom: 1.25rem; }
+
+.backLink {
+  font-family: var(--font-data);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--data-gray);
+  text-decoration: none;
+  transition: color 0.15s;
+}
+
+.backLink:hover { color: var(--logic-lime); }
+
+.header {
+  border-bottom: 1px solid rgba(var(--logic-lime-rgb), 0.3);
+  padding-bottom: 1rem;
+  margin-bottom: 1.75rem;
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+}
+
+.headerLabel {
+  font-family: var(--font-data);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--logic-lime);
+}
+
+.title {
+  font-weight: 800;
+  font-size: 1.5rem;
+  text-transform: uppercase;
+  letter-spacing: -0.02em;
+  color: var(--fl-text);
+}
+
+/* ── Section card ──────────────────────────────────────────────── */
+.section {
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.12);
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 1.25rem;
+  background: rgba(var(--logic-lime-rgb), 0.015);
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.sectionTitle {
+  font-family: var(--font-data);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--logic-lime);
+  margin: 0 0 1rem;
+}
+
+/* when sectionHeader wraps sectionTitle, remove the bottom margin */
+.sectionHeader .sectionTitle { margin: 0; }
+
+/* ── Identity grid ─────────────────────────────────────────────── */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 0.75rem 1.5rem;
+}
+
+.field { display: flex; flex-direction: column; gap: 0.2rem; }
+
+.fieldFull { grid-column: 1 / -1; }
+
+.fieldLabel {
+  font-family: var(--font-data);
+  font-size: 0.55rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--data-gray);
+}
+
+.fieldValue {
+  font-family: var(--font-data);
+  font-size: 0.8rem;
+  color: var(--fl-text);
+}
+
+.mono {
+  font-family: monospace;
+  font-size: 0.75rem;
+  color: var(--data-gray);
+}
+
+.adminLink {
+  font-family: var(--font-data);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--data-gray);
+  text-decoration: none;
+  padding: 0.3rem 0.6rem;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  transition: color 0.15s, border-color 0.15s;
+  display: inline-block;
+}
+
+.adminLink:hover {
+  color: var(--fl-text);
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+/* ── Overrides ─────────────────────────────────────────────────── */
+.addBtn {
+  font-family: var(--font-data);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.3rem 0.75rem;
+  background: transparent;
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.35);
+  color: var(--logic-lime);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.addBtn:hover {
+  background: rgba(var(--logic-lime-rgb), 0.08);
+  border-color: var(--logic-lime);
+}
+
+.overrideForm {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.2);
+  background: rgba(var(--logic-lime-rgb), 0.03);
+}
+
+.formRow { display: flex; flex-direction: column; gap: 0.3rem; }
+
+.formLabel {
+  font-family: var(--font-data);
+  font-size: 0.55rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--data-gray);
+}
+
+.formSelect,
+.formInput,
+.formTextarea {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.3);
+  color: var(--fl-text);
+  font-family: var(--font-data);
+  font-size: 0.75rem;
+  padding: 0.35rem 0.6rem;
+  border-radius: 2px;
+  outline: none;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.formSelect:focus,
+.formInput:focus,
+.formTextarea:focus {
+  border-color: var(--logic-lime);
+}
+
+.formTextarea { resize: vertical; }
+
+.overrideList { display: flex; flex-direction: column; gap: 0.6rem; }
+
+.overrideRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.overrideRowRevoked { opacity: 0.5; }
+
+.overrideMeta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+}
+
+.overrideType {
+  font-family: var(--font-data);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--fl-text);
+}
+
+.overrideValue {
+  font-family: var(--font-data);
+  font-size: 0.65rem;
+  color: var(--logic-lime);
+  padding: 0.1rem 0.4rem;
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.3);
+}
+
+.overrideExpiry {
+  font-family: var(--font-data);
+  font-size: 0.6rem;
+  color: var(--data-gray);
+}
+
+.overrideReason {
+  font-family: var(--font-data);
+  font-size: 0.65rem;
+  color: var(--fl-text);
+  opacity: 0.8;
+  flex-basis: 100%;
+}
+
+.overrideBy {
+  font-family: var(--font-data);
+  font-size: 0.55rem;
+  color: var(--data-gray);
+  flex-basis: 100%;
+}
+
+.expiredWarning {
+  font-family: var(--font-data);
+  font-size: 0.6rem;
+  font-weight: 700;
+  color: #f59e0b;
+  margin-top: 0.3rem;
+  flex-basis: 100%;
+}
+
+.revokeCell {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+.revokeBtn {
+  font-family: var(--font-data);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.25rem 0.6rem;
+  background: transparent;
+  border: 1px solid rgba(248, 113, 113, 0.35);
+  color: #f87171;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  white-space: nowrap;
+}
+
+.revokeBtn:hover {
+  background: rgba(248, 113, 113, 0.08);
+  border-color: #f87171;
+}
+
+.confirmLabel {
+  font-family: var(--font-data);
+  font-size: 0.6rem;
+  color: var(--data-gray);
+  white-space: nowrap;
+}
+
+.confirmBtn {
+  font-family: var(--font-data);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.25rem 0.6rem;
+  background: rgba(248, 113, 113, 0.1);
+  border: 1px solid #f87171;
+  color: #f87171;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.confirmBtn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.cancelBtn {
+  font-family: var(--font-data);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.25rem 0.6rem;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: var(--data-gray);
+  cursor: pointer;
+  transition: border-color 0.15s;
+  white-space: nowrap;
+}
+
+.cancelBtn:hover { border-color: rgba(255, 255, 255, 0.25); }
+
+.historySection { margin-top: 1rem; }
+
+.historyToggle {
+  font-family: var(--font-data);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--data-gray);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  margin-bottom: 0.75rem;
+  transition: color 0.15s;
+}
+
+.historyToggle:hover { color: var(--fl-text); }
+
+/* ── Members + Tournaments tables ──────────────────────────────── */
+.tableWrap { overflow-x: auto; }
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-data);
+  font-size: 0.75rem;
+}
+
+.table th {
+  text-align: left;
+  padding: 0.4rem 0.75rem;
+  font-size: 0.55rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--data-gray);
+  border-bottom: 1px solid rgba(var(--logic-lime-rgb), 0.15);
+  white-space: nowrap;
+}
+
+.table td {
+  padding: 0.6rem 0.75rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  vertical-align: middle;
+  color: var(--fl-text);
+}
+
+.table tr:last-child td { border-bottom: none; }
+
+.dimText { color: var(--data-gray); }
+
+.capText { text-transform: capitalize; }
+
+/* ── Status badges ─────────────────────────────────────────────── */
+.badge {
+  display: inline-block;
+  font-size: 0.55rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 0.2rem 0.5rem;
+  border: 1px solid;
+}
+
+.badgeActive {
+  color: #86efac;
+  border-color: rgba(134, 239, 172, 0.3);
+  background: rgba(134, 239, 172, 0.06);
+}
+
+.badgeDraft {
+  color: var(--logic-lime);
+  border-color: rgba(var(--logic-lime-rgb), 0.3);
+  background: rgba(var(--logic-lime-rgb), 0.06);
+}
+
+.badgeMuted {
+  color: var(--data-gray);
+  border-color: rgba(255, 255, 255, 0.1);
+  background: transparent;
+}
+
+/* ── Notes ─────────────────────────────────────────────────────── */
+.notesTextarea {
+  width: 100%;
+  box-sizing: border-box;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.25);
+  color: var(--fl-text);
+  font-family: var(--font-data);
+  font-size: 0.8rem;
+  line-height: 1.6;
+  padding: 0.75rem 1rem;
+  resize: vertical;
+  outline: none;
+  border-radius: 2px;
+  margin-bottom: 0.75rem;
+}
+
+.notesTextarea:focus { border-color: var(--logic-lime); }
+
+.notesActions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+/* ── Shared action buttons ─────────────────────────────────────── */
+.saveBtn {
+  font-family: var(--font-data);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.4rem 0.9rem;
+  background: rgba(var(--logic-lime-rgb), 0.08);
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.4);
+  color: var(--logic-lime);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.saveBtn:hover:not(:disabled) {
+  background: rgba(var(--logic-lime-rgb), 0.16);
+  border-color: var(--logic-lime);
+}
+
+.saveBtn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ── Misc ──────────────────────────────────────────────────────── */
+.emptyNote {
+  font-family: var(--font-data);
+  font-size: 0.7rem;
+  color: var(--data-gray);
+  margin: 0;
+}
+
+.rowError {
+  font-family: var(--font-data);
+  font-size: 0.6rem;
+  color: #f87171;
+}

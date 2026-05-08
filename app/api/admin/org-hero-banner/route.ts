@@ -13,7 +13,13 @@ const EXT_MAP: Record<string, string> = {
 
 async function ensureBucket() {
   const { data: buckets } = await supabaseAdmin.storage.listBuckets();
-  if (buckets?.find(b => b.name === BUCKET)) return;
+  const existing = buckets?.find(b => b.name === BUCKET);
+  if (existing) {
+    if (!existing.public) {
+      await supabaseAdmin.storage.updateBucket(BUCKET, { public: true });
+    }
+    return;
+  }
   await supabaseAdmin.storage.createBucket(BUCKET, { public: true });
 }
 

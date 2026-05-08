@@ -36,9 +36,9 @@ export default function UsersClient({ users }: Props) {
     setErrors(e => ({ ...e, [id]: '' }));
     try {
       const res = await fetch(`/api/platform-admin/users/${id}/reset`, {
-        method: 'POST',
+        method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
+        body:    JSON.stringify({ email }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -63,7 +63,7 @@ export default function UsersClient({ users }: Props) {
     <div className={styles.page}>
       <header className={styles.header}>
         <div className={styles.headerLabel}>FieldLogicHQ</div>
-        <h1 className={styles.title}>Users</h1>
+        <h1 className={styles.title}>Platform Users</h1>
         <div className={styles.count}>{users.length} total</div>
       </header>
 
@@ -78,6 +78,11 @@ export default function UsersClient({ users }: Props) {
             </tr>
           </thead>
           <tbody>
+            {users.length === 0 && (
+              <tr>
+                <td colSpan={4} className={styles.emptyCell}>No platform users found.</td>
+              </tr>
+            )}
             {users.map(u => (
               <Fragment key={u.id}>
                 <tr>

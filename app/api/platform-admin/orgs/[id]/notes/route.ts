@@ -11,35 +11,35 @@ export async function PATCH(
   if (!user) return new NextResponse('Forbidden', { status: 403 });
 
   const { id } = await params;
-  const body = await req.json() as { planId?: string; tournamentLimit?: number };
-  const { planId, tournamentLimit } = body;
-
-  if (!planId || typeof tournamentLimit !== 'number') {
+  const body = await req.json() as { notes?: string };
+  if (typeof body.notes !== 'string') {
     return NextResponse.json({ error: 'Invalid payload' }, { status: 400 });
   }
 
   const { data: current } = await supabaseAdmin
     .from('organizations')
-    .select('plan_id, tournament_limit')
+    .select('internal_notes')
     .eq('id', id)
     .single();
 
   const { error } = await supabaseAdmin
     .from('organizations')
-    .update({ plan_id: planId, tournament_limit: tournamentLimit })
+    .update({ internal_notes: body.notes || null })
     .eq('id', id);
 
   if (error) {
-    console.error('[platform-admin] org plan update error:', error);
+    console.error('[platform-admin] notes update error:', error);
     return NextResponse.json({ error: 'Update failed' }, { status: 500 });
   }
 
-  await writePlatformAuditLog(user.email!, id, 'update_plan', 'plan_id',
-    (current as any)?.plan_id, planId);
-  if ((current as any)?.tournament_limit !== tournamentLimit) {
-    await writePlatformAuditLog(user.email!, id, 'update_plan', 'tournament_limit',
-      (current as any)?.tournament_limit, tournamentLimit);
-  }
+  await writePlatformAuditLog(
+    user.email!,
+    id,
+    'update_notes',
+    'internal_notes',
+    (current as any)?.internal_notes ?? null,
+    body.notes || null,
+  );
 
   return NextResponse.json({ ok: true });
 }

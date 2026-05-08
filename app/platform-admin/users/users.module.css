@@ -1,4 +1,4 @@
-.page { max-width: 1000px; }
+.page { max-width: 800px; }
 
 .header {
   border-bottom: 1px solid rgba(var(--logic-lime-rgb), 0.3);
@@ -111,6 +111,14 @@
   font-family: var(--font-data);
   font-size: 0.6rem;
   color: #f87171;
+}
+
+.emptyCell {
+  font-family: var(--font-data);
+  font-size: 0.7rem;
+  color: var(--data-gray);
+  text-align: center;
+  padding: 2rem;
 }
 
 .linkRow td {

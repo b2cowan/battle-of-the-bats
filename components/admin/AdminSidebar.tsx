@@ -4,7 +4,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import {
   LayoutDashboard, Users, Calendar, Trophy, Megaphone, Tag, LogOut, Home,
   ChevronRight, MapPin, RefreshCw, BookUser, BookOpen, CreditCard, Settings,
-  Users2, Archive, ArrowLeft, Mail, Globe,
+  Users2, Archive, ArrowLeft, Mail, Globe, DollarSign, Receipt,
 } from 'lucide-react';
 import { signOut } from '@/lib/auth';
 import { useOrg } from '@/lib/org-context';
@@ -35,6 +35,7 @@ export default function AdminSidebar() {
   const isHub        = pathname === base;
   const isOrgAdmin   = pathname.startsWith(`${base}/org`);
   const isPublicSite = pathname.startsWith(`${base}/public-site`);
+  const isAccounting = pathname.startsWith(`${base}/accounting`);
 
   const canSeeMembersNav = userRole
     ? userRole === 'owner' || hasCapability(userRole, userCapabilities, 'module_members')
@@ -42,6 +43,10 @@ export default function AdminSidebar() {
 
   const canSeePublicSite = userRole
     ? hasCapability(userRole, userCapabilities, 'module_public_site')
+    : false;
+
+  const canSeeAccounting = userRole
+    ? hasCapability(userRole, userCapabilities, 'module_accounting')
     : false;
 
   async function handleLogout() {
@@ -142,8 +147,26 @@ export default function AdminSidebar() {
         </>
       )}
 
+      {/* Accounting mode */}
+      {isAccounting && canSeeAccounting && (
+        <>
+          {backLink}
+          <div className={styles.navSection}>
+            <div className={styles.sectionHeader}>Accounting</div>
+            <nav className={styles.nav}>
+              {navLink('accounting', DollarSign, 'Overview',
+                `${base}/accounting`,
+                pathname === `${base}/accounting`)}
+              {navLink('accounting-org', Receipt, 'Org Ledger',
+                `${base}/accounting`,
+                false)}
+            </nav>
+          </div>
+        </>
+      )}
+
       {/* Tournament operations mode */}
-      {!isHub && !isOrgAdmin && !isPublicSite && (
+      {!isHub && !isOrgAdmin && !isPublicSite && !isAccounting && (
         <>
           {backLink}
           {tournaments.length > 0 && (
@@ -175,6 +198,13 @@ export default function AdminSidebar() {
                 const active = pathname.startsWith(href);
                 return navLink(item.key, item.icon, item.label, href, active);
               })}
+              {canSeeAccounting && navLink(
+                'tournament-accounting', DollarSign, 'Accounting',
+                currentTournament
+                  ? `${base}/accounting?tournamentId=${currentTournament.id}`
+                  : `${base}/accounting`,
+                false,
+              )}
             </nav>
           </div>
         </>

@@ -6,13 +6,24 @@ This file tracks the ongoing tasks for the tournament website project. AI models
 
 ## 🚀 Active Tasks (Priority Order)
 
-### 1. Platform Roadmap — Add-On Modules
+### 1. Platform Admin — Superuser Tooling
+*Authoritative plan in [PLATFORM_ADMIN_IMPROVEMENTS_PLAN.md](PLATFORM_ADMIN_IMPROVEMENTS_PLAN.md)*
+
+- [x] **Phase A** — `enabled_addons` toggle UI + direct admin link (unblocks `module_public_site` production enablement)
+- [x] **Phase B** — Users page org context enrichment (no migration)
+- [x] **Phase E1+E2** — Platform audit log table + write helper (bundle with Phase A so all new routes log from day one)
+- [x] **Phase C** — Org notes column + drill-down detail page
+- [x] **Phase D** — `org_overrides` table: subscription status override + comp/billing grace period
+- [x] **Phase E3** — Audit log read page at `/platform-admin/audit`
+- [ ] **Phase F** — Org search/filter + users pagination (deferred; do when scale demands)
+
+### 2. Platform Roadmap — Add-On Modules
 *Authoritative plan in [PLATFORM_ROADMAP.md](PLATFORM_ROADMAP.md)*
 
 - [x] **Phase 1** — Archives B2: back-to-admin link on public archive detail pages
 - [x] **Phase 2** — Plan entitlements architecture: `moduleEntitlements` in PlanConfig, `enabled_addons` migration, `hasModuleEntitlement()` helper
 - [x] **Phase 3** — `module_public_site` (see [docs/archive/PUBLIC_SITE_MODULE_PLAN.md](docs/archive/PUBLIC_SITE_MODULE_PLAN.md))
-- [ ] **Phase 4** — `module_accounting` (requires plan file first)
+- [ ] **Phase 4** — `module_accounting` (see [ACCOUNTING_MODULE_PLAN.md](ACCOUNTING_MODULE_PLAN.md))
 - [ ] **Phase 5** — `module_house_league` (requires plan file first)
 - [ ] **Phase 6** — `module_rep_teams` (requires plan file first)
 
@@ -20,7 +31,7 @@ This file tracks the ongoing tasks for the tournament website project. AI models
 *Recommended build order: Accounting → House League → Rep Teams. Each requires its own detailed plan file before implementation begins.*
 
 - [x] **Public Website Module (`module_public_site`)** — Shipped. (see [docs/archive/PUBLIC_SITE_MODULE_PLAN.md](docs/archive/PUBLIC_SITE_MODULE_PLAN.md))
-- [ ] **Accounting Module (`module_accounting`)** — The org's own financial management: income/expense tracking, invoicing teams for fees, registration payment reconciliation. Requires plan file.
+- [ ] **Accounting Module (`module_accounting`)** — The org's own financial management: income/expense tracking, tournament ledgers, inter-ledger transfers. Plan: [ACCOUNTING_MODULE_PLAN.md](ACCOUNTING_MODULE_PLAN.md).
 - [ ] **House League Module (`module_house_league`)** — Season-long recreational league management: player registration, waitlists, team placement, scheduling, standings. Requires plan file.
 - [ ] **Rep Team Module (`module_rep_teams`)** — Competitive team program management: coaches portal, rosters, tryout management, player documents, accounting integration. Requires plan file.
 
@@ -34,7 +45,11 @@ This file tracks the ongoing tasks for the tournament website project. AI models
 
 - [ ] **Phase 5** — Billing & Subscriptions: Stripe account setup and testing remaining
 
-### 5. Infrastructure — Dev Environment
+### 5. Code Quality — Pre-existing TypeScript Errors in `lib/db.ts`
+
+- [ ] **Fix 9 implicit `any` parameters in row-mapper callbacks** — `getDiamonds`, `getContacts`, `getAgeGroups`, `getPools`, `getTeams`, `getGames`, `getAnnouncements`, `getRules`, `getResources` (each `.map()` callback param needs `: any`). Also remove unused `fileExt` var and unused `data` destructure in `uploadResourceFile`. All pre-existing; discovered during accounting module work. One small commit, no behaviour change.
+
+### 6. Infrastructure — Dev Environment
 - [ ] **AWS Amplify Hosting Strategy**:
     - [ ] Research proper hosting for parallel Dev and Production environments on AWS Amplify
     - [ ] Evaluate URL options: subdomain (`dev.fieldlogichq.ca`) vs. separate domain

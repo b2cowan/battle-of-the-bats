@@ -39,8 +39,7 @@ export async function POST(req: Request) {
     );
   }
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? '';
-  const logoUrl = `${appUrl}${stockPath}`;
+  const logoUrl = stockPath;
 
   const { error: dbError } = await supabaseAdmin
     .from('organizations')

@@ -30,6 +30,8 @@ const dmSansFont = DM_Sans({
   variable: '--font-dm-sans',
 });
 
+export const dynamic = 'force-dynamic';
+
 export async function generateMetadata({
   params,
 }: {
