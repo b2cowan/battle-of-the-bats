@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getOrganizationBySlug, getArchivesByOrg } from '@/lib/db';
+import { getAuthContextWithScope } from '@/lib/api-auth';
 
 export default async function ArchivesPage({
   params,
@@ -11,7 +12,11 @@ export default async function ArchivesPage({
   const org = await getOrganizationBySlug(orgSlug);
   if (!org) notFound();
 
-  const archives = await getArchivesByOrg(org.id);
+  const [archives, ctx] = await Promise.all([
+    getArchivesByOrg(org.id),
+    getAuthContextWithScope().catch(() => null),
+  ]);
+  const isAdmin = ctx?.org?.id === org.id;
 
   return (
     <div
@@ -54,9 +59,26 @@ export default async function ArchivesPage({
               fontSize: '0.75rem',
               color: 'var(--data-gray, #94A3B8)',
               marginTop: '0.375rem',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '1.5rem',
             }}
           >
-            {archives.length} SEALED RECORD{archives.length !== 1 ? 'S' : ''} · READ-ONLY
+            <span>{archives.length} SEALED RECORD{archives.length !== 1 ? 'S' : ''} · READ-ONLY</span>
+            {isAdmin && (
+              <Link
+                href={`/${orgSlug}/admin/archives`}
+                style={{
+                  fontSize: '0.625rem',
+                  letterSpacing: '0.1em',
+                  textTransform: 'uppercase',
+                  color: 'var(--data-gray, #94A3B8)',
+                  textDecoration: 'none',
+                }}
+              >
+                Admin →
+              </Link>
+            )}
           </div>
         </div>
 

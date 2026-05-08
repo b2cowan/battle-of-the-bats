@@ -1,0 +1,204 @@
+.page {
+  max-width: 720px;
+}
+
+.pageHeader {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.headerIcon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: rgba(var(--blueprint-blue-rgb), 0.12);
+  color: var(--logic-lime);
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.pageTitle {
+  font-size: 1.75rem;
+  font-weight: 900;
+  font-family: var(--font-display, sans-serif);
+  margin: 0;
+  color: var(--white-90, #f0f0f0);
+  line-height: 1.1;
+}
+
+.pageSub {
+  margin: 0.25rem 0 0;
+  color: var(--white-40, rgba(255,255,255,0.4));
+  font-size: 0.9rem;
+}
+
+.card {
+  padding: 1.5rem;
+  border-radius: 12px;
+  background: var(--surface, rgba(255,255,255,0.04));
+  border: 1px solid var(--border, rgba(255,255,255,0.08));
+  margin-bottom: 1.25rem;
+}
+
+.sectionTitle {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--white-40, rgba(255,255,255,0.4));
+  margin: 0 0 1.25rem;
+}
+
+.settingsLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.8rem;
+  color: var(--blueprint-blue, #60a5fa);
+  text-decoration: none;
+  margin-bottom: 1.5rem;
+}
+.settingsLink:hover { text-decoration: underline; }
+
+.field {
+  margin-bottom: 1.25rem;
+}
+.field:last-child { margin-bottom: 0; }
+
+.label {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--white-60, rgba(255,255,255,0.6));
+  margin-bottom: 0.4rem;
+}
+
+.input {
+  width: 100%;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 8px;
+  padding: 0.55rem 0.75rem;
+  color: var(--white-90, #f0f0f0);
+  font-size: 0.9rem;
+  box-sizing: border-box;
+  transition: border-color 0.15s;
+}
+.input:focus {
+  outline: none;
+  border-color: var(--blueprint-blue, #60a5fa);
+}
+
+.textarea {
+  composes: input;
+  resize: vertical;
+  min-height: 90px;
+  line-height: 1.5;
+}
+
+.hint {
+  font-size: 0.78rem;
+  color: var(--white-40, rgba(255,255,255,0.4));
+  margin: 0.35rem 0 0;
+}
+
+.charRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 0.35rem;
+}
+
+.charCount {
+  font-size: 0.75rem;
+  color: var(--white-30, rgba(255,255,255,0.3));
+}
+.charCountWarn { color: #f87171; }
+
+.toggleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  gap: 1rem;
+}
+
+.toggle {
+  appearance: none;
+  width: 40px;
+  height: 22px;
+  border-radius: 11px;
+  background: rgba(255,255,255,0.15);
+  border: 1px solid rgba(255,255,255,0.2);
+  position: relative;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.2s;
+}
+.toggle:checked {
+  background: var(--blueprint-blue, #60a5fa);
+  border-color: var(--blueprint-blue, #60a5fa);
+}
+.toggle::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: white;
+  transition: transform 0.2s;
+}
+.toggle:checked::after { transform: translateX(18px); }
+
+.accessDenied {
+  padding: 4rem 2rem;
+  text-align: center;
+  color: var(--white-40, rgba(255,255,255,0.4));
+}
+.accessDenied h2 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin: 1rem 0 0.5rem;
+  color: var(--white-60, rgba(255,255,255,0.6));
+}
+.accessDenied p {
+  font-size: 0.9rem;
+  max-width: 360px;
+  margin: 0 auto;
+}
+
+.formFooter {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 1rem;
+  padding-top: 0.5rem;
+  margin-bottom: 2rem;
+}
+
+.unsavedLabel {
+  font-size: 0.8rem;
+  color: var(--white-40, rgba(255,255,255,0.4));
+}
+
+.muted {
+  color: var(--white-40, rgba(255,255,255,0.4));
+  padding: 2rem;
+}
+
+.previewLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+  color: var(--white-40, rgba(255,255,255,0.4));
+  text-decoration: none;
+}
+.previewLink:hover { color: var(--white-70, rgba(255,255,255,0.7)); }
