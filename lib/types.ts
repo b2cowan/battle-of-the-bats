@@ -23,6 +23,7 @@ export interface Organization {
   themeCardStyle?: string;  // 'default' | 'glass' | 'outlined' | 'flat'
   requireScoreFinalization?: boolean;
   onboardingCompletedAt?: string | null;
+  enabledAddons: string[];
 }
 
 export interface OrganizationMember {
@@ -200,6 +201,22 @@ export interface Resource {
   label: string;
   url: string;
   order: number;
+}
+
+export interface OrgPublicSiteContent {
+  id: string;
+  orgId: string;
+  tagline: string | null;
+  description: string | null;
+  contactEmail: string | null;
+  socialInstagram: string | null;
+  socialFacebook: string | null;
+  socialX: string | null;
+  socialWebsite: string | null;
+  showUpcomingTournaments: boolean;
+  showArchivesLink: boolean;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface TournamentArchive {

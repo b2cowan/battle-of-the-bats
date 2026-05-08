@@ -1,3 +1,5 @@
+> **DEPRECATED** — Superseded by [PLATFORM_ROADMAP.md](../../PLATFORM_ROADMAP.md). Phase A complete; deferred items carried forward to the roadmap. This file is retained for historical context only.
+
 # Archives Expansion Plan
 
 Picks up from Item 4 in `TOURNAMENT_LIFECYCLE_PLAN.md`. Items 1–3 are already shipped. This plan covers the admin-side archives gap and public ledger improvements.

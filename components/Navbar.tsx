@@ -6,12 +6,17 @@ import { useOrgNav } from './OrgNavContext';
 import { cn } from '@/lib/utils';
 import styles from './Navbar.module.css';
 
-const NAV_KEYS = [
-  { key: 'news',     label: 'News'     },
-  { key: 'schedule', label: 'Schedule' },
+const TOURNAMENT_NAV_KEYS = [
+  { key: 'news',      label: 'News'      },
+  { key: 'schedule',  label: 'Schedule'  },
   { key: 'standings', label: 'Standings' },
-  { key: 'teams',    label: 'Teams'    },
-  { key: 'rules',    label: 'Rules'    },
+  { key: 'teams',     label: 'Teams'     },
+  { key: 'rules',     label: 'Rules'     },
+];
+
+const ORG_NAV_LINKS = [
+  { key: 'home',        label: 'Home',        anchor: '' },
+  { key: 'tournaments', label: 'Tournaments',  anchor: '#tournaments' },
 ];
 
 function isMarketingPath(pathname: string) {
@@ -25,7 +30,8 @@ function isMarketingPath(pathname: string) {
 export default function Navbar() {
   const pathname = usePathname();
   const params   = useParams();
-  const orgSlug        = (params?.orgSlug as string) || 'milton-bats';
+  const orgSlug           = (params?.orgSlug as string) || '';
+  const urlTournamentSlug = params?.tournamentSlug as string | undefined;
   const { logoUrl, orgName, tournamentSlug, tournamentName } = useOrgNav();
   const [scrolled, setScrolled] = useState(false);
 
@@ -94,7 +100,41 @@ export default function Navbar() {
     );
   }
 
-  /* ── Tournament nav (/[orgSlug]/*) ── */
+  /* ── Org home nav (/{orgSlug}/* — no tournament in URL) ── */
+  if (!urlTournamentSlug) {
+    return (
+      <nav className={navClass}>
+        <div className={`container ${styles.inner}`}>
+          <Link href={`/${orgSlug}`} className={styles.logo}>
+            {logoUrl && (
+              <img src={logoUrl} alt={orgName || 'Org logo'} className={styles.logoImg} />
+            )}
+            {orgName && <span className={styles.orgName}>{orgName}</span>}
+          </Link>
+
+          <div className={styles.links}>
+            {ORG_NAV_LINKS.map(l => {
+              const href = `/${orgSlug}${l.anchor}`;
+              const isActive = l.key === 'home' && pathname === `/${orgSlug}`;
+              return (
+                <Link
+                  key={l.key}
+                  href={href}
+                  className={`${styles.link} ${isActive ? styles.active : ''}`}
+                >
+                  {l.label}
+                </Link>
+              );
+            })}
+          </div>
+
+          <div className={styles.actions} />
+        </div>
+      </nav>
+    );
+  }
+
+  /* ── Tournament nav (/[orgSlug]/[tournamentSlug]/*) ── */
   return (
     <nav className={navClass}>
       <div className={`container ${styles.inner}`}>
@@ -108,10 +148,8 @@ export default function Navbar() {
         </Link>
 
         <div className={styles.links}>
-          {NAV_KEYS.map(l => {
-            const href = tournamentSlug
-              ? `/${orgSlug}/${tournamentSlug}/${l.key}`
-              : `/${orgSlug}/${l.key}`;
+          {TOURNAMENT_NAV_KEYS.map(l => {
+            const href = `/${orgSlug}/${tournamentSlug}/${l.key}`;
             const isActive = pathname.startsWith(href);
             return (
               <Link
@@ -127,7 +165,7 @@ export default function Navbar() {
 
         <div className={styles.actions}>
           <Link
-            href={tournamentSlug ? `/${orgSlug}/${tournamentSlug}/register` : `/${orgSlug}/register`}
+            href={`/${orgSlug}/${tournamentSlug}/register`}
             className="btn btn-primary btn-sm"
             id="nav-register-btn"
           >

@@ -1,7 +1,7 @@
 import { supabase } from './supabase';
 import { supabaseAdmin } from './supabase-admin';
 import { createClient as createBrowserSupabaseClient } from './supabase-browser';
-import { Tournament, TournamentStatus, Diamond, Contact, AgeGroup, Pool, Team, Game, Announcement, PlayoffConfig, RuleSection, RuleItem, Resource, Organization, OrganizationMember, OrgPlan, OrgRole, TournamentArchive } from './types';
+import { Tournament, TournamentStatus, Diamond, Contact, AgeGroup, Pool, Team, Game, Announcement, PlayoffConfig, RuleSection, RuleItem, Resource, Organization, OrganizationMember, OrgPlan, OrgRole, TournamentArchive, OrgPublicSiteContent } from './types';
 
 // Use the SSR browser client (cookie-based session) for writes that need auth;
 // falls back to anon client on the server where there is no window.
@@ -933,6 +933,56 @@ export async function deleteRuleSection(id: string): Promise<void> {
   await authClient().from('rules').delete().eq('id', id);
 }
 
+// ── Public Site Module ────────────────────────────────────────────────────────
+
+export async function getOrgPublicSiteContent(orgId: string): Promise<OrgPublicSiteContent | null> {
+  const { data } = await supabase
+    .from('org_public_site_content')
+    .select('*')
+    .eq('org_id', orgId)
+    .maybeSingle();
+  if (!data) return null;
+  return {
+    id:                       data.id,
+    orgId:                    data.org_id,
+    tagline:                  data.tagline             ?? null,
+    description:              data.description         ?? null,
+    contactEmail:             data.contact_email       ?? null,
+    socialInstagram:          data.social_instagram    ?? null,
+    socialFacebook:           data.social_facebook     ?? null,
+    socialX:                  data.social_x            ?? null,
+    socialWebsite:            data.social_website      ?? null,
+    showUpcomingTournaments:  data.show_upcoming_tournaments,
+    showArchivesLink:         data.show_archives_link,
+    createdAt:                data.created_at,
+    updatedAt:                data.updated_at,
+  };
+}
+
+export async function upsertOrgPublicSiteContent(
+  orgId: string,
+  content: Partial<Omit<OrgPublicSiteContent, 'id' | 'orgId' | 'createdAt' | 'updatedAt'>>,
+): Promise<void> {
+  await supabaseAdmin
+    .from('org_public_site_content')
+    .upsert(
+      {
+        org_id:                   orgId,
+        tagline:                  content.tagline             ?? null,
+        description:              content.description         ?? null,
+        contact_email:            content.contactEmail        ?? null,
+        social_instagram:         content.socialInstagram     ?? null,
+        social_facebook:          content.socialFacebook      ?? null,
+        social_x:                 content.socialX             ?? null,
+        social_website:           content.socialWebsite       ?? null,
+        show_upcoming_tournaments: content.showUpcomingTournaments ?? true,
+        show_archives_link:        content.showArchivesLink   ?? true,
+        updated_at:               new Date().toISOString(),
+      },
+      { onConflict: 'org_id' },
+    );
+}
+
 export async function saveRuleItem(item: Omit<RuleItem, 'id'>): Promise<void> {
   await authClient().from('rule_items').insert({
     rule_id: item.ruleId,
@@ -1262,6 +1312,7 @@ function mapOrg(r: any): Organization {
     heroBannerUrl:        r.hero_banner_url ?? undefined,
     themeFont:            r.theme_font ?? 'system',
     themeCardStyle:       r.theme_card_style ?? 'default',
+    enabledAddons:        r.enabled_addons ?? [],
   };
 }
 

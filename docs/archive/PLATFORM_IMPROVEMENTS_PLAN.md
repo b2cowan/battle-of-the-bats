@@ -1,3 +1,5 @@
+> **DEPRECATED** — Superseded by [PLATFORM_ROADMAP.md](../../PLATFORM_ROADMAP.md). Phases 1–3 complete; Phase 4 items reconciled in the roadmap. This file is retained for historical context only.
+
 # Platform Improvements Plan
 
 Covers five investigation areas from the May 2026 platform audit. Each section has current state, gaps, implementation tasks, and any business decisions that must be resolved before implementation.

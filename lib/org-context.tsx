@@ -64,6 +64,7 @@ export function OrgProvider({ children }: { children: ReactNode }) {
         createdAt: orgRow.created_at,
         requireScoreFinalization: orgRow.require_score_finalization ?? false,
         onboardingCompletedAt: orgRow.onboarding_completed_at ?? null,
+        enabledAddons: orgRow.enabled_addons ?? [],
       });
       setUserRole((memberData as any)?.role ?? null);
       setUserCapabilities((memberData as any)?.capabilities ?? null);

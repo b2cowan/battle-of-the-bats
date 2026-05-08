@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getArchiveById } from '@/lib/db';
+import { getAuthContextWithScope } from '@/lib/api-auth';
 import type { Game, Team, AgeGroup } from '@/lib/types';
 
 // Compute standings from a frozen snapshot — no live DB queries
@@ -68,6 +69,9 @@ export default async function ArchiveDetailPage({
   const archive = await getArchiveById(archiveId);
   if (!archive) notFound();
 
+  const ctx = await getAuthContextWithScope().catch(() => null);
+  const isAdmin = ctx?.org?.id === archive.orgId;
+
   const { finalSnapshot: snap, tournamentName, season, sealedAt, integrityHash } = archive;
   const { ageGroups, teams, games } = snap;
 
@@ -108,13 +112,23 @@ export default async function ArchiveDetailPage({
     >
       <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
 
-        {/* Back link */}
-        <Link
-          href={`/${orgSlug}/archives`}
-          style={{ fontSize: '0.625rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: dataGray, textDecoration: 'none' }}
-        >
-          ← Archives
-        </Link>
+        {/* Back links */}
+        <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
+          <Link
+            href={`/${orgSlug}/archives`}
+            style={{ fontSize: '0.625rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: dataGray, textDecoration: 'none' }}
+          >
+            ← Archives
+          </Link>
+          {isAdmin && (
+            <Link
+              href={`/${orgSlug}/admin/archives`}
+              style={{ fontSize: '0.625rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: dataGray, textDecoration: 'none' }}
+            >
+              ← Past Tournaments
+            </Link>
+          )}
+        </div>
 
         {/* Header */}
         <div

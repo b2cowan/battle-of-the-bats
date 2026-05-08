@@ -1,3 +1,5 @@
+> **DEPRECATED** — Superseded by [PLATFORM_ROADMAP.md](../../PLATFORM_ROADMAP.md). Phase A complete; Phase B standing pattern documented in the roadmap's Module Build Checklist. This file is retained for historical context only.
+
 # Module-Level Capabilities Plan (2A)
 
 Implements the `module_*` capability tier from the Platform Improvements Plan. Covers the foundation needed now and the per-module pattern to follow when each new module is built.

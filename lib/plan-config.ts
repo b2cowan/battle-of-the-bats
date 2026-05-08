@@ -1,4 +1,5 @@
 import type { OrgPlan } from './types';
+import type { Capability } from './roles';
 
 export interface PlanConfig {
   label: string;
@@ -9,7 +10,16 @@ export interface PlanConfig {
   // When true, officials are excluded from the seat count and have no seat cap.
   officialsFreeSeats: boolean;
   priceId?: string;
+  // Modules included in this plan. Reserved add-on modules are not listed here;
+  // they require an entry in org.enabledAddons (see lib/module-entitlements.ts).
+  moduleEntitlements: Capability[];
 }
+
+const CORE_MODULES: Capability[] = [
+  'module_tournaments',
+  'module_communications',
+  'module_members',
+];
 
 export const PLAN_CONFIG: Record<OrgPlan, PlanConfig> = {
   starter: {
@@ -18,6 +28,7 @@ export const PLAN_CONFIG: Record<OrgPlan, PlanConfig> = {
     tournamentLimit: 1,
     seatLimit: 1,
     officialsFreeSeats: false,
+    moduleEntitlements: CORE_MODULES,
   },
   pro: {
     label: 'Pro',
@@ -26,6 +37,7 @@ export const PLAN_CONFIG: Record<OrgPlan, PlanConfig> = {
     seatLimit: 5,
     officialsFreeSeats: true,
     priceId: process.env.STRIPE_PRICE_PRO_MONTHLY,
+    moduleEntitlements: CORE_MODULES,
   },
   elite: {
     label: 'Elite',
@@ -34,5 +46,6 @@ export const PLAN_CONFIG: Record<OrgPlan, PlanConfig> = {
     seatLimit: 9999,
     officialsFreeSeats: true,
     priceId: process.env.STRIPE_PRICE_ELITE_MONTHLY,
+    moduleEntitlements: CORE_MODULES,
   },
 };
