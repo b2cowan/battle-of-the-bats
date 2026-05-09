@@ -5,7 +5,7 @@ import { X, Plus, ChevronLeft } from 'lucide-react';
 import Link from 'next/link';
 import { useOrg } from '@/lib/org-context';
 import FeedbackModal from '@/components/FeedbackModal';
-import styles from '../../house-league.module.css';
+import styles from '../../../house-league.module.css';
 import type { LeagueRegistration, LeagueRegistrationStatus, LeagueDivision } from '@/lib/types';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
