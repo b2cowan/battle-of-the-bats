@@ -57,6 +57,9 @@ const ROLE_LABELS: Record<OrgRole, string> = {
   admin: 'Admin',
   staff: 'Staff',
   official: 'Official',
+  league_admin: 'League Admin',
+  league_registrar: 'League Registrar',
+  treasurer: 'Treasurer',
 };
 
 const ROLE_BADGE: Record<OrgRole, string> = {
@@ -64,6 +67,9 @@ const ROLE_BADGE: Record<OrgRole, string> = {
   admin: 'badge-success',
   staff: 'badge-neutral',
   official: 'badge-warning',
+  league_admin: 'badge-info',
+  league_registrar: 'badge-info',
+  treasurer: 'badge-neutral',
 };
 
 const STATUS_LABEL: Record<'invited' | 'active' | 'suspended', string> = {
