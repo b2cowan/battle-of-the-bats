@@ -11,6 +11,18 @@ function getResend() {
   return _resend;
 }
 
+const INVITABLE_ROLES: OrgRole[] = ['admin', 'staff', 'official', 'league_admin', 'league_registrar', 'treasurer'];
+
+const ROLE_EMAIL_LABEL: Record<OrgRole, string> = {
+  owner: 'owner',
+  admin: 'administrator',
+  staff: 'staff member',
+  official: 'field official (scorekeeper)',
+  league_admin: 'league administrator',
+  league_registrar: 'league registrar',
+  treasurer: 'treasurer',
+};
+
 export async function POST(req: Request) {
   const ctx = await getAuthContext();
   if (!ctx) return unauthorized();
@@ -22,7 +34,7 @@ export async function POST(req: Request) {
 
   const body = await req.json();
   const email: string = String(body.email ?? '').trim().toLowerCase();
-  const role: OrgRole = body.role === 'admin' ? 'admin' : body.role === 'official' ? 'official' : 'staff';
+  const role: OrgRole = INVITABLE_ROLES.includes(body.role) ? (body.role as OrgRole) : 'staff';
 
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return NextResponse.json({ error: 'Valid email required' }, { status: 400 });
@@ -64,6 +76,7 @@ export async function POST(req: Request) {
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://fieldlogichq.ca';
   const fromAddress = process.env.RESEND_FROM ?? 'noreply@fieldlogichq.ca';
+  const roleLabel = ROLE_EMAIL_LABEL[role] ?? role;
 
   if (existingUser) {
     // Check they're not already in THIS org
@@ -114,7 +127,6 @@ export async function POST(req: Request) {
     });
 
     // Notify the existing user that they now have access to this org.
-    const roleLabel = role === 'official' ? 'field official (scorekeeper)' : `team ${role}`;
     await getResend().emails.send({
       from: fromAddress,
       to: email,
@@ -183,7 +195,6 @@ If you weren't expecting this, you can safely ignore this email.`,
   // Send invite email via Resend
   const inviteUrl = (linkData as any).properties?.action_link ?? linkData.properties?.action_link;
 
-  const roleLabel = role === 'official' ? 'field official (scorekeeper)' : `team ${role}`;
   const officialNote = role === 'official'
     ? `<p>As a field official, you'll have access to the score entry app to submit game results from your assigned diamonds.</p>`
     : '';
