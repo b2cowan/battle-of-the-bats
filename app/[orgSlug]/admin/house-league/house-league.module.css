@@ -1,0 +1,604 @@
+/* ── Shared layout ────────────────────────────────────────────────────────── */
+.page { max-width: 960px; }
+
+.pageHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+}
+
+.pageHeaderLeft {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.headerIcon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: rgba(var(--blueprint-blue-rgb), 0.12);
+  color: var(--logic-lime);
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.pageTitle {
+  font-size: 1.75rem;
+  font-weight: 900;
+  font-family: var(--font-display, sans-serif);
+  margin: 0;
+  color: var(--white-90, #f0f0f0);
+  line-height: 1.1;
+}
+
+.pageSub {
+  margin: 0.25rem 0 0;
+  color: var(--white-40, rgba(255,255,255,0.4));
+  font-size: 0.9rem;
+}
+
+.muted {
+  color: var(--white-40, rgba(255,255,255,0.4));
+  padding: 2rem;
+}
+
+.accessDenied {
+  padding: 4rem 2rem;
+  text-align: center;
+  color: var(--white-40, rgba(255,255,255,0.4));
+}
+.accessDenied h2 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin: 1rem 0 0.5rem;
+  color: var(--white-60, rgba(255,255,255,0.6));
+}
+.accessDenied p {
+  font-size: 0.9rem;
+  max-width: 360px;
+  margin: 0 auto;
+}
+
+/* ── Season card grid ─────────────────────────────────────────────────────── */
+.seasonGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.75rem;
+}
+
+.seasonCard {
+  padding: 1.25rem 1.5rem;
+  border-radius: 12px;
+  background: var(--surface, rgba(255,255,255,0.04));
+  border: 1px solid var(--border, rgba(255,255,255,0.08));
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  transition: border-color 0.15s;
+}
+.seasonCard:hover {
+  border-color: rgba(255,255,255,0.15);
+}
+
+.seasonCardTop {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.seasonCardMeta {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.6rem;
+}
+
+.seasonName {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--white-90, #f0f0f0);
+  line-height: 1.3;
+}
+
+.seasonStats {
+  display: flex;
+  gap: 1.25rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.statItem {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.statLabel {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--white-40, rgba(255,255,255,0.4));
+}
+
+.statValue {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--white-80, rgba(255,255,255,0.8));
+}
+
+.seasonCardActions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-top: auto;
+  padding-top: 0.75rem;
+  border-top: 1px solid rgba(255,255,255,0.06);
+}
+
+/* ── Status badges ────────────────────────────────────────────────────────── */
+.statusBadge {
+  display: inline-block;
+  padding: 0.2rem 0.55rem;
+  border-radius: 4px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+}
+
+.statusDraft              { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.5); }
+.statusRegistrationOpen   { background: rgba(74,222,128,0.12); color: #4ade80; border: 1px solid rgba(74,222,128,0.25); }
+.statusRegistrationClosed { background: rgba(251,191,36,0.12); color: #fbbf24; border: 1px solid rgba(251,191,36,0.25); }
+.statusActive             { background: rgba(96,165,250,0.12); color: #60a5fa; border: 1px solid rgba(96,165,250,0.25); }
+.statusCompleted          { background: rgba(167,139,250,0.12); color: #a78bfa; border: 1px solid rgba(167,139,250,0.25); }
+.statusArchived           { background: rgba(255,255,255,0.04); color: rgba(255,255,255,0.3); }
+
+/* ── Age group badge ──────────────────────────────────────────────────────── */
+.ageGroupBadge {
+  display: inline-block;
+  padding: 0.2rem 0.55rem;
+  border-radius: 4px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  background: rgba(var(--blueprint-blue-rgb), 0.12);
+  color: #60a5fa;
+  white-space: nowrap;
+}
+
+/* ── Empty state ──────────────────────────────────────────────────────────── */
+.emptyState {
+  text-align: center;
+  padding: 3.5rem 1rem;
+  color: var(--white-40, rgba(255,255,255,0.4));
+  font-size: 0.9rem;
+}
+.emptyState p { margin: 0.5rem 0 0; }
+
+/* ── Season detail header ─────────────────────────────────────────────────── */
+.seasonHeader {
+  padding: 1.5rem;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.08);
+  margin-bottom: 1.75rem;
+}
+
+.seasonHeaderTop {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.seasonHeaderLeft { flex: 1; }
+
+.seasonHeaderName {
+  font-size: 1.5rem;
+  font-weight: 900;
+  font-family: var(--font-display, sans-serif);
+  color: var(--white-90, #f0f0f0);
+  margin: 0 0 0.5rem;
+}
+
+.seasonHeaderBadges {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.75rem;
+}
+
+.seasonHeaderActions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.seasonDates {
+  display: flex;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid rgba(255,255,255,0.06);
+}
+
+.datePair {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.dateLabel {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--white-40, rgba(255,255,255,0.4));
+}
+
+.dateValue {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--white-70, rgba(255,255,255,0.7));
+}
+
+/* ── Section header ───────────────────────────────────────────────────────── */
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.sectionTitle {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--white-40, rgba(255,255,255,0.4));
+  margin: 0;
+}
+
+/* ── Division cards ───────────────────────────────────────────────────────── */
+.divisionGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.75rem;
+}
+
+.divisionCard {
+  padding: 1.25rem 1.5rem;
+  border-radius: 12px;
+  background: var(--surface, rgba(255,255,255,0.04));
+  border: 1px solid var(--border, rgba(255,255,255,0.08));
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.divisionCardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.divisionName {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--white-90, #f0f0f0);
+}
+
+.divisionCardActions {
+  display: flex;
+  gap: 0.35rem;
+}
+
+.divisionStats {
+  display: flex;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+}
+
+/* ── Capacity bar ─────────────────────────────────────────────────────────── */
+.capacityWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.capacityLabel {
+  font-size: 0.68rem;
+  color: var(--white-40, rgba(255,255,255,0.4));
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.capacityBar {
+  height: 6px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.capacityFill {
+  height: 100%;
+  border-radius: 3px;
+  background: var(--logic-lime, #a3e635);
+  transition: width 0.3s ease;
+}
+
+.capacityFillFull {
+  background: #f87171;
+}
+
+.capacityText {
+  font-size: 0.75rem;
+  color: var(--white-60, rgba(255,255,255,0.6));
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Division sub-links ───────────────────────────────────────────────────── */
+.divisionLinks {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  padding-top: 0.5rem;
+  border-top: 1px solid rgba(255,255,255,0.05);
+}
+
+.divisionLink {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--white-40, rgba(255,255,255,0.4));
+  text-decoration: none;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  border: 1px solid rgba(255,255,255,0.08);
+  transition: color 0.15s, border-color 0.15s;
+}
+.divisionLink:hover {
+  color: var(--blueprint-blue, #60a5fa);
+  border-color: rgba(96,165,250,0.3);
+}
+
+/* ── Lifecycle controls ───────────────────────────────────────────────────── */
+.lifecycleBar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.06);
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.lifecycleLabel {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--white-40, rgba(255,255,255,0.4));
+  margin-right: 0.25rem;
+}
+
+.lifecycleHint {
+  font-size: 0.78rem;
+  color: var(--white-30, rgba(255,255,255,0.3));
+  margin-left: auto;
+}
+
+/* ── Form fields ──────────────────────────────────────────────────────────── */
+.field { margin-bottom: 1.1rem; }
+.field:last-child { margin-bottom: 0; }
+
+.label {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--white-60, rgba(255,255,255,0.6));
+  margin-bottom: 0.4rem;
+}
+
+.input, .select, .textarea {
+  width: 100%;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 8px;
+  padding: 0.55rem 0.75rem;
+  color: var(--white-90, #f0f0f0);
+  font-size: 0.9rem;
+  box-sizing: border-box;
+  transition: border-color 0.15s;
+  font-family: inherit;
+}
+.input:focus, .select:focus, .textarea:focus {
+  outline: none;
+  border-color: var(--blueprint-blue, #60a5fa);
+}
+.select option { background: #1a1f2e; }
+.textarea { resize: vertical; min-height: 80px; }
+
+.hint {
+  font-size: 0.78rem;
+  color: var(--white-40, rgba(255,255,255,0.4));
+  margin: 0.3rem 0 0;
+}
+
+.formGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem 1rem;
+}
+.formGridFull { grid-column: 1 / -1; }
+
+/* ── Toggle (boolean fields) ──────────────────────────────────────────────── */
+.toggleRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.toggleRow:last-child { border-bottom: none; }
+
+.toggleInfo { flex: 1; }
+
+.toggleTitle {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--white-80, rgba(255,255,255,0.8));
+  margin-bottom: 0.2rem;
+}
+
+.toggleDesc {
+  font-size: 0.78rem;
+  color: var(--white-40, rgba(255,255,255,0.4));
+  line-height: 1.4;
+}
+
+.toggle {
+  position: relative;
+  width: 40px;
+  height: 22px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.toggle input { opacity: 0; width: 0; height: 0; }
+
+.toggleSlider {
+  position: absolute;
+  inset: 0;
+  background: rgba(255,255,255,0.1);
+  border-radius: 11px;
+  cursor: pointer;
+  transition: background 0.2s;
+  border: 1px solid rgba(255,255,255,0.12);
+}
+.toggleSlider::before {
+  content: '';
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  left: 2px;
+  top: 2px;
+  background: rgba(255,255,255,0.6);
+  border-radius: 50%;
+  transition: transform 0.2s, background 0.2s;
+}
+.toggle input:checked + .toggleSlider {
+  background: var(--logic-lime, #a3e635);
+  border-color: var(--logic-lime, #a3e635);
+}
+.toggle input:checked + .toggleSlider::before {
+  transform: translateX(18px);
+  background: #1a1f2e;
+}
+
+.automationSection {
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 10px;
+  padding: 0.75rem 1rem;
+  margin-top: 0.5rem;
+}
+
+.automationSectionTitle {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--white-40, rgba(255,255,255,0.4));
+  margin: 0 0 0.5rem;
+}
+
+/* ── Modals ───────────────────────────────────────────────────────────────── */
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.65);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  padding: 1rem;
+  overflow-y: auto;
+}
+
+.modal {
+  background: #1a1f2e;
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 14px;
+  width: 100%;
+  max-width: 560px;
+  padding: 1.5rem;
+  max-height: calc(100vh - 2rem);
+  overflow-y: auto;
+}
+
+.modalHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.25rem;
+}
+
+.modalTitle {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--white-90, #f0f0f0);
+  margin: 0;
+}
+
+.modalCloseBtn {
+  background: none;
+  border: none;
+  color: var(--white-40, rgba(255,255,255,0.4));
+  cursor: pointer;
+  padding: 0.25rem;
+  display: flex;
+  align-items: center;
+}
+.modalCloseBtn:hover { color: var(--white-80, rgba(255,255,255,0.8)); }
+
+.modalFooter {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255,255,255,0.07);
+}
+
+/* ── Action icon buttons ──────────────────────────────────────────────────── */
+.iconBtn {
+  background: none;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 6px;
+  padding: 0.3rem 0.45rem;
+  color: var(--white-40, rgba(255,255,255,0.4));
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+  display: flex;
+  align-items: center;
+  line-height: 1;
+}
+.iconBtn:hover          { color: var(--white-80, rgba(255,255,255,0.8)); border-color: rgba(255,255,255,0.25); }
+.iconBtnDanger:hover    { color: #f87171; border-color: rgba(248,113,113,0.4); }
+.iconBtn:disabled       { opacity: 0.3; cursor: not-allowed; }

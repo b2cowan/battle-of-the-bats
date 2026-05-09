@@ -18,20 +18,32 @@ export default function ResetPasswordPage() {
 
   useEffect(() => {
     const supabase = createClient();
+    let timer: ReturnType<typeof setTimeout> | null = null;
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === 'PASSWORD_RECOVERY') {
         setPageState('ready');
       }
     });
 
-    // If no PASSWORD_RECOVERY event fires within 3 seconds the token is missing/expired.
-    const timer = setTimeout(() => {
-      setPageState(prev => prev === 'waiting' ? 'expired' : prev);
-    }, 3000);
+    // PKCE flow: Supabase sends ?code=XXX in the URL. Exchange it so PASSWORD_RECOVERY fires.
+    const code = new URLSearchParams(window.location.search).get('code');
+    if (code) {
+      supabase.auth.exchangeCodeForSession(code).then(({ error }) => {
+        if (error) setPageState('expired');
+        // On success, onAuthStateChange fires PASSWORD_RECOVERY above.
+      });
+    } else {
+      // Implicit flow: Supabase detects the hash fragment automatically.
+      // If no PASSWORD_RECOVERY fires within 3 s, the token is missing or expired.
+      timer = setTimeout(() => {
+        setPageState(prev => prev === 'waiting' ? 'expired' : prev);
+      }, 3000);
+    }
 
     return () => {
       subscription.unsubscribe();
-      clearTimeout(timer);
+      if (timer) clearTimeout(timer);
     };
   }, []);
 

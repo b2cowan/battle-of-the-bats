@@ -165,3 +165,98 @@ export function paymentConfirmationHtml(p: {
     <p style="color:rgba(255,255,255,0.7);">Stay tuned for schedule announcements. We look forward to seeing you on the diamond!</p>
   `, p.contactEmail);
 }
+
+// ── House League registration emails ──────────────────────────────────────────
+
+export function leagueRegistrationApprovedHtml(p: {
+  playerFirstName: string;
+  playerLastName: string;
+  guardianFirstName: string;
+  seasonName: string;
+  divisionName: string;
+  registrationId: string;
+  contactEmail?: string;
+}) {
+  const ref = p.registrationId.slice(0, 8).toUpperCase();
+  return wrap(`
+    <h2 style="color:#22C55E;font-size:1.4rem;margin:0 0 1rem;">✅ Registration Approved!</h2>
+    <p>Hi <strong>${p.guardianFirstName}</strong>,</p>
+    <p>Great news — <strong>${p.playerFirstName} ${p.playerLastName}</strong>'s registration for <strong>${p.seasonName}</strong> has been approved.</p>
+    <div style="background:#1A1530;border:1px solid rgba(34,197,94,0.3);border-radius:8px;padding:1.25rem;margin:1.5rem 0;">
+      <p style="margin:0 0 0.5rem;font-weight:700;color:#22C55E;">Registration Details</p>
+      <p style="margin:0;line-height:1.8;">
+        Player: <strong>${p.playerFirstName} ${p.playerLastName}</strong><br>
+        Season: <strong>${p.seasonName}</strong><br>
+        Division: <strong>${p.divisionName}</strong><br>
+        Reference: <strong style="font-family:monospace;">#${ref}</strong>
+      </p>
+    </div>
+    <p style="color:rgba(255,255,255,0.7);">We look forward to seeing ${p.playerFirstName} on the field! Watch for further updates from your league administrator.</p>
+  `, p.contactEmail);
+}
+
+export function leagueRegistrationPendingHtml(p: {
+  playerFirstName: string;
+  playerLastName: string;
+  guardianFirstName: string;
+  seasonName: string;
+  divisionName: string;
+  registrationId: string;
+  contactEmail?: string;
+}) {
+  const ref = p.registrationId.slice(0, 8).toUpperCase();
+  return wrap(`
+    <h2 style="color:#fff;font-size:1.4rem;margin:0 0 1rem;">Registration Received</h2>
+    <p>Hi <strong>${p.guardianFirstName}</strong>,</p>
+    <p>We've received the registration for <strong>${p.playerFirstName} ${p.playerLastName}</strong> in <strong>${p.seasonName}</strong>. A league administrator will review it shortly.</p>
+    <div style="background:#1A1530;border:1px solid rgba(var(--primary-rgb),0.3);border-radius:8px;padding:1.25rem;margin:1.5rem 0;">
+      <p style="margin:0 0 0.5rem;font-weight:700;color:#A855F7;">Registration Details</p>
+      <p style="margin:0;line-height:1.8;">
+        Player: <strong>${p.playerFirstName} ${p.playerLastName}</strong><br>
+        Season: <strong>${p.seasonName}</strong><br>
+        Division: <strong>${p.divisionName}</strong><br>
+        Reference: <strong style="font-family:monospace;">#${ref}</strong>
+      </p>
+    </div>
+    <p style="color:rgba(255,255,255,0.7);">Your registration status is currently <strong style="color:#F59E0B;">pending review</strong>. You will receive another email once a decision has been made. No payment is required until your registration is approved.</p>
+  `, p.contactEmail);
+}
+
+export function leagueRegistrationWaitlistHtml(p: {
+  playerFirstName: string;
+  playerLastName: string;
+  guardianFirstName: string;
+  seasonName: string;
+  divisionName: string;
+  waitlistPosition: number;
+  registrationId: string;
+  contactEmail?: string;
+}) {
+  const ref = p.registrationId.slice(0, 8).toUpperCase();
+  return wrap(`
+    <h2 style="color:#F59E0B;font-size:1.4rem;margin:0 0 1rem;">You're on the Waitlist</h2>
+    <p>Hi <strong>${p.guardianFirstName}</strong>,</p>
+    <p>We've received the registration for <strong>${p.playerFirstName} ${p.playerLastName}</strong> for <strong>${p.seasonName}</strong>.</p>
+    <div style="background:#1A1530;border:1px solid rgba(245,158,11,0.3);border-radius:8px;padding:1.25rem;margin:1.5rem 0;">
+      <p style="margin:0 0 0.5rem;font-weight:700;color:#F59E0B;">Waitlist Status</p>
+      <p style="margin:0;line-height:1.8;">
+        Player: <strong>${p.playerFirstName} ${p.playerLastName}</strong><br>
+        Season: <strong>${p.seasonName}</strong><br>
+        Division: <strong>${p.divisionName}</strong><br>
+        Waitlist Position: <strong>#${p.waitlistPosition}</strong><br>
+        Reference: <strong style="font-family:monospace;">#${ref}</strong>
+      </p>
+    </div>
+    <p style="color:rgba(255,255,255,0.7);"><strong>${p.divisionName}</strong> is currently full. ${p.playerFirstName} has been added to the waitlist at position <strong>#${p.waitlistPosition}</strong>. You will be contacted if a spot becomes available.</p>
+  `, p.contactEmail);
+}
+
+export function passwordResetHtml(resetLink: string) {
+  return wrap(`
+    <h2 style="color:#fff;font-size:1.4rem;margin:0 0 1rem;">Reset Your Password</h2>
+    <p>We received a request to reset the password for your <strong>FieldLogicHQ</strong> account.</p>
+    <p style="color:rgba(255,255,255,0.7);">Click the button below to set a new password. This link expires in 1 hour.</p>
+    <a href="${resetLink}" style="display:inline-block;background:#8B2FC9;color:#fff;padding:0.75rem 1.75rem;border-radius:8px;text-decoration:none;font-weight:700;margin:1.5rem 0;">Reset Password &rarr;</a>
+    <p style="color:rgba(255,255,255,0.4);font-size:0.82rem;">If you didn't request a password reset, you can safely ignore this email. Your password will not change.</p>
+  `);
+}

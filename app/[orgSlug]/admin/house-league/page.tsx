@@ -1,0 +1,503 @@
+'use client';
+import { useState, useEffect, useCallback } from 'react';
+import Link from 'next/link';
+import { CalendarDays, X, Users } from 'lucide-react';
+import { useOrg } from '@/lib/org-context';
+import { hasCapability } from '@/lib/roles';
+import FeedbackModal from '@/components/FeedbackModal';
+import styles from './house-league.module.css';
+import type { LeagueSeason, LeagueSeasonSummary } from '@/lib/types';
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+function slugify(s: string): string {
+  return s
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '');
+}
+
+function formatDate(iso: string | null): string {
+  if (!iso) return '—';
+  return new Date(iso).toLocaleDateString('en-CA', { year: 'numeric', month: 'short', day: 'numeric' });
+}
+
+type StatusClass = keyof typeof STATUS_LABELS;
+const STATUS_LABELS: Record<string, string> = {
+  draft:                'Draft',
+  registration_open:    'Registration Open',
+  registration_closed:  'Registration Closed',
+  active:               'Active',
+  completed:            'Completed',
+  archived:             'Archived',
+};
+const STATUS_CSS: Record<string, string> = {
+  draft:                styles.statusDraft,
+  registration_open:    styles.statusRegistrationOpen,
+  registration_closed:  styles.statusRegistrationClosed,
+  active:               styles.statusActive,
+  completed:            styles.statusCompleted,
+  archived:             styles.statusArchived,
+};
+
+// ── Create season form state ───────────────────────────────────────────────────
+
+interface SeasonForm {
+  name: string;
+  slug: string;
+  sport: string;
+  ageGroup: string;
+  description: string;
+  seasonStartDate: string;
+  seasonEndDate: string;
+  registrationFee: string;
+  autoApproveUnderCapacity: boolean;
+  autoPromoteWaitlist: boolean;
+  autoGenerateFees: boolean;
+}
+
+const BLANK_FORM: SeasonForm = {
+  name: '',
+  slug: '',
+  sport: 'softball',
+  ageGroup: '',
+  description: '',
+  seasonStartDate: '',
+  seasonEndDate: '',
+  registrationFee: '',
+  autoApproveUnderCapacity: false,
+  autoPromoteWaitlist: false,
+  autoGenerateFees: false,
+};
+
+// ── Component ─────────────────────────────────────────────────────────────────
+
+export default function HouseLeaguePage() {
+  const { currentOrg, userRole, userCapabilities, loading } = useOrg();
+  const base = `/${currentOrg?.slug ?? ''}/admin`;
+  const isAdmin = userRole === 'owner' || userRole === 'league_admin';
+
+  const [summaries, setSummaries]     = useState<LeagueSeasonSummary[]>([]);
+  const [fetching,  setFetching]      = useState(true);
+  const [createOpen, setCreateOpen]   = useState(false);
+  const [form, setForm]               = useState<SeasonForm>(BLANK_FORM);
+  const [slugEdited, setSlugEdited]   = useState(false);
+  const [creating,  setCreating]      = useState(false);
+
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const [feedbackType, setFeedbackType] = useState<'success' | 'danger'>('success');
+  const [feedbackMsg,  setFeedbackMsg]  = useState('');
+
+  function showFeedback(type: 'success' | 'danger', msg: string) {
+    setFeedbackType(type); setFeedbackMsg(msg); setFeedbackOpen(true);
+  }
+
+  const load = useCallback(async () => {
+    setFetching(true);
+    try {
+      const res  = await fetch('/api/admin/house-league/seasons');
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? 'Failed to load');
+      setSummaries(data.seasons ?? []);
+    } catch (e: any) {
+      showFeedback('danger', e.message ?? 'Failed to load seasons.');
+    } finally {
+      setFetching(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (currentOrg) load();
+  }, [currentOrg, load]);
+
+  // Auto-derive slug from name unless user has manually edited it
+  function handleNameChange(name: string) {
+    setForm(f => ({
+      ...f,
+      name,
+      slug: slugEdited ? f.slug : slugify(name),
+    }));
+  }
+
+  function handleSlugChange(slug: string) {
+    setSlugEdited(true);
+    setForm(f => ({ ...f, slug: slug.toLowerCase().replace(/[^a-z0-9-]/g, '') }));
+  }
+
+  function openCreate() {
+    setForm(BLANK_FORM);
+    setSlugEdited(false);
+    setCreateOpen(true);
+  }
+
+  async function handleCreate() {
+    if (!form.name.trim() || !form.slug.trim()) return;
+    setCreating(true);
+    try {
+      const res = await fetch('/api/admin/house-league/seasons', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name:                     form.name.trim(),
+          slug:                     form.slug.trim(),
+          sport:                    form.sport || 'softball',
+          ageGroup:                 form.ageGroup.trim() || null,
+          description:              form.description.trim() || null,
+          seasonStartDate:          form.seasonStartDate || null,
+          seasonEndDate:            form.seasonEndDate   || null,
+          registrationFee:          form.registrationFee ? parseFloat(form.registrationFee) : null,
+          autoApproveUnderCapacity: form.autoApproveUnderCapacity,
+          autoPromoteWaitlist:      form.autoPromoteWaitlist,
+          autoGenerateFees:         form.autoGenerateFees,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? 'Failed to create season');
+      setCreateOpen(false);
+      await load();
+      showFeedback('success', `Season "${form.name}" created.`);
+    } catch (e: any) {
+      showFeedback('danger', e.message ?? 'Failed to create season.');
+    } finally {
+      setCreating(false);
+    }
+  }
+
+  // ── Render ──────────────────────────────────────────────────────────────────
+
+  if (loading) return <p className={styles.muted}>Loading…</p>;
+
+  if (!userRole || !hasCapability(userRole, userCapabilities, 'module_house_league')) {
+    return (
+      <div className={styles.accessDenied}>
+        <Users size={32} />
+        <h2>Access Restricted</h2>
+        <p>You don&apos;t have access to the House League module. Contact your organization owner to enable it.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className={styles.page}>
+      <div className={styles.pageHeader}>
+        <div className={styles.pageHeaderLeft}>
+          <div className={styles.headerIcon}><CalendarDays size={20} /></div>
+          <div>
+            <h1 className={styles.pageTitle}>House League</h1>
+            <p className={styles.pageSub}>{currentOrg?.name} — all seasons</p>
+          </div>
+        </div>
+        {isAdmin && (
+          <button type="button" className="btn btn-primary" onClick={openCreate}>
+            + Create Season
+          </button>
+        )}
+      </div>
+
+      {fetching ? (
+        <p className={styles.muted}>Loading…</p>
+      ) : summaries.length === 0 ? (
+        <div className={styles.emptyState}>
+          <CalendarDays size={28} style={{ opacity: 0.3, margin: '0 auto 0.75rem', display: 'block' }} />
+          <p>No seasons yet.</p>
+          {isAdmin && (
+            <p>
+              <button type="button" className="btn btn-secondary" style={{ marginTop: '0.75rem' }} onClick={openCreate}>
+                Create your first season
+              </button>
+            </p>
+          )}
+        </div>
+      ) : (
+        <div className={styles.seasonGrid}>
+          {summaries.map(({ season, activeRegistrationCount, waitlistCount, pendingReviewCount, divisionCount }) => (
+            <SeasonCard
+              key={season.id}
+              season={season}
+              activeCount={activeRegistrationCount}
+              waitlistCount={waitlistCount}
+              pendingCount={pendingReviewCount}
+              divisionCount={divisionCount}
+              base={base}
+              isAdmin={isAdmin}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Create Season modal */}
+      {createOpen && (
+        <div className={styles.modalOverlay} onClick={() => setCreateOpen(false)}>
+          <div className={styles.modal} onClick={e => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <h3 className={styles.modalTitle}>Create Season</h3>
+              <button className={styles.modalCloseBtn} onClick={() => setCreateOpen(false)}><X size={16} /></button>
+            </div>
+
+            <div className={styles.formGrid}>
+              <div className={`${styles.field} ${styles.formGridFull}`}>
+                <label className={styles.label} htmlFor="hl-name">Season Name <span style={{ color: '#f87171' }}>*</span></label>
+                <input
+                  id="hl-name"
+                  className={styles.input}
+                  type="text"
+                  value={form.name}
+                  onChange={e => handleNameChange(e.target.value)}
+                  placeholder="e.g. U11 Summer 2025"
+                  maxLength={120}
+                  autoFocus
+                />
+              </div>
+
+              <div className={`${styles.field} ${styles.formGridFull}`}>
+                <label className={styles.label} htmlFor="hl-slug">Slug <span style={{ color: '#f87171' }}>*</span></label>
+                <input
+                  id="hl-slug"
+                  className={styles.input}
+                  type="text"
+                  value={form.slug}
+                  onChange={e => handleSlugChange(e.target.value)}
+                  placeholder="e.g. u11-summer-2025"
+                />
+                <p className={styles.hint}>Used in public URLs. Lowercase letters, numbers, and hyphens only.</p>
+              </div>
+
+              <div className={styles.field}>
+                <label className={styles.label} htmlFor="hl-sport">Sport</label>
+                <select
+                  id="hl-sport"
+                  className={styles.select}
+                  value={form.sport}
+                  onChange={e => setForm(f => ({ ...f, sport: e.target.value }))}
+                >
+                  <option value="softball">Softball</option>
+                  <option value="baseball">Baseball</option>
+                  <option value="hockey">Hockey</option>
+                  <option value="soccer">Soccer</option>
+                  <option value="basketball">Basketball</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+
+              <div className={styles.field}>
+                <label className={styles.label} htmlFor="hl-age-group">Age Group</label>
+                <input
+                  id="hl-age-group"
+                  className={styles.input}
+                  type="text"
+                  value={form.ageGroup}
+                  onChange={e => setForm(f => ({ ...f, ageGroup: e.target.value }))}
+                  placeholder="e.g. U11, U13, Adult"
+                  maxLength={30}
+                />
+              </div>
+
+              <div className={styles.field}>
+                <label className={styles.label} htmlFor="hl-start">Season Start</label>
+                <input
+                  id="hl-start"
+                  className={styles.input}
+                  type="date"
+                  value={form.seasonStartDate}
+                  onChange={e => setForm(f => ({ ...f, seasonStartDate: e.target.value }))}
+                />
+              </div>
+
+              <div className={styles.field}>
+                <label className={styles.label} htmlFor="hl-end">Season End</label>
+                <input
+                  id="hl-end"
+                  className={styles.input}
+                  type="date"
+                  value={form.seasonEndDate}
+                  onChange={e => setForm(f => ({ ...f, seasonEndDate: e.target.value }))}
+                />
+              </div>
+
+              <div className={`${styles.field} ${styles.formGridFull}`}>
+                <label className={styles.label} htmlFor="hl-desc">Description</label>
+                <textarea
+                  id="hl-desc"
+                  className={styles.textarea}
+                  value={form.description}
+                  onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
+                  placeholder="Optional description shown on the public registration page"
+                  rows={3}
+                />
+              </div>
+
+              <div className={`${styles.field} ${styles.formGridFull}`}>
+                <label className={styles.label} htmlFor="hl-fee">Registration Fee (CAD)</label>
+                <input
+                  id="hl-fee"
+                  className={styles.input}
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={form.registrationFee}
+                  onChange={e => setForm(f => ({ ...f, registrationFee: e.target.value }))}
+                  placeholder="e.g. 150.00 (display-only; fees are not collected here)"
+                />
+              </div>
+            </div>
+
+            {/* Automation section */}
+            <div className={styles.automationSection} style={{ marginTop: '1rem' }}>
+              <p className={styles.automationSectionTitle}>Automation</p>
+
+              <div className={styles.toggleRow}>
+                <div className={styles.toggleInfo}>
+                  <div className={styles.toggleTitle}>Auto-approve registrations</div>
+                  <div className={styles.toggleDesc}>
+                    Automatically approve submissions while a division has open spots. New registrations go directly to Active status without manual review.
+                  </div>
+                </div>
+                <label className={styles.toggle}>
+                  <input
+                    type="checkbox"
+                    checked={form.autoApproveUnderCapacity}
+                    onChange={e => setForm(f => ({ ...f, autoApproveUnderCapacity: e.target.checked }))}
+                  />
+                  <span className={styles.toggleSlider} />
+                </label>
+              </div>
+
+              <div className={styles.toggleRow}>
+                <div className={styles.toggleInfo}>
+                  <div className={styles.toggleTitle}>Auto-promote from waitlist</div>
+                  <div className={styles.toggleDesc}>
+                    Automatically move the next waitlisted player to Active when a spot opens due to a withdrawal or decline.
+                  </div>
+                </div>
+                <label className={styles.toggle}>
+                  <input
+                    type="checkbox"
+                    checked={form.autoPromoteWaitlist}
+                    onChange={e => setForm(f => ({ ...f, autoPromoteWaitlist: e.target.checked }))}
+                  />
+                  <span className={styles.toggleSlider} />
+                </label>
+              </div>
+
+              <div className={styles.toggleRow}>
+                <div className={styles.toggleInfo}>
+                  <div className={styles.toggleTitle}>Auto-generate fee entries</div>
+                  <div className={styles.toggleDesc}>
+                    Create an accounting entry when a registration is approved (requires Accounting module).
+                  </div>
+                </div>
+                <label className={styles.toggle}>
+                  <input
+                    type="checkbox"
+                    checked={form.autoGenerateFees}
+                    onChange={e => setForm(f => ({ ...f, autoGenerateFees: e.target.checked }))}
+                  />
+                  <span className={styles.toggleSlider} />
+                </label>
+              </div>
+            </div>
+
+            <div className={styles.modalFooter}>
+              <button type="button" className="btn btn-ghost" onClick={() => setCreateOpen(false)}>Cancel</button>
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={handleCreate}
+                disabled={creating || !form.name.trim() || !form.slug.trim()}
+              >
+                {creating ? 'Creating…' : 'Create Season'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <FeedbackModal
+        isOpen={feedbackOpen}
+        onClose={() => setFeedbackOpen(false)}
+        title={feedbackType === 'success' ? 'Done' : 'Error'}
+        message={feedbackMsg}
+        type={feedbackType}
+      />
+    </div>
+  );
+}
+
+// ── Season Card ────────────────────────────────────────────────────────────────
+
+function SeasonCard({
+  season,
+  activeCount,
+  waitlistCount,
+  pendingCount,
+  divisionCount,
+  base,
+  isAdmin,
+}: {
+  season: LeagueSeason;
+  activeCount: number;
+  waitlistCount: number;
+  pendingCount: number;
+  divisionCount: number;
+  base: string;
+  isAdmin: boolean;
+}) {
+  const href = `${base}/house-league/seasons/${season.id}`;
+
+  return (
+    <div className={styles.seasonCard}>
+      <div className={styles.seasonCardTop}>
+        <span className={styles.seasonName}>{season.name}</span>
+      </div>
+
+      <div className={styles.seasonCardMeta}>
+        {season.ageGroup && (
+          <span className={styles.ageGroupBadge}>{season.ageGroup}</span>
+        )}
+        <span className={`${styles.statusBadge} ${STATUS_CSS[season.status] ?? ''}`}>
+          {STATUS_LABELS[season.status] ?? season.status}
+        </span>
+      </div>
+
+      <div className={styles.seasonStats}>
+        <div className={styles.statItem}>
+          <span className={styles.statLabel}>Active</span>
+          <span className={styles.statValue}>{activeCount}</span>
+        </div>
+        {pendingCount > 0 && (
+          <div className={styles.statItem}>
+            <span className={styles.statLabel}>Pending</span>
+            <span className={styles.statValue}>{pendingCount}</span>
+          </div>
+        )}
+        {waitlistCount > 0 && (
+          <div className={styles.statItem}>
+            <span className={styles.statLabel}>Waitlist</span>
+            <span className={styles.statValue}>{waitlistCount}</span>
+          </div>
+        )}
+        <div className={styles.statItem}>
+          <span className={styles.statLabel}>Divisions</span>
+          <span className={styles.statValue}>{divisionCount}</span>
+        </div>
+      </div>
+
+      {(season.seasonStartDate || season.seasonEndDate) && (
+        <p style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.35)', margin: '0 0 0.75rem' }}>
+          {season.seasonStartDate ? formatDate(season.seasonStartDate) : '?'}
+          {' — '}
+          {season.seasonEndDate ? formatDate(season.seasonEndDate) : '?'}
+        </p>
+      )}
+
+      <div className={styles.seasonCardActions}>
+        <Link href={href} className="btn btn-secondary" style={{ fontSize: '0.8rem', padding: '0.35rem 0.75rem' }}>
+          View Season →
+        </Link>
+      </div>
+    </div>
+  );
+}
