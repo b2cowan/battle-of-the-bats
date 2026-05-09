@@ -2,7 +2,7 @@
 
 **Phase 5 of PLATFORM_ROADMAP.md** — Seasonal recreational league management.
 
-**Status:** In progress — Migration 020, C2 role expansion, Phase 5B (types + DB helpers) complete. Phase 5C shell (C3 sidebar nav, C4 hub tile, C5 layout passthrough) complete. Phase 5D next (confirm before proceeding).
+**Status:** In progress — Migration 020, C2 role expansion, Phase 5B (types + DB helpers) complete. Phase 5C shell (C3 sidebar nav, C4 hub tile, C5 layout passthrough) complete. Phase 5D (season + division management API + admin pages) complete — pending browser verification. Phase 5E (public registration form: API route, email templates, landing page, RegisterForm client component) complete — pending browser verification. Phase 5F (registration management admin) next — confirm before proceeding.
 
 **Answers to pre-implementation questions:**
 - Q1/Q2: A season represents one age group (e.g., "U11 Summer 2025"). Each age group gets its own season entity. Within a season, optional divisions allow large age groups to be split into independent sub-groups with separate schedules and standings.
@@ -682,7 +682,7 @@ export default function HouseLeagueLayout({ children }: { children: React.ReactN
 
 ---
 
-## Phase 5D — Season + Division Management
+## Phase 5D — Season + Division Management ✅ Complete
 
 ### API Routes
 
@@ -758,7 +758,7 @@ Owner / `league_admin` only: division creation, season settings edit, lifecycle 
 
 ---
 
-## Phase 5E — Public Registration Form (C5 Pattern)
+## Phase 5E — Public Registration Form (C5 Pattern) ✅ Complete
 
 This is the first public-facing form in the platform. The pattern established here is reused by Phase 6 (rep team tryout signups).
 
@@ -1267,7 +1267,7 @@ Follow the Module Build Checklist testing pattern from PLATFORM_ROADMAP.md:
 2. ✅ **C2 role model expansion** — types.ts + roles.ts + ROLE_DEFAULTS + accounting route updates for `treasurer`
 3. ✅ **B1, B2** — TypeScript types and DB helpers
 4. ✅ **5C: E3, E4, C5** — Sidebar, hub tile, layout passthrough (validate the shell before building pages)
-5. **5D** — Season + division management API + admin pages
+5. ✅ **5D** — Season + division management API + admin pages
 6. **5E** — Public registration form + public API route + confirmation emails
 7. **5F** — Registration management admin page
 8. **5G** — Team creation + placement tools (randomize + manual); draft mode can follow immediately after
