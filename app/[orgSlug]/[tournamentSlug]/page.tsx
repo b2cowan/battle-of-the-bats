@@ -119,9 +119,7 @@ export default async function TournamentHomePage({
           </div>
 
           <h1 className={`display-xl ${styles.heroTitle}`}>
-            BATTLE<br />
-            <span className={styles.heroAccent}>OF THE</span><br />
-            BATS
+            {tournament.name}
           </h1>
           <p className={styles.heroSub}>
             The premier youth softball tournament hosted by the <strong>{org.name}</strong>.{' '}

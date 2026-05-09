@@ -48,6 +48,17 @@ export const ROLE_DEFAULTS: Record<OrgRole, Set<Capability>> = {
     'module_tournaments',
   ]),
   official: new Set<Capability>(['submit_scores']),
+  league_admin: new Set<Capability>([
+    'module_house_league',
+    'module_members',
+  ]),
+  league_registrar: new Set<Capability>([
+    'module_house_league',
+  ]),
+  treasurer: new Set<Capability>([
+    'module_accounting',
+    'module_members',
+  ]),
 };
 
 export const ALL_CAPABILITY_KEYS: Capability[] = [

@@ -23,22 +23,22 @@ This file tracks the ongoing tasks for the tournament website project. AI models
 - [x] **Phase 1** — Archives B2: back-to-admin link on public archive detail pages
 - [x] **Phase 2** — Plan entitlements architecture: `moduleEntitlements` in PlanConfig, `enabled_addons` migration, `hasModuleEntitlement()` helper
 - [x] **Phase 3** — `module_public_site` (see [docs/archive/PUBLIC_SITE_MODULE_PLAN.md](docs/archive/PUBLIC_SITE_MODULE_PLAN.md))
-- [ ] **Phase 4** — `module_accounting` (see [ACCOUNTING_MODULE_PLAN.md](ACCOUNTING_MODULE_PLAN.md))
-- [ ] **Phase 5** — `module_house_league` (requires plan file first)
+- [x] **Phase 4** — `module_accounting` (see [ACCOUNTING_MODULE_PLAN.md](ACCOUNTING_MODULE_PLAN.md))
+- [~] **Phase 5** — `module_house_league` (see [HOUSE_LEAGUE_MODULE_PLAN.md](HOUSE_LEAGUE_MODULE_PLAN.md)) — Migration 020, C2 role expansion, Phase 5B types+helpers complete. Phase 5C shell (sidebar nav, hub tile, layout passthrough) complete. Phase 5D (season/division API + pages) next — confirm before proceeding.
 - [ ] **Phase 6** — `module_rep_teams` (requires plan file first)
 
 ### 2. Future Product Modules (detail)
 *Recommended build order: Accounting → House League → Rep Teams. Each requires its own detailed plan file before implementation begins.*
 
 - [x] **Public Website Module (`module_public_site`)** — Shipped. (see [docs/archive/PUBLIC_SITE_MODULE_PLAN.md](docs/archive/PUBLIC_SITE_MODULE_PLAN.md))
-- [ ] **Accounting Module (`module_accounting`)** — The org's own financial management: income/expense tracking, tournament ledgers, inter-ledger transfers. Plan: [ACCOUNTING_MODULE_PLAN.md](ACCOUNTING_MODULE_PLAN.md).
-- [ ] **House League Module (`module_house_league`)** — Season-long recreational league management: player registration, waitlists, team placement, scheduling, standings. Requires plan file.
+- [x] **Accounting Module (`module_accounting`)** — The org's own financial management: income/expense tracking, tournament ledgers, inter-ledger transfers. Plan: [ACCOUNTING_MODULE_PLAN.md](ACCOUNTING_MODULE_PLAN.md).
+- [~] **House League Module (`module_house_league`)** — Season-long recreational league management: player registration, waitlists, team placement, scheduling, standings. Plan: [HOUSE_LEAGUE_MODULE_PLAN.md](HOUSE_LEAGUE_MODULE_PLAN.md). Steps 1–4 (migration, roles, types+helpers, 5C shell) complete.
 - [ ] **Rep Team Module (`module_rep_teams`)** — Competitive team program management: coaches portal, rosters, tryout management, player documents, accounting integration. Requires plan file.
 
 ### 3. Tournament Landing Page Polish
 *One outstanding item from the completed Tournament Redesign project*
 
-- [ ] **Tournament Landing Page Review** — Polish `app/[orgSlug]/[tournamentSlug]/page.tsx`: make hero title dynamic from `org.name` (replace hardcoded "BATTLE OF THE BATS"), review copy/layout for multi-tenant correctness, consider adding a registration CTA when registration is open
+- [x] **Tournament Landing Page Review** — Hero title now dynamic from `tournament.name`; remaining polish (registration CTA) deferred
 
 ### 4. Multi-Tenancy — Billing & Subscriptions
 *Detailed tasks in [MULTI_TENANT_ARCHITECTURE.md](MULTI_TENANT_ARCHITECTURE.md)*
@@ -47,7 +47,7 @@ This file tracks the ongoing tasks for the tournament website project. AI models
 
 ### 5. Code Quality — Pre-existing TypeScript Errors in `lib/db.ts`
 
-- [ ] **Fix 9 implicit `any` parameters in row-mapper callbacks** — `getDiamonds`, `getContacts`, `getAgeGroups`, `getPools`, `getTeams`, `getGames`, `getAnnouncements`, `getRules`, `getResources` (each `.map()` callback param needs `: any`). Also remove unused `fileExt` var and unused `data` destructure in `uploadResourceFile`. All pre-existing; discovered during accounting module work. One small commit, no behaviour change.
+- [x] **Fix 9 implicit `any` parameters in row-mapper callbacks** — `getDiamonds`, `getContacts`, `getAgeGroups`, `getPools`, `getTeams`, `getGames`, `getAnnouncements`, `getRules`, `getResources` (each `.map()` callback param needs `: any`). Also remove unused `fileExt` var and unused `data` destructure in `uploadResourceFile`. All pre-existing; discovered during accounting module work. One small commit, no behaviour change.
 
 ### 6. Infrastructure — Dev Environment
 - [ ] **AWS Amplify Hosting Strategy**:

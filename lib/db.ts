@@ -1,7 +1,7 @@
 import { supabase } from './supabase';
 import { supabaseAdmin } from './supabase-admin';
 import { createClient as createBrowserSupabaseClient } from './supabase-browser';
-import { Tournament, TournamentStatus, Diamond, Contact, AgeGroup, Pool, Team, Game, Announcement, PlayoffConfig, RuleSection, RuleItem, Resource, Organization, OrganizationMember, OrgPlan, OrgRole, TournamentArchive, OrgPublicSiteContent, AccountingLedger, AccountingEntry, LedgerSummary, AccountingEntryStatus, AccountingEntryType } from './types';
+import { Tournament, TournamentStatus, Diamond, Contact, AgeGroup, Pool, Team, Game, Announcement, PlayoffConfig, RuleSection, RuleItem, Resource, Organization, OrganizationMember, OrgPlan, OrgRole, TournamentArchive, OrgPublicSiteContent, AccountingLedger, AccountingEntry, LedgerSummary, AccountingEntryStatus, AccountingEntryType, LeagueSeason, LeagueDivision, LeagueTeam, LeagueRegistration, LeagueGame, LeagueStandingsRow, LeagueSeasonSummary, LeagueRegistrationStatus, LeagueSeasonStatus } from './types';
 
 // Use the SSR browser client (cookie-based session) for writes that need auth;
 // falls back to anon client on the server where there is no window.
@@ -185,7 +185,7 @@ export async function getDiamonds(tournamentId?: string): Promise<Diamond[]> {
     if (error) console.error('getDiamonds error', error);
     return [];
   }
-  return data.map(d => ({ id: d.id, tournamentId: d.tournament_id, name: d.name, address: d.address, notes: d.notes }));
+  return data.map((d: any) => ({ id: d.id, tournamentId: d.tournament_id, name: d.name, address: d.address, notes: d.notes }));
 }
 
 export async function saveDiamond(d: Omit<Diamond, 'id'>): Promise<void> {
@@ -219,7 +219,7 @@ export async function getContacts(tournamentId?: string): Promise<Contact[]> {
     if (error) console.error('getContacts error', error);
     return [];
   }
-  return data.map(c => ({
+  return data.map((c: any) => ({
     id: c.id,
     tournamentId: c.tournament_id,
     name: c.name,
@@ -262,7 +262,7 @@ export async function getAgeGroups(tournamentId?: string): Promise<AgeGroup[]> {
     if (error) console.error('getAgeGroups error', error);
     return [];
   }
-  return data.map(g => ({
+  return data.map((g: any) => ({
     id: g.id,
     tournamentId: g.tournament_id,
     name: g.name,
@@ -330,7 +330,7 @@ export async function getPools(ageGroupId: string): Promise<Pool[]> {
     .eq('age_group_id', ageGroupId)
     .order('display_order', { ascending: true });
   if (error || !data) return [];
-  return data.map(p => ({
+  return data.map((p: any) => ({
     id: p.id,
     ageGroupId: p.age_group_id,
     name: p.name,
@@ -365,7 +365,7 @@ export async function getTeams(tournamentId?: string): Promise<Team[]> {
     if (error) console.error('getTeams error', error);
     return [];
   }
-  return data.map(t => ({
+  return data.map((t: any) => ({
     id: t.id,
     tournamentId: t.tournament_id,
     ageGroupId: t.age_group_id,
@@ -431,7 +431,7 @@ export async function getGames(tournamentId?: string): Promise<Game[]> {
     if (error) console.error('getGames error', error);
     return [];
   }
-  return data.map(g => ({
+  return data.map((g: any) => ({
     id: g.id,
     tournamentId: g.tournament_id,
     ageGroupId: g.age_group_id,
@@ -646,7 +646,7 @@ export async function getAnnouncements(tournamentId?: string): Promise<Announcem
     if (error) console.error('getAnnouncements error', error);
     return [];
   }
-  return data.map(a => ({
+  return data.map((a: any) => ({
     id: a.id,
     tournamentId: a.tournament_id,
     title: a.title,
@@ -883,7 +883,7 @@ export async function getRules(tournamentId: string): Promise<RuleSection[]> {
 
   if (error || !data) return [];
 
-  return data.map(r => ({
+  return data.map((r: any) => ({
     id: r.id,
     tournamentId: r.tournament_id,
     title: r.title,
@@ -1012,7 +1012,7 @@ export async function getResources(tournamentId: string): Promise<Resource[]> {
 
   if (error || !data) return [];
 
-  return data.map(r => ({
+  return data.map((r: any) => ({
     id: r.id,
     tournamentId: r.tournament_id,
     label: r.label,
@@ -1061,14 +1061,11 @@ export async function deleteResource(id: string): Promise<void> {
 
 export async function uploadResourceFile(file: File): Promise<string | null> {
   try {
-    const fileExt = file.name.split('.').pop();
-    // Use original name + timestamp to ensure uniqueness but keep it readable
     const cleanName = file.name.replace(/[^\w\s\.\-]/gi, '').replace(/\s+/g, '_');
     const fileName = `${Date.now()}-${cleanName}`;
-    // Path within the bucket
     const filePath = fileName;
 
-    const { error, data } = await supabase.storage
+    const { error } = await supabase.storage
       .from('resources')
       .upload(filePath, file, {
         cacheControl: '3600',
@@ -1583,4 +1580,573 @@ function mapEntry(row: any): AccountingEntry {
     createdAt:      row.created_at,
     updatedAt:      row.updated_at,
   };
+}
+
+// ── House League Module ───────────────────────────────────────────────────────
+
+// ─── Input shapes ─────────────────────────────────────────────────────────────
+
+export interface LeagueSeasonInput {
+  name: string;
+  slug: string;
+  sport?: string;
+  ageGroup?: string | null;
+  description?: string | null;
+  registrationFee?: number | null;
+  autoGenerateFees?: boolean;
+  autoApproveUnderCapacity?: boolean;
+  autoPromoteWaitlist?: boolean;
+  registrationOpenAt?: string | null;
+  registrationCloseAt?: string | null;
+  seasonStartDate?: string | null;
+  seasonEndDate?: string | null;
+  waiverText?: string | null;
+}
+
+export interface LeagueTeamInput {
+  name: string;
+  color?: string | null;
+  coachName?: string | null;
+  sortOrder?: number;
+}
+
+export interface LeagueGameInput {
+  seasonId: string;
+  divisionId: string;
+  homeTeamId: string;
+  awayTeamId: string;
+  scheduledAt?: string | null;
+  location?: string | null;
+  notes?: string | null;
+}
+
+export interface PublicRegistrationInput {
+  seasonId: string;
+  divisionId: string | null;
+  playerFirstName: string;
+  playerLastName: string;
+  playerDateOfBirth?: string | null;
+  playerJerseyPref?: string | null;
+  playerPositionPref?: string | null;
+  playerNotes?: string | null;
+  guardianFirstName: string;
+  guardianLastName: string;
+  guardianEmail: string;
+  guardianPhone?: string | null;
+  status?: LeagueRegistrationStatus;
+  waitlistPosition?: number | null;
+  source?: 'public_form' | 'admin_manual';
+}
+
+// ─── Mappers ──────────────────────────────────────────────────────────────────
+
+function mapLeagueSeason(row: any): LeagueSeason {
+  return {
+    id:                        row.id,
+    orgId:                     row.org_id,
+    name:                      row.name,
+    slug:                      row.slug,
+    sport:                     row.sport,
+    ageGroup:                  row.age_group ?? null,
+    status:                    row.status,
+    description:               row.description ?? null,
+    registrationFee:           row.registration_fee != null ? Number(row.registration_fee) : null,
+    autoGenerateFees:          row.auto_generate_fees,
+    autoApproveUnderCapacity:  row.auto_approve_under_capacity,
+    autoPromoteWaitlist:       row.auto_promote_waitlist,
+    registrationOpenAt:        row.registration_open_at ?? null,
+    registrationCloseAt:       row.registration_close_at ?? null,
+    seasonStartDate:           row.season_start_date ?? null,
+    seasonEndDate:             row.season_end_date ?? null,
+    waiverText:                row.waiver_text ?? null,
+    createdAt:                 row.created_at,
+    updatedAt:                 row.updated_at,
+  };
+}
+
+function mapLeagueDivision(row: any): LeagueDivision {
+  return {
+    id:        row.id,
+    seasonId:  row.season_id,
+    name:      row.name,
+    capacity:  row.capacity ?? null,
+    sortOrder: row.sort_order,
+    createdAt: row.created_at,
+  };
+}
+
+function mapLeagueTeam(row: any): LeagueTeam {
+  return {
+    id:         row.id,
+    seasonId:   row.season_id,
+    divisionId: row.division_id,
+    name:       row.name,
+    color:      row.color ?? null,
+    coachName:  row.coach_name ?? null,
+    sortOrder:  row.sort_order,
+    createdAt:  row.created_at,
+  };
+}
+
+function mapLeagueRegistration(row: any): LeagueRegistration {
+  return {
+    id:                  row.id,
+    seasonId:            row.season_id,
+    divisionId:          row.division_id ?? null,
+    playerFirstName:     row.player_first_name,
+    playerLastName:      row.player_last_name,
+    playerDateOfBirth:   row.player_date_of_birth ?? null,
+    playerJerseyPref:    row.player_jersey_pref ?? null,
+    playerPositionPref:  row.player_position_pref ?? null,
+    playerNotes:         row.player_notes ?? null,
+    guardianFirstName:   row.guardian_first_name,
+    guardianLastName:    row.guardian_last_name,
+    guardianEmail:       row.guardian_email,
+    guardianPhone:       row.guardian_phone ?? null,
+    status:              row.status,
+    waitlistPosition:    row.waitlist_position ?? null,
+    teamId:              row.team_id ?? null,
+    registrationFeePaid: row.registration_fee_paid,
+    feeEntryId:          row.fee_entry_id ?? null,
+    adminNotes:          row.admin_notes ?? null,
+    source:              row.source,
+    registeredAt:        row.registered_at,
+    updatedAt:           row.updated_at,
+  };
+}
+
+function mapLeagueGame(row: any): LeagueGame {
+  return {
+    id:          row.id,
+    seasonId:    row.season_id,
+    divisionId:  row.division_id,
+    homeTeamId:  row.home_team_id,
+    awayTeamId:  row.away_team_id,
+    scheduledAt: row.scheduled_at ?? null,
+    location:    row.location ?? null,
+    homeScore:   row.home_score ?? null,
+    awayScore:   row.away_score ?? null,
+    status:      row.status,
+    notes:       row.notes ?? null,
+    createdAt:   row.created_at,
+    updatedAt:   row.updated_at,
+  };
+}
+
+// ─── Season helpers ───────────────────────────────────────────────────────────
+
+export async function getLeagueSeasons(orgId: string): Promise<LeagueSeason[]> {
+  const { data } = await supabaseAdmin
+    .from('league_seasons')
+    .select('*')
+    .eq('org_id', orgId)
+    .order('created_at', { ascending: false });
+  return (data ?? []).map(mapLeagueSeason);
+}
+
+export async function getLeagueSeasonBySlug(orgId: string, slug: string): Promise<LeagueSeason | null> {
+  const { data } = await supabaseAdmin
+    .from('league_seasons')
+    .select('*')
+    .eq('org_id', orgId)
+    .eq('slug', slug)
+    .maybeSingle();
+  return data ? mapLeagueSeason(data) : null;
+}
+
+export async function getLeagueSeasonById(seasonId: string, orgId: string): Promise<LeagueSeason | null> {
+  const { data } = await supabaseAdmin
+    .from('league_seasons')
+    .select('*')
+    .eq('id', seasonId)
+    .eq('org_id', orgId)
+    .maybeSingle();
+  return data ? mapLeagueSeason(data) : null;
+}
+
+export async function createLeagueSeason(orgId: string, input: LeagueSeasonInput): Promise<LeagueSeason> {
+  const { data } = await supabaseAdmin
+    .from('league_seasons')
+    .insert({
+      org_id:                      orgId,
+      name:                        input.name,
+      slug:                        input.slug,
+      sport:                       input.sport ?? 'softball',
+      age_group:                   input.ageGroup ?? null,
+      description:                 input.description ?? null,
+      registration_fee:            input.registrationFee ?? null,
+      auto_generate_fees:          input.autoGenerateFees ?? false,
+      auto_approve_under_capacity: input.autoApproveUnderCapacity ?? false,
+      auto_promote_waitlist:       input.autoPromoteWaitlist ?? false,
+      registration_open_at:        input.registrationOpenAt ?? null,
+      registration_close_at:       input.registrationCloseAt ?? null,
+      season_start_date:           input.seasonStartDate ?? null,
+      season_end_date:             input.seasonEndDate ?? null,
+      waiver_text:                 input.waiverText ?? null,
+    })
+    .select()
+    .single();
+  return mapLeagueSeason(data!);
+}
+
+export async function updateLeagueSeason(
+  seasonId: string,
+  orgId: string,
+  input: Partial<LeagueSeasonInput> & { status?: LeagueSeasonStatus }
+): Promise<void> {
+  const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
+  if (input.name                      !== undefined) patch.name                        = input.name;
+  if (input.slug                      !== undefined) patch.slug                        = input.slug;
+  if (input.sport                     !== undefined) patch.sport                       = input.sport;
+  if (input.ageGroup                  !== undefined) patch.age_group                   = input.ageGroup;
+  if (input.description               !== undefined) patch.description                 = input.description;
+  if (input.registrationFee           !== undefined) patch.registration_fee            = input.registrationFee;
+  if (input.autoGenerateFees          !== undefined) patch.auto_generate_fees          = input.autoGenerateFees;
+  if (input.autoApproveUnderCapacity  !== undefined) patch.auto_approve_under_capacity = input.autoApproveUnderCapacity;
+  if (input.autoPromoteWaitlist       !== undefined) patch.auto_promote_waitlist       = input.autoPromoteWaitlist;
+  if (input.registrationOpenAt        !== undefined) patch.registration_open_at        = input.registrationOpenAt;
+  if (input.registrationCloseAt       !== undefined) patch.registration_close_at       = input.registrationCloseAt;
+  if (input.seasonStartDate           !== undefined) patch.season_start_date           = input.seasonStartDate;
+  if (input.seasonEndDate             !== undefined) patch.season_end_date             = input.seasonEndDate;
+  if (input.waiverText                !== undefined) patch.waiver_text                 = input.waiverText;
+  if (input.status                    !== undefined) patch.status                      = input.status;
+  await supabaseAdmin
+    .from('league_seasons')
+    .update(patch)
+    .eq('id', seasonId)
+    .eq('org_id', orgId);
+}
+
+// ─── Division helpers ─────────────────────────────────────────────────────────
+
+export async function getDivisionsForSeason(seasonId: string): Promise<LeagueDivision[]> {
+  const { data } = await supabaseAdmin
+    .from('league_divisions')
+    .select('*')
+    .eq('season_id', seasonId)
+    .order('sort_order', { ascending: true })
+    .order('created_at', { ascending: true });
+  return (data ?? []).map(mapLeagueDivision);
+}
+
+export async function createDivision(
+  seasonId: string,
+  input: { name: string; capacity?: number | null; sortOrder?: number }
+): Promise<LeagueDivision> {
+  const { data } = await supabaseAdmin
+    .from('league_divisions')
+    .insert({
+      season_id:  seasonId,
+      name:       input.name,
+      capacity:   input.capacity ?? null,
+      sort_order: input.sortOrder ?? 0,
+    })
+    .select()
+    .single();
+  return mapLeagueDivision(data!);
+}
+
+export async function updateDivision(
+  divisionId: string,
+  input: Partial<{ name: string; capacity: number | null; sortOrder: number }>
+): Promise<void> {
+  const patch: Record<string, unknown> = {};
+  if (input.name      !== undefined) patch.name       = input.name;
+  if (input.capacity  !== undefined) patch.capacity   = input.capacity;
+  if (input.sortOrder !== undefined) patch.sort_order = input.sortOrder;
+  await supabaseAdmin.from('league_divisions').update(patch).eq('id', divisionId);
+}
+
+export async function deleteDivision(divisionId: string): Promise<void> {
+  // Guard: caller must verify no active registrations before calling
+  await supabaseAdmin.from('league_divisions').delete().eq('id', divisionId);
+}
+
+// ─── Team helpers ─────────────────────────────────────────────────────────────
+
+export async function getTeamsForSeason(seasonId: string): Promise<LeagueTeam[]> {
+  const { data } = await supabaseAdmin
+    .from('league_teams')
+    .select('*')
+    .eq('season_id', seasonId)
+    .order('sort_order', { ascending: true })
+    .order('created_at', { ascending: true });
+  return (data ?? []).map(mapLeagueTeam);
+}
+
+export async function getTeamsForDivision(divisionId: string): Promise<LeagueTeam[]> {
+  const { data } = await supabaseAdmin
+    .from('league_teams')
+    .select('*')
+    .eq('division_id', divisionId)
+    .order('sort_order', { ascending: true })
+    .order('created_at', { ascending: true });
+  return (data ?? []).map(mapLeagueTeam);
+}
+
+export async function createLeagueTeam(
+  seasonId: string,
+  divisionId: string,
+  input: LeagueTeamInput
+): Promise<LeagueTeam> {
+  const { data } = await supabaseAdmin
+    .from('league_teams')
+    .insert({
+      season_id:   seasonId,
+      division_id: divisionId,
+      name:        input.name,
+      color:       input.color ?? null,
+      coach_name:  input.coachName ?? null,
+      sort_order:  input.sortOrder ?? 0,
+    })
+    .select()
+    .single();
+  return mapLeagueTeam(data!);
+}
+
+export async function updateLeagueTeam(teamId: string, input: Partial<LeagueTeamInput>): Promise<void> {
+  const patch: Record<string, unknown> = {};
+  if (input.name      !== undefined) patch.name       = input.name;
+  if (input.color     !== undefined) patch.color      = input.color;
+  if (input.coachName !== undefined) patch.coach_name = input.coachName;
+  if (input.sortOrder !== undefined) patch.sort_order = input.sortOrder;
+  await supabaseAdmin.from('league_teams').update(patch).eq('id', teamId);
+}
+
+export async function deleteLeagueTeam(teamId: string): Promise<void> {
+  // Guard: caller must verify no assigned players before calling
+  await supabaseAdmin.from('league_teams').delete().eq('id', teamId);
+}
+
+// ─── Registration helpers ─────────────────────────────────────────────────────
+
+export async function getRegistrationsForSeason(
+  seasonId: string,
+  opts: { status?: LeagueRegistrationStatus } = {}
+): Promise<LeagueRegistration[]> {
+  let q = supabaseAdmin
+    .from('league_registrations')
+    .select('*')
+    .eq('season_id', seasonId)
+    .order('registered_at', { ascending: false });
+  if (opts.status) q = q.eq('status', opts.status);
+  const { data } = await q;
+  return (data ?? []).map(mapLeagueRegistration);
+}
+
+export async function getRegistrationsForDivision(
+  divisionId: string,
+  opts: { status?: LeagueRegistrationStatus } = {}
+): Promise<LeagueRegistration[]> {
+  let q = supabaseAdmin
+    .from('league_registrations')
+    .select('*')
+    .eq('division_id', divisionId)
+    .order('registered_at', { ascending: false });
+  if (opts.status) q = q.eq('status', opts.status);
+  const { data } = await q;
+  return (data ?? []).map(mapLeagueRegistration);
+}
+
+export async function createRegistration(input: PublicRegistrationInput): Promise<LeagueRegistration> {
+  const { data } = await supabaseAdmin
+    .from('league_registrations')
+    .insert({
+      season_id:            input.seasonId,
+      division_id:          input.divisionId ?? null,
+      player_first_name:    input.playerFirstName,
+      player_last_name:     input.playerLastName,
+      player_date_of_birth: input.playerDateOfBirth ?? null,
+      player_jersey_pref:   input.playerJerseyPref ?? null,
+      player_position_pref: input.playerPositionPref ?? null,
+      player_notes:         input.playerNotes ?? null,
+      guardian_first_name:  input.guardianFirstName,
+      guardian_last_name:   input.guardianLastName,
+      guardian_email:       input.guardianEmail,
+      guardian_phone:       input.guardianPhone ?? null,
+      status:               input.status ?? 'pending_review',
+      waitlist_position:    input.waitlistPosition ?? null,
+      source:               input.source ?? 'public_form',
+    })
+    .select()
+    .single();
+  return mapLeagueRegistration(data!);
+}
+
+export async function updateRegistrationStatus(
+  registrationId: string,
+  status: LeagueRegistrationStatus,
+  adminNotes?: string
+): Promise<void> {
+  const patch: Record<string, unknown> = {
+    status,
+    updated_at: new Date().toISOString(),
+  };
+  if (adminNotes !== undefined) patch.admin_notes = adminNotes;
+  // Clear waitlist_position when moving out of waitlist
+  if (status !== 'waitlisted') patch.waitlist_position = null;
+  await supabaseAdmin.from('league_registrations').update(patch).eq('id', registrationId);
+}
+
+export async function assignRegistrationToTeam(registrationId: string, teamId: string): Promise<void> {
+  await supabaseAdmin
+    .from('league_registrations')
+    .update({ team_id: teamId, updated_at: new Date().toISOString() })
+    .eq('id', registrationId);
+}
+
+export async function bulkAssignTeams(
+  assignments: Array<{ registrationId: string; teamId: string }>
+): Promise<void> {
+  await Promise.all(assignments.map(a => assignRegistrationToTeam(a.registrationId, a.teamId)));
+}
+
+export async function getWaitlistForDivision(divisionId: string): Promise<LeagueRegistration[]> {
+  const { data } = await supabaseAdmin
+    .from('league_registrations')
+    .select('*')
+    .eq('division_id', divisionId)
+    .eq('status', 'waitlisted')
+    .order('waitlist_position', { ascending: true });
+  return (data ?? []).map(mapLeagueRegistration);
+}
+
+export async function promoteFromWaitlist(registrationId: string): Promise<void> {
+  await supabaseAdmin
+    .from('league_registrations')
+    .update({ status: 'active', waitlist_position: null, updated_at: new Date().toISOString() })
+    .eq('id', registrationId);
+}
+
+// ─── Game helpers ─────────────────────────────────────────────────────────────
+
+export async function getGamesForDivision(divisionId: string): Promise<LeagueGame[]> {
+  const { data } = await supabaseAdmin
+    .from('league_games')
+    .select('*')
+    .eq('division_id', divisionId)
+    .order('scheduled_at', { ascending: true });
+  return (data ?? []).map(mapLeagueGame);
+}
+
+export async function createLeagueGame(input: LeagueGameInput): Promise<LeagueGame> {
+  const { data } = await supabaseAdmin
+    .from('league_games')
+    .insert({
+      season_id:    input.seasonId,
+      division_id:  input.divisionId,
+      home_team_id: input.homeTeamId,
+      away_team_id: input.awayTeamId,
+      scheduled_at: input.scheduledAt ?? null,
+      location:     input.location ?? null,
+      notes:        input.notes ?? null,
+    })
+    .select()
+    .single();
+  return mapLeagueGame(data!);
+}
+
+export async function updateLeagueGame(
+  gameId: string,
+  input: Partial<LeagueGameInput> & { homeScore?: number | null; awayScore?: number | null; status?: string; notes?: string | null }
+): Promise<void> {
+  const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
+  if (input.scheduledAt !== undefined) patch.scheduled_at = input.scheduledAt;
+  if (input.location    !== undefined) patch.location     = input.location;
+  if (input.homeScore   !== undefined) patch.home_score   = input.homeScore;
+  if (input.awayScore   !== undefined) patch.away_score   = input.awayScore;
+  if (input.status      !== undefined) patch.status       = input.status;
+  if (input.notes       !== undefined) patch.notes        = input.notes;
+  await supabaseAdmin.from('league_games').update(patch).eq('id', gameId);
+}
+
+export async function enterGameResult(gameId: string, homeScore: number, awayScore: number): Promise<void> {
+  await supabaseAdmin
+    .from('league_games')
+    .update({ home_score: homeScore, away_score: awayScore, status: 'completed', updated_at: new Date().toISOString() })
+    .eq('id', gameId);
+}
+
+// ─── Standings (computed, not stored) ────────────────────────────────────────
+
+export async function computeStandings(divisionId: string): Promise<LeagueStandingsRow[]> {
+  const [teams, games] = await Promise.all([
+    getTeamsForDivision(divisionId),
+    getGamesForDivision(divisionId),
+  ]);
+  const completedGames = games.filter(g => g.status === 'completed');
+
+  const rows: LeagueStandingsRow[] = teams.map(team => {
+    let wins = 0, losses = 0, ties = 0, runsFor = 0, runsAgainst = 0;
+    for (const g of completedGames) {
+      const isHome = g.homeTeamId === team.id;
+      const isAway = g.awayTeamId === team.id;
+      if (!isHome && !isAway) continue;
+      const tf = isHome ? (g.homeScore ?? 0) : (g.awayScore ?? 0);
+      const ta = isHome ? (g.awayScore ?? 0) : (g.homeScore ?? 0);
+      runsFor     += tf;
+      runsAgainst += ta;
+      if      (tf > ta) wins++;
+      else if (tf < ta) losses++;
+      else              ties++;
+    }
+    return {
+      team,
+      gamesPlayed:     wins + losses + ties,
+      wins,
+      losses,
+      ties,
+      points:          wins * 2 + ties,
+      runsFor,
+      runsAgainst,
+      runDifferential: runsFor - runsAgainst,
+    };
+  });
+
+  return rows.sort((a, b) =>
+    b.points - a.points ||
+    b.runDifferential - a.runDifferential ||
+    b.runsFor - a.runsFor
+  );
+}
+
+// ─── Season summary ───────────────────────────────────────────────────────────
+
+export async function getLeagueSeasonSummary(season: LeagueSeason): Promise<LeagueSeasonSummary> {
+  const [divisions, teams, regs] = await Promise.all([
+    getDivisionsForSeason(season.id),
+    getTeamsForSeason(season.id),
+    getRegistrationsForSeason(season.id),
+  ]);
+  return {
+    season,
+    divisionCount:           divisions.length,
+    activeRegistrationCount: regs.filter(r => r.status === 'active').length,
+    waitlistCount:           regs.filter(r => r.status === 'waitlisted').length,
+    pendingReviewCount:      regs.filter(r => r.status === 'pending_review').length,
+    teamCount:               teams.length,
+  };
+}
+
+// ─── League season ledger helper ──────────────────────────────────────────────
+
+export async function getOrCreateLeagueSeasonLedger(
+  orgId: string,
+  seasonId: string,
+  seasonName: string
+): Promise<AccountingLedger> {
+  const { data: existing } = await supabaseAdmin
+    .from('accounting_ledgers')
+    .select('*')
+    .eq('org_id', orgId)
+    .eq('entity_type', 'league_season')
+    .eq('entity_id', seasonId)
+    .maybeSingle();
+  if (existing) return mapLedger(existing);
+  const { data } = await supabaseAdmin
+    .from('accounting_ledgers')
+    .insert({ org_id: orgId, entity_type: 'league_season', entity_id: seasonId, name: seasonName })
+    .select()
+    .single();
+  return mapLedger(data!);
 }

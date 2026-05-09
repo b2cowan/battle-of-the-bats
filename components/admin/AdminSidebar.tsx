@@ -5,6 +5,7 @@ import {
   LayoutDashboard, Users, Calendar, Trophy, Megaphone, Tag, LogOut, Home,
   ChevronRight, MapPin, RefreshCw, BookUser, BookOpen, CreditCard, Settings,
   Users2, Archive, ArrowLeft, Mail, Globe, DollarSign, Receipt,
+  CalendarDays, ClipboardList, Bell,
 } from 'lucide-react';
 import { signOut } from '@/lib/auth';
 import { useOrg } from '@/lib/org-context';
@@ -32,10 +33,14 @@ export default function AdminSidebar() {
   const base = `/${currentOrg?.slug ?? 'milton-bats'}/admin`;
   const { tournaments, currentTournament, setCurrentTournament } = useTournament();
 
-  const isHub        = pathname === base;
-  const isOrgAdmin   = pathname.startsWith(`${base}/org`);
-  const isPublicSite = pathname.startsWith(`${base}/public-site`);
-  const isAccounting = pathname.startsWith(`${base}/accounting`);
+  const isHub          = pathname === base;
+  const isOrgAdmin     = pathname.startsWith(`${base}/org`);
+  const isPublicSite   = pathname.startsWith(`${base}/public-site`);
+  const isAccounting   = pathname.startsWith(`${base}/accounting`);
+  const isHouseLeague  = pathname.startsWith(`${base}/house-league`);
+
+  const seasonMatch     = pathname.match(/\/house-league\/seasons\/([^/]+)/);
+  const currentSeasonId = seasonMatch?.[1] ?? null;
 
   const canSeeMembersNav = userRole
     ? userRole === 'owner' || hasCapability(userRole, userCapabilities, 'module_members')
@@ -47,6 +52,10 @@ export default function AdminSidebar() {
 
   const canSeeAccounting = userRole
     ? hasCapability(userRole, userCapabilities, 'module_accounting')
+    : false;
+
+  const canSeeHouseLeague = userRole
+    ? hasCapability(userRole, userCapabilities, 'module_house_league')
     : false;
 
   async function handleLogout() {
@@ -165,8 +174,48 @@ export default function AdminSidebar() {
         </>
       )}
 
+      {/* House League mode */}
+      {isHouseLeague && canSeeHouseLeague && (
+        <>
+          {backLink}
+          <div className={styles.navSection}>
+            <div className={styles.sectionHeader}>House League</div>
+            <nav className={styles.nav}>
+              {navLink('hl-seasons', CalendarDays, 'Seasons',
+                `${base}/house-league`,
+                pathname === `${base}/house-league`)}
+              {navLink('hl-past', Archive, 'Past Seasons',
+                `${base}/house-league/past`,
+                pathname.startsWith(`${base}/house-league/past`))}
+            </nav>
+          </div>
+          {currentSeasonId && (
+            <div className={styles.navSection}>
+              <div className={styles.sectionHeader}>Season</div>
+              <nav className={styles.nav}>
+                {navLink('hl-registrations', ClipboardList, 'Registrations',
+                  `${base}/house-league/seasons/${currentSeasonId}/registrations`,
+                  pathname.startsWith(`${base}/house-league/seasons/${currentSeasonId}/registrations`))}
+                {navLink('hl-teams', Users, 'Teams & Draft',
+                  `${base}/house-league/seasons/${currentSeasonId}/teams`,
+                  pathname.startsWith(`${base}/house-league/seasons/${currentSeasonId}/teams`))}
+                {navLink('hl-schedule', Calendar, 'Schedule',
+                  `${base}/house-league/seasons/${currentSeasonId}/schedule`,
+                  pathname.startsWith(`${base}/house-league/seasons/${currentSeasonId}/schedule`))}
+                {navLink('hl-standings', Trophy, 'Standings',
+                  `${base}/house-league/seasons/${currentSeasonId}/standings`,
+                  pathname.startsWith(`${base}/house-league/seasons/${currentSeasonId}/standings`))}
+                {navLink('hl-notifications', Bell, 'Notifications',
+                  `${base}/house-league/seasons/${currentSeasonId}/notifications`,
+                  pathname.startsWith(`${base}/house-league/seasons/${currentSeasonId}/notifications`))}
+              </nav>
+            </div>
+          )}
+        </>
+      )}
+
       {/* Tournament operations mode */}
-      {!isHub && !isOrgAdmin && !isPublicSite && !isAccounting && (
+      {!isHub && !isOrgAdmin && !isPublicSite && !isAccounting && !isHouseLeague && (
         <>
           {backLink}
           {tournaments.length > 0 && (

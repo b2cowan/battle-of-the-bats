@@ -53,7 +53,7 @@ export async function POST(req: Request, { params }: Params) {
   const err = gate(ctx);
   if (err) return err;
 
-  if (ctx!.role !== 'owner') return forbidden();
+  if (ctx!.role !== 'owner' && ctx!.role !== 'treasurer') return forbidden();
 
   const { ledgerId } = await params;
   const ledger = await getLedgerById(ledgerId, ctx!.org.id);
