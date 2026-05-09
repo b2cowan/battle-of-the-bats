@@ -251,6 +251,109 @@ export function leagueRegistrationWaitlistHtml(p: {
   `, p.contactEmail);
 }
 
+// ── House League admin-triggered status-change emails ─────────────────────────
+
+export function leagueAdminApprovedHtml(p: {
+  playerFirstName: string;
+  playerLastName: string;
+  guardianFirstName: string;
+  seasonName: string;
+  divisionName: string;
+  registrationId: string;
+  contactEmail?: string;
+}) {
+  const ref = p.registrationId.slice(0, 8).toUpperCase();
+  return wrap(`
+    <h2 style="color:#22C55E;font-size:1.4rem;margin:0 0 1rem;">✅ Registration Approved!</h2>
+    <p>Hi <strong>${p.guardianFirstName}</strong>,</p>
+    <p>Great news! <strong>${p.playerFirstName} ${p.playerLastName}</strong>'s registration for <strong>${p.seasonName}</strong> — <strong>${p.divisionName}</strong> has been approved.</p>
+    <div style="background:#1A1530;border:1px solid rgba(34,197,94,0.3);border-radius:8px;padding:1.25rem;margin:1.5rem 0;">
+      <p style="margin:0 0 0.5rem;font-weight:700;color:#22C55E;">Registration Details</p>
+      <p style="margin:0;line-height:1.8;">
+        Player: <strong>${p.playerFirstName} ${p.playerLastName}</strong><br>
+        Season: <strong>${p.seasonName}</strong><br>
+        Division: <strong>${p.divisionName}</strong><br>
+        Reference: <strong style="font-family:monospace;">#${ref}</strong>
+      </p>
+    </div>
+    <p style="color:rgba(255,255,255,0.7);">We look forward to seeing ${p.playerFirstName} on the field! Watch for further updates from your league administrator.</p>
+  `, p.contactEmail);
+}
+
+export function leagueAdminWaitlistedHtml(p: {
+  playerFirstName: string;
+  playerLastName: string;
+  guardianFirstName: string;
+  seasonName: string;
+  divisionName: string;
+  registrationId: string;
+  waitlistPosition: number;
+  contactEmail?: string;
+}) {
+  const ref = p.registrationId.slice(0, 8).toUpperCase();
+  return wrap(`
+    <h2 style="color:#F59E0B;font-size:1.4rem;margin:0 0 1rem;">Added to Waitlist</h2>
+    <p>Hi <strong>${p.guardianFirstName}</strong>,</p>
+    <p>Unfortunately <strong>${p.divisionName}</strong> is currently full. <strong>${p.playerFirstName} ${p.playerLastName}</strong> has been added to the waitlist at position <strong>#${p.waitlistPosition}</strong>.</p>
+    <div style="background:#1A1530;border:1px solid rgba(245,158,11,0.3);border-radius:8px;padding:1.25rem;margin:1.5rem 0;">
+      <p style="margin:0 0 0.5rem;font-weight:700;color:#F59E0B;">Waitlist Status</p>
+      <p style="margin:0;line-height:1.8;">
+        Player: <strong>${p.playerFirstName} ${p.playerLastName}</strong><br>
+        Season: <strong>${p.seasonName}</strong><br>
+        Division: <strong>${p.divisionName}</strong><br>
+        Waitlist Position: <strong>#${p.waitlistPosition}</strong><br>
+        Reference: <strong style="font-family:monospace;">#${ref}</strong>
+      </p>
+    </div>
+    <p style="color:rgba(255,255,255,0.7);">You will be contacted if a spot becomes available. No payment is required until your registration is approved.</p>
+  `, p.contactEmail);
+}
+
+export function leagueWaitlistPromotedHtml(p: {
+  playerFirstName: string;
+  playerLastName: string;
+  guardianFirstName: string;
+  seasonName: string;
+  divisionName: string;
+  registrationId: string;
+  contactEmail?: string;
+}) {
+  const ref = p.registrationId.slice(0, 8).toUpperCase();
+  return wrap(`
+    <h2 style="color:#22C55E;font-size:1.4rem;margin:0 0 1rem;">🎉 You're Off the Waitlist!</h2>
+    <p>Hi <strong>${p.guardianFirstName}</strong>,</p>
+    <p><strong>${p.playerFirstName} ${p.playerLastName}</strong> has been moved off the waitlist and is now registered for <strong>${p.divisionName}</strong>. Welcome!</p>
+    <div style="background:#1A1530;border:1px solid rgba(34,197,94,0.3);border-radius:8px;padding:1.25rem;margin:1.5rem 0;">
+      <p style="margin:0 0 0.5rem;font-weight:700;color:#22C55E;">Registration Details</p>
+      <p style="margin:0;line-height:1.8;">
+        Player: <strong>${p.playerFirstName} ${p.playerLastName}</strong><br>
+        Season: <strong>${p.seasonName}</strong><br>
+        Division: <strong>${p.divisionName}</strong><br>
+        Reference: <strong style="font-family:monospace;">#${ref}</strong>
+      </p>
+    </div>
+    <p style="color:rgba(255,255,255,0.7);">We look forward to seeing ${p.playerFirstName} on the field! Watch for further updates from your league administrator.</p>
+  `, p.contactEmail);
+}
+
+export function leagueRegistrationDeclinedHtml(p: {
+  playerFirstName: string;
+  playerLastName: string;
+  guardianFirstName: string;
+  seasonName: string;
+  divisionName: string;
+  registrationId: string;
+  contactEmail?: string;
+}) {
+  const contact = p.contactEmail ?? ADMIN_EMAIL;
+  return wrap(`
+    <h2 style="color:#EF4444;font-size:1.4rem;margin:0 0 1rem;">Registration Update</h2>
+    <p>Hi <strong>${p.guardianFirstName}</strong>,</p>
+    <p>We're sorry — <strong>${p.playerFirstName} ${p.playerLastName}</strong>'s registration for <strong>${p.seasonName}</strong> — <strong>${p.divisionName}</strong> was not approved.</p>
+    <p style="color:rgba(255,255,255,0.7);">Please contact <a href="mailto:${contact}" style="color:#A855F7;">${contact}</a> for more information.</p>
+  `, contact);
+}
+
 export function passwordResetHtml(resetLink: string) {
   return wrap(`
     <h2 style="color:#fff;font-size:1.4rem;margin:0 0 1rem;">Reset Your Password</h2>

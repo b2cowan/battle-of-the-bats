@@ -23,8 +23,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true }); // still 200 — no enumeration
   }
 
+  // Wrap the Supabase action_link in our own confirm page so email scanners
+  // can't consume the one-time token by pre-fetching anchor hrefs in the email.
+  const confirmUrl = `${appUrl}/auth/reset-confirm?link=${encodeURIComponent(data.properties.action_link)}`;
+
   try {
-    await sendEmail(email, 'Reset your FieldLogicHQ password', passwordResetHtml(data.properties.action_link));
+    await sendEmail(email, 'Reset your FieldLogicHQ password', passwordResetHtml(confirmUrl));
     console.log(`[forgot-password] reset email sent to ${email}`);
   } catch (emailErr) {
     console.error('[forgot-password] sendEmail error:', emailErr);
