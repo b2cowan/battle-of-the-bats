@@ -31,7 +31,7 @@ export async function PATCH(req: Request, { params }: Params) {
   const err = gate(ctx);
   if (err) return err;
 
-  if (ctx!.role !== 'owner') return forbidden();
+  if (ctx!.role !== 'owner' && ctx!.role !== 'treasurer') return forbidden();
 
   const { ledgerId, entryId } = await params;
 
@@ -108,7 +108,7 @@ export async function DELETE(_req: Request, { params }: Params) {
   const err = gate(ctx);
   if (err) return err;
 
-  if (ctx!.role !== 'owner') return forbidden();
+  if (ctx!.role !== 'owner' && ctx!.role !== 'treasurer') return forbidden();
 
   const { ledgerId, entryId } = await params;
 

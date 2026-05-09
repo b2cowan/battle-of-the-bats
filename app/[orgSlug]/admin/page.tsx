@@ -2,7 +2,7 @@
 import { useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Trophy, Building2, Globe, DollarSign } from 'lucide-react';
+import { Trophy, Building2, Globe, DollarSign, CalendarDays } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { hasCapability } from '@/lib/roles';
 
@@ -25,6 +25,10 @@ export default function AdminHub() {
 
   const canSeeAccounting = !loading && userRole
     ? hasCapability(userRole, userCapabilities, 'module_accounting')
+    : false;
+
+  const canSeeHouseLeague = !loading && userRole
+    ? hasCapability(userRole, userCapabilities, 'module_house_league')
     : false;
 
   // Auto-forward single-module users who only have tournament access
@@ -67,6 +71,12 @@ export default function AdminHub() {
       desc: 'Track income, expenses, and financial activity across the org and each tournament',
       icon: DollarSign,
       href: `${base}/accounting`,
+    },
+    canSeeHouseLeague && {
+      label: 'House League',
+      desc: 'Manage recreational seasons, player registrations, team placement, scheduling, and standings',
+      icon: CalendarDays,
+      href: `${base}/house-league`,
     },
   ].filter(Boolean) as { label: string; desc: string; icon: React.ElementType; href: string }[];
 

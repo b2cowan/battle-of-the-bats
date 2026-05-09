@@ -1,5 +1,5 @@
 export type OrgPlan = 'starter' | 'pro' | 'elite';
-export type OrgRole = 'owner' | 'admin' | 'staff' | 'official';
+export type OrgRole = 'owner' | 'admin' | 'staff' | 'official' | 'league_admin' | 'league_registrar' | 'treasurer';
 export type SubscriptionStatus = 'active' | 'trialing' | 'past_due' | 'canceled';
 export type TournamentStatus = 'draft' | 'active' | 'completed' | 'archived';
 
@@ -286,4 +286,122 @@ export interface TournamentArchive {
   integrityHash: string;
   sealedAt: string;
   sealedBy?: string;
+}
+
+// ── House League Module ───────────────────────────────────────────────────────
+
+export type LeagueSeasonStatus =
+  | 'draft' | 'registration_open' | 'registration_closed'
+  | 'active' | 'completed' | 'archived';
+
+export type LeagueRegistrationStatus =
+  | 'pending_review' | 'active' | 'waitlisted' | 'declined' | 'withdrawn';
+
+export type LeagueGameStatus =
+  | 'scheduled' | 'completed' | 'cancelled' | 'postponed';
+
+export interface LeagueSeason {
+  id: string;
+  orgId: string;
+  name: string;
+  slug: string;
+  sport: string;
+  ageGroup: string | null;
+  status: LeagueSeasonStatus;
+  description: string | null;
+  registrationFee: number | null;
+  autoGenerateFees: boolean;
+  autoApproveUnderCapacity: boolean;
+  autoPromoteWaitlist: boolean;
+  registrationOpenAt: string | null;
+  registrationCloseAt: string | null;
+  seasonStartDate: string | null;
+  seasonEndDate: string | null;
+  waiverText: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface LeagueDivision {
+  id: string;
+  seasonId: string;
+  name: string;
+  capacity: number | null;
+  sortOrder: number;
+  createdAt: string;
+}
+
+export interface LeagueTeam {
+  id: string;
+  seasonId: string;
+  divisionId: string;
+  name: string;
+  color: string | null;
+  coachName: string | null;
+  sortOrder: number;
+  createdAt: string;
+}
+
+export interface LeagueRegistration {
+  id: string;
+  seasonId: string;
+  divisionId: string | null;
+  playerFirstName: string;
+  playerLastName: string;
+  playerDateOfBirth: string | null;
+  playerJerseyPref: string | null;
+  playerPositionPref: string | null;
+  playerNotes: string | null;
+  guardianFirstName: string;
+  guardianLastName: string;
+  guardianEmail: string;
+  guardianPhone: string | null;
+  status: LeagueRegistrationStatus;
+  waitlistPosition: number | null;
+  teamId: string | null;
+  registrationFeePaid: boolean;
+  feeEntryId: string | null;
+  adminNotes: string | null;
+  source: 'public_form' | 'admin_manual';
+  registeredAt: string;
+  updatedAt: string;
+}
+
+export interface LeagueGame {
+  id: string;
+  seasonId: string;
+  divisionId: string;
+  homeTeamId: string;
+  awayTeamId: string;
+  scheduledAt: string | null;
+  location: string | null;
+  homeScore: number | null;
+  awayScore: number | null;
+  status: LeagueGameStatus;
+  notes: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Computed standings row per team within a division
+export interface LeagueStandingsRow {
+  team: LeagueTeam;
+  gamesPlayed: number;
+  wins: number;
+  losses: number;
+  ties: number;
+  points: number;      // W=2, T=1, L=0
+  runsFor: number;
+  runsAgainst: number;
+  runDifferential: number;
+}
+
+// Summary shape for the season overview card
+export interface LeagueSeasonSummary {
+  season: LeagueSeason;
+  divisionCount: number;
+  activeRegistrationCount: number;
+  waitlistCount: number;
+  pendingReviewCount: number;
+  teamCount: number;
 }

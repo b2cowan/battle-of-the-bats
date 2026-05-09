@@ -26,7 +26,7 @@ export async function POST(req: Request) {
   const err = gate(ctx);
   if (err) return err;
 
-  if (ctx!.role !== 'owner') return forbidden();
+  if (ctx!.role !== 'owner' && ctx!.role !== 'treasurer') return forbidden();
 
   const body = await req.json();
 
