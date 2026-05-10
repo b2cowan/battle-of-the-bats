@@ -5,6 +5,7 @@ import {
   getAnnouncements, getGames, getTeams, getAgeGroups, getDiamonds,
   getOrganizationBySlug, getTournamentsByOrg,
   getOrgPublicSiteContent, getArchivesByOrg,
+  getLeagueSeasons,
 } from '@/lib/db';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { formatTime } from '@/lib/utils';
@@ -22,10 +23,15 @@ export default async function HomePage({ params }: { params: Promise<{ orgSlug: 
 
   // ── Public Site module branch ──────────────────────────────────────────────
   if (org && hasModuleEntitlement(org, 'module_public_site')) {
-    const [siteContent, archives] = await Promise.all([
+    const [siteContent, archives, leagueSeasons] = await Promise.all([
       getOrgPublicSiteContent(org.id),
       getArchivesByOrg(org.id),
+      hasModuleEntitlement(org, 'module_house_league') ? getLeagueSeasons(org.id) : Promise.resolve([]),
     ]);
+
+    const publicLeagueSeasons = leagueSeasons.filter(s => s.status !== 'draft');
+    const activeLeagueSeason  = publicLeagueSeasons.find(s => ['registration_open', 'registration_closed', 'active'].includes(s.status));
+    const showLeague          = publicLeagueSeasons.length > 0;
 
     const heroBanner  = org.heroBannerUrl ?? null;
     const showArchives = siteContent?.showArchivesLink !== false && archives.length > 0;
@@ -154,6 +160,35 @@ export default async function HomePage({ params }: { params: Promise<{ orgSlug: 
                   ))}
                 </div>
               )}
+            </div>
+          </section>
+        )}
+
+        {/* House League CTA */}
+        {showLeague && (
+          <section className="section">
+            <div className="container">
+              <div className="section-header">
+                <span className="eyebrow">House League</span>
+                <h2 className="display-md">League Play</h2>
+              </div>
+              <Link href={`/${orgSlug}/league`} className={`card ${styles.archivesCta}`}>
+                <div>
+                  <div className={styles.archivesCtaTitle}>
+                    {activeLeagueSeason ? activeLeagueSeason.name : 'House League'}
+                  </div>
+                  <div className={styles.archivesCtaSub}>
+                    {activeLeagueSeason
+                      ? activeLeagueSeason.status === 'registration_open'
+                        ? 'Registration is open — sign up now'
+                        : activeLeagueSeason.status === 'active'
+                          ? 'Season in progress — view standings and schedule'
+                          : 'Registration closed — season starting soon'
+                      : 'View past seasons and results'}
+                  </div>
+                </div>
+                <ChevronRight size={18} className={styles.archivesCtaChevron} />
+              </Link>
             </div>
           </section>
         )}

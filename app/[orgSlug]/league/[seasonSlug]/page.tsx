@@ -339,20 +339,67 @@ export default async function LeagueSeasonPage({
             )}
           </div>
         ) : (
-          <div
-            style={{
-              padding: '1rem 1.25rem',
-              borderRadius: '8px',
-              background: 'rgba(255,255,255,0.03)',
-              border: '1px solid rgba(255,255,255,0.07)',
-              fontSize: '0.88rem',
-              color: 'rgba(255,255,255,0.45)',
-            }}
-          >
-            {season.status === 'registration_closed' && 'Registration for this season has closed.'}
-            {season.status === 'active' && 'This season is currently active. Registration is closed.'}
-            {season.status === 'completed' && 'This season has concluded.'}
-            {season.status === 'archived' && 'This season has been archived.'}
+          <div>
+            <div
+              style={{
+                padding: '1rem 1.25rem',
+                borderRadius: '8px',
+                background: 'rgba(255,255,255,0.03)',
+                border: '1px solid rgba(255,255,255,0.07)',
+                fontSize: '0.88rem',
+                color: 'rgba(255,255,255,0.45)',
+                marginBottom: (season.status === 'completed' || season.status === 'archived' || season.status === 'active') ? '1.25rem' : 0,
+              }}
+            >
+              {season.status === 'registration_closed' && 'Registration for this season has closed.'}
+              {season.status === 'active' && 'This season is currently active. Registration is closed.'}
+              {season.status === 'completed' && 'This season has concluded.'}
+              {season.status === 'archived' && 'This season has been archived.'}
+            </div>
+
+            {/* Quick-access links for active, completed, and archived seasons */}
+            {(season.status === 'active' || season.status === 'completed' || season.status === 'archived') && (
+              <div style={{ display: 'flex', gap: '0.65rem', flexWrap: 'wrap' }}>
+                <Link
+                  href={`/${orgSlug}/league/${seasonSlug}/standings`}
+                  style={{
+                    display: 'inline-block',
+                    padding: '0.65rem 1.5rem',
+                    background: season.status === 'completed' || season.status === 'archived'
+                      ? 'rgba(163,230,53,0.1)'
+                      : 'rgba(255,255,255,0.06)',
+                    color: season.status === 'completed' || season.status === 'archived'
+                      ? '#a3e635'
+                      : 'rgba(255,255,255,0.7)',
+                    fontWeight: 700,
+                    fontSize: '0.9rem',
+                    borderRadius: '8px',
+                    textDecoration: 'none',
+                    border: season.status === 'completed' || season.status === 'archived'
+                      ? '1px solid rgba(163,230,53,0.25)'
+                      : '1px solid rgba(255,255,255,0.1)',
+                  }}
+                >
+                  {season.status === 'completed' || season.status === 'archived' ? 'Final Standings →' : 'Standings →'}
+                </Link>
+                <Link
+                  href={`/${orgSlug}/league/${seasonSlug}/schedule`}
+                  style={{
+                    display: 'inline-block',
+                    padding: '0.65rem 1.5rem',
+                    background: 'rgba(255,255,255,0.06)',
+                    color: 'rgba(255,255,255,0.7)',
+                    fontWeight: 600,
+                    fontSize: '0.9rem',
+                    borderRadius: '8px',
+                    textDecoration: 'none',
+                    border: '1px solid rgba(255,255,255,0.1)',
+                  }}
+                >
+                  Schedule
+                </Link>
+              </div>
+            )}
           </div>
         )}
       </div>
