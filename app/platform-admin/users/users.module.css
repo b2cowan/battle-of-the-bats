@@ -176,3 +176,45 @@
 .copyBtn:hover {
   background: rgba(var(--logic-lime-rgb), 0.16);
 }
+
+/* Pagination */
+.pagination {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(var(--logic-lime-rgb), 0.15);
+}
+
+.pageBtn {
+  font-family: var(--font-data);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.35rem 0.75rem;
+  background: rgba(var(--logic-lime-rgb), 0.06);
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.35);
+  color: var(--logic-lime);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  white-space: nowrap;
+}
+
+.pageBtn:hover:not(:disabled) {
+  background: rgba(var(--logic-lime-rgb), 0.14);
+  border-color: var(--logic-lime);
+}
+
+.pageBtn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.pageLabel {
+  font-family: var(--font-data);
+  font-size: 0.6rem;
+  color: var(--data-gray);
+  letter-spacing: 0.06em;
+}

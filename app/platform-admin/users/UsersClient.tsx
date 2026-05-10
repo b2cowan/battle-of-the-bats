@@ -1,5 +1,6 @@
 'use client';
 import { Fragment, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Copy, Check } from 'lucide-react';
 import styles from './users.module.css';
 
@@ -12,6 +13,8 @@ interface UserRow {
 
 interface Props {
   users: UserRow[];
+  page: number;
+  totalPages: number;
 }
 
 function fmtDate(iso: string | null) {
@@ -21,7 +24,8 @@ function fmtDate(iso: string | null) {
   });
 }
 
-export default function UsersClient({ users }: Props) {
+export default function UsersClient({ users, page, totalPages }: Props) {
+  const router = useRouter();
   const [resetting, setResetting] = useState<Record<string, boolean>>({});
   const [links,     setLinks]     = useState<Record<string, string>>({});
   const [errors,    setErrors]    = useState<Record<string, string>>({});
@@ -64,7 +68,7 @@ export default function UsersClient({ users }: Props) {
       <header className={styles.header}>
         <div className={styles.headerLabel}>FieldLogicHQ</div>
         <h1 className={styles.title}>Platform Users</h1>
-        <div className={styles.count}>{users.length} total</div>
+        <div className={styles.count}>{users.length} on page</div>
       </header>
 
       <div className={styles.tableWrap}>
@@ -128,6 +132,26 @@ export default function UsersClient({ users }: Props) {
           </tbody>
         </table>
       </div>
+
+      {totalPages > 1 && (
+        <div className={styles.pagination}>
+          <button
+            className={styles.pageBtn}
+            disabled={page <= 1}
+            onClick={() => router.push(`/platform-admin/users?page=${page - 1}`)}
+          >
+            ← Prev
+          </button>
+          <span className={styles.pageLabel}>Page {page} of {totalPages}</span>
+          <button
+            className={styles.pageBtn}
+            disabled={page >= totalPages}
+            onClick={() => router.push(`/platform-admin/users?page=${page + 1}`)}
+          >
+            Next →
+          </button>
+        </div>
+      )}
     </div>
   );
 }

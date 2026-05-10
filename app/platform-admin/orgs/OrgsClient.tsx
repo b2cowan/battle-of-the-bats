@@ -27,6 +27,8 @@ interface Props {
 
 const PLANS = ['starter', 'pro', 'elite'] as const;
 
+const STATUSES = ['active', 'trialing', 'past_due', 'canceled'] as const;
+
 const ADDON_CAPS = [
   { cap: 'module_public_site',  label: 'Public Site'  },
   { cap: 'module_accounting',   label: 'Accounting'   },
@@ -53,6 +55,21 @@ function addonsDirty(committed: string[], current: string[]) {
 }
 
 export default function OrgsClient({ orgs, planDefaults }: Props) {
+  // Filter state
+  const [search,      setSearch]      = useState('');
+  const [planFilter,  setPlanFilter]  = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
+
+  const filteredOrgs = orgs.filter(o => {
+    if (search) {
+      const q = search.toLowerCase();
+      if (!o.name.toLowerCase().includes(q) && !o.slug.toLowerCase().includes(q)) return false;
+    }
+    if (planFilter   && o.planId              !== planFilter)   return false;
+    if (statusFilter && o.subscriptionStatus  !== statusFilter) return false;
+    return true;
+  });
+
   // Plan / limit state
   const [edits, setEdits] = useState<Record<string, EditState>>(
     Object.fromEntries(
@@ -151,8 +168,46 @@ export default function OrgsClient({ orgs, planDefaults }: Props) {
       <header className={styles.header}>
         <div className={styles.headerLabel}>FieldLogicHQ</div>
         <h1 className={styles.title}>Organizations</h1>
-        <div className={styles.count}>{orgs.length} total</div>
+        <div className={styles.count}>
+          {filteredOrgs.length === orgs.length
+            ? `${orgs.length} total`
+            : `${filteredOrgs.length} of ${orgs.length}`}
+        </div>
       </header>
+
+      <div className={styles.filterBar}>
+        <input
+          type="search"
+          className={styles.filterInput}
+          placeholder="Search name or slug…"
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+        />
+        <select
+          className={styles.filterSelect}
+          value={planFilter}
+          onChange={e => setPlanFilter(e.target.value)}
+        >
+          <option value="">All plans</option>
+          {PLANS.map(p => <option key={p} value={p}>{p}</option>)}
+        </select>
+        <select
+          className={styles.filterSelect}
+          value={statusFilter}
+          onChange={e => setStatusFilter(e.target.value)}
+        >
+          <option value="">All statuses</option>
+          {STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
+        </select>
+        {(search || planFilter || statusFilter) && (
+          <button
+            className={styles.filterClear}
+            onClick={() => { setSearch(''); setPlanFilter(''); setStatusFilter(''); }}
+          >
+            Clear
+          </button>
+        )}
+      </div>
 
       <div className={styles.tableWrap}>
         <table className={styles.table}>
@@ -168,7 +223,12 @@ export default function OrgsClient({ orgs, planDefaults }: Props) {
             </tr>
           </thead>
           <tbody>
-            {orgs.map(org => {
+            {filteredOrgs.length === 0 && (
+              <tr>
+                <td colSpan={7} className={styles.emptyCell}>No organizations match the current filter.</td>
+              </tr>
+            )}
+            {filteredOrgs.map(org => {
               const edit         = edits[org.id] ?? { planId: org.planId, tournamentLimit: org.tournamentLimit };
               const currentAddons   = addonEdits[org.id]     ?? org.enabledAddons;
               const committedAddons = addonCommitted[org.id]  ?? org.enabledAddons;
