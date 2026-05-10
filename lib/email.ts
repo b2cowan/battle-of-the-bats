@@ -354,6 +354,33 @@ export function leagueRegistrationDeclinedHtml(p: {
   `, contact);
 }
 
+export function leagueBroadcastHtml(p: {
+  orgName: string;
+  seasonName: string;
+  subject: string;
+  message: string;
+  contactEmail?: string;
+}) {
+  const contact = p.contactEmail ?? ADMIN_EMAIL;
+  const bodyLines = p.message
+    .split('\n')
+    .map(l => l.trim() ? `<p style="margin:0 0 0.75rem;line-height:1.6;">${l}</p>` : '<br>')
+    .join('');
+  return `
+<div style="font-family:Inter,sans-serif;background:#0D0B14;color:#fff;max-width:600px;margin:0 auto;padding:2rem;border-radius:12px;border:1px solid rgba(255,255,255,0.1);">
+  <div style="margin-bottom:1.5rem;">
+    <span style="font-size:1.1rem;font-weight:800;color:#a3e635;letter-spacing:0.02em;">${p.orgName}</span>
+    <span style="display:block;font-size:0.75rem;color:rgba(255,255,255,0.4);margin-top:0.15rem;">${p.seasonName}</span>
+  </div>
+  <h2 style="color:#f0f0f0;font-size:1.25rem;margin:0 0 1.25rem;font-weight:700;">${p.subject}</h2>
+  <div style="color:rgba(255,255,255,0.8);">${bodyLines}</div>
+  <hr style="border:none;border-top:1px solid rgba(255,255,255,0.08);margin:2rem 0;" />
+  <p style="color:rgba(255,255,255,0.35);font-size:0.78rem;margin:0;">
+    Questions? Contact <a href="mailto:${contact}" style="color:#a3e635;">${contact}</a>
+  </p>
+</div>`;
+}
+
 export function passwordResetHtml(resetLink: string) {
   return wrap(`
     <h2 style="color:#fff;font-size:1.4rem;margin:0 0 1rem;">Reset Your Password</h2>
