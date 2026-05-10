@@ -1,7 +1,7 @@
 import { supabase } from './supabase';
 import { supabaseAdmin } from './supabase-admin';
 import { createClient as createBrowserSupabaseClient } from './supabase-browser';
-import { Tournament, TournamentStatus, Diamond, Contact, AgeGroup, Pool, Team, Game, Announcement, PlayoffConfig, RuleSection, RuleItem, Resource, Organization, OrganizationMember, OrgPlan, OrgRole, TournamentArchive, OrgPublicSiteContent, AccountingLedger, AccountingEntry, LedgerSummary, AccountingEntryStatus, AccountingEntryType, LeagueSeason, LeagueDivision, LeagueTeam, LeagueRegistration, LeagueGame, LeagueStandingsRow, LeagueSeasonSummary, LeagueRegistrationStatus, LeagueSeasonStatus } from './types';
+import { Tournament, TournamentStatus, Diamond, Contact, AgeGroup, Pool, Team, Game, Announcement, PlayoffConfig, RuleSection, RuleItem, Resource, Organization, OrganizationMember, OrgPlan, OrgRole, TournamentArchive, OrgPublicSiteContent, AccountingLedger, AccountingEntry, LedgerSummary, AccountingEntryStatus, AccountingEntryType, LeagueSeason, LeagueDivision, LeagueTeam, LeagueRegistration, LeagueGame, LeagueStandingsRow, LeagueSeasonSummary, LeagueRegistrationStatus, LeagueSeasonStatus, LeaguePractice, LeaguePracticeStatus } from './types';
 
 // Use the SSR browser client (cookie-based session) for writes that need auth;
 // falls back to anon client on the server where there is no window.
@@ -2038,6 +2038,107 @@ export async function getGamesForSeason(seasonId: string): Promise<LeagueGame[]>
     .neq('status', 'cancelled')
     .order('scheduled_at', { ascending: true });
   return (data ?? []).map(mapLeagueGame);
+}
+
+// ─── League practices ─────────────────────────────────────────────────────────
+
+function mapLeaguePractice(row: Record<string, unknown>): LeaguePractice {
+  return {
+    id:                row.id as string,
+    seasonId:          row.season_id as string,
+    divisionId:        row.division_id as string | null,
+    teamId:            row.team_id as string,
+    scheduledAt:       row.scheduled_at as string | null,
+    endsAt:            row.ends_at as string | null,
+    location:          row.location as string | null,
+    notes:             row.notes as string | null,
+    status:            row.status as LeaguePracticeStatus,
+    recurrenceGroupId: row.recurrence_group_id as string | null,
+    createdAt:         row.created_at as string,
+    updatedAt:         row.updated_at as string,
+  };
+}
+
+export async function getPracticesForTeam(teamId: string): Promise<LeaguePractice[]> {
+  const { data } = await supabaseAdmin
+    .from('league_practices')
+    .select('*')
+    .eq('team_id', teamId)
+    .order('scheduled_at', { ascending: true });
+  return (data ?? []).map(mapLeaguePractice);
+}
+
+export async function getPracticesForSeason(seasonId: string): Promise<LeaguePractice[]> {
+  const { data } = await supabaseAdmin
+    .from('league_practices')
+    .select('*')
+    .eq('season_id', seasonId)
+    .order('scheduled_at', { ascending: true });
+  return (data ?? []).map(mapLeaguePractice);
+}
+
+interface LeaguePracticeInput {
+  seasonId: string;
+  divisionId: string | null;
+  teamId: string;
+  scheduledAt: string | null;
+  endsAt: string | null;
+  location: string | null;
+  notes: string | null;
+  recurrenceGroupId?: string | null;
+}
+
+export async function createPractices(inputs: LeaguePracticeInput[]): Promise<LeaguePractice[]> {
+  const { data } = await supabaseAdmin
+    .from('league_practices')
+    .insert(inputs.map(i => ({
+      season_id:           i.seasonId,
+      division_id:         i.divisionId ?? null,
+      team_id:             i.teamId,
+      scheduled_at:        i.scheduledAt ?? null,
+      ends_at:             i.endsAt ?? null,
+      location:            i.location ?? null,
+      notes:               i.notes ?? null,
+      recurrence_group_id: i.recurrenceGroupId ?? null,
+    })))
+    .select();
+  return (data ?? []).map(mapLeaguePractice);
+}
+
+export async function cancelPractice(
+  practiceId: string,
+  scope: 'one' | 'remaining' | 'all',
+): Promise<void> {
+  const patch = { status: 'cancelled', updated_at: new Date().toISOString() };
+
+  if (scope === 'one') {
+    await supabaseAdmin.from('league_practices').update(patch).eq('id', practiceId);
+    return;
+  }
+
+  const { data: p } = await supabaseAdmin
+    .from('league_practices')
+    .select('recurrence_group_id, scheduled_at')
+    .eq('id', practiceId)
+    .single();
+
+  if (!p?.recurrence_group_id) {
+    await supabaseAdmin.from('league_practices').update(patch).eq('id', practiceId);
+    return;
+  }
+
+  if (scope === 'all') {
+    await supabaseAdmin
+      .from('league_practices')
+      .update(patch)
+      .eq('recurrence_group_id', p.recurrence_group_id);
+  } else {
+    await supabaseAdmin
+      .from('league_practices')
+      .update(patch)
+      .eq('recurrence_group_id', p.recurrence_group_id)
+      .gte('scheduled_at', p.scheduled_at!);
+  }
 }
 
 export async function createLeagueGame(input: LeagueGameInput): Promise<LeagueGame> {
