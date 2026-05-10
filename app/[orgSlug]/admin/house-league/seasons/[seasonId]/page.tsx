@@ -875,6 +875,7 @@ function DivisionCard({
         <Link href={`${seasonBase}/teams`}         className={styles.divisionLink}>Teams</Link>
         <Link href={`${seasonBase}/schedule`}      className={styles.divisionLink}>Schedule</Link>
         <Link href={`${seasonBase}/standings`}     className={styles.divisionLink}>Standings</Link>
+        <Link href={`${seasonBase}/ledger`}        className={styles.divisionLink}>Ledger</Link>
       </div>
     </div>
   );
