@@ -15,7 +15,7 @@ This file tracks the ongoing tasks for the tournament website project. AI models
 - [x] **Phase C** — Org notes column + drill-down detail page
 - [x] **Phase D** — `org_overrides` table: subscription status override + comp/billing grace period
 - [x] **Phase E3** — Audit log read page at `/platform-admin/audit`
-- [ ] **Phase F** — Org search/filter + users pagination (deferred; do when scale demands)
+- [x] **Phase F** — Org search/filter + users pagination
 
 ### 2. Platform Roadmap — Add-On Modules
 *Authoritative plan in [PLATFORM_ROADMAP.md](PLATFORM_ROADMAP.md)*
