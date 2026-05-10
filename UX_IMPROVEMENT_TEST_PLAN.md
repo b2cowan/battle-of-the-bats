@@ -50,10 +50,37 @@ To review the existing codebase and planned modules for FieldLogicHQ and identif
 - **Impersonation/Support Tools:** If an org owner reports an issue, can the platform admin easily troubleshoot their specific context without requiring their password?
 - **Global Metrics:** Is there a high-level dashboard showing platform-wide metrics (total active orgs, tournaments created this month, active subscriptions)?
 
+## 8. Public Viewer (Parents / Athletes / Fans)
+**Focus:** Easy access to public information, mobile readability, and professional branding.
+- **Org Landing Page:** Is the organization's public page visually appealing and easy to navigate? Does it clearly highlight active tournaments and open house league registrations?
+- **Tournament Schedules & Standings:** Can a fan easily find a specific team's schedule or check the latest bracket updates on their phone without excessive scrolling or zooming?
+- **Contact & Support:** If a parent has a question, is there an obvious way to contact the organization directly from the public pages?
+- **Performance & Load Times:** Do the public pages load instantly, especially for images or large schedules?
+
 ---
 
-## Next Steps for Execution
-1. **Walkthrough Sessions:** Conduct a guided UI walkthrough for each role using the active dev server.
-2. **Friction Logging:** Document any clicks that feel redundant, pages that take too long to load, or UI elements that are confusing.
-3. **Prioritization:** Rank the identified UX improvements based on development effort vs. user impact.
-4. **Implementation:** Feed the prioritized items back into the `PLATFORM_ROADMAP.md` or a dedicated `UX_POLISH_PLAN.md` for execution.
+## Execution Strategy (Phased Approach)
+
+To ensure we prioritize effectively and don't get overwhelmed, I recommend breaking this UX review into three distinct phases, aligned with your current platform roadmap:
+
+### Phase 1: The "Front Door" (Public & Registrants)
+**Roles:** Public Viewer, House League Registrant (Parent/Player)
+**Why start here?** These pages are the first point of contact for the highest volume of users. Any friction here immediately results in support emails for the org owner. Since the Public Site module and the House League registration form are already built, we can test these immediately.
+**Focus:** Mobile responsiveness of public schedules, the exact flow a parent goes through to register a child, and the clarity of the public organization landing page.
+
+### Phase 2: The "Engine Room" (Owner, Admin, & Coach)
+**Roles:** Org Owner & Admin, Coach, Official
+**Why next?** The core tournament operations and hub navigation are the backbone of the platform. Since this is actively being used, ensuring day-to-day tasks are fast is critical for retention.
+**Focus:** Dashboard navigation, tournament creation, roster management, and mobile score entry workflows.
+
+### Phase 3: The "New Modules" (Registrar & Treasurer)
+**Roles:** League Admin & Registrar, Treasurer
+**Why last?** The House League administrative tools are still being finalized, and the Accounting module is about to start development. We can perform UX reviews as these workflows become testable.
+**Focus:** The registration pipeline (waitlist promotion, team draft board) and the accounting ledger data-entry flow.
+
+---
+
+## Next Steps
+1. **Kick off Phase 1:** We can use a browser subagent to actively navigate the public-facing pages (desktop and mobile) to identify immediate friction points.
+2. **Friction Logging:** I will document any issues found and create a prioritized hit-list of UI/UX polishes.
+3. **Execution:** We implement the fixes before moving on to Phase 2.

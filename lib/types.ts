@@ -300,6 +300,23 @@ export type LeagueRegistrationStatus =
 export type LeagueGameStatus =
   | 'scheduled' | 'completed' | 'cancelled' | 'postponed';
 
+export interface LeagueDraftPick {
+  round: number;
+  pickNumber: number;
+  teamId: string;
+  registrationId: string;
+}
+
+export interface LeagueDraftState {
+  draftId: string;
+  divisionId: string;
+  round: number;
+  pickNumber: number;
+  currentTeamId: string;
+  pickOrder: string[];
+  picks: LeagueDraftPick[];
+}
+
 export interface LeagueSeason {
   id: string;
   orgId: string;
@@ -318,6 +335,7 @@ export interface LeagueSeason {
   seasonStartDate: string | null;
   seasonEndDate: string | null;
   waiverText: string | null;
+  draftState: LeagueDraftState | null;
   createdAt: string;
   updatedAt: string;
 }

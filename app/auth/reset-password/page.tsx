@@ -18,33 +18,42 @@ export default function ResetPasswordPage() {
 
   useEffect(() => {
     const supabase = createClient();
-    let timer: ReturnType<typeof setTimeout> | null = null;
 
+    // Keep listening for PKCE-based PASSWORD_RECOVERY in case it fires via exchangeCodeForSession.
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === 'PASSWORD_RECOVERY') {
-        setPageState('ready');
-      }
+      if (event === 'PASSWORD_RECOVERY') setPageState('ready');
     });
 
-    // PKCE flow: Supabase sends ?code=XXX in the URL. Exchange it so PASSWORD_RECOVERY fires.
     const code = new URLSearchParams(window.location.search).get('code');
-    if (code) {
+    // @supabase/ssr forces flowType:'pkce' on createBrowserClient, so hash-based tokens
+    // (from admin.generateLink implicit flow) are never auto-processed. Parse manually.
+    const hash = new URLSearchParams(window.location.hash.slice(1));
+    const hashError = hash.get('error');
+    const accessToken = hash.get('access_token');
+    const refreshToken = hash.get('refresh_token');
+
+    if (hashError) {
+      // Supabase auth server returned an error (token already used, truly expired, etc.)
+      setPageState('expired');
+    } else if (code) {
+      // PKCE flow — exchange code; PASSWORD_RECOVERY fires via onAuthStateChange above.
       supabase.auth.exchangeCodeForSession(code).then(({ error }) => {
         if (error) setPageState('expired');
-        // On success, onAuthStateChange fires PASSWORD_RECOVERY above.
       });
+    } else if (accessToken && refreshToken) {
+      // Implicit/admin flow — set session manually since the PKCE client won't process the hash.
+      supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken })
+        .then(({ error }) => {
+          setPageState(error ? 'expired' : 'ready');
+          // Clean up the hash so the token isn't replayed on refresh.
+          if (!error) window.history.replaceState(null, '', window.location.pathname);
+        });
     } else {
-      // Implicit flow: Supabase detects the hash fragment automatically.
-      // If no PASSWORD_RECOVERY fires within 3 s, the token is missing or expired.
-      timer = setTimeout(() => {
-        setPageState(prev => prev === 'waiting' ? 'expired' : prev);
-      }, 3000);
+      // No token — direct navigation or stripped URL.
+      setPageState('expired');
     }
 
-    return () => {
-      subscription.unsubscribe();
-      if (timer) clearTimeout(timer);
-    };
+    return () => subscription.unsubscribe();
   }, []);
 
   async function handleSubmit(e: React.FormEvent) {
