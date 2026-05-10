@@ -2030,6 +2030,16 @@ export async function getGamesForDivision(divisionId: string): Promise<LeagueGam
   return (data ?? []).map(mapLeagueGame);
 }
 
+export async function getGamesForSeason(seasonId: string): Promise<LeagueGame[]> {
+  const { data } = await supabaseAdmin
+    .from('league_games')
+    .select('*')
+    .eq('season_id', seasonId)
+    .neq('status', 'cancelled')
+    .order('scheduled_at', { ascending: true });
+  return (data ?? []).map(mapLeagueGame);
+}
+
 export async function createLeagueGame(input: LeagueGameInput): Promise<LeagueGame> {
   const { data } = await supabaseAdmin
     .from('league_games')
