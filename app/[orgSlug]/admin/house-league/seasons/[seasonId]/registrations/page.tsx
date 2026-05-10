@@ -1,12 +1,12 @@
 'use client';
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams } from 'next/navigation';
-import { X, Plus, ChevronLeft } from 'lucide-react';
+import { X, Plus, ChevronLeft, Mail } from 'lucide-react';
 import Link from 'next/link';
 import { useOrg } from '@/lib/org-context';
 import FeedbackModal from '@/components/FeedbackModal';
 import styles from '../../../house-league.module.css';
-import type { LeagueRegistration, LeagueRegistrationStatus, LeagueDivision } from '@/lib/types';
+import type { LeagueRegistration, LeagueRegistrationStatus, LeagueDivision, LeagueTeam } from '@/lib/types';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -117,6 +117,18 @@ export default function RegistrationsPage() {
   // Decline confirm
   const [confirmDeclineId, setConfirmDeclineId] = useState<string | null>(null);
 
+  // Compose modal
+  const [composeOpen,    setComposeOpen]    = useState(false);
+  const [composeScope,   setComposeScope]   = useState<'all' | 'division' | 'team' | 'status'>('all');
+  const [composeDivId,   setComposeDivId]   = useState('');
+  const [composeTeamId,  setComposeTeamId]  = useState('');
+  const [composeStatus,  setComposeStatus]  = useState<LeagueRegistrationStatus>('active');
+  const [composeSubject, setComposeSubject] = useState('');
+  const [composeMessage, setComposeMessage] = useState('');
+  const [composeSending, setComposeSending] = useState(false);
+  const [teams,          setTeams]          = useState<LeagueTeam[]>([]);
+  const [teamsLoaded,    setTeamsLoaded]    = useState(false);
+
   // Feedback
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [feedbackType, setFeedbackType] = useState<'success' | 'danger'>('success');
@@ -189,6 +201,15 @@ export default function RegistrationsPage() {
     }
   }, [filtered, activeTab]);
 
+  const recipientCount = useMemo(() => {
+    switch (composeScope) {
+      case 'all':      return regs.filter(r => r.status === 'active').length;
+      case 'division': return composeDivId ? regs.filter(r => r.divisionId === composeDivId && r.status === 'active').length : 0;
+      case 'team':     return composeTeamId ? regs.filter(r => r.teamId === composeTeamId).length : 0;
+      case 'status':   return regs.filter(r => r.status === composeStatus).length;
+    }
+  }, [regs, composeScope, composeDivId, composeTeamId, composeStatus]);
+
   const counts = useMemo(() => ({
     pending_review:     regs.filter(r => r.status === 'pending_review').length,
     active:             regs.filter(r => r.status === 'active').length,
@@ -196,6 +217,15 @@ export default function RegistrationsPage() {
     declined_withdrawn: regs.filter(r => r.status === 'declined' || r.status === 'withdrawn').length,
     all:                regs.length,
   }), [regs]);
+
+  // Lazy-load teams when "By Team" scope is selected
+  useEffect(() => {
+    if (composeScope === 'team' && !teamsLoaded && seasonId) {
+      fetch(`/api/admin/house-league/seasons/${seasonId}/teams`)
+        .then(r => r.json())
+        .then(d => { setTeams(d.teams ?? []); setTeamsLoaded(true); });
+    }
+  }, [composeScope, teamsLoaded, seasonId]);
 
   // ── Actions ───────────────────────────────────────────────────────────────────
 
@@ -280,6 +310,42 @@ export default function RegistrationsPage() {
       showFeedback('danger', e.message ?? 'Failed to add registration.');
     } finally {
       setAdding(false);
+    }
+  }
+
+  async function handleSendMessage() {
+    if (!composeSubject.trim() || !composeMessage.trim()) {
+      showFeedback('danger', 'Please fill in subject and message.');
+      return;
+    }
+    if (recipientCount === 0) {
+      showFeedback('danger', 'No recipients match this audience selection.');
+      return;
+    }
+    setComposeSending(true);
+    try {
+      const res = await fetch(`/api/admin/house-league/seasons/${seasonId}/email`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          subject:    composeSubject.trim(),
+          message:    composeMessage.trim(),
+          scope:      composeScope,
+          divisionId: composeScope === 'division' ? composeDivId   : undefined,
+          teamId:     composeScope === 'team'     ? composeTeamId  : undefined,
+          status:     composeScope === 'status'   ? composeStatus  : undefined,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? 'Failed to send');
+      setComposeOpen(false);
+      setComposeSubject('');
+      setComposeMessage('');
+      showFeedback('success', `Sent to ${data.sent} guardian${data.sent !== 1 ? 's' : ''}.${data.skipped ? ` ${data.skipped} skipped.` : ''}`);
+    } catch (e: any) {
+      showFeedback('danger', e.message ?? 'Failed to send message.');
+    } finally {
+      setComposeSending(false);
     }
   }
 
@@ -382,14 +448,24 @@ export default function RegistrationsPage() {
           </div>
         </div>
         {isAdminOrOwner && (
-          <button
-            className={styles.iconBtn}
-            style={{ gap: '0.35rem', padding: '0.45rem 0.85rem', fontSize: '0.85rem', color: 'var(--logic-lime, #a3e635)', borderColor: 'rgba(163,230,53,0.3)' }}
-            onClick={() => { setAddForm(BLANK_FORM); setAddOpen(true); }}
-          >
-            <Plus size={14} />
-            Add Registration
-          </button>
+          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+            <button
+              className={styles.iconBtn}
+              style={{ gap: '0.35rem', padding: '0.45rem 0.85rem', fontSize: '0.85rem' }}
+              onClick={() => setComposeOpen(true)}
+            >
+              <Mail size={14} />
+              Message Registrants
+            </button>
+            <button
+              className={styles.iconBtn}
+              style={{ gap: '0.35rem', padding: '0.45rem 0.85rem', fontSize: '0.85rem', color: 'var(--logic-lime, #a3e635)', borderColor: 'rgba(163,230,53,0.3)' }}
+              onClick={() => { setAddForm(BLANK_FORM); setAddOpen(true); }}
+            >
+              <Plus size={14} />
+              Add Registration
+            </button>
+          </div>
         )}
       </div>
 
@@ -674,6 +750,127 @@ export default function RegistrationsPage() {
                 onClick={handleManualAdd}
               >
                 {adding ? 'Adding…' : 'Add Registration'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Compose modal ─────────────────────────────────────────────────── */}
+      {composeOpen && (
+        <div className={styles.modalOverlay}>
+          <div className={styles.modal} style={{ maxWidth: 520 }}>
+            <div className={styles.modalHeader}>
+              <h2 className={styles.modalTitle}>Message Registrants</h2>
+              <button className={styles.modalCloseBtn} onClick={() => setComposeOpen(false)}>
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className={styles.field} style={{ marginBottom: '1rem' }}>
+              <label className={styles.label}>Audience</label>
+              <select
+                className={styles.select}
+                value={composeScope}
+                onChange={e => setComposeScope(e.target.value as typeof composeScope)}
+              >
+                <option value="all">All Active Registrants</option>
+                <option value="division">By Division</option>
+                <option value="team">By Team</option>
+                <option value="status">By Status</option>
+              </select>
+            </div>
+
+            {composeScope === 'division' && (
+              <div className={styles.field} style={{ marginBottom: '1rem' }}>
+                <label className={styles.label}>Division</label>
+                <select className={styles.select} value={composeDivId} onChange={e => setComposeDivId(e.target.value)}>
+                  <option value="">Select a division…</option>
+                  {divisions.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+                </select>
+              </div>
+            )}
+
+            {composeScope === 'team' && (
+              <div className={styles.field} style={{ marginBottom: '1rem' }}>
+                <label className={styles.label}>Team</label>
+                <select className={styles.select} value={composeTeamId} onChange={e => setComposeTeamId(e.target.value)}>
+                  <option value="">Select a team…</option>
+                  {teams.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                </select>
+              </div>
+            )}
+
+            {composeScope === 'status' && (
+              <div className={styles.field} style={{ marginBottom: '1rem' }}>
+                <label className={styles.label}>Status</label>
+                <select className={styles.select} value={composeStatus} onChange={e => setComposeStatus(e.target.value as LeagueRegistrationStatus)}>
+                  <option value="active">Active</option>
+                  <option value="waitlisted">Waitlisted</option>
+                  <option value="pending_review">Pending Review</option>
+                  <option value="declined">Declined</option>
+                </select>
+              </div>
+            )}
+
+            <div
+              style={{
+                padding: '0.5rem 0.75rem',
+                borderRadius: '6px',
+                background: recipientCount > 0 ? 'rgba(163,230,53,0.07)' : 'rgba(255,255,255,0.04)',
+                border: recipientCount > 0 ? '1px solid rgba(163,230,53,0.2)' : '1px solid rgba(255,255,255,0.07)',
+                fontSize: '0.8rem',
+                color: recipientCount > 0 ? '#a3e635' : 'rgba(255,255,255,0.35)',
+                marginBottom: '1.25rem',
+              }}
+            >
+              {recipientCount > 0
+                ? `Sending to ${recipientCount} guardian${recipientCount !== 1 ? 's' : ''}`
+                : 'No recipients match this selection'}
+            </div>
+
+            <div className={styles.field} style={{ marginBottom: '1rem' }}>
+              <label className={styles.label}>Subject *</label>
+              <input
+                className={styles.input}
+                placeholder="e.g. Season start reminder"
+                value={composeSubject}
+                onChange={e => setComposeSubject(e.target.value)}
+              />
+            </div>
+
+            <div className={styles.field} style={{ marginBottom: '0.5rem' }}>
+              <label className={styles.label}>Message *</label>
+              <textarea
+                className={styles.textarea}
+                rows={6}
+                placeholder="Write your message here…"
+                value={composeMessage}
+                onChange={e => setComposeMessage(e.target.value)}
+              />
+            </div>
+
+            <div className={styles.modalFooter}>
+              <button
+                className={styles.iconBtn}
+                style={{ fontSize: '0.875rem', padding: '0.5rem 1rem' }}
+                onClick={() => setComposeOpen(false)}
+                disabled={composeSending}
+              >
+                Cancel
+              </button>
+              <button
+                className={styles.iconBtn}
+                style={{
+                  fontSize: '0.875rem', padding: '0.5rem 1.25rem',
+                  color: 'var(--logic-lime, #a3e635)',
+                  borderColor: 'rgba(163,230,53,0.3)',
+                  opacity: recipientCount === 0 ? 0.5 : 1,
+                }}
+                disabled={composeSending || recipientCount === 0}
+                onClick={handleSendMessage}
+              >
+                {composeSending ? 'Sending…' : `Send to ${recipientCount}`}
               </button>
             </div>
           </div>
