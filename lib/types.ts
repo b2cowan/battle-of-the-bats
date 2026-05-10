@@ -401,6 +401,23 @@ export interface LeagueGame {
   updatedAt: string;
 }
 
+export type LeaguePracticeStatus = 'scheduled' | 'cancelled';
+
+export interface LeaguePractice {
+  id: string;
+  seasonId: string;
+  divisionId: string | null;
+  teamId: string;
+  scheduledAt: string | null;
+  endsAt: string | null;
+  location: string | null;
+  notes: string | null;
+  status: LeaguePracticeStatus;
+  recurrenceGroupId: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
 // Computed standings row per team within a division
 export interface LeagueStandingsRow {
   team: LeagueTeam;

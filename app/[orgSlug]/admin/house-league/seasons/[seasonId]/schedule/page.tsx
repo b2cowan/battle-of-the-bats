@@ -7,7 +7,7 @@ import { useOrg } from '@/lib/org-context';
 import { hasCapability } from '@/lib/roles';
 import FeedbackModal from '@/components/FeedbackModal';
 import styles from '../../../house-league.module.css';
-import type { LeagueDivision, LeagueTeam, LeagueGame, LeagueGameStatus } from '@/lib/types';
+import type { LeagueDivision, LeagueTeam, LeagueGame, LeagueGameStatus, LeaguePractice } from '@/lib/types';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -40,6 +40,18 @@ interface GenerateConfig {
   location: string;
 }
 
+interface PracticeForm {
+  recurring: boolean;
+  scheduledDate: string;
+  dayOfWeek: string;
+  startDate: string;
+  endDate: string;
+  startTime: string;
+  endTime: string;
+  location: string;
+  notes: string;
+}
+
 interface FeedbackState {
   isOpen: boolean; title: string; message: string;
   type: 'success' | 'danger' | 'info';
@@ -63,7 +75,6 @@ function isoToTimeInput(iso: string): string {
   return new Date(iso).toTimeString().slice(0, 5);
 }
 
-// Returns the Monday of the week containing the given date (YYYY-MM-DD key)
 function weekKey(iso: string): string {
   const d = new Date(iso);
   const day = d.getDay();
@@ -78,10 +89,10 @@ function weekLabel(key: string): string {
 }
 
 const STATUS_LABELS: Record<LeagueGameStatus, string> = {
-  scheduled:  'Scheduled',
-  completed:  'Completed',
-  postponed:  'Postponed',
-  cancelled:  'Cancelled',
+  scheduled: 'Scheduled',
+  completed: 'Completed',
+  postponed: 'Postponed',
+  cancelled: 'Cancelled',
 };
 
 const STATUS_CLASS: Record<LeagueGameStatus, string> = {
@@ -90,6 +101,8 @@ const STATUS_CLASS: Record<LeagueGameStatus, string> = {
   postponed: styles.gameStatusPostponed,
   cancelled: styles.gameStatusCancelled,
 };
+
+const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
 const BTN_PRIMARY: React.CSSProperties = {
   background: 'var(--logic-lime, #a3e635)', color: '#1a1f2e', border: 'none',
@@ -120,7 +133,7 @@ function GameModal({
   onCancel: onCancelGame,
   onClose,
 }: {
-  game: LeagueGame | null; // null = create mode
+  game: LeagueGame | null;
   teams: LeagueTeam[];
   canManage: boolean;
   saving: boolean;
@@ -371,6 +384,179 @@ function GenerateModal({
   );
 }
 
+// ── Practice Modal ────────────────────────────────────────────────────────────
+
+function PracticeModal({
+  team,
+  saving,
+  onSave,
+  onClose,
+}: {
+  team: LeagueTeam;
+  saving: boolean;
+  onSave: (form: PracticeForm) => Promise<void>;
+  onClose: () => void;
+}) {
+  const today = new Date().toISOString().slice(0, 10);
+  const [form, setForm] = useState<PracticeForm>({
+    recurring: false,
+    scheduledDate: today,
+    dayOfWeek: '2',
+    startDate: today,
+    endDate: today,
+    startTime: '18:00',
+    endTime: '20:00',
+    location: '',
+    notes: '',
+  });
+
+  function set(k: keyof PracticeForm, v: string | boolean) {
+    setForm(f => ({ ...f, [k]: v }));
+  }
+
+  return (
+    <div className={styles.modalOverlay} onClick={e => e.target === e.currentTarget && onClose()}>
+      <div className={styles.modal}>
+        <div className={styles.modalHeader}>
+          <h2 className={styles.modalTitle}>Add Practice — {team.name}</h2>
+          <button className={styles.modalCloseBtn} onClick={onClose}><X size={18} /></button>
+        </div>
+
+        <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
+          <button
+            style={{ ...(!form.recurring ? BTN_PRIMARY : BTN_SECONDARY), flex: 1 }}
+            onClick={() => set('recurring', false)}
+          >
+            Single
+          </button>
+          <button
+            style={{ ...(form.recurring ? BTN_PRIMARY : BTN_SECONDARY), flex: 1 }}
+            onClick={() => set('recurring', true)}
+          >
+            Recurring Series
+          </button>
+        </div>
+
+        <div className={styles.formGrid}>
+          {!form.recurring ? (
+            <div className={styles.field}>
+              <label className={styles.label}>Date</label>
+              <input type="date" className={styles.input} value={form.scheduledDate} onChange={e => set('scheduledDate', e.target.value)} />
+            </div>
+          ) : (
+            <>
+              <div className={`${styles.field} ${styles.formGridFull}`}>
+                <label className={styles.label}>Day of week</label>
+                <select className={styles.select} value={form.dayOfWeek} onChange={e => set('dayOfWeek', e.target.value)}>
+                  {DAY_NAMES.map((n, i) => <option key={i} value={String(i)}>{n}</option>)}
+                </select>
+              </div>
+              <div className={styles.field}>
+                <label className={styles.label}>From date</label>
+                <input type="date" className={styles.input} value={form.startDate} onChange={e => set('startDate', e.target.value)} />
+              </div>
+              <div className={styles.field}>
+                <label className={styles.label}>To date</label>
+                <input type="date" className={styles.input} value={form.endDate} onChange={e => set('endDate', e.target.value)} />
+              </div>
+            </>
+          )}
+          <div className={styles.field}>
+            <label className={styles.label}>Start time</label>
+            <input type="time" className={styles.input} value={form.startTime} onChange={e => set('startTime', e.target.value)} />
+          </div>
+          <div className={styles.field}>
+            <label className={styles.label}>End time</label>
+            <input type="time" className={styles.input} value={form.endTime} onChange={e => set('endTime', e.target.value)} />
+          </div>
+        </div>
+
+        <div className={styles.field}>
+          <label className={styles.label}>Location <span style={{ fontWeight: 400, opacity: 0.5 }}>(optional)</span></label>
+          <input className={styles.input} value={form.location} onChange={e => set('location', e.target.value)} placeholder="Field name or address" />
+        </div>
+
+        <div className={styles.field}>
+          <label className={styles.label}>Notes <span style={{ fontWeight: 400, opacity: 0.5 }}>(optional)</span></label>
+          <textarea className={styles.textarea} value={form.notes} onChange={e => set('notes', e.target.value)} rows={2} />
+        </div>
+
+        <div className={styles.modalFooter}>
+          <button style={BTN_SECONDARY} onClick={onClose}>Cancel</button>
+          <button style={BTN_PRIMARY} onClick={() => onSave(form)} disabled={saving}>
+            {saving ? 'Saving…' : form.recurring ? 'Create Series' : 'Create Practice'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Cancel Practice Modal ─────────────────────────────────────────────────────
+
+function CancelPracticeModal({
+  practice,
+  teamName,
+  saving,
+  onConfirm,
+  onClose,
+}: {
+  practice: LeaguePractice;
+  teamName: string;
+  saving: boolean;
+  onConfirm: (scope: 'one' | 'remaining' | 'all') => Promise<void>;
+  onClose: () => void;
+}) {
+  const isRecurring = !!practice.recurrenceGroupId;
+  const [scope, setScope] = useState<'one' | 'remaining' | 'all'>('one');
+  const dt = practice.scheduledAt ? formatDateTime(practice.scheduledAt) : null;
+
+  return (
+    <div className={styles.modalOverlay} onClick={e => e.target === e.currentTarget && onClose()}>
+      <div className={styles.modal} style={{ maxWidth: 420 }}>
+        <div className={styles.modalHeader}>
+          <h2 className={styles.modalTitle}>Cancel Practice</h2>
+          <button className={styles.modalCloseBtn} onClick={onClose}><X size={18} /></button>
+        </div>
+
+        <p style={{ fontSize: '0.88rem', color: 'rgba(255,255,255,0.55)', marginBottom: '1rem' }}>
+          {teamName}{dt ? ` · ${dt.date} at ${dt.time}` : ''}
+        </p>
+
+        {isRecurring && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1.25rem' }}>
+            {(['one', 'remaining', 'all'] as const).map(s => (
+              <label
+                key={s}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: '0.6rem',
+                  cursor: 'pointer', padding: '0.5rem 0.75rem', borderRadius: 7,
+                  border: `1px solid ${scope === s ? 'rgba(239,68,68,0.35)' : 'rgba(255,255,255,0.08)'}`,
+                  background: scope === s ? 'rgba(239,68,68,0.07)' : 'rgba(255,255,255,0.02)',
+                }}
+              >
+                <input type="radio" value={s} checked={scope === s} onChange={() => setScope(s)} style={{ accentColor: '#f87171' }} />
+                <span style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.75)' }}>
+                  {s === 'one' && 'Cancel this practice only'}
+                  {s === 'remaining' && 'Cancel this and all remaining in the series'}
+                  {s === 'all' && 'Cancel the entire series'}
+                </span>
+              </label>
+            ))}
+          </div>
+        )}
+
+        <div className={styles.modalFooter}>
+          <button style={BTN_SECONDARY} onClick={onClose}>Back</button>
+          <button style={BTN_DANGER} onClick={() => onConfirm(scope)} disabled={saving}>
+            {saving ? 'Cancelling…' : 'Cancel Practice'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── Main Page ─────────────────────────────────────────────────────────────────
 
 export default function SchedulePage() {
@@ -382,14 +568,19 @@ export default function SchedulePage() {
   const [selectedDivId, setSelectedDivId] = useState('');
   const [teams, setTeams] = useState<LeagueTeam[]>([]);
   const [games, setGames] = useState<LeagueGame[]>([]);
-  const [viewMode, setViewMode] = useState<'week' | 'list'>('week');
+  const [practices, setPractices] = useState<LeaguePractice[]>([]);
+  const [selectedTeamId, setSelectedTeamId] = useState('');
+  const [viewMode, setViewMode] = useState<'week' | 'list' | 'practices'>('week');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
   const [showGenerate, setShowGenerate] = useState(false);
-  const [editGame, setEditGame] = useState<LeagueGame | null | 'create'>('create' as any);
   const [gameModalOpen, setGameModalOpen] = useState(false);
   const [activeGame, setActiveGame] = useState<LeagueGame | null>(null);
+
+  const [showPracticeModal, setShowPracticeModal] = useState(false);
+  const [activePractice, setActivePractice] = useState<LeaguePractice | null>(null);
+  const [showCancelModal, setShowCancelModal] = useState(false);
 
   const [feedback, setFeedback] = useState<FeedbackState>({ isOpen: false, title: '', message: '', type: 'success' });
 
@@ -412,8 +603,15 @@ export default function SchedulePage() {
       fetch(`/api/admin/house-league/seasons/${seasonId}/teams?divisionId=${divId}`),
       fetch(`/api/admin/house-league/seasons/${seasonId}/schedule?divisionId=${divId}`),
     ]);
-    if (teamsRes.ok) setTeams((await teamsRes.json()).teams ?? []);
+    const newTeams = teamsRes.ok ? ((await teamsRes.json()).teams ?? []) : [];
+    setTeams(newTeams);
+    setSelectedTeamId(t => t || (newTeams[0]?.id ?? ''));
     if (gamesRes.ok) setGames((await gamesRes.json()).games ?? []);
+  }, [seasonId]);
+
+  const loadPractices = useCallback(async (teamId: string) => {
+    const res = await fetch(`/api/admin/house-league/seasons/${seasonId}/practices?teamId=${teamId}`);
+    if (res.ok) setPractices((await res.json()).practices ?? []);
   }, [seasonId]);
 
   useEffect(() => {
@@ -422,15 +620,23 @@ export default function SchedulePage() {
   }, [loadSeasonAndDivisions]);
 
   useEffect(() => {
-    if (selectedDivId) loadTeamsAndGames(selectedDivId);
+    if (selectedDivId) {
+      setSelectedTeamId('');
+      loadTeamsAndGames(selectedDivId);
+    }
   }, [selectedDivId, loadTeamsAndGames]);
+
+  useEffect(() => {
+    if (viewMode === 'practices' && selectedTeamId) {
+      void loadPractices(selectedTeamId);
+    }
+  }, [viewMode, selectedTeamId, loadPractices]);
 
   // ── Derived ────────────────────────────────────────────────────────────────
 
   const selectedDiv = divisions.find(d => d.id === selectedDivId);
   const teamMap = useMemo(() => new Map(teams.map(t => [t.id, t])), [teams]);
 
-  // Week view grouping
   const weekGroups = useMemo(() => {
     const map = new Map<string, LeagueGame[]>();
     const unscheduled: LeagueGame[] = [];
@@ -444,6 +650,20 @@ export default function SchedulePage() {
     if (unscheduled.length) sorted.push(['unscheduled', unscheduled]);
     return sorted;
   }, [games]);
+
+  const practiceWeekGroups = useMemo(() => {
+    const map = new Map<string, LeaguePractice[]>();
+    const unscheduled: LeaguePractice[] = [];
+    for (const p of practices) {
+      if (!p.scheduledAt) { unscheduled.push(p); continue; }
+      const key = weekKey(p.scheduledAt);
+      if (!map.has(key)) map.set(key, []);
+      map.get(key)!.push(p);
+    }
+    const sorted = [...map.entries()].sort(([a], [b]) => a.localeCompare(b));
+    if (unscheduled.length) sorted.push(['unscheduled', unscheduled]);
+    return sorted;
+  }, [practices]);
 
   // ── Helpers ────────────────────────────────────────────────────────────────
 
@@ -540,6 +760,69 @@ export default function SchedulePage() {
     await loadTeamsAndGames(selectedDivId);
   }
 
+  // ── Practice CRUD ──────────────────────────────────────────────────────────
+
+  async function handleSavePractice(form: PracticeForm) {
+    setSaving(true);
+    const body: Record<string, unknown> = {
+      teamId:     selectedTeamId,
+      divisionId: selectedDivId || null,
+      recurring:  form.recurring,
+      startTime:  form.startTime,
+      endTime:    form.endTime || null,
+      location:   form.location || null,
+      notes:      form.notes || null,
+    };
+
+    if (form.recurring) {
+      body.dayOfWeek = Number(form.dayOfWeek);
+      body.startDate = form.startDate;
+      body.endDate   = form.endDate;
+    } else {
+      body.scheduledDate = form.scheduledDate;
+    }
+
+    const res = await fetch(`/api/admin/house-league/seasons/${seasonId}/practices`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    setSaving(false);
+    if (!res.ok) {
+      showError('Could not save practice', (await res.json()).error ?? 'Unknown error');
+      return;
+    }
+    const { count } = await res.json();
+    setShowPracticeModal(false);
+    setFeedback({
+      isOpen: true, title: 'Practices created',
+      message: `${count} practice${count !== 1 ? 's' : ''} added successfully.`,
+      type: 'success',
+    });
+    await loadPractices(selectedTeamId);
+  }
+
+  async function handleCancelPractice(scope: 'one' | 'remaining' | 'all') {
+    if (!activePractice) return;
+    setSaving(true);
+    const res = await fetch(
+      `/api/admin/house-league/seasons/${seasonId}/practices/${activePractice.id}`,
+      {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'cancel', scope }),
+      },
+    );
+    setSaving(false);
+    if (!res.ok) {
+      showError('Could not cancel practice', (await res.json()).error ?? 'Unknown error');
+      return;
+    }
+    setShowCancelModal(false);
+    setActivePractice(null);
+    await loadPractices(selectedTeamId);
+  }
+
   // ── Render ─────────────────────────────────────────────────────────────────
 
   if (loading) return <div className={styles.muted}>Loading schedule…</div>;
@@ -600,9 +883,15 @@ export default function SchedulePage() {
           >
             List
           </button>
+          <button
+            className={`${styles.viewToggleBtn} ${viewMode === 'practices' ? styles.viewToggleBtnActive : ''}`}
+            onClick={() => setViewMode('practices')}
+          >
+            Practices
+          </button>
         </div>
 
-        {canManage && (
+        {viewMode !== 'practices' && canManage && (
           <>
             <div className={styles.toolbarSep} />
             {teams.length >= 2 && (
@@ -617,10 +906,36 @@ export default function SchedulePage() {
             </button>
           </>
         )}
+
+        {viewMode === 'practices' && (
+          <>
+            {teams.length > 0 && (
+              <>
+                <div className={styles.toolbarSep} />
+                <select
+                  className={styles.divSelect}
+                  value={selectedTeamId}
+                  onChange={e => setSelectedTeamId(e.target.value)}
+                >
+                  {teams.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                </select>
+              </>
+            )}
+            {canManage && selectedTeamId && (
+              <>
+                <div className={styles.toolbarSep} />
+                <button style={BTN_SECONDARY} onClick={() => setShowPracticeModal(true)}>
+                  <Plus size={14} style={{ marginRight: 4 }} />
+                  Add Practice
+                </button>
+              </>
+            )}
+          </>
+        )}
       </div>
 
-      {/* Empty state */}
-      {games.length === 0 && (
+      {/* Empty state (games views) */}
+      {viewMode !== 'practices' && games.length === 0 && (
         <div className={styles.emptyState}>
           <p>
             {teams.length < 2
@@ -743,6 +1058,79 @@ export default function SchedulePage() {
         </div>
       )}
 
+      {/* Practices view */}
+      {viewMode === 'practices' && (
+        <>
+          {teams.length === 0 && (
+            <div className={styles.emptyState}>
+              <p>No teams in this division yet. Create teams before scheduling practices.</p>
+            </div>
+          )}
+
+          {teams.length > 0 && practices.length === 0 && (
+            <div className={styles.emptyState}>
+              <p>
+                {canManage
+                  ? 'No practices scheduled for this team. Use "Add Practice" to get started.'
+                  : 'No practices scheduled yet.'}
+              </p>
+            </div>
+          )}
+
+          {practices.length > 0 && practiceWeekGroups.map(([key, weekPractices]) => (
+            <div key={key} className={styles.weekGroup}>
+              <div className={styles.weekLabel}>
+                {key === 'unscheduled' ? 'Unscheduled' : weekLabel(key)}
+              </div>
+              <div className={styles.weekGames}>
+                {weekPractices.map(p => {
+                  const team = teamMap.get(p.teamId);
+                  const dt = p.scheduledAt ? formatDateTime(p.scheduledAt) : null;
+                  const endDt = p.endsAt ? formatDateTime(p.endsAt) : null;
+                  const clickable = canManage && p.status !== 'cancelled';
+                  return (
+                    <div
+                      key={p.id}
+                      className={`${styles.practiceCard} ${p.status === 'cancelled' ? styles.gameCardCancelled : ''}`}
+                      style={{ cursor: clickable ? 'pointer' : 'default' }}
+                      onClick={() => { if (clickable) { setActivePractice(p); setShowCancelModal(true); } }}
+                    >
+                      <div className={styles.practiceCardHeader}>
+                        {team?.color && <span className={styles.teamDot} style={{ background: team.color }} />}
+                        <span className={styles.gameTeamName}>{team?.name ?? 'Unknown team'}</span>
+                        {p.recurrenceGroupId && (
+                          <span className={styles.recurrenceBadge}>↻ Series</span>
+                        )}
+                      </div>
+                      {dt && (
+                        <div className={styles.gameCardMeta}>
+                          <span>{dt.date}</span>
+                          <span>{dt.time}{endDt ? ` – ${endDt.time}` : ''}</span>
+                          {p.location && <span>{p.location}</span>}
+                        </div>
+                      )}
+                      {p.notes && (
+                        <div style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.35)', marginTop: '0.3rem', fontStyle: 'italic' }}>
+                          {p.notes}
+                        </div>
+                      )}
+                      <div className={styles.gameCardFooter}>
+                        <span className={`${styles.statusBadge} ${p.status === 'cancelled' ? styles.gameStatusCancelled : styles.practiceBadge}`}>
+                          {p.status === 'cancelled' ? 'Cancelled' : 'Practice'}
+                        </span>
+                        {clickable && (
+                          <span style={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.25)' }}>click to cancel</span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </>
+      )}
+
       {/* Generate modal */}
       {showGenerate && selectedDiv && (
         <GenerateModal
@@ -765,6 +1153,27 @@ export default function SchedulePage() {
           onSave={handleSaveGame}
           onCancel={handleCancelGame}
           onClose={() => setGameModalOpen(false)}
+        />
+      )}
+
+      {/* Practice create modal */}
+      {showPracticeModal && selectedTeamId && teamMap.get(selectedTeamId) && (
+        <PracticeModal
+          team={teamMap.get(selectedTeamId)!}
+          saving={saving}
+          onSave={handleSavePractice}
+          onClose={() => setShowPracticeModal(false)}
+        />
+      )}
+
+      {/* Practice cancel modal */}
+      {showCancelModal && activePractice && (
+        <CancelPracticeModal
+          practice={activePractice}
+          teamName={teamMap.get(activePractice.teamId)?.name ?? 'Team'}
+          saving={saving}
+          onConfirm={handleCancelPractice}
+          onClose={() => { setShowCancelModal(false); setActivePractice(null); }}
         />
       )}
 
