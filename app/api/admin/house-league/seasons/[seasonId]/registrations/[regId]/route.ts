@@ -7,6 +7,11 @@ import {
   updateRegistrationStatus,
   promoteFromWaitlist,
   getWaitlistForDivision,
+  createLeagueRegistrationFeeEntry,
+  updateEntry,
+  voidEntry,
+  getLedgerEntries,
+  getLeagueSeasonLedger,
 } from '@/lib/db';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import {
@@ -124,10 +129,27 @@ export async function PATCH(
   // ── feePaid ──────────────────────────────────────────────────────────────────
   if ('feePaid' in body) {
     if (!canManageRegs) return forbidden();
+    const paid = Boolean(body.feePaid);
     await supabaseAdmin
       .from('league_registrations')
-      .update({ registration_fee_paid: Boolean(body.feePaid), updated_at: new Date().toISOString() })
+      .update({ registration_fee_paid: paid, updated_at: new Date().toISOString() })
       .eq('id', regId);
+
+    // Sync ledger entry if one is linked
+    if (reg.feeEntryId) {
+      const ledger = await getLeagueSeasonLedger(ctx!.org.id, seasonId);
+      if (ledger) {
+        await updateEntry(reg.feeEntryId, ledger.id, { status: paid ? 'posted' : 'pending' });
+      }
+    } else if (paid && season.registrationFee) {
+      // No entry yet — create one as posted immediately (manual/retroactive)
+      const playerName = `${reg.playerFirstName} ${reg.playerLastName}`;
+      await createLeagueRegistrationFeeEntry(
+        ctx!.org.id, seasonId, season.name, regId, playerName,
+        season.registrationFee, 'posted', ctx!.user.id,
+      );
+    }
+
     const updated = await fetchReg(regId, seasonId);
     return NextResponse.json({ registration: updated });
   }
@@ -198,6 +220,15 @@ export async function PATCH(
     // Compact waitlist if this was a waitlisted entry
     if (reg.status === 'waitlisted' && divisionId && oldWaitlistPos !== null) {
       await compactWaitlist(divisionId, oldWaitlistPos);
+    }
+
+    // Auto-generate pending fee entry if configured and not already present
+    if (season.autoGenerateFees && season.registrationFee && !reg.feeEntryId) {
+      const playerName = `${reg.playerFirstName} ${reg.playerLastName}`;
+      void createLeagueRegistrationFeeEntry(
+        ctx!.org.id, seasonId, season.name, regId, playerName,
+        season.registrationFee, 'pending', ctx!.user.id,
+      ).catch(e => console.error('[ledger] fee entry creation failed', e));
     }
 
     void (async () => {
