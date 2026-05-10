@@ -1659,6 +1659,7 @@ function mapLeagueSeason(row: any): LeagueSeason {
     seasonStartDate:           row.season_start_date ?? null,
     seasonEndDate:             row.season_end_date ?? null,
     waiverText:                row.waiver_text ?? null,
+    draftState:                row.draft_state ?? null,
     createdAt:                 row.created_at,
     updatedAt:                 row.updated_at,
   };
