@@ -5,7 +5,7 @@ import { ClipboardList, X, Plus, ChevronRight } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { hasCapability } from '@/lib/roles';
 import FeedbackModal from '@/components/FeedbackModal';
-import styles from '../../../../rep-teams.module.css';
+import styles from '../../../../../rep-teams.module.css';
 import type { RepTryoutRegistration, RepTryoutRegistrationStatus } from '@/lib/types';
 
 type Tab = 'pending_review' | 'offered' | 'accepted' | 'declined_withdrawn' | 'all';

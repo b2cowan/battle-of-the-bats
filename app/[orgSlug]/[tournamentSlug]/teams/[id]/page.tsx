@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { use } from 'react';
 import { Users, CheckCircle, Clock, CreditCard, AlertTriangle, Mail, MapPin } from 'lucide-react';
 import { formatTime } from '@/lib/utils';
-import styles from '../../../teams/[id]/team-profile.module.css';
+import styles from '../../../../teams/[id]/team-profile.module.css';
 
 interface TeamProfile {
   id: string;
