@@ -1,0 +1,176 @@
+/* ── Form container ───────────────────────────────────────────────────────── */
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* ── Sections ─────────────────────────────────────────────────────────────── */
+.section {
+  padding: 1.25rem 1.5rem;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 12px;
+  background: rgba(255,255,255,0.03);
+}
+
+.sectionTitle {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: rgba(255,255,255,0.4);
+  margin: 0 0 1rem;
+}
+
+/* ── Grid rows ────────────────────────────────────────────────────────────── */
+.fieldRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem 1rem;
+  margin-bottom: 0.85rem;
+}
+.fieldRow:last-child { margin-bottom: 0; }
+
+@media (max-width: 480px) {
+  .fieldRow { grid-template-columns: 1fr; }
+}
+
+.field {
+  margin-bottom: 0.85rem;
+}
+.field:last-child { margin-bottom: 0; }
+
+/* ── Labels + inputs ──────────────────────────────────────────────────────── */
+.label {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: rgba(255,255,255,0.6);
+  margin-bottom: 0.35rem;
+}
+
+.required {
+  color: #f87171;
+  margin-left: 0.1em;
+}
+
+.input,
+.textarea {
+  width: 100%;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 8px;
+  padding: 0.6rem 0.75rem;
+  color: #f0f0f0;
+  font-size: 0.9rem;
+  box-sizing: border-box;
+  transition: border-color 0.15s;
+  font-family: inherit;
+}
+.input:focus,
+.textarea:focus {
+  outline: none;
+  border-color: var(--logic-lime, #a3e635);
+}
+.inputError { border-color: #f87171 !important; }
+.textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.errorMsg {
+  font-size: 0.78rem;
+  color: #f87171;
+  margin: 0.25rem 0 0;
+}
+
+.hint {
+  font-size: 0.78rem;
+  color: rgba(255,255,255,0.4);
+  margin: 0.25rem 0 0;
+}
+
+/* ── Global error ─────────────────────────────────────────────────────────── */
+.globalError {
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  background: rgba(248,113,113,0.1);
+  border: 1px solid rgba(248,113,113,0.3);
+  color: #f87171;
+  font-size: 0.85rem;
+  margin-bottom: 0.85rem;
+}
+
+/* ── Submit button ────────────────────────────────────────────────────────── */
+.submitBtn {
+  width: 100%;
+  padding: 0.9rem;
+  font-size: 1rem;
+  font-weight: 700;
+  background: var(--logic-lime, #a3e635);
+  color: #0A0A0A;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.1s;
+  font-family: var(--font-display, sans-serif);
+  letter-spacing: 0.01em;
+}
+.submitBtn:hover:not(:disabled) { opacity: 0.9; }
+.submitBtn:active:not(:disabled) { transform: scale(0.99); }
+.submitBtn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* ── Success panel ────────────────────────────────────────────────────────── */
+.successPanel {
+  text-align: center;
+  padding: 3rem 2rem;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 12px;
+  background: rgba(255,255,255,0.02);
+}
+
+.successIcon {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: rgba(163,230,53,0.1);
+  border: 1px solid rgba(163,230,53,0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1.5rem;
+  color: var(--logic-lime, #a3e635);
+}
+
+.successTitle {
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: #f0f0f0;
+  margin: 0 0 0.6rem;
+  font-family: var(--font-display, sans-serif);
+}
+
+.successBody {
+  font-size: 0.9rem;
+  color: rgba(255,255,255,0.6);
+  line-height: 1.65;
+  max-width: 440px;
+  margin: 0 auto 1.5rem;
+}
+
+.refBox {
+  display: inline-block;
+  padding: 0.5rem 1.25rem;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  font-size: 0.8rem;
+  color: rgba(255,255,255,0.5);
+}
+.refCode {
+  font-weight: 700;
+  color: rgba(255,255,255,0.85);
+  letter-spacing: 0.12em;
+  font-family: var(--font-data, 'IBM Plex Mono', monospace);
+  margin-left: 0.25rem;
+}

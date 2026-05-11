@@ -1,7 +1,7 @@
 import { supabase } from './supabase';
 import { supabaseAdmin } from './supabase-admin';
 import { createClient as createBrowserSupabaseClient } from './supabase-browser';
-import { Tournament, TournamentStatus, Diamond, Contact, AgeGroup, Pool, Team, Game, Announcement, PlayoffConfig, RuleSection, RuleItem, Resource, Organization, OrganizationMember, OrgPlan, OrgRole, TournamentArchive, OrgPublicSiteContent, AccountingLedger, AccountingEntry, LedgerSummary, AccountingEntryStatus, AccountingEntryType, LeagueSeason, LeagueDivision, LeagueTeam, LeagueRegistration, LeagueGame, LeagueStandingsRow, LeagueSeasonSummary, LeagueRegistrationStatus, LeagueSeasonStatus, LeaguePractice, LeaguePracticeStatus } from './types';
+import { Tournament, TournamentStatus, Diamond, Contact, AgeGroup, Pool, Team, Game, Announcement, PlayoffConfig, RuleSection, RuleItem, Resource, Organization, OrganizationMember, OrgPlan, OrgRole, TournamentArchive, OrgPublicSiteContent, AccountingLedger, AccountingEntry, LedgerSummary, AccountingEntryStatus, AccountingEntryType, LeagueSeason, LeagueDivision, LeagueTeam, LeagueRegistration, LeagueGame, LeagueStandingsRow, LeagueSeasonSummary, LeagueRegistrationStatus, LeagueSeasonStatus, LeaguePractice, LeaguePracticeStatus, RepTeam, RepProgramYear, RepProgramYearStatus, RepTeamCoach, RepTryoutRegistration, RepTryoutRegistrationStatus, RepRosterPlayer, RepRosterStatus, RepTeamEvent, RepEventType, RepEventStatus, RepDocumentTemplate, RepDocumentType, RepPlayerDocument, RepDocumentStatus, RepCostAllocation, RepAllocationSplit, RepAllocationInstallment, RepPlayerDuesSchedule, RepPlayerDuesInstallment, RepTeamExpense } from './types';
 
 // Use the SSR browser client (cookie-based session) for writes that need auth;
 // falls back to anon client on the server where there is no window.
@@ -2309,4 +2309,1140 @@ export async function createLeagueRegistrationFeeEntry(
     .update({ fee_entry_id: data!.id, updated_at: new Date().toISOString() })
     .eq('id', regId);
   return mapEntry(data!);
+}
+
+// ── Rep Teams Module ──────────────────────────────────────────────────────────
+
+function mapRepTeam(r: any): RepTeam {
+  return {
+    id: r.id,
+    orgId: r.org_id,
+    name: r.name,
+    slug: r.slug,
+    sport: r.sport,
+    ageGroup: r.age_group,
+    description: r.description,
+    color: r.color,
+    isArchived: r.is_archived,
+    createdAt: r.created_at,
+    updatedAt: r.updated_at,
+  };
+}
+
+export async function getRepTeams(orgId: string): Promise<RepTeam[]> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_teams')
+    .select('*')
+    .eq('org_id', orgId)
+    .order('name');
+  if (error) throw error;
+  return (data ?? []).map(mapRepTeam);
+}
+
+export async function getRepTeam(teamId: string): Promise<RepTeam | null> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_teams')
+    .select('*')
+    .eq('id', teamId)
+    .single();
+  if (error) return null;
+  return mapRepTeam(data);
+}
+
+export async function getRepTeamBySlug(orgId: string, slug: string): Promise<RepTeam | null> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_teams')
+    .select('*')
+    .eq('org_id', orgId)
+    .eq('slug', slug)
+    .single();
+  if (error) return null;
+  return mapRepTeam(data);
+}
+
+export async function createRepTeam(orgId: string, fields: {
+  name: string;
+  slug: string;
+  sport: string;
+  ageGroup?: string | null;
+  description?: string | null;
+  color?: string | null;
+}): Promise<RepTeam> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_teams')
+    .insert({
+      org_id: orgId,
+      name: fields.name,
+      slug: fields.slug,
+      sport: fields.sport,
+      age_group: fields.ageGroup ?? null,
+      description: fields.description ?? null,
+      color: fields.color ?? null,
+    })
+    .select()
+    .single();
+  if (error) throw error;
+  return mapRepTeam(data);
+}
+
+export async function updateRepTeam(teamId: string, fields: {
+  name?: string;
+  sport?: string;
+  ageGroup?: string | null;
+  description?: string | null;
+  color?: string | null;
+  isArchived?: boolean;
+}): Promise<RepTeam> {
+  const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
+  if (fields.name !== undefined) patch.name = fields.name;
+  if (fields.sport !== undefined) patch.sport = fields.sport;
+  if (fields.ageGroup !== undefined) patch.age_group = fields.ageGroup;
+  if (fields.description !== undefined) patch.description = fields.description;
+  if (fields.color !== undefined) patch.color = fields.color;
+  if (fields.isArchived !== undefined) patch.is_archived = fields.isArchived;
+  const { data, error } = await supabaseAdmin
+    .from('rep_teams')
+    .update(patch)
+    .eq('id', teamId)
+    .select()
+    .single();
+  if (error) throw error;
+  return mapRepTeam(data);
+}
+
+export async function deleteRepTeam(teamId: string): Promise<void> {
+  const { error } = await supabaseAdmin.from('rep_teams').delete().eq('id', teamId);
+  if (error) throw error;
+}
+
+export async function bulkRenameTeamSlugs(
+  orgId: string,
+  renames: Array<{ teamId: string; newSlug: string }>,
+): Promise<void> {
+  if (renames.length === 0) return;
+
+  // Snapshot current slugs for best-effort rollback on failure
+  const { data: snapshot } = await supabaseAdmin
+    .from('rep_teams')
+    .select('id, slug')
+    .in('id', renames.map(r => r.teamId))
+    .eq('org_id', orgId);
+  const original = new Map((snapshot ?? []).map(r => [r.id as string, r.slug as string]));
+
+  try {
+    // Phase 1: move every changing team to a guaranteed-unique temp slug.
+    // This resolves any circular dependency (A→B, B→C, C→A) by vacating
+    // all "departing" slugs before any "arriving" ones are written.
+    for (const { teamId } of renames) {
+      const { error } = await supabaseAdmin
+        .from('rep_teams')
+        .update({ slug: `__tmp_${teamId}` })
+        .eq('id', teamId)
+        .eq('org_id', orgId);
+      if (error) throw error;
+    }
+
+    // Phase 2: apply final slugs — all target slots are now free
+    for (const { teamId, newSlug } of renames) {
+      const { error } = await supabaseAdmin
+        .from('rep_teams')
+        .update({ slug: newSlug, updated_at: new Date().toISOString() })
+        .eq('id', teamId)
+        .eq('org_id', orgId);
+      if (error) throw error;
+    }
+  } catch (err) {
+    // Best-effort rollback: restore original slugs so no team is stuck with a __tmp_ slug
+    for (const { teamId } of renames) {
+      const prev = original.get(teamId);
+      if (prev) {
+        try {
+          await supabaseAdmin
+            .from('rep_teams')
+            .update({ slug: prev })
+            .eq('id', teamId)
+            .eq('org_id', orgId);
+        } catch {
+          // ignore rollback errors — the admin will see teams with __tmp_ slugs
+          // and can re-run the rename to recover
+        }
+      }
+    }
+    throw err;
+  }
+}
+
+// Program Years
+
+function mapRepProgramYear(r: any): RepProgramYear {
+  return {
+    id: r.id,
+    teamId: r.team_id,
+    orgId: r.org_id,
+    name: r.name,
+    year: r.year,
+    status: r.status,
+    tryoutOpen: r.tryout_open,
+    tryoutDescription: r.tryout_description,
+    budgetAmount: r.budget_amount != null ? Number(r.budget_amount) : null,
+    createdAt: r.created_at,
+    updatedAt: r.updated_at,
+  };
+}
+
+export async function getRepProgramYears(teamId: string): Promise<RepProgramYear[]> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_program_years')
+    .select('*')
+    .eq('team_id', teamId)
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return (data ?? []).map(mapRepProgramYear);
+}
+
+export async function getRepProgramYear(yearId: string): Promise<RepProgramYear | null> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_program_years')
+    .select('*')
+    .eq('id', yearId)
+    .single();
+  if (error) return null;
+  return mapRepProgramYear(data);
+}
+
+export async function createRepProgramYear(teamId: string, orgId: string, fields: {
+  name: string;
+  year: number;
+  tryoutOpen?: boolean;
+  tryoutDescription?: string | null;
+}): Promise<RepProgramYear> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_program_years')
+    .insert({
+      team_id: teamId,
+      org_id: orgId,
+      name: fields.name,
+      year: fields.year,
+      tryout_open: fields.tryoutOpen ?? false,
+      tryout_description: fields.tryoutDescription ?? null,
+    })
+    .select()
+    .single();
+  if (error) throw error;
+  return mapRepProgramYear(data);
+}
+
+export async function updateRepProgramYear(yearId: string, fields: {
+  name?: string;
+  status?: RepProgramYearStatus;
+  tryoutOpen?: boolean;
+  tryoutDescription?: string | null;
+  budgetAmount?: number | null;
+}): Promise<RepProgramYear> {
+  const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
+  if (fields.name !== undefined) patch.name = fields.name;
+  if (fields.status !== undefined) patch.status = fields.status;
+  if (fields.tryoutOpen !== undefined) patch.tryout_open = fields.tryoutOpen;
+  if (fields.tryoutDescription !== undefined) patch.tryout_description = fields.tryoutDescription;
+  if (fields.budgetAmount !== undefined) patch.budget_amount = fields.budgetAmount;
+  const { data, error } = await supabaseAdmin
+    .from('rep_program_years')
+    .update(patch)
+    .eq('id', yearId)
+    .select()
+    .single();
+  if (error) throw error;
+  return mapRepProgramYear(data);
+}
+
+// Team Coaches
+
+function mapRepTeamCoach(r: any): RepTeamCoach {
+  return {
+    id: r.id,
+    programYearId: r.program_year_id,
+    teamId: r.team_id,
+    orgId: r.org_id,
+    userId: r.user_id,
+    coachRole: r.coach_role,
+    createdAt: r.created_at,
+  };
+}
+
+export async function getRepTeamCoaches(programYearId: string): Promise<RepTeamCoach[]> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_coaches')
+    .select('*')
+    .eq('program_year_id', programYearId)
+    .order('created_at');
+  if (error) throw error;
+  return (data ?? []).map(mapRepTeamCoach);
+}
+
+export async function addRepTeamCoach(
+  programYearId: string,
+  teamId: string,
+  orgId: string,
+  userId: string,
+  coachRole: 'head_coach' | 'assistant_coach' = 'head_coach',
+): Promise<RepTeamCoach> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_coaches')
+    .insert({ program_year_id: programYearId, team_id: teamId, org_id: orgId, user_id: userId, coach_role: coachRole })
+    .select()
+    .single();
+  if (error) throw error;
+  return mapRepTeamCoach(data);
+}
+
+export async function removeRepTeamCoach(coachId: string): Promise<void> {
+  const { error } = await supabaseAdmin.from('rep_team_coaches').delete().eq('id', coachId);
+  if (error) throw error;
+}
+
+// Tryout Registrations
+
+function mapRepTryoutRegistration(r: any): RepTryoutRegistration {
+  return {
+    id: r.id,
+    programYearId: r.program_year_id,
+    teamId: r.team_id,
+    orgId: r.org_id,
+    playerFirstName: r.player_first_name,
+    playerLastName: r.player_last_name,
+    playerDateOfBirth: r.player_date_of_birth,
+    playerNotes: r.player_notes,
+    guardianFirstName: r.guardian_first_name,
+    guardianLastName: r.guardian_last_name,
+    guardianEmail: r.guardian_email,
+    guardianPhone: r.guardian_phone,
+    status: r.status,
+    adminNotes: r.admin_notes,
+    submittedAt: r.submitted_at,
+    updatedAt: r.updated_at,
+  };
+}
+
+export async function getRepTryoutRegistrations(programYearId: string): Promise<RepTryoutRegistration[]> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_tryout_registrations')
+    .select('*')
+    .eq('program_year_id', programYearId)
+    .order('registered_at', { ascending: false });
+  if (error) throw error;
+  return (data ?? []).map(mapRepTryoutRegistration);
+}
+
+export async function getRepTryoutRegistration(regId: string): Promise<RepTryoutRegistration | null> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_tryout_registrations')
+    .select('*')
+    .eq('id', regId)
+    .single();
+  if (error) return null;
+  return mapRepTryoutRegistration(data);
+}
+
+export async function createRepTryoutRegistration(fields: {
+  programYearId: string;
+  teamId: string;
+  orgId: string;
+  playerFirstName: string;
+  playerLastName: string;
+  playerDateOfBirth?: string | null;
+  playerNotes?: string | null;
+  guardianFirstName: string;
+  guardianLastName: string;
+  guardianEmail: string;
+  guardianPhone?: string | null;
+}): Promise<RepTryoutRegistration> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_tryout_registrations')
+    .insert({
+      program_year_id: fields.programYearId,
+      team_id: fields.teamId,
+      org_id: fields.orgId,
+      player_first_name: fields.playerFirstName,
+      player_last_name: fields.playerLastName,
+      player_date_of_birth: fields.playerDateOfBirth ?? null,
+      player_notes: fields.playerNotes ?? null,
+      guardian_first_name: fields.guardianFirstName,
+      guardian_last_name: fields.guardianLastName,
+      guardian_email: fields.guardianEmail,
+      guardian_phone: fields.guardianPhone ?? null,
+    })
+    .select()
+    .single();
+  if (error) throw error;
+  return mapRepTryoutRegistration(data);
+}
+
+export async function updateRepTryoutRegistrationStatus(
+  regId: string,
+  status: RepTryoutRegistrationStatus,
+  adminNotes?: string | null,
+): Promise<RepTryoutRegistration> {
+  const patch: Record<string, unknown> = { status, updated_at: new Date().toISOString() };
+  if (adminNotes !== undefined) patch.admin_notes = adminNotes;
+  const { data, error } = await supabaseAdmin
+    .from('rep_tryout_registrations')
+    .update(patch)
+    .eq('id', regId)
+    .select()
+    .single();
+  if (error) throw error;
+  return mapRepTryoutRegistration(data);
+}
+
+// Roster Players
+
+function mapRepRosterPlayer(r: any): RepRosterPlayer {
+  return {
+    id: r.id,
+    programYearId: r.program_year_id,
+    orgId: r.org_id,
+    tryoutRegistrationId: r.tryout_registration_id,
+    playerFirstName: r.player_first_name,
+    playerLastName: r.player_last_name,
+    playerDateOfBirth: r.player_date_of_birth,
+    jerseyNumber: r.jersey_number,
+    position: r.position,
+    status: r.status,
+    guardianFirstName: r.guardian_first_name,
+    guardianLastName: r.guardian_last_name,
+    guardianEmail: r.guardian_email,
+    guardianPhone: r.guardian_phone,
+    adminNotes: r.admin_notes,
+    createdAt: r.created_at,
+    updatedAt: r.updated_at,
+  };
+}
+
+export async function getRepRosterPlayers(programYearId: string): Promise<RepRosterPlayer[]> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_roster_players')
+    .select('*')
+    .eq('program_year_id', programYearId)
+    .order('player_last_name');
+  if (error) throw error;
+  return (data ?? []).map(mapRepRosterPlayer);
+}
+
+export async function getRepRosterPlayer(playerId: string): Promise<RepRosterPlayer | null> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_roster_players')
+    .select('*')
+    .eq('id', playerId)
+    .single();
+  if (error) return null;
+  return mapRepRosterPlayer(data);
+}
+
+export async function createRepRosterPlayer(fields: {
+  programYearId: string;
+  orgId: string;
+  tryoutRegistrationId?: string | null;
+  playerFirstName: string;
+  playerLastName: string;
+  playerDateOfBirth?: string | null;
+  jerseyNumber?: string | null;
+  position?: string | null;
+  guardianFirstName?: string | null;
+  guardianLastName?: string | null;
+  guardianEmail?: string | null;
+  guardianPhone?: string | null;
+  adminNotes?: string | null;
+}): Promise<RepRosterPlayer> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_roster_players')
+    .insert({
+      program_year_id: fields.programYearId,
+      org_id: fields.orgId,
+      tryout_registration_id: fields.tryoutRegistrationId ?? null,
+      player_first_name: fields.playerFirstName,
+      player_last_name: fields.playerLastName,
+      player_date_of_birth: fields.playerDateOfBirth ?? null,
+      jersey_number: fields.jerseyNumber ?? null,
+      position: fields.position ?? null,
+      guardian_first_name: fields.guardianFirstName ?? null,
+      guardian_last_name: fields.guardianLastName ?? null,
+      guardian_email: fields.guardianEmail ?? null,
+      guardian_phone: fields.guardianPhone ?? null,
+      admin_notes: fields.adminNotes ?? null,
+    })
+    .select()
+    .single();
+  if (error) throw error;
+  return mapRepRosterPlayer(data);
+}
+
+export async function updateRepRosterPlayer(playerId: string, fields: {
+  playerFirstName?: string;
+  playerLastName?: string;
+  playerDateOfBirth?: string | null;
+  jerseyNumber?: string | null;
+  position?: string | null;
+  status?: RepRosterStatus;
+  guardianFirstName?: string | null;
+  guardianLastName?: string | null;
+  guardianEmail?: string | null;
+  guardianPhone?: string | null;
+  adminNotes?: string | null;
+}): Promise<RepRosterPlayer> {
+  const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
+  if (fields.playerFirstName !== undefined) patch.player_first_name = fields.playerFirstName;
+  if (fields.playerLastName !== undefined) patch.player_last_name = fields.playerLastName;
+  if (fields.playerDateOfBirth !== undefined) patch.player_date_of_birth = fields.playerDateOfBirth;
+  if (fields.jerseyNumber !== undefined) patch.jersey_number = fields.jerseyNumber;
+  if (fields.position !== undefined) patch.position = fields.position;
+  if (fields.status !== undefined) patch.status = fields.status;
+  if (fields.guardianFirstName !== undefined) patch.guardian_first_name = fields.guardianFirstName;
+  if (fields.guardianLastName !== undefined) patch.guardian_last_name = fields.guardianLastName;
+  if (fields.guardianEmail !== undefined) patch.guardian_email = fields.guardianEmail;
+  if (fields.guardianPhone !== undefined) patch.guardian_phone = fields.guardianPhone;
+  if (fields.adminNotes !== undefined) patch.admin_notes = fields.adminNotes;
+  const { data, error } = await supabaseAdmin
+    .from('rep_roster_players')
+    .update(patch)
+    .eq('id', playerId)
+    .select()
+    .single();
+  if (error) throw error;
+  return mapRepRosterPlayer(data);
+}
+
+export async function deleteRepRosterPlayer(playerId: string): Promise<void> {
+  const { error } = await supabaseAdmin.from('rep_roster_players').delete().eq('id', playerId);
+  if (error) throw error;
+}
+
+// Team Events
+
+function mapRepTeamEvent(r: any): RepTeamEvent {
+  return {
+    id: r.id,
+    programYearId: r.program_year_id,
+    orgId: r.org_id,
+    eventType: r.event_type,
+    title: r.title,
+    scheduledAt: r.scheduled_at,
+    endsAt: r.ends_at,
+    location: r.location,
+    opponent: r.opponent,
+    notes: r.notes,
+    status: r.status,
+    parentEventId: r.parent_event_id,
+    recurrenceParentId: r.recurrence_parent_id,
+    recurrenceRule: r.recurrence_rule,
+    createdAt: r.created_at,
+    updatedAt: r.updated_at,
+  };
+}
+
+export async function getRepTeamEvents(programYearId: string): Promise<RepTeamEvent[]> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_events')
+    .select('*')
+    .eq('program_year_id', programYearId)
+    .order('scheduled_at', { ascending: true });
+  if (error) throw error;
+  return (data ?? []).map(mapRepTeamEvent);
+}
+
+export async function createRepTeamEvent(fields: {
+  programYearId: string;
+  orgId: string;
+  eventType: RepEventType;
+  title: string;
+  scheduledAt?: string | null;
+  endsAt?: string | null;
+  location?: string | null;
+  opponent?: string | null;
+  notes?: string | null;
+  parentEventId?: string | null;
+  recurrenceParentId?: string | null;
+  recurrenceRule?: Record<string, unknown> | null;
+}): Promise<RepTeamEvent> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_events')
+    .insert({
+      program_year_id: fields.programYearId,
+      org_id: fields.orgId,
+      event_type: fields.eventType,
+      title: fields.title,
+      scheduled_at: fields.scheduledAt ?? null,
+      ends_at: fields.endsAt ?? null,
+      location: fields.location ?? null,
+      opponent: fields.opponent ?? null,
+      notes: fields.notes ?? null,
+      parent_event_id: fields.parentEventId ?? null,
+      recurrence_parent_id: fields.recurrenceParentId ?? null,
+      recurrence_rule: fields.recurrenceRule ?? null,
+    })
+    .select()
+    .single();
+  if (error) throw error;
+  return mapRepTeamEvent(data);
+}
+
+export async function updateRepTeamEvent(eventId: string, fields: {
+  eventType?: RepEventType;
+  title?: string;
+  scheduledAt?: string | null;
+  endsAt?: string | null;
+  location?: string | null;
+  opponent?: string | null;
+  notes?: string | null;
+  status?: RepEventStatus;
+}): Promise<RepTeamEvent> {
+  const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
+  if (fields.eventType !== undefined) patch.event_type = fields.eventType;
+  if (fields.title !== undefined) patch.title = fields.title;
+  if (fields.scheduledAt !== undefined) patch.scheduled_at = fields.scheduledAt;
+  if (fields.endsAt !== undefined) patch.ends_at = fields.endsAt;
+  if (fields.location !== undefined) patch.location = fields.location;
+  if (fields.opponent !== undefined) patch.opponent = fields.opponent;
+  if (fields.notes !== undefined) patch.notes = fields.notes;
+  if (fields.status !== undefined) patch.status = fields.status;
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_events')
+    .update(patch)
+    .eq('id', eventId)
+    .select()
+    .single();
+  if (error) throw error;
+  return mapRepTeamEvent(data);
+}
+
+export async function deleteRepTeamEvent(eventId: string): Promise<void> {
+  const { error } = await supabaseAdmin.from('rep_team_events').delete().eq('id', eventId);
+  if (error) throw error;
+}
+
+// Document Templates
+
+function mapRepDocumentTemplate(r: any): RepDocumentTemplate {
+  return {
+    id: r.id,
+    orgId: r.org_id,
+    name: r.name,
+    description: r.description,
+    documentType: r.document_type,
+    isRequired: r.is_required,
+    isActive: r.is_active,
+    createdAt: r.created_at,
+    updatedAt: r.updated_at,
+  };
+}
+
+export async function getRepDocumentTemplates(orgId: string): Promise<RepDocumentTemplate[]> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_document_templates')
+    .select('*')
+    .eq('org_id', orgId)
+    .order('name');
+  if (error) throw error;
+  return (data ?? []).map(mapRepDocumentTemplate);
+}
+
+export async function createRepDocumentTemplate(fields: {
+  orgId: string;
+  name: string;
+  description?: string | null;
+  documentType: RepDocumentType;
+  isRequired?: boolean;
+}): Promise<RepDocumentTemplate> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_document_templates')
+    .insert({
+      org_id: fields.orgId,
+      name: fields.name,
+      description: fields.description ?? null,
+      document_type: fields.documentType,
+      is_required: fields.isRequired ?? true,
+    })
+    .select()
+    .single();
+  if (error) throw error;
+  return mapRepDocumentTemplate(data);
+}
+
+export async function updateRepDocumentTemplate(templateId: string, fields: {
+  name?: string;
+  description?: string | null;
+  documentType?: RepDocumentType;
+  isRequired?: boolean;
+  isActive?: boolean;
+}): Promise<RepDocumentTemplate> {
+  const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
+  if (fields.name !== undefined) patch.name = fields.name;
+  if (fields.description !== undefined) patch.description = fields.description;
+  if (fields.documentType !== undefined) patch.document_type = fields.documentType;
+  if (fields.isRequired !== undefined) patch.is_required = fields.isRequired;
+  if (fields.isActive !== undefined) patch.is_active = fields.isActive;
+  const { data, error } = await supabaseAdmin
+    .from('rep_document_templates')
+    .update(patch)
+    .eq('id', templateId)
+    .select()
+    .single();
+  if (error) throw error;
+  return mapRepDocumentTemplate(data);
+}
+
+export async function deleteRepDocumentTemplate(templateId: string): Promise<void> {
+  const { error } = await supabaseAdmin.from('rep_document_templates').delete().eq('id', templateId);
+  if (error) throw error;
+}
+
+// Player Documents
+
+function mapRepPlayerDocument(r: any): RepPlayerDocument {
+  return {
+    id: r.id,
+    rosterPlayerId: r.roster_player_id,
+    orgId: r.org_id,
+    templateId: r.template_id,
+    documentType: r.document_type,
+    fileName: r.file_name,
+    storagePath: r.storage_path,
+    mimeType: r.mime_type,
+    status: r.status,
+    adminNotes: r.admin_notes,
+    uploadedBy: r.uploaded_by,
+    uploadedAt: r.uploaded_at,
+    reviewedBy: r.reviewed_by,
+    reviewedAt: r.reviewed_at,
+    updatedAt: r.updated_at,
+  };
+}
+
+export async function getRepPlayerDocuments(rosterPlayerId: string): Promise<RepPlayerDocument[]> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_player_documents')
+    .select('*')
+    .eq('roster_player_id', rosterPlayerId)
+    .order('uploaded_at', { ascending: false });
+  if (error) throw error;
+  return (data ?? []).map(mapRepPlayerDocument);
+}
+
+export async function createRepPlayerDocument(fields: {
+  rosterPlayerId: string;
+  orgId: string;
+  templateId?: string | null;
+  documentType: RepDocumentType;
+  fileName: string;
+  storagePath: string;
+  mimeType: string;
+  uploadedBy?: string | null;
+}): Promise<RepPlayerDocument> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_player_documents')
+    .insert({
+      roster_player_id: fields.rosterPlayerId,
+      org_id: fields.orgId,
+      template_id: fields.templateId ?? null,
+      document_type: fields.documentType,
+      file_name: fields.fileName,
+      storage_path: fields.storagePath,
+      mime_type: fields.mimeType,
+      uploaded_by: fields.uploadedBy ?? null,
+    })
+    .select()
+    .single();
+  if (error) throw error;
+  return mapRepPlayerDocument(data);
+}
+
+export async function updateRepPlayerDocumentStatus(
+  docId: string,
+  status: RepDocumentStatus,
+  reviewedBy: string | null,
+  adminNotes?: string | null,
+): Promise<RepPlayerDocument> {
+  const patch: Record<string, unknown> = {
+    status,
+    reviewed_by: reviewedBy,
+    reviewed_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  };
+  if (adminNotes !== undefined) patch.admin_notes = adminNotes;
+  const { data, error } = await supabaseAdmin
+    .from('rep_player_documents')
+    .update(patch)
+    .eq('id', docId)
+    .select()
+    .single();
+  if (error) throw error;
+  return mapRepPlayerDocument(data);
+}
+
+export async function deleteRepPlayerDocument(docId: string): Promise<void> {
+  const { error } = await supabaseAdmin.from('rep_player_documents').delete().eq('id', docId);
+  if (error) throw error;
+}
+
+// Cost Allocations
+
+function mapRepCostAllocation(r: any): RepCostAllocation {
+  return {
+    id: r.id,
+    orgId: r.org_id,
+    programYearId: r.program_year_id,
+    description: r.description,
+    totalAmount: Number(r.total_amount),
+    allocationMethod: r.allocation_method,
+    entryId: r.entry_id,
+    notes: r.notes,
+    createdAt: r.created_at,
+    updatedAt: r.updated_at,
+  };
+}
+
+export async function getRepCostAllocations(programYearId: string): Promise<RepCostAllocation[]> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_cost_allocations')
+    .select('*')
+    .eq('program_year_id', programYearId)
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return (data ?? []).map(mapRepCostAllocation);
+}
+
+export async function createRepCostAllocation(fields: {
+  orgId: string;
+  programYearId: string;
+  description: string;
+  totalAmount: number;
+  allocationMethod: 'equal' | 'manual';
+  entryId?: string | null;
+  notes?: string | null;
+}): Promise<RepCostAllocation> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_cost_allocations')
+    .insert({
+      org_id: fields.orgId,
+      program_year_id: fields.programYearId,
+      description: fields.description,
+      total_amount: fields.totalAmount,
+      allocation_method: fields.allocationMethod,
+      entry_id: fields.entryId ?? null,
+      notes: fields.notes ?? null,
+    })
+    .select()
+    .single();
+  if (error) throw error;
+  return mapRepCostAllocation(data);
+}
+
+// Allocation Splits
+
+function mapRepAllocationSplit(r: any): RepAllocationSplit {
+  return {
+    id: r.id,
+    allocationId: r.allocation_id,
+    repTeamId: r.rep_team_id,
+    amount: Number(r.amount),
+    createdAt: r.created_at,
+  };
+}
+
+export async function getRepAllocationSplits(allocationId: string): Promise<RepAllocationSplit[]> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_allocation_splits')
+    .select('*')
+    .eq('allocation_id', allocationId);
+  if (error) throw error;
+  return (data ?? []).map(mapRepAllocationSplit);
+}
+
+export async function createRepAllocationSplit(fields: {
+  allocationId: string;
+  repTeamId: string;
+  amount: number;
+}): Promise<RepAllocationSplit> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_allocation_splits')
+    .insert({ allocation_id: fields.allocationId, rep_team_id: fields.repTeamId, amount: fields.amount })
+    .select()
+    .single();
+  if (error) throw error;
+  return mapRepAllocationSplit(data);
+}
+
+// Allocation Installments
+
+function mapRepAllocationInstallment(r: any): RepAllocationInstallment {
+  return {
+    id: r.id,
+    splitId: r.split_id,
+    dueDate: r.due_date,
+    amount: Number(r.amount),
+    paid: r.paid,
+    paidAt: r.paid_at,
+    entryId: r.entry_id,
+    createdAt: r.created_at,
+    updatedAt: r.updated_at,
+  };
+}
+
+export async function getRepAllocationInstallments(splitId: string): Promise<RepAllocationInstallment[]> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_allocation_installments')
+    .select('*')
+    .eq('split_id', splitId)
+    .order('due_date');
+  if (error) throw error;
+  return (data ?? []).map(mapRepAllocationInstallment);
+}
+
+export async function createRepAllocationInstallment(fields: {
+  splitId: string;
+  dueDate: string;
+  amount: number;
+}): Promise<RepAllocationInstallment> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_allocation_installments')
+    .insert({ split_id: fields.splitId, due_date: fields.dueDate, amount: fields.amount })
+    .select()
+    .single();
+  if (error) throw error;
+  return mapRepAllocationInstallment(data);
+}
+
+export async function markRepAllocationInstallmentPaid(
+  installmentId: string,
+  entryId: string | null,
+): Promise<RepAllocationInstallment> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_allocation_installments')
+    .update({ paid: true, paid_at: new Date().toISOString(), entry_id: entryId, updated_at: new Date().toISOString() })
+    .eq('id', installmentId)
+    .select()
+    .single();
+  if (error) throw error;
+  return mapRepAllocationInstallment(data);
+}
+
+// Player Dues Schedules
+
+function mapRepPlayerDuesSchedule(r: any): RepPlayerDuesSchedule {
+  return {
+    id: r.id,
+    programYearId: r.program_year_id,
+    rosterPlayerId: r.roster_player_id,
+    orgId: r.org_id,
+    totalAmount: Number(r.total_amount),
+    notes: r.notes,
+    createdAt: r.created_at,
+    updatedAt: r.updated_at,
+  };
+}
+
+export async function getRepPlayerDuesSchedules(programYearId: string): Promise<RepPlayerDuesSchedule[]> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_player_dues_schedules')
+    .select('*')
+    .eq('program_year_id', programYearId)
+    .order('created_at');
+  if (error) throw error;
+  return (data ?? []).map(mapRepPlayerDuesSchedule);
+}
+
+export async function getRepPlayerDuesSchedule(
+  playerId: string,
+  programYearId: string,
+): Promise<RepPlayerDuesSchedule | null> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_player_dues_schedules')
+    .select('*')
+    .eq('roster_player_id', playerId)
+    .eq('program_year_id', programYearId)
+    .maybeSingle();
+  if (error) throw error;
+  if (!data) return null;
+  return mapRepPlayerDuesSchedule(data);
+}
+
+export async function createRepPlayerDuesSchedule(fields: {
+  programYearId: string;
+  rosterPlayerId: string;
+  orgId: string;
+  totalAmount: number;
+  notes?: string | null;
+}): Promise<RepPlayerDuesSchedule> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_player_dues_schedules')
+    .insert({
+      program_year_id: fields.programYearId,
+      roster_player_id: fields.rosterPlayerId,
+      org_id: fields.orgId,
+      total_amount: fields.totalAmount,
+      notes: fields.notes ?? null,
+    })
+    .select()
+    .single();
+  if (error) throw error;
+  return mapRepPlayerDuesSchedule(data);
+}
+
+export async function updateRepPlayerDuesSchedule(scheduleId: string, fields: {
+  totalAmount?: number;
+  notes?: string | null;
+}): Promise<RepPlayerDuesSchedule> {
+  const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
+  if (fields.totalAmount !== undefined) patch.total_amount = fields.totalAmount;
+  if (fields.notes !== undefined) patch.notes = fields.notes;
+  const { data, error } = await supabaseAdmin
+    .from('rep_player_dues_schedules')
+    .update(patch)
+    .eq('id', scheduleId)
+    .select()
+    .single();
+  if (error) throw error;
+  return mapRepPlayerDuesSchedule(data);
+}
+
+// Player Dues Installments
+
+function mapRepPlayerDuesInstallment(r: any): RepPlayerDuesInstallment {
+  return {
+    id: r.id,
+    duesScheduleId: r.dues_schedule_id,
+    dueDate: r.due_date,
+    amount: Number(r.amount),
+    paid: r.paid,
+    paidAt: r.paid_at,
+    entryId: r.entry_id,
+    createdAt: r.created_at,
+    updatedAt: r.updated_at,
+  };
+}
+
+export async function getRepPlayerDuesInstallments(duesScheduleId: string): Promise<RepPlayerDuesInstallment[]> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_player_dues_installments')
+    .select('*')
+    .eq('dues_schedule_id', duesScheduleId)
+    .order('due_date');
+  if (error) throw error;
+  return (data ?? []).map(mapRepPlayerDuesInstallment);
+}
+
+export async function createRepPlayerDuesInstallment(fields: {
+  duesScheduleId: string;
+  dueDate: string;
+  amount: number;
+}): Promise<RepPlayerDuesInstallment> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_player_dues_installments')
+    .insert({ dues_schedule_id: fields.duesScheduleId, due_date: fields.dueDate, amount: fields.amount })
+    .select()
+    .single();
+  if (error) throw error;
+  return mapRepPlayerDuesInstallment(data);
+}
+
+export async function markRepPlayerDuesInstallmentPaid(
+  installmentId: string,
+  entryId: string | null,
+): Promise<RepPlayerDuesInstallment> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_player_dues_installments')
+    .update({ paid: true, paid_at: new Date().toISOString(), entry_id: entryId, updated_at: new Date().toISOString() })
+    .eq('id', installmentId)
+    .select()
+    .single();
+  if (error) throw error;
+  return mapRepPlayerDuesInstallment(data);
+}
+
+// Team Expenses
+
+function mapRepTeamExpense(r: any): RepTeamExpense {
+  return {
+    id: r.id,
+    programYearId: r.program_year_id,
+    orgId: r.org_id,
+    description: r.description,
+    amount: Number(r.amount),
+    expenseDate: r.expense_date,
+    category: r.category,
+    entryId: r.entry_id,
+    notes: r.notes,
+    createdBy: r.created_by,
+    createdAt: r.created_at,
+    updatedAt: r.updated_at,
+  };
+}
+
+export async function getRepTeamExpenses(programYearId: string): Promise<RepTeamExpense[]> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_expenses')
+    .select('*')
+    .eq('program_year_id', programYearId)
+    .order('expense_date', { ascending: false });
+  if (error) throw error;
+  return (data ?? []).map(mapRepTeamExpense);
+}
+
+export async function createRepTeamExpense(fields: {
+  programYearId: string;
+  orgId: string;
+  description: string;
+  amount: number;
+  expenseDate: string;
+  category?: string | null;
+  entryId?: string | null;
+  notes?: string | null;
+  createdBy?: string | null;
+}): Promise<RepTeamExpense> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_expenses')
+    .insert({
+      program_year_id: fields.programYearId,
+      org_id: fields.orgId,
+      description: fields.description,
+      amount: fields.amount,
+      expense_date: fields.expenseDate,
+      category: fields.category ?? null,
+      entry_id: fields.entryId ?? null,
+      notes: fields.notes ?? null,
+      created_by: fields.createdBy ?? null,
+    })
+    .select()
+    .single();
+  if (error) throw error;
+  return mapRepTeamExpense(data);
+}
+
+export async function updateRepTeamExpense(expenseId: string, fields: {
+  description?: string;
+  amount?: number;
+  expenseDate?: string;
+  category?: string | null;
+  entryId?: string | null;
+  notes?: string | null;
+}): Promise<RepTeamExpense> {
+  const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
+  if (fields.description !== undefined) patch.description = fields.description;
+  if (fields.amount !== undefined) patch.amount = fields.amount;
+  if (fields.expenseDate !== undefined) patch.expense_date = fields.expenseDate;
+  if (fields.category !== undefined) patch.category = fields.category;
+  if (fields.entryId !== undefined) patch.entry_id = fields.entryId;
+  if (fields.notes !== undefined) patch.notes = fields.notes;
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_expenses')
+    .update(patch)
+    .eq('id', expenseId)
+    .select()
+    .single();
+  if (error) throw error;
+  return mapRepTeamExpense(data);
+}
+
+export async function deleteRepTeamExpense(expenseId: string): Promise<void> {
+  const { error } = await supabaseAdmin.from('rep_team_expenses').delete().eq('id', expenseId);
+  if (error) throw error;
 }

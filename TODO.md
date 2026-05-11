@@ -24,16 +24,31 @@ This file tracks the ongoing tasks for the tournament website project. AI models
 - [x] **Phase 2** — Plan entitlements architecture: `moduleEntitlements` in PlanConfig, `enabled_addons` migration, `hasModuleEntitlement()` helper
 - [x] **Phase 3** — `module_public_site` (see [docs/archive/PUBLIC_SITE_MODULE_PLAN.md](docs/archive/PUBLIC_SITE_MODULE_PLAN.md))
 - [x] **Phase 4** — `module_accounting` (see [ACCOUNTING_MODULE_PLAN.md](ACCOUNTING_MODULE_PLAN.md))
-- [~] **Phase 5** — `module_house_league` (see [HOUSE_LEAGUE_MODULE_PLAN.md](HOUSE_LEAGUE_MODULE_PLAN.md)) — Migration 020, C2 role expansion, 5B types+helpers, 5C shell all complete. Phase 5D (season/division API + admin pages) complete — pending browser verification. Phase 5E (public registration form: API route, email templates, landing page, RegisterForm) complete — pending browser verification. Phase 5F (registration management admin) next — confirm before proceeding.
-- [ ] **Phase 6** — `module_rep_teams` (requires plan file first)
+- [x] **Phase 5** — `module_house_league` (see [HOUSE_LEAGUE_MODULE_PLAN.md](HOUSE_LEAGUE_MODULE_PLAN.md)) — All phases 5A–5M complete: migration, roles, types/helpers, module shell, season/division management, public registration form, registration admin, team placement + draft, scheduling, standings, scoped email dispatch, accounting integration, past seasons pages, practice scheduling with recurrence.
+- [ ] **Phase 6** — `module_rep_teams` (see [REP_TEAMS_MODULE_PLAN.md](REP_TEAMS_MODULE_PLAN.md))
+  - [x] **6A** — DB schema: Migration 021 + Supabase Storage bucket setup
+  - [x] **6B** — TypeScript types + DB helpers
+  - [x] **6C** — C2 coach role expansion + module shell (5 layers: route gate, page guard, sidebar, hub tile, layout)
+  - [x] **6D** — Team + program year management (admin API + pages)
+  - [x] **6E** — Public tryout registration form (C5 pattern: public form, API, confirmation emails)
+  - [ ] **6F** — Tryout approval queue (admin): offer → accept/decline flow + status emails
+  - [ ] **6G** — Roster management (admin direct add + roster page)
+  - [ ] **6H** — Player documents (C4 Supabase Storage: upload API, signed URLs, template management)
+  - [ ] **6I** — Coaches portal foundation (layout + auth guard + team scope + dashboard)
+  - [ ] **6J** — Coaches portal: unified team calendar (6 event types + Phase 5M practice recurrence)
+  - [ ] **6K** — Accounting: org cost allocation + team payment schedules + org real-time view
+  - [ ] **6L** — Accounting: coach-managed team budget (player dues, expenses, tournament payables)
+  - [ ] **6M** — Accounting: automated payment reminder emails with paid-status awareness
+  - [ ] **6N** — Past program years (admin history + coaches portal history, read-only)
+  - [ ] **Module gating test** — 5-layer verification + coach role team-scope test
 
 ### 2. Future Product Modules (detail)
 *Recommended build order: Accounting → House League → Rep Teams. Each requires its own detailed plan file before implementation begins.*
 
 - [x] **Public Website Module (`module_public_site`)** — Shipped. (see [docs/archive/PUBLIC_SITE_MODULE_PLAN.md](docs/archive/PUBLIC_SITE_MODULE_PLAN.md))
 - [x] **Accounting Module (`module_accounting`)** — The org's own financial management: income/expense tracking, tournament ledgers, inter-ledger transfers. Plan: [ACCOUNTING_MODULE_PLAN.md](ACCOUNTING_MODULE_PLAN.md).
-- [~] **House League Module (`module_house_league`)** — Season-long recreational league management: player registration, waitlists, team placement, scheduling, standings. Plan: [HOUSE_LEAGUE_MODULE_PLAN.md](HOUSE_LEAGUE_MODULE_PLAN.md). Phases 5A–5E complete (migration, roles, types+helpers, shell, season/division management, public registration form) — pending browser verification. Phase 5F (registration management admin) next.
-- [ ] **Rep Team Module (`module_rep_teams`)** — Competitive team program management: coaches portal, rosters, tryout management, player documents, accounting integration. Requires plan file.
+- [x] **House League Module (`module_house_league`)** — Season-long recreational league management: player registration, waitlists, team placement + draft, scheduling, standings, scoped email dispatch, accounting integration, past seasons, practice scheduling. Plan: [HOUSE_LEAGUE_MODULE_PLAN.md](HOUSE_LEAGUE_MODULE_PLAN.md). All phases 5A–5M complete.
+- [ ] **Rep Team Module (`module_rep_teams`)** — Competitive team program management: coaches portal, rosters, tryout management, player documents, three-tier accounting integration. Plan: [REP_TEAMS_MODULE_PLAN.md](REP_TEAMS_MODULE_PLAN.md).
 
 ### 3. Tournament Landing Page Polish
 *One outstanding item from the completed Tournament Redesign project*
