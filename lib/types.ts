@@ -24,6 +24,7 @@ export interface Organization {
   requireScoreFinalization?: boolean;
   onboardingCompletedAt?: string | null;
   enabledAddons: string[];
+  contactEmail?: string | null;
 }
 
 export interface OrganizationMember {

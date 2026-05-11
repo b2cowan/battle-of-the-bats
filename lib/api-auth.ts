@@ -67,6 +67,7 @@ export async function getAuthContext(): Promise<AuthContext | null> {
     requireScoreFinalization: orgRow.require_score_finalization ?? false,
     onboardingCompletedAt: orgRow.onboarding_completed_at ?? null,
     enabledAddons: orgRow.enabled_addons ?? [],
+    contactEmail: orgRow.contact_email ?? null,
   };
 
   return { user, org };
