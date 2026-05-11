@@ -3017,41 +3017,67 @@ function mapRepDocumentTemplate(r: any): RepDocumentTemplate {
   return {
     id: r.id,
     orgId: r.org_id,
+    teamId: r.team_id,
     name: r.name,
-    description: r.description,
     documentType: r.document_type,
-    isRequired: r.is_required,
+    storagePath: r.storage_path,
+    fileName: r.file_name,
+    fileSize: r.file_size,
     isActive: r.is_active,
+    publishedBy: r.published_by,
     createdAt: r.created_at,
-    updatedAt: r.updated_at,
   };
 }
 
-export async function getRepDocumentTemplates(orgId: string): Promise<RepDocumentTemplate[]> {
+export async function getRepDocumentTemplateById(id: string): Promise<RepDocumentTemplate | null> {
   const { data, error } = await supabaseAdmin
     .from('rep_document_templates')
     .select('*')
-    .eq('org_id', orgId)
-    .order('name');
+    .eq('id', id)
+    .single();
+  if (error) return null;
+  return mapRepDocumentTemplate(data);
+}
+
+// When teamId is provided: returns org-wide (team_id IS NULL) + team-specific templates.
+// When omitted: returns all templates for the org (admin view).
+export async function getRepDocumentTemplates(
+  orgId: string,
+  teamId?: string | null,
+): Promise<RepDocumentTemplate[]> {
+  let query = supabaseAdmin
+    .from('rep_document_templates')
+    .select('*')
+    .eq('org_id', orgId);
+  if (teamId !== undefined && teamId !== null) {
+    query = query.or(`team_id.is.null,team_id.eq.${teamId}`);
+  }
+  const { data, error } = await query.order('name');
   if (error) throw error;
   return (data ?? []).map(mapRepDocumentTemplate);
 }
 
 export async function createRepDocumentTemplate(fields: {
   orgId: string;
+  teamId?: string | null;
   name: string;
-  description?: string | null;
   documentType: RepDocumentType;
-  isRequired?: boolean;
+  storagePath: string;
+  fileName: string;
+  fileSize: number;
+  publishedBy?: string | null;
 }): Promise<RepDocumentTemplate> {
   const { data, error } = await supabaseAdmin
     .from('rep_document_templates')
     .insert({
       org_id: fields.orgId,
+      team_id: fields.teamId ?? null,
       name: fields.name,
-      description: fields.description ?? null,
       document_type: fields.documentType,
-      is_required: fields.isRequired ?? true,
+      storage_path: fields.storagePath,
+      file_name: fields.fileName,
+      file_size: fields.fileSize,
+      published_by: fields.publishedBy ?? null,
     })
     .select()
     .single();
@@ -3059,18 +3085,11 @@ export async function createRepDocumentTemplate(fields: {
   return mapRepDocumentTemplate(data);
 }
 
-export async function updateRepDocumentTemplate(templateId: string, fields: {
-  name?: string;
-  description?: string | null;
-  documentType?: RepDocumentType;
-  isRequired?: boolean;
-  isActive?: boolean;
-}): Promise<RepDocumentTemplate> {
-  const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
-  if (fields.name !== undefined) patch.name = fields.name;
-  if (fields.description !== undefined) patch.description = fields.description;
-  if (fields.documentType !== undefined) patch.document_type = fields.documentType;
-  if (fields.isRequired !== undefined) patch.is_required = fields.isRequired;
+export async function updateRepDocumentTemplate(
+  templateId: string,
+  fields: { isActive?: boolean },
+): Promise<RepDocumentTemplate> {
+  const patch: Record<string, unknown> = {};
   if (fields.isActive !== undefined) patch.is_active = fields.isActive;
   const { data, error } = await supabaseAdmin
     .from('rep_document_templates')
@@ -3092,78 +3111,63 @@ export async function deleteRepDocumentTemplate(templateId: string): Promise<voi
 function mapRepPlayerDocument(r: any): RepPlayerDocument {
   return {
     id: r.id,
-    rosterPlayerId: r.roster_player_id,
+    playerId: r.player_id,
+    teamId: r.team_id,
     orgId: r.org_id,
-    templateId: r.template_id,
     documentType: r.document_type,
-    fileName: r.file_name,
     storagePath: r.storage_path,
-    mimeType: r.mime_type,
-    status: r.status,
-    adminNotes: r.admin_notes,
+    fileName: r.file_name,
+    fileSize: r.file_size,
+    templateId: r.template_id,
     uploadedBy: r.uploaded_by,
-    uploadedAt: r.uploaded_at,
-    reviewedBy: r.reviewed_by,
-    reviewedAt: r.reviewed_at,
-    updatedAt: r.updated_at,
+    createdAt: r.created_at,
   };
 }
 
-export async function getRepPlayerDocuments(rosterPlayerId: string): Promise<RepPlayerDocument[]> {
+export async function getRepPlayerDocumentById(id: string): Promise<RepPlayerDocument | null> {
   const { data, error } = await supabaseAdmin
     .from('rep_player_documents')
     .select('*')
-    .eq('roster_player_id', rosterPlayerId)
-    .order('uploaded_at', { ascending: false });
+    .eq('id', id)
+    .single();
+  if (error) return null;
+  return mapRepPlayerDocument(data);
+}
+
+export async function getRepPlayerDocuments(playerId: string): Promise<RepPlayerDocument[]> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_player_documents')
+    .select('*')
+    .eq('player_id', playerId)
+    .order('created_at', { ascending: false });
   if (error) throw error;
   return (data ?? []).map(mapRepPlayerDocument);
 }
 
 export async function createRepPlayerDocument(fields: {
-  rosterPlayerId: string;
+  playerId: string;
+  teamId: string;
   orgId: string;
-  templateId?: string | null;
   documentType: RepDocumentType;
-  fileName: string;
   storagePath: string;
-  mimeType: string;
+  fileName: string;
+  fileSize: number;
+  templateId?: string | null;
   uploadedBy?: string | null;
 }): Promise<RepPlayerDocument> {
   const { data, error } = await supabaseAdmin
     .from('rep_player_documents')
     .insert({
-      roster_player_id: fields.rosterPlayerId,
+      player_id: fields.playerId,
+      team_id: fields.teamId,
       org_id: fields.orgId,
-      template_id: fields.templateId ?? null,
       document_type: fields.documentType,
-      file_name: fields.fileName,
       storage_path: fields.storagePath,
-      mime_type: fields.mimeType,
+      file_name: fields.fileName,
+      file_size: fields.fileSize,
+      template_id: fields.templateId ?? null,
       uploaded_by: fields.uploadedBy ?? null,
     })
-    .select()
-    .single();
-  if (error) throw error;
-  return mapRepPlayerDocument(data);
-}
-
-export async function updateRepPlayerDocumentStatus(
-  docId: string,
-  status: RepDocumentStatus,
-  reviewedBy: string | null,
-  adminNotes?: string | null,
-): Promise<RepPlayerDocument> {
-  const patch: Record<string, unknown> = {
-    status,
-    reviewed_by: reviewedBy,
-    reviewed_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  };
-  if (adminNotes !== undefined) patch.admin_notes = adminNotes;
-  const { data, error } = await supabaseAdmin
-    .from('rep_player_documents')
-    .update(patch)
-    .eq('id', docId)
     .select()
     .single();
   if (error) throw error;
