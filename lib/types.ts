@@ -511,18 +511,20 @@ export interface RepTryoutRegistration {
 export interface RepRosterPlayer {
   id: string;
   programYearId: string;
+  teamId: string;
   orgId: string;
   tryoutRegistrationId: string | null;
+  source: 'tryout' | 'admin_manual';
   playerFirstName: string;
   playerLastName: string;
   playerDateOfBirth: string | null;
-  jerseyNumber: string | null;
-  position: string | null;
+  playerNumber: string | null;
   status: RepRosterStatus;
   guardianFirstName: string | null;
   guardianLastName: string | null;
   guardianEmail: string | null;
   guardianPhone: string | null;
+  notes: string | null;
   adminNotes: string | null;
   createdAt: string;
   updatedAt: string;

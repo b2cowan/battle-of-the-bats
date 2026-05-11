@@ -1,0 +1,54 @@
+import { redirect } from 'next/navigation';
+import { getAuthContext } from '@/lib/api-auth';
+import { getCoachingAssignmentsForUser } from '@/lib/db';
+import { OrgProvider } from '@/lib/org-context';
+import { CoachesProvider } from '@/lib/coaches-context';
+import CoachesSidebar from '@/components/coaches/CoachesSidebar';
+import styles from './coaches.module.css';
+
+export default async function CoachesLayout({
+  params,
+  children,
+}: {
+  params: Promise<{ orgSlug: string }>;
+  children: React.ReactNode;
+}) {
+  const { orgSlug } = await params;
+
+  const authCtx = await getAuthContext();
+  if (!authCtx) {
+    redirect(`/auth/login?next=/${orgSlug}/coaches`);
+  }
+  if (authCtx.org.slug !== orgSlug) {
+    redirect(`/${authCtx.org.slug}/coaches`);
+  }
+
+  const assignments = await getCoachingAssignmentsForUser(authCtx.org.id, authCtx.user.id);
+
+  if (assignments.length === 0) {
+    return (
+      <OrgProvider>
+        <div className={styles.notAssigned}>
+          <h2>Not assigned to any teams</h2>
+          <p>
+            You don&apos;t have an active coaching assignment for this organization.
+            Contact your org admin to be added to a team.
+          </p>
+        </div>
+      </OrgProvider>
+    );
+  }
+
+  return (
+    <OrgProvider>
+      <CoachesProvider orgSlug={orgSlug}>
+        <div className={styles.coachesShell}>
+          <CoachesSidebar orgSlug={orgSlug} />
+          <main className={styles.coachesMain}>
+            {children}
+          </main>
+        </div>
+      </CoachesProvider>
+    </OrgProvider>
+  );
+}
