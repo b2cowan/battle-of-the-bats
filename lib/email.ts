@@ -1,7 +1,7 @@
 ﻿const RESEND_API = 'https://api.resend.com/emails';
 const FROM = process.env.RESEND_FROM ?? 'Battle of the Bats <onboarding@resend.dev>';
 const ADMIN_EMAIL = 'fieldlogichq@gmail.com';
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000';
+const SITE_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000';
 
 function htmlToText(html: string): string {
   return html

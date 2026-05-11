@@ -51,7 +51,7 @@ export default async function AdminLayout({
             </main>
           </div>
           <AdminBottomNav />
-          {process.env.NODE_ENV === 'development' && <DevPlanSwitcher />}
+          {process.env.NEXT_PUBLIC_ENABLE_DEV_TOOLS === 'true' && <DevPlanSwitcher />}
           <LiveLogicRail />
         </LiveLogicProvider>
       </TournamentProvider>
