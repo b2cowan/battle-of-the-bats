@@ -409,6 +409,71 @@ export function tryoutRegistrationConfirmationHtml(p: {
   `, p.contactEmail);
 }
 
+// ── Rep Teams tryout status emails ───────────────────────────────────────────
+
+export function tryoutOfferHtml(p: {
+  guardianFirstName: string;
+  playerFirstName: string;
+  playerLastName: string;
+  teamName: string;
+  yearName: string;
+  contactEmail?: string;
+}) {
+  const contact = p.contactEmail ?? ADMIN_EMAIL;
+  return wrap(`
+    <h2 style="color:#a3e635;font-size:1.4rem;margin:0 0 1rem;">Offer Extended</h2>
+    <p>Hi <strong>${p.guardianFirstName}</strong>,</p>
+    <p>We&apos;re pleased to let you know that <strong>${p.playerFirstName} ${p.playerLastName}</strong> has been extended an offer to join the <strong>${p.teamName}</strong> <strong>${p.yearName}</strong> program.</p>
+    <div style="background:#1A1530;border:1px solid rgba(163,230,53,0.3);border-radius:8px;padding:1.25rem;margin:1.5rem 0;">
+      <p style="margin:0 0 0.5rem;font-weight:700;color:#a3e635;">Next Steps</p>
+      <p style="margin:0;line-height:1.8;color:rgba(255,255,255,0.75);">
+        Please reply to this email to confirm whether <strong>${p.playerFirstName}</strong> will be accepting this offer.<br>
+        Program: <strong>${p.teamName} — ${p.yearName}</strong>
+      </p>
+    </div>
+    <p style="color:rgba(255,255,255,0.6);">Questions? Contact us at <a href="mailto:${contact}" style="color:#a3e635;">${contact}</a></p>
+  `, p.contactEmail);
+}
+
+export function tryoutAcceptedHtml(p: {
+  guardianFirstName: string;
+  playerFirstName: string;
+  playerLastName: string;
+  teamName: string;
+  yearName: string;
+  contactEmail?: string;
+}) {
+  return wrap(`
+    <h2 style="color:#4ade80;font-size:1.4rem;margin:0 0 1rem;">Welcome to the Team!</h2>
+    <p>Hi <strong>${p.guardianFirstName}</strong>,</p>
+    <p><strong>${p.playerFirstName} ${p.playerLastName}</strong> has been added to the <strong>${p.teamName}</strong> <strong>${p.yearName}</strong> roster. Welcome!</p>
+    <div style="background:#1A1530;border:1px solid rgba(74,222,128,0.3);border-radius:8px;padding:1.25rem;margin:1.5rem 0;">
+      <p style="margin:0;line-height:1.8;color:rgba(255,255,255,0.75);">
+        Program: <strong>${p.teamName} — ${p.yearName}</strong><br>
+        Player: <strong>${p.playerFirstName} ${p.playerLastName}</strong>
+      </p>
+    </div>
+    <p style="color:rgba(255,255,255,0.6);">Your coaching staff will be in touch with more details. We look forward to a great season!</p>
+  `, p.contactEmail);
+}
+
+export function tryoutDeclinedHtml(p: {
+  guardianFirstName: string;
+  playerFirstName: string;
+  playerLastName: string;
+  teamName: string;
+  yearName: string;
+  contactEmail?: string;
+}) {
+  const contact = p.contactEmail ?? ADMIN_EMAIL;
+  return wrap(`
+    <h2 style="color:#f0f0f0;font-size:1.4rem;margin:0 0 1rem;">Tryout Update</h2>
+    <p>Hi <strong>${p.guardianFirstName}</strong>,</p>
+    <p>Thank you for registering <strong>${p.playerFirstName} ${p.playerLastName}</strong> for the <strong>${p.teamName}</strong> <strong>${p.yearName}</strong> program. After reviewing all applications, we are unfortunately unable to extend an offer at this time.</p>
+    <p style="color:rgba(255,255,255,0.6);">We appreciate <strong>${p.playerFirstName}</strong>&apos;s interest and encourage them to try again in the future. Please reach out to <a href="mailto:${contact}" style="color:#a3e635;">${contact}</a> if you have any questions.</p>
+  `, p.contactEmail);
+}
+
 export function passwordResetHtml(resetLink: string) {
   return wrap(`
     <h2 style="color:#fff;font-size:1.4rem;margin:0 0 1rem;">Reset Your Password</h2>

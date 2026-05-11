@@ -31,7 +31,7 @@ This file tracks the ongoing tasks for the tournament website project. AI models
   - [x] **6C** — C2 coach role expansion + module shell (5 layers: route gate, page guard, sidebar, hub tile, layout)
   - [x] **6D** — Team + program year management (admin API + pages)
   - [x] **6E** — Public tryout registration form (C5 pattern: public form, API, confirmation emails)
-  - [ ] **6F** — Tryout approval queue (admin): offer → accept/decline flow + status emails
+  - [x] **6F** — Tryout approval queue (admin): offer → accept/decline flow + status emails
   - [ ] **6G** — Roster management (admin direct add + roster page)
   - [ ] **6H** — Player documents (C4 Supabase Storage: upload API, signed URLs, template management)
   - [ ] **6I** — Coaches portal foundation (layout + auth guard + team scope + dashboard)
