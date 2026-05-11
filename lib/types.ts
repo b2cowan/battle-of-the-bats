@@ -447,8 +447,13 @@ export interface LeagueSeasonSummary {
 export type RepProgramYearStatus = 'draft' | 'active' | 'completed' | 'archived';
 export type RepTryoutRegistrationStatus = 'pending_review' | 'offered' | 'accepted' | 'declined' | 'withdrawn';
 export type RepRosterStatus = 'active' | 'inactive' | 'released';
-export type RepEventType = 'game' | 'practice' | 'tryout' | 'tournament' | 'meeting' | 'other';
-export type RepEventStatus = 'scheduled' | 'completed' | 'cancelled' | 'postponed';
+export type RepEventType =
+  | 'external_tournament'
+  | 'tournament_game'
+  | 'scrimmage'
+  | 'league_game'
+  | 'practice'
+  | 'team_event';
 export type RepDocumentType = 'waiver' | 'medical_consent' | 'code_of_conduct' | 'other';
 
 export interface RepTeam {
@@ -533,18 +538,23 @@ export interface RepRosterPlayer {
 export interface RepTeamEvent {
   id: string;
   programYearId: string;
+  teamId: string;
   orgId: string;
   eventType: RepEventType;
-  title: string;
-  scheduledAt: string | null;
+  name: string;
+  description: string | null;
+  startsAt: string;
   endsAt: string | null;
   location: string | null;
   opponent: string | null;
-  notes: string | null;
-  status: RepEventStatus;
+  homeAway: 'home' | 'away' | 'neutral' | null;
+  homeScore: number | null;
+  awayScore: number | null;
+  result: 'win' | 'loss' | 'tie' | null;
   parentEventId: string | null;
-  recurrenceParentId: string | null;
+  isRecurring: boolean;
   recurrenceRule: Record<string, unknown> | null;
+  recurrenceParentId: string | null;
   createdAt: string;
   updatedAt: string;
 }

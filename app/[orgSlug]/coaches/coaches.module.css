@@ -498,3 +498,198 @@
   max-width: 360px;
   margin: 0 auto;
 }
+
+/* ── Calendar (Phase 6J) ──────────────────────────────────────────────────── */
+.viewToggle {
+  display: flex;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.viewToggleBtn {
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.45);
+  padding: 0.35rem 0.75rem;
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: background 0.1s, color 0.1s;
+}
+.viewToggleBtn:hover { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.8); }
+.viewToggleBtnActive { background: rgba(var(--blueprint-blue-rgb),0.15); color: var(--blueprint-blue,#4fa3e0); font-weight: 600; }
+
+.addEventWrap { position: relative; }
+.addEventMenu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 4px);
+  background: var(--card-bg, #1a1f2e);
+  border: 1px solid rgba(var(--blueprint-blue-rgb),0.25);
+  border-radius: 8px;
+  padding: 0.35rem 0;
+  min-width: 190px;
+  z-index: 50;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+}
+.addEventMenuItem {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.75);
+  padding: 0.5rem 1rem;
+  font-size: 0.88rem;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.1s;
+}
+.addEventMenuItem:hover { background: rgba(255,255,255,0.06); }
+
+.wltWidget {
+  display: inline-flex;
+  align-items: center;
+  gap: 1rem;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 8px;
+  padding: 0.6rem 1.25rem;
+  margin-bottom: 1.5rem;
+}
+.wltLabel { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: rgba(255,255,255,0.35); }
+.wltRow { display: flex; align-items: baseline; gap: 0.4rem; }
+.wltW  { font-size: 1.4rem; font-weight: 900; color: #22c55e; line-height: 1; }
+.wltL  { font-size: 1.4rem; font-weight: 900; color: #ef4444; line-height: 1; }
+.wltT  { font-size: 1.4rem; font-weight: 900; color: #f59e0b; line-height: 1; }
+.wltW small, .wltL small, .wltT small { font-size: 0.7rem; font-weight: 600; margin-left: 0.15rem; opacity: 0.7; }
+.wltSep { color: rgba(255,255,255,0.2); font-size: 1.1rem; }
+
+.calNav { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem; }
+.calNavBtn {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 6px;
+  color: rgba(255,255,255,0.6);
+  width: 32px; height: 32px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+}
+.calNavBtn:hover { background: rgba(255,255,255,0.09); }
+.calNavLabel { font-size: 0.95rem; font-weight: 700; color: var(--white-90,#f0f0f0); }
+
+.calMonthGroup { margin-bottom: 1.75rem; }
+.calMonthLabel {
+  font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em;
+  color: rgba(255,255,255,0.3); padding-bottom: 0.5rem;
+  border-bottom: 1px solid rgba(255,255,255,0.07); margin-bottom: 0.75rem;
+}
+.calEventList { display: flex; flex-direction: column; gap: 0.35rem; }
+
+.eventChip {
+  display: flex; align-items: center; gap: 0.5rem;
+  background: rgba(255,255,255,0.04); border: none;
+  border-left: 3px solid transparent;
+  border-radius: 0 6px 6px 0;
+  padding: 0.45rem 0.75rem; text-align: left; cursor: pointer; width: 100%;
+  transition: background 0.1s;
+}
+.eventChip:hover { background: rgba(255,255,255,0.07); }
+.eventChipTime { font-size: 0.78rem; color: rgba(255,255,255,0.4); min-width: 5.5rem; }
+.eventChipName { font-size: 0.88rem; color: var(--white-90,#f0f0f0); flex: 1; }
+.eventChipResult { font-size: 0.7rem; font-weight: 700; }
+
+.calWeekGrid { display: grid; grid-template-columns: repeat(7,1fr); gap: 0.5rem; overflow-x: auto; }
+.calWeekDay {
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.06); border-radius: 6px; min-width: 110px;
+}
+.calWeekDayLabel { font-size: 0.72rem; font-weight: 700; color: rgba(255,255,255,0.35); padding: 0.5rem 0.6rem; border-bottom: 1px solid rgba(255,255,255,0.06); }
+.calWeekDayEvents { display: flex; flex-direction: column; gap: 0.25rem; padding: 0.4rem; min-height: 60px; }
+.calWeekEmpty { font-size: 0.78rem; color: rgba(255,255,255,0.15); padding: 0.25rem 0; }
+
+.calMonthGrid {
+  display: grid; grid-template-columns: repeat(7,1fr); gap: 1px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; overflow: hidden;
+}
+.calMonthHeader {
+  background: rgba(255,255,255,0.03); padding: 0.4rem;
+  font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;
+  color: rgba(255,255,255,0.3); text-align: center;
+}
+.calMonthCell { background: var(--pitch-black,#0a0d14); min-height: 80px; padding: 0.35rem; }
+.calMonthCellToday { background: rgba(var(--blueprint-blue-rgb),0.07); }
+.calMonthDayNum { font-size: 0.78rem; color: rgba(255,255,255,0.35); }
+.calMonthDayEvents { display: flex; flex-direction: column; gap: 2px; margin-top: 2px; }
+.calMonthEventDot {
+  display: block; font-size: 0.68rem; padding: 1px 4px; border-radius: 3px;
+  color: #fff; border: none; cursor: pointer; text-align: left;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; opacity: 0.9;
+}
+.calMonthEventDot:hover { opacity: 1; }
+.calMonthMoreDots { font-size: 0.67rem; color: rgba(255,255,255,0.3); padding-left: 2px; }
+
+.slideOver {
+  background: var(--card-bg,#1a1f2e);
+  border: 1px solid rgba(var(--blueprint-blue-rgb),0.3);
+  border-radius: 12px; padding: 1.5rem;
+  width: 100%; max-width: 440px; max-height: 90vh; overflow-y: auto; margin-left: auto;
+}
+.slideOverTitle { font-size: 1.2rem; font-weight: 800; color: var(--white-90,#f0f0f0); margin: 0.5rem 0 1rem; }
+.slideOverDetails {
+  display: grid; grid-template-columns: auto 1fr; gap: 0.35rem 1rem;
+  font-size: 0.88rem; margin-bottom: 1rem;
+}
+.slideOverDetails dt { color: rgba(255,255,255,0.35); font-size: 0.78rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; white-space: nowrap; }
+.slideOverDetails dd { color: var(--white-90,#f0f0f0); margin: 0; }
+.slideOverActions { margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.07); display: flex; gap: 0.5rem; }
+
+.eventTypePill { font-size: 0.72rem; font-weight: 700; padding: 0.15rem 0.5rem; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.04em; }
+
+.scoreSection { margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid rgba(255,255,255,0.07); }
+.scoreDisplay { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
+.scoreNum { font-size: 2rem; font-weight: 900; line-height: 1; }
+.scoreSep { font-size: 1.2rem; color: rgba(255,255,255,0.3); }
+.resultBadge { font-size: 0.85rem; font-weight: 800; text-transform: uppercase; }
+.scoreForm { margin-top: 0.75rem; display: flex; flex-direction: column; gap: 0.5rem; }
+.scoreFormRow { display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap; }
+
+.deleteConfirm { display: flex; flex-direction: column; gap: 0.5rem; }
+.deleteConfirmMsg { font-size: 0.88rem; color: rgba(255,255,255,0.7); margin: 0; }
+.deleteConfirmBtns { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+
+.btnPrimary {
+  display: inline-flex; align-items: center; gap: 0.35rem;
+  background: var(--blueprint-blue,#4fa3e0); color: #fff;
+  border: none; border-radius: 6px; padding: 0.45rem 0.9rem;
+  font-size: 0.88rem; font-weight: 600; cursor: pointer; transition: opacity 0.15s;
+}
+.btnPrimary:hover { opacity: 0.88; }
+.btnPrimary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.btnSecondary {
+  display: inline-flex; align-items: center; gap: 0.35rem;
+  background: rgba(255,255,255,0.07); color: rgba(255,255,255,0.75);
+  border: 1px solid rgba(255,255,255,0.12); border-radius: 6px;
+  padding: 0.45rem 0.9rem; font-size: 0.88rem; font-weight: 600; cursor: pointer;
+}
+.btnSecondary:hover { background: rgba(255,255,255,0.11); }
+
+.btnGhost {
+  display: inline-flex; align-items: center; gap: 0.35rem;
+  background: none; border: none; color: rgba(255,255,255,0.45);
+  font-size: 0.85rem; cursor: pointer; padding: 0.3rem 0.5rem;
+}
+.btnGhost:hover { color: rgba(255,255,255,0.8); }
+
+.btnDanger {
+  display: inline-flex; align-items: center; gap: 0.35rem;
+  background: rgba(239,68,68,0.12); color: #f87171;
+  border: 1px solid rgba(239,68,68,0.25); border-radius: 6px;
+  padding: 0.4rem 0.85rem; font-size: 0.85rem; font-weight: 600; cursor: pointer;
+}
+.btnDanger:hover { background: rgba(239,68,68,0.2); }
+.btnDanger:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.errorText { color: #ef4444; font-size: 0.85rem; margin: 0; }

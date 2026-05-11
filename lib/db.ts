@@ -1,7 +1,7 @@
 import { supabase } from './supabase';
 import { supabaseAdmin } from './supabase-admin';
 import { createClient as createBrowserSupabaseClient } from './supabase-browser';
-import { Tournament, TournamentStatus, Diamond, Contact, AgeGroup, Pool, Team, Game, Announcement, PlayoffConfig, RuleSection, RuleItem, Resource, Organization, OrganizationMember, OrgPlan, OrgRole, TournamentArchive, OrgPublicSiteContent, AccountingLedger, AccountingEntry, LedgerSummary, AccountingEntryStatus, AccountingEntryType, LeagueSeason, LeagueDivision, LeagueTeam, LeagueRegistration, LeagueGame, LeagueStandingsRow, LeagueSeasonSummary, LeagueRegistrationStatus, LeagueSeasonStatus, LeaguePractice, LeaguePracticeStatus, RepTeam, RepProgramYear, RepProgramYearStatus, RepTeamCoach, RepTryoutRegistration, RepTryoutRegistrationStatus, RepRosterPlayer, RepRosterStatus, RepTeamEvent, RepEventType, RepEventStatus, RepDocumentTemplate, RepDocumentType, RepPlayerDocument, RepCostAllocation, RepAllocationSplit, RepAllocationInstallment, RepPlayerDuesSchedule, RepPlayerDuesInstallment, RepTeamExpense } from './types';
+import { Tournament, TournamentStatus, Diamond, Contact, AgeGroup, Pool, Team, Game, Announcement, PlayoffConfig, RuleSection, RuleItem, Resource, Organization, OrganizationMember, OrgPlan, OrgRole, TournamentArchive, OrgPublicSiteContent, AccountingLedger, AccountingEntry, LedgerSummary, AccountingEntryStatus, AccountingEntryType, LeagueSeason, LeagueDivision, LeagueTeam, LeagueRegistration, LeagueGame, LeagueStandingsRow, LeagueSeasonSummary, LeagueRegistrationStatus, LeagueSeasonStatus, LeaguePractice, LeaguePracticeStatus, RepTeam, RepProgramYear, RepProgramYearStatus, RepTeamCoach, RepTryoutRegistration, RepTryoutRegistrationStatus, RepRosterPlayer, RepRosterStatus, RepTeamEvent, RepEventType, RepDocumentTemplate, RepDocumentType, RepPlayerDocument, RepCostAllocation, RepAllocationSplit, RepAllocationInstallment, RepPlayerDuesSchedule, RepPlayerDuesInstallment, RepTeamExpense } from './types';
 
 // Use the SSR browser client (cookie-based session) for writes that need auth;
 // falls back to anon client on the server where there is no window.
@@ -2914,62 +2914,92 @@ function mapRepTeamEvent(r: any): RepTeamEvent {
   return {
     id: r.id,
     programYearId: r.program_year_id,
+    teamId: r.team_id,
     orgId: r.org_id,
     eventType: r.event_type,
-    title: r.title,
-    scheduledAt: r.scheduled_at,
-    endsAt: r.ends_at,
-    location: r.location,
-    opponent: r.opponent,
-    notes: r.notes,
-    status: r.status,
-    parentEventId: r.parent_event_id,
-    recurrenceParentId: r.recurrence_parent_id,
-    recurrenceRule: r.recurrence_rule,
+    name: r.name,
+    description: r.description ?? null,
+    startsAt: r.starts_at,
+    endsAt: r.ends_at ?? null,
+    location: r.location ?? null,
+    opponent: r.opponent ?? null,
+    homeAway: r.home_away ?? null,
+    homeScore: r.home_score ?? null,
+    awayScore: r.away_score ?? null,
+    result: r.result ?? null,
+    parentEventId: r.parent_event_id ?? null,
+    isRecurring: r.is_recurring ?? false,
+    recurrenceRule: r.recurrence_rule ?? null,
+    recurrenceParentId: r.recurrence_parent_id ?? null,
     createdAt: r.created_at,
     updatedAt: r.updated_at,
   };
 }
 
-export async function getRepTeamEvents(programYearId: string): Promise<RepTeamEvent[]> {
-  const { data, error } = await supabaseAdmin
+export async function getRepTeamEvents(
+  programYearId: string,
+  opts?: { from?: string; to?: string; type?: RepEventType },
+): Promise<RepTeamEvent[]> {
+  let q = supabaseAdmin
     .from('rep_team_events')
     .select('*')
     .eq('program_year_id', programYearId)
-    .order('scheduled_at', { ascending: true });
+    .order('starts_at', { ascending: true });
+  if (opts?.from) q = q.gte('starts_at', opts.from);
+  if (opts?.to)   q = q.lte('starts_at', opts.to);
+  if (opts?.type) q = q.eq('event_type', opts.type);
+  const { data, error } = await q;
   if (error) throw error;
   return (data ?? []).map(mapRepTeamEvent);
 }
 
-export async function createRepTeamEvent(fields: {
+export async function getRepTeamEventById(eventId: string): Promise<RepTeamEvent | null> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_events')
+    .select('*')
+    .eq('id', eventId)
+    .maybeSingle();
+  if (error) throw error;
+  return data ? mapRepTeamEvent(data) : null;
+}
+
+export interface CreateRepTeamEventFields {
   programYearId: string;
+  teamId: string;
   orgId: string;
   eventType: RepEventType;
-  title: string;
-  scheduledAt?: string | null;
+  name: string;
+  description?: string | null;
+  startsAt: string;
   endsAt?: string | null;
   location?: string | null;
   opponent?: string | null;
-  notes?: string | null;
+  homeAway?: 'home' | 'away' | 'neutral' | null;
   parentEventId?: string | null;
-  recurrenceParentId?: string | null;
+  isRecurring?: boolean;
   recurrenceRule?: Record<string, unknown> | null;
-}): Promise<RepTeamEvent> {
+  recurrenceParentId?: string | null;
+}
+
+export async function createRepTeamEvent(fields: CreateRepTeamEventFields): Promise<RepTeamEvent> {
   const { data, error } = await supabaseAdmin
     .from('rep_team_events')
     .insert({
       program_year_id: fields.programYearId,
+      team_id: fields.teamId,
       org_id: fields.orgId,
       event_type: fields.eventType,
-      title: fields.title,
-      scheduled_at: fields.scheduledAt ?? null,
+      name: fields.name,
+      description: fields.description ?? null,
+      starts_at: fields.startsAt,
       ends_at: fields.endsAt ?? null,
       location: fields.location ?? null,
       opponent: fields.opponent ?? null,
-      notes: fields.notes ?? null,
+      home_away: fields.homeAway ?? null,
       parent_event_id: fields.parentEventId ?? null,
-      recurrence_parent_id: fields.recurrenceParentId ?? null,
+      is_recurring: fields.isRecurring ?? false,
       recurrence_rule: fields.recurrenceRule ?? null,
+      recurrence_parent_id: fields.recurrenceParentId ?? null,
     })
     .select()
     .single();
@@ -2977,25 +3007,56 @@ export async function createRepTeamEvent(fields: {
   return mapRepTeamEvent(data);
 }
 
+export async function createRepTeamEvents(rows: CreateRepTeamEventFields[]): Promise<RepTeamEvent[]> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_events')
+    .insert(rows.map(f => ({
+      program_year_id: f.programYearId,
+      team_id: f.teamId,
+      org_id: f.orgId,
+      event_type: f.eventType,
+      name: f.name,
+      description: f.description ?? null,
+      starts_at: f.startsAt,
+      ends_at: f.endsAt ?? null,
+      location: f.location ?? null,
+      opponent: f.opponent ?? null,
+      home_away: f.homeAway ?? null,
+      parent_event_id: f.parentEventId ?? null,
+      is_recurring: f.isRecurring ?? false,
+      recurrence_rule: f.recurrenceRule ?? null,
+      recurrence_parent_id: f.recurrenceParentId ?? null,
+    })))
+    .select();
+  if (error) throw error;
+  return (data ?? []).map(mapRepTeamEvent);
+}
+
 export async function updateRepTeamEvent(eventId: string, fields: {
+  name?: string;
+  description?: string | null;
   eventType?: RepEventType;
-  title?: string;
-  scheduledAt?: string | null;
+  startsAt?: string;
   endsAt?: string | null;
   location?: string | null;
   opponent?: string | null;
-  notes?: string | null;
-  status?: RepEventStatus;
+  homeAway?: 'home' | 'away' | 'neutral' | null;
+  homeScore?: number | null;
+  awayScore?: number | null;
+  result?: 'win' | 'loss' | 'tie' | null;
 }): Promise<RepTeamEvent> {
   const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
-  if (fields.eventType !== undefined) patch.event_type = fields.eventType;
-  if (fields.title !== undefined) patch.title = fields.title;
-  if (fields.scheduledAt !== undefined) patch.scheduled_at = fields.scheduledAt;
-  if (fields.endsAt !== undefined) patch.ends_at = fields.endsAt;
-  if (fields.location !== undefined) patch.location = fields.location;
-  if (fields.opponent !== undefined) patch.opponent = fields.opponent;
-  if (fields.notes !== undefined) patch.notes = fields.notes;
-  if (fields.status !== undefined) patch.status = fields.status;
+  if (fields.name !== undefined)        patch.name = fields.name;
+  if (fields.description !== undefined) patch.description = fields.description;
+  if (fields.eventType !== undefined)   patch.event_type = fields.eventType;
+  if (fields.startsAt !== undefined)    patch.starts_at = fields.startsAt;
+  if (fields.endsAt !== undefined)      patch.ends_at = fields.endsAt;
+  if (fields.location !== undefined)    patch.location = fields.location;
+  if (fields.opponent !== undefined)    patch.opponent = fields.opponent;
+  if (fields.homeAway !== undefined)    patch.home_away = fields.homeAway;
+  if (fields.homeScore !== undefined)   patch.home_score = fields.homeScore;
+  if (fields.awayScore !== undefined)   patch.away_score = fields.awayScore;
+  if (fields.result !== undefined)      patch.result = fields.result;
   const { data, error } = await supabaseAdmin
     .from('rep_team_events')
     .update(patch)
@@ -3006,8 +3067,37 @@ export async function updateRepTeamEvent(eventId: string, fields: {
   return mapRepTeamEvent(data);
 }
 
+export async function updateRepTeamEventsByRecurrenceParent(
+  recurrenceParentId: string,
+  fromStartsAt: string,
+  fields: { location?: string | null; endsAt?: string | null },
+): Promise<void> {
+  const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
+  if (fields.location !== undefined) patch.location = fields.location;
+  if (fields.endsAt !== undefined)   patch.ends_at = fields.endsAt;
+  const { error } = await supabaseAdmin
+    .from('rep_team_events')
+    .update(patch)
+    .eq('recurrence_parent_id', recurrenceParentId)
+    .gte('starts_at', fromStartsAt);
+  if (error) throw error;
+}
+
 export async function deleteRepTeamEvent(eventId: string): Promise<void> {
   const { error } = await supabaseAdmin.from('rep_team_events').delete().eq('id', eventId);
+  if (error) throw error;
+}
+
+export async function deleteRepTeamEventsByRecurrenceParent(
+  recurrenceParentId: string,
+  fromStartsAt?: string,
+): Promise<void> {
+  let q = supabaseAdmin
+    .from('rep_team_events')
+    .delete()
+    .eq('recurrence_parent_id', recurrenceParentId);
+  if (fromStartsAt) q = q.gte('starts_at', fromStartsAt);
+  const { error } = await q;
   if (error) throw error;
 }
 
