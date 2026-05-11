@@ -2628,7 +2628,7 @@ export async function getRepTryoutRegistrations(programYearId: string): Promise<
     .from('rep_tryout_registrations')
     .select('*')
     .eq('program_year_id', programYearId)
-    .order('registered_at', { ascending: false });
+    .order('submitted_at', { ascending: false });
   if (error) throw error;
   return (data ?? []).map(mapRepTryoutRegistration);
 }
@@ -2694,24 +2694,51 @@ export async function updateRepTryoutRegistrationStatus(
   return mapRepTryoutRegistration(data);
 }
 
+export async function acceptTryoutAndAddToRoster(
+  regId: string,
+): Promise<{ registration: RepTryoutRegistration; player: RepRosterPlayer }> {
+  const reg = await getRepTryoutRegistration(regId);
+  if (!reg) throw new Error('Tryout registration not found');
+
+  const player = await createRepRosterPlayer({
+    programYearId: reg.programYearId,
+    teamId: reg.teamId,
+    orgId: reg.orgId,
+    source: 'tryout',
+    tryoutRegistrationId: reg.id,
+    playerFirstName: reg.playerFirstName,
+    playerLastName: reg.playerLastName,
+    playerDateOfBirth: reg.playerDateOfBirth,
+    guardianFirstName: reg.guardianFirstName,
+    guardianLastName: reg.guardianLastName,
+    guardianEmail: reg.guardianEmail,
+    guardianPhone: reg.guardianPhone,
+  });
+
+  const registration = await updateRepTryoutRegistrationStatus(regId, 'accepted');
+  return { registration, player };
+}
+
 // Roster Players
 
 function mapRepRosterPlayer(r: any): RepRosterPlayer {
   return {
     id: r.id,
     programYearId: r.program_year_id,
+    teamId: r.team_id,
     orgId: r.org_id,
     tryoutRegistrationId: r.tryout_registration_id,
     playerFirstName: r.player_first_name,
     playerLastName: r.player_last_name,
     playerDateOfBirth: r.player_date_of_birth,
-    jerseyNumber: r.jersey_number,
-    position: r.position,
+    playerNumber: r.player_number,
     status: r.status,
+    source: r.source,
     guardianFirstName: r.guardian_first_name,
     guardianLastName: r.guardian_last_name,
     guardianEmail: r.guardian_email,
     guardianPhone: r.guardian_phone,
+    notes: r.notes,
     adminNotes: r.admin_notes,
     createdAt: r.created_at,
     updatedAt: r.updated_at,
@@ -2740,34 +2767,38 @@ export async function getRepRosterPlayer(playerId: string): Promise<RepRosterPla
 
 export async function createRepRosterPlayer(fields: {
   programYearId: string;
+  teamId: string;
   orgId: string;
+  source?: 'tryout' | 'admin_manual';
   tryoutRegistrationId?: string | null;
   playerFirstName: string;
   playerLastName: string;
   playerDateOfBirth?: string | null;
-  jerseyNumber?: string | null;
-  position?: string | null;
+  playerNumber?: string | null;
   guardianFirstName?: string | null;
   guardianLastName?: string | null;
   guardianEmail?: string | null;
   guardianPhone?: string | null;
+  notes?: string | null;
   adminNotes?: string | null;
 }): Promise<RepRosterPlayer> {
   const { data, error } = await supabaseAdmin
     .from('rep_roster_players')
     .insert({
       program_year_id: fields.programYearId,
+      team_id: fields.teamId,
       org_id: fields.orgId,
+      source: fields.source ?? 'admin_manual',
       tryout_registration_id: fields.tryoutRegistrationId ?? null,
       player_first_name: fields.playerFirstName,
       player_last_name: fields.playerLastName,
       player_date_of_birth: fields.playerDateOfBirth ?? null,
-      jersey_number: fields.jerseyNumber ?? null,
-      position: fields.position ?? null,
+      player_number: fields.playerNumber ?? null,
       guardian_first_name: fields.guardianFirstName ?? null,
       guardian_last_name: fields.guardianLastName ?? null,
       guardian_email: fields.guardianEmail ?? null,
       guardian_phone: fields.guardianPhone ?? null,
+      notes: fields.notes ?? null,
       admin_notes: fields.adminNotes ?? null,
     })
     .select()
@@ -2780,26 +2811,26 @@ export async function updateRepRosterPlayer(playerId: string, fields: {
   playerFirstName?: string;
   playerLastName?: string;
   playerDateOfBirth?: string | null;
-  jerseyNumber?: string | null;
-  position?: string | null;
+  playerNumber?: string | null;
   status?: RepRosterStatus;
   guardianFirstName?: string | null;
   guardianLastName?: string | null;
   guardianEmail?: string | null;
   guardianPhone?: string | null;
+  notes?: string | null;
   adminNotes?: string | null;
 }): Promise<RepRosterPlayer> {
   const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
   if (fields.playerFirstName !== undefined) patch.player_first_name = fields.playerFirstName;
   if (fields.playerLastName !== undefined) patch.player_last_name = fields.playerLastName;
   if (fields.playerDateOfBirth !== undefined) patch.player_date_of_birth = fields.playerDateOfBirth;
-  if (fields.jerseyNumber !== undefined) patch.jersey_number = fields.jerseyNumber;
-  if (fields.position !== undefined) patch.position = fields.position;
+  if (fields.playerNumber !== undefined) patch.player_number = fields.playerNumber;
   if (fields.status !== undefined) patch.status = fields.status;
   if (fields.guardianFirstName !== undefined) patch.guardian_first_name = fields.guardianFirstName;
   if (fields.guardianLastName !== undefined) patch.guardian_last_name = fields.guardianLastName;
   if (fields.guardianEmail !== undefined) patch.guardian_email = fields.guardianEmail;
   if (fields.guardianPhone !== undefined) patch.guardian_phone = fields.guardianPhone;
+  if (fields.notes !== undefined) patch.notes = fields.notes;
   if (fields.adminNotes !== undefined) patch.admin_notes = fields.adminNotes;
   const { data, error } = await supabaseAdmin
     .from('rep_roster_players')

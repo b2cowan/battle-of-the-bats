@@ -2,11 +2,11 @@
 
 **Phase 6 of PLATFORM_ROADMAP.md** — Competitive team program management.
 
-**Status:** Phases 6A–6D complete. Next: 6E (public tryout registration form).
+**Status:** Phases 6A–6F complete. Next: 6G (roster management).
 
 **Dependencies:** Phase 2 (plan entitlements), Phase 4 (accounting), Phase 5 (C5 public form pattern, Phase 5M practice scheduling), C2 (coach role), C4 (Supabase Storage first use).
 
-**Next migration:** `021_rep_teams.sql`
+**Migration:** `021_rep_teams.sql` — applied to Supabase ✓
 
 ---
 

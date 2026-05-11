@@ -513,6 +513,212 @@
   max-width: 640px;
 }
 
+/* ── Tryout queue ─────────────────────────────────────────────────────────── */
+.tryoutToggleRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.tryoutToggleLabel {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: rgba(255,255,255,0.6);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.tryoutUrlRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.tryoutUrlInput {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 6px;
+  color: rgba(255,255,255,0.6);
+  padding: 0.35rem 0.6rem;
+  font-size: 0.78rem;
+  font-family: var(--font-data, 'IBM Plex Mono', monospace);
+  width: 340px;
+  max-width: 100%;
+  cursor: text;
+}
+
+.tryoutTabs {
+  display: flex;
+  gap: 0.25rem;
+  margin-bottom: 1.25rem;
+  flex-wrap: wrap;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+  padding-bottom: 0;
+}
+
+.tryoutTab {
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: rgba(255,255,255,0.4);
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 0.5rem 0.75rem 0.6rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  transition: color 0.12s, border-color 0.12s;
+  margin-bottom: -1px;
+}
+.tryoutTab:hover { color: rgba(255,255,255,0.7); }
+
+.tryoutTabActive {
+  color: var(--white-90, #f0f0f0);
+  border-bottom-color: var(--logic-lime, #a3e635);
+}
+
+.tryoutTabCount {
+  font-size: 0.72rem;
+  font-weight: 700;
+  background: rgba(255,255,255,0.1);
+  color: rgba(255,255,255,0.6);
+  border-radius: 10px;
+  padding: 0.05rem 0.45rem;
+  min-width: 18px;
+  text-align: center;
+}
+.tryoutTabActive .tryoutTabCount {
+  background: rgba(163,230,53,0.15);
+  color: var(--logic-lime, #a3e635);
+}
+
+.tryoutTableWrap {
+  overflow-x: auto;
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.15);
+  border-radius: 8px;
+}
+
+.tryoutTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+}
+
+.tryoutTh {
+  text-align: left;
+  padding: 0.6rem 1rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: rgba(255,255,255,0.35);
+  background: rgba(255,255,255,0.02);
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+  white-space: nowrap;
+}
+
+.tryoutTd {
+  padding: 0.7rem 1rem;
+  color: var(--white-90, #f0f0f0);
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  vertical-align: middle;
+}
+
+.tryoutTr { cursor: pointer; transition: background 0.1s; }
+.tryoutTr:hover .tryoutTd { background: rgba(255,255,255,0.03); }
+.tryoutTr:last-child .tryoutTd { border-bottom: none; }
+
+.tryoutPlayerName { font-weight: 600; font-size: 0.92rem; }
+
+.tryoutActions {
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+}
+
+/* ── Status badge variants (tryout-specific) ──────────────────────────────── */
+.badgePendingReview { background: rgba(251,191,36,0.1);  color: #fbbf24; border: 1px solid rgba(251,191,36,0.25); }
+.badgeOffered       { background: rgba(var(--blueprint-blue-rgb),0.15); color: var(--blueprint-blue,#4fa3e0); border: 1px solid rgba(var(--blueprint-blue-rgb),0.3); }
+
+/* ── Detail slide-over ────────────────────────────────────────────────────── */
+.slideOverBackdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 200;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.slideOverPanel {
+  width: 100%;
+  max-width: 420px;
+  height: 100%;
+  background: var(--card-bg, #1a1f2e);
+  border-left: 1px solid rgba(var(--blueprint-blue-rgb), 0.25);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.slideOverHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+  flex-shrink: 0;
+}
+
+.slideOverBody {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 1.5rem 2rem;
+}
+
+.slideOverSection {
+  padding: 1.25rem 0;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.slideOverSection:last-child { border-bottom: none; }
+
+.slideOverSectionTitle {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: rgba(255,255,255,0.3);
+  margin-bottom: 0.75rem;
+}
+
+.slideOverField {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  margin-bottom: 0.65rem;
+  font-size: 0.9rem;
+  color: var(--white-90, #f0f0f0);
+}
+.slideOverField:last-child { margin-bottom: 0; }
+
+.slideOverFieldLabel {
+  font-size: 0.72rem;
+  color: rgba(255,255,255,0.35);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
 /* ── Breadcrumb ───────────────────────────────────────────────────────────── */
 .breadcrumb {
   display: flex;
