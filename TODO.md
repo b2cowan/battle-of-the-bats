@@ -33,7 +33,7 @@ This file tracks the ongoing tasks for the tournament website project. AI models
   - [x] **6E** — Public tryout registration form (C5 pattern: public form, API, confirmation emails)
   - [x] **6F** — Tryout approval queue (admin): offer → accept/decline flow + status emails
   - [x] **6G** — Roster management (coaches portal: foundation + roster list + player detail; franchise model — coaches are primary operators)
-  - [ ] **6H** — Player documents (C4 Supabase Storage: upload API, signed URLs, template management)
+  - [x] **6H** — Player documents (C4 Supabase Storage: upload API, signed URLs, template management)
   - [x] **6I** — Coaches portal foundation (pulled into 6G: layout, auth guard, sidebar, context, dashboard, team overview)
   - [ ] **6J** — Coaches portal: unified team calendar (6 event types + Phase 5M practice recurrence)
   - [ ] **6K** — Accounting: org cost allocation + team payment schedules + org real-time view
