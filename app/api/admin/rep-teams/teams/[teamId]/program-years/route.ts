@@ -14,13 +14,14 @@ function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
 
 export async function GET(
   _req: Request,
-  { params }: { params: { teamId: string } },
+  { params }: { params: Promise<{ teamId: string }> },
 ) {
   const ctx = await getAuthContextWithRole();
   const err = gate(ctx);
   if (err) return err;
 
-  const team = await getRepTeam(params.teamId);
+  const { teamId } = await params;
+  const team = await getRepTeam(teamId);
   if (!team || team.orgId !== ctx!.org.id) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }
@@ -31,7 +32,7 @@ export async function GET(
 
 export async function POST(
   req: Request,
-  { params }: { params: { teamId: string } },
+  { params }: { params: Promise<{ teamId: string }> },
 ) {
   const ctx = await getAuthContextWithRole();
   const err = gate(ctx);
@@ -39,7 +40,8 @@ export async function POST(
 
   if (ctx!.role !== 'owner' && ctx!.role !== 'admin') return forbidden();
 
-  const team = await getRepTeam(params.teamId);
+  const { teamId } = await params;
+  const team = await getRepTeam(teamId);
   if (!team || team.orgId !== ctx!.org.id) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }

@@ -9,17 +9,18 @@ import type { RepRosterStatus } from '@/lib/types';
 
 export async function GET(
   _req: Request,
-  { params }: { params: { orgSlug: string; teamId: string; playerId: string } },
+  { params }: { params: Promise<{ orgSlug: string; teamId: string; playerId: string }> },
 ) {
+  const { orgSlug, teamId, playerId } = await params;
   const ctx = await getAuthContext();
   if (!ctx) return unauthorized();
-  if (ctx.org.slug !== params.orgSlug) return forbidden();
+  if (ctx.org.slug !== orgSlug) return forbidden();
 
   const assignments = await getCoachingAssignmentsForUser(ctx.org.id, ctx.user.id);
-  if (!assignments.find(a => a.teamId === params.teamId)) return forbidden();
+  if (!assignments.find(a => a.teamId === teamId)) return forbidden();
 
-  const player = await getRepRosterPlayer(params.playerId);
-  if (!player || player.teamId !== params.teamId || player.orgId !== ctx.org.id) {
+  const player = await getRepRosterPlayer(playerId);
+  if (!player || player.teamId !== teamId || player.orgId !== ctx.org.id) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }
 
@@ -28,23 +29,24 @@ export async function GET(
 
 export async function PATCH(
   req: Request,
-  { params }: { params: { orgSlug: string; teamId: string; playerId: string } },
+  { params }: { params: Promise<{ orgSlug: string; teamId: string; playerId: string }> },
 ) {
+  const { orgSlug, teamId, playerId } = await params;
   const ctx = await getAuthContext();
   if (!ctx) return unauthorized();
-  if (ctx.org.slug !== params.orgSlug) return forbidden();
+  if (ctx.org.slug !== orgSlug) return forbidden();
 
   const assignments = await getCoachingAssignmentsForUser(ctx.org.id, ctx.user.id);
-  if (!assignments.find(a => a.teamId === params.teamId)) return forbidden();
+  if (!assignments.find(a => a.teamId === teamId)) return forbidden();
 
-  const player = await getRepRosterPlayer(params.playerId);
-  if (!player || player.teamId !== params.teamId || player.orgId !== ctx.org.id) {
+  const player = await getRepRosterPlayer(playerId);
+  if (!player || player.teamId !== teamId || player.orgId !== ctx.org.id) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }
 
   const body = await req.json();
 
-  const updated = await updateRepRosterPlayer(params.playerId, {
+  const updated = await updateRepRosterPlayer(playerId, {
     playerFirstName:  body.playerFirstName  !== undefined ? String(body.playerFirstName).trim()  : undefined,
     playerLastName:   body.playerLastName   !== undefined ? String(body.playerLastName).trim()   : undefined,
     playerDateOfBirth:body.playerDateOfBirth !== undefined ? (body.playerDateOfBirth || null)     : undefined,

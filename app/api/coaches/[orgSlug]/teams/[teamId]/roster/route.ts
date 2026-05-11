@@ -32,9 +32,10 @@ async function resolveCoachContext(orgSlug: string, teamId: string) {
 
 export async function GET(
   _req: Request,
-  { params }: { params: { orgSlug: string; teamId: string } },
+  { params }: { params: Promise<{ orgSlug: string; teamId: string }> },
 ) {
-  const resolved = await resolveCoachContext(params.orgSlug, params.teamId);
+  const { orgSlug, teamId } = await params;
+  const resolved = await resolveCoachContext(orgSlug, teamId);
   if ('error' in resolved) return resolved.error;
   const { programYear } = resolved;
 
@@ -44,9 +45,10 @@ export async function GET(
 
 export async function POST(
   req: Request,
-  { params }: { params: { orgSlug: string; teamId: string } },
+  { params }: { params: Promise<{ orgSlug: string; teamId: string }> },
 ) {
-  const resolved = await resolveCoachContext(params.orgSlug, params.teamId);
+  const { orgSlug, teamId } = await params;
+  const resolved = await resolveCoachContext(orgSlug, teamId);
   if ('error' in resolved) return resolved.error;
   const { ctx, team, programYear } = resolved;
 
