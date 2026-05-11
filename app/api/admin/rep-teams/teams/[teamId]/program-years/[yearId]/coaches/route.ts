@@ -14,18 +14,19 @@ function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
 
 export async function GET(
   _req: Request,
-  { params }: { params: { teamId: string; yearId: string } },
+  { params }: { params: Promise<{ teamId: string; yearId: string }> },
 ) {
   const ctx = await getAuthContextWithRole();
   const err = gate(ctx);
   if (err) return err;
 
-  const team = await getRepTeam(params.teamId);
+  const { teamId, yearId } = await params;
+  const team = await getRepTeam(teamId);
   if (!team || team.orgId !== ctx!.org.id) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }
 
-  const programYear = await getRepProgramYear(params.yearId);
+  const programYear = await getRepProgramYear(yearId);
   if (!programYear || programYear.teamId !== team.id) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }
@@ -60,7 +61,7 @@ export async function GET(
 
 export async function POST(
   req: Request,
-  { params }: { params: { teamId: string; yearId: string } },
+  { params }: { params: Promise<{ teamId: string; yearId: string }> },
 ) {
   const ctx = await getAuthContextWithRole();
   const err = gate(ctx);
@@ -68,12 +69,13 @@ export async function POST(
 
   if (ctx!.role !== 'owner' && ctx!.role !== 'admin') return forbidden();
 
-  const team = await getRepTeam(params.teamId);
+  const { teamId, yearId } = await params;
+  const team = await getRepTeam(teamId);
   if (!team || team.orgId !== ctx!.org.id) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }
 
-  const programYear = await getRepProgramYear(params.yearId);
+  const programYear = await getRepProgramYear(yearId);
   if (!programYear || programYear.teamId !== team.id) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }
@@ -112,7 +114,7 @@ export async function POST(
 
 export async function DELETE(
   req: Request,
-  { params }: { params: { teamId: string; yearId: string } },
+  { params }: { params: Promise<{ teamId: string; yearId: string }> },
 ) {
   const ctx = await getAuthContextWithRole();
   const err = gate(ctx);
@@ -120,7 +122,8 @@ export async function DELETE(
 
   if (ctx!.role !== 'owner' && ctx!.role !== 'admin') return forbidden();
 
-  const team = await getRepTeam(params.teamId);
+  const { teamId, yearId } = await params;
+  const team = await getRepTeam(teamId);
   if (!team || team.orgId !== ctx!.org.id) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }
@@ -136,7 +139,7 @@ export async function DELETE(
     .from('rep_team_coaches')
     .select('id')
     .eq('id', coachId)
-    .eq('program_year_id', params.yearId)
+    .eq('program_year_id', yearId)
     .single();
 
   if (!row) {
