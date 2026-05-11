@@ -59,6 +59,9 @@ export const ROLE_DEFAULTS: Record<OrgRole, Set<Capability>> = {
     'module_accounting',
     'module_members',
   ]),
+  coach: new Set<Capability>([
+    'module_rep_teams',
+  ]),
 };
 
 export const ALL_CAPABILITY_KEYS: Capability[] = [

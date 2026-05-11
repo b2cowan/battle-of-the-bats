@@ -21,6 +21,7 @@ const ROLE_EMAIL_LABEL: Record<OrgRole, string> = {
   league_admin: 'league administrator',
   league_registrar: 'league registrar',
   treasurer: 'treasurer',
+  coach: 'coach',
 };
 
 export async function POST(req: Request) {

@@ -1,5 +1,5 @@
 export type OrgPlan = 'starter' | 'pro' | 'elite';
-export type OrgRole = 'owner' | 'admin' | 'staff' | 'official' | 'league_admin' | 'league_registrar' | 'treasurer';
+export type OrgRole = 'owner' | 'admin' | 'staff' | 'official' | 'league_admin' | 'league_registrar' | 'treasurer' | 'coach';
 export type SubscriptionStatus = 'active' | 'trialing' | 'past_due' | 'canceled';
 export type TournamentStatus = 'draft' | 'active' | 'completed' | 'archived';
 
@@ -439,4 +439,212 @@ export interface LeagueSeasonSummary {
   waitlistCount: number;
   pendingReviewCount: number;
   teamCount: number;
+}
+
+// ── Rep Teams Module ──────────────────────────────────────────────────────────
+
+export type RepProgramYearStatus = 'planning' | 'active' | 'completed' | 'archived';
+export type RepTryoutRegistrationStatus = 'pending' | 'offered' | 'accepted' | 'declined' | 'withdrawn';
+export type RepRosterStatus = 'active' | 'inactive' | 'released';
+export type RepEventType = 'game' | 'practice' | 'tryout' | 'tournament' | 'meeting' | 'other';
+export type RepEventStatus = 'scheduled' | 'completed' | 'cancelled' | 'postponed';
+export type RepDocumentType = 'waiver' | 'medical' | 'liability' | 'identity' | 'custom';
+export type RepDocumentStatus = 'pending_review' | 'approved' | 'rejected' | 'expired';
+
+export interface RepTeam {
+  id: string;
+  orgId: string;
+  name: string;
+  sport: string;
+  ageGroup: string | null;
+  gender: string | null;
+  isActive: boolean;
+  notes: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface RepProgramYear {
+  id: string;
+  teamId: string;
+  orgId: string;
+  label: string;
+  seasonStart: string | null;
+  seasonEnd: string | null;
+  tryoutOpen: boolean;
+  tryoutCloseDate: string | null;
+  rosterLocked: boolean;
+  status: RepProgramYearStatus;
+  notes: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface RepTeamCoach {
+  id: string;
+  programYearId: string;
+  orgId: string;
+  memberId: string;
+  headCoach: boolean;
+  createdAt: string;
+}
+
+export interface RepTryoutRegistration {
+  id: string;
+  programYearId: string;
+  orgId: string;
+  playerFirstName: string;
+  playerLastName: string;
+  playerDateOfBirth: string | null;
+  playerPositionPref: string | null;
+  playerNotes: string | null;
+  guardianFirstName: string;
+  guardianLastName: string;
+  guardianEmail: string;
+  guardianPhone: string | null;
+  status: RepTryoutRegistrationStatus;
+  adminNotes: string | null;
+  source: 'public_form' | 'admin_manual';
+  registeredAt: string;
+  updatedAt: string;
+}
+
+export interface RepRosterPlayer {
+  id: string;
+  programYearId: string;
+  orgId: string;
+  tryoutRegistrationId: string | null;
+  playerFirstName: string;
+  playerLastName: string;
+  playerDateOfBirth: string | null;
+  jerseyNumber: string | null;
+  position: string | null;
+  status: RepRosterStatus;
+  guardianFirstName: string | null;
+  guardianLastName: string | null;
+  guardianEmail: string | null;
+  guardianPhone: string | null;
+  adminNotes: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface RepTeamEvent {
+  id: string;
+  programYearId: string;
+  orgId: string;
+  eventType: RepEventType;
+  title: string;
+  scheduledAt: string | null;
+  endsAt: string | null;
+  location: string | null;
+  opponent: string | null;
+  notes: string | null;
+  status: RepEventStatus;
+  parentEventId: string | null;
+  recurrenceParentId: string | null;
+  recurrenceRule: Record<string, unknown> | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface RepDocumentTemplate {
+  id: string;
+  orgId: string;
+  name: string;
+  description: string | null;
+  documentType: RepDocumentType;
+  isRequired: boolean;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface RepPlayerDocument {
+  id: string;
+  rosterPlayerId: string;
+  orgId: string;
+  templateId: string | null;
+  documentType: RepDocumentType;
+  fileName: string;
+  storagePath: string;
+  mimeType: string;
+  status: RepDocumentStatus;
+  adminNotes: string | null;
+  uploadedBy: string | null;
+  uploadedAt: string;
+  reviewedBy: string | null;
+  reviewedAt: string | null;
+  updatedAt: string;
+}
+
+export interface RepCostAllocation {
+  id: string;
+  orgId: string;
+  programYearId: string;
+  description: string;
+  totalAmount: number;
+  allocationMethod: 'equal' | 'manual';
+  entryId: string | null;
+  notes: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface RepAllocationSplit {
+  id: string;
+  allocationId: string;
+  repTeamId: string;
+  amount: number;
+  createdAt: string;
+}
+
+export interface RepAllocationInstallment {
+  id: string;
+  splitId: string;
+  dueDate: string;
+  amount: number;
+  paid: boolean;
+  paidAt: string | null;
+  entryId: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface RepPlayerDuesSchedule {
+  id: string;
+  programYearId: string;
+  rosterPlayerId: string;
+  orgId: string;
+  totalAmount: number;
+  notes: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface RepPlayerDuesInstallment {
+  id: string;
+  duesScheduleId: string;
+  dueDate: string;
+  amount: number;
+  paid: boolean;
+  paidAt: string | null;
+  entryId: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface RepTeamExpense {
+  id: string;
+  programYearId: string;
+  orgId: string;
+  description: string;
+  amount: number;
+  expenseDate: string;
+  category: string | null;
+  entryId: string | null;
+  notes: string | null;
+  createdBy: string | null;
+  createdAt: string;
+  updatedAt: string;
 }
