@@ -443,8 +443,8 @@ export interface LeagueSeasonSummary {
 
 // ── Rep Teams Module ──────────────────────────────────────────────────────────
 
-export type RepProgramYearStatus = 'planning' | 'active' | 'completed' | 'archived';
-export type RepTryoutRegistrationStatus = 'pending' | 'offered' | 'accepted' | 'declined' | 'withdrawn';
+export type RepProgramYearStatus = 'draft' | 'active' | 'completed' | 'archived';
+export type RepTryoutRegistrationStatus = 'pending_review' | 'offered' | 'accepted' | 'declined' | 'withdrawn';
 export type RepRosterStatus = 'active' | 'inactive' | 'released';
 export type RepEventType = 'game' | 'practice' | 'tryout' | 'tournament' | 'meeting' | 'other';
 export type RepEventStatus = 'scheduled' | 'completed' | 'cancelled' | 'postponed';
@@ -455,11 +455,12 @@ export interface RepTeam {
   id: string;
   orgId: string;
   name: string;
+  slug: string;
   sport: string;
   ageGroup: string | null;
-  gender: string | null;
-  isActive: boolean;
-  notes: string | null;
+  description: string | null;
+  color: string | null;
+  isArchived: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -468,14 +469,12 @@ export interface RepProgramYear {
   id: string;
   teamId: string;
   orgId: string;
-  label: string;
-  seasonStart: string | null;
-  seasonEnd: string | null;
-  tryoutOpen: boolean;
-  tryoutCloseDate: string | null;
-  rosterLocked: boolean;
+  name: string;
+  year: number;
   status: RepProgramYearStatus;
-  notes: string | null;
+  tryoutOpen: boolean;
+  tryoutDescription: string | null;
+  budgetAmount: number | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -483,20 +482,21 @@ export interface RepProgramYear {
 export interface RepTeamCoach {
   id: string;
   programYearId: string;
+  teamId: string;
   orgId: string;
-  memberId: string;
-  headCoach: boolean;
+  userId: string;
+  coachRole: 'head_coach' | 'assistant_coach';
   createdAt: string;
 }
 
 export interface RepTryoutRegistration {
   id: string;
   programYearId: string;
+  teamId: string;
   orgId: string;
   playerFirstName: string;
   playerLastName: string;
   playerDateOfBirth: string | null;
-  playerPositionPref: string | null;
   playerNotes: string | null;
   guardianFirstName: string;
   guardianLastName: string;
@@ -504,8 +504,7 @@ export interface RepTryoutRegistration {
   guardianPhone: string | null;
   status: RepTryoutRegistrationStatus;
   adminNotes: string | null;
-  source: 'public_form' | 'admin_manual';
-  registeredAt: string;
+  submittedAt: string;
   updatedAt: string;
 }
 

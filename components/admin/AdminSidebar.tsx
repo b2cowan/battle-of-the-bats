@@ -5,7 +5,7 @@ import {
   LayoutDashboard, Users, Calendar, Trophy, Megaphone, Tag, LogOut, Home,
   ChevronRight, MapPin, RefreshCw, BookUser, BookOpen, CreditCard, Settings,
   Users2, Archive, ArrowLeft, Mail, Globe, DollarSign, Receipt,
-  CalendarDays, ClipboardList, Bell,
+  CalendarDays, ClipboardList, Bell, FileText, UserCheck,
 } from 'lucide-react';
 import { signOut } from '@/lib/auth';
 import { useOrg } from '@/lib/org-context';
@@ -38,8 +38,12 @@ export default function AdminSidebar() {
   const isPublicSite   = pathname.startsWith(`${base}/public-site`);
   const isAccounting   = pathname.startsWith(`${base}/accounting`);
   const isHouseLeague  = pathname.startsWith(`${base}/house-league`);
+  const isRepTeams     = pathname.startsWith(`${base}/rep-teams`);
 
   const seasonMatch     = pathname.match(/\/house-league\/seasons\/([^/]+)/);
+  const repTeamMatch    = pathname.match(/\/rep-teams\/teams\/([^/]+)\/program-years\/([^/]+)/);
+  const currentRepTeamId = repTeamMatch?.[1] ?? null;
+  const currentRepYearId = repTeamMatch?.[2] ?? null;
   const currentSeasonId = seasonMatch?.[1] ?? null;
 
   const canSeeMembersNav = userRole
@@ -56,6 +60,10 @@ export default function AdminSidebar() {
 
   const canSeeHouseLeague = userRole
     ? hasCapability(userRole, userCapabilities, 'module_house_league')
+    : false;
+
+  const canSeeRepTeams = userRole
+    ? hasCapability(userRole, userCapabilities, 'module_rep_teams')
     : false;
 
   async function handleLogout() {
@@ -214,8 +222,54 @@ export default function AdminSidebar() {
         </>
       )}
 
+      {/* Rep Teams mode */}
+      {isRepTeams && canSeeRepTeams && (
+        <>
+          {backLink}
+          <div className={styles.navSection}>
+            <div className={styles.sectionHeader}>Rep Teams</div>
+            <nav className={styles.nav}>
+              {navLink('rt-teams', Users, 'Teams',
+                `${base}/rep-teams`,
+                pathname === `${base}/rep-teams`)}
+              {navLink('rt-allocations', DollarSign, 'Cost Allocation',
+                `${base}/rep-teams/allocations`,
+                pathname.startsWith(`${base}/rep-teams/allocations`))}
+              {navLink('rt-docs', FileText, 'Document Templates',
+                `${base}/rep-teams/documents`,
+                pathname.startsWith(`${base}/rep-teams/documents`))}
+              {navLink('rt-past', Archive, 'Past Seasons',
+                `${base}/rep-teams/past`,
+                pathname.startsWith(`${base}/rep-teams/past`))}
+            </nav>
+          </div>
+          {currentRepTeamId && currentRepYearId && (
+            <div className={styles.navSection}>
+              <div className={styles.sectionHeader}>Team</div>
+              <nav className={styles.nav}>
+                {navLink('rt-tryouts', ClipboardList, 'Tryouts',
+                  `${base}/rep-teams/teams/${currentRepTeamId}/program-years/${currentRepYearId}/tryouts`,
+                  pathname.startsWith(`${base}/rep-teams/teams/${currentRepTeamId}/program-years/${currentRepYearId}/tryouts`))}
+                {navLink('rt-roster', Users, 'Roster',
+                  `${base}/rep-teams/teams/${currentRepTeamId}/program-years/${currentRepYearId}/roster`,
+                  pathname.startsWith(`${base}/rep-teams/teams/${currentRepTeamId}/program-years/${currentRepYearId}/roster`))}
+                {navLink('rt-schedule', Calendar, 'Schedule',
+                  `${base}/rep-teams/teams/${currentRepTeamId}/program-years/${currentRepYearId}/schedule`,
+                  pathname.startsWith(`${base}/rep-teams/teams/${currentRepTeamId}/program-years/${currentRepYearId}/schedule`))}
+                {navLink('rt-documents', FileText, 'Documents',
+                  `${base}/rep-teams/teams/${currentRepTeamId}/program-years/${currentRepYearId}/documents`,
+                  pathname.startsWith(`${base}/rep-teams/teams/${currentRepTeamId}/program-years/${currentRepYearId}/documents`))}
+                {navLink('rt-coaches', UserCheck, 'Coaches',
+                  `${base}/rep-teams/teams/${currentRepTeamId}/program-years/${currentRepYearId}/coaches`,
+                  pathname.startsWith(`${base}/rep-teams/teams/${currentRepTeamId}/program-years/${currentRepYearId}/coaches`))}
+              </nav>
+            </div>
+          )}
+        </>
+      )}
+
       {/* Tournament operations mode */}
-      {!isHub && !isOrgAdmin && !isPublicSite && !isAccounting && !isHouseLeague && (
+      {!isHub && !isOrgAdmin && !isPublicSite && !isAccounting && !isHouseLeague && !isRepTeams && (
         <>
           {backLink}
           {tournaments.length > 0 && (

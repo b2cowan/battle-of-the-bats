@@ -381,6 +381,34 @@ export function leagueBroadcastHtml(p: {
 </div>`;
 }
 
+// ── Rep Teams tryout registration email ──────────────────────────────────────
+
+export function tryoutRegistrationConfirmationHtml(p: {
+  guardianFirstName: string;
+  playerFirstName: string;
+  playerLastName: string;
+  teamName: string;
+  yearName: string;
+  registrationId: string;
+  contactEmail?: string;
+}) {
+  const ref = p.registrationId.slice(0, 8).toUpperCase();
+  return wrap(`
+    <h2 style="color:#fff;font-size:1.4rem;margin:0 0 1rem;">Tryout Application Received</h2>
+    <p>Hi <strong>${p.guardianFirstName}</strong>,</p>
+    <p>We've received <strong>${p.playerFirstName} ${p.playerLastName}</strong>'s tryout application for the <strong>${p.teamName}</strong> <strong>${p.yearName}</strong> program.</p>
+    <div style="background:#1A1530;border:1px solid rgba(var(--primary-rgb),0.3);border-radius:8px;padding:1.25rem;margin:1.5rem 0;">
+      <p style="margin:0 0 0.5rem;font-weight:700;color:#A855F7;">Application Details</p>
+      <p style="margin:0;line-height:1.8;">
+        Player: <strong>${p.playerFirstName} ${p.playerLastName}</strong><br>
+        Program: <strong>${p.teamName} — ${p.yearName}</strong><br>
+        Reference: <strong style="font-family:monospace;">#${ref}</strong>
+      </p>
+    </div>
+    <p style="color:rgba(255,255,255,0.7);">Our coaching staff will review all applications and be in touch. No further action is required at this time.</p>
+  `, p.contactEmail);
+}
+
 export function passwordResetHtml(resetLink: string) {
   return wrap(`
     <h2 style="color:#fff;font-size:1.4rem;margin:0 0 1rem;">Reset Your Password</h2>

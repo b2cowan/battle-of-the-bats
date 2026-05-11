@@ -2318,11 +2318,12 @@ function mapRepTeam(r: any): RepTeam {
     id: r.id,
     orgId: r.org_id,
     name: r.name,
+    slug: r.slug,
     sport: r.sport,
     ageGroup: r.age_group,
-    gender: r.gender,
-    isActive: r.is_active,
-    notes: r.notes,
+    description: r.description,
+    color: r.color,
+    isArchived: r.is_archived,
     createdAt: r.created_at,
     updatedAt: r.updated_at,
   };
@@ -2348,22 +2349,35 @@ export async function getRepTeam(teamId: string): Promise<RepTeam | null> {
   return mapRepTeam(data);
 }
 
+export async function getRepTeamBySlug(orgId: string, slug: string): Promise<RepTeam | null> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_teams')
+    .select('*')
+    .eq('org_id', orgId)
+    .eq('slug', slug)
+    .single();
+  if (error) return null;
+  return mapRepTeam(data);
+}
+
 export async function createRepTeam(orgId: string, fields: {
   name: string;
+  slug: string;
   sport: string;
   ageGroup?: string | null;
-  gender?: string | null;
-  notes?: string | null;
+  description?: string | null;
+  color?: string | null;
 }): Promise<RepTeam> {
   const { data, error } = await supabaseAdmin
     .from('rep_teams')
     .insert({
       org_id: orgId,
       name: fields.name,
+      slug: fields.slug,
       sport: fields.sport,
       age_group: fields.ageGroup ?? null,
-      gender: fields.gender ?? null,
-      notes: fields.notes ?? null,
+      description: fields.description ?? null,
+      color: fields.color ?? null,
     })
     .select()
     .single();
@@ -2375,17 +2389,17 @@ export async function updateRepTeam(teamId: string, fields: {
   name?: string;
   sport?: string;
   ageGroup?: string | null;
-  gender?: string | null;
-  isActive?: boolean;
-  notes?: string | null;
+  description?: string | null;
+  color?: string | null;
+  isArchived?: boolean;
 }): Promise<RepTeam> {
   const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
   if (fields.name !== undefined) patch.name = fields.name;
   if (fields.sport !== undefined) patch.sport = fields.sport;
   if (fields.ageGroup !== undefined) patch.age_group = fields.ageGroup;
-  if (fields.gender !== undefined) patch.gender = fields.gender;
-  if (fields.isActive !== undefined) patch.is_active = fields.isActive;
-  if (fields.notes !== undefined) patch.notes = fields.notes;
+  if (fields.description !== undefined) patch.description = fields.description;
+  if (fields.color !== undefined) patch.color = fields.color;
+  if (fields.isArchived !== undefined) patch.is_archived = fields.isArchived;
   const { data, error } = await supabaseAdmin
     .from('rep_teams')
     .update(patch)
@@ -2401,6 +2415,63 @@ export async function deleteRepTeam(teamId: string): Promise<void> {
   if (error) throw error;
 }
 
+export async function bulkRenameTeamSlugs(
+  orgId: string,
+  renames: Array<{ teamId: string; newSlug: string }>,
+): Promise<void> {
+  if (renames.length === 0) return;
+
+  // Snapshot current slugs for best-effort rollback on failure
+  const { data: snapshot } = await supabaseAdmin
+    .from('rep_teams')
+    .select('id, slug')
+    .in('id', renames.map(r => r.teamId))
+    .eq('org_id', orgId);
+  const original = new Map((snapshot ?? []).map(r => [r.id as string, r.slug as string]));
+
+  try {
+    // Phase 1: move every changing team to a guaranteed-unique temp slug.
+    // This resolves any circular dependency (A→B, B→C, C→A) by vacating
+    // all "departing" slugs before any "arriving" ones are written.
+    for (const { teamId } of renames) {
+      const { error } = await supabaseAdmin
+        .from('rep_teams')
+        .update({ slug: `__tmp_${teamId}` })
+        .eq('id', teamId)
+        .eq('org_id', orgId);
+      if (error) throw error;
+    }
+
+    // Phase 2: apply final slugs — all target slots are now free
+    for (const { teamId, newSlug } of renames) {
+      const { error } = await supabaseAdmin
+        .from('rep_teams')
+        .update({ slug: newSlug, updated_at: new Date().toISOString() })
+        .eq('id', teamId)
+        .eq('org_id', orgId);
+      if (error) throw error;
+    }
+  } catch (err) {
+    // Best-effort rollback: restore original slugs so no team is stuck with a __tmp_ slug
+    for (const { teamId } of renames) {
+      const prev = original.get(teamId);
+      if (prev) {
+        try {
+          await supabaseAdmin
+            .from('rep_teams')
+            .update({ slug: prev })
+            .eq('id', teamId)
+            .eq('org_id', orgId);
+        } catch {
+          // ignore rollback errors — the admin will see teams with __tmp_ slugs
+          // and can re-run the rename to recover
+        }
+      }
+    }
+    throw err;
+  }
+}
+
 // Program Years
 
 function mapRepProgramYear(r: any): RepProgramYear {
@@ -2408,14 +2479,12 @@ function mapRepProgramYear(r: any): RepProgramYear {
     id: r.id,
     teamId: r.team_id,
     orgId: r.org_id,
-    label: r.label,
-    seasonStart: r.season_start,
-    seasonEnd: r.season_end,
-    tryoutOpen: r.tryout_open,
-    tryoutCloseDate: r.tryout_close_date,
-    rosterLocked: r.roster_locked,
+    name: r.name,
+    year: r.year,
     status: r.status,
-    notes: r.notes,
+    tryoutOpen: r.tryout_open,
+    tryoutDescription: r.tryout_description,
+    budgetAmount: r.budget_amount != null ? Number(r.budget_amount) : null,
     createdAt: r.created_at,
     updatedAt: r.updated_at,
   };
@@ -2442,24 +2511,20 @@ export async function getRepProgramYear(yearId: string): Promise<RepProgramYear 
 }
 
 export async function createRepProgramYear(teamId: string, orgId: string, fields: {
-  label: string;
-  seasonStart?: string | null;
-  seasonEnd?: string | null;
+  name: string;
+  year: number;
   tryoutOpen?: boolean;
-  tryoutCloseDate?: string | null;
-  notes?: string | null;
+  tryoutDescription?: string | null;
 }): Promise<RepProgramYear> {
   const { data, error } = await supabaseAdmin
     .from('rep_program_years')
     .insert({
       team_id: teamId,
       org_id: orgId,
-      label: fields.label,
-      season_start: fields.seasonStart ?? null,
-      season_end: fields.seasonEnd ?? null,
+      name: fields.name,
+      year: fields.year,
       tryout_open: fields.tryoutOpen ?? false,
-      tryout_close_date: fields.tryoutCloseDate ?? null,
-      notes: fields.notes ?? null,
+      tryout_description: fields.tryoutDescription ?? null,
     })
     .select()
     .single();
@@ -2468,24 +2533,18 @@ export async function createRepProgramYear(teamId: string, orgId: string, fields
 }
 
 export async function updateRepProgramYear(yearId: string, fields: {
-  label?: string;
-  seasonStart?: string | null;
-  seasonEnd?: string | null;
-  tryoutOpen?: boolean;
-  tryoutCloseDate?: string | null;
-  rosterLocked?: boolean;
+  name?: string;
   status?: RepProgramYearStatus;
-  notes?: string | null;
+  tryoutOpen?: boolean;
+  tryoutDescription?: string | null;
+  budgetAmount?: number | null;
 }): Promise<RepProgramYear> {
   const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
-  if (fields.label !== undefined) patch.label = fields.label;
-  if (fields.seasonStart !== undefined) patch.season_start = fields.seasonStart;
-  if (fields.seasonEnd !== undefined) patch.season_end = fields.seasonEnd;
-  if (fields.tryoutOpen !== undefined) patch.tryout_open = fields.tryoutOpen;
-  if (fields.tryoutCloseDate !== undefined) patch.tryout_close_date = fields.tryoutCloseDate;
-  if (fields.rosterLocked !== undefined) patch.roster_locked = fields.rosterLocked;
+  if (fields.name !== undefined) patch.name = fields.name;
   if (fields.status !== undefined) patch.status = fields.status;
-  if (fields.notes !== undefined) patch.notes = fields.notes;
+  if (fields.tryoutOpen !== undefined) patch.tryout_open = fields.tryoutOpen;
+  if (fields.tryoutDescription !== undefined) patch.tryout_description = fields.tryoutDescription;
+  if (fields.budgetAmount !== undefined) patch.budget_amount = fields.budgetAmount;
   const { data, error } = await supabaseAdmin
     .from('rep_program_years')
     .update(patch)
@@ -2502,9 +2561,10 @@ function mapRepTeamCoach(r: any): RepTeamCoach {
   return {
     id: r.id,
     programYearId: r.program_year_id,
+    teamId: r.team_id,
     orgId: r.org_id,
-    memberId: r.member_id,
-    headCoach: r.head_coach,
+    userId: r.user_id,
+    coachRole: r.coach_role,
     createdAt: r.created_at,
   };
 }
@@ -2521,13 +2581,14 @@ export async function getRepTeamCoaches(programYearId: string): Promise<RepTeamC
 
 export async function addRepTeamCoach(
   programYearId: string,
+  teamId: string,
   orgId: string,
-  memberId: string,
-  headCoach = false,
+  userId: string,
+  coachRole: 'head_coach' | 'assistant_coach' = 'head_coach',
 ): Promise<RepTeamCoach> {
   const { data, error } = await supabaseAdmin
     .from('rep_team_coaches')
-    .insert({ program_year_id: programYearId, org_id: orgId, member_id: memberId, head_coach: headCoach })
+    .insert({ program_year_id: programYearId, team_id: teamId, org_id: orgId, user_id: userId, coach_role: coachRole })
     .select()
     .single();
   if (error) throw error;
@@ -2545,11 +2606,11 @@ function mapRepTryoutRegistration(r: any): RepTryoutRegistration {
   return {
     id: r.id,
     programYearId: r.program_year_id,
+    teamId: r.team_id,
     orgId: r.org_id,
     playerFirstName: r.player_first_name,
     playerLastName: r.player_last_name,
     playerDateOfBirth: r.player_date_of_birth,
-    playerPositionPref: r.player_position_pref,
     playerNotes: r.player_notes,
     guardianFirstName: r.guardian_first_name,
     guardianLastName: r.guardian_last_name,
@@ -2557,8 +2618,7 @@ function mapRepTryoutRegistration(r: any): RepTryoutRegistration {
     guardianPhone: r.guardian_phone,
     status: r.status,
     adminNotes: r.admin_notes,
-    source: r.source,
-    registeredAt: r.registered_at,
+    submittedAt: r.submitted_at,
     updatedAt: r.updated_at,
   };
 }
@@ -2585,33 +2645,31 @@ export async function getRepTryoutRegistration(regId: string): Promise<RepTryout
 
 export async function createRepTryoutRegistration(fields: {
   programYearId: string;
+  teamId: string;
   orgId: string;
   playerFirstName: string;
   playerLastName: string;
   playerDateOfBirth?: string | null;
-  playerPositionPref?: string | null;
   playerNotes?: string | null;
   guardianFirstName: string;
   guardianLastName: string;
   guardianEmail: string;
   guardianPhone?: string | null;
-  source?: 'public_form' | 'admin_manual';
 }): Promise<RepTryoutRegistration> {
   const { data, error } = await supabaseAdmin
     .from('rep_tryout_registrations')
     .insert({
       program_year_id: fields.programYearId,
+      team_id: fields.teamId,
       org_id: fields.orgId,
       player_first_name: fields.playerFirstName,
       player_last_name: fields.playerLastName,
       player_date_of_birth: fields.playerDateOfBirth ?? null,
-      player_position_pref: fields.playerPositionPref ?? null,
       player_notes: fields.playerNotes ?? null,
       guardian_first_name: fields.guardianFirstName,
       guardian_last_name: fields.guardianLastName,
       guardian_email: fields.guardianEmail,
       guardian_phone: fields.guardianPhone ?? null,
-      source: fields.source ?? 'public_form',
     })
     .select()
     .single();

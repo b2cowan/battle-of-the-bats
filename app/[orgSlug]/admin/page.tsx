@@ -2,7 +2,7 @@
 import { useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Trophy, Building2, Globe, DollarSign, CalendarDays } from 'lucide-react';
+import { Trophy, Building2, Globe, DollarSign, CalendarDays, Users } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { hasCapability } from '@/lib/roles';
 
@@ -29,6 +29,10 @@ export default function AdminHub() {
 
   const canSeeHouseLeague = !loading && userRole
     ? hasCapability(userRole, userCapabilities, 'module_house_league')
+    : false;
+
+  const canSeeRepTeams = !loading && userRole
+    ? hasCapability(userRole, userCapabilities, 'module_rep_teams')
     : false;
 
   // Auto-forward single-module users who only have tournament access
@@ -77,6 +81,12 @@ export default function AdminHub() {
       desc: 'Manage recreational seasons, player registrations, team placement, scheduling, and standings',
       icon: CalendarDays,
       href: `${base}/house-league`,
+    },
+    canSeeRepTeams && {
+      label: 'Rep Teams',
+      desc: 'Manage competitive team programs — tryouts, rosters, player documents, schedules, and team finances',
+      icon: Users,
+      href: `${base}/rep-teams`,
     },
   ].filter(Boolean) as { label: string; desc: string; icon: React.ElementType; href: string }[];
 
