@@ -2600,6 +2600,67 @@ export async function removeRepTeamCoach(coachId: string): Promise<void> {
   if (error) throw error;
 }
 
+export interface CoachingAssignment {
+  coachId: string;
+  teamId: string;
+  teamName: string;
+  teamSlug: string;
+  teamColor: string | null;
+  programYearId: string;
+  programYearName: string;
+  programYearStatus: RepProgramYearStatus;
+  coachRole: 'head_coach' | 'assistant_coach';
+}
+
+export async function getCoachingAssignmentsForUser(
+  orgId: string,
+  userId: string,
+): Promise<CoachingAssignment[]> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_coaches')
+    .select(`
+      id,
+      team_id,
+      program_year_id,
+      coach_role,
+      rep_teams!team_id ( name, slug, color ),
+      rep_program_years!program_year_id ( name, status )
+    `)
+    .eq('org_id', orgId)
+    .eq('user_id', userId);
+  if (error) throw error;
+  return (data ?? [])
+    .filter((r: any) => {
+      const s = r.rep_program_years?.status;
+      return s === 'draft' || s === 'active';
+    })
+    .map((r: any) => ({
+      coachId: r.id,
+      teamId: r.team_id,
+      teamName: r.rep_teams?.name ?? '',
+      teamSlug: r.rep_teams?.slug ?? '',
+      teamColor: r.rep_teams?.color ?? null,
+      programYearId: r.program_year_id,
+      programYearName: r.rep_program_years?.name ?? '',
+      programYearStatus: r.rep_program_years?.status as RepProgramYearStatus,
+      coachRole: r.coach_role as 'head_coach' | 'assistant_coach',
+    }));
+}
+
+export async function getActiveRepProgramYear(teamId: string): Promise<RepProgramYear | null> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_program_years')
+    .select('*')
+    .eq('team_id', teamId)
+    .in('status', ['draft', 'active'])
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) return null;
+  if (!data) return null;
+  return mapRepProgramYear(data);
+}
+
 // Tryout Registrations
 
 function mapRepTryoutRegistration(r: any): RepTryoutRegistration {

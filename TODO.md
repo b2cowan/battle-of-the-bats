@@ -32,9 +32,9 @@ This file tracks the ongoing tasks for the tournament website project. AI models
   - [x] **6D** — Team + program year management (admin API + pages)
   - [x] **6E** — Public tryout registration form (C5 pattern: public form, API, confirmation emails)
   - [x] **6F** — Tryout approval queue (admin): offer → accept/decline flow + status emails
-  - [ ] **6G** — Roster management (admin direct add + roster page)
+  - [x] **6G** — Roster management (coaches portal: foundation + roster list + player detail; franchise model — coaches are primary operators)
   - [ ] **6H** — Player documents (C4 Supabase Storage: upload API, signed URLs, template management)
-  - [ ] **6I** — Coaches portal foundation (layout + auth guard + team scope + dashboard)
+  - [x] **6I** — Coaches portal foundation (pulled into 6G: layout, auth guard, sidebar, context, dashboard, team overview)
   - [ ] **6J** — Coaches portal: unified team calendar (6 event types + Phase 5M practice recurrence)
   - [ ] **6K** — Accounting: org cost allocation + team payment schedules + org real-time view
   - [ ] **6L** — Accounting: coach-managed team budget (player dues, expenses, tournament payables)
@@ -65,11 +65,8 @@ This file tracks the ongoing tasks for the tournament website project. AI models
 - [x] **Fix 9 implicit `any` parameters in row-mapper callbacks** — `getDiamonds`, `getContacts`, `getAgeGroups`, `getPools`, `getTeams`, `getGames`, `getAnnouncements`, `getRules`, `getResources` (each `.map()` callback param needs `: any`). Also remove unused `fileExt` var and unused `data` destructure in `uploadResourceFile`. All pre-existing; discovered during accounting module work. One small commit, no behaviour change.
 
 ### 6. Infrastructure — Dev Environment
-- [ ] **AWS Amplify Hosting Strategy**:
-    - [ ] Research proper hosting for parallel Dev and Production environments on AWS Amplify
-    - [ ] Evaluate URL options: subdomain (`dev.fieldlogichq.ca`) vs. separate domain
-    - [ ] Document branch-specific Stripe key configuration (Test for dev, Live for prod)
-- [ ] **Live Dev Environment** — Create the live development environment on AWS Amplify `dev` branch once research above is finalized
+- [x] **AWS Amplify Hosting Strategy** — Branch-based deployment, `dev.fieldlogichq.ca`, per-branch env var scoping (see [AMPLIFY_DEV_ENV_PLAN.md](AMPLIFY_DEV_ENV_PLAN.md))
+- [ ] **Live Dev Environment** — Create the live development environment on AWS Amplify `dev` branch (follow checklist in [AMPLIFY_DEV_ENV_PLAN.md](AMPLIFY_DEV_ENV_PLAN.md))
 
 ### 6. Email Strategy
 - [ ] **Email Strategy Investigation**:
@@ -89,6 +86,8 @@ This file tracks the ongoing tasks for the tournament website project. AI models
 ---
 
 ## 🧭 Strategy (Post-Roadmap)
+
+- [ ] **In-App Documentation & Help System** — Research all sections and user roles across the platform and design a documentation layer that surfaces help without cluttering pages. Two tiers: (1) **Contextual in-app cues** — empty-state guidance, tooltip hints, section intros, and inline explainers placed at natural decision points (e.g. "What is a program year?", "When should I mark a season Active?"); (2) **Help pages** — role-scoped walkthroughs for first-time users covering real-world workflows such as: coach setting up a rep team for the season, house league admin building teams and running a draft, treasurer handling common accounting scenarios (entry categories, transfers, reconciling tournament income), org owner onboarding a new season from scratch. Research should audit every module (tournaments, house league, rep teams, accounting, public site, org admin) and every role (owner, admin, treasurer, league_admin, league_registrar, coach, official) before any writing or implementation begins. Do not start until all Platform Roadmap modules are complete.
 
 - [ ] **Role-Based UX Improvement Review** — *(Deferred until House League module is complete)* Execute the UX Improvement Test Plan (`UX_IMPROVEMENT_TEST_PLAN.md`) to evaluate the platform from the perspective of all user roles (owner, admin, treasurer, coach, parent, etc.) and identify friction points for future polish.
 - [ ] **Pricing & Branding Strategy Review** — Once all Platform Roadmap modules are shipped (Public Site, Accounting, House League, Rep Teams), conduct a full evaluation of: plan tier pricing in light of new module value, add-on pricing model (flat monthly vs. bundled tiers — see D-M1/D-M2 in [PLATFORM_ROADMAP.md](PLATFORM_ROADMAP.md)), whether any reserved modules should be promoted to core, and whether the Starter/Pro/Elite brand naming still fits the expanded product surface. Do not revisit pricing decisions before the roadmap is complete — functionality defines value before pricing follows.
