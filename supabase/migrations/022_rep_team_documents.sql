@@ -74,12 +74,14 @@ CREATE INDEX IF NOT EXISTS rep_player_documents_team_idx
 ALTER TABLE rep_document_templates ENABLE ROW LEVEL SECURITY;
 ALTER TABLE rep_player_documents   ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "org members can read document_templates" ON rep_document_templates;
 CREATE POLICY "org members can read document_templates"
   ON rep_document_templates FOR SELECT
   USING (org_id IN (
     SELECT organization_id FROM organization_members WHERE user_id = auth.uid()
   ));
 
+DROP POLICY IF EXISTS "coaches can read assigned team templates" ON rep_document_templates;
 CREATE POLICY "coaches can read assigned team templates"
   ON rep_document_templates FOR SELECT
   USING (
@@ -89,12 +91,14 @@ CREATE POLICY "coaches can read assigned team templates"
     ))
   );
 
+DROP POLICY IF EXISTS "org members can read player documents" ON rep_player_documents;
 CREATE POLICY "org members can read player documents"
   ON rep_player_documents FOR SELECT
   USING (org_id IN (
     SELECT organization_id FROM organization_members WHERE user_id = auth.uid()
   ));
 
+DROP POLICY IF EXISTS "coaches can read assigned team player documents" ON rep_player_documents;
 CREATE POLICY "coaches can read assigned team player documents"
   ON rep_player_documents FOR SELECT
   USING (team_id IN (
