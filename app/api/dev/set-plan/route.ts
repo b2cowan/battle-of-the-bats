@@ -9,7 +9,7 @@ const PLAN_LIMITS: Record<string, number> = {
 };
 
 export async function POST(req: Request) {
-  if (process.env.NODE_ENV !== 'development') {
+  if (process.env.NEXT_PUBLIC_ENABLE_DEV_TOOLS !== 'true') {
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }
 

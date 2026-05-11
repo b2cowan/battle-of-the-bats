@@ -449,8 +449,7 @@ export type RepTryoutRegistrationStatus = 'pending_review' | 'offered' | 'accept
 export type RepRosterStatus = 'active' | 'inactive' | 'released';
 export type RepEventType = 'game' | 'practice' | 'tryout' | 'tournament' | 'meeting' | 'other';
 export type RepEventStatus = 'scheduled' | 'completed' | 'cancelled' | 'postponed';
-export type RepDocumentType = 'waiver' | 'medical' | 'liability' | 'identity' | 'custom';
-export type RepDocumentStatus = 'pending_review' | 'approved' | 'rejected' | 'expired';
+export type RepDocumentType = 'waiver' | 'medical_consent' | 'code_of_conduct' | 'other';
 
 export interface RepTeam {
   id: string;
@@ -553,31 +552,29 @@ export interface RepTeamEvent {
 export interface RepDocumentTemplate {
   id: string;
   orgId: string;
+  teamId: string | null;
   name: string;
-  description: string | null;
   documentType: RepDocumentType;
-  isRequired: boolean;
+  storagePath: string;
+  fileName: string;
+  fileSize: number;
   isActive: boolean;
+  publishedBy: string | null;
   createdAt: string;
-  updatedAt: string;
 }
 
 export interface RepPlayerDocument {
   id: string;
-  rosterPlayerId: string;
+  playerId: string;
+  teamId: string;
   orgId: string;
-  templateId: string | null;
   documentType: RepDocumentType;
-  fileName: string;
   storagePath: string;
-  mimeType: string;
-  status: RepDocumentStatus;
-  adminNotes: string | null;
+  fileName: string;
+  fileSize: number;
+  templateId: string | null;
   uploadedBy: string | null;
-  uploadedAt: string;
-  reviewedBy: string | null;
-  reviewedAt: string | null;
-  updatedAt: string;
+  createdAt: string;
 }
 
 export interface RepCostAllocation {

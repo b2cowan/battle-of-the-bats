@@ -427,6 +427,69 @@
   margin: 2rem 0 0.75rem;
 }
 
+/* ── Table ────────────────────────────────────────────────────────────────── */
+.tableWrap {
+  overflow-x: auto;
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.15);
+  border-radius: 8px;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+}
+
+.th {
+  text-align: left;
+  padding: 0.6rem 1rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: rgba(255,255,255,0.35);
+  background: rgba(255,255,255,0.02);
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+  white-space: nowrap;
+}
+
+.td {
+  padding: 0.7rem 1rem;
+  color: var(--white-90, #f0f0f0);
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  vertical-align: middle;
+}
+
+.tr { transition: background 0.1s; }
+.tr:hover .td { background: rgba(255,255,255,0.03); }
+.tr:last-child .td { border-bottom: none; }
+
+/* ── Detail section ───────────────────────────────────────────────────────── */
+.detailSection {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.15);
+  border-radius: 8px;
+  padding: 1.25rem;
+  margin-bottom: 1.25rem;
+}
+
+.detailSectionTitle {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: rgba(255,255,255,0.3);
+  margin: 0 0 1rem;
+}
+
+.detailPlaceholder {
+  font-size: 0.85rem;
+  color: rgba(255,255,255,0.25);
+  font-style: italic;
+}
+
+.badgeInfo { background: rgba(var(--blueprint-blue-rgb),0.15); color: var(--blueprint-blue,#4fa3e0); border: 1px solid rgba(var(--blueprint-blue-rgb),0.3); }
+
 /* ── Rename slugs page ────────────────────────────────────────────────────── */
 .renameList { display: flex; flex-direction: column; gap: 0.5rem; }
 

@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { ChevronRight } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
 import FeedbackModal from '@/components/FeedbackModal';
+import PlayerDocumentsSection from '@/components/coaches/PlayerDocumentsSection';
 import styles from '../../../../coaches.module.css';
 import type { RepRosterPlayer } from '@/lib/types';
 
@@ -302,10 +303,13 @@ export default function PlayerDetailPage({
         </div>
       )}
 
-      {/* Documents placeholder */}
+      {/* Documents */}
       <div className={styles.detailSection}>
-        <p className={styles.detailSectionTitle}>Documents</p>
-        <p className={styles.detailPlaceholder}>Document management coming in a future phase.</p>
+        <PlayerDocumentsSection
+          orgSlug={params.orgSlug}
+          teamId={params.teamId}
+          playerId={params.playerId}
+        />
       </div>
 
       {/* Dues placeholder */}

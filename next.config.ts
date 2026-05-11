@@ -3,6 +3,20 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   async redirects() {
     return [
+      // Redirect .com to .ca (canonical domain)
+      {
+        source: '/:path*',
+        has: [{ type: 'host', value: 'fieldlogichq.com' }],
+        destination: 'https://www.fieldlogichq.ca/:path*',
+        permanent: true,
+      },
+      {
+        source: '/:path*',
+        has: [{ type: 'host', value: 'www.fieldlogichq.com' }],
+        destination: 'https://www.fieldlogichq.ca/:path*',
+        permanent: true,
+      },
+      // Legacy path redirects (pre-multi-tenancy)
       { source: '/schedule',     destination: '/milton-bats/schedule',     permanent: true },
       { source: '/results',      destination: '/milton-bats/results',      permanent: true },
       { source: '/register',     destination: '/milton-bats/register',     permanent: true },
