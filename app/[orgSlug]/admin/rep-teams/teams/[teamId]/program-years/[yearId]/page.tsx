@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { Users, ChevronRight } from 'lucide-react';
+import HelpTooltip from '@/components/help/HelpTooltip';
 import { useOrg } from '@/lib/org-context';
 import { hasCapability } from '@/lib/roles';
 import FeedbackModal from '@/components/FeedbackModal';
@@ -131,6 +132,10 @@ export default function ProgramYearOverviewPage({
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
               <h1 className={styles.pageTitle}>{programYear.name}</h1>
+              <HelpTooltip
+                title="What is a program year?"
+                body="A program year represents one competitive season for a team. Roster, schedule, finances, and tryouts are all scoped to a program year. Create a new one at the start of each season."
+              />
               <span className={`${styles.badge} ${STATUS_CSS[programYear.status] ?? styles.badgeDraft}`}>
                 {STATUS_LABEL[programYear.status] ?? programYear.status}
               </span>

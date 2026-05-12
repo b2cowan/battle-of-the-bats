@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { getOrganizationBySlug, getRepTeamBySlug, getRepProgramYear } from '@/lib/db';
+import HelpCallout from '@/components/help/HelpCallout';
 
 export const dynamic = 'force-dynamic';
 
@@ -142,29 +143,18 @@ export default async function TryoutLandingPage({
             </div>
           </div>
         ) : (
-          <div
-            style={{
-              padding: '3rem 2rem',
-              textAlign: 'center',
-              border: '1px solid rgba(255,255,255,0.08)',
-              borderRadius: '12px',
-              background: 'rgba(255,255,255,0.02)',
-            }}
-          >
-            <h2
-              style={{
-                fontSize: '1.1rem',
-                fontWeight: 700,
-                color: 'rgba(255,255,255,0.7)',
-                margin: '0 0 0.5rem',
-              }}
-            >
-              Registration is not currently open
-            </h2>
-            <p style={{ fontSize: '0.88rem', color: 'rgba(255,255,255,0.4)', margin: 0 }}>
-              Tryout registration for {team.name} — {programYear.name} is not accepting applications at this time.
-            </p>
-          </div>
+          <HelpCallout
+            variant="info"
+            title="Tryouts are currently closed"
+            body={
+              <>
+                Tryout registration for {team.name} — {programYear.name} is not accepting applications at this time.
+                {org.contactEmail && (
+                  <> Questions? <a href={`mailto:${org.contactEmail}`} style={{ color: '#4fa3e0' }}>Contact us</a>.</>
+                )}
+              </>
+            }
+          />
         )}
       </div>
     </div>

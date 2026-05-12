@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { DollarSign, Plus, Trash2, ChevronRight, ChevronLeft } from 'lucide-react';
+import HelpTooltip from '@/components/help/HelpTooltip';
 import { useOrg } from '@/lib/org-context';
 import { hasCapability } from '@/lib/roles';
 import styles from '../../rep-teams.module.css';
@@ -497,7 +498,13 @@ export default function NewAllocationPage() {
                   </div>
 
                   <div className={styles.field}>
-                    <label className={styles.label}>Split Amount ($) <span style={{ color: '#f87171' }}>*</span></label>
+                    <label className={styles.label}>
+                      Split Amount ($) <span style={{ color: '#f87171' }}>*</span>
+                      <HelpTooltip
+                        title="Allocation amount"
+                        body="This is the total cost the org is assigning to this team for the program year. The coach's accounting page will show this as their budget baseline."
+                      />
+                    </label>
                     <input
                       className={styles.input}
                       type="number"

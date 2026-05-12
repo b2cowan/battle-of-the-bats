@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { DollarSign, AlertTriangle } from 'lucide-react';
+import HelpCallout from '@/components/help/HelpCallout';
 import { useOrg } from '@/lib/org-context';
 import { hasCapability } from '@/lib/roles';
 import styles from '../rep-teams.module.css';
@@ -88,17 +89,13 @@ export default function AllocationsPage() {
       {fetching ? (
         <p className={styles.muted}>Loading…</p>
       ) : allocations.length === 0 ? (
-        <div className={styles.emptyState}>
-          <DollarSign size={28} style={{ opacity: 0.3, margin: '0 auto 0.75rem', display: 'block' }} />
-          <p>No allocations yet.</p>
-          {canWrite && (
-            <p>
-              <Link href={`${base}/rep-teams/allocations/new`} className="btn btn-secondary"
-                style={{ marginTop: '0.75rem', display: 'inline-block' }}>
-                Create your first allocation
-              </Link>
-            </p>
-          )}
+        <div>
+          <HelpCallout
+            variant="info"
+            title="No cost allocations yet"
+            body="Cost allocations define how much the org charges each team for shared costs (e.g., diamond fees, insurance). Once set, coaches see their team's allocation as a budget target."
+            cta={canWrite ? { label: 'New Allocation', href: `${base}/rep-teams/allocations/new` } : undefined}
+          />
         </div>
       ) : (
         <div className={styles.tableWrap}>
