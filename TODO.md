@@ -37,7 +37,7 @@ This file tracks the ongoing tasks for the tournament website project. AI models
   - [x] **6I** — Coaches portal foundation (pulled into 6G: layout, auth guard, sidebar, context, dashboard, team overview)
   - [x] **6J** — Coaches portal: unified team calendar (6 event types + Phase 5M practice recurrence)
   - [x] **6K** — Accounting: org cost allocation + team payment schedules + org real-time view
-  - [ ] **6L** — Accounting: coach-managed team budget (player dues, expenses, tournament payables)
+  - [x] **6L** — Accounting: coach-managed team budget (player dues, expenses, tournament payables)
   - [ ] **6M** — Accounting: automated payment reminder emails with paid-status awareness
   - [ ] **6N** — Past program years (admin history + coaches portal history, read-only)
   - [ ] **Module gating test** — 5-layer verification + coach role team-scope test

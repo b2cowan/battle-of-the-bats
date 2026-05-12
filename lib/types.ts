@@ -626,7 +626,8 @@ export interface RepAllocationInstallment {
 export interface RepPlayerDuesSchedule {
   id: string;
   programYearId: string;
-  rosterPlayerId: string;
+  playerId: string;
+  teamId: string;
   orgId: string;
   totalAmount: number;
   notes: string | null;
@@ -636,14 +637,15 @@ export interface RepPlayerDuesSchedule {
 
 export interface RepPlayerDuesInstallment {
   id: string;
-  duesScheduleId: string;
+  scheduleId: string;
+  playerId: string;
+  installmentNumber: number;
   dueDate: string;
   amount: number;
-  paid: boolean;
   paidAt: string | null;
-  entryId: string | null;
+  reminderSentAt: string | null;
+  accountingEntryId: string | null;
   createdAt: string;
-  updatedAt: string;
 }
 
 export interface RepTeamExpense {

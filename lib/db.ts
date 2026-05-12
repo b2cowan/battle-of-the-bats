@@ -3529,10 +3529,11 @@ function mapRepPlayerDuesSchedule(r: any): RepPlayerDuesSchedule {
   return {
     id: r.id,
     programYearId: r.program_year_id,
-    rosterPlayerId: r.roster_player_id,
+    playerId: r.player_id,
+    teamId: r.team_id,
     orgId: r.org_id,
     totalAmount: Number(r.total_amount),
-    notes: r.notes,
+    notes: r.notes ?? null,
     createdAt: r.created_at,
     updatedAt: r.updated_at,
   };
@@ -3555,17 +3556,17 @@ export async function getRepPlayerDuesSchedule(
   const { data, error } = await supabaseAdmin
     .from('rep_player_dues_schedules')
     .select('*')
-    .eq('roster_player_id', playerId)
+    .eq('player_id', playerId)
     .eq('program_year_id', programYearId)
     .maybeSingle();
   if (error) throw error;
-  if (!data) return null;
-  return mapRepPlayerDuesSchedule(data);
+  return data ? mapRepPlayerDuesSchedule(data) : null;
 }
 
 export async function createRepPlayerDuesSchedule(fields: {
   programYearId: string;
-  rosterPlayerId: string;
+  playerId: string;
+  teamId: string;
   orgId: string;
   totalAmount: number;
   notes?: string | null;
@@ -3574,7 +3575,8 @@ export async function createRepPlayerDuesSchedule(fields: {
     .from('rep_player_dues_schedules')
     .insert({
       program_year_id: fields.programYearId,
-      roster_player_id: fields.rosterPlayerId,
+      player_id: fields.playerId,
+      team_id: fields.teamId,
       org_id: fields.orgId,
       total_amount: fields.totalAmount,
       notes: fields.notes ?? null,
@@ -3607,48 +3609,35 @@ export async function updateRepPlayerDuesSchedule(scheduleId: string, fields: {
 function mapRepPlayerDuesInstallment(r: any): RepPlayerDuesInstallment {
   return {
     id: r.id,
-    duesScheduleId: r.dues_schedule_id,
+    scheduleId: r.schedule_id,
+    playerId: r.player_id,
+    installmentNumber: r.installment_number,
     dueDate: r.due_date,
     amount: Number(r.amount),
-    paid: r.paid,
-    paidAt: r.paid_at,
-    entryId: r.entry_id,
+    paidAt: r.paid_at ?? null,
+    reminderSentAt: r.reminder_sent_at ?? null,
+    accountingEntryId: r.accounting_entry_id ?? null,
     createdAt: r.created_at,
-    updatedAt: r.updated_at,
   };
 }
 
-export async function getRepPlayerDuesInstallments(duesScheduleId: string): Promise<RepPlayerDuesInstallment[]> {
+export async function getRepPlayerDuesInstallments(scheduleId: string): Promise<RepPlayerDuesInstallment[]> {
   const { data, error } = await supabaseAdmin
     .from('rep_player_dues_installments')
     .select('*')
-    .eq('dues_schedule_id', duesScheduleId)
-    .order('due_date');
+    .eq('schedule_id', scheduleId)
+    .order('installment_number');
   if (error) throw error;
   return (data ?? []).map(mapRepPlayerDuesInstallment);
 }
 
-export async function createRepPlayerDuesInstallment(fields: {
-  duesScheduleId: string;
-  dueDate: string;
-  amount: number;
-}): Promise<RepPlayerDuesInstallment> {
-  const { data, error } = await supabaseAdmin
-    .from('rep_player_dues_installments')
-    .insert({ dues_schedule_id: fields.duesScheduleId, due_date: fields.dueDate, amount: fields.amount })
-    .select()
-    .single();
-  if (error) throw error;
-  return mapRepPlayerDuesInstallment(data);
-}
-
 export async function markRepPlayerDuesInstallmentPaid(
   installmentId: string,
-  entryId: string | null,
+  accountingEntryId: string | null,
 ): Promise<RepPlayerDuesInstallment> {
   const { data, error } = await supabaseAdmin
     .from('rep_player_dues_installments')
-    .update({ paid: true, paid_at: new Date().toISOString(), entry_id: entryId, updated_at: new Date().toISOString() })
+    .update({ paid_at: new Date().toISOString(), accounting_entry_id: accountingEntryId })
     .eq('id', installmentId)
     .select()
     .single();
@@ -3662,14 +3651,22 @@ function mapRepTeamExpense(r: any): RepTeamExpense {
   return {
     id: r.id,
     programYearId: r.program_year_id,
+    teamId: r.team_id,
     orgId: r.org_id,
+    expenseType: r.expense_type,
     description: r.description,
+    category: r.category ?? null,
     amount: Number(r.amount),
-    expenseDate: r.expense_date,
-    category: r.category,
-    entryId: r.entry_id,
-    notes: r.notes,
-    createdBy: r.created_by,
+    expensePaidAt: r.expense_paid_at ?? null,
+    depositAmount: r.deposit_amount != null ? Number(r.deposit_amount) : null,
+    depositDueDate: r.deposit_due_date ?? null,
+    depositPaidAt: r.deposit_paid_at ?? null,
+    balanceAmount: r.balance_amount != null ? Number(r.balance_amount) : null,
+    balanceDueDate: r.balance_due_date ?? null,
+    balancePaidAt: r.balance_paid_at ?? null,
+    eventId: r.event_id ?? null,
+    notes: r.notes ?? null,
+    createdBy: r.created_by ?? null,
     createdAt: r.created_at,
     updatedAt: r.updated_at,
   };
@@ -3680,19 +3677,34 @@ export async function getRepTeamExpenses(programYearId: string): Promise<RepTeam
     .from('rep_team_expenses')
     .select('*')
     .eq('program_year_id', programYearId)
-    .order('expense_date', { ascending: false });
+    .order('created_at', { ascending: false });
   if (error) throw error;
   return (data ?? []).map(mapRepTeamExpense);
 }
 
+export async function getRepTeamExpense(expenseId: string): Promise<RepTeamExpense | null> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_expenses')
+    .select('*')
+    .eq('id', expenseId)
+    .maybeSingle();
+  if (error) throw error;
+  return data ? mapRepTeamExpense(data) : null;
+}
+
 export async function createRepTeamExpense(fields: {
   programYearId: string;
+  teamId: string;
   orgId: string;
+  expenseType: 'expense' | 'tournament_payable';
   description: string;
-  amount: number;
-  expenseDate: string;
   category?: string | null;
-  entryId?: string | null;
+  amount: number;
+  depositAmount?: number | null;
+  depositDueDate?: string | null;
+  balanceAmount?: number | null;
+  balanceDueDate?: string | null;
+  eventId?: string | null;
   notes?: string | null;
   createdBy?: string | null;
 }): Promise<RepTeamExpense> {
@@ -3700,12 +3712,17 @@ export async function createRepTeamExpense(fields: {
     .from('rep_team_expenses')
     .insert({
       program_year_id: fields.programYearId,
+      team_id: fields.teamId,
       org_id: fields.orgId,
+      expense_type: fields.expenseType,
       description: fields.description,
-      amount: fields.amount,
-      expense_date: fields.expenseDate,
       category: fields.category ?? null,
-      entry_id: fields.entryId ?? null,
+      amount: fields.amount,
+      deposit_amount: fields.depositAmount ?? null,
+      deposit_due_date: fields.depositDueDate ?? null,
+      balance_amount: fields.balanceAmount ?? null,
+      balance_due_date: fields.balanceDueDate ?? null,
+      event_id: fields.eventId ?? null,
       notes: fields.notes ?? null,
       created_by: fields.createdBy ?? null,
     })
@@ -3717,19 +3734,19 @@ export async function createRepTeamExpense(fields: {
 
 export async function updateRepTeamExpense(expenseId: string, fields: {
   description?: string;
-  amount?: number;
-  expenseDate?: string;
   category?: string | null;
-  entryId?: string | null;
   notes?: string | null;
+  expensePaidAt?: string | null;
+  depositPaidAt?: string | null;
+  balancePaidAt?: string | null;
 }): Promise<RepTeamExpense> {
   const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
   if (fields.description !== undefined) patch.description = fields.description;
-  if (fields.amount !== undefined) patch.amount = fields.amount;
-  if (fields.expenseDate !== undefined) patch.expense_date = fields.expenseDate;
   if (fields.category !== undefined) patch.category = fields.category;
-  if (fields.entryId !== undefined) patch.entry_id = fields.entryId;
   if (fields.notes !== undefined) patch.notes = fields.notes;
+  if (fields.expensePaidAt !== undefined) patch.expense_paid_at = fields.expensePaidAt;
+  if (fields.depositPaidAt !== undefined) patch.deposit_paid_at = fields.depositPaidAt;
+  if (fields.balancePaidAt !== undefined) patch.balance_paid_at = fields.balancePaidAt;
   const { data, error } = await supabaseAdmin
     .from('rep_team_expenses')
     .update(patch)
@@ -3743,6 +3760,130 @@ export async function updateRepTeamExpense(expenseId: string, fields: {
 export async function deleteRepTeamExpense(expenseId: string): Promise<void> {
   const { error } = await supabaseAdmin.from('rep_team_expenses').delete().eq('id', expenseId);
   if (error) throw error;
+}
+
+// ── Rep Dues: bulk replace installments ──────────────────────────────────────
+
+export async function replaceRepDuesInstallments(
+  scheduleId: string,
+  playerId: string,
+  installments: Array<{ installmentNumber: number; amount: number; dueDate: string }>,
+): Promise<RepPlayerDuesInstallment[]> {
+  const { error: delError } = await supabaseAdmin
+    .from('rep_player_dues_installments')
+    .delete()
+    .eq('schedule_id', scheduleId);
+  if (delError) throw delError;
+
+  if (!installments.length) return [];
+
+  const rows = installments.map(i => ({
+    schedule_id: scheduleId,
+    player_id: playerId,
+    installment_number: i.installmentNumber,
+    amount: i.amount,
+    due_date: i.dueDate,
+  }));
+
+  const { data, error } = await supabaseAdmin
+    .from('rep_player_dues_installments')
+    .insert(rows)
+    .select();
+  if (error) throw error;
+  return (data ?? []).map(mapRepPlayerDuesInstallment);
+}
+
+// ── Rep Dues: upsert schedule + replace installments ─────────────────────────
+
+export async function upsertRepPlayerDuesSchedule(fields: {
+  programYearId: string;
+  playerId: string;
+  teamId: string;
+  orgId: string;
+  totalAmount: number;
+  notes: string | null;
+  installments: Array<{ installmentNumber: number; amount: number; dueDate: string }>;
+}): Promise<{ schedule: RepPlayerDuesSchedule; installments: RepPlayerDuesInstallment[] }> {
+  const existing = await getRepPlayerDuesSchedule(fields.playerId, fields.programYearId);
+
+  let schedule: RepPlayerDuesSchedule;
+  if (existing) {
+    schedule = await updateRepPlayerDuesSchedule(existing.id, {
+      totalAmount: fields.totalAmount,
+      notes: fields.notes,
+    });
+  } else {
+    schedule = await createRepPlayerDuesSchedule({
+      programYearId: fields.programYearId,
+      playerId: fields.playerId,
+      teamId: fields.teamId,
+      orgId: fields.orgId,
+      totalAmount: fields.totalAmount,
+      notes: fields.notes,
+    });
+  }
+
+  const newInstallments = await replaceRepDuesInstallments(schedule.id, fields.playerId, fields.installments);
+  return { schedule, installments: newInstallments };
+}
+
+// ── Rep Allocations: splits for a team ───────────────────────────────────────
+
+export interface RepAllocationSplitWithInstallments {
+  id: string;
+  allocationId: string;
+  allocationDescription: string;
+  teamId: string;
+  programYearId: string;
+  amount: number;
+  splitMethod: string;
+  splitValue: number;
+  paymentSchedule: string;
+  notes: string | null;
+  installments: RepAllocationInstallment[];
+}
+
+export async function getRepAllocationSplitsForTeam(
+  teamId: string,
+): Promise<RepAllocationSplitWithInstallments[]> {
+  const { data: splitData, error: splitError } = await supabaseAdmin
+    .from('rep_allocation_splits')
+    .select('*')
+    .eq('team_id', teamId)
+    .order('created_at');
+  if (splitError) throw splitError;
+  const splits = splitData ?? [];
+
+  const { data: allocData, error: allocError } = await supabaseAdmin
+    .from('rep_cost_allocations')
+    .select('id, description');
+  if (allocError) throw allocError;
+  const allocMap: Record<string, string> = {};
+  for (const a of allocData ?? []) allocMap[a.id] = a.description;
+
+  const result: RepAllocationSplitWithInstallments[] = [];
+  for (const s of splits) {
+    const { data: instData, error: instError } = await supabaseAdmin
+      .from('rep_allocation_installments')
+      .select('*')
+      .eq('allocation_split_id', s.id)
+      .order('installment_number');
+    if (instError) throw instError;
+    result.push({
+      id: s.id,
+      allocationId: s.allocation_id,
+      allocationDescription: allocMap[s.allocation_id] ?? '',
+      teamId: s.team_id,
+      programYearId: s.program_year_id,
+      amount: Number(s.amount),
+      splitMethod: s.split_method,
+      splitValue: Number(s.split_value),
+      paymentSchedule: s.payment_schedule,
+      notes: s.notes ?? null,
+      installments: (instData ?? []).map(mapRepAllocationInstallment),
+    });
+  }
+  return result;
 }
 
 // ── Platform users ────────────────────────────────────────────────────────────
