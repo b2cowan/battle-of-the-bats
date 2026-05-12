@@ -32,8 +32,14 @@ function LoginForm() {
       setError(AUTH_ERRORS[err] ?? err);
       setLoading(false);
     } else {
-      const next = searchParams.get('next') ?? '/admin';
-      router.push(next);
+      const next = searchParams.get('next');
+      if (next) {
+        router.push(next);
+      } else {
+        const res = await fetch('/api/auth/destination');
+        const { destination } = await res.json();
+        router.push(destination);
+      }
       router.refresh();
     }
   }

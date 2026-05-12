@@ -590,34 +590,37 @@ export interface RepPlayerDocument {
 export interface RepCostAllocation {
   id: string;
   orgId: string;
-  programYearId: string;
+  sourceEntryId: string | null;
   description: string;
   totalAmount: number;
-  allocationMethod: 'equal' | 'manual';
-  entryId: string | null;
-  notes: string | null;
+  createdBy: string | null;
   createdAt: string;
-  updatedAt: string;
 }
 
 export interface RepAllocationSplit {
   id: string;
   allocationId: string;
-  repTeamId: string;
+  teamId: string;
+  programYearId: string;
+  orgId: string;
   amount: number;
+  splitMethod: 'percentage' | 'sessions' | 'fixed';
+  splitValue: number;
+  paymentSchedule: 'standard' | 'custom';
+  notes: string | null;
   createdAt: string;
 }
 
 export interface RepAllocationInstallment {
   id: string;
   splitId: string;
-  dueDate: string;
+  installmentNumber: number;
   amount: number;
-  paid: boolean;
+  dueDate: string;
   paidAt: string | null;
-  entryId: string | null;
+  paidBy: string | null;
+  accountingEntryId: string | null;
   createdAt: string;
-  updatedAt: string;
 }
 
 export interface RepPlayerDuesSchedule {
@@ -646,14 +649,35 @@ export interface RepPlayerDuesInstallment {
 export interface RepTeamExpense {
   id: string;
   programYearId: string;
+  teamId: string;
   orgId: string;
+  expenseType: 'expense' | 'tournament_payable';
   description: string;
-  amount: number;
-  expenseDate: string;
   category: string | null;
-  entryId: string | null;
+  amount: number;
+  expensePaidAt: string | null;
+  depositAmount: number | null;
+  depositDueDate: string | null;
+  depositPaidAt: string | null;
+  balanceAmount: number | null;
+  balanceDueDate: string | null;
+  balancePaidAt: string | null;
+  eventId: string | null;
   notes: string | null;
   createdBy: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// ── Platform (FieldLogicHQ company) users ────────────────────────────────────
+
+export interface PlatformUser {
+  id: string;
+  email: string;
+  displayName: string | null;
+  role: string;
+  isActive: boolean;
+  invitedBy: string | null;
   createdAt: string;
   updatedAt: string;
 }

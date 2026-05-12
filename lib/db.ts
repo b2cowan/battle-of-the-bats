@@ -1453,6 +1453,27 @@ export async function getOrCreateTournamentLedger(
   return mapLedger(data!);
 }
 
+export async function getOrCreateRepTeamLedger(
+  orgId: string,
+  teamId: string,
+  teamName: string,
+): Promise<AccountingLedger> {
+  const { data: existing } = await supabaseAdmin
+    .from('accounting_ledgers')
+    .select('*')
+    .eq('org_id', orgId)
+    .eq('entity_type', 'team')
+    .eq('entity_id', teamId)
+    .maybeSingle();
+  if (existing) return mapLedger(existing);
+  const { data } = await supabaseAdmin
+    .from('accounting_ledgers')
+    .insert({ org_id: orgId, entity_type: 'team', entity_id: teamId, name: teamName })
+    .select()
+    .single();
+  return mapLedger(data!);
+}
+
 export async function getLedgerEntries(
   ledgerId: string,
   opts: { status?: AccountingEntryStatus; limit?: number; offset?: number } = {}
@@ -3275,140 +3296,231 @@ function mapRepCostAllocation(r: any): RepCostAllocation {
   return {
     id: r.id,
     orgId: r.org_id,
-    programYearId: r.program_year_id,
+    sourceEntryId: r.source_entry_id ?? null,
     description: r.description,
     totalAmount: Number(r.total_amount),
-    allocationMethod: r.allocation_method,
-    entryId: r.entry_id,
-    notes: r.notes,
+    createdBy: r.created_by ?? null,
     createdAt: r.created_at,
-    updatedAt: r.updated_at,
   };
 }
 
-export async function getRepCostAllocations(programYearId: string): Promise<RepCostAllocation[]> {
+function mapRepAllocationSplit(r: any): RepAllocationSplit {
+  return {
+    id: r.id,
+    allocationId: r.allocation_id,
+    teamId: r.team_id,
+    programYearId: r.program_year_id,
+    orgId: r.org_id,
+    amount: Number(r.amount),
+    splitMethod: r.split_method,
+    splitValue: Number(r.split_value),
+    paymentSchedule: r.payment_schedule,
+    notes: r.notes ?? null,
+    createdAt: r.created_at,
+  };
+}
+
+function mapRepAllocationInstallment(r: any): RepAllocationInstallment {
+  return {
+    id: r.id,
+    splitId: r.split_id,
+    installmentNumber: r.installment_number,
+    amount: Number(r.amount),
+    dueDate: r.due_date,
+    paidAt: r.paid_at ?? null,
+    paidBy: r.paid_by ?? null,
+    accountingEntryId: r.accounting_entry_id ?? null,
+    createdAt: r.created_at,
+  };
+}
+
+export async function getRepCostAllocations(orgId: string): Promise<RepCostAllocation[]> {
   const { data, error } = await supabaseAdmin
     .from('rep_cost_allocations')
     .select('*')
-    .eq('program_year_id', programYearId)
+    .eq('org_id', orgId)
     .order('created_at', { ascending: false });
   if (error) throw error;
   return (data ?? []).map(mapRepCostAllocation);
 }
 
-export async function createRepCostAllocation(fields: {
+export async function getRepCostAllocationDetail(
+  allocationId: string,
+  orgId: string,
+): Promise<{
+  allocation: RepCostAllocation;
+  splits: Array<RepAllocationSplit & { installments: RepAllocationInstallment[] }>;
+} | null> {
+  const { data: alloc, error: ae } = await supabaseAdmin
+    .from('rep_cost_allocations')
+    .select('*')
+    .eq('id', allocationId)
+    .eq('org_id', orgId)
+    .maybeSingle();
+  if (ae) throw ae;
+  if (!alloc) return null;
+
+  const { data: splits, error: se } = await supabaseAdmin
+    .from('rep_allocation_splits')
+    .select('*')
+    .eq('allocation_id', allocationId)
+    .order('created_at');
+  if (se) throw se;
+
+  const splitIds = (splits ?? []).map((s: any) => s.id);
+  let installments: any[] = [];
+  if (splitIds.length > 0) {
+    const { data: inst, error: ie } = await supabaseAdmin
+      .from('rep_allocation_installments')
+      .select('*')
+      .in('split_id', splitIds)
+      .order('installment_number');
+    if (ie) throw ie;
+    installments = inst ?? [];
+  }
+
+  const mappedSplits = (splits ?? []).map((s: any) => ({
+    ...mapRepAllocationSplit(s),
+    installments: installments
+      .filter((i: any) => i.split_id === s.id)
+      .map(mapRepAllocationInstallment),
+  }));
+
+  return { allocation: mapRepCostAllocation(alloc), splits: mappedSplits };
+}
+
+export async function createRepCostAllocationWithSplits(fields: {
   orgId: string;
-  programYearId: string;
   description: string;
   totalAmount: number;
-  allocationMethod: 'equal' | 'manual';
-  entryId?: string | null;
-  notes?: string | null;
-}): Promise<RepCostAllocation> {
-  const { data, error } = await supabaseAdmin
+  sourceEntryId?: string | null;
+  createdBy: string;
+  splits: Array<{
+    teamId: string;
+    programYearId: string;
+    amount: number;
+    splitMethod: 'percentage' | 'sessions' | 'fixed';
+    splitValue: number;
+    paymentSchedule: 'standard' | 'custom';
+    notes?: string | null;
+    installments: Array<{ installmentNumber: number; amount: number; dueDate: string }>;
+  }>;
+}): Promise<{
+  allocation: RepCostAllocation;
+  splits: Array<RepAllocationSplit & { installments: RepAllocationInstallment[] }>;
+}> {
+  const { data: alloc, error: ae } = await supabaseAdmin
     .from('rep_cost_allocations')
     .insert({
       org_id: fields.orgId,
-      program_year_id: fields.programYearId,
       description: fields.description,
       total_amount: fields.totalAmount,
-      allocation_method: fields.allocationMethod,
-      entry_id: fields.entryId ?? null,
-      notes: fields.notes ?? null,
+      source_entry_id: fields.sourceEntryId ?? null,
+      created_by: fields.createdBy,
     })
+    .select()
+    .single();
+  if (ae) throw ae;
+
+  const resultSplits: Array<RepAllocationSplit & { installments: RepAllocationInstallment[] }> = [];
+
+  for (const split of fields.splits) {
+    const { data: splitRow, error: se } = await supabaseAdmin
+      .from('rep_allocation_splits')
+      .insert({
+        allocation_id: alloc.id,
+        team_id: split.teamId,
+        program_year_id: split.programYearId,
+        org_id: fields.orgId,
+        amount: split.amount,
+        split_method: split.splitMethod,
+        split_value: split.splitValue,
+        payment_schedule: split.paymentSchedule,
+        notes: split.notes ?? null,
+      })
+      .select()
+      .single();
+    if (se) throw se;
+
+    const instRows: RepAllocationInstallment[] = [];
+    for (const inst of split.installments) {
+      const { data: instRow, error: ie } = await supabaseAdmin
+        .from('rep_allocation_installments')
+        .insert({
+          split_id: splitRow.id,
+          installment_number: inst.installmentNumber,
+          amount: inst.amount,
+          due_date: inst.dueDate,
+        })
+        .select()
+        .single();
+      if (ie) throw ie;
+      instRows.push(mapRepAllocationInstallment(instRow));
+    }
+
+    resultSplits.push({ ...mapRepAllocationSplit(splitRow), installments: instRows });
+  }
+
+  return { allocation: mapRepCostAllocation(alloc), splits: resultSplits };
+}
+
+export async function updateRepCostAllocationDescription(
+  allocationId: string,
+  orgId: string,
+  description: string,
+): Promise<RepCostAllocation> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_cost_allocations')
+    .update({ description })
+    .eq('id', allocationId)
+    .eq('org_id', orgId)
     .select()
     .single();
   if (error) throw error;
   return mapRepCostAllocation(data);
 }
 
-// Allocation Splits
-
-function mapRepAllocationSplit(r: any): RepAllocationSplit {
-  return {
-    id: r.id,
-    allocationId: r.allocation_id,
-    repTeamId: r.rep_team_id,
-    amount: Number(r.amount),
-    createdAt: r.created_at,
-  };
-}
-
-export async function getRepAllocationSplits(allocationId: string): Promise<RepAllocationSplit[]> {
-  const { data, error } = await supabaseAdmin
-    .from('rep_allocation_splits')
-    .select('*')
-    .eq('allocation_id', allocationId);
-  if (error) throw error;
-  return (data ?? []).map(mapRepAllocationSplit);
-}
-
-export async function createRepAllocationSplit(fields: {
-  allocationId: string;
-  repTeamId: string;
-  amount: number;
-}): Promise<RepAllocationSplit> {
-  const { data, error } = await supabaseAdmin
-    .from('rep_allocation_splits')
-    .insert({ allocation_id: fields.allocationId, rep_team_id: fields.repTeamId, amount: fields.amount })
-    .select()
-    .single();
-  if (error) throw error;
-  return mapRepAllocationSplit(data);
-}
-
-// Allocation Installments
-
-function mapRepAllocationInstallment(r: any): RepAllocationInstallment {
-  return {
-    id: r.id,
-    splitId: r.split_id,
-    dueDate: r.due_date,
-    amount: Number(r.amount),
-    paid: r.paid,
-    paidAt: r.paid_at,
-    entryId: r.entry_id,
-    createdAt: r.created_at,
-    updatedAt: r.updated_at,
-  };
-}
-
-export async function getRepAllocationInstallments(splitId: string): Promise<RepAllocationInstallment[]> {
-  const { data, error } = await supabaseAdmin
-    .from('rep_allocation_installments')
-    .select('*')
-    .eq('split_id', splitId)
-    .order('due_date');
-  if (error) throw error;
-  return (data ?? []).map(mapRepAllocationInstallment);
-}
-
-export async function createRepAllocationInstallment(fields: {
-  splitId: string;
-  dueDate: string;
-  amount: number;
-}): Promise<RepAllocationInstallment> {
-  const { data, error } = await supabaseAdmin
-    .from('rep_allocation_installments')
-    .insert({ split_id: fields.splitId, due_date: fields.dueDate, amount: fields.amount })
-    .select()
-    .single();
-  if (error) throw error;
-  return mapRepAllocationInstallment(data);
-}
-
 export async function markRepAllocationInstallmentPaid(
   installmentId: string,
-  entryId: string | null,
+  paidBy: string,
+  accountingEntryId: string | null,
 ): Promise<RepAllocationInstallment> {
   const { data, error } = await supabaseAdmin
     .from('rep_allocation_installments')
-    .update({ paid: true, paid_at: new Date().toISOString(), entry_id: entryId, updated_at: new Date().toISOString() })
+    .update({
+      paid_at: new Date().toISOString(),
+      paid_by: paidBy,
+      accounting_entry_id: accountingEntryId,
+    })
     .eq('id', installmentId)
     .select()
     .single();
   if (error) throw error;
   return mapRepAllocationInstallment(data);
+}
+
+export async function getRepAllocationInstallment(
+  installmentId: string,
+): Promise<RepAllocationInstallment | null> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_allocation_installments')
+    .select('*')
+    .eq('id', installmentId)
+    .maybeSingle();
+  if (error) throw error;
+  return data ? mapRepAllocationInstallment(data) : null;
+}
+
+export async function getRepAllocationSplit(
+  splitId: string,
+): Promise<RepAllocationSplit | null> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_allocation_splits')
+    .select('*')
+    .eq('id', splitId)
+    .maybeSingle();
+  if (error) throw error;
+  return data ? mapRepAllocationSplit(data) : null;
 }
 
 // Player Dues Schedules
@@ -3630,5 +3742,81 @@ export async function updateRepTeamExpense(expenseId: string, fields: {
 
 export async function deleteRepTeamExpense(expenseId: string): Promise<void> {
   const { error } = await supabaseAdmin.from('rep_team_expenses').delete().eq('id', expenseId);
+  if (error) throw error;
+}
+
+// ── Platform users ────────────────────────────────────────────────────────────
+
+import type { PlatformUser } from './types';
+
+function mapPlatformUser(r: any): PlatformUser {
+  return {
+    id:          r.id,
+    email:       r.email,
+    displayName: r.display_name ?? null,
+    role:        r.role,
+    isActive:    r.is_active,
+    invitedBy:   r.invited_by ?? null,
+    createdAt:   r.created_at,
+    updatedAt:   r.updated_at,
+  };
+}
+
+export async function getPlatformUsers(): Promise<PlatformUser[]> {
+  const { data, error } = await supabaseAdmin
+    .from('platform_users')
+    .select('*')
+    .order('created_at', { ascending: true });
+  if (error) throw error;
+  return (data ?? []).map(mapPlatformUser);
+}
+
+export async function getPlatformUserByEmail(email: string): Promise<PlatformUser | null> {
+  const { data, error } = await supabaseAdmin
+    .from('platform_users')
+    .select('*')
+    .eq('email', email.toLowerCase())
+    .maybeSingle();
+  if (error) throw error;
+  return data ? mapPlatformUser(data) : null;
+}
+
+export async function createPlatformUser(fields: {
+  email: string;
+  displayName?: string | null;
+  invitedBy?: string | null;
+}): Promise<PlatformUser> {
+  const { data, error } = await supabaseAdmin
+    .from('platform_users')
+    .insert({
+      email:        fields.email.toLowerCase(),
+      display_name: fields.displayName ?? null,
+      invited_by:   fields.invitedBy ?? null,
+    })
+    .select()
+    .single();
+  if (error) throw error;
+  return mapPlatformUser(data);
+}
+
+export async function updatePlatformUser(id: string, fields: {
+  displayName?: string | null;
+  isActive?: boolean;
+}): Promise<PlatformUser> {
+  const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
+  if (fields.displayName !== undefined) patch.display_name = fields.displayName;
+  if (fields.isActive    !== undefined) patch.is_active    = fields.isActive;
+  const { data, error } = await supabaseAdmin
+    .from('platform_users')
+    .update(patch)
+    .eq('id', id)
+    .select()
+    .single();
+  if (error) throw error;
+  return mapPlatformUser(data);
+}
+
+export async function deletePlatformUser(id: string): Promise<void> {
+  const { error } = await supabaseAdmin.from('platform_users').delete().eq('id', id);
   if (error) throw error;
 }

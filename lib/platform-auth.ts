@@ -1,14 +1,25 @@
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import type { User } from '@supabase/supabase-js';
+import { supabaseAdmin } from './supabase-admin';
 
-export function isPlatformAdmin(user: User | null | undefined): boolean {
-  if (!user?.email) return false;
+function isBootstrapAdmin(email: string | null | undefined): boolean {
+  if (!email) return false;
   const allowlist = (process.env.PLATFORM_ADMIN_EMAILS ?? '')
     .split(',')
     .map(e => e.trim().toLowerCase())
     .filter(Boolean);
-  return allowlist.includes(user.email.toLowerCase());
+  return allowlist.includes(email.toLowerCase());
+}
+
+async function isDbPlatformAdmin(email: string): Promise<boolean> {
+  const { data } = await supabaseAdmin
+    .from('platform_users')
+    .select('is_active')
+    .eq('email', email.toLowerCase())
+    .eq('is_active', true)
+    .maybeSingle();
+  return !!data;
 }
 
 export async function getPlatformAuthContext(): Promise<User | null> {
@@ -24,6 +35,14 @@ export async function getPlatformAuthContext(): Promise<User | null> {
     }
   );
   const { data: { user } } = await supabase.auth.getUser();
-  if (!isPlatformAdmin(user)) return null;
-  return user;
+  if (!user?.email) return null;
+
+  if (isBootstrapAdmin(user.email)) return user;
+
+  const isDb = await isDbPlatformAdmin(user.email);
+  return isDb ? user : null;
+}
+
+export function isPlatformAdmin(user: User | null | undefined): boolean {
+  return isBootstrapAdmin(user?.email);
 }
