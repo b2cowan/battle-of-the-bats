@@ -18,7 +18,7 @@ export default async function PlatformAdminLayout({
 
   return (
     <div className={styles.shell}>
-      <PlatformAdminNav sessionEmail={user.email} />
+      <PlatformAdminNav sessionEmail={user.email ?? ''} />
       <main className={styles.main}>
         {children}
       </main>
