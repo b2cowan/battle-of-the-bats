@@ -1,19 +1,19 @@
 # In-App Documentation & Help System Plan
 
-> Created: 2026-05-12 | Status: Blocked — do not implement until UX Review Phases 1–5 (TODO.md §1) are complete
+> Created: 2026-05-12 | Status: Ready — UX Review Phases 1–5 complete as of 2026-05-12
 > See TODO.md for the tracking entry.
 
-### Prerequisite: Complete UX Review Phases 1–5 first
+### Prerequisites: Complete (as of 2026-05-12)
 
-Do not begin implementation until all items in TODO.md §1 (UX Phases 1–5) are done. Key reasons:
+All UX Review Phases 1–5 are done. Previous blockers resolved:
 
-- **UX 5F (empty state standardization)** is the same work as the help system's empty-state tier — it gets absorbed into Phase A of this plan rather than done separately. Running both concurrently would duplicate effort.
-- **UX 3C and 3E** add new pages (org hub, notifications) that need help cues — those pages don't exist yet.
-- **UX 2A** (coaches bottom nav) changes the coaches portal layout — help integration points may shift.
-- **UX 3D and 3G** add new UI to pages where help cues will live — cues written against the current UI would reference controls that are about to be replaced.
-- **UX 3A and 3B** are explicit prerequisites for Phase G of this plan.
+- **UX 5F (empty state standardization)** — complete. Phase A now absorbs the established `.loadingState` / `.emptyStateTitle` / `.emptyStateSub` CSS pattern rather than defining it from scratch.
+- **UX 3C and 3E** — org hub and notifications pages are built. Help cue targets now exist.
+- **UX 2A** — coaches bottom nav is built. Layout integration points are stable.
+- **UX 3D and 3G** — status-transition buttons and "Needs attention" strip are in place.
+- **UX 3A and 3B** — onboarding checklist and billing modules section are built (Phase G prerequisites met).
 
-Phase A (shared components only) is safe to build at any time — it touches no pages.
+Phase A (shared components only) is safe to build immediately.
 
 ---
 

@@ -1,6 +1,6 @@
 # Pricing — Phase 1 Implementation Plan
 
-**Status:** Ready to implement
+**Status:** Complete (Phase 1A + 1C implemented 2026-05-12)
 **Date:** 2026-05-12
 **Content spec:** `PRICING_PAGE_COPY.md`
 **Scope:** A (plan-config) + C (public pricing page). Stripe and in-app billing page are Phase 2.
