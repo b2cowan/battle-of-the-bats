@@ -7,7 +7,7 @@ This file tracks the ongoing tasks for the tournament website project. AI models
 ## 🚀 Active Tasks (Priority Order)
 
 ### 1. Platform Admin — Superuser Tooling
-*Authoritative plan in [PLATFORM_ADMIN_IMPROVEMENTS_PLAN.md](PLATFORM_ADMIN_IMPROVEMENTS_PLAN.md)*
+*Authoritative plan in [PLATFORM_ADMIN_IMPROVEMENTS_PLAN.md](docs/archive/PLATFORM_ADMIN_IMPROVEMENTS_PLAN.md)*
 
 - [x] **Phase A** — `enabled_addons` toggle UI + direct admin link (unblocks `module_public_site` production enablement)
 - [x] **Phase B** — Users page org context enrichment (no migration)
@@ -23,8 +23,8 @@ This file tracks the ongoing tasks for the tournament website project. AI models
 - [x] **Phase 1** — Archives B2: back-to-admin link on public archive detail pages
 - [x] **Phase 2** — Plan entitlements architecture: `moduleEntitlements` in PlanConfig, `enabled_addons` migration, `hasModuleEntitlement()` helper
 - [x] **Phase 3** — `module_public_site` (see [docs/archive/PUBLIC_SITE_MODULE_PLAN.md](docs/archive/PUBLIC_SITE_MODULE_PLAN.md))
-- [x] **Phase 4** — `module_accounting` (see [ACCOUNTING_MODULE_PLAN.md](ACCOUNTING_MODULE_PLAN.md))
-- [x] **Phase 5** — `module_house_league` (see [HOUSE_LEAGUE_MODULE_PLAN.md](HOUSE_LEAGUE_MODULE_PLAN.md)) — All phases 5A–5M complete: migration, roles, types/helpers, module shell, season/division management, public registration form, registration admin, team placement + draft, scheduling, standings, scoped email dispatch, accounting integration, past seasons pages, practice scheduling with recurrence.
+- [x] **Phase 4** — `module_accounting` (see [ACCOUNTING_MODULE_PLAN.md](docs/archive/ACCOUNTING_MODULE_PLAN.md))
+- [x] **Phase 5** — `module_house_league` (see [HOUSE_LEAGUE_MODULE_PLAN.md](docs/archive/HOUSE_LEAGUE_MODULE_PLAN.md)) — All phases 5A–5M complete: migration, roles, types/helpers, module shell, season/division management, public registration form, registration admin, team placement + draft, scheduling, standings, scoped email dispatch, accounting integration, past seasons pages, practice scheduling with recurrence.
 - [ ] **Phase 6** — `module_rep_teams` (see [REP_TEAMS_MODULE_PLAN.md](REP_TEAMS_MODULE_PLAN.md))
   - [x] **6A** — DB schema: Migration 021 + Supabase Storage bucket setup
   - [x] **6B** — TypeScript types + DB helpers
@@ -46,8 +46,8 @@ This file tracks the ongoing tasks for the tournament website project. AI models
 *Recommended build order: Accounting → House League → Rep Teams. Each requires its own detailed plan file before implementation begins.*
 
 - [x] **Public Website Module (`module_public_site`)** — Shipped. (see [docs/archive/PUBLIC_SITE_MODULE_PLAN.md](docs/archive/PUBLIC_SITE_MODULE_PLAN.md))
-- [x] **Accounting Module (`module_accounting`)** — The org's own financial management: income/expense tracking, tournament ledgers, inter-ledger transfers. Plan: [ACCOUNTING_MODULE_PLAN.md](ACCOUNTING_MODULE_PLAN.md).
-- [x] **House League Module (`module_house_league`)** — Season-long recreational league management: player registration, waitlists, team placement + draft, scheduling, standings, scoped email dispatch, accounting integration, past seasons, practice scheduling. Plan: [HOUSE_LEAGUE_MODULE_PLAN.md](HOUSE_LEAGUE_MODULE_PLAN.md). All phases 5A–5M complete.
+- [x] **Accounting Module (`module_accounting`)** — The org's own financial management: income/expense tracking, tournament ledgers, inter-ledger transfers. Plan: [ACCOUNTING_MODULE_PLAN.md](docs/archive/ACCOUNTING_MODULE_PLAN.md).
+- [x] **House League Module (`module_house_league`)** — Season-long recreational league management: player registration, waitlists, team placement + draft, scheduling, standings, scoped email dispatch, accounting integration, past seasons, practice scheduling. Plan: [HOUSE_LEAGUE_MODULE_PLAN.md](docs/archive/HOUSE_LEAGUE_MODULE_PLAN.md). All phases 5A–5M complete.
 - [ ] **Rep Team Module (`module_rep_teams`)** — Competitive team program management: coaches portal, rosters, tryout management, player documents, three-tier accounting integration. Plan: [REP_TEAMS_MODULE_PLAN.md](REP_TEAMS_MODULE_PLAN.md).
 
 ### 3. Tournament Landing Page Polish
@@ -120,7 +120,7 @@ This file tracks the ongoing tasks for the tournament website project. AI models
 - [x] Grouped module/action sections in capability override UI
 
 ### Tournament Lifecycle Cleanup
-*(see [TOURNAMENT_LIFECYCLE_PLAN.md](TOURNAMENT_LIFECYCLE_PLAN.md))*
+*(see [TOURNAMENT_LIFECYCLE_PLAN.md](docs/archive/TOURNAMENT_LIFECYCLE_PLAN.md))*
 - [x] All status transitions freely selectable via dropdown
 - [x] Seal button gated to completed status only (UI + server guard)
 - [x] Archived tournaments hidden from admin switcher

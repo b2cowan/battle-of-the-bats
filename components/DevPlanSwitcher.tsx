@@ -1,5 +1,6 @@
 'use client';
 import { useState } from 'react';
+import Link from 'next/link';
 import { useOrg } from '@/lib/org-context';
 
 const PLANS = ['starter', 'pro', 'elite'] as const;
@@ -37,18 +38,34 @@ export default function DevPlanSwitcher() {
       gap: '0.4rem',
       pointerEvents: 'none',
     }}>
-      <span style={{
-        fontSize: '0.65rem',
-        fontWeight: 700,
-        letterSpacing: '0.08em',
-        textTransform: 'uppercase',
-        color: 'rgba(255,255,0,0.7)',
-        background: 'rgba(0,0,0,0.7)',
-        padding: '0.15rem 0.4rem',
-        borderRadius: '4px',
-      }}>
-        DEV — Plan
-      </span>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+        <span style={{
+          fontSize: '0.65rem',
+          fontWeight: 700,
+          letterSpacing: '0.08em',
+          textTransform: 'uppercase',
+          color: 'rgba(255,255,0,0.7)',
+          background: 'rgba(0,0,0,0.7)',
+          padding: '0.15rem 0.4rem',
+          borderRadius: '4px',
+        }}>
+          DEV — Plan
+        </span>
+        <Link href="/dev" style={{
+          fontSize: '0.6rem',
+          fontWeight: 700,
+          letterSpacing: '0.08em',
+          textTransform: 'uppercase',
+          color: 'rgba(255,255,0,0.55)',
+          background: 'rgba(0,0,0,0.7)',
+          padding: '0.15rem 0.4rem',
+          borderRadius: '4px',
+          textDecoration: 'none',
+          border: '1px solid rgba(255,255,0,0.2)',
+        }}>
+          Seed →
+        </Link>
+      </div>
       <div style={{
         display: 'flex',
         gap: '0.3rem',
