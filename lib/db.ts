@@ -1940,6 +1940,66 @@ export async function deleteLeagueTeam(teamId: string): Promise<void> {
   await supabaseAdmin.from('league_teams').delete().eq('id', teamId);
 }
 
+// ─── League email log ─────────────────────────────────────────────────────────
+
+export interface LeagueEmailLogEntry {
+  id: string;
+  orgId: string;
+  seasonId: string;
+  sentBy: string;
+  sentAt: string;
+  subject: string;
+  scope: string;
+  audience: string;
+  countSent: number;
+  countSkipped: number;
+}
+
+export async function insertLeagueEmailLog(entry: {
+  orgId: string;
+  seasonId: string;
+  sentBy: string;
+  subject: string;
+  scope: string;
+  audience: string;
+  countSent: number;
+  countSkipped: number;
+}): Promise<void> {
+  const { error } = await supabaseAdmin.from('league_email_log').insert({
+    org_id:        entry.orgId,
+    season_id:     entry.seasonId,
+    sent_by:       entry.sentBy,
+    subject:       entry.subject,
+    scope:         entry.scope,
+    audience:      entry.audience,
+    count_sent:    entry.countSent,
+    count_skipped: entry.countSkipped,
+  });
+  if (error) throw error;
+}
+
+export async function getLeagueEmailLog(seasonId: string): Promise<LeagueEmailLogEntry[]> {
+  const { data, error } = await supabaseAdmin
+    .from('league_email_log')
+    .select('*')
+    .eq('season_id', seasonId)
+    .order('sent_at', { ascending: false })
+    .limit(50);
+  if (error) throw error;
+  return (data ?? []).map(row => ({
+    id:           row.id,
+    orgId:        row.org_id,
+    seasonId:     row.season_id,
+    sentBy:       row.sent_by,
+    sentAt:       row.sent_at,
+    subject:      row.subject,
+    scope:        row.scope,
+    audience:     row.audience,
+    countSent:    row.count_sent,
+    countSkipped: row.count_skipped,
+  }));
+}
+
 // ─── Registration helpers ─────────────────────────────────────────────────────
 
 export async function getRegistrationsForSeason(

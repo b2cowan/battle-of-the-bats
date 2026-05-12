@@ -22,13 +22,13 @@ This file tracks the ongoing tasks for the tournament website project. AI models
 - [x] **2D** — Show program year name alongside team name in coaches sidebar team list
 
 **Phase 3 — Owner & operator improvements**
-- [ ] **3A** — Expand onboarding checklist: add conditional steps for enabled modules (house league, rep teams, public site)
-- [ ] **3B** — Add "Modules" section to billing page: per-module plan inclusion, active status, and "Request to enable" CTA
-- [ ] **3C** — Create `/admin/org` hub page (Members, Diamonds, Tournament Records, Billing, Settings tiles); update admin hub tile href
-- [ ] **3D** — Add inline status-transition buttons to house league season cards
-- [ ] **3E** — Build House League Notifications page at `/admin/house-league/seasons/[seasonId]/notifications` (include email preview before send)
-- [ ] **3F** — Season detail index page: redirect to `/registrations` on entry
-- [ ] **3G** — Add cross-module "Needs attention" strip to admin hub (pending registrations, open tryouts)
+- [ ] **3A** — Expand onboarding checklist: add conditional steps for enabled modules (house league, rep teams, public site) — **Deferred: pending pricing strategy sign-off**
+- [ ] **3B** — Add "Modules" section to billing page: per-module plan inclusion, active status, and "Request to enable" CTA — **Deferred: pending pricing strategy sign-off**
+- [x] **3C** — Create `/admin/org` hub page (Members, Diamonds, Tournament Records, Billing, Settings tiles); update admin hub tile href
+- [x] **3D** — Add inline status-transition buttons to house league season cards
+- [x] **3E** — Build House League Notifications page at `/admin/house-league/seasons/[seasonId]/notifications` (email preview + sent history log); re-add Notifications sidebar link
+- [x] **3F** — Season detail index page: not redirected — sidebar sub-nav renders correctly on the index page; original issue no longer exists
+- [x] **3G** — Add cross-module "Needs attention" strip to admin hub (pending registrations, open tryouts)
 
 **Phase 4 — Platform admin & treasurer**
 - [ ] **4A** — Add health indicators to platform admin overview: `past_due` org count, new signups in 7 days

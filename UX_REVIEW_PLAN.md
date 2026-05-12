@@ -118,7 +118,7 @@ Each finding is tagged with a **role**, a **finding ID**, a **priority** (High /
 
 ---
 
-### 3C — "Organization Admin" tile lands on Members, not an org overview
+### 3C — "Organization Admin" tile lands on Members, not an org overview ✅
 
 - **Finding:** F2-3
 - **File:** `app/[orgSlug]/admin/page.tsx` line 62; would require new `app/[orgSlug]/admin/org/page.tsx`
@@ -127,7 +127,7 @@ Each finding is tagged with a **role**, a **finding ID**, a **priority** (High /
 
 ---
 
-### 3D — Season status cannot be changed from the seasons list
+### 3D — Season status cannot be changed from the seasons list ✅
 
 - **Finding:** F5-2
 - **File:** `app/[orgSlug]/admin/house-league/page.tsx`, `SeasonCard` component (line 431+)
@@ -142,7 +142,7 @@ Each finding is tagged with a **role**, a **finding ID**, a **priority** (High /
 
 ---
 
-### 3E — Create the House League Notifications page (or remove the link)
+### 3E — Create the House League Notifications page (or remove the link) ✅
 
 - **Finding:** F5-1 (Phase 1 removes the link; Phase 3 builds the page)
 - **File:** Need to create `app/[orgSlug]/admin/house-league/seasons/[seasonId]/notifications/page.tsx`
@@ -156,16 +156,17 @@ Each finding is tagged with a **role**, a **finding ID**, a **priority** (High /
 
 ---
 
-### 3F — Season detail index page has no clear landing content
+### 3F — Season detail index page has no clear landing content ✅
 
 - **Finding:** F5-5
+- **Status:** Complete (no-op) — the sidebar sub-nav regex correctly matches the index path, so Registrations/Teams/Schedule/Standings links already render when an admin lands on the season index page. The index page itself shows divisions management and lifecycle controls, which are the correct landing content. No redirect needed.
 - **File:** `app/[orgSlug]/admin/house-league/seasons/[seasonId]/page.tsx`
 - **Problem:** Clicking "View Season →" from the seasons list takes the admin to the season index page, but the sidebar sub-nav items (Registrations, Teams, Schedule, etc.) only render when you're on a sub-path — not on the index page itself. The index page may render as empty or with minimal content.
 - **Fix:** Add a `redirect` to `/registrations` in the season index page so the admin always lands on the most relevant first page. The sidebar sub-nav will then be visible immediately. One-line change: `redirect(`.../seasons/${seasonId}/registrations`)` in the page component.
 
 ---
 
-### 3G — Cross-module "what needs attention" strip on the admin hub
+### 3G — Cross-module "what needs attention" strip on the admin hub ✅
 
 - **Source:** UX_IMPROVEMENT_TEST_PLAN.md §1 (Cross-Module Dashboard); original review F2-5
 - **File:** `app/[orgSlug]/admin/page.tsx`

@@ -1,10 +1,17 @@
 'use client';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Trophy, Building2, Globe, DollarSign, CalendarDays, Users, UserCheck } from 'lucide-react';
+import { Trophy, Building2, Globe, DollarSign, CalendarDays, Users, UserCheck, AlertCircle } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { hasCapability } from '@/lib/roles';
+
+interface AttentionSummary {
+  pendingTournamentCount: number;
+  pendingLeagueCount: number;
+  openLeagueSeasonId: string | null;
+  pendingTryoutCount: number;
+}
 
 export default function AdminHub() {
   const router = useRouter();
@@ -35,6 +42,8 @@ export default function AdminHub() {
     ? hasCapability(userRole, userCapabilities, 'module_rep_teams')
     : false;
 
+  const [attention, setAttention] = useState<AttentionSummary | null>(null);
+
   // Auto-forward single-module users who only have tournament access
   useEffect(() => {
     if (loading || !userRole || !currentOrg) return;
@@ -42,6 +51,14 @@ export default function AdminHub() {
       router.replace(`${base}/dashboard`);
     }
   }, [loading, userRole, currentOrg, canSeeTournaments, canSeeOrgAdmin, base, router]);
+
+  useEffect(() => {
+    if (loading || !currentOrg) return;
+    fetch('/api/admin/attention-summary')
+      .then(r => r.ok ? r.json() : null)
+      .then(data => { if (data) setAttention(data); })
+      .catch(() => {});
+  }, [loading, currentOrg]);
 
   if (loading || !userRole) {
     return (
@@ -62,7 +79,7 @@ export default function AdminHub() {
       label: 'Organization Admin',
       desc: 'Members, billing, settings, diamonds, and tournament records',
       icon: Building2,
-      href: `${base}/org/members`,
+      href: `${base}/org`,
     },
     canSeePublicSite && {
       label: 'Public Site',
@@ -96,6 +113,31 @@ export default function AdminHub() {
     },
   ].filter(Boolean) as { label: string; desc: string; icon: React.ElementType; href: string }[];
 
+  // Build the attention items — only include non-zero counts
+  const attentionItems: { label: string; href: string }[] = [];
+  if (attention) {
+    if (attention.pendingTournamentCount > 0) {
+      attentionItems.push({
+        label: `${attention.pendingTournamentCount} pending tournament registration${attention.pendingTournamentCount === 1 ? '' : 's'}`,
+        href:  `${base}/teams`,
+      });
+    }
+    if (attention.pendingLeagueCount > 0) {
+      attentionItems.push({
+        label: `${attention.pendingLeagueCount} pending league registration${attention.pendingLeagueCount === 1 ? '' : 's'}`,
+        href:  attention.openLeagueSeasonId
+          ? `${base}/house-league/seasons/${attention.openLeagueSeasonId}/registrations`
+          : `${base}/house-league`,
+      });
+    }
+    if (attention.pendingTryoutCount > 0) {
+      attentionItems.push({
+        label: `${attention.pendingTryoutCount} open tryout application${attention.pendingTryoutCount === 1 ? '' : 's'}`,
+        href:  `${base}/rep-teams`,
+      });
+    }
+  }
+
   return (
     <div className="p-8 max-w-4xl">
       <header className="border-b border-blueprint-blue/60 pb-4 mb-8">
@@ -122,6 +164,35 @@ export default function AdminHub() {
           </Link>
         ))}
       </div>
+
+      {attentionItems.length > 0 && (
+        <div style={{
+          marginTop: '2rem',
+          padding: '1rem 1.25rem',
+          background: 'rgba(245,158,11,0.07)',
+          border: '1px solid rgba(245,158,11,0.25)',
+          borderRadius: '0.5rem',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.6rem' }}>
+            <AlertCircle size={15} style={{ color: 'rgba(245,158,11,0.8)', flexShrink: 0 }} />
+            <span style={{ fontSize: '0.78rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'rgba(245,158,11,0.8)' }}>
+              Needs attention
+            </span>
+          </div>
+          <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+            {attentionItems.map(item => (
+              <li key={item.href}>
+                <Link
+                  href={item.href}
+                  style={{ fontSize: '0.88rem', color: 'rgba(255,255,255,0.75)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}
+                >
+                  {item.label} →
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
   );
 }

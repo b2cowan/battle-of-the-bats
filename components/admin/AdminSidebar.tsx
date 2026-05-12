@@ -209,6 +209,9 @@ export default function AdminSidebar() {
                 {navLink('hl-standings', Trophy, 'Standings',
                   `${base}/house-league/seasons/${currentSeasonId}/standings`,
                   pathname.startsWith(`${base}/house-league/seasons/${currentSeasonId}/standings`))}
+                {navLink('hl-notifications', Mail, 'Notifications',
+                  `${base}/house-league/seasons/${currentSeasonId}/notifications`,
+                  pathname.startsWith(`${base}/house-league/seasons/${currentSeasonId}/notifications`))}
               </nav>
             </div>
           )}

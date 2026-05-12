@@ -6,7 +6,7 @@ import { useOrg } from '@/lib/org-context';
 import { hasCapability } from '@/lib/roles';
 import FeedbackModal from '@/components/FeedbackModal';
 import styles from './house-league.module.css';
-import type { LeagueSeason, LeagueSeasonSummary } from '@/lib/types';
+import type { LeagueSeason, LeagueSeasonSummary, LeagueSeasonStatus } from '@/lib/types';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -41,6 +41,15 @@ const STATUS_CSS: Record<string, string> = {
   active:               styles.statusActive,
   completed:            styles.statusCompleted,
   archived:             styles.statusArchived,
+};
+
+const NEXT_TRANSITION: Record<string, { status: LeagueSeasonStatus; label: string; danger?: boolean } | null> = {
+  draft:               { status: 'registration_open',   label: 'Open Registration' },
+  registration_open:   { status: 'registration_closed', label: 'Close Registration' },
+  registration_closed: { status: 'active',              label: 'Start Season' },
+  active:              { status: 'completed',           label: 'Mark Complete' },
+  completed:           { status: 'archived',            label: 'Archive', danger: true },
+  archived:            null,
 };
 
 // ── Create season form state ───────────────────────────────────────────────────
@@ -223,6 +232,7 @@ export default function HouseLeaguePage() {
               divisionCount={divisionCount}
               base={base}
               isAdmin={isAdmin}
+              onTransition={load}
             />
           ))}
         </div>
@@ -436,6 +446,7 @@ function SeasonCard({
   divisionCount,
   base,
   isAdmin,
+  onTransition,
 }: {
   season: LeagueSeason;
   activeCount: number;
@@ -444,8 +455,34 @@ function SeasonCard({
   divisionCount: number;
   base: string;
   isAdmin: boolean;
+  onTransition: () => void;
 }) {
+  const [transitioning, setTransitioning] = useState(false);
+  const [confirmArchive, setConfirmArchive] = useState(false);
+  const [transitionError, setTransitionError] = useState<string | null>(null);
+
   const href = `${base}/house-league/seasons/${season.id}`;
+  const next = NEXT_TRANSITION[season.status] ?? null;
+
+  async function doTransition(newStatus: LeagueSeasonStatus) {
+    setTransitioning(true);
+    setTransitionError(null);
+    try {
+      const res = await fetch(`/api/admin/house-league/seasons/${season.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? 'Failed to update status');
+      setConfirmArchive(false);
+      onTransition();
+    } catch (e: any) {
+      setTransitionError(e.message ?? 'Failed to update season status.');
+    } finally {
+      setTransitioning(false);
+    }
+  }
 
   return (
     <div className={styles.seasonCard}>
@@ -497,7 +534,55 @@ function SeasonCard({
         <Link href={href} className="btn btn-secondary" style={{ fontSize: '0.8rem', padding: '0.35rem 0.75rem' }}>
           View Season →
         </Link>
+
+        {isAdmin && next && (
+          confirmArchive ? (
+            <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center', flexWrap: 'wrap' }}>
+              <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.5)' }}>Archive this season?</span>
+              <button
+                type="button"
+                className="btn btn-danger"
+                style={{ fontSize: '0.75rem', padding: '0.25rem 0.6rem' }}
+                disabled={transitioning}
+                onClick={() => doTransition('archived')}
+              >
+                {transitioning ? 'Archiving…' : 'Confirm'}
+              </button>
+              <button
+                type="button"
+                className="btn btn-ghost"
+                style={{ fontSize: '0.75rem', padding: '0.25rem 0.6rem' }}
+                disabled={transitioning}
+                onClick={() => setConfirmArchive(false)}
+              >
+                Cancel
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              className={next.danger ? 'btn btn-danger' : 'btn btn-secondary'}
+              style={{ fontSize: '0.8rem', padding: '0.35rem 0.75rem' }}
+              disabled={transitioning}
+              onClick={() => {
+                if (next.status === 'archived') {
+                  setConfirmArchive(true);
+                } else {
+                  doTransition(next.status);
+                }
+              }}
+            >
+              {transitioning ? 'Updating…' : next.label}
+            </button>
+          )
+        )}
       </div>
+
+      {transitionError && (
+        <p style={{ fontSize: '0.78rem', color: 'var(--danger)', margin: '0.5rem 0 0' }}>
+          {transitionError}
+        </p>
+      )}
     </div>
   );
 }
