@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Calendar, ChevronLeft, ChevronRight, Plus, X, Trophy, Swords, Shield, Dumbbell, Users } from 'lucide-react';
 import Link from 'next/link';
 import { useOrg } from '@/lib/org-context';
-import styles from '../../../../rep-teams.module.css';
+import styles from '../../../../../rep-teams.module.css';
 import type { RepTeamEvent, RepEventType } from '@/lib/types';
 
 // ── Constants ──────────────────────────────────────────────────────────────────
