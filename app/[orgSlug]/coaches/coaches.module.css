@@ -499,6 +499,59 @@
   margin: 0 auto;
 }
 
+.notAssignedContact {
+  margin-top: 0.5rem !important;
+}
+
+.notAssignedEmailLink {
+  color: var(--blueprint-blue, #4fa3e0);
+  text-decoration: none;
+}
+.notAssignedEmailLink:hover { text-decoration: underline; }
+
+.notAssignedBack {
+  display: inline-block;
+  margin-top: 1.25rem;
+  font-size: 0.85rem;
+  color: rgba(255,255,255,0.45);
+  text-decoration: none;
+  transition: color 0.12s;
+}
+.notAssignedBack:hover { color: rgba(255,255,255,0.8); }
+
+/* ── Sidebar team list sub-label ────────────────────────────────────────── */
+.sidebarTeamInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.sidebarTeamYear {
+  font-size: 0.72rem;
+  color: rgba(255,255,255,0.3);
+  font-weight: 400;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── Accounting info banner ─────────────────────────────────────────────── */
+.infoBanner {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  background: rgba(79, 163, 224, 0.07);
+  border: 1px solid rgba(79, 163, 224, 0.2);
+  border-left: 3px solid var(--blueprint-blue, #4fa3e0);
+  border-radius: 0 8px 8px 0;
+  padding: 0.875rem 1rem;
+  margin-bottom: 1.5rem;
+  font-size: 0.88rem;
+  color: rgba(255,255,255,0.65);
+  line-height: 1.5;
+}
+
 /* ── Calendar (Phase 6J) ──────────────────────────────────────────────────── */
 .viewToggle {
   display: flex;

@@ -51,10 +51,13 @@ export default function CoachesSidebar({ orgSlug }: { orgSlug: string }) {
           >
             {a.teamColor && (
               <span
-                style={{ width: 10, height: 10, borderRadius: 2, background: a.teamColor, flexShrink: 0 }}
+                style={{ width: 10, height: 10, borderRadius: 2, background: a.teamColor, flexShrink: 0, marginTop: 2 }}
               />
             )}
-            {a.teamName}
+            <span className={styles.sidebarTeamInfo}>
+              <span>{a.teamName}</span>
+              <span className={styles.sidebarTeamYear}>{a.programYearName}</span>
+            </span>
           </Link>
         ))}
       </div>

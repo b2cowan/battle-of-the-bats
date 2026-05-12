@@ -16,10 +16,10 @@ This file tracks the ongoing tasks for the tournament website project. AI models
 - [x] **1D** — Fix staff auto-redirect: change target from `/admin/tournaments` to `/admin/dashboard`
 
 **Phase 2 — Coaches portal gaps**
-- [ ] **2A** — Build `CoachesBottomNav` for mobile navigation in the coaches portal
-- [ ] **2B** — Improve "Not assigned" screen: add org contact email and "Back to [org]" link
-- [ ] **2C** — Add unconfigured-state message to coaches accounting page when no dues/expenses exist
-- [ ] **2D** — Show program year name alongside team name in coaches sidebar team list
+- [x] **2A** — Build `CoachesBottomNav` for mobile navigation in the coaches portal
+- [x] **2B** — Improve "Not assigned" screen: add org contact email and "Back to [org]" link
+- [x] **2C** — Add unconfigured-state message to coaches accounting page when no dues/expenses exist
+- [x] **2D** — Show program year name alongside team name in coaches sidebar team list
 
 **Phase 3 — Owner & operator improvements**
 - [ ] **3A** — Expand onboarding checklist: add conditional steps for enabled modules (house league, rep teams, public site)
@@ -81,7 +81,7 @@ This file tracks the ongoing tasks for the tournament website project. AI models
 ## 🧭 Strategy (Post-Roadmap)
 
 - [ ] **In-App Documentation & Help System** — Two-tier help layer: contextual cues (empty states, tooltips, transition callouts) + role-scoped help pages (walkthroughs for every module and role). Full plan in [HELP_SYSTEM_PLAN.md](HELP_SYSTEM_PLAN.md). **Blocked: complete UX Review Phases 1–5 first** (UX 5F empty-state standardization folds into Phase A of this plan; UX 3A/3B/3C/3E/2A add/change pages where help cues will live).
-- [ ] **Pricing & Branding Strategy Review** — Once all Platform Roadmap modules are shipped (Public Site, Accounting, House League, Rep Teams), conduct a full evaluation of: plan tier pricing in light of new module value, add-on pricing model (flat monthly vs. bundled tiers — see D-M1/D-M2 in [PLATFORM_ROADMAP.md](PLATFORM_ROADMAP.md)), whether any reserved modules should be promoted to core, and whether the Starter/Pro/Elite brand naming still fits the expanded product surface. Do not revisit pricing decisions before the roadmap is complete — functionality defines value before pricing follows.
+- [~] **Pricing & Branding Strategy Review** — Full strategy draft in [PRICING_STRATEGY_PLAN.md](PRICING_STRATEGY_PLAN.md). Awaiting user sign-off on 7 open questions before any code changes. Recommendations: Starter/Pro/Club tiers, hybrid à la carte + bundles (League $49/mo, Full Platform $99/mo), Public Site promoted to Pro+Club core, Pro raised to $49/mo.
 - [ ] **Custom domain investigation** — Research feasibility and effort of allowing orgs to point a custom domain (e.g. miltonbats.com) to their FieldLogicHQ public page. Covers: DNS verification flow, wildcard SSL or per-org cert provisioning, reverse proxy / Amplify routing changes, and potential upsell pricing. Do not design or implement until `module_public_site` is fully shipped.
 - [ ] **Public Site Offering Evaluation** — After the first external org enables `module_public_site`, review the offering across three dimensions: (1) ease of setup — is the path from enabling the module to a live page clear enough for a non-technical org owner? (2) customization level — structured fields are correct; assess whether anything is missing without going full CMS; (3) base UX improvements — e.g., contact email is shown on the public page with no surrounding context (needs a label like "Contact Us"), tournament cards need review, social link presentation. Produce a prioritized fix list before moving to the next module.
 

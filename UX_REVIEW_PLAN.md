@@ -55,40 +55,35 @@ Each finding is tagged with a **role**, a **finding ID**, a **priority** (High /
 
 ---
 
-### 2A — No mobile navigation in the coaches portal
+### 2A — No mobile navigation in the coaches portal ✅
 
 - **Finding:** F7-1
-- **File:** `app/[orgSlug]/coaches/layout.tsx` — no `CoachesBottomNav` component referenced
-- **Problem:** The admin shell has `AdminBottomNav`. The coaches layout has only a sidebar. On mobile, coaches cannot navigate between Roster, Schedule, Accounting, and Documents.
-- **Fix:** Create `components/coaches/CoachesBottomNav.tsx` with mobile tabs: My Teams (hub), Schedule (current team), and a "More" drawer for Roster, Accounting, Documents, History. Mount it in `app/[orgSlug]/coaches/layout.tsx` alongside the sidebar (hidden on desktop via CSS, shown on mobile).
-- **Pattern to follow:** `components/admin/AdminBottomNav.tsx` — same section-aware tab pattern, simpler "More" drawer.
+- **Status:** Complete — `CoachesBottomNav` created with My Teams / Schedule (team-scoped) / More drawer (Roster, Accounting, Documents, History, Logout). Mounted in coaches layout. Hidden on desktop via CSS, shown on mobile (≤900px). Blueprint-blue theme matches coaches portal.
+- **Files:** `components/coaches/CoachesBottomNav.tsx`, `components/coaches/CoachesBottomNav.module.css`, `app/[orgSlug]/coaches/layout.tsx`
 
 ---
 
-### 2B — "Not assigned to any teams" is a dead end
+### 2B — "Not assigned to any teams" is a dead end ✅
 
 - **Finding:** F7-5
-- **File:** `app/[orgSlug]/coaches/layout.tsx` lines 28–40
-- **Problem:** A newly-invited coach with no assignments sees a plain text block with no contact info, no CTA, and no next step.
-- **Fix:** Fetch `org.contactEmail` (or the public site's `contactEmail`) and render it as a mailto link with "Questions? Contact [org name]" copy. Also add a "Back to [org name]" link to `/${orgSlug}` so the user has somewhere to go.
+- **Status:** Complete — not-assigned state now shows org name in the message, a mailto link to `org.contactEmail` (or fallback "Contact your org admin" when null), and a "← Back to [org name]" link to `/{orgSlug}`. No additional DB query needed — `contactEmail` was already in `getAuthContext()`.
+- **File:** `app/[orgSlug]/coaches/layout.tsx`
 
 ---
 
-### 2C — Accounting page shows all zeros with no explanation when unconfigured
+### 2C — Accounting page shows all zeros with no explanation when unconfigured ✅
 
 - **Finding:** F7-3
+- **Status:** Complete — informational banner renders above quick-link sections when `budgetAmount === null && duesCollected === 0 && totalExpenses === 0`. Banner text is action-oriented ("Set your team budget above, then track player dues, expenses, and org allocations using the sections below") rather than implying the coach must wait for admin. Banner disappears once any data exists.
 - **File:** `app/[orgSlug]/coaches/teams/[teamId]/accounting/page.tsx`
-- **Problem:** If no dues schedules or expenses exist for the team, the page renders four $0.00 / "—" summary cards with no context. A coach thinks the page is broken.
-- **Fix:** After the summary data loads, check if `budgetAmount === null && duesCollected === 0 && totalExpenses === 0`. If true, render an informational banner above the quick-link sections: "Team accounting hasn't been configured yet. Your org admin will set up dues schedules and cost allocations before this view shows data."
 
 ---
 
-### 2D — Program year not shown in the coaches sidebar team list
+### 2D — Program year not shown in the coaches sidebar team list ✅
 
 - **Finding:** F7-4 (partial)
-- **File:** `components/coaches/CoachesSidebar.tsx` lines 46–59
-- **Problem:** Each team list item shows the team name and a color swatch. The current program year name is not shown. A coach re-opening the portal might not realize they're looking at a "Draft" year from the previous cycle.
-- **Fix:** Add `a.programYearName` as a sub-label under the team name in the team list items. One line of text at reduced opacity — same pattern as the page header.
+- **Status:** Complete — `programYearName` now rendered as a second line below the team name in the sidebar team list, at reduced opacity (0.3). `programYearName` was already in the `CoachingAssignment` type — no new query needed.
+- **File:** `components/coaches/CoachesSidebar.tsx`
 
 ---
 

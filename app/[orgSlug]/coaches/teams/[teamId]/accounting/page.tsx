@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { DollarSign, Users, Receipt, Building2, TrendingUp } from 'lucide-react';
+import { DollarSign, Users, Receipt, Building2, Info } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
 import styles from '../../../coaches.module.css';
 
@@ -174,6 +174,17 @@ export default function CoachesAccountingPage({
               </span>
             </div>
           </div>
+
+          {/* Unconfigured-state banner */}
+          {summary.budgetAmount === null && summary.duesCollected === 0 && summary.totalExpenses === 0 && (
+            <div className={styles.infoBanner}>
+              <Info size={16} style={{ flexShrink: 0, marginTop: 2, color: 'var(--blueprint-blue, #4fa3e0)' }} />
+              <span>
+                No accounting data yet. Set your team budget above, then track player dues,
+                expenses, and org allocations using the sections below.
+              </span>
+            </div>
+          )}
 
           {/* Quick-link sections */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
