@@ -468,23 +468,29 @@ export default function MembersPage() {
                         </button>
                       )}
                       {confirmRemoveId === m.id ? (
-                        <span className={styles.inlineConfirmRow}>
-                          <button
-                            className="btn btn-danger btn-sm"
-                            style={{ fontSize: '0.72rem', padding: '0.2rem 0.5rem' }}
-                            onClick={() => handleRemove(m)}
-                            disabled={removingId === m.id}
-                          >
-                            {removingId === m.id ? '…' : 'Remove'}
-                          </button>
-                          <button
-                            className="btn btn-outline btn-sm"
-                            style={{ fontSize: '0.72rem', padding: '0.2rem 0.5rem' }}
-                            onClick={() => setConfirmRemoveId(null)}
-                          >
-                            Cancel
-                          </button>
-                        </span>
+                        <div className={styles.inlineConfirm}>
+                          <p className={styles.inlineConfirmText}>
+                            This will <strong>permanently delete</strong> their account.
+                            They must be re-invited to regain access.
+                          </p>
+                          <span className={styles.inlineConfirmRow} style={{ marginTop: '0.5rem' }}>
+                            <button
+                              className="btn btn-danger btn-sm"
+                              style={{ fontSize: '0.72rem', padding: '0.2rem 0.5rem' }}
+                              onClick={() => handleRemove(m)}
+                              disabled={removingId === m.id}
+                            >
+                              {removingId === m.id ? '…' : 'Remove'}
+                            </button>
+                            <button
+                              className="btn btn-outline btn-sm"
+                              style={{ fontSize: '0.72rem', padding: '0.2rem 0.5rem' }}
+                              onClick={() => setConfirmRemoveId(null)}
+                            >
+                              Cancel
+                            </button>
+                          </span>
+                        </div>
                       ) : (
                         <button
                           className={styles.iconBtnDanger}
