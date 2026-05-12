@@ -4,10 +4,9 @@ import { usePathname, useRouter } from 'next/navigation';
 import {
   LayoutDashboard, Users, Calendar, Trophy, Megaphone, Tag, LogOut, Home,
   ChevronRight, MapPin, RefreshCw, BookUser, BookOpen, CreditCard, Settings,
-  Users2, Archive, ArrowLeft, Mail, Globe, DollarSign, Receipt,
-  CalendarDays, ClipboardList, Bell, FileText, UserCheck, ExternalLink,
-} from 'lucide-react';
-import { signOut } from '@/lib/auth';
+  Users2, Archive, ArrowLeft, Mail, Globe, DollarSign,
+  CalendarDays, ClipboardList, FileText, UserCheck, ExternalLink,
+} from 'lucide-react';import { signOut } from '@/lib/auth';
 import { useOrg } from '@/lib/org-context';
 import { useTournament } from '@/lib/tournament-context';
 import { hasCapability } from '@/lib/roles';
@@ -171,12 +170,9 @@ export default function AdminSidebar() {
           <div className={styles.navSection}>
             <div className={styles.sectionHeader}>Accounting</div>
             <nav className={styles.nav}>
-              {navLink('accounting', DollarSign, 'Overview',
+              {navLink('accounting', DollarSign, 'Ledgers',
                 `${base}/accounting`,
                 pathname === `${base}/accounting`)}
-              {navLink('accounting-org', Receipt, 'Org Ledger',
-                `${base}/accounting`,
-                false)}
             </nav>
           </div>
         </>
@@ -213,9 +209,6 @@ export default function AdminSidebar() {
                 {navLink('hl-standings', Trophy, 'Standings',
                   `${base}/house-league/seasons/${currentSeasonId}/standings`,
                   pathname.startsWith(`${base}/house-league/seasons/${currentSeasonId}/standings`))}
-                {navLink('hl-notifications', Bell, 'Notifications',
-                  `${base}/house-league/seasons/${currentSeasonId}/notifications`,
-                  pathname.startsWith(`${base}/house-league/seasons/${currentSeasonId}/notifications`))}
               </nav>
             </div>
           )}

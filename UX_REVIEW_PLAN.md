@@ -17,40 +17,35 @@ Each finding is tagged with a **role**, a **finding ID**, a **priority** (High /
 
 ---
 
-### 1A — Multi-tenancy copy leak on the default `/{orgSlug}` page
+### 1A — Multi-tenancy copy leak on the default `/{orgSlug}` page ✅
 
 - **Finding:** F1-1
-- **File:** `app/[orgSlug]/page.tsx` — the `if (!activeTournament)` empty-state block (lines 293–347) and the active-tournament hero section (lines 349–420) both hardcode "BATTLE OF THE BATS", "Milton Bats", and "elite youth softball in Milton". This is the rendering path for every org that does not have `module_public_site` enabled.
-- **Fix:** Replace all hardcoded org-specific copy with dynamic values from the `org` object (`org.name`). Use a generic fallback hero description ("Your next great tournament is on the way.") instead of sport/city-specific copy. The countdown and stats sections are safe because they use DB data.
-- **Scope:** `app/[orgSlug]/page.tsx` — default branch hero section and empty-state section. No DB migration required.
+- **Status:** Complete — default branch replaced with FieldLogicHQ-branded placeholder (0 tournaments) and tournament selector (2+ tournaments). Hardcoded Milton copy removed entirely.
+- **File:** `app/[orgSlug]/page.tsx`
 
 ---
 
-### 1B — Accounting sidebar "Org Ledger" item is broken
+### 1B — Accounting sidebar "Org Ledger" item is broken ✅
 
 - **Finding:** F6-1
-- **File:** `components/admin/AdminSidebar.tsx` lines 177–180
-- **Problem:** The "Org Ledger" nav item links to `${base}/accounting` (same URL as "Overview") and has its active check hardcoded to `false`. Two sidebar items navigate to the same page; one never activates.
-- **Fix option A (preferred):** Remove the "Org Ledger" item. The accounting overview IS the org ledger view — the duplication is redundant.
-- **Fix option B:** Route "Org Ledger" to a real org-specific sub-page if one is intended. Requires confirming the intended destination first.
+- **Status:** Complete — "Overview" renamed to "Ledgers" (accurate label for the current page); "Org Ledger" duplicate removed. A true Overview/dashboard will be built in Phase 4.
+- **File:** `components/admin/AdminSidebar.tsx`
 
 ---
 
-### 1C — House League "Notifications" sidebar link resolves to a 404
+### 1C — House League "Notifications" sidebar link resolves to a 404 ✅
 
 - **Finding:** F5-1
-- **File:** `components/admin/AdminSidebar.tsx` line ~216 links to `.../house-league/seasons/${currentSeasonId}/notifications`
-- **Problem:** No `app/[orgSlug]/admin/house-league/seasons/[seasonId]/notifications/page.tsx` exists in the file tree.
-- **Fix:** Either create the notifications page (the email dispatch API from Phase 5K exists; it needs an admin UI) or remove the sidebar link until the page is built. Remove is safer and faster; the broken link causes an immediate 404 for league admins clicking it.
+- **Status:** Complete (Phase 1 part) — broken sidebar link removed. Notifications page to be built in Phase 3 (item 3E); link will be re-added then.
+- **File:** `components/admin/AdminSidebar.tsx`
 
 ---
 
-### 1D — Staff/single-module auto-redirect sends users to the wrong page
+### 1D — Staff/single-module auto-redirect sends users to the wrong page ✅
 
 - **Finding:** F4-1
-- **File:** `app/[orgSlug]/admin/page.tsx` lines 39–44
-- **Problem:** The hub auto-redirect fires for any user with `module_tournaments` but without `module_members` access, redirecting them to `${base}/tournaments` — the tournament records/management page. A staff member on event day needs Results, Schedule, or Dashboard — not the page used to create tournaments.
-- **Fix:** Change the redirect target to `${base}/dashboard` (the tournament operations dashboard).
+- **Status:** Complete — redirect target changed from `${base}/tournaments` to `${base}/dashboard`.
+- **File:** `app/[orgSlug]/admin/page.tsx`
 
 ---
 

@@ -39,7 +39,7 @@ export default function AdminHub() {
   useEffect(() => {
     if (loading || !userRole || !currentOrg) return;
     if (canSeeTournaments && !canSeeOrgAdmin) {
-      router.replace(`${base}/tournaments`);
+      router.replace(`${base}/dashboard`);
     }
   }, [loading, userRole, currentOrg, canSeeTournaments, canSeeOrgAdmin, base, router]);
 

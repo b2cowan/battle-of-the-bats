@@ -6,58 +6,14 @@ This file tracks the ongoing tasks for the tournament website project. AI models
 
 ## 🚀 Active Tasks (Priority Order)
 
-### 1. Platform Admin — Superuser Tooling
-*Authoritative plan in [PLATFORM_ADMIN_IMPROVEMENTS_PLAN.md](docs/archive/PLATFORM_ADMIN_IMPROVEMENTS_PLAN.md)*
-
-- [x] **Phase A** — `enabled_addons` toggle UI + direct admin link (unblocks `module_public_site` production enablement)
-- [x] **Phase B** — Users page org context enrichment (no migration)
-- [x] **Phase E1+E2** — Platform audit log table + write helper (bundle with Phase A so all new routes log from day one)
-- [x] **Phase C** — Org notes column + drill-down detail page
-- [x] **Phase D** — `org_overrides` table: subscription status override + comp/billing grace period
-- [x] **Phase E3** — Audit log read page at `/platform-admin/audit`
-- [x] **Phase F** — Org search/filter + users pagination
-
-### 2. Platform Roadmap — Add-On Modules
-*Authoritative plan in [PLATFORM_ROADMAP.md](PLATFORM_ROADMAP.md)*
-
-- [x] **Phase 1** — Archives B2: back-to-admin link on public archive detail pages
-- [x] **Phase 2** — Plan entitlements architecture: `moduleEntitlements` in PlanConfig, `enabled_addons` migration, `hasModuleEntitlement()` helper
-- [x] **Phase 3** — `module_public_site` (see [docs/archive/PUBLIC_SITE_MODULE_PLAN.md](docs/archive/PUBLIC_SITE_MODULE_PLAN.md))
-- [x] **Phase 4** — `module_accounting` (see [ACCOUNTING_MODULE_PLAN.md](docs/archive/ACCOUNTING_MODULE_PLAN.md))
-- [x] **Phase 5** — `module_house_league` (see [HOUSE_LEAGUE_MODULE_PLAN.md](docs/archive/HOUSE_LEAGUE_MODULE_PLAN.md)) — All phases 5A–5M complete: migration, roles, types/helpers, module shell, season/division management, public registration form, registration admin, team placement + draft, scheduling, standings, scoped email dispatch, accounting integration, past seasons pages, practice scheduling with recurrence.
-- [x] **Phase 6** — `module_rep_teams` (see [REP_TEAMS_MODULE_PLAN.md](REP_TEAMS_MODULE_PLAN.md)) — **All phases complete. Pending browser verification.**
-  - [x] **6A** — DB schema: Migration 021 + Supabase Storage bucket setup
-  - [x] **6B** — TypeScript types + DB helpers
-  - [x] **6C** — C2 coach role expansion + module shell (5 layers: route gate, page guard, sidebar, hub tile, layout)
-  - [x] **6D** — Team + program year management (admin API + pages)
-  - [x] **6E** — Public tryout registration form (C5 pattern: public form, API, confirmation emails)
-  - [x] **6F** — Tryout approval queue (admin): offer → accept/decline flow + status emails
-  - [x] **6G** — Roster management (coaches portal: foundation + roster list + player detail; franchise model — coaches are primary operators)
-  - [x] **6H** — Player documents (C4 Supabase Storage: upload API, signed URLs, template management)
-  - [x] **6I** — Coaches portal foundation (pulled into 6G: layout, auth guard, sidebar, context, dashboard, team overview)
-  - [x] **6J** — Coaches portal: unified team calendar (6 event types + Phase 5M practice recurrence)
-  - [x] **6K** — Accounting: org cost allocation + team payment schedules + org real-time view
-  - [x] **6L** — Accounting: coach-managed team budget (player dues, expenses, tournament payables)
-  - [x] **6M** — Accounting: automated payment reminder emails (coach-initiated, franchise model; `send-reminders` route under coaches API)
-  - [x] **6N** — Past program years (admin history + coaches portal history, read-only)
-  - [x] **Module gating test** — checklist written; awaiting browser verification by user
-
-### 2. Future Product Modules (detail)
-*Recommended build order: Accounting → House League → Rep Teams. Each requires its own detailed plan file before implementation begins.*
-
-- [x] **Public Website Module (`module_public_site`)** — Shipped. (see [docs/archive/PUBLIC_SITE_MODULE_PLAN.md](docs/archive/PUBLIC_SITE_MODULE_PLAN.md))
-- [x] **Accounting Module (`module_accounting`)** — The org's own financial management: income/expense tracking, tournament ledgers, inter-ledger transfers. Plan: [ACCOUNTING_MODULE_PLAN.md](docs/archive/ACCOUNTING_MODULE_PLAN.md).
-- [x] **House League Module (`module_house_league`)** — Season-long recreational league management: player registration, waitlists, team placement + draft, scheduling, standings, scoped email dispatch, accounting integration, past seasons, practice scheduling. Plan: [HOUSE_LEAGUE_MODULE_PLAN.md](docs/archive/HOUSE_LEAGUE_MODULE_PLAN.md). All phases 5A–5M complete.
-- [x] **Rep Team Module (`module_rep_teams`)** — Competitive team program management: coaches portal, rosters, tryout management, player documents, three-tier accounting integration. Plan: [REP_TEAMS_MODULE_PLAN.md](REP_TEAMS_MODULE_PLAN.md). All phases 6A–6N complete. Pending browser verification.
-
-### 3. UX Improvements — Role-Based Findings
+### 1. UX Improvements — Role-Based Findings
 *Authoritative plan in [UX_REVIEW_PLAN.md](UX_REVIEW_PLAN.md)*
 
 **Phase 1 — Critical bugs & multi-tenancy (do before onboarding any new org)**
-- [ ] **1A** — Fix multi-tenancy copy leak: replace hardcoded "Battle of the Bats" / Milton copy on default `/{orgSlug}` page
-- [ ] **1B** — Fix broken "Org Ledger" accounting sidebar item (points to same URL as Overview, never active)
-- [ ] **1C** — Remove House League "Notifications" sidebar link (currently resolves to a 404)
-- [ ] **1D** — Fix staff auto-redirect: change target from `/admin/tournaments` to `/admin/dashboard`
+- [x] **1A** — Replace default `/{orgSlug}` page: FieldLogicHQ-branded placeholder (no public site), tournament selector for 2+ active tournaments
+- [x] **1B** — Fix accounting sidebar: rename "Overview" → "Ledgers", remove broken "Org Ledger" duplicate
+- [x] **1C** — Remove House League "Notifications" sidebar link (currently resolves to a 404)
+- [x] **1D** — Fix staff auto-redirect: change target from `/admin/tournaments` to `/admin/dashboard`
 
 **Phase 2 — Coaches portal gaps**
 - [ ] **2A** — Build `CoachesBottomNav` for mobile navigation in the coaches portal
@@ -95,31 +51,21 @@ This file tracks the ongoing tasks for the tournament website project. AI models
 - [ ] **5H** — Audit Official/Scorekeeper score entry page for mobile UX (tap targets, contrast, slow-network handling)
 - [ ] **5I** — House league public registration form: show division capacity, add post-registration status lookup
 
-### 4. Tournament Landing Page Polish
-*One outstanding item from the completed Tournament Redesign project*
+### 2. Tournament Admin URL Restructure
+*Full plan in [TOURNAMENT_URL_RESTRUCTURE_PLAN.md](TOURNAMENT_URL_RESTRUCTURE_PLAN.md)*
 
-- [x] **Tournament Landing Page Review** — Hero title now dynamic from `tournament.name`; remaining polish (registration CTA) deferred
+- [ ] Move all tournament operational pages from `admin/{page}` to `admin/tournaments/{page}` to match module URL pattern (do after Phase 1 UX fixes are committed)
 
-### 6. Multi-Tenancy — Billing & Subscriptions
+### 3. Multi-Tenancy — Billing & Subscriptions
 *Detailed tasks in [MULTI_TENANT_ARCHITECTURE.md](MULTI_TENANT_ARCHITECTURE.md)*
 
 - [ ] **Phase 5** — Billing & Subscriptions: Stripe account setup and testing remaining
 
-### 7. Code Quality — Pre-existing TypeScript Errors in `lib/db.ts`
+### 4. Email Strategy
 
-- [x] **Fix 9 implicit `any` parameters in row-mapper callbacks** — `getDiamonds`, `getContacts`, `getAgeGroups`, `getPools`, `getTeams`, `getGames`, `getAnnouncements`, `getRules`, `getResources` (each `.map()` callback param needs `: any`). Also remove unused `fileExt` var and unused `data` destructure in `uploadResourceFile`. All pre-existing; discovered during accounting module work. One small commit, no behaviour change.
-
-### 8. Infrastructure — Dev Environment
-- [x] **AWS Amplify Hosting Strategy** — Branch-based deployment, `dev.fieldlogichq.ca`, per-branch env var scoping (see [AMPLIFY_DEV_ENV_PLAN.md](AMPLIFY_DEV_ENV_PLAN.md))
-- [x] **Live Dev Environment** — Create the live development environment on AWS Amplify `dev` branch (see [docs/archive/AMPLIFY_DEV_ENV_PLAN.md](docs/archive/AMPLIFY_DEV_ENV_PLAN.md))
-
-### 9. Email Strategy
 - [ ] **Email Strategy Investigation**:
     - [ ] Investigate best-of-breed providers (Resend, Postmark, AWS SES) for system notifications
     - [ ] Define the architecture for a "Contact Us" inquiry system
-
-### 10. Auth & Membership Constraints
-- [x] **One-user-one-org enforcement** — Delete auth user on member removal; cross-org invite guard (see [docs/archive/ONE_ORG_CONSTRAINT_PLAN.md](docs/archive/ONE_ORG_CONSTRAINT_PLAN.md))
 
 ---
 
@@ -134,9 +80,7 @@ This file tracks the ongoing tasks for the tournament website project. AI models
 
 ## 🧭 Strategy (Post-Roadmap)
 
-- [ ] **In-App Documentation & Help System** — Research all sections and user roles across the platform and design a documentation layer that surfaces help without cluttering pages. Two tiers: (1) **Contextual in-app cues** — empty-state guidance, tooltip hints, section intros, and inline explainers placed at natural decision points (e.g. "What is a program year?", "When should I mark a season Active?"); (2) **Help pages** — role-scoped walkthroughs for first-time users covering real-world workflows such as: coach setting up a rep team for the season, house league admin building teams and running a draft, treasurer handling common accounting scenarios (entry categories, transfers, reconciling tournament income), org owner onboarding a new season from scratch. Research should audit every module (tournaments, house league, rep teams, accounting, public site, org admin) and every role (owner, admin, treasurer, league_admin, league_registrar, coach, official) before any writing or implementation begins. Do not start until all Platform Roadmap modules are complete.
-
-- [x] **Role-Based UX Improvement Review** — *(Complete)* Full review executed 2026-05-11 across all user roles. Findings in [UX_REVIEW_PLAN.md](UX_REVIEW_PLAN.md); 32 actionable items tracked in TODO.md Section 3.
+- [ ] **In-App Documentation & Help System** — Two-tier help layer: contextual cues (empty states, tooltips, transition callouts) + role-scoped help pages (walkthroughs for every module and role). Full plan in [HELP_SYSTEM_PLAN.md](HELP_SYSTEM_PLAN.md). **Blocked: complete UX Review Phases 1–5 first** (UX 5F empty-state standardization folds into Phase A of this plan; UX 3A/3B/3C/3E/2A add/change pages where help cues will live).
 - [ ] **Pricing & Branding Strategy Review** — Once all Platform Roadmap modules are shipped (Public Site, Accounting, House League, Rep Teams), conduct a full evaluation of: plan tier pricing in light of new module value, add-on pricing model (flat monthly vs. bundled tiers — see D-M1/D-M2 in [PLATFORM_ROADMAP.md](PLATFORM_ROADMAP.md)), whether any reserved modules should be promoted to core, and whether the Starter/Pro/Elite brand naming still fits the expanded product surface. Do not revisit pricing decisions before the roadmap is complete — functionality defines value before pricing follows.
 - [ ] **Custom domain investigation** — Research feasibility and effort of allowing orgs to point a custom domain (e.g. miltonbats.com) to their FieldLogicHQ public page. Covers: DNS verification flow, wildcard SSL or per-org cert provisioning, reverse proxy / Amplify routing changes, and potential upsell pricing. Do not design or implement until `module_public_site` is fully shipped.
 - [ ] **Public Site Offering Evaluation** — After the first external org enables `module_public_site`, review the offering across three dimensions: (1) ease of setup — is the path from enabling the module to a live page clear enough for a non-technical org owner? (2) customization level — structured fields are correct; assess whether anything is missing without going full CMS; (3) base UX improvements — e.g., contact email is shown on the public page with no surrounding context (needs a label like "Contact Us"), tournament cards need review, social link presentation. Produce a prioritized fix list before moving to the next module.
@@ -145,9 +89,59 @@ This file tracks the ongoing tasks for the tournament website project. AI models
 
 ## ✅ Completed Projects
 
-### Platform Roadmap — Foundation (Phases 1–2)
-- [x] Plan entitlements architecture (`moduleEntitlements`, `enabled_addons`, `hasModuleEntitlement()`)
-- [x] Archives B2: back-to-admin link on public archive pages
+### Platform Admin — Superuser Tooling
+*(see [PLATFORM_ADMIN_IMPROVEMENTS_PLAN.md](docs/archive/PLATFORM_ADMIN_IMPROVEMENTS_PLAN.md))*
+- [x] **Phase A** — `enabled_addons` toggle UI + direct admin link
+- [x] **Phase B** — Users page org context enrichment
+- [x] **Phase C** — Org notes column + drill-down detail page
+- [x] **Phase D** — `org_overrides` table: subscription status override + comp/billing grace period
+- [x] **Phase E1+E2** — Platform audit log table + write helper
+- [x] **Phase E3** — Audit log read page at `/platform-admin/audit`
+- [x] **Phase F** — Org search/filter + users pagination
+- [x] Platform company users — DB-managed platform admin access (`platform_users` table, invite/deactivate/remove UI)
+
+### Platform Roadmap — Add-On Modules
+*(see [PLATFORM_ROADMAP.md](PLATFORM_ROADMAP.md))*
+- [x] **Phase 1** — Archives B2: back-to-admin link on public archive detail pages
+- [x] **Phase 2** — Plan entitlements architecture: `moduleEntitlements` in PlanConfig, `enabled_addons` migration, `hasModuleEntitlement()` helper
+- [x] **Phase 3** — `module_public_site` (see [docs/archive/PUBLIC_SITE_MODULE_PLAN.md](docs/archive/PUBLIC_SITE_MODULE_PLAN.md))
+- [x] **Phase 4** — `module_accounting` (see [ACCOUNTING_MODULE_PLAN.md](docs/archive/ACCOUNTING_MODULE_PLAN.md))
+- [x] **Phase 5** — `module_house_league` — All phases 5A–5M complete (see [HOUSE_LEAGUE_MODULE_PLAN.md](docs/archive/HOUSE_LEAGUE_MODULE_PLAN.md))
+- [x] **Phase 6** — `module_rep_teams` — All phases 6A–6N complete (see [REP_TEAMS_MODULE_PLAN.md](REP_TEAMS_MODULE_PLAN.md))
+  - [x] 6A — DB schema: Migration 021 + Supabase Storage bucket setup
+  - [x] 6B — TypeScript types + DB helpers
+  - [x] 6C — Coach role expansion + module shell
+  - [x] 6D — Team + program year management (admin API + pages)
+  - [x] 6E — Public tryout registration form
+  - [x] 6F — Tryout approval queue (admin): offer → accept/decline flow + status emails
+  - [x] 6G — Roster management (coaches portal; franchise model)
+  - [x] 6H — Player documents (Supabase Storage: upload API, signed URLs, template management)
+  - [x] 6I — Coaches portal foundation (layout, auth guard, sidebar, context, dashboard)
+  - [x] 6J — Coaches portal: unified team calendar (6 event types + recurrence)
+  - [x] 6K — Accounting: org cost allocation + team payment schedules
+  - [x] 6L — Accounting: coach-managed team budget (dues, expenses, tournament payables)
+  - [x] 6M — Accounting: automated payment reminder emails (coach-initiated)
+  - [x] 6N — Past program years (admin history + coaches portal history, read-only)
+  - [x] Franchise model audit — 9 violations fixed across admin/coaches layers
+
+### Role-Based UX Improvement Review
+- [x] Full review executed 2026-05-11 across all user roles. Findings in [UX_REVIEW_PLAN.md](UX_REVIEW_PLAN.md); 32 actionable items tracked in TODO.md Section 1.
+
+### Infrastructure — Dev Environment
+*(see [AMPLIFY_DEV_ENV_PLAN.md](docs/archive/AMPLIFY_DEV_ENV_PLAN.md))*
+- [x] AWS Amplify Hosting Strategy — branch-based deployment, `dev.fieldlogichq.ca`, per-branch env var scoping
+- [x] Live Dev Environment — AWS Amplify `dev` branch live
+- [x] RESEND_API_KEY added to Amplify environment variables
+- [x] NEXT_PUBLIC_APP_URL added to Amplify environment variables
+
+### Auth & Membership Constraints
+- [x] One-user-one-org enforcement — delete auth user on member removal; cross-org invite guard (see [docs/archive/ONE_ORG_CONSTRAINT_PLAN.md](docs/archive/ONE_ORG_CONSTRAINT_PLAN.md))
+
+### Code Quality
+- [x] Fix 9 implicit `any` parameters in `lib/db.ts` row-mapper callbacks
+
+### Tournament Landing Page Polish
+- [x] Hero title now dynamic from `tournament.name`; remaining registration CTA polish deferred
 
 ### Platform Improvements — Phases 1–3
 *(see [PLATFORM_IMPROVEMENTS_PLAN.md](docs/archive/PLATFORM_IMPROVEMENTS_PLAN.md))*
@@ -203,10 +197,6 @@ This file tracks the ongoing tasks for the tournament website project. AI models
 ### Platform Administration (Super Admin)
 *(see [PLATFORM_ADMIN_PLAN.md](PLATFORM_ADMIN_PLAN.md))*
 - [x] Site Admin Dashboard — email-allowlist auth guard, org plan override, user password reset, global stats
-
-### Infrastructure
-- [x] RESEND_API_KEY added to Amplify environment variables
-- [x] NEXT_PUBLIC_APP_URL added to Amplify environment variables (`https://www.fieldlogichq.ca`)
 
 ### Other
 - [x] Brand Pivot — sports-authority copy across landing page, auth pages, navbar
