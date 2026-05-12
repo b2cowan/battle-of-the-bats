@@ -3886,9 +3886,228 @@ export async function getRepAllocationSplitsForTeam(
   return result;
 }
 
-// ── Platform users ────────────────────────────────────────────────────────────
+// ── 6M: Due reminder helpers ──────────────────────────────────────────────────
 
-import type { PlatformUser } from './types';
+import type {
+  RepDueReminderCandidate,
+  RepPastProgramYear,
+  RepTeamHistoryYear,
+  PlatformUser,
+} from './types';
+
+export async function getDueReminderCandidates(
+  teamId: string,
+  daysAhead: number,
+): Promise<RepDueReminderCandidate[]> {
+  const programYear = await getActiveRepProgramYear(teamId);
+  if (!programYear) return [];
+
+  const { data: schedules, error: sErr } = await supabaseAdmin
+    .from('rep_player_dues_schedules')
+    .select('id, player_id, total_amount')
+    .eq('program_year_id', programYear.id);
+  if (sErr) throw sErr;
+  if (!schedules?.length) return [];
+
+  const scheduleIds = schedules.map((s: any) => s.id);
+
+  const { data: allInst, error: iErr } = await supabaseAdmin
+    .from('rep_player_dues_installments')
+    .select('*')
+    .in('schedule_id', scheduleIds);
+  if (iErr) throw iErr;
+  const allInstallments: any[] = allInst ?? [];
+
+  // Total installment count per schedule (for "N of M" display)
+  const totalBySchedule: Record<string, number> = {};
+  for (const i of allInstallments) {
+    totalBySchedule[i.schedule_id] = (totalBySchedule[i.schedule_id] ?? 0) + 1;
+  }
+
+  const today = new Date();
+  const cutoff = new Date(today);
+  cutoff.setDate(cutoff.getDate() + daysAhead);
+  const todayStr = today.toISOString().slice(0, 10);
+  const cutoffStr = cutoff.toISOString().slice(0, 10);
+  const sevenDaysAgo = new Date(today);
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+  const candidates = allInstallments.filter(i => {
+    if (i.paid_at) return false;
+    if (i.due_date < todayStr || i.due_date > cutoffStr) return false;
+    if (i.reminder_sent_at && new Date(i.reminder_sent_at) >= sevenDaysAgo) return false;
+    return true;
+  });
+
+  if (!candidates.length) return [];
+
+  const playerIds = [...new Set(candidates.map((c: any) => c.player_id))];
+  const { data: players, error: pErr } = await supabaseAdmin
+    .from('rep_roster_players')
+    .select('id, player_first_name, player_last_name, guardian_first_name, guardian_last_name, guardian_email')
+    .in('id', playerIds);
+  if (pErr) throw pErr;
+  const playerMap = new Map((players ?? []).map((p: any) => [p.id, p]));
+
+  const team = await getRepTeam(teamId);
+
+  return candidates.map((i: any) => {
+    const p = playerMap.get(i.player_id);
+    return {
+      installmentId: i.id,
+      scheduleId: i.schedule_id,
+      playerId: i.player_id,
+      playerFirstName: p?.player_first_name ?? '',
+      playerLastName: p?.player_last_name ?? '',
+      guardianFirstName: p?.guardian_first_name ?? null,
+      guardianLastName: p?.guardian_last_name ?? null,
+      guardianEmail: p?.guardian_email ?? null,
+      teamId,
+      teamName: team?.name ?? '',
+      installmentNumber: i.installment_number,
+      totalInstallments: totalBySchedule[i.schedule_id] ?? 1,
+      amount: Number(i.amount),
+      dueDate: i.due_date,
+    };
+  });
+}
+
+export async function markInstallmentsReminderSent(installmentIds: string[]): Promise<void> {
+  if (!installmentIds.length) return;
+  const { error } = await supabaseAdmin
+    .from('rep_player_dues_installments')
+    .update({ reminder_sent_at: new Date().toISOString() })
+    .in('id', installmentIds);
+  if (error) throw error;
+}
+
+// ── 6N: Past program year helpers ─────────────────────────────────────────────
+
+export async function getRepPastProgramYears(orgId: string): Promise<RepPastProgramYear[]> {
+  const { data: years, error: yErr } = await supabaseAdmin
+    .from('rep_program_years')
+    .select('*')
+    .eq('org_id', orgId)
+    .in('status', ['completed', 'archived'])
+    .order('year', { ascending: false });
+  if (yErr) throw yErr;
+  if (!years?.length) return [];
+
+  const teamIds = [...new Set(years.map((y: any) => y.team_id))];
+  const { data: teams, error: tErr } = await supabaseAdmin
+    .from('rep_teams')
+    .select('id, name, color, age_group')
+    .in('id', teamIds);
+  if (tErr) throw tErr;
+  const teamMap = new Map((teams ?? []).map((t: any) => [t.id, t]));
+
+  const yearIds = years.map((y: any) => y.id);
+  const { data: rosterCounts, error: rErr } = await supabaseAdmin
+    .from('rep_roster_players')
+    .select('program_year_id')
+    .in('program_year_id', yearIds);
+  if (rErr) throw rErr;
+  const countMap: Record<string, number> = {};
+  for (const r of rosterCounts ?? []) {
+    countMap[r.program_year_id] = (countMap[r.program_year_id] ?? 0) + 1;
+  }
+
+  return years.map((y: any) => {
+    const t = teamMap.get(y.team_id);
+    return {
+      id: y.id,
+      teamId: y.team_id,
+      teamName: t?.name ?? '',
+      teamColor: t?.color ?? null,
+      teamAgeGroup: t?.age_group ?? null,
+      orgId: y.org_id,
+      name: y.name,
+      year: y.year,
+      status: y.status,
+      rosterCount: countMap[y.id] ?? 0,
+      createdAt: y.created_at,
+      updatedAt: y.updated_at,
+    };
+  });
+}
+
+export async function getRepTeamHistory(teamId: string): Promise<RepTeamHistoryYear[]> {
+  const team = await getRepTeam(teamId);
+  if (!team) return [];
+
+  const { data: years, error: yErr } = await supabaseAdmin
+    .from('rep_program_years')
+    .select('*')
+    .eq('team_id', teamId)
+    .in('status', ['completed', 'archived'])
+    .order('year', { ascending: false });
+  if (yErr) throw yErr;
+  if (!years?.length) return [];
+
+  const yearIds = years.map((y: any) => y.id);
+
+  const [rosterRes, eventRes, tryoutRes] = await Promise.all([
+    supabaseAdmin.from('rep_roster_players').select('program_year_id').in('program_year_id', yearIds),
+    supabaseAdmin
+      .from('rep_team_events')
+      .select('program_year_id, result')
+      .in('program_year_id', yearIds)
+      .in('event_type', ['league_game', 'scrimmage', 'external_tournament'])
+      .not('result', 'is', null),
+    supabaseAdmin
+      .from('rep_tryout_registrations')
+      .select('program_year_id, status')
+      .in('program_year_id', yearIds),
+  ]);
+  if (rosterRes.error) throw rosterRes.error;
+  if (eventRes.error) throw eventRes.error;
+  if (tryoutRes.error) throw tryoutRes.error;
+
+  const rosterCount: Record<string, number> = {};
+  for (const r of rosterRes.data ?? []) {
+    rosterCount[r.program_year_id] = (rosterCount[r.program_year_id] ?? 0) + 1;
+  }
+
+  const wins: Record<string, number> = {};
+  const losses: Record<string, number> = {};
+  const ties: Record<string, number> = {};
+  for (const e of eventRes.data ?? []) {
+    if (e.result === 'win') wins[e.program_year_id] = (wins[e.program_year_id] ?? 0) + 1;
+    else if (e.result === 'loss') losses[e.program_year_id] = (losses[e.program_year_id] ?? 0) + 1;
+    else if (e.result === 'tie') ties[e.program_year_id] = (ties[e.program_year_id] ?? 0) + 1;
+  }
+
+  const tryoutTotal: Record<string, number> = {};
+  const tryoutAccepted: Record<string, number> = {};
+  for (const t of tryoutRes.data ?? []) {
+    tryoutTotal[t.program_year_id] = (tryoutTotal[t.program_year_id] ?? 0) + 1;
+    if (t.status === 'accepted') {
+      tryoutAccepted[t.program_year_id] = (tryoutAccepted[t.program_year_id] ?? 0) + 1;
+    }
+  }
+
+  return years.map((y: any) => ({
+    id: y.id,
+    teamId: y.team_id,
+    teamName: team.name,
+    teamColor: team.color ?? null,
+    teamAgeGroup: team.ageGroup ?? null,
+    orgId: y.org_id,
+    name: y.name,
+    year: y.year,
+    status: y.status,
+    rosterCount: rosterCount[y.id] ?? 0,
+    wins: wins[y.id] ?? 0,
+    losses: losses[y.id] ?? 0,
+    ties: ties[y.id] ?? 0,
+    tryoutTotal: tryoutTotal[y.id] ?? 0,
+    tryoutAccepted: tryoutAccepted[y.id] ?? 0,
+    createdAt: y.created_at,
+    updatedAt: y.updated_at,
+  }));
+}
+
+// ── Platform users ────────────────────────────────────────────────────────────
 
 function mapPlatformUser(r: any): PlatformUser {
   return {

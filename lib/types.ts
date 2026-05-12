@@ -648,6 +648,46 @@ export interface RepPlayerDuesInstallment {
   createdAt: string;
 }
 
+export interface RepDueReminderCandidate {
+  installmentId: string;
+  scheduleId: string;
+  playerId: string;
+  playerFirstName: string;
+  playerLastName: string;
+  guardianFirstName: string | null;
+  guardianLastName: string | null;
+  guardianEmail: string | null;
+  teamId: string;
+  teamName: string;
+  installmentNumber: number;
+  totalInstallments: number;
+  amount: number;
+  dueDate: string;
+}
+
+export interface RepPastProgramYear {
+  id: string;
+  teamId: string;
+  teamName: string;
+  teamColor: string | null;
+  teamAgeGroup: string | null;
+  orgId: string;
+  name: string;
+  year: number;
+  status: 'completed' | 'archived';
+  rosterCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface RepTeamHistoryYear extends RepPastProgramYear {
+  wins: number;
+  losses: number;
+  ties: number;
+  tryoutTotal: number;
+  tryoutAccepted: number;
+}
+
 export interface RepTeamExpense {
   id: string;
   programYearId: string;

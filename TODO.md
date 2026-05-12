@@ -25,7 +25,7 @@ This file tracks the ongoing tasks for the tournament website project. AI models
 - [x] **Phase 3** — `module_public_site` (see [docs/archive/PUBLIC_SITE_MODULE_PLAN.md](docs/archive/PUBLIC_SITE_MODULE_PLAN.md))
 - [x] **Phase 4** — `module_accounting` (see [ACCOUNTING_MODULE_PLAN.md](docs/archive/ACCOUNTING_MODULE_PLAN.md))
 - [x] **Phase 5** — `module_house_league` (see [HOUSE_LEAGUE_MODULE_PLAN.md](docs/archive/HOUSE_LEAGUE_MODULE_PLAN.md)) — All phases 5A–5M complete: migration, roles, types/helpers, module shell, season/division management, public registration form, registration admin, team placement + draft, scheduling, standings, scoped email dispatch, accounting integration, past seasons pages, practice scheduling with recurrence.
-- [ ] **Phase 6** — `module_rep_teams` (see [REP_TEAMS_MODULE_PLAN.md](REP_TEAMS_MODULE_PLAN.md))
+- [x] **Phase 6** — `module_rep_teams` (see [REP_TEAMS_MODULE_PLAN.md](REP_TEAMS_MODULE_PLAN.md)) — **All phases complete. Pending browser verification.**
   - [x] **6A** — DB schema: Migration 021 + Supabase Storage bucket setup
   - [x] **6B** — TypeScript types + DB helpers
   - [x] **6C** — C2 coach role expansion + module shell (5 layers: route gate, page guard, sidebar, hub tile, layout)
@@ -38,9 +38,9 @@ This file tracks the ongoing tasks for the tournament website project. AI models
   - [x] **6J** — Coaches portal: unified team calendar (6 event types + Phase 5M practice recurrence)
   - [x] **6K** — Accounting: org cost allocation + team payment schedules + org real-time view
   - [x] **6L** — Accounting: coach-managed team budget (player dues, expenses, tournament payables)
-  - [ ] **6M** — Accounting: automated payment reminder emails with paid-status awareness
-  - [ ] **6N** — Past program years (admin history + coaches portal history, read-only)
-  - [ ] **Module gating test** — 5-layer verification + coach role team-scope test
+  - [x] **6M** — Accounting: automated payment reminder emails (coach-initiated, franchise model; `send-reminders` route under coaches API)
+  - [x] **6N** — Past program years (admin history + coaches portal history, read-only)
+  - [x] **Module gating test** — checklist written; awaiting browser verification by user
 
 ### 2. Future Product Modules (detail)
 *Recommended build order: Accounting → House League → Rep Teams. Each requires its own detailed plan file before implementation begins.*

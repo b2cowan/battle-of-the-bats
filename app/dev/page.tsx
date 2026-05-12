@@ -1,6 +1,5 @@
 'use client';
 import { useEffect, useState, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
 import {
   Building2, Users, Trophy, CalendarDays, UserCheck, Shield,
   Lock, RefreshCw, Trash2, CheckCircle, AlertCircle, Loader,
@@ -109,17 +108,11 @@ function SeedCard({
 }
 
 export default function DevDashboard() {
-  const router  = useRouter();
   const [status, setStatus]   = useState<Status | null>(null);
   const [busy,   setBusy]     = useState<Record<string, boolean>>({});
   const [results, setResults] = useState<Record<string, SeedResult | null>>({});
   const [wiping,  setWiping]  = useState(false);
   const [wipeResult, setWipeResult] = useState<SeedResult | null>(null);
-
-  if (process.env.NEXT_PUBLIC_ENABLE_DEV_TOOLS !== 'true') {
-    router.replace('/');
-    return null;
-  }
 
   const fetchStatus = useCallback(async () => {
     const res = await fetch('/api/dev/seed/status');

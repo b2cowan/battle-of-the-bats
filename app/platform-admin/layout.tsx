@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
-import { LayoutDashboard, Building2, Users, ScrollText } from 'lucide-react';
+import { LayoutDashboard, Building2, Users, ScrollText, Terminal } from 'lucide-react';
 import { getPlatformAuthContext } from '@/lib/platform-auth';
 import styles from './platform-admin.module.css';
 
@@ -12,6 +12,9 @@ const NAV = [
   { href: '/platform-admin/orgs',  label: 'Organizations',  Icon: Building2       },
   { href: '/platform-admin/users', label: 'Users',          Icon: Users           },
   { href: '/platform-admin/audit', label: 'Audit Log',      Icon: ScrollText      },
+  ...(process.env.NEXT_PUBLIC_ENABLE_DEV_TOOLS === 'true'
+    ? [{ href: '/dev', label: 'Dev Tools', Icon: Terminal }]
+    : []),
 ];
 
 export default async function PlatformAdminLayout({

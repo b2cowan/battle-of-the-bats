@@ -72,6 +72,10 @@ export default function CoachesDuesPage({
   const [applyAllSaving, setApplyAllSaving] = useState(false);
   const [applyAllError, setApplyAllError] = useState('');
 
+  const [sendingReminders, setSendingReminders] = useState(false);
+  const [reminderResult, setReminderResult] = useState<{ emailsSent: number; installmentsTagged: number } | null>(null);
+  const [reminderError, setReminderError] = useState('');
+
   const assignment = assignments.find(a => a.teamId === teamId);
   const base = `/${orgSlug}/coaches/teams/${teamId}`;
 
@@ -206,6 +210,22 @@ export default function CoachesDuesPage({
     }
   }
 
+  async function sendReminders() {
+    setSendingReminders(true);
+    setReminderError('');
+    setReminderResult(null);
+    try {
+      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/dues/send-reminders`, { method: 'POST' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? 'Failed to send reminders');
+      setReminderResult({ emailsSent: data.emailsSent, installmentsTagged: data.installmentsTagged });
+    } catch (e: any) {
+      setReminderError(e.message ?? 'Failed to send reminders.');
+    } finally {
+      setSendingReminders(false);
+    }
+  }
+
   function addInstallmentRow(rows: InstallmentRow[], setRows: (r: InstallmentRow[]) => void) {
     setRows([...rows, { installmentNumber: rows.length + 1, amount: '', dueDate: '' }]);
   }
@@ -243,9 +263,34 @@ export default function CoachesDuesPage({
             <p className={styles.pageSub}>{assignment.programYearName}</p>
           </div>
         </div>
-        <button className={styles.btnSecondary} onClick={() => { setApplyAllOpen(true); setApplyAllError(''); }}>
-          Set dues for all players
-        </button>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.5rem' }}>
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <button className={styles.btnSecondary} onClick={() => { setApplyAllOpen(true); setApplyAllError(''); }}>
+              Set dues for all players
+            </button>
+            <button
+              className={styles.btnSecondary}
+              onClick={sendReminders}
+              disabled={sendingReminders}
+              style={{ opacity: sendingReminders ? 0.6 : 1 }}
+            >
+              {sendingReminders ? 'Sending…' : 'Send Due Reminders'}
+            </button>
+          </div>
+          {reminderResult && reminderResult.emailsSent > 0 && (
+            <span style={{ fontSize: '0.8rem', color: '#4ade80' }}>
+              Sent {reminderResult.emailsSent} reminder email{reminderResult.emailsSent !== 1 ? 's' : ''} covering {reminderResult.installmentsTagged} installment{reminderResult.installmentsTagged !== 1 ? 's' : ''}.
+            </span>
+          )}
+          {reminderResult && reminderResult.emailsSent === 0 && (
+            <span style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.4)' }}>
+              No reminders needed — no installments due within 3 days.
+            </span>
+          )}
+          {reminderError && (
+            <span style={{ fontSize: '0.8rem', color: '#f87171' }}>{reminderError}</span>
+          )}
+        </div>
       </div>
 
       {loading ? (
