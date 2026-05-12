@@ -227,14 +227,22 @@ export default function AdminResultsPage() {
         </p>
       )}
 
+      {!loading && currentTournament && games.length === 0 && (
+        <HelpCallout
+          variant="info"
+          title="No scores submitted yet"
+          body="Scores appear here as officials submit them from the field. Results are live — no refresh needed once a game is scored."
+        />
+      )}
+
       {loading ? (
         <div className="empty-state"><RefreshCw size={32} className="spin opacity-40" /><p>Loading games...</p></div>
-      ) : filtered.length === 0 ? (
+      ) : filtered.length === 0 && games.length > 0 ? (
         <div className="empty-state">
           <Trophy size={40} style={{ opacity: 0.2 }} />
           <p>{searchQuery ? 'No games matching search.' : 'No games found.'}</p>
         </div>
-      ) : (
+      ) : games.length > 0 ? (
         <div className={s.compactList}>
           <GameList
             games={filtered}
