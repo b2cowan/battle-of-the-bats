@@ -5,6 +5,7 @@ import { Mail, Send, ArrowLeft, Clock } from 'lucide-react';
 import Link from 'next/link';
 import { useOrg } from '@/lib/org-context';
 import { hasCapability } from '@/lib/roles';
+import HelpCallout from '@/components/help/HelpCallout';
 import styles from '../../../house-league.module.css';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -246,6 +247,14 @@ export default function NotificationsPage() {
 
       {/* Compose form */}
       <div style={{ maxWidth: '600px' }}>
+        <div style={{ marginBottom: '1.25rem' }}>
+          <HelpCallout
+            variant="tip"
+            title="Emails go out immediately and cannot be recalled"
+            body="Emails go to all registrants in the selected audience. Preview carefully — there is no undo once sent."
+          />
+        </div>
+
         {/* Audience selector */}
         <div className={styles.field} style={{ marginBottom: '1.25rem' }}>
           <label className={styles.label}>Recipients</label>

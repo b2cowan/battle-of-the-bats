@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { CheckCircle } from 'lucide-react';
+import HelpCallout from '@/components/help/HelpCallout';
 import styles from './register.module.css';
 
 export interface DivisionWithCount {
@@ -199,6 +200,15 @@ export default function RegisterForm({
             Check registration status later →
           </a>
         </p>
+        {(success.status === 'pending_review' || success.status === 'waitlisted') && (
+          <div style={{ marginTop: '1.25rem' }}>
+            <HelpCallout
+              variant="info"
+              title="What happens next"
+              body="You'll receive an email at the address you provided once your registration is reviewed. Use the link above to check your status at any time — it updates in real time."
+            />
+          </div>
+        )}
       </div>
     );
   }

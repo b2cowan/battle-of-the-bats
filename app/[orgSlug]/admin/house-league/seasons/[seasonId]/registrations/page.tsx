@@ -5,6 +5,7 @@ import { X, Plus, ChevronLeft, Mail } from 'lucide-react';
 import Link from 'next/link';
 import { useOrg } from '@/lib/org-context';
 import FeedbackModal from '@/components/FeedbackModal';
+import HelpCallout from '@/components/help/HelpCallout';
 import styles from '../../../house-league.module.css';
 import type { LeagueRegistration, LeagueRegistrationStatus, LeagueDivision, LeagueTeam } from '@/lib/types';
 
@@ -468,6 +469,17 @@ export default function RegistrationsPage() {
           </div>
         )}
       </div>
+
+      {/* ── Empty state help cue ──────────────────────────────────────────── */}
+      {regs.length === 0 && !search && (
+        <div style={{ marginBottom: '1.25rem' }}>
+          <HelpCallout
+            variant="info"
+            title="No registrations yet"
+            body="Registrations appear here as parents submit the public form. Review each one and approve, waitlist, or decline. Approved registrants are available for team assignment."
+          />
+        </div>
+      )}
 
       {/* ── Search ────────────────────────────────────────────────────────── */}
       <div style={{ marginBottom: '1rem' }}>

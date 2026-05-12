@@ -16,6 +16,7 @@ import { useDraggable, useDroppable } from '@dnd-kit/core';
 import { useOrg } from '@/lib/org-context';
 import { hasCapability } from '@/lib/roles';
 import FeedbackModal from '@/components/FeedbackModal';
+import HelpCallout from '@/components/help/HelpCallout';
 import styles from '../../../house-league.module.css';
 import type { LeagueDivision, LeagueTeam, LeagueRegistration, LeagueDraftState } from '@/lib/types';
 
@@ -834,9 +835,15 @@ export default function TeamsPage() {
               <div className={styles.teamsPanel}>
                 {divTeams.length === 0 ? (
                   <div className={styles.noTeamsPrompt}>
-                    {canManage
-                      ? 'No teams yet. Click "Create Teams" to get started.'
-                      : 'No teams have been created for this division.'}
+                    {canManage ? (
+                      <HelpCallout
+                        variant="info"
+                        title="No teams yet"
+                        body="Create your teams first, then assign players from your approved registrations. You can drag players onto teams manually, randomize assignments, or run a structured draft."
+                      />
+                    ) : (
+                      'No teams have been created for this division.'
+                    )}
                   </div>
                 ) : (
                   <div className={styles.teamColumns}>

@@ -5,6 +5,8 @@ import { CalendarDays, X, Users } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { hasCapability } from '@/lib/roles';
 import FeedbackModal from '@/components/FeedbackModal';
+import HelpCallout from '@/components/help/HelpCallout';
+import HelpTooltip from '@/components/help/HelpTooltip';
 import styles from './house-league.module.css';
 import type { LeagueSeason, LeagueSeasonSummary, LeagueSeasonStatus } from '@/lib/types';
 
@@ -210,11 +212,14 @@ export default function HouseLeaguePage() {
         <p className={styles.muted}>Loading…</p>
       ) : summaries.length === 0 ? (
         <div className={styles.emptyState}>
-          <CalendarDays size={28} style={{ opacity: 0.3, margin: '0 auto 0.75rem', display: 'block' }} />
-          <p>No seasons yet.</p>
+          <HelpCallout
+            variant="info"
+            title="Get started with House League"
+            body="A season groups one division of players for one competitive cycle — registrations, teams, schedule, and standings all belong to a season. Create one to get started."
+          />
           {isAdmin && (
-            <p>
-              <button type="button" className="btn btn-secondary" style={{ marginTop: '0.75rem' }} onClick={openCreate}>
+            <p style={{ textAlign: 'center', marginTop: '1rem' }}>
+              <button type="button" className="btn btn-secondary" onClick={openCreate}>
                 Create your first season
               </button>
             </p>
@@ -494,8 +499,14 @@ function SeasonCard({
         {season.ageGroup && (
           <span className={styles.ageGroupBadge}>{season.ageGroup}</span>
         )}
-        <span className={`${styles.statusBadge} ${STATUS_CSS[season.status] ?? ''}`}>
-          {STATUS_LABELS[season.status] ?? season.status}
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
+          <span className={`${styles.statusBadge} ${STATUS_CSS[season.status] ?? ''}`}>
+            {STATUS_LABELS[season.status] ?? season.status}
+          </span>
+          <HelpTooltip
+            title="Season statuses"
+            body="Draft: configuration only, not visible publicly. Registration Open: public form is live for parents. Registration Closed: building teams and schedule. Active: games underway. Completed: season is over. Archived: season is retired."
+          />
         </span>
       </div>
 

@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useOrg } from '@/lib/org-context';
 import { hasCapability } from '@/lib/roles';
 import FeedbackModal from '@/components/FeedbackModal';
+import HelpCallout from '@/components/help/HelpCallout';
 import styles from '../../../house-league.module.css';
 import type { LeagueDivision, LeagueTeam, LeagueGame, LeagueGameStatus, LeaguePractice } from '@/lib/types';
 
@@ -937,13 +938,19 @@ export default function SchedulePage() {
       {/* Empty state (games views) */}
       {viewMode !== 'practices' && games.length === 0 && (
         <div className={styles.emptyState}>
-          <p>
-            {teams.length < 2
-              ? 'Create at least 2 teams before generating a schedule.'
-              : canManage
-                ? 'No games scheduled yet. Use "Generate Schedule" or "Add Game" to get started.'
+          {teams.length >= 2 && canManage ? (
+            <HelpCallout
+              variant="info"
+              title="No games scheduled yet"
+              body="Generate your schedule by selecting the number of rounds and time slots — the generator creates a round-robin where every team plays every other team once. Games can be edited individually after generation, or added manually one at a time."
+            />
+          ) : (
+            <p>
+              {teams.length < 2
+                ? 'Create at least 2 teams before generating a schedule.'
                 : 'No games scheduled yet.'}
-          </p>
+            </p>
+          )}
         </div>
       )}
 
