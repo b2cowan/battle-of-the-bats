@@ -48,7 +48,7 @@ export default function AdminHub() {
   useEffect(() => {
     if (loading || !userRole || !currentOrg) return;
     if (canSeeTournaments && !canSeeOrgAdmin) {
-      router.replace(`${base}/dashboard`);
+      router.replace(`${base}/tournaments/dashboard`);
     }
   }, [loading, userRole, currentOrg, canSeeTournaments, canSeeOrgAdmin, base, router]);
 
@@ -119,7 +119,7 @@ export default function AdminHub() {
     if (attention.pendingTournamentCount > 0) {
       attentionItems.push({
         label: `${attention.pendingTournamentCount} pending tournament registration${attention.pendingTournamentCount === 1 ? '' : 's'}`,
-        href:  `${base}/teams`,
+        href:  `${base}/tournaments/teams`,
       });
     }
     if (attention.pendingLeagueCount > 0) {

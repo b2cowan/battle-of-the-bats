@@ -1,67 +1,17 @@
-# Project TODO List
+# FieldLogicHQ — Project TODO List
 
-This file tracks the ongoing tasks for the tournament website project. AI models and the USER use this to coordinate work.
+This file tracks the ongoing tasks for the FieldLogicHQ platform (multi-tenant sports club and league management). AI models and the USER use this to coordinate work.
 
 ---
 
 ## 🚀 Active Tasks (Priority Order)
 
-### 1. UX Improvements — Role-Based Findings
-*Authoritative plan in [UX_REVIEW_PLAN.md](UX_REVIEW_PLAN.md)*
-
-**Phase 1 — Critical bugs & multi-tenancy (do before onboarding any new org)**
-- [x] **1A** — Replace default `/{orgSlug}` page: FieldLogicHQ-branded placeholder (no public site), tournament selector for 2+ active tournaments
-- [x] **1B** — Fix accounting sidebar: rename "Overview" → "Ledgers", remove broken "Org Ledger" duplicate
-- [x] **1C** — Remove House League "Notifications" sidebar link (currently resolves to a 404)
-- [x] **1D** — Fix staff auto-redirect: change target from `/admin/tournaments` to `/admin/dashboard`
-
-**Phase 2 — Coaches portal gaps**
-- [x] **2A** — Build `CoachesBottomNav` for mobile navigation in the coaches portal
-- [x] **2B** — Improve "Not assigned" screen: add org contact email and "Back to [org]" link
-- [x] **2C** — Add unconfigured-state message to coaches accounting page when no dues/expenses exist
-- [x] **2D** — Show program year name alongside team name in coaches sidebar team list
-
-**Phase 3 — Owner & operator improvements**
-- [ ] **3A** — Expand onboarding checklist: add conditional steps for enabled modules (house league, rep teams, public site) — **Deferred: pending pricing strategy sign-off**
-- [ ] **3B** — Add "Modules" section to billing page: per-module plan inclusion, active status, and "Request to enable" CTA — **Deferred: pending pricing strategy sign-off**
-- [x] **3C** — Create `/admin/org` hub page (Members, Diamonds, Tournament Records, Billing, Settings tiles); update admin hub tile href
-- [x] **3D** — Add inline status-transition buttons to house league season cards
-- [x] **3E** — Build House League Notifications page at `/admin/house-league/seasons/[seasonId]/notifications` (email preview + sent history log); re-add Notifications sidebar link
-- [x] **3F** — Season detail index page: not redirected — sidebar sub-nav renders correctly on the index page; original issue no longer exists
-- [x] **3G** — Add cross-module "Needs attention" strip to admin hub (pending registrations, open tryouts)
-
-**Phase 4 — Platform admin & treasurer**
-- [x] **4A** — Add health indicators to platform admin overview: `past_due` org count, new signups in 7 days
-- [x] **4B** — Add org/date-range filter and pagination to platform audit log (200-row hard cap, no search)
-- [x] **4C** — Add active-route highlighting to platform admin sidebar nav
-- [x] **4D** — Add "Go to Admin →" link in platform admin org rows and detail page (was already implemented; label standardised to "↗ Admin")
-- [x] **4E** — Allow treasurers (not just owners) to create tournament ledgers; expanded Add Entry / Add Transfer / Edit / Void gates to treasurer too
-- [x] **4F** — Skipped: platform users list is internal staff only (no cap issue); org users found via org → users drill-down
-- [x] **4G** — Treasurer: add CSV export to ledger detail page
-- [x] **4H** — Treasurer: category `<datalist>` now fetches distinct categories from this org's ledger entries; falls back to static defaults for new orgs
-
-**Phase 5 — Public experience & polish**
-- [x] **5A** — Add rep teams tryout section to org home page when module enabled and tryouts open
-- [x] **5B** — Add house league CTA to default `/{orgSlug}` branch when module enabled and registration open
-- [x] **5C** — Improve tryout registration closed page: show org contact email (open-date field deferred — column does not exist in schema)
-- [x] **5D** — Add "Contact Us" label to contact email link on public site page
-- [x] **5E** — Add pending-action badges to coaches team hub cards (overdue installments, upcoming events in 7 days)
-- [x] **5F** — Audit and standardise empty/loading states app-wide (coaches portal: loadingState CSS, emptyStateTitle/Sub)
-- [x] **5G** — Add season switcher dropdown to House League sidebar when inside a season (client-side fetch pattern)
-- [x] **5H** — Official/Scorekeeper score entry: type="number", 56px input height, 48px button height, filter selects 44px
-- [x] **5I** — House league public registration form: clear capacity labels + status lookup page at `/{orgSlug}/league/{seasonSlug}/status`
-
-### 2. Tournament Admin URL Restructure
-*Full plan in [TOURNAMENT_URL_RESTRUCTURE_PLAN.md](TOURNAMENT_URL_RESTRUCTURE_PLAN.md)*
-
-- [ ] Move all tournament operational pages from `admin/{page}` to `admin/tournaments/{page}` to match module URL pattern (do after Phase 1 UX fixes are committed)
-
-### 3. Multi-Tenancy — Billing & Subscriptions
+### 1. Multi-Tenancy — Billing & Subscriptions
 *Detailed tasks in [MULTI_TENANT_ARCHITECTURE.md](MULTI_TENANT_ARCHITECTURE.md)*
 
 - [ ] **Phase 5** — Billing & Subscriptions: Stripe account setup and testing remaining
 
-### 4. Email Strategy
+### 2. Email Strategy
 
 - [ ] **Email Strategy Investigation**:
     - [ ] Investigate best-of-breed providers (Resend, Postmark, AWS SES) for system notifications
@@ -80,15 +30,64 @@ This file tracks the ongoing tasks for the tournament website project. AI models
 
 ## 🧭 Strategy (Post-Roadmap)
 
-- [ ] **In-App Documentation & Help System** — Two-tier help layer: contextual cues (empty states, tooltips, transition callouts) + role-scoped help pages (walkthroughs for every module and role). Full plan in [HELP_SYSTEM_PLAN.md](HELP_SYSTEM_PLAN.md). **Blocked: complete UX Review Phases 1–5 first** (UX 5F empty-state standardization folds into Phase A of this plan; UX 3A/3B/3C/3E/2A add/change pages where help cues will live).
+- [ ] **In-App Documentation & Help System** — Two-tier help layer: contextual cues (empty states, tooltips, transition callouts) + role-scoped help pages (walkthroughs for every module and role). Full plan in [HELP_SYSTEM_PLAN.md](HELP_SYSTEM_PLAN.md). **Phase A (foundation components) complete** — `HelpCallout`, `HelpTooltip`, `HelpPageLayout`, `help.module.css`, `lib/help-content/index.ts` built. Phase B (Tournaments) next.
 - [x] **Pricing — Phase 1 Implementation** — Update plan-config (4 tiers), rewrite PricingSection component, build public `/pricing` page. Full plan in [PRICING_IMPLEMENTATION_PLAN.md](PRICING_IMPLEMENTATION_PLAN.md). Content spec in [PRICING_PAGE_COPY.md](PRICING_PAGE_COPY.md).
-- [ ] **Pricing — Functionality Audit** — Review billing page, onboarding flow, upgrade banners, and any plan-gated UI for references to old plan names (starter/pro/elite) or module assumptions that conflict with the new four-tier strategy. Fix or flag for Phase 2.
+- [x] **Pricing — Phase 2 / Functionality Audit** — Billing page rewritten (monthly/annual toggle, modules section, outcome-focused upgrade cards); onboarding checklist updated with conditional module steps; all stale plan name references removed.
 - [ ] **Custom domain investigation** — Research feasibility and effort of allowing orgs to point a custom domain (e.g. miltonbats.com) to their FieldLogicHQ public page. Covers: DNS verification flow, wildcard SSL or per-org cert provisioning, reverse proxy / Amplify routing changes, and potential upsell pricing. Do not design or implement until `module_public_site` is fully shipped.
-- [ ] **Public Site Offering Evaluation** — After the first external org enables `module_public_site`, review the offering across three dimensions: (1) ease of setup — is the path from enabling the module to a live page clear enough for a non-technical org owner? (2) customization level — structured fields are correct; assess whether anything is missing without going full CMS; (3) base UX improvements — e.g., contact email is shown on the public page with no surrounding context (needs a label like "Contact Us"), tournament cards need review, social link presentation. Produce a prioritized fix list before moving to the next module.
+- [ ] **Public Site Offering Evaluation** — After the first external org enables `module_public_site`, review the offering across three dimensions: (1) ease of setup — is the path from enabling the module to a live page clear enough for a non-technical org owner? (2) customization level — structured fields are correct; assess whether anything is missing without going full CMS; (3) base UX improvements. Produce a prioritized fix list before moving to the next module.
 
 ---
 
 ## ✅ Completed Projects
+
+### Tournament Admin URL Restructure
+*(see [TOURNAMENT_URL_RESTRUCTURE_PLAN.md](TOURNAMENT_URL_RESTRUCTURE_PLAN.md))*
+- [x] Moved all tournament operational pages from `admin/{page}` to `admin/tournaments/{page}` — matches module URL pattern used by house-league, rep-teams, and accounting
+
+### Role-Based UX Improvement Review — Phases 1–5
+*(see [UX_REVIEW_PLAN.md](UX_REVIEW_PLAN.md))*
+
+**Phase 1 — Critical bugs & multi-tenancy**
+- [x] **1A** — Replace default `/{orgSlug}` page: FieldLogicHQ-branded placeholder (no public site), tournament selector for 2+ active tournaments
+- [x] **1B** — Fix accounting sidebar: rename "Overview" → "Ledgers", remove broken "Org Ledger" duplicate
+- [x] **1C** — Remove House League "Notifications" sidebar link (currently resolves to a 404)
+- [x] **1D** — Fix staff auto-redirect: change target from `/admin/tournaments` to `/admin/dashboard`
+
+**Phase 2 — Coaches portal gaps**
+- [x] **2A** — Build `CoachesBottomNav` for mobile navigation in the coaches portal
+- [x] **2B** — Improve "Not assigned" screen: add org contact email and "Back to [org]" link
+- [x] **2C** — Add unconfigured-state message to coaches accounting page when no dues/expenses exist
+- [x] **2D** — Show program year name alongside team name in coaches sidebar team list
+
+**Phase 3 — Owner & operator improvements**
+- [x] **3A** — Expand onboarding checklist: add conditional steps for enabled modules (house league, rep teams, public site)
+- [x] **3B** — Add "Modules" section to billing page: per-module plan inclusion, active status, and upgrade CTA
+- [x] **3C** — Create `/admin/org` hub page (Members, Diamonds, Tournament Records, Billing, Settings tiles); update admin hub tile href
+- [x] **3D** — Add inline status-transition buttons to house league season cards
+- [x] **3E** — Build House League Notifications page at `/admin/house-league/seasons/[seasonId]/notifications` (email preview + sent history log); re-add Notifications sidebar link
+- [x] **3F** — Season detail index page: sidebar sub-nav renders correctly on the index page; original issue no longer exists
+- [x] **3G** — Add cross-module "Needs attention" strip to admin hub (pending registrations, open tryouts)
+
+**Phase 4 — Platform admin & treasurer**
+- [x] **4A** — Add health indicators to platform admin overview: `past_due` org count, new signups in 7 days
+- [x] **4B** — Add org/date-range filter and pagination to platform audit log (200-row hard cap, no search)
+- [x] **4C** — Add active-route highlighting to platform admin sidebar nav
+- [x] **4D** — Add "Go to Admin →" link in platform admin org rows and detail page (label standardised to "↗ Admin")
+- [x] **4E** — Allow treasurers (not just owners) to create tournament ledgers; expanded Add Entry / Add Transfer / Edit / Void gates to treasurer too
+- [x] **4F** — Skipped: platform users list is internal staff only (no cap issue); org users found via org → users drill-down
+- [x] **4G** — Treasurer: add CSV export to ledger detail page
+- [x] **4H** — Treasurer: category `<datalist>` now fetches distinct categories from this org's ledger entries; falls back to static defaults for new orgs
+
+**Phase 5 — Public experience & polish**
+- [x] **5A** — Add rep teams tryout section to org home page when module enabled and tryouts open
+- [x] **5B** — Add house league CTA to default `/{orgSlug}` branch when module enabled and registration open
+- [x] **5C** — Improve tryout registration closed page: show org contact email (open-date field deferred — column does not exist in schema)
+- [x] **5D** — Add "Contact Us" label to contact email link on public site page
+- [x] **5E** — Add pending-action badges to coaches team hub cards (overdue installments, upcoming events in 7 days)
+- [x] **5F** — Audit and standardise empty/loading states app-wide (coaches portal: loadingState CSS, emptyStateTitle/Sub)
+- [x] **5G** — Add season switcher dropdown to House League sidebar when inside a season (client-side fetch pattern)
+- [x] **5H** — Official/Scorekeeper score entry: type="number", 56px input height, 48px button height, filter selects 44px
+- [x] **5I** — House league public registration form: clear capacity labels + status lookup page at `/{orgSlug}/league/{seasonSlug}/status`
 
 ### Platform Admin — Superuser Tooling
 *(see [PLATFORM_ADMIN_IMPROVEMENTS_PLAN.md](docs/archive/PLATFORM_ADMIN_IMPROVEMENTS_PLAN.md))*
@@ -124,9 +123,6 @@ This file tracks the ongoing tasks for the tournament website project. AI models
   - [x] 6M — Accounting: automated payment reminder emails (coach-initiated)
   - [x] 6N — Past program years (admin history + coaches portal history, read-only)
   - [x] Franchise model audit — 9 violations fixed across admin/coaches layers
-
-### Role-Based UX Improvement Review
-- [x] Full review executed 2026-05-11 across all user roles. Findings in [UX_REVIEW_PLAN.md](UX_REVIEW_PLAN.md); 32 actionable items tracked in TODO.md Section 1.
 
 ### Infrastructure — Dev Environment
 *(see [AMPLIFY_DEV_ENV_PLAN.md](docs/archive/AMPLIFY_DEV_ENV_PLAN.md))*

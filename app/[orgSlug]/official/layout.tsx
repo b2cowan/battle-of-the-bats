@@ -64,7 +64,7 @@ export default async function OfficialLayout({
             Staff members use the admin panel to enter scores.
           </p>
           <Link
-            href={`/${orgSlug}/admin/results`}
+            href={`/${orgSlug}/admin/tournaments/results`}
             style={{
               display: 'inline-block',
               marginTop: '1.5rem',

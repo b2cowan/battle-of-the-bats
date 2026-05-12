@@ -15,17 +15,17 @@ import { setActiveTournament } from '@/lib/db';
 import styles from './AdminBottomNav.module.css';
 
 const PRIMARY_KEYS = [
-  { key: 'teams',    icon: Users,    label: 'Registrations' },
-  { key: 'schedule', icon: Calendar, label: 'Schedule'      },
-  { key: 'results',  icon: Trophy,   label: 'Results'       },
+  { key: 'tournaments/teams',    icon: Users,    label: 'Registrations' },
+  { key: 'tournaments/schedule', icon: Calendar, label: 'Schedule'      },
+  { key: 'tournaments/results',  icon: Trophy,   label: 'Results'       },
 ];
 
 const TOURNAMENT_MORE = [
-  { key: 'dashboard',     icon: LayoutDashboard, label: 'Dashboard'     },
-  { key: 'tournaments',   icon: RefreshCw,       label: 'Tournaments'   },
-  { key: 'announcements', icon: Megaphone,       label: 'Announcements' },
-  { key: 'contacts',      icon: BookUser,        label: 'Contacts'      },
-  { key: 'age-groups',    icon: Tag,             label: 'Age Groups'    },
+  { key: 'tournaments/dashboard',     icon: LayoutDashboard, label: 'Dashboard'     },
+  { key: 'tournaments',               icon: RefreshCw,       label: 'Tournaments'   },
+  { key: 'tournaments/announcements', icon: Megaphone,       label: 'Announcements' },
+  { key: 'tournaments/contacts',      icon: BookUser,        label: 'Contacts'      },
+  { key: 'tournaments/age-groups',    icon: Tag,             label: 'Age Groups'    },
 ];
 
 const ORG_MORE = [

@@ -51,7 +51,7 @@ export default function DevPlanSwitcher() {
         }}>
           DEV — Plan
         </span>
-        <Link href="/dev" style={{
+        <Link href="/platform-admin/dev-tools" style={{
           fontSize: '0.6rem',
           fontWeight: 700,
           letterSpacing: '0.08em',

@@ -17,7 +17,7 @@ export default function PlatformAdminNav({ sessionEmail }: { sessionEmail: strin
   const nav = [
     ...BASE_NAV,
     ...(process.env.NEXT_PUBLIC_ENABLE_DEV_TOOLS === 'true'
-      ? [{ href: '/dev', label: 'Dev Tools', Icon: Terminal }]
+      ? [{ href: '/platform-admin/dev-tools', label: 'Dev Tools', Icon: Terminal }]
       : []),
   ];
 

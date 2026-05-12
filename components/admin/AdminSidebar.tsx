@@ -40,6 +40,7 @@ export default function AdminSidebar() {
   const isAccounting   = pathname.startsWith(`${base}/accounting`);
   const isHouseLeague  = pathname.startsWith(`${base}/house-league`);
   const isRepTeams     = pathname.startsWith(`${base}/rep-teams`);
+  const isTournaments  = pathname.startsWith(`${base}/tournaments`);
 
   const seasonMatch     = pathname.match(/\/house-league\/seasons\/([^/]+)/);
   const repTeamMatch    = pathname.match(/\/rep-teams\/teams\/([^/]+)\/program-years\/([^/]+)/);
@@ -298,7 +299,7 @@ export default function AdminSidebar() {
       )}
 
       {/* Tournament operations mode */}
-      {!isHub && !isOrgAdmin && !isPublicSite && !isAccounting && !isHouseLeague && !isRepTeams && (
+      {isTournaments && (
         <>
           {backLink}
           {tournaments.length > 0 && (
@@ -326,7 +327,7 @@ export default function AdminSidebar() {
             <div className={styles.sectionHeader}>Tournament</div>
             <nav className={styles.nav}>
               {TOURNAMENT_NAV.map(item => {
-                const href   = `${base}/${item.key}`;
+                const href   = `${base}/tournaments/${item.key}`;
                 const active = pathname.startsWith(href);
                 return navLink(item.key, item.icon, item.label, href, active);
               })}
