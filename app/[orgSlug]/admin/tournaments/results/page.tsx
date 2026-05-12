@@ -257,7 +257,7 @@ export default function AdminResultsPage() {
             mode="scoring"
           />
         </div>
-      )}
+      ) : null}
 
       {editing && (
         <div className="modal-overlay" onClick={() => setEditing(null)}>
