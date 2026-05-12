@@ -5,7 +5,7 @@ import {
   LayoutDashboard, Users, Calendar, Trophy, Megaphone, Tag, LogOut, Home,
   ChevronRight, MapPin, RefreshCw, BookUser, BookOpen, CreditCard, Settings,
   Users2, Archive, ArrowLeft, Mail, Globe, DollarSign, Receipt,
-  CalendarDays, ClipboardList, Bell, FileText, UserCheck,
+  CalendarDays, ClipboardList, Bell, FileText, UserCheck, ExternalLink,
 } from 'lucide-react';
 import { signOut } from '@/lib/auth';
 import { useOrg } from '@/lib/org-context';
@@ -241,6 +241,9 @@ export default function AdminSidebar() {
               {navLink('rt-past', Archive, 'Past Seasons',
                 `${base}/rep-teams/past`,
                 pathname.startsWith(`${base}/rep-teams/past`))}
+              {navLink('rt-coaches-portal', ExternalLink, 'Coaches Portal',
+                `/${currentOrg?.slug ?? ''}/coaches`,
+                pathname.startsWith(`/${currentOrg?.slug ?? ''}/coaches`))}
             </nav>
           </div>
           {currentRepTeamId && currentRepYearId && (

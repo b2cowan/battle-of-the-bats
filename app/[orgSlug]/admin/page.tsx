@@ -2,7 +2,7 @@
 import { useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Trophy, Building2, Globe, DollarSign, CalendarDays, Users } from 'lucide-react';
+import { Trophy, Building2, Globe, DollarSign, CalendarDays, Users, UserCheck } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { hasCapability } from '@/lib/roles';
 
@@ -87,6 +87,12 @@ export default function AdminHub() {
       desc: 'Manage competitive team programs — tryouts, rosters, player documents, schedules, and team finances',
       icon: Users,
       href: `${base}/rep-teams`,
+    },
+    canSeeRepTeams && {
+      label: 'Coaches Portal',
+      desc: 'Switch to the coach-facing view — schedules, rosters, and player documents for assigned teams',
+      icon: UserCheck,
+      href: `/${currentOrg?.slug ?? ''}/coaches`,
     },
   ].filter(Boolean) as { label: string; desc: string; icon: React.ElementType; href: string }[];
 

@@ -6,7 +6,7 @@ import {
   Users, Calendar, Trophy, Megaphone,
   MoreHorizontal, LayoutDashboard, Tag, MapPin,
   RefreshCw, LogOut, X, ChevronRight, BookUser,
-  Settings, Users2,
+  Settings, Users2, LayoutGrid, CalendarDays, UserCheck,
 } from 'lucide-react';
 import { signOut } from '@/lib/auth';
 import { useOrg } from '@/lib/org-context';
@@ -42,9 +42,14 @@ export default function AdminBottomNav() {
   const router    = useRouter();
   const { currentOrg, userRole } = useOrg();
   const base = `/${currentOrg?.slug ?? 'milton-bats'}/admin`;
+  const orgSlug = currentOrg?.slug ?? 'milton-bats';
   const [moreOpen, setMoreOpen] = useState(false);
   const moreRef   = useRef<HTMLDivElement>(null);
   const { tournaments, currentTournament, setCurrentTournament, refresh } = useTournament();
+
+  const isRepTeams    = pathname.startsWith(`${base}/rep-teams`);
+  const isHouseLeague = pathname.startsWith(`${base}/house-league`);
+  const isModule      = isRepTeams || isHouseLeague || pathname.startsWith(`${base}/org`) || pathname.startsWith(`${base}/public-site`) || pathname.startsWith(`${base}/accounting`);
 
   const allMoreKeys = [
     ...TOURNAMENT_MORE,
@@ -107,26 +112,64 @@ export default function AdminBottomNav() {
     });
   }
 
+  // Section-aware primary tabs
+  const modulePrimaryTabs = isRepTeams
+    ? [
+        { href: `${base}/rep-teams`,   icon: Users,      label: 'Rep Teams'  },
+        { href: `/${orgSlug}/coaches`, icon: UserCheck,  label: 'Coaches'    },
+        { href: base,                  icon: LayoutGrid, label: 'Hub'        },
+      ]
+    : isHouseLeague
+    ? [
+        { href: `${base}/house-league`, icon: CalendarDays, label: 'Seasons' },
+        { href: base,                   icon: LayoutGrid,   label: 'Hub'     },
+      ]
+    : isModule
+    ? [
+        { href: base, icon: LayoutGrid, label: 'Hub' },
+      ]
+    : null; // tournament ops — use PRIMARY_KEYS
+
   return (
     <nav className={styles.bottomNav} aria-label="Admin mobile navigation">
-      {PRIMARY_KEYS.map(({ key, icon: Icon, label }) => {
-        const href   = `${base}/${key}`;
-        const active = pathname === href || pathname.startsWith(href + '/');
-        return (
-          <Link
-            key={key}
-            href={href}
-            className={`${styles.tab} ${active ? styles.active : ''}`}
-            id={`admin-mob-${label.toLowerCase()}`}
-          >
-            <span className={styles.iconWrap}>
-              <Icon size={22} strokeWidth={active ? 2.5 : 1.8} />
-              {active && <span className={styles.activeDot} />}
-            </span>
-            <span className={styles.label}>{label}</span>
-          </Link>
-        );
-      })}
+      {modulePrimaryTabs ? (
+        modulePrimaryTabs.map(({ href, icon: Icon, label }) => {
+          const active = href === base ? pathname === base : pathname === href || pathname.startsWith(href + '/');
+          return (
+            <Link
+              key={href}
+              href={href}
+              className={`${styles.tab} ${active ? styles.active : ''}`}
+              id={`admin-mob-${label.toLowerCase().replace(/\s/g, '-')}`}
+            >
+              <span className={styles.iconWrap}>
+                <Icon size={22} strokeWidth={active ? 2.5 : 1.8} />
+                {active && <span className={styles.activeDot} />}
+              </span>
+              <span className={styles.label}>{label}</span>
+            </Link>
+          );
+        })
+      ) : (
+        PRIMARY_KEYS.map(({ key, icon: Icon, label }) => {
+          const href   = `${base}/${key}`;
+          const active = pathname === href || pathname.startsWith(href + '/');
+          return (
+            <Link
+              key={key}
+              href={href}
+              className={`${styles.tab} ${active ? styles.active : ''}`}
+              id={`admin-mob-${label.toLowerCase()}`}
+            >
+              <span className={styles.iconWrap}>
+                <Icon size={22} strokeWidth={active ? 2.5 : 1.8} />
+                {active && <span className={styles.activeDot} />}
+              </span>
+              <span className={styles.label}>{label}</span>
+            </Link>
+          );
+        })
+      )}
 
       {/* More button */}
       <div ref={moreRef} className={styles.moreWrap}>
