@@ -2,6 +2,8 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import { ClipboardList, X, Plus, ChevronRight } from 'lucide-react';
+import HelpCallout from '@/components/help/HelpCallout';
+import HelpTooltip from '@/components/help/HelpTooltip';
 import { useOrg } from '@/lib/org-context';
 import { hasCapability } from '@/lib/roles';
 import FeedbackModal from '@/components/FeedbackModal';
@@ -297,6 +299,10 @@ export default function TryoutsPage({
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
                   <span className={styles.tryoutToggleLabel}>Registration</span>
+                  <HelpTooltip
+                    title="Tryout registration"
+                    body="When tryouts are open, the public registration form is live on your org page. Applicants can register; you review and approve from the Tryouts tab."
+                  />
                   <span className={`${styles.badge} ${info.programYear.tryoutOpen ? styles.badgeActive : styles.badgeDraft}`}>
                     {info.programYear.tryoutOpen ? 'Open' : 'Closed'}
                   </span>
@@ -333,6 +339,14 @@ export default function TryoutsPage({
                 {togglingOpen ? '…' : info.programYear.tryoutOpen ? 'Close Registration' : 'Open Registration'}
               </button>
             </div>
+          )}
+
+          {registrations.length === 0 && (
+            <HelpCallout
+              variant="info"
+              title="No applicants yet"
+              body="Applicants appear here when the public tryout form is live. Review each one and offer, accept, or decline. Accepted players become available for the coach's roster."
+            />
           )}
 
           {/* Tabs */}

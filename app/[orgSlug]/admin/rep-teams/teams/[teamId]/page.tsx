@@ -138,7 +138,15 @@ export default function TeamOverviewPage({ params }: { params: { orgSlug: string
       </div>
 
       {/* Program Years */}
-      <p className={styles.sectionTitle}>Program Years</p>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+        <p className={styles.sectionTitle} style={{ margin: 0 }}>Program Years</p>
+        <Link
+          href={`${base}/rep-teams/teams/${team.id}/history`}
+          style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.4)', textDecoration: 'none' }}
+        >
+          View history →
+        </Link>
+      </div>
 
       {programYears.length === 0 ? (
         <div className={styles.emptyState}>

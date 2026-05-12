@@ -122,7 +122,7 @@ export default async function ArchiveDetailPage({
           </Link>
           {isAdmin && (
             <Link
-              href={`/${orgSlug}/admin/archives`}
+              href={`/${orgSlug}/admin/tournaments/archives`}
               style={{ fontSize: '0.625rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: dataGray, textDecoration: 'none' }}
             >
               ← Past Tournaments

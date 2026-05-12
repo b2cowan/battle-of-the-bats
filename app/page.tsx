@@ -185,13 +185,21 @@ export default function HomePage() {
           <AnimateIn>
             <div className={styles.sectionHead}>
               <p className={styles.eyebrow}>Pricing</p>
-              <h2 className={styles.sectionTitle}>Simple pricing. Start free.</h2>
+              <h2 className={styles.sectionTitle}>Plans built for how you operate.</h2>
               <p className={styles.sectionSub}>
-                Start for free — no credit card needed. Upgrade as you grow.
+                From your first tournament to a full club — one platform that grows with you. Start free, no credit card required.
               </p>
             </div>
           </AnimateIn>
           <PricingSection />
+          <div className="flex justify-center mt-8">
+            <Link
+              href="/pricing"
+              className="font-mono text-xs uppercase tracking-widest text-data-gray border border-blueprint-blue/30 px-6 py-2.5 hover:border-blueprint-blue hover:text-fl-text transition-colors"
+            >
+              Compare all plans in detail →
+            </Link>
+          </div>
         </div>
       </section>
 

@@ -3,12 +3,14 @@ import { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import { DollarSign, Pencil, X, ArrowRightLeft } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
+import HelpCallout from '@/components/help/HelpCallout';
+import HelpTooltip from '@/components/help/HelpTooltip';
 import { hasCapability } from '@/lib/roles';
 import FeedbackModal from '@/components/FeedbackModal';
 import styles from '../../accounting.module.css';
 import type { AccountingLedger, AccountingEntry, LedgerSummary, AccountingEntryType, AccountingEntryStatus } from '@/lib/types';
 
-const CATEGORY_SUGGESTIONS = [
+const CATEGORY_DEFAULTS = [
   'Prize pool', 'Diamond rental', 'Umpire fees', 'Trophies & medals', 'Equipment',
   'Registration fees', 'Sponsorship', 'Grant', 'Fundraising', 'Food & beverages',
   'Administrative', 'Marketing', 'Travel subsidy', 'Other',
@@ -78,6 +80,7 @@ export default function LedgerDetailPage() {
   const ledgerId  = params.ledgerId as string;
   const base      = `/${currentOrg?.slug ?? ''}/admin`;
   const isOwner   = userRole === 'owner';
+  const canEdit   = isOwner || userRole === 'treasurer';
 
   const [ledger,      setLedger]      = useState<AccountingLedger | null>(null);
   const [summary,     setSummary]     = useState<LedgerSummary | null>(null);
@@ -101,6 +104,15 @@ export default function LedgerDetailPage() {
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [feedbackType, setFeedbackType] = useState<'success' | 'danger'>('success');
   const [feedbackMsg,  setFeedbackMsg]  = useState('');
+
+  const [categories, setCategories] = useState<string[]>(CATEGORY_DEFAULTS);
+
+  useEffect(() => {
+    fetch('/api/admin/accounting/categories')
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d?.categories?.length) setCategories(d.categories); })
+      .catch(() => {});
+  }, []);
 
   function showFeedback(type: 'success' | 'danger', msg: string) {
     setFeedbackType(type); setFeedbackMsg(msg); setFeedbackOpen(true);
@@ -253,6 +265,25 @@ export default function LedgerDetailPage() {
     }
   }
 
+  function handleExportCsv() {
+    const header = ['Date', 'Description', 'Category', 'Type', 'Amount', 'Status'];
+    const rows   = entries.map(e => [
+      e.entryDate,
+      `"${e.description.replace(/"/g, '""')}"`,
+      `"${(e.category ?? '').replace(/"/g, '""')}"`,
+      entryTypeLabel(e.entryType),
+      e.amount.toFixed(2),
+      e.status,
+    ]);
+    const csv  = [header, ...rows].map(r => r.join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    const name = `${ledger?.name ?? 'ledger'}-${tab}-${new Date().toLocaleDateString('en-CA')}.csv`;
+    a.href = url; a.download = name; a.click();
+    URL.revokeObjectURL(url);
+  }
+
   function ef<K extends keyof EntryForm>(k: K, v: EntryForm[K]) {
     setEntryForm(f => ({ ...f, [k]: v }));
   }
@@ -343,9 +374,11 @@ export default function LedgerDetailPage() {
           </div>
 
           {/* Action bar */}
-          {isOwner && (
+          {canEdit && (
             <div className={styles.addEntryBar}>
-              <div />
+              <button type="button" className="btn btn-ghost" onClick={handleExportCsv} style={{ fontSize: '0.78rem' }}>
+                ↓ Export CSV
+              </button>
               <div className={styles.addEntryBtns}>
                 <button type="button" className="btn btn-secondary" onClick={openAddEntry}>+ Add Entry</button>
                 <button type="button" className="btn btn-ghost" onClick={openTransferModal}>
@@ -360,7 +393,15 @@ export default function LedgerDetailPage() {
           {fetching ? (
             <p className={styles.muted}>Loading entries…</p>
           ) : entries.length === 0 ? (
-            <div className={styles.emptyState}>No entries {tab !== 'all' ? `with status "${tab}"` : ''}.</div>
+            tab === 'all' ? (
+              <HelpCallout
+                variant="info"
+                title="This ledger has no entries yet"
+                body="Add your first entry using the button above. Income entries increase the balance; expense entries decrease it. Use transfers to move funds between ledgers. All entries are visible to the org owner."
+              />
+            ) : (
+              <div className={styles.emptyState}>No entries with status &ldquo;{tab}&rdquo;.</div>
+            )
           ) : (
             <div className={styles.tableWrap}>
               <table className={styles.entryTable}>
@@ -372,7 +413,7 @@ export default function LedgerDetailPage() {
                     <th>Type</th>
                     <th>Amount</th>
                     <th>Status</th>
-                    {isOwner && <th></th>}
+                    {canEdit && <th></th>}
                   </tr>
                 </thead>
                 <tbody>
@@ -402,7 +443,7 @@ export default function LedgerDetailPage() {
                             {entry.status}
                           </span>
                         </td>
-                        {isOwner && (
+                        {canEdit && (
                           <td>
                             <div className={styles.actionBtns}>
                               {!isTransfer && entry.status !== 'void' && (
@@ -487,10 +528,16 @@ export default function LedgerDetailPage() {
                 </select>
               </div>
               <div className={`${styles.field} ${styles.formGridFull}`}>
-                <label className={styles.label} htmlFor="ae-cat">Category</label>
+                <label className={styles.label} htmlFor="ae-cat">
+                  Category
+                  <HelpTooltip
+                    title="Why use categories?"
+                    body="Consistent names (e.g. 'Diamond Rental', 'Umpire Fees', 'Registration Income') make filtering and year-over-year comparisons much easier. Categories are shared across all ledgers in your org."
+                  />
+                </label>
                 <input id="ae-cat" type="text" className={styles.input} list="ae-cat-list" value={entryForm.category} onChange={e => ef('category', e.target.value.slice(0, 100))} placeholder="e.g. Umpire fees" maxLength={100} />
                 <datalist id="ae-cat-list">
-                  {CATEGORY_SUGGESTIONS.map(c => <option key={c} value={c} />)}
+                  {categories.map(c => <option key={c} value={c} />)}
                 </datalist>
               </div>
             </div>
@@ -551,7 +598,7 @@ export default function LedgerDetailPage() {
                 <label className={styles.label} htmlFor="tr-cat">Category</label>
                 <input id="tr-cat" type="text" className={styles.input} list="tr-cat-list" value={transferForm.category} onChange={e => tf('category', e.target.value.slice(0, 100))} placeholder="e.g. Administrative" maxLength={100} />
                 <datalist id="tr-cat-list">
-                  {CATEGORY_SUGGESTIONS.map(c => <option key={c} value={c} />)}
+                  {categories.map(c => <option key={c} value={c} />)}
                 </datalist>
               </div>
             </div>

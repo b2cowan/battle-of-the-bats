@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import styles from './orgDetail.module.css';
+import HelpTooltip from '@/components/help/HelpTooltip';
 
 interface Override {
   id: string;
@@ -190,7 +191,13 @@ export default function OrgDetailClient({
       {/* Active Overrides */}
       <section className={styles.section}>
         <div className={styles.sectionHeader}>
-          <h2 className={styles.sectionTitle}>Active Overrides</h2>
+          <h2 className={styles.sectionTitle}>
+            Active Overrides
+            <HelpTooltip
+              title="Enabled addons"
+              body="Enabled addons are the modules active for this org beyond their base plan. Toggle here immediately — no deploy required."
+            />
+          </h2>
           <button className={styles.addBtn} onClick={() => setShowForm(f => !f)}>
             {showForm ? 'Cancel' : '+ Add Override'}
           </button>

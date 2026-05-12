@@ -1,7 +1,9 @@
 'use client';
 import Link from 'next/link';
+import { Users } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { useCoaches } from '@/lib/coaches-context';
+import HelpCallout from '@/components/help/HelpCallout';
 import styles from './coaches.module.css';
 
 const STATUS_LABEL: Record<string, string> = {
@@ -20,7 +22,7 @@ export default function CoachesDashboard({
   const { currentOrg } = useOrg();
   const { assignments, loading } = useCoaches();
 
-  if (loading) return <p className={styles.muted}>Loading…</p>;
+  if (loading) return <div className={styles.loadingState}>Loading teams…</div>;
 
   return (
     <div className={styles.page}>
@@ -33,9 +35,21 @@ export default function CoachesDashboard({
         </div>
       </div>
 
+      {assignments.length > 0 && (
+        <HelpCallout
+          variant="info"
+          title="Welcome to your coaching portal"
+          body="You're the operator — your org handles tryouts and setup; you run day-to-day. Start by exploring your team below."
+          dismissible
+          localStorageKey={`flhq-help-dismissed-coaches-welcome-${params.orgSlug}`}
+        />
+      )}
+
       {assignments.length === 0 ? (
         <div className={styles.emptyState}>
-          <p>No active team assignments.</p>
+          <Users size={32} style={{ opacity: 0.25, marginBottom: '0.75rem' }} />
+          <p className={styles.emptyStateTitle}>No team assignments yet</p>
+          <p className={styles.emptyStateSub}>You&apos;ll appear here once your org admin assigns you to a team.</p>
         </div>
       ) : (
         <div className={styles.teamGrid}>
@@ -61,8 +75,24 @@ export default function CoachesDashboard({
                   </div>
                 </div>
               </div>
-              <div style={{ fontSize: '0.82rem', color: 'rgba(255,255,255,0.4)' }}>
-                {a.programYearName}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
+                <div style={{ fontSize: '0.82rem', color: 'rgba(255,255,255,0.4)' }}>
+                  {a.programYearName}
+                </div>
+                {(a.overdueInstallments > 0 || a.upcomingEventsCount > 0) && (
+                  <div style={{ display: 'flex', gap: '0.35rem', flexShrink: 0 }}>
+                    {a.overdueInstallments > 0 && (
+                      <span className={`${styles.badge} ${styles.badgeOverdue}`}>
+                        {a.overdueInstallments} overdue
+                      </span>
+                    )}
+                    {a.upcomingEventsCount > 0 && (
+                      <span className={`${styles.badge} ${styles.badgeUpcoming}`}>
+                        {a.upcomingEventsCount} upcoming
+                      </span>
+                    )}
+                  </div>
+                )}
               </div>
             </Link>
           ))}

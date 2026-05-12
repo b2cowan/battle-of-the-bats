@@ -288,3 +288,12 @@
   font-family: var(--font-data, 'IBM Plex Mono', monospace);
   margin-left: 0.25rem;
 }
+
+.successStatusLink {
+  margin: 1rem 0 0;
+  font-size: 0.82rem;
+}
+.successStatusLink a {
+  color: rgba(255,255,255,0.45);
+  text-decoration: underline;
+}

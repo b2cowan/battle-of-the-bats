@@ -6,7 +6,7 @@ import {
   Users, Calendar, Trophy, Megaphone,
   MoreHorizontal, LayoutDashboard, Tag, MapPin,
   RefreshCw, LogOut, X, ChevronRight, BookUser,
-  Settings, Users2,
+  Settings, Users2, LayoutGrid, CalendarDays, UserCheck,
 } from 'lucide-react';
 import { signOut } from '@/lib/auth';
 import { useOrg } from '@/lib/org-context';
@@ -15,17 +15,17 @@ import { setActiveTournament } from '@/lib/db';
 import styles from './AdminBottomNav.module.css';
 
 const PRIMARY_KEYS = [
-  { key: 'teams',    icon: Users,    label: 'Registrations' },
-  { key: 'schedule', icon: Calendar, label: 'Schedule'      },
-  { key: 'results',  icon: Trophy,   label: 'Results'       },
+  { key: 'tournaments/teams',    icon: Users,    label: 'Registrations' },
+  { key: 'tournaments/schedule', icon: Calendar, label: 'Schedule'      },
+  { key: 'tournaments/results',  icon: Trophy,   label: 'Results'       },
 ];
 
 const TOURNAMENT_MORE = [
-  { key: 'dashboard',     icon: LayoutDashboard, label: 'Dashboard'     },
-  { key: 'tournaments',   icon: RefreshCw,       label: 'Tournaments'   },
-  { key: 'announcements', icon: Megaphone,       label: 'Announcements' },
-  { key: 'contacts',      icon: BookUser,        label: 'Contacts'      },
-  { key: 'age-groups',    icon: Tag,             label: 'Age Groups'    },
+  { key: 'tournaments/dashboard',     icon: LayoutDashboard, label: 'Dashboard'     },
+  { key: 'tournaments',               icon: RefreshCw,       label: 'Tournaments'   },
+  { key: 'tournaments/announcements', icon: Megaphone,       label: 'Announcements' },
+  { key: 'tournaments/contacts',      icon: BookUser,        label: 'Contacts'      },
+  { key: 'tournaments/age-groups',    icon: Tag,             label: 'Age Groups'    },
 ];
 
 const ORG_MORE = [
@@ -42,9 +42,14 @@ export default function AdminBottomNav() {
   const router    = useRouter();
   const { currentOrg, userRole } = useOrg();
   const base = `/${currentOrg?.slug ?? 'milton-bats'}/admin`;
+  const orgSlug = currentOrg?.slug ?? 'milton-bats';
   const [moreOpen, setMoreOpen] = useState(false);
   const moreRef   = useRef<HTMLDivElement>(null);
   const { tournaments, currentTournament, setCurrentTournament, refresh } = useTournament();
+
+  const isRepTeams    = pathname.startsWith(`${base}/rep-teams`);
+  const isHouseLeague = pathname.startsWith(`${base}/house-league`);
+  const isModule      = isRepTeams || isHouseLeague || pathname.startsWith(`${base}/org`) || pathname.startsWith(`${base}/public-site`) || pathname.startsWith(`${base}/accounting`);
 
   const allMoreKeys = [
     ...TOURNAMENT_MORE,
@@ -107,26 +112,64 @@ export default function AdminBottomNav() {
     });
   }
 
+  // Section-aware primary tabs
+  const modulePrimaryTabs = isRepTeams
+    ? [
+        { href: `${base}/rep-teams`,   icon: Users,      label: 'Rep Teams'  },
+        { href: `/${orgSlug}/coaches`, icon: UserCheck,  label: 'Coaches'    },
+        { href: base,                  icon: LayoutGrid, label: 'Hub'        },
+      ]
+    : isHouseLeague
+    ? [
+        { href: `${base}/house-league`, icon: CalendarDays, label: 'Seasons' },
+        { href: base,                   icon: LayoutGrid,   label: 'Hub'     },
+      ]
+    : isModule
+    ? [
+        { href: base, icon: LayoutGrid, label: 'Hub' },
+      ]
+    : null; // tournament ops — use PRIMARY_KEYS
+
   return (
     <nav className={styles.bottomNav} aria-label="Admin mobile navigation">
-      {PRIMARY_KEYS.map(({ key, icon: Icon, label }) => {
-        const href   = `${base}/${key}`;
-        const active = pathname === href || pathname.startsWith(href + '/');
-        return (
-          <Link
-            key={key}
-            href={href}
-            className={`${styles.tab} ${active ? styles.active : ''}`}
-            id={`admin-mob-${label.toLowerCase()}`}
-          >
-            <span className={styles.iconWrap}>
-              <Icon size={22} strokeWidth={active ? 2.5 : 1.8} />
-              {active && <span className={styles.activeDot} />}
-            </span>
-            <span className={styles.label}>{label}</span>
-          </Link>
-        );
-      })}
+      {modulePrimaryTabs ? (
+        modulePrimaryTabs.map(({ href, icon: Icon, label }) => {
+          const active = href === base ? pathname === base : pathname === href || pathname.startsWith(href + '/');
+          return (
+            <Link
+              key={href}
+              href={href}
+              className={`${styles.tab} ${active ? styles.active : ''}`}
+              id={`admin-mob-${label.toLowerCase().replace(/\s/g, '-')}`}
+            >
+              <span className={styles.iconWrap}>
+                <Icon size={22} strokeWidth={active ? 2.5 : 1.8} />
+                {active && <span className={styles.activeDot} />}
+              </span>
+              <span className={styles.label}>{label}</span>
+            </Link>
+          );
+        })
+      ) : (
+        PRIMARY_KEYS.map(({ key, icon: Icon, label }) => {
+          const href   = `${base}/${key}`;
+          const active = pathname === href || pathname.startsWith(href + '/');
+          return (
+            <Link
+              key={key}
+              href={href}
+              className={`${styles.tab} ${active ? styles.active : ''}`}
+              id={`admin-mob-${label.toLowerCase()}`}
+            >
+              <span className={styles.iconWrap}>
+                <Icon size={22} strokeWidth={active ? 2.5 : 1.8} />
+                {active && <span className={styles.activeDot} />}
+              </span>
+              <span className={styles.label}>{label}</span>
+            </Link>
+          );
+        })
+      )}
 
       {/* More button */}
       <div ref={moreRef} className={styles.moreWrap}>

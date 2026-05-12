@@ -100,7 +100,7 @@ export async function PATCH(req: Request) {
     if (body.themePrimary === null) {
       updates.theme_primary = null;
     } else {
-      const isProOrElite = org.planId === 'pro' || org.planId === 'elite';
+      const isProOrElite = org.planId !== 'tournament';
       if (!isProOrElite) {
         return NextResponse.json(
           { error: 'Custom colors require a Pro or Elite plan' },
@@ -119,7 +119,7 @@ export async function PATCH(req: Request) {
     if (body.themeAccent === null) {
       updates.theme_accent = null;
     } else {
-      const isProOrElite = org.planId === 'pro' || org.planId === 'elite';
+      const isProOrElite = org.planId !== 'tournament';
       if (!isProOrElite) {
         return NextResponse.json(
           { error: 'Custom colors require a Pro or Elite plan' },
@@ -136,7 +136,7 @@ export async function PATCH(req: Request) {
 
   if (body.themeFont !== undefined) {
     const font = String(body.themeFont);
-    const isProOrElite = org.planId === 'pro' || org.planId === 'elite';
+    const isProOrElite = org.planId !== 'tournament';
     if (!isProOrElite && font !== 'system') {
       return NextResponse.json(
         { error: 'Custom fonts require a Pro or Elite plan' },

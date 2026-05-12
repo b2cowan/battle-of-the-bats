@@ -64,6 +64,13 @@
   background: rgba(var(--logic-lime-rgb), 0.04);
 }
 
+.navLinkActive,
+.navLinkActive:hover {
+  color: var(--logic-lime);
+  border-color: rgba(var(--logic-lime-rgb), 0.4);
+  background: rgba(var(--logic-lime-rgb), 0.08);
+}
+
 .sidebarFooter {
   padding: 1rem 1.25rem 1.5rem;
   border-top: 1px solid rgba(var(--logic-lime-rgb), 0.15);

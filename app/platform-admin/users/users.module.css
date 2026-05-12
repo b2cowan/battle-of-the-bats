@@ -1,11 +1,12 @@
-.page { max-width: 800px; }
+.page { max-width: 900px; }
 
 .header {
   border-bottom: 1px solid rgba(var(--logic-lime-rgb), 0.3);
   padding-bottom: 1rem;
   margin-bottom: 1.5rem;
   display: flex;
-  align-items: baseline;
+  align-items: flex-end;
+  justify-content: space-between;
   gap: 1rem;
 }
 
@@ -176,6 +177,149 @@
 .copyBtn:hover {
   background: rgba(var(--logic-lime-rgb), 0.16);
 }
+
+.nameCell { color: var(--fl-text); }
+
+.badgeActive {
+  font-family: var(--font-data);
+  font-size: 0.55rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 0.2rem 0.5rem;
+  background: rgba(34, 197, 94, 0.1);
+  border: 1px solid rgba(34, 197, 94, 0.35);
+  color: #4ade80;
+}
+
+.badgeInactive {
+  font-family: var(--font-data);
+  font-size: 0.55rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 0.2rem 0.5rem;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: var(--data-gray);
+}
+
+.bootstrapBadge {
+  margin-left: 0.5rem;
+  font-family: var(--font-data);
+  font-size: 0.5rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 0.15rem 0.4rem;
+  background: rgba(var(--blueprint-blue-rgb, 79, 163, 224), 0.12);
+  border: 1px solid rgba(var(--blueprint-blue-rgb, 79, 163, 224), 0.3);
+  color: var(--blueprint-blue, #4fa3e0);
+}
+
+.inviteBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: var(--font-data);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.45rem 0.9rem;
+  background: rgba(var(--logic-lime-rgb), 0.08);
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.4);
+  color: var(--logic-lime);
+  cursor: pointer;
+  transition: background 0.15s;
+  flex-shrink: 0;
+}
+.inviteBtn:hover { background: rgba(var(--logic-lime-rgb), 0.16); }
+
+.inviteCard {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.2);
+  padding: 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.inviteTitle {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--logic-lime);
+  margin: 0 0 1rem;
+}
+
+.inviteForm {}
+
+.inviteRow {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.inviteField { display: flex; flex-direction: column; gap: 0.3rem; flex: 1; min-width: 180px; }
+
+.fieldLabel {
+  font-family: var(--font-data);
+  font-size: 0.55rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--data-gray);
+}
+
+.required { color: #f87171; }
+
+.fieldInput {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: var(--fl-text);
+  padding: 0.45rem 0.65rem;
+  font-family: var(--font-data);
+  font-size: 0.78rem;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.fieldInput:focus { border-color: rgba(var(--logic-lime-rgb), 0.5); }
+
+.submitBtn {
+  font-family: var(--font-data);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.45rem 1rem;
+  background: var(--logic-lime);
+  border: none;
+  color: #000;
+  cursor: pointer;
+  transition: opacity 0.15s;
+  white-space: nowrap;
+  align-self: flex-end;
+}
+.submitBtn:hover:not(:disabled) { opacity: 0.85; }
+.submitBtn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.removeBtn {
+  font-family: var(--font-data);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.35rem 0.75rem;
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #f87171;
+  cursor: pointer;
+  transition: background 0.15s;
+  white-space: nowrap;
+}
+.removeBtn:hover:not(:disabled) { background: rgba(239, 68, 68, 0.16); }
+.removeBtn:disabled { opacity: 0.5; cursor: not-allowed; }
 
 /* Pagination */
 .pagination {

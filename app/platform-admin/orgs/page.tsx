@@ -23,11 +23,16 @@ async function getOrgs() {
   }));
 }
 
-export default async function OrgsPage() {
+export default async function OrgsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ status?: string }>;
+}) {
+  const { status } = await searchParams;
   const orgs = await getOrgs();
   const planDefaults = Object.fromEntries(
     Object.entries(PLAN_CONFIG).map(([plan, cfg]) => [plan, cfg.tournamentLimit])
   );
 
-  return <OrgsClient orgs={orgs} planDefaults={planDefaults} />;
+  return <OrgsClient orgs={orgs} planDefaults={planDefaults} initialStatus={status ?? ''} />;
 }

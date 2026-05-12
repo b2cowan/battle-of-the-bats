@@ -1,10 +1,11 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { Users, X, Archive, Link2 } from 'lucide-react';
+import { Users, X, Archive, Link2, DollarSign } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { hasCapability } from '@/lib/roles';
 import FeedbackModal from '@/components/FeedbackModal';
+import HelpCallout from '@/components/help/HelpCallout';
 import styles from './rep-teams.module.css';
 import type { RepTeam, RepProgramYear } from '@/lib/types';
 
@@ -178,15 +179,51 @@ export default function RepTeamsPage() {
         )}
       </div>
 
+      {/* Quick-access nav */}
+      <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', marginBottom: '2rem' }}>
+        <Link
+          href={`${base}/rep-teams/allocations`}
+          style={{
+            display: 'inline-flex', alignItems: 'center', gap: '0.5rem',
+            background: 'rgba(255,255,255,0.04)',
+            border: '1px solid rgba(var(--blueprint-blue-rgb),0.2)',
+            borderRadius: 8, padding: '0.6rem 1rem',
+            color: 'rgba(255,255,255,0.7)', fontSize: '0.88rem', fontWeight: 600,
+            textDecoration: 'none', transition: 'background 0.15s',
+          }}
+        >
+          <DollarSign size={15} style={{ color: 'var(--logic-lime,#a3e635)' }} />
+          Cost Allocations
+        </Link>
+        <Link
+          href={`${base}/rep-teams/documents`}
+          style={{
+            display: 'inline-flex', alignItems: 'center', gap: '0.5rem',
+            background: 'rgba(255,255,255,0.04)',
+            border: '1px solid rgba(var(--blueprint-blue-rgb),0.2)',
+            borderRadius: 8, padding: '0.6rem 1rem',
+            color: 'rgba(255,255,255,0.7)', fontSize: '0.88rem', fontWeight: 600,
+            textDecoration: 'none', transition: 'background 0.15s',
+          }}
+        >
+          Document Templates
+        </Link>
+      </div>
+
+      <p className={styles.sectionTitle}>Teams</p>
+
       {fetching ? (
         <p className={styles.muted}>Loading…</p>
       ) : summaries.length === 0 ? (
-        <div className={styles.emptyState}>
-          <Users size={28} style={{ opacity: 0.3, margin: '0 auto 0.75rem', display: 'block' }} />
-          <p>No teams yet.</p>
+        <div>
+          <HelpCallout
+            variant="info"
+            title="Get started with Rep Teams"
+            body="Rep teams are competitive travel teams managed through the franchise model — the org creates and oversees teams, coaches operate them day-to-day. Create your first team to get started."
+          />
           {canWrite && (
             <p>
-              <button type="button" className="btn btn-secondary" style={{ marginTop: '0.75rem' }} onClick={openCreate}>
+              <button type="button" className="btn btn-secondary" style={{ marginTop: '0.25rem' }} onClick={openCreate}>
                 Add your first team
               </button>
             </p>

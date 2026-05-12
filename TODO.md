@@ -1,80 +1,21 @@
-# Project TODO List
+# FieldLogicHQ — Project TODO List
 
-This file tracks the ongoing tasks for the tournament website project. AI models and the USER use this to coordinate work.
+This file tracks the ongoing tasks for the FieldLogicHQ platform (multi-tenant sports club and league management). AI models and the USER use this to coordinate work.
 
 ---
 
 ## 🚀 Active Tasks (Priority Order)
 
-### 1. Platform Admin — Superuser Tooling
-*Authoritative plan in [PLATFORM_ADMIN_IMPROVEMENTS_PLAN.md](PLATFORM_ADMIN_IMPROVEMENTS_PLAN.md)*
-
-- [x] **Phase A** — `enabled_addons` toggle UI + direct admin link (unblocks `module_public_site` production enablement)
-- [x] **Phase B** — Users page org context enrichment (no migration)
-- [x] **Phase E1+E2** — Platform audit log table + write helper (bundle with Phase A so all new routes log from day one)
-- [x] **Phase C** — Org notes column + drill-down detail page
-- [x] **Phase D** — `org_overrides` table: subscription status override + comp/billing grace period
-- [x] **Phase E3** — Audit log read page at `/platform-admin/audit`
-- [x] **Phase F** — Org search/filter + users pagination
-
-### 2. Platform Roadmap — Add-On Modules
-*Authoritative plan in [PLATFORM_ROADMAP.md](PLATFORM_ROADMAP.md)*
-
-- [x] **Phase 1** — Archives B2: back-to-admin link on public archive detail pages
-- [x] **Phase 2** — Plan entitlements architecture: `moduleEntitlements` in PlanConfig, `enabled_addons` migration, `hasModuleEntitlement()` helper
-- [x] **Phase 3** — `module_public_site` (see [docs/archive/PUBLIC_SITE_MODULE_PLAN.md](docs/archive/PUBLIC_SITE_MODULE_PLAN.md))
-- [x] **Phase 4** — `module_accounting` (see [ACCOUNTING_MODULE_PLAN.md](ACCOUNTING_MODULE_PLAN.md))
-- [x] **Phase 5** — `module_house_league` (see [HOUSE_LEAGUE_MODULE_PLAN.md](HOUSE_LEAGUE_MODULE_PLAN.md)) — All phases 5A–5M complete: migration, roles, types/helpers, module shell, season/division management, public registration form, registration admin, team placement + draft, scheduling, standings, scoped email dispatch, accounting integration, past seasons pages, practice scheduling with recurrence.
-- [ ] **Phase 6** — `module_rep_teams` (see [REP_TEAMS_MODULE_PLAN.md](REP_TEAMS_MODULE_PLAN.md))
-  - [x] **6A** — DB schema: Migration 021 + Supabase Storage bucket setup
-  - [x] **6B** — TypeScript types + DB helpers
-  - [x] **6C** — C2 coach role expansion + module shell (5 layers: route gate, page guard, sidebar, hub tile, layout)
-  - [x] **6D** — Team + program year management (admin API + pages)
-  - [x] **6E** — Public tryout registration form (C5 pattern: public form, API, confirmation emails)
-  - [x] **6F** — Tryout approval queue (admin): offer → accept/decline flow + status emails
-  - [x] **6G** — Roster management (coaches portal: foundation + roster list + player detail; franchise model — coaches are primary operators)
-  - [x] **6H** — Player documents (C4 Supabase Storage: upload API, signed URLs, template management)
-  - [x] **6I** — Coaches portal foundation (pulled into 6G: layout, auth guard, sidebar, context, dashboard, team overview)
-  - [ ] **6J** — Coaches portal: unified team calendar (6 event types + Phase 5M practice recurrence)
-  - [ ] **6K** — Accounting: org cost allocation + team payment schedules + org real-time view
-  - [ ] **6L** — Accounting: coach-managed team budget (player dues, expenses, tournament payables)
-  - [ ] **6M** — Accounting: automated payment reminder emails with paid-status awareness
-  - [ ] **6N** — Past program years (admin history + coaches portal history, read-only)
-  - [ ] **Module gating test** — 5-layer verification + coach role team-scope test
-
-### 2. Future Product Modules (detail)
-*Recommended build order: Accounting → House League → Rep Teams. Each requires its own detailed plan file before implementation begins.*
-
-- [x] **Public Website Module (`module_public_site`)** — Shipped. (see [docs/archive/PUBLIC_SITE_MODULE_PLAN.md](docs/archive/PUBLIC_SITE_MODULE_PLAN.md))
-- [x] **Accounting Module (`module_accounting`)** — The org's own financial management: income/expense tracking, tournament ledgers, inter-ledger transfers. Plan: [ACCOUNTING_MODULE_PLAN.md](ACCOUNTING_MODULE_PLAN.md).
-- [x] **House League Module (`module_house_league`)** — Season-long recreational league management: player registration, waitlists, team placement + draft, scheduling, standings, scoped email dispatch, accounting integration, past seasons, practice scheduling. Plan: [HOUSE_LEAGUE_MODULE_PLAN.md](HOUSE_LEAGUE_MODULE_PLAN.md). All phases 5A–5M complete.
-- [ ] **Rep Team Module (`module_rep_teams`)** — Competitive team program management: coaches portal, rosters, tryout management, player documents, three-tier accounting integration. Plan: [REP_TEAMS_MODULE_PLAN.md](REP_TEAMS_MODULE_PLAN.md).
-
-### 3. Tournament Landing Page Polish
-*One outstanding item from the completed Tournament Redesign project*
-
-- [x] **Tournament Landing Page Review** — Hero title now dynamic from `tournament.name`; remaining polish (registration CTA) deferred
-
-### 4. Multi-Tenancy — Billing & Subscriptions
+### 1. Multi-Tenancy — Billing & Subscriptions
 *Detailed tasks in [MULTI_TENANT_ARCHITECTURE.md](MULTI_TENANT_ARCHITECTURE.md)*
 
 - [ ] **Phase 5** — Billing & Subscriptions: Stripe account setup and testing remaining
 
-### 5. Code Quality — Pre-existing TypeScript Errors in `lib/db.ts`
+### 2. Email Strategy
 
-- [x] **Fix 9 implicit `any` parameters in row-mapper callbacks** — `getDiamonds`, `getContacts`, `getAgeGroups`, `getPools`, `getTeams`, `getGames`, `getAnnouncements`, `getRules`, `getResources` (each `.map()` callback param needs `: any`). Also remove unused `fileExt` var and unused `data` destructure in `uploadResourceFile`. All pre-existing; discovered during accounting module work. One small commit, no behaviour change.
-
-### 6. Infrastructure — Dev Environment
-- [x] **AWS Amplify Hosting Strategy** — Branch-based deployment, `dev.fieldlogichq.ca`, per-branch env var scoping (see [AMPLIFY_DEV_ENV_PLAN.md](AMPLIFY_DEV_ENV_PLAN.md))
-- [ ] **Live Dev Environment** — Create the live development environment on AWS Amplify `dev` branch (follow checklist in [AMPLIFY_DEV_ENV_PLAN.md](AMPLIFY_DEV_ENV_PLAN.md))
-
-### 6. Email Strategy
 - [ ] **Email Strategy Investigation**:
     - [ ] Investigate best-of-breed providers (Resend, Postmark, AWS SES) for system notifications
     - [ ] Define the architecture for a "Contact Us" inquiry system
-
-### 7. Auth & Membership Constraints
-- [ ] **One-user-one-org enforcement** — Delete auth user on member removal; cross-org invite guard (see [ONE_ORG_CONSTRAINT_PLAN.md](ONE_ORG_CONSTRAINT_PLAN.md))
 
 ---
 
@@ -82,25 +23,122 @@ This file tracks the ongoing tasks for the tournament website project. AI models
 
 - [ ] **House League — Coach Draft Room** — Shareable per-team link (no login required) that lets coaches participate in the draft live. Each team gets a token-scoped URL; coaches see the current pick state and submit their pick when it's their turn. Requires: real-time state sync (polling or WebSocket), a `draftTokens` map in `draft_state`, and a public-facing draft room page. See conversation context from Phase 5G planning. **Architecture note:** Phase 5G is designed to not block this — draft business logic is kept auth-layer-agnostic so a token path can be added to `/draft/route.ts` without restructuring the state machine.
 - [ ] **House League — Practice Scheduling** — Allow league admins to schedule practices for individual teams alongside the game schedule. A practice belongs to one team (not two), has no score, and does not affect standings. Confirmed scope post-Phase 5H. Build as an extension of the schedule page: separate "Practices" tab or filter, same date/time/location fields, team selector instead of home/away. No schema migration needed — can reuse `league_games` with `away_team_id = null` and a `game_type` column, or use a separate `league_practices` table (decide at build time).
-
----
-
-## 🧭 Strategy (Post-Roadmap)
-
-- [ ] **In-App Documentation & Help System** — Research all sections and user roles across the platform and design a documentation layer that surfaces help without cluttering pages. Two tiers: (1) **Contextual in-app cues** — empty-state guidance, tooltip hints, section intros, and inline explainers placed at natural decision points (e.g. "What is a program year?", "When should I mark a season Active?"); (2) **Help pages** — role-scoped walkthroughs for first-time users covering real-world workflows such as: coach setting up a rep team for the season, house league admin building teams and running a draft, treasurer handling common accounting scenarios (entry categories, transfers, reconciling tournament income), org owner onboarding a new season from scratch. Research should audit every module (tournaments, house league, rep teams, accounting, public site, org admin) and every role (owner, admin, treasurer, league_admin, league_registrar, coach, official) before any writing or implementation begins. Do not start until all Platform Roadmap modules are complete.
-
-- [ ] **Role-Based UX Improvement Review** — *(Deferred until House League module is complete)* Execute the UX Improvement Test Plan (`UX_IMPROVEMENT_TEST_PLAN.md`) to evaluate the platform from the perspective of all user roles (owner, admin, treasurer, coach, parent, etc.) and identify friction points for future polish.
-- [ ] **Pricing & Branding Strategy Review** — Once all Platform Roadmap modules are shipped (Public Site, Accounting, House League, Rep Teams), conduct a full evaluation of: plan tier pricing in light of new module value, add-on pricing model (flat monthly vs. bundled tiers — see D-M1/D-M2 in [PLATFORM_ROADMAP.md](PLATFORM_ROADMAP.md)), whether any reserved modules should be promoted to core, and whether the Starter/Pro/Elite brand naming still fits the expanded product surface. Do not revisit pricing decisions before the roadmap is complete — functionality defines value before pricing follows.
+- [ ] **Calendar Sync for Team Schedules** — Allow parents/coaches to export a team's game schedule as an `.ics` file or subscribe via a calendar URL (Google/Apple Calendar). Technically straightforward (generate `.ics` from schedule query). Applies to both house league team schedules and rep team schedules in the coaches portal. Build during a parent-facing polish pass.
+- [ ] **Bulk Operations for Admins** — Bulk-change registration statuses, bulk-assign teams, bulk-edit schedule slots. High value for orgs with 100+ registrations. Requires multi-select UI, confirmation flows, and async batch API routes. Revisit after Phase 3 UX ships and an org is operating at scale.
 - [ ] **Custom domain investigation** — Research feasibility and effort of allowing orgs to point a custom domain (e.g. miltonbats.com) to their FieldLogicHQ public page. Covers: DNS verification flow, wildcard SSL or per-org cert provisioning, reverse proxy / Amplify routing changes, and potential upsell pricing. Do not design or implement until `module_public_site` is fully shipped.
-- [ ] **Public Site Offering Evaluation** — After the first external org enables `module_public_site`, review the offering across three dimensions: (1) ease of setup — is the path from enabling the module to a live page clear enough for a non-technical org owner? (2) customization level — structured fields are correct; assess whether anything is missing without going full CMS; (3) base UX improvements — e.g., contact email is shown on the public page with no surrounding context (needs a label like "Contact Us"), tournament cards need review, social link presentation. Produce a prioritized fix list before moving to the next module.
+- [ ] **Public Site Offering Evaluation** — After the first external org enables `module_public_site`, review the offering across three dimensions: (1) ease of setup — is the path from enabling the module to a live page clear enough for a non-technical org owner? (2) customization level — structured fields are correct; assess whether anything is missing without going full CMS; (3) base UX improvements. Produce a prioritized fix list before moving to the next module.
 
 ---
 
 ## ✅ Completed Projects
 
-### Platform Roadmap — Foundation (Phases 1–2)
-- [x] Plan entitlements architecture (`moduleEntitlements`, `enabled_addons`, `hasModuleEntitlement()`)
-- [x] Archives B2: back-to-admin link on public archive pages
+### In-App Documentation & Help System
+*(see [HELP_SYSTEM_PLAN.md](HELP_SYSTEM_PLAN.md))*
+- [x] **Phases A–I complete** — foundation + Tournaments + House League + Rep Teams + Coaches Portal + Accounting + Org Admin & Onboarding + Platform Admin contextual cues (H) + Help Hub & context-aware navigation (I)
+
+### Pricing
+- [x] **Phase 1** — Update plan-config (4 tiers), rewrite PricingSection component, build public `/pricing` page. Full plan in [PRICING_IMPLEMENTATION_PLAN.md](PRICING_IMPLEMENTATION_PLAN.md). Content spec in [PRICING_PAGE_COPY.md](PRICING_PAGE_COPY.md).
+- [x] **Phase 2 / Functionality Audit** — Billing page rewritten (monthly/annual toggle, modules section, outcome-focused upgrade cards); onboarding checklist updated with conditional module steps; all stale plan name references removed.
+
+### Tournament Admin URL Restructure
+*(see [TOURNAMENT_URL_RESTRUCTURE_PLAN.md](TOURNAMENT_URL_RESTRUCTURE_PLAN.md))*
+- [x] Moved all tournament operational pages from `admin/{page}` to `admin/tournaments/{page}` — matches module URL pattern used by house-league, rep-teams, and accounting
+
+### Role-Based UX Improvement Review — Phases 1–5
+*(see [UX_REVIEW_PLAN.md](UX_REVIEW_PLAN.md))*
+
+**Phase 1 — Critical bugs & multi-tenancy**
+- [x] **1A** — Replace default `/{orgSlug}` page: FieldLogicHQ-branded placeholder (no public site), tournament selector for 2+ active tournaments
+- [x] **1B** — Fix accounting sidebar: rename "Overview" → "Ledgers", remove broken "Org Ledger" duplicate
+- [x] **1C** — Remove House League "Notifications" sidebar link (currently resolves to a 404)
+- [x] **1D** — Fix staff auto-redirect: change target from `/admin/tournaments` to `/admin/dashboard`
+
+**Phase 2 — Coaches portal gaps**
+- [x] **2A** — Build `CoachesBottomNav` for mobile navigation in the coaches portal
+- [x] **2B** — Improve "Not assigned" screen: add org contact email and "Back to [org]" link
+- [x] **2C** — Add unconfigured-state message to coaches accounting page when no dues/expenses exist
+- [x] **2D** — Show program year name alongside team name in coaches sidebar team list
+
+**Phase 3 — Owner & operator improvements**
+- [x] **3A** — Expand onboarding checklist: add conditional steps for enabled modules (house league, rep teams, public site)
+- [x] **3B** — Add "Modules" section to billing page: per-module plan inclusion, active status, and upgrade CTA
+- [x] **3C** — Create `/admin/org` hub page (Members, Diamonds, Tournament Records, Billing, Settings tiles); update admin hub tile href
+- [x] **3D** — Add inline status-transition buttons to house league season cards
+- [x] **3E** — Build House League Notifications page at `/admin/house-league/seasons/[seasonId]/notifications` (email preview + sent history log); re-add Notifications sidebar link
+- [x] **3F** — Season detail index page: sidebar sub-nav renders correctly on the index page; original issue no longer exists
+- [x] **3G** — Add cross-module "Needs attention" strip to admin hub (pending registrations, open tryouts)
+
+**Phase 4 — Platform admin & treasurer**
+- [x] **4A** — Add health indicators to platform admin overview: `past_due` org count, new signups in 7 days
+- [x] **4B** — Add org/date-range filter and pagination to platform audit log (200-row hard cap, no search)
+- [x] **4C** — Add active-route highlighting to platform admin sidebar nav
+- [x] **4D** — Add "Go to Admin →" link in platform admin org rows and detail page (label standardised to "↗ Admin")
+- [x] **4E** — Allow treasurers (not just owners) to create tournament ledgers; expanded Add Entry / Add Transfer / Edit / Void gates to treasurer too
+- [x] **4F** — Skipped: platform users list is internal staff only (no cap issue); org users found via org → users drill-down
+- [x] **4G** — Treasurer: add CSV export to ledger detail page
+- [x] **4H** — Treasurer: category `<datalist>` now fetches distinct categories from this org's ledger entries; falls back to static defaults for new orgs
+
+**Phase 5 — Public experience & polish**
+- [x] **5A** — Add rep teams tryout section to org home page when module enabled and tryouts open
+- [x] **5B** — Add house league CTA to default `/{orgSlug}` branch when module enabled and registration open
+- [x] **5C** — Improve tryout registration closed page: show org contact email (open-date field deferred — column does not exist in schema)
+- [x] **5D** — Add "Contact Us" label to contact email link on public site page
+- [x] **5E** — Add pending-action badges to coaches team hub cards (overdue installments, upcoming events in 7 days)
+- [x] **5F** — Audit and standardise empty/loading states app-wide (coaches portal: loadingState CSS, emptyStateTitle/Sub)
+- [x] **5G** — Add season switcher dropdown to House League sidebar when inside a season (client-side fetch pattern)
+- [x] **5H** — Official/Scorekeeper score entry: type="number", 56px input height, 48px button height, filter selects 44px
+- [x] **5I** — House league public registration form: clear capacity labels + status lookup page at `/{orgSlug}/league/{seasonSlug}/status`
+
+### Platform Admin — Superuser Tooling
+*(see [PLATFORM_ADMIN_IMPROVEMENTS_PLAN.md](docs/archive/PLATFORM_ADMIN_IMPROVEMENTS_PLAN.md))*
+- [x] **Phase A** — `enabled_addons` toggle UI + direct admin link
+- [x] **Phase B** — Users page org context enrichment
+- [x] **Phase C** — Org notes column + drill-down detail page
+- [x] **Phase D** — `org_overrides` table: subscription status override + comp/billing grace period
+- [x] **Phase E1+E2** — Platform audit log table + write helper
+- [x] **Phase E3** — Audit log read page at `/platform-admin/audit`
+- [x] **Phase F** — Org search/filter + users pagination
+- [x] Platform company users — DB-managed platform admin access (`platform_users` table, invite/deactivate/remove UI)
+
+### Platform Roadmap — Add-On Modules
+*(see [PLATFORM_ROADMAP.md](PLATFORM_ROADMAP.md))*
+- [x] **Phase 1** — Archives B2: back-to-admin link on public archive detail pages
+- [x] **Phase 2** — Plan entitlements architecture: `moduleEntitlements` in PlanConfig, `enabled_addons` migration, `hasModuleEntitlement()` helper
+- [x] **Phase 3** — `module_public_site` (see [docs/archive/PUBLIC_SITE_MODULE_PLAN.md](docs/archive/PUBLIC_SITE_MODULE_PLAN.md))
+- [x] **Phase 4** — `module_accounting` (see [ACCOUNTING_MODULE_PLAN.md](docs/archive/ACCOUNTING_MODULE_PLAN.md))
+- [x] **Phase 5** — `module_house_league` — All phases 5A–5M complete (see [HOUSE_LEAGUE_MODULE_PLAN.md](docs/archive/HOUSE_LEAGUE_MODULE_PLAN.md))
+- [x] **Phase 6** — `module_rep_teams` — All phases 6A–6N complete (see [REP_TEAMS_MODULE_PLAN.md](REP_TEAMS_MODULE_PLAN.md))
+  - [x] 6A — DB schema: Migration 021 + Supabase Storage bucket setup
+  - [x] 6B — TypeScript types + DB helpers
+  - [x] 6C — Coach role expansion + module shell
+  - [x] 6D — Team + program year management (admin API + pages)
+  - [x] 6E — Public tryout registration form
+  - [x] 6F — Tryout approval queue (admin): offer → accept/decline flow + status emails
+  - [x] 6G — Roster management (coaches portal; franchise model)
+  - [x] 6H — Player documents (Supabase Storage: upload API, signed URLs, template management)
+  - [x] 6I — Coaches portal foundation (layout, auth guard, sidebar, context, dashboard)
+  - [x] 6J — Coaches portal: unified team calendar (6 event types + recurrence)
+  - [x] 6K — Accounting: org cost allocation + team payment schedules
+  - [x] 6L — Accounting: coach-managed team budget (dues, expenses, tournament payables)
+  - [x] 6M — Accounting: automated payment reminder emails (coach-initiated)
+  - [x] 6N — Past program years (admin history + coaches portal history, read-only)
+  - [x] Franchise model audit — 9 violations fixed across admin/coaches layers
+
+### Infrastructure — Dev Environment
+*(see [AMPLIFY_DEV_ENV_PLAN.md](docs/archive/AMPLIFY_DEV_ENV_PLAN.md))*
+- [x] AWS Amplify Hosting Strategy — branch-based deployment, `dev.fieldlogichq.ca`, per-branch env var scoping
+- [x] Live Dev Environment — AWS Amplify `dev` branch live
+- [x] RESEND_API_KEY added to Amplify environment variables
+- [x] NEXT_PUBLIC_APP_URL added to Amplify environment variables
+
+### Auth & Membership Constraints
+- [x] One-user-one-org enforcement — delete auth user on member removal; cross-org invite guard (see [docs/archive/ONE_ORG_CONSTRAINT_PLAN.md](docs/archive/ONE_ORG_CONSTRAINT_PLAN.md))
+
+### Code Quality
+- [x] Fix 9 implicit `any` parameters in `lib/db.ts` row-mapper callbacks
+
+### Tournament Landing Page Polish
+- [x] Hero title now dynamic from `tournament.name`; remaining registration CTA polish deferred
 
 ### Platform Improvements — Phases 1–3
 *(see [PLATFORM_IMPROVEMENTS_PLAN.md](docs/archive/PLATFORM_IMPROVEMENTS_PLAN.md))*
@@ -120,7 +158,7 @@ This file tracks the ongoing tasks for the tournament website project. AI models
 - [x] Grouped module/action sections in capability override UI
 
 ### Tournament Lifecycle Cleanup
-*(see [TOURNAMENT_LIFECYCLE_PLAN.md](TOURNAMENT_LIFECYCLE_PLAN.md))*
+*(see [TOURNAMENT_LIFECYCLE_PLAN.md](docs/archive/TOURNAMENT_LIFECYCLE_PLAN.md))*
 - [x] All status transitions freely selectable via dropdown
 - [x] Seal button gated to completed status only (UI + server guard)
 - [x] Archived tournaments hidden from admin switcher
@@ -156,10 +194,6 @@ This file tracks the ongoing tasks for the tournament website project. AI models
 ### Platform Administration (Super Admin)
 *(see [PLATFORM_ADMIN_PLAN.md](PLATFORM_ADMIN_PLAN.md))*
 - [x] Site Admin Dashboard — email-allowlist auth guard, org plan override, user password reset, global stats
-
-### Infrastructure
-- [x] RESEND_API_KEY added to Amplify environment variables
-- [x] NEXT_PUBLIC_APP_URL added to Amplify environment variables (`https://www.fieldlogichq.ca`)
 
 ### Other
 - [x] Brand Pivot — sports-authority copy across landing page, auth pages, navbar

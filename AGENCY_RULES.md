@@ -2,11 +2,15 @@
 
 These rules apply to all AI coding assistants working in this repository.
 
+## Platform context
+
+**FieldLogicHQ** is a multi-tenant sports club and league management platform for Canadian sports organizations. Each org gets an isolated space at `/{orgSlug}/`. The platform is modular (tournaments, house league, rep teams, accounting, public site) and billed on a four-tier SaaS model (Tournament / Tournament Plus / League / Club). See `README.md` for full context.
+
 ## Workflow Requirements
 - **Planning First**: For every request, the agent must provide an **Implementation Plan** and/or **Task List** of items being reviewed and actioned before proceeding with significant changes.
 - **Product Manager UX Plan (required)**: Before implementing any feature, the agent MUST present a plain-language UX summary in the conversation — written for a product manager, not an engineer. This summary must describe what the user sees and does differently after the change, the benefits, and any role-based access differences. This is a blocking step: no code changes may begin until this summary has been presented.
 - **Verification**: The user is responsible for performing all **browser-based testing** and visual verification unless explicitly asked otherwise. This is intended to minimize model token usage and browser tool execution.
-- **Documentation**: Maintain the `memory.md` file as a living record of the project's state and technical decisions.
+- **Documentation**: Maintain project memory via the Claude auto-memory system (`memory/MEMORY.md` index + per-topic files in `memory/`). This is the living record of project state and technical decisions.
 - **Task Tracking**: Agents MUST update the `TODO.md` file in the root directory. Mark items as completed `[x]` and move them to the `✅ Completed Tasks` section once verified.
 
 ## Documentation Structure
@@ -35,4 +39,4 @@ When an agent is asked to write up an implementation plan, it must create a new 
 
 ## Technical Context
 - Refer to `AGENTS.md` for Next.js specific version rules.
-- Refer to `memory.md` for current project state and data models.
+- Refer to `memory/MEMORY.md` (index) and per-topic files in `memory/` for current project state and data models.

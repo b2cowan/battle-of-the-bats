@@ -118,7 +118,7 @@ export default function PlayerDocumentsSection({ orgSlug, teamId, playerId }: Pr
       </div>
 
       {loading ? (
-        <p className={styles.muted} style={{ padding: '0.5rem 0' }}>Loading…</p>
+        <div className={styles.loadingState} style={{ padding: '0.5rem 0' }}>Loading documents…</div>
       ) : docs.length === 0 ? (
         <p className={styles.detailPlaceholder}>No documents uploaded yet.</p>
       ) : (

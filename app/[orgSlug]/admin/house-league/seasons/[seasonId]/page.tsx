@@ -6,6 +6,8 @@ import { CalendarDays, Users, Pencil, Trash2, X, Plus } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { hasCapability } from '@/lib/roles';
 import FeedbackModal from '@/components/FeedbackModal';
+import HelpCallout from '@/components/help/HelpCallout';
+import HelpTooltip from '@/components/help/HelpTooltip';
 import styles from '../../house-league.module.css';
 import type { LeagueSeason, LeagueSeasonStatus } from '@/lib/types';
 
@@ -357,8 +359,14 @@ export default function SeasonDetailPage() {
               {season.ageGroup && (
                 <span className={styles.ageGroupBadge}>{season.ageGroup}</span>
               )}
-              <span className={`${styles.statusBadge} ${STATUS_CSS[season.status] ?? ''}`}>
-                {STATUS_LABELS[season.status] ?? season.status}
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
+                <span className={`${styles.statusBadge} ${STATUS_CSS[season.status] ?? ''}`}>
+                  {STATUS_LABELS[season.status] ?? season.status}
+                </span>
+                <HelpTooltip
+                  title="Season statuses"
+                  body="Draft: configuration only, not visible publicly. Registration Open: public form is live for parents. Registration Closed: building teams and schedule. Active: games underway. Completed: season is over. Archived: season is retired."
+                />
               </span>
             </div>
 
@@ -430,23 +438,34 @@ export default function SeasonDetailPage() {
 
       {/* Lifecycle controls — admin only */}
       {isAdmin && nextTransition && (
-        <div className={styles.lifecycleBar}>
-          <span className={styles.lifecycleLabel}>Status</span>
-          <button
-            type="button"
-            className="btn btn-secondary"
-            style={{ fontSize: '0.82rem' }}
-            disabled={transitioningTo !== null}
-            onClick={() => handleTransition(nextTransition.status)}
-          >
-            {transitioningTo ? 'Updating…' : nextTransition.label}
-          </button>
-          {season.status === 'draft' && divisions.length === 0 && (
-            <span className={styles.lifecycleHint}>
-              Add at least one division before opening registration.
-            </span>
+        <>
+          {nextTransition.status === 'registration_open' && (
+            <div style={{ marginBottom: '0.75rem' }}>
+              <HelpCallout
+                variant="tip"
+                title="Opening registration publishes the public form"
+                body="Once registration opens, parents can submit registrations online. You can close it again at any time from this page."
+              />
+            </div>
           )}
-        </div>
+          <div className={styles.lifecycleBar}>
+            <span className={styles.lifecycleLabel}>Status</span>
+            <button
+              type="button"
+              className="btn btn-secondary"
+              style={{ fontSize: '0.82rem' }}
+              disabled={transitioningTo !== null}
+              onClick={() => handleTransition(nextTransition.status)}
+            >
+              {transitioningTo ? 'Updating…' : nextTransition.label}
+            </button>
+            {season.status === 'draft' && divisions.length === 0 && (
+              <span className={styles.lifecycleHint}>
+                Add at least one division before opening registration.
+              </span>
+            )}
+          </div>
+        </>
       )}
 
       {/* Divisions section */}

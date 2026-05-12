@@ -14,6 +14,8 @@ function generateSlug(name: string): string {
   return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 }
 import FeedbackModal from '@/components/FeedbackModal';
+import HelpCallout from '@/components/help/HelpCallout';
+import HelpTooltip from '@/components/help/HelpTooltip';
 import styles from './tournaments-admin.module.css';
 
 type ModalMode = 'add' | 'edit' | null;
@@ -380,13 +382,41 @@ export default function AdminTournamentsPage() {
         </p>
       </div>
 
+      {tournaments.length === 0 && (
+        <HelpCallout
+          variant="info"
+          title="Tournaments are the core of FieldLogicHQ"
+          body="Create your first tournament to get started — you can configure age groups, teams, schedule, and scoring all from here."
+          cta={{ label: 'New Tournament', href: '#' }}
+        />
+      )}
+
+      {(() => {
+        const hasUnsealedCompleted = tournaments.some(
+          t => t.status === 'completed' && !sealedTournamentIds.has(t.id)
+        );
+        return hasUnsealedCompleted ? (
+          <HelpCallout
+            variant="warning"
+            title="Sealing is permanent"
+            body="Sealing permanently locks the results and moves the tournament to your digital archive. This cannot be undone — only seal once all scores are verified."
+          />
+        ) : null;
+      })()}
+
       <div className="table-wrap">
         <table>
           <thead>
             <tr>
               <th>Tournament Name</th>
               <th>Year</th>
-              <th>Status</th>
+              <th style={{ whiteSpace: 'nowrap' }}>
+                Status
+                <HelpTooltip
+                  title="Tournament statuses"
+                  body="Draft: visible only to admins. Active: accepting registrations and score submissions. Completed: season is over. Archived: hidden from most views."
+                />
+              </th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -394,7 +424,7 @@ export default function AdminTournamentsPage() {
             {tournaments.length === 0 ? (
               <tr>
                 <td colSpan={4} style={{ textAlign: 'center', color: 'var(--white-30)', padding: '2rem' }}>
-                  No tournaments yet.
+                  No tournaments yet — use the button above to create your first one.
                 </td>
               </tr>
             ) : tournaments.map(t => (

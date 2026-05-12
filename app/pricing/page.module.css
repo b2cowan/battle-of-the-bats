@@ -1,0 +1,450 @@
+/* ── Hero ────────────────────────────────────────────────────────────────── */
+.hero {
+  padding: 6rem 0 4rem;
+  border-bottom: 1px solid rgba(var(--blueprint-blue-rgb), 0.2);
+}
+
+.heroTitle {
+  font-family: var(--font-data);
+  font-size: clamp(2rem, 4vw, 3.25rem);
+  font-weight: 700;
+  color: var(--fl-text);
+  line-height: 1.15;
+  margin-bottom: 1.25rem;
+}
+
+.heroSub {
+  font-family: var(--font-data);
+  font-size: 0.95rem;
+  color: var(--data-gray);
+  max-width: 52ch;
+  line-height: 1.7;
+  margin-bottom: 2.5rem;
+}
+
+.trustRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.25rem 2.5rem;
+}
+
+.trustItem {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--font-data);
+  font-size: 0.72rem;
+  color: var(--data-gray);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.trustDot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--logic-lime);
+  flex-shrink: 0;
+}
+
+/* ── Plans section ───────────────────────────────────────────────────────── */
+.plansSection {
+  padding: 4rem 0;
+  border-bottom: 1px solid rgba(var(--blueprint-blue-rgb), 0.2);
+}
+
+/* ── Shared section headings ─────────────────────────────────────────────── */
+.sectionTitle {
+  font-family: var(--font-data);
+  font-size: clamp(1.35rem, 3vw, 2rem);
+  font-weight: 700;
+  color: var(--fl-text);
+  margin-bottom: 0.6rem;
+}
+
+.sectionSub {
+  font-family: var(--font-data);
+  font-size: 0.85rem;
+  color: var(--data-gray);
+  max-width: 60ch;
+  line-height: 1.7;
+  margin-bottom: 2.5rem;
+}
+
+/* ── Comparison table ────────────────────────────────────────────────────── */
+.tableSection {
+  padding: 5rem 0;
+  border-bottom: 1px solid rgba(var(--blueprint-blue-rgb), 0.2);
+}
+
+.tableWrap {
+  overflow-x: auto;
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.3);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-data);
+  font-size: 0.75rem;
+}
+
+.thFeature {
+  text-align: left;
+  padding: 0.85rem 1.25rem;
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--data-gray);
+  background: rgba(var(--blueprint-blue-rgb), 0.08);
+  border-bottom: 1px solid rgba(var(--blueprint-blue-rgb), 0.25);
+  min-width: 200px;
+}
+
+.th {
+  text-align: center;
+  padding: 0.85rem 1rem;
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--data-gray);
+  background: rgba(var(--blueprint-blue-rgb), 0.08);
+  border-bottom: 1px solid rgba(var(--blueprint-blue-rgb), 0.25);
+  border-left: 1px solid rgba(var(--blueprint-blue-rgb), 0.15);
+  min-width: 130px;
+}
+
+.thClub {
+  color: var(--logic-lime);
+  background: rgba(var(--logic-lime-rgb), 0.05);
+}
+
+.catRow td {
+  padding: 0.5rem 1.25rem;
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--blueprint-blue);
+  background: rgba(var(--blueprint-blue-rgb), 0.06);
+  border-top: 1px solid rgba(var(--blueprint-blue-rgb), 0.2);
+}
+
+.catLabel {
+  color: var(--blueprint-blue);
+}
+
+.dataRow:nth-child(even) {
+  background: rgba(var(--blueprint-blue-rgb), 0.02);
+}
+
+.dataRow:hover {
+  background: rgba(var(--blueprint-blue-rgb), 0.06);
+}
+
+.tdFeature {
+  padding: 0.65rem 1.25rem;
+  color: var(--fl-text);
+  border-bottom: 1px solid rgba(var(--blueprint-blue-rgb), 0.08);
+}
+
+.td {
+  text-align: center;
+  padding: 0.65rem 1rem;
+  color: var(--data-gray);
+  border-bottom: 1px solid rgba(var(--blueprint-blue-rgb), 0.08);
+  border-left: 1px solid rgba(var(--blueprint-blue-rgb), 0.08);
+}
+
+.tdClub {
+  background: rgba(var(--logic-lime-rgb), 0.03);
+  color: var(--logic-lime);
+}
+
+/* ── Upgrade bridges ─────────────────────────────────────────────────────── */
+.bridgeSection {
+  padding: 5rem 0;
+  border-bottom: 1px solid rgba(var(--blueprint-blue-rgb), 0.2);
+}
+
+.bridgeGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+}
+
+.bridgeCard {
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.3);
+  padding: 2rem;
+  background: var(--hud-surface);
+}
+
+.bridgeLabel {
+  font-family: var(--font-data);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--blueprint-blue);
+  margin-bottom: 0.75rem;
+}
+
+.bridgeHeadline {
+  font-family: var(--font-data);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--fl-text);
+  margin-bottom: 0.75rem;
+  line-height: 1.35;
+}
+
+.bridgeBody {
+  font-family: var(--font-data);
+  font-size: 0.75rem;
+  color: var(--data-gray);
+  line-height: 1.7;
+  margin-bottom: 1.25rem;
+}
+
+.bridgeCta {
+  font-family: var(--font-data);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--logic-lime);
+  text-decoration: none;
+  transition: opacity 0.15s;
+}
+
+.bridgeCta:hover {
+  opacity: 0.75;
+}
+
+/* ── Club deep-dive ──────────────────────────────────────────────────────── */
+.clubSection {
+  padding: 5rem 0;
+  border-bottom: 1px solid rgba(var(--blueprint-blue-rgb), 0.2);
+  background: rgba(var(--logic-lime-rgb), 0.02);
+}
+
+.clubInner {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4rem;
+  align-items: start;
+}
+
+.clubTitle {
+  font-family: var(--font-data);
+  font-size: clamp(1.35rem, 2.5vw, 1.85rem);
+  font-weight: 700;
+  color: var(--fl-text);
+  margin-bottom: 0.5rem;
+  line-height: 1.25;
+}
+
+.clubSub {
+  font-family: var(--font-data);
+  font-size: 0.85rem;
+  color: var(--logic-lime);
+  margin-bottom: 1.5rem;
+  font-style: italic;
+}
+
+.clubBody {
+  font-family: var(--font-data);
+  font-size: 0.8rem;
+  color: var(--data-gray);
+  line-height: 1.75;
+  margin-bottom: 1rem;
+}
+
+.clubStats {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.clubStat {
+  border-left: 2px solid rgba(var(--logic-lime-rgb), 0.4);
+  padding-left: 1.25rem;
+}
+
+.clubStatLabel {
+  font-family: var(--font-data);
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--fl-text);
+  margin-bottom: 0.35rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.clubStatBody {
+  font-family: var(--font-data);
+  font-size: 0.75rem;
+  color: var(--data-gray);
+  line-height: 1.6;
+}
+
+/* ── FAQ ─────────────────────────────────────────────────────────────────── */
+.faqSection {
+  padding: 5rem 0;
+  border-bottom: 1px solid rgba(var(--blueprint-blue-rgb), 0.2);
+}
+
+.faqList {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.3);
+}
+
+.faqItem {
+  border-bottom: 1px solid rgba(var(--blueprint-blue-rgb), 0.2);
+}
+
+.faqItem:last-child {
+  border-bottom: none;
+}
+
+.faqFeatured {
+  background: rgba(var(--logic-lime-rgb), 0.03);
+  border-left: 2px solid var(--logic-lime);
+}
+
+.faqQuestion {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 1.25rem 1.5rem;
+  font-family: var(--font-data);
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--fl-text);
+  cursor: pointer;
+  list-style: none;
+  line-height: 1.4;
+  transition: color 0.15s;
+}
+
+.faqQuestion::-webkit-details-marker {
+  display: none;
+}
+
+.faqQuestion::after {
+  content: '+';
+  margin-left: auto;
+  font-size: 1rem;
+  color: var(--blueprint-blue);
+  flex-shrink: 0;
+  transition: transform 0.2s;
+}
+
+details[open] .faqQuestion::after {
+  content: '−';
+}
+
+.faqQuestion:hover {
+  color: var(--logic-lime);
+}
+
+.faqBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.1rem 0.5rem;
+  background: rgba(var(--logic-lime-rgb), 0.1);
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.3);
+  color: var(--logic-lime);
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.faqAnswer {
+  font-family: var(--font-data);
+  font-size: 0.78rem;
+  color: var(--data-gray);
+  line-height: 1.75;
+  padding: 0 1.5rem 1.5rem 1.5rem;
+  max-width: 72ch;
+}
+
+/* ── Bottom CTA ──────────────────────────────────────────────────────────── */
+.ctaSection {
+  position: relative;
+  padding: 6rem 0;
+  text-align: center;
+  overflow: hidden;
+}
+
+.ctaBg {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at center, rgba(var(--blueprint-blue-rgb), 0.12) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.ctaTitle {
+  font-family: var(--font-data);
+  font-size: clamp(1.5rem, 3vw, 2.25rem);
+  font-weight: 700;
+  color: var(--fl-text);
+  margin-bottom: 1rem;
+  position: relative;
+  line-height: 1.25;
+}
+
+.ctaSub {
+  font-family: var(--font-data);
+  font-size: 0.85rem;
+  color: var(--data-gray);
+  margin-bottom: 2.5rem;
+  position: relative;
+}
+
+.ctaActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: center;
+  position: relative;
+  margin-bottom: 1.5rem;
+}
+
+.ctaFootnote {
+  font-family: var(--font-data);
+  font-size: 0.68rem;
+  color: rgba(255,255,255,0.25);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  position: relative;
+}
+
+/* ── Responsive ──────────────────────────────────────────────────────────── */
+@media (max-width: 900px) {
+  .bridgeGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .clubInner {
+    grid-template-columns: 1fr;
+    gap: 2.5rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .hero {
+    padding: 4rem 0 3rem;
+  }
+
+  .trustRow {
+    gap: 0.75rem 1.5rem;
+  }
+}

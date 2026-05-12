@@ -1,9 +1,11 @@
 import { redirect } from 'next/navigation';
+import Link from 'next/link';
 import { getAuthContext } from '@/lib/api-auth';
 import { getCoachingAssignmentsForUser } from '@/lib/db';
 import { OrgProvider } from '@/lib/org-context';
 import { CoachesProvider } from '@/lib/coaches-context';
 import CoachesSidebar from '@/components/coaches/CoachesSidebar';
+import CoachesBottomNav from '@/components/coaches/CoachesBottomNav';
 import styles from './coaches.module.css';
 
 export default async function CoachesLayout({
@@ -26,14 +28,22 @@ export default async function CoachesLayout({
   const assignments = await getCoachingAssignmentsForUser(authCtx.org.id, authCtx.user.id);
 
   if (assignments.length === 0) {
+    const { name: orgName, contactEmail } = authCtx.org;
     return (
       <OrgProvider>
         <div className={styles.notAssigned}>
           <h2>Not assigned to any teams</h2>
-          <p>
-            You don&apos;t have an active coaching assignment for this organization.
-            Contact your org admin to be added to a team.
+          <p>You don&apos;t have an active coaching assignment for {orgName}.</p>
+          <p className={styles.notAssignedContact}>
+            {contactEmail ? (
+              <>Questions? <a href={`mailto:${contactEmail}`} className={styles.notAssignedEmailLink}>{contactEmail}</a></>
+            ) : (
+              <>Questions? Contact your org admin.</>
+            )}
           </p>
+          <Link href={`/${orgSlug}`} className={styles.notAssignedBack}>
+            ← Back to {orgName}
+          </Link>
         </div>
       </OrgProvider>
     );
@@ -48,6 +58,7 @@ export default async function CoachesLayout({
             {children}
           </main>
         </div>
+        <CoachesBottomNav />
       </CoachesProvider>
     </OrgProvider>
   );

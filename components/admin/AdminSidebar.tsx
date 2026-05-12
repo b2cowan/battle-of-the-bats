@@ -1,11 +1,12 @@
 'use client';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
 import {
   LayoutDashboard, Users, Calendar, Trophy, Megaphone, Tag, LogOut, Home,
   ChevronRight, MapPin, RefreshCw, BookUser, BookOpen, CreditCard, Settings,
-  Users2, Archive, ArrowLeft, Mail, Globe, DollarSign, Receipt,
-  CalendarDays, ClipboardList, Bell, FileText, UserCheck,
+  Users2, Archive, ArrowLeft, Mail, Globe, DollarSign,
+  CalendarDays, ClipboardList, FileText, UserCheck, ExternalLink, HelpCircle,
 } from 'lucide-react';
 import { signOut } from '@/lib/auth';
 import { useOrg } from '@/lib/org-context';
@@ -39,6 +40,7 @@ export default function AdminSidebar() {
   const isAccounting   = pathname.startsWith(`${base}/accounting`);
   const isHouseLeague  = pathname.startsWith(`${base}/house-league`);
   const isRepTeams     = pathname.startsWith(`${base}/rep-teams`);
+  const isTournaments  = pathname.startsWith(`${base}/tournaments`);
 
   const seasonMatch     = pathname.match(/\/house-league\/seasons\/([^/]+)/);
   const repTeamMatch    = pathname.match(/\/rep-teams\/teams\/([^/]+)\/program-years\/([^/]+)/);
@@ -49,6 +51,16 @@ export default function AdminSidebar() {
   const canSeeMembersNav = userRole
     ? userRole === 'owner' || hasCapability(userRole, userCapabilities, 'module_members')
     : false;
+
+  // Season switcher — loaded client-side when inside house league section
+  const [houseLeagueSeasons, setHouseLeagueSeasons] = useState<{ id: string; name: string }[]>([]);
+  useEffect(() => {
+    if (!isHouseLeague || !currentOrg) return;
+    fetch(`/api/admin/house-league/seasons`)
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d?.seasons) setHouseLeagueSeasons(d.seasons.filter((s: any) => s.status !== 'archived')); })
+      .catch(() => {});
+  }, [isHouseLeague, currentOrg?.slug]);
 
   const canSeePublicSite = userRole
     ? hasCapability(userRole, userCapabilities, 'module_public_site')
@@ -65,6 +77,13 @@ export default function AdminSidebar() {
   const canSeeRepTeams = userRole
     ? hasCapability(userRole, userCapabilities, 'module_rep_teams')
     : false;
+
+  const helpHref = isTournaments  ? `${base}/help/tournaments`
+                 : isHouseLeague  ? `${base}/help/house-league`
+                 : isRepTeams     ? `${base}/help/rep-teams`
+                 : isAccounting   ? `${base}/help/accounting`
+                 : isOrgAdmin     ? `${base}/help/org`
+                 : `${base}/help`;
 
   async function handleLogout() {
     await signOut();
@@ -171,12 +190,9 @@ export default function AdminSidebar() {
           <div className={styles.navSection}>
             <div className={styles.sectionHeader}>Accounting</div>
             <nav className={styles.nav}>
-              {navLink('accounting', DollarSign, 'Overview',
+              {navLink('accounting', DollarSign, 'Ledgers',
                 `${base}/accounting`,
                 pathname === `${base}/accounting`)}
-              {navLink('accounting-org', Receipt, 'Org Ledger',
-                `${base}/accounting`,
-                false)}
             </nav>
           </div>
         </>
@@ -200,6 +216,24 @@ export default function AdminSidebar() {
           {currentSeasonId && (
             <div className={styles.navSection}>
               <div className={styles.sectionHeader}>Season</div>
+              {houseLeagueSeasons.length > 1 && (
+                <div className={styles.tournamentSwitcher}>
+                  <label className={styles.switcherLabel} htmlFor="hl-season-select">Switch Season</label>
+                  <select
+                    id="hl-season-select"
+                    className={styles.switcherSelect}
+                    value={currentSeasonId}
+                    onChange={e => {
+                      const subPath = pathname.match(/\/seasons\/[^/]+\/([^/]+)/)?.[1] ?? 'registrations';
+                      router.push(`${base}/house-league/seasons/${e.target.value}/${subPath}`);
+                    }}
+                  >
+                    {houseLeagueSeasons.map(s => (
+                      <option key={s.id} value={s.id}>{s.name}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
               <nav className={styles.nav}>
                 {navLink('hl-registrations', ClipboardList, 'Registrations',
                   `${base}/house-league/seasons/${currentSeasonId}/registrations`,
@@ -213,7 +247,7 @@ export default function AdminSidebar() {
                 {navLink('hl-standings', Trophy, 'Standings',
                   `${base}/house-league/seasons/${currentSeasonId}/standings`,
                   pathname.startsWith(`${base}/house-league/seasons/${currentSeasonId}/standings`))}
-                {navLink('hl-notifications', Bell, 'Notifications',
+                {navLink('hl-notifications', Mail, 'Notifications',
                   `${base}/house-league/seasons/${currentSeasonId}/notifications`,
                   pathname.startsWith(`${base}/house-league/seasons/${currentSeasonId}/notifications`))}
               </nav>
@@ -241,6 +275,9 @@ export default function AdminSidebar() {
               {navLink('rt-past', Archive, 'Past Seasons',
                 `${base}/rep-teams/past`,
                 pathname.startsWith(`${base}/rep-teams/past`))}
+              {navLink('rt-coaches-portal', ExternalLink, 'Coaches Portal',
+                `/${currentOrg?.slug ?? ''}/coaches`,
+                pathname.startsWith(`/${currentOrg?.slug ?? ''}/coaches`))}
             </nav>
           </div>
           {currentRepTeamId && currentRepYearId && (
@@ -269,7 +306,7 @@ export default function AdminSidebar() {
       )}
 
       {/* Tournament operations mode */}
-      {!isHub && !isOrgAdmin && !isPublicSite && !isAccounting && !isHouseLeague && !isRepTeams && (
+      {isTournaments && (
         <>
           {backLink}
           {tournaments.length > 0 && (
@@ -297,7 +334,7 @@ export default function AdminSidebar() {
             <div className={styles.sectionHeader}>Tournament</div>
             <nav className={styles.nav}>
               {TOURNAMENT_NAV.map(item => {
-                const href   = `${base}/${item.key}`;
+                const href   = `${base}/tournaments/${item.key}`;
                 const active = pathname.startsWith(href);
                 return navLink(item.key, item.icon, item.label, href, active);
               })}
@@ -320,6 +357,9 @@ export default function AdminSidebar() {
             <Home size={15} /> Back to Site
           </Link>
         )}
+        <Link href={helpHref} className={styles.footerLink} id="admin-help">
+          <HelpCircle size={15} /> Help
+        </Link>
         <button onClick={handleLogout} className={styles.logoutBtn} id="admin-logout">
           <LogOut size={15} /> Logout
         </button>

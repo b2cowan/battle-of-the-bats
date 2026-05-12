@@ -1,11 +1,12 @@
-﻿'use client';
+'use client';
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { CreditCard, Zap, Shield, CheckCircle } from 'lucide-react';
+import { CreditCard, CheckCircle, Lock } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { useTournament } from '@/lib/tournament-context';
 import { PLAN_CONFIG } from '@/lib/plan-config';
 import FeedbackModal from '@/components/FeedbackModal';
+import HelpCallout from '@/components/help/HelpCallout';
 import type { OrgPlan, SubscriptionStatus } from '@/lib/types';
 import styles from './billing.module.css';
 
@@ -23,20 +24,91 @@ const STATUS_BADGE: Record<SubscriptionStatus, string> = {
   canceled: 'badge-neutral',
 };
 
-const PLAN_ORDER: OrgPlan[] = ['starter', 'pro', 'elite'];
+const PLAN_ORDER: OrgPlan[] = ['tournament', 'tournament_plus', 'league', 'club'];
 
-const PLAN_ICONS: Record<OrgPlan, React.ReactNode> = {
-  starter: <Zap size={20} />,
-  pro:     <CreditCard size={20} />,
-  elite:   <Shield size={20} />,
+const PLAN_TAGLINE: Record<OrgPlan, string> = {
+  tournament:      'Everything you need to run a basic tournament.',
+  tournament_plus: 'Professional tournament management without the league complexity.',
+  league:          'Manage your league, registrations, and public presence — all in one place.',
+  club:            'The complete operating system for your sports organization.',
 };
+
+const PLAN_FEATURES: Record<OrgPlan, string[]> = {
+  tournament: [
+    'Manual tournament scheduling',
+    'Basic standings and score entry',
+    'Field and diamond management',
+    '3 staff / admin seats · 1 active tournament',
+  ],
+  tournament_plus: [
+    'Everything in Tournament',
+    'Automated schedule generation',
+    'Bracket generator',
+    'Email announcements and communications',
+    'Unlimited simultaneous tournaments',
+    '5 staff seats — officials always free',
+  ],
+  league: [
+    'Everything in Tournament Plus',
+    'Public organization page (branded)',
+    'House League — registration, divisions, seasons, standings',
+    'Advanced member roles and permissions',
+    '10 staff / admin seats',
+  ],
+  club: [
+    'Everything in League',
+    'Accounting — ledger, invoicing, payment reconciliation',
+    'Rep Teams — tryouts, rosters, player documents',
+    'Coaches portal',
+    'Unlimited staff / admin seats',
+  ],
+};
+
+const PLAN_META_COPY: Record<OrgPlan, string> = {
+  tournament:      "You're on the free plan. Upgrade anytime — no credit card required until you're ready.",
+  tournament_plus: "You're on Tournament Plus. Running a league or registration workflow? League unlocks those tools.",
+  league:          "You're on League. Need accounting or rep team tools? Club is the complete platform.",
+  club:            "You're on the complete Club platform.",
+};
+
+const MODULE_META = [
+  {
+    key: 'module_public_site' as const,
+    name: 'Public Organization Page',
+    description: 'A branded public page listing your tournaments, results, and registration.',
+    upgradeTarget: 'league' as OrgPlan,
+    upgradeLabel: 'League',
+  },
+  {
+    key: 'module_house_league' as const,
+    name: 'House League',
+    description: 'Registration, divisions, seasons, scheduling, and standings for your rec league.',
+    upgradeTarget: 'league' as OrgPlan,
+    upgradeLabel: 'League',
+  },
+  {
+    key: 'module_accounting' as const,
+    name: 'Accounting',
+    description: 'Org ledger, team invoicing, payment reconciliation, and expense tracking.',
+    upgradeTarget: 'club' as OrgPlan,
+    upgradeLabel: 'Club',
+  },
+  {
+    key: 'module_rep_teams' as const,
+    name: 'Rep Teams',
+    description: 'Tryouts, rosters, player documents, coaches portal, and team finances.',
+    upgradeTarget: 'club' as OrgPlan,
+    upgradeLabel: 'Club',
+  },
+];
 
 export default function BillingPage() {
   const { currentOrg } = useOrg();
   const { tournaments }  = useTournament();
   const searchParams     = useSearchParams();
 
-  const [loading, setLoading]     = useState<OrgPlan | null>(null);
+  const [billingCycle, setBillingCycle] = useState<'monthly' | 'annual'>('annual');
+  const [loading, setLoading]           = useState<OrgPlan | null>(null);
   const [portalLoading, setPortalLoading] = useState(false);
   const [successOpen, setSuccessOpen]     = useState(false);
   const [errorOpen, setErrorOpen]         = useState(false);
@@ -46,9 +118,7 @@ export default function BillingPage() {
   } | null>(null);
 
   useEffect(() => {
-    if (searchParams.get('success') === '1') {
-      setSuccessOpen(true);
-    }
+    if (searchParams.get('success') === '1') setSuccessOpen(true);
   }, [searchParams]);
 
   useEffect(() => {
@@ -59,7 +129,7 @@ export default function BillingPage() {
       .catch(() => {});
   }, [currentOrg]);
 
-  async function handleUpgrade(planKey: 'pro' | 'elite') {
+  async function handleUpgrade(planKey: 'tournament_plus' | 'league' | 'club') {
     setLoading(planKey);
     try {
       const res = await fetch('/api/billing/create-checkout', {
@@ -95,14 +165,30 @@ export default function BillingPage() {
     return <div className={styles.page}><p style={{ color: 'var(--white-40)' }}>Loading…</p></div>;
   }
 
-  const currentPlanKey  = currentOrg.planId;
-  const currentPlan     = PLAN_CONFIG[currentPlanKey];
-  const status          = currentOrg.subscriptionStatus;
-  const usageCount      = tournaments.filter(t => t.status === 'active').length;
-  const usageLimit      = currentOrg.tournamentLimit;
-  const usagePct        = usageLimit >= 9999 ? 0 : Math.min(100, Math.round((usageCount / usageLimit) * 100));
-  const upgradePlans    = PLAN_ORDER.filter(p => PLAN_ORDER.indexOf(p) > PLAN_ORDER.indexOf(currentPlanKey));
-  const hasPaidPlan     = currentPlanKey !== 'starter';
+  const currentPlanKey = currentOrg.planId;
+  const currentPlan    = PLAN_CONFIG[currentPlanKey];
+  const status         = currentOrg.subscriptionStatus;
+  const usageCount     = tournaments.filter(t => t.status === 'active').length;
+  const usageLimit     = currentOrg.tournamentLimit;
+  const usagePct       = usageLimit >= 9999 ? 0 : Math.min(100, Math.round((usageCount / usageLimit) * 100));
+  const upgradePlans   = PLAN_ORDER.filter(p => PLAN_ORDER.indexOf(p) > PLAN_ORDER.indexOf(currentPlanKey));
+  const hasPaidPlan    = currentPlanKey !== 'tournament';
+  const entitlements   = currentPlan.moduleEntitlements;
+
+  function getPrice(planKey: OrgPlan): string {
+    const plan = PLAN_CONFIG[planKey];
+    if (plan.monthlyPrice === 0) return 'Free';
+    if (billingCycle === 'annual') return `$${plan.annualPrice} CAD / year`;
+    return `$${plan.monthlyPrice} CAD / month`;
+  }
+
+  function getSavings(planKey: OrgPlan): string | null {
+    if (billingCycle !== 'annual') return null;
+    const plan = PLAN_CONFIG[planKey];
+    if (plan.monthlyPrice === 0) return null;
+    const savings = plan.monthlyPrice * 12 - plan.annualPrice;
+    return `Save $${savings} — 2 months free`;
+  }
 
   return (
     <div className={styles.page}>
@@ -119,20 +205,20 @@ export default function BillingPage() {
       {/* Current plan card */}
       <div className={styles.currentCard}>
         <div className={styles.currentLeft}>
-          <div className={styles.planIcon}>{PLAN_ICONS[currentPlanKey]}</div>
           <div>
             <div className={styles.planName}>{currentPlan.label} Plan</div>
+            <div className={styles.planTagline}>{PLAN_TAGLINE[currentPlanKey]}</div>
             <div className={styles.planPrice}>
               {currentPlan.monthlyPrice === 0
                 ? 'Free forever'
                 : `$${currentPlan.monthlyPrice} CAD / month`}
             </div>
+            <div className={styles.planMetaCopy}>{PLAN_META_COPY[currentPlanKey]}</div>
           </div>
         </div>
         <span className={`badge ${STATUS_BADGE[status]}`}>{STATUS_LABEL[status]}</span>
       </div>
 
-      {/* Subscription status alerts */}
       {status === 'past_due' && (
         <p className={`${styles.statusNote} ${styles.statusNoteWarning}`}>
           Your last payment failed. Your access remains active during the grace period — please update your payment method via <strong>Manage Subscription</strong> below to avoid service interruption.
@@ -140,11 +226,11 @@ export default function BillingPage() {
       )}
       {status === 'canceled' && (
         <p className={`${styles.statusNote} ${styles.statusNoteDanger}`}>
-          Your subscription has been canceled. You retain access until the end of the current billing period, after which your plan will revert to Starter (1 active tournament, 1 seat).
+          Your subscription has been canceled. You retain access until the end of the current billing period, after which your plan will revert to the Tournament plan.
         </p>
       )}
 
-      {/* Usage meter */}
+      {/* Usage meters */}
       <div className={styles.usageCard}>
         <div className={styles.usageHeader}>
           <span className={styles.usageLabel}>Active tournaments</span>
@@ -165,7 +251,6 @@ export default function BillingPage() {
         )}
       </div>
 
-      {/* Seat usage meter */}
       {seatUsage && (
         <div className={styles.usageCard}>
           <div className={styles.usageHeader}>
@@ -218,45 +303,58 @@ export default function BillingPage() {
       {/* Upgrade cards */}
       {upgradePlans.length > 0 && (
         <>
-          <h2 className={styles.sectionTitle}>Upgrade your plan</h2>
+          <div className={styles.upgradeHeader}>
+            <h2 className={styles.sectionTitle}>Upgrade your plan</h2>
+            <div className={styles.billingToggle}>
+              <button
+                className={`${styles.toggleOption} ${billingCycle === 'monthly' ? styles.toggleActive : ''}`}
+                onClick={() => setBillingCycle('monthly')}
+              >
+                Monthly
+              </button>
+              <button
+                className={`${styles.toggleOption} ${billingCycle === 'annual' ? styles.toggleActive : ''}`}
+                onClick={() => setBillingCycle('annual')}
+              >
+                Annual
+              </button>
+            </div>
+          </div>
+
           <div className={styles.plansGrid}>
             {upgradePlans.map(planKey => {
               const plan = PLAN_CONFIG[planKey];
+              const isClub = planKey === 'club';
+              const savings = getSavings(planKey);
               return (
-                <div key={planKey} className={styles.planCard}>
-                  <div className={styles.planCardIcon}>{PLAN_ICONS[planKey]}</div>
-                  <div className={styles.planCardName}>{plan.label}</div>
-                  <div className={styles.planCardPrice}>
-                    <span className={styles.priceAmount}>${plan.monthlyPrice} CAD</span>
-                    <span className={styles.priceUnit}>/mo</span>
+                <div key={planKey} className={`${styles.planCard} ${isClub ? styles.planCardFeatured : ''}`}>
+                  <div className={styles.planCardHeader}>
+                    <div className={styles.planCardName}>{plan.label}</div>
+                    {isClub && <span className={styles.popularBadge}>Most Popular</span>}
                   </div>
+                  <div className={styles.planTaglineCard}>{PLAN_TAGLINE[planKey]}</div>
+                  <div className={styles.planCardPrice}>
+                    <span className={styles.priceAmount}>{getPrice(planKey)}</span>
+                  </div>
+                  {savings && <div className={styles.savingsBadge}>{savings}</div>}
                   <ul className={styles.featureList}>
-                    <li>
-                      <CheckCircle size={13} />
-                      {plan.tournamentLimit >= 9999
-                        ? 'Unlimited active tournaments'
-                        : plan.tournamentLimit === 2
-                          ? 'Run summer and fall ball simultaneously'
-                          : `Up to ${plan.tournamentLimit} active tournaments`}
-                    </li>
-                    <li>
-                      <CheckCircle size={13} />
-                      14-day free trial
-                    </li>
-                    <li>
-                      <CheckCircle size={13} />
-                      All features included
-                    </li>
+                    {PLAN_FEATURES[planKey].map(f => (
+                      <li key={f}>
+                        <CheckCircle size={13} />
+                        {f}
+                      </li>
+                    ))}
                   </ul>
                   <button
-                    className="btn btn-primary"
+                    className={`btn ${isClub ? 'btn-primary' : 'btn-outline'}`}
                     style={{ width: '100%' }}
-                    onClick={() => handleUpgrade(planKey as 'pro' | 'elite')}
+                    onClick={() => handleUpgrade(planKey as 'tournament_plus' | 'league' | 'club')}
                     disabled={loading === planKey}
                     id={`billing-upgrade-${planKey}`}
                   >
                     {loading === planKey ? 'Redirecting…' : `Upgrade to ${plan.label}`}
                   </button>
+                  <p className={styles.trialNote}>14-day free trial · No credit card required</p>
                 </div>
               );
             })}
@@ -264,16 +362,54 @@ export default function BillingPage() {
         </>
       )}
 
-      {/* Success modal */}
+      {/* Modules section */}
+      <div className={styles.modulesSection}>
+        <h2 className={styles.sectionTitle}>Modules</h2>
+        <HelpCallout
+          variant="info"
+          title="About modules"
+          body="Modules extend FieldLogicHQ beyond tournaments. If your plan includes a module but it's not yet enabled, use the 'Request to enable' button and we'll activate it for you."
+        />
+        <div className={styles.modulesList}>
+          {MODULE_META.map(mod => {
+            const included = entitlements.includes(mod.key);
+            return (
+              <div key={mod.key} className={styles.moduleRow}>
+                <div className={styles.moduleInfo}>
+                  <div className={styles.moduleName}>{mod.name}</div>
+                  <div className={styles.moduleDesc}>{mod.description}</div>
+                </div>
+                {included ? (
+                  <div className={styles.moduleIncluded}>
+                    <CheckCircle size={13} />
+                    Included in your plan
+                  </div>
+                ) : (
+                  <div className={styles.moduleLocked}>
+                    <Lock size={12} />
+                    <span>Available on {mod.upgradeLabel}</span>
+                    <button
+                      className={styles.moduleUpgradeBtn}
+                      onClick={() => handleUpgrade(mod.upgradeTarget as 'tournament_plus' | 'league' | 'club')}
+                      disabled={loading === mod.upgradeTarget}
+                    >
+                      {loading === mod.upgradeTarget ? 'Redirecting…' : 'Upgrade'}
+                    </button>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
       <FeedbackModal
         isOpen={successOpen}
         onClose={() => setSuccessOpen(false)}
         title="Subscription activated!"
-        message="Your plan has been upgraded. Enjoy your new tournament limit — it's applied immediately."
+        message="Your plan has been upgraded. Enjoy your new features — they're applied immediately."
         type="success"
       />
-
-      {/* Error modal */}
       <FeedbackModal
         isOpen={errorOpen}
         onClose={() => setErrorOpen(false)}

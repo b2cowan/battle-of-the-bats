@@ -13,7 +13,7 @@ export default function TournamentsRedirect() {
     if (loading || !currentOrg) return;
     const slug = currentOrg.slug;
     if (currentTournament) {
-      router.replace(`/${slug}/admin/dashboard`);
+      router.replace(`/${slug}/admin/tournaments/dashboard`);
     } else {
       router.replace(`/${slug}/admin/org/tournaments`);
     }

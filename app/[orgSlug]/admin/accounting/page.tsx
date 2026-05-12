@@ -3,6 +3,8 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { DollarSign, X } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
+import HelpCallout from '@/components/help/HelpCallout';
+import HelpTooltip from '@/components/help/HelpTooltip';
 import { useTournament } from '@/lib/tournament-context';
 import { hasCapability } from '@/lib/roles';
 import FeedbackModal from '@/components/FeedbackModal';
@@ -227,7 +229,11 @@ export default function AccountingOverviewPage() {
           )}
 
           {ledgers.length === 0 ? (
-            <p className={styles.muted}>No ledgers yet. Use the button below to create your first one.</p>
+            <HelpCallout
+              variant="info"
+              title="No ledgers yet"
+              body="The accounting module tracks financial activity for tournaments and your org. Create a tournament ledger when a tournament begins, or an org sub-ledger for non-tournament income and expenses such as sponsorships or general operating costs."
+            />
           ) : (
             <div className={styles.ledgerGrid}>
               {ledgers.map(({ ledger, pendingIncome, pendingExpenses, netPosted: net }) => {
@@ -240,8 +246,21 @@ export default function AccountingOverviewPage() {
                   >
                     <div className={styles.ledgerCardHeader}>
                       <span className={styles.ledgerName}>{ledger.name}</span>
-                      <span className={`${styles.typeBadge} ${ledger.entityType === 'org' ? styles.typeBadgeOrg : styles.typeBadgeTournament}`}>
-                        {ledger.entityType === 'org' ? 'Org' : 'Tournament'}
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
+                        <span className={`${styles.typeBadge} ${ledger.entityType === 'org' ? styles.typeBadgeOrg : styles.typeBadgeTournament}`}>
+                          {ledger.entityType === 'org' ? 'Org' : 'Tournament'}
+                        </span>
+                        {ledger.entityType === 'org' ? (
+                          <HelpTooltip
+                            title="Org sub-ledger"
+                            body="Tracks org-wide income and expenses not tied to a specific tournament — e.g., sponsorships, grants, or general operating costs."
+                          />
+                        ) : (
+                          <HelpTooltip
+                            title="Tournament ledger"
+                            body="Tracks income and expenses for one specific tournament event — registration fees, diamond rentals, umpire fees, and similar costs."
+                          />
+                        )}
                       </span>
                     </div>
 
@@ -271,7 +290,7 @@ export default function AccountingOverviewPage() {
           )}
 
           {/* F2: tournaments without ledgers — offer one-click ledger creation */}
-          {isOwner && tournamentsWithoutLedger.length > 0 && (
+          {(isOwner || userRole === 'treasurer') && tournamentsWithoutLedger.length > 0 && (
             <div className={styles.pendingLedgersSection}>
               <div className={styles.sectionTitle}>Tournaments without a ledger</div>
               {tournamentsWithoutLedger.map(t => (
@@ -291,7 +310,7 @@ export default function AccountingOverviewPage() {
             </div>
           )}
 
-          {isOwner && (
+          {(isOwner || userRole === 'treasurer') && (
             <div className={styles.footerRow} style={{ marginTop: '1.5rem' }}>
               <button type="button" className="btn btn-secondary" onClick={() => setAddOpen(true)}>
                 + Add Ledger

@@ -6,8 +6,9 @@ import type { OrgPlan } from '@/lib/types';
 export const dynamic = 'force-dynamic';
 
 function planKeyFromPriceId(priceId: string): OrgPlan | null {
-  if (priceId === process.env.STRIPE_PRICE_PRO_MONTHLY) return 'pro';
-  if (priceId === process.env.STRIPE_PRICE_ELITE_MONTHLY) return 'elite';
+  if (priceId === process.env.STRIPE_PRICE_TOURNAMENT_PLUS_MONTHLY) return 'tournament_plus';
+  if (priceId === process.env.STRIPE_PRICE_LEAGUE_MONTHLY) return 'league';
+  if (priceId === process.env.STRIPE_PRICE_CLUB_MONTHLY) return 'club';
   return null;
 }
 
@@ -59,8 +60,8 @@ export async function POST(req: Request) {
       await supabaseAdmin
         .from('organizations')
         .update({
-          plan_id: 'starter',
-          tournament_limit: PLAN_CONFIG.starter.tournamentLimit,
+          plan_id: 'tournament',
+          tournament_limit: PLAN_CONFIG.tournament.tournamentLimit,
           subscription_status: 'canceled',
           stripe_subscription_id: null,
         })

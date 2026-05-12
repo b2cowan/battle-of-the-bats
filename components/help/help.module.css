@@ -1,0 +1,403 @@
+/* ── HelpCallout ─────────────────────────────────────────────────────────── */
+.callout {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  border-radius: 0 8px 8px 0;
+  border: 1px solid;
+  border-left-width: 3px;
+  padding: 0.875rem 1rem;
+  margin-bottom: 1.5rem;
+  font-size: 0.88rem;
+  line-height: 1.5;
+  position: relative;
+}
+
+.calloutInfo {
+  background: rgba(79, 163, 224, 0.07);
+  border-color: rgba(79, 163, 224, 0.2);
+  border-left-color: #4fa3e0;
+}
+
+.calloutTip {
+  background: rgba(74, 222, 128, 0.07);
+  border-color: rgba(74, 222, 128, 0.2);
+  border-left-color: #4ade80;
+}
+
+.calloutWarning {
+  background: rgba(245, 158, 11, 0.08);
+  border-color: rgba(245, 158, 11, 0.2);
+  border-left-color: #f59e0b;
+}
+
+.calloutIcon {
+  flex-shrink: 0;
+  margin-top: 0.1rem;
+}
+
+.calloutInfo .calloutIcon  { color: #4fa3e0; }
+.calloutTip .calloutIcon   { color: #4ade80; }
+.calloutWarning .calloutIcon { color: #f59e0b; }
+
+.calloutBody {
+  flex: 1;
+  min-width: 0;
+}
+
+.calloutTitle {
+  font-weight: 600;
+  font-size: 0.88rem;
+  color: rgba(255, 255, 255, 0.85);
+  margin: 0 0 0.25rem;
+  line-height: 1.4;
+}
+
+.calloutText {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.85rem;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.calloutCta {
+  display: inline-block;
+  margin-top: 0.6rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #4fa3e0;
+  text-decoration: none;
+  transition: opacity 0.12s;
+}
+.calloutCta:hover { opacity: 0.8; }
+
+.calloutInfo .calloutCta   { color: #4fa3e0; }
+.calloutTip .calloutCta    { color: #4ade80; }
+.calloutWarning .calloutCta { color: #f59e0b; }
+
+.calloutDismiss {
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.25);
+  cursor: pointer;
+  padding: 0.1rem;
+  line-height: 1;
+  margin-top: 0.1rem;
+  transition: color 0.12s;
+}
+.calloutDismiss:hover { color: rgba(255, 255, 255, 0.55); }
+
+/* ── HelpTooltip ─────────────────────────────────────────────────────────── */
+.tooltip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  vertical-align: middle;
+}
+
+.tooltipSm .tooltipTrigger {
+  width: 16px;
+  height: 16px;
+  font-size: 0.65rem;
+}
+
+.tooltipMd .tooltipTrigger {
+  width: 20px;
+  height: 20px;
+  font-size: 0.72rem;
+}
+
+.tooltipTrigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: rgba(255, 255, 255, 0.45);
+  font-weight: 700;
+  cursor: pointer;
+  line-height: 1;
+  flex-shrink: 0;
+  transition: background 0.12s, color 0.12s;
+  margin-left: 0.3rem;
+}
+.tooltipTrigger:hover {
+  background: rgba(79, 163, 224, 0.15);
+  border-color: rgba(79, 163, 224, 0.35);
+  color: #4fa3e0;
+}
+
+.tooltipPopover {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: 240px;
+  background: #1a1f2e;
+  border: 1px solid rgba(79, 163, 224, 0.25);
+  border-radius: 8px;
+  padding: 0.75rem 0.875rem;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+  z-index: 60;
+  pointer-events: none;
+}
+
+/* Caret pointing down */
+.tooltipPopover::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top-color: #1a1f2e;
+}
+
+/* Outline caret to match border */
+.tooltipPopover::before {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 7px solid transparent;
+  border-top-color: rgba(79, 163, 224, 0.25);
+  margin-top: 1px;
+}
+
+.tooltipTitle {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.85);
+  margin: 0 0 0.35rem;
+  line-height: 1.3;
+}
+
+.tooltipBody {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.55);
+  margin: 0;
+  line-height: 1.55;
+}
+
+/* ── HelpPageLayout ──────────────────────────────────────────────────────── */
+.helpPage {
+  max-width: 720px;
+}
+
+.helpPageHeader {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.75rem;
+}
+
+.helpPageTitle {
+  font-size: 1.6rem;
+  font-weight: 900;
+  font-family: var(--font-display, sans-serif);
+  color: var(--white-90, rgba(255, 255, 255, 0.9));
+  margin: 0;
+  line-height: 1.15;
+}
+
+.helpRoleBadge {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 0.2rem 0.55rem;
+  border-radius: 4px;
+  background: rgba(79, 163, 224, 0.12);
+  border: 1px solid rgba(79, 163, 224, 0.25);
+  color: #4fa3e0;
+  white-space: nowrap;
+}
+
+.helpIntro {
+  font-size: 0.95rem;
+  color: rgba(255, 255, 255, 0.55);
+  line-height: 1.65;
+  margin: 0 0 2rem;
+  max-width: 600px;
+}
+
+.helpSections {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.helpSection {
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+  padding: 1.5rem 0;
+}
+
+.helpSection:last-child {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.helpSectionHeading {
+  font-size: 1rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.85);
+  margin: 0 0 0.75rem;
+  line-height: 1.3;
+}
+
+.helpSectionContent {
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.55);
+  line-height: 1.7;
+}
+
+.helpSectionContent p {
+  margin: 0 0 0.6rem;
+}
+
+.helpSectionContent p:last-child {
+  margin-bottom: 0;
+}
+
+.helpSectionContent ul,
+.helpSectionContent ol {
+  padding-left: 1.25rem;
+  margin: 0.4rem 0 0.6rem;
+}
+
+.helpSectionContent li {
+  margin-bottom: 0.3rem;
+  line-height: 1.6;
+}
+
+.helpSectionContent strong {
+  color: rgba(255, 255, 255, 0.75);
+  font-weight: 600;
+}
+
+/* ── Help Hub ────────────────────────────────────────────────────────────── */
+.helpHub {
+  max-width: 800px;
+}
+
+.helpHubHeader {
+  margin-bottom: 2rem;
+}
+
+.helpHubTitle {
+  font-size: 1.6rem;
+  font-weight: 900;
+  font-family: var(--font-display, sans-serif);
+  color: var(--white-90, rgba(255, 255, 255, 0.9));
+  margin: 0 0 0.4rem;
+  line-height: 1.15;
+}
+
+.helpHubSubtitle {
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.45);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.helpHubGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+}
+
+@media (max-width: 640px) {
+  .helpHubGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.helpHubCard {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1.25rem 1.375rem;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgba(255, 255, 255, 0.03);
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.helpHubCard:hover {
+  border-color: rgba(79, 163, 224, 0.25);
+  background: rgba(79, 163, 224, 0.04);
+}
+
+.helpHubCardTitle {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.85);
+  margin: 0;
+  line-height: 1.3;
+}
+
+.helpHubCardDesc {
+  font-size: 0.83rem;
+  color: rgba(255, 255, 255, 0.45);
+  margin: 0;
+  line-height: 1.55;
+  flex: 1;
+}
+
+.helpHubCardLink {
+  display: inline-block;
+  margin-top: 0.25rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #4fa3e0;
+  text-decoration: none;
+  transition: opacity 0.12s;
+}
+
+.helpHubCardLink:hover {
+  opacity: 0.75;
+}
+
+/* ── Loading / empty state (absorbed from coaches.module.css pattern) ────── */
+.loadingState {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 2rem;
+  color: rgba(255, 255, 255, 0.35);
+  font-size: 0.85rem;
+}
+
+.loadingState::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.35);
+  flex-shrink: 0;
+  animation: helpPulseDot 1.5s ease-in-out infinite;
+}
+
+@keyframes helpPulseDot {
+  0%, 100% { opacity: 0.3; transform: scale(0.8); }
+  50%       { opacity: 1;   transform: scale(1.2); }
+}
+
+.emptyStateTitle {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.5);
+  margin: 0 0 0.4rem;
+}
+
+.emptyStateSub {
+  font-size: 0.82rem;
+  color: rgba(255, 255, 255, 0.3);
+  margin: 0 auto;
+  max-width: 280px;
+  line-height: 1.5;
+}

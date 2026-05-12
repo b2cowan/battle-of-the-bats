@@ -25,7 +25,7 @@ export async function POST(req: Request) {
     });
   }
 
-  const subId = plan === 'starter' ? null : `mock_sub_${plan}_${Date.now()}`;
+  const subId = plan === 'tournament' ? null : `mock_sub_${plan}_${Date.now()}`;
 
   await supabaseAdmin
     .from('organizations')

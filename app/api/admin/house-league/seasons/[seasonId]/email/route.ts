@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { getAuthContextWithRole, unauthorized, forbidden } from '@/lib/api-auth';
 import { hasCapability } from '@/lib/roles';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
-import { getLeagueSeasonById, getRegistrationsForSeason } from '@/lib/db';
+import { getLeagueSeasonById, getRegistrationsForSeason, insertLeagueEmailLog, getLeagueEmailLog } from '@/lib/db';
 import { sendEmail, leagueBroadcastHtml, ADMIN_EMAIL } from '@/lib/email';
 import type { LeagueRegistrationStatus } from '@/lib/types';
 
@@ -11,6 +11,24 @@ function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
   if (!hasCapability(ctx.role, ctx.capabilities, 'module_house_league')) return forbidden();
   if (!hasModuleEntitlement(ctx.org, 'module_house_league')) return forbidden();
   return null;
+}
+
+export async function GET(
+  _req: Request,
+  { params }: { params: Promise<{ seasonId: string }> },
+) {
+  const ctx = await getAuthContextWithRole();
+  const err = gate(ctx);
+  if (err) return err;
+  if (ctx!.role !== 'owner' && ctx!.role !== 'league_admin') return forbidden();
+
+  const { seasonId } = await params;
+  try {
+    const log = await getLeagueEmailLog(seasonId);
+    return NextResponse.json({ log });
+  } catch {
+    return NextResponse.json({ log: [] });
+  }
 }
 
 export async function POST(
@@ -93,5 +111,27 @@ export async function POST(
   }
 
   console.log(`[email] League broadcast: season=${seasonId} scope=${scope} sent=${sent} skipped=${skipped}`);
+
+  const audienceLabel =
+    scope === 'all'    ? 'All active registrants' :
+    status === 'waitlisted'    ? 'Waitlist' :
+    status === 'pending_review' ? 'Pending review' :
+    scope;
+
+  try {
+    await insertLeagueEmailLog({
+      orgId:        ctx!.org.id,
+      seasonId,
+      sentBy:       ctx!.user.id,
+      subject:      subject.trim(),
+      scope,
+      audience:     audienceLabel,
+      countSent:    sent,
+      countSkipped: skipped,
+    });
+  } catch (e) {
+    console.error('[email] Failed to write email log:', e);
+  }
+
   return NextResponse.json({ sent, skipped });
 }

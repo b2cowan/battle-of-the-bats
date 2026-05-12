@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { CheckCircle } from 'lucide-react';
+import HelpCallout from '@/components/help/HelpCallout';
 import styles from './register.module.css';
 
 export interface DivisionWithCount {
@@ -194,8 +195,29 @@ export default function RegisterForm({
         <div className={styles.refBox}>
           Reference: <span className={styles.refCode}>{success.id.slice(0, 8).toUpperCase()}</span>
         </div>
+        <p className={styles.successStatusLink}>
+          <a href={`/${orgSlug}/league/${seasonSlug}/status?email=${encodeURIComponent(success.guardianEmail)}`}>
+            Check registration status later →
+          </a>
+        </p>
+        {(success.status === 'pending_review' || success.status === 'waitlisted') && (
+          <div style={{ marginTop: '1.25rem' }}>
+            <HelpCallout
+              variant="info"
+              title="What happens next"
+              body="You'll receive an email at the address you provided once your registration is reviewed. Use the link above to check your status at any time — it updates in real time."
+            />
+          </div>
+        )}
       </div>
     );
+  }
+
+  function divisionStatusLabel(d: DivisionWithCount): string {
+    if (d.capacity == null) return 'Open — unlimited spots';
+    const remaining = d.capacity - d.activeCount;
+    if (remaining <= 0) return 'Waitlist only';
+    return `Open — ${remaining} spot${remaining === 1 ? '' : 's'} remaining`;
   }
 
   return (
@@ -213,12 +235,9 @@ export default function RegisterForm({
             <div className={styles.divisionOptionLeft}>
               <div>
                 <div className={styles.divisionOptionName}>{divisions[0].name}</div>
-                {divisions[0].capacity != null && (
-                  <div className={styles.divisionCapacity}>
-                    {divisions[0].activeCount} / {divisions[0].capacity} spots filled
-                    {divisions[0].activeCount >= divisions[0].capacity ? ' · Registering to waitlist' : ''}
-                  </div>
-                )}
+                <div className={styles.divisionCapacity}>
+                  {divisionStatusLabel(divisions[0])}
+                </div>
               </div>
             </div>
             {divisions[0].capacity != null && divisions[0].activeCount >= divisions[0].capacity && (
@@ -248,14 +267,9 @@ export default function RegisterForm({
                       />
                       <div>
                         <div className={styles.divisionOptionName}>{d.name}</div>
-                        {d.capacity != null && (
-                          <div className={styles.divisionCapacity}>
-                            {d.activeCount} / {d.capacity} spots filled
-                          </div>
-                        )}
-                        {d.capacity == null && (
-                          <div className={styles.divisionCapacity}>Unlimited spots</div>
-                        )}
+                        <div className={styles.divisionCapacity}>
+                          {divisionStatusLabel(d)}
+                        </div>
                       </div>
                     </div>
                     {isFull && <span className={styles.divisionWaitlistBadge}>Waitlist</span>}

@@ -8,14 +8,14 @@ import FeedbackModal from '@/components/FeedbackModal';
 import type { OrgPlan, SubscriptionStatus } from '@/lib/types';
 import styles from './mock-portal.module.css';
 
-const PLANS: OrgPlan[]    = ['starter', 'pro', 'elite'];
+const PLANS: OrgPlan[]    = ['tournament', 'tournament_plus', 'league', 'club'];
 const STATUSES: SubscriptionStatus[] = ['active', 'trialing', 'past_due', 'canceled'];
 
 export default function MockPortalPage() {
   const { currentOrg, refresh } = useOrg();
   const router = useRouter();
 
-  const [plan,   setPlan]   = useState<OrgPlan>(currentOrg?.planId ?? 'starter');
+  const [plan,   setPlan]   = useState<OrgPlan>(currentOrg?.planId ?? 'tournament');
   const [status, setStatus] = useState<SubscriptionStatus>(currentOrg?.subscriptionStatus ?? 'active');
   const [saving, setSaving] = useState(false);
   const [saved,  setSaved]  = useState(false);

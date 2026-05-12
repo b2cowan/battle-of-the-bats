@@ -1,4 +1,4 @@
-export type OrgPlan = 'starter' | 'pro' | 'elite';
+export type OrgPlan = 'tournament' | 'tournament_plus' | 'league' | 'club';
 export type OrgRole = 'owner' | 'admin' | 'staff' | 'official' | 'league_admin' | 'league_registrar' | 'treasurer' | 'coach';
 export type SubscriptionStatus = 'active' | 'trialing' | 'past_due' | 'canceled';
 export type TournamentStatus = 'draft' | 'active' | 'completed' | 'archived';
@@ -447,8 +447,13 @@ export interface LeagueSeasonSummary {
 export type RepProgramYearStatus = 'draft' | 'active' | 'completed' | 'archived';
 export type RepTryoutRegistrationStatus = 'pending_review' | 'offered' | 'accepted' | 'declined' | 'withdrawn';
 export type RepRosterStatus = 'active' | 'inactive' | 'released';
-export type RepEventType = 'game' | 'practice' | 'tryout' | 'tournament' | 'meeting' | 'other';
-export type RepEventStatus = 'scheduled' | 'completed' | 'cancelled' | 'postponed';
+export type RepEventType =
+  | 'external_tournament'
+  | 'tournament_game'
+  | 'scrimmage'
+  | 'league_game'
+  | 'practice'
+  | 'team_event';
 export type RepDocumentType = 'waiver' | 'medical_consent' | 'code_of_conduct' | 'other';
 
 export interface RepTeam {
@@ -533,18 +538,23 @@ export interface RepRosterPlayer {
 export interface RepTeamEvent {
   id: string;
   programYearId: string;
+  teamId: string;
   orgId: string;
   eventType: RepEventType;
-  title: string;
-  scheduledAt: string | null;
+  name: string;
+  description: string | null;
+  startsAt: string;
   endsAt: string | null;
   location: string | null;
   opponent: string | null;
-  notes: string | null;
-  status: RepEventStatus;
+  homeAway: 'home' | 'away' | 'neutral' | null;
+  homeScore: number | null;
+  awayScore: number | null;
+  result: 'win' | 'loss' | 'tie' | null;
   parentEventId: string | null;
-  recurrenceParentId: string | null;
+  isRecurring: boolean;
   recurrenceRule: Record<string, unknown> | null;
+  recurrenceParentId: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -580,40 +590,44 @@ export interface RepPlayerDocument {
 export interface RepCostAllocation {
   id: string;
   orgId: string;
-  programYearId: string;
+  sourceEntryId: string | null;
   description: string;
   totalAmount: number;
-  allocationMethod: 'equal' | 'manual';
-  entryId: string | null;
-  notes: string | null;
+  createdBy: string | null;
   createdAt: string;
-  updatedAt: string;
 }
 
 export interface RepAllocationSplit {
   id: string;
   allocationId: string;
-  repTeamId: string;
+  teamId: string;
+  programYearId: string;
+  orgId: string;
   amount: number;
+  splitMethod: 'percentage' | 'sessions' | 'fixed';
+  splitValue: number;
+  paymentSchedule: 'standard' | 'custom';
+  notes: string | null;
   createdAt: string;
 }
 
 export interface RepAllocationInstallment {
   id: string;
   splitId: string;
-  dueDate: string;
+  installmentNumber: number;
   amount: number;
-  paid: boolean;
+  dueDate: string;
   paidAt: string | null;
-  entryId: string | null;
+  paidBy: string | null;
+  accountingEntryId: string | null;
   createdAt: string;
-  updatedAt: string;
 }
 
 export interface RepPlayerDuesSchedule {
   id: string;
   programYearId: string;
-  rosterPlayerId: string;
+  playerId: string;
+  teamId: string;
   orgId: string;
   totalAmount: number;
   notes: string | null;
@@ -623,27 +637,89 @@ export interface RepPlayerDuesSchedule {
 
 export interface RepPlayerDuesInstallment {
   id: string;
-  duesScheduleId: string;
+  scheduleId: string;
+  playerId: string;
+  installmentNumber: number;
   dueDate: string;
   amount: number;
-  paid: boolean;
   paidAt: string | null;
-  entryId: string | null;
+  reminderSentAt: string | null;
+  accountingEntryId: string | null;
+  createdAt: string;
+}
+
+export interface RepDueReminderCandidate {
+  installmentId: string;
+  scheduleId: string;
+  playerId: string;
+  playerFirstName: string;
+  playerLastName: string;
+  guardianFirstName: string | null;
+  guardianLastName: string | null;
+  guardianEmail: string | null;
+  teamId: string;
+  teamName: string;
+  installmentNumber: number;
+  totalInstallments: number;
+  amount: number;
+  dueDate: string;
+}
+
+export interface RepPastProgramYear {
+  id: string;
+  teamId: string;
+  teamName: string;
+  teamColor: string | null;
+  teamAgeGroup: string | null;
+  orgId: string;
+  name: string;
+  year: number;
+  status: 'completed' | 'archived';
+  rosterCount: number;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface RepTeamHistoryYear extends RepPastProgramYear {
+  wins: number;
+  losses: number;
+  ties: number;
+  tryoutTotal: number;
+  tryoutAccepted: number;
 }
 
 export interface RepTeamExpense {
   id: string;
   programYearId: string;
+  teamId: string;
   orgId: string;
+  expenseType: 'expense' | 'tournament_payable';
   description: string;
-  amount: number;
-  expenseDate: string;
   category: string | null;
-  entryId: string | null;
+  amount: number;
+  expensePaidAt: string | null;
+  depositAmount: number | null;
+  depositDueDate: string | null;
+  depositPaidAt: string | null;
+  balanceAmount: number | null;
+  balanceDueDate: string | null;
+  balancePaidAt: string | null;
+  eventId: string | null;
   notes: string | null;
   createdBy: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// ── Platform (FieldLogicHQ company) users ────────────────────────────────────
+
+export interface PlatformUser {
+  id: string;
+  email: string;
+  displayName: string | null;
+  role: string;
+  isActive: boolean;
+  invitedBy: string | null;
   createdAt: string;
   updatedAt: string;
 }

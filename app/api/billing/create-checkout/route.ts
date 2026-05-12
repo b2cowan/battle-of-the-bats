@@ -9,7 +9,7 @@ export async function POST(req: Request) {
   const auth = await getAuthContext();
   if (!auth) return unauthorized();
 
-  const { planKey }: { planKey: 'pro' | 'elite' } = await req.json();
+  const { planKey }: { planKey: 'tournament_plus' | 'league' | 'club' } = await req.json();
   const plan = PLAN_CONFIG[planKey as OrgPlan];
   if (!plan) {
     return new Response(JSON.stringify({ error: 'Invalid plan' }), {
