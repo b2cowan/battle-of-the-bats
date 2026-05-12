@@ -114,8 +114,8 @@ export async function POST(
 
   const audienceLabel =
     scope === 'all'    ? 'All active registrants' :
-    status === 'waitlist' ? 'Waitlist' :
-    status === 'pending'  ? 'Pending review' :
+    status === 'waitlisted'    ? 'Waitlist' :
+    status === 'pending_review' ? 'Pending review' :
     scope;
 
   try {
