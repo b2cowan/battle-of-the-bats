@@ -12,6 +12,7 @@ interface HelpCalloutProps {
   body: React.ReactNode;
   cta?: { label: string; href: string };
   dismissible?: boolean;
+  localStorageKey?: string;
 }
 
 const ICONS: Record<Variant, React.ElementType> = {
@@ -26,24 +27,26 @@ const VARIANT_CLASS: Record<Variant, string> = {
   warning: styles.calloutWarning,
 };
 
-function storageKey(title: string) {
+function defaultStorageKey(title: string) {
   return `flhq-help-dismissed-${title.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
 }
 
-export default function HelpCallout({ variant, title, body, cta, dismissible }: HelpCalloutProps) {
+export default function HelpCallout({ variant, title, body, cta, dismissible, localStorageKey }: HelpCalloutProps) {
   const [dismissed, setDismissed] = useState(false);
+
+  const resolvedKey = localStorageKey ?? defaultStorageKey(title);
 
   useEffect(() => {
     if (!dismissible) return;
-    if (localStorage.getItem(storageKey(title)) === '1') setDismissed(true);
-  }, [dismissible, title]);
+    if (localStorage.getItem(resolvedKey) === '1') setDismissed(true);
+  }, [dismissible, resolvedKey]);
 
   if (dismissed) return null;
 
   const Icon = ICONS[variant];
 
   function handleDismiss() {
-    localStorage.setItem(storageKey(title), '1');
+    localStorage.setItem(resolvedKey, '1');
     setDismissed(true);
   }
 

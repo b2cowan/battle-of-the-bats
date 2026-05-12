@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { ArrowLeft, Users, Calendar, DollarSign, FileText, History, LayoutDashboard } from 'lucide-react';
+import { ArrowLeft, Users, Calendar, DollarSign, FileText, History, LayoutDashboard, HelpCircle } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
 import { useOrg } from '@/lib/org-context';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
@@ -87,6 +87,16 @@ export default function CoachesSidebar({ orgSlug }: { orgSlug: string }) {
           </div>
         </>
       )}
+      <div className={styles.sidebarDivider} />
+      <div className={styles.sidebarSection}>
+        <Link
+          href={`${base}/help`}
+          className={`${styles.sidebarItem}${pathname === `${base}/help` ? ` ${styles.sidebarItemActive}` : ''}`}
+        >
+          <HelpCircle size={14} />
+          Help
+        </Link>
+      </div>
     </nav>
   );
 }

@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { ChevronRight, Download, Upload, X } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
+import HelpCallout from '@/components/help/HelpCallout';
 import styles from '../../../coaches.module.css';
 import type { RepDocumentType } from '@/lib/types';
 
@@ -186,6 +187,14 @@ export default function TeamDocumentsPage({
           <Upload size={14} /> Upload Template
         </button>
       </div>
+
+      {orgWide.length === 0 && teamSpecific.length === 0 && (
+        <HelpCallout
+          variant="info"
+          title="No document templates yet"
+          body="Your org admin publishes document templates here (waivers, medical consent forms, codes of conduct). Once available, you can download them to share with players and families, or upload team-specific templates using the button above."
+        />
+      )}
 
       {/* Org-wide templates */}
       <div className={styles.detailSection}>

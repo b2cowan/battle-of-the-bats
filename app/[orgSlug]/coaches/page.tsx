@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { Users } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { useCoaches } from '@/lib/coaches-context';
+import HelpCallout from '@/components/help/HelpCallout';
 import styles from './coaches.module.css';
 
 const STATUS_LABEL: Record<string, string> = {
@@ -33,6 +34,16 @@ export default function CoachesDashboard({
           </div>
         </div>
       </div>
+
+      {assignments.length > 0 && (
+        <HelpCallout
+          variant="info"
+          title="Welcome to your coaching portal"
+          body="You're the operator — your org handles tryouts and setup; you run day-to-day. Start by exploring your team below."
+          dismissible
+          localStorageKey={`flhq-help-dismissed-coaches-welcome-${params.orgSlug}`}
+        />
+      )}
 
       {assignments.length === 0 ? (
         <div className={styles.emptyState}>

@@ -1,8 +1,9 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { DollarSign, Users, Receipt, Building2, Info } from 'lucide-react';
+import { DollarSign, Users, Receipt, Building2 } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
+import HelpCallout from '@/components/help/HelpCallout';
 import styles from '../../../coaches.module.css';
 
 interface BudgetSummary {
@@ -177,13 +178,11 @@ export default function CoachesAccountingPage({
 
           {/* Unconfigured-state banner */}
           {summary.budgetAmount === null && summary.duesCollected === 0 && summary.totalExpenses === 0 && (
-            <div className={styles.infoBanner}>
-              <Info size={16} style={{ flexShrink: 0, marginTop: 2, color: 'var(--blueprint-blue, #4fa3e0)' }} />
-              <span>
-                No accounting data yet. Set your team budget above, then track player dues,
-                expenses, and org allocations using the sections below.
-              </span>
-            </div>
+            <HelpCallout
+              variant="info"
+              title="Team accounting hasn't been configured yet"
+              body="Your org admin will set up dues schedules and cost allocations before this view shows data. Once ready, use the sections below to track player dues, expenses, and org allocations."
+            />
           )}
 
           {/* Quick-link sections */}

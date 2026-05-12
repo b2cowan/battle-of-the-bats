@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Calendar, ChevronLeft, ChevronRight, Plus, X, Trophy, Swords, Shield, Dumbbell, Users, MoreHorizontal } from 'lucide-react';
 import Link from 'next/link';
 import { useCoaches } from '@/lib/coaches-context';
+import HelpCallout from '@/components/help/HelpCallout';
 import styles from '../../../coaches.module.css';
 import type { RepTeamEvent, RepEventType } from '@/lib/types';
 
@@ -354,7 +355,13 @@ export default function CoachesSchedulePage({
 
   function renderListView() {
     if (!events.length) {
-      return <div className={styles.emptyState}>No events scheduled yet. Use "Add Event" to get started.</div>;
+      return (
+        <HelpCallout
+          variant="info"
+          title="No events scheduled yet"
+          body="Add games, practices, meetings, and tournaments to your team calendar using the Add Event button. Events are visible to you and your org admin."
+        />
+      );
     }
     const grouped: Record<string, RepTeamEvent[]> = {};
     for (const e of events) {

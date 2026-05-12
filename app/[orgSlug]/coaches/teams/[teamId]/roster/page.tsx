@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { Users, ChevronRight, Plus, X } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
 import FeedbackModal from '@/components/FeedbackModal';
+import HelpCallout from '@/components/help/HelpCallout';
 import styles from '../../../coaches.module.css';
 import type { RepRosterPlayer, RepProgramYear } from '@/lib/types';
 
@@ -174,12 +175,11 @@ export default function RosterPage({
       {fetching ? (
         <p className={styles.muted}>Loading…</p>
       ) : players.length === 0 ? (
-        <div className={styles.emptyState}>
-          <p>No players on the roster yet.</p>
-          <p style={{ marginTop: '0.5rem', fontSize: '0.82rem' }}>
-            Players are added here when a tryout application is accepted, or you can add them directly.
-          </p>
-        </div>
+        <HelpCallout
+          variant="info"
+          title="Your roster is empty"
+          body="Players are added after tryout acceptance — contact your org admin if expected players are missing. You can also add players directly using the Add Player button above."
+        />
       ) : (
         <div className={styles.tableWrap}>
           <table className={styles.table}>

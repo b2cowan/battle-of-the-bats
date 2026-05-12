@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { Users, X, CheckCircle2, AlertTriangle, ChevronRight } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
+import HelpTooltip from '@/components/help/HelpTooltip';
 import styles from '../../../../coaches.module.css';
 import type { RepRosterPlayer, RepPlayerDuesSchedule, RepPlayerDuesInstallment } from '@/lib/types';
 
@@ -537,7 +538,13 @@ function ScheduleForm({
         </div>
       </div>
 
-      <p className={styles.label} style={{ marginBottom: '0.5rem' }}>Installments</p>
+      <p className={styles.label} style={{ marginBottom: '0.5rem' }}>
+        Installments
+        <HelpTooltip
+          title="What is an installment?"
+          body="An installment is one payment in a dues schedule. For example, a $500 annual due might be split into 5 monthly installments of $100 each."
+        />
+      </p>
       {installmentRows.map((row, idx) => (
         <div key={idx} style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginBottom: '0.4rem' }}>
           <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', width: '1.5rem', textAlign: 'right', flexShrink: 0 }}>#{row.installmentNumber}</span>
