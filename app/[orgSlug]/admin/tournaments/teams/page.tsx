@@ -6,7 +6,7 @@ import { downloadCSV, formatPoolName } from '@/lib/utils';
 import { useTournament } from '@/lib/tournament-context';
 import { useOrg } from '@/lib/org-context';
 import { AgeGroup, Team } from '@/lib/types';
-import s from '../admin-common.module.css';
+import s from '../../admin-common.module.css';
 import styles from './teams-admin.module.css';
 import FeedbackModal from '@/components/FeedbackModal';
 

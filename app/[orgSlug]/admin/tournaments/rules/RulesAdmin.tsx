@@ -31,7 +31,7 @@ import {
   getResources, saveResource, updateResource, deleteResource,
   uploadResourceFile, seedRulesAndResources, getAgeGroups
 } from '@/lib/db';
-import styles from '../admin-common.module.css';
+import styles from '../../admin-common.module.css';
 
 interface Props {
   tournament: Tournament;

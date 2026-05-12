@@ -9,9 +9,10 @@ import ScheduleGenerator from './Generator';
 import PlayoffWizard from './PlayoffWizard';
 import GameList from './components/GameList';
 import { Game, Team, AgeGroup, Diamond } from '@/lib/types';
-import s from '../admin-common.module.css';
+import s from '../../admin-common.module.css';
 import styles from './schedule-admin.module.css';
 import FeedbackModal from '@/components/FeedbackModal';
+import HelpCallout from '@/components/help/HelpCallout';
 
 type ModalMode = 'add' | 'edit' | null;
 
@@ -243,6 +244,14 @@ export default function AdminSchedulePage() {
           <input type="text" placeholder="Search teams..." value={search} onChange={e => setSearch(e.target.value)} className={s.searchInput} />
         </div>
       </div>
+
+      {currentTournament && games.length === 0 && (
+        <HelpCallout
+          variant="info"
+          title="No games scheduled yet"
+          body="Build your schedule by adding games manually, or use Auto-Generate to create a round-robin schedule from your age groups and teams. For playoffs, use the Playoff Wizard."
+        />
+      )}
 
       {viewMode === 'playoff' && layoutMode === 'bracket' ? (
         <PlayoffBracketView
