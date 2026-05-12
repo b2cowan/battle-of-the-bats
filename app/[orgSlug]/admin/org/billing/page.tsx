@@ -6,6 +6,7 @@ import { useOrg } from '@/lib/org-context';
 import { useTournament } from '@/lib/tournament-context';
 import { PLAN_CONFIG } from '@/lib/plan-config';
 import FeedbackModal from '@/components/FeedbackModal';
+import HelpCallout from '@/components/help/HelpCallout';
 import type { OrgPlan, SubscriptionStatus } from '@/lib/types';
 import styles from './billing.module.css';
 
@@ -364,6 +365,11 @@ export default function BillingPage() {
       {/* Modules section */}
       <div className={styles.modulesSection}>
         <h2 className={styles.sectionTitle}>Modules</h2>
+        <HelpCallout
+          variant="info"
+          title="About modules"
+          body="Modules extend FieldLogicHQ beyond tournaments. If your plan includes a module but it's not yet enabled, use the 'Request to enable' button and we'll activate it for you."
+        />
         <div className={styles.modulesList}>
           {MODULE_META.map(mod => {
             const included = entitlements.includes(mod.key);

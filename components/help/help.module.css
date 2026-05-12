@@ -279,6 +279,89 @@
   font-weight: 600;
 }
 
+/* ── Help Hub ────────────────────────────────────────────────────────────── */
+.helpHub {
+  max-width: 800px;
+}
+
+.helpHubHeader {
+  margin-bottom: 2rem;
+}
+
+.helpHubTitle {
+  font-size: 1.6rem;
+  font-weight: 900;
+  font-family: var(--font-display, sans-serif);
+  color: var(--white-90, rgba(255, 255, 255, 0.9));
+  margin: 0 0 0.4rem;
+  line-height: 1.15;
+}
+
+.helpHubSubtitle {
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.45);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.helpHubGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+}
+
+@media (max-width: 640px) {
+  .helpHubGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.helpHubCard {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1.25rem 1.375rem;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgba(255, 255, 255, 0.03);
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.helpHubCard:hover {
+  border-color: rgba(79, 163, 224, 0.25);
+  background: rgba(79, 163, 224, 0.04);
+}
+
+.helpHubCardTitle {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.85);
+  margin: 0;
+  line-height: 1.3;
+}
+
+.helpHubCardDesc {
+  font-size: 0.83rem;
+  color: rgba(255, 255, 255, 0.45);
+  margin: 0;
+  line-height: 1.55;
+  flex: 1;
+}
+
+.helpHubCardLink {
+  display: inline-block;
+  margin-top: 0.25rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #4fa3e0;
+  text-decoration: none;
+  transition: opacity 0.12s;
+}
+
+.helpHubCardLink:hover {
+  opacity: 0.75;
+}
+
 /* ── Loading / empty state (absorbed from coaches.module.css pattern) ────── */
 .loadingState {
   display: flex;

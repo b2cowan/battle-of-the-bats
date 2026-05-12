@@ -6,7 +6,7 @@ import {
   LayoutDashboard, Users, Calendar, Trophy, Megaphone, Tag, LogOut, Home,
   ChevronRight, MapPin, RefreshCw, BookUser, BookOpen, CreditCard, Settings,
   Users2, Archive, ArrowLeft, Mail, Globe, DollarSign,
-  CalendarDays, ClipboardList, FileText, UserCheck, ExternalLink,
+  CalendarDays, ClipboardList, FileText, UserCheck, ExternalLink, HelpCircle,
 } from 'lucide-react';
 import { signOut } from '@/lib/auth';
 import { useOrg } from '@/lib/org-context';
@@ -77,6 +77,13 @@ export default function AdminSidebar() {
   const canSeeRepTeams = userRole
     ? hasCapability(userRole, userCapabilities, 'module_rep_teams')
     : false;
+
+  const helpHref = isTournaments  ? `${base}/help/tournaments`
+                 : isHouseLeague  ? `${base}/help/house-league`
+                 : isRepTeams     ? `${base}/help/rep-teams`
+                 : isAccounting   ? `${base}/help/accounting`
+                 : isOrgAdmin     ? `${base}/help/org`
+                 : `${base}/help`;
 
   async function handleLogout() {
     await signOut();
@@ -350,6 +357,9 @@ export default function AdminSidebar() {
             <Home size={15} /> Back to Site
           </Link>
         )}
+        <Link href={helpHref} className={styles.footerLink} id="admin-help">
+          <HelpCircle size={15} /> Help
+        </Link>
         <button onClick={handleLogout} className={styles.logoutBtn} id="admin-logout">
           <LogOut size={15} /> Logout
         </button>

@@ -5,6 +5,7 @@ import { Users2, UserPlus, ShieldCheck, BookOpen, ChevronDown, Settings2, Mail, 
 import { useOrg } from '@/lib/org-context';
 import { PLAN_CONFIG } from '@/lib/plan-config';
 import FeedbackModal from '@/components/FeedbackModal';
+import HelpTooltip from '@/components/help/HelpTooltip';
 import { ROLE_DEFAULTS, hasCapability } from '@/lib/roles';
 import type { OrgRole } from '@/lib/types';
 import type { Capability } from '@/lib/roles';
@@ -61,6 +62,17 @@ const ROLE_LABELS: Record<OrgRole, string> = {
   league_registrar: 'League Registrar',
   treasurer: 'Treasurer',
   coach: 'Coach',
+};
+
+const ROLE_TOOLTIP: Record<OrgRole, string> = {
+  owner:            'Full access. Owns the org, manages billing, and can do everything admins can.',
+  admin:            'Manages tournaments, house league, rep teams, and org settings. Cannot manage billing.',
+  staff:            'Day-of operator. Updates game times and diamond assignments, submits scores, and posts announcements. Cannot create tournaments or manage members.',
+  treasurer:        'Access to accounting and ledgers only.',
+  league_admin:     'Manages house league seasons, registrations, teams, and schedules.',
+  league_registrar: 'Reviews and processes house league registrations only.',
+  coach:            'Accesses the Coaches Portal for their assigned rep team. Cannot access the admin panel.',
+  official:         'Submits scores for assigned games only.',
 };
 
 const ROLE_BADGE: Record<OrgRole, string> = {
@@ -449,6 +461,7 @@ export default function MembersPage() {
                 </td>
                 <td>
                   <span className={`badge ${ROLE_BADGE[m.role]}`}>{ROLE_LABELS[m.role]}</span>
+                  <HelpTooltip title={ROLE_LABELS[m.role]} body={ROLE_TOOLTIP[m.role]} size="sm" />
                 </td>
                 <td>
                   <span className={`badge ${STATUS_BADGE[m.status]}`}>{STATUS_LABEL[m.status]}</span>

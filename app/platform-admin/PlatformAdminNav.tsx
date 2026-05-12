@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Building2, Users, ScrollText, Terminal } from 'lucide-react';
+import { LayoutDashboard, Building2, Users, ScrollText, Terminal, HelpCircle } from 'lucide-react';
 import styles from './platform-admin.module.css';
 
 const BASE_NAV = [
@@ -9,6 +9,7 @@ const BASE_NAV = [
   { href: '/platform-admin/orgs',  label: 'Organizations',  Icon: Building2       },
   { href: '/platform-admin/users', label: 'Users',          Icon: Users           },
   { href: '/platform-admin/audit', label: 'Audit Log',      Icon: ScrollText      },
+  { href: '/platform-admin/help',  label: 'Help',           Icon: HelpCircle      },
 ];
 
 export default function PlatformAdminNav({ sessionEmail }: { sessionEmail: string }) {

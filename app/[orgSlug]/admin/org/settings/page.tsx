@@ -6,6 +6,7 @@ import { STOCK_LOGOS, STOCK_LOGO_CATEGORIES, isStockLogoUnlocked } from '@/lib/s
 import { useOrg } from '@/lib/org-context';
 import { useOrgNav } from '@/components/OrgNavContext';
 import FeedbackModal from '@/components/FeedbackModal';
+import HelpCallout from '@/components/help/HelpCallout';
 import { PRESETS, FONT_OPTIONS, CARD_STYLE_OPTIONS, resolveTheme } from '@/lib/themes';
 import styles from './settings.module.css';
 
@@ -496,6 +497,11 @@ export default function OrgSettingsPage() {
           </div>
         </div>
 
+        <HelpCallout
+          variant="warning"
+          title="Changing your slug breaks existing links"
+          body="Changing your org slug will break any existing links to your public pages, registration forms, and tournament URLs. Update external links before saving."
+        />
         <div className={styles.field}>
           <label className={styles.label} htmlFor="settings-slug">URL Slug</label>
           <input

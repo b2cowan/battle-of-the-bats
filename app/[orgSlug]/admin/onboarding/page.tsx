@@ -5,6 +5,7 @@ import { CheckCircle2, Circle, ArrowRight, Rocket } from 'lucide-react';
 import Link from 'next/link';
 import { useOrg } from '@/lib/org-context';
 import { PLAN_CONFIG } from '@/lib/plan-config';
+import HelpCallout from '@/components/help/HelpCallout';
 import styles from './onboarding.module.css';
 
 export default function OnboardingPage() {
@@ -216,6 +217,13 @@ export default function OnboardingPage() {
           </div>
         )}
       </div>
+
+      <HelpCallout
+        variant="tip"
+        title="Unlock more with modules"
+        body="Modules extend FieldLogicHQ beyond the tournament core. Complete the steps above, then enable your first module from the Billing page to unlock house league, rep teams, and more."
+        cta={{ label: 'Go to Billing', href: `/${currentOrg.slug}/admin/org/billing` }}
+      />
 
       <div className={styles.footer}>
         {allDone ? (

@@ -4,6 +4,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { PLAN_CONFIG } from '@/lib/plan-config';
 import OrgDetailClient from './OrgDetailClient';
 import styles from './orgDetail.module.css';
+import HelpTooltip from '@/components/help/HelpTooltip';
 
 const ADDON_LABELS: Record<string, string> = {
   module_public_site:  'Public Site',
@@ -191,7 +192,14 @@ export default async function OrgDetailPage({
             </div>
           )}
           <div className={`${styles.field} ${styles.fieldFull}`}>
-            <span className={styles.fieldLabel}>Active Add-ons</span>
+            <span className={styles.fieldLabel} style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+              Active Add-ons
+              <HelpTooltip
+                title="Active add-ons"
+                body="Enabled addons are the modules active for this org beyond their base plan. Toggling here takes effect immediately — no deploy required."
+                size="sm"
+              />
+            </span>
             <span className={styles.fieldValue}>
               {addonLabels.length > 0 ? addonLabels.join(', ') : 'None'}
             </span>

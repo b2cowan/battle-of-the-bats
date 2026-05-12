@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { Building2, Users, Trophy, UsersRound, AlertCircle, Sparkles } from 'lucide-react';
 import styles from './overview.module.css';
+import HelpTooltip from '@/components/help/HelpTooltip';
 
 async function getStats() {
   const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
@@ -58,18 +59,25 @@ export default async function PlatformOverviewPage() {
       <div className={styles.healthRow}>
         <div className={styles.healthLabel}>Health</div>
         <div className={styles.healthGrid}>
-          <Link
-            href="/platform-admin/orgs?status=past_due"
-            className={`${styles.healthCard} ${stats.pastDue > 0 ? styles.healthCardWarn : styles.healthCardOk}`}
-          >
-            <div className={styles.healthIconWrap}>
-              <AlertCircle size={18} />
-            </div>
-            <div>
-              <div className={styles.healthNum}>{stats.pastDue}</div>
-              <div className={styles.healthCardLabel}>Past Due</div>
-            </div>
-          </Link>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <Link
+              href="/platform-admin/orgs?status=past_due"
+              className={`${styles.healthCard} ${stats.pastDue > 0 ? styles.healthCardWarn : styles.healthCardOk}`}
+            >
+              <div className={styles.healthIconWrap}>
+                <AlertCircle size={18} />
+              </div>
+              <div>
+                <div className={styles.healthNum}>{stats.pastDue}</div>
+                <div className={styles.healthCardLabel}>Past Due</div>
+              </div>
+            </Link>
+            <HelpTooltip
+              title="Past due subscriptions"
+              body="Organizations with a past-due subscription have failed a payment. They retain access during the grace period. Contact them directly or extend the grace period from the org detail page."
+              size="sm"
+            />
+          </div>
           <div className={`${styles.healthCard} ${styles.healthCardOk}`}>
             <div className={styles.healthIconWrap}>
               <Sparkles size={18} />

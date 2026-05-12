@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import styles from './audit.module.css';
+import HelpCallout from '@/components/help/HelpCallout';
 
 const PAGE_SIZE = 100;
 
@@ -113,6 +114,12 @@ export default async function AuditLogPage({
         <h1 className={styles.title}>Audit Log</h1>
         <div className={styles.count}>{rows.length} entries</div>
       </header>
+
+      <HelpCallout
+        variant="info"
+        title="About this log"
+        body="The audit log records all consequential admin actions across all orgs. Use the filters to narrow by org, date, or action type. Logs are retained indefinitely."
+      />
 
       {/* Filter bar — native GET form, no JS needed */}
       <form method="GET" action="/platform-admin/audit" className={styles.filterBar}>
