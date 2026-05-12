@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
-import { Calendar, ChevronLeft, ChevronRight, Plus, X, Trophy, Swords, Shield, Dumbbell, Users } from 'lucide-react';
+import { Calendar, ChevronLeft, ChevronRight, X, Trophy, Swords, Shield, Dumbbell, Users } from 'lucide-react';
 import Link from 'next/link';
 import { useOrg } from '@/lib/org-context';
 import styles from '../../../../../rep-teams.module.css';
@@ -38,42 +38,6 @@ const EVENT_ICONS: Record<RepEventType, React.ElementType> = {
 const DAYS_OF_WEEK = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
 type ViewMode = 'list' | 'week' | 'month';
-
-interface EventForm {
-  eventType: RepEventType;
-  name: string;
-  description: string;
-  startsAt: string;
-  endsAt: string;
-  location: string;
-  opponent: string;
-  homeAway: string;
-  parentEventId: string;
-  isRecurring: boolean;
-  dayOfWeek: string;
-  startDate: string;
-  endDate: string;
-  startTime: string;
-  endTime: string;
-}
-
-const BLANK_FORM: EventForm = {
-  eventType: 'practice',
-  name: '',
-  description: '',
-  startsAt: '',
-  endsAt: '',
-  location: '',
-  opponent: '',
-  homeAway: '',
-  parentEventId: '',
-  isRecurring: false,
-  dayOfWeek: '1',
-  startDate: '',
-  endDate: '',
-  startTime: '',
-  endTime: '',
-};
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
@@ -152,8 +116,7 @@ export default function AdminSchedulePage({
   params: { orgSlug: string; teamId: string; yearId: string };
 }) {
   const { orgSlug, teamId, yearId } = params;
-  const { userRole, loading: orgLoading } = useOrg();
-  const canWrite = userRole === 'owner' || userRole === 'admin';
+  const { loading: orgLoading } = useOrg();
 
   const [events, setEvents] = useState<RepTeamEvent[]>([]);
   const [loading, setLoading] = useState(true);
@@ -165,12 +128,6 @@ export default function AdminSchedulePage({
   const [cursorDate, setCursorDate] = useState(() => new Date().toISOString().slice(0, 10));
 
   const [selectedEvent, setSelectedEvent] = useState<RepTeamEvent | null>(null);
-  const [showAddForm, setShowAddForm] = useState(false);
-  const [addTypeMenuOpen, setAddTypeMenuOpen] = useState(false);
-  const [form, setForm] = useState<EventForm>(BLANK_FORM);
-  const [saving, setSaving] = useState(false);
-  const [saveError, setSaveError] = useState('');
-  const [deleteConfirm, setDeleteConfirm] = useState(false);
 
   const base = `/${orgSlug}/admin/rep-teams`;
   const apiBase = `/api/admin/rep-teams/teams/${teamId}/program-years/${yearId}/events`;
@@ -193,7 +150,6 @@ export default function AdminSchedulePage({
     }
   }, [apiBase]);
 
-  // Fetch team name separately for breadcrumb
   useEffect(() => {
     fetch(`/api/admin/rep-teams/teams/${teamId}`)
       .then(r => r.json())
@@ -202,74 +158,6 @@ export default function AdminSchedulePage({
   }, [teamId]);
 
   useEffect(() => { fetchEvents(); }, [fetchEvents]);
-
-  function openAddForm(type: RepEventType) {
-    setAddTypeMenuOpen(false);
-    setForm({ ...BLANK_FORM, eventType: type });
-    setSaveError('');
-    setShowAddForm(true);
-  }
-
-  async function handleSave() {
-    setSaveError('');
-    setSaving(true);
-    try {
-      const body: Record<string, unknown> = {
-        eventType: form.eventType,
-        name: form.name.trim(),
-        description: form.description.trim() || null,
-        location: form.location.trim() || null,
-        opponent: form.opponent.trim() || null,
-        homeAway: form.homeAway || null,
-        parentEventId: form.parentEventId || null,
-      };
-
-      if (form.eventType === 'practice' && form.isRecurring) {
-        body.isRecurring = true;
-        body.recurrenceRule = {
-          dayOfWeek: Number(form.dayOfWeek),
-          startDate: form.startDate,
-          endDate: form.endDate,
-          startTime: form.startTime,
-          endTime: form.endTime || null,
-        };
-      } else {
-        body.startsAt = form.startsAt;
-        body.endsAt = form.endsAt || null;
-      }
-
-      const res = await fetch(apiBase, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      });
-      if (!res.ok) {
-        const d = await res.json().catch(() => ({ error: res.statusText }));
-        throw new Error(d.error ?? 'Save failed');
-      }
-      setShowAddForm(false);
-      await fetchEvents();
-    } catch (e: any) {
-      setSaveError(e.message);
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  async function handleDelete(eventId: string) {
-    setSaving(true);
-    try {
-      const res = await fetch(`${apiBase.replace('/events', '')}/events/${eventId}`, { method: 'DELETE' });
-      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Delete failed');
-      setDeleteConfirm(false);
-      setSelectedEvent(null);
-      await fetchEvents();
-    } catch (e: any) {
-      setSaveError(e.message);
-    } finally {
-      setSaving(false);
-    }
-  }
 
   function navigate(dir: -1 | 1) {
     const d = new Date(cursorDate + 'T00:00:00');
@@ -280,8 +168,6 @@ export default function AdminSchedulePage({
 
   const curMonth = cursorDate.slice(0, 7);
   const curWeek  = weekKey(cursorDate + 'T00:00:00');
-
-  const needsOpponent = (t: RepEventType) => ['tournament_game', 'scrimmage', 'league_game'].includes(t);
 
   function renderListView() {
     if (!events.length) return <div className={styles.emptyStateState}>No events yet.</div>;
@@ -384,26 +270,9 @@ export default function AdminSchedulePage({
               </button>
             ))}
           </div>
-          {canWrite && (
-            <div className={styles.addEventWrap}>
-              <button className={styles.btnPrimary} onClick={() => setAddTypeMenuOpen(v => !v)}>
-                <Plus size={15} /> Add Event
-              </button>
-              {addTypeMenuOpen && (
-                <div className={styles.addEventMenu}>
-                  {(Object.keys(EVENT_LABELS) as RepEventType[]).map(t => {
-                    const Icon = EVENT_ICONS[t];
-                    return (
-                      <button key={t} className={styles.addEventMenuItem} onClick={() => openAddForm(t)}>
-                        <Icon size={14} style={{ color: EVENT_COLORS[t] }} />
-                        {EVENT_LABELS[t]}
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          )}
+          <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.35)', alignSelf: 'center' }}>
+            Read-only
+          </span>
         </div>
       </div>
 
@@ -436,7 +305,7 @@ export default function AdminSchedulePage({
 
       {/* Detail slide-over */}
       {selectedEvent && (
-        <div className={styles.modalOverlay} onClick={() => { setSelectedEvent(null); setSaveError(''); }}>
+        <div className={styles.modalOverlay} onClick={() => setSelectedEvent(null)}>
           <div className={styles.slideOver} onClick={e => e.stopPropagation()}>
             <div className={styles.modalHeader}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
@@ -457,117 +326,6 @@ export default function AdminSchedulePage({
               {selectedEvent.homeScore != null && <><dt>Score</dt><dd>{selectedEvent.homeScore}–{selectedEvent.awayScore} <strong style={{ color: selectedEvent.result === 'win' ? '#22c55e' : selectedEvent.result === 'loss' ? '#ef4444' : '#f59e0b' }}>{selectedEvent.result?.toUpperCase()}</strong></dd></>}
               {selectedEvent.description && <><dt>Notes</dt><dd>{selectedEvent.description}</dd></>}
             </dl>
-            {canWrite && (
-              <div className={styles.slideOverActions}>
-                {!deleteConfirm ? (
-                  <button className={styles.btnDanger} onClick={() => setDeleteConfirm(true)}>Delete</button>
-                ) : (
-                  <div className={styles.deleteConfirm}>
-                    <p className={styles.deleteConfirmMsg}>Delete "{selectedEvent.name}"?</p>
-                    <div className={styles.deleteConfirmBtns}>
-                      <button className={styles.btnDanger} disabled={saving} onClick={() => handleDelete(selectedEvent.id)}>Confirm</button>
-                      <button className={styles.btnGhost} onClick={() => setDeleteConfirm(false)}>Cancel</button>
-                    </div>
-                    {saveError && <p style={{ color: '#ef4444', fontSize: '0.85rem' }}>{saveError}</p>}
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Add event modal */}
-      {showAddForm && (
-        <div className={styles.modalOverlay} onClick={() => setShowAddForm(false)}>
-          <div className={styles.modal} onClick={e => e.stopPropagation()}>
-            <div className={styles.modalHeader}>
-              <h3 className={styles.modalTitle}>Add {EVENT_LABELS[form.eventType]}</h3>
-              <button className={styles.modalCloseBtn} onClick={() => setShowAddForm(false)}><X size={16} /></button>
-            </div>
-            <div className={styles.formGrid}>
-              <div className={`${styles.field} ${styles.formGridFull}`}>
-                <label className={styles.label}>Name *</label>
-                <input className={styles.input} value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
-              </div>
-              {form.eventType === 'practice' && (
-                <div className={`${styles.field} ${styles.formGridFull}`}>
-                  <label className={styles.label}>
-                    <input type="checkbox" checked={form.isRecurring} onChange={e => setForm(f => ({ ...f, isRecurring: e.target.checked }))} style={{ marginRight: '0.4rem' }} />
-                    Recurring (weekly)
-                  </label>
-                </div>
-              )}
-              {form.eventType === 'practice' && form.isRecurring ? (
-                <>
-                  <div className={styles.field}>
-                    <label className={styles.label}>Day of Week *</label>
-                    <select className={styles.select} value={form.dayOfWeek} onChange={e => setForm(f => ({ ...f, dayOfWeek: e.target.value }))}>
-                      {DAYS_OF_WEEK.map((d, i) => <option key={i} value={i}>{d}</option>)}
-                    </select>
-                  </div>
-                  <div className={styles.field}>
-                    <label className={styles.label}>Start Time *</label>
-                    <input className={styles.input} type="time" value={form.startTime} onChange={e => setForm(f => ({ ...f, startTime: e.target.value }))} />
-                  </div>
-                  <div className={styles.field}>
-                    <label className={styles.label}>End Time</label>
-                    <input className={styles.input} type="time" value={form.endTime} onChange={e => setForm(f => ({ ...f, endTime: e.target.value }))} />
-                  </div>
-                  <div className={styles.field}>
-                    <label className={styles.label}>Start Date *</label>
-                    <input className={styles.input} type="date" value={form.startDate} onChange={e => setForm(f => ({ ...f, startDate: e.target.value }))} />
-                  </div>
-                  <div className={styles.field}>
-                    <label className={styles.label}>End Date *</label>
-                    <input className={styles.input} type="date" value={form.endDate} onChange={e => setForm(f => ({ ...f, endDate: e.target.value }))} />
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div className={styles.field}>
-                    <label className={styles.label}>Start *</label>
-                    <input className={styles.input} type="datetime-local" value={form.startsAt} onChange={e => setForm(f => ({ ...f, startsAt: e.target.value }))} />
-                  </div>
-                  <div className={styles.field}>
-                    <label className={styles.label}>End</label>
-                    <input className={styles.input} type="datetime-local" value={form.endsAt} onChange={e => setForm(f => ({ ...f, endsAt: e.target.value }))} />
-                  </div>
-                </>
-              )}
-              <div className={`${styles.field} ${styles.formGridFull}`}>
-                <label className={styles.label}>Location</label>
-                <input className={styles.input} value={form.location} onChange={e => setForm(f => ({ ...f, location: e.target.value }))} />
-              </div>
-              {needsOpponent(form.eventType) && (
-                <>
-                  <div className={styles.field}>
-                    <label className={styles.label}>Opponent</label>
-                    <input className={styles.input} value={form.opponent} onChange={e => setForm(f => ({ ...f, opponent: e.target.value }))} />
-                  </div>
-                  <div className={styles.field}>
-                    <label className={styles.label}>Home / Away</label>
-                    <select className={styles.select} value={form.homeAway} onChange={e => setForm(f => ({ ...f, homeAway: e.target.value }))}>
-                      <option value="">—</option>
-                      <option value="home">Home</option>
-                      <option value="away">Away</option>
-                      <option value="neutral">Neutral</option>
-                    </select>
-                  </div>
-                </>
-              )}
-              <div className={`${styles.field} ${styles.formGridFull}`}>
-                <label className={styles.label}>Notes</label>
-                <textarea className={styles.textarea} value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} rows={2} />
-              </div>
-            </div>
-            {saveError && <p style={{ color: '#ef4444', marginTop: '0.75rem', fontSize: '0.85rem' }}>{saveError}</p>}
-            <div className={styles.modalFooter}>
-              <button className={styles.btnSecondary} onClick={() => setShowAddForm(false)}>Cancel</button>
-              <button className={styles.btnPrimary} disabled={saving || !form.name.trim()} onClick={handleSave}>
-                {saving ? 'Saving…' : 'Save'}
-              </button>
-            </div>
           </div>
         </div>
       )}

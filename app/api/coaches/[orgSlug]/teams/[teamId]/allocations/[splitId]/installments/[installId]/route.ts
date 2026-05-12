@@ -3,6 +3,7 @@ import { getAuthContext, unauthorized, forbidden } from '@/lib/api-auth';
 import {
   getCoachingAssignmentsForUser,
   getRepTeam,
+  getActiveRepProgramYear,
   getRepAllocationSplit,
   getRepAllocationInstallment,
   markRepAllocationInstallmentPaid,
@@ -11,20 +12,37 @@ import {
 } from '@/lib/db';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 
+async function resolveCoachContext(orgSlug: string, teamId: string) {
+  const ctx = await getAuthContext();
+  if (!ctx) return { error: unauthorized() };
+  if (ctx.org.slug !== orgSlug) return { error: forbidden() };
+
+  const team = await getRepTeam(teamId);
+  if (!team || team.orgId !== ctx.org.id) {
+    return { error: NextResponse.json({ error: 'Not found' }, { status: 404 }) };
+  }
+
+  const assignments = await getCoachingAssignmentsForUser(ctx.org.id, ctx.user.id);
+  const assignment = assignments.find(a => a.teamId === teamId);
+  if (!assignment) return { error: forbidden() };
+
+  const programYear = await getActiveRepProgramYear(teamId);
+  if (!programYear) {
+    return { error: NextResponse.json({ error: 'No active program year for this team' }, { status: 404 }) };
+  }
+
+  return { ctx, team, assignment, programYear };
+}
+
 export async function PATCH(
   _req: Request,
   { params }: { params: Promise<{ orgSlug: string; teamId: string; splitId: string; installId: string }> },
 ) {
   const { orgSlug, teamId, splitId, installId } = await params;
 
-  const ctx = await getAuthContext();
-  if (!ctx) return unauthorized();
-  if (ctx.org.slug !== orgSlug) return forbidden();
-
-  // Verify the coach is assigned to this team
-  const assignments = await getCoachingAssignmentsForUser(ctx.org.id, ctx.user.id);
-  const assignment = assignments.find(a => a.teamId === teamId);
-  if (!assignment) return forbidden();
+  const resolved = await resolveCoachContext(orgSlug, teamId);
+  if ('error' in resolved) return resolved.error;
+  const { ctx, team } = resolved;
 
   // Verify the split belongs to this team + org
   const split = await getRepAllocationSplit(splitId);
@@ -39,9 +57,6 @@ export async function PATCH(
   if (installment.paidAt) {
     return NextResponse.json({ error: 'Installment already marked paid' }, { status: 409 });
   }
-
-  const team = await getRepTeam(teamId);
-  if (!team) return NextResponse.json({ error: 'Team not found' }, { status: 404 });
 
   const [teamLedger, orgLedger] = await Promise.all([
     getOrCreateRepTeamLedger(ctx.org.id, team.id, team.name),

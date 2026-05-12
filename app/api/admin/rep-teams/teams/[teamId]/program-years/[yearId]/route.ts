@@ -99,7 +99,6 @@ export async function PATCH(
   if (typeof body.name === 'string') fields.name = body.name.trim();
   if (typeof body.tryoutOpen === 'boolean') fields.tryoutOpen = body.tryoutOpen;
   if ('tryoutDescription' in body) fields.tryoutDescription = body.tryoutDescription?.trim() || null;
-  if ('budgetAmount' in body) fields.budgetAmount = body.budgetAmount != null ? Number(body.budgetAmount) : null;
 
   if (body.status !== undefined) {
     const newStatus = body.status as RepProgramYearStatus;

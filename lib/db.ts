@@ -4127,7 +4127,10 @@ export async function getPlatformUsers(): Promise<PlatformUser[]> {
     .from('platform_users')
     .select('*')
     .order('created_at', { ascending: true });
-  if (error) throw error;
+  if (error) {
+    console.error('[getPlatformUsers]', error);
+    return [];
+  }
   return (data ?? []).map(mapPlatformUser);
 }
 

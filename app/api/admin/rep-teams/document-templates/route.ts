@@ -41,6 +41,8 @@ export async function POST(
   const err = gate(ctx);
   if (err) return err;
 
+  if (ctx!.role !== 'owner' && ctx!.role !== 'admin') return forbidden();
+
   let formData: FormData;
   try {
     formData = await req.formData();

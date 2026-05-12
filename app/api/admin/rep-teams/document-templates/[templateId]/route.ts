@@ -58,6 +58,8 @@ export async function PATCH(
   const err = gate(ctx);
   if (err) return err;
 
+  if (ctx!.role !== 'owner' && ctx!.role !== 'admin') return forbidden();
+
   const resolved = await resolveTemplate(templateId, ctx!.org.id);
   if ('error' in resolved) return resolved.error;
 
@@ -79,6 +81,8 @@ export async function DELETE(
   const ctx = await getAuthContextWithRole();
   const err = gate(ctx);
   if (err) return err;
+
+  if (ctx!.role !== 'owner' && ctx!.role !== 'admin') return forbidden();
 
   const resolved = await resolveTemplate(templateId, ctx!.org.id);
   if ('error' in resolved) return resolved.error;

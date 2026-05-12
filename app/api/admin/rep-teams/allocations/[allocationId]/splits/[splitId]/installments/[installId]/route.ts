@@ -29,24 +29,12 @@ export async function PATCH(
 
   const { allocationId, splitId, installId } = await params;
 
-  // Fetch the split to verify org ownership and check coach auth
   const split = await getRepAllocationSplit(splitId);
   if (!split || split.allocationId !== allocationId || split.orgId !== ctx!.org.id) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }
 
-  // Authorization: owner or treasurer can always mark paid.
-  // A coach can mark paid only if they are assigned to this split's team.
-  const isOwnerOrTreasurer = ctx!.role === 'owner' || ctx!.role === 'treasurer';
-  if (!isOwnerOrTreasurer) {
-    const { data: coachRow } = await supabaseAdmin
-      .from('rep_team_coaches')
-      .select('id')
-      .eq('team_id', split.teamId)
-      .eq('user_id', ctx!.user.id)
-      .maybeSingle();
-    if (!coachRow) return forbidden();
-  }
+  if (ctx!.role !== 'owner' && ctx!.role !== 'treasurer') return forbidden();
 
   const installment = await getRepAllocationInstallment(installId);
   if (!installment || installment.splitId !== splitId) {

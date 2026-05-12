@@ -2,12 +2,7 @@ import { NextResponse } from 'next/server';
 import { getAuthContextWithRole, unauthorized, forbidden } from '@/lib/api-auth';
 import { hasCapability } from '@/lib/roles';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
-import {
-  getRepTeam,
-  getRepProgramYear,
-  getRepTeamEvents,
-} from '@/lib/db';
-import type { RepEventType } from '@/lib/types';
+import { getRepTeam, getRepProgramYear, getRepRosterPlayers } from '@/lib/db';
 
 function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
   if (!ctx) return unauthorized();
@@ -17,7 +12,7 @@ function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
 }
 
 export async function GET(
-  req: Request,
+  _req: Request,
   { params }: { params: Promise<{ teamId: string; yearId: string }> },
 ) {
   const ctx = await getAuthContextWithRole();
@@ -25,6 +20,7 @@ export async function GET(
   if (err) return err;
 
   const { teamId, yearId } = await params;
+
   const team = await getRepTeam(teamId);
   if (!team || team.orgId !== ctx!.org.id) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
@@ -35,11 +31,6 @@ export async function GET(
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }
 
-  const url = new URL(req.url);
-  const from = url.searchParams.get('from') ?? undefined;
-  const to   = url.searchParams.get('to')   ?? undefined;
-  const type = url.searchParams.get('type') as RepEventType | undefined ?? undefined;
-
-  const events = await getRepTeamEvents(programYear.id, { from, to, type });
-  return NextResponse.json({ events, programYear });
+  const players = await getRepRosterPlayers(yearId);
+  return NextResponse.json({ players });
 }
