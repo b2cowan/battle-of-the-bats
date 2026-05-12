@@ -64,48 +64,17 @@
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 1.25rem;
-  align-items: start;
+  align-items: stretch;
 }
 
 /* ── Plan cards ───────────────────────────────────────────────────────── */
-.planWrapper {
+.planCard {
   display: flex;
   flex-direction: column;
-}
-
-.popularBadge {
-  text-align: center;
-  color: var(--logic-lime);
-  font-family: var(--font-data);
-  font-size: 0.6rem;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  padding: 0.25rem 0.75rem;
-  border: 1px solid var(--logic-lime);
-  border-bottom: none;
-  background: rgba(var(--logic-lime-rgb), 0.05);
-  white-space: nowrap;
-}
-
-.popularSpacer {
-  padding: 0.25rem 0.75rem;
-  border: 1px solid transparent;
-  font-size: 0.6rem;
-  visibility: hidden;
-}
-
-.planCard {
   background: var(--hud-surface);
   border: 1px solid rgba(var(--blueprint-blue-rgb), 0.4);
   border-radius: 0;
   padding: 2rem;
-  flex: 1;
-}
-
-.planHighlight {
-  border-color: var(--logic-lime);
-  box-shadow: 0 0 0 1px var(--logic-lime), 0 0 16px rgba(var(--logic-lime-rgb), 0.25);
 }
 
 .planName {
@@ -142,10 +111,6 @@
   color: var(--fl-text);
 }
 
-.planHighlight .planAmount {
-  color: var(--logic-lime);
-}
-
 .planCurrency {
   font-family: var(--font-data);
   font-size: 0.85rem;
@@ -177,34 +142,6 @@
   min-height: 1.2em;
 }
 
-.popularBlurb {
-  font-family: var(--font-data);
-  font-size: 0.7rem;
-  color: rgba(var(--logic-lime-rgb), 0.75);
-  line-height: 1.6;
-  margin-bottom: 1.25rem;
-  padding: 0.75rem;
-  border: 1px solid rgba(var(--logic-lime-rgb), 0.2);
-  background: rgba(var(--logic-lime-rgb), 0.04);
-}
-
-.notIncludedNote {
-  font-family: var(--font-data);
-  font-size: 0.68rem;
-  color: rgba(255,255,255,0.3);
-  line-height: 1.5;
-  margin-bottom: 1rem;
-}
-
-.upgradeNudge {
-  font-family: var(--font-data);
-  font-size: 0.65rem;
-  color: var(--data-gray);
-  margin-top: 0.75rem;
-  text-align: center;
-  opacity: 0.7;
-}
-
 .planDivider {
   border: none;
   border-top: 1px solid rgba(var(--blueprint-blue-rgb), 0.2);
@@ -216,6 +153,7 @@
   flex-direction: column;
   gap: 0.6rem;
   margin-bottom: 1.75rem;
+  flex: 1;
 }
 
 .planRow {

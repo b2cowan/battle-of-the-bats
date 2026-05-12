@@ -7,10 +7,6 @@ import styles from './PricingSection.module.css';
 
 type Billing = 'monthly' | 'annual';
 
-interface PlanFeature {
-  label: string;
-}
-
 interface Plan {
   key: string;
   name: string;
@@ -23,11 +19,7 @@ interface Plan {
   period: string;
   freeNote: string;
   trialNote: string;
-  highlight: boolean;
-  features: PlanFeature[];
-  notIncludedNote: string | null;
-  upgradeNudge: string | null;
-  popularBlurb: string | null;
+  features: string[];
   cta: string;
   ctaHref: string;
 }
@@ -36,7 +28,7 @@ const PLANS: Plan[] = [
   {
     key: 'tournament',
     name: 'Tournament',
-    tagline: 'Everything you need to run a basic tournament.',
+    tagline: 'Organize tournaments, track scores, and publish results — free forever.',
     monthlyPrice: 'Free',
     annualPrice: null,
     annualTotal: null,
@@ -45,25 +37,21 @@ const PLANS: Plan[] = [
     period: '',
     freeNote: 'No credit card required',
     trialNote: 'No credit card required',
-    highlight: false,
     features: [
-      { label: 'Manual tournament scheduling' },
-      { label: 'Manual score entry' },
-      { label: 'Basic standings' },
-      { label: 'Field and diamond management' },
-      { label: '3 staff / admin seats' },
-      { label: '1 active tournament' },
+      'Tournament scheduling',
+      'Score entry and results',
+      'Standings',
+      'Field and diamond management',
+      '3 staff / admin seats',
+      '1 active tournament',
     ],
-    notIncludedNote: null,
-    upgradeNudge: 'Need automated scheduling or bracket tools? → Tournament Plus',
-    popularBlurb: null,
     cta: 'Get Started Free',
     ctaHref: '/auth/signup',
   },
   {
     key: 'tournament_plus',
     name: 'Tournament Plus',
-    tagline: 'Professional tournament management without the league complexity.',
+    tagline: 'Run unlimited events simultaneously with automated scheduling, brackets, and communications.',
     monthlyPrice: '$39',
     annualPrice: '$390',
     annualTotal: '$390 CAD / year',
@@ -72,20 +60,16 @@ const PLANS: Plan[] = [
     period: '/mo',
     freeNote: '14-day free trial',
     trialNote: '14-day free trial',
-    highlight: false,
     features: [
-      { label: 'Everything in Tournament' },
-      { label: 'Automated schedule generation' },
-      { label: 'Bracket generator' },
-      { label: 'Email announcements and communications' },
-      { label: 'Tournament archives and history' },
-      { label: 'Unlimited simultaneous tournaments' },
-      { label: '5 staff / admin seats' },
-      { label: 'Unlimited officials seats' },
+      'Everything in Tournament',
+      'Automated schedule generation',
+      'Bracket generator',
+      'Email announcements and communications',
+      'Tournament archives and history',
+      'Unlimited simultaneous tournaments',
+      '5 staff / admin seats',
+      'Unlimited officials seats',
     ],
-    notIncludedNote: 'Built for tournament organizers — house league, accounting, and rep team tools not included.',
-    upgradeNudge: 'Running a public-facing league? → League',
-    popularBlurb: null,
     cta: 'Start Free Trial',
     ctaHref: '/auth/signup',
   },
@@ -101,27 +85,23 @@ const PLANS: Plan[] = [
     period: '/mo',
     freeNote: '14-day free trial',
     trialNote: '14-day free trial',
-    highlight: false,
     features: [
-      { label: 'Everything in Tournament Plus' },
-      { label: 'Public organization page' },
-      { label: 'House League module' },
-      { label: 'Registration workflows' },
-      { label: 'Division and season management' },
-      { label: 'League-scoped communications' },
-      { label: 'Advanced member roles and permissions' },
-      { label: '10 staff / admin seats' },
+      'Everything in Tournament Plus',
+      'Public organization page',
+      'House League module',
+      'Registration workflows',
+      'Division and season management',
+      'League-scoped communications',
+      'Advanced member roles and permissions',
+      '10 staff / admin seats',
     ],
-    notIncludedNote: null,
-    upgradeNudge: 'Managing finances, tryouts, or competitive teams? → Club',
-    popularBlurb: null,
     cta: 'Start Free Trial',
     ctaHref: '/auth/signup',
   },
   {
     key: 'club',
     name: 'Club',
-    tagline: 'The complete operating system for your sports organization.',
+    tagline: 'The complete platform for full-service clubs — tournaments, house league, rep teams, and accounting.',
     monthlyPrice: '$179',
     annualPrice: '$1,790',
     annualTotal: '$1,790 CAD / year',
@@ -130,23 +110,21 @@ const PLANS: Plan[] = [
     period: '/mo',
     freeNote: '14-day free trial',
     trialNote: '14-day free trial',
-    highlight: true,
     features: [
-      { label: 'Everything in League' },
-      { label: 'Accounting module — org ledger, team invoicing, payment reconciliation, expense tracking' },
-      { label: 'Rep Teams module — tryouts, rosters, player documents, coaches portal, team finances' },
-      { label: 'Unlimited staff / admin seats' },
+      'Everything in League',
+      'Accounting module — org ledger, team invoicing, payment reconciliation, expense tracking',
+      'Rep Teams module — tryouts, rosters, player documents, coaches portal, team finances',
+      'Unlimited staff / admin seats',
     ],
-    notIncludedNote: null,
-    upgradeNudge: null,
-    popularBlurb: 'Most organizations choose Club because of what they stop doing: hunting down payments, managing tryouts over email, reconciling team finances in spreadsheets.',
     cta: 'Start Free Trial',
     ctaHref: '/auth/signup',
   },
 ];
 
+const CTA_CLASS = 'block font-mono text-xs uppercase tracking-widest font-bold text-center bg-logic-lime text-pitch-black px-4 py-3 hover:bg-white transition-colors w-full';
+
 export default function PricingSection() {
-  const [billing, setBilling] = useState<Billing>('annual');
+  const [billing, setBilling] = useState<Billing>('monthly');
 
   return (
     <>
@@ -183,63 +161,38 @@ export default function PricingSection() {
             : plan.freeNote;
 
           return (
-            <div key={plan.key} className={styles.planWrapper}>
-              {plan.highlight
-                ? <div className={styles.popularBadge}>Most Popular</div>
-                : <div className={styles.popularSpacer} aria-hidden />}
+            <div key={plan.key} className={styles.planCard}>
+              <p className={styles.planName}>{plan.name}</p>
+              <p className={styles.planTagline}>{plan.tagline}</p>
 
-              <div className={`${styles.planCard} ${plan.highlight ? styles.planHighlight : ''}`}>
-                <p className={styles.planName}>{plan.name}</p>
-                <p className={styles.planTagline}>{plan.tagline}</p>
-
-                <div className={styles.planPrice}>
-                  <span className={styles.planAmount}>{displayPrice}</span>
-                  {!isAnnual && plan.currency && (
-                    <span className={styles.planCurrency}>{plan.currency}</span>
-                  )}
-                  {!isAnnual && plan.period && (
-                    <span className={styles.planPeriod}>{plan.period}</span>
-                  )}
-                </div>
-                {isAnnual && plan.annualTotal && (
-                  <p className={styles.planAnnualTotal}>{plan.annualTotal}</p>
+              <div className={styles.planPrice}>
+                <span className={styles.planAmount}>{displayPrice}</span>
+                {!isAnnual && plan.currency && (
+                  <span className={styles.planCurrency}>{plan.currency}</span>
                 )}
-                <p className={styles.planNote}>{displayNote}</p>
-
-                <hr className={styles.planDivider} />
-
-                <ul className={styles.planFeatures}>
-                  {plan.features.map(f => (
-                    <li key={f.label} className={styles.planRow}>
-                      <Check size={13} className={styles.rowCheck} />
-                      <span>{f.label}</span>
-                    </li>
-                  ))}
-                </ul>
-
-                {plan.popularBlurb && (
-                  <p className={styles.popularBlurb}>{plan.popularBlurb}</p>
-                )}
-
-                {plan.notIncludedNote && (
-                  <p className={styles.notIncludedNote}>{plan.notIncludedNote}</p>
-                )}
-
-                <Link
-                  href={plan.ctaHref}
-                  className={
-                    plan.highlight
-                      ? 'block font-mono text-xs uppercase tracking-widest font-bold text-center bg-logic-lime text-pitch-black px-4 py-3 hover:bg-white transition-colors w-full'
-                      : 'block font-mono text-xs uppercase tracking-widest text-center border border-blueprint-blue/40 text-fl-text px-4 py-3 hover:border-blueprint-blue transition-colors w-full'
-                  }
-                >
-                  {plan.cta}
-                </Link>
-
-                {plan.upgradeNudge && (
-                  <p className={styles.upgradeNudge}>{plan.upgradeNudge}</p>
+                {!isAnnual && plan.period && (
+                  <span className={styles.planPeriod}>{plan.period}</span>
                 )}
               </div>
+              {isAnnual && plan.annualTotal && (
+                <p className={styles.planAnnualTotal}>{plan.annualTotal}</p>
+              )}
+              <p className={styles.planNote}>{displayNote}</p>
+
+              <hr className={styles.planDivider} />
+
+              <ul className={styles.planFeatures}>
+                {plan.features.map(f => (
+                  <li key={f} className={styles.planRow}>
+                    <Check size={13} className={styles.rowCheck} />
+                    <span>{f}</span>
+                  </li>
+                ))}
+              </ul>
+
+              <Link href={plan.ctaHref} className={CTA_CLASS}>
+                {plan.cta}
+              </Link>
             </div>
           );
         })}
