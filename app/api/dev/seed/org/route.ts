@@ -26,11 +26,11 @@ export async function POST() {
       .insert({
         name: DEV_ORG_NAME,
         slug: DEV_ORG_SLUG,
-        plan_id: 'elite',
-        tournament_limit: 999,
+        plan_id: 'club',
+        tournament_limit: 9999,
         subscription_status: 'active',
         is_public: false,
-        enabled_addons: ['module_tournaments','module_house_league','module_rep_teams','module_accounting','module_public_site'],
+        enabled_addons: [],
       })
       .select('id')
       .single();

@@ -1,5 +1,6 @@
 import { supabase } from './supabase';
 import { supabaseAdmin } from './supabase-admin';
+import { PLAN_CONFIG } from './plan-config';
 import { createClient as createBrowserSupabaseClient } from './supabase-browser';
 import { Tournament, TournamentStatus, Diamond, Contact, AgeGroup, Pool, Team, Game, Announcement, PlayoffConfig, RuleSection, RuleItem, Resource, Organization, OrganizationMember, OrgPlan, OrgRole, TournamentArchive, OrgPublicSiteContent, AccountingLedger, AccountingEntry, LedgerSummary, AccountingEntryStatus, AccountingEntryType, LeagueSeason, LeagueDivision, LeagueTeam, LeagueRegistration, LeagueGame, LeagueStandingsRow, LeagueSeasonSummary, LeagueRegistrationStatus, LeagueSeasonStatus, LeaguePractice, LeaguePracticeStatus, RepTeam, RepProgramYear, RepProgramYearStatus, RepTeamCoach, RepTryoutRegistration, RepTryoutRegistrationStatus, RepRosterPlayer, RepRosterStatus, RepTeamEvent, RepEventType, RepDocumentTemplate, RepDocumentType, RepPlayerDocument, RepCostAllocation, RepAllocationSplit, RepAllocationInstallment, RepPlayerDuesSchedule, RepPlayerDuesInstallment, RepTeamExpense } from './types';
 
@@ -1262,9 +1263,9 @@ export async function getTournamentBySlug(orgId: string, slug: string): Promise<
 export async function createOrganization(
   name: string,
   slug: string,
-  planId: OrgPlan = 'starter'
+  planId: OrgPlan = 'tournament'
 ): Promise<Organization> {
-  const limit = planId === 'elite' ? 999 : planId === 'pro' ? 2 : 1;
+  const limit = PLAN_CONFIG[planId]?.tournamentLimit ?? 1;
   const { data, error } = await supabaseAdmin
     .from('organizations')
     .insert({ name, slug, plan_id: planId, tournament_limit: limit })
@@ -2420,6 +2421,31 @@ export async function getRepTeams(orgId: string): Promise<RepTeam[]> {
   return (data ?? []).map(mapRepTeam);
 }
 
+export interface OpenTryout {
+  teamId: string;
+  teamName: string;
+  teamSlug: string;
+  programYearId: string;
+  programYearName: string;
+}
+
+export async function getOpenTryoutsByOrg(orgId: string): Promise<OpenTryout[]> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_program_years')
+    .select('id, name, team_id, rep_teams!team_id(name, slug)')
+    .eq('org_id', orgId)
+    .eq('status', 'active')
+    .eq('tryout_open', true);
+  if (error) throw error;
+  return (data ?? []).map((r: any) => ({
+    teamId: r.team_id,
+    teamName: r.rep_teams?.name ?? '',
+    teamSlug: r.rep_teams?.slug ?? '',
+    programYearId: r.id,
+    programYearName: r.name,
+  }));
+}
+
 export async function getRepTeam(teamId: string): Promise<RepTeam | null> {
   const { data, error } = await supabaseAdmin
     .from('rep_teams')
@@ -2691,6 +2717,75 @@ export interface CoachingAssignment {
   programYearName: string;
   programYearStatus: RepProgramYearStatus;
   coachRole: 'head_coach' | 'assistant_coach';
+  overdueInstallments: number;
+  upcomingEventsCount: number;
+}
+
+async function getCoachingBadges(
+  programYearIds: string[],
+): Promise<Map<string, { overdueInstallments: number; upcomingEventsCount: number }>> {
+  const result = new Map<string, { overdueInstallments: number; upcomingEventsCount: number }>();
+  if (programYearIds.length === 0) return result;
+  for (const id of programYearIds) result.set(id, { overdueInstallments: 0, upcomingEventsCount: 0 });
+
+  const today      = new Date().toISOString().split('T')[0];
+  const sevenDays  = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+
+  // Overdue allocation installments (org→team splits)
+  const { data: splitRows } = await supabaseAdmin
+    .from('rep_allocation_splits')
+    .select('id, program_year_id')
+    .in('program_year_id', programYearIds);
+  const splitIds = (splitRows ?? []).map((r: any) => r.id as string);
+  const splitToYear = Object.fromEntries((splitRows ?? []).map((r: any) => [r.id, r.program_year_id]));
+
+  if (splitIds.length > 0) {
+    const { data: allocInst } = await supabaseAdmin
+      .from('rep_allocation_installments')
+      .select('split_id')
+      .in('split_id', splitIds)
+      .lt('due_date', today)
+      .is('paid_at', null);
+    for (const row of allocInst ?? []) {
+      const yearId = splitToYear[(row as any).split_id];
+      if (yearId && result.has(yearId)) result.get(yearId)!.overdueInstallments++;
+    }
+  }
+
+  // Overdue player dues installments
+  const { data: scheduleRows } = await supabaseAdmin
+    .from('rep_player_dues_schedules')
+    .select('id, program_year_id')
+    .in('program_year_id', programYearIds);
+  const scheduleIds = (scheduleRows ?? []).map((r: any) => r.id as string);
+  const scheduleToYear = Object.fromEntries((scheduleRows ?? []).map((r: any) => [r.id, r.program_year_id]));
+
+  if (scheduleIds.length > 0) {
+    const { data: duesInst } = await supabaseAdmin
+      .from('rep_player_dues_installments')
+      .select('schedule_id')
+      .in('schedule_id', scheduleIds)
+      .lt('due_date', today)
+      .is('paid_at', null);
+    for (const row of duesInst ?? []) {
+      const yearId = scheduleToYear[(row as any).schedule_id];
+      if (yearId && result.has(yearId)) result.get(yearId)!.overdueInstallments++;
+    }
+  }
+
+  // Upcoming events in next 7 days
+  const { data: events } = await supabaseAdmin
+    .from('rep_team_events')
+    .select('program_year_id')
+    .in('program_year_id', programYearIds)
+    .gte('starts_at', new Date().toISOString())
+    .lte('starts_at', sevenDays);
+  for (const row of events ?? []) {
+    const yearId = (row as any).program_year_id;
+    if (yearId && result.has(yearId)) result.get(yearId)!.upcomingEventsCount++;
+  }
+
+  return result;
 }
 
 export async function getCoachingAssignmentsForUser(
@@ -2710,22 +2805,28 @@ export async function getCoachingAssignmentsForUser(
     .eq('org_id', orgId)
     .eq('user_id', userId);
   if (error) throw error;
-  return (data ?? [])
-    .filter((r: any) => {
-      const s = r.rep_program_years?.status;
-      return s === 'draft' || s === 'active';
-    })
-    .map((r: any) => ({
-      coachId: r.id,
-      teamId: r.team_id,
-      teamName: r.rep_teams?.name ?? '',
-      teamSlug: r.rep_teams?.slug ?? '',
-      teamColor: r.rep_teams?.color ?? null,
-      programYearId: r.program_year_id,
-      programYearName: r.rep_program_years?.name ?? '',
-      programYearStatus: r.rep_program_years?.status as RepProgramYearStatus,
-      coachRole: r.coach_role as 'head_coach' | 'assistant_coach',
-    }));
+
+  const filtered = (data ?? []).filter((r: any) => {
+    const s = r.rep_program_years?.status;
+    return s === 'draft' || s === 'active';
+  });
+
+  const programYearIds = filtered.map((r: any) => r.program_year_id as string);
+  const badges = await getCoachingBadges(programYearIds);
+
+  return filtered.map((r: any) => ({
+    coachId: r.id,
+    teamId: r.team_id,
+    teamName: r.rep_teams?.name ?? '',
+    teamSlug: r.rep_teams?.slug ?? '',
+    teamColor: r.rep_teams?.color ?? null,
+    programYearId: r.program_year_id,
+    programYearName: r.rep_program_years?.name ?? '',
+    programYearStatus: r.rep_program_years?.status as RepProgramYearStatus,
+    coachRole: r.coach_role as 'head_coach' | 'assistant_coach',
+    overdueInstallments:  badges.get(r.program_year_id)?.overdueInstallments  ?? 0,
+    upcomingEventsCount:  badges.get(r.program_year_id)?.upcomingEventsCount   ?? 0,
+  }));
 }
 
 export async function getActiveRepProgramYear(teamId: string): Promise<RepProgramYear | null> {

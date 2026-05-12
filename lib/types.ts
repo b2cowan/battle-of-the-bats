@@ -1,4 +1,4 @@
-export type OrgPlan = 'starter' | 'pro' | 'elite';
+export type OrgPlan = 'tournament' | 'tournament_plus' | 'league' | 'club';
 export type OrgRole = 'owner' | 'admin' | 'staff' | 'official' | 'league_admin' | 'league_registrar' | 'treasurer' | 'coach';
 export type SubscriptionStatus = 'active' | 'trialing' | 'past_due' | 'canceled';
 export type TournamentStatus = 'draft' | 'active' | 'completed' | 'archived';

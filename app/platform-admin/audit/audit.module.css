@@ -120,3 +120,104 @@
   text-align: center;
   padding: 2rem;
 }
+
+.filterBar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  margin-bottom: 1.25rem;
+}
+
+.filterInput {
+  flex: 1;
+  min-width: 180px;
+  padding: 0.4rem 0.65rem;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.2);
+  color: var(--fl-text);
+  font-family: var(--font-data);
+  font-size: 0.72rem;
+}
+
+.filterDate,
+.filterSelect {
+  padding: 0.4rem 0.65rem;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.2);
+  color: var(--fl-text);
+  font-family: var(--font-data);
+  font-size: 0.72rem;
+}
+
+.filterSelect option { background: #0a0f0a; }
+
+.filterBtn {
+  padding: 0.4rem 0.9rem;
+  background: rgba(var(--logic-lime-rgb), 0.1);
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.35);
+  color: var(--logic-lime);
+  font-family: var(--font-data);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.filterBtn:hover { background: rgba(var(--logic-lime-rgb), 0.18); }
+
+.filterClear {
+  font-family: var(--font-data);
+  font-size: 0.68rem;
+  color: var(--data-gray);
+  text-decoration: none;
+  padding: 0.4rem 0.5rem;
+  transition: color 0.15s;
+}
+
+.filterClear:hover { color: var(--fl-text); }
+
+.pagination {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(var(--logic-lime-rgb), 0.15);
+}
+
+.pageBtn {
+  font-family: var(--font-data);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--logic-lime);
+  text-decoration: none;
+  padding: 0.35rem 0.75rem;
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.3);
+  transition: background 0.15s;
+}
+
+.pageBtn:hover { background: rgba(var(--logic-lime-rgb), 0.06); }
+
+.pageBtnDisabled {
+  font-family: var(--font-data);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--data-gray);
+  padding: 0.35rem 0.75rem;
+  border: 1px solid transparent;
+  opacity: 0.4;
+}
+
+.pageInfo {
+  font-family: var(--font-data);
+  font-size: 0.65rem;
+  color: var(--data-gray);
+  margin: 0 auto;
+}

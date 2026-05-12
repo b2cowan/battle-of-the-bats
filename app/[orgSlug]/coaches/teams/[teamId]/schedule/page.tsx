@@ -317,7 +317,7 @@ export default function CoachesSchedulePage({
 
   // ── Rendering ───────────────────────────────────────────────────────────────
 
-  if (ctxLoading) return <p className={styles.muted}>Loading…</p>;
+  if (ctxLoading) return <div className={styles.loadingState}>Loading schedule…</div>;
   if (!assignment) {
     return (
       <div className={styles.notAssigned}>
@@ -535,7 +535,7 @@ export default function CoachesSchedulePage({
 
       {/* Calendar body */}
       {loading
-        ? <p className={styles.muted}>Loading events…</p>
+        ? <div className={styles.loadingState}>Loading events…</div>
         : error
           ? <p className={styles.errorText}>{error}</p>
           : view === 'list'  ? renderListView()

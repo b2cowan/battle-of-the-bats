@@ -1,10 +1,10 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
-import { Calendar, ChevronRight, Star, Globe, Mail, ExternalLink, Archive } from 'lucide-react';
+import { Calendar, ChevronRight, Star, Globe, Mail, ExternalLink, Archive, Users } from 'lucide-react';
 import {
   getOrganizationBySlug, getTournamentsByOrg,
   getOrgPublicSiteContent, getArchivesByOrg,
-  getLeagueSeasons, getAgeGroups,
+  getLeagueSeasons, getAgeGroups, getOpenTryoutsByOrg,
 } from '@/lib/db';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import styles from './Home.module.css';
@@ -20,15 +20,17 @@ export default async function HomePage({ params }: { params: Promise<{ orgSlug: 
 
   // ── Public Site module branch ──────────────────────────────────────────────
   if (org && hasModuleEntitlement(org, 'module_public_site')) {
-    const [siteContent, archives, leagueSeasons] = await Promise.all([
+    const [siteContent, archives, leagueSeasons, openTryouts] = await Promise.all([
       getOrgPublicSiteContent(org.id),
       getArchivesByOrg(org.id),
       hasModuleEntitlement(org, 'module_house_league') ? getLeagueSeasons(org.id) : Promise.resolve([]),
+      hasModuleEntitlement(org, 'module_rep_teams') ? getOpenTryoutsByOrg(org.id) : Promise.resolve([]),
     ]);
 
     const publicLeagueSeasons = leagueSeasons.filter(s => s.status !== 'draft');
     const activeLeagueSeason  = publicLeagueSeasons.find(s => ['registration_open', 'registration_closed', 'active'].includes(s.status));
     const showLeague          = publicLeagueSeasons.length > 0;
+    const showTryouts         = openTryouts.length > 0;
 
     const heroBanner  = org.heroBannerUrl ?? null;
     const showArchives = siteContent?.showArchivesLink !== false && archives.length > 0;
@@ -110,9 +112,9 @@ export default async function HomePage({ params }: { params: Promise<{ orgSlug: 
                   </a>
                 ))}
                 {siteContent?.contactEmail && (
-                  <a href={`mailto:${siteContent.contactEmail}`} className={styles.socialLink}>
+                  <a href={`mailto:${siteContent.contactEmail}`} className={styles.socialLink} aria-label={`Contact Us: ${siteContent.contactEmail}`}>
                     <Mail size={13} />
-                    {siteContent.contactEmail}
+                    Contact Us
                   </a>
                 )}
               </div>
@@ -190,6 +192,29 @@ export default async function HomePage({ params }: { params: Promise<{ orgSlug: 
           </section>
         )}
 
+        {/* Rep Teams Tryouts CTA */}
+        {showTryouts && (
+          <section className="section">
+            <div className="container">
+              <div className="section-header">
+                <span className="eyebrow"><Users size={12} /> Rep Teams</span>
+                <h2 className="display-md">Try Out</h2>
+              </div>
+              <Link href={`/${orgSlug}/teams`} className={`card ${styles.archivesCta}`}>
+                <div>
+                  <div className={styles.archivesCtaTitle}>Tryouts Are Open</div>
+                  <div className={styles.archivesCtaSub}>
+                    {openTryouts.length === 1
+                      ? `${openTryouts[0].teamName} — ${openTryouts[0].programYearName} is accepting applications`
+                      : `${openTryouts.length} programs are currently accepting applications`}
+                  </div>
+                </div>
+                <ChevronRight size={18} className={styles.archivesCtaChevron} />
+              </Link>
+            </div>
+          </section>
+        )}
+
         {/* Archives CTA */}
         {showArchives && (
           <section className="section">
@@ -214,6 +239,17 @@ export default async function HomePage({ params }: { params: Promise<{ orgSlug: 
   if (activeTournaments.length === 1) {
     redirect(`/${orgSlug}/${activeTournaments[0].slug}`);
   }
+
+  // Fetch module-conditional data for the rendered cases (0 or 2+ tournaments)
+  const [defaultLeagueSeasons, defaultOpenTryouts] = org ? await Promise.all([
+    hasModuleEntitlement(org, 'module_house_league') ? getLeagueSeasons(org.id) : Promise.resolve([]),
+    hasModuleEntitlement(org, 'module_rep_teams')    ? getOpenTryoutsByOrg(org.id) : Promise.resolve([]),
+  ]) : [[], []];
+
+  const defaultPublicSeasons  = defaultLeagueSeasons.filter(s => s.status !== 'draft');
+  const defaultActiveSeason   = defaultPublicSeasons.find(s => ['registration_open', 'registration_closed', 'active'].includes(s.status));
+  const defaultShowLeague     = defaultPublicSeasons.length > 0;
+  const defaultShowTryouts    = defaultOpenTryouts.length > 0;
 
   const heroBanner = org?.heroBannerUrl ?? null;
 
@@ -256,6 +292,56 @@ export default async function HomePage({ params }: { params: Promise<{ orgSlug: 
             </p>
           </div>
         </section>
+
+        {defaultShowLeague && (
+          <section className="section">
+            <div className="container">
+              <div className="section-header">
+                <span className="eyebrow">House League</span>
+                <h2 className="display-md">League Play</h2>
+              </div>
+              <Link href={`/${orgSlug}/league`} className={`card ${styles.archivesCta}`}>
+                <div>
+                  <div className={styles.archivesCtaTitle}>
+                    {defaultActiveSeason ? defaultActiveSeason.name : 'House League'}
+                  </div>
+                  <div className={styles.archivesCtaSub}>
+                    {defaultActiveSeason
+                      ? defaultActiveSeason.status === 'registration_open'
+                        ? 'Registration is open — sign up now'
+                        : defaultActiveSeason.status === 'active'
+                          ? 'Season in progress — view standings and schedule'
+                          : 'Registration closed — season starting soon'
+                      : 'View seasons and results'}
+                  </div>
+                </div>
+                <ChevronRight size={18} className={styles.archivesCtaChevron} />
+              </Link>
+            </div>
+          </section>
+        )}
+
+        {defaultShowTryouts && (
+          <section className="section">
+            <div className="container">
+              <div className="section-header">
+                <span className="eyebrow"><Users size={12} /> Rep Teams</span>
+                <h2 className="display-md">Try Out</h2>
+              </div>
+              <Link href={`/${orgSlug}/teams`} className={`card ${styles.archivesCta}`}>
+                <div>
+                  <div className={styles.archivesCtaTitle}>Tryouts Are Open</div>
+                  <div className={styles.archivesCtaSub}>
+                    {defaultOpenTryouts.length === 1
+                      ? `${defaultOpenTryouts[0].teamName} — ${defaultOpenTryouts[0].programYearName} is accepting applications`
+                      : `${defaultOpenTryouts.length} programs are currently accepting applications`}
+                  </div>
+                </div>
+                <ChevronRight size={18} className={styles.archivesCtaChevron} />
+              </Link>
+            </div>
+          </section>
+        )}
       </div>
     );
   }
@@ -316,6 +402,56 @@ export default async function HomePage({ params }: { params: Promise<{ orgSlug: 
           </div>
         </div>
       </section>
+
+      {defaultShowLeague && (
+        <section className="section">
+          <div className="container">
+            <div className="section-header">
+              <span className="eyebrow">House League</span>
+              <h2 className="display-md">League Play</h2>
+            </div>
+            <Link href={`/${orgSlug}/league`} className={`card ${styles.archivesCta}`}>
+              <div>
+                <div className={styles.archivesCtaTitle}>
+                  {defaultActiveSeason ? defaultActiveSeason.name : 'House League'}
+                </div>
+                <div className={styles.archivesCtaSub}>
+                  {defaultActiveSeason
+                    ? defaultActiveSeason.status === 'registration_open'
+                      ? 'Registration is open — sign up now'
+                      : defaultActiveSeason.status === 'active'
+                        ? 'Season in progress — view standings and schedule'
+                        : 'Registration closed — season starting soon'
+                    : 'View seasons and results'}
+                </div>
+              </div>
+              <ChevronRight size={18} className={styles.archivesCtaChevron} />
+            </Link>
+          </div>
+        </section>
+      )}
+
+      {defaultShowTryouts && (
+        <section className="section">
+          <div className="container">
+            <div className="section-header">
+              <span className="eyebrow"><Users size={12} /> Rep Teams</span>
+              <h2 className="display-md">Try Out</h2>
+            </div>
+            <Link href={`/${orgSlug}/teams`} className={`card ${styles.archivesCta}`}>
+              <div>
+                <div className={styles.archivesCtaTitle}>Tryouts Are Open</div>
+                <div className={styles.archivesCtaSub}>
+                  {defaultOpenTryouts.length === 1
+                    ? `${defaultOpenTryouts[0].teamName} — ${defaultOpenTryouts[0].programYearName} is accepting applications`
+                    : `${defaultOpenTryouts.length} programs are currently accepting applications`}
+                </div>
+              </div>
+              <ChevronRight size={18} className={styles.archivesCtaChevron} />
+            </Link>
+          </div>
+        </section>
+      )}
     </div>
   );
 }

@@ -54,7 +54,7 @@ export default function CoachesHistoryPage({
 
   useEffect(() => { load(); }, [load]);
 
-  if (ctxLoading) return <p className={styles.muted}>Loading…</p>;
+  if (ctxLoading) return <div className={styles.loadingState}>Loading…</div>;
   if (!assignment) {
     return (
       <div className={styles.notAssigned}>
@@ -84,13 +84,14 @@ export default function CoachesHistoryPage({
       </div>
 
       {loading ? (
-        <p className={styles.muted}>Loading…</p>
+        <div className={styles.loadingState}>Loading history…</div>
       ) : error ? (
         <p className={styles.errorText}>{error}</p>
       ) : history.length === 0 ? (
         <div className={styles.emptyState}>
           <Archive size={28} style={{ opacity: 0.3, margin: '0 auto 0.75rem', display: 'block' }} />
-          <p>No completed or archived seasons yet.</p>
+          <p className={styles.emptyStateTitle}>No past seasons yet</p>
+          <p className={styles.emptyStateSub}>Completed and archived program years will appear here.</p>
         </div>
       ) : (
         <div>

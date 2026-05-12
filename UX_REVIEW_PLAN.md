@@ -185,7 +185,7 @@ Each finding is tagged with a **role**, a **finding ID**, a **priority** (High /
 
 ---
 
-### 4A — Platform admin overview has no actionable signal
+### 4A — Platform admin overview has no actionable signal ✅
 
 - **Finding:** F8-1
 - **File:** `app/platform-admin/page.tsx`
@@ -198,7 +198,7 @@ Each finding is tagged with a **role**, a **finding ID**, a **priority** (High /
 
 ---
 
-### 4B — Audit log has no filter/search and caps at 200 rows
+### 4B — Audit log has no filter/search and caps at 200 rows ✅
 
 - **Finding:** F8-2
 - **File:** `app/platform-admin/audit/page.tsx`
@@ -212,7 +212,7 @@ Each finding is tagged with a **role**, a **finding ID**, a **priority** (High /
 
 ---
 
-### 4C — Platform admin sidebar has no active-page indicator
+### 4C — Platform admin sidebar has no active-page indicator ✅
 
 - **Finding:** F8-3
 - **File:** `app/platform-admin/layout.tsx` lines 37–44
@@ -221,7 +221,7 @@ Each finding is tagged with a **role**, a **finding ID**, a **priority** (High /
 
 ---
 
-### 4D — No direct link from orgs list to an org's admin shell
+### 4D — No direct link from orgs list to an org's admin shell ✅
 
 - **Finding:** F8-4
 - **File:** `app/platform-admin/orgs/OrgsClient.tsx` and/or `app/platform-admin/orgs/[id]/OrgDetailClient.tsx`
@@ -230,7 +230,7 @@ Each finding is tagged with a **role**, a **finding ID**, a **priority** (High /
 
 ---
 
-### 4E — Treasurer cannot create tournament ledgers
+### 4E — Treasurer cannot create tournament ledgers ✅
 
 - **Finding:** F6-2
 - **File:** `app/[orgSlug]/admin/accounting/page.tsx` line 274
@@ -239,7 +239,7 @@ Each finding is tagged with a **role**, a **finding ID**, a **priority** (High /
 
 ---
 
-### 4F — Users page caps silently at 1000 records
+### 4F — Users page caps silently at 1000 records ✅ (skipped — platform users list is internal staff only; no cap risk)
 
 - **Finding:** F8-5
 - **File:** `app/platform-admin/users/page.tsx`, `lib/db.ts` `getPlatformUsers()`
@@ -248,7 +248,7 @@ Each finding is tagged with a **role**, a **finding ID**, a **priority** (High /
 
 ---
 
-### 4G — Treasurer: Export ledger as CSV
+### 4G — Treasurer: Export ledger as CSV ✅
 
 - **Source:** UX_IMPROVEMENT_TEST_PLAN.md §2 (Export & Reporting)
 - **File:** `app/[orgSlug]/admin/accounting/ledger/[ledgerId]/page.tsx`
@@ -258,7 +258,7 @@ Each finding is tagged with a **role**, a **finding ID**, a **priority** (High /
 
 ---
 
-### 4H — Treasurer: Category auto-suggest in accounting entry forms
+### 4H — Treasurer: Category auto-suggest in accounting entry forms ✅
 
 - **Source:** UX_IMPROVEMENT_TEST_PLAN.md §2 (Data Entry Efficiency)
 - **File:** `app/[orgSlug]/admin/accounting/ledger/[ledgerId]/page.tsx` (entry creation form)
@@ -273,7 +273,7 @@ Each finding is tagged with a **role**, a **finding ID**, a **priority** (High /
 
 ---
 
-### 5A — No rep team tryout path on the org home page
+### 5A — No rep team tryout path on the org home page ✅
 
 - **Finding:** F1-2
 - **File:** `app/[orgSlug]/page.tsx` — both branches
@@ -283,7 +283,7 @@ Each finding is tagged with a **role**, a **finding ID**, a **priority** (High /
 
 ---
 
-### 5B — House league CTA absent from default org home branch
+### 5B — House league CTA absent from default org home branch ✅
 
 - **Finding:** F1-3
 - **File:** `app/[orgSlug]/page.tsx` — default branch (no `module_public_site`)
@@ -292,7 +292,7 @@ Each finding is tagged with a **role**, a **finding ID**, a **priority** (High /
 
 ---
 
-### 5C — Tryout registration closed page gives no forward path
+### 5C — Tryout registration closed page gives no forward path ✅
 
 - **Finding:** F1-4
 - **File:** `app/[orgSlug]/teams/[teamSlug]/tryouts/[yearId]/register/page.tsx` lines 86–110
@@ -302,7 +302,7 @@ Each finding is tagged with a **role**, a **finding ID**, a **priority** (High /
 
 ---
 
-### 5D — Contact email on public site lacks a label
+### 5D — Contact email on public site lacks a label ✅
 
 - **Finding:** F1-5 / already noted in TODO.md "Public Site Offering Evaluation"
 - **File:** `app/[orgSlug]/page.tsx` line 116
@@ -310,7 +310,7 @@ Each finding is tagged with a **role**, a **finding ID**, a **priority** (High /
 
 ---
 
-### 5E — Action badges on coaches team hub cards
+### 5E — Action badges on coaches team hub cards ✅
 
 - **Finding:** F7-4 (partial)
 - **File:** `app/[orgSlug]/coaches/page.tsx`
@@ -323,7 +323,7 @@ Each finding is tagged with a **role**, a **finding ID**, a **priority** (High /
 
 ---
 
-### 5F — Standardise empty states and loading states across the app
+### 5F — Standardise empty states and loading states across the app ✅
 
 - **Finding:** CX-8
 - **Scope:** App-wide
@@ -332,7 +332,7 @@ Each finding is tagged with a **role**, a **finding ID**, a **priority** (High /
 
 ---
 
-### 5G — Season switcher in the house league sidebar
+### 5G — Season switcher in the house league sidebar ✅
 
 - **Finding:** F5-4
 - **File:** `components/admin/AdminSidebar.tsx`, house league section
@@ -342,7 +342,7 @@ Each finding is tagged with a **role**, a **finding ID**, a **priority** (High /
 
 ---
 
-### 5H — Official/Scorekeeper: Mobile score entry UX
+### 5H — Official/Scorekeeper: Mobile score entry UX ✅
 
 - **Source:** UX_IMPROVEMENT_TEST_PLAN.md §6
 - **File:** `app/[orgSlug]/official/score/page.tsx`, `app/[orgSlug]/official/page.tsx`
@@ -355,7 +355,7 @@ Each finding is tagged with a **role**, a **finding ID**, a **priority** (High /
 
 ---
 
-### 5I — Public: House league registration form UX and post-registration status
+### 5I — Public: House league registration form UX and post-registration status ✅
 
 - **Source:** UX_IMPROVEMENT_TEST_PLAN.md §5
 - **Files:** `app/[orgSlug]/league/[seasonSlug]/register/page.tsx`, confirmation email template

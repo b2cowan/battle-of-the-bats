@@ -30,9 +30,9 @@ export async function POST(req: Request) {
   const { user, org } = ctx;
 
   // Plan gate: Pro+ only
-  if (org.planId === 'starter') {
+  if (org.planId === 'tournament') {
     return NextResponse.json(
-      { error: 'Hero banner requires a Pro or Elite plan' },
+      { error: 'Hero banner requires a paid plan' },
       { status: 403 }
     );
   }

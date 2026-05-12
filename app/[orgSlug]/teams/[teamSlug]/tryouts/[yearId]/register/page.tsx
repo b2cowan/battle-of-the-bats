@@ -103,9 +103,20 @@ export default async function TryoutRegisterPage({
             >
               Registration is not currently open
             </h2>
-            <p style={{ fontSize: '0.88rem', color: 'rgba(255,255,255,0.4)', margin: 0 }}>
+            <p style={{ fontSize: '0.88rem', color: 'rgba(255,255,255,0.4)', margin: '0 0 1rem' }}>
               Tryout registration for {team.name} — {programYear.name} is not accepting applications at this time.
             </p>
+            {org.contactEmail && (
+              <p style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.35)', margin: 0 }}>
+                Questions?{' '}
+                <a
+                  href={`mailto:${org.contactEmail}`}
+                  style={{ color: 'rgba(255,255,255,0.6)', textDecoration: 'underline' }}
+                >
+                  Contact us
+                </a>
+              </p>
+            )}
           </div>
         ) : (
           <TryoutRegisterForm

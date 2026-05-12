@@ -255,9 +255,9 @@ export default function OfficialScorePage() {
           <select
             value={filterDiamond}
             onChange={e => setFilterDiamond(e.target.value)}
-            style={{ fontFamily: 'var(--font-data)', fontSize: '0.7rem', background: '#111827',
-              border: '1px solid rgba(30,58,138,0.5)', color: '#F1F5F9', padding: '0.4rem 0.6rem',
-              letterSpacing: '0.05em' }}
+            style={{ fontFamily: 'var(--font-data)', fontSize: '0.82rem', background: '#111827',
+              border: '1px solid rgba(30,58,138,0.5)', color: '#F1F5F9', padding: '0.5rem 0.75rem',
+              letterSpacing: '0.05em', minHeight: '44px' }}
           >
             <option value="">All Diamonds</option>
             {diamonds.map(d => (
@@ -269,9 +269,9 @@ export default function OfficialScorePage() {
           <select
             value={filterDivision}
             onChange={e => setFilterDivision(e.target.value)}
-            style={{ fontFamily: 'var(--font-data)', fontSize: '0.7rem', background: '#111827',
-              border: '1px solid rgba(30,58,138,0.5)', color: '#F1F5F9', padding: '0.4rem 0.6rem',
-              letterSpacing: '0.05em' }}
+            style={{ fontFamily: 'var(--font-data)', fontSize: '0.82rem', background: '#111827',
+              border: '1px solid rgba(30,58,138,0.5)', color: '#F1F5F9', padding: '0.5rem 0.75rem',
+              letterSpacing: '0.05em', minHeight: '44px' }}
           >
             <option value="">All Divisions</option>
             {ageGroups.map(g => (
@@ -407,14 +407,15 @@ export default function OfficialScorePage() {
                   {cards.find(c => c.game.id === editing.id)?.homeName ?? 'Home'}
                 </div>
                 <input
-                  type="text"
+                  type="number"
                   inputMode="numeric"
+                  min={0}
                   value={home}
                   onChange={e => { if (e.target.value === '' || /^\d+$/.test(e.target.value)) setHome(e.target.value); }}
                   autoFocus
                   placeholder="0"
                   style={{
-                    width: '100%', textAlign: 'center',
+                    width: '100%', textAlign: 'center', minHeight: '56px',
                     fontFamily: 'var(--font-data)', fontSize: '2.5rem', fontWeight: 700,
                     background: 'transparent', color: '#D9F99D',
                     border: showErrors && home === '' ? '1px solid #ef4444' : '1px solid rgba(30,58,138,0.6)',
@@ -430,13 +431,14 @@ export default function OfficialScorePage() {
                   {cards.find(c => c.game.id === editing.id)?.awayName ?? 'Away'}
                 </div>
                 <input
-                  type="text"
+                  type="number"
                   inputMode="numeric"
+                  min={0}
                   value={away}
                   onChange={e => { if (e.target.value === '' || /^\d+$/.test(e.target.value)) setAway(e.target.value); }}
                   placeholder="0"
                   style={{
-                    width: '100%', textAlign: 'center',
+                    width: '100%', textAlign: 'center', minHeight: '56px',
                     fontFamily: 'var(--font-data)', fontSize: '2.5rem', fontWeight: 700,
                     background: 'transparent', color: '#D9F99D',
                     border: showErrors && away === '' ? '1px solid #ef4444' : '1px solid rgba(30,58,138,0.6)',
@@ -459,11 +461,11 @@ export default function OfficialScorePage() {
               </p>
             )}
 
-            <div style={{ display: 'flex', gap: '0.75rem' }}>
+            <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
               <button
                 onClick={() => { setEditing(null); setScoreState('idle'); setErrorMsg(''); }}
                 disabled={scoreState === 'saving'}
-                style={{ flex: 1, fontFamily: 'var(--font-data)', fontSize: '0.7rem', fontWeight: 700,
+                style={{ flex: '1 1 80px', minHeight: '48px', fontFamily: 'var(--font-data)', fontSize: '0.7rem', fontWeight: 700,
                   textTransform: 'uppercase', letterSpacing: '0.08em',
                   background: 'transparent', color: '#94A3B8',
                   border: '1px solid rgba(30,58,138,0.4)', padding: '0.75rem',
@@ -474,7 +476,7 @@ export default function OfficialScorePage() {
               <button
                 onClick={handleSubmit}
                 disabled={scoreState === 'saving'}
-                style={{ flex: 2, fontFamily: 'var(--font-data)', fontSize: '0.75rem', fontWeight: 700,
+                style={{ flex: '2 1 140px', minHeight: '48px', fontFamily: 'var(--font-data)', fontSize: '0.85rem', fontWeight: 700,
                   textTransform: 'uppercase', letterSpacing: '0.08em',
                   background: '#D9F99D', color: '#0A0A0A',
                   border: 'none', padding: '0.75rem',

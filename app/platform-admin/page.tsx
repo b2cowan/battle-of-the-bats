@@ -1,13 +1,18 @@
+import Link from 'next/link';
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { Building2, Users, Trophy, UsersRound } from 'lucide-react';
+import { Building2, Users, Trophy, UsersRound, AlertCircle, Sparkles } from 'lucide-react';
 import styles from './overview.module.css';
 
 async function getStats() {
-  const [orgsRes, tournamentsRes, teamsRes, usersRes] = await Promise.all([
+  const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+
+  const [orgsRes, tournamentsRes, teamsRes, usersRes, pastDueRes, newOrgsRes] = await Promise.all([
     supabaseAdmin.from('organizations').select('*', { count: 'exact', head: true }),
     supabaseAdmin.from('tournaments').select('*', { count: 'exact', head: true }),
     supabaseAdmin.from('teams').select('*', { count: 'exact', head: true }),
     supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1000 }),
+    supabaseAdmin.from('organizations').select('*', { count: 'exact', head: true }).eq('subscription_status', 'past_due'),
+    supabaseAdmin.from('organizations').select('*', { count: 'exact', head: true }).gte('created_at', sevenDaysAgo),
   ]);
 
   return {
@@ -15,6 +20,8 @@ async function getStats() {
     tournaments: tournamentsRes.count ?? 0,
     teams:       teamsRes.count ?? 0,
     users:       usersRes.data?.users?.length ?? 0,
+    pastDue:     pastDueRes.count ?? 0,
+    newOrgs:     newOrgsRes.count ?? 0,
   };
 }
 
@@ -46,6 +53,33 @@ export default async function PlatformOverviewPage() {
             </div>
           </div>
         ))}
+      </div>
+
+      <div className={styles.healthRow}>
+        <div className={styles.healthLabel}>Health</div>
+        <div className={styles.healthGrid}>
+          <Link
+            href="/platform-admin/orgs?status=past_due"
+            className={`${styles.healthCard} ${stats.pastDue > 0 ? styles.healthCardWarn : styles.healthCardOk}`}
+          >
+            <div className={styles.healthIconWrap}>
+              <AlertCircle size={18} />
+            </div>
+            <div>
+              <div className={styles.healthNum}>{stats.pastDue}</div>
+              <div className={styles.healthCardLabel}>Past Due</div>
+            </div>
+          </Link>
+          <div className={`${styles.healthCard} ${styles.healthCardOk}`}>
+            <div className={styles.healthIconWrap}>
+              <Sparkles size={18} />
+            </div>
+            <div>
+              <div className={styles.healthNum}>{stats.newOrgs}</div>
+              <div className={styles.healthCardLabel}>New (7 days)</div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

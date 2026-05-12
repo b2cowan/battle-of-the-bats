@@ -301,6 +301,31 @@
 .badgeArchived  { background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.3); border: 1px solid rgba(255,255,255,0.08); }
 .badgeTryout    { background: rgba(var(--blueprint-blue-rgb),0.15); color: var(--blueprint-blue,#4fa3e0); border: 1px solid rgba(var(--blueprint-blue-rgb),0.3); }
 .badgeManual    { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.5); border: 1px solid rgba(255,255,255,0.12); }
+.badgeOverdue   { background: rgba(239,68,68,0.12); color: #f87171; border: 1px solid rgba(239,68,68,0.3); }
+.badgeUpcoming  { background: rgba(74,222,128,0.10); color: #4ade80; border: 1px solid rgba(74,222,128,0.25); }
+
+/* ── Loading state ──────────────────────────────────────────────────────── */
+.loadingState {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 2rem;
+  color: rgba(255,255,255,0.35);
+  font-size: 0.85rem;
+}
+.loadingState::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.35);
+  flex-shrink: 0;
+  animation: coachPulseDot 1.5s ease-in-out infinite;
+}
+@keyframes coachPulseDot {
+  0%, 100% { opacity: 0.3; transform: scale(0.8); }
+  50%       { opacity: 1;   transform: scale(1.2); }
+}
 
 /* ── Empty state ────────────────────────────────────────────────────────── */
 .emptyState {
@@ -308,6 +333,19 @@
   padding: 4rem 2rem;
   color: var(--white-40, rgba(255,255,255,0.4));
   font-size: 0.9rem;
+}
+.emptyStateTitle {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: rgba(255,255,255,0.5);
+  margin: 0 0 0.4rem;
+}
+.emptyStateSub {
+  font-size: 0.82rem;
+  color: rgba(255,255,255,0.3);
+  margin: 0 auto;
+  max-width: 280px;
+  line-height: 1.5;
 }
 
 /* ── Table ──────────────────────────────────────────────────────────────── */

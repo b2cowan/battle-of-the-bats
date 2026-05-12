@@ -407,7 +407,7 @@ export default function MembersPage() {
     );
   }
 
-  const planCfg = currentOrg ? PLAN_CONFIG[currentOrg.planId] : PLAN_CONFIG.starter;
+  const planCfg = currentOrg ? PLAN_CONFIG[currentOrg.planId] : PLAN_CONFIG.tournament;
   const seatLimit = planCfg.seatLimit;
   const billableMembers = planCfg.officialsFreeSeats
     ? members.filter(m => m.role !== 'official')

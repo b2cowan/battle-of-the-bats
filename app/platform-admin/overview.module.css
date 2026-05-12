@@ -70,3 +70,82 @@
   color: var(--data-gray);
   margin-top: 0.2rem;
 }
+
+.healthRow {
+  margin-top: 2rem;
+}
+
+.healthLabel {
+  font-family: var(--font-data);
+  font-size: 0.55rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--data-gray);
+  margin-bottom: 0.75rem;
+}
+
+.healthGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 1rem;
+}
+
+.healthCard {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.25rem;
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.2);
+  background: var(--hud-surface);
+  text-decoration: none;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.healthCard:hover {
+  border-color: rgba(var(--logic-lime-rgb), 0.4);
+  background: rgba(var(--logic-lime-rgb), 0.04);
+}
+
+.healthCardWarn {
+  border-color: rgba(251, 191, 36, 0.4);
+  box-shadow: 0 0 0 1px rgba(251, 191, 36, 0.1);
+}
+
+.healthCardWarn .healthIconWrap { color: #fbbf24; background: rgba(251, 191, 36, 0.1); border-color: rgba(251, 191, 36, 0.25); }
+.healthCardWarn .healthNum      { color: #fbbf24; }
+
+.healthCardOk {
+  border-color: rgba(var(--logic-lime-rgb), 0.2);
+}
+
+.healthIconWrap {
+  width: 38px;
+  height: 38px;
+  background: rgba(var(--logic-lime-rgb), 0.08);
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--logic-lime);
+  flex-shrink: 0;
+}
+
+.healthNum {
+  font-family: var(--font-data);
+  font-size: 1.6rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--logic-lime);
+  line-height: 1;
+}
+
+.healthCardLabel {
+  font-family: var(--font-data);
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--data-gray);
+  margin-top: 0.2rem;
+}

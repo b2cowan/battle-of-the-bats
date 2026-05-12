@@ -1,0 +1,606 @@
+# FieldLogicHQ — Pricing Page Copy
+
+**Status:** Ready for review
+**Date:** 2026-05-12
+**Supersedes:** Previous three-tier + module add-on strategy (initial draft, no longer on disk)
+
+---
+
+## Structural Notes
+
+The new pricing model bundles all modules into four named plans. There are no à la carte module add-ons. Plans are named after organizational roles, not SaaS seniority tiers. This document contains all copy needed to build the pricing page.
+
+---
+
+## 1. PAGE LAYOUT (recommended structure, top to bottom)
+
+```
+[1] PAGE HERO — headline, subheadline, trust signals
+[2] BILLING TOGGLE — Monthly | Annual (save ~2 months)
+[3] PRICING CARDS — 4 plans, horizontal row
+[4] FEATURE COMPARISON TABLE — full breakdown
+[5] UPGRADE BRIDGE — 3 short "why upgrade" callout blocks
+[6] MOST POPULAR CALLOUT — Club deep-dive justification
+[7] TESTIMONIAL STRIP — 4 cards, one per plan
+[8] FAQ — volunteer-org-first, 8 questions
+[9] BOTTOM CTA — "Start Free" + "Talk to us"
+```
+
+---
+
+## 2. PAGE HERO
+
+### Primary Headline (H1)
+> Plans that match how your organization actually operates.
+
+### Alternative Headlines
+> Simple, honest pricing for Canadian sports organizations.
+
+> From your first tournament to your full club — one platform that grows with you.
+
+### Subheadline (shown below H1)
+> Pick the plan that fits where you are today. No modules to buy separately. No seat surprises. No contract required.
+
+### Alternative Subheadlines
+> Every plan is built around what your organization needs to run — not arbitrary usage limits.
+
+> FieldLogicHQ handles the admin. You handle the sport.
+
+### Trust Signals (icon row beneath hero, 3–4 items)
+- Canadian organization, Canadian pricing (CAD)
+- No contracts — cancel anytime
+- 14-day free trial on paid plans
+- Plans can be changed at any time
+
+---
+
+## 3. BILLING TOGGLE
+
+```
+[ Monthly ]   [ Annual — Save 2 Months ]
+```
+
+**Toggle label copy options:**
+- Annual (Save ~2 Months Free)
+- Annual Billing — Pay for 10, Get 12
+- Switch to Annual — You Save on Every Plan
+
+**Tooltip/note on annual:**
+> Annual plans are billed once per year. You can switch back to monthly at renewal. No penalty for upgrading mid-year.
+
+---
+
+## 4. PRICING CARDS
+
+Layout: four equal-width cards in a horizontal row. Club card is visually elevated (border highlight, "Most Popular" badge). Cards include: plan name, subtitle, price, CTA, feature list, and a brief "not included" callout at the bottom of lower-tier cards.
+
+---
+
+### CARD 1 — TOURNAMENT (Free)
+
+**Plan Name:** Tournament
+
+**Subtitle/tagline:**
+> Everything you need to run a basic tournament.
+
+**Price Display:**
+
+| Billing | Display |
+|---------|---------|
+| Monthly | Free |
+| Annual | Free |
+
+**CTA Button:**
+> Get Started Free
+
+**Feature List:**
+- Manual tournament scheduling
+- Manual score entry
+- Basic standings
+- Field and diamond management
+- 3 staff / admin seats
+- 1 active tournament
+
+**"What's next" upgrade nudge (bottom of card):**
+> Need automated scheduling or bracket tools? → Tournament Plus
+
+---
+
+### CARD 2 — TOURNAMENT PLUS ($39 / $390)
+
+**Plan Name:** Tournament Plus
+
+**Subtitle/tagline:**
+> Professional tournament management without the league complexity.
+
+**Price Display:**
+
+| Billing | Display |
+|---------|---------|
+| Monthly | $39 CAD / month |
+| Annual | $390 CAD / year *(you save $78 — 2 months free)* |
+
+**Badge:** 14-Day Free Trial
+
+**CTA Button:**
+> Start Free Trial
+
+**Feature List:**
+- Everything in Tournament
+- Automated schedule generation
+- Bracket generator
+- Email announcements and communications
+- Tournament archives and history
+- Unlimited simultaneous tournaments
+- 5 staff / admin seats
+- Unlimited officials seats (officials never count against your limit)
+
+**"Not included" callout:**
+> This plan is built for tournament organizers who don't need league or club features. House league, accounting, and rep team management are not included — by design.
+
+**"What's next" upgrade nudge:**
+> Running a public-facing league or registrations? → League
+
+---
+
+### CARD 3 — LEAGUE ($89 / $890)
+
+**Plan Name:** League
+
+**Subtitle/tagline:**
+> Manage your league, registrations, and public presence — all in one place.
+
+**Price Display:**
+
+| Billing | Display |
+|---------|---------|
+| Monthly | $89 CAD / month |
+| Annual | $890 CAD / year *(you save $178 — 2 months free)* |
+
+**Badge:** 14-Day Free Trial
+
+**CTA Button:**
+> Start Free Trial
+
+**Feature List:**
+- Everything in Tournament Plus
+- Public organization page (branded, tournament-listed)
+- House League module — registration, divisions, seasons, scheduling, standings
+- League-scoped communications
+- Advanced member roles and permissions
+- 10 staff / admin seats
+
+**"What's next" upgrade nudge:**
+> Managing finances, tryouts, or competitive teams? → Club
+
+---
+
+### CARD 4 — CLUB ($179 / $1,790) ⭐ Most Popular
+
+**Plan Name:** Club
+
+**Badge:** Most Popular
+
+**Subtitle/tagline:**
+> The complete operating system for your sports organization.
+
+**Price Display:**
+
+| Billing | Display |
+|---------|---------|
+| Monthly | $179 CAD / month |
+| Annual | $1,790 CAD / year *(you save $358 — 2 months free)* |
+
+**Badge:** 14-Day Free Trial
+
+**CTA Button:**
+> Start Free Trial
+
+**Feature List:**
+- Everything in League
+- Accounting module — org ledger, team invoicing, payment reconciliation, expense tracking
+- Rep Teams module — tryouts, rosters, player documents, coaches portal, team finances
+- Unlimited staff / admin seats
+
+**"Why most popular" blurb (shown within or beneath the card):**
+> Most organizations choose Club because of what they stop doing: hunting down payments, managing tryouts over email, reconciling team finances in spreadsheets. Club eliminates the manual work that takes up treasurer and executive time all season. If your organization runs rep teams or manages money, it pays for itself quickly.
+
+---
+
+## 5. FEATURE COMPARISON TABLE
+
+Full breakdown, grouped by category. Shown below the pricing cards with a "Compare all plans" toggle or section anchor.
+
+### Table Headers
+
+| Feature | Tournament | Tournament Plus | League | Club |
+|---------|-----------|-----------------|--------|------|
+
+---
+
+### Category: Tournaments & Scheduling
+
+| Feature | Tournament | Tournament Plus | League | Club |
+|---------|-----------|-----------------|--------|------|
+| Active tournaments | 1 | Unlimited | Unlimited | Unlimited |
+| Manual scheduling | ✓ | ✓ | ✓ | ✓ |
+| Automated schedule generation | — | ✓ | ✓ | ✓ |
+| Bracket generator | — | ✓ | ✓ | ✓ |
+| Tournament archives and history | — | ✓ | ✓ | ✓ |
+| Field and diamond management | ✓ | ✓ | ✓ | ✓ |
+| Score entry | ✓ | ✓ | ✓ | ✓ |
+| Standings | ✓ | ✓ | ✓ | ✓ |
+
+---
+
+### Category: Staff & Access
+
+| Feature | Tournament | Tournament Plus | League | Club |
+|---------|-----------|-----------------|--------|------|
+| Staff / admin seats | 3 | 5 | 10 | Unlimited |
+| Officials seats | Counted toward limit | Unlimited (free) | Unlimited (free) | Unlimited (free) |
+| Advanced member roles and permissions | — | — | ✓ | ✓ |
+
+---
+
+### Category: Communications
+
+| Feature | Tournament | Tournament Plus | League | Club |
+|---------|-----------|-----------------|--------|------|
+| Email announcements | — | ✓ | ✓ | ✓ |
+| League-scoped communications | — | — | ✓ | ✓ |
+
+---
+
+### Category: Public Presence
+
+| Feature | Tournament | Tournament Plus | League | Club |
+|---------|-----------|-----------------|--------|------|
+| Public organization page | — | — | ✓ | ✓ |
+| Branded tournament listing | — | — | ✓ | ✓ |
+
+---
+
+### Category: House League
+
+| Feature | Tournament | Tournament Plus | League | Club |
+|---------|-----------|-----------------|--------|------|
+| House League module | — | — | ✓ | ✓ |
+| Player registration workflows | — | — | ✓ | ✓ |
+| Season and division management | — | — | ✓ | ✓ |
+| League scheduling and standings | — | — | ✓ | ✓ |
+
+---
+
+### Category: Accounting
+
+| Feature | Tournament | Tournament Plus | League | Club |
+|---------|-----------|-----------------|--------|------|
+| Accounting module | — | — | — | ✓ |
+| Organization ledger | — | — | — | ✓ |
+| Team invoicing | — | — | — | ✓ |
+| Payment reconciliation | — | — | — | ✓ |
+| Expense tracking | — | — | — | ✓ |
+
+---
+
+### Category: Rep Teams
+
+| Feature | Tournament | Tournament Plus | League | Club |
+|---------|-----------|-----------------|--------|------|
+| Rep Teams module | — | — | — | ✓ |
+| Tryout registration | — | — | — | ✓ |
+| Roster management | — | — | — | ✓ |
+| Player document management | — | — | — | ✓ |
+| Coaches portal | — | — | — | ✓ |
+| Team financial management | — | — | — | ✓ |
+
+---
+
+### Category: Free Trial
+
+| Feature | Tournament | Tournament Plus | League | Club |
+|---------|-----------|-----------------|--------|------|
+| 14-day free trial | — | ✓ | ✓ | ✓ |
+
+---
+
+## 6. UPGRADE BRIDGE CALLOUTS
+
+Three short blocks, placed between cards or after the comparison table. Each makes the upgrade case in plain language.
+
+---
+
+### Tournament → Tournament Plus
+
+**Headline:**
+> Ready to stop building schedules by hand?
+
+**Body:**
+> Tournament Plus gives you automated scheduling, bracket generation, and email communications. For organizations running more than one event a year, the time saved on schedule builds alone is worth the upgrade.
+
+**CTA:** Start Free Trial
+
+---
+
+### Tournament Plus → League
+
+**Headline:**
+> Running a public-facing organization?
+
+**Body:**
+> League adds a branded public page for your organization, a full house league module with registration and season management, and the advanced permissions your registrar and division coordinators need. One platform for everything members interact with.
+
+**CTA:** Start Free Trial
+
+---
+
+### League → Club
+
+**Headline:**
+> Still managing rep team finances in spreadsheets?
+
+**Body:**
+> Club adds full accounting and rep team management — the two things that consume the most volunteer time in any organization. Invoicing, payment tracking, tryout coordination, roster management, player documents, and a coaches portal are all included. Most Club organizations recover that time within the first season.
+
+**CTA:** Start Free Trial
+
+---
+
+## 7. MOST POPULAR CALLOUT SECTION (Club deep-dive)
+
+This is a standalone section below the pricing cards — a brief feature callout block that explains why Club earns the "Most Popular" designation despite being the highest-priced plan.
+
+**Section Headline:**
+> Why most clubs choose the Club plan
+
+**Section Subheadline:**
+> It's not about features. It's about time.
+
+**Body:**
+> The two tools that Club adds — accounting and rep team management — are where sports organizations lose the most time every season. Chasing payments. Reconciling who owes what. Coordinating tryouts over email. Keeping track of player documents. Sending rosters to coaches who then manage their own spreadsheets.
+>
+> Club centralizes all of it. Treasurers get a real ledger. Team managers stop chasing paper. Coaches have their own portal. And the executive doesn't spend Sunday nights in a spreadsheet.
+>
+> That's why it's the most popular plan — not because organizations want the most features, but because they want their volunteer hours back.
+
+**Icon callouts (3-column layout):**
+
+| Icon | Label | Microcopy |
+|------|-------|-----------|
+| ⏱ | Hours recovered every season | Accounting and rep team tools eliminate the manual coordination that costs volunteer orgs most of their time |
+| 📋 | One place for everything | Rosters, finances, documents, schedules, and communications — no more fragmented tools |
+| 👥 | Built for the whole org | Treasurers, coaches, registrars, and executives each get the access they need without stepping on each other |
+
+---
+
+## 8. UPGRADE-ORIENTED MICROCOPY
+
+Short text fragments for use in banners, tooltips, and inline upgrade prompts throughout the platform.
+
+### In-app upgrade banners (by feature gate)
+
+**When a user hits the 1-tournament limit (Tournament plan):**
+> Running more than one event? Tournament Plus gives you unlimited simultaneous tournaments.
+
+**When a user tries to add a 4th staff member (Tournament plan):**
+> You've reached the seat limit on your current plan. Tournament Plus includes 5 seats — and officials are always free.
+
+**When a user accesses a gated feature (communications):**
+> Email announcements are included on Tournament Plus and above. Upgrade to reach your participants directly from FieldLogicHQ.
+
+**When a user accesses a gated feature (bracket generator):**
+> Bracket generation is a Tournament Plus feature. Your current plan supports manual scheduling.
+
+**When a user accesses a gated feature (public site):**
+> A public organization page is included on League and above — give your members a place to find your schedule, results, and registration.
+
+**When a user accesses a gated feature (house league):**
+> House League management is included on the League plan. Upgrade to run registrations, manage divisions, and publish standings publicly.
+
+**When a user accesses a gated feature (accounting):**
+> The Accounting module is included on the Club plan. Track payments, reconcile invoices, and manage your org ledger in one place.
+
+**When a user accesses a gated feature (rep teams):**
+> Rep Team management is included on the Club plan — tryouts, rosters, documents, and a coaches portal, all connected.
+
+### Billing page plan comparison microcopy
+
+**Below plan name on billing page:**
+- Tournament: You're on the free plan. Upgrade anytime — no credit card required until you're ready.
+- Tournament Plus: You're on Tournament Plus. Running a league or registration workflow? League unlocks those tools.
+- League: You're on League. Need accounting or rep team tools? Club is the complete platform.
+
+### Annual upsell (on billing page, monthly subscribers)
+> Switch to annual billing and get two months free. No other changes to your plan — cancel anytime at renewal.
+
+---
+
+## 9. FAQ SECTION
+
+### Section Headline
+> Questions? We've got answers.
+
+### Section Subheadline
+> Especially for volunteer-run organizations — we know the questions.
+
+---
+
+### Volunteer Organization FAQ (featured, appears first)
+
+**Q: Is this too complex for a volunteer-run organization?**
+
+> No — and we built it with volunteer-run orgs specifically in mind. FieldLogicHQ is used by associations where the "tech person" is whoever stepped up at the last AGM. The platform is designed around tasks that your team already does (scheduling, communications, score entry, registration) — just without the spreadsheets and email chains. You don't need to configure anything complicated to get started. Most organizations are running their first tournament within an afternoon of signing up. If you get stuck, the documentation covers every feature in plain language, and Club plan subscribers get direct support access.
+
+---
+
+### General FAQ
+
+**Q: How does billing work?**
+
+> Paid plans are billed monthly or annually in Canadian dollars. Monthly billing renews automatically each month. Annual billing is charged once per year — you pay for 10 months and get 12, which works out to roughly 2 months free. You can switch between monthly and annual at any renewal date. No contracts, no penalties.
+
+**Q: What happens when my free trial ends?**
+
+> At the end of your 14-day trial, your plan continues at the regular monthly rate. We'll send you a reminder before your trial ends. If you decide not to continue, you can cancel before the trial period closes and you won't be charged. Your data stays available for 30 days after cancellation in case you change your mind.
+
+**Q: Can I change plans later?**
+
+> Yes, at any time. If you upgrade mid-month, the new features are available immediately and billing adjusts pro-rata. If you downgrade, the change takes effect at your next billing date. There's no lock-in. Organizations often start on Tournament, try the platform, and upgrade as their needs grow — that's exactly how the plans are designed.
+
+**Q: Do I need a credit card to get started?**
+
+> No. The Tournament plan is free, no card required. Paid plan free trials also don't require a credit card upfront — you only enter billing information when you're ready to continue after the trial.
+
+**Q: What if we get stuck?**
+
+> FieldLogicHQ is designed to be self-serve — every workflow is built to be completed without needing to contact anyone. Documentation covers every feature in plain language, written for administrators who aren't technical. In practice, most organizations are fully operational after an afternoon of setup. If something isn't clear, the documentation is the first place to look, and it's updated as the platform evolves.
+
+**Q: Can I use FieldLogicHQ for multiple sports?**
+
+> Yes. The platform is sport-agnostic — it's used by softball associations, hockey organizations, soccer leagues, and baseball clubs. You configure your organization around your sport: field naming, team structures, scoring, and season setup all work across sports. If you run multiple associations, each one is managed as its own organization within the platform.
+
+**Q: Are officials counted against my seat limit?**
+
+> No — from Tournament Plus and above, officials seats are always free and never count against your staff/admin seat limit. The seat limit applies to administrative staff: people who can create events, manage schedules, enter scores, and configure the organization. Officials have a more limited access role focused on game assignments and score reporting.
+
+**Q: Is there a setup fee or onboarding cost?**
+
+> No. There are no setup fees, implementation costs, or onboarding charges. You sign up, create your organization, and start using the platform. The documentation covers every setup step, including first-season configuration, accounting setup, and rep team structure.
+
+---
+
+## 10. TESTIMONIAL THEMES (copy directions — one per plan)
+
+These are intended as guidance for sourcing real testimonials or writing representative ones. Do not publish these as real quotes.
+
+---
+
+**Tournament plan testimonial direction:**
+
+*Profile:* A first-time tournament organizer — a parent volunteer, minor sports coordinator, or new committee member who has never managed an event digitally before. They were expecting a learning curve and were surprised by how quickly they got started. The copy should focus on ease of setup, not features. The emotional payoff is confidence: "I actually knew what I was doing."
+
+*Theme:* "I ran my first tournament in two days and didn't need help from anyone."
+
+---
+
+**Tournament Plus testimonial direction:**
+
+*Profile:* A tournament director or organization that runs 3–5 events per year across multiple age divisions. They used to spend hours building schedules in Excel. The copy should be about time savings and professionalism — they now look like they have a dedicated operations team, even though it's still just 2 people. The emotional payoff is relief and scale.
+
+*Theme:* "What used to take a full weekend now takes a couple of hours."
+
+---
+
+**League testimonial direction:**
+
+*Profile:* A recreational league registrar or operations lead. They replaced a combination of a WordPress site, Google Forms for registration, and email blasts to division coordinators. Everything was disconnected. The copy should focus on consolidation — one login, everything in one place, members can actually find information. The emotional payoff is order and legitimacy.
+
+*Theme:* "Our members can actually find everything now. It looks like a real league."
+
+---
+
+**Club testimonial direction:**
+
+*Profile:* A club executive or treasurer of a competitive sports organization — softball association, hockey club, soccer club. The copy should focus on the accounting and rep team tools specifically. Before Club, they were managing rep team finances in spreadsheets, coordinating tryouts over email, and spending significant time tracking which families owed what. The emotional payoff is recovered time — hours per week that now go somewhere useful.
+
+*Theme:* "I used to spend every Sunday night in a spreadsheet. That's done."
+
+---
+
+## 11. VISUAL HIERARCHY RECOMMENDATIONS
+
+**Page flow priority:** Hero → Toggle → Cards → Comparison Table → FAQ → Bottom CTA
+
+**Club card visual treatment:**
+- Elevated appearance: slightly taller card, subtle drop shadow or border highlight in brand accent color
+- "Most Popular" badge: top-right badge, solid accent color background, white text
+- The badge should read "Most Popular" — not "Best Value" or "Recommended." Most Popular is a fact claim; the other two are opinions that invite skepticism.
+- The card body copy (the "why most popular" blurb) should appear inline on the card or immediately adjacent — don't make users scroll to justify the choice
+
+**Annual billing toggle:**
+- Default state should be Annual (not Monthly) — it shows the better value and anchors the user's expectations higher. Monthly toggle should still be one click away.
+- Show savings clearly on annual view: add "Save $X" or "2 months free" beneath each paid plan price on annual toggle
+
+**Feature comparison table:**
+- Group by category (as structured above) — don't flatten into a single alphabetical list
+- Use ✓ for included, — (en dash) for not included. Avoid ✗ — it feels punitive. The dash is neutral and the card copy already handles the "not included" framing for lower tiers.
+- Sticky header row on scroll
+- Highlight the Club column with the same accent treatment as the pricing card
+
+**Upgrade bridge callouts:**
+- Place between the comparison table and the FAQ
+- Style as a 3-column feature callout row, not a plain text block
+- Each callout should have an icon or visual to break up the text
+
+---
+
+## 12. FRICTION-REDUCTION SUGGESTIONS
+
+**Pricing anxiety:**
+- The "no credit card required" signal should appear near each CTA button — not just in the FAQ. Repeat it visually where decisions happen.
+- Add the "cancel anytime" reassurance inline on the paid plan cards, not just in the FAQ
+- Show "CAD" clearly and early — Canadian orgs are accustomed to seeing USD pricing on US SaaS tools and calculating conversion in their heads. Making CAD explicit immediately removes that friction.
+
+**Feature comprehension:**
+- Avoid feature jargon in the card lists. "Bracket generator" is fine. "Automated schedule generation" is fine. Don't write "advanced scheduling engine" or "dynamic bracket management" — plain language wins.
+- For the comparison table, consider adding a one-line description below each category header so users understand what they're evaluating without needing to click into docs.
+
+**Plan selection confidence:**
+- The subtitles (one-line tagline per plan) do the heaviest lifting for self-selection. Keep them visible at all times — don't collapse them on mobile.
+- Consider adding a "Not sure which plan is right?" link that anchors to the FAQ or surfaces a 3-question self-selection tool.
+
+**Mobile layout:**
+- On mobile, default to showing the Club card first (since it's Most Popular) rather than left-to-right ordering, which would show Tournament first and require the user to swipe to reach the recommended plan.
+- Make the billing toggle persistent (sticky) so users can switch between monthly and annual pricing while scrolling through plans.
+
+**Trust signals:**
+- Add a "Used by Canadian sports organizations in [sport], [sport], and [sport]" signal beneath the hero — specificity builds trust better than generic "trusted by X organizations."
+- If you have org logo permission from any current customers, a small logo strip near the bottom of the page outperforms any written testimonial for purchase confidence.
+
+**CTA text:**
+- "Get Started Free" for Tournament — zero friction
+- "Start Free Trial" for all paid plans — sets expectation (trial, not commitment)
+- Bottom-of-page secondary CTA: "Have questions? Talk to us." — provides an escape valve for orgs that need reassurance before signing up
+
+---
+
+## 13. BOTTOM CTA SECTION
+
+**Primary CTA:**
+> Start running your organization on FieldLogicHQ.
+
+**Subtext:**
+> Free plan available. No credit card required for trials. Cancel anytime.
+
+**Button 1 (primary):**
+> Get Started Free
+
+**Button 2 (secondary):**
+> Have questions? Talk to us.
+
+**Supporting copy below buttons:**
+> All plans are billed in CAD. No contracts. No setup fees.
+
+---
+
+## APPENDIX: PRICING QUICK REFERENCE
+
+| | Tournament | Tournament Plus | League | Club |
+|---|---|---|---|---|
+| Monthly | Free | $39 | $89 | $179 |
+| Annual | Free | $390 | $890 | $1,790 |
+| Annual savings | — | $78 (~2 months) | $178 (~2 months) | $358 (~2 months) |
+| Staff seats | 3 | 5 | 10 | Unlimited |
+| Officials seats | Counted | Free | Free | Free |
+| Active tournaments | 1 | Unlimited | Unlimited | Unlimited |
+| Automated scheduling | — | ✓ | ✓ | ✓ |
+| Bracket generator | — | ✓ | ✓ | ✓ |
+| Communications | — | ✓ | ✓ | ✓ |
+| Tournament archives | — | ✓ | ✓ | ✓ |
+| Public organization page | — | — | ✓ | ✓ |
+| House League module | — | — | ✓ | ✓ |
+| Accounting module | — | — | — | ✓ |
+| Rep Teams module | — | — | — | ✓ |
+| Unlimited staff seats | — | — | — | ✓ |
+| Free trial | — | 14 days | 14 days | 14 days |

@@ -271,7 +271,7 @@ export default function AccountingOverviewPage() {
           )}
 
           {/* F2: tournaments without ledgers — offer one-click ledger creation */}
-          {isOwner && tournamentsWithoutLedger.length > 0 && (
+          {(isOwner || userRole === 'treasurer') && tournamentsWithoutLedger.length > 0 && (
             <div className={styles.pendingLedgersSection}>
               <div className={styles.sectionTitle}>Tournaments without a ledger</div>
               {tournamentsWithoutLedger.map(t => (
@@ -291,7 +291,7 @@ export default function AccountingOverviewPage() {
             </div>
           )}
 
-          {isOwner && (
+          {(isOwner || userRole === 'treasurer') && (
             <div className={styles.footerRow} style={{ marginTop: '1.5rem' }}>
               <button type="button" className="btn btn-secondary" onClick={() => setAddOpen(true)}>
                 + Add Ledger

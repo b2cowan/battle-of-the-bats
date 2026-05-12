@@ -31,25 +31,25 @@ This file tracks the ongoing tasks for the tournament website project. AI models
 - [x] **3G** — Add cross-module "Needs attention" strip to admin hub (pending registrations, open tryouts)
 
 **Phase 4 — Platform admin & treasurer**
-- [ ] **4A** — Add health indicators to platform admin overview: `past_due` org count, new signups in 7 days
-- [ ] **4B** — Add org/date-range filter and pagination to platform audit log (200-row hard cap, no search)
-- [ ] **4C** — Add active-route highlighting to platform admin sidebar nav
-- [ ] **4D** — Add "Go to Admin →" link in platform admin org rows and detail page
-- [ ] **4E** — Allow treasurers (not just owners) to create tournament ledgers
-- [ ] **4F** — Add "Showing first 1000" indicator and pagination to platform admin users page
-- [ ] **4G** — Treasurer: add CSV export to ledger detail page
-- [ ] **4H** — Treasurer: category auto-suggest (`<datalist>`) on accounting entry form
+- [x] **4A** — Add health indicators to platform admin overview: `past_due` org count, new signups in 7 days
+- [x] **4B** — Add org/date-range filter and pagination to platform audit log (200-row hard cap, no search)
+- [x] **4C** — Add active-route highlighting to platform admin sidebar nav
+- [x] **4D** — Add "Go to Admin →" link in platform admin org rows and detail page (was already implemented; label standardised to "↗ Admin")
+- [x] **4E** — Allow treasurers (not just owners) to create tournament ledgers; expanded Add Entry / Add Transfer / Edit / Void gates to treasurer too
+- [x] **4F** — Skipped: platform users list is internal staff only (no cap issue); org users found via org → users drill-down
+- [x] **4G** — Treasurer: add CSV export to ledger detail page
+- [x] **4H** — Treasurer: category `<datalist>` now fetches distinct categories from this org's ledger entries; falls back to static defaults for new orgs
 
 **Phase 5 — Public experience & polish**
-- [ ] **5A** — Add rep teams tryout section to org home page when module enabled and tryouts open
-- [ ] **5B** — Add house league CTA to default `/{orgSlug}` branch when module enabled and registration open
-- [ ] **5C** — Improve tryout registration closed page: show expected open date and org contact email
-- [ ] **5D** — Add "Contact Us:" label before contact email on public site page
-- [ ] **5E** — Add pending-action badges to coaches team hub cards (overdue payments, upcoming events)
-- [ ] **5F** — Audit and standardise empty/loading states app-wide
-- [ ] **5G** — Add season switcher dropdown to House League sidebar when inside a season
-- [ ] **5H** — Audit Official/Scorekeeper score entry page for mobile UX (tap targets, contrast, slow-network handling)
-- [ ] **5I** — House league public registration form: show division capacity, add post-registration status lookup
+- [x] **5A** — Add rep teams tryout section to org home page when module enabled and tryouts open
+- [x] **5B** — Add house league CTA to default `/{orgSlug}` branch when module enabled and registration open
+- [x] **5C** — Improve tryout registration closed page: show org contact email (open-date field deferred — column does not exist in schema)
+- [x] **5D** — Add "Contact Us" label to contact email link on public site page
+- [x] **5E** — Add pending-action badges to coaches team hub cards (overdue installments, upcoming events in 7 days)
+- [x] **5F** — Audit and standardise empty/loading states app-wide (coaches portal: loadingState CSS, emptyStateTitle/Sub)
+- [x] **5G** — Add season switcher dropdown to House League sidebar when inside a season (client-side fetch pattern)
+- [x] **5H** — Official/Scorekeeper score entry: type="number", 56px input height, 48px button height, filter selects 44px
+- [x] **5I** — House league public registration form: clear capacity labels + status lookup page at `/{orgSlug}/league/{seasonSlug}/status`
 
 ### 2. Tournament Admin URL Restructure
 *Full plan in [TOURNAMENT_URL_RESTRUCTURE_PLAN.md](TOURNAMENT_URL_RESTRUCTURE_PLAN.md)*
@@ -81,7 +81,8 @@ This file tracks the ongoing tasks for the tournament website project. AI models
 ## 🧭 Strategy (Post-Roadmap)
 
 - [ ] **In-App Documentation & Help System** — Two-tier help layer: contextual cues (empty states, tooltips, transition callouts) + role-scoped help pages (walkthroughs for every module and role). Full plan in [HELP_SYSTEM_PLAN.md](HELP_SYSTEM_PLAN.md). **Blocked: complete UX Review Phases 1–5 first** (UX 5F empty-state standardization folds into Phase A of this plan; UX 3A/3B/3C/3E/2A add/change pages where help cues will live).
-- [~] **Pricing & Branding Strategy Review** — Full strategy draft in [PRICING_STRATEGY_PLAN.md](PRICING_STRATEGY_PLAN.md). Awaiting user sign-off on 7 open questions before any code changes. Recommendations: Starter/Pro/Club tiers, hybrid à la carte + bundles (League $49/mo, Full Platform $99/mo), Public Site promoted to Pro+Club core, Pro raised to $49/mo.
+- [x] **Pricing — Phase 1 Implementation** — Update plan-config (4 tiers), rewrite PricingSection component, build public `/pricing` page. Full plan in [PRICING_IMPLEMENTATION_PLAN.md](PRICING_IMPLEMENTATION_PLAN.md). Content spec in [PRICING_PAGE_COPY.md](PRICING_PAGE_COPY.md).
+- [ ] **Pricing — Functionality Audit** — Review billing page, onboarding flow, upgrade banners, and any plan-gated UI for references to old plan names (starter/pro/elite) or module assumptions that conflict with the new four-tier strategy. Fix or flag for Phase 2.
 - [ ] **Custom domain investigation** — Research feasibility and effort of allowing orgs to point a custom domain (e.g. miltonbats.com) to their FieldLogicHQ public page. Covers: DNS verification flow, wildcard SSL or per-org cert provisioning, reverse proxy / Amplify routing changes, and potential upsell pricing. Do not design or implement until `module_public_site` is fully shipped.
 - [ ] **Public Site Offering Evaluation** — After the first external org enables `module_public_site`, review the offering across three dimensions: (1) ease of setup — is the path from enabling the module to a live page clear enough for a non-technical org owner? (2) customization level — structured fields are correct; assess whether anything is missing without going full CMS; (3) base UX improvements — e.g., contact email is shown on the public page with no surrounding context (needs a label like "Contact Us"), tournament cards need review, social link presentation. Produce a prioritized fix list before moving to the next module.
 

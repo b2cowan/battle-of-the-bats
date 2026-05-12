@@ -162,7 +162,7 @@ export default async function OrgDetailPage({
               rel="noreferrer"
               className={styles.adminLink}
             >
-              ↗ Open Admin
+              ↗ Admin
             </Link>
           </div>
         </div>

@@ -94,7 +94,7 @@ export default function TeamDocumentsPage({
     return `${(n / (1024 * 1024)).toFixed(1)} MB`;
   }
 
-  if (assignmentsLoading || loading) return <p className={styles.muted}>Loading…</p>;
+  if (assignmentsLoading || loading) return <div className={styles.loadingState}>Loading documents…</div>;
 
   if (!assignment) {
     return (

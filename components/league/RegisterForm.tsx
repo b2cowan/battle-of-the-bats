@@ -194,8 +194,20 @@ export default function RegisterForm({
         <div className={styles.refBox}>
           Reference: <span className={styles.refCode}>{success.id.slice(0, 8).toUpperCase()}</span>
         </div>
+        <p className={styles.successStatusLink}>
+          <a href={`/${orgSlug}/league/${seasonSlug}/status?email=${encodeURIComponent(success.guardianEmail)}`}>
+            Check registration status later →
+          </a>
+        </p>
       </div>
     );
+  }
+
+  function divisionStatusLabel(d: DivisionWithCount): string {
+    if (d.capacity == null) return 'Open — unlimited spots';
+    const remaining = d.capacity - d.activeCount;
+    if (remaining <= 0) return 'Waitlist only';
+    return `Open — ${remaining} spot${remaining === 1 ? '' : 's'} remaining`;
   }
 
   return (
@@ -213,12 +225,9 @@ export default function RegisterForm({
             <div className={styles.divisionOptionLeft}>
               <div>
                 <div className={styles.divisionOptionName}>{divisions[0].name}</div>
-                {divisions[0].capacity != null && (
-                  <div className={styles.divisionCapacity}>
-                    {divisions[0].activeCount} / {divisions[0].capacity} spots filled
-                    {divisions[0].activeCount >= divisions[0].capacity ? ' · Registering to waitlist' : ''}
-                  </div>
-                )}
+                <div className={styles.divisionCapacity}>
+                  {divisionStatusLabel(divisions[0])}
+                </div>
               </div>
             </div>
             {divisions[0].capacity != null && divisions[0].activeCount >= divisions[0].capacity && (
@@ -248,14 +257,9 @@ export default function RegisterForm({
                       />
                       <div>
                         <div className={styles.divisionOptionName}>{d.name}</div>
-                        {d.capacity != null && (
-                          <div className={styles.divisionCapacity}>
-                            {d.activeCount} / {d.capacity} spots filled
-                          </div>
-                        )}
-                        {d.capacity == null && (
-                          <div className={styles.divisionCapacity}>Unlimited spots</div>
-                        )}
+                        <div className={styles.divisionCapacity}>
+                          {divisionStatusLabel(d)}
+                        </div>
                       </div>
                     </div>
                     {isFull && <span className={styles.divisionWaitlistBadge}>Waitlist</span>}

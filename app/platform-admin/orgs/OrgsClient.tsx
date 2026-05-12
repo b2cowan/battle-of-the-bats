@@ -23,9 +23,10 @@ interface EditState {
 interface Props {
   orgs: OrgRow[];
   planDefaults: Record<string, number>;
+  initialStatus: string;
 }
 
-const PLANS = ['starter', 'pro', 'elite'] as const;
+const PLANS = ['tournament', 'tournament_plus', 'league', 'club'] as const;
 
 const STATUSES = ['active', 'trialing', 'past_due', 'canceled'] as const;
 
@@ -54,11 +55,11 @@ function addonsDirty(committed: string[], current: string[]) {
   return [...committed].sort().join() !== [...current].sort().join();
 }
 
-export default function OrgsClient({ orgs, planDefaults }: Props) {
+export default function OrgsClient({ orgs, planDefaults, initialStatus }: Props) {
   // Filter state
   const [search,      setSearch]      = useState('');
   const [planFilter,  setPlanFilter]  = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
+  const [statusFilter, setStatusFilter] = useState(initialStatus);
 
   const filteredOrgs = orgs.filter(o => {
     if (search) {

@@ -4,15 +4,19 @@ import { useRouter } from 'next/navigation';
 import { CheckCircle2, Circle, ArrowRight, Rocket } from 'lucide-react';
 import Link from 'next/link';
 import { useOrg } from '@/lib/org-context';
+import { PLAN_CONFIG } from '@/lib/plan-config';
 import styles from './onboarding.module.css';
 
 export default function OnboardingPage() {
   const { currentOrg, userRole, loading } = useOrg();
   const router = useRouter();
 
-  const [memberCount, setMemberCount] = useState<number | null>(null);
+  const [memberCount, setMemberCount]       = useState<number | null>(null);
   const [tournamentCount, setTournamentCount] = useState<number | null>(null);
-  const [completing, setCompleting] = useState(false);
+  const [seasonsDone, setSeasonsDone]       = useState<boolean | null>(null);
+  const [repTeamsDone, setRepTeamsDone]     = useState<boolean | null>(null);
+  const [publicSiteDone, setPublicSiteDone] = useState<boolean | null>(null);
+  const [completing, setCompleting]         = useState(false);
 
   useEffect(() => {
     if (loading || !currentOrg) return;
@@ -31,6 +35,29 @@ export default function OnboardingPage() {
       .then(r => r.json())
       .then(d => setTournamentCount(Array.isArray(d) ? d.length : 0))
       .catch(() => setTournamentCount(0));
+
+    const entitlements = PLAN_CONFIG[currentOrg.planId].moduleEntitlements;
+
+    if (entitlements.includes('module_house_league')) {
+      fetch('/api/admin/house-league/seasons')
+        .then(r => r.ok ? r.json() : [])
+        .then(d => setSeasonsDone(Array.isArray(d) && d.length > 0))
+        .catch(() => setSeasonsDone(false));
+    }
+
+    if (entitlements.includes('module_rep_teams')) {
+      fetch('/api/admin/rep-teams/teams')
+        .then(r => r.ok ? r.json() : { teams: [] })
+        .then(d => setRepTeamsDone(Array.isArray(d?.teams) && d.teams.length > 0))
+        .catch(() => setRepTeamsDone(false));
+    }
+
+    if (entitlements.includes('module_public_site')) {
+      fetch('/api/admin/public-site')
+        .then(r => r.ok ? r.json() : {})
+        .then((d: Record<string, unknown>) => setPublicSiteDone(!!(d?.tagline || d?.description)))
+        .catch(() => setPublicSiteDone(false));
+    }
   }, [loading, currentOrg, router]);
 
   async function complete() {
@@ -47,9 +74,12 @@ export default function OnboardingPage() {
     return null;
   }
 
-  const memberDone = (memberCount ?? 0) > 1;
+  const entitlements  = PLAN_CONFIG[currentOrg.planId].moduleEntitlements;
+  const planLabel     = PLAN_CONFIG[currentOrg.planId].label;
+
+  const memberDone     = (memberCount ?? 0) > 1;
   const tournamentDone = (tournamentCount ?? 0) > 0;
-  const allDone = memberDone && tournamentDone;
+  const allDone        = memberDone && tournamentDone;
 
   return (
     <div className={styles.page}>
@@ -64,7 +94,7 @@ export default function OnboardingPage() {
         <div className={`${styles.step} ${styles.stepDone}`}>
           <div className={styles.stepIcon}><CheckCircle2 size={20} /></div>
           <div className={styles.stepBody}>
-            <div className={styles.stepTitle}>You&apos;re on the Starter plan</div>
+            <div className={styles.stepTitle}>You&apos;re on the {planLabel} plan</div>
             <div className={styles.stepDesc}>
               Get started for free. Upgrade when you&apos;re ready for more seats and advanced features.
             </div>
@@ -109,6 +139,82 @@ export default function OnboardingPage() {
             </Link>
           )}
         </div>
+
+        {/* Step 4 — Public site (League and above) */}
+        {entitlements.includes('module_public_site') && (
+          <div className={`${styles.step} ${publicSiteDone ? styles.stepDone : ''}`}>
+            <div className={styles.stepIcon}>
+              {publicSiteDone ? <CheckCircle2 size={20} /> : <Circle size={20} />}
+            </div>
+            <div className={styles.stepBody}>
+              <div className={styles.stepTitle}>Set up your public page</div>
+              <div className={styles.stepDesc}>
+                Add a tagline and description so members can find your organization online.
+              </div>
+            </div>
+            {!publicSiteDone && (
+              <Link href={`/${currentOrg.slug}/admin/public-site`} className={styles.stepCta}>
+                Set up public page <ArrowRight size={13} />
+              </Link>
+            )}
+          </div>
+        )}
+
+        {/* Step 5 — House League season (League and above) */}
+        {entitlements.includes('module_house_league') && (
+          <div className={`${styles.step} ${seasonsDone ? styles.stepDone : ''}`}>
+            <div className={styles.stepIcon}>
+              {seasonsDone ? <CheckCircle2 size={20} /> : <Circle size={20} />}
+            </div>
+            <div className={styles.stepBody}>
+              <div className={styles.stepTitle}>Create your first season</div>
+              <div className={styles.stepDesc}>
+                Set up a house league season with divisions, registration, and scheduling.
+              </div>
+            </div>
+            {!seasonsDone && (
+              <Link href={`/${currentOrg.slug}/admin/house-league`} className={styles.stepCta}>
+                Create a season <ArrowRight size={13} />
+              </Link>
+            )}
+          </div>
+        )}
+
+        {/* Step 6 — Accounting (Club only) */}
+        {entitlements.includes('module_accounting') && (
+          <div className={styles.step}>
+            <div className={styles.stepIcon}><Circle size={20} /></div>
+            <div className={styles.stepBody}>
+              <div className={styles.stepTitle}>Review your accounting setup</div>
+              <div className={styles.stepDesc}>
+                Your org ledger is ready. Set up team ledgers, add entries, and track invoices.
+              </div>
+            </div>
+            <Link href={`/${currentOrg.slug}/admin/accounting`} className={styles.stepCta}>
+              Go to Accounting <ArrowRight size={13} />
+            </Link>
+          </div>
+        )}
+
+        {/* Step 7 — Rep Teams (Club only) */}
+        {entitlements.includes('module_rep_teams') && (
+          <div className={`${styles.step} ${repTeamsDone ? styles.stepDone : ''}`}>
+            <div className={styles.stepIcon}>
+              {repTeamsDone ? <CheckCircle2 size={20} /> : <Circle size={20} />}
+            </div>
+            <div className={styles.stepBody}>
+              <div className={styles.stepTitle}>Set up your first rep team</div>
+              <div className={styles.stepDesc}>
+                Create a rep team, open a program year, and start managing tryouts and rosters.
+              </div>
+            </div>
+            {!repTeamsDone && (
+              <Link href={`/${currentOrg.slug}/admin/rep-teams`} className={styles.stepCta}>
+                Set up a rep team <ArrowRight size={13} />
+              </Link>
+            )}
+          </div>
+        )}
       </div>
 
       <div className={styles.footer}>

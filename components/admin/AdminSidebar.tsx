@@ -1,12 +1,14 @@
 'use client';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
 import {
   LayoutDashboard, Users, Calendar, Trophy, Megaphone, Tag, LogOut, Home,
   ChevronRight, MapPin, RefreshCw, BookUser, BookOpen, CreditCard, Settings,
   Users2, Archive, ArrowLeft, Mail, Globe, DollarSign,
   CalendarDays, ClipboardList, FileText, UserCheck, ExternalLink,
-} from 'lucide-react';import { signOut } from '@/lib/auth';
+} from 'lucide-react';
+import { signOut } from '@/lib/auth';
 import { useOrg } from '@/lib/org-context';
 import { useTournament } from '@/lib/tournament-context';
 import { hasCapability } from '@/lib/roles';
@@ -48,6 +50,16 @@ export default function AdminSidebar() {
   const canSeeMembersNav = userRole
     ? userRole === 'owner' || hasCapability(userRole, userCapabilities, 'module_members')
     : false;
+
+  // Season switcher — loaded client-side when inside house league section
+  const [houseLeagueSeasons, setHouseLeagueSeasons] = useState<{ id: string; name: string }[]>([]);
+  useEffect(() => {
+    if (!isHouseLeague || !currentOrg) return;
+    fetch(`/api/admin/house-league/seasons`)
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d?.seasons) setHouseLeagueSeasons(d.seasons.filter((s: any) => s.status !== 'archived')); })
+      .catch(() => {});
+  }, [isHouseLeague, currentOrg?.slug]);
 
   const canSeePublicSite = userRole
     ? hasCapability(userRole, userCapabilities, 'module_public_site')
@@ -196,6 +208,24 @@ export default function AdminSidebar() {
           {currentSeasonId && (
             <div className={styles.navSection}>
               <div className={styles.sectionHeader}>Season</div>
+              {houseLeagueSeasons.length > 1 && (
+                <div className={styles.tournamentSwitcher}>
+                  <label className={styles.switcherLabel} htmlFor="hl-season-select">Switch Season</label>
+                  <select
+                    id="hl-season-select"
+                    className={styles.switcherSelect}
+                    value={currentSeasonId}
+                    onChange={e => {
+                      const subPath = pathname.match(/\/seasons\/[^/]+\/([^/]+)/)?.[1] ?? 'registrations';
+                      router.push(`${base}/house-league/seasons/${e.target.value}/${subPath}`);
+                    }}
+                  >
+                    {houseLeagueSeasons.map(s => (
+                      <option key={s.id} value={s.id}>{s.name}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
               <nav className={styles.nav}>
                 {navLink('hl-registrations', ClipboardList, 'Registrations',
                   `${base}/house-league/seasons/${currentSeasonId}/registrations`,

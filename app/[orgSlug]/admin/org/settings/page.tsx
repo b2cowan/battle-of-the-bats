@@ -158,7 +158,7 @@ export default function OrgSettingsPage() {
     setErrorOpen(true);
   }
 
-  const isCustomPlan = currentOrg?.planId === 'pro' || currentOrg?.planId === 'elite';
+  const isCustomPlan = currentOrg?.planId !== 'tournament';
 
   const previewTheme = useMemo(() => {
     if (presetKey === 'custom') {

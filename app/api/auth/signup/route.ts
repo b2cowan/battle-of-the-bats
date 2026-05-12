@@ -41,7 +41,7 @@ export async function POST(req: Request) {
     const userId = authData.user.id;
 
     // Create the organization
-    const org = await createOrganization(orgName, slug, 'starter');
+    const org = await createOrganization(orgName, slug, 'tournament');
     if (!org) {
       // Roll back auth user on failure
       await supabaseAdmin.auth.admin.deleteUser(userId);
