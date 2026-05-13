@@ -1091,31 +1091,23 @@ export async function uploadResourceFile(file: File): Promise<string | null> {
 
 export async function seedRulesAndResources(tournamentId: string) {
   console.log('Seeding rules for tournament:', tournamentId);
-  // Hardcoded data from app/rules/page.tsx
+  // Neutral starter content; organizers should customize before publishing.
   const RULES_SECTIONS = [
     {
       icon: 'Shield',
       title: 'General Tournament Rules',
       items: [
-        'All games are governed by Softball Canada official rules unless otherwise specified.',
-        'Each team must provide 1 scorekeeper and 1 base umpire per game.',
-        'A minimum of 8 players are required to start a game; fewer than 8 results in a forfeit.',
-        'Teams must be ready to play 10 minutes before their scheduled game time.',
-        'A 10-run mercy rule applies after 4 innings (3.5 innings if home team is ahead).',
-        'Games are 6 innings or 90 minutes maximum. No new inning starts after time expires.',
-        'Protests must be filed with the tournament director before the end of the disputed game.',
+        'Tournament-specific rules should be reviewed and published before the event goes live.',
+        'Teams must be ready to play before their scheduled game time.',
+        'Final eligibility, roster, scoring, and protest rules are set by the tournament organizer.',
       ],
     },
     {
       icon: 'BookOpen',
-      title: 'Eligibility & Age Divisions',
+      title: 'Eligibility & Divisions',
       items: [
-        'Players must meet the age requirement for their division as of January 1st of the tournament year.',
-        'U11: Ages 9–11 | U13: Ages 11–13 | U15: Ages 13–15 | U17: Ages 15–17 | U19: Ages 17–19',
-        'Each player may only be registered on one team per division.',
-        'Proof of age (birth certificate or government ID) may be requested at any time.',
-        'Player callups from lower divisions require tournament director approval.',
-        'Overage players are not permitted under any circumstances.',
+        'Division eligibility should be confirmed by the tournament organizer.',
+        'Roster limits, player eligibility, and team documentation requirements should be published before registration opens.',
       ],
     },
     {
@@ -1125,8 +1117,7 @@ export async function seedRulesAndResources(tournamentId: string) {
         'Respect for all players, coaches, umpires, and spectators is mandatory.',
         'Any player, coach, or spectator ejected from a game may not return to the facility that day.',
         'Aggressive or threatening behaviour will result in immediate removal from the tournament.',
-        'Consumption of alcohol or use of tobacco/cannabis is strictly prohibited in the playing area.',
-        'All disputes must be handled through official channels — no confrontations with umpires.',
+        'All disputes must be handled through official channels.',
         'Coaches are responsible for the behaviour of their players and spectators.',
       ],
     },
@@ -1134,24 +1125,17 @@ export async function seedRulesAndResources(tournamentId: string) {
       icon: 'CheckCircle',
       title: 'Equipment & Uniforms',
       items: [
-        'All bats must be certified for play under current Softball Canada regulations.',
-        'Players must wear matching team uniforms with visible numbers.',
-        'Helmets with face guards are mandatory for all batters and base runners.',
-        'Catchers must wear full protective equipment (helmet, chest protector, shin guards).',
-        'Cleats with metal spikes are NOT permitted for U11 and U13 divisions.',
-        'Teams must supply their own game balls — one new ball per game minimum.',
+        'Teams are responsible for meeting equipment requirements set by the tournament organizer.',
+        'Uniform and identification requirements should be published before the event.',
       ],
     },
   ];
 
   const RESOURCES = [
-    { label: 'Softball Canada Official Rules (PDF)', url: 'https://www.softball.ca/en/rules' },
-    { label: 'Tournament Bracket Format', url: '#' },
-    { label: 'Field Map & Directions', url: '#' },
-    { label: 'Player Registration Form', url: '#' },
-    { label: 'Medical Waiver Form', url: '#' },
+    { label: 'Tournament Rules', url: '#' },
+    { label: 'Venue Map & Directions', url: '#' },
+    { label: 'Registration Requirements', url: '#' },
   ];
-
   try {
     // Seed Rules
     for (let i = 0; i < RULES_SECTIONS.length; i++) {
@@ -1258,6 +1242,18 @@ export async function getTournamentBySlug(orgId: string, slug: string): Promise<
   return mapTournament(data);
 }
 
+export async function getPublicTournamentBySlug(orgId: string, slug: string): Promise<Tournament | null> {
+  const { data, error } = await supabase
+    .from('tournaments')
+    .select('*')
+    .eq('organization_id', orgId)
+    .eq('slug', slug)
+    .in('status', ['active', 'completed'])
+    .single();
+  if (error || !data) return null;
+  return mapTournament(data);
+}
+
 // Server-side only (uses service role key) ────────────────────────────────────
 
 export async function createOrganization(
@@ -1311,6 +1307,7 @@ function mapOrg(r: any): Organization {
     themeFont:            r.theme_font ?? 'system',
     themeCardStyle:       r.theme_card_style ?? 'default',
     enabledAddons:        r.enabled_addons ?? [],
+    contactEmail:          r.contact_email ?? null,
   };
 }
 

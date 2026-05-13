@@ -1,6 +1,6 @@
 import { cookies } from 'next/headers';
 import { Megaphone, Star, Calendar } from 'lucide-react';
-import { getAnnouncements, getOrganizationBySlug, getTournamentBySlug, getAgeGroups } from '@/lib/db';
+import { getAnnouncements, getOrganizationBySlug, getPublicTournamentBySlug, getAgeGroups } from '@/lib/db';
 import { Announcement } from '@/lib/types';
 import DivisionFilterBar from '@/components/DivisionFilterBar';
 import styles from '../../news/news.module.css';
@@ -21,7 +21,7 @@ export default async function NewsPage({
   const prefName = cookieStore.get(`fl_agpref_${orgSlug}`)?.value ?? null;
 
   const org = await getOrganizationBySlug(orgSlug);
-  const tournament = org ? await getTournamentBySlug(org.id, tournamentSlug) : null;
+  const tournament = org ? await getPublicTournamentBySlug(org.id, tournamentSlug) : null;
 
   const [allAnnouncements, ageGroups] = await Promise.all([
     getAnnouncements(tournament?.id),

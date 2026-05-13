@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation';
-import { getOrganizationBySlug, getTournamentBySlug } from '@/lib/db';
+import { getOrganizationBySlug, getPublicTournamentBySlug } from '@/lib/db';
 import TournamentNavSync from '@/components/TournamentNavSync';
 
 export const dynamic = 'force-dynamic';
@@ -14,7 +14,7 @@ export default async function TournamentLayout({
   const { orgSlug, tournamentSlug } = await params;
   const org = await getOrganizationBySlug(orgSlug);
   if (!org) notFound();
-  const tournament = await getTournamentBySlug(org.id, tournamentSlug);
+  const tournament = await getPublicTournamentBySlug(org.id, tournamentSlug);
   if (!tournament) notFound();
 
   return (

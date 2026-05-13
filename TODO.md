@@ -6,6 +6,17 @@ This file tracks the ongoing tasks for the FieldLogicHQ platform (multi-tenant s
 
 ## 🚀 Active Tasks (Priority Order)
 
+### 0. Tournament Signup Experience
+*Detailed tasks in [TOURNAMENT_SIGNUP_EXPERIENCE_FIXES.md](TOURNAMENT_SIGNUP_EXPERIENCE_FIXES.md)*
+
+- [ ] **First tournament signup path** - Fix onboarding, setup, public registration, and route polish for new tournament organizers
+  - [x] Phase 1 trust and blocking fixes implemented
+  - [x] Phase 2 setup polish implemented
+  - [x] Phase 3 conversion and public experience implemented
+  - [x] Phase 4 plan-aware onboarding refinement implemented
+  - [x] Non-browser hardening pass completed
+  - [ ] Browser verification of signup-to-registration flow
+
 ### 1. Multi-Tenancy — Billing & Subscriptions
 *Detailed tasks in [MULTI_TENANT_ARCHITECTURE.md](MULTI_TENANT_ARCHITECTURE.md)*
 
@@ -130,6 +141,9 @@ This file tracks the ongoing tasks for the FieldLogicHQ platform (multi-tenant s
 - [x] Live Dev Environment — AWS Amplify `dev` branch live
 - [x] RESEND_API_KEY added to Amplify environment variables
 - [x] NEXT_PUBLIC_APP_URL added to Amplify environment variables
+- [x] Signup DB hardening - `025_service_role_api_grants.sql` applied in dev and production; secret-key prefix logging removed locally
+- [x] Platform admin/dev tools hardening - bootstrap admin preservation, DB-aware platform access, and auth-gated seed/wipe APIs
+- [x] Local Supabase safety guard - localhost refuses the known production Supabase project and signup key-prefix logging is removed
 
 ### Auth & Membership Constraints
 - [x] One-user-one-org enforcement — delete auth user on member removal; cross-org invite guard (see [docs/archive/ONE_ORG_CONSTRAINT_PLAN.md](docs/archive/ONE_ORG_CONSTRAINT_PLAN.md))

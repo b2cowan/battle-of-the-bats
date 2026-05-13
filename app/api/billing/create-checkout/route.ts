@@ -9,7 +9,7 @@ export async function POST(req: Request) {
   const auth = await getAuthContext();
   if (!auth) return unauthorized();
 
-  const { planKey }: { planKey: 'tournament_plus' | 'league' | 'club' } = await req.json();
+  const { planKey, returnTo }: { planKey: 'tournament_plus' | 'league' | 'club'; returnTo?: string } = await req.json();
   const plan = PLAN_CONFIG[planKey as OrgPlan];
   if (!plan) {
     return new Response(JSON.stringify({ error: 'Invalid plan' }), {
@@ -19,6 +19,10 @@ export async function POST(req: Request) {
   }
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? '';
+  const fallbackReturnTo = `/${auth.org.slug}/admin/org/billing`;
+  const safeReturnTo = returnTo?.startsWith(`/${auth.org.slug}/admin/`)
+    ? returnTo
+    : fallbackReturnTo;
 
   // ── Dev mock: no Stripe, write directly to DB ──────────────────────────────
   if (DEV_MODE) {
@@ -33,7 +37,7 @@ export async function POST(req: Request) {
       .eq('id', auth.org.id);
 
     return new Response(
-      JSON.stringify({ url: `${appUrl}/${auth.org.slug}/admin/org/billing?success=1` }),
+      JSON.stringify({ url: `${appUrl}${safeReturnTo}?success=1` }),
       { status: 200, headers: { 'Content-Type': 'application/json' } }
     );
   }
@@ -65,8 +69,8 @@ export async function POST(req: Request) {
     mode: 'subscription',
     customer: customerId,
     line_items: [{ price: plan.priceId, quantity: 1 }],
-    success_url: `${appUrl}/${auth.org.slug}/admin/org/billing?success=1`,
-    cancel_url: `${appUrl}/${auth.org.slug}/admin/org/billing`,
+    success_url: `${appUrl}${safeReturnTo}?success=1`,
+    cancel_url: `${appUrl}${safeReturnTo}`,
   });
 
   return new Response(JSON.stringify({ url: session.url }), {

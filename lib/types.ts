@@ -40,7 +40,7 @@ export interface Tournament {
   id: string;
   organizationId?: string;   // FK → organizations (nullable during migration)
   year: number;        // e.g. 2026
-  name: string;        // e.g. "Battle of the Bats 2026"
+  name: string;        // e.g. "Spring Classic 2026"
   slug: string;        // URL-safe identifier; unique per org among non-archived
   status: TournamentStatus;
   isActive: boolean;   // derived: status === 'active'. Kept for compatibility.

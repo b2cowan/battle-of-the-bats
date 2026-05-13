@@ -16,6 +16,7 @@ export default function RegisterPage() {
   const [ageGroups, setAgeGroups]   = useState<AgeGroup[]>([]);
   const [contacts, setContacts]     = useState<Contact[]>([]);
   const [tournament, setTournament] = useState<Tournament | null>(null);
+  const [contactEmail, setContactEmail] = useState<string | null>(null);
   const [stats, setStats]           = useState<Record<string, number>>({});
   const [step, setStep]             = useState<Step>('form');
   const [errorMsg, setErrorMsg]     = useState('');
@@ -29,6 +30,7 @@ export default function RegisterPage() {
       const ts  = org ? await getTournamentsByOrg(org.id) : [];
       const current = ts.find(t => t.slug === tournamentSlug) ?? null;
       setTournament(current);
+      setContactEmail(current?.contactEmail ?? org?.contactEmail ?? null);
       if (current) {
         setAgeGroups(await getAgeGroups(current.id));
         setContacts(await getContacts(current.id));
@@ -79,13 +81,14 @@ export default function RegisterPage() {
       }
 
       setStep('success');
-    } catch (err: any) {
-      setErrorMsg(err.message ?? 'Something went wrong. Please try again.');
+    } catch (err: unknown) {
+      setErrorMsg(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
       setStep('error');
     }
   }
 
-  const notOpen = !tournament || ageGroups.length === 0;
+  const isRegistrationOpen = tournament?.status === 'active' && ageGroups.length > 0;
+  const notOpen = !isRegistrationOpen;
 
   const selectedGroup = ageGroups.find(g => g.id === form.ageGroupId);
   const isClosed = selectedGroup?.isClosed;
@@ -112,8 +115,15 @@ export default function RegisterPage() {
             {notOpen && step === 'form' && (
               <div className={`card ${styles.closedCard}`}>
                 <AlertCircle size={40} style={{ color: 'var(--warning)', margin: '0 auto 1rem' }} />
-                <h3>Registration Not Yet Open</h3>
-                <p>Tournament registration isn&apos;t available yet. Check back soon or contact us at <a href="mailto:b2cowan@gmail.com">b2cowan@gmail.com</a>.</p>
+                <h3>Registration Not Open</h3>
+                <p>
+                  Tournament registration is not accepting submissions right now.
+                  {contactEmail ? (
+                    <> Questions? Contact the organizer at <a href={`mailto:${contactEmail}`}>{contactEmail}</a>.</>
+                  ) : (
+                    <> Check back soon or contact the organizer directly.</>
+                  )}
+                </p>
               </div>
             )}
 

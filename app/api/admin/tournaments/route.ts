@@ -67,6 +67,32 @@ export async function POST(req: Request) {
       const newStatus: TournamentStatus = data.status;
 
       if (newStatus === 'active') {
+        const { data: tournamentRow, error: tournamentError } = await supabase
+          .from('tournaments')
+          .select('start_date, end_date, contact_email')
+          .eq('id', id)
+          .eq('organization_id', ctx.org.id)
+          .single();
+        if (tournamentError) throw tournamentError;
+
+        const { data: ageGroups, error: ageGroupsError } = await supabase
+          .from('age_groups')
+          .select('id, is_closed')
+          .eq('tournament_id', id);
+        if (ageGroupsError) throw ageGroupsError;
+
+        const blockers: string[] = [];
+        if (!tournamentRow?.start_date || !tournamentRow?.end_date) blockers.push('add tournament dates');
+        if (!ageGroups?.length) blockers.push('add at least one division');
+        if (!tournamentRow?.contact_email && !ctx.org.contactEmail) blockers.push('add a public contact email');
+        if (ageGroups?.length && ageGroups.every(g => g.is_closed)) blockers.push('open at least one division');
+        if (blockers.length > 0) {
+          return Response.json(
+            { error: `Before activating this tournament, please ${blockers.join(', ')}.` },
+            { status: 400 }
+          );
+        }
+
         const { count } = await supabase
           .from('tournaments')
           .select('*', { count: 'exact', head: true })
@@ -122,7 +148,23 @@ export async function POST(req: Request) {
       const updates: Record<string, unknown> = {};
       if (data.year      !== undefined) updates.year       = data.year;
       if (data.name      !== undefined) updates.name       = data.name;
-      if (data.slug      !== undefined) updates.slug       = data.slug;
+      if (data.slug      !== undefined) {
+        const slug = String(data.slug).trim().toLowerCase();
+        if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) {
+          return Response.json({ error: 'Tournament URL must contain lowercase letters, numbers, and hyphens.' }, { status: 400 });
+        }
+        const { count } = await supabase
+          .from('tournaments')
+          .select('*', { count: 'exact', head: true })
+          .eq('organization_id', ctx.org.id)
+          .eq('slug', slug)
+          .neq('status', 'archived')
+          .neq('id', id);
+        if ((count ?? 0) > 0) {
+          return Response.json({ error: 'A tournament with this URL already exists.' }, { status: 409 });
+        }
+        updates.slug = slug;
+      }
       if (data.startDate !== undefined) updates.start_date = data.startDate;
       if (data.endDate   !== undefined) updates.end_date   = data.endDate;
 

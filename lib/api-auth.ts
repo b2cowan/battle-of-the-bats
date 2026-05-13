@@ -5,6 +5,7 @@ import type { Organization, OrgPlan, OrgRole } from './types';
 import type { User } from '@supabase/supabase-js';
 import { hasCapability } from './roles';
 import type { Capability } from './roles';
+import { assertSafeSupabaseServerEnvironment } from './supabase-safety';
 
 export interface AuthContext {
   user: User;
@@ -24,6 +25,8 @@ export interface AuthContextWithScope extends AuthContext {
  * Use in all /api/admin/* route handlers before touching the database.
  */
 export async function getAuthContext(): Promise<AuthContext | null> {
+  assertSafeSupabaseServerEnvironment('API auth Supabase client');
+
   const cookieStore = await cookies();
 
   const supabase = createServerClient(

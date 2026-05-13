@@ -1,10 +1,9 @@
 ﻿'use client';
 import { useState, useEffect } from 'react';
-import { RefreshCw, Plus, Check, X, Trash2, Pencil, Star, Sparkles } from 'lucide-react';
+import { RefreshCw, Plus, Check, X, Trash2, Pencil, Star, Sparkles, ArrowRight } from 'lucide-react';
+import Link from 'next/link';
 import {
-  getTournamentsByOrg, saveTournament, updateTournament, deleteTournament, setActiveTournament,
-  getContacts, getDiamonds, cloneContacts, cloneDiamonds, initializeAgeGroups, saveAnnouncement,
-  seedTournamentData, getArchivesByOrg
+  getTournamentsByOrg, getContacts, getArchivesByOrg, getAgeGroups
 } from '@/lib/db';
 import { useTournament } from '@/lib/tournament-context';
 import { useOrg } from '@/lib/org-context';
@@ -19,8 +18,26 @@ import HelpTooltip from '@/components/help/HelpTooltip';
 import styles from './tournaments-admin.module.css';
 
 type ModalMode = 'add' | 'edit' | null;
+type DivisionPreset = 'youth' | 'adult' | 'custom';
+type SlugStatus = 'idle' | 'checking' | 'available' | 'taken' | 'invalid';
+
+const DIVISION_PRESETS: Record<Exclude<DivisionPreset, 'custom'>, string[]> = {
+  youth: ['U9', 'U11', 'U13', 'U15', 'U17', 'U19'],
+  adult: ['Open', 'Competitive', 'Recreational'],
+};
+
+function buildDivisionDefaults(names: string[]) {
+  return {
+    selected: new Set(names),
+    capacities: Object.fromEntries(names.map(name => [name, 8])),
+    pools: Object.fromEntries(names.map(name => [name, 0])),
+    requiresPool: Object.fromEntries(names.map(name => [name, false])),
+    poolNames: Object.fromEntries(names.map(name => [name, ['Pool A']])),
+  };
+}
 
 export default function AdminTournamentsPage() {
+  const showDevSeedTools = process.env.NEXT_PUBLIC_ENABLE_DEV_TOOLS === 'true';
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
   const [modal, setModal]       = useState<ModalMode>(null);
   const [editing, setEditing]   = useState<Tournament | null>(null);
@@ -42,6 +59,9 @@ export default function AdminTournamentsPage() {
     endDate: '',
   });
   const [slugEdited, setSlugEdited] = useState(false);
+  const [slugStatus, setSlugStatus] = useState<SlugStatus>('idle');
+  const [slugMessage, setSlugMessage] = useState('');
+  const [createdTournament, setCreatedTournament] = useState<{ name: string; slug: string } | null>(null);
   const { refresh: refreshCtx } = useTournament();
   const { currentOrg } = useOrg();
 
@@ -50,21 +70,16 @@ export default function AdminTournamentsPage() {
   const [sourceContacts, setSourceContacts]         = useState<Contact[]>([]);
   const [selectedContactIds, setSelectedContactIds] = useState<Set<string>>(new Set());
   const [migrateDiamonds, setMigrateDiamonds]       = useState(false);
-  const [selectedDivisions, setSelectedDivisions]   = useState<Set<string>>(new Set(['U11', 'U13', 'U15', 'U17', 'U19']));
-  const [divisionCapacities, setDivisionCapacities] = useState<Record<string, number>>({
-    'U11': 8, 'U13': 8, 'U15': 8, 'U17': 8, 'U19': 8
-  });
-  const [divisionPools, setDivisionPools]           = useState<Record<string, number>>({
-    'U11': 0, 'U13': 0, 'U15': 0, 'U17': 0, 'U19': 0
-  });
-  const [divisionRequiresPool, setDivisionRequiresPool] = useState<Record<string, boolean>>({
-    'U11': false, 'U13': false, 'U15': false, 'U17': false, 'U19': false
-  });
-  const [divisionPoolNames, setDivisionPoolNames] = useState<Record<string, string[]>>({
-    'U11': ['Pool A'], 'U13': ['Pool A'], 'U15': ['Pool A'], 'U17': ['Pool A'], 'U19': ['Pool A']
-  });
+  const [divisionPreset, setDivisionPreset] = useState<DivisionPreset>('youth');
+  const [customDivisionName, setCustomDivisionName] = useState('');
+  const initialDivisions = buildDivisionDefaults(DIVISION_PRESETS.youth);
+  const [selectedDivisions, setSelectedDivisions]   = useState<Set<string>>(initialDivisions.selected);
+  const [divisionCapacities, setDivisionCapacities] = useState<Record<string, number>>(initialDivisions.capacities);
+  const [divisionPools, setDivisionPools]           = useState<Record<string, number>>(initialDivisions.pools);
+  const [divisionRequiresPool, setDivisionRequiresPool] = useState<Record<string, boolean>>(initialDivisions.requiresPool);
+  const [divisionPoolNames, setDivisionPoolNames] = useState<Record<string, string[]>>(initialDivisions.poolNames);
   const [useWelcomeMsg, setUseWelcomeMsg]           = useState(true);
-  const [welcomeMsg, setWelcomeMsg]                 = useState('Welcome to the Battle of the Bats tournament! We are excited to have you join us for another great season of competitive youth softball.');
+  const [welcomeMsg, setWelcomeMsg]                 = useState('Welcome to our tournament! We are excited to host a great event for all participating teams.');
   const [seedData, setSeedData]                     = useState({
     contacts: false,
     diamonds: false,
@@ -109,10 +124,50 @@ export default function AdminTournamentsPage() {
     fetchSourceContacts();
   }, [sourceTournamentId, modal]);
 
+  useEffect(() => {
+    const timer = window.setTimeout(async () => {
+      if (!modal || !form.slug) {
+        setSlugStatus('idle');
+        setSlugMessage('');
+        return;
+      }
+      if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(form.slug)) {
+        setSlugStatus('invalid');
+        setSlugMessage('Use lowercase letters, numbers, and single hyphens only.');
+        return;
+      }
+      setSlugStatus('checking');
+      setSlugMessage('Checking URL availability...');
+      try {
+        const res = await fetch('/api/admin/tournaments', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'check-slug',
+            data: { slug: form.slug, excludeId: editing?.id },
+          }),
+        });
+        const result = await res.json();
+        if (!res.ok) throw new Error(result.error || 'Unable to check URL.');
+        setSlugStatus(result.available ? 'available' : 'taken');
+        setSlugMessage(result.available ? 'URL available.' : 'This URL is already in use.');
+      } catch {
+        setSlugStatus('idle');
+        setSlugMessage('URL availability could not be checked.');
+      }
+    }, !modal || !form.slug ? 0 : 350);
+
+    return () => window.clearTimeout(timer);
+  }, [modal, form.slug, editing?.id]);
+
   function openAdd() {
     const nextYear = new Date().getFullYear();
-    const defaultName = `Battle of the Bats ${nextYear}`;
+    const defaultName = `${nextYear} Tournament`;
+    const defaults = buildDivisionDefaults(DIVISION_PRESETS.youth);
     setSlugEdited(false);
+    setSlugStatus('idle');
+    setSlugMessage('');
+    setCreatedTournament(null);
     setForm({
       year: String(nextYear),
       name: defaultName,
@@ -123,12 +178,15 @@ export default function AdminTournamentsPage() {
     setEditing(null);
     setSourceTournamentId('');
     setMigrateDiamonds(false);
-    setSelectedDivisions(new Set(['U11', 'U13', 'U15', 'U17', 'U19']));
-    setDivisionCapacities({ 'U11': 8, 'U13': 8, 'U15': 8, 'U17': 8, 'U19': 8 });
-    setDivisionPools({ 'U11': 0, 'U13': 0, 'U15': 0, 'U17': 0, 'U19': 0 });
-    setDivisionRequiresPool({ 'U11': false, 'U13': false, 'U15': false, 'U17': false, 'U19': false });
+    setDivisionPreset('youth');
+    setCustomDivisionName('');
+    setSelectedDivisions(defaults.selected);
+    setDivisionCapacities(defaults.capacities);
+    setDivisionPools(defaults.pools);
+    setDivisionRequiresPool(defaults.requiresPool);
+    setDivisionPoolNames(defaults.poolNames);
     setUseWelcomeMsg(true);
-    setWelcomeMsg('Welcome to the Battle of the Bats tournament! We are excited to have you join us for another great season of competitive youth softball.');
+    setWelcomeMsg('Welcome to our tournament! We are excited to host a great event for all participating teams.');
     setSeedData({
       contacts: false,
       diamonds: false,
@@ -150,6 +208,8 @@ export default function AdminTournamentsPage() {
 
   function openEdit(t: Tournament) {
     setSlugEdited(true);
+    setSlugStatus('idle');
+    setSlugMessage('');
     setForm({
       year: String(t.year),
       name: t.name,
@@ -170,6 +230,18 @@ export default function AdminTournamentsPage() {
       startDate: form.startDate || undefined,
       endDate:   form.endDate || undefined,
     };
+    if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(data.slug)) {
+      alert('Please use a valid URL slug before saving.');
+      return;
+    }
+    if (slugStatus === 'taken' || slugStatus === 'checking') {
+      alert(slugStatus === 'taken' ? 'This tournament URL is already in use.' : 'Please wait for the URL availability check to finish.');
+      return;
+    }
+    if (modal === 'add' && selectedDivisions.size === 0) {
+      alert('Add at least one division before creating the tournament.');
+      return;
+    }
 
     try {
       if (modal === 'add') {
@@ -178,13 +250,19 @@ export default function AdminTournamentsPage() {
           divisions: Array.from(selectedDivisions).map(name => ({
             name,
             capacity: divisionCapacities[name] || 8,
-            poolCount: divisionPools[name] || 1,
+            poolCount: divisionPools[name] ?? 0,
             poolNames: (divisionPoolNames[name] || []).join(','),
             requiresPoolSelection: divisionRequiresPool[name] || false
           })),
           announcement: useWelcomeMsg ? { body: welcomeMsg } : null,
-          seedData: seedData,
-          scheduleParams: seedData.schedule ? {
+          seedData: showDevSeedTools ? seedData : {
+            contacts: false,
+            diamonds: false,
+            registrations: false,
+            schedule: false,
+            results: false,
+          },
+          scheduleParams: showDevSeedTools && seedData.schedule ? {
             ...scheduleParams,
             startDate: scheduleParams.startDate || data.startDate,
             endDate: scheduleParams.endDate || data.endDate
@@ -207,6 +285,7 @@ export default function AdminTournamentsPage() {
           console.log('Setup API Debug Logs:', result.debug);
         }
         if (!res.ok) throw new Error(result.error || 'Setup failed');
+        setCreatedTournament({ name: data.name, slug: data.slug });
       } else if (editing) {
         const res = await fetch('/api/admin/tournaments', {
           method: 'POST',
@@ -249,6 +328,29 @@ export default function AdminTournamentsPage() {
     setSelectedDivisions(next);
   }
 
+  function applyDivisionPreset(preset: DivisionPreset) {
+    setDivisionPreset(preset);
+    setCustomDivisionName('');
+    const names = preset === 'custom' ? [] : DIVISION_PRESETS[preset];
+    const defaults = buildDivisionDefaults(names);
+    setSelectedDivisions(defaults.selected);
+    setDivisionCapacities(defaults.capacities);
+    setDivisionPools(defaults.pools);
+    setDivisionRequiresPool(defaults.requiresPool);
+    setDivisionPoolNames(defaults.poolNames);
+  }
+
+  function addCustomDivision() {
+    const name = customDivisionName.trim();
+    if (!name || selectedDivisions.has(name)) return;
+    setSelectedDivisions(prev => new Set([...prev, name]));
+    setDivisionCapacities(prev => ({ ...prev, [name]: 8 }));
+    setDivisionPools(prev => ({ ...prev, [name]: 0 }));
+    setDivisionRequiresPool(prev => ({ ...prev, [name]: false }));
+    setDivisionPoolNames(prev => ({ ...prev, [name]: ['Pool A'] }));
+    setCustomDivisionName('');
+  }
+
   function updateCapacity(name: string, cap: number) {
     setDivisionCapacities(prev => ({ ...prev, [name]: cap }));
   }
@@ -283,7 +385,7 @@ export default function AdminTournamentsPage() {
     setDivisionRequiresPool(prev => ({ ...prev, [name]: req }));
   }
 
-  async function handleSetStatus(id: string, status: TournamentStatus) {
+  async function applyTournamentStatus(id: string, status: TournamentStatus) {
     try {
       const res = await fetch('/api/admin/tournaments', {
         method: 'POST',
@@ -304,6 +406,42 @@ export default function AdminTournamentsPage() {
     } catch (err: any) {
       alert('Error: ' + err.message);
     }
+  }
+
+  async function handleSetStatus(tournament: Tournament, status: TournamentStatus) {
+    if (status === 'active') {
+      const ageGroups = await getAgeGroups(tournament.id);
+      const blockers: string[] = [];
+      const reminders: string[] = [];
+
+      if (!tournament.startDate || !tournament.endDate) blockers.push('Add tournament start and end dates.');
+      if (ageGroups.length === 0) blockers.push('Add at least one division.');
+      if (!tournament.contactEmail && !currentOrg?.contactEmail) blockers.push('Add a public contact email.');
+      if (ageGroups.length > 0 && ageGroups.every(g => g.isClosed)) blockers.push('Open at least one division for registration.');
+      if (ageGroups.some(g => !g.capacity)) reminders.push('Review division capacities.');
+
+      if (blockers.length > 0) {
+        setFeedback({
+          isOpen: true,
+          title: 'Tournament Not Ready',
+          message: `Before activating, please: ${blockers.join(' ')}`,
+          type: 'warning',
+        });
+        return;
+      }
+
+      setFeedback({
+        isOpen: true,
+        title: 'Activate Tournament?',
+        message: `This will publish the tournament page and open registration. ${reminders.length ? `Recommended before launch: ${reminders.join(' ')}` : 'Your launch checklist looks ready.'}`,
+        type: 'primary',
+        confirmText: 'Activate Tournament',
+        onConfirm: () => applyTournamentStatus(tournament.id, status),
+      });
+      return;
+    }
+
+    applyTournamentStatus(tournament.id, status);
   }
 
   function openSealConfirm(t: Tournament) {
@@ -354,6 +492,16 @@ export default function AdminTournamentsPage() {
       alert("Error: " + err.message);
     }
   }
+
+  const visibleDivisionNames = divisionPreset === 'custom'
+    ? Array.from(selectedDivisions)
+    : DIVISION_PRESETS[divisionPreset];
+  const slugHintColor = slugStatus === 'available'
+    ? 'var(--success, #22c55e)'
+    : slugStatus === 'taken' || slugStatus === 'invalid'
+      ? 'var(--danger, #ef4444)'
+      : 'var(--white-30)';
+  const saveDisabled = slugStatus === 'checking' || slugStatus === 'taken' || slugStatus === 'invalid';
 
   return (
     <div className={styles.page}>
@@ -441,7 +589,7 @@ export default function AdminTournamentsPage() {
                     style={{ padding: '0.25rem 0.5rem', fontSize: '0.8rem', minWidth: '120px' }}
                     value={t.status}
                     disabled={sealedTournamentIds.has(t.id)}
-                    onChange={e => handleSetStatus(t.id, e.target.value as TournamentStatus)}
+                    onChange={e => handleSetStatus(t, e.target.value as TournamentStatus)}
                     id={`status-select-${t.id}`}
                   >
                     <option value="draft">Draft</option>
@@ -467,6 +615,17 @@ export default function AdminTournamentsPage() {
                           Seal
                         </button>
                       )
+                    )}
+                    {currentOrg && (
+                      <Link
+                        className="btn btn-outline btn-sm"
+                        href={t.status === 'draft'
+                          ? `/${currentOrg.slug}/admin/tournaments/preview/${t.slug}`
+                          : `/${currentOrg.slug}/${t.slug}`}
+                        id={`preview-tournament-${t.id}`}
+                      >
+                        Preview
+                      </Link>
                     )}
                     <button className="btn btn-ghost btn-sm" onClick={() => openEdit(t)} id={`edit-tournament-${t.id}`}>
                       <Pencil size={13} />
@@ -505,7 +664,7 @@ export default function AdminTournamentsPage() {
                     onChange={e => {
                       const y = e.target.value;
                       setForm(f => {
-                        const newName = f.name.includes('Battle') ? `Battle of the Bats ${y}` : f.name;
+                        const newName = /^\d{4} Tournament$/.test(f.name) ? `${y} Tournament` : f.name;
                         return { ...f, year: y, name: newName, ...(!slugEdited && { slug: generateSlug(newName) }) };
                       });
                     }}
@@ -517,7 +676,7 @@ export default function AdminTournamentsPage() {
                   <label className="form-label">Tournament Name *</label>
                   <input
                     className="form-input"
-                    placeholder="Battle of the Bats 2026"
+                    placeholder="e.g. Spring Classic 2026"
                     value={form.name}
                     onChange={e => {
                       const name = e.target.value;
@@ -566,17 +725,22 @@ export default function AdminTournamentsPage() {
                 <label className="form-label">URL Slug *</label>
                 <input
                   className="form-input"
-                  placeholder="battle-of-the-bats-2026"
+                  placeholder="spring-classic-2026"
                   value={form.slug}
                   onChange={e => {
                     setSlugEdited(true);
-                    setForm(f => ({ ...f, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '') }));
+                    setForm(f => ({ ...f, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-') }));
                   }}
                   required
                   id="tournament-slug-input"
                 />
                 <p style={{ fontSize: '0.7rem', color: 'var(--white-30)', marginTop: '0.25rem' }}>
                   Used in the public URL — /{'{orgSlug}'}/{form.slug || '…'}/schedule
+                  {slugMessage && (
+                    <span style={{ color: slugHintColor, marginLeft: '0.5rem' }}>
+                      {slugMessage}
+                    </span>
+                  )}
                   {modal === 'edit' && (
                     <span style={{ color: 'var(--warning, #f59e0b)', marginLeft: '0.5rem' }}>
                       Changing this will break existing links to this tournament.
@@ -640,9 +804,64 @@ export default function AdminTournamentsPage() {
                   )}
 
                   <div className={styles.setupGroup}>
-                    <label className="form-label">Age divisions & capacities:</label>
+                    <label className="form-label">Division setup</label>
+                    <p className={styles.setupHint}>
+                      Choose a starting structure, then adjust capacities. Pools are optional and only needed when a division is split into smaller groups.
+                    </p>
+                    <div className={styles.presetGrid}>
+                      <button
+                        type="button"
+                        className={`${styles.presetButton} ${divisionPreset === 'youth' ? styles.presetButtonActive : ''}`}
+                        onClick={() => applyDivisionPreset('youth')}
+                      >
+                        <strong>Youth</strong>
+                        <span>U9, U11, U13, U15, U17, U19</span>
+                      </button>
+                      <button
+                        type="button"
+                        className={`${styles.presetButton} ${divisionPreset === 'adult' ? styles.presetButtonActive : ''}`}
+                        onClick={() => applyDivisionPreset('adult')}
+                      >
+                        <strong>Adult</strong>
+                        <span>Open, Competitive, Recreational</span>
+                      </button>
+                      <button
+                        type="button"
+                        className={`${styles.presetButton} ${divisionPreset === 'custom' ? styles.presetButtonActive : ''}`}
+                        onClick={() => applyDivisionPreset('custom')}
+                      >
+                        <strong>Custom</strong>
+                        <span>Add your own division names</span>
+                      </button>
+                    </div>
+
+                    {divisionPreset === 'custom' && (
+                      <div className={styles.customDivisionRow}>
+                        <input
+                          className="form-input"
+                          value={customDivisionName}
+                          onChange={e => setCustomDivisionName(e.target.value)}
+                          onKeyDown={e => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              addCustomDivision();
+                            }
+                          }}
+                          placeholder="e.g. 12U, Open, Varsity"
+                        />
+                        <button type="button" className="btn btn-outline btn-sm" onClick={addCustomDivision}>
+                          <Plus size={14} /> Add
+                        </button>
+                      </div>
+                    )}
+
                     <div className={styles.divisionGrid}>
-                      {['U11', 'U13', 'U15', 'U17', 'U19'].map(div => (
+                      {visibleDivisionNames.length === 0 && (
+                        <div className={styles.emptyDivisions}>
+                          Add at least one division to create the tournament.
+                        </div>
+                      )}
+                      {visibleDivisionNames.map(div => (
                         <div key={div} className={styles.divisionRow}>
                           <label className={styles.checkboxLabel}>
                             <input 
@@ -744,6 +963,7 @@ export default function AdminTournamentsPage() {
                     )}
                   </div>
 
+                  {showDevSeedTools && (
                   <div className={styles.setupGroup}>
                     <div className={styles.migrationHeader}>
                       <Sparkles size={16} />
@@ -852,11 +1072,12 @@ export default function AdminTournamentsPage() {
                       </div>
                     )}
                   </div>
+                  )}
                 </div>
               )}
               <div className="modal-footer">
                 <button type="button" className="btn btn-ghost" onClick={() => setModal(null)}>Cancel</button>
-                <button type="submit" className="btn btn-primary" id="tournament-save-btn">
+                <button type="submit" className="btn btn-primary" id="tournament-save-btn" disabled={saveDisabled}>
                   <Check size={14} /> Save
                 </button>
               </div>
@@ -869,6 +1090,37 @@ export default function AdminTournamentsPage() {
         {...feedback}
         onClose={() => setFeedback(f => ({ ...f, isOpen: false, onConfirm: undefined }))}
       />
+
+      {createdTournament && currentOrg && (
+        <div className="modal-overlay" onClick={() => setCreatedTournament(null)}>
+          <div className="modal" style={{ maxWidth: 520 }} onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <div className="flex items-center gap-2">
+                <Check size={20} style={{ color: 'var(--success, #22c55e)' }} />
+                <h3>Tournament Created</h3>
+              </div>
+              <button className="btn btn-ghost btn-sm" onClick={() => setCreatedTournament(null)}><X size={16} /></button>
+            </div>
+            <div style={{ padding: '1.25rem 1.5rem' }}>
+              <p style={{ color: 'var(--white-70)', marginBottom: '1rem' }}>
+                {createdTournament.name} is saved as a draft. Finish setup, then activate it when you are ready to publish the public page and accept registrations.
+              </p>
+              <div className={styles.nextStepsGrid}>
+                <Link href={`/${currentOrg.slug}/admin/tournaments/age-groups`} className={styles.nextStepLink}>Review divisions</Link>
+                <Link href={`/${currentOrg.slug}/admin/tournaments/diamonds`} className={styles.nextStepLink}>Add venues</Link>
+                <Link href={`/${currentOrg.slug}/admin/tournaments/contacts`} className={styles.nextStepLink}>Add contacts</Link>
+                <Link href={`/${currentOrg.slug}/admin/org/tournaments`} className={styles.nextStepLink}>Activate when ready</Link>
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button className="btn btn-ghost" onClick={() => setCreatedTournament(null)}>Stay Here</button>
+              <Link href={`/${currentOrg.slug}/admin/tournaments/dashboard`} className="btn btn-primary">
+                Go to Dashboard <ArrowRight size={15} />
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Delete Confirm */}
       {deleteId && (

@@ -1,8 +1,11 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { assertSafeSupabaseServerEnvironment } from './lib/supabase-safety';
 
 export async function middleware(request: NextRequest) {
+  assertSafeSupabaseServerEnvironment('Middleware Supabase client');
+
   let supabaseResponse = NextResponse.next({ request });
 
   const supabase = createServerClient(
