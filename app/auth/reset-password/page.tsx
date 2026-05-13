@@ -74,11 +74,16 @@ export default function ResetPasswordPage() {
       // Determine the role-aware destination before redirecting.
       let dest = '/admin';
       try {
-        const res = await fetch('/api/auth/me');
-        if (res.ok) {
-          const { orgSlug, role } = await res.json();
-          if (orgSlug) {
-            dest = role === 'official' ? `/${orgSlug}/official` : `/${orgSlug}/admin`;
+        const paRes = await fetch('/api/platform-admin/me');
+        if (paRes.ok) {
+          dest = '/platform-admin';
+        } else {
+          const res = await fetch('/api/auth/me');
+          if (res.ok) {
+            const { orgSlug, role } = await res.json();
+            if (orgSlug) {
+              dest = role === 'official' ? `/${orgSlug}/official` : `/${orgSlug}/admin`;
+            }
           }
         }
       } catch {
