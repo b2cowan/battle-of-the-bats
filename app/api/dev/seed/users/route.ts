@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { requireDevToolPlatformAdmin } from '@/lib/platform-auth';
 
 const DEV_ORG_SLUG = 'dev-test-org';
 const DEV_PASSWORD = 'devpass123';
@@ -13,9 +14,8 @@ const SEED_USERS: { email: string; name: string; role: string }[] = [
 ];
 
 export async function POST() {
-  if (process.env.NEXT_PUBLIC_ENABLE_DEV_TOOLS !== 'true') {
-    return NextResponse.json({ error: 'Not found' }, { status: 404 });
-  }
+  const auth = await requireDevToolPlatformAdmin();
+  if (auth.response) return auth.response;
 
   const { data: org } = await supabaseAdmin
     .from('organizations')

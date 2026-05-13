@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { requireDevToolPlatformAdmin } from '@/lib/platform-auth';
 
 const DEV_ORG_SLUG = 'dev-test-org';
 
 export async function GET() {
-  if (process.env.NEXT_PUBLIC_ENABLE_DEV_TOOLS !== 'true') {
-    return NextResponse.json({ error: 'Not found' }, { status: 404 });
-  }
+  const auth = await requireDevToolPlatformAdmin();
+  if (auth.response) return auth.response;
 
   const [
     { count: orgs },
@@ -27,10 +27,12 @@ export async function GET() {
       .neq('role', 'owner'),
   ]);
 
+  const devOrg = orgRow as { id?: string; slug?: string } | null;
+
   return NextResponse.json({
     orgs:          orgs ?? 0,
-    orgId:         (orgRow as any)?.id ?? null,
-    orgSlug:       (orgRow as any)?.slug ?? null,
+    orgId:         devOrg?.id ?? null,
+    orgSlug:       devOrg?.slug ?? null,
     platformUsers: platformUsers ?? 0,
     tournaments:   tournaments ?? 0,
     leagueSeasons: leagueSeasons ?? 0,

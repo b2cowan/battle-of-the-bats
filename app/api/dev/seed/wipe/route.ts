@@ -1,18 +1,15 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { getBootstrapAdminEmails, requireDevToolPlatformAdmin } from '@/lib/platform-auth';
 
 export async function POST() {
-  if (process.env.NEXT_PUBLIC_ENABLE_DEV_TOOLS !== 'true') {
-    return NextResponse.json({ error: 'Not found' }, { status: 404 });
-  }
+  const auth = await requireDevToolPlatformAdmin();
+  if (auth.response) return auth.response;
 
   const log: string[] = [];
 
   // Emails that are never wiped — these are real operator accounts
-  const protectedEmails = (process.env.PLATFORM_ADMIN_EMAILS ?? '')
-    .split(',')
-    .map(e => e.trim().toLowerCase())
-    .filter(Boolean);
+  const protectedEmails = getBootstrapAdminEmails();
 
   // Delete all orgs (cascades to all child tables via FK)
   const { error: orgErr } = await supabaseAdmin
@@ -23,17 +20,21 @@ export async function POST() {
   log.push('Wiped all organizations (cascaded to all child tables)');
 
   // Delete platform_users rows — skip protected emails
-  if (protectedEmails.length > 0) {
-    await supabaseAdmin
+  const { data: platformRows, error: platformFetchErr } = await supabaseAdmin
+    .from('platform_users')
+    .select('id, email');
+  if (platformFetchErr) return NextResponse.json({ error: platformFetchErr.message }, { status: 500 });
+
+  const platformIdsToDelete = (platformRows ?? [])
+    .filter(row => !protectedEmails.includes((row.email ?? '').toLowerCase()))
+    .map(row => row.id);
+
+  if (platformIdsToDelete.length > 0) {
+    const { error: platformDeleteErr } = await supabaseAdmin
       .from('platform_users')
       .delete()
-      .neq('id', '00000000-0000-0000-0000-000000000000')
-      .not('email', 'in', `(${protectedEmails.join(',')})`);
-  } else {
-    await supabaseAdmin
-      .from('platform_users')
-      .delete()
-      .neq('id', '00000000-0000-0000-0000-000000000000');
+      .in('id', platformIdsToDelete);
+    if (platformDeleteErr) return NextResponse.json({ error: platformDeleteErr.message }, { status: 500 });
   }
   log.push('Wiped platform_users (protected accounts preserved)');
 

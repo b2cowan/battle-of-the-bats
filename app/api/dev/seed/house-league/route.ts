@@ -1,13 +1,22 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { requireDevToolPlatformAdmin } from '@/lib/platform-auth';
 
 const DEV_ORG_SLUG = 'dev-test-org';
 const SEASON_SLUG  = 'dev-league-2026';
 
+type SeedGame = {
+  season_id: string;
+  division_id: string;
+  home_team_id: string;
+  away_team_id: string;
+  scheduled_at: string;
+  status: string;
+};
+
 export async function POST() {
-  if (process.env.NEXT_PUBLIC_ENABLE_DEV_TOOLS !== 'true') {
-    return NextResponse.json({ error: 'Not found' }, { status: 404 });
-  }
+  const auth = await requireDevToolPlatformAdmin();
+  if (auth.response) return auth.response;
 
   const { data: org } = await supabaseAdmin
     .from('organizations')
@@ -85,7 +94,7 @@ export async function POST() {
 
     // Round-robin games within each division
     if (!teams) continue;
-    const games: any[] = [];
+    const games: SeedGame[] = [];
     let dayOffset = 0;
 
     for (let a = 0; a < teams.length; a++) {

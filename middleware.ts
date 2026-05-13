@@ -42,23 +42,16 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // Protect /platform-admin/* — platform operator only (email allowlist)
-  // /platform-admin/login is exempt so unauthenticated users can reach it
+  // Protect /platform-admin/* with an optimistic session check.
+  // Full platform-admin authorization happens in the layout and API routes.
   const isPlatformAdmin   = segments[0] === 'platform-admin';
   const isPlatformLogin   = isPlatformAdmin && segments[1] === 'login';
 
-  if (isPlatformAdmin && !isPlatformLogin) {
-    if (!user) {
-      const url = request.nextUrl.clone();
-      url.pathname = '/platform-admin/login';
-      url.searchParams.set('next', pathname);
-      return NextResponse.redirect(url);
-    }
-    const adminEmails = (process.env.PLATFORM_ADMIN_EMAILS ?? '')
-      .split(',').map(e => e.trim().toLowerCase()).filter(Boolean);
-    if (!user.email || !adminEmails.includes(user.email.toLowerCase())) {
-      return new NextResponse('Forbidden', { status: 403 });
-    }
+  if (isPlatformAdmin && !isPlatformLogin && !user) {
+    const url = request.nextUrl.clone();
+    url.pathname = '/platform-admin/login';
+    url.searchParams.set('next', pathname);
+    return NextResponse.redirect(url);
   }
 
   // Expose pathname to server layouts so they can make route-aware decisions
