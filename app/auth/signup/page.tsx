@@ -54,7 +54,7 @@ export default function SignupPage() {
       return;
     }
 
-    const dest = json.orgSlug ? `/${json.orgSlug}/admin/onboarding` : '/admin';
+    const dest = json.orgSlug ? `/${json.orgSlug}/admin/onboarding?choosePlan=1` : '/admin';
     router.push(dest);
     router.refresh();
   }
@@ -69,7 +69,7 @@ export default function SignupPage() {
             </svg>
           </div>
           <h1 className={styles.title}>Create Your Organization</h1>
-          <p className={styles.sub}>FieldLogicHQ — Tournament Management Platform</p>
+          <p className={styles.sub}>FieldLogicHQ — Sports Organization Management</p>
         </div>
 
         <form onSubmit={handleSubmit} className={styles.form}>
@@ -138,7 +138,7 @@ export default function SignupPage() {
           </button>
 
           <p style={{ fontFamily: 'var(--font-data)', fontSize: '0.65rem', letterSpacing: '0.06em', color: 'var(--data-gray)', textAlign: 'center' }}>
-            Starts on the free Starter plan. No credit card required.
+            Starts on the free Tournament plan. No credit card required.
           </p>
         </form>
 

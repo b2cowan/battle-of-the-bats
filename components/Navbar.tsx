@@ -6,6 +6,14 @@ import { useOrgNav } from './OrgNavContext';
 import { cn } from '@/lib/utils';
 import styles from './Navbar.module.css';
 
+const MARKETING_NAV_LINKS = [
+  { href: '/platform/tournaments',  label: 'Tournaments'  },
+  { href: '/platform/house-league', label: 'House League' },
+  { href: '/platform/rep-teams',    label: 'Rep Teams'    },
+  { href: '/platform/accounting',   label: 'Accounting'   },
+  { href: '/pricing',               label: 'Pricing'      },
+];
+
 const TOURNAMENT_NAV_KEYS = [
   { key: 'news',      label: 'News'      },
   { key: 'schedule',  label: 'Schedule'  },
@@ -23,6 +31,8 @@ function isMarketingPath(pathname: string) {
   return (
     pathname === '/' ||
     pathname.startsWith('/discover') ||
+    pathname.startsWith('/platform') ||
+    pathname.startsWith('/pricing') ||
     pathname.startsWith('/auth')
   );
 }
@@ -63,22 +73,19 @@ export default function Navbar() {
             <span className="text-data-gray/50">HQ</span>
           </Link>
 
-          <div className="hidden md:flex items-center gap-8">
-            <Link
-              href="/discover"
-              className={cn(
-                'font-mono text-xs uppercase tracking-widest transition-colors',
-                pathname.startsWith('/discover') ? 'text-logic-lime' : 'text-data-gray hover:text-fl-text'
-              )}
-            >
-              Discover
-            </Link>
-            <Link
-              href="/#pricing"
-              className="font-mono text-xs uppercase tracking-widest text-data-gray hover:text-fl-text transition-colors"
-            >
-              Pricing
-            </Link>
+          <div className="hidden md:flex items-center gap-6">
+            {MARKETING_NAV_LINKS.map(({ href, label }) => (
+              <Link
+                key={href}
+                href={href}
+                className={cn(
+                  'font-mono text-xs uppercase tracking-widest transition-colors',
+                  pathname.startsWith(href) ? 'text-logic-lime' : 'text-data-gray hover:text-fl-text'
+                )}
+              >
+                {label}
+              </Link>
+            ))}
           </div>
 
           <div className="flex items-center gap-3">

@@ -1,7 +1,10 @@
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
+import { assertSafeSupabaseServerEnvironment } from './supabase-safety';
 
 export async function createClient() {
+  assertSafeSupabaseServerEnvironment('Supabase server client');
+
   const cookieStore = await cookies();
 
   return createServerClient(

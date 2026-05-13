@@ -42,6 +42,31 @@
   color: var(--fl-text);
 }
 
+.headerPlan {
+  font-family: var(--font-data);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--logic-lime);
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.35);
+  padding: 0.15rem 0.5rem;
+}
+
+.headerStatus {
+  font-family: var(--font-data);
+  font-size: 0.55rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 0.15rem 0.5rem;
+  border: 1px solid;
+}
+
+.headerStatusActive  { color: #86efac; border-color: rgba(134, 239, 172, 0.35); background: rgba(134, 239, 172, 0.06); }
+.headerStatusTrialing { color: #fcd34d; border-color: rgba(252, 211, 77, 0.35);  background: rgba(252, 211, 77, 0.06);  }
+.headerStatusMuted   { color: var(--data-gray); border-color: rgba(255, 255, 255, 0.12); background: transparent; }
+
 /* ── Section card ──────────────────────────────────────────────── */
 .section {
   border: 1px solid rgba(var(--logic-lime-rgb), 0.12);
@@ -119,6 +144,87 @@
 .adminLink:hover {
   color: var(--fl-text);
   border-color: rgba(255, 255, 255, 0.25);
+}
+
+/* ── Plan module tags ──────────────────────────────────────────── */
+.moduleTagRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.2rem;
+}
+
+.moduleTagIncluded {
+  font-family: var(--font-data);
+  font-size: 0.55rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--logic-lime);
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.3);
+  padding: 0.15rem 0.5rem;
+  background: rgba(var(--logic-lime-rgb), 0.04);
+}
+
+/* ── Module override toggles ───────────────────────────────────── */
+.addonGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.addonRow {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.addonLabel {
+  font-family: var(--font-data);
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--fl-text);
+  flex: 1;
+}
+
+.addonToggle {
+  font-family: var(--font-data);
+  font-size: 0.55rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 0.2rem 0.65rem;
+  border: 1px solid;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  min-width: 4.5rem;
+  text-align: center;
+}
+
+.addonToggleOn {
+  color: var(--logic-lime);
+  border-color: rgba(var(--logic-lime-rgb), 0.5);
+  background: rgba(var(--logic-lime-rgb), 0.08);
+}
+
+.addonToggleOn:hover {
+  background: rgba(var(--logic-lime-rgb), 0.15);
+  border-color: var(--logic-lime);
+}
+
+.addonToggleOff {
+  color: var(--data-gray);
+  border-color: rgba(255, 255, 255, 0.1);
+  background: transparent;
+}
+
+.addonToggleOff:hover {
+  color: var(--fl-text);
+  border-color: rgba(255, 255, 255, 0.2);
 }
 
 /* ── Overrides ─────────────────────────────────────────────────── */

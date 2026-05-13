@@ -1,14 +1,25 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { requireDevToolPlatformAdmin } from '@/lib/platform-auth';
 
 const DEV_ORG_SLUG = 'dev-test-org';
 const YEAR = 2026;
 const SLUG = 'dev-tournament-2026';
 
+type SeedGame = {
+  tournament_id: string;
+  age_group_id: string;
+  home_team_id: string;
+  away_team_id: string;
+  game_date: string;
+  game_time: string;
+  status: string;
+  is_playoff: boolean;
+};
+
 export async function POST() {
-  if (process.env.NEXT_PUBLIC_ENABLE_DEV_TOOLS !== 'true') {
-    return NextResponse.json({ error: 'Not found' }, { status: 404 });
-  }
+  const auth = await requireDevToolPlatformAdmin();
+  if (auth.response) return auth.response;
 
   const { data: org } = await supabaseAdmin
     .from('organizations')
@@ -98,7 +109,7 @@ export async function POST() {
     // Round-robin games (each team plays each other once)
     if (!teams) continue;
     const gameDates = [`${YEAR}-07-15`, `${YEAR}-07-16`, `${YEAR}-07-17`];
-    const games: any[] = [];
+    const games: SeedGame[] = [];
     let dateIdx = 0;
 
     for (let i = 0; i < teams.length; i++) {

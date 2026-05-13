@@ -13,6 +13,7 @@ import styles from './tournaments-admin.module.css';
 type ModalMode = 'add' | 'edit' | null;
 
 export default function AdminTournamentsPage() {
+  const showDevSeedTools = process.env.NEXT_PUBLIC_ENABLE_DEV_TOOLS === 'true';
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
   const [modal, setModal]       = useState<ModalMode>(null);
   const [editing, setEditing]   = useState<Tournament | null>(null);
@@ -45,7 +46,7 @@ export default function AdminTournamentsPage() {
     'U11': ['Pool A'], 'U13': ['Pool A'], 'U15': ['Pool A'], 'U17': ['Pool A'], 'U19': ['Pool A']
   });
   const [useWelcomeMsg, setUseWelcomeMsg]           = useState(true);
-  const [welcomeMsg, setWelcomeMsg]                 = useState('Welcome to the Battle of the Bats tournament! We are excited to have you join us for another great season of competitive youth softball.');
+  const [welcomeMsg, setWelcomeMsg]                 = useState('Welcome to our tournament! We are excited to host a great event for all participating teams.');
   const [seedData, setSeedData]                     = useState({
     contacts: false,
     diamonds: false,
@@ -85,9 +86,10 @@ export default function AdminTournamentsPage() {
 
   function openAdd() {
     const nextYear = new Date().getFullYear();
+    const defaultName = `${nextYear} Tournament`;
     setForm({ 
       year: String(nextYear), 
-      name: `Battle of the Bats ${nextYear}`, 
+      name: defaultName, 
       isActive: true,
       startDate: '',
       endDate: ''
@@ -100,7 +102,7 @@ export default function AdminTournamentsPage() {
     setDivisionPools({ 'U11': 0, 'U13': 0, 'U15': 0, 'U17': 0, 'U19': 0 });
     setDivisionRequiresPool({ 'U11': false, 'U13': false, 'U15': false, 'U17': false, 'U19': false });
     setUseWelcomeMsg(true);
-    setWelcomeMsg('Welcome to the Battle of the Bats tournament! We are excited to have you join us for another great season of competitive youth softball.');
+    setWelcomeMsg('Welcome to our tournament! We are excited to host a great event for all participating teams.');
     setSeedData({
       contacts: false,
       diamonds: false,
@@ -149,13 +151,19 @@ export default function AdminTournamentsPage() {
           divisions: Array.from(selectedDivisions).map(name => ({
             name,
             capacity: divisionCapacities[name] || 8,
-            poolCount: divisionPools[name] || 1,
+            poolCount: divisionPools[name] ?? 0,
             poolNames: (divisionPoolNames[name] || []).join(','),
             requiresPoolSelection: divisionRequiresPool[name] || false
           })),
           announcement: useWelcomeMsg ? { body: welcomeMsg } : null,
-          seedData: seedData,
-          scheduleParams: seedData.schedule ? {
+          seedData: showDevSeedTools ? seedData : {
+            contacts: false,
+            diamonds: false,
+            registrations: false,
+            schedule: false,
+            results: false,
+          },
+          scheduleParams: showDevSeedTools && seedData.schedule ? {
             ...scheduleParams,
             startDate: scheduleParams.startDate || data.startDate,
             endDate: scheduleParams.endDate || data.endDate
@@ -384,7 +392,7 @@ export default function AdminTournamentsPage() {
                     value={form.year}
                     onChange={e => {
                       const y = e.target.value;
-                      setForm(f => ({ ...f, year: y, name: f.name.includes('Battle') ? `Battle of the Bats ${y}` : f.name }));
+                      setForm(f => ({ ...f, year: y, name: /^\d{4} Tournament$/.test(f.name) ? `${y} Tournament` : f.name }));
                     }}
                     required
                     id="tournament-year-input"
@@ -394,7 +402,7 @@ export default function AdminTournamentsPage() {
                   <label className="form-label">Tournament Name *</label>
                   <input
                     className="form-input"
-                    placeholder="Battle of the Bats 2026"
+                    placeholder="e.g. Spring Classic 2026"
                     value={form.name}
                     onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
                     required
@@ -607,6 +615,7 @@ export default function AdminTournamentsPage() {
                     )}
                   </div>
 
+                  {showDevSeedTools && (
                   <div className={styles.setupGroup}>
                     <div className={styles.migrationHeader}>
                       <Sparkles size={16} />
@@ -715,6 +724,7 @@ export default function AdminTournamentsPage() {
                       </div>
                     )}
                   </div>
+                  )}
                 </div>
               )}
               <div className="modal-footer">

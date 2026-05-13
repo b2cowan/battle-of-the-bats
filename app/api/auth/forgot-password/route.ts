@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { sendEmail, passwordResetHtml } from '@/lib/email';
+import { sendEmail, platformPasswordResetHtml } from '@/lib/email';
 
 export async function POST(req: NextRequest) {
   const { email } = await req.json();
@@ -8,13 +8,18 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true }); // never reveal whether email exists
   }
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://www.fieldlogichq.ca';
+  // Derive base URL from the incoming request's origin so that a reset
+  // initiated on dev.fieldlogichq.ca redirects back there, not to localhost.
+  const origin =
+    req.headers.get('origin') ??
+    process.env.NEXT_PUBLIC_APP_URL ??
+    'https://www.fieldlogichq.ca';
 
   const { data, error } = await supabaseAdmin.auth.admin.generateLink({
     type: 'recovery',
     email: email.trim().toLowerCase(),
     options: {
-      redirectTo: `${appUrl}/auth/reset-password`,
+      redirectTo: `${origin}/auth/reset-password`,
     },
   });
 
@@ -25,10 +30,10 @@ export async function POST(req: NextRequest) {
 
   // Wrap the Supabase action_link in our own confirm page so email scanners
   // can't consume the one-time token by pre-fetching anchor hrefs in the email.
-  const confirmUrl = `${appUrl}/auth/reset-confirm?link=${encodeURIComponent(data.properties.action_link)}`;
+  const confirmUrl = `${origin}/auth/reset-confirm?link=${encodeURIComponent(data.properties.action_link)}`;
 
   try {
-    await sendEmail(email, 'Reset your FieldLogicHQ password', passwordResetHtml(confirmUrl));
+    await sendEmail(email, 'Reset your FieldLogicHQ password', platformPasswordResetHtml(confirmUrl));
     console.log(`[forgot-password] reset email sent to ${email}`);
   } catch (emailErr) {
     console.error('[forgot-password] sendEmail error:', emailErr);

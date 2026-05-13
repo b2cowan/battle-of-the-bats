@@ -321,6 +321,32 @@
 .wipeBtn:hover:not(:disabled) { background: rgba(239,68,68,0.2); }
 .wipeBtn:disabled { opacity: 0.5; cursor: not-allowed; }
 
+.wipeConfirm {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  flex: 1;
+}
+
+.wipeCancelBtn {
+  font-family: var(--font-data, monospace);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.4rem 0.9rem;
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.12);
+  color: rgba(255,255,255,0.4);
+  border-radius: 5px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: border-color 0.15s, color 0.15s;
+}
+.wipeCancelBtn:hover { border-color: rgba(255,255,255,0.25); color: rgba(255,255,255,0.7); }
+.wipeCancelBtn:disabled { opacity: 0.5; cursor: not-allowed; }
+
 /* Spinner */
 @keyframes spin { to { transform: rotate(360deg); } }
 .spin { animation: spin 0.8s linear infinite; }

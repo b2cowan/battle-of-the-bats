@@ -107,7 +107,7 @@ export default function RegisterPage() {
               <div className={`card ${styles.closedCard}`}>
                 <AlertCircle size={40} style={{ color: 'var(--warning)', margin: '0 auto 1rem' }} />
                 <h3>Registration Not Yet Open</h3>
-                <p>Tournament registration isn't available yet. Check back soon or contact us at <a href="mailto:b2cowan@gmail.com">b2cowan@gmail.com</a>.</p>
+                <p>Tournament registration isn't available yet. Check back soon or contact the organizer directly.</p>
               </div>
             )}
 

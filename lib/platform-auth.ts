@@ -1,15 +1,19 @@
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
+import { NextResponse } from 'next/server';
 import type { User } from '@supabase/supabase-js';
 import { supabaseAdmin } from './supabase-admin';
 
-function isBootstrapAdmin(email: string | null | undefined): boolean {
-  if (!email) return false;
-  const allowlist = (process.env.PLATFORM_ADMIN_EMAILS ?? '')
+export function getBootstrapAdminEmails(): string[] {
+  return (process.env.PLATFORM_ADMIN_EMAILS ?? '')
     .split(',')
     .map(e => e.trim().toLowerCase())
     .filter(Boolean);
-  return allowlist.includes(email.toLowerCase());
+}
+
+export function isBootstrapAdmin(email: string | null | undefined): boolean {
+  if (!email) return false;
+  return getBootstrapAdminEmails().includes(email.toLowerCase());
 }
 
 async function isDbPlatformAdmin(email: string): Promise<boolean> {
@@ -20,6 +24,11 @@ async function isDbPlatformAdmin(email: string): Promise<boolean> {
     .eq('is_active', true)
     .maybeSingle();
   return !!data;
+}
+
+export async function isPlatformAdminEmail(email: string): Promise<boolean> {
+  if (isBootstrapAdmin(email)) return true;
+  return isDbPlatformAdmin(email);
 }
 
 export async function getPlatformAuthContext(): Promise<User | null> {
@@ -37,12 +46,33 @@ export async function getPlatformAuthContext(): Promise<User | null> {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user?.email) return null;
 
-  if (isBootstrapAdmin(user.email)) return user;
-
-  const isDb = await isDbPlatformAdmin(user.email);
-  return isDb ? user : null;
+  return (await isPlatformAdminEmail(user.email)) ? user : null;
 }
 
-export function isPlatformAdmin(user: User | null | undefined): boolean {
-  return isBootstrapAdmin(user?.email);
+export async function requirePlatformAdmin(): Promise<
+  { user: User; response: null } | { user: null; response: NextResponse }
+> {
+  const user = await getPlatformAuthContext();
+  if (!user) return { user: null, response: new NextResponse('Forbidden', { status: 403 }) };
+  return { user, response: null };
+}
+
+export async function requireDevToolPlatformAdmin(): Promise<
+  { user: User; response: null } | { user: null; response: NextResponse }
+> {
+  if (process.env.NEXT_PUBLIC_ENABLE_DEV_TOOLS !== 'true') {
+    return {
+      user: null,
+      response: NextResponse.json({ error: 'Not found' }, { status: 404 }),
+    };
+  }
+
+  const auth = await requirePlatformAdmin();
+  if (auth.response) {
+    return {
+      user: null,
+      response: NextResponse.json({ error: 'Forbidden' }, { status: 403 }),
+    };
+  }
+  return auth;
 }

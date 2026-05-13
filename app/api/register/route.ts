@@ -12,14 +12,23 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    // 1. Get Age Group capacity and tournament contact email
+    // 1. Get age group capacity and tournament availability.
     const [{ data: ageGroup, error: agError }, { data: tournament }] = await Promise.all([
-      supabase.from('age_groups').select('capacity').eq('id', ageGroupId).single(),
-      supabase.from('tournaments').select('contact_email, organization_id').eq('id', tournamentId).single(),
+      supabase.from('age_groups').select('capacity, is_closed, tournament_id').eq('id', ageGroupId).single(),
+      supabase.from('tournaments').select('contact_email, organization_id, status').eq('id', tournamentId).single(),
     ]);
 
     if (agError) {
       console.error('Error fetching age group capacity:', agError);
+    }
+    if (!tournament || tournament.status !== 'active') {
+      return NextResponse.json({ error: 'Tournament registration is not open.' }, { status: 403 });
+    }
+    if (!ageGroup || ageGroup.tournament_id !== tournamentId) {
+      return NextResponse.json({ error: 'Invalid division for this tournament.' }, { status: 400 });
+    }
+    if (ageGroup.is_closed) {
+      return NextResponse.json({ error: 'Registration for this division is closed.' }, { status: 403 });
     }
 
     // 2. Get current registration count (non-rejected)
@@ -60,13 +69,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: `Database error: ${error.message}` }, { status: 500 });
     }
 
-    const adminEmailToUse = contactEmail || ADMIN_EMAIL;
-
     // Fire emails (non-blocking — don't fail the request if email fails)
     const isWaitlist = finalStatus === 'waitlist';
     const footerContactEmail = tournament?.contact_email
       || (tournament?.organization_id ? await getOrgOwnerEmail(tournament.organization_id) : undefined)
       || undefined;
+    const adminEmailToUse = tournament?.contact_email || contactEmail || footerContactEmail || ADMIN_EMAIL;
     await Promise.allSettled([
       sendEmail(
         email,

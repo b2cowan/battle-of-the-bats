@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getPlatformAuthContext } from '@/lib/platform-auth';
-import { getPlatformUsers, updatePlatformUser, deletePlatformUser, getPlatformUserByEmail } from '@/lib/db';
+import { getPlatformUsers, updatePlatformUser, deletePlatformUser } from '@/lib/db';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 
 type Params = { params: Promise<{ id: string }> };

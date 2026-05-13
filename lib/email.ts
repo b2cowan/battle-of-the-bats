@@ -1,5 +1,5 @@
 ﻿const RESEND_API = 'https://api.resend.com/emails';
-const FROM = process.env.RESEND_FROM ?? 'Battle of the Bats <onboarding@resend.dev>';
+const FROM = process.env.RESEND_FROM ?? 'FieldLogicHQ <onboarding@resend.dev>';
 const ADMIN_EMAIL = 'fieldlogichq@gmail.com';
 const SITE_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000';
 
@@ -45,7 +45,7 @@ export { ADMIN_EMAIL, SITE_URL };
 const wrap = (content: string, contactEmail = ADMIN_EMAIL) => `
 <div style="font-family:Inter,sans-serif;background:#0D0B14;color:#fff;max-width:600px;margin:0 auto;padding:2rem;border-radius:12px;border:1px solid rgba(var(--primary-rgb),0.3);">
   <div style="margin-bottom:1.5rem;">
-    <span style="font-size:1.75rem;font-weight:900;color:#A855F7;letter-spacing:0.04em;">⚾ BATTLE OF THE BATS</span>
+    <span style="font-size:1.75rem;font-weight:900;color:#A855F7;letter-spacing:0.04em;">FIELDLOGICHQ</span>
   </div>
   ${content}
   <hr style="border:none;border-top:1px solid rgba(255,255,255,0.08);margin:2rem 0;" />
@@ -100,20 +100,15 @@ export function acceptanceHtml(p: {
   contactEmail?: string;
 }) {
   const profileUrl = `${SITE_URL}/teams/${p.teamId}`;
+  const contact = p.contactEmail ?? ADMIN_EMAIL;
   return wrap(`
     <h2 style="color:#22C55E;font-size:1.4rem;margin:0 0 1rem;">🎉 Team Accepted!</h2>
     <p>Hi <strong>${p.coachName}</strong>,</p>
     <p>Great news! <strong>${p.teamName}</strong> has been accepted into the <strong>${p.ageGroupName}</strong> division for <strong>${p.tournamentName}</strong>.</p>
     <div style="background:#1A1530;border:2px solid rgba(34,197,94,0.4);border-radius:8px;padding:1.5rem;margin:1.5rem 0;">
       <p style="margin:0 0 0.75rem;color:#22C55E;font-weight:700;font-size:1.05rem;">💳 Payment Required</p>
-      <p style="margin:0 0 0.75rem;">To secure your spot, please submit your registration fee via <strong>Interac E-Transfer</strong>:</p>
-      <table style="border-collapse:collapse;width:100%;">
-        <tr><td style="padding:0.3rem 0;color:rgba(255,255,255,0.6);width:120px;">Send to:</td>
-            <td><strong><a href="mailto:b2cowan@gmail.com" style="color:#A855F7;">b2cowan@gmail.com</a></strong></td></tr>
-        <tr><td style="padding:0.3rem 0;color:rgba(255,255,255,0.6);">Message:</td>
-            <td><strong>${p.teamName} — ${p.ageGroupName} — ${p.tournamentName}</strong></td></tr>
-      </table>
-      <p style="margin:1rem 0 0;color:rgba(255,255,255,0.5);font-size:0.85rem;">Your registration will be fully confirmed once payment is received.</p>
+      <p style="margin:0 0 0.75rem;">The tournament organizer will follow up with payment instructions to secure your spot.</p>
+      <p style="margin:1rem 0 0;color:rgba(255,255,255,0.5);font-size:0.85rem;">Questions? Contact <a href="mailto:${contact}" style="color:#A855F7;">${contact}</a>.</p>
     </div>
     <a href="${profileUrl}" style="display:inline-block;background:#8B2FC9;color:#fff;padding:0.75rem 1.75rem;border-radius:8px;text-decoration:none;font-weight:700;">View Team Profile →</a>
   `, p.contactEmail);
@@ -482,4 +477,18 @@ export function passwordResetHtml(resetLink: string) {
     <a href="${resetLink}" style="display:inline-block;background:#8B2FC9;color:#fff;padding:0.75rem 1.75rem;border-radius:8px;text-decoration:none;font-weight:700;margin:1.5rem 0;">Reset Password &rarr;</a>
     <p style="color:rgba(255,255,255,0.4);font-size:0.82rem;">If you didn't request a password reset, you can safely ignore this email. Your password will not change.</p>
   `);
+}
+
+export function platformPasswordResetHtml(resetLink: string) {
+  return `
+<div style="font-family:monospace,sans-serif;background:#090d09;color:#e8efe8;max-width:480px;margin:0 auto;padding:2rem;border:1px solid rgba(163,230,53,0.2);">
+  <div style="margin-bottom:1.5rem;padding-bottom:1rem;border-bottom:1px solid rgba(163,230,53,0.12);">
+    <span style="font-size:0.65rem;font-weight:900;color:#a3e635;letter-spacing:0.18em;text-transform:uppercase;">FIELDLOGICHQ</span>
+    <span style="display:block;font-size:0.6rem;color:rgba(255,255,255,0.35);letter-spacing:0.12em;text-transform:uppercase;margin-top:0.2rem;">Staff Access</span>
+  </div>
+  <h2 style="color:#e8efe8;font-size:1rem;font-weight:700;margin:0 0 1rem;letter-spacing:0.04em;text-transform:uppercase;">Reset Your Password</h2>
+  <p style="color:rgba(255,255,255,0.6);font-size:0.85rem;line-height:1.65;margin:0 0 1.5rem;">We received a password reset request for your FieldLogicHQ staff account. Click below to set a new password. This link expires in 1 hour.</p>
+  <a href="${resetLink}" style="display:inline-block;background:#a3e635;color:#090d09;padding:0.7rem 1.5rem;text-decoration:none;font-weight:800;font-size:0.72rem;letter-spacing:0.1em;text-transform:uppercase;">Reset Password &rarr;</a>
+  <p style="color:rgba(255,255,255,0.22);font-size:0.75rem;margin:1.75rem 0 0;line-height:1.55;">If you didn't request this, you can safely ignore this email. Your password will not change.</p>
+</div>`;
 }

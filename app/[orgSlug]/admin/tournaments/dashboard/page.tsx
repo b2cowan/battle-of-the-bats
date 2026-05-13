@@ -11,7 +11,7 @@ import styles from './dashboard.module.css';
 export default function AdminDashboard() {
   const { currentTournament } = useTournament();
   const { currentOrg } = useOrg();
-  const base = `/${currentOrg?.slug ?? 'milton-bats'}/admin`;
+  const base = `/${currentOrg?.slug ?? 'milton-bats'}/admin/tournaments`;
   const [stats, setStats] = useState({
     ageGroups: 0, teams: 0, scheduled: 0, completed: 0, announcements: 0,
   });

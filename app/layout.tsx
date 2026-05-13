@@ -29,7 +29,7 @@ export const metadata: Metadata = {
     default: 'FieldLogicHQ',
     template: '%s | FieldLogicHQ',
   },
-  description: 'Tournament management platform for youth and amateur sports organizations.',
+  description: 'The all-in-one platform for Canadian sports organizations — tournaments, house leagues, rep teams, and accounting in one place.',
   manifest: '/manifest.json',
 };
 

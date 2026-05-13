@@ -1,5 +1,4 @@
 import { createClient } from '@supabase/supabase-js';
-import { NextResponse } from 'next/server';
 import { getAuthContext, unauthorized, requireCapability } from '@/lib/api-auth';
 
 export async function POST(req: Request) {
@@ -41,6 +40,25 @@ export async function POST(req: Request) {
     };
 
     const { tournament, divisions, announcement, seedData, scheduleParams, migration } = body;
+    const allowSeedData = process.env.NEXT_PUBLIC_ENABLE_DEV_TOOLS === 'true';
+    const effectiveSeedData = allowSeedData ? seedData : null;
+    const slug = String(tournament?.slug ?? '').trim().toLowerCase();
+
+    if (!slug || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) {
+      return Response.json({ error: 'Tournament URL must contain lowercase letters, numbers, and hyphens.' }, { status: 400 });
+    }
+
+    const { count: slugCount, error: slugError } = await supabase
+      .from('tournaments')
+      .select('*', { count: 'exact', head: true })
+      .eq('organization_id', auth.org.id)
+      .eq('slug', slug)
+      .neq('status', 'archived');
+
+    if (slugError) throw slugError;
+    if ((slugCount ?? 0) > 0) {
+      return Response.json({ error: 'A tournament with this URL already exists.' }, { status: 409 });
+    }
 
     // 1. Create Tournament (always starts as draft; activate explicitly from the Tournaments page)
     const { data: newTnt, error: tntError } = await supabase
@@ -48,7 +66,7 @@ export async function POST(req: Request) {
       .insert({
         year:            tournament.year,
         name:            tournament.name,
-        slug:            tournament.slug,
+        slug,
         status:          'draft',
         is_active:       false,
         start_date:      tournament.startDate,
@@ -68,11 +86,15 @@ export async function POST(req: Request) {
     // 2. Initialize Divisions & Pools
     if (divisions && divisions.length > 0) {
       const defaults: Record<string, any> = {
-        'U11': { min: 9, max: 11, order: 1 },
-        'U13': { min: 11, max: 13, order: 2 },
-        'U15': { min: 13, max: 15, order: 3 },
-        'U17': { min: 15, max: 17, order: 4 },
-        'U19': { min: 17, max: 19, order: 5 },
+        'U9': { min: 7, max: 9, order: 1 },
+        'U11': { min: 9, max: 11, order: 2 },
+        'U13': { min: 11, max: 13, order: 3 },
+        'U15': { min: 13, max: 15, order: 4 },
+        'U17': { min: 15, max: 17, order: 5 },
+        'U19': { min: 17, max: 19, order: 6 },
+        'Open': { min: 0, max: 99, order: 1 },
+        'Competitive': { min: 0, max: 99, order: 2 },
+        'Recreational': { min: 0, max: 99, order: 3 },
       };
 
       const groupRows = divisions.map((div: any) => {
@@ -102,7 +124,8 @@ export async function POST(req: Request) {
         const poolRows: any[] = [];
         for (const g of insertedGroups) {
           const names = (g.pool_names || '').split(',').map((n: string) => n.trim()).filter(Boolean);
-          for (let i = 0; i < (g.pool_count || 1); i++) {
+          const poolCount = Number(g.pool_count ?? 0);
+          for (let i = 0; i < poolCount; i++) {
             const name = names[i] || String.fromCharCode(65 + i);
             poolRows.push({
               age_group_id: g.id,
@@ -168,12 +191,12 @@ export async function POST(req: Request) {
     }
 
     // 4. Seed Data
-    if (seedData && Object.values(seedData).some(v => v)) {
-      log('Seeding Data', seedData);
+    if (effectiveSeedData && Object.values(effectiveSeedData).some(v => v)) {
+      log('Seeding Data', effectiveSeedData);
       const { data: ageGroups } = await supabase.from('age_groups').select('*, pools(*)').eq('tournament_id', tid);
       
       if (ageGroups && ageGroups.length > 0) {
-        if (seedData.contacts) {
+        if (effectiveSeedData.contacts) {
           const roles = ['Tournament Director', 'Registrar', 'Head Umpire', 'Diamond Manager', 'Volunteer Coordinator'];
           const names = ['John Smith', 'Sarah Jenkins', 'Mike Miller', 'Lisa Wong', 'David Chen'];
           const rows = names.map((name, i) => ({
@@ -186,7 +209,7 @@ export async function POST(req: Request) {
           await supabase.from('contacts').insert(rows);
         }
 
-        if (seedData.diamonds) {
+        if (effectiveSeedData.diamonds) {
           const names = ['Memorial Park D1', 'Memorial Park D2', 'Lions Field', 'South Common', 'Milton Sports Center'];
           const rows = names.map((name, i) => ({
             tournament_id: tid,
@@ -197,7 +220,7 @@ export async function POST(req: Request) {
           await supabase.from('diamonds').insert(rows);
         }
 
-        if (seedData.registrations) {
+        if (effectiveSeedData.registrations) {
           const teamNames = ['Milton Bats', 'Oakville Angels', 'Burlington Bulls', 'Mississauga Tigers', 'Hamilton Heat', 'Brampton Blazers', 'Toronto Titans', 'Guelph Gryphons'];
           const coaches = ['Coach Bob', 'Coach Alice', 'Coach Charlie', 'Coach Diana', 'Coach Ed', 'Coach Fiona', 'Coach Greg', 'Coach Heather'];
           
@@ -221,7 +244,7 @@ export async function POST(req: Request) {
           }
         }
 
-        if (seedData.schedule || seedData.results) {
+        if (effectiveSeedData.schedule || effectiveSeedData.results) {
           log('Seeding schedule/results for tournament:', tid);
           
           // 1. Fetch teams that were just created
@@ -362,9 +385,9 @@ export async function POST(req: Request) {
                       game_time: timeStr,
                       location: diamond.name,
                       diamond_id: diamond.id,
-                      status: seedData.results ? 'completed' : 'scheduled',
-                      home_score: seedData.results ? Math.floor(Math.random() * 8) : null,
-                      away_score: seedData.results ? Math.floor(Math.random() * 8) : null
+                      status: effectiveSeedData.results ? 'completed' : 'scheduled',
+                      home_score: effectiveSeedData.results ? Math.floor(Math.random() * 8) : null,
+                      away_score: effectiveSeedData.results ? Math.floor(Math.random() * 8) : null
                     });
 
                     if (!teamBusySlots.has(home.id)) teamBusySlots.set(home.id, new Set());
@@ -415,7 +438,7 @@ export async function POST(req: Request) {
       });
     }
 
-    return new Response(JSON.stringify({ success: true, id: tid, debug }), {
+    return new Response(JSON.stringify({ success: true, id: tid, slug, name: tournament.name, debug }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' }
     });

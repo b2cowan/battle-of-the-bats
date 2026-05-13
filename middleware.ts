@@ -1,8 +1,11 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { assertSafeSupabaseServerEnvironment } from './lib/supabase-safety';
 
 export async function middleware(request: NextRequest) {
+  assertSafeSupabaseServerEnvironment('Middleware Supabase client');
+
   let supabaseResponse = NextResponse.next({ request });
 
   const supabase = createServerClient(
@@ -42,20 +45,20 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // Protect /platform-admin/* — platform operator only (email allowlist)
-  if (segments[0] === 'platform-admin') {
-    if (!user) {
-      const url = request.nextUrl.clone();
-      url.pathname = '/auth/login';
-      url.searchParams.set('next', pathname);
-      return NextResponse.redirect(url);
-    }
-    const adminEmails = (process.env.PLATFORM_ADMIN_EMAILS ?? '')
-      .split(',').map(e => e.trim().toLowerCase()).filter(Boolean);
-    if (!user.email || !adminEmails.includes(user.email.toLowerCase())) {
-      return new NextResponse('Forbidden', { status: 403 });
-    }
+  // Protect /platform-admin/* with an optimistic session check.
+  // Full platform-admin authorization happens in the layout and API routes.
+  const isPlatformAdmin   = segments[0] === 'platform-admin';
+  const isPlatformLogin   = isPlatformAdmin && segments[1] === 'login';
+
+  if (isPlatformAdmin && !isPlatformLogin && !user) {
+    const url = request.nextUrl.clone();
+    url.pathname = '/platform-admin/login';
+    url.searchParams.set('next', pathname);
+    return NextResponse.redirect(url);
   }
+
+  // Expose pathname to server layouts so they can make route-aware decisions
+  supabaseResponse.headers.set('x-pathname', pathname);
 
   // Pass org slug downstream so server components can read it without re-parsing the URL
   if (segments.length >= 1) {
@@ -66,5 +69,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/:slug/admin/:path*', '/auth/:path*', '/platform-admin', '/platform-admin/:path*'],
+  matcher: ['/:slug/admin/:path*', '/auth/:path*', '/platform-admin', '/platform-admin/:path*', '/platform-admin/login', '/api/dev/:path*'],
 };

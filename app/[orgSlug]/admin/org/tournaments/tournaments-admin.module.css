@@ -96,6 +96,67 @@
   border-radius: var(--radius-sm);
 }
 
+.setupHint {
+  color: var(--white-40);
+  font-size: 0.78rem;
+  line-height: 1.5;
+  margin: 0.25rem 0 0.75rem;
+}
+
+.presetGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 0.9rem;
+}
+
+.presetButton {
+  text-align: left;
+  background: var(--black-20);
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius-xs);
+  color: var(--white-70);
+  padding: 0.75rem;
+  cursor: pointer;
+  min-height: 84px;
+}
+
+.presetButton:hover,
+.presetButtonActive {
+  border-color: rgba(var(--blueprint-blue-rgb), 0.6);
+  background: rgba(var(--blueprint-blue-rgb), 0.09);
+}
+
+.presetButton strong {
+  display: block;
+  color: var(--white);
+  font-size: 0.88rem;
+  margin-bottom: 0.3rem;
+}
+
+.presetButton span {
+  display: block;
+  color: var(--white-40);
+  font-size: 0.72rem;
+  line-height: 1.35;
+}
+
+.customDivisionRow {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.75rem;
+  margin-bottom: 0.9rem;
+}
+
+.emptyDivisions {
+  padding: 0.85rem;
+  color: var(--white-40);
+  font-size: 0.85rem;
+  background: var(--black-20);
+  border: 1px dashed var(--border-2);
+  border-radius: var(--radius-xs);
+}
+
 .checkboxGroup {
   margin-bottom: 0.5rem;
 }
@@ -251,5 +312,36 @@
   padding: 0.2rem 0.5rem;
   font-size: 0.85rem;
   height: 28px;
+}
+
+.nextStepsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.nextStepLink {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0.75rem;
+  color: var(--white-80);
+  text-decoration: none;
+  background: var(--white-5);
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius-xs);
+  font-size: 0.86rem;
+}
+
+.nextStepLink:hover {
+  color: var(--white);
+  border-color: rgba(var(--blueprint-blue-rgb), 0.45);
+}
+
+@media (max-width: 640px) {
+  .presetGrid,
+  .nextStepsGrid {
+    grid-template-columns: 1fr;
+  }
 }
 

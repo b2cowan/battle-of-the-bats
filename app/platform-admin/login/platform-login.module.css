@@ -1,0 +1,193 @@
+.page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--pitch-black);
+  background-image:
+    linear-gradient(to right, rgba(var(--logic-lime-rgb), 0.025) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(var(--logic-lime-rgb), 0.025) 1px, transparent 1px);
+  background-size: 40px 40px;
+  padding: 2rem 1.5rem;
+}
+
+.card {
+  width: 100%;
+  max-width: 400px;
+  background: var(--hud-surface);
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.2);
+  padding: 2.5rem;
+  box-shadow: 0 0 0 1px rgba(var(--logic-lime-rgb), 0.06), 0 0 32px rgba(var(--logic-lime-rgb), 0.04);
+}
+
+/* ── Header ──────────────────────────────────────────────── */
+.header {
+  text-align: center;
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid rgba(var(--logic-lime-rgb), 0.12);
+}
+
+.wordmark {
+  font-family: var(--font-data);
+  font-size: 1rem;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  margin-bottom: 1rem;
+}
+
+.wordmarkField  { color: var(--fl-text); }
+.wordmarkLogic  { color: var(--logic-lime); }
+.wordmarkHq     { color: var(--fl-text); }
+
+.title {
+  font-family: var(--font-data);
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--fl-text);
+  margin-bottom: 0.35rem;
+}
+
+.sub {
+  font-family: var(--font-data);
+  font-size: 0.6rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--data-gray);
+  opacity: 0.6;
+}
+
+/* ── Form ────────────────────────────────────────────────── */
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.label {
+  font-family: var(--font-data);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--data-gray);
+}
+
+.input {
+  width: 100%;
+  box-sizing: border-box;
+  background: rgba(var(--logic-lime-rgb), 0.03);
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.18);
+  color: var(--fl-text);
+  font-family: var(--font-data);
+  font-size: 0.85rem;
+  padding: 0.625rem 0.875rem;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.input:focus         { border-color: var(--logic-lime); }
+.input::placeholder  { color: var(--data-gray); opacity: 0.35; }
+
+/* ── Password toggle ─────────────────────────────────────── */
+.pwWrap { position: relative; }
+.pwWrap .input { padding-right: 2.75rem; }
+
+.pwToggle {
+  position: absolute;
+  right: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: var(--data-gray);
+  padding: 0.25rem;
+  cursor: pointer;
+  transition: color 0.15s;
+}
+.pwToggle:hover { color: var(--fl-text); }
+
+/* ── Error ───────────────────────────────────────────────── */
+.error {
+  background: rgba(239, 68, 68, 0.07);
+  border: 1px solid rgba(239, 68, 68, 0.28);
+  padding: 0.625rem 1rem;
+  font-family: var(--font-data);
+  font-size: 0.72rem;
+  color: #f87171;
+}
+
+/* ── Submit ──────────────────────────────────────────────── */
+.submitBtn {
+  width: 100%;
+  padding: 0.875rem;
+  font-family: var(--font-data);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  background: var(--logic-lime);
+  color: var(--pitch-black);
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s;
+  margin-top: 0.25rem;
+}
+
+.submitBtn:hover:not(:disabled) { background: #fff; }
+.submitBtn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ── Label row (label + forgot link side by side) ────────────── */
+.labelRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.forgotLink {
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: var(--font-data);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--data-gray);
+  cursor: pointer;
+  transition: color 0.15s;
+}
+.forgotLink:hover { color: var(--logic-lime); }
+
+/* ── Back link (forgot-password view) ───────────────────────── */
+.backLink {
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: var(--font-data);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--data-gray);
+  cursor: pointer;
+  transition: color 0.15s;
+  text-align: left;
+}
+.backLink:hover { color: var(--fl-text); }
+
+/* ── Reset sent confirmation ─────────────────────────────────── */
+.resetConfirm {
+  font-family: var(--font-data);
+  font-size: 0.78rem;
+  color: var(--fl-text);
+  line-height: 1.65;
+  margin-bottom: 1.5rem;
+}
+.resetConfirm strong { color: var(--logic-lime); font-weight: 700; }

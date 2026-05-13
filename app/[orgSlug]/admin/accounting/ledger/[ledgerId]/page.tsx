@@ -592,7 +592,7 @@ export default function LedgerDetailPage() {
               </div>
               <div className={`${styles.field} ${styles.formGridFull}`}>
                 <label className={styles.label} htmlFor="tr-desc">Description</label>
-                <input id="tr-desc" type="text" className={styles.input} value={transferForm.description} onChange={e => tf('description', e.target.value.slice(0, 500))} placeholder="e.g. Budget allocation — Battle of the Bats 2026" maxLength={500} />
+                <input id="tr-desc" type="text" className={styles.input} value={transferForm.description} onChange={e => tf('description', e.target.value.slice(0, 500))} placeholder="e.g. Budget allocation for Spring Classic 2026" maxLength={500} />
               </div>
               <div className={`${styles.field} ${styles.formGridFull}`}>
                 <label className={styles.label} htmlFor="tr-cat">Category</label>

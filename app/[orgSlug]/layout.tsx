@@ -1,7 +1,8 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { Inter, Barlow_Condensed, DM_Serif_Display, DM_Sans } from 'next/font/google';
-import { getOrganizationBySlug, getActiveTournamentByOrg } from '@/lib/db';
+import { getActiveTournamentByOrg } from '@/lib/db';
+import { getOrganizationBySlugForServer } from '@/lib/server-organizations';
 import { resolveTheme } from '@/lib/themes';
 import { OrgNavSync } from '@/components/OrgNavSync';
 
@@ -38,7 +39,7 @@ export async function generateMetadata({
   params: Promise<{ orgSlug: string }>;
 }): Promise<Metadata> {
   const { orgSlug } = await params;
-  const org = await getOrganizationBySlug(orgSlug);
+  const org = await getOrganizationBySlugForServer(orgSlug);
   if (!org) return {};
   const activeTournament = await getActiveTournamentByOrg(org.id);
   return {
@@ -55,7 +56,7 @@ export default async function OrgLayout({
   children: React.ReactNode;
 }) {
   const { orgSlug } = await params;
-  const org = await getOrganizationBySlug(orgSlug);
+  const org = await getOrganizationBySlugForServer(orgSlug);
   if (!org) notFound();
 
   const theme = resolveTheme(org.themePreset, org.themePrimary, org.themeAccent);

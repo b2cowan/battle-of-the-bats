@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
+import { headers } from 'next/headers';
 import { getPlatformAuthContext } from '@/lib/platform-auth';
 import PlatformAdminNav from './PlatformAdminNav';
 import styles from './platform-admin.module.css';
@@ -11,9 +12,18 @@ export default async function PlatformAdminLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const headersList = await headers();
+  const pathname    = headersList.get('x-pathname') ?? '';
+
+  // Login page renders without the sidebar shell — no auth check needed here
+  // since middleware already gates everything else
+  if (pathname === '/platform-admin/login') {
+    return <>{children}</>;
+  }
+
   const user = await getPlatformAuthContext();
   if (!user) {
-    redirect('/auth/login?next=/platform-admin');
+    redirect('/platform-admin/login?next=/platform-admin');
   }
 
   return (

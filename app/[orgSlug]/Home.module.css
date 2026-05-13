@@ -163,6 +163,43 @@
 
 .heroSub strong { color: var(--primary-light); }
 
+.previewBanner,
+.registrationStatus {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  max-width: 680px;
+  margin: 0 auto 1rem;
+  padding: 0.65rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: rgba(26,21,48,0.72);
+  color: var(--white-70);
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+
+.previewBanner {
+  color: var(--logic-lime);
+  border-color: rgba(var(--blueprint-blue-rgb), 0.35);
+}
+
+.registrationStatus {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 1.5rem;
+}
+
+.registrationStatus strong {
+  color: var(--white);
+  font-size: 0.95rem;
+}
+
+.registrationStatus span {
+  color: var(--white-50);
+}
+
 .heroCta {
   display: flex;
   gap: 1rem;
