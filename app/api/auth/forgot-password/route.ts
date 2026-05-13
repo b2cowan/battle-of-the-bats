@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { sendEmail, passwordResetHtml } from '@/lib/email';
+import { sendEmail, platformPasswordResetHtml } from '@/lib/email';
 
 export async function POST(req: NextRequest) {
   const { email } = await req.json();
@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
   const confirmUrl = `${appUrl}/auth/reset-confirm?link=${encodeURIComponent(data.properties.action_link)}`;
 
   try {
-    await sendEmail(email, 'Reset your FieldLogicHQ password', passwordResetHtml(confirmUrl));
+    await sendEmail(email, 'Reset your FieldLogicHQ password', platformPasswordResetHtml(confirmUrl));
     console.log(`[forgot-password] reset email sent to ${email}`);
   } catch (emailErr) {
     console.error('[forgot-password] sendEmail error:', emailErr);
