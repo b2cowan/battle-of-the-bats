@@ -43,10 +43,14 @@ export async function middleware(request: NextRequest) {
   }
 
   // Protect /platform-admin/* — platform operator only (email allowlist)
-  if (segments[0] === 'platform-admin') {
+  // /platform-admin/login is exempt so unauthenticated users can reach it
+  const isPlatformAdmin   = segments[0] === 'platform-admin';
+  const isPlatformLogin   = isPlatformAdmin && segments[1] === 'login';
+
+  if (isPlatformAdmin && !isPlatformLogin) {
     if (!user) {
       const url = request.nextUrl.clone();
-      url.pathname = '/auth/login';
+      url.pathname = '/platform-admin/login';
       url.searchParams.set('next', pathname);
       return NextResponse.redirect(url);
     }
@@ -57,6 +61,9 @@ export async function middleware(request: NextRequest) {
     }
   }
 
+  // Expose pathname to server layouts so they can make route-aware decisions
+  supabaseResponse.headers.set('x-pathname', pathname);
+
   // Pass org slug downstream so server components can read it without re-parsing the URL
   if (segments.length >= 1) {
     supabaseResponse.headers.set('x-org-slug', segments[0]);
@@ -66,5 +73,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/:slug/admin/:path*', '/auth/:path*', '/platform-admin', '/platform-admin/:path*'],
+  matcher: ['/:slug/admin/:path*', '/auth/:path*', '/platform-admin', '/platform-admin/:path*', '/platform-admin/login'],
 };

@@ -1,7 +1,8 @@
 'use client';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Building2, Users, ScrollText, Terminal, HelpCircle } from 'lucide-react';
+import { usePathname, useRouter } from 'next/navigation';
+import { LayoutDashboard, Building2, Users, ScrollText, Terminal, HelpCircle, LogOut } from 'lucide-react';
+import { signOut } from '@/lib/auth';
 import styles from './platform-admin.module.css';
 
 const BASE_NAV = [
@@ -14,6 +15,13 @@ const BASE_NAV = [
 
 export default function PlatformAdminNav({ sessionEmail }: { sessionEmail: string }) {
   const pathname = usePathname();
+  const router   = useRouter();
+
+  async function handleSignOut() {
+    await signOut();
+    router.push('/platform-admin/login');
+    router.refresh();
+  }
 
   const nav = [
     ...BASE_NAV,
@@ -48,6 +56,10 @@ export default function PlatformAdminNav({ sessionEmail }: { sessionEmail: strin
       <div className={styles.sidebarFooter}>
         <div className={styles.sessionLabel}>ACTIVE SESSION</div>
         <div className={styles.sessionEmail}>{sessionEmail}</div>
+        <button className={styles.signOutBtn} onClick={handleSignOut}>
+          <LogOut size={12} />
+          Sign out
+        </button>
       </div>
     </aside>
   );

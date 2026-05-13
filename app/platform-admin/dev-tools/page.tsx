@@ -111,8 +111,9 @@ export default function DevDashboard() {
   const [status, setStatus]   = useState<Status | null>(null);
   const [busy,   setBusy]     = useState<Record<string, boolean>>({});
   const [results, setResults] = useState<Record<string, SeedResult | null>>({});
-  const [wiping,  setWiping]  = useState(false);
-  const [wipeResult, setWipeResult] = useState<SeedResult | null>(null);
+  const [wiping,      setWiping]      = useState(false);
+  const [wipeConfirm, setWipeConfirm] = useState(false);
+  const [wipeResult,  setWipeResult]  = useState<SeedResult | null>(null);
 
   const fetchStatus = useCallback(async () => {
     const res = await fetch('/api/dev/seed/status');
@@ -137,8 +138,8 @@ export default function DevDashboard() {
   }
 
   async function handleWipe() {
-    if (!confirm('Wipe EVERYTHING? This deletes all orgs, users, and data. Cannot be undone.')) return;
     setWiping(true);
+    setWipeConfirm(false);
     setWipeResult(null);
     try {
       const res  = await fetch('/api/dev/seed/wipe', { method: 'POST' });
@@ -275,11 +276,26 @@ export default function DevDashboard() {
       {/* Danger zone */}
       <div className={styles.danger}>
         <div className={styles.dangerLabel}>Danger Zone</div>
-        <button className={styles.wipeBtn} onClick={handleWipe} disabled={wiping}>
-          {wiping ? <Loader size={14} className={styles.spin} /> : <Trash2 size={14} />}
-          {wiping ? 'Wiping…' : 'Wipe Everything'}
-        </button>
-        <span className={styles.dangerDesc}>Deletes all orgs, all auth users, and all data.</span>
+        {wipeConfirm ? (
+          <div className={styles.wipeConfirm}>
+            <span className={styles.dangerDesc}>This deletes all orgs, users, and data. Cannot be undone.</span>
+            <button className={styles.wipeBtn} onClick={handleWipe} disabled={wiping}>
+              {wiping ? <Loader size={14} className={styles.spin} /> : <Trash2 size={14} />}
+              {wiping ? 'Wiping…' : 'Yes, wipe everything'}
+            </button>
+            <button className={styles.wipeCancelBtn} onClick={() => setWipeConfirm(false)} disabled={wiping}>
+              Cancel
+            </button>
+          </div>
+        ) : (
+          <>
+            <button className={styles.wipeBtn} onClick={() => setWipeConfirm(true)} disabled={wiping}>
+              <Trash2 size={14} />
+              Wipe Everything
+            </button>
+            <span className={styles.dangerDesc}>Deletes all orgs, all auth users, and all data.</span>
+          </>
+        )}
         {wipeResult && (
           <div className={wipeResult.ok ? styles.logOk : styles.logErr} style={{ marginTop: '0.5rem' }}>
             {wipeResult.ok ? <CheckCircle size={12} /> : <AlertCircle size={12} />}

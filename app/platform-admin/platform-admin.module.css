@@ -93,6 +93,30 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  margin-bottom: 0.75rem;
+}
+
+.signOutBtn {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: none;
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.15);
+  padding: 0.35rem 0.6rem;
+  font-family: var(--font-data);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--data-gray);
+  cursor: pointer;
+  width: 100%;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.signOutBtn:hover {
+  color: var(--fl-text);
+  border-color: rgba(var(--logic-lime-rgb), 0.35);
 }
 
 .main {

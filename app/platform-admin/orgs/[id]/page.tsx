@@ -105,9 +105,15 @@ function fmtDate(iso: string) {
   });
 }
 
-function planLabel(planId: string) {
-  return planId.charAt(0).toUpperCase() + planId.slice(1);
-}
+const MODULE_LABELS: Record<string, string> = {
+  module_tournaments:   'Tournaments',
+  module_communications:'Communications',
+  module_members:       'Members',
+  module_public_site:   'Public Site',
+  module_house_league:  'House League',
+  module_accounting:    'Accounting',
+  module_rep_teams:     'Rep Teams',
+};
 
 export default async function OrgDetailPage({
   params,
@@ -124,9 +130,9 @@ export default async function OrgDetailPage({
 
   if (!org) notFound();
 
-  const enabledAddons = (org.enabled_addons as string[]) ?? [];
-  const addonLabels   = enabledAddons.map(a => ADDON_LABELS[a] ?? a);
-  const planCfg       = PLAN_CONFIG[org.plan_id as keyof typeof PLAN_CONFIG];
+  const enabledAddons  = (org.enabled_addons as string[]) ?? [];
+  const planCfg        = PLAN_CONFIG[org.plan_id as keyof typeof PLAN_CONFIG];
+  const planModules    = planCfg?.moduleEntitlements ?? [];
 
   return (
     <div className={styles.page}>
@@ -137,6 +143,10 @@ export default async function OrgDetailPage({
       <header className={styles.header}>
         <div className={styles.headerLabel}>FieldLogicHQ</div>
         <h1 className={styles.title}>{org.name}</h1>
+        <span className={styles.headerPlan}>{planCfg?.label ?? org.plan_id}</span>
+        <span className={`${styles.headerStatus} ${org.subscription_status === 'active' ? styles.headerStatusActive : org.subscription_status === 'trialing' ? styles.headerStatusTrialing : styles.headerStatusMuted}`}>
+          {org.subscription_status}
+        </span>
       </header>
 
       {/* Identity */}
@@ -175,16 +185,26 @@ export default async function OrgDetailPage({
         <div className={styles.grid}>
           <div className={styles.field}>
             <span className={styles.fieldLabel}>Plan</span>
-            <span className={styles.fieldValue}>{planLabel(org.plan_id as string)}</span>
-          </div>
-          <div className={styles.field}>
-            <span className={styles.fieldLabel}>Tournament Limit</span>
-            <span className={styles.fieldValue}>{org.tournament_limit}</span>
+            <span className={styles.fieldValue}>{planCfg?.label ?? org.plan_id}</span>
           </div>
           <div className={styles.field}>
             <span className={styles.fieldLabel}>Status</span>
             <span className={styles.fieldValue}>{org.subscription_status}</span>
           </div>
+          {org.plan_id === 'tournament' && (
+            <div className={styles.field}>
+              <span className={styles.fieldLabel}>Tournament Limit</span>
+              <span className={styles.fieldValue}>{org.tournament_limit}</span>
+            </div>
+          )}
+          {planCfg && (
+            <div className={styles.field}>
+              <span className={styles.fieldLabel}>Staff Seat Limit</span>
+              <span className={styles.fieldValue}>
+                {planCfg.seatLimit >= 9999 ? 'Unlimited' : planCfg.seatLimit}
+              </span>
+            </div>
+          )}
           {planCfg && (
             <div className={styles.field}>
               <span className={styles.fieldLabel}>Officials Free Seats</span>
@@ -192,25 +212,24 @@ export default async function OrgDetailPage({
             </div>
           )}
           <div className={`${styles.field} ${styles.fieldFull}`}>
-            <span className={styles.fieldLabel} style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-              Active Add-ons
-              <HelpTooltip
-                title="Active add-ons"
-                body="Enabled addons are the modules active for this org beyond their base plan. Toggling here takes effect immediately — no deploy required."
-                size="sm"
-              />
-            </span>
-            <span className={styles.fieldValue}>
-              {addonLabels.length > 0 ? addonLabels.join(', ') : 'None'}
-            </span>
+            <span className={styles.fieldLabel}>Plan-included modules</span>
+            <div className={styles.moduleTagRow}>
+              {planModules.map(m => (
+                <span key={m} className={styles.moduleTagIncluded}>
+                  {MODULE_LABELS[m] ?? m}
+                </span>
+              ))}
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Active Overrides + Members + Tournaments + Notes — interactive via client */}
+      {/* Active Overrides + Module Overrides + Members + Tournaments + Notes — interactive via client */}
       <OrgDetailClient
         orgId={id}
         orgSlug={org.slug as string}
+        planModules={planModules}
+        enabledAddons={enabledAddons}
         internalNotes={(org.internal_notes as string | null) ?? null}
         overrides={overrides}
         members={members}

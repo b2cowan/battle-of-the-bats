@@ -35,6 +35,8 @@ interface Tournament {
 interface Props {
   orgId: string;
   orgSlug: string;
+  planModules: string[];
+  enabledAddons: string[];
   internalNotes: string | null;
   overrides: Override[];
   members: Member[];
@@ -42,6 +44,13 @@ interface Props {
 }
 
 const STATUS_VALUES = ['active', 'trialing', 'past_due', 'canceled'] as const;
+
+const ADDON_MODULE_LABELS: Record<string, string> = {
+  module_public_site:  'Public Site',
+  module_house_league: 'House League',
+  module_accounting:   'Accounting',
+  module_rep_teams:    'Rep Teams',
+};
 
 function fmtDate(iso: string) {
   return new Date(iso).toLocaleDateString('en-CA', {
@@ -70,6 +79,8 @@ function tournamentStatusClass(status: string, styles: Record<string, string>) {
 
 export default function OrgDetailClient({
   orgId,
+  planModules,
+  enabledAddons: initialAddons,
   internalNotes,
   overrides: initialOverrides,
   members,
@@ -104,13 +115,51 @@ export default function OrgDetailClient({
     }
   }
 
-  // ─── Overrides ───────────────────────────────────────────────────────
-  const [overrides,      setOverrides]      = useState<Override[]>(initialOverrides);
-  const [showHistory,    setShowHistory]    = useState(false);
-  const [revokeConfirm,  setRevokeConfirm]  = useState<Record<string, boolean>>({});
-  const [revoking,       setRevoking]       = useState<Record<string, boolean>>({});
+  // ─── Module Overrides ─────────────────────────────────────────────
+  const overrideableModules = Object.keys(ADDON_MODULE_LABELS).filter(
+    m => !planModules.includes(m)
+  );
+  const [addonEdits,  setAddonEdits]  = useState<string[]>(initialAddons);
+  const [addonSaving, setAddonSaving] = useState(false);
+  const [addonSaved,  setAddonSaved]  = useState(false);
+  const [addonError,  setAddonError]  = useState('');
 
-  // Add form
+  function handleAddonToggle(module: string) {
+    setAddonEdits(prev =>
+      prev.includes(module) ? prev.filter(m => m !== module) : [...prev, module]
+    );
+    setAddonSaved(false);
+  }
+
+  async function handleAddonSave() {
+    setAddonSaving(true);
+    setAddonError('');
+    setAddonSaved(false);
+    try {
+      const res = await fetch(`/api/platform-admin/orgs/${orgId}/addons`, {
+        method:  'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ enabledAddons: addonEdits }),
+      });
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}));
+        setAddonError((d as any).error ?? 'Save failed');
+      } else {
+        setAddonSaved(true);
+      }
+    } catch {
+      setAddonError('Network error');
+    } finally {
+      setAddonSaving(false);
+    }
+  }
+
+  // ─── Overrides ───────────────────────────────────────────────────────
+  const [overrides,     setOverrides]     = useState<Override[]>(initialOverrides);
+  const [showHistory,   setShowHistory]   = useState(false);
+  const [revokeConfirm, setRevokeConfirm] = useState<Record<string, boolean>>({});
+  const [revoking,      setRevoking]      = useState<Record<string, boolean>>({});
+
   const [showForm,    setShowForm]    = useState(false);
   const [formType,    setFormType]    = useState<'subscription_status' | 'comp_period'>('subscription_status');
   const [formValue,   setFormValue]   = useState('active');
@@ -119,7 +168,7 @@ export default function OrgDetailClient({
   const [formSaving,  setFormSaving]  = useState(false);
   const [formError,   setFormError]   = useState('');
 
-  const activeOverrides   = overrides.filter(o => !o.revokedAt);
+  const activeOverrides     = overrides.filter(o => !o.revokedAt);
   const historicalOverrides = overrides.filter(o => o.revokedAt);
 
   async function handleRevoke(oid: string) {
@@ -194,8 +243,8 @@ export default function OrgDetailClient({
           <h2 className={styles.sectionTitle}>
             Active Overrides
             <HelpTooltip
-              title="Enabled addons"
-              body="Enabled addons are the modules active for this org beyond their base plan. Toggle here immediately — no deploy required."
+              title="Active Overrides"
+              body="Overrides let you manually set subscription status or grant comp periods for this org. All changes are audit-logged with a required reason."
             />
           </h2>
           <button className={styles.addBtn} onClick={() => setShowForm(f => !f)}>
@@ -342,6 +391,43 @@ export default function OrgDetailClient({
               </div>
             )}
           </div>
+        )}
+      </section>
+
+      {/* Module Overrides */}
+      <section className={styles.section}>
+        <h2 className={styles.sectionTitle}>Module Overrides</h2>
+        {overrideableModules.length === 0 ? (
+          <p className={styles.emptyNote}>All add-on modules are included in this org&apos;s plan.</p>
+        ) : (
+          <>
+            <div className={styles.addonGrid}>
+              {overrideableModules.map(m => {
+                const enabled = addonEdits.includes(m);
+                return (
+                  <div key={m} className={styles.addonRow}>
+                    <span className={styles.addonLabel}>{ADDON_MODULE_LABELS[m] ?? m}</span>
+                    <button
+                      className={`${styles.addonToggle} ${enabled ? styles.addonToggleOn : styles.addonToggleOff}`}
+                      onClick={() => handleAddonToggle(m)}
+                    >
+                      {enabled ? 'Enabled' : 'Off'}
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+            <div className={styles.notesActions}>
+              <button
+                className={styles.saveBtn}
+                onClick={handleAddonSave}
+                disabled={addonSaving}
+              >
+                {addonSaving ? 'Saving…' : addonSaved ? 'Saved ✓' : 'Save Overrides'}
+              </button>
+              {addonError && <span className={styles.rowError}>{addonError}</span>}
+            </div>
+          </>
         )}
       </section>
 
