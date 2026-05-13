@@ -8,8 +8,11 @@ export async function POST() {
 
   const log: string[] = [];
 
-  // Emails that are never wiped — these are real operator accounts
-  const protectedEmails = getBootstrapAdminEmails();
+  // Emails that are never wiped: bootstrap admins plus the operator running the wipe.
+  const protectedEmails = Array.from(new Set([
+    ...getBootstrapAdminEmails(),
+    auth.user.email?.toLowerCase(),
+  ].filter(Boolean) as string[]));
 
   // Delete all orgs (cascades to all child tables via FK)
   const { error: orgErr } = await supabaseAdmin
