@@ -295,19 +295,3 @@ export async function POST(
     accountingEntryId: accountingEntry.id,
   }, { status: 201 });
 }
-
-function mapEntry(e: Record<string, unknown>) {
-  return {
-    id:                e.id,
-    fundraiserId:      e.fundraiser_id,
-    playerId:          e.player_id,
-    amountRaised:      Number(e.amount_raised),
-    rebatePercent:     Number(e.rebate_percent),
-    rebateAmount:      Number(e.rebate_amount),
-    accountingEntryId: e.accounting_entry_id ?? null,
-    creditId:          e.credit_id ?? null,
-    notes:             e.notes ?? null,
-    createdAt:         e.created_at,
-    updatedAt:         e.updated_at,
-  };
-}
