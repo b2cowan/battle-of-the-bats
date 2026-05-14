@@ -9,9 +9,10 @@ import {
   CalendarDays, ClipboardList, FileText, UserCheck, ExternalLink, HelpCircle,
 } from 'lucide-react';
 import { signOut } from '@/lib/auth';
+import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { useOrg } from '@/lib/org-context';
 import { useTournament } from '@/lib/tournament-context';
-import { hasCapability } from '@/lib/roles';
+import { hasCapability, type Capability } from '@/lib/roles';
 import styles from './AdminSidebar.module.css';
 
 const TOURNAMENT_NAV = [
@@ -27,14 +28,26 @@ const TOURNAMENT_NAV = [
   { key: 'archives',      icon: Archive,         label: 'Past Tournaments'  },
 ];
 
+type HouseLeagueSeasonOption = {
+  id: string;
+  name: string;
+  status?: string;
+};
+
+function isHouseLeagueSeasonOption(value: unknown): value is HouseLeagueSeasonOption {
+  if (!value || typeof value !== 'object') return false;
+  const season = value as Record<string, unknown>;
+  return typeof season.id === 'string' && typeof season.name === 'string';
+}
+
 export default function AdminSidebar() {
   const pathname = usePathname();
   const router   = useRouter();
   const { currentOrg, userRole, userCapabilities } = useOrg();
   const base = `/${currentOrg?.slug ?? 'milton-bats'}/admin`;
+  const currentOrgSlug = currentOrg?.slug;
   const { tournaments, currentTournament, setCurrentTournament } = useTournament();
 
-  const isHub          = pathname === base;
   const isOrgAdmin     = pathname.startsWith(`${base}/org`);
   const isPublicSite   = pathname.startsWith(`${base}/public-site`);
   const isAccounting   = pathname.startsWith(`${base}/accounting`);
@@ -48,35 +61,49 @@ export default function AdminSidebar() {
   const currentRepYearId = repTeamMatch?.[2] ?? null;
   const currentSeasonId = seasonMatch?.[1] ?? null;
 
+  const canUseModule = (capability: Capability) => currentOrg && userRole
+    ? hasCapability(userRole, userCapabilities, capability) && hasModuleEntitlement(currentOrg, capability)
+    : false;
+
   const canSeeMembersNav = userRole
-    ? userRole === 'owner' || hasCapability(userRole, userCapabilities, 'module_members')
+    ? (userRole === 'owner' || hasCapability(userRole, userCapabilities, 'module_members')) && canUseModule('module_members')
     : false;
 
   // Season switcher — loaded client-side when inside house league section
   const [houseLeagueSeasons, setHouseLeagueSeasons] = useState<{ id: string; name: string }[]>([]);
   useEffect(() => {
-    if (!isHouseLeague || !currentOrg) return;
+    if (!isHouseLeague || !currentOrgSlug) return;
     fetch(`/api/admin/house-league/seasons`)
       .then(r => r.ok ? r.json() : null)
-      .then(d => { if (d?.seasons) setHouseLeagueSeasons(d.seasons.filter((s: any) => s.status !== 'archived')); })
+      .then(d => {
+        const seasons = Array.isArray(d?.seasons)
+          ? d.seasons
+              .filter(isHouseLeagueSeasonOption)
+              .filter((season: HouseLeagueSeasonOption) => season.status !== 'archived')
+              .map((season: HouseLeagueSeasonOption) => ({ id: season.id, name: season.name }))
+          : [];
+        setHouseLeagueSeasons(seasons);
+      })
       .catch(() => {});
-  }, [isHouseLeague, currentOrg?.slug]);
+  }, [isHouseLeague, currentOrgSlug]);
 
   const canSeePublicSite = userRole
-    ? hasCapability(userRole, userCapabilities, 'module_public_site')
+    ? canUseModule('module_public_site')
     : false;
 
   const canSeeAccounting = userRole
-    ? hasCapability(userRole, userCapabilities, 'module_accounting')
+    ? canUseModule('module_accounting')
     : false;
 
   const canSeeHouseLeague = userRole
-    ? hasCapability(userRole, userCapabilities, 'module_house_league')
+    ? canUseModule('module_house_league')
     : false;
 
   const canSeeRepTeams = userRole
-    ? hasCapability(userRole, userCapabilities, 'module_rep_teams')
+    ? canUseModule('module_rep_teams')
     : false;
+
+  const hasOnlyTournamentWorkspace = !!currentOrg && canUseModule('module_tournaments') && !canSeePublicSite && !canSeeAccounting && !canSeeHouseLeague && !canSeeRepTeams;
 
   const helpHref = isTournaments  ? `${base}/help/tournaments`
                  : isHouseLeague  ? `${base}/help/house-league`
@@ -118,6 +145,8 @@ export default function AdminSidebar() {
     </Link>
   );
 
+  const maybeBackLink = hasOnlyTournamentWorkspace ? null : backLink;
+
   return (
     <aside className={styles.sidebar}>
       {/* Logo */}
@@ -132,7 +161,7 @@ export default function AdminSidebar() {
       {/* Org Admin mode */}
       {isOrgAdmin && (
         <>
-          {backLink}
+          {maybeBackLink}
           <div className={styles.navSection}>
             <div className={styles.sectionHeader}>Organization Admin</div>
             <nav className={styles.nav}>
@@ -152,7 +181,7 @@ export default function AdminSidebar() {
                 pathname.startsWith(`${base}/org/diamonds`),
               )}
               {userRole === 'owner' && navLink(
-                'org/billing', CreditCard, 'Billing',
+                'org/billing', CreditCard, 'Subscription',
                 `${base}/org/billing`,
                 pathname.startsWith(`${base}/org/billing`),
               )}
@@ -169,7 +198,7 @@ export default function AdminSidebar() {
       {/* Public Site mode */}
       {isPublicSite && canSeePublicSite && (
         <>
-          {backLink}
+          {maybeBackLink}
           <div className={styles.navSection}>
             <div className={styles.sectionHeader}>Public Site</div>
             <nav className={styles.nav}>
@@ -186,7 +215,7 @@ export default function AdminSidebar() {
       {/* Accounting mode */}
       {isAccounting && canSeeAccounting && (
         <>
-          {backLink}
+          {maybeBackLink}
           <div className={styles.navSection}>
             <div className={styles.sectionHeader}>Accounting</div>
             <nav className={styles.nav}>
@@ -201,7 +230,7 @@ export default function AdminSidebar() {
       {/* House League mode */}
       {isHouseLeague && canSeeHouseLeague && (
         <>
-          {backLink}
+          {maybeBackLink}
           <div className={styles.navSection}>
             <div className={styles.sectionHeader}>House League</div>
             <nav className={styles.nav}>
@@ -259,7 +288,7 @@ export default function AdminSidebar() {
       {/* Rep Teams mode */}
       {isRepTeams && canSeeRepTeams && (
         <>
-          {backLink}
+          {maybeBackLink}
           <div className={styles.navSection}>
             <div className={styles.sectionHeader}>Rep Teams</div>
             <nav className={styles.nav}>
@@ -308,7 +337,7 @@ export default function AdminSidebar() {
       {/* Tournament operations mode */}
       {isTournaments && (
         <>
-          {backLink}
+          {maybeBackLink}
           {tournaments.length > 0 && (
             <div className={styles.tournamentSwitcher}>
               <label className={styles.switcherLabel}>Editing Tournament</label>

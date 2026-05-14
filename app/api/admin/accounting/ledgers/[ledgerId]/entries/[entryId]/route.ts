@@ -98,6 +98,18 @@ export async function PATCH(req: Request, { params }: Params) {
   if ('category' in body) {
     input.category = typeof body.category === 'string' ? body.category.trim().slice(0, 100) || null : null;
   }
+  if ('paymentMethod' in body) {
+    input.paymentMethod = typeof body.paymentMethod === 'string' ? body.paymentMethod.trim().slice(0, 100) || null : null;
+  }
+  if ('payeeId' in body) {
+    input.payeeId = typeof body.payeeId === 'string' ? body.payeeId || null : null;
+  }
+  if ('payeePayer' in body) {
+    input.payeePayer = typeof body.payeePayer === 'string' ? body.payeePayer.trim().slice(0, 200) || null : null;
+  }
+  if ('notes' in body) {
+    input.notes = typeof body.notes === 'string' ? body.notes.trim().slice(0, 2000) || null : null;
+  }
 
   await updateEntry(entryId, ledgerId, input);
   return NextResponse.json({ ok: true });

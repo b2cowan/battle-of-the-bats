@@ -14,15 +14,62 @@ This file tracks the ongoing tasks for the FieldLogicHQ platform (multi-tenant s
   - [x] Phase 2 setup polish implemented
   - [x] Phase 3 conversion and public experience implemented
   - [x] Phase 4 plan-aware onboarding refinement implemented
+  - [x] Walkthrough blocker: post-signup onboarding plan chooser no longer blanks on org-context 403
+  - [x] Walkthrough polish: create-tournament onboarding opens the modal and post-create optional launch steps are shown
+  - [x] Walkthrough cleanup: create modal initializes immediately and admin archive console errors are removed
+  - [x] Walkthrough cleanup: launch steps visible up front and first-run create modal no longer shows migration/seed controls
+  - [x] Walkthrough polish: onboarding workflow uses focused chrome without admin side navigation
+  - [x] Walkthrough polish: division presets are editable starter rows instead of hardcoded youth brackets
+  - [x] Walkthrough polish: startup workflow steps open modals over onboarding with save/skip progress and dashboard reminder
+  - [x] Walkthrough blocker: post-signup onboarding render fault guarded
+  - [x] Walkthrough polish: onboarding division rows label capacity, expand pool controls, and tolerate missing startup-task migration
+  - [x] Walkthrough polish: startup workflow is now a single step-by-step modal wizard with save/skip advancement
+  - [x] Walkthrough polish: first-run plan selection stays editable until setup starts
+  - [x] Walkthrough polish: wizard plan selection advances automatically and every modal has Back navigation
+  - [x] Walkthrough polish: tournament details update saved drafts, with divisions and welcome message split into standalone wizard steps
+  - [x] Walkthrough polish: skipping first tournament skips dependent setup modals as a group
+  - [x] Walkthrough polish: skipping tournament setup requires confirmation and manual tournament creation retires the wizard
+  - [x] Walkthrough polish: venue setup uses one-at-a-time structured entry with editable added venues
+  - [x] Walkthrough polish: venue addresses are optional and missing required venue names show validation
+  - [x] Walkthrough refactor: startup wizard is draft-first and only persists setup at final review
+  - [x] Walkthrough polish: new tournament start dates cannot be before today
+  - [x] Walkthrough polish: first-run setup saves tournaments as private drafts without an activation step
+  - [x] Walkthrough polish: first-run setup removes staff invites so role management stays in admin settings
+  - [x] Walkthrough copy: setup review explains public visibility without private-draft jargon
+  - [x] Walkthrough blocker: Tournament-plan owners land in tournament management and only see entitled modules
+  - [x] Walkthrough high: production signup requires email verification before plan selection/onboarding
+  - [x] Walkthrough blocker: Tournament-only workspaces bypass the org hub before paint and dashboard stats use an authorized admin API
+  - [x] Walkthrough polish: subscription defaults to monthly pricing and unfinished tournament setup resumes on login
   - [x] Non-browser hardening pass completed
   - [ ] Browser verification of signup-to-registration flow
 
-### 1. Multi-Tenancy — Billing & Subscriptions
+### 1. Accounting Enhancements — Org & Rep Team Budget Planning
+*Detailed tasks in [ACCOUNTING_ENHANCEMENTS_PLAN.md](ACCOUNTING_ENHANCEMENTS_PLAN.md)*
+
+- [x] **Phase A** — Shared category & item library (predefined + custom, two-level hierarchy)
+- [x] **Phase B** — Rep team budget planner (line items, period distribution, installment generator)
+- [x] **Phase C** — Rep team budget vs. actual screen (period columns, delta chart, headroom)
+- [x] **Phase D** — Player-linked transactions & dues credits (equipment contributions, credit apply logic, rolling balance, season refund calculator)
+- [x] **Phase E** — Fundraiser module (per-player tracking, rebate %, auto dues credit)
+- [x] **Phase F** — Org budget planner (season lines, period distribution, "Allocate to Teams" from budget line) — complete
+- [x] **Phase G** — Org budget vs. actual screen (allocation recovery column, team health panel) — complete
+- [x] **Phase H** — Bidirectional team payment requests (coach submits, admin approves/denies) — migration 032 applied dev+prod, complete
+- [x] **Phase I** — 30/60/90 dashboards (coach + admin, three-lane upcoming payables) — complete
+- [x] **Phase J** — Transaction detail enhancements (payment method, payee/payee directory, notes) — migration 033 applied dev+prod, complete
+- [x] **Phase K** — Automated reminder system enhancements (30-day and 7-day triggers for dues + allocations) — migration 034 applied dev+prod, complete
+
+### 2. Chart Library Investigation
+- [ ] **Investigate chart libraries** — Evaluate recharts, chart.js, or @nivo for use in budget vs. actual and dashboard screens; assess bundle size, SSR compatibility, and dark-theme support before adding a dependency
+
+### 3. Light / Dark Theme Toggle
+- [ ] **Per-user light/dark theme preference** — Allow each user to toggle light/dark theme from their own settings screen (org admins in org settings, coaches in coach portal settings, etc.). Theme preference stored per-user (not per-org). Also expose a light/dark toggle on the public org and tournament websites so visitors can choose their preferred mode.
+
+### 4. Multi-Tenancy — Billing & Subscriptions
 *Detailed tasks in [MULTI_TENANT_ARCHITECTURE.md](MULTI_TENANT_ARCHITECTURE.md)*
 
 - [ ] **Phase 5** — Billing & Subscriptions: Stripe account setup and testing remaining
 
-### 2. Email Strategy
+### 5. Email Strategy
 
 - [ ] **Email Strategy Investigation**:
     - [ ] Investigate best-of-breed providers (Resend, Postmark, AWS SES) for system notifications
@@ -204,6 +251,8 @@ This file tracks the ongoing tasks for the FieldLogicHQ platform (multi-tenant s
 ### Admin UX & Documentation
 - [x] In-app role/permissions documentation — Role Guide panel, permission matrix, invite modal hints
 - [x] Admin help gaps — Billing status alerts, slug-change warning, Randomize copy, Results legend
+- [x] Walkthrough polish — subscription upgrade cards match onboarding plan chooser styling
+- [x] Walkthrough polish — remove ad hoc module upgrade section from Subscription
 
 ### Platform Administration (Super Admin)
 *(see [PLATFORM_ADMIN_PLAN.md](PLATFORM_ADMIN_PLAN.md))*

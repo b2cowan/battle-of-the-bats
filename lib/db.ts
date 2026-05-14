@@ -2,7 +2,7 @@ import { supabase } from './supabase';
 import { supabaseAdmin } from './supabase-admin';
 import { PLAN_CONFIG } from './plan-config';
 import { createClient as createBrowserSupabaseClient } from './supabase-browser';
-import { Tournament, TournamentStatus, Diamond, Contact, AgeGroup, Pool, Team, Game, Announcement, PlayoffConfig, RuleSection, RuleItem, Resource, Organization, OrganizationMember, OrgPlan, OrgRole, TournamentArchive, OrgPublicSiteContent, AccountingLedger, AccountingEntry, LedgerSummary, AccountingEntryStatus, AccountingEntryType, LeagueSeason, LeagueDivision, LeagueTeam, LeagueRegistration, LeagueGame, LeagueStandingsRow, LeagueSeasonSummary, LeagueRegistrationStatus, LeagueSeasonStatus, LeaguePractice, LeaguePracticeStatus, RepTeam, RepProgramYear, RepProgramYearStatus, RepTeamCoach, RepTryoutRegistration, RepTryoutRegistrationStatus, RepRosterPlayer, RepRosterStatus, RepTeamEvent, RepEventType, RepDocumentTemplate, RepDocumentType, RepPlayerDocument, RepCostAllocation, RepAllocationSplit, RepAllocationInstallment, RepPlayerDuesSchedule, RepPlayerDuesInstallment, RepTeamExpense } from './types';
+import { Tournament, TournamentStatus, Diamond, Contact, AgeGroup, Pool, Team, Game, Announcement, PlayoffConfig, RuleSection, RuleItem, Resource, Organization, OrganizationMember, OrgPlan, OrgRole, TournamentArchive, OrgPublicSiteContent, AccountingLedger, AccountingEntry, LedgerSummary, AccountingEntryStatus, AccountingEntryType, LeagueSeason, LeagueDivision, LeagueTeam, LeagueRegistration, LeagueGame, LeagueStandingsRow, LeagueSeasonSummary, LeagueRegistrationStatus, LeagueSeasonStatus, LeaguePractice, LeaguePracticeStatus, RepTeam, RepProgramYear, RepProgramYearStatus, RepTeamCoach, RepTryoutRegistration, RepTryoutRegistrationStatus, RepRosterPlayer, RepRosterStatus, RepTeamEvent, RepEventType, RepDocumentTemplate, RepDocumentType, RepPlayerDocument, RepCostAllocation, RepAllocationSplit, RepAllocationInstallment, RepPlayerDuesSchedule, RepPlayerDuesInstallment, RepTeamExpense, OrgPayee } from './types';
 
 // Use the SSR browser client (cookie-based session) for writes that need auth;
 // falls back to anon client on the server where there is no window.
@@ -1491,20 +1491,25 @@ export async function getLedgerEntries(
 
 export async function createEntry(
   ledgerId: string,
-  input: Pick<AccountingEntry, 'entryDate' | 'description' | 'amount' | 'entryType' | 'status' | 'category'>,
+  input: Pick<AccountingEntry, 'entryDate' | 'description' | 'amount' | 'entryType' | 'status' | 'category'> &
+    Partial<Pick<AccountingEntry, 'paymentMethod' | 'payeeId' | 'payeePayer' | 'notes'>>,
   createdBy: string
 ): Promise<AccountingEntry> {
   const { data } = await supabaseAdmin
     .from('accounting_entries')
     .insert({
-      ledger_id:   ledgerId,
-      entry_date:  input.entryDate,
-      description: input.description,
-      amount:      input.amount,
-      entry_type:  input.entryType,
-      status:      input.status,
-      category:    input.category ?? null,
-      created_by:  createdBy,
+      ledger_id:      ledgerId,
+      entry_date:     input.entryDate,
+      description:    input.description,
+      amount:         input.amount,
+      entry_type:     input.entryType,
+      status:         input.status,
+      category:       input.category ?? null,
+      payment_method: input.paymentMethod ?? null,
+      payee_id:       input.payeeId ?? null,
+      payee_payer:    input.payeePayer ?? null,
+      notes:          input.notes ?? null,
+      created_by:     createdBy,
     })
     .select()
     .single();
@@ -1514,17 +1519,21 @@ export async function createEntry(
 export async function updateEntry(
   entryId: string,
   ledgerId: string,
-  input: Partial<Pick<AccountingEntry, 'entryDate' | 'description' | 'amount' | 'entryType' | 'status' | 'category'>>
+  input: Partial<Pick<AccountingEntry, 'entryDate' | 'description' | 'amount' | 'entryType' | 'status' | 'category' | 'paymentMethod' | 'payeeId' | 'payeePayer' | 'notes'>>
 ): Promise<void> {
   await supabaseAdmin
     .from('accounting_entries')
     .update({
-      ...(input.entryDate   !== undefined && { entry_date:  input.entryDate }),
-      ...(input.description !== undefined && { description: input.description }),
-      ...(input.amount      !== undefined && { amount:      input.amount }),
-      ...(input.entryType   !== undefined && { entry_type:  input.entryType }),
-      ...(input.status      !== undefined && { status:      input.status }),
-      ...(input.category    !== undefined && { category:    input.category }),
+      ...(input.entryDate     !== undefined && { entry_date:      input.entryDate }),
+      ...(input.description   !== undefined && { description:     input.description }),
+      ...(input.amount        !== undefined && { amount:          input.amount }),
+      ...(input.entryType     !== undefined && { entry_type:      input.entryType }),
+      ...(input.status        !== undefined && { status:          input.status }),
+      ...(input.category      !== undefined && { category:        input.category }),
+      ...(input.paymentMethod !== undefined && { payment_method:  input.paymentMethod }),
+      ...(input.payeeId       !== undefined && { payee_id:        input.payeeId }),
+      ...(input.payeePayer    !== undefined && { payee_payer:     input.payeePayer }),
+      ...(input.notes         !== undefined && { notes:           input.notes }),
       updated_at: new Date().toISOString(),
     })
     .eq('id', entryId)
@@ -1595,6 +1604,10 @@ function mapEntry(row: any): AccountingEntry {
     linkedEntryId:  row.linked_entry_id ?? null,
     sourceModule:   row.source_module ?? null,
     sourceEntityId: row.source_entity_id ?? null,
+    paymentMethod:  row.payment_method ?? null,
+    payeeId:        row.payee_id ?? null,
+    payeePayer:     row.payee_payer ?? null,
+    notes:          row.notes ?? null,
     createdBy:      row.created_by,
     createdAt:      row.created_at,
     updatedAt:      row.updated_at,
@@ -2589,6 +2602,7 @@ function mapRepProgramYear(r: any): RepProgramYear {
     tryoutOpen: r.tryout_open,
     tryoutDescription: r.tryout_description,
     budgetAmount: r.budget_amount != null ? Number(r.budget_amount) : null,
+    autoRemindersEnabled: r.auto_reminders_enabled ?? true,
     createdAt: r.created_at,
     updatedAt: r.updated_at,
   };
@@ -3488,6 +3502,7 @@ function mapRepAllocationInstallment(r: any): RepAllocationInstallment {
     paidAt: r.paid_at ?? null,
     paidBy: r.paid_by ?? null,
     accountingEntryId: r.accounting_entry_id ?? null,
+    reminderSentAt: r.reminder_sent_at ?? null,
     createdAt: r.created_at,
   };
 }
@@ -3774,6 +3789,8 @@ function mapRepPlayerDuesInstallment(r: any): RepPlayerDuesInstallment {
     amount: Number(r.amount),
     paidAt: r.paid_at ?? null,
     reminderSentAt: r.reminder_sent_at ?? null,
+    reminder30SentAt: r.reminder_30_sent_at ?? null,
+    reminder7SentAt: r.reminder_7_sent_at ?? null,
     accountingEntryId: r.accounting_entry_id ?? null,
     createdAt: r.created_at,
   };
@@ -3824,6 +3841,9 @@ function mapRepTeamExpense(r: any): RepTeamExpense {
     balancePaidAt: r.balance_paid_at ?? null,
     eventId: r.event_id ?? null,
     notes: r.notes ?? null,
+    paymentMethod: r.payment_method ?? null,
+    payeeId: r.payee_id ?? null,
+    payeePayer: r.payee_payer ?? null,
     createdBy: r.created_by ?? null,
     createdAt: r.created_at,
     updatedAt: r.updated_at,
@@ -3864,25 +3884,31 @@ export async function createRepTeamExpense(fields: {
   balanceDueDate?: string | null;
   eventId?: string | null;
   notes?: string | null;
+  paymentMethod?: string | null;
+  payeeId?: string | null;
+  payeePayer?: string | null;
   createdBy?: string | null;
 }): Promise<RepTeamExpense> {
   const { data, error } = await supabaseAdmin
     .from('rep_team_expenses')
     .insert({
-      program_year_id: fields.programYearId,
-      team_id: fields.teamId,
-      org_id: fields.orgId,
-      expense_type: fields.expenseType,
-      description: fields.description,
-      category: fields.category ?? null,
-      amount: fields.amount,
-      deposit_amount: fields.depositAmount ?? null,
+      program_year_id:  fields.programYearId,
+      team_id:          fields.teamId,
+      org_id:           fields.orgId,
+      expense_type:     fields.expenseType,
+      description:      fields.description,
+      category:         fields.category ?? null,
+      amount:           fields.amount,
+      deposit_amount:   fields.depositAmount ?? null,
       deposit_due_date: fields.depositDueDate ?? null,
-      balance_amount: fields.balanceAmount ?? null,
+      balance_amount:   fields.balanceAmount ?? null,
       balance_due_date: fields.balanceDueDate ?? null,
-      event_id: fields.eventId ?? null,
-      notes: fields.notes ?? null,
-      created_by: fields.createdBy ?? null,
+      event_id:         fields.eventId ?? null,
+      notes:            fields.notes ?? null,
+      payment_method:   fields.paymentMethod ?? null,
+      payee_id:         fields.payeeId ?? null,
+      payee_payer:      fields.payeePayer ?? null,
+      created_by:       fields.createdBy ?? null,
     })
     .select()
     .single();
@@ -3918,6 +3944,66 @@ export async function updateRepTeamExpense(expenseId: string, fields: {
 export async function deleteRepTeamExpense(expenseId: string): Promise<void> {
   const { error } = await supabaseAdmin.from('rep_team_expenses').delete().eq('id', expenseId);
   if (error) throw error;
+}
+
+// ── Org Payees ────────────────────────────────────────────────────────────────
+
+function mapOrgPayee(r: any): OrgPayee {
+  return {
+    id:        r.id,
+    orgId:     r.org_id,
+    teamId:    r.team_id ?? null,
+    name:      r.name,
+    notes:     r.notes ?? null,
+    isActive:  r.is_active,
+    createdBy: r.created_by ?? null,
+    createdAt: r.created_at,
+  };
+}
+
+export async function searchOrgPayees(orgId: string, q: string, teamId?: string | null): Promise<OrgPayee[]> {
+  // Returns org-wide payees + (if teamId provided) that team's scoped payees
+  let query = supabaseAdmin
+    .from('org_payees')
+    .select('*')
+    .eq('org_id', orgId)
+    .eq('is_active', true)
+    .order('team_id', { ascending: true, nullsFirst: true })
+    .order('name', { ascending: true })
+    .limit(30);
+
+  if (teamId) {
+    query = query.or(`team_id.is.null,team_id.eq.${teamId}`);
+  } else {
+    query = query.is('team_id', null);
+  }
+
+  if (q.trim()) query = query.ilike('name', `%${q.trim()}%`);
+  const { data, error } = await query;
+  if (error) throw error;
+  return (data ?? []).map(mapOrgPayee);
+}
+
+export async function createOrgPayee(fields: {
+  orgId: string;
+  name: string;
+  teamId?: string | null;
+  notes?: string | null;
+  createdBy?: string | null;
+}): Promise<OrgPayee> {
+  const { data, error } = await supabaseAdmin
+    .from('org_payees')
+    .insert({
+      org_id:     fields.orgId,
+      team_id:    fields.teamId ?? null,
+      name:       fields.name.trim(),
+      notes:      fields.notes ?? null,
+      created_by: fields.createdBy ?? null,
+    })
+    .select()
+    .single();
+  if (error) throw error;
+  return mapOrgPayee(data);
 }
 
 // ── Rep Dues: bulk replace installments ──────────────────────────────────────
@@ -4048,6 +4134,7 @@ export async function getRepAllocationSplitsForTeam(
 
 import type {
   RepDueReminderCandidate,
+  RepAllocationReminderCandidate,
   RepPastProgramYear,
   RepTeamHistoryYear,
   PlatformUser,
@@ -4056,6 +4143,7 @@ import type {
 export async function getDueReminderCandidates(
   teamId: string,
   daysAhead: number,
+  window?: 30 | 7,
 ): Promise<RepDueReminderCandidate[]> {
   const programYear = await getActiveRepProgramYear(teamId);
   if (!programYear) return [];
@@ -4093,7 +4181,14 @@ export async function getDueReminderCandidates(
   const candidates = allInstallments.filter(i => {
     if (i.paid_at) return false;
     if (i.due_date < todayStr || i.due_date > cutoffStr) return false;
-    if (i.reminder_sent_at && new Date(i.reminder_sent_at) >= sevenDaysAgo) return false;
+    // Check window-specific sent column, fall back to legacy reminder_sent_at
+    if (window === 30) {
+      if (i.reminder_30_sent_at && new Date(i.reminder_30_sent_at) >= sevenDaysAgo) return false;
+    } else if (window === 7) {
+      if (i.reminder_7_sent_at && new Date(i.reminder_7_sent_at) >= sevenDaysAgo) return false;
+    } else {
+      if (i.reminder_sent_at && new Date(i.reminder_sent_at) >= sevenDaysAgo) return false;
+    }
     return true;
   });
 
@@ -4134,6 +4229,127 @@ export async function markInstallmentsReminderSent(installmentIds: string[]): Pr
   if (!installmentIds.length) return;
   const { error } = await supabaseAdmin
     .from('rep_player_dues_installments')
+    .update({ reminder_sent_at: new Date().toISOString() })
+    .in('id', installmentIds);
+  if (error) throw error;
+}
+
+export async function markInstallments30ReminderSent(installmentIds: string[]): Promise<void> {
+  if (!installmentIds.length) return;
+  const { error } = await supabaseAdmin
+    .from('rep_player_dues_installments')
+    .update({ reminder_30_sent_at: new Date().toISOString() })
+    .in('id', installmentIds);
+  if (error) throw error;
+}
+
+export async function markInstallments7ReminderSent(installmentIds: string[]): Promise<void> {
+  if (!installmentIds.length) return;
+  const { error } = await supabaseAdmin
+    .from('rep_player_dues_installments')
+    .update({ reminder_7_sent_at: new Date().toISOString() })
+    .in('id', installmentIds);
+  if (error) throw error;
+}
+
+export async function setAutoRemindersEnabled(programYearId: string, enabled: boolean): Promise<void> {
+  const { error } = await supabaseAdmin
+    .from('rep_program_years')
+    .update({ auto_reminders_enabled: enabled })
+    .eq('id', programYearId);
+  if (error) throw error;
+}
+
+export async function getAllocationReminderCandidates(
+  orgId: string,
+  daysAhead: number,
+): Promise<RepAllocationReminderCandidate[]> {
+  const today = new Date();
+  const cutoff = new Date(today);
+  cutoff.setDate(cutoff.getDate() + daysAhead);
+  const todayStr = today.toISOString().slice(0, 10);
+  const cutoffStr = cutoff.toISOString().slice(0, 10);
+  const sevenDaysAgo = new Date(today);
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+  // Load all active splits for the org
+  const { data: splits, error: sErr } = await supabaseAdmin
+    .from('rep_allocation_splits')
+    .select('id, allocation_id, team_id')
+    .eq('org_id', orgId);
+  if (sErr) throw sErr;
+  if (!splits?.length) return [];
+
+  const splitIds = splits.map((s: any) => s.id);
+  const splitMap = new Map(splits.map((s: any) => [s.id, s]));
+
+  // Load allocation descriptions
+  const allocationIds = [...new Set(splits.map((s: any) => s.allocation_id))];
+  const { data: allocations, error: aErr } = await supabaseAdmin
+    .from('rep_cost_allocations')
+    .select('id, description')
+    .in('id', allocationIds);
+  if (aErr) throw aErr;
+  const allocMap = new Map((allocations ?? []).map((a: any) => [a.id, a]));
+
+  // Load unpaid installments due in window
+  const { data: installments, error: iErr } = await supabaseAdmin
+    .from('rep_allocation_installments')
+    .select('*')
+    .in('split_id', splitIds)
+    .is('paid_at', null)
+    .gte('due_date', todayStr)
+    .lte('due_date', cutoffStr);
+  if (iErr) throw iErr;
+  if (!installments?.length) return [];
+
+  // Total installments per split
+  const { data: allInstCount, error: cErr } = await supabaseAdmin
+    .from('rep_allocation_installments')
+    .select('split_id')
+    .in('split_id', splitIds);
+  if (cErr) throw cErr;
+  const totalBySplit: Record<string, number> = {};
+  for (const r of allInstCount ?? []) {
+    totalBySplit[r.split_id] = (totalBySplit[r.split_id] ?? 0) + 1;
+  }
+
+  // Load team names
+  const teamIds = [...new Set(splits.map((s: any) => s.team_id))];
+  const { data: teams, error: tErr } = await supabaseAdmin
+    .from('rep_teams')
+    .select('id, name')
+    .in('id', teamIds);
+  if (tErr) throw tErr;
+  const teamMap = new Map((teams ?? []).map((t: any) => [t.id, t]));
+
+  return installments
+    .filter((i: any) => {
+      if (i.reminder_sent_at && new Date(i.reminder_sent_at) >= sevenDaysAgo) return false;
+      return true;
+    })
+    .map((i: any) => {
+      const split = splitMap.get(i.split_id);
+      const alloc = allocMap.get(split?.allocation_id);
+      const team = teamMap.get(split?.team_id);
+      return {
+        installmentId: i.id,
+        splitId: i.split_id,
+        teamId: split?.team_id ?? '',
+        teamName: team?.name ?? '',
+        allocationDescription: alloc?.description ?? '',
+        installmentNumber: i.installment_number,
+        totalInstallments: totalBySplit[i.split_id] ?? 1,
+        amount: Number(i.amount),
+        dueDate: i.due_date,
+      };
+    });
+}
+
+export async function markAllocationReminderSent(installmentIds: string[]): Promise<void> {
+  if (!installmentIds.length) return;
+  const { error } = await supabaseAdmin
+    .from('rep_allocation_installments')
     .update({ reminder_sent_at: new Date().toISOString() })
     .in('id', installmentIds);
   if (error) throw error;

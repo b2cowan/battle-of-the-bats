@@ -2,6 +2,62 @@ import { getAuthContextWithScope, unauthorized, forbidden, scopeGuard } from '@/
 import { hasCapability } from '@/lib/roles';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 
+type ApiPool = {
+  id: string;
+  ageGroupId: string;
+  name: string;
+  order: number;
+};
+
+type DbPool = {
+  id: string;
+  name: string;
+  display_order: number;
+};
+
+export async function GET(req: Request) {
+  const ctx = await getAuthContextWithScope();
+  if (!ctx) return unauthorized();
+
+  const tournamentId = new URL(req.url).searchParams.get('tournamentId');
+  if (!tournamentId) return Response.json([]);
+
+  const denied = scopeGuard(ctx, tournamentId);
+  if (denied) return denied;
+
+  const { data, error } = await supabaseAdmin
+    .from('age_groups')
+    .select('*, pools(*)')
+    .eq('tournament_id', tournamentId)
+    .order('display_order', { ascending: true });
+
+  if (error) return Response.json({ error: error.message }, { status: 500 });
+
+  return Response.json((data ?? []).map(group => ({
+    id: group.id,
+    tournamentId: group.tournament_id,
+    name: group.name,
+    minAge: group.min_age,
+    maxAge: group.max_age,
+    order: group.display_order,
+    contactId: group.contact_id,
+    isClosed: group.is_closed,
+    capacity: group.capacity,
+    poolCount: group.pool_count,
+    poolNames: group.pool_names,
+    requiresPoolSelection: group.requires_pool_selection,
+    playoffConfig: group.playoff_config,
+    pools: ((group.pools ?? [])
+      .map((pool: { id: string; age_group_id: string; name: string; display_order: number }) => ({
+        id: pool.id,
+        ageGroupId: pool.age_group_id,
+        name: pool.name,
+        order: pool.display_order,
+      })) as ApiPool[])
+      .sort((a, b) => a.order - b.order),
+  })));
+}
+
 export async function POST(req: Request) {
   const ctx = await getAuthContextWithScope();
   if (!ctx) return unauthorized();
@@ -15,7 +71,7 @@ export async function POST(req: Request) {
       const denied = scopeGuard(ctx, data.tournamentId);
       if (denied) return denied;
 
-      const { error } = await supabaseAdmin.from('age_groups').insert({
+      const { data: insertedGroup, error } = await supabaseAdmin.from('age_groups').insert({
         tournament_id:           data.tournamentId,
         name:                    data.name,
         min_age:                 data.minAge,
@@ -28,8 +84,20 @@ export async function POST(req: Request) {
         pool_names:              data.poolNames,
         requires_pool_selection: data.requiresPoolSelection,
         playoff_config:          data.playoffConfig,
-      });
+      }).select('id').single();
       if (error) throw error;
+
+      const poolCount = data.poolCount || 0;
+      if (insertedGroup?.id && poolCount >= 2) {
+        const names = (data.poolNames || '').split(',').map((n: string) => n.trim());
+        const poolRows = Array.from({ length: poolCount }).map((_, index) => ({
+          age_group_id: insertedGroup.id,
+          name: names[index] || String.fromCharCode(65 + index),
+          display_order: index,
+        }));
+        const { error: poolError } = await supabaseAdmin.from('pools').insert(poolRows);
+        if (poolError) throw poolError;
+      }
     }
 
     else if (action === 'update' && id) {
@@ -68,11 +136,11 @@ export async function POST(req: Request) {
         .eq('age_group_id', id)
         .order('display_order', { ascending: true });
 
-      const pools: any[] = existingPools || [];
+      const pools: DbPool[] = existingPools || [];
 
       if (newPoolCount < 2) {
         if (pools.length > 0) {
-          await supabaseAdmin.from('pools').delete().in('id', pools.map((p: any) => p.id));
+          await supabaseAdmin.from('pools').delete().in('id', pools.map(p => p.id));
         }
       } else {
         for (let i = 0; i < newPoolCount; i++) {
@@ -84,7 +152,7 @@ export async function POST(req: Request) {
           }
         }
         if (pools.length > newPoolCount) {
-          await supabaseAdmin.from('pools').delete().in('id', pools.slice(newPoolCount).map((p: any) => p.id));
+          await supabaseAdmin.from('pools').delete().in('id', pools.slice(newPoolCount).map(p => p.id));
         }
       }
     }
@@ -110,9 +178,10 @@ export async function POST(req: Request) {
       headers: { 'Content-Type': 'application/json' },
     });
 
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('Age Group Admin Error:', err);
-    return new Response(JSON.stringify({ error: err.message || 'Unknown server error' }), {
+    const message = err instanceof Error ? err.message : 'Unknown server error';
+    return new Response(JSON.stringify({ error: message }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' },
     });

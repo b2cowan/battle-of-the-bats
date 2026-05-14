@@ -1,12 +1,11 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { CreditCard, CheckCircle, Lock } from 'lucide-react';
+import { CreditCard, CheckCircle } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { useTournament } from '@/lib/tournament-context';
 import { PLAN_CONFIG } from '@/lib/plan-config';
 import FeedbackModal from '@/components/FeedbackModal';
-import HelpCallout from '@/components/help/HelpCallout';
 import type { OrgPlan, SubscriptionStatus } from '@/lib/types';
 import styles from './billing.module.css';
 
@@ -71,55 +70,20 @@ const PLAN_META_COPY: Record<OrgPlan, string> = {
   club:            "You're on the complete Club platform.",
 };
 
-const MODULE_META = [
-  {
-    key: 'module_public_site' as const,
-    name: 'Public Organization Page',
-    description: 'A branded public page listing your tournaments, results, and registration.',
-    upgradeTarget: 'league' as OrgPlan,
-    upgradeLabel: 'League',
-  },
-  {
-    key: 'module_house_league' as const,
-    name: 'House League',
-    description: 'Registration, divisions, seasons, scheduling, and standings for your rec league.',
-    upgradeTarget: 'league' as OrgPlan,
-    upgradeLabel: 'League',
-  },
-  {
-    key: 'module_accounting' as const,
-    name: 'Accounting',
-    description: 'Org ledger, team invoicing, payment reconciliation, and expense tracking.',
-    upgradeTarget: 'club' as OrgPlan,
-    upgradeLabel: 'Club',
-  },
-  {
-    key: 'module_rep_teams' as const,
-    name: 'Rep Teams',
-    description: 'Tryouts, rosters, player documents, coaches portal, and team finances.',
-    upgradeTarget: 'club' as OrgPlan,
-    upgradeLabel: 'Club',
-  },
-];
-
 export default function BillingPage() {
   const { currentOrg } = useOrg();
   const { tournaments }  = useTournament();
   const searchParams     = useSearchParams();
 
-  const [billingCycle, setBillingCycle] = useState<'monthly' | 'annual'>('annual');
+  const [billingCycle, setBillingCycle] = useState<'monthly' | 'annual'>('monthly');
   const [loading, setLoading]           = useState<OrgPlan | null>(null);
   const [portalLoading, setPortalLoading] = useState(false);
-  const [successOpen, setSuccessOpen]     = useState(false);
+  const [successOpen, setSuccessOpen]     = useState(() => searchParams.get('success') === '1');
   const [errorOpen, setErrorOpen]         = useState(false);
   const [errorMsg, setErrorMsg]           = useState('');
   const [seatUsage, setSeatUsage]         = useState<{
     billed: number; officials: number; limit: number; officialsFree: boolean;
   } | null>(null);
-
-  useEffect(() => {
-    if (searchParams.get('success') === '1') setSuccessOpen(true);
-  }, [searchParams]);
 
   useEffect(() => {
     if (!currentOrg) return;
@@ -137,11 +101,12 @@ export default function BillingPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ planKey }),
       });
-      const data = await res.json();
+      const data = await res.json() as { url?: string; error?: string };
       if (!res.ok) throw new Error(data.error ?? 'Checkout failed');
-      window.location.href = data.url;
-    } catch (err: any) {
-      setErrorMsg(err.message ?? 'Something went wrong. Please try again.');
+      if (!data.url) throw new Error('Checkout did not return a destination.');
+      window.location.assign(data.url);
+    } catch (err: unknown) {
+      setErrorMsg(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
       setErrorOpen(true);
       setLoading(null);
     }
@@ -151,11 +116,12 @@ export default function BillingPage() {
     setPortalLoading(true);
     try {
       const res = await fetch('/api/billing/portal', { method: 'POST' });
-      const data = await res.json();
+      const data = await res.json() as { url?: string; error?: string };
       if (!res.ok) throw new Error(data.error ?? 'Portal failed');
-      window.location.href = data.url;
-    } catch (err: any) {
-      setErrorMsg(err.message ?? 'Something went wrong. Please try again.');
+      if (!data.url) throw new Error('Portal did not return a destination.');
+      window.location.assign(data.url);
+    } catch (err: unknown) {
+      setErrorMsg(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
       setErrorOpen(true);
       setPortalLoading(false);
     }
@@ -173,7 +139,6 @@ export default function BillingPage() {
   const usagePct       = usageLimit >= 9999 ? 0 : Math.min(100, Math.round((usageCount / usageLimit) * 100));
   const upgradePlans   = PLAN_ORDER.filter(p => PLAN_ORDER.indexOf(p) > PLAN_ORDER.indexOf(currentPlanKey));
   const hasPaidPlan    = currentPlanKey !== 'tournament';
-  const entitlements   = currentPlan.moduleEntitlements;
 
   function getPrice(planKey: OrgPlan): string {
     const plan = PLAN_CONFIG[planKey];
@@ -196,8 +161,8 @@ export default function BillingPage() {
         <div className={styles.headerLeft}>
           <div className={styles.headerIcon}><CreditCard size={20} /></div>
           <div>
-            <h1 className={styles.pageTitle}>Billing</h1>
-            <p className={styles.pageSub}>Manage your plan and subscription</p>
+            <h1 className={styles.pageTitle}>Subscription</h1>
+            <p className={styles.pageSub}>Manage your plan and payment method</p>
           </div>
         </div>
       </div>
@@ -324,13 +289,11 @@ export default function BillingPage() {
           <div className={styles.plansGrid}>
             {upgradePlans.map(planKey => {
               const plan = PLAN_CONFIG[planKey];
-              const isClub = planKey === 'club';
               const savings = getSavings(planKey);
               return (
-                <div key={planKey} className={`${styles.planCard} ${isClub ? styles.planCardFeatured : ''}`}>
+                <div key={planKey} className={styles.planCard}>
                   <div className={styles.planCardHeader}>
                     <div className={styles.planCardName}>{plan.label}</div>
-                    {isClub && <span className={styles.popularBadge}>Most Popular</span>}
                   </div>
                   <div className={styles.planTaglineCard}>{PLAN_TAGLINE[planKey]}</div>
                   <div className={styles.planCardPrice}>
@@ -343,11 +306,10 @@ export default function BillingPage() {
                         <CheckCircle size={13} />
                         {f}
                       </li>
-                    ))}
+                  ))}
                   </ul>
                   <button
-                    className={`btn ${isClub ? 'btn-primary' : 'btn-outline'}`}
-                    style={{ width: '100%' }}
+                    className={`btn btn-primary ${styles.planButton}`}
                     onClick={() => handleUpgrade(planKey as 'tournament_plus' | 'league' | 'club')}
                     disabled={loading === planKey}
                     id={`billing-upgrade-${planKey}`}
@@ -361,47 +323,6 @@ export default function BillingPage() {
           </div>
         </>
       )}
-
-      {/* Modules section */}
-      <div className={styles.modulesSection}>
-        <h2 className={styles.sectionTitle}>Modules</h2>
-        <HelpCallout
-          variant="info"
-          title="About modules"
-          body="Modules extend FieldLogicHQ beyond tournaments. If your plan includes a module but it's not yet enabled, use the 'Request to enable' button and we'll activate it for you."
-        />
-        <div className={styles.modulesList}>
-          {MODULE_META.map(mod => {
-            const included = entitlements.includes(mod.key);
-            return (
-              <div key={mod.key} className={styles.moduleRow}>
-                <div className={styles.moduleInfo}>
-                  <div className={styles.moduleName}>{mod.name}</div>
-                  <div className={styles.moduleDesc}>{mod.description}</div>
-                </div>
-                {included ? (
-                  <div className={styles.moduleIncluded}>
-                    <CheckCircle size={13} />
-                    Included in your plan
-                  </div>
-                ) : (
-                  <div className={styles.moduleLocked}>
-                    <Lock size={12} />
-                    <span>Available on {mod.upgradeLabel}</span>
-                    <button
-                      className={styles.moduleUpgradeBtn}
-                      onClick={() => handleUpgrade(mod.upgradeTarget as 'tournament_plus' | 'league' | 'club')}
-                      disabled={loading === mod.upgradeTarget}
-                    >
-                      {loading === mod.upgradeTarget ? 'Redirecting…' : 'Upgrade'}
-                    </button>
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      </div>
 
       <FeedbackModal
         isOpen={successOpen}

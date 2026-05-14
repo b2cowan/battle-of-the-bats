@@ -227,6 +227,17 @@ export type AccountingEntityType = 'org' | 'tournament' | 'team' | 'league_seaso
 export type AccountingEntryType  = 'income' | 'expense' | 'transfer_in' | 'transfer_out';
 export type AccountingEntryStatus = 'pending' | 'posted' | 'void';
 
+export interface OrgPayee {
+  id: string;
+  orgId: string;
+  teamId: string | null;   // null = org-wide; set = team-scoped
+  name: string;
+  notes: string | null;
+  isActive: boolean;
+  createdBy: string | null;
+  createdAt: string;
+}
+
 export interface AccountingLedger {
   id: string;
   orgId: string;
@@ -250,6 +261,10 @@ export interface AccountingEntry {
   linkedEntryId: string | null;
   sourceModule: string | null;
   sourceEntityId: string | null;
+  paymentMethod: string | null;
+  payeeId: string | null;
+  payeePayer: string | null;
+  notes: string | null;
   createdBy: string;
   createdAt: string;
   updatedAt: string;
@@ -480,6 +495,7 @@ export interface RepProgramYear {
   tryoutOpen: boolean;
   tryoutDescription: string | null;
   budgetAmount: number | null;
+  autoRemindersEnabled: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -620,6 +636,7 @@ export interface RepAllocationInstallment {
   paidAt: string | null;
   paidBy: string | null;
   accountingEntryId: string | null;
+  reminderSentAt: string | null;
   createdAt: string;
 }
 
@@ -644,6 +661,8 @@ export interface RepPlayerDuesInstallment {
   amount: number;
   paidAt: string | null;
   reminderSentAt: string | null;
+  reminder30SentAt: string | null;
+  reminder7SentAt: string | null;
   accountingEntryId: string | null;
   createdAt: string;
 }
@@ -659,6 +678,18 @@ export interface RepDueReminderCandidate {
   guardianEmail: string | null;
   teamId: string;
   teamName: string;
+  installmentNumber: number;
+  totalInstallments: number;
+  amount: number;
+  dueDate: string;
+}
+
+export interface RepAllocationReminderCandidate {
+  installmentId: string;
+  splitId: string;
+  teamId: string;
+  teamName: string;
+  allocationDescription: string;
   installmentNumber: number;
   totalInstallments: number;
   amount: number;
@@ -706,9 +737,124 @@ export interface RepTeamExpense {
   balancePaidAt: string | null;
   eventId: string | null;
   notes: string | null;
+  paymentMethod: string | null;
+  payeeId: string | null;
+  payeePayer: string | null;
   createdBy: string | null;
   createdAt: string;
   updatedAt: string;
+}
+
+// ── Budget category & item library ───────────────────────────────────────────
+
+export type BudgetScope = 'org' | 'team' | 'both';
+
+export interface BudgetCategory {
+  id: string;
+  orgId: string | null;       // null = platform default (read-only)
+  name: string;
+  scope: BudgetScope;
+  sortOrder: number;
+  isDefault: boolean;
+  createdAt: string;
+  items?: BudgetItem[];
+}
+
+export interface BudgetItem {
+  id: string;
+  categoryId: string;
+  orgId: string | null;       // null = platform default (read-only)
+  name: string;
+  suggestedAmount: number | null;
+  sortOrder: number;
+  isDefault: boolean;
+  isMisc: boolean;            // true = Misc catch-all, always rendered last
+  createdAt: string;
+}
+
+export interface BudgetCategoryWithItems extends BudgetCategory {
+  items: BudgetItem[];
+}
+
+// ── Rep team budget planner ───────────────────────────────────────────────────
+
+export interface RepBudgetLine {
+  id: string;
+  orgId: string;
+  teamId: string;
+  programYearId: string;
+  categoryId: string | null;
+  itemId: string | null;
+  description: string;
+  totalAmount: number;
+  notes: string | null;
+  sortOrder: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface RepBudgetPeriod {
+  id: string;
+  budgetLineId: string;
+  periodLabel: string;
+  periodDate: string | null;
+  amount: number;
+  sortOrder: number;
+  createdAt: string;
+}
+
+export interface RepBudgetLineWithPeriods extends RepBudgetLine {
+  periods: RepBudgetPeriod[];
+  categoryName: string | null;
+  itemName: string | null;
+}
+
+export interface RepBudgetPlan {
+  lines: RepBudgetLineWithPeriods[];
+  totalBudget: number;
+  hasInstallments: boolean;
+  rosterCount: number;
+}
+
+// Installment preview row returned before generating dues installments
+export interface RepInstallmentPreviewRow {
+  playerId: string;
+  playerFirstName: string;
+  playerLastName: string;
+  installments: { installmentNumber: number; dueDate: string; amount: number }[];
+}
+
+export type DuesCreditType = 'contribution' | 'fundraiser' | 'overpayment' | 'other';
+
+export interface DuesCredit {
+  id: string;
+  programYearId: string;
+  playerId: string;
+  amount: number;
+  description: string;
+  creditDate: string;
+  creditType: DuesCreditType;
+  notes: string | null;
+  createdAt: string;
+}
+
+export interface SeasonSurplus {
+  id: string;
+  programYearId: string;
+  totalSurplus: number;
+  notes: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SeasonRefundRow {
+  playerId: string;
+  playerFirstName: string;
+  playerLastName: string;
+  creditPortion: number;
+  evenShare: number;
+  totalRefund: number;
+  rollingBalance: number;
 }
 
 // ── Platform (FieldLogicHQ company) users ────────────────────────────────────

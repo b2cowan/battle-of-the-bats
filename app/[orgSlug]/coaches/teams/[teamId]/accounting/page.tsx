@@ -1,9 +1,10 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { DollarSign, Users, Receipt, Building2 } from 'lucide-react';
+import { DollarSign, Users, Receipt, Building2, BarChart3, TrendingUp, Gift, ArrowLeftRight, Bell } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
 import HelpCallout from '@/components/help/HelpCallout';
+import UpcomingPayablesPanel from '@/components/accounting/UpcomingPayablesPanel';
 import styles from '../../../coaches.module.css';
 
 interface BudgetSummary {
@@ -32,6 +33,8 @@ export default function CoachesAccountingPage({
   const [budgetInput, setBudgetInput] = useState('');
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
+  const [autoReminders, setAutoReminders] = useState<boolean | null>(null);
+  const [reminderSaving, setReminderSaving] = useState(false);
 
   const assignment = assignments.find(a => a.teamId === teamId);
   const base = `/${orgSlug}/coaches/teams/${teamId}`;
@@ -40,11 +43,18 @@ export default function CoachesAccountingPage({
     setLoading(true);
     setError('');
     try {
-      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/budget`);
-      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Failed to load');
-      const data = await res.json();
+      const [budgetRes, settingsRes] = await Promise.all([
+        fetch(`/api/coaches/${orgSlug}/teams/${teamId}/budget`),
+        fetch(`/api/coaches/${orgSlug}/teams/${teamId}/accounting-settings`),
+      ]);
+      if (!budgetRes.ok) throw new Error((await budgetRes.json().catch(() => ({}))).error ?? 'Failed to load');
+      const data = await budgetRes.json();
       setSummary(data);
       setBudgetInput(data.budgetAmount != null ? String(data.budgetAmount) : '');
+      if (settingsRes.ok) {
+        const settings = await settingsRes.json();
+        setAutoReminders(settings.autoRemindersEnabled ?? true);
+      }
     } catch (e: any) {
       setError(e.message ?? 'Failed to load budget.');
     } finally {
@@ -72,6 +82,21 @@ export default function CoachesAccountingPage({
       setSaveError(e.message);
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function toggleAutoReminders(enabled: boolean) {
+    setReminderSaving(true);
+    try {
+      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/accounting-settings`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ autoRemindersEnabled: enabled }),
+      });
+      if (!res.ok) throw new Error('Failed to update');
+      setAutoReminders(enabled);
+    } finally {
+      setReminderSaving(false);
     }
   }
 
@@ -176,6 +201,13 @@ export default function CoachesAccountingPage({
             </div>
           </div>
 
+          {/* Upcoming payables panel */}
+          <div style={{ marginBottom: '1.5rem' }}>
+            <UpcomingPayablesPanel
+              apiUrl={`/api/coaches/${orgSlug}/teams/${teamId}/upcoming-payables`}
+            />
+          </div>
+
           {/* Unconfigured-state banner */}
           {summary.budgetAmount === null && summary.duesCollected === 0 && summary.totalExpenses === 0 && (
             <HelpCallout
@@ -187,6 +219,30 @@ export default function CoachesAccountingPage({
 
           {/* Quick-link sections */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            <Link href={`${base}/accounting/budget`} className={styles.detailSection} style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '1rem', padding: '1.1rem 1.25rem' }}>
+              <BarChart3 size={20} style={{ color: '#4ade80', flexShrink: 0 }} />
+              <div>
+                <p style={{ fontWeight: 600, color: 'rgba(255,255,255,0.9)', margin: 0 }}>Season Budget Plan</p>
+                <p className={styles.muted} style={{ margin: 0, fontSize: '0.82rem' }}>Build estimated costs, set player installment schedules</p>
+              </div>
+            </Link>
+
+            <Link href={`${base}/accounting/budget-vs-actual`} className={styles.detailSection} style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '1rem', padding: '1.1rem 1.25rem' }}>
+              <TrendingUp size={20} style={{ color: '#60a5fa', flexShrink: 0 }} />
+              <div>
+                <p style={{ fontWeight: 600, color: 'rgba(255,255,255,0.9)', margin: 0 }}>Budget vs. Actual</p>
+                <p className={styles.muted} style={{ margin: 0, fontSize: '0.82rem' }}>Track headroom, compare spending to plan, view monthly trends</p>
+              </div>
+            </Link>
+
+            <Link href={`${base}/accounting/fundraisers`} className={styles.detailSection} style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '1rem', padding: '1.1rem 1.25rem' }}>
+              <Gift size={20} style={{ color: '#4ade80', flexShrink: 0 }} />
+              <div>
+                <p style={{ fontWeight: 600, color: 'rgba(255,255,255,0.9)', margin: 0 }}>Fundraisers</p>
+                <p className={styles.muted} style={{ margin: 0, fontSize: '0.82rem' }}>Track per-player fundraising, rebates, and automatic dues credits</p>
+              </div>
+            </Link>
+
             <Link href={`${base}/accounting/dues`} className={styles.detailSection} style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '1rem', padding: '1.1rem 1.25rem' }}>
               <Users size={20} style={{ color: '#a855f7', flexShrink: 0 }} />
               <div>
@@ -210,7 +266,38 @@ export default function CoachesAccountingPage({
                 <p className={styles.muted} style={{ margin: 0, fontSize: '0.82rem' }}>View costs allocated to this team by your organization</p>
               </div>
             </Link>
+
+            <Link href={`${base}/accounting/payment-requests`} className={styles.detailSection} style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '1rem', padding: '1.1rem 1.25rem' }}>
+              <ArrowLeftRight size={20} style={{ color: '#facc15', flexShrink: 0 }} />
+              <div>
+                <p style={{ fontWeight: 600, color: 'rgba(255,255,255,0.9)', margin: 0 }}>Payment Requests</p>
+                <p className={styles.muted} style={{ margin: 0, fontSize: '0.82rem' }}>Submit payments to the org or request reimbursement — admin reviews and approves</p>
+              </div>
+            </Link>
           </div>
+
+          {/* Automated reminders toggle */}
+          {autoReminders !== null && (
+            <div className={styles.detailSection} style={{ marginTop: '1.5rem', padding: '1.1rem 1.25rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+              <Bell size={20} style={{ color: 'rgba(255,255,255,0.5)', flexShrink: 0 }} />
+              <div style={{ flex: 1 }}>
+                <p style={{ fontWeight: 600, color: 'rgba(255,255,255,0.9)', margin: 0 }}>Automatic Dues Reminders</p>
+                <p className={styles.muted} style={{ margin: 0, fontSize: '0.82rem' }}>
+                  {autoReminders
+                    ? 'On — guardians receive email reminders at 30 days and 7 days before each installment due date.'
+                    : 'Off — no automatic reminder emails will be sent for this team.'}
+                </p>
+              </div>
+              <button
+                className={autoReminders ? styles.btnPrimary : styles.btnGhost}
+                disabled={reminderSaving}
+                onClick={() => toggleAutoReminders(!autoReminders)}
+                style={{ flexShrink: 0, fontSize: '0.8rem', padding: '0.35rem 0.9rem' }}
+              >
+                {reminderSaving ? '…' : autoReminders ? 'Enabled' : 'Disabled'}
+              </button>
+            </div>
+          )}
         </>
       )}
     </div>

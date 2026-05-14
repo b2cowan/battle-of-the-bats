@@ -2,44 +2,80 @@
 import { useState, useEffect } from 'react';
 import { Users, Calendar, Trophy, Megaphone, Tag } from 'lucide-react';
 import Link from 'next/link';
-import { getTeams, getGames, getAnnouncements, getAgeGroups } from '@/lib/db';
 import { useTournament } from '@/lib/tournament-context';
 import { useOrg } from '@/lib/org-context';
 import { LiveEventLog } from '@/components/admin/LiveEventLog';
 import styles from './dashboard.module.css';
 
+type DashboardStats = {
+  ageGroups: number;
+  teams: number;
+  scheduled: number;
+  completed: number;
+  announcements: number;
+};
+
+const EMPTY_STATS: DashboardStats = {
+  ageGroups: 0,
+  teams: 0,
+  scheduled: 0,
+  completed: 0,
+  announcements: 0,
+};
+
 export default function AdminDashboard() {
   const { currentTournament } = useTournament();
   const { currentOrg } = useOrg();
   const base = `/${currentOrg?.slug ?? 'milton-bats'}/admin/tournaments`;
-  const [stats, setStats] = useState({
-    ageGroups: 0, teams: 0, scheduled: 0, completed: 0, announcements: 0,
-  });
+  const [stats, setStats] = useState<DashboardStats>(EMPTY_STATS);
+  const [statsError, setStatsError] = useState('');
 
   useEffect(() => {
-    async function fetchStats() {
-      const tid = currentTournament?.id;
-      const games = await getGames(tid);
-      const ageGroups = await getAgeGroups(tid);
-      const teams = await getTeams(tid);
-      const announcements = await getAnnouncements(tid);
-      setStats({
-        ageGroups: ageGroups.length,
-        teams: teams.length,
-        scheduled: games.filter(g => g.status === 'scheduled').length,
-        completed: games.filter(g => g.status === 'completed').length,
-        announcements: announcements.length,
-      });
+    const tournamentId = currentTournament?.id;
+    if (!tournamentId) return;
+
+    const controller = new AbortController();
+
+    async function fetchStats(selectedTournamentId: string) {
+      try {
+        const res = await fetch(
+          `/api/admin/tournament-dashboard?tournamentId=${encodeURIComponent(selectedTournamentId)}`,
+          { signal: controller.signal },
+        );
+        const data = await res.json().catch(() => null) as Partial<DashboardStats> & { error?: string } | null;
+        if (!res.ok) {
+          throw new Error(data?.error ?? 'Unable to load dashboard stats.');
+        }
+        setStats({
+          ageGroups: data?.ageGroups ?? 0,
+          teams: data?.teams ?? 0,
+          scheduled: data?.scheduled ?? 0,
+          completed: data?.completed ?? 0,
+          announcements: data?.announcements ?? 0,
+        });
+        setStatsError('');
+      } catch (err) {
+        if (err instanceof DOMException && err.name === 'AbortError') return;
+        setStats(EMPTY_STATS);
+        setStatsError(err instanceof Error ? err.message : 'Unable to load dashboard stats.');
+      }
     }
-    fetchStats();
+
+    void fetchStats(tournamentId);
+
+    return () => controller.abort();
   }, [currentTournament?.id]);
 
+  const statusLabel = (currentTournament?.status ?? 'draft').toUpperCase();
+  const isLive = currentTournament?.status === 'active';
+  const visibleStats = currentTournament?.id ? stats : EMPTY_STATS;
+
   const cards = [
-    { label: 'Age Groups', value: stats.ageGroups,      icon: Tag,       key: 'age-groups'    },
-    { label: 'Teams',      value: stats.teams,          icon: Users,     key: 'teams'         },
-    { label: 'Scheduled',  value: stats.scheduled,      icon: Calendar,  key: 'schedule'      },
-    { label: 'Completed',  value: stats.completed,      icon: Trophy,    key: 'results'       },
-    { label: 'News Posts', value: stats.announcements,  icon: Megaphone, key: 'announcements' },
+    { label: 'Age Groups', value: visibleStats.ageGroups,     icon: Tag,       key: 'age-groups'    },
+    { label: 'Teams',      value: visibleStats.teams,         icon: Users,     key: 'teams'         },
+    { label: 'Scheduled',  value: visibleStats.scheduled,     icon: Calendar,  key: 'schedule'      },
+    { label: 'Completed',  value: visibleStats.completed,     icon: Trophy,    key: 'results'       },
+    { label: 'News Posts', value: visibleStats.announcements, icon: Megaphone, key: 'announcements' },
   ];
 
   return (
@@ -52,8 +88,10 @@ export default function AdminDashboard() {
           </h1>
         </div>
         <div className="hidden md:flex items-center gap-6 font-mono text-xs text-data-gray">
-          <span className="live-dot text-logic-lime font-bold">LIVE</span>
-          <span>{currentOrg?.slug}</span>
+          <span className={isLive ? 'live-dot text-logic-lime font-bold' : 'text-data-gray font-bold'}>
+            {statusLabel}
+          </span>
+          <span>{currentTournament?.name ?? currentOrg?.slug}</span>
         </div>
       </header>
 
@@ -69,15 +107,21 @@ export default function AdminDashboard() {
         ))}
       </div>
 
+      {currentTournament?.id && statsError && (
+        <div className="mt-3 text-xs text-data-gray">
+          Dashboard counts are unavailable right now.
+        </div>
+      )}
+
       <div className={styles.quickLinks}>
         <h2 className={styles.sectionTitle}>Quick Actions</h2>
         <div className={styles.actionsGrid}>
           {[
-            { key: 'age-groups',    label: 'Manage Age Groups',    desc: 'Add, edit, or remove age divisions', icon: Tag       },
-            { key: 'teams',         label: 'Manage Teams',         desc: 'Add teams and edit player rosters',  icon: Users     },
-            { key: 'schedule',      label: 'Schedule Games',       desc: 'Create and manage game schedule',    icon: Calendar  },
-            { key: 'results',       label: 'Post Results',         desc: 'Enter scores for completed games',   icon: Trophy    },
-            { key: 'announcements', label: 'Post Announcement',    desc: 'Share news with participants',       icon: Megaphone },
+            { key: 'age-groups',    label: 'Manage Age Groups', desc: 'Add, edit, or remove age divisions', icon: Tag       },
+            { key: 'teams',         label: 'Manage Teams',      desc: 'Add teams and edit player rosters',  icon: Users     },
+            { key: 'schedule',      label: 'Schedule Games',    desc: 'Create and manage game schedule',    icon: Calendar  },
+            { key: 'results',       label: 'Post Results',      desc: 'Enter scores for completed games',   icon: Trophy    },
+            { key: 'announcements', label: 'Post Announcement', desc: 'Share news with participants',       icon: Megaphone },
           ].map(a => (
             <Link key={a.key} href={`${base}/${a.key}`} className={`card ${styles.actionCard}`}>
               <div className={styles.actionIcon}><a.icon size={18} /></div>
@@ -92,7 +136,11 @@ export default function AdminDashboard() {
 
       <div className={styles.recentEvents}>
         <h2 className={styles.sectionTitle}>Recent Events</h2>
-        <LiveEventLog tournamentId={currentTournament?.id ?? ''} />
+        {currentTournament?.id ? (
+          <LiveEventLog tournamentId={currentTournament.id} />
+        ) : (
+          <div className="font-mono text-xs text-data-gray/50">{'// Awaiting tournament selection...'}</div>
+        )}
       </div>
     </div>
   );

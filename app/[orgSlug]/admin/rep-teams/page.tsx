@@ -1,11 +1,12 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { Users, X, Archive, Link2, DollarSign } from 'lucide-react';
+import { Users, X, Archive, Link2, DollarSign, ArrowLeftRight } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { hasCapability } from '@/lib/roles';
 import FeedbackModal from '@/components/FeedbackModal';
 import HelpCallout from '@/components/help/HelpCallout';
+import UpcomingPayablesPanel from '@/components/accounting/UpcomingPayablesPanel';
 import styles from './rep-teams.module.css';
 import type { RepTeam, RepProgramYear } from '@/lib/types';
 
@@ -208,6 +209,20 @@ export default function RepTeamsPage() {
         >
           Document Templates
         </Link>
+        <Link
+          href={`${base}/rep-teams/payment-requests`}
+          style={{
+            display: 'inline-flex', alignItems: 'center', gap: '0.5rem',
+            background: 'rgba(255,255,255,0.04)',
+            border: '1px solid rgba(var(--blueprint-blue-rgb),0.2)',
+            borderRadius: 8, padding: '0.6rem 1rem',
+            color: 'rgba(255,255,255,0.7)', fontSize: '0.88rem', fontWeight: 600,
+            textDecoration: 'none', transition: 'background 0.15s',
+          }}
+        >
+          <ArrowLeftRight size={15} style={{ color: '#facc15' }} />
+          Payment Requests
+        </Link>
       </div>
 
       <p className={styles.sectionTitle}>Teams</p>
@@ -240,6 +255,16 @@ export default function RepTeamsPage() {
               onArchive={() => setArchiveTarget(s)}
             />
           ))}
+        </div>
+      )}
+
+      {/* Payables overview */}
+      {summaries.length > 0 && hasCapability(userRole ?? '', userCapabilities, 'module_rep_teams') && (
+        <div style={{ marginTop: '2.5rem' }}>
+          <UpcomingPayablesPanel
+            apiUrl="/api/admin/rep-teams/upcoming-payables"
+            reviewQueueUrl={`${base}/rep-teams/payment-requests`}
+          />
         </div>
       )}
 

@@ -1,0 +1,283 @@
+/* ── Layout ──────────────────────────────────────────────────────────────── */
+.page { max-width: 960px; }
+
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.82rem;
+  color: rgba(255,255,255,0.4);
+  margin-bottom: 1.5rem;
+}
+.breadcrumb a { color: rgba(255,255,255,0.55); text-decoration: none; }
+.breadcrumb a:hover { color: rgba(255,255,255,0.85); }
+
+.pageHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+}
+
+.pageHeaderLeft { display: flex; align-items: center; gap: 1rem; }
+
+.headerIcon {
+  width: 48px; height: 48px; border-radius: 12px;
+  background: rgba(var(--blueprint-blue-rgb), 0.12);
+  color: var(--logic-lime);
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.3);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+
+.pageTitle {
+  font-size: 1.75rem; font-weight: 900;
+  font-family: var(--font-display, sans-serif);
+  margin: 0; color: #f0f0f0; line-height: 1.1;
+}
+.pageSub { margin: 0.25rem 0 0; color: rgba(255,255,255,0.4); font-size: 0.9rem; }
+
+.muted { color: rgba(255,255,255,0.4); padding: 2rem; }
+
+.accessDenied { padding: 4rem 2rem; text-align: center; color: rgba(255,255,255,0.4); }
+.accessDenied h2 { font-size: 1.1rem; font-weight: 700; margin: 1rem 0 0.5rem; color: rgba(255,255,255,0.6); }
+.accessDenied p  { font-size: 0.9rem; max-width: 360px; margin: 0 auto; }
+
+/* ── Year selector ───────────────────────────────────────────────────────── */
+.yearRow {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+  font-size: 0.88rem;
+  color: rgba(255,255,255,0.5);
+}
+
+.yearSelect {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.12);
+  color: rgba(255,255,255,0.85);
+  border-radius: 6px;
+  padding: 0.35rem 0.65rem;
+  font-size: 0.88rem;
+  cursor: pointer;
+}
+.yearSelect:focus { outline: 2px solid rgba(var(--blueprint-blue-rgb),0.5); }
+
+/* ── Summary cards ───────────────────────────────────────────────────────── */
+.summaryGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.summaryCard {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 10px;
+  padding: 1rem 1.25rem;
+}
+
+.summaryLabel { font-size: 0.75rem; color: rgba(255,255,255,0.4); margin-bottom: 0.35rem; }
+.summaryValue {
+  font-size: 1.35rem; font-weight: 700;
+  color: rgba(255,255,255,0.9);
+  font-variant-numeric: tabular-nums;
+}
+.summaryValuePos  { color: #4ade80; }
+.summaryValueNeg  { color: #f87171; }
+.summaryValueMuted { color: rgba(255,255,255,0.55); }
+
+/* ── Category section ────────────────────────────────────────────────────── */
+.categorySection { margin-bottom: 2rem; }
+
+.categoryHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.6rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+}
+
+.categoryName {
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: rgba(255,255,255,0.35);
+}
+
+.categoryTotal {
+  font-size: 0.82rem;
+  font-variant-numeric: tabular-nums;
+  color: rgba(255,255,255,0.4);
+}
+
+/* ── Budget lines table ──────────────────────────────────────────────────── */
+.tableWrap { overflow-x: auto; }
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+}
+
+.th {
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+  color: rgba(255,255,255,0.35);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+  white-space: nowrap;
+}
+.thRight { text-align: right; }
+
+.tr { border-bottom: 1px solid rgba(255,255,255,0.05); }
+.tr:hover { background: rgba(255,255,255,0.02); }
+
+.td { padding: 0.65rem 0.75rem; vertical-align: top; }
+.tdRight { text-align: right; }
+
+.lineDesc { font-weight: 600; color: rgba(255,255,255,0.85); }
+.lineItem  { font-size: 0.78rem; color: rgba(255,255,255,0.4); margin-top: 0.15rem; }
+.lineAmount { font-variant-numeric: tabular-nums; color: rgba(255,255,255,0.85); }
+
+/* ── Badges ──────────────────────────────────────────────────────────────── */
+.badgeAllocated {
+  display: inline-flex; align-items: center; gap: 0.3rem;
+  background: rgba(74,222,128,0.12);
+  color: #4ade80;
+  border: 1px solid rgba(74,222,128,0.25);
+  border-radius: 4px;
+  font-size: 0.72rem; font-weight: 700;
+  padding: 0.15rem 0.45rem;
+  white-space: nowrap;
+}
+
+/* ── Periods expand row ──────────────────────────────────────────────────── */
+.periodsRow { background: rgba(255,255,255,0.015); }
+
+.periodsInner {
+  padding: 0.5rem 0.75rem 0.75rem 2rem;
+  font-size: 0.82rem;
+}
+
+.periodToggleBtn {
+  background: none; border: none; cursor: pointer;
+  color: rgba(255,255,255,0.4); padding: 0;
+  display: inline-flex; align-items: center; gap: 0.25rem;
+  font-size: 0.78rem;
+}
+.periodToggleBtn:hover { color: rgba(255,255,255,0.7); }
+
+.periodTable { width: 100%; border-collapse: collapse; margin-top: 0.4rem; }
+.periodTh {
+  text-align: left; font-size: 0.72rem; font-weight: 600;
+  color: rgba(255,255,255,0.3); padding-bottom: 0.3rem;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.periodTr td { padding: 0.3rem 0.5rem 0.3rem 0; color: rgba(255,255,255,0.65); font-size: 0.82rem; }
+
+/* ── Actions ─────────────────────────────────────────────────────────────── */
+.actionsCell { display: flex; align-items: center; gap: 0.4rem; justify-content: flex-end; }
+
+.btnIcon {
+  background: none; border: none; cursor: pointer;
+  color: rgba(255,255,255,0.3); padding: 0.25rem;
+  border-radius: 4px; display: flex; align-items: center;
+  transition: color 0.15s, background 0.15s;
+}
+.btnIcon:hover { color: rgba(255,255,255,0.7); background: rgba(255,255,255,0.06); }
+.btnIconDanger:hover { color: #f87171; background: rgba(248,113,113,0.1); }
+
+/* ── Add Line form ───────────────────────────────────────────────────────── */
+.addLineSection {
+  margin-top: 1.5rem;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.addLineHeader {
+  padding: 0.75rem 1rem;
+  background: rgba(255,255,255,0.04);
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: rgba(255,255,255,0.7);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.addLineBody { padding: 1rem; }
+
+.formGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+@media (max-width: 600px) { .formGrid { grid-template-columns: 1fr; } }
+.formGridFull { grid-column: 1 / -1; }
+
+.field { display: flex; flex-direction: column; gap: 0.3rem; }
+.label { font-size: 0.78rem; font-weight: 600; color: rgba(255,255,255,0.5); }
+
+.input, .select, .textarea {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.12);
+  color: rgba(255,255,255,0.85);
+  border-radius: 6px;
+  padding: 0.5rem 0.65rem;
+  font-size: 0.88rem;
+  width: 100%;
+}
+.input:focus, .select:focus, .textarea:focus {
+  outline: 2px solid rgba(var(--blueprint-blue-rgb),0.5);
+  border-color: transparent;
+}
+.textarea { resize: vertical; min-height: 64px; }
+
+.hint { font-size: 0.75rem; color: rgba(255,255,255,0.35); margin: 0; }
+.errorText { color: #f87171; font-size: 0.82rem; margin: 0; }
+
+.formActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.6rem;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255,255,255,0.07);
+}
+
+/* ── Period editor ───────────────────────────────────────────────────────── */
+.periodEditorRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr auto;
+  gap: 0.5rem;
+  align-items: center;
+  margin-bottom: 0.4rem;
+}
+@media (max-width: 500px) { .periodEditorRow { grid-template-columns: 1fr 1fr auto; } }
+
+/* ── Edit inline form ────────────────────────────────────────────────────── */
+.editRow td { background: rgba(var(--blueprint-blue-rgb),0.05); }
+
+/* ── Empty states ────────────────────────────────────────────────────────── */
+.emptyBudget {
+  text-align: center;
+  padding: 3rem 2rem;
+  color: rgba(255,255,255,0.35);
+  font-size: 0.9rem;
+  border: 1px dashed rgba(255,255,255,0.1);
+  border-radius: 10px;
+  margin-bottom: 1.5rem;
+}
+.emptyBudget p { margin: 0 0 1rem; }

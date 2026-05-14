@@ -1,0 +1,457 @@
+.page { max-width: 960px; }
+
+.pageHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+}
+
+.pageHeaderLeft {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.headerIcon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: rgba(var(--blueprint-blue-rgb), 0.12);
+  color: var(--logic-lime);
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.pageTitle {
+  font-size: 1.75rem;
+  font-weight: 900;
+  font-family: var(--font-display, sans-serif);
+  margin: 0;
+  color: var(--white-90, #f0f0f0);
+  line-height: 1.1;
+}
+
+.pageSub {
+  margin: 0.25rem 0 0;
+  color: var(--white-40, rgba(255,255,255,0.4));
+  font-size: 0.9rem;
+}
+
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.82rem;
+  color: rgba(255,255,255,0.35);
+  margin-bottom: 0.35rem;
+}
+.breadcrumb a { color: rgba(255,255,255,0.55); text-decoration: none; }
+.breadcrumb a:hover { color: rgba(255,255,255,0.8); }
+.breadcrumb span { color: rgba(255,255,255,0.25); }
+
+.muted { color: var(--white-40, rgba(255,255,255,0.4)); padding: 2rem; }
+.errorText { color: #f87171; font-size: 0.85rem; margin: 0.5rem 0; }
+
+/* ── Summary banner ──────────────────────────────────────────────────────── */
+.summaryBanner {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  padding: 1.25rem 1.75rem;
+  border-radius: 12px;
+  background: rgba(var(--blueprint-blue-rgb), 0.07);
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.2);
+  margin-bottom: 1.25rem;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+}
+
+.summaryItem { min-width: 100px; }
+
+.summaryLabel {
+  display: block;
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--white-40, rgba(255,255,255,0.4));
+  margin-bottom: 0.2rem;
+}
+
+.summaryValue {
+  display: block;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--white-90, #f0f0f0);
+  font-variant-numeric: tabular-nums;
+}
+
+.summaryHint {
+  display: block;
+  font-size: 0.72rem;
+  color: var(--white-30, rgba(255,255,255,0.3));
+  margin-top: 0.15rem;
+}
+
+.summaryDivider {
+  width: 1px;
+  background: rgba(255,255,255,0.08);
+  align-self: stretch;
+  flex-shrink: 0;
+}
+
+/* ── Dues collection card ────────────────────────────────────────────────── */
+.duesCard {
+  padding: 1rem 1.5rem;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.08);
+  margin-bottom: 1.25rem;
+}
+
+.duesTitle {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--white-40, rgba(255,255,255,0.4));
+  margin-bottom: 0.75rem;
+}
+
+.duesRow {
+  display: flex;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+
+.duesStat { min-width: 80px; }
+
+.duesValue {
+  display: block;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--white-85, rgba(255,255,255,0.85));
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Monthly chart card ──────────────────────────────────────────────────── */
+.chartCard {
+  padding: 1rem 1.25rem 0.5rem;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.08);
+  margin-bottom: 1.25rem;
+}
+
+.chartTitle {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--white-40, rgba(255,255,255,0.4));
+  margin: 0 0 0.75rem;
+}
+
+/* ── Category breakdown ──────────────────────────────────────────────────── */
+.section { margin-bottom: 1.5rem; }
+
+.tableHeader {
+  display: grid;
+  grid-template-columns: 1fr 110px 110px 110px;
+  padding: 0.4rem 1rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--white-30, rgba(255,255,255,0.3));
+  gap: 0.5rem;
+}
+
+.colDesc { }
+.colNum { text-align: right; }
+
+.linesContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.categoryGroup {
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.08);
+  overflow: hidden;
+}
+
+.categoryHeader {
+  display: grid;
+  grid-template-columns: 1fr 110px 110px 110px;
+  gap: 0.5rem;
+  align-items: center;
+  padding: 0.7rem 1rem;
+  background: rgba(255,255,255,0.03);
+  border: none;
+  width: 100%;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.12s;
+}
+.categoryHeader:hover { background: rgba(255,255,255,0.05); }
+
+.catHeaderInner {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.expandIcon {
+  color: var(--white-40, rgba(255,255,255,0.4));
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.categoryName {
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--white-50, rgba(255,255,255,0.5));
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.catNum {
+  font-size: 0.88rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--white-75, rgba(255,255,255,0.75));
+  text-align: right;
+  white-space: nowrap;
+}
+
+/* ── Line rows ───────────────────────────────────────────────────────────── */
+.linesBody {}
+
+.lineRow {
+  border-top: 1px solid rgba(255,255,255,0.04);
+}
+
+.lineMain {
+  display: grid;
+  grid-template-columns: 1fr 110px 110px 110px;
+  gap: 0.5rem;
+  align-items: center;
+  padding: 0.6rem 1rem 0.6rem 1.75rem;
+}
+
+.lineInner {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-width: 0;
+}
+
+.expandBtn, .expandSpacer {
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.expandBtn {
+  background: none;
+  border: none;
+  color: var(--white-40, rgba(255,255,255,0.4));
+  cursor: pointer;
+  padding: 0;
+  border-radius: 4px;
+  transition: color 0.12s;
+}
+.expandBtn:hover { color: var(--white-80, rgba(255,255,255,0.8)); }
+
+.lineDesc {
+  font-size: 0.88rem;
+  color: var(--white-75, rgba(255,255,255,0.75));
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.lineNum {
+  font-size: 0.88rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--white-60, rgba(255,255,255,0.6));
+  text-align: right;
+  white-space: nowrap;
+}
+
+/* ── Period sub-rows ─────────────────────────────────────────────────────── */
+.periodsBody {
+  background: rgba(255,255,255,0.015);
+  border-top: 1px solid rgba(255,255,255,0.04);
+}
+
+.periodRow {
+  display: grid;
+  grid-template-columns: 1fr 100px 110px 110px 110px;
+  gap: 0.5rem;
+  align-items: center;
+  padding: 0.45rem 1rem 0.45rem 3.25rem;
+  border-bottom: 1px solid rgba(255,255,255,0.025);
+  font-size: 0.82rem;
+}
+.periodRow:last-child { border-bottom: none; }
+
+.periodLabel {
+  color: var(--white-65, rgba(255,255,255,0.65));
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.periodDate {
+  color: var(--white-30, rgba(255,255,255,0.3));
+  font-size: 0.75rem;
+  white-space: nowrap;
+}
+
+.periodNum {
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  white-space: nowrap;
+}
+
+/* ── Grand total ─────────────────────────────────────────────────────────── */
+.grandTotal {
+  display: grid;
+  grid-template-columns: 1fr 110px 110px 110px;
+  gap: 0.5rem;
+  align-items: center;
+  padding: 0.85rem 1rem;
+  margin-top: 0.5rem;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.08);
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--white-70, rgba(255,255,255,0.7));
+}
+
+.grandNum {
+  font-size: 0.95rem;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  color: var(--white-90, #f0f0f0);
+  text-align: right;
+  white-space: nowrap;
+}
+
+/* ── Unbudgeted actuals ──────────────────────────────────────────────────── */
+.unbudgetedSection {
+  margin-top: 1.5rem;
+  padding: 1.25rem;
+  border-radius: 10px;
+  background: rgba(249,115,22,0.05);
+  border: 1px solid rgba(249,115,22,0.2);
+}
+
+.sectionTitle {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #f97316;
+  margin: 0 0 0.25rem;
+}
+
+.sectionSub {
+  font-size: 0.78rem;
+  color: var(--white-40, rgba(255,255,255,0.4));
+  margin: 0 0 1rem;
+}
+
+.unbudgetedRow {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.4rem 0;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  font-size: 0.85rem;
+}
+.unbudgetedRow:last-of-type { border-bottom: none; }
+
+.unbudgetedDesc {
+  flex: 1;
+  color: var(--white-75, rgba(255,255,255,0.75));
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.unbudgetedCat {
+  font-size: 0.75rem;
+  color: var(--white-40, rgba(255,255,255,0.4));
+  background: rgba(255,255,255,0.06);
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+.unbudgetedDate {
+  font-size: 0.78rem;
+  color: var(--white-35, rgba(255,255,255,0.35));
+  white-space: nowrap;
+}
+
+.unbudgetedAmount {
+  font-size: 0.88rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: #f97316;
+  white-space: nowrap;
+  margin-left: auto;
+}
+
+.unbudgetedTotal {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 0.75rem;
+  padding-top: 0.6rem;
+  border-top: 1px solid rgba(249,115,22,0.2);
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #f97316;
+}
+
+/* ── Empty state ─────────────────────────────────────────────────────────── */
+.emptyState {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: var(--white-40, rgba(255,255,255,0.4));
+}
+
+.emptyHint {
+  font-size: 0.85rem;
+  margin: 0.4rem 0 0;
+}
+
+.inlineLink {
+  color: #60a5fa;
+  text-decoration: none;
+  font-weight: 600;
+}
+.inlineLink:hover { text-decoration: underline; }
+
+.notAssigned {
+  padding: 2rem;
+  color: var(--white-40, rgba(255,255,255,0.4));
+}

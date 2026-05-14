@@ -61,12 +61,16 @@ export async function POST(req: Request, { params }: Params) {
 
   const body = await req.json();
 
-  const entryDate:   string  = typeof body.entryDate   === 'string' ? body.entryDate.trim()   : '';
-  const description: string  = typeof body.description === 'string' ? body.description.trim() : '';
-  const amount:      unknown = body.amount;
-  const entryType:   string  = typeof body.entryType   === 'string' ? body.entryType           : '';
-  const status:      string  = typeof body.status      === 'string' ? body.status              : '';
-  const category:    string | null = typeof body.category === 'string' ? body.category.trim().slice(0, 100) || null : null;
+  const entryDate:      string  = typeof body.entryDate      === 'string' ? body.entryDate.trim()                        : '';
+  const description:    string  = typeof body.description    === 'string' ? body.description.trim()                      : '';
+  const amount:         unknown = body.amount;
+  const entryType:      string  = typeof body.entryType      === 'string' ? body.entryType                               : '';
+  const status:         string  = typeof body.status         === 'string' ? body.status                                  : '';
+  const category:       string | null = typeof body.category       === 'string' ? body.category.trim().slice(0, 100) || null       : null;
+  const paymentMethod:  string | null = typeof body.paymentMethod  === 'string' ? body.paymentMethod.trim().slice(0, 100) || null  : null;
+  const payeeId:        string | null = typeof body.payeeId        === 'string' ? body.payeeId || null                             : null;
+  const payeePayer:     string | null = typeof body.payeePayer     === 'string' ? body.payeePayer.trim().slice(0, 200) || null     : null;
+  const notes:          string | null = typeof body.notes          === 'string' ? body.notes.trim().slice(0, 2000) || null         : null;
 
   if (!isValidEntryDate(entryDate)) {
     return NextResponse.json({ error: 'entryDate must be a valid YYYY-MM-DD date no more than one year in the future' }, { status: 400 });
@@ -96,6 +100,10 @@ export async function POST(req: Request, { params }: Params) {
       entryType: entryType as AccountingEntryType,
       status: status as AccountingEntryStatus,
       category,
+      paymentMethod,
+      payeeId,
+      payeePayer,
+      notes,
     },
     ctx!.user.id,
   );

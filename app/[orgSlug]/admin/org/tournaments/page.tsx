@@ -1,16 +1,52 @@
 ﻿'use client';
-import { useState, useEffect } from 'react';
-import { RefreshCw, Plus, Check, X, Trash2, Pencil, Star, Sparkles, ArrowRight } from 'lucide-react';
+import { useState, useEffect, use } from 'react';
+import { RefreshCw, Plus, Check, X, Trash2, Pencil, Star, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import {
-  getTournamentsByOrg, getContacts, getArchivesByOrg, getAgeGroups
+  getTournamentsByOrg, getAgeGroups
 } from '@/lib/db';
 import { useTournament } from '@/lib/tournament-context';
 import { useOrg } from '@/lib/org-context';
-import { Tournament, TournamentStatus, Contact } from '@/lib/types';
+import { Tournament, TournamentStatus, TournamentArchive } from '@/lib/types';
 
 function generateSlug(name: string): string {
   return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+}
+
+function getDefaultTournamentForm() {
+  const nextYear = new Date().getFullYear();
+  const defaultName = `${nextYear} Tournament`;
+  return {
+    year: String(nextYear),
+    name: defaultName,
+    slug: generateSlug(defaultName),
+    startDate: '',
+    endDate: '',
+  };
+}
+
+function getTodayDateValue() {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/Toronto',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(new Date());
+  const year = parts.find(part => part.type === 'year')?.value;
+  const month = parts.find(part => part.type === 'month')?.value;
+  const day = parts.find(part => part.type === 'day')?.value;
+  return year && month && day ? `${year}-${month}-${day}` : new Date().toISOString().slice(0, 10);
+}
+
+async function getAdminArchives(): Promise<TournamentArchive[]> {
+  const res = await fetch('/api/admin/tournament-archives', { cache: 'no-store' });
+  if (!res.ok) return [];
+  const data = await res.json();
+  return Array.isArray(data) ? data : [];
+}
+
+function getErrorMessage(error: unknown, fallback = 'Something went wrong.') {
+  return error instanceof Error ? error.message : fallback;
 }
 import FeedbackModal from '@/components/FeedbackModal';
 import HelpCallout from '@/components/help/HelpCallout';
@@ -20,26 +56,43 @@ import styles from './tournaments-admin.module.css';
 type ModalMode = 'add' | 'edit' | null;
 type DivisionPreset = 'youth' | 'adult' | 'custom';
 type SlugStatus = 'idle' | 'checking' | 'available' | 'taken' | 'invalid';
+type DivisionRow = {
+  id: string;
+  name: string;
+  enabled: boolean;
+  capacity: number;
+  poolCount: number;
+  requiresPoolSelection: boolean;
+  poolNames: string[];
+};
 
 const DIVISION_PRESETS: Record<Exclude<DivisionPreset, 'custom'>, string[]> = {
   youth: ['U9', 'U11', 'U13', 'U15', 'U17', 'U19'],
   adult: ['Open', 'Competitive', 'Recreational'],
 };
 
-function buildDivisionDefaults(names: string[]) {
-  return {
-    selected: new Set(names),
-    capacities: Object.fromEntries(names.map(name => [name, 8])),
-    pools: Object.fromEntries(names.map(name => [name, 0])),
-    requiresPool: Object.fromEntries(names.map(name => [name, false])),
-    poolNames: Object.fromEntries(names.map(name => [name, ['Pool A']])),
-  };
+function buildDivisionRows(names: string[]): DivisionRow[] {
+  return names.map((name, index) => ({
+    id: `${generateSlug(name) || 'division'}-${index + 1}`,
+    name,
+    enabled: true,
+    capacity: 8,
+    poolCount: 0,
+    requiresPoolSelection: false,
+    poolNames: ['Pool A'],
+  }));
 }
 
-export default function AdminTournamentsPage() {
-  const showDevSeedTools = process.env.NEXT_PUBLIC_ENABLE_DEV_TOOLS === 'true';
+export default function AdminTournamentsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ create?: string | string[] }>;
+}) {
+  const resolvedSearchParams = use(searchParams);
+  const createValue = resolvedSearchParams.create;
+  const createOnLoad = createValue === '1' || (Array.isArray(createValue) && createValue.includes('1'));
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
-  const [modal, setModal]       = useState<ModalMode>(null);
+  const [modal, setModal]       = useState<ModalMode>(createOnLoad ? 'add' : null);
   const [editing, setEditing]   = useState<Tournament | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [sealedTournamentIds, setSealedTournamentIds] = useState<Set<string>>(new Set());
@@ -51,7 +104,7 @@ export default function AdminTournamentsPage() {
     confirmText?: string;
     onConfirm?: () => void;
   }>({ isOpen: false, title: '', message: '', type: 'warning' });
-  const [form, setForm]         = useState({
+  const [form, setForm]         = useState(() => createOnLoad ? getDefaultTournamentForm() : {
     year: String(new Date().getFullYear()),
     name: '',
     slug: '',
@@ -65,43 +118,16 @@ export default function AdminTournamentsPage() {
   const { refresh: refreshCtx } = useTournament();
   const { currentOrg } = useOrg();
 
-  // Migration / Initialization states
-  const [sourceTournamentId, setSourceTournamentId] = useState<string>('');
-  const [sourceContacts, setSourceContacts]         = useState<Contact[]>([]);
-  const [selectedContactIds, setSelectedContactIds] = useState<Set<string>>(new Set());
-  const [migrateDiamonds, setMigrateDiamonds]       = useState(false);
   const [divisionPreset, setDivisionPreset] = useState<DivisionPreset>('youth');
   const [customDivisionName, setCustomDivisionName] = useState('');
-  const initialDivisions = buildDivisionDefaults(DIVISION_PRESETS.youth);
-  const [selectedDivisions, setSelectedDivisions]   = useState<Set<string>>(initialDivisions.selected);
-  const [divisionCapacities, setDivisionCapacities] = useState<Record<string, number>>(initialDivisions.capacities);
-  const [divisionPools, setDivisionPools]           = useState<Record<string, number>>(initialDivisions.pools);
-  const [divisionRequiresPool, setDivisionRequiresPool] = useState<Record<string, boolean>>(initialDivisions.requiresPool);
-  const [divisionPoolNames, setDivisionPoolNames] = useState<Record<string, string[]>>(initialDivisions.poolNames);
+  const [divisionRows, setDivisionRows] = useState<DivisionRow[]>(() => buildDivisionRows(DIVISION_PRESETS.youth));
   const [useWelcomeMsg, setUseWelcomeMsg]           = useState(true);
   const [welcomeMsg, setWelcomeMsg]                 = useState('Welcome to our tournament! We are excited to host a great event for all participating teams.');
-  const [seedData, setSeedData]                     = useState({
-    contacts: false,
-    diamonds: false,
-    registrations: false,
-    schedule: false,
-    results: false
-  });
-  const [scheduleParams, setScheduleParams] = useState({
-    gameDuration: 90,
-    turnoverTime: 15,
-    gamesPerTeam: 3,
-    startDate: '',
-    endDate: '',
-    startTime: '08:00',
-    endTime: '20:30'
-  });
-
   async function refresh() {
     if (currentOrg) {
       const [ts, archives] = await Promise.all([
         getTournamentsByOrg(currentOrg.id),
-        getArchivesByOrg(currentOrg.id),
+        getAdminArchives(),
       ]);
       setTournaments(ts);
       setSealedTournamentIds(new Set(archives.map(a => a.tournamentId).filter(Boolean) as string[]));
@@ -109,20 +135,6 @@ export default function AdminTournamentsPage() {
     await refreshCtx();
   }
   useEffect(() => { refresh(); }, []); // eslint-disable-line
-
-  useEffect(() => {
-    async function fetchSourceContacts() {
-      if (sourceTournamentId && modal === 'add') {
-        const contacts = await getContacts(sourceTournamentId);
-        setSourceContacts(contacts);
-        setSelectedContactIds(new Set(contacts.map(c => c.id)));
-      } else {
-        setSourceContacts([]);
-        setSelectedContactIds(new Set());
-      }
-    }
-    fetchSourceContacts();
-  }, [sourceTournamentId, modal]);
 
   useEffect(() => {
     const timer = window.setTimeout(async () => {
@@ -161,48 +173,17 @@ export default function AdminTournamentsPage() {
   }, [modal, form.slug, editing?.id]);
 
   function openAdd() {
-    const nextYear = new Date().getFullYear();
-    const defaultName = `${nextYear} Tournament`;
-    const defaults = buildDivisionDefaults(DIVISION_PRESETS.youth);
     setSlugEdited(false);
     setSlugStatus('idle');
     setSlugMessage('');
     setCreatedTournament(null);
-    setForm({
-      year: String(nextYear),
-      name: defaultName,
-      slug: generateSlug(defaultName),
-      startDate: '',
-      endDate: '',
-    });
+    setForm(getDefaultTournamentForm());
     setEditing(null);
-    setSourceTournamentId('');
-    setMigrateDiamonds(false);
     setDivisionPreset('youth');
     setCustomDivisionName('');
-    setSelectedDivisions(defaults.selected);
-    setDivisionCapacities(defaults.capacities);
-    setDivisionPools(defaults.pools);
-    setDivisionRequiresPool(defaults.requiresPool);
-    setDivisionPoolNames(defaults.poolNames);
+    setDivisionRows(buildDivisionRows(DIVISION_PRESETS.youth));
     setUseWelcomeMsg(true);
     setWelcomeMsg('Welcome to our tournament! We are excited to host a great event for all participating teams.');
-    setSeedData({
-      contacts: false,
-      diamonds: false,
-      registrations: false,
-      schedule: false,
-      results: false
-    });
-    setScheduleParams({
-      gameDuration: 90,
-      turnoverTime: 15,
-      gamesPerTeam: 3,
-      startDate: '',
-      endDate: '',
-      startTime: '08:00',
-      endTime: '20:30'
-    });
     setModal('add');
   }
 
@@ -238,40 +219,40 @@ export default function AdminTournamentsPage() {
       alert(slugStatus === 'taken' ? 'This tournament URL is already in use.' : 'Please wait for the URL availability check to finish.');
       return;
     }
-    if (modal === 'add' && selectedDivisions.size === 0) {
-      alert('Add at least one division before creating the tournament.');
+    if (modal === 'add' && data.startDate && data.startDate < getTodayDateValue()) {
+      alert('Start date cannot be before today.');
       return;
+    }
+    const enabledDivisionRows = divisionRows
+      .map(row => ({ ...row, name: row.name.trim() }))
+      .filter(row => row.enabled && row.name);
+    const duplicateDivision = enabledDivisionRows.find((row, index) =>
+      enabledDivisionRows.findIndex(other => other.name.toLowerCase() === row.name.toLowerCase()) !== index
+    );
+    if (modal === 'add') {
+      if (enabledDivisionRows.length === 0) {
+        alert('Add at least one division before creating the tournament.');
+        return;
+      }
+      if (duplicateDivision) {
+        alert(`Division names must be unique. "${duplicateDivision.name}" is listed more than once.`);
+        return;
+      }
     }
 
     try {
       if (modal === 'add') {
         const setupData = {
           tournament: { year: data.year, name: data.name, slug: data.slug, startDate: data.startDate, endDate: data.endDate },
-          divisions: Array.from(selectedDivisions).map(name => ({
-            name,
-            capacity: divisionCapacities[name] || 8,
-            poolCount: divisionPools[name] ?? 0,
-            poolNames: (divisionPoolNames[name] || []).join(','),
-            requiresPoolSelection: divisionRequiresPool[name] || false
+          divisions: enabledDivisionRows.map(row => ({
+            name: row.name,
+            capacity: row.capacity || 8,
+            poolCount: row.poolCount,
+            poolNames: row.poolNames.join(','),
+            requiresPoolSelection: row.requiresPoolSelection
           })),
           announcement: useWelcomeMsg ? { body: welcomeMsg } : null,
-          seedData: showDevSeedTools ? seedData : {
-            contacts: false,
-            diamonds: false,
-            registrations: false,
-            schedule: false,
-            results: false,
-          },
-          scheduleParams: showDevSeedTools && seedData.schedule ? {
-            ...scheduleParams,
-            startDate: scheduleParams.startDate || data.startDate,
-            endDate: scheduleParams.endDate || data.endDate
-          } : null,
-          migration: sourceTournamentId ? {
-            sourceTournamentId,
-            migrateDiamonds,
-            contactIds: Array.from(selectedContactIds)
-          } : null
+          migration: null
         };
 
         const res = await fetch('/api/admin/setup-tournament', {
@@ -297,92 +278,87 @@ export default function AdminTournamentsPage() {
       
       setModal(null);
       refresh();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Tournament operation failed:', err);
-      alert(`There was an error saving the tournament: ${err.message}`);
+      alert(`There was an error saving the tournament: ${getErrorMessage(err)}`);
     }
-  }
-
-  function toggleContact(id: string) {
-    const next = new Set(selectedContactIds);
-    if (next.has(id)) next.delete(id);
-    else next.add(id);
-    setSelectedContactIds(next);
-  }
-
-  function toggleDivision(name: string) {
-    const next = new Set(selectedDivisions);
-    if (next.has(name)) next.delete(name);
-    else {
-      next.add(name);
-      if (!(name in divisionCapacities)) {
-        setDivisionCapacities(prev => ({ ...prev, [name]: 8 }));
-      }
-      if (!(name in divisionPools)) {
-        setDivisionPools(prev => ({ ...prev, [name]: 0 }));
-      }
-      if (!(name in divisionRequiresPool)) {
-        setDivisionRequiresPool(prev => ({ ...prev, [name]: false }));
-      }
-    }
-    setSelectedDivisions(next);
   }
 
   function applyDivisionPreset(preset: DivisionPreset) {
     setDivisionPreset(preset);
     setCustomDivisionName('');
     const names = preset === 'custom' ? [] : DIVISION_PRESETS[preset];
-    const defaults = buildDivisionDefaults(names);
-    setSelectedDivisions(defaults.selected);
-    setDivisionCapacities(defaults.capacities);
-    setDivisionPools(defaults.pools);
-    setDivisionRequiresPool(defaults.requiresPool);
-    setDivisionPoolNames(defaults.poolNames);
+    setDivisionRows(buildDivisionRows(names));
   }
 
   function addCustomDivision() {
     const name = customDivisionName.trim();
-    if (!name || selectedDivisions.has(name)) return;
-    setSelectedDivisions(prev => new Set([...prev, name]));
-    setDivisionCapacities(prev => ({ ...prev, [name]: 8 }));
-    setDivisionPools(prev => ({ ...prev, [name]: 0 }));
-    setDivisionRequiresPool(prev => ({ ...prev, [name]: false }));
-    setDivisionPoolNames(prev => ({ ...prev, [name]: ['Pool A'] }));
+    if (!name) return;
+    setDivisionRows(prev => [
+      ...prev,
+      {
+        id: `custom-${prev.length + 1}-${generateSlug(name) || 'division'}`,
+        name,
+        enabled: true,
+        capacity: 8,
+        poolCount: 0,
+        requiresPoolSelection: false,
+        poolNames: ['Pool A'],
+      },
+    ]);
     setCustomDivisionName('');
   }
 
-  function updateCapacity(name: string, cap: number) {
-    setDivisionCapacities(prev => ({ ...prev, [name]: cap }));
+  function updateDivisionRow(id: string, updater: (row: DivisionRow) => DivisionRow) {
+    setDivisionRows(prev => prev.map(row => row.id === id ? updater(row) : row));
   }
 
-  function updatePools(name: string, count: number) {
-    setDivisionPools(prev => ({ ...prev, [name]: count }));
-    setDivisionPoolNames(prev => {
-      const existing = prev[name] || [];
-      const next = Array.from({ length: count }).map((_, i) => existing[i] || `Pool ${String.fromCharCode(65 + i)}`);
-      return { ...prev, [name]: next };
+  function removeDivisionRow(id: string) {
+    setDivisionRows(prev => prev.filter(row => row.id !== id));
+  }
+
+  function updateDivisionName(id: string, name: string) {
+    updateDivisionRow(id, row => ({ ...row, name }));
+  }
+
+  function toggleDivision(id: string) {
+    updateDivisionRow(id, row => ({ ...row, enabled: !row.enabled }));
+  }
+
+  function updateCapacity(id: string, cap: number) {
+    updateDivisionRow(id, row => ({ ...row, capacity: cap }));
+  }
+
+  function updatePools(id: string, count: number) {
+    updateDivisionRow(id, row => {
+      const poolNames = Array.from({ length: count }).map((_, i) => row.poolNames[i] || `Pool ${String.fromCharCode(65 + i)}`);
+      return { ...row, poolCount: count, poolNames };
     });
   }
 
-  function togglePoolsForDiv(name: string, enabled: boolean) {
+  function togglePoolsForDiv(id: string, enabled: boolean) {
     if (enabled) {
-      updatePools(name, 2);
+      updatePools(id, 2);
     } else {
-      updatePools(name, 0);
-      updateRequiresPool(name, false);
+      updateDivisionRow(id, row => ({
+        ...row,
+        poolCount: 0,
+        poolNames: ['Pool A'],
+        requiresPoolSelection: false,
+      }));
     }
   }
 
-  function updatePoolName(divName: string, poolIdx: number, newName: string) {
-    setDivisionPoolNames(prev => {
-      const next = [...(prev[divName] || [])];
-      next[poolIdx] = newName;
-      return { ...prev, [divName]: next };
+  function updatePoolName(id: string, poolIdx: number, newName: string) {
+    updateDivisionRow(id, row => {
+      const poolNames = [...row.poolNames];
+      poolNames[poolIdx] = newName;
+      return { ...row, poolNames };
     });
   }
 
-  function updateRequiresPool(name: string, req: boolean) {
-    setDivisionRequiresPool(prev => ({ ...prev, [name]: req }));
+  function updateRequiresPool(id: string, req: boolean) {
+    updateDivisionRow(id, row => ({ ...row, requiresPoolSelection: req }));
   }
 
   async function applyTournamentStatus(id: string, status: TournamentStatus) {
@@ -403,8 +379,8 @@ export default function AdminTournamentsPage() {
         return;
       }
       refresh();
-    } catch (err: any) {
-      alert('Error: ' + err.message);
+    } catch (err: unknown) {
+      alert('Error: ' + getErrorMessage(err));
     }
   }
 
@@ -467,11 +443,11 @@ export default function AdminTournamentsPage() {
         throw new Error(err.error || 'Seal failed');
       }
       refresh();
-    } catch (err: any) {
+    } catch (err: unknown) {
       setFeedback({
         isOpen: true,
         title: 'Seal Failed',
-        message: err.message,
+        message: getErrorMessage(err),
         type: 'danger',
       });
     }
@@ -488,14 +464,11 @@ export default function AdminTournamentsPage() {
       if (!res.ok) throw new Error('Delete failed');
       setDeleteId(null);
       refresh();
-    } catch (err: any) {
-      alert("Error: " + err.message);
+    } catch (err: unknown) {
+      alert('Error: ' + getErrorMessage(err));
     }
   }
 
-  const visibleDivisionNames = divisionPreset === 'custom'
-    ? Array.from(selectedDivisions)
-    : DIVISION_PRESETS[divisionPreset];
   const slugHintColor = slugStatus === 'available'
     ? 'var(--success, #22c55e)'
     : slugStatus === 'taken' || slugStatus === 'invalid'
@@ -518,25 +491,24 @@ export default function AdminTournamentsPage() {
         </button>
       </div>
 
-      {/* Info card */}
-      <div className={styles.infoCard}>
+      <div className={styles.lifecycleStrip}>
         <Star size={14} style={{ color: 'var(--logic-lime)', flexShrink: 0, marginTop: 2 }} />
-        <p>
-          <strong>Draft</strong> tournaments are invisible to the public — set up age groups and schedule before going live.
-          <strong> Activate</strong> to publish and open registration.
-          <strong> Complete</strong> when the season ends to free your active slot.
-          <strong> Archive</strong> to retire a tournament while keeping its history accessible.
-          <strong> Seal</strong> to create a permanent, tamper-proof snapshot of the final results — this cannot be undone.
-        </p>
+        <span><strong>Draft</strong> is private.</span>
+        <span><strong>Active</strong> publishes registration.</span>
+        <span><strong>Completed</strong> frees the active slot.</span>
+        <span><strong>Archive</strong> or <strong>Seal</strong> after the event.</span>
       </div>
 
       {tournaments.length === 0 && (
-        <HelpCallout
-          variant="info"
-          title="Tournaments are the core of FieldLogicHQ"
-          body="Create your first tournament to get started — you can configure age groups, teams, schedule, and scoring all from here."
-          cta={{ label: 'New Tournament', href: '#' }}
-        />
+        <div className={styles.emptyPrompt}>
+          <div>
+            <strong>No tournaments yet</strong>
+            <span>Create one draft tournament, then add venues, contacts, registration settings, and activate when ready.</span>
+          </div>
+          <button type="button" className="btn btn-outline btn-sm" onClick={openAdd}>
+            <Plus size={14} /> Create Tournament
+          </button>
+        </div>
       )}
 
       {(() => {
@@ -695,10 +667,11 @@ export default function AdminTournamentsPage() {
                     className="form-input"
                     type="date"
                     value={form.startDate}
+                    min={modal === 'add' ? getTodayDateValue() : undefined}
                     onChange={e => {
                       const start = e.target.value;
                       setForm(f => {
-                        const updates: any = { startDate: start };
+                        const updates: Partial<typeof form> = { startDate: start };
                         if (start) {
                           const date = new Date(start + 'T12:00:00');
                           date.setDate(date.getDate() + 2);
@@ -750,63 +723,11 @@ export default function AdminTournamentsPage() {
               </div>
 
               {modal === 'add' && (
-                <div className={styles.migrationSection}>
-                  <div className={styles.migrationHeader}>
-                    <RefreshCw size={16} />
-                    <h4>Migration & Setup</h4>
-                  </div>
-
-                  <div className="form-group" style={{ marginTop: '0.5rem' }}>
-                    <label className="form-label">Migrate data from past tournament (optional)</label>
-                    <select 
-                      className="form-input" 
-                      value={sourceTournamentId}
-                      onChange={e => setSourceTournamentId(e.target.value)}
-                    >
-                      <option value="">-- No Migration --</option>
-                      {tournaments.map(t => (
-                        <option key={t.id} value={t.id}>{t.name} ({t.year})</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {sourceTournamentId && (
-                    <div className={styles.migrationOptions}>
-                      <div className={styles.checkboxGroup}>
-                        <label className={styles.checkboxLabel}>
-                          <input 
-                            type="checkbox" 
-                            checked={migrateDiamonds} 
-                            onChange={e => setMigrateDiamonds(e.target.checked)} 
-                          />
-                          Migrate all diamond locations
-                        </label>
-                      </div>
-
-                      {sourceContacts.length > 0 && (
-                        <div className={styles.contactPicker}>
-                          <label className="form-label">Select contacts to migrate:</label>
-                          <div className={styles.contactList}>
-                            {sourceContacts.map(c => (
-                              <label key={c.id} className={styles.checkboxLabel}>
-                                <input 
-                                  type="checkbox" 
-                                  checked={selectedContactIds.has(c.id)}
-                                  onChange={() => toggleContact(c.id)}
-                                />
-                                {c.name} ({c.role})
-                              </label>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  )}
-
+                <>
                   <div className={styles.setupGroup}>
                     <label className="form-label">Division setup</label>
                     <p className={styles.setupHint}>
-                      Choose a starting structure, then adjust capacities. Pools are optional and only needed when a division is split into smaller groups.
+                      Choose a starter set, then rename, remove, or add divisions. Pools are optional and only needed when a division is split into smaller groups.
                     </p>
                     <div className={styles.presetGrid}>
                       <button
@@ -815,7 +736,7 @@ export default function AdminTournamentsPage() {
                         onClick={() => applyDivisionPreset('youth')}
                       >
                         <strong>Youth</strong>
-                        <span>U9, U11, U13, U15, U17, U19</span>
+                        <span>Starts with common U-style divisions</span>
                       </button>
                       <button
                         type="button"
@@ -823,7 +744,7 @@ export default function AdminTournamentsPage() {
                         onClick={() => applyDivisionPreset('adult')}
                       >
                         <strong>Adult</strong>
-                        <span>Open, Competitive, Recreational</span>
+                        <span>Starts with common adult brackets</span>
                       </button>
                       <button
                         type="button"
@@ -831,47 +752,59 @@ export default function AdminTournamentsPage() {
                         onClick={() => applyDivisionPreset('custom')}
                       >
                         <strong>Custom</strong>
-                        <span>Add your own division names</span>
+                        <span>Start blank and add your own</span>
                       </button>
                     </div>
 
-                    {divisionPreset === 'custom' && (
-                      <div className={styles.customDivisionRow}>
-                        <input
-                          className="form-input"
-                          value={customDivisionName}
-                          onChange={e => setCustomDivisionName(e.target.value)}
-                          onKeyDown={e => {
-                            if (e.key === 'Enter') {
-                              e.preventDefault();
-                              addCustomDivision();
-                            }
-                          }}
-                          placeholder="e.g. 12U, Open, Varsity"
-                        />
-                        <button type="button" className="btn btn-outline btn-sm" onClick={addCustomDivision}>
-                          <Plus size={14} /> Add
-                        </button>
-                      </div>
-                    )}
+                    <div className={styles.customDivisionRow}>
+                      <input
+                        className="form-input"
+                        value={customDivisionName}
+                        onChange={e => setCustomDivisionName(e.target.value)}
+                        onKeyDown={e => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            addCustomDivision();
+                          }
+                        }}
+                        placeholder="Add a division, e.g. 12U, Open, Varsity"
+                      />
+                      <button type="button" className="btn btn-outline btn-sm" onClick={addCustomDivision}>
+                        <Plus size={14} /> Add
+                      </button>
+                    </div>
 
                     <div className={styles.divisionGrid}>
-                      {visibleDivisionNames.length === 0 && (
+                      {divisionRows.length === 0 && (
                         <div className={styles.emptyDivisions}>
                           Add at least one division to create the tournament.
                         </div>
                       )}
-                      {visibleDivisionNames.map(div => (
-                        <div key={div} className={styles.divisionRow}>
-                          <label className={styles.checkboxLabel}>
-                            <input 
-                              type="checkbox" 
-                              checked={selectedDivisions.has(div)}
-                              onChange={() => toggleDivision(div)}
+                      {divisionRows.map(row => (
+                        <div key={row.id} className={styles.divisionRow}>
+                          <div className={styles.divisionNameCell}>
+                            <input
+                              type="checkbox"
+                              checked={row.enabled}
+                              onChange={() => toggleDivision(row.id)}
+                              aria-label={`Include ${row.name || 'division'}`}
                             />
-                            {div}
-                          </label>
-                          {selectedDivisions.has(div) && (
+                            <input
+                              className={`form-input ${styles.divisionNameInput}`}
+                              value={row.name}
+                              onChange={e => updateDivisionName(row.id, e.target.value)}
+                              placeholder="Division name"
+                            />
+                            <button
+                              type="button"
+                              className={styles.removeDivisionButton}
+                              onClick={() => removeDivisionRow(row.id)}
+                              aria-label={`Remove ${row.name || 'division'}`}
+                            >
+                              <X size={14} />
+                            </button>
+                          </div>
+                          {row.enabled && (
                             <div className={styles.divisionControls}>
                               <div className={styles.capInputWrap}>
                                 <div className={styles.subInput}>
@@ -879,8 +812,8 @@ export default function AdminTournamentsPage() {
                                   <input 
                                     type="number" 
                                     min="1" 
-                                    value={divisionCapacities[div] || 8}
-                                    onChange={e => updateCapacity(div, Number(e.target.value))}
+                                    value={row.capacity || 8}
+                                    onChange={e => updateCapacity(row.id, Number(e.target.value))}
                                     className="form-input"
                                   />
                                 </div>
@@ -888,45 +821,45 @@ export default function AdminTournamentsPage() {
                                   <label style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                     <input 
                                       type="checkbox" 
-                                      checked={(divisionPools[div] || 0) >= 2}
-                                      onChange={e => togglePoolsForDiv(div, e.target.checked)}
+                                      checked={row.poolCount >= 2}
+                                      onChange={e => togglePoolsForDiv(row.id, e.target.checked)}
                                     />
                                     Use Pools
                                   </label>
                                 </div>
-                                {(divisionPools[div] || 0) >= 2 && (
+                                {row.poolCount >= 2 && (
                                   <div className={styles.subInput} style={{ marginLeft: '1rem' }}>
                                     <label>Count:</label>
                                     <input 
                                       type="number" 
                                       min="2" 
                                       max="4"
-                                      value={divisionPools[div]}
-                                      onChange={e => updatePools(div, Number(e.target.value))}
+                                      value={row.poolCount}
+                                      onChange={e => updatePools(row.id, Number(e.target.value))}
                                       className="form-input"
                                       style={{ width: '60px' }}
                                     />
                                   </div>
                                 )}
                               </div>
-                              {(divisionPools[div] || 0) >= 2 && (
+                              {row.poolCount >= 2 && (
                                 <>
                                   <div className={styles.subCheck}>
                                     <label>User Selects Pool:</label>
                                     <input 
                                       type="checkbox" 
-                                      checked={divisionRequiresPool[div] || false}
-                                      onChange={e => updateRequiresPool(div, e.target.checked)}
+                                      checked={row.requiresPoolSelection}
+                                      onChange={e => updateRequiresPool(row.id, e.target.checked)}
                                     />
                                   </div>
                                   <div className={styles.poolNamesList}>
-                                    {Array.from({ length: divisionPools[div] }).map((_, i) => (
+                                    {Array.from({ length: row.poolCount }).map((_, i) => (
                                       <div key={i} className={styles.poolNameItem}>
                                         <label>{String.fromCharCode(65 + i)} Name:</label>
                                         <input 
                                           className="form-input" 
-                                          value={divisionPoolNames[div]?.[i] || ''} 
-                                          onChange={e => updatePoolName(div, i, e.target.value)}
+                                          value={row.poolNames[i] || ''} 
+                                          onChange={e => updatePoolName(row.id, i, e.target.value)}
                                           placeholder={`e.g. Gold`}
                                         />
                                       </div>
@@ -963,117 +896,7 @@ export default function AdminTournamentsPage() {
                     )}
                   </div>
 
-                  {showDevSeedTools && (
-                  <div className={styles.setupGroup}>
-                    <div className={styles.migrationHeader}>
-                      <Sparkles size={16} />
-                      <h4>Seed Random Data (Testing)</h4>
-                    </div>
-                    <div className={styles.seedGrid}>
-                      <label className={styles.checkboxLabel}>
-                        <input type="checkbox" checked={seedData.contacts} onChange={e => setSeedData(s => ({ ...s, contacts: e.target.checked }))} />
-                        Contacts
-                      </label>
-                      <label className={styles.checkboxLabel}>
-                        <input type="checkbox" checked={seedData.diamonds} onChange={e => setSeedData(s => ({ ...s, diamonds: e.target.checked }))} />
-                        Diamonds
-                      </label>
-                      <label className={styles.checkboxLabel}>
-                        <input type="checkbox" checked={seedData.registrations} onChange={e => setSeedData(s => ({ ...s, registrations: e.target.checked }))} />
-                        Registrations
-                      </label>
-                      <label className={styles.checkboxLabel}>
-                        <input type="checkbox" checked={seedData.schedule} onChange={e => setSeedData(s => ({ ...s, schedule: e.target.checked }))} />
-                        Schedule
-                      </label>
-                      <label className={styles.checkboxLabel}>
-                        <input type="checkbox" checked={seedData.results} onChange={e => setSeedData(s => ({ ...s, results: e.target.checked }))} />
-                        Results
-                      </label>
-                    </div>
-
-                    {seedData.schedule && (
-                      <div className={styles.scheduleParamsPanel}>
-                        <p style={{ fontSize: '0.75rem', color: 'var(--white-30)', marginBottom: '0.75rem' }}>
-                          Parameters for generated schedule:
-                        </p>
-                        
-                        <div className="form-row form-row-2" style={{ marginBottom: '0.75rem' }}>
-                          <div className="form-group">
-                            <label className="form-label" style={{ fontSize: '0.7rem' }}>Scheduling Start Date</label>
-                            <input 
-                              type="date" 
-                              className="form-input" 
-                              value={scheduleParams.startDate || form.startDate} 
-                              onChange={e => setScheduleParams(p => ({ ...p, startDate: e.target.value }))}
-                            />
-                          </div>
-                          <div className="form-group">
-                            <label className="form-label" style={{ fontSize: '0.7rem' }}>Scheduling End Date</label>
-                            <input 
-                              type="date" 
-                              className="form-input" 
-                              value={scheduleParams.endDate || form.endDate} 
-                              onChange={e => setScheduleParams(p => ({ ...p, endDate: e.target.value }))}
-                            />
-                          </div>
-                        </div>
-
-                        <div className="form-row form-row-2" style={{ marginBottom: '0.75rem' }}>
-                          <div className="form-group">
-                            <label className="form-label" style={{ fontSize: '0.7rem' }}>Daily Start Time</label>
-                            <input 
-                              type="time" 
-                              className="form-input" 
-                              value={scheduleParams.startTime} 
-                              onChange={e => setScheduleParams(p => ({ ...p, startTime: e.target.value }))}
-                            />
-                          </div>
-                          <div className="form-group">
-                            <label className="form-label" style={{ fontSize: '0.7rem' }}>Daily End Time</label>
-                            <input 
-                              type="time" 
-                              className="form-input" 
-                              value={scheduleParams.endTime} 
-                              onChange={e => setScheduleParams(p => ({ ...p, endTime: e.target.value }))}
-                            />
-                          </div>
-                        </div>
-
-                        <div className="form-row form-row-3">
-                          <div className="form-group">
-                            <label className="form-label" style={{ fontSize: '0.7rem' }}>Game Length (min)</label>
-                            <input 
-                              type="number" 
-                              className="form-input" 
-                              value={scheduleParams.gameDuration} 
-                              onChange={e => setScheduleParams(p => ({ ...p, gameDuration: Number(e.target.value) }))}
-                            />
-                          </div>
-                          <div className="form-group">
-                            <label className="form-label" style={{ fontSize: '0.7rem' }}>Turnover (min)</label>
-                            <input 
-                              type="number" 
-                              className="form-input" 
-                              value={scheduleParams.turnoverTime} 
-                              onChange={e => setScheduleParams(p => ({ ...p, turnoverTime: Number(e.target.value) }))}
-                            />
-                          </div>
-                          <div className="form-group">
-                            <label className="form-label" style={{ fontSize: '0.7rem' }}>Games / Team</label>
-                            <input 
-                              type="number" 
-                              className="form-input" 
-                              value={scheduleParams.gamesPerTeam} 
-                              onChange={e => setScheduleParams(p => ({ ...p, gamesPerTeam: Number(e.target.value) }))}
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                  )}
-                </div>
+                </>
               )}
               <div className="modal-footer">
                 <button type="button" className="btn btn-ghost" onClick={() => setModal(null)}>Cancel</button>

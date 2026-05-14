@@ -12,7 +12,7 @@ import type { Capability } from '@/lib/roles';
 import styles from './members.module.css';
 
 const ROLE_INVITE_DESCRIPTIONS: Record<'admin' | 'staff' | 'official', string> = {
-  admin: 'Tournament architect — can create tournaments, define age groups, manage registrations, build schedules, manage contacts and diamonds, post rules, send communications, and manage members. Cannot access org settings or billing.',
+  admin: 'Tournament architect — can create tournaments, define age groups, manage registrations, build schedules, manage contacts and diamonds, post rules, send communications, and manage members. Cannot access org settings or subscription.',
   staff: 'Tournament operator — updates game times and diamond assignments during events, submits scores, and posts announcements. Cannot create or delete tournaments, manage registrations, or send communications.',
   official: 'Score entry only. Officials receive a direct link to the scorekeeper app and can submit results from their assigned diamonds. They do not access the main admin area.',
 };
@@ -30,7 +30,7 @@ const ROLE_MATRIX: { label: string; owner: boolean; admin: boolean; staff: boole
   { label: 'Seal tournament (archive)',         owner: true,  admin: true,  staff: false, official: false },
   { label: 'Manage members',                    owner: true,  admin: true,  staff: false, official: false },
   { label: 'Org settings & branding',           owner: true,  admin: false, staff: false, official: false },
-  { label: 'Billing & subscription',            owner: true,  admin: false, staff: false, official: false },
+  { label: 'Subscription management',           owner: true,  admin: false, staff: false, official: false },
 ];
 
 interface Member {
@@ -65,8 +65,8 @@ const ROLE_LABELS: Record<OrgRole, string> = {
 };
 
 const ROLE_TOOLTIP: Record<OrgRole, string> = {
-  owner:            'Full access. Owns the org, manages billing, and can do everything admins can.',
-  admin:            'Manages tournaments, house league, rep teams, and org settings. Cannot manage billing.',
+  owner:            'Full access. Owns the org, manages the subscription, and can do everything admins can.',
+  admin:            'Manages tournaments, house league, rep teams, and org settings. Cannot manage the subscription.',
   staff:            'Day-of operator. Updates game times and diamond assignments, submits scores, and posts announcements. Cannot create tournaments or manage members.',
   treasurer:        'Access to accounting and ledgers only.',
   league_admin:     'Manages house league seasons, registrations, teams, and schedules.',
@@ -120,7 +120,7 @@ const CAPABILITY_LABELS: Record<Capability, string> = {
   seal_tournaments:          'Seal tournament (archive)',
   manage_members:            'Manage members',
   org_settings:              'Org settings & branding',
-  billing:                   'Billing & subscription',
+  billing:                   'Subscription management',
 };
 
 const MODULE_CAP_KEYS: Capability[] = [
@@ -599,7 +599,7 @@ export default function MembersPage() {
           </table>
           <p className={styles.roleRefNote}>
             <strong>Owner</strong> is assigned at org creation and cannot be transferred here — contact support to transfer ownership.
-            {' '}<strong>Admin</strong> is the co-organizer role (full tournament management, member management, no billing/settings).
+            {' '}<strong>Admin</strong> is the co-organizer role (full tournament management, member management, no subscription/settings).
             {' '}<strong>Staff</strong> are day-of operators (schedule updates, scores, announcements only).
             {' '}<strong>Officials</strong> receive a separate scorekeeper link and are not expected to use the admin area.
           </p>

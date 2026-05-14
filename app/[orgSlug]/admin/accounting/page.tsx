@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
-import { DollarSign, X } from 'lucide-react';
+import { DollarSign, X, Bell } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import HelpCallout from '@/components/help/HelpCallout';
 import HelpTooltip from '@/components/help/HelpTooltip';
@@ -44,6 +44,9 @@ export default function AccountingOverviewPage() {
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [feedbackType, setFeedbackType] = useState<'success' | 'danger'>('success');
   const [feedbackMsg,  setFeedbackMsg]  = useState('');
+
+  const [sendingDueReminders, setSendingDueReminders] = useState<30 | 7 | null>(null);
+  const [sendingAllocReminders, setSendingAllocReminders] = useState(false);
 
   // Highlight ledger card linked from the tournament sidebar link
   const [highlightEntityId, setHighlightEntityId] = useState<string | null>(null);
@@ -123,6 +126,42 @@ export default function AccountingOverviewPage() {
       showFeedback('danger', e.message ?? 'Failed to open tournament ledger.');
     } finally {
       setCreatingForTournamentId(null);
+    }
+  }
+
+  async function runDueReminders(window: 30 | 7) {
+    setSendingDueReminders(window);
+    try {
+      const res = await fetch('/api/admin/rep-teams/dues/send-automated-reminders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ window }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error ?? 'Failed');
+      showFeedback('success', `${window}-day reminders: ${data.emailsSent} email(s) sent across ${data.teamsProcessed} team(s).${data.teamsSkipped ? ` ${data.teamsSkipped} team(s) skipped (reminders disabled by coach).` : ''}`);
+    } catch (e: any) {
+      showFeedback('danger', e.message ?? 'Failed to send reminders.');
+    } finally {
+      setSendingDueReminders(null);
+    }
+  }
+
+  async function runAllocReminders() {
+    setSendingAllocReminders(true);
+    try {
+      const res = await fetch('/api/admin/rep-teams/allocations/send-reminders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ daysAhead: 30 }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error ?? 'Failed');
+      showFeedback('success', `Allocation reminders: ${data.installmentsTagged} installment(s) across ${data.emailsSent} email(s) sent.`);
+    } catch (e: any) {
+      showFeedback('danger', e.message ?? 'Failed to send allocation reminders.');
+    } finally {
+      setSendingAllocReminders(false);
     }
   }
 
@@ -307,6 +346,134 @@ export default function AccountingOverviewPage() {
                   </button>
                 </div>
               ))}
+            </div>
+          )}
+
+          {/* Accounting tools section */}
+          <div style={{ marginTop: '2rem' }}>
+            <div style={{
+              fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase',
+              letterSpacing: '0.06em', color: 'rgba(255,255,255,0.3)',
+              marginBottom: '0.75rem',
+            }}>
+              Planning Tools
+            </div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem' }}>
+              <Link
+                href={`${base}/accounting/budget`}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: '0.65rem',
+                  padding: '0.75rem 1rem',
+                  background: 'rgba(255,255,255,0.04)',
+                  border: '1px solid rgba(255,255,255,0.08)',
+                  borderRadius: 8,
+                  color: 'rgba(255,255,255,0.75)',
+                  textDecoration: 'none',
+                  fontSize: '0.88rem', fontWeight: 600,
+                  transition: 'background 0.15s, border-color 0.15s',
+                }}
+              >
+                <DollarSign size={16} style={{ color: 'var(--logic-lime)' }} />
+                Org Budget
+                <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.35)', fontWeight: 400 }}>
+                  Season planning &amp; team allocations
+                </span>
+              </Link>
+              <Link
+                href={`${base}/accounting/budget-vs-actual`}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: '0.65rem',
+                  padding: '0.75rem 1rem',
+                  background: 'rgba(255,255,255,0.04)',
+                  border: '1px solid rgba(255,255,255,0.08)',
+                  borderRadius: 8,
+                  color: 'rgba(255,255,255,0.75)',
+                  textDecoration: 'none',
+                  fontSize: '0.88rem', fontWeight: 600,
+                  transition: 'background 0.15s, border-color 0.15s',
+                }}
+              >
+                <DollarSign size={16} style={{ color: 'var(--logic-lime)' }} />
+                Budget vs. Actual
+                <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.35)', fontWeight: 400 }}>
+                  Allocation &amp; team collection status
+                </span>
+              </Link>
+            </div>
+          </div>
+
+          {/* Reminders section — owners and treasurers only */}
+          {(isOwner || userRole === 'treasurer') && (
+            <div style={{ marginTop: '2rem' }}>
+              <div style={{
+                fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase',
+                letterSpacing: '0.06em', color: 'rgba(255,255,255,0.3)',
+                marginBottom: '0.75rem',
+              }}>
+                Automated Reminders
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                <div style={{
+                  display: 'flex', alignItems: 'center', gap: '1rem',
+                  padding: '0.9rem 1.1rem',
+                  background: 'rgba(255,255,255,0.04)',
+                  border: '1px solid rgba(255,255,255,0.08)',
+                  borderRadius: 8,
+                }}>
+                  <Bell size={16} style={{ color: 'rgba(255,255,255,0.4)', flexShrink: 0 }} />
+                  <div style={{ flex: 1 }}>
+                    <p style={{ margin: 0, fontWeight: 600, color: 'rgba(255,255,255,0.85)', fontSize: '0.88rem' }}>Dues Reminders</p>
+                    <p style={{ margin: 0, fontSize: '0.78rem', color: 'rgba(255,255,255,0.4)' }}>
+                      Send 30-day or 7-day reminder emails to guardians for upcoming installments. Respects per-team coach toggle.
+                    </p>
+                  </div>
+                  <div style={{ display: 'flex', gap: '0.5rem', flexShrink: 0 }}>
+                    <button
+                      type="button"
+                      className="btn btn-secondary"
+                      style={{ fontSize: '0.78rem', padding: '0.3rem 0.65rem' }}
+                      disabled={sendingDueReminders !== null}
+                      onClick={() => runDueReminders(30)}
+                    >
+                      {sendingDueReminders === 30 ? 'Sending…' : '30-day wave'}
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-secondary"
+                      style={{ fontSize: '0.78rem', padding: '0.3rem 0.65rem' }}
+                      disabled={sendingDueReminders !== null}
+                      onClick={() => runDueReminders(7)}
+                    >
+                      {sendingDueReminders === 7 ? 'Sending…' : '7-day wave'}
+                    </button>
+                  </div>
+                </div>
+
+                <div style={{
+                  display: 'flex', alignItems: 'center', gap: '1rem',
+                  padding: '0.9rem 1.1rem',
+                  background: 'rgba(255,255,255,0.04)',
+                  border: '1px solid rgba(255,255,255,0.08)',
+                  borderRadius: 8,
+                }}>
+                  <Bell size={16} style={{ color: 'rgba(255,255,255,0.4)', flexShrink: 0 }} />
+                  <div style={{ flex: 1 }}>
+                    <p style={{ margin: 0, fontWeight: 600, color: 'rgba(255,255,255,0.85)', fontSize: '0.88rem' }}>Allocation Reminders</p>
+                    <p style={{ margin: 0, fontSize: '0.78rem', color: 'rgba(255,255,255,0.4)' }}>
+                      Send a reminder email to you listing all team allocation installments due within the next 30 days.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    style={{ fontSize: '0.78rem', padding: '0.3rem 0.65rem', flexShrink: 0 }}
+                    disabled={sendingAllocReminders}
+                    onClick={runAllocReminders}
+                  >
+                    {sendingAllocReminders ? 'Sending…' : 'Run now'}
+                  </button>
+                </div>
+              </div>
             </div>
           )}
 

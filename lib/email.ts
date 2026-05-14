@@ -492,3 +492,16 @@ export function platformPasswordResetHtml(resetLink: string) {
   <p style="color:rgba(255,255,255,0.22);font-size:0.75rem;margin:1.75rem 0 0;line-height:1.55;">If you didn't request this, you can safely ignore this email. Your password will not change.</p>
 </div>`;
 }
+
+export function signupVerificationHtml(p: {
+  orgName: string;
+  verifyUrl: string;
+}) {
+  return wrap(`
+    <h2 style="color:#fff;font-size:1.4rem;margin:0 0 1rem;">Verify Your Email</h2>
+    <p>Welcome to <strong>FieldLogicHQ</strong>.</p>
+    <p>Confirm your email address to continue setting up <strong>${p.orgName}</strong>.</p>
+    <a href="${p.verifyUrl}" style="display:inline-block;background:#8B2FC9;color:#fff;padding:0.75rem 1.75rem;border-radius:8px;text-decoration:none;font-weight:700;margin:1.5rem 0;">Verify Email &rarr;</a>
+    <p style="color:rgba(255,255,255,0.4);font-size:0.82rem;">If you did not create this account, you can safely ignore this email.</p>
+  `);
+}

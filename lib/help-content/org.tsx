@@ -1,3 +1,4 @@
+/* eslint-disable react/no-unescaped-entities */
 import type { HelpPageContent } from './index';
 
 const orgHelp: HelpPageContent = {
@@ -14,7 +15,7 @@ const orgHelp: HelpPageContent = {
             <li><strong>Invite your co-organizers.</strong> Go to <strong>Members</strong> and send invites to anyone who will help manage tournaments or run the league. Assign the Admin role for full co-organizer access.</li>
             <li><strong>Create your first tournament.</strong> Head to <strong>Tournaments</strong>, click <strong>New Tournament</strong>, and fill in the name, year, and URL slug.</li>
             <li><strong>Set up your org branding.</strong> In <strong>Settings</strong>, upload your logo, pick a colour theme, and confirm your URL slug before you share any links publicly.</li>
-            <li><strong>Enable your first module.</strong> If your plan includes House League, Rep Teams, or other modules, go to <strong>Billing</strong> and request activation. Each module unlocks a new section in the admin panel.</li>
+            <li><strong>Enable your first module.</strong> If your plan includes House League, Rep Teams, or other modules, go to <strong>Subscription</strong> and request activation. Each module unlocks a new section in the admin panel.</li>
             <li><strong>Invite field officials.</strong> Officials don't use the main admin area — they receive a direct scoring link. Add them via <strong>Members → Invite Member</strong> using the Official role.</li>
           </ol>
         </>
@@ -26,8 +27,8 @@ const orgHelp: HelpPageContent = {
         <>
           <p>Every member of your org is assigned one of these roles. Roles control what pages and actions they can access.</p>
           <ul>
-            <li><strong>Owner</strong> — Full access. Owns the org, manages billing, and can do everything admins can. Assigned at org creation; ownership cannot be transferred through the admin panel.</li>
-            <li><strong>Admin</strong> — Manages tournaments, house league, rep teams, and org settings. Cannot manage billing or subscription.</li>
+            <li><strong>Owner</strong> — Full access. Owns the org, manages the subscription, and can do everything admins can. Assigned at org creation; ownership cannot be transferred through the admin panel.</li>
+            <li><strong>Admin</strong> — Manages tournaments, house league, rep teams, and org settings. Cannot manage the subscription.</li>
             <li><strong>Staff</strong> — Day-of operator. Updates game times and diamond assignments, submits scores, and posts announcements. Cannot create tournaments, manage registrations, or send communications.</li>
             <li><strong>Treasurer</strong> — Access to accounting and ledgers only. Cannot access tournament management or other admin areas.</li>
             <li><strong>League Admin</strong> — Manages house league seasons, registrations, teams, and schedules. Scoped to the House League module.</li>
@@ -67,15 +68,15 @@ const orgHelp: HelpPageContent = {
             <li><strong>Accounting</strong> — Org ledger, team invoicing, payment reconciliation, and expense tracking. Included on Club.</li>
             <li><strong>Rep Teams</strong> — Tryouts, rosters, player documents, and the Coaches Portal. Included on Club.</li>
           </ul>
-          <p>To enable a module your plan includes, go to <strong>Billing → Modules</strong> and use the activation option there. Modules are enabled per-org — contact support if you expect a module to be available but don't see the activation option.</p>
+          <p>To enable a module your plan includes, go to <strong>Subscription → Modules</strong> and use the activation option there. Modules are enabled per-org — contact support if you expect a module to be available but don't see the activation option.</p>
         </>
       ),
     },
     {
-      heading: 'Billing and plan management',
+      heading: 'Subscription and plan management',
       content: (
         <>
-          <p>The <strong>Billing</strong> page (visible to Owners only) shows your current plan, active tournament count, seat usage, and available upgrades.</p>
+          <p>The <strong>Subscription</strong> page (visible to Owners only) shows your current plan, active tournament count, seat usage, and available upgrades.</p>
           <p>To upgrade, click <strong>Upgrade to [Plan Name]</strong> on the plan card that's right for your org. You'll be taken to a secure Stripe checkout — no credit card is required for the 14-day free trial.</p>
           <p>If you're on a paid plan, use <strong>Manage Subscription</strong> to update your payment method, view past invoices, or cancel. This opens the Stripe customer portal.</p>
           <p><strong>Past-due payments:</strong> If a payment fails, your access stays active during a grace period. Update your payment method via <strong>Manage Subscription</strong> before the grace period ends to avoid service interruption.</p>

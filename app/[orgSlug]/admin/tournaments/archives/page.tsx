@@ -2,11 +2,22 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Archive, ExternalLink, Sparkles } from 'lucide-react';
-import { getTournamentsByOrg, getArchivesByOrg } from '@/lib/db';
+import { getTournamentsByOrg } from '@/lib/db';
 import { useOrg } from '@/lib/org-context';
 import { Tournament, TournamentArchive } from '@/lib/types';
 import FeedbackModal from '@/components/FeedbackModal';
 import styles from './archives-admin.module.css';
+
+async function getAdminArchives(): Promise<TournamentArchive[]> {
+  const res = await fetch('/api/admin/tournament-archives', { cache: 'no-store' });
+  if (!res.ok) return [];
+  const data = await res.json();
+  return Array.isArray(data) ? data : [];
+}
+
+function getErrorMessage(error: unknown, fallback = 'Something went wrong.') {
+  return error instanceof Error ? error.message : fallback;
+}
 
 export default function AdminArchivesPage() {
   const { currentOrg } = useOrg();
@@ -25,7 +36,7 @@ export default function AdminArchivesPage() {
     if (!currentOrg) return;
     const [ts, arcs] = await Promise.all([
       getTournamentsByOrg(currentOrg.id),
-      getArchivesByOrg(currentOrg.id),
+      getAdminArchives(),
     ]);
     const sealedIds = new Set(arcs.map(a => a.tournamentId).filter(Boolean) as string[]);
     setArchives(arcs);
@@ -57,11 +68,11 @@ export default function AdminArchivesPage() {
         throw new Error(err.error || 'Seal failed');
       }
       refresh();
-    } catch (err: any) {
+    } catch (err: unknown) {
       setFeedback({
         isOpen: true,
         title: 'Seal Failed',
-        message: err.message,
+        message: getErrorMessage(err),
         type: 'danger',
       });
     }

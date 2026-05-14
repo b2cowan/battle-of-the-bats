@@ -30,13 +30,13 @@ export default function MockPortalPage() {
         body: JSON.stringify({ plan, status }),
       });
       if (!res.ok) {
-        const d = await res.json();
+        const d = await res.json() as { error?: string };
         throw new Error(d.error ?? 'Failed to apply');
       }
       await refresh();
       setSaved(true);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to apply');
     } finally {
       setSaving(false);
     }
@@ -99,7 +99,7 @@ export default function MockPortalPage() {
 
         <div className={styles.actions}>
           <button className="btn btn-ghost" onClick={handleReturn}>
-            ← Back to Billing
+            Back to Subscription
           </button>
           <button
             className="btn btn-primary"
@@ -116,7 +116,7 @@ export default function MockPortalPage() {
         isOpen={saved}
         onClose={() => { setSaved(false); handleReturn(); }}
         title="Changes applied"
-        message={`Plan set to ${PLAN_CONFIG[plan].label}, status set to ${status}. Returning to billing page.`}
+        message={`Plan set to ${PLAN_CONFIG[plan].label}, status set to ${status}. Returning to subscription page.`}
         type="success"
       />
 

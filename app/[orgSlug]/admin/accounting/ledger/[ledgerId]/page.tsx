@@ -7,6 +7,8 @@ import HelpCallout from '@/components/help/HelpCallout';
 import HelpTooltip from '@/components/help/HelpTooltip';
 import { hasCapability } from '@/lib/roles';
 import FeedbackModal from '@/components/FeedbackModal';
+import PayeeCombobox from '@/components/accounting/PayeeCombobox';
+import type { PayeeSelection } from '@/components/accounting/PayeeCombobox';
 import styles from '../../accounting.module.css';
 import type { AccountingLedger, AccountingEntry, LedgerSummary, AccountingEntryType, AccountingEntryStatus } from '@/lib/types';
 
@@ -25,6 +27,8 @@ interface EntryForm {
   amount: string;
   entryType: 'income' | 'expense';
   status: 'posted' | 'pending';
+  paymentMethod: string;
+  notes: string;
 }
 
 interface TransferForm {
@@ -40,7 +44,7 @@ function today(): string {
 }
 
 function emptyEntryForm(): EntryForm {
-  return { entryDate: today(), description: '', category: '', amount: '', entryType: 'income', status: 'posted' };
+  return { entryDate: today(), description: '', category: '', amount: '', entryType: 'income', status: 'posted', paymentMethod: '', notes: '' };
 }
 
 function emptyTransferForm(): TransferForm {
@@ -94,6 +98,7 @@ export default function LedgerDetailPage() {
   const [entryModal,    setEntryModal]    = useState<'add' | 'edit' | null>(null);
   const [editingEntry,  setEditingEntry]  = useState<AccountingEntry | null>(null);
   const [entryForm,     setEntryForm]     = useState<EntryForm>(emptyEntryForm);
+  const [payeeSelection, setPayeeSelection] = useState<PayeeSelection | null>(null);
   const [submitting,    setSubmitting]    = useState(false);
 
   const [transferModal, setTransferModal] = useState(false);
@@ -170,19 +175,31 @@ export default function LedgerDetailPage() {
 
   function openAddEntry() {
     setEntryForm(emptyEntryForm());
+    setPayeeSelection(null);
     setEditingEntry(null);
     setEntryModal('add');
   }
 
   function openEditEntry(entry: AccountingEntry) {
     setEntryForm({
-      entryDate:   entry.entryDate,
-      description: entry.description,
-      category:    entry.category ?? '',
-      amount:      String(entry.amount),
-      entryType:   entry.entryType as 'income' | 'expense',
-      status:      entry.status as 'posted' | 'pending',
+      entryDate:     entry.entryDate,
+      description:   entry.description,
+      category:      entry.category ?? '',
+      amount:        String(entry.amount),
+      entryType:     entry.entryType as 'income' | 'expense',
+      status:        entry.status as 'posted' | 'pending',
+      paymentMethod: entry.paymentMethod ?? '',
+      notes:         entry.notes ?? '',
     });
+    if (entry.payeePayer || entry.payeeId) {
+      setPayeeSelection({
+        payeeId:     entry.payeeId,
+        payeePayer:  entry.payeeId ? null : entry.payeePayer,
+        displayName: entry.payeePayer ?? entry.payeeId ?? '',
+      });
+    } else {
+      setPayeeSelection(null);
+    }
     setEditingEntry(entry);
     setEntryModal('edit');
   }
@@ -196,12 +213,17 @@ export default function LedgerDetailPage() {
     const isAdd = entryModal === 'add';
     try {
       const payload = {
-        entryDate:   entryForm.entryDate,
-        description: entryForm.description.trim(),
+        entryDate:     entryForm.entryDate,
+        description:   entryForm.description.trim(),
         amount,
-        entryType:   entryForm.entryType,
-        status:      entryForm.status,
-        category:    entryForm.category.trim() || null,
+        entryType:     entryForm.entryType,
+        status:        entryForm.status,
+        category:      entryForm.category.trim() || null,
+        paymentMethod: entryForm.paymentMethod.trim() || null,
+        payeeId:       payeeSelection?.payeeId ?? null,
+        // Always store display name for UI rendering; payeeId FK is the authoritative reference
+        payeePayer:    payeeSelection?.displayName ?? null,
+        notes:         entryForm.notes.trim() || null,
       };
 
       const url = isAdd
@@ -539,6 +561,22 @@ export default function LedgerDetailPage() {
                 <datalist id="ae-cat-list">
                   {categories.map(c => <option key={c} value={c} />)}
                 </datalist>
+              </div>
+              <div className={styles.field}>
+                <label className={styles.label} htmlFor="ae-method">Payment Method</label>
+                <input id="ae-method" type="text" className={styles.input} value={entryForm.paymentMethod} onChange={e => ef('paymentMethod', e.target.value.slice(0, 100))} placeholder="e.g. E-transfer, Cheque, Cash" maxLength={100} />
+              </div>
+              <div className={styles.field}>
+                <label className={styles.label}>Payee / Payer</label>
+                <PayeeCombobox
+                  payeesApiUrl="/api/admin/accounting/payees"
+                  value={payeeSelection}
+                  onChange={setPayeeSelection}
+                />
+              </div>
+              <div className={`${styles.field} ${styles.formGridFull}`}>
+                <label className={styles.label} htmlFor="ae-notes">Notes</label>
+                <textarea id="ae-notes" className={styles.input} rows={2} value={entryForm.notes} onChange={e => ef('notes', e.target.value.slice(0, 2000))} placeholder="Optional internal notes" style={{ resize: 'vertical', minHeight: '3.5rem' }} />
               </div>
             </div>
 

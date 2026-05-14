@@ -1,4 +1,5 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient as createSupabaseClient } from '@supabase/supabase-js';
+import { createClient as createBrowserSupabaseClient } from './supabase-browser';
 import {
   assertSafeSupabaseBrowserEnvironment,
   assertSafeSupabaseServerEnvironment,
@@ -10,7 +11,9 @@ if (typeof window === 'undefined') {
   assertSafeSupabaseBrowserEnvironment('Supabase public client');
 }
 
-export const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co',
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder'
-);
+export const supabase = typeof window === 'undefined'
+  ? createSupabaseClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co',
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder'
+  )
+  : createBrowserSupabaseClient();

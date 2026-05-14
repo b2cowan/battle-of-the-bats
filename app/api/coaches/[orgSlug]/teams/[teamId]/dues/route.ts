@@ -9,6 +9,7 @@ import {
   getRepPlayerDuesInstallments,
   upsertRepPlayerDuesSchedule,
 } from '@/lib/db';
+import { supabaseAdmin } from '@/lib/supabase-admin';
 
 async function resolveCoachContext(orgSlug: string, teamId: string) {
   const ctx = await getAuthContext();
@@ -48,17 +49,51 @@ export async function GET(
 
   const scheduleMap = new Map(schedules.map(s => [s.playerId, s]));
 
+  // Fetch all credits for this program year in one query
+  const { data: allCredits } = await supabaseAdmin
+    .from('rep_dues_credits')
+    .select('*')
+    .eq('program_year_id', programYear.id)
+    .order('credit_date', { ascending: false });
+
+  const creditsMap = new Map<string, Array<Record<string, unknown>>>();
+  for (const c of (allCredits ?? []) as Array<Record<string, unknown>>) {
+    const pid = c.player_id as string;
+    if (!creditsMap.has(pid)) creditsMap.set(pid, []);
+    creditsMap.get(pid)!.push(c);
+  }
+
   const playersWithDues = await Promise.all(
     rosterPlayers.map(async p => {
       const schedule = scheduleMap.get(p.id) ?? null;
       const installments = schedule ? await getRepPlayerDuesInstallments(schedule.id) : [];
       const paidAmount = installments.filter(i => i.paidAt).reduce((s, i) => s + i.amount, 0);
+      const outstanding = schedule ? schedule.totalAmount - paidAmount : 0;
+
+      const rawCredits = creditsMap.get(p.id) ?? [];
+      const credits = rawCredits.map(c => ({
+        id:          c.id,
+        programYearId: c.program_year_id,
+        playerId:    c.player_id,
+        amount:      c.amount,
+        description: c.description,
+        creditDate:  c.credit_date,
+        creditType:  c.credit_type,
+        notes:       c.notes ?? null,
+        createdAt:   c.created_at,
+      }));
+      const totalCredits  = credits.reduce((s, c) => s + (c.amount as number), 0);
+      const rollingBalance = Math.round((outstanding - totalCredits) * 100) / 100;
+
       return {
         player: p,
         schedule,
         installments,
         paidAmount,
-        outstanding: schedule ? schedule.totalAmount - paidAmount : 0,
+        outstanding,
+        credits,
+        totalCredits: Math.round(totalCredits * 100) / 100,
+        rollingBalance,
       };
     }),
   );

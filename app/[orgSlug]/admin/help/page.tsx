@@ -54,7 +54,7 @@ export default function AdminHelpHubPage() {
     }] : []),
     ...(canOrgAdmin ? [{
       title: 'Org Admin & Setup',
-      desc:  'Configure your organization settings, manage members, billing, and diamonds.',
+      desc:  'Configure your organization settings, manage members, subscription, and diamonds.',
       href:  './help/org',
     }] : []),
   ];

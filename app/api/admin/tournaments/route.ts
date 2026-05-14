@@ -9,6 +9,10 @@ import { hasCapability } from '@/lib/roles';
 import type { TournamentStatus } from '@/lib/types';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 
+function isDateValue(value: unknown): value is string {
+  return typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value);
+}
+
 /**
  * GET /api/admin/tournaments
  * Returns tournaments for the calling user's org, filtered by their assignment scope.
@@ -168,6 +172,38 @@ export async function POST(req: Request) {
       if (data.startDate !== undefined) updates.start_date = data.startDate;
       if (data.endDate   !== undefined) updates.end_date   = data.endDate;
 
+      if (data.startDate !== undefined || data.endDate !== undefined) {
+        const hasStartDateUpdate = data.startDate !== undefined;
+        const hasEndDateUpdate = data.endDate !== undefined;
+        const nextStartDate = !hasStartDateUpdate
+          ? null
+          : data.startDate === null || data.startDate === ''
+          ? null
+          : isDateValue(data.startDate)
+            ? data.startDate
+            : undefined;
+        const nextEndDate = !hasEndDateUpdate
+          ? null
+          : data.endDate === null || data.endDate === ''
+          ? null
+          : isDateValue(data.endDate)
+            ? data.endDate
+            : undefined;
+
+        if ((hasStartDateUpdate && nextStartDate === undefined) || (hasEndDateUpdate && nextEndDate === undefined)) {
+          return Response.json({ error: 'Tournament dates must use YYYY-MM-DD format.' }, { status: 400 });
+        }
+        if (hasStartDateUpdate && hasEndDateUpdate && nextEndDate && !nextStartDate) {
+          return Response.json({ error: 'Choose a start date before setting an end date.' }, { status: 400 });
+        }
+        if (hasStartDateUpdate && hasEndDateUpdate && nextStartDate && nextEndDate && nextEndDate < nextStartDate) {
+          return Response.json({ error: 'End date cannot be before the start date.' }, { status: 400 });
+        }
+
+        if (data.startDate !== undefined) updates.start_date = nextStartDate;
+        if (data.endDate !== undefined) updates.end_date = nextEndDate;
+      }
+
       const { error } = await supabase
         .from('tournaments')
         .update(updates)
@@ -207,9 +243,10 @@ export async function POST(req: Request) {
       status: 200,
       headers: { 'Content-Type': 'application/json' },
     });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('Admin Tournaments API Error:', err);
-    return new Response(JSON.stringify({ error: err.message ?? 'Unknown server error' }), {
+    const message = err instanceof Error ? err.message : 'Unknown server error';
+    return new Response(JSON.stringify({ error: message }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' },
     });

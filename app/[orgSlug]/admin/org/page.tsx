@@ -36,7 +36,7 @@ export default function OrgAdminHub() {
     },
     ...(userRole === 'owner' ? [
       {
-        label: 'Billing',
+        label: 'Subscription',
         desc: 'Manage your plan, subscription, and payment method',
         icon: CreditCard,
         href: `${base}/billing`,
