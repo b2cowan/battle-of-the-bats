@@ -324,7 +324,7 @@ export default function AllocateBudgetLinePage({ params }: { params: Promise<{ l
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          description: lineInfo.description,
+          description: lineInfo!.description,
           splits: splits.map(s => ({
             teamId:          s.teamId,
             programYearId:   s.programYearId,
