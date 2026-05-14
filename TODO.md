@@ -58,7 +58,14 @@ This file tracks the ongoing tasks for the FieldLogicHQ platform (multi-tenant s
 - [x] **Phase J** — Transaction detail enhancements (payment method, payee/payee directory, notes) — migration 033 applied dev+prod, complete
 - [x] **Phase K** — Automated reminder system enhancements (30-day and 7-day triggers for dues + allocations) — migration 034 applied dev+prod, complete
 
-### 2. Chart Library Investigation
+### 2. Rep Teams — Groups & Per-Team Billing
+*Detailed tasks in [REP_TEAMS_ENHANCEMENTS_PLAN.md](REP_TEAMS_ENHANCEMENTS_PLAN.md)*
+
+- [ ] **Phase 1** — Rep team groups: `rep_team_groups` table, group management UI, team assignment, group filter on lists and accounting views (migration 035)
+- [ ] **Phase 2** — Staff group scoping: `rep_group_id` on members, auth context extension, hard 403 gating on all rep team admin routes (migration 036)
+- [ ] **Phase 3** — Per-team billing: Stripe quantity sync, billing preview modal on team creation, billing page breakdown, program year status → Stripe hook
+
+### 3. Chart Library Investigation
 - [ ] **Investigate chart libraries** — Evaluate recharts, chart.js, or @nivo for use in budget vs. actual and dashboard screens; assess bundle size, SSR compatibility, and dark-theme support before adding a dependency
 
 ### 3. Light / Dark Theme Toggle
@@ -253,6 +260,9 @@ This file tracks the ongoing tasks for the FieldLogicHQ platform (multi-tenant s
 - [x] Admin help gaps — Billing status alerts, slug-change warning, Randomize copy, Results legend
 - [x] Walkthrough polish — subscription upgrade cards match onboarding plan chooser styling
 - [x] Walkthrough polish — remove ad hoc module upgrade section from Subscription
+- [x] Walkthrough polish — remove tournament onboarding get-started flash after wizard save
+- [x] Walkthrough polish — replace tournament admin Back to Site with admin-only Preview Site
+- [x] Walkthrough bugfix — admin tournament preview resolves draft tournaments without 404
 
 ### Platform Administration (Super Admin)
 *(see [PLATFORM_ADMIN_PLAN.md](PLATFORM_ADMIN_PLAN.md))*

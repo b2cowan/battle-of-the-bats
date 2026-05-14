@@ -591,10 +591,10 @@ export default function AdminTournamentsPage({
                     {currentOrg && (
                       <Link
                         className="btn btn-outline btn-sm"
-                        href={t.status === 'draft'
-                          ? `/${currentOrg.slug}/admin/tournaments/preview/${t.slug}`
-                          : `/${currentOrg.slug}/${t.slug}`}
+                        href={`/${currentOrg.slug}/admin/tournaments/preview/${t.slug}`}
                         id={`preview-tournament-${t.id}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
                       >
                         Preview
                       </Link>

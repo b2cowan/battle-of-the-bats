@@ -97,6 +97,9 @@ export default async function TournamentHomeContent({
   const publicBase = `/${orgSlug}/${tournamentSlug}`;
   const adminTournamentBase = `/${orgSlug}/admin/tournaments`;
   const useAdminLinks = isPreview && tournament.status === 'draft';
+  const previewLabel = tournament.status === 'draft'
+    ? 'Admin preview. This draft tournament is not publicly visible until it is activated.'
+    : 'Admin preview. You are viewing this tournament page from inside the admin workspace.';
   const scheduleHref = useAdminLinks ? `${adminTournamentBase}/schedule` : `${publicBase}/schedule`;
   const newsHref = useAdminLinks ? `${adminTournamentBase}/announcements` : `${publicBase}/news`;
   const rulesHref = useAdminLinks ? `${adminTournamentBase}/rules` : `${publicBase}/rules`;
@@ -182,7 +185,7 @@ export default async function TournamentHomeContent({
           {isPreview && (
             <div className={styles.previewBanner}>
               <Eye size={14} />
-              Draft preview. This page is visible to admins only until the tournament is activated.
+              {previewLabel}
             </div>
           )}
           <div className={styles.heroBadge}>

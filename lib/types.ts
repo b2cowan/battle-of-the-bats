@@ -460,6 +460,14 @@ export interface LeagueSeasonSummary {
 // ── Rep Teams Module ──────────────────────────────────────────────────────────
 
 export type RepProgramYearStatus = 'draft' | 'active' | 'completed' | 'archived';
+
+export interface RepTeamGroup {
+  id: string;
+  orgId: string;
+  name: string;
+  displayOrder: number;
+  createdAt: string;
+}
 export type RepTryoutRegistrationStatus = 'pending_review' | 'offered' | 'accepted' | 'declined' | 'withdrawn';
 export type RepRosterStatus = 'active' | 'inactive' | 'released';
 export type RepEventType =
@@ -478,6 +486,8 @@ export interface RepTeam {
   slug: string;
   sport: string;
   ageGroup: string | null;
+  groupId: string | null;
+  groupName: string | null;
   description: string | null;
   color: string | null;
   isArchived: boolean;

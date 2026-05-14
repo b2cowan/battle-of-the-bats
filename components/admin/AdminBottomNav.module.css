@@ -131,6 +131,10 @@
   .seasonSelect option { background: #1A1530; }
 
   .setLiveBtn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
     background: rgba(139,47,201,0.18);
     border: 1px solid rgba(139,47,201,0.4);
     border-radius: 8px;

@@ -11,6 +11,21 @@
   max-width: 1340px;
 }
 
+.workflowOnlyPage {
+  min-height: 100vh;
+}
+
+.redirectPanel {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 1.5rem;
+  text-align: center;
+}
+
 .header {
   text-align: center;
   display: flex;
@@ -221,60 +236,6 @@
 
 .skipBtn:hover {
   color: var(--white-50, rgba(255,255,255,0.5));
-}
-
-.footerHint {
-  max-width: 30rem;
-  margin: 0;
-  color: var(--white-35, rgba(255,255,255,0.35));
-  font-size: 0.78rem;
-  line-height: 1.45;
-  text-align: center;
-}
-
-.progressSummary {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.45rem;
-  align-self: center;
-  padding: 0.45rem 0.7rem;
-  color: var(--white-50, rgba(255,255,255,0.5));
-  background: rgba(255,255,255,0.035);
-  border: 1px solid var(--border, rgba(255,255,255,0.08));
-  border-radius: 999px;
-  font-size: 0.78rem;
-}
-
-.progressSummary strong {
-  color: var(--logic-lime);
-}
-
-.wizardLaunchCard {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 1rem;
-  padding: 1.25rem;
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.28);
-  border-radius: 8px;
-  background: rgba(var(--blueprint-blue-rgb), 0.055);
-}
-
-.wizardLaunchIcon {
-  width: 42px;
-  height: 42px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.3);
-  border-radius: 50%;
-  color: var(--logic-lime);
-  background: rgba(255, 255, 255, 0.035);
-}
-
-.wizardLaunchCopy {
-  min-width: 0;
 }
 
 /* Modal */
@@ -949,13 +910,11 @@
     flex-direction: column;
   }
 
-  .wizardLaunchCard,
   .planStepPanel {
     grid-template-columns: 1fr;
     justify-items: stretch;
   }
 
-  .wizardLaunchIcon,
   .planStepIcon {
     justify-self: center;
   }

@@ -1,14 +1,14 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { Users, X, Archive, Link2, DollarSign, ArrowLeftRight } from 'lucide-react';
+import { Users, X, Archive, Link2, DollarSign, ArrowLeftRight, Pencil, Trash2, ChevronDown, ChevronUp } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { hasCapability } from '@/lib/roles';
 import FeedbackModal from '@/components/FeedbackModal';
 import HelpCallout from '@/components/help/HelpCallout';
 import UpcomingPayablesPanel from '@/components/accounting/UpcomingPayablesPanel';
 import styles from './rep-teams.module.css';
-import type { RepTeam, RepProgramYear } from '@/lib/types';
+import type { RepTeam, RepProgramYear, RepTeamGroup } from '@/lib/types';
 
 function slugify(s: string): string {
   return s.toLowerCase().trim()
@@ -35,11 +35,11 @@ interface TeamSummary {
 
 interface TeamForm {
   name: string; slug: string; sport: string;
-  ageGroup: string; description: string; color: string;
+  ageGroup: string; description: string; color: string; groupId: string;
 }
 
 const BLANK_FORM: TeamForm = {
-  name: '', slug: '', sport: 'softball', ageGroup: '', description: '', color: '',
+  name: '', slug: '', sport: 'softball', ageGroup: '', description: '', color: '', groupId: '',
 };
 
 export default function RepTeamsPage() {
@@ -48,13 +48,25 @@ export default function RepTeamsPage() {
   const canWrite = userRole === 'owner' || userRole === 'admin';
 
   const [summaries, setSummaries] = useState<TeamSummary[]>([]);
+  const [groups, setGroups] = useState<RepTeamGroup[]>([]);
+  const [groupFilter, setGroupFilter] = useState<string>('');
   const [fetching, setFetching] = useState(true);
+
   const [createOpen, setCreateOpen] = useState(false);
   const [form, setForm] = useState<TeamForm>(BLANK_FORM);
   const [slugEdited, setSlugEdited] = useState(false);
   const [creating, setCreating] = useState(false);
   const [archiveTarget, setArchiveTarget] = useState<TeamSummary | null>(null);
   const [archiving, setArchiving] = useState(false);
+
+  // Group management state
+  const [groupsExpanded, setGroupsExpanded] = useState(false);
+  const [newGroupName, setNewGroupName] = useState('');
+  const [addingGroup, setAddingGroup] = useState(false);
+  const [editingGroupId, setEditingGroupId] = useState<string | null>(null);
+  const [editingGroupName, setEditingGroupName] = useState('');
+  const [savingGroup, setSavingGroup] = useState(false);
+  const [deletingGroupId, setDeletingGroupId] = useState<string | null>(null);
 
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [feedbackType, setFeedbackType] = useState<'success' | 'danger'>('success');
@@ -64,19 +76,33 @@ export default function RepTeamsPage() {
     setFeedbackType(type); setFeedbackMsg(msg); setFeedbackOpen(true);
   }
 
+  const loadGroups = useCallback(async () => {
+    try {
+      const res = await fetch('/api/admin/rep-teams/groups');
+      if (res.ok) {
+        const data = await res.json();
+        setGroups(data.groups ?? []);
+      }
+    } catch { /* non-fatal */ }
+  }, []);
+
   const load = useCallback(async () => {
     setFetching(true);
     try {
-      const res = await fetch('/api/admin/rep-teams/teams');
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? 'Failed to load');
+      const qs = groupFilter ? `?group=${groupFilter}` : '';
+      const [teamsRes] = await Promise.all([
+        fetch(`/api/admin/rep-teams/teams${qs}`),
+        loadGroups(),
+      ]);
+      const data = await teamsRes.json();
+      if (!teamsRes.ok) throw new Error(data.error ?? 'Failed to load');
       setSummaries(data.teams ?? []);
     } catch (e: any) {
       showFeedback('danger', e.message ?? 'Failed to load teams.');
     } finally {
       setFetching(false);
     }
-  }, []);
+  }, [groupFilter, loadGroups]);
 
   useEffect(() => { if (currentOrg) load(); }, [currentOrg, load]);
 
@@ -107,6 +133,7 @@ export default function RepTeamsPage() {
           ageGroup: form.ageGroup.trim() || null,
           description: form.description.trim() || null,
           color: form.color.trim() || null,
+          groupId: form.groupId || null,
         }),
       });
       const data = await res.json();
@@ -142,6 +169,66 @@ export default function RepTeamsPage() {
     }
   }
 
+  async function handleAddGroup() {
+    const name = newGroupName.trim();
+    if (!name) return;
+    setAddingGroup(true);
+    try {
+      const res = await fetch('/api/admin/rep-teams/groups', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, displayOrder: groups.length }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? 'Failed to create group');
+      setNewGroupName('');
+      await loadGroups();
+    } catch (e: any) {
+      showFeedback('danger', e.message ?? 'Failed to create group.');
+    } finally {
+      setAddingGroup(false);
+    }
+  }
+
+  async function handleSaveGroupName(groupId: string) {
+    const name = editingGroupName.trim();
+    if (!name) return;
+    setSavingGroup(true);
+    try {
+      const res = await fetch(`/api/admin/rep-teams/groups/${groupId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? 'Failed to rename group');
+      setEditingGroupId(null);
+      await loadGroups();
+      // Reload teams if any are displayed with the old group name
+      await load();
+    } catch (e: any) {
+      showFeedback('danger', e.message ?? 'Failed to rename group.');
+    } finally {
+      setSavingGroup(false);
+    }
+  }
+
+  async function handleDeleteGroup(groupId: string, groupName: string) {
+    setDeletingGroupId(groupId);
+    try {
+      const res = await fetch(`/api/admin/rep-teams/groups/${groupId}`, { method: 'DELETE' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? 'Failed to delete group');
+      if (groupFilter === groupId) setGroupFilter('');
+      await loadGroups();
+      showFeedback('success', `Group "${groupName}" deleted.`);
+    } catch (e: any) {
+      showFeedback('danger', e.message ?? 'Failed to delete group.');
+    } finally {
+      setDeletingGroupId(null);
+    }
+  }
+
   if (loading) return <p className={styles.muted}>Loading…</p>;
 
   if (!userRole || !hasCapability(userRole, userCapabilities, 'module_rep_teams')) {
@@ -153,6 +240,8 @@ export default function RepTeamsPage() {
       </div>
     );
   }
+
+  const displayedSummaries = summaries;
 
   return (
     <div className={styles.page}>
@@ -190,7 +279,7 @@ export default function RepTeamsPage() {
             border: '1px solid rgba(var(--blueprint-blue-rgb),0.2)',
             borderRadius: 8, padding: '0.6rem 1rem',
             color: 'rgba(255,255,255,0.7)', fontSize: '0.88rem', fontWeight: 600,
-            textDecoration: 'none', transition: 'background 0.15s',
+            textDecoration: 'none',
           }}
         >
           <DollarSign size={15} style={{ color: 'var(--logic-lime,#a3e635)' }} />
@@ -204,7 +293,7 @@ export default function RepTeamsPage() {
             border: '1px solid rgba(var(--blueprint-blue-rgb),0.2)',
             borderRadius: 8, padding: '0.6rem 1rem',
             color: 'rgba(255,255,255,0.7)', fontSize: '0.88rem', fontWeight: 600,
-            textDecoration: 'none', transition: 'background 0.15s',
+            textDecoration: 'none',
           }}
         >
           Document Templates
@@ -217,7 +306,7 @@ export default function RepTeamsPage() {
             border: '1px solid rgba(var(--blueprint-blue-rgb),0.2)',
             borderRadius: 8, padding: '0.6rem 1rem',
             color: 'rgba(255,255,255,0.7)', fontSize: '0.88rem', fontWeight: 600,
-            textDecoration: 'none', transition: 'background 0.15s',
+            textDecoration: 'none',
           }}
         >
           <ArrowLeftRight size={15} style={{ color: '#facc15' }} />
@@ -225,18 +314,145 @@ export default function RepTeamsPage() {
         </Link>
       </div>
 
-      <p className={styles.sectionTitle}>Teams</p>
+      {/* Groups management (owners/admins only) */}
+      {canWrite && (
+        <div style={{
+          background: 'rgba(255,255,255,0.03)',
+          border: '1px solid rgba(255,255,255,0.08)',
+          borderRadius: 8,
+          marginBottom: '1.5rem',
+          overflow: 'hidden',
+        }}>
+          <button
+            type="button"
+            onClick={() => setGroupsExpanded(e => !e)}
+            style={{
+              width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              padding: '0.75rem 1rem', background: 'none', border: 'none', cursor: 'pointer',
+              color: 'rgba(255,255,255,0.7)', fontSize: '0.85rem', fontWeight: 600,
+            }}
+          >
+            <span>Team Groups {groups.length > 0 && <span style={{ color: 'rgba(255,255,255,0.35)', fontWeight: 400 }}>({groups.length})</span>}</span>
+            {groupsExpanded ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
+          </button>
+
+          {groupsExpanded && (
+            <div style={{ padding: '0 1rem 1rem' }}>
+              {groups.length === 0 && (
+                <p style={{ fontSize: '0.82rem', color: 'rgba(255,255,255,0.35)', margin: '0 0 0.75rem' }}>
+                  No groups yet. Create groups like "AA", "A", or "Select" to classify and filter your teams.
+                </p>
+              )}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', marginBottom: groups.length > 0 ? '0.75rem' : 0 }}>
+                {groups.map(g => (
+                  <div key={g.id} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    {editingGroupId === g.id ? (
+                      <>
+                        <input
+                          className={styles.input}
+                          style={{ flex: 1, fontSize: '0.85rem', padding: '0.3rem 0.6rem' }}
+                          value={editingGroupName}
+                          onChange={e => setEditingGroupName(e.target.value)}
+                          onKeyDown={e => { if (e.key === 'Enter') handleSaveGroupName(g.id); if (e.key === 'Escape') setEditingGroupId(null); }}
+                          autoFocus
+                          maxLength={50}
+                        />
+                        <button
+                          className="btn btn-primary"
+                          style={{ fontSize: '0.78rem', padding: '0.28rem 0.65rem' }}
+                          disabled={savingGroup || !editingGroupName.trim()}
+                          onClick={() => handleSaveGroupName(g.id)}
+                        >
+                          {savingGroup ? '…' : 'Save'}
+                        </button>
+                        <button
+                          className="btn btn-ghost"
+                          style={{ fontSize: '0.78rem', padding: '0.28rem 0.5rem' }}
+                          onClick={() => setEditingGroupId(null)}
+                        >
+                          Cancel
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <span style={{ flex: 1, fontSize: '0.85rem', color: 'rgba(255,255,255,0.8)' }}>{g.name}</span>
+                        <button
+                          className="btn btn-ghost"
+                          style={{ fontSize: '0.75rem', padding: '0.25rem 0.5rem', opacity: 0.6 }}
+                          onClick={() => { setEditingGroupId(g.id); setEditingGroupName(g.name); }}
+                          title="Rename group"
+                        >
+                          <Pencil size={12} />
+                        </button>
+                        <button
+                          className="btn btn-ghost"
+                          style={{ fontSize: '0.75rem', padding: '0.25rem 0.5rem', opacity: 0.5, color: '#f87171' }}
+                          disabled={deletingGroupId === g.id}
+                          onClick={() => handleDeleteGroup(g.id, g.name)}
+                          title="Delete group"
+                        >
+                          {deletingGroupId === g.id ? '…' : <Trash2 size={12} />}
+                        </button>
+                      </>
+                    )}
+                  </div>
+                ))}
+              </div>
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <input
+                  className={styles.input}
+                  style={{ flex: 1, fontSize: '0.85rem', padding: '0.3rem 0.6rem' }}
+                  placeholder="New group name (e.g. AA)"
+                  value={newGroupName}
+                  onChange={e => setNewGroupName(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter') handleAddGroup(); }}
+                  maxLength={50}
+                />
+                <button
+                  className="btn btn-secondary"
+                  style={{ fontSize: '0.82rem', padding: '0.3rem 0.75rem' }}
+                  disabled={addingGroup || !newGroupName.trim()}
+                  onClick={handleAddGroup}
+                >
+                  {addingGroup ? '…' : 'Add'}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Teams header + group filter */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
+        <p className={styles.sectionTitle} style={{ margin: 0 }}>Teams</p>
+        {groups.length > 0 && (
+          <select
+            className={styles.select}
+            style={{ fontSize: '0.82rem', padding: '0.3rem 0.6rem', width: 'auto' }}
+            value={groupFilter}
+            onChange={e => setGroupFilter(e.target.value)}
+          >
+            <option value="">All groups</option>
+            {groups.map(g => (
+              <option key={g.id} value={g.id}>{g.name}</option>
+            ))}
+            <option value="none">Ungrouped</option>
+          </select>
+        )}
+      </div>
 
       {fetching ? (
         <p className={styles.muted}>Loading…</p>
-      ) : summaries.length === 0 ? (
+      ) : displayedSummaries.length === 0 ? (
         <div>
           <HelpCallout
             variant="info"
-            title="Get started with Rep Teams"
-            body="Rep teams are competitive travel teams managed through the franchise model — the org creates and oversees teams, coaches operate them day-to-day. Create your first team to get started."
+            title={groupFilter ? 'No teams in this group' : 'Get started with Rep Teams'}
+            body={groupFilter
+              ? 'No teams are assigned to this group. Assign teams from the team create or edit form.'
+              : 'Rep teams are competitive travel teams managed through the franchise model — the org creates and oversees teams, coaches operate them day-to-day. Create your first team to get started.'}
           />
-          {canWrite && (
+          {canWrite && !groupFilter && (
             <p>
               <button type="button" className="btn btn-secondary" style={{ marginTop: '0.25rem' }} onClick={openCreate}>
                 Add your first team
@@ -246,7 +462,7 @@ export default function RepTeamsPage() {
         </div>
       ) : (
         <div className={styles.teamGrid}>
-          {summaries.map(s => (
+          {displayedSummaries.map(s => (
             <TeamCard
               key={s.team.id}
               summary={s}
@@ -310,6 +526,19 @@ export default function RepTeamsPage() {
                   onChange={e => setForm(f => ({ ...f, ageGroup: e.target.value }))}
                   placeholder="e.g. U13, U15, Senior" maxLength={30} />
               </div>
+
+              {groups.length > 0 && (
+                <div className={styles.field}>
+                  <label className={styles.label} htmlFor="rt-group">Group</label>
+                  <select id="rt-group" className={styles.select} value={form.groupId}
+                    onChange={e => setForm(f => ({ ...f, groupId: e.target.value }))}>
+                    <option value="">No group</option>
+                    {groups.map(g => (
+                      <option key={g.id} value={g.id}>{g.name}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
 
               <div className={`${styles.field} ${styles.formGridFull}`}>
                 <label className={styles.label} htmlFor="rt-desc">Description</label>
@@ -389,6 +618,9 @@ function TeamCard({ summary, base, canWrite, onArchive }: {
       </div>
 
       <div className={styles.teamMeta}>
+        {team.groupName && (
+          <span className={`${styles.badge} ${styles.badgeGroup}`}>{team.groupName}</span>
+        )}
         {team.ageGroup && (
           <span className={`${styles.badge} ${styles.badgeAgeGroup}`}>{team.ageGroup}</span>
         )}

@@ -28,7 +28,8 @@ export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const includeArchived = searchParams.get('archived') === 'true';
 
-  const teams = await getRepTeams(ctx!.org.id);
+  const groupFilter = searchParams.get('group') || undefined;
+  const teams = await getRepTeams(ctx!.org.id, groupFilter);
   const visible = includeArchived ? teams : teams.filter(t => !t.isArchived);
 
   // Fetch summary counts per team in one query each
@@ -85,6 +86,7 @@ export async function POST(req: Request) {
       ageGroup: body.ageGroup?.trim() || null,
       description: body.description?.trim() || null,
       color: body.color?.trim() || null,
+      groupId: body.groupId || null,
     });
     return NextResponse.json({ team }, { status: 201 });
   } catch (e: any) {

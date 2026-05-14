@@ -1278,6 +1278,74 @@ Acceptance criteria:
 
 ---
 
+### F32 - Tournament Setup Save Flashes Obsolete Get Started Page
+
+Priority: High
+
+Category:
+- Product flow
+- Onboarding logic
+- Technical bug
+
+Problem:
+After saving the tournament setup wizard, the onboarding route briefly rendered the old “get started” shell before redirecting to tournament admin. That shell also still offered a manual `Start setup` entry point even though tournament onboarding now lives inside the step-by-step modal workflow.
+
+User impact:
+Owners can think the wizard restarted or failed after saving. The flash also undermines the expectation that the final review is the last onboarding screen before entering tournament admin.
+
+Recommended fix:
+Keep the wizard mounted until the final route transition begins, use `router.replace` for the post-save transition, and remove the obsolete tournament get-started screen from the render path.
+
+Implemented fix:
+- Added an explicit tournament-workflow redirect state.
+- Switched final wizard exits to `router.replace`.
+- Routed skipped tournament setup to Tournament Management instead of back to onboarding.
+- Removed the tournament `Start setup` shell and its unused styles.
+- Tournament-plan onboarding now renders only the wizard overlay or a brief “Opening tournament admin” transition state.
+
+Acceptance criteria:
+- Saving setup does not flash the old get-started page.
+- Tournament and Tournament Plus owners do not see the org admin hub as a transient destination.
+- Closing or finishing tournament onboarding leaves the onboarding route without showing a stale setup launcher.
+
+---
+
+### F33 - Tournament Admin Needs Admin-Only Site Preview
+
+Priority: Medium
+
+Category:
+- Product flow
+- Visual design
+- Onboarding logic
+
+Problem:
+Tournament admin still showed a generic `Back to Site` footer link, which sends owners toward the public organization URL rather than helping them review the tournament page they are preparing. Active tournament preview links could also point at the public-facing URL instead of an admin preview URL.
+
+User impact:
+Draft tournament owners need a safe way to review what the tournament page will look like before activation. Sending them to the public site is confusing for draft tournaments and risky as a habit for content review.
+
+Recommended fix:
+Replace `Back to Site` in tournament admin with `Preview Site`, open it in a new window, and route both draft and active previews through an authenticated admin preview URL.
+
+Implemented fix:
+- Tournament admin sidebar now shows `Preview Site` instead of `Back to Site`.
+- Preview opens in a new window at `/admin/tournaments/preview/[tournamentSlug]`.
+- The mobile tournament menu includes the same preview action.
+- Tournament Records preview links now use the admin preview URL for both draft and active tournaments.
+- Admin chrome is hidden on preview routes so the new window reads like a tournament site preview while remaining admin-gated.
+- Preview banner copy now works for both draft and active tournaments.
+- Admin preview slug lookup now uses the server-side service client after auth succeeds, so draft tournaments do not 404 due to public/RLS filtering.
+
+Acceptance criteria:
+- Tournament admin pages do not show `Back to Site`.
+- `Preview Site` opens an admin preview in a new window.
+- Draft and active tournaments both preview from an admin URL.
+- Draft preview remains accessible only to authenticated admins with tournament access.
+- Preview route resolves draft tournaments owned by the current org.
+
+---
+
 ## Suggested Build Order
 
 1. Fix dashboard quick links.

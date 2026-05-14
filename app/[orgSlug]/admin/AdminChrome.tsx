@@ -16,18 +16,26 @@ export default function AdminChrome({
 }) {
   const pathname = usePathname();
   const isOnboarding = pathname.endsWith('/admin/onboarding');
+  const isTournamentPreview = pathname.includes('/admin/tournaments/preview/');
+  const isFocused = isOnboarding || isTournamentPreview;
+  const shellClassName = isTournamentPreview
+    ? styles.adminPreviewShell
+    : `${styles.adminShell} ${isOnboarding ? styles.adminShellFocused : ''}`;
+  const mainClassName = isTournamentPreview
+    ? styles.adminPreviewMain
+    : `${styles.adminMain} ${isOnboarding ? styles.adminMainFocused : ''}`;
 
   return (
     <>
-      <div className={`${styles.adminShell} ${isOnboarding ? styles.adminShellFocused : ''}`}>
-        {!isOnboarding && <AdminSidebar />}
-        <main className={`${styles.adminMain} ${isOnboarding ? styles.adminMainFocused : ''}`}>
+      <div className={shellClassName}>
+        {!isFocused && <AdminSidebar />}
+        <main className={mainClassName}>
           {children}
         </main>
       </div>
-      {!isOnboarding && <AdminBottomNav />}
-      {showDevTools && !isOnboarding && <DevPlanSwitcher />}
-      {!isOnboarding && <LiveLogicRail />}
+      {!isFocused && <AdminBottomNav />}
+      {showDevTools && !isFocused && <DevPlanSwitcher />}
+      {!isFocused && <LiveLogicRail />}
     </>
   );
 }

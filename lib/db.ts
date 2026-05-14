@@ -1228,7 +1228,7 @@ export async function getActiveTournamentByOrg(orgId: string): Promise<Tournamen
 }
 
 export async function getTournamentBySlug(orgId: string, slug: string): Promise<Tournament | null> {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseAdmin
     .from('tournaments')
     .select('*')
     .eq('organization_id', orgId)
@@ -2412,23 +2412,104 @@ function mapRepTeam(r: any): RepTeam {
     name: r.name,
     slug: r.slug,
     sport: r.sport,
-    ageGroup: r.age_group,
-    description: r.description,
-    color: r.color,
+    ageGroup: r.age_group ?? null,
+    groupId: r.group_id ?? null,
+    groupName: r.rep_team_groups?.name ?? null,
+    description: r.description ?? null,
+    color: r.color ?? null,
     isArchived: r.is_archived,
     createdAt: r.created_at,
     updatedAt: r.updated_at,
   };
 }
 
-export async function getRepTeams(orgId: string): Promise<RepTeam[]> {
-  const { data, error } = await supabaseAdmin
+export async function getRepTeams(orgId: string, groupId?: string | null): Promise<RepTeam[]> {
+  let query = supabaseAdmin
     .from('rep_teams')
-    .select('*')
+    .select('*, rep_team_groups(name)')
     .eq('org_id', orgId)
     .order('name');
+  if (groupId !== undefined && groupId !== null) query = query.eq('group_id', groupId);
+  const { data, error } = await query;
   if (error) throw error;
   return (data ?? []).map(mapRepTeam);
+}
+
+// ── Rep Team Groups ────────────────────────────────────────────────────────────
+
+import type { RepTeamGroup } from './types';
+
+function mapRepTeamGroup(r: any): RepTeamGroup {
+  return {
+    id: r.id,
+    orgId: r.org_id,
+    name: r.name,
+    displayOrder: r.display_order,
+    createdAt: r.created_at,
+  };
+}
+
+export async function getRepTeamGroups(orgId: string): Promise<RepTeamGroup[]> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_groups')
+    .select('*')
+    .eq('org_id', orgId)
+    .order('display_order')
+    .order('name');
+  if (error) throw error;
+  return (data ?? []).map(mapRepTeamGroup);
+}
+
+export async function createRepTeamGroup(
+  orgId: string,
+  name: string,
+  displayOrder = 0,
+): Promise<RepTeamGroup> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_groups')
+    .insert({ org_id: orgId, name: name.trim(), display_order: displayOrder })
+    .select()
+    .single();
+  if (error) throw error;
+  return mapRepTeamGroup(data);
+}
+
+export async function updateRepTeamGroup(
+  id: string,
+  fields: { name?: string; displayOrder?: number },
+): Promise<RepTeamGroup> {
+  const patch: Record<string, unknown> = {};
+  if (fields.name !== undefined) patch.name = fields.name.trim();
+  if (fields.displayOrder !== undefined) patch.display_order = fields.displayOrder;
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_groups')
+    .update(patch)
+    .eq('id', id)
+    .select()
+    .single();
+  if (error) throw error;
+  return mapRepTeamGroup(data);
+}
+
+export async function deleteRepTeamGroup(id: string): Promise<void> {
+  // Block deletion if any teams are still assigned to this group
+  const { count } = await supabaseAdmin
+    .from('rep_teams')
+    .select('id', { count: 'exact', head: true })
+    .eq('group_id', id);
+  if ((count ?? 0) > 0) {
+    throw Object.assign(new Error('Cannot delete a group that has teams assigned to it'), { code: 'GROUP_HAS_TEAMS' });
+  }
+  const { error } = await supabaseAdmin.from('rep_team_groups').delete().eq('id', id);
+  if (error) throw error;
+}
+
+export async function setRepTeamGroup(teamId: string, groupId: string | null): Promise<void> {
+  const { error } = await supabaseAdmin
+    .from('rep_teams')
+    .update({ group_id: groupId })
+    .eq('id', teamId);
+  if (error) throw error;
 }
 
 export interface OpenTryout {
@@ -2459,7 +2540,7 @@ export async function getOpenTryoutsByOrg(orgId: string): Promise<OpenTryout[]> 
 export async function getRepTeam(teamId: string): Promise<RepTeam | null> {
   const { data, error } = await supabaseAdmin
     .from('rep_teams')
-    .select('*')
+    .select('*, rep_team_groups(name)')
     .eq('id', teamId)
     .single();
   if (error) return null;
@@ -2469,7 +2550,7 @@ export async function getRepTeam(teamId: string): Promise<RepTeam | null> {
 export async function getRepTeamBySlug(orgId: string, slug: string): Promise<RepTeam | null> {
   const { data, error } = await supabaseAdmin
     .from('rep_teams')
-    .select('*')
+    .select('*, rep_team_groups(name)')
     .eq('org_id', orgId)
     .eq('slug', slug)
     .single();
@@ -2484,6 +2565,7 @@ export async function createRepTeam(orgId: string, fields: {
   ageGroup?: string | null;
   description?: string | null;
   color?: string | null;
+  groupId?: string | null;
 }): Promise<RepTeam> {
   const { data, error } = await supabaseAdmin
     .from('rep_teams')
@@ -2495,8 +2577,9 @@ export async function createRepTeam(orgId: string, fields: {
       age_group: fields.ageGroup ?? null,
       description: fields.description ?? null,
       color: fields.color ?? null,
+      group_id: fields.groupId ?? null,
     })
-    .select()
+    .select('*, rep_team_groups(name)')
     .single();
   if (error) throw error;
   return mapRepTeam(data);

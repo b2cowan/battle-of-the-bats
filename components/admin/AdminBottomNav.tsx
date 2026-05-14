@@ -7,6 +7,7 @@ import {
   MoreHorizontal, LayoutDashboard, Tag, MapPin,
   RefreshCw, LogOut, X, ChevronRight, BookUser,
   Settings, Users2, LayoutGrid, CalendarDays, UserCheck,
+  ExternalLink,
 } from 'lucide-react';
 import { signOut } from '@/lib/auth';
 import { useOrg } from '@/lib/org-context';
@@ -72,7 +73,10 @@ export default function AdminBottomNav() {
     return () => document.removeEventListener('mousedown', handleClick);
   }, [moreOpen]);
 
-  useEffect(() => { setMoreOpen(false); }, [pathname]);
+  useEffect(() => {
+    const frame = window.requestAnimationFrame(() => setMoreOpen(false));
+    return () => window.cancelAnimationFrame(frame);
+  }, [pathname]);
 
   async function handleLogout() {
     await signOut();
@@ -213,6 +217,17 @@ export default function AdminBottomNav() {
                   <button className={styles.setLiveBtn} onClick={handleSetLive} id="admin-mob-set-live">
                     Set as Live
                   </button>
+                )}
+                {currentTournament && (
+                  <Link
+                    className={styles.setLiveBtn}
+                    href={`/${orgSlug}/admin/tournaments/preview/${currentTournament.slug}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    id="admin-mob-preview-site"
+                  >
+                    <ExternalLink size={13} /> Preview Site
+                  </Link>
                 )}
                 {currentTournament?.isActive && (
                   <span className={styles.livePill}>● Live</span>

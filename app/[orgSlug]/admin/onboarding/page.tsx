@@ -271,7 +271,7 @@ function getPostOnboardingHref(
   options: { hasTournament?: boolean } = {},
 ) {
   if (hasNonTournamentWorkspace(org.planId, org.enabledAddons)) return `/${org.slug}/admin`;
-  if (options.hasTournament === false) return `/${org.slug}/admin/onboarding?continueSetup=1`;
+  if (options.hasTournament === false) return `/${org.slug}/admin/tournaments`;
   return `/${org.slug}/admin/tournaments/dashboard`;
 }
 
@@ -306,6 +306,7 @@ export default function OnboardingPage() {
   const [activeModal, setActiveModal] = useState<ActiveModal>(null);
   const [planChooserOpen, setPlanChooserOpen] = useState(false);
   const [wizardDismissed, setWizardDismissed] = useState(false);
+  const [workflowRedirecting, setWorkflowRedirecting] = useState(false);
   const [stepSaving, setStepSaving] = useState(false);
   const [stepError, setStepError] = useState('');
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'annual'>('monthly');
@@ -350,7 +351,10 @@ export default function OnboardingPage() {
   useEffect(() => {
     if (loading || !currentOrg) return;
 
-    if (currentOrg.onboardingCompletedAt && !continueSetup) {
+    const activePlan = normalizePlanId(currentOrg.planId);
+    const isGuidedTournamentPlan = activePlan === 'tournament' || activePlan === 'tournament_plus';
+
+    if (currentOrg.onboardingCompletedAt && !continueSetup && !isGuidedTournamentPlan) {
       router.replace(`/${currentOrg.slug}/admin`);
       return;
     }
@@ -360,7 +364,7 @@ export default function OnboardingPage() {
       setStartupProgress(null);
     });
 
-    const entitlements = PLAN_CONFIG[normalizePlanId(currentOrg.planId)].moduleEntitlements;
+    const entitlements = PLAN_CONFIG[activePlan].moduleEntitlements;
 
     const seasonsRequest = entitlements.includes('module_house_league')
       ? fetch('/api/admin/house-league/seasons')
@@ -397,7 +401,7 @@ export default function OnboardingPage() {
     const activePlan = normalizePlanId(currentOrg.planId);
     const isGuidedTournamentPlan = activePlan === 'tournament' || activePlan === 'tournament_plus';
     if (isGuidedTournamentPlan && !startupProgress.wizardAvailable) {
-      router.replace(`/${currentOrg.slug}/admin`);
+      router.replace(getPostOnboardingHref(currentOrg, { hasTournament: Boolean(startupProgress.firstTournament) }));
     }
   }, [loading, currentOrg, startupProgress, router]);
 
@@ -411,7 +415,8 @@ export default function OnboardingPage() {
       !startupProgress ||
       activeModal ||
       planChooserOpen ||
-      wizardDismissed
+      wizardDismissed ||
+      workflowRedirecting
     ) {
       return;
     }
@@ -421,13 +426,14 @@ export default function OnboardingPage() {
 
     const shouldResumeAfterPlan = continueSetup || planSelectionSucceeded;
     void showWizardStep(getWizardResumeStep(startupProgress, shouldResumeAfterPlan));
-  }, [loading, currentOrg, userRole, planChoiceRequired, continueSetup, planSelectionSucceeded, startupProgress, activeModal, planChooserOpen, wizardDismissed]);
+  }, [loading, currentOrg, userRole, planChoiceRequired, continueSetup, planSelectionSucceeded, startupProgress, activeModal, planChooserOpen, wizardDismissed, workflowRedirecting]);
 
   async function complete() {
     if (!currentOrg || completing) return;
     setCompleting(true);
     await fetch('/api/admin/org/complete-onboarding', { method: 'POST' });
-    router.push(getPostOnboardingHref(currentOrg, { hasTournament: false }));
+    setWorkflowRedirecting(true);
+    router.replace(getPostOnboardingHref(currentOrg, { hasTournament: false }));
   }
 
   async function choosePlan(planKey: OrgPlan) {
@@ -533,6 +539,17 @@ export default function OnboardingPage() {
   }
 
   function closeWorkflowModal() {
+    if (currentOrg) {
+      const activePlan = normalizePlanId(currentOrg.planId);
+      const isGuidedTournamentPlan = activePlan === 'tournament' || activePlan === 'tournament_plus';
+      if (isGuidedTournamentPlan) {
+        setStepError('');
+        setWorkflowRedirecting(true);
+        router.replace(getPostOnboardingHref(currentOrg, { hasTournament: Boolean(startupProgress?.firstTournament) }));
+        return;
+      }
+    }
+
     setActiveModal(null);
     setStepError('');
     setWizardDismissed(true);
@@ -564,12 +581,6 @@ export default function OnboardingPage() {
     const previousStep = getPreviousWizardStep(stepId);
     if (!previousStep) return;
     await showWizardStep(previousStep);
-  }
-
-  async function startWizard() {
-    setWizardDismissed(false);
-    resetWorkflowDraftState();
-    await showWizardStep(getWizardResumeStep(startupProgress, true));
   }
 
   function applyDivisionPreset(preset: DivisionPreset) {
@@ -842,9 +853,8 @@ export default function OnboardingPage() {
         }
         await requestJson<{ ok: boolean }>('/api/admin/org/complete-onboarding', { method: 'POST' });
         await refreshOrgContext();
-        setActiveModal(null);
-        setWizardDismissed(true);
-        router.push(getPostOnboardingHref(currentOrg, { hasTournament: false }));
+        setWorkflowRedirecting(true);
+        router.replace(getPostOnboardingHref(currentOrg, { hasTournament: false }));
         return;
       }
 
@@ -907,9 +917,8 @@ export default function OnboardingPage() {
       await refreshTournamentContext();
       await refreshOrgContext();
       await refreshStartup();
-      setActiveModal(null);
-      setWizardDismissed(true);
-      router.push(getPostOnboardingHref(currentOrg, { hasTournament: true }));
+      setWorkflowRedirecting(true);
+      router.replace(getPostOnboardingHref(currentOrg, { hasTournament: true }));
     } catch (err) {
       setStepError(err instanceof Error ? err.message : 'Unable to save setup.');
     } finally {
@@ -929,15 +938,13 @@ export default function OnboardingPage() {
   const isTournamentPlan = activePlanId === 'tournament' || activePlanId === 'tournament_plus';
   const isLeaguePlan = activePlanId === 'league';
   const isClubPlan = activePlanId === 'club';
+  const shouldRedirectFromTournamentOnboarding = isTournamentPlan && startupProgress?.wizardAvailable === false;
   const todayDate = getTodayDateValue();
-  const allTournamentStepsFinished = isTournamentPlan ? startupProgress?.allFinished === true : false;
-  const allDone = isTournamentPlan
-    ? allTournamentStepsFinished
-    : isLeaguePlan
-      ? seasonsDone === true
-      : isClubPlan
-        ? seasonsDone === true || repTeamsDone === true || publicSiteDone === true
-        : false;
+  const allDone = isLeaguePlan
+    ? seasonsDone === true
+    : isClubPlan
+      ? seasonsDone === true || repTeamsDone === true || publicSiteDone === true
+      : false;
 
   function getPlanPrice(planKey: OrgPlan) {
     const plan = PLAN_CONFIG[planKey];
@@ -1555,6 +1562,29 @@ export default function OnboardingPage() {
     );
   }
 
+  if (workflowRedirecting || shouldRedirectFromTournamentOnboarding) {
+    return (
+      <div className={styles.workflowOnlyPage} aria-busy="true">
+        <div className={styles.redirectPanel}>
+          <div className={styles.headerIcon}><Rocket size={22} /></div>
+          <div>
+            <h1 className={styles.title}>Opening tournament admin</h1>
+            <p className={styles.sub}>Your setup is saved. Taking you to the right workspace now.</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (isTournamentPlan) {
+    return (
+      <div className={styles.workflowOnlyPage}>
+        {renderActiveModal()}
+        {planChooserOpen && <div className={styles.modalOverlay} role="presentation">{renderPlanChooser(false)}</div>}
+      </div>
+    );
+  }
+
   return (
     <div className={styles.page}>
       <div className={styles.header}>
@@ -1563,33 +1593,7 @@ export default function OnboardingPage() {
         <p className={styles.sub}>Let&apos;s get {currentOrg.name} set up in a few quick steps.</p>
       </div>
 
-      {isTournamentPlan && startupProgress && (
-        <div className={styles.progressSummary}>
-          <strong>Draft setup</strong>
-          <span>saved at final review</span>
-        </div>
-      )}
-
-      {isTournamentPlan && startupProgress && (
-        <div className={styles.wizardLaunchCard}>
-          <div className={styles.wizardLaunchIcon}>
-            <Rocket size={22} />
-          </div>
-          <div className={styles.wizardLaunchCopy}>
-            <div className={styles.stepTitle}>Startup workflow</div>
-            <div className={styles.stepDesc}>
-              Work through one setup step at a time. Use Next, Back, or Skip, then save everything at the final review.
-            </div>
-          </div>
-          <button type="button" className="btn btn-primary" onClick={startWizard}>
-            Start setup
-            <ArrowRight size={15} />
-          </button>
-        </div>
-      )}
-
-      {!isTournamentPlan && (
-        <div className={styles.steps}>
+      <div className={styles.steps}>
           <div className={`${styles.step} ${styles.stepDone}`}>
             <div className={styles.stepIcon}><CheckCircle2 size={20} /></div>
             <div className={styles.stepBody}>
@@ -1660,19 +1664,13 @@ export default function OnboardingPage() {
               </div>
             </div>
           )}
-        </div>
-      )}
+      </div>
 
       <div className={styles.footer}>
-        <button className="btn btn-primary" onClick={complete} disabled={completing || (isTournamentPlan && !startupProgress)}>
+        <button className="btn btn-primary" onClick={complete} disabled={completing}>
           {completing ? 'Loading...' : allDone ? 'Go to Dashboard' : 'Leave setup for now'}
           {!completing && <ArrowRight size={15} />}
         </button>
-        {isTournamentPlan && startupProgress && !startupProgress.allFinished && (
-          <p className={styles.footerHint}>
-            If you leave before saving a tournament, the dashboard can offer this setup wizard again.
-          </p>
-        )}
       </div>
 
       {renderActiveModal()}

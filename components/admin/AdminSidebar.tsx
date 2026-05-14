@@ -146,6 +146,9 @@ export default function AdminSidebar() {
   );
 
   const maybeBackLink = hasOnlyTournamentWorkspace ? null : backLink;
+  const tournamentPreviewHref = currentOrg?.slug && currentTournament
+    ? `/${currentOrg.slug}/admin/tournaments/preview/${currentTournament.slug}`
+    : null;
 
   return (
     <aside className={styles.sidebar}>
@@ -381,7 +384,19 @@ export default function AdminSidebar() {
 
       {/* Footer */}
       <div className={styles.footer}>
-        {!isOrgAdmin && (
+        {isTournaments ? (
+          tournamentPreviewHref ? (
+            <Link
+              href={tournamentPreviewHref}
+              className={styles.footerLink}
+              id="admin-preview-site"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <ExternalLink size={15} /> Preview Site
+            </Link>
+          ) : null
+        ) : !isOrgAdmin && (
           <Link href={`/${currentOrg?.slug ?? 'milton-bats'}`} className={styles.footerLink} id="admin-back-site">
             <Home size={15} /> Back to Site
           </Link>
