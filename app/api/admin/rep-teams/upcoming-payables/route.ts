@@ -27,6 +27,17 @@ export async function GET(req: Request) {
   const url = new URL(req.url);
   const days = Math.min(Math.max(parseInt(url.searchParams.get('days') ?? '90', 10), 1), 365);
 
+  // When the caller is scoped to specific groups, restrict to those teams
+  let scopedTeamIds: string[] | null = null;
+  if (ctx!.repGroupIds) {
+    const { data: scopedTeams } = await supabaseAdmin
+      .from('rep_teams')
+      .select('id')
+      .eq('org_id', ctx!.org.id)
+      .in('group_id', ctx!.repGroupIds);
+    scopedTeamIds = (scopedTeams ?? []).map((t: any) => t.id as string);
+  }
+
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const cutoff = new Date(today);
@@ -34,7 +45,7 @@ export async function GET(req: Request) {
   const cutoffStr = cutoff.toISOString().slice(0, 10);
 
   // ── Lane 1: allocation installments coming due across all teams ──────────
-  const { data: splits } = await supabaseAdmin
+  let splitsQuery = supabaseAdmin
     .from('rep_allocation_splits')
     .select(`
       id, team_id,
@@ -42,6 +53,8 @@ export async function GET(req: Request) {
       rep_teams ( name )
     `)
     .eq('org_id', ctx!.org.id);
+  if (scopedTeamIds) splitsQuery = splitsQuery.in('team_id', scopedTeamIds);
+  const { data: splits } = await splitsQuery;
 
   const splitIds = (splits ?? []).map((s: any) => s.id);
   const splitMetaMap = new Map<string, { description: string; teamName: string }>(
@@ -80,7 +93,7 @@ export async function GET(req: Request) {
   }
 
   // ── Lane 2: pending team payment requests ────────────────────────────────
-  const { data: pendingRequests } = await supabaseAdmin
+  let reqQuery = supabaseAdmin
     .from('rep_team_payment_requests')
     .select(`
       id, request_type, amount, description,
@@ -89,6 +102,8 @@ export async function GET(req: Request) {
     .eq('org_id', ctx!.org.id)
     .eq('status', 'pending')
     .order('created_at', { ascending: true });
+  if (scopedTeamIds) reqQuery = reqQuery.in('team_id', scopedTeamIds);
+  const { data: pendingRequests } = await reqQuery;
 
   const requestItems = (pendingRequests ?? []).map((r: any) => ({
     id:          r.id,

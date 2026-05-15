@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname, useParams } from 'next/navigation';
 import { useOrgNav } from './OrgNavContext';
 import { cn } from '@/lib/utils';
+import PublicThemeToggle from './PublicThemeToggle';
 import styles from './Navbar.module.css';
 
 const MARKETING_NAV_LINKS = [
@@ -135,7 +136,9 @@ export default function Navbar() {
             })}
           </div>
 
-          <div className={styles.actions} />
+          <div className={styles.actions}>
+            <PublicThemeToggle />
+          </div>
         </div>
       </nav>
     );
@@ -171,6 +174,7 @@ export default function Navbar() {
         </div>
 
         <div className={styles.actions}>
+          <PublicThemeToggle />
           <Link
             href={`/${orgSlug}/${tournamentSlug}/register`}
             className="btn btn-primary btn-sm"

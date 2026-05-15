@@ -181,6 +181,8 @@
 }
 
 .previewBanner {
+  display: flex;
+  width: fit-content;
   color: var(--logic-lime);
   border-color: rgba(var(--blueprint-blue-rgb), 0.35);
 }

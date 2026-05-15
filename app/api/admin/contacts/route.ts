@@ -69,6 +69,18 @@ export async function POST(req: Request) {
         role: data.role,
       }).eq('id', id);
       if (error) throw error;
+    } else if (action === 'delete' && id) {
+      const { data: contact } = await supabaseAdmin
+        .from('contacts')
+        .select('tournament_id')
+        .eq('id', id)
+        .single();
+      if (contact) {
+        const denied = scopeGuard(ctx, contact.tournament_id);
+        if (denied) return denied;
+      }
+      const { error } = await supabaseAdmin.from('contacts').delete().eq('id', id);
+      if (error) throw error;
     } else {
       return NextResponse.json({ error: 'Unsupported contact action.' }, { status: 400 });
     }

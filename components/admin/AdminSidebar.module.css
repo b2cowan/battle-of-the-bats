@@ -85,26 +85,21 @@
 }
 
 .logoIcon {
-  font-size: 1.25rem;
-  width: 36px;
-  height: 36px;
-  border-radius: 0;
-  background: rgba(var(--blueprint-blue-rgb), 0.15);
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.4);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
+  display: none;
 }
 
 .logoMain {
-  font-family: var(--font-data);
-  font-size: 0.75rem;
-  font-weight: 700;
-  color: var(--fl-text);
-  letter-spacing: 0.06em;
+  font-family: var(--font-display, var(--font-sans, system-ui, sans-serif));
+  font-size: 1rem;
+  font-weight: 900;
+  letter-spacing: 0;
+  line-height: 1;
   text-transform: uppercase;
 }
+
+.logoField { color: var(--fl-text); }
+.logoLogic { color: var(--logic-lime); }
+.logoHq    { color: var(--data-gray); opacity: 0.5; }
 
 .logoSub {
   font-family: var(--font-data);
@@ -172,6 +167,55 @@
 .navActive svg:first-child { color: var(--logic-lime); }
 
 .navChevron { margin-left: auto; color: var(--logic-lime); opacity: 0.5; }
+
+/* Collapsible nav groups */
+.navGroup {
+  display: flex;
+  flex-direction: column;
+}
+
+.navGroupHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.55rem 1.25rem 0.3rem;
+  border: none;
+  border-left: 2px solid transparent;
+  background: none;
+  color: rgba(148, 163, 184, 0.5);
+  font-family: var(--font-data);
+  font-size: 0.5625rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+  transition: color 0.15s;
+  margin-top: 0.2rem;
+}
+
+.navGroupHeader:hover {
+  color: rgba(148, 163, 184, 0.85);
+}
+
+.navGroupHeaderActive {
+  color: rgba(var(--logic-lime-rgb), 0.7) !important;
+}
+
+.navGroupChevron {
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+.navGroupChevronOpen {
+  transform: rotate(90deg);
+}
+
+.navGroupItems {
+  display: flex;
+  flex-direction: column;
+}
 
 /* Footer — pushed to bottom */
 .footer {

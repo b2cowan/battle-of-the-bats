@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getAuthContextWithRole, unauthorized, forbidden } from '@/lib/api-auth';
+import { getAuthContextWithRole, unauthorized, forbidden, repGroupScopeGuard } from '@/lib/api-auth';
 import { hasCapability } from '@/lib/roles';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import {
@@ -26,6 +26,8 @@ async function resolveContext(teamId: string, playerId: string, docId: string) {
   if (!team || team.orgId !== ctx!.org.id) {
     return { error: NextResponse.json({ error: 'Team not found' }, { status: 404 }) };
   }
+  const groupErr = repGroupScopeGuard(ctx!, team.groupId);
+  if (groupErr) return { error: groupErr };
 
   const player = await getRepRosterPlayer(playerId);
   if (!player || player.teamId !== teamId || player.orgId !== ctx!.org.id) {

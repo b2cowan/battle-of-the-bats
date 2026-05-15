@@ -47,6 +47,20 @@ export interface Tournament {
   startDate?: string;    // YYYY-MM-DD
   endDate?: string;      // YYYY-MM-DD
   contactEmail?: string; // shown in coach-facing email footers
+  feeScheduleMode?: 'tournament' | 'age_group';
+  depositAmount?: number | null;
+  depositDueDate?: string | null;   // YYYY-MM-DD
+  totalFeeAmount?: number | null;
+  totalFeeDueDate?: string | null;  // YYYY-MM-DD
+  // Per-tournament branding (overrides org-level when set)
+  logoUrl?: string | null;
+  heroBannerUrl?: string | null;
+  themePreset?: string | null;
+  themePrimary?: string | null;
+  themeAccent?: string | null;
+  themeFont?: string | null;
+  themeCardStyle?: string | null;
+  requireScoreFinalization?: boolean | null;
 }
 
 export interface Diamond {
@@ -105,8 +119,8 @@ export interface AgeGroup {
   id: string;
   tournamentId: string;
   name: string; // e.g. "U11"
-  minAge: number;
-  maxAge: number;
+  minAge: number | null;
+  maxAge: number | null;
   order: number;
   contactId?: string; // links to a managed Contact
   isClosed?: boolean; // if true, public registration is disabled
@@ -116,6 +130,10 @@ export interface AgeGroup {
   requiresPoolSelection?: boolean; // if true, user picks pool during registration
   pools?: Pool[]; // The new way
   playoffConfig?: PlayoffConfig;
+  depositAmount?: number | null;
+  depositDueDate?: string | null;
+  totalFeeAmount?: number | null;
+  totalFeeDueDate?: string | null;
 }
 
 export interface Pool {

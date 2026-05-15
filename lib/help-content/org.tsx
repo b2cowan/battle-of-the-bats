@@ -76,8 +76,8 @@ const orgHelp: HelpPageContent = {
       heading: 'Subscription and plan management',
       content: (
         <>
-          <p>The <strong>Subscription</strong> page (visible to Owners only) shows your current plan, active tournament count, seat usage, and available upgrades.</p>
-          <p>To upgrade, click <strong>Upgrade to [Plan Name]</strong> on the plan card that's right for your org. You'll be taken to a secure Stripe checkout — no credit card is required for the 14-day free trial.</p>
+          <p>The <strong>Subscription</strong> page (visible to Owners only) shows your current plan, tournament slot usage, seat usage, and available upgrades.</p>
+          <p>To upgrade, click <strong>Upgrade to [Plan Name]</strong> on the plan card that's right for your org. You'll be taken to secure Stripe Checkout to enter payment details. Your first payment is collected automatically after the trial: 14 days for Tournament Plus, 30 days for League, and 90 days for the Club early-adopter trial.</p>
           <p>If you're on a paid plan, use <strong>Manage Subscription</strong> to update your payment method, view past invoices, or cancel. This opens the Stripe customer portal.</p>
           <p><strong>Past-due payments:</strong> If a payment fails, your access stays active during a grace period. Update your payment method via <strong>Manage Subscription</strong> before the grace period ends to avoid service interruption.</p>
         </>

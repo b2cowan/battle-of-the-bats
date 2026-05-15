@@ -7,6 +7,14 @@ import styles from './register.module.css';
 
 type Step = 'form' | 'submitting' | 'success' | 'error';
 
+function formatAgeRange(minAge: number | null, maxAge: number | null) {
+  if (minAge === null && maxAge === null) return '';
+  if (minAge === null) return `Ages under ${maxAge}`;
+  if (maxAge === null) return `Ages ${minAge}+`;
+  if (minAge === maxAge) return `Age ${minAge}`;
+  return `Ages ${minAge}-${maxAge}`;
+}
+
 export default function RegisterPage() {
   const [ageGroups, setAgeGroups]     = useState<AgeGroup[]>([]);
   const [contacts, setContacts]       = useState<Contact[]>([]);
@@ -73,8 +81,8 @@ export default function RegisterPage() {
       }
 
       setStep('success');
-    } catch (err: any) {
-      setErrorMsg(err.message ?? 'Something went wrong. Please try again.');
+    } catch (err: unknown) {
+      setErrorMsg(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
       setStep('error');
     }
   }
@@ -107,7 +115,7 @@ export default function RegisterPage() {
               <div className={`card ${styles.closedCard}`}>
                 <AlertCircle size={40} style={{ color: 'var(--warning)', margin: '0 auto 1rem' }} />
                 <h3>Registration Not Yet Open</h3>
-                <p>Tournament registration isn't available yet. Check back soon or contact the organizer directly.</p>
+                <p>Tournament registration isn&apos;t available yet. Check back soon or contact the organizer directly.</p>
               </div>
             )}
 
@@ -157,7 +165,7 @@ export default function RegisterPage() {
                     <div className={styles.successIcon}><CreditCard size={20} /></div>
                     <div>
                       <span className={styles.successTitleInner}>Secure Your Spot</span>
-                      <p className={styles.successDescInner}>Once approved, you'll receive a payment link. Spots are first-come, first-served based on payment.</p>
+                      <p className={styles.successDescInner}>Once approved, you&apos;ll receive a payment link. Spots are first-come, first-served based on payment.</p>
                     </div>
                   </div>
                 </div>
@@ -239,9 +247,10 @@ export default function RegisterPage() {
                             const remaining = g.capacity ? Math.max(0, g.capacity - filled) : null;
                             const waitlistLabel = g.capacity && filled >= g.capacity ? ' (WAITLIST)' : '';
                             const spotsLabel = remaining !== null && remaining > 0 ? ` (${remaining} left)` : '';
+                            const ageLabel = formatAgeRange(g.minAge, g.maxAge);
                             return (
                               <option key={g.id} value={g.id}>
-                                {g.name} Ages {g.minAge}-{g.maxAge} {g.isClosed ? '- CLOSED' : (waitlistLabel || spotsLabel)}
+                                {g.name}{ageLabel ? ` ${ageLabel}` : ''} {g.isClosed ? '- CLOSED' : (waitlistLabel || spotsLabel)}
                               </option>
                             );
                           })}

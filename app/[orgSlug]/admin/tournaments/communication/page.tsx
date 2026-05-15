@@ -1,15 +1,14 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { Mail, Send, Users, CheckCircle2, AlertCircle, RefreshCw } from 'lucide-react';
-import { getContacts, getAgeGroups } from '@/lib/db';
+import { getContacts } from '@/lib/db';
 import { useTournament } from '@/lib/tournament-context';
-import { Contact, AgeGroup } from '@/lib/types';
+import { Contact } from '@/lib/types';
 import styles from './communication.module.css';
 
 export default function AdminCommunicationPage() {
   const { currentTournament } = useTournament();
   const [contacts, setContacts] = useState<Contact[]>([]);
-  const [ageGroups, setAgeGroups] = useState<AgeGroup[]>([]);
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [status, setStatus] = useState<{ type: 'success' | 'error', msg: string } | null>(null);
@@ -17,19 +16,14 @@ export default function AdminCommunicationPage() {
   // Form state
   const [subject, setSubject] = useState('');
   const [message, setMessage] = useState('');
-  const [selectedDivisions, setSelectedDivisions] = useState<Set<string>>(new Set());
   const [selectedRoles, setSelectedRoles] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     async function load() {
       if (!currentTournament) return;
       setLoading(true);
-      const [c, g] = await Promise.all([
-        getContacts(currentTournament.id),
-        getAgeGroups(currentTournament.id)
-      ]);
+      const c = await getContacts(currentTournament.id);
       setContacts(c);
-      setAgeGroups(g);
       setLoading(false);
     }
     load();
@@ -39,7 +33,7 @@ export default function AdminCommunicationPage() {
 
   const filteredRecipients = contacts.filter(c => {
     // If nothing is selected, don't show any (safer)
-    if (selectedDivisions.size === 0 && selectedRoles.size === 0) return false;
+    if (selectedRoles.size === 0) return false;
     
     // Check roles
     if (selectedRoles.size > 0 && c.role && selectedRoles.has(c.role)) return true;
@@ -64,10 +58,10 @@ export default function AdminCommunicationPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          tournamentId: currentTournament?.id,
           recipients: filteredRecipients.map(r => r.email),
           subject,
-          message,
-          tournamentName: currentTournament?.name
+          message
         }),
       });
       
@@ -77,8 +71,8 @@ export default function AdminCommunicationPage() {
       setStatus({ type: 'success', msg: `Successfully sent to ${filteredRecipients.length} recipients.` });
       setSubject('');
       setMessage('');
-    } catch (e: any) {
-      setStatus({ type: 'error', msg: e.message });
+    } catch (e: unknown) {
+      setStatus({ type: 'error', msg: e instanceof Error ? e.message : 'Failed to send messages' });
     } finally {
       setSending(false);
     }

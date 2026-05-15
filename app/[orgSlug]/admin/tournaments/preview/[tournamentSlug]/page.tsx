@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 import { getTournamentBySlug } from '@/lib/db';
 import { getAuthContextWithScope } from '@/lib/api-auth';
 import TournamentHomeContent from '@/components/public/TournamentHomeContent';
+import TournamentPreviewNav from '@/components/public/TournamentPreviewNav';
 
 export const dynamic = 'force-dynamic';
 
@@ -21,12 +22,15 @@ export default async function TournamentPreviewPage({
   }
 
   return (
-    <TournamentHomeContent
-      orgSlug={orgSlug}
-      tournamentSlug={tournamentSlug}
-      org={ctx.org}
-      tournament={tournament}
-      isPreview
-    />
+    <>
+      <TournamentPreviewNav org={ctx.org} orgSlug={orgSlug} tournamentName={tournament.name} />
+      <TournamentHomeContent
+        orgSlug={orgSlug}
+        tournamentSlug={tournamentSlug}
+        org={ctx.org}
+        tournament={tournament}
+        isPreview
+      />
+    </>
   );
 }

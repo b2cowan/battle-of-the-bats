@@ -78,19 +78,20 @@ export default async function TournamentHomeContent({
   isPreview?: boolean;
 }) {
   const currentYear = tournament.year;
+  const readOptions = isPreview ? { admin: true } : undefined;
 
-  const allAnnouncements = await getAnnouncements(tournament.id);
+  const allAnnouncements = await getAnnouncements(tournament.id, readOptions);
   const announcements = allAnnouncements.slice(0, 3);
 
-  const allGames = await getGames(tournament.id);
+  const allGames = await getGames(tournament.id, readOptions);
   const now = new Date().toISOString().split('T')[0];
   const upcomingGames = allGames
     .filter(g => g.status === 'scheduled' && g.date >= now)
     .slice(0, 4);
 
-  const teams     = await getTeams(tournament.id);
-  const ageGroups = await getAgeGroups(tournament.id);
-  const diamonds  = await getDiamonds(tournament.id);
+  const teams     = await getTeams(tournament.id, readOptions);
+  const ageGroups = await getAgeGroups(tournament.id, readOptions);
+  const diamonds  = await getDiamonds(tournament.id, readOptions);
 
   const registration = getRegistrationState(tournament, ageGroups, teams);
   const canRegister = registration.state === 'open' || registration.state === 'waitlist';
@@ -104,7 +105,7 @@ export default async function TournamentHomeContent({
   const newsHref = useAdminLinks ? `${adminTournamentBase}/announcements` : `${publicBase}/news`;
   const rulesHref = useAdminLinks ? `${adminTournamentBase}/rules` : `${publicBase}/rules`;
   const primaryHref = useAdminLinks
-    ? `/${orgSlug}/admin/org/tournaments`
+    ? `/${orgSlug}/admin/tournaments/manage`
     : canRegister
     ? `/${orgSlug}/${tournamentSlug}/register`
     : `/${orgSlug}/${tournamentSlug}/${registration.state === 'completed' ? 'standings' : 'schedule'}`;
@@ -163,11 +164,11 @@ export default async function TournamentHomeContent({
     });
   }
 
-  const heroBanner = org.heroBannerUrl ?? null;
+  const heroBanner = tournament.heroBannerUrl ?? org.heroBannerUrl ?? null;
 
   return (
     <div className={styles.page}>
-      <section className={styles.hero}>
+      <section className={styles.hero} id="preview-home">
         {heroBanner ? (
           <>
             <div className={styles.heroBanner} style={{ backgroundImage: `url(${heroBanner})` }} />
@@ -251,7 +252,7 @@ export default async function TournamentHomeContent({
         </div>
       </section>
 
-      <section className={`section ${styles.announcementsSection}`}>
+      <section className={`section ${styles.announcementsSection}`} id="announcements">
         <div className="container">
           <div className="section-header">
             <span className="eyebrow"><Megaphone size={12} /> Latest News</span>
@@ -296,7 +297,7 @@ export default async function TournamentHomeContent({
         </div>
       </section>
 
-      <section className="section">
+      <section className="section" id="schedule">
         <div className="container">
           <div className="section-header">
             <span className="eyebrow"><Calendar size={12} /> Upcoming Games</span>

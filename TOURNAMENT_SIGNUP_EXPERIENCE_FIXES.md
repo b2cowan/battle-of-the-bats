@@ -1346,6 +1346,100 @@ Acceptance criteria:
 
 ---
 
+### F34 - Admin Preview Uses Public Reads And Missing Preview Chrome
+
+Priority: High
+
+Category:
+- Technical bug
+- Visual design
+- Product flow
+
+Problem:
+The authenticated tournament preview rendered the shared public tournament homepage, but the page's supporting reads for announcements, games, teams, divisions, and diamonds still used the anonymous client. Draft previews could therefore show console permission errors. The preview also lacked a tournament navbar, and the admin preview banner appeared beside the countdown badge instead of above it.
+
+User impact:
+Owners reviewing a draft see noisy errors and a page that does not fully resemble the tournament site they are preparing to launch.
+
+Recommended fix:
+Keep public pages on public reads, but let the authenticated admin preview pass an admin-read option to the shared homepage data loaders. Add preview navigation and center the admin preview notice above the tournament date/countdown badge.
+
+Implemented fix:
+- Added an admin-read option to the shared tournament read helpers used by the preview.
+- Updated the shared tournament homepage to use admin reads only when `isPreview` is true.
+- Added a tournament preview navbar to the authenticated preview route.
+- Forced the admin preview banner to render as its own centered row above the countdown/date badge.
+
+Acceptance criteria:
+- Admin previews of draft tournaments do not log anonymous permission errors for tournament child data.
+- Public tournament pages still use normal public reads.
+- Preview pages include tournament navigation.
+- The admin preview banner is centered above the countdown/date badge.
+
+---
+
+### F35 - Division Age Limits Are Inferred From Division Names
+
+Priority: Medium
+
+Category:
+- UX copy
+- Data/auth
+- Onboarding logic
+
+Problem:
+Setup inferred age ranges from labels like `U9` or defaulted adult divisions to broad numeric ranges. That fails for real-world naming patterns and does not let an owner express open-ended ranges like under 9 or 18+.
+
+User impact:
+Owners can save divisions with misleading age ranges, and public registration can show confusing labels such as `Ages 7-9` when the organizer only intended `U9`.
+
+Recommended fix:
+Add explicit optional min/max age fields wherever divisions are configured. Prefill sensible starter values, but let either side stay blank for open-ended ranges.
+
+Implemented fix:
+- Added optional From Age and To Age fields to the startup wizard division step.
+- Prefilled youth starters with blank minimum and their upper age, and adult starters with `18+`.
+- Sent explicit nullable min/max ages through the setup API instead of guessing from division names.
+- Updated age-group admin forms to allow blank min/max ages.
+- Updated registration labels to handle open-ended or blank age ranges cleanly.
+
+Acceptance criteria:
+- Owners can create `U9` as an under-9-style division without a forced lower bound.
+- Owners can create `18+` by setting only a minimum age.
+- Blank min/max values are stored as null, not guessed from the division name.
+- Public registration does not display `null-null` or misleading age ranges.
+
+---
+
+### F36 - Tournament-Level Site Customization Is Missing
+
+Priority: High
+
+Category:
+- Product flow
+- Visual design
+- Onboarding logic
+
+Problem:
+Site customization currently appears to be organization-scoped. There is no clear tournament-admin surface for per-tournament public-site theme, hero, copy, or page settings.
+
+User impact:
+An organization cannot brand each tournament independently. A red organization site, purple tournament, and blue tournament should be possible without forcing every tournament to inherit the same public presentation.
+
+Recommended fix:
+Add a tournament-level Site Settings area in tournament admin. Store tournament-specific theme and content overrides separately from organization theme fields, and have the tournament public page resolve tournament overrides first, then fall back to org defaults.
+
+Status:
+- Tracked as a follow-up feature. This likely needs a schema migration, admin UI, preview integration, and public-page theme resolution work.
+
+Acceptance criteria:
+- Tournament admin has a visible Customize Site or Site Settings entry.
+- Each tournament can define its own theme preset/custom colors, hero/banner treatment, and tournament homepage copy.
+- Public and admin preview tournament pages use tournament overrides when present.
+- Organization public-site customization remains separate.
+
+---
+
 ## Suggested Build Order
 
 1. Fix dashboard quick links.

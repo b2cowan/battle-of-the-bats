@@ -505,3 +505,34 @@ export function signupVerificationHtml(p: {
     <p style="color:rgba(255,255,255,0.4);font-size:0.82rem;">If you did not create this account, you can safely ignore this email.</p>
   `);
 }
+
+export function billingRetentionWarningHtml(p: {
+  orgName: string;
+  records: { displayName: string; recordType: string; retentionUntil: string }[];
+  retentionUrl: string;
+  daysUntilExpiry: number;
+  isPendingPurge?: boolean;
+}) {
+  const rows = p.records.map(r => `
+    <li style="margin-bottom:0.5rem;">
+      <strong>${r.displayName}</strong>
+      <span style="color:rgba(255,255,255,0.45);">(${r.recordType}, retained until ${r.retentionUntil})</span>
+    </li>
+  `).join('');
+
+  const title = p.isPendingPurge ? 'Retention window expired' : 'Retention window ending soon';
+  const body = p.isPendingPurge
+    ? `The retained data below has reached the end of its retention window and is now pending purge. Contact FieldLogicHQ support if you need more time or want to restore access.`
+    : `The retained data below is scheduled to leave the restore window in about ${p.daysUntilExpiry} day${p.daysUntilExpiry === 1 ? '' : 's'}.`;
+
+  return wrap(`
+    <h2 style="color:#fff;font-size:1.4rem;margin:0 0 1rem;">${title}</h2>
+    <p>Hi,</p>
+    <p>${body}</p>
+    <div style="background:#1A1530;border:1px solid rgba(245,158,11,0.35);border-radius:8px;padding:1.25rem;margin:1.5rem 0;">
+      <p style="margin:0 0 0.75rem;font-weight:700;color:#F59E0B;">${p.orgName}</p>
+      <ul style="margin:0;padding-left:1.25rem;color:rgba(255,255,255,0.72);">${rows}</ul>
+    </div>
+    <a href="${p.retentionUrl}" style="display:inline-block;background:#8B2FC9;color:#fff;padding:0.75rem 1.75rem;border-radius:8px;text-decoration:none;font-weight:700;">Review Subscription</a>
+  `);
+}

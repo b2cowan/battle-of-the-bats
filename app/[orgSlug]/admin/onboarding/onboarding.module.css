@@ -432,7 +432,7 @@
 .divisionHeaderRow,
 .divisionInlineRow {
   display: grid;
-  grid-template-columns: minmax(8rem, 1fr) 5.8rem 6.5rem 2rem;
+  grid-template-columns: minmax(8rem, 1fr) 5.5rem 5.5rem 5.8rem 6.5rem 2rem;
   align-items: center;
   gap: 0.45rem;
 }

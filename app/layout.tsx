@@ -33,9 +33,14 @@ export const metadata: Metadata = {
   manifest: '/manifest.json',
 };
 
+// Inline script runs before first paint to prevent FOUC when user has saved a light mode preference.
+const colorModeScript = `(function(){try{var m=localStorage.getItem('public-color-mode');if(m==='light'){document.documentElement.setAttribute('data-color-mode','light');}}catch(e){}})();`;
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${inter.variable} ${barlow.variable} ${ibmPlexMono.variable}`} data-scroll-behavior="smooth">
+      {/* eslint-disable-next-line react/no-danger */}
+      <script dangerouslySetInnerHTML={{ __html: colorModeScript }} />
       <body>
         <OrgNavProvider>
           <a href="#main-content" className="skip-link">Skip to content</a>

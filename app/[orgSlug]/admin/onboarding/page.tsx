@@ -53,6 +53,8 @@ type DivisionRow = {
   id: string;
   sourceId?: string;
   name: string;
+  minAge: string;
+  maxAge: string;
   capacity: number;
   poolCount: number;
   requiresPoolSelection: boolean;
@@ -76,8 +78,8 @@ type VenueRow = VenueFields & {
 type DraftSkippedState = Record<StartupActionTaskId, boolean>;
 
 const PLAN_TAGLINE: Record<OrgPlan, string> = {
-  tournament:      'Start free with one active tournament and the core tools to get registration moving.',
-  tournament_plus: 'Run multiple tournaments with automation and more staff flexibility.',
+  tournament:      'Start free with one tournament slot and the core tools to get registration moving.',
+  tournament_plus: 'Run up to 3 non-archived tournaments with automation and more staff flexibility.',
   league:          'Manage a house league season, registration, standings, and a public organization page.',
   club:            'Run the full club operation with league, rep teams, accounting, and coaches tools.',
 };
@@ -105,7 +107,7 @@ const PLAN_FEATURES: Record<OrgPlan, string[]> = {
     'Standings',
     'Field and diamond management',
     '3 staff / admin seats',
-    '1 active tournament',
+    '1 tournament slot',
   ],
   tournament_plus: [
     'Everything in Tournament',
@@ -113,7 +115,7 @@ const PLAN_FEATURES: Record<OrgPlan, string[]> = {
     'Bracket generator',
     'Email announcements and communications',
     'Tournament archives and history',
-    'Unlimited simultaneous tournaments',
+    '3 non-archived tournament slots',
     '5 staff / admin seats',
     'Unlimited officials seats',
   ],
@@ -191,10 +193,23 @@ function addDaysToDateValue(value: string, days: number) {
   return date.toISOString().slice(0, 10);
 }
 
+function getDivisionStarterAgeRange(name: string) {
+  const normalized = name.trim();
+  const youthMatch = normalized.match(/^U\s*(\d{1,2})$/i) || normalized.match(/^(\d{1,2})\s*U$/i);
+  if (youthMatch) {
+    return { minAge: '', maxAge: youthMatch[1] };
+  }
+  if (['Open', 'Competitive', 'Recreational'].includes(normalized)) {
+    return { minAge: '18', maxAge: '' };
+  }
+  return { minAge: '', maxAge: '' };
+}
+
 function buildDivisionRows(names: string[]): DivisionRow[] {
   return names.map((name, index) => ({
     id: `${generateSlug(name) || 'division'}-${index + 1}`,
     name,
+    ...getDivisionStarterAgeRange(name),
     capacity: 8,
     poolCount: 0,
     requiresPoolSelection: false,
@@ -598,6 +613,8 @@ export default function OnboardingPage() {
       {
         id: `custom-${prev.length + 1}-${generateSlug(name) || 'division'}`,
         name,
+        minAge: '',
+        maxAge: '',
         capacity: 8,
         poolCount: 0,
         requiresPoolSelection: false,
@@ -674,7 +691,7 @@ export default function OnboardingPage() {
       throw new Error('Enter a tournament name before continuing.');
     }
     if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) {
-      throw new Error('Use a valid URL slug before continuing.');
+      throw new Error('Use a valid public link before continuing.');
     }
     if (tournamentForm.endDate && !tournamentForm.startDate) {
       throw new Error('Choose a start date before setting an end date.');
@@ -697,7 +714,12 @@ export default function OnboardingPage() {
 
   function getDivisionDraftRows() {
     const rows = divisionRows
-      .map(row => ({ ...row, name: row.name.trim() }))
+      .map(row => ({
+        ...row,
+        name: row.name.trim(),
+        minAge: row.minAge.trim(),
+        maxAge: row.maxAge.trim(),
+      }))
       .filter(row => row.name);
     if (rows.length === 0) throw new Error('Add at least one division, or skip this step.');
 
@@ -707,10 +729,21 @@ export default function OnboardingPage() {
     if (duplicateDivision) throw new Error(`Division names must be unique. "${duplicateDivision.name}" is listed more than once.`);
 
     const invalidCapacity = rows.find(row => !Number.isFinite(row.capacity) || row.capacity < 1);
-    if (invalidCapacity) throw new Error(`Add a valid capacity for ${invalidCapacity.name}.`);
+    if (invalidCapacity) throw new Error(`Add a valid max team count for ${invalidCapacity.name}.`);
+
+    const invalidAge = rows.find(row => {
+      const min = row.minAge === '' ? null : Number(row.minAge);
+      const max = row.maxAge === '' ? null : Number(row.maxAge);
+      if (min !== null && (!Number.isFinite(min) || min < 0)) return true;
+      if (max !== null && (!Number.isFinite(max) || max < 0)) return true;
+      return min !== null && max !== null && min > max;
+    });
+    if (invalidAge) throw new Error(`Review the age limits for ${invalidAge.name}. Leave either side blank for open-ended ranges.`);
 
     return rows.map(row => ({
       name: row.name,
+      minAge: row.minAge ? Number(row.minAge) : null,
+      maxAge: row.maxAge ? Number(row.maxAge) : null,
       capacity: row.capacity || 8,
       poolCount: row.poolCount,
       poolNames: row.poolCount >= 2 ? row.poolNames.slice(0, row.poolCount).join(',') : '',
@@ -969,9 +1002,9 @@ export default function OnboardingPage() {
         {!embedded && (
           <div className={styles.modalHeader}>
             <div>
-              <h2 id="onboarding-plan-title" className={styles.modalTitle}>Choose your starting plan</h2>
+              <h2 id="onboarding-plan-title" className={styles.modalTitle}>Start free or choose an upgrade</h2>
               <p className={styles.modalSub}>
-                Select the plan that matches what you want to set up first. Monthly pricing is shown by default.
+                You can begin on the free Tournament plan. Upgrade only if you need more tournament slots, automation, league tools, or club operations.
               </p>
             </div>
             {!required && (
@@ -1117,8 +1150,8 @@ export default function OnboardingPage() {
   function renderActiveModal() {
     if (activeModal === 'plan') {
       return renderModalFrame(
-        'Choose your starting plan',
-        'Select the plan that matches what you want to set up first. You can come back before saving setup work.',
+        'Start free or choose an upgrade',
+        'You can begin on the free Tournament plan and upgrade later if you need more capacity or automation.',
         renderPlanChooser(false, true),
         { stepId: 'plan', saveLabel: 'Continue', onSave: () => advanceWizard('plan'), hidePrimaryAction: true }
       );
@@ -1174,7 +1207,7 @@ export default function OnboardingPage() {
             </div>
 
             <label className={styles.fieldLabel}>
-              URL slug
+              Public link
               <input
                 className="form-input"
                 value={tournamentForm.slug}
@@ -1193,12 +1226,12 @@ export default function OnboardingPage() {
     if (activeModal === 'divisions') {
       return renderModalFrame(
         'Set up divisions',
-        'Add the divisions teams can register for. Pools are optional and can be configured per division.',
+        'Add the age groups or divisions teams can register for. Pools or groups are optional when you need to split teams inside a division.',
         (
           <div className={styles.setupBlock}>
             <div className={styles.setupBlockHeader}>
-              <span>Division setup</span>
-              <small>Starter rows are editable.</small>
+              <span>Age groups and divisions</span>
+              <small>Max teams is the registration cap for that division.</small>
             </div>
             <div className={styles.presetGridCompact}>
               {(['youth', 'adult', 'custom'] as DivisionPreset[]).map(preset => (
@@ -1232,8 +1265,10 @@ export default function OnboardingPage() {
             <div className={styles.inlineList}>
               <div className={styles.divisionHeaderRow} aria-hidden="true">
                 <span>Division</span>
-                <span>Capacity</span>
-                <span>Pools</span>
+                <span>From age</span>
+                <span>To age</span>
+                <span>Max teams</span>
+                <span>Pools/groups</span>
                 <span></span>
               </div>
               {divisionRows.map(row => (
@@ -1248,10 +1283,28 @@ export default function OnboardingPage() {
                     <input
                       className="form-input"
                       type="number"
+                      min="0"
+                      value={row.minAge}
+                      placeholder="Any"
+                      onChange={e => updateDivisionRow(row.id, current => ({ ...current, minAge: e.target.value }))}
+                      aria-label={`${row.name || 'Division'} minimum age`}
+                    />
+                    <input
+                      className="form-input"
+                      type="number"
+                      min="0"
+                      value={row.maxAge}
+                      placeholder="Any"
+                      onChange={e => updateDivisionRow(row.id, current => ({ ...current, maxAge: e.target.value }))}
+                      aria-label={`${row.name || 'Division'} maximum age`}
+                    />
+                    <input
+                      className="form-input"
+                      type="number"
                       min="1"
                       value={row.capacity}
                       onChange={e => updateDivisionRow(row.id, current => ({ ...current, capacity: Number(e.target.value) }))}
-                      aria-label={`${row.name || 'Division'} capacity`}
+                      aria-label={`${row.name || 'Division'} max teams`}
                     />
                     <label className={styles.compactCheckbox}>
                       <input
@@ -1259,7 +1312,7 @@ export default function OnboardingPage() {
                         checked={row.poolCount >= 2}
                         onChange={e => e.target.checked ? updateDivisionPools(row.id, 2) : updateDivisionPools(row.id, 0)}
                       />
-                      Pools
+                      Pools/groups
                     </label>
                     <button
                       type="button"
@@ -1274,7 +1327,7 @@ export default function OnboardingPage() {
                     <div className={styles.poolSetupPanel}>
                       <div className={styles.poolControlsRow}>
                         <label className={styles.poolMiniField}>
-                          <span>Pool count</span>
+                          <span>Pool/group count</span>
                           <input
                             className="form-input"
                             type="number"
@@ -1290,7 +1343,7 @@ export default function OnboardingPage() {
                             checked={row.requiresPoolSelection}
                             onChange={e => updateDivisionRow(row.id, current => ({ ...current, requiresPoolSelection: e.target.checked }))}
                           />
-                          Registrant picks pool
+                          Team chooses pool/group
                         </label>
                       </div>
                       <div className={styles.poolNameGrid}>
@@ -1553,8 +1606,8 @@ export default function OnboardingPage() {
       <div className={`${styles.page} ${styles.pageWide}`}>
         <div className={styles.header}>
           <div className={styles.headerIcon}><Rocket size={22} /></div>
-          <h1 className={styles.title}>Choose your FieldLogicHQ plan</h1>
-          <p className={styles.sub}>Pick the setup path that best matches {currentOrg.name}.</p>
+          <h1 className={styles.title}>Start free or choose an upgrade</h1>
+          <p className={styles.sub}>Begin with the free Tournament plan, or upgrade if {currentOrg.name} needs more capacity.</p>
         </div>
 
         {renderPlanChooser(true)}

@@ -82,13 +82,13 @@ export default function SignupPage() {
         {verificationEmail ? (
           <>
             <p style={{ fontFamily: 'var(--font-data)', fontSize: '0.82rem', color: 'var(--fl-text)', lineHeight: 1.65, marginBottom: '1rem' }}>
-              Check your email to verify your account before choosing a plan.
+              Your organization has been created. For security, verify your email before choosing a plan and opening onboarding.
             </p>
             <div className={styles.error} style={{ color: 'var(--logic-lime)', borderColor: 'rgba(163,230,53,0.28)', background: 'rgba(163,230,53,0.08)' }}>
               Verification email sent to {verificationEmail}.
             </div>
             <p style={{ fontFamily: 'var(--font-data)', fontSize: '0.72rem', color: 'var(--data-gray)', lineHeight: 1.6, marginTop: '1rem' }}>
-              After you confirm your email, FieldLogicHQ will bring you back to onboarding to select your plan and finish setup.
+              After you confirm, FieldLogicHQ will bring you back to start on the free Tournament plan or choose an upgrade.
             </p>
             <div className={styles.footer}>
               <p className={styles.footerText}>
@@ -164,7 +164,7 @@ export default function SignupPage() {
           </button>
 
           <p style={{ fontFamily: 'var(--font-data)', fontSize: '0.65rem', letterSpacing: '0.06em', color: 'var(--data-gray)', textAlign: 'center' }}>
-            Starts on the free Tournament plan. No credit card required.
+            Start on the free Tournament plan. No credit card required.
           </p>
         </form>
         )}

@@ -184,7 +184,7 @@
 
 /* ── HelpPageLayout ──────────────────────────────────────────────────────── */
 .helpPage {
-  max-width: 720px;
+  max-width: 980px;
 }
 
 .helpPageHeader {
@@ -226,27 +226,255 @@
   max-width: 600px;
 }
 
+.helpSearchPanel {
+  margin: 0 0 1.5rem;
+  max-width: 720px;
+}
+
+.helpSearchLabel {
+  display: block;
+  margin-bottom: 0.45rem;
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.helpSearchBox {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.helpSearchIcon {
+  position: absolute;
+  left: 0.9rem;
+  color: rgba(255, 255, 255, 0.35);
+  pointer-events: none;
+}
+
+.helpSearchInput {
+  width: 100%;
+  min-height: 44px;
+  padding: 0.7rem 2.6rem 0.7rem 2.35rem;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.045);
+  color: rgba(255, 255, 255, 0.84);
+  font: inherit;
+  font-size: 0.92rem;
+  outline: none;
+}
+
+.helpSearchInput:focus {
+  border-color: rgba(79, 163, 224, 0.45);
+  box-shadow: 0 0 0 2px rgba(79, 163, 224, 0.12);
+}
+
+.helpSearchInput::placeholder {
+  color: rgba(255, 255, 255, 0.28);
+}
+
+.helpSearchClear {
+  position: absolute;
+  right: 0.55rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.07);
+  color: rgba(255, 255, 255, 0.55);
+  cursor: pointer;
+}
+
+.helpSearchClear:hover {
+  color: rgba(255, 255, 255, 0.85);
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.helpSearchMeta {
+  margin: 0.5rem 0 0;
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.42);
+}
+
+.helpUtilityTitle {
+  margin: 0 0 0.85rem;
+  font-size: 0.78rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.quickAnswers {
+  margin: 0 0 1.5rem;
+  max-width: 900px;
+}
+
+.quickAnswerGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.6rem;
+}
+
+.quickAnswerLink {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0.7rem 0.85rem;
+  border-radius: 8px;
+  border: 1px solid rgba(79, 163, 224, 0.18);
+  background: rgba(79, 163, 224, 0.055);
+  color: rgba(255, 255, 255, 0.76);
+  font-size: 0.84rem;
+  line-height: 1.35;
+  text-decoration: none;
+}
+
+.quickAnswerLink:hover {
+  border-color: rgba(79, 163, 224, 0.38);
+  background: rgba(79, 163, 224, 0.09);
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.helpToc {
+  margin: 0 0 1.75rem;
+  max-width: 900px;
+}
+
+.helpTocGroups {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.8rem;
+}
+
+.helpTocGroup {
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgba(255, 255, 255, 0.028);
+  padding: 0.9rem;
+}
+
+.helpTocGroupTitle {
+  margin: 0 0 0.65rem;
+  font-size: 0.72rem;
+  font-weight: 850;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #4fa3e0;
+}
+
+.helpTocLinks {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.helpTocLink {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.4rem 0;
+  color: rgba(255, 255, 255, 0.74);
+  text-decoration: none;
+}
+
+.helpTocLink:hover {
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.helpTocLink span {
+  font-size: 0.86rem;
+  font-weight: 650;
+  line-height: 1.35;
+}
+
+.helpTocLink em {
+  font-size: 0.76rem;
+  font-style: normal;
+  line-height: 1.4;
+  color: rgba(255, 255, 255, 0.38);
+}
+
 .helpSections {
   display: flex;
   flex-direction: column;
   gap: 0;
+  max-width: 760px;
 }
 
 .helpSection {
   border-top: 1px solid rgba(255, 255, 255, 0.07);
   padding: 1.5rem 0;
+  scroll-margin-top: 1.5rem;
 }
 
 .helpSection:last-child {
   border-bottom: 1px solid rgba(255, 255, 255, 0.07);
 }
 
+.helpSectionHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.6rem;
+}
+
+.helpSectionGroup {
+  margin: 0 0 0.25rem;
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: rgba(79, 163, 224, 0.8);
+}
+
 .helpSectionHeading {
   font-size: 1rem;
   font-weight: 700;
   color: rgba(255, 255, 255, 0.85);
-  margin: 0 0 0.75rem;
+  margin: 0;
   line-height: 1.3;
+}
+
+.helpSectionSummary {
+  margin: 0 0 0.8rem;
+  font-size: 0.83rem;
+  line-height: 1.55;
+  color: rgba(255, 255, 255, 0.42);
+}
+
+.helpSectionLinks {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+  max-width: 280px;
+}
+
+.helpSectionLink {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 0.32rem 0.55rem;
+  border-radius: 6px;
+  border: 1px solid rgba(79, 163, 224, 0.18);
+  color: #4fa3e0;
+  background: rgba(79, 163, 224, 0.06);
+  font-size: 0.74rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.helpSectionLink:hover {
+  border-color: rgba(79, 163, 224, 0.35);
+  background: rgba(79, 163, 224, 0.1);
 }
 
 .helpSectionContent {
@@ -277,6 +505,119 @@
 .helpSectionContent strong {
   color: rgba(255, 255, 255, 0.75);
   font-weight: 600;
+}
+
+.helpFaqSection {
+  max-width: 760px;
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.helpFaqHeader {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.helpFaqHeader span {
+  font-size: 0.78rem;
+  color: rgba(255, 255, 255, 0.38);
+}
+
+.helpFaqList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.helpFaqItem {
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.075);
+  background: rgba(255, 255, 255, 0.028);
+}
+
+.helpFaqItem[open] {
+  border-color: rgba(79, 163, 224, 0.2);
+  background: rgba(79, 163, 224, 0.045);
+}
+
+.helpFaqItem summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+  min-height: 48px;
+  padding: 0.7rem 0.9rem;
+  cursor: pointer;
+  list-style: none;
+}
+
+.helpFaqItem summary::-webkit-details-marker {
+  display: none;
+}
+
+.helpFaqItem summary span {
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 0.88rem;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.helpFaqItem summary em {
+  flex-shrink: 0;
+  font-size: 0.68rem;
+  font-style: normal;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: rgba(79, 163, 224, 0.7);
+}
+
+.helpFaqAnswer {
+  padding: 0 0.9rem 0.85rem;
+  color: rgba(255, 255, 255, 0.56);
+  font-size: 0.86rem;
+  line-height: 1.65;
+}
+
+.helpFaqAnswer p {
+  margin: 0;
+}
+
+.helpFaqAnswer strong {
+  color: rgba(255, 255, 255, 0.76);
+}
+
+.helpNoResults {
+  margin: 0;
+  padding: 1rem;
+  border-radius: 8px;
+  border: 1px dashed rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.42);
+  font-size: 0.84rem;
+}
+
+@media (max-width: 760px) {
+  .quickAnswerGrid,
+  .helpTocGroups {
+    grid-template-columns: 1fr;
+  }
+
+  .helpSectionHeader {
+    flex-direction: column;
+  }
+
+  .helpSectionLinks {
+    justify-content: flex-start;
+    max-width: none;
+  }
+
+  .helpFaqItem summary {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
 }
 
 /* ── Help Hub ────────────────────────────────────────────────────────────── */

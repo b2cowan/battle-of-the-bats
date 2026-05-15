@@ -2,13 +2,15 @@ import { createClient } from '@supabase/supabase-js';
 import { getAuthContext, unauthorized, requireCapability } from '@/lib/api-auth';
 
 type DivisionAgeConfig = {
-  min: number;
-  max: number;
+  min: number | null;
+  max: number | null;
   order: number;
 };
 
 type SetupDivision = {
   name: string;
+  minAge?: number | string | null;
+  maxAge?: number | string | null;
   capacity: number;
   poolCount: number;
   poolNames: string;
@@ -41,22 +43,23 @@ type GameInsertRow = {
   away_score: number | null;
 };
 
-function getDivisionAgeConfig(name: string, index: number): DivisionAgeConfig {
-  const normalized = name.trim();
-  const youthMatch = normalized.match(/^U\s*(\d{1,2})$/i) || normalized.match(/^(\d{1,2})\s*U$/i);
+function normalizeOptionalAge(value: unknown): number | null {
+  if (value === null || value === undefined || value === '') return null;
+  const age = Number(value);
+  return Number.isFinite(age) ? age : null;
+}
 
-  if (youthMatch) {
-    const maxAge = Number(youthMatch[1]);
-    return { min: Math.max(0, maxAge - 2), max: maxAge, order: index + 1 };
+function getDivisionAgeConfig(division: SetupDivision, index: number): DivisionAgeConfig {
+  const min = normalizeOptionalAge(division.minAge);
+  const max = normalizeOptionalAge(division.maxAge);
+  if (min !== null && max !== null && min > max) {
+    throw new Error(`Minimum age cannot be greater than maximum age for ${division.name}.`);
   }
-
-  const adultDefaults: Record<string, DivisionAgeConfig> = {
-    Open: { min: 0, max: 99, order: 1 },
-    Competitive: { min: 0, max: 99, order: 2 },
-    Recreational: { min: 0, max: 99, order: 3 },
+  return {
+    min,
+    max,
+    order: index + 1,
   };
-
-  return adultDefaults[normalized] || { min: 0, max: 99, order: index + 1 };
 }
 
 function isDateValue(value: unknown): value is string {
@@ -74,6 +77,10 @@ function getTodayDateValue() {
   const month = parts.find(part => part.type === 'month')?.value;
   const day = parts.find(part => part.type === 'day')?.value;
   return year && month && day ? `${year}-${month}-${day}` : new Date().toISOString().slice(0, 10);
+}
+
+function normalizeTournamentName(name: string) {
+  return name.trim().replace(/\s+/g, ' ').toLowerCase();
 }
 
 export async function POST(req: Request) {
@@ -118,8 +125,13 @@ export async function POST(req: Request) {
     const allowSeedData = process.env.NEXT_PUBLIC_ENABLE_DEV_TOOLS === 'true';
     const effectiveSeedData = allowSeedData ? seedData : null;
     const slug = String(tournament?.slug ?? '').trim().toLowerCase();
+    const tournamentName = String(tournament?.name ?? '').trim().replace(/\s+/g, ' ');
     const startDate = isDateValue(tournament?.startDate) ? tournament.startDate : null;
     const endDate = isDateValue(tournament?.endDate) ? tournament.endDate : null;
+
+    if (!tournamentName) {
+      return Response.json({ error: 'Tournament name is required.' }, { status: 400 });
+    }
 
     if (!slug || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) {
       return Response.json({ error: 'Tournament URL must contain lowercase letters, numbers, and hyphens.' }, { status: 400 });
@@ -149,12 +161,42 @@ export async function POST(req: Request) {
       return Response.json({ error: 'A tournament with this URL already exists.' }, { status: 409 });
     }
 
+    const { data: existingNames, error: nameError } = await supabase
+      .from('tournaments')
+      .select('name')
+      .eq('organization_id', auth.org.id)
+      .neq('status', 'archived');
+
+    if (nameError) throw nameError;
+    if ((existingNames ?? []).some(row => normalizeTournamentName(row.name ?? '') === normalizeTournamentName(tournamentName))) {
+      return Response.json({ error: `A tournament named "${tournamentName}" already exists. Choose a different name.` }, { status: 409 });
+    }
+
+    const limit = auth.org.tournamentLimit;
+    if (limit < 9999) {
+      const { count: occupiedSlotCount, error: limitError } = await supabase
+        .from('tournaments')
+        .select('*', { count: 'exact', head: true })
+        .eq('organization_id', auth.org.id)
+        .neq('status', 'archived');
+
+      if (limitError) throw limitError;
+      if ((occupiedSlotCount ?? 0) >= limit) {
+        return Response.json(
+          {
+            error: `Your plan allows ${limit} tournament slot${limit === 1 ? '' : 's'}. Archive an existing tournament before creating another.`,
+          },
+          { status: 403 }
+        );
+      }
+    }
+
     // 1. Create Tournament (always starts as draft; activate explicitly from the Tournaments page)
     const { data: newTnt, error: tntError } = await supabase
       .from('tournaments')
       .insert({
         year:            tournament.year,
-        name:            tournament.name,
+        name:            tournamentName,
         slug,
         status:          'draft',
         is_active:       false,
@@ -175,7 +217,7 @@ export async function POST(req: Request) {
     // 2. Initialize Divisions & Pools
     if (divisions && divisions.length > 0) {
       const groupRows = (divisions as SetupDivision[]).map((div, index) => {
-        const config = getDivisionAgeConfig(div.name, index);
+        const config = getDivisionAgeConfig(div, index);
         return {
           tournament_id: tid,
           name: div.name,
@@ -515,7 +557,7 @@ export async function POST(req: Request) {
       });
     }
 
-    return new Response(JSON.stringify({ success: true, id: tid, slug, name: tournament.name, debug }), {
+    return new Response(JSON.stringify({ success: true, id: tid, slug, name: tournamentName, debug }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' }
     });

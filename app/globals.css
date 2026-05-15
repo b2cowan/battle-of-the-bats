@@ -50,6 +50,106 @@
 
   --nav-height:  72px;
   --transition:  all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Themeable nav backgrounds — overridden in light mode */
+  --nav-bg-scrolled:  rgba(13, 11, 20, 0.92);
+  --nav-mobile-bg:    rgba(13, 11, 20, 0.97);
+
+  /* Opacity-alpha text tokens used by some component CSS */
+  --white-80:    rgba(255, 255, 255, 0.8);
+  --white-45:    rgba(255, 255, 255, 0.45);
+  --white-40:    rgba(255, 255, 255, 0.4);
+  --white-35:    rgba(255, 255, 255, 0.35);
+  --white-50:    rgba(255, 255, 255, 0.5);
+}
+
+/* ─── Light Mode Token Overrides ────────────────────────────────────────────── */
+[data-color-mode="light"] {
+  --bg:          #F5F7FC;
+  --bg-2:        #EEF1F8;
+  --bg-3:        #E5E9F2;
+  --surface:     #FFFFFF;
+  --surface-2:   #F0F3FA;
+
+  --white:       #0F1123;
+  --white-90:    rgba(15, 17, 35, 0.9);
+  --white-80:    rgba(15, 17, 35, 0.8);
+  --white-60:    rgba(15, 17, 35, 0.6);
+  --white-50:    rgba(15, 17, 35, 0.5);
+  --white-45:    rgba(15, 17, 35, 0.45);
+  --white-40:    rgba(15, 17, 35, 0.4);
+  --white-35:    rgba(15, 17, 35, 0.35);
+  --white-30:    rgba(15, 17, 35, 0.3);
+  --white-10:    rgba(15, 17, 35, 0.07);
+
+  --border-2:    rgba(15, 17, 35, 0.1);
+
+  --shadow-sm:   0 2px 8px rgba(0,0,0,0.1);
+  --shadow:      0 4px 24px rgba(0,0,0,0.12);
+  --shadow-lg:   0 8px 48px rgba(0,0,0,0.16);
+
+  --fl-text:     #0F1123;
+  --data-gray:   #4B5563;
+  --hud-surface: #FFFFFF;
+
+  /* Nav backgrounds */
+  --nav-bg-scrolled: rgba(245, 247, 252, 0.95);
+  --nav-mobile-bg:   rgba(245, 247, 252, 0.99);
+}
+
+/* Light-mode: body text + background */
+[data-color-mode="light"] body {
+  background: var(--bg);
+  color: var(--white);
+}
+
+/* Light-mode: card glass variants */
+[data-color-mode="light"] .card-glass,
+[data-color-mode="light"] [data-card-style="glass"] .card {
+  background: rgba(255, 255, 255, 0.75);
+  border-color: rgba(15, 17, 35, 0.1);
+}
+
+/* Light-mode: forms */
+[data-color-mode="light"] .form-input,
+[data-color-mode="light"] .form-select,
+[data-color-mode="light"] .form-textarea {
+  background: #FFFFFF;
+  color: var(--white);
+  border-color: rgba(15, 17, 35, 0.15);
+}
+
+[data-color-mode="light"] .form-input::placeholder,
+[data-color-mode="light"] .form-textarea::placeholder {
+  color: rgba(15, 17, 35, 0.3);
+}
+
+[data-color-mode="light"] select option {
+  background: #FFFFFF;
+  color: #0F1123;
+}
+
+/* Light-mode: table */
+[data-color-mode="light"] thead tr {
+  background: var(--surface-2);
+}
+
+/* Light-mode: badges */
+[data-color-mode="light"] .badge-neutral {
+  background: rgba(15, 17, 35, 0.07);
+  color: rgba(15, 17, 35, 0.6);
+  border-color: rgba(15, 17, 35, 0.12);
+}
+
+/* Light-mode: btn-ghost */
+[data-color-mode="light"] .btn-ghost {
+  background: rgba(15, 17, 35, 0.06);
+  color: var(--white);
+  border-color: rgba(15, 17, 35, 0.12);
+}
+
+[data-color-mode="light"] .btn-ghost:hover {
+  background: rgba(15, 17, 35, 0.12);
 }
 
 /* ─── Reset & Base ──────────────────────────────────────────────────────────── */

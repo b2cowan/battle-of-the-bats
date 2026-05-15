@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getAuthContextWithRole, unauthorized, forbidden } from '@/lib/api-auth';
+import { getAuthContextWithRole, unauthorized, forbidden, repGroupScopeGuard } from '@/lib/api-auth';
 import { hasCapability } from '@/lib/roles';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { getRepTeam, getRepProgramYear, getRepRosterPlayers } from '@/lib/db';
@@ -25,6 +25,8 @@ export async function GET(
   if (!team || team.orgId !== ctx!.org.id) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }
+  const groupErr = repGroupScopeGuard(ctx!, team.groupId);
+  if (groupErr) return groupErr;
 
   const programYear = await getRepProgramYear(yearId);
   if (!programYear || programYear.teamId !== team.id) {

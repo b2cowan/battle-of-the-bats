@@ -26,17 +26,17 @@ function SignupConfirmInner() {
   return (
     <>
       <p style={{ fontFamily: 'var(--font-data)', fontSize: '0.82rem', color: 'var(--fl-text)', lineHeight: 1.6, marginBottom: '1.5rem' }}>
-        Click below to verify your email and continue setting up your organization.
+        This confirms your email and opens the next step for your organization setup.
       </p>
       <button
         className={styles.submitBtn}
         onClick={() => { window.location.href = link; }}
       >
-        Verify Email
+        Continue Setup
       </button>
       <div className={styles.footer}>
         <p className={styles.footerText}>
-          Already verified?{' '}
+          Already confirmed?{' '}
           <Link href="/auth/login" className={styles.footerLink}>Sign in</Link>
         </p>
       </div>

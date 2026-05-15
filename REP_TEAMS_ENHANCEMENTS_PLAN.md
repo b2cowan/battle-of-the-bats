@@ -1,6 +1,6 @@
 # Rep Teams Enhancements Plan
 
-Two related features: rep team groups/classifications and per-team billing for Club plan orgs.
+Phases 1 and 2 complete. Phase 3 (per-team billing) has moved to [STRIPE_INTEGRATION_PLAN.md](STRIPE_INTEGRATION_PLAN.md) Phase E, consolidated with all other Stripe work.
 
 ---
 

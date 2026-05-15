@@ -42,7 +42,7 @@ New plan config:
 | Key | Label | Monthly | Annual | Tournaments | Seats | Officials Free | Module Entitlements |
 |-----|-------|---------|--------|-------------|-------|----------------|---------------------|
 | `tournament` | Tournament | $0 | $0 | 1 | 3 | No | CORE only |
-| `tournament_plus` | Tournament Plus | $39 | $390 | 9999 | 5 | Yes | CORE only |
+| `tournament_plus` | Tournament Plus | $39 | $390 | 3 | 5 | Yes | CORE only |
 | `league` | League | $89 | $890 | 9999 | 10 | Yes | CORE + public_site + house_league |
 | `club` | Club | $179 | $1790 | 9999 | 9999 | Yes | CORE + public_site + house_league + accounting + rep_teams |
 
@@ -91,7 +91,7 @@ Tournament (Free):
 
 Tournament Plus ($39 / $390/yr):
 - No "Most Popular" badge
-- Features: Everything in Tournament + Automated schedule generation, Bracket generator, Email announcements and communications, Tournament archives and history, Unlimited simultaneous tournaments, 5 staff / admin seats, Unlimited officials seats
+- Features: Everything in Tournament + Automated schedule generation, Bracket generator, Email announcements and communications, Tournament archives and history, 3 non-archived tournament slots, 5 staff / admin seats, Unlimited officials seats
 - Not-included note: "Built for tournament organizers — house league, accounting, and rep team tools not included."
 - Upgrade nudge: "Running a public-facing league? → League"
 - CTA: "Start Free Trial" → `/auth/signup`

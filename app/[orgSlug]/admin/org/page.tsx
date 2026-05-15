@@ -6,6 +6,7 @@ import { useOrg } from '@/lib/org-context';
 export default function OrgAdminHub() {
   const { currentOrg, userRole, loading } = useOrg();
   const base = `/${currentOrg?.slug ?? ''}/admin/org`;
+  const adminBase = `/${currentOrg?.slug ?? ''}/admin`;
 
   if (loading || !userRole) {
     return (
@@ -23,10 +24,10 @@ export default function OrgAdminHub() {
       href: `${base}/members`,
     },
     {
-      label: 'Tournament Records',
-      desc: 'Historical and archived tournament data',
+      label: 'Manage Tournaments',
+      desc: 'Create tournaments and change Draft, Live, Completed, or Archived state',
       icon: RefreshCw,
-      href: `${base}/tournaments`,
+      href: `${adminBase}/tournaments/manage`,
     },
     {
       label: 'Diamonds',

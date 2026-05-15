@@ -11,6 +11,7 @@ import {
   markAllocationReminderSent,
 } from '@/lib/db';
 import { sendEmail } from '@/lib/email';
+import { supabaseAdmin } from '@/lib/supabase-admin';
 
 function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
   if (!ctx) return unauthorized();
@@ -37,7 +38,19 @@ export async function POST(req: Request) {
   const body = await req.json().catch(() => ({}));
   const daysAhead: number = typeof body.daysAhead === 'number' ? body.daysAhead : 30;
 
-  const candidates = await getAllocationReminderCandidates(ctx!.org.id, daysAhead);
+  let allCandidates = await getAllocationReminderCandidates(ctx!.org.id, daysAhead);
+
+  if (ctx!.repGroupIds) {
+    const { data: scopedTeams } = await supabaseAdmin
+      .from('rep_teams')
+      .select('id')
+      .eq('org_id', ctx!.org.id)
+      .in('group_id', ctx!.repGroupIds);
+    const scopedSet = new Set((scopedTeams ?? []).map((t: any) => t.id as string));
+    allCandidates = allCandidates.filter(c => scopedSet.has(c.teamId));
+  }
+
+  const candidates = allCandidates;
 
   if (!candidates.length) {
     return NextResponse.json({ remindersChecked: 0, emailsSent: 0, installmentsTagged: 0 });

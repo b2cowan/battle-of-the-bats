@@ -21,6 +21,17 @@ export async function GET(req: Request) {
   const status = url.searchParams.get('status') ?? 'pending';
   const teamId = url.searchParams.get('teamId') ?? null;
 
+  // When the caller is scoped to specific groups, restrict to those teams
+  let scopedTeamIds: string[] | null = null;
+  if (ctx!.repGroupIds) {
+    const { data: scopedTeams } = await supabaseAdmin
+      .from('rep_teams')
+      .select('id')
+      .eq('org_id', ctx!.org.id)
+      .in('group_id', ctx!.repGroupIds);
+    scopedTeamIds = (scopedTeams ?? []).map((t: any) => t.id as string);
+  }
+
   let query = supabaseAdmin
     .from('rep_team_payment_requests')
     .select(`
@@ -32,6 +43,7 @@ export async function GET(req: Request) {
 
   if (status !== 'all') query = query.eq('status', status);
   if (teamId) query = query.eq('team_id', teamId);
+  if (scopedTeamIds) query = query.in('team_id', scopedTeamIds);
 
   const { data, error } = await query;
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });

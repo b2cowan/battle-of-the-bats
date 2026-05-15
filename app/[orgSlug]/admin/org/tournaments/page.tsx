@@ -1,9 +1,9 @@
 ﻿'use client';
-import { useState, useEffect, use } from 'react';
-import { RefreshCw, Plus, Check, X, Trash2, Pencil, Star, ArrowRight } from 'lucide-react';
+import { useState, useEffect, use, useCallback } from 'react';
+import { RefreshCw, Plus, Check, X, Trash2, Pencil, ExternalLink } from 'lucide-react';
 import Link from 'next/link';
 import {
-  getTournamentsByOrg, getAgeGroups
+  getAgeGroups
 } from '@/lib/db';
 import { useTournament } from '@/lib/tournament-context';
 import { useOrg } from '@/lib/org-context';
@@ -50,7 +50,7 @@ function getErrorMessage(error: unknown, fallback = 'Something went wrong.') {
 }
 import FeedbackModal from '@/components/FeedbackModal';
 import HelpCallout from '@/components/help/HelpCallout';
-import HelpTooltip from '@/components/help/HelpTooltip';
+import TournamentSetupWizard from '@/components/admin/TournamentSetupWizard';
 import styles from './tournaments-admin.module.css';
 
 type ModalMode = 'add' | 'edit' | null;
@@ -66,10 +66,57 @@ type DivisionRow = {
   poolNames: string[];
 };
 
+type AdminTournamentRow = {
+  id: string;
+  organization_id?: string | null;
+  year: number;
+  name: string;
+  slug?: string | null;
+  status?: TournamentStatus | null;
+  is_active?: boolean | null;
+  start_date?: string | null;
+  end_date?: string | null;
+  contact_email?: string | null;
+  fee_schedule_mode?: string | null;
+  deposit_amount?: number | null;
+  deposit_due_date?: string | null;
+  total_fee_amount?: number | null;
+  total_fee_due_date?: string | null;
+};
+
 const DIVISION_PRESETS: Record<Exclude<DivisionPreset, 'custom'>, string[]> = {
   youth: ['U9', 'U11', 'U13', 'U15', 'U17', 'U19'],
   adult: ['Open', 'Competitive', 'Recreational'],
 };
+
+function mapAdminTournament(row: AdminTournamentRow): Tournament {
+  const status: TournamentStatus = row.status ?? (row.is_active ? 'active' : 'draft');
+  return {
+    id: row.id,
+    organizationId: row.organization_id ?? undefined,
+    year: row.year,
+    name: row.name,
+    slug: row.slug ?? '',
+    status,
+    isActive: status === 'active',
+    startDate: row.start_date ?? undefined,
+    endDate: row.end_date ?? undefined,
+    contactEmail: row.contact_email ?? undefined,
+    feeScheduleMode: (row.fee_schedule_mode as 'tournament' | 'age_group') ?? 'tournament',
+    depositAmount: row.deposit_amount ?? null,
+    depositDueDate: row.deposit_due_date ?? null,
+    totalFeeAmount: row.total_fee_amount ?? null,
+    totalFeeDueDate: row.total_fee_due_date ?? null,
+  };
+}
+
+async function getAdminTournaments(): Promise<Tournament[]> {
+  const res = await fetch('/api/admin/tournaments', { cache: 'no-store' });
+  if (!res.ok) return [];
+  const data: unknown = await res.json();
+  if (!Array.isArray(data)) return [];
+  return data.map(row => mapAdminTournament(row as AdminTournamentRow));
+}
 
 function buildDivisionRows(names: string[]): DivisionRow[] {
   return names.map((name, index) => ({
@@ -92,7 +139,9 @@ export default function AdminTournamentsPage({
   const createValue = resolvedSearchParams.create;
   const createOnLoad = createValue === '1' || (Array.isArray(createValue) && createValue.includes('1'));
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
-  const [modal, setModal]       = useState<ModalMode>(createOnLoad ? 'add' : null);
+  const [loadingData, setLoadingData] = useState(true);
+  const [modal, setModal]       = useState<ModalMode>(null);
+  const [setupWizardOpen, setSetupWizardOpen] = useState(createOnLoad);
   const [editing, setEditing]   = useState<Tournament | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [sealedTournamentIds, setSealedTournamentIds] = useState<Set<string>>(new Set());
@@ -111,6 +160,13 @@ export default function AdminTournamentsPage({
     startDate: '',
     endDate: '',
   });
+  const [feeForm, setFeeForm] = useState({
+    feeScheduleMode: 'tournament' as 'tournament' | 'age_group',
+    depositAmount: '',
+    depositDueDate: '',
+    totalFeeAmount: '',
+    totalFeeDueDate: '',
+  });
   const [slugEdited, setSlugEdited] = useState(false);
   const [slugStatus, setSlugStatus] = useState<SlugStatus>('idle');
   const [slugMessage, setSlugMessage] = useState('');
@@ -123,18 +179,23 @@ export default function AdminTournamentsPage({
   const [divisionRows, setDivisionRows] = useState<DivisionRow[]>(() => buildDivisionRows(DIVISION_PRESETS.youth));
   const [useWelcomeMsg, setUseWelcomeMsg]           = useState(true);
   const [welcomeMsg, setWelcomeMsg]                 = useState('Welcome to our tournament! We are excited to host a great event for all participating teams.');
-  async function refresh() {
+  const refresh = useCallback(async () => {
     if (currentOrg) {
       const [ts, archives] = await Promise.all([
-        getTournamentsByOrg(currentOrg.id),
+        getAdminTournaments(),
         getAdminArchives(),
       ]);
       setTournaments(ts);
       setSealedTournamentIds(new Set(archives.map(a => a.tournamentId).filter(Boolean) as string[]));
     }
     await refreshCtx();
-  }
-  useEffect(() => { refresh(); }, []); // eslint-disable-line
+    setLoadingData(false);
+  }, [currentOrg, refreshCtx]);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => { void refresh(); }, 0);
+    return () => window.clearTimeout(timer);
+  }, [refresh]);
 
   useEffect(() => {
     const timer = window.setTimeout(async () => {
@@ -173,6 +234,18 @@ export default function AdminTournamentsPage({
   }, [modal, form.slug, editing?.id]);
 
   function openAdd() {
+    const limit = currentOrg?.tournamentLimit ?? 9999;
+    const occupiedSlotCount = tournaments.filter(t => t.status !== 'archived').length;
+    if (limit < 9999 && occupiedSlotCount >= limit) {
+      setFeedback({
+        isOpen: true,
+        title: 'Tournament Limit Reached',
+        message: `Your plan includes ${limit} tournament slot${limit === 1 ? '' : 's'}. Archive an existing tournament before creating another, or upgrade for more tournaments.`,
+        type: 'warning',
+      });
+      return;
+    }
+
     setSlugEdited(false);
     setSlugStatus('idle');
     setSlugMessage('');
@@ -184,7 +257,7 @@ export default function AdminTournamentsPage({
     setDivisionRows(buildDivisionRows(DIVISION_PRESETS.youth));
     setUseWelcomeMsg(true);
     setWelcomeMsg('Welcome to our tournament! We are excited to host a great event for all participating teams.');
-    setModal('add');
+    setSetupWizardOpen(true);
   }
 
   function openEdit(t: Tournament) {
@@ -197,6 +270,13 @@ export default function AdminTournamentsPage({
       slug: t.slug,
       startDate: t.startDate || '',
       endDate: t.endDate || '',
+    });
+    setFeeForm({
+      feeScheduleMode: t.feeScheduleMode ?? 'tournament',
+      depositAmount: t.depositAmount != null ? String(t.depositAmount) : '',
+      depositDueDate: t.depositDueDate ?? '',
+      totalFeeAmount: t.totalFeeAmount != null ? String(t.totalFeeAmount) : '',
+      totalFeeDueDate: t.totalFeeDueDate ?? '',
     });
     setEditing(t);
     setModal('edit');
@@ -271,7 +351,18 @@ export default function AdminTournamentsPage({
         const res = await fetch('/api/admin/tournaments', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'update', id: editing.id, data })
+          body: JSON.stringify({
+            action: 'update',
+            id: editing.id,
+            data: {
+              ...data,
+              feeScheduleMode: feeForm.feeScheduleMode,
+              depositAmount:   feeForm.depositAmount   ? Number(feeForm.depositAmount)   : null,
+              depositDueDate:  feeForm.depositDueDate  || null,
+              totalFeeAmount:  feeForm.totalFeeAmount  ? Number(feeForm.totalFeeAmount)  : null,
+              totalFeeDueDate: feeForm.totalFeeDueDate || null,
+            },
+          }),
         });
         if (!res.ok) throw new Error('Update failed');
       }
@@ -475,6 +566,10 @@ export default function AdminTournamentsPage({
       ? 'var(--danger, #ef4444)'
       : 'var(--white-30)';
   const saveDisabled = slugStatus === 'checking' || slugStatus === 'taken' || slugStatus === 'invalid';
+  const tournamentLimit = currentOrg?.tournamentLimit ?? 9999;
+  const occupiedTournamentSlotCount = tournaments.filter(t => t.status !== 'archived').length;
+  const tournamentLimitReached = tournamentLimit < 9999 && occupiedTournamentSlotCount >= tournamentLimit;
+  const tournamentLimitLabel = tournamentLimit >= 9999 ? 'Unlimited' : tournamentLimit;
 
   return (
     <div className={styles.page}>
@@ -486,26 +581,52 @@ export default function AdminTournamentsPage({
             <p className={styles.pageSub}>Manage tournament years — create a new season and set which one is live</p>
           </div>
         </div>
-        <button className="btn btn-primary btn-sm" onClick={openAdd} id="tournament-add-btn">
+        <button
+          className="btn btn-primary btn-sm"
+          onClick={openAdd}
+          disabled={loadingData}
+          id="tournament-add-btn"
+        >
           <Plus size={16} /> New Tournament
         </button>
       </div>
 
       <div className={styles.lifecycleStrip}>
-        <Star size={14} style={{ color: 'var(--logic-lime)', flexShrink: 0, marginTop: 2 }} />
-        <span><strong>Draft</strong> is private.</span>
-        <span><strong>Active</strong> publishes registration.</span>
-        <span><strong>Completed</strong> frees the active slot.</span>
-        <span><strong>Archive</strong> or <strong>Seal</strong> after the event.</span>
+        <div className={styles.lifecycleItems}>
+          <div className={styles.lifecycleItem}>
+            <strong>Draft</strong>
+            <span>Private — admins only</span>
+          </div>
+          <div className={styles.lifecycleItem}>
+            <strong>Active</strong>
+            <span>Registration open to public</span>
+          </div>
+          <div className={styles.lifecycleItem}>
+            <strong>Completed</strong>
+            <span>Event over — archive to free slot</span>
+          </div>
+          <div className={styles.lifecycleItem}>
+            <strong>Archived</strong>
+            <span>Hidden — slot freed</span>
+          </div>
+        </div>
+        <div className={styles.lifecycleCount}>
+          <span className={styles.lifecycleCountValue}>{occupiedTournamentSlotCount} / {tournamentLimitLabel}</span>
+          <span className={styles.lifecycleCountLabel}>slots used</span>
+        </div>
       </div>
 
-      {tournaments.length === 0 && (
+      {!loadingData && tournaments.length === 0 && (
         <div className={styles.emptyPrompt}>
           <div>
             <strong>No tournaments yet</strong>
             <span>Create one draft tournament, then add venues, contacts, registration settings, and activate when ready.</span>
           </div>
-          <button type="button" className="btn btn-outline btn-sm" onClick={openAdd}>
+          <button
+            type="button"
+            className="btn btn-outline btn-sm"
+            onClick={openAdd}
+          >
             <Plus size={14} /> Create Tournament
           </button>
         </div>
@@ -530,18 +651,18 @@ export default function AdminTournamentsPage({
             <tr>
               <th>Tournament Name</th>
               <th>Year</th>
-              <th style={{ whiteSpace: 'nowrap' }}>
-                Status
-                <HelpTooltip
-                  title="Tournament statuses"
-                  body="Draft: visible only to admins. Active: accepting registrations and score submissions. Completed: season is over. Archived: hidden from most views."
-                />
-              </th>
+              <th>Status</th>
               <th>Actions</th>
             </tr>
           </thead>
           <tbody>
-            {tournaments.length === 0 ? (
+            {loadingData ? (
+              <tr>
+                <td colSpan={4} style={{ textAlign: 'center', color: 'var(--white-30)', padding: '2rem' }}>
+                  Loading…
+                </td>
+              </tr>
+            ) : tournaments.length === 0 ? (
               <tr>
                 <td colSpan={4} style={{ textAlign: 'center', color: 'var(--white-30)', padding: '2rem' }}>
                   No tournaments yet — use the button above to create your first one.
@@ -565,7 +686,7 @@ export default function AdminTournamentsPage({
                     id={`status-select-${t.id}`}
                   >
                     <option value="draft">Draft</option>
-                    <option value="active">● Live</option>
+                    <option value="active">Live</option>
                     <option value="completed">Completed</option>
                     <option value="archived">Archived</option>
                   </select>
@@ -595,15 +716,16 @@ export default function AdminTournamentsPage({
                         id={`preview-tournament-${t.id}`}
                         target="_blank"
                         rel="noopener noreferrer"
+                        title="Preview the public tournament site"
                       >
-                        Preview
+                        <ExternalLink size={13} />
                       </Link>
                     )}
-                    <button className="btn btn-ghost btn-sm" onClick={() => openEdit(t)} id={`edit-tournament-${t.id}`}>
+                    <button className="btn btn-ghost btn-sm" onClick={() => openEdit(t)} id={`edit-tournament-${t.id}`} title="Edit tournament details">
                       <Pencil size={13} />
                     </button>
                     {t.status !== 'active' && (
-                      <button className="btn btn-danger btn-sm" onClick={() => setDeleteId(t.id)} id={`delete-tournament-${t.id}`}>
+                      <button className="btn btn-danger btn-sm" onClick={() => setDeleteId(t.id)} id={`delete-tournament-${t.id}`} title="Delete this tournament">
                         <Trash2 size={13} />
                       </button>
                     )}
@@ -721,6 +843,62 @@ export default function AdminTournamentsPage({
                   )}
                 </p>
               </div>
+
+              {modal === 'edit' && (
+                <div style={{ borderTop: '1px solid var(--border-2)', paddingTop: '1.25rem', marginTop: '0.5rem', marginBottom: '1rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                    <label className="form-label" style={{ margin: 0 }}>Fee Schedule</label>
+                    <div style={{ display: 'flex', gap: '0.25rem', background: 'var(--white-5)', padding: '0.2rem', borderRadius: 'var(--radius-sm)' }}>
+                      {(['tournament', 'age_group'] as const).map(mode => (
+                        <button
+                          key={mode}
+                          type="button"
+                          onClick={() => setFeeForm(f => ({ ...f, feeScheduleMode: mode }))}
+                          style={{
+                            padding: '0.25rem 0.6rem',
+                            fontSize: '0.7rem',
+                            fontFamily: 'var(--font-data)',
+                            fontWeight: 700,
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.06em',
+                            border: '1px solid transparent',
+                            borderRadius: 'var(--radius-sm)',
+                            cursor: 'pointer',
+                            background: feeForm.feeScheduleMode === mode ? 'var(--blueprint-blue)' : 'transparent',
+                            color: feeForm.feeScheduleMode === mode ? '#fff' : 'var(--data-gray)',
+                          }}
+                        >
+                          {mode === 'tournament' ? 'By Tournament' : 'By Division'}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  {feeForm.feeScheduleMode === 'tournament' ? (
+                    <div className="form-row form-row-2">
+                      <div className="form-group">
+                        <label className="form-label">Deposit Amount ($)</label>
+                        <input className="form-input" type="number" min="0" step="0.01" placeholder="e.g. 200" value={feeForm.depositAmount} onChange={e => setFeeForm(f => ({ ...f, depositAmount: e.target.value }))} />
+                      </div>
+                      <div className="form-group">
+                        <label className="form-label">Deposit Due Date</label>
+                        <input className="form-input" type="date" value={feeForm.depositDueDate} onChange={e => setFeeForm(f => ({ ...f, depositDueDate: e.target.value }))} />
+                      </div>
+                      <div className="form-group">
+                        <label className="form-label">Total Fee ($)</label>
+                        <input className="form-input" type="number" min="0" step="0.01" placeholder="e.g. 500" value={feeForm.totalFeeAmount} onChange={e => setFeeForm(f => ({ ...f, totalFeeAmount: e.target.value }))} />
+                      </div>
+                      <div className="form-group">
+                        <label className="form-label">Total Fee Due Date</label>
+                        <input className="form-input" type="date" value={feeForm.totalFeeDueDate} onChange={e => setFeeForm(f => ({ ...f, totalFeeDueDate: e.target.value }))} />
+                      </div>
+                    </div>
+                  ) : (
+                    <p style={{ fontSize: '0.72rem', color: 'var(--data-gray)', lineHeight: 1.5 }}>
+                      Fee amounts and due dates are set per division. Edit each age group to configure its fee schedule.
+                    </p>
+                  )}
+                </div>
+              )}
 
               {modal === 'add' && (
                 <>
@@ -914,9 +1092,20 @@ export default function AdminTournamentsPage({
         onClose={() => setFeedback(f => ({ ...f, isOpen: false, onConfirm: undefined }))}
       />
 
+      <TournamentSetupWizard
+        isOpen={setupWizardOpen}
+        orgContactEmail={currentOrg?.contactEmail}
+        onClose={() => setSetupWizardOpen(false)}
+        onCreated={async tournament => {
+          setSetupWizardOpen(false);
+          setCreatedTournament({ name: tournament.name, slug: tournament.slug });
+          await refresh();
+        }}
+      />
+
       {createdTournament && currentOrg && (
         <div className="modal-overlay" onClick={() => setCreatedTournament(null)}>
-          <div className="modal" style={{ maxWidth: 520 }} onClick={e => e.stopPropagation()}>
+          <div className="modal" style={{ maxWidth: 460 }} onClick={e => e.stopPropagation()}>
             <div className="modal-header">
               <div className="flex items-center gap-2">
                 <Check size={20} style={{ color: 'var(--success, #22c55e)' }} />
@@ -925,21 +1114,27 @@ export default function AdminTournamentsPage({
               <button className="btn btn-ghost btn-sm" onClick={() => setCreatedTournament(null)}><X size={16} /></button>
             </div>
             <div style={{ padding: '1.25rem 1.5rem' }}>
-              <p style={{ color: 'var(--white-70)', marginBottom: '1rem' }}>
-                {createdTournament.name} is saved as a draft. Finish setup, then activate it when you are ready to publish the public page and accept registrations.
+              <p style={{ color: 'var(--white-70)', marginBottom: '1.25rem' }}>
+                <strong>{createdTournament.name}</strong> is saved as a draft. Here's what to finish before going live:
               </p>
-              <div className={styles.nextStepsGrid}>
-                <Link href={`/${currentOrg.slug}/admin/tournaments/age-groups`} className={styles.nextStepLink}>Review divisions</Link>
-                <Link href={`/${currentOrg.slug}/admin/tournaments/diamonds`} className={styles.nextStepLink}>Add venues</Link>
-                <Link href={`/${currentOrg.slug}/admin/tournaments/contacts`} className={styles.nextStepLink}>Add contacts</Link>
-                <Link href={`/${currentOrg.slug}/admin/org/tournaments`} className={styles.nextStepLink}>Activate when ready</Link>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                {[
+                  'Review and adjust your divisions',
+                  'Add venue locations',
+                  'Add a public contact',
+                  'Activate when you\'re ready to publish and accept registrations',
+                ].map(item => (
+                  <div key={item} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem' }}>
+                    <Check size={14} style={{ color: 'var(--success, #22c55e)', flexShrink: 0, marginTop: '0.15rem' }} />
+                    <span style={{ fontSize: '0.9rem', color: 'var(--white-70)' }}>{item}</span>
+                  </div>
+                ))}
               </div>
             </div>
-            <div className="modal-footer">
-              <button className="btn btn-ghost" onClick={() => setCreatedTournament(null)}>Stay Here</button>
-              <Link href={`/${currentOrg.slug}/admin/tournaments/dashboard`} className="btn btn-primary">
-                Go to Dashboard <ArrowRight size={15} />
-              </Link>
+            <div className="modal-footer" style={{ justifyContent: 'flex-end' }}>
+              <button className="btn btn-primary" onClick={() => setCreatedTournament(null)}>
+                Got it
+              </button>
             </div>
           </div>
         </div>

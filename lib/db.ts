@@ -1,6 +1,6 @@
 import { supabase } from './supabase';
 import { supabaseAdmin } from './supabase-admin';
-import { PLAN_CONFIG } from './plan-config';
+import { getEffectiveTournamentLimit, PLAN_CONFIG } from './plan-config';
 import { createClient as createBrowserSupabaseClient } from './supabase-browser';
 import { Tournament, TournamentStatus, Diamond, Contact, AgeGroup, Pool, Team, Game, Announcement, PlayoffConfig, RuleSection, RuleItem, Resource, Organization, OrganizationMember, OrgPlan, OrgRole, TournamentArchive, OrgPublicSiteContent, AccountingLedger, AccountingEntry, LedgerSummary, AccountingEntryStatus, AccountingEntryType, LeagueSeason, LeagueDivision, LeagueTeam, LeagueRegistration, LeagueGame, LeagueStandingsRow, LeagueSeasonSummary, LeagueRegistrationStatus, LeagueSeasonStatus, LeaguePractice, LeaguePracticeStatus, RepTeam, RepProgramYear, RepProgramYearStatus, RepTeamCoach, RepTryoutRegistration, RepTryoutRegistrationStatus, RepRosterPlayer, RepRosterStatus, RepTeamEvent, RepEventType, RepDocumentTemplate, RepDocumentType, RepPlayerDocument, RepCostAllocation, RepAllocationSplit, RepAllocationInstallment, RepPlayerDuesSchedule, RepPlayerDuesInstallment, RepTeamExpense, OrgPayee } from './types';
 
@@ -9,6 +9,10 @@ import { Tournament, TournamentStatus, Diamond, Contact, AgeGroup, Pool, Team, G
 function authClient() {
   return typeof window !== 'undefined' ? createBrowserSupabaseClient() : supabase;
 }
+
+type ReadOptions = {
+  admin?: boolean;
+};
 
 // --- Tournaments ---
 export async function getTournaments(): Promise<Tournament[]> {
@@ -178,8 +182,9 @@ export async function setActiveTournament(id: string): Promise<void> {
 }
 
 // --- Diamonds ---
-export async function getDiamonds(tournamentId?: string): Promise<Diamond[]> {
-  let query = supabase.from('diamonds').select('*').order('name', { ascending: true });
+export async function getDiamonds(tournamentId?: string, options: ReadOptions = {}): Promise<Diamond[]> {
+  const client = options.admin ? supabaseAdmin : supabase;
+  let query = client.from('diamonds').select('*').order('name', { ascending: true });
   if (tournamentId) query = query.eq('tournament_id', tournamentId);
   const { data, error } = await query;
   if (error || !data) {
@@ -255,8 +260,9 @@ export async function deleteContact(id: string): Promise<void> {
 }
 
 // --- Age Groups ---
-export async function getAgeGroups(tournamentId?: string): Promise<AgeGroup[]> {
-  let query = supabase.from('age_groups').select('*, pools(*)').order('display_order', { ascending: true });
+export async function getAgeGroups(tournamentId?: string, options: ReadOptions = {}): Promise<AgeGroup[]> {
+  const client = options.admin ? supabaseAdmin : supabase;
+  let query = client.from('age_groups').select('*, pools(*)').order('display_order', { ascending: true });
   if (tournamentId) query = query.eq('tournament_id', tournamentId);
   const { data, error } = await query;
   if (error || !data) {
@@ -358,8 +364,9 @@ export async function deletePool(id: string): Promise<void> {
 }
 
 // --- Teams ---
-export async function getTeams(tournamentId?: string): Promise<Team[]> {
-  let query = supabase.from('teams').select('*').order('name', { ascending: true });
+export async function getTeams(tournamentId?: string, options: ReadOptions = {}): Promise<Team[]> {
+  const client = options.admin ? supabaseAdmin : supabase;
+  let query = client.from('teams').select('*').order('name', { ascending: true });
   if (tournamentId) query = query.eq('tournament_id', tournamentId);
   const { data, error } = await query;
   if (error || !data) {
@@ -424,8 +431,9 @@ export async function deleteTeam(id: string): Promise<void> {
 }
 
 // --- Games ---
-export async function getGames(tournamentId?: string): Promise<Game[]> {
-  let query = supabase.from('games').select('*').order('game_date', { ascending: true }).order('game_time', { ascending: true });
+export async function getGames(tournamentId?: string, options: ReadOptions = {}): Promise<Game[]> {
+  const client = options.admin ? supabaseAdmin : supabase;
+  let query = client.from('games').select('*').order('game_date', { ascending: true }).order('game_time', { ascending: true });
   if (tournamentId) query = query.eq('tournament_id', tournamentId);
   const { data, error } = await query;
   if (error || !data) {
@@ -637,8 +645,9 @@ export async function getStandings(ageGroupId: string, config?: PlayoffConfig) {
 }
 
 // --- Announcements ---
-export async function getAnnouncements(tournamentId?: string): Promise<Announcement[]> {
-  let query = supabase.from('announcements').select('*')
+export async function getAnnouncements(tournamentId?: string, options: ReadOptions = {}): Promise<Announcement[]> {
+  const client = options.admin ? supabaseAdmin : supabase;
+  let query = client.from('announcements').select('*')
     .order('pinned', { ascending: false })
     .order('published_at', { ascending: false });
   if (tournamentId) query = query.eq('tournament_id', tournamentId);
@@ -1297,7 +1306,7 @@ function mapOrg(r: any): Organization {
     stripeCustomerId:     r.stripe_customer_id ?? undefined,
     stripeSubscriptionId: r.stripe_subscription_id ?? undefined,
     subscriptionStatus:   r.subscription_status ?? 'active',
-    tournamentLimit:      r.tournament_limit ?? 1,
+    tournamentLimit:      getEffectiveTournamentLimit(r.plan_id, r.tournament_limit),
     isPublic:             r.is_public ?? true,
     createdAt:            r.created_at,
     themePreset:          r.theme_preset ?? undefined,
@@ -1335,6 +1344,14 @@ function mapTournament(r: any): Tournament {
     startDate:      r.start_date ?? undefined,
     endDate:        r.end_date ?? undefined,
     contactEmail:   r.contact_email ?? undefined,
+    logoUrl:                  r.logo_url ?? null,
+    heroBannerUrl:            r.hero_banner_url ?? null,
+    themePreset:              r.theme_preset ?? null,
+    themePrimary:             r.theme_primary ?? null,
+    themeAccent:              r.theme_accent ?? null,
+    themeFont:                r.theme_font ?? null,
+    themeCardStyle:           r.theme_card_style ?? null,
+    requireScoreFinalization: r.require_score_finalization ?? null,
   };
 }
 
@@ -2423,13 +2440,17 @@ function mapRepTeam(r: any): RepTeam {
   };
 }
 
-export async function getRepTeams(orgId: string, groupId?: string | null): Promise<RepTeam[]> {
+export async function getRepTeams(orgId: string, groupId?: string | null, scopeGroupIds?: string[]): Promise<RepTeam[]> {
   let query = supabaseAdmin
     .from('rep_teams')
     .select('*, rep_team_groups(name)')
     .eq('org_id', orgId)
     .order('name');
-  if (groupId !== undefined && groupId !== null) query = query.eq('group_id', groupId);
+  if (scopeGroupIds && scopeGroupIds.length > 0) {
+    query = query.in('group_id', scopeGroupIds);
+  } else if (groupId !== undefined && groupId !== null) {
+    query = query.eq('group_id', groupId);
+  }
   const { data, error } = await query;
   if (error) throw error;
   return (data ?? []).map(mapRepTeam);
@@ -4440,13 +4461,15 @@ export async function markAllocationReminderSent(installmentIds: string[]): Prom
 
 // ── 6N: Past program year helpers ─────────────────────────────────────────────
 
-export async function getRepPastProgramYears(orgId: string): Promise<RepPastProgramYear[]> {
-  const { data: years, error: yErr } = await supabaseAdmin
+export async function getRepPastProgramYears(orgId: string, scopeTeamIds?: string[]): Promise<RepPastProgramYear[]> {
+  let yearsQuery = supabaseAdmin
     .from('rep_program_years')
     .select('*')
     .eq('org_id', orgId)
     .in('status', ['completed', 'archived'])
     .order('year', { ascending: false });
+  if (scopeTeamIds && scopeTeamIds.length > 0) yearsQuery = yearsQuery.in('team_id', scopeTeamIds);
+  const { data: years, error: yErr } = await yearsQuery;
   if (yErr) throw yErr;
   if (!years?.length) return [];
 

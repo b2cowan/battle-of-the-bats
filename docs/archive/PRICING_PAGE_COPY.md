@@ -49,7 +49,7 @@ The new pricing model bundles all modules into four named plans. There are no à
 ### Trust Signals (icon row beneath hero, 3–4 items)
 - Canadian organization, Canadian pricing (CAD)
 - No contracts — cancel anytime
-- 14-day free trial on paid plans
+- Plan-specific paid trials: 14 days for Tournament Plus, 30 days for League, 90 days for Club early adopters
 - Plans can be changed at any time
 
 ---
@@ -131,7 +131,7 @@ Layout: four equal-width cards in a horizontal row. Club card is visually elevat
 - Bracket generator
 - Email announcements and communications
 - Tournament archives and history
-- Unlimited simultaneous tournaments
+- 3 non-archived tournament slots
 - 5 staff / admin seats
 - Unlimited officials seats (officials never count against your limit)
 
@@ -222,7 +222,7 @@ Full breakdown, grouped by category. Shown below the pricing cards with a "Compa
 
 | Feature | Tournament | Tournament Plus | League | Club |
 |---------|-----------|-----------------|--------|------|
-| Active tournaments | 1 | Unlimited | Unlimited | Unlimited |
+| Non-archived tournament slots | 1 | 3 | Unlimited | Unlimited |
 | Manual scheduling | ✓ | ✓ | ✓ | ✓ |
 | Automated schedule generation | — | ✓ | ✓ | ✓ |
 | Bracket generator | — | ✓ | ✓ | ✓ |
@@ -301,7 +301,8 @@ Full breakdown, grouped by category. Shown below the pricing cards with a "Compa
 
 | Feature | Tournament | Tournament Plus | League | Club |
 |---------|-----------|-----------------|--------|------|
-| 14-day free trial | — | ✓ | ✓ | ✓ |
+| Trial length | — | 14 days | 30 days | 90 days |
+| Payment details at signup | — | ✓ | ✓ | ✓ |
 
 ---
 
@@ -381,7 +382,7 @@ Short text fragments for use in banners, tooltips, and inline upgrade prompts th
 ### In-app upgrade banners (by feature gate)
 
 **When a user hits the 1-tournament limit (Tournament plan):**
-> Running more than one event? Tournament Plus gives you unlimited simultaneous tournaments.
+> Running more than one event? Tournament Plus gives you up to 3 non-archived tournament slots.
 
 **When a user tries to add a 4th staff member (Tournament plan):**
 > You've reached the seat limit on your current plan. Tournament Plus includes 5 seats — and officials are always free.
@@ -442,7 +443,7 @@ Short text fragments for use in banners, tooltips, and inline upgrade prompts th
 
 **Q: What happens when my free trial ends?**
 
-> At the end of your 14-day trial, your plan continues at the regular monthly rate. We'll send you a reminder before your trial ends. If you decide not to continue, you can cancel before the trial period closes and you won't be charged. Your data stays available for 30 days after cancellation in case you change your mind.
+> At the end of your trial, your plan continues at the regular rate for the plan and billing period you selected. Tournament Plus trials run 14 days, League trials run 30 days, and Club early-adopter trials run 90 days. We'll send reminders before your trial ends. If you decide not to continue, you can cancel before the trial period closes and you won't be charged. Your data stays available for 90 days after cancellation in case you change your mind.
 
 **Q: Can I change plans later?**
 
@@ -450,7 +451,7 @@ Short text fragments for use in banners, tooltips, and inline upgrade prompts th
 
 **Q: Do I need a credit card to get started?**
 
-> No. The Tournament plan is free, no card required. Paid plan free trials also don't require a credit card upfront — you only enter billing information when you're ready to continue after the trial.
+> No card is required for the free Tournament plan. Paid plan trials use secure Stripe Checkout and collect payment details at signup, with the first payment charged automatically only after the trial ends.
 
 **Q: What if we get stuck?**
 
@@ -571,7 +572,7 @@ These are intended as guidance for sourcing real testimonials or writing represe
 > Start running your organization on FieldLogicHQ.
 
 **Subtext:**
-> Free plan available. No credit card required for trials. Cancel anytime.
+> Free plan available. Paid trials collect payment details up front and charge only after the trial. Cancel anytime.
 
 **Button 1 (primary):**
 > Get Started Free
@@ -593,7 +594,7 @@ These are intended as guidance for sourcing real testimonials or writing represe
 | Annual savings | — | $78 (~2 months) | $178 (~2 months) | $358 (~2 months) |
 | Staff seats | 3 | 5 | 10 | Unlimited |
 | Officials seats | Counted | Free | Free | Free |
-| Active tournaments | 1 | Unlimited | Unlimited | Unlimited |
+| Non-archived tournament slots | 1 | 3 | Unlimited | Unlimited |
 | Automated scheduling | — | ✓ | ✓ | ✓ |
 | Bracket generator | — | ✓ | ✓ | ✓ |
 | Communications | — | ✓ | ✓ | ✓ |
@@ -603,4 +604,4 @@ These are intended as guidance for sourcing real testimonials or writing represe
 | Accounting module | — | — | — | ✓ |
 | Rep Teams module | — | — | — | ✓ |
 | Unlimited staff seats | — | — | — | ✓ |
-| Free trial | — | 14 days | 14 days | 14 days |
+| Free trial | — | 14 days | 30 days | 90 days |

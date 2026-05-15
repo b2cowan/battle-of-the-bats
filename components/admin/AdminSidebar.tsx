@@ -15,17 +15,47 @@ import { useTournament } from '@/lib/tournament-context';
 import { hasCapability, type Capability } from '@/lib/roles';
 import styles from './AdminSidebar.module.css';
 
-const TOURNAMENT_NAV = [
-  { key: 'dashboard',     icon: LayoutDashboard, label: 'Dashboard'         },
-  { key: 'announcements', icon: Megaphone,       label: 'Announcements'     },
-  { key: 'contacts',      icon: BookUser,        label: 'Contacts'          },
-  { key: 'age-groups',    icon: Tag,             label: 'Age Groups'        },
-  { key: 'teams',         icon: Users,           label: 'Registrations'     },
-  { key: 'schedule',      icon: Calendar,        label: 'Schedule'          },
-  { key: 'results',       icon: Trophy,          label: 'Results'           },
-  { key: 'rules',         icon: BookOpen,        label: 'Rules & Resources' },
-  { key: 'communication', icon: Mail,            label: 'Communication'     },
-  { key: 'archives',      icon: Archive,         label: 'Past Tournaments'  },
+const TOUR_TOP = [
+  { key: 'dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+];
+
+type TourNavItem = { key: string; icon: React.ElementType; label: string };
+type TourGroup   = { key: string; label: string; defaultOpenFor: string[]; items: TourNavItem[] };
+
+const TOUR_GROUPS: TourGroup[] = [
+  {
+    key: 'setup',
+    label: 'Setup',
+    defaultOpenFor: ['draft'],
+    items: [
+      { key: 'venues',        icon: MapPin,    label: 'Venues'            },
+      { key: 'contacts',      icon: BookUser,  label: 'Contacts'          },
+      { key: 'age-groups',    icon: Tag,       label: 'Age Groups'        },
+      { key: 'announcements', icon: Megaphone, label: 'Announcements'     },
+      { key: 'rules',         icon: BookOpen,  label: 'Rules & Resources' },
+    ],
+  },
+  {
+    key: 'operations',
+    label: 'Operations',
+    defaultOpenFor: ['active', 'completed'],
+    items: [
+      { key: 'teams',         icon: Users,    label: 'Registrations' },
+      { key: 'schedule',      icon: Calendar, label: 'Schedule'      },
+      { key: 'results',       icon: Trophy,   label: 'Results'       },
+      { key: 'communication', icon: Mail,     label: 'Communication' },
+    ],
+  },
+  {
+    key: 'admin',
+    label: 'Admin',
+    defaultOpenFor: [],
+    items: [
+      { key: 'manage',   icon: RefreshCw, label: 'Manage Tournaments' },
+      { key: 'settings', icon: Settings,  label: 'Settings & Access'  },
+      { key: 'archives', icon: Archive,   label: 'Past Tournaments'   },
+    ],
+  },
 ];
 
 type HouseLeagueSeasonOption = {
@@ -105,6 +135,39 @@ export default function AdminSidebar() {
 
   const hasOnlyTournamentWorkspace = !!currentOrg && canUseModule('module_tournaments') && !canSeePublicSite && !canSeeAccounting && !canSeeHouseLeague && !canSeeRepTeams;
 
+  // Collapsible nav groups — persisted to localStorage
+  const [openGroups, setOpenGroups] = useState<Set<string>>(() => new Set<string>());
+  const [groupsReady, setGroupsReady] = useState(false);
+
+  useEffect(() => {
+    if (groupsReady) return;
+    try {
+      const stored = localStorage.getItem('fl_nav_groups');
+      if (stored) {
+        setOpenGroups(new Set(JSON.parse(stored) as string[]));
+        setGroupsReady(true);
+        return;
+      }
+    } catch {}
+    const status = currentTournament?.status ?? 'draft';
+    setOpenGroups(new Set(TOUR_GROUPS.filter(g => g.defaultOpenFor.includes(status)).map(g => g.key)));
+    setGroupsReady(true);
+  }, [groupsReady, currentTournament?.status]);
+
+  function toggleGroup(key: string) {
+    setOpenGroups(prev => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key); else next.add(key);
+      try { localStorage.setItem('fl_nav_groups', JSON.stringify([...next])); } catch {}
+      return next;
+    });
+  }
+
+  function isGroupOpen(groupKey: string, items: TourNavItem[]) {
+    if (openGroups.has(groupKey)) return true;
+    return items.some(item => pathname.startsWith(`${base}/tournaments/${item.key}`));
+  }
+
   const helpHref = isTournaments  ? `${base}/help/tournaments`
                  : isHouseLeague  ? `${base}/help/house-league`
                  : isRepTeams     ? `${base}/help/rep-teams`
@@ -154,9 +217,12 @@ export default function AdminSidebar() {
     <aside className={styles.sidebar}>
       {/* Logo */}
       <div className={styles.logo}>
-        <div className={styles.logoIcon}>⚾</div>
         <div>
-          <div className={styles.logoMain}>FieldLogicHQ</div>
+          <div className={styles.logoMain}>
+            <span className={styles.logoField}>Field</span>
+            <span className={styles.logoLogic}>Logic</span>
+            <span className={styles.logoHq}>HQ</span>
+          </div>
           <div className={styles.logoSub}>{currentOrg?.name ?? 'Admin'}</div>
         </div>
       </div>
@@ -168,11 +234,6 @@ export default function AdminSidebar() {
           <div className={styles.navSection}>
             <div className={styles.sectionHeader}>Organization Admin</div>
             <nav className={styles.nav}>
-              {navLink(
-                'org/tournaments', RefreshCw, 'Tournament Records',
-                `${base}/org/tournaments`,
-                pathname.startsWith(`${base}/org/tournaments`),
-              )}
               {canSeeMembersNav && navLink(
                 'org/members', Users2, 'Members',
                 `${base}/org/members`,
@@ -363,12 +424,37 @@ export default function AdminSidebar() {
             </div>
           )}
           <div className={styles.navSection}>
-            <div className={styles.sectionHeader}>Tournament</div>
+            {!hasOnlyTournamentWorkspace && <div className={styles.sectionHeader}>Tournament</div>}
             <nav className={styles.nav}>
-              {TOURNAMENT_NAV.map(item => {
-                const href   = `${base}/tournaments/${item.key}`;
-                const active = pathname.startsWith(href);
-                return navLink(item.key, item.icon, item.label, href, active);
+              {TOUR_TOP.map(item => {
+                const href = `${base}/tournaments/${item.key}`;
+                return navLink(item.key, item.icon, item.label, href, pathname.startsWith(href));
+              })}
+              {TOUR_GROUPS.map(group => {
+                const open      = isGroupOpen(group.key, group.items);
+                const hasActive = group.items.some(item => pathname.startsWith(`${base}/tournaments/${item.key}`));
+                return (
+                  <div key={group.key} className={styles.navGroup}>
+                    <button
+                      className={`${styles.navGroupHeader} ${hasActive ? styles.navGroupHeaderActive : ''}`}
+                      onClick={() => toggleGroup(group.key)}
+                    >
+                      <span>{group.label}</span>
+                      <ChevronRight
+                        size={11}
+                        className={`${styles.navGroupChevron} ${open ? styles.navGroupChevronOpen : ''}`}
+                      />
+                    </button>
+                    {open && (
+                      <div className={styles.navGroupItems}>
+                        {group.items.map(item => {
+                          const href = `${base}/tournaments/${item.key}`;
+                          return navLink(item.key, item.icon, item.label, href, pathname.startsWith(href));
+                        })}
+                      </div>
+                    )}
+                  </div>
+                );
               })}
               {canSeeAccounting && navLink(
                 'tournament-accounting', DollarSign, 'Accounting',
@@ -401,7 +487,13 @@ export default function AdminSidebar() {
             <Home size={15} /> Back to Site
           </Link>
         )}
-        <Link href={helpHref} className={styles.footerLink} id="admin-help">
+        <Link
+          href={helpHref}
+          className={styles.footerLink}
+          id="admin-help"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
           <HelpCircle size={15} /> Help
         </Link>
         <button onClick={handleLogout} className={styles.logoutBtn} id="admin-logout">

@@ -6,6 +6,15 @@ This file tracks the ongoing tasks for the FieldLogicHQ platform (multi-tenant s
 
 ## 🚀 Active Tasks (Priority Order)
 
+- [ ] **Tournament help documentation UX review** - Upgrade tournament help with grouped contents, search, quick answers, and FAQs (see [TOURNAMENT_HELP_DOCS_REVIEW_PLAN.md](TOURNAMENT_HELP_DOCS_REVIEW_PLAN.md))
+
+- [ ] **Free Tournament organizer UX cleanup** - Resolve signup/onboarding, publish, operations, and free-tier guardrail findings (see [TOURNAMENT_FREE_TIER_UX_IMPLEMENTATION_PLAN.md](TOURNAMENT_FREE_TIER_UX_IMPLEMENTATION_PLAN.md))
+  - [x] Reusable Manage Tournaments setup wizard with existing-venue reuse
+  - [x] Tournament Settings & Access section
+  - [x] Phase 1 trust fixes: mobile activation API path, secured message sending, active contact mapping
+  - [x] Phase 2 signup and onboarding clarity copy
+  - [x] Phase 3 item 8: draft-to-publish dashboard checklist
+
 ### 0. Tournament Signup Experience
 *Detailed tasks in [TOURNAMENT_SIGNUP_EXPERIENCE_FIXES.md](TOURNAMENT_SIGNUP_EXPERIENCE_FIXES.md)*
 
@@ -40,30 +49,21 @@ This file tracks the ongoing tasks for the FieldLogicHQ platform (multi-tenant s
   - [x] Walkthrough high: production signup requires email verification before plan selection/onboarding
   - [x] Walkthrough blocker: Tournament-only workspaces bypass the org hub before paint and dashboard stats use an authorized admin API
   - [x] Walkthrough polish: subscription defaults to monthly pricing and unfinished tournament setup resumes on login
+  - [x] Walkthrough high: admin tournament preview uses authorized reads and shows preview navigation
+  - [x] Walkthrough polish: division setup uses explicit optional age limits instead of name guessing
+  - [x] Walkthrough follow-up: add tournament-level public site customization separate from org site customization
   - [x] Non-browser hardening pass completed
   - [ ] Browser verification of signup-to-registration flow
 
 ### 1. Accounting Enhancements — Org & Rep Team Budget Planning
-*Detailed tasks in [ACCOUNTING_ENHANCEMENTS_PLAN.md](ACCOUNTING_ENHANCEMENTS_PLAN.md)*
-
-- [x] **Phase A** — Shared category & item library (predefined + custom, two-level hierarchy)
-- [x] **Phase B** — Rep team budget planner (line items, period distribution, installment generator)
-- [x] **Phase C** — Rep team budget vs. actual screen (period columns, delta chart, headroom)
-- [x] **Phase D** — Player-linked transactions & dues credits (equipment contributions, credit apply logic, rolling balance, season refund calculator)
-- [x] **Phase E** — Fundraiser module (per-player tracking, rebate %, auto dues credit)
-- [x] **Phase F** — Org budget planner (season lines, period distribution, "Allocate to Teams" from budget line) — complete
-- [x] **Phase G** — Org budget vs. actual screen (allocation recovery column, team health panel) — complete
-- [x] **Phase H** — Bidirectional team payment requests (coach submits, admin approves/denies) — migration 032 applied dev+prod, complete
-- [x] **Phase I** — 30/60/90 dashboards (coach + admin, three-lane upcoming payables) — complete
-- [x] **Phase J** — Transaction detail enhancements (payment method, payee/payee directory, notes) — migration 033 applied dev+prod, complete
-- [x] **Phase K** — Automated reminder system enhancements (30-day and 7-day triggers for dues + allocations) — migration 034 applied dev+prod, complete
+*(Archived — all phases complete. See [docs/archive/ACCOUNTING_ENHANCEMENTS_PLAN.md](docs/archive/ACCOUNTING_ENHANCEMENTS_PLAN.md))*
 
 ### 2. Rep Teams — Groups & Per-Team Billing
 *Detailed tasks in [REP_TEAMS_ENHANCEMENTS_PLAN.md](REP_TEAMS_ENHANCEMENTS_PLAN.md)*
 
-- [ ] **Phase 1** — Rep team groups: `rep_team_groups` table, group management UI, team assignment, group filter on lists and accounting views (migration 035)
-- [ ] **Phase 2** — Staff group scoping: `rep_group_id` on members, auth context extension, hard 403 gating on all rep team admin routes (migration 036)
-- [ ] **Phase 3** — Per-team billing: Stripe quantity sync, billing preview modal on team creation, billing page breakdown, program year status → Stripe hook
+- [x] **Phase 1** — Rep team groups: `rep_team_groups` table, group management UI, team assignment, group filter on lists and accounting views — migration 035 applied dev+prod, complete
+- [x] **Phase 2** — Staff group scoping: `org_member_rep_group_scopes` junction table, multi-group selection per member, `repGroupIds` on auth context, hard 403 gating on all rep team admin routes, group access UI in Manage Member modal (migration 036, apply to dev+prod)
+- [ ] **Phase 3** — Per-team billing: moved to [STRIPE_INTEGRATION_PLAN.md](STRIPE_INTEGRATION_PLAN.md) Phase E
 
 ### 3. Chart Library Investigation
 - [ ] **Investigate chart libraries** — Evaluate recharts, chart.js, or @nivo for use in budget vs. actual and dashboard screens; assess bundle size, SSR compatibility, and dark-theme support before adding a dependency
@@ -71,10 +71,25 @@ This file tracks the ongoing tasks for the FieldLogicHQ platform (multi-tenant s
 ### 3. Light / Dark Theme Toggle
 - [ ] **Per-user light/dark theme preference** — Allow each user to toggle light/dark theme from their own settings screen (org admins in org settings, coaches in coach portal settings, etc.). Theme preference stored per-user (not per-org). Also expose a light/dark toggle on the public org and tournament websites so visitors can choose their preferred mode.
 
-### 4. Multi-Tenancy — Billing & Subscriptions
-*Detailed tasks in [MULTI_TENANT_ARCHITECTURE.md](MULTI_TENANT_ARCHITECTURE.md)*
+### 4. Stripe Integration — End-to-End Billing & Subscriptions
+*Detailed tasks in [STRIPE_INTEGRATION_PLAN.md](STRIPE_INTEGRATION_PLAN.md)*
 
-- [ ] **Phase 5** — Billing & Subscriptions: Stripe account setup and testing remaining
+- [ ] **Billing downgrade and data retention flow** - Add FieldLogicHQ-guided downgrade/cancel review with over-limit data retention choices (see [BILLING_DOWNGRADE_RETENTION_PLAN.md](BILLING_DOWNGRADE_RETENTION_PLAN.md))
+  - [x] First implementation slice: retention schema, owner review APIs/UI, cancellation suspension, and platform-admin retention queue
+  - [x] Migration 038 applied in dev and production
+  - [x] Retention expiry warnings and pending-purge processing
+  - [x] Migration 039 applied in dev and production
+  - [x] Dev/mock upgrades restore retained downgrade tournaments when plan limits allow
+  - [ ] Hard purge job after pending-purge review policy is finalized
+- [ ] **Phase A** — Stripe dashboard setup: products, prices, webhooks, Customer Portal (test environment)
+- [ ] **Phase B** — App infrastructure: Stripe SDK, lib/stripe.ts, price map, DB migration 037
+- [ ] **Phase C** — Webhook handler: subscription lifecycle → org plan tier sync
+- [ ] **Phase D** — Checkout + Customer Portal APIs + billing settings page
+  - [ ] Stripe subscription scheduling/reconciliation for confirmed downgrade and cancellation intents
+  - [ ] Trial lifecycle reminders/checkpoints for League 30-day and Club 90-day onboarding windows
+- [ ] **Phase E** — Per-team billing: quantity sync, billing preview modal, program year hook
+- [ ] **Phase F** — Upsell gate component + plan selection → Checkout flow
+- [ ] **Phase G** — Production cutover: prod Stripe setup, Amplify env vars, smoke test
 
 ### 5. Email Strategy
 
@@ -98,19 +113,19 @@ This file tracks the ongoing tasks for the FieldLogicHQ platform (multi-tenant s
 ## ✅ Completed Projects
 
 ### In-App Documentation & Help System
-*(see [HELP_SYSTEM_PLAN.md](HELP_SYSTEM_PLAN.md))*
+*(see [HELP_SYSTEM_PLAN.md](docs/archive/HELP_SYSTEM_PLAN.md))*
 - [x] **Phases A–I complete** — foundation + Tournaments + House League + Rep Teams + Coaches Portal + Accounting + Org Admin & Onboarding + Platform Admin contextual cues (H) + Help Hub & context-aware navigation (I)
 
 ### Pricing
-- [x] **Phase 1** — Update plan-config (4 tiers), rewrite PricingSection component, build public `/pricing` page. Full plan in [PRICING_IMPLEMENTATION_PLAN.md](PRICING_IMPLEMENTATION_PLAN.md). Content spec in [PRICING_PAGE_COPY.md](PRICING_PAGE_COPY.md).
+- [x] **Phase 1** — Update plan-config (4 tiers), rewrite PricingSection component, build public `/pricing` page. Full plan in [PRICING_IMPLEMENTATION_PLAN.md](docs/archive/PRICING_IMPLEMENTATION_PLAN.md). Content spec in [PRICING_PAGE_COPY.md](docs/archive/PRICING_PAGE_COPY.md).
 - [x] **Phase 2 / Functionality Audit** — Billing page rewritten (monthly/annual toggle, modules section, outcome-focused upgrade cards); onboarding checklist updated with conditional module steps; all stale plan name references removed.
 
 ### Tournament Admin URL Restructure
-*(see [TOURNAMENT_URL_RESTRUCTURE_PLAN.md](TOURNAMENT_URL_RESTRUCTURE_PLAN.md))*
+*(see [TOURNAMENT_URL_RESTRUCTURE_PLAN.md](docs/archive/TOURNAMENT_URL_RESTRUCTURE_PLAN.md))*
 - [x] Moved all tournament operational pages from `admin/{page}` to `admin/tournaments/{page}` — matches module URL pattern used by house-league, rep-teams, and accounting
 
 ### Role-Based UX Improvement Review — Phases 1–5
-*(see [UX_REVIEW_PLAN.md](UX_REVIEW_PLAN.md))*
+*(see [UX_REVIEW_PLAN.md](docs/archive/UX_REVIEW_PLAN.md))*
 
 **Phase 1 — Critical bugs & multi-tenancy**
 - [x] **1A** — Replace default `/{orgSlug}` page: FieldLogicHQ-branded placeholder (no public site), tournament selector for 2+ active tournaments
@@ -237,7 +252,7 @@ This file tracks the ongoing tasks for the FieldLogicHQ platform (multi-tenant s
 - [x] DB schema: `status` + `slug` columns, partial unique index
 - [x] TypeScript: Tournament type, `mapTournament`, `getTournamentBySlug`
 - [x] Admin UI: status transitions, slug field, active-limit enforcement
-- [x] Billing: usage meter counts active-only, plan-config `tournamentLimit`
+- [x] Billing: usage meter counts non-archived tournament slots, plan-config `tournamentLimit`
 - [x] URL restructuring: `/[orgSlug]/[tournamentSlug]/` route tree, redirects, OrgNavContext, Navbar updates
 
 ### Multi-Tenancy — Phases 3, 4, 6
@@ -260,6 +275,7 @@ This file tracks the ongoing tasks for the FieldLogicHQ platform (multi-tenant s
 - [x] Admin help gaps — Billing status alerts, slug-change warning, Randomize copy, Results legend
 - [x] Walkthrough polish — subscription upgrade cards match onboarding plan chooser styling
 - [x] Walkthrough polish — remove ad hoc module upgrade section from Subscription
+- [x] Subscription polish — upgrade comparison appears before muted downgrade/cancel controls
 - [x] Walkthrough polish — remove tournament onboarding get-started flash after wizard save
 - [x] Walkthrough polish — replace tournament admin Back to Site with admin-only Preview Site
 - [x] Walkthrough bugfix — admin tournament preview resolves draft tournaments without 404

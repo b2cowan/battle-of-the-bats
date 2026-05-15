@@ -42,7 +42,7 @@ export async function POST(req: Request) {
   const window: 30 | 7 = body.window === 7 ? 7 : 30;
   const daysAhead = window === 30 ? 32 : 9;
 
-  const teams = await getRepTeams(ctx!.org.id);
+  const teams = await getRepTeams(ctx!.org.id, undefined, ctx!.repGroupIds ?? undefined);
 
   let totalChecked = 0;
   let totalEmailed = 0;

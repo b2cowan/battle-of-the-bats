@@ -1,6 +1,5 @@
 import { getAuthContext, unauthorized } from '@/lib/api-auth';
-
-const DEV_MODE = !process.env.STRIPE_SECRET_KEY;
+import { isBillingMockEnabled, isStripeConfigured } from '@/lib/billing-mock';
 
 export async function POST() {
   const auth = await getAuthContext();
@@ -9,7 +8,7 @@ export async function POST() {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? '';
 
   // ── Dev mock: redirect to local mock portal ───────────────────────────────
-  if (DEV_MODE) {
+  if (isBillingMockEnabled()) {
     return new Response(
       JSON.stringify({ url: `${appUrl}/${auth.org.slug}/admin/org/billing/mock-portal` }),
       { status: 200, headers: { 'Content-Type': 'application/json' } }
@@ -17,6 +16,13 @@ export async function POST() {
   }
 
   // ── Production: real Stripe billing portal ────────────────────────────────
+  if (!isStripeConfigured()) {
+    return new Response(JSON.stringify({ error: 'Billing portal is not configured.' }), {
+      status: 503,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+
   if (!auth.org.stripeCustomerId) {
     return new Response(JSON.stringify({ error: 'No billing account found' }), {
       status: 400,

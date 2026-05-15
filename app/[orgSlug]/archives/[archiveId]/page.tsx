@@ -1,8 +1,8 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { getArchiveById } from '@/lib/db';
+import { getArchiveById, getOrganizationBySlug } from '@/lib/db';
 import { getAuthContextWithScope } from '@/lib/api-auth';
-import type { Game, Team, AgeGroup } from '@/lib/types';
+import type { Game, Team } from '@/lib/types';
 
 // Compute standings from a frozen snapshot — no live DB queries
 function computeStandings(
@@ -66,8 +66,12 @@ export default async function ArchiveDetailPage({
   params: Promise<{ orgSlug: string; archiveId: string }>;
 }) {
   const { orgSlug, archiveId } = await params;
-  const archive = await getArchiveById(archiveId);
+  const [archive, org] = await Promise.all([
+    getArchiveById(archiveId),
+    getOrganizationBySlug(orgSlug),
+  ]);
   if (!archive) notFound();
+  if (!org || org.subscriptionStatus === 'canceled') notFound();
 
   const ctx = await getAuthContextWithScope().catch(() => null);
   const isAdmin = ctx?.org?.id === archive.orgId;

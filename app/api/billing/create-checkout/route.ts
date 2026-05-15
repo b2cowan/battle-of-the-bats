@@ -1,9 +1,9 @@
 import { getAuthContext, unauthorized } from '@/lib/api-auth';
+import { restoreRetainedDowngradeTournaments } from '@/lib/billing-retention';
+import { isBillingMockEnabled, isStripeConfigured } from '@/lib/billing-mock';
 import { PLAN_CONFIG } from '@/lib/plan-config';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import type { OrgPlan } from '@/lib/types';
-
-const DEV_MODE = !process.env.STRIPE_SECRET_KEY;
 
 function appendSuccess(url: string) {
   return `${url}${url.includes('?') ? '&' : '?'}success=1`;
@@ -58,10 +58,11 @@ export async function POST(req: Request) {
     ? returnTo
     : fallbackReturnTo;
   const isOnboardingPlanSelection = safeReturnTo.includes('/admin/onboarding');
+  const shouldApplyDirectly = isBillingMockEnabled() || (!isStripeConfigured() && process.env.NODE_ENV !== 'production');
 
   // ── Dev mock: no Stripe, write directly to DB ──────────────────────────────
-  if (DEV_MODE) {
-    await supabaseAdmin
+  if (shouldApplyDirectly) {
+    const { error: orgError } = await supabaseAdmin
       .from('organizations')
       .update({
         plan_id: planKey,
@@ -70,15 +71,36 @@ export async function POST(req: Request) {
         stripe_subscription_id: `mock_sub_${planKey}_${Date.now()}`,
       })
       .eq('id', auth.org.id);
+    if (orgError) {
+      return new Response(JSON.stringify({ error: orgError.message }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
+    const restoreResult = await restoreRetainedDowngradeTournaments(auth.org.id, plan.tournamentLimit);
     await resetStartupTasksForEditableOnboarding(auth.org.id, isOnboardingPlanSelection);
 
     return new Response(
-      JSON.stringify({ url: appendSuccess(`${appUrl}${safeReturnTo}`), applied: true }),
+      JSON.stringify({
+        url: appendSuccess(`${appUrl}${safeReturnTo}`),
+        applied: true,
+        planKey,
+        restoredCount: restoreResult.restoredCount,
+        remainingRetainedCount: restoreResult.remainingRetainedCount,
+      }),
       { status: 200, headers: { 'Content-Type': 'application/json' } }
     );
   }
 
   // ── Production: real Stripe checkout ──────────────────────────────────────
+  if (!isStripeConfigured()) {
+    return new Response(JSON.stringify({ error: 'Stripe checkout is not configured.' }), {
+      status: 503,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+
   if (!plan.priceId) {
     return new Response(JSON.stringify({ error: 'No price configured for this plan' }), {
       status: 400,
@@ -107,6 +129,11 @@ export async function POST(req: Request) {
     mode: 'subscription',
     customer: customerId,
     line_items: [{ price: plan.priceId, quantity: 1 }],
+    subscription_data: {
+      trial_period_days: plan.trialDays,
+      metadata: { orgId: auth.org.id, planKey },
+    },
+    metadata: { orgId: auth.org.id, planKey },
     success_url: appendSuccess(`${appUrl}${safeReturnTo}`),
     cancel_url: `${appUrl}${safeReturnTo}`,
   });

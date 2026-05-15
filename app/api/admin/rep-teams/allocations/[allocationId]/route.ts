@@ -3,6 +3,7 @@ import { getAuthContextWithRole, unauthorized, forbidden } from '@/lib/api-auth'
 import { hasCapability } from '@/lib/roles';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { getRepCostAllocationDetail, updateRepCostAllocationDescription } from '@/lib/db';
+import { supabaseAdmin } from '@/lib/supabase-admin';
 
 function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
   if (!ctx) return unauthorized();
@@ -20,8 +21,20 @@ export async function GET(
   if (err) return err;
 
   const { allocationId } = await params;
-  const detail = await getRepCostAllocationDetail(allocationId, ctx!.org.id);
+  let detail = await getRepCostAllocationDetail(allocationId, ctx!.org.id);
   if (!detail) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+
+  if (ctx!.repGroupIds) {
+    const { data: scopedTeams } = await supabaseAdmin
+      .from('rep_teams')
+      .select('id')
+      .eq('org_id', ctx!.org.id)
+      .in('group_id', ctx!.repGroupIds);
+    const scopedSet = new Set((scopedTeams ?? []).map((t: any) => t.id as string));
+    const visibleSplits = detail.splits.filter(s => scopedSet.has(s.teamId));
+    if (visibleSplits.length === 0) return forbidden();
+    detail = { ...detail, splits: visibleSplits };
+  }
 
   return NextResponse.json(detail);
 }

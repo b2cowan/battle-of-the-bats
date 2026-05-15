@@ -1,0 +1,494 @@
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  background: rgba(0, 0, 0, 0.72);
+  backdrop-filter: blur(8px);
+}
+
+.workflowModal {
+  width: min(880px, 100%);
+  max-height: min(780px, calc(100vh - 3rem));
+  overflow-y: auto;
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.25);
+  border-radius: 8px;
+  background: #080b12;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.5);
+  padding: 1.25rem;
+}
+
+.wizardChrome {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 0.85rem;
+  margin-bottom: 1rem;
+  color: var(--logic-lime);
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.wizardProgressBar {
+  height: 5px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.wizardProgressBar span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--logic-lime);
+  transition: width 0.25s ease;
+}
+
+.modalHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.modalTitle {
+  margin: 0;
+  color: var(--white-90, #f0f0f0);
+  font-family: var(--font-display, sans-serif);
+  font-size: 1.2rem;
+  font-weight: 900;
+}
+
+.modalSub {
+  margin: 0.35rem 0 0;
+  color: var(--white-40, rgba(255,255,255,0.4));
+  font-size: 0.86rem;
+  line-height: 1.5;
+}
+
+.modalClose,
+.iconOnlyButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border, rgba(255,255,255,0.08));
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--white-70, rgba(255,255,255,0.7));
+  cursor: pointer;
+}
+
+.modalClose {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+}
+
+.iconOnlyButton {
+  width: 30px;
+  height: 30px;
+  background: transparent;
+}
+
+.modalClose:hover,
+.iconOnlyButton:hover {
+  border-color: rgba(var(--blueprint-blue-rgb), 0.45);
+  color: var(--white-90, #f0f0f0);
+}
+
+.workflowSlide {
+  animation: slideIn 0.24s ease both;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(28px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.workflowModalBody,
+.inlineList {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.workflowModalFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border, rgba(255,255,255,0.08));
+}
+
+.workflowFooterActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+
+.modalGridTwo {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem;
+}
+
+.fieldLabel,
+.poolMiniField,
+.poolNameField {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  color: var(--white-60, rgba(255,255,255,0.6));
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.setupBlock,
+.venueCard,
+.reviewPanel {
+  padding: 1rem;
+  border: 1px solid var(--border, rgba(255,255,255,0.08));
+  border-radius: 8px;
+  background: rgba(255,255,255,0.025);
+}
+
+.setupBlockHeader,
+.venueCardHeader {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.setupBlockHeader span,
+.venueCardHeader strong {
+  color: var(--white-80, rgba(255,255,255,0.8));
+  font-size: 0.82rem;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.setupBlockHeader small {
+  color: var(--white-35, rgba(255,255,255,0.35));
+  font-size: 0.74rem;
+}
+
+.presetGridCompact {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.presetButtonCompact {
+  min-height: 36px;
+  color: var(--white-60, rgba(255,255,255,0.6));
+  background: var(--black-20, rgba(0,0,0,0.2));
+  border: 1px solid var(--border, rgba(255,255,255,0.08));
+  border-radius: 7px;
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.presetButtonCompactActive,
+.presetButtonCompact:hover {
+  color: var(--white-90, #f0f0f0);
+  border-color: rgba(var(--blueprint-blue-rgb), 0.5);
+  background: rgba(var(--blueprint-blue-rgb), 0.1);
+}
+
+.addInlineRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.divisionHeaderRow,
+.divisionInlineRow {
+  display: grid;
+  grid-template-columns: minmax(8rem, 1fr) 5.5rem 5.5rem 5.8rem 6.5rem 2rem;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.divisionHeaderRow {
+  padding: 0 0.35rem 0.1rem;
+  color: var(--white-35, rgba(255,255,255,0.35));
+  font-size: 0.66rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.divisionInlineShell {
+  padding: 0.35rem;
+  border: 1px solid var(--border, rgba(255,255,255,0.08));
+  border-radius: 8px;
+  background: rgba(255,255,255,0.02);
+}
+
+.divisionInlineRow :global(.form-input) {
+  height: 38px;
+  padding: 0.42rem 0.65rem;
+  font-size: 0.9rem;
+}
+
+.compactCheckbox,
+.checkboxLine {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: var(--white-55, rgba(255,255,255,0.55));
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.compactCheckbox input,
+.checkboxLine input,
+.divisionInlineRow input[type='checkbox'] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--blueprint-blue);
+}
+
+.poolSetupPanel {
+  margin-top: 0.65rem;
+  padding: 0.75rem;
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.22);
+  border-radius: 8px;
+  background: rgba(var(--blueprint-blue-rgb), 0.055);
+}
+
+.poolControlsRow {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.7rem;
+}
+
+.poolMiniField input {
+  width: 72px;
+  height: 34px;
+}
+
+.poolNameGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 0.6rem;
+}
+
+.poolNameField input {
+  height: 34px;
+  font-size: 0.82rem;
+}
+
+.venueComposer {
+  padding: 1rem;
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.25);
+  border-radius: 8px;
+  background: rgba(var(--blueprint-blue-rgb), 0.045);
+}
+
+.venueDraftGrid,
+.venueCardGrid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 0.65rem;
+}
+
+.venueDraftGrid {
+  margin-bottom: 0.8rem;
+}
+
+.venueDraftGrid label:nth-child(1),
+.venueDraftGrid label:nth-child(2),
+.venueCardGrid label:nth-child(1),
+.venueCardGrid label:nth-child(2) {
+  grid-column: span 3;
+}
+
+.venueDraftGrid label:nth-child(3),
+.venueDraftGrid label:nth-child(4),
+.venueDraftGrid label:nth-child(5),
+.venueCardGrid label:nth-child(3),
+.venueCardGrid label:nth-child(4),
+.venueCardGrid label:nth-child(5),
+.venueCardGrid label:nth-child(6) {
+  grid-column: span 2;
+}
+
+.venueNotesField {
+  grid-column: 1 / -1;
+}
+
+.venueList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.existingVenueGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 0.6rem;
+}
+
+.existingVenueButton {
+  min-height: 88px;
+  padding: 0.75rem;
+  text-align: left;
+  border: 1px solid var(--border, rgba(255,255,255,0.08));
+  border-radius: 8px;
+  color: var(--white-65, rgba(255,255,255,0.65));
+  background: rgba(255,255,255,0.025);
+  cursor: pointer;
+}
+
+.existingVenueButton:hover,
+.existingVenueSelected {
+  border-color: rgba(var(--blueprint-blue-rgb), 0.5);
+  background: rgba(var(--blueprint-blue-rgb), 0.08);
+  color: var(--white-90, #f0f0f0);
+}
+
+.existingVenueButton strong,
+.existingVenueButton span,
+.existingVenueButton small {
+  display: block;
+}
+
+.existingVenueButton strong {
+  margin-bottom: 0.25rem;
+  font-size: 0.88rem;
+}
+
+.existingVenueButton span,
+.existingVenueButton small {
+  color: var(--white-40, rgba(255,255,255,0.4));
+  font-size: 0.74rem;
+  line-height: 1.35;
+}
+
+.emptyModalState {
+  padding: 1rem;
+  color: var(--white-35, rgba(255,255,255,0.35));
+  border: 1px dashed var(--border, rgba(255,255,255,0.08));
+  border-radius: 8px;
+  text-align: center;
+  font-size: 0.85rem;
+}
+
+.reviewPanel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.reviewItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.65rem 0;
+  border-bottom: 1px solid var(--border, rgba(255,255,255,0.08));
+}
+
+.reviewItem:last-child {
+  border-bottom: 0;
+}
+
+.reviewItem span {
+  color: var(--white-45, rgba(255,255,255,0.45));
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.reviewItem strong {
+  color: var(--white-85, rgba(255,255,255,0.85));
+  font-size: 0.9rem;
+  text-align: right;
+}
+
+.planError {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  border: 1px solid rgba(248, 113, 113, 0.35);
+  border-radius: 8px;
+  background: rgba(248, 113, 113, 0.08);
+  color: #fecaca;
+  font-size: 0.82rem;
+  padding: 0.8rem 0.9rem;
+}
+
+@media (max-width: 640px) {
+  .modalOverlay {
+    align-items: flex-start;
+    padding: 0.75rem;
+  }
+
+  .wizardChrome,
+  .modalGridTwo,
+  .presetGridCompact,
+  .divisionInlineRow,
+  .venueDraftGrid,
+  .venueCardGrid,
+  .addInlineRow {
+    grid-template-columns: 1fr;
+  }
+
+  .venueDraftGrid label:nth-child(1),
+  .venueDraftGrid label:nth-child(2),
+  .venueDraftGrid label:nth-child(3),
+  .venueDraftGrid label:nth-child(4),
+  .venueDraftGrid label:nth-child(5),
+  .venueDraftGrid label:nth-child(6),
+  .venueCardGrid label:nth-child(1),
+  .venueCardGrid label:nth-child(2),
+  .venueCardGrid label:nth-child(3),
+  .venueCardGrid label:nth-child(4),
+  .venueCardGrid label:nth-child(5),
+  .venueCardGrid label:nth-child(6) {
+    grid-column: auto;
+  }
+
+  .divisionHeaderRow {
+    display: none;
+  }
+
+  .workflowModalFooter,
+  .workflowFooterActions,
+  .reviewItem,
+  .poolControlsRow {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .reviewItem strong {
+    text-align: left;
+  }
+}

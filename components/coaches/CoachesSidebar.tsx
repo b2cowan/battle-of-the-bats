@@ -92,6 +92,8 @@ export default function CoachesSidebar({ orgSlug }: { orgSlug: string }) {
         <Link
           href={`${base}/help`}
           className={`${styles.sidebarItem}${pathname === `${base}/help` ? ` ${styles.sidebarItemActive}` : ''}`}
+          target="_blank"
+          rel="noopener noreferrer"
         >
           <HelpCircle size={14} />
           Help

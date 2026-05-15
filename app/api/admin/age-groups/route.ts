@@ -47,6 +47,10 @@ export async function GET(req: Request) {
     poolNames: group.pool_names,
     requiresPoolSelection: group.requires_pool_selection,
     playoffConfig: group.playoff_config,
+    depositAmount: group.deposit_amount ?? null,
+    depositDueDate: group.deposit_due_date ?? null,
+    totalFeeAmount: group.total_fee_amount ?? null,
+    totalFeeDueDate: group.total_fee_due_date ?? null,
     pools: ((group.pools ?? [])
       .map((pool: { id: string; age_group_id: string; name: string; display_order: number }) => ({
         id: pool.id,
@@ -84,6 +88,10 @@ export async function POST(req: Request) {
         pool_names:              data.poolNames,
         requires_pool_selection: data.requiresPoolSelection,
         playoff_config:          data.playoffConfig,
+        deposit_amount:          data.depositAmount ?? null,
+        deposit_due_date:        data.depositDueDate ?? null,
+        total_fee_amount:        data.totalFeeAmount ?? null,
+        total_fee_due_date:      data.totalFeeDueDate ?? null,
       }).select('id').single();
       if (error) throw error;
 
@@ -124,6 +132,10 @@ export async function POST(req: Request) {
         pool_names:              data.poolNames,
         requires_pool_selection: data.requiresPoolSelection,
         playoff_config:          data.playoffConfig,
+        deposit_amount:          data.depositAmount ?? null,
+        deposit_due_date:        data.depositDueDate ?? null,
+        total_fee_amount:        data.totalFeeAmount ?? null,
+        total_fee_due_date:      data.totalFeeDueDate ?? null,
       }).eq('id', id);
       if (agError) throw agError;
 

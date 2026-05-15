@@ -1,5 +1,6 @@
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { PLAN_CONFIG } from '@/lib/plan-config';
+import { getEffectiveTournamentLimit, PLAN_CONFIG } from '@/lib/plan-config';
+import type { OrgPlan } from '@/lib/types';
 import OrgsClient from './OrgsClient';
 
 async function getOrgs() {
@@ -15,7 +16,7 @@ async function getOrgs() {
     name:               r.name as string,
     slug:               r.slug as string,
     planId:             r.plan_id as string,
-    tournamentLimit:    r.tournament_limit as number,
+    tournamentLimit:    getEffectiveTournamentLimit(r.plan_id as OrgPlan, r.tournament_limit as number | null),
     subscriptionStatus: r.subscription_status as string,
     createdAt:          r.created_at as string,
     enabledAddons:      (r.enabled_addons as string[]) ?? [],

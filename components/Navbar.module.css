@@ -10,9 +10,9 @@
 }
 
 .nav.scrolled {
-  background: rgba(13, 11, 20, 0.9);
+  background: var(--nav-bg-scrolled);
   backdrop-filter: blur(20px);
-  box-shadow: 0 1px 0 var(--border), 0 4px 32px rgba(0,0,0,0.5);
+  box-shadow: 0 1px 0 var(--border), 0 4px 32px rgba(0,0,0,0.3);
 }
 
 .inner {
@@ -151,7 +151,7 @@
   flex-direction: column;
   gap: 0.25rem;
   padding: 1rem 1.5rem 1.5rem;
-  background: rgba(13, 11, 20, 0.97);
+  background: var(--nav-mobile-bg);
   backdrop-filter: blur(20px);
   border-top: 1px solid var(--border);
   animation: slideDown 0.2s ease;

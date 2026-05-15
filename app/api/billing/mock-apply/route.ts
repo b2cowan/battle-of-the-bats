@@ -1,14 +1,13 @@
 import { getAuthContext, unauthorized } from '@/lib/api-auth';
+import { isBillingMockEnabled } from '@/lib/billing-mock';
 import { PLAN_CONFIG } from '@/lib/plan-config';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import type { OrgPlan, SubscriptionStatus } from '@/lib/types';
 
-// This route only exists in dev. In production STRIPE_SECRET_KEY will be set,
-// so reaching this endpoint means someone is calling it directly — reject it.
 export async function POST(req: Request) {
-  if (process.env.STRIPE_SECRET_KEY) {
-    return new Response(JSON.stringify({ error: 'Not available in production' }), {
-      status: 403,
+  if (!isBillingMockEnabled()) {
+    return new Response(JSON.stringify({ error: 'Not found' }), {
+      status: 404,
       headers: { 'Content-Type': 'application/json' },
     });
   }

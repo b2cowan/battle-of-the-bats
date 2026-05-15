@@ -12,7 +12,6 @@ import {
 import { signOut } from '@/lib/auth';
 import { useOrg } from '@/lib/org-context';
 import { useTournament } from '@/lib/tournament-context';
-import { setActiveTournament } from '@/lib/db';
 import styles from './AdminBottomNav.module.css';
 
 const PRIMARY_KEYS = [
@@ -23,10 +22,12 @@ const PRIMARY_KEYS = [
 
 const TOURNAMENT_MORE = [
   { key: 'tournaments/dashboard',     icon: LayoutDashboard, label: 'Dashboard'     },
-  { key: 'tournaments',               icon: RefreshCw,       label: 'Tournaments'   },
+  { key: 'tournaments/manage',        icon: RefreshCw,       label: 'Manage'        },
   { key: 'tournaments/announcements', icon: Megaphone,       label: 'Announcements' },
   { key: 'tournaments/contacts',      icon: BookUser,        label: 'Contacts'      },
+  { key: 'tournaments/venues',        icon: MapPin,          label: 'Venues'        },
   { key: 'tournaments/age-groups',    icon: Tag,             label: 'Age Groups'    },
+  { key: 'tournaments/settings',      icon: Settings,        label: 'Settings'      },
 ];
 
 const ORG_MORE = [
@@ -90,8 +91,22 @@ export default function AdminBottomNav() {
 
   async function handleSetLive() {
     if (!currentTournament) return;
-    await setActiveTournament(currentTournament.id);
-    refresh();
+    const res = await fetch('/api/admin/tournaments', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'set-status',
+        id: currentTournament.id,
+        data: { status: 'active' },
+      }),
+    });
+    const result = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      window.alert(result.error ?? 'This tournament is not ready to go live.');
+      return;
+    }
+    await refresh();
+    setMoreOpen(false);
   }
 
   function dropNavItems(items: typeof TOURNAMENT_MORE) {

@@ -15,7 +15,7 @@ export default function TournamentsRedirect() {
     if (currentTournament) {
       router.replace(`/${slug}/admin/tournaments/dashboard`);
     } else {
-      router.replace(`/${slug}/admin/org/tournaments`);
+      router.replace(`/${slug}/admin/tournaments/manage`);
     }
   }, [loading, currentOrg, currentTournament, router]);
 

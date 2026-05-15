@@ -45,12 +45,18 @@ interface Member {
   acceptedAt: string | null;
   lastSignIn: string | null;
   assignedTournamentIds: string[];
+  repGroupIds: string[];
 }
 
 interface TournamentOption {
   id: string;
   name: string;
   year: number;
+}
+
+interface RepGroupOption {
+  id: string;
+  name: string;
 }
 
 const ROLE_LABELS: Record<OrgRole, string> = {
@@ -148,6 +154,7 @@ export default function MembersPage() {
 
   const [members, setMembers] = useState<Member[]>([]);
   const [tournaments, setTournaments] = useState<TournamentOption[]>([]);
+  const [repGroups, setRepGroups] = useState<RepGroupOption[]>([]);
   const [fetching, setFetching] = useState(true);
 
   // Invite modal
@@ -168,6 +175,7 @@ export default function MembersPage() {
   const [removingId, setRemovingId] = useState<string | null>(null);
   const [capDraft, setCapDraft] = useState<Record<string, boolean>>({});
   const [capSaving, setCapSaving] = useState(false);
+  const [manageDraftRepGroupIds, setManageDraftRepGroupIds] = useState<string[]>([]);
 
   // Feedback
   const [successOpen, setSuccessOpen] = useState(false);
@@ -179,6 +187,7 @@ export default function MembersPage() {
     if (!currentOrg) return;
     loadMembers();
     loadTournaments();
+    loadRepGroups();
   }, [currentOrg]);
 
   async function loadMembers() {
@@ -203,6 +212,18 @@ export default function MembersPage() {
       }
     } catch {
       // non-fatal — assignment UI will just show empty
+    }
+  }
+
+  async function loadRepGroups() {
+    try {
+      const res = await fetch('/api/admin/rep-teams/groups');
+      if (res.ok) {
+        const data = await res.json();
+        setRepGroups((data.groups ?? []).map((g: any) => ({ id: g.id, name: g.name })));
+      }
+    } catch {
+      // non-fatal — rep group section will just be hidden
     }
   }
 
@@ -245,6 +266,7 @@ export default function MembersPage() {
     setManageDraftRole(member.role);
     setManageDraftDisplayName(member.displayName ?? '');
     setManageDraftAssignments([...member.assignedTournamentIds]);
+    setManageDraftRepGroupIds([...member.repGroupIds]);
     setCapDraft(member.capabilities ? { ...member.capabilities } : {});
   }
 
@@ -285,6 +307,9 @@ export default function MembersPage() {
     const assignmentsChanged =
       JSON.stringify([...manageDraftAssignments].sort()) !==
       JSON.stringify([...manageTarget.assignedTournamentIds].sort());
+    const repGroupsChanged =
+      JSON.stringify([...manageDraftRepGroupIds].sort()) !==
+      JSON.stringify([...manageTarget.repGroupIds].sort());
 
     if (roleChanged || displayNameChanged) {
       const patchBody: Record<string, unknown> = {};
@@ -322,12 +347,28 @@ export default function MembersPage() {
       }
     }
 
+    if (repGroupsChanged) {
+      const res = await fetch(`/api/admin/members/${manageTarget.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ repGroupIds: manageDraftRepGroupIds }),
+      });
+      if (!res.ok) {
+        const d = await res.json();
+        errors.push(d.error ?? 'Rep group scope update failed');
+      } else {
+        setMembers(prev => prev.map(m =>
+          m.id === manageTarget.id ? { ...m, repGroupIds: manageDraftRepGroupIds } : m
+        ));
+      }
+    }
+
     setManageSaving(false);
     if (errors.length > 0) {
       showError(errors.join('\n'));
     } else {
       closeManage();
-      if (roleChanged || assignmentsChanged) showSuccess('Member updated.');
+      if (roleChanged || assignmentsChanged || repGroupsChanged) showSuccess('Member updated.');
     }
   }
 
@@ -782,6 +823,35 @@ export default function MembersPage() {
                     : `Restricted to ${manageDraftAssignments.length} tournament${manageDraftAssignments.length === 1 ? '' : 's'}.`}
                 </p>
               </div>
+
+              {/* Rep Team Group Access — shown when the org has groups and the member has rep teams access */}
+              {repGroups.length > 0 && hasCapability(manageDraftRole, Object.keys(capDraft).length > 0 ? capDraft : null, 'module_rep_teams') && (
+                <div className={styles.modalSection}>
+                  <div className={styles.modalSectionTitle}>Rep Team Group Access</div>
+                  <p style={{ fontSize: '0.78rem', color: 'var(--white-30)', marginBottom: '0.5rem' }}>
+                    Select groups to restrict this member's rep team access. Leave all unchecked to allow access to all groups.
+                  </p>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', maxHeight: '150px', overflowY: 'auto' }}>
+                    {repGroups.map(g => (
+                      <label key={g.id} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.875rem' }}>
+                        <input
+                          type="checkbox"
+                          checked={manageDraftRepGroupIds.includes(g.id)}
+                          onChange={() => setManageDraftRepGroupIds(prev =>
+                            prev.includes(g.id) ? prev.filter(id => id !== g.id) : [...prev, g.id]
+                          )}
+                        />
+                        {g.name}
+                      </label>
+                    ))}
+                  </div>
+                  <p style={{ fontSize: '0.75rem', color: 'var(--white-30)', marginTop: '0.4rem' }}>
+                    {manageDraftRepGroupIds.length === 0
+                      ? 'No restrictions — sees all rep team groups.'
+                      : `Restricted to ${manageDraftRepGroupIds.length} group${manageDraftRepGroupIds.length === 1 ? '' : 's'}.`}
+                  </p>
+                </div>
+              )}
 
               {/* Capability Overrides — owner-only */}
               {userRole === 'owner' && (

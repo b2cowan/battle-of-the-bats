@@ -8,6 +8,14 @@ import styles from '../../register/register.module.css';
 
 type Step = 'form' | 'submitting' | 'success' | 'error';
 
+function formatAgeRange(minAge: number | null, maxAge: number | null) {
+  if (minAge === null && maxAge === null) return '';
+  if (minAge === null) return `Ages under ${maxAge}`;
+  if (maxAge === null) return `Ages ${minAge}+`;
+  if (minAge === maxAge) return `Age ${minAge}`;
+  return `Ages ${minAge}-${maxAge}`;
+}
+
 export default function RegisterPage() {
   const params         = useParams();
   const orgSlug        = params.orgSlug as string;
@@ -255,9 +263,10 @@ export default function RegisterPage() {
                             const remaining = g.capacity ? Math.max(0, g.capacity - filled) : null;
                             const waitlistLabel = g.capacity && filled >= g.capacity ? ' (WAITLIST)' : '';
                             const spotsLabel = remaining !== null && remaining > 0 ? ` (${remaining} left)` : '';
+                            const ageLabel = formatAgeRange(g.minAge, g.maxAge);
                             return (
                               <option key={g.id} value={g.id}>
-                                {g.name} Ages {g.minAge}-{g.maxAge} {g.isClosed ? '- CLOSED' : (waitlistLabel || spotsLabel)}
+                                {g.name}{ageLabel ? ` ${ageLabel}` : ''} {g.isClosed ? '- CLOSED' : (waitlistLabel || spotsLabel)}
                               </option>
                             );
                           })}

@@ -1,6 +1,6 @@
 import Link from 'next/link';
-import { redirect } from 'next/navigation';
-import { Calendar, ChevronRight, Star, Globe, Mail, ExternalLink, Archive, Users } from 'lucide-react';
+import { notFound, redirect } from 'next/navigation';
+import { Calendar, ChevronRight, Star, Mail, ExternalLink, Archive, Users } from 'lucide-react';
 import {
   getOrganizationBySlug, getTournamentsByOrg,
   getOrgPublicSiteContent, getArchivesByOrg,
@@ -14,6 +14,7 @@ export const dynamic = 'force-dynamic';
 export default async function HomePage({ params }: { params: Promise<{ orgSlug: string }> }) {
   const { orgSlug } = await params;
   const org = await getOrganizationBySlug(orgSlug);
+  if (org?.subscriptionStatus === 'canceled') notFound();
 
   const allTournaments   = org ? await getTournamentsByOrg(org.id) : [];
   const activeTournaments = allTournaments.filter(t => t.status === 'active');

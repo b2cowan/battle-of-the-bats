@@ -89,10 +89,12 @@ export async function PATCH(req: Request, { params }: Params) {
   const hasRoleUpdate = 'role' in body;
   const hasCapabilitiesUpdate = 'capabilities' in body;
   const hasStatusUpdate = 'status' in body;
+  const hasRepGroupIdsUpdate = 'repGroupIds' in body;
 
-  // Capabilities and status changes are owner-only
+  // Capabilities, status, and rep group scope changes are owner-only
   if (hasCapabilitiesUpdate && ctx.role !== 'owner') return forbidden();
   if (hasStatusUpdate && ctx.role !== 'owner') return forbidden();
+  if (hasRepGroupIdsUpdate && ctx.role !== 'owner' && ctx.role !== 'admin') return forbidden();
 
   const hasDisplayNameUpdate = 'displayName' in body;
 
@@ -159,6 +161,45 @@ export async function PATCH(req: Request, { params }: Params) {
   if (hasDisplayNameUpdate) {
     const raw = typeof body.displayName === 'string' ? body.displayName.trim().slice(0, 60) : '';
     update.display_name = raw || null;
+  }
+
+  // Rep group scope update — replace all scope rows for this member
+  if (hasRepGroupIdsUpdate) {
+    const rawIds = body.repGroupIds;
+    const newGroupIds: string[] = Array.isArray(rawIds)
+      ? rawIds.filter((id): id is string => typeof id === 'string')
+      : [];
+
+    // Validate each ID belongs to this org
+    if (newGroupIds.length > 0) {
+      const { data: validGroups } = await supabaseAdmin
+        .from('rep_team_groups')
+        .select('id')
+        .eq('org_id', org.id)
+        .in('id', newGroupIds);
+      const validIds = new Set((validGroups ?? []).map((g: any) => g.id as string));
+      const allValid = newGroupIds.every(id => validIds.has(id));
+      if (!allValid) {
+        return NextResponse.json({ error: 'One or more group IDs are invalid for this org' }, { status: 400 });
+      }
+    }
+
+    await supabaseAdmin
+      .from('org_member_rep_group_scopes')
+      .delete()
+      .eq('member_id', memberId);
+
+    if (newGroupIds.length > 0) {
+      await supabaseAdmin
+        .from('org_member_rep_group_scopes')
+        .insert(newGroupIds.map(gid => ({ member_id: memberId, group_id: gid })));
+    }
+
+    void supabaseAdmin.from('org_audit_log').insert({
+      org_id: org.id, actor_id: ctx.user.id, target_id: target.user_id,
+      action: 'rep_group_scope_changed',
+      payload: { groupIds: newGroupIds },
+    });
   }
 
   if (Object.keys(update).length === 0) {

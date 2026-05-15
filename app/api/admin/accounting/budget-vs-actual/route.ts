@@ -120,7 +120,23 @@ export async function GET(req: Request) {
   }
 
   // ── Team names ────────────────────────────────────────────────────────────
-  const teamIds = Array.from(new Set(allSplitRows.map((s: any) => s.team_id)));
+  // When caller is scoped to specific groups, restrict team health to those teams
+  let allTeamIds = Array.from(new Set(allSplitRows.map((s: any) => s.team_id as string)));
+  if (ctx!.repGroupIds) {
+    const { data: scopedTeams } = await supabaseAdmin
+      .from('rep_teams')
+      .select('id')
+      .eq('org_id', orgId)
+      .in('group_id', ctx!.repGroupIds);
+    const scopedSet = new Set((scopedTeams ?? []).map((t: any) => t.id as string));
+    allTeamIds = allTeamIds.filter(id => scopedSet.has(id));
+    allSplitRows = allSplitRows.filter((s: any) => scopedSet.has(s.team_id));
+    allInstRows  = allInstRows.filter((i: any) => {
+      const split = allSplitRows.find((s: any) => s.id === i.split_id);
+      return !!split;
+    });
+  }
+  const teamIds = allTeamIds;
   let teamMap = new Map<string, string>();
   if (teamIds.length > 0) {
     const { data: teams } = await supabaseAdmin

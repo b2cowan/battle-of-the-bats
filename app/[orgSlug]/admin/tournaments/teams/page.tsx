@@ -20,10 +20,47 @@ interface TeamRecord {
   tournament_name: string;
   status: 'pending' | 'accepted' | 'rejected' | 'waitlist';
   paymentStatus: 'pending' | 'paid';
+  depositPaid: number;
+  totalPaid: number;
   registered_at: string;
   poolId?: string;
   adminNotes?: string;
 }
+
+type PaymentStatus = 'paid' | 'deposit-paid' | 'pending' | 'past-due' | 'no-schedule';
+
+interface FeeSchedule {
+  depositAmount: number | null;
+  depositDueDate: string | null;
+  totalFeeAmount: number | null;
+  totalFeeDueDate: string | null;
+}
+
+function computePaymentStatus(team: TeamRecord, fee: FeeSchedule, today: string): PaymentStatus {
+  const { depositAmount, depositDueDate, totalFeeAmount, totalFeeDueDate } = fee;
+  if (!totalFeeAmount) return 'no-schedule';
+  if (team.totalPaid >= totalFeeAmount) return 'paid';
+  if (totalFeeDueDate && today > totalFeeDueDate) return 'past-due';
+  if (depositAmount && depositDueDate && today > depositDueDate && team.depositPaid < depositAmount) return 'past-due';
+  if (depositAmount && team.depositPaid >= depositAmount) return 'deposit-paid';
+  return 'pending';
+}
+
+const PAYMENT_STATUS_STYLE: Record<PaymentStatus, string> = {
+  'paid':         'success',
+  'deposit-paid': 'primary',
+  'pending':      'warning',
+  'past-due':     'danger',
+  'no-schedule':  'neutral',
+};
+
+const PAYMENT_STATUS_LABEL: Record<PaymentStatus, string> = {
+  'paid':         'Paid',
+  'deposit-paid': 'Deposit Paid',
+  'pending':      'Pending',
+  'past-due':     'Past Due',
+  'no-schedule':  'No Schedule',
+};
 
 type Status = 'pending' | 'accepted' | 'rejected' | 'waitlist';
 
@@ -45,6 +82,7 @@ export default function UnifiedTeamsPage() {
   const [stableSortedIds, setStableSortedIds] = useState<string[]>([]);
   const [hasLoadedInitial, setHasLoadedInitial] = useState(false);
   const [viewMode, setViewMode] = useState<'flat' | 'pools'>('pools');
+  const [feeSchedule, setFeeSchedule] = useState<FeeSchedule>({ depositAmount: null, depositDueDate: null, totalFeeAmount: null, totalFeeDueDate: null });
   const [feedback, setFeedback] = useState<{
     isOpen: boolean;
     title: string;
@@ -59,16 +97,19 @@ export default function UnifiedTeamsPage() {
     setErrorMsg(null);
     try {
       // 1. Fetch all data in parallel
-      const [rRes, groups] = await Promise.all([
+      const [rRes, groups, tRes] = await Promise.all([
         fetch('/api/registrations'),
-        getAgeGroups(currentTournament.id)
+        getAgeGroups(currentTournament.id),
+        fetch(`/api/admin/tournaments`),
       ]);
       
       const rData = (await rRes.json()).map((r: any) => ({
         ...r,
         poolId: r.pool_id,
         paymentStatus: r.payment_status,
-        adminNotes: r.admin_notes
+        depositPaid: Number(r.deposit_paid ?? 0),
+        totalPaid: Number(r.total_paid ?? 0),
+        adminNotes: r.admin_notes,
       }));
 
       setAgeGroups(groups);
@@ -78,6 +119,25 @@ export default function UnifiedTeamsPage() {
         }
         if (!addForm.ageGroupId) {
           setAddForm(f => ({ ...f, ageGroupId: groups[0].id }));
+        }
+      }
+
+      // Resolve fee schedule from tournament
+      if (tRes.ok) {
+        const tournaments: any[] = await tRes.json();
+        const t = tournaments.find((x: any) => x.id === currentTournament.id);
+        if (t) {
+          if (t.fee_schedule_mode === 'age_group') {
+            // per-division: no single schedule; computePaymentStatus handles per-group
+            setFeeSchedule({ depositAmount: null, depositDueDate: null, totalFeeAmount: null, totalFeeDueDate: null });
+          } else {
+            setFeeSchedule({
+              depositAmount:  t.deposit_amount  != null ? Number(t.deposit_amount)  : null,
+              depositDueDate: t.deposit_due_date ?? null,
+              totalFeeAmount: t.total_fee_amount != null ? Number(t.total_fee_amount) : null,
+              totalFeeDueDate: t.total_fee_due_date ?? null,
+            });
+          }
         }
       }
 
@@ -299,9 +359,16 @@ export default function UnifiedTeamsPage() {
     downloadCSV(`teams-regs-${new Date().toISOString().split('T')[0]}.csv`, headers, rows);
   }
 
+  const today = new Date().toISOString().split('T')[0];
+
   const renderRow = (r: TeamRecord, hidePoolBadge = false) => {
     const isExpanded = expanded.has(r.id);
     const busy = working === r.id;
+    const agFee = ageGroups.find(g => g.id === r.age_group_id);
+    const effectiveFee: FeeSchedule = agFee?.totalFeeAmount != null
+      ? { depositAmount: agFee.depositAmount ?? null, depositDueDate: agFee.depositDueDate ?? null, totalFeeAmount: agFee.totalFeeAmount ?? null, totalFeeDueDate: agFee.totalFeeDueDate ?? null }
+      : feeSchedule;
+    const pStatus = computePaymentStatus(r, effectiveFee, today);
     return (
       <div key={r.id} className={s.row}>
         <div className={s.rowMain}>
@@ -328,7 +395,13 @@ export default function UnifiedTeamsPage() {
           <div style={{ width: 120 }}>
             <span className={`badge badge-${r.status === 'accepted' ? 'success' : r.status === 'rejected' ? 'danger' : 'warning'}`}>{r.status}</span>
           </div>
-          <div style={{ width: 120, paddingLeft: '1rem' }}>{r.status === 'accepted' ? <span className={`badge badge-${r.paymentStatus === 'paid' ? 'success' : 'warning'}`}>{r.paymentStatus}</span> : '-'}</div>
+          <div style={{ width: 120, paddingLeft: '1rem' }}>
+            {r.status === 'accepted' && pStatus !== 'no-schedule'
+              ? <span className={`badge badge-${PAYMENT_STATUS_STYLE[pStatus]}`}>{PAYMENT_STATUS_LABEL[pStatus]}</span>
+              : r.status === 'accepted'
+              ? <span className={`badge badge-${r.paymentStatus === 'paid' ? 'success' : 'warning'}`}>{r.paymentStatus}</span>
+              : '-'}
+          </div>
           <div style={{ width: 40, textAlign: 'right' }}><button className={s.iconBtn} onClick={() => setExpanded(prev => { const set = new Set(prev); set.has(r.id) ? set.delete(r.id) : set.add(r.id); return set; })}>{isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}</button></div>
         </div>
         {isExpanded && (
@@ -366,11 +439,46 @@ export default function UnifiedTeamsPage() {
                   {r.status !== 'rejected' && (
                     <button className="btn btn-outline btn-xs" style={{ color: 'var(--danger-light)' }} onClick={() => patch(r.id, { status: 'rejected' }, `Reject "${r.name}"? An automated email will be sent.`)} disabled={busy}>Reject</button>
                   )}
-                  {r.status === 'accepted' && (
+                  {r.status === 'accepted' && effectiveFee.totalFeeAmount ? (
+                    <>
+                      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', borderTop: '1px solid var(--border-2)', paddingTop: '0.5rem', width: '100%', flexWrap: 'wrap' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
+                          <label style={{ fontSize: '0.65rem', color: 'var(--data-gray)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Deposit Paid ($)</label>
+                          <input
+                            type="number" min="0" step="0.01"
+                            defaultValue={r.depositPaid || ''}
+                            placeholder="0.00"
+                            style={{ width: '90px', padding: '0.2rem 0.4rem', fontSize: '0.85rem', background: 'var(--hud-surface)', border: '1px solid var(--border-2)', color: 'var(--fl-text)' }}
+                            onBlur={e => {
+                              const val = parseFloat(e.target.value) || 0;
+                              if (val !== r.depositPaid) patch(r.id, { depositPaid: val });
+                            }}
+                          />
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
+                          <label style={{ fontSize: '0.65rem', color: 'var(--data-gray)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Total Paid ($)</label>
+                          <input
+                            type="number" min="0" step="0.01"
+                            defaultValue={r.totalPaid || ''}
+                            placeholder="0.00"
+                            style={{ width: '90px', padding: '0.2rem 0.4rem', fontSize: '0.85rem', background: 'var(--hud-surface)', border: '1px solid var(--border-2)', color: 'var(--fl-text)' }}
+                            onBlur={e => {
+                              const val = parseFloat(e.target.value) || 0;
+                              if (val !== r.totalPaid) patch(r.id, { totalPaid: val });
+                            }}
+                          />
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem', alignSelf: 'flex-end' }}>
+                          <span style={{ fontSize: '0.65rem', color: 'var(--data-gray)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>of ${effectiveFee.totalFeeAmount}</span>
+                          <span className={`badge badge-${PAYMENT_STATUS_STYLE[pStatus]}`}>{PAYMENT_STATUS_LABEL[pStatus]}</span>
+                        </div>
+                      </div>
+                    </>
+                  ) : r.status === 'accepted' ? (
                     <button className="btn btn-outline btn-xs" onClick={() => patch(r.id, { paymentStatus: r.paymentStatus === 'paid' ? 'pending' : 'paid' })} disabled={busy}>
                       {r.paymentStatus === 'paid' ? 'Mark Unpaid' : 'Mark Paid'}
                     </button>
-                  )}
+                  ) : null}
                   <button className="btn btn-ghost btn-xs" onClick={() => handleDelete(r.id, r.name)} disabled={busy} style={{ color: 'var(--danger-light)' }}>
                     <Trash2 size={14} />
                   </button>

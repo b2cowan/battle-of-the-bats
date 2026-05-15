@@ -28,8 +28,9 @@ export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const includeArchived = searchParams.get('archived') === 'true';
 
+  // Scoped member: ignore caller ?group= and enforce their assigned group IDs
   const groupFilter = searchParams.get('group') || undefined;
-  const teams = await getRepTeams(ctx!.org.id, groupFilter);
+  const teams = await getRepTeams(ctx!.org.id, groupFilter, ctx!.repGroupIds ?? undefined);
   const visible = includeArchived ? teams : teams.filter(t => !t.isArchived);
 
   // Fetch summary counts per team in one query each

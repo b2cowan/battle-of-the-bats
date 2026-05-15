@@ -54,6 +54,14 @@ export async function POST(req: Request) {
         dbUpdates.payment_status = dbUpdates.paymentStatus;
         delete dbUpdates.paymentStatus;
       }
+      if (dbUpdates.depositPaid !== undefined) {
+        dbUpdates.deposit_paid = dbUpdates.depositPaid;
+        delete dbUpdates.depositPaid;
+      }
+      if (dbUpdates.totalPaid !== undefined) {
+        dbUpdates.total_paid = dbUpdates.totalPaid;
+        delete dbUpdates.totalPaid;
+      }
       return dbUpdates;
     });
 

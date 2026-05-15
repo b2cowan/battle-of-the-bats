@@ -148,18 +148,153 @@
   transition: width 0.3s ease;
 }
 
-/* ── Manage subscription row ─────────────────────────── */
-.manageRow {
+/* ── Billing portal tools ────────────────────────────── */
+.billingTools {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 1rem;
-  margin-bottom: 2rem;
+  margin: 2rem 0 1.5rem;
+  padding: 1rem 1.25rem;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--border, rgba(255,255,255,0.08));
 }
 
 .manageHint {
   font-size: 0.8rem;
-  color: var(--white-30, rgba(255,255,255,0.3));
+  color: var(--white-45, rgba(255,255,255,0.45));
   margin: 0;
+  line-height: 1.45;
+}
+
+.retentionCard,
+.reviewCard {
+  padding: 1.25rem 1.5rem;
+  border-radius: 8px;
+  background: var(--surface, rgba(255,255,255,0.04));
+  border: 1px solid var(--border, rgba(255,255,255,0.08));
+  margin-bottom: 1.5rem;
+}
+
+.retentionCard {
+  margin-top: 1.75rem;
+  padding: 1rem 1.25rem;
+  background: rgba(255,255,255,0.025);
+}
+
+.reviewCard {
+  border-color: rgba(var(--logic-lime-rgb), 0.28);
+}
+
+.retentionCopy {
+  margin: 0 0 1rem;
+  color: var(--white-50, rgba(255,255,255,0.5));
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+.changeGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.changeButton {
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.4rem;
+  padding: 0.45rem 0.65rem;
+  border-radius: 6px;
+  border: 1px solid var(--border, rgba(255,255,255,0.08));
+  background: transparent;
+  color: var(--white-45, rgba(255,255,255,0.45));
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.changeButton:hover {
+  border-color: rgba(var(--blueprint-blue-rgb), 0.35);
+  background: rgba(var(--blueprint-blue-rgb), 0.08);
+  color: var(--white-75, rgba(255,255,255,0.75));
+}
+
+.changeButton svg {
+  flex-shrink: 0;
+}
+
+.dangerButton {
+  width: auto;
+  border-color: rgba(239, 68, 68, 0.2);
+  color: rgba(239, 68, 68, 0.72);
+}
+
+.dangerButton:hover {
+  border-color: rgba(239, 68, 68, 0.32);
+  background: rgba(239, 68, 68, 0.06);
+  color: rgba(239, 68, 68, 0.9);
+}
+
+.reviewHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.reviewHeader .sectionTitle {
+  margin: 0;
+}
+
+.tournamentChoiceList {
+  display: grid;
+  gap: 0.6rem;
+  margin-bottom: 1rem;
+}
+
+.tournamentChoice {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  border-radius: 8px;
+  border: 1px solid var(--border, rgba(255,255,255,0.08));
+  background: rgba(255,255,255,0.03);
+  color: var(--white-70, rgba(255,255,255,0.7));
+}
+
+.tournamentChoiceSelected {
+  border-color: rgba(var(--logic-lime-rgb), 0.45);
+  background: rgba(var(--logic-lime-rgb), 0.07);
+}
+
+.tournamentChoice span {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.tournamentChoice small {
+  color: var(--white-35, rgba(255,255,255,0.35));
+  font-size: 0.75rem;
+}
+
+.reasonInput {
+  width: 100%;
+  resize: vertical;
+  min-height: 78px;
+  margin-bottom: 1rem;
+  border-radius: 8px;
+  border: 1px solid var(--border, rgba(255,255,255,0.08));
+  background: rgba(0,0,0,0.25);
+  color: var(--white-90, #f0f0f0);
+  padding: 0.75rem;
+  font: inherit;
 }
 
 /* ── Section title ───────────────────────────────────── */
@@ -276,7 +411,14 @@
 }
 
 .upgradeHeader .sectionTitle {
+  margin: 0 0 0.35rem;
+}
+
+.upgradeIntro {
   margin: 0;
+  color: var(--white-40, rgba(255,255,255,0.4));
+  font-size: 0.82rem;
+  line-height: 1.45;
 }
 
 /* ── Billing toggle ──────────────────────────────────── */
@@ -326,6 +468,62 @@
   margin: 0;
 }
 
+.cancelImpactGrid {
+  display: grid;
+  gap: 0.8rem;
+  margin-bottom: 1rem;
+}
+
+.cancelImpactSection {
+  padding: 0.85rem 1rem;
+  border-radius: 8px;
+  border: 1px solid var(--border, rgba(255,255,255,0.08));
+  background: rgba(255,255,255,0.025);
+}
+
+.cancelImpactSection h3 {
+  margin: 0 0 0.45rem;
+  color: var(--white-75, rgba(255,255,255,0.75));
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.cancelImpactSection p {
+  margin: 0;
+  color: var(--white-55, rgba(255,255,255,0.55));
+  font-size: 0.84rem;
+  line-height: 1.5;
+}
+
+.impactList {
+  margin: 0.65rem 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.45rem;
+  color: var(--white-70, rgba(255,255,255,0.7));
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
+.impactList li {
+  position: relative;
+  padding-left: 1rem;
+}
+
+.impactList li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.58em;
+  width: 0.35rem;
+  height: 0.35rem;
+  border-radius: 999px;
+  background: rgba(239, 68, 68, 0.72);
+}
+
 .savingsBadge {
   font-size: 0.75rem;
   font-weight: 600;
@@ -354,5 +552,38 @@
   color: var(--white-30, rgba(255,255,255,0.3));
   text-align: center;
   margin: 0;
+}
+
+@media (max-width: 640px) {
+  .currentCard,
+  .usageHeader,
+  .upgradeHeader,
+  .billingTools,
+  .reviewHeader {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .billingTools > button {
+    width: 100%;
+    justify-content: center;
+    white-space: normal;
+  }
+
+  .billingToggle {
+    width: 100%;
+  }
+
+  .toggleOption {
+    flex: 1;
+  }
+
+  .changeGrid {
+    display: flex;
+  }
+
+  .dangerButton {
+    width: auto;
+  }
 }
 

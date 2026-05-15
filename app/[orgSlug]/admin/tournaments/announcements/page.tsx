@@ -1,7 +1,6 @@
 ﻿'use client';
 import { useState, useEffect } from 'react';
 import { Megaphone, Plus, Pencil, Trash2, X, Check, Star } from 'lucide-react';
-import { getAnnouncements, saveAnnouncement, updateAnnouncement, deleteAnnouncement, getAgeGroups } from '@/lib/db';
 import { useTournament } from '@/lib/tournament-context';
 import { Announcement, AgeGroup } from '@/lib/types';
 import styles from './announcements-admin.module.css';
@@ -19,10 +18,17 @@ export default function AdminAnnouncementsPage() {
     title: '', body: '', pinned: false, ageGroupIds: null,
   });
 
-  async function refresh() { setItems(await getAnnouncements(currentTournament?.id)); }
+  async function refresh() {
+    if (!currentTournament?.id) { setItems([]); return; }
+    const res = await fetch(`/api/admin/announcements?tournamentId=${currentTournament.id}`);
+    setItems(res.ok ? await res.json() : []);
+  }
   useEffect(() => { refresh(); }, [currentTournament?.id]);
   useEffect(() => {
-    if (currentTournament?.id) getAgeGroups(currentTournament.id).then(setAgeGroups);
+    if (!currentTournament?.id) return;
+    fetch(`/api/admin/age-groups?tournamentId=${currentTournament.id}`)
+      .then(r => r.ok ? r.json() : [])
+      .then(setAgeGroups);
   }, [currentTournament?.id]);
 
   function openAdd() {
@@ -42,20 +48,35 @@ export default function AdminAnnouncementsPage() {
     if (!currentTournament) return;
     const data = {
       tournamentId: currentTournament.id,
-      ...form,
       title: form.title.trim(),
       body: form.body.trim(),
+      pinned: form.pinned,
       date: editing?.date ?? new Date().toISOString(),
       ageGroupIds: form.ageGroupIds?.length ? form.ageGroupIds : null,
     };
-    if (modal === 'add') await saveAnnouncement(data);
-    else if (editing) await updateAnnouncement(editing.id, data);
+    if (modal === 'add') {
+      await fetch('/api/admin/announcements', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'save', data }),
+      });
+    } else if (editing) {
+      await fetch('/api/admin/announcements', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'update', id: editing.id, data }),
+      });
+    }
     setModal(null);
     refresh();
   }
 
   async function togglePin(id: string, pinned: boolean) {
-    await updateAnnouncement(id, { pinned: !pinned });
+    await fetch('/api/admin/announcements', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'update', id, data: { pinned: !pinned } }),
+    });
     refresh();
   }
 
@@ -184,7 +205,15 @@ export default function AdminAnnouncementsPage() {
             <p style={{ color: 'var(--white-60)' }}>This will permanently remove this announcement.</p>
             <div className="modal-footer">
               <button className="btn btn-ghost" onClick={() => setDeleteId(null)}>Cancel</button>
-              <button className="btn btn-danger" onClick={async () => { await deleteAnnouncement(deleteId); setDeleteId(null); refresh(); }}><Trash2 size={14} /> Delete</button>
+              <button className="btn btn-danger" onClick={async () => {
+                await fetch('/api/admin/announcements', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ action: 'delete', id: deleteId }),
+                });
+                setDeleteId(null);
+                refresh();
+              }}><Trash2 size={14} /> Delete</button>
             </div>
           </div>
         </div>
