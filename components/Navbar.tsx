@@ -1,10 +1,11 @@
 'use client';
+/* eslint-disable @next/next/no-img-element */
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useParams } from 'next/navigation';
 import { useOrgNav } from './OrgNavContext';
 import { cn } from '@/lib/utils';
-import PublicThemeToggle from './PublicThemeToggle';
+import type { PublicPageKey } from '@/lib/public-pages';
 import styles from './Navbar.module.css';
 
 const MARKETING_NAV_LINKS = [
@@ -43,7 +44,7 @@ export default function Navbar() {
   const params   = useParams();
   const orgSlug           = (params?.orgSlug as string) || '';
   const urlTournamentSlug = params?.tournamentSlug as string | undefined;
-  const { logoUrl, orgName, tournamentSlug, tournamentName } = useOrgNav();
+  const { logoUrl, orgName, tournamentSlug, tournamentName, tournamentColorMode, tournamentHiddenPages } = useOrgNav();
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
@@ -136,9 +137,7 @@ export default function Navbar() {
             })}
           </div>
 
-          <div className={styles.actions}>
-            <PublicThemeToggle />
-          </div>
+          <div className={styles.actions} />
         </div>
       </nav>
     );
@@ -146,7 +145,7 @@ export default function Navbar() {
 
   /* ── Tournament nav (/[orgSlug]/[tournamentSlug]/*) ── */
   return (
-    <nav className={navClass}>
+    <nav className={navClass} data-color-mode={tournamentColorMode ?? 'dark'}>
       <div className={`container ${styles.inner}`}>
         <Link href={tournamentSlug ? `/${orgSlug}/${tournamentSlug}` : `/${orgSlug}`} className={styles.logo}>
           {logoUrl && (
@@ -158,7 +157,7 @@ export default function Navbar() {
         </Link>
 
         <div className={styles.links}>
-          {TOURNAMENT_NAV_KEYS.map(l => {
+          {TOURNAMENT_NAV_KEYS.filter(l => !tournamentHiddenPages.includes(l.key as PublicPageKey)).map(l => {
             const href = `/${orgSlug}/${tournamentSlug}/${l.key}`;
             const isActive = pathname.startsWith(href);
             return (
@@ -174,14 +173,15 @@ export default function Navbar() {
         </div>
 
         <div className={styles.actions}>
-          <PublicThemeToggle />
-          <Link
-            href={`/${orgSlug}/${tournamentSlug}/register`}
-            className="btn btn-primary btn-sm"
-            id="nav-register-btn"
-          >
-            Register
-          </Link>
+          {!tournamentHiddenPages.includes('register') && (
+            <Link
+              href={`/${orgSlug}/${tournamentSlug}/register`}
+              className="btn btn-primary btn-sm"
+              id="nav-register-btn"
+            >
+              Register
+            </Link>
+          )}
         </div>
       </div>
     </nav>

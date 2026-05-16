@@ -1,6 +1,8 @@
 import { cookies } from 'next/headers';
 import { Megaphone, Star, Calendar } from 'lucide-react';
 import { getAnnouncements, getOrganizationBySlug, getPublicTournamentBySlug, getAgeGroups } from '@/lib/db';
+import { notFound } from 'next/navigation';
+import { isPublicPageEnabled } from '@/lib/public-pages';
 import { Announcement } from '@/lib/types';
 import DivisionFilterBar from '@/components/DivisionFilterBar';
 import styles from '../../news/news.module.css';
@@ -22,9 +24,10 @@ export default async function NewsPage({
 
   const org = await getOrganizationBySlug(orgSlug);
   const tournament = org ? await getPublicTournamentBySlug(org.id, tournamentSlug) : null;
+  if (!tournament || !isPublicPageEnabled(tournament, 'news')) notFound();
 
   const [allAnnouncements, ageGroups] = await Promise.all([
-    getAnnouncements(tournament?.id),
+    getAnnouncements(tournament.id),
     tournament ? getAgeGroups(tournament.id) : Promise.resolve([]),
   ]);
 

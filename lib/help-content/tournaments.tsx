@@ -11,8 +11,9 @@ const tournamentsHelp: HelpPageContent = {
       group: 'Getting Started',
       heading: 'Tournament workflow at a glance',
       summary: 'The shortest path from draft setup to a live public tournament.',
+      hideFromContents: true,
       keywords: ['start', 'setup order', 'first tournament', 'draft', 'publish'],
-      searchText: 'create tournament draft dates URL slug divisions capacity venues contacts rules announcements preview activate registration public launch checklist',
+      searchText: 'create tournament draft dates URL slug divisions capacity venues contacts rules announcements scoring settings access branding preview activate registration public launch checklist',
       links: [
         { label: 'Open Dashboard', href: '../tournaments/dashboard' },
         { label: 'Manage Tournaments', href: '../tournaments/manage' },
@@ -27,6 +28,7 @@ const tournamentsHelp: HelpPageContent = {
             <li>Add divisions, capacities, pools, and fee settings.</li>
             <li>Add venues and a public contact email.</li>
             <li>Add rules, resources, and a welcome announcement.</li>
+            <li>Review scoring, branding, subscription, and member access settings.</li>
             <li>Preview the tournament site.</li>
             <li>Activate when the launch checklist is complete.</li>
           </ol>
@@ -342,6 +344,48 @@ const tournamentsHelp: HelpPageContent = {
           <p>Use <strong>Communication</strong> for targeted tournament messages. Review recipients and message content carefully before sending.</p>
         </>
       ),
+    },
+    {
+      id: 'settings-and-access',
+      group: 'Admin and Settings',
+      heading: 'Settings, branding, scoring, and access',
+      summary: 'Review tournament-specific controls that affect public appearance, scoring rules, billing visibility, and who can help administer the event.',
+      keywords: ['settings', 'branding', 'scoring', 'subscription', 'members', 'access', 'officials'],
+      searchText: 'settings access members branding logo hero banner scoring finalization subscription plan tournament settings official score finalization role members permissions public appearance',
+      links: [
+        { label: 'Settings', href: '../tournaments/settings' },
+        { label: 'Branding', href: '../tournaments/settings/branding' },
+        { label: 'Scoring', href: '../tournaments/settings/scoring' },
+        { label: 'Members', href: '../tournaments/settings/members' },
+      ],
+      content: (
+        <>
+          <p>Use <strong>Settings & Access</strong> for tournament-specific administration after the core setup is in place.</p>
+          <p><strong>Branding</strong> controls the tournament public appearance, including assets such as tournament logos or hero imagery when available. Use it when one tournament needs to look distinct from the organization site.</p>
+          <p><strong>Scoring</strong> controls result workflow choices such as whether official score submissions require admin finalization before becoming final.</p>
+          <p><strong>Members</strong> helps you review who can administer tournament work. Keep access limited to people who need to manage setup, registrations, schedule, results, or communications.</p>
+        </>
+      ),
+      faqs: [
+        {
+          id: 'faq-score-finalization-setting',
+          question: 'Where do I control whether scores need admin review?',
+          answerText: 'Use tournament scoring settings to control score finalization behavior.',
+          keywords: ['score finalization', 'pending review', 'officials', 'scoring settings'],
+          answer: (
+            <p>Open <strong>Settings & Access</strong>, then <strong>Scoring</strong>. If finalization is enabled, official submissions appear as Pending Review until an admin finalizes them.</p>
+          ),
+        },
+        {
+          id: 'faq-tournament-branding',
+          question: 'Can one tournament have different branding from the organization site?',
+          answerText: 'Use tournament branding settings for tournament-specific public appearance.',
+          keywords: ['branding', 'logo', 'hero', 'public site'],
+          answer: (
+            <p>Yes. Use <strong>Branding</strong> under tournament settings when a tournament needs its own public identity separate from the default organization look.</p>
+          ),
+        },
+      ],
     },
     {
       id: 'archive-and-seal',

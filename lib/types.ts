@@ -2,6 +2,7 @@ export type OrgPlan = 'tournament' | 'tournament_plus' | 'league' | 'club';
 export type OrgRole = 'owner' | 'admin' | 'staff' | 'official' | 'league_admin' | 'league_registrar' | 'treasurer' | 'coach';
 export type SubscriptionStatus = 'active' | 'trialing' | 'past_due' | 'canceled';
 export type TournamentStatus = 'draft' | 'active' | 'completed' | 'archived';
+export type PublicPageKey = 'news' | 'schedule' | 'standings' | 'teams' | 'rules' | 'register';
 
 export interface Organization {
   id: string;
@@ -60,6 +61,8 @@ export interface Tournament {
   themeAccent?: string | null;
   themeFont?: string | null;
   themeCardStyle?: string | null;
+  colorMode?: 'dark' | 'light' | null;
+  publicHiddenPages?: PublicPageKey[];
   requireScoreFinalization?: boolean | null;
 }
 
@@ -134,6 +137,7 @@ export interface AgeGroup {
   depositDueDate?: string | null;
   totalFeeAmount?: number | null;
   totalFeeDueDate?: string | null;
+  scheduleVisibility?: 'unpublished' | 'published_generic' | 'published_teams';
 }
 
 export interface Pool {
@@ -141,6 +145,17 @@ export interface Pool {
   ageGroupId: string;
   name: string;
   order: number;
+}
+
+export interface PoolSlot {
+  id: string;
+  poolId: string;
+  tournamentId: string;
+  ageGroupId: string;
+  slotNumber: number;
+  displayName: string;  // e.g. "Pool A Team 1"
+  teamId?: string | null;
+  teamName?: string;    // joined from teams for display convenience
 }
 
 export interface Player {
@@ -163,6 +178,8 @@ export interface Team {
   registeredAt: string;
   adminNotes?: string;
   poolId?: string; // The new way (link to pools table)
+  waitlistPosition?: number | null;
+  slotId?: string | null;
 }
 
 export type GameStatus = 'scheduled' | 'submitted' | 'completed' | 'cancelled';
@@ -185,6 +202,8 @@ export interface Game {
   bracketCode?: string;
   homePlaceholder?: string;
   awayPlaceholder?: string;
+  homeSlotId?: string;   // FK to pool_slots — set for slot-based games
+  awaySlotId?: string;
   notes?: string;
 }
 

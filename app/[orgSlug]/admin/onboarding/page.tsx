@@ -20,13 +20,18 @@ import styles from './onboarding.module.css';
 const PLAN_ORDER: OrgPlan[] = ['tournament', 'tournament_plus', 'league', 'club'];
 const STARTUP_ORDER = ['tournament', 'divisions', 'welcome', 'venues', 'contacts'] as const;
 const WIZARD_ORDER = ['plan', ...STARTUP_ORDER, 'review'] as const;
+const LEAGUE_STARTUP_ORDER = ['league_season', 'league_divisions', 'league_registration', 'league_tournament'] as const;
+const LEAGUE_WIZARD_ORDER = ['league-season', 'league-divisions', 'league-registration', 'league-tournament', 'league-review'] as const;
 
 type StartupActionTaskId = typeof STARTUP_ORDER[number];
-type StartupProgressTaskId = 'plan' | StartupActionTaskId;
+type LeagueStartupActionTaskId = typeof LEAGUE_STARTUP_ORDER[number];
+type StartupProgressTaskId = 'plan' | StartupActionTaskId | LeagueStartupActionTaskId;
 type StartupTaskId = typeof WIZARD_ORDER[number];
+type LeagueWizardTaskId = typeof LEAGUE_WIZARD_ORDER[number];
 type StartupTaskStatus = 'pending' | 'complete' | 'skipped';
-type ActiveModal = StartupTaskId | null;
+type ActiveModal = StartupTaskId | LeagueWizardTaskId | null;
 type DivisionPreset = 'youth' | 'adult' | 'custom';
+type LeagueDivisionPreset = 'youth' | 'adult' | 'custom';
 
 type TournamentSummary = {
   id: string;
@@ -76,6 +81,30 @@ type VenueRow = VenueFields & {
 };
 
 type DraftSkippedState = Record<StartupActionTaskId, boolean>;
+type LeagueDraftSkippedState = Record<LeagueStartupActionTaskId, boolean>;
+
+type LeagueDivisionRow = {
+  id: string;
+  name: string;
+  capacity: string;
+};
+
+type LeagueSeasonForm = {
+  name: string;
+  slug: string;
+  sport: string;
+  ageGroup: string;
+  description: string;
+  seasonStartDate: string;
+  seasonEndDate: string;
+  registrationFee: string;
+  registrationOpenAt: string;
+  registrationCloseAt: string;
+  waiverText: string;
+  autoApproveUnderCapacity: boolean;
+  autoPromoteWaitlist: boolean;
+  autoGenerateFees: boolean;
+};
 
 const PLAN_TAGLINE: Record<OrgPlan, string> = {
   tournament:      'Start free with one tournament slot and the core tools to get registration moving.',
@@ -142,6 +171,11 @@ const DIVISION_PRESETS: Record<Exclude<DivisionPreset, 'custom'>, string[]> = {
   adult: ['Open', 'Competitive', 'Recreational'],
 };
 
+const LEAGUE_DIVISION_PRESETS: Record<Exclude<LeagueDivisionPreset, 'custom'>, string[]> = {
+  youth: ['U9', 'U11', 'U13', 'U15', 'U17'],
+  adult: ['Recreational', 'Competitive'],
+};
+
 function generateSlug(name: string): string {
   return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 }
@@ -158,6 +192,27 @@ function getDefaultTournamentForm() {
   };
 }
 
+function getDefaultLeagueSeasonForm(): LeagueSeasonForm {
+  const nextYear = new Date().getFullYear();
+  const defaultName = `${nextYear} House League`;
+  return {
+    name: defaultName,
+    slug: generateSlug(defaultName),
+    sport: 'softball',
+    ageGroup: '',
+    description: '',
+    seasonStartDate: '',
+    seasonEndDate: '',
+    registrationFee: '',
+    registrationOpenAt: '',
+    registrationCloseAt: '',
+    waiverText: '',
+    autoApproveUnderCapacity: true,
+    autoPromoteWaitlist: true,
+    autoGenerateFees: false,
+  };
+}
+
 function getDefaultDraftSkipped(): DraftSkippedState {
   return {
     tournament: false,
@@ -165,6 +220,15 @@ function getDefaultDraftSkipped(): DraftSkippedState {
     welcome: false,
     venues: false,
     contacts: false,
+  };
+}
+
+function getDefaultLeagueDraftSkipped(): LeagueDraftSkippedState {
+  return {
+    league_season: false,
+    league_divisions: false,
+    league_registration: false,
+    league_tournament: false,
   };
 }
 
@@ -214,6 +278,14 @@ function buildDivisionRows(names: string[]): DivisionRow[] {
     poolCount: 0,
     requiresPoolSelection: false,
     poolNames: ['Pool A'],
+  }));
+}
+
+function buildLeagueDivisionRows(names: string[]): LeagueDivisionRow[] {
+  return names.map((name, index) => ({
+    id: `${generateSlug(name) || 'division'}-${index + 1}`,
+    name,
+    capacity: '',
   }));
 }
 
@@ -299,7 +371,7 @@ async function requestJson<T>(input: RequestInfo | URL, init?: RequestInit): Pro
   return data as T;
 }
 
-async function markStartupTask(taskId: StartupActionTaskId, status: 'complete' | 'skipped') {
+async function markStartupTask(taskId: StartupActionTaskId | LeagueStartupActionTaskId, status: 'complete' | 'skipped') {
   return requestJson<StartupProgress>('/api/admin/org/startup-tasks', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -328,6 +400,7 @@ export default function OnboardingPage() {
   const [planLoading, setPlanLoading] = useState<OrgPlan | null>(null);
   const [planError, setPlanError] = useState('');
   const [draftSkipped, setDraftSkipped] = useState<DraftSkippedState>(getDefaultDraftSkipped);
+  const [leagueDraftSkipped, setLeagueDraftSkipped] = useState<LeagueDraftSkippedState>(getDefaultLeagueDraftSkipped);
 
   const [tournamentForm, setTournamentForm] = useState(getDefaultTournamentForm);
   const [slugEdited, setSlugEdited] = useState(false);
@@ -340,6 +413,12 @@ export default function OnboardingPage() {
   const [venueDraft, setVenueDraft] = useState<VenueFields>(buildVenueDraft);
   const [venueRows, setVenueRows] = useState<VenueRow[]>([]);
   const [contactForm, setContactForm] = useState({ name: '', email: '', phone: '', role: 'Tournament Director' });
+  const [leagueSeasonForm, setLeagueSeasonForm] = useState<LeagueSeasonForm>(getDefaultLeagueSeasonForm);
+  const [leagueSlugEdited, setLeagueSlugEdited] = useState(false);
+  const [leagueDivisionPreset, setLeagueDivisionPreset] = useState<LeagueDivisionPreset>('youth');
+  const [leagueDivisionRows, setLeagueDivisionRows] = useState<LeagueDivisionRow[]>(() => buildLeagueDivisionRows(LEAGUE_DIVISION_PRESETS.youth));
+  const [leagueCustomDivisionName, setLeagueCustomDivisionName] = useState('');
+  const [leagueWantsTournamentSetup, setLeagueWantsTournamentSetup] = useState(false);
 
   const planChoiceRequired = searchParams.get('choosePlan') === '1';
   const continueSetup = searchParams.get('continueSetup') === '1';
@@ -349,7 +428,7 @@ export default function OnboardingPage() {
     if (!currentOrg || currentOrg.onboardingCompletedAt) return false;
     if (!progress) return planChoiceRequired;
     if (progress.firstTournament) return false;
-    return STARTUP_ORDER.every(taskId => progress.tasks[taskId] !== 'complete');
+    return [...STARTUP_ORDER, ...LEAGUE_STARTUP_ORDER].every(taskId => progress.tasks[taskId] !== 'complete');
   }
 
   function getWizardResumeStep(progress: StartupProgress | null, resumeIncomplete: boolean): StartupTaskId {
@@ -442,6 +521,29 @@ export default function OnboardingPage() {
     const shouldResumeAfterPlan = continueSetup || planSelectionSucceeded;
     void showWizardStep(getWizardResumeStep(startupProgress, shouldResumeAfterPlan));
   }, [loading, currentOrg, userRole, planChoiceRequired, continueSetup, planSelectionSucceeded, startupProgress, activeModal, planChooserOpen, wizardDismissed, workflowRedirecting]);
+
+  useEffect(() => {
+    if (
+      loading ||
+      !currentOrg ||
+      userRole !== 'owner' ||
+      currentOrg.onboardingCompletedAt ||
+      planChoiceRequired ||
+      activeModal ||
+      planChooserOpen ||
+      wizardDismissed ||
+      workflowRedirecting ||
+      seasonsDone !== false
+    ) {
+      return;
+    }
+
+    const activePlan = normalizePlanId(currentOrg.planId);
+    if (activePlan !== 'league' && activePlan !== 'club') return;
+    if (!PLAN_CONFIG[activePlan].moduleEntitlements.includes('module_house_league')) return;
+
+    void showWizardStep('league-season');
+  }, [loading, currentOrg, userRole, planChoiceRequired, seasonsDone, activeModal, planChooserOpen, wizardDismissed, workflowRedirecting]);
 
   async function complete() {
     if (!currentOrg || completing) return;
@@ -542,13 +644,24 @@ export default function OnboardingPage() {
   function resetWorkflowDraftState() {
     resetTournamentModal();
     setDraftSkipped(getDefaultDraftSkipped());
+    resetLeagueSetupDraft();
     setVenueDraft(buildVenueDraft());
     setVenueRows([]);
     setContactForm({ name: '', email: currentOrg?.contactEmail ?? '', phone: '', role: 'Tournament Director' });
     setStepError('');
   }
 
-  async function showWizardStep(stepId: StartupTaskId) {
+  function resetLeagueSetupDraft() {
+    setLeagueSeasonForm(getDefaultLeagueSeasonForm());
+    setLeagueSlugEdited(false);
+    setLeagueDivisionPreset('youth');
+    setLeagueDivisionRows(buildLeagueDivisionRows(LEAGUE_DIVISION_PRESETS.youth));
+    setLeagueCustomDivisionName('');
+    setLeagueWantsTournamentSetup(false);
+    setLeagueDraftSkipped(getDefaultLeagueDraftSkipped());
+  }
+
+  async function showWizardStep(stepId: Exclude<ActiveModal, null>) {
     setStepError('');
     setActiveModal(stepId);
   }
@@ -570,18 +683,29 @@ export default function OnboardingPage() {
     setWizardDismissed(true);
   }
 
-  function getNextWizardStep(stepId: StartupTaskId): StartupTaskId | null {
-    const currentIndex = WIZARD_ORDER.indexOf(stepId);
-    return WIZARD_ORDER[currentIndex + 1] ?? null;
+  function isLeagueWizardStep(stepId: Exclude<ActiveModal, null>): stepId is LeagueWizardTaskId {
+    return (LEAGUE_WIZARD_ORDER as readonly string[]).includes(stepId);
   }
 
-  function getPreviousWizardStep(stepId: StartupTaskId): StartupTaskId | null {
+  function getWizardOrder(stepId: Exclude<ActiveModal, null>) {
+    return isLeagueWizardStep(stepId) ? LEAGUE_WIZARD_ORDER : WIZARD_ORDER;
+  }
+
+  function getNextWizardStep(stepId: Exclude<ActiveModal, null>): Exclude<ActiveModal, null> | null {
+    const order = getWizardOrder(stepId);
+    const currentIndex = (order as readonly string[]).indexOf(stepId);
+    return (order[currentIndex + 1] as Exclude<ActiveModal, null> | undefined) ?? null;
+  }
+
+  function getPreviousWizardStep(stepId: Exclude<ActiveModal, null>): Exclude<ActiveModal, null> | null {
+    if (stepId === 'league-season') return null;
     if (stepId === 'review' && draftSkipped.tournament) return 'tournament';
-    const currentIndex = WIZARD_ORDER.indexOf(stepId);
-    return currentIndex > 0 ? WIZARD_ORDER[currentIndex - 1] : null;
+    const order = getWizardOrder(stepId);
+    const currentIndex = (order as readonly string[]).indexOf(stepId);
+    return currentIndex > 0 ? (order[currentIndex - 1] as Exclude<ActiveModal, null>) : null;
   }
 
-  async function advanceWizard(stepId: StartupTaskId) {
+  async function advanceWizard(stepId: Exclude<ActiveModal, null>) {
     const nextStep = getNextWizardStep(stepId);
     if (!nextStep) {
       setActiveModal(null);
@@ -592,7 +716,7 @@ export default function OnboardingPage() {
     await showWizardStep(nextStep);
   }
 
-  async function goBackWizard(stepId: StartupTaskId) {
+  async function goBackWizard(stepId: Exclude<ActiveModal, null>) {
     const previousStep = getPreviousWizardStep(stepId);
     if (!previousStep) return;
     await showWizardStep(previousStep);
@@ -626,6 +750,44 @@ export default function OnboardingPage() {
 
   function updateDivisionRow(id: string, updater: (row: DivisionRow) => DivisionRow) {
     setDivisionRows(prev => prev.map(row => row.id === id ? updater(row) : row));
+  }
+
+  function handleLeagueSeasonNameChange(name: string) {
+    setLeagueSeasonForm(form => ({
+      ...form,
+      name,
+      slug: leagueSlugEdited ? form.slug : generateSlug(name),
+    }));
+  }
+
+  function handleLeagueSeasonSlugChange(slug: string) {
+    setLeagueSlugEdited(true);
+    setLeagueSeasonForm(form => ({ ...form, slug: slug.toLowerCase().replace(/[^a-z0-9-]/g, '') }));
+  }
+
+  function applyLeagueDivisionPreset(preset: LeagueDivisionPreset) {
+    setLeagueDivisionPreset(preset);
+    setLeagueCustomDivisionName('');
+    const names = preset === 'custom' ? [] : LEAGUE_DIVISION_PRESETS[preset];
+    setLeagueDivisionRows(buildLeagueDivisionRows(names));
+  }
+
+  function addLeagueDivisionRow() {
+    const name = leagueCustomDivisionName.trim();
+    if (!name) return;
+    setLeagueDivisionRows(prev => [
+      ...prev,
+      {
+        id: `league-custom-${prev.length + 1}-${generateSlug(name) || 'division'}`,
+        name,
+        capacity: '',
+      },
+    ]);
+    setLeagueCustomDivisionName('');
+  }
+
+  function updateLeagueDivisionRow(id: string, updater: (row: LeagueDivisionRow) => LeagueDivisionRow) {
+    setLeagueDivisionRows(prev => prev.map(row => row.id === id ? updater(row) : row));
   }
 
   function updateDivisionPools(id: string, count: number) {
@@ -783,6 +945,72 @@ export default function OnboardingPage() {
     };
   }
 
+  function getLeagueSeasonDraft() {
+    const name = leagueSeasonForm.name.trim().replace(/\s+/g, ' ');
+    const slug = leagueSeasonForm.slug || generateSlug(name);
+    const registrationFee = leagueSeasonForm.registrationFee ? Number(leagueSeasonForm.registrationFee) : null;
+
+    if (!name) throw new Error('Enter a season name before continuing.');
+    if (!slug || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) {
+      throw new Error('Use a valid public link before continuing.');
+    }
+    if (leagueSeasonForm.seasonStartDate && leagueSeasonForm.seasonStartDate < getTodayDateValue()) {
+      throw new Error('Season start date cannot be before today.');
+    }
+    if (leagueSeasonForm.seasonStartDate && leagueSeasonForm.seasonEndDate && leagueSeasonForm.seasonEndDate < leagueSeasonForm.seasonStartDate) {
+      throw new Error('Season end date cannot be before the start date.');
+    }
+    if (registrationFee !== null && (!Number.isFinite(registrationFee) || registrationFee < 0)) {
+      throw new Error('Enter a valid registration fee, or leave it blank.');
+    }
+
+    return {
+      name,
+      slug,
+      sport: leagueSeasonForm.sport || 'softball',
+      ageGroup: leagueSeasonForm.ageGroup.trim() || null,
+      description: leagueSeasonForm.description.trim() || null,
+      seasonStartDate: leagueSeasonForm.seasonStartDate || null,
+      seasonEndDate: leagueSeasonForm.seasonEndDate || null,
+      registrationFee,
+      registrationOpenAt: leagueSeasonForm.registrationOpenAt ? `${leagueSeasonForm.registrationOpenAt}:00Z` : null,
+      registrationCloseAt: leagueSeasonForm.registrationCloseAt ? `${leagueSeasonForm.registrationCloseAt}:00Z` : null,
+      waiverText: leagueSeasonForm.waiverText.trim() || null,
+      autoApproveUnderCapacity: leagueSeasonForm.autoApproveUnderCapacity,
+      autoPromoteWaitlist: leagueSeasonForm.autoPromoteWaitlist,
+      autoGenerateFees: leagueSeasonForm.autoGenerateFees,
+    };
+  }
+
+  function getLeagueDivisionDraftRows() {
+    const rows = leagueDivisionRows
+      .map(row => ({
+        name: row.name.trim(),
+        capacity: row.capacity.trim(),
+      }))
+      .filter(row => row.name);
+
+    if (rows.length === 0) throw new Error('Add at least one division, or skip this step.');
+
+    const duplicateDivision = rows.find((row, index) =>
+      rows.findIndex(other => other.name.toLowerCase() === row.name.toLowerCase()) !== index
+    );
+    if (duplicateDivision) throw new Error(`Division names must be unique. "${duplicateDivision.name}" is listed more than once.`);
+
+    const invalidCapacity = rows.find(row => {
+      if (!row.capacity) return false;
+      const capacity = Number(row.capacity);
+      return !Number.isInteger(capacity) || capacity < 1;
+    });
+    if (invalidCapacity) throw new Error(`Add a valid capacity for ${invalidCapacity.name}, or leave it blank.`);
+
+    return rows.map((row, index) => ({
+      name: row.name,
+      capacity: row.capacity ? Number(row.capacity) : null,
+      sortOrder: index,
+    }));
+  }
+
   async function saveTournamentStep() {
     try {
       const draft = getTournamentDraft();
@@ -839,6 +1067,46 @@ export default function OnboardingPage() {
     }
   }
 
+  async function saveLeagueSeasonStep() {
+    try {
+      const draft = getLeagueSeasonDraft();
+      setLeagueSeasonForm(form => ({ ...form, slug: draft.slug }));
+      setLeagueDraftSkipped(prev => ({ ...prev, league_season: false }));
+      setStepError('');
+      await advanceWizard('league-season');
+    } catch (err) {
+      setStepError(err instanceof Error ? err.message : 'Unable to continue.');
+    }
+  }
+
+  async function saveLeagueDivisionsStep() {
+    try {
+      getLeagueDivisionDraftRows();
+      setLeagueDraftSkipped(prev => ({ ...prev, league_divisions: false }));
+      setStepError('');
+      await advanceWizard('league-divisions');
+    } catch (err) {
+      setStepError(err instanceof Error ? err.message : 'Unable to continue.');
+    }
+  }
+
+  async function saveLeagueRegistrationStep() {
+    try {
+      getLeagueSeasonDraft();
+      setLeagueDraftSkipped(prev => ({ ...prev, league_registration: false }));
+      setStepError('');
+      await advanceWizard('league-registration');
+    } catch (err) {
+      setStepError(err instanceof Error ? err.message : 'Unable to continue.');
+    }
+  }
+
+  async function saveLeagueTournamentChoiceStep() {
+    setLeagueDraftSkipped(prev => ({ ...prev, league_tournament: !leagueWantsTournamentSetup }));
+    setStepError('');
+    await advanceWizard('league-tournament');
+  }
+
   function clearDraftForStep(taskId: StartupActionTaskId) {
     if (taskId === 'tournament') {
       resetTournamentModal();
@@ -872,6 +1140,45 @@ export default function OnboardingPage() {
     });
     setStepError('');
     await showWizardStep(taskId === 'tournament' ? 'review' : getNextWizardStep(taskId) ?? 'review');
+  }
+
+  function clearLeagueDraftForStep(taskId: LeagueStartupActionTaskId) {
+    if (taskId === 'league_season') {
+      resetLeagueSetupDraft();
+    }
+    if (taskId === 'league_divisions') {
+      setLeagueDivisionPreset('custom');
+      setLeagueCustomDivisionName('');
+      setLeagueDivisionRows([]);
+    }
+    if (taskId === 'league_registration') {
+      setLeagueSeasonForm(form => ({
+        ...form,
+        registrationFee: '',
+        registrationOpenAt: '',
+        registrationCloseAt: '',
+        waiverText: '',
+        autoApproveUnderCapacity: false,
+        autoPromoteWaitlist: false,
+        autoGenerateFees: false,
+      }));
+    }
+    if (taskId === 'league_tournament') {
+      setLeagueWantsTournamentSetup(false);
+    }
+  }
+
+  async function skipLeagueStep(taskId: LeagueStartupActionTaskId) {
+    clearLeagueDraftForStep(taskId);
+    setLeagueDraftSkipped(prev => {
+      if (taskId === 'league_season') {
+        return LEAGUE_STARTUP_ORDER.reduce<LeagueDraftSkippedState>((acc, step) => ({ ...acc, [step]: true }), getDefaultLeagueDraftSkipped());
+      }
+      return { ...prev, [taskId]: true };
+    });
+    setStepError('');
+    const stepName = taskId.replace('league_', 'league-') as LeagueWizardTaskId;
+    await showWizardStep(taskId === 'league_season' ? 'league-review' : getNextWizardStep(stepName) ?? 'league-review');
   }
 
   async function saveSetupDraft() {
@@ -954,6 +1261,64 @@ export default function OnboardingPage() {
       router.replace(getPostOnboardingHref(currentOrg, { hasTournament: true }));
     } catch (err) {
       setStepError(err instanceof Error ? err.message : 'Unable to save setup.');
+    } finally {
+      setStepSaving(false);
+    }
+  }
+
+  async function saveLeagueSetupDraft() {
+    if (!currentOrg) return;
+    setStepError('');
+    setStepSaving(true);
+
+    try {
+      if (leagueDraftSkipped.league_season) {
+        for (const taskId of LEAGUE_STARTUP_ORDER) {
+          await markStartupTask(taskId, 'skipped');
+        }
+        await requestJson<{ ok: boolean }>('/api/admin/org/complete-onboarding', { method: 'POST' });
+        await refreshOrgContext();
+        setWorkflowRedirecting(true);
+        router.replace(`/${currentOrg.slug}/admin`);
+        return;
+      }
+
+      const season = getLeagueSeasonDraft();
+      const divisions = leagueDraftSkipped.league_divisions ? [] : getLeagueDivisionDraftRows();
+
+      const createdSeason = await requestJson<{ id: string }>('/api/admin/house-league/seasons', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(season),
+      });
+
+      await Promise.all(divisions.map(row => requestJson<{ id: string }>(`/api/admin/house-league/seasons/${createdSeason.id}/divisions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: row.name,
+          capacity: row.capacity,
+        }),
+      })));
+
+      await markStartupTask('league_season', 'complete');
+      await markStartupTask('league_divisions', divisions.length > 0 ? 'complete' : 'skipped');
+      await markStartupTask('league_registration', leagueDraftSkipped.league_registration ? 'skipped' : 'complete');
+      await markStartupTask('league_tournament', 'skipped');
+      await requestJson<{ ok: boolean }>('/api/admin/org/complete-onboarding', { method: 'POST' });
+      await refreshStartup();
+      await refreshOrgContext();
+
+      if (leagueWantsTournamentSetup) {
+        setWorkflowRedirecting(true);
+        router.replace(`/${currentOrg.slug}/admin/tournaments/manage?create=1`);
+        return;
+      }
+
+      setWorkflowRedirecting(true);
+      router.replace(`/${currentOrg.slug}/admin`);
+    } catch (err) {
+      setStepError(err instanceof Error ? err.message : 'Unable to save league setup.');
     } finally {
       setStepSaving(false);
     }
@@ -1077,23 +1442,24 @@ export default function OnboardingPage() {
   }
 
   function renderModalFrame(title: string, description: string, children: React.ReactNode, options: {
-    stepId: StartupTaskId;
+    stepId: Exclude<ActiveModal, null>;
     saveLabel: string;
     onSave: () => void;
-    taskId?: StartupActionTaskId;
+    taskId?: StartupActionTaskId | LeagueStartupActionTaskId;
     allowSkip?: boolean;
     saveDisabled?: boolean;
     hidePrimaryAction?: boolean;
   }) {
-    const stepNumber = WIZARD_ORDER.indexOf(options.stepId) + 1;
-    const progressWidth = `${(stepNumber / WIZARD_ORDER.length) * 100}%`;
+    const wizardOrder = getWizardOrder(options.stepId);
+    const stepNumber = (wizardOrder as readonly string[]).indexOf(options.stepId) + 1;
+    const progressWidth = `${(stepNumber / wizardOrder.length) * 100}%`;
     const previousStep = getPreviousWizardStep(options.stepId);
 
     return (
       <div className={styles.modalOverlay} role="presentation">
         <div className={styles.workflowModal} role="dialog" aria-modal="true" aria-labelledby="workflow-modal-title">
           <div className={styles.wizardChrome}>
-            <span>Step {stepNumber}/{WIZARD_ORDER.length}</span>
+            <span>Step {stepNumber}/{wizardOrder.length}</span>
             <div className={styles.wizardProgressBar} aria-hidden="true">
               <span style={{ width: progressWidth }} />
             </div>
@@ -1131,7 +1497,14 @@ export default function OnboardingPage() {
             </button>
             <div className={styles.workflowFooterActions}>
               {options.allowSkip && options.taskId && (
-                <button type="button" className="btn btn-ghost" onClick={() => void skipStep(options.taskId!)} disabled={stepSaving}>
+                <button
+                  type="button"
+                  className="btn btn-ghost"
+                  onClick={() => void ((LEAGUE_STARTUP_ORDER as readonly string[]).includes(options.taskId!)
+                    ? skipLeagueStep(options.taskId as LeagueStartupActionTaskId)
+                    : skipStep(options.taskId as StartupActionTaskId))}
+                  disabled={stepSaving}
+                >
                   Skip
                 </button>
               )}
@@ -1154,6 +1527,305 @@ export default function OnboardingPage() {
         'You can begin on the free Tournament plan and upgrade later if you need more capacity or automation.',
         renderPlanChooser(false, true),
         { stepId: 'plan', saveLabel: 'Continue', onSave: () => advanceWizard('plan'), hidePrimaryAction: true }
+      );
+    }
+
+    if (activeModal === 'league-season') {
+      return renderModalFrame(
+        'Create your first season',
+        'Start with the core details parents and staff will recognize. The season stays in draft until you open registration.',
+        (
+          <div className={styles.inlineList}>
+            <div className={styles.modalGridTwo}>
+              <label className={`${styles.fieldLabel} ${styles.fullWidthField}`}>
+                Season name
+                <input
+                  className="form-input"
+                  value={leagueSeasonForm.name}
+                  onChange={e => handleLeagueSeasonNameChange(e.target.value)}
+                  placeholder="2026 House League"
+                  autoFocus
+                />
+              </label>
+              <label className={`${styles.fieldLabel} ${styles.fullWidthField}`}>
+                Public link
+                <input
+                  className="form-input"
+                  value={leagueSeasonForm.slug}
+                  onChange={e => handleLeagueSeasonSlugChange(e.target.value)}
+                  placeholder="2026-house-league"
+                />
+              </label>
+              <label className={styles.fieldLabel}>
+                Sport
+                <select
+                  className="form-select"
+                  value={leagueSeasonForm.sport}
+                  onChange={e => setLeagueSeasonForm(form => ({ ...form, sport: e.target.value }))}
+                >
+                  <option value="softball">Softball</option>
+                  <option value="baseball">Baseball</option>
+                  <option value="hockey">Hockey</option>
+                  <option value="soccer">Soccer</option>
+                  <option value="basketball">Basketball</option>
+                  <option value="other">Other</option>
+                </select>
+              </label>
+              <label className={styles.fieldLabel}>
+                Age group optional
+                <input
+                  className="form-input"
+                  value={leagueSeasonForm.ageGroup}
+                  onChange={e => setLeagueSeasonForm(form => ({ ...form, ageGroup: e.target.value }))}
+                  placeholder="U11, Adult, All ages"
+                />
+              </label>
+              <label className={styles.fieldLabel}>
+                Season starts optional
+                <input
+                  className="form-input"
+                  type="date"
+                  min={todayDate}
+                  value={leagueSeasonForm.seasonStartDate}
+                  onChange={e => setLeagueSeasonForm(form => ({ ...form, seasonStartDate: e.target.value }))}
+                />
+              </label>
+              <label className={styles.fieldLabel}>
+                Season ends optional
+                <input
+                  className="form-input"
+                  type="date"
+                  min={leagueSeasonForm.seasonStartDate || todayDate}
+                  value={leagueSeasonForm.seasonEndDate}
+                  onChange={e => setLeagueSeasonForm(form => ({ ...form, seasonEndDate: e.target.value }))}
+                />
+              </label>
+              <label className={`${styles.fieldLabel} ${styles.fullWidthField}`}>
+                Public description optional
+                <textarea
+                  className="form-textarea"
+                  rows={3}
+                  value={leagueSeasonForm.description}
+                  onChange={e => setLeagueSeasonForm(form => ({ ...form, description: e.target.value }))}
+                  placeholder="A short description for the public registration page."
+                />
+              </label>
+            </div>
+          </div>
+        ),
+        { stepId: 'league-season', saveLabel: 'Next', onSave: saveLeagueSeasonStep, taskId: 'league_season', allowSkip: true }
+      );
+    }
+
+    if (activeModal === 'league-divisions') {
+      return renderModalFrame(
+        'Set up divisions',
+        'Create the registration groups parents will choose from. Capacities can be blank if you do not need hard limits yet.',
+        (
+          <div className={styles.inlineList}>
+            <div className={styles.divisionPresetGrid}>
+              {(['youth', 'adult', 'custom'] as LeagueDivisionPreset[]).map(preset => (
+                <button
+                  key={preset}
+                  type="button"
+                  className={`${styles.presetCard} ${leagueDivisionPreset === preset ? styles.presetCardActive : ''}`}
+                  onClick={() => applyLeagueDivisionPreset(preset)}
+                >
+                  <strong>{preset === 'youth' ? 'Youth starter' : preset === 'adult' ? 'Adult starter' : 'Custom'}</strong>
+                  <span>{preset === 'custom' ? 'Start with a blank list.' : `Adds ${LEAGUE_DIVISION_PRESETS[preset].join(', ')}.`}</span>
+                </button>
+              ))}
+            </div>
+
+            <div className={styles.inlineActions}>
+              <input
+                className="form-input"
+                value={leagueCustomDivisionName}
+                onChange={e => setLeagueCustomDivisionName(e.target.value)}
+                placeholder="Add division name"
+              />
+              <button type="button" className="btn btn-outline btn-sm" onClick={addLeagueDivisionRow}>
+                <Plus size={14} /> Add
+              </button>
+            </div>
+
+            <div className={styles.divisionList}>
+              {leagueDivisionRows.map(row => (
+                <div key={row.id} className={styles.divisionRow}>
+                  <input
+                    className="form-input"
+                    value={row.name}
+                    onChange={e => updateLeagueDivisionRow(row.id, current => ({ ...current, name: e.target.value }))}
+                    placeholder="Division name"
+                  />
+                  <input
+                    className="form-input"
+                    type="number"
+                    min="1"
+                    value={row.capacity}
+                    onChange={e => updateLeagueDivisionRow(row.id, current => ({ ...current, capacity: e.target.value }))}
+                    placeholder="Capacity"
+                    aria-label={`${row.name || 'Division'} capacity`}
+                  />
+                  <button type="button" className={styles.iconOnlyButton} onClick={() => setLeagueDivisionRows(prev => prev.filter(item => item.id !== row.id))} aria-label={`Remove ${row.name || 'division'}`}>
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+              ))}
+              {leagueDivisionRows.length === 0 && (
+                <div className={styles.emptyModalState}>Add at least one division to continue.</div>
+              )}
+            </div>
+          </div>
+        ),
+        { stepId: 'league-divisions', saveLabel: 'Next', onSave: saveLeagueDivisionsStep, taskId: 'league_divisions', allowSkip: true }
+      );
+    }
+
+    if (activeModal === 'league-registration') {
+      return renderModalFrame(
+        'Configure registration',
+        'Set the defaults that control how public submissions are handled when registration opens.',
+        (
+          <div className={styles.inlineList}>
+            <div className={styles.modalGridTwo}>
+              <label className={styles.fieldLabel}>
+                Registration opens optional
+                <input
+                  className="form-input"
+                  type="datetime-local"
+                  value={leagueSeasonForm.registrationOpenAt}
+                  onChange={e => setLeagueSeasonForm(form => ({ ...form, registrationOpenAt: e.target.value }))}
+                />
+              </label>
+              <label className={styles.fieldLabel}>
+                Registration closes optional
+                <input
+                  className="form-input"
+                  type="datetime-local"
+                  value={leagueSeasonForm.registrationCloseAt}
+                  onChange={e => setLeagueSeasonForm(form => ({ ...form, registrationCloseAt: e.target.value }))}
+                />
+              </label>
+              <label className={`${styles.fieldLabel} ${styles.fullWidthField}`}>
+                Registration fee optional
+                <input
+                  className="form-input"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={leagueSeasonForm.registrationFee}
+                  onChange={e => setLeagueSeasonForm(form => ({ ...form, registrationFee: e.target.value }))}
+                  placeholder="Display-only fee, e.g. 150.00"
+                />
+              </label>
+              <label className={`${styles.fieldLabel} ${styles.fullWidthField}`}>
+                Waiver text optional
+                <textarea
+                  className="form-textarea"
+                  rows={4}
+                  value={leagueSeasonForm.waiverText}
+                  onChange={e => setLeagueSeasonForm(form => ({ ...form, waiverText: e.target.value }))}
+                  placeholder="Shown on the public registration form."
+                />
+              </label>
+            </div>
+
+            <div className={styles.setupBlock}>
+              <div className={styles.setupBlockHeader}>
+                <span>Automation</span>
+                <small>These can be changed later.</small>
+              </div>
+              {[
+                ['autoApproveUnderCapacity', 'Auto-approve while spots are open'],
+                ['autoPromoteWaitlist', 'Auto-promote from waitlist'],
+                ['autoGenerateFees', 'Auto-generate accounting fee entries'],
+              ].map(([key, label]) => (
+                <label key={key} className={styles.checkboxLine}>
+                  <input
+                    type="checkbox"
+                    checked={Boolean(leagueSeasonForm[key as keyof LeagueSeasonForm])}
+                    onChange={e => setLeagueSeasonForm(form => ({ ...form, [key]: e.target.checked }))}
+                  />
+                  {label}
+                </label>
+              ))}
+            </div>
+          </div>
+        ),
+        { stepId: 'league-registration', saveLabel: 'Next', onSave: saveLeagueRegistrationStep, taskId: 'league_registration', allowSkip: true }
+      );
+    }
+
+    if (activeModal === 'league-tournament') {
+      return renderModalFrame(
+        'Add a tournament?',
+        'Tournament setup is optional for house league onboarding. If you want it now, the existing tournament wizard opens after league setup is saved.',
+        (
+          <div className={styles.setupBlock}>
+            <label className={styles.checkboxLine}>
+              <input
+                type="checkbox"
+                checked={leagueWantsTournamentSetup}
+                onChange={e => setLeagueWantsTournamentSetup(e.target.checked)}
+              />
+              Set up a tournament after this league season is saved
+            </label>
+            <div className={styles.emptyModalState}>
+              Leaving this unchecked keeps the league workflow focused. You can create tournaments later from Tournament Management.
+            </div>
+          </div>
+        ),
+        { stepId: 'league-tournament', saveLabel: 'Next', onSave: saveLeagueTournamentChoiceStep, taskId: 'league_tournament', allowSkip: true }
+      );
+    }
+
+    if (activeModal === 'league-review') {
+      const leagueDivisions = leagueDraftSkipped.league_divisions ? [] : leagueDivisionRows.filter(row => row.name.trim());
+
+      return renderModalFrame(
+        leagueDraftSkipped.league_season ? 'Finish setup' : 'Review and save',
+        leagueDraftSkipped.league_season
+          ? 'No house league season will be created. You can create one later from House League.'
+          : 'Saving creates a draft season. Registration is not public until you open it.',
+        leagueDraftSkipped.league_season ? (
+          <div className={styles.reviewPanel}>
+            <div className={styles.emptyModalState}>
+              You skipped league season creation, so no season, divisions, or registration settings will be created.
+            </div>
+          </div>
+        ) : (
+          <div className={styles.reviewPanel}>
+            <div className={styles.reviewItem}>
+              <span>Season</span>
+              <strong>{leagueSeasonForm.name.trim() || 'Not named yet'}</strong>
+            </div>
+            <div className={styles.reviewItem}>
+              <span>Divisions</span>
+              <strong>{leagueDivisions.length > 0 ? `${leagueDivisions.length} included` : 'Skipped'}</strong>
+            </div>
+            <div className={styles.reviewItem}>
+              <span>Registration</span>
+              <strong>{leagueDraftSkipped.league_registration ? 'Skipped for now' : 'Draft settings included'}</strong>
+            </div>
+            <div className={styles.reviewItem}>
+              <span>Public visibility</span>
+              <strong>Not live yet</strong>
+            </div>
+            <div className={styles.reviewItem}>
+              <span>Tournament setup</span>
+              <strong>{leagueWantsTournamentSetup ? 'Open next' : 'Later'}</strong>
+            </div>
+            <div className={styles.emptyModalState}>
+              After saving, only admins can work on this season. Parents will not see registration until you open registration from the season page.
+            </div>
+          </div>
+        ),
+        {
+          stepId: 'league-review',
+          saveLabel: leagueDraftSkipped.league_season ? 'Finish for now' : 'Save setup',
+          onSave: saveLeagueSetupDraft,
+        }
       );
     }
 
@@ -1621,7 +2293,7 @@ export default function OnboardingPage() {
         <div className={styles.redirectPanel}>
           <div className={styles.headerIcon}><Rocket size={22} /></div>
           <div>
-            <h1 className={styles.title}>Opening tournament admin</h1>
+            <h1 className={styles.title}>Opening admin</h1>
             <p className={styles.sub}>Your setup is saved. Taking you to the right workspace now.</p>
           </div>
         </div>
@@ -1689,6 +2361,34 @@ export default function OnboardingPage() {
                   Set up a house league season with divisions, registration, and scheduling.
                 </div>
               </div>
+              <button
+                type="button"
+                className={`${styles.stepCta} ${seasonsDone ? styles.stepCtaSecondary : ''}`}
+                onClick={() => seasonsDone ? router.push(`/${currentOrg.slug}/admin/house-league`) : showWizardStep('league-season')}
+              >
+                {seasonsDone ? 'View seasons' : 'Start setup'} <ArrowRight size={13} />
+              </button>
+            </div>
+          )}
+
+          {entitlements.includes('module_tournaments') && (
+            <div className={`${styles.step} ${startupProgress?.firstTournament ? styles.stepDone : ''}`}>
+              <div className={styles.stepIcon}>
+                {startupProgress?.firstTournament ? <CheckCircle2 size={20} /> : <Circle size={20} />}
+              </div>
+              <div className={styles.stepBody}>
+                <div className={styles.stepTitle}>Optional: set up a tournament</div>
+                <div className={styles.stepDesc}>
+                  Create a tournament only if your league also runs events or weekend showcases.
+                </div>
+              </div>
+              <button
+                type="button"
+                className={`${styles.stepCta} ${styles.stepCtaSecondary}`}
+                onClick={() => router.push(`/${currentOrg.slug}/admin/tournaments/manage?create=1`)}
+              >
+                {startupProgress?.firstTournament ? 'View tournaments' : 'Open wizard'} <ArrowRight size={13} />
+              </button>
             </div>
           )}
 

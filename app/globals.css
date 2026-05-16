@@ -8,15 +8,15 @@
 /* ─── Design Tokens ─────────────────────────────────────────────────────────── */
 :root {
   --bg:          #0A0A0A;
-  --bg-2:        #14101F;
-  --bg-3:        #1E1830;
-  --surface:     #1A1530;
-  --surface-2:   #251E3E;
+  --bg-2:        #0F172A;
+  --bg-3:        #111827;
+  --surface:     #111827;
+  --surface-2:   #0F172A;
 
   /* Primary color — overridden per-org via inline style on [orgSlug] wrapper */
-  --primary-rgb:   139, 47, 201;
-  --primary:       #8B2FC9;
-  --primary-light: #A855F7;
+  --primary-rgb:   30, 58, 138;
+  --primary:       #1E3A8A;
+  --primary-light: #D9F99D;
   --primary-glow:  rgba(var(--primary-rgb), 0.35);
   --primary-faint: rgba(var(--primary-rgb), 0.08);
 
@@ -25,6 +25,7 @@
 
   --white:       #FFFFFF;
   --white-90:    rgba(255, 255, 255, 0.9);
+  --white-70:    rgba(255, 255, 255, 0.7);
   --white-60:    rgba(255, 255, 255, 0.6);
   --white-30:    rgba(255, 255, 255, 0.3);
   --white-10:    rgba(255, 255, 255, 0.1);
@@ -74,6 +75,7 @@
   --white:       #0F1123;
   --white-90:    rgba(15, 17, 35, 0.9);
   --white-80:    rgba(15, 17, 35, 0.8);
+  --white-70:    rgba(15, 17, 35, 0.7);
   --white-60:    rgba(15, 17, 35, 0.6);
   --white-50:    rgba(15, 17, 35, 0.5);
   --white-45:    rgba(15, 17, 35, 0.45);
@@ -97,10 +99,18 @@
   --nav-mobile-bg:   rgba(245, 247, 252, 0.99);
 }
 
-/* Light-mode: body text + background */
-[data-color-mode="light"] body {
+/* Light-mode: public site wrapper text + background */
+[data-card-style][data-color-mode="light"] {
+  --primary-light: var(--primary);
   background: var(--bg);
   color: var(--white);
+  min-height: 100vh;
+}
+
+[data-card-style][data-color-mode="dark"] {
+  background: var(--bg);
+  color: var(--white);
+  min-height: 100vh;
 }
 
 /* Light-mode: card glass variants */
@@ -362,6 +372,44 @@ h1, h2, h3, h4, h5, h6 {
 
 .btn-sm { padding: 0.375rem 0.75rem; font-size: 0.875rem; }
 .btn-lg { padding: 0.875rem 2rem; font-size: 1.125rem; }
+
+/* Public tournament color modes: bright accents work on dark surfaces, while
+   light surfaces need the darker primary for readable buttons, badges, and links. */
+[data-color-mode] .btn-primary {
+  background: var(--primary);
+  color: #FFFFFF;
+  box-shadow: 0 10px 24px rgba(var(--primary-rgb), 0.22);
+}
+
+[data-color-mode] .btn-primary:hover {
+  background: color-mix(in srgb, var(--primary) 88%, #000 12%);
+  box-shadow: 0 12px 30px rgba(var(--primary-rgb), 0.28);
+}
+
+[data-color-mode="light"] .btn-outline {
+  background: rgba(255, 255, 255, 0.58);
+  color: var(--primary);
+  border-color: rgba(var(--primary-rgb), 0.55);
+}
+
+[data-color-mode="light"] .btn-outline:hover {
+  background: rgba(var(--primary-rgb), 0.08);
+}
+
+[data-color-mode="light"] .badge-primary,
+[data-color-mode="light"] .badge-purple,
+[data-color-mode="light"] .text-primary,
+[data-color-mode="light"] .text-purple {
+  color: var(--primary);
+}
+
+[data-color-mode="light"] .section-header .eyebrow {
+  color: var(--primary);
+}
+
+[data-color-mode="light"] .section-header .eyebrow svg {
+  color: var(--primary);
+}
 
 /* ─── Badges ─────────────────────────────────────────────────────────────────── */
 .badge {

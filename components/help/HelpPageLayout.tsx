@@ -104,11 +104,11 @@ export default function HelpPageLayout({
   }, [faqMatches, normalizedQuery, sections]);
 
   const groupedSections = useMemo(() => {
-    const groups = new Map<string, Array<{ section: HelpSection; id: string; index: number }>>();
-    visibleSections.forEach((section, index) => {
+    const groups = new Map<string, Array<{ section: HelpSection; id: string }>>();
+    visibleSections.filter(section => !section.hideFromContents).forEach(section => {
       const group = section.group ?? 'Guide';
       const items = groups.get(group) ?? [];
-      items.push({ section, id: sectionId(section, sections.indexOf(section)), index });
+      items.push({ section, id: sectionId(section, sections.indexOf(section)) });
       groups.set(group, items);
     });
     return [...groups.entries()];
@@ -121,130 +121,143 @@ export default function HelpPageLayout({
 
   return (
     <div className={styles.helpPage}>
-      <div className={styles.helpPageHeader}>
-        <h1 className={styles.helpPageTitle}>{title}</h1>
-        <span className={styles.helpRoleBadge}>For: {role}</span>
-      </div>
-      <p className={styles.helpIntro}>{intro}</p>
-
-      <div className={styles.helpSearchPanel}>
-        <label className={styles.helpSearchLabel} htmlFor="help-search">
-          Search this guide
-        </label>
-        <div className={styles.helpSearchBox}>
-          <Search size={16} className={styles.helpSearchIcon} />
-          <input
-            id="help-search"
-            type="search"
-            value={query}
-            onChange={event => setQuery(event.target.value)}
-            placeholder={searchPlaceholder ?? 'Search help...'}
-            className={styles.helpSearchInput}
-          />
-          {query && (
-            <button
-              type="button"
-              onClick={() => setQuery('')}
-              className={styles.helpSearchClear}
-              aria-label="Clear search"
-            >
-              <X size={14} />
-            </button>
-          )}
-        </div>
-        {hasSearch && (
-          <p className={styles.helpSearchMeta}>
-            {hasResults
-              ? `${visibleSections.length} section${visibleSections.length === 1 ? '' : 's'} and ${displayedFaqs.length} FAQ${displayedFaqs.length === 1 ? '' : 's'} found`
-              : 'No matching help found. Try a broader search term.'}
-          </p>
-        )}
-      </div>
-
-      {!hasSearch && popularFaqs.length > 0 && (
-        <div className={styles.quickAnswers}>
-          <h2 className={styles.helpUtilityTitle}>Popular Questions</h2>
-          <div className={styles.quickAnswerGrid}>
-            {popularFaqs.map(faq => (
-              <a key={faq.resolvedId} href={`#${faq.resolvedId}`} className={styles.quickAnswerLink}>
-                {faq.question}
-              </a>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {visibleSections.length > 0 && (
-        <nav className={styles.helpToc} aria-label="Guide contents">
-          <h2 className={styles.helpUtilityTitle}>Contents</h2>
-          <div className={styles.helpTocGroups}>
-            {groupedSections.map(([group, items]) => (
-              <div key={group} className={styles.helpTocGroup}>
-                <p className={styles.helpTocGroupTitle}>{group}</p>
-                <div className={styles.helpTocLinks}>
-                  {items.map(({ section, id }) => (
-                    <a key={id} href={`#${id}`} className={styles.helpTocLink}>
-                      <span>{section.heading}</span>
-                      {section.summary && <em>{section.summary}</em>}
-                    </a>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        </nav>
-      )}
-
-      <div className={styles.helpSections}>
-        {visibleSections.map((section, i) => {
-          const originalIndex = sections.indexOf(section);
-          const id = sectionId(section, originalIndex >= 0 ? originalIndex : i);
-          return (
-          <section key={id} id={id} className={styles.helpSection}>
-            <div className={styles.helpSectionHeader}>
-              <div>
-                {section.group && <p className={styles.helpSectionGroup}>{section.group}</p>}
-                <h2 className={styles.helpSectionHeading}>{section.heading}</h2>
-              </div>
-              {section.links && section.links.length > 0 && (
-                <div className={styles.helpSectionLinks}>
-                  {section.links.map(link => (
-                    <Link key={link.href} href={link.href} className={styles.helpSectionLink}>
-                      {link.label}
-                    </Link>
-                  ))}
-                </div>
+      <aside className={styles.helpSidePanel} aria-label="Help navigation">
+        <div className={styles.helpSideInner}>
+          <div className={styles.helpSearchPanel}>
+            <label className={styles.helpSearchLabel} htmlFor="help-search">
+              Search this guide
+            </label>
+            <div className={styles.helpSearchBox}>
+              <Search size={16} className={styles.helpSearchIcon} />
+              <input
+                id="help-search"
+                type="search"
+                value={query}
+                onChange={event => setQuery(event.target.value)}
+                placeholder={searchPlaceholder ?? 'Search help...'}
+                className={styles.helpSearchInput}
+              />
+              {query && (
+                <button
+                  type="button"
+                  onClick={() => setQuery('')}
+                  className={styles.helpSearchClear}
+                  aria-label="Clear search"
+                >
+                  <X size={14} />
+                </button>
               )}
             </div>
-            {section.summary && <p className={styles.helpSectionSummary}>{section.summary}</p>}
-            <div className={styles.helpSectionContent}>{section.content}</div>
-          </section>
-        )})}
-      </div>
-
-      {indexedFaqs.length > 0 && (
-        <section className={styles.helpFaqSection} aria-labelledby="help-faq-heading">
-          <div className={styles.helpFaqHeader}>
-            <h2 id="help-faq-heading" className={styles.helpUtilityTitle}>FAQs</h2>
-            <span>{displayedFaqs.length} question{displayedFaqs.length === 1 ? '' : 's'}</span>
+            {hasSearch && (
+              <p className={styles.helpSearchMeta}>
+                {hasResults
+                  ? `${visibleSections.length} section${visibleSections.length === 1 ? '' : 's'} and ${displayedFaqs.length} FAQ${displayedFaqs.length === 1 ? '' : 's'} found`
+                  : 'No matching help found. Try a broader search term.'}
+              </p>
+            )}
           </div>
-          {displayedFaqs.length === 0 ? (
-            <p className={styles.helpNoResults}>No FAQs match this search.</p>
-          ) : (
-            <div className={styles.helpFaqList}>
-              {displayedFaqs.map(faq => (
-                <details key={faq.resolvedId} id={faq.resolvedId} className={styles.helpFaqItem} open={hasSearch}>
-                  <summary>
-                    <span>{faq.question}</span>
-                    {faq.group && <em>{faq.group}</em>}
-                  </summary>
-                  <div className={styles.helpFaqAnswer}>{faq.answer}</div>
-                </details>
-              ))}
+
+          {!hasSearch && popularFaqs.length > 0 && (
+            <div className={styles.quickAnswers}>
+              <h2 className={styles.helpUtilityTitle}>Popular Questions</h2>
+              <div className={styles.quickAnswerGrid}>
+                {popularFaqs.map(faq => (
+                  <a key={faq.resolvedId} href={`#${faq.resolvedId}`} className={styles.quickAnswerLink}>
+                    {faq.question}
+                  </a>
+                ))}
+              </div>
             </div>
           )}
-        </section>
-      )}
+
+          {groupedSections.length > 0 && (
+            <nav className={styles.helpToc} aria-label="Guide contents">
+              <h2 className={styles.helpUtilityTitle}>Contents</h2>
+              <div className={styles.helpTocGroups}>
+                {groupedSections.map(([group, items]) => (
+                  <div key={group} className={styles.helpTocGroup}>
+                    <p className={styles.helpTocGroupTitle}>{group}</p>
+                    <div className={styles.helpTocLinks}>
+                      {items.map(({ section, id }) => (
+                        <a key={id} href={`#${id}`} className={styles.helpTocLink}>
+                          <span>{section.heading}</span>
+                          {section.summary && <em>{section.summary}</em>}
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </nav>
+          )}
+        </div>
+      </aside>
+
+      <main className={styles.helpMain}>
+        <div className={styles.helpPageHeader}>
+          <h1 className={styles.helpPageTitle}>{title}</h1>
+          <span className={styles.helpRoleBadge}>For: {role}</span>
+        </div>
+        <p className={styles.helpIntro}>{intro}</p>
+
+        {!hasResults && (
+          <div className={styles.helpEmptyResults}>
+            <p className={styles.emptyStateTitle}>No matching help found</p>
+            <p className={styles.emptyStateSub}>Try a broader term like schedule, scores, registration, or archive.</p>
+          </div>
+        )}
+
+        <div className={styles.helpSections}>
+          {visibleSections.map((section, i) => {
+            const originalIndex = sections.indexOf(section);
+            const id = sectionId(section, originalIndex >= 0 ? originalIndex : i);
+            return (
+            <section key={id} id={id} className={styles.helpSection}>
+              <div className={styles.helpSectionHeader}>
+                <div>
+                  {section.group && <p className={styles.helpSectionGroup}>{section.group}</p>}
+                  <h2 className={styles.helpSectionHeading}>{section.heading}</h2>
+                </div>
+                {section.links && section.links.length > 0 && (
+                  <div className={styles.helpSectionLinks}>
+                    {section.links.map(link => (
+                      <Link key={link.href} href={link.href} className={styles.helpSectionLink}>
+                        {link.label}
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
+              {section.summary && <p className={styles.helpSectionSummary}>{section.summary}</p>}
+              <div className={styles.helpSectionContent}>{section.content}</div>
+            </section>
+          )})}
+        </div>
+
+        {indexedFaqs.length > 0 && (
+          <section className={styles.helpFaqSection} aria-labelledby="help-faq-heading">
+            <div className={styles.helpFaqHeader}>
+              <h2 id="help-faq-heading" className={styles.helpUtilityTitle}>FAQs</h2>
+              <span>{displayedFaqs.length} question{displayedFaqs.length === 1 ? '' : 's'}</span>
+            </div>
+            {displayedFaqs.length === 0 ? (
+              <p className={styles.helpNoResults}>No FAQs match this search.</p>
+            ) : (
+              <div className={styles.helpFaqList}>
+                {displayedFaqs.map(faq => (
+                  <details key={faq.resolvedId} id={faq.resolvedId} className={styles.helpFaqItem} open={hasSearch}>
+                    <summary>
+                      <span>{faq.question}</span>
+                      {faq.group && <em>{faq.group}</em>}
+                    </summary>
+                    <div className={styles.helpFaqAnswer}>{faq.answer}</div>
+                  </details>
+                ))}
+              </div>
+            )}
+          </section>
+        )}
+      </main>
     </div>
   );
 }

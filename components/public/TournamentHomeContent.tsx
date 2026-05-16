@@ -3,6 +3,8 @@ import { Calendar, Trophy, ChevronRight, Megaphone, Star, Eye } from 'lucide-rea
 import { getAnnouncements, getGames, getTeams, getAgeGroups, getDiamonds } from '@/lib/db';
 import type { Organization, Tournament } from '@/lib/types';
 import { formatTime } from '@/lib/utils';
+import { isPublicPageEnabled } from '@/lib/public-pages';
+import { canUseAdvancedTournamentBranding } from '@/lib/tournament-branding';
 import LocationLink from '@/components/LocationLink';
 import styles from '@/app/[orgSlug]/Home.module.css';
 
@@ -97,23 +99,37 @@ export default async function TournamentHomeContent({
   const canRegister = registration.state === 'open' || registration.state === 'waitlist';
   const publicBase = `/${orgSlug}/${tournamentSlug}`;
   const adminTournamentBase = `/${orgSlug}/admin/tournaments`;
+  const previewBase = `${adminTournamentBase}/preview/${tournamentSlug}`;
+  const usePreviewLinks = isPreview;
   const useAdminLinks = isPreview && tournament.status === 'draft';
+  const showNewsPage = isPublicPageEnabled(tournament, 'news');
+  const showSchedulePage = isPublicPageEnabled(tournament, 'schedule');
+  const showStandingsPage = isPublicPageEnabled(tournament, 'standings');
+  const showRulesPage = isPublicPageEnabled(tournament, 'rules');
+  const showRegistrationPage = isPublicPageEnabled(tournament, 'register');
   const previewLabel = tournament.status === 'draft'
     ? 'Admin preview. This draft tournament is not publicly visible until it is activated.'
     : 'Admin preview. You are viewing this tournament page from inside the admin workspace.';
-  const scheduleHref = useAdminLinks ? `${adminTournamentBase}/schedule` : `${publicBase}/schedule`;
-  const newsHref = useAdminLinks ? `${adminTournamentBase}/announcements` : `${publicBase}/news`;
-  const rulesHref = useAdminLinks ? `${adminTournamentBase}/rules` : `${publicBase}/rules`;
-  const primaryHref = useAdminLinks
-    ? `/${orgSlug}/admin/tournaments/manage`
-    : canRegister
-    ? `/${orgSlug}/${tournamentSlug}/register`
-    : `/${orgSlug}/${tournamentSlug}/${registration.state === 'completed' ? 'standings' : 'schedule'}`;
-  const primaryLabel = useAdminLinks
-    ? 'Continue Setup'
-    : canRegister
-    ? (registration.state === 'waitlist' ? 'Join Waitlist' : 'Register Team')
-    : (registration.state === 'completed' ? 'View Results' : 'View Schedule');
+  const scheduleHref = usePreviewLinks ? `${previewBase}/schedule` : `${publicBase}/schedule`;
+  const newsHref = usePreviewLinks ? `${previewBase}/news` : `${publicBase}/news`;
+  const rulesHref = usePreviewLinks ? `${previewBase}/rules` : `${publicBase}/rules`;
+  const primaryBase = usePreviewLinks ? previewBase : publicBase;
+  const primaryCta = (() => {
+    if (canRegister && showRegistrationPage) {
+      return {
+        href: `${primaryBase}/register`,
+        label: registration.state === 'waitlist' ? 'Join Waitlist' : 'Register Team',
+      };
+    }
+    if (registration.state === 'completed' && showStandingsPage) {
+      return { href: `${primaryBase}/standings`, label: 'View Results' };
+    }
+    if (showSchedulePage) return { href: `${primaryBase}/schedule`, label: 'View Schedule' };
+    if (showStandingsPage) return { href: `${primaryBase}/standings`, label: 'View Standings' };
+    if (showNewsPage) return { href: `${primaryBase}/news`, label: 'View News' };
+    return null;
+  })();
+  const showPrimaryCta = !useAdminLinks && !!primaryCta;
 
   const startDate = tournament.startDate;
   const endDate   = tournament.endDate;
@@ -164,7 +180,9 @@ export default async function TournamentHomeContent({
     });
   }
 
-  const heroBanner = tournament.heroBannerUrl ?? org.heroBannerUrl ?? null;
+  const heroBanner = canUseAdvancedTournamentBranding(org)
+    ? tournament.heroBannerUrl ?? org.heroBannerUrl ?? null
+    : org.heroBannerUrl ?? null;
 
   return (
     <div className={styles.page}>
@@ -208,8 +226,7 @@ export default async function TournamentHomeContent({
             {tournament.name}
           </h1>
           <p className={styles.heroSub}>
-            Hosted by <strong>{org.name}</strong>. View schedules, results, teams,
-            and tournament rules in one place.
+            Hosted by <strong>{org.name}</strong>. View tournament details and updates in one place.
           </p>
 
           <div className={styles.registrationStatus}>
@@ -218,15 +235,21 @@ export default async function TournamentHomeContent({
           </div>
 
           <div className={styles.heroCta}>
-            <Link href={primaryHref} className="btn btn-primary btn-lg" id="hero-primary-btn">
-              {primaryLabel}
-            </Link>
-            <Link href={scheduleHref} className="btn btn-outline btn-lg" id="hero-schedule-btn">
-              <Calendar size={18} /> View Schedule
-            </Link>
-            <Link href={newsHref} className="btn btn-outline btn-lg" id="hero-news-btn">
-              <Megaphone size={18} /> Announcements
-            </Link>
+            {showPrimaryCta && (
+              <Link href={primaryCta!.href} className="btn btn-primary btn-lg" id="hero-primary-btn">
+                {primaryCta!.label}
+              </Link>
+            )}
+            {showSchedulePage && (
+              <Link href={scheduleHref} className="btn btn-outline btn-lg" id="hero-schedule-btn">
+                <Calendar size={18} /> View Schedule
+              </Link>
+            )}
+            {showNewsPage && (
+              <Link href={newsHref} className="btn btn-outline btn-lg" id="hero-news-btn">
+                <Megaphone size={18} /> Announcements
+              </Link>
+            )}
           </div>
 
           <div className={styles.stats}>
@@ -252,6 +275,7 @@ export default async function TournamentHomeContent({
         </div>
       </section>
 
+      {showNewsPage && (
       <section className={`section ${styles.announcementsSection}`} id="announcements">
         <div className="container">
           <div className="section-header">
@@ -296,7 +320,9 @@ export default async function TournamentHomeContent({
           </div>
         </div>
       </section>
+      )}
 
+      {showSchedulePage && (
       <section className="section" id="schedule">
         <div className="container">
           <div className="section-header">
@@ -340,6 +366,7 @@ export default async function TournamentHomeContent({
           </div>
         </div>
       </section>
+      )}
 
       <section className={styles.ctaSection}>
         <div className={styles.ctaBg} />
@@ -347,14 +374,18 @@ export default async function TournamentHomeContent({
           <div className={styles.ctaContent}>
             <Trophy size={40} className={styles.ctaIcon} />
             <h2 className="display-md">{canRegister ? 'Ready to Register?' : 'Follow the Tournament'}</h2>
-            <p>{canRegister ? 'Submit your team registration and watch for organizer updates.' : 'Check the schedule, standings, and rules for tournament updates.'}</p>
+            <p>{canRegister && showRegistrationPage ? 'Submit your team registration and watch for organizer updates.' : 'Follow tournament updates from the available public pages.'}</p>
             <div className={styles.ctaButtons}>
-              <Link href={primaryHref} className="btn btn-primary btn-lg" id="cta-primary-btn">
-                {primaryLabel}
-              </Link>
-              <Link href={rulesHref} className="btn btn-ghost btn-lg" id="cta-rules-btn">
-                Tournament Rules
-              </Link>
+              {showPrimaryCta && (
+                <Link href={primaryCta!.href} className="btn btn-primary btn-lg" id="cta-primary-btn">
+                  {primaryCta!.label}
+                </Link>
+              )}
+              {showRulesPage && (
+                <Link href={rulesHref} className="btn btn-ghost btn-lg" id="cta-rules-btn">
+                  Tournament Rules
+                </Link>
+              )}
             </div>
           </div>
         </div>

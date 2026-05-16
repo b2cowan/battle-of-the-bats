@@ -2,7 +2,17 @@ import { NextResponse } from 'next/server';
 import { getAuthContextWithRole, unauthorized } from '@/lib/api-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 
-type StartupTaskId = 'plan' | 'tournament' | 'divisions' | 'welcome' | 'venues' | 'contacts';
+type StartupTaskId =
+  | 'plan'
+  | 'tournament'
+  | 'divisions'
+  | 'welcome'
+  | 'venues'
+  | 'contacts'
+  | 'league_season'
+  | 'league_divisions'
+  | 'league_registration'
+  | 'league_tournament';
 type StartupTaskStatus = 'pending' | 'complete' | 'skipped';
 type StoredStartupTasks = Partial<Record<StartupTaskId, { status: Exclude<StartupTaskStatus, 'pending'>; updatedAt: string }>>;
 type StoredStartupRead = {
@@ -10,7 +20,18 @@ type StoredStartupRead = {
   storageAvailable: boolean;
 };
 
-const TASK_IDS: StartupTaskId[] = ['plan', 'tournament', 'divisions', 'welcome', 'venues', 'contacts'];
+const TASK_IDS: StartupTaskId[] = [
+  'plan',
+  'tournament',
+  'divisions',
+  'welcome',
+  'venues',
+  'contacts',
+  'league_season',
+  'league_divisions',
+  'league_registration',
+  'league_tournament',
+];
 
 function isStartupTaskId(value: unknown): value is StartupTaskId {
   return typeof value === 'string' && TASK_IDS.includes(value as StartupTaskId);
@@ -69,7 +90,17 @@ async function buildProgress(
 
   if (tournamentError) throw tournamentError;
 
+  const { data: leagueSeasons, error: leagueSeasonError } = await supabaseAdmin
+    .from('league_seasons')
+    .select('id')
+    .eq('org_id', orgId)
+    .neq('status', 'archived')
+    .limit(1);
+
+  if (leagueSeasonError) throw leagueSeasonError;
+
   const firstTournament = tournaments?.[0] ?? null;
+  const firstLeagueSeason = leagueSeasons?.[0] ?? null;
   const wizardAvailable = !firstTournament;
 
   const dataComplete: Record<StartupTaskId, boolean> = {
@@ -79,6 +110,10 @@ async function buildProgress(
     welcome: false,
     venues: false,
     contacts: false,
+    league_season: !!firstLeagueSeason,
+    league_divisions: false,
+    league_registration: false,
+    league_tournament: !!firstTournament,
   };
 
   const tasks = TASK_IDS.reduce<Record<StartupTaskId, StartupTaskStatus>>((acc, taskId) => {

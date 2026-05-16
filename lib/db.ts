@@ -2,7 +2,7 @@ import { supabase } from './supabase';
 import { supabaseAdmin } from './supabase-admin';
 import { getEffectiveTournamentLimit, PLAN_CONFIG } from './plan-config';
 import { createClient as createBrowserSupabaseClient } from './supabase-browser';
-import { Tournament, TournamentStatus, Diamond, Contact, AgeGroup, Pool, Team, Game, Announcement, PlayoffConfig, RuleSection, RuleItem, Resource, Organization, OrganizationMember, OrgPlan, OrgRole, TournamentArchive, OrgPublicSiteContent, AccountingLedger, AccountingEntry, LedgerSummary, AccountingEntryStatus, AccountingEntryType, LeagueSeason, LeagueDivision, LeagueTeam, LeagueRegistration, LeagueGame, LeagueStandingsRow, LeagueSeasonSummary, LeagueRegistrationStatus, LeagueSeasonStatus, LeaguePractice, LeaguePracticeStatus, RepTeam, RepProgramYear, RepProgramYearStatus, RepTeamCoach, RepTryoutRegistration, RepTryoutRegistrationStatus, RepRosterPlayer, RepRosterStatus, RepTeamEvent, RepEventType, RepDocumentTemplate, RepDocumentType, RepPlayerDocument, RepCostAllocation, RepAllocationSplit, RepAllocationInstallment, RepPlayerDuesSchedule, RepPlayerDuesInstallment, RepTeamExpense, OrgPayee } from './types';
+import { Tournament, TournamentStatus, Diamond, Contact, AgeGroup, Pool, PoolSlot, Team, Game, Announcement, PlayoffConfig, RuleSection, RuleItem, Resource, Organization, OrganizationMember, OrgPlan, OrgRole, TournamentArchive, OrgPublicSiteContent, AccountingLedger, AccountingEntry, LedgerSummary, AccountingEntryStatus, AccountingEntryType, LeagueSeason, LeagueDivision, LeagueTeam, LeagueRegistration, LeagueGame, LeagueStandingsRow, LeagueSeasonSummary, LeagueRegistrationStatus, LeagueSeasonStatus, LeaguePractice, LeaguePracticeStatus, RepTeam, RepProgramYear, RepProgramYearStatus, RepTeamCoach, RepTryoutRegistration, RepTryoutRegistrationStatus, RepRosterPlayer, RepRosterStatus, RepTeamEvent, RepEventType, RepDocumentTemplate, RepDocumentType, RepPlayerDocument, RepCostAllocation, RepAllocationSplit, RepAllocationInstallment, RepPlayerDuesSchedule, RepPlayerDuesInstallment, RepTeamExpense, OrgPayee } from './types';
 
 // Use the SSR browser client (cookie-based session) for writes that need auth;
 // falls back to anon client on the server where there is no window.
@@ -283,6 +283,7 @@ export async function getAgeGroups(tournamentId?: string, options: ReadOptions =
     poolNames: g.pool_names,
     requiresPoolSelection: g.requires_pool_selection,
     playoffConfig: g.playoff_config,
+    scheduleVisibility: g.schedule_visibility,
     pools: (g.pools || []).map((p: any) => ({
       id: p.id,
       ageGroupId: p.age_group_id,
@@ -304,7 +305,8 @@ export async function saveAgeGroup(g: Omit<AgeGroup, 'id'>): Promise<void> {
     capacity: g.capacity,
     pool_count: g.poolCount || 1,
     pool_names: g.poolNames,
-    playoff_config: g.playoffConfig || { type: 'single', crossover: 'standard', hasThirdPlace: false, teamsQualifying: 4 }
+    playoff_config: g.playoffConfig || { type: 'single', crossover: 'standard', hasThirdPlace: false, teamsQualifying: 4 },
+    schedule_visibility: g.scheduleVisibility ?? 'unpublished'
   });
 }
 
@@ -322,6 +324,7 @@ export async function updateAgeGroup(id: string, g: Partial<AgeGroup>): Promise<
   if (g.poolNames !== undefined) updates.pool_names = g.poolNames;
   if (g.requiresPoolSelection !== undefined) updates.requires_pool_selection = g.requiresPoolSelection;
   if (g.playoffConfig !== undefined) updates.playoff_config = g.playoffConfig;
+  if (g.scheduleVisibility !== undefined) updates.schedule_visibility = g.scheduleVisibility;
   await authClient().from('age_groups').update(updates).eq('id', id);
 }
 
@@ -386,7 +389,9 @@ export async function getTeams(tournamentId?: string, options: ReadOptions = {})
     registered_at: t.registered_at, // Map to registeredAt if needed
     registeredAt: t.registered_at,
     adminNotes: t.admin_notes,
-    poolId: t.pool_id
+    poolId: t.pool_id,
+    waitlistPosition: t.waitlist_position ?? null,
+    slotId: t.slot_id ?? null
   }));
 }
 
@@ -402,7 +407,9 @@ export async function saveTeam(t: Omit<Team, 'id'> & { id?: string }): Promise<v
     payment_status: t.paymentStatus || 'paid',
     registered_at: t.registeredAt || new Date().toISOString(),
     admin_notes: t.adminNotes,
-    pool_id: t.poolId
+    pool_id: t.poolId,
+    waitlist_position: t.waitlistPosition ?? null,
+    slot_id: t.slotId ?? null
   };
   if (t.id) payload.id = t.id;
   const { error } = await authClient().from('teams').insert(payload);
@@ -420,8 +427,10 @@ export async function updateTeam(id: string, t: Partial<Team>): Promise<void> {
   if (t.status !== undefined)       updates.status = t.status;
   if (t.paymentStatus !== undefined) updates.payment_status = t.paymentStatus;
   if (t.registeredAt !== undefined) updates.registered_at = t.registeredAt;
-  if (t.adminNotes !== undefined)    updates.admin_notes = t.adminNotes;
-  if (t.poolId !== undefined)       updates.pool_id        = t.poolId;
+  if (t.adminNotes !== undefined)        updates.admin_notes       = t.adminNotes;
+  if (t.poolId !== undefined)            updates.pool_id            = t.poolId;
+  if (t.waitlistPosition !== undefined)  updates.waitlist_position  = t.waitlistPosition;
+  if (t.slotId !== undefined)            updates.slot_id            = t.slotId;
   const { error } = await authClient().from('teams').update(updates).eq('id', id);
   if (error) throw error;
 }
@@ -458,6 +467,8 @@ export async function getGames(tournamentId?: string, options: ReadOptions = {})
     bracketCode: g.bracket_code,
     homePlaceholder: g.home_placeholder,
     awayPlaceholder: g.away_placeholder,
+    homeSlotId: g.home_slot_id,
+    awaySlotId: g.away_slot_id,
     notes: g.notes
   }));
 }
@@ -480,11 +491,13 @@ export async function saveGame(g: Omit<Game, 'id'>): Promise<void> {
     bracket_code: g.bracketCode,
     home_placeholder: g.homePlaceholder,
     away_placeholder: g.awayPlaceholder,
+    home_slot_id: g.homeSlotId,
+    away_slot_id: g.awaySlotId,
     notes: g.notes
   });
 }
 
-export async function updateGame(id: string, g: Partial<Game>): Promise<void> {
+export async function updateGame(id: string, g: Partial<Game>, options: ReadOptions = {}): Promise<void> {
   const updates: any = {};
   if (g.tournamentId !== undefined) updates.tournament_id = g.tournamentId;
   if (g.ageGroupId !== undefined) updates.age_group_id = g.ageGroupId;
@@ -502,15 +515,18 @@ export async function updateGame(id: string, g: Partial<Game>): Promise<void> {
   if (g.bracketCode !== undefined) updates.bracket_code = g.bracketCode;
   if (g.homePlaceholder !== undefined) updates.home_placeholder = g.homePlaceholder;
   if (g.awayPlaceholder !== undefined) updates.away_placeholder = g.awayPlaceholder;
+  if (g.homeSlotId !== undefined) updates.home_slot_id = g.homeSlotId;
+  if (g.awaySlotId !== undefined) updates.away_slot_id = g.awaySlotId;
   if (g.notes !== undefined) updates.notes = g.notes;
 
-  const { error } = await authClient().from('games').update(updates).eq('id', id);
+  const writeClient = options.admin ? supabaseAdmin : authClient();
+  const { error } = await writeClient.from('games').update(updates).eq('id', id);
   if (error) throw error;
 
   // Trigger advancement
   if (g.status === 'completed' || (g.homeScore !== undefined && g.awayScore !== undefined)) {
-    const fullGame = (await getGames()).find(x => x.id === id);
-    if (fullGame) await advancePlayoffs(fullGame);
+    const fullGame = (await getGames(undefined, options)).find(x => x.id === id);
+    if (fullGame) await advancePlayoffs(fullGame, options);
   }
 }
 
@@ -518,9 +534,9 @@ export async function deleteGame(id: string): Promise<void> {
   await authClient().from('games').delete().eq('id', id);
 }
 
-export async function getStandings(ageGroupId: string, config?: PlayoffConfig) {
-  const games = await getGames();
-  const teams = await getTeams();
+export async function getStandings(ageGroupId: string, config?: PlayoffConfig, options: ReadOptions = {}) {
+  const games = await getGames(undefined, options);
+  const teams = await getTeams(undefined, options);
   const groupTeams = teams.filter(t => t.ageGroupId === ageGroupId && t.status === 'accepted');
   const groupGames = games.filter(g =>
     g.ageGroupId === ageGroupId &&
@@ -812,10 +828,10 @@ export async function seedTournamentData(tid: string, options: {
   }
 }
 
-export async function advancePlayoffs(game: Game) {
+export async function advancePlayoffs(game: Game, options: ReadOptions = {}) {
   if (game.status !== 'completed') return;
 
-  const games = await getGames(game.tournamentId);
+  const games = await getGames(game.tournamentId, options);
   const playoffGames = games.filter(g => g.isPlayoff && g.ageGroupId === game.ageGroupId);
 
   if (playoffGames.length === 0) return;
@@ -833,7 +849,7 @@ export async function advancePlayoffs(game: Game) {
       if (pg.awayPlaceholder === 'Loser ' + game.bracketCode) updates.awayTeamId = loserId;
 
       if (Object.keys(updates).length > 0) {
-        await updateGame(pg.id, updates);
+        await updateGame(pg.id, updates, options);
       }
     }
   }
@@ -843,8 +859,8 @@ export async function advancePlayoffs(game: Game) {
   const allPoolDone = poolGames.every(g => g.status === 'completed');
 
   if (allPoolDone && poolGames.length > 0) {
-    const ageGroup = (await getAgeGroups(game.tournamentId)).find(g => g.id === game.ageGroupId);
-    const standings = await getStandings(game.ageGroupId, ageGroup?.playoffConfig);
+    const ageGroup = (await getAgeGroups(game.tournamentId, options)).find(g => g.id === game.ageGroupId);
+    const standings = await getStandings(game.ageGroupId, ageGroup?.playoffConfig, options);
     const pools = ageGroup?.pools || [];
 
     for (const pg of playoffGames) {
@@ -877,15 +893,16 @@ export async function advancePlayoffs(game: Game) {
       if (aId) updates.awayTeamId = aId;
 
       if (Object.keys(updates).length > 0) {
-        await updateGame(pg.id, updates);
+        await updateGame(pg.id, updates, options);
       }
     }
   }
 }
 
 // --- Rules ---
-export async function getRules(tournamentId: string): Promise<RuleSection[]> {
-  const { data, error } = await supabase
+export async function getRules(tournamentId: string, options: ReadOptions = {}): Promise<RuleSection[]> {
+  const client = options.admin ? supabaseAdmin : supabase;
+  const { data, error } = await client
     .from('rules')
     .select('*, rule_items(*)')
     .eq('tournament_id', tournamentId)
@@ -1013,8 +1030,9 @@ export async function deleteRuleItem(id: string): Promise<void> {
 }
 
 // --- Resources ---
-export async function getResources(tournamentId: string): Promise<Resource[]> {
-  const { data, error } = await supabase
+export async function getResources(tournamentId: string, options: ReadOptions = {}): Promise<Resource[]> {
+  const client = options.admin ? supabaseAdmin : supabase;
+  const { data, error } = await client
     .from('resources')
     .select('*')
     .eq('tournament_id', tournamentId)
@@ -1351,6 +1369,8 @@ function mapTournament(r: any): Tournament {
     themeAccent:              r.theme_accent ?? null,
     themeFont:                r.theme_font ?? null,
     themeCardStyle:           r.theme_card_style ?? null,
+    colorMode:                (r.color_mode === 'light' ? 'light' : null) as 'light' | null,
+    publicHiddenPages:        Array.isArray(r.public_hidden_pages) ? r.public_hidden_pages : [],
     requireScoreFinalization: r.require_score_finalization ?? null,
   };
 }

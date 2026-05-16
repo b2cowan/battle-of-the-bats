@@ -2,9 +2,24 @@
 
 This file tracks the ongoing tasks for the FieldLogicHQ platform (multi-tenant sports club and league management). AI models and the USER use this to coordinate work.
 
+
 ---
 
+- [ ] **League onboarding wizard** - Guide League/Club owners through first house league setup with optional tournament setup branch (see [LEAGUE_ONBOARDING_WIZARD_PLAN.md](LEAGUE_ONBOARDING_WIZARD_PLAN.md))
+  - [x] First implementation: league startup tasks, onboarding wizard, remaining-step CTAs, and create-season modal alignment
+  - [ ] Browser verification
+
 ## 🚀 Active Tasks (Priority Order)
+
+- [x] **Slot-first roster & schedule architecture** — Slots are the division roster from day one. Auto-created on pool configuration, auto-assigned on registration. Unified registrations page with slot board + waitlist. Explicit publish control (unpublished / generic names / team names). Supersedes SCHEDULE_SLOT_PLAN.md. (see [SLOT_ROSTER_PLAN.md](SLOT_ROSTER_PLAN.md))
+  - [x] Foundation: DB migration 041 (pool_slots + game slot FKs), types, db.ts, API — applied dev + prod
+  - [x] Phase 1: DB migration 042 (schedule_visibility on age_groups, waitlist_position + slot_id on teams)
+  - [x] Phase 2: Auto-slot creation on pool configuration (sync-capacity action, hook into age-groups save)
+  - [x] Phase 3: Registration auto-assignment (auto-claim slot on submit, promote-from-waitlist, swap-slots)
+  - [x] Phase 4: DB lock fn (migration 043 claim_next_slot), register route uses RPC, registrations page redesigned (slot board + waitlist)
+  - [x] Phase 5: Schedule simplification + publish control (lazy slot fetch, remove mode toggle/chip, visibility dropdown + Publish All)
+  - [x] Phase 6: Public schedule respects schedule_visibility per division
+  - [x] Phase 7: Cleanup (remove old slot mode code, archive SCHEDULE_SLOT_PLAN.md)
 
 - [ ] **Tournament help documentation UX review** - Upgrade tournament help with grouped contents, search, quick answers, and FAQs (see [TOURNAMENT_HELP_DOCS_REVIEW_PLAN.md](TOURNAMENT_HELP_DOCS_REVIEW_PLAN.md))
 
@@ -14,6 +29,12 @@ This file tracks the ongoing tasks for the FieldLogicHQ platform (multi-tenant s
   - [x] Phase 1 trust fixes: mobile activation API path, secured message sending, active contact mapping
   - [x] Phase 2 signup and onboarding clarity copy
   - [x] Phase 3 item 8: draft-to-publish dashboard checklist
+  - [x] Phase 3 item 10: draft public-page messaging and preview-link clarity
+  - [x] Phase 4 item 11: external payment expectations and fee-mode alignment
+  - [x] Phase 4 item 12: admin score entry respects finalization rules
+  - [x] Phase 4 item 13: public announcement posting is clearly separated from email communication
+  - [x] Phase 4 item 14: communication targeting now supports teams, divisions, statuses, and contacts
+  - [x] Phase 4 item 15: mobile tournament More menu includes day-of tools
 
 ### 0. Tournament Signup Experience
 *Detailed tasks in [TOURNAMENT_SIGNUP_EXPERIENCE_FIXES.md](TOURNAMENT_SIGNUP_EXPERIENCE_FIXES.md)*
@@ -111,6 +132,19 @@ This file tracks the ongoing tasks for the FieldLogicHQ platform (multi-tenant s
 ---
 
 ## ✅ Completed Projects
+
+### Public Tournament UAT
+- [x] Default tournament/public-site customization to FieldLogicHQ colors and remove preview-only setup CTA
+- [x] Apply light/dark theme in tournament preview, group theme controls, and add public-style preview nav pages
+- [x] Fix light-mode public tournament hero surfaces so text and icons remain visible
+- [x] Tune public tournament palette contrast and add combined dark/light theme preview samples
+- [x] Public tournament light-mode polish — solid public CTAs, readable light-mode accents, restored Battle Purple preset
+- [x] Public tournament preview light-mode section backgrounds inherit the selected mode below the hero
+- [x] Tournament branding palettes — normalize presets for dark/light readability and gate custom colors to Tournament Plus+
+- [x] Public tournament light-mode accent tokens use readable primary text on pale surfaces
+- [x] Public tournament page visibility controls for hiding News, Schedule, Standings, Teams, Rules, or Registration
+- [x] Tournament branding settings reorder included controls above Tournament Plus advanced customizations
+- [x] Tournament branding logo placeholder polish and branding API 500 cleanup
 
 ### In-App Documentation & Help System
 *(see [HELP_SYSTEM_PLAN.md](docs/archive/HELP_SYSTEM_PLAN.md))*
@@ -279,6 +313,7 @@ This file tracks the ongoing tasks for the FieldLogicHQ platform (multi-tenant s
 - [x] Walkthrough polish — remove tournament onboarding get-started flash after wizard save
 - [x] Walkthrough polish — replace tournament admin Back to Site with admin-only Preview Site
 - [x] Walkthrough bugfix — admin tournament preview resolves draft tournaments without 404
+- [x] Tournament branding UX — collapse dark/light choices into one toggle with a single live preview
 
 ### Platform Administration (Super Admin)
 *(see [PLATFORM_ADMIN_PLAN.md](PLATFORM_ADMIN_PLAN.md))*

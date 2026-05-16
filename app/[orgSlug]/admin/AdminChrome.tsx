@@ -17,13 +17,15 @@ export default function AdminChrome({
   const pathname = usePathname();
   const isOnboarding = pathname.endsWith('/admin/onboarding');
   const isTournamentPreview = pathname.includes('/admin/tournaments/preview/');
-  const isFocused = isOnboarding || isTournamentPreview;
+  const isHelp = pathname.includes('/admin/help');
+  const isFocusedAdmin = isOnboarding || isHelp;
+  const isFocused = isFocusedAdmin || isTournamentPreview;
   const shellClassName = isTournamentPreview
     ? styles.adminPreviewShell
-    : `${styles.adminShell} ${isOnboarding ? styles.adminShellFocused : ''}`;
+    : `${styles.adminShell} ${isFocusedAdmin ? styles.adminShellFocused : ''}`;
   const mainClassName = isTournamentPreview
     ? styles.adminPreviewMain
-    : `${styles.adminMain} ${isOnboarding ? styles.adminMainFocused : ''}`;
+    : `${styles.adminMain} ${isFocusedAdmin ? styles.adminMainFocused : ''}`;
 
   return (
     <>

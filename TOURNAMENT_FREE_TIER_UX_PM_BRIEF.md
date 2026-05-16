@@ -94,7 +94,7 @@ Proposed solution: Show "1 tournament slot included" near tournament creation an
 
 Expected outcome: The limit feels like a known plan rule instead of a surprise error.
 
-### 10. [ ] Improve draft public-page messaging
+### 10. [x] Improve draft public-page messaging
 
 Problem: If an organizer visits or shares the org URL before activation, the public page can show a generic "public site not set up" message that does not explain the draft tournament state.
 
@@ -104,15 +104,15 @@ Expected outcome: Organizers understand that the tournament exists but is not pu
 
 ## Phase 4 - Core Operations Cleanup
 
-### 11. [ ] Clarify registration and payment expectations
+### 11. [x] Clarify registration and payment expectations
 
-Problem: Registration management supports viewing teams and status changes, but public registration copy implies a payment step that is not actually implemented in that flow.
+Problem: FieldLogicHQ already supports fee schedules, division fee overrides, and basic deposit/balance tracking, but the public registration flow implied online payment processing through a future payment link. That conflicts with the intended model: organizers collect payment outside FieldLogicHQ while using the app as the system of record.
 
-Proposed solution: Either implement payment handling for tournament registration or change the copy to make clear that payment is handled separately.
+Proposed solution: Reframe registration payments as external payment instructions and tracking. The public form shows fee expectations from the existing tournament/division schedule and says payment is handled directly by the organizer. Admin payment status continues to use the existing fee schedule, but division overrides only apply when the tournament is set to "By Division."
 
-Expected outcome: Teams and organizers are not promised a payment flow the product does not currently provide.
+Expected outcome: Teams understand how payment works before registering, organizers keep deposit/balance tracking without FieldLogicHQ processing funds, and tournament-wide vs. division-specific fee rules behave predictably.
 
-### 12. [ ] Respect score finalization rules in the admin UI
+### 12. [x] Respect score finalization rules in the admin UI
 
 Problem: The score-entry page directly marks games completed, while the API has separate submitted/finalized behavior for score review.
 
@@ -120,7 +120,7 @@ Proposed solution: Send score updates through the existing score API so finaliza
 
 Expected outcome: Score review, official submission, and finalization behave predictably.
 
-### 13. [ ] Make announcement delivery clear
+### 13. [x] Make announcement delivery clear
 
 Problem: Announcements can be posted to the public tournament experience, but the UI does not clearly distinguish public posting from notifying teams.
 
@@ -128,7 +128,7 @@ Proposed solution: Label announcements as public posts unless notification deliv
 
 Expected outcome: Organizers know whether teams will actually receive a message.
 
-### 14. [ ] Complete or hide incomplete communication filters
+### 14. [x] Complete or hide incomplete communication filters
 
 Problem: Communication recipient filtering is not fully wired for division/team targeting, which can make the feature look more capable than it is.
 
@@ -136,7 +136,7 @@ Proposed solution: Finish role, division, and team recipient targeting, or hide 
 
 Expected outcome: Message counts and recipient selection match what will actually happen.
 
-### 15. [ ] Improve mobile day-of navigation
+### 15. [x] Improve mobile day-of navigation
 
 Problem: Mobile navigation omits Rules & Resources, Communication, and Past Tournaments, even though these areas can matter on tournament day.
 

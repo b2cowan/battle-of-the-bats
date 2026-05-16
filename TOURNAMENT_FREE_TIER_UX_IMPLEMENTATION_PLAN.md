@@ -36,17 +36,17 @@ Improve the first-time Tournament-plan experience for a softball/baseball organi
 - [x] Add a draft checklist panel to `app/[orgSlug]/admin/tournaments/dashboard/page.tsx`.
 - [x] Reuse the existing publish blockers from `app/api/admin/tournaments/route.ts`: dates, at least one division, tournament contact email, and at least one open division.
 - [x] Show the free-plan tournament-slot limit near creation and publish controls in `app/[orgSlug]/admin/org/tournaments/page.tsx`.
-- [ ] Keep draft tournaments private, but replace generic public-site placeholder messaging with tournament-specific guidance in `app/[orgSlug]/page.tsx`.
-- [ ] Make the public preview link explain whether the page is private draft, active, or completed.
+- [x] Keep draft tournaments private, but replace generic public-site placeholder messaging with tournament-specific guidance in `app/[orgSlug]/page.tsx`.
+- [x] Make the public preview link explain whether the page is private draft, active, or completed.
 
 ## Phase 4 - Core Operations Cleanup
 
-- [ ] Registration: either add basic registration form settings or clearly label the current public form as fixed in `app/[orgSlug]/admin/tournaments/teams/page.tsx`.
-- [ ] Registration: remove or finish the payment step language in `app/[orgSlug]/[tournamentSlug]/register/page.tsx`.
-- [ ] Score entry: make `app/[orgSlug]/admin/tournaments/results/page.tsx` submit scores through `app/api/admin/games/route.ts` so finalization rules are respected.
-- [ ] Announcements: add a "post only" vs "post and notify" distinction, or wire notification delivery into the announcement flow.
-- [ ] Communication: complete division/team recipient targeting in `app/[orgSlug]/admin/tournaments/communication/page.tsx`, or hide incomplete filters.
-- [ ] Mobile nav: add Rules & Resources, Communication, and Past Tournaments to `components/admin/AdminBottomNav.tsx`.
+- [x] Registration: show external payment expectations from the existing fee schedule and remove payment-link language in `app/[orgSlug]/[tournamentSlug]/register/page.tsx`.
+- [x] Registration: make admin payment status respect tournament-wide vs. per-division fee mode in `app/[orgSlug]/admin/tournaments/teams/page.tsx`.
+- [x] Score entry: make `app/[orgSlug]/admin/tournaments/results/page.tsx` submit scores through `app/api/admin/games/route.ts` so finalization rules are respected.
+- [x] Announcements: add a "post only" vs "post and notify" distinction, or wire notification delivery into the announcement flow.
+- [x] Communication: complete division/team recipient targeting in `app/[orgSlug]/admin/tournaments/communication/page.tsx`, or hide incomplete filters.
+- [x] Mobile nav: add Rules & Resources, Communication, and Past Tournaments to `components/admin/AdminBottomNav.tsx`.
 - [x] Tournament-tier IA: expose tournament-critical org admin tools from the tournament workspace, including members/staff, subscription, and score/settings controls where appropriate.
 
 ## Phase 5 - Plan Guardrails and Upgrade Consistency

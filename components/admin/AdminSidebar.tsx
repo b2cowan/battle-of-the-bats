@@ -4,7 +4,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import {
   LayoutDashboard, Users, Calendar, Trophy, Megaphone, Tag, LogOut, Home,
-  ChevronRight, MapPin, RefreshCw, BookUser, BookOpen, CreditCard, Settings,
+  ChevronRight, MapPin, BookUser, BookOpen, CreditCard, Settings,
   Users2, Archive, ArrowLeft, Mail, Globe, DollarSign,
   CalendarDays, ClipboardList, FileText, UserCheck, ExternalLink, HelpCircle,
 } from 'lucide-react';
@@ -24,26 +24,26 @@ type TourGroup   = { key: string; label: string; defaultOpenFor: string[]; items
 
 const TOUR_GROUPS: TourGroup[] = [
   {
+    key: 'operations',
+    label: 'Operations',
+    defaultOpenFor: ['active', 'completed'],
+    items: [
+      { key: 'teams',         icon: Users,     label: 'Registrations' },
+      { key: 'schedule',      icon: Calendar,  label: 'Schedule'      },
+      { key: 'results',       icon: Trophy,    label: 'Results'       },
+      { key: 'announcements', icon: Megaphone, label: 'News Posts'    },
+      { key: 'communication', icon: Mail,      label: 'Communication' },
+    ],
+  },
+  {
     key: 'setup',
     label: 'Setup',
     defaultOpenFor: ['draft'],
     items: [
       { key: 'venues',        icon: MapPin,    label: 'Venues'            },
       { key: 'contacts',      icon: BookUser,  label: 'Contacts'          },
-      { key: 'age-groups',    icon: Tag,       label: 'Age Groups'        },
-      { key: 'announcements', icon: Megaphone, label: 'Announcements'     },
+      { key: 'age-groups',    icon: Tag,       label: 'Divisions'         },
       { key: 'rules',         icon: BookOpen,  label: 'Rules & Resources' },
-    ],
-  },
-  {
-    key: 'operations',
-    label: 'Operations',
-    defaultOpenFor: ['active', 'completed'],
-    items: [
-      { key: 'teams',         icon: Users,    label: 'Registrations' },
-      { key: 'schedule',      icon: Calendar, label: 'Schedule'      },
-      { key: 'results',       icon: Trophy,   label: 'Results'       },
-      { key: 'communication', icon: Mail,     label: 'Communication' },
     ],
   },
   {
@@ -51,7 +51,6 @@ const TOUR_GROUPS: TourGroup[] = [
     label: 'Admin',
     defaultOpenFor: [],
     items: [
-      { key: 'manage',   icon: RefreshCw, label: 'Manage Tournaments' },
       { key: 'settings', icon: Settings,  label: 'Settings & Access'  },
       { key: 'archives', icon: Archive,   label: 'Past Tournaments'   },
     ],
@@ -141,17 +140,22 @@ export default function AdminSidebar() {
 
   useEffect(() => {
     if (groupsReady) return;
-    try {
-      const stored = localStorage.getItem('fl_nav_groups');
-      if (stored) {
-        setOpenGroups(new Set(JSON.parse(stored) as string[]));
-        setGroupsReady(true);
-        return;
+    const frame = window.requestAnimationFrame(() => {
+      try {
+        const stored = localStorage.getItem('fl_nav_groups');
+        if (stored) {
+          setOpenGroups(new Set(JSON.parse(stored) as string[]));
+          setGroupsReady(true);
+          return;
+        }
+      } catch {
+        // Fall back to the default group below when stored state is unavailable.
       }
-    } catch {}
-    const status = currentTournament?.status ?? 'draft';
-    setOpenGroups(new Set(TOUR_GROUPS.filter(g => g.defaultOpenFor.includes(status)).map(g => g.key)));
-    setGroupsReady(true);
+      const status = currentTournament?.status ?? 'draft';
+      setOpenGroups(new Set(TOUR_GROUPS.filter(g => g.defaultOpenFor.includes(status)).map(g => g.key)));
+      setGroupsReady(true);
+    });
+    return () => window.cancelAnimationFrame(frame);
   }, [groupsReady, currentTournament?.status]);
 
   function toggleGroup(key: string) {
@@ -212,6 +216,18 @@ export default function AdminSidebar() {
   const tournamentPreviewHref = currentOrg?.slug && currentTournament
     ? `/${currentOrg.slug}/admin/tournaments/preview/${currentTournament.slug}`
     : null;
+  const tournamentPreviewLabel =
+    currentTournament?.status === 'draft'
+      ? 'Preview Draft Site'
+      : currentTournament?.status === 'completed'
+        ? 'Preview Completed Site'
+        : 'Preview Site';
+  const tournamentPreviewTitle =
+    currentTournament?.status === 'draft'
+      ? 'Preview the private draft tournament site. It is not public until activated.'
+      : currentTournament?.status === 'completed'
+        ? 'Preview the completed tournament site.'
+        : 'Preview the public tournament site.';
 
   return (
     <aside className={styles.sidebar}>
@@ -478,8 +494,10 @@ export default function AdminSidebar() {
               id="admin-preview-site"
               target="_blank"
               rel="noopener noreferrer"
+              title={tournamentPreviewTitle}
+              aria-label={`${tournamentPreviewLabel} opens in a new tab`}
             >
-              <ExternalLink size={15} /> Preview Site
+              <ExternalLink size={15} /> {tournamentPreviewLabel}
             </Link>
           ) : null
         ) : !isOrgAdmin && (

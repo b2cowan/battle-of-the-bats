@@ -1,32 +1,35 @@
 import Link from 'next/link';
 import type { Organization } from '@/lib/types';
+import { visiblePublicPages, type PublicPageKey } from '@/lib/public-pages';
 import styles from '@/components/Navbar.module.css';
 
 type TournamentPreviewNavProps = {
   org: Organization;
   orgSlug: string;
+  tournamentSlug: string;
   tournamentName: string;
+  hiddenPages?: PublicPageKey[];
 };
 
 export default function TournamentPreviewNav({
   org,
   orgSlug,
+  tournamentSlug,
   tournamentName,
+  hiddenPages = [],
 }: TournamentPreviewNavProps) {
-  const adminBase = `/${orgSlug}/admin/tournaments`;
+  const previewBase = `/${orgSlug}/admin/tournaments/preview/${tournamentSlug}`;
   const links = [
-    { href: '#preview-home', label: 'Home' },
-    { href: '#announcements', label: 'News' },
-    { href: '#schedule', label: 'Schedule' },
-    { href: `${adminBase}/results`, label: 'Standings' },
-    { href: `${adminBase}/teams`, label: 'Teams' },
-    { href: `${adminBase}/rules`, label: 'Rules' },
+    { href: previewBase, label: 'Home', key: null },
+    ...visiblePublicPages({ publicHiddenPages: hiddenPages })
+      .filter(page => page.key !== 'register')
+      .map(page => ({ href: `${previewBase}/${page.key}`, label: page.label, key: page.key })),
   ];
 
   return (
     <nav className={`${styles.nav} ${styles.scrolled}`} aria-label="Tournament preview navigation">
       <div className={`container ${styles.inner}`}>
-        <Link href="#preview-home" className={styles.logo}>
+        <Link href={previewBase} className={styles.logo}>
           {org.logoUrl && (
             <span
               aria-hidden="true"
@@ -52,9 +55,11 @@ export default function TournamentPreviewNav({
         </div>
 
         <div className={styles.actions}>
-          <Link href={`${adminBase}/registrations`} className="btn btn-primary btn-sm">
-            Registration
-          </Link>
+          {!hiddenPages.includes('register') && (
+            <Link href={`${previewBase}/register`} className="btn btn-primary btn-sm">
+              Registration
+            </Link>
+          )}
         </div>
       </div>
     </nav>

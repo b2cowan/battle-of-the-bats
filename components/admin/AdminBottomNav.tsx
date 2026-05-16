@@ -7,7 +7,7 @@ import {
   MoreHorizontal, LayoutDashboard, Tag, MapPin,
   RefreshCw, LogOut, X, ChevronRight, BookUser,
   Settings, Users2, LayoutGrid, CalendarDays, UserCheck,
-  ExternalLink,
+  ExternalLink, BookOpen, Mail, Archive,
 } from 'lucide-react';
 import { signOut } from '@/lib/auth';
 import { useOrg } from '@/lib/org-context';
@@ -22,12 +22,15 @@ const PRIMARY_KEYS = [
 
 const TOURNAMENT_MORE = [
   { key: 'tournaments/dashboard',     icon: LayoutDashboard, label: 'Dashboard'     },
-  { key: 'tournaments/manage',        icon: RefreshCw,       label: 'Manage'        },
-  { key: 'tournaments/announcements', icon: Megaphone,       label: 'Announcements' },
+  { key: 'tournaments/announcements', icon: Megaphone,       label: 'News Posts'    },
+  { key: 'tournaments/communication', icon: Mail,            label: 'Communication' },
+  { key: 'tournaments/rules',         icon: BookOpen,        label: 'Rules & Resources' },
   { key: 'tournaments/contacts',      icon: BookUser,        label: 'Contacts'      },
   { key: 'tournaments/venues',        icon: MapPin,          label: 'Venues'        },
-  { key: 'tournaments/age-groups',    icon: Tag,             label: 'Age Groups'    },
+  { key: 'tournaments/age-groups',    icon: Tag,             label: 'Divisions'     },
+  { key: 'tournaments/manage',        icon: RefreshCw,       label: 'Manage'        },
   { key: 'tournaments/settings',      icon: Settings,        label: 'Settings'      },
+  { key: 'tournaments/archives',      icon: Archive,         label: 'Past Tournaments' },
 ];
 
 const ORG_MORE = [
@@ -48,6 +51,18 @@ export default function AdminBottomNav() {
   const [moreOpen, setMoreOpen] = useState(false);
   const moreRef   = useRef<HTMLDivElement>(null);
   const { tournaments, currentTournament, setCurrentTournament, refresh } = useTournament();
+  const tournamentPreviewLabel =
+    currentTournament?.status === 'draft'
+      ? 'Preview Draft Site'
+      : currentTournament?.status === 'completed'
+        ? 'Preview Completed Site'
+        : 'Preview Site';
+  const tournamentPreviewTitle =
+    currentTournament?.status === 'draft'
+      ? 'Preview the private draft tournament site. It is not public until activated.'
+      : currentTournament?.status === 'completed'
+        ? 'Preview the completed tournament site.'
+        : 'Preview the public tournament site.';
 
   const isRepTeams    = pathname.startsWith(`${base}/rep-teams`);
   const isHouseLeague = pathname.startsWith(`${base}/house-league`);
@@ -121,7 +136,7 @@ export default function AdminBottomNav() {
           href={href}
           className={`${styles.dropItem} ${active ? styles.dropActive : ''}`}
           role="menuitem"
-          id={`admin-mob-more-${label.toLowerCase().replace(/\s/g, '-')}`}
+          id={`admin-mob-more-${label.toLowerCase().replace(/[\s&]+/g, '-')}`}
         >
           <Icon size={17} />
           <span>{label}</span>
@@ -240,8 +255,10 @@ export default function AdminBottomNav() {
                     target="_blank"
                     rel="noopener noreferrer"
                     id="admin-mob-preview-site"
+                    title={tournamentPreviewTitle}
+                    aria-label={`${tournamentPreviewLabel} opens in a new tab`}
                   >
-                    <ExternalLink size={13} /> Preview Site
+                    <ExternalLink size={13} /> {tournamentPreviewLabel}
                   </Link>
                 )}
                 {currentTournament?.isActive && (

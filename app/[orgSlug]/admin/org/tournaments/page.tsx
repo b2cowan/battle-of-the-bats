@@ -2,9 +2,6 @@
 import { useState, useEffect, use, useCallback } from 'react';
 import { RefreshCw, Plus, Check, X, Trash2, Pencil, ExternalLink } from 'lucide-react';
 import Link from 'next/link';
-import {
-  getAgeGroups
-} from '@/lib/db';
 import { useTournament } from '@/lib/tournament-context';
 import { useOrg } from '@/lib/org-context';
 import { Tournament, TournamentStatus, TournamentArchive } from '@/lib/types';
@@ -354,14 +351,7 @@ export default function AdminTournamentsPage({
           body: JSON.stringify({
             action: 'update',
             id: editing.id,
-            data: {
-              ...data,
-              feeScheduleMode: feeForm.feeScheduleMode,
-              depositAmount:   feeForm.depositAmount   ? Number(feeForm.depositAmount)   : null,
-              depositDueDate:  feeForm.depositDueDate  || null,
-              totalFeeAmount:  feeForm.totalFeeAmount  ? Number(feeForm.totalFeeAmount)  : null,
-              totalFeeDueDate: feeForm.totalFeeDueDate || null,
-            },
+            data: { year: data.year, name: data.name, slug: data.slug },
           }),
         });
         if (!res.ok) throw new Error('Update failed');
@@ -477,7 +467,8 @@ export default function AdminTournamentsPage({
 
   async function handleSetStatus(tournament: Tournament, status: TournamentStatus) {
     if (status === 'active') {
-      const ageGroups = await getAgeGroups(tournament.id);
+      const agRes = await fetch(`/api/admin/age-groups?tournamentId=${encodeURIComponent(tournament.id)}`);
+      const ageGroups: any[] = agRes.ok ? await agRes.json() : [];
       const blockers: string[] = [];
       const reminders: string[] = [];
 
@@ -782,40 +773,6 @@ export default function AdminTournamentsPage({
                 </div>
               </div>
 
-              <div className="form-row form-row-2" style={{ marginBottom: '1rem' }}>
-                <div className="form-group">
-                  <label className="form-label">Start Date (Optional)</label>
-                  <input
-                    className="form-input"
-                    type="date"
-                    value={form.startDate}
-                    min={modal === 'add' ? getTodayDateValue() : undefined}
-                    onChange={e => {
-                      const start = e.target.value;
-                      setForm(f => {
-                        const updates: Partial<typeof form> = { startDate: start };
-                        if (start) {
-                          const date = new Date(start + 'T12:00:00');
-                          date.setDate(date.getDate() + 2);
-                          updates.endDate = date.toISOString().split('T')[0];
-                        }
-                        return { ...f, ...updates };
-                      });
-                    }}
-                    id="tournament-start-date"
-                  />
-                </div>
-                <div className="form-group">
-                  <label className="form-label">End Date (Optional)</label>
-                  <input
-                    className="form-input"
-                    type="date"
-                    value={form.endDate}
-                    onChange={e => setForm(f => ({ ...f, endDate: e.target.value }))}
-                    id="tournament-end-date"
-                  />
-                </div>
-              </div>
               <div className="form-group" style={{ marginBottom: '1rem' }}>
                 <label className="form-label">URL Slug *</label>
                 <input
@@ -843,62 +800,6 @@ export default function AdminTournamentsPage({
                   )}
                 </p>
               </div>
-
-              {modal === 'edit' && (
-                <div style={{ borderTop: '1px solid var(--border-2)', paddingTop: '1.25rem', marginTop: '0.5rem', marginBottom: '1rem' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                    <label className="form-label" style={{ margin: 0 }}>Fee Schedule</label>
-                    <div style={{ display: 'flex', gap: '0.25rem', background: 'var(--white-5)', padding: '0.2rem', borderRadius: 'var(--radius-sm)' }}>
-                      {(['tournament', 'age_group'] as const).map(mode => (
-                        <button
-                          key={mode}
-                          type="button"
-                          onClick={() => setFeeForm(f => ({ ...f, feeScheduleMode: mode }))}
-                          style={{
-                            padding: '0.25rem 0.6rem',
-                            fontSize: '0.7rem',
-                            fontFamily: 'var(--font-data)',
-                            fontWeight: 700,
-                            textTransform: 'uppercase',
-                            letterSpacing: '0.06em',
-                            border: '1px solid transparent',
-                            borderRadius: 'var(--radius-sm)',
-                            cursor: 'pointer',
-                            background: feeForm.feeScheduleMode === mode ? 'var(--blueprint-blue)' : 'transparent',
-                            color: feeForm.feeScheduleMode === mode ? '#fff' : 'var(--data-gray)',
-                          }}
-                        >
-                          {mode === 'tournament' ? 'By Tournament' : 'By Division'}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                  {feeForm.feeScheduleMode === 'tournament' ? (
-                    <div className="form-row form-row-2">
-                      <div className="form-group">
-                        <label className="form-label">Deposit Amount ($)</label>
-                        <input className="form-input" type="number" min="0" step="0.01" placeholder="e.g. 200" value={feeForm.depositAmount} onChange={e => setFeeForm(f => ({ ...f, depositAmount: e.target.value }))} />
-                      </div>
-                      <div className="form-group">
-                        <label className="form-label">Deposit Due Date</label>
-                        <input className="form-input" type="date" value={feeForm.depositDueDate} onChange={e => setFeeForm(f => ({ ...f, depositDueDate: e.target.value }))} />
-                      </div>
-                      <div className="form-group">
-                        <label className="form-label">Total Fee ($)</label>
-                        <input className="form-input" type="number" min="0" step="0.01" placeholder="e.g. 500" value={feeForm.totalFeeAmount} onChange={e => setFeeForm(f => ({ ...f, totalFeeAmount: e.target.value }))} />
-                      </div>
-                      <div className="form-group">
-                        <label className="form-label">Total Fee Due Date</label>
-                        <input className="form-input" type="date" value={feeForm.totalFeeDueDate} onChange={e => setFeeForm(f => ({ ...f, totalFeeDueDate: e.target.value }))} />
-                      </div>
-                    </div>
-                  ) : (
-                    <p style={{ fontSize: '0.72rem', color: 'var(--data-gray)', lineHeight: 1.5 }}>
-                      Fee amounts and due dates are set per division. Edit each age group to configure its fee schedule.
-                    </p>
-                  )}
-                </div>
-              )}
 
               {modal === 'add' && (
                 <>

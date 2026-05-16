@@ -267,7 +267,7 @@ export default function DiscoverPage() {
                           </span>
                           <span className={styles.metaItem}>
                             <Layers size={13} />
-                            {org.ageGroupCount} age group{org.ageGroupCount !== 1 ? 's' : ''}
+                            {org.ageGroupCount} division{org.ageGroupCount !== 1 ? 's' : ''}
                           </span>
                           <span className={styles.metaItem}>
                             <Users size={13} />
@@ -302,7 +302,7 @@ export default function DiscoverPage() {
                           </span>
                           <span className={styles.metaItem}>
                             <Layers size={13} />
-                            {org.ageGroupCount} age group{org.ageGroupCount !== 1 ? 's' : ''}
+                            {org.ageGroupCount} division{org.ageGroupCount !== 1 ? 's' : ''}
                           </span>
                           <span className={styles.metaItem}>
                             <Users size={13} />

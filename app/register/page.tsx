@@ -133,7 +133,7 @@ export default function RegisterPage() {
                 <div className={styles.stepLine}></div>
                 <div className={styles.step}>
                   <div className={styles.stepNum}>3</div>
-                  <span className={styles.stepText}>Payment</span>
+                  <span className={styles.stepText}>Next Steps</span>
                 </div>
               </div>
             )}
@@ -164,8 +164,8 @@ export default function RegisterPage() {
                   <div className={styles.successItem}>
                     <div className={styles.successIcon}><CreditCard size={20} /></div>
                     <div>
-                      <span className={styles.successTitleInner}>Secure Your Spot</span>
-                      <p className={styles.successDescInner}>Once approved, you&apos;ll receive a payment link. Spots are first-come, first-served based on payment.</p>
+                      <span className={styles.successTitleInner}>Payment Instructions</span>
+                      <p className={styles.successDescInner}>If payment is required, the organizer will send instructions directly. FieldLogicHQ does not process online payments.</p>
                     </div>
                   </div>
                 </div>

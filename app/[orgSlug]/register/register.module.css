@@ -72,6 +72,73 @@
 .notice p { margin: 0; color: rgba(255,255,255,0.65); }
 .notice strong { color: var(--white); }
 
+.paymentNotice {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius-sm);
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.paymentNoticeHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--primary-light);
+}
+
+.paymentDetails {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.paymentDetails > div {
+  min-width: 0;
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius-sm);
+  background: rgba(0,0,0,0.12);
+  padding: 0.75rem;
+}
+
+.paymentDetails span {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--white-40);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.paymentDetails strong {
+  display: block;
+  margin-top: 0.2rem;
+  font-size: 1.1rem;
+  color: var(--white);
+}
+
+.paymentDetails em {
+  display: block;
+  margin-top: 0.2rem;
+  font-size: 0.75rem;
+  font-style: normal;
+  color: var(--white-50);
+}
+
+.paymentNotice p {
+  margin: 0;
+  color: var(--white-50);
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
 /* Success state */
 .successCard { text-align: center; padding: 3rem 2rem; }
 .successTitle { font-family: var(--font-display); font-size: 2rem; font-weight: 900; color: var(--success); margin: 0 0 1rem; }
@@ -229,6 +296,12 @@
   font-size: 0.85rem;
   color: var(--white-60);
   line-height: 1.4;
+}
+
+@media (max-width: 640px) {
+  .paymentDetails {
+    grid-template-columns: 1fr;
+  }
 }
 
 @keyframes slideDown {

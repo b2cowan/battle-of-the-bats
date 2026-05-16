@@ -15,6 +15,58 @@ type DbPool = {
   display_order: number;
 };
 
+// Creates missing slots and trims empty slots above capacity for every pool in a division.
+// Idempotent: safe to call after every save/update.
+async function syncSlots(tournamentId: string, ageGroupId: string, capacity: number | undefined) {
+  if (!capacity || capacity <= 0) return;
+
+  const { data: poolRows } = await supabaseAdmin
+    .from('pools')
+    .select('id, name')
+    .eq('age_group_id', ageGroupId)
+    .order('display_order', { ascending: true });
+
+  const pools = poolRows ?? [];
+  if (pools.length === 0) return;
+
+  const slotCount = Math.floor(capacity / pools.length);
+  if (slotCount <= 0) return;
+
+  for (const pool of pools) {
+    const namePrefix = pools.length === 1 ? '' : pool.name;
+
+    const { data: existing } = await supabaseAdmin
+      .from('pool_slots')
+      .select('id, slot_number, team_id')
+      .eq('pool_id', pool.id)
+      .order('slot_number', { ascending: true });
+
+    const existingSlots = existing ?? [];
+    const existingNums = new Set(existingSlots.map((s: any) => s.slot_number));
+
+    const toInsert: any[] = [];
+    for (let n = 1; n <= slotCount; n++) {
+      if (!existingNums.has(n)) {
+        toInsert.push({
+          pool_id:       pool.id,
+          tournament_id: tournamentId,
+          age_group_id:  ageGroupId,
+          slot_number:   n,
+          display_name:  namePrefix ? `${namePrefix} Team ${n}` : `Team ${n}`,
+        });
+      }
+    }
+    if (toInsert.length > 0) {
+      await supabaseAdmin.from('pool_slots').insert(toInsert);
+    }
+
+    const emptyAbove = existingSlots.filter((s: any) => s.slot_number > slotCount && s.team_id === null);
+    if (emptyAbove.length > 0) {
+      await supabaseAdmin.from('pool_slots').delete().in('id', emptyAbove.map((s: any) => s.id));
+    }
+  }
+}
+
 export async function GET(req: Request) {
   const ctx = await getAuthContextWithScope();
   if (!ctx) return unauthorized();
@@ -47,6 +99,7 @@ export async function GET(req: Request) {
     poolNames: group.pool_names,
     requiresPoolSelection: group.requires_pool_selection,
     playoffConfig: group.playoff_config,
+    scheduleVisibility: group.schedule_visibility,
     depositAmount: group.deposit_amount ?? null,
     depositDueDate: group.deposit_due_date ?? null,
     totalFeeAmount: group.total_fee_amount ?? null,
@@ -92,6 +145,7 @@ export async function POST(req: Request) {
         deposit_due_date:        data.depositDueDate ?? null,
         total_fee_amount:        data.totalFeeAmount ?? null,
         total_fee_due_date:      data.totalFeeDueDate ?? null,
+        schedule_visibility:     data.scheduleVisibility ?? 'unpublished',
       }).select('id').single();
       if (error) throw error;
 
@@ -105,6 +159,10 @@ export async function POST(req: Request) {
         }));
         const { error: poolError } = await supabaseAdmin.from('pools').insert(poolRows);
         if (poolError) throw poolError;
+      }
+
+      if (insertedGroup?.id) {
+        await syncSlots(data.tournamentId, insertedGroup.id, data.capacity);
       }
     }
 
@@ -136,6 +194,7 @@ export async function POST(req: Request) {
         deposit_due_date:        data.depositDueDate ?? null,
         total_fee_amount:        data.totalFeeAmount ?? null,
         total_fee_due_date:      data.totalFeeDueDate ?? null,
+        schedule_visibility:     data.scheduleVisibility,
       }).eq('id', id);
       if (agError) throw agError;
 
@@ -166,6 +225,31 @@ export async function POST(req: Request) {
         if (pools.length > newPoolCount) {
           await supabaseAdmin.from('pools').delete().in('id', pools.slice(newPoolCount).map(p => p.id));
         }
+      }
+
+      if (ag) {
+        await syncSlots(ag.tournament_id, id, data.capacity);
+      }
+    }
+
+    else if (action === 'set-visibility') {
+      // Lightweight bulk-or-single visibility update.
+      // Body: { action, id?, tournamentId?, scheduleVisibility }
+      const { id: agId, tournamentId: tId, scheduleVisibility: vis } = data ?? {};
+      if (!vis) throw new Error('scheduleVisibility required');
+
+      if (agId) {
+        const { data: ag } = await supabaseAdmin.from('age_groups').select('tournament_id').eq('id', agId).single();
+        if (ag) { const denied = scopeGuard(ctx, ag.tournament_id); if (denied) return denied; }
+        const { error } = await supabaseAdmin.from('age_groups').update({ schedule_visibility: vis }).eq('id', agId);
+        if (error) throw error;
+      } else if (tId) {
+        const denied = scopeGuard(ctx, tId);
+        if (denied) return denied;
+        const { error } = await supabaseAdmin.from('age_groups').update({ schedule_visibility: vis }).eq('tournament_id', tId);
+        if (error) throw error;
+      } else {
+        throw new Error('id or tournamentId required');
       }
     }
 

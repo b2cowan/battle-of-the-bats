@@ -24,6 +24,7 @@ export interface HelpSection {
   searchText?: string;
   links?: HelpLink[];
   faqs?: HelpFaq[];
+  hideFromContents?: boolean;
   content: ReactNode;
 }
 

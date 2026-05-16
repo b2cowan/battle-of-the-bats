@@ -58,7 +58,9 @@ CREATE TABLE IF NOT EXISTS age_groups (
   pool_count              int,
   pool_names              text,
   requires_pool_selection boolean NOT NULL DEFAULT false,
-  playoff_config          jsonb
+  playoff_config          jsonb,
+  schedule_visibility     text    NOT NULL DEFAULT 'unpublished'
+                                  CHECK (schedule_visibility IN ('unpublished', 'published_generic', 'published_teams'))
 );
 
 CREATE TABLE IF NOT EXISTS pools (
@@ -80,7 +82,21 @@ CREATE TABLE IF NOT EXISTS teams (
   payment_status text        NOT NULL DEFAULT 'paid',
   registered_at  timestamptz NOT NULL DEFAULT now(),
   admin_notes    text,
-  pool_id        uuid        REFERENCES pools(id) ON DELETE SET NULL
+  pool_id        uuid        REFERENCES pools(id) ON DELETE SET NULL,
+  waitlist_position int,
+  slot_id        uuid        REFERENCES pool_slots(id) ON DELETE SET NULL
+);
+
+CREATE TABLE IF NOT EXISTS pool_slots (
+  id             uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+  pool_id        uuid        NOT NULL REFERENCES pools(id) ON DELETE CASCADE,
+  tournament_id  uuid        NOT NULL REFERENCES tournaments(id) ON DELETE CASCADE,
+  age_group_id   uuid        NOT NULL REFERENCES age_groups(id) ON DELETE CASCADE,
+  slot_number    int         NOT NULL,
+  display_name   text        NOT NULL,
+  team_id        uuid        REFERENCES teams(id) ON DELETE SET NULL,
+  created_at     timestamptz DEFAULT now(),
+  UNIQUE(pool_id, slot_number)
 );
 
 CREATE TABLE IF NOT EXISTS games (
@@ -101,7 +117,9 @@ CREATE TABLE IF NOT EXISTS games (
   bracket_code     text,
   home_placeholder text,
   away_placeholder text,
-  notes            text
+  notes            text,
+  home_slot_id     uuid    REFERENCES pool_slots(id) ON DELETE SET NULL,
+  away_slot_id     uuid    REFERENCES pool_slots(id) ON DELETE SET NULL
 );
 
 CREATE TABLE IF NOT EXISTS announcements (
@@ -1674,3 +1692,33 @@ CREATE POLICY "coaches can read their team's expenses"
   USING (team_id IN (
     SELECT team_id FROM rep_team_coaches WHERE user_id = auth.uid()
   ));
+
+-- =============================================================================
+-- Migration 043: claim_next_slot function
+-- Atomically claims the next available slot using SELECT ... FOR UPDATE SKIP LOCKED.
+-- =============================================================================
+CREATE OR REPLACE FUNCTION claim_next_slot(p_age_group_id UUID, p_team_id UUID)
+RETURNS UUID
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  v_slot_id UUID;
+BEGIN
+  UPDATE pool_slots
+  SET    team_id = p_team_id
+  WHERE  id = (
+    SELECT ps.id
+    FROM   pool_slots ps
+    JOIN   pools p ON p.id = ps.pool_id
+    WHERE  ps.age_group_id = p_age_group_id
+      AND  ps.team_id IS NULL
+    ORDER  BY p.display_order ASC, ps.slot_number ASC
+    LIMIT  1
+    FOR UPDATE SKIP LOCKED
+  )
+  RETURNING id INTO v_slot_id;
+
+  RETURN v_slot_id;
+END;
+$$;

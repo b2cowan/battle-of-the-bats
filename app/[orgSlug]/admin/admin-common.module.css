@@ -114,22 +114,56 @@
   flex-wrap: wrap;
 }
 
-.statusFilters { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+.statusFilters { display: flex; gap: 0.4rem; flex-wrap: wrap; }
 
 .filterChip {
-  padding: 0.4rem 0.8rem;
-  border-radius: 20px;
-  font-size: 0.75rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0.7rem;
+  border-radius: 0;
+  font-family: var(--font-data);
+  font-size: 0.625rem;
   font-weight: 700;
-  background: var(--white-5);
-  border: 1px solid var(--border-2);
-  color: var(--white-40);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.18);
+  color: rgba(148, 163, 184, 0.5);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: border-color 0.15s, background 0.15s, color 0.15s;
 }
 
-.filterChip:hover { background: var(--white-10); color: var(--white-60); }
-.chipActive { background: var(--blueprint-blue); border-color: var(--logic-lime); color: var(--white); }
+.filterChip::before {
+  content: '';
+  display: block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.chip_pending::before  { background: #f6c453; }
+.chip_accepted::before { background: #ccff66; }
+.chip_waitlist::before { background: var(--blueprint-blue, #60a5fa); }
+.chip_rejected::before { background: #ef4444; }
+
+.filterChip:hover { border-color: rgba(255, 255, 255, 0.2); color: rgba(148, 163, 184, 0.75); }
+
+.chipActive.chip_pending  { border-color: rgba(246, 196, 83, 0.5);  background: rgba(246, 196, 83, 0.08);  color: #f6c453; }
+.chipActive.chip_accepted { border-color: rgba(204, 255, 102, 0.5); background: rgba(204, 255, 102, 0.07); color: #ccff66; }
+.chipActive.chip_waitlist { border-color: rgba(var(--blueprint-blue-rgb), 0.55); background: rgba(var(--blueprint-blue-rgb), 0.1); color: var(--blueprint-blue); }
+.chipActive.chip_rejected { border-color: rgba(239, 68, 68, 0.5);   background: rgba(239, 68, 68, 0.08);   color: #ef4444; }
+
+.chipCount {
+  font-family: var(--font-data);
+  font-size: 0.7rem;
+  font-weight: 700;
+  opacity: 0.65;
+  line-height: 1;
+}
+
+.chipActive .chipCount { opacity: 1; }
 
 /* ─── Search ──────────────────────────────────────────────────────────────── */
 .searchWrapper {

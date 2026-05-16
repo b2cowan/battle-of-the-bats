@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { ArrowRight, CreditCard, Palette, ShieldCheck, SlidersHorizontal, Users2 } from 'lucide-react';
+import { ArrowRight, CreditCard, Palette, RefreshCw, Settings2, ShieldCheck, Users2 } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { hasCapability } from '@/lib/roles';
 import styles from './settings-access.module.css';
@@ -14,6 +14,15 @@ export default function TournamentSettingsAccessPage() {
     ? userRole === 'owner' || hasCapability(userRole, userCapabilities, 'module_members')
     : false;
   const cards = [
+    {
+      href: `${base}/manage`,
+      icon: RefreshCw,
+      title: 'Tournaments & seasons',
+      description: 'Create new tournament seasons, rename or re-slug existing ones, manage lifecycle status, and archive completed events.',
+      meta: 'Manage tournaments',
+      enabled: true,
+      comingSoon: false,
+    },
     {
       href: `${base}/settings/members`,
       icon: Users2,
@@ -42,11 +51,11 @@ export default function TournamentSettingsAccessPage() {
       comingSoon: false,
     },
     {
-      href: `${base}/settings/scoring`,
-      icon: SlidersHorizontal,
-      title: 'Score settings',
-      description: 'Control whether submitted scores require admin finalization before they become official for this tournament.',
-      meta: isOwner ? 'Manage scoring' : 'Owner only',
+      href: `${base}/settings/event`,
+      icon: Settings2,
+      title: 'Event settings',
+      description: 'Set tournament dates, configure the registration fee schedule, and control score finalization policy.',
+      meta: isOwner ? 'Manage event settings' : 'Owner only',
       enabled: isOwner,
       comingSoon: false,
     },

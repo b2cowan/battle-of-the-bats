@@ -71,7 +71,7 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ id: str
       await sendEmail(current.email, `Registration Update — ${current.name}`, rejectionHtml(p));
     }
     if (payment_status === 'paid' && current.payment_status !== 'paid') {
-      await sendEmail(current.email, `Payment Confirmed — ${current.name}`, paymentConfirmationHtml(p));
+      await sendEmail(current.email, `Payment Recorded — ${current.name}`, paymentConfirmationHtml(p));
     }
 
     return NextResponse.json({ ok: true });

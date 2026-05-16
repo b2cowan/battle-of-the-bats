@@ -64,10 +64,10 @@ export default function AdminCommunicationPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          tournamentId: currentTournament?.id,
           recipients: filteredRecipients.map(r => r.email),
           subject,
           message,
-          tournamentName: currentTournament?.name
         }),
       });
       
@@ -151,7 +151,7 @@ export default function AdminCommunicationPage() {
               rows={10}
               value={message}
               onChange={e => setMessage(e.target.value)}
-              placeholder="Write your announcement here..."
+              placeholder="Write the email message recipients should receive..."
               required
             />
           </div>

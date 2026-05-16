@@ -211,12 +211,12 @@ export default function AgeGroupsPage() {
         <div className={styles.headerLeft}>
           <div className={styles.headerIcon}><Tag size={20} /></div>
           <div>
-            <h1 className={styles.pageTitle}>Age Groups</h1>
-            <p className={styles.pageSub}>Manage tournament age divisions</p>
+            <h1 className={styles.pageTitle}>Divisions</h1>
+            <p className={styles.pageSub}>Manage tournament divisions and registration groups</p>
           </div>
         </div>
         <button className="btn btn-primary" onClick={openAdd} id="age-group-add-btn" disabled={!currentTournament}>
-          <Plus size={16} /> Add Age Group
+          <Plus size={16} /> Add Division
         </button>
       </div>
 
@@ -236,7 +236,7 @@ export default function AgeGroupsPage() {
           </thead>
           <tbody>
             {groups.length === 0 ? (
-              <tr><td colSpan={5} style={{ textAlign: 'center', color: 'var(--white-30)', padding: '2rem' }}>No age groups yet. Add one to get started.</td></tr>
+              <tr><td colSpan={5} style={{ textAlign: 'center', color: 'var(--white-30)', padding: '2rem' }}>No divisions yet. Add one to get started.</td></tr>
             ) : groups.map(g => (
               <tr key={g.id}>
                 <td><span className="badge badge-primary" style={{ fontSize: '0.875rem' }}>{g.name}</span></td>
@@ -277,7 +277,7 @@ export default function AgeGroupsPage() {
         <div className="modal-overlay" onClick={() => setModal(null)}>
           <div className="modal" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
-              <h3>{modal === 'add' ? 'Add Age Group' : 'Edit Age Group'}</h3>
+              <h3>{modal === 'add' ? 'Add Division' : 'Edit Division'}</h3>
               <button className="btn btn-ghost btn-sm" onClick={() => setModal(null)}><X size={16} /></button>
             </div>
             <form onSubmit={handleSubmit}>
@@ -432,11 +432,11 @@ export default function AgeGroupsPage() {
         <div className="modal-overlay" onClick={() => setDeleteId(null)}>
           <div className="modal" style={{ maxWidth: 400 }} onClick={e => e.stopPropagation()}>
             <div className="modal-header">
-              <h3>Delete Age Group?</h3>
+              <h3>Delete Division?</h3>
               <button className="btn btn-ghost btn-sm" onClick={() => setDeleteId(null)}><X size={16} /></button>
             </div>
             <p style={{ color: 'var(--white-60)', marginBottom: '0.5rem' }}>
-              This will permanently delete this age group. Teams, games, and results in this group will remain but lose their division link.
+              This will permanently delete this division. Teams, games, and results in this division will remain but lose their division link.
             </p>
             <div className="modal-footer">
               <button className="btn btn-ghost" onClick={() => setDeleteId(null)}>Cancel</button>

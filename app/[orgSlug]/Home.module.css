@@ -1,5 +1,11 @@
 ﻿.page { overflow-x: hidden; }
 
+.page {
+  overflow-x: hidden;
+  background: var(--bg);
+  color: var(--white);
+}
+
 /* ── Hero ─────────────────────────────────────────────────────────────────── */
 .hero {
   position: relative;
@@ -162,6 +168,21 @@
 }
 
 .heroSub strong { color: var(--primary-light); }
+
+.draftPublicNotice {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 0.65rem 1rem;
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.35);
+  border-radius: var(--radius);
+  background: rgba(26,21,48,0.72);
+  color: var(--logic-lime);
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
 
 .previewBanner,
 .registrationStatus {
@@ -405,6 +426,66 @@
 .ctaContent p { color: var(--white-60); margin-bottom: 2rem; font-size: 1.0625rem; }
 
 .ctaButtons { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+
+/* Light mode needs explicit hero surfaces because the original tournament
+   hero uses dark-only decorative layers while global text tokens flip dark. */
+[data-color-mode="light"] .hero {
+  background:
+    radial-gradient(ellipse 70% 65% at 80% 10%, rgba(var(--primary-rgb), 0.14), transparent 60%),
+    linear-gradient(180deg, var(--bg) 0%, var(--bg-2) 100%);
+}
+
+[data-color-mode="light"] .heroBg {
+  background: linear-gradient(180deg, rgba(var(--primary-rgb), 0.08), rgba(255, 255, 255, 0));
+}
+
+[data-color-mode="light"] .heroOrb1,
+[data-color-mode="light"] .heroOrb2 {
+  opacity: 0.35;
+}
+
+[data-color-mode="light"] .heroOrb2 {
+  background: radial-gradient(circle, rgba(var(--logic-lime-rgb), 0.35) 0%, transparent 65%);
+}
+
+[data-color-mode="light"] .heroGrid {
+  background-image:
+    linear-gradient(rgba(var(--primary-rgb), 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(var(--primary-rgb), 0.08) 1px, transparent 1px);
+}
+
+[data-color-mode="light"] .heroTitle {
+  text-shadow: 0 12px 40px rgba(var(--primary-rgb), 0.16);
+}
+
+[data-color-mode="light"] .heroSub strong,
+[data-color-mode="light"] .heroBadge,
+[data-color-mode="light"] .previewBanner,
+[data-color-mode="light"] .countdown,
+[data-color-mode="light"] .vs,
+[data-color-mode="light"] .ctaIcon {
+  color: var(--primary);
+}
+
+[data-color-mode="light"] .previewBanner,
+[data-color-mode="light"] .registrationStatus,
+[data-color-mode="light"] .stats {
+  background: rgba(255, 255, 255, 0.82);
+  border-color: rgba(var(--primary-rgb), 0.2);
+  box-shadow: 0 18px 50px rgba(15, 17, 35, 0.08);
+}
+
+[data-color-mode="light"] .annFeatured {
+  background: linear-gradient(135deg, rgba(var(--primary-rgb), 0.1), rgba(255, 255, 255, 0.92));
+}
+
+[data-color-mode="light"] .announcementsSection {
+  background: var(--bg-2);
+}
+
+[data-color-mode="light"] .ctaSection {
+  background: var(--bg);
+}
 
 /* Animations */
 @keyframes float {

@@ -5,6 +5,7 @@ import { Users, Search } from 'lucide-react';
 import { useParams } from 'next/navigation';
 import { getTeams, getAgeGroups, getOrganizationBySlug, getTournamentsByOrg } from '@/lib/db';
 import { getAgPref, setAgPref } from '@/lib/age-group-cookie';
+import { isPublicPageEnabled } from '@/lib/public-pages';
 import { Team, AgeGroup, Tournament } from '@/lib/types';
 import YearSelector from '@/components/YearSelector';
 import styles from '../../teams/teams.module.css';
@@ -52,6 +53,21 @@ export default function TeamsPage() {
 
   const countByGroup = Object.fromEntries(ageGroups.map(g => [g.id, teams.filter(t => t.ageGroupId === g.id).length]));
   const totalCount = teams.length;
+
+  if (selectedTournament && !isPublicPageEnabled(selectedTournament, 'teams')) {
+    return (
+      <div className="page-content">
+        <div className="section">
+          <div className="container">
+            <div className="empty-state">
+              <Users size={48} />
+              <p>Teams are not available for this tournament.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="page-content">

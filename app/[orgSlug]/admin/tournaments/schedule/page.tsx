@@ -2,22 +2,24 @@
 import React, { useState, useEffect } from 'react';
 import { Calendar, Plus, Pencil, Trash2, X, Check, Download, Sparkles, Trophy, MapPin, Clock, Search } from 'lucide-react';
 import { formatPoolName } from '@/lib/utils';
-import { getGames, saveGame, updateGame, deleteGame, getTeams, getAgeGroups, getDiamonds } from '@/lib/db';
+import { saveGame, updateGame, deleteGame } from '@/lib/db';
 import { downloadCSV, formatTime } from '@/lib/utils';
 import { useTournament } from '@/lib/tournament-context';
 import ScheduleGenerator from './Generator';
 import PlayoffWizard from './PlayoffWizard';
 import GameList from './components/GameList';
-import { Game, Team, AgeGroup, Diamond } from '@/lib/types';
+import { Game, Team, AgeGroup, Diamond, PoolSlot } from '@/lib/types';
 import s from '../../admin-common.module.css';
 import styles from './schedule-admin.module.css';
 import FeedbackModal from '@/components/FeedbackModal';
 import HelpCallout from '@/components/help/HelpCallout';
+import AddVenueModal from '@/components/admin/AddVenueModal';
 
 type ModalMode = 'add' | 'edit' | null;
 
 const emptyForm = {
   ageGroupId: '', homeTeamId: '', awayTeamId: '',
+  homeSlotId: '', awaySlotId: '',
   date: '', time: '09:00', location: '', diamondId: '', notes: null as string | null,
   bracketCode: '',
 };
@@ -28,6 +30,8 @@ export default function AdminSchedulePage() {
   const [teams, setTeams]       = useState<Team[]>([]);
   const [ageGroups, setAgeGroups] = useState<AgeGroup[]>([]);
   const [diamonds, setDiamonds] = useState<Diamond[]>([]);
+  const [modalSlots, setModalSlots] = useState<PoolSlot[]>([]);
+  const [modalSlotsLoading, setModalSlotsLoading] = useState(false);
   const [modal, setModal]       = useState<ModalMode>(null);
   const [editing, setEditing]   = useState<Game | null>(null);
   const [form, setForm]         = useState(emptyForm);
@@ -38,6 +42,9 @@ export default function AdminSchedulePage() {
   const [showGenerator, setShowGenerator] = useState(false);
   const [showPlayoffWizard, setShowPlayoffWizard] = useState(false);
   const [search, setSearch] = useState('');
+  const [venueSearch, setVenueSearch] = useState('');
+  const [venueDropdownOpen, setVenueDropdownOpen] = useState(false);
+  const [addVenueOpen, setAddVenueOpen] = useState(false);
   const [feedback, setFeedback] = useState<{
     isOpen: boolean;
     title: string;
@@ -50,36 +57,88 @@ export default function AdminSchedulePage() {
   async function refresh() {
     const tournamentId = currentTournament?.id;
     if (!tournamentId) return;
-    
-    setGames(await getGames(tournamentId));
-    const allTeams = await getTeams(tournamentId);
-    setTeams(allTeams.filter(t => t.status === 'accepted'));
-    
-    const groups = await getAgeGroups(tournamentId);
+
+    const [gamesRes, teamsRes, groupsRes, diamondsRes] = await Promise.all([
+      fetch(`/api/admin/games?tournamentId=${encodeURIComponent(tournamentId)}`),
+      fetch(`/api/admin/teams?tournamentId=${encodeURIComponent(tournamentId)}`),
+      fetch(`/api/admin/age-groups?tournamentId=${encodeURIComponent(tournamentId)}`),
+      fetch(`/api/admin/diamonds?tournamentId=${encodeURIComponent(tournamentId)}`),
+    ]);
+
+    const games = gamesRes.ok ? await gamesRes.json() : [];
+    const allTeams = teamsRes.ok ? await teamsRes.json() : [];
+    const groups = groupsRes.ok ? await groupsRes.json() : [];
+    const diamonds = diamondsRes.ok ? await diamondsRes.json() : [];
+
+    setGames(games);
+    setTeams(allTeams.filter((t: any) => t.status === 'accepted'));
     setAgeGroups(groups);
     if (groups.length > 0 && !filterGroup) {
       setFilterGroup(groups[0].id);
     }
-    
-    setDiamonds(await getDiamonds(tournamentId));
+    setDiamonds(diamonds);
   }
   
   useEffect(() => { refresh(); }, [currentTournament?.id]);
 
   const groupTeams   = (id: string) => teams.filter(t => t.ageGroupId === id);
-  const getTeamName  = (id: string) => teams.find(t => t.id === id)?.name ?? 'TBD';
+  const getTeamName  = (id: string) => teams.find(t => t.id === id)?.name ?? null;
+  const resolveTeam  = (id: string, placeholder?: string) => getTeamName(id) ?? placeholder ?? 'TBD';
   const getGroupName = (id: string) => ageGroups.find(g => g.id === id)?.name ?? '—';
   const getDiamondName = (id?: string) => id ? (diamonds.find(d => d.id === id)?.name ?? '') : '';
 
-  function handleDiamondChange(diamondId: string) {
-    const diamond = diamonds.find(d => d.id === diamondId);
-    setForm(f => ({ ...f, diamondId, location: diamond ? diamond.name : f.location }));
+  async function fetchModalSlots(ageGroupId: string) {
+    if (!currentTournament?.id || !ageGroupId) { setModalSlots([]); return; }
+    setModalSlotsLoading(true);
+    try {
+      const res = await fetch(`/api/admin/pool-slots?tournamentId=${encodeURIComponent(currentTournament.id)}&ageGroupId=${encodeURIComponent(ageGroupId)}`);
+      setModalSlots(res.ok ? await res.json() : []);
+    } catch { setModalSlots([]); }
+    finally { setModalSlotsLoading(false); }
+  }
+
+  async function handleSetVisibility(ageGroupId: string, visibility: string) {
+    const ag = ageGroups.find(g => g.id === ageGroupId);
+    if (visibility === 'published_teams' && !ag?.isClosed) {
+      setFeedback({ isOpen: true, title: 'Registration Still Open', message: `Close registration for "${ag?.name ?? 'this division'}" before publishing team names.`, type: 'warning' });
+      return;
+    }
+    try {
+      await fetch('/api/admin/age-groups', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'set-visibility', data: { id: ageGroupId, scheduleVisibility: visibility } }),
+      });
+      setAgeGroups(prev => prev.map(g => g.id === ageGroupId ? { ...g, scheduleVisibility: visibility as any } : g));
+    } catch {
+      setFeedback({ isOpen: true, title: 'Error', message: 'Failed to update visibility.', type: 'danger' });
+    }
+  }
+
+  function handlePublishAll() {
+    setFeedback({
+      isOpen: true,
+      title: 'Publish All Divisions?',
+      message: 'Set all divisions to "Generic Names" visibility? The public schedule will show slot names (Team 1, Team 2…). Switch individual divisions to "Team Names" once registration closes.',
+      type: 'primary',
+      onConfirm: async () => {
+        await fetch('/api/admin/age-groups', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'set-visibility', data: { tournamentId: currentTournament?.id, scheduleVisibility: 'published_generic' } }),
+        });
+        setAgeGroups(prev => prev.map(g => ({ ...g, scheduleVisibility: 'published_generic' as const })));
+      }
+    });
   }
 
   function openAdd() {
-    setForm({ ...emptyForm, ageGroupId: filterGroup || (ageGroups[0]?.id ?? '') });
+    const ageGroupId = filterGroup || (ageGroups[0]?.id ?? '');
+    setForm({ ...emptyForm, ageGroupId });
+    setVenueSearch('');
     setEditing(null);
     setModal('add');
+    fetchModalSlots(ageGroupId);
   }
 
   function openEdit(g: Game) {
@@ -87,6 +146,8 @@ export default function AdminSchedulePage() {
       ageGroupId: g.ageGroupId,
       homeTeamId: g.homeTeamId ?? '',
       awayTeamId: g.awayTeamId ?? '',
+      homeSlotId: g.homeSlotId ?? '',
+      awaySlotId: g.awaySlotId ?? '',
       date: g.date ?? '',
       time: g.time ?? '09:00',
       location: g.location ?? '',
@@ -94,24 +155,34 @@ export default function AdminSchedulePage() {
       notes: g.notes ?? '',
       bracketCode: g.bracketCode ?? '',
     });
+    const existingDiamond = g.diamondId ? diamonds.find(d => d.id === g.diamondId) : null;
+    setVenueSearch(existingDiamond?.name ?? g.location ?? '');
     setEditing(g);
     setModal('edit');
+    fetchModalSlots(g.ageGroupId);
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    const slotMode = modalSlots.length > 0;
+    const homeSlot = slotMode ? modalSlots.find(s => s.id === form.homeSlotId) : null;
+    const awaySlot = slotMode ? modalSlots.find(s => s.id === form.awaySlotId) : null;
     const data: Omit<Game, 'id'> = {
-      tournamentId: currentTournament?.id ?? '',
-      ageGroupId:  form.ageGroupId,
-      homeTeamId:  form.homeTeamId,
-      awayTeamId:  form.awayTeamId,
-      date:        form.date,
-      time:        form.time,
-      location:    form.location,
-      diamondId:   form.diamondId || undefined,
-      notes:       form.notes || undefined,
-      status:      editing?.status || 'scheduled',
-      bracketCode: form.bracketCode || undefined,
+      tournamentId:    currentTournament?.id ?? '',
+      ageGroupId:      form.ageGroupId,
+      homeTeamId:      slotMode ? '' : (form.homeTeamId || ''),
+      awayTeamId:      slotMode ? '' : (form.awayTeamId || ''),
+      homeSlotId:      homeSlot?.id,
+      awaySlotId:      awaySlot?.id,
+      homePlaceholder: homeSlot?.displayName,
+      awayPlaceholder: awaySlot?.displayName,
+      date:            form.date,
+      time:            form.time,
+      location:        form.location,
+      diamondId:       form.diamondId || undefined,
+      notes:           form.notes || undefined,
+      status:          editing?.status || 'scheduled',
+      bracketCode:     form.bracketCode || undefined,
     };
     if (modal === 'add') await saveGame(data);
     else if (editing) await updateGame(editing.id, data);
@@ -135,16 +206,23 @@ export default function AdminSchedulePage() {
     });
   }
 
+  async function handleVenueSaved(saved: Diamond) {
+    const res = await fetch(`/api/admin/diamonds?tournamentId=${encodeURIComponent(currentTournament!.id)}`);
+    const updated: Diamond[] = res.ok ? await res.json() : [];
+    setDiamonds(updated);
+    setForm(f => ({ ...f, diamondId: saved.id, location: saved.name }));
+    setVenueSearch(saved.name);
+    setAddVenueOpen(false);
+  }
+
   const scheduled = games;
   const filtered  = scheduled.filter(g => {
     const matchesDivision = g.ageGroupId === filterGroup;
     const matchesView = viewMode === 'playoff' ? g.isPlayoff : !g.isPlayoff;
     const q = search.toLowerCase();
-    const matchesSearch = q === '' || 
-      getTeamName(g.homeTeamId).toLowerCase().includes(q) || 
-      getTeamName(g.awayTeamId).toLowerCase().includes(q) ||
-      (g.homePlaceholder || '').toLowerCase().includes(q) ||
-      (g.awayPlaceholder || '').toLowerCase().includes(q);
+    const matchesSearch = q === '' ||
+      resolveTeam(g.homeTeamId, g.homePlaceholder).toLowerCase().includes(q) ||
+      resolveTeam(g.awayTeamId, g.awayPlaceholder).toLowerCase().includes(q);
     return matchesDivision && matchesView && matchesSearch;
   });
 
@@ -158,8 +236,8 @@ export default function AdminSchedulePage() {
       g.date,
       formatTime(g.time),
       getGroupName(g.ageGroupId),
-      getTeamName(g.homeTeamId),
-      getTeamName(g.awayTeamId),
+      resolveTeam(g.homeTeamId, g.homePlaceholder),
+      resolveTeam(g.awayTeamId, g.awayPlaceholder),
       g.diamondId ? getDiamondName(g.diamondId) : g.location,
       g.status,
     ]);
@@ -210,6 +288,11 @@ export default function AdminSchedulePage() {
               <Trophy size={14} /> Playoff Wizard
             </button>
           )}
+          {viewMode === 'pool' && (
+            <button className="btn btn-ghost btn-sm" onClick={handlePublishAll} disabled={!currentTournament || ageGroups.length === 0} style={{ height: '32px', marginLeft: '0.5rem', color: 'var(--logic-lime)', gap: '0.4rem' }}>
+              Publish All
+            </button>
+          )}
         </div>
         <div className={s.controlsRight}>
           <div className={s.controlGroup}>
@@ -218,6 +301,24 @@ export default function AdminSchedulePage() {
               {ageGroups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
             </select>
           </div>
+          {viewMode === 'pool' && (() => {
+            const ag = ageGroups.find(g => g.id === filterGroup);
+            return (
+              <div className={s.controlGroup}>
+                <label className={s.controlLabel}>Visibility:</label>
+                <select
+                  className={`${s.controlSelect} form-input`}
+                  value={ag?.scheduleVisibility ?? 'unpublished'}
+                  onChange={e => handleSetVisibility(filterGroup, e.target.value)}
+                  style={{ minWidth: '155px' }}
+                >
+                  <option value="unpublished">Unpublished</option>
+                  <option value="published_generic">Generic Names</option>
+                  <option value="published_teams">{ag?.isClosed ? 'Team Names' : 'Team Names (close reg first)'}</option>
+                </select>
+              </div>
+            );
+          })()}
           {viewMode === 'pool' && (
             <div className={s.viewToggle}>
               <button className={`${s.toggleBtn} ${groupMode === 'flat' ? s.toggleActive : ''}`} onClick={() => setGroupMode('flat')}>Flat</button>
@@ -302,7 +403,7 @@ export default function AdminSchedulePage() {
                 <div className="form-group">
                   <label className="form-label">Division *</label>
                   <select className="form-select" value={form.ageGroupId}
-                    onChange={e => setForm(f => ({ ...f, ageGroupId: e.target.value, homeTeamId: '', awayTeamId: '' }))} required>
+                    onChange={e => { setForm(f => ({ ...f, ageGroupId: e.target.value, homeTeamId: '', awayTeamId: '', homeSlotId: '', awaySlotId: '' })); fetchModalSlots(e.target.value); }} required>
                     <option value="">Select...</option>
                     {ageGroups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
                   </select>
@@ -318,37 +419,138 @@ export default function AdminSchedulePage() {
                     onChange={e => setForm(f => ({ ...f, time: e.target.value }))} />
                 </div>
               </div>
-              <div className="form-row form-row-2" style={{ marginBottom: '1rem' }}>
-                <div className="form-group">
-                  <label className="form-label">Home Team</label>
-                  <select className="form-select" value={form.homeTeamId}
-                    onChange={e => setForm(f => ({ ...f, homeTeamId: e.target.value }))}>
-                    <option value="">Select...</option>
-                    {groupTeams(form.ageGroupId).map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
-                  </select>
+              {(() => {
+                if (modalSlotsLoading) {
+                  return <div style={{ marginBottom: '1rem', padding: '0.7rem 0.875rem', fontSize: '0.85rem', color: 'var(--white-40)' }}>Loading slots…</div>;
+                }
+
+                const ag = ageGroups.find(g => g.id === form.ageGroupId);
+                const mPools = ag?.pools ?? [];
+
+                if (modalSlots.length > 0) {
+                  const slotOptions = mPools.length > 0
+                    ? mPools.flatMap(pool => {
+                        const ps = modalSlots.filter(s => s.poolId === pool.id);
+                        return ps.length > 0 ? [{ label: pool.name, slots: ps }] : [];
+                      })
+                    : [{ label: null, slots: modalSlots }];
+                  const renderSlotSelect = (value: string, onChange: (v: string) => void, label: string) => (
+                    <div className="form-group">
+                      <label className="form-label">{label}</label>
+                      <select className="form-select" value={value} onChange={e => onChange(e.target.value)}>
+                        <option value="">Select slot...</option>
+                        {slotOptions.map(({ label: gLabel, slots }) =>
+                          gLabel
+                            ? <optgroup key={gLabel} label={gLabel}>{slots.map(s => <option key={s.id} value={s.id}>{s.displayName}</option>)}</optgroup>
+                            : slots.map(s => <option key={s.id} value={s.id}>{s.displayName}</option>)
+                        )}
+                      </select>
+                    </div>
+                  );
+                  return (
+                    <div className="form-row form-row-2" style={{ marginBottom: '1rem' }}>
+                      {renderSlotSelect(form.homeSlotId, v => setForm(f => ({ ...f, homeSlotId: v })), 'Home Slot')}
+                      {renderSlotSelect(form.awaySlotId, v => setForm(f => ({ ...f, awaySlotId: v })), 'Away Slot')}
+                    </div>
+                  );
+                }
+
+                return (
+                  <>
+                    <div style={{ marginBottom: '0.75rem', padding: '0.7rem 0.875rem', background: 'var(--white-5)', borderRadius: 'var(--radius-sm)', fontSize: '0.8rem', color: 'var(--white-40)' }}>
+                      No slots configured for this division. Configure pools in Division Settings to use slot-based scheduling.
+                    </div>
+                    <div className="form-row form-row-2" style={{ marginBottom: '1rem' }}>
+                      <div className="form-group">
+                        <label className="form-label">Home Team</label>
+                        <select className="form-select" value={form.homeTeamId} onChange={e => setForm(f => ({ ...f, homeTeamId: e.target.value }))}>
+                          <option value="">Select...</option>
+                          {groupTeams(form.ageGroupId).map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                        </select>
+                      </div>
+                      <div className="form-group">
+                        <label className="form-label">Away Team</label>
+                        <select className="form-select" value={form.awayTeamId} onChange={e => setForm(f => ({ ...f, awayTeamId: e.target.value }))}>
+                          <option value="">Select...</option>
+                          {groupTeams(form.ageGroupId).map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                        </select>
+                      </div>
+                    </div>
+                  </>
+                );
+              })()}
+              <div className="form-group" style={{ marginBottom: '1rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.35rem' }}>
+                  <label className="form-label" style={{ margin: 0 }}>Venue *</label>
+                  <button
+                    type="button"
+                    className="btn btn-outline btn-sm"
+                    style={{ height: '26px', fontSize: '0.75rem', padding: '0 0.6rem', gap: '0.25rem' }}
+                    onClick={() => setAddVenueOpen(true)}
+                  >
+                    <Plus size={12} /> Add venue
+                  </button>
                 </div>
-                <div className="form-group">
-                  <label className="form-label">Away Team</label>
-                  <select className="form-select" value={form.awayTeamId}
-                    onChange={e => setForm(f => ({ ...f, awayTeamId: e.target.value }))}>
-                    <option value="">Select...</option>
-                    {groupTeams(form.ageGroupId).map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
-                  </select>
+                <div style={{ position: 'relative' }}>
+                  <MapPin size={14} style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--white-30)', pointerEvents: 'none', zIndex: 1 }} />
+                  <input
+                    className="form-input"
+                    style={{ paddingLeft: '2.1rem' }}
+                    placeholder={diamonds.length > 0 ? 'Search venues…' : 'Type a location…'}
+                    value={venueSearch}
+                    autoComplete="off"
+                    required
+                    onChange={e => {
+                      const v = e.target.value;
+                      setVenueSearch(v);
+                      setForm(f => ({ ...f, location: v, diamondId: '' }));
+                      setVenueDropdownOpen(true);
+                    }}
+                    onFocus={() => { if (diamonds.length > 0) setVenueDropdownOpen(true); }}
+                    onBlur={() => setTimeout(() => setVenueDropdownOpen(false), 150)}
+                  />
+                  {venueDropdownOpen && (() => {
+                    const q = venueSearch.toLowerCase();
+                    const filtered = diamonds.filter(d =>
+                      !q || d.name.toLowerCase().includes(q) || (d.address || '').toLowerCase().includes(q)
+                    );
+                    if (filtered.length === 0) return null;
+                    return (
+                      <div style={{
+                        position: 'absolute', top: 'calc(100% + 2px)', left: 0, right: 0, zIndex: 200,
+                        background: '#0d0f18', border: '1px solid var(--border)',
+                        borderRadius: 'var(--radius-sm)', boxShadow: '0 8px 32px rgba(0,0,0,0.8)',
+                        maxHeight: '180px', overflowY: 'auto',
+                      }}>
+                        {filtered.map((d, i) => (
+                          <div
+                            key={d.id}
+                            onMouseDown={() => {
+                              setForm(f => ({ ...f, diamondId: d.id, location: d.name }));
+                              setVenueSearch(d.name);
+                              setVenueDropdownOpen(false);
+                            }}
+                            style={{
+                              padding: '0.55rem 0.875rem',
+                              cursor: 'pointer',
+                              borderBottom: i < filtered.length - 1 ? '1px solid var(--border)' : 'none',
+                            }}
+                            onMouseEnter={e => (e.currentTarget.style.background = 'var(--white-5)')}
+                            onMouseLeave={e => (e.currentTarget.style.background = '')}
+                          >
+                            <div style={{ fontWeight: 600, fontSize: '0.88rem', color: 'var(--white)' }}>{d.name}</div>
+                            {d.address && <div style={{ fontSize: '0.73rem', color: 'var(--white-40)', marginTop: '1px' }}>{d.address}</div>}
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  })()}
                 </div>
-              </div>
-              <div className="form-row form-row-2" style={{ marginBottom: '1rem' }}>
-                <div className="form-group">
-                  <label className="form-label">Diamond</label>
-                  <select className="form-select" value={form.diamondId} onChange={e => handleDiamondChange(e.target.value)}>
-                    <option value="">— Custom location —</option>
-                    {diamonds.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Location Name *</label>
-                  <input className="form-input" placeholder="Field name / address" value={form.location}
-                    onChange={e => setForm(f => ({ ...f, location: e.target.value }))} required />
-                </div>
+                {form.diamondId && (
+                  <div style={{ marginTop: '0.35rem', fontSize: '0.73rem', color: 'var(--white-40)', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                    <Check size={11} style={{ color: 'var(--logic-lime)' }} /> Linked to saved venue
+                  </div>
+                )}
               </div>
               {viewMode === 'playoff' && (
                 <div className="form-row form-row-2" style={{ marginBottom: '1rem' }}>
@@ -412,9 +614,18 @@ export default function AdminSchedulePage() {
         />
       )}
 
-      <FeedbackModal 
-        {...feedback} 
-        onClose={() => setFeedback(f => ({ ...f, isOpen: false, onConfirm: undefined }))} 
+      {addVenueOpen && currentTournament && (
+        <AddVenueModal
+          tournamentId={currentTournament.id}
+          onClose={() => setAddVenueOpen(false)}
+          onSaved={handleVenueSaved}
+          zIndex={1100}
+        />
+      )}
+
+      <FeedbackModal
+        {...feedback}
+        onClose={() => setFeedback(f => ({ ...f, isOpen: false, onConfirm: undefined }))}
       />
     </div>
   );
