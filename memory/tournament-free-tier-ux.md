@@ -8,3 +8,4 @@
 - Item 13 now labels tournament announcements as public News page posts, adds a public-post-only callout with a Communication link, and changes email composer placeholders away from "announcement" wording.
 - Item 14 now gives Communication explicit team/status/division/team/contact-role targeting with a deduped recipient preview, and `app/api/send-message/route.ts` resolves targeting server-side before sending.
 - Item 15 now adds Communication, Rules & Resources, and Past Tournaments to the mobile tournament More menu, and caps the drawer height so the larger menu scrolls on short screens.
+- Item 16 product decision: keep free Tournament as a complete manual tournament product, keep basic Communication Hub email free, and reserve automation/history/premium presentation for Tournament Plus and above. League and Club plans inherit Tournament Plus tournament features through rank-based feature gates.

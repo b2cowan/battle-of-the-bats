@@ -11,19 +11,9 @@ This file tracks the ongoing tasks for the FieldLogicHQ platform (multi-tenant s
 
 ## 🚀 Active Tasks (Priority Order)
 
-- [x] **Slot-first roster & schedule architecture** — Slots are the division roster from day one. Auto-created on pool configuration, auto-assigned on registration. Unified registrations page with slot board + waitlist. Explicit publish control (unpublished / generic names / team names). Supersedes SCHEDULE_SLOT_PLAN.md. (see [SLOT_ROSTER_PLAN.md](SLOT_ROSTER_PLAN.md))
-  - [x] Foundation: DB migration 041 (pool_slots + game slot FKs), types, db.ts, API — applied dev + prod
-  - [x] Phase 1: DB migration 042 (schedule_visibility on age_groups, waitlist_position + slot_id on teams)
-  - [x] Phase 2: Auto-slot creation on pool configuration (sync-capacity action, hook into age-groups save)
-  - [x] Phase 3: Registration auto-assignment (auto-claim slot on submit, promote-from-waitlist, swap-slots)
-  - [x] Phase 4: DB lock fn (migration 043 claim_next_slot), register route uses RPC, registrations page redesigned (slot board + waitlist)
-  - [x] Phase 5: Schedule simplification + publish control (lazy slot fetch, remove mode toggle/chip, visibility dropdown + Publish All)
-  - [x] Phase 6: Public schedule respects schedule_visibility per division
-  - [x] Phase 7: Cleanup (remove old slot mode code, archive SCHEDULE_SLOT_PLAN.md)
-
 - [ ] **Tournament help documentation UX review** - Upgrade tournament help with grouped contents, search, quick answers, and FAQs (see [TOURNAMENT_HELP_DOCS_REVIEW_PLAN.md](TOURNAMENT_HELP_DOCS_REVIEW_PLAN.md))
 
-- [ ] **Free Tournament organizer UX cleanup** - Resolve signup/onboarding, publish, operations, and free-tier guardrail findings (see [TOURNAMENT_FREE_TIER_UX_IMPLEMENTATION_PLAN.md](TOURNAMENT_FREE_TIER_UX_IMPLEMENTATION_PLAN.md))
+- [ ] **Free Tournament organizer UX cleanup** - Resolve signup/onboarding, publish, operations, and free-tier guardrail findings (see [docs/archive/TOURNAMENT_FREE_TIER_UX_IMPLEMENTATION_PLAN.md](docs/archive/TOURNAMENT_FREE_TIER_UX_IMPLEMENTATION_PLAN.md))
   - [x] Reusable Manage Tournaments setup wizard with existing-venue reuse
   - [x] Tournament Settings & Access section
   - [x] Phase 1 trust fixes: mobile activation API path, secured message sending, active contact mapping
@@ -35,6 +25,7 @@ This file tracks the ongoing tasks for the FieldLogicHQ platform (multi-tenant s
   - [x] Phase 4 item 13: public announcement posting is clearly separated from email communication
   - [x] Phase 4 item 14: communication targeting now supports teams, divisions, statuses, and contacts
   - [x] Phase 4 item 15: mobile tournament More menu includes day-of tools
+  - [ ] Phase 5 item 16: plan feature gates and pricing copy align free Tournament with Tournament Plus-and-above benefits
 
 ### 0. Tournament Signup Experience
 *Detailed tasks in [TOURNAMENT_SIGNUP_EXPERIENCE_FIXES.md](TOURNAMENT_SIGNUP_EXPERIENCE_FIXES.md)*
@@ -76,11 +67,8 @@ This file tracks the ongoing tasks for the FieldLogicHQ platform (multi-tenant s
   - [x] Non-browser hardening pass completed
   - [ ] Browser verification of signup-to-registration flow
 
-### 1. Accounting Enhancements — Org & Rep Team Budget Planning
-*(Archived — all phases complete. See [docs/archive/ACCOUNTING_ENHANCEMENTS_PLAN.md](docs/archive/ACCOUNTING_ENHANCEMENTS_PLAN.md))*
-
 ### 2. Rep Teams — Groups & Per-Team Billing
-*Detailed tasks in [REP_TEAMS_ENHANCEMENTS_PLAN.md](REP_TEAMS_ENHANCEMENTS_PLAN.md)*
+*Detailed tasks in [docs/archive/REP_TEAMS_ENHANCEMENTS_PLAN.md](docs/archive/REP_TEAMS_ENHANCEMENTS_PLAN.md) (Phases 1+2 archived; Phase 3 tracked in Stripe plan)*
 
 - [x] **Phase 1** — Rep team groups: `rep_team_groups` table, group management UI, team assignment, group filter on lists and accounting views — migration 035 applied dev+prod, complete
 - [x] **Phase 2** — Staff group scoping: `org_member_rep_group_scopes` junction table, multi-group selection per member, `repGroupIds` on auth context, hard 403 gating on all rep team admin routes, group access UI in Manage Member modal (migration 036, apply to dev+prod)
@@ -132,6 +120,13 @@ This file tracks the ongoing tasks for the FieldLogicHQ platform (multi-tenant s
 ---
 
 ## ✅ Completed Projects
+
+### Slot-First Roster & Schedule Architecture
+*(Archived — all 7 phases complete. See [docs/archive/SLOT_ROSTER_PLAN.md](docs/archive/SLOT_ROSTER_PLAN.md))*
+- [x] Foundation–Phase 7: pool slots as division roster, atomic slot claiming (PG fn), slot board + waitlist registrations page, publish control per division, public schedule visibility, cleanup
+
+### Accounting Enhancements — Org & Rep Team Budget Planning
+*(Archived — all phases complete. See [docs/archive/ACCOUNTING_ENHANCEMENTS_PLAN.md](docs/archive/ACCOUNTING_ENHANCEMENTS_PLAN.md))*
 
 ### Public Tournament UAT
 - [x] Default tournament/public-site customization to FieldLogicHQ colors and remove preview-only setup CTA

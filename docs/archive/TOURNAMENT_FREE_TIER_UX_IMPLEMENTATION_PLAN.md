@@ -51,11 +51,55 @@ Improve the first-time Tournament-plan experience for a softball/baseball organi
 
 ## Phase 5 - Plan Guardrails and Upgrade Consistency
 
-- [ ] Decide whether automated scheduling, playoff bracket generation, email communication, and archives belong in free Tournament or Tournament Plus.
-- [ ] Align `app/pricing/page.tsx`, `components/PricingSection.tsx`, `lib/plan-config.ts`, and `components/admin/AdminSidebar.tsx` with that decision.
-- [ ] If these features are Plus-only, add explicit feature-level gates instead of relying only on module entitlements.
-- [ ] Add upgrade prompts at the point of need for locked Plus features, linking to `app/[orgSlug]/admin/org/billing/page.tsx`.
-- [ ] Keep paid non-tournament modules hidden for Tournament-plan orgs unless a clear upgrade entry point is added.
+### Product Decision
+
+The free Tournament plan should remain a complete manual tournament operations product. Tournament Plus should unlock capacity, automation, premium presentation, and durable history. League and Club plans should inherit all Tournament Plus tournament features.
+
+### Feature Treatment Matrix
+
+| Feature | Free Tournament treatment | Tournament Plus, League, Club treatment |
+| --- | --- | --- |
+| Manual tournament scheduling | Visible and usable | Visible and usable |
+| Automated schedule generation | Visible and locked at the point of need | Visible and usable |
+| Manual playoff/bracket games and public bracket views | Visible and usable | Visible and usable |
+| Playoff/bracket generator wizard | Visible and locked at the point of need | Visible and usable |
+| Registration, score entry, standings, venues, rules/resources | Visible and usable | Visible and usable |
+| Public news posts | Visible and usable | Visible and usable |
+| Basic Communication Hub email to registered teams/contacts | Visible and usable | Visible and usable |
+| Future advanced communication features such as templates, saved segments, attachments, delivery history, or larger bulk tools | Hidden until built, then visible and locked where useful | Visible and usable |
+| Basic archive/close flow needed to free the single tournament slot | Visible and usable | Visible and usable |
+| Permanent/sealed tournament archives and durable history | Visible and locked at the point of need | Visible and usable |
+| Advanced tournament branding and premium stock logos | Visible and locked where already presented in branding/settings | Visible and usable according to each feature's minimum plan |
+| Extra tournament slots and seat/official capacity benefits | Visible through usage meters and upgrade prompts | Visible as included plan capacity |
+
+### Implementation Tasks
+
+- [ ] Add a central tournament feature entitlement helper, likely in `lib/plan-features.ts` or `lib/plan-config.ts`, with plan ranking instead of direct `planId === 'tournament_plus'` checks.
+  - [ ] Define `PLAN_RANK` for `tournament`, `tournament_plus`, `league`, and `club`.
+  - [ ] Define feature minimums for `auto_schedule`, `playoff_generator`, `sealed_archives`, and `advanced_tournament_branding`.
+  - [ ] Add `hasPlanFeature(planId, feature)` so `league` and `club` automatically satisfy `minPlan: 'tournament_plus'`.
+- [ ] Replace existing ad hoc Tournament Plus checks, including advanced tournament branding, with the central helper where practical.
+- [ ] Gate automated tournament scheduling:
+  - [ ] Keep manual schedule creation/editing available to free Tournament orgs.
+  - [ ] Lock generator entry points in `app/[orgSlug]/admin/tournaments/schedule/page.tsx` and related generator components.
+  - [ ] Enforce the same gate server-side on any generation/save API that creates generated schedules.
+- [ ] Gate playoff/bracket generation:
+  - [ ] Keep manual playoff games, score entry, and public bracket display available to free Tournament orgs.
+  - [ ] Lock the playoff/bracket generator wizard and any API routes that auto-create bracket structures.
+- [ ] Gate sealed/permanent archives:
+  - [ ] Keep the basic close/archive lifecycle available so a free Tournament org can free its single tournament slot.
+  - [ ] Lock seal/permanent-history actions and their API routes for base Tournament orgs.
+- [ ] Keep current Communication Hub basic sending available on free Tournament.
+  - [ ] Update pricing copy so basic email communication is not advertised as Plus-only.
+  - [ ] Reserve future advanced email features for Plus-and-above if/when built.
+- [ ] Update public pricing and plan comparison copy:
+  - [ ] Free Tournament: manual scheduling, registrations, scoring/standings, public news posts, basic team/contact email, one active tournament slot.
+  - [ ] Tournament Plus: automated scheduling, bracket generator, permanent sealed archives, advanced branding, three tournament slots, higher admin capacity, officials not counted toward seats.
+  - [ ] League and Club: make clear they include Tournament Plus tournament capabilities in addition to their league/club modules.
+- [ ] Keep free-plan navigation clean:
+  - [ ] Do not add locked-only sidebar destinations for base Tournament orgs.
+  - [ ] Place upgrade prompts beside useful locked actions inside Schedule, Playoffs/Brackets, Archives/Past Tournaments, Branding, and Billing/usage surfaces.
+- [ ] Add focused tests for the plan helper and any server-side gates so UI locks cannot be bypassed by direct API calls.
 
 ## Verification Checklist
 

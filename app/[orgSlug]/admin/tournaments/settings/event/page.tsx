@@ -75,7 +75,7 @@ export default function TournamentEventSettingsPage() {
         setTotalFeeAmount(tf); setTotalFeeDueDate(td);
         setSaved(s => ({ ...s, startDate: sd, endDate: ed, feeMode: fm, depositAmount: da, depositDueDate: dd, totalFeeAmount: tf, totalFeeDueDate: td }));
       }
-      const rf = branding.requireScoreFinalization ?? false;
+      const rf = (branding as { requireScoreFinalization?: boolean }).requireScoreFinalization ?? false;
       setRequireFinalization(rf);
       setSaved(s => ({ ...s, requireFinalization: rf }));
     }).catch(() => { setErrorMsg('Failed to load settings'); setErrorOpen(true); });

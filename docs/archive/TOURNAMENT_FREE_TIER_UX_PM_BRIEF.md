@@ -158,9 +158,17 @@ Expected outcome: Tournament-tier customers can stay in one tournament workspace
 
 Problem: Pricing positions automated scheduling, bracket generation, email communication, and archives as Plus features, but some of those features are visible or usable on the free Tournament plan.
 
-Proposed solution: Decide which features are truly free, then align pricing, plan configuration, navigation, and upgrade prompts.
+Proposed solution: Treat the free Tournament plan as a complete manual tournament operations product, then reserve capacity, automation, premium presentation, and durable history for Tournament Plus and above. League and Club plans should inherit all Tournament Plus tournament features.
+
+Free Tournament should keep manual scheduling, registrations, score entry, standings, venues, rules/resources, public news posts, basic team/contact email, and the basic close/archive flow needed to free the single tournament slot. These are the features that make the free plan feel credible enough to run a real event.
+
+Tournament Plus, League, and Club should unlock automated schedule generation, playoff/bracket generation, permanent or sealed tournament archives, advanced tournament branding, extra tournament slots, higher admin capacity, and officials not counting against seats. These are strong upgrade benefits because they save time, support repeat events, or improve the public presentation without blocking the core free workflow.
+
+The admin UI should keep free navigation clean. Locked Plus benefits should appear beside the relevant action rather than as dead-end menu items: "Generate Schedule" on the schedule page, "Generate Bracket" in playoffs, "Seal Archive" in past tournaments, and advanced branding controls in settings. Basic Communication Hub email should remain free; future advanced communication features such as templates, delivery history, saved audiences, attachments, or higher-volume tools can become Plus-and-above features when built.
 
 Expected outcome: The free tier feels trustworthy, and upgrade prompts are based on clear value instead of inconsistent availability.
+
+Customer impact: Free organizers can run a tournament without feeling bait-and-switched, while upgrade reminders appear when the user naturally wants speed, scale, polish, or permanent history. Paid League and Club customers continue receiving the full Tournament Plus tournament toolkit as part of their higher-tier plans.
 
 ## Customer Impact
 
