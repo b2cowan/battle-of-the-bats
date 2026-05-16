@@ -91,11 +91,12 @@
     bottom: calc(100% + 0.75rem);
     right: 0;
     min-width: 220px;
+    max-height: min(74vh, 620px);
     background: #1A1530;
     border: 1px solid rgba(139, 47, 201, 0.35);
     border-radius: 16px;
     box-shadow: 0 -8px 32px rgba(0,0,0,0.65), 0 0 24px rgba(139,47,201,0.15);
-    overflow: hidden;
+    overflow-y: auto;
     animation: slideUpMenu 0.18s ease;
   }
 
@@ -131,6 +132,10 @@
   .seasonSelect option { background: #1A1530; }
 
   .setLiveBtn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
     background: rgba(139,47,201,0.18);
     border: 1px solid rgba(139,47,201,0.4);
     border-radius: 8px;

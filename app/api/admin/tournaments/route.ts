@@ -9,6 +9,14 @@ import { hasCapability } from '@/lib/roles';
 import type { TournamentStatus } from '@/lib/types';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 
+function isDateValue(value: unknown): value is string {
+  return typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value);
+}
+
+function normalizeTournamentName(name: string) {
+  return name.trim().replace(/\s+/g, ' ').toLowerCase();
+}
+
 /**
  * GET /api/admin/tournaments
  * Returns tournaments for the calling user's org, filtered by their assignment scope.
@@ -66,6 +74,27 @@ export async function POST(req: Request) {
 
       const newStatus: TournamentStatus = data.status;
 
+      if (newStatus !== 'archived') {
+        const { count, error: limitError } = await supabase
+          .from('tournaments')
+          .select('*', { count: 'exact', head: true })
+          .eq('organization_id', ctx.org.id)
+          .neq('status', 'archived')
+          .neq('id', id);
+
+        if (limitError) throw limitError;
+
+        const limit: number = ctx.org.tournamentLimit;
+        if (limit < 9999 && (count ?? 0) >= limit) {
+          return new Response(
+            JSON.stringify({
+              error: `Your plan allows ${limit} tournament slot${limit === 1 ? '' : 's'}. Archive another tournament before moving this one to ${newStatus}.`,
+            }),
+            { status: 403, headers: { 'Content-Type': 'application/json' } }
+          );
+        }
+      }
+
       if (newStatus === 'active') {
         const { data: tournamentRow, error: tournamentError } = await supabase
           .from('tournaments')
@@ -93,22 +122,6 @@ export async function POST(req: Request) {
           );
         }
 
-        const { count } = await supabase
-          .from('tournaments')
-          .select('*', { count: 'exact', head: true })
-          .eq('organization_id', ctx.org.id)
-          .eq('status', 'active')
-          .neq('id', id);
-
-        const limit: number = ctx.org.tournamentLimit;
-        if (limit < 999 && (count ?? 0) >= limit) {
-          return new Response(
-            JSON.stringify({
-              error: `Your plan allows ${limit} active tournament${limit === 1 ? '' : 's'}. Complete or archive another before activating this one.`,
-            }),
-            { status: 403, headers: { 'Content-Type': 'application/json' } }
-          );
-        }
       }
 
       const { error } = await supabase
@@ -147,7 +160,25 @@ export async function POST(req: Request) {
 
       const updates: Record<string, unknown> = {};
       if (data.year      !== undefined) updates.year       = data.year;
-      if (data.name      !== undefined) updates.name       = data.name;
+      if (data.name      !== undefined) {
+        const name = String(data.name).trim().replace(/\s+/g, ' ');
+        if (!name) {
+          return Response.json({ error: 'Tournament name is required.' }, { status: 400 });
+        }
+
+        const { data: existingNames, error: nameError } = await supabase
+          .from('tournaments')
+          .select('name')
+          .eq('organization_id', ctx.org.id)
+          .neq('status', 'archived')
+          .neq('id', id);
+        if (nameError) throw nameError;
+        if ((existingNames ?? []).some(row => normalizeTournamentName(row.name ?? '') === normalizeTournamentName(name))) {
+          return Response.json({ error: `A tournament named "${name}" already exists. Choose a different name.` }, { status: 409 });
+        }
+
+        updates.name = name;
+      }
       if (data.slug      !== undefined) {
         const slug = String(data.slug).trim().toLowerCase();
         if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) {
@@ -167,6 +198,43 @@ export async function POST(req: Request) {
       }
       if (data.startDate !== undefined) updates.start_date = data.startDate;
       if (data.endDate   !== undefined) updates.end_date   = data.endDate;
+      if (data.feeScheduleMode !== undefined) updates.fee_schedule_mode = data.feeScheduleMode;
+      if (data.depositAmount   !== undefined) updates.deposit_amount    = data.depositAmount ?? null;
+      if (data.depositDueDate  !== undefined) updates.deposit_due_date  = data.depositDueDate ?? null;
+      if (data.totalFeeAmount  !== undefined) updates.total_fee_amount  = data.totalFeeAmount ?? null;
+      if (data.totalFeeDueDate !== undefined) updates.total_fee_due_date = data.totalFeeDueDate ?? null;
+
+      if (data.startDate !== undefined || data.endDate !== undefined) {
+        const hasStartDateUpdate = data.startDate !== undefined;
+        const hasEndDateUpdate = data.endDate !== undefined;
+        const nextStartDate = !hasStartDateUpdate
+          ? null
+          : data.startDate === null || data.startDate === ''
+          ? null
+          : isDateValue(data.startDate)
+            ? data.startDate
+            : undefined;
+        const nextEndDate = !hasEndDateUpdate
+          ? null
+          : data.endDate === null || data.endDate === ''
+          ? null
+          : isDateValue(data.endDate)
+            ? data.endDate
+            : undefined;
+
+        if ((hasStartDateUpdate && nextStartDate === undefined) || (hasEndDateUpdate && nextEndDate === undefined)) {
+          return Response.json({ error: 'Tournament dates must use YYYY-MM-DD format.' }, { status: 400 });
+        }
+        if (hasStartDateUpdate && hasEndDateUpdate && nextEndDate && !nextStartDate) {
+          return Response.json({ error: 'Choose a start date before setting an end date.' }, { status: 400 });
+        }
+        if (hasStartDateUpdate && hasEndDateUpdate && nextStartDate && nextEndDate && nextEndDate < nextStartDate) {
+          return Response.json({ error: 'End date cannot be before the start date.' }, { status: 400 });
+        }
+
+        if (data.startDate !== undefined) updates.start_date = nextStartDate;
+        if (data.endDate !== undefined) updates.end_date = nextEndDate;
+      }
 
       const { error } = await supabase
         .from('tournaments')
@@ -207,9 +275,10 @@ export async function POST(req: Request) {
       status: 200,
       headers: { 'Content-Type': 'application/json' },
     });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('Admin Tournaments API Error:', err);
-    return new Response(JSON.stringify({ error: err.message ?? 'Unknown server error' }), {
+    const message = err instanceof Error ? err.message : 'Unknown server error';
+    return new Response(JSON.stringify({ error: message }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' },
     });

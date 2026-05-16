@@ -2,9 +2,30 @@
 
 This file tracks the ongoing tasks for the FieldLogicHQ platform (multi-tenant sports club and league management). AI models and the USER use this to coordinate work.
 
+
 ---
 
+- [ ] **League onboarding wizard** - Guide League/Club owners through first house league setup with optional tournament setup branch (see [LEAGUE_ONBOARDING_WIZARD_PLAN.md](LEAGUE_ONBOARDING_WIZARD_PLAN.md))
+  - [x] First implementation: league startup tasks, onboarding wizard, remaining-step CTAs, and create-season modal alignment
+  - [ ] Browser verification
+
 ## 🚀 Active Tasks (Priority Order)
+
+- [ ] **Tournament help documentation UX review** - Upgrade tournament help with grouped contents, search, quick answers, and FAQs (see [TOURNAMENT_HELP_DOCS_REVIEW_PLAN.md](TOURNAMENT_HELP_DOCS_REVIEW_PLAN.md))
+
+- [ ] **Free Tournament organizer UX cleanup** - Resolve signup/onboarding, publish, operations, and free-tier guardrail findings (see [docs/archive/TOURNAMENT_FREE_TIER_UX_IMPLEMENTATION_PLAN.md](docs/archive/TOURNAMENT_FREE_TIER_UX_IMPLEMENTATION_PLAN.md))
+  - [x] Reusable Manage Tournaments setup wizard with existing-venue reuse
+  - [x] Tournament Settings & Access section
+  - [x] Phase 1 trust fixes: mobile activation API path, secured message sending, active contact mapping
+  - [x] Phase 2 signup and onboarding clarity copy
+  - [x] Phase 3 item 8: draft-to-publish dashboard checklist
+  - [x] Phase 3 item 10: draft public-page messaging and preview-link clarity
+  - [x] Phase 4 item 11: external payment expectations and fee-mode alignment
+  - [x] Phase 4 item 12: admin score entry respects finalization rules
+  - [x] Phase 4 item 13: public announcement posting is clearly separated from email communication
+  - [x] Phase 4 item 14: communication targeting now supports teams, divisions, statuses, and contacts
+  - [x] Phase 4 item 15: mobile tournament More menu includes day-of tools
+  - [ ] Phase 5 item 16: plan feature gates and pricing copy align free Tournament with Tournament Plus-and-above benefits
 
 ### 0. Tournament Signup Experience
 *Detailed tasks in [TOURNAMENT_SIGNUP_EXPERIENCE_FIXES.md](TOURNAMENT_SIGNUP_EXPERIENCE_FIXES.md)*
@@ -14,15 +35,72 @@ This file tracks the ongoing tasks for the FieldLogicHQ platform (multi-tenant s
   - [x] Phase 2 setup polish implemented
   - [x] Phase 3 conversion and public experience implemented
   - [x] Phase 4 plan-aware onboarding refinement implemented
+  - [x] Walkthrough blocker: post-signup onboarding plan chooser no longer blanks on org-context 403
+  - [x] Walkthrough polish: create-tournament onboarding opens the modal and post-create optional launch steps are shown
+  - [x] Walkthrough cleanup: create modal initializes immediately and admin archive console errors are removed
+  - [x] Walkthrough cleanup: launch steps visible up front and first-run create modal no longer shows migration/seed controls
+  - [x] Walkthrough polish: onboarding workflow uses focused chrome without admin side navigation
+  - [x] Walkthrough polish: division presets are editable starter rows instead of hardcoded youth brackets
+  - [x] Walkthrough polish: startup workflow steps open modals over onboarding with save/skip progress and dashboard reminder
+  - [x] Walkthrough blocker: post-signup onboarding render fault guarded
+  - [x] Walkthrough polish: onboarding division rows label capacity, expand pool controls, and tolerate missing startup-task migration
+  - [x] Walkthrough polish: startup workflow is now a single step-by-step modal wizard with save/skip advancement
+  - [x] Walkthrough polish: first-run plan selection stays editable until setup starts
+  - [x] Walkthrough polish: wizard plan selection advances automatically and every modal has Back navigation
+  - [x] Walkthrough polish: tournament details update saved drafts, with divisions and welcome message split into standalone wizard steps
+  - [x] Walkthrough polish: skipping first tournament skips dependent setup modals as a group
+  - [x] Walkthrough polish: skipping tournament setup requires confirmation and manual tournament creation retires the wizard
+  - [x] Walkthrough polish: venue setup uses one-at-a-time structured entry with editable added venues
+  - [x] Walkthrough polish: venue addresses are optional and missing required venue names show validation
+  - [x] Walkthrough refactor: startup wizard is draft-first and only persists setup at final review
+  - [x] Walkthrough polish: new tournament start dates cannot be before today
+  - [x] Walkthrough polish: first-run setup saves tournaments as private drafts without an activation step
+  - [x] Walkthrough polish: first-run setup removes staff invites so role management stays in admin settings
+  - [x] Walkthrough copy: setup review explains public visibility without private-draft jargon
+  - [x] Walkthrough blocker: Tournament-plan owners land in tournament management and only see entitled modules
+  - [x] Walkthrough high: production signup requires email verification before plan selection/onboarding
+  - [x] Walkthrough blocker: Tournament-only workspaces bypass the org hub before paint and dashboard stats use an authorized admin API
+  - [x] Walkthrough polish: subscription defaults to monthly pricing and unfinished tournament setup resumes on login
+  - [x] Walkthrough high: admin tournament preview uses authorized reads and shows preview navigation
+  - [x] Walkthrough polish: division setup uses explicit optional age limits instead of name guessing
+  - [x] Walkthrough follow-up: add tournament-level public site customization separate from org site customization
   - [x] Non-browser hardening pass completed
   - [ ] Browser verification of signup-to-registration flow
 
-### 1. Multi-Tenancy — Billing & Subscriptions
-*Detailed tasks in [MULTI_TENANT_ARCHITECTURE.md](MULTI_TENANT_ARCHITECTURE.md)*
+### 2. Rep Teams — Groups & Per-Team Billing
+*Detailed tasks in [docs/archive/REP_TEAMS_ENHANCEMENTS_PLAN.md](docs/archive/REP_TEAMS_ENHANCEMENTS_PLAN.md) (Phases 1+2 archived; Phase 3 tracked in Stripe plan)*
 
-- [ ] **Phase 5** — Billing & Subscriptions: Stripe account setup and testing remaining
+- [x] **Phase 1** — Rep team groups: `rep_team_groups` table, group management UI, team assignment, group filter on lists and accounting views — migration 035 applied dev+prod, complete
+- [x] **Phase 2** — Staff group scoping: `org_member_rep_group_scopes` junction table, multi-group selection per member, `repGroupIds` on auth context, hard 403 gating on all rep team admin routes, group access UI in Manage Member modal (migration 036, apply to dev+prod)
+- [ ] **Phase 3** — Per-team billing: moved to [STRIPE_INTEGRATION_PLAN.md](STRIPE_INTEGRATION_PLAN.md) Phase E
 
-### 2. Email Strategy
+### 3. Chart Library Investigation
+- [ ] **Investigate chart libraries** — Evaluate recharts, chart.js, or @nivo for use in budget vs. actual and dashboard screens; assess bundle size, SSR compatibility, and dark-theme support before adding a dependency
+
+### 3. Light / Dark Theme Toggle
+- [ ] **Per-user light/dark theme preference** — Allow each user to toggle light/dark theme from their own settings screen (org admins in org settings, coaches in coach portal settings, etc.). Theme preference stored per-user (not per-org). Also expose a light/dark toggle on the public org and tournament websites so visitors can choose their preferred mode.
+
+### 4. Stripe Integration — End-to-End Billing & Subscriptions
+*Detailed tasks in [STRIPE_INTEGRATION_PLAN.md](STRIPE_INTEGRATION_PLAN.md)*
+
+- [ ] **Billing downgrade and data retention flow** - Add FieldLogicHQ-guided downgrade/cancel review with over-limit data retention choices (see [BILLING_DOWNGRADE_RETENTION_PLAN.md](BILLING_DOWNGRADE_RETENTION_PLAN.md))
+  - [x] First implementation slice: retention schema, owner review APIs/UI, cancellation suspension, and platform-admin retention queue
+  - [x] Migration 038 applied in dev and production
+  - [x] Retention expiry warnings and pending-purge processing
+  - [x] Migration 039 applied in dev and production
+  - [x] Dev/mock upgrades restore retained downgrade tournaments when plan limits allow
+  - [ ] Hard purge job after pending-purge review policy is finalized
+- [ ] **Phase A** — Stripe dashboard setup: products, prices, webhooks, Customer Portal (test environment)
+- [ ] **Phase B** — App infrastructure: Stripe SDK, lib/stripe.ts, price map, DB migration 037
+- [ ] **Phase C** — Webhook handler: subscription lifecycle → org plan tier sync
+- [ ] **Phase D** — Checkout + Customer Portal APIs + billing settings page
+  - [ ] Stripe subscription scheduling/reconciliation for confirmed downgrade and cancellation intents
+  - [ ] Trial lifecycle reminders/checkpoints for League 30-day and Club 90-day onboarding windows
+- [ ] **Phase E** — Per-team billing: quantity sync, billing preview modal, program year hook
+- [ ] **Phase F** — Upsell gate component + plan selection → Checkout flow
+- [ ] **Phase G** — Production cutover: prod Stripe setup, Amplify env vars, smoke test
+
+### 5. Email Strategy
 
 - [ ] **Email Strategy Investigation**:
     - [ ] Investigate best-of-breed providers (Resend, Postmark, AWS SES) for system notifications
@@ -43,20 +121,40 @@ This file tracks the ongoing tasks for the FieldLogicHQ platform (multi-tenant s
 
 ## ✅ Completed Projects
 
+### Slot-First Roster & Schedule Architecture
+*(Archived — all 7 phases complete. See [docs/archive/SLOT_ROSTER_PLAN.md](docs/archive/SLOT_ROSTER_PLAN.md))*
+- [x] Foundation–Phase 7: pool slots as division roster, atomic slot claiming (PG fn), slot board + waitlist registrations page, publish control per division, public schedule visibility, cleanup
+
+### Accounting Enhancements — Org & Rep Team Budget Planning
+*(Archived — all phases complete. See [docs/archive/ACCOUNTING_ENHANCEMENTS_PLAN.md](docs/archive/ACCOUNTING_ENHANCEMENTS_PLAN.md))*
+
+### Public Tournament UAT
+- [x] Default tournament/public-site customization to FieldLogicHQ colors and remove preview-only setup CTA
+- [x] Apply light/dark theme in tournament preview, group theme controls, and add public-style preview nav pages
+- [x] Fix light-mode public tournament hero surfaces so text and icons remain visible
+- [x] Tune public tournament palette contrast and add combined dark/light theme preview samples
+- [x] Public tournament light-mode polish — solid public CTAs, readable light-mode accents, restored Battle Purple preset
+- [x] Public tournament preview light-mode section backgrounds inherit the selected mode below the hero
+- [x] Tournament branding palettes — normalize presets for dark/light readability and gate custom colors to Tournament Plus+
+- [x] Public tournament light-mode accent tokens use readable primary text on pale surfaces
+- [x] Public tournament page visibility controls for hiding News, Schedule, Standings, Teams, Rules, or Registration
+- [x] Tournament branding settings reorder included controls above Tournament Plus advanced customizations
+- [x] Tournament branding logo placeholder polish and branding API 500 cleanup
+
 ### In-App Documentation & Help System
-*(see [HELP_SYSTEM_PLAN.md](HELP_SYSTEM_PLAN.md))*
+*(see [HELP_SYSTEM_PLAN.md](docs/archive/HELP_SYSTEM_PLAN.md))*
 - [x] **Phases A–I complete** — foundation + Tournaments + House League + Rep Teams + Coaches Portal + Accounting + Org Admin & Onboarding + Platform Admin contextual cues (H) + Help Hub & context-aware navigation (I)
 
 ### Pricing
-- [x] **Phase 1** — Update plan-config (4 tiers), rewrite PricingSection component, build public `/pricing` page. Full plan in [PRICING_IMPLEMENTATION_PLAN.md](PRICING_IMPLEMENTATION_PLAN.md). Content spec in [PRICING_PAGE_COPY.md](PRICING_PAGE_COPY.md).
+- [x] **Phase 1** — Update plan-config (4 tiers), rewrite PricingSection component, build public `/pricing` page. Full plan in [PRICING_IMPLEMENTATION_PLAN.md](docs/archive/PRICING_IMPLEMENTATION_PLAN.md). Content spec in [PRICING_PAGE_COPY.md](docs/archive/PRICING_PAGE_COPY.md).
 - [x] **Phase 2 / Functionality Audit** — Billing page rewritten (monthly/annual toggle, modules section, outcome-focused upgrade cards); onboarding checklist updated with conditional module steps; all stale plan name references removed.
 
 ### Tournament Admin URL Restructure
-*(see [TOURNAMENT_URL_RESTRUCTURE_PLAN.md](TOURNAMENT_URL_RESTRUCTURE_PLAN.md))*
+*(see [TOURNAMENT_URL_RESTRUCTURE_PLAN.md](docs/archive/TOURNAMENT_URL_RESTRUCTURE_PLAN.md))*
 - [x] Moved all tournament operational pages from `admin/{page}` to `admin/tournaments/{page}` — matches module URL pattern used by house-league, rep-teams, and accounting
 
 ### Role-Based UX Improvement Review — Phases 1–5
-*(see [UX_REVIEW_PLAN.md](UX_REVIEW_PLAN.md))*
+*(see [UX_REVIEW_PLAN.md](docs/archive/UX_REVIEW_PLAN.md))*
 
 **Phase 1 — Critical bugs & multi-tenancy**
 - [x] **1A** — Replace default `/{orgSlug}` page: FieldLogicHQ-branded placeholder (no public site), tournament selector for 2+ active tournaments
@@ -183,7 +281,7 @@ This file tracks the ongoing tasks for the FieldLogicHQ platform (multi-tenant s
 - [x] DB schema: `status` + `slug` columns, partial unique index
 - [x] TypeScript: Tournament type, `mapTournament`, `getTournamentBySlug`
 - [x] Admin UI: status transitions, slug field, active-limit enforcement
-- [x] Billing: usage meter counts active-only, plan-config `tournamentLimit`
+- [x] Billing: usage meter counts non-archived tournament slots, plan-config `tournamentLimit`
 - [x] URL restructuring: `/[orgSlug]/[tournamentSlug]/` route tree, redirects, OrgNavContext, Navbar updates
 
 ### Multi-Tenancy — Phases 3, 4, 6
@@ -204,6 +302,13 @@ This file tracks the ongoing tasks for the FieldLogicHQ platform (multi-tenant s
 ### Admin UX & Documentation
 - [x] In-app role/permissions documentation — Role Guide panel, permission matrix, invite modal hints
 - [x] Admin help gaps — Billing status alerts, slug-change warning, Randomize copy, Results legend
+- [x] Walkthrough polish — subscription upgrade cards match onboarding plan chooser styling
+- [x] Walkthrough polish — remove ad hoc module upgrade section from Subscription
+- [x] Subscription polish — upgrade comparison appears before muted downgrade/cancel controls
+- [x] Walkthrough polish — remove tournament onboarding get-started flash after wizard save
+- [x] Walkthrough polish — replace tournament admin Back to Site with admin-only Preview Site
+- [x] Walkthrough bugfix — admin tournament preview resolves draft tournaments without 404
+- [x] Tournament branding UX — collapse dark/light choices into one toggle with a single live preview
 
 ### Platform Administration (Super Admin)
 *(see [PLATFORM_ADMIN_PLAN.md](PLATFORM_ADMIN_PLAN.md))*

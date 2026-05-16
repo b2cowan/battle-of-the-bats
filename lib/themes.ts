@@ -24,14 +24,15 @@ interface Preset extends ThemeVars {
 }
 
 export const PRESETS: Record<string, Preset> = {
-  platform: { name: 'Platform',      primary: '#8B2FC9', primaryLight: '#A855F7', primaryRgb: '139, 47, 201',  accent: '#A855F7' },
-  ocean:    { name: 'Ocean Blue',    primary: '#0284C7', primaryLight: '#38BDF8', primaryRgb: '2, 132, 199',   accent: '#38BDF8' },
-  forest:   { name: 'Forest Green',  primary: '#15803D', primaryLight: '#4ADE80', primaryRgb: '21, 128, 61',   accent: '#4ADE80' },
-  sunset:   { name: 'Sunset Orange', primary: '#C2410C', primaryLight: '#FB923C', primaryRgb: '194, 65, 12',   accent: '#FB923C' },
-  crimson:  { name: 'Crimson',       primary: '#BE123C', primaryLight: '#FB7185', primaryRgb: '190, 18, 60',   accent: '#FB7185' },
-  gold:     { name: 'Gold',          primary: '#B45309', primaryLight: '#FCD34D', primaryRgb: '180, 83, 9',    accent: '#FCD34D' },
-  teal:     { name: 'Teal',          primary: '#0F766E', primaryLight: '#2DD4BF', primaryRgb: '15, 118, 110',  accent: '#2DD4BF' },
-  midnight: { name: 'Midnight Blue', primary: '#1D4ED8', primaryLight: '#60A5FA', primaryRgb: '29, 78, 216',   accent: '#60A5FA' },
+  platform: { name: 'FieldLogicHQ',   primary: '#1E3A8A', primaryLight: '#D9F99D', primaryRgb: '30, 58, 138',   accent: '#D9F99D' },
+  bats:     { name: 'Battle Purple', primary: '#8B2FC9', primaryLight: '#C084FC', primaryRgb: '139, 47, 201',  accent: '#C084FC' },
+  ocean:    { name: 'Ocean Blue',    primary: '#075985', primaryLight: '#38BDF8', primaryRgb: '7, 89, 133',    accent: '#38BDF8' },
+  forest:   { name: 'Forest Green',  primary: '#166534', primaryLight: '#86EFAC', primaryRgb: '22, 101, 52',   accent: '#86EFAC' },
+  sunset:   { name: 'Sunset Orange', primary: '#9A3412', primaryLight: '#FDBA74', primaryRgb: '154, 52, 18',   accent: '#FDBA74' },
+  crimson:  { name: 'Crimson',       primary: '#9F1239', primaryLight: '#FB7185', primaryRgb: '159, 18, 57',   accent: '#FB7185' },
+  gold:     { name: 'Championship Gold', primary: '#92400E', primaryLight: '#FACC15', primaryRgb: '146, 64, 14', accent: '#FACC15' },
+  teal:     { name: 'Teal',          primary: '#115E59', primaryLight: '#5EEAD4', primaryRgb: '17, 94, 89',    accent: '#5EEAD4' },
+  midnight: { name: 'Midnight Blue', primary: '#1E40AF', primaryLight: '#93C5FD', primaryRgb: '30, 64, 175',   accent: '#93C5FD' },
 };
 
 const HEX_RE = /^#[0-9A-Fa-f]{6}$/;

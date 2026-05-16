@@ -7,11 +7,11 @@ import {
   MoreHorizontal, LayoutDashboard, Tag, MapPin,
   RefreshCw, LogOut, X, ChevronRight, BookUser,
   Settings, Users2, LayoutGrid, CalendarDays, UserCheck,
+  ExternalLink, BookOpen, Mail, Archive,
 } from 'lucide-react';
 import { signOut } from '@/lib/auth';
 import { useOrg } from '@/lib/org-context';
 import { useTournament } from '@/lib/tournament-context';
-import { setActiveTournament } from '@/lib/db';
 import styles from './AdminBottomNav.module.css';
 
 const PRIMARY_KEYS = [
@@ -22,10 +22,15 @@ const PRIMARY_KEYS = [
 
 const TOURNAMENT_MORE = [
   { key: 'tournaments/dashboard',     icon: LayoutDashboard, label: 'Dashboard'     },
-  { key: 'tournaments',               icon: RefreshCw,       label: 'Tournaments'   },
-  { key: 'tournaments/announcements', icon: Megaphone,       label: 'Announcements' },
+  { key: 'tournaments/announcements', icon: Megaphone,       label: 'News Posts'    },
+  { key: 'tournaments/communication', icon: Mail,            label: 'Communication' },
+  { key: 'tournaments/rules',         icon: BookOpen,        label: 'Rules & Resources' },
   { key: 'tournaments/contacts',      icon: BookUser,        label: 'Contacts'      },
-  { key: 'tournaments/age-groups',    icon: Tag,             label: 'Age Groups'    },
+  { key: 'tournaments/venues',        icon: MapPin,          label: 'Venues'        },
+  { key: 'tournaments/age-groups',    icon: Tag,             label: 'Divisions'     },
+  { key: 'tournaments/manage',        icon: RefreshCw,       label: 'Manage'        },
+  { key: 'tournaments/settings',      icon: Settings,        label: 'Settings'      },
+  { key: 'tournaments/archives',      icon: Archive,         label: 'Past Tournaments' },
 ];
 
 const ORG_MORE = [
@@ -46,6 +51,18 @@ export default function AdminBottomNav() {
   const [moreOpen, setMoreOpen] = useState(false);
   const moreRef   = useRef<HTMLDivElement>(null);
   const { tournaments, currentTournament, setCurrentTournament, refresh } = useTournament();
+  const tournamentPreviewLabel =
+    currentTournament?.status === 'draft'
+      ? 'Preview Draft Site'
+      : currentTournament?.status === 'completed'
+        ? 'Preview Completed Site'
+        : 'Preview Site';
+  const tournamentPreviewTitle =
+    currentTournament?.status === 'draft'
+      ? 'Preview the private draft tournament site. It is not public until activated.'
+      : currentTournament?.status === 'completed'
+        ? 'Preview the completed tournament site.'
+        : 'Preview the public tournament site.';
 
   const isRepTeams    = pathname.startsWith(`${base}/rep-teams`);
   const isHouseLeague = pathname.startsWith(`${base}/house-league`);
@@ -72,7 +89,10 @@ export default function AdminBottomNav() {
     return () => document.removeEventListener('mousedown', handleClick);
   }, [moreOpen]);
 
-  useEffect(() => { setMoreOpen(false); }, [pathname]);
+  useEffect(() => {
+    const frame = window.requestAnimationFrame(() => setMoreOpen(false));
+    return () => window.cancelAnimationFrame(frame);
+  }, [pathname]);
 
   async function handleLogout() {
     await signOut();
@@ -86,8 +106,22 @@ export default function AdminBottomNav() {
 
   async function handleSetLive() {
     if (!currentTournament) return;
-    await setActiveTournament(currentTournament.id);
-    refresh();
+    const res = await fetch('/api/admin/tournaments', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'set-status',
+        id: currentTournament.id,
+        data: { status: 'active' },
+      }),
+    });
+    const result = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      window.alert(result.error ?? 'This tournament is not ready to go live.');
+      return;
+    }
+    await refresh();
+    setMoreOpen(false);
   }
 
   function dropNavItems(items: typeof TOURNAMENT_MORE) {
@@ -102,7 +136,7 @@ export default function AdminBottomNav() {
           href={href}
           className={`${styles.dropItem} ${active ? styles.dropActive : ''}`}
           role="menuitem"
-          id={`admin-mob-more-${label.toLowerCase().replace(/\s/g, '-')}`}
+          id={`admin-mob-more-${label.toLowerCase().replace(/[\s&]+/g, '-')}`}
         >
           <Icon size={17} />
           <span>{label}</span>
@@ -213,6 +247,19 @@ export default function AdminBottomNav() {
                   <button className={styles.setLiveBtn} onClick={handleSetLive} id="admin-mob-set-live">
                     Set as Live
                   </button>
+                )}
+                {currentTournament && (
+                  <Link
+                    className={styles.setLiveBtn}
+                    href={`/${orgSlug}/admin/tournaments/preview/${currentTournament.slug}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    id="admin-mob-preview-site"
+                    title={tournamentPreviewTitle}
+                    aria-label={`${tournamentPreviewLabel} opens in a new tab`}
+                  >
+                    <ExternalLink size={13} /> {tournamentPreviewLabel}
+                  </Link>
                 )}
                 {currentTournament?.isActive && (
                   <span className={styles.livePill}>● Live</span>

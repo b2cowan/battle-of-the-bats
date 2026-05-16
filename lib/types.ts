@@ -2,6 +2,7 @@ export type OrgPlan = 'tournament' | 'tournament_plus' | 'league' | 'club';
 export type OrgRole = 'owner' | 'admin' | 'staff' | 'official' | 'league_admin' | 'league_registrar' | 'treasurer' | 'coach';
 export type SubscriptionStatus = 'active' | 'trialing' | 'past_due' | 'canceled';
 export type TournamentStatus = 'draft' | 'active' | 'completed' | 'archived';
+export type PublicPageKey = 'news' | 'schedule' | 'standings' | 'teams' | 'rules' | 'register';
 
 export interface Organization {
   id: string;
@@ -47,6 +48,22 @@ export interface Tournament {
   startDate?: string;    // YYYY-MM-DD
   endDate?: string;      // YYYY-MM-DD
   contactEmail?: string; // shown in coach-facing email footers
+  feeScheduleMode?: 'tournament' | 'age_group';
+  depositAmount?: number | null;
+  depositDueDate?: string | null;   // YYYY-MM-DD
+  totalFeeAmount?: number | null;
+  totalFeeDueDate?: string | null;  // YYYY-MM-DD
+  // Per-tournament branding (overrides org-level when set)
+  logoUrl?: string | null;
+  heroBannerUrl?: string | null;
+  themePreset?: string | null;
+  themePrimary?: string | null;
+  themeAccent?: string | null;
+  themeFont?: string | null;
+  themeCardStyle?: string | null;
+  colorMode?: 'dark' | 'light' | null;
+  publicHiddenPages?: PublicPageKey[];
+  requireScoreFinalization?: boolean | null;
 }
 
 export interface Diamond {
@@ -105,8 +122,8 @@ export interface AgeGroup {
   id: string;
   tournamentId: string;
   name: string; // e.g. "U11"
-  minAge: number;
-  maxAge: number;
+  minAge: number | null;
+  maxAge: number | null;
   order: number;
   contactId?: string; // links to a managed Contact
   isClosed?: boolean; // if true, public registration is disabled
@@ -116,6 +133,11 @@ export interface AgeGroup {
   requiresPoolSelection?: boolean; // if true, user picks pool during registration
   pools?: Pool[]; // The new way
   playoffConfig?: PlayoffConfig;
+  depositAmount?: number | null;
+  depositDueDate?: string | null;
+  totalFeeAmount?: number | null;
+  totalFeeDueDate?: string | null;
+  scheduleVisibility?: 'unpublished' | 'published_generic' | 'published_teams';
 }
 
 export interface Pool {
@@ -123,6 +145,17 @@ export interface Pool {
   ageGroupId: string;
   name: string;
   order: number;
+}
+
+export interface PoolSlot {
+  id: string;
+  poolId: string;
+  tournamentId: string;
+  ageGroupId: string;
+  slotNumber: number;
+  displayName: string;  // e.g. "Pool A Team 1"
+  teamId?: string | null;
+  teamName?: string;    // joined from teams for display convenience
 }
 
 export interface Player {
@@ -145,6 +178,8 @@ export interface Team {
   registeredAt: string;
   adminNotes?: string;
   poolId?: string; // The new way (link to pools table)
+  waitlistPosition?: number | null;
+  slotId?: string | null;
 }
 
 export type GameStatus = 'scheduled' | 'submitted' | 'completed' | 'cancelled';
@@ -167,6 +202,8 @@ export interface Game {
   bracketCode?: string;
   homePlaceholder?: string;
   awayPlaceholder?: string;
+  homeSlotId?: string;   // FK to pool_slots — set for slot-based games
+  awaySlotId?: string;
   notes?: string;
 }
 
@@ -227,6 +264,17 @@ export type AccountingEntityType = 'org' | 'tournament' | 'team' | 'league_seaso
 export type AccountingEntryType  = 'income' | 'expense' | 'transfer_in' | 'transfer_out';
 export type AccountingEntryStatus = 'pending' | 'posted' | 'void';
 
+export interface OrgPayee {
+  id: string;
+  orgId: string;
+  teamId: string | null;   // null = org-wide; set = team-scoped
+  name: string;
+  notes: string | null;
+  isActive: boolean;
+  createdBy: string | null;
+  createdAt: string;
+}
+
 export interface AccountingLedger {
   id: string;
   orgId: string;
@@ -250,6 +298,10 @@ export interface AccountingEntry {
   linkedEntryId: string | null;
   sourceModule: string | null;
   sourceEntityId: string | null;
+  paymentMethod: string | null;
+  payeeId: string | null;
+  payeePayer: string | null;
+  notes: string | null;
   createdBy: string;
   createdAt: string;
   updatedAt: string;
@@ -445,6 +497,14 @@ export interface LeagueSeasonSummary {
 // ── Rep Teams Module ──────────────────────────────────────────────────────────
 
 export type RepProgramYearStatus = 'draft' | 'active' | 'completed' | 'archived';
+
+export interface RepTeamGroup {
+  id: string;
+  orgId: string;
+  name: string;
+  displayOrder: number;
+  createdAt: string;
+}
 export type RepTryoutRegistrationStatus = 'pending_review' | 'offered' | 'accepted' | 'declined' | 'withdrawn';
 export type RepRosterStatus = 'active' | 'inactive' | 'released';
 export type RepEventType =
@@ -463,6 +523,8 @@ export interface RepTeam {
   slug: string;
   sport: string;
   ageGroup: string | null;
+  groupId: string | null;
+  groupName: string | null;
   description: string | null;
   color: string | null;
   isArchived: boolean;
@@ -480,6 +542,7 @@ export interface RepProgramYear {
   tryoutOpen: boolean;
   tryoutDescription: string | null;
   budgetAmount: number | null;
+  autoRemindersEnabled: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -620,6 +683,7 @@ export interface RepAllocationInstallment {
   paidAt: string | null;
   paidBy: string | null;
   accountingEntryId: string | null;
+  reminderSentAt: string | null;
   createdAt: string;
 }
 
@@ -644,6 +708,8 @@ export interface RepPlayerDuesInstallment {
   amount: number;
   paidAt: string | null;
   reminderSentAt: string | null;
+  reminder30SentAt: string | null;
+  reminder7SentAt: string | null;
   accountingEntryId: string | null;
   createdAt: string;
 }
@@ -659,6 +725,18 @@ export interface RepDueReminderCandidate {
   guardianEmail: string | null;
   teamId: string;
   teamName: string;
+  installmentNumber: number;
+  totalInstallments: number;
+  amount: number;
+  dueDate: string;
+}
+
+export interface RepAllocationReminderCandidate {
+  installmentId: string;
+  splitId: string;
+  teamId: string;
+  teamName: string;
+  allocationDescription: string;
   installmentNumber: number;
   totalInstallments: number;
   amount: number;
@@ -706,9 +784,124 @@ export interface RepTeamExpense {
   balancePaidAt: string | null;
   eventId: string | null;
   notes: string | null;
+  paymentMethod: string | null;
+  payeeId: string | null;
+  payeePayer: string | null;
   createdBy: string | null;
   createdAt: string;
   updatedAt: string;
+}
+
+// ── Budget category & item library ───────────────────────────────────────────
+
+export type BudgetScope = 'org' | 'team' | 'both';
+
+export interface BudgetCategory {
+  id: string;
+  orgId: string | null;       // null = platform default (read-only)
+  name: string;
+  scope: BudgetScope;
+  sortOrder: number;
+  isDefault: boolean;
+  createdAt: string;
+  items?: BudgetItem[];
+}
+
+export interface BudgetItem {
+  id: string;
+  categoryId: string;
+  orgId: string | null;       // null = platform default (read-only)
+  name: string;
+  suggestedAmount: number | null;
+  sortOrder: number;
+  isDefault: boolean;
+  isMisc: boolean;            // true = Misc catch-all, always rendered last
+  createdAt: string;
+}
+
+export interface BudgetCategoryWithItems extends BudgetCategory {
+  items: BudgetItem[];
+}
+
+// ── Rep team budget planner ───────────────────────────────────────────────────
+
+export interface RepBudgetLine {
+  id: string;
+  orgId: string;
+  teamId: string;
+  programYearId: string;
+  categoryId: string | null;
+  itemId: string | null;
+  description: string;
+  totalAmount: number;
+  notes: string | null;
+  sortOrder: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface RepBudgetPeriod {
+  id: string;
+  budgetLineId: string;
+  periodLabel: string;
+  periodDate: string | null;
+  amount: number;
+  sortOrder: number;
+  createdAt: string;
+}
+
+export interface RepBudgetLineWithPeriods extends RepBudgetLine {
+  periods: RepBudgetPeriod[];
+  categoryName: string | null;
+  itemName: string | null;
+}
+
+export interface RepBudgetPlan {
+  lines: RepBudgetLineWithPeriods[];
+  totalBudget: number;
+  hasInstallments: boolean;
+  rosterCount: number;
+}
+
+// Installment preview row returned before generating dues installments
+export interface RepInstallmentPreviewRow {
+  playerId: string;
+  playerFirstName: string;
+  playerLastName: string;
+  installments: { installmentNumber: number; dueDate: string; amount: number }[];
+}
+
+export type DuesCreditType = 'contribution' | 'fundraiser' | 'overpayment' | 'other';
+
+export interface DuesCredit {
+  id: string;
+  programYearId: string;
+  playerId: string;
+  amount: number;
+  description: string;
+  creditDate: string;
+  creditType: DuesCreditType;
+  notes: string | null;
+  createdAt: string;
+}
+
+export interface SeasonSurplus {
+  id: string;
+  programYearId: string;
+  totalSurplus: number;
+  notes: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SeasonRefundRow {
+  playerId: string;
+  playerFirstName: string;
+  playerLastName: string;
+  creditPortion: number;
+  evenShare: number;
+  totalRefund: number;
+  rollingBalance: number;
 }
 
 // ── Platform (FieldLogicHQ company) users ────────────────────────────────────

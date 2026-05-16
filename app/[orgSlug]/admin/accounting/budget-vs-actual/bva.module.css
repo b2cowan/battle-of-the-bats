@@ -1,0 +1,241 @@
+/* ── Layout ──────────────────────────────────────────────────────────────── */
+.page { max-width: 1040px; }
+
+.breadcrumb {
+  display: flex; align-items: center; gap: 0.5rem;
+  font-size: 0.82rem; color: rgba(255,255,255,0.4); margin-bottom: 1.5rem;
+}
+.breadcrumb a { color: rgba(255,255,255,0.55); text-decoration: none; }
+.breadcrumb a:hover { color: rgba(255,255,255,0.85); }
+
+.pageHeader {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  gap: 1rem; margin-bottom: 2rem; flex-wrap: wrap;
+}
+.pageHeaderLeft { display: flex; align-items: center; gap: 1rem; }
+
+.headerIcon {
+  width: 48px; height: 48px; border-radius: 12px;
+  background: rgba(var(--blueprint-blue-rgb), 0.12);
+  color: var(--logic-lime);
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.3);
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+
+.pageTitle {
+  font-size: 1.75rem; font-weight: 900;
+  font-family: var(--font-display, sans-serif);
+  margin: 0; color: #f0f0f0; line-height: 1.1;
+}
+.pageSub { margin: 0.25rem 0 0; color: rgba(255,255,255,0.4); font-size: 0.9rem; }
+
+.muted { color: rgba(255,255,255,0.4); padding: 2rem; }
+
+.accessDenied { padding: 4rem 2rem; text-align: center; color: rgba(255,255,255,0.4); }
+.accessDenied h2 { font-size: 1.1rem; font-weight: 700; margin: 1rem 0 0.5rem; color: rgba(255,255,255,0.6); }
+.accessDenied p  { font-size: 0.9rem; max-width: 360px; margin: 0 auto; }
+
+/* ── Year selector ───────────────────────────────────────────────────────── */
+.yearRow {
+  display: flex; align-items: center; gap: 0.75rem;
+  margin-bottom: 1.5rem; font-size: 0.88rem; color: rgba(255,255,255,0.5);
+}
+.yearSelect {
+  background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12);
+  color: rgba(255,255,255,0.85); border-radius: 6px;
+  padding: 0.35rem 0.65rem; font-size: 0.88rem; cursor: pointer;
+}
+
+/* ── Headroom headline ───────────────────────────────────────────────────── */
+.headroom {
+  padding: 1.5rem 2rem;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 12px;
+  margin-bottom: 1.25rem;
+  display: flex; align-items: center; gap: 2rem; flex-wrap: wrap;
+}
+.headroomLabel { font-size: 0.8rem; color: rgba(255,255,255,0.4); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+.headroomValue { font-size: 2.4rem; font-weight: 900; font-variant-numeric: tabular-nums; line-height: 1; }
+.headroomPos { color: #4ade80; }
+.headroomNeg { color: #f87171; }
+.headroomNote { font-size: 0.78rem; color: rgba(255,255,255,0.35); margin-top: 0.25rem; }
+
+/* ── Summary cards ───────────────────────────────────────────────────────── */
+.summaryGrid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(175px, 1fr));
+  gap: 0.75rem; margin-bottom: 2rem;
+}
+.summaryCard {
+  background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 10px; padding: 0.9rem 1.1rem;
+}
+.summaryLabel { font-size: 0.73rem; color: rgba(255,255,255,0.4); margin-bottom: 0.3rem; }
+.summaryValue { font-size: 1.25rem; font-weight: 700; color: rgba(255,255,255,0.9); font-variant-numeric: tabular-nums; }
+.summaryPos  { color: #4ade80; }
+.summaryNeg  { color: #f87171; }
+.summaryMuted { color: rgba(255,255,255,0.55); }
+
+/* ── Section headers ─────────────────────────────────────────────────────── */
+.sectionTitle {
+  font-size: 1rem; font-weight: 800; color: rgba(255,255,255,0.75);
+  margin: 0 0 1rem;
+}
+
+.categorySection { margin-bottom: 2rem; }
+
+.categoryHeader {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 0.6rem; padding-bottom: 0.4rem;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+}
+.categoryName {
+  font-size: 0.78rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.06em; color: rgba(255,255,255,0.35);
+}
+.categoryMeta {
+  display: flex; gap: 1.5rem; font-size: 0.78rem;
+  color: rgba(255,255,255,0.35); font-variant-numeric: tabular-nums;
+}
+.categoryMetaItem span:first-child { color: rgba(255,255,255,0.25); margin-right: 0.3rem; }
+
+/* ── Table ───────────────────────────────────────────────────────────────── */
+.tableWrap { overflow-x: auto; }
+
+.table { width: 100%; border-collapse: collapse; font-size: 0.87rem; }
+
+.th {
+  padding: 0.45rem 0.7rem; text-align: left;
+  color: rgba(255,255,255,0.3); font-size: 0.72rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.05em;
+  border-bottom: 1px solid rgba(255,255,255,0.07); white-space: nowrap;
+}
+.thRight { text-align: right; }
+
+.tr { border-bottom: 1px solid rgba(255,255,255,0.04); }
+.tr:hover { background: rgba(255,255,255,0.02); }
+
+.td { padding: 0.6rem 0.7rem; vertical-align: middle; }
+.tdRight { text-align: right; font-variant-numeric: tabular-nums; }
+
+.lineDesc { font-weight: 600; color: rgba(255,255,255,0.85); }
+
+.varPos { color: #4ade80; }
+.varNeg { color: #f87171; }
+.varNeutral { color: rgba(255,255,255,0.45); }
+
+/* ── Period expand row ───────────────────────────────────────────────────── */
+.periodsRow { background: rgba(255,255,255,0.015); }
+.periodsInner { padding: 0.5rem 0.7rem 0.75rem 2rem; font-size: 0.81rem; }
+
+.periodToggleBtn {
+  background: none; border: none; cursor: pointer;
+  color: rgba(255,255,255,0.4); padding: 0;
+  display: inline-flex; align-items: center; gap: 0.25rem; font-size: 0.77rem;
+}
+.periodToggleBtn:hover { color: rgba(255,255,255,0.7); }
+
+.periodTable { width: 100%; border-collapse: collapse; margin-top: 0.4rem; }
+.periodTh {
+  text-align: left; font-size: 0.7rem; font-weight: 600; color: rgba(255,255,255,0.28);
+  padding-bottom: 0.3rem; border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.periodTd { padding: 0.28rem 0.5rem 0.28rem 0; color: rgba(255,255,255,0.6); font-size: 0.81rem; }
+.periodTdRight { text-align: right; font-variant-numeric: tabular-nums; }
+
+/* ── Allocation badge ────────────────────────────────────────────────────── */
+.badgeAllocated {
+  display: inline-flex; align-items: center; gap: 0.3rem;
+  background: rgba(74,222,128,0.1); color: #4ade80;
+  border: 1px solid rgba(74,222,128,0.22); border-radius: 4px;
+  font-size: 0.7rem; font-weight: 700; padding: 0.12rem 0.4rem; white-space: nowrap;
+}
+.badgeUnallocated {
+  display: inline-flex; align-items: center; gap: 0.3rem;
+  background: rgba(251,191,36,0.08); color: #fbbf24;
+  border: 1px solid rgba(251,191,36,0.2); border-radius: 4px;
+  font-size: 0.7rem; font-weight: 700; padding: 0.12rem 0.4rem; white-space: nowrap;
+}
+
+/* ── Org actuals panel ───────────────────────────────────────────────────── */
+.actualsPanel {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 10px;
+  margin-bottom: 2rem;
+  overflow: hidden;
+}
+.actualsPanelHeader {
+  padding: 0.8rem 1rem;
+  background: rgba(255,255,255,0.03);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.actualsPanelTitle { font-size: 0.85rem; font-weight: 700; color: rgba(255,255,255,0.65); }
+.actualsPanelTotal { font-size: 0.85rem; font-variant-numeric: tabular-nums; color: #f87171; font-weight: 700; }
+.actualsPanelNote { font-size: 0.72rem; color: rgba(255,255,255,0.35); padding: 0.5rem 1rem 0.75rem; }
+
+.actualsTable { width: 100%; border-collapse: collapse; font-size: 0.83rem; }
+.actualsTableTr { border-bottom: 1px solid rgba(255,255,255,0.04); }
+.actualsTableTr:hover { background: rgba(255,255,255,0.02); }
+.actualsTd { padding: 0.45rem 1rem; color: rgba(255,255,255,0.65); }
+.actualsTdRight { text-align: right; font-variant-numeric: tabular-nums; }
+.actualsDate { font-size: 0.75rem; color: rgba(255,255,255,0.35); }
+.actualsLedger { font-size: 0.72rem; color: rgba(255,255,255,0.3); }
+
+.actualsToggleBtn {
+  background: none; border: none; cursor: pointer;
+  color: rgba(255,255,255,0.4); padding: 0.5rem 1rem;
+  display: flex; align-items: center; gap: 0.35rem;
+  font-size: 0.78rem; width: 100%;
+}
+.actualsToggleBtn:hover { color: rgba(255,255,255,0.7); }
+
+/* ── Team health grid ────────────────────────────────────────────────────── */
+.teamGrid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 0.75rem; margin-bottom: 2rem;
+}
+
+.teamCard {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 10px; padding: 1rem 1.1rem;
+  text-decoration: none; display: block;
+  transition: background 0.15s, border-color 0.15s;
+}
+.teamCard:hover { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.14); }
+.teamCardOverdue { border-color: rgba(248,113,113,0.3); background: rgba(248,113,113,0.04); }
+.teamCardBehind  { border-color: rgba(251,191,36,0.25); background: rgba(251,191,36,0.03); }
+
+.teamCardHeader { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.6rem; }
+.teamCardName { font-size: 0.88rem; font-weight: 700; color: rgba(255,255,255,0.85); }
+
+.statusBadge {
+  font-size: 0.68rem; font-weight: 700; border-radius: 4px; padding: 0.12rem 0.4rem;
+}
+.statusOnTrack { background: rgba(74,222,128,0.12); color: #4ade80; border: 1px solid rgba(74,222,128,0.22); }
+.statusBehind  { background: rgba(251,191,36,0.1);  color: #fbbf24; border: 1px solid rgba(251,191,36,0.2);  }
+.statusOverdue { background: rgba(248,113,113,0.12); color: #f87171; border: 1px solid rgba(248,113,113,0.25); }
+
+.teamCardStats { display: grid; grid-template-columns: 1fr 1fr; gap: 0.4rem 0.75rem; }
+.teamStatLabel { font-size: 0.7rem; color: rgba(255,255,255,0.35); margin-bottom: 0.1rem; }
+.teamStatValue { font-size: 0.92rem; font-weight: 700; font-variant-numeric: tabular-nums; color: rgba(255,255,255,0.8); }
+
+.progressBar {
+  height: 4px; border-radius: 2px; background: rgba(255,255,255,0.08);
+  margin-top: 0.75rem; overflow: hidden;
+}
+.progressFill { height: 100%; border-radius: 2px; transition: width 0.3s; }
+.progressFillGood    { background: #4ade80; }
+.progressFillWarning { background: #fbbf24; }
+.progressFillDanger  { background: #f87171; }
+
+/* ── Empty states ────────────────────────────────────────────────────────── */
+.emptySection {
+  padding: 2rem; text-align: center; color: rgba(255,255,255,0.35);
+  font-size: 0.88rem; border: 1px dashed rgba(255,255,255,0.08);
+  border-radius: 10px; margin-bottom: 2rem;
+}
+
+.errorText { color: #f87171; font-size: 0.82rem; margin: 0 0 1rem; }

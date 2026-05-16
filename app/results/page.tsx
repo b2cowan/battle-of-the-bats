@@ -99,7 +99,7 @@ export default function ResultsPage() {
         <div className="container">
           <span className="eyebrow"><Trophy size={12} /> Results</span>
           <h1 className="display-lg">Game Results</h1>
-          <p className="text-muted">Completed game scores by age group.</p>
+          <p className="text-muted">Completed game scores by division.</p>
         </div>
       </div>
 

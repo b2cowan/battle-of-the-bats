@@ -63,19 +63,25 @@
 .pricingGrid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 1.25rem;
-  align-items: stretch;
+  grid-template-rows: repeat(5, auto);
+  column-gap: 1.25rem;
+  row-gap: 1.25rem;
 }
 
-/* ── Plan cards ───────────────────────────────────────────────────────── */
+/* ── Plan cards — subgrid so all 5 bands align across cards ───────────── */
 .planCard {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-rows: subgrid;
+  grid-row: span 5;
   background: var(--hud-surface);
   border: 1px solid rgba(var(--blueprint-blue-rgb), 0.4);
   border-radius: 0;
   padding: 2rem;
 }
+
+/* Band wrappers — no extra styles needed; subgrid handles alignment */
+.planHeader {}
+.planPriceBlock {}
 
 .planName {
   font-family: var(--font-data);
@@ -92,8 +98,7 @@
   font-size: 0.7rem;
   color: var(--data-gray);
   line-height: 1.5;
-  margin-bottom: 1rem;
-  min-height: 2.5em;
+  margin-bottom: 0;
 }
 
 .planPrice {
@@ -138,22 +143,22 @@
   color: var(--data-gray);
   font-family: var(--font-data);
   font-size: 0.7rem;
-  margin-bottom: 1.5rem;
+  margin-bottom: 0;
   min-height: 1.2em;
 }
 
 .planDivider {
   border: none;
   border-top: 1px solid rgba(var(--blueprint-blue-rgb), 0.2);
-  margin: 1.5rem 0;
+  margin: 0;
+  align-self: stretch;
 }
 
 .planFeatures {
   display: flex;
   flex-direction: column;
   gap: 0.6rem;
-  margin-bottom: 1.75rem;
-  flex: 1;
+  margin-bottom: 0;
 }
 
 .planRow {
@@ -172,17 +177,15 @@
 @media (max-width: 1100px) {
   .pricingGrid {
     grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: repeat(10, auto);
   }
 }
 
 @media (max-width: 640px) {
   .pricingGrid {
     grid-template-columns: 1fr;
+    grid-template-rows: repeat(20, auto);
     max-width: 420px;
     margin: 0 auto;
-  }
-
-  .planTagline {
-    min-height: unset;
   }
 }

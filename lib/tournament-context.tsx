@@ -20,7 +20,20 @@ const TournamentContext = createContext<TournamentContextType>({
 
 const ADMIN_T_KEY = 'botb_admin_tournament_id';
 
-function mapRow(r: any): Tournament {
+type TournamentRow = {
+  id: string;
+  organization_id?: string | null;
+  year: number;
+  name: string;
+  slug?: string | null;
+  status?: TournamentStatus | null;
+  is_active?: boolean | null;
+  start_date?: string | null;
+  end_date?: string | null;
+  contact_email?: string | null;
+};
+
+function mapRow(r: TournamentRow): Tournament {
   const status: TournamentStatus = r.status ?? (r.is_active ? 'active' : 'completed');
   return {
     id:             r.id,
@@ -32,6 +45,7 @@ function mapRow(r: any): Tournament {
     isActive:       status === 'active',
     startDate:      r.start_date ?? undefined,
     endDate:        r.end_date ?? undefined,
+    contactEmail:   r.contact_email ?? undefined,
   };
 }
 
@@ -42,7 +56,8 @@ export function TournamentProvider({ children }: { children: ReactNode }) {
   const refresh = useCallback(async () => {
     // Use the scoped API endpoint — server enforces org filter + assignment filter
     const res = await fetch('/api/admin/tournaments');
-    const rows: any[] = res.ok ? await res.json() : [];
+    const data: unknown = res.ok ? await res.json() : [];
+    const rows = Array.isArray(data) ? data as TournamentRow[] : [];
     const ts = rows.map(mapRow).filter(t => t.status !== 'archived');
 
     setTournaments(ts);
@@ -52,7 +67,10 @@ export function TournamentProvider({ children }: { children: ReactNode }) {
     setCurrentState(saved ?? active ?? ts[0] ?? null);
   }, []);
 
-  useEffect(() => { refresh(); }, [refresh]);
+  useEffect(() => {
+    const timer = window.setTimeout(() => { void refresh(); }, 0);
+    return () => window.clearTimeout(timer);
+  }, [refresh]);
 
   function setCurrentTournament(t: Tournament) {
     setCurrentState(t);

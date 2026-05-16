@@ -3,10 +3,67 @@ import { useState, useEffect } from 'react';
 import { UserPlus, CheckCircle, AlertCircle, ChevronDown, RefreshCw, Send, ShieldCheck, CreditCard } from 'lucide-react';
 import { useParams } from 'next/navigation';
 import { getAgeGroups, getContacts, getOrganizationBySlug, getTournamentsByOrg } from '@/lib/db';
+import { isPublicPageEnabled } from '@/lib/public-pages';
 import { AgeGroup, Tournament, Contact } from '@/lib/types';
 import styles from '../../register/register.module.css';
 
 type Step = 'form' | 'submitting' | 'success' | 'error';
+
+type FeeSchedule = {
+  depositAmount: number | null;
+  depositDueDate: string | null;
+  totalFeeAmount: number | null;
+  totalFeeDueDate: string | null;
+  source: 'tournament' | 'division';
+};
+
+function formatAgeRange(minAge: number | null, maxAge: number | null) {
+  if (minAge === null && maxAge === null) return '';
+  if (minAge === null) return `Ages under ${maxAge}`;
+  if (maxAge === null) return `Ages ${minAge}+`;
+  if (minAge === maxAge) return `Age ${minAge}`;
+  return `Ages ${minAge}-${maxAge}`;
+}
+
+function formatMoney(amount: number) {
+  return new Intl.NumberFormat('en-CA', {
+    style: 'currency',
+    currency: 'CAD',
+    maximumFractionDigits: amount % 1 === 0 ? 0 : 2,
+  }).format(amount);
+}
+
+function formatDate(date: string | null) {
+  if (!date) return null;
+  return new Date(`${date}T12:00:00`).toLocaleDateString('en-CA', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
+}
+
+function resolveFeeSchedule(tournament: Tournament | null, group: AgeGroup | undefined): FeeSchedule | null {
+  if (!tournament || !group) return null;
+
+  if (tournament.feeScheduleMode === 'age_group' && group.totalFeeAmount != null) {
+    return {
+      depositAmount: group.depositAmount ?? null,
+      depositDueDate: group.depositDueDate ?? null,
+      totalFeeAmount: group.totalFeeAmount ?? null,
+      totalFeeDueDate: group.totalFeeDueDate ?? null,
+      source: 'division',
+    };
+  }
+
+  if (tournament.totalFeeAmount == null) return null;
+  return {
+    depositAmount: tournament.depositAmount ?? null,
+    depositDueDate: tournament.depositDueDate ?? null,
+    totalFeeAmount: tournament.totalFeeAmount ?? null,
+    totalFeeDueDate: tournament.totalFeeDueDate ?? null,
+    source: 'tournament',
+  };
+}
 
 export default function RegisterPage() {
   const params         = useParams();
@@ -94,6 +151,22 @@ export default function RegisterPage() {
   const isClosed = selectedGroup?.isClosed;
   const count = selectedGroup ? stats[selectedGroup.id] || 0 : 0;
   const isWaitlist = selectedGroup?.capacity && count >= selectedGroup.capacity;
+  const selectedFeeSchedule = resolveFeeSchedule(tournament, selectedGroup);
+
+  if (tournament && !isPublicPageEnabled(tournament, 'register')) {
+    return (
+      <div className="page-content">
+        <div className="section">
+          <div className="container">
+            <div className="empty-state">
+              <UserPlus size={48} />
+              <p>Registration is not available for this tournament.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="page-content">
@@ -103,7 +176,7 @@ export default function RegisterPage() {
           <h1 className="display-lg">Team Registration</h1>
           <p className="text-muted">
             Register your team for {tournament?.name ?? 'the upcoming tournament'}.
-            A confirmation email will be sent once your registration is reviewed.
+            A confirmation email will be sent once your registration is reviewed. Payment is handled directly by the tournament organizer.
           </p>
         </div>
       </div>
@@ -141,7 +214,7 @@ export default function RegisterPage() {
                 <div className={styles.stepLine}></div>
                 <div className={styles.step}>
                   <div className={styles.stepNum}>3</div>
-                  <span className={styles.stepText}>Payment</span>
+                  <span className={styles.stepText}>Next Steps</span>
                 </div>
               </div>
             )}
@@ -172,8 +245,8 @@ export default function RegisterPage() {
                   <div className={styles.successItem}>
                     <div className={styles.successIcon}><CreditCard size={20} /></div>
                     <div>
-                      <span className={styles.successTitleInner}>Secure Your Spot</span>
-                      <p className={styles.successDescInner}>Once approved, you&apos;ll receive a payment link. Spots are first-come, first-served based on payment.</p>
+                      <span className={styles.successTitleInner}>Payment Instructions</span>
+                      <p className={styles.successDescInner}>If payment is required, the organizer will send instructions directly. FieldLogicHQ does not process online payments.</p>
                     </div>
                   </div>
                 </div>
@@ -255,9 +328,10 @@ export default function RegisterPage() {
                             const remaining = g.capacity ? Math.max(0, g.capacity - filled) : null;
                             const waitlistLabel = g.capacity && filled >= g.capacity ? ' (WAITLIST)' : '';
                             const spotsLabel = remaining !== null && remaining > 0 ? ` (${remaining} left)` : '';
+                            const ageLabel = formatAgeRange(g.minAge, g.maxAge);
                             return (
                               <option key={g.id} value={g.id}>
-                                {g.name} Ages {g.minAge}-{g.maxAge} {g.isClosed ? '- CLOSED' : (waitlistLabel || spotsLabel)}
+                                {g.name}{ageLabel ? ` ${ageLabel}` : ''} {g.isClosed ? '- CLOSED' : (waitlistLabel || spotsLabel)}
                               </option>
                             );
                           })}
@@ -298,6 +372,42 @@ export default function RegisterPage() {
                     <div className="alert alert-warning" style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem', background: 'rgba(245, 158, 11, 0.1)', color: '#fbbf24', padding: '1rem', borderRadius: 8, border: '1px solid rgba(245,158,11,0.2)' }}>
                       <AlertCircle size={20} />
                       <p style={{ margin: 0, fontSize: '0.9rem' }}>This division is currently full. Submitting this form will place your team on the <strong>Waitlist</strong>.</p>
+                    </div>
+                  )}
+
+                  {selectedGroup && (
+                    <div className={styles.paymentNotice}>
+                      <div className={styles.paymentNoticeHeader}>
+                        <CreditCard size={18} />
+                        <span>Payment handled by organizer</span>
+                      </div>
+                      {selectedFeeSchedule?.totalFeeAmount ? (
+                        <div className={styles.paymentDetails}>
+                          <div>
+                            <span>Total fee</span>
+                            <strong>{formatMoney(selectedFeeSchedule.totalFeeAmount)}</strong>
+                            {formatDate(selectedFeeSchedule.totalFeeDueDate) && (
+                              <em>Due {formatDate(selectedFeeSchedule.totalFeeDueDate)}</em>
+                            )}
+                          </div>
+                          {selectedFeeSchedule.depositAmount ? (
+                            <div>
+                              <span>Deposit</span>
+                              <strong>{formatMoney(selectedFeeSchedule.depositAmount)}</strong>
+                              {formatDate(selectedFeeSchedule.depositDueDate) && (
+                                <em>Due {formatDate(selectedFeeSchedule.depositDueDate)}</em>
+                              )}
+                            </div>
+                          ) : null}
+                        </div>
+                      ) : (
+                        <p>
+                          The organizer has not published a fee schedule for this division yet.
+                        </p>
+                      )}
+                      <p>
+                        FieldLogicHQ records registration and payment status for the organizer, but payments are made outside the platform.
+                      </p>
                     </div>
                   )}
 

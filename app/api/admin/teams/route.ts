@@ -6,6 +6,45 @@ import { getAuthContextWithScope, unauthorized, forbidden, scopeGuard } from '@/
 import { hasCapability } from '@/lib/roles';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 
+export async function GET(req: Request) {
+  const ctx = await getAuthContextWithScope();
+  if (!ctx) return unauthorized();
+
+  const tournamentId = new URL(req.url).searchParams.get('tournamentId');
+  if (!tournamentId) return new Response(JSON.stringify([]), { status: 200, headers: { 'Content-Type': 'application/json' } });
+
+  const denied = scopeGuard(ctx, tournamentId);
+  if (denied) return denied;
+
+  const { data, error } = await supabaseAdmin
+    .from('teams')
+    .select('*')
+    .eq('tournament_id', tournamentId)
+    .order('name', { ascending: true });
+
+  if (error) return new Response(JSON.stringify({ error: error.message }), { status: 500, headers: { 'Content-Type': 'application/json' } });
+
+  const teams = (data ?? []).map((t: any) => ({
+    id: t.id,
+    tournamentId: t.tournament_id,
+    ageGroupId: t.age_group_id,
+    name: t.name,
+    coach: t.coach,
+    email: t.email,
+    players: t.players || [],
+    status: t.status || 'accepted',
+    paymentStatus: t.payment_status || 'paid',
+    registered_at: t.registered_at,
+    registeredAt: t.registered_at,
+    adminNotes: t.admin_notes,
+    poolId: t.pool_id,
+    waitlistPosition: t.waitlist_position ?? null,
+    slotId: t.slot_id ?? null,
+  }));
+
+  return new Response(JSON.stringify(teams), { status: 200, headers: { 'Content-Type': 'application/json' } });
+}
+
 export async function POST(req: Request) {
   const ctx = await getAuthContextWithScope();
   if (!ctx) return unauthorized();
@@ -15,6 +54,93 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
 
+    // ── promote-from-waitlist ─────────────────────────────────────────────────
+    // Assigns a waitlisted team to a specific slot, or to the lowest empty slot.
+    // Body: { action, teamId, slotId? }
+    if (body.action === 'promote-from-waitlist') {
+      const { teamId, slotId: targetSlotId } = body as { teamId: string; slotId?: string };
+
+      const { data: team } = await supabaseAdmin
+        .from('teams').select('*').eq('id', teamId).single();
+      if (!team) return new Response(JSON.stringify({ error: 'Team not found' }), { status: 404 });
+
+      const denied = scopeGuard(ctx, team.tournament_id);
+      if (denied) return denied;
+
+      let slotId = targetSlotId ?? null;
+
+      if (!slotId) {
+        // Find lowest empty slot for this age group, ordered by pool then slot_number
+        const { data: emptySlots } = await supabaseAdmin
+          .from('pool_slots')
+          .select('id, slot_number, pools(display_order)')
+          .eq('age_group_id', team.age_group_id)
+          .is('team_id', null);
+
+        const sorted = (emptySlots ?? []).sort((a: any, b: any) => {
+          const oa = (a.pools as any)?.display_order ?? 0;
+          const ob = (b.pools as any)?.display_order ?? 0;
+          return oa !== ob ? oa - ob : a.slot_number - b.slot_number;
+        });
+
+        if (!sorted[0]) {
+          return new Response(JSON.stringify({ error: 'No empty slots available' }), { status: 409 });
+        }
+        slotId = sorted[0].id;
+      }
+
+      await supabaseAdmin.from('pool_slots').update({ team_id: teamId }).eq('id', slotId);
+      await supabaseAdmin.from('teams').update({ slot_id: slotId, waitlist_position: null }).eq('id', teamId);
+
+      // Reorder remaining waitlist queue to close the gap
+      const { data: remaining } = await supabaseAdmin
+        .from('teams')
+        .select('id, waitlist_position')
+        .eq('age_group_id', team.age_group_id)
+        .not('waitlist_position', 'is', null)
+        .order('waitlist_position', { ascending: true });
+
+      for (let i = 0; i < (remaining ?? []).length; i++) {
+        await supabaseAdmin.from('teams').update({ waitlist_position: i + 1 }).eq('id', remaining![i].id);
+      }
+
+      return new Response(JSON.stringify({ success: true, slotId }), { status: 200 });
+    }
+
+    // ── swap-slots ────────────────────────────────────────────────────────────
+    // Swaps two teams' slot assignments. Games are unaffected (they reference slot IDs).
+    // Body: { action, slotAId, slotBId }
+    if (body.action === 'swap-slots') {
+      const { slotAId, slotBId } = body as { slotAId: string; slotBId: string };
+
+      const [{ data: slotA }, { data: slotB }] = await Promise.all([
+        supabaseAdmin.from('pool_slots').select('id, team_id, tournament_id').eq('id', slotAId).single(),
+        supabaseAdmin.from('pool_slots').select('id, team_id').eq('id', slotBId).single(),
+      ]);
+
+      if (!slotA || !slotB) {
+        return new Response(JSON.stringify({ error: 'One or both slots not found' }), { status: 404 });
+      }
+
+      const denied = scopeGuard(ctx, slotA.tournament_id);
+      if (denied) return denied;
+
+      // Swap team_id on pool_slots
+      await supabaseAdmin.from('pool_slots').update({ team_id: slotB.team_id }).eq('id', slotAId);
+      await supabaseAdmin.from('pool_slots').update({ team_id: slotA.team_id }).eq('id', slotBId);
+
+      // Update slot_id on the affected teams
+      if (slotA.team_id) {
+        await supabaseAdmin.from('teams').update({ slot_id: slotBId }).eq('id', slotA.team_id);
+      }
+      if (slotB.team_id) {
+        await supabaseAdmin.from('teams').update({ slot_id: slotAId }).eq('id', slotB.team_id);
+      }
+
+      return new Response(JSON.stringify({ success: true }), { status: 200 });
+    }
+
+    // ── bulk update ───────────────────────────────────────────────────────────
     let items: { id: string; updates: any }[] = [];
     if (body.ids && body.updates) {
       items = body.ids.map((id: string) => ({ id, updates: body.updates }));
@@ -54,11 +180,36 @@ export async function POST(req: Request) {
         dbUpdates.payment_status = dbUpdates.paymentStatus;
         delete dbUpdates.paymentStatus;
       }
+      if (dbUpdates.depositPaid !== undefined) {
+        dbUpdates.deposit_paid = dbUpdates.depositPaid;
+        delete dbUpdates.depositPaid;
+      }
+      if (dbUpdates.totalPaid !== undefined) {
+        dbUpdates.total_paid = dbUpdates.totalPaid;
+        delete dbUpdates.totalPaid;
+      }
+      if (dbUpdates.slotId !== undefined) {
+        dbUpdates.slot_id = dbUpdates.slotId ?? null;
+        delete dbUpdates.slotId;
+      }
+      if (dbUpdates.waitlistPosition !== undefined) {
+        dbUpdates.waitlist_position = dbUpdates.waitlistPosition ?? null;
+        delete dbUpdates.waitlistPosition;
+      }
       return dbUpdates;
     });
 
     const { error: updateErr } = await supabaseAdmin.from('teams').upsert(upsertData);
     if (updateErr) throw updateErr;
+
+    // Release slots for teams being rejected
+    for (const item of items) {
+      if (item.updates.status !== 'rejected') continue;
+      const current = currents.find((c: any) => c.id === item.id);
+      if (!current || current.status === 'rejected' || !current.slot_id) continue;
+      await supabaseAdmin.from('pool_slots').update({ team_id: null }).eq('id', current.slot_id);
+      await supabaseAdmin.from('teams').update({ slot_id: null }).eq('id', item.id);
+    }
 
     // Handle Emails
     for (const item of items) {
@@ -81,7 +232,7 @@ export async function POST(req: Request) {
         await sendEmail(current.email, `Registration Update — ${current.name}`, rejectionHtml(p));
       }
       if ((updates.payment_status === 'paid' || updates.paymentStatus === 'paid') && current.payment_status !== 'paid') {
-        await sendEmail(current.email, `Payment Confirmed — ${current.name}`, paymentConfirmationHtml(p));
+        await sendEmail(current.email, `Payment Recorded — ${current.name}`, paymentConfirmationHtml(p));
       }
     }
 

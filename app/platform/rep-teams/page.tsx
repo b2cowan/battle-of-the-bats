@@ -121,7 +121,7 @@ export default function RepTeamsPage() {
             The whole club, one platform.
           </h2>
           <p className="font-mono text-xs text-data-gray mb-10">
-            Rep Teams is included in the Club plan. 14-day free trial.
+            Rep Teams is included in the Club plan. Start with a 90-day early-adopter trial.
           </p>
           <Link
             href="/auth/signup"

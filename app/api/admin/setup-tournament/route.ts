@@ -1,6 +1,88 @@
 import { createClient } from '@supabase/supabase-js';
 import { getAuthContext, unauthorized, requireCapability } from '@/lib/api-auth';
 
+type DivisionAgeConfig = {
+  min: number | null;
+  max: number | null;
+  order: number;
+};
+
+type SetupDivision = {
+  name: string;
+  minAge?: number | string | null;
+  maxAge?: number | string | null;
+  capacity: number;
+  poolCount: number;
+  poolNames: string;
+  requiresPoolSelection: boolean;
+};
+
+type PoolInsertRow = {
+  age_group_id: string;
+  name: string;
+  display_order: number;
+};
+
+type SeedTeam = {
+  id: string;
+  age_group_id: string;
+  pool_id?: string | null;
+};
+
+type GameInsertRow = {
+  tournament_id: string;
+  age_group_id: string;
+  home_team_id: string;
+  away_team_id: string;
+  game_date: string;
+  game_time: string;
+  location: string | null;
+  diamond_id: string;
+  status: 'completed' | 'scheduled';
+  home_score: number | null;
+  away_score: number | null;
+};
+
+function normalizeOptionalAge(value: unknown): number | null {
+  if (value === null || value === undefined || value === '') return null;
+  const age = Number(value);
+  return Number.isFinite(age) ? age : null;
+}
+
+function getDivisionAgeConfig(division: SetupDivision, index: number): DivisionAgeConfig {
+  const min = normalizeOptionalAge(division.minAge);
+  const max = normalizeOptionalAge(division.maxAge);
+  if (min !== null && max !== null && min > max) {
+    throw new Error(`Minimum age cannot be greater than maximum age for ${division.name}.`);
+  }
+  return {
+    min,
+    max,
+    order: index + 1,
+  };
+}
+
+function isDateValue(value: unknown): value is string {
+  return typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value);
+}
+
+function getTodayDateValue() {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/Toronto',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(new Date());
+  const year = parts.find(part => part.type === 'year')?.value;
+  const month = parts.find(part => part.type === 'month')?.value;
+  const day = parts.find(part => part.type === 'day')?.value;
+  return year && month && day ? `${year}-${month}-${day}` : new Date().toISOString().slice(0, 10);
+}
+
+function normalizeTournamentName(name: string) {
+  return name.trim().replace(/\s+/g, ' ').toLowerCase();
+}
+
 export async function POST(req: Request) {
   const auth = await getAuthContext();
   if (!auth) return unauthorized();
@@ -33,7 +115,7 @@ export async function POST(req: Request) {
     }
 
     const debug: string[] = [];
-    const log = (msg: string, data?: any) => {
+    const log = (msg: string, data?: unknown) => {
       const line = data ? `${msg} ${JSON.stringify(data)}` : msg;
       console.log(`[Setup API] ${line}`);
       debug.push(line);
@@ -43,9 +125,28 @@ export async function POST(req: Request) {
     const allowSeedData = process.env.NEXT_PUBLIC_ENABLE_DEV_TOOLS === 'true';
     const effectiveSeedData = allowSeedData ? seedData : null;
     const slug = String(tournament?.slug ?? '').trim().toLowerCase();
+    const tournamentName = String(tournament?.name ?? '').trim().replace(/\s+/g, ' ');
+    const startDate = isDateValue(tournament?.startDate) ? tournament.startDate : null;
+    const endDate = isDateValue(tournament?.endDate) ? tournament.endDate : null;
+
+    if (!tournamentName) {
+      return Response.json({ error: 'Tournament name is required.' }, { status: 400 });
+    }
 
     if (!slug || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) {
       return Response.json({ error: 'Tournament URL must contain lowercase letters, numbers, and hyphens.' }, { status: 400 });
+    }
+
+    if (endDate && !startDate) {
+      return Response.json({ error: 'Choose a start date before setting an end date.' }, { status: 400 });
+    }
+
+    if (startDate && startDate < getTodayDateValue()) {
+      return Response.json({ error: 'Start date cannot be before today.' }, { status: 400 });
+    }
+
+    if (startDate && endDate && endDate < startDate) {
+      return Response.json({ error: 'End date cannot be before the start date.' }, { status: 400 });
     }
 
     const { count: slugCount, error: slugError } = await supabase
@@ -60,17 +161,47 @@ export async function POST(req: Request) {
       return Response.json({ error: 'A tournament with this URL already exists.' }, { status: 409 });
     }
 
+    const { data: existingNames, error: nameError } = await supabase
+      .from('tournaments')
+      .select('name')
+      .eq('organization_id', auth.org.id)
+      .neq('status', 'archived');
+
+    if (nameError) throw nameError;
+    if ((existingNames ?? []).some(row => normalizeTournamentName(row.name ?? '') === normalizeTournamentName(tournamentName))) {
+      return Response.json({ error: `A tournament named "${tournamentName}" already exists. Choose a different name.` }, { status: 409 });
+    }
+
+    const limit = auth.org.tournamentLimit;
+    if (limit < 9999) {
+      const { count: occupiedSlotCount, error: limitError } = await supabase
+        .from('tournaments')
+        .select('*', { count: 'exact', head: true })
+        .eq('organization_id', auth.org.id)
+        .neq('status', 'archived');
+
+      if (limitError) throw limitError;
+      if ((occupiedSlotCount ?? 0) >= limit) {
+        return Response.json(
+          {
+            error: `Your plan allows ${limit} tournament slot${limit === 1 ? '' : 's'}. Archive an existing tournament before creating another.`,
+          },
+          { status: 403 }
+        );
+      }
+    }
+
     // 1. Create Tournament (always starts as draft; activate explicitly from the Tournaments page)
     const { data: newTnt, error: tntError } = await supabase
       .from('tournaments')
       .insert({
         year:            tournament.year,
-        name:            tournament.name,
+        name:            tournamentName,
         slug,
         status:          'draft',
         is_active:       false,
-        start_date:      tournament.startDate,
-        end_date:        tournament.endDate,
+        start_date:      startDate,
+        end_date:        endDate,
         organization_id: auth.org.id,
       })
       .select()
@@ -85,20 +216,8 @@ export async function POST(req: Request) {
 
     // 2. Initialize Divisions & Pools
     if (divisions && divisions.length > 0) {
-      const defaults: Record<string, any> = {
-        'U9': { min: 7, max: 9, order: 1 },
-        'U11': { min: 9, max: 11, order: 2 },
-        'U13': { min: 11, max: 13, order: 3 },
-        'U15': { min: 13, max: 15, order: 4 },
-        'U17': { min: 15, max: 17, order: 5 },
-        'U19': { min: 17, max: 19, order: 6 },
-        'Open': { min: 0, max: 99, order: 1 },
-        'Competitive': { min: 0, max: 99, order: 2 },
-        'Recreational': { min: 0, max: 99, order: 3 },
-      };
-
-      const groupRows = divisions.map((div: any) => {
-        const config = defaults[div.name] || { min: 0, max: 99, order: 10 };
+      const groupRows = (divisions as SetupDivision[]).map((div, index) => {
+        const config = getDivisionAgeConfig(div, index);
         return {
           tournament_id: tid,
           name: div.name,
@@ -121,7 +240,7 @@ export async function POST(req: Request) {
 
       // 3. Create Pools for each group
       if (insertedGroups) {
-        const poolRows: any[] = [];
+        const poolRows: PoolInsertRow[] = [];
         for (const g of insertedGroups) {
           const names = (g.pool_names || '').split(',').map((n: string) => n.trim()).filter(Boolean);
           const poolCount = Number(g.pool_count ?? 0);
@@ -271,7 +390,7 @@ export async function POST(req: Request) {
 
           if (allTeams && allTeams.length >= 2 && diamonds && diamonds.length > 0) {
             log('Starting schedule generation');
-            const gameRows: any[] = [];
+            const gameRows: GameInsertRow[] = [];
             const duration = scheduleParams?.gameDuration || 90;
             const turnover = scheduleParams?.turnoverTime || 15;
             const gamesPerTeam = scheduleParams?.gamesPerTeam || 3;
@@ -303,7 +422,7 @@ export async function POST(req: Request) {
 
               // We'll iterate through pools. If no pools, we treat it as one big pool.
               const poolsToProcess = groupPools.length > 0 ? groupPools : [{ id: null, name: 'General' }];
-              const selectedPairs: [any, any][] = [];
+              const selectedPairs: [SeedTeam, SeedTeam][] = [];
               const teamGameCounts = new Map<string, number>();
 
               for (const pool of poolsToProcess) {
@@ -438,13 +557,14 @@ export async function POST(req: Request) {
       });
     }
 
-    return new Response(JSON.stringify({ success: true, id: tid, slug, name: tournament.name, debug }), {
+    return new Response(JSON.stringify({ success: true, id: tid, slug, name: tournamentName, debug }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' }
     });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('Setup Tournament Error:', err);
-    return new Response(JSON.stringify({ error: err.message || "Unknown server error" }), {
+    const message = err instanceof Error ? err.message : 'Unknown server error';
+    return new Response(JSON.stringify({ error: message }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' }
     });

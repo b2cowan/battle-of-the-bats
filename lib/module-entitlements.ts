@@ -12,6 +12,8 @@ import type { Organization } from './types';
  *   if (!hasModuleEntitlement(ctx.org, 'module_X')) return forbidden();
  */
 export function hasModuleEntitlement(org: Organization, cap: Capability): boolean {
+  if (org.subscriptionStatus === 'canceled') return false;
+
   const plan = PLAN_CONFIG[org.planId];
   if (plan.moduleEntitlements.includes(cap)) return true;
   return org.enabledAddons.includes(cap);

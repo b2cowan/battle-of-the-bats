@@ -120,7 +120,7 @@ export default function HouseLeaguePage() {
             Ready to run a real season?
           </h2>
           <p className="font-mono text-xs text-data-gray mb-10">
-            House League is included in the League and Club plans. 14-day free trial.
+            House League is included in the League and Club plans. League starts with a 30-day trial; Club starts with a 90-day early-adopter trial.
           </p>
           <Link
             href="/auth/signup"

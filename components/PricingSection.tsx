@@ -43,7 +43,7 @@ const PLANS: Plan[] = [
       'Standings',
       'Field and diamond management',
       '3 staff / admin seats',
-      '1 active tournament',
+      '1 tournament slot',
     ],
     cta: 'Get Started Free',
     ctaHref: '/auth/signup',
@@ -51,22 +51,22 @@ const PLANS: Plan[] = [
   {
     key: 'tournament_plus',
     name: 'Tournament Plus',
-    tagline: 'Run unlimited events simultaneously with automated scheduling, brackets, and communications.',
+    tagline: 'Run up to 3 non-archived tournaments with automated scheduling, brackets, and communications.',
     monthlyPrice: '$39',
     annualPrice: '$390',
     annualTotal: '$390 CAD / year',
-    annualSavings: 'Save $78 — 2 months free',
+    annualSavings: 'Save $78 — 2 months free · 14-day trial first',
     currency: 'CAD',
     period: '/mo',
-    freeNote: '14-day free trial',
-    trialNote: '14-day free trial',
+    freeNote: '14-day trial · Payment details at signup',
+    trialNote: '14-day trial',
     features: [
       'Everything in Tournament',
       'Automated schedule generation',
       'Bracket generator',
       'Email announcements and communications',
       'Tournament archives and history',
-      'Unlimited simultaneous tournaments',
+      '3 non-archived tournament slots',
       '5 staff / admin seats',
       'Unlimited officials seats',
     ],
@@ -80,11 +80,11 @@ const PLANS: Plan[] = [
     monthlyPrice: '$89',
     annualPrice: '$890',
     annualTotal: '$890 CAD / year',
-    annualSavings: 'Save $178 — 2 months free',
+    annualSavings: 'Save $178 — 2 months free · 30-day trial first',
     currency: 'CAD',
     period: '/mo',
-    freeNote: '14-day free trial',
-    trialNote: '14-day free trial',
+    freeNote: '30-day trial · Payment details at signup',
+    trialNote: '30-day trial',
     features: [
       'Everything in Tournament Plus',
       'Public organization page',
@@ -105,11 +105,11 @@ const PLANS: Plan[] = [
     monthlyPrice: '$179',
     annualPrice: '$1,790',
     annualTotal: '$1,790 CAD / year',
-    annualSavings: 'Save $358 — 2 months free',
+    annualSavings: 'Save $358 — 2 months free · 90-day trial first',
     currency: 'CAD',
     period: '/mo',
-    freeNote: '14-day free trial',
-    trialNote: '14-day free trial',
+    freeNote: '90-day trial · Payment details at signup',
+    trialNote: '90-day early-adopter trial',
     features: [
       'Everything in League',
       'Accounting module — org ledger, team invoicing, payment reconciliation, expense tracking',
@@ -162,25 +162,33 @@ export default function PricingSection() {
 
           return (
             <div key={plan.key} className={styles.planCard}>
-              <p className={styles.planName}>{plan.name}</p>
-              <p className={styles.planTagline}>{plan.tagline}</p>
-
-              <div className={styles.planPrice}>
-                <span className={styles.planAmount}>{displayPrice}</span>
-                {!isAnnual && plan.currency && (
-                  <span className={styles.planCurrency}>{plan.currency}</span>
-                )}
-                {!isAnnual && plan.period && (
-                  <span className={styles.planPeriod}>{plan.period}</span>
-                )}
+              {/* Band 1: header */}
+              <div className={styles.planHeader}>
+                <p className={styles.planName}>{plan.name}</p>
+                <p className={styles.planTagline}>{plan.tagline}</p>
               </div>
-              {isAnnual && plan.annualTotal && (
-                <p className={styles.planAnnualTotal}>{plan.annualTotal}</p>
-              )}
-              <p className={styles.planNote}>{displayNote}</p>
 
+              {/* Band 2: price */}
+              <div className={styles.planPriceBlock}>
+                <div className={styles.planPrice}>
+                  <span className={styles.planAmount}>{displayPrice}</span>
+                  {!isAnnual && plan.currency && (
+                    <span className={styles.planCurrency}>{plan.currency}</span>
+                  )}
+                  {!isAnnual && plan.period && (
+                    <span className={styles.planPeriod}>{plan.period}</span>
+                  )}
+                </div>
+                {isAnnual && plan.annualTotal && (
+                  <p className={styles.planAnnualTotal}>{plan.annualTotal}</p>
+                )}
+                <p className={styles.planNote}>{displayNote}</p>
+              </div>
+
+              {/* Band 3: divider */}
               <hr className={styles.planDivider} />
 
+              {/* Band 4: features */}
               <ul className={styles.planFeatures}>
                 {plan.features.map(f => (
                   <li key={f} className={styles.planRow}>
@@ -190,6 +198,7 @@ export default function PricingSection() {
                 ))}
               </ul>
 
+              {/* Band 5: CTA */}
               <Link href={plan.ctaHref} className={CTA_CLASS}>
                 {plan.cta}
               </Link>

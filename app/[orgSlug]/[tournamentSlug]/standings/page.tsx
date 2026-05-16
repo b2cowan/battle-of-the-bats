@@ -4,6 +4,7 @@ import { Trophy } from 'lucide-react';
 import { useParams } from 'next/navigation';
 import { getAgeGroups, getStandings, getOrganizationBySlug, getTournamentsByOrg } from '@/lib/db';
 import { getAgPref, setAgPref } from '@/lib/age-group-cookie';
+import { isPublicPageEnabled } from '@/lib/public-pages';
 import { AgeGroup, Tournament } from '@/lib/types';
 import YearSelector from '@/components/YearSelector';
 import { formatPoolName } from '@/lib/utils';
@@ -51,13 +52,28 @@ export default function StandingsPage() {
   const currentGroup = ageGroups.find(g => g.id === activeGroup);
   const pools        = currentGroup?.pools || [];
 
+  if (selectedTournament && !isPublicPageEnabled(selectedTournament, 'standings')) {
+    return (
+      <div className="page-content">
+        <div className="section">
+          <div className="container">
+            <div className="empty-state">
+              <Trophy size={48} />
+              <p>Standings are not available for this tournament.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="page-content">
       <div className={styles.pageHeader}>
         <div className="container">
           <span className="eyebrow"><Trophy size={12} /> Standings</span>
           <h1 className="display-lg">Pool Standings</h1>
-          <p className="text-muted">Current standings by pool and age group.</p>
+          <p className="text-muted">Current standings by pool and division.</p>
         </div>
       </div>
 

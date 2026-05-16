@@ -72,7 +72,7 @@ export function registrationConfirmationHtml(p: {
         Tournament: <strong>${p.tournamentName}</strong>
       </p>
     </div>
-    <p style="color:rgba(255,255,255,0.7);">Your registration is currently <strong style="color:#F59E0B;">pending review</strong>. You'll receive another email once your team has been accepted, including payment instructions to secure your spot.</p>
+    <p style="color:rgba(255,255,255,0.7);">Your registration is currently <strong style="color:#F59E0B;">pending review</strong>. If payment is required, the organizer will share payment instructions directly. FieldLogicHQ does not process online payments.</p>
   `, p.contactEmail);
 }
 
@@ -106,8 +106,8 @@ export function acceptanceHtml(p: {
     <p>Hi <strong>${p.coachName}</strong>,</p>
     <p>Great news! <strong>${p.teamName}</strong> has been accepted into the <strong>${p.ageGroupName}</strong> division for <strong>${p.tournamentName}</strong>.</p>
     <div style="background:#1A1530;border:2px solid rgba(34,197,94,0.4);border-radius:8px;padding:1.5rem;margin:1.5rem 0;">
-      <p style="margin:0 0 0.75rem;color:#22C55E;font-weight:700;font-size:1.05rem;">💳 Payment Required</p>
-      <p style="margin:0 0 0.75rem;">The tournament organizer will follow up with payment instructions to secure your spot.</p>
+      <p style="margin:0 0 0.75rem;color:#22C55E;font-weight:700;font-size:1.05rem;">Payment Instructions</p>
+      <p style="margin:0 0 0.75rem;">If payment is required, the tournament organizer will follow up with instructions for paying outside FieldLogicHQ.</p>
       <p style="margin:1rem 0 0;color:rgba(255,255,255,0.5);font-size:0.85rem;">Questions? Contact <a href="mailto:${contact}" style="color:#A855F7;">${contact}</a>.</p>
     </div>
     <a href="${profileUrl}" style="display:inline-block;background:#8B2FC9;color:#fff;padding:0.75rem 1.75rem;border-radius:8px;text-decoration:none;font-weight:700;">View Team Profile →</a>
@@ -154,9 +154,9 @@ export function paymentConfirmationHtml(p: {
   contactEmail?: string;
 }) {
   return wrap(`
-    <h2 style="color:#22C55E;font-size:1.4rem;margin:0 0 1rem;">✅ Payment Confirmed!</h2>
+    <h2 style="color:#22C55E;font-size:1.4rem;margin:0 0 1rem;">Payment Recorded</h2>
     <p>Hi <strong>${p.coachName}</strong>,</p>
-    <p>Your payment for <strong>${p.teamName}</strong> has been received and confirmed. Your registration for the <strong>${p.ageGroupName}</strong> division of <strong>${p.tournamentName}</strong> is now <strong style="color:#22C55E;">complete</strong>!</p>
+    <p>The tournament organizer has recorded payment for <strong>${p.teamName}</strong>. Your registration for the <strong>${p.ageGroupName}</strong> division of <strong>${p.tournamentName}</strong> is now marked <strong style="color:#22C55E;">paid</strong>.</p>
     <p style="color:rgba(255,255,255,0.7);">Stay tuned for schedule announcements. We look forward to seeing you on the diamond!</p>
   `, p.contactEmail);
 }
@@ -491,4 +491,48 @@ export function platformPasswordResetHtml(resetLink: string) {
   <a href="${resetLink}" style="display:inline-block;background:#a3e635;color:#090d09;padding:0.7rem 1.5rem;text-decoration:none;font-weight:800;font-size:0.72rem;letter-spacing:0.1em;text-transform:uppercase;">Reset Password &rarr;</a>
   <p style="color:rgba(255,255,255,0.22);font-size:0.75rem;margin:1.75rem 0 0;line-height:1.55;">If you didn't request this, you can safely ignore this email. Your password will not change.</p>
 </div>`;
+}
+
+export function signupVerificationHtml(p: {
+  orgName: string;
+  verifyUrl: string;
+}) {
+  return wrap(`
+    <h2 style="color:#fff;font-size:1.4rem;margin:0 0 1rem;">Verify Your Email</h2>
+    <p>Welcome to <strong>FieldLogicHQ</strong>.</p>
+    <p>Confirm your email address to continue setting up <strong>${p.orgName}</strong>.</p>
+    <a href="${p.verifyUrl}" style="display:inline-block;background:#8B2FC9;color:#fff;padding:0.75rem 1.75rem;border-radius:8px;text-decoration:none;font-weight:700;margin:1.5rem 0;">Verify Email &rarr;</a>
+    <p style="color:rgba(255,255,255,0.4);font-size:0.82rem;">If you did not create this account, you can safely ignore this email.</p>
+  `);
+}
+
+export function billingRetentionWarningHtml(p: {
+  orgName: string;
+  records: { displayName: string; recordType: string; retentionUntil: string }[];
+  retentionUrl: string;
+  daysUntilExpiry: number;
+  isPendingPurge?: boolean;
+}) {
+  const rows = p.records.map(r => `
+    <li style="margin-bottom:0.5rem;">
+      <strong>${r.displayName}</strong>
+      <span style="color:rgba(255,255,255,0.45);">(${r.recordType}, retained until ${r.retentionUntil})</span>
+    </li>
+  `).join('');
+
+  const title = p.isPendingPurge ? 'Retention window expired' : 'Retention window ending soon';
+  const body = p.isPendingPurge
+    ? `The retained data below has reached the end of its retention window and is now pending purge. Contact FieldLogicHQ support if you need more time or want to restore access.`
+    : `The retained data below is scheduled to leave the restore window in about ${p.daysUntilExpiry} day${p.daysUntilExpiry === 1 ? '' : 's'}.`;
+
+  return wrap(`
+    <h2 style="color:#fff;font-size:1.4rem;margin:0 0 1rem;">${title}</h2>
+    <p>Hi,</p>
+    <p>${body}</p>
+    <div style="background:#1A1530;border:1px solid rgba(245,158,11,0.35);border-radius:8px;padding:1.25rem;margin:1.5rem 0;">
+      <p style="margin:0 0 0.75rem;font-weight:700;color:#F59E0B;">${p.orgName}</p>
+      <ul style="margin:0;padding-left:1.25rem;color:rgba(255,255,255,0.72);">${rows}</ul>
+    </div>
+    <a href="${p.retentionUrl}" style="display:inline-block;background:#8B2FC9;color:#fff;padding:0.75rem 1.75rem;border-radius:8px;text-decoration:none;font-weight:700;">Review Subscription</a>
+  `);
 }

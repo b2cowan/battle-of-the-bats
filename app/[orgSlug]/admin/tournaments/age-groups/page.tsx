@@ -1,15 +1,51 @@
 ﻿'use client';
 import { useState, useEffect } from 'react';
 import { Tag, Plus, Pencil, Trash2, X, Check, ChevronUp, ChevronDown, Trophy } from 'lucide-react';
-import { 
-  getAgeGroups, saveAgeGroup, updateAgeGroup, deleteAgeGroup, getContacts, 
-  savePool, updatePool, deletePool 
-} from '@/lib/db';
 import { useTournament } from '@/lib/tournament-context';
-import { AgeGroup, Contact } from '@/lib/types';
+import type { AgeGroup, Contact } from '@/lib/types';
 import styles from './admin-page.module.css';
 
 type ModalMode = 'add' | 'edit' | null;
+type TieBreaker = NonNullable<AgeGroup['playoffConfig']>['tieBreakers'][number];
+type AgeGroupFormPayload = {
+  tournamentId: string;
+  name: string;
+  minAge: number | null;
+  maxAge: number | null;
+  order: number;
+  contactId?: string;
+  capacity?: number;
+  isClosed: boolean;
+  poolCount: number;
+  poolNames?: string;
+  requiresPoolSelection: boolean;
+  playoffConfig: NonNullable<AgeGroup['playoffConfig']>;
+  depositAmount?: number | null;
+  depositDueDate?: string | null;
+  totalFeeAmount?: number | null;
+  totalFeeDueDate?: string | null;
+};
+
+async function loadAgeGroupState(tournamentId?: string) {
+  if (!tournamentId) return { groups: [] as AgeGroup[], contacts: [] as Contact[] };
+  const [groupsRes, contactsRes] = await Promise.all([
+    fetch(`/api/admin/age-groups?tournamentId=${encodeURIComponent(tournamentId)}`),
+    fetch(`/api/admin/contacts?tournamentId=${encodeURIComponent(tournamentId)}`),
+  ]);
+  const groups: AgeGroup[]  = groupsRes.ok   ? await groupsRes.json()   : [];
+  const contacts: Contact[] = contactsRes.ok ? await contactsRes.json() : [];
+  return { groups, contacts };
+}
+
+function getErrorMessage(err: unknown, fallback: string) {
+  return err instanceof Error ? err.message : fallback;
+}
+
+function normalizeTieBreakers(values: string[]): TieBreaker[] {
+  const allowed = new Set<TieBreaker>(['h2h', 'rd', 'rf', 'ra']);
+  const normalized = values.filter((value): value is TieBreaker => allowed.has(value as TieBreaker));
+  return normalized.length ? normalized : ['h2h', 'rd', 'rf', 'ra'];
+}
 
 export default function AgeGroupsPage() {
   const { currentTournament } = useTournament();
@@ -17,58 +53,62 @@ export default function AgeGroupsPage() {
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [modal, setModal] = useState<ModalMode>(null);
   const [editing, setEditing] = useState<AgeGroup | null>(null);
-  const [form, setForm] = useState({ 
-    name: '', minAge: '', maxAge: '', order: '', contactId: '', 
+  const [form, setForm] = useState({
+    name: '', minAge: '', maxAge: '', order: '', contactId: '',
     capacity: '', isClosed: false, poolCount: '0', poolNames: '',
     requiresPoolSelection: false, usePools: false,
-    tieBreakers: ['h2h', 'rd', 'rf', 'ra']
+    tieBreakers: ['h2h', 'rd', 'rf', 'ra'],
+    depositAmount: '', depositDueDate: '', totalFeeAmount: '', totalFeeDueDate: '',
   });
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
-  async function refresh() { 
-    const groups = await getAgeGroups(currentTournament?.id);
-    setGroups(groups); 
-    setContacts(await getContacts(currentTournament?.id));
-
-    // ONE-TIME MIGRATION CHECK:
-    // If we have poolNames/poolCount but no real pool records, migrate them.
-    for (const g of groups) {
-      if ((g.poolCount || 0) >= 2 && (!g.pools || g.pools.length === 0)) {
-        console.log(`Migrating legacy pools for ${g.name}...`);
-        const names = (g.poolNames || '').split(',').map(n => n.trim());
-        for (let i = 0; i < (g.poolCount || 0); i++) {
-          const name = names[i] || String.fromCharCode(65 + i);
-          await savePool({ ageGroupId: g.id, name, order: i });
-        }
-      }
-    }
-    // Re-fetch if migration happened to get IDs
-    if (groups.some(g => (g.poolCount || 0) > 0 && (!g.pools || g.pools.length === 0))) {
-      setGroups(await getAgeGroups(currentTournament?.id));
-    }
+  async function refresh() {
+    const next = await loadAgeGroupState(currentTournament?.id);
+    setGroups(next.groups);
+    setContacts(next.contacts);
   }
-  useEffect(() => { refresh(); }, [currentTournament?.id]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function load() {
+      const next = await loadAgeGroupState(currentTournament?.id);
+      if (cancelled) return;
+      setGroups(next.groups);
+      setContacts(next.contacts);
+    }
+
+    void load();
+    return () => { cancelled = true; };
+  }, [currentTournament?.id]);
 
   function openAdd() {
-    setForm({ 
-      name: '', minAge: '', maxAge: '', order: String(groups.length + 1), 
+    setForm({
+      name: '', minAge: '', maxAge: '', order: String(groups.length + 1),
       contactId: '', capacity: '', isClosed: false, poolCount: '0', poolNames: '',
       requiresPoolSelection: false, usePools: false,
-      tieBreakers: ['h2h', 'rd', 'rf', 'ra']
+      tieBreakers: ['h2h', 'rd', 'rf', 'ra'],
+      depositAmount: '', depositDueDate: '', totalFeeAmount: '', totalFeeDueDate: '',
     });
     setEditing(null);
     setModal('add');
   }
 
   function openEdit(g: AgeGroup) {
-    setForm({ 
-      name: g.name, minAge: String(g.minAge), maxAge: String(g.maxAge), 
+    setForm({
+      name: g.name,
+      minAge: g.minAge === null || g.minAge === undefined ? '' : String(g.minAge),
+      maxAge: g.maxAge === null || g.maxAge === undefined ? '' : String(g.maxAge),
       order: String(g.order), contactId: g.contactId || '',
       capacity: g.capacity ? String(g.capacity) : '', isClosed: !!g.isClosed,
       poolCount: String(g.poolCount || 0), poolNames: g.poolNames || '',
       requiresPoolSelection: !!g.requiresPoolSelection,
       usePools: (g.poolCount || 0) >= 2,
-      tieBreakers: g.playoffConfig?.tieBreakers || ['h2h', 'rd', 'rf', 'ra']
+      tieBreakers: g.playoffConfig?.tieBreakers || ['h2h', 'rd', 'rf', 'ra'],
+      depositAmount: g.depositAmount != null ? String(g.depositAmount) : '',
+      depositDueDate: g.depositDueDate ?? '',
+      totalFeeAmount: g.totalFeeAmount != null ? String(g.totalFeeAmount) : '',
+      totalFeeDueDate: g.totalFeeDueDate ?? '',
     });
     setEditing(g);
     setModal('edit');
@@ -77,11 +117,25 @@ export default function AgeGroupsPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!currentTournament) return;
-    const data: any = { 
+    const minAge = form.minAge.trim() ? Number(form.minAge) : null;
+    const maxAge = form.maxAge.trim() ? Number(form.maxAge) : null;
+    if (minAge !== null && (!Number.isFinite(minAge) || minAge < 0)) {
+      alert('Age limits must be positive numbers, or left blank for an open-ended range.');
+      return;
+    }
+    if (maxAge !== null && (!Number.isFinite(maxAge) || maxAge < 0)) {
+      alert('Age limits must be positive numbers, or left blank for an open-ended range.');
+      return;
+    }
+    if (minAge !== null && maxAge !== null && minAge > maxAge) {
+      alert('Minimum age cannot be greater than maximum age.');
+      return;
+    }
+    const data: AgeGroupFormPayload = {
       tournamentId: currentTournament.id,
-      name: form.name.trim(), 
-      minAge: Number(form.minAge), 
-      maxAge: Number(form.maxAge), 
+      name: form.name.trim(),
+      minAge,
+      maxAge,
       order: Number(form.order),
       contactId: form.contactId || undefined,
       capacity: form.capacity ? Number(form.capacity) : undefined,
@@ -91,8 +145,12 @@ export default function AgeGroupsPage() {
       requiresPoolSelection: form.requiresPoolSelection,
       playoffConfig: {
         ...(editing?.playoffConfig || { type: 'single', crossover: 'reseed', hasThirdPlace: false, teamsQualifying: 4 }),
-        tieBreakers: form.tieBreakers
-      }
+        tieBreakers: normalizeTieBreakers(form.tieBreakers)
+      },
+      depositAmount:  form.depositAmount  ? Number(form.depositAmount)  : null,
+      depositDueDate: form.depositDueDate || null,
+      totalFeeAmount: form.totalFeeAmount ? Number(form.totalFeeAmount) : null,
+      totalFeeDueDate: form.totalFeeDueDate || null,
     };
 
     try {
@@ -105,13 +163,13 @@ export default function AgeGroupsPage() {
           data 
         })
       });
-      const resData = await res.json();
+      const resData = await res.json() as { error?: string };
       if (!res.ok) throw new Error(resData.error || 'Failed to save');
       
       setModal(null);
       refresh();
-    } catch (err: any) {
-      alert("Error saving: " + err.message);
+    } catch (err: unknown) {
+      alert('Error saving: ' + getErrorMessage(err, 'Unknown error'));
     }
   }
 
@@ -126,8 +184,8 @@ export default function AgeGroupsPage() {
       if (!res.ok) throw new Error('Failed to delete');
       setDeleteId(null); 
       refresh();
-    } catch (err: any) {
-      alert("Error deleting: " + err.message);
+    } catch (err: unknown) {
+      alert('Error deleting: ' + getErrorMessage(err, 'Unknown error'));
     }
   }
 
@@ -155,12 +213,12 @@ export default function AgeGroupsPage() {
         <div className={styles.headerLeft}>
           <div className={styles.headerIcon}><Tag size={20} /></div>
           <div>
-            <h1 className={styles.pageTitle}>Age Groups</h1>
-            <p className={styles.pageSub}>Manage tournament age divisions</p>
+            <h1 className={styles.pageTitle}>Divisions</h1>
+            <p className={styles.pageSub}>Manage tournament divisions and registration groups</p>
           </div>
         </div>
         <button className="btn btn-primary btn-sm" onClick={openAdd} id="age-group-add-btn" disabled={!currentTournament}>
-          <Plus size={16} /> Add Age Group
+          <Plus size={16} /> Add Division
         </button>
       </div>
 
@@ -180,7 +238,7 @@ export default function AgeGroupsPage() {
           </thead>
           <tbody>
             {groups.length === 0 ? (
-              <tr><td colSpan={5} style={{ textAlign: 'center', color: 'var(--white-30)', padding: '2rem' }}>No age groups yet. Add one to get started.</td></tr>
+              <tr><td colSpan={5} style={{ textAlign: 'center', color: 'var(--white-30)', padding: '2rem' }}>No divisions yet. Add one to get started.</td></tr>
             ) : groups.map(g => (
               <tr key={g.id}>
                 <td><span className="badge badge-primary" style={{ fontSize: '0.875rem' }}>{g.name}</span></td>
@@ -197,8 +255,8 @@ export default function AgeGroupsPage() {
                     <span style={{ color: 'var(--white-20)', fontSize: '0.75rem' }}>No pools</span>
                   )}
                 </td>
-                <td>{g.minAge}</td>
-                <td>{g.maxAge}</td>
+                <td>{g.minAge ?? 'Any'}</td>
+                <td>{g.maxAge ?? 'Any'}</td>
                 <td>{g.order}</td>
                 <td>{g.capacity || ''}</td>
                 <td>
@@ -221,7 +279,7 @@ export default function AgeGroupsPage() {
         <div className="modal-overlay" onClick={() => setModal(null)}>
           <div className="modal" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
-              <h3>{modal === 'add' ? 'Add Age Group' : 'Edit Age Group'}</h3>
+              <h3>{modal === 'add' ? 'Add Division' : 'Edit Division'}</h3>
               <button className="btn btn-ghost btn-sm" onClick={() => setModal(null)}><X size={16} /></button>
             </div>
             <form onSubmit={handleSubmit}>
@@ -249,14 +307,14 @@ export default function AgeGroupsPage() {
               </div>
               <div className="form-row form-row-2" style={{ marginBottom: '1.5rem' }}>
                 <div className="form-group">
-                  <label className="form-label">Min Age *</label>
+                  <label className="form-label">Min Age</label>
                   <input className="form-input" type="number" value={form.minAge}
-                    onChange={e => setForm(f => ({ ...f, minAge: e.target.value }))} required />
+                    onChange={e => setForm(f => ({ ...f, minAge: e.target.value }))} placeholder="Blank for no minimum" />
                 </div>
                 <div className="form-group">
-                  <label className="form-label">Max Age *</label>
+                  <label className="form-label">Max Age</label>
                   <input className="form-input" type="number" value={form.maxAge}
-                    onChange={e => setForm(f => ({ ...f, maxAge: e.target.value }))} required />
+                    onChange={e => setForm(f => ({ ...f, maxAge: e.target.value }))} placeholder="Blank for no maximum" />
                 </div>
               </div>
               <div className="form-group" style={{ marginBottom: '1.5rem', background: 'var(--white-5)', padding: '1rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-2)' }}>
@@ -331,6 +389,32 @@ export default function AgeGroupsPage() {
                 </div>
               </div>
 
+              {/* Fee Schedule Section */}
+              <div className="form-group" style={{ marginBottom: '1.5rem', borderTop: '1px solid var(--border-2)', paddingTop: '1.5rem' }}>
+                <label className="form-label" style={{ marginBottom: '0.75rem', display: 'block' }}>Fee Schedule (Division Override)</label>
+                <p style={{ fontSize: '0.72rem', color: 'var(--white-30)', marginBottom: '1rem', lineHeight: 1.5 }}>
+                  Set fees here only when the tournament uses per-division fee mode. Leave blank to inherit from tournament settings.
+                </p>
+                <div className="form-row form-row-2">
+                  <div className="form-group">
+                    <label className="form-label">Deposit Amount ($)</label>
+                    <input className="form-input" type="number" min="0" step="0.01" placeholder="e.g. 200" value={form.depositAmount} onChange={e => setForm(f => ({ ...f, depositAmount: e.target.value }))} />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Deposit Due Date</label>
+                    <input className="form-input" type="date" value={form.depositDueDate} onChange={e => setForm(f => ({ ...f, depositDueDate: e.target.value }))} />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Total Fee ($)</label>
+                    <input className="form-input" type="number" min="0" step="0.01" placeholder="e.g. 500" value={form.totalFeeAmount} onChange={e => setForm(f => ({ ...f, totalFeeAmount: e.target.value }))} />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Total Fee Due Date</label>
+                    <input className="form-input" type="date" value={form.totalFeeDueDate} onChange={e => setForm(f => ({ ...f, totalFeeDueDate: e.target.value }))} />
+                  </div>
+                </div>
+              </div>
+
               {/* Tie Breakers Section */}
               <div className="form-group" style={{ marginBottom: '1.5rem', borderTop: '1px solid var(--border-2)', paddingTop: '1.5rem' }}>
                 <label className="form-label" style={{ marginBottom: '0.75rem', opacity: 0.8, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -382,11 +466,11 @@ export default function AgeGroupsPage() {
         <div className="modal-overlay" onClick={() => setDeleteId(null)}>
           <div className="modal" style={{ maxWidth: 400 }} onClick={e => e.stopPropagation()}>
             <div className="modal-header">
-              <h3>Delete Age Group?</h3>
+              <h3>Delete Division?</h3>
               <button className="btn btn-ghost btn-sm" onClick={() => setDeleteId(null)}><X size={16} /></button>
             </div>
             <p style={{ color: 'var(--white-60)', marginBottom: '0.5rem' }}>
-              This will permanently delete this age group. Teams, games, and results in this group will remain but lose their division link.
+              This will permanently delete this division. Teams, games, and results in this division will remain but lose their division link.
             </p>
             <div className="modal-footer">
               <button className="btn btn-ghost" onClick={() => setDeleteId(null)}>Cancel</button>

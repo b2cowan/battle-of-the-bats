@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getAuthContextWithRole, unauthorized, forbidden } from '@/lib/api-auth';
+import { getAuthContextWithRole, unauthorized, forbidden, repGroupScopeGuard } from '@/lib/api-auth';
 import { hasCapability } from '@/lib/roles';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { supabaseAdmin } from '@/lib/supabase-admin';
@@ -33,6 +33,8 @@ export async function GET(
   if (!team || team.orgId !== ctx!.org.id) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }
+  const groupErrG = repGroupScopeGuard(ctx!, team.groupId);
+  if (groupErrG) return groupErrG;
 
   const programYear = await getRepProgramYear(yearId);
   if (!programYear || programYear.teamId !== team.id) {
@@ -87,6 +89,8 @@ export async function PATCH(
   if (!team || team.orgId !== ctx!.org.id) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }
+  const groupErrP = repGroupScopeGuard(ctx!, team.groupId);
+  if (groupErrP) return groupErrP;
 
   const programYear = await getRepProgramYear(yearId);
   if (!programYear || programYear.teamId !== team.id) {

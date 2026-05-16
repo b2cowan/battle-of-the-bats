@@ -1,15 +1,11 @@
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
-import { getAuthContext } from '@/lib/api-auth';
+import { getAuthContextWithRole } from '@/lib/api-auth';
 import { getOrganizationBySlug } from '@/lib/db';
 import { TournamentProvider } from '@/lib/tournament-context';
 import { OrgProvider } from '@/lib/org-context';
-import AdminSidebar from '@/components/admin/AdminSidebar';
-import AdminBottomNav from '@/components/admin/AdminBottomNav';
-import DevPlanSwitcher from '@/components/DevPlanSwitcher';
 import { LiveLogicProvider } from '@/components/live-logic/LiveLogicProvider';
-import { LiveLogicRail } from '@/components/live-logic/LiveLogicRail';
-import styles from './admin.module.css';
+import AdminChrome from './AdminChrome';
 
 export async function generateMetadata({
   params,
@@ -30,7 +26,7 @@ export default async function AdminLayout({
 }) {
   const { orgSlug } = await params;
 
-  const authCtx = await getAuthContext();
+  const authCtx = await getAuthContextWithRole();
   if (!authCtx) {
     redirect(`/auth/login?next=/${orgSlug}/admin`);
   }
@@ -41,18 +37,16 @@ export default async function AdminLayout({
   }
 
   return (
-    <OrgProvider>
+    <OrgProvider
+      initialOrg={authCtx.org}
+      initialUserRole={authCtx.role}
+      initialUserCapabilities={authCtx.capabilities}
+    >
       <TournamentProvider>
         <LiveLogicProvider>
-          <div className={styles.adminShell}>
-            <AdminSidebar />
-            <main className={styles.adminMain}>
-              {children}
-            </main>
-          </div>
-          <AdminBottomNav />
-          {process.env.NEXT_PUBLIC_ENABLE_DEV_TOOLS === 'true' && <DevPlanSwitcher />}
-          <LiveLogicRail />
+          <AdminChrome showDevTools={process.env.NEXT_PUBLIC_ENABLE_DEV_TOOLS === 'true'}>
+            {children}
+          </AdminChrome>
         </LiveLogicProvider>
       </TournamentProvider>
     </OrgProvider>

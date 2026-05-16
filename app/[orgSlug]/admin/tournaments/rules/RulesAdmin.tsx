@@ -29,7 +29,7 @@ import {
   getRules, saveRuleSection, updateRuleSection, deleteRuleSection,
   saveRuleItem, updateRuleItem, deleteRuleItem,
   getResources, saveResource, updateResource, deleteResource,
-  uploadResourceFile, seedRulesAndResources, getAgeGroups
+  uploadResourceFile, seedRulesAndResources
 } from '@/lib/db';
 import styles from '../../admin-common.module.css';
 
@@ -163,11 +163,12 @@ export default function RulesAdmin({ tournament }: Props) {
     try {
       setLoading(true);
       setError(null);
-      const [r, res, ag] = await Promise.all([
+      const [r, res, agRes] = await Promise.all([
         getRules(tournament.id),
         getResources(tournament.id),
-        getAgeGroups(tournament.id),
+        fetch(`/api/admin/age-groups?tournamentId=${encodeURIComponent(tournament.id)}`),
       ]);
+      const ag = agRes.ok ? await agRes.json() : [];
       setRules(r);
       setResources(res);
       setAgeGroups(ag);

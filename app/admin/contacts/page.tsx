@@ -159,7 +159,7 @@ export default function AdminContactsPage() {
               <button className="btn btn-ghost btn-sm" onClick={() => setDeleteId(null)}><X size={16} /></button>
             </div>
             <p style={{ color: 'var(--white-60)', marginBottom: '0.5rem' }}>
-              This will permanently delete this contact. If this contact is assigned to any age groups, they will revert to the default admin email.
+              This will permanently delete this contact. If this contact is assigned to any divisions, they will revert to the default admin email.
             </p>
             <div className="modal-footer">
               <button className="btn btn-ghost" onClick={() => setDeleteId(null)}>Cancel</button>

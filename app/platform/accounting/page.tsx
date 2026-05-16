@@ -121,7 +121,7 @@ export default function AccountingPage() {
             Stop managing money in spreadsheets.
           </h2>
           <p className="font-mono text-xs text-data-gray mb-10">
-            Accounting is included in the Club plan. 14-day free trial.
+            Accounting is included in the Club plan. Start with a 90-day early-adopter trial.
           </p>
           <Link
             href="/auth/signup"

@@ -10,7 +10,7 @@ export const metadata = {
 const TRUST_SIGNALS = [
   'Canadian pricing — billed in CAD',
   'No contracts — cancel anytime',
-  '14-day free trial on paid plans',
+  'Longer launch trials for League and Club',
   'Plans can be changed at any time',
 ];
 
@@ -18,7 +18,7 @@ const COMPARISON_CATEGORIES = [
   {
     label: 'Tournaments & Scheduling',
     rows: [
-      { feature: 'Active tournaments',           tournament: '1',        plus: 'Unlimited', league: 'Unlimited', club: 'Unlimited' },
+      { feature: 'Non-archived tournament slots', tournament: '1',        plus: '3',         league: 'Unlimited', club: 'Unlimited' },
       { feature: 'Tournament scheduling',        tournament: 'Manual',   plus: 'Automated', league: 'Automated', club: 'Automated' },
       { feature: 'Bracket generator',            tournament: '—',        plus: '✓',         league: '✓',         club: '✓' },
       { feature: 'Tournament archives',          tournament: '—',        plus: '✓',         league: '✓',         club: '✓' },
@@ -81,7 +81,8 @@ const COMPARISON_CATEGORIES = [
   {
     label: 'Free Trial',
     rows: [
-      { feature: '14-day free trial', tournament: '—', plus: '✓', league: '✓', club: '✓' },
+      { feature: 'Trial length', tournament: '—', plus: '14 days', league: '30 days', club: '90 days' },
+      { feature: 'Payment details at signup', tournament: '—', plus: '✓', league: '✓', club: '✓' },
     ],
   },
 ];
@@ -89,7 +90,7 @@ const COMPARISON_CATEGORIES = [
 const UPGRADE_BRIDGES = [
   {
     headline: 'Ready to stop building schedules by hand?',
-    body: 'Tournament Plus gives you automated scheduling, bracket generation, and email communications. For organizations running more than one event a year, the time saved on schedule builds alone is worth the upgrade.',
+    body: 'Tournament Plus gives you up to 3 non-archived tournament slots, automated scheduling, bracket generation, and email communications. For organizations running more than one event a year, the time saved on schedule builds alone is worth the upgrade.',
     from: 'Tournament',
     to: 'Tournament Plus',
   },
@@ -123,7 +124,7 @@ const FAQS = [
   },
   {
     q: 'What happens when my free trial ends?',
-    a: "At the end of your 14-day trial, your plan continues at the regular monthly rate. We'll send you a reminder before your trial ends. If you decide not to continue, you can cancel before the trial period closes and you won't be charged. Your data stays available for 30 days after cancellation.",
+    a: "At the end of your trial, your plan continues at the regular rate for the plan and billing period you selected. Tournament Plus trials run 14 days, League trials run 30 days, and Club early-adopter trials run 90 days. We'll send reminders before the trial ends. If you decide not to continue, you can cancel before the trial period closes and you won't be charged. Your data stays available for 90 days after cancellation.",
   },
   {
     q: 'Can I change plans later?',
@@ -131,7 +132,7 @@ const FAQS = [
   },
   {
     q: 'Do I need a credit card to get started?',
-    a: "No. The Tournament plan is free, no card required. Paid plan free trials also don't require a credit card upfront — you only enter billing information when you're ready to continue after the trial.",
+    a: 'No card is required for the free Tournament plan. Paid plan trials use secure Stripe Checkout and collect payment details at signup, with the first payment charged automatically only after the trial ends.',
   },
   {
     q: 'What if we get stuck?',
@@ -254,7 +255,7 @@ export default function PricingPage() {
             <div className={styles.clubText}>
               <p className="font-mono text-xs uppercase tracking-widest text-logic-lime mb-3">Most Popular</p>
               <h2 className={styles.clubTitle}>Why most clubs choose the Club plan</h2>
-              <p className={styles.clubSub}>It's not about features. It's about time.</p>
+              <p className={styles.clubSub}>It&apos;s not about features. It&apos;s about time.</p>
               <p className={styles.clubBody}>
                 The two tools that Club adds — accounting and rep team management — are where sports
                 organizations lose the most time every season. Chasing payments. Reconciling who owes
@@ -263,11 +264,11 @@ export default function PricingPage() {
               </p>
               <p className={styles.clubBody}>
                 Club centralizes all of it. Treasurers get a real ledger. Team managers stop chasing
-                paper. Coaches have their own portal. And the executive doesn't spend Sunday nights
+                paper. Coaches have their own portal. And the executive doesn&apos;t spend Sunday nights
                 in a spreadsheet.
               </p>
               <p className={styles.clubBody}>
-                That's why it's the most popular plan — not because organizations want the most
+                That&apos;s why it&apos;s the most popular plan — not because organizations want the most
                 features, but because they want their volunteer hours back.
               </p>
             </div>
@@ -296,7 +297,7 @@ export default function PricingPage() {
       {/* ── FAQ ──────────────────────────────────────────────────────────── */}
       <section className={styles.faqSection}>
         <div className="container">
-          <h2 className={styles.sectionTitle}>Questions? We've got answers.</h2>
+          <h2 className={styles.sectionTitle}>Questions? We&apos;ve got answers.</h2>
           <p className={styles.sectionSub}>
             Especially for volunteer-run organizations — we know the questions.
           </p>
@@ -324,7 +325,7 @@ export default function PricingPage() {
             and more time running your organization.
           </h2>
           <p className={styles.ctaSub}>
-            Free plan available. No credit card required for trials. Cancel anytime.
+            Free plan available. Paid trials collect payment details up front and charge only after the trial. Cancel anytime.
           </p>
           <div className={styles.ctaActions}>
             <Link

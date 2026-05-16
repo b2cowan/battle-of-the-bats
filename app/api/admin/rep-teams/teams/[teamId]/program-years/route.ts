@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getAuthContextWithRole, unauthorized, forbidden } from '@/lib/api-auth';
+import { getAuthContextWithRole, unauthorized, forbidden, repGroupScopeGuard } from '@/lib/api-auth';
 import { hasCapability } from '@/lib/roles';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { supabaseAdmin } from '@/lib/supabase-admin';
@@ -25,6 +25,8 @@ export async function GET(
   if (!team || team.orgId !== ctx!.org.id) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }
+  const groupErrG = repGroupScopeGuard(ctx!, team.groupId);
+  if (groupErrG) return groupErrG;
 
   const programYears = await getRepProgramYears(team.id);
   return NextResponse.json({ programYears });
@@ -45,6 +47,8 @@ export async function POST(
   if (!team || team.orgId !== ctx!.org.id) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }
+  const groupErrP = repGroupScopeGuard(ctx!, team.groupId);
+  if (groupErrP) return groupErrP;
 
   const body = await req.json();
   const name = typeof body.name === 'string' ? body.name.trim() : '';

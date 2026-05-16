@@ -52,6 +52,8 @@ const ADDON_MODULE_LABELS: Record<string, string> = {
   module_rep_teams:    'Rep Teams',
 };
 
+type ApiErrorBody = { error?: string };
+
 function fmtDate(iso: string) {
   return new Date(iso).toLocaleDateString('en-CA', {
     year: 'numeric', month: 'short', day: 'numeric',
@@ -103,8 +105,8 @@ export default function OrgDetailClient({
         body:    JSON.stringify({ notes }),
       });
       if (!res.ok) {
-        const d = await res.json().catch(() => ({}));
-        setNotesError((d as any).error ?? 'Save failed');
+        const d = await res.json().catch((): ApiErrorBody => ({}));
+        setNotesError(d.error ?? 'Save failed');
       } else {
         setNotesSaved(true);
       }
@@ -142,8 +144,8 @@ export default function OrgDetailClient({
         body:    JSON.stringify({ enabledAddons: addonEdits }),
       });
       if (!res.ok) {
-        const d = await res.json().catch(() => ({}));
-        setAddonError((d as any).error ?? 'Save failed');
+        const d = await res.json().catch((): ApiErrorBody => ({}));
+        setAddonError(d.error ?? 'Save failed');
       } else {
         setAddonSaved(true);
       }
@@ -466,11 +468,11 @@ export default function OrgDetailClient({
         )}
       </section>
 
-      {/* Active Tournaments */}
+      {/* Non-archived Tournaments */}
       <section className={styles.section}>
-        <h2 className={styles.sectionTitle}>Active Tournaments</h2>
+        <h2 className={styles.sectionTitle}>Non-Archived Tournaments</h2>
         {tournaments.length === 0 ? (
-          <p className={styles.emptyNote}>No active tournaments.</p>
+          <p className={styles.emptyNote}>No non-archived tournaments.</p>
         ) : (
           <div className={styles.tableWrap}>
             <table className={styles.table}>

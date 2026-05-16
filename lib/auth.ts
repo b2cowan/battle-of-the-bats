@@ -6,7 +6,15 @@ export async function signIn(
 ): Promise<{ error: string | null }> {
   const supabase = createClient();
   const { error } = await supabase.auth.signInWithPassword({ email, password });
-  return { error: error?.message ?? null };
+  if (!error) return { error: null };
+
+  const authError = error as { code?: string; message?: string };
+  const message = authError.message ?? '';
+  const normalized = message.toLowerCase();
+  if (authError.code) return { error: authError.code };
+  if (normalized.includes('email not confirmed')) return { error: 'email_not_confirmed' };
+  if (normalized.includes('invalid login credentials')) return { error: 'invalid_credentials' };
+  return { error: message };
 }
 
 export async function signOut(): Promise<void> {
@@ -30,7 +38,7 @@ export async function getSession() {
 // Auth is now handled by middleware + Supabase session cookies.
 
 /** @deprecated Use signIn() instead */
-export function login(_u: string, _p: string): boolean { return false; }
+export function login(): boolean { return false; }
 
 /** @deprecated Use signOut() instead */
 export function logout(): void {}

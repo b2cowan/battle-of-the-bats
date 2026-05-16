@@ -1,14 +1,18 @@
 import { supabase } from './supabase';
 import { supabaseAdmin } from './supabase-admin';
-import { PLAN_CONFIG } from './plan-config';
+import { getEffectiveTournamentLimit, PLAN_CONFIG } from './plan-config';
 import { createClient as createBrowserSupabaseClient } from './supabase-browser';
-import { Tournament, TournamentStatus, Diamond, Contact, AgeGroup, Pool, Team, Game, Announcement, PlayoffConfig, RuleSection, RuleItem, Resource, Organization, OrganizationMember, OrgPlan, OrgRole, TournamentArchive, OrgPublicSiteContent, AccountingLedger, AccountingEntry, LedgerSummary, AccountingEntryStatus, AccountingEntryType, LeagueSeason, LeagueDivision, LeagueTeam, LeagueRegistration, LeagueGame, LeagueStandingsRow, LeagueSeasonSummary, LeagueRegistrationStatus, LeagueSeasonStatus, LeaguePractice, LeaguePracticeStatus, RepTeam, RepProgramYear, RepProgramYearStatus, RepTeamCoach, RepTryoutRegistration, RepTryoutRegistrationStatus, RepRosterPlayer, RepRosterStatus, RepTeamEvent, RepEventType, RepDocumentTemplate, RepDocumentType, RepPlayerDocument, RepCostAllocation, RepAllocationSplit, RepAllocationInstallment, RepPlayerDuesSchedule, RepPlayerDuesInstallment, RepTeamExpense } from './types';
+import { Tournament, TournamentStatus, Diamond, Contact, AgeGroup, Pool, PoolSlot, Team, Game, Announcement, PlayoffConfig, RuleSection, RuleItem, Resource, Organization, OrganizationMember, OrgPlan, OrgRole, TournamentArchive, OrgPublicSiteContent, AccountingLedger, AccountingEntry, LedgerSummary, AccountingEntryStatus, AccountingEntryType, LeagueSeason, LeagueDivision, LeagueTeam, LeagueRegistration, LeagueGame, LeagueStandingsRow, LeagueSeasonSummary, LeagueRegistrationStatus, LeagueSeasonStatus, LeaguePractice, LeaguePracticeStatus, RepTeam, RepProgramYear, RepProgramYearStatus, RepTeamCoach, RepTryoutRegistration, RepTryoutRegistrationStatus, RepRosterPlayer, RepRosterStatus, RepTeamEvent, RepEventType, RepDocumentTemplate, RepDocumentType, RepPlayerDocument, RepCostAllocation, RepAllocationSplit, RepAllocationInstallment, RepPlayerDuesSchedule, RepPlayerDuesInstallment, RepTeamExpense, OrgPayee } from './types';
 
 // Use the SSR browser client (cookie-based session) for writes that need auth;
 // falls back to anon client on the server where there is no window.
 function authClient() {
   return typeof window !== 'undefined' ? createBrowserSupabaseClient() : supabase;
 }
+
+type ReadOptions = {
+  admin?: boolean;
+};
 
 // --- Tournaments ---
 export async function getTournaments(): Promise<Tournament[]> {
@@ -178,8 +182,9 @@ export async function setActiveTournament(id: string): Promise<void> {
 }
 
 // --- Diamonds ---
-export async function getDiamonds(tournamentId?: string): Promise<Diamond[]> {
-  let query = supabase.from('diamonds').select('*').order('name', { ascending: true });
+export async function getDiamonds(tournamentId?: string, options: ReadOptions = {}): Promise<Diamond[]> {
+  const client = options.admin ? supabaseAdmin : supabase;
+  let query = client.from('diamonds').select('*').order('name', { ascending: true });
   if (tournamentId) query = query.eq('tournament_id', tournamentId);
   const { data, error } = await query;
   if (error || !data) {
@@ -255,8 +260,9 @@ export async function deleteContact(id: string): Promise<void> {
 }
 
 // --- Age Groups ---
-export async function getAgeGroups(tournamentId?: string): Promise<AgeGroup[]> {
-  let query = supabase.from('age_groups').select('*, pools(*)').order('display_order', { ascending: true });
+export async function getAgeGroups(tournamentId?: string, options: ReadOptions = {}): Promise<AgeGroup[]> {
+  const client = options.admin ? supabaseAdmin : supabase;
+  let query = client.from('age_groups').select('*, pools(*)').order('display_order', { ascending: true });
   if (tournamentId) query = query.eq('tournament_id', tournamentId);
   const { data, error } = await query;
   if (error || !data) {
@@ -277,6 +283,7 @@ export async function getAgeGroups(tournamentId?: string): Promise<AgeGroup[]> {
     poolNames: g.pool_names,
     requiresPoolSelection: g.requires_pool_selection,
     playoffConfig: g.playoff_config,
+    scheduleVisibility: g.schedule_visibility,
     pools: (g.pools || []).map((p: any) => ({
       id: p.id,
       ageGroupId: p.age_group_id,
@@ -298,7 +305,8 @@ export async function saveAgeGroup(g: Omit<AgeGroup, 'id'>): Promise<void> {
     capacity: g.capacity,
     pool_count: g.poolCount || 1,
     pool_names: g.poolNames,
-    playoff_config: g.playoffConfig || { type: 'single', crossover: 'standard', hasThirdPlace: false, teamsQualifying: 4 }
+    playoff_config: g.playoffConfig || { type: 'single', crossover: 'standard', hasThirdPlace: false, teamsQualifying: 4 },
+    schedule_visibility: g.scheduleVisibility ?? 'unpublished'
   });
 }
 
@@ -316,6 +324,7 @@ export async function updateAgeGroup(id: string, g: Partial<AgeGroup>): Promise<
   if (g.poolNames !== undefined) updates.pool_names = g.poolNames;
   if (g.requiresPoolSelection !== undefined) updates.requires_pool_selection = g.requiresPoolSelection;
   if (g.playoffConfig !== undefined) updates.playoff_config = g.playoffConfig;
+  if (g.scheduleVisibility !== undefined) updates.schedule_visibility = g.scheduleVisibility;
   await authClient().from('age_groups').update(updates).eq('id', id);
 }
 
@@ -358,8 +367,9 @@ export async function deletePool(id: string): Promise<void> {
 }
 
 // --- Teams ---
-export async function getTeams(tournamentId?: string): Promise<Team[]> {
-  let query = supabase.from('teams').select('*').order('name', { ascending: true });
+export async function getTeams(tournamentId?: string, options: ReadOptions = {}): Promise<Team[]> {
+  const client = options.admin ? supabaseAdmin : supabase;
+  let query = client.from('teams').select('*').order('name', { ascending: true });
   if (tournamentId) query = query.eq('tournament_id', tournamentId);
   const { data, error } = await query;
   if (error || !data) {
@@ -379,7 +389,9 @@ export async function getTeams(tournamentId?: string): Promise<Team[]> {
     registered_at: t.registered_at, // Map to registeredAt if needed
     registeredAt: t.registered_at,
     adminNotes: t.admin_notes,
-    poolId: t.pool_id
+    poolId: t.pool_id,
+    waitlistPosition: t.waitlist_position ?? null,
+    slotId: t.slot_id ?? null
   }));
 }
 
@@ -395,7 +407,9 @@ export async function saveTeam(t: Omit<Team, 'id'> & { id?: string }): Promise<v
     payment_status: t.paymentStatus || 'paid',
     registered_at: t.registeredAt || new Date().toISOString(),
     admin_notes: t.adminNotes,
-    pool_id: t.poolId
+    pool_id: t.poolId,
+    waitlist_position: t.waitlistPosition ?? null,
+    slot_id: t.slotId ?? null
   };
   if (t.id) payload.id = t.id;
   const { error } = await authClient().from('teams').insert(payload);
@@ -413,8 +427,10 @@ export async function updateTeam(id: string, t: Partial<Team>): Promise<void> {
   if (t.status !== undefined)       updates.status = t.status;
   if (t.paymentStatus !== undefined) updates.payment_status = t.paymentStatus;
   if (t.registeredAt !== undefined) updates.registered_at = t.registeredAt;
-  if (t.adminNotes !== undefined)    updates.admin_notes = t.adminNotes;
-  if (t.poolId !== undefined)       updates.pool_id        = t.poolId;
+  if (t.adminNotes !== undefined)        updates.admin_notes       = t.adminNotes;
+  if (t.poolId !== undefined)            updates.pool_id            = t.poolId;
+  if (t.waitlistPosition !== undefined)  updates.waitlist_position  = t.waitlistPosition;
+  if (t.slotId !== undefined)            updates.slot_id            = t.slotId;
   const { error } = await authClient().from('teams').update(updates).eq('id', id);
   if (error) throw error;
 }
@@ -424,8 +440,9 @@ export async function deleteTeam(id: string): Promise<void> {
 }
 
 // --- Games ---
-export async function getGames(tournamentId?: string): Promise<Game[]> {
-  let query = supabase.from('games').select('*').order('game_date', { ascending: true }).order('game_time', { ascending: true });
+export async function getGames(tournamentId?: string, options: ReadOptions = {}): Promise<Game[]> {
+  const client = options.admin ? supabaseAdmin : supabase;
+  let query = client.from('games').select('*').order('game_date', { ascending: true }).order('game_time', { ascending: true });
   if (tournamentId) query = query.eq('tournament_id', tournamentId);
   const { data, error } = await query;
   if (error || !data) {
@@ -450,6 +467,8 @@ export async function getGames(tournamentId?: string): Promise<Game[]> {
     bracketCode: g.bracket_code,
     homePlaceholder: g.home_placeholder,
     awayPlaceholder: g.away_placeholder,
+    homeSlotId: g.home_slot_id,
+    awaySlotId: g.away_slot_id,
     notes: g.notes
   }));
 }
@@ -472,11 +491,13 @@ export async function saveGame(g: Omit<Game, 'id'>): Promise<void> {
     bracket_code: g.bracketCode,
     home_placeholder: g.homePlaceholder,
     away_placeholder: g.awayPlaceholder,
+    home_slot_id: g.homeSlotId,
+    away_slot_id: g.awaySlotId,
     notes: g.notes
   });
 }
 
-export async function updateGame(id: string, g: Partial<Game>): Promise<void> {
+export async function updateGame(id: string, g: Partial<Game>, options: ReadOptions = {}): Promise<void> {
   const updates: any = {};
   if (g.tournamentId !== undefined) updates.tournament_id = g.tournamentId;
   if (g.ageGroupId !== undefined) updates.age_group_id = g.ageGroupId;
@@ -494,15 +515,18 @@ export async function updateGame(id: string, g: Partial<Game>): Promise<void> {
   if (g.bracketCode !== undefined) updates.bracket_code = g.bracketCode;
   if (g.homePlaceholder !== undefined) updates.home_placeholder = g.homePlaceholder;
   if (g.awayPlaceholder !== undefined) updates.away_placeholder = g.awayPlaceholder;
+  if (g.homeSlotId !== undefined) updates.home_slot_id = g.homeSlotId;
+  if (g.awaySlotId !== undefined) updates.away_slot_id = g.awaySlotId;
   if (g.notes !== undefined) updates.notes = g.notes;
 
-  const { error } = await authClient().from('games').update(updates).eq('id', id);
+  const writeClient = options.admin ? supabaseAdmin : authClient();
+  const { error } = await writeClient.from('games').update(updates).eq('id', id);
   if (error) throw error;
 
   // Trigger advancement
   if (g.status === 'completed' || (g.homeScore !== undefined && g.awayScore !== undefined)) {
-    const fullGame = (await getGames()).find(x => x.id === id);
-    if (fullGame) await advancePlayoffs(fullGame);
+    const fullGame = (await getGames(undefined, options)).find(x => x.id === id);
+    if (fullGame) await advancePlayoffs(fullGame, options);
   }
 }
 
@@ -510,9 +534,9 @@ export async function deleteGame(id: string): Promise<void> {
   await authClient().from('games').delete().eq('id', id);
 }
 
-export async function getStandings(ageGroupId: string, config?: PlayoffConfig) {
-  const games = await getGames();
-  const teams = await getTeams();
+export async function getStandings(ageGroupId: string, config?: PlayoffConfig, options: ReadOptions = {}) {
+  const games = await getGames(undefined, options);
+  const teams = await getTeams(undefined, options);
   const groupTeams = teams.filter(t => t.ageGroupId === ageGroupId && t.status === 'accepted');
   const groupGames = games.filter(g =>
     g.ageGroupId === ageGroupId &&
@@ -637,8 +661,9 @@ export async function getStandings(ageGroupId: string, config?: PlayoffConfig) {
 }
 
 // --- Announcements ---
-export async function getAnnouncements(tournamentId?: string): Promise<Announcement[]> {
-  let query = supabase.from('announcements').select('*')
+export async function getAnnouncements(tournamentId?: string, options: ReadOptions = {}): Promise<Announcement[]> {
+  const client = options.admin ? supabaseAdmin : supabase;
+  let query = client.from('announcements').select('*')
     .order('pinned', { ascending: false })
     .order('published_at', { ascending: false });
   if (tournamentId) query = query.eq('tournament_id', tournamentId);
@@ -803,10 +828,10 @@ export async function seedTournamentData(tid: string, options: {
   }
 }
 
-export async function advancePlayoffs(game: Game) {
+export async function advancePlayoffs(game: Game, options: ReadOptions = {}) {
   if (game.status !== 'completed') return;
 
-  const games = await getGames(game.tournamentId);
+  const games = await getGames(game.tournamentId, options);
   const playoffGames = games.filter(g => g.isPlayoff && g.ageGroupId === game.ageGroupId);
 
   if (playoffGames.length === 0) return;
@@ -824,7 +849,7 @@ export async function advancePlayoffs(game: Game) {
       if (pg.awayPlaceholder === 'Loser ' + game.bracketCode) updates.awayTeamId = loserId;
 
       if (Object.keys(updates).length > 0) {
-        await updateGame(pg.id, updates);
+        await updateGame(pg.id, updates, options);
       }
     }
   }
@@ -834,8 +859,8 @@ export async function advancePlayoffs(game: Game) {
   const allPoolDone = poolGames.every(g => g.status === 'completed');
 
   if (allPoolDone && poolGames.length > 0) {
-    const ageGroup = (await getAgeGroups(game.tournamentId)).find(g => g.id === game.ageGroupId);
-    const standings = await getStandings(game.ageGroupId, ageGroup?.playoffConfig);
+    const ageGroup = (await getAgeGroups(game.tournamentId, options)).find(g => g.id === game.ageGroupId);
+    const standings = await getStandings(game.ageGroupId, ageGroup?.playoffConfig, options);
     const pools = ageGroup?.pools || [];
 
     for (const pg of playoffGames) {
@@ -868,15 +893,16 @@ export async function advancePlayoffs(game: Game) {
       if (aId) updates.awayTeamId = aId;
 
       if (Object.keys(updates).length > 0) {
-        await updateGame(pg.id, updates);
+        await updateGame(pg.id, updates, options);
       }
     }
   }
 }
 
 // --- Rules ---
-export async function getRules(tournamentId: string): Promise<RuleSection[]> {
-  const { data, error } = await supabase
+export async function getRules(tournamentId: string, options: ReadOptions = {}): Promise<RuleSection[]> {
+  const client = options.admin ? supabaseAdmin : supabase;
+  const { data, error } = await client
     .from('rules')
     .select('*, rule_items(*)')
     .eq('tournament_id', tournamentId)
@@ -1004,8 +1030,9 @@ export async function deleteRuleItem(id: string): Promise<void> {
 }
 
 // --- Resources ---
-export async function getResources(tournamentId: string): Promise<Resource[]> {
-  const { data, error } = await supabase
+export async function getResources(tournamentId: string, options: ReadOptions = {}): Promise<Resource[]> {
+  const client = options.admin ? supabaseAdmin : supabase;
+  const { data, error } = await client
     .from('resources')
     .select('*')
     .eq('tournament_id', tournamentId)
@@ -1228,7 +1255,7 @@ export async function getActiveTournamentByOrg(orgId: string): Promise<Tournamen
 }
 
 export async function getTournamentBySlug(orgId: string, slug: string): Promise<Tournament | null> {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseAdmin
     .from('tournaments')
     .select('*')
     .eq('organization_id', orgId)
@@ -1297,7 +1324,7 @@ function mapOrg(r: any): Organization {
     stripeCustomerId:     r.stripe_customer_id ?? undefined,
     stripeSubscriptionId: r.stripe_subscription_id ?? undefined,
     subscriptionStatus:   r.subscription_status ?? 'active',
-    tournamentLimit:      r.tournament_limit ?? 1,
+    tournamentLimit:      getEffectiveTournamentLimit(r.plan_id, r.tournament_limit),
     isPublic:             r.is_public ?? true,
     createdAt:            r.created_at,
     themePreset:          r.theme_preset ?? undefined,
@@ -1335,6 +1362,16 @@ function mapTournament(r: any): Tournament {
     startDate:      r.start_date ?? undefined,
     endDate:        r.end_date ?? undefined,
     contactEmail:   r.contact_email ?? undefined,
+    logoUrl:                  r.logo_url ?? null,
+    heroBannerUrl:            r.hero_banner_url ?? null,
+    themePreset:              r.theme_preset ?? null,
+    themePrimary:             r.theme_primary ?? null,
+    themeAccent:              r.theme_accent ?? null,
+    themeFont:                r.theme_font ?? null,
+    themeCardStyle:           r.theme_card_style ?? null,
+    colorMode:                (r.color_mode === 'light' ? 'light' : null) as 'light' | null,
+    publicHiddenPages:        Array.isArray(r.public_hidden_pages) ? r.public_hidden_pages : [],
+    requireScoreFinalization: r.require_score_finalization ?? null,
   };
 }
 
@@ -1491,20 +1528,25 @@ export async function getLedgerEntries(
 
 export async function createEntry(
   ledgerId: string,
-  input: Pick<AccountingEntry, 'entryDate' | 'description' | 'amount' | 'entryType' | 'status' | 'category'>,
+  input: Pick<AccountingEntry, 'entryDate' | 'description' | 'amount' | 'entryType' | 'status' | 'category'> &
+    Partial<Pick<AccountingEntry, 'paymentMethod' | 'payeeId' | 'payeePayer' | 'notes'>>,
   createdBy: string
 ): Promise<AccountingEntry> {
   const { data } = await supabaseAdmin
     .from('accounting_entries')
     .insert({
-      ledger_id:   ledgerId,
-      entry_date:  input.entryDate,
-      description: input.description,
-      amount:      input.amount,
-      entry_type:  input.entryType,
-      status:      input.status,
-      category:    input.category ?? null,
-      created_by:  createdBy,
+      ledger_id:      ledgerId,
+      entry_date:     input.entryDate,
+      description:    input.description,
+      amount:         input.amount,
+      entry_type:     input.entryType,
+      status:         input.status,
+      category:       input.category ?? null,
+      payment_method: input.paymentMethod ?? null,
+      payee_id:       input.payeeId ?? null,
+      payee_payer:    input.payeePayer ?? null,
+      notes:          input.notes ?? null,
+      created_by:     createdBy,
     })
     .select()
     .single();
@@ -1514,17 +1556,21 @@ export async function createEntry(
 export async function updateEntry(
   entryId: string,
   ledgerId: string,
-  input: Partial<Pick<AccountingEntry, 'entryDate' | 'description' | 'amount' | 'entryType' | 'status' | 'category'>>
+  input: Partial<Pick<AccountingEntry, 'entryDate' | 'description' | 'amount' | 'entryType' | 'status' | 'category' | 'paymentMethod' | 'payeeId' | 'payeePayer' | 'notes'>>
 ): Promise<void> {
   await supabaseAdmin
     .from('accounting_entries')
     .update({
-      ...(input.entryDate   !== undefined && { entry_date:  input.entryDate }),
-      ...(input.description !== undefined && { description: input.description }),
-      ...(input.amount      !== undefined && { amount:      input.amount }),
-      ...(input.entryType   !== undefined && { entry_type:  input.entryType }),
-      ...(input.status      !== undefined && { status:      input.status }),
-      ...(input.category    !== undefined && { category:    input.category }),
+      ...(input.entryDate     !== undefined && { entry_date:      input.entryDate }),
+      ...(input.description   !== undefined && { description:     input.description }),
+      ...(input.amount        !== undefined && { amount:          input.amount }),
+      ...(input.entryType     !== undefined && { entry_type:      input.entryType }),
+      ...(input.status        !== undefined && { status:          input.status }),
+      ...(input.category      !== undefined && { category:        input.category }),
+      ...(input.paymentMethod !== undefined && { payment_method:  input.paymentMethod }),
+      ...(input.payeeId       !== undefined && { payee_id:        input.payeeId }),
+      ...(input.payeePayer    !== undefined && { payee_payer:     input.payeePayer }),
+      ...(input.notes         !== undefined && { notes:           input.notes }),
       updated_at: new Date().toISOString(),
     })
     .eq('id', entryId)
@@ -1595,6 +1641,10 @@ function mapEntry(row: any): AccountingEntry {
     linkedEntryId:  row.linked_entry_id ?? null,
     sourceModule:   row.source_module ?? null,
     sourceEntityId: row.source_entity_id ?? null,
+    paymentMethod:  row.payment_method ?? null,
+    payeeId:        row.payee_id ?? null,
+    payeePayer:     row.payee_payer ?? null,
+    notes:          row.notes ?? null,
     createdBy:      row.created_by,
     createdAt:      row.created_at,
     updatedAt:      row.updated_at,
@@ -2399,23 +2449,108 @@ function mapRepTeam(r: any): RepTeam {
     name: r.name,
     slug: r.slug,
     sport: r.sport,
-    ageGroup: r.age_group,
-    description: r.description,
-    color: r.color,
+    ageGroup: r.age_group ?? null,
+    groupId: r.group_id ?? null,
+    groupName: r.rep_team_groups?.name ?? null,
+    description: r.description ?? null,
+    color: r.color ?? null,
     isArchived: r.is_archived,
     createdAt: r.created_at,
     updatedAt: r.updated_at,
   };
 }
 
-export async function getRepTeams(orgId: string): Promise<RepTeam[]> {
-  const { data, error } = await supabaseAdmin
+export async function getRepTeams(orgId: string, groupId?: string | null, scopeGroupIds?: string[]): Promise<RepTeam[]> {
+  let query = supabaseAdmin
     .from('rep_teams')
-    .select('*')
+    .select('*, rep_team_groups(name)')
     .eq('org_id', orgId)
     .order('name');
+  if (scopeGroupIds && scopeGroupIds.length > 0) {
+    query = query.in('group_id', scopeGroupIds);
+  } else if (groupId !== undefined && groupId !== null) {
+    query = query.eq('group_id', groupId);
+  }
+  const { data, error } = await query;
   if (error) throw error;
   return (data ?? []).map(mapRepTeam);
+}
+
+// ── Rep Team Groups ────────────────────────────────────────────────────────────
+
+import type { RepTeamGroup } from './types';
+
+function mapRepTeamGroup(r: any): RepTeamGroup {
+  return {
+    id: r.id,
+    orgId: r.org_id,
+    name: r.name,
+    displayOrder: r.display_order,
+    createdAt: r.created_at,
+  };
+}
+
+export async function getRepTeamGroups(orgId: string): Promise<RepTeamGroup[]> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_groups')
+    .select('*')
+    .eq('org_id', orgId)
+    .order('display_order')
+    .order('name');
+  if (error) throw error;
+  return (data ?? []).map(mapRepTeamGroup);
+}
+
+export async function createRepTeamGroup(
+  orgId: string,
+  name: string,
+  displayOrder = 0,
+): Promise<RepTeamGroup> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_groups')
+    .insert({ org_id: orgId, name: name.trim(), display_order: displayOrder })
+    .select()
+    .single();
+  if (error) throw error;
+  return mapRepTeamGroup(data);
+}
+
+export async function updateRepTeamGroup(
+  id: string,
+  fields: { name?: string; displayOrder?: number },
+): Promise<RepTeamGroup> {
+  const patch: Record<string, unknown> = {};
+  if (fields.name !== undefined) patch.name = fields.name.trim();
+  if (fields.displayOrder !== undefined) patch.display_order = fields.displayOrder;
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_groups')
+    .update(patch)
+    .eq('id', id)
+    .select()
+    .single();
+  if (error) throw error;
+  return mapRepTeamGroup(data);
+}
+
+export async function deleteRepTeamGroup(id: string): Promise<void> {
+  // Block deletion if any teams are still assigned to this group
+  const { count } = await supabaseAdmin
+    .from('rep_teams')
+    .select('id', { count: 'exact', head: true })
+    .eq('group_id', id);
+  if ((count ?? 0) > 0) {
+    throw Object.assign(new Error('Cannot delete a group that has teams assigned to it'), { code: 'GROUP_HAS_TEAMS' });
+  }
+  const { error } = await supabaseAdmin.from('rep_team_groups').delete().eq('id', id);
+  if (error) throw error;
+}
+
+export async function setRepTeamGroup(teamId: string, groupId: string | null): Promise<void> {
+  const { error } = await supabaseAdmin
+    .from('rep_teams')
+    .update({ group_id: groupId })
+    .eq('id', teamId);
+  if (error) throw error;
 }
 
 export interface OpenTryout {
@@ -2446,7 +2581,7 @@ export async function getOpenTryoutsByOrg(orgId: string): Promise<OpenTryout[]> 
 export async function getRepTeam(teamId: string): Promise<RepTeam | null> {
   const { data, error } = await supabaseAdmin
     .from('rep_teams')
-    .select('*')
+    .select('*, rep_team_groups(name)')
     .eq('id', teamId)
     .single();
   if (error) return null;
@@ -2456,7 +2591,7 @@ export async function getRepTeam(teamId: string): Promise<RepTeam | null> {
 export async function getRepTeamBySlug(orgId: string, slug: string): Promise<RepTeam | null> {
   const { data, error } = await supabaseAdmin
     .from('rep_teams')
-    .select('*')
+    .select('*, rep_team_groups(name)')
     .eq('org_id', orgId)
     .eq('slug', slug)
     .single();
@@ -2471,6 +2606,7 @@ export async function createRepTeam(orgId: string, fields: {
   ageGroup?: string | null;
   description?: string | null;
   color?: string | null;
+  groupId?: string | null;
 }): Promise<RepTeam> {
   const { data, error } = await supabaseAdmin
     .from('rep_teams')
@@ -2482,8 +2618,9 @@ export async function createRepTeam(orgId: string, fields: {
       age_group: fields.ageGroup ?? null,
       description: fields.description ?? null,
       color: fields.color ?? null,
+      group_id: fields.groupId ?? null,
     })
-    .select()
+    .select('*, rep_team_groups(name)')
     .single();
   if (error) throw error;
   return mapRepTeam(data);
@@ -2589,6 +2726,7 @@ function mapRepProgramYear(r: any): RepProgramYear {
     tryoutOpen: r.tryout_open,
     tryoutDescription: r.tryout_description,
     budgetAmount: r.budget_amount != null ? Number(r.budget_amount) : null,
+    autoRemindersEnabled: r.auto_reminders_enabled ?? true,
     createdAt: r.created_at,
     updatedAt: r.updated_at,
   };
@@ -3488,6 +3626,7 @@ function mapRepAllocationInstallment(r: any): RepAllocationInstallment {
     paidAt: r.paid_at ?? null,
     paidBy: r.paid_by ?? null,
     accountingEntryId: r.accounting_entry_id ?? null,
+    reminderSentAt: r.reminder_sent_at ?? null,
     createdAt: r.created_at,
   };
 }
@@ -3774,6 +3913,8 @@ function mapRepPlayerDuesInstallment(r: any): RepPlayerDuesInstallment {
     amount: Number(r.amount),
     paidAt: r.paid_at ?? null,
     reminderSentAt: r.reminder_sent_at ?? null,
+    reminder30SentAt: r.reminder_30_sent_at ?? null,
+    reminder7SentAt: r.reminder_7_sent_at ?? null,
     accountingEntryId: r.accounting_entry_id ?? null,
     createdAt: r.created_at,
   };
@@ -3824,6 +3965,9 @@ function mapRepTeamExpense(r: any): RepTeamExpense {
     balancePaidAt: r.balance_paid_at ?? null,
     eventId: r.event_id ?? null,
     notes: r.notes ?? null,
+    paymentMethod: r.payment_method ?? null,
+    payeeId: r.payee_id ?? null,
+    payeePayer: r.payee_payer ?? null,
     createdBy: r.created_by ?? null,
     createdAt: r.created_at,
     updatedAt: r.updated_at,
@@ -3864,25 +4008,31 @@ export async function createRepTeamExpense(fields: {
   balanceDueDate?: string | null;
   eventId?: string | null;
   notes?: string | null;
+  paymentMethod?: string | null;
+  payeeId?: string | null;
+  payeePayer?: string | null;
   createdBy?: string | null;
 }): Promise<RepTeamExpense> {
   const { data, error } = await supabaseAdmin
     .from('rep_team_expenses')
     .insert({
-      program_year_id: fields.programYearId,
-      team_id: fields.teamId,
-      org_id: fields.orgId,
-      expense_type: fields.expenseType,
-      description: fields.description,
-      category: fields.category ?? null,
-      amount: fields.amount,
-      deposit_amount: fields.depositAmount ?? null,
+      program_year_id:  fields.programYearId,
+      team_id:          fields.teamId,
+      org_id:           fields.orgId,
+      expense_type:     fields.expenseType,
+      description:      fields.description,
+      category:         fields.category ?? null,
+      amount:           fields.amount,
+      deposit_amount:   fields.depositAmount ?? null,
       deposit_due_date: fields.depositDueDate ?? null,
-      balance_amount: fields.balanceAmount ?? null,
+      balance_amount:   fields.balanceAmount ?? null,
       balance_due_date: fields.balanceDueDate ?? null,
-      event_id: fields.eventId ?? null,
-      notes: fields.notes ?? null,
-      created_by: fields.createdBy ?? null,
+      event_id:         fields.eventId ?? null,
+      notes:            fields.notes ?? null,
+      payment_method:   fields.paymentMethod ?? null,
+      payee_id:         fields.payeeId ?? null,
+      payee_payer:      fields.payeePayer ?? null,
+      created_by:       fields.createdBy ?? null,
     })
     .select()
     .single();
@@ -3918,6 +4068,66 @@ export async function updateRepTeamExpense(expenseId: string, fields: {
 export async function deleteRepTeamExpense(expenseId: string): Promise<void> {
   const { error } = await supabaseAdmin.from('rep_team_expenses').delete().eq('id', expenseId);
   if (error) throw error;
+}
+
+// ── Org Payees ────────────────────────────────────────────────────────────────
+
+function mapOrgPayee(r: any): OrgPayee {
+  return {
+    id:        r.id,
+    orgId:     r.org_id,
+    teamId:    r.team_id ?? null,
+    name:      r.name,
+    notes:     r.notes ?? null,
+    isActive:  r.is_active,
+    createdBy: r.created_by ?? null,
+    createdAt: r.created_at,
+  };
+}
+
+export async function searchOrgPayees(orgId: string, q: string, teamId?: string | null): Promise<OrgPayee[]> {
+  // Returns org-wide payees + (if teamId provided) that team's scoped payees
+  let query = supabaseAdmin
+    .from('org_payees')
+    .select('*')
+    .eq('org_id', orgId)
+    .eq('is_active', true)
+    .order('team_id', { ascending: true, nullsFirst: true })
+    .order('name', { ascending: true })
+    .limit(30);
+
+  if (teamId) {
+    query = query.or(`team_id.is.null,team_id.eq.${teamId}`);
+  } else {
+    query = query.is('team_id', null);
+  }
+
+  if (q.trim()) query = query.ilike('name', `%${q.trim()}%`);
+  const { data, error } = await query;
+  if (error) throw error;
+  return (data ?? []).map(mapOrgPayee);
+}
+
+export async function createOrgPayee(fields: {
+  orgId: string;
+  name: string;
+  teamId?: string | null;
+  notes?: string | null;
+  createdBy?: string | null;
+}): Promise<OrgPayee> {
+  const { data, error } = await supabaseAdmin
+    .from('org_payees')
+    .insert({
+      org_id:     fields.orgId,
+      team_id:    fields.teamId ?? null,
+      name:       fields.name.trim(),
+      notes:      fields.notes ?? null,
+      created_by: fields.createdBy ?? null,
+    })
+    .select()
+    .single();
+  if (error) throw error;
+  return mapOrgPayee(data);
 }
 
 // ── Rep Dues: bulk replace installments ──────────────────────────────────────
@@ -4048,6 +4258,7 @@ export async function getRepAllocationSplitsForTeam(
 
 import type {
   RepDueReminderCandidate,
+  RepAllocationReminderCandidate,
   RepPastProgramYear,
   RepTeamHistoryYear,
   PlatformUser,
@@ -4056,6 +4267,7 @@ import type {
 export async function getDueReminderCandidates(
   teamId: string,
   daysAhead: number,
+  window?: 30 | 7,
 ): Promise<RepDueReminderCandidate[]> {
   const programYear = await getActiveRepProgramYear(teamId);
   if (!programYear) return [];
@@ -4093,7 +4305,14 @@ export async function getDueReminderCandidates(
   const candidates = allInstallments.filter(i => {
     if (i.paid_at) return false;
     if (i.due_date < todayStr || i.due_date > cutoffStr) return false;
-    if (i.reminder_sent_at && new Date(i.reminder_sent_at) >= sevenDaysAgo) return false;
+    // Check window-specific sent column, fall back to legacy reminder_sent_at
+    if (window === 30) {
+      if (i.reminder_30_sent_at && new Date(i.reminder_30_sent_at) >= sevenDaysAgo) return false;
+    } else if (window === 7) {
+      if (i.reminder_7_sent_at && new Date(i.reminder_7_sent_at) >= sevenDaysAgo) return false;
+    } else {
+      if (i.reminder_sent_at && new Date(i.reminder_sent_at) >= sevenDaysAgo) return false;
+    }
     return true;
   });
 
@@ -4139,15 +4358,138 @@ export async function markInstallmentsReminderSent(installmentIds: string[]): Pr
   if (error) throw error;
 }
 
+export async function markInstallments30ReminderSent(installmentIds: string[]): Promise<void> {
+  if (!installmentIds.length) return;
+  const { error } = await supabaseAdmin
+    .from('rep_player_dues_installments')
+    .update({ reminder_30_sent_at: new Date().toISOString() })
+    .in('id', installmentIds);
+  if (error) throw error;
+}
+
+export async function markInstallments7ReminderSent(installmentIds: string[]): Promise<void> {
+  if (!installmentIds.length) return;
+  const { error } = await supabaseAdmin
+    .from('rep_player_dues_installments')
+    .update({ reminder_7_sent_at: new Date().toISOString() })
+    .in('id', installmentIds);
+  if (error) throw error;
+}
+
+export async function setAutoRemindersEnabled(programYearId: string, enabled: boolean): Promise<void> {
+  const { error } = await supabaseAdmin
+    .from('rep_program_years')
+    .update({ auto_reminders_enabled: enabled })
+    .eq('id', programYearId);
+  if (error) throw error;
+}
+
+export async function getAllocationReminderCandidates(
+  orgId: string,
+  daysAhead: number,
+): Promise<RepAllocationReminderCandidate[]> {
+  const today = new Date();
+  const cutoff = new Date(today);
+  cutoff.setDate(cutoff.getDate() + daysAhead);
+  const todayStr = today.toISOString().slice(0, 10);
+  const cutoffStr = cutoff.toISOString().slice(0, 10);
+  const sevenDaysAgo = new Date(today);
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+  // Load all active splits for the org
+  const { data: splits, error: sErr } = await supabaseAdmin
+    .from('rep_allocation_splits')
+    .select('id, allocation_id, team_id')
+    .eq('org_id', orgId);
+  if (sErr) throw sErr;
+  if (!splits?.length) return [];
+
+  const splitIds = splits.map((s: any) => s.id);
+  const splitMap = new Map(splits.map((s: any) => [s.id, s]));
+
+  // Load allocation descriptions
+  const allocationIds = [...new Set(splits.map((s: any) => s.allocation_id))];
+  const { data: allocations, error: aErr } = await supabaseAdmin
+    .from('rep_cost_allocations')
+    .select('id, description')
+    .in('id', allocationIds);
+  if (aErr) throw aErr;
+  const allocMap = new Map((allocations ?? []).map((a: any) => [a.id, a]));
+
+  // Load unpaid installments due in window
+  const { data: installments, error: iErr } = await supabaseAdmin
+    .from('rep_allocation_installments')
+    .select('*')
+    .in('split_id', splitIds)
+    .is('paid_at', null)
+    .gte('due_date', todayStr)
+    .lte('due_date', cutoffStr);
+  if (iErr) throw iErr;
+  if (!installments?.length) return [];
+
+  // Total installments per split
+  const { data: allInstCount, error: cErr } = await supabaseAdmin
+    .from('rep_allocation_installments')
+    .select('split_id')
+    .in('split_id', splitIds);
+  if (cErr) throw cErr;
+  const totalBySplit: Record<string, number> = {};
+  for (const r of allInstCount ?? []) {
+    totalBySplit[r.split_id] = (totalBySplit[r.split_id] ?? 0) + 1;
+  }
+
+  // Load team names
+  const teamIds = [...new Set(splits.map((s: any) => s.team_id))];
+  const { data: teams, error: tErr } = await supabaseAdmin
+    .from('rep_teams')
+    .select('id, name')
+    .in('id', teamIds);
+  if (tErr) throw tErr;
+  const teamMap = new Map((teams ?? []).map((t: any) => [t.id, t]));
+
+  return installments
+    .filter((i: any) => {
+      if (i.reminder_sent_at && new Date(i.reminder_sent_at) >= sevenDaysAgo) return false;
+      return true;
+    })
+    .map((i: any) => {
+      const split = splitMap.get(i.split_id);
+      const alloc = allocMap.get(split?.allocation_id);
+      const team = teamMap.get(split?.team_id);
+      return {
+        installmentId: i.id,
+        splitId: i.split_id,
+        teamId: split?.team_id ?? '',
+        teamName: team?.name ?? '',
+        allocationDescription: alloc?.description ?? '',
+        installmentNumber: i.installment_number,
+        totalInstallments: totalBySplit[i.split_id] ?? 1,
+        amount: Number(i.amount),
+        dueDate: i.due_date,
+      };
+    });
+}
+
+export async function markAllocationReminderSent(installmentIds: string[]): Promise<void> {
+  if (!installmentIds.length) return;
+  const { error } = await supabaseAdmin
+    .from('rep_allocation_installments')
+    .update({ reminder_sent_at: new Date().toISOString() })
+    .in('id', installmentIds);
+  if (error) throw error;
+}
+
 // ── 6N: Past program year helpers ─────────────────────────────────────────────
 
-export async function getRepPastProgramYears(orgId: string): Promise<RepPastProgramYear[]> {
-  const { data: years, error: yErr } = await supabaseAdmin
+export async function getRepPastProgramYears(orgId: string, scopeTeamIds?: string[]): Promise<RepPastProgramYear[]> {
+  let yearsQuery = supabaseAdmin
     .from('rep_program_years')
     .select('*')
     .eq('org_id', orgId)
     .in('status', ['completed', 'archived'])
     .order('year', { ascending: false });
+  if (scopeTeamIds && scopeTeamIds.length > 0) yearsQuery = yearsQuery.in('team_id', scopeTeamIds);
+  const { data: years, error: yErr } = await yearsQuery;
   if (yErr) throw yErr;
   if (!years?.length) return [];
 

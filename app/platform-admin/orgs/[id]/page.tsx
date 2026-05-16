@@ -1,16 +1,21 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { PLAN_CONFIG } from '@/lib/plan-config';
+import { getEffectiveTournamentLimit, PLAN_CONFIG } from '@/lib/plan-config';
+import type { OrgPlan } from '@/lib/types';
 import OrgDetailClient from './OrgDetailClient';
 import styles from './orgDetail.module.css';
-import HelpTooltip from '@/components/help/HelpTooltip';
 
-const ADDON_LABELS: Record<string, string> = {
-  module_public_site:  'Public Site',
-  module_accounting:   'Accounting',
-  module_house_league: 'House League',
-  module_rep_teams:    'Rep Teams',
+type OverrideRow = {
+  id: string;
+  type: string;
+  value: string | null;
+  expires_at: string | null;
+  reason: string;
+  created_by: string;
+  created_at: string;
+  revoked_at: string | null;
+  revoked_by: string | null;
 };
 
 async function getOrgDetail(id: string) {
@@ -86,7 +91,7 @@ async function getOverrides(orgId: string) {
     .eq('org_id', orgId)
     .order('created_at', { ascending: false });
 
-  return (data ?? []).map((r: any) => ({
+  return ((data ?? []) as OverrideRow[]).map(r => ({
     id:         r.id as string,
     type:       r.type as string,
     value:      r.value as string | null,
@@ -191,10 +196,12 @@ export default async function OrgDetailPage({
             <span className={styles.fieldLabel}>Status</span>
             <span className={styles.fieldValue}>{org.subscription_status}</span>
           </div>
-          {org.plan_id === 'tournament' && (
+          {planCfg && planCfg.tournamentLimit < 9999 && (
             <div className={styles.field}>
-              <span className={styles.fieldLabel}>Tournament Limit</span>
-              <span className={styles.fieldValue}>{org.tournament_limit}</span>
+              <span className={styles.fieldLabel}>Non-Archived Tournament Limit</span>
+              <span className={styles.fieldValue}>
+                {getEffectiveTournamentLimit(org.plan_id as OrgPlan, org.tournament_limit as number | null)}
+              </span>
             </div>
           )}
           {planCfg && (

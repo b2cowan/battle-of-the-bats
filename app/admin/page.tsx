@@ -31,7 +31,7 @@ export default function AdminDashboard() {
   }, [currentTournament?.id]);
 
   const cards = [
-    { label: 'Age Groups', value: stats.ageGroups, icon: Tag,        href: '/admin/age-groups',    color: 'purple' },
+    { label: 'Divisions',  value: stats.ageGroups, icon: Tag,        href: '/admin/age-groups',    color: 'purple' },
     { label: 'Teams',      value: stats.teams,     icon: Users,       href: '/admin/teams',          color: 'blue'   },
     { label: 'Scheduled',  value: stats.scheduled, icon: Calendar,    href: '/admin/schedule',       color: 'amber'  },
     { label: 'Completed',  value: stats.completed, icon: Trophy,      href: '/admin/results',        color: 'green'  },
@@ -64,7 +64,7 @@ export default function AdminDashboard() {
         <h2 className={styles.sectionTitle}>Quick Actions</h2>
         <div className={styles.actionsGrid}>
           {[
-            { href: '/admin/age-groups',    label: 'Manage Age Groups',    desc: 'Add, edit, or remove age divisions', icon: Tag       },
+            { href: '/admin/age-groups',    label: 'Manage Divisions',     desc: 'Add, edit, or remove divisions',     icon: Tag       },
             { href: '/admin/teams',         label: 'Manage Teams',         desc: 'Add teams and edit player rosters',  icon: Users     },
             { href: '/admin/schedule',      label: 'Schedule Games',       desc: 'Create and manage game schedule',    icon: Calendar  },
             { href: '/admin/results',       label: 'Post Results',         desc: 'Enter scores for completed games',   icon: Trophy    },

@@ -4,6 +4,10 @@
   background: var(--pitch-black);
 }
 
+.adminShellFocused {
+  display: block;
+}
+
 .adminMain {
   flex: 1;
   padding: 2rem;
@@ -16,6 +20,19 @@
   background-size: 40px 40px;
 }
 
+.adminMainFocused {
+  min-height: 100vh;
+}
+
+.adminPreviewShell {
+  min-height: 100vh;
+  background: var(--pitch-black);
+}
+
+.adminPreviewMain {
+  min-height: 100vh;
+}
+
 /* ── Mobile: hide sidebar, use bottom nav instead ── */
 @media (max-width: 900px) {
   .adminShell { flex-direction: column; }
@@ -23,6 +40,7 @@
   .adminMain {
     padding: 1rem 1rem calc(80px + env(safe-area-inset-bottom));
   }
+
 }
 
 /* ── Override global utility classes within admin shell ── */

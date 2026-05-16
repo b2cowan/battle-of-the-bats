@@ -64,7 +64,10 @@ interface SeasonForm {
   description: string;
   seasonStartDate: string;
   seasonEndDate: string;
+  registrationOpenAt: string;
+  registrationCloseAt: string;
   registrationFee: string;
+  waiverText: string;
   autoApproveUnderCapacity: boolean;
   autoPromoteWaitlist: boolean;
   autoGenerateFees: boolean;
@@ -78,7 +81,10 @@ const BLANK_FORM: SeasonForm = {
   description: '',
   seasonStartDate: '',
   seasonEndDate: '',
+  registrationOpenAt: '',
+  registrationCloseAt: '',
   registrationFee: '',
+  waiverText: '',
   autoApproveUnderCapacity: false,
   autoPromoteWaitlist: false,
   autoGenerateFees: false,
@@ -159,7 +165,10 @@ export default function HouseLeaguePage() {
           description:              form.description.trim() || null,
           seasonStartDate:          form.seasonStartDate || null,
           seasonEndDate:            form.seasonEndDate   || null,
+          registrationOpenAt:       form.registrationOpenAt  ? form.registrationOpenAt  + ':00Z' : null,
+          registrationCloseAt:      form.registrationCloseAt ? form.registrationCloseAt + ':00Z' : null,
           registrationFee:          form.registrationFee ? parseFloat(form.registrationFee) : null,
+          waiverText:               form.waiverText.trim() || null,
           autoApproveUnderCapacity: form.autoApproveUnderCapacity,
           autoPromoteWaitlist:      form.autoPromoteWaitlist,
           autoGenerateFees:         form.autoGenerateFees,
@@ -344,6 +353,28 @@ export default function HouseLeaguePage() {
                 />
               </div>
 
+              <div className={styles.field}>
+                <label className={styles.label} htmlFor="hl-reg-open">Registration Opens</label>
+                <input
+                  id="hl-reg-open"
+                  className={styles.input}
+                  type="datetime-local"
+                  value={form.registrationOpenAt}
+                  onChange={e => setForm(f => ({ ...f, registrationOpenAt: e.target.value }))}
+                />
+              </div>
+
+              <div className={styles.field}>
+                <label className={styles.label} htmlFor="hl-reg-close">Registration Closes</label>
+                <input
+                  id="hl-reg-close"
+                  className={styles.input}
+                  type="datetime-local"
+                  value={form.registrationCloseAt}
+                  onChange={e => setForm(f => ({ ...f, registrationCloseAt: e.target.value }))}
+                />
+              </div>
+
               <div className={`${styles.field} ${styles.formGridFull}`}>
                 <label className={styles.label} htmlFor="hl-fee">Registration Fee (CAD)</label>
                 <input
@@ -355,6 +386,18 @@ export default function HouseLeaguePage() {
                   value={form.registrationFee}
                   onChange={e => setForm(f => ({ ...f, registrationFee: e.target.value }))}
                   placeholder="e.g. 150.00 (display-only; fees are not collected here)"
+                />
+              </div>
+
+              <div className={`${styles.field} ${styles.formGridFull}`}>
+                <label className={styles.label} htmlFor="hl-waiver">Waiver Text</label>
+                <textarea
+                  id="hl-waiver"
+                  className={styles.textarea}
+                  value={form.waiverText}
+                  onChange={e => setForm(f => ({ ...f, waiverText: e.target.value }))}
+                  placeholder="Optional waiver shown on the public registration form"
+                  rows={4}
                 />
               </div>
             </div>

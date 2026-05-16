@@ -7,6 +7,7 @@ import { Game, Team, AgeGroup, Diamond, Tournament } from '@/lib/types';
 import LocationLink from '@/components/LocationLink';
 import { formatTime, formatPoolName } from '@/lib/utils';
 import { getAgPref, setAgPref } from '@/lib/age-group-cookie';
+import { isPublicPageEnabled } from '@/lib/public-pages';
 import YearSelector from '@/components/YearSelector';
 import styles from '../../schedule/schedule.module.css';
 import { LogicSyncBracket } from '@/components/bracket/LogicSyncBracket';
@@ -117,10 +118,11 @@ export default function SchedulePage() {
   const getTeamDisplay = (game: Game, isHome: boolean) => {
     const id = isHome ? game.homeTeamId : game.awayTeamId;
     const ph = isHome ? game.homePlaceholder : game.awayPlaceholder;
-    if (id && id !== NIL_UUID) {
-      return teams.find(t => t.id === id)?.name ?? 'TBD';
+    const vis = ageGroups.find(g => g.id === game.ageGroupId)?.scheduleVisibility ?? 'unpublished';
+    if (vis !== 'published_generic' && id && id !== NIL_UUID) {
+      return teams.find(t => t.id === id)?.name ?? ph ?? 'TBD';
     }
-    return ph || 'TBD';
+    return ph ?? 'TBD';
   };
 
   const getDiamond = (id?: string) => id ? diamonds.find(d => d.id === id) ?? null : null;
@@ -176,6 +178,8 @@ export default function SchedulePage() {
 
   const activeG = ageGroups.find(g => g.id === activeGroup);
   const pools   = activeG?.pools || [];
+  const activeVisibility = activeG?.scheduleVisibility ?? 'unpublished';
+  const allUnpublished = ageGroups.length > 0 && ageGroups.every(g => (g.scheduleVisibility ?? 'unpublished') === 'unpublished');
 
   function inferPool(game: Game, allGames: Game[]): string | null {
     for (const pool of pools) {
@@ -295,13 +299,28 @@ export default function SchedulePage() {
   }
 
   // ── render ─────────────────────────────────────────────────────────────────
+  if (!loading && selectedTournament && !isPublicPageEnabled(selectedTournament, 'schedule')) {
+    return (
+      <div className="page-content">
+        <div className="section">
+          <div className="container">
+            <div className="empty-state">
+              <Calendar size={48} />
+              <p>Schedule is not available for this tournament.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="page-content">
       <div className={styles.pageHeader}>
         <div className="container">
           <span className="eyebrow"><Calendar size={12} /> Schedule</span>
           <h1 className="display-lg">Tournament Schedule</h1>
-          <p className="text-muted">View games by age group. All times are local.</p>
+          <p className="text-muted">View games by division. All times are local.</p>
         </div>
       </div>
 
@@ -313,6 +332,14 @@ export default function SchedulePage() {
             currentTournamentSlug={tournamentSlug}
             currentPage="schedule"
           />
+
+          {allUnpublished ? (
+            <div className="empty-state" style={{ padding: '4rem 0' }}>
+              <Calendar size={48} style={{ opacity: 0.3 }} />
+              <p>The schedule for this tournament hasn't been published yet. Check back soon!</p>
+            </div>
+          ) : (
+          <>
 
           {/* ── age group tab bar ── */}
           <div className="tabs flex-between" style={{ padding: '0.375rem 0.75rem', marginBottom: '0.75rem' }}>
@@ -333,6 +360,9 @@ export default function SchedulePage() {
 
           {/* ── team filter + list/bracket toggle row ── */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 0.75rem', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '0.75rem' }}>
+            {activeVisibility === 'published_generic' || activeVisibility === 'unpublished' ? (
+              <div />
+            ) : (
             <div className={styles.teamFilter}>
               <select
                 className="form-select form-select-sm"
@@ -349,6 +379,7 @@ export default function SchedulePage() {
                 <button className={styles.clearFilter} onClick={() => setSelectedTeamId('')}>×</button>
               )}
             </div>
+            )}
 
             {viewMode === 'playoff' ? (
               <div className="segmented-control" style={{ border: 'none', background: 'var(--white-10)', padding: '0.15rem' }}>
@@ -378,7 +409,12 @@ export default function SchedulePage() {
           )}
 
           {/* ── main content ── */}
-          {loading ? (
+          {activeVisibility === 'unpublished' ? (
+            <div className="empty-state" style={{ padding: '3rem 0' }}>
+              <Calendar size={48} style={{ opacity: 0.3 }} />
+              <p>The schedule for this division hasn&apos;t been published yet. Check back soon!</p>
+            </div>
+          ) : loading ? (
             <div className={styles.skeletonContainer}>
               <div className={`${styles.skeleton} ${styles.skeletonPulse}`} />
               <div className={`${styles.skeleton} ${styles.skeletonPulse}`} />
@@ -450,9 +486,12 @@ export default function SchedulePage() {
               // ── LIST VIEW — pool play split ───────────────────────────────
               if (viewMode === 'pool' && pools.length >= 2) {
                 return pools.map(pool => {
-                  const poolTeams = teams.filter(t => t.poolId === pool.id).map(t => t.id);
+                  const bare = pool.name.replace(/^Pool\s+/i, '').trim();
+                  const tag  = `Pool ${bare}`;
+                  const poolTeamIds = teams.filter(t => t.poolId === pool.id).map(t => t.id);
                   const poolGames = teamFiltered.filter(g =>
-                    poolTeams.includes(g.homeTeamId) || poolTeams.includes(g.awayTeamId)
+                    g.homePlaceholder?.includes(tag) || g.awayPlaceholder?.includes(tag) ||
+                    poolTeamIds.includes(g.homeTeamId) || poolTeamIds.includes(g.awayTeamId)
                   );
                   if (poolGames.length === 0) return null;
                   const poolDateGroups: Record<string, Game[]> = {};
@@ -540,6 +579,8 @@ export default function SchedulePage() {
                 </div>
               ));
             })()
+          )}
+          </>
           )}
         </div>
       </div>

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getAuthContextWithRole, unauthorized, forbidden } from '@/lib/api-auth';
+import { getAuthContextWithRole, unauthorized, forbidden, repGroupScopeGuard } from '@/lib/api-auth';
 import { hasCapability } from '@/lib/roles';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { supabaseAdmin } from '@/lib/supabase-admin';
@@ -25,6 +25,8 @@ export async function GET(
   if (!team || team.orgId !== ctx!.org.id) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }
+  const groupErr = repGroupScopeGuard(ctx!, team.groupId);
+  if (groupErr) return groupErr;
 
   const programYear = await getRepProgramYear(yearId);
   if (!programYear || programYear.teamId !== team.id) {
@@ -74,6 +76,8 @@ export async function POST(
   if (!team || team.orgId !== ctx!.org.id) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }
+  const groupErr = repGroupScopeGuard(ctx!, team.groupId);
+  if (groupErr) return groupErr;
 
   const programYear = await getRepProgramYear(yearId);
   if (!programYear || programYear.teamId !== team.id) {
@@ -127,6 +131,8 @@ export async function DELETE(
   if (!team || team.orgId !== ctx!.org.id) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }
+  const groupErr = repGroupScopeGuard(ctx!, team.groupId);
+  if (groupErr) return groupErr;
 
   const { searchParams } = new URL(req.url);
   const coachId = searchParams.get('coachId');

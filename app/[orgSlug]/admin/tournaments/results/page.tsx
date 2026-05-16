@@ -1,7 +1,6 @@
 'use client';
 import React, { useState, useEffect } from 'react';
-import { Trophy, X, Check, Search, RefreshCw, Users, Download } from 'lucide-react';
-import { getGames, updateGame, getTeams, getAgeGroups, getDiamonds } from '@/lib/db';
+import { Trophy, X, Check, Search, RefreshCw, Download } from 'lucide-react';
 import { downloadCSV, formatTime } from '@/lib/utils';
 import { useTournament } from '@/lib/tournament-context';
 import { useOrg } from '@/lib/org-context';
@@ -46,15 +45,20 @@ export default function AdminResultsPage() {
     if (!tournamentId) return;
 
     setLoading(true);
-    const [allGames, allTeams, groups, allDiamonds] = await Promise.all([
-      getGames(tournamentId),
-      getTeams(tournamentId),
-      getAgeGroups(tournamentId),
-      getDiamonds(tournamentId)
+    const [gamesRes, teamsRes, groupsRes, diamondsRes] = await Promise.all([
+      fetch(`/api/admin/games?tournamentId=${encodeURIComponent(tournamentId)}`),
+      fetch(`/api/admin/teams?tournamentId=${encodeURIComponent(tournamentId)}`),
+      fetch(`/api/admin/age-groups?tournamentId=${encodeURIComponent(tournamentId)}`),
+      fetch(`/api/admin/diamonds?tournamentId=${encodeURIComponent(tournamentId)}`),
     ]);
 
+    const allGames = gamesRes.ok ? await gamesRes.json() : [];
+    const allTeams = teamsRes.ok ? await teamsRes.json() : [];
+    const groups = groupsRes.ok ? await groupsRes.json() : [];
+    const allDiamonds = diamondsRes.ok ? await diamondsRes.json() : [];
+
     setGames(allGames);
-    setTeams(allTeams.filter(t => t.status === 'accepted'));
+    setTeams(allTeams.filter((t: any) => t.status === 'accepted'));
     setAgeGroups(groups);
     if (groups.length > 0 && !filterGroup) {
       setFilterGroup(groups[0].id);
@@ -82,16 +86,29 @@ export default function AdminResultsPage() {
     setEditing(g);
   }
 
+  async function patchGame(body: Record<string, unknown>) {
+    const res = await fetch('/api/admin/games', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      throw new Error(typeof data?.error === 'string' ? data.error : 'Score update failed');
+    }
+  }
+
   async function handleSaveScore() {
     if (!editing) return;
     if (scores.home === '' || scores.away === '') {
       setShowErrors(true);
       return;
     }
-    await updateGame(editing.id, {
+    await patchGame({
+      action: 'submit-score',
+      id: editing.id,
       homeScore: Number(scores.home),
       awayScore: Number(scores.away),
-      status: 'completed'
     });
     setEditing(null);
     refresh();
@@ -104,14 +121,14 @@ export default function AdminResultsPage() {
       message: 'This will clear the score and mark the game as scheduled. This action cannot be undone.',
       type: 'warning',
       onConfirm: async () => {
-        await updateGame(id, { status: 'scheduled', homeScore: null, awayScore: null });
+        await patchGame({ action: 'revert-score', id });
         refresh();
       }
     });
   }
 
   async function finalizeGame(id: string) {
-    await updateGame(id, { status: 'completed' });
+    await patchGame({ action: 'finalize', id });
     refresh();
   }
 

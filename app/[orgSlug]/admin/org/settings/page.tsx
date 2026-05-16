@@ -40,8 +40,8 @@ export default function OrgSettingsPage() {
   const [stockLogoLockedCta, setStockLogoLockedCta] = useState<string | null>(null);
 
   const [presetKey, setPresetKey]         = useState<string>('platform');
-  const [customPrimary, setCustomPrimary] = useState<string>('#8B2FC9');
-  const [customAccent, setCustomAccent]   = useState<string>('#A855F7');
+  const [customPrimary, setCustomPrimary] = useState<string>('#1E3A8A');
+  const [customAccent, setCustomAccent]   = useState<string>('#D9F99D');
 
   const [heroBannerPreview, setHeroBannerPreview] = useState<string | null>(null);
   const [bannerUploading, setBannerUploading]     = useState(false);
@@ -83,7 +83,7 @@ export default function OrgSettingsPage() {
         if (data.themePrimary) {
           setPresetKey('custom');
           setCustomPrimary(data.themePrimary);
-          setCustomAccent(data.themeAccent ?? '#A855F7');
+          setCustomAccent(data.themeAccent ?? '#D9F99D');
         } else {
           setPresetKey(data.themePreset ?? 'platform');
         }
@@ -96,8 +96,8 @@ export default function OrgSettingsPage() {
     const savedPresetKey = settings.themePrimary ? 'custom' : (settings.themePreset ?? 'platform');
     const presetChanged = presetKey !== savedPresetKey ||
       (presetKey === 'custom' && savedPresetKey === 'custom' && (
-        customPrimary !== (settings.themePrimary ?? '#8B2FC9') ||
-        customAccent  !== (settings.themeAccent  ?? '#A855F7')
+        customPrimary !== (settings.themePrimary ?? '#1E3A8A') ||
+        customAccent  !== (settings.themeAccent  ?? '#D9F99D')
       ));
     return (
       form.name  !== settings.name  ||
@@ -225,8 +225,8 @@ export default function OrgSettingsPage() {
     const savedPresetKey = settings.themePrimary ? 'custom' : (settings.themePreset ?? 'platform');
     setPresetKey(savedPresetKey);
     if (savedPresetKey === 'custom') {
-      setCustomPrimary(settings.themePrimary ?? '#8B2FC9');
-      setCustomAccent(settings.themeAccent   ?? '#A855F7');
+      setCustomPrimary(settings.themePrimary ?? '#1E3A8A');
+      setCustomAccent(settings.themeAccent   ?? '#D9F99D');
     }
     setFontKey(settings.themeFont        ?? 'system');
     setCardStyle(settings.themeCardStyle ?? 'default');

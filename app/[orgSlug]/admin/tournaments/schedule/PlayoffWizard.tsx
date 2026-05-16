@@ -1,7 +1,7 @@
 ﻿'use client';
 import React, { useState, useEffect } from 'react';
 import { Trophy, Check, X, Calendar, MapPin, Clock, AlertCircle, ChevronUp, ChevronDown } from 'lucide-react';
-import { getStandings, getDiamonds, saveGame, getTournament, getGames, deleteGame, getTeams } from '@/lib/db';
+import { getStandings, saveGame, getTournament, deleteGame } from '@/lib/db';
 import { AgeGroup, Team, Diamond, PlayoffConfig, Game, Tournament } from '@/lib/types';
 import { formatTime, formatPoolName } from '@/lib/utils';
 import BracketBuilder from './components/BracketBuilder';
@@ -38,9 +38,14 @@ export default function PlayoffWizard({ ageGroup, tournamentId, onClose, onCompl
   const [showWarning, setShowWarning] = useState(false);
 
   useEffect(() => {
-    getDiamonds(tournamentId).then(setDiamonds);
     getTournament(tournamentId).then(setTournament);
-    getTeams(tournamentId).then(all => setTeams(all.filter(t => t.ageGroupId === ageGroup.id && t.status === 'accepted')));
+    Promise.all([
+      fetch(`/api/admin/diamonds?tournamentId=${encodeURIComponent(tournamentId)}`).then(r => r.ok ? r.json() : []),
+      fetch(`/api/admin/teams?tournamentId=${encodeURIComponent(tournamentId)}`).then(r => r.ok ? r.json() : []),
+    ]).then(([ds, all]) => {
+      setDiamonds(ds);
+      setTeams((all as any[]).filter(t => t.ageGroupId === ageGroup.id && t.status === 'accepted'));
+    });
   }, [tournamentId, ageGroup.id]);
 
   useEffect(() => {
@@ -229,8 +234,9 @@ export default function PlayoffWizard({ ageGroup, tournamentId, onClose, onCompl
     setShowConfirm(false);
     try {
       // Delete existing playoff games for this division
-      const allGames = await getGames(tournamentId);
-      const toDelete = allGames.filter(g => g.ageGroupId === ageGroup.id && g.isPlayoff);
+      const gamesRes = await fetch(`/api/admin/games?tournamentId=${encodeURIComponent(tournamentId)}`);
+      const allGames = gamesRes.ok ? await gamesRes.json() : [];
+      const toDelete = allGames.filter((g: any) => g.ageGroupId === ageGroup.id && g.isPlayoff);
       for (const g of toDelete) {
         await deleteGame(g.id);
       }

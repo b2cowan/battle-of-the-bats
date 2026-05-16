@@ -129,6 +129,12 @@
   letter-spacing: 0.03em;
 }
 
+.badgeGroup {
+  background: rgba(163, 230, 53, 0.12);
+  color: #a3e635;
+  border: 1px solid rgba(163, 230, 53, 0.25);
+}
+
 .badgeAgeGroup {
   background: rgba(var(--blueprint-blue-rgb), 0.18);
   color: var(--blueprint-blue, #4fa3e0);

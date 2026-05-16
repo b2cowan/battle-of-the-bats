@@ -1,6 +1,6 @@
 import Link from 'next/link';
-import { redirect } from 'next/navigation';
-import { Calendar, ChevronRight, Star, Globe, Mail, ExternalLink, Archive, Users } from 'lucide-react';
+import { notFound, redirect } from 'next/navigation';
+import { Calendar, ChevronRight, Star, Mail, ExternalLink, Archive, Users } from 'lucide-react';
 import {
   getOrganizationBySlug, getTournamentsByOrg,
   getOrgPublicSiteContent, getArchivesByOrg,
@@ -14,9 +14,12 @@ export const dynamic = 'force-dynamic';
 export default async function HomePage({ params }: { params: Promise<{ orgSlug: string }> }) {
   const { orgSlug } = await params;
   const org = await getOrganizationBySlug(orgSlug);
+  if (org?.subscriptionStatus === 'canceled') notFound();
 
   const allTournaments   = org ? await getTournamentsByOrg(org.id) : [];
   const activeTournaments = allTournaments.filter(t => t.status === 'active');
+  const hasTournamentModule = org ? hasModuleEntitlement(org, 'module_tournaments') : false;
+  const hasDraftTournament = allTournaments.some(t => t.status === 'draft');
 
   // ── Public Site module branch ──────────────────────────────────────────────
   if (org && hasModuleEntitlement(org, 'module_public_site')) {
@@ -267,6 +270,8 @@ export default async function HomePage({ params }: { params: Promise<{ orgSlug: 
 
   // No active tournaments — FieldLogicHQ-branded placeholder
   if (activeTournaments.length === 0) {
+    const showTournamentDraftGuidance = hasTournamentModule && hasDraftTournament;
+
     return (
       <div className={styles.page}>
         <section className={styles.hero}>
@@ -288,8 +293,15 @@ export default async function HomePage({ params }: { params: Promise<{ orgSlug: 
               {org?.name ?? orgSlug}
             </h1>
             <p className={styles.heroSub}>
-              This organization hasn&apos;t set up their public site yet.
+              {showTournamentDraftGuidance
+                ? 'Tournament details are being prepared. Registration and public schedules will appear here once the organizer publishes the tournament.'
+                : 'This organization hasn&apos;t set up their public site yet.'}
             </p>
+            {showTournamentDraftGuidance && (
+              <div className={styles.draftPublicNotice}>
+                Draft tournament pages are private until the organizer activates registration.
+              </div>
+            )}
           </div>
         </section>
 

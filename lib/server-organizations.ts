@@ -1,4 +1,5 @@
 import { supabaseAdmin } from './supabase-admin';
+import { getEffectiveTournamentLimit } from './plan-config';
 import type { Organization } from './types';
 
 type OrganizationRow = {
@@ -35,7 +36,7 @@ function mapOrganization(row: OrganizationRow): Organization {
     stripeCustomerId: row.stripe_customer_id ?? undefined,
     stripeSubscriptionId: row.stripe_subscription_id ?? undefined,
     subscriptionStatus: row.subscription_status ?? 'active',
-    tournamentLimit: row.tournament_limit ?? 1,
+    tournamentLimit: getEffectiveTournamentLimit(row.plan_id, row.tournament_limit),
     isPublic: row.is_public ?? true,
     createdAt: row.created_at,
     themePreset: row.theme_preset ?? undefined,

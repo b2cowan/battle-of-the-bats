@@ -2,6 +2,8 @@ import { cookies } from 'next/headers';
 import { BookOpen, FileText, Shield, AlertCircle, CheckCircle, Download, ExternalLink } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { getOrganizationBySlug, getPublicTournamentBySlug, getRules, getResources, getAgeGroups } from '@/lib/db';
+import { notFound } from 'next/navigation';
+import { isPublicPageEnabled } from '@/lib/public-pages';
 import type { AgeGroup, Resource, RuleSection } from '@/lib/types';
 import DivisionFilterBar from '@/components/DivisionFilterBar';
 import styles from '../../rules/rules.module.css';
@@ -47,6 +49,7 @@ export default async function RulesPage({
 
   const org = await getOrganizationBySlug(orgSlug);
   const tournament = org ? await getPublicTournamentBySlug(org.id, tournamentSlug) : null;
+  if (!tournament || !isPublicPageEnabled(tournament, 'rules')) notFound();
 
   let allRules: RuleSection[] = [];
   let resources: Resource[] = [];

@@ -64,6 +64,9 @@ export async function POST(
     balanceDueDate = null,
     eventId = null,
     notes = null,
+    paymentMethod = null,
+    payeeId = null,
+    payeePayer = null,
   } = body;
 
   if (!expenseType || !['expense', 'tournament_payable'].includes(expenseType)) {
@@ -77,20 +80,23 @@ export async function POST(
   }
 
   const expense = await createRepTeamExpense({
-    programYearId: programYear.id,
-    teamId: team.id,
-    orgId: team.orgId,
+    programYearId:  programYear.id,
+    teamId:         team.id,
+    orgId:          team.orgId,
     expenseType,
-    description: description.trim(),
-    category: category?.trim() || null,
+    description:    description.trim(),
+    category:       category?.trim() || null,
     amount,
-    depositAmount: depositAmount != null ? Number(depositAmount) : null,
+    depositAmount:  depositAmount != null ? Number(depositAmount) : null,
     depositDueDate: depositDueDate || null,
-    balanceAmount: balanceAmount != null ? Number(balanceAmount) : null,
+    balanceAmount:  balanceAmount != null ? Number(balanceAmount) : null,
     balanceDueDate: balanceDueDate || null,
-    eventId: eventId || null,
-    notes: notes?.trim() || null,
-    createdBy: ctx!.user.id,
+    eventId:        eventId || null,
+    notes:          notes?.trim() || null,
+    paymentMethod:  paymentMethod?.trim() || null,
+    payeeId:        payeeId || null,
+    payeePayer:     payeePayer?.trim() || null,
+    createdBy:      ctx!.user.id,
   });
 
   return NextResponse.json({ expense }, { status: 201 });

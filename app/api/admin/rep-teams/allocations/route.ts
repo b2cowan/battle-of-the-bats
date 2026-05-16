@@ -24,15 +24,27 @@ export async function GET(_req: Request) {
   const err = gate(ctx);
   if (err) return err;
 
+  let scopedTeamIds: string[] | null = null;
+  if (ctx!.repGroupIds) {
+    const { data: scopedTeams } = await supabaseAdmin
+      .from('rep_teams')
+      .select('id')
+      .eq('org_id', ctx!.org.id)
+      .in('group_id', ctx!.repGroupIds);
+    scopedTeamIds = (scopedTeams ?? []).map((t: any) => t.id as string);
+  }
+
   const allocations = await getRepCostAllocations(ctx!.org.id);
 
   // Enrich each allocation with split-level summary stats
-  const enriched = await Promise.all(
+  const enrichedAll = await Promise.all(
     allocations.map(async alloc => {
-      const { data: splits } = await supabaseAdmin
+      let splitsQuery = supabaseAdmin
         .from('rep_allocation_splits')
         .select('id, amount, team_id')
         .eq('allocation_id', alloc.id);
+      if (scopedTeamIds) splitsQuery = splitsQuery.in('team_id', scopedTeamIds);
+      const { data: splits } = await splitsQuery;
 
       const splitIds = (splits ?? []).map((s: any) => s.id);
       let installments: any[] = [];
@@ -66,6 +78,11 @@ export async function GET(_req: Request) {
       };
     }),
   );
+
+  // Exclude allocations with no splits visible to this caller
+  const enriched = scopedTeamIds
+    ? enrichedAll.filter(a => a.teamCount > 0)
+    : enrichedAll;
 
   return NextResponse.json({ allocations: enriched });
 }

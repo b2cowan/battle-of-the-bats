@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
+import { supabaseAdmin } from '@/lib/supabase-admin';
 import { sendEmail, registrationConfirmationHtml, waitlistConfirmationHtml, adminNotificationHtml, ADMIN_EMAIL } from '@/lib/email';
 import { getOrgOwnerEmail } from '@/lib/supabase-admin';
 
@@ -31,35 +32,43 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Registration for this division is closed.' }, { status: 403 });
     }
 
-    // 2. Get current registration count (non-rejected)
-    const { count: regCount, error: countError } = await supabase
-      .from('teams')
+    // 2. Check if slots are configured for this division
+    const { count: slotCount } = await supabaseAdmin
+      .from('pool_slots')
       .select('*', { count: 'exact', head: true })
-      .eq('age_group_id', ageGroupId)
-      .neq('status', 'rejected');
+      .eq('age_group_id', ageGroupId);
 
-    if (countError) {
-      console.error('Error counting registrations:', countError);
+    const slotConfigured = (slotCount ?? 0) > 0;
+
+    let finalStatus = 'pending';
+
+    if (!slotConfigured) {
+      // Count-based fallback for divisions without pool slots configured
+      const { count: regCount } = await supabase
+        .from('teams')
+        .select('*', { count: 'exact', head: true })
+        .eq('age_group_id', ageGroupId)
+        .neq('status', 'rejected');
+
+      if (ageGroup?.capacity && (regCount || 0) >= ageGroup.capacity) {
+        finalStatus = 'waitlist';
+      }
     }
 
-    // 3. Determine status
-    let finalStatus = status || 'pending';
-    if (ageGroup?.capacity && (regCount || 0) >= ageGroup.capacity) {
-      finalStatus = 'waitlist';
-    }
-
-    // Save to Supabase
+    // 3. Insert the team record (slot_id assigned after RPC claim)
     const { data, error } = await supabase
       .from('teams')
-      .insert({ 
-        name: teamName, 
-        coach: coachName, 
-        email, 
-        age_group_id: ageGroupId, 
+      .insert({
+        name: teamName,
+        coach: coachName,
+        email,
+        age_group_id: ageGroupId,
         tournament_id: tournamentId,
         status: finalStatus,
         payment_status: 'pending',
-        registered_at: new Date().toISOString()
+        registered_at: new Date().toISOString(),
+        slot_id: null,
+        waitlist_position: null,
       })
       .select()
       .single();
@@ -67,6 +76,43 @@ export async function POST(req: NextRequest) {
     if (error) {
       console.error('Supabase insert error:', error);
       return NextResponse.json({ error: `Database error: ${error.message}` }, { status: 500 });
+    }
+
+    // 4. Atomically claim a slot (sets pool_slots.team_id and returns the slot id)
+    if (slotConfigured && data?.id) {
+      const { data: claimedSlotId } = await supabaseAdmin.rpc('claim_next_slot', {
+        p_age_group_id: ageGroupId,
+        p_team_id: data.id,
+      });
+
+      if (claimedSlotId) {
+        await supabaseAdmin.from('teams').update({ slot_id: claimedSlotId }).eq('id', data.id);
+      } else {
+        // No slot available — move to waitlist
+        const { data: maxRow } = await supabaseAdmin
+          .from('teams')
+          .select('waitlist_position')
+          .eq('age_group_id', ageGroupId)
+          .not('waitlist_position', 'is', null)
+          .order('waitlist_position', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        const pos = ((maxRow as any)?.waitlist_position ?? 0) + 1;
+        await supabaseAdmin.from('teams').update({ status: 'waitlist', waitlist_position: pos }).eq('id', data.id);
+        finalStatus = 'waitlist';
+      }
+    } else if (!slotConfigured && finalStatus === 'waitlist' && data?.id) {
+      // Count-based waitlist: assign position
+      const { data: maxRow } = await supabaseAdmin
+        .from('teams')
+        .select('waitlist_position')
+        .eq('age_group_id', ageGroupId)
+        .not('waitlist_position', 'is', null)
+        .order('waitlist_position', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      const pos = ((maxRow as any)?.waitlist_position ?? 0) + 1;
+      await supabaseAdmin.from('teams').update({ waitlist_position: pos }).eq('id', data.id);
     }
 
     // Fire emails (non-blocking — don't fail the request if email fails)

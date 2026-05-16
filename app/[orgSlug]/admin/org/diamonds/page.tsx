@@ -1,48 +1,41 @@
-﻿'use client';
-import { useState, useEffect } from 'react';
-import { MapPin, Plus, Pencil, Trash2, X, Check, ExternalLink } from 'lucide-react';
-import { getDiamonds, saveDiamond, updateDiamond, deleteDiamond } from '@/lib/db';
+'use client';
+import { useState, useCallback, useEffect } from 'react';
+import { MapPin, Plus, Pencil, Trash2, X, ExternalLink } from 'lucide-react'; // X used in delete confirm modal
 import { useTournament } from '@/lib/tournament-context';
 import { Diamond } from '@/lib/types';
 import { getMapsUrl } from '@/components/LocationLink';
+import AddVenueModal from '@/components/admin/AddVenueModal';
 import styles from './diamonds-admin.module.css';
 
-type ModalMode = 'add' | 'edit' | null;
-
-const emptyForm = { name: '', address: '', notes: '' };
+async function requestJson<T>(url: string, init?: RequestInit): Promise<T> {
+  const res = await fetch(url, init);
+  const data = await res.json().catch(() => null);
+  if (!res.ok) throw new Error(data?.error ?? 'Request failed');
+  return data as T;
+}
 
 export default function AdminDiamondsPage() {
   const { currentTournament } = useTournament();
   const [diamonds, setDiamonds] = useState<Diamond[]>([]);
-  const [modal, setModal]       = useState<ModalMode>(null);
-  const [editing, setEditing]   = useState<Diamond | null>(null);
-  const [deleteId, setDeleteId] = useState<string | null>(null);
-  const [form, setForm]         = useState(emptyForm);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editing, setEditing]     = useState<Diamond | undefined>(undefined);
+  const [deleteId, setDeleteId]   = useState<string | null>(null);
 
-  async function refresh() { setDiamonds(await getDiamonds(currentTournament?.id)); }
-  useEffect(() => { refresh(); }, [currentTournament?.id]);
+  const refresh = useCallback(async () => {
+    if (!currentTournament) { setDiamonds([]); return; }
+    const rows = await requestJson<Diamond[]>(`/api/admin/diamonds?tournamentId=${currentTournament.id}`);
+    setDiamonds(rows);
+  }, [currentTournament]);
 
-  function openAdd() {
-    setForm(emptyForm);
-    setEditing(null);
-    setModal('add');
-  }
+  useEffect(() => {
+    const timer = window.setTimeout(() => { void refresh(); }, 0);
+    return () => window.clearTimeout(timer);
+  }, [refresh]);
 
-  function openEdit(d: Diamond) {
-    setForm({ name: d.name, address: d.address, notes: d.notes ?? '' });
-    setEditing(d);
-    setModal('edit');
-  }
+  function openAdd() { setEditing(undefined); setModalOpen(true); }
+  function openEdit(d: Diamond) { setEditing(d); setModalOpen(true); }
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!currentTournament) return;
-    const data = { tournamentId: currentTournament.id, name: form.name.trim(), address: form.address.trim(), notes: form.notes.trim() || undefined };
-    if (modal === 'add') await saveDiamond(data);
-    else if (editing) await updateDiamond(editing.id, data);
-    setModal(null);
-    refresh();
-  }
+  function handleSaved() { setModalOpen(false); refresh(); }
 
   return (
     <div className={styles.page}>
@@ -50,12 +43,12 @@ export default function AdminDiamondsPage() {
         <div className={styles.headerLeft}>
           <div className={styles.headerIcon}><MapPin size={20} /></div>
           <div>
-            <h1 className={styles.pageTitle}>Diamond Locations</h1>
+            <h1 className={styles.pageTitle}>Venue Locations</h1>
             <p className={styles.pageSub}>Manage playing fields — names, addresses, and notes</p>
           </div>
         </div>
         <button className="btn btn-primary btn-sm" onClick={openAdd} id="diamond-add-btn" disabled={!currentTournament}>
-          <Plus size={16} /> Add Diamond
+          <Plus size={16} /> Add Venue
         </button>
       </div>
 
@@ -63,7 +56,7 @@ export default function AdminDiamondsPage() {
         <table>
           <thead>
             <tr>
-              <th>Diamond Name</th>
+              <th>Venue Name</th>
               <th>Address</th>
               <th>Notes</th>
               <th>Maps</th>
@@ -74,7 +67,7 @@ export default function AdminDiamondsPage() {
             {diamonds.length === 0 ? (
               <tr>
                 <td colSpan={5} style={{ textAlign: 'center', color: 'var(--white-30)', padding: '2rem' }}>
-                  No diamonds yet. Add one to get started.
+                  No venues yet. Add one to get started.
                 </td>
               </tr>
             ) : diamonds.map(d => (
@@ -89,7 +82,7 @@ export default function AdminDiamondsPage() {
                 <td style={{ color: 'var(--white-60)', fontSize: '0.875rem' }}>{d.notes || '—'}</td>
                 <td>
                   <a
-                    href={getMapsUrl(d.address)}
+                    href={getMapsUrl(d.address || d.name)}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="btn btn-ghost btn-sm"
@@ -115,60 +108,13 @@ export default function AdminDiamondsPage() {
         </table>
       </div>
 
-      {/* Add / Edit Modal */}
-      {modal && (
-        <div className="modal-overlay" onClick={() => setModal(null)}>
-          <div className="modal" onClick={e => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3>{modal === 'add' ? 'Add Diamond' : 'Edit Diamond'}</h3>
-              <button className="btn btn-ghost btn-sm" onClick={() => setModal(null)}><X size={16} /></button>
-            </div>
-            <form onSubmit={handleSubmit}>
-              <div className="form-group" style={{ marginBottom: '1rem' }}>
-                <label className="form-label">Diamond Name *</label>
-                <input
-                  className="form-input"
-                  placeholder="e.g. Diamond 1 — Lions Park"
-                  value={form.name}
-                  onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-                  required
-                  id="diamond-name-input"
-                />
-              </div>
-              <div className="form-group" style={{ marginBottom: '1rem' }}>
-                <label className="form-label">Full Address *</label>
-                <input
-                  className="form-input"
-                  placeholder="e.g. 123 Main St, Milton, ON L9T 2M3"
-                  value={form.address}
-                  onChange={e => setForm(f => ({ ...f, address: e.target.value }))}
-                  required
-                  id="diamond-address-input"
-                />
-                <span style={{ fontSize: '0.75rem', color: 'var(--white-30)', marginTop: '0.25rem' }}>
-                  Used to generate a Google Maps link throughout the site.
-                </span>
-              </div>
-              <div className="form-group" style={{ marginBottom: '0.5rem' }}>
-                <label className="form-label">Notes (optional)</label>
-                <textarea
-                  className="form-textarea"
-                  placeholder="Parking info, directions, field-specific rules…"
-                  rows={3}
-                  value={form.notes}
-                  onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
-                  id="diamond-notes-input"
-                />
-              </div>
-              <div className="modal-footer">
-                <button type="button" className="btn btn-ghost" onClick={() => setModal(null)}>Cancel</button>
-                <button type="submit" className="btn btn-primary" id="diamond-save-btn">
-                  <Check size={14} /> Save Diamond
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
+      {modalOpen && currentTournament && (
+        <AddVenueModal
+          tournamentId={currentTournament.id}
+          existing={editing}
+          onClose={() => setModalOpen(false)}
+          onSaved={handleSaved}
+        />
       )}
 
       {/* Delete Confirm */}
@@ -176,18 +122,26 @@ export default function AdminDiamondsPage() {
         <div className="modal-overlay" onClick={() => setDeleteId(null)}>
           <div className="modal" style={{ maxWidth: 400 }} onClick={e => e.stopPropagation()}>
             <div className="modal-header">
-              <h3>Delete Diamond?</h3>
+              <h3>Delete Venue?</h3>
               <button className="btn btn-ghost btn-sm" onClick={() => setDeleteId(null)}><X size={16} /></button>
             </div>
             <p style={{ color: 'var(--white-60)' }}>
-              Games linked to this diamond will retain their location name but lose the Maps link.
+              Games linked to this venue will retain their location name but lose the Maps link.
             </p>
             <div className="modal-footer">
               <button className="btn btn-ghost" onClick={() => setDeleteId(null)}>Cancel</button>
               <button
                 className="btn btn-danger"
                 id="confirm-delete-diamond"
-                onClick={async () => { await deleteDiamond(deleteId); setDeleteId(null); refresh(); }}
+                onClick={async () => {
+                  await requestJson<{ success: boolean }>('/api/admin/diamonds', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'delete', id: deleteId }),
+                  });
+                  setDeleteId(null);
+                  refresh();
+                }}
               >
                 <Trash2 size={14} /> Delete
               </button>

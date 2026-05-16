@@ -40,17 +40,94 @@
 .section h3 {
   font-size: 1.1rem;
   font-weight: 700;
-  margin-bottom: 1.25rem;
+  margin: 0 0 1.25rem;
   color: var(--white);
   display: flex;
   align-items: center;
   gap: 0.5rem;
 }
 
+.recipientSection {
+  padding-bottom: 1rem;
+}
+
+.recipientHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.recipientHeader h3 {
+  margin: 0;
+}
+
+.recipientSummary {
+  padding: 0.85rem 1rem;
+  background: rgba(var(--blueprint-blue-rgb), 0.08);
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.25);
+  border-radius: var(--radius-sm);
+}
+
+.recipientSummary div {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.recipientSummary strong {
+  color: var(--white);
+  font-size: 0.96rem;
+  text-transform: capitalize;
+}
+
+.recipientSummary span {
+  color: var(--white-50);
+  font-size: 0.82rem;
+}
+
+.recipientDetails {
+  margin-top: 1rem;
+}
+
 .filters {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 1rem;
+}
+
+.audienceToggle {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.audienceOption {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 40px;
+  padding: 0.45rem 0.75rem;
+  background: var(--black-20);
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius-sm);
+  color: var(--white-60);
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.audienceOption input,
+.checkboxLabel input {
+  accent-color: var(--blueprint-blue);
+}
+
+.audienceActive {
+  color: var(--white);
+  border-color: rgba(var(--blueprint-blue-rgb), 0.45);
+  background: rgba(var(--blueprint-blue-rgb), 0.12);
 }
 
 .filterCard {
@@ -65,7 +142,7 @@
 
 .checkboxLabel {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 0.5rem;
   font-size: 0.9rem;
   color: var(--white-80);
@@ -73,7 +150,41 @@
 }
 
 .checkboxLabel input {
-  accent-color: var(--blueprint-blue);
+  margin-top: 0.2rem;
+  flex-shrink: 0;
+}
+
+.checkboxLabel span {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.checkboxLabel small,
+.filterHelp,
+.emptyHint,
+.previewMore {
+  color: var(--white-40);
+  font-size: 0.76rem;
+  line-height: 1.35;
+}
+
+.filterHelp {
+  margin: -0.35rem 0 0.15rem;
+}
+
+.emptyHint {
+  margin: 0;
+}
+
+.scrollList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-height: 220px;
+  overflow: auto;
+  padding-right: 0.2rem;
 }
 
 .recipientCount {
@@ -84,6 +195,54 @@
   background: rgba(255,255,255,0.05);
   border-radius: var(--radius-xs);
   display: inline-block;
+}
+
+.recipientPreview {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  padding: 0.75rem;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius-sm);
+}
+
+.recipientRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+
+.recipientRow:last-child {
+  border-bottom: 0;
+}
+
+.recipientRow div {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.recipientRow strong {
+  color: var(--white);
+  font-size: 0.85rem;
+}
+
+.recipientRow span,
+.recipientRow small {
+  color: var(--white-50);
+  font-size: 0.78rem;
+  overflow-wrap: anywhere;
+}
+
+.recipientRow small {
+  flex-shrink: 0;
+  text-align: right;
 }
 
 .formGroup {
@@ -103,6 +262,9 @@
   padding: 1rem;
   border-radius: var(--radius);
   font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .statusSuccess {
@@ -115,4 +277,21 @@
   background: rgba(239,68,68,0.1);
   border: 1px solid rgba(239,68,68,0.3);
   color: #f87171;
+}
+
+@media (max-width: 640px) {
+  .recipientHeader {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .recipientRow {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .recipientRow small {
+    text-align: left;
+  }
 }

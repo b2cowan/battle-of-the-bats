@@ -32,10 +32,16 @@ export async function GET() {
 
   // Batch-fetch tournament assignments for all members
   const memberIds = members.map(m => m.id);
-  const { data: allAssignments } = await supabaseAdmin
-    .from('org_member_tournament_assignments')
-    .select('org_member_id, tournament_id')
-    .in('org_member_id', memberIds);
+  const [{ data: allAssignments }, { data: allRepGroupScopes }] = await Promise.all([
+    supabaseAdmin
+      .from('org_member_tournament_assignments')
+      .select('org_member_id, tournament_id')
+      .in('org_member_id', memberIds),
+    supabaseAdmin
+      .from('org_member_rep_group_scopes')
+      .select('member_id, group_id')
+      .in('member_id', memberIds),
+  ]);
 
   const assignmentMap = new Map<string, string[]>();
   for (const a of allAssignments ?? []) {
@@ -44,22 +50,30 @@ export async function GET() {
     assignmentMap.set(a.org_member_id, arr);
   }
 
+  const repGroupScopeMap = new Map<string, string[]>();
+  for (const s of allRepGroupScopes ?? []) {
+    const arr = repGroupScopeMap.get(s.member_id) ?? [];
+    arr.push(s.group_id);
+    repGroupScopeMap.set(s.member_id, arr);
+  }
+
   const userMap = new Map(usersData.users.map(u => [u.id, u]));
 
   const result = members.map(m => {
     const authUser = userMap.get(m.user_id);
     return {
-      id:                   m.id,
-      userId:               m.user_id,
-      email:                authUser?.email ?? '(unknown)',
-      displayName:          (m as any).display_name ?? null,
-      role:                 m.role,
-      status:               (m.status as 'invited' | 'active' | 'suspended') ?? 'active',
-      capabilities:         (m.capabilities as Record<string, boolean> | null) ?? null,
-      invitedAt:            m.invited_at,
-      acceptedAt:           m.accepted_at ?? null,
-      lastSignIn:           authUser?.last_sign_in_at ?? null,
+      id:                    m.id,
+      userId:                m.user_id,
+      email:                 authUser?.email ?? '(unknown)',
+      displayName:           (m as any).display_name ?? null,
+      role:                  m.role,
+      status:                (m.status as 'invited' | 'active' | 'suspended') ?? 'active',
+      capabilities:          (m.capabilities as Record<string, boolean> | null) ?? null,
+      invitedAt:             m.invited_at,
+      acceptedAt:            m.accepted_at ?? null,
+      lastSignIn:            authUser?.last_sign_in_at ?? null,
       assignedTournamentIds: assignmentMap.get(m.id) ?? [],
+      repGroupIds:           repGroupScopeMap.get(m.id) ?? [],
     };
   });
 

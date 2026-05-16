@@ -2,6 +2,50 @@ import { createClient } from '@supabase/supabase-js';
 import { getAuthContextWithScope, unauthorized, forbidden, scopeGuard } from '@/lib/api-auth';
 import { hasCapability } from '@/lib/roles';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { updateGame } from '@/lib/db';
+
+export async function GET(req: Request) {
+  const ctx = await getAuthContextWithScope();
+  if (!ctx) return unauthorized();
+
+  const tournamentId = new URL(req.url).searchParams.get('tournamentId');
+  if (!tournamentId) return new Response(JSON.stringify([]), { status: 200, headers: { 'Content-Type': 'application/json' } });
+
+  const denied = scopeGuard(ctx, tournamentId);
+  if (denied) return denied;
+
+  const { data, error } = await supabaseAdmin
+    .from('games')
+    .select('*')
+    .eq('tournament_id', tournamentId)
+    .order('game_date', { ascending: true })
+    .order('game_time', { ascending: true });
+
+  if (error) return new Response(JSON.stringify({ error: error.message }), { status: 500, headers: { 'Content-Type': 'application/json' } });
+
+  const games = (data ?? []).map((g: any) => ({
+    id: g.id,
+    tournamentId: g.tournament_id,
+    ageGroupId: g.age_group_id,
+    homeTeamId: g.home_team_id,
+    awayTeamId: g.away_team_id,
+    date: g.game_date,
+    time: g.game_time,
+    location: g.location,
+    diamondId: g.diamond_id,
+    homeScore: g.home_score,
+    awayScore: g.away_score,
+    status: g.status,
+    isPlayoff: g.is_playoff,
+    bracketId: g.bracket_id,
+    bracketCode: g.bracket_code,
+    homePlaceholder: g.home_placeholder,
+    awayPlaceholder: g.away_placeholder,
+    notes: g.notes,
+  }));
+
+  return new Response(JSON.stringify(games), { status: 200, headers: { 'Content-Type': 'application/json' } });
+}
 
 export async function POST(req: Request) {
   const ctx = await getAuthContextWithScope();
@@ -43,16 +87,23 @@ export async function POST(req: Request) {
       }
 
       const rows = games.map((g: any) => ({
-        tournament_id: g.tournamentId,
-        age_group_id:  g.ageGroupId,
-        home_team_id:  g.homeTeamId,
-        away_team_id:  g.awayTeamId,
-        game_date:     g.date,
-        game_time:     g.time,
-        location:      g.location,
-        diamond_id:    g.diamondId,
-        status:        g.status || 'scheduled',
-        notes:         g.notes,
+        tournament_id:    g.tournamentId,
+        age_group_id:     g.ageGroupId,
+        home_team_id:     g.homeTeamId   || null,
+        away_team_id:     g.awayTeamId   || null,
+        game_date:        g.date,
+        game_time:        g.time,
+        location:         g.location,
+        diamond_id:       g.diamondId    || null,
+        status:           g.status       || 'scheduled',
+        is_playoff:       g.isPlayoff    || false,
+        bracket_id:       g.bracketId    || null,
+        bracket_code:     g.bracketCode  || null,
+        home_placeholder: g.homePlaceholder || null,
+        away_placeholder: g.awayPlaceholder || null,
+        home_slot_id:     g.homeSlotId   || null,
+        away_slot_id:     g.awaySlotId   || null,
+        notes:            g.notes        || null,
       }));
 
       const { error } = await supabase.from('games').insert(rows);
@@ -119,7 +170,7 @@ export async function PATCH(req: Request) {
     // Look up the game's tournament once for scope enforcement on all action branches
     const { data: gameRow } = await supabaseAdmin
       .from('games')
-      .select('tournament_id')
+      .select('tournament_id, status')
       .eq('id', id)
       .single();
 
@@ -165,12 +216,7 @@ export async function PATCH(req: Request) {
           ? 'submitted'
           : 'completed';
 
-      const { error } = await supabase
-        .from('games')
-        .update({ home_score: homeScore, away_score: awayScore, status: finalStatus })
-        .eq('id', id);
-
-      if (error) throw error;
+      await updateGame(id, { homeScore, awayScore, status: finalStatus }, { admin: true });
     }
 
     // ── finalize (submitted → completed, owner/admin only) ───────────────────
@@ -178,13 +224,16 @@ export async function PATCH(req: Request) {
       if (!hasCapability(ctx.role, ctx.capabilities, 'seal_tournaments')) return forbidden();
 
       // Only promote games that are actually in 'submitted' state
-      const { error } = await supabase
-        .from('games')
-        .update({ status: 'completed' })
-        .eq('id', id)
-        .eq('status', 'submitted');
+      if (gameRow?.status === 'submitted') {
+        await updateGame(id, { status: 'completed' }, { admin: true });
+      }
+    }
 
-      if (error) throw error;
+    // Revert a scored game back to scheduled and clear the recorded result.
+    else if (action === 'revert-score') {
+      if (!hasCapability(ctx.role, ctx.capabilities, 'submit_scores')) return forbidden();
+
+      await updateGame(id, { status: 'scheduled', homeScore: null, awayScore: null }, { admin: true });
     }
 
     else {

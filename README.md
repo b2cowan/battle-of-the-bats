@@ -43,7 +43,7 @@ Four bundled SaaS tiers — no à la carte modules:
 | Plan | Monthly | Modules |
 |---|---|---|
 | Tournament | Free | Core only |
-| Tournament Plus | $39/mo | Core only, unlimited tournaments |
+| Tournament Plus | $39/mo | Core only, 3 non-archived tournaments |
 | League | $89/mo | Core + Public Site + House League |
 | Club | $179/mo | All modules |
 

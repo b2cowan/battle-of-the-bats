@@ -6,6 +6,7 @@ import type { User } from '@supabase/supabase-js';
 import { hasCapability } from './roles';
 import type { Capability } from './roles';
 import { assertSafeSupabaseServerEnvironment } from './supabase-safety';
+import { getEffectiveTournamentLimit } from './plan-config';
 
 export interface AuthContext {
   user: User;
@@ -18,6 +19,24 @@ export interface AuthContextWithScope extends AuthContext {
   /** null = unrestricted (owner, or user with zero assignment rows) */
   assignedTournamentIds: string[] | null;
 }
+
+type AuthOrgRow = {
+  id: string;
+  name: string;
+  slug: string;
+  logo_url: string | null;
+  plan_id: OrgPlan;
+  tournament_limit: number | null;
+  subscription_status: Organization['subscriptionStatus'] | null;
+  stripe_customer_id: string | null;
+  stripe_subscription_id: string | null;
+  is_public: boolean | null;
+  created_at: string;
+  require_score_finalization: boolean | null;
+  onboarding_completed_at: string | null;
+  enabled_addons: string[] | null;
+  contact_email: string | null;
+};
 
 /**
  * Extracts the authenticated user and their organization from the request session cookie.
@@ -50,22 +69,22 @@ export async function getAuthContext(): Promise<AuthContext | null> {
     .select('organizations(*)')
     .eq('user_id', user.id)
     .neq('status', 'suspended')
-    .single();
+    .single<{ organizations: AuthOrgRow | null }>();
 
-  const orgRow = (memberData as any)?.organizations;
+  const orgRow = memberData?.organizations;
   if (!orgRow) return null;
 
   const org: Organization = {
     id: orgRow.id,
     name: orgRow.name,
     slug: orgRow.slug,
-    logoUrl: orgRow.logo_url ?? null,
+    logoUrl: orgRow.logo_url ?? undefined,
     planId: orgRow.plan_id as OrgPlan,
-    tournamentLimit: orgRow.tournament_limit,
-    subscriptionStatus: orgRow.subscription_status,
+    tournamentLimit: getEffectiveTournamentLimit(orgRow.plan_id as OrgPlan, orgRow.tournament_limit),
+    subscriptionStatus: orgRow.subscription_status ?? 'active',
     stripeCustomerId: orgRow.stripe_customer_id ?? undefined,
     stripeSubscriptionId: orgRow.stripe_subscription_id ?? undefined,
-    isPublic: orgRow.is_public,
+    isPublic: orgRow.is_public ?? true,
     createdAt: orgRow.created_at,
     requireScoreFinalization: orgRow.require_score_finalization ?? false,
     onboardingCompletedAt: orgRow.onboarding_completed_at ?? null,
@@ -76,23 +95,53 @@ export async function getAuthContext(): Promise<AuthContext | null> {
   return { user, org };
 }
 
-export async function getAuthContextWithRole(): Promise<(AuthContext & { role: OrgRole; capabilities: Record<string, boolean> | null }) | null> {
+export interface AuthContextWithRole extends AuthContext {
+  role: OrgRole;
+  capabilities: Record<string, boolean> | null;
+  /** null = unrestricted (no scope rows); array = restricted to those group IDs */
+  repGroupIds: string[] | null;
+}
+
+export async function getAuthContextWithRole(): Promise<AuthContextWithRole | null> {
   const ctx = await getAuthContext();
   if (!ctx) return null;
 
-  const { data } = await supabaseAdmin
+  const { data: member } = await supabaseAdmin
     .from('organization_members')
-    .select('role, capabilities')
+    .select('id, role, capabilities')
     .eq('organization_id', ctx.org.id)
     .eq('user_id', ctx.user.id)
     .single();
 
-  if (!data) return null;
-  return {
-    ...ctx,
-    role: data.role as OrgRole,
-    capabilities: (data.capabilities as Record<string, boolean> | null) ?? null,
-  };
+  if (!member) return null;
+
+  const role = member.role as OrgRole;
+  const capabilities = (member.capabilities as Record<string, boolean> | null) ?? null;
+
+  // Owners, admins, and treasurers are always unrestricted
+  if (role === 'owner' || role === 'admin' || role === 'treasurer') {
+    return { ...ctx, role, capabilities, repGroupIds: null };
+  }
+
+  const { data: scopes } = await supabaseAdmin
+    .from('org_member_rep_group_scopes')
+    .select('group_id')
+    .eq('member_id', member.id);
+
+  const repGroupIds = scopes?.length ? scopes.map(s => s.group_id as string) : null;
+
+  return { ...ctx, role, capabilities, repGroupIds };
+}
+
+/**
+ * Returns a 403 if the caller has a rep group scope that excludes this team.
+ * Pass the team's groupId (may be null for ungrouped teams).
+ * Scoped members cannot access ungrouped teams.
+ */
+export function repGroupScopeGuard(ctx: AuthContextWithRole, teamGroupId: string | null): Response | null {
+  if (!ctx.repGroupIds) return null;
+  if (!teamGroupId || !ctx.repGroupIds.includes(teamGroupId)) return forbidden();
+  return null;
 }
 
 /**

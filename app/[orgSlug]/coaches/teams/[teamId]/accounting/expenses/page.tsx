@@ -3,6 +3,8 @@ import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { Receipt, Plus, X, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
+import PayeeCombobox from '@/components/accounting/PayeeCombobox';
+import type { PayeeSelection } from '@/components/accounting/PayeeCombobox';
 import styles from '../../../../coaches.module.css';
 import type { RepTeamExpense } from '@/lib/types';
 
@@ -28,6 +30,7 @@ const BLANK_EXPENSE = {
   category: '',
   amount: '',
   notes: '',
+  paymentMethod: '',
 };
 
 const BLANK_PAYABLE = {
@@ -39,6 +42,7 @@ const BLANK_PAYABLE = {
   balanceAmount: '',
   balanceDueDate: '',
   notes: '',
+  paymentMethod: '',
 };
 
 export default function CoachesExpensesPage({
@@ -58,6 +62,8 @@ export default function CoachesExpensesPage({
   const [showAddPayable, setShowAddPayable] = useState(false);
   const [expenseForm, setExpenseForm] = useState(BLANK_EXPENSE);
   const [payableForm, setPayableForm] = useState(BLANK_PAYABLE);
+  const [expensePayee, setExpensePayee] = useState<PayeeSelection | null>(null);
+  const [payablePayee, setPayablePayee] = useState<PayeeSelection | null>(null);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
   const [marking, setMarking] = useState<Record<string, boolean>>({});
@@ -93,16 +99,20 @@ export default function CoachesExpensesPage({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          expenseType: 'expense',
-          description: expenseForm.description.trim(),
-          category: expenseForm.category.trim() || null,
+          expenseType:   'expense',
+          description:   expenseForm.description.trim(),
+          category:      expenseForm.category.trim() || null,
           amount,
-          notes: expenseForm.notes.trim() || null,
+          notes:         expenseForm.notes.trim() || null,
+          paymentMethod: expenseForm.paymentMethod.trim() || null,
+          payeeId:       expensePayee?.payeeId ?? null,
+          payeePayer:    expensePayee?.displayName ?? null,
         }),
       });
       if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Save failed');
       setShowAddExpense(false);
       setExpenseForm(BLANK_EXPENSE);
+      setExpensePayee(null);
       await load();
     } catch (e: any) {
       setSaveError(e.message);
@@ -122,20 +132,24 @@ export default function CoachesExpensesPage({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          expenseType: 'tournament_payable',
-          description: payableForm.description.trim(),
-          category: payableForm.category.trim() || null,
+          expenseType:    'tournament_payable',
+          description:    payableForm.description.trim(),
+          category:       payableForm.category.trim() || null,
           amount,
-          depositAmount: payableForm.depositAmount ? parseFloat(payableForm.depositAmount) : null,
+          depositAmount:  payableForm.depositAmount ? parseFloat(payableForm.depositAmount) : null,
           depositDueDate: payableForm.depositDueDate || null,
-          balanceAmount: payableForm.balanceAmount ? parseFloat(payableForm.balanceAmount) : null,
+          balanceAmount:  payableForm.balanceAmount ? parseFloat(payableForm.balanceAmount) : null,
           balanceDueDate: payableForm.balanceDueDate || null,
-          notes: payableForm.notes.trim() || null,
+          notes:          payableForm.notes.trim() || null,
+          paymentMethod:  payableForm.paymentMethod.trim() || null,
+          payeeId:        payablePayee?.payeeId ?? null,
+          payeePayer:     payablePayee?.displayName ?? null,
         }),
       });
       if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Save failed');
       setShowAddPayable(false);
       setPayableForm(BLANK_PAYABLE);
+      setPayablePayee(null);
       await load();
     } catch (e: any) {
       setSaveError(e.message);
@@ -194,10 +208,10 @@ export default function CoachesExpensesPage({
           </div>
         </div>
         <div style={{ display: 'flex', gap: '0.5rem' }}>
-          <button className={styles.btnSecondary} onClick={() => { setShowAddExpense(true); setSaveError(''); }}>
+          <button className={styles.btnSecondary} onClick={() => { setShowAddExpense(true); setExpenseForm(BLANK_EXPENSE); setExpensePayee(null); setSaveError(''); }}>
             <Plus size={14} /> Add Expense
           </button>
-          <button className={styles.btnSecondary} onClick={() => { setShowAddPayable(true); setSaveError(''); }}>
+          <button className={styles.btnSecondary} onClick={() => { setShowAddPayable(true); setPayableForm(BLANK_PAYABLE); setPayablePayee(null); setSaveError(''); }}>
             <Plus size={14} /> Add Payable
           </button>
         </div>
@@ -370,6 +384,19 @@ export default function CoachesExpensesPage({
                 <label className={styles.label}>Amount *</label>
                 <input className={styles.input} type="number" min={0} step="0.01" value={expenseForm.amount} onChange={e => setExpenseForm(f => ({ ...f, amount: e.target.value }))} placeholder="0.00" />
               </div>
+              <div className={styles.field}>
+                <label className={styles.label}>Payment Method</label>
+                <input className={styles.input} value={expenseForm.paymentMethod} onChange={e => setExpenseForm(f => ({ ...f, paymentMethod: e.target.value }))} placeholder="e.g. E-transfer, Cash" />
+              </div>
+              <div className={styles.field}>
+                <label className={styles.label}>Payee</label>
+                <PayeeCombobox
+                  payeesApiUrl={`/api/coaches/${orgSlug}/teams/${teamId}/payees`}
+                  value={expensePayee}
+                  onChange={setExpensePayee}
+                  saveScope="team"
+                />
+              </div>
               <div className={`${styles.field} ${styles.formGridFull}`}>
                 <label className={styles.label}>Notes</label>
                 <textarea className={styles.textarea} rows={2} value={expenseForm.notes} onChange={e => setExpenseForm(f => ({ ...f, notes: e.target.value }))} />
@@ -420,6 +447,19 @@ export default function CoachesExpensesPage({
               <div className={styles.field}>
                 <label className={styles.label}>Balance Due Date</label>
                 <input className={styles.input} type="date" value={payableForm.balanceDueDate} onChange={e => setPayableForm(f => ({ ...f, balanceDueDate: e.target.value }))} />
+              </div>
+              <div className={styles.field}>
+                <label className={styles.label}>Payment Method</label>
+                <input className={styles.input} value={payableForm.paymentMethod} onChange={e => setPayableForm(f => ({ ...f, paymentMethod: e.target.value }))} placeholder="e.g. E-transfer, Cash" />
+              </div>
+              <div className={styles.field}>
+                <label className={styles.label}>Payee</label>
+                <PayeeCombobox
+                  payeesApiUrl={`/api/coaches/${orgSlug}/teams/${teamId}/payees`}
+                  value={payablePayee}
+                  onChange={setPayablePayee}
+                  saveScope="team"
+                />
               </div>
               <div className={`${styles.field} ${styles.formGridFull}`}>
                 <label className={styles.label}>Notes</label>

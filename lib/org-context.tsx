@@ -4,7 +4,7 @@ import React, {
 } from 'react';
 import type { User } from '@supabase/supabase-js';
 import { createClient } from './supabase-browser';
-import type { Organization, OrgPlan, OrgRole } from './types';
+import type { Organization, OrgRole } from './types';
 
 interface OrgContextType {
   user: User | null;
@@ -15,6 +15,13 @@ interface OrgContextType {
   refresh: () => Promise<void>;
 }
 
+type OrgProviderProps = {
+  children: ReactNode;
+  initialOrg?: Organization | null;
+  initialUserRole?: OrgRole | null;
+  initialUserCapabilities?: Record<string, boolean> | null;
+};
+
 const OrgContext = createContext<OrgContextType>({
   user: null,
   currentOrg: null,
@@ -24,12 +31,17 @@ const OrgContext = createContext<OrgContextType>({
   refresh: async () => {},
 });
 
-export function OrgProvider({ children }: { children: ReactNode }) {
-  const [user, setUser]           = useState<User | null>(null);
-  const [currentOrg, setCurrentOrg] = useState<Organization | null>(null);
-  const [userRole, setUserRole]   = useState<OrgRole | null>(null);
-  const [userCapabilities, setUserCapabilities] = useState<Record<string, boolean> | null>(null);
-  const [loading, setLoading]     = useState(true);
+export function OrgProvider({
+  children,
+  initialOrg = null,
+  initialUserRole = null,
+  initialUserCapabilities = null,
+}: OrgProviderProps) {
+  const [user, setUser] = useState<User | null>(null);
+  const [currentOrg, setCurrentOrg] = useState<Organization | null>(initialOrg);
+  const [userRole, setUserRole] = useState<OrgRole | null>(initialUserRole);
+  const [userCapabilities, setUserCapabilities] = useState<Record<string, boolean> | null>(initialUserCapabilities);
+  const [loading, setLoading] = useState(!initialOrg || !initialUserRole);
 
   const load = useCallback(async (authUser: User | null) => {
     if (!authUser) {
@@ -42,35 +54,27 @@ export function OrgProvider({ children }: { children: ReactNode }) {
     }
     setUser(authUser);
 
-    // Use the browser client — it carries the user's JWT so RLS allows reading own membership
-    const supabase = createClient();
-    const { data: memberData } = await supabase
-      .from('organization_members')
-      .select('role, capabilities, organizations(*)')
-      .eq('user_id', authUser.id)
-      .single();
-
-    const orgRow = (memberData as any)?.organizations;
-    if (orgRow) {
-      setCurrentOrg({
-        id: orgRow.id,
-        name: orgRow.name,
-        slug: orgRow.slug,
-        logoUrl: orgRow.logo_url ?? null,
-        planId: orgRow.plan_id as OrgPlan,
-        tournamentLimit: orgRow.tournament_limit,
-        subscriptionStatus: orgRow.subscription_status,
-        isPublic: orgRow.is_public,
-        createdAt: orgRow.created_at,
-        requireScoreFinalization: orgRow.require_score_finalization ?? false,
-        onboardingCompletedAt: orgRow.onboarding_completed_at ?? null,
-        enabledAddons: orgRow.enabled_addons ?? [],
-      });
-      setUserRole((memberData as any)?.role ?? null);
-      setUserCapabilities((memberData as any)?.capabilities ?? null);
+    try {
+      const res = await fetch('/api/org-context', { cache: 'no-store' });
+      if (res.ok) {
+        const data = await res.json();
+        setCurrentOrg(data.org ?? null);
+        setUserRole(data.userRole ?? null);
+        setUserCapabilities(data.userCapabilities ?? null);
+      } else if (!initialOrg) {
+        setCurrentOrg(null);
+        setUserRole(null);
+        setUserCapabilities(null);
+      }
+    } catch {
+      if (!initialOrg) {
+        setCurrentOrg(null);
+        setUserRole(null);
+        setUserCapabilities(null);
+      }
     }
     setLoading(false);
-  }, []);
+  }, [initialOrg]);
 
   const refresh = useCallback(async () => {
     const supabase = createClient();
@@ -81,12 +85,10 @@ export function OrgProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const supabase = createClient();
 
-    // Initial load
     supabase.auth.getUser().then(({ data: { user: authUser } }) => {
       load(authUser);
     });
 
-    // Keep in sync with auth state changes (login / logout)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_event, session) => { load(session?.user ?? null); }
     );

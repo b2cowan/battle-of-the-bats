@@ -11,6 +11,7 @@ export default async function ArchivesPage({
   const { orgSlug } = await params;
   const org = await getOrganizationBySlug(orgSlug);
   if (!org) notFound();
+  if (org.subscriptionStatus === 'canceled') notFound();
 
   const [archives, ctx] = await Promise.all([
     getArchivesByOrg(org.id),

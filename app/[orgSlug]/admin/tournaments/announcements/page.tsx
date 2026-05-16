@@ -1,7 +1,7 @@
 ﻿'use client';
 import { useState, useEffect } from 'react';
-import { Megaphone, Plus, Pencil, Trash2, X, Check, Star } from 'lucide-react';
-import { getAnnouncements, saveAnnouncement, updateAnnouncement, deleteAnnouncement, getAgeGroups } from '@/lib/db';
+import Link from 'next/link';
+import { Mail, Megaphone, Plus, Pencil, Trash2, X, Check, Star } from 'lucide-react';
 import { useTournament } from '@/lib/tournament-context';
 import { Announcement, AgeGroup } from '@/lib/types';
 import styles from './announcements-admin.module.css';
@@ -19,10 +19,17 @@ export default function AdminAnnouncementsPage() {
     title: '', body: '', pinned: false, ageGroupIds: null,
   });
 
-  async function refresh() { setItems(await getAnnouncements(currentTournament?.id)); }
+  async function refresh() {
+    if (!currentTournament?.id) { setItems([]); return; }
+    const res = await fetch(`/api/admin/announcements?tournamentId=${currentTournament.id}`);
+    setItems(res.ok ? await res.json() : []);
+  }
   useEffect(() => { refresh(); }, [currentTournament?.id]);
   useEffect(() => {
-    if (currentTournament?.id) getAgeGroups(currentTournament.id).then(setAgeGroups);
+    if (!currentTournament?.id) return;
+    fetch(`/api/admin/age-groups?tournamentId=${currentTournament.id}`)
+      .then(r => r.ok ? r.json() : [])
+      .then(setAgeGroups);
   }, [currentTournament?.id]);
 
   function openAdd() {
@@ -42,20 +49,35 @@ export default function AdminAnnouncementsPage() {
     if (!currentTournament) return;
     const data = {
       tournamentId: currentTournament.id,
-      ...form,
       title: form.title.trim(),
       body: form.body.trim(),
+      pinned: form.pinned,
       date: editing?.date ?? new Date().toISOString(),
       ageGroupIds: form.ageGroupIds?.length ? form.ageGroupIds : null,
     };
-    if (modal === 'add') await saveAnnouncement(data);
-    else if (editing) await updateAnnouncement(editing.id, data);
+    if (modal === 'add') {
+      await fetch('/api/admin/announcements', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'save', data }),
+      });
+    } else if (editing) {
+      await fetch('/api/admin/announcements', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'update', id: editing.id, data }),
+      });
+    }
     setModal(null);
     refresh();
   }
 
   async function togglePin(id: string, pinned: boolean) {
-    await updateAnnouncement(id, { pinned: !pinned });
+    await fetch('/api/admin/announcements', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'update', id, data: { pinned: !pinned } }),
+    });
     refresh();
   }
 
@@ -65,18 +87,28 @@ export default function AdminAnnouncementsPage() {
         <div className={styles.headerLeft}>
           <div className={styles.headerIcon}><Megaphone size={20} /></div>
           <div>
-            <h1 className={styles.pageTitle}>Announcements</h1>
-            <p className={styles.pageSub}>Post news and updates for tournament participants</p>
+            <h1 className={styles.pageTitle}>Public News Posts</h1>
+            <p className={styles.pageSub}>Publish updates to the tournament News page. This does not send email.</p>
           </div>
         </div>
-        <button className="btn btn-primary btn-sm" onClick={openAdd} id="ann-add-btn" disabled={!currentTournament}><Plus size={16} /> New Announcement</button>
+        <button className="btn btn-primary btn-sm" onClick={openAdd} id="ann-add-btn" disabled={!currentTournament}><Plus size={16} /> New Public Post</button>
+      </div>
+
+      <div className={styles.deliveryNote}>
+        <div>
+          <strong>Public post only</strong>
+          <span>These updates appear on the public tournament News page. To send an email, use Communication.</span>
+        </div>
+        <Link className="btn btn-outline btn-sm" href="../communication">
+          <Mail size={14} /> Email Teams
+        </Link>
       </div>
 
       <div className={styles.annList}>
         {items.length === 0 ? (
           <div className="empty-state">
             <Megaphone size={40} />
-            <p>No announcements yet. Create one above!</p>
+            <p>No public news posts yet. Create one above.</p>
           </div>
         ) : items.map(ann => (
           <div key={ann.id} className={`card ${styles.annCard} ${ann.pinned ? styles.pinned : ''}`}>
@@ -110,23 +142,27 @@ export default function AdminAnnouncementsPage() {
         <div className="modal-overlay" onClick={() => setModal(null)}>
           <div className="modal modal-lg" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
-              <h3>{modal === 'add' ? 'New Announcement' : 'Edit Announcement'}</h3>
+              <h3>{modal === 'add' ? 'New Public Post' : 'Edit Public Post'}</h3>
               <button className="btn btn-ghost btn-sm" onClick={() => setModal(null)}><X size={16} /></button>
             </div>
+            <p className={styles.modalHelp}>
+              This will publish to the public tournament News page only. It will not email teams, coaches, or contacts.
+            </p>
             <form onSubmit={handleSubmit}>
               <div className="form-group" style={{ marginBottom: '1rem' }}>
                 <label className="form-label">Title *</label>
-                <input className="form-input" placeholder="Announcement title" value={form.title}
+                <input className="form-input" placeholder="Public post title" value={form.title}
                   onChange={e => setForm(f => ({ ...f, title: e.target.value }))} required />
               </div>
               <div className="form-group" style={{ marginBottom: '1.5rem' }}>
                 <label className="form-label">Body *</label>
-                <textarea className="form-textarea" placeholder="Write your announcement here..." rows={12} value={form.body}
+                <textarea className="form-textarea" placeholder="Write the public News page update here..." rows={12} value={form.body}
                   onChange={e => setForm(f => ({ ...f, body: e.target.value }))} required style={{ fontSize: '1rem', lineHeight: '1.6' }} />
               </div>
               {ageGroups.length > 0 && (
                 <div className="form-group" style={{ marginBottom: '1.5rem' }}>
-                  <label className="form-label">Division Visibility</label>
+                  <label className="form-label">News Page Visibility</label>
+                  <p className={styles.fieldHelp}>Controls where this post appears on the public site. It does not select email recipients.</p>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', marginTop: '0.5rem' }}>
                     <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.9rem' }}>
                       <input
@@ -162,12 +198,12 @@ export default function AdminAnnouncementsPage() {
                 <input type="checkbox" id="ann-pinned" checked={form.pinned}
                   onChange={e => setForm(f => ({ ...f, pinned: e.target.checked }))} />
                 <label htmlFor="ann-pinned">
-                  <Star size={14} /> Pin this announcement (appears at top of News page)
+                  <Star size={14} /> Pin this public post at the top of the News page
                 </label>
               </div>
               <div className="modal-footer">
                 <button type="button" className="btn btn-ghost" onClick={() => setModal(null)}>Cancel</button>
-                <button type="submit" className="btn btn-primary" id="ann-save-btn"><Check size={14} /> Publish</button>
+                <button type="submit" className="btn btn-primary" id="ann-save-btn"><Check size={14} /> Publish to News Page</button>
               </div>
             </form>
           </div>
@@ -178,13 +214,21 @@ export default function AdminAnnouncementsPage() {
         <div className="modal-overlay" onClick={() => setDeleteId(null)}>
           <div className="modal" style={{ maxWidth: 400 }} onClick={e => e.stopPropagation()}>
             <div className="modal-header">
-              <h3>Delete Announcement?</h3>
+              <h3>Delete Public Post?</h3>
               <button className="btn btn-ghost btn-sm" onClick={() => setDeleteId(null)}><X size={16} /></button>
             </div>
-            <p style={{ color: 'var(--white-60)' }}>This will permanently remove this announcement.</p>
+            <p style={{ color: 'var(--white-60)' }}>This will permanently remove this post from the public News page.</p>
             <div className="modal-footer">
               <button className="btn btn-ghost" onClick={() => setDeleteId(null)}>Cancel</button>
-              <button className="btn btn-danger" onClick={async () => { await deleteAnnouncement(deleteId); setDeleteId(null); refresh(); }}><Trash2 size={14} /> Delete</button>
+              <button className="btn btn-danger" onClick={async () => {
+                await fetch('/api/admin/announcements', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ action: 'delete', id: deleteId }),
+                });
+                setDeleteId(null);
+                refresh();
+              }}><Trash2 size={14} /> Delete</button>
             </div>
           </div>
         </div>

@@ -3,6 +3,7 @@ import { getAuthContextWithRole, unauthorized, forbidden } from '@/lib/api-auth'
 import { hasCapability } from '@/lib/roles';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { getRepPastProgramYears } from '@/lib/db';
+import { supabaseAdmin } from '@/lib/supabase-admin';
 
 function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
   if (!ctx) return unauthorized();
@@ -16,6 +17,16 @@ export async function GET() {
   const err = gate(ctx);
   if (err) return err;
 
-  const years = await getRepPastProgramYears(ctx!.org.id);
+  let scopeTeamIds: string[] | undefined;
+  if (ctx!.repGroupIds) {
+    const { data: scopedTeams } = await supabaseAdmin
+      .from('rep_teams')
+      .select('id')
+      .eq('org_id', ctx!.org.id)
+      .in('group_id', ctx!.repGroupIds);
+    scopeTeamIds = (scopedTeams ?? []).map((t: any) => t.id as string);
+  }
+
+  const years = await getRepPastProgramYears(ctx!.org.id, scopeTeamIds);
   return NextResponse.json({ years });
 }

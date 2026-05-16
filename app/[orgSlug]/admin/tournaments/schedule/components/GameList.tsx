@@ -31,7 +31,8 @@ export default function GameList({
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [openMenu, setOpenMenu] = useState<string | null>(null);
 
-  const getTeamName = (id: string) => teams.find(t => t.id === id)?.name ?? 'TBD';
+  const getTeamName = (id: string) => teams.find(t => t.id === id)?.name ?? null;
+  const resolveTeam = (id: string, placeholder?: string) => getTeamName(id) ?? placeholder ?? 'TBD';
   const getDiamondName = (id?: string) => id ? (diamonds.find(d => d.id === id)?.name ?? '') : '';
 
   function toggleExpand(id: string) {
@@ -162,7 +163,7 @@ export default function GameList({
                   width: '100%',
                   lineHeight: '1.2'
                 }}>
-                  {getTeamName(g.awayTeamId) || g.awayPlaceholder || 'TBD'}
+                  {resolveTeam(g.awayTeamId, g.awayPlaceholder)}
                 </div>
                 {mode === 'scoring' && g.status === 'completed' && (
                   <div style={{
@@ -198,7 +199,7 @@ export default function GameList({
                   width: '100%',
                   lineHeight: '1.2'
                 }}>
-                  {getTeamName(g.homeTeamId) || g.homePlaceholder || 'TBD'}
+                  {resolveTeam(g.homeTeamId, g.homePlaceholder)}
                 </div>
                 {mode === 'scoring' && g.status === 'completed' && (
                   <div style={{
@@ -217,6 +218,9 @@ export default function GameList({
           </div>
 
           <div className="flex justify-end items-center gap-2">
+            {(g.homeSlotId || g.awaySlotId) && !g.isPlayoff && (
+              <span className="badge badge-neutral" style={{ fontSize: '0.65rem', letterSpacing: '0.05em', flexShrink: 0 }}>SLOT</span>
+            )}
             {mode === 'scoring' ? (
               <div className="flex items-center gap-2">
                 {onScore && (

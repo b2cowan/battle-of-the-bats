@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getAuthContextWithRole, unauthorized, forbidden } from '@/lib/api-auth';
+import { getAuthContextWithRole, unauthorized, forbidden, repGroupScopeGuard } from '@/lib/api-auth';
 import { hasCapability } from '@/lib/roles';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import {
@@ -21,6 +21,8 @@ function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
 async function resolveEvent(ctx: NonNullable<Awaited<ReturnType<typeof getAuthContextWithRole>>>, teamId: string, yearId: string, eventId: string) {
   const team = await getRepTeam(teamId);
   if (!team || team.orgId !== ctx.org.id) return { error: NextResponse.json({ error: 'Not found' }, { status: 404 }) };
+  const groupErr = repGroupScopeGuard(ctx, team.groupId);
+  if (groupErr) return { error: groupErr };
 
   const programYear = await getRepProgramYear(yearId);
   if (!programYear || programYear.teamId !== team.id) return { error: NextResponse.json({ error: 'Not found' }, { status: 404 }) };

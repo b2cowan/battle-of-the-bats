@@ -1,13 +1,14 @@
 'use client';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { LayoutDashboard, Building2, Users, ScrollText, Terminal, HelpCircle, LogOut } from 'lucide-react';
+import { LayoutDashboard, Building2, Users, ScrollText, Terminal, HelpCircle, LogOut, ArchiveRestore } from 'lucide-react';
 import { signOut } from '@/lib/auth';
 import styles from './platform-admin.module.css';
 
 const BASE_NAV = [
   { href: '/platform-admin',       label: 'Overview',       Icon: LayoutDashboard },
   { href: '/platform-admin/orgs',  label: 'Organizations',  Icon: Building2       },
+  { href: '/platform-admin/retention', label: 'Retention',   Icon: ArchiveRestore },
   { href: '/platform-admin/users', label: 'Users',          Icon: Users           },
   { href: '/platform-admin/audit', label: 'Audit Log',      Icon: ScrollText      },
   { href: '/platform-admin/help',  label: 'Help',           Icon: HelpCircle      },
@@ -47,6 +48,8 @@ export default function PlatformAdminNav({ sessionEmail }: { sessionEmail: strin
             key={href}
             href={href}
             className={`${styles.navLink} ${isActive(href) ? styles.navLinkActive : ''}`}
+            target={label === 'Help' ? '_blank' : undefined}
+            rel={label === 'Help' ? 'noopener noreferrer' : undefined}
           >
             <Icon size={15} />
             <span>{label}</span>

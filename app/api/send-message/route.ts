@@ -1,16 +1,126 @@
 import { NextResponse } from 'next/server';
 import { sendEmail } from '@/lib/email';
+import { getAuthContextWithScope, scopeGuard, unauthorized, forbidden } from '@/lib/api-auth';
+import { hasCapability } from '@/lib/roles';
+import { supabaseAdmin } from '@/lib/supabase-admin';
+
+type RecipientTargeting = {
+  includeTeams?: boolean;
+  includeContacts?: boolean;
+  teamStatuses?: string[];
+  ageGroupIds?: string[];
+  teamIds?: string[];
+  contactRoles?: string[];
+};
+
+function normalizeEmail(email: unknown) {
+  return typeof email === 'string' ? email.trim().toLowerCase() : '';
+}
+
+function stringSet(value: unknown) {
+  return new Set(Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : []);
+}
 
 export async function POST(req: Request) {
-  try {
-    const { recipients, subject, message, tournamentName } = await req.json();
+  const ctx = await getAuthContextWithScope();
+  if (!ctx) return unauthorized();
+  if (!hasCapability(ctx.role, ctx.capabilities, 'send_communications')) return forbidden();
 
-    if (!recipients || !Array.isArray(recipients) || recipients.length === 0) {
-      return NextResponse.json({ error: 'No recipients selected' }, { status: 400 });
+  try {
+    const { tournamentId, recipients, targeting, subject, message } = await req.json();
+
+    if (!tournamentId || typeof tournamentId !== 'string') {
+      return NextResponse.json({ error: 'Tournament is required' }, { status: 400 });
+    }
+
+    const denied = scopeGuard(ctx, tournamentId);
+    if (denied) return denied;
+
+    const { data: tournament, error: tournamentError } = await supabaseAdmin
+      .from('tournaments')
+      .select('id')
+      .eq('id', tournamentId)
+      .eq('organization_id', ctx.org.id)
+      .single();
+    if (tournamentError || !tournament) {
+      return NextResponse.json({ error: 'Tournament not found' }, { status: 404 });
     }
 
     if (!subject || !message) {
       return NextResponse.json({ error: 'Subject and message are required' }, { status: 400 });
+    }
+
+    const recipientMap = new Map<string, { email: string; source: 'team' | 'contact' | 'direct' }>();
+    const target = (targeting ?? null) as RecipientTargeting | null;
+
+    if (target) {
+      const teamStatuses = stringSet(target.teamStatuses);
+      const ageGroupIds = stringSet(target.ageGroupIds);
+      const teamIds = stringSet(target.teamIds);
+      const contactRoles = stringSet(target.contactRoles);
+
+      if (target.includeTeams) {
+        const { data: teams, error: teamsError } = await supabaseAdmin
+          .from('teams')
+          .select('id, email, status, age_group_id')
+          .eq('tournament_id', tournamentId);
+        if (teamsError) return NextResponse.json({ error: teamsError.message }, { status: 500 });
+
+        for (const team of teams ?? []) {
+          const selectedById = teamIds.size > 0 && teamIds.has(team.id);
+          const selectedByFilters =
+            teamIds.size === 0 &&
+            (teamStatuses.size === 0 || teamStatuses.has(team.status)) &&
+            (ageGroupIds.size === 0 || ageGroupIds.has(team.age_group_id));
+
+          if (!selectedById && !selectedByFilters) continue;
+
+          const email = normalizeEmail(team.email);
+          if (email) recipientMap.set(email, { email, source: 'team' });
+        }
+      }
+
+      if (target.includeContacts) {
+        const { data: contacts, error: contactsError } = await supabaseAdmin
+          .from('contacts')
+          .select('email, role')
+          .eq('tournament_id', tournamentId);
+        if (contactsError) return NextResponse.json({ error: contactsError.message }, { status: 500 });
+
+        for (const contact of contacts ?? []) {
+          if (contactRoles.size > 0 && !contactRoles.has(contact.role)) continue;
+          const email = normalizeEmail(contact.email);
+          if (email && !recipientMap.has(email)) recipientMap.set(email, { email, source: 'contact' });
+        }
+      }
+    } else {
+      if (!recipients || !Array.isArray(recipients) || recipients.length === 0) {
+        return NextResponse.json({ error: 'No recipients selected' }, { status: 400 });
+      }
+
+      const directRecipients = Array.from(new Set(recipients.map(normalizeEmail).filter(Boolean)));
+      const { data: contacts, error: contactsError } = await supabaseAdmin
+        .from('contacts')
+        .select('email')
+        .eq('tournament_id', tournamentId);
+      if (contactsError) {
+        return NextResponse.json({ error: contactsError.message }, { status: 500 });
+      }
+
+      const allowedRecipients = new Set((contacts ?? []).map(contact => normalizeEmail(contact.email)).filter(Boolean));
+      const unauthorizedRecipients = directRecipients.filter(email => !allowedRecipients.has(email));
+      if (unauthorizedRecipients.length > 0) {
+        return NextResponse.json({ error: 'One or more recipients are not contacts for this tournament.' }, { status: 403 });
+      }
+
+      for (const email of directRecipients) {
+        recipientMap.set(email, { email, source: 'direct' });
+      }
+    }
+
+    const normalizedRecipients = Array.from(recipientMap.keys());
+    if (normalizedRecipients.length === 0) {
+      return NextResponse.json({ error: 'No valid recipients selected' }, { status: 400 });
     }
 
     // Iterate through recipients and send emails
@@ -18,7 +128,7 @@ export async function POST(req: Request) {
     // For larger volumes, a background job or Resend's batch API would be better.
     const results = { success: 0, failed: 0 };
 
-    for (const email of recipients) {
+    for (const email of normalizedRecipients) {
       try {
         await sendEmail(email, subject, message);
         results.success++;
@@ -32,8 +142,9 @@ export async function POST(req: Request) {
       message: `Finished sending. Success: ${results.success}, Failed: ${results.failed}`,
       results
     });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('Send message error:', err);
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    const message = err instanceof Error ? err.message : 'Unable to send message';
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

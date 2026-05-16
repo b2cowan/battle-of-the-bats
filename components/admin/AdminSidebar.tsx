@@ -4,37 +4,79 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import {
   LayoutDashboard, Users, Calendar, Trophy, Megaphone, Tag, LogOut, Home,
-  ChevronRight, MapPin, RefreshCw, BookUser, BookOpen, CreditCard, Settings,
+  ChevronRight, MapPin, BookUser, BookOpen, CreditCard, Settings,
   Users2, Archive, ArrowLeft, Mail, Globe, DollarSign,
   CalendarDays, ClipboardList, FileText, UserCheck, ExternalLink, HelpCircle,
 } from 'lucide-react';
 import { signOut } from '@/lib/auth';
+import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { useOrg } from '@/lib/org-context';
 import { useTournament } from '@/lib/tournament-context';
-import { hasCapability } from '@/lib/roles';
+import { hasCapability, type Capability } from '@/lib/roles';
 import styles from './AdminSidebar.module.css';
 
-const TOURNAMENT_NAV = [
-  { key: 'dashboard',     icon: LayoutDashboard, label: 'Dashboard'         },
-  { key: 'announcements', icon: Megaphone,       label: 'Announcements'     },
-  { key: 'contacts',      icon: BookUser,        label: 'Contacts'          },
-  { key: 'age-groups',    icon: Tag,             label: 'Age Groups'        },
-  { key: 'teams',         icon: Users,           label: 'Registrations'     },
-  { key: 'schedule',      icon: Calendar,        label: 'Schedule'          },
-  { key: 'results',       icon: Trophy,          label: 'Results'           },
-  { key: 'rules',         icon: BookOpen,        label: 'Rules & Resources' },
-  { key: 'communication', icon: Mail,            label: 'Communication'     },
-  { key: 'archives',      icon: Archive,         label: 'Past Tournaments'  },
+const TOUR_TOP = [
+  { key: 'dashboard', icon: LayoutDashboard, label: 'Dashboard' },
 ];
+
+type TourNavItem = { key: string; icon: React.ElementType; label: string };
+type TourGroup   = { key: string; label: string; defaultOpenFor: string[]; items: TourNavItem[] };
+
+const TOUR_GROUPS: TourGroup[] = [
+  {
+    key: 'operations',
+    label: 'Operations',
+    defaultOpenFor: ['active', 'completed'],
+    items: [
+      { key: 'teams',         icon: Users,     label: 'Registrations' },
+      { key: 'schedule',      icon: Calendar,  label: 'Schedule'      },
+      { key: 'results',       icon: Trophy,    label: 'Results'       },
+      { key: 'announcements', icon: Megaphone, label: 'News Posts'    },
+      { key: 'communication', icon: Mail,      label: 'Communication' },
+    ],
+  },
+  {
+    key: 'setup',
+    label: 'Setup',
+    defaultOpenFor: ['draft'],
+    items: [
+      { key: 'venues',        icon: MapPin,    label: 'Venues'            },
+      { key: 'contacts',      icon: BookUser,  label: 'Contacts'          },
+      { key: 'age-groups',    icon: Tag,       label: 'Divisions'         },
+      { key: 'rules',         icon: BookOpen,  label: 'Rules & Resources' },
+    ],
+  },
+  {
+    key: 'admin',
+    label: 'Admin',
+    defaultOpenFor: [],
+    items: [
+      { key: 'settings', icon: Settings,  label: 'Settings & Access'  },
+      { key: 'archives', icon: Archive,   label: 'Past Tournaments'   },
+    ],
+  },
+];
+
+type HouseLeagueSeasonOption = {
+  id: string;
+  name: string;
+  status?: string;
+};
+
+function isHouseLeagueSeasonOption(value: unknown): value is HouseLeagueSeasonOption {
+  if (!value || typeof value !== 'object') return false;
+  const season = value as Record<string, unknown>;
+  return typeof season.id === 'string' && typeof season.name === 'string';
+}
 
 export default function AdminSidebar() {
   const pathname = usePathname();
   const router   = useRouter();
   const { currentOrg, userRole, userCapabilities } = useOrg();
   const base = `/${currentOrg?.slug ?? 'milton-bats'}/admin`;
+  const currentOrgSlug = currentOrg?.slug;
   const { tournaments, currentTournament, setCurrentTournament } = useTournament();
 
-  const isHub          = pathname === base;
   const isOrgAdmin     = pathname.startsWith(`${base}/org`);
   const isPublicSite   = pathname.startsWith(`${base}/public-site`);
   const isAccounting   = pathname.startsWith(`${base}/accounting`);
@@ -48,35 +90,87 @@ export default function AdminSidebar() {
   const currentRepYearId = repTeamMatch?.[2] ?? null;
   const currentSeasonId = seasonMatch?.[1] ?? null;
 
+  const canUseModule = (capability: Capability) => currentOrg && userRole
+    ? hasCapability(userRole, userCapabilities, capability) && hasModuleEntitlement(currentOrg, capability)
+    : false;
+
   const canSeeMembersNav = userRole
-    ? userRole === 'owner' || hasCapability(userRole, userCapabilities, 'module_members')
+    ? (userRole === 'owner' || hasCapability(userRole, userCapabilities, 'module_members')) && canUseModule('module_members')
     : false;
 
   // Season switcher — loaded client-side when inside house league section
   const [houseLeagueSeasons, setHouseLeagueSeasons] = useState<{ id: string; name: string }[]>([]);
   useEffect(() => {
-    if (!isHouseLeague || !currentOrg) return;
+    if (!isHouseLeague || !currentOrgSlug) return;
     fetch(`/api/admin/house-league/seasons`)
       .then(r => r.ok ? r.json() : null)
-      .then(d => { if (d?.seasons) setHouseLeagueSeasons(d.seasons.filter((s: any) => s.status !== 'archived')); })
+      .then(d => {
+        const seasons = Array.isArray(d?.seasons)
+          ? d.seasons
+              .filter(isHouseLeagueSeasonOption)
+              .filter((season: HouseLeagueSeasonOption) => season.status !== 'archived')
+              .map((season: HouseLeagueSeasonOption) => ({ id: season.id, name: season.name }))
+          : [];
+        setHouseLeagueSeasons(seasons);
+      })
       .catch(() => {});
-  }, [isHouseLeague, currentOrg?.slug]);
+  }, [isHouseLeague, currentOrgSlug]);
 
   const canSeePublicSite = userRole
-    ? hasCapability(userRole, userCapabilities, 'module_public_site')
+    ? canUseModule('module_public_site')
     : false;
 
   const canSeeAccounting = userRole
-    ? hasCapability(userRole, userCapabilities, 'module_accounting')
+    ? canUseModule('module_accounting')
     : false;
 
   const canSeeHouseLeague = userRole
-    ? hasCapability(userRole, userCapabilities, 'module_house_league')
+    ? canUseModule('module_house_league')
     : false;
 
   const canSeeRepTeams = userRole
-    ? hasCapability(userRole, userCapabilities, 'module_rep_teams')
+    ? canUseModule('module_rep_teams')
     : false;
+
+  const hasOnlyTournamentWorkspace = !!currentOrg && canUseModule('module_tournaments') && !canSeePublicSite && !canSeeAccounting && !canSeeHouseLeague && !canSeeRepTeams;
+
+  // Collapsible nav groups — persisted to localStorage
+  const [openGroups, setOpenGroups] = useState<Set<string>>(() => new Set<string>());
+  const [groupsReady, setGroupsReady] = useState(false);
+
+  useEffect(() => {
+    if (groupsReady) return;
+    const frame = window.requestAnimationFrame(() => {
+      try {
+        const stored = localStorage.getItem('fl_nav_groups');
+        if (stored) {
+          setOpenGroups(new Set(JSON.parse(stored) as string[]));
+          setGroupsReady(true);
+          return;
+        }
+      } catch {
+        // Fall back to the default group below when stored state is unavailable.
+      }
+      const status = currentTournament?.status ?? 'draft';
+      setOpenGroups(new Set(TOUR_GROUPS.filter(g => g.defaultOpenFor.includes(status)).map(g => g.key)));
+      setGroupsReady(true);
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [groupsReady, currentTournament?.status]);
+
+  function toggleGroup(key: string) {
+    setOpenGroups(prev => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key); else next.add(key);
+      try { localStorage.setItem('fl_nav_groups', JSON.stringify([...next])); } catch {}
+      return next;
+    });
+  }
+
+  function isGroupOpen(groupKey: string, items: TourNavItem[]) {
+    if (openGroups.has(groupKey)) return true;
+    return items.some(item => pathname.startsWith(`${base}/tournaments/${item.key}`));
+  }
 
   const helpHref = isTournaments  ? `${base}/help/tournaments`
                  : isHouseLeague  ? `${base}/help/house-league`
@@ -118,13 +212,33 @@ export default function AdminSidebar() {
     </Link>
   );
 
+  const maybeBackLink = hasOnlyTournamentWorkspace ? null : backLink;
+  const tournamentPreviewHref = currentOrg?.slug && currentTournament
+    ? `/${currentOrg.slug}/admin/tournaments/preview/${currentTournament.slug}`
+    : null;
+  const tournamentPreviewLabel =
+    currentTournament?.status === 'draft'
+      ? 'Preview Draft Site'
+      : currentTournament?.status === 'completed'
+        ? 'Preview Completed Site'
+        : 'Preview Site';
+  const tournamentPreviewTitle =
+    currentTournament?.status === 'draft'
+      ? 'Preview the private draft tournament site. It is not public until activated.'
+      : currentTournament?.status === 'completed'
+        ? 'Preview the completed tournament site.'
+        : 'Preview the public tournament site.';
+
   return (
     <aside className={styles.sidebar}>
       {/* Logo */}
       <div className={styles.logo}>
-        <div className={styles.logoIcon}>⚾</div>
         <div>
-          <div className={styles.logoMain}>FieldLogicHQ</div>
+          <div className={styles.logoMain}>
+            <span className={styles.logoField}>Field</span>
+            <span className={styles.logoLogic}>Logic</span>
+            <span className={styles.logoHq}>HQ</span>
+          </div>
           <div className={styles.logoSub}>{currentOrg?.name ?? 'Admin'}</div>
         </div>
       </div>
@@ -132,15 +246,10 @@ export default function AdminSidebar() {
       {/* Org Admin mode */}
       {isOrgAdmin && (
         <>
-          {backLink}
+          {maybeBackLink}
           <div className={styles.navSection}>
             <div className={styles.sectionHeader}>Organization Admin</div>
             <nav className={styles.nav}>
-              {navLink(
-                'org/tournaments', RefreshCw, 'Tournament Records',
-                `${base}/org/tournaments`,
-                pathname.startsWith(`${base}/org/tournaments`),
-              )}
               {canSeeMembersNav && navLink(
                 'org/members', Users2, 'Members',
                 `${base}/org/members`,
@@ -152,7 +261,7 @@ export default function AdminSidebar() {
                 pathname.startsWith(`${base}/org/diamonds`),
               )}
               {userRole === 'owner' && navLink(
-                'org/billing', CreditCard, 'Billing',
+                'org/billing', CreditCard, 'Subscription',
                 `${base}/org/billing`,
                 pathname.startsWith(`${base}/org/billing`),
               )}
@@ -169,7 +278,7 @@ export default function AdminSidebar() {
       {/* Public Site mode */}
       {isPublicSite && canSeePublicSite && (
         <>
-          {backLink}
+          {maybeBackLink}
           <div className={styles.navSection}>
             <div className={styles.sectionHeader}>Public Site</div>
             <nav className={styles.nav}>
@@ -186,7 +295,7 @@ export default function AdminSidebar() {
       {/* Accounting mode */}
       {isAccounting && canSeeAccounting && (
         <>
-          {backLink}
+          {maybeBackLink}
           <div className={styles.navSection}>
             <div className={styles.sectionHeader}>Accounting</div>
             <nav className={styles.nav}>
@@ -201,7 +310,7 @@ export default function AdminSidebar() {
       {/* House League mode */}
       {isHouseLeague && canSeeHouseLeague && (
         <>
-          {backLink}
+          {maybeBackLink}
           <div className={styles.navSection}>
             <div className={styles.sectionHeader}>House League</div>
             <nav className={styles.nav}>
@@ -259,7 +368,7 @@ export default function AdminSidebar() {
       {/* Rep Teams mode */}
       {isRepTeams && canSeeRepTeams && (
         <>
-          {backLink}
+          {maybeBackLink}
           <div className={styles.navSection}>
             <div className={styles.sectionHeader}>Rep Teams</div>
             <nav className={styles.nav}>
@@ -308,7 +417,7 @@ export default function AdminSidebar() {
       {/* Tournament operations mode */}
       {isTournaments && (
         <>
-          {backLink}
+          {maybeBackLink}
           {tournaments.length > 0 && (
             <div className={styles.tournamentSwitcher}>
               <label className={styles.switcherLabel}>Editing Tournament</label>
@@ -331,12 +440,37 @@ export default function AdminSidebar() {
             </div>
           )}
           <div className={styles.navSection}>
-            <div className={styles.sectionHeader}>Tournament</div>
+            {!hasOnlyTournamentWorkspace && <div className={styles.sectionHeader}>Tournament</div>}
             <nav className={styles.nav}>
-              {TOURNAMENT_NAV.map(item => {
-                const href   = `${base}/tournaments/${item.key}`;
-                const active = pathname.startsWith(href);
-                return navLink(item.key, item.icon, item.label, href, active);
+              {TOUR_TOP.map(item => {
+                const href = `${base}/tournaments/${item.key}`;
+                return navLink(item.key, item.icon, item.label, href, pathname.startsWith(href));
+              })}
+              {TOUR_GROUPS.map(group => {
+                const open      = isGroupOpen(group.key, group.items);
+                const hasActive = group.items.some(item => pathname.startsWith(`${base}/tournaments/${item.key}`));
+                return (
+                  <div key={group.key} className={styles.navGroup}>
+                    <button
+                      className={`${styles.navGroupHeader} ${hasActive ? styles.navGroupHeaderActive : ''}`}
+                      onClick={() => toggleGroup(group.key)}
+                    >
+                      <span>{group.label}</span>
+                      <ChevronRight
+                        size={11}
+                        className={`${styles.navGroupChevron} ${open ? styles.navGroupChevronOpen : ''}`}
+                      />
+                    </button>
+                    {open && (
+                      <div className={styles.navGroupItems}>
+                        {group.items.map(item => {
+                          const href = `${base}/tournaments/${item.key}`;
+                          return navLink(item.key, item.icon, item.label, href, pathname.startsWith(href));
+                        })}
+                      </div>
+                    )}
+                  </div>
+                );
               })}
               {canSeeAccounting && navLink(
                 'tournament-accounting', DollarSign, 'Accounting',
@@ -352,12 +486,32 @@ export default function AdminSidebar() {
 
       {/* Footer */}
       <div className={styles.footer}>
-        {!isOrgAdmin && (
+        {isTournaments ? (
+          tournamentPreviewHref ? (
+            <Link
+              href={tournamentPreviewHref}
+              className={styles.footerLink}
+              id="admin-preview-site"
+              target="_blank"
+              rel="noopener noreferrer"
+              title={tournamentPreviewTitle}
+              aria-label={`${tournamentPreviewLabel} opens in a new tab`}
+            >
+              <ExternalLink size={15} /> {tournamentPreviewLabel}
+            </Link>
+          ) : null
+        ) : !isOrgAdmin && (
           <Link href={`/${currentOrg?.slug ?? 'milton-bats'}`} className={styles.footerLink} id="admin-back-site">
             <Home size={15} /> Back to Site
           </Link>
         )}
-        <Link href={helpHref} className={styles.footerLink} id="admin-help">
+        <Link
+          href={helpHref}
+          className={styles.footerLink}
+          id="admin-help"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
           <HelpCircle size={15} /> Help
         </Link>
         <button onClick={handleLogout} className={styles.logoutBtn} id="admin-logout">

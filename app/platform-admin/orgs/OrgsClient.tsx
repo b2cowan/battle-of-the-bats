@@ -36,6 +36,8 @@ const PLAN_LABELS: Record<string, string> = {
   club:            'Club',
 };
 
+type ApiErrorBody = { error?: string };
+
 function fmtDate(iso: string) {
   return new Date(iso).toLocaleDateString('en-CA', {
     year: 'numeric', month: 'short', day: 'numeric',
@@ -97,8 +99,8 @@ export default function OrgsClient({ orgs, planDefaults, initialStatus }: Props)
         body: JSON.stringify({ planId, tournamentLimit }),
       });
       if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        setErrors(e => ({ ...e, [id]: (data as any).error ?? 'Save failed' }));
+        const data = await res.json().catch((): ApiErrorBody => ({}));
+        setErrors(e => ({ ...e, [id]: data.error ?? 'Save failed' }));
       } else {
         setSaved(s => ({ ...s, [id]: true }));
       }
@@ -176,7 +178,7 @@ export default function OrgsClient({ orgs, planDefaults, initialStatus }: Props)
             )}
             {filteredOrgs.map(org => {
               const edit     = edits[org.id] ?? { planId: org.planId, tournamentLimit: org.tournamentLimit };
-              const isLimited = edit.planId === 'tournament';
+              const hasFiniteTournamentLimit = (planDefaults[edit.planId] ?? edit.tournamentLimit) < 9999;
 
               return (
                 <tr key={org.id}>
@@ -199,7 +201,7 @@ export default function OrgsClient({ orgs, planDefaults, initialStatus }: Props)
                     </select>
                   </td>
                   <td>
-                    {isLimited ? (
+                    {hasFiniteTournamentLimit ? (
                       <input
                         type="number"
                         className={styles.limitInput}
