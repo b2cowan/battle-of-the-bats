@@ -1,5 +1,6 @@
 'use client';
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import styles from './orgDetail.module.css';
 import HelpTooltip from '@/components/help/HelpTooltip';
 
@@ -34,6 +35,7 @@ interface Tournament {
 
 interface Props {
   orgId: string;
+  orgName: string;
   orgSlug: string;
   planModules: string[];
   enabledAddons: string[];
@@ -81,6 +83,8 @@ function tournamentStatusClass(status: string, styles: Record<string, string>) {
 
 export default function OrgDetailClient({
   orgId,
+  orgName,
+  orgSlug,
   planModules,
   enabledAddons: initialAddons,
   internalNotes,
@@ -88,6 +92,44 @@ export default function OrgDetailClient({
   members,
   tournaments,
 }: Props) {
+  const router = useRouter();
+  const [identityName, setIdentityName] = useState(orgName);
+  const [identitySlug, setIdentitySlug] = useState(orgSlug);
+  const [identityReason, setIdentityReason] = useState('');
+  const [identitySaving, setIdentitySaving] = useState(false);
+  const [identitySaved, setIdentitySaved] = useState(false);
+  const [identityError, setIdentityError] = useState('');
+
+  async function handleIdentitySave(e: React.FormEvent) {
+    e.preventDefault();
+    setIdentitySaving(true);
+    setIdentitySaved(false);
+    setIdentityError('');
+    try {
+      const res = await fetch(`/api/platform-admin/orgs/${orgId}/identity`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: identityName,
+          slug: identitySlug,
+          reason: identityReason,
+        }),
+      });
+      const data = await res.json().catch((): ApiErrorBody => ({}));
+      if (!res.ok) {
+        setIdentityError(data.error ?? 'Save failed');
+        return;
+      }
+      setIdentitySaved(true);
+      setIdentityReason('');
+      router.refresh();
+    } catch {
+      setIdentityError('Network error');
+    } finally {
+      setIdentitySaving(false);
+    }
+  }
+
   // ─── Notes ───────────────────────────────────────────────────────────
   const [notes,       setNotes]       = useState(internalNotes ?? '');
   const [notesSaving, setNotesSaving] = useState(false);
@@ -239,6 +281,52 @@ export default function OrgDetailClient({
 
   return (
     <>
+      {/* Organization Identity */}
+      <section className={styles.section}>
+        <h2 className={styles.sectionTitle}>Organization Identity</h2>
+        <form className={styles.overrideForm} onSubmit={handleIdentitySave}>
+          <div className={styles.formRow}>
+            <label className={styles.formLabel}>Name</label>
+            <input
+              className={styles.formInput}
+              value={identityName}
+              onChange={e => { setIdentityName(e.target.value); setIdentitySaved(false); }}
+              required
+            />
+          </div>
+          <div className={styles.formRow}>
+            <label className={styles.formLabel}>Slug</label>
+            <input
+              className={styles.formInput}
+              value={identitySlug}
+              onChange={e => { setIdentitySlug(e.target.value.trim().toLowerCase()); setIdentitySaved(false); }}
+              pattern="[a-z0-9]+(-[a-z0-9]+)*"
+              required
+            />
+            <p className={styles.warningNote}>
+              Changing the slug updates public and admin URLs immediately. Existing links may break.
+            </p>
+          </div>
+          <div className={styles.formRow}>
+            <label className={styles.formLabel}>Reason</label>
+            <textarea
+              className={styles.formTextarea}
+              value={identityReason}
+              onChange={e => setIdentityReason(e.target.value)}
+              rows={2}
+              placeholder="Support reason for this identity change"
+              required
+            />
+          </div>
+          {identityError && <div className={styles.rowError}>{identityError}</div>}
+          <div className={styles.notesActions}>
+            <button type="submit" className={styles.saveBtn} disabled={identitySaving}>
+              {identitySaving ? 'Saving...' : identitySaved ? 'Saved' : 'Save Identity'}
+            </button>
+          </div>
+        </form>
+      </section>
+
       {/* Active Overrides */}
       <section className={styles.section}>
         <div className={styles.sectionHeader}>

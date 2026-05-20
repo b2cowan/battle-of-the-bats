@@ -12,6 +12,10 @@ function isOrgPlan(planId: unknown): planId is OrgPlan {
 type CurrentPlanRow = {
   plan_id: string;
   tournament_limit: number;
+  subscription_status: string | null;
+  stripe_subscription_id: string | null;
+  subscription_period: string | null;
+  current_period_end: string | null;
 };
 
 export async function PATCH(
@@ -33,13 +37,32 @@ export async function PATCH(
 
   const { data: current } = await supabaseAdmin
     .from('organizations')
-    .select('plan_id, tournament_limit')
+    .select('plan_id, tournament_limit, subscription_status, stripe_subscription_id, subscription_period, current_period_end')
     .eq('id', id)
     .single<CurrentPlanRow>();
 
+  const updatePayload: {
+    plan_id: OrgPlan;
+    tournament_limit: number;
+    subscription_status?: 'active';
+    stripe_subscription_id?: null;
+    subscription_period?: null;
+    current_period_end?: null;
+  } = {
+    plan_id: planId,
+    tournament_limit: effectiveTournamentLimit,
+  };
+
+  if (planId === 'tournament') {
+    updatePayload.subscription_status = 'active';
+    updatePayload.stripe_subscription_id = null;
+    updatePayload.subscription_period = null;
+    updatePayload.current_period_end = null;
+  }
+
   const { error } = await supabaseAdmin
     .from('organizations')
-    .update({ plan_id: planId, tournament_limit: effectiveTournamentLimit })
+    .update(updatePayload)
     .eq('id', id);
 
   if (error) {
@@ -52,6 +75,24 @@ export async function PATCH(
   if (current?.tournament_limit !== effectiveTournamentLimit) {
     await writePlatformAuditLog(user.email!, id, 'update_plan', 'tournament_limit',
       current?.tournament_limit, effectiveTournamentLimit);
+  }
+  if (planId === 'tournament') {
+    if (current?.subscription_status !== 'active') {
+      await writePlatformAuditLog(user.email!, id, 'update_plan', 'subscription_status',
+        current?.subscription_status, 'active');
+    }
+    if (current?.stripe_subscription_id) {
+      await writePlatformAuditLog(user.email!, id, 'update_plan', 'stripe_subscription_id',
+        current?.stripe_subscription_id, null);
+    }
+    if (current?.subscription_period) {
+      await writePlatformAuditLog(user.email!, id, 'update_plan', 'subscription_period',
+        current?.subscription_period, null);
+    }
+    if (current?.current_period_end) {
+      await writePlatformAuditLog(user.email!, id, 'update_plan', 'current_period_end',
+        current?.current_period_end, null);
+    }
   }
 
   return NextResponse.json({ ok: true });

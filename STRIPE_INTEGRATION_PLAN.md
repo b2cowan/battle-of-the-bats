@@ -46,18 +46,18 @@
 - [ ] Trial lifecycle reminders for League 30-day and Club 90-day windows (F4)
 
 ### Phase E — Per-Team Billing (Club Add-on)
-- [ ] E1 — `getActiveRepTeamCount()` DB helper
-- [ ] E2 — `syncRepTeamBilling()` in `lib/stripe-sync.ts`
-- [ ] E3 — Billing preview API: `/api/admin/rep-teams/billing-preview`
-- [ ] E4 — Team creation billing modal (Club orgs, active_count â‰¥ 3)
-- [ ] E5 — Program year status hook: call `syncRepTeamBilling` on status → completed/archived
-- [ ] E6 — Billing page add-on section for Club orgs with active rep team items
+- [x] E1 — `getActiveRepTeamCount()` DB helper in `lib/db.ts`
+- [x] E2 — `syncRepTeamBilling()` in `lib/stripe-sync.ts`
+- [x] E3 — Billing preview API: `app/api/admin/rep-teams/billing-preview/route.ts`
+- [x] E4 — Team creation billing modal (Club orgs, active_count ≥ 3) — client gate in rep-teams page + server sync on POST
+- [x] E5 — Program year status hook: `syncRepTeamBilling` on status → completed/archived in program-years PATCH route
+- [x] E6 — Billing page add-on section for Club orgs (active count + recurring cost display)
 
 ### Phase F — Upsell Surfaces
-- [ ] F1 — `UpgradeGate` component: wraps locked features with plan-aware upgrade CTA
-- [ ] F2 — Onboarding plan selection: paid plan → Stripe Checkout; resume onboarding on `?checkout=success`
-- [ ] F3 — Soft upsell prompts at tournament limit and module entry points
-- [ ] F4 — Trial checkpoints/reminder emails: League (day 7, 21, ~30), Club (day 7, 30, 60, 80)
+- [x] F1 — `UpgradeGate` component: `components/billing/UpgradeGate.tsx` — wraps locked features with plan-aware upgrade CTA
+- [x] F2 — Onboarding plan selection: already implemented in `choosePlan()` — verified no code change needed
+- [x] F3 — Soft upsell prompts: tournament limit nudge on tournaments page; locked module teaser tiles on admin hub
+- [ ] F4 — Trial checkpoints/reminder emails: deferred — see Deferred Enhancements in TODO.md
 
 ### Phase G — Production Cutover
 - [ ] G1 — Stripe live account setup (repeat Phase A in live mode)

@@ -24,6 +24,7 @@ export async function POST(req: Request) {
     });
   }
 
+  const normalizedStatus = plan === 'tournament' && status === 'trialing' ? 'active' : status;
   const subId = plan === 'tournament' ? null : `mock_sub_${plan}_${Date.now()}`;
 
   await supabaseAdmin
@@ -31,8 +32,9 @@ export async function POST(req: Request) {
     .update({
       plan_id: plan,
       tournament_limit: cfg.tournamentLimit,
-      subscription_status: status,
+      subscription_status: normalizedStatus,
       stripe_subscription_id: subId,
+      ...(plan === 'tournament' ? { subscription_period: null, current_period_end: null } : {}),
     })
     .eq('id', auth.org.id);
 

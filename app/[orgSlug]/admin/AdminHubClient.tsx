@@ -2,7 +2,7 @@
 import { useEffect, useState, type ElementType } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Trophy, Building2, Globe, DollarSign, CalendarDays, Users, UserCheck, AlertCircle, Rocket } from 'lucide-react';
+import { Trophy, Building2, Globe, DollarSign, CalendarDays, Users, UserCheck, AlertCircle, Rocket, Lock } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { hasCapability, type Capability } from '@/lib/roles';
@@ -205,6 +205,53 @@ export default function AdminHubClient() {
           </Link>
         ))}
       </div>
+
+      {/* F3 — Soft upsell: show teaser tiles for modules not on the current plan */}
+      {!loading && userRole === 'owner' && currentOrg && !canSeeAccounting && !canSeeRepTeams && (
+        <div style={{ marginTop: '2rem' }}>
+          <div style={{
+            fontSize: '0.72rem',
+            fontWeight: 700,
+            textTransform: 'uppercase',
+            letterSpacing: '0.08em',
+            color: 'rgba(255,255,255,0.28)',
+            marginBottom: '0.75rem',
+          }}>
+            Coming soon — League &amp; Club plans
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            {([
+              { label: 'Public Site', desc: 'Branded org page with registration and news — League plan', icon: Globe, plan: 'league' },
+              { label: 'House League', desc: 'Recreational seasons, registrations, scheduling, and standings — League plan', icon: CalendarDays, plan: 'league' },
+              { label: 'Accounting', desc: 'Income, expenses, and financial activity across the org and tournaments — Club plan', icon: DollarSign, plan: 'club' },
+              { label: 'Rep Teams', desc: 'Competitive team programs, tryouts, rosters, player documents, and team finances — Club plan', icon: Users, plan: 'club' },
+            ] as const).map(({ label, desc, icon: Icon }) => (
+              <Link
+                key={label}
+                href={`${base}/org/billing`}
+                className="card p-6 flex gap-4 items-start"
+                style={{ opacity: 0.45, cursor: 'default', pointerEvents: 'none' }}
+                tabIndex={-1}
+                aria-hidden="true"
+              >
+                <div style={{ color: 'rgba(255,255,255,0.3)', marginTop: '0.125rem', flexShrink: 0 }}>
+                  <Lock size={20} />
+                </div>
+                <div>
+                  <div className="font-sans font-bold text-fl-text text-base uppercase tracking-wide">{label}</div>
+                  <div className="text-data-gray text-sm mt-1">{desc}</div>
+                </div>
+              </Link>
+            ))}
+          </div>
+          <p style={{ marginTop: '0.85rem', fontSize: '0.8rem', color: 'rgba(255,255,255,0.3)' }}>
+            League and Club plans are in early access.{' '}
+            <Link href={`${base}/org/billing`} style={{ color: 'rgba(255,255,255,0.5)', textDecoration: 'underline' }}>
+              View billing and upgrade options →
+            </Link>
+          </p>
+        </div>
+      )}
 
       {startupProgress && startupProgress.wizardAvailable && !startupProgress.allFinished && (
         <Link

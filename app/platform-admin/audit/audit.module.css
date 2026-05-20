@@ -179,6 +179,68 @@
 
 .filterClear:hover { color: var(--fl-text); }
 
+.messageCallout,
+.errorCallout {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+  font-family: var(--font-data);
+  font-size: 0.7rem;
+  border: 1px solid;
+}
+
+.messageCallout {
+  color: var(--logic-lime);
+  border-color: rgba(var(--logic-lime-rgb), 0.3);
+  background: rgba(var(--logic-lime-rgb), 0.05);
+}
+
+.errorCallout {
+  color: #f87171;
+  border-color: rgba(248, 113, 113, 0.35);
+  background: rgba(248, 113, 113, 0.06);
+}
+
+.dismissBtn {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font-family: var(--font-data);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.inlineForm {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-width: 220px;
+}
+
+.reasonInput {
+  width: 100%;
+  box-sizing: border-box;
+  resize: vertical;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.25);
+  color: var(--fl-text);
+  font-family: var(--font-data);
+  font-size: 0.7rem;
+  padding: 0.4rem 0.55rem;
+}
+
+.inlineActions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
 .pagination {
   display: flex;
   align-items: center;

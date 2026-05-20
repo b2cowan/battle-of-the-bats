@@ -4,6 +4,7 @@ import { hasCapability } from '@/lib/roles';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { getRepTeams, createRepTeam } from '@/lib/db';
+import { syncRepTeamBilling } from '@/lib/stripe-sync';
 
 function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
   if (!ctx) return unauthorized();
@@ -89,6 +90,16 @@ export async function POST(req: Request) {
       color: body.color?.trim() || null,
       groupId: body.groupId || null,
     });
+
+    // E4 — sync rep-team billing after a new team is created for Club orgs.
+    // The new team may push the active count past the free-3 threshold.
+    // Fire-and-forget: a billing sync failure must not block the creation response.
+    if (ctx!.org.planId === 'club') {
+      syncRepTeamBilling(ctx!.org.id).catch(err =>
+        console.error('[teams POST] syncRepTeamBilling failed:', err),
+      );
+    }
+
     return NextResponse.json({ team }, { status: 201 });
   } catch (e: any) {
     if (e?.code === '23505') {

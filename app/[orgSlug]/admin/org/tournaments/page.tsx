@@ -607,6 +607,33 @@ export default function AdminTournamentsPage({
         </div>
       </div>
 
+      {/* F3 — soft upsell when tournament slot limit is reached */}
+      {tournamentLimitReached && currentOrg && currentOrg.planId === 'tournament' && (
+        <HelpCallout
+          variant="info"
+          title="Tournament slot limit reached"
+          body={
+            <>
+              Your free Tournament plan includes 1 active tournament slot. Archive a completed tournament to free a slot, or{' '}
+              <Link
+                href={`/${currentOrg.slug}/admin/org/billing`}
+                style={{ color: 'inherit', textDecoration: 'underline' }}
+              >
+                upgrade to Tournament Plus
+              </Link>
+              {' '}for up to 3 slots and additional automation features.
+            </>
+          }
+        />
+      )}
+      {tournamentLimitReached && currentOrg && currentOrg.planId === 'tournament_plus' && (
+        <HelpCallout
+          variant="info"
+          title="Tournament slots full"
+          body="Tournament Plus includes 3 active tournament slots. Archive a completed tournament to free a slot."
+        />
+      )}
+
       {!loadingData && tournaments.length === 0 && (
         <div className={styles.emptyPrompt}>
           <div>

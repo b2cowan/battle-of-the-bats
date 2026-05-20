@@ -536,6 +536,13 @@
   gap: 0.75rem;
 }
 
+.actionRow {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
 /* ── Shared action buttons ─────────────────────────────────────── */
 .saveBtn {
   font-family: var(--font-data);
@@ -570,4 +577,12 @@
   font-family: var(--font-data);
   font-size: 0.6rem;
   color: #f87171;
+}
+
+.warningNote {
+  font-family: var(--font-data);
+  font-size: 0.62rem;
+  line-height: 1.5;
+  color: #fcd34d;
+  margin: 0.2rem 0 0;
 }

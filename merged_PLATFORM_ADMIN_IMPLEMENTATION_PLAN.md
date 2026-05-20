@@ -11,6 +11,7 @@ Expected customer impact: faster support, fewer manual database edits, safer bil
 Success criteria:
 
 - Platform admin navigation is grouped by operator workflow.
+- Core platform admin pages use consistent information architecture instead of long unstructured stacks.
 - Support can search users across orgs and resolve common account issues from the app.
 - Org detail shows billing, ownership, recent activity, and support context in one place.
 - Overview includes subscription health, growth, usage, and action alerts.
@@ -22,6 +23,8 @@ Success criteria:
 Platform admins will see a more organized admin area with sections for support, growth, billing/product, and system controls. The overview becomes a command center with meaningful health indicators instead of only total counts. Organization detail becomes a support console with billing status, owner contact, member context, recent changes, and common support actions.
 
 Support users can search across all customer users, generate reset links, inspect org memberships, and open the relevant org without leaving FieldLogicHQ. Billing/product users can see how many orgs are on each plan before changing availability, pricing IDs, trials, or limits. Super admins can still manage platform staff and sensitive system controls, but lower-risk support workflows do not require broad access to every setting.
+
+The platform admin should also feel intentionally organized page by page. Instead of every page becoming a vertical list of unrelated panels, high-use pages should have a clear primary workflow, grouped secondary details, and visible next actions. For example, an organization detail page should read as: "what is this account, is anything wrong, what can support do, what changed recently?" before exposing deeper billing, modules, members, and notes.
 
 Role differences:
 
@@ -100,22 +103,24 @@ Rename the existing `/platform-admin/users` surface to **Platform Users** or **C
 
 ## Phase 1 - Support Console Foundation
 
+Status: Implementation complete; browser verification pending.
+
 Goal: make the platform admin immediately more useful for everyday support.
 
 ### Tasks
 
-- [ ] Reorganize platform admin nav with labeled sections.
-- [ ] Rename current `Users` nav item to `Platform Users` or `Company Users`.
-- [ ] Add new `Customer Users` page.
-- [ ] Implement global customer-user search across org memberships and Supabase auth users.
-- [ ] Show customer user email, display name, org memberships, role per org, member status, auth status, and last sign-in.
-- [ ] Surface password reset link generation in the customer-user UI.
-- [ ] Add org detail **Support Summary** panel.
-- [ ] Add org owner and billing contact display.
-- [ ] Add "email owner" mailto shortcut.
-- [ ] Add org rename/re-slug panel with warning about public link impact.
-- [ ] Add org activity timeline sourced from `platform_audit_log`.
-- [ ] Replace Retention Queue `window.prompt()` and `window.alert()` with inline forms and dismissible result callouts.
+- [x] Reorganize platform admin nav with labeled sections.
+- [x] Rename current `Users` nav item to `Platform Users` or `Company Users`.
+- [x] Add new `Customer Users` page.
+- [x] Implement global customer-user search across org memberships and Supabase auth users.
+- [x] Show customer user email, display name, org memberships, role per org, member status, auth status, and last sign-in.
+- [x] Surface password reset link generation in the customer-user UI.
+- [x] Add org detail **Support Summary** panel.
+- [x] Add org owner and billing contact display.
+- [x] Add "email owner" mailto shortcut.
+- [x] Add org rename/re-slug panel with warning about public link impact.
+- [x] Add org activity timeline sourced from `platform_audit_log`.
+- [x] Replace Retention Queue `window.prompt()` and `window.alert()` with inline forms and dismissible result callouts.
 
 ### Org Detail Support Summary Fields
 
@@ -137,6 +142,50 @@ Goal: make the platform admin immediately more useful for everyday support.
 - Org detail shows owner/contact/billing context without requiring Stripe first.
 - Retention extension flow uses app-native UI.
 - Org rename and slug changes are audit-logged and guarded by confirmation.
+
+## Phase 1.5 - Information Architecture And Layout Pass
+
+Goal: make platform admin pages easier to understand before adding more metrics, billing tools, and product controls.
+
+### Why This Phase Exists
+
+Phase 1 added useful support context, but the org detail page now exposes too many sections in a long vertical stack. That creates a comprehension problem: the user can see many facts, but not the logic of what to do first, what is informational, what is risky, and what is a support action. This same pattern can spread to Overview, Plans & Pricing, Audit Log, Retention Queue, Early Access, and Platform Users as more functionality is added.
+
+### Page Architecture Pattern
+
+Each platform admin page should follow a consistent structure:
+
+- **Snapshot**: the few facts needed to orient the operator.
+- **Needs Attention**: warnings, inconsistent state, overdue action, or blocked workflows.
+- **Primary Actions**: the small set of things this page is mainly for.
+- **Grouped Detail**: related information organized by support, billing, product, users, or activity.
+- **History / Evidence**: notes, audit events, previous actions, and logs.
+
+### Organization Detail Restructure
+
+- [ ] Add a compact account header with plan, subscription status, owner, member count, tournament count, and direct admin link.
+- [ ] Add a "Needs attention" strip for inconsistent billing state, expired overrides, missing owner, past-due/canceled status, retained records, or over-limit usage.
+- [ ] Group org detail into clear workflow zones: Account, Support, Billing, Entitlements, People, Activity.
+- [ ] Convert lower-priority sections into tabs, accordions, or a two-column master/detail layout so users do not have to scroll through every panel.
+- [ ] Put common support actions near the top: email owner, reset user path, edit notes, change plan, add override.
+- [ ] Move dangerous or uncommon actions behind explicit "Advanced" grouping with reason/confirmation language.
+- [ ] Make duplicate facts appear once, then link to the detailed section instead of repeating the same status across Support Summary, Billing Snapshot, and Plan & Entitlements.
+
+### Platform Admin Wide Layout Audit
+
+- [ ] Review Overview, Organizations, Customer Users, Retention Queue, Plans & Pricing, Early Access, Platform Users, and Audit Log for the same long-stack problem.
+- [ ] Define reusable page-level components or CSS patterns for summary strips, action bars, section groups, tabs, and empty states.
+- [ ] Standardize section titles around operator intent, not database names.
+- [ ] Ensure each page has a clear first action and a clear investigation path.
+- [ ] Preserve dense operational views for tables, but avoid mixing edit forms, logs, and summaries without grouping.
+
+### Acceptance Criteria
+
+- Org detail can be scanned above the fold for account status, owner, plan, and urgent issues.
+- Support, billing, entitlement, people, and activity concerns are visually separated.
+- Repeated billing/status fields are reduced or intentionally cross-linked.
+- Platform admin pages share a recognizable layout system.
+- Future Phase 2-5 functionality has a place to live without making pages feel longer and less coherent.
 
 ## Phase 2 - Metrics Command Center
 
@@ -329,15 +378,16 @@ Add only after permissions and audit logging are solid:
 2. Customer Users page with search and reset link action.
 3. Org detail support summary, billing snapshot, owner contact, timeline.
 4. Retention Queue UI cleanup.
-5. Overview metrics dashboard with subscription health, growth, usage, and alerts.
-6. Plans & Pricing subscriber counts and impact previews.
-7. Audit coverage expansion for plan/pricing/platform-user actions.
-8. Audit log export and full value viewer.
-9. Override semantics refactor.
-10. Platform admin roles and guarded action permissions.
-11. Early Access conversion tracking.
-12. Product catalog, effective dates, add-ons, campaigns, and approvals.
-13. Bulk operations.
+5. Platform admin information architecture and layout pass, starting with org detail.
+6. Overview metrics dashboard with subscription health, growth, usage, and alerts.
+7. Plans & Pricing subscriber counts and impact previews.
+8. Audit coverage expansion for plan/pricing/platform-user actions.
+9. Audit log export and full value viewer.
+10. Override semantics refactor.
+11. Platform admin roles and guarded action permissions.
+12. Early Access conversion tracking.
+13. Product catalog, effective dates, add-ons, campaigns, and approvals.
+14. Bulk operations.
 
 ## Key Technical Notes
 
@@ -363,6 +413,7 @@ Browser verification, performed by the user per project rules:
 - Platform admin nav grouping and active states.
 - Customer Users search and reset link flow.
 - Org detail support summary and timeline.
+- Org detail layout scanability, grouped workflows, and reduced long-scroll confusion.
 - Retention Queue inline extension flow.
 - Overview dashboard counts and alerts.
 - Plans & Pricing impact previews.

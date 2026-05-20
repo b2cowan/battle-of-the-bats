@@ -2698,6 +2698,22 @@ export async function deleteRepTeam(teamId: string): Promise<void> {
   if (error) throw error;
 }
 
+/**
+ * Returns the number of rep teams in an org that have at least one program year
+ * in 'draft' or 'active' status. Used to determine the billable quantity for the
+ * Club plan rep-team add-on (first 3 free, $20/month per additional).
+ */
+export async function getActiveRepTeamCount(orgId: string): Promise<number> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_program_years')
+    .select('team_id')
+    .eq('org_id', orgId)
+    .in('status', ['draft', 'active']);
+  if (error) throw error;
+  const uniqueTeamIds = new Set((data ?? []).map((r: any) => r.team_id as string));
+  return uniqueTeamIds.size;
+}
+
 export async function bulkRenameTeamSlugs(
   orgId: string,
   renames: Array<{ teamId: string; newSlug: string }>,

@@ -127,6 +127,9 @@ export default function BillingPage() {
   const [seatUsage, setSeatUsage]         = useState<{
     billed: number; officials: number; limit: number; officialsFree: boolean;
   } | null>(null);
+  const [repTeamAddon, setRepTeamAddon]   = useState<{
+    activeCount: number; billableCount: number;
+  } | null>(null);
 
   async function refreshBillingState() {
     await Promise.all([refreshOrg(), refreshTournaments()]);
@@ -137,6 +140,22 @@ export default function BillingPage() {
     fetch('/api/admin/members/count')
       .then(r => r.ok ? r.json() : null)
       .then(data => { if (data) setSeatUsage(data); })
+      .catch(() => {});
+  }, [currentOrg]);
+
+  // E6 — fetch rep-team add-on usage for Club orgs
+  useEffect(() => {
+    if (!currentOrg || currentOrg.planId !== 'club') return;
+    fetch('/api/admin/rep-teams/billing-preview?proposedCount=0')
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (data && typeof data.currentCount === 'number') {
+          setRepTeamAddon({
+            activeCount: data.currentCount,
+            billableCount: Math.max(0, data.currentCount - 3),
+          });
+        }
+      })
       .catch(() => {});
   }, [currentOrg]);
 
@@ -421,6 +440,25 @@ export default function BillingPage() {
               })()}
             </div>
           )}
+        </div>
+      )}
+
+      {/* E6 — Rep team add-on usage (Club plan only) */}
+      {currentPlanKey === 'club' && repTeamAddon !== null && (
+        <div className={styles.usageCard}>
+          <div className={styles.usageHeader}>
+            <span className={styles.usageLabel}>
+              Rep team add-on
+              <span style={{ marginLeft: '0.5rem', fontWeight: 400, color: 'var(--white-30)' }}>
+                · first 3 active teams included
+              </span>
+            </span>
+            <span className={styles.usageCount}>
+              {repTeamAddon.billableCount > 0
+                ? `${repTeamAddon.billableCount} billed — ${currentOrg.subscriptionPeriod === 'annual' ? '$200 CAD / year' : '$20 CAD / month'} each`
+                : `${repTeamAddon.activeCount} active · within free threshold`}
+            </span>
+          </div>
         </div>
       )}
 

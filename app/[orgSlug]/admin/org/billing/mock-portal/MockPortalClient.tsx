@@ -11,15 +11,24 @@ import styles from './mock-portal.module.css';
 const PLANS: OrgPlan[]    = ['tournament', 'tournament_plus', 'league', 'club'];
 const STATUSES: SubscriptionStatus[] = ['active', 'trialing', 'past_due', 'canceled'];
 
+function normalizeStatusForPlan(plan: OrgPlan, status: SubscriptionStatus): SubscriptionStatus {
+  return plan === 'tournament' && status === 'trialing' ? 'active' : status;
+}
+
 export default function MockPortalPage() {
   const { currentOrg, refresh } = useOrg();
   const router = useRouter();
 
   const [plan,   setPlan]   = useState<OrgPlan>(currentOrg?.planId ?? 'tournament');
-  const [status, setStatus] = useState<SubscriptionStatus>(currentOrg?.subscriptionStatus ?? 'active');
+  const [status, setStatus] = useState<SubscriptionStatus>(
+    normalizeStatusForPlan(currentOrg?.planId ?? 'tournament', currentOrg?.subscriptionStatus ?? 'active')
+  );
   const [saving, setSaving] = useState(false);
   const [saved,  setSaved]  = useState(false);
   const [error,  setError]  = useState('');
+  const availableStatuses = plan === 'tournament'
+    ? STATUSES.filter(s => s !== 'trialing')
+    : STATUSES;
 
   async function handleApply() {
     setSaving(true);
@@ -67,7 +76,10 @@ export default function MockPortalPage() {
               <button
                 key={p}
                 className={`${styles.pill} ${plan === p ? styles.pillActive : ''}`}
-                onClick={() => setPlan(p)}
+                onClick={() => {
+                  setPlan(p);
+                  setStatus(current => normalizeStatusForPlan(p, current));
+                }}
               >
                 {PLAN_CONFIG[p].label}
                 {plan === p && <CheckCircle size={13} />}
@@ -84,7 +96,7 @@ export default function MockPortalPage() {
         <div className={styles.field}>
           <label className={styles.label}>Subscription status</label>
           <div className={styles.pills}>
-            {STATUSES.map(s => (
+            {availableStatuses.map(s => (
               <button
                 key={s}
                 className={`${styles.pill} ${status === s ? styles.pillActive : ''}`}

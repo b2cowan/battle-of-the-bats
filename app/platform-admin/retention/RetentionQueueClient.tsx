@@ -41,12 +41,27 @@ export default function RetentionQueueClient({ rows }: { rows: RetentionRow[] })
   const router = useRouter();
   const [busyId, setBusyId] = useState<string | null>(null);
   const [processing, setProcessing] = useState(false);
+  const [extendId, setExtendId] = useState<string | null>(null);
+  const [reason, setReason] = useState('');
+  const [message, setMessage] = useState('');
+  const [error, setError] = useState('');
+
+  function startExtend(row: RetentionRow) {
+    setExtendId(row.id);
+    setReason(row.lastExtensionReason ?? '');
+    setMessage('');
+    setError('');
+  }
 
   async function extend(row: RetentionRow) {
-    const reason = window.prompt(`Reason for extending retention for ${row.displayName}?`);
-    if (!reason?.trim()) return;
+    if (!reason.trim()) {
+      setError('Reason is required to extend retention.');
+      return;
+    }
 
     setBusyId(row.id);
+    setError('');
+    setMessage('');
     try {
       const res = await fetch(`/api/platform-admin/retention/${row.id}/extend`, {
         method: 'POST',
@@ -55,9 +70,12 @@ export default function RetentionQueueClient({ rows }: { rows: RetentionRow[] })
       });
       const data = await res.json() as { error?: string };
       if (!res.ok) throw new Error(data.error ?? 'Failed to extend retention');
+      setMessage(`Extended ${row.displayName} by 30 days.`);
+      setExtendId(null);
+      setReason('');
       router.refresh();
     } catch (err: unknown) {
-      window.alert(err instanceof Error ? err.message : 'Failed to extend retention');
+      setError(err instanceof Error ? err.message : 'Failed to extend retention');
     } finally {
       setBusyId(null);
     }
@@ -65,6 +83,8 @@ export default function RetentionQueueClient({ rows }: { rows: RetentionRow[] })
 
   async function processExpiry() {
     setProcessing(true);
+    setError('');
+    setMessage('');
     try {
       const res = await fetch('/api/platform-admin/retention/process', { method: 'POST' });
       const data = await res.json() as {
@@ -75,15 +95,15 @@ export default function RetentionQueueClient({ rows }: { rows: RetentionRow[] })
         pendingPurgeRecords?: number;
       };
       if (!res.ok) throw new Error(data.error ?? 'Failed to process retention expiry');
-      window.alert([
+      setMessage([
         `Warning emails sent: ${data.warningEmailsSent ?? 0}`,
         `Records warning-tagged: ${data.warningRecordsTagged ?? 0}`,
         `Pending-purge emails sent: ${data.pendingPurgeEmailsSent ?? 0}`,
         `Records moved to pending purge: ${data.pendingPurgeRecords ?? 0}`,
-      ].join('\n'));
+      ].join(' / '));
       router.refresh();
     } catch (err: unknown) {
-      window.alert(err instanceof Error ? err.message : 'Failed to process retention expiry');
+      setError(err instanceof Error ? err.message : 'Failed to process retention expiry');
     } finally {
       setProcessing(false);
     }
@@ -103,6 +123,19 @@ export default function RetentionQueueClient({ rows }: { rows: RetentionRow[] })
           Sends 14-day warnings and moves expired records into pending purge.
         </span>
       </div>
+
+      {(message || error) && (
+        <div className={error ? styles.errorCallout : styles.messageCallout}>
+          {error || message}
+          <button
+            className={styles.dismissBtn}
+            onClick={() => { setMessage(''); setError(''); }}
+            type="button"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
 
       <div className={styles.tableWrap}>
         <table className={styles.table}>
@@ -145,13 +178,43 @@ export default function RetentionQueueClient({ rows }: { rows: RetentionRow[] })
                   )}
                 </td>
                 <td>
-                  <button
-                    className={styles.filterBtn}
-                    onClick={() => extend(row)}
-                    disabled={busyId === row.id}
-                  >
-                    {busyId === row.id ? 'Extending...' : '+30 days'}
-                  </button>
+                  {extendId === row.id ? (
+                    <div className={styles.inlineForm}>
+                      <textarea
+                        className={styles.reasonInput}
+                        value={reason}
+                        onChange={event => setReason(event.target.value)}
+                        rows={2}
+                        placeholder="Reason for support extension"
+                      />
+                      <div className={styles.inlineActions}>
+                        <button
+                          className={styles.filterBtn}
+                          onClick={() => extend(row)}
+                          disabled={busyId === row.id}
+                          type="button"
+                        >
+                          {busyId === row.id ? 'Extending...' : 'Save'}
+                        </button>
+                        <button
+                          className={styles.filterClear}
+                          onClick={() => { setExtendId(null); setReason(''); }}
+                          type="button"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <button
+                      className={styles.filterBtn}
+                      onClick={() => startExtend(row)}
+                      disabled={busyId === row.id}
+                      type="button"
+                    >
+                      +30 days
+                    </button>
+                  )}
                 </td>
               </tr>
             ))}

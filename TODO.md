@@ -11,7 +11,13 @@ This file tracks the ongoing tasks for the FieldLogicHQ platform (multi-tenant s
 
 ## 🚀 Active Tasks (Priority Order)
 
-- [ ] **Platform admin support, metrics, and product operations upgrade** - Merge Claude/Codex platform admin recommendations into phased implementation plan (see [merged_PLATFORM_ADMIN_IMPLEMENTATION_PLAN.md](merged_PLATFORM_ADMIN_IMPLEMENTATION_PLAN.md))
+- [ ] **Platform admin Phase 1** - Support console foundation implemented; browser verification pending for nav grouping, customer users search, org support summary, reset links, owner contact, timeline, and retention UI cleanup (see [merged_PLATFORM_ADMIN_IMPLEMENTATION_PLAN.md](merged_PLATFORM_ADMIN_IMPLEMENTATION_PLAN.md))
+  - [x] Free Tournament billing invariant: Tournament plan changes, mock billing, and cleanup migration no longer preserve `trialing` subscription state
+- [ ] **Platform admin Phase 1.5** - Information architecture and layout pass: restructure org detail and audit key platform admin pages for clearer workflows before adding more functionality (see [merged_PLATFORM_ADMIN_IMPLEMENTATION_PLAN.md](merged_PLATFORM_ADMIN_IMPLEMENTATION_PLAN.md))
+- [ ] **Platform admin Phase 2** - Metrics command center: subscription health, growth funnel, product usage, and platform admin alerts (see [merged_PLATFORM_ADMIN_IMPLEMENTATION_PLAN.md](merged_PLATFORM_ADMIN_IMPLEMENTATION_PLAN.md))
+- [ ] **Platform admin Phase 3** - Billing and product safety: plan impact previews, expanded audit logging, override semantics, and audit log investigation tools (see [merged_PLATFORM_ADMIN_IMPLEMENTATION_PLAN.md](merged_PLATFORM_ADMIN_IMPLEMENTATION_PLAN.md))
+- [ ] **Platform admin Phase 4** - Permissions and governance: platform admin roles, guarded actions, reasons, confirmations, and role-scoped controls (see [merged_PLATFORM_ADMIN_IMPLEMENTATION_PLAN.md](merged_PLATFORM_ADMIN_IMPLEMENTATION_PLAN.md))
+- [ ] **Platform admin Phase 5** - Growth and product catalog: early-access conversion tracking, plan versions, add-ons, effective dates, campaigns, approvals, and bulk operations (see [merged_PLATFORM_ADMIN_IMPLEMENTATION_PLAN.md](merged_PLATFORM_ADMIN_IMPLEMENTATION_PLAN.md))
 
 - [ ] **Tournament help documentation UX review** - Upgrade tournament help with grouped contents, search, quick answers, and FAQs (see [TOURNAMENT_HELP_DOCS_REVIEW_PLAN.md](TOURNAMENT_HELP_DOCS_REVIEW_PLAN.md))
 
@@ -108,9 +114,9 @@ This file tracks the ongoing tasks for the FieldLogicHQ platform (multi-tenant s
   - [x] portal route: Stripe Customer Portal session
   - [x] Billing settings page: upgrade cards, usage meters, downgrade/cancel review
   - [x] Stripe reconciliation (D4): downgrade/confirm calls subscriptions.update() or cancel(); cancel/confirm calls subscriptions.cancel(); webhook dedup guard is intent-type aware (downgrade vs cancellation)
-  - [ ] Trial lifecycle reminders for League 30-day and Club 90-day windows (F4)
-- [ ] **Phase E** — Per-team billing: quantity sync, billing preview modal, program year hook
-- [ ] **Phase F** — Upsell gate component + plan selection → Checkout flow
+  - [ ] Trial lifecycle reminders for League 30-day and Club 90-day windows — deferred to F4 (see Deferred Enhancements)
+- [x] **Phase E** — Per-team billing: quantity sync (E1–E2), billing preview API (E3), team creation modal (E4), program year hook (E5), billing page add-on section (E6)
+- [x] **Phase F** — UpgradeGate component (F1), onboarding→Checkout verified (F2), soft upsell prompts (F3); F4 deferred (see Deferred Enhancements)
 - [ ] **Phase G — Go live with Stripe** (production cutover checklist)
   - **Current state:** test Stripe keys (`sk_test_...`) set on all Amplify branches — safe while prod is not live
   - [x] D4 gap resolved: downgrade/cancel confirm routes now call Stripe after DB write
@@ -132,6 +138,8 @@ This file tracks the ongoing tasks for the FieldLogicHQ platform (multi-tenant s
 ---
 
 ## 🧭 Deferred Enhancements (Confirmed scope, build later)
+
+- [ ] **F4 — Trial checkpoint emails (League + Club)** — League orgs on a 30-day trial receive setup check-in emails at day 7, day 21, and ~day 27 (3-day warning already handled by Stripe `trial_will_end` webhook). Club orgs on a 90-day trial receive check-ins at day 7, day 30, day 60, and day 80. These are proactive activation emails (not just payment warnings). Implementation requires: a daily cron route at `/api/cron/trial-emails` protected by a shared secret, called by AWS EventBridge Scheduler; a `trial_email_sent` bitmask column on `organizations` for idempotency; and 4–5 email templates in the Resend stack. **Blocked on:** decision to enable EventBridge Scheduler in the Amplify account. See [STRIPE_INTEGRATION_PLAN.md](STRIPE_INTEGRATION_PLAN.md) Phase F.
 
 - [ ] **House League — Coach Draft Room** — Shareable per-team link (no login required) that lets coaches participate in the draft live. Each team gets a token-scoped URL; coaches see the current pick state and submit their pick when it's their turn. Requires: real-time state sync (polling or WebSocket), a `draftTokens` map in `draft_state`, and a public-facing draft room page. See conversation context from Phase 5G planning. **Architecture note:** Phase 5G is designed to not block this — draft business logic is kept auth-layer-agnostic so a token path can be added to `/draft/route.ts` without restructuring the state machine.
 - [ ] **House League — Practice Scheduling** — Allow league admins to schedule practices for individual teams alongside the game schedule. A practice belongs to one team (not two), has no score, and does not affect standings. Confirmed scope post-Phase 5H. Build as an extension of the schedule page: separate "Practices" tab or filter, same date/time/location fields, team selector instead of home/away. No schema migration needed — can reuse `league_games` with `away_team_id = null` and a `game_type` column, or use a separate `league_practices` table (decide at build time).
