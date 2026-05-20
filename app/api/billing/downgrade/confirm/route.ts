@@ -7,6 +7,8 @@ import {
   writeOrgBillingAudit,
 } from '@/lib/billing-retention';
 import { PLAN_CONFIG } from '@/lib/plan-config';
+import { stripe } from '@/lib/stripe';
+import { getPlanFromPriceId, getStripePriceId } from '@/lib/stripe-prices';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 
 type ConfirmBody = {
@@ -132,6 +134,64 @@ export async function POST(req: Request) {
     keepTournamentIds,
     retentionUntil,
   });
+
+  // — D4: Stripe reconciliation —
+  // All DB writes have succeeded. Now apply the matching change in Stripe so
+  // billing stops at the old rate. If there is no Stripe subscription (e.g. the
+  // org was on a free trial or never completed checkout), skip silently.
+  const stripeSubscriptionId = ctx.org.stripeSubscriptionId ?? null;
+  if (stripeSubscriptionId) {
+    try {
+      if (targetPlan === 'tournament') {
+        // Downgrading to the free tier — cancel the Stripe subscription entirely.
+        // customer.subscription.deleted will fire; the dedup guard in the webhook
+        // will find this intent (status='applied', intent_type='downgrade') and
+        // skip retention logic while only clearing the Stripe subscription fields.
+        await stripe.subscriptions.cancel(stripeSubscriptionId);
+      } else {
+        // Downgrading to a lower paid plan — swap the price on the existing
+        // subscription. Retrieve first to get the subscription item ID and derive
+        // the billing cycle from the current price.
+        const currentSub = await stripe.subscriptions.retrieve(stripeSubscriptionId);
+        const currentItem = currentSub.items.data[0];
+        const currentMatch = await getPlanFromPriceId(currentItem.price.id);
+        const billingCycle = currentMatch?.billingCycle ?? 'monthly';
+
+        const newPriceId = await getStripePriceId(targetPlan, billingCycle);
+        if (!newPriceId) {
+          throw new Error(
+            `No Stripe price ID found for plan "${targetPlan}" / cycle "${billingCycle}". ` +
+            'Enter it in Platform Admin → Stripe Prices.'
+          );
+        }
+
+        await stripe.subscriptions.update(stripeSubscriptionId, {
+          items: [{ id: currentItem.id, price: newPriceId }],
+          proration_behavior: 'create_prorations',
+        });
+      }
+    } catch (stripeErr) {
+      const message = stripeErr instanceof Error ? stripeErr.message : String(stripeErr);
+      console.error('[downgrade/confirm] Stripe reconciliation failed:', message);
+      await writeOrgBillingAudit(ctx.org.id, ctx.user.id, 'billing_stripe_reconciliation_failed', {
+        action: 'downgrade',
+        targetPlan,
+        stripeSubscriptionId,
+        error: message,
+      });
+      return Response.json(
+        {
+          error:
+            'Your plan was updated in FieldLogicHQ but the Stripe subscription could not be changed. ' +
+            'Contact support to reconcile your billing.',
+          targetPlan,
+          retainedCount: retainedTournaments.length,
+          retentionUntil,
+        },
+        { status: 500 },
+      );
+    }
+  }
 
   return Response.json({
     ok: true,

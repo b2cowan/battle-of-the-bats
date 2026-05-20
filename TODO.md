@@ -1,4 +1,4 @@
-# FieldLogicHQ — Project TODO List
+﻿# FieldLogicHQ — Project TODO List
 
 This file tracks the ongoing tasks for the FieldLogicHQ platform (multi-tenant sports club and league management). AI models and the USER use this to coordinate work.
 
@@ -25,7 +25,7 @@ This file tracks the ongoing tasks for the FieldLogicHQ platform (multi-tenant s
   - [x] Phase 4 item 13: public announcement posting is clearly separated from email communication
   - [x] Phase 4 item 14: communication targeting now supports teams, divisions, statuses, and contacts
   - [x] Phase 4 item 15: mobile tournament More menu includes day-of tools
-  - [ ] Phase 5 item 16: plan feature gates and pricing copy align free Tournament with Tournament Plus-and-above benefits
+  - [x] Phase 5 item 16: plan feature gates and pricing copy align free Tournament with Tournament Plus-and-above benefits
 
 ### 0. Tournament Signup Experience
 *Detailed tasks in [TOURNAMENT_SIGNUP_EXPERIENCE_FIXES.md](TOURNAMENT_SIGNUP_EXPERIENCE_FIXES.md)*
@@ -90,15 +90,36 @@ This file tracks the ongoing tasks for the FieldLogicHQ platform (multi-tenant s
   - [x] Migration 039 applied in dev and production
   - [x] Dev/mock upgrades restore retained downgrade tournaments when plan limits allow
   - [ ] Hard purge job after pending-purge review policy is finalized
-- [ ] **Phase A** — Stripe dashboard setup: products, prices, webhooks, Customer Portal (test environment)
-- [ ] **Phase B** — App infrastructure: Stripe SDK, lib/stripe.ts, price map, DB migration 037
-- [ ] **Phase C** — Webhook handler: subscription lifecycle → org plan tier sync
-- [ ] **Phase D** — Checkout + Customer Portal APIs + billing settings page
-  - [ ] Stripe subscription scheduling/reconciliation for confirmed downgrade and cancellation intents
-  - [ ] Trial lifecycle reminders/checkpoints for League 30-day and Club 90-day onboarding windows
+- [x] **Phase A** — Stripe dashboard setup: products, prices, webhooks, Customer Portal, API keys + price IDs configured in dev (test environment complete)
+- [ ] **Phase B** — App infrastructure: Stripe SDK, price map, DB migration 047
+  - [x] Stripe package + lib/stripe.ts singleton complete
+  - [x] ~~Price map: getPlanPriceId() in lib/plan-config.ts~~ → replaced by DB-backed stripe_prices table (migration 048)
+  - [x] Migration 047: subscription_period, current_period_end, rep_team_subscription_item_id — applied dev + prod
+  - [x] Migration 048: stripe_prices table — price IDs in DB, managed via Platform Admin → Plans & Pricing — applied dev + prod
+  - [x] Migration 049: plan_config_overrides table — per-plan tournament limit, seat limit, trial day overrides; lib/plan-config-db.ts helpers — applied dev + prod
+  - [x] Platform Configuration: Plans & Pricing admin page at /platform-admin/plans-pricing (plan availability, limits & trials, Stripe price IDs)
+- [x] **Phase C** — Webhook handler: subscription lifecycle → org plan tier sync
+  - [x] runtime = nodejs; checkout.session.completed; invoice.payment_succeeded; trial_will_end email; subscription.created/updated writes new columns; subscription.deleted dedup guard (intent-type aware)
+- [x] **Phase D** — Checkout + Customer Portal APIs + billing settings page
+  - [x] Checkout billing-cycle readiness: monthly/annual selection now flows into checkout/mock checkout with future annual Stripe price guards
+  - [x] create-checkout route: full Stripe checkout with gating + mock dev path
+  - [x] portal route: Stripe Customer Portal session
+  - [x] Billing settings page: upgrade cards, usage meters, downgrade/cancel review
+  - [x] Stripe reconciliation (D4): downgrade/confirm calls subscriptions.update() or cancel(); cancel/confirm calls subscriptions.cancel(); webhook dedup guard is intent-type aware (downgrade vs cancellation)
+  - [ ] Trial lifecycle reminders for League 30-day and Club 90-day windows (F4)
 - [ ] **Phase E** — Per-team billing: quantity sync, billing preview modal, program year hook
 - [ ] **Phase F** — Upsell gate component + plan selection → Checkout flow
-- [ ] **Phase G** — Production cutover: prod Stripe setup, Amplify env vars, smoke test
+- [ ] **Phase G — Go live with Stripe** (production cutover checklist)
+  - **Current state:** test Stripe keys (`sk_test_...`) set on all Amplify branches — safe while prod is not live
+  - [x] D4 gap resolved: downgrade/cancel confirm routes now call Stripe after DB write
+  - [ ] In Stripe Dashboard (Live mode): create products + prices matching sandbox setup; record 8 live `price_xxx` IDs
+  - [ ] In Stripe Dashboard (Live mode): create production webhook endpoint at `https://fieldlogichq.ca/api/billing/webhook`; record live `whsec_...`
+  - [ ] Configure Stripe Customer Portal for live mode: add business name, privacy policy URL, and terms of service URL (required before live transactions)
+  - [ ] Enter the 8 live price IDs via **Platform Admin → Plans & Pricing → Stripe Price IDs** (Live Mode rows) on the production app — no Amplify deploy needed
+  - [ ] In Amplify: add master-branch **override** for `STRIPE_SECRET_KEY` → `sk_live_...`, `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` → `pk_live_...`, `STRIPE_WEBHOOK_SECRET` → live `whsec_...` (leave test keys on all-branches default so dev keeps working)
+  - [ ] Remove now-unused `STRIPE_PRICE_*` env vars from Amplify (price IDs are DB-backed; these no longer do anything)
+  - [ ] Run Phase G smoke test checklist (see STRIPE_INTEGRATION_PLAN.md § Phase G)
+  - [ ] Monitor first real transactions in Stripe dashboard and verify webhook delivery
 
 ### 5. Email Strategy
 
@@ -114,12 +135,16 @@ This file tracks the ongoing tasks for the FieldLogicHQ platform (multi-tenant s
 - [ ] **House League — Practice Scheduling** — Allow league admins to schedule practices for individual teams alongside the game schedule. A practice belongs to one team (not two), has no score, and does not affect standings. Confirmed scope post-Phase 5H. Build as an extension of the schedule page: separate "Practices" tab or filter, same date/time/location fields, team selector instead of home/away. No schema migration needed — can reuse `league_games` with `away_team_id = null` and a `game_type` column, or use a separate `league_practices` table (decide at build time).
 - [ ] **Calendar Sync for Team Schedules** — Allow parents/coaches to export a team's game schedule as an `.ics` file or subscribe via a calendar URL (Google/Apple Calendar). Technically straightforward (generate `.ics` from schedule query). Applies to both house league team schedules and rep team schedules in the coaches portal. Build during a parent-facing polish pass.
 - [ ] **Bulk Operations for Admins** — Bulk-change registration statuses, bulk-assign teams, bulk-edit schedule slots. High value for orgs with 100+ registrations. Requires multi-select UI, confirmation flows, and async batch API routes. Revisit after Phase 3 UX ships and an org is operating at scale.
-- [ ] **Custom domain investigation** — Research feasibility and effort of allowing orgs to point a custom domain (e.g. miltonbats.com) to their FieldLogicHQ public page. Covers: DNS verification flow, wildcard SSL or per-org cert provisioning, reverse proxy / Amplify routing changes, and potential upsell pricing. Do not design or implement until `module_public_site` is fully shipped.
+- [ ] **Custom domain investigation** — Research feasibility and effort of allowing orgs to point a custom domain (e.g. miltonbats.com) to their FieldLogicHQ public page. Covers: DNS verification flow, wildcard SSL or per-org cert provisioning, reverse proxy / Amplify routing changes, and potential upsell pricing. Do not design or implement until `module_public_site` is fully shipped. **Also investigate:** pros and cons of a custom domain for the Stripe Customer Portal (e.g. `billing.fieldlogichq.ca`) — level of effort, DNS setup, whether it meaningfully improves trust vs. billing.stripe.com, and when this becomes worth prioritizing.
 - [ ] **Public Site Offering Evaluation** — After the first external org enables `module_public_site`, review the offering across three dimensions: (1) ease of setup — is the path from enabling the module to a live page clear enough for a non-technical org owner? (2) customization level — structured fields are correct; assess whether anything is missing without going full CMS; (3) base UX improvements. Produce a prioritized fix list before moving to the next module.
 
 ---
 
 ## ✅ Completed Projects
+
+### Non-Billing UAT Remediation
+*(Archived - all 8 items complete. See [docs/archive/NON_BILLING_UAT_REMEDIATION_PLAN.md](docs/archive/NON_BILLING_UAT_REMEDIATION_PLAN.md))*
+- [x] Signup URL guardrails, legacy admin routing, public tournament reads, public registration reads, official scorekeeper scoping/states, Next.js proxy migration, and lint-gate stabilization
 
 ### Slot-First Roster & Schedule Architecture
 *(Archived — all 7 phases complete. See [docs/archive/SLOT_ROSTER_PLAN.md](docs/archive/SLOT_ROSTER_PLAN.md))*
@@ -148,6 +173,8 @@ This file tracks the ongoing tasks for the FieldLogicHQ platform (multi-tenant s
 ### Pricing
 - [x] **Phase 1** — Update plan-config (4 tiers), rewrite PricingSection component, build public `/pricing` page. Full plan in [PRICING_IMPLEMENTATION_PLAN.md](docs/archive/PRICING_IMPLEMENTATION_PLAN.md). Content spec in [PRICING_PAGE_COPY.md](docs/archive/PRICING_PAGE_COPY.md).
 - [x] **Phase 2 / Functionality Audit** — Billing page rewritten (monthly/annual toggle, modules section, outcome-focused upgrade cards); onboarding checklist updated with conditional module steps; all stale plan name references removed.
+- [x] **Launch positioning update** — Public and billing pages now sell Tournament/Tournament Plus as live tiers while League/Club are marked coming soon/early access; checkout blocks League/Club self-serve purchase.
+- [x] **Early-access lead capture** — Join Early Access CTAs now open a modal that collects name, email, organization, interest areas, and consent into `early_access_leads`.
 
 ### Tournament Admin URL Restructure
 *(see [TOURNAMENT_URL_RESTRUCTURE_PLAN.md](docs/archive/TOURNAMENT_URL_RESTRUCTURE_PLAN.md))*
@@ -208,6 +235,7 @@ This file tracks the ongoing tasks for the FieldLogicHQ platform (multi-tenant s
 - [x] **Phase E3** — Audit log read page at `/platform-admin/audit`
 - [x] **Phase F** — Org search/filter + users pagination
 - [x] Platform company users — DB-managed platform admin access (`platform_users` table, invite/deactivate/remove UI)
+- [x] Early Access Platform Admin — League/Club lead pipeline with protected APIs, filtering, detail/status/notes workflow, copy/export helpers, outreach templates, migrations 044/045 applied dev+prod, and browser verification complete
 
 ### Platform Roadmap — Add-On Modules
 *(see [PLATFORM_ROADMAP.md](PLATFORM_ROADMAP.md))*
@@ -319,3 +347,4 @@ This file tracks the ongoing tasks for the FieldLogicHQ platform (multi-tenant s
 - [x] Age Group Preference Persistence — cookie-based tab persistence
 - [x] Schedule/Results Revamp — inline scores, team filter, bracket view, `/standings` page
 - [x] Stock Logo Library — curated sport icon set, plan-tiered access
+

@@ -4,6 +4,7 @@ import {
   retentionDeadline,
   writeOrgBillingAudit,
 } from '@/lib/billing-retention';
+import { stripe } from '@/lib/stripe';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 
 export async function POST(req: Request) {
@@ -105,6 +106,37 @@ export async function POST(req: Request) {
     retainedTournamentIds: preflight.tournaments.map(t => t.id),
     retentionUntil,
   });
+
+  // — D4: Stripe reconciliation —
+  // All DB writes have succeeded. Cancel the Stripe subscription immediately so
+  // billing stops at the same moment the in-app suspension takes effect.
+  // customer.subscription.deleted will fire; the dedup guard in the webhook will
+  // find this intent (status='applied', intent_type='cancellation') and skip the
+  // retention logic (already applied here) while still clearing Stripe fields.
+  const stripeSubscriptionId = ctx.org.stripeSubscriptionId ?? null;
+  if (stripeSubscriptionId) {
+    try {
+      await stripe.subscriptions.cancel(stripeSubscriptionId);
+    } catch (stripeErr) {
+      const message = stripeErr instanceof Error ? stripeErr.message : String(stripeErr);
+      console.error('[cancel/confirm] Stripe reconciliation failed:', message);
+      await writeOrgBillingAudit(ctx.org.id, ctx.user.id, 'billing_stripe_reconciliation_failed', {
+        action: 'cancellation',
+        stripeSubscriptionId,
+        error: message,
+      });
+      return Response.json(
+        {
+          error:
+            'Your account was canceled in FieldLogicHQ but the Stripe subscription could not be stopped. ' +
+            'Contact support to cancel your billing.',
+          retainedCount: preflight.tournaments.length + 1,
+          retentionUntil,
+        },
+        { status: 500 },
+      );
+    }
+  }
 
   return Response.json({
     ok: true,

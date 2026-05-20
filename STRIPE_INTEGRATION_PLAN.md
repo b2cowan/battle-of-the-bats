@@ -1,5 +1,69 @@
-# Stripe Integration Plan
+﻿# Stripe Integration Plan
 ## End-to-End Billing & Subscription Infrastructure for FieldLogicHQ
+
+**PM Brief:** [STRIPE_PM_BRIEF.md](STRIPE_PM_BRIEF.md)
+
+---
+
+## Implementation Checklist
+
+### Phase A — Stripe Dashboard Setup (Manual)
+- [x] A1 — Create Stripe account, enable test mode
+- [x] A2 — Create Products & Prices (test mode): Tournament Plus, League, Club, Rep Team add-on; 8 plan price IDs + 2 rep team price IDs
+- [x] A3 — Configure Customer Portal (payment methods + invoices only; no direct cancel/downgrade)
+- [x] A4 — Add webhook endpoint for dev/staging: `/api/billing/webhook`; record `whsec_...`
+- [x] A5 — Add test-mode API keys + webhook secret to Amplify dev branch env vars; enter price IDs via Platform Admin → Stripe Prices (no env vars needed for price IDs)
+- [ ] A6 — Repeat A2–A5 in live mode after dev verified end-to-end
+
+### Phase B — App Infrastructure
+- [x] B1 — Stripe package installed (`stripe` npm)
+- [x] B2 — `lib/stripe.ts` lazy singleton complete
+- [x] B3 — Price IDs: `stripe_prices` DB table (migration 048) + `lib/stripe-prices.ts` helpers; replaces env-var price map — manageable via Platform Admin → Stripe Prices without redeploy
+- [x] B4 — Migration `047_stripe_subscription_period.sql`: applied dev + prod
+- [x] B5 — `updateOrgSubscription` DB helper in `lib/db.ts`; new fields added to `Organization` type and `mapOrg`
+- [x] B6 — Migration 049_plan_config_overrides.sql: per-plan overrides for tournament limit, seat limit, trial days; lib/plan-config-db.ts helpers (getPlanConfigOverride, upsertPlanConfigOverride); create-checkout route uses merged trial days. Apply to dev + prod.
+- [x] Platform Configuration: Plans and Pricing admin page at /platform-admin/plans-pricing — plan availability toggles, plan limits and trials overrides, Stripe price IDs — consolidates old Plans + Stripe Prices pages.
+
+### Phase C — Webhook Handler
+- [x] Handler exists at `app/api/billing/webhook/route.ts` with signature verification
+- [x] `customer.subscription.created/updated` — updates plan, tournament_limit, subscription_status, stripe_subscription_id
+- [x] `customer.subscription.deleted` — cancellation with full retention logic
+- [x] `invoice.payment_failed` — sets past_due
+- [x] Add `export const runtime = 'nodejs'`
+- [x] `checkout.session.completed` — defensively sets `stripe_customer_id` if null
+- [x] `invoice.payment_succeeded` — sets `subscription_status = 'active'`, updates `current_period_end`
+- [x] `customer.subscription.trial_will_end` — sends trial-ending email to org owner via Resend
+- [x] Update `subscription.created/updated` to write `subscription_period` and `current_period_end` (from `items.data[0].current_period_end` — moved in API 2026-04-22.dahlia)
+- [x] `customer.subscription.deleted` — dedup guard: skips retention logic if an in-app intent already applied
+
+### Phase D — Checkout & Billing UI
+- [x] D1 — `create-checkout` route: full Stripe checkout with gating, customer create/reuse, trial days, mock dev path
+- [x] D2 — `portal` route: Stripe Customer Portal session creation
+- [x] D3 — Billing settings page: upgrade cards, usage meters, downgrade/cancel review flows
+- [x] D4 — Stripe reconciliation: `downgrade/confirm` must call `stripe.subscriptions.update()` after DB write
+- [x] D4 — Stripe reconciliation: `cancel/confirm` must call `stripe.subscriptions.cancel()` after DB write
+- [x] D4 — Webhook dedup: `subscription.deleted` handler must detect already-applied cancellation intent and skip re-processing
+- [ ] Trial lifecycle reminders for League 30-day and Club 90-day windows (F4)
+
+### Phase E — Per-Team Billing (Club Add-on)
+- [ ] E1 — `getActiveRepTeamCount()` DB helper
+- [ ] E2 — `syncRepTeamBilling()` in `lib/stripe-sync.ts`
+- [ ] E3 — Billing preview API: `/api/admin/rep-teams/billing-preview`
+- [ ] E4 — Team creation billing modal (Club orgs, active_count â‰¥ 3)
+- [ ] E5 — Program year status hook: call `syncRepTeamBilling` on status → completed/archived
+- [ ] E6 — Billing page add-on section for Club orgs with active rep team items
+
+### Phase F — Upsell Surfaces
+- [ ] F1 — `UpgradeGate` component: wraps locked features with plan-aware upgrade CTA
+- [ ] F2 — Onboarding plan selection: paid plan → Stripe Checkout; resume onboarding on `?checkout=success`
+- [ ] F3 — Soft upsell prompts at tournament limit and module entry points
+- [ ] F4 — Trial checkpoints/reminder emails: League (day 7, 21, ~30), Club (day 7, 30, 60, 80)
+
+### Phase G — Production Cutover
+- [ ] G1 — Stripe live account setup (repeat Phase A in live mode)
+- [ ] G2 — Set all live env vars in Amplify production branch
+- [ ] G3 — Apply migration 047 to production Supabase
+- [ ] G4 — End-to-end smoke test checklist (see Phase G section below)
 
 ---
 
@@ -99,19 +163,9 @@ All env vars needed in `.env.local` (dev) and Amplify console (prod). Use separa
 STRIPE_SECRET_KEY=sk_test_...            # sk_live_... in prod
 NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_...   # pk_live_... in prod
 STRIPE_WEBHOOK_SECRET=whsec_...          # separate value for test vs prod
-
-# Plan price IDs (test)
-STRIPE_PRICE_TOURNAMENT_PLUS_MONTHLY=price_...
-STRIPE_PRICE_TOURNAMENT_PLUS_ANNUAL=price_...
-STRIPE_PRICE_LEAGUE_MONTHLY=price_...
-STRIPE_PRICE_LEAGUE_ANNUAL=price_...
-STRIPE_PRICE_CLUB_MONTHLY=price_...
-STRIPE_PRICE_CLUB_ANNUAL=price_...
-
-# Rep team add-on price IDs (test)
-STRIPE_REP_TEAM_PRICE_MONTHLY_ID=price_...
-STRIPE_REP_TEAM_PRICE_ANNUAL_ID=price_...
 ```
+
+**Price IDs are no longer env vars.** They are stored in the `stripe_prices` database table and managed via **Platform Admin → Stripe Prices**. The active environment (sandbox vs live) is derived automatically from the `STRIPE_SECRET_KEY` prefix (`sk_live_` → live, all else → sandbox). Enter price IDs there after completing Stripe dashboard setup (Phase A).
 
 ---
 
@@ -132,7 +186,7 @@ Create one product per paid plan. Each product gets two prices (monthly recurrin
 
 The rep team product uses quantity-based billing. When creating prices, mark it as "Usage is metered" → No (quantity per subscription, not usage-based).
 
-Record all price IDs and add to `.env.local`.
+Record all price IDs. After applying migration 048, enter them via **Platform Admin → Stripe Prices** — no env vars needed.
 
 Trial lengths are configured in the FieldLogicHQ checkout request, not as a static Stripe price setting:
 - Tournament Plus: 14 days
@@ -194,39 +248,21 @@ export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 });
 ```
 
-### B3 — Price ID Map
+### B3 — Price ID Helpers
 
 **File:** `lib/stripe-prices.ts`
 
-Centralised map from plan + period to price ID. Avoids scattering env var lookups across the codebase.
+DB-backed helpers replacing the old env-var map. Price IDs are stored in the `stripe_prices` table and managed via Platform Admin → Stripe Prices. The runtime environment (sandbox/live) is detected automatically from the `STRIPE_SECRET_KEY` prefix.
 
 ```typescript
-export type StripePlan = 'tournament_plus' | 'league' | 'club';
-export type BillingPeriod = 'monthly' | 'annual';
+// Look up a price ID for checkout
+export async function getStripePriceId(planId, billingCycle): Promise<string | null>
 
-export function getPriceId(plan: StripePlan, period: BillingPeriod): string {
-  const map: Record<StripePlan, Record<BillingPeriod, string>> = {
-    tournament_plus: {
-      monthly: process.env.STRIPE_PRICE_TOURNAMENT_PLUS_MONTHLY!,
-      annual:  process.env.STRIPE_PRICE_TOURNAMENT_PLUS_ANNUAL!,
-    },
-    league: {
-      monthly: process.env.STRIPE_PRICE_LEAGUE_MONTHLY!,
-      annual:  process.env.STRIPE_PRICE_LEAGUE_ANNUAL!,
-    },
-    club: {
-      monthly: process.env.STRIPE_PRICE_CLUB_MONTHLY!,
-      annual:  process.env.STRIPE_PRICE_CLUB_ANNUAL!,
-    },
-  };
-  return map[plan][period];
-}
+// Reverse lookup: price ID → plan + cycle (used by webhook handler)
+export async function getPlanFromPriceId(priceId): Promise<{ planId, billingCycle } | null>
 
-export function getRepTeamPriceId(period: BillingPeriod): string {
-  return period === 'monthly'
-    ? process.env.STRIPE_REP_TEAM_PRICE_MONTHLY_ID!
-    : process.env.STRIPE_REP_TEAM_PRICE_ANNUAL_ID!;
-}
+// Fetch all rows for the platform admin UI
+export async function getAllStripePrices(): Promise<StripePriceRow[]>
 ```
 
 ### B4 — DB Migration
@@ -309,21 +345,7 @@ Use `req.text()` to get the raw body, then `stripe.webhooks.constructEvent()` to
 - Send a reminder to the org owner that the trial is ending and the first payment will be collected automatically from the payment method on file.
 - Include a link to the Subscription page or Stripe billing portal for payment-method changes.
 
-**Reverse price ID map** (needed in webhook handler to identify plan from price ID):
-
-```typescript
-function planFromPriceId(priceId: string): { planId: string; period: string } | null {
-  const map: Record<string, { planId: string; period: string }> = {
-    [process.env.STRIPE_PRICE_TOURNAMENT_PLUS_MONTHLY!]: { planId: 'tournament_plus', period: 'monthly' },
-    [process.env.STRIPE_PRICE_TOURNAMENT_PLUS_ANNUAL!]:  { planId: 'tournament_plus', period: 'annual'  },
-    [process.env.STRIPE_PRICE_LEAGUE_MONTHLY!]:          { planId: 'league',           period: 'monthly' },
-    [process.env.STRIPE_PRICE_LEAGUE_ANNUAL!]:           { planId: 'league',           period: 'annual'  },
-    [process.env.STRIPE_PRICE_CLUB_MONTHLY!]:            { planId: 'club',             period: 'monthly' },
-    [process.env.STRIPE_PRICE_CLUB_ANNUAL!]:             { planId: 'club',             period: 'annual'  },
-  };
-  return map[priceId] ?? null;
-}
-```
+**Reverse price ID lookup** (webhook handler uses `getPlanFromPriceId(priceId)` from `lib/stripe-prices.ts` — DB lookup, no env-var map needed).
 
 ---
 
@@ -536,3 +558,5 @@ Run migration `037_stripe_subscription_period.sql` against the production Supaba
 | G | Production cutover | All of above verified in test |
 
 A and B can proceed in parallel (A is manual dashboard work; B is code with no Stripe dependency until keys are ready).
+
+
