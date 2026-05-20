@@ -75,8 +75,8 @@ export default async function RulesPage() {
   let resources: Resource[] = [];
   
   if (active) {
-    rules = await getRules(active.id);
-    resources = await getResources(active.id);
+    rules = await getRules(active.id, { admin: true });
+    resources = await getResources(active.id, { admin: true });
   }
 
   const displayRules = rules.length > 0 ? rules : FALLBACK_RULES;

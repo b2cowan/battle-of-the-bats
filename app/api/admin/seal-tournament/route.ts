@@ -3,6 +3,7 @@ import { createHash } from 'crypto';
 import { getAuthContextWithScope, unauthorized, scopeGuard } from '@/lib/api-auth';
 import { hasCapability } from '@/lib/roles';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { hasPlanFeature, requiresTournamentPlusCopy } from '@/lib/plan-features';
 
 export async function POST(req: Request) {
   const ctx = await getAuthContextWithScope();
@@ -10,6 +11,13 @@ export async function POST(req: Request) {
 
   if (!hasCapability(ctx.role, ctx.capabilities, 'seal_tournaments')) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  }
+
+  if (!hasPlanFeature(ctx.org.planId, 'sealed_archives')) {
+    return NextResponse.json(
+      { error: requiresTournamentPlusCopy('sealed_archives') },
+      { status: 403 }
+    );
   }
 
   const body = await req.json();

@@ -67,13 +67,15 @@ const PLAN_FEATURES: Record<OrgPlan, string[]> = {
     'Manual tournament scheduling',
     'Basic standings and score entry',
     'Field and diamond management',
+    'Public news posts and basic team email',
     '3 staff / admin seats · 1 tournament slot',
   ],
   tournament_plus: [
     'Everything in Tournament',
     'Automated schedule generation',
-    'Bracket generator',
-    'Email announcements and communications',
+    'Playoff bracket generator',
+    'Permanent sealed archives',
+    'Advanced tournament branding',
     '3 non-archived tournament slots',
     '5 staff seats — officials always free',
   ],
@@ -95,10 +97,12 @@ const PLAN_FEATURES: Record<OrgPlan, string[]> = {
 
 const PLAN_META_COPY: Record<OrgPlan, string> = {
   tournament:      "You're on the free plan. Upgrade anytime — no credit card required until you're ready.",
-  tournament_plus: "You're on Tournament Plus. Running a league or registration workflow? League unlocks those tools.",
+  tournament_plus: "You're on Tournament Plus. League and Club are coming soon while those workflows are refined.",
   league:          "You're on League. Need accounting or rep team tools? Club is the complete platform.",
   club:            "You're on the complete Club platform.",
 };
+
+const COMING_SOON_PLANS = new Set<OrgPlan>(['league', 'club']);
 
 export default function BillingPage() {
   const { currentOrg, refresh: refreshOrg, userRole } = useOrg();
@@ -142,7 +146,7 @@ export default function BillingPage() {
       const res = await fetch('/api/billing/create-checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ planKey }),
+        body: JSON.stringify({ planKey, billingCycle }),
       });
       const data = await res.json() as {
         url?: string;
@@ -302,6 +306,7 @@ export default function BillingPage() {
   const canManageBilling = userRole === 'owner';
 
   function getPrice(planKey: OrgPlan): string {
+    if (COMING_SOON_PLANS.has(planKey)) return 'Coming soon';
     const plan = PLAN_CONFIG[planKey];
     if (plan.monthlyPrice === 0) return 'Free';
     if (billingCycle === 'annual') return `$${plan.annualPrice} CAD / year`;
@@ -309,6 +314,7 @@ export default function BillingPage() {
   }
 
   function getSavings(planKey: OrgPlan): string | null {
+    if (COMING_SOON_PLANS.has(planKey)) return null;
     if (billingCycle !== 'annual') return null;
     const plan = PLAN_CONFIG[planKey];
     if (plan.monthlyPrice === 0) return null;
@@ -317,8 +323,9 @@ export default function BillingPage() {
   }
 
   function getTrialNote(planKey: OrgPlan): string {
+    if (COMING_SOON_PLANS.has(planKey)) return 'Early access only. Self-serve checkout is not open yet.';
     const days = PLAN_CONFIG[planKey].trialDays;
-    if (days === 90) return '90-day early-adopter trial · Payment details collected in Stripe';
+    if (days === 90) return 'Early-access trial details collected in Stripe';
     return `${days}-day trial · Payment details collected in Stripe`;
   }
 
@@ -445,10 +452,12 @@ export default function BillingPage() {
             {upgradePlans.map(planKey => {
               const plan = PLAN_CONFIG[planKey];
               const savings = getSavings(planKey);
+              const isComingSoon = COMING_SOON_PLANS.has(planKey);
               return (
-                <div key={planKey} className={styles.planCard}>
+                <div key={planKey} className={`${styles.planCard} ${isComingSoon ? styles.planCardComingSoon : ''}`}>
                   <div className={styles.planCardHeader}>
                     <div className={styles.planCardName}>{plan.label}</div>
+                    {isComingSoon && <span className={styles.comingSoonBadge}>Coming soon</span>}
                   </div>
                   <div className={styles.planTaglineCard}>{PLAN_TAGLINE[planKey]}</div>
                   <div className={styles.planCardPrice}>
@@ -466,10 +475,10 @@ export default function BillingPage() {
                   <button
                     className={`btn btn-primary ${styles.planButton}`}
                     onClick={() => handleUpgrade(planKey as 'tournament_plus' | 'league' | 'club')}
-                    disabled={loading === planKey}
+                    disabled={isComingSoon || loading === planKey}
                     id={`billing-upgrade-${planKey}`}
                   >
-                    {loading === planKey ? 'Redirecting…' : `Upgrade to ${plan.label}`}
+                    {isComingSoon ? 'Early access only' : loading === planKey ? 'Redirecting…' : `Upgrade to ${plan.label}`}
                   </button>
                   <p className={styles.trialNote}>{getTrialNote(planKey)}</p>
                 </div>

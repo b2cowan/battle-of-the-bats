@@ -14,9 +14,13 @@ type ReadOptions = {
   admin?: boolean;
 };
 
+function readClient(options: ReadOptions = {}) {
+  return options.admin || typeof window === 'undefined' ? supabaseAdmin : supabase;
+}
+
 // --- Tournaments ---
 export async function getTournaments(): Promise<Tournament[]> {
-  const { data, error } = await supabase.from('tournaments').select('*').order('year', { ascending: false });
+  const { data, error } = await readClient().from('tournaments').select('*').order('year', { ascending: false });
   if (error || !data) {
     if (error) console.error('getTournaments error', error);
     return [];
@@ -25,7 +29,7 @@ export async function getTournaments(): Promise<Tournament[]> {
 }
 
 export async function getTournament(id: string): Promise<Tournament | null> {
-  const { data, error } = await supabase.from('tournaments').select('*').eq('id', id).single();
+  const { data, error } = await readClient().from('tournaments').select('*').eq('id', id).single();
   if (error || !data) {
     if (error) console.error('getTournament error', error);
     return null;
@@ -217,8 +221,8 @@ export async function deleteDiamond(id: string): Promise<void> {
 }
 
 // --- Contacts ---
-export async function getContacts(tournamentId?: string): Promise<Contact[]> {
-  let query = supabase.from('contacts').select('*').order('name', { ascending: true });
+export async function getContacts(tournamentId?: string, options: ReadOptions = {}): Promise<Contact[]> {
+  let query = readClient(options).from('contacts').select('*').order('name', { ascending: true });
   if (tournamentId) query = query.eq('tournament_id', tournamentId);
   const { data, error } = await query;
   if (error || !data) {
@@ -284,6 +288,10 @@ export async function getAgeGroups(tournamentId?: string, options: ReadOptions =
     requiresPoolSelection: g.requires_pool_selection,
     playoffConfig: g.playoff_config,
     scheduleVisibility: g.schedule_visibility,
+    depositAmount: g.deposit_amount != null ? Number(g.deposit_amount) : null,
+    depositDueDate: g.deposit_due_date ?? null,
+    totalFeeAmount: g.total_fee_amount != null ? Number(g.total_fee_amount) : null,
+    totalFeeDueDate: g.total_fee_due_date ?? null,
     pools: (g.pools || []).map((p: any) => ({
       id: p.id,
       ageGroupId: p.age_group_id,
@@ -588,7 +596,7 @@ export async function getStandings(ageGroupId: string, config?: PlayoffConfig, o
       return breakTies(tiedTeams, breakerIndex + 1);
     }
 
-    let sorted = [...tiedTeams];
+    const sorted = [...tiedTeams];
     if (breaker === 'h2h') {
       // Compare the two teams directly
       const t1 = tiedTeams[0];
@@ -963,7 +971,7 @@ export async function deleteRuleSection(id: string): Promise<void> {
 // ── Public Site Module ────────────────────────────────────────────────────────
 
 export async function getOrgPublicSiteContent(orgId: string): Promise<OrgPublicSiteContent | null> {
-  const { data } = await supabase
+  const { data } = await readClient()
     .from('org_public_site_content')
     .select('*')
     .eq('org_id', orgId)
@@ -1205,7 +1213,7 @@ export async function seedRulesAndResources(tournamentId: string) {
 // ── Organizations ─────────────────────────────────────────────────────────────
 
 export async function getOrganizationBySlug(slug: string): Promise<Organization | null> {
-  const { data, error } = await supabase
+  const { data, error } = await readClient()
     .from('organizations')
     .select('*')
     .eq('slug', slug)
@@ -1239,8 +1247,8 @@ export async function getOrgMembership(
   return mapMember(data);
 }
 
-export async function getTournamentsByOrg(orgId: string): Promise<Tournament[]> {
-  const { data, error } = await supabase
+export async function getTournamentsByOrg(orgId: string, options: ReadOptions = {}): Promise<Tournament[]> {
+  const { data, error } = await readClient(options)
     .from('tournaments')
     .select('*')
     .eq('organization_id', orgId)
@@ -1270,13 +1278,13 @@ export async function getTournamentBySlug(orgId: string, slug: string): Promise<
 }
 
 export async function getPublicTournamentBySlug(orgId: string, slug: string): Promise<Tournament | null> {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseAdmin
     .from('tournaments')
     .select('*')
     .eq('organization_id', orgId)
     .eq('slug', slug)
     .in('status', ['active', 'completed'])
-    .single();
+    .maybeSingle();
   if (error || !data) return null;
   return mapTournament(data);
 }
@@ -1312,6 +1320,30 @@ export async function createOrganizationMember(
   return mapMember(data);
 }
 
+export async function updateOrgSubscription(orgId: string, fields: {
+  stripeCustomerId?: string;
+  stripeSubscriptionId?: string | null;
+  subscriptionStatus?: string;
+  planId?: string;
+  tournamentLimit?: number;
+  subscriptionPeriod?: string | null;
+  currentPeriodEnd?: string | null;
+  repTeamSubscriptionItemId?: string | null;
+}): Promise<void> {
+  const update: Record<string, unknown> = {};
+  if (fields.stripeCustomerId !== undefined)        update.stripe_customer_id = fields.stripeCustomerId;
+  if (fields.stripeSubscriptionId !== undefined)    update.stripe_subscription_id = fields.stripeSubscriptionId;
+  if (fields.subscriptionStatus !== undefined)      update.subscription_status = fields.subscriptionStatus;
+  if (fields.planId !== undefined)                  update.plan_id = fields.planId;
+  if (fields.tournamentLimit !== undefined)         update.tournament_limit = fields.tournamentLimit;
+  if (fields.subscriptionPeriod !== undefined)      update.subscription_period = fields.subscriptionPeriod;
+  if (fields.currentPeriodEnd !== undefined)        update.current_period_end = fields.currentPeriodEnd;
+  if (fields.repTeamSubscriptionItemId !== undefined) update.rep_team_subscription_item_id = fields.repTeamSubscriptionItemId;
+  if (Object.keys(update).length === 0) return;
+  const { error } = await supabaseAdmin.from('organizations').update(update).eq('id', orgId);
+  if (error) throw new Error(error.message);
+}
+
 // ── Row mappers ───────────────────────────────────────────────────────────────
 
 function mapOrg(r: any): Organization {
@@ -1321,10 +1353,13 @@ function mapOrg(r: any): Organization {
     slug:                 r.slug,
     logoUrl:              r.logo_url ?? undefined,
     planId:               r.plan_id,
-    stripeCustomerId:     r.stripe_customer_id ?? undefined,
-    stripeSubscriptionId: r.stripe_subscription_id ?? undefined,
-    subscriptionStatus:   r.subscription_status ?? 'active',
-    tournamentLimit:      getEffectiveTournamentLimit(r.plan_id, r.tournament_limit),
+    stripeCustomerId:            r.stripe_customer_id ?? undefined,
+    stripeSubscriptionId:        r.stripe_subscription_id ?? undefined,
+    subscriptionStatus:          r.subscription_status ?? 'active',
+    subscriptionPeriod:          r.subscription_period ?? undefined,
+    currentPeriodEnd:            r.current_period_end ?? null,
+    repTeamSubscriptionItemId:   r.rep_team_subscription_item_id ?? null,
+    tournamentLimit:             getEffectiveTournamentLimit(r.plan_id, r.tournament_limit),
     isPublic:             r.is_public ?? true,
     createdAt:            r.created_at,
     themePreset:          r.theme_preset ?? undefined,
@@ -1333,6 +1368,8 @@ function mapOrg(r: any): Organization {
     heroBannerUrl:        r.hero_banner_url ?? undefined,
     themeFont:            r.theme_font ?? 'system',
     themeCardStyle:       r.theme_card_style ?? 'default',
+    requireScoreFinalization: r.require_score_finalization ?? false,
+    onboardingCompletedAt: r.onboarding_completed_at ?? null,
     enabledAddons:        r.enabled_addons ?? [],
     contactEmail:          r.contact_email ?? null,
   };
@@ -1362,6 +1399,11 @@ function mapTournament(r: any): Tournament {
     startDate:      r.start_date ?? undefined,
     endDate:        r.end_date ?? undefined,
     contactEmail:   r.contact_email ?? undefined,
+    feeScheduleMode:          (r.fee_schedule_mode === 'age_group' ? 'age_group' : 'tournament'),
+    depositAmount:            r.deposit_amount != null ? Number(r.deposit_amount) : null,
+    depositDueDate:           r.deposit_due_date ?? null,
+    totalFeeAmount:           r.total_fee_amount != null ? Number(r.total_fee_amount) : null,
+    totalFeeDueDate:          r.total_fee_due_date ?? null,
     logoUrl:                  r.logo_url ?? null,
     heroBannerUrl:            r.hero_banner_url ?? null,
     themePreset:              r.theme_preset ?? null,
@@ -1398,7 +1440,7 @@ function mapArchive(r: any): TournamentArchive {
 // ── Tournament Archives ───────────────────────────────────────────────────────
 
 export async function getArchivesByOrg(orgId: string): Promise<TournamentArchive[]> {
-  const { data, error } = await supabase
+  const { data, error } = await readClient()
     .from('tournament_archives')
     .select('*')
     .eq('org_id', orgId)

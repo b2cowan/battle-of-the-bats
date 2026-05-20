@@ -13,6 +13,9 @@ export interface Organization {
   stripeCustomerId?: string;
   stripeSubscriptionId?: string;
   subscriptionStatus: SubscriptionStatus;
+  subscriptionPeriod?: 'monthly' | 'annual';
+  currentPeriodEnd?: string | null;
+  repTeamSubscriptionItemId?: string | null;
   tournamentLimit: number;
   isPublic: boolean;
   createdAt: string;

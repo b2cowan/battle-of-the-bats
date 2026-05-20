@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { forbidden, getAuthContextWithScope, scopeGuard, unauthorized } from '@/lib/api-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { hasPlanFeature } from '@/lib/plan-features';
 
 const BUCKET    = 'org-assets';
 const MAX_BYTES = 4 * 1024 * 1024;
@@ -32,7 +33,7 @@ export async function POST(req: Request) {
   const denied = scopeGuard(ctx, tournamentId);
   if (denied) return denied;
 
-  if (ctx.org.planId === 'tournament') {
+  if (!hasPlanFeature(ctx.org.planId, 'advanced_tournament_branding')) {
     return NextResponse.json(
       { error: 'Hero banners require Tournament Plus or higher' },
       { status: 403 }

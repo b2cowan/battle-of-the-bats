@@ -15,6 +15,7 @@ import { useOrg } from '@/lib/org-context';
 import { useTournament } from '@/lib/tournament-context';
 import { PLAN_CONFIG } from '@/lib/plan-config';
 import type { OrgPlan } from '@/lib/types';
+import PricingSection from '@/components/PricingSection';
 import styles from './onboarding.module.css';
 
 const PLAN_ORDER: OrgPlan[] = ['tournament', 'tournament_plus', 'league', 'club'];
@@ -106,12 +107,6 @@ type LeagueSeasonForm = {
   autoGenerateFees: boolean;
 };
 
-const PLAN_TAGLINE: Record<OrgPlan, string> = {
-  tournament:      'Start free with one tournament slot and the core tools to get registration moving.',
-  tournament_plus: 'Run up to 3 non-archived tournaments with automation and more staff flexibility.',
-  league:          'Manage a house league season, registration, standings, and a public organization page.',
-  club:            'Run the full club operation with league, rep teams, accounting, and coaches tools.',
-};
 
 const CANADIAN_PROVINCES = [
   'AB',
@@ -129,42 +124,6 @@ const CANADIAN_PROVINCES = [
   'YT',
 ];
 
-const PLAN_FEATURES: Record<OrgPlan, string[]> = {
-  tournament: [
-    'Tournament scheduling',
-    'Score entry and results',
-    'Standings',
-    'Field and diamond management',
-    '3 staff / admin seats',
-    '1 tournament slot',
-  ],
-  tournament_plus: [
-    'Everything in Tournament',
-    'Automated schedule generation',
-    'Bracket generator',
-    'Email announcements and communications',
-    'Tournament archives and history',
-    '3 non-archived tournament slots',
-    '5 staff / admin seats',
-    'Unlimited officials seats',
-  ],
-  league: [
-    'Everything in Tournament Plus',
-    'Public organization page',
-    'House league registration and seasons',
-    'Registration workflows',
-    'Division and season management',
-    'League-scoped communications',
-    'Advanced member roles and permissions',
-    '10 staff / admin seats',
-  ],
-  club: [
-    'Everything in League',
-    'Accounting module - org ledger, team invoicing, payment reconciliation, expense tracking',
-    'Rep Teams module - tryouts, rosters, player documents, coaches portal, team finances',
-    'Unlimited staff / admin seats',
-  ],
-};
 
 const DIVISION_PRESETS: Record<Exclude<DivisionPreset, 'custom'>, string[]> = {
   youth: ['U9', 'U11', 'U13', 'U15', 'U17', 'U19'],
@@ -396,7 +355,12 @@ export default function OnboardingPage() {
   const [workflowRedirecting, setWorkflowRedirecting] = useState(false);
   const [stepSaving, setStepSaving] = useState(false);
   const [stepError, setStepError] = useState('');
-  const [billingCycle, setBillingCycle] = useState<'monthly' | 'annual'>('monthly');
+  const [gatingMap, setGatingMap] = useState<Record<OrgPlan, boolean>>(() => ({
+    tournament: PLAN_CONFIG.tournament.gatingStatus === 'early_access',
+    tournament_plus: PLAN_CONFIG.tournament_plus.gatingStatus === 'early_access',
+    league: PLAN_CONFIG.league.gatingStatus === 'early_access',
+    club: PLAN_CONFIG.club.gatingStatus === 'early_access',
+  }));
   const [planLoading, setPlanLoading] = useState<OrgPlan | null>(null);
   const [planError, setPlanError] = useState('');
   const [draftSkipped, setDraftSkipped] = useState<DraftSkippedState>(getDefaultDraftSkipped);
@@ -491,6 +455,13 @@ export default function OnboardingPage() {
   }, [loading, currentOrg, userRole, router]);
 
   useEffect(() => {
+    fetch('/api/plan-gating')
+      .then(r => r.json())
+      .then(setGatingMap)
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
     if (loading || !currentOrg || !startupProgress) return;
     const activePlan = normalizePlanId(currentOrg.planId);
     const isGuidedTournamentPlan = activePlan === 'tournament' || activePlan === 'tournament_plus';
@@ -553,7 +524,7 @@ export default function OnboardingPage() {
     router.replace(getPostOnboardingHref(currentOrg, { hasTournament: false }));
   }
 
-  async function choosePlan(planKey: OrgPlan) {
+  async function choosePlan(planKey: OrgPlan, selectedBillingCycle: 'monthly' | 'annual' = 'monthly') {
     if (!currentOrg || planLoading) return;
     setPlanError('');
 
@@ -606,6 +577,7 @@ export default function OnboardingPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           planKey,
+          billingCycle: selectedBillingCycle,
           returnTo: `/${currentOrg.slug}/admin/onboarding`,
         }),
       });
@@ -1344,24 +1316,12 @@ export default function OnboardingPage() {
       ? seasonsDone === true || repTeamsDone === true || publicSiteDone === true
       : false;
 
-  function getPlanPrice(planKey: OrgPlan) {
-    const plan = PLAN_CONFIG[planKey];
-    if (plan.monthlyPrice === 0) return 'Free';
-    if (billingCycle === 'annual') return `$${plan.annualPrice} CAD / year`;
-    return `$${plan.monthlyPrice} CAD / month`;
-  }
-
-  function getPlanAction(planKey: OrgPlan) {
-    const planSelectionEditable = !planChoiceRequired && isFirstRunPlanEditable();
-    if (planSelectionEditable) return `Select ${PLAN_CONFIG[planKey].label}`;
-    if (planChoiceRequired && planKey === 'tournament') return 'Start with Tournament';
-    if (!planChoiceRequired && planKey === activePlanId) return 'Current plan';
-    if (!planChoiceRequired && PLAN_ORDER.indexOf(planKey) < PLAN_ORDER.indexOf(activePlanId)) return 'Included in current plan';
-    if (planKey === 'tournament') return 'Continue free';
-    return `Choose ${PLAN_CONFIG[planKey].label}`;
-  }
-
   function renderPlanChooser(required: boolean, embedded = false) {
+    const planSelectionEditable = !required && isFirstRunPlanEditable();
+    const disabledPlans: OrgPlan[] = (!required && !planSelectionEditable)
+      ? PLAN_ORDER.filter(k => PLAN_ORDER.indexOf(k) < PLAN_ORDER.indexOf(activePlanId))
+      : [];
+
     return (
       <div className={embedded ? styles.planChooserEmbedded : required ? styles.planStage : styles.planModal} role={required || embedded ? undefined : 'dialog'} aria-modal={required || embedded ? undefined : 'true'} aria-labelledby="onboarding-plan-title">
         {!embedded && (
@@ -1385,56 +1345,19 @@ export default function OnboardingPage() {
           </div>
         )}
 
-        <div className={styles.billingToggle}>
-          <button
-            type="button"
-            className={`${styles.toggleOption} ${billingCycle === 'monthly' ? styles.toggleActive : ''}`}
-            onClick={() => setBillingCycle('monthly')}
-          >
-            Monthly
-          </button>
-          <button
-            type="button"
-            className={`${styles.toggleOption} ${billingCycle === 'annual' ? styles.toggleActive : ''}`}
-            onClick={() => setBillingCycle('annual')}
-          >
-            Annual
-          </button>
-        </div>
-
-        <div className={styles.planGrid}>
-          {PLAN_ORDER.map(planKey => {
-            const plan = PLAN_CONFIG[planKey];
-            const isCurrent = !required && planKey === activePlanId;
-            const isLowerTier = !required && !isFirstRunPlanEditable() && PLAN_ORDER.indexOf(planKey) < PLAN_ORDER.indexOf(activePlanId);
-            return (
-              <div key={planKey} className={`${styles.planCard} ${isCurrent ? styles.planCardCurrent : ''}`}>
-                <div className={styles.planCardHeader}>
-                  <h3>{plan.label}</h3>
-                  {isCurrent && <span>Current</span>}
-                </div>
-                <div className={styles.planCardPrice}>{getPlanPrice(planKey)}</div>
-                <p className={styles.planCardTagline}>{PLAN_TAGLINE[planKey]}</p>
-                <ul className={styles.planFeatureList}>
-                  {PLAN_FEATURES[planKey].map(feature => (
-                    <li key={feature}>
-                      <CheckCircle2 size={13} />
-                      {feature}
-                    </li>
-                  ))}
-                </ul>
-                <button
-                  type="button"
-                  className={`btn btn-primary ${styles.planButton}`}
-                  onClick={() => choosePlan(planKey)}
-                  disabled={planLoading !== null || isLowerTier}
-                >
-                  {planLoading === planKey ? 'Loading...' : getPlanAction(planKey)}
-                </button>
-              </div>
-            );
-          })}
-        </div>
+        <PricingSection
+          gatingMap={gatingMap}
+          onChoosePlan={choosePlan}
+          currentPlan={required ? undefined : activePlanId}
+          planLoading={planLoading}
+          disabledPlans={disabledPlans}
+          initialBilling={searchParams.get('billing') === 'annual' ? 'annual' : 'monthly'}
+          ctaLabel={(planKey) => {
+            if (required && planKey === 'tournament') return 'Start with Tournament';
+            if (!required && planKey === 'tournament' && planKey !== activePlanId) return 'Continue free';
+            return undefined;
+          }}
+        />
 
         {planError && <div className={styles.planError}>{planError}</div>}
       </div>

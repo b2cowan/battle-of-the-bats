@@ -231,9 +231,9 @@ const tournamentsHelp: HelpPageContent = {
       ],
       content: (
         <>
-          <p>Use <strong>Add Game</strong> for manual scheduling or <strong>Auto-Generate</strong> to create round-robin games from accepted teams, divisions, venues, and time slots.</p>
+          <p>Use <strong>Add Game</strong> for manual scheduling. Tournament Plus, League, and Club can also use <strong>Auto-Generate</strong> to create round-robin games from accepted teams, divisions, venues, and time slots.</p>
           <p>Use pool view when a division is split into pools. Use flat view when you want one combined list.</p>
-          <p>For playoffs, switch to the Playoffs view and use the <strong>Playoff Wizard</strong>. Bracket view helps admins inspect playoff paths after games are created.</p>
+          <p>For playoffs, switch to the Playoffs view. Free Tournament orgs can add playoff games manually; Tournament Plus, League, and Club can use the <strong>Playoff Wizard</strong>. Bracket view helps admins inspect playoff paths after games are created.</p>
           <p>The public schedule updates as games are added or edited. There is no separate schedule publish step.</p>
         </>
       ),
@@ -354,7 +354,7 @@ const tournamentsHelp: HelpPageContent = {
       searchText: 'settings access members branding logo hero banner scoring finalization subscription plan tournament settings official score finalization role members permissions public appearance',
       links: [
         { label: 'Settings', href: '../tournaments/settings' },
-        { label: 'Branding', href: '../tournaments/settings/branding' },
+        { label: 'Branding', href: '../tournaments/branding' },
         { label: 'Scoring', href: '../tournaments/settings/scoring' },
         { label: 'Members', href: '../tournaments/settings/members' },
       ],

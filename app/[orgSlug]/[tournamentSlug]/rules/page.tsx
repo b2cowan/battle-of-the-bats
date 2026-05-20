@@ -57,9 +57,9 @@ export default async function RulesPage({
 
   if (tournament) {
     [allRules, resources, ageGroups] = await Promise.all([
-      getRules(tournament.id),
-      getResources(tournament.id),
-      getAgeGroups(tournament.id),
+      getRules(tournament.id, { admin: true }),
+      getResources(tournament.id, { admin: true }),
+      getAgeGroups(tournament.id, { admin: true }),
     ]);
   }
 

@@ -1,9 +1,10 @@
 'use client';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Archive, ExternalLink, Sparkles } from 'lucide-react';
+import { Archive, ExternalLink, Lock, Sparkles } from 'lucide-react';
 import { getTournamentsByOrg } from '@/lib/db';
 import { useOrg } from '@/lib/org-context';
+import { hasPlanFeature, requiresTournamentPlusCopy } from '@/lib/plan-features';
 import { Tournament, TournamentArchive } from '@/lib/types';
 import FeedbackModal from '@/components/FeedbackModal';
 import styles from './archives-admin.module.css';
@@ -21,6 +22,7 @@ function getErrorMessage(error: unknown, fallback = 'Something went wrong.') {
 
 export default function AdminArchivesPage() {
   const { currentOrg } = useOrg();
+  const canSealArchives = currentOrg ? hasPlanFeature(currentOrg.planId, 'sealed_archives') : false;
   const [archives, setArchives] = useState<TournamentArchive[]>([]);
   const [archivedUnsealed, setArchivedUnsealed] = useState<Tournament[]>([]);
   const [feedback, setFeedback] = useState<{
@@ -46,6 +48,18 @@ export default function AdminArchivesPage() {
   useEffect(() => { refresh(); }, [currentOrg?.id]); // eslint-disable-line
 
   function openSealConfirm(t: Tournament) {
+    if (!canSealArchives) {
+      setFeedback({
+        isOpen: true,
+        title: 'Upgrade for Sealed Archives',
+        message: `${requiresTournamentPlusCopy('sealed_archives')} You can still archive tournaments on the free plan to free your tournament slot.`,
+        type: 'info',
+        confirmText: 'View Upgrade Options',
+        onConfirm: currentOrg?.slug ? () => { window.location.href = `/${currentOrg.slug}/admin/org/billing`; } : undefined,
+      });
+      return;
+    }
+
     setFeedback({
       isOpen: true,
       title: 'Seal Tournament?',
@@ -87,7 +101,11 @@ export default function AdminArchivesPage() {
           <div className={styles.headerIcon}><Archive size={20} /></div>
           <div>
             <h1 className={styles.pageTitle}>Archives</h1>
-            <p className={styles.pageSub}>Sealed records and archived tournaments pending a snapshot</p>
+            <p className={styles.pageSub}>
+              {canSealArchives
+                ? 'Sealed records and archived tournaments pending a snapshot'
+                : 'Archived tournaments are available on free; permanent sealed records require Tournament Plus or higher'}
+            </p>
           </div>
         </div>
         <Link
@@ -108,7 +126,9 @@ export default function AdminArchivesPage() {
         </div>
         {archives.length === 0 ? (
           <div className={styles.emptyState}>
-            No sealed records yet. Seal a completed or archived tournament to create a permanent snapshot.
+            {canSealArchives
+              ? 'No sealed records yet. Seal a completed or archived tournament to create a permanent snapshot.'
+              : 'No sealed records yet. Upgrade to Tournament Plus or higher to create permanent public archive snapshots.'}
           </div>
         ) : (
           <div className="table-wrap">
@@ -188,9 +208,9 @@ export default function AdminArchivesPage() {
                       <button
                         className="btn btn-outline btn-sm"
                         onClick={() => openSealConfirm(t)}
-                        title="Create an immutable archive record for this tournament"
+                        title={canSealArchives ? 'Create an immutable archive record for this tournament' : 'Tournament Plus and above'}
                       >
-                        <Sparkles size={13} /> Seal Now
+                        {canSealArchives ? <Sparkles size={13} /> : <Lock size={13} />} Seal Now
                       </button>
                     </td>
                   </tr>

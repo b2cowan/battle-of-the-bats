@@ -2,6 +2,7 @@ import Link from 'next/link';
 import styles from './page.module.css';
 import AnimateIn from '@/components/AnimateIn';
 import PricingSection from '@/components/PricingSection';
+import { getPlanGatingMap } from '@/lib/plan-gating-server';
 
 const MODULE_CARDS = [
   {
@@ -21,7 +22,7 @@ const MODULE_CARDS = [
     id: '02',
     name: 'House League',
     href: '/platform/house-league',
-    plan: 'League · Club',
+    plan: 'Coming soon',
     tagline: 'From registration to final standings, in one dashboard.',
     features: [
       'Player registration and waitlist management',
@@ -34,7 +35,7 @@ const MODULE_CARDS = [
     id: '03',
     name: 'Rep Teams',
     href: '/platform/rep-teams',
-    plan: 'Club',
+    plan: 'Coming soon',
     tagline: 'Coaches run their team. You run the org.',
     features: [
       'Tryout registration and player intake',
@@ -47,7 +48,7 @@ const MODULE_CARDS = [
     id: '04',
     name: 'Accounting',
     href: '/platform/accounting',
-    plan: 'Club',
+    plan: 'Coming soon',
     tagline: 'Financial tracking built for volunteer-run clubs.',
     features: [
       'Org ledger with categorized entries',
@@ -62,17 +63,17 @@ const STEPS = [
   {
     num: '01',
     label: 'SET UP YOUR ORGANIZATION',
-    desc: 'Create your org and configure the modules you need. Define your structure — age groups, seasons, teams, and fields.',
+    desc: 'Create your org and set up the tournament tools you need today. League and club modules can be added as they open.',
   },
   {
     num: '02',
     label: 'OPEN YOUR PROGRAMS',
-    desc: 'Publish registrations for tournaments, house league, or rep tryouts. Waitlists and approvals manage themselves.',
+    desc: 'Publish tournament pages, manage teams and contacts, and keep registration work organized without extra spreadsheets.',
   },
   {
     num: '03',
     label: 'RUN YOUR WHOLE SEASON',
-    desc: 'Enter scores from the field. Manage your league. Track finances. Everything in one place, all season long.',
+    desc: 'Enter scores from the field, publish results, and preserve tournament history. Broader season operations are coming next.',
   },
 ];
 
@@ -95,7 +96,8 @@ const PLATFORM_BENEFITS = [
 ];
 // id field kept for React key only — not rendered
 
-export default function HomePage() {
+export default async function HomePage() {
+  const gatingMap = await getPlanGatingMap();
   return (
     <>
       {/* ── Hero ──────────────────────────────────────────────────────── */}
@@ -120,8 +122,8 @@ export default function HomePage() {
             </h1>
 
             <p className={styles.heroSub}>
-              Everything your organization needs to run tournaments, house leagues,
-              and rep programs — without the spreadsheets and the chaos.
+              Everything your organization needs to run tournaments now, with house league
+              and club operations coming next as the platform expands.
             </p>
 
             <div className={styles.heroActions}>
@@ -147,8 +149,8 @@ export default function HomePage() {
         <div className="container">
           <div className={styles.statsBarInner}>
             <div className={styles.statItem}>
-              <span className={styles.statNumber}>5 modules</span>
-              <span className={styles.statLabel}>One platform for every program</span>
+              <span className={styles.statNumber}>2 tiers live</span>
+              <span className={styles.statLabel}>Tournament and Tournament Plus</span>
             </div>
             <div className={styles.statItem}>
               <span className={styles.statNumber}>Free plan</span>
@@ -170,7 +172,7 @@ export default function HomePage() {
               <p className={styles.eyebrow}>Modules</p>
               <h2 className={styles.sectionTitle}>Everything your organization needs</h2>
               <p className={styles.sectionSub}>
-                Tournaments, house leagues, rep teams, and accounting — every tool your org needs, in one place.
+                Tournament tools are live now. House league, rep teams, and accounting show where the platform is headed next.
               </p>
             </div>
           </AnimateIn>
@@ -243,11 +245,11 @@ export default function HomePage() {
               <p className={styles.eyebrow}>Pricing</p>
               <h2 className={styles.sectionTitle}>Plans built for how you operate.</h2>
               <p className={styles.sectionSub}>
-                From your first tournament to a full club — one platform that grows with you. Start free, no credit card required.
+                Tournament and Tournament Plus are available now. League and Club are open for early-access interest while those workflows are refined.
               </p>
             </div>
           </AnimateIn>
-          <PricingSection />
+          <PricingSection gatingMap={gatingMap} />
           <div className="flex justify-center mt-8">
             <Link
               href="/pricing"

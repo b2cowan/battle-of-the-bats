@@ -27,8 +27,8 @@ export default async function NewsPage({
   if (!tournament || !isPublicPageEnabled(tournament, 'news')) notFound();
 
   const [allAnnouncements, ageGroups] = await Promise.all([
-    getAnnouncements(tournament.id),
-    tournament ? getAgeGroups(tournament.id) : Promise.resolve([]),
+    getAnnouncements(tournament.id, { admin: true }),
+    tournament ? getAgeGroups(tournament.id, { admin: true }) : Promise.resolve([]),
   ]);
 
   const preferredGroup = prefName ? ageGroups.find(g => g.name === prefName) : null;

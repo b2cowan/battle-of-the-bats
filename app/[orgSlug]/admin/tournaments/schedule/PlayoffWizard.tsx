@@ -1,11 +1,10 @@
 ﻿'use client';
 import React, { useState, useEffect } from 'react';
-import { Trophy, Check, X, Calendar, MapPin, Clock, AlertCircle, ChevronUp, ChevronDown } from 'lucide-react';
-import { getStandings, saveGame, getTournament, deleteGame } from '@/lib/db';
-import { AgeGroup, Team, Diamond, PlayoffConfig, Game, Tournament } from '@/lib/types';
-import { formatTime, formatPoolName } from '@/lib/utils';
+import { Trophy, Check, X, Calendar, AlertCircle, ChevronUp, ChevronDown } from 'lucide-react';
+import { getTournament } from '@/lib/db';
+import { AgeGroup, Team, Diamond, PlayoffConfig, Tournament } from '@/lib/types';
+import { formatPoolName } from '@/lib/utils';
 import BracketBuilder from './components/BracketBuilder';
-import builderStyles from './components/BracketBuilder.module.css';
 import FeedbackModal from '@/components/FeedbackModal';
 
 interface Props {
@@ -233,14 +232,6 @@ export default function PlayoffWizard({ ageGroup, tournamentId, onClose, onCompl
     setLoading(true);
     setShowConfirm(false);
     try {
-      // Delete existing playoff games for this division
-      const gamesRes = await fetch(`/api/admin/games?tournamentId=${encodeURIComponent(tournamentId)}`);
-      const allGames = gamesRes.ok ? await gamesRes.json() : [];
-      const toDelete = allGames.filter((g: any) => g.ageGroupId === ageGroup.id && g.isPlayoff);
-      for (const g of toDelete) {
-        await deleteGame(g.id);
-      }
-
       // In No Crossover mode each pool gets its own bracketId so transitive
       // pool inference (FIN → Winner SF1 → SF1) can match by bracketId and
       // avoid code collisions between pools that share identical codes.
@@ -254,11 +245,11 @@ export default function PlayoffWizard({ ageGroup, tournamentId, onClose, onCompl
         }
       }
 
-      for (const p of preview) {
+      const gameRows = preview.map(p => {
         const bracketId = (config.crossover === 'none' && p.pool && poolBracketIds[p.pool])
           ? poolBracketIds[p.pool]
           : defaultBracketId;
-        await saveGame({
+        return {
           tournamentId,
           ageGroupId: ageGroup.id,
           homeTeamId: null as any,
@@ -274,12 +265,28 @@ export default function PlayoffWizard({ ageGroup, tournamentId, onClose, onCompl
           homePlaceholder: p.home,
           awayPlaceholder: p.away,
           notes: undefined
-        });
-      }
+        };
+      });
+
+      const deleteRes = await fetch('/api/admin/games', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'delete-division-playoff-games', ageGroupId: ageGroup.id }),
+      });
+      const deleteData = await deleteRes.json();
+      if (!deleteRes.ok) throw new Error(deleteData.error || 'Failed to clear existing playoff games');
+
+      const saveRes = await fetch('/api/admin/games', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'bulk-save', games: gameRows, tournamentId, ageGroupId: ageGroup.id }),
+      });
+      const saveData = await saveRes.json();
+      if (!saveRes.ok) throw new Error(saveData.error || 'Failed to save playoff bracket');
       onComplete();
     } catch (err) {
       console.error(err);
-      setFeedback({ isOpen: true, title: 'Error', message: 'Failed to generate bracket. Please try again.', type: 'danger' });
+      setFeedback({ isOpen: true, title: 'Error', message: err instanceof Error ? err.message : 'Failed to generate bracket. Please try again.', type: 'danger' });
     } finally {
       setLoading(false);
     }

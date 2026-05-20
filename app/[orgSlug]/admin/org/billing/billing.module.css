@@ -460,6 +460,26 @@
   min-height: 26px;
 }
 
+.planCardComingSoon {
+  border-color: rgba(var(--blueprint-blue-rgb), 0.24);
+  background: rgba(var(--blueprint-blue-rgb), 0.035);
+}
+
+.comingSoonBadge {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.35);
+  color: var(--logic-lime);
+  background: rgba(var(--logic-lime-rgb), 0.08);
+  padding: 0.15rem 0.45rem;
+  font-size: 0.58rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
 .planTaglineCard {
   min-height: 70px;
   font-size: 0.82rem;

@@ -506,6 +506,31 @@ export function signupVerificationHtml(p: {
   `);
 }
 
+export function schedulePublishedHtml(p: {
+  tournamentName: string;
+  coachName: string;
+  divisions: string[];
+  showTeamNames: boolean;
+  scheduleUrl: string;
+  contactEmail?: string;
+}) {
+  const divisionList = p.divisions.map(d => `<li style="margin-bottom:0.25rem;">${d}</li>`).join('');
+  const nameNote = p.showTeamNames
+    ? 'Your team name appears on the public schedule.'
+    : 'Team names are displayed as placeholders until registration closes. Your team name will appear once the organizer finalizes the roster.';
+  return wrap(`
+    <h2 style="color:#fff;font-size:1.4rem;margin:0 0 1rem;">Your Schedule is Live!</h2>
+    <p>Hi <strong>${p.coachName}</strong>,</p>
+    <p>The schedule for <strong>${p.tournamentName}</strong> has been published. You can now view game times, dates, and locations on the public tournament page.</p>
+    <div style="background:#1A1530;border:1px solid rgba(var(--primary-rgb),0.3);border-radius:8px;padding:1.25rem;margin:1.5rem 0;">
+      <p style="margin:0 0 0.5rem;font-weight:700;color:#A855F7;">Published Divisions</p>
+      <ul style="margin:0;padding-left:1.25rem;line-height:1.8;color:rgba(255,255,255,0.8);">${divisionList}</ul>
+    </div>
+    <p style="color:rgba(255,255,255,0.65);font-size:0.88rem;">${nameNote}</p>
+    <a href="${p.scheduleUrl}" style="display:inline-block;background:#8B2FC9;color:#fff;padding:0.75rem 1.75rem;border-radius:8px;text-decoration:none;font-weight:700;margin-top:0.5rem;">View Schedule &rarr;</a>
+  `, p.contactEmail);
+}
+
 export function billingRetentionWarningHtml(p: {
   orgName: string;
   records: { displayName: string; recordType: string; retentionUntil: string }[];

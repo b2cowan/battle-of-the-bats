@@ -11,6 +11,8 @@ This file tracks the ongoing tasks for the FieldLogicHQ platform (multi-tenant s
 
 ## 🚀 Active Tasks (Priority Order)
 
+- [ ] **Platform admin support, metrics, and product operations upgrade** - Merge Claude/Codex platform admin recommendations into phased implementation plan (see [merged_PLATFORM_ADMIN_IMPLEMENTATION_PLAN.md](merged_PLATFORM_ADMIN_IMPLEMENTATION_PLAN.md))
+
 - [ ] **Tournament help documentation UX review** - Upgrade tournament help with grouped contents, search, quick answers, and FAQs (see [TOURNAMENT_HELP_DOCS_REVIEW_PLAN.md](TOURNAMENT_HELP_DOCS_REVIEW_PLAN.md))
 
 - [ ] **Free Tournament organizer UX cleanup** - Resolve signup/onboarding, publish, operations, and free-tier guardrail findings (see [docs/archive/TOURNAMENT_FREE_TIER_UX_IMPLEMENTATION_PLAN.md](docs/archive/TOURNAMENT_FREE_TIER_UX_IMPLEMENTATION_PLAN.md))

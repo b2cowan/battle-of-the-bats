@@ -1,6 +1,6 @@
 'use client';
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { Suspense, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Eye, EyeOff } from 'lucide-react';
 import Link from 'next/link';
 import { signIn } from '@/lib/auth';
@@ -14,9 +14,12 @@ function slugify(name: string) {
     .replace(/^-+|-+$/g, '');
 }
 
-export default function SignupPage() {
+function SignupForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [orgName, setOrgName]   = useState('');
+  const [publicSlug, setPublicSlug] = useState('');
+  const [slugEdited, setSlugEdited] = useState(false);
   const [email, setEmail]       = useState('');
   const [password, setPassword] = useState('');
   const [showPw, setShowPw]     = useState(false);
@@ -24,21 +27,41 @@ export default function SignupPage() {
   const [loading, setLoading]   = useState(false);
   const [verificationEmail, setVerificationEmail] = useState('');
 
-  const previewSlug = slugify(orgName) || 'your-org';
+  const previewSlug = publicSlug || 'your-org';
+
+  function handleOrgNameChange(value: string) {
+    setOrgName(value);
+    if (!slugEdited) {
+      setPublicSlug(slugify(value));
+    }
+  }
+
+  function handlePublicSlugChange(value: string) {
+    setSlugEdited(true);
+    setPublicSlug(slugify(value));
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    const orgSlug = slugify(publicSlug);
+
     if (password.length < 8) {
       setError('Password must be at least 8 characters.');
       return;
     }
+    if (!orgSlug) {
+      setError('Enter a public URL for your organization.');
+      return;
+    }
+
     setError('');
     setLoading(true);
+    setPublicSlug(orgSlug);
 
     const res = await fetch('/api/auth/signup', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password, orgName }),
+      body: JSON.stringify({ email, password, orgName, orgSlug }),
     });
 
     const json = await res.json();
@@ -61,7 +84,12 @@ export default function SignupPage() {
       return;
     }
 
-    const dest = json.orgSlug ? `/${json.orgSlug}/admin/onboarding?choosePlan=1` : '/admin';
+    const plan = searchParams.get('plan');
+    const billing = searchParams.get('billing') === 'annual' ? 'annual' : searchParams.get('billing') === 'monthly' ? 'monthly' : null;
+    const onboardingParams = new URLSearchParams({ choosePlan: '1' });
+    if (plan) onboardingParams.set('plan', plan);
+    if (billing) onboardingParams.set('billing', billing);
+    const dest = json.orgSlug ? `/${json.orgSlug}/admin/onboarding?${onboardingParams.toString()}` : '/admin';
     router.push(dest);
     router.refresh();
   }
@@ -106,13 +134,29 @@ export default function SignupPage() {
               type="text"
               className="form-input"
               value={orgName}
-              onChange={e => setOrgName(e.target.value)}
+              onChange={e => handleOrgNameChange(e.target.value)}
               placeholder="e.g. Milton Softball Association"
               required
               autoComplete="organization"
             />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label" htmlFor="signup-slug">Public URL</label>
+            <input
+              id="signup-slug"
+              type="text"
+              className="form-input"
+              value={publicSlug}
+              onChange={e => handlePublicSlugChange(e.target.value)}
+              placeholder="milton-softball"
+              required
+              autoComplete="off"
+              inputMode="url"
+              pattern="[a-z0-9]+(-[a-z0-9]+)*"
+            />
             <p style={{ fontFamily: 'var(--font-data)', fontSize: '0.65rem', letterSpacing: '0.06em', color: 'var(--data-gray)', marginTop: '0.35rem' }}>
-              Public URL: <span style={{ color: 'var(--logic-lime)' }}>/{previewSlug}</span>
+              Site address: <span style={{ color: 'var(--logic-lime)' }}>fieldlogichq.ca/{previewSlug}</span>
             </p>
           </div>
 
@@ -179,5 +223,13 @@ export default function SignupPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function SignupPage() {
+  return (
+    <Suspense fallback={<div className={styles.page} />}>
+      <SignupForm />
+    </Suspense>
   );
 }

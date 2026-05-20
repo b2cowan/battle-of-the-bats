@@ -5,7 +5,7 @@ import { ArrowLeft, Settings2 } from 'lucide-react';
 import { useTournament } from '@/lib/tournament-context';
 import { useOrg } from '@/lib/org-context';
 import FeedbackModal from '@/components/FeedbackModal';
-import styles from '../branding/branding.module.css';
+import styles from '../../branding/branding.module.css';
 
 type FeeMode = 'tournament' | 'age_group';
 

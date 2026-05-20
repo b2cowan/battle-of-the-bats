@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { Settings, Upload, Lock, Check, Image, AlertTriangle, Library, X } from 'lucide-react';
+import { Settings, Upload, Lock, Check, Image as ImageIcon, AlertTriangle, Library, X } from 'lucide-react';
 import { STOCK_LOGOS, STOCK_LOGO_CATEGORIES, isStockLogoUnlocked } from '@/lib/stock-logos';
 import { useOrg } from '@/lib/org-context';
 import { useOrgNav } from '@/components/OrgNavContext';
@@ -159,6 +159,10 @@ export default function OrgSettingsPage() {
     setErrorOpen(true);
   }
 
+  function getErrorMessage(err: unknown, fallback: string) {
+    return err instanceof Error ? err.message : fallback;
+  }
+
   const isCustomPlan = currentOrg?.planId !== 'tournament';
 
   const previewTheme = useMemo(() => {
@@ -211,8 +215,8 @@ export default function OrgSettingsPage() {
         router.push(`/${data.slug}/admin/org/settings`);
       }
       return true;
-    } catch (err: any) {
-      showError(err.message ?? 'Something went wrong');
+    } catch (err: unknown) {
+      showError(getErrorMessage(err, 'Something went wrong'));
       return false;
     } finally {
       setSaving(false);
@@ -264,8 +268,8 @@ export default function OrgSettingsPage() {
       setSuccessMsg('Hero banner updated.');
       setSuccessOpen(true);
       refresh();
-    } catch (err: any) {
-      showError(err.message ?? 'Upload failed');
+    } catch (err: unknown) {
+      showError(getErrorMessage(err, 'Upload failed'));
       setHeroBannerPreview(settings?.heroBannerUrl ?? null);
     } finally {
       setBannerUploading(false);
@@ -283,8 +287,8 @@ export default function OrgSettingsPage() {
       setSuccessMsg('Hero banner removed.');
       setSuccessOpen(true);
       refresh();
-    } catch (err: any) {
-      showError(err.message ?? 'Remove failed');
+    } catch (err: unknown) {
+      showError(getErrorMessage(err, 'Remove failed'));
     } finally {
       setBannerUploading(false);
     }
@@ -307,8 +311,8 @@ export default function OrgSettingsPage() {
       setSuccessMsg('Logo updated.');
       setSuccessOpen(true);
       refresh();
-    } catch (err: any) {
-      showError(err.message ?? 'Upload failed');
+    } catch (err: unknown) {
+      showError(getErrorMessage(err, 'Upload failed'));
       setLogoPreview(settings?.logoUrl ?? null);
     } finally {
       setUploading(false);
@@ -328,8 +332,8 @@ export default function OrgSettingsPage() {
       setSuccessMsg('Logo removed.');
       setSuccessOpen(true);
       refresh();
-    } catch (err: any) {
-      showError(err.message ?? 'Remove failed');
+    } catch (err: unknown) {
+      showError(getErrorMessage(err, 'Remove failed'));
     } finally {
       setUploading(false);
     }
@@ -355,8 +359,8 @@ export default function OrgSettingsPage() {
       setSuccessMsg('Logo updated.');
       setSuccessOpen(true);
       refresh();
-    } catch (err: any) {
-      showError(err.message ?? 'Something went wrong');
+    } catch (err: unknown) {
+      showError(getErrorMessage(err, 'Something went wrong'));
     } finally {
       setStockLogoSaving(false);
     }
@@ -579,7 +583,7 @@ export default function OrgSettingsPage() {
           ) : (
             <div className={styles.planLock}>
               <Lock size={12} />
-              Custom — Pro/Elite only
+              Custom - Tournament Plus only
             </div>
           )}
         </div>
@@ -638,7 +642,7 @@ export default function OrgSettingsPage() {
         <div className={styles.sectionTitleRow}>
           <h2 className={styles.sectionTitle}>Hero Banner</h2>
           {!isCustomPlan && (
-            <span className={styles.planLock}><Lock size={12} /> Pro / Elite only</span>
+            <span className={styles.planLock}><Lock size={12} /> Tournament Plus</span>
           )}
         </div>
 
@@ -659,7 +663,7 @@ export default function OrgSettingsPage() {
                 onClick={() => bannerInputRef.current?.click()}
                 disabled={bannerUploading}
               >
-                <Image size={15} />
+                <ImageIcon size={15} />
                 {bannerUploading ? 'Uploading…' : heroBannerPreview ? 'Replace Banner' : 'Upload Banner'}
               </button>
               {heroBannerPreview && (
@@ -683,7 +687,7 @@ export default function OrgSettingsPage() {
             />
           </>
         ) : (
-          <p className={styles.planHint}>Upgrade to Pro or Elite to add a custom hero banner image to your tournament home page.</p>
+          <p className={styles.planHint}>Upgrade to Tournament Plus to add a custom hero banner image to your tournament home page.</p>
         )}
       </div>
 
@@ -692,7 +696,7 @@ export default function OrgSettingsPage() {
         <div className={styles.sectionTitleRow}>
           <h2 className={styles.sectionTitle}>Font Family</h2>
           {!isCustomPlan && (
-            <span className={styles.planLock}><Lock size={12} /> Pro / Elite only</span>
+            <span className={styles.planLock}><Lock size={12} /> Tournament Plus</span>
           )}
         </div>
 
@@ -813,7 +817,7 @@ export default function OrgSettingsPage() {
 
           {deletionSent ? (
             <p style={{ fontSize: '0.85rem', color: '#4ade80', flexShrink: 0 }}>
-              ✓ Request sent — we'll be in touch.
+              ✓ Request sent — we&apos;ll be in touch.
             </p>
           ) : !deletionConfirmOpen ? (
             <button

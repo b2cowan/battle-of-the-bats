@@ -15,7 +15,7 @@ export default async function TournamentLayout({
 }) {
   const { orgSlug, tournamentSlug } = await params;
   const org = await getOrganizationBySlug(orgSlug);
-  if (!org) notFound();
+  if (!org || !org.isPublic) notFound();
   if (org.subscriptionStatus === 'canceled') notFound();
   const tournament = await getPublicTournamentBySlug(org.id, tournamentSlug);
   if (!tournament) notFound();

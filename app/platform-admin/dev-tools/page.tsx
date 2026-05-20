@@ -2,7 +2,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import {
   Building2, Users, Trophy, CalendarDays, UserCheck, Shield,
-  Lock, RefreshCw, Trash2, CheckCircle, AlertCircle, Loader,
+  Lock, RefreshCw, Trash2, CheckCircle, AlertCircle, Loader, Zap,
 } from 'lucide-react';
 import styles from './dev.module.css';
 
@@ -107,6 +107,12 @@ function SeedCard({
   );
 }
 
+function readPlanGatesCookie(): 'live' | 'enforced' {
+  if (typeof document === 'undefined') return 'enforced';
+  const match = document.cookie.match(/dev_plan_gates=([^;]+)/);
+  return (match?.[1] === 'live') ? 'live' : 'enforced';
+}
+
 export default function DevDashboard() {
   const [status, setStatus]   = useState<Status | null>(null);
   const [busy,   setBusy]     = useState<Record<string, boolean>>({});
@@ -114,6 +120,10 @@ export default function DevDashboard() {
   const [wiping,      setWiping]      = useState(false);
   const [wipeConfirm, setWipeConfirm] = useState(false);
   const [wipeResult,  setWipeResult]  = useState<SeedResult | null>(null);
+  const [planGatesMode, setPlanGatesMode] = useState<'live' | 'enforced'>('enforced');
+  const [planGatesBusy, setPlanGatesBusy] = useState(false);
+
+  useEffect(() => { setPlanGatesMode(readPlanGatesCookie()); }, []);
 
   const fetchStatus = useCallback(async () => {
     const res = await fetch('/api/dev/seed/status');
@@ -134,6 +144,21 @@ export default function DevDashboard() {
       setResults(r => ({ ...r, [key]: { ok: false, error: 'Network error' } }));
     } finally {
       setBusy(b => ({ ...b, [key]: false }));
+    }
+  }
+
+  async function togglePlanGates() {
+    const next = planGatesMode === 'live' ? 'enforced' : 'live';
+    setPlanGatesBusy(true);
+    try {
+      await fetch('/api/dev/set-plan-gates', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mode: next }),
+      });
+      setPlanGatesMode(next);
+    } finally {
+      setPlanGatesBusy(false);
     }
   }
 
@@ -271,6 +296,59 @@ export default function DevDashboard() {
             result={results[card.key] ?? null}
           />
         ))}
+      </div>
+
+      {/* Plan gates toggle */}
+      <div style={{
+        border: '1px solid rgba(255,255,0,0.2)',
+        borderRadius: '8px',
+        padding: '1rem 1.25rem',
+        marginBottom: '1.5rem',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '1rem',
+        flexWrap: 'wrap' as const,
+      }}>
+        <Zap size={15} style={{ color: 'rgba(255,255,0,0.6)', flexShrink: 0 }} />
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: '0.72rem', fontWeight: 700, color: '#f0f0f0', marginBottom: '0.2rem' }}>
+            Plan Gates
+          </div>
+          <div style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.4)' }}>
+            {planGatesMode === 'live'
+              ? 'All plans treated as live — checkout CTAs visible on pricing page.'
+              : 'Gates enforced — League and Club show early-access CTAs.'}
+          </div>
+        </div>
+        <button
+          onClick={togglePlanGates}
+          disabled={planGatesBusy}
+          style={{
+            flexShrink: 0,
+            fontFamily: 'var(--font-data, monospace)',
+            fontSize: '0.65rem',
+            fontWeight: 800,
+            letterSpacing: '0.1em',
+            textTransform: 'uppercase' as const,
+            padding: '0.35rem 0.85rem',
+            background: planGatesMode === 'live'
+              ? 'rgba(255,255,0,0.1)'
+              : 'rgba(255,255,255,0.05)',
+            border: planGatesMode === 'live'
+              ? '1px solid rgba(255,255,0,0.45)'
+              : '1px solid rgba(255,255,255,0.15)',
+            color: planGatesMode === 'live' ? '#ffff00' : 'rgba(255,255,255,0.5)',
+            borderRadius: '5px',
+            cursor: planGatesBusy ? 'wait' : 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.35rem',
+          }}
+        >
+          {planGatesBusy
+            ? <Loader size={13} className={styles.spin} />
+            : planGatesMode === 'live' ? 'Enforce Gates' : 'All Live'}
+        </button>
       </div>
 
       {/* Danger zone */}

@@ -1,4 +1,5 @@
 import type { OrgPlan } from './types';
+import { PLAN_RANK } from './plan-features';
 
 export interface StockLogo {
   id: string;
@@ -32,15 +33,10 @@ export const STOCK_LOGOS: StockLogo[] = [
   { id: 'diamond-field',   label: 'Diamond Field', category: 'Baseball',    file: '/stock-logos/diamond-field.svg',   minPlan: 'club' },
 ];
 
-export const PLAN_ORDER: Record<OrgPlan, number> = {
-  tournament:      0,
-  tournament_plus: 1,
-  league:          2,
-  club:            3,
-};
+export const PLAN_ORDER = PLAN_RANK;
 
 export function isStockLogoUnlocked(logo: StockLogo, orgPlan: OrgPlan): boolean {
-  return PLAN_ORDER[orgPlan] >= PLAN_ORDER[logo.minPlan];
+  return PLAN_RANK[orgPlan] >= PLAN_RANK[logo.minPlan];
 }
 
 export const STOCK_LOGO_CATEGORIES = [

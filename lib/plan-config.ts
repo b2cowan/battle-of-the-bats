@@ -1,6 +1,8 @@
 import type { OrgPlan } from './types';
 import type { Capability } from './roles';
 
+export type BillingCycle = 'monthly' | 'annual';
+
 export interface PlanConfig {
   label: string;
   monthlyPrice: number;
@@ -12,10 +14,13 @@ export interface PlanConfig {
   officialsFreeSeats: boolean;
   // Trial length for paid subscriptions created through Stripe Checkout.
   trialDays: number;
-  priceId?: string;
   // Modules unlocked by this plan. All modules listed here are available without
   // a separate enabledAddons entry — entitlement is derived from plan tier alone.
   moduleEntitlements: Capability[];
+  // 'early_access': plan is not open for self-serve checkout; shows early-access CTA.
+  // 'live': plan is available for checkout.
+  // To activate a plan, change this to 'live' — no other changes required.
+  gatingStatus: 'live' | 'early_access';
 }
 
 const CORE_MODULES: Capability[] = [
@@ -34,6 +39,7 @@ export const PLAN_CONFIG: Record<OrgPlan, PlanConfig> = {
     officialsFreeSeats: false,
     trialDays: 0,
     moduleEntitlements: CORE_MODULES,
+    gatingStatus: 'live',
   },
   tournament_plus: {
     label: 'Tournament Plus',
@@ -43,8 +49,8 @@ export const PLAN_CONFIG: Record<OrgPlan, PlanConfig> = {
     seatLimit: 5,
     officialsFreeSeats: true,
     trialDays: 14,
-    priceId: process.env.STRIPE_PRICE_TOURNAMENT_PLUS_MONTHLY,
     moduleEntitlements: CORE_MODULES,
+    gatingStatus: 'live',
   },
   league: {
     label: 'League',
@@ -54,12 +60,12 @@ export const PLAN_CONFIG: Record<OrgPlan, PlanConfig> = {
     seatLimit: 10,
     officialsFreeSeats: true,
     trialDays: 30,
-    priceId: process.env.STRIPE_PRICE_LEAGUE_MONTHLY,
     moduleEntitlements: [
       ...CORE_MODULES,
       'module_public_site',
       'module_house_league',
     ],
+    gatingStatus: 'early_access',
   },
   club: {
     label: 'Club',
@@ -69,7 +75,6 @@ export const PLAN_CONFIG: Record<OrgPlan, PlanConfig> = {
     seatLimit: 9999,
     officialsFreeSeats: true,
     trialDays: 90,
-    priceId: process.env.STRIPE_PRICE_CLUB_MONTHLY,
     moduleEntitlements: [
       ...CORE_MODULES,
       'module_public_site',
@@ -77,8 +82,20 @@ export const PLAN_CONFIG: Record<OrgPlan, PlanConfig> = {
       'module_accounting',
       'module_rep_teams',
     ],
+    gatingStatus: 'early_access',
   },
 };
+
+/**
+ * Returns true when a plan's checkout should be blocked and an early-access CTA
+ * shown instead. Respects NEXT_PUBLIC_PLAN_GATES:
+ *   'live'     — all plans treated as live (use in .env.local to test checkout)
+ *   'enforced' / absent — plan gatingStatus is authoritative
+ */
+export function isEffectivelyGated(planKey: OrgPlan): boolean {
+  if (process.env.NEXT_PUBLIC_PLAN_GATES === 'live') return false;
+  return PLAN_CONFIG[planKey]?.gatingStatus === 'early_access';
+}
 
 export function getEffectiveTournamentLimit(
   planId: OrgPlan,
@@ -92,3 +109,8 @@ export function getEffectiveTournamentLimit(
 
   return storedLimit ?? configuredLimit;
 }
+
+export function normalizeBillingCycle(value: unknown): BillingCycle {
+  return value === 'annual' ? 'annual' : 'monthly';
+}
+

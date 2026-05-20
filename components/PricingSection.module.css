@@ -79,9 +79,22 @@
   padding: 2rem;
 }
 
+.planCardPending {
+  border-color: rgba(var(--blueprint-blue-rgb), 0.24);
+  background: rgba(var(--blueprint-blue-rgb), 0.035);
+}
+
 /* Band wrappers — no extra styles needed; subgrid handles alignment */
 .planHeader {}
 .planPriceBlock {}
+
+.planHeaderTop {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.4rem;
+}
 
 .planName {
   font-family: var(--font-data);
@@ -90,7 +103,23 @@
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--blueprint-blue);
-  margin-bottom: 0.4rem;
+  margin-bottom: 0;
+}
+
+.statusBadge {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.35);
+  color: var(--logic-lime);
+  background: rgba(var(--logic-lime-rgb), 0.08);
+  padding: 0.15rem 0.45rem;
+  font-family: var(--font-data);
+  font-size: 0.55rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  text-transform: uppercase;
+  white-space: nowrap;
 }
 
 .planTagline {
@@ -114,6 +143,11 @@
   font-weight: 700;
   line-height: 1;
   color: var(--fl-text);
+}
+
+.pendingAmount {
+  font-size: 1.35rem;
+  color: var(--data-gray);
 }
 
 .planCurrency {
@@ -172,6 +206,51 @@
 .rowCheck { color: var(--logic-lime); flex-shrink: 0; }
 .rowCross { color: rgba(255,255,255,0.15); flex-shrink: 0; }
 .rowMuted { color: rgba(255,255,255,0.2); }
+
+.planCardCurrent {
+  border-color: rgba(var(--blueprint-blue-rgb), 0.7);
+  background: rgba(var(--blueprint-blue-rgb), 0.06);
+}
+
+.currentBadge {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.6);
+  color: var(--blueprint-blue);
+  background: rgba(var(--blueprint-blue-rgb), 0.1);
+  padding: 0.15rem 0.45rem;
+  font-family: var(--font-data);
+  font-size: 0.55rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.ctaDisabled {
+  background: transparent;
+  color: var(--data-gray);
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.25);
+  cursor: default;
+  opacity: 0.6;
+}
+
+.ctaDisabled:hover {
+  background: transparent;
+  color: var(--data-gray);
+}
+
+.pendingCta {
+  background: transparent;
+  color: var(--logic-lime);
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.45);
+}
+
+.pendingCta:hover {
+  background: rgba(var(--logic-lime-rgb), 0.08);
+  color: var(--fl-text);
+}
 
 /* ── Responsive ───────────────────────────────────────────────────────── */
 @media (max-width: 1100px) {

@@ -2,13 +2,33 @@
 import { useState, useEffect } from 'react';
 import { Trophy } from 'lucide-react';
 import { useParams } from 'next/navigation';
-import { getAgeGroups, getStandings, getOrganizationBySlug, getTournamentsByOrg } from '@/lib/db';
 import { getAgPref, setAgPref } from '@/lib/age-group-cookie';
 import { isPublicPageEnabled } from '@/lib/public-pages';
 import { AgeGroup, Tournament } from '@/lib/types';
 import YearSelector from '@/components/YearSelector';
 import { formatPoolName } from '@/lib/utils';
 import styles from '../../standings/standings.module.css';
+import { fetchPublicTournamentData } from '@/lib/public-tournament-client';
+
+type StandingResult = {
+  teamId: string;
+  teamName: string;
+  poolId?: string;
+  gp: number;
+  w: number;
+  l: number;
+  t: number;
+  rf: number;
+  ra: number;
+  rd: number;
+  pts: number;
+  hasPendingGame?: boolean;
+};
+
+type StandingRow = StandingResult & {
+  id: string;
+  name: string;
+};
 
 export default function StandingsPage() {
   const params         = useParams();
@@ -19,17 +39,17 @@ export default function StandingsPage() {
   const [allTournaments, setAllTournaments] = useState<Tournament[]>([]);
   const [selectedTournament, setSelectedTournament] = useState<Tournament | null>(null);
   const [activeGroup, setActiveGroup]     = useState<string>('');
-  const [standings, setStandings]         = useState<any[]>([]);
+  const [standingsByAgeGroup, setStandingsByAgeGroup] = useState<Record<string, StandingResult[]>>({});
 
   useEffect(() => {
     async function init() {
-      const org = await getOrganizationBySlug(orgSlug);
-      const ts  = org ? await getTournamentsByOrg(org.id) : [];
-      setAllTournaments(ts.filter(t => t.status !== 'archived'));
-      const current = ts.find(t => t.slug === tournamentSlug) ?? null;
+      const data = await fetchPublicTournamentData(orgSlug, tournamentSlug, 'standings');
+      const current = data?.tournament ?? null;
+      const groups = data?.ageGroups ?? [];
+      setAllTournaments(data?.tournaments ?? []);
       setSelectedTournament(current);
-      const groups = await getAgeGroups(current?.id);
       setAgeGroups(groups);
+      setStandingsByAgeGroup(data?.standingsByAgeGroup ?? {});
       if (groups.length > 0) {
         const pref = getAgPref(orgSlug);
         const preferred = pref ? groups.find(g => g.name === pref) : null;
@@ -39,17 +59,10 @@ export default function StandingsPage() {
     init();
   }, [orgSlug, tournamentSlug]);
 
-  useEffect(() => {
-    if (!selectedTournament || !activeGroup) return;
-    async function fetchStandings() {
-      const group   = ageGroups.find(g => g.id === activeGroup);
-      const results = await getStandings(activeGroup, group?.playoffConfig);
-      setStandings(results.map(s => ({ ...s, id: s.teamId, name: s.teamName })));
-    }
-    fetchStandings();
-  }, [activeGroup, selectedTournament, ageGroups]);
-
   const currentGroup = ageGroups.find(g => g.id === activeGroup);
+  const standings: StandingRow[] = activeGroup
+    ? (standingsByAgeGroup[activeGroup] ?? []).map(s => ({ ...s, id: s.teamId, name: s.teamName }))
+    : [];
   const pools        = currentGroup?.pools || [];
 
   if (selectedTournament && !isPublicPageEnabled(selectedTournament, 'standings')) {

@@ -55,7 +55,7 @@ export default function ScheduleGenerator({ tournament, ageGroups, teams, diamon
     const start = new Date(tournament.startDate + 'T12:00:00');
     const end = new Date(tournament.endDate + 'T12:00:00');
     const dates = [];
-    let curr = new Date(start);
+    const curr = new Date(start);
     while (curr <= end) {
       dates.push(curr.toISOString().split('T')[0]);
       curr.setDate(curr.getDate() + 1);

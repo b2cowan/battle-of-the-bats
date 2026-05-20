@@ -154,7 +154,7 @@ Expected outcome: Tournament-tier customers can stay in one tournament workspace
 
 ## Phase 5 - Plan Guardrails and Upgrade Consistency
 
-### 16. [ ] Align free-vs-Plus feature expectations
+### 16. [x] Align free-vs-Plus feature expectations
 
 Problem: Pricing positions automated scheduling, bracket generation, email communication, and archives as Plus features, but some of those features are visible or usable on the free Tournament plan.
 

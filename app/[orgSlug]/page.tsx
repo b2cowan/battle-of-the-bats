@@ -14,6 +14,7 @@ export const dynamic = 'force-dynamic';
 export default async function HomePage({ params }: { params: Promise<{ orgSlug: string }> }) {
   const { orgSlug } = await params;
   const org = await getOrganizationBySlug(orgSlug);
+  if (!org || !org.isPublic) notFound();
   if (org?.subscriptionStatus === 'canceled') notFound();
 
   const allTournaments   = org ? await getTournamentsByOrg(org.id) : [];
@@ -40,7 +41,7 @@ export default async function HomePage({ params }: { params: Promise<{ orgSlug: 
 
     // Per-tournament age range helper
     async function tournamentAgeRange(tId: string) {
-      const groups = await getAgeGroups(tId);
+      const groups = await getAgeGroups(tId, { admin: true });
       const sorted = [...groups].sort((a, b) => a.order - b.order);
       if (sorted.length === 0) return null;
       return sorted.length === 1 ? sorted[0].name : `${sorted[0].name} – ${sorted[sorted.length - 1].name}`;

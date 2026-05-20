@@ -2,7 +2,6 @@
 import { useState, useEffect } from 'react';
 import { Calendar, Clock, Trophy, List, LayoutTemplate } from 'lucide-react';
 import { useParams } from 'next/navigation';
-import { getGames, getTeams, getAgeGroups, getDiamonds, getOrganizationBySlug, getTournamentsByOrg } from '@/lib/db';
 import { Game, Team, AgeGroup, Diamond, Tournament } from '@/lib/types';
 import LocationLink from '@/components/LocationLink';
 import { formatTime, formatPoolName } from '@/lib/utils';
@@ -11,6 +10,7 @@ import { isPublicPageEnabled } from '@/lib/public-pages';
 import YearSelector from '@/components/YearSelector';
 import styles from '../../schedule/schedule.module.css';
 import { LogicSyncBracket } from '@/components/bracket/LogicSyncBracket';
+import { fetchPublicTournamentData } from '@/lib/public-tournament-client';
 
 // ── bracket helpers ───────────────────────────────────────────────────────────
 
@@ -80,23 +80,16 @@ export default function SchedulePage() {
   useEffect(() => {
     async function init() {
       setLoading(true);
-      const org = await getOrganizationBySlug(orgSlug);
-      if (org) setRequireFinalization(org.requireScoreFinalization ?? true);
-      const ts = org ? await getTournamentsByOrg(org.id) : [];
-      setAllTournaments(ts.filter(t => t.status !== 'archived'));
-      const current = ts.find(t => t.slug === tournamentSlug) ?? null;
+      const data = await fetchPublicTournamentData(orgSlug, tournamentSlug, 'schedule');
+      const current = data?.tournament ?? null;
+      const groups = data?.ageGroups ?? [];
+
+      setRequireFinalization(data?.organization.requireScoreFinalization ?? current?.requireScoreFinalization ?? true);
+      setAllTournaments(data?.tournaments ?? []);
       setSelectedTournament(current);
-
-      const [fetchedGames, fetchedTeams, fetchedDiamonds, groups] = await Promise.all([
-        current ? getGames(current.id) : Promise.resolve([]),
-        current ? getTeams(current.id) : Promise.resolve([]),
-        current ? getDiamonds(current.id) : Promise.resolve([]),
-        getAgeGroups(current?.id),
-      ]);
-
-      setGames(fetchedGames);
-      setTeams(fetchedTeams);
-      setDiamonds(fetchedDiamonds);
+      setGames(data?.games ?? []);
+      setTeams(data?.teams ?? []);
+      setDiamonds(data?.diamonds ?? []);
       setAgeGroups(groups);
       if (groups.length > 0) {
         const pref = getAgPref(orgSlug);
@@ -107,11 +100,6 @@ export default function SchedulePage() {
     }
     init();
   }, [orgSlug, tournamentSlug]);
-
-  // Reset team filter when switching age groups
-  useEffect(() => {
-    setSelectedTeamId('');
-  }, [activeGroup]);
 
   // ── helper fns ─────────────────────────────────────────────────────────────
 
@@ -336,7 +324,7 @@ export default function SchedulePage() {
           {allUnpublished ? (
             <div className="empty-state" style={{ padding: '4rem 0' }}>
               <Calendar size={48} style={{ opacity: 0.3 }} />
-              <p>The schedule for this tournament hasn't been published yet. Check back soon!</p>
+              <p>The schedule for this tournament hasn&apos;t been published yet. Check back soon!</p>
             </div>
           ) : (
           <>
@@ -347,7 +335,7 @@ export default function SchedulePage() {
               {ageGroups.map(g => (
                 <button key={g.id}
                   className={`tab-btn ${activeGroup === g.id ? 'active' : ''}`}
-                  onClick={() => { setActiveGroup(g.id); setAgPref(orgSlug, g.name); }}
+                  onClick={() => { setActiveGroup(g.id); setSelectedTeamId(''); setAgPref(orgSlug, g.name); }}
                   style={{ marginBottom: 0 }}
                   id={`schedule-tab-${g.name}`}>{g.name}</button>
               ))}

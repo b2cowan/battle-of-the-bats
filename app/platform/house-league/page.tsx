@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import type { Metadata } from 'next';
+import EarlyAccessModalTrigger from '@/components/EarlyAccessModalTrigger';
 
 export const metadata: Metadata = {
   title: 'House League — FieldLogicHQ',
@@ -50,13 +51,17 @@ export default function HouseLeaguePage() {
             Season setup, player registration, draft tools, scheduling, standings, and parent notifications
             — everything your house league needs in one dashboard. No spreadsheets, no reply-all emails.
           </p>
+          <p className="font-mono text-xs text-logic-lime leading-relaxed max-w-2xl mb-8 border border-logic-lime/30 px-4 py-3">
+            Coming soon: House League is in final refinement. Tournament and Tournament Plus are available now.
+          </p>
           <div className="flex flex-wrap gap-4">
-            <Link
-              href="/auth/signup"
-              className="font-mono text-xs font-bold uppercase tracking-widest bg-logic-lime text-pitch-black px-8 py-4 hover:bg-white transition-colors"
+            <EarlyAccessModalTrigger
+              className="font-mono text-xs font-bold uppercase tracking-widest bg-logic-lime text-pitch-black px-8 py-4 hover:bg-white transition-colors border-0 cursor-pointer"
+              initialPlanInterest={['league']}
+              initialFeaturesInterested={['house_league', 'registration']}
             >
-              Get Started
-            </Link>
+              Join Early Access
+            </EarlyAccessModalTrigger>
             <Link
               href="/pricing"
               className="font-mono text-xs uppercase tracking-widest text-data-gray border border-blueprint-blue/40 px-8 py-4 hover:border-blueprint-blue hover:text-fl-text transition-colors"
@@ -120,14 +125,15 @@ export default function HouseLeaguePage() {
             Ready to run a real season?
           </h2>
           <p className="font-mono text-xs text-data-gray mb-10">
-            House League is included in the League and Club plans. League starts with a 30-day trial; Club starts with a 90-day early-adopter trial.
+            House League will be included in the League and Club plans when those tiers open for self-serve signup.
           </p>
-          <Link
-            href="/auth/signup"
-            className="font-mono text-sm font-bold uppercase tracking-widest bg-logic-lime text-pitch-black px-8 py-4 hover:bg-white transition-colors"
+          <EarlyAccessModalTrigger
+            className="font-mono text-sm font-bold uppercase tracking-widest bg-logic-lime text-pitch-black px-8 py-4 hover:bg-white transition-colors border-0 cursor-pointer"
+            initialPlanInterest={['league']}
+            initialFeaturesInterested={['house_league', 'registration']}
           >
-            Start Your Organization
-          </Link>
+            Join Early Access
+          </EarlyAccessModalTrigger>
         </div>
       </section>
     </div>

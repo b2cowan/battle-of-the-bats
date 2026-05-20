@@ -12,6 +12,10 @@ interface TournamentRow {
   status: string;
 }
 
+type AssignmentRow = {
+  tournaments: TournamentRow | TournamentRow[] | null;
+};
+
 export default async function OfficialOverviewPage({ params }: Params) {
   const { orgSlug } = await params;
   const ctx = await getAuthContextWithScope();
@@ -35,9 +39,11 @@ export default async function OfficialOverviewPage({ params }: Params) {
       .select('tournaments(id, name, year, slug, status)')
       .eq('org_member_id', memberRow.id);
 
-    const assigned: TournamentRow[] = (assignments ?? [])
-      .map((a: any) => a.tournaments)
-      .filter(Boolean);
+    const assigned: TournamentRow[] = ((assignments ?? []) as AssignmentRow[])
+      .flatMap(assignment => {
+        if (!assignment.tournaments) return [];
+        return Array.isArray(assignment.tournaments) ? assignment.tournaments : [assignment.tournaments];
+      });
 
     if (assigned.length > 0) {
       tournaments = assigned;
@@ -160,7 +166,7 @@ export default async function OfficialOverviewPage({ params }: Params) {
         color: 'rgba(148,163,184,0.4)',
         lineHeight: 1.6,
       }}>
-        The scorekeeper app will open to the currently active tournament.
+        The scorekeeper app will show games scheduled today from your assigned tournament access.
         Contact your org admin if you need access to a specific tournament.
       </p>
     </div>

@@ -2,10 +2,10 @@
 import { useState, useEffect } from 'react';
 import { UserPlus, CheckCircle, AlertCircle, ChevronDown, RefreshCw, Send, ShieldCheck, CreditCard } from 'lucide-react';
 import { useParams } from 'next/navigation';
-import { getAgeGroups, getContacts, getOrganizationBySlug, getTournamentsByOrg } from '@/lib/db';
 import { isPublicPageEnabled } from '@/lib/public-pages';
 import { AgeGroup, Tournament, Contact } from '@/lib/types';
 import styles from '../../register/register.module.css';
+import { fetchPublicTournamentData } from '@/lib/public-tournament-client';
 
 type Step = 'form' | 'submitting' | 'success' | 'error';
 
@@ -83,14 +83,13 @@ export default function RegisterPage() {
 
   useEffect(() => {
     async function init() {
-      const org = await getOrganizationBySlug(orgSlug);
-      const ts  = org ? await getTournamentsByOrg(org.id) : [];
-      const current = ts.find(t => t.slug === tournamentSlug) ?? null;
+      const data = await fetchPublicTournamentData(orgSlug, tournamentSlug, 'register');
+      const current = data?.tournament ?? null;
       setTournament(current);
-      setContactEmail(current?.contactEmail ?? org?.contactEmail ?? null);
-      if (current) {
-        setAgeGroups(await getAgeGroups(current.id));
-        setContacts(await getContacts(current.id));
+      setContactEmail(current?.contactEmail ?? data?.organization.contactEmail ?? null);
+      if (current && data?.pageEnabled) {
+        setAgeGroups(data.ageGroups);
+        setContacts(data.contacts);
         fetchStats(current.id);
       }
     }

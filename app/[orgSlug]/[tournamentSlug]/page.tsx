@@ -10,7 +10,7 @@ export default async function TournamentHomePage({
 }) {
   const { orgSlug, tournamentSlug } = await params;
   const org = await getOrganizationBySlug(orgSlug);
-  if (!org) return null;
+  if (!org || !org.isPublic || org.subscriptionStatus === 'canceled') return null;
 
   const tournament = await getPublicTournamentBySlug(org.id, tournamentSlug);
   if (!tournament) return null;

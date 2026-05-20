@@ -2,7 +2,7 @@
 /* eslint-disable @next/next/no-img-element */
 import { useState, useEffect, useRef, useMemo } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Image as ImageIcon, Palette, Upload } from 'lucide-react';
+import { ArrowLeft, Image as ImageIcon, Lock, Palette, Upload } from 'lucide-react';
 import { useTournament } from '@/lib/tournament-context';
 import { useOrg } from '@/lib/org-context';
 import FeedbackModal from '@/components/FeedbackModal';
@@ -29,7 +29,7 @@ function errorMessage(err: unknown, fallback: string) {
 export default function TournamentBrandingPage() {
   const { currentTournament } = useTournament();
   const { currentOrg, userRole } = useOrg();
-  const base = `/${currentOrg?.slug ?? 'admin'}/admin/tournaments/settings`;
+  const base = `/${currentOrg?.slug ?? 'admin'}/admin/tournaments`;
 
   const [saved, setSaved] = useState<BrandingSettings | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
@@ -270,7 +270,7 @@ export default function TournamentBrandingPage() {
     <div className={styles.page}>
       <div className={styles.pageHeader}>
         <Link href={base} className={styles.backBtn}>
-          <ArrowLeft size={13} /> Settings
+          <ArrowLeft size={13} /> Dashboard
         </Link>
       </div>
 
@@ -328,7 +328,33 @@ export default function TournamentBrandingPage() {
               {presetKey === key && <span className={styles.swatchCheck}>✓</span>}
             </button>
           ))}
+          <button
+            type="button"
+            title={canUseAdvancedBranding ? 'Custom colors' : 'Custom colors — Tournament Plus'}
+            aria-label={canUseAdvancedBranding ? 'Custom colors' : 'Custom colors — Tournament Plus'}
+            aria-pressed={presetKey === 'custom'}
+            className={`${styles.swatch} ${styles.swatchCustom} ${presetKey === 'custom' ? styles.swatchActive : ''} ${!canUseAdvancedBranding ? styles.swatchLocked : ''}`}
+            onClick={() => canUseAdvancedBranding && setPresetKey('custom')}
+          >
+            {presetKey === 'custom' && canUseAdvancedBranding
+              ? <span className={styles.swatchCheck}>✓</span>
+              : !canUseAdvancedBranding && <span className={styles.swatchLockIcon}><Lock size={11} /></span>
+            }
+          </button>
         </div>
+
+        {presetKey === 'custom' && canUseAdvancedBranding && (
+          <div className={styles.customPickers}>
+            <div className={styles.colorPickerField}>
+              <label className={styles.label} htmlFor="t-primary">Primary</label>
+              <input id="t-primary" type="color" className={styles.colorInput} value={customPrimary} onChange={e => setCustomPrimary(e.target.value)} />
+            </div>
+            <div className={styles.colorPickerField}>
+              <label className={styles.label} htmlFor="t-accent">Accent</label>
+              <input id="t-accent" type="color" className={styles.colorInput} value={customAccent} onChange={e => setCustomAccent(e.target.value)} />
+            </div>
+          </div>
+        )}
 
         <div className={styles.modeToggleRow}>
           <h3 className={styles.modeToggleLabel}>Background</h3>
@@ -442,43 +468,6 @@ export default function TournamentBrandingPage() {
         )}
         <p className={styles.bannerHint}>JPG, PNG, or WebP - max 4 MB. Recommended 16:5 ratio.</p>
         <input ref={bannerInputRef} type="file" accept="image/jpeg,image/png,image/webp" onChange={handleBannerChange} style={{ display: 'none' }} />
-      </div>
-
-      <div className={advancedCardClass}>
-        <div className={styles.sectionTitleRow}>
-          <h2 className={styles.sectionTitle}>Custom Colors</h2>
-          {!canUseAdvancedBranding && <span className={styles.lockedBadge}>Locked</span>}
-        </div>
-        <p className={styles.compactNote}>
-          Use exact brand colors instead of one of the included palettes.
-        </p>
-        <button
-          type="button"
-          title="Custom colors"
-          aria-label="Custom colors"
-          aria-pressed={presetKey === 'custom'}
-          className={`${styles.customColorBtn} ${presetKey === 'custom' ? styles.customColorBtnActive : ''}`}
-          onClick={() => setPresetKey('custom')}
-          disabled={!canUseAdvancedBranding}
-        >
-          <span className={styles.customColorSwatch} />
-          <span>Use custom colors</span>
-        </button>
-        {presetKey === 'custom' && canUseAdvancedBranding && (
-          <div className={styles.customPickers}>
-            <div className={styles.colorPickerField}>
-              <label className={styles.label} htmlFor="t-primary">Primary</label>
-              <input id="t-primary" type="color" className={styles.colorInput} value={customPrimary} onChange={e => setCustomPrimary(e.target.value)} />
-            </div>
-            <div className={styles.colorPickerField}>
-              <label className={styles.label} htmlFor="t-accent">Accent</label>
-              <input id="t-accent" type="color" className={styles.colorInput} value={customAccent} onChange={e => setCustomAccent(e.target.value)} />
-            </div>
-          </div>
-        )}
-        {!canUseAdvancedBranding && (
-          <p className={styles.upgradeNote}>Custom color picking is available on Tournament Plus and higher plans.</p>
-        )}
       </div>
 
       <div className={advancedCardClass}>

@@ -355,7 +355,7 @@ export default function AdminDashboard() {
                 </div>
               </Link>
 
-              <Link href={`${base}/settings/branding`} className={`${styles.checklistNudge} ${checklist.hasBranding ? styles.nudgeDone : ''}`}>
+              <Link href={`${base}/branding`} className={`${styles.checklistNudge} ${checklist.hasBranding ? styles.nudgeDone : ''}`}>
                 <div className={styles.checklistIcon}>
                   {checklist.hasBranding ? <CheckCircle2 size={18} /> : <Info size={18} />}
                 </div>

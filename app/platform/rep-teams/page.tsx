@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import type { Metadata } from 'next';
+import EarlyAccessModalTrigger from '@/components/EarlyAccessModalTrigger';
 
 export const metadata: Metadata = {
   title: 'Rep Teams — FieldLogicHQ',
@@ -51,13 +52,17 @@ export default function RepTeamsPage() {
             and team finances — all in one place. Coaches own their day-to-day. Org admins keep
             visibility without owning every task.
           </p>
+          <p className="font-mono text-xs text-logic-lime leading-relaxed max-w-2xl mb-8 border border-logic-lime/30 px-4 py-3">
+            Coming soon: Rep Teams is part of the Club roadmap and is not open for self-serve signup yet.
+          </p>
           <div className="flex flex-wrap gap-4">
-            <Link
-              href="/auth/signup"
-              className="font-mono text-xs font-bold uppercase tracking-widest bg-logic-lime text-pitch-black px-8 py-4 hover:bg-white transition-colors"
+            <EarlyAccessModalTrigger
+              className="font-mono text-xs font-bold uppercase tracking-widest bg-logic-lime text-pitch-black px-8 py-4 hover:bg-white transition-colors border-0 cursor-pointer"
+              initialPlanInterest={['club']}
+              initialFeaturesInterested={['rep_teams', 'coach_portal']}
             >
-              Get Started
-            </Link>
+              Join Early Access
+            </EarlyAccessModalTrigger>
             <Link
               href="/pricing"
               className="font-mono text-xs uppercase tracking-widest text-data-gray border border-blueprint-blue/40 px-8 py-4 hover:border-blueprint-blue hover:text-fl-text transition-colors"
@@ -121,14 +126,15 @@ export default function RepTeamsPage() {
             The whole club, one platform.
           </h2>
           <p className="font-mono text-xs text-data-gray mb-10">
-            Rep Teams is included in the Club plan. Start with a 90-day early-adopter trial.
+            Rep Teams will be included in the Club plan when that tier opens for self-serve signup.
           </p>
-          <Link
-            href="/auth/signup"
-            className="font-mono text-sm font-bold uppercase tracking-widest bg-logic-lime text-pitch-black px-8 py-4 hover:bg-white transition-colors"
+          <EarlyAccessModalTrigger
+            className="font-mono text-sm font-bold uppercase tracking-widest bg-logic-lime text-pitch-black px-8 py-4 hover:bg-white transition-colors border-0 cursor-pointer"
+            initialPlanInterest={['club']}
+            initialFeaturesInterested={['rep_teams', 'coach_portal']}
           >
-            Start Your Organization
-          </Link>
+            Join Early Access
+          </EarlyAccessModalTrigger>
         </div>
       </section>
     </div>

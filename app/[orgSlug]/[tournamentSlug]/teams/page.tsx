@@ -3,12 +3,12 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Users, Search } from 'lucide-react';
 import { useParams } from 'next/navigation';
-import { getTeams, getAgeGroups, getOrganizationBySlug, getTournamentsByOrg } from '@/lib/db';
 import { getAgPref, setAgPref } from '@/lib/age-group-cookie';
 import { isPublicPageEnabled } from '@/lib/public-pages';
 import { Team, AgeGroup, Tournament } from '@/lib/types';
 import YearSelector from '@/components/YearSelector';
 import styles from '../../teams/teams.module.css';
+import { fetchPublicTournamentData } from '@/lib/public-tournament-client';
 
 export default function TeamsPage() {
   const params         = useParams();
@@ -24,32 +24,22 @@ export default function TeamsPage() {
 
   useEffect(() => {
     async function init() {
-      const org = await getOrganizationBySlug(orgSlug);
-      const ts  = org ? await getTournamentsByOrg(org.id) : [];
-      setAllTournaments(ts.filter(t => t.status !== 'archived'));
-      const current = ts.find(t => t.slug === tournamentSlug) ?? null;
+      const data = await fetchPublicTournamentData(orgSlug, tournamentSlug, 'teams');
+      const current = data?.tournament ?? null;
+      setAllTournaments(data?.tournaments ?? []);
       setSelectedTournament(current);
-    }
-    init();
-  }, [orgSlug, tournamentSlug]);
-
-  useEffect(() => {
-    if (!selectedTournament) return;
-    async function fetchTeams() {
-      const allTeams = await getTeams(selectedTournament!.id);
-      setTeams(allTeams.filter(t => t.status === 'accepted'));
-      const groups = await getAgeGroups(selectedTournament!.id);
+      setTeams(data?.teams ?? []);
+      const groups = data?.ageGroups ?? [];
       setAgeGroups(groups);
       const pref = getAgPref(orgSlug);
       const preferred = pref ? groups.find(g => g.name === pref) : null;
       if (preferred) setActiveGroup(preferred.id);
     }
-    fetchTeams();
-  }, [selectedTournament]);
+    init();
+  }, [orgSlug, tournamentSlug]);
 
   const filtered = (activeGroup === 'all' ? teams : teams.filter(t => t.ageGroupId === activeGroup))
     .filter(t => t.name.toLowerCase().includes(search.toLowerCase()));
-  const getGroupName = (id: string) => ageGroups.find(g => g.id === id)?.name ?? '—';
 
   const countByGroup = Object.fromEntries(ageGroups.map(g => [g.id, teams.filter(t => t.ageGroupId === g.id).length]));
   const totalCount = teams.length;

@@ -230,6 +230,24 @@
   background: conic-gradient(#f87171, #fb923c, #fcd34d, #4ade80, #60a5fa, #c084fc, #f87171);
 }
 
+.swatchLocked {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.swatchLocked:hover {
+  transform: none;
+}
+
+.swatchLockIcon {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+}
+
 .customPickers {
   display: flex;
   gap: 1.5rem;

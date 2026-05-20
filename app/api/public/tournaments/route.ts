@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { supabaseAdmin } from '@/lib/supabase-admin';
 
 export const dynamic = 'force-dynamic';
 
@@ -11,44 +11,43 @@ export async function GET(req: Request) {
     const limit  = Math.min(Math.max(parseInt(searchParams.get('limit')  ?? '20', 10), 1), MAX_LIMIT);
     const offset = Math.max(parseInt(searchParams.get('offset') ?? '0', 10), 0);
 
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    );
-
     // Fetch public orgs (paginated) + total count in one query
-    const { data: orgs, error: orgsError, count } = await supabase
+    const { data: orgs, error: orgsError, count } = await supabaseAdmin
       .from('organizations')
-      .select('id, name, slug, logo_url', { count: 'exact' })
+      .select('id, name, slug, logo_url, subscription_status', { count: 'exact' })
       .eq('is_public', true)
       .order('name', { ascending: true })
       .range(offset, offset + limit - 1);
 
     if (orgsError) throw orgsError;
-    if (!orgs?.length) {
+    const publicOrgs = (orgs ?? []).filter(org => org.subscription_status !== 'canceled');
+    if (!publicOrgs.length) {
       return NextResponse.json({ orgs: [], total: count ?? 0, hasMore: false });
     }
 
-    const orgIds = orgs.map(o => o.id);
+    const orgIds = publicOrgs.map(o => o.id);
 
     // Fetch active tournaments for this batch, then counts (sequential — counts need tournament IDs)
-    const { data: tournaments, error: tError } = await supabase
+    const { data: tournaments, error: tError } = await supabaseAdmin
       .from('tournaments')
       .select('id, name, year, start_date, end_date, is_active, organization_id')
       .in('organization_id', orgIds)
-      .eq('is_active', true);
+      .eq('status', 'active');
 
     if (tError) throw tError;
 
     const tournamentIds = (tournaments || []).map(t => t.id);
+    if (tournamentIds.length === 0) {
+      return NextResponse.json({ orgs: [], total: count ?? 0, hasMore: offset + limit < (count ?? 0) });
+    }
 
     const [{ data: agRows, error: agErr }, { data: teamRows, error: teErr }] =
       await Promise.all([
-        supabase
+        supabaseAdmin
           .from('age_groups')
           .select('tournament_id')
           .in('tournament_id', tournamentIds),
-        supabase
+        supabaseAdmin
           .from('teams')
           .select('tournament_id')
           .in('tournament_id', tournamentIds)
@@ -74,7 +73,7 @@ export async function GET(req: Request) {
       teamCount[row.tournament_id] = (teamCount[row.tournament_id] ?? 0) + 1;
     }
 
-    const result = orgs
+    const result = publicOrgs
       .map(org => {
         const t = tournamentByOrg[org.id] ?? null;
         return {
@@ -101,8 +100,9 @@ export async function GET(req: Request) {
     const hasMore = offset + limit < total;
 
     return NextResponse.json({ orgs: result, total, hasMore });
-  } catch (e: any) {
+  } catch (e: unknown) {
     console.error('Public tournaments API error:', e);
-    return NextResponse.json({ error: e.message }, { status: 500 });
+    const message = e instanceof Error ? e.message : 'Unable to load public tournaments.';
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

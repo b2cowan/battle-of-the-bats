@@ -1,5 +1,7 @@
 'use client';
 
+import Link from 'next/link';
+
 export default function GlobalError({ error, reset }: { error: Error; reset: () => void }) {
   return (
     <div className="min-h-screen bg-pitch-black flex items-center justify-center p-8">
@@ -22,12 +24,12 @@ export default function GlobalError({ error, reset }: { error: Error; reset: () 
           >
             Retry Request
           </button>
-          <a
+          <Link
             href="/"
             className="font-mono text-xs uppercase tracking-widest text-data-gray border border-white/10 px-6 py-3 hover:border-white/30 transition-colors"
           >
             Return to Root
-          </a>
+          </Link>
         </div>
       </div>
     </div>

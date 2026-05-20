@@ -3,6 +3,14 @@ import { getAuthContextWithScope, unauthorized, forbidden, scopeGuard } from '@/
 import { hasCapability } from '@/lib/roles';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { updateGame } from '@/lib/db';
+import { hasPlanFeature, requiresTournamentPlusCopy, type PlanFeature } from '@/lib/plan-features';
+
+function planFeatureForbidden(feature: PlanFeature) {
+  return new Response(JSON.stringify({ error: requiresTournamentPlusCopy(feature) }), {
+    status: 403,
+    headers: { 'Content-Type': 'application/json' },
+  });
+}
 
 export async function GET(req: Request) {
   const ctx = await getAuthContextWithScope();
@@ -78,6 +86,13 @@ export async function POST(req: Request) {
         return new Response(JSON.stringify({ error: 'Invalid games data' }), { status: 400 });
       }
 
+      const requiredFeature: PlanFeature = games.some((g: any) => g.isPlayoff)
+        ? 'playoff_generator'
+        : 'auto_schedule';
+      if (!hasPlanFeature(ctx.org.planId, requiredFeature)) {
+        return planFeatureForbidden(requiredFeature);
+      }
+
       // Verify every game in the batch belongs to a tournament in scope
       for (const g of games) {
         if (g.tournamentId) {
@@ -123,7 +138,31 @@ export async function POST(req: Request) {
         if (denied) return denied;
       }
 
+      if (!hasPlanFeature(ctx.org.planId, 'auto_schedule')) {
+        return planFeatureForbidden('auto_schedule');
+      }
+
       const { error } = await supabase.from('games').delete().eq('age_group_id', ageGroupId);
+      if (error) throw error;
+    }
+
+    else if (action === 'delete-division-playoff-games' && ageGroupId) {
+      const { data: ag } = await supabaseAdmin
+        .from('age_groups')
+        .select('tournament_id')
+        .eq('id', ageGroupId)
+        .single();
+
+      if (ag) {
+        const denied = scopeGuard(ctx, ag.tournament_id);
+        if (denied) return denied;
+      }
+
+      if (!hasPlanFeature(ctx.org.planId, 'playoff_generator')) {
+        return planFeatureForbidden('playoff_generator');
+      }
+
+      const { error } = await supabase.from('games').delete().eq('age_group_id', ageGroupId).eq('is_playoff', true);
       if (error) throw error;
     }
 

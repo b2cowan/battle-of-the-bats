@@ -1,17 +1,19 @@
-'use client';
+﻿'use client';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { LayoutDashboard, Building2, Users, ScrollText, Terminal, HelpCircle, LogOut, ArchiveRestore } from 'lucide-react';
+import { LayoutDashboard, Building2, Users, ScrollText, Terminal, HelpCircle, LogOut, ArchiveRestore, Mail, SlidersHorizontal } from 'lucide-react';
 import { signOut } from '@/lib/auth';
 import styles from './platform-admin.module.css';
 
 const BASE_NAV = [
-  { href: '/platform-admin',       label: 'Overview',       Icon: LayoutDashboard },
-  { href: '/platform-admin/orgs',  label: 'Organizations',  Icon: Building2       },
-  { href: '/platform-admin/retention', label: 'Retention',   Icon: ArchiveRestore },
-  { href: '/platform-admin/users', label: 'Users',          Icon: Users           },
-  { href: '/platform-admin/audit', label: 'Audit Log',      Icon: ScrollText      },
-  { href: '/platform-admin/help',  label: 'Help',           Icon: HelpCircle      },
+  { href: '/platform-admin',              label: 'Overview',       Icon: LayoutDashboard },
+  { href: '/platform-admin/orgs',         label: 'Organizations',  Icon: Building2       },
+  { href: '/platform-admin/plans-pricing', label: 'Plans & Pricing', Icon: SlidersHorizontal },
+  { href: '/platform-admin/early-access', label: 'Early Access',   Icon: Mail            },
+  { href: '/platform-admin/retention',    label: 'Retention',      Icon: ArchiveRestore  },
+  { href: '/platform-admin/users',        label: 'Users',          Icon: Users           },
+  { href: '/platform-admin/audit',        label: 'Audit Log',      Icon: ScrollText      },
+  { href: '/platform-admin/help',         label: 'Help',           Icon: HelpCircle      },
 ];
 
 export default function PlatformAdminNav({ sessionEmail }: { sessionEmail: string }) {
@@ -67,3 +69,4 @@ export default function PlatformAdminNav({ sessionEmail }: { sessionEmail: strin
     </aside>
   );
 }
+

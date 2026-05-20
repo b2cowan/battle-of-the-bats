@@ -5,6 +5,7 @@ import AdminSidebar from '@/components/admin/AdminSidebar';
 import AdminBottomNav from '@/components/admin/AdminBottomNav';
 import DevPlanSwitcher from '@/components/DevPlanSwitcher';
 import { LiveLogicRail } from '@/components/live-logic/LiveLogicRail';
+import AdminTitleManager from './AdminTitleManager';
 import styles from './admin.module.css';
 
 export default function AdminChrome({
@@ -29,6 +30,7 @@ export default function AdminChrome({
 
   return (
     <>
+      <AdminTitleManager />
       <div className={shellClassName}>
         {!isFocused && <AdminSidebar />}
         <main className={mainClassName}>

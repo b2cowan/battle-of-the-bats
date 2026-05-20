@@ -4,7 +4,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import {
   LayoutDashboard, Users, Calendar, Trophy, Megaphone, Tag, LogOut, Home,
-  ChevronRight, MapPin, BookUser, BookOpen, CreditCard, Settings,
+  ChevronRight, MapPin, BookUser, BookOpen, CreditCard, Settings, Paintbrush,
   Users2, Archive, ArrowLeft, Mail, Globe, DollarSign,
   CalendarDays, ClipboardList, FileText, UserCheck, ExternalLink, HelpCircle,
 } from 'lucide-react';
@@ -40,10 +40,11 @@ const TOUR_GROUPS: TourGroup[] = [
     label: 'Setup',
     defaultOpenFor: ['draft'],
     items: [
-      { key: 'venues',        icon: MapPin,    label: 'Venues'            },
-      { key: 'contacts',      icon: BookUser,  label: 'Contacts'          },
-      { key: 'age-groups',    icon: Tag,       label: 'Divisions'         },
-      { key: 'rules',         icon: BookOpen,  label: 'Rules & Resources' },
+      { key: 'venues',           icon: MapPin,       label: 'Venues'            },
+      { key: 'contacts',         icon: BookUser,     label: 'Contacts'          },
+      { key: 'age-groups',       icon: Tag,          label: 'Divisions'         },
+      { key: 'rules',            icon: BookOpen,     label: 'Rules & Resources' },
+      { key: 'branding',          icon: Paintbrush,  label: 'Branding'          },
     ],
   },
   {
@@ -448,7 +449,13 @@ export default function AdminSidebar() {
               })}
               {TOUR_GROUPS.map(group => {
                 const open      = isGroupOpen(group.key, group.items);
-                const hasActive = group.items.some(item => pathname.startsWith(`${base}/tournaments/${item.key}`));
+                const allKeys = TOUR_GROUPS.flatMap(g => g.items).map(i => i.key);
+                const hasActive = group.items.some(item => {
+                  const href = `${base}/tournaments/${item.key}`;
+                  return pathname.startsWith(href) && !allKeys.some(
+                    k => k !== item.key && pathname.startsWith(`${base}/tournaments/${k}`) && k.length > item.key.length,
+                  );
+                });
                 return (
                   <div key={group.key} className={styles.navGroup}>
                     <button
@@ -465,7 +472,12 @@ export default function AdminSidebar() {
                       <div className={styles.navGroupItems}>
                         {group.items.map(item => {
                           const href = `${base}/tournaments/${item.key}`;
-                          return navLink(item.key, item.icon, item.label, href, pathname.startsWith(href));
+                          const hasMoreSpecificMatch = TOUR_GROUPS.flatMap(g => g.items).some(
+                            other => other.key !== item.key &&
+                                     pathname.startsWith(`${base}/tournaments/${other.key}`) &&
+                                     other.key.length > item.key.length,
+                          );
+                          return navLink(item.key, item.icon, item.label, href, pathname.startsWith(href) && !hasMoreSpecificMatch);
                         })}
                       </div>
                     )}

@@ -74,31 +74,31 @@ The free Tournament plan should remain a complete manual tournament operations p
 
 ### Implementation Tasks
 
-- [ ] Add a central tournament feature entitlement helper, likely in `lib/plan-features.ts` or `lib/plan-config.ts`, with plan ranking instead of direct `planId === 'tournament_plus'` checks.
-  - [ ] Define `PLAN_RANK` for `tournament`, `tournament_plus`, `league`, and `club`.
-  - [ ] Define feature minimums for `auto_schedule`, `playoff_generator`, `sealed_archives`, and `advanced_tournament_branding`.
-  - [ ] Add `hasPlanFeature(planId, feature)` so `league` and `club` automatically satisfy `minPlan: 'tournament_plus'`.
-- [ ] Replace existing ad hoc Tournament Plus checks, including advanced tournament branding, with the central helper where practical.
-- [ ] Gate automated tournament scheduling:
-  - [ ] Keep manual schedule creation/editing available to free Tournament orgs.
-  - [ ] Lock generator entry points in `app/[orgSlug]/admin/tournaments/schedule/page.tsx` and related generator components.
-  - [ ] Enforce the same gate server-side on any generation/save API that creates generated schedules.
-- [ ] Gate playoff/bracket generation:
-  - [ ] Keep manual playoff games, score entry, and public bracket display available to free Tournament orgs.
-  - [ ] Lock the playoff/bracket generator wizard and any API routes that auto-create bracket structures.
-- [ ] Gate sealed/permanent archives:
-  - [ ] Keep the basic close/archive lifecycle available so a free Tournament org can free its single tournament slot.
-  - [ ] Lock seal/permanent-history actions and their API routes for base Tournament orgs.
-- [ ] Keep current Communication Hub basic sending available on free Tournament.
-  - [ ] Update pricing copy so basic email communication is not advertised as Plus-only.
-  - [ ] Reserve future advanced email features for Plus-and-above if/when built.
-- [ ] Update public pricing and plan comparison copy:
-  - [ ] Free Tournament: manual scheduling, registrations, scoring/standings, public news posts, basic team/contact email, one active tournament slot.
-  - [ ] Tournament Plus: automated scheduling, bracket generator, permanent sealed archives, advanced branding, three tournament slots, higher admin capacity, officials not counted toward seats.
-  - [ ] League and Club: make clear they include Tournament Plus tournament capabilities in addition to their league/club modules.
-- [ ] Keep free-plan navigation clean:
-  - [ ] Do not add locked-only sidebar destinations for base Tournament orgs.
-  - [ ] Place upgrade prompts beside useful locked actions inside Schedule, Playoffs/Brackets, Archives/Past Tournaments, Branding, and Billing/usage surfaces.
+- [x] Add a central tournament feature entitlement helper, likely in `lib/plan-features.ts` or `lib/plan-config.ts`, with plan ranking instead of direct `planId === 'tournament_plus'` checks.
+  - [x] Define `PLAN_RANK` for `tournament`, `tournament_plus`, `league`, and `club`.
+  - [x] Define feature minimums for `auto_schedule`, `playoff_generator`, `sealed_archives`, and `advanced_tournament_branding`.
+  - [x] Add `hasPlanFeature(planId, feature)` so `league` and `club` automatically satisfy `minPlan: 'tournament_plus'`.
+- [x] Replace existing ad hoc Tournament Plus checks, including advanced tournament branding, with the central helper where practical.
+- [x] Gate automated tournament scheduling:
+  - [x] Keep manual schedule creation/editing available to free Tournament orgs.
+  - [x] Lock generator entry points in `app/[orgSlug]/admin/tournaments/schedule/page.tsx` and related generator components.
+  - [x] Enforce the same gate server-side on any generation/save API that creates generated schedules.
+- [x] Gate playoff/bracket generation:
+  - [x] Keep manual playoff games, score entry, and public bracket display available to free Tournament orgs.
+  - [x] Lock the playoff/bracket generator wizard and any API routes that auto-create bracket structures.
+- [x] Gate sealed/permanent archives:
+  - [x] Keep the basic close/archive lifecycle available so a free Tournament org can free its single tournament slot.
+  - [x] Lock seal/permanent-history actions and their API routes for base Tournament orgs.
+- [x] Keep current Communication Hub basic sending available on free Tournament.
+  - [x] Update pricing copy so basic email communication is not advertised as Plus-only.
+  - [x] Reserve future advanced email features for Plus-and-above if/when built.
+- [x] Update public pricing and plan comparison copy:
+  - [x] Free Tournament: manual scheduling, registrations, scoring/standings, public news posts, basic team/contact email, one active tournament slot.
+  - [x] Tournament Plus: automated scheduling, bracket generator, permanent sealed archives, advanced branding, three tournament slots, higher admin capacity, officials not counted toward seats.
+  - [x] League and Club: make clear they include Tournament Plus tournament capabilities in addition to their league/club modules.
+- [x] Keep free-plan navigation clean:
+  - [x] Do not add locked-only sidebar destinations for base Tournament orgs.
+  - [x] Place upgrade prompts beside useful locked actions inside Schedule, Playoffs/Brackets, Archives/Past Tournaments, Branding, and Billing/usage surfaces.
 - [ ] Add focused tests for the plan helper and any server-side gates so UI locks cannot be bypassed by direct API calls.
 
 ## Verification Checklist
@@ -108,7 +108,7 @@ The free Tournament plan should remain a complete manual tournament operations p
 - [ ] Desktop and mobile publish actions enforce the same blockers.
 - [ ] Public tournament pages remain unavailable for draft tournaments and available for active/completed tournaments.
 - [x] Free Tournament plan allows one non-archived tournament and communicates the limit before creation or lifecycle failure.
-- [ ] Plus-positioned features are either available everywhere as free features or visibly locked with upgrade copy.
+- [x] Plus-positioned features are either available everywhere as free features or visibly locked with upgrade copy.
 
 ## PM Brief
 

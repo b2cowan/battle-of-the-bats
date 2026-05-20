@@ -8,7 +8,7 @@ export const dynamic = 'force-dynamic';
 export default async function NewsPage() {
   const tournaments = await getTournaments();
   const activeTournament = tournaments.find(t => t.isActive);
-  const announcements = await getAnnouncements(activeTournament?.id);
+  const announcements = await getAnnouncements(activeTournament?.id, { admin: true });
 
   function formatDate(d: string) {
     if (!d) return '';

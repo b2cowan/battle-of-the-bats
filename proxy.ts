@@ -3,8 +3,8 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { assertSafeSupabaseServerEnvironment } from './lib/supabase-safety';
 
-export async function middleware(request: NextRequest) {
-  assertSafeSupabaseServerEnvironment('Middleware Supabase client');
+export async function proxy(request: NextRequest) {
+  assertSafeSupabaseServerEnvironment('Proxy Supabase client');
 
   let supabaseResponse = NextResponse.next({ request });
 
@@ -29,26 +29,27 @@ export async function middleware(request: NextRequest) {
     }
   );
 
-  // Refresh the session if expired — required to keep Server Components in sync
+  // Refresh the session if expired - required to keep Server Components in sync
   const { data: { user } } = await supabase.auth.getUser();
 
   const { pathname } = request.nextUrl;
   const segments = pathname.split('/').filter(Boolean);
 
-  // Protect /[orgSlug]/admin/* routes — second path segment must be 'admin'
+  // Protect /[orgSlug]/admin/* routes - second path segment must be 'admin'
   const isOrgAdmin = segments.length >= 2 && segments[1] === 'admin';
+  const isLegacyAdmin = segments[0] === 'admin';
 
-  if (isOrgAdmin && !user) {
+  if ((isOrgAdmin || isLegacyAdmin) && !user) {
     const url = request.nextUrl.clone();
     url.pathname = '/auth/login';
-    url.searchParams.set('next', pathname);
+    url.searchParams.set('next', isLegacyAdmin ? '/admin' : pathname);
     return NextResponse.redirect(url);
   }
 
   // Protect /platform-admin/* with an optimistic session check.
   // Full platform-admin authorization happens in the layout and API routes.
-  const isPlatformAdmin   = segments[0] === 'platform-admin';
-  const isPlatformLogin   = isPlatformAdmin && segments[1] === 'login';
+  const isPlatformAdmin = segments[0] === 'platform-admin';
+  const isPlatformLogin = isPlatformAdmin && segments[1] === 'login';
 
   if (isPlatformAdmin && !isPlatformLogin && !user) {
     const url = request.nextUrl.clone();
@@ -69,5 +70,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/:slug/admin/:path*', '/auth/:path*', '/platform-admin', '/platform-admin/:path*', '/platform-admin/login', '/api/dev/:path*'],
+  matcher: ['/:slug/admin/:path*', '/admin', '/admin/:path*', '/auth/:path*', '/platform-admin', '/platform-admin/:path*', '/platform-admin/login', '/api/dev/:path*'],
 };

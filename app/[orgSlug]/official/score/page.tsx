@@ -2,11 +2,15 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase-browser';
-import { getGames, getTeams, getDiamonds, getAgeGroups, getOrganizationBySlug, getTournamentsByOrg } from '@/lib/db';
-import type { Game, Team, Diamond, AgeGroup } from '@/lib/types';
+import type { Game, Diamond, AgeGroup, GameStatus } from '@/lib/types';
 import { formatTime } from '@/lib/utils';
 
 type ScoreState = 'idle' | 'entering' | 'saving';
+type OfficialScoreEmptyReason =
+  | 'access_denied'
+  | 'no_tournament_access'
+  | 'no_active_tournaments'
+  | 'no_games_today';
 
 interface GameCard {
   game: Game;
@@ -14,6 +18,120 @@ interface GameCard {
   awayName: string;
   diamond: Diamond | null;
   divisionName: string;
+  tournamentName: string | null;
+}
+
+interface OfficialScoreEmptyState {
+  reason: OfficialScoreEmptyReason;
+  title: string;
+  message: string;
+}
+
+interface OfficialScoreResponse {
+  date: string;
+  tournamentIds: string[];
+  cards: GameCard[];
+  diamonds: Diamond[];
+  ageGroups: AgeGroup[];
+  emptyMessage: string;
+  emptyState: OfficialScoreEmptyState | null;
+}
+
+type RealtimeGameUpdate = {
+  id?: unknown;
+  home_score?: unknown;
+  away_score?: unknown;
+  status?: unknown;
+};
+
+interface ScorekeeperNotice {
+  title: string;
+  message: string;
+  retryable?: boolean;
+}
+
+function errorMessage(error: unknown, fallback: string) {
+  return error instanceof Error ? error.message : fallback;
+}
+
+function isOfficialScoreEmptyState(value: unknown): value is OfficialScoreEmptyState {
+  if (!value || typeof value !== 'object') return false;
+  const state = value as Record<string, unknown>;
+  return (
+    typeof state.reason === 'string'
+    && typeof state.title === 'string'
+    && typeof state.message === 'string'
+  );
+}
+
+function scoreFromRealtime(value: unknown, fallback: number | null | undefined) {
+  if (typeof value === 'number') return value;
+  if (value === null) return null;
+  return fallback;
+}
+
+function statusFromRealtime(value: unknown, fallback: GameStatus): GameStatus {
+  if (value === 'scheduled' || value === 'submitted' || value === 'completed' || value === 'cancelled') {
+    return value;
+  }
+  return fallback;
+}
+
+function ScorekeeperStatePanel({
+  notice,
+  action,
+}: {
+  notice: ScorekeeperNotice;
+  action?: { label: string; onClick: () => void };
+}) {
+  return (
+    <div style={{
+      border: '1px solid rgba(30,58,138,0.45)',
+      background: '#111827',
+      borderRadius: '8px',
+      padding: '1.5rem',
+      textAlign: 'center',
+      fontFamily: 'var(--font-data)',
+      color: '#94A3B8',
+      lineHeight: 1.55,
+    }}>
+      <div style={{
+        fontSize: '0.72rem',
+        fontWeight: 800,
+        letterSpacing: '0.1em',
+        textTransform: 'uppercase',
+        color: '#F1F5F9',
+        marginBottom: '0.5rem',
+      }}>
+        {notice.title}
+      </div>
+      <p style={{ margin: 0, fontSize: '0.82rem' }}>
+        {notice.message}
+      </p>
+      {action && (
+        <button
+          type="button"
+          onClick={action.onClick}
+          style={{
+            marginTop: '1rem',
+            fontFamily: 'var(--font-data)',
+            fontSize: '0.7rem',
+            fontWeight: 700,
+            textTransform: 'uppercase',
+            letterSpacing: '0.1em',
+            color: '#0A0A0A',
+            background: '#D9F99D',
+            border: 'none',
+            borderRadius: '4px',
+            padding: '0.65rem 1rem',
+            cursor: 'pointer',
+          }}
+        >
+          {action.label}
+        </button>
+      )}
+    </div>
+  );
 }
 
 export default function OfficialScorePage() {
@@ -22,6 +140,9 @@ export default function OfficialScorePage() {
 
   const [cards, setCards]                         = useState<GameCard[]>([]);
   const [loading, setLoading]                     = useState(true);
+  const [tournamentIds, setTournamentIds]         = useState<string[]>([]);
+  const [emptyState, setEmptyState]               = useState<OfficialScoreEmptyState | null>(null);
+  const [blockedNotice, setBlockedNotice]         = useState<ScorekeeperNotice | null>(null);
 
   // Filters
   const [diamonds, setDiamonds]     = useState<Diamond[]>([]);
@@ -45,83 +166,105 @@ export default function OfficialScorePage() {
   const loadGames = useCallback(async () => {
     setLoading(true);
     setErrorMsg('');
+    setBlockedNotice(null);
+    setEmptyState(null);
     try {
-      const org = await getOrganizationBySlug(orgSlug);
-      if (!org) throw new Error('Organization not found');
+      const res = await fetch(`/api/official/${encodeURIComponent(orgSlug)}/score?date=${encodeURIComponent(today)}`, {
+        cache: 'no-store',
+      });
+      const data = await res.json().catch(() => ({})) as Partial<OfficialScoreResponse> & { error?: string };
 
-      const tournaments = await getTournamentsByOrg(org.id);
-      const activeTournament = tournaments.find(t => t.isActive) ?? tournaments[0] ?? null;
-      if (!activeTournament) {
+      if (!res.ok) {
         setCards([]);
-        setLoading(false);
-        return;
+        setDiamonds([]);
+        setAgeGroups([]);
+        setTournamentIds([]);
+        if (res.status === 401) {
+          setBlockedNotice({
+            title: 'Sign in required',
+            message: 'Sign in again to continue scorekeeping.',
+          });
+          return;
+        }
+        if (res.status === 403) {
+          const apiState = isOfficialScoreEmptyState(data.emptyState) ? data.emptyState : null;
+          setBlockedNotice({
+            title: apiState?.title ?? 'Scorekeeper access unavailable',
+            message: apiState?.message ?? 'You do not have scorekeeper access for this organization.',
+          });
+          return;
+        }
+        throw new Error(data.error ?? 'Unable to load games. Please refresh.');
       }
 
-      const [allGames, allTeams, allDiamonds, allGroups] = await Promise.all([
-        getGames(activeTournament.id),
-        getTeams(activeTournament.id),
-        getDiamonds(activeTournament.id),
-        getAgeGroups(activeTournament.id),
-      ]);
+      setCards(Array.isArray(data.cards) ? data.cards : []);
+      setDiamonds(Array.isArray(data.diamonds) ? data.diamonds : []);
+      setAgeGroups(Array.isArray(data.ageGroups) ? data.ageGroups : []);
+      setTournamentIds(Array.isArray(data.tournamentIds) ? data.tournamentIds : []);
+      setEmptyState(isOfficialScoreEmptyState(data.emptyState) ? data.emptyState : null);
 
-      setDiamonds(allDiamonds);
-      setAgeGroups(allGroups);
-
-      const todayGames = allGames.filter(g => g.date === today);
-
-      const built: GameCard[] = todayGames.map(g => ({
-        game: g,
-        homeName: allTeams.find(t => t.id === g.homeTeamId)?.name ?? g.homePlaceholder ?? 'TBD',
-        awayName: allTeams.find(t => t.id === g.awayTeamId)?.name ?? g.awayPlaceholder ?? 'TBD',
-        diamond: allDiamonds.find(d => d.id === g.diamondId) ?? null,
-        divisionName: allGroups.find(gr => gr.id === g.ageGroupId)?.name ?? '—',
-      }));
-
-      built.sort((a, b) => (a.game.time ?? '').localeCompare(b.game.time ?? ''));
-      setCards(built);
-    } catch (err: any) {
-      setErrorMsg('Unable to load games. Please refresh.');
+    } catch (err) {
+      setCards([]);
+      setDiamonds([]);
+      setAgeGroups([]);
+      setTournamentIds([]);
+      setBlockedNotice({
+        title: 'Unable to load scorekeeper',
+        message: errorMessage(err, 'Unable to load games. Please refresh.'),
+        retryable: true,
+      });
     } finally {
       setLoading(false);
     }
   }, [orgSlug, today]);
 
   useEffect(() => {
-    loadGames();
+    const loadTimer = window.setTimeout(() => {
+      void loadGames();
+    }, 0);
+
+    return () => window.clearTimeout(loadTimer);
   }, [loadGames]);
+
+  const tournamentKey = tournamentIds.join('|');
 
   // Realtime: detect finalization by admin or any score change
   useEffect(() => {
-    if (cards.length === 0) return;
-
-    const tournamentId = cards[0]?.game.tournamentId;
-    if (!tournamentId) return;
+    const scopedTournamentIds = tournamentKey.split('|').filter(Boolean);
+    if (scopedTournamentIds.length === 0) return;
 
     const channel = supabase
-      .channel(`official-games-${tournamentId}`)
-      .on(
+      .channel(`official-games-${orgSlug}-${tournamentKey}`);
+
+    scopedTournamentIds.forEach(tournamentId => {
+      channel.on(
         'postgres_changes',
         { event: 'UPDATE', schema: 'public', table: 'games', filter: `tournament_id=eq.${tournamentId}` },
         (payload) => {
+          const updated = payload.new as RealtimeGameUpdate;
+          if (typeof updated.id !== 'string') return;
+
           setCards(prev => prev.map(c =>
-            c.game.id === payload.new.id
+            c.game.id === updated.id
               ? {
                   ...c,
                   game: {
                     ...c.game,
-                    homeScore: payload.new.home_score,
-                    awayScore: payload.new.away_score,
-                    status:    payload.new.status,
+                    homeScore: scoreFromRealtime(updated.home_score, c.game.homeScore),
+                    awayScore: scoreFromRealtime(updated.away_score, c.game.awayScore),
+                    status:    statusFromRealtime(updated.status, c.game.status),
                   },
                 }
               : c
           ));
         }
-      )
-      .subscribe();
+      );
+    });
+
+    channel.subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, [cards.length, supabase]);
+  }, [orgSlug, supabase, tournamentKey]);
 
   function openEdit(game: Game) {
     // Block editing if game is completed (finalized or auto-final)
@@ -157,19 +300,41 @@ export default function OfficialScorePage() {
       }
       setEditing(null);
       setScoreState('idle');
-    } catch (err: any) {
-      setErrorMsg(err.message ?? 'Failed to save score. Please try again.');
+    } catch (err) {
+      setErrorMsg(errorMessage(err, 'Failed to save score. Please try again.'));
       setScoreState('entering');
     }
   }
 
+  const hasActiveFilters = Boolean(filterDiamond || filterDivision);
+
   // Filtered view
-  const visible = cards.filter(c => {
+  const filteredByControls = cards.filter(c => {
     if (filterDiamond && c.game.diamondId !== filterDiamond) return false;
     if (filterDivision && c.game.ageGroupId !== filterDivision) return false;
-    if (!showCompleted && c.game.status === 'completed') return false;
     return true;
   });
+  const visible = filteredByControls.filter(c => showCompleted || c.game.status !== 'completed');
+  const completedOnlyHidden =
+    !showCompleted
+    && filteredByControls.length > 0
+    && filteredByControls.every(c => c.game.status === 'completed');
+  const emptyNotice: ScorekeeperNotice = cards.length === 0
+    ? {
+        title: emptyState?.title ?? 'No assigned games today',
+        message: emptyState?.message ?? 'Your tournament access is set, but there are no games scheduled for today.',
+      }
+    : completedOnlyHidden
+      ? {
+          title: hasActiveFilters ? 'Matching games are finalized' : 'All games are finalized',
+          message: hasActiveFilters
+            ? 'The games matching these filters are already finalized. Show finalized games or clear a filter to keep reviewing.'
+            : 'All assigned games for today have been finalized. Show finalized games to review the results.',
+        }
+      : {
+          title: 'No games match these filters',
+          message: 'Clear a filter or show finalized games to widen the list.',
+        };
 
   const pendingCount   = cards.filter(c => c.game.status === 'scheduled').length;
   const submittedCount = cards.filter(c => c.game.status === 'submitted').length;
@@ -219,17 +384,15 @@ export default function OfficialScorePage() {
     );
   }
 
-  if (errorMsg && cards.length === 0) {
+  if (blockedNotice && cards.length === 0) {
     return (
-      <div style={{ padding: '2rem' }}>
-        <p style={{ fontFamily: 'var(--font-data)', color: '#94A3B8', fontSize: '0.875rem' }}>{errorMsg}</p>
-        <button onClick={loadGames}
-          style={{ marginTop: '1rem', fontFamily: 'var(--font-data)', fontSize: '0.7rem',
-            textTransform: 'uppercase', letterSpacing: '0.1em', color: '#F1F5F9',
-            border: '1px solid rgba(30,58,138,0.5)', background: 'transparent',
-            padding: '0.5rem 1rem', cursor: 'pointer' }}>
-          Retry
-        </button>
+      <div style={{ maxWidth: 600, margin: '0 auto', paddingTop: '1rem' }}>
+        <ScorekeeperStatePanel
+          notice={blockedNotice}
+          action={blockedNotice.retryable
+            ? { label: 'Retry', onClick: loadGames }
+            : undefined}
+        />
       </div>
     );
   }
@@ -243,6 +406,9 @@ export default function OfficialScorePage() {
         <span>{pendingCount} to score</span>
         {submittedCount > 0 && (
           <span style={{ color: '#F59E0B' }}>{submittedCount} pending review</span>
+        )}
+        {tournamentIds.length > 1 && (
+          <span>{tournamentIds.length} tournaments</span>
         )}
         <span style={{ color: '#94A3B8' }}>
           {today}
@@ -294,18 +460,26 @@ export default function OfficialScorePage() {
 
       {/* Game cards */}
       {visible.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '3rem 1rem', fontFamily: 'var(--font-data)',
-          color: '#94A3B8', fontSize: '0.8rem', letterSpacing: '0.05em' }}>
-          {cards.length === 0
-            ? 'No games scheduled for today.'
-            : 'No games match the current filters.'}
-        </div>
+        <ScorekeeperStatePanel
+          notice={emptyNotice}
+          action={completedOnlyHidden
+            ? { label: 'Show finalized', onClick: () => setShowCompleted(true) }
+            : cards.length > 0 && hasActiveFilters
+              ? { label: 'Clear filters', onClick: () => { setFilterDiamond(''); setFilterDivision(''); } }
+              : undefined}
+        />
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-          {visible.map(({ game, homeName, awayName, diamond, divisionName }) => {
+          {visible.map(({ game, homeName, awayName, diamond, divisionName, tournamentName }) => {
             const isFinalized = game.status === 'completed';
             const isSubmitted = game.status === 'submitted';
             const isEditable  = !isFinalized;
+            const metaParts = [
+              tournamentIds.length > 1 ? tournamentName : null,
+              formatTime(game.time),
+              diamond?.name ?? null,
+              divisionName,
+            ].filter((part): part is string => Boolean(part));
 
             return (
               <div
@@ -324,7 +498,7 @@ export default function OfficialScorePage() {
                   marginBottom: '0.75rem' }}>
                   <div style={{ fontFamily: 'var(--font-data)', fontSize: '0.65rem',
                     color: '#94A3B8', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-                    {formatTime(game.time)}{diamond ? ` · ${diamond.name}` : ''} · {divisionName}
+                    {metaParts.join(' - ')}
                   </div>
                   {statusPill(game)}
                 </div>

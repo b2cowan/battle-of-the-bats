@@ -1,10 +1,12 @@
 ﻿'use client';
 import React, { useState, useEffect } from 'react';
-import { Calendar, Plus, Pencil, Trash2, X, Check, Download, Sparkles, Trophy, MapPin, Clock, Search } from 'lucide-react';
+import { Calendar, Plus, Pencil, Trash2, X, Check, Download, Sparkles, Trophy, MapPin, Clock, Search, Lock, Send, Globe, Eye, EyeOff } from 'lucide-react';
 import { formatPoolName } from '@/lib/utils';
 import { saveGame, updateGame, deleteGame } from '@/lib/db';
 import { downloadCSV, formatTime } from '@/lib/utils';
 import { useTournament } from '@/lib/tournament-context';
+import { useOrg } from '@/lib/org-context';
+import { hasPlanFeature, requiresTournamentPlusCopy, type PlanFeature } from '@/lib/plan-features';
 import ScheduleGenerator from './Generator';
 import PlayoffWizard from './PlayoffWizard';
 import GameList from './components/GameList';
@@ -26,6 +28,7 @@ const emptyForm = {
 
 export default function AdminSchedulePage() {
   const { currentTournament } = useTournament();
+  const { currentOrg } = useOrg();
   const [games, setGames]       = useState<Game[]>([]);
   const [teams, setTeams]       = useState<Team[]>([]);
   const [ageGroups, setAgeGroups] = useState<AgeGroup[]>([]);
@@ -50,9 +53,46 @@ export default function AdminSchedulePage() {
     title: string;
     message: string;
     type: 'primary' | 'danger' | 'warning' | 'success' | 'info';
+    confirmText?: string;
     onConfirm?: () => void;
   }>({ isOpen: false, title: '', message: '', type: 'primary' });
 
+  const [publishModal, setPublishModal] = useState<{
+    mode: 'single' | 'all';
+    ageGroupId?: string;
+  } | null>(null);
+
+  const canAutoGenerateSchedule = currentOrg ? hasPlanFeature(currentOrg.planId, 'auto_schedule') : false;
+  const canGeneratePlayoffs = currentOrg ? hasPlanFeature(currentOrg.planId, 'playoff_generator') : false;
+  const canNotify = currentOrg ? hasPlanFeature(currentOrg.planId, 'schedule_notification') : false;
+
+  function showUpgradePrompt(feature: PlanFeature, title: string) {
+    const orgSlug = currentOrg?.slug;
+    setFeedback({
+      isOpen: true,
+      title,
+      message: `${requiresTournamentPlusCopy(feature)} You can keep building manually on the free Tournament plan.`,
+      type: 'info',
+      confirmText: 'View Upgrade Options',
+      onConfirm: orgSlug ? () => { window.location.href = `/${orgSlug}/admin/org/billing`; } : undefined,
+    });
+  }
+
+  function openGenerator() {
+    if (canAutoGenerateSchedule) {
+      setShowGenerator(true);
+      return;
+    }
+    showUpgradePrompt('auto_schedule', 'Upgrade for Auto-Generate');
+  }
+
+  function openPlayoffWizard() {
+    if (canGeneratePlayoffs) {
+      setShowPlayoffWizard(true);
+      return;
+    }
+    showUpgradePrompt('playoff_generator', 'Upgrade for Playoff Wizard');
+  }
 
   async function refresh() {
     const tournamentId = currentTournament?.id;
@@ -97,38 +137,29 @@ export default function AdminSchedulePage() {
     finally { setModalSlotsLoading(false); }
   }
 
-  async function handleSetVisibility(ageGroupId: string, visibility: string) {
-    const ag = ageGroups.find(g => g.id === ageGroupId);
-    if (visibility === 'published_teams' && !ag?.isClosed) {
-      setFeedback({ isOpen: true, title: 'Registration Still Open', message: `Close registration for "${ag?.name ?? 'this division'}" before publishing team names.`, type: 'warning' });
-      return;
-    }
-    try {
-      await fetch('/api/admin/age-groups', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'set-visibility', data: { id: ageGroupId, scheduleVisibility: visibility } }),
-      });
-      setAgeGroups(prev => prev.map(g => g.id === ageGroupId ? { ...g, scheduleVisibility: visibility as any } : g));
-    } catch {
-      setFeedback({ isOpen: true, title: 'Error', message: 'Failed to update visibility.', type: 'danger' });
-    }
+  function handlePublishDone(updates: { id: string; scheduleVisibility: 'published_generic' | 'published_teams' }[]) {
+    setAgeGroups(prev => prev.map(g => {
+      const u = updates.find(u => u.id === g.id);
+      return u ? { ...g, scheduleVisibility: u.scheduleVisibility } : g;
+    }));
+    // Modal stays open to show success state; user closes it with "Done"
   }
 
-  function handlePublishAll() {
+  function handleUnpublish(ageGroupId: string) {
     setFeedback({
       isOpen: true,
-      title: 'Publish All Divisions?',
-      message: 'Set all divisions to "Generic Names" visibility? The public schedule will show slot names (Team 1, Team 2…). Switch individual divisions to "Team Names" once registration closes.',
-      type: 'primary',
+      title: 'Unpublish Division?',
+      message: 'The schedule for this division will be removed from the public page.',
+      type: 'warning',
+      confirmText: 'Unpublish',
       onConfirm: async () => {
         await fetch('/api/admin/age-groups', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'set-visibility', data: { tournamentId: currentTournament?.id, scheduleVisibility: 'published_generic' } }),
+          body: JSON.stringify({ action: 'set-visibility', data: { id: ageGroupId, scheduleVisibility: 'unpublished' } }),
         });
-        setAgeGroups(prev => prev.map(g => ({ ...g, scheduleVisibility: 'published_generic' as const })));
-      }
+        setAgeGroups(prev => prev.map(g => g.id === ageGroupId ? { ...g, scheduleVisibility: 'unpublished' } : g));
+      },
     });
   }
 
@@ -280,19 +311,28 @@ export default function AdminSchedulePage() {
             <button className={`${s.toggleBtn} ${viewMode === 'playoff' ? s.toggleActive : ''}`} onClick={() => setViewMode('playoff')}>Playoffs</button>
           </div>
           {viewMode === 'pool' ? (
-            <button className="btn btn-ghost btn-sm text-primary-light" onClick={() => setShowGenerator(true)} disabled={!currentTournament} style={{ height: '32px', marginLeft: '0.5rem' }}>
-              <Sparkles size={14} /> Auto-Generate
+            <button className="btn btn-ghost btn-sm text-primary-light" onClick={openGenerator} disabled={!currentTournament} title={canAutoGenerateSchedule ? 'Generate a round-robin schedule' : 'Tournament Plus and above'} style={{ height: '32px', marginLeft: '0.5rem' }}>
+              {canAutoGenerateSchedule ? <Sparkles size={14} /> : <Lock size={14} />} Auto-Generate
             </button>
           ) : (
-            <button className="btn btn-ghost btn-sm text-primary-light" onClick={() => setShowPlayoffWizard(true)} disabled={!currentTournament} style={{ height: '32px', marginLeft: '0.5rem' }}>
-              <Trophy size={14} /> Playoff Wizard
+            <button className="btn btn-ghost btn-sm text-primary-light" onClick={openPlayoffWizard} disabled={!currentTournament} title={canGeneratePlayoffs ? 'Generate a playoff bracket' : 'Tournament Plus and above'} style={{ height: '32px', marginLeft: '0.5rem' }}>
+              {canGeneratePlayoffs ? <Trophy size={14} /> : <Lock size={14} />} Playoff Wizard
             </button>
           )}
-          {viewMode === 'pool' && (
-            <button className="btn btn-ghost btn-sm" onClick={handlePublishAll} disabled={!currentTournament || ageGroups.length === 0} style={{ height: '32px', marginLeft: '0.5rem', color: 'var(--logic-lime)', gap: '0.4rem' }}>
-              Publish All
-            </button>
-          )}
+          {viewMode === 'pool' && (() => {
+            const unpublished = ageGroups.filter(g => !g.scheduleVisibility || g.scheduleVisibility === 'unpublished');
+            if (unpublished.length === 0) return null;
+            return (
+              <button
+                className="btn btn-ghost btn-sm"
+                onClick={() => setPublishModal({ mode: 'all' })}
+                disabled={!currentTournament}
+                style={{ height: '32px', marginLeft: '0.5rem', color: 'var(--logic-lime)', gap: '0.4rem' }}
+              >
+                <Globe size={13} /> Publish All Divisions
+              </button>
+            );
+          })()}
         </div>
         <div className={s.controlsRight}>
           <div className={s.controlGroup}>
@@ -303,19 +343,60 @@ export default function AdminSchedulePage() {
           </div>
           {viewMode === 'pool' && (() => {
             const ag = ageGroups.find(g => g.id === filterGroup);
+            const vis = ag?.scheduleVisibility ?? 'unpublished';
+            const isPublished = vis !== 'unpublished';
             return (
-              <div className={s.controlGroup}>
-                <label className={s.controlLabel}>Visibility:</label>
-                <select
-                  className={`${s.controlSelect} form-input`}
-                  value={ag?.scheduleVisibility ?? 'unpublished'}
-                  onChange={e => handleSetVisibility(filterGroup, e.target.value)}
-                  style={{ minWidth: '155px' }}
-                >
-                  <option value="unpublished">Unpublished</option>
-                  <option value="published_generic">Generic Names</option>
-                  <option value="published_teams">{ag?.isClosed ? 'Team Names' : 'Team Names (close reg first)'}</option>
-                </select>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                {isPublished ? (
+                  <>
+                    <span style={{
+                      display: 'inline-flex', alignItems: 'center', gap: '0.3rem',
+                      fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.04em',
+                      color: 'var(--logic-lime)', padding: '0.2rem 0.55rem',
+                      background: 'rgba(163,230,53,0.1)', border: '1px solid rgba(163,230,53,0.25)',
+                      borderRadius: '20px',
+                    }}>
+                      <Globe size={10} />
+                      {vis === 'published_teams' ? 'Published — Team Names' : 'Published — Generic'}
+                    </span>
+                    <button
+                      className="btn btn-ghost btn-sm"
+                      onClick={() => setPublishModal({ mode: 'single', ageGroupId: filterGroup })}
+                      style={{ height: '28px', fontSize: '0.75rem', padding: '0 0.6rem' }}
+                    >
+                      Update
+                    </button>
+                    <button
+                      className="btn btn-ghost btn-sm"
+                      onClick={() => handleUnpublish(filterGroup)}
+                      style={{ height: '28px', fontSize: '0.75rem', padding: '0 0.6rem', color: 'var(--white-40)' }}
+                      title="Remove from public page"
+                    >
+                      <EyeOff size={12} />
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <span style={{
+                      display: 'inline-flex', alignItems: 'center', gap: '0.3rem',
+                      fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.04em',
+                      color: 'var(--white-40)', padding: '0.2rem 0.55rem',
+                      background: 'var(--white-5)', border: '1px solid var(--white-10)',
+                      borderRadius: '20px',
+                    }}>
+                      <EyeOff size={10} />
+                      Not Published
+                    </span>
+                    <button
+                      className="btn btn-primary btn-sm"
+                      onClick={() => setPublishModal({ mode: 'single', ageGroupId: filterGroup })}
+                      disabled={!currentTournament}
+                      style={{ height: '28px', fontSize: '0.75rem', padding: '0 0.75rem' }}
+                    >
+                      <Globe size={12} /> Publish Schedule
+                    </button>
+                  </>
+                )}
               </div>
             );
           })()}
@@ -350,7 +431,9 @@ export default function AdminSchedulePage() {
         <HelpCallout
           variant="info"
           title="No games scheduled yet"
-          body="Build your schedule by adding games manually, or use Auto-Generate to create a round-robin schedule from your age groups and teams. For playoffs, use the Playoff Wizard."
+          body={canAutoGenerateSchedule
+            ? 'Build your schedule by adding games manually, or use Auto-Generate to create a round-robin schedule from your age groups and teams. For playoffs, use the Playoff Wizard.'
+            : 'Build your schedule by adding games manually. Auto-Generate and Playoff Wizard are available with Tournament Plus or higher.'}
         />
       )}
 
@@ -359,6 +442,7 @@ export default function AdminSchedulePage() {
           games={filtered}
           teams={teams}
           ageGroup={ageGroups.find(g => g.id === filterGroup)}
+          canGeneratePlayoffs={canGeneratePlayoffs}
           onEdit={openEdit}
           onDelete={handleDeleteRequest}
           getGroupName={getGroupName}
@@ -588,7 +672,7 @@ export default function AdminSchedulePage() {
         </div>
       )}
 
-      {showGenerator && currentTournament && (
+      {showGenerator && currentTournament && canAutoGenerateSchedule && (
         <ScheduleGenerator 
           tournament={currentTournament}
           ageGroups={ageGroups}
@@ -602,7 +686,7 @@ export default function AdminSchedulePage() {
         />
       )}
 
-      {showPlayoffWizard && filterGroup !== '' && (
+      {showPlayoffWizard && filterGroup !== '' && canGeneratePlayoffs && (
         <PlayoffWizard
           ageGroup={ageGroups.find(g => g.id === filterGroup)!}
           tournamentId={currentTournament?.id || ''}
@@ -623,10 +707,272 @@ export default function AdminSchedulePage() {
         />
       )}
 
+      {publishModal && currentTournament && (
+        <PublishScheduleModal
+          mode={publishModal.mode}
+          ageGroupId={publishModal.ageGroupId}
+          ageGroups={ageGroups}
+          tournament={currentTournament}
+          canNotify={canNotify}
+          orgSlug={currentOrg?.slug ?? ''}
+          onClose={() => setPublishModal(null)}
+          onPublished={handlePublishDone}
+        />
+      )}
+
       <FeedbackModal
         {...feedback}
         onClose={() => setFeedback(f => ({ ...f, isOpen: false, onConfirm: undefined }))}
       />
+    </div>
+  );
+}
+
+function PublishScheduleModal({
+  mode,
+  ageGroupId,
+  ageGroups,
+  tournament,
+  canNotify,
+  orgSlug,
+  onClose,
+  onPublished,
+}: {
+  mode: 'single' | 'all';
+  ageGroupId?: string;
+  ageGroups: import('@/lib/types').AgeGroup[];
+  tournament: import('@/lib/types').Tournament;
+  canNotify: boolean;
+  orgSlug: string;
+  onClose: () => void;
+  onPublished: (updates: { id: string; scheduleVisibility: 'published_generic' | 'published_teams' }[]) => void;
+}) {
+  const targets = mode === 'single'
+    ? ageGroups.filter(g => g.id === ageGroupId)
+    : ageGroups.filter(g => !g.scheduleVisibility || g.scheduleVisibility === 'unpublished');
+
+  const allClosed = targets.every(g => g.isClosed);
+  const someClosed = targets.some(g => g.isClosed);
+
+  const [nameMode, setNameMode] = React.useState<'generic' | 'teams'>(allClosed ? 'teams' : 'generic');
+  const [notify, setNotify] = React.useState(false);
+  const [loading, setLoading] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
+  const [result, setResult] = React.useState<{ notified: number } | null>(null);
+
+  const showTeamNamesOption = mode === 'single' ? targets[0]?.isClosed : someClosed;
+
+  async function handleConfirm() {
+    setLoading(true);
+    setError(null);
+    try {
+      const ageGroupIds = targets.map(g => g.id);
+
+      // In "all" mode, smart-assign: closed divisions get team names if nameMode is 'teams',
+      // open divisions always get generic.
+      const allSameVisibility = mode === 'single' || !someClosed || nameMode === 'generic';
+
+      if (allSameVisibility) {
+        const visibility = nameMode === 'teams' ? 'published_teams' : 'published_generic';
+        const res = await fetch('/api/admin/schedule-publish', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ tournamentId: tournament.id, ageGroupIds, visibility, notify }),
+        });
+        if (!res.ok) throw new Error((await res.json()).error ?? 'Failed to publish');
+        const data = await res.json();
+        setResult({ notified: data.notified ?? 0 });
+        onPublished(ageGroupIds.map(id => ({ id, scheduleVisibility: visibility })));
+      } else {
+        // Mixed: closed → teams, open → generic (two separate requests)
+        const closedIds = targets.filter(g => g.isClosed).map(g => g.id);
+        const openIds = targets.filter(g => !g.isClosed).map(g => g.id);
+
+        const [r1, r2] = await Promise.all([
+          closedIds.length ? fetch('/api/admin/schedule-publish', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ tournamentId: tournament.id, ageGroupIds: closedIds, visibility: 'published_teams', notify }),
+          }) : Promise.resolve(null),
+          openIds.length ? fetch('/api/admin/schedule-publish', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ tournamentId: tournament.id, ageGroupIds: openIds, visibility: 'published_generic', notify: false }),
+          }) : Promise.resolve(null),
+        ]);
+
+        if (r1 && !r1.ok) throw new Error((await r1.json()).error ?? 'Failed to publish');
+        if (r2 && !r2.ok) throw new Error((await r2.json()).error ?? 'Failed to publish');
+
+        const n1 = r1 ? (await r1.json()).notified ?? 0 : 0;
+        setResult({ notified: n1 });
+
+        const updates = [
+          ...closedIds.map(id => ({ id, scheduleVisibility: 'published_teams' as const })),
+          ...openIds.map(id => ({ id, scheduleVisibility: 'published_generic' as const })),
+        ];
+        onPublished(updates);
+      }
+    } catch (e: any) {
+      setError(e.message ?? 'Something went wrong');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const titleText = mode === 'single'
+    ? `Publish ${targets[0]?.name ?? 'Division'} Schedule`
+    : 'Publish All Divisions';
+
+  return (
+    <div className="modal-overlay" onClick={result ? onClose : undefined}>
+      <div className="modal" style={{ maxWidth: '480px' }} onClick={e => e.stopPropagation()}>
+        <div className="modal-header">
+          <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <Globe size={16} style={{ color: 'var(--logic-lime)' }} /> {titleText}
+          </h3>
+          <button className="btn btn-ghost btn-sm" onClick={onClose}><X size={16} /></button>
+        </div>
+
+        <div style={{ padding: '1.25rem 1.5rem' }}>
+          {result ? (
+            <div style={{ textAlign: 'center', padding: '1rem 0' }}>
+              <div style={{ fontSize: '2rem', marginBottom: '0.75rem' }}>✓</div>
+              <p style={{ fontWeight: 700, color: 'var(--logic-lime)', marginBottom: '0.5rem' }}>Schedule Published!</p>
+              {result.notified > 0 && (
+                <p style={{ fontSize: '0.85rem', color: 'var(--white-60)' }}>
+                  Notified {result.notified} team{result.notified !== 1 ? 's' : ''} by email.
+                </p>
+              )}
+              <button className="btn btn-primary btn-sm" onClick={onClose} style={{ marginTop: '1rem' }}>Done</button>
+            </div>
+          ) : (
+            <>
+              <p style={{ color: 'var(--white-70)', fontSize: '0.88rem', marginBottom: '1.25rem', lineHeight: 1.55 }}>
+                {mode === 'single'
+                  ? 'This division\'s schedule will appear on your public tournament page.'
+                  : `${targets.length} unpublished division${targets.length !== 1 ? 's' : ''} will appear on your public tournament page.`}
+              </p>
+
+              {mode === 'all' && targets.length > 0 && (
+                <div style={{
+                  background: 'var(--white-5)', border: '1px solid var(--white-10)',
+                  borderRadius: 'var(--radius-sm)', padding: '0.75rem 1rem', marginBottom: '1.25rem',
+                }}>
+                  {targets.map(g => (
+                    <div key={g.id} style={{
+                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                      padding: '0.3rem 0', fontSize: '0.83rem', color: 'var(--white-70)',
+                    }}>
+                      <span style={{ fontWeight: 600 }}>{g.name}</span>
+                      <span style={{ fontSize: '0.73rem', color: g.isClosed ? 'var(--logic-lime)' : 'var(--white-40)' }}>
+                        {g.isClosed ? 'Registration closed' : 'Registration open'}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div style={{ marginBottom: '1.25rem' }}>
+                <p style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--white-50)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.6rem' }}>
+                  Team Names
+                </p>
+                <label style={{
+                  display: 'flex', alignItems: 'flex-start', gap: '0.65rem',
+                  padding: '0.75rem', borderRadius: 'var(--radius-sm)', cursor: 'pointer',
+                  background: nameMode === 'generic' ? 'rgba(var(--blueprint-blue-rgb),0.08)' : 'transparent',
+                  border: nameMode === 'generic' ? '1px solid rgba(var(--blueprint-blue-rgb),0.3)' : '1px solid transparent',
+                  marginBottom: '0.4rem',
+                }}>
+                  <input type="radio" checked={nameMode === 'generic'} onChange={() => setNameMode('generic')} style={{ marginTop: '2px', flexShrink: 0 }} />
+                  <div>
+                    <div style={{ fontWeight: 600, fontSize: '0.88rem', marginBottom: '0.2rem' }}>Placeholder names</div>
+                    <div style={{ fontSize: '0.78rem', color: 'var(--white-50)', lineHeight: 1.45 }}>
+                      Teams appear as "Team 1", "Team 2", etc.
+                      {mode === 'single' && !targets[0]?.isClosed ? ' Recommended — registration is still open.' : ''}
+                    </div>
+                  </div>
+                </label>
+                <label style={{
+                  display: 'flex', alignItems: 'flex-start', gap: '0.65rem',
+                  padding: '0.75rem', borderRadius: 'var(--radius-sm)',
+                  cursor: showTeamNamesOption ? 'pointer' : 'not-allowed',
+                  opacity: showTeamNamesOption ? 1 : 0.45,
+                  background: nameMode === 'teams' ? 'rgba(163,230,53,0.06)' : 'transparent',
+                  border: nameMode === 'teams' ? '1px solid rgba(163,230,53,0.25)' : '1px solid transparent',
+                }}>
+                  <input
+                    type="radio"
+                    checked={nameMode === 'teams'}
+                    onChange={() => showTeamNamesOption && setNameMode('teams')}
+                    disabled={!showTeamNamesOption}
+                    style={{ marginTop: '2px', flexShrink: 0 }}
+                  />
+                  <div>
+                    <div style={{ fontWeight: 600, fontSize: '0.88rem', marginBottom: '0.2rem' }}>Real team names</div>
+                    <div style={{ fontSize: '0.78rem', color: 'var(--white-50)', lineHeight: 1.45 }}>
+                      {showTeamNamesOption
+                        ? mode === 'all' && someClosed && !allClosed
+                          ? 'Divisions with closed registration will show team names. Open divisions will use placeholders.'
+                          : 'Registered team names will be visible on the public schedule.'
+                        : 'Close registration for this division first.'}
+                    </div>
+                  </div>
+                </label>
+              </div>
+
+              <div style={{
+                borderTop: '1px solid var(--white-8)', paddingTop: '1rem', marginBottom: '1rem',
+              }}>
+                <label style={{
+                  display: 'flex', alignItems: 'flex-start', gap: '0.65rem',
+                  cursor: canNotify ? 'pointer' : 'default',
+                  opacity: canNotify ? 1 : 0.5,
+                }}>
+                  <input
+                    type="checkbox"
+                    checked={notify}
+                    onChange={e => canNotify && setNotify(e.target.checked)}
+                    disabled={!canNotify}
+                    style={{ marginTop: '3px', flexShrink: 0 }}
+                  />
+                  <div>
+                    <div style={{ fontWeight: 600, fontSize: '0.88rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                      <Send size={12} /> Notify registered teams by email
+                      {!canNotify && (
+                        <span style={{
+                          fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.06em',
+                          color: 'var(--blueprint-blue)', background: 'rgba(var(--blueprint-blue-rgb),0.12)',
+                          border: '1px solid rgba(var(--blueprint-blue-rgb),0.25)',
+                          padding: '1px 6px', borderRadius: '4px',
+                        }}>Tournament Plus</span>
+                      )}
+                    </div>
+                    <div style={{ fontSize: '0.78rem', color: 'var(--white-50)', marginTop: '0.2rem', lineHeight: 1.45 }}>
+                      {canNotify
+                        ? 'Send a "schedule is live" email to all accepted team contacts.'
+                        : 'Upgrade to Tournament Plus to send schedule notifications.'}
+                    </div>
+                  </div>
+                </label>
+              </div>
+
+              {error && (
+                <div style={{ marginBottom: '1rem', padding: '0.6rem 0.75rem', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 'var(--radius-sm)', fontSize: '0.82rem', color: '#f87171' }}>
+                  {error}
+                </div>
+              )}
+
+              <div className="modal-footer" style={{ padding: 0, marginTop: 0 }}>
+                <button className="btn btn-ghost" onClick={onClose} disabled={loading}>Cancel</button>
+                <button className="btn btn-primary" onClick={handleConfirm} disabled={loading || targets.length === 0}>
+                  {loading ? 'Publishing…' : `Publish${targets.length > 1 ? ` ${targets.length} Divisions` : ''}`}
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
@@ -855,13 +1201,15 @@ function BracketColumns({ columns, onEdit, onDelete, formatDate }: any) {
   );
 }
 
-function PlayoffBracketView({ games, teams, ageGroup, onEdit, onDelete, getGroupName, formatDate, statusBadge }: any) {
+function PlayoffBracketView({ games, teams, ageGroup, canGeneratePlayoffs, onEdit, onDelete, getGroupName, formatDate, statusBadge }: any) {
   if (games.length === 0) {
     return (
       <div className="empty-state" style={{ padding: '4rem' }}>
         <Trophy size={48} />
         <p>No playoff games scheduled for this division.</p>
-        <p className="text-sm text-muted">Use the Playoff Wizard to generate brackets.</p>
+        <p className="text-sm text-muted">
+          {canGeneratePlayoffs ? 'Use the Playoff Wizard to generate brackets.' : 'Add playoff games manually, or upgrade to generate brackets.'}
+        </p>
       </div>
     );
   }

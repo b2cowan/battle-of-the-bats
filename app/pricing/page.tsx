@@ -1,16 +1,19 @@
+import { Fragment } from 'react';
 import Link from 'next/link';
 import PricingSection from '@/components/PricingSection';
+import EarlyAccessModalTrigger from '@/components/EarlyAccessModalTrigger';
+import { getPlanGatingMap } from '@/lib/plan-gating-server';
 import styles from './page.module.css';
 
 export const metadata = {
   title: 'Pricing — FieldLogicHQ',
-  description: 'Simple, honest pricing for Canadian sports organizations. From your first tournament to a full club — one platform that grows with you.',
+  description: 'Simple, honest pricing for Canadian sports organizations. Tournament and Tournament Plus are available now; League and Club are coming soon.',
 };
 
 const TRUST_SIGNALS = [
   'Canadian pricing — billed in CAD',
   'No contracts — cancel anytime',
-  'Longer launch trials for League and Club',
+  'Tournament and Tournament Plus available now',
   'Plans can be changed at any time',
 ];
 
@@ -19,9 +22,9 @@ const COMPARISON_CATEGORIES = [
     label: 'Tournaments & Scheduling',
     rows: [
       { feature: 'Non-archived tournament slots', tournament: '1',        plus: '3',         league: 'Unlimited', club: 'Unlimited' },
-      { feature: 'Tournament scheduling',        tournament: 'Manual',   plus: 'Automated', league: 'Automated', club: 'Automated' },
-      { feature: 'Bracket generator',            tournament: '—',        plus: '✓',         league: '✓',         club: '✓' },
-      { feature: 'Tournament archives',          tournament: '—',        plus: '✓',         league: '✓',         club: '✓' },
+      { feature: 'Tournament scheduling',        tournament: 'Manual',   plus: 'Manual + automated', league: 'Manual + automated', club: 'Manual + automated' },
+      { feature: 'Playoff games / brackets',     tournament: 'Manual',   plus: 'Generator included', league: 'Generator included', club: 'Generator included' },
+      { feature: 'Tournament archive flow',      tournament: 'Basic archive', plus: 'Sealed archives', league: 'Sealed archives', club: 'Sealed archives' },
       { feature: 'Field and diamond management', tournament: '✓',        plus: '✓',         league: '✓',         club: '✓' },
       { feature: 'Score entry and standings',    tournament: '✓',        plus: '✓',         league: '✓',         club: '✓' },
     ],
@@ -37,7 +40,7 @@ const COMPARISON_CATEGORIES = [
   {
     label: 'Communications',
     rows: [
-      { feature: 'Email announcements',        tournament: '—', plus: '✓', league: '✓', club: '✓' },
+      { feature: 'Basic team/contact email',     tournament: '✓', plus: '✓', league: '✓', club: '✓' },
       { feature: 'League-scoped communications', tournament: '—', plus: '—', league: '✓', club: '✓' },
     ],
   },
@@ -79,10 +82,11 @@ const COMPARISON_CATEGORIES = [
     ],
   },
   {
-    label: 'Free Trial',
+    label: 'Availability',
     rows: [
-      { feature: 'Trial length', tournament: '—', plus: '14 days', league: '30 days', club: '90 days' },
-      { feature: 'Payment details at signup', tournament: '—', plus: '✓', league: '✓', club: '✓' },
+      { feature: 'Self-serve signup', tournament: 'Available now', plus: 'Available now', league: 'Coming soon', club: 'Coming soon' },
+      { feature: 'Free trial', tournament: '-', plus: '14 days', league: 'Early access', club: 'Early access' },
+      { feature: 'Payment details at signup', tournament: '-', plus: 'Yes', league: 'Not yet', club: 'Not yet' },
     ],
   },
 ];
@@ -90,21 +94,32 @@ const COMPARISON_CATEGORIES = [
 const UPGRADE_BRIDGES = [
   {
     headline: 'Ready to stop building schedules by hand?',
-    body: 'Tournament Plus gives you up to 3 non-archived tournament slots, automated scheduling, bracket generation, and email communications. For organizations running more than one event a year, the time saved on schedule builds alone is worth the upgrade.',
+    body: 'Tournament Plus gives you up to 3 non-archived tournament slots, automated scheduling, playoff bracket generation, permanent sealed archives, and advanced tournament branding. Basic team email stays available on the free plan; Plus is about saving time and supporting repeat events.',
     from: 'Tournament',
     to: 'Tournament Plus',
+    cta: 'Start Free Trial',
+    href: '/auth/signup',
+    earlyAccess: false,
   },
   {
-    headline: 'Running a public-facing organization?',
-    body: 'League adds a branded public page, a full house league module with registration and season management, and the advanced permissions your registrar and division coordinators need. One platform for everything members interact with.',
+    headline: 'Planning a public-facing organization?',
+    body: 'League is the next tier being refined: a branded public page, house league registration and season management, and advanced permissions for registrars and division coordinators. It is visible now so organizations can see where the platform is going.',
     from: 'Tournament Plus',
     to: 'League',
+    cta: 'Join Early Access',
+    earlyAccess: true,
+    initialPlanInterest: ['league'],
+    initialFeaturesInterested: ['house_league', 'registration', 'public_site'],
   },
   {
     headline: 'When operations grow, disconnected tools become the problem.',
-    body: 'Club adds full accounting and rep team management — the two things that consume the most volunteer time in any organization. Invoicing, payment tracking, tryout coordination, roster management, player documents, and a coaches portal are all included. Most Club organizations recover that time within the first season.',
+    body: 'Club is the full-platform direction: accounting, rep team management, tryout coordination, rosters, player documents, and a coaches portal. Those workflows are still being refined before self-serve launch.',
     from: 'League',
     to: 'Club',
+    cta: 'Join Early Access',
+    earlyAccess: true,
+    initialPlanInterest: ['club'],
+    initialFeaturesInterested: ['accounting', 'rep_teams', 'coach_portal'],
   },
 ];
 
@@ -116,15 +131,19 @@ const FAQS = [
   },
   {
     q: 'Is the platform only for tournaments?',
-    a: 'No. Tournament management is one part of the platform. League and Club plans support registrations, public-facing league operations, accounting, rep teams, and organization-wide administration. The Tournament plan is the entry point — not the full picture.',
+    a: 'No. Tournament management is the live entry point today. League and Club are the next parts of the platform, covering registrations, public-facing league operations, accounting, rep teams, and organization-wide administration.',
+  },
+  {
+    q: 'Can I buy League or Club today?',
+    a: 'Not through self-serve checkout yet. Tournament and Tournament Plus are available now. League and Club are shown as coming-soon previews so organizations can plan ahead and join early access while those workflows are refined.',
   },
   {
     q: 'How does billing work?',
-    a: 'Paid plans are billed monthly or annually in Canadian dollars. Monthly billing renews automatically each month. Annual billing is charged once per year — you pay for 10 months and get 12, which works out to roughly 2 months free. You can switch between monthly and annual at any renewal date. No contracts, no penalties.',
+    a: 'Tournament Plus is billed monthly or annually in Canadian dollars. Monthly billing renews automatically each month. Annual billing is charged once per year - you pay for 10 months and get 12, which works out to roughly 2 months free. No contracts, no penalties.',
   },
   {
     q: 'What happens when my free trial ends?',
-    a: "At the end of your trial, your plan continues at the regular rate for the plan and billing period you selected. Tournament Plus trials run 14 days, League trials run 30 days, and Club early-adopter trials run 90 days. We'll send reminders before the trial ends. If you decide not to continue, you can cancel before the trial period closes and you won't be charged. Your data stays available for 90 days after cancellation.",
+    a: "At the end of a Tournament Plus trial, your plan continues at the regular rate for the billing period you selected. We'll send reminders before the trial ends. If you decide not to continue, you can cancel before the trial period closes and you won't be charged. Your data stays available for 90 days after cancellation.",
   },
   {
     q: 'Can I change plans later?',
@@ -132,7 +151,7 @@ const FAQS = [
   },
   {
     q: 'Do I need a credit card to get started?',
-    a: 'No card is required for the free Tournament plan. Paid plan trials use secure Stripe Checkout and collect payment details at signup, with the first payment charged automatically only after the trial ends.',
+    a: 'No card is required for the free Tournament plan. Tournament Plus trials use secure Stripe Checkout and collect payment details at signup, with the first payment charged automatically only after the trial ends.',
   },
   {
     q: 'What if we get stuck?',
@@ -148,11 +167,13 @@ const FAQS = [
   },
   {
     q: 'Is there a setup fee or onboarding cost?',
-    a: 'No. There are no setup fees, implementation costs, or onboarding charges. You sign up, create your organization, and start using the platform. Documentation covers every setup step, including first-season configuration, accounting setup, and rep team structure.',
+    a: 'No. There are no setup fees, implementation costs, or onboarding charges. You sign up, create your organization, and start using the live tournament tools. Documentation covers every available setup step.',
   },
 ];
 
-export default function PricingPage() {
+export default async function PricingPage() {
+  const gatingMap = await getPlanGatingMap();
+
   return (
     <main>
 
@@ -165,8 +186,8 @@ export default function PricingPage() {
             organization actually operates.
           </h1>
           <p className={styles.heroSub}>
-            Pick the plan that fits where you are today. No modules to buy separately.
-            No seat surprises. No contract required.
+            Tournament and Tournament Plus are ready for self-serve signup today.
+            League and Club are previewed for early-access planning while those workflows are refined.
           </p>
           <div className={styles.trustRow}>
             {TRUST_SIGNALS.map(s => (
@@ -182,7 +203,7 @@ export default function PricingPage() {
       {/* ── Plans ────────────────────────────────────────────────────────── */}
       <section className={styles.plansSection}>
         <div className="container">
-          <PricingSection />
+          <PricingSection gatingMap={gatingMap} />
         </div>
       </section>
 
@@ -191,7 +212,7 @@ export default function PricingPage() {
         <div className="container">
           <h2 className={styles.sectionTitle}>Compare all plans</h2>
           <p className={styles.sectionSub}>
-            Choose the plan that matches how your organization operates today.
+            Choose from the live tournament plans today, and preview the League and Club roadmap.
           </p>
 
           <div className={styles.tableWrap}>
@@ -201,14 +222,14 @@ export default function PricingPage() {
                   <th className={styles.thFeature}>Feature</th>
                   <th className={styles.th}>Tournament</th>
                   <th className={styles.th}>Tournament Plus</th>
-                  <th className={styles.th}>League</th>
-                  <th className={`${styles.th} ${styles.thClub}`}>Club ⭐</th>
+                  <th className={styles.th}>League Preview</th>
+                  <th className={`${styles.th} ${styles.thClub}`}>Club Preview</th>
                 </tr>
               </thead>
               <tbody>
                 {COMPARISON_CATEGORIES.map(cat => (
-                  <>
-                    <tr key={cat.label} className={styles.catRow}>
+                  <Fragment key={cat.label}>
+                    <tr className={styles.catRow}>
                       <td colSpan={5} className={styles.catLabel}>{cat.label}</td>
                     </tr>
                     {cat.rows.map(row => (
@@ -220,7 +241,7 @@ export default function PricingPage() {
                         <td className={`${styles.td} ${styles.tdClub}`}>{row.club}</td>
                       </tr>
                     ))}
-                  </>
+                  </Fragment>
                 ))}
               </tbody>
             </table>
@@ -239,9 +260,19 @@ export default function PricingPage() {
                 </div>
                 <h3 className={styles.bridgeHeadline}>{b.headline}</h3>
                 <p className={styles.bridgeBody}>{b.body}</p>
-                <Link href="/auth/signup" className={styles.bridgeCta}>
-                  Start Free Trial →
-                </Link>
+                {b.earlyAccess ? (
+                  <EarlyAccessModalTrigger
+                    className={styles.bridgeCta}
+                    initialPlanInterest={b.initialPlanInterest}
+                    initialFeaturesInterested={b.initialFeaturesInterested}
+                  >
+                    {b.cta} →
+                  </EarlyAccessModalTrigger>
+                ) : (
+                  <Link href={b.href ?? '/auth/signup'} className={styles.bridgeCta}>
+                    {b.cta} →
+                  </Link>
+                )}
               </div>
             ))}
           </div>
@@ -249,46 +280,46 @@ export default function PricingPage() {
       </section>
 
       {/* ── Club deep-dive ───────────────────────────────────────────────── */}
-      <section className={styles.clubSection}>
+      <section className={styles.clubSection} id="early-access">
         <div className="container">
           <div className={styles.clubInner}>
             <div className={styles.clubText}>
-              <p className="font-mono text-xs uppercase tracking-widest text-logic-lime mb-3">Most Popular</p>
-              <h2 className={styles.clubTitle}>Why most clubs choose the Club plan</h2>
-              <p className={styles.clubSub}>It&apos;s not about features. It&apos;s about time.</p>
+              <p className="font-mono text-xs uppercase tracking-widest text-logic-lime mb-3">Early Access</p>
+              <h2 className={styles.clubTitle}>League and Club are coming next</h2>
+              <p className={styles.clubSub}>Preview the bigger platform without pretending it is ready to buy today.</p>
               <p className={styles.clubBody}>
-                The two tools that Club adds — accounting and rep team management — are where sports
-                organizations lose the most time every season. Chasing payments. Reconciling who owes
-                what. Coordinating tryouts over email. Keeping track of player documents. Sending
-                rosters to coaches who then manage their own spreadsheets.
+                Tournament and Tournament Plus are the live launch offers. League and Club remain on the
+                public site so organizations can understand the long-term platform direction before
+                they start building their tournament workflow here.
               </p>
               <p className={styles.clubBody}>
-                Club centralizes all of it. Treasurers get a real ledger. Team managers stop chasing
-                paper. Coaches have their own portal. And the executive doesn&apos;t spend Sunday nights
-                in a spreadsheet.
+                League is focused on house league registration, divisions, seasons, public organization
+                pages, and registrar workflows. Club adds rep teams and accounting for organizations
+                that need the whole operating system.
               </p>
               <p className={styles.clubBody}>
-                That&apos;s why it&apos;s the most popular plan — not because organizations want the most
-                features, but because they want their volunteer hours back.
+                If you want either tier, start on a live tournament plan now or open the early-access form.
+                That keeps the launch honest while still giving interested clubs a path into the roadmap.
               </p>
+              <EarlyAccessModalTrigger
+                className="inline-flex font-mono text-xs uppercase tracking-widest font-bold bg-logic-lime text-pitch-black px-6 py-3 hover:bg-white transition-colors border-0 cursor-pointer"
+                initialPlanInterest={['league', 'club']}
+                initialFeaturesInterested={['house_league', 'registration', 'accounting', 'rep_teams']}
+              >
+                Join Early Access
+              </EarlyAccessModalTrigger>
             </div>
             <div className={styles.clubStats}>
               {[
-                { label: 'Hours recovered every season', body: 'Accounting and rep team tools eliminate the manual coordination that costs volunteer orgs most of their time.' },
-                { label: 'One place for everything', body: 'Rosters, finances, documents, schedules, and communications — no more fragmented tools.' },
-                { label: 'Built for the whole org', body: 'Treasurers, coaches, registrars, and executives each get the access they need without stepping on each other.' },
+                { label: 'Available now', body: 'Tournament and Tournament Plus cover tournament setup, score entry, public results, schedule automation, brackets, archives, and branding.' },
+                { label: 'Coming next', body: 'League and Club workflows are being refined before self-serve checkout opens.' },
+                { label: 'Early-access path', body: 'Interested organizations can share their details and module priorities before the broader tiers launch.' },
               ].map(s => (
                 <div key={s.label} className={styles.clubStat}>
                   <p className={styles.clubStatLabel}>{s.label}</p>
                   <p className={styles.clubStatBody}>{s.body}</p>
                 </div>
               ))}
-              <Link
-                href="/auth/signup"
-                className="block font-mono text-xs uppercase tracking-widest font-bold text-center bg-logic-lime text-pitch-black px-6 py-3 hover:bg-white transition-colors w-full mt-2"
-              >
-                Start Free Trial
-              </Link>
             </div>
           </div>
         </div>
@@ -325,7 +356,7 @@ export default function PricingPage() {
             and more time running your organization.
           </h2>
           <p className={styles.ctaSub}>
-            Free plan available. Paid trials collect payment details up front and charge only after the trial. Cancel anytime.
+            Free Tournament plan available. Tournament Plus includes a 14-day trial. League and Club are coming soon.
           </p>
           <div className={styles.ctaActions}>
             <Link
@@ -334,12 +365,13 @@ export default function PricingPage() {
             >
               Get Started Free
             </Link>
-            <Link
-              href="/auth/signup"
-              className="font-mono text-sm uppercase tracking-widest text-data-gray border border-blueprint-blue/40 px-8 py-4 hover:border-blueprint-blue hover:text-fl-text transition-colors"
+            <EarlyAccessModalTrigger
+              className="font-mono text-sm uppercase tracking-widest text-data-gray border border-blueprint-blue/40 bg-transparent px-8 py-4 hover:border-blueprint-blue hover:text-fl-text transition-colors cursor-pointer"
+              initialPlanInterest={['league', 'club']}
+              initialFeaturesInterested={['house_league', 'registration', 'accounting', 'rep_teams']}
             >
-              Have questions? Talk to us.
-            </Link>
+              Join Early Access
+            </EarlyAccessModalTrigger>
           </div>
           <p className={styles.ctaFootnote}>All plans are billed in CAD. No contracts. No setup fees.</p>
         </div>

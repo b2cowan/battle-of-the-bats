@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import type { Metadata } from 'next';
+import EarlyAccessModalTrigger from '@/components/EarlyAccessModalTrigger';
 
 export const metadata: Metadata = {
   title: 'Accounting — FieldLogicHQ',
@@ -51,13 +52,17 @@ export default function AccountingPage() {
             tools built for how volunteer-run sports clubs actually operate. No separate spreadsheets.
             No more treasurer onboarding from scratch.
           </p>
+          <p className="font-mono text-xs text-logic-lime leading-relaxed max-w-2xl mb-8 border border-logic-lime/30 px-4 py-3">
+            Coming soon: Accounting is part of the Club roadmap and is not open for self-serve signup yet.
+          </p>
           <div className="flex flex-wrap gap-4">
-            <Link
-              href="/auth/signup"
-              className="font-mono text-xs font-bold uppercase tracking-widest bg-logic-lime text-pitch-black px-8 py-4 hover:bg-white transition-colors"
+            <EarlyAccessModalTrigger
+              className="font-mono text-xs font-bold uppercase tracking-widest bg-logic-lime text-pitch-black px-8 py-4 hover:bg-white transition-colors border-0 cursor-pointer"
+              initialPlanInterest={['club']}
+              initialFeaturesInterested={['accounting']}
             >
-              Get Started
-            </Link>
+              Join Early Access
+            </EarlyAccessModalTrigger>
             <Link
               href="/pricing"
               className="font-mono text-xs uppercase tracking-widest text-data-gray border border-blueprint-blue/40 px-8 py-4 hover:border-blueprint-blue hover:text-fl-text transition-colors"
@@ -121,14 +126,15 @@ export default function AccountingPage() {
             Stop managing money in spreadsheets.
           </h2>
           <p className="font-mono text-xs text-data-gray mb-10">
-            Accounting is included in the Club plan. Start with a 90-day early-adopter trial.
+            Accounting will be included in the Club plan when that tier opens for self-serve signup.
           </p>
-          <Link
-            href="/auth/signup"
-            className="font-mono text-sm font-bold uppercase tracking-widest bg-logic-lime text-pitch-black px-8 py-4 hover:bg-white transition-colors"
+          <EarlyAccessModalTrigger
+            className="font-mono text-sm font-bold uppercase tracking-widest bg-logic-lime text-pitch-black px-8 py-4 hover:bg-white transition-colors border-0 cursor-pointer"
+            initialPlanInterest={['club']}
+            initialFeaturesInterested={['accounting']}
           >
-            Start Your Organization
-          </Link>
+            Join Early Access
+          </EarlyAccessModalTrigger>
         </div>
       </section>
     </div>

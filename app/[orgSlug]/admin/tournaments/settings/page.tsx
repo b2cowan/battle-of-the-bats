@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { ArrowRight, CreditCard, Palette, RefreshCw, Settings2, ShieldCheck, Users2 } from 'lucide-react';
+import { ArrowRight, CreditCard, RefreshCw, Settings2, ShieldCheck, Users2 } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { hasCapability } from '@/lib/roles';
 import styles from './settings-access.module.css';
@@ -38,15 +38,6 @@ export default function TournamentSettingsAccessPage() {
       title: 'Plan & subscription',
       description: 'Review the Tournament plan, upgrade to Tournament Plus, and confirm tournament-slot usage.',
       meta: isOwner ? 'Open billing' : 'Owner only',
-      enabled: isOwner,
-      comingSoon: false,
-    },
-    {
-      href: `${base}/settings/branding`,
-      icon: Palette,
-      title: 'Public site & branding',
-      description: 'Set a logo, color theme, hero banner, and font for this tournament\'s public page — each tournament can have its own look.',
-      meta: isOwner ? 'Manage branding' : 'Owner only',
       enabled: isOwner,
       comingSoon: false,
     },
@@ -105,7 +96,7 @@ export default function TournamentSettingsAccessPage() {
       </div>
 
       <div className={styles.note}>
-        Tournament operations (registrations, schedule, results) live in the main sidebar. This section covers account setup, staff permissions, subscription, public-site appearance, and score policy.
+        Tournament operations (registrations, schedule, results) live in the main sidebar. This section covers account setup, staff permissions, subscription, and score policy.
       </div>
     </div>
   );

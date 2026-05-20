@@ -3,6 +3,7 @@ import { forbidden, getAuthContextWithScope, scopeGuard, unauthorized } from '@/
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { CARD_STYLE_OPTIONS, FONT_OPTIONS, PRESETS } from '@/lib/themes';
 import { normalizeHiddenPublicPages } from '@/lib/public-pages';
+import { hasPlanFeature } from '@/lib/plan-features';
 import type { PublicPageKey } from '@/lib/types';
 
 const HEX_RE = /^#[0-9A-Fa-f]{6}$/;
@@ -73,7 +74,7 @@ export async function PATCH(req: Request) {
   };
 
   const updates: Record<string, unknown> = {};
-  const canUseAdvancedBranding = ctx.org.planId !== 'tournament';
+  const canUseAdvancedBranding = hasPlanFeature(ctx.org.planId, 'advanced_tournament_branding');
   if ('themePreset' in body) {
     if (body.themePreset === null) {
       updates.theme_preset = null;

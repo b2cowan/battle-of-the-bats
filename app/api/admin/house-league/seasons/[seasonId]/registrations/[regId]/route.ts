@@ -306,7 +306,7 @@ export async function PATCH(
         await promoteFromWaitlist(next.id);
         if (oldPos !== null) await compactWaitlist(divisionId, oldPos);
 
-        let promotedDivisionName = divisionName;
+        const promotedDivisionName = divisionName;
         void (async () => {
           try {
             await sendEmail(

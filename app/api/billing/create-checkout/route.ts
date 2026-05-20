@@ -1,7 +1,10 @@
 import { getAuthContext, unauthorized } from '@/lib/api-auth';
 import { restoreRetainedDowngradeTournaments } from '@/lib/billing-retention';
 import { isBillingMockEnabled, isStripeConfigured } from '@/lib/billing-mock';
-import { PLAN_CONFIG } from '@/lib/plan-config';
+import { normalizeBillingCycle, PLAN_CONFIG } from '@/lib/plan-config';
+import { getPlanConfigOverride } from '@/lib/plan-config-db';
+import { getStripePriceId } from '@/lib/stripe-prices';
+import { getPlanGatingMap } from '@/lib/plan-gating-server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import type { OrgPlan } from '@/lib/types';
 
@@ -43,11 +46,27 @@ export async function POST(req: Request) {
   const auth = await getAuthContext();
   if (!auth) return unauthorized();
 
-  const { planKey, returnTo }: { planKey: 'tournament_plus' | 'league' | 'club'; returnTo?: string } = await req.json();
+  const { planKey, returnTo, billingCycle: requestedBillingCycle }: {
+    planKey: 'tournament_plus' | 'league' | 'club';
+    returnTo?: string;
+    billingCycle?: unknown;
+  } = await req.json();
+  const billingCycle = normalizeBillingCycle(requestedBillingCycle);
   const plan = PLAN_CONFIG[planKey as OrgPlan];
   if (!plan) {
     return new Response(JSON.stringify({ error: 'Invalid plan' }), {
       status: 400,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+
+  // Merge DB overrides over PLAN_CONFIG defaults for this plan
+  const mergedConfig = await getPlanConfigOverride(planKey as OrgPlan);
+
+  const gatingMap = await getPlanGatingMap();
+  if (gatingMap[planKey]) {
+    return new Response(JSON.stringify({ error: 'This plan is not open for self-serve checkout yet.' }), {
+      status: 403,
       headers: { 'Content-Type': 'application/json' },
     });
   }
@@ -66,9 +85,9 @@ export async function POST(req: Request) {
       .from('organizations')
       .update({
         plan_id: planKey,
-        tournament_limit: plan.tournamentLimit,
+        tournament_limit: mergedConfig.tournamentLimit,
         subscription_status: 'trialing',
-        stripe_subscription_id: `mock_sub_${planKey}_${Date.now()}`,
+        stripe_subscription_id: `mock_sub_${planKey}_${billingCycle}_${Date.now()}`,
       })
       .eq('id', auth.org.id);
     if (orgError) {
@@ -86,6 +105,7 @@ export async function POST(req: Request) {
         url: appendSuccess(`${appUrl}${safeReturnTo}`),
         applied: true,
         planKey,
+        billingCycle,
         restoredCount: restoreResult.restoredCount,
         remainingRetainedCount: restoreResult.remainingRetainedCount,
       }),
@@ -101,8 +121,10 @@ export async function POST(req: Request) {
     });
   }
 
-  if (!plan.priceId) {
-    return new Response(JSON.stringify({ error: 'No price configured for this plan' }), {
+  const priceId = await getStripePriceId(planKey as OrgPlan, billingCycle);
+  if (!priceId) {
+    const cycleLabel = billingCycle === 'annual' ? 'Annual' : 'Monthly';
+    return new Response(JSON.stringify({ error: `${cycleLabel} checkout is not configured for ${plan.label} yet.` }), {
       status: 400,
       headers: { 'Content-Type': 'application/json' },
     });
@@ -128,12 +150,12 @@ export async function POST(req: Request) {
   const session = await stripe.checkout.sessions.create({
     mode: 'subscription',
     customer: customerId,
-    line_items: [{ price: plan.priceId, quantity: 1 }],
+    line_items: [{ price: priceId, quantity: 1 }],
     subscription_data: {
-      trial_period_days: plan.trialDays,
-      metadata: { orgId: auth.org.id, planKey },
+      trial_period_days: mergedConfig.trialDays,
+      metadata: { orgId: auth.org.id, planKey, billingCycle },
     },
-    metadata: { orgId: auth.org.id, planKey },
+    metadata: { orgId: auth.org.id, planKey, billingCycle },
     success_url: appendSuccess(`${appUrl}${safeReturnTo}`),
     cancel_url: `${appUrl}${safeReturnTo}`,
   });
