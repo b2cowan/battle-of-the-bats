@@ -10,6 +10,9 @@ const ERROR_MAP: Record<string, string> = {
   'invalid_credentials':       'Incorrect email or password.',
   'too_many_requests':         'Too many attempts — please wait a moment.',
   'Email not confirmed':       'Account not yet confirmed.',
+  'email_not_confirmed':       'Account not yet confirmed.',
+  'auth_timeout':              'Sign-in is taking too long. Check your connection and try again.',
+  'network_error':             'Could not reach the auth service. Please try again.',
 };
 
 function LoginForm() {

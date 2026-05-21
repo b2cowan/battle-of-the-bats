@@ -1329,7 +1329,7 @@ export default function OnboardingPage() {
             <div>
               <h2 id="onboarding-plan-title" className={styles.modalTitle}>Start free or choose an upgrade</h2>
               <p className={styles.modalSub}>
-                You can begin on the free Tournament plan. Upgrade only if you need more tournament slots, automation, league tools, or club operations.
+                Start free for one small tournament, or choose Tournament Plus if you need registration control, branding, automation, and repeat-event tools.
               </p>
             </div>
             {!required && (
@@ -1447,7 +1447,7 @@ export default function OnboardingPage() {
     if (activeModal === 'plan') {
       return renderModalFrame(
         'Start free or choose an upgrade',
-        'You can begin on the free Tournament plan and upgrade later if you need more capacity or automation.',
+        'Start free for one small tournament, or upgrade when you need registration control, branding, automation, and repeat-event tools.',
         renderPlanChooser(false, true),
         { stepId: 'plan', saveLabel: 'Continue', onSave: () => advanceWizard('plan'), hidePrimaryAction: true }
       );
@@ -2202,7 +2202,7 @@ export default function OnboardingPage() {
         <div className={styles.header}>
           <div className={styles.headerIcon}><Rocket size={22} /></div>
           <h1 className={styles.title}>Start free or choose an upgrade</h1>
-          <p className={styles.sub}>Begin with the free Tournament plan, or upgrade if {currentOrg.name} needs more capacity.</p>
+          <p className={styles.sub}>Begin with the free starter plan, or upgrade if {currentOrg.name} needs registration control, branding, automation, and repeat-event tools.</p>
         </div>
 
         {renderPlanChooser(true)}

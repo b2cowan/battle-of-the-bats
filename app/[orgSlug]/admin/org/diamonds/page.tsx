@@ -5,7 +5,22 @@ import { useTournament } from '@/lib/tournament-context';
 import { Diamond } from '@/lib/types';
 import { getMapsUrl } from '@/components/LocationLink';
 import AddVenueModal from '@/components/admin/AddVenueModal';
+import ExportMenu from '@/components/admin/ExportMenu';
+import {
+  downloadXLSX, generateCSV, downloadCSVBlob,
+  buildFilename, serializeRows, serializeHeaders, type ExportColumnDef,
+} from '@/lib/export';
 import styles from './diamonds-admin.module.css';
+
+// ── Export ────────────────────────────────────────────────────────────────────
+
+const VENUES_EXPORT_COLS: ExportColumnDef[] = [
+  { label: 'Venue Name', key: 'name',    format: 'text' },
+  { label: 'Address',    key: 'address', format: 'text' },
+  { label: 'Notes',      key: 'notes',   format: 'text' },
+];
+
+// ─────────────────────────────────────────────────────────────────────────────
 
 async function requestJson<T>(url: string, init?: RequestInit): Promise<T> {
   const res = await fetch(url, init);
@@ -37,6 +52,40 @@ export default function AdminDiamondsPage() {
 
   function handleSaved() { setModalOpen(false); refresh(); }
 
+  // ── Export ──────────────────────────────────────────────────────────────────
+
+  function buildVenueRows() {
+    return diamonds.map(d => ({
+      name:    d.name,
+      address: d.address ?? '',
+      notes:   d.notes ?? '',
+    }));
+  }
+
+  function handleExportXLSX() {
+    const rows     = buildVenueRows();
+    const headers  = serializeHeaders(VENUES_EXPORT_COLS);
+    const data     = serializeRows(rows, VENUES_EXPORT_COLS);
+    const filename = buildFilename(
+      { org: currentTournament?.slug ?? 'org', dataset: 'venues' },
+      'xlsx',
+    );
+    downloadXLSX(filename, headers, data, 'Venues');
+  }
+
+  function handleExportCSV() {
+    const rows     = buildVenueRows();
+    const headers  = serializeHeaders(VENUES_EXPORT_COLS);
+    const data     = serializeRows(rows, VENUES_EXPORT_COLS);
+    const filename = buildFilename(
+      { org: currentTournament?.slug ?? 'org', dataset: 'venues' },
+      'csv',
+    );
+    downloadCSVBlob(filename, generateCSV(headers, data));
+  }
+
+  // ────────────────────────────────────────────────────────────────────────────
+
   return (
     <div className={styles.page}>
       <div className={styles.pageHeader}>
@@ -47,9 +96,17 @@ export default function AdminDiamondsPage() {
             <p className={styles.pageSub}>Manage playing fields — names, addresses, and notes</p>
           </div>
         </div>
-        <button className="btn btn-primary btn-sm" onClick={openAdd} id="diamond-add-btn" disabled={!currentTournament}>
-          <Plus size={16} /> Add Venue
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <ExportMenu
+            formats={['xlsx', 'csv']}
+            onExportXLSX={handleExportXLSX}
+            onExportCSV={handleExportCSV}
+            disabled={diamonds.length === 0}
+          />
+          <button className="btn btn-primary btn-sm" onClick={openAdd} id="diamond-add-btn" disabled={!currentTournament}>
+            <Plus size={16} /> Add Venue
+          </button>
+        </div>
       </div>
 
       <div className="table-wrap">

@@ -2,6 +2,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import { DollarSign, Pencil, X, ArrowRightLeft } from 'lucide-react';
+import {
+  downloadXLSX, generateCSV, downloadCSVBlob,
+  buildFilename, type ExportColumnDef,
+} from '@/lib/export';
+import ExportMenu from '@/components/admin/ExportMenu';
 import { useOrg } from '@/lib/org-context';
 import HelpCallout from '@/components/help/HelpCallout';
 import HelpTooltip from '@/components/help/HelpTooltip';
@@ -77,6 +82,17 @@ function statusBadgeClass(st: AccountingEntryStatus, s: typeof styles): string {
 }
 
 const LIMIT = 50;
+
+// ── Export column definitions ─────────────────────────────────────────────
+// No sensitive fields — ledger entries are financial records, not personal data.
+const LEDGER_EXPORT_COLS: ExportColumnDef[] = [
+  { label: 'Date',        key: 'date'        },
+  { label: 'Description', key: 'description' },
+  { label: 'Category',    key: 'category'    },
+  { label: 'Type',        key: 'type'        },
+  { label: 'Amount',      key: 'amount'      },
+  { label: 'Status',      key: 'status'      },
+];
 
 export default function LedgerDetailPage() {
   const { currentOrg, userRole, userCapabilities, loading } = useOrg();
@@ -287,23 +303,35 @@ export default function LedgerDetailPage() {
     }
   }
 
-  function handleExportCsv() {
-    const header = ['Date', 'Description', 'Category', 'Type', 'Amount', 'Status'];
-    const rows   = entries.map(e => [
-      e.entryDate,
-      `"${e.description.replace(/"/g, '""')}"`,
-      `"${(e.category ?? '').replace(/"/g, '""')}"`,
-      entryTypeLabel(e.entryType),
-      e.amount.toFixed(2),
-      e.status,
-    ]);
-    const csv  = [header, ...rows].map(r => r.join(',')).join('\n');
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url  = URL.createObjectURL(blob);
-    const a    = document.createElement('a');
-    const name = `${ledger?.name ?? 'ledger'}-${tab}-${new Date().toLocaleDateString('en-CA')}.csv`;
-    a.href = url; a.download = name; a.click();
-    URL.revokeObjectURL(url);
+  // ── Export handlers ────────────────────────────────────────────────────
+  function buildLedgerRows() {
+    return entries.map(e => ({
+      date:        e.entryDate,
+      description: e.description,
+      category:    e.category ?? '',
+      type:        entryTypeLabel(e.entryType),
+      amount:      e.amount.toFixed(2),
+      status:      e.status,
+    }));
+  }
+
+  async function handleExportXLSX() {
+    const rows = buildLedgerRows();
+    await downloadXLSX(
+      buildFilename({ org: currentOrg?.slug, dataset: ledger?.name ?? 'ledger', scope: tab }, 'xlsx'),
+      LEDGER_EXPORT_COLS.map(c => c.label),
+      rows.map(r => LEDGER_EXPORT_COLS.map(c => r[c.key as keyof typeof r] ?? '')),
+      'Ledger',
+    );
+  }
+
+  function handleExportCSV() {
+    const headers = LEDGER_EXPORT_COLS.map(c => c.label);
+    const data = buildLedgerRows().map(r => LEDGER_EXPORT_COLS.map(c => r[c.key as keyof typeof r] ?? ''));
+    downloadCSVBlob(
+      buildFilename({ org: currentOrg?.slug, dataset: ledger?.name ?? 'ledger', scope: tab }, 'csv'),
+      generateCSV(headers, data),
+    );
   }
 
   function ef<K extends keyof EntryForm>(k: K, v: EntryForm[K]) {
@@ -398,9 +426,12 @@ export default function LedgerDetailPage() {
           {/* Action bar */}
           {canEdit && (
             <div className={styles.addEntryBar}>
-              <button type="button" className="btn btn-ghost" onClick={handleExportCsv} style={{ fontSize: '0.78rem' }}>
-                ↓ Export CSV
-              </button>
+              <ExportMenu
+                formats={['xlsx', 'csv']}
+                onExportXLSX={handleExportXLSX}
+                onExportCSV={handleExportCSV}
+                disabled={entries.length === 0}
+              />
               <div className={styles.addEntryBtns}>
                 <button type="button" className="btn btn-secondary" onClick={openAddEntry}>+ Add Entry</button>
                 <button type="button" className="btn btn-ghost" onClick={openTransferModal}>

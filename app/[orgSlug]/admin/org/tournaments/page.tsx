@@ -48,6 +48,7 @@ function getErrorMessage(error: unknown, fallback = 'Something went wrong.') {
 import FeedbackModal from '@/components/FeedbackModal';
 import HelpCallout from '@/components/help/HelpCallout';
 import TournamentSetupWizard from '@/components/admin/TournamentSetupWizard';
+import { hasPlanFeature, requiresTournamentPlusCopy } from '@/lib/plan-features';
 import styles from './tournaments-admin.module.css';
 
 type ModalMode = 'add' | 'edit' | null;
@@ -621,7 +622,7 @@ export default function AdminTournamentsPage({
               >
                 upgrade to Tournament Plus
               </Link>
-              {' '}for up to 3 slots and additional automation features.
+              {' '}for unlimited tournament slots, registration control, branding, and automation.
             </>
           }
         />
@@ -630,7 +631,7 @@ export default function AdminTournamentsPage({
         <HelpCallout
           variant="info"
           title="Tournament slots full"
-          body="Tournament Plus includes 3 active tournament slots. Archive a completed tournament to free a slot."
+          body="Tournament Plus includes unlimited tournament slots. If this message appears, review the plan override for this organization in Platform Admin."
         />
       )}
 
@@ -1023,6 +1024,11 @@ export default function AdminTournamentsPage({
       <TournamentSetupWizard
         isOpen={setupWizardOpen}
         orgContactEmail={currentOrg?.contactEmail}
+        existingTournaments={tournaments
+          .filter(t => t.status !== 'archived')
+          .sort((a, b) => (b.year ?? 0) - (a.year ?? 0))}
+        canClone={Boolean(currentOrg && hasPlanFeature(currentOrg.planId, 'tournament_cloning'))}
+        upgradeCopy={requiresTournamentPlusCopy('tournament_cloning')}
         onClose={() => setSetupWizardOpen(false)}
         onCreated={async tournament => {
           setSetupWizardOpen(false);

@@ -12,6 +12,7 @@ export type PlanConfigOverrideRow = {
   trial_days: number | null;
   updated_at: string;
   updated_by_email: string | null;
+  last_change_note: string | null;
 };
 
 export type MergedPlanLimits = {
@@ -81,6 +82,7 @@ export async function upsertPlanConfigOverride(
     trial_days?: number | null;
   },
   byEmail?: string | null,
+  changeNote?: string | null,
 ): Promise<void> {
   const { error } = await supabaseAdmin
     .from('plan_config_overrides')
@@ -90,6 +92,7 @@ export async function upsertPlanConfigOverride(
         ...fields,
         updated_at: new Date().toISOString(),
         updated_by_email: byEmail ?? null,
+        last_change_note: changeNote ?? null,
       },
       { onConflict: 'plan_id' }
     );

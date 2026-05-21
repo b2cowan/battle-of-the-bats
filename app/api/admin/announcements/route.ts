@@ -5,6 +5,7 @@ import {
   unauthorized,
 } from '@/lib/api-auth';
 import { hasCapability } from '@/lib/roles';
+import { hasPlanFeature, requiresTournamentPlusCopy } from '@/lib/plan-features';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 
 function mapRow(a: any) {
@@ -17,6 +18,12 @@ function mapRow(a: any) {
     pinned: a.pinned,
     ageGroupIds: a.age_group_ids ?? null,
   };
+}
+
+function hasDivisionVisibility(data: unknown) {
+  if (!data || typeof data !== 'object') return false;
+  const value = (data as { ageGroupIds?: unknown }).ageGroupIds;
+  return Array.isArray(value) && value.length > 0;
 }
 
 export async function GET(req: Request) {
@@ -90,6 +97,10 @@ export async function POST(req: Request) {
       const denied = scopeGuard(ctx, data.tournamentId);
       if (denied) return denied;
 
+      if (hasDivisionVisibility(data) && !hasPlanFeature(ctx.org.planId, 'targeted_tournament_announcements')) {
+        return Response.json({ error: requiresTournamentPlusCopy('targeted_tournament_announcements') }, { status: 403 });
+      }
+
       const { data: inserted, error } = await supabaseAdmin.from('announcements').insert({
         tournament_id: data.tournamentId,
         title: data.title,
@@ -109,6 +120,10 @@ export async function POST(req: Request) {
       if (existing) {
         const denied = scopeGuard(ctx, existing.tournament_id);
         if (denied) return denied;
+      }
+
+      if (hasDivisionVisibility(data) && !hasPlanFeature(ctx.org.planId, 'targeted_tournament_announcements')) {
+        return Response.json({ error: requiresTournamentPlusCopy('targeted_tournament_announcements') }, { status: 403 });
       }
 
       const updates: Record<string, unknown> = {};

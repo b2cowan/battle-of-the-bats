@@ -91,6 +91,27 @@
   margin-top: 1rem;
 }
 
+.lockedTargeting {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.85rem 1rem;
+  background: rgba(var(--blueprint-blue-rgb), 0.08);
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.25);
+  border-radius: var(--radius-sm);
+}
+
+.lockedTargeting strong {
+  color: var(--white);
+  font-size: 0.9rem;
+}
+
+.lockedTargeting span {
+  color: var(--white-60);
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
 .filters {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));

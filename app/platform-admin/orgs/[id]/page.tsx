@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { getEffectiveTournamentLimit, PLAN_CONFIG } from '@/lib/plan-config';
+import { getPlatformAdminContext, hasPlatformPermission } from '@/lib/platform-auth';
 import type { OrgPlan } from '@/lib/types';
 import OrgDetailClient from './OrgDetailClient';
 import styles from './orgDetail.module.css';
@@ -28,11 +29,20 @@ type AuditEventRow = {
   created_at: string;
 };
 
+type InternalNoteRow = {
+  id: string;
+  body: string;
+  created_by_email: string;
+  updated_by_email: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
 async function getOrgDetail(id: string) {
   const { data: org, error } = await supabaseAdmin
     .from('organizations')
     .select(
-      'id, name, slug, plan_id, tournament_limit, subscription_status, subscription_period, current_period_end, stripe_customer_id, stripe_subscription_id, created_at, enabled_addons, internal_notes'
+      'id, name, slug, plan_id, tournament_limit, subscription_status, subscription_period, current_period_end, stripe_customer_id, stripe_subscription_id, created_at, enabled_addons'
     )
     .eq('id', id)
     .single();
@@ -49,7 +59,6 @@ async function getMembers(orgId: string) {
 
   if (!rows || rows.length === 0) return [];
 
-  // Fetch all auth users and filter to this org's members
   const { data: usersData } = await supabaseAdmin.auth.admin.listUsers({
     page: 1,
     perPage: 1000,
@@ -133,30 +142,38 @@ async function getRecentAuditEvents(orgId: string) {
   }));
 }
 
+async function getInternalNotes(orgId: string) {
+  const { data, error } = await supabaseAdmin
+    .from('org_internal_notes')
+    .select('id, body, created_by_email, updated_by_email, created_at, updated_at')
+    .eq('org_id', orgId)
+    .is('deleted_at', null)
+    .order('created_at', { ascending: false })
+    .limit(50);
+
+  if (error) {
+    console.warn('[platform-admin] internal notes read failed', error);
+    return [];
+  }
+
+  return ((data ?? []) as InternalNoteRow[]).map(row => ({
+    id: row.id,
+    body: row.body,
+    createdByEmail: row.created_by_email,
+    updatedByEmail: row.updated_by_email,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  }));
+}
+
 function fmtDate(iso: string) {
   return new Date(iso).toLocaleDateString('en-CA', {
     year: 'numeric', month: 'short', day: 'numeric',
   });
 }
 
-function fmtDateTime(iso: string) {
-  return new Date(iso).toLocaleString('en-CA', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-}
-
 function fmtNullableDate(iso: string | null) {
   return iso ? fmtDate(iso) : 'Not set';
-}
-
-function fmtAuditValue(value: unknown) {
-  if (value === null || value === undefined) return '-';
-  const text = typeof value === 'string' ? value : JSON.stringify(value);
-  return text.length > 90 ? `${text.slice(0, 90)}...` : text;
 }
 
 function stripeCustomerUrl(customerId: string | null) {
@@ -165,14 +182,19 @@ function stripeCustomerUrl(customerId: string | null) {
   return `https://dashboard.stripe.com${modePath}/customers/${customerId}`;
 }
 
+function isExpiredOverride(expiresAt: string | null) {
+  if (!expiresAt) return false;
+  return new Date(expiresAt) < new Date();
+}
+
 const MODULE_LABELS: Record<string, string> = {
-  module_tournaments:   'Tournaments',
-  module_communications:'Communications',
-  module_members:       'Members',
-  module_public_site:   'Public Site',
-  module_house_league:  'House League',
-  module_accounting:    'Accounting',
-  module_rep_teams:     'Rep Teams',
+  module_tournaments:    'Tournaments',
+  module_communications: 'Communications',
+  module_members:        'Members',
+  module_public_site:    'Public Site',
+  module_house_league:   'House League',
+  module_accounting:     'Accounting',
+  module_rep_teams:      'Rep Teams',
 };
 
 export default async function OrgDetailPage({
@@ -181,125 +203,159 @@ export default async function OrgDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const [org, members, tournaments, overrides, auditEvents] = await Promise.all([
+  const [auth, org, members, tournaments, overrides, auditEvents, internalNotes] = await Promise.all([
+    getPlatformAdminContext(),
     getOrgDetail(id),
     getMembers(id),
     getTournaments(id),
     getOverrides(id),
     getRecentAuditEvents(id),
+    getInternalNotes(id),
   ]);
 
   if (!org) notFound();
 
-  const enabledAddons  = (org.enabled_addons as string[]) ?? [];
-  const planCfg        = PLAN_CONFIG[org.plan_id as keyof typeof PLAN_CONFIG];
-  const planModules    = planCfg?.moduleEntitlements ?? [];
-  const ownerMembers    = members.filter(member => member.role === 'owner');
-  const ownerSummary    = ownerMembers.map(member => member.email).join(', ') || 'No owner found';
-  const activeModules   = [...new Set([...planModules, ...enabledAddons])];
-  const stripeUrl       = stripeCustomerUrl((org.stripe_customer_id as string | null) ?? null);
+  const enabledAddons = (org.enabled_addons as string[]) ?? [];
+  const planCfg = PLAN_CONFIG[org.plan_id as keyof typeof PLAN_CONFIG];
+  const planOptions = Object.entries(PLAN_CONFIG).map(([planId, config]) => ({
+    id: planId,
+    label: config.label,
+    defaultTournamentLimit: config.tournamentLimit,
+  }));
+  const planModules = planCfg?.moduleEntitlements ?? [];
+  const ownerMembers = members.filter(member => member.role === 'owner');
+  const ownerSummary = ownerMembers.map(member => member.email).join(', ') || 'No owner found';
+  const activeModules = [...new Set([...planModules, ...enabledAddons])];
+  const stripeUrl = stripeCustomerUrl((org.stripe_customer_id as string | null) ?? null);
+  const subscriptionStatus = (org.subscription_status as string | null) ?? 'active';
+  const effectiveTournamentLimit = planCfg
+    ? getEffectiveTournamentLimit(org.plan_id as OrgPlan, org.tournament_limit as number | null)
+    : null;
+  const activeOverrides = overrides.filter(o => !o.revokedAt);
+  const expiredActiveOverrides = activeOverrides.filter(o => isExpiredOverride(o.expiresAt));
+  const hasFreePlanBillingMismatch = org.plan_id === 'tournament' && (
+    subscriptionStatus === 'trialing' ||
+    Boolean(org.stripe_subscription_id) ||
+    Boolean(org.subscription_period) ||
+    Boolean(org.current_period_end)
+  );
+  const hasOverLimitTournaments = effectiveTournamentLimit !== null &&
+    effectiveTournamentLimit < 9999 &&
+    tournaments.length > effectiveTournamentLimit;
+  const attentionItems = [
+    ...(ownerMembers.length === 0 ? ['No owner is assigned to this organization.'] : []),
+    ...(subscriptionStatus === 'past_due' ? ['Subscription is past due. Review billing and owner contact before support-sensitive changes.'] : []),
+    ...(subscriptionStatus === 'canceled' ? ['Subscription is canceled. Confirm access expectations before making support changes.'] : []),
+    ...(hasFreePlanBillingMismatch ? ['Free Tournament billing state is inconsistent. The plan should be active with no Stripe subscription.'] : []),
+    ...(expiredActiveOverrides.length > 0 ? [`${expiredActiveOverrides.length} active override${expiredActiveOverrides.length === 1 ? '' : 's'} expired and should be revoked or extended.`] : []),
+    ...(hasOverLimitTournaments ? [`This org has ${tournaments.length} non-archived tournaments against a limit of ${effectiveTournamentLimit}.`] : []),
+  ];
 
   return (
     <div className={styles.page}>
       <div className={styles.backRow}>
-        <Link href="/platform-admin/orgs" className={styles.backLink}>← Organizations</Link>
+        <Link href="/platform-admin/orgs" className={styles.backLink}>Back to Organizations</Link>
       </div>
 
-      <header className={styles.header}>
-        <div className={styles.headerLabel}>FieldLogicHQ</div>
-        <h1 className={styles.title}>{org.name}</h1>
-        <span className={styles.headerPlan}>{planCfg?.label ?? org.plan_id}</span>
-        <span className={`${styles.headerStatus} ${org.subscription_status === 'active' ? styles.headerStatusActive : org.subscription_status === 'trialing' ? styles.headerStatusTrialing : styles.headerStatusMuted}`}>
-          {org.subscription_status}
-        </span>
+      <header className={styles.accountHero}>
+        <div className={styles.accountHeroMain}>
+          <div className={styles.headerLabel}>Organization Account</div>
+          <h1 className={styles.title}>{org.name}</h1>
+          <div className={styles.heroMeta}>
+            <span className={styles.mono}>/{org.slug}</span>
+            <span>Created {fmtDate(org.created_at as string)}</span>
+          </div>
+        </div>
+        <div className={styles.heroActions}>
+          <div className={styles.heroBadges}>
+            <span className={styles.headerPlan}>{planCfg?.label ?? org.plan_id}</span>
+            <span className={`${styles.headerStatus} ${subscriptionStatus === 'active' ? styles.headerStatusActive : subscriptionStatus === 'trialing' ? styles.headerStatusTrialing : styles.headerStatusMuted}`}>
+              {subscriptionStatus}
+            </span>
+          </div>
+          <Link
+            href={`/${org.slug}/admin`}
+            target="_blank"
+            rel="noreferrer"
+            className={styles.adminLink}
+          >
+            Open Admin
+          </Link>
+        </div>
       </header>
 
-      {/* Support Summary */}
-      <section className={styles.section}>
-        <h2 className={styles.sectionTitle}>Support Summary</h2>
-        <div className={styles.grid}>
-          <div className={styles.field}>
-            <span className={styles.fieldLabel}>Owner</span>
-            <span className={styles.fieldValue}>{ownerSummary}</span>
-          </div>
-          <div className={styles.field}>
-            <span className={styles.fieldLabel}>Members</span>
-            <span className={styles.fieldValue}>{members.length}</span>
-          </div>
-          <div className={styles.field}>
-            <span className={styles.fieldLabel}>Non-Archived Tournaments</span>
-            <span className={styles.fieldValue}>{tournaments.length}</span>
-          </div>
-          <div className={styles.field}>
-            <span className={styles.fieldLabel}>Current Period End</span>
-            <span className={styles.fieldValue}>{fmtNullableDate((org.current_period_end as string | null) ?? null)}</span>
-          </div>
-          <div className={`${styles.field} ${styles.fieldFull}`}>
-            <span className={styles.fieldLabel}>Active Modules</span>
-            <div className={styles.moduleTagRow}>
-              {activeModules.map(m => (
-                <span key={m} className={styles.moduleTagIncluded}>
-                  {MODULE_LABELS[m] ?? m}
-                </span>
-              ))}
-            </div>
-          </div>
-          <div className={`${styles.field} ${styles.fieldFull}`}>
-            <span className={styles.fieldLabel}>Owner Contact</span>
-            <div className={styles.actionRow}>
-              {ownerMembers.length > 0 ? ownerMembers.map(member => (
-                <a
-                  key={member.userId}
-                  href={`mailto:${member.email}`}
-                  className={styles.adminLink}
-                >
-                  Email {member.displayName || member.email}
-                </a>
-              )) : (
-                <span className={styles.dimText}>No owner email available.</span>
-              )}
-            </div>
-          </div>
+      {attentionItems.length > 0 && (
+        <section className={styles.attentionPanel} aria-label="Needs attention">
+          <h2 className={styles.sectionTitle}>Needs Attention</h2>
+          <ul className={styles.attentionList}>
+            {attentionItems.map(item => (
+              <li key={item}>{item}</li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      <section className={styles.snapshotGrid} aria-label="Account snapshot">
+        <div className={styles.snapshotItem}>
+          <span className={styles.fieldLabel}>Owner</span>
+          <span className={styles.fieldValue}>{ownerSummary}</span>
+        </div>
+        <div className={styles.snapshotItem}>
+          <span className={styles.fieldLabel}>Members</span>
+          <span className={styles.fieldValue}>{members.length}</span>
+        </div>
+        <div className={styles.snapshotItem}>
+          <span className={styles.fieldLabel}>Tournaments</span>
+          <span className={styles.fieldValue}>
+            {tournaments.length}{effectiveTournamentLimit !== null && effectiveTournamentLimit < 9999 ? ` / ${effectiveTournamentLimit}` : ''}
+          </span>
+        </div>
+        <div className={styles.snapshotItem}>
+          <span className={styles.fieldLabel}>Billing Period</span>
+          <span className={styles.fieldValue}>{(org.subscription_period as string | null) ?? 'Not set'}</span>
+        </div>
+        <div className={styles.snapshotItem}>
+          <span className={styles.fieldLabel}>Current Period End</span>
+          <span className={styles.fieldValue}>{fmtNullableDate((org.current_period_end as string | null) ?? null)}</span>
+        </div>
+        <div className={styles.snapshotItem}>
+          <span className={styles.fieldLabel}>Active Overrides</span>
+          <span className={styles.fieldValue}>{activeOverrides.length}</span>
         </div>
       </section>
 
-      {/* Billing Snapshot */}
-      <section className={styles.section}>
-        <h2 className={styles.sectionTitle}>Billing Snapshot</h2>
-        <div className={styles.grid}>
-          <div className={styles.field}>
-            <span className={styles.fieldLabel}>Subscription Status</span>
-            <span className={styles.fieldValue}>{org.subscription_status as string}</span>
-          </div>
-          <div className={styles.field}>
-            <span className={styles.fieldLabel}>Billing Period</span>
-            <span className={styles.fieldValue}>{(org.subscription_period as string | null) ?? 'Not set'}</span>
-          </div>
-          <div className={styles.field}>
-            <span className={styles.fieldLabel}>Stripe Customer</span>
-            {stripeUrl ? (
-              <a href={stripeUrl} target="_blank" rel="noreferrer" className={styles.adminLink}>
-                Open Stripe
-              </a>
-            ) : (
-              <span className={styles.mono}>Not set</span>
-            )}
-          </div>
-          <div className={styles.field}>
-            <span className={styles.fieldLabel}>Stripe Subscription</span>
-            <span className={styles.mono}>{(org.stripe_subscription_id as string | null) ?? 'Not set'}</span>
-          </div>
-          <div className={`${styles.field} ${styles.fieldFull}`}>
-            <span className={styles.fieldLabel}>Customer ID</span>
-            <span className={styles.mono}>{(org.stripe_customer_id as string | null) ?? 'Not set'}</span>
-          </div>
+      <section className={styles.quickActions} aria-label="Primary account actions">
+        <div className={styles.quickActionIntro}>
+          <h2 className={styles.sectionTitle}>Primary Actions</h2>
+          <p className={styles.emptyNote}>Start with owner contact, billing context, then review the grouped workflow below.</p>
+        </div>
+        <div className={styles.actionRow}>
+          {ownerMembers.map(member => (
+            <a
+              key={member.userId}
+              href={`mailto:${member.email}`}
+              className={styles.adminLink}
+            >
+              Email {member.displayName || member.email}
+            </a>
+          ))}
+          {stripeUrl && (
+            <a href={stripeUrl} target="_blank" rel="noreferrer" className={styles.adminLink}>
+              Open Stripe
+            </a>
+          )}
+          <Link href={`/platform-admin/audit?q=${encodeURIComponent(org.name as string)}`} className={styles.adminLink}>
+            Audit Log
+          </Link>
         </div>
       </section>
 
-      {/* Identity */}
       <section className={styles.section}>
-        <h2 className={styles.sectionTitle}>Identity</h2>
-        <div className={styles.grid}>
+        <div className={styles.sectionHeader}>
+          <h2 className={styles.sectionTitle}>Account Context</h2>
+          <span className={styles.sectionHint}>Quick reference only. Use the workflow tabs below for edits and investigation.</span>
+        </div>
+        <div className={styles.contextGrid}>
           <div className={styles.field}>
             <span className={styles.fieldLabel}>Name</span>
             <span className={styles.fieldValue}>{org.name}</span>
@@ -309,43 +365,17 @@ export default async function OrgDetailPage({
             <span className={`${styles.fieldValue} ${styles.mono}`}>{org.slug}</span>
           </div>
           <div className={styles.field}>
-            <span className={styles.fieldLabel}>Created</span>
-            <span className={styles.fieldValue}>{fmtDate(org.created_at as string)}</span>
-          </div>
-          <div className={styles.field}>
-            <span className={styles.fieldLabel}>Admin</span>
-            <Link
-              href={`/${org.slug}/admin`}
-              target="_blank"
-              rel="noreferrer"
-              className={styles.adminLink}
-            >
-              ↗ Admin
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* Plan & Entitlements */}
-      <section className={styles.section}>
-        <h2 className={styles.sectionTitle}>Plan &amp; Entitlements</h2>
-        <div className={styles.grid}>
-          <div className={styles.field}>
             <span className={styles.fieldLabel}>Plan</span>
             <span className={styles.fieldValue}>{planCfg?.label ?? org.plan_id}</span>
           </div>
           <div className={styles.field}>
-            <span className={styles.fieldLabel}>Status</span>
-            <span className={styles.fieldValue}>{org.subscription_status}</span>
+            <span className={styles.fieldLabel}>Stripe Subscription</span>
+            <span className={styles.mono}>{(org.stripe_subscription_id as string | null) ?? 'Not set'}</span>
           </div>
-          {planCfg && planCfg.tournamentLimit < 9999 && (
-            <div className={styles.field}>
-              <span className={styles.fieldLabel}>Non-Archived Tournament Limit</span>
-              <span className={styles.fieldValue}>
-                {getEffectiveTournamentLimit(org.plan_id as OrgPlan, org.tournament_limit as number | null)}
-              </span>
-            </div>
-          )}
+          <div className={styles.field}>
+            <span className={styles.fieldLabel}>Stripe Customer</span>
+            <span className={styles.mono}>{(org.stripe_customer_id as string | null) ?? 'Not set'}</span>
+          </div>
           {planCfg && (
             <div className={styles.field}>
               <span className={styles.fieldLabel}>Staff Seat Limit</span>
@@ -361,9 +391,9 @@ export default async function OrgDetailPage({
             </div>
           )}
           <div className={`${styles.field} ${styles.fieldFull}`}>
-            <span className={styles.fieldLabel}>Plan-included modules</span>
+            <span className={styles.fieldLabel}>Active Modules</span>
             <div className={styles.moduleTagRow}>
-              {planModules.map(m => (
+              {activeModules.map(m => (
                 <span key={m} className={styles.moduleTagIncluded}>
                   {MODULE_LABELS[m] ?? m}
                 </span>
@@ -373,55 +403,25 @@ export default async function OrgDetailPage({
         </div>
       </section>
 
-      {/* Active Overrides + Module Overrides + Members + Tournaments + Notes — interactive via client */}
       <OrgDetailClient
         orgId={id}
         orgName={org.name as string}
         orgSlug={org.slug as string}
+        currentPlanId={org.plan_id as string}
+        currentTournamentLimit={effectiveTournamentLimit ?? ((org.tournament_limit as number | null) ?? 1)}
+        planOptions={planOptions}
+        canManageSupport={auth ? hasPlatformPermission(auth.role, 'manage_support') : false}
+        canManageBilling={auth ? hasPlatformPermission(auth.role, 'manage_billing') : false}
+        canManageProduct={auth ? hasPlatformPermission(auth.role, 'manage_product') : false}
         planModules={planModules}
         enabledAddons={enabledAddons}
-        internalNotes={(org.internal_notes as string | null) ?? null}
+        internalNotes={internalNotes}
         overrides={overrides}
         members={members}
         tournaments={tournaments}
+        auditEvents={auditEvents}
+        auditHref={`/platform-admin/audit?q=${encodeURIComponent(org.name as string)}`}
       />
-
-      <section className={styles.section}>
-        <div className={styles.sectionHeader}>
-          <h2 className={styles.sectionTitle}>Recent Platform Activity</h2>
-          <Link href={`/platform-admin/audit?q=${encodeURIComponent(org.name as string)}`} className={styles.adminLink}>
-            Audit Log
-          </Link>
-        </div>
-        {auditEvents.length === 0 ? (
-          <p className={styles.emptyNote}>No platform audit entries for this org yet.</p>
-        ) : (
-          <div className={styles.tableWrap}>
-            <table className={styles.table}>
-              <thead>
-                <tr>
-                  <th>When</th>
-                  <th>Actor</th>
-                  <th>Action</th>
-                  <th>Field</th>
-                  <th>New Value</th>
-                </tr>
-              </thead>
-              <tbody>
-                {auditEvents.map(event => (
-                  <tr key={event.id}>
-                    <td className={styles.dimText}>{fmtDateTime(event.createdAt)}</td>
-                    <td className={styles.mono}>{event.actorEmail}</td>
-                    <td>{event.action}</td>
-                    <td className={styles.dimText}>{event.field ?? '-'}</td>
-                    <td className={styles.mono}>{fmtAuditValue(event.newValue)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </section>
     </div>
   );
 }

@@ -57,6 +57,11 @@ export default function AdminHelpHubPage() {
       desc:  'Configure your organization settings, manage members, subscription, and diamonds.',
       href:  './help/org',
     }] : []),
+    {
+      title: 'Exports & Downloads',
+      desc:  'Export registrations, schedules, rosters, and reports to Excel, CSV, iCal, or PDF. Covers all formats, plan requirements, calendar import, and privacy defaults.',
+      href:  './help/exports',
+    },
   ];
 
   return (

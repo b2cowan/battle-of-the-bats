@@ -1,14 +1,18 @@
 'use client';
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Users, X, RefreshCw, ChevronDown, ChevronUp, AlertCircle, Download, Plus, Trash2, Search, LayoutDashboard, ArrowLeftRight } from 'lucide-react';
+import { Users, X, RefreshCw, ChevronDown, ChevronUp, AlertCircle, Plus, Trash2, Search, LayoutDashboard, ArrowLeftRight, Mail } from 'lucide-react';
 import { saveTeam } from '@/lib/db';
-import { downloadCSV, formatPoolName } from '@/lib/utils';
+import { formatPoolName } from '@/lib/utils';
 import { useTournament } from '@/lib/tournament-context';
 import { useOrg } from '@/lib/org-context';
+import { hasPlanFeature, requiresTournamentPlusCopy } from '@/lib/plan-features';
 import { AgeGroup } from '@/lib/types';
+import { buildFilename, downloadPDF, DEFAULT_PDF_SETTINGS, type OrgPdfSettings } from '@/lib/export';
 import s from '../../admin-common.module.css';
 import styles from './teams-admin.module.css';
 import FeedbackModal from '@/components/FeedbackModal';
+import ExportMenu from '@/components/admin/ExportMenu';
+import HelpCallout from '@/components/help/HelpCallout';
 
 interface TeamRecord {
   id: string;
@@ -26,6 +30,12 @@ interface TeamRecord {
   adminNotes?: string;
   slotId?: string | null;
   waitlistPosition?: number | null;
+  customAnswers?: Array<{
+    fieldId: string;
+    label: string;
+    fieldType: string;
+    value: string;
+  }>;
 }
 
 interface PoolSlot {
@@ -38,8 +48,10 @@ interface PoolSlot {
 }
 
 type PaymentStatus = 'paid' | 'deposit-paid' | 'pending' | 'past-due' | 'no-schedule';
+type PaymentFilter = 'all' | 'unpaid' | 'deposit-paid' | 'paid' | 'past-due';
 type FeeMode = 'tournament' | 'age_group';
 type Status = 'pending' | 'accepted' | 'rejected' | 'waitlist';
+type BulkAction = 'accept' | 'reject' | 'waitlist' | 'mark_deposit_paid' | 'mark_paid';
 
 interface FeeSchedule {
   depositAmount: number | null;
@@ -65,6 +77,53 @@ const PAYMENT_STATUS_LABEL: Record<PaymentStatus, string> = {
   'paid': 'Paid', 'deposit-paid': 'Deposit Paid', 'pending': 'Pending', 'past-due': 'Past Due', 'no-schedule': 'No Schedule',
 };
 
+const PAYMENT_FILTER_LABEL: Record<PaymentFilter, string> = {
+  all: 'All payment states',
+  unpaid: 'Unpaid',
+  'deposit-paid': 'Deposit paid',
+  paid: 'Paid in full',
+  'past-due': 'Past due',
+};
+
+function formatMoney(value: number) {
+  return new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD', maximumFractionDigits: 0 }).format(value);
+}
+
+function getEffectiveFee(team: TeamRecord, ageGroups: AgeGroup[], feeMode: FeeMode, feeSchedule: FeeSchedule): FeeSchedule {
+  const agFee = ageGroups.find(g => g.id === team.age_group_id);
+  if (feeMode === 'age_group' && agFee?.totalFeeAmount != null) {
+    return {
+      depositAmount: agFee.depositAmount ?? null,
+      depositDueDate: agFee.depositDueDate ?? null,
+      totalFeeAmount: agFee.totalFeeAmount ?? null,
+      totalFeeDueDate: agFee.totalFeeDueDate ?? null,
+    };
+  }
+  return feeSchedule;
+}
+
+function getPaymentDue(team: TeamRecord, fee: FeeSchedule) {
+  if (!fee.totalFeeAmount || team.totalPaid >= fee.totalFeeAmount) return null;
+  if (fee.depositAmount && team.depositPaid < fee.depositAmount) {
+    return {
+      amount: Math.max(fee.depositAmount - team.depositPaid, 0),
+      dueDate: fee.depositDueDate,
+      label: 'Deposit due',
+    };
+  }
+  return {
+    amount: Math.max(fee.totalFeeAmount - team.totalPaid, 0),
+    dueDate: fee.totalFeeDueDate,
+    label: 'Balance due',
+  };
+}
+
+function matchesPaymentFilter(status: PaymentStatus, filter: PaymentFilter) {
+  if (filter === 'all') return true;
+  if (filter === 'unpaid') return status === 'pending' || status === 'past-due';
+  return status === filter;
+}
+
 export default function UnifiedTeamsPage() {
   const { currentTournament } = useTournament();
   const { currentOrg } = useOrg();
@@ -88,6 +147,10 @@ export default function UnifiedTeamsPage() {
   const [poolSlots, setPoolSlots] = useState<PoolSlot[]>([]);
   const [swapMode, setSwapMode] = useState(false);
   const [swapFirstSlotId, setSwapFirstSlotId] = useState<string | null>(null);
+  const [selectedRegistrationIds, setSelectedRegistrationIds] = useState<Set<string>>(new Set());
+  const [paymentFilter, setPaymentFilter] = useState<PaymentFilter>('all');
+  const [showReminderModal, setShowReminderModal] = useState(false);
+  const [paymentInstructions, setPaymentInstructions] = useState('');
   const [feedback, setFeedback] = useState<{
     isOpen: boolean; title: string; message: string;
     type: 'primary' | 'danger' | 'warning' | 'success' | 'info';
@@ -121,6 +184,7 @@ export default function UnifiedTeamsPage() {
           adminNotes: r.admin_notes,
           slotId: admin.slotId ?? null,
           waitlistPosition: admin.waitlistPosition ?? null,
+          customAnswers: admin.customAnswers ?? [],
         };
       });
 
@@ -177,6 +241,20 @@ export default function UnifiedTeamsPage() {
 
   useEffect(() => { load(); }, [load]);
   useEffect(() => { loadPoolSlots(); }, [loadPoolSlots]);
+
+  useEffect(() => {
+    setSelectedRegistrationIds(prev => {
+      if (prev.size === 0) return prev;
+      const validIds = new Set(regs.filter(reg => reg.age_group_id === selectedAgeGroupId).map(reg => reg.id));
+      const next = new Set([...prev].filter(id => validIds.has(id)));
+      return next.size === prev.size ? prev : next;
+    });
+  }, [regs, selectedAgeGroupId]);
+
+  useEffect(() => {
+    if (paymentInstructions || !currentTournament) return;
+    setPaymentInstructions(`Please send payment for ${currentTournament.name} using the payment instructions provided by the tournament organizer. Include your team name and division in the memo or note.`);
+  }, [currentTournament, paymentInstructions]);
 
   async function patch(id: string, updates: any, confirmMsg?: string) {
     const execute = async () => {
@@ -388,25 +466,258 @@ export default function UnifiedTeamsPage() {
     }
   }
 
-  function exportCSV() {
-    const divTeams = regs.filter(r => r.age_group_id === selectedAgeGroupId);
-    const headers = ['Team', 'Coach', 'Email', 'Status', 'Slot', 'Waitlist #', 'Payment'];
-    const rows = divTeams.map(r => [
-      r.name, r.coach, r.email, r.status,
-      poolSlots.find(s => s.id === r.slotId)?.displayName ?? '-',
-      r.waitlistPosition ?? '-',
-      r.paymentStatus,
+  // ── Export handlers (server-side — registration data has custom fields) ──
+  function guardExport(): boolean {
+    if (!currentTournament) return false;
+    if (!currentOrg || !hasPlanFeature(currentOrg.planId, 'registration_export')) {
+      setFeedback({
+        isOpen: true,
+        title: 'Export Requires Tournament Plus',
+        message: requiresTournamentPlusCopy('registration_export'),
+        type: 'warning',
+      });
+      return false;
+    }
+    return true;
+  }
+
+  function handleExportXLSX() {
+    if (!guardExport()) return;
+    window.location.href = `/api/admin/tournaments/${encodeURIComponent(currentTournament!.id)}/registrations/export?format=xlsx`;
+  }
+
+  function handleExportCSV() {
+    if (!guardExport()) return;
+    window.location.href = `/api/admin/tournaments/${encodeURIComponent(currentTournament!.id)}/registrations/export?format=csv`;
+  }
+
+  async function handleExportPDF() {
+    if (!guardExport()) return;
+
+    const settings: OrgPdfSettings = {
+      ...DEFAULT_PDF_SETTINGS,
+      ...(pdfSettings && Object.keys(pdfSettings).length > 0 ? pdfSettings : {}),
+    };
+
+    const headers = ['Team', 'Division', 'Coach', 'Email', 'Status', 'Slot / Pool', 'Payment'];
+
+    // Group all accepted/waitlisted regs by division for page breaks
+    const acceptedRegs = regs.filter(r => r.status === 'accepted' || r.status === 'waitlist' || r.status === 'pending');
+    const groupMap = new Map<string, typeof acceptedRegs>();
+    for (const r of acceptedRegs) {
+      const div = r.age_group_name || 'Uncategorized';
+      if (!groupMap.has(div)) groupMap.set(div, []);
+      groupMap.get(div)!.push(r);
+    }
+
+    const groups = Array.from(groupMap.entries()).map(([label, divRegs]) => ({
+      label,
+      rows: divRegs.map(r => [
+        r.name,
+        r.age_group_name,
+        r.coach,
+        r.email,
+        r.status.charAt(0).toUpperCase() + r.status.slice(1),
+        r.slotId ? `Slot ${r.slotId}` : (r.waitlistPosition != null ? `Waitlist #${r.waitlistPosition}` : '—'),
+        r.paymentStatus === 'paid' ? 'Paid' : r.depositPaid > 0 ? 'Deposit' : 'Pending',
+      ]),
+    }));
+
+    // Flat fallback for orgs without divisions
+    const flatRows = acceptedRegs.map(r => [
+      r.name, r.age_group_name, r.coach, r.email,
+      r.status.charAt(0).toUpperCase() + r.status.slice(1),
+      r.slotId ? `Slot ${r.slotId}` : '—',
+      r.paymentStatus === 'paid' ? 'Paid' : r.depositPaid > 0 ? 'Deposit' : 'Pending',
     ]);
-    downloadCSV(`teams-${new Date().toISOString().split('T')[0]}.csv`, headers, rows);
+
+    const filename = buildFilename(
+      { org: currentOrg?.slug, dataset: 'registrations', scope: String(currentTournament?.year ?? '') },
+      'pdf',
+    );
+
+    await downloadPDF(
+      filename,
+      'Tournament Registrations',
+      currentTournament?.name,
+      headers,
+      flatRows,
+      settings,
+      groups.length > 0 ? groups : undefined,
+    );
+  }
+
+  function toggleRegistrationSelection(id: string) {
+    setSelectedRegistrationIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function setSelectedRegistrations(ids: string[]) {
+    setSelectedRegistrationIds(new Set(ids));
+  }
+
+  async function runBulkAction(action: BulkAction) {
+    if (!currentTournament || selectedRegistrationIds.size === 0) return;
+    const selectedCount = selectedRegistrationIds.size;
+
+    if (!currentOrg || !hasPlanFeature(currentOrg.planId, 'bulk_registration_actions')) {
+      setFeedback({
+        isOpen: true,
+        title: 'Bulk Actions Require Tournament Plus',
+        message: requiresTournamentPlusCopy('bulk_registration_actions'),
+        type: 'warning',
+      });
+      return;
+    }
+
+    const label: Record<BulkAction, string> = {
+      accept: 'accept',
+      reject: 'reject',
+      waitlist: 'move to the waitlist',
+      mark_deposit_paid: 'mark deposit paid',
+      mark_paid: 'mark paid',
+    };
+
+    setFeedback({
+      isOpen: true,
+      title: 'Run Bulk Action?',
+      message: `This will ${label[action]} ${selectedCount} selected registration${selectedCount === 1 ? '' : 's'}.`,
+      type: action === 'reject' ? 'warning' : 'primary',
+      onConfirm: async () => {
+        setWorking('bulk');
+        try {
+          const res = await fetch(`/api/admin/tournaments/${encodeURIComponent(currentTournament.id)}/registrations/bulk`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action, ids: [...selectedRegistrationIds] }),
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error ?? 'Bulk action failed.');
+          setSelectedRegistrationIds(new Set());
+          await Promise.all([load(), loadPoolSlots()]);
+          setFeedback({
+            isOpen: true,
+            title: 'Bulk Action Complete',
+            message: `${data.count ?? selectedCount} registration${(data.count ?? selectedCount) === 1 ? '' : 's'} updated.`,
+            type: 'success',
+          });
+        } catch (error) {
+          setFeedback({
+            isOpen: true,
+            title: 'Bulk Action Failed',
+            message: error instanceof Error ? error.message : 'Bulk action failed.',
+            type: 'danger',
+          });
+        } finally {
+          setWorking(null);
+        }
+      },
+    });
+  }
+
+  async function sendPaymentReminders() {
+    if (!currentTournament || selectedRegistrationIds.size === 0) return;
+
+    if (!currentOrg || !hasPlanFeature(currentOrg.planId, 'payment_readiness_tools')) {
+      setFeedback({
+        isOpen: true,
+        title: 'Payment Tools Require Tournament Plus',
+        message: requiresTournamentPlusCopy('payment_readiness_tools'),
+        type: 'warning',
+      });
+      setShowReminderModal(false);
+      return;
+    }
+
+    setWorking('payment-reminders');
+    try {
+      const res = await fetch(`/api/admin/tournaments/${encodeURIComponent(currentTournament.id)}/registrations/payment-reminders`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ids: [...selectedRegistrationIds],
+          paymentInstructions,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? 'Payment reminders could not be sent.');
+      setShowReminderModal(false);
+      setFeedback({
+        isOpen: true,
+        title: 'Payment Reminders Sent',
+        message: `${data.emailsSent ?? 0} reminder${(data.emailsSent ?? 0) === 1 ? '' : 's'} sent. ${data.skippedCount ?? 0} selected registration${(data.skippedCount ?? 0) === 1 ? ' was' : 's were'} skipped because no payment is currently due.`,
+        type: 'success',
+      });
+    } catch (error) {
+      setFeedback({
+        isOpen: true,
+        title: 'Reminder Send Failed',
+        message: error instanceof Error ? error.message : 'Payment reminders could not be sent.',
+        type: 'danger',
+      });
+    } finally {
+      setWorking(null);
+    }
   }
 
   const today = new Date().toISOString().split('T')[0];
   const selectedGroup = ageGroups.find(g => g.id === selectedAgeGroupId);
   const slotConfigured = poolSlots.length > 0;
+  const waitlistAutomationAvailable = currentOrg ? hasPlanFeature(currentOrg.planId, 'waitlist_automation') : false;
+  const bulkActionsAvailable = currentOrg ? hasPlanFeature(currentOrg.planId, 'bulk_registration_actions') : false;
+  const paymentToolsAvailable = currentOrg ? hasPlanFeature(currentOrg.planId, 'payment_readiness_tools') : false;
+
+  // PDF settings — fetched once on mount; used in handleExportPDF
+  const [pdfSettings, setPdfSettings] = useState<OrgPdfSettings | null>(null);
+  const canUsePDF = currentOrg ? hasPlanFeature(currentOrg.planId, 'pdf_exports') : false;
+  const showPdfNudge = canUsePDF && pdfSettings !== null && Object.keys(pdfSettings).length === 0;
+
+  useEffect(() => {
+    fetch('/api/admin/org/pdf-settings')
+      .then(r => r.ok ? r.json() : {})
+      .then(data => setPdfSettings(data as OrgPdfSettings))
+      .catch(() => setPdfSettings(null));
+  }, []);
   const divRegs = regs.filter(r => r.age_group_id === selectedAgeGroupId);
   const waitlistTeams = divRegs.filter(r => r.waitlistPosition != null).sort((a, b) => (a.waitlistPosition ?? 0) - (b.waitlistPosition ?? 0));
   const filledSlotCount = poolSlots.filter(s => s.teamId !== null).length;
   const pendingCount = divRegs.filter(r => r.status === 'pending').length;
+  const paymentSummary = useMemo(() => {
+    const accepted = divRegs.filter(team => team.status === 'accepted');
+    let expected = 0;
+    let collected = 0;
+    let outstanding = 0;
+    let depositComplete = 0;
+    let pastDue = 0;
+    let scheduled = 0;
+
+    for (const team of accepted) {
+      const fee = getEffectiveFee(team, ageGroups, feeMode, feeSchedule);
+      const status = computePaymentStatus(team, fee, today);
+      if (fee.totalFeeAmount) {
+        scheduled++;
+        expected += fee.totalFeeAmount;
+        collected += Math.min(team.totalPaid, fee.totalFeeAmount);
+        outstanding += Math.max(fee.totalFeeAmount - team.totalPaid, 0);
+      }
+      if (fee.depositAmount && team.depositPaid >= fee.depositAmount) depositComplete++;
+      if (status === 'past-due') pastDue++;
+    }
+
+    return {
+      accepted: accepted.length,
+      scheduled,
+      expected,
+      collected,
+      outstanding,
+      depositComplete,
+      pastDue,
+    };
+  }, [ageGroups, divRegs, feeMode, feeSchedule, today]);
 
   const slotsByPool = useMemo(() => {
     if (!selectedGroup?.pools) return [];
@@ -420,11 +731,9 @@ export default function UnifiedTeamsPage() {
   }, [poolSlots, selectedGroup]);
 
   function renderExpandedTeamDetails(team: TeamRecord) {
-    const agFee = ageGroups.find(g => g.id === team.age_group_id);
-    const effectiveFee: FeeSchedule = feeMode === 'age_group' && agFee?.totalFeeAmount != null
-      ? { depositAmount: agFee.depositAmount ?? null, depositDueDate: agFee.depositDueDate ?? null, totalFeeAmount: agFee.totalFeeAmount ?? null, totalFeeDueDate: agFee.totalFeeDueDate ?? null }
-      : feeSchedule;
+    const effectiveFee = getEffectiveFee(team, ageGroups, feeMode, feeSchedule);
     const pStatus = computePaymentStatus(team, effectiveFee, today);
+    const due = getPaymentDue(team, effectiveFee);
     const busy = working === team.id;
 
     return (
@@ -439,6 +748,19 @@ export default function UnifiedTeamsPage() {
               <label>Admin Notes</label>
               <textarea placeholder="Private notes..." defaultValue={team.adminNotes} onBlur={e => e.target.value !== team.adminNotes && patch(team.id, { adminNotes: e.target.value })} />
             </div>
+            {team.customAnswers && team.customAnswers.length > 0 && (
+              <div className={styles.notesArea}>
+                <label>Registration Answers</label>
+                <div style={{ display: 'grid', gap: '0.5rem', fontSize: '0.85rem', color: 'var(--white-70)' }}>
+                  {team.customAnswers.map(answer => (
+                    <div key={answer.fieldId} style={{ display: 'grid', gap: '0.15rem' }}>
+                      <strong style={{ color: 'var(--white-80)' }}>{answer.label}</strong>
+                      <span>{answer.value || '-'}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
           <div className={s.expandedActions}>
             <div className={styles.buttonGroup}>
@@ -466,6 +788,12 @@ export default function UnifiedTeamsPage() {
                     <span style={{ fontSize: '0.65rem', color: 'var(--data-gray)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>of ${effectiveFee.totalFeeAmount}</span>
                     <span className={`badge badge-${PAYMENT_STATUS_STYLE[pStatus]}`}>{PAYMENT_STATUS_LABEL[pStatus]}</span>
                   </div>
+                  {due && (
+                    <div style={{ flexBasis: '100%', fontSize: '0.78rem', color: 'var(--white-50)' }}>
+                      {due.label}: <strong style={{ color: 'var(--white-80)' }}>{formatMoney(due.amount)}</strong>
+                      {due.dueDate ? ` by ${new Date(due.dueDate).toLocaleDateString()}` : ''}
+                    </div>
+                  )}
                 </div>
               ) : team.status === 'accepted' ? (
                 <button className="btn btn-outline btn-xs" onClick={() => patch(team.id, { paymentStatus: team.paymentStatus === 'paid' ? 'pending' : 'paid' })} disabled={busy}>
@@ -489,23 +817,34 @@ export default function UnifiedTeamsPage() {
   const filtered = divRegs.filter(r => {
     const matchesStatus = selectedStatuses.length === 0 || selectedStatuses.includes(r.status);
     const matchesSearch = search === '' || r.name.toLowerCase().includes(search.toLowerCase()) || r.coach.toLowerCase().includes(search.toLowerCase());
-    return matchesStatus && matchesSearch;
+    const pStatus = computePaymentStatus(r, getEffectiveFee(r, ageGroups, feeMode, feeSchedule), today);
+    const matchesPayment = !paymentToolsAvailable || matchesPaymentFilter(pStatus, paymentFilter);
+    return matchesStatus && matchesSearch && matchesPayment;
   });
   const sorted = stableSortedIds.map(id => filtered.find(r => r.id === id)).filter(Boolean) as TeamRecord[];
   const flatDisplay = [...sorted, ...filtered.filter(r => !stableSortedIds.includes(r.id))];
+  const selectableRows = slotConfigured
+    ? divRegs.filter(row => row.waitlistPosition != null || poolSlots.some(slot => slot.teamId === row.id))
+    : flatDisplay;
+  const visibleSelectableIds = selectableRows.map(row => row.id);
+  const allVisibleSelected = visibleSelectableIds.length > 0 && visibleSelectableIds.every(id => selectedRegistrationIds.has(id));
 
   const renderFlatRow = (r: TeamRecord) => {
     const isExpanded = expanded.has(r.id);
-    const agFee = ageGroups.find(g => g.id === r.age_group_id);
-    const effectiveFee: FeeSchedule = feeMode === 'age_group' && agFee?.totalFeeAmount != null
-      ? { depositAmount: agFee.depositAmount ?? null, depositDueDate: agFee.depositDueDate ?? null, totalFeeAmount: agFee.totalFeeAmount ?? null, totalFeeDueDate: agFee.totalFeeDueDate ?? null }
-      : feeSchedule;
+    const effectiveFee = getEffectiveFee(r, ageGroups, feeMode, feeSchedule);
     const pStatus = computePaymentStatus(r, effectiveFee, today);
 
     return (
       <div key={r.id} className={s.row}>
         <div className={s.rowMain}>
-          <div style={{ width: 12 }} />
+          <div style={{ width: 32, display: 'flex', justifyContent: 'center' }}>
+            <input
+              type="checkbox"
+              checked={selectedRegistrationIds.has(r.id)}
+              onChange={() => toggleRegistrationSelection(r.id)}
+              aria-label={`Select ${r.name}`}
+            />
+          </div>
           <div style={{ flex: 2 }} className={s.primaryCell}><strong>{r.name}</strong></div>
           <div style={{ flex: 1.5 }} className={s.secondaryCell}>{r.coach}</div>
           <div style={{ width: 120 }}>
@@ -540,10 +879,29 @@ export default function UnifiedTeamsPage() {
           </div>
         </div>
         <div className="flex gap-1">
-          <button className="btn btn-outline btn-sm" onClick={exportCSV} disabled={regs.length === 0}><Download size={14} /> Export</button>
+          <ExportMenu
+            formats={['xlsx', 'csv', 'pdf']}
+            onExportXLSX={handleExportXLSX}
+            onExportCSV={handleExportCSV}
+            onExportPDF={handleExportPDF}
+            planId={currentOrg?.planId}
+            pdfFeatureKey="pdf_exports"
+            disabled={regs.length === 0}
+          />
           <button className="btn btn-primary btn-sm" onClick={() => setShowAddModal(true)} disabled={!currentTournament}><Plus size={16} /> Add Team</button>
         </div>
       </div>
+
+      {showPdfNudge && (
+        <HelpCallout
+          variant="info"
+          title="PDF settings not configured"
+          body="Your PDF export will use default styling. Set up your header, logo, and footer once and all future PDFs will use those settings."
+          cta={{ label: 'Configure PDF Settings', href: `/${currentOrg?.slug}/admin/org/settings/pdf` }}
+          dismissible
+          localStorageKey="flhq-pdf-nudge-registrations"
+        />
+      )}
 
       {errorMsg && (
         <div className="alert alert-danger" style={{ margin: '1rem 2rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
@@ -595,6 +953,155 @@ export default function UnifiedTeamsPage() {
               </div>
             </>
           )}
+        </div>
+      </div>
+
+      <div className={styles.paymentPanel}>
+        {paymentToolsAvailable ? (
+          <>
+            <div className={styles.paymentMetrics}>
+              <div className={styles.paymentMetric}>
+                <span>Expected</span>
+                <strong>{formatMoney(paymentSummary.expected)}</strong>
+              </div>
+              <div className={styles.paymentMetric}>
+                <span>Collected</span>
+                <strong>{formatMoney(paymentSummary.collected)}</strong>
+              </div>
+              <div className={styles.paymentMetric}>
+                <span>Outstanding</span>
+                <strong>{formatMoney(paymentSummary.outstanding)}</strong>
+              </div>
+              <div className={styles.paymentMetric}>
+                <span>Deposits</span>
+                <strong>{paymentSummary.depositComplete}/{paymentSummary.scheduled}</strong>
+              </div>
+              <div className={styles.paymentMetric} data-variant={paymentSummary.pastDue > 0 ? 'danger' : 'neutral'}>
+                <span>Past Due</span>
+                <strong>{paymentSummary.pastDue}</strong>
+              </div>
+            </div>
+            {!slotConfigured && (
+              <div className={styles.paymentFilters}>
+                {(['all', 'unpaid', 'deposit-paid', 'paid', 'past-due'] as PaymentFilter[]).map(filter => (
+                  <button
+                    key={filter}
+                    type="button"
+                    className={`${styles.paymentFilter} ${paymentFilter === filter ? styles.paymentFilterActive : ''}`}
+                    onClick={() => setPaymentFilter(filter)}
+                  >
+                    {PAYMENT_FILTER_LABEL[filter]}
+                  </button>
+                ))}
+              </div>
+            )}
+          </>
+        ) : (
+          <>
+            <div>
+              <strong>Payment Readiness Bundle</strong>
+              <p>{requiresTournamentPlusCopy('payment_readiness_tools')}</p>
+            </div>
+            <button
+              type="button"
+              className="btn btn-outline btn-xs"
+              onClick={() => setFeedback({
+                isOpen: true,
+                title: 'Payment Tools Require Tournament Plus',
+                message: requiresTournamentPlusCopy('payment_readiness_tools'),
+                type: 'warning',
+              })}
+            >
+              Tournament Plus
+            </button>
+          </>
+        )}
+      </div>
+
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: '1rem',
+          margin: '0 2rem 1rem',
+          padding: '0.75rem 1rem',
+          border: '1px solid var(--border-2)',
+          borderRadius: 8,
+          background: 'var(--hud-surface)',
+          flexWrap: 'wrap',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--white-70)', fontSize: '0.85rem' }}>
+            <input
+              type="checkbox"
+              checked={allVisibleSelected}
+              disabled={visibleSelectableIds.length === 0}
+              onChange={() => {
+                if (allVisibleSelected) setSelectedRegistrations([]);
+                else setSelectedRegistrations(visibleSelectableIds);
+              }}
+            />
+            Select current division
+          </label>
+          <span className="badge badge-neutral">
+            {selectedRegistrationIds.size} selected
+          </span>
+          {!bulkActionsAvailable && (
+            <button
+              type="button"
+              className="btn btn-outline btn-xs"
+              onClick={() => setFeedback({
+                isOpen: true,
+                title: 'Bulk Actions Require Tournament Plus',
+                message: requiresTournamentPlusCopy('bulk_registration_actions'),
+                type: 'warning',
+              })}
+            >
+              Tournament Plus
+            </button>
+          )}
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+          <button type="button" className="btn btn-primary btn-xs" onClick={() => runBulkAction('accept')} disabled={selectedRegistrationIds.size === 0 || working === 'bulk'}>
+            Accept
+          </button>
+          <button type="button" className="btn btn-outline btn-xs" onClick={() => runBulkAction('waitlist')} disabled={selectedRegistrationIds.size === 0 || working === 'bulk'}>
+            Waitlist
+          </button>
+          <button type="button" className="btn btn-outline btn-xs" onClick={() => runBulkAction('mark_deposit_paid')} disabled={selectedRegistrationIds.size === 0 || working === 'bulk'}>
+            Deposit Paid
+          </button>
+          <button type="button" className="btn btn-outline btn-xs" onClick={() => runBulkAction('mark_paid')} disabled={selectedRegistrationIds.size === 0 || working === 'bulk'}>
+            Paid
+          </button>
+          <button
+            type="button"
+            className="btn btn-outline btn-xs"
+            onClick={() => {
+              if (!paymentToolsAvailable) {
+                setFeedback({
+                  isOpen: true,
+                  title: 'Payment Tools Require Tournament Plus',
+                  message: requiresTournamentPlusCopy('payment_readiness_tools'),
+                  type: 'warning',
+                });
+                return;
+              }
+              setShowReminderModal(true);
+            }}
+            disabled={selectedRegistrationIds.size === 0 || working === 'payment-reminders'}
+          >
+            <Mail size={13} /> Reminder
+          </button>
+          <button type="button" className="btn btn-outline btn-xs" style={{ color: 'var(--danger-light)' }} onClick={() => runBulkAction('reject')} disabled={selectedRegistrationIds.size === 0 || working === 'bulk'}>
+            Reject
+          </button>
+          <button type="button" className="btn btn-ghost btn-xs" onClick={() => setSelectedRegistrations([])} disabled={selectedRegistrationIds.size === 0 || working === 'bulk'}>
+            Clear
+          </button>
         </div>
       </div>
 
@@ -653,6 +1160,9 @@ export default function UnifiedTeamsPage() {
                 const team = slot.teamId ? divRegs.find(r => r.id === slot.teamId) : null;
                 const isExpanded = expanded.has(slot.id);
                 const isSwapSelected = swapFirstSlotId === slot.id;
+                const teamPaymentStatus = team
+                  ? computePaymentStatus(team, getEffectiveFee(team, ageGroups, feeMode, feeSchedule), today)
+                  : null;
 
                 return (
                   <div
@@ -662,12 +1172,27 @@ export default function UnifiedTeamsPage() {
                     style={swapMode ? { cursor: 'pointer' } : undefined}
                   >
                     <div className={styles.slotRowMain}>
+                      {team && (
+                        <span onClick={e => e.stopPropagation()} style={{ display: 'flex', alignItems: 'center' }}>
+                          <input
+                            type="checkbox"
+                            checked={selectedRegistrationIds.has(team.id)}
+                            onChange={() => toggleRegistrationSelection(team.id)}
+                            aria-label={`Select ${team.name}`}
+                          />
+                        </span>
+                      )}
                       <span className={styles.slotName}>{slot.displayName}</span>
                       {team ? (
                         <>
                           <span className={styles.slotTeamName}>{team.name}</span>
                           <span className={styles.slotCoach}>{team.coach}</span>
                           <span className={`badge badge-${team.status === 'accepted' ? 'success' : team.status === 'rejected' ? 'danger' : 'warning'}`} style={{ flexShrink: 0 }}>{team.status}</span>
+                          {team.status === 'accepted' && teamPaymentStatus && teamPaymentStatus !== 'no-schedule' && (
+                            <span className={`badge badge-${PAYMENT_STATUS_STYLE[teamPaymentStatus]}`} style={{ flexShrink: 0 }}>
+                              {PAYMENT_STATUS_LABEL[teamPaymentStatus]}
+                            </span>
+                          )}
                         </>
                       ) : (
                         <span className={styles.slotEmpty}>— Empty —</span>
@@ -700,15 +1225,28 @@ export default function UnifiedTeamsPage() {
               </div>
               {waitlistTeams.map(team => (
                 <div key={team.id} className={styles.waitlistRow}>
+                  <input
+                    type="checkbox"
+                    checked={selectedRegistrationIds.has(team.id)}
+                    onChange={() => toggleRegistrationSelection(team.id)}
+                    aria-label={`Select ${team.name}`}
+                  />
                   <span className={styles.waitlistPosition}>#{team.waitlistPosition}</span>
                   <span className={styles.slotTeamName}>{team.name}</span>
                   <span className={styles.slotCoach}>{team.coach}</span>
                   <button
                     className="btn btn-primary btn-xs"
-                    onClick={() => handlePromote(team.id, team.name)}
-                    disabled={working === team.id || filledSlotCount >= poolSlots.length}
+                    onClick={() => waitlistAutomationAvailable
+                      ? handlePromote(team.id, team.name)
+                      : setFeedback({
+                        isOpen: true,
+                        title: 'Waitlist Automation Requires Tournament Plus',
+                        message: requiresTournamentPlusCopy('waitlist_automation'),
+                        type: 'warning',
+                      })}
+                    disabled={working === team.id || (waitlistAutomationAvailable && filledSlotCount >= poolSlots.length)}
                   >
-                    {filledSlotCount >= poolSlots.length ? 'No Slots' : 'Promote'}
+                    {!waitlistAutomationAvailable ? 'Tournament Plus' : filledSlotCount >= poolSlots.length ? 'No Slots' : 'Promote'}
                   </button>
                 </div>
               ))}
@@ -806,6 +1344,46 @@ export default function UnifiedTeamsPage() {
                 <button type="submit" className="btn btn-primary" disabled={!!working}>Save Team</button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {showReminderModal && (
+        <div className="modal-overlay" onClick={() => setShowReminderModal(false)}>
+          <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 560 }}>
+            <div className="modal-header">
+              <div className="flex items-center gap-2">
+                <Mail size={18} style={{ color: 'var(--logic-lime)' }} />
+                <h3 style={{ margin: 0 }}>Send Payment Reminders</h3>
+              </div>
+              <button className="btn btn-ghost btn-sm" onClick={() => setShowReminderModal(false)}><X size={16} /></button>
+            </div>
+            <div style={{ padding: '1.5rem 2rem', display: 'grid', gap: '1rem' }}>
+              <div className="alert alert-info" style={{ margin: 0 }}>
+                {selectedRegistrationIds.size} selected. Reminders are sent only to accepted teams with an outstanding amount.
+              </div>
+              <div className="form-group">
+                <label className="form-label">Payment Instructions</label>
+                <textarea
+                  className="form-textarea"
+                  value={paymentInstructions}
+                  onChange={e => setPaymentInstructions(e.target.value)}
+                  rows={6}
+                  placeholder="E-transfer, cheque, or payment-link instructions..."
+                />
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button type="button" className="btn btn-ghost" onClick={() => setShowReminderModal(false)}>Cancel</button>
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={sendPaymentReminders}
+                disabled={working === 'payment-reminders' || paymentInstructions.trim().length === 0}
+              >
+                {working === 'payment-reminders' ? 'Sending...' : 'Send Reminders'}
+              </button>
+            </div>
           </div>
         </div>
       )}

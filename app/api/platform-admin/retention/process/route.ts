@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
 import { processBillingRetentionExpiry } from '@/lib/billing-retention';
-import { requirePlatformAdmin } from '@/lib/platform-auth';
+import { requirePlatformPermission } from '@/lib/platform-auth';
 
 export async function POST() {
-  const auth = await requirePlatformAdmin();
+  const auth = await requirePlatformPermission('manage_billing');
   if (auth.response) return auth.response;
 
   try {

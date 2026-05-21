@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getPlatformAuthContext } from '@/lib/platform-auth';
+import { requirePlatformPermission } from '@/lib/platform-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { writePlatformAuditLog } from '@/lib/platform-audit';
 
@@ -7,8 +7,8 @@ export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const user = await getPlatformAuthContext();
-  if (!user) return new NextResponse('Forbidden', { status: 403 });
+  const auth = await requirePlatformPermission('manage_support');
+  if (auth.response) return auth.response;
 
   // id param is present but unused — email is the key for generateLink
   await params;
@@ -33,7 +33,7 @@ export async function POST(
     return NextResponse.json({ error: 'Failed to generate reset link' }, { status: 500 });
   }
 
-  await writePlatformAuditLog(user.email!, null, 'generate_reset_link', 'email', null, email);
+  await writePlatformAuditLog(auth.user.email!, null, 'generate_reset_link', 'email', null, email);
 
   return NextResponse.json({ link: data.properties.action_link });
 }

@@ -67,6 +67,9 @@ export interface Tournament {
   colorMode?: 'dark' | 'light' | null;
   publicHiddenPages?: PublicPageKey[];
   requireScoreFinalization?: boolean | null;
+  notifyTeamsOnComplete?: boolean;
+  resultsNotifiedAt?: string | null;
+  resultsNotificationSentCount?: number;
 }
 
 export interface Diamond {
@@ -183,6 +186,38 @@ export interface Team {
   poolId?: string; // The new way (link to pools table)
   waitlistPosition?: number | null;
   slotId?: string | null;
+}
+
+export type TournamentRegistrationFieldType =
+  | 'short_text'
+  | 'long_text'
+  | 'dropdown'
+  | 'checkbox'
+  | 'file';
+
+export interface TournamentRegistrationField {
+  id: string;
+  tournamentId: string;
+  orgId: string;
+  label: string;
+  fieldType: TournamentRegistrationFieldType;
+  options: string[];
+  required: boolean;
+  sortOrder: number;
+  isArchived: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface TournamentRegistrationFieldAnswer {
+  id: string;
+  registrationId: string;
+  fieldId: string;
+  valueText: string | null;
+  valueJson: unknown;
+  fileUrl: string | null;
+  createdAt: string;
+  field?: TournamentRegistrationField;
 }
 
 export type GameStatus = 'scheduled' | 'submitted' | 'completed' | 'cancelled';

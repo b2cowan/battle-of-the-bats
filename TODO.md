@@ -1,9 +1,11 @@
-﻿# FieldLogicHQ — Project TODO List
+# FieldLogicHQ — Project TODO List
 
 This file tracks the ongoing tasks for the FieldLogicHQ platform (multi-tenant sports club and league management). AI models and the USER use this to coordinate work.
 
 
 ---
+
+- [ ] **Coaches standalone access + pricing research** — Research findings on standalone Team plan, per-team add-on, pricing architecture, and coaches portal enhancements (see [codex_COACHES_STANDALONE_RESEARCH.md](codex_COACHES_STANDALONE_RESEARCH.md))
 
 - [ ] **League onboarding wizard** - Guide League/Club owners through first house league setup with optional tournament setup branch (see [LEAGUE_ONBOARDING_WIZARD_PLAN.md](LEAGUE_ONBOARDING_WIZARD_PLAN.md))
   - [x] First implementation: league startup tasks, onboarding wizard, remaining-step CTAs, and create-season modal alignment
@@ -11,76 +13,125 @@ This file tracks the ongoing tasks for the FieldLogicHQ platform (multi-tenant s
 
 ## 🚀 Active Tasks (Priority Order)
 
-- [ ] **Platform admin Phase 1** - Support console foundation implemented; browser verification pending for nav grouping, customer users search, org support summary, reset links, owner contact, timeline, and retention UI cleanup (see [merged_PLATFORM_ADMIN_IMPLEMENTATION_PLAN.md](merged_PLATFORM_ADMIN_IMPLEMENTATION_PLAN.md))
+- [x] **Export Enhancements** - Standardized XLSX-first exports, CSV secondary, iCal schedules, branded PDF reports, export catalog, help docs, plan gates, and pricing/marketing updates (see [MERGED_EXPORTS_IMPLEMENTATION_PLAN.md](docs/archive/MERGED_EXPORTS_IMPLEMENTATION_PLAN.md))
+  - [x] Phase B — Shared export foundation: lib/export/ layer, ExportMenu component, plan feature keys, exceljs (replaces xlsx — CVE), ics, jspdf, jspdf-autotable installed and audited clean
+  - [x] Phase C — Migrate 5 existing CSV exports to ExportMenu + xlsx default (schedule, results, registrations, ledger, early-access leads); legacy /admin routes deferred pending Open Decision #1
+  - [x] Phase D1 — P0 new table exports: HL registrations, tryout registrations, coaches roster (with contact opt-in), coaches dues, budget-vs-actual
+  - [x] Phase E1 — iCal: public tournament schedule — "📅 Add to Calendar" button; all games or team-filtered; standalone button (not in admin ExportMenu); links back to schedule page
+  - [x] Phase D2 — P1 new table exports: coaches schedule (xlsx/csv/ics), HL schedule (xlsx/csv/ics), HL standings (xlsx/csv), HL teams (xlsx/csv), accounting budget plan (xlsx/csv), rep roster admin view (xlsx/csv/pdf-coming-soon)
+  - [x] Phase E2/E3 — iCal: coaches portal schedule + HL season schedule admin
+  - [x] Phase D3 — P2 new table exports: org members, member audit log, venues/diamonds, platform admin orgs, customer users, audit log (xlsx+csv; audit log route now supports format=xlsx)
+  - [x] Phase G — Help docs: lib/help-content/exports.tsx, /admin/help/exports page, hub card, cross-links in tournaments + accounting help
+  - [x] Phase F1 — DB migration (`ALTER TABLE organizations ADD COLUMN pdf_settings JSONB DEFAULT '{}'` run on dev + prod) + API routes (`GET`/`POST /api/admin/org/pdf-settings`) + PDF Settings admin page (`/{orgSlug}/admin/org/settings/pdf`) with all E3 spec fields + org hub tile
+  - [x] Phase F2 — `lib/export/pdf.ts` full implementation: `buildTablePDF()` + `downloadPDF()` with lazy-load jsPDF/autotable, header/logo/accent/footer/density/grouping/page-numbers
+  - [x] Phase F3 — PDF P0 surfaces: tournament registrations (portrait, grouped by division), schedule (landscape+compact), results (portrait, grouped, champions callout); PDF settings nudge callout on all three; `HelpCallout` added to registrations page
+  - [x] Phase F4 (PDF P1 surfaces) — coaches roster, player dues statement, budget-vs-actual board report; GET pdf-settings relaxed to all org members
+  - [x] Phase H (Pricing/marketing) — pricing comparison table (Data & Exports category), plan card feature lines, upgrade bridge copy, platform pages, home page, and org help subscription section
+
+- [x] **Platform admin Phase 1** - Support console foundation complete: nav grouping, customer users search, org support summary, reset links, owner contact, timeline, retention UI cleanup, and billing invariant follow-up (see [merged_PLATFORM_ADMIN_IMPLEMENTATION_PLAN.md](docs/archive/merged_PLATFORM_ADMIN_IMPLEMENTATION_PLAN.md))
   - [x] Free Tournament billing invariant: Tournament plan changes, mock billing, and cleanup migration no longer preserve `trialing` subscription state
-- [ ] **Platform admin Phase 1.5** - Information architecture and layout pass: restructure org detail and audit key platform admin pages for clearer workflows before adding more functionality (see [merged_PLATFORM_ADMIN_IMPLEMENTATION_PLAN.md](merged_PLATFORM_ADMIN_IMPLEMENTATION_PLAN.md))
-- [ ] **Platform admin Phase 2** - Metrics command center: subscription health, growth funnel, product usage, and platform admin alerts (see [merged_PLATFORM_ADMIN_IMPLEMENTATION_PLAN.md](merged_PLATFORM_ADMIN_IMPLEMENTATION_PLAN.md))
-- [ ] **Platform admin Phase 3** - Billing and product safety: plan impact previews, expanded audit logging, override semantics, and audit log investigation tools (see [merged_PLATFORM_ADMIN_IMPLEMENTATION_PLAN.md](merged_PLATFORM_ADMIN_IMPLEMENTATION_PLAN.md))
-- [ ] **Platform admin Phase 4** - Permissions and governance: platform admin roles, guarded actions, reasons, confirmations, and role-scoped controls (see [merged_PLATFORM_ADMIN_IMPLEMENTATION_PLAN.md](merged_PLATFORM_ADMIN_IMPLEMENTATION_PLAN.md))
-- [ ] **Platform admin Phase 5** - Growth and product catalog: early-access conversion tracking, plan versions, add-ons, effective dates, campaigns, approvals, and bulk operations (see [merged_PLATFORM_ADMIN_IMPLEMENTATION_PLAN.md](merged_PLATFORM_ADMIN_IMPLEMENTATION_PLAN.md))
+- [x] **Platform admin Phase 1.5** - Information architecture and layout pass complete: org detail restructure and platform-admin-wide layout audit for clearer workflows before adding more functionality (see [merged_PLATFORM_ADMIN_IMPLEMENTATION_PLAN.md](docs/archive/merged_PLATFORM_ADMIN_IMPLEMENTATION_PLAN.md))
+  - [x] Org detail layout restructured with account snapshot, needs-attention strip, primary actions, and workflow tabs
+  - [x] Org detail readability spacing improved for snapshot fields, account context, and workflow tables
+  - [x] Platform-admin-wide layout audit documented for Overview, Organizations, Customer Users, Retention, Plans & Pricing, Early Access, Platform Users, and Audit Log
+  - [x] Organizations directory cleaned up with account snapshot, needs-attention strip, primary account search, and grouped directory table
+  - [x] Organizations directory simplified to read-only account navigation; plan/limit edits moved out of directory rows
+- [x] **Platform admin Phase 2** - Metrics command center: live-query dashboard, durable lifecycle events, snapshot infrastructure, and since-last-visit alerts implemented and browser-verified (see [merged_PLATFORM_ADMIN_IMPLEMENTATION_PLAN.md](docs/archive/merged_PLATFORM_ADMIN_IMPLEMENTATION_PLAN.md))
+  - [x] Overview dashboard now shows subscription health, growth funnel, product usage, estimated MRR/ARR, and platform admin alerts
+  - [x] Overview dashboard expanded with new organizations by plan, early-access conversion rate, top source paths, owner inactivity, and tournaments created in the last 30 days
+  - [x] Apply migration 052 in dev and production for reliable tournament-created metrics
+  - [x] Durable event-backed Overview metrics for cancellations, downgrades, past-due recovery counts, and recovery rate
+  - [x] Apply migration 053 in dev and production for `platform_events`
+  - [x] Overview dashboard lower metrics grouped into tabs to reduce scrolling, with clearer metric-note copy
+  - [x] Browser verification for Overview metrics and action links
+  - [x] Daily metric snapshot table/API and "since last admin visit" metrics
+  - [x] Apply migration 054 in dev and production for metric snapshots, admin visits, and structured notes
+- [x] **Platform admin Phase 3** - Billing and product safety complete: plan impact previews, expanded audit logging, structured timestamped org notes, override semantics, and audit log investigation tools (see [merged_PLATFORM_ADMIN_IMPLEMENTATION_PLAN.md](docs/archive/merged_PLATFORM_ADMIN_IMPLEMENTATION_PLAN.md))
+  - [x] Plans & Pricing now shows subscriber impact and plan/status breakdowns before product or billing config edits
+  - [x] Plan availability, limits/trials, and Stripe price ID changes now support last-change notes and audit entries
+  - [x] Apply the plan/pricing change-note migration in dev and production
+  - [x] Browser verification for Plans & Pricing impact summaries, note capture, and save flows
+  - [x] Stripe price ID validation against Stripe where environment credentials allow it
+  - [x] Structured timestamped org notes implementation
+  - [x] App-native confirmation modal for structured note deletion
+  - [x] Browser verification for structured org notes
+  - [x] Org detail plan/limit edits moved into guarded Billing & Access workflow with reason and confirmation
+  - [x] Audit log investigation tools: CSV export, org filter action, action labels, and full JSON value viewer
+  - [x] Browser verification for newest org billing workflow and Audit Log investigation tools
+- [x] **Platform admin Phase 4** - Permissions and governance complete: platform admin roles, guarded actions, reasons, confirmations, and role-scoped controls (see [merged_PLATFORM_ADMIN_IMPLEMENTATION_PLAN.md](docs/archive/merged_PLATFORM_ADMIN_IMPLEMENTATION_PLAN.md))
+  - [x] Initial role model and permission gates implemented for support, billing, product, read-only, and super-admin roles
+  - [x] Apply migration 055 in dev and production for platform admin role constraint/default
+  - [x] Browser verification for role-scoped platform admin controls
+- [x] **Platform admin Phase 5** - Growth and product catalog complete for launch scope: early-access conversion tracking, plan versions, add-ons, effective dates, campaigns, approvals, and bulk operations (see [merged_PLATFORM_ADMIN_IMPLEMENTATION_PLAN.md](docs/archive/merged_PLATFORM_ADMIN_IMPLEMENTATION_PLAN.md))
+  - [x] Early Access conversion tracking implementation: converted timestamp, org link, follow-up due date, next action, conversion metrics, CSV export fields, and growth role support
+  - [x] Apply migration 057 in dev and production for early-access conversion fields and growth role constraint
+  - [x] Browser verification for Early Access conversion and follow-up flows
+  - [x] Product Catalog read-only foundation: plan version records, add-on catalog records, and live feature matrix review tab
+  - [x] Apply migration 058 in dev and production for product catalog foundation
+  - [x] Browser verification for Plans & Pricing Product Catalog tab
+  - [x] Product Catalog governance implementation: change requests, approval statuses, and campaign tracking
+  - [x] Apply migration 059 in dev and production for product catalog governance
+  - [x] Browser verification for Product Catalog planned changes and campaign tracking
+  - [x] Approval enforcement implementation: live plan availability, limits/trials, and Stripe price ID changes require an approved catalog change request
+  - [x] Apply migration 060 in dev and production for catalog approval application logging
+  - [x] Browser verification for approved-request enforcement on live pricing/config changes
+  - [x] Feature Matrix draft editor implementation: product admins can toggle proposed plan/module entitlements and save the proposal as a Product Catalog change request
+  - [x] Browser verification for Feature Matrix draft editor
+  - [x] Feature Matrix publishing implementation: approved feature-matrix requests can be previewed and published into the live product catalog matrix with audit/application logging
+  - [x] Apply migration 062 in dev and production for feature matrix publishing
+  - [x] Browser verification for approved Feature Matrix publishing
+  - [x] Bulk operations foundation implementation: role-gated account selection, preview, required reason, confirmation, batch logging, and audit entries for status overrides, comp-period grants, and plan changes
+  - [x] Apply migration 063 in dev and production for platform bulk operation batch records
+  - [x] Browser verification for bulk status override, comp-period grant, and plan change workflows
+  - [x] Bulk module/add-on enablement implementation: product-gated bulk enable/remove controls for organization-specific module overrides
+  - [x] Apply migration 064 in dev and production for bulk module/add-on batch records
+  - [x] Browser verification for bulk module add-on enable/remove workflows
+- [x] **Platform admin Phase 6** - Final readability QA complete; remaining punch-list items are deferred as future usage-driven cleanup (see [merged_PLATFORM_ADMIN_IMPLEMENTATION_PLAN.md](docs/archive/merged_PLATFORM_ADMIN_IMPLEMENTATION_PLAN.md))
+  - [x] Shared Platform Admin shell responsiveness: sidebar stacks into a top navigation band on narrower screens and main content padding is reduced for mobile scanability
+  - [x] Browser verification for shared Platform Admin shell on desktop and mobile widths
+  - [x] Header/action-label consistency pass for Retention Queue, Platform Users, and Audit Log
+  - [x] Complete final section-by-section readability punch list
+  - [x] Browser verification for Phase 6 header/action-label consistency pass
+  - [x] Plans & Pricing Product Catalog density cleanup: split catalog work into Planning, Feature Matrix, and Catalog Records inline workspaces
+  - [x] Browser verification for Plans & Pricing Product Catalog sub-workspaces
+  - [x] Remaining Phase 6 punch-list items deferred to future usage-driven cleanup
+
+- [x] **Tournament Plus enhancements** - Launch scope complete: Plus is repositioned as the serious tournament operations plan, with a clear free starter tier, coach acquisition loops, registration control tools, organizer productivity, post-event reporting, and measured upgrade funnels (see [TOURNAMENT_PLUS_ENHANCEMENT_PLAN.md](docs/archive/TOURNAMENT_PLUS_ENHANCEMENT_PLAN.md))
+  - [x] Phase 0 - Packaging, metrics, and feature taxonomy
+  - [x] Phase 1 - Free vs. Plus boundary and branding gate
+  - [x] Phase 2 - Coach acquisition and public growth surfaces
+  - [x] Phase 3 - Registration Control Bundle
+    - [x] Custom registration questions, private file collection, admin answer details, CSV export foundation, and Plus gates
+    - [x] Migration 056 applied in dev and production
+    - [x] Bulk action bar, dedicated bulk route, and waitlist tracking
+    - [x] Email-selected workflow via Phase 5.2 targeted communication
+    - [x] Browser verification for registration control and communication workflows
+  - [x] Phase 4 - Payment and deposit value
+    - [x] Plus-gated payment dashboard, payment status filters, selected-team payment reminders, and payment-ready CSV fields
+    - [x] Online tournament payment collection intentionally deferred to a separate research and architecture decision
+  - [x] Phase 5 - Organizer Productivity Bundle
+    - [x] Plus-gated tournament cloning into a draft setup without registrations, payments, games, scores, or private notes
+    - [x] Targeted announcements and selected-recipient communication workflow
+    - [x] Tournament staffing guidance and setup-template follow-up
+    - [x] Settings & Access layout uses tabs for Tournament setup, People & access, and Account sections
+    - [x] Tournament Plus upgrade CTAs stay inside tournament admin subscription/pricing instead of org admin billing
+  - [x] Phase 6 - Post-event summary, results, and renewal loop
+    - [x] Retention strategy, next-tournament prompts, and export-compatible summary/report plan
+    - [x] Plus-gated manual post-event summary API/page with registration, payment, schedule, division recap, print/share actions, and completed/archived nav entry
+    - [x] Automatic results notification implementation and renewal CTA tracking
+    - [x] Apply migration 061 in dev and production before testing the notification toggle
+  - [x] Phase 7 - Rollout, QA, and documentation
+    - [x] Rollout code audit and tournament help documentation updates
+    - [x] Final browser smoke pass for Phase 3 registration control before external Plus marketing
+
+- [ ] **Online tournament payment collection research** - Decide whether future tournament entry payments should use Stripe Connect, manual payment links, or another architecture before building payment processing (see [TOURNAMENT_PLUS_ENHANCEMENT_PLAN.md](docs/archive/TOURNAMENT_PLUS_ENHANCEMENT_PLAN.md) Phase 4.3)
+
+- [ ] **Tournament admin UX reformat** - Mobile-first cleanup of tournament admin pages so records appear before secondary controls, using shared reusable toolbar/action patterns (see [TOURNAMENT_ADMIN_UX_REFORMAT_PLAN.md](TOURNAMENT_ADMIN_UX_REFORMAT_PLAN.md); PM brief: [TOURNAMENT_ADMIN_UX_REFORMAT_PM_BRIEF.md](TOURNAMENT_ADMIN_UX_REFORMAT_PM_BRIEF.md))
 
 - [ ] **Tournament help documentation UX review** - Upgrade tournament help with grouped contents, search, quick answers, and FAQs (see [TOURNAMENT_HELP_DOCS_REVIEW_PLAN.md](TOURNAMENT_HELP_DOCS_REVIEW_PLAN.md))
 
-- [ ] **Free Tournament organizer UX cleanup** - Resolve signup/onboarding, publish, operations, and free-tier guardrail findings (see [docs/archive/TOURNAMENT_FREE_TIER_UX_IMPLEMENTATION_PLAN.md](docs/archive/TOURNAMENT_FREE_TIER_UX_IMPLEMENTATION_PLAN.md))
-  - [x] Reusable Manage Tournaments setup wizard with existing-venue reuse
-  - [x] Tournament Settings & Access section
-  - [x] Phase 1 trust fixes: mobile activation API path, secured message sending, active contact mapping
-  - [x] Phase 2 signup and onboarding clarity copy
-  - [x] Phase 3 item 8: draft-to-publish dashboard checklist
-  - [x] Phase 3 item 10: draft public-page messaging and preview-link clarity
-  - [x] Phase 4 item 11: external payment expectations and fee-mode alignment
-  - [x] Phase 4 item 12: admin score entry respects finalization rules
-  - [x] Phase 4 item 13: public announcement posting is clearly separated from email communication
-  - [x] Phase 4 item 14: communication targeting now supports teams, divisions, statuses, and contacts
-  - [x] Phase 4 item 15: mobile tournament More menu includes day-of tools
-  - [x] Phase 5 item 16: plan feature gates and pricing copy align free Tournament with Tournament Plus-and-above benefits
+- [ ] **QA Infrastructure** — Design and build a layered automated test suite (unit, integration, E2E smoke) with a test catalog, plan-gate matrix, post-release update workflow, CI/CD integration, and QA_RULES.md process documentation; use the prompt written 2026-05-21 as the starting brief for that session
 
-### 0. Tournament Signup Experience
-*Detailed tasks in [TOURNAMENT_SIGNUP_EXPERIENCE_FIXES.md](TOURNAMENT_SIGNUP_EXPERIENCE_FIXES.md)*
-
-- [ ] **First tournament signup path** - Fix onboarding, setup, public registration, and route polish for new tournament organizers
-  - [x] Phase 1 trust and blocking fixes implemented
-  - [x] Phase 2 setup polish implemented
-  - [x] Phase 3 conversion and public experience implemented
-  - [x] Phase 4 plan-aware onboarding refinement implemented
-  - [x] Walkthrough blocker: post-signup onboarding plan chooser no longer blanks on org-context 403
-  - [x] Walkthrough polish: create-tournament onboarding opens the modal and post-create optional launch steps are shown
-  - [x] Walkthrough cleanup: create modal initializes immediately and admin archive console errors are removed
-  - [x] Walkthrough cleanup: launch steps visible up front and first-run create modal no longer shows migration/seed controls
-  - [x] Walkthrough polish: onboarding workflow uses focused chrome without admin side navigation
-  - [x] Walkthrough polish: division presets are editable starter rows instead of hardcoded youth brackets
-  - [x] Walkthrough polish: startup workflow steps open modals over onboarding with save/skip progress and dashboard reminder
-  - [x] Walkthrough blocker: post-signup onboarding render fault guarded
-  - [x] Walkthrough polish: onboarding division rows label capacity, expand pool controls, and tolerate missing startup-task migration
-  - [x] Walkthrough polish: startup workflow is now a single step-by-step modal wizard with save/skip advancement
-  - [x] Walkthrough polish: first-run plan selection stays editable until setup starts
-  - [x] Walkthrough polish: wizard plan selection advances automatically and every modal has Back navigation
-  - [x] Walkthrough polish: tournament details update saved drafts, with divisions and welcome message split into standalone wizard steps
-  - [x] Walkthrough polish: skipping first tournament skips dependent setup modals as a group
-  - [x] Walkthrough polish: skipping tournament setup requires confirmation and manual tournament creation retires the wizard
-  - [x] Walkthrough polish: venue setup uses one-at-a-time structured entry with editable added venues
-  - [x] Walkthrough polish: venue addresses are optional and missing required venue names show validation
-  - [x] Walkthrough refactor: startup wizard is draft-first and only persists setup at final review
-  - [x] Walkthrough polish: new tournament start dates cannot be before today
-  - [x] Walkthrough polish: first-run setup saves tournaments as private drafts without an activation step
-  - [x] Walkthrough polish: first-run setup removes staff invites so role management stays in admin settings
-  - [x] Walkthrough copy: setup review explains public visibility without private-draft jargon
-  - [x] Walkthrough blocker: Tournament-plan owners land in tournament management and only see entitled modules
-  - [x] Walkthrough high: production signup requires email verification before plan selection/onboarding
-  - [x] Walkthrough blocker: Tournament-only workspaces bypass the org hub before paint and dashboard stats use an authorized admin API
-  - [x] Walkthrough polish: subscription defaults to monthly pricing and unfinished tournament setup resumes on login
-  - [x] Walkthrough high: admin tournament preview uses authorized reads and shows preview navigation
-  - [x] Walkthrough polish: division setup uses explicit optional age limits instead of name guessing
-  - [x] Walkthrough follow-up: add tournament-level public site customization separate from org site customization
-  - [x] Non-browser hardening pass completed
-  - [ ] Browser verification of signup-to-registration flow
-
-### 2. Rep Teams — Groups & Per-Team Billing
-*Detailed tasks in [docs/archive/REP_TEAMS_ENHANCEMENTS_PLAN.md](docs/archive/REP_TEAMS_ENHANCEMENTS_PLAN.md) (Phases 1+2 archived; Phase 3 tracked in Stripe plan)*
-
-- [x] **Phase 1** — Rep team groups: `rep_team_groups` table, group management UI, team assignment, group filter on lists and accounting views — migration 035 applied dev+prod, complete
-- [x] **Phase 2** — Staff group scoping: `org_member_rep_group_scopes` junction table, multi-group selection per member, `repGroupIds` on auth context, hard 403 gating on all rep team admin routes, group access UI in Manage Member modal (migration 036, apply to dev+prod)
-- [ ] **Phase 3** — Per-team billing: moved to [STRIPE_INTEGRATION_PLAN.md](STRIPE_INTEGRATION_PLAN.md) Phase E
 
 ### 3. Chart Library Investigation
 - [ ] **Investigate chart libraries** — Evaluate recharts, chart.js, or @nivo for use in budget vs. actual and dashboard screens; assess bundle size, SSR compatibility, and dark-theme support before adding a dependency
@@ -89,7 +140,7 @@ This file tracks the ongoing tasks for the FieldLogicHQ platform (multi-tenant s
 - [ ] **Per-user light/dark theme preference** — Allow each user to toggle light/dark theme from their own settings screen (org admins in org settings, coaches in coach portal settings, etc.). Theme preference stored per-user (not per-org). Also expose a light/dark toggle on the public org and tournament websites so visitors can choose their preferred mode.
 
 ### 4. Stripe Integration — End-to-End Billing & Subscriptions
-*Detailed tasks in [STRIPE_INTEGRATION_PLAN.md](STRIPE_INTEGRATION_PLAN.md)*
+*Detailed tasks in [STRIPE_INTEGRATION_PLAN.md](docs/active/STRIPE_INTEGRATION_PLAN.md)*
 
 - [ ] **Billing downgrade and data retention flow** - Add FieldLogicHQ-guided downgrade/cancel review with over-limit data retention choices (see [BILLING_DOWNGRADE_RETENTION_PLAN.md](BILLING_DOWNGRADE_RETENTION_PLAN.md))
   - [x] First implementation slice: retention schema, owner review APIs/UI, cancellation suspension, and platform-admin retention queue
@@ -99,7 +150,7 @@ This file tracks the ongoing tasks for the FieldLogicHQ platform (multi-tenant s
   - [x] Dev/mock upgrades restore retained downgrade tournaments when plan limits allow
   - [ ] Hard purge job after pending-purge review policy is finalized
 - [x] **Phase A** — Stripe dashboard setup: products, prices, webhooks, Customer Portal, API keys + price IDs configured in dev (test environment complete)
-- [ ] **Phase B** — App infrastructure: Stripe SDK, price map, DB migration 047
+- [x] **Phase B** — App infrastructure: Stripe SDK, price map, DB migrations
   - [x] Stripe package + lib/stripe.ts singleton complete
   - [x] ~~Price map: getPlanPriceId() in lib/plan-config.ts~~ → replaced by DB-backed stripe_prices table (migration 048)
   - [x] Migration 047: subscription_period, current_period_end, rep_team_subscription_item_id — applied dev + prod
@@ -126,7 +177,7 @@ This file tracks the ongoing tasks for the FieldLogicHQ platform (multi-tenant s
   - [ ] Enter the 8 live price IDs via **Platform Admin → Plans & Pricing → Stripe Price IDs** (Live Mode rows) on the production app — no Amplify deploy needed
   - [ ] In Amplify: add master-branch **override** for `STRIPE_SECRET_KEY` → `sk_live_...`, `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` → `pk_live_...`, `STRIPE_WEBHOOK_SECRET` → live `whsec_...` (leave test keys on all-branches default so dev keeps working)
   - [ ] Remove now-unused `STRIPE_PRICE_*` env vars from Amplify (price IDs are DB-backed; these no longer do anything)
-  - [ ] Run Phase G smoke test checklist (see STRIPE_INTEGRATION_PLAN.md § Phase G)
+  - [ ] Run Phase G smoke test checklist (see docs/active/STRIPE_INTEGRATION_PLAN.md § Phase G)
   - [ ] Monitor first real transactions in Stripe dashboard and verify webhook delivery
 
 ### 5. Email Strategy
@@ -145,12 +196,42 @@ This file tracks the ongoing tasks for the FieldLogicHQ platform (multi-tenant s
 - [ ] **House League — Practice Scheduling** — Allow league admins to schedule practices for individual teams alongside the game schedule. A practice belongs to one team (not two), has no score, and does not affect standings. Confirmed scope post-Phase 5H. Build as an extension of the schedule page: separate "Practices" tab or filter, same date/time/location fields, team selector instead of home/away. No schema migration needed — can reuse `league_games` with `away_team_id = null` and a `game_type` column, or use a separate `league_practices` table (decide at build time).
 - [ ] **Calendar Sync for Team Schedules** — Allow parents/coaches to export a team's game schedule as an `.ics` file or subscribe via a calendar URL (Google/Apple Calendar). Technically straightforward (generate `.ics` from schedule query). Applies to both house league team schedules and rep team schedules in the coaches portal. Build during a parent-facing polish pass.
 - [ ] **Bulk Operations for Admins** — Bulk-change registration statuses, bulk-assign teams, bulk-edit schedule slots. High value for orgs with 100+ registrations. Requires multi-select UI, confirmation flows, and async batch API routes. Revisit after Phase 3 UX ships and an org is operating at scale.
+- [ ] **Tournament setup templates** - Post-clone enhancement for orgs that run several similar tournaments and want reusable setup patterns without choosing a prior event each time.
+- [ ] **Tournament staff role presets** - Later enhancement for Plus orgs if real usage shows registrar, scheduler, communications, and scorer-manager presets would reduce setup mistakes beyond current role/capability overrides.
 - [ ] **Custom domain investigation** — Research feasibility and effort of allowing orgs to point a custom domain (e.g. miltonbats.com) to their FieldLogicHQ public page. Covers: DNS verification flow, wildcard SSL or per-org cert provisioning, reverse proxy / Amplify routing changes, and potential upsell pricing. Do not design or implement until `module_public_site` is fully shipped. **Also investigate:** pros and cons of a custom domain for the Stripe Customer Portal (e.g. `billing.fieldlogichq.ca`) — level of effort, DNS setup, whether it meaningfully improves trust vs. billing.stripe.com, and when this becomes worth prioritizing.
 - [ ] **Public Site Offering Evaluation** — After the first external org enables `module_public_site`, review the offering across three dimensions: (1) ease of setup — is the path from enabling the module to a live page clear enough for a non-technical org owner? (2) customization level — structured fields are correct; assess whether anything is missing without going full CMS; (3) base UX improvements. Produce a prioritized fix list before moving to the next module.
 
 ---
 
 ## ✅ Completed Projects
+
+### Tournament Signup Experience
+*(Archived — all phases and browser verification complete. See [TOURNAMENT_SIGNUP_EXPERIENCE_FIXES.md](TOURNAMENT_SIGNUP_EXPERIENCE_FIXES.md))*
+- [x] Phases 1–4 trust, setup, conversion, and plan-aware onboarding refinement
+- [x] Full walkthrough polish series (30+ incremental improvements)
+- [x] Non-browser hardening pass
+- [x] Browser verification of signup-to-registration flow complete
+
+### Free Tournament Organizer UX Cleanup
+*(Archived — all items complete. See [docs/archive/TOURNAMENT_FREE_TIER_UX_IMPLEMENTATION_PLAN.md](docs/archive/TOURNAMENT_FREE_TIER_UX_IMPLEMENTATION_PLAN.md))*
+- [x] Reusable Manage Tournaments setup wizard with existing-venue reuse
+- [x] Tournament Settings & Access section
+- [x] Phase 1 trust fixes: mobile activation API path, secured message sending, active contact mapping
+- [x] Phase 2 signup and onboarding clarity copy
+- [x] Phase 3 item 8: draft-to-publish dashboard checklist
+- [x] Phase 3 item 10: draft public-page messaging and preview-link clarity
+- [x] Phase 4 item 11: external payment expectations and fee-mode alignment
+- [x] Phase 4 item 12: admin score entry respects finalization rules
+- [x] Phase 4 item 13: public announcement posting is clearly separated from email communication
+- [x] Phase 4 item 14: communication targeting now supports teams, divisions, statuses, and contacts
+- [x] Phase 4 item 15: mobile tournament More menu includes day-of tools
+- [x] Phase 5 item 16: plan feature gates and pricing copy align free Tournament with Tournament Plus-and-above benefits
+
+### Rep Teams — Groups & Per-Team Billing
+*(Archived — all phases complete. See [docs/archive/REP_TEAMS_ENHANCEMENTS_PLAN.md](docs/archive/REP_TEAMS_ENHANCEMENTS_PLAN.md); Phase 3 tracking moved to docs/active/STRIPE_INTEGRATION_PLAN.md Phase E)*
+- [x] **Phase 1** — Rep team groups: `rep_team_groups` table, group management UI, team assignment, group filter on lists and accounting views — migration 035 applied dev+prod
+- [x] **Phase 2** — Staff group scoping: `org_member_rep_group_scopes` junction table, multi-group selection per member, `repGroupIds` on auth context, hard 403 gating on all rep team admin routes, group access UI in Manage Member modal — migration 036 applied dev+prod
+- [x] **Phase 3** — Per-team billing: synced via Stripe Phase E (quantity sync, billing preview API, team creation modal with charge confirmation, program year status hook, billing page add-on section)
 
 ### Non-Billing UAT Remediation
 *(Archived - all 8 items complete. See [docs/archive/NON_BILLING_UAT_REMEDIATION_PLAN.md](docs/archive/NON_BILLING_UAT_REMEDIATION_PLAN.md))*
@@ -357,4 +438,3 @@ This file tracks the ongoing tasks for the FieldLogicHQ platform (multi-tenant s
 - [x] Age Group Preference Persistence — cookie-based tab persistence
 - [x] Schedule/Results Revamp — inline scores, team filter, bracket view, `/standings` page
 - [x] Stock Logo Library — curated sport icon set, plan-tiered access
-

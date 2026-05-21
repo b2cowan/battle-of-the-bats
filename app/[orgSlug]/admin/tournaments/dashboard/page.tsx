@@ -1,10 +1,11 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { AlertCircle, CheckCircle2, Info, Users, Calendar, Trophy, Megaphone, Tag, DollarSign, TrendingUp, MapPin, BookUser, BookOpen, Zap, Flag } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Copy, Info, Users, Calendar, Trophy, Megaphone, Tag, DollarSign, TrendingUp, MapPin, BookUser, BookOpen, Zap, Flag } from 'lucide-react';
 import Link from 'next/link';
 import { useTournament } from '@/lib/tournament-context';
 import { useOrg } from '@/lib/org-context';
+import { hasPlanFeature, requiresTournamentPlusCopy } from '@/lib/plan-features';
 import { LiveEventLog } from '@/components/admin/LiveEventLog';
 import styles from './dashboard.module.css';
 
@@ -206,6 +207,67 @@ export default function AdminDashboard() {
     return () => controller.abort();
   }, [currentTournament?.id]);
 
+  // ── Populate-from state (draft dashboard only) ───────────────────────────
+  type OtherTournament = { id: string; name: string; year: number | null; status: string | null };
+  const [otherTournaments, setOtherTournaments] = useState<OtherTournament[]>([]);
+  const [populateOpen, setPopulateOpen] = useState(false);
+  const [populateSelected, setPopulateSelected] = useState<OtherTournament | null>(null);
+  const [populateStep, setPopulateStep] = useState<'pick' | 'confirm'>('pick');
+  const [populateWorking, setPopulateWorking] = useState(false);
+  const [populateError, setPopulateError] = useState('');
+  const [populateDone, setPopulateDone] = useState(false);
+
+  const canClone = Boolean(currentOrg && hasPlanFeature(currentOrg.planId, 'tournament_cloning'));
+  const cloneUpgradeCopy = requiresTournamentPlusCopy('tournament_cloning');
+
+  useEffect(() => {
+    const tournamentId = currentTournament?.id;
+    if (!tournamentId) return;
+    fetch('/api/admin/tournaments', { cache: 'no-store' })
+      .then(r => r.json())
+      .then((data: unknown) => {
+        if (!Array.isArray(data)) return;
+        const others = (data as Array<{ id: string; name: string; year: number | null; status: string | null }>)
+          .filter(t => t.id !== tournamentId && t.status !== 'archived')
+          .sort((a, b) => (b.year ?? 0) - (a.year ?? 0));
+        setOtherTournaments(others);
+      })
+      .catch(() => {});
+  }, [currentTournament?.id]);
+
+  async function handlePopulateConfirm() {
+    if (!populateSelected || !currentTournament?.id) return;
+    setPopulateWorking(true);
+    setPopulateError('');
+    try {
+      const res = await fetch(
+        `/api/admin/tournaments/${encodeURIComponent(currentTournament.id)}/populate-from`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sourceTournamentId: populateSelected.id }),
+        },
+      );
+      const json = await res.json() as { error?: string };
+      if (!res.ok) throw new Error(json.error ?? 'Failed to populate tournament.');
+      setPopulateDone(true);
+      await refreshTournaments();
+      router.refresh();
+    } catch (err) {
+      setPopulateError(err instanceof Error ? err.message : 'Failed to populate tournament.');
+    } finally {
+      setPopulateWorking(false);
+    }
+  }
+
+  function openPopulateModal() {
+    setPopulateSelected(null);
+    setPopulateStep('pick');
+    setPopulateError('');
+    setPopulateDone(false);
+    setPopulateOpen(true);
+  }
+
   const status        = currentTournament?.status ?? 'draft';
   const isDraft       = status === 'draft';
   const isActive      = status === 'active';
@@ -234,9 +296,9 @@ export default function AdminDashboard() {
   ];
 
   const checklistItems = [
-    { key: 'dates',         done: checklist.hasDates,         label: 'Tournament dates added',                  desc: 'Set a start and end date so teams know when the event runs.',              href: `${base}/settings/event`, action: 'Edit dates'    },
+    { key: 'dates',         done: checklist.hasDates,         label: 'Tournament dates',                        desc: 'Set a start and end date so teams know when the event runs.',              href: `${base}/settings/event`, action: 'Edit dates'    },
     { key: 'divisions',     done: checklist.hasDivisions,     label: 'At least one division',                   desc: 'Create the divisions teams can register for.',                             href: `${base}/age-groups`,  action: 'Add divisions'    },
-    { key: 'contact',       done: checklist.hasPublicContact, label: 'Public contact email selected',           desc: 'Choose the email coaches can use for tournament questions.',               href: `${base}/contacts`,    action: 'Manage contacts'  },
+    { key: 'contact',       done: checklist.hasPublicContact, label: 'Public contact email',                    desc: 'Choose the email coaches can use for tournament questions.',               href: `${base}/contacts`,    action: 'Manage contacts'  },
     { key: 'open-division', done: checklist.hasOpenDivision,  label: 'Registration open for at least one division', desc: 'Open a division when you are ready for teams to register.',          href: `${base}/age-groups`,  action: 'Open divisions'   },
   ];
 
@@ -256,8 +318,10 @@ export default function AdminDashboard() {
             {currentTournament?.name ?? currentOrg?.name ?? 'Admin'}
           </h1>
         </div>
-        <div className="hidden md:flex items-center font-mono text-xs font-bold" style={{ color: statusColor }}>
-          {status.toUpperCase()}
+        <div className="hidden md:block">
+          <span className="font-mono text-xs font-bold" style={{ color: statusColor }}>
+            {status.toUpperCase()}
+          </span>
         </div>
       </header>
 
@@ -268,6 +332,29 @@ export default function AdminDashboard() {
       {/* ── DRAFT DASHBOARD ─────────────────────────────── */}
       {isDraft && (
         <>
+          {/* Clone from past tournament — shown only when other tournaments exist */}
+          {otherTournaments.length > 0 && (
+            <div style={{ marginBottom: '1.5rem', padding: '1rem 1.25rem', border: '1px solid var(--border-2)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', background: 'var(--surface-1, rgba(255,255,255,0.02))' }}>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.2rem' }}>
+                  <Copy size={14} style={{ color: 'var(--logic-lime)' }} />
+                  <strong style={{ fontSize: '0.88rem' }}>Clone from a past tournament</strong>
+                </div>
+                <p style={{ fontSize: '0.78rem', color: 'var(--white-50)', margin: 0 }}>
+                  Replace this draft's setup with divisions, venues, contacts, and branding from a previous event.
+                </p>
+              </div>
+              <button
+                type="button"
+                className="btn btn-outline btn-sm"
+                style={{ flexShrink: 0 }}
+                onClick={openPopulateModal}
+              >
+                Clone setup
+              </button>
+            </div>
+          )}
+
           {/* Launch checklist */}
           <section className={styles.publishChecklist}>
             <div className={styles.checklistHeader}>
@@ -275,9 +362,20 @@ export default function AdminDashboard() {
                 <h2 className={styles.sectionTitle}>Draft Launch Checklist</h2>
                 <p>Complete these items before activating registration and the public tournament page.</p>
               </div>
-              <span className={checklist.ready ? styles.readyPill : styles.draftPill}>
-                {checklist.ready ? 'Ready to activate' : 'Draft only'}
-              </span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexShrink: 0 }}>
+                <span className={checklist.ready ? styles.readyPill : styles.draftPill}>
+                  {checklist.ready ? 'Ready to activate' : 'Draft only'}
+                </span>
+                <button
+                  type="button"
+                  className={styles.activateChip}
+                  onClick={() => setShowActivateConfirm(true)}
+                  disabled={activating || !checklist.ready}
+                  title={!checklist.ready ? 'Complete all required items before activating' : 'Activate this tournament'}
+                >
+                  {activating ? 'Activating…' : 'Activate'}
+                </button>
+              </div>
             </div>
 
             <div className={styles.checklistGrid}>
@@ -376,19 +474,11 @@ export default function AdminDashboard() {
               </Link>
             </div>
 
-            <div className={styles.checklistFooter}>
-              <span>
-                {!checklist.ready && 'Activation will stay blocked until every required item is complete.'}
-                {activateError && <span style={{ color: 'var(--danger-light)', display: 'block', marginTop: '0.25rem', fontSize: '0.8rem' }}>{activateError}</span>}
-              </span>
-              <button
-                className="btn btn-primary btn-sm"
-                onClick={() => setShowActivateConfirm(true)}
-                disabled={activating}
-              >
-                Activate
-              </button>
-            </div>
+            {activateError && (
+              <div className={styles.checklistFooter}>
+                <span style={{ color: 'var(--danger-light)', fontSize: '0.8rem' }}>{activateError}</span>
+              </div>
+            )}
           </section>
 
           {/* Setup quick links */}
@@ -699,6 +789,108 @@ export default function AdminDashboard() {
         <div style={{ padding: '2rem 0', color: 'var(--data-gray)', fontSize: '0.85rem' }}>
           This tournament is archived. View historical results in{' '}
           <Link href={`${base}/archives`} style={{ color: 'var(--blueprint-blue)' }}>Past Tournaments</Link>.
+        </div>
+      )}
+
+      {/* ── POPULATE-FROM MODAL ──────────────────────────── */}
+      {populateOpen && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.72)', backdropFilter: 'blur(6px)' }}>
+          <div className="modal" style={{ maxWidth: 500, width: '100%', padding: '1.75rem' }} onClick={e => e.stopPropagation()}>
+
+            {/* ── PICK step ── */}
+            {populateStep === 'pick' && (
+              <>
+                <div className="modal-header">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <Copy size={17} style={{ color: 'var(--logic-lime)' }} />
+                    <h3 style={{ margin: 0 }}>Clone setup from a past tournament</h3>
+                  </div>
+                  <button className="btn btn-ghost btn-sm" onClick={() => setPopulateOpen(false)}>✕</button>
+                </div>
+
+                {!canClone ? (
+                  <div style={{ padding: '0.5rem 0 1rem' }}>
+                    <div className="alert alert-warning">{cloneUpgradeCopy}</div>
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', margin: '1rem 0' }}>
+                    {otherTournaments.map(t => (
+                      <button
+                        key={t.id}
+                        type="button"
+                        onClick={() => { setPopulateSelected(t); setPopulateStep('confirm'); }}
+                        style={{
+                          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                          padding: '0.65rem 0.9rem',
+                          border: `1px solid ${populateSelected?.id === t.id ? 'var(--logic-lime)' : 'var(--border-2)'}`,
+                          borderRadius: 8,
+                          background: 'var(--surface-1, rgba(255,255,255,0.03))',
+                          cursor: 'pointer', textAlign: 'left', color: 'inherit',
+                        }}
+                      >
+                        <span>
+                          <span style={{ display: 'block', fontWeight: 600, fontSize: '0.88rem' }}>{t.name}</span>
+                          {t.year && <span style={{ display: 'block', fontSize: '0.75rem', color: 'var(--white-40)' }}>{t.year} · {t.status ?? ''}</span>}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                <div className="modal-footer">
+                  <button className="btn btn-ghost btn-sm" onClick={() => setPopulateOpen(false)}>Cancel</button>
+                </div>
+              </>
+            )}
+
+            {/* ── CONFIRM step ── */}
+            {populateStep === 'confirm' && populateSelected && !populateDone && (
+              <>
+                <div className="modal-header">
+                  <h3 style={{ margin: 0 }}>Replace setup with {populateSelected.name}?</h3>
+                  <button className="btn btn-ghost btn-sm" onClick={() => setPopulateOpen(false)}>✕</button>
+                </div>
+                <div style={{ margin: '1rem 0', fontSize: '0.875rem', color: 'var(--white-70)', lineHeight: 1.6 }}>
+                  <p style={{ margin: '0 0 0.75rem' }}>
+                    This will <strong>replace</strong> the current setup of <strong>{currentTournament?.name}</strong> with data from <strong>{populateSelected.name}</strong>:
+                  </p>
+                  <ul style={{ margin: '0 0 0.75rem', paddingLeft: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
+                    <li>Divisions, pools, and slot placeholders</li>
+                    <li>Venues and contacts</li>
+                    <li>Branding and fee schedule</li>
+                    <li>Rules, resources, and registration questions</li>
+                  </ul>
+                  <p style={{ margin: 0, color: 'var(--white-50)' }}>
+                    Your tournament name, URL, and dates are not changed. Registrations and scores are never copied. <strong>This cannot be undone.</strong>
+                  </p>
+                </div>
+                {populateError && (
+                  <div className="alert alert-danger" style={{ marginBottom: '0.75rem', fontSize: '0.82rem' }}>{populateError}</div>
+                )}
+                <div className="modal-footer">
+                  <button className="btn btn-ghost btn-sm" onClick={() => setPopulateStep('pick')} disabled={populateWorking}>Back</button>
+                  <button className="btn btn-danger btn-sm" onClick={handlePopulateConfirm} disabled={populateWorking}>
+                    {populateWorking ? 'Applying…' : 'Yes, replace setup'}
+                  </button>
+                </div>
+              </>
+            )}
+
+            {/* ── SUCCESS step ── */}
+            {populateDone && (
+              <>
+                <div className="modal-header">
+                  <h3 style={{ margin: 0 }}>Setup replaced</h3>
+                </div>
+                <p style={{ margin: '1rem 0', fontSize: '0.875rem', color: 'var(--white-70)' }}>
+                  <strong>{currentTournament?.name}</strong>'s setup has been updated from <strong>{populateSelected?.name}</strong>. Review your divisions and checklist to confirm everything looks right.
+                </p>
+                <div className="modal-footer">
+                  <button className="btn btn-primary btn-sm" onClick={() => setPopulateOpen(false)}>Done</button>
+                </div>
+              </>
+            )}
+          </div>
         </div>
       )}
 

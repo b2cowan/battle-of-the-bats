@@ -3,8 +3,16 @@ import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { Users, ChevronRight, Plus, X } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
+import { useOrg } from '@/lib/org-context';
 import FeedbackModal from '@/components/FeedbackModal';
 import HelpCallout from '@/components/help/HelpCallout';
+import {
+  downloadXLSX, generateCSV, downloadCSVBlob,
+  buildFilename, serializeRows, serializeHeaders, type ExportColumnDef,
+  downloadPDF, DEFAULT_PDF_SETTINGS, type OrgPdfSettings,
+} from '@/lib/export';
+import { hasPlanFeature } from '@/lib/plan-features';
+import ExportMenu from '@/components/admin/ExportMenu';
 import styles from '../../../coaches.module.css';
 import type { RepRosterPlayer, RepProgramYear } from '@/lib/types';
 
@@ -12,6 +20,21 @@ const STATUS_CSS: Record<string, string> = {
   active:   styles.badgeActive,
   inactive: styles.badgeDraft,
 };
+
+// ── Export definition ─────────────────────────────────────────────────────────
+
+const ROSTER_EXPORT_COLS: ExportColumnDef[] = [
+  { label: '#',              key: 'playerNumber',      format: 'text' },
+  { label: 'First Name',     key: 'playerFirstName',   format: 'text' },
+  { label: 'Last Name',      key: 'playerLastName',    format: 'text' },
+  { label: 'Date of Birth',  key: 'playerDateOfBirth', format: 'date',     sensitive: true },
+  { label: 'Guardian Name',  key: 'guardianName',      format: 'text',     sensitive: true },
+  { label: 'Guardian Email', key: 'guardianEmail',     format: 'text',     sensitive: true },
+  { label: 'Guardian Phone', key: 'guardianPhone',     format: 'text',     sensitive: true },
+  { label: 'Source',         key: 'source',            format: 'text' },
+  { label: 'Status',         key: 'status',            format: 'text' },
+  { label: 'Notes',          key: 'notes',             format: 'text',     sensitive: true },
+];
 
 interface AddForm {
   playerFirstName: string; playerLastName: string;
@@ -33,6 +56,7 @@ export default function RosterPage({
   params: { orgSlug: string; teamId: string };
 }) {
   const { assignments, loading: assignmentsLoading } = useCoaches();
+  const { currentOrg } = useOrg();
   const assignment = assignments.find(a => a.teamId === params.teamId);
 
   const [players, setPlayers] = useState<RepRosterPlayer[]>([]);
@@ -46,6 +70,11 @@ export default function RosterPage({
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [feedbackType, setFeedbackType] = useState<'success' | 'danger'>('success');
   const [feedbackMsg, setFeedbackMsg] = useState('');
+
+  // PDF settings — fetched once on mount; used in handleExportPDF
+  const [pdfSettings, setPdfSettings] = useState<OrgPdfSettings | null>(null);
+  const canUsePDF = currentOrg ? hasPlanFeature(currentOrg.planId, 'pdf_exports') : false;
+  const showPdfNudge = canUsePDF && pdfSettings !== null && Object.keys(pdfSettings).length === 0;
 
   function showFeedback(type: 'success' | 'danger', msg: string) {
     setFeedbackType(type); setFeedbackMsg(msg); setFeedbackOpen(true);
@@ -67,6 +96,13 @@ export default function RosterPage({
   }, [params.orgSlug, params.teamId]);
 
   useEffect(() => { if (!assignmentsLoading) load(); }, [assignmentsLoading, load]);
+
+  useEffect(() => {
+    fetch('/api/admin/org/pdf-settings')
+      .then(r => r.ok ? r.json() : {})
+      .then(d => setPdfSettings(d as OrgPdfSettings))
+      .catch(() => setPdfSettings({}));
+  }, []);
 
   async function handleToggleStatus(player: RepRosterPlayer) {
     const newStatus = player.status === 'active' ? 'inactive' : 'active';
@@ -130,6 +166,90 @@ export default function RosterPage({
 
   const base = `/${params.orgSlug}/coaches/teams/${params.teamId}`;
 
+  // ── Export helpers ───────────────────────────────────────────────────────────
+
+  function buildRosterExportSrc() {
+    return players.map(p => ({
+      playerNumber:      p.playerNumber ?? '',
+      playerFirstName:   p.playerFirstName,
+      playerLastName:    p.playerLastName,
+      playerDateOfBirth: p.playerDateOfBirth ?? '',
+      guardianName:      [p.guardianFirstName, p.guardianLastName].filter(Boolean).join(' '),
+      guardianEmail:     p.guardianEmail ?? '',
+      guardianPhone:     p.guardianPhone ?? '',
+      source:            p.source === 'tryout' ? 'Tryout' : 'Manual',
+      status:            p.status === 'active' ? 'Active' : 'Inactive',
+      notes:             p.notes ?? '',
+    }));
+  }
+
+  async function handleExportXLSX() {
+    if (!players.length) return;
+    const headers = serializeHeaders(ROSTER_EXPORT_COLS);
+    const rows = serializeRows(buildRosterExportSrc(), ROSTER_EXPORT_COLS);
+    await downloadXLSX(
+      buildFilename({ org: currentOrg?.slug ?? params.orgSlug, dataset: 'roster', scope: assignment?.teamName ?? params.teamId }, 'xlsx'),
+      headers, rows, 'Roster',
+    );
+  }
+
+  async function handleExportXLSXWithSensitive() {
+    if (!players.length) return;
+    const headers = serializeHeaders(ROSTER_EXPORT_COLS, true);
+    const rows = serializeRows(buildRosterExportSrc(), ROSTER_EXPORT_COLS, true);
+    await downloadXLSX(
+      buildFilename({ org: currentOrg?.slug ?? params.orgSlug, dataset: 'roster-with-contacts', scope: assignment?.teamName ?? params.teamId }, 'xlsx'),
+      headers, rows, 'Roster',
+    );
+  }
+
+  function handleExportCSV() {
+    const headers = serializeHeaders(ROSTER_EXPORT_COLS);
+    const rows = serializeRows(buildRosterExportSrc(), ROSTER_EXPORT_COLS);
+    downloadCSVBlob(
+      buildFilename({ org: currentOrg?.slug ?? params.orgSlug, dataset: 'roster', scope: assignment?.teamName ?? params.teamId }, 'csv'),
+      generateCSV(headers, rows),
+    );
+  }
+
+  async function handleExportPDF() {
+    if (!players.length) return;
+    const settings: OrgPdfSettings = {
+      ...DEFAULT_PDF_SETTINGS,
+      ...(pdfSettings && Object.keys(pdfSettings).length > 0 ? pdfSettings : {}),
+    };
+    const includeGuardian = settings.includeGuardianContacts;
+    const teamName = assignment?.teamName ?? params.teamId;
+    const programYearName = programYear?.name ?? assignment?.programYearName ?? '';
+
+    // Build PDF-specific headers — DOB always included; guardian columns conditional
+    const pdfHeaders = [
+      '#', 'First Name', 'Last Name', 'Date of Birth',
+      ...(includeGuardian ? ['Guardian Name', 'Guardian Email', 'Guardian Phone'] : []),
+      'Source', 'Status',
+    ];
+
+    const src = buildRosterExportSrc();
+    const pdfRows = src.map(r => [
+      r.playerNumber,
+      r.playerFirstName,
+      r.playerLastName,
+      r.playerDateOfBirth,
+      ...(includeGuardian ? [r.guardianName, r.guardianEmail, r.guardianPhone] : []),
+      r.source,
+      r.status,
+    ]);
+
+    await downloadPDF(
+      buildFilename({ org: currentOrg?.slug ?? params.orgSlug, dataset: 'roster', scope: teamName }, 'pdf'),
+      'Team Roster',
+      `${teamName} — ${programYearName}`,
+      pdfHeaders,
+      pdfRows,
+      settings,
+    );
+  }
+
   if (assignmentsLoading) return <p className={styles.muted}>Loading…</p>;
   if (!assignment) {
     return (
@@ -162,15 +282,40 @@ export default function RosterPage({
             </p>
           </div>
         </div>
-        <button
-          type="button"
-          className="btn btn-secondary"
-          style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.85rem' }}
-          onClick={() => { setAddForm(BLANK); setAddOpen(true); }}
-        >
-          <Plus size={14} /> Add Player
-        </button>
+        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+          <ExportMenu
+            formats={['xlsx', 'csv', 'pdf']}
+            onExportXLSX={handleExportXLSX}
+            onExportCSV={handleExportCSV}
+            onExportPDF={handleExportPDF}
+            hasSensitiveOption={true}
+            sensitiveOptionLabel="Excel with contact details"
+            onExportXLSXWithSensitive={handleExportXLSXWithSensitive}
+            planId={currentOrg?.planId}
+            pdfFeatureKey="pdf_exports"
+            disabled={players.length === 0}
+          />
+          <button
+            type="button"
+            className="btn btn-secondary"
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.85rem' }}
+            onClick={() => { setAddForm(BLANK); setAddOpen(true); }}
+          >
+            <Plus size={14} /> Add Player
+          </button>
+        </div>
       </div>
+
+      {showPdfNudge && (
+        <HelpCallout
+          variant="info"
+          title="PDF settings not configured"
+          body="Your export will use default FieldLogicHQ branding. Configure your header, logo, and footer once and all future PDFs will use those settings."
+          cta={{ label: 'Configure PDF Settings', href: `/${params.orgSlug}/admin/org` }}
+          dismissible
+          localStorageKey="flhq-pdf-nudge-roster"
+        />
+      )}
 
       {fetching ? (
         <p className={styles.muted}>Loading…</p>

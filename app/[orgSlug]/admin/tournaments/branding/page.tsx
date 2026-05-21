@@ -6,8 +6,10 @@ import { ArrowLeft, Image as ImageIcon, Lock, Palette, Upload } from 'lucide-rea
 import { useTournament } from '@/lib/tournament-context';
 import { useOrg } from '@/lib/org-context';
 import FeedbackModal from '@/components/FeedbackModal';
+import UpgradeGate from '@/components/billing/UpgradeGate';
 import { PRESETS, FONT_OPTIONS, CARD_STYLE_OPTIONS, resolveTheme } from '@/lib/themes';
 import { PUBLIC_PAGE_OPTIONS, normalizeHiddenPublicPages, type PublicPageKey } from '@/lib/public-pages';
+import { hasPlanFeature } from '@/lib/plan-features';
 import styles from './branding.module.css';
 
 interface BrandingSettings {
@@ -55,7 +57,9 @@ export default function TournamentBrandingPage() {
   const bannerInputRef = useRef<HTMLInputElement>(null);
 
   const tournamentId = currentTournament?.id;
-  const canUseAdvancedBranding = currentOrg?.planId ? currentOrg.planId !== 'tournament' : false;
+  const canUseAdvancedBranding = currentOrg?.planId
+    ? hasPlanFeature(currentOrg.planId, 'advanced_tournament_branding')
+    : false;
 
   useEffect(() => {
     if (!tournamentId) return;
@@ -82,6 +86,9 @@ export default function TournamentBrandingPage() {
 
   const isDirty = useMemo(() => {
     if (!saved) return false;
+    if (!canUseAdvancedBranding) {
+      return normalizeHiddenPublicPages(publicHiddenPages).join('|') !== normalizeHiddenPublicPages(saved.publicHiddenPages).join('|');
+    }
     const savedPresetKey = saved.themePrimary && canUseAdvancedBranding ? 'custom' : (saved.themePreset ?? 'platform');
     const savedFontKey = canUseAdvancedBranding ? saved.themeFont ?? 'system' : 'system';
     const savedCardStyle = canUseAdvancedBranding ? saved.themeCardStyle ?? 'default' : 'default';
@@ -122,17 +129,22 @@ export default function TournamentBrandingPage() {
       const themeBody = presetKey === 'custom' && canUseAdvancedBranding
         ? { themePreset: 'platform', themePrimary: customPrimary, themeAccent: customAccent }
         : { themePreset: presetKey, themePrimary: null, themeAccent: null };
+      const requestBody = canUseAdvancedBranding
+        ? {
+            ...themeBody,
+            themeFont: safeFontKey,
+            themeCardStyle: safeCardStyle,
+            colorMode,
+            publicHiddenPages: normalizedHiddenPages,
+          }
+        : {
+            publicHiddenPages: normalizedHiddenPages,
+          };
 
       const res = await fetch(`/api/admin/tournament-branding?tournamentId=${encodeURIComponent(tournamentId)}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...themeBody,
-          themeFont: safeFontKey,
-          themeCardStyle: safeCardStyle,
-          colorMode,
-          publicHiddenPages: normalizedHiddenPages,
-        }),
+        body: JSON.stringify(requestBody),
       });
       if (!res.ok) {
         const d = await res.json();
@@ -143,10 +155,12 @@ export default function TournamentBrandingPage() {
       setPublicHiddenPages(normalizedHiddenPages);
       setSaved(prev => prev ? {
         ...prev,
-        ...themeBody,
-        themeFont: safeFontKey,
-        themeCardStyle: safeCardStyle,
-        colorMode,
+        ...(canUseAdvancedBranding ? {
+          ...themeBody,
+          themeFont: safeFontKey,
+          themeCardStyle: safeCardStyle,
+          colorMode,
+        } : {}),
         publicHiddenPages: normalizedHiddenPages,
       } : null);
       setSuccessMsg('Branding settings saved.');
@@ -282,6 +296,12 @@ export default function TournamentBrandingPage() {
         </div>
       </div>
 
+      <UpgradeGate
+        requiredPlan="tournament_plus"
+        feature="Tournament branding"
+        description="Tournament Plus unlocks tournament logos, custom color presets, light mode, hero banners, fonts, and public card styles."
+      >
+        <>
       <div className={styles.card}>
         <h2 className={styles.sectionTitle}>Tournament Logo</h2>
         <div className={styles.logoRow}>
@@ -402,6 +422,8 @@ export default function TournamentBrandingPage() {
 
         <p className={styles.inheritNote}>When not set, this tournament inherits the organization color theme.</p>
       </div>
+        </>
+      </UpgradeGate>
 
       <div className={styles.card}>
         <h2 className={styles.sectionTitle}>Public Pages</h2>
@@ -427,6 +449,12 @@ export default function TournamentBrandingPage() {
         </div>
       </div>
 
+      <UpgradeGate
+        requiredPlan="tournament_plus"
+        feature="Advanced tournament branding"
+        description="Tournament Plus unlocks hero banners, custom fonts, and public card styles for a polished event site."
+      >
+        <>
       <div className={styles.advancedHeader}>
         <div>
           <p className={styles.advancedEyebrow}>Advanced</p>
@@ -525,6 +553,8 @@ export default function TournamentBrandingPage() {
         )}
         <p className={styles.inheritNote}>When not set, this tournament inherits the organization card style.</p>
       </div>
+        </>
+      </UpgradeGate>
 
       <div className={styles.formFooter}>
         {isDirty && <span className={styles.unsavedLabel}>Unsaved changes</span>}

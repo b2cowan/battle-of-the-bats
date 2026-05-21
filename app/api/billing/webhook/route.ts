@@ -3,6 +3,7 @@ import { PLAN_CONFIG, type BillingCycle } from '@/lib/plan-config';
 import { getPlanFromPriceId } from '@/lib/stripe-prices';
 import { restoreRetainedDowngradeTournaments, retentionDeadline } from '@/lib/billing-retention';
 import { supabaseAdmin, getOrgOwnerEmail } from '@/lib/supabase-admin';
+import { isPastDueTransition, isRecoveryTransition, writePlatformEvent } from '@/lib/platform-events';
 import { sendEmail, SITE_URL } from '@/lib/email';
 import type { OrgPlan } from '@/lib/types';
 import type Stripe from 'stripe';
@@ -14,6 +15,13 @@ function toIso(unixSeconds: number | null | undefined): string | null {
   if (!unixSeconds) return null;
   return new Date(unixSeconds * 1000).toISOString();
 }
+
+const PLAN_RANK: Record<OrgPlan, number> = {
+  tournament: 0,
+  tournament_plus: 1,
+  league: 2,
+  club: 3,
+};
 
 export async function POST(req: Request) {
   const rawBody = await req.text();
@@ -66,6 +74,11 @@ export async function POST(req: Request) {
         if (!cfg) break;
         // current_period_end moved to SubscriptionItem in API 2026-04-22.dahlia
         const currentPeriodEnd = toIso(sub.items?.data?.[0]?.current_period_end);
+        const { data: currentOrg } = await supabaseAdmin
+          .from('organizations')
+          .select('id, plan_id, subscription_status')
+          .eq('stripe_customer_id', customerId)
+          .maybeSingle();
         const { data: updatedOrg } = await supabaseAdmin
           .from('organizations')
           .update({
@@ -82,6 +95,50 @@ export async function POST(req: Request) {
 
         if (updatedOrg) {
           await restoreRetainedDowngradeTournaments(updatedOrg.id, cfg.tournamentLimit);
+
+          const previousPlan = currentOrg?.plan_id as OrgPlan | undefined;
+          const previousStatus = currentOrg?.subscription_status as string | null | undefined;
+          if (previousPlan && PLAN_RANK[planKey] < PLAN_RANK[previousPlan]) {
+            await writePlatformEvent({
+              eventType: 'plan_downgraded',
+              source: 'stripe',
+              sourceEventId: `${event.id}:plan_downgraded`,
+              orgId: updatedOrg.id,
+              previousPlanId: previousPlan,
+              planId: planKey,
+              previousSubscriptionStatus: previousStatus,
+              subscriptionStatus: sub.status,
+              metadata: { stripeSubscriptionId: sub.id, priceId, billingCycle },
+            });
+          }
+
+          if (isPastDueTransition(previousStatus, sub.status)) {
+            await writePlatformEvent({
+              eventType: 'subscription_past_due',
+              source: 'stripe',
+              sourceEventId: `${event.id}:subscription_past_due`,
+              orgId: updatedOrg.id,
+              previousPlanId: previousPlan ?? null,
+              planId: planKey,
+              previousSubscriptionStatus: previousStatus,
+              subscriptionStatus: sub.status,
+              metadata: { stripeSubscriptionId: sub.id, priceId, billingCycle },
+            });
+          }
+
+          if (isRecoveryTransition(previousStatus, sub.status)) {
+            await writePlatformEvent({
+              eventType: 'subscription_recovered',
+              source: 'stripe',
+              sourceEventId: `${event.id}:subscription_recovered`,
+              orgId: updatedOrg.id,
+              previousPlanId: previousPlan ?? null,
+              planId: planKey,
+              previousSubscriptionStatus: previousStatus,
+              subscriptionStatus: sub.status,
+              metadata: { stripeSubscriptionId: sub.id, priceId, billingCycle },
+            });
+          }
         }
       }
       break;
@@ -90,7 +147,7 @@ export async function POST(req: Request) {
     case 'customer.subscription.deleted': {
       const { data: org } = await supabaseAdmin
         .from('organizations')
-        .select('id, name, plan_id')
+        .select('id, name, plan_id, subscription_status')
         .eq('stripe_customer_id', customerId)
         .maybeSingle();
 
@@ -194,6 +251,18 @@ export async function POST(req: Request) {
               billing_suspension_reason: 'Stripe subscription deleted',
             })
             .eq('stripe_customer_id', customerId);
+
+          await writePlatformEvent({
+            eventType: 'subscription_canceled',
+            source: 'stripe',
+            sourceEventId: `${event.id}:subscription_canceled`,
+            orgId: org.id,
+            previousPlanId: org.plan_id,
+            planId: org.plan_id,
+            previousSubscriptionStatus: org.subscription_status,
+            subscriptionStatus: 'canceled',
+            metadata: { stripeCustomerId: customerId, reason: 'Stripe subscription deleted' },
+          });
         } else if (existingIntent.intent_type === 'cancellation') {
           // In-app cancellation already applied — org is already suspended. Clear the
           // Stripe subscription fields that only become accurate once Stripe confirms
@@ -227,6 +296,11 @@ export async function POST(req: Request) {
     case 'invoice.payment_succeeded': {
       const invoice = event.data.object as Stripe.Invoice;
       const currentPeriodEnd = toIso(invoice.period_end);
+      const { data: currentOrg } = await supabaseAdmin
+        .from('organizations')
+        .select('id, plan_id, subscription_status')
+        .eq('stripe_customer_id', customerId)
+        .maybeSingle();
       await supabaseAdmin
         .from('organizations')
         .update({
@@ -234,14 +308,47 @@ export async function POST(req: Request) {
           ...(currentPeriodEnd ? { current_period_end: currentPeriodEnd } : {}),
         })
         .eq('stripe_customer_id', customerId);
+
+      if (currentOrg && isRecoveryTransition(currentOrg.subscription_status, 'active')) {
+        await writePlatformEvent({
+          eventType: 'subscription_recovered',
+          source: 'stripe',
+          sourceEventId: `${event.id}:subscription_recovered`,
+          orgId: currentOrg.id,
+          previousPlanId: currentOrg.plan_id,
+          planId: currentOrg.plan_id,
+          previousSubscriptionStatus: currentOrg.subscription_status,
+          subscriptionStatus: 'active',
+          metadata: { stripeCustomerId: customerId, invoiceId: invoice.id },
+        });
+      }
       break;
     }
 
     case 'invoice.payment_failed': {
+      const { data: currentOrg } = await supabaseAdmin
+        .from('organizations')
+        .select('id, plan_id, subscription_status')
+        .eq('stripe_customer_id', customerId)
+        .maybeSingle();
       await supabaseAdmin
         .from('organizations')
         .update({ subscription_status: 'past_due' })
         .eq('stripe_customer_id', customerId);
+
+      if (currentOrg && isPastDueTransition(currentOrg.subscription_status, 'past_due')) {
+        await writePlatformEvent({
+          eventType: 'subscription_past_due',
+          source: 'stripe',
+          sourceEventId: `${event.id}:subscription_past_due`,
+          orgId: currentOrg.id,
+          previousPlanId: currentOrg.plan_id,
+          planId: currentOrg.plan_id,
+          previousSubscriptionStatus: currentOrg.subscription_status,
+          subscriptionStatus: 'past_due',
+          metadata: { stripeCustomerId: customerId },
+        });
+      }
       break;
     }
 

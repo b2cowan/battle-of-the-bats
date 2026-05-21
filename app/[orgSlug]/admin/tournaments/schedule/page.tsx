@@ -1,12 +1,18 @@
 ﻿'use client';
 import React, { useState, useEffect } from 'react';
-import { Calendar, Plus, Pencil, Trash2, X, Check, Download, Sparkles, Trophy, MapPin, Clock, Search, Lock, Send, Globe, Eye, EyeOff } from 'lucide-react';
+import { Calendar, Plus, Pencil, Trash2, X, Check, Sparkles, Trophy, MapPin, Clock, Search, Lock, Send, Globe, Eye, EyeOff } from 'lucide-react';
 import { formatPoolName } from '@/lib/utils';
 import { saveGame, updateGame, deleteGame } from '@/lib/db';
-import { downloadCSV, formatTime } from '@/lib/utils';
+import { formatTime } from '@/lib/utils';
 import { useTournament } from '@/lib/tournament-context';
 import { useOrg } from '@/lib/org-context';
 import { hasPlanFeature, requiresTournamentPlusCopy, type PlanFeature } from '@/lib/plan-features';
+import {
+  downloadXLSX, generateCSV, downloadCSVBlob, downloadICS,
+  buildFilename, serializeRows, serializeHeaders, type ExportColumnDef,
+  downloadPDF, DEFAULT_PDF_SETTINGS, type OrgPdfSettings,
+} from '@/lib/export';
+import ExportMenu from '@/components/admin/ExportMenu';
 import ScheduleGenerator from './Generator';
 import PlayoffWizard from './PlayoffWizard';
 import GameList from './components/GameList';
@@ -18,6 +24,18 @@ import HelpCallout from '@/components/help/HelpCallout';
 import AddVenueModal from '@/components/admin/AddVenueModal';
 
 type ModalMode = 'add' | 'edit' | null;
+
+// ── Export column definitions ─────────────────────────────────────────────
+// No sensitive fields on this surface — schedule data is operational/public.
+const SCHEDULE_EXPORT_COLS: ExportColumnDef[] = [
+  { label: 'Date',      key: 'date'     },
+  { label: 'Time',      key: 'time'     },
+  { label: 'Division',  key: 'division' },
+  { label: 'Home Team', key: 'homeTeam' },
+  { label: 'Away Team', key: 'awayTeam' },
+  { label: 'Location',  key: 'location' },
+  { label: 'Status',    key: 'status'   },
+];
 
 const emptyForm = {
   ageGroupId: '', homeTeamId: '', awayTeamId: '',
@@ -62,6 +80,11 @@ export default function AdminSchedulePage() {
     ageGroupId?: string;
   } | null>(null);
 
+  // PDF settings — fetched once on mount; used in handleExportPDF
+  const [pdfSettings, setPdfSettings] = useState<OrgPdfSettings | null>(null);
+  const canUsePDF = currentOrg ? hasPlanFeature(currentOrg.planId, 'pdf_exports') : false;
+  const showPdfNudge = canUsePDF && pdfSettings !== null && Object.keys(pdfSettings).length === 0;
+
   const canAutoGenerateSchedule = currentOrg ? hasPlanFeature(currentOrg.planId, 'auto_schedule') : false;
   const canGeneratePlayoffs = currentOrg ? hasPlanFeature(currentOrg.planId, 'playoff_generator') : false;
   const canNotify = currentOrg ? hasPlanFeature(currentOrg.planId, 'schedule_notification') : false;
@@ -74,7 +97,7 @@ export default function AdminSchedulePage() {
       message: `${requiresTournamentPlusCopy(feature)} You can keep building manually on the free Tournament plan.`,
       type: 'info',
       confirmText: 'View Upgrade Options',
-      onConfirm: orgSlug ? () => { window.location.href = `/${orgSlug}/admin/org/billing`; } : undefined,
+      onConfirm: orgSlug ? () => { window.location.href = `/${orgSlug}/admin/tournaments/settings/subscription`; } : undefined,
     });
   }
 
@@ -120,6 +143,13 @@ export default function AdminSchedulePage() {
   }
   
   useEffect(() => { refresh(); }, [currentTournament?.id]);
+
+  useEffect(() => {
+    fetch('/api/admin/org/pdf-settings')
+      .then(r => r.ok ? r.json() : {})
+      .then(data => setPdfSettings(data as OrgPdfSettings))
+      .catch(() => setPdfSettings(null));
+  }, []);
 
   const groupTeams   = (id: string) => teams.filter(t => t.ageGroupId === id);
   const getTeamName  = (id: string) => teams.find(t => t.id === id)?.name ?? null;
@@ -261,19 +291,69 @@ export default function AdminSchedulePage() {
     return new Date(d + 'T12:00:00').toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' });
   }
 
-  function exportToCSV() {
-    const headers = ['Date', 'Time', 'Division', 'Home Team', 'Away Team', 'Location', 'Status'];
-    const rows = filtered.map(g => [
-      g.date,
-      formatTime(g.time),
-      getGroupName(g.ageGroupId),
-      resolveTeam(g.homeTeamId, g.homePlaceholder),
-      resolveTeam(g.awayTeamId, g.awayPlaceholder),
-      g.diamondId ? getDiamondName(g.diamondId) : g.location,
-      g.status,
-    ]);
-    const filename = `schedule-${currentTournament?.year || 'all'}-${new Date().toISOString().split('T')[0]}.csv`;
-    downloadCSV(filename, headers, rows);
+  // ── Export handlers ────────────────────────────────────────────────────
+  function buildScheduleRows() {
+    return filtered.map(g => ({
+      date:     g.date ?? '',
+      time:     formatTime(g.time),
+      division: getGroupName(g.ageGroupId),
+      homeTeam: resolveTeam(g.homeTeamId, g.homePlaceholder),
+      awayTeam: resolveTeam(g.awayTeamId, g.awayPlaceholder),
+      location: g.diamondId ? getDiamondName(g.diamondId) : (g.location ?? ''),
+      status:   g.status,
+    }));
+  }
+
+  async function handleExportXLSX() {
+    await downloadXLSX(
+      buildFilename({ org: currentOrg?.slug, dataset: 'schedule', scope: String(currentTournament?.year ?? '') }, 'xlsx'),
+      serializeHeaders(SCHEDULE_EXPORT_COLS),
+      serializeRows(buildScheduleRows(), SCHEDULE_EXPORT_COLS),
+      'Schedule',
+    );
+  }
+
+  function handleExportCSV() {
+    const headers = serializeHeaders(SCHEDULE_EXPORT_COLS);
+    const rows    = serializeRows(buildScheduleRows(), SCHEDULE_EXPORT_COLS);
+    downloadCSVBlob(
+      buildFilename({ org: currentOrg?.slug, dataset: 'schedule', scope: String(currentTournament?.year ?? '') }, 'csv'),
+      generateCSV(headers, rows),
+    );
+  }
+
+  async function handleExportICS() {
+    const events = filtered
+      .filter(g => g.date)
+      .map(g => ({
+        gameId:   g.id,
+        title:    `${resolveTeam(g.homeTeamId, g.homePlaceholder)} vs ${resolveTeam(g.awayTeamId, g.awayPlaceholder)} — ${getGroupName(g.ageGroupId)}`,
+        date:     g.date,
+        time:     g.time || undefined,
+        location: g.diamondId ? getDiamondName(g.diamondId) : (g.location || undefined),
+        cancelled: g.status === 'cancelled',
+      }));
+    await downloadICS(
+      buildFilename({ org: currentOrg?.slug, dataset: 'schedule', scope: String(currentTournament?.year ?? '') }, 'ics'),
+      events,
+    );
+  }
+
+  async function handleExportPDF() {
+    const settings: OrgPdfSettings = {
+      ...DEFAULT_PDF_SETTINGS,
+      ...(pdfSettings && Object.keys(pdfSettings).length > 0 ? pdfSettings : {}),
+      // Schedule always exports landscape + compact regardless of org default
+      orientation: 'landscape',
+      reportDensity: 'compact',
+    };
+    const headers = serializeHeaders(SCHEDULE_EXPORT_COLS);
+    const rows    = serializeRows(buildScheduleRows(), SCHEDULE_EXPORT_COLS);
+    const filename = buildFilename(
+      { org: currentOrg?.slug, dataset: 'schedule', scope: String(currentTournament?.year ?? '') },
+      'pdf',
+    );
+    await downloadPDF(filename, 'Tournament Schedule', currentTournament?.name, headers, rows, settings);
   }
 
   function statusBadge(status: string) {
@@ -295,9 +375,15 @@ export default function AdminSchedulePage() {
           </div>
         </div>
         <div className={s.headerActions}>
-          <button className="btn btn-outline btn-sm" onClick={exportToCSV} disabled={filtered.length === 0}>
-            <Download size={14} /> Export
-          </button>
+          <ExportMenu
+            formats={['xlsx', 'csv', 'ics', 'pdf']}
+            onExportXLSX={handleExportXLSX}
+            onExportCSV={handleExportCSV}
+            onExportICS={handleExportICS}
+            onExportPDF={handleExportPDF}
+            planId={currentOrg?.planId}
+            disabled={filtered.length === 0}
+          />
           <button className="btn btn-primary btn-sm" onClick={openAdd} disabled={!currentTournament}>
             <Plus size={16} /> Add Game
           </button>
@@ -426,6 +512,17 @@ export default function AdminSchedulePage() {
           <input type="text" placeholder="Search teams..." value={search} onChange={e => setSearch(e.target.value)} className={s.searchInput} />
         </div>
       </div>
+
+      {showPdfNudge && (
+        <HelpCallout
+          variant="info"
+          title="PDF settings not configured"
+          body="Your PDF export will use default styling. Set up your header, logo, and footer once and all future PDFs will use those settings."
+          cta={{ label: 'Configure PDF Settings', href: `/${currentOrg?.slug}/admin/org/settings/pdf` }}
+          dismissible
+          localStorageKey="flhq-pdf-nudge-schedule"
+        />
+      )}
 
       {currentTournament && games.length === 0 && (
         <HelpCallout

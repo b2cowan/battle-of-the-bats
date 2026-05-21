@@ -77,6 +77,7 @@ const orgHelp: HelpPageContent = {
       content: (
         <>
           <p>The <strong>Subscription</strong> page (visible to Owners only) shows your current plan, tournament slot usage, seat usage, and available upgrades.</p>
+          <p>The free Tournament plan is meant for one starter event with standard registration and FieldLogicHQ default public styling. Tournament Plus is the serious tournament operations plan: unlimited tournament slots, 10 staff seats, custom registration questions, Excel and PDF exports for registrations, schedules, and results — useful for check-in sheets, insurance submissions, and post-event board reports — bulk actions, waitlists, full branding, automation, cloning, and post-event reporting.</p>
           <p>To upgrade to Tournament Plus, click <strong>Upgrade to Tournament Plus</strong>. You'll be taken to secure Stripe Checkout to enter payment details. Your first payment is collected automatically after the 14-day trial. League and Club are shown as coming soon until those tiers open for self-serve checkout.</p>
           <p>If you're on a paid plan, use <strong>Manage Subscription</strong> to update your payment method, view past invoices, or cancel. This opens the Stripe customer portal.</p>
           <p><strong>Past-due payments:</strong> If a payment fails, your access stays active during a grace period. Update your payment method via <strong>Manage Subscription</strong> before the grace period ends to avoid service interruption.</p>
@@ -95,7 +96,7 @@ const orgHelp: HelpPageContent = {
             <li>Note that registration form links sent to coaches in past emails will break</li>
             <li>Consider the timing — avoid changing mid-tournament</li>
           </ul>
-          <p><strong>Branding</strong> — Upload a logo (JPG, PNG, or WebP, max 2 MB), choose a colour theme, and optionally set a hero banner for your public page (League and above). Changes apply to the public site immediately after saving.</p>
+          <p><strong>Branding</strong> — Free Tournament orgs use FieldLogicHQ default public styling. Tournament Plus and higher can upload logos, choose tournament colours, and control more of the public tournament appearance. Public organization page branding is part of the broader public-site tiers.</p>
           <p><strong>Score finalization</strong> — When enabled, official score submissions are visible to the public but not marked final until an admin reviews them in the Results page. Useful if your org requires a second review before results are official.</p>
         </>
       ),

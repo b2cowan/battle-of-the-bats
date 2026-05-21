@@ -1,0 +1,286 @@
+import { NextRequest, NextResponse } from 'next/server';
+import {
+  acceptanceHtml,
+  paymentConfirmationHtml,
+  rejectionHtml,
+  sendEmail,
+} from '@/lib/email';
+import { getAuthContextWithScope, forbidden, scopeGuard, unauthorized } from '@/lib/api-auth';
+import { hasCapability } from '@/lib/roles';
+import { hasPlanFeature, requiresTournamentPlusCopy } from '@/lib/plan-features';
+import { writePlatformEvent } from '@/lib/platform-events';
+import { supabaseAdmin } from '@/lib/supabase-admin';
+
+type RouteParams = { params: Promise<{ tournamentId: string }> };
+
+type BulkAction =
+  | 'accept'
+  | 'reject'
+  | 'waitlist'
+  | 'mark_deposit_paid'
+  | 'mark_paid';
+
+type TeamRow = {
+  id: string;
+  tournament_id: string;
+  age_group_id: string;
+  name: string;
+  coach: string | null;
+  email: string | null;
+  status: string | null;
+  payment_status: string | null;
+  slot_id: string | null;
+  waitlist_position: number | null;
+  deposit_paid: number | null;
+  total_paid: number | null;
+};
+
+type TournamentRow = {
+  id: string;
+  name: string;
+  organization_id: string | null;
+  fee_schedule_mode: string | null;
+  deposit_amount: number | null;
+  total_fee_amount: number | null;
+};
+
+type AgeGroupFeeRow = {
+  id: string;
+  name: string;
+  deposit_amount: number | null;
+  total_fee_amount: number | null;
+};
+
+const BULK_ACTIONS = new Set<BulkAction>([
+  'accept',
+  'reject',
+  'waitlist',
+  'mark_deposit_paid',
+  'mark_paid',
+]);
+
+function json(data: unknown, status = 200) {
+  return NextResponse.json(data, { status });
+}
+
+async function trackBulkEvent(input: {
+  orgId: string;
+  userId: string;
+  userEmail?: string | null;
+  planId: string;
+  tournamentId: string;
+  action: BulkAction | string;
+  selectedCount: number;
+  status: 'attempted' | 'completed' | 'blocked';
+}) {
+  await writePlatformEvent({
+    eventType: 'tournament_plus_feature_used',
+    source: 'app',
+    orgId: input.orgId,
+    actorUserId: input.userId,
+    actorEmail: input.userEmail,
+    planId: input.planId,
+    metadata: {
+      feature: 'bulk_registration_actions',
+      tournamentId: input.tournamentId,
+      action: input.action,
+      selectedCount: input.selectedCount,
+      status: input.status,
+    },
+  });
+}
+
+async function getNextWaitlistPosition(ageGroupId: string) {
+  const { data, error } = await supabaseAdmin
+    .from('teams')
+    .select('waitlist_position')
+    .eq('age_group_id', ageGroupId)
+    .not('waitlist_position', 'is', null)
+    .order('waitlist_position', { ascending: false })
+    .limit(1)
+    .maybeSingle<{ waitlist_position: number | null }>();
+  if (error) throw error;
+  return (data?.waitlist_position ?? 0) + 1;
+}
+
+function effectiveFee(
+  team: TeamRow,
+  tournament: TournamentRow,
+  ageGroups: Map<string, AgeGroupFeeRow>,
+) {
+  const group = ageGroups.get(team.age_group_id);
+  if (tournament.fee_schedule_mode === 'age_group' && group?.total_fee_amount != null) {
+    return {
+      depositAmount: group.deposit_amount ?? null,
+      totalFeeAmount: group.total_fee_amount ?? null,
+    };
+  }
+  return {
+    depositAmount: tournament.deposit_amount ?? null,
+    totalFeeAmount: tournament.total_fee_amount ?? null,
+  };
+}
+
+async function releaseTeamSlot(team: TeamRow) {
+  if (!team.slot_id) return;
+  await supabaseAdmin.from('pool_slots').update({ team_id: null }).eq('id', team.slot_id);
+}
+
+async function sendStatusEmails(teams: TeamRow[], action: BulkAction, tournamentName: string, ageGroups: Map<string, AgeGroupFeeRow>) {
+  if (action !== 'accept' && action !== 'reject' && action !== 'mark_paid') return;
+
+  for (const team of teams) {
+    if (!team.email) continue;
+    const ageGroupName = ageGroups.get(team.age_group_id)?.name ?? 'Division';
+    const payload = {
+      teamName: team.name,
+      coachName: team.coach ?? '',
+      ageGroupName,
+      tournamentName,
+      teamId: team.id,
+    };
+
+    if (action === 'accept' && team.status !== 'accepted') {
+      await sendEmail(team.email, `Your Team Has Been Accepted - ${team.name}`, acceptanceHtml(payload));
+    }
+    if (action === 'reject' && team.status !== 'rejected') {
+      await sendEmail(team.email, `Registration Update - ${team.name}`, rejectionHtml(payload));
+    }
+    if (action === 'mark_paid' && team.payment_status !== 'paid') {
+      await sendEmail(team.email, `Payment Recorded - ${team.name}`, paymentConfirmationHtml(payload));
+    }
+  }
+}
+
+export async function POST(req: NextRequest, { params }: RouteParams) {
+  const ctx = await getAuthContextWithScope();
+  if (!ctx) return unauthorized();
+  if (!hasCapability(ctx.role, ctx.capabilities, 'module_tournaments')) return forbidden();
+  if (!hasCapability(ctx.role, ctx.capabilities, 'manage_registrations') && !hasCapability(ctx.role, ctx.capabilities, 'create_tournaments')) {
+    return forbidden();
+  }
+
+  const { tournamentId } = await params;
+  const body = await req.json() as { action?: unknown; ids?: unknown };
+  const action = typeof body.action === 'string' ? body.action : '';
+  const ids = Array.isArray(body.ids)
+    ? body.ids.filter((id): id is string => typeof id === 'string' && id.length > 0)
+    : [];
+
+  if (!BULK_ACTIONS.has(action as BulkAction)) return json({ error: 'Choose a valid bulk action.' }, 400);
+  if (ids.length === 0) return json({ error: 'Select at least one registration.' }, 400);
+
+  const bulkAction = action as BulkAction;
+  const denied = scopeGuard(ctx, tournamentId);
+  if (denied) return denied;
+
+  await trackBulkEvent({
+    orgId: ctx.org.id,
+    userId: ctx.user.id,
+    userEmail: ctx.user.email,
+    planId: ctx.org.planId,
+    tournamentId,
+    action: bulkAction,
+    selectedCount: ids.length,
+    status: 'attempted',
+  });
+
+  if (!hasPlanFeature(ctx.org.planId, 'bulk_registration_actions')) {
+    await trackBulkEvent({
+      orgId: ctx.org.id,
+      userId: ctx.user.id,
+      userEmail: ctx.user.email,
+      planId: ctx.org.planId,
+      tournamentId,
+      action: bulkAction,
+      selectedCount: ids.length,
+      status: 'blocked',
+    });
+    return json({ error: requiresTournamentPlusCopy('bulk_registration_actions') }, 403);
+  }
+
+  const [{ data: tournament, error: tournamentError }, { data: teams, error: teamsError }, { data: ageGroupRows, error: ageGroupError }] = await Promise.all([
+    supabaseAdmin
+      .from('tournaments')
+      .select('id, name, organization_id, fee_schedule_mode, deposit_amount, total_fee_amount')
+      .eq('id', tournamentId)
+      .maybeSingle<TournamentRow>(),
+    supabaseAdmin
+      .from('teams')
+      .select('id, tournament_id, age_group_id, name, coach, email, status, payment_status, slot_id, waitlist_position, deposit_paid, total_paid')
+      .in('id', ids),
+    supabaseAdmin
+      .from('age_groups')
+      .select('id, name, deposit_amount, total_fee_amount')
+      .eq('tournament_id', tournamentId),
+  ]);
+
+  if (tournamentError) return json({ error: tournamentError.message }, 500);
+  if (teamsError) return json({ error: teamsError.message }, 500);
+  if (ageGroupError) return json({ error: ageGroupError.message }, 500);
+  if (!tournament || tournament.organization_id !== ctx.org.id) return forbidden();
+
+  const selectedTeams = (teams ?? []) as TeamRow[];
+  if (selectedTeams.length !== ids.length || selectedTeams.some(team => team.tournament_id !== tournamentId)) {
+    return json({ error: 'One or more registrations are outside this tournament.' }, 400);
+  }
+
+  const ageGroups = new Map((ageGroupRows ?? []).map(group => [group.id, group as AgeGroupFeeRow]));
+
+  const updates: Array<{ id: string; patch: Record<string, unknown> }> = [];
+  let nextWaitlistByGroup = new Map<string, number>();
+
+  for (const team of selectedTeams) {
+    const patch: Record<string, unknown> = {};
+    if (bulkAction === 'accept') {
+      patch.status = 'accepted';
+      patch.waitlist_position = null;
+    } else if (bulkAction === 'reject') {
+      patch.status = 'rejected';
+      patch.waitlist_position = null;
+      patch.slot_id = null;
+      await releaseTeamSlot(team);
+    } else if (bulkAction === 'waitlist') {
+      let nextPosition = nextWaitlistByGroup.get(team.age_group_id);
+      if (nextPosition == null) nextPosition = await getNextWaitlistPosition(team.age_group_id);
+      patch.status = 'waitlist';
+      patch.waitlist_position = nextPosition;
+      patch.slot_id = null;
+      nextWaitlistByGroup = new Map(nextWaitlistByGroup).set(team.age_group_id, nextPosition + 1);
+      await releaseTeamSlot(team);
+    } else if (bulkAction === 'mark_deposit_paid') {
+      const fee = effectiveFee(team, tournament, ageGroups);
+      if (fee.depositAmount != null) patch.deposit_paid = Math.max(Number(team.deposit_paid ?? 0), Number(fee.depositAmount));
+      if (fee.totalFeeAmount && fee.depositAmount && Number(fee.depositAmount) >= Number(fee.totalFeeAmount)) {
+        patch.total_paid = Math.max(Number(team.total_paid ?? 0), Number(fee.totalFeeAmount));
+        patch.payment_status = 'paid';
+      }
+    } else if (bulkAction === 'mark_paid') {
+      const fee = effectiveFee(team, tournament, ageGroups);
+      patch.payment_status = 'paid';
+      if (fee.depositAmount != null) patch.deposit_paid = Math.max(Number(team.deposit_paid ?? 0), Number(fee.depositAmount));
+      if (fee.totalFeeAmount != null) patch.total_paid = Math.max(Number(team.total_paid ?? 0), Number(fee.totalFeeAmount));
+    }
+    if (Object.keys(patch).length > 0) updates.push({ id: team.id, patch });
+  }
+
+  for (const update of updates) {
+    const { error } = await supabaseAdmin.from('teams').update(update.patch).eq('id', update.id);
+    if (error) return json({ error: error.message }, 500);
+  }
+
+  await sendStatusEmails(selectedTeams, bulkAction, tournament.name, ageGroups);
+
+  await trackBulkEvent({
+    orgId: ctx.org.id,
+    userId: ctx.user.id,
+    userEmail: ctx.user.email,
+    planId: ctx.org.planId,
+    tournamentId,
+    action: bulkAction,
+    selectedCount: ids.length,
+    status: 'completed',
+  });
+
+  return json({ success: true, count: selectedTeams.length, action: bulkAction });
+}

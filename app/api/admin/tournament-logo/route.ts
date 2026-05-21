@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { forbidden, getAuthContextWithScope, scopeGuard, unauthorized } from '@/lib/api-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { hasPlanFeature } from '@/lib/plan-features';
 
 const BUCKET   = 'org-logos';
 const MAX_BYTES = 2 * 1024 * 1024;
@@ -31,6 +32,13 @@ export async function POST(req: Request) {
 
   const denied = scopeGuard(ctx, tournamentId);
   if (denied) return denied;
+
+  if (!hasPlanFeature(ctx.org.planId, 'advanced_tournament_branding')) {
+    return NextResponse.json(
+      { error: 'Tournament logos require Tournament Plus or higher' },
+      { status: 403 }
+    );
+  }
 
   const formData = await req.formData();
   const file = formData.get('file');
@@ -74,6 +82,13 @@ export async function DELETE(req: Request) {
 
   const denied = scopeGuard(ctx, tournamentId);
   if (denied) return denied;
+
+  if (!hasPlanFeature(ctx.org.planId, 'advanced_tournament_branding')) {
+    return NextResponse.json(
+      { error: 'Tournament logos require Tournament Plus or higher' },
+      { status: 403 }
+    );
+  }
 
   for (const ext of ['jpg', 'png', 'webp']) {
     await supabaseAdmin.storage.from(BUCKET).remove([`${ctx.org.id}/${tournamentId}/logo.${ext}`]);

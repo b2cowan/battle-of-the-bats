@@ -4,6 +4,7 @@ import { Users } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { useCoaches } from '@/lib/coaches-context';
 import HelpCallout from '@/components/help/HelpCallout';
+import CoachTournamentAwarenessBanner from '@/components/marketing/CoachTournamentAwarenessBanner';
 import styles from './coaches.module.css';
 
 const STATUS_LABEL: Record<string, string> = {
@@ -43,6 +44,10 @@ export default function CoachesDashboard({
           dismissible
           localStorageKey={`flhq-help-dismissed-coaches-welcome-${params.orgSlug}`}
         />
+      )}
+
+      {assignments.length > 0 && (
+        <CoachTournamentAwarenessBanner orgSlug={params.orgSlug} />
       )}
 
       {assignments.length === 0 ? (

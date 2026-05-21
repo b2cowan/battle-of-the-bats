@@ -3,9 +3,27 @@ import { useState, useEffect, useCallback } from 'react';
 import { Calendar, ChevronLeft, ChevronRight, Plus, X, Trophy, Swords, Shield, Dumbbell, Users, MoreHorizontal } from 'lucide-react';
 import Link from 'next/link';
 import { useCoaches } from '@/lib/coaches-context';
+import { useOrg } from '@/lib/org-context';
 import HelpCallout from '@/components/help/HelpCallout';
+import {
+  downloadXLSX, generateCSV, downloadCSVBlob, downloadICS,
+  buildFilename, serializeRows, serializeHeaders, type ExportColumnDef, type ICSEventInput,
+} from '@/lib/export';
+import ExportMenu from '@/components/admin/ExportMenu';
 import styles from '../../../coaches.module.css';
 import type { RepTeamEvent, RepEventType } from '@/lib/types';
+
+// ── Export definition ─────────────────────────────────────────────────────────
+
+const SCHEDULE_EXPORT_COLS: ExportColumnDef[] = [
+  { label: 'Date',       key: 'date',      format: 'date' },
+  { label: 'Time',       key: 'time',      format: 'text' },
+  { label: 'Event Type', key: 'eventType', format: 'text' },
+  { label: 'Name',       key: 'name',      format: 'text' },
+  { label: 'Opponent',   key: 'opponent',  format: 'text' },
+  { label: 'Location',   key: 'location',  format: 'text' },
+  { label: 'Home/Away',  key: 'homeAway',  format: 'text' },
+];
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 
@@ -167,6 +185,7 @@ export default function CoachesSchedulePage({
 }) {
   const { orgSlug, teamId } = params;
   const { assignments, loading: ctxLoading } = useCoaches();
+  const { currentOrg } = useOrg();
 
   const [events, setEvents] = useState<RepTeamEvent[]>([]);
   const [loading, setLoading] = useState(true);
@@ -314,6 +333,65 @@ export default function CoachesSchedulePage({
     } finally {
       setSaving(false);
     }
+  }
+
+  // ── Export ──────────────────────────────────────────────────────────────────
+
+  function buildExportRows() {
+    return events.map(e => ({
+      date:      e.startsAt ? e.startsAt.slice(0, 10) : '',
+      time:      e.startsAt ? new Date(e.startsAt).toLocaleTimeString('en-CA', { hour: 'numeric', minute: '2-digit', hour12: true }) : '',
+      eventType: EVENT_LABELS[e.eventType] ?? e.eventType,
+      name:      e.name,
+      opponent:  e.opponent ?? '',
+      location:  e.location ?? '',
+      homeAway:  e.homeAway ?? '',
+    }));
+  }
+
+  function handleExportXLSX() {
+    const rows = buildExportRows();
+    const headers = serializeHeaders(SCHEDULE_EXPORT_COLS);
+    const data    = serializeRows(rows, SCHEDULE_EXPORT_COLS);
+    const filename = buildFilename(
+      { org: currentOrg?.slug, dataset: 'schedule', scope: assignment?.teamName },
+      'xlsx',
+    );
+    downloadXLSX(filename, headers, data, 'Schedule');
+  }
+
+  function handleExportCSV() {
+    const rows = buildExportRows();
+    const headers = serializeHeaders(SCHEDULE_EXPORT_COLS);
+    const data    = serializeRows(rows, SCHEDULE_EXPORT_COLS);
+    const filename = buildFilename(
+      { org: currentOrg?.slug, dataset: 'schedule', scope: assignment?.teamName },
+      'csv',
+    );
+    downloadCSVBlob(filename, generateCSV(headers, data));
+  }
+
+  async function handleExportICS() {
+    const icsEvents: ICSEventInput[] = events
+      .filter(e => e.startsAt)
+      .map(e => ({
+        gameId:    e.id,
+        title:     e.opponent
+          ? `${e.name} vs ${e.opponent}`
+          : e.name,
+        date:      e.startsAt!.slice(0, 10),
+        time:      new Date(e.startsAt!).toTimeString().slice(0, 5),
+        durationHours: e.endsAt
+          ? Math.max(0.5, (new Date(e.endsAt).getTime() - new Date(e.startsAt!).getTime()) / 3600000)
+          : 2,
+        location:  e.location ?? undefined,
+        description: e.description ?? undefined,
+      }));
+    const filename = buildFilename(
+      { org: currentOrg?.slug, dataset: 'schedule', scope: assignment?.teamName },
+      'ics',
+    );
+    await downloadICS(filename, icsEvents);
   }
 
   // ── Rendering ───────────────────────────────────────────────────────────────
@@ -484,6 +562,14 @@ export default function CoachesSchedulePage({
           </div>
         </div>
         <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
+          {/* Export */}
+          <ExportMenu
+            formats={['xlsx', 'csv', 'ics']}
+            onExportXLSX={handleExportXLSX}
+            onExportCSV={handleExportCSV}
+            onExportICS={handleExportICS}
+            disabled={events.length === 0}
+          />
           {/* View toggle */}
           <div className={styles.viewToggle}>
             {(['list', 'week', 'month'] as ViewMode[]).map(v => (

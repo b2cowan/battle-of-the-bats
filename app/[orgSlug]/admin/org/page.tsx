@@ -1,6 +1,6 @@
 'use client';
 import Link from 'next/link';
-import { Users2, RefreshCw, MapPin, CreditCard, Settings } from 'lucide-react';
+import { Users2, RefreshCw, MapPin, CreditCard, Settings, FileText } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 
 export default function OrgAdminHub() {
@@ -35,6 +35,14 @@ export default function OrgAdminHub() {
       icon: MapPin,
       href: `${base}/diamonds`,
     },
+    ...(userRole === 'owner' || userRole === 'admin' ? [
+      {
+        label: 'PDF Settings',
+        desc: 'Configure header, logo, footer, and branding for all PDF exports',
+        icon: FileText,
+        href: `${base}/settings/pdf`,
+      },
+    ] : []),
     ...(userRole === 'owner' ? [
       {
         label: 'Subscription',

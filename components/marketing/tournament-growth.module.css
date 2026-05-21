@@ -1,0 +1,176 @@
+.poweredBy {
+  position: fixed;
+  right: 1rem;
+  bottom: 1rem;
+  z-index: 70;
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  max-width: calc(100vw - 2rem);
+  padding: 0.45rem 0.65rem;
+  border: 1px solid rgba(255,255,255,0.14);
+  border-radius: 8px;
+  background: rgba(9, 12, 20, 0.86);
+  color: rgba(255,255,255,0.58);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.28);
+  backdrop-filter: blur(12px);
+  font-size: 0.74rem;
+}
+
+.poweredBy a {
+  color: var(--logic-lime, #d9f99d);
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.poweredBy a:hover {
+  text-decoration: underline;
+}
+
+.poweredByWithBanner {
+  bottom: 5.25rem;
+}
+
+.banner,
+.coachBanner {
+  position: fixed;
+  left: 50%;
+  bottom: 1rem;
+  z-index: 75;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 0.85rem;
+  width: min(760px, calc(100vw - 2rem));
+  padding: 0.75rem;
+  border: 1px solid rgba(217,249,157,0.26);
+  border-radius: 8px;
+  background: rgba(12, 17, 27, 0.94);
+  color: rgba(255,255,255,0.82);
+  box-shadow: 0 18px 50px rgba(0,0,0,0.38);
+  backdrop-filter: blur(14px);
+  transform: translateX(-50%);
+}
+
+.coachBanner {
+  position: static;
+  transform: none;
+  width: 100%;
+  margin-bottom: 1rem;
+  background: rgba(255,255,255,0.045);
+  border-color: rgba(var(--blueprint-blue-rgb), 0.28);
+  box-shadow: none;
+}
+
+.bannerIcon,
+.confirmationIcon {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  color: var(--logic-lime, #d9f99d);
+  background: rgba(217,249,157,0.12);
+  border: 1px solid rgba(217,249,157,0.22);
+}
+
+.bannerBody,
+.confirmationBody {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.bannerBody strong,
+.confirmationBody strong {
+  color: var(--white, #fff);
+  font-size: 0.88rem;
+  line-height: 1.2;
+}
+
+.bannerBody span,
+.confirmationBody span {
+  color: rgba(255,255,255,0.58);
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+
+.bannerCta,
+.confirmationLink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 34px;
+  padding: 0 0.85rem;
+  border-radius: 6px;
+  background: var(--logic-lime, #d9f99d);
+  color: #111827;
+  font-size: 0.8rem;
+  font-weight: 800;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.bannerCta:hover,
+.confirmationLink:hover {
+  filter: brightness(0.96);
+}
+
+.dismissBtn {
+  width: 30px;
+  height: 30px;
+  border: 0;
+  border-radius: 6px;
+  display: grid;
+  place-items: center;
+  color: rgba(255,255,255,0.55);
+  background: transparent;
+}
+
+.dismissBtn:hover {
+  color: rgba(255,255,255,0.9);
+  background: rgba(255,255,255,0.08);
+}
+
+.confirmationCta {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.85rem;
+  margin-top: 1.25rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid rgba(255,255,255,0.1);
+  text-align: left;
+}
+
+@media (max-width: 720px) {
+  .poweredBy {
+    left: 1rem;
+    right: 1rem;
+    justify-content: center;
+    bottom: 0.75rem;
+  }
+
+  .poweredByWithBanner {
+    bottom: 7.75rem;
+  }
+
+  .banner,
+  .coachBanner,
+  .confirmationCta {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+  }
+
+  .bannerCta,
+  .confirmationLink {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+
+  .dismissBtn {
+    grid-column: 3;
+    grid-row: 1;
+  }
+}

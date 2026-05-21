@@ -78,10 +78,23 @@
 }
 
 .actionCell {
-  font-family: monospace;
+  white-space: nowrap;
+}
+
+.actionCell span {
+  display: block;
+  font-family: var(--font-data);
   font-size: 0.68rem;
   color: var(--logic-lime);
-  white-space: nowrap;
+  text-transform: capitalize;
+}
+
+.actionCell code {
+  display: block;
+  margin-top: 0.18rem;
+  font-family: monospace;
+  font-size: 0.58rem;
+  color: var(--data-gray);
 }
 
 .orgLink {
@@ -98,19 +111,61 @@
   border-color: rgba(var(--logic-lime-rgb), 0.5);
 }
 
+.orgCell {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+}
+
+.orgFilterLink {
+  font-family: var(--font-data);
+  font-size: 0.52rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--data-gray);
+  text-decoration: none;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 0.14rem 0.38rem;
+}
+
+.orgFilterLink:hover {
+  color: var(--fl-text);
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
 .dimText {
   color: var(--data-gray);
 }
 
-.valueCell {
+.valueDetails {
+  max-width: 260px;
+}
+
+.valueDetails summary {
   font-family: monospace;
   font-size: 0.65rem;
   color: var(--data-gray);
-  display: block;
-  max-width: 200px;
+  cursor: pointer;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.valueDetails pre {
+  max-width: min(520px, 72vw);
+  max-height: 20rem;
+  overflow: auto;
+  margin: 0.5rem 0 0;
+  padding: 0.75rem;
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.16);
+  background: #050705;
+  color: var(--fl-text);
+  font-family: monospace;
+  font-size: 0.68rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
 }
 
 .emptyCell {
@@ -152,7 +207,8 @@
 
 .filterSelect option { background: #0a0f0a; }
 
-.filterBtn {
+.filterBtn,
+.exportBtn {
   padding: 0.4rem 0.9rem;
   background: rgba(var(--logic-lime-rgb), 0.1);
   border: 1px solid rgba(var(--logic-lime-rgb), 0.35);
@@ -164,9 +220,17 @@
   text-transform: uppercase;
   cursor: pointer;
   transition: background 0.15s;
+  text-decoration: none;
 }
 
-.filterBtn:hover { background: rgba(var(--logic-lime-rgb), 0.18); }
+.filterBtn:hover,
+.exportBtn:hover { background: rgba(var(--logic-lime-rgb), 0.18); }
+
+.exportBtn {
+  color: var(--data-gray);
+  border-color: rgba(255, 255, 255, 0.12);
+  background: transparent;
+}
 
 .filterClear {
   font-family: var(--font-data);

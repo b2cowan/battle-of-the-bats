@@ -179,12 +179,16 @@ const tournamentsHelp: HelpPageContent = {
       searchText: 'teams registrations public form pending accepted waitlist rejected payment status no schedule deposit paid paid in full past due export accepted teams schedule builder',
       links: [
         { label: 'Registrations', href: '../tournaments/teams' },
+        { label: 'Registration Questions', href: '../tournaments/settings/registration-fields' },
       ],
       content: (
         <>
           <p>Teams register through the public tournament registration form once the tournament is active and at least one division is open.</p>
           <p>Each registration can be <strong>Pending</strong>, <strong>Accepted</strong>, <strong>Waitlist</strong>, or <strong>Rejected</strong>. Only accepted teams are eligible for schedule assignment and public competition views.</p>
-          <p>Payment status helps admins track whether an accepted team has no schedule, pending payment, deposit paid, paid in full, or past due. Use export when you need a team list outside FieldLogicHQ.</p>
+          <p>Payment status helps admins track whether an accepted team has no schedule, pending payment, deposit paid, paid in full, or past due.</p>
+          <p>The free Tournament plan supports standard registration fields for a starter event. Tournament Plus adds the registration operations tools serious organizers usually need: custom questions, file collection, Excel/CSV export, bulk actions, and richer waitlist workflows.</p>
+          <p>Use <strong>Registration Questions</strong> when you need tournament-specific coach confirmations, dropdown answers, or uploaded documents. Submitted answers appear in admin registration details and registration exports.</p>
+          <p>Use bulk actions only after filtering and selecting the exact registrations you want to change. Bulk actions update selected registrations only; they do not apply to hidden rows or every registration in the tournament.</p>
         </>
       ),
       faqs: [
@@ -215,6 +219,33 @@ const tournamentsHelp: HelpPageContent = {
           keywords: ['payment status', 'deposit', 'paid', 'past due'],
           answer: (
             <p>Payment status is calculated from the tournament or division fee schedule and the payment values tracked for each accepted registration.</p>
+          ),
+        },
+        {
+          id: 'faq-custom-registration-questions',
+          question: 'How do custom registration questions work?',
+          answerText: 'Tournament Plus lets admins add tournament-specific questions and file uploads to the public team registration form.',
+          keywords: ['custom questions', 'registration fields', 'file upload', 'Tournament Plus'],
+          answer: (
+            <p>Open <strong>Settings & Access</strong>, then <strong>Registration Questions</strong>. Tournament Plus questions appear on the public registration form and submitted answers appear in registration details and exports.</p>
+          ),
+        },
+        {
+          id: 'faq-bulk-registration-actions',
+          question: 'How do bulk registration actions work?',
+          answerText: 'Select the registrations you want to update, then choose the bulk action. Only selected registrations are changed.',
+          keywords: ['bulk actions', 'selected teams', 'approve', 'reject', 'waitlist'],
+          answer: (
+            <p>Select specific rows on the Registrations page, then choose a bulk action such as accept, reject, waitlist, mark deposit paid, or mark paid. Bulk actions are a Tournament Plus workflow and only affect the selected rows.</p>
+          ),
+        },
+        {
+          id: 'faq-waitlist-order',
+          question: 'How is waitlist order preserved?',
+          answerText: 'Waitlisted teams receive a numbered position in their division queue, and promotions compact the remaining queue.',
+          keywords: ['waitlist', 'queue', 'promotion', 'position'],
+          answer: (
+            <p>When a team joins or is moved to the waitlist, FieldLogicHQ assigns the next queue position for that division. When a waitlisted team is promoted, the remaining waitlist closes the gap so the queue stays in order.</p>
           ),
         },
       ],
@@ -341,9 +372,21 @@ const tournamentsHelp: HelpPageContent = {
         <>
           <p>Use <strong>Preview Site</strong> from the tournament sidebar footer to inspect the public tournament experience before or after activation.</p>
           <p>The public tournament site can include registration, schedule, standings, results, teams, rules, resources, and news depending on tournament setup and status.</p>
-          <p>Use <strong>Communication</strong> for targeted tournament messages. Review recipients and message content carefully before sending.</p>
+          <p>Use <strong>Communication</strong> for tournament messages. Free Tournament supports basic all-team email. Tournament Plus can target by division, registration status, payment status, selected teams, and contact role.</p>
+          <p>Review recipients and message content carefully before sending. Targeted sends should be operational and useful for teams, not broad marketing blasts.</p>
         </>
       ),
+      faqs: [
+        {
+          id: 'faq-targeted-communication',
+          question: 'Who can use targeted tournament communication?',
+          answerText: 'Tournament Plus, League, and Club can target messages by team status, payment status, division, selected teams, and contact role.',
+          keywords: ['targeted communication', 'email selected', 'division email', 'payment status'],
+          answer: (
+            <p>Targeted communication is included with Tournament Plus and higher. Free Tournament can still send basic all-team email, but targeted filters are locked so an unauthorized filter never falls back to sending everyone.</p>
+          ),
+        },
+      ],
     },
     {
       id: 'settings-and-access',
@@ -361,9 +404,10 @@ const tournamentsHelp: HelpPageContent = {
       content: (
         <>
           <p>Use <strong>Settings & Access</strong> for tournament-specific administration after the core setup is in place.</p>
-          <p><strong>Branding</strong> controls the tournament public appearance, including assets such as tournament logos or hero imagery when available. Use it when one tournament needs to look distinct from the organization site.</p>
-          <p><strong>Scoring</strong> controls result workflow choices such as whether official score submissions require admin finalization before becoming final.</p>
+          <p><strong>Branding</strong> controls the tournament public appearance. Free tournaments use the default FieldLogicHQ look; Tournament Plus and higher can make a tournament look distinct with custom logo, colour, and appearance controls.</p>
+          <p><strong>Event Settings</strong> controls dates, fees, score finalization, and the Plus-only post-event results notification. When enabled, accepted team contacts receive the public results links once when the tournament is marked completed.</p>
           <p><strong>Members</strong> helps you review who can administer tournament work. Keep access limited to people who need to manage setup, registrations, schedule, results, or communications.</p>
+          <p><strong>Subscription</strong> stays inside tournament admin for Tournament and Tournament Plus users, so upgrade prompts do not send tournament-only organizers into organization admin billing pages.</p>
         </>
       ),
       faqs: [
@@ -383,6 +427,15 @@ const tournamentsHelp: HelpPageContent = {
           keywords: ['branding', 'logo', 'hero', 'public site'],
           answer: (
             <p>Yes. Use <strong>Branding</strong> under tournament settings when a tournament needs its own public identity separate from the default organization look.</p>
+          ),
+        },
+        {
+          id: 'faq-post-event-results-email',
+          question: 'How do teams get final results after the tournament?',
+          answerText: 'Tournament Plus can send accepted team contacts one post-event email with public standings, schedule, and teams links when the tournament is marked completed.',
+          keywords: ['post-event email', 'results notification', 'completed tournament', 'Tournament Plus'],
+          answer: (
+            <p>Open <strong>Event Settings</strong> and enable the post-event results notification. The email sends once when the tournament changes to Completed, and FieldLogicHQ records that it was sent so it is not resent by accident.</p>
           ),
         },
       ],
@@ -409,6 +462,7 @@ const tournamentsHelp: HelpPageContent = {
             <li><strong>Sealed</strong> - a permanent snapshot of final results has been created.</li>
           </ul>
           <p>Archive when you want to retire an event and free the slot. Seal only after scores and results are final. Sealing is permanent and cannot be undone.</p>
+          <p>For completed or archived tournaments, Tournament Plus adds a <strong>Summary</strong> page with registration totals, payment readiness, schedule progress, division recaps, public results links, print/share actions, and a prompt to start next year from the same setup.</p>
         </>
       ),
       faqs: [
@@ -450,7 +504,47 @@ const tournamentsHelp: HelpPageContent = {
             <p>Seal only after all scores, standings, and final results have been reviewed. Sealing creates an immutable record and cannot be reversed.</p>
           ),
         },
+        {
+          id: 'faq-post-event-summary',
+          question: 'What is the post-event summary for?',
+          answerText: 'Tournament Plus gives completed or archived tournaments a printable recap and repeat-event planning surface.',
+          keywords: ['summary', 'recap', 'post-event', 'clone next year', 'renewal'],
+          answer: (
+            <p>The Summary page helps organizers share the public results record, print a recap, review registration and payment readiness, and start a future draft from the completed tournament setup.</p>
+          ),
+        },
       ],
+    },
+
+    // ── Exports cross-link ──────────────────────────────────────────────────
+    {
+      id: 'exports',
+      heading: 'Exporting data',
+      summary: 'Export registrations, schedules, and results to Excel, CSV, iCal, and PDF.',
+      keywords: ['export', 'xlsx', 'csv', 'ical', 'pdf', 'spreadsheet', 'download', 'check-in', 'insurance'],
+      searchText:
+        'export xlsx csv excel spreadsheet ical calendar pdf report check-in insurance registrations schedule results download',
+      links: [
+        { label: 'Exports & Downloads guide', href: '../help/exports' },
+      ],
+      content: (
+        <>
+          <p>
+            Registration lists, schedules, and results can all be exported directly from their
+            admin pages. Click the <strong>Export</strong> button in the top right of any table to
+            download in Excel (.xlsx), CSV, Calendar (.ics), or PDF formats.
+          </p>
+          <ul>
+            <li><strong>Registrations</strong> — Excel and CSV of the full team list; PDF check-in or insurance sheet (Tournament Plus)</li>
+            <li><strong>Schedule</strong> — Excel, CSV, or iCal to add games to Google Calendar, Apple Calendar, or Outlook; PDF field ops sheet (Tournament Plus)</li>
+            <li><strong>Results</strong> — Excel or CSV; PDF post-event board report (Tournament Plus)</li>
+          </ul>
+          <p>
+            See the <a href="../help/exports">Exports &amp; Downloads guide</a> for format details,
+            plan requirements, calendar import instructions, and privacy defaults.
+          </p>
+        </>
+      ),
     },
   ],
 };

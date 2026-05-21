@@ -62,7 +62,7 @@ export default async function RetentionQueuePage() {
   return (
     <div className={styles.page}>
       <header className={styles.header}>
-        <div className={styles.headerLabel}>FieldLogicHQ</div>
+        <div className={styles.headerLabel}>Customer Risk</div>
         <h1 className={styles.title}>Retention Queue</h1>
         <div className={styles.count}>{rows.length} records</div>
       </header>

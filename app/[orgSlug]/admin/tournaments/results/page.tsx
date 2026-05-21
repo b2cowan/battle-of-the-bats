@@ -1,15 +1,34 @@
 'use client';
 import React, { useState, useEffect } from 'react';
-import { Trophy, X, Check, Search, RefreshCw, Download } from 'lucide-react';
-import { downloadCSV, formatTime } from '@/lib/utils';
+import { Trophy, X, Check, Search, RefreshCw } from 'lucide-react';
+import { formatTime } from '@/lib/utils';
 import { useTournament } from '@/lib/tournament-context';
 import { useOrg } from '@/lib/org-context';
+import {
+  downloadXLSX, generateCSV, downloadCSVBlob,
+  buildFilename, serializeRows, serializeHeaders, type ExportColumnDef,
+  downloadPDF, DEFAULT_PDF_SETTINGS, type OrgPdfSettings,
+} from '@/lib/export';
+import ExportMenu from '@/components/admin/ExportMenu';
 import { Game, Team, AgeGroup, Diamond } from '@/lib/types';
 import GameList from '../schedule/components/GameList';
 import s from '../../admin-common.module.css';
 import styles from '../schedule/schedule-admin.module.css';
 import FeedbackModal from '@/components/FeedbackModal';
 import HelpCallout from '@/components/help/HelpCallout';
+
+// ── Export column definitions ─────────────────────────────────────────────
+// No sensitive fields on this surface — results data is public/operational.
+const RESULTS_EXPORT_COLS: ExportColumnDef[] = [
+  { label: 'Date',       key: 'date'      },
+  { label: 'Time',       key: 'time'      },
+  { label: 'Division',   key: 'division'  },
+  { label: 'Home Team',  key: 'homeTeam'  },
+  { label: 'Home Score', key: 'homeScore' },
+  { label: 'Away Team',  key: 'awayTeam'  },
+  { label: 'Away Score', key: 'awayScore' },
+  { label: 'Status',     key: 'status'    },
+];
 
 type ResultsFilter = 'pending' | 'submitted' | 'completed';
 
@@ -40,6 +59,11 @@ export default function AdminResultsPage() {
     onConfirm?: () => void;
   }>({ isOpen: false, title: '', message: '', type: 'primary' });
 
+  // PDF settings — fetched once; used in handleExportPDF
+  const [pdfSettings, setPdfSettings] = useState<OrgPdfSettings | null>(null);
+  const canUsePDF = currentOrg ? hasPlanFeature(currentOrg.planId, 'pdf_exports') : false;
+  const showPdfNudge = canUsePDF && pdfSettings !== null && Object.keys(pdfSettings).length === 0;
+
   async function refresh() {
     const tournamentId = currentTournament?.id;
     if (!tournamentId) return;
@@ -68,6 +92,13 @@ export default function AdminResultsPage() {
   }
 
   useEffect(() => { refresh(); }, [currentTournament?.id]);
+
+  useEffect(() => {
+    fetch('/api/admin/org/pdf-settings')
+      .then(r => r.ok ? r.json() : {})
+      .then(data => setPdfSettings(data as OrgPdfSettings))
+      .catch(() => setPdfSettings(null));
+  }, []);
 
   function getTeamName(id: string) {
     return teams.find(t => t.id === id)?.name ?? 'TBD';
@@ -163,20 +194,110 @@ export default function AdminResultsPage() {
     return matchesGroup && matchesStatus && matchesSearch && matchesView;
   });
 
-  function exportToCSV() {
-    const headers = ['Date', 'Time', 'Division', 'Home Team', 'Home Score', 'Away Team', 'Away Score', 'Status'];
-    const rows = filtered.map(g => [
-      g.date,
-      formatTime(g.time),
-      getGroupName(g.ageGroupId),
-      getTeamName(g.homeTeamId),
-      g.homeScore !== null && g.homeScore !== undefined ? String(g.homeScore) : '',
-      getTeamName(g.awayTeamId),
-      g.awayScore !== null && g.awayScore !== undefined ? String(g.awayScore) : '',
-      g.status,
-    ]);
-    const filename = `results-${currentTournament?.year || 'all'}-${new Date().toISOString().split('T')[0]}.csv`;
-    downloadCSV(filename, headers, rows);
+  // ── Export handlers ────────────────────────────────────────────────────
+  function buildResultsRows() {
+    return filtered.map(g => ({
+      date:      g.date ?? '',
+      time:      formatTime(g.time),
+      division:  getGroupName(g.ageGroupId),
+      homeTeam:  getTeamName(g.homeTeamId),
+      homeScore: g.homeScore != null ? g.homeScore : '',
+      awayTeam:  getTeamName(g.awayTeamId),
+      awayScore: g.awayScore != null ? g.awayScore : '',
+      status:    g.status,
+    }));
+  }
+
+  async function handleExportXLSX() {
+    await downloadXLSX(
+      buildFilename({ org: currentOrg?.slug, dataset: 'results', scope: String(currentTournament?.year ?? '') }, 'xlsx'),
+      serializeHeaders(RESULTS_EXPORT_COLS),
+      serializeRows(buildResultsRows(), RESULTS_EXPORT_COLS),
+      'Results',
+    );
+  }
+
+  function handleExportCSV() {
+    const headers = serializeHeaders(RESULTS_EXPORT_COLS);
+    const rows    = serializeRows(buildResultsRows(), RESULTS_EXPORT_COLS);
+    downloadCSVBlob(
+      buildFilename({ org: currentOrg?.slug, dataset: 'results', scope: String(currentTournament?.year ?? '') }, 'csv'),
+      generateCSV(headers, rows),
+    );
+  }
+
+  async function handleExportPDF() {
+    const settings: OrgPdfSettings = {
+      ...DEFAULT_PDF_SETTINGS,
+      ...(pdfSettings && Object.keys(pdfSettings).length > 0 ? pdfSettings : {}),
+    };
+
+    // Build groups: one table per division (all games for that division)
+    const allFiltered = games.filter(g => {
+      const matchesView = viewMode === 'pool' ? !g.isPlayoff : g.isPlayoff;
+      return matchesView && (g.status === 'completed' || g.status === 'submitted' || g.status === 'scheduled');
+    });
+
+    const groupMap = new Map<string, typeof allFiltered>();
+    for (const ag of ageGroups) {
+      const divGames = allFiltered.filter(g => g.ageGroupId === ag.id);
+      if (divGames.length > 0) groupMap.set(ag.id, divGames);
+    }
+
+    const headers = serializeHeaders(RESULTS_EXPORT_COLS);
+
+    // Champions callout: find winner of the last completed game per division
+    const champLines: string[] = [];
+    for (const ag of ageGroups) {
+      const divGames = (groupMap.get(ag.id) ?? []).filter(g => g.status === 'completed');
+      if (divGames.length === 0) continue;
+      const last = divGames[divGames.length - 1];
+      if (last.homeScore != null && last.awayScore != null) {
+        const winner = last.homeScore > last.awayScore
+          ? getTeamName(last.homeTeamId)
+          : last.awayScore > last.homeScore
+            ? getTeamName(last.awayTeamId)
+            : null;
+        if (winner) champLines.push(`${ag.name}: ${winner}`);
+      }
+    }
+    const subtitle = champLines.length > 0
+      ? `Champions — ${champLines.join('  ·  ')}`
+      : currentTournament?.name;
+
+    const groups = ageGroups
+      .filter(ag => groupMap.has(ag.id))
+      .map(ag => ({
+        label: ag.name,
+        rows: (groupMap.get(ag.id) ?? []).map(g => [
+          g.date ?? '',
+          formatTime(g.time),
+          getGroupName(g.ageGroupId),
+          getTeamName(g.homeTeamId),
+          g.homeScore != null ? g.homeScore : '—',
+          getTeamName(g.awayTeamId),
+          g.awayScore != null ? g.awayScore : '—',
+          g.status,
+        ]),
+      }));
+
+    const filename = buildFilename(
+      { org: currentOrg?.slug, dataset: 'results', scope: String(currentTournament?.year ?? '') },
+      'pdf',
+    );
+
+    // Flat fallback if no groups resolved
+    const flatRows = serializeRows(buildResultsRows(), RESULTS_EXPORT_COLS);
+
+    await downloadPDF(
+      filename,
+      'Tournament Results',
+      subtitle,
+      headers,
+      flatRows,
+      settings,
+      groups.length > 0 ? groups : undefined,
+    );
   }
 
   return (
@@ -190,9 +311,14 @@ export default function AdminResultsPage() {
           </div>
         </div>
         <div className={s.headerActions}>
-          <button className="btn btn-outline btn-sm" onClick={exportToCSV} disabled={filtered.length === 0}>
-            <Download size={14} /> Export
-          </button>
+          <ExportMenu
+            formats={['xlsx', 'csv', 'pdf']}
+            onExportXLSX={handleExportXLSX}
+            onExportCSV={handleExportCSV}
+            onExportPDF={handleExportPDF}
+            planId={currentOrg?.planId}
+            disabled={filtered.length === 0}
+          />
         </div>
       </div>
 
@@ -242,6 +368,17 @@ export default function AdminResultsPage() {
           <strong style={{ color: 'var(--warning, #f59e0b)' }}>Pending Review</strong> — score submitted by a field official; visible to the public but not yet final. Use <em>Finalize</em> to mark it complete.
           {' '}<strong style={{ color: 'var(--success, #4ade80)' }}>Completed</strong> — score is final and locked.
         </p>
+      )}
+
+      {showPdfNudge && (
+        <HelpCallout
+          variant="info"
+          title="PDF settings not configured"
+          body="Your PDF export will use default styling. Set up your header, logo, and footer once and all future PDFs will use those settings."
+          cta={{ label: 'Configure PDF Settings', href: `/${currentOrg?.slug}/admin/org/settings/pdf` }}
+          dismissible
+          localStorageKey="flhq-pdf-nudge-results"
+        />
       )}
 
       {!loading && currentTournament && games.length === 0 && (

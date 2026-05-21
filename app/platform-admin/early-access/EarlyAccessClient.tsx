@@ -1,7 +1,9 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { Check, Clipboard, Download, Mail, RefreshCw, Search, X } from 'lucide-react';
+import Link from 'next/link';
+import { Check, Clipboard, Mail, RefreshCw, Search, X } from 'lucide-react';
+import ExportMenu from '@/components/admin/ExportMenu';
 import {
   EARLY_ACCESS_FEATURE_LABELS,
   EARLY_ACCESS_PLAN_LABELS,
@@ -33,6 +35,21 @@ type Lead = {
   last_contacted_at: string | null;
   last_contacted_by: string | null;
   converted_org_id: string | null;
+  converted_at: string | null;
+  follow_up_due_at: string | null;
+  next_action: string | null;
+};
+
+type OrganizationOption = {
+  id: string;
+  name: string;
+  slug: string;
+  planId: string;
+};
+
+type Props = {
+  organizations: OrganizationOption[];
+  canManageGrowth: boolean;
 };
 
 type LeadResponse = {
@@ -81,7 +98,35 @@ function applyTemplate(template: string, lead: Lead) {
     .replaceAll('{{organization}}', lead.organization_name || 'your organization');
 }
 
-export default function EarlyAccessClient() {
+function todayDate() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function conversionBreakdown(
+  leads: Lead[],
+  key: 'plan_interest' | 'features_interested',
+  labels: Record<string, string>,
+) {
+  const rows = new Map<string, { label: string; total: number; converted: number }>();
+  for (const lead of leads) {
+    const values = lead[key].length ? lead[key] : ['none'];
+    for (const value of values) {
+      const current = rows.get(value) ?? { label: labels[value] ?? value, total: 0, converted: 0 };
+      current.total += 1;
+      if (lead.converted_org_id || lead.converted_at) current.converted += 1;
+      rows.set(value, current);
+    }
+  }
+  return [...rows.values()]
+    .sort((a, b) => b.converted - a.converted || b.total - a.total)
+    .slice(0, 5)
+    .map(row => ({
+      ...row,
+      rate: row.total > 0 ? Math.round((row.converted / row.total) * 100) : 0,
+    }));
+}
+
+export default function EarlyAccessClient({ organizations, canManageGrowth }: Props) {
   const [filters, setFilters] = useState({
     q: '',
     plan: '',
@@ -94,6 +139,9 @@ export default function EarlyAccessClient() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [draftStatus, setDraftStatus] = useState<EarlyAccessStatus>('new');
   const [draftNotes, setDraftNotes] = useState('');
+  const [draftConvertedOrgId, setDraftConvertedOrgId] = useState('');
+  const [draftFollowUpDueAt, setDraftFollowUpDueAt] = useState('');
+  const [draftNextAction, setDraftNextAction] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
@@ -103,6 +151,10 @@ export default function EarlyAccessClient() {
     () => leads.find(lead => lead.id === selectedId) ?? null,
     [leads, selectedId],
   );
+  const organizationById = useMemo(
+    () => new Map(organizations.map(org => [org.id, org])),
+    [organizations],
+  );
 
   const queryString = useMemo(() => buildQuery(filters).toString(), [filters]);
 
@@ -110,7 +162,18 @@ export default function EarlyAccessClient() {
     newLeads: leads.filter(lead => lead.internal_status === 'new').length,
     pilotCandidates: leads.filter(lead => lead.internal_status === 'pilot_candidate').length,
     consented: leads.filter(lead => lead.release_notifications_consent).length,
+    converted: leads.filter(lead => lead.converted_org_id || lead.converted_at).length,
+    followUpsDue: leads.filter(lead => lead.follow_up_due_at && lead.follow_up_due_at <= todayDate()).length,
   }), [leads]);
+  const conversionRate = leads.length > 0 ? Math.round((summary.converted / leads.length) * 100) : 0;
+  const conversionByPlan = useMemo(
+    () => conversionBreakdown(leads, 'plan_interest', EARLY_ACCESS_PLAN_LABELS),
+    [leads],
+  );
+  const conversionByFeature = useMemo(
+    () => conversionBreakdown(leads, 'features_interested', EARLY_ACCESS_FEATURE_LABELS),
+    [leads],
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -150,6 +213,9 @@ export default function EarlyAccessClient() {
     setSelectedId(lead.id);
     setDraftStatus(nextStatus);
     setDraftNotes(lead.internal_notes ?? '');
+    setDraftConvertedOrgId(lead.converted_org_id ?? '');
+    setDraftFollowUpDueAt(lead.follow_up_due_at ?? '');
+    setDraftNextAction(lead.next_action ?? '');
   }
 
   function resetFilters() {
@@ -174,24 +240,40 @@ export default function EarlyAccessClient() {
     await copyText(emails, 'Copied consented emails.');
   }
 
-  async function saveLead(markContacted = false) {
+  async function saveLead(options: { markContacted?: boolean; markConverted?: boolean } = {}) {
     if (!selectedLead) return;
+    if (!canManageGrowth) {
+      setError('Your platform role can view this lead but cannot update the growth pipeline.');
+      return;
+    }
+    if (options.markConverted && !draftConvertedOrgId) {
+      setError('Select the converted organization first.');
+      return;
+    }
     setSaving(true);
     setError('');
     try {
+      const nextStatus = options.markConverted ? 'converted' : draftStatus;
       const response = await fetch(`/api/platform-admin/early-access/${selectedLead.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          internalStatus: draftStatus,
+          internalStatus: nextStatus,
           internalNotes: draftNotes,
-          markContacted,
+          markContacted: options.markContacted,
+          convertedOrgId: draftConvertedOrgId || null,
+          followUpDueAt: draftFollowUpDueAt || null,
+          nextAction: draftNextAction,
         }),
       });
       if (!response.ok) throw new Error('Unable to save lead');
       const payload = await response.json() as { lead: Lead };
       setLeads(current => current.map(lead => lead.id === payload.lead.id ? payload.lead : lead));
-      setMessage(markContacted ? 'Marked contacted.' : 'Lead saved.');
+      setDraftStatus(payload.lead.internal_status as EarlyAccessStatus);
+      setDraftConvertedOrgId(payload.lead.converted_org_id ?? '');
+      setDraftFollowUpDueAt(payload.lead.follow_up_due_at ?? '');
+      setDraftNextAction(payload.lead.next_action ?? '');
+      setMessage(options.markConverted ? 'Lead marked converted.' : options.markContacted ? 'Marked contacted.' : 'Lead saved.');
       window.setTimeout(() => setMessage(''), 2400);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unable to save lead');
@@ -200,8 +282,12 @@ export default function EarlyAccessClient() {
     }
   }
 
-  function openExport() {
-    window.location.href = `/api/platform-admin/early-access/export?${queryString}`;
+  function handleExportXLSX() {
+    window.location.href = `/api/platform-admin/early-access/export?${queryString}&format=xlsx`;
+  }
+
+  function handleExportCSV() {
+    window.location.href = `/api/platform-admin/early-access/export?${queryString}&format=csv`;
   }
 
   return (
@@ -228,8 +314,48 @@ export default function EarlyAccessClient() {
           <strong>{summary.pilotCandidates}</strong>
         </div>
         <div className={styles.metric}>
-          <span className={styles.metricLabel}>Consented</span>
-          <strong>{summary.consented}</strong>
+          <span className={styles.metricLabel}>Converted</span>
+          <strong>{summary.converted}</strong>
+          <span className={styles.metricHint}>{conversionRate}% rate</span>
+        </div>
+        <div className={summary.followUpsDue > 0 ? `${styles.metric} ${styles.metricWarn}` : styles.metric}>
+          <span className={styles.metricLabel}>Follow-up Due</span>
+          <strong>{summary.followUpsDue}</strong>
+        </div>
+      </section>
+
+      <section className={styles.conversionGrid} aria-label="Conversion breakdown">
+        <div className={styles.breakdownPanel}>
+          <div className={styles.notesLabel}>Conversions By Plan Interest</div>
+          {conversionByPlan.length === 0 ? (
+            <p className={styles.muted}>No leads loaded.</p>
+          ) : (
+            <div className={styles.conversionList}>
+              {conversionByPlan.map(row => (
+                <div key={row.label} className={styles.conversionItem}>
+                  <span>{row.label}</span>
+                  <strong>{row.converted}/{row.total}</strong>
+                  <em>{row.rate}%</em>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+        <div className={styles.breakdownPanel}>
+          <div className={styles.notesLabel}>Conversions By Feature Interest</div>
+          {conversionByFeature.length === 0 ? (
+            <p className={styles.muted}>No leads loaded.</p>
+          ) : (
+            <div className={styles.conversionList}>
+              {conversionByFeature.map(row => (
+                <div key={row.label} className={styles.conversionItem}>
+                  <span>{row.label}</span>
+                  <strong>{row.converted}/{row.total}</strong>
+                  <em>{row.rate}%</em>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 
@@ -273,10 +399,12 @@ export default function EarlyAccessClient() {
           <Clipboard size={14} />
           Copy emails
         </button>
-        <button className={styles.iconButton} onClick={openExport} title="Export filtered CSV" type="button">
-          <Download size={14} />
-          CSV
-        </button>
+        <ExportMenu
+          formats={['xlsx', 'csv']}
+          onExportXLSX={handleExportXLSX}
+          onExportCSV={handleExportCSV}
+          label="Export"
+        />
       </div>
 
       {(message || error) && (
@@ -329,6 +457,16 @@ export default function EarlyAccessClient() {
                     <span className={`${styles.statusBadge} ${styles[`status_${lead.internal_status}`] ?? ''}`}>
                       {statusLabel(lead.internal_status)}
                     </span>
+                    {(lead.converted_org_id || lead.converted_at) && (
+                      <div className={styles.convertedMeta}>
+                        Converted {formatDate(lead.converted_at)}
+                      </div>
+                    )}
+                    {lead.follow_up_due_at && (
+                      <div className={lead.follow_up_due_at <= todayDate() ? styles.followUpDue : styles.muted}>
+                        Follow up {formatDate(lead.follow_up_due_at)}
+                      </div>
+                    )}
                     {!lead.release_notifications_consent && (
                       <div className={styles.noConsent}>No release updates</div>
                     )}
@@ -392,6 +530,28 @@ export default function EarlyAccessClient() {
                   <dd>{formatDate(selectedLead.last_contacted_at)}</dd>
                 </div>
                 <div>
+                  <dt>Converted</dt>
+                  <dd>
+                    {selectedLead.converted_org_id || selectedLead.converted_at ? (
+                      <>
+                        {formatDate(selectedLead.converted_at)}
+                        {selectedLead.converted_org_id && organizationById.get(selectedLead.converted_org_id) && (
+                          <>
+                            {' '}
+                            <Link href={`/platform-admin/orgs/${selectedLead.converted_org_id}`} className={styles.detailLink}>
+                              {organizationById.get(selectedLead.converted_org_id)!.name}
+                            </Link>
+                          </>
+                        )}
+                      </>
+                    ) : 'Not converted'}
+                  </dd>
+                </div>
+                <div>
+                  <dt>Next follow-up</dt>
+                  <dd>{selectedLead.follow_up_due_at ? formatDate(selectedLead.follow_up_due_at) : 'Not set'}</dd>
+                </div>
+                <div>
                   <dt>Source</dt>
                   <dd>{selectedLead.source_path || 'Unknown'}</dd>
                 </div>
@@ -404,11 +564,52 @@ export default function EarlyAccessClient() {
 
               <label className={styles.fieldLabel}>
                 Status
-                <select value={draftStatus} onChange={event => setDraftStatus(event.target.value as EarlyAccessStatus)}>
+                <select
+                  value={draftStatus}
+                  onChange={event => setDraftStatus(event.target.value as EarlyAccessStatus)}
+                  disabled={!canManageGrowth}
+                >
                   {EARLY_ACCESS_STATUSES.map(status => (
                     <option key={status} value={status}>{EARLY_ACCESS_STATUS_LABELS[status]}</option>
                   ))}
                 </select>
+              </label>
+
+              <label className={styles.fieldLabel}>
+                Converted organization
+                <select
+                  value={draftConvertedOrgId}
+                  onChange={event => setDraftConvertedOrgId(event.target.value)}
+                  disabled={!canManageGrowth}
+                >
+                  <option value="">Not linked</option>
+                  {organizations.map(org => (
+                    <option key={org.id} value={org.id}>
+                      {org.name} /{org.slug}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label className={styles.fieldLabel}>
+                Follow-up due
+                <input
+                  type="date"
+                  value={draftFollowUpDueAt}
+                  onChange={event => setDraftFollowUpDueAt(event.target.value)}
+                  disabled={!canManageGrowth}
+                />
+              </label>
+
+              <label className={styles.fieldLabel}>
+                Next action
+                <textarea
+                  value={draftNextAction}
+                  onChange={event => setDraftNextAction(event.target.value)}
+                  rows={3}
+                  placeholder="Call owner, send pilot invite, wait for launch email..."
+                  disabled={!canManageGrowth}
+                />
               </label>
 
               <label className={styles.fieldLabel}>
@@ -418,15 +619,20 @@ export default function EarlyAccessClient() {
                   onChange={event => setDraftNotes(event.target.value)}
                   rows={6}
                   placeholder="Qualification notes, follow-up plan, launch fit..."
+                  disabled={!canManageGrowth}
                 />
               </label>
 
               <div className={styles.actionRow}>
-                <button className={styles.primaryButton} onClick={() => saveLead(false)} disabled={saving} type="button">
+                <button className={styles.primaryButton} onClick={() => saveLead()} disabled={saving || !canManageGrowth} type="button">
                   <Check size={14} />
                   Save
                 </button>
-                <button className={styles.iconButton} onClick={() => saveLead(true)} disabled={saving} type="button">
+                <button className={styles.iconButton} onClick={() => saveLead({ markConverted: true })} disabled={saving || !canManageGrowth} type="button">
+                  <Check size={14} />
+                  Mark converted
+                </button>
+                <button className={styles.iconButton} onClick={() => saveLead({ markContacted: true })} disabled={saving || !canManageGrowth} type="button">
                   <RefreshCw size={14} />
                   Mark contacted
                 </button>

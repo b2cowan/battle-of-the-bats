@@ -2,12 +2,15 @@ import { NextResponse } from 'next/server';
 import { sendEmail } from '@/lib/email';
 import { getAuthContextWithScope, scopeGuard, unauthorized, forbidden } from '@/lib/api-auth';
 import { hasCapability } from '@/lib/roles';
+import { hasPlanFeature, requiresTournamentPlusCopy } from '@/lib/plan-features';
+import { writePlatformEvent } from '@/lib/platform-events';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 
 type RecipientTargeting = {
   includeTeams?: boolean;
   includeContacts?: boolean;
   teamStatuses?: string[];
+  paymentStatuses?: string[];
   ageGroupIds?: string[];
   teamIds?: string[];
   contactRoles?: string[];
@@ -19,6 +22,53 @@ function normalizeEmail(email: unknown) {
 
 function stringSet(value: unknown) {
   return new Set(Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : []);
+}
+
+const ALL_TEAM_STATUSES = new Set(['accepted', 'pending', 'waitlist', 'rejected']);
+
+function isAllStatuses(set: Set<string>) {
+  return set.size === 0 || (set.size === ALL_TEAM_STATUSES.size && Array.from(set).every(status => ALL_TEAM_STATUSES.has(status)));
+}
+
+function usesAdvancedTargeting(target: RecipientTargeting | null) {
+  if (!target) return true;
+  const teamStatuses = stringSet(target.teamStatuses);
+  return Boolean(
+    target.includeContacts ||
+    stringSet(target.ageGroupIds).size > 0 ||
+    stringSet(target.teamIds).size > 0 ||
+    stringSet(target.contactRoles).size > 0 ||
+    stringSet(target.paymentStatuses).size > 0 ||
+    !isAllStatuses(teamStatuses)
+  );
+}
+
+async function trackCommunicationEvent(input: {
+  orgId: string;
+  userId: string;
+  userEmail?: string | null;
+  planId: string;
+  tournamentId: string;
+  status: 'attempted' | 'blocked' | 'completed';
+  advancedTargeting: boolean;
+  recipientCount?: number;
+}) {
+  await writePlatformEvent({
+    eventType: 'tournament_plus_feature_used',
+    source: 'app',
+    orgId: input.orgId,
+    actorUserId: input.userId,
+    actorEmail: input.userEmail,
+    planId: input.planId,
+    metadata: {
+      feature: 'targeted_tournament_announcements',
+      action: 'send_tournament_email',
+      tournamentId: input.tournamentId,
+      status: input.status,
+      advancedTargeting: input.advancedTargeting,
+      recipientCount: input.recipientCount,
+    },
+  });
 }
 
 export async function POST(req: Request) {
@@ -52,9 +102,34 @@ export async function POST(req: Request) {
 
     const recipientMap = new Map<string, { email: string; source: 'team' | 'contact' | 'direct' }>();
     const target = (targeting ?? null) as RecipientTargeting | null;
+    const advancedTargeting = usesAdvancedTargeting(target);
+
+    await trackCommunicationEvent({
+      orgId: ctx.org.id,
+      userId: ctx.user.id,
+      userEmail: ctx.user.email,
+      planId: ctx.org.planId,
+      tournamentId,
+      status: 'attempted',
+      advancedTargeting,
+    });
+
+    if (advancedTargeting && !hasPlanFeature(ctx.org.planId, 'targeted_tournament_announcements')) {
+      await trackCommunicationEvent({
+        orgId: ctx.org.id,
+        userId: ctx.user.id,
+        userEmail: ctx.user.email,
+        planId: ctx.org.planId,
+        tournamentId,
+        status: 'blocked',
+        advancedTargeting,
+      });
+      return NextResponse.json({ error: requiresTournamentPlusCopy('targeted_tournament_announcements') }, { status: 403 });
+    }
 
     if (target) {
       const teamStatuses = stringSet(target.teamStatuses);
+      const paymentStatuses = stringSet(target.paymentStatuses);
       const ageGroupIds = stringSet(target.ageGroupIds);
       const teamIds = stringSet(target.teamIds);
       const contactRoles = stringSet(target.contactRoles);
@@ -62,7 +137,7 @@ export async function POST(req: Request) {
       if (target.includeTeams) {
         const { data: teams, error: teamsError } = await supabaseAdmin
           .from('teams')
-          .select('id, email, status, age_group_id')
+          .select('id, email, status, payment_status, age_group_id')
           .eq('tournament_id', tournamentId);
         if (teamsError) return NextResponse.json({ error: teamsError.message }, { status: 500 });
 
@@ -71,6 +146,7 @@ export async function POST(req: Request) {
           const selectedByFilters =
             teamIds.size === 0 &&
             (teamStatuses.size === 0 || teamStatuses.has(team.status)) &&
+            (paymentStatuses.size === 0 || paymentStatuses.has(team.payment_status ?? 'pending')) &&
             (ageGroupIds.size === 0 || ageGroupIds.has(team.age_group_id));
 
           if (!selectedById && !selectedByFilters) continue;
@@ -137,6 +213,17 @@ export async function POST(req: Request) {
         results.failed++;
       }
     }
+
+    await trackCommunicationEvent({
+      orgId: ctx.org.id,
+      userId: ctx.user.id,
+      userEmail: ctx.user.email,
+      planId: ctx.org.planId,
+      tournamentId,
+      status: 'completed',
+      advancedTargeting,
+      recipientCount: normalizedRecipients.length,
+    });
 
     return NextResponse.json({ 
       message: `Finished sending. Success: ${results.success}, Failed: ${results.failed}`,

@@ -134,6 +134,12 @@ export default function AdminSidebar() {
     : false;
 
   const hasOnlyTournamentWorkspace = !!currentOrg && canUseModule('module_tournaments') && !canSeePublicSite && !canSeeAccounting && !canSeeHouseLeague && !canSeeRepTeams;
+  const showTournamentSummary = currentTournament?.status === 'completed' || currentTournament?.status === 'archived';
+  const tournamentGroups = TOUR_GROUPS.map(group =>
+    group.key === 'operations' && showTournamentSummary
+      ? { ...group, items: [...group.items, { key: 'summary', icon: FileText, label: 'Summary' }] }
+      : group
+  );
 
   // Collapsible nav groups — persisted to localStorage
   const [openGroups, setOpenGroups] = useState<Set<string>>(() => new Set<string>());
@@ -447,9 +453,9 @@ export default function AdminSidebar() {
                 const href = `${base}/tournaments/${item.key}`;
                 return navLink(item.key, item.icon, item.label, href, pathname.startsWith(href));
               })}
-              {TOUR_GROUPS.map(group => {
+              {tournamentGroups.map(group => {
                 const open      = isGroupOpen(group.key, group.items);
-                const allKeys = TOUR_GROUPS.flatMap(g => g.items).map(i => i.key);
+                const allKeys = tournamentGroups.flatMap(g => g.items).map(i => i.key);
                 const hasActive = group.items.some(item => {
                   const href = `${base}/tournaments/${item.key}`;
                   return pathname.startsWith(href) && !allKeys.some(
@@ -472,7 +478,7 @@ export default function AdminSidebar() {
                       <div className={styles.navGroupItems}>
                         {group.items.map(item => {
                           const href = `${base}/tournaments/${item.key}`;
-                          const hasMoreSpecificMatch = TOUR_GROUPS.flatMap(g => g.items).some(
+                          const hasMoreSpecificMatch = tournamentGroups.flatMap(g => g.items).some(
                             other => other.key !== item.key &&
                                      pathname.startsWith(`${base}/tournaments/${other.key}`) &&
                                      other.key.length > item.key.length,

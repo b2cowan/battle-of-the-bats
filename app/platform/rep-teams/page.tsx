@@ -32,6 +32,10 @@ const CAPABILITIES = [
     name: 'Program Year Tracking',
     desc: 'Each team is organized by program year. Historical rosters, documents, and financials are preserved year over year.',
   },
+  {
+    name: 'Roster & Dues Exports',
+    desc: 'Roster PDFs for provincial associations and insurance submissions. Player dues statements formatted for parent distribution — one click from the coaches portal.',
+  },
 ];
 
 export default function RepTeamsPage() {

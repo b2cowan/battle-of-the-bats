@@ -1,8 +1,12 @@
 import { notFound } from 'next/navigation';
+import { getAuthContext } from '@/lib/api-auth';
 import { getOrganizationBySlug, getPublicTournamentBySlug } from '@/lib/db';
 import { resolveTheme } from '@/lib/themes';
 import { canUseAdvancedTournamentBranding } from '@/lib/tournament-branding';
+import { OrgNavSync } from '@/components/OrgNavSync';
 import TournamentNavSync from '@/components/TournamentNavSync';
+import PoweredByBadge from '@/components/marketing/PoweredByBadge';
+import TournamentAcquisitionBanner from '@/components/marketing/TournamentAcquisitionBanner';
 
 export const dynamic = 'force-dynamic';
 
@@ -21,12 +25,18 @@ export default async function TournamentLayout({
   if (!tournament) notFound();
 
   const canUseAdvancedBranding = canUseAdvancedTournamentBranding(org);
-  // Apply tournament-level preset overrides for all plans; custom values are Plus+.
-  const hasTournamentTheme = !!(tournament.themePreset || (canUseAdvancedBranding && tournament.themePrimary));
+  const isFreeTournamentPlan = org.planId === 'tournament';
+  const authCtx = await getAuthContext().catch(() => null);
+  const showAcquisitionBanner = isFreeTournamentPlan && (!authCtx || authCtx.org.id !== org.id);
+  const effectiveColorMode = canUseAdvancedBranding ? tournament.colorMode ?? 'dark' : 'dark';
+  // Free public tournament pages always use the FieldLogicHQ default theme, even if old branding values exist.
+  const hasTournamentTheme = canUseAdvancedBranding
+    ? !!(tournament.themePreset || tournament.themePrimary)
+    : true;
   let tournamentCssVars: string | null = null;
   if (hasTournamentTheme) {
     const t = resolveTheme(
-      tournament.themePreset,
+      canUseAdvancedBranding ? tournament.themePreset : 'platform',
       canUseAdvancedBranding ? tournament.themePrimary : null,
       canUseAdvancedBranding ? tournament.themeAccent : null
     );
@@ -44,10 +54,10 @@ export default async function TournamentLayout({
 
   const cardStyle = canUseAdvancedBranding
     ? tournament.themeCardStyle ?? org.themeCardStyle ?? 'default'
-    : org.themeCardStyle ?? 'default';
+    : 'default';
 
   // Light mode: override :root tokens so body background and all descendants flip.
-  const lightModeVars = tournament.colorMode === 'light' ? [
+  const lightModeVars = effectiveColorMode === 'light' ? [
     '--bg:              #F5F7FC',
     '--bg-2:            #EEF1F8',
     '--bg-3:            #E5E9F2',
@@ -77,19 +87,37 @@ export default async function TournamentLayout({
 
   return (
     <>
+      <OrgNavSync
+        logoUrl={canUseAdvancedBranding ? tournament.logoUrl ?? org.logoUrl ?? null : null}
+        orgName={org.name}
+      />
       <TournamentNavSync
         slug={tournament.slug}
         tournamentName={tournament.name}
-        colorMode={tournament.colorMode ?? 'dark'}
+        colorMode={effectiveColorMode}
         hiddenPages={tournament.publicHiddenPages ?? []}
       />
+      {isFreeTournamentPlan && (
+        <PoweredByBadge
+          orgSlug={orgSlug}
+          tournamentSlug={tournament.slug}
+          offsetForBanner={showAcquisitionBanner}
+        />
+      )}
+      {showAcquisitionBanner && (
+        <TournamentAcquisitionBanner
+          orgSlug={orgSlug}
+          tournamentSlug={tournament.slug}
+          tournamentName={tournament.name}
+        />
+      )}
       {tournamentCssVars && (
         <style dangerouslySetInnerHTML={{ __html: `:root { ${tournamentCssVars} }` }} />
       )}
       {lightModeVars && (
         <style dangerouslySetInnerHTML={{ __html: `:root { ${lightModeVars} }` }} />
       )}
-      <div data-card-style={cardStyle} data-color-mode={tournament.colorMode ?? 'dark'}>
+      <div data-card-style={cardStyle} data-color-mode={effectiveColorMode}>
         {children}
       </div>
     </>

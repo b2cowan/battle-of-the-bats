@@ -7,8 +7,25 @@ import { useOrg } from '@/lib/org-context';
 import { hasCapability } from '@/lib/roles';
 import FeedbackModal from '@/components/FeedbackModal';
 import HelpCallout from '@/components/help/HelpCallout';
+import {
+  downloadXLSX, generateCSV, downloadCSVBlob, downloadICS,
+  buildFilename, serializeRows, serializeHeaders, type ExportColumnDef, type ICSEventInput,
+} from '@/lib/export';
+import ExportMenu from '@/components/admin/ExportMenu';
 import styles from '../../../house-league.module.css';
 import type { LeagueDivision, LeagueTeam, LeagueGame, LeagueGameStatus, LeaguePractice } from '@/lib/types';
+
+// ── Export definition ─────────────────────────────────────────────────────────
+
+const SCHEDULE_EXPORT_COLS: ExportColumnDef[] = [
+  { label: 'Date',      key: 'date',     format: 'date' },
+  { label: 'Time',      key: 'time',     format: 'text' },
+  { label: 'Home Team', key: 'homeTeam', format: 'text' },
+  { label: 'Away Team', key: 'awayTeam', format: 'text' },
+  { label: 'Location',  key: 'location', format: 'text' },
+  { label: 'Status',    key: 'status',   format: 'text' },
+  { label: 'Score',     key: 'score',    format: 'text' },
+];
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -562,7 +579,7 @@ function CancelPracticeModal({
 
 export default function SchedulePage() {
   const { orgSlug, seasonId } = useParams<{ orgSlug: string; seasonId: string }>();
-  const { userRole, userCapabilities } = useOrg();
+  const { currentOrg, userRole, userCapabilities } = useOrg();
 
   const [season, setSeason] = useState<SeasonInfo | null>(null);
   const [divisions, setDivisions] = useState<LeagueDivision[]>([]);
@@ -824,6 +841,72 @@ export default function SchedulePage() {
     await loadPractices(selectedTeamId);
   }
 
+  // ── Export ─────────────────────────────────────────────────────────────────
+
+  function buildGameExportRows() {
+    return games.map(g => {
+      const home = teamMap.get(g.homeTeamId);
+      const away = teamMap.get(g.awayTeamId);
+      const dt   = g.scheduledAt ? formatDateTime(g.scheduledAt) : null;
+      const score = g.status === 'completed' && g.homeScore != null
+        ? `${g.homeScore} – ${g.awayScore}`
+        : '';
+      return {
+        date:     g.scheduledAt ? g.scheduledAt.slice(0, 10) : '',
+        time:     dt?.time ?? '',
+        homeTeam: home?.name ?? '',
+        awayTeam: away?.name ?? '',
+        location: g.location ?? '',
+        status:   STATUS_LABELS[g.status],
+        score,
+      };
+    });
+  }
+
+  function handleExportXLSX() {
+    const rows     = buildGameExportRows();
+    const headers  = serializeHeaders(SCHEDULE_EXPORT_COLS);
+    const data     = serializeRows(rows, SCHEDULE_EXPORT_COLS);
+    const filename = buildFilename(
+      { org: currentOrg?.slug, dataset: 'hl-schedule', scope: season?.name },
+      'xlsx',
+    );
+    downloadXLSX(filename, headers, data, 'Schedule');
+  }
+
+  function handleExportCSV() {
+    const rows     = buildGameExportRows();
+    const headers  = serializeHeaders(SCHEDULE_EXPORT_COLS);
+    const data     = serializeRows(rows, SCHEDULE_EXPORT_COLS);
+    const filename = buildFilename(
+      { org: currentOrg?.slug, dataset: 'hl-schedule', scope: season?.name },
+      'csv',
+    );
+    downloadCSVBlob(filename, generateCSV(headers, data));
+  }
+
+  async function handleExportICS() {
+    const icsEvents: ICSEventInput[] = games
+      .filter(g => g.scheduledAt)
+      .map(g => {
+        const home = teamMap.get(g.homeTeamId);
+        const away = teamMap.get(g.awayTeamId);
+        return {
+          gameId:    g.id,
+          title:     `${home?.name ?? 'Home'} vs ${away?.name ?? 'Away'}`,
+          date:      g.scheduledAt!.slice(0, 10),
+          time:      isoToTimeInput(g.scheduledAt!),
+          location:  g.location ?? undefined,
+          cancelled: g.status === 'cancelled',
+        };
+      });
+    const filename = buildFilename(
+      { org: currentOrg?.slug, dataset: 'hl-schedule', scope: season?.name },
+      'ics',
+    );
+    await downloadICS(filename, icsEvents);
+  }
+
   // ── Render ─────────────────────────────────────────────────────────────────
 
   if (loading) return <div className={styles.muted}>Loading schedule…</div>;
@@ -905,6 +988,19 @@ export default function SchedulePage() {
               <Plus size={14} style={{ marginRight: 4 }} />
               Add Game
             </button>
+          </>
+        )}
+
+        {viewMode !== 'practices' && (
+          <>
+            <div className={styles.toolbarSep} />
+            <ExportMenu
+              formats={['xlsx', 'csv', 'ics']}
+              onExportXLSX={handleExportXLSX}
+              onExportCSV={handleExportCSV}
+              onExportICS={handleExportICS}
+              disabled={games.length === 0}
+            />
           </>
         )}
 

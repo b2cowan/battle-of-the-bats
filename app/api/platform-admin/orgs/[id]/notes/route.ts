@@ -1,45 +1,79 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getPlatformAuthContext } from '@/lib/platform-auth';
+import { requirePlatformAdmin, requirePlatformPermission } from '@/lib/platform-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { writePlatformAuditLog } from '@/lib/platform-audit';
 
-export async function PATCH(
+const MAX_NOTE_LENGTH = 4000;
+
+function cleanNoteBody(value: unknown) {
+  if (typeof value !== 'string') return null;
+  const body = value.trim();
+  if (!body) return null;
+  return body.slice(0, MAX_NOTE_LENGTH);
+}
+
+export async function GET(
+  _req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const auth = await requirePlatformAdmin();
+  if (auth.response) return auth.response;
+
+  const { id } = await params;
+  const { data, error } = await supabaseAdmin
+    .from('org_internal_notes')
+    .select('id, body, created_by_email, updated_by_email, created_at, updated_at')
+    .eq('org_id', id)
+    .is('deleted_at', null)
+    .order('created_at', { ascending: false })
+    .limit(50);
+
+  if (error) {
+    console.error('[platform-admin] notes list error:', error);
+    return NextResponse.json({ error: 'Load failed' }, { status: 500 });
+  }
+
+  return NextResponse.json({ notes: data ?? [] });
+}
+
+export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const user = await getPlatformAuthContext();
-  if (!user) return new NextResponse('Forbidden', { status: 403 });
+  const auth = await requirePlatformPermission('manage_support');
+  if (auth.response) return auth.response;
 
   const { id } = await params;
-  const body = await req.json() as { notes?: string };
-  if (typeof body.notes !== 'string') {
+  const payload = await req.json().catch(() => ({})) as { body?: string; notes?: string };
+  const body = cleanNoteBody(payload.body ?? payload.notes);
+  if (!body) {
     return NextResponse.json({ error: 'Invalid payload' }, { status: 400 });
   }
 
-  const { data: current } = await supabaseAdmin
-    .from('organizations')
-    .select('internal_notes')
-    .eq('id', id)
+  const { data, error } = await supabaseAdmin
+    .from('org_internal_notes')
+    .insert({
+      org_id: id,
+      body,
+      created_by_email: auth.user.email ?? 'platform-admin',
+      updated_by_email: auth.user.email ?? 'platform-admin',
+    })
+    .select('id, body, created_by_email, updated_by_email, created_at, updated_at')
     .single();
 
-  const { error } = await supabaseAdmin
-    .from('organizations')
-    .update({ internal_notes: body.notes || null })
-    .eq('id', id);
-
   if (error) {
-    console.error('[platform-admin] notes update error:', error);
-    return NextResponse.json({ error: 'Update failed' }, { status: 500 });
+    console.error('[platform-admin] notes create error:', error);
+    return NextResponse.json({ error: 'Create failed' }, { status: 500 });
   }
 
   await writePlatformAuditLog(
-    user.email!,
+    auth.user.email ?? 'platform-admin',
     id,
-    'update_notes',
-    'internal_notes',
-    (current as any)?.internal_notes ?? null,
-    body.notes || null,
+    'create_internal_note',
+    'org_internal_notes',
+    null,
+    data,
   );
 
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({ note: data });
 }

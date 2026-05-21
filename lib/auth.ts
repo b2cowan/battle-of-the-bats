@@ -1,11 +1,31 @@
 import { createClient } from './supabase-browser';
 
+const AUTH_TIMEOUT_MS = 15000;
+
+function timeoutError() {
+  return new Promise<never>((_, reject) => {
+    window.setTimeout(() => reject(new Error('auth_timeout')), AUTH_TIMEOUT_MS);
+  });
+}
+
 export async function signIn(
   email: string,
   password: string
 ): Promise<{ error: string | null }> {
-  const supabase = createClient();
-  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  let error: unknown;
+
+  try {
+    const supabase = createClient();
+    const result = await Promise.race([
+      supabase.auth.signInWithPassword({ email, password }),
+      timeoutError(),
+    ]);
+    error = result.error;
+  } catch (err) {
+    const message = err instanceof Error ? err.message : '';
+    return { error: message === 'auth_timeout' ? 'auth_timeout' : 'network_error' };
+  }
+
   if (!error) return { error: null };
 
   const authError = error as { code?: string; message?: string };

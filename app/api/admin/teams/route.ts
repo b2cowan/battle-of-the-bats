@@ -5,6 +5,12 @@ import {
 import { getAuthContextWithScope, unauthorized, forbidden, scopeGuard } from '@/lib/api-auth';
 import { hasCapability } from '@/lib/roles';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import {
+  getTournamentRegistrationFieldAnswersForRegistrations,
+  getTournamentRegistrationFields,
+} from '@/lib/db';
+import { hasPlanFeature, requiresTournamentPlusCopy } from '@/lib/plan-features';
+import { writePlatformEvent } from '@/lib/platform-events';
 
 export async function GET(req: Request) {
   const ctx = await getAuthContextWithScope();
@@ -42,7 +48,35 @@ export async function GET(req: Request) {
     slotId: t.slot_id ?? null,
   }));
 
-  return new Response(JSON.stringify(teams), { status: 200, headers: { 'Content-Type': 'application/json' } });
+  const [fields, answers] = await Promise.all([
+    getTournamentRegistrationFields(tournamentId),
+    getTournamentRegistrationFieldAnswersForRegistrations(teams.map(team => team.id)),
+  ]);
+  const fieldMap = new Map(fields.map(field => [field.id, field]));
+  const answersByRegistration = new Map<string, Array<{
+    fieldId: string;
+    label: string;
+    fieldType: string;
+    value: string;
+  }>>();
+  for (const answer of answers) {
+    const field = fieldMap.get(answer.fieldId);
+    if (!field) continue;
+    let value = answer.fileUrl ?? answer.valueText ?? '';
+    if (!value && answer.valueJson && typeof answer.valueJson === 'object' && 'checked' in answer.valueJson) {
+      value = (answer.valueJson as { checked?: unknown }).checked ? 'Yes' : 'No';
+    }
+    const list = answersByRegistration.get(answer.registrationId) ?? [];
+    list.push({ fieldId: field.id, label: field.label, fieldType: field.fieldType, value });
+    answersByRegistration.set(answer.registrationId, list);
+  }
+
+  const teamsWithAnswers = teams.map(team => ({
+    ...team,
+    customAnswers: answersByRegistration.get(team.id) ?? [],
+  }));
+
+  return new Response(JSON.stringify(teamsWithAnswers), { status: 200, headers: { 'Content-Type': 'application/json' } });
 }
 
 export async function POST(req: Request) {
@@ -66,6 +100,13 @@ export async function POST(req: Request) {
 
       const denied = scopeGuard(ctx, team.tournament_id);
       if (denied) return denied;
+
+      if (!hasPlanFeature(ctx.org.planId, 'waitlist_automation')) {
+        return new Response(JSON.stringify({ error: requiresTournamentPlusCopy('waitlist_automation') }), {
+          status: 403,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
 
       let slotId = targetSlotId ?? null;
 
@@ -103,6 +144,22 @@ export async function POST(req: Request) {
       for (let i = 0; i < (remaining ?? []).length; i++) {
         await supabaseAdmin.from('teams').update({ waitlist_position: i + 1 }).eq('id', remaining![i].id);
       }
+
+      await writePlatformEvent({
+        eventType: 'tournament_plus_feature_used',
+        source: 'app',
+        orgId: ctx.org.id,
+        actorUserId: ctx.user.id,
+        actorEmail: ctx.user.email,
+        planId: ctx.org.planId,
+        metadata: {
+          feature: 'waitlist_automation',
+          action: 'waitlist_promotion',
+          tournamentId: team.tournament_id,
+          ageGroupId: team.age_group_id,
+          registrationId: teamId,
+        },
+      });
 
       return new Response(JSON.stringify({ success: true, slotId }), { status: 200 });
     }
@@ -150,6 +207,12 @@ export async function POST(req: Request) {
 
     if (items.length === 0) {
       return new Response(JSON.stringify({ error: 'No updates provided' }), { status: 400 });
+    }
+    if (items.length > 1 && !hasPlanFeature(ctx.org.planId, 'bulk_registration_actions')) {
+      return new Response(JSON.stringify({ error: requiresTournamentPlusCopy('bulk_registration_actions') }), {
+        status: 403,
+        headers: { 'Content-Type': 'application/json' },
+      });
     }
 
     const ids = items.map(i => i.id);

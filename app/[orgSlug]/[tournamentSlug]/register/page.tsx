@@ -3,9 +3,10 @@ import { useState, useEffect } from 'react';
 import { UserPlus, CheckCircle, AlertCircle, ChevronDown, RefreshCw, Send, ShieldCheck, CreditCard } from 'lucide-react';
 import { useParams } from 'next/navigation';
 import { isPublicPageEnabled } from '@/lib/public-pages';
-import { AgeGroup, Tournament, Contact } from '@/lib/types';
+import { AgeGroup, Tournament, Contact, TournamentRegistrationField } from '@/lib/types';
 import styles from '../../register/register.module.css';
 import { fetchPublicTournamentData } from '@/lib/public-tournament-client';
+import RegistrationConfirmationCta from '@/components/marketing/RegistrationConfirmationCta';
 
 type Step = 'form' | 'submitting' | 'success' | 'error';
 
@@ -16,6 +17,9 @@ type FeeSchedule = {
   totalFeeDueDate: string | null;
   source: 'tournament' | 'division';
 };
+
+type CustomAnswerState = Record<string, string>;
+type CustomFileState = Record<string, File | null>;
 
 function formatAgeRange(minAge: number | null, maxAge: number | null) {
   if (minAge === null && maxAge === null) return '';
@@ -73,6 +77,7 @@ export default function RegisterPage() {
   const [ageGroups, setAgeGroups]   = useState<AgeGroup[]>([]);
   const [contacts, setContacts]     = useState<Contact[]>([]);
   const [tournament, setTournament] = useState<Tournament | null>(null);
+  const [registrationFields, setRegistrationFields] = useState<TournamentRegistrationField[]>([]);
   const [contactEmail, setContactEmail] = useState<string | null>(null);
   const [stats, setStats]           = useState<Record<string, number>>({});
   const [step, setStep]             = useState<Step>('form');
@@ -80,6 +85,8 @@ export default function RegisterPage() {
   const [form, setForm] = useState({
     teamName: '', coachName: '', email: '', ageGroupId: '',
   });
+  const [customAnswers, setCustomAnswers] = useState<CustomAnswerState>({});
+  const [customFiles, setCustomFiles] = useState<CustomFileState>({});
 
   useEffect(() => {
     async function init() {
@@ -90,6 +97,7 @@ export default function RegisterPage() {
       if (current && data?.pageEnabled) {
         setAgeGroups(data.ageGroups);
         setContacts(data.contacts);
+        setRegistrationFields(data.registrationFields ?? []);
         fetchStats(current.id);
       }
     }
@@ -113,22 +121,38 @@ export default function RegisterPage() {
 
       const count = stats[selectedGroup.id] || 0;
       const isWaitlist = selectedGroup.capacity && count >= selectedGroup.capacity;
+      const missingField = registrationFields.find(field => {
+        if (!field.required) return false;
+        if (field.fieldType === 'file') return !customFiles[field.id];
+        if (field.fieldType === 'checkbox') return customAnswers[field.id] !== 'true';
+        return !customAnswers[field.id]?.trim();
+      });
+      if (missingField) throw new Error(`Please complete: ${missingField.label}`);
+
+      const payload = new FormData();
+      payload.append('teamName', form.teamName.trim());
+      payload.append('coachName', form.coachName.trim());
+      payload.append('email', form.email.trim().toLowerCase());
+      payload.append('ageGroupId', form.ageGroupId);
+      payload.append('ageGroupName', selectedGroup.name);
+      payload.append('contactEmail', contacts.find(c => c.id === selectedGroup.contactId)?.email ?? '');
+      payload.append('tournamentId', tournament?.id ?? '');
+      payload.append('tournamentName', tournament?.name ?? '');
+      payload.append('status', isWaitlist ? 'waitlist' : 'pending');
+
+      for (const field of registrationFields) {
+        if (field.fieldType === 'file') {
+          const file = customFiles[field.id];
+          if (file) payload.append(`customFile_${field.id}`, file);
+        } else {
+          payload.append(`customField_${field.id}`, customAnswers[field.id] ?? '');
+        }
+      }
 
       setStep('submitting');
       const res = await fetch('/api/register', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          teamName:       form.teamName.trim(),
-          coachName:      form.coachName.trim(),
-          email:          form.email.trim().toLowerCase(),
-          ageGroupId:     form.ageGroupId,
-          ageGroupName:   selectedGroup.name,
-          contactEmail:   contacts.find(c => c.id === selectedGroup.contactId)?.email,
-          tournamentId:   tournament?.id,
-          tournamentName: tournament?.name,
-          status:         isWaitlist ? 'waitlist' : 'pending',
-        }),
+        body: payload,
       });
 
       if (!res.ok) {
@@ -250,7 +274,24 @@ export default function RegisterPage() {
                   </div>
                 </div>
 
-                <button className="btn btn-outline" style={{ marginTop: '1rem' }} onClick={() => { setStep('form'); setForm({ teamName: '', coachName: '', email: '', ageGroupId: '' }); }}>
+                {tournament && (
+                  <RegistrationConfirmationCta
+                    orgSlug={orgSlug}
+                    tournamentSlug={tournamentSlug}
+                    tournamentName={tournament.name}
+                  />
+                )}
+
+                <button
+                  className="btn btn-outline"
+                  style={{ marginTop: '1rem' }}
+                  onClick={() => {
+                    setStep('form');
+                    setForm({ teamName: '', coachName: '', email: '', ageGroupId: '' });
+                    setCustomAnswers({});
+                    setCustomFiles({});
+                  }}
+                >
                   Register Another Team
                 </button>
               </div>
@@ -407,6 +448,75 @@ export default function RegisterPage() {
                       <p>
                         FieldLogicHQ records registration and payment status for the organizer, but payments are made outside the platform.
                       </p>
+                    </div>
+                  )}
+
+                  {registrationFields.length > 0 && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '1.5rem' }}>
+                      {registrationFields.map(field => (
+                        <div key={field.id} className="form-group">
+                          <label className="form-label">
+                            {field.label}{field.required ? ' *' : ''}
+                          </label>
+                          {field.fieldType === 'short_text' && (
+                            <input
+                              className="form-input"
+                              value={customAnswers[field.id] ?? ''}
+                              onChange={e => setCustomAnswers(prev => ({ ...prev, [field.id]: e.target.value }))}
+                              required={field.required}
+                              disabled={step === 'submitting'}
+                            />
+                          )}
+                          {field.fieldType === 'long_text' && (
+                            <textarea
+                              className="form-textarea"
+                              rows={4}
+                              value={customAnswers[field.id] ?? ''}
+                              onChange={e => setCustomAnswers(prev => ({ ...prev, [field.id]: e.target.value }))}
+                              required={field.required}
+                              disabled={step === 'submitting'}
+                            />
+                          )}
+                          {field.fieldType === 'dropdown' && (
+                            <div className="select-wrapper">
+                              <select
+                                className="form-input"
+                                value={customAnswers[field.id] ?? ''}
+                                onChange={e => setCustomAnswers(prev => ({ ...prev, [field.id]: e.target.value }))}
+                                required={field.required}
+                                disabled={step === 'submitting'}
+                              >
+                                <option value="" disabled>Select an option</option>
+                                {field.options.map(option => (
+                                  <option key={option} value={option}>{option}</option>
+                                ))}
+                              </select>
+                              <ChevronDown size={16} className="select-icon" />
+                            </div>
+                          )}
+                          {field.fieldType === 'checkbox' && (
+                            <label style={{ display: 'flex', gap: '0.6rem', alignItems: 'center', color: 'var(--white-70)', fontSize: '0.9rem' }}>
+                              <input
+                                type="checkbox"
+                                checked={customAnswers[field.id] === 'true'}
+                                onChange={e => setCustomAnswers(prev => ({ ...prev, [field.id]: e.target.checked ? 'true' : 'false' }))}
+                                required={field.required}
+                                disabled={step === 'submitting'}
+                              />
+                              <span>I confirm</span>
+                            </label>
+                          )}
+                          {field.fieldType === 'file' && (
+                            <input
+                              className="form-input"
+                              type="file"
+                              onChange={e => setCustomFiles(prev => ({ ...prev, [field.id]: e.target.files?.[0] ?? null }))}
+                              required={field.required}
+                              disabled={step === 'submitting'}
+                            />
+                          )}
+                        </div>
+                      ))}
                     </div>
                   )}
 

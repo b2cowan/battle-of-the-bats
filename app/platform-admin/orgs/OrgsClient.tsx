@@ -1,28 +1,38 @@
 'use client';
 import { useState } from 'react';
 import Link from 'next/link';
+import ExportMenu from '@/components/admin/ExportMenu';
+import {
+  downloadXLSX, generateCSV, downloadCSVBlob,
+  buildFilename, serializeRows, serializeHeaders, type ExportColumnDef,
+} from '@/lib/export';
 import styles from './orgs.module.css';
+
+// ── Export ────────────────────────────────────────────────────────────────────
+
+const ORGS_EXPORT_COLS: ExportColumnDef[] = [
+  { label: 'Name',   key: 'name',               format: 'text' },
+  { label: 'Slug',   key: 'slug',               format: 'text' },
+  { label: 'Plan',   key: 'planLabel',          format: 'text' },
+  { label: 'Status', key: 'subscriptionStatus', format: 'text' },
+  { label: 'Created', key: 'createdAt',         format: 'text' },
+];
+
+// ─────────────────────────────────────────────────────────────────────────────
 
 interface OrgRow {
   id: string;
   name: string;
   slug: string;
   planId: string;
-  tournamentLimit: number;
   subscriptionStatus: string;
   createdAt: string;
   enabledAddons: string[];
   internalNotes: string | null;
 }
 
-interface EditState {
-  planId: string;
-  tournamentLimit: number;
-}
-
 interface Props {
   orgs: OrgRow[];
-  planDefaults: Record<string, number>;
   initialStatus: string;
 }
 
@@ -35,8 +45,6 @@ const PLAN_LABELS: Record<string, string> = {
   league:          'League',
   club:            'Club',
 };
-
-type ApiErrorBody = { error?: string };
 
 function fmtDate(iso: string) {
   return new Date(iso).toLocaleDateString('en-CA', {
@@ -51,10 +59,19 @@ function statusClass(status: string) {
   return styles.badgeMuted;
 }
 
-export default function OrgsClient({ orgs, planDefaults, initialStatus }: Props) {
+export default function OrgsClient({ orgs, initialStatus }: Props) {
   const [search,       setSearch]       = useState('');
   const [planFilter,   setPlanFilter]   = useState('');
   const [statusFilter, setStatusFilter] = useState(initialStatus);
+
+  const statusCounts = orgs.reduce<Record<string, number>>((acc, org) => {
+    acc[org.subscriptionStatus] = (acc[org.subscriptionStatus] ?? 0) + 1;
+    return acc;
+  }, {});
+  const pastDueCount = statusCounts.past_due ?? 0;
+  const canceledCount = statusCounts.canceled ?? 0;
+  const notesCount = orgs.filter(org => org.internalNotes).length;
+  const activeOrTrialing = (statusCounts.active ?? 0) + (statusCounts.trialing ?? 0);
 
   const filteredOrgs = orgs.filter(o => {
     if (search) {
@@ -66,153 +83,189 @@ export default function OrgsClient({ orgs, planDefaults, initialStatus }: Props)
     return true;
   });
 
-  const [edits, setEdits] = useState<Record<string, EditState>>(
-    Object.fromEntries(
-      orgs.map(o => [o.id, { planId: o.planId, tournamentLimit: o.tournamentLimit }])
-    )
-  );
-  const [saving, setSaving] = useState<Record<string, boolean>>({});
-  const [errors, setErrors] = useState<Record<string, string>>({});
-  const [saved,  setSaved]  = useState<Record<string, boolean>>({});
+  // ── Export ────────────────────────────────────────────────────────────────
 
-  function handlePlanChange(id: string, planId: string) {
-    setEdits(e => ({ ...e, [id]: { planId, tournamentLimit: planDefaults[planId] ?? 1 } }));
-    setSaved(s => ({ ...s, [id]: false }));
+  function buildOrgExportRows() {
+    return filteredOrgs.map(o => ({
+      name:               o.name,
+      slug:               o.slug,
+      planLabel:          PLAN_LABELS[o.planId] ?? o.planId,
+      subscriptionStatus: o.subscriptionStatus,
+      createdAt:          fmtDate(o.createdAt),
+    }));
   }
 
-  function handleLimitChange(id: string, raw: string) {
-    const num = parseInt(raw, 10);
-    if (isNaN(num) || num < 0) return;
-    setEdits(e => ({ ...e, [id]: { ...e[id], tournamentLimit: num } }));
-    setSaved(s => ({ ...s, [id]: false }));
+  function handleExportXLSX() {
+    const rows     = buildOrgExportRows();
+    const headers  = serializeHeaders(ORGS_EXPORT_COLS);
+    const data     = serializeRows(rows, ORGS_EXPORT_COLS);
+    const filename = buildFilename({ dataset: 'organizations' }, 'xlsx');
+    downloadXLSX(filename, headers, data, 'Organizations');
   }
 
-  async function handleSave(id: string) {
-    setSaving(s => ({ ...s, [id]: true }));
-    setErrors(e => ({ ...e, [id]: '' }));
-    setSaved(s => ({ ...s, [id]: false }));
-    const { planId, tournamentLimit } = edits[id];
-    try {
-      const res = await fetch(`/api/platform-admin/orgs/${id}/plan`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ planId, tournamentLimit }),
-      });
-      if (!res.ok) {
-        const data = await res.json().catch((): ApiErrorBody => ({}));
-        setErrors(e => ({ ...e, [id]: data.error ?? 'Save failed' }));
-      } else {
-        setSaved(s => ({ ...s, [id]: true }));
-      }
-    } catch {
-      setErrors(e => ({ ...e, [id]: 'Network error' }));
-    } finally {
-      setSaving(s => ({ ...s, [id]: false }));
-    }
+  function handleExportCSV() {
+    const rows     = buildOrgExportRows();
+    const headers  = serializeHeaders(ORGS_EXPORT_COLS);
+    const data     = serializeRows(rows, ORGS_EXPORT_COLS);
+    const filename = buildFilename({ dataset: 'organizations' }, 'csv');
+    downloadCSVBlob(filename, generateCSV(headers, data));
   }
+
+  // ─────────────────────────────────────────────────────────────────────────
 
   return (
     <div className={styles.page}>
       <header className={styles.header}>
-        <div className={styles.headerLabel}>FieldLogicHQ</div>
-        <h1 className={styles.title}>Organizations</h1>
-        <div className={styles.count}>
-          {filteredOrgs.length === orgs.length
-            ? `${orgs.length} total`
-            : `${filteredOrgs.length} of ${orgs.length}`}
+        <div>
+          <div className={styles.headerLabel}>Customers</div>
+          <h1 className={styles.title}>Organizations</h1>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <ExportMenu
+            formats={['xlsx', 'csv']}
+            onExportXLSX={handleExportXLSX}
+            onExportCSV={handleExportCSV}
+            disabled={filteredOrgs.length === 0}
+          />
+          <div className={styles.count}>
+            {filteredOrgs.length === orgs.length
+              ? `${orgs.length} total`
+              : `${filteredOrgs.length} of ${orgs.length}`}
+          </div>
         </div>
       </header>
 
-      <div className={styles.filterBar}>
-        <input
-          type="search"
-          className={styles.filterInput}
-          placeholder="Search name or slug…"
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-        />
-        <select
-          className={styles.filterSelect}
-          value={planFilter}
-          onChange={e => setPlanFilter(e.target.value)}
-        >
-          <option value="">All plans</option>
-          {PLANS.map(p => <option key={p} value={p}>{PLAN_LABELS[p]}</option>)}
-        </select>
-        <select
-          className={styles.filterSelect}
-          value={statusFilter}
-          onChange={e => setStatusFilter(e.target.value)}
-        >
-          <option value="">All statuses</option>
-          {STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
-        </select>
-        {(search || planFilter || statusFilter) && (
-          <button
-            className={styles.filterClear}
-            onClick={() => { setSearch(''); setPlanFilter(''); setStatusFilter(''); }}
+      <section className={styles.summaryGrid} aria-label="Organization account snapshot">
+        <div className={styles.metric}>
+          <span className={styles.metricLabel}>Total Accounts</span>
+          <strong>{orgs.length}</strong>
+        </div>
+        <div className={`${styles.metric} ${pastDueCount > 0 ? styles.metricWarn : ''}`}>
+          <span className={styles.metricLabel}>Past Due</span>
+          <strong>{pastDueCount}</strong>
+        </div>
+        <div className={styles.metric}>
+          <span className={styles.metricLabel}>Active / Trial</span>
+          <strong>{activeOrTrialing}</strong>
+        </div>
+        <div className={styles.metric}>
+          <span className={styles.metricLabel}>Internal Notes</span>
+          <strong>{notesCount}</strong>
+        </div>
+      </section>
+
+      <section className={`${styles.attentionStrip} ${pastDueCount > 0 || canceledCount > 0 ? styles.attentionWarn : ''}`}>
+        <div>
+          <div className={styles.sectionKicker}>Needs Attention</div>
+          <div className={styles.attentionText}>
+            {pastDueCount > 0 || canceledCount > 0
+              ? 'Accounts with billing or access risk are ready for review.'
+              : 'No past-due or canceled accounts in the current directory.'}
+          </div>
+        </div>
+        <div className={styles.attentionActions}>
+          {pastDueCount > 0 && (
+            <button type="button" onClick={() => setStatusFilter('past_due')} className={styles.attentionBtn}>
+              Past due ({pastDueCount})
+            </button>
+          )}
+          {canceledCount > 0 && (
+            <button type="button" onClick={() => setStatusFilter('canceled')} className={styles.attentionBtn}>
+              Canceled ({canceledCount})
+            </button>
+          )}
+          {pastDueCount === 0 && canceledCount === 0 && (
+            <span className={styles.attentionOk}>Clear</span>
+          )}
+        </div>
+      </section>
+
+      <section className={styles.workflowPanel}>
+        <div className={styles.sectionHeader}>
+          <div>
+            <div className={styles.sectionKicker}>Primary Workflow</div>
+            <h2 className={styles.sectionTitle}>Find Accounts</h2>
+          </div>
+          <Link href="/platform-admin/customer-users" className={styles.secondaryAction}>
+            Search Customer Users
+          </Link>
+        </div>
+
+        <div className={styles.filterBar}>
+          <input
+            type="search"
+            className={styles.filterInput}
+            placeholder="Search name or slug..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+          />
+          <select
+            className={styles.filterSelect}
+            value={planFilter}
+            onChange={e => setPlanFilter(e.target.value)}
           >
-            Clear
-          </button>
-        )}
-      </div>
+            <option value="">All plans</option>
+            {PLANS.map(p => <option key={p} value={p}>{PLAN_LABELS[p]}</option>)}
+          </select>
+          <select
+            className={styles.filterSelect}
+            value={statusFilter}
+            onChange={e => setStatusFilter(e.target.value)}
+          >
+            <option value="">All statuses</option>
+            {STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
+          </select>
+          {(search || planFilter || statusFilter) && (
+            <button
+              className={styles.filterClear}
+              onClick={() => { setSearch(''); setPlanFilter(''); setStatusFilter(''); }}
+            >
+              Clear
+            </button>
+          )}
+        </div>
+      </section>
 
-      <div className={styles.tableWrap}>
-        <table className={styles.table}>
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Slug</th>
-              <th>Plan</th>
-              <th>Limit</th>
-              <th>Status</th>
-              <th>Created</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredOrgs.length === 0 && (
+      <section className={styles.tableSection}>
+        <div className={styles.sectionHeader}>
+          <div>
+            <div className={styles.sectionKicker}>Grouped Detail</div>
+            <h2 className={styles.sectionTitle}>Account Directory</h2>
+          </div>
+          <div className={styles.sectionMeta}>
+            {filteredOrgs.length} shown
+          </div>
+        </div>
+
+        <div className={styles.tableWrap}>
+          <table className={styles.table}>
+            <thead>
               <tr>
-                <td colSpan={7} className={styles.emptyCell}>No organizations match the current filter.</td>
+                <th>Name</th>
+                <th>Slug</th>
+                <th>Plan</th>
+                <th>Status</th>
+                <th>Created</th>
+                <th></th>
               </tr>
-            )}
-            {filteredOrgs.map(org => {
-              const edit     = edits[org.id] ?? { planId: org.planId, tournamentLimit: org.tournamentLimit };
-              const hasFiniteTournamentLimit = (planDefaults[edit.planId] ?? edit.tournamentLimit) < 9999;
-
-              return (
+            </thead>
+            <tbody>
+              {filteredOrgs.length === 0 && (
+                <tr>
+                  <td colSpan={6} className={styles.emptyCell}>No organizations match the current filter.</td>
+                </tr>
+              )}
+              {filteredOrgs.map(org => (
                 <tr key={org.id}>
                   <td>
                     <span className={styles.orgName}>{org.name}</span>
                     {org.internalNotes && (
-                      <span className={styles.noteIndicator} title="Has internal note">●</span>
+                      <span className={styles.noteIndicator} title="Has internal note">note</span>
                     )}
                   </td>
                   <td><span className={styles.slug}>{org.slug}</span></td>
                   <td>
-                    <select
-                      className={styles.planSelect}
-                      value={edit.planId}
-                      onChange={e => handlePlanChange(org.id, e.target.value)}
-                    >
-                      {PLANS.map(p => (
-                        <option key={p} value={p}>{PLAN_LABELS[p]}</option>
-                      ))}
-                    </select>
-                  </td>
-                  <td>
-                    {hasFiniteTournamentLimit ? (
-                      <input
-                        type="number"
-                        className={styles.limitInput}
-                        value={edit.tournamentLimit}
-                        min={0}
-                        max={9999}
-                        onChange={e => handleLimitChange(org.id, e.target.value)}
-                      />
-                    ) : (
-                      <span className={styles.slug}>—</span>
-                    )}
+                    <span className={styles.planLabel}>{PLAN_LABELS[org.planId] ?? org.planId}</span>
                   </td>
                   <td>
                     <span className={`${styles.badge} ${statusClass(org.subscriptionStatus)}`}>
@@ -222,15 +275,8 @@ export default function OrgsClient({ orgs, planDefaults, initialStatus }: Props)
                   <td className={styles.dateCell}>{fmtDate(org.createdAt)}</td>
                   <td className={styles.actionsCell}>
                     <div className={styles.actionGroup}>
-                      <button
-                        className={styles.saveBtn}
-                        onClick={() => handleSave(org.id)}
-                        disabled={saving[org.id]}
-                      >
-                        {saving[org.id] ? 'Saving…' : saved[org.id] ? 'Saved ✓' : 'Save'}
-                      </button>
                       <Link href={`/platform-admin/orgs/${org.id}`} className={styles.viewLink}>
-                        View →
+                        View
                       </Link>
                       <Link
                         href={`/${org.slug}/admin`}
@@ -238,19 +284,16 @@ export default function OrgsClient({ orgs, planDefaults, initialStatus }: Props)
                         rel="noreferrer"
                         className={styles.adminLink}
                       >
-                        ↗ Admin
+                        Admin
                       </Link>
                     </div>
-                    {errors[org.id] && (
-                      <div className={styles.rowError}>{errors[org.id]}</div>
-                    )}
                   </td>
                 </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
     </div>
   );
 }

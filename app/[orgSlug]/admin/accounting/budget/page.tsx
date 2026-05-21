@@ -5,8 +5,25 @@ import { DollarSign, ChevronDown, ChevronRight, Pencil, Trash2, Plus, X, Check }
 import { useOrg } from '@/lib/org-context';
 import { hasCapability } from '@/lib/roles';
 import BudgetItemPicker, { type BudgetItemSelection } from '@/components/accounting/BudgetItemPicker';
+import {
+  downloadXLSX, generateCSV, downloadCSVBlob,
+  buildFilename, serializeRows, serializeHeaders, type ExportColumnDef,
+} from '@/lib/export';
+import ExportMenu from '@/components/admin/ExportMenu';
 import type { BudgetCategoryWithItems } from '@/lib/types';
 import styles from './budget.module.css';
+
+// ── Export definition ─────────────────────────────────────────────────────────
+
+const BUDGET_EXPORT_COLS: ExportColumnDef[] = [
+  { label: 'Category',    key: 'category',    format: 'text'     },
+  { label: 'Description', key: 'description', format: 'text'     },
+  { label: 'Total',       key: 'total',       format: 'currency' },
+  { label: 'Allocated',   key: 'allocated',   format: 'currency' },
+  { label: 'Collected',   key: 'collected',   format: 'currency' },
+  { label: 'Periods',     key: 'periodCount', format: 'number'   },
+  { label: 'Allocated?',  key: 'isAllocated', format: 'text'     },
+];
 
 function fmt(n: number) {
   return `$${n.toLocaleString('en-CA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -278,6 +295,61 @@ export default function OrgBudgetPage() {
     setAddPeriods(prev => prev.map((p, i) => i === idx ? { ...p, ...patch } : p));
   }
 
+  // ── Export ────────────────────────────────────────────────────────────────
+
+  function buildBudgetExportRows() {
+    if (!plan) return [];
+    const rows: Record<string, unknown>[] = [];
+
+    for (const cat of plan.categories) {
+      for (const line of cat.lines) {
+        rows.push({
+          category:    cat.name,
+          description: line.description,
+          total:       line.totalAmount,
+          allocated:   line.allocation?.totalAllocated ?? 0,
+          collected:   line.allocation?.collected ?? 0,
+          periodCount: line.periods.length,
+          isAllocated: line.allocation ? 'Yes' : 'No',
+        });
+      }
+    }
+    for (const line of plan.uncategorized) {
+      rows.push({
+        category:    'Uncategorized',
+        description: line.description,
+        total:       line.totalAmount,
+        allocated:   line.allocation?.totalAllocated ?? 0,
+        collected:   line.allocation?.collected ?? 0,
+        periodCount: line.periods.length,
+        isAllocated: line.allocation ? 'Yes' : 'No',
+      });
+    }
+    return rows;
+  }
+
+  function handleExportXLSX() {
+    const rows     = buildBudgetExportRows();
+    const headers  = serializeHeaders(BUDGET_EXPORT_COLS);
+    const data     = serializeRows(rows as Record<string, unknown>[], BUDGET_EXPORT_COLS);
+    const filename = buildFilename(
+      { org: currentOrg?.slug, dataset: 'budget-plan', scope: String(year) },
+      'xlsx',
+    );
+    downloadXLSX(filename, headers, data, 'Budget Plan');
+  }
+
+  function handleExportCSV() {
+    const rows     = buildBudgetExportRows();
+    const headers  = serializeHeaders(BUDGET_EXPORT_COLS);
+    const data     = serializeRows(rows as Record<string, unknown>[], BUDGET_EXPORT_COLS);
+    const filename = buildFilename(
+      { org: currentOrg?.slug, dataset: 'budget-plan', scope: String(year) },
+      'csv',
+    );
+    downloadCSVBlob(filename, generateCSV(headers, data));
+  }
+
   // ── Render ────────────────────────────────────────────────────────────────
 
   const allLines = plan
@@ -462,11 +534,19 @@ export default function OrgBudgetPage() {
           </div>
         </div>
 
-        {canWrite && !addOpen && (
-          <button type="button" className="btn btn-primary" onClick={() => setAddOpen(true)}>
-            <Plus size={15} /> Add Line
-          </button>
-        )}
+        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+          <ExportMenu
+            formats={['xlsx', 'csv']}
+            onExportXLSX={handleExportXLSX}
+            onExportCSV={handleExportCSV}
+            disabled={!plan || allLines.length === 0}
+          />
+          {canWrite && !addOpen && (
+            <button type="button" className="btn btn-primary" onClick={() => setAddOpen(true)}>
+              <Plus size={15} /> Add Line
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Year selector */}

@@ -6,8 +6,23 @@ import HelpTooltip from '@/components/help/HelpTooltip';
 import { useOrg } from '@/lib/org-context';
 import { hasCapability } from '@/lib/roles';
 import FeedbackModal from '@/components/FeedbackModal';
+import {
+  downloadXLSX, generateCSV, downloadCSVBlob,
+  buildFilename, serializeRows, serializeHeaders, type ExportColumnDef,
+} from '@/lib/export';
+import ExportMenu from '@/components/admin/ExportMenu';
 import styles from '../../../../rep-teams.module.css';
-import type { RepTeam, RepProgramYear, RepProgramYearStatus } from '@/lib/types';
+import type { RepTeam, RepProgramYear, RepProgramYearStatus, RepRosterPlayer } from '@/lib/types';
+
+// ── Export definition ─────────────────────────────────────────────────────────
+
+const ROSTER_EXPORT_COLS: ExportColumnDef[] = [
+  { label: '#',             key: 'playerNumber',      format: 'text' },
+  { label: 'First Name',    key: 'playerFirstName',   format: 'text' },
+  { label: 'Last Name',     key: 'playerLastName',    format: 'text' },
+  { label: 'Date of Birth', key: 'playerDateOfBirth', format: 'date', sensitive: true },
+  { label: 'Status',        key: 'status',            format: 'text' },
+];
 
 const STATUS_LABEL: Record<string, string> = {
   draft: 'Draft', active: 'Active', completed: 'Completed', archived: 'Archived',
@@ -46,8 +61,12 @@ export default function ProgramYearOverviewPage({
   const [fetching, setFetching] = useState(true);
   const [transitioning, setTransitioning] = useState(false);
 
+  // Roster
+  const [players, setPlayers] = useState<RepRosterPlayer[]>([]);
+  const [rosterFetching, setRosterFetching] = useState(false);
+
   const [feedbackOpen, setFeedbackOpen] = useState(false);
-  const [feedbackType, setFeedbackType] = useState<'success' | 'danger'>('success');
+  const [feedbackType, setFeedbackType] = useState<'success' | 'danger' | 'info'>('success');
   const [feedbackMsg, setFeedbackMsg] = useState('');
 
   function showFeedback(type: 'success' | 'danger', msg: string) {
@@ -72,7 +91,22 @@ export default function ProgramYearOverviewPage({
     }
   }, [params.teamId, params.yearId]);
 
-  useEffect(() => { if (currentOrg) load(); }, [currentOrg, load]);
+  const loadRoster = useCallback(async () => {
+    setRosterFetching(true);
+    try {
+      const res = await fetch(
+        `/api/admin/rep-teams/teams/${params.teamId}/program-years/${params.yearId}/roster`,
+      );
+      if (res.ok) {
+        const data = await res.json();
+        setPlayers(data.players ?? []);
+      }
+    } finally {
+      setRosterFetching(false);
+    }
+  }, [params.teamId, params.yearId]);
+
+  useEffect(() => { if (currentOrg) { load(); loadRoster(); } }, [currentOrg, load, loadRoster]);
 
   async function handleTransition(newStatus: RepProgramYearStatus) {
     setTransitioning(true);
@@ -94,6 +128,48 @@ export default function ProgramYearOverviewPage({
     } finally {
       setTransitioning(false);
     }
+  }
+
+  // ── Export ──────────────────────────────────────────────────────────────────
+
+  function buildRosterExportRows(includeSensitive = false) {
+    return serializeRows(
+      players.map(p => ({
+        playerNumber:      p.playerNumber ?? '',
+        playerFirstName:   p.playerFirstName,
+        playerLastName:    p.playerLastName,
+        playerDateOfBirth: p.playerDateOfBirth ?? '',
+        status:            p.status,
+      })),
+      ROSTER_EXPORT_COLS,
+      includeSensitive,
+    );
+  }
+
+  function handleExportXLSX() {
+    const headers  = serializeHeaders(ROSTER_EXPORT_COLS);
+    const data     = buildRosterExportRows(false);
+    const filename = buildFilename(
+      { org: currentOrg?.slug, dataset: 'roster', scope: team?.name },
+      'xlsx',
+    );
+    downloadXLSX(filename, headers, data, 'Roster');
+  }
+
+  function handleExportCSV() {
+    const headers  = serializeHeaders(ROSTER_EXPORT_COLS);
+    const data     = buildRosterExportRows(false);
+    const filename = buildFilename(
+      { org: currentOrg?.slug, dataset: 'roster', scope: team?.name },
+      'csv',
+    );
+    downloadCSVBlob(filename, generateCSV(headers, data));
+  }
+
+  function handleExportPDF() {
+    setFeedbackType('info');
+    setFeedbackMsg('PDF roster export is coming soon. It will include your org logo, header, and privacy settings configured in Org Settings → PDF Settings.');
+    setFeedbackOpen(true);
   }
 
   if (loading || fetching) return <p className={styles.muted}>Loading…</p>;
@@ -187,8 +263,70 @@ export default function ProgramYearOverviewPage({
         </div>
       </div>
 
+      {/* ── Roster section ─────────────────────────────────────────────────── */}
+      <div style={{ marginTop: '2rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
+          <h2 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, color: '#f0f0f0' }}>
+            Roster
+          </h2>
+          <ExportMenu
+            formats={['xlsx', 'csv', 'pdf']}
+            onExportXLSX={handleExportXLSX}
+            onExportCSV={handleExportCSV}
+            onExportPDF={handleExportPDF}
+            planId={currentOrg?.planId}
+            pdfFeatureKey="pdf_exports"
+            disabled={players.length === 0}
+          />
+        </div>
+
+        {rosterFetching && (
+          <p className={styles.muted}>Loading roster…</p>
+        )}
+
+        {!rosterFetching && players.length === 0 && (
+          <p className={styles.muted}>No players on this roster yet.</p>
+        )}
+
+        {!rosterFetching && players.length > 0 && (
+          <div style={{ overflowX: 'auto' }}>
+            <table className={styles.table}>
+              <thead>
+                <tr>
+                  <th className={styles.th}>#</th>
+                  <th className={styles.th}>First Name</th>
+                  <th className={styles.th}>Last Name</th>
+                  <th className={styles.th}>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {players.map(p => (
+                  <tr key={p.id}>
+                    <td className={styles.td} style={{ color: 'rgba(255,255,255,0.45)', width: '3rem' }}>
+                      {p.playerNumber ?? '—'}
+                    </td>
+                    <td className={styles.td}>{p.playerFirstName}</td>
+                    <td className={styles.td}>{p.playerLastName}</td>
+                    <td className={styles.td}>
+                      <span className={`${styles.badge} ${
+                        p.status === 'active'   ? styles.badgeActive   :
+                        p.status === 'inactive' ? styles.badgeDraft    :
+                                                  styles.badgeArchived
+                      }`}>
+                        {p.status === 'active' ? 'Active' : p.status === 'inactive' ? 'Inactive' : 'Released'}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
       <FeedbackModal isOpen={feedbackOpen} onClose={() => setFeedbackOpen(false)}
-        title={feedbackType === 'success' ? 'Done' : 'Error'} message={feedbackMsg} type={feedbackType} />
+        title={feedbackType === 'success' ? 'Done' : feedbackType === 'info' ? 'Coming Soon' : 'Error'}
+        message={feedbackMsg} type={feedbackType} />
     </div>
   );
 }

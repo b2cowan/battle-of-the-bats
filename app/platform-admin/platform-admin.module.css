@@ -7,10 +7,15 @@
 .sidebar {
   width: 220px;
   flex-shrink: 0;
+  position: sticky;
+  top: 0;
+  align-self: flex-start;
+  max-height: 100vh;
   border-right: 1px solid rgba(var(--logic-lime-rgb), 0.25);
   background: rgba(5, 10, 5, 0.6);
   display: flex;
   flex-direction: column;
+  overflow-y: auto;
 }
 
 .sidebarHeader {
@@ -145,4 +150,93 @@
     linear-gradient(to right, rgba(var(--logic-lime-rgb), 0.03) 1px, transparent 1px),
     linear-gradient(to bottom, rgba(var(--logic-lime-rgb), 0.03) 1px, transparent 1px);
   background-size: 40px 40px;
+}
+
+@media (max-width: 920px) {
+  .shell {
+    display: block;
+  }
+
+  .sidebar {
+    position: static;
+    width: 100%;
+    max-height: none;
+    border-right: 0;
+    border-bottom: 1px solid rgba(var(--logic-lime-rgb), 0.25);
+    overflow: visible;
+  }
+
+  .sidebarHeader,
+  .sidebarFooter {
+    padding: 0.9rem 1rem;
+  }
+
+  .nav {
+    display: flex;
+    flex-direction: row;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    overflow-x: auto;
+    scroll-snap-type: x proximity;
+  }
+
+  .navGroup {
+    min-width: max-content;
+    scroll-snap-align: start;
+  }
+
+  .navGroupLabel {
+    padding: 0 0.4rem 0.2rem;
+  }
+
+  .navLink {
+    min-height: 2.35rem;
+    padding: 0.5rem 0.65rem;
+    white-space: nowrap;
+  }
+
+  .sidebarFooter {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 0.25rem 0.75rem;
+    align-items: center;
+  }
+
+  .sessionLabel {
+    grid-column: 1 / -1;
+    margin-bottom: 0;
+  }
+
+  .sessionEmail {
+    margin-bottom: 0;
+  }
+
+  .signOutBtn {
+    width: auto;
+    min-height: 2.2rem;
+  }
+
+  .main {
+    padding: 1rem;
+    overflow-y: visible;
+  }
+}
+
+@media (max-width: 560px) {
+  .sidebarHeader {
+    padding-bottom: 0.75rem;
+  }
+
+  .nav {
+    padding-inline: 0.75rem;
+  }
+
+  .sidebarFooter {
+    grid-template-columns: 1fr;
+  }
+
+  .signOutBtn {
+    width: 100%;
+    justify-content: center;
+  }
 }

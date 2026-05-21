@@ -10,6 +10,7 @@ import { PLAN_CONFIG } from '@/lib/plan-config';
 import { stripe } from '@/lib/stripe';
 import { getPlanFromPriceId, getStripePriceId } from '@/lib/stripe-prices';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { writePlatformEvent } from '@/lib/platform-events';
 
 type ConfirmBody = {
   targetPlan?: unknown;
@@ -133,6 +134,24 @@ export async function POST(req: Request) {
     retainedTournamentIds: retainedTournaments.map(t => t.id),
     keepTournamentIds,
     retentionUntil,
+  });
+
+  await writePlatformEvent({
+    eventType: 'plan_downgraded',
+    source: 'app',
+    orgId: ctx.org.id,
+    actorUserId: ctx.user.id,
+    actorEmail,
+    previousPlanId: ctx.org.planId,
+    planId: targetPlan,
+    previousSubscriptionStatus: ctx.org.subscriptionStatus,
+    subscriptionStatus: 'active',
+    metadata: {
+      retainedTournamentIds: retainedTournaments.map(t => t.id),
+      keepTournamentIds,
+      retentionUntil,
+      reason,
+    },
   });
 
   // — D4: Stripe reconciliation —

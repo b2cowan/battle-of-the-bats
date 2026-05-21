@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getPlatformAuthContext } from '@/lib/platform-auth';
+import { getPlatformAuthContext, requirePlatformPermission } from '@/lib/platform-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { writePlatformAuditLog } from '@/lib/platform-audit';
 
@@ -7,8 +7,8 @@ export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const user = await getPlatformAuthContext();
-  if (!user) return new NextResponse('Forbidden', { status: 403 });
+  const auth = await requirePlatformPermission('manage_billing');
+  if (auth.response) return auth.response;
 
   const { id } = await params;
 
@@ -30,8 +30,8 @@ export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const user = await getPlatformAuthContext();
-  if (!user) return new NextResponse('Forbidden', { status: 403 });
+  const auth = await requirePlatformPermission('manage_billing');
+  if (auth.response) return auth.response;
 
   const { id } = await params;
   const body = await req.json() as {
@@ -56,18 +56,6 @@ export async function POST(
     return NextResponse.json({ error: 'reason is required' }, { status: 400 });
   }
 
-  // For subscription_status: write value to organizations.subscription_status first
-  if (type === 'subscription_status') {
-    const { error: orgErr } = await supabaseAdmin
-      .from('organizations')
-      .update({ subscription_status: value })
-      .eq('id', id);
-    if (orgErr) {
-      console.error('[platform-admin] subscription_status update error:', orgErr);
-      return NextResponse.json({ error: 'Status update failed' }, { status: 500 });
-    }
-  }
-
   const { data: created, error } = await supabaseAdmin
     .from('org_overrides')
     .insert({
@@ -76,7 +64,7 @@ export async function POST(
       value:      value ?? null,
       expires_at: expires_at ?? null,
       reason,
-      created_by: user.email!,
+      created_by: auth.user.email!,
     })
     .select()
     .single();
@@ -87,7 +75,7 @@ export async function POST(
   }
 
   await writePlatformAuditLog(
-    user.email!,
+    auth.user.email!,
     id,
     'create_override',
     'type',

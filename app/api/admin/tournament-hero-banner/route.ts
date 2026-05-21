@@ -83,6 +83,13 @@ export async function DELETE(req: Request) {
   const denied = scopeGuard(ctx, tournamentId);
   if (denied) return denied;
 
+  if (!hasPlanFeature(ctx.org.planId, 'advanced_tournament_branding')) {
+    return NextResponse.json(
+      { error: 'Hero banners require Tournament Plus or higher' },
+      { status: 403 }
+    );
+  }
+
   for (const ext of ['jpg', 'png', 'webp']) {
     await supabaseAdmin.storage.from(BUCKET).remove([`${ctx.org.id}/${tournamentId}/hero-banner.${ext}`]);
   }

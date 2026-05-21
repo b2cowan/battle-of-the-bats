@@ -32,6 +32,10 @@ const CAPABILITIES = [
     name: 'Parent Notifications',
     desc: 'Automated email notifications when schedules change, games are postponed, or standings update. No more reply-all chains.',
   },
+  {
+    name: 'Data Exports',
+    desc: 'Registration, schedule, and standings exports in Excel and CSV. iCal calendar download so team contacts can import the season schedule directly into Google Calendar or Apple Calendar.',
+  },
 ];
 
 export default function HouseLeaguePage() {

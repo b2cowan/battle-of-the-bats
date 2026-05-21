@@ -6,6 +6,11 @@ import Link from 'next/link';
 import { useOrg } from '@/lib/org-context';
 import FeedbackModal from '@/components/FeedbackModal';
 import HelpCallout from '@/components/help/HelpCallout';
+import {
+  downloadXLSX, generateCSV, downloadCSVBlob,
+  buildFilename, serializeRows, serializeHeaders, type ExportColumnDef,
+} from '@/lib/export';
+import ExportMenu from '@/components/admin/ExportMenu';
 import styles from '../../../house-league.module.css';
 import type { LeagueRegistration, LeagueRegistrationStatus, LeagueDivision, LeagueTeam } from '@/lib/types';
 
@@ -62,6 +67,25 @@ const REG_STATUS_LABEL: Record<LeagueRegistrationStatus, string> = {
   declined:       'Declined',
   withdrawn:      'Withdrawn',
 };
+
+// ── Export definition ─────────────────────────────────────────────────────────
+
+const HL_REG_EXPORT_COLS: ExportColumnDef[] = [
+  { label: 'First Name',       key: 'playerFirstName',   format: 'text' },
+  { label: 'Last Name',        key: 'playerLastName',    format: 'text' },
+  { label: 'Division',         key: 'division',          format: 'text' },
+  { label: 'Date of Birth',    key: 'playerDateOfBirth', format: 'date',     sensitive: true },
+  { label: 'Guardian Name',    key: 'guardianName',      format: 'text',     sensitive: true },
+  { label: 'Guardian Email',   key: 'guardianEmail',     format: 'text',     sensitive: true },
+  { label: 'Guardian Phone',   key: 'guardianPhone',     format: 'text',     sensitive: true },
+  { label: 'Registered At',    key: 'registeredAt',      format: 'date' },
+  { label: 'Status',           key: 'status',            format: 'text' },
+  { label: 'Fee Paid',         key: 'feePaid',           format: 'text' },
+  { label: 'Jersey Pref',      key: 'jerseyPref',        format: 'text' },
+  { label: 'Position Pref',    key: 'positionPref',      format: 'text' },
+  { label: 'Player Notes',     key: 'playerNotes',       format: 'text',     sensitive: true },
+  { label: 'Admin Notes',      key: 'adminNotes',        format: 'text',     sensitive: true },
+];
 
 const REG_STATUS_STYLE: Record<LeagueRegistrationStatus, React.CSSProperties> = {
   pending_review: { background: 'rgba(245,158,11,0.12)', color: '#F59E0B', border: '1px solid rgba(245,158,11,0.25)' },
@@ -350,6 +374,60 @@ export default function RegistrationsPage() {
     }
   }
 
+  // ── Export helpers ───────────────────────────────────────────────────────────
+
+  function buildHLRegExportSrc() {
+    return tabRegs.map(r => ({
+      playerFirstName:   r.playerFirstName,
+      playerLastName:    r.playerLastName,
+      division:          divisionName(r.divisionId),
+      playerDateOfBirth: r.playerDateOfBirth ?? '',
+      guardianName:      `${r.guardianFirstName} ${r.guardianLastName}`.trim(),
+      guardianEmail:     r.guardianEmail,
+      guardianPhone:     r.guardianPhone ?? '',
+      registeredAt:      r.registeredAt.slice(0, 10),
+      status:            REG_STATUS_LABEL[r.status] ?? r.status,
+      feePaid:           r.registrationFeePaid ? 'Yes' : 'No',
+      jerseyPref:        r.playerJerseyPref ?? '',
+      positionPref:      r.playerPositionPref ?? '',
+      playerNotes:       r.playerNotes ?? '',
+      adminNotes:        r.adminNotes ?? '',
+    }));
+  }
+
+  async function handleExportXLSX() {
+    if (!tabRegs.length) return;
+    const headers = serializeHeaders(HL_REG_EXPORT_COLS);
+    const rows = serializeRows(buildHLRegExportSrc(), HL_REG_EXPORT_COLS);
+    await downloadXLSX(
+      buildFilename({ org: currentOrg?.slug, dataset: 'registrations', scope: activeTab }, 'xlsx'),
+      headers, rows, 'Registrations',
+    );
+  }
+
+  async function handleExportXLSXWithSensitive() {
+    if (!tabRegs.length) return;
+    const headers = serializeHeaders(HL_REG_EXPORT_COLS, true);
+    const rows = serializeRows(buildHLRegExportSrc(), HL_REG_EXPORT_COLS, true);
+    await downloadXLSX(
+      buildFilename({ org: currentOrg?.slug, dataset: 'registrations-with-contacts', scope: activeTab }, 'xlsx'),
+      headers, rows, 'Registrations',
+    );
+  }
+
+  function handleExportCSV() {
+    const headers = serializeHeaders(HL_REG_EXPORT_COLS);
+    const rows = serializeRows(buildHLRegExportSrc(), HL_REG_EXPORT_COLS);
+    downloadCSVBlob(
+      buildFilename({ org: currentOrg?.slug, dataset: 'registrations', scope: activeTab }, 'csv'),
+      generateCSV(headers, rows),
+    );
+  }
+
+  function handleExportPDF() {
+    showFeedback('success', 'PDF export is coming soon.');
+  }
+
   // ── Render helpers ────────────────────────────────────────────────────────────
 
   const orgSlug = currentOrg?.slug ?? '';
@@ -450,6 +528,18 @@ export default function RegistrationsPage() {
         </div>
         {isAdminOrOwner && (
           <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+            <ExportMenu
+              formats={['xlsx', 'csv', 'pdf']}
+              onExportXLSX={handleExportXLSX}
+              onExportCSV={handleExportCSV}
+              onExportPDF={handleExportPDF}
+              hasSensitiveOption={true}
+              sensitiveOptionLabel="Excel with contact details"
+              onExportXLSXWithSensitive={handleExportXLSXWithSensitive}
+              planId={currentOrg?.planId}
+              pdfFeatureKey="pdf_exports"
+              disabled={tabRegs.length === 0}
+            />
             <button
               className={styles.iconBtn}
               style={{ gap: '0.35rem', padding: '0.45rem 0.85rem', fontSize: '0.85rem' }}

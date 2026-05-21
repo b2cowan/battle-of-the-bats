@@ -2,15 +2,66 @@ import Link from 'next/link';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import styles from './audit.module.css';
 import HelpCallout from '@/components/help/HelpCallout';
+import AuditExportClient from './AuditExportClient';
 
 const PAGE_SIZE = 100;
 
 interface Filters {
-  q:      string;
-  from:   string;
-  to:     string;
+  q: string;
+  from: string;
+  to: string;
   action: string;
+  orgId: string;
   offset: number;
+}
+
+type AuditLogRow = {
+  id: string;
+  actor_email: string;
+  org_id: string | null;
+  action: string;
+  field: string | null;
+  old_value: unknown;
+  new_value: unknown;
+  created_at: string;
+  organizations: { id: string; name: string } | { id: string; name: string }[] | null;
+};
+
+type AuditActionRow = {
+  action: string;
+};
+
+const ACTION_LABELS: Record<string, string> = {
+  bulk_create_override: 'Bulk Create Override',
+  bulk_update_addons: 'Bulk Update Add-ons',
+  bulk_update_org_plan_and_limit: 'Bulk Update Plan And Limit',
+  create_internal_note: 'Create Internal Note',
+  delete_internal_note: 'Delete Internal Note',
+  extend_billing_retention: 'Extend Billing Retention',
+  generate_reset_link: 'Generate Reset Link',
+  invite_platform_user: 'Invite Platform User',
+  remove_platform_user: 'Remove Platform User',
+  revoke_override: 'Revoke Override',
+  run_bulk_operation: 'Run Bulk Operation',
+  update_addons: 'Update Add-ons',
+  update_early_access_lead: 'Update Early Access Lead',
+  update_internal_note: 'Update Internal Note',
+  update_org_identity: 'Update Organization Identity',
+  update_org_plan_and_limit: 'Update Plan And Limit',
+  update_plan: 'Update Plan Field',
+  update_plan_config: 'Update Plan Config',
+  update_plan_gating: 'Update Plan Availability',
+  update_platform_user: 'Update Platform User',
+  update_stripe_price_id: 'Update Stripe Price ID',
+};
+
+function actionLabel(action: string) {
+  return ACTION_LABELS[action] ?? action.replace(/_/g, ' ');
+}
+
+function orgNameFromJoin(value: AuditLogRow['organizations']) {
+  if (Array.isArray(value)) return value[0]?.name ?? null;
+  return value?.name ?? null;
 }
 
 async function getAuditLog(f: Filters) {
@@ -20,26 +71,26 @@ async function getAuditLog(f: Filters) {
     .order('created_at', { ascending: false })
     .range(f.offset, f.offset + PAGE_SIZE - 1);
 
-  if (f.from)   q = q.gte('created_at', f.from);
-  if (f.to)     q = q.lte('created_at', f.to + 'T23:59:59');
+  if (f.from) q = q.gte('created_at', f.from);
+  if (f.to) q = q.lte('created_at', f.to + 'T23:59:59');
   if (f.action) q = q.eq('action', f.action);
+  if (f.orgId) q = q.eq('org_id', f.orgId);
 
   const { data, error } = await q;
   if (error || !data) return [];
 
-  let rows = data.map((r: any) => ({
-    id:         r.id as string,
+  let rows = ((data ?? []) as AuditLogRow[]).map(r => ({
+    id: r.id as string,
     actorEmail: r.actor_email as string,
-    orgId:      r.org_id as string | null,
-    orgName:    (r.organizations as any)?.name as string | null ?? null,
-    action:     r.action as string,
-    field:      r.field as string | null,
-    oldValue:   r.old_value,
-    newValue:   r.new_value,
-    createdAt:  r.created_at as string,
+    orgId: r.org_id as string | null,
+    orgName: orgNameFromJoin(r.organizations),
+    action: r.action as string,
+    field: r.field as string | null,
+    oldValue: r.old_value,
+    newValue: r.new_value,
+    createdAt: r.created_at as string,
   }));
 
-  // Org name/email search is post-filter (names come from join, not indexed)
   if (f.q) {
     const lq = f.q.toLowerCase();
     rows = rows.filter(r =>
@@ -57,7 +108,7 @@ async function getDistinctActions(): Promise<string[]> {
     .select('action')
     .order('action');
   if (!data) return [];
-  return [...new Set(data.map((r: any) => r.action as string))];
+  return [...new Set(((data ?? []) as AuditActionRow[]).map(r => r.action))];
 }
 
 function fmtDateTime(iso: string) {
@@ -68,23 +119,43 @@ function fmtDateTime(iso: string) {
 }
 
 function fmtValue(v: unknown): string {
-  if (v === null || v === undefined) return '—';
+  if (v === null || v === undefined) return '-';
   const s = typeof v === 'string' ? v : JSON.stringify(v);
-  return s.length > 80 ? s.slice(0, 80) + '…' : s;
+  return s.length > 80 ? `${s.slice(0, 80)}...` : s;
 }
+
+function fullValue(v: unknown): string {
+  if (v === null || v === undefined) return '-';
+  return typeof v === 'string' ? v : JSON.stringify(v, null, 2);
+}
+
+function buildAuditHref(filters: Filters, extra: Partial<Filters> = {}) {
+  const next = { ...filters, ...extra };
+  const p = new URLSearchParams();
+  if (next.q) p.set('q', next.q);
+  if (next.from) p.set('from', next.from);
+  if (next.to) p.set('to', next.to);
+  if (next.action) p.set('action', next.action);
+  if (next.orgId) p.set('orgId', next.orgId);
+  if (next.offset > 0) p.set('offset', String(next.offset));
+  const qs = p.toString();
+  return `/platform-admin/audit${qs ? `?${qs}` : ''}`;
+}
+
 
 export default async function AuditLogPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; from?: string; to?: string; action?: string; offset?: string }>;
+  searchParams: Promise<{ q?: string; from?: string; to?: string; action?: string; orgId?: string; offset?: string }>;
 }) {
-  const sp     = await searchParams;
+  const sp = await searchParams;
   const offset = Math.max(0, parseInt(sp.offset ?? '0', 10));
   const filters: Filters = {
-    q:      sp.q      ?? '',
-    from:   sp.from   ?? '',
-    to:     sp.to     ?? '',
+    q: sp.q ?? '',
+    from: sp.from ?? '',
+    to: sp.to ?? '',
     action: sp.action ?? '',
+    orgId: sp.orgId ?? '',
     offset,
   };
 
@@ -96,21 +167,10 @@ export default async function AuditLogPage({
   const hasNext = rows.length === PAGE_SIZE;
   const hasPrev = offset > 0;
 
-  function pageHref(newOffset: number) {
-    const p = new URLSearchParams();
-    if (filters.q)      p.set('q',      filters.q);
-    if (filters.from)   p.set('from',   filters.from);
-    if (filters.to)     p.set('to',     filters.to);
-    if (filters.action) p.set('action', filters.action);
-    if (newOffset > 0)  p.set('offset', String(newOffset));
-    const qs = p.toString();
-    return `/platform-admin/audit${qs ? `?${qs}` : ''}`;
-  }
-
   return (
     <div className={styles.page}>
       <header className={styles.header}>
-        <div className={styles.headerLabel}>FieldLogicHQ</div>
+        <div className={styles.headerLabel}>System</div>
         <h1 className={styles.title}>Audit Log</h1>
         <div className={styles.count}>{rows.length} entries</div>
       </header>
@@ -121,13 +181,12 @@ export default async function AuditLogPage({
         body="The audit log records all consequential admin actions across all orgs. Use the filters to narrow by org, date, or action type. Logs are retained indefinitely."
       />
 
-      {/* Filter bar — native GET form, no JS needed */}
       <form method="GET" action="/platform-admin/audit" className={styles.filterBar}>
         <input
           type="search"
           name="q"
           defaultValue={filters.q}
-          placeholder="Search org or email…"
+          placeholder="Search org or email..."
           className={styles.filterInput}
         />
         <input
@@ -150,8 +209,16 @@ export default async function AuditLogPage({
             <option key={a} value={a}>{a}</option>
           ))}
         </select>
+        {filters.orgId && <input type="hidden" name="orgId" value={filters.orgId} />}
         <button type="submit" className={styles.filterBtn}>Filter</button>
-        {(filters.q || filters.from || filters.to || filters.action) && (
+        <AuditExportClient
+          q={filters.q}
+          from={filters.from}
+          to={filters.to}
+          action={filters.action}
+          orgId={filters.orgId}
+        />
+        {(filters.q || filters.from || filters.to || filters.action || filters.orgId) && (
           <Link href="/platform-admin/audit" className={styles.filterClear}>Clear</Link>
         )}
       </form>
@@ -181,17 +248,35 @@ export default async function AuditLogPage({
                 <td className={styles.emailCell}>{row.actorEmail}</td>
                 <td>
                   {row.orgId && row.orgName ? (
-                    <Link href={`/platform-admin/orgs/${row.orgId}`} className={styles.orgLink}>
-                      {row.orgName}
-                    </Link>
+                    <span className={styles.orgCell}>
+                      <Link href={`/platform-admin/orgs/${row.orgId}`} className={styles.orgLink}>
+                        {row.orgName}
+                      </Link>
+                      <Link href={buildAuditHref(filters, { orgId: row.orgId, offset: 0 })} className={styles.orgFilterLink}>
+                        Filter
+                      </Link>
+                    </span>
                   ) : (
-                    <span className={styles.dimText}>—</span>
+                    <span className={styles.dimText}>-</span>
                   )}
                 </td>
-                <td className={styles.actionCell}>{row.action}</td>
-                <td className={styles.dimText}>{row.field ?? '—'}</td>
-                <td><span className={styles.valueCell} title={JSON.stringify(row.oldValue)}>{fmtValue(row.oldValue)}</span></td>
-                <td><span className={styles.valueCell} title={JSON.stringify(row.newValue)}>{fmtValue(row.newValue)}</span></td>
+                <td className={styles.actionCell}>
+                  <span>{actionLabel(row.action)}</span>
+                  <code>{row.action}</code>
+                </td>
+                <td className={styles.dimText}>{row.field ?? '-'}</td>
+                <td>
+                  <details className={styles.valueDetails}>
+                    <summary>{fmtValue(row.oldValue)}</summary>
+                    <pre>{fullValue(row.oldValue)}</pre>
+                  </details>
+                </td>
+                <td>
+                  <details className={styles.valueDetails}>
+                    <summary>{fmtValue(row.newValue)}</summary>
+                    <pre>{fullValue(row.newValue)}</pre>
+                  </details>
+                </td>
               </tr>
             ))}
           </tbody>
@@ -201,15 +286,15 @@ export default async function AuditLogPage({
       {(hasPrev || hasNext) && (
         <div className={styles.pagination}>
           {hasPrev ? (
-            <Link href={pageHref(offset - PAGE_SIZE)} className={styles.pageBtn}>← Previous</Link>
+            <Link href={buildAuditHref(filters, { offset: offset - PAGE_SIZE })} className={styles.pageBtn}>Previous</Link>
           ) : (
-            <span className={styles.pageBtnDisabled}>← Previous</span>
+            <span className={styles.pageBtnDisabled}>Previous</span>
           )}
-          <span className={styles.pageInfo}>Showing {offset + 1}–{offset + rows.length}</span>
+          <span className={styles.pageInfo}>Showing {offset + 1}-{offset + rows.length}</span>
           {hasNext ? (
-            <Link href={pageHref(offset + PAGE_SIZE)} className={styles.pageBtn}>Next →</Link>
+            <Link href={buildAuditHref(filters, { offset: offset + PAGE_SIZE })} className={styles.pageBtn}>Next</Link>
           ) : (
-            <span className={styles.pageBtnDisabled}>Next →</span>
+            <span className={styles.pageBtnDisabled}>Next</span>
           )}
         </div>
       )}

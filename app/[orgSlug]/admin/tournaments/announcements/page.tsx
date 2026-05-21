@@ -2,6 +2,8 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Mail, Megaphone, Plus, Pencil, Trash2, X, Check, Star } from 'lucide-react';
+import { useOrg } from '@/lib/org-context';
+import { hasPlanFeature, requiresTournamentPlusCopy } from '@/lib/plan-features';
 import { useTournament } from '@/lib/tournament-context';
 import { Announcement, AgeGroup } from '@/lib/types';
 import styles from './announcements-admin.module.css';
@@ -10,6 +12,7 @@ type ModalMode = 'add' | 'edit' | null;
 
 export default function AdminAnnouncementsPage() {
   const { currentTournament } = useTournament();
+  const { currentOrg } = useOrg();
   const [items, setItems] = useState<Announcement[]>([]);
   const [ageGroups, setAgeGroups] = useState<AgeGroup[]>([]);
   const [modal, setModal] = useState<ModalMode>(null);
@@ -18,6 +21,7 @@ export default function AdminAnnouncementsPage() {
   const [form, setForm] = useState<{ title: string; body: string; pinned: boolean; ageGroupIds: string[] | null }>({
     title: '', body: '', pinned: false, ageGroupIds: null,
   });
+  const canTargetAnnouncements = currentOrg ? hasPlanFeature(currentOrg.planId, 'targeted_tournament_announcements') : false;
 
   async function refresh() {
     if (!currentTournament?.id) { setItems([]); return; }
@@ -53,7 +57,7 @@ export default function AdminAnnouncementsPage() {
       body: form.body.trim(),
       pinned: form.pinned,
       date: editing?.date ?? new Date().toISOString(),
-      ageGroupIds: form.ageGroupIds?.length ? form.ageGroupIds : null,
+      ageGroupIds: canTargetAnnouncements && form.ageGroupIds?.length ? form.ageGroupIds : null,
     };
     if (modal === 'add') {
       await fetch('/api/admin/announcements', {
@@ -162,35 +166,44 @@ export default function AdminAnnouncementsPage() {
               {ageGroups.length > 0 && (
                 <div className="form-group" style={{ marginBottom: '1.5rem' }}>
                   <label className="form-label">News Page Visibility</label>
-                  <p className={styles.fieldHelp}>Controls where this post appears on the public site. It does not select email recipients.</p>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', marginTop: '0.5rem' }}>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.9rem' }}>
-                      <input
-                        type="checkbox"
-                        checked={!form.ageGroupIds?.length}
-                        onChange={() => setForm(f => ({ ...f, ageGroupIds: null }))}
-                      />
-                      All divisions <span style={{ color: 'var(--white-40)', fontSize: '0.75rem' }}>(default)</span>
-                    </label>
-                    {ageGroups.map(g => (
-                      <label key={g.id} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.9rem' }}>
-                        <input
-                          type="checkbox"
-                          checked={form.ageGroupIds?.includes(g.id) ?? false}
-                          onChange={e => {
-                            setForm(f => {
-                              const ids = f.ageGroupIds ? [...f.ageGroupIds] : [];
-                              const next = e.target.checked
-                                ? [...ids, g.id]
-                                : ids.filter(id => id !== g.id);
-                              return { ...f, ageGroupIds: next.length ? next : null };
-                            });
-                          }}
-                        />
-                        {g.name}
-                      </label>
-                    ))}
-                  </div>
+                  {canTargetAnnouncements ? (
+                    <>
+                      <p className={styles.fieldHelp}>Controls where this post appears on the public site. It does not select email recipients.</p>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', marginTop: '0.5rem' }}>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.9rem' }}>
+                          <input
+                            type="checkbox"
+                            checked={!form.ageGroupIds?.length}
+                            onChange={() => setForm(f => ({ ...f, ageGroupIds: null }))}
+                          />
+                          All divisions <span style={{ color: 'var(--white-40)', fontSize: '0.75rem' }}>(default)</span>
+                        </label>
+                        {ageGroups.map(g => (
+                          <label key={g.id} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.9rem' }}>
+                            <input
+                              type="checkbox"
+                              checked={form.ageGroupIds?.includes(g.id) ?? false}
+                              onChange={e => {
+                                setForm(f => {
+                                  const ids = f.ageGroupIds ? [...f.ageGroupIds] : [];
+                                  const next = e.target.checked
+                                    ? [...ids, g.id]
+                                    : ids.filter(id => id !== g.id);
+                                  return { ...f, ageGroupIds: next.length ? next : null };
+                                });
+                              }}
+                            />
+                            {g.name}
+                          </label>
+                        ))}
+                      </div>
+                    </>
+                  ) : (
+                    <div className={styles.lockedTargeting}>
+                      <strong>Tournament Plus unlocks division-specific News posts.</strong>
+                      <span>{requiresTournamentPlusCopy('targeted_tournament_announcements')}</span>
+                    </div>
+                  )}
                 </div>
               )}
 

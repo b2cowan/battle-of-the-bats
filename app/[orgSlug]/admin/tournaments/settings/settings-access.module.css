@@ -44,6 +44,68 @@
   line-height: 1.5;
 }
 
+.tabs {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-bottom: 1.25rem;
+  padding: 0.25rem;
+  width: fit-content;
+  max-width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--border, rgba(255,255,255,0.08));
+  border-radius: 8px;
+  background: rgba(255,255,255,0.025);
+}
+
+.tabButton {
+  min-height: 38px;
+  padding: 0.45rem 0.8rem;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  color: var(--white-50);
+  background: transparent;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.tabButton:hover {
+  color: var(--white-80);
+  background: rgba(var(--blueprint-blue-rgb), 0.06);
+}
+
+.tabActive {
+  color: var(--logic-lime);
+  border-color: rgba(var(--blueprint-blue-rgb), 0.35);
+  background: rgba(var(--blueprint-blue-rgb), 0.12);
+}
+
+.section {
+  margin-top: 0;
+}
+
+.sectionHeader {
+  margin-bottom: 0.75rem;
+}
+
+.sectionHeader h2 {
+  margin: 0;
+  color: var(--white-90);
+  font-size: 1rem;
+  font-weight: 900;
+}
+
+.sectionHeader p {
+  margin: 0.25rem 0 0;
+  color: var(--white-45);
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
 .grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -64,7 +126,8 @@
   transition: border-color 0.16s ease, background 0.16s ease;
 }
 
-.card:hover {
+.card:hover,
+.actionCard:hover {
   border-color: rgba(var(--blueprint-blue-rgb), 0.45);
   background: rgba(var(--blueprint-blue-rgb), 0.08);
 }
@@ -112,6 +175,16 @@
   text-transform: uppercase;
 }
 
+.cardAction {
+  display: inline-flex;
+  align-items: center;
+  margin-top: 0.8rem;
+}
+
+.actionCard {
+  min-height: 142px;
+}
+
 .lockedCard {
   opacity: 0.68;
   pointer-events: none;
@@ -127,20 +200,13 @@
   color: var(--data-gray);
 }
 
-.note {
-  margin-top: 1.25rem;
-  padding: 0.85rem 1rem;
-  border: 1px solid var(--border, rgba(255,255,255,0.08));
-  border-radius: 8px;
-  color: var(--white-45);
-  background: rgba(255,255,255,0.025);
-  font-size: 0.82rem;
-  line-height: 1.55;
-}
-
 @media (max-width: 720px) {
   .pageHeader {
     align-items: flex-start;
+  }
+
+  .tabs {
+    width: 100%;
   }
 
   .grid {

@@ -21,7 +21,7 @@ const COMPARISON_CATEGORIES = [
   {
     label: 'Tournaments & Scheduling',
     rows: [
-      { feature: 'Non-archived tournament slots', tournament: '1',        plus: '3',         league: 'Unlimited', club: 'Unlimited' },
+      { feature: 'Non-archived tournament slots', tournament: '1',        plus: 'Unlimited', league: 'Unlimited', club: 'Unlimited' },
       { feature: 'Tournament scheduling',        tournament: 'Manual',   plus: 'Manual + automated', league: 'Manual + automated', club: 'Manual + automated' },
       { feature: 'Playoff games / brackets',     tournament: 'Manual',   plus: 'Generator included', league: 'Generator included', club: 'Generator included' },
       { feature: 'Tournament archive flow',      tournament: 'Basic archive', plus: 'Sealed archives', league: 'Sealed archives', club: 'Sealed archives' },
@@ -30,9 +30,30 @@ const COMPARISON_CATEGORIES = [
     ],
   },
   {
+    label: 'Registration Operations',
+    rows: [
+      { feature: 'Team registration form',          tournament: 'Standard fields', plus: 'Custom fields + files', league: 'Custom fields + files', club: 'Custom fields + files' },
+      { feature: 'Registration exports (Excel, CSV, PDF)', tournament: '-',          plus: 'Included',              league: 'Included',              club: 'Included' },
+      { feature: 'Bulk registration actions',       tournament: '-',               plus: 'Included',              league: 'Included',              club: 'Included' },
+      { feature: 'Division capacity and waitlists', tournament: 'Basic review',    plus: 'Automation included',   league: 'Automation included',   club: 'Automation included' },
+      { feature: 'Payment and deposit tracking',    tournament: 'Basic tracking',  plus: 'Advanced reporting',    league: 'Advanced reporting',    club: 'Advanced reporting' },
+    ],
+  },
+  {
+    label: 'Data & Exports',
+    rows: [
+      { feature: 'Schedule export (Excel, CSV, iCal)',        tournament: '✓', plus: '✓',         league: '✓',       club: '✓' },
+      { feature: 'Results export (Excel, CSV)',               tournament: '✓', plus: '✓',         league: '✓',       club: '✓' },
+      { feature: 'Registration exports (Excel, CSV, PDF)',    tournament: '—', plus: 'Included',   league: 'Included', club: 'Included' },
+      { feature: 'PDF reports with branded templates',        tournament: '—', plus: 'Included',   league: 'Included', club: 'Included' },
+      { feature: 'League registration and standings exports', tournament: '—', plus: '—',          league: 'Included', club: 'Included' },
+      { feature: 'Rep team and accounting PDF reports',       tournament: '—', plus: '—',          league: '—',        club: 'Included' },
+    ],
+  },
+  {
     label: 'Staff & Access',
     rows: [
-      { feature: 'Staff / admin seats',                   tournament: '3',       plus: '5',               league: '10',            club: 'Unlimited' },
+      { feature: 'Staff / admin seats',                   tournament: '3',       plus: '10',              league: '10',            club: 'Unlimited' },
       { feature: 'Officials seats',                       tournament: 'Counted', plus: 'Unlimited (free)', league: 'Unlimited (free)', club: 'Unlimited (free)' },
       { feature: 'Advanced member roles and permissions', tournament: '—',       plus: '—',               league: '✓',             club: '✓' },
     ],
@@ -41,12 +62,15 @@ const COMPARISON_CATEGORIES = [
     label: 'Communications',
     rows: [
       { feature: 'Basic team/contact email',     tournament: '✓', plus: '✓', league: '✓', club: '✓' },
+      { feature: 'Targeted tournament announcements', tournament: '-', plus: 'Included', league: 'Included', club: 'Included' },
       { feature: 'League-scoped communications', tournament: '—', plus: '—', league: '✓', club: '✓' },
     ],
   },
   {
     label: 'Public Presence',
     rows: [
+      { feature: 'Tournament public branding', tournament: 'FieldLogicHQ default', plus: 'Full control', league: 'Full control', club: 'Full control' },
+      { feature: 'Powered by FieldLogicHQ badge', tournament: 'Shown', plus: 'Not shown', league: 'Not shown', club: 'Not shown' },
       { feature: 'Public organization page',  tournament: '—', plus: '—', league: '✓', club: '✓' },
       { feature: 'Branded tournament listing', tournament: '—', plus: '—', league: '✓', club: '✓' },
     ],
@@ -93,8 +117,8 @@ const COMPARISON_CATEGORIES = [
 
 const UPGRADE_BRIDGES = [
   {
-    headline: 'Ready to stop building schedules by hand?',
-    body: 'Tournament Plus gives you up to 3 non-archived tournament slots, automated scheduling, playoff bracket generation, permanent sealed archives, and advanced tournament branding. Basic team email stays available on the free plan; Plus is about saving time and supporting repeat events.',
+    headline: 'Ready to run a serious tournament program?',
+    body: 'Tournament Plus adds the operational tools real organizers need: unlimited tournament slots, 10 staff seats, custom registration questions, file uploads, Excel and PDF exports for registrations, schedules, and results — check-in sheets, insurance documents, and field ops handouts — bulk actions, waitlists, full branding, cloning, targeted announcements, and post-event summaries.',
     from: 'Tournament',
     to: 'Tournament Plus',
     cta: 'Start Free Trial',
@@ -311,7 +335,7 @@ export default async function PricingPage() {
             </div>
             <div className={styles.clubStats}>
               {[
-                { label: 'Available now', body: 'Tournament and Tournament Plus cover tournament setup, score entry, public results, schedule automation, brackets, archives, and branding.' },
+                { label: 'Available now', body: 'Tournament is the free starter event tier. Tournament Plus adds registration control, schedule automation, brackets, archives, branding, cloning, and reporting for serious organizers.' },
                 { label: 'Coming next', body: 'League and Club workflows are being refined before self-serve checkout opens.' },
                 { label: 'Early-access path', body: 'Interested organizations can share their details and module priorities before the broader tiers launch.' },
               ].map(s => (

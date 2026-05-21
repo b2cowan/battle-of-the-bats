@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { requirePlatformAdmin } from '@/lib/platform-auth';
+import { requirePlatformPermission } from '@/lib/platform-auth';
 import { writePlatformAuditLog } from '@/lib/platform-audit';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 
@@ -19,7 +19,7 @@ function clampDays(value: unknown): number | null {
 }
 
 export async function POST(req: Request, ctx: { params: Promise<{ recordId: string }> }) {
-  const auth = await requirePlatformAdmin();
+  const auth = await requirePlatformPermission('manage_billing');
   if (auth.response) return auth.response;
 
   const { recordId } = await ctx.params;

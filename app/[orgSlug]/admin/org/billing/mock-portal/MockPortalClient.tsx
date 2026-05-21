@@ -87,8 +87,10 @@ export default function MockPortalPage() {
             ))}
           </div>
           <p className={styles.hint}>
-            Limit: {PLAN_CONFIG[plan].tournamentLimit >= 9999 ? 'Unlimited' : `${PLAN_CONFIG[plan].tournamentLimit} non-archived`} tournaments
+            Limit: {PLAN_CONFIG[plan].tournamentLimit >= 9999 ? 'Unlimited tournament slots' : `${PLAN_CONFIG[plan].tournamentLimit} non-archived tournament slot${PLAN_CONFIG[plan].tournamentLimit === 1 ? '' : 's'}`}
             &nbsp;·&nbsp;
+            {PLAN_CONFIG[plan].seatLimit >= 9999 ? 'Unlimited staff seats' : `${PLAN_CONFIG[plan].seatLimit} staff seats`}
+            &nbsp;Â·&nbsp;
             {PLAN_CONFIG[plan].monthlyPrice === 0 ? 'Free' : `$${PLAN_CONFIG[plan].monthlyPrice}/mo`}
           </p>
         </div>

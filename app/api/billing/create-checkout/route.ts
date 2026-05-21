@@ -5,6 +5,7 @@ import { normalizeBillingCycle, PLAN_CONFIG } from '@/lib/plan-config';
 import { getPlanConfigOverride } from '@/lib/plan-config-db';
 import { getStripePriceId } from '@/lib/stripe-prices';
 import { getPlanGatingMap } from '@/lib/plan-gating-server';
+import { isRecoveryTransition, writePlatformEvent } from '@/lib/platform-events';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import type { OrgPlan } from '@/lib/types';
 
@@ -99,6 +100,21 @@ export async function POST(req: Request) {
 
     const restoreResult = await restoreRetainedDowngradeTournaments(auth.org.id, plan.tournamentLimit);
     await resetStartupTasksForEditableOnboarding(auth.org.id, isOnboardingPlanSelection);
+
+    if (isRecoveryTransition(auth.org.subscriptionStatus, 'trialing')) {
+      await writePlatformEvent({
+        eventType: 'subscription_recovered',
+        source: 'mock',
+        orgId: auth.org.id,
+        actorUserId: auth.user.id,
+        actorEmail: auth.user.email,
+        previousPlanId: auth.org.planId,
+        planId: planKey,
+        previousSubscriptionStatus: auth.org.subscriptionStatus,
+        subscriptionStatus: 'trialing',
+        metadata: { billingCycle, restoredCount: restoreResult.restoredCount },
+      });
+    }
 
     return new Response(
       JSON.stringify({

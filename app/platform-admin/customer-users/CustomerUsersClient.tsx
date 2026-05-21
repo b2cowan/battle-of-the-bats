@@ -3,7 +3,25 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { Check, Copy, KeyRound, Search } from 'lucide-react';
+import ExportMenu from '@/components/admin/ExportMenu';
+import {
+  downloadXLSX, generateCSV, downloadCSVBlob,
+  buildFilename, serializeRows, serializeHeaders, type ExportColumnDef,
+} from '@/lib/export';
 import styles from './customer-users.module.css';
+
+// ── Export ────────────────────────────────────────────────────────────────────
+
+const CUSTOMER_USERS_EXPORT_COLS: ExportColumnDef[] = [
+  { label: 'Email',        key: 'email',       format: 'text' },
+  { label: 'Display Name', key: 'displayName', format: 'text' },
+  { label: 'User ID',      key: 'userId',      format: 'text' },
+  { label: 'Auth Status',  key: 'authStatus',  format: 'text' },
+  { label: 'Last Sign In', key: 'lastSignIn',  format: 'text' },
+  { label: 'Organizations', key: 'orgs',       format: 'text' },
+];
+
+// ─────────────────────────────────────────────────────────────────────────────
 
 export type CustomerUserRow = {
   userId: string;
@@ -91,6 +109,37 @@ export default function CustomerUsersClient({ initialRows, query, searched }: Pr
     }, 1800);
   }
 
+  // ── Export ────────────────────────────────────────────────────────────────
+
+  function buildUserExportRows() {
+    return initialRows.map(row => ({
+      email:       row.email,
+      displayName: row.displayName || '',
+      userId:      row.userId,
+      authStatus:  row.authStatus,
+      lastSignIn:  fmtDate(row.lastSignIn),
+      orgs:        row.memberships.map(m => `${m.orgName} (${m.role})`).join('; '),
+    }));
+  }
+
+  function handleExportXLSX() {
+    const rows     = buildUserExportRows();
+    const headers  = serializeHeaders(CUSTOMER_USERS_EXPORT_COLS);
+    const data     = serializeRows(rows, CUSTOMER_USERS_EXPORT_COLS);
+    const filename = buildFilename({ dataset: 'customer-users' }, 'xlsx');
+    downloadXLSX(filename, headers, data, 'Customer Users');
+  }
+
+  function handleExportCSV() {
+    const rows     = buildUserExportRows();
+    const headers  = serializeHeaders(CUSTOMER_USERS_EXPORT_COLS);
+    const data     = serializeRows(rows, CUSTOMER_USERS_EXPORT_COLS);
+    const filename = buildFilename({ dataset: 'customer-users' }, 'csv');
+    downloadCSVBlob(filename, generateCSV(headers, data));
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+
   return (
     <div className={styles.page}>
       <header className={styles.header}>
@@ -98,8 +147,16 @@ export default function CustomerUsersClient({ initialRows, query, searched }: Pr
           <div className={styles.headerLabel}>Customer Support</div>
           <h1 className={styles.title}>Customer Users</h1>
         </div>
-        <div className={styles.count}>
-          {searched ? `${initialRows.length} result${initialRows.length === 1 ? '' : 's'}` : 'Search required'}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <ExportMenu
+            formats={['xlsx', 'csv']}
+            onExportXLSX={handleExportXLSX}
+            onExportCSV={handleExportCSV}
+            disabled={!searched || initialRows.length === 0}
+          />
+          <div className={styles.count}>
+            {searched ? `${initialRows.length} result${initialRows.length === 1 ? '' : 's'}` : 'Search required'}
+          </div>
         </div>
       </header>
 

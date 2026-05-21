@@ -4,7 +4,28 @@ import Link from 'next/link';
 import { BarChart2, ChevronDown, ChevronRight, Check, AlertTriangle } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { hasCapability } from '@/lib/roles';
+import {
+  downloadXLSX, generateCSV, downloadCSVBlob,
+  buildFilename, serializeRows, serializeHeaders, type ExportColumnDef,
+  downloadPDF, DEFAULT_PDF_SETTINGS, type OrgPdfSettings,
+} from '@/lib/export';
+import { hasPlanFeature } from '@/lib/plan-features';
+import ExportMenu from '@/components/admin/ExportMenu';
+import FeedbackModal from '@/components/FeedbackModal';
+import HelpCallout from '@/components/help/HelpCallout';
 import styles from './bva.module.css';
+
+// ── Export definition ─────────────────────────────────────────────────────────
+
+const BVA_EXPORT_COLS: ExportColumnDef[] = [
+  { label: 'Category',    key: 'category',    format: 'text' },
+  { label: 'Description', key: 'description', format: 'text' },
+  { label: 'Estimated',   key: 'estimated',   format: 'currency' },
+  { label: 'Allocated',   key: 'allocated',   format: 'currency' },
+  { label: 'Collected',   key: 'collected',   format: 'currency' },
+  { label: 'Unallocated', key: 'unallocated', format: 'currency' },
+  { label: 'Status',      key: 'status',      format: 'text' },
+];
 
 function fmt(n: number) {
   return `$${n.toLocaleString('en-CA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -57,6 +78,99 @@ export default function OrgBudgetVsActualPage() {
 
   const [expandedLines,    setExpandedLines]    = useState<Set<string>>(new Set());
   const [showActuals,      setShowActuals]      = useState(false);
+  const [feedbackOpen,     setFeedbackOpen]     = useState(false);
+  const [feedbackMsg,      setFeedbackMsg]      = useState('');
+
+  // PDF settings — fetched once on mount; used in handleExportPDF
+  const [pdfSettings, setPdfSettings] = useState<OrgPdfSettings | null>(null);
+  const canUsePDF = currentOrg ? hasPlanFeature(currentOrg.planId, 'pdf_exports') : false;
+  const showPdfNudge = canUsePDF && pdfSettings !== null && Object.keys(pdfSettings).length === 0;
+
+  // ── Export helpers ───────────────────────────────────────────────────────────
+
+  function buildBVARows() {
+    if (!data) return [];
+    const rows: Record<string, unknown>[] = [];
+    const processLines = (lines: BudgetLine[], catName: string) => {
+      lines.forEach(line => rows.push({
+        category:    catName,
+        description: line.description,
+        estimated:   line.estimated,
+        allocated:   line.allocated,
+        collected:   line.collected,
+        unallocated: line.unallocated,
+        status:      line.allocationId ? 'Allocated' : 'Unallocated',
+      }));
+    };
+    data.categories.forEach(cat => processLines(cat.lines, cat.name));
+    if (data.uncategorized.length) processLines(data.uncategorized, 'Uncategorized');
+    return rows;
+  }
+
+  async function handleExportXLSX() {
+    const src = buildBVARows();
+    if (!src.length) return;
+    const headers = serializeHeaders(BVA_EXPORT_COLS);
+    const rows = serializeRows(src, BVA_EXPORT_COLS);
+    await downloadXLSX(
+      buildFilename({ org: currentOrg?.slug, dataset: 'budget-vs-actual', scope: String(year) }, 'xlsx'),
+      headers, rows, 'Budget vs. Actual',
+    );
+  }
+
+  function handleExportCSV() {
+    const src = buildBVARows();
+    const headers = serializeHeaders(BVA_EXPORT_COLS);
+    const rows = serializeRows(src, BVA_EXPORT_COLS);
+    downloadCSVBlob(
+      buildFilename({ org: currentOrg?.slug, dataset: 'budget-vs-actual', scope: String(year) }, 'csv'),
+      generateCSV(headers, rows),
+    );
+  }
+
+  async function handleExportPDF() {
+    if (!data) return;
+    const settings: OrgPdfSettings = {
+      ...DEFAULT_PDF_SETTINGS,
+      ...(pdfSettings && Object.keys(pdfSettings).length > 0 ? pdfSettings : {}),
+      // 7 columns — always export landscape regardless of org default
+      orientation: 'landscape',
+    };
+
+    const pdfHeaders = ['Category', 'Description', 'Estimated', 'Allocated', 'Collected', 'Unallocated', 'Status'];
+
+    // Build groups: one per category + optional Uncategorized
+    const buildGroupRows = (lines: BudgetLine[], catName: string) =>
+      lines.map(line => [
+        catName,
+        line.description,
+        fmt(line.estimated),
+        line.allocated > 0 ? fmt(line.allocated) : '—',
+        line.collected > 0 ? fmt(line.collected) : '—',
+        line.unallocated === 0 ? '—' : `${line.unallocated > 0 ? '+' : ''}${fmt(line.unallocated)}`,
+        line.allocationId ? 'Allocated' : 'Unallocated',
+      ]);
+
+    const groups = [
+      ...data.categories.map(cat => ({
+        label: cat.name,
+        rows: buildGroupRows(cat.lines, cat.name),
+      })),
+      ...(data.uncategorized.length > 0
+        ? [{ label: 'Uncategorized', rows: buildGroupRows(data.uncategorized, 'Uncategorized') }]
+        : []),
+    ];
+
+    await downloadPDF(
+      buildFilename({ org: currentOrg?.slug, dataset: 'budget-vs-actual', scope: String(year) }, 'pdf'),
+      'Budget vs. Actual',
+      `${currentOrg?.name} — ${year} Season`,
+      pdfHeaders,
+      [], // not used when groups is provided
+      settings,
+      groups,
+    );
+  }
 
   const load = useCallback(async (y: number) => {
     setFetching(true);
@@ -78,6 +192,13 @@ export default function OrgBudgetVsActualPage() {
     if (currentOrg) load(year);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentOrg]);
+
+  useEffect(() => {
+    fetch('/api/admin/org/pdf-settings')
+      .then(r => r.ok ? r.json() : {})
+      .then(d => setPdfSettings(d as OrgPdfSettings))
+      .catch(() => setPdfSettings({}));
+  }, []);
 
   if (loading) return <p className={styles.muted}>Loading…</p>;
 
@@ -234,10 +355,32 @@ export default function OrgBudgetVsActualPage() {
             <p className={styles.pageSub}>{currentOrg?.name} — {year} season</p>
           </div>
         </div>
-        <Link href={`${base}/accounting/budget`} className="btn btn-secondary" style={{ fontSize: '0.82rem' }}>
-          Edit Budget →
-        </Link>
+        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+          <ExportMenu
+            formats={['xlsx', 'csv', 'pdf']}
+            onExportXLSX={handleExportXLSX}
+            onExportCSV={handleExportCSV}
+            onExportPDF={handleExportPDF}
+            planId={currentOrg?.planId}
+            pdfFeatureKey="pdf_exports"
+            disabled={!data || (data.categories.length === 0 && data.uncategorized.length === 0)}
+          />
+          <Link href={`${base}/accounting/budget`} className="btn btn-secondary" style={{ fontSize: '0.82rem' }}>
+            Edit Budget →
+          </Link>
+        </div>
       </div>
+
+      {showPdfNudge && (
+        <HelpCallout
+          variant="info"
+          title="PDF settings not configured"
+          body="Your export will use default FieldLogicHQ branding. Configure your header, logo, and footer once and all future PDFs will use those settings."
+          cta={{ label: 'Configure PDF Settings', href: `${base}/org` }}
+          dismissible
+          localStorageKey="flhq-pdf-nudge-bva"
+        />
+      )}
 
       {/* Year selector */}
       <div className={styles.yearRow}>
@@ -472,6 +615,14 @@ export default function OrgBudgetVsActualPage() {
           )}
         </>
       )}
+
+      <FeedbackModal
+        isOpen={feedbackOpen}
+        onClose={() => setFeedbackOpen(false)}
+        title="Coming Soon"
+        message={feedbackMsg}
+        type="success"
+      />
     </div>
   );
 }

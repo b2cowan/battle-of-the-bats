@@ -4,7 +4,7 @@ import EarlyAccessModalTrigger from '@/components/EarlyAccessModalTrigger';
 
 export const metadata: Metadata = {
   title: 'Accounting — FieldLogicHQ',
-  description: 'Financial tracking built for sports organizations. Org ledgers, team invoicing, expense tracking, and CSV export — no separate spreadsheets.',
+  description: 'Financial tracking built for sports organizations. Org ledgers, team invoicing, expense tracking, and Excel and PDF exports — no separate spreadsheets.',
 };
 
 const CAPABILITIES = [
@@ -25,8 +25,8 @@ const CAPABILITIES = [
     desc: 'Move funds between ledgers — org to team, team to team. Reconcile transfers and keep books balanced season over season.',
   },
   {
-    name: 'CSV Export',
-    desc: 'Export any ledger to CSV at any time. Hand off clean data to your external accountant or upload to any accounting software.',
+    name: 'Data Exports',
+    desc: 'Export any ledger to Excel or CSV. Download board-ready PDF reports for budget vs. actual — formatted for AGM presentations and treasurer handoffs.',
   },
   {
     name: 'Treasurer Role',

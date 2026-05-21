@@ -3,7 +3,24 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { ScrollText, Users2, ArrowLeft } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
+import ExportMenu from '@/components/admin/ExportMenu';
+import {
+  downloadXLSX, generateCSV, downloadCSVBlob,
+  buildFilename, serializeRows, serializeHeaders, type ExportColumnDef,
+} from '@/lib/export';
 import styles from '../members.module.css';
+
+// ── Export ────────────────────────────────────────────────────────────────────
+
+const AUDIT_EXPORT_COLS: ExportColumnDef[] = [
+  { label: 'Timestamp',   key: 'createdAt',   format: 'text' },
+  { label: 'Action',      key: 'actionLabel', format: 'text' },
+  { label: 'Actor Email', key: 'actorEmail',  format: 'text' },
+  { label: 'Target',      key: 'targetEmail', format: 'text' },
+  { label: 'Details',     key: 'details',     format: 'text' },
+];
+
+// ─────────────────────────────────────────────────────────────────────────────
 
 const ACTION_BADGE: Record<string, string> = {
   member_invited:       'badge-success',
@@ -14,7 +31,7 @@ const ACTION_BADGE: Record<string, string> = {
   member_reinstated:    'badge-success',
 };
 
-interface AuditRow {
+interface AuditRow extends Record<string, unknown> {
   id: string;
   action: string;
   actionLabel: string;
@@ -88,6 +105,26 @@ export default function AuditLogPage() {
 
   const totalPages = data ? Math.max(1, Math.ceil(data.total / data.pageSize)) : 1;
 
+  // ── Export ────────────────────────────────────────────────────────────────
+
+  function handleExportXLSX() {
+    if (!data) return;
+    const headers  = serializeHeaders(AUDIT_EXPORT_COLS);
+    const rows     = serializeRows(data.rows, AUDIT_EXPORT_COLS);
+    const filename = buildFilename({ org: currentOrg?.slug, dataset: 'member-audit' }, 'xlsx');
+    downloadXLSX(filename, headers, rows, 'Audit Log');
+  }
+
+  function handleExportCSV() {
+    if (!data) return;
+    const headers  = serializeHeaders(AUDIT_EXPORT_COLS);
+    const rows     = serializeRows(data.rows, AUDIT_EXPORT_COLS);
+    const filename = buildFilename({ org: currentOrg?.slug, dataset: 'member-audit' }, 'csv');
+    downloadCSVBlob(filename, generateCSV(headers, rows));
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+
   return (
     <div className={styles.page}>
       <div className={styles.pageHeader}>
@@ -98,14 +135,22 @@ export default function AuditLogPage() {
             <p className={styles.pageSub}>Member change history for your organization</p>
           </div>
         </div>
-        <Link
-          href={`/${currentOrg?.slug}/admin/org/members`}
-          className="btn btn-outline btn-sm"
-          style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}
-        >
-          <ArrowLeft size={14} />
-          Members
-        </Link>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <ExportMenu
+            formats={['xlsx', 'csv']}
+            onExportXLSX={handleExportXLSX}
+            onExportCSV={handleExportCSV}
+            disabled={!data || data.rows.length === 0}
+          />
+          <Link
+            href={`/${currentOrg?.slug}/admin/org/members`}
+            className="btn btn-outline btn-sm"
+            style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}
+          >
+            <ArrowLeft size={14} />
+            Members
+          </Link>
+        </div>
       </div>
 
       {errorMsg && (

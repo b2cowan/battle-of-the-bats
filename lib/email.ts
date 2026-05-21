@@ -161,6 +161,76 @@ export function paymentConfirmationHtml(p: {
   `, p.contactEmail);
 }
 
+function escapeEmailHtml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+export function paymentReminderHtml(p: {
+  teamName: string;
+  coachName: string;
+  ageGroupName: string;
+  tournamentName: string;
+  amountDue: string;
+  dueDate?: string | null;
+  paymentInstructions: string;
+  contactEmail?: string;
+}) {
+  const instructions = escapeEmailHtml(p.paymentInstructions)
+    .split('\n')
+    .map(line => line.trim() ? `<p style="margin:0 0 0.75rem;line-height:1.6;">${line}</p>` : '<br>')
+    .join('');
+
+  return wrap(`
+    <h2 style="color:#fff;font-size:1.4rem;margin:0 0 1rem;">Tournament Payment Reminder</h2>
+    <p>Hi <strong>${escapeEmailHtml(p.coachName)}</strong>,</p>
+    <p>This is a friendly reminder that payment is still outstanding for <strong>${escapeEmailHtml(p.teamName)}</strong> in the <strong>${escapeEmailHtml(p.ageGroupName)}</strong> division of <strong>${escapeEmailHtml(p.tournamentName)}</strong>.</p>
+    <div style="background:#1A1530;border:1px solid rgba(245,158,11,0.35);border-radius:8px;padding:1.25rem;margin:1.5rem 0;">
+      <p style="margin:0 0 0.5rem;font-weight:700;color:#F59E0B;">Payment Details</p>
+      <p style="margin:0;line-height:1.8;">
+        Amount due: <strong>${escapeEmailHtml(p.amountDue)}</strong><br>
+        ${p.dueDate ? `Due date: <strong>${escapeEmailHtml(p.dueDate)}</strong><br>` : ''}
+        Team: <strong>${escapeEmailHtml(p.teamName)}</strong><br>
+        Division: <strong>${escapeEmailHtml(p.ageGroupName)}</strong>
+      </p>
+    </div>
+    <div style="color:rgba(255,255,255,0.75);">${instructions}</div>
+    <p style="color:rgba(255,255,255,0.55);font-size:0.86rem;">FieldLogicHQ records payment status for the organizer but does not process tournament payments online.</p>
+  `, p.contactEmail);
+}
+
+export function tournamentResultsFinalizedHtml(p: {
+  tournamentName: string;
+  coachName: string;
+  resultsUrl: string;
+  scheduleUrl: string;
+  teamsUrl: string;
+  fieldLogicUrl: string;
+  contactEmail?: string;
+}) {
+  return wrap(`
+    <h2 style="color:#fff;font-size:1.4rem;margin:0 0 1rem;">Final Results Are Posted</h2>
+    <p>Hi <strong>${escapeEmailHtml(p.coachName)}</strong>,</p>
+    <p>The organizer has finalized results for <strong>${escapeEmailHtml(p.tournamentName)}</strong>. You can review standings, scores, and team information from the public tournament site.</p>
+    <div style="background:#1A1530;border:1px solid rgba(168,85,247,0.35);border-radius:8px;padding:1.25rem;margin:1.5rem 0;">
+      <p style="margin:0 0 0.75rem;font-weight:700;color:#A855F7;">Tournament Links</p>
+      <p style="margin:0;line-height:1.9;">
+        <a href="${escapeEmailHtml(p.resultsUrl)}" style="color:#A855F7;">View standings and results</a><br>
+        <a href="${escapeEmailHtml(p.scheduleUrl)}" style="color:#A855F7;">View schedule</a><br>
+        <a href="${escapeEmailHtml(p.teamsUrl)}" style="color:#A855F7;">View teams</a>
+      </p>
+    </div>
+    <p style="color:rgba(255,255,255,0.65);font-size:0.88rem;">Thanks for being part of the tournament.</p>
+    <p style="color:rgba(255,255,255,0.45);font-size:0.82rem;line-height:1.55;margin-top:1.5rem;">
+      Running your own tournament? <a href="${escapeEmailHtml(p.fieldLogicUrl)}" style="color:#A855F7;">See how FieldLogicHQ helps organizers manage registration, schedules, results, and post-event reporting.</a>
+    </p>
+  `, p.contactEmail);
+}
+
 // ── House League registration emails ──────────────────────────────────────────
 
 export function leagueRegistrationApprovedHtml(p: {

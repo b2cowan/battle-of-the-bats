@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getPlatformAuthContext } from '@/lib/platform-auth';
+import { requirePlatformPermission } from '@/lib/platform-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { writePlatformAuditLog } from '@/lib/platform-audit';
 
@@ -7,8 +7,8 @@ export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const user = await getPlatformAuthContext();
-  if (!user) return new NextResponse('Forbidden', { status: 403 });
+  const auth = await requirePlatformPermission('manage_product');
+  if (auth.response) return auth.response;
 
   const { id } = await params;
   const body = await req.json() as { enabledAddons?: string[] };
@@ -35,7 +35,7 @@ export async function PATCH(
   }
 
   await writePlatformAuditLog(
-    user.email!,
+    auth.user.email!,
     id,
     'update_addons',
     'enabled_addons',

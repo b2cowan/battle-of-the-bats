@@ -1,4 +1,10 @@
-import { getPlatformAuthContext } from '@/lib/platform-auth';
+import { getPlatformAuthContext, requirePlatformPermission } from '@/lib/platform-auth';
+import {
+  recordCatalogChangeApplication,
+  requireApprovedCatalogChangeRequest,
+} from '@/lib/platform-catalog-approval';
+import { sanitizePlatformChangeNote } from '@/lib/platform-change-note';
+import { writePlatformAuditLog } from '@/lib/platform-audit';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 
 function unauthorized() {
@@ -28,10 +34,16 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-  const user = await getPlatformAuthContext();
-  if (!user) return unauthorized();
+  const auth = await requirePlatformPermission('manage_product');
+  if (auth.response) return auth.response;
 
-  const { planKey, gatingStatus }: { planKey: string; gatingStatus: string } = await req.json();
+  const {
+    planKey,
+    gatingStatus,
+    changeNote,
+    approvedChangeRequestId,
+  }: { planKey: string; gatingStatus: string; changeNote?: string; approvedChangeRequestId?: string } = await req.json();
+  const sanitizedNote = sanitizePlatformChangeNote(changeNote);
 
   const validKeys = ['tournament', 'tournament_plus', 'league', 'club'];
   const validStatuses = ['live', 'early_access'];
@@ -42,12 +54,23 @@ export async function POST(req: Request) {
     });
   }
 
+  const approval = await requireApprovedCatalogChangeRequest(approvedChangeRequestId, 'plan_gating');
+  if (!approval.ok) return approval.response;
+
+  const { data: current } = await supabaseAdmin
+    .from('plan_gating')
+    .select('*')
+    .eq('plan_key', planKey)
+    .maybeSingle();
+
+  const updatedAt = new Date().toISOString();
   const { error } = await supabaseAdmin
     .from('plan_gating')
     .update({
       gating_status: gatingStatus,
-      updated_at: new Date().toISOString(),
-      updated_by_email: user.email,
+      updated_at: updatedAt,
+      updated_by_email: auth.user.email,
+      last_change_note: sanitizedNote,
     })
     .eq('plan_key', planKey);
 
@@ -58,5 +81,35 @@ export async function POST(req: Request) {
     });
   }
 
-  return Response.json({ ok: true, planKey, gatingStatus });
+  await writePlatformAuditLog(
+    auth.user.email!,
+    null,
+    'update_plan_gating',
+    'gating_status',
+    {
+      planKey,
+      gatingStatus: current?.gating_status ?? null,
+      changeNote: current?.last_change_note ?? null,
+      approvedChangeRequestId: approval.changeRequest.id,
+    },
+    { planKey, gatingStatus, changeNote: sanitizedNote, approvedChangeRequestId: approval.changeRequest.id },
+  );
+
+  await recordCatalogChangeApplication(
+    approval.changeRequest.id,
+    'plan_gating',
+    planKey,
+    auth.user.email!,
+    { planKey, gatingStatus, changeNote: sanitizedNote },
+  );
+
+  return Response.json({
+    ok: true,
+    planKey,
+    gatingStatus,
+    updated_at: updatedAt,
+    updated_by_email: auth.user.email,
+    last_change_note: sanitizedNote,
+    approved_change_request_id: approval.changeRequest.id,
+  });
 }

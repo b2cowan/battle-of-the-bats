@@ -8,6 +8,9 @@ import {
 import { hasCapability } from '@/lib/roles';
 import type { TournamentStatus } from '@/lib/types';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { hasPlanFeature } from '@/lib/plan-features';
+import { sendEmail, SITE_URL, tournamentResultsFinalizedHtml } from '@/lib/email';
+import { writePlatformEvent } from '@/lib/platform-events';
 
 function isDateValue(value: unknown): value is string {
   return typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value);
@@ -15,6 +18,202 @@ function isDateValue(value: unknown): value is string {
 
 function normalizeTournamentName(name: string) {
   return name.trim().replace(/\s+/g, ' ').toLowerCase();
+}
+
+type CompletionNotificationTournament = {
+  id: string;
+  name: string;
+  slug: string | null;
+  status: TournamentStatus | null;
+  contact_email: string | null;
+  notify_teams_on_complete: boolean | null;
+  results_notified_at: string | null;
+};
+
+type ResultsNotificationTeam = {
+  id: string;
+  name: string;
+  coach: string | null;
+  email: string | null;
+};
+
+function normalizeEmail(value: unknown) {
+  return typeof value === 'string' ? value.trim().toLowerCase() : '';
+}
+
+async function trackResultsNotificationEvent(input: {
+  orgId: string;
+  userId: string;
+  userEmail?: string | null;
+  planId: string;
+  tournamentId: string;
+  status: 'attempted' | 'blocked' | 'completed' | 'skipped';
+  notified?: number;
+  reason?: string;
+}) {
+  await writePlatformEvent({
+    eventType: 'tournament_plus_feature_used',
+    source: 'app',
+    orgId: input.orgId,
+    actorUserId: input.userId,
+    actorEmail: input.userEmail,
+    planId: input.planId,
+    metadata: {
+      feature: 'post_tournament_summary',
+      action: 'send_post_event_results_notification',
+      tournamentId: input.tournamentId,
+      status: input.status,
+      notified: input.notified,
+      reason: input.reason,
+    },
+  });
+}
+
+async function sendCompletionResultsNotification(input: {
+  ctx: NonNullable<Awaited<ReturnType<typeof getAuthContextWithScope>>>;
+  tournament: CompletionNotificationTournament;
+}) {
+  const { ctx, tournament } = input;
+
+  await trackResultsNotificationEvent({
+    orgId: ctx.org.id,
+    userId: ctx.user.id,
+    userEmail: ctx.user.email,
+    planId: ctx.org.planId,
+    tournamentId: tournament.id,
+    status: 'attempted',
+  });
+
+  if (!tournament.notify_teams_on_complete) {
+    await trackResultsNotificationEvent({
+      orgId: ctx.org.id,
+      userId: ctx.user.id,
+      userEmail: ctx.user.email,
+      planId: ctx.org.planId,
+      tournamentId: tournament.id,
+      status: 'skipped',
+      reason: 'disabled',
+    });
+    return;
+  }
+
+  if (tournament.results_notified_at) {
+    await trackResultsNotificationEvent({
+      orgId: ctx.org.id,
+      userId: ctx.user.id,
+      userEmail: ctx.user.email,
+      planId: ctx.org.planId,
+      tournamentId: tournament.id,
+      status: 'skipped',
+      reason: 'already_notified',
+    });
+    return;
+  }
+
+  if (!hasPlanFeature(ctx.org.planId, 'post_tournament_summary')) {
+    await trackResultsNotificationEvent({
+      orgId: ctx.org.id,
+      userId: ctx.user.id,
+      userEmail: ctx.user.email,
+      planId: ctx.org.planId,
+      tournamentId: tournament.id,
+      status: 'blocked',
+      reason: 'plan_gate',
+    });
+    return;
+  }
+
+  if (!tournament.slug) {
+    await trackResultsNotificationEvent({
+      orgId: ctx.org.id,
+      userId: ctx.user.id,
+      userEmail: ctx.user.email,
+      planId: ctx.org.planId,
+      tournamentId: tournament.id,
+      status: 'skipped',
+      reason: 'missing_slug',
+    });
+    return;
+  }
+
+  const notifiedAt = new Date().toISOString();
+  const { data: lockRows, error: lockError } = await supabaseAdmin
+    .from('tournaments')
+    .update({ results_notified_at: notifiedAt })
+    .eq('id', tournament.id)
+    .eq('organization_id', ctx.org.id)
+    .is('results_notified_at', null)
+    .select('id');
+
+  if (lockError) throw lockError;
+  if (!lockRows?.length) {
+    await trackResultsNotificationEvent({
+      orgId: ctx.org.id,
+      userId: ctx.user.id,
+      userEmail: ctx.user.email,
+      planId: ctx.org.planId,
+      tournamentId: tournament.id,
+      status: 'skipped',
+      reason: 'already_notified',
+    });
+    return;
+  }
+
+  const { data: teams, error: teamsError } = await supabaseAdmin
+    .from('teams')
+    .select('id, name, coach, email')
+    .eq('tournament_id', tournament.id)
+    .eq('status', 'accepted');
+
+  if (teamsError) throw teamsError;
+
+  const recipients = new Map<string, ResultsNotificationTeam>();
+  for (const team of (teams ?? []) as ResultsNotificationTeam[]) {
+    const email = normalizeEmail(team.email);
+    if (email && !recipients.has(email)) recipients.set(email, { ...team, email });
+  }
+
+  const resultsUrl = `${SITE_URL}/${ctx.org.slug}/${tournament.slug}/standings`;
+  const scheduleUrl = `${SITE_URL}/${ctx.org.slug}/${tournament.slug}/schedule`;
+  const teamsUrl = `${SITE_URL}/${ctx.org.slug}/${tournament.slug}/teams`;
+  const fieldLogicUrl = `${SITE_URL}/pricing?source=post_event_results_email`;
+  const contactEmail = tournament.contact_email || ctx.org.contactEmail || undefined;
+  let sent = 0;
+
+  for (const recipient of recipients.values()) {
+    await sendEmail(
+      recipient.email!,
+      `Final Results Posted - ${tournament.name}`,
+      tournamentResultsFinalizedHtml({
+        tournamentName: tournament.name,
+        coachName: recipient.coach || recipient.name,
+        resultsUrl,
+        scheduleUrl,
+        teamsUrl,
+        fieldLogicUrl,
+        contactEmail,
+      }),
+    );
+    sent++;
+  }
+
+  const { error: updateError } = await supabaseAdmin
+    .from('tournaments')
+    .update({ results_notification_sent_count: sent })
+    .eq('id', tournament.id)
+    .eq('organization_id', ctx.org.id);
+
+  if (updateError) throw updateError;
+
+  await trackResultsNotificationEvent({
+    orgId: ctx.org.id,
+    userId: ctx.user.id,
+    userEmail: ctx.user.email,
+    planId: ctx.org.planId,
+    tournamentId: tournament.id,
+    status: 'completed',
+    notified: sent,
+  });
 }
 
 /**
@@ -73,6 +272,7 @@ export async function POST(req: Request) {
       if (denied) return denied;
 
       const newStatus: TournamentStatus = data.status;
+      let completionNotificationTournament: CompletionNotificationTournament | null = null;
 
       if (newStatus !== 'archived') {
         const { count, error: limitError } = await supabase
@@ -124,6 +324,17 @@ export async function POST(req: Request) {
 
       }
 
+      if (newStatus === 'completed') {
+        const { data: tournamentRow, error: tournamentError } = await supabase
+          .from('tournaments')
+          .select('id, name, slug, status, contact_email, notify_teams_on_complete, results_notified_at')
+          .eq('id', id)
+          .eq('organization_id', ctx.org.id)
+          .single();
+        if (tournamentError) throw tournamentError;
+        completionNotificationTournament = tournamentRow as CompletionNotificationTournament;
+      }
+
       const { error } = await supabase
         .from('tournaments')
         .update({ status: newStatus, is_active: newStatus === 'active' })
@@ -131,6 +342,18 @@ export async function POST(req: Request) {
         .eq('organization_id', ctx.org.id);
 
       if (error) throw error;
+
+      if (
+        newStatus === 'completed' &&
+        completionNotificationTournament &&
+        completionNotificationTournament.status !== 'completed'
+      ) {
+        try {
+          await sendCompletionResultsNotification({ ctx, tournament: completionNotificationTournament });
+        } catch (notificationError) {
+          console.error('[tournaments] post-event results notification failed:', notificationError);
+        }
+      }
     }
 
     // ── check-slug ────────────────────────────────────────────────────────────
@@ -203,6 +426,13 @@ export async function POST(req: Request) {
       if (data.depositDueDate  !== undefined) updates.deposit_due_date  = data.depositDueDate ?? null;
       if (data.totalFeeAmount  !== undefined) updates.total_fee_amount  = data.totalFeeAmount ?? null;
       if (data.totalFeeDueDate !== undefined) updates.total_fee_due_date = data.totalFeeDueDate ?? null;
+      if (data.notifyTeamsOnComplete !== undefined) {
+        const wantsNotification = Boolean(data.notifyTeamsOnComplete);
+        if (wantsNotification && !hasPlanFeature(ctx.org.planId, 'post_tournament_summary')) {
+          return Response.json({ error: 'Post-event result notifications are included with Tournament Plus, League, and Club.' }, { status: 403 });
+        }
+        updates.notify_teams_on_complete = wantsNotification;
+      }
 
       if (data.startDate !== undefined || data.endDate !== undefined) {
         const hasStartDateUpdate = data.startDate !== undefined;

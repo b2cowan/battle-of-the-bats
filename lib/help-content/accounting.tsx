@@ -92,12 +92,45 @@ const accountingHelp: HelpPageContent = {
       ),
     },
     {
-      heading: 'Exporting for the board',
+      id: 'exports',
+      heading: 'Exporting accounting data',
+      summary: 'Export ledger entries, budget plans, and budget vs. actual reports to Excel, CSV, and PDF.',
+      keywords: ['export', 'xlsx', 'csv', 'pdf', 'spreadsheet', 'download', 'board', 'report', 'ledger', 'budget'],
+      searchText:
+        'export xlsx csv excel pdf spreadsheet download board report ledger budget budget-vs-actual print treasurer',
+      links: [
+        { label: 'Exports & Downloads guide', href: '../help/exports' },
+      ],
       content: (
         <>
-          <p>Every ledger detail page includes an <strong>Export CSV</strong> button in the action bar (visible to Treasurers and Owners). The export includes all entries currently shown — use the tab filter to export only posted entries, or export all entries including pending ones.</p>
-          <p>The CSV contains: date, description, category, type (income / expense / transfer), amount, and status. This is suitable for sharing with your board, accountant, or for import into spreadsheet tools.</p>
-          <p>For a full-year picture, set the date range on the Accounting Overview page before drilling into individual ledgers — the overview shows your org's aggregate income, expenses, and net position across all ledgers for the selected period.</p>
+          <p>
+            Every accounting data table has an <strong>Export</strong> button in the top right.
+            Click it to download in Excel (.xlsx) or CSV.
+          </p>
+          <ul>
+            <li>
+              <strong>Ledger</strong> — exports all currently visible entries (use the tab filter
+              to export only posted or only pending). Columns: date, description, category, type,
+              amount, status.
+            </li>
+            <li>
+              <strong>Budget Plan</strong> — exports the full budget by category and line with
+              total, allocated, and collected amounts.
+            </li>
+            <li>
+              <strong>Budget vs. Actual</strong> — exports the variance report by category and
+              line. The PDF option produces a board-ready financial report.
+            </li>
+          </ul>
+          <p>
+            For a full-year picture, set the date range on the Accounting Overview page before
+            drilling into individual ledgers — the overview shows your org's aggregate net position
+            for the selected period.
+          </p>
+          <p>
+            See the <a href="../help/exports">Exports &amp; Downloads guide</a> for format details,
+            plan requirements, and PDF configuration.
+          </p>
         </>
       ),
     },

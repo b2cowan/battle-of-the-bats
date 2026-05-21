@@ -7,6 +7,11 @@ import HelpTooltip from '@/components/help/HelpTooltip';
 import { useOrg } from '@/lib/org-context';
 import { hasCapability } from '@/lib/roles';
 import FeedbackModal from '@/components/FeedbackModal';
+import {
+  downloadXLSX, generateCSV, downloadCSVBlob,
+  buildFilename, serializeRows, serializeHeaders, type ExportColumnDef,
+} from '@/lib/export';
+import ExportMenu from '@/components/admin/ExportMenu';
 import styles from '../../../../../rep-teams.module.css';
 import type { RepTryoutRegistration, RepTryoutRegistrationStatus } from '@/lib/types';
 
@@ -52,6 +57,21 @@ const BLANK: AddForm = {
   playerFirstName: '', playerLastName: '', playerDateOfBirth: '', playerNotes: '',
   guardianFirstName: '', guardianLastName: '', guardianEmail: '', guardianPhone: '',
 };
+
+// ── Export definition ─────────────────────────────────────────────────────────
+
+const TRYOUT_EXPORT_COLS: ExportColumnDef[] = [
+  { label: 'First Name',       key: 'playerFirstName',  format: 'text' },
+  { label: 'Last Name',        key: 'playerLastName',   format: 'text' },
+  { label: 'Date of Birth',    key: 'playerDateOfBirth',format: 'date',     sensitive: true },
+  { label: 'Guardian Name',    key: 'guardianName',     format: 'text',     sensitive: true },
+  { label: 'Guardian Email',   key: 'guardianEmail',    format: 'text',     sensitive: true },
+  { label: 'Guardian Phone',   key: 'guardianPhone',    format: 'text',     sensitive: true },
+  { label: 'Player Notes',     key: 'playerNotes',      format: 'text',     sensitive: true },
+  { label: 'Admin Notes',      key: 'adminNotes',       format: 'text',     sensitive: true },
+  { label: 'Submitted At',     key: 'submittedAt',      format: 'date' },
+  { label: 'Status',           key: 'status',           format: 'text' },
+];
 
 export default function TryoutsPage({
   params,
@@ -237,6 +257,58 @@ export default function TryoutsPage({
     });
   }
 
+  // ── Export helpers ───────────────────────────────────────────────────────────
+
+  function buildTryoutExportSrc() {
+    return filtered.map(r => ({
+      playerFirstName:  r.playerFirstName,
+      playerLastName:   r.playerLastName,
+      playerDateOfBirth: r.playerDateOfBirth ?? '',
+      guardianName:     `${r.guardianFirstName} ${r.guardianLastName}`.trim(),
+      guardianEmail:    r.guardianEmail,
+      guardianPhone:    r.guardianPhone ?? '',
+      playerNotes:      r.playerNotes ?? '',
+      adminNotes:       r.adminNotes ?? '',
+      submittedAt:      r.submittedAt.slice(0, 10),
+      status:           STATUS_LABEL[r.status] ?? r.status,
+    }));
+  }
+
+  async function handleExportXLSX() {
+    if (!filtered.length) return;
+    const headers = serializeHeaders(TRYOUT_EXPORT_COLS);
+    const rows = serializeRows(buildTryoutExportSrc(), TRYOUT_EXPORT_COLS);
+    await downloadXLSX(
+      buildFilename({ org: currentOrg?.slug, dataset: 'tryouts', scope: info?.team?.name ?? params.teamId }, 'xlsx'),
+      headers, rows, 'Tryout Applications',
+    );
+  }
+
+  async function handleExportXLSXWithSensitive() {
+    if (!filtered.length) return;
+    const headers = serializeHeaders(TRYOUT_EXPORT_COLS, true);
+    const rows = serializeRows(buildTryoutExportSrc(), TRYOUT_EXPORT_COLS, true);
+    await downloadXLSX(
+      buildFilename({ org: currentOrg?.slug, dataset: 'tryouts-with-contacts', scope: info?.team?.name ?? params.teamId }, 'xlsx'),
+      headers, rows, 'Tryout Applications',
+    );
+  }
+
+  function handleExportCSV() {
+    const headers = serializeHeaders(TRYOUT_EXPORT_COLS);
+    const rows = serializeRows(buildTryoutExportSrc(), TRYOUT_EXPORT_COLS);
+    downloadCSVBlob(
+      buildFilename({ org: currentOrg?.slug, dataset: 'tryouts', scope: info?.team?.name ?? params.teamId }, 'csv'),
+      generateCSV(headers, rows),
+    );
+  }
+
+  function handleExportPDF() {
+    setFeedbackType('success');
+    setFeedbackMsg('PDF export is coming soon.');
+    setFeedbackOpen(true);
+  }
+
   if (loading) return <p className={styles.muted}>Loading…</p>;
 
   if (!userRole || !hasCapability(userRole, userCapabilities, 'module_rep_teams')) {
@@ -278,14 +350,28 @@ export default function TryoutsPage({
           </div>
         </div>
         {canWrite && (
-          <button
-            type="button"
-            className="btn btn-secondary"
-            style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.85rem' }}
-            onClick={() => { setAddForm(BLANK); setAddOpen(true); }}
-          >
-            <Plus size={14} /> Add Applicant
-          </button>
+          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+            <ExportMenu
+              formats={['xlsx', 'csv', 'pdf']}
+              onExportXLSX={handleExportXLSX}
+              onExportCSV={handleExportCSV}
+              onExportPDF={handleExportPDF}
+              hasSensitiveOption={true}
+              sensitiveOptionLabel="Excel with contact details"
+              onExportXLSXWithSensitive={handleExportXLSXWithSensitive}
+              planId={currentOrg?.planId}
+              pdfFeatureKey="pdf_exports"
+              disabled={filtered.length === 0}
+            />
+            <button
+              type="button"
+              className="btn btn-secondary"
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.85rem' }}
+              onClick={() => { setAddForm(BLANK); setAddOpen(true); }}
+            >
+              <Plus size={14} /> Add Applicant
+            </button>
+          </div>
         )}
       </div>
 

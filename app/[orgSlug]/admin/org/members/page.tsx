@@ -9,6 +9,11 @@ import HelpTooltip from '@/components/help/HelpTooltip';
 import { ROLE_DEFAULTS, hasCapability } from '@/lib/roles';
 import type { OrgRole } from '@/lib/types';
 import type { Capability } from '@/lib/roles';
+import ExportMenu from '@/components/admin/ExportMenu';
+import {
+  downloadXLSX, generateCSV, downloadCSVBlob,
+  buildFilename, serializeRows, serializeHeaders, type ExportColumnDef,
+} from '@/lib/export';
 import styles from './members.module.css';
 
 const ROLE_INVITE_DESCRIPTIONS: Record<'admin' | 'staff' | 'official', string> = {
@@ -91,6 +96,19 @@ const ROLE_BADGE: Record<OrgRole, string> = {
   treasurer: 'badge-neutral',
   coach: 'badge-info',
 };
+
+// ── Export ────────────────────────────────────────────────────────────────────
+
+const MEMBERS_EXPORT_COLS: ExportColumnDef[] = [
+  { label: 'Display Name', key: 'displayName', format: 'text' },
+  { label: 'Email',        key: 'email',        format: 'text' },
+  { label: 'Role',         key: 'roleLabel',    format: 'text' },
+  { label: 'Status',       key: 'statusLabel',  format: 'text' },
+  { label: 'Last Sign In', key: 'lastSignIn',   format: 'text' },
+  { label: 'Invited',      key: 'invitedAt',    format: 'text' },
+];
+
+// ─────────────────────────────────────────────────────────────────────────────
 
 const STATUS_LABEL: Record<'invited' | 'active' | 'suspended', string> = {
   invited:   'Pending',
@@ -470,6 +488,37 @@ export default function MembersPage() {
   const atLimit = seatCount >= seatLimit;
   const nearLimit = !atLimit && seatLimit < 9999 && seatCount > 0 && seatCount / seatLimit >= 0.8;
 
+  // ── Export ──────────────────────────────────────────────────────────────────
+
+  function buildMemberExportRows(rows: Member[]) {
+    return rows.map(m => ({
+      displayName: m.displayName ?? '',
+      email:       m.email,
+      roleLabel:   ROLE_LABELS[m.role],
+      statusLabel: STATUS_LABEL[m.status],
+      lastSignIn:  m.lastSignIn ? formatDate(m.lastSignIn) : '—',
+      invitedAt:   formatDate(m.invitedAt),
+    }));
+  }
+
+  function handleExportXLSX() {
+    const rows     = buildMemberExportRows(members);
+    const headers  = serializeHeaders(MEMBERS_EXPORT_COLS);
+    const data     = serializeRows(rows, MEMBERS_EXPORT_COLS);
+    const filename = buildFilename({ org: currentOrg?.slug, dataset: 'members' }, 'xlsx');
+    downloadXLSX(filename, headers, data, 'Members');
+  }
+
+  function handleExportCSV() {
+    const rows     = buildMemberExportRows(members);
+    const headers  = serializeHeaders(MEMBERS_EXPORT_COLS);
+    const data     = serializeRows(rows, MEMBERS_EXPORT_COLS);
+    const filename = buildFilename({ org: currentOrg?.slug, dataset: 'members' }, 'csv');
+    downloadCSVBlob(filename, generateCSV(headers, data));
+  }
+
+  // ────────────────────────────────────────────────────────────────────────────
+
   function renderMemberTable(rows: Member[]) {
     return (
       <table className={styles.table}>
@@ -595,6 +644,13 @@ export default function MembersPage() {
               Audit Log
             </Link>
           )}
+          <ExportMenu
+            formats={['xlsx', 'csv']}
+            onExportXLSX={handleExportXLSX}
+            onExportCSV={handleExportCSV}
+            disabled={members.length === 0}
+            planId={currentOrg?.planId}
+          />
           <button
             className="btn btn-primary btn-sm"
             onClick={() => setInviteOpen(true)}
@@ -647,6 +703,11 @@ export default function MembersPage() {
           <p className={styles.roleRefNote} style={{ marginTop: '0.5rem' }}>
             <strong>Tournament assignments:</strong> Staff and officials can be restricted to specific tournaments.
             Click <strong>Manage</strong> on any member row to edit tournament access. A member with no assignments sees all tournaments.
+          </p>
+          <p className={styles.roleRefNote} style={{ marginTop: '0.5rem' }}>
+            <strong>Tournament Plus staffing pattern:</strong> Use the 10-seat Plus allowance for a lead organizer, registrar,
+            scheduler, communications lead, scorer manager, and payment or accounting contact. Start with Staff for operators,
+            then have the owner add only the capabilities that person needs.
           </p>
         </div>
       </details>

@@ -12,6 +12,8 @@ const AUTH_ERRORS: Record<string, string> = {
   'email_not_confirmed': 'Please verify your email before signing in. Check your inbox for a confirmation link.',
   'too_many_requests':   'Too many sign-in attempts. Please wait a moment and try again.',
   'user_not_found':      'No account found for this email address.',
+  'auth_timeout':        'Sign-in is taking too long. Check your connection and try again.',
+  'network_error':       'Could not reach the auth service. Please try again.',
 };
 
 function LoginForm() {

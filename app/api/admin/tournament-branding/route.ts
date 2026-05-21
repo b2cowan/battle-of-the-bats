@@ -10,6 +10,14 @@ const HEX_RE = /^#[0-9A-Fa-f]{6}$/;
 const VALID_PRESETS = new Set(Object.keys(PRESETS));
 const VALID_FONTS = new Set(Object.keys(FONT_OPTIONS));
 const VALID_CARD_STYLES = new Set(Object.keys(CARD_STYLE_OPTIONS));
+const PLUS_VISUAL_FIELDS = [
+  'themePreset',
+  'themePrimary',
+  'themeAccent',
+  'themeFont',
+  'themeCardStyle',
+  'colorMode',
+] as const;
 
 export async function GET(req: Request) {
   const ctx = await getAuthContextWithScope();
@@ -75,6 +83,14 @@ export async function PATCH(req: Request) {
 
   const updates: Record<string, unknown> = {};
   const canUseAdvancedBranding = hasPlanFeature(ctx.org.planId, 'advanced_tournament_branding');
+
+  if (!canUseAdvancedBranding && PLUS_VISUAL_FIELDS.some(field => field in body)) {
+    return NextResponse.json(
+      { error: 'Tournament visual branding requires Tournament Plus or higher' },
+      { status: 403 }
+    );
+  }
+
   if ('themePreset' in body) {
     if (body.themePreset === null) {
       updates.theme_preset = null;

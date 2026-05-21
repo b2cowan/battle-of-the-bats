@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { AlertCircle, Plus, Trash2, X } from 'lucide-react';
+import { AlertCircle, ArrowRight, Copy, Plus, Trash2, X } from 'lucide-react';
 import styles from './TournamentSetupWizard.module.css';
 
 const WIZARD_ORDER = ['tournament', 'divisions', 'welcome', 'venues', 'contacts', 'review'] as const;
@@ -95,9 +95,34 @@ type CreatedTournament = {
   slug: string;
 };
 
+type PastTournament = {
+  id: string;
+  name: string;
+  year?: number | null;
+  status?: string | null;
+};
+
+/** Mode before the main wizard steps: pick clone source or start from scratch. */
+type PreStepMode = 'choose' | 'clone-name';
+
+type CloneNameForm = {
+  name: string;
+  slug: string;
+  year: string;
+  startDate: string;
+  endDate: string;
+  autoSlug: boolean;
+};
+
 type TournamentSetupWizardProps = {
   isOpen: boolean;
   orgContactEmail?: string | null;
+  /** Pass existing non-archived tournaments to enable the clone pre-step. */
+  existingTournaments?: PastTournament[];
+  /** Whether the org's plan includes tournament cloning. */
+  canClone?: boolean;
+  /** Upgrade copy shown if canClone is false. */
+  upgradeCopy?: string;
   onClose: () => void;
   onCreated: (tournament: CreatedTournament) => void | Promise<void>;
 };
@@ -243,9 +268,24 @@ async function requestJson<T>(input: RequestInfo | URL, init?: RequestInit): Pro
 export default function TournamentSetupWizard({
   isOpen,
   orgContactEmail,
+  existingTournaments,
+  canClone,
+  upgradeCopy,
   onClose,
   onCreated,
 }: TournamentSetupWizardProps) {
+  // ── Pre-step state (choose / clone-name) ─────────────────────────────────
+  const hasPastTournaments = Boolean(existingTournaments && existingTournaments.length > 0);
+  const [preStep, setPreStep] = useState<PreStepMode | null>(hasPastTournaments ? 'choose' : null);
+  const [cloneSource, setCloneSource] = useState<PastTournament | null>(null);
+  const [cloneNameForm, setCloneNameForm] = useState<CloneNameForm>({
+    name: '', slug: '', year: String(new Date().getFullYear() + 1),
+    startDate: '', endDate: '', autoSlug: true,
+  });
+  const [cloneWorking, setCloneWorking] = useState(false);
+  const [cloneError, setCloneError] = useState('');
+
+  // ── Main wizard state ─────────────────────────────────────────────────────
   const [activeStep, setActiveStep] = useState<WizardStep>('tournament');
   const [stepError, setStepError] = useState('');
   const [saving, setSaving] = useState(false);
@@ -279,6 +319,13 @@ export default function TournamentSetupWizard({
 
   useEffect(() => {
     if (!isOpen) return;
+    // Reset pre-step
+    const hasPast = Boolean(existingTournaments && existingTournaments.length > 0);
+    setPreStep(hasPast ? 'choose' : null);
+    setCloneSource(null);
+    setCloneNameForm({ name: '', slug: '', year: String(new Date().getFullYear() + 1), startDate: '', endDate: '', autoSlug: true });
+    setCloneWorking(false);
+    setCloneError('');
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setActiveStep('tournament');
     setStepError('');
@@ -316,7 +363,8 @@ export default function TournamentSetupWizard({
       }
       setDataLoading(false);
     }).catch(() => setDataLoading(false));
-  }, [isOpen, orgContactEmail]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, orgContactEmail, existingTournaments?.length]);
 
   if (!isOpen) return null;
 
@@ -526,6 +574,10 @@ export default function TournamentSetupWizard({
   }
 
   function requestClose() {
+    // 'choose' screen has no data entered yet — close immediately
+    if (preStep === 'choose') { onClose(); return; }
+    // 'clone-name' screen has a source picked — confirm before leaving
+    if (preStep === 'clone-name') { setCloseConfirmOpen(true); return; }
     const setupStarted = formTouchedRef.current || activeStep !== 'tournament';
     if (setupStarted) {
       setCloseConfirmOpen(true);
@@ -731,6 +783,279 @@ export default function TournamentSetupWizard({
               )}
               <button type="button" className="btn btn-primary" onClick={options.onSave} disabled={saving || (options.step === 'tournament' && dataLoading)}>
                 {saving ? 'Saving...' : (options.step === 'tournament' && dataLoading) ? 'Loading…' : options.saveLabel}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ── PRE-STEP: CHOOSE ──────────────────────────────────────────────────────
+  if (preStep === 'choose') {
+    const sorted = [...(existingTournaments ?? [])].sort((a, b) => (b.year ?? 0) - (a.year ?? 0));
+    return (
+      <div className={styles.modalOverlay} role="presentation">
+        {closeConfirmOpen && (
+          <div className={styles.modalOverlay} style={{ zIndex: 10 }}>
+            <div className="modal" style={{ maxWidth: 400 }} onClick={e => e.stopPropagation()}>
+              <div className="modal-header"><h3>Leave setup?</h3></div>
+              <p style={{ color: 'var(--white-60)', marginBottom: '0.5rem' }}>Your progress will not be saved.</p>
+              <div className="modal-footer">
+                <button className="btn btn-ghost" onClick={() => setCloseConfirmOpen(false)}>Keep working</button>
+                <button className="btn btn-danger" onClick={() => { setCloseConfirmOpen(false); onClose(); }}>Leave</button>
+              </div>
+            </div>
+          </div>
+        )}
+        <div className={styles.workflowModal} role="dialog" aria-modal="true">
+          <div className={styles.modalHeader}>
+            <div>
+              <h2 className={styles.modalTitle}>New Tournament</h2>
+              <p className={styles.modalSub}>How do you want to set up this tournament?</p>
+            </div>
+            <button type="button" className={styles.modalClose} onClick={requestClose} aria-label="Close">
+              <X size={18} />
+            </button>
+          </div>
+
+          <div className={styles.workflowModalBody}>
+            {/* Clone option */}
+            <div style={{ marginBottom: '1.5rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
+                <Copy size={15} style={{ color: 'var(--logic-lime)' }} />
+                <strong style={{ fontSize: '0.9rem' }}>Clone a past tournament</strong>
+                {!canClone && upgradeCopy && (
+                  <span className="badge badge-warning" style={{ fontSize: '0.7rem' }}>Tournament Plus</span>
+                )}
+              </div>
+              <p style={{ fontSize: '0.8rem', color: 'var(--white-50)', marginBottom: '0.85rem', lineHeight: 1.5 }}>
+                Copy divisions, venues, contacts, branding, and fees from an existing tournament into this one.
+              </p>
+              {!canClone && upgradeCopy ? (
+                <div className="alert alert-warning" style={{ margin: 0, fontSize: '0.82rem' }}>{upgradeCopy}</div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  {sorted.map(t => (
+                    <button
+                      key={t.id}
+                      type="button"
+                      onClick={() => {
+                        const nextYear = (t.year ?? new Date().getFullYear()) + 1;
+                        const defaultName = `${t.name} ${nextYear}`;
+                        setCloneSource(t);
+                        setCloneNameForm({
+                          name: defaultName,
+                          slug: generateSlug(defaultName),
+                          year: String(nextYear),
+                          startDate: '',
+                          endDate: '',
+                          autoSlug: true,
+                        });
+                        setCloneError('');
+                        setPreStep('clone-name');
+                      }}
+                      style={{
+                        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                        padding: '0.65rem 0.9rem',
+                        border: '1px solid var(--border-2)',
+                        borderRadius: 8,
+                        background: 'var(--surface-1, rgba(255,255,255,0.03))',
+                        cursor: 'pointer', textAlign: 'left', color: 'inherit',
+                        transition: 'border-color 0.15s',
+                      }}
+                      onMouseEnter={e => (e.currentTarget.style.borderColor = 'var(--logic-lime)')}
+                      onMouseLeave={e => (e.currentTarget.style.borderColor = 'var(--border-2)')}
+                    >
+                      <span>
+                        <span style={{ display: 'block', fontWeight: 600, fontSize: '0.88rem' }}>{t.name}</span>
+                        {t.year && <span style={{ display: 'block', fontSize: '0.75rem', color: 'var(--white-40)' }}>{t.year} · {t.status ?? 'tournament'}</span>}
+                      </span>
+                      <ArrowRight size={14} style={{ color: 'var(--logic-lime)', flexShrink: 0 }} />
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Divider */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.25rem' }}>
+              <div style={{ flex: 1, height: 1, background: 'var(--border-2)' }} />
+              <span style={{ fontSize: '0.72rem', color: 'var(--white-30)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>or</span>
+              <div style={{ flex: 1, height: 1, background: 'var(--border-2)' }} />
+            </div>
+          </div>
+
+          <div className={styles.workflowModalFooter}>
+            <div />
+            <div className={styles.workflowFooterActions}>
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={() => { setPreStep(null); }}
+              >
+                Start from scratch
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ── PRE-STEP: CLONE NAME ──────────────────────────────────────────────────
+  if (preStep === 'clone-name') {
+    async function submitClone() {
+      if (!cloneSource) return;
+      const name = cloneNameForm.name.trim();
+      const slug = cloneNameForm.slug.trim();
+      const year = Number(cloneNameForm.year);
+      if (!name) { setCloneError('Enter a tournament name.'); return; }
+      if (!slug || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) { setCloneError('Enter a valid URL slug (lowercase letters, numbers, hyphens).'); return; }
+      if (!Number.isInteger(year) || year < 2000 || year > 2100) { setCloneError('Enter a valid year.'); return; }
+      if (cloneNameForm.startDate && cloneNameForm.startDate < getTodayDateValue()) { setCloneError('Start date cannot be before today.'); return; }
+
+      setCloneWorking(true);
+      setCloneError('');
+      try {
+        const res = await fetch(`/api/admin/tournaments/${encodeURIComponent(cloneSource.id)}/clone`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name, slug, year,
+            startDate: cloneNameForm.startDate || null,
+            endDate: cloneNameForm.endDate || null,
+            options: {
+              includeDivisions: true, includePools: true, includeSlots: true,
+              includeVenues: true, includeContacts: true, includeBranding: true,
+              includePublicPages: true, includeWelcome: true, includeRulesResources: true,
+              includeRegistrationFields: true, includeFeeSchedule: true,
+            },
+          }),
+        });
+        const data = await res.json() as { tournament?: { id: string; name: string; slug: string }; error?: string };
+        if (!res.ok) throw new Error(data.error ?? 'Clone failed.');
+        if (!data.tournament) throw new Error('No tournament returned.');
+        await onCreated({ id: data.tournament.id, name: data.tournament.name, slug: data.tournament.slug });
+      } catch (err) {
+        setCloneError(err instanceof Error ? err.message : 'Unable to clone tournament.');
+      } finally {
+        setCloneWorking(false);
+      }
+    }
+
+    return (
+      <div className={styles.modalOverlay} role="presentation">
+        {closeConfirmOpen && (
+          <div className={styles.modalOverlay} style={{ zIndex: 10 }}>
+            <div className="modal" style={{ maxWidth: 400 }} onClick={e => e.stopPropagation()}>
+              <div className="modal-header"><h3>Leave setup?</h3></div>
+              <p style={{ color: 'var(--white-60)', marginBottom: '0.5rem' }}>Your progress will not be saved.</p>
+              <div className="modal-footer">
+                <button className="btn btn-ghost" onClick={() => setCloseConfirmOpen(false)}>Keep working</button>
+                <button className="btn btn-danger" onClick={() => { setCloseConfirmOpen(false); onClose(); }}>Leave</button>
+              </div>
+            </div>
+          </div>
+        )}
+        <div className={styles.workflowModal} role="dialog" aria-modal="true">
+          <div className={styles.modalHeader}>
+            <div>
+              <h2 className={styles.modalTitle}>Clone from {cloneSource?.name}</h2>
+              <p className={styles.modalSub}>Name and date your new tournament. Everything else comes from the clone.</p>
+            </div>
+            <button type="button" className={styles.modalClose} onClick={requestClose} aria-label="Close">
+              <X size={18} />
+            </button>
+          </div>
+
+          <div className={styles.workflowModalBody}>
+            <div className={styles.modalGridTwo}>
+              <label className={styles.fieldLabel}>
+                Tournament name *
+                <input
+                  className="form-input"
+                  value={cloneNameForm.name}
+                  onChange={e => {
+                    const name = e.target.value;
+                    setCloneNameForm(f => ({
+                      ...f, name,
+                      ...(f.autoSlug ? { slug: generateSlug(name) } : {}),
+                    }));
+                  }}
+                  placeholder="e.g. Spring Classic 2027"
+                />
+              </label>
+              <label className={styles.fieldLabel}>
+                Year *
+                <input
+                  className="form-input"
+                  type="number"
+                  min="2000"
+                  max="2100"
+                  value={cloneNameForm.year}
+                  onChange={e => setCloneNameForm(f => ({ ...f, year: e.target.value }))}
+                />
+              </label>
+              <label className={styles.fieldLabel}>
+                Public link *
+                <input
+                  className="form-input"
+                  value={cloneNameForm.slug}
+                  onChange={e => setCloneNameForm(f => ({
+                    ...f,
+                    slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-'),
+                    autoSlug: false,
+                  }))}
+                  placeholder="spring-classic-2027"
+                />
+              </label>
+              <label className={styles.fieldLabel}>
+                Start date <span style={{ fontWeight: 400, color: 'var(--white-40)' }}>optional</span>
+                <input
+                  className="form-input"
+                  type="date"
+                  value={cloneNameForm.startDate}
+                  min={getTodayDateValue()}
+                  onChange={e => setCloneNameForm(f => ({
+                    ...f,
+                    startDate: e.target.value,
+                    endDate: e.target.value ? addDaysToDateValue(e.target.value, 2) : '',
+                  }))}
+                />
+              </label>
+              <label className={styles.fieldLabel}>
+                End date <span style={{ fontWeight: 400, color: 'var(--white-40)' }}>optional</span>
+                <input
+                  className="form-input"
+                  type="date"
+                  value={cloneNameForm.endDate}
+                  min={cloneNameForm.startDate || getTodayDateValue()}
+                  onChange={e => setCloneNameForm(f => ({ ...f, endDate: e.target.value }))}
+                />
+              </label>
+            </div>
+
+            <div className="alert alert-info" style={{ marginTop: '1rem', fontSize: '0.8rem' }}>
+              Divisions, venues, contacts, branding, fees, and rules will be copied from <strong>{cloneSource?.name}</strong>. Registrations and scores are never copied.
+            </div>
+
+            {cloneError && (
+              <div className={styles.planError} style={{ marginTop: '0.75rem' }}>
+                <AlertCircle size={14} /> {cloneError}
+              </div>
+            )}
+          </div>
+
+          <div className={styles.workflowModalFooter}>
+            <div>
+              <button type="button" className="btn btn-ghost" onClick={() => { setPreStep('choose'); setCloneError(''); }} disabled={cloneWorking}>
+                Back
+              </button>
+            </div>
+            <div className={styles.workflowFooterActions}>
+              <button type="button" className="btn btn-primary" onClick={submitClone} disabled={cloneWorking}>
+                {cloneWorking ? 'Creating clone…' : 'Create clone'}
               </button>
             </div>
           </div>

@@ -7,7 +7,7 @@ import {
   MoreHorizontal, LayoutDashboard, Tag, MapPin,
   RefreshCw, LogOut, X, ChevronRight, BookUser,
   Settings, Users2, LayoutGrid, CalendarDays, UserCheck,
-  ExternalLink, BookOpen, Mail, Archive,
+  ExternalLink, BookOpen, Mail, Archive, FileText,
 } from 'lucide-react';
 import { signOut } from '@/lib/auth';
 import { useOrg } from '@/lib/org-context';
@@ -67,9 +67,17 @@ export default function AdminBottomNav() {
   const isRepTeams    = pathname.startsWith(`${base}/rep-teams`);
   const isHouseLeague = pathname.startsWith(`${base}/house-league`);
   const isModule      = isRepTeams || isHouseLeague || pathname.startsWith(`${base}/org`) || pathname.startsWith(`${base}/public-site`) || pathname.startsWith(`${base}/accounting`);
+  const showTournamentSummary = currentTournament?.status === 'completed' || currentTournament?.status === 'archived';
+  const tournamentMore = showTournamentSummary
+    ? [
+        ...TOURNAMENT_MORE.slice(0, 3),
+        { key: 'tournaments/summary', icon: FileText, label: 'Summary' },
+        ...TOURNAMENT_MORE.slice(3),
+      ]
+    : TOURNAMENT_MORE;
 
   const allMoreKeys = [
-    ...TOURNAMENT_MORE,
+    ...tournamentMore,
     ...ORG_MORE,
     ...(userRole === 'owner' ? OWNER_ORG_MORE : []),
   ];
@@ -271,7 +279,7 @@ export default function AdminBottomNav() {
 
             {/* Tournament nav group */}
             <div className={styles.dropSectionLabel}>Tournament</div>
-            {dropNavItems(TOURNAMENT_MORE)}
+            {dropNavItems(tournamentMore)}
 
             <div className={styles.dropDivider} />
 

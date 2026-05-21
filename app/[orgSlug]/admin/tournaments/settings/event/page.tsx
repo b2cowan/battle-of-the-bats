@@ -5,6 +5,7 @@ import { ArrowLeft, Settings2 } from 'lucide-react';
 import { useTournament } from '@/lib/tournament-context';
 import { useOrg } from '@/lib/org-context';
 import FeedbackModal from '@/components/FeedbackModal';
+import { hasPlanFeature, requiresTournamentPlusCopy } from '@/lib/plan-features';
 import styles from '../../branding/branding.module.css';
 
 type FeeMode = 'tournament' | 'age_group';
@@ -27,6 +28,9 @@ export default function TournamentEventSettingsPage() {
 
   // Scoring
   const [requireFinalization, setRequireFinalization] = useState(false);
+  const [notifyTeamsOnComplete, setNotifyTeamsOnComplete] = useState(false);
+  const [resultsNotifiedAt, setResultsNotifiedAt] = useState<string | null>(null);
+  const [resultsNotificationSentCount, setResultsNotificationSentCount] = useState(0);
 
   // Dirty tracking
   const [saved, setSaved] = useState({
@@ -34,6 +38,7 @@ export default function TournamentEventSettingsPage() {
     feeMode: 'tournament' as FeeMode,
     depositAmount: '', depositDueDate: '', totalFeeAmount: '', totalFeeDueDate: '',
     requireFinalization: false,
+    notifyTeamsOnComplete: false,
   });
 
   const [saving, setSaving] = useState(false);
@@ -42,6 +47,8 @@ export default function TournamentEventSettingsPage() {
   const [errorMsg, setErrorMsg] = useState('');
 
   const tournamentId = currentTournament?.id;
+  const canUsePostEventNotifications = Boolean(currentOrg && hasPlanFeature(currentOrg.planId, 'post_tournament_summary'));
+  const subscriptionHref = `/${currentOrg?.slug ?? 'admin'}/admin/tournaments/settings/subscription`;
 
   const isDirty =
     startDate !== saved.startDate ||
@@ -51,7 +58,8 @@ export default function TournamentEventSettingsPage() {
     depositDueDate !== saved.depositDueDate ||
     totalFeeAmount !== saved.totalFeeAmount ||
     totalFeeDueDate !== saved.totalFeeDueDate ||
-    requireFinalization !== saved.requireFinalization;
+    requireFinalization !== saved.requireFinalization ||
+    notifyTeamsOnComplete !== saved.notifyTeamsOnComplete;
 
   useEffect(() => {
     if (!tournamentId) return;
@@ -69,11 +77,15 @@ export default function TournamentEventSettingsPage() {
         const dd = t.deposit_due_date ?? '';
         const tf = t.total_fee_amount != null ? String(t.total_fee_amount) : '';
         const td = t.total_fee_due_date ?? '';
+        const notify = Boolean(t.notify_teams_on_complete);
+        setResultsNotifiedAt(t.results_notified_at ?? null);
+        setResultsNotificationSentCount(t.results_notification_sent_count ?? 0);
         setStartDate(sd); setEndDate(ed);
         setFeeMode(fm);
         setDepositAmount(da); setDepositDueDate(dd);
         setTotalFeeAmount(tf); setTotalFeeDueDate(td);
-        setSaved(s => ({ ...s, startDate: sd, endDate: ed, feeMode: fm, depositAmount: da, depositDueDate: dd, totalFeeAmount: tf, totalFeeDueDate: td }));
+        setNotifyTeamsOnComplete(notify);
+        setSaved(s => ({ ...s, startDate: sd, endDate: ed, feeMode: fm, depositAmount: da, depositDueDate: dd, totalFeeAmount: tf, totalFeeDueDate: td, notifyTeamsOnComplete: notify }));
       }
       const rf = (branding as { requireScoreFinalization?: boolean }).requireScoreFinalization ?? false;
       setRequireFinalization(rf);
@@ -103,6 +115,7 @@ export default function TournamentEventSettingsPage() {
               depositDueDate:  depositDueDate  || null,
               totalFeeAmount:  totalFeeAmount  ? Number(totalFeeAmount)  : null,
               totalFeeDueDate: totalFeeDueDate || null,
+              notifyTeamsOnComplete,
             },
           }),
         }),
@@ -122,7 +135,7 @@ export default function TournamentEventSettingsPage() {
         throw new Error(d.error ?? 'Failed to save scoring settings');
       }
 
-      setSaved({ startDate, endDate, feeMode, depositAmount, depositDueDate, totalFeeAmount, totalFeeDueDate, requireFinalization });
+      setSaved({ startDate, endDate, feeMode, depositAmount, depositDueDate, totalFeeAmount, totalFeeDueDate, requireFinalization, notifyTeamsOnComplete });
       setSuccessOpen(true);
     } catch (err: unknown) {
       setErrorMsg(err instanceof Error ? err.message : 'Something went wrong');
@@ -273,6 +286,40 @@ export default function TournamentEventSettingsPage() {
           <p className={styles.inheritNote} style={{ marginTop: '0.5rem' }}>
             When not set, this tournament inherits the organization-level finalization setting.
           </p>
+        </div>
+      </div>
+
+      <div className={styles.card} style={{ marginTop: '1.5rem' }}>
+        <h2 className={styles.sectionTitle}>Post-Event Results Notification</h2>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+          <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', cursor: canUsePostEventNotifications ? 'pointer' : 'not-allowed' }}>
+            <span style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--white-80)' }}>
+              Email accepted teams when results are finalized
+            </span>
+            <input
+              type="checkbox"
+              checked={notifyTeamsOnComplete}
+              disabled={!canUsePostEventNotifications}
+              onChange={e => setNotifyTeamsOnComplete(e.target.checked)}
+              style={{ width: '18px', height: '18px', cursor: canUsePostEventNotifications ? 'pointer' : 'not-allowed', accentColor: 'var(--primary)' }}
+            />
+          </label>
+          <p style={{ fontSize: '0.83rem', color: 'var(--white-40)', lineHeight: 1.55, margin: 0 }}>
+            When enabled, accepted team contacts receive one email with public standings, schedule, and team links the first time this tournament is marked completed.
+          </p>
+          {resultsNotifiedAt && (
+            <p style={{ fontSize: '0.8rem', color: 'var(--logic-lime)', lineHeight: 1.5, margin: 0 }}>
+              Results notification sent to {resultsNotificationSentCount} team contact{resultsNotificationSentCount === 1 ? '' : 's'} on {resultsNotifiedAt.slice(0, 10)}.
+            </p>
+          )}
+          {!canUsePostEventNotifications && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+              <p style={{ fontSize: '0.82rem', color: 'var(--white-45)', lineHeight: 1.5, margin: 0 }}>
+                {requiresTournamentPlusCopy('post_tournament_summary')}
+              </p>
+              <Link href={subscriptionHref} className="btn btn-outline btn-sm">Review Tournament Plus</Link>
+            </div>
+          )}
         </div>
       </div>
 

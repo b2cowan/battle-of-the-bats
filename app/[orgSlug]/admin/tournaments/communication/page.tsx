@@ -2,10 +2,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import { AlertCircle, CheckCircle2, Mail, RefreshCw, Send, Users } from 'lucide-react';
 import { useTournament } from '@/lib/tournament-context';
+import { useOrg } from '@/lib/org-context';
+import { hasPlanFeature, requiresTournamentPlusCopy } from '@/lib/plan-features';
 import { AgeGroup, Contact, Team } from '@/lib/types';
 import styles from './communication.module.css';
 
 type Status = Team['status'];
+type PaymentStatus = Team['paymentStatus'];
 type StatusMessage = { type: 'success' | 'error'; msg: string };
 type RecipientPreview = {
   email: string;
@@ -21,12 +24,21 @@ const TEAM_STATUS_OPTIONS: { value: Status; label: string }[] = [
   { value: 'rejected', label: 'Rejected teams' },
 ];
 
+const PAYMENT_STATUS_OPTIONS: { value: PaymentStatus; label: string }[] = [
+  { value: 'pending', label: 'Payment pending' },
+  { value: 'paid', label: 'Marked paid' },
+];
+
 function normalizeEmail(email: string) {
   return email.trim().toLowerCase();
 }
 
 function statusLabel(status: Status) {
   return TEAM_STATUS_OPTIONS.find(option => option.value === status)?.label.replace(' teams', '') ?? status;
+}
+
+function paymentStatusLabel(status: PaymentStatus) {
+  return PAYMENT_STATUS_OPTIONS.find(option => option.value === status)?.label ?? status;
 }
 
 function toggleSetValue<T>(set: Set<T>, value: T) {
@@ -38,6 +50,7 @@ function toggleSetValue<T>(set: Set<T>, value: T) {
 
 export default function AdminCommunicationPage() {
   const { currentTournament } = useTournament();
+  const { currentOrg } = useOrg();
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
   const [ageGroups, setAgeGroups] = useState<AgeGroup[]>([]);
@@ -48,6 +61,7 @@ export default function AdminCommunicationPage() {
   const [includeTeams, setIncludeTeams] = useState(true);
   const [includeContacts, setIncludeContacts] = useState(false);
   const [selectedTeamStatuses, setSelectedTeamStatuses] = useState<Set<Status>>(() => new Set(['accepted']));
+  const [selectedPaymentStatuses, setSelectedPaymentStatuses] = useState<Set<PaymentStatus>>(() => new Set());
   const [selectedAgeGroups, setSelectedAgeGroups] = useState<Set<string>>(() => new Set());
   const [selectedTeamIds, setSelectedTeamIds] = useState<Set<string>>(() => new Set());
   const [selectedContactRoles, setSelectedContactRoles] = useState<Set<string>>(() => new Set());
@@ -83,26 +97,30 @@ export default function AdminCommunicationPage() {
   }, [currentTournament?.id]);
 
   const ageGroupNameById = useMemo(() => new Map(ageGroups.map(group => [group.id, group.name])), [ageGroups]);
+  const canTargetAnnouncements = currentOrg ? hasPlanFeature(currentOrg.planId, 'targeted_tournament_announcements') : false;
 
   const contactRoles = useMemo(() => {
     return Array.from(new Set(contacts.map(contact => contact.role).filter((role): role is string => Boolean(role)))).sort();
   }, [contacts]);
 
   const filteredTeams = useMemo(() => {
+    if (!canTargetAnnouncements) return teams;
     if (!includeTeams) return [];
     if (selectedTeamIds.size > 0) return teams.filter(team => selectedTeamIds.has(team.id));
 
     return teams.filter(team => {
       const matchesStatus = selectedTeamStatuses.size === 0 || selectedTeamStatuses.has(team.status);
+      const matchesPaymentStatus = selectedPaymentStatuses.size === 0 || selectedPaymentStatuses.has(team.paymentStatus);
       const matchesDivision = selectedAgeGroups.size === 0 || selectedAgeGroups.has(team.ageGroupId);
-      return matchesStatus && matchesDivision;
+      return matchesStatus && matchesPaymentStatus && matchesDivision;
     });
-  }, [includeTeams, selectedAgeGroups, selectedTeamIds, selectedTeamStatuses, teams]);
+  }, [canTargetAnnouncements, includeTeams, selectedAgeGroups, selectedPaymentStatuses, selectedTeamIds, selectedTeamStatuses, teams]);
 
   const filteredContacts = useMemo(() => {
+    if (!canTargetAnnouncements) return [];
     if (!includeContacts) return [];
     return contacts.filter(contact => selectedContactRoles.size === 0 || selectedContactRoles.has(contact.role ?? ''));
-  }, [contacts, includeContacts, selectedContactRoles]);
+  }, [canTargetAnnouncements, contacts, includeContacts, selectedContactRoles]);
 
   const recipients = useMemo<RecipientPreview[]>(() => {
     const byEmail = new Map<string, RecipientPreview>();
@@ -114,7 +132,7 @@ export default function AdminCommunicationPage() {
       byEmail.set(email, {
         email,
         name: team.name,
-        detail: `${ageGroupNameById.get(team.ageGroupId) ?? 'Division'} - ${statusLabel(team.status)}`,
+        detail: `${ageGroupNameById.get(team.ageGroupId) ?? 'Division'} - ${statusLabel(team.status)} - ${paymentStatusLabel(team.paymentStatus)}`,
         source: 'Team',
       });
     }
@@ -144,6 +162,8 @@ export default function AdminCommunicationPage() {
   }, [ageGroupNameById, filteredContacts, filteredTeams]);
 
   const recipientSummary = useMemo(() => {
+    if (!canTargetAnnouncements) return 'all registered teams';
+
     const parts: string[] = [];
 
     if (includeTeams) {
@@ -156,7 +176,10 @@ export default function AdminCommunicationPage() {
         const divisionText = selectedAgeGroups.size === 0
           ? ''
           : ` in ${selectedAgeGroups.size} division${selectedAgeGroups.size === 1 ? '' : 's'}`;
-        parts.push(`${statusText} teams${divisionText}`);
+        const paymentText = selectedPaymentStatuses.size === 0
+          ? ''
+          : ` with ${Array.from(selectedPaymentStatuses).map(item => paymentStatusLabel(item).toLowerCase()).join(', ')}`;
+        parts.push(`${statusText} teams${divisionText}${paymentText}`);
       }
     }
 
@@ -167,7 +190,7 @@ export default function AdminCommunicationPage() {
     }
 
     return parts.length > 0 ? parts.join(' + ') : 'No audience selected';
-  }, [includeContacts, includeTeams, selectedAgeGroups.size, selectedContactRoles.size, selectedTeamIds.size, selectedTeamStatuses]);
+  }, [canTargetAnnouncements, includeContacts, includeTeams, selectedAgeGroups.size, selectedContactRoles.size, selectedPaymentStatuses, selectedTeamIds.size, selectedTeamStatuses]);
 
   async function handleSend(e: React.FormEvent) {
     e.preventDefault();
@@ -183,12 +206,13 @@ export default function AdminCommunicationPage() {
         body: JSON.stringify({
           tournamentId: currentTournament.id,
           targeting: {
-            includeTeams,
-            includeContacts,
-            teamStatuses: Array.from(selectedTeamStatuses),
-            ageGroupIds: Array.from(selectedAgeGroups),
-            teamIds: Array.from(selectedTeamIds),
-            contactRoles: Array.from(selectedContactRoles),
+            includeTeams: canTargetAnnouncements ? includeTeams : true,
+            includeContacts: canTargetAnnouncements ? includeContacts : false,
+            teamStatuses: canTargetAnnouncements ? Array.from(selectedTeamStatuses) : [],
+            paymentStatuses: canTargetAnnouncements ? Array.from(selectedPaymentStatuses) : [],
+            ageGroupIds: canTargetAnnouncements ? Array.from(selectedAgeGroups) : [],
+            teamIds: canTargetAnnouncements ? Array.from(selectedTeamIds) : [],
+            contactRoles: canTargetAnnouncements ? Array.from(selectedContactRoles) : [],
           },
           subject,
           message,
@@ -247,6 +271,15 @@ export default function AdminCommunicationPage() {
 
           {recipientsOpen && (
             <div className={styles.recipientDetails}>
+              {!canTargetAnnouncements && (
+                <div className={styles.lockedTargeting}>
+                  <strong>Tournament Plus unlocks targeted sends.</strong>
+                  <span>{requiresTournamentPlusCopy('targeted_tournament_announcements')}</span>
+                </div>
+              )}
+
+              {canTargetAnnouncements && (
+              <>
               <div className={styles.audienceToggle}>
                 <label className={`${styles.audienceOption} ${includeTeams ? styles.audienceActive : ''}`}>
                   <input type="checkbox" checked={includeTeams} onChange={e => setIncludeTeams(e.target.checked)} />
@@ -270,6 +303,21 @@ export default function AdminCommunicationPage() {
                             type="checkbox"
                             checked={selectedTeamStatuses.has(option.value)}
                             onChange={() => setSelectedTeamStatuses(prev => toggleSetValue(prev, option.value))}
+                          />
+                          {option.label}
+                        </label>
+                      ))}
+                    </div>
+
+                    <div className={styles.filterCard}>
+                      <label className="form-label">Payment Status</label>
+                      <p className={styles.filterHelp}>Leave blank for all payment states.</p>
+                      {PAYMENT_STATUS_OPTIONS.map(option => (
+                        <label key={option.value} className={styles.checkboxLabel}>
+                          <input
+                            type="checkbox"
+                            checked={selectedPaymentStatuses.has(option.value)}
+                            onChange={() => setSelectedPaymentStatuses(prev => toggleSetValue(prev, option.value))}
                           />
                           {option.label}
                         </label>
@@ -336,6 +384,8 @@ export default function AdminCommunicationPage() {
                   </div>
                 )}
               </div>
+              </>
+              )}
 
               <div className={styles.recipientPreview}>
                 {recipients.length === 0 ? (

@@ -1,7 +1,7 @@
 ﻿'use client';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { LayoutDashboard, Building2, Users, ScrollText, Terminal, HelpCircle, LogOut, ArchiveRestore, Mail, SlidersHorizontal, Search } from 'lucide-react';
+import { LayoutDashboard, Building2, Users, ScrollText, Terminal, HelpCircle, LogOut, ArchiveRestore, Mail, SlidersHorizontal, Search, ListChecks } from 'lucide-react';
 import { signOut } from '@/lib/auth';
 import styles from './platform-admin.module.css';
 
@@ -30,6 +30,7 @@ const BASE_NAV_GROUPS = [
     label: 'Billing & Product',
     items: [
       { href: '/platform-admin/plans-pricing', label: 'Plans & Pricing', Icon: SlidersHorizontal },
+      { href: '/platform-admin/bulk-operations', label: 'Bulk Operations', Icon: ListChecks },
     ],
   },
   {

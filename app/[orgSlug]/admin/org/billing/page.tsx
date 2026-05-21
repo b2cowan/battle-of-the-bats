@@ -56,8 +56,8 @@ type CancellationPreflight = {
 };
 
 const PLAN_TAGLINE: Record<OrgPlan, string> = {
-  tournament:      'Everything you need to run a basic tournament.',
-  tournament_plus: 'Professional tournament management without the league complexity.',
+  tournament:      'A free starter plan for one small tournament or a first test run.',
+  tournament_plus: 'Serious tournament operations: registration control, branding, automation, and reporting.',
   league:          'Manage your league, registrations, and public presence — all in one place.',
   club:            'The complete operating system for your sports organization.',
 };
@@ -65,19 +65,25 @@ const PLAN_TAGLINE: Record<OrgPlan, string> = {
 const PLAN_FEATURES: Record<OrgPlan, string[]> = {
   tournament: [
     'Manual tournament scheduling',
+    'Standard team registration fields',
     'Basic standings and score entry',
     'Field and diamond management',
+    'Default FieldLogicHQ public styling',
     'Public news posts and basic team email',
     '3 staff / admin seats · 1 tournament slot',
   ],
   tournament_plus: [
     'Everything in Tournament',
+    'Unlimited tournament slots',
+    '10 staff seats - officials always free',
+    'Custom registration questions and file uploads',
+    'CSV export and bulk registration actions',
+    'Division capacity and waitlist automation',
+    'Full branding control',
     'Automated schedule generation',
     'Playoff bracket generator',
     'Permanent sealed archives',
-    'Advanced tournament branding',
-    '3 non-archived tournament slots',
-    '5 staff seats — officials always free',
+    'Tournament cloning, targeted announcements, and summary reporting',
   ],
   league: [
     'Everything in Tournament Plus',
@@ -96,8 +102,8 @@ const PLAN_FEATURES: Record<OrgPlan, string[]> = {
 };
 
 const PLAN_META_COPY: Record<OrgPlan, string> = {
-  tournament:      "You're on the free plan. Upgrade anytime — no credit card required until you're ready.",
-  tournament_plus: "You're on Tournament Plus. League and Club are coming soon while those workflows are refined.",
+  tournament:      "You're on the free starter plan. Upgrade when you need custom registration, export, waitlists, branding, or repeat-event tools.",
+  tournament_plus: "You're on Tournament Plus. Your tournament operations tools are active; League and Club are coming soon while those broader workflows are refined.",
   league:          "You're on League. Need accounting or rep team tools? Club is the complete platform.",
   club:            "You're on the complete Club platform.",
 };
@@ -468,7 +474,7 @@ export default function BillingPage() {
           <div className={styles.upgradeHeader}>
             <div>
               <h2 className={styles.sectionTitle}>Compare upgrade options</h2>
-              <p className={styles.upgradeIntro}>Review the plans that unlock more tournament capacity and organization tools.</p>
+              <p className={styles.upgradeIntro}>Review the plans that unlock registration control, organizer productivity, and broader organization tools.</p>
             </div>
             <div className={styles.billingToggle}>
               <button
@@ -587,6 +593,11 @@ export default function BillingPage() {
             New limit: {downgradePreflight.targetTournamentLimit >= 9999 ? 'Unlimited' : downgradePreflight.targetTournamentLimit} non-archived tournament slots.
             {' '}Current usage: {downgradePreflight.activeTournamentCount}.
           </p>
+          {downgradePreflight.targetPlan === 'tournament' && (
+            <p className={styles.statusNote}>
+              Tournament Plus features become inactive on the free plan: custom tournament branding, custom registration controls, exports, bulk actions, waitlists, cloning, targeted announcements, and post-event summaries. Saved branding remains stored but public tournament pages use FieldLogicHQ defaults until you upgrade again.
+            </p>
+          )}
           {downgradePreflight.requiresTournamentChoice ? (
             <>
               <p className={styles.statusNote}>

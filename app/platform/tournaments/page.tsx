@@ -17,7 +17,7 @@ const CAPABILITIES = [
   },
   {
     name: 'Team Registration',
-    desc: 'Custom registration forms per tournament, with waitlist management built in. Seat releases execute without staff intervention.',
+    desc: 'Start with standard team registration on the free plan. Tournament Plus adds custom questions, file collection, Excel and PDF exports for check-in and insurance submissions, and waitlist workflows.',
   },
   {
     name: 'Schedule Generator',
@@ -47,8 +47,8 @@ export default function TournamentsPage() {
             <span className="text-logic-lime">Not your inbox.</span>
           </h1>
           <p className="font-mono text-sm text-data-gray leading-relaxed max-w-2xl mb-10">
-            Brackets, live scoring, team registration, scheduling, and field management — every tool
-            a tournament director needs, without the spreadsheets. Available free, with no credit card.
+            Scores, standings, standard team registration, scheduling, and field management for your first
+            tournament. Tournament Plus adds the registration control and repeat-event tools serious organizers need.
           </p>
           <div className="flex flex-wrap gap-4">
             <Link
@@ -72,7 +72,7 @@ export default function TournamentsPage() {
         <div className="max-w-4xl mx-auto px-6">
           <p className="font-mono text-xs text-logic-lime uppercase tracking-widest mb-2">Capabilities</p>
           <h2 className="font-display text-3xl font-black text-fl-text mb-12">
-            What&apos;s included
+            Start free, then add serious operations
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {CAPABILITIES.map(cap => (
@@ -120,7 +120,7 @@ export default function TournamentsPage() {
             Your first tournament is free.
           </h2>
           <p className="font-mono text-xs text-data-gray mb-10">
-            No credit card required. No time limit on the free plan.
+            No credit card required. Upgrade when you need custom registration, Excel and PDF exports, iCal schedule downloads, waitlists, cloning, and full branding.
           </p>
           <Link
             href="/auth/signup"

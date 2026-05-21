@@ -5,14 +5,34 @@ import { BarChart2 } from 'lucide-react';
 import Link from 'next/link';
 import { useOrg } from '@/lib/org-context';
 import { hasCapability } from '@/lib/roles';
+import {
+  downloadXLSX, generateCSV, downloadCSVBlob,
+  buildFilename, serializeRows, serializeHeaders, type ExportColumnDef,
+} from '@/lib/export';
+import ExportMenu from '@/components/admin/ExportMenu';
 import styles from '../../../house-league.module.css';
 import type { LeagueDivision, LeagueStandingsRow } from '@/lib/types';
+
+// ── Export definition ─────────────────────────────────────────────────────────
+
+const STANDINGS_EXPORT_COLS: ExportColumnDef[] = [
+  { label: 'Rank', key: 'rank',           format: 'number' },
+  { label: 'Team', key: 'teamName',       format: 'text'   },
+  { label: 'GP',   key: 'gamesPlayed',    format: 'number' },
+  { label: 'W',    key: 'wins',           format: 'number' },
+  { label: 'L',    key: 'losses',         format: 'number' },
+  { label: 'T',    key: 'ties',           format: 'number' },
+  { label: 'Pts',  key: 'points',         format: 'number' },
+  { label: 'GF',   key: 'runsFor',        format: 'number' },
+  { label: 'GA',   key: 'runsAgainst',    format: 'number' },
+  { label: 'Diff', key: 'runDifferential',format: 'number' },
+];
 
 interface SeasonInfo { id: string; name: string; }
 
 export default function StandingsPage() {
   const { orgSlug, seasonId } = useParams<{ orgSlug: string; seasonId: string }>();
-  const { user, userRole, userCapabilities } = useOrg();
+  const { currentOrg, user, userRole, userCapabilities } = useOrg();
 
   const canView = hasCapability(userRole ?? 'staff', userCapabilities ?? null, 'module_house_league');
 
@@ -56,6 +76,47 @@ export default function StandingsPage() {
   useEffect(() => {
     if (selectedDiv) loadStandings(selectedDiv);
   }, [selectedDiv, loadStandings]);
+
+  // ── Export ──────────────────────────────────────────────────────────────────
+
+  const selectedDivName = divisions.find(d => d.id === selectedDiv)?.name;
+
+  function buildStandingsExportRows() {
+    return standings.map((row, i) => ({
+      rank:            i + 1,
+      teamName:        row.team.name,
+      gamesPlayed:     row.gamesPlayed,
+      wins:            row.wins,
+      losses:          row.losses,
+      ties:            row.ties,
+      points:          row.points,
+      runsFor:         row.runsFor,
+      runsAgainst:     row.runsAgainst,
+      runDifferential: row.runDifferential,
+    }));
+  }
+
+  function handleExportXLSX() {
+    const rows     = buildStandingsExportRows();
+    const headers  = serializeHeaders(STANDINGS_EXPORT_COLS);
+    const data     = serializeRows(rows, STANDINGS_EXPORT_COLS);
+    const filename = buildFilename(
+      { org: currentOrg?.slug, dataset: 'standings', scope: season?.name ?? selectedDivName },
+      'xlsx',
+    );
+    downloadXLSX(filename, headers, data, 'Standings');
+  }
+
+  function handleExportCSV() {
+    const rows     = buildStandingsExportRows();
+    const headers  = serializeHeaders(STANDINGS_EXPORT_COLS);
+    const data     = serializeRows(rows, STANDINGS_EXPORT_COLS);
+    const filename = buildFilename(
+      { org: currentOrg?.slug, dataset: 'standings', scope: season?.name ?? selectedDivName },
+      'csv',
+    );
+    downloadCSVBlob(filename, generateCSV(headers, data));
+  }
 
   if (!user) return null;
   if (!canView) {
@@ -120,6 +181,14 @@ export default function StandingsPage() {
             ))}
           </select>
         )}
+        <div style={{ marginLeft: 'auto' }}>
+          <ExportMenu
+            formats={['xlsx', 'csv']}
+            onExportXLSX={handleExportXLSX}
+            onExportCSV={handleExportCSV}
+            disabled={standings.length === 0}
+          />
+        </div>
       </div>
 
       {/* Standings table */}

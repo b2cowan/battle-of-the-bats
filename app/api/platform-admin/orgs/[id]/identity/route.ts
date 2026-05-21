@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getPlatformAuthContext } from '@/lib/platform-auth';
+import { requirePlatformPermission } from '@/lib/platform-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { writePlatformAuditLog } from '@/lib/platform-audit';
 
@@ -16,8 +16,8 @@ export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const user = await getPlatformAuthContext();
-  if (!user) return new NextResponse('Forbidden', { status: 403 });
+  const auth = await requirePlatformPermission('manage_support');
+  if (auth.response) return auth.response;
 
   const { id } = await params;
   const body = await req.json() as { name?: string; slug?: string; reason?: string };
@@ -77,13 +77,13 @@ export async function PATCH(
   }
 
   if (current.name !== name) {
-    await writePlatformAuditLog(user.email!, id, 'update_org_identity', 'name', current.name, {
+    await writePlatformAuditLog(auth.user.email!, id, 'update_org_identity', 'name', current.name, {
       value: name,
       reason,
     });
   }
   if (current.slug !== slug) {
-    await writePlatformAuditLog(user.email!, id, 'update_org_identity', 'slug', current.slug, {
+    await writePlatformAuditLog(auth.user.email!, id, 'update_org_identity', 'slug', current.slug, {
       value: slug,
       reason,
     });

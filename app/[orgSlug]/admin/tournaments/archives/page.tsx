@@ -55,7 +55,7 @@ export default function AdminArchivesPage() {
         message: `${requiresTournamentPlusCopy('sealed_archives')} You can still archive tournaments on the free plan to free your tournament slot.`,
         type: 'info',
         confirmText: 'View Upgrade Options',
-        onConfirm: currentOrg?.slug ? () => { window.location.href = `/${currentOrg.slug}/admin/org/billing`; } : undefined,
+        onConfirm: currentOrg?.slug ? () => { window.location.href = `/${currentOrg.slug}/admin/tournaments/settings/subscription`; } : undefined,
       });
       return;
     }

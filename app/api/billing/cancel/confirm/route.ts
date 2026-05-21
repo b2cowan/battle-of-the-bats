@@ -4,6 +4,7 @@ import {
   retentionDeadline,
   writeOrgBillingAudit,
 } from '@/lib/billing-retention';
+import { writePlatformEvent } from '@/lib/platform-events';
 import { stripe } from '@/lib/stripe';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 
@@ -105,6 +106,23 @@ export async function POST(req: Request) {
     fromPlan: ctx.org.planId,
     retainedTournamentIds: preflight.tournaments.map(t => t.id),
     retentionUntil,
+  });
+
+  await writePlatformEvent({
+    eventType: 'subscription_canceled',
+    source: 'app',
+    orgId: ctx.org.id,
+    actorUserId: ctx.user.id,
+    actorEmail,
+    previousPlanId: ctx.org.planId,
+    planId: ctx.org.planId,
+    previousSubscriptionStatus: ctx.org.subscriptionStatus,
+    subscriptionStatus: 'canceled',
+    metadata: {
+      retainedTournamentIds: preflight.tournaments.map(t => t.id),
+      retentionUntil,
+      reason,
+    },
   });
 
   // — D4: Stripe reconciliation —

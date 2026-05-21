@@ -182,7 +182,7 @@ export default async function TournamentHomeContent({
 
   const heroBanner = canUseAdvancedTournamentBranding(org)
     ? tournament.heroBannerUrl ?? org.heroBannerUrl ?? null
-    : org.heroBannerUrl ?? null;
+    : null;
 
   return (
     <div className={styles.page}>

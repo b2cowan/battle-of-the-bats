@@ -54,7 +54,7 @@ const MODULE_CARDS = [
       'Org ledger with categorized entries',
       'Team invoicing and payment tracking',
       'Expense logging and transfer reconciliation',
-      'CSV export and dedicated treasurer role',
+      'Excel and PDF exports — ledgers, budget vs. actual, and dues statements',
     ],
   },
 ];

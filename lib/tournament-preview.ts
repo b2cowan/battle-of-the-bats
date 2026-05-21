@@ -24,10 +24,12 @@ export async function getTournamentPreviewContext(orgSlug: string, tournamentSlu
 
 export function buildPublicThemeCssVars(org: Organization, tournament?: Tournament | null): string {
   const canUseAdvancedBranding = canUseAdvancedTournamentBranding(org);
-  const hasTournamentTheme = !!(tournament?.themePreset || (canUseAdvancedBranding && tournament?.themePrimary));
+  const hasTournamentTheme = canUseAdvancedBranding
+    ? !!(tournament?.themePreset || tournament?.themePrimary)
+    : true;
   const theme = hasTournamentTheme
     ? resolveTheme(
-        tournament?.themePreset,
+        canUseAdvancedBranding ? tournament?.themePreset : 'platform',
         canUseAdvancedBranding ? tournament?.themePrimary : null,
         canUseAdvancedBranding ? tournament?.themeAccent : null
       )
@@ -76,6 +78,11 @@ export function buildPublicLightModeCssVars(): string {
 }
 
 export function getPreviewCardStyle(org: Organization, tournament?: Tournament | null): string {
-  if (!canUseAdvancedTournamentBranding(org)) return org.themeCardStyle ?? 'default';
+  if (!canUseAdvancedTournamentBranding(org)) return 'default';
   return tournament?.themeCardStyle ?? org.themeCardStyle ?? 'default';
+}
+
+export function getPreviewColorMode(org: Organization, tournament?: Tournament | null): 'dark' | 'light' {
+  if (!canUseAdvancedTournamentBranding(org)) return 'dark';
+  return tournament?.colorMode === 'light' ? 'light' : 'dark';
 }

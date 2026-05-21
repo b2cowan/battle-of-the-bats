@@ -2,6 +2,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { sendEmail, registrationConfirmationHtml, waitlistConfirmationHtml, adminNotificationHtml, ADMIN_EMAIL } from '@/lib/email';
 import { getOrgOwnerEmail } from '@/lib/supabase-admin';
+import { getTournamentRegistrationFields, saveTournamentRegistrationFieldAnswers } from '@/lib/db';
+import { hasPlanFeature } from '@/lib/plan-features';
+import { writePlatformEvent } from '@/lib/platform-events';
+import type { OrgPlan, TournamentRegistrationField } from '@/lib/types';
+
+const REGISTRATION_FILES_BUCKET = 'tournament-registration-files';
+const MAX_REGISTRATION_FILE_BYTES = 10 * 1024 * 1024;
 
 type RegistrationRequestBody = {
   teamName?: unknown;
@@ -9,6 +16,7 @@ type RegistrationRequestBody = {
   email?: unknown;
   ageGroupId?: unknown;
   tournamentId?: unknown;
+  customFieldAnswers?: unknown;
 };
 
 type TournamentRow = {
@@ -33,6 +41,7 @@ type OrganizationRow = {
   id: string;
   contact_email: string | null;
   is_public: boolean | null;
+  plan_id: OrgPlan;
   subscription_status: string | null;
 };
 
@@ -46,6 +55,14 @@ type WaitlistRow = {
 
 function cleanString(value: unknown) {
   return typeof value === 'string' ? value.trim() : '';
+}
+
+function cleanStorageFileName(value: string) {
+  return value.replace(/[^a-zA-Z0-9._-]+/g, '-').replace(/-+/g, '-').slice(0, 120) || 'upload';
+}
+
+function isFileLike(value: FormDataEntryValue | null): value is File {
+  return typeof File !== 'undefined' && value instanceof File && value.size > 0;
 }
 
 function isRegisterPageHidden(value: unknown) {
@@ -83,9 +100,99 @@ async function getDivisionContactEmail(contactId: string | null) {
   return contact?.email ?? null;
 }
 
+async function ensureRegistrationFilesBucket() {
+  const { data: buckets, error } = await supabaseAdmin.storage.listBuckets();
+  if (error) throw error;
+  if (buckets?.some(bucket => bucket.name === REGISTRATION_FILES_BUCKET)) return;
+  const { error: createError } = await supabaseAdmin.storage.createBucket(REGISTRATION_FILES_BUCKET, {
+    public: false,
+    fileSizeLimit: MAX_REGISTRATION_FILE_BYTES,
+  });
+  if (createError) throw createError;
+}
+
+async function parseRegistrationRequest(req: NextRequest) {
+  const contentType = req.headers.get('content-type') ?? '';
+  if (contentType.includes('multipart/form-data')) {
+    const formData = await req.formData();
+    return {
+      body: {
+        teamName: formData.get('teamName'),
+        coachName: formData.get('coachName'),
+        email: formData.get('email'),
+        ageGroupId: formData.get('ageGroupId'),
+        tournamentId: formData.get('tournamentId'),
+      } satisfies RegistrationRequestBody,
+      formData,
+    };
+  }
+
+  const body = await req.json() as RegistrationRequestBody;
+  return { body, formData: null };
+}
+
+function readCustomAnswer(field: TournamentRegistrationField, formData: FormData | null, body: RegistrationRequestBody) {
+  if (formData) {
+    if (field.fieldType === 'file') return formData.get(`customFile_${field.id}`);
+    return formData.get(`customField_${field.id}`);
+  }
+
+  const rawAnswers = body.customFieldAnswers;
+  if (!rawAnswers || typeof rawAnswers !== 'object' || Array.isArray(rawAnswers)) return null;
+  return (rawAnswers as Record<string, unknown>)[field.id] ?? null;
+}
+
+function validateCustomAnswers(fields: TournamentRegistrationField[], formData: FormData | null, body: RegistrationRequestBody) {
+  const answers: Array<{
+    field: TournamentRegistrationField;
+    valueText?: string | null;
+    valueJson?: unknown;
+    file?: File;
+  }> = [];
+
+  for (const field of fields) {
+    const raw = readCustomAnswer(field, formData, body);
+
+    if (field.fieldType === 'file') {
+      const file = formData ? raw : null;
+      if (field.required && !isFileLike(file as FormDataEntryValue | null)) {
+        return { error: `Please upload a file for: ${field.label}` };
+      }
+      if (isFileLike(file as FormDataEntryValue | null)) {
+        if ((file as File).size > MAX_REGISTRATION_FILE_BYTES) {
+          return { error: `${field.label} must be 10MB or smaller.` };
+        }
+        answers.push({ field, file: file as File });
+      }
+      continue;
+    }
+
+    const value = typeof raw === 'string' ? raw.trim() : typeof raw === 'boolean' ? String(raw) : '';
+    if (field.required) {
+      if (field.fieldType === 'checkbox' && value !== 'true') {
+        return { error: `Please confirm: ${field.label}` };
+      }
+      if (field.fieldType !== 'checkbox' && !value) {
+        return { error: `Please complete: ${field.label}` };
+      }
+    }
+    if (!value && field.fieldType !== 'checkbox') continue;
+    if (field.fieldType === 'dropdown' && value && !field.options.includes(value)) {
+      return { error: `Choose a valid option for: ${field.label}` };
+    }
+    answers.push({
+      field,
+      valueText: field.fieldType === 'checkbox' ? null : value,
+      valueJson: field.fieldType === 'checkbox' ? { checked: value === 'true' } : null,
+    });
+  }
+
+  return { answers };
+}
+
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json() as RegistrationRequestBody;
+    const { body, formData } = await parseRegistrationRequest(req);
     const teamName = cleanString(body.teamName);
     const coachName = cleanString(body.coachName);
     const email = cleanString(body.email).toLowerCase();
@@ -137,7 +244,7 @@ export async function POST(req: NextRequest) {
     if (tournament.organization_id) {
       const { data: orgData, error: orgError } = await supabaseAdmin
         .from('organizations')
-        .select('id, contact_email, is_public, subscription_status')
+        .select('id, contact_email, is_public, plan_id, subscription_status')
         .eq('id', tournament.organization_id)
         .maybeSingle<OrganizationRow>();
 
@@ -151,6 +258,14 @@ export async function POST(req: NextRequest) {
 
     if (!organization?.is_public || organization.subscription_status === 'canceled') {
       return NextResponse.json({ error: 'Tournament registration is not open.' }, { status: 403 });
+    }
+
+    const registrationFields = organization && hasPlanFeature(organization.plan_id, 'custom_registration_fields')
+      ? await getTournamentRegistrationFields(tournamentId)
+      : [];
+    const customAnswerResult = validateCustomAnswers(registrationFields, formData, body);
+    if ('error' in customAnswerResult) {
+      return NextResponse.json({ error: customAnswerResult.error }, { status: 400 });
     }
 
     const divisionContactEmail = await getDivisionContactEmail(ageGroup.contact_id);
@@ -241,7 +356,60 @@ export async function POST(req: NextRequest) {
       if (waitlistError) console.error('Registration waitlist position update error:', waitlistError);
     }
 
+    const customAnswersToSave = customAnswerResult.answers ?? [];
+    if (customAnswersToSave.length > 0 && data?.id) {
+      const answerRows: Array<{
+        fieldId: string;
+        valueText?: string | null;
+        valueJson?: unknown;
+        fileUrl?: string | null;
+      }> = [];
+
+      const fileAnswers = customAnswersToSave.filter(answer => answer.file);
+      if (fileAnswers.length > 0) await ensureRegistrationFilesBucket();
+
+      for (const answer of customAnswersToSave) {
+        if (answer.file) {
+          const ext = answer.file.name.includes('.') ? answer.file.name.split('.').pop() : 'bin';
+          const path = `${organization.id}/${tournamentId}/${data.id}/${answer.field.id}-${crypto.randomUUID()}-${cleanStorageFileName(answer.file.name || `upload.${ext}`)}`;
+          const bytes = new Uint8Array(await answer.file.arrayBuffer());
+          const { error: uploadError } = await supabaseAdmin.storage
+            .from(REGISTRATION_FILES_BUCKET)
+            .upload(path, bytes, { contentType: answer.file.type || 'application/octet-stream' });
+          if (uploadError) {
+            console.error('Registration custom file upload error:', uploadError);
+            return NextResponse.json({ error: 'Registration file upload failed. Please try again.' }, { status: 500 });
+          }
+          answerRows.push({ fieldId: answer.field.id, fileUrl: path });
+        } else {
+          answerRows.push({
+            fieldId: answer.field.id,
+            valueText: answer.valueText ?? null,
+            valueJson: answer.valueJson ?? null,
+          });
+        }
+      }
+
+      await saveTournamentRegistrationFieldAnswers(data.id, answerRows);
+    }
+
     const isWaitlist = finalStatus === 'waitlist';
+    if (isWaitlist && tournament.organization_id) {
+      await writePlatformEvent({
+        eventType: 'tournament_plus_feature_used',
+        source: 'app',
+        orgId: tournament.organization_id,
+        planId: organization.plan_id,
+        metadata: {
+          feature: 'waitlist_automation',
+          action: 'waitlist_join',
+          tournamentId,
+          ageGroupId,
+          registrationId: data.id,
+        },
+      });
+    }
+
     const ageGroupName = ageGroup.name;
     const tournamentName = tournament.name;
     const footerContactEmail = tournament.contact_email

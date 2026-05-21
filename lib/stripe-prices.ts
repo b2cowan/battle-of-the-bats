@@ -11,6 +11,8 @@ export type StripePriceRow = {
   product_name: string | null;
   created_at: string;
   updated_at: string;
+  updated_by_email: string | null;
+  last_change_note: string | null;
 };
 
 function getStripeEnvironment(): 'sandbox' | 'live' {

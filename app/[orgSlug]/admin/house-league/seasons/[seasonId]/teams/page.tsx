@@ -17,8 +17,22 @@ import { useOrg } from '@/lib/org-context';
 import { hasCapability } from '@/lib/roles';
 import FeedbackModal from '@/components/FeedbackModal';
 import HelpCallout from '@/components/help/HelpCallout';
+import {
+  downloadXLSX, generateCSV, downloadCSVBlob,
+  buildFilename, serializeRows, serializeHeaders, type ExportColumnDef,
+} from '@/lib/export';
+import ExportMenu from '@/components/admin/ExportMenu';
 import styles from '../../../house-league.module.css';
 import type { LeagueDivision, LeagueTeam, LeagueRegistration, LeagueDraftState } from '@/lib/types';
+
+// ── Export definition ─────────────────────────────────────────────────────────
+
+const TEAMS_EXPORT_COLS: ExportColumnDef[] = [
+  { label: 'Team Name',    key: 'teamName',    format: 'text'   },
+  { label: 'Division',     key: 'division',    format: 'text'   },
+  { label: 'Coach',        key: 'coachName',   format: 'text'   },
+  { label: 'Player Count', key: 'playerCount', format: 'number' },
+];
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -443,7 +457,7 @@ function DraftOverlay({
 
 export default function TeamsPage() {
   const { orgSlug, seasonId } = useParams<{ orgSlug: string; seasonId: string }>();
-  const { userRole, userCapabilities } = useOrg();
+  const { currentOrg, userRole, userCapabilities } = useOrg();
 
   const [season, setSeason] = useState<SeasonInfo | null>(null);
   const [divisions, setDivisions] = useState<LeagueDivision[]>([]);
@@ -712,6 +726,40 @@ export default function TeamsPage() {
     }
   }
 
+  // ── Export ──────────────────────────────────────────────────────────────────
+
+  function handleExportXLSX() {
+    const rows = divTeams.map(t => ({
+      teamName:    t.name,
+      division:    selectedDiv?.name ?? '',
+      coachName:   t.coachName ?? '',
+      playerCount: teamPlayerMap.get(t.id)?.length ?? 0,
+    }));
+    const headers  = serializeHeaders(TEAMS_EXPORT_COLS);
+    const data     = serializeRows(rows, TEAMS_EXPORT_COLS);
+    const filename = buildFilename(
+      { org: currentOrg?.slug, dataset: 'hl-teams', scope: season?.name ?? selectedDiv?.name },
+      'xlsx',
+    );
+    downloadXLSX(filename, headers, data, 'Teams');
+  }
+
+  function handleExportCSV() {
+    const rows = divTeams.map(t => ({
+      teamName:    t.name,
+      division:    selectedDiv?.name ?? '',
+      coachName:   t.coachName ?? '',
+      playerCount: teamPlayerMap.get(t.id)?.length ?? 0,
+    }));
+    const headers  = serializeHeaders(TEAMS_EXPORT_COLS);
+    const data     = serializeRows(rows, TEAMS_EXPORT_COLS);
+    const filename = buildFilename(
+      { org: currentOrg?.slug, dataset: 'hl-teams', scope: season?.name ?? selectedDiv?.name },
+      'csv',
+    );
+    downloadCSVBlob(filename, generateCSV(headers, data));
+  }
+
   // ── Render ──────────────────────────────────────────────────────────────────
 
   if (loading) {
@@ -798,6 +846,13 @@ export default function TeamsPage() {
                 Resume Draft
               </button>
             )}
+
+            <ExportMenu
+              formats={['xlsx', 'csv']}
+              onExportXLSX={handleExportXLSX}
+              onExportCSV={handleExportCSV}
+              disabled={divTeams.length === 0}
+            />
 
             {canManage && assignedCount > 0 && (
               <>

@@ -1,0 +1,318 @@
+.page {
+  max-width: 1060px;
+}
+
+.pageHeader {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.headerIcon {
+  width: 48px;
+  height: 48px;
+  background: rgba(var(--blueprint-blue-rgb), 0.12);
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.3);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--logic-lime);
+  flex-shrink: 0;
+}
+
+.pageTitle {
+  margin: 0;
+  color: var(--white);
+  font-family: var(--font-display);
+  font-size: 1.75rem;
+  font-weight: 900;
+}
+
+.pageSub,
+.muted {
+  margin: 0.25rem 0 0;
+  color: var(--white-60);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.printBtn {
+  margin-left: auto;
+}
+
+.lockedCard,
+.hero,
+.actionsPanel,
+.divisionCard {
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.18);
+  border-radius: 8px;
+  background: rgba(var(--blueprint-blue-rgb), 0.04);
+}
+
+.lockedCard {
+  max-width: 760px;
+  padding: 1.5rem;
+}
+
+.lockedCard h2,
+.actionsPanel h2,
+.sectionHeader h2 {
+  margin: 0;
+  color: var(--white-90);
+  font-size: 1rem;
+  font-weight: 900;
+}
+
+.lockedCard p,
+.actionsPanel p,
+.sectionHeader p {
+  margin: 0.45rem 0 1rem;
+  color: var(--white-55);
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+
+.hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.25rem;
+  margin-bottom: 1rem;
+}
+
+.eyebrow {
+  display: block;
+  margin-bottom: 0.35rem;
+  color: var(--logic-lime);
+  font-size: 0.7rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.hero h2 {
+  margin: 0;
+  color: var(--white);
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  font-weight: 900;
+}
+
+.hero p {
+  margin: 0.35rem 0 0;
+  color: var(--white-55);
+  font-size: 0.85rem;
+}
+
+.heroStats {
+  min-width: 140px;
+  padding: 0.85rem 1rem;
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.18);
+  border-radius: 8px;
+  background: rgba(0,0,0,0.16);
+  text-align: right;
+}
+
+.heroStats strong {
+  display: block;
+  color: var(--logic-lime);
+  font-size: 1.45rem;
+  font-weight: 900;
+}
+
+.heroStats span {
+  color: var(--white-45);
+  font-size: 0.78rem;
+}
+
+.metricGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.metricCard {
+  min-width: 0;
+  padding: 1rem;
+  border: 1px solid var(--border, rgba(255,255,255,0.08));
+  border-radius: 8px;
+  background: rgba(255,255,255,0.025);
+}
+
+.metricCard svg {
+  color: var(--logic-lime);
+}
+
+.metricCard span,
+.metricCard small {
+  display: block;
+  margin-top: 0.5rem;
+  color: var(--white-45);
+  font-size: 0.76rem;
+  line-height: 1.4;
+}
+
+.metricCard strong {
+  display: block;
+  margin-top: 0.15rem;
+  color: var(--white);
+  font-size: 1.3rem;
+  font-weight: 900;
+}
+
+.actionsPanel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.actionsPanel p {
+  margin-bottom: 0;
+}
+
+.actionButtons {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+}
+
+.actionNote {
+  color: var(--white-45);
+  font-size: 0.75rem;
+  line-height: 1.4;
+}
+
+.section {
+  margin-top: 1.25rem;
+}
+
+.sectionHeader {
+  margin-bottom: 0.75rem;
+}
+
+.sectionHeader p {
+  margin-bottom: 0;
+}
+
+.divisionList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.divisionCard {
+  padding: 1rem;
+}
+
+.divisionHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.divisionHeader h3 {
+  margin: 0;
+  color: var(--white-90);
+  font-size: 1rem;
+  font-weight: 900;
+}
+
+.divisionHeader p {
+  margin: 0.3rem 0 0;
+  color: var(--white-45);
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.championBadge,
+.leaderBadge,
+.neutralBadge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0.25rem 0.55rem;
+  border-radius: 6px;
+  font-size: 0.74rem;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.championBadge {
+  color: var(--black);
+  background: var(--logic-lime);
+}
+
+.leaderBadge {
+  color: var(--logic-lime);
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.35);
+  background: rgba(var(--blueprint-blue-rgb), 0.12);
+}
+
+.neutralBadge {
+  color: var(--white-45);
+  border: 1px solid var(--border, rgba(255,255,255,0.08));
+  background: rgba(255,255,255,0.025);
+}
+
+.divisionStats {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  margin-top: 0.85rem;
+}
+
+.divisionStats span {
+  color: var(--white-45);
+  font-size: 0.76rem;
+}
+
+@media (max-width: 920px) {
+  .metricGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .pageHeader,
+  .hero,
+  .actionsPanel,
+  .divisionHeader {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .printBtn,
+  .heroStats {
+    margin-left: 0;
+    text-align: left;
+  }
+
+  .metricGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .actionButtons {
+    justify-content: flex-start;
+  }
+}
+
+@media print {
+  .printBtn,
+  .actionsPanel {
+    display: none;
+  }
+
+  .page {
+    max-width: none;
+  }
+}

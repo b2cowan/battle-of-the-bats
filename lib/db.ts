@@ -2,7 +2,7 @@ import { supabase } from './supabase';
 import { supabaseAdmin } from './supabase-admin';
 import { getEffectiveTournamentLimit, PLAN_CONFIG } from './plan-config';
 import { createClient as createBrowserSupabaseClient } from './supabase-browser';
-import { Tournament, TournamentStatus, Diamond, Contact, AgeGroup, Pool, PoolSlot, Team, Game, Announcement, PlayoffConfig, RuleSection, RuleItem, Resource, Organization, OrganizationMember, OrgPlan, OrgRole, TournamentArchive, OrgPublicSiteContent, AccountingLedger, AccountingEntry, LedgerSummary, AccountingEntryStatus, AccountingEntryType, LeagueSeason, LeagueDivision, LeagueTeam, LeagueRegistration, LeagueGame, LeagueStandingsRow, LeagueSeasonSummary, LeagueRegistrationStatus, LeagueSeasonStatus, LeaguePractice, LeaguePracticeStatus, RepTeam, RepProgramYear, RepProgramYearStatus, RepTeamCoach, RepTryoutRegistration, RepTryoutRegistrationStatus, RepRosterPlayer, RepRosterStatus, RepTeamEvent, RepEventType, RepDocumentTemplate, RepDocumentType, RepPlayerDocument, RepCostAllocation, RepAllocationSplit, RepAllocationInstallment, RepPlayerDuesSchedule, RepPlayerDuesInstallment, RepTeamExpense, OrgPayee } from './types';
+import { Tournament, TournamentStatus, Diamond, Contact, AgeGroup, Pool, PoolSlot, Team, Game, Announcement, PlayoffConfig, RuleSection, RuleItem, Resource, Organization, OrganizationMember, OrgPlan, OrgRole, TournamentArchive, OrgPublicSiteContent, AccountingLedger, AccountingEntry, LedgerSummary, AccountingEntryStatus, AccountingEntryType, LeagueSeason, LeagueDivision, LeagueTeam, LeagueRegistration, LeagueGame, LeagueStandingsRow, LeagueSeasonSummary, LeagueRegistrationStatus, LeagueSeasonStatus, LeaguePractice, LeaguePracticeStatus, RepTeam, RepProgramYear, RepProgramYearStatus, RepTeamCoach, RepTryoutRegistration, RepTryoutRegistrationStatus, RepRosterPlayer, RepRosterStatus, RepTeamEvent, RepEventType, RepDocumentTemplate, RepDocumentType, RepPlayerDocument, RepCostAllocation, RepAllocationSplit, RepAllocationInstallment, RepPlayerDuesSchedule, RepPlayerDuesInstallment, RepTeamExpense, OrgPayee, TournamentRegistrationField, TournamentRegistrationFieldAnswer, TournamentRegistrationFieldType } from './types';
 
 // Use the SSR browser client (cookie-based session) for writes that need auth;
 // falls back to anon client on the server where there is no window.
@@ -183,6 +183,688 @@ export async function setActiveTournament(id: string): Promise<void> {
       .neq('id', id);
   }
   await authClient().from('tournaments').update({ is_active: true, status: 'active' }).eq('id', id);
+}
+
+export type CloneTournamentOptions = {
+  name: string;
+  slug: string;
+  year: number;
+  startDate?: string | null;
+  endDate?: string | null;
+  includeDivisions?: boolean;
+  includePools?: boolean;
+  includeSlots?: boolean;
+  includeVenues?: boolean;
+  includeContacts?: boolean;
+  includeBranding?: boolean;
+  includePublicPages?: boolean;
+  includeWelcome?: boolean;
+  includeRulesResources?: boolean;
+  includeRegistrationFields?: boolean;
+  includeFeeSchedule?: boolean;
+};
+
+export type CloneTournamentResult = {
+  tournament: Tournament;
+  copied: {
+    contacts: number;
+    venues: number;
+    divisions: number;
+    pools: number;
+    slots: number;
+    rules: number;
+    resources: number;
+    welcome: boolean;
+    registrationFields: number;
+  };
+};
+
+function remapUuidArray(value: unknown, idMap: Map<string, string>): string[] | null {
+  if (!Array.isArray(value)) return null;
+  const mapped = value
+    .map(id => typeof id === 'string' ? idMap.get(id) : null)
+    .filter((id): id is string => Boolean(id));
+  return mapped.length ? mapped : null;
+}
+
+export async function cloneTournament(
+  sourceTournamentId: string,
+  orgId: string,
+  options: CloneTournamentOptions,
+): Promise<CloneTournamentResult> {
+  let targetTournamentId: string | null = null;
+
+  try {
+    const { data: source, error: sourceError } = await supabaseAdmin
+      .from('tournaments')
+      .select('*')
+      .eq('id', sourceTournamentId)
+      .eq('organization_id', orgId)
+      .maybeSingle();
+
+    if (sourceError) throw sourceError;
+    if (!source) throw new Error('Source tournament not found.');
+
+    const tournamentInsert: Record<string, unknown> = {
+      organization_id: orgId,
+      year: options.year,
+      name: options.name,
+      slug: options.slug,
+      status: 'draft',
+      is_active: false,
+      start_date: options.startDate ?? null,
+      end_date: options.endDate ?? null,
+      contact_email: source.contact_email ?? null,
+      require_score_finalization: source.require_score_finalization ?? null,
+    };
+
+    if (options.includeFeeSchedule) {
+      tournamentInsert.fee_schedule_mode = source.fee_schedule_mode ?? 'tournament';
+      tournamentInsert.deposit_amount = source.deposit_amount ?? null;
+      tournamentInsert.deposit_due_date = source.deposit_due_date ?? null;
+      tournamentInsert.total_fee_amount = source.total_fee_amount ?? null;
+      tournamentInsert.total_fee_due_date = source.total_fee_due_date ?? null;
+    }
+
+    if (options.includeBranding) {
+      tournamentInsert.logo_url = source.logo_url ?? null;
+      tournamentInsert.hero_banner_url = source.hero_banner_url ?? null;
+      tournamentInsert.theme_preset = source.theme_preset ?? null;
+      tournamentInsert.theme_primary = source.theme_primary ?? null;
+      tournamentInsert.theme_accent = source.theme_accent ?? null;
+      tournamentInsert.theme_font = source.theme_font ?? null;
+      tournamentInsert.theme_card_style = source.theme_card_style ?? null;
+      tournamentInsert.color_mode = source.color_mode ?? null;
+    }
+
+    if (options.includePublicPages) {
+      tournamentInsert.public_hidden_pages = Array.isArray(source.public_hidden_pages)
+        ? source.public_hidden_pages
+        : [];
+    }
+
+    const { data: target, error: targetError } = await supabaseAdmin
+      .from('tournaments')
+      .insert(tournamentInsert)
+      .select()
+      .single();
+
+    if (targetError) throw targetError;
+    targetTournamentId = target.id;
+
+    const copied: CloneTournamentResult['copied'] = {
+      contacts: 0,
+      venues: 0,
+      divisions: 0,
+      pools: 0,
+      slots: 0,
+      rules: 0,
+      resources: 0,
+      welcome: false,
+      registrationFields: 0,
+    };
+
+    const contactIdMap = new Map<string, string>();
+    if (options.includeContacts) {
+      const { data: contacts, error } = await supabaseAdmin
+        .from('contacts')
+        .select('*')
+        .eq('tournament_id', sourceTournamentId)
+        .order('name', { ascending: true });
+      if (error) throw error;
+
+      if (contacts?.length) {
+        const rows = contacts.map(contact => ({
+          tournament_id: targetTournamentId,
+          name: contact.name,
+          email: contact.email,
+          phone: contact.phone,
+          role: contact.role,
+          is_notification_contact: contact.is_notification_contact ?? false,
+        }));
+        const { data: insertedContacts, error: insertError } = await supabaseAdmin
+          .from('contacts')
+          .insert(rows)
+          .select('id');
+        if (insertError) throw insertError;
+        contacts.forEach((contact, index) => {
+          const inserted = insertedContacts?.[index];
+          if (inserted?.id) contactIdMap.set(contact.id, inserted.id);
+        });
+        copied.contacts = insertedContacts?.length ?? 0;
+      }
+    }
+
+    if (options.includeVenues) {
+      const { data: venues, error } = await supabaseAdmin
+        .from('diamonds')
+        .select('*')
+        .eq('tournament_id', sourceTournamentId)
+        .order('name', { ascending: true });
+      if (error) throw error;
+
+      if (venues?.length) {
+        const { data: insertedVenues, error: insertError } = await supabaseAdmin
+          .from('diamonds')
+          .insert(venues.map(venue => ({
+            tournament_id: targetTournamentId,
+            name: venue.name,
+            address: venue.address,
+            notes: venue.notes,
+          })))
+          .select('id');
+        if (insertError) throw insertError;
+        copied.venues = insertedVenues?.length ?? 0;
+      }
+    }
+
+    const ageGroupIdMap = new Map<string, string>();
+    const poolIdMap = new Map<string, string>();
+
+    if (options.includeDivisions) {
+      const { data: ageGroups, error } = await supabaseAdmin
+        .from('age_groups')
+        .select('*')
+        .eq('tournament_id', sourceTournamentId)
+        .order('display_order', { ascending: true });
+      if (error) throw error;
+
+      if (ageGroups?.length) {
+        const { data: insertedGroups, error: insertError } = await supabaseAdmin
+          .from('age_groups')
+          .insert(ageGroups.map(group => ({
+            tournament_id: targetTournamentId,
+            name: group.name,
+            min_age: group.min_age,
+            max_age: group.max_age,
+            display_order: group.display_order,
+            contact_id: group.contact_id ? contactIdMap.get(group.contact_id) ?? null : null,
+            is_closed: false,
+            capacity: group.capacity,
+            pool_count: group.pool_count,
+            pool_names: group.pool_names,
+            requires_pool_selection: group.requires_pool_selection ?? false,
+            playoff_config: group.playoff_config,
+            schedule_visibility: 'unpublished',
+            deposit_amount: options.includeFeeSchedule ? group.deposit_amount ?? null : null,
+            deposit_due_date: options.includeFeeSchedule ? group.deposit_due_date ?? null : null,
+            total_fee_amount: options.includeFeeSchedule ? group.total_fee_amount ?? null : null,
+            total_fee_due_date: options.includeFeeSchedule ? group.total_fee_due_date ?? null : null,
+          })))
+          .select('id');
+        if (insertError) throw insertError;
+        ageGroups.forEach((group, index) => {
+          const inserted = insertedGroups?.[index];
+          if (inserted?.id) ageGroupIdMap.set(group.id, inserted.id);
+        });
+        copied.divisions = insertedGroups?.length ?? 0;
+
+        if (options.includePools) {
+          const { data: pools, error: poolsError } = await supabaseAdmin
+            .from('pools')
+            .select('*')
+            .in('age_group_id', ageGroups.map(group => group.id))
+            .order('display_order', { ascending: true });
+          if (poolsError) throw poolsError;
+
+          if (pools?.length) {
+            const { data: insertedPools, error: poolInsertError } = await supabaseAdmin
+              .from('pools')
+              .insert(pools.map(pool => ({
+                age_group_id: ageGroupIdMap.get(pool.age_group_id),
+                name: pool.name,
+                display_order: pool.display_order,
+              })))
+              .select('id');
+            if (poolInsertError) throw poolInsertError;
+            pools.forEach((pool, index) => {
+              const inserted = insertedPools?.[index];
+              if (inserted?.id) poolIdMap.set(pool.id, inserted.id);
+            });
+            copied.pools = insertedPools?.length ?? 0;
+
+            if (options.includeSlots) {
+              const { data: slots, error: slotsError } = await supabaseAdmin
+                .from('pool_slots')
+                .select('*')
+                .eq('tournament_id', sourceTournamentId)
+                .order('slot_number', { ascending: true });
+              if (slotsError) throw slotsError;
+
+              const slotRows = (slots ?? [])
+                .map(slot => ({
+                  pool_id: poolIdMap.get(slot.pool_id),
+                  tournament_id: targetTournamentId,
+                  age_group_id: ageGroupIdMap.get(slot.age_group_id),
+                  slot_number: slot.slot_number,
+                  display_name: slot.display_name,
+                  team_id: null,
+                }))
+                .filter(slot => slot.pool_id && slot.age_group_id);
+
+              if (slotRows.length) {
+                const { data: insertedSlots, error: slotInsertError } = await supabaseAdmin
+                  .from('pool_slots')
+                  .insert(slotRows)
+                  .select('id');
+                if (slotInsertError) throw slotInsertError;
+                copied.slots = insertedSlots?.length ?? 0;
+              }
+            }
+          }
+        }
+      }
+    }
+
+    if (options.includeRulesResources) {
+      const { data: rules, error } = await supabaseAdmin
+        .from('rules')
+        .select('*')
+        .eq('tournament_id', sourceTournamentId)
+        .order('display_order', { ascending: true });
+      if (error) throw error;
+
+      if (rules?.length) {
+        const { data: insertedRules, error: insertError } = await supabaseAdmin
+          .from('rules')
+          .insert(rules.map(rule => ({
+            tournament_id: targetTournamentId,
+            title: rule.title,
+            icon: rule.icon,
+            display_order: rule.display_order,
+            age_group_ids: remapUuidArray(rule.age_group_ids, ageGroupIdMap),
+          })))
+          .select('id');
+        if (insertError) throw insertError;
+        copied.rules = insertedRules?.length ?? 0;
+
+        const ruleIdMap = new Map<string, string>();
+        rules.forEach((rule, index) => {
+          const inserted = insertedRules?.[index];
+          if (inserted?.id) ruleIdMap.set(rule.id, inserted.id);
+        });
+
+        const { data: ruleItems, error: itemError } = await supabaseAdmin
+          .from('rule_items')
+          .select('*')
+          .in('rule_id', rules.map(rule => rule.id))
+          .order('display_order', { ascending: true });
+        if (itemError) throw itemError;
+
+        const itemRows = (ruleItems ?? [])
+          .map(item => ({
+            rule_id: ruleIdMap.get(item.rule_id),
+            content: item.content,
+            display_order: item.display_order,
+          }))
+          .filter(item => item.rule_id);
+        if (itemRows.length) {
+          const { error: itemInsertError } = await supabaseAdmin.from('rule_items').insert(itemRows);
+          if (itemInsertError) throw itemInsertError;
+        }
+      }
+
+      const { data: resources, error: resourceError } = await supabaseAdmin
+        .from('resources')
+        .select('*')
+        .eq('tournament_id', sourceTournamentId)
+        .order('display_order', { ascending: true });
+      if (resourceError) throw resourceError;
+
+      if (resources?.length) {
+        const { data: insertedResources, error: insertError } = await supabaseAdmin
+          .from('resources')
+          .insert(resources.map(resource => ({
+            tournament_id: targetTournamentId,
+            label: resource.label,
+            url: resource.url,
+            display_order: resource.display_order,
+          })))
+          .select('id');
+        if (insertError) throw insertError;
+        copied.resources = insertedResources?.length ?? 0;
+      }
+    }
+
+    if (options.includeWelcome) {
+      const { data: welcome, error } = await supabaseAdmin
+        .from('announcements')
+        .select('*')
+        .eq('tournament_id', sourceTournamentId)
+        .eq('title', 'Welcome!')
+        .order('published_at', { ascending: true })
+        .limit(1)
+        .maybeSingle();
+      if (error) throw error;
+
+      if (welcome?.body) {
+        const { error: welcomeInsertError } = await supabaseAdmin.from('announcements').insert({
+          tournament_id: targetTournamentId,
+          title: 'Welcome!',
+          body: welcome.body,
+          published_at: new Date().toISOString(),
+          pinned: true,
+          age_group_ids: remapUuidArray(welcome.age_group_ids, ageGroupIdMap),
+        });
+        if (welcomeInsertError) throw welcomeInsertError;
+        copied.welcome = true;
+      }
+    }
+
+    if (options.includeRegistrationFields) {
+      const { data: fields, error } = await supabaseAdmin
+        .from('tournament_registration_fields')
+        .select('*')
+        .eq('tournament_id', sourceTournamentId)
+        .eq('org_id', orgId)
+        .eq('is_archived', false)
+        .order('sort_order', { ascending: true });
+      if (error) throw error;
+
+      if (fields?.length) {
+        const { data: insertedFields, error: insertError } = await supabaseAdmin
+          .from('tournament_registration_fields')
+          .insert(fields.map(field => ({
+            tournament_id: targetTournamentId,
+            org_id: orgId,
+            label: field.label,
+            field_type: field.field_type,
+            options: field.options ?? [],
+            required: field.required ?? false,
+            sort_order: field.sort_order ?? 0,
+            is_archived: false,
+          })))
+          .select('id');
+        if (insertError) throw insertError;
+        copied.registrationFields = insertedFields?.length ?? 0;
+      }
+    }
+
+    return {
+      tournament: mapTournament(target),
+      copied,
+    };
+  } catch (error) {
+    if (targetTournamentId) {
+      await supabaseAdmin.from('tournaments').delete().eq('id', targetTournamentId).eq('organization_id', orgId);
+    }
+    throw error;
+  }
+}
+
+// --- Populate Tournament From Source ---
+export type PopulateTournamentResult = {
+  copied: {
+    contacts: number;
+    venues: number;
+    divisions: number;
+    pools: number;
+    slots: number;
+    rules: number;
+    resources: number;
+    welcome: boolean;
+    registrationFields: number;
+  };
+};
+
+/**
+ * Wipes the setup data of an existing draft tournament and repopulates it
+ * from a source tournament in the same org. The destination's name, slug,
+ * year, and dates are left untouched — only setup content is replaced.
+ */
+export async function populateTournamentFrom(
+  destinationTournamentId: string,
+  sourceTournamentId: string,
+  orgId: string,
+): Promise<PopulateTournamentResult> {
+  if (destinationTournamentId === sourceTournamentId) {
+    throw new Error('Source and destination must be different tournaments.');
+  }
+
+  const [{ data: destination, error: destError }, { data: source, error: sourceError }] = await Promise.all([
+    supabaseAdmin.from('tournaments').select('*').eq('id', destinationTournamentId).eq('organization_id', orgId).maybeSingle(),
+    supabaseAdmin.from('tournaments').select('*').eq('id', sourceTournamentId).eq('organization_id', orgId).maybeSingle(),
+  ]);
+  if (destError) throw destError;
+  if (sourceError) throw sourceError;
+  if (!destination) throw new Error('Destination tournament not found.');
+  if (!source) throw new Error('Source tournament not found.');
+  if (destination.status !== 'draft') throw new Error('Can only populate a draft tournament.');
+
+  // ── Clear existing destination data ───────────────────────────────────────
+  const { data: existingAgeGroups } = await supabaseAdmin
+    .from('age_groups').select('id').eq('tournament_id', destinationTournamentId);
+  const existingAgeGroupIds = (existingAgeGroups ?? []).map(g => g.id);
+
+  let existingPoolIds: string[] = [];
+  if (existingAgeGroupIds.length > 0) {
+    const { data: existingPools } = await supabaseAdmin
+      .from('pools').select('id').in('age_group_id', existingAgeGroupIds);
+    existingPoolIds = (existingPools ?? []).map(p => p.id);
+  }
+
+  const { data: existingRules } = await supabaseAdmin
+    .from('rules').select('id').eq('tournament_id', destinationTournamentId);
+  const existingRuleIds = (existingRules ?? []).map(r => r.id);
+
+  // Delete in dependency order
+  if (existingPoolIds.length > 0) {
+    const { error } = await supabaseAdmin.from('pool_slots').delete().in('pool_id', existingPoolIds);
+    if (error) throw error;
+  }
+  await supabaseAdmin.from('pool_slots').delete().eq('tournament_id', destinationTournamentId);
+
+  if (existingPoolIds.length > 0) {
+    const { error } = await supabaseAdmin.from('pools').delete().in('id', existingPoolIds);
+    if (error) throw error;
+  }
+  if (existingAgeGroupIds.length > 0) {
+    const { error } = await supabaseAdmin.from('age_groups').delete().in('id', existingAgeGroupIds);
+    if (error) throw error;
+  }
+  if (existingRuleIds.length > 0) {
+    await supabaseAdmin.from('rule_items').delete().in('rule_id', existingRuleIds);
+    await supabaseAdmin.from('rules').delete().in('id', existingRuleIds);
+  }
+
+  await Promise.all([
+    supabaseAdmin.from('contacts').delete().eq('tournament_id', destinationTournamentId),
+    supabaseAdmin.from('diamonds').delete().eq('tournament_id', destinationTournamentId),
+    supabaseAdmin.from('resources').delete().eq('tournament_id', destinationTournamentId),
+    supabaseAdmin.from('tournament_registration_fields').delete().eq('tournament_id', destinationTournamentId),
+    supabaseAdmin.from('announcements').delete().eq('tournament_id', destinationTournamentId).eq('title', 'Welcome!'),
+  ]);
+
+  // ── Copy tournament-level fields from source ───────────────────────────────
+  const { error: updateError } = await supabaseAdmin.from('tournaments').update({
+    contact_email: source.contact_email ?? null,
+    require_score_finalization: source.require_score_finalization ?? null,
+    fee_schedule_mode: source.fee_schedule_mode ?? 'tournament',
+    deposit_amount: source.deposit_amount ?? null,
+    deposit_due_date: source.deposit_due_date ?? null,
+    total_fee_amount: source.total_fee_amount ?? null,
+    total_fee_due_date: source.total_fee_due_date ?? null,
+    logo_url: source.logo_url ?? null,
+    hero_banner_url: source.hero_banner_url ?? null,
+    theme_preset: source.theme_preset ?? null,
+    theme_primary: source.theme_primary ?? null,
+    theme_accent: source.theme_accent ?? null,
+    theme_font: source.theme_font ?? null,
+    theme_card_style: source.theme_card_style ?? null,
+    color_mode: source.color_mode ?? null,
+    public_hidden_pages: Array.isArray(source.public_hidden_pages) ? source.public_hidden_pages : [],
+  }).eq('id', destinationTournamentId);
+  if (updateError) throw updateError;
+
+  // ── Copy related data from source to destination ───────────────────────────
+  const copied: PopulateTournamentResult['copied'] = {
+    contacts: 0, venues: 0, divisions: 0, pools: 0, slots: 0,
+    rules: 0, resources: 0, welcome: false, registrationFields: 0,
+  };
+
+  const contactIdMap = new Map<string, string>();
+  const ageGroupIdMap = new Map<string, string>();
+  const poolIdMap = new Map<string, string>();
+
+  // Contacts
+  const { data: contacts, error: contactsError } = await supabaseAdmin
+    .from('contacts').select('*').eq('tournament_id', sourceTournamentId).order('name');
+  if (contactsError) throw contactsError;
+  if (contacts?.length) {
+    const { data: ins, error } = await supabaseAdmin.from('contacts').insert(
+      contacts.map(c => ({
+        tournament_id: destinationTournamentId,
+        name: c.name, email: c.email, phone: c.phone, role: c.role,
+        is_notification_contact: c.is_notification_contact ?? false,
+      }))
+    ).select('id');
+    if (error) throw error;
+    contacts.forEach((c, i) => { if (ins?.[i]?.id) contactIdMap.set(c.id, ins[i].id); });
+    copied.contacts = ins?.length ?? 0;
+  }
+
+  // Venues
+  const { data: venues, error: venuesError } = await supabaseAdmin
+    .from('diamonds').select('*').eq('tournament_id', sourceTournamentId).order('name');
+  if (venuesError) throw venuesError;
+  if (venues?.length) {
+    const { data: ins, error } = await supabaseAdmin.from('diamonds').insert(
+      venues.map(v => ({ tournament_id: destinationTournamentId, name: v.name, address: v.address, notes: v.notes }))
+    ).select('id');
+    if (error) throw error;
+    copied.venues = ins?.length ?? 0;
+  }
+
+  // Divisions + pools + slots
+  const { data: ageGroups, error: ageGroupsError } = await supabaseAdmin
+    .from('age_groups').select('*').eq('tournament_id', sourceTournamentId).order('display_order');
+  if (ageGroupsError) throw ageGroupsError;
+  if (ageGroups?.length) {
+    const { data: ins, error } = await supabaseAdmin.from('age_groups').insert(
+      ageGroups.map(g => ({
+        tournament_id: destinationTournamentId,
+        name: g.name, min_age: g.min_age, max_age: g.max_age,
+        display_order: g.display_order,
+        contact_id: g.contact_id ? (contactIdMap.get(g.contact_id) ?? null) : null,
+        is_closed: false,
+        capacity: g.capacity,
+        pool_count: g.pool_count, pool_names: g.pool_names,
+        requires_pool_selection: g.requires_pool_selection ?? false,
+        playoff_config: g.playoff_config,
+        schedule_visibility: 'unpublished',
+        deposit_amount: g.deposit_amount ?? null,
+        deposit_due_date: g.deposit_due_date ?? null,
+        total_fee_amount: g.total_fee_amount ?? null,
+        total_fee_due_date: g.total_fee_due_date ?? null,
+      }))
+    ).select('id');
+    if (error) throw error;
+    ageGroups.forEach((g, i) => { if (ins?.[i]?.id) ageGroupIdMap.set(g.id, ins[i].id); });
+    copied.divisions = ins?.length ?? 0;
+
+    const { data: pools, error: poolsError } = await supabaseAdmin
+      .from('pools').select('*').in('age_group_id', ageGroups.map(g => g.id)).order('display_order');
+    if (poolsError) throw poolsError;
+    if (pools?.length) {
+      const { data: insPools, error: poolError } = await supabaseAdmin.from('pools').insert(
+        pools.map(p => ({ age_group_id: ageGroupIdMap.get(p.age_group_id), name: p.name, display_order: p.display_order }))
+      ).select('id');
+      if (poolError) throw poolError;
+      pools.forEach((p, i) => { if (insPools?.[i]?.id) poolIdMap.set(p.id, insPools[i].id); });
+      copied.pools = insPools?.length ?? 0;
+
+      const { data: slots, error: slotsError } = await supabaseAdmin
+        .from('pool_slots').select('*').eq('tournament_id', sourceTournamentId).order('slot_number');
+      if (slotsError) throw slotsError;
+      const slotRows = (slots ?? [])
+        .map(s => ({
+          pool_id: poolIdMap.get(s.pool_id),
+          tournament_id: destinationTournamentId,
+          age_group_id: ageGroupIdMap.get(s.age_group_id),
+          slot_number: s.slot_number, display_name: s.display_name, team_id: null,
+        }))
+        .filter(s => s.pool_id && s.age_group_id);
+      if (slotRows.length) {
+        const { data: insSlots, error: slotError } = await supabaseAdmin.from('pool_slots').insert(slotRows).select('id');
+        if (slotError) throw slotError;
+        copied.slots = insSlots?.length ?? 0;
+      }
+    }
+  }
+
+  // Rules & resources
+  const { data: rules, error: rulesError } = await supabaseAdmin
+    .from('rules').select('*').eq('tournament_id', sourceTournamentId).order('display_order');
+  if (rulesError) throw rulesError;
+  if (rules?.length) {
+    const { data: insRules, error: ruleError } = await supabaseAdmin.from('rules').insert(
+      rules.map(r => ({
+        tournament_id: destinationTournamentId,
+        title: r.title, icon: r.icon, display_order: r.display_order,
+        age_group_ids: remapUuidArray(r.age_group_ids, ageGroupIdMap),
+      }))
+    ).select('id');
+    if (ruleError) throw ruleError;
+    copied.rules = insRules?.length ?? 0;
+    const ruleIdMap = new Map<string, string>();
+    rules.forEach((r, i) => { if (insRules?.[i]?.id) ruleIdMap.set(r.id, insRules[i].id); });
+    const { data: ruleItems, error: itemError } = await supabaseAdmin
+      .from('rule_items').select('*').in('rule_id', rules.map(r => r.id)).order('display_order');
+    if (itemError) throw itemError;
+    const itemRows = (ruleItems ?? [])
+      .map(item => ({ rule_id: ruleIdMap.get(item.rule_id), content: item.content, display_order: item.display_order }))
+      .filter(item => item.rule_id);
+    if (itemRows.length) {
+      const { error: itemInsertError } = await supabaseAdmin.from('rule_items').insert(itemRows);
+      if (itemInsertError) throw itemInsertError;
+    }
+  }
+
+  const { data: resources, error: resourcesError } = await supabaseAdmin
+    .from('resources').select('*').eq('tournament_id', sourceTournamentId).order('display_order');
+  if (resourcesError) throw resourcesError;
+  if (resources?.length) {
+    const { data: ins, error } = await supabaseAdmin.from('resources').insert(
+      resources.map(r => ({ tournament_id: destinationTournamentId, label: r.label, url: r.url, display_order: r.display_order }))
+    ).select('id');
+    if (error) throw error;
+    copied.resources = ins?.length ?? 0;
+  }
+
+  // Welcome announcement
+  const { data: welcome, error: welcomeError } = await supabaseAdmin
+    .from('announcements').select('*')
+    .eq('tournament_id', sourceTournamentId).eq('title', 'Welcome!').order('published_at').limit(1).maybeSingle();
+  if (welcomeError) throw welcomeError;
+  if (welcome?.body) {
+    const { error } = await supabaseAdmin.from('announcements').insert({
+      tournament_id: destinationTournamentId,
+      title: 'Welcome!', body: welcome.body,
+      published_at: new Date().toISOString(), pinned: true,
+      age_group_ids: remapUuidArray(welcome.age_group_ids, ageGroupIdMap),
+    });
+    if (error) throw error;
+    copied.welcome = true;
+  }
+
+  // Registration fields
+  const { data: fields, error: fieldsError } = await supabaseAdmin
+    .from('tournament_registration_fields').select('*')
+    .eq('tournament_id', sourceTournamentId).eq('org_id', orgId).eq('is_archived', false).order('sort_order');
+  if (fieldsError) throw fieldsError;
+  if (fields?.length) {
+    const { data: ins, error } = await supabaseAdmin.from('tournament_registration_fields').insert(
+      fields.map(f => ({
+        tournament_id: destinationTournamentId, org_id: orgId,
+        label: f.label, field_type: f.field_type, options: f.options ?? [],
+        required: f.required ?? false, sort_order: f.sort_order ?? 0, is_archived: false,
+      }))
+    ).select('id');
+    if (error) throw error;
+    copied.registrationFields = ins?.length ?? 0;
+  }
+
+  return { copied };
 }
 
 // --- Diamonds ---
@@ -445,6 +1127,175 @@ export async function updateTeam(id: string, t: Partial<Team>): Promise<void> {
 
 export async function deleteTeam(id: string): Promise<void> {
   await authClient().from('teams').delete().eq('id', id);
+}
+
+// --- Tournament Registration Fields ---
+export type TournamentRegistrationFieldInput = {
+  label: string;
+  fieldType: TournamentRegistrationFieldType;
+  options?: string[];
+  required?: boolean;
+  sortOrder?: number;
+};
+
+function normalizeRegistrationFieldOptions(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map(item => typeof item === 'string' ? item.trim() : '')
+    .filter(Boolean);
+}
+
+function mapTournamentRegistrationField(row: any): TournamentRegistrationField {
+  return {
+    id: row.id,
+    tournamentId: row.tournament_id,
+    orgId: row.org_id,
+    label: row.label,
+    fieldType: row.field_type,
+    options: normalizeRegistrationFieldOptions(row.options),
+    required: row.required ?? false,
+    sortOrder: row.sort_order ?? 0,
+    isArchived: row.is_archived ?? false,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+function mapTournamentRegistrationFieldAnswer(row: any): TournamentRegistrationFieldAnswer {
+  return {
+    id: row.id,
+    registrationId: row.registration_id,
+    fieldId: row.field_id,
+    valueText: row.value_text ?? null,
+    valueJson: row.value_json ?? null,
+    fileUrl: row.file_url ?? null,
+    createdAt: row.created_at,
+  };
+}
+
+export async function getTournamentRegistrationFields(
+  tournamentId: string,
+  options: { includeArchived?: boolean } = {},
+): Promise<TournamentRegistrationField[]> {
+  let query = supabaseAdmin
+    .from('tournament_registration_fields')
+    .select('*')
+    .eq('tournament_id', tournamentId)
+    .order('sort_order', { ascending: true })
+    .order('created_at', { ascending: true });
+
+  if (!options.includeArchived) query = query.eq('is_archived', false);
+
+  const { data, error } = await query;
+  if (error) {
+    console.error('getTournamentRegistrationFields error', error);
+    return [];
+  }
+  return (data ?? []).map(mapTournamentRegistrationField);
+}
+
+export async function createTournamentRegistrationField(
+  tournamentId: string,
+  orgId: string,
+  input: TournamentRegistrationFieldInput,
+): Promise<TournamentRegistrationField> {
+  const { data, error } = await supabaseAdmin
+    .from('tournament_registration_fields')
+    .insert({
+      tournament_id: tournamentId,
+      org_id: orgId,
+      label: input.label.trim(),
+      field_type: input.fieldType,
+      options: input.fieldType === 'dropdown' ? normalizeRegistrationFieldOptions(input.options) : [],
+      required: input.required ?? false,
+      sort_order: input.sortOrder ?? 0,
+    })
+    .select('*')
+    .single();
+
+  if (error) throw error;
+  return mapTournamentRegistrationField(data);
+}
+
+export async function updateTournamentRegistrationField(
+  fieldId: string,
+  input: Partial<TournamentRegistrationFieldInput> & { isArchived?: boolean },
+): Promise<TournamentRegistrationField> {
+  const updates: Record<string, unknown> = { updated_at: new Date().toISOString() };
+  if (input.label !== undefined) updates.label = input.label.trim();
+  if (input.fieldType !== undefined) updates.field_type = input.fieldType;
+  if (input.options !== undefined) updates.options = normalizeRegistrationFieldOptions(input.options);
+  if (input.required !== undefined) updates.required = input.required;
+  if (input.sortOrder !== undefined) updates.sort_order = input.sortOrder;
+  if (input.isArchived !== undefined) updates.is_archived = input.isArchived;
+
+  const { data, error } = await supabaseAdmin
+    .from('tournament_registration_fields')
+    .update(updates)
+    .eq('id', fieldId)
+    .select('*')
+    .single();
+
+  if (error) throw error;
+  return mapTournamentRegistrationField(data);
+}
+
+export async function archiveTournamentRegistrationField(fieldId: string): Promise<void> {
+  const { error } = await supabaseAdmin
+    .from('tournament_registration_fields')
+    .update({ is_archived: true, updated_at: new Date().toISOString() })
+    .eq('id', fieldId);
+  if (error) throw error;
+}
+
+export async function reorderTournamentRegistrationFields(
+  fields: Array<{ id: string; sortOrder: number }>,
+): Promise<void> {
+  for (const field of fields) {
+    const { error } = await supabaseAdmin
+      .from('tournament_registration_fields')
+      .update({ sort_order: field.sortOrder, updated_at: new Date().toISOString() })
+      .eq('id', field.id);
+    if (error) throw error;
+  }
+}
+
+export async function saveTournamentRegistrationFieldAnswers(
+  registrationId: string,
+  answers: Array<{
+    fieldId: string;
+    valueText?: string | null;
+    valueJson?: unknown;
+    fileUrl?: string | null;
+  }>,
+): Promise<void> {
+  if (answers.length === 0) return;
+  const rows = answers.map(answer => ({
+    registration_id: registrationId,
+    field_id: answer.fieldId,
+    value_text: answer.valueText ?? null,
+    value_json: answer.valueJson ?? null,
+    file_url: answer.fileUrl ?? null,
+  }));
+  const { error } = await supabaseAdmin
+    .from('tournament_registration_field_answers')
+    .upsert(rows, { onConflict: 'registration_id,field_id' });
+  if (error) throw error;
+}
+
+export async function getTournamentRegistrationFieldAnswersForRegistrations(
+  registrationIds: string[],
+): Promise<TournamentRegistrationFieldAnswer[]> {
+  if (registrationIds.length === 0) return [];
+  const { data, error } = await supabaseAdmin
+    .from('tournament_registration_field_answers')
+    .select('*')
+    .in('registration_id', registrationIds);
+  if (error) {
+    console.error('getTournamentRegistrationFieldAnswersForRegistrations error', error);
+    return [];
+  }
+  return (data ?? []).map(mapTournamentRegistrationFieldAnswer);
 }
 
 // --- Games ---
@@ -4706,12 +5557,14 @@ export async function createPlatformUser(fields: {
   email: string;
   displayName?: string | null;
   invitedBy?: string | null;
+  role?: string;
 }): Promise<PlatformUser> {
   const { data, error } = await supabaseAdmin
     .from('platform_users')
     .insert({
       email:        fields.email.toLowerCase(),
       display_name: fields.displayName ?? null,
+      role:         fields.role ?? 'support',
       invited_by:   fields.invitedBy ?? null,
     })
     .select()
@@ -4723,10 +5576,12 @@ export async function createPlatformUser(fields: {
 export async function updatePlatformUser(id: string, fields: {
   displayName?: string | null;
   isActive?: boolean;
+  role?: string;
 }): Promise<PlatformUser> {
   const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
   if (fields.displayName !== undefined) patch.display_name = fields.displayName;
   if (fields.isActive    !== undefined) patch.is_active    = fields.isActive;
+  if (fields.role        !== undefined) patch.role         = fields.role;
   const { data, error } = await supabaseAdmin
     .from('platform_users')
     .update(patch)

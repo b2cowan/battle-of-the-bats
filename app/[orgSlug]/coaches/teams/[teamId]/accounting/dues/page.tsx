@@ -3,7 +3,15 @@ import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { Users, X, CheckCircle2, AlertTriangle, ChevronRight, Plus, Trash2, ChevronDown } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
+import { useOrg } from '@/lib/org-context';
 import HelpTooltip from '@/components/help/HelpTooltip';
+import {
+  downloadXLSX, generateCSV, downloadCSVBlob,
+  buildFilename, serializeRows, serializeHeaders, type ExportColumnDef,
+  downloadPDF, DEFAULT_PDF_SETTINGS, type OrgPdfSettings,
+} from '@/lib/export';
+import { hasPlanFeature } from '@/lib/plan-features';
+import ExportMenu from '@/components/admin/ExportMenu';
 import styles from '../../../../coaches.module.css';
 import type {
   RepRosterPlayer,
@@ -85,6 +93,15 @@ const BLANK_CREDIT_FORM = {
   notes:      '',
 };
 
+const DUES_EXPORT_COLS: ExportColumnDef[] = [
+  { label: 'Player',     key: 'player',    format: 'text' },
+  { label: 'Total Dues', key: 'totalDues', format: 'currency' },
+  { label: 'Credits',    key: 'credits',   format: 'currency' },
+  { label: 'Paid',       key: 'paid',      format: 'currency' },
+  { label: 'Balance',    key: 'balance',   format: 'currency' },
+  { label: 'Status',     key: 'status',    format: 'text' },
+];
+
 export default function CoachesDuesPage({
   params,
 }: {
@@ -92,6 +109,7 @@ export default function CoachesDuesPage({
 }) {
   const { orgSlug, teamId } = params;
   const { assignments, loading: ctxLoading } = useCoaches();
+  const { currentOrg } = useOrg();
 
   const [players, setPlayers] = useState<PlayerWithDues[]>([]);
   const [loading, setLoading] = useState(true);
@@ -140,6 +158,10 @@ export default function CoachesDuesPage({
   const assignment = assignments.find(a => a.teamId === teamId);
   const base = `/${orgSlug}/coaches/teams/${teamId}`;
 
+  // PDF settings — fetched once on mount; used in handleExportPDF
+  const [pdfSettings, setPdfSettings] = useState<OrgPdfSettings | null>(null);
+  const canUsePDF = currentOrg ? hasPlanFeature(currentOrg.planId, 'pdf_exports') : false;
+
   const load = useCallback(async () => {
     setLoading(true);
     setError('');
@@ -156,6 +178,78 @@ export default function CoachesDuesPage({
   }, [orgSlug, teamId]);
 
   useEffect(() => { load(); }, [load]);
+
+  useEffect(() => {
+    fetch('/api/admin/org/pdf-settings')
+      .then(r => r.ok ? r.json() : {})
+      .then(d => setPdfSettings(d as OrgPdfSettings))
+      .catch(() => setPdfSettings({}));
+  }, []);
+
+  // ── Export helpers ───────────────────────────────────────────────────────────
+
+  function buildDuesExportRows() {
+    return players.map(p => ({
+      player:    `${p.player.playerFirstName} ${p.player.playerLastName}`,
+      totalDues: p.schedule?.totalAmount ?? '',
+      credits:   p.totalCredits || '',
+      paid:      p.schedule ? p.paidAmount : '',
+      balance:   p.schedule ? p.rollingBalance : '',
+      status:    statusLabel(p).label,
+    }));
+  }
+
+  async function handleExportXLSX() {
+    const src = buildDuesExportRows();
+    if (!src.length) return;
+    const headers = serializeHeaders(DUES_EXPORT_COLS);
+    const rows = serializeRows(src, DUES_EXPORT_COLS);
+    await downloadXLSX(
+      buildFilename({ org: currentOrg?.slug ?? orgSlug, dataset: 'player-dues', scope: assignment?.programYearName ?? teamId }, 'xlsx'),
+      headers, rows, 'Player Dues',
+    );
+  }
+
+  function handleExportCSV() {
+    const src = buildDuesExportRows();
+    const headers = serializeHeaders(DUES_EXPORT_COLS);
+    const rows = serializeRows(src, DUES_EXPORT_COLS);
+    downloadCSVBlob(
+      buildFilename({ org: currentOrg?.slug ?? orgSlug, dataset: 'player-dues', scope: assignment?.programYearName ?? teamId }, 'csv'),
+      generateCSV(headers, rows),
+    );
+  }
+
+  async function handleExportPDF() {
+    const src = buildDuesExportRows();
+    if (!src.length) return;
+    const settings: OrgPdfSettings = {
+      ...DEFAULT_PDF_SETTINGS,
+      ...(pdfSettings && Object.keys(pdfSettings).length > 0 ? pdfSettings : {}),
+    };
+    const teamName = assignment?.teamName ?? teamId;
+    const programYearName = assignment?.programYearName ?? '';
+
+    // Pre-format currency values as strings so jsPDF renders them correctly
+    const pdfHeaders = ['Player', 'Total Dues', 'Credits', 'Paid', 'Balance', 'Status'];
+    const pdfRows = src.map(r => [
+      r.player,
+      r.totalDues !== '' ? fmt(Number(r.totalDues)) : '—',
+      r.credits   !== '' ? fmt(Number(r.credits))   : '—',
+      r.paid      !== '' ? fmt(Number(r.paid))       : '—',
+      r.balance   !== '' ? fmt(Number(r.balance))    : '—',
+      r.status,
+    ]);
+
+    await downloadPDF(
+      buildFilename({ org: currentOrg?.slug ?? orgSlug, dataset: 'player-dues', scope: programYearName || teamName }, 'pdf'),
+      'Player Dues Statement',
+      `${teamName} — ${programYearName}`,
+      pdfHeaders,
+      pdfRows,
+      settings,
+    );
+  }
 
   // Keep selected player data fresh after reload
   useEffect(() => {
@@ -404,7 +498,16 @@ export default function CoachesDuesPage({
           </div>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.5rem' }}>
-          <div style={{ display: 'flex', gap: '0.5rem' }}>
+          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+            <ExportMenu
+              formats={['xlsx', 'csv', 'pdf']}
+              onExportXLSX={handleExportXLSX}
+              onExportCSV={handleExportCSV}
+              onExportPDF={handleExportPDF}
+              planId={currentOrg?.planId}
+              pdfFeatureKey="pdf_exports"
+              disabled={players.length === 0}
+            />
             <button className={styles.btnSecondary} onClick={() => { setApplyAllOpen(true); setApplyAllError(''); }}>
               Set dues for all players
             </button>

@@ -11,6 +11,7 @@ import YearSelector from '@/components/YearSelector';
 import styles from '../../schedule/schedule.module.css';
 import { LogicSyncBracket } from '@/components/bracket/LogicSyncBracket';
 import { fetchPublicTournamentData } from '@/lib/public-tournament-client';
+import { downloadICS, buildFilename, type ICSEventInput } from '@/lib/export';
 
 // ── bracket helpers ───────────────────────────────────────────────────────────
 
@@ -145,6 +146,37 @@ export default function SchedulePage() {
   const teamFiltered = selectedTeamId
     ? filtered.filter(g => g.homeTeamId === selectedTeamId || g.awayTeamId === selectedTeamId)
     : filtered;
+
+  // ── iCal export ───────────────────────────────────────────────────────────────
+
+  async function handleExportICS() {
+    if (!teamFiltered.length) return;
+    const activeGroupName = activeG?.name ?? 'schedule';
+    const selectedTeam    = selectedTeamId ? teams.find(t => t.id === selectedTeamId) : undefined;
+    const scope           = selectedTeam
+      ? `${activeGroupName}-${selectedTeam.name}`
+      : activeGroupName;
+    const scheduleUrl = typeof window !== 'undefined'
+      ? `${window.location.origin}/${orgSlug}/${tournamentSlug}/schedule`
+      : undefined;
+
+    const events: ICSEventInput[] = teamFiltered
+      .filter(g => !!g.date)
+      .map(g => ({
+        gameId:   g.id,
+        title:    `${getTeamDisplay(g, true)} vs ${getTeamDisplay(g, false)}${activeG ? ` — ${activeG.name}` : ''}`,
+        date:     g.date,
+        time:     g.time ?? undefined,
+        location: g.location ?? getDiamond(g.diamondId)?.name ?? undefined,
+        url:      scheduleUrl,
+        cancelled: g.status === 'cancelled',
+      }));
+
+    await downloadICS(
+      buildFilename({ tournament: tournamentSlug, dataset: 'schedule', scope }, 'ics'),
+      events,
+    );
+  }
 
   function formatDate(d: string) {
     return new Date(d + 'T12:00:00').toLocaleDateString('en-CA', {
@@ -369,24 +401,38 @@ export default function SchedulePage() {
             </div>
             )}
 
-            {viewMode === 'playoff' ? (
-              <div className="segmented-control" style={{ border: 'none', background: 'var(--white-10)', padding: '0.15rem' }}>
+            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+              {viewMode === 'playoff' && (
+                <div className="segmented-control" style={{ border: 'none', background: 'var(--white-10)', padding: '0.15rem' }}>
+                  <button
+                    className={`segment ${bracketLayout === 'list' ? 'active' : ''}`}
+                    onClick={() => setBracketLayout('list')}
+                    style={{ padding: '0.3rem 0.65rem', fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}
+                  >
+                    <List size={12} /> List
+                  </button>
+                  <button
+                    className={`segment ${bracketLayout === 'bracket' ? 'active' : ''}`}
+                    onClick={() => setBracketLayout('bracket')}
+                    style={{ padding: '0.3rem 0.65rem', fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}
+                  >
+                    <LayoutTemplate size={12} /> Bracket
+                  </button>
+                </div>
+              )}
+              {teamFiltered.length > 0 && activeVisibility !== 'unpublished' && (
                 <button
-                  className={`segment ${bracketLayout === 'list' ? 'active' : ''}`}
-                  onClick={() => setBracketLayout('list')}
-                  style={{ padding: '0.3rem 0.65rem', fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}
+                  type="button"
+                  className="btn btn-ghost"
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.82rem', padding: '0.3rem 0.75rem' }}
+                  onClick={handleExportICS}
                 >
-                  <List size={12} /> List
+                  📅 {selectedTeamId
+                    ? `${teams.find(t => t.id === selectedTeamId)?.name ?? ''} Schedule`
+                    : 'Add to Calendar'}
                 </button>
-                <button
-                  className={`segment ${bracketLayout === 'bracket' ? 'active' : ''}`}
-                  onClick={() => setBracketLayout('bracket')}
-                  style={{ padding: '0.3rem 0.65rem', fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}
-                >
-                  <LayoutTemplate size={12} /> Bracket
-                </button>
-              </div>
-            ) : <div />}
+              )}
+            </div>
           </div>
 
           {/* Team filter active label */}

@@ -59,6 +59,9 @@ export const EARLY_ACCESS_SELECT = [
   'last_contacted_at',
   'last_contacted_by',
   'converted_org_id',
+  'converted_at',
+  'follow_up_due_at',
+  'next_action',
 ].join(', ');
 
 export type EarlyAccessFilters = {
@@ -104,6 +107,19 @@ export function cleanInternalNotes(value: unknown): string | null {
   const trimmed = value.trim();
   if (!trimmed) return null;
   return trimmed.slice(0, 4000);
+}
+
+export function cleanNextAction(value: unknown): string | null {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  return trimmed.slice(0, 500);
+}
+
+export function cleanOptionalDate(value: unknown): string | null {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  return /^\d{4}-\d{2}-\d{2}$/.test(trimmed) ? trimmed : null;
 }
 
 export function toCsvCell(value: unknown): string {
