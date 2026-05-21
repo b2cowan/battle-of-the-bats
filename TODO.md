@@ -5,7 +5,7 @@ This file tracks the ongoing tasks for the FieldLogicHQ platform (multi-tenant s
 
 ---
 
-- [ ] **Coaches standalone access + pricing research** — Research findings on standalone Team plan, per-team add-on, pricing architecture, and coaches portal enhancements (see [codex_COACHES_STANDALONE_RESEARCH.md](codex_COACHES_STANDALONE_RESEARCH.md))
+- [ ] **Coaches standalone access + pricing research** — Research findings on standalone Team plan, per-team add-on, pricing architecture, and coaches portal enhancements (see [codex_COACHES_STANDALONE_RESEARCH.md](docs/active/codex_COACHES_STANDALONE_RESEARCH.md))
 
 - [ ] **League onboarding wizard** - Guide League/Club owners through first house league setup with optional tournament setup branch (see [LEAGUE_ONBOARDING_WIZARD_PLAN.md](LEAGUE_ONBOARDING_WIZARD_PLAN.md))
   - [x] First implementation: league startup tasks, onboarding wizard, remaining-step CTAs, and create-season modal alignment
@@ -126,7 +126,7 @@ This file tracks the ongoing tasks for the FieldLogicHQ platform (multi-tenant s
 
 - [ ] **Online tournament payment collection research** - Decide whether future tournament entry payments should use Stripe Connect, manual payment links, or another architecture before building payment processing (see [TOURNAMENT_PLUS_ENHANCEMENT_PLAN.md](docs/archive/TOURNAMENT_PLUS_ENHANCEMENT_PLAN.md) Phase 4.3)
 
-- [ ] **Tournament admin UX reformat** - Mobile-first cleanup of tournament admin pages so records appear before secondary controls, using shared reusable toolbar/action patterns (see [TOURNAMENT_ADMIN_UX_REFORMAT_PLAN.md](TOURNAMENT_ADMIN_UX_REFORMAT_PLAN.md); PM brief: [TOURNAMENT_ADMIN_UX_REFORMAT_PM_BRIEF.md](TOURNAMENT_ADMIN_UX_REFORMAT_PM_BRIEF.md))
+- [ ] **Tournament admin UX reformat** - Mobile-first cleanup of tournament admin pages so records appear before secondary controls, using shared reusable toolbar/action patterns (see [TOURNAMENT_ADMIN_UX_REFORMAT_PLAN.md](docs/active/TOURNAMENT_ADMIN_UX_REFORMAT_PLAN.md); PM brief: [TOURNAMENT_ADMIN_UX_REFORMAT_PM_BRIEF.md](docs/active/TOURNAMENT_ADMIN_UX_REFORMAT_PM_BRIEF.md))
 
 - [ ] **Tournament help documentation UX review** - Upgrade tournament help with grouped contents, search, quick answers, and FAQs (see [TOURNAMENT_HELP_DOCS_REVIEW_PLAN.md](TOURNAMENT_HELP_DOCS_REVIEW_PLAN.md))
 
