@@ -16,6 +16,7 @@ import s from '../../admin-common.module.css';
 import styles from '../schedule/schedule-admin.module.css';
 import FeedbackModal from '@/components/FeedbackModal';
 import HelpCallout from '@/components/help/HelpCallout';
+import { hasPlanFeature } from '@/lib/plan-features';
 
 // ── Export column definitions ─────────────────────────────────────────────
 // No sensitive fields on this surface — results data is public/operational.
