@@ -183,7 +183,7 @@ export default function CoachesDuesPage({
     fetch('/api/admin/org/pdf-settings')
       .then(r => r.ok ? r.json() : {})
       .then(d => setPdfSettings(d as OrgPdfSettings))
-      .catch(() => setPdfSettings({}));
+      .catch(() => setPdfSettings(null));
   }, []);
 
   // ── Export helpers ───────────────────────────────────────────────────────────

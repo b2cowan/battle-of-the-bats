@@ -197,7 +197,7 @@ export default function OrgBudgetVsActualPage() {
     fetch('/api/admin/org/pdf-settings')
       .then(r => r.ok ? r.json() : {})
       .then(d => setPdfSettings(d as OrgPdfSettings))
-      .catch(() => setPdfSettings({}));
+      .catch(() => setPdfSettings(null));
   }, []);
 
   if (loading) return <p className={styles.muted}>Loading…</p>;
