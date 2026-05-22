@@ -2,10 +2,10 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { ArrowDown, ArrowLeft, ArrowUp, ClipboardList, Plus, Save, Trash2 } from 'lucide-react';
+import { ArrowDown, ArrowLeft, ArrowUp, ClipboardList, Lock, Plus, Save, Trash2 } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { useTournament } from '@/lib/tournament-context';
-import { hasPlanFeature, requiresTournamentPlusCopy } from '@/lib/plan-features';
+import { hasPlanFeature } from '@/lib/plan-features';
 import type { TournamentRegistrationField, TournamentRegistrationFieldType } from '@/lib/types';
 import styles from '../../branding/branding.module.css';
 
@@ -191,17 +191,24 @@ export default function RegistrationFieldsSettingsPage() {
           <div className={styles.headerIcon}><ClipboardList size={20} /></div>
           <div>
             <h1 className={styles.pageTitle}>Registration Questions</h1>
-            <p className={styles.pageSub}>{currentTournament?.name} - custom registration control</p>
+            <p className={styles.pageSub}>Every registration already collects team name, coach, email, and division.</p>
           </div>
         </div>
         <div className={styles.card}>
-          <h2 className={styles.sectionTitle}>Upgrade to collect more than the basics</h2>
-          <p style={{ color: 'var(--white-60)', lineHeight: 1.6, marginBottom: '1rem' }}>
-            {requiresTournamentPlusCopy('custom_registration_fields')}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.6rem' }}>
+            <Lock size={14} style={{ color: 'var(--white-40)', flexShrink: 0 }} />
+            <h2 className={styles.sectionTitle} style={{ margin: 0 }}>Custom questions</h2>
+          </div>
+          <p style={{ color: 'var(--white-60)', lineHeight: 1.6 }}>
+            Add short text fields, dropdowns, file uploads, and more to gather tournament-specific details at registration.
+            Available with{' '}
+            <Link
+              href={`/${currentOrg?.slug ?? 'admin'}/admin/tournaments/settings/subscription`}
+              style={{ color: 'var(--white-60)', textDecoration: 'underline' }}
+            >
+              Tournament Plus
+            </Link>.
           </p>
-          <Link href={`/${currentOrg?.slug ?? 'admin'}/admin/tournaments/settings/subscription`} className="btn btn-primary">
-            Review Tournament Plus
-          </Link>
         </div>
       </div>
     );
@@ -227,39 +234,11 @@ export default function RegistrationFieldsSettingsPage() {
         </div>
       )}
 
-      <form className={styles.card} style={{ marginBottom: '1.5rem' }} onSubmit={createField}>
-        <h2 className={styles.sectionTitle}>Add a Question</h2>
-        <div className="form-row form-row-2">
-          <div className="form-group">
-            <label className="form-label">Question</label>
-            <input className="form-input" value={draft.label} onChange={e => setDraft(d => ({ ...d, label: e.target.value }))} required />
-          </div>
-          <div className="form-group">
-            <label className="form-label">Type</label>
-            <select className="form-input" value={draft.fieldType} onChange={e => setDraft(d => ({ ...d, fieldType: e.target.value as TournamentRegistrationFieldType }))}>
-              {FIELD_TYPES.map(type => <option key={type.value} value={type.value}>{type.label}</option>)}
-            </select>
-          </div>
+      <div className={styles.card} style={{ marginBottom: '1.5rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+          <h2 className={styles.sectionTitle} style={{ marginBottom: 0 }}>Active Questions</h2>
+          <a href="#add-question-form" className="btn btn-outline btn-sm"><Plus size={14} /> Add Question</a>
         </div>
-        {draft.fieldType === 'dropdown' && (
-          <div className="form-group" style={{ marginTop: '1rem' }}>
-            <label className="form-label">Dropdown options</label>
-            <textarea className="form-textarea" rows={3} value={draft.optionsText} onChange={e => setDraft(d => ({ ...d, optionsText: e.target.value }))} placeholder="One option per line" required />
-          </div>
-        )}
-        <label style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginTop: '1rem', color: 'var(--white-70)' }}>
-          <input type="checkbox" checked={draft.required} onChange={e => setDraft(d => ({ ...d, required: e.target.checked }))} />
-          Required on public registration
-        </label>
-        <div className={styles.formFooter}>
-          <button type="submit" className="btn btn-primary" disabled={working === 'new'}>
-            <Plus size={14} /> {working === 'new' ? 'Adding...' : 'Add Question'}
-          </button>
-        </div>
-      </form>
-
-      <div className={styles.card}>
-        <h2 className={styles.sectionTitle}>Active Questions</h2>
         {loading ? (
           <p style={{ color: 'var(--white-40)' }}>Loading...</p>
         ) : fields.length === 0 ? (
@@ -306,6 +285,37 @@ export default function RegistrationFieldsSettingsPage() {
           </div>
         )}
       </div>
+
+      <form id="add-question-form" className={styles.card} onSubmit={createField}>
+        <h2 className={styles.sectionTitle}>Add a Question</h2>
+        <div className="form-row form-row-2">
+          <div className="form-group">
+            <label className="form-label">Question</label>
+            <input className="form-input" value={draft.label} onChange={e => setDraft(d => ({ ...d, label: e.target.value }))} required />
+          </div>
+          <div className="form-group">
+            <label className="form-label">Type</label>
+            <select className="form-input" value={draft.fieldType} onChange={e => setDraft(d => ({ ...d, fieldType: e.target.value as TournamentRegistrationFieldType }))}>
+              {FIELD_TYPES.map(type => <option key={type.value} value={type.value}>{type.label}</option>)}
+            </select>
+          </div>
+        </div>
+        {draft.fieldType === 'dropdown' && (
+          <div className="form-group" style={{ marginTop: '1rem' }}>
+            <label className="form-label">Dropdown options</label>
+            <textarea className="form-textarea" rows={3} value={draft.optionsText} onChange={e => setDraft(d => ({ ...d, optionsText: e.target.value }))} placeholder="One option per line" required />
+          </div>
+        )}
+        <label style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginTop: '1rem', color: 'var(--white-70)' }}>
+          <input type="checkbox" checked={draft.required} onChange={e => setDraft(d => ({ ...d, required: e.target.checked }))} />
+          Required on public registration
+        </label>
+        <div className={styles.formFooter}>
+          <button type="submit" className="btn btn-primary" disabled={working === 'new'}>
+            <Plus size={14} /> {working === 'new' ? 'Adding...' : 'Add Question'}
+          </button>
+        </div>
+      </form>
     </div>
   );
 }

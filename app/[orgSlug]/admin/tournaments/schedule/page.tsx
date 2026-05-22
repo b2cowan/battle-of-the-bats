@@ -1,12 +1,12 @@
 ﻿'use client';
 import React, { useState, useEffect } from 'react';
-import { Calendar, Plus, Pencil, Trash2, X, Check, Sparkles, Trophy, MapPin, Clock, Search, Lock, Send, Globe, Eye, EyeOff } from 'lucide-react';
+import { Calendar, Plus, Pencil, Trash2, X, Check, Sparkles, Trophy, MapPin, Clock, Send, Globe, EyeOff } from 'lucide-react';
 import { formatPoolName } from '@/lib/utils';
 import { saveGame, updateGame, deleteGame } from '@/lib/db';
 import { formatTime } from '@/lib/utils';
 import { useTournament } from '@/lib/tournament-context';
 import { useOrg } from '@/lib/org-context';
-import { hasPlanFeature, requiresTournamentPlusCopy, type PlanFeature } from '@/lib/plan-features';
+import { hasPlanFeature } from '@/lib/plan-features';
 import {
   downloadXLSX, generateCSV, downloadCSVBlob, downloadICS,
   buildFilename, serializeRows, serializeHeaders, type ExportColumnDef,
@@ -22,6 +22,16 @@ import styles from './schedule-admin.module.css';
 import FeedbackModal from '@/components/FeedbackModal';
 import HelpCallout from '@/components/help/HelpCallout';
 import AddVenueModal from '@/components/admin/AddVenueModal';
+import {
+  TournamentAdminHeader,
+  TournamentAdminToolbar,
+  ToolbarGroup,
+  ToolbarSelect,
+  ToolbarSearch,
+  ToolbarSegmentedControl,
+  ToolbarMenu,
+  ToolbarMenuItem,
+} from '@/components/admin/tournament/TournamentAdminUI';
 
 type ModalMode = 'add' | 'edit' | null;
 
@@ -89,32 +99,12 @@ export default function AdminSchedulePage() {
   const canGeneratePlayoffs = currentOrg ? hasPlanFeature(currentOrg.planId, 'playoff_generator') : false;
   const canNotify = currentOrg ? hasPlanFeature(currentOrg.planId, 'schedule_notification') : false;
 
-  function showUpgradePrompt(feature: PlanFeature, title: string) {
-    const orgSlug = currentOrg?.slug;
-    setFeedback({
-      isOpen: true,
-      title,
-      message: `${requiresTournamentPlusCopy(feature)} You can keep building manually on the free Tournament plan.`,
-      type: 'info',
-      confirmText: 'View Upgrade Options',
-      onConfirm: orgSlug ? () => { window.location.href = `/${orgSlug}/admin/tournaments/settings/subscription`; } : undefined,
-    });
-  }
-
   function openGenerator() {
-    if (canAutoGenerateSchedule) {
-      setShowGenerator(true);
-      return;
-    }
-    showUpgradePrompt('auto_schedule', 'Upgrade for Auto-Generate');
+    setShowGenerator(true);
   }
 
   function openPlayoffWizard() {
-    if (canGeneratePlayoffs) {
-      setShowPlayoffWizard(true);
-      return;
-    }
-    showUpgradePrompt('playoff_generator', 'Upgrade for Playoff Wizard');
+    setShowPlayoffWizard(true);
   }
 
   async function refresh() {
@@ -364,69 +354,47 @@ export default function AdminSchedulePage() {
 
   return (
     <div className={s.page}>
-      <div className={s.pageHeader}>
-        <div className={s.headerLeft}>
-          <div className={s.headerIcon}><Calendar size={20} /></div>
-          <div>
-            <h1 className={s.pageTitle}>Schedule Management</h1>
-            <p className={s.pageSub}>
-              {currentTournament ? `${currentTournament.name} (${currentTournament.year})` : 'Plan tournament games'}
-            </p>
-          </div>
-        </div>
-        <div className={s.headerActions}>
-          <ExportMenu
-            formats={['xlsx', 'csv', 'ics', 'pdf']}
-            onExportXLSX={handleExportXLSX}
-            onExportCSV={handleExportCSV}
-            onExportICS={handleExportICS}
-            onExportPDF={handleExportPDF}
-            planId={currentOrg?.planId}
-            disabled={filtered.length === 0}
-          />
-          <button className="btn btn-primary btn-sm" onClick={openAdd} disabled={!currentTournament}>
-            <Plus size={16} /> Add Game
-          </button>
-        </div>
-      </div>
+      <TournamentAdminHeader
+        icon={<Calendar size={20} />}
+        title="Schedule Management"
+        subtitle={currentTournament ? `${currentTournament.name} (${currentTournament.year})` : 'Plan tournament games'}
+        actions={
+          <>
+            <ExportMenu
+              formats={['xlsx', 'csv', 'ics', 'pdf']}
+              onExportXLSX={handleExportXLSX}
+              onExportCSV={handleExportCSV}
+              onExportICS={handleExportICS}
+              onExportPDF={handleExportPDF}
+              planId={currentOrg?.planId}
+              disabled={filtered.length === 0}
+            />
+            <button className="btn btn-primary btn-sm" onClick={openAdd} disabled={!currentTournament}>
+              <Plus size={16} /> Add Game
+            </button>
+          </>
+        }
+      />
 
-      <div className={s.controlsBar}>
-        <div className={s.controlsLeft}>
-          <div className={s.viewToggle}>
-            <button className={`${s.toggleBtn} ${viewMode === 'pool' ? s.toggleActive : ''}`} onClick={() => setViewMode('pool')}>Round Robin</button>
-            <button className={`${s.toggleBtn} ${viewMode === 'playoff' ? s.toggleActive : ''}`} onClick={() => setViewMode('playoff')}>Playoffs</button>
-          </div>
-          {viewMode === 'pool' ? (
-            <button className="btn btn-ghost btn-sm text-primary-light" onClick={openGenerator} disabled={!currentTournament} title={canAutoGenerateSchedule ? 'Generate a round-robin schedule' : 'Tournament Plus and above'} style={{ height: '32px', marginLeft: '0.5rem' }}>
-              {canAutoGenerateSchedule ? <Sparkles size={14} /> : <Lock size={14} />} Auto-Generate
-            </button>
-          ) : (
-            <button className="btn btn-ghost btn-sm text-primary-light" onClick={openPlayoffWizard} disabled={!currentTournament} title={canGeneratePlayoffs ? 'Generate a playoff bracket' : 'Tournament Plus and above'} style={{ height: '32px', marginLeft: '0.5rem' }}>
-              {canGeneratePlayoffs ? <Trophy size={14} /> : <Lock size={14} />} Playoff Wizard
-            </button>
+      <TournamentAdminToolbar ariaLabel="Schedule controls">
+        <ToolbarGroup align="start">
+          <ToolbarSegmentedControl<'pool' | 'playoff'>
+            value={viewMode}
+            options={[
+              { value: 'pool', label: 'Round Robin' },
+              { value: 'playoff', label: 'Playoffs' },
+            ]}
+            onChange={setViewMode}
+            ariaLabel="View mode"
+          />
+          {ageGroups.length > 0 && (
+            <ToolbarSelect<string>
+              label="Division"
+              value={filterGroup}
+              options={ageGroups.map(g => ({ value: g.id, label: g.name }))}
+              onChange={setFilterGroup}
+            />
           )}
-          {viewMode === 'pool' && (() => {
-            const unpublished = ageGroups.filter(g => !g.scheduleVisibility || g.scheduleVisibility === 'unpublished');
-            if (unpublished.length === 0) return null;
-            return (
-              <button
-                className="btn btn-ghost btn-sm"
-                onClick={() => setPublishModal({ mode: 'all' })}
-                disabled={!currentTournament}
-                style={{ height: '32px', marginLeft: '0.5rem', color: 'var(--logic-lime)', gap: '0.4rem' }}
-              >
-                <Globe size={13} /> Publish All Divisions
-              </button>
-            );
-          })()}
-        </div>
-        <div className={s.controlsRight}>
-          <div className={s.controlGroup}>
-            <label className={s.controlLabel}>Division:</label>
-            <select className={`${s.controlSelect} form-input`} value={filterGroup} onChange={e => setFilterGroup(e.target.value)}>
-              {ageGroups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
-            </select>
-          </div>
           {viewMode === 'pool' && (() => {
             const ag = ageGroups.find(g => g.id === filterGroup);
             const vis = ag?.scheduleVisibility ?? 'unpublished';
@@ -456,7 +424,7 @@ export default function AdminSchedulePage() {
                       className="btn btn-ghost btn-sm"
                       onClick={() => handleUnpublish(filterGroup)}
                       style={{ height: '28px', fontSize: '0.75rem', padding: '0 0.6rem', color: 'var(--white-40)' }}
-                      title="Remove from public page"
+                      title="Unpublish this division"
                     >
                       <EyeOff size={12} />
                     </button>
@@ -479,7 +447,7 @@ export default function AdminSchedulePage() {
                       disabled={!currentTournament}
                       style={{ height: '28px', fontSize: '0.75rem', padding: '0 0.75rem' }}
                     >
-                      <Globe size={12} /> Publish Schedule
+                      <Globe size={12} /> Publish
                     </button>
                   </>
                 )}
@@ -487,31 +455,68 @@ export default function AdminSchedulePage() {
             );
           })()}
           {viewMode === 'pool' && (
-            <div className={s.viewToggle}>
-              <button className={`${s.toggleBtn} ${groupMode === 'flat' ? s.toggleActive : ''}`} onClick={() => setGroupMode('flat')}>Flat</button>
-              <button className={`${s.toggleBtn} ${groupMode === 'pools' ? s.toggleActive : ''}`} onClick={() => setGroupMode('pools')}>Pools</button>
-            </div>
+            <ToolbarSegmentedControl<'flat' | 'pools'>
+              value={groupMode}
+              options={[
+                { value: 'flat', label: 'Flat' },
+                { value: 'pools', label: 'Pools' },
+              ]}
+              onChange={setGroupMode}
+              ariaLabel="Grouping mode"
+            />
           )}
           {viewMode === 'playoff' && (
-            <div className={s.viewToggle}>
-              <button className={`${s.toggleBtn} ${layoutMode === 'list' ? s.toggleActive : ''}`} onClick={() => setLayoutMode('list')}>List</button>
-              <button className={`${s.toggleBtn} ${layoutMode === 'bracket' ? s.toggleActive : ''}`} onClick={() => setLayoutMode('bracket')}>Bracket</button>
-            </div>
+            <ToolbarSegmentedControl<'list' | 'bracket'>
+              value={layoutMode}
+              options={[
+                { value: 'list', label: 'List' },
+                { value: 'bracket', label: 'Bracket' },
+              ]}
+              onChange={setLayoutMode}
+              ariaLabel="Layout mode"
+            />
           )}
-        </div>
-      </div>
-
-      <div className={s.filtersRow}>
-        <div className={s.statusFilters}>
-          <span className={s.filterChip} style={{ cursor: 'default', opacity: 0.6 }}>
-            {filtered.length} Game{filtered.length !== 1 ? 's' : ''}
-          </span>
-        </div>
-        <div className={s.searchWrapper}>
-          <Search size={16} className={s.searchIcon} />
-          <input type="text" placeholder="Search teams..." value={search} onChange={e => setSearch(e.target.value)} className={s.searchInput} />
-        </div>
-      </div>
+        </ToolbarGroup>
+        <ToolbarGroup align="end">
+          <ToolbarSearch value={search} onChange={setSearch} placeholder="Search teams..." label="Search games" />
+          <ToolbarMenu label="Tools">
+            {viewMode === 'pool' ? (
+              <ToolbarMenuItem
+                icon={<Sparkles size={14} />}
+                label="Auto-Generate"
+                hint="Create a round-robin schedule from pools"
+                locked={!canAutoGenerateSchedule}
+                lockTitle="Automated schedule generation is included with Tournament Plus, League, and Club."
+                disabled={!currentTournament}
+                onSelect={openGenerator}
+              />
+            ) : (
+              <ToolbarMenuItem
+                icon={<Trophy size={14} />}
+                label="Playoff Wizard"
+                hint="Generate a playoff bracket"
+                locked={!canGeneratePlayoffs}
+                lockTitle="The playoff bracket generator is included with Tournament Plus, League, and Club."
+                disabled={!currentTournament}
+                onSelect={openPlayoffWizard}
+              />
+            )}
+            {viewMode === 'pool' && (() => {
+              const unpublished = ageGroups.filter(g => !g.scheduleVisibility || g.scheduleVisibility === 'unpublished');
+              if (unpublished.length === 0) return null;
+              return (
+                <ToolbarMenuItem
+                  icon={<Globe size={14} />}
+                  label="Publish All Divisions"
+                  hint={`${unpublished.length} division${unpublished.length !== 1 ? 's' : ''} not yet published`}
+                  disabled={!currentTournament}
+                  onSelect={() => setPublishModal({ mode: 'all' })}
+                />
+              );
+            })()}
+          </ToolbarMenu>
+        </ToolbarGroup>
+      </TournamentAdminToolbar>
 
       {showPdfNudge && (
         <HelpCallout

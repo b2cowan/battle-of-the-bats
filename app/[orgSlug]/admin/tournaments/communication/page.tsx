@@ -252,14 +252,16 @@ export default function AdminCommunicationPage() {
         <div className={`${styles.section} ${styles.recipientSection}`}>
           <div className={styles.recipientHeader}>
             <h3><Users size={18} /> 1. Recipients</h3>
-            <button
-              type="button"
-              className="btn btn-outline btn-sm"
-              onClick={() => setRecipientsOpen(open => !open)}
-              aria-expanded={recipientsOpen}
-            >
-              {recipientsOpen ? 'Done' : 'Edit Recipients'}
-            </button>
+            {canTargetAnnouncements && (
+              <button
+                type="button"
+                className="btn btn-outline btn-sm"
+                onClick={() => setRecipientsOpen(open => !open)}
+                aria-expanded={recipientsOpen}
+              >
+                {recipientsOpen ? 'Done' : 'Edit Recipients'}
+              </button>
+            )}
           </div>
 
           <div className={styles.recipientSummary}>
@@ -341,7 +343,7 @@ export default function AdminCommunicationPage() {
                       ))}
                     </div>
 
-                    <div className={styles.filterCard}>
+                    <div className={styles.filterCard} style={{ gridColumn: '1 / -1' }}>
                       <label className="form-label">Individual Teams</label>
                       <p className={styles.filterHelp}>Optional. If selected, these teams override status and division filters.</p>
                       <div className={styles.scrollList}>
@@ -400,6 +402,10 @@ export default function AdminCommunicationPage() {
                   </div>
                 ))}
                 {recipients.length > 12 && <p className={styles.previewMore}>+{recipients.length - 12} more recipients</p>}
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.75rem', paddingTop: '0.75rem', borderTop: '1px solid var(--border-2)' }}>
+                <button type="button" className="btn btn-outline btn-sm" onClick={() => setRecipientsOpen(false)}>Done</button>
               </div>
             </div>
           )}
