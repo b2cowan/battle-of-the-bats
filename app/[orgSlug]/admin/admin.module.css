@@ -1,7 +1,7 @@
 .adminShell {
   display: flex;
   min-height: 100vh;
-  background: var(--pitch-black);
+  background: var(--hud-surface);
 }
 
 .adminShellFocused {
@@ -13,10 +13,10 @@
   padding: 2rem;
   overflow-y: auto;
   min-width: 0;
-  background: var(--pitch-black);
+  background: var(--hud-surface);
   background-image:
-    linear-gradient(to right, rgba(30,58,138,0.07) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(30,58,138,0.07) 1px, transparent 1px);
+    linear-gradient(to right, rgba(30,58,138,0.09) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(30,58,138,0.09) 1px, transparent 1px);
   background-size: 40px 40px;
 }
 
@@ -97,6 +97,12 @@
   color: rgba(34, 197, 94, 0.72);
   border-color: rgba(34, 197, 94, 0.22);
 }
+/* ── Tone down PENDING/warning badge to match ── */
+.adminShell :global(.badge-warning) {
+  background: rgba(245, 158, 11, 0.07);
+  color: rgba(245, 158, 11, 0.72);
+  border-color: rgba(245, 158, 11, 0.22);
+}
 
 /* ── Form controls: square corners to match operational feel ── */
 .adminShell :global(.form-input),
@@ -111,7 +117,10 @@
   box-shadow: 0 0 0 2px rgba(var(--blueprint-blue-rgb), 0.2);
 }
 
-/* ── Cards: reduce hover glow theatrics ── */
+/* ── Cards: square corners + reduce hover glow theatrics ── */
+.adminShell :global(.card) {
+  border-radius: 2px;
+}
 .adminShell :global(.card:hover) {
   border-color: rgba(var(--blueprint-blue-rgb), 0.4);
   box-shadow: none;
@@ -122,5 +131,54 @@
 .adminShell :global(.text-primary-light),
 .adminShell :global(.text-purple) {
   color: var(--logic-lime);
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   SWEEP ADDITIONS — 2026-05-23
+   Global cascade fixes for admin-shell design violations.
+   These catch patterns that appear across many pages without
+   requiring per-page edits.
+   ══════════════════════════════════════════════════════════════════ */
+
+/* ── h1 / h2: terminal type hierarchy ──────────────────────────── */
+/* Catches page titles and section headers still using font-sans/white.
+   font-sans Tailwind on the element is overridden via the rule below. */
+.adminShell h1 {
+  font-family: var(--font-data);
+  color: var(--logic-lime);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.adminShell h2 {
+  font-family: var(--font-data);
+  color: rgba(var(--logic-lime-rgb), 0.75);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/* ── Tailwind font-sans global shim ────────────────────────────── */
+/* Targets any element using Tailwind's font-sans utility inside the
+   admin shell (hub tile labels, section headings, data rows).
+   !important required to beat Tailwind's specificity.              */
+.adminShell :global(.font-sans) {
+  font-family: var(--font-data) !important;
+}
+
+/* ── btn-sm shim: restyle to match btn-data sizing ─────────────── */
+/* Prevents the global btn-sm (0.875rem, pill padding) from appearing
+   in the admin shell. Per design rule (2026-05-23): never use btn-sm
+   inside admin; use btn-data instead. This shim bridges existing
+   usages without per-page class renames.                           */
+.adminShell :global(.btn-sm) {
+  font-family: var(--font-data);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border-radius: 2px !important;
+  padding: 0.3rem 0.62rem;
+  min-height: unset;
+  gap: 0.28rem;
 }
 

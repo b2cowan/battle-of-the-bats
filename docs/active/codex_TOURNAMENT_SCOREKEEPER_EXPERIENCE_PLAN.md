@@ -1,6 +1,6 @@
 # Tournament Scorekeeper Experience Plan
 
-> Status: Planning only - no implementation started
+> Status: Implementation slice 7 complete - shared scoring service now centralizes score submit/finalize/revert rules for admin Results and Scorekeeper APIs; migrations 066 and 068 applied in dev and production
 > Created: 2026-05-22
 > Parent context: Tournament Experience Excellence
 > PM brief: [codex_TOURNAMENT_SCOREKEEPER_EXPERIENCE_PM_BRIEF.md](codex_TOURNAMENT_SCOREKEEPER_EXPERIENCE_PM_BRIEF.md)
@@ -22,13 +22,43 @@ Existing pieces to reuse:
 - The `official` role already defaults to `submit_scores` only and is not intended to use the main admin area.
 - `organizations.require_score_finalization` already controls whether official/staff submissions become `submitted` or `completed`.
 
-Gaps to address before implementation:
+Remaining gaps after implementation slice 3:
 
-- The user-facing scorekeeper route should be productized as a scorekeeper experience, not left as an "official" side page with older inline styling.
-- Current score submission from the official page calls `/api/admin/games` without passing `orgSlug`; this should be fixed in any scorekeeper implementation because multi-org users must resolve against the visited org.
-- The Event Settings UI talks like score finalization can be a tournament-level setting, but the persisted setting found in the codebase is organization-level. The plan should either make the policy truly tournament-level or rewrite the UX to say it is organization-wide.
-- The role/capability label "Submit & finalize scores" is too broad for scorekeepers. Scorekeepers submit scores; admins finalize them when review is required.
+- The user-facing scorekeeper route now exists as `/{orgSlug}/scorekeeper` with a dedicated mobile-first scoring page.
+- Score submissions now use the visited org-scoped scorekeeper API path instead of posting to the broad admin games route.
+- Event Settings now exposes the tournament score finalization policy as inherit organization default, admin review, or final immediately.
+- Score submission audit metadata is still a future decision if Results & Scoring should show submitted by/time.
 - Existing tournament assignments restrict by tournament, not by venue/field. That is acceptable for MVP if filters are strong, but larger events may need field-level scorekeeper assignments later.
+
+Implementation slice 4 audit notes:
+
+- Results & Scoring remains the source of truth for Pending Review, Finalize, Revert, exports, standings, and corrections.
+- Pending-review games now show their submitted score in admin schedule/results rows instead of appearing unscored until finalization.
+- Public schedule/bracket surfaces continue to label pending-review scores as Pending when finalization is required.
+- Public standings already include submitted scores with pending markers; that preserves day-of visibility while signaling that the result is not official yet.
+- Playoff advancement remains restricted to `completed` games only, so a pending score cannot advance a bracket.
+- Admin score submission now rejects cancelled games, missing games, and non-whole/non-negative scores with clearer API responses.
+
+Implementation slice 5 admin entry point:
+
+- Results & Scoring now includes an "Open Scorekeeper View" header action for admins.
+- The action opens `/{orgSlug}/scorekeeper` in a new tab so admins keep the review/finalization desk open while testing or using the lightweight day-of route.
+- This is an entry point only; permissions continue to come from the existing protected scorekeeper route and capability checks.
+
+Implementation slice 6 score submission audit metadata:
+
+- Migration 068 adds nullable score audit columns to `games`: submitter user id, submitter email snapshot, submitted timestamp, and submission source. Migration 068 was applied in dev and production.
+- Scorekeeper submissions write source `scorekeeper`; admin Results score saves write source `admin_results`.
+- Reverting a score clears the score audit metadata along with the score.
+- Results & Scoring expanded rows and results exports now show submitter/source/time when metadata exists.
+- Public tournament game data intentionally does not expose score submitter metadata.
+
+Implementation slice 7 shared scoring service:
+
+- `lib/tournament-scoring-service.ts` now centralizes game lookup, score validation, pending-vs-final status, finalized/cancelled conflicts, audit metadata writes, finalization, and revert behavior.
+- Admin Results and Scorekeeper APIs both call the shared service while keeping route-level auth, capability, and tournament-scope checks in the route handlers.
+- Admin Results can still correct finalized scores; Scorekeeper View still blocks finalized-score edits.
+- Error messages are now shared for invalid scores, missing games, cancelled games, and finalized score conflicts.
 
 ## Product Manager UX Summary
 
@@ -347,7 +377,15 @@ Required:
 - Add nullable `tournaments.require_score_finalization boolean` if tournament-level policy is confirmed.
 - Add an effective policy helper that resolves tournament override then org default.
 
-Strongly recommended:
+Implemented current-score audit metadata:
+
+- Add nullable `games` score audit metadata for the current visible score:
+  - `score_submitted_by_user_id`
+  - `score_submitted_by_email`
+  - `score_submitted_at`
+  - `score_submission_source`
+
+Optional future event history:
 
 - Add `game_score_events` or `game_score_submissions` to track:
   - game id
@@ -376,7 +414,7 @@ Recommended:
   - `GET /api/scorekeeper/[orgSlug]/games?date=YYYY-MM-DD`
   - `PATCH /api/scorekeeper/[orgSlug]/games/[gameId]/score`
 - Keep `/api/official/[orgSlug]/score` as a compatibility alias or migrate it.
-- Extract shared scoring logic from `/api/admin/games` into a service so admin and scorekeeper submissions cannot diverge.
+- Shared scoring logic now lives in `lib/tournament-scoring-service.ts` so admin and scorekeeper submissions cannot diverge.
 - Ensure every scorekeeper/admin score request resolves auth with the visited `orgSlug`.
 - Add clear 401/403/409 responses for login, capability, scope, and finalized-conflict states.
 
@@ -395,36 +433,37 @@ Required:
 
 - [x] Create this dedicated plan.
 - [x] Create the PM brief.
-- [ ] Confirm canonical route name: recommended `/{orgSlug}/scorekeeper`.
-- [ ] Confirm tournament-level score policy override vs org-level only.
-- [ ] Confirm whether field-level assignment is MVP or future.
+- [x] Confirm canonical route name: `/{orgSlug}/scorekeeper`.
+- [x] Confirm tournament-level score policy override vs org-level only: nullable tournament override with org-level fallback.
+- [x] Confirm whether field-level assignment is MVP or future: future enhancement.
 
 ### Phase 1 - Foundation And Policy
 
-- [ ] Add/fix effective score finalization policy.
-- [ ] Add migration if tournament-level override is approved.
-- [ ] Extract shared score submission/finalization service.
-- [ ] Add scorekeeper API routes or harden existing official routes with visited `orgSlug`.
-- [ ] Add score submission audit/event logging if approved.
-- [ ] Update auth destination for official users.
+- [x] Add/fix effective score finalization policy.
+- [x] Add migration if tournament-level override is approved. Migration 066 applied in dev and production.
+- [x] Extract shared score submission/finalization service.
+- [x] Add scorekeeper API routes or harden existing official routes with visited `orgSlug`.
+- [x] Add tournament-level score finalization override UI in Event Settings.
+- [x] Add score submission audit metadata for the current visible score. Migration 068 applied in dev and production.
+- [x] Update auth destination for official users.
 
 ### Phase 2 - Scorekeeper Route MVP
 
-- [ ] Build `/{orgSlug}/scorekeeper` route and mobile-first layout.
-- [ ] Reuse existing official score page behavior where possible.
-- [ ] Replace hardcoded inline styling with maintainable module/shared styles.
-- [ ] Add filters: date/today, field, division, team search, status.
-- [ ] Add bottom-sheet score entry with policy-aware submit labels.
-- [ ] Add loading, empty, access denied, save error, and conflict states.
-- [ ] Keep old official routes as redirects/aliases.
+- [x] Build `/{orgSlug}/scorekeeper` route and mobile-first layout shell.
+- [x] Reuse existing official score page behavior where possible.
+- [x] Replace hardcoded inline styling with maintainable module/shared styles for the canonical scorekeeper page.
+- [x] Add filters: date/today, field, division, team search, status.
+- [x] Add bottom-sheet score entry with policy-aware submit labels.
+- [x] Add loading, empty, access denied, save error, and conflict states.
+- [x] Keep old official routes as redirects/aliases.
 
 ### Phase 3 - Admin Integration
 
-- [ ] Add "Open Scorekeeper View" entry point for eligible users.
-- [ ] Improve Members/Staff & Access copy for scorekeeper invites and assignments.
-- [ ] Show submitter/time metadata in Results & Scoring if audit logging exists.
-- [ ] Confirm Pending Review, Finalize, Revert, exports, standings, and playoff advancement continue to use one shared source of truth.
-- [ ] Update tournament help content.
+- [x] Add "Open Scorekeeper View" entry point for eligible users.
+- [x] Improve Members/Staff & Access copy for scorekeeper invites and assignments.
+- [x] Show submitter/time metadata in Results & Scoring if audit metadata exists.
+- [x] Confirm Pending Review, Finalize, Revert, exports, standings, and playoff advancement continue to use one shared source of truth.
+- [x] Update tournament help content.
 
 ### Phase 4 - Hardening And UAT Prep
 
@@ -453,10 +492,10 @@ Per project rule, user browser verification is expected unless explicitly reques
   - accepted teams
   - games scheduled today across at least two fields and two divisions
   - one scheduled game, one submitted game, one completed game
-  - one official/scorekeeper assigned to the tournament
+  - one scorekeeper assigned to the tournament
 - Tournament Plus org with the same shape.
-- One official with no tournament assignment.
-- One official assigned to a tournament with no games today.
+- One scorekeeper with no tournament assignment.
+- One scorekeeper assigned to a tournament with no games today.
 - One staff/admin user with score submission access.
 
 ### Browser Matrix
@@ -477,13 +516,13 @@ Routes:
 
 ### Acceptance Scenarios
 
-- Official accepts invite and lands in the scorekeeper workspace.
-- Official with valid tournament access sees today's assigned games.
-- Official can filter by field, division, team, and status.
+- Scorekeeper accepts invite and lands in the scorekeeper workspace.
+- Scorekeeper with valid tournament access sees today's assigned games.
+- Scorekeeper can filter by field, division, team, and status.
 - Score submission with finalization disabled becomes Completed immediately.
 - Score submission with finalization enabled becomes Pending Review.
-- Official can correct a Pending Review score before admin finalization.
-- Official cannot edit a finalized score.
+- Scorekeeper can correct a Pending Review score before admin finalization.
+- Scorekeeper cannot edit a finalized score.
 - Admin sees Pending Review in Results & Scoring and can finalize.
 - Admin can revert a score and scorekeeper sees it return to To Score.
 - Public standings/results reflect pending/final status as designed.

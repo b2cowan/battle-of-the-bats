@@ -327,24 +327,24 @@ export default function RepTeamsPage() {
           href={`${base}/rep-teams/allocations`}
           style={{
             display: 'inline-flex', alignItems: 'center', gap: '0.5rem',
-            background: 'rgba(255,255,255,0.04)',
+            background: 'var(--white-5)',
             border: '1px solid rgba(var(--blueprint-blue-rgb),0.2)',
-            borderRadius: 8, padding: '0.6rem 1rem',
-            color: 'rgba(255,255,255,0.7)', fontSize: '0.88rem', fontWeight: 600,
+            borderRadius: '2px', padding: '0.6rem 1rem',
+            color: 'var(--white-70)', fontSize: '0.88rem', fontWeight: 600,
             textDecoration: 'none',
           }}
         >
-          <DollarSign size={15} style={{ color: 'var(--logic-lime,#a3e635)' }} />
+          <DollarSign size={15} style={{ color: 'var(--logic-lime,var(--logic-lime))' }} />
           Cost Allocations
         </Link>
         <Link
           href={`${base}/rep-teams/documents`}
           style={{
             display: 'inline-flex', alignItems: 'center', gap: '0.5rem',
-            background: 'rgba(255,255,255,0.04)',
+            background: 'var(--white-5)',
             border: '1px solid rgba(var(--blueprint-blue-rgb),0.2)',
-            borderRadius: 8, padding: '0.6rem 1rem',
-            color: 'rgba(255,255,255,0.7)', fontSize: '0.88rem', fontWeight: 600,
+            borderRadius: '2px', padding: '0.6rem 1rem',
+            color: 'var(--white-70)', fontSize: '0.88rem', fontWeight: 600,
             textDecoration: 'none',
           }}
         >
@@ -354,10 +354,10 @@ export default function RepTeamsPage() {
           href={`${base}/rep-teams/payment-requests`}
           style={{
             display: 'inline-flex', alignItems: 'center', gap: '0.5rem',
-            background: 'rgba(255,255,255,0.04)',
+            background: 'var(--white-5)',
             border: '1px solid rgba(var(--blueprint-blue-rgb),0.2)',
-            borderRadius: 8, padding: '0.6rem 1rem',
-            color: 'rgba(255,255,255,0.7)', fontSize: '0.88rem', fontWeight: 600,
+            borderRadius: '2px', padding: '0.6rem 1rem',
+            color: 'var(--white-70)', fontSize: '0.88rem', fontWeight: 600,
             textDecoration: 'none',
           }}
         >
@@ -369,9 +369,9 @@ export default function RepTeamsPage() {
       {/* Groups management (owners/admins only) */}
       {canWrite && (
         <div style={{
-          background: 'rgba(255,255,255,0.03)',
-          border: '1px solid rgba(255,255,255,0.08)',
-          borderRadius: 8,
+          background: 'var(--white-03)',
+          border: '1px solid var(--white-8)',
+          borderRadius: '2px',
           marginBottom: '1.5rem',
           overflow: 'hidden',
         }}>
@@ -381,17 +381,17 @@ export default function RepTeamsPage() {
             style={{
               width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
               padding: '0.75rem 1rem', background: 'none', border: 'none', cursor: 'pointer',
-              color: 'rgba(255,255,255,0.7)', fontSize: '0.85rem', fontWeight: 600,
+              color: 'var(--white-70)', fontSize: '0.85rem', fontWeight: 600,
             }}
           >
-            <span>Team Groups {groups.length > 0 && <span style={{ color: 'rgba(255,255,255,0.35)', fontWeight: 400 }}>({groups.length})</span>}</span>
+            <span>Team Groups {groups.length > 0 && <span style={{ color: 'var(--white-35)', fontWeight: 400 }}>({groups.length})</span>}</span>
             {groupsExpanded ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
           </button>
 
           {groupsExpanded && (
             <div style={{ padding: '0 1rem 1rem' }}>
               {groups.length === 0 && (
-                <p style={{ fontSize: '0.82rem', color: 'rgba(255,255,255,0.35)', margin: '0 0 0.75rem' }}>
+                <p style={{ fontSize: '0.82rem', color: 'var(--white-35)', margin: '0 0 0.75rem' }}>
                   No groups yet. Create groups like "AA", "A", or "Select" to classify and filter your teams.
                 </p>
               )}
@@ -427,7 +427,7 @@ export default function RepTeamsPage() {
                       </>
                     ) : (
                       <>
-                        <span style={{ flex: 1, fontSize: '0.85rem', color: 'rgba(255,255,255,0.8)' }}>{g.name}</span>
+                        <span style={{ flex: 1, fontSize: '0.85rem', color: 'var(--white-80)' }}>{g.name}</span>
                         <button
                           className="btn btn-ghost"
                           style={{ fontSize: '0.75rem', padding: '0.25rem 0.5rem', opacity: 0.6 }}
@@ -628,7 +628,7 @@ export default function RepTeamsPage() {
               rosters, and history are preserved and the public page remains accessible.
             </p>
             <p className={styles.confirmMsg} style={{ marginTop: '-0.5rem' }}>
-              <strong style={{ color: 'rgba(255,255,255,0.7)' }}>Tip:</strong> If you want to reuse
+              <strong style={{ color: 'var(--white-70)' }}>Tip:</strong> If you want to reuse
               this team&apos;s URL slug for an incoming cohort, use{' '}
               <Link href={`${base}/rep-teams/rename-slugs`} style={{ color: 'var(--blueprint-blue, #4fa3e0)' }}>
                 Rename Team URLs

@@ -344,7 +344,7 @@ export default function SeasonDetailPage() {
       <div style={{ marginBottom: '1rem' }}>
         <Link
           href={`${base}/house-league`}
-          style={{ fontSize: '0.82rem', color: 'rgba(255,255,255,0.4)', textDecoration: 'none' }}
+          style={{ fontSize: '0.82rem', color: 'var(--white-40)', textDecoration: 'none' }}
         >
           ← All Seasons
         </Link>
@@ -790,7 +790,7 @@ export default function SeasonDetailPage() {
               <h3 className={styles.modalTitle}>Delete Division</h3>
               <button className={styles.modalCloseBtn} onClick={() => setDeleteDivId(null)}><X size={16} /></button>
             </div>
-            <p style={{ fontSize: '0.9rem', color: 'rgba(255,255,255,0.7)', margin: '0 0 1rem' }}>
+            <p style={{ fontSize: '0.9rem', color: 'var(--white-70)', margin: '0 0 1rem' }}>
               Are you sure? This cannot be undone. Divisions with registrations cannot be deleted.
             </p>
             <div className={styles.modalFooter}>

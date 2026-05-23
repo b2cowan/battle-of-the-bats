@@ -4,15 +4,28 @@ import { requireDevToolPlatformAdmin } from '@/lib/platform-auth';
 import { PLAN_CONFIG } from '@/lib/plan-config';
 import type { OrgPlan } from '@/lib/types';
 
-const DEV_ORG_SLUG  = 'dev-test-org';
-const DEV_ORG_NAME  = 'Dev Test Org';
-const OWNER_EMAIL   = 'owner@dev.local';
-const DEV_PASSWORD  = 'devpass123';
+const OWNER_EMAIL  = 'owner@dev.local';
+const DEV_PASSWORD = 'devpass123';
 
-const VALID_ORG_PLANS: OrgPlan[] = ['tournament', 'tournament_plus', 'league', 'club'];
+const VALID_ORG_PLANS = ['tournament', 'tournament_plus', 'league', 'club'] as const satisfies readonly OrgPlan[];
+type DevOrgPlan = (typeof VALID_ORG_PLANS)[number];
 
-function isValidOrgPlan(plan: unknown): plan is OrgPlan {
-  return typeof plan === 'string' && VALID_ORG_PLANS.includes(plan as OrgPlan);
+const PLAN_SLUG: Record<DevOrgPlan, string> = {
+  tournament:      'dev-tournament-org',
+  tournament_plus: 'dev-tplus-org',
+  league:          'dev-league-org',
+  club:            'dev-club-org',
+};
+
+const PLAN_NAME: Record<DevOrgPlan, string> = {
+  tournament:      'Dev Tournament Org',
+  tournament_plus: 'Dev Tournament+ Org',
+  league:          'Dev League Org',
+  club:            'Dev Club Org',
+};
+
+function isValidOrgPlan(plan: unknown): plan is DevOrgPlan {
+  return typeof plan === 'string' && VALID_ORG_PLANS.includes(plan as DevOrgPlan);
 }
 
 export async function POST(req: Request) {
@@ -20,28 +33,30 @@ export async function POST(req: Request) {
   if (auth.response) return auth.response;
 
   // Parse optional plan param — defaults to 'club' (full access for dev)
-  let plan: OrgPlan = 'club';
+  let plan: DevOrgPlan = 'club';
   try {
     const body = await req.json();
     if (body?.plan && isValidOrgPlan(body.plan)) plan = body.plan;
   } catch { /* no body or invalid JSON — use default */ }
 
   const planConfig = PLAN_CONFIG[plan];
+  const devOrgSlug = PLAN_SLUG[plan];
+  const devOrgName = PLAN_NAME[plan];
   const log: string[] = [];
 
   // Org
   let { data: org } = await supabaseAdmin
     .from('organizations')
     .select('id')
-    .eq('slug', DEV_ORG_SLUG)
+    .eq('slug', devOrgSlug)
     .maybeSingle();
 
   if (!org) {
     const { data, error } = await supabaseAdmin
       .from('organizations')
       .insert({
-        name: DEV_ORG_NAME,
-        slug: DEV_ORG_SLUG,
+        name: devOrgName,
+        slug: devOrgSlug,
         plan_id: plan,
         tournament_limit: planConfig.tournamentLimit,
         subscription_status: 'active',
@@ -52,7 +67,7 @@ export async function POST(req: Request) {
       .single();
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     org = data;
-    log.push(`Created org: ${DEV_ORG_NAME} (plan: ${plan})`);
+    log.push(`Created org: ${devOrgName} (plan: ${plan})`);
   } else {
     // Update plan if caller explicitly requested one
     const { error } = await supabaseAdmin

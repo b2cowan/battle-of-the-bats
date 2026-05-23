@@ -18,7 +18,7 @@
 .headerIcon {
   width: 48px;
   height: 48px;
-  border-radius: 12px;
+  border-radius: 2px;
   background: rgba(var(--blueprint-blue-rgb), 0.12);
   color: var(--logic-lime);
   border: 1px solid rgba(var(--blueprint-blue-rgb), 0.3);
@@ -31,7 +31,7 @@
 .pageTitle {
   font-size: 1.75rem;
   font-weight: 900;
-  font-family: var(--font-display, sans-serif);
+  font-family: var(--font-data);
   margin: 0;
   color: var(--white-90, #f0f0f0);
   line-height: 1.1;
@@ -49,7 +49,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 1.25rem 1.5rem;
-  border-radius: 12px;
+  border-radius: 2px;
   background: var(--surface, rgba(255,255,255,0.04));
   border: 1px solid var(--border, rgba(255,255,255,0.08));
   margin-bottom: 1rem;
@@ -64,7 +64,7 @@
 .planIcon {
   width: 40px;
   height: 40px;
-  border-radius: 10px;
+  border-radius: 2px;
   background: rgba(var(--blueprint-blue-rgb), 0.12);
   color: var(--logic-lime);
   display: flex;
@@ -91,7 +91,7 @@
   line-height: 1.5;
   margin: 0 0 1rem;
   padding: 0.75rem 1rem;
-  border-radius: 8px;
+  border-radius: 2px;
   border-left: 3px solid;
 }
 
@@ -110,7 +110,7 @@
 /* ── Usage card ──────────────────────────────────────── */
 .usageCard {
   padding: 1.25rem 1.5rem;
-  border-radius: 12px;
+  border-radius: 2px;
   background: var(--surface, rgba(255,255,255,0.04));
   border: 1px solid var(--border, rgba(255,255,255,0.08));
   margin-bottom: 1.5rem;
@@ -137,14 +137,14 @@
 
 .usageBar {
   height: 6px;
-  border-radius: 3px;
+  border-radius: 2px;
   background: var(--white-10, rgba(255,255,255,0.1));
   overflow: hidden;
 }
 
 .usageFill {
   height: 100%;
-  border-radius: 3px;
+  border-radius: 2px;
   transition: width 0.3s ease;
 }
 
@@ -156,7 +156,7 @@
   gap: 1rem;
   margin: 2rem 0 1.5rem;
   padding: 1rem 1.25rem;
-  border-radius: 8px;
+  border-radius: 2px;
   background: rgba(255,255,255,0.03);
   border: 1px solid var(--border, rgba(255,255,255,0.08));
 }
@@ -171,7 +171,7 @@
 .retentionCard,
 .reviewCard {
   padding: 1.25rem 1.5rem;
-  border-radius: 8px;
+  border-radius: 2px;
   background: var(--surface, rgba(255,255,255,0.04));
   border: 1px solid var(--border, rgba(255,255,255,0.08));
   margin-bottom: 1.5rem;
@@ -208,7 +208,7 @@
   justify-content: flex-start;
   gap: 0.4rem;
   padding: 0.45rem 0.65rem;
-  border-radius: 6px;
+  border-radius: 2px;
   border: 1px solid var(--border, rgba(255,255,255,0.08));
   background: transparent;
   color: var(--white-45, rgba(255,255,255,0.45));
@@ -262,7 +262,7 @@
   align-items: center;
   gap: 0.75rem;
   padding: 0.75rem;
-  border-radius: 8px;
+  border-radius: 2px;
   border: 1px solid var(--border, rgba(255,255,255,0.08));
   background: rgba(255,255,255,0.03);
   color: var(--white-70, rgba(255,255,255,0.7));
@@ -289,7 +289,7 @@
   resize: vertical;
   min-height: 78px;
   margin-bottom: 1rem;
-  border-radius: 8px;
+  border-radius: 2px;
   border: 1px solid var(--border, rgba(255,255,255,0.08));
   background: rgba(0,0,0,0.25);
   color: var(--white-90, #f0f0f0);
@@ -319,7 +319,7 @@
   flex-direction: column;
   min-height: 510px;
   padding: 1rem;
-  border-radius: 8px;
+  border-radius: 2px;
   background: rgba(255,255,255,0.035);
   border: 1px solid var(--border, rgba(255,255,255,0.08));
   gap: 0.75rem;
@@ -328,7 +328,7 @@
 .planCardIcon {
   width: 36px;
   height: 36px;
-  border-radius: 8px;
+  border-radius: 2px;
   background: rgba(var(--blueprint-blue-rgb), 0.12);
   color: var(--logic-lime);
   display: flex;
@@ -427,13 +427,13 @@
   gap: 0.25rem;
   background: var(--surface, rgba(255,255,255,0.04));
   border: 1px solid var(--border, rgba(255,255,255,0.08));
-  border-radius: 8px;
+  border-radius: 2px;
   padding: 0.2rem;
 }
 
 .toggleOption {
   padding: 0.3rem 0.85rem;
-  border-radius: 6px;
+  border-radius: 2px;
   font-size: 0.8rem;
   font-weight: 600;
   color: var(--white-40, rgba(255,255,255,0.4));
@@ -496,7 +496,7 @@
 
 .cancelImpactSection {
   padding: 0.85rem 1rem;
-  border-radius: 8px;
+  border-radius: 2px;
   border: 1px solid var(--border, rgba(255,255,255,0.08));
   background: rgba(255,255,255,0.025);
 }
@@ -540,7 +540,7 @@
   top: 0.58em;
   width: 0.35rem;
   height: 0.35rem;
-  border-radius: 999px;
+  border-radius: 2px;
   background: rgba(239, 68, 68, 0.72);
 }
 
@@ -550,7 +550,7 @@
   color: var(--logic-lime);
   background: rgba(var(--blueprint-blue-rgb), 0.12);
   border: 1px solid rgba(var(--blueprint-blue-rgb), 0.25);
-  border-radius: 6px;
+  border-radius: 2px;
   padding: 0.25rem 0.6rem;
   display: inline-block;
 }

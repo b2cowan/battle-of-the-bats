@@ -45,7 +45,7 @@
 
 .title {
   margin: 0;
-  color: var(--fl-text);
+  color: var(--logic-lime);
   font-family: var(--font-data);
   font-size: 1.05rem;
   font-weight: 700;
@@ -117,6 +117,12 @@
 
 .toolbarGroup[data-grow="true"] {
   flex: 1 1 0;
+}
+
+/* Forces a full-width row break — always occupies its own line */
+.toolbarGroup[data-full-width="true"] {
+  flex: 1 1 100%;
+  width: 100%;
 }
 
 .field {
@@ -207,7 +213,7 @@
   height: 22px;
   padding: 0 0.6rem;
   border: none;
-  border-radius: 1px;
+  border-radius: 2px;
   background: transparent;
   color: rgba(148, 163, 184, 0.5);
   cursor: pointer;
@@ -229,9 +235,9 @@
 }
 
 .segmentActive {
-  background: rgba(var(--blueprint-blue-rgb), 0.3);
-  color: var(--fl-text);
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.5);
+  background: rgba(var(--logic-lime-rgb), 0.12);
+  color: var(--logic-lime);
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.35);
 }
 
 .menuRoot {
@@ -260,8 +266,8 @@
 
 .menuButton:hover:not(:disabled),
 .menuButtonOpen {
-  border-color: rgba(var(--blueprint-blue-rgb), 0.45);
-  color: var(--white);
+  border-color: rgba(var(--logic-lime-rgb), 0.4);
+  color: var(--logic-lime);
 }
 
 .menuButton:disabled {
@@ -294,7 +300,7 @@
   width: 100%;
   padding: 0.62rem 0.7rem;
   border: none;
-  border-radius: 6px;
+  border-radius: 2px;
   background: transparent;
   color: var(--white);
   cursor: pointer;
@@ -377,7 +383,7 @@
   min-width: 1.35rem;
   height: 1.35rem;
   padding: 0 0.3rem;
-  border-radius: 999px;
+  border-radius: 2px;
   background: var(--blueprint-blue);
   color: var(--white);
   font-size: 0.68rem;
@@ -406,7 +412,7 @@
   gap: 0.75rem;
   padding: 0.65rem 0.75rem;
   border: 1px solid rgba(var(--blueprint-blue-rgb), 0.28);
-  border-radius: 8px;
+  border-radius: 2px;
   background: rgba(var(--blueprint-blue-rgb), 0.08);
 }
 
@@ -445,7 +451,7 @@
   height: 32px;
   padding: 0 0.65rem;
   border: 1px solid var(--border-subtle);
-  border-radius: 7px;
+  border-radius: 2px;
   background: transparent;
   color: var(--white-60);
   cursor: pointer;
@@ -467,7 +473,7 @@
   width: min(20rem, calc(100vw - 2rem));
   padding: 0.75rem;
   border: 1px solid var(--border-subtle);
-  border-radius: 8px;
+  border-radius: 2px;
   background: var(--bg-raised, #111827);
   box-shadow: 0 18px 38px rgba(0, 0, 0, 0.42);
 }
@@ -495,7 +501,7 @@
   width: 0.48rem;
   height: 0.48rem;
   margin-top: 0.33rem;
-  border-radius: 999px;
+  border-radius: 2px;
   background: var(--white-30);
 }
 

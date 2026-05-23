@@ -117,10 +117,10 @@ export function LiveEventLog({ tournamentId, orgSlug }: { tournamentId: string; 
               alignItems: 'flex-start',
               gap: '0.75rem',
               padding: '0.6rem 0',
-              borderBottom: i < events.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none',
+              borderBottom: i < events.length - 1 ? '1px solid var(--white-5)' : 'none',
             }}
           >
-            <div style={{ width: 28, height: 28, borderRadius: 6, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <div style={{ width: 28, height: 28, borderRadius: '2px', background: 'var(--white-5)', border: '1px solid var(--white-8)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
               <Icon size={13} style={{ color: cfg.color }} />
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>

@@ -17,7 +17,21 @@ export type PlatformEventType =
   | 'team_org_link_approved'
   | 'team_org_link_declined'
   | 'team_org_link_invite_accepted'
-  | 'team_org_link_invite_declined';
+  | 'team_org_link_invite_declined'
+  | 'team_org_billing_requested'
+  | 'team_org_billing_invited'
+  | 'team_org_billing_invite_accepted'
+  | 'team_org_billing_request_declined'
+  | 'team_org_billing_invite_declined'
+  | 'team_org_billing_checkout_started'
+  | 'team_org_billing_takeover_completed'
+  | 'team_org_ownership_requested'
+  | 'team_org_ownership_invited'
+  | 'team_org_ownership_request_approved'
+  | 'team_org_ownership_invite_accepted'
+  | 'team_org_ownership_request_declined'
+  | 'team_org_ownership_invite_declined'
+  | 'team_org_ownership_transfer_completed';
 
 export type PlatformEventInput = {
   eventType: PlatformEventType;

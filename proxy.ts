@@ -38,8 +38,9 @@ export async function proxy(request: NextRequest) {
   // Protect /[orgSlug]/admin/* routes - second path segment must be 'admin'
   const isOrgAdmin = segments.length >= 2 && segments[1] === 'admin';
   const isLegacyAdmin = segments[0] === 'admin';
+  const isOrgScorekeeper = segments.length >= 2 && segments[0] !== 'api' && segments[1] === 'scorekeeper';
 
-  if ((isOrgAdmin || isLegacyAdmin) && !user) {
+  if ((isOrgAdmin || isLegacyAdmin || isOrgScorekeeper) && !user) {
     const url = request.nextUrl.clone();
     url.pathname = '/auth/login';
     url.searchParams.set('next', isLegacyAdmin ? '/admin' : pathname);
@@ -72,6 +73,7 @@ export async function proxy(request: NextRequest) {
 export const config = {
   matcher: [
     '/:slug/admin/:path*',
+    '/:slug/scorekeeper/:path*',
     '/admin',
     '/admin/:path*',
     '/auth/:path*',
@@ -79,6 +81,7 @@ export const config = {
     '/platform-admin/:path*',
     '/platform-admin/login',
     '/api/admin/:path*',
+    '/api/scorekeeper/:path*',
     '/api/registrations',
     '/api/org-context',
     '/api/dev/:path*',

@@ -1068,7 +1068,7 @@ export default function UnifiedTeamsPage() {
             pdfFeatureKey="pdf_exports"
             disabled={regs.length === 0}
           />
-          <button className="btn btn-primary btn-data" onClick={openAddTeamModal} disabled={!currentTournament}><Plus size={14} /> Add Team</button>
+          <button className="btn btn-lime btn-data" onClick={openAddTeamModal} disabled={!currentTournament}><Plus size={14} /> Add Team</button>
           </>
         )}
       />
@@ -1092,6 +1092,7 @@ export default function UnifiedTeamsPage() {
       )}
 
       <TournamentAdminToolbar ariaLabel="Registration controls">
+        {/* ── Row 1: controls + end actions ── */}
         <ToolbarGroup grow>
           <ToolbarSelect
             label="Division"
@@ -1110,26 +1111,6 @@ export default function UnifiedTeamsPage() {
               ]}
               onChange={setViewMode}
             />
-          )}
-          {!slotConfigured && (
-            <div className={s.statusFilters}>
-              {(['pending', 'accepted', 'waitlist', 'rejected'] as Status[]).map(st => (
-                <button
-                  key={st}
-                  className={`${s.filterChip} ${s[`chip_${st}`]} ${selectedStatuses.includes(st) ? s.chipActive : ''}`}
-                  onClick={() => setSelectedStatuses(prev => prev.includes(st) ? prev.filter(x => x !== st) : [...prev, st])}
-                >
-                  {st.toUpperCase()}
-                  <span className={s.chipCount}>{divRegs.filter(r => r.status === st).length}</span>
-                </button>
-              ))}
-            </div>
-          )}
-          {!slotConfigured && (
-            <ToolbarSearch value={search} onChange={setSearch} placeholder="Search teams or coaches..." />
-          )}
-          {paymentToolsAvailable && !slotConfigured && paymentFilter !== 'all' && (
-            <span className={styles.activeFilterBadge}>Payment: {PAYMENT_FILTER_LABEL[paymentFilter]}</span>
           )}
         </ToolbarGroup>
 
@@ -1224,6 +1205,28 @@ export default function UnifiedTeamsPage() {
             )}
           </ToolbarMenu>
         </ToolbarGroup>
+
+        {/* ── Row 2: filter chips + search — always on their own full-width row ── */}
+        {!slotConfigured && (
+          <ToolbarGroup fullWidth>
+            <div className={s.statusFilters}>
+              {(['pending', 'accepted', 'waitlist', 'rejected'] as Status[]).map(st => (
+                <button
+                  key={st}
+                  className={`${s.filterChip} ${s[`chip_${st}`]} ${selectedStatuses.includes(st) ? s.chipActive : ''}`}
+                  onClick={() => setSelectedStatuses(prev => prev.includes(st) ? prev.filter(x => x !== st) : [...prev, st])}
+                >
+                  {st.toUpperCase()}
+                  <span className={s.chipCount}>{divRegs.filter(r => r.status === st).length}</span>
+                </button>
+              ))}
+            </div>
+            <ToolbarSearch value={search} onChange={setSearch} placeholder="Search teams or coaches..." />
+            {paymentToolsAvailable && paymentFilter !== 'all' && (
+              <span className={styles.activeFilterBadge}>Payment: {PAYMENT_FILTER_LABEL[paymentFilter]}</span>
+            )}
+          </ToolbarGroup>
+        )}
       </TournamentAdminToolbar>
 
       <SelectionActionBar

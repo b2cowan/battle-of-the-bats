@@ -78,6 +78,13 @@ export default function AdminHubClient() {
       return;
     }
 
+    // Returning user: onboarding was previously completed but all tournaments
+    // were archived. Go to tournament management, not the first-run wizard.
+    if (currentOrg.onboardingCompletedAt) {
+      router.replace(`${base}/tournaments`);
+      return;
+    }
+
     router.replace(`${base}/onboarding?continueSetup=1`);
   }, [loading, userRole, currentOrg, hasOnlyTournamentWorkspace, startupProgress, base, router]);
 
@@ -88,7 +95,7 @@ export default function AdminHubClient() {
       .then(data => { if (data) setAttention(data); })
       .catch(() => {});
 
-    fetch('/api/admin/org/startup-tasks')
+    fetch(`/api/admin/org/startup-tasks?orgSlug=${encodeURIComponent(currentOrg.slug)}`)
       .then(r => r.ok ? r.json() : null)
       .then(data => { if (data) setStartupProgress(data); })
       .catch(() => {});
@@ -183,7 +190,7 @@ export default function AdminHubClient() {
     <div className="p-8 max-w-4xl">
       <header className="border-b border-blueprint-blue/60 pb-4 mb-8">
         <div className="hud-label mb-1">Admin</div>
-        <h1 className="font-sans font-extrabold text-2xl uppercase tracking-tighter text-fl-text">
+        <h1 className="font-mono font-bold text-2xl uppercase tracking-tight" style={{ color: 'var(--logic-lime)' }}>
           {currentOrg?.name ?? 'Admin'}
         </h1>
       </header>
@@ -199,7 +206,7 @@ export default function AdminHubClient() {
               <Icon size={28} />
             </div>
             <div>
-              <div className="font-sans font-bold text-fl-text text-base uppercase tracking-wide">{label}</div>
+              <div className="font-bold text-fl-text text-base uppercase tracking-wide">{label}</div>
               <div className="text-data-gray text-sm mt-1">{desc}</div>
             </div>
           </Link>
@@ -214,7 +221,7 @@ export default function AdminHubClient() {
             fontWeight: 700,
             textTransform: 'uppercase',
             letterSpacing: '0.08em',
-            color: 'rgba(255,255,255,0.28)',
+            color: 'var(--white-30)',
             marginBottom: '0.75rem',
           }}>
             Coming soon — League &amp; Club plans
@@ -234,19 +241,19 @@ export default function AdminHubClient() {
                 tabIndex={-1}
                 aria-hidden="true"
               >
-                <div style={{ color: 'rgba(255,255,255,0.3)', marginTop: '0.125rem', flexShrink: 0 }}>
+                <div style={{ color: 'var(--white-30)', marginTop: '0.125rem', flexShrink: 0 }}>
                   <Lock size={20} />
                 </div>
                 <div>
-                  <div className="font-sans font-bold text-fl-text text-base uppercase tracking-wide">{label}</div>
+                  <div className="font-bold text-fl-text text-base uppercase tracking-wide">{label}</div>
                   <div className="text-data-gray text-sm mt-1">{desc}</div>
                 </div>
               </Link>
             ))}
           </div>
-          <p style={{ marginTop: '0.85rem', fontSize: '0.8rem', color: 'rgba(255,255,255,0.3)' }}>
+          <p style={{ marginTop: '0.85rem', fontSize: '0.8rem', color: 'var(--white-30)' }}>
             League and Club plans are in early access.{' '}
-            <Link href={`${base}/org/billing`} style={{ color: 'rgba(255,255,255,0.5)', textDecoration: 'underline' }}>
+            <Link href={`${base}/org/billing`} style={{ color: 'var(--white-50)', textDecoration: 'underline' }}>
               View billing and upgrade options →
             </Link>
           </p>
@@ -262,10 +269,10 @@ export default function AdminHubClient() {
             display: 'flex',
             alignItems: 'center',
             gap: '0.85rem',
-            background: 'rgba(68,130,255,0.08)',
-            border: '1px solid rgba(68,130,255,0.28)',
-            borderRadius: '0.5rem',
-            color: 'rgba(255,255,255,0.82)',
+            background: 'rgba(var(--blueprint-blue-rgb),0.08)',
+            border: '1px solid rgba(var(--blueprint-blue-rgb),0.28)',
+            borderRadius: '2px',
+            color: 'var(--white-80)',
             textDecoration: 'none',
           }}
         >
@@ -274,7 +281,7 @@ export default function AdminHubClient() {
             <div style={{ fontWeight: 800, fontSize: '0.92rem' }}>
               First tournament setup available
             </div>
-            <div style={{ color: 'rgba(255,255,255,0.48)', fontSize: '0.82rem', marginTop: '0.15rem' }}>
+            <div style={{ color: 'var(--white-50)', fontSize: '0.82rem', marginTop: '0.15rem' }}>
               Start the guided setup wizard and save everything at the final review.
             </div>
           </div>
@@ -286,13 +293,13 @@ export default function AdminHubClient() {
         <div style={{
           marginTop: '2rem',
           padding: '1rem 1.25rem',
-          background: 'rgba(245,158,11,0.07)',
-          border: '1px solid rgba(245,158,11,0.25)',
-          borderRadius: '0.5rem',
+          background: 'rgba(var(--warning-rgb),0.07)',
+          border: '1px solid rgba(var(--warning-rgb),0.25)',
+          borderRadius: '2px',
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.6rem' }}>
-            <AlertCircle size={15} style={{ color: 'rgba(245,158,11,0.8)', flexShrink: 0 }} />
-            <span style={{ fontSize: '0.78rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'rgba(245,158,11,0.8)' }}>
+            <AlertCircle size={15} style={{ color: 'rgba(var(--warning-rgb),0.8)', flexShrink: 0 }} />
+            <span style={{ fontSize: '0.78rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'rgba(var(--warning-rgb),0.8)' }}>
               Needs attention
             </span>
           </div>
@@ -301,7 +308,7 @@ export default function AdminHubClient() {
               <li key={item.href}>
                 <Link
                   href={item.href}
-                  style={{ fontSize: '0.88rem', color: 'rgba(255,255,255,0.75)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}
+                  style={{ fontSize: '0.88rem', color: 'var(--white-80)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}
                 >
                   {item.label} -&gt;
                 </Link>

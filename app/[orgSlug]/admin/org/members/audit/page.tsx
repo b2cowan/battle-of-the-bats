@@ -203,7 +203,7 @@ export default function AuditLogPage() {
           justifyContent: 'space-between',
           marginTop: '1rem',
           fontSize: '0.82rem',
-          color: 'var(--white-40, rgba(255,255,255,0.4))',
+          color: 'var(--white-40, var(--white-40))',
         }}>
           <span>
             Page {data.page} of {totalPages} · {data.total} event{data.total === 1 ? '' : 's'}

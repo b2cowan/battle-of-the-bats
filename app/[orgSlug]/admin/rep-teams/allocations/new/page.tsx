@@ -325,17 +325,17 @@ export default function NewAllocationPage() {
           <div key={s} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <div style={{
               width: 28, height: 28, borderRadius: '50%',
-              background: step >= s ? 'var(--blueprint-blue,#4fa3e0)' : 'rgba(255,255,255,0.08)',
-              color: step >= s ? '#fff' : 'rgba(255,255,255,0.3)',
+              background: step >= s ? 'var(--blueprint-blue,#4fa3e0)' : 'var(--white-8)',
+              color: step >= s ? '#fff' : 'var(--white-30)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               fontSize: '0.8rem', fontWeight: 700, flexShrink: 0,
             }}>
               {s}
             </div>
-            <span style={{ fontSize: '0.82rem', color: step === s ? 'rgba(255,255,255,0.8)' : 'rgba(255,255,255,0.3)' }}>
+            <span style={{ fontSize: '0.82rem', color: step === s ? 'var(--white-80)' : 'var(--white-30)' }}>
               {s === 1 ? 'Details' : s === 2 ? 'Team Splits' : 'Review'}
             </span>
-            {s < 3 && <ChevronRight size={14} style={{ color: 'rgba(255,255,255,0.2)' }} />}
+            {s < 3 && <ChevronRight size={14} style={{ color: 'var(--white-20)' }} />}
           </div>
         ))}
       </div>
@@ -414,10 +414,10 @@ export default function NewAllocationPage() {
       {step === 2 && (
         <div>
           <p className={styles.hint} style={{ marginBottom: '1.5rem', fontSize: '0.88rem' }}>
-            Total: <strong style={{ color: 'rgba(255,255,255,0.8)' }}>{fmt(total)}</strong>
+            Total: <strong style={{ color: 'var(--white-80)' }}>{fmt(total)}</strong>
             {' '}— Allocated so far: <strong style={{ color: splitSum > total + 0.001 ? '#f87171' : '#4ade80' }}>{fmt(splitSum)}</strong>
             {total > splitSum + 0.001 && (
-              <span style={{ color: 'rgba(255,255,255,0.4)' }}> (unallocated: {fmt(total - splitSum)})</span>
+              <span style={{ color: 'var(--white-40)' }}> (unallocated: {fmt(total - splitSum)})</span>
             )}
           </p>
 
@@ -428,7 +428,7 @@ export default function NewAllocationPage() {
             return (
               <div key={si} className={styles.detailSection} style={{ marginBottom: '1rem' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                  <span style={{ fontWeight: 700, fontSize: '0.9rem', color: 'rgba(255,255,255,0.7)' }}>
+                  <span style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--white-70)' }}>
                     Split {si + 1}
                   </span>
                   {splits.length > 1 && (
@@ -632,16 +632,16 @@ export default function NewAllocationPage() {
           <div className={styles.detailSection} style={{ marginBottom: '1.5rem' }}>
             <p className={styles.detailSectionTitle}>Allocation Details</p>
             <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '0.4rem 1rem', fontSize: '0.9rem' }}>
-              <span style={{ color: 'rgba(255,255,255,0.4)' }}>Description</span>
-              <span style={{ color: 'rgba(255,255,255,0.9)', fontWeight: 600 }}>{description}</span>
-              <span style={{ color: 'rgba(255,255,255,0.4)' }}>Total amount</span>
-              <span style={{ color: 'rgba(255,255,255,0.9)' }}>{fmt(total)}</span>
-              <span style={{ color: 'rgba(255,255,255,0.4)' }}>Allocated</span>
+              <span style={{ color: 'var(--white-40)' }}>Description</span>
+              <span style={{ color: 'var(--white-90)', fontWeight: 600 }}>{description}</span>
+              <span style={{ color: 'var(--white-40)' }}>Total amount</span>
+              <span style={{ color: 'var(--white-90)' }}>{fmt(total)}</span>
+              <span style={{ color: 'var(--white-40)' }}>Allocated</span>
               <span style={{ color: splitSum > total + 0.001 ? '#f87171' : '#4ade80' }}>{fmt(splitSum)}</span>
               {total > splitSum + 0.001 && (
                 <>
-                  <span style={{ color: 'rgba(255,255,255,0.4)' }}>Org retains</span>
-                  <span style={{ color: 'rgba(255,255,255,0.5)' }}>{fmt(total - splitSum)}</span>
+                  <span style={{ color: 'var(--white-40)' }}>Org retains</span>
+                  <span style={{ color: 'var(--white-50)' }}>{fmt(total - splitSum)}</span>
                 </>
               )}
             </div>
@@ -658,9 +658,9 @@ export default function NewAllocationPage() {
                   <p className={styles.detailSectionTitle} style={{ margin: 0 }}>
                     {teamName} — {yearLabel ? `${yearLabel.name} (${yearLabel.year})` : '—'}
                   </p>
-                  <strong style={{ color: 'rgba(255,255,255,0.9)', fontSize: '0.95rem' }}>{fmt(parseFloat(split.amount) || 0)}</strong>
+                  <strong style={{ color: 'var(--white-90)', fontSize: '0.95rem' }}>{fmt(parseFloat(split.amount) || 0)}</strong>
                 </div>
-                <div style={{ fontSize: '0.83rem', color: 'rgba(255,255,255,0.5)', marginBottom: '0.5rem' }}>
+                <div style={{ fontSize: '0.83rem', color: 'var(--white-50)', marginBottom: '0.5rem' }}>
                   {split.splitMethod === 'percentage' && `${split.splitValue}% of total`}
                   {split.splitMethod === 'sessions' && `${split.splitValue} sessions`}
                   {split.splitMethod === 'fixed' && 'Fixed amount'}
@@ -673,17 +673,17 @@ export default function NewAllocationPage() {
                 <table style={{ width: '100%', fontSize: '0.82rem', borderCollapse: 'collapse' }}>
                   <thead>
                     <tr>
-                      <th style={{ textAlign: 'left', color: 'rgba(255,255,255,0.3)', paddingBottom: '0.3rem', fontWeight: 600 }}>#</th>
-                      <th style={{ textAlign: 'left', color: 'rgba(255,255,255,0.3)', paddingBottom: '0.3rem', fontWeight: 600 }}>Amount</th>
-                      <th style={{ textAlign: 'left', color: 'rgba(255,255,255,0.3)', paddingBottom: '0.3rem', fontWeight: 600 }}>Due Date</th>
+                      <th style={{ textAlign: 'left', color: 'var(--white-30)', paddingBottom: '0.3rem', fontWeight: 600 }}>#</th>
+                      <th style={{ textAlign: 'left', color: 'var(--white-30)', paddingBottom: '0.3rem', fontWeight: 600 }}>Amount</th>
+                      <th style={{ textAlign: 'left', color: 'var(--white-30)', paddingBottom: '0.3rem', fontWeight: 600 }}>Due Date</th>
                     </tr>
                   </thead>
                   <tbody>
                     {split.installments.map((inst, ii) => (
                       <tr key={ii}>
-                        <td style={{ color: 'rgba(255,255,255,0.4)', padding: '0.2rem 0' }}>{inst.installmentNumber}</td>
-                        <td style={{ color: 'rgba(255,255,255,0.8)', padding: '0.2rem 0' }}>{fmt(parseFloat(inst.amount) || 0)}</td>
-                        <td style={{ color: 'rgba(255,255,255,0.6)', padding: '0.2rem 0' }}>{inst.dueDate || '—'}</td>
+                        <td style={{ color: 'var(--white-40)', padding: '0.2rem 0' }}>{inst.installmentNumber}</td>
+                        <td style={{ color: 'var(--white-80)', padding: '0.2rem 0' }}>{fmt(parseFloat(inst.amount) || 0)}</td>
+                        <td style={{ color: 'var(--white-60)', padding: '0.2rem 0' }}>{inst.dueDate || '—'}</td>
                       </tr>
                     ))}
                   </tbody>

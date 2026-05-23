@@ -153,8 +153,10 @@ async function buildProgress(
   };
 }
 
-export async function GET() {
-  const ctx = await getAuthContextWithRole();
+export async function GET(req: Request) {
+  const { searchParams } = new URL(req.url);
+  const orgSlug = searchParams.get('orgSlug') ?? undefined;
+  const ctx = await getAuthContextWithRole({ orgSlug });
   if (!ctx) return unauthorized();
 
   try {
@@ -166,7 +168,9 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-  const ctx = await getAuthContextWithRole();
+  const { searchParams } = new URL(req.url);
+  const orgSlug = searchParams.get('orgSlug') ?? undefined;
+  const ctx = await getAuthContextWithRole({ orgSlug });
   if (!ctx) return unauthorized();
 
   try {

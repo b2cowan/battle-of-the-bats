@@ -273,7 +273,7 @@ export async function listTeamOrgLinksForLinkedOrg(orgId: string): Promise<TeamO
   return mapLinkRows((data ?? []) as TeamOrgLinkRow[]);
 }
 
-async function getTeamOrgLinkSummary(linkId: string): Promise<TeamOrgLinkSummary | null> {
+export async function getTeamOrgLinkSummary(linkId: string): Promise<TeamOrgLinkSummary | null> {
   const { data, error } = await supabaseAdmin
     .from('team_org_links')
     .select('*')

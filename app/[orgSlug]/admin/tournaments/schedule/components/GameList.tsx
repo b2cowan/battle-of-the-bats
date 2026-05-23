@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { ChevronDown, ChevronUp, MapPin, Trophy, Pencil, X, AlertCircle, Trash2, MoreVertical } from 'lucide-react';
 import { Game, Team, AgeGroup, Diamond } from '@/lib/types';
 import { formatTime, formatPoolName } from '@/lib/utils';
+import { scoreSubmissionSummary } from '@/lib/tournament-score-audit';
 import { Pool } from '@/lib/types';
 import s from '@/app/admin/admin-common.module.css';
 import styles from '../schedule-admin.module.css';
@@ -131,6 +132,17 @@ export default function GameList({
 
   const renderRow = (g: Game) => {
     const isExpanded = expanded.has(g.id);
+    const hasScoredResult = mode === 'scoring'
+      && (g.status === 'completed' || g.status === 'submitted')
+      && g.homeScore != null
+      && g.awayScore != null;
+    const scoreAuditSummary = hasScoredResult
+      ? scoreSubmissionSummary({
+          source: g.scoreSubmissionSource,
+          email: g.scoreSubmittedByEmail,
+          submittedAt: g.scoreSubmittedAt,
+        })
+      : '';
     return (
       <div key={g.id} className={`${s.row} ${isExpanded ? styles.expanded : ''}`}>
         <div className={s.rowMain} onClick={() => toggleExpand(g.id)} style={{ cursor: 'pointer', gap: '1rem' }}>
@@ -158,21 +170,21 @@ export default function GameList({
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1, minWidth: 0 }}>
                 <div style={{
                   fontSize: '0.9rem',
-                  color: mode === 'scoring' && g.status === 'completed' && (g.awayScore ?? 0) > (g.homeScore ?? 0) ? '#ffffff' : 'rgba(255,255,255,0.6)',
-                  fontWeight: mode === 'scoring' && g.status === 'completed' && (g.awayScore ?? 0) > (g.homeScore ?? 0) ? 900 : 400,
+                  color: hasScoredResult && (g.awayScore ?? 0) > (g.homeScore ?? 0) ? 'var(--white)' : 'var(--white-60)',
+                  fontWeight: hasScoredResult && (g.awayScore ?? 0) > (g.homeScore ?? 0) ? 900 : 400,
                   textAlign: 'center',
                   width: '100%',
                   lineHeight: '1.2'
                 }}>
                   {resolveTeam(g.awayTeamId, g.awayPlaceholder)}
                 </div>
-                {mode === 'scoring' && g.status === 'completed' && (
+                {hasScoredResult && (
                   <div style={{
                     marginTop: '6px',
                     fontSize: '1rem',
                     fontWeight: 900,
                     color: (g.awayScore ?? 0) > (g.homeScore ?? 0) ? 'var(--success)' : (g.awayScore === g.homeScore) ? 'var(--warning)' : 'var(--danger)',
-                    fontFamily: 'var(--font-display)',
+                    fontFamily: 'var(--font-data)',
                     letterSpacing: '0.05em'
                   }}>
                     {(g.awayScore ?? 0) > (g.homeScore ?? 0) ? 'W' : (g.awayScore === g.homeScore) ? 'T' : 'L'} {g.awayScore}
@@ -182,7 +194,7 @@ export default function GameList({
 
               {/* VS Separator */}
               <div style={{
-                color: 'rgba(255,255,255,0.4)',
+                color: 'var(--white-40)',
                 fontWeight: 900,
                 fontStyle: 'italic',
                 fontSize: '11px',
@@ -194,21 +206,21 @@ export default function GameList({
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1, minWidth: 0 }}>
                 <div style={{
                   fontSize: '0.9rem',
-                  color: mode === 'scoring' && g.status === 'completed' && (g.homeScore ?? 0) > (g.awayScore ?? 0) ? '#ffffff' : 'rgba(255,255,255,0.6)',
-                  fontWeight: mode === 'scoring' && g.status === 'completed' && (g.homeScore ?? 0) > (g.awayScore ?? 0) ? 900 : 400,
+                  color: hasScoredResult && (g.homeScore ?? 0) > (g.awayScore ?? 0) ? 'var(--white)' : 'var(--white-60)',
+                  fontWeight: hasScoredResult && (g.homeScore ?? 0) > (g.awayScore ?? 0) ? 900 : 400,
                   textAlign: 'center',
                   width: '100%',
                   lineHeight: '1.2'
                 }}>
                   {resolveTeam(g.homeTeamId, g.homePlaceholder)}
                 </div>
-                {mode === 'scoring' && g.status === 'completed' && (
+                {hasScoredResult && (
                   <div style={{
                     marginTop: '6px',
                     fontSize: '1rem',
                     fontWeight: 900,
                     color: (g.homeScore ?? 0) > (g.awayScore ?? 0) ? 'var(--success)' : (g.homeScore === g.awayScore) ? 'var(--warning)' : 'var(--danger)',
-                    fontFamily: 'var(--font-display)',
+                    fontFamily: 'var(--font-data)',
                     letterSpacing: '0.05em'
                   }}>
                     {(g.homeScore ?? 0) > (g.awayScore ?? 0) ? 'W' : (g.homeScore === g.awayScore) ? 'T' : 'L'} {g.homeScore}
@@ -230,7 +242,7 @@ export default function GameList({
                     onClick={(e) => { e.stopPropagation(); onScore(g); }}
                     title={g.status === 'completed' ? 'Edit Score' : g.status === 'submitted' ? 'Edit Submitted Score' : 'Enter Score'}
                     aria-label={g.status === 'completed' ? 'Edit Score' : g.status === 'submitted' ? 'Edit Submitted Score' : 'Enter Score'}
-                    style={{ padding: '8px', borderRadius: '8px', width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                    style={{ padding: '8px', borderRadius: '2px', width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                   >
                     <Trophy size={16} />
                   </button>
@@ -290,6 +302,12 @@ export default function GameList({
                     <span className="text-label" style={{ fontSize: '0.65rem' }}>Notes</span>
                     <p className="text-sm text-white-60 mt-1">{g.notes || ''}</p>
                   </div>
+                  {scoreAuditSummary && (
+                    <div className="flex flex-col gap-1">
+                      <span className="text-label" style={{ fontSize: '0.65rem' }}>Score submission</span>
+                      <p className="text-sm text-white-60 mt-1">{scoreAuditSummary}</p>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -340,7 +358,7 @@ export default function GameList({
     <div className={s.groupSection}>
       <div className={s.groupHeader}>
         <strong>{ageGroupName}</strong>
-        <span className="badge badge-primary">{sortedGames.length} Game{sortedGames.length !== 1 ? 's' : ''}</span>
+        <span className="badge badge-neutral">{sortedGames.length} Game{sortedGames.length !== 1 ? 's' : ''}</span>
       </div>
 
       <div className={s.compactListContent}>
@@ -463,8 +481,8 @@ export default function GameList({
             return (
               <div key={p.id} className={s.poolSubSection}>
                 <div className={s.poolSubHeader}>
-                  <div className={s.poolDot} style={{ background: p.id === 'unassigned' ? 'var(--danger-light)' : 'var(--logic-lime)' }} />
-                  <span className={s.poolSubLabel} style={{ color: p.id === 'unassigned' ? 'var(--danger-light)' : undefined }}>
+                  <div className={s.poolDot} style={{ background: p.id === 'unassigned' ? 'var(--danger)' : 'var(--logic-lime)' }} />
+                  <span className={s.poolSubLabel} style={{ color: p.id === 'unassigned' ? 'var(--danger)' : undefined }}>
                     {p.id === 'unassigned' ? 'UNASSIGNED' : formatPoolName(p.name).toUpperCase()}
                   </span>
                   <span className={s.poolSubCount}>({poolGames.length})</span>

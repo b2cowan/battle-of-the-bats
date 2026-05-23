@@ -334,4 +334,97 @@ test.describe.serial('standalone Team org-link smoke', () => {
 
     expect(linkedOrgEntitlements ?? 0).toBe(0)
   })
+
+  test('coach requests org billing and org owner applies the Team add-on in mock mode', async ({ browser }) => {
+    test.skip(
+      Boolean(process.env.STRIPE_SECRET_KEY) && process.env.ENABLE_BILLING_MOCK_PORTAL !== 'true',
+      'Real Stripe org Team add-on checkout requires manual sandbox completion.',
+    )
+
+    if (!state?.linkId) {
+      throw new Error('Approved link smoke state was not initialized.')
+    }
+
+    const coachContext = await browser.newContext()
+    const coachPage = await coachContext.newPage()
+
+    await coachPage.goto('/auth/login')
+    await coachPage.locator('#login-email').fill(state.coachEmail)
+    await coachPage.locator('#login-password').fill(SMOKE_COACH_PASSWORD)
+    await coachPage.locator('#login-submit').click()
+    await coachPage.waitForURL((url) => !url.pathname.startsWith('/auth/login'), {
+      timeout: 90_000,
+    })
+
+    await coachPage.goto(`/${state.workspaceSlug}/coaches/link-org`)
+    await expect(coachPage.getByRole('heading', { name: 'Link Organization' })).toBeVisible({
+      timeout: 30_000,
+    })
+    await coachPage.getByRole('button', { name: 'Request Org Billing' }).click()
+    await expect(coachPage.getByText('Org billing request sent.')).toBeVisible({ timeout: 15_000 })
+
+    await coachContext.close()
+
+    const { data: requestedBillingLink, error: requestedBillingError } = await supabaseAdmin
+      .from('team_org_links')
+      .select('*')
+      .eq('id', state.linkId)
+      .single()
+
+    if (requestedBillingError) {
+      throw requestedBillingError
+    }
+
+    expect(requestedBillingLink.link_type).toBe('billing')
+    expect(requestedBillingLink.billing_mode_after_approval).toBe('org_team_addon')
+    expect(requestedBillingLink.approved_by_team_user_id).toBe(state.coachUserId)
+    expect(requestedBillingLink.approved_by_org_user_id).toBeNull()
+    expect(requestedBillingLink.status).toBe('linked')
+
+    const ownerContext = await browser.newContext({ storageState: OWNER_STORAGE })
+    const ownerPage = await ownerContext.newPage()
+
+    await ownerPage.goto(`/${state.linkedOrgSlug}/admin/org/team-links`)
+    await expect(ownerPage.getByRole('heading', { name: 'Team Links' })).toBeVisible({
+      timeout: 30_000,
+    })
+    await expect(ownerPage.getByText('Coach requested org billing')).toBeVisible({
+      timeout: 30_000,
+    })
+    await ownerPage.getByRole('button', { name: 'Approve Annual' }).click()
+    await expect(ownerPage.getByText('Org billing is now active for this Team.')).toBeVisible({
+      timeout: 15_000,
+    })
+
+    await ownerContext.close()
+
+    const { data: workspace, error: workspaceError } = await supabaseAdmin
+      .from('team_workspaces')
+      .select('billing_mode, billing_owner_org_id, workspace_state')
+      .eq('id', state.teamWorkspaceId)
+      .single()
+
+    if (workspaceError) {
+      throw workspaceError
+    }
+
+    expect(workspace.billing_mode).toBe('org_team_addon')
+    expect(workspace.billing_owner_org_id).toBe(state.linkedOrgId)
+    expect(workspace.workspace_state).toBe('linked')
+
+    const { data: addOnEntitlements, error: addOnEntitlementsError } = await supabaseAdmin
+      .from('team_entitlements')
+      .select('org_id, source, status')
+      .eq('team_workspace_id', state.teamWorkspaceId)
+      .eq('source', 'org_team_addon')
+      .in('status', ['active', 'trialing', 'past_due'])
+
+    if (addOnEntitlementsError) {
+      throw addOnEntitlementsError
+    }
+
+    const addOnOrgIds = new Set((addOnEntitlements ?? []).map(row => row.org_id as string))
+    expect(addOnOrgIds.has(state.workspaceOrgId)).toBe(true)
+    expect(addOnOrgIds.has(state.linkedOrgId)).toBe(true)
+  })
 })

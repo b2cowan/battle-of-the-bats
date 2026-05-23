@@ -195,7 +195,7 @@ export async function syncTeamWorkspaceSubscription(params: {
 }): Promise<boolean> {
   const { data: workspace, error } = await supabaseAdmin
     .from('team_workspaces')
-    .select('id, workspace_org_id, rep_team_id')
+    .select('id, workspace_org_id, rep_team_id, billing_mode')
     .eq('stripe_subscription_id', params.stripeSubscriptionId)
     .maybeSingle();
 
@@ -218,8 +218,8 @@ export async function syncTeamWorkspaceSubscription(params: {
   await supabaseAdmin
     .from('organizations')
     .update({
-      stripe_customer_id: params.stripeCustomerId,
-      stripe_subscription_id: params.stripeSubscriptionId,
+      stripe_customer_id: workspace.billing_mode === 'org_team_addon' ? null : params.stripeCustomerId,
+      stripe_subscription_id: workspace.billing_mode === 'org_team_addon' ? null : params.stripeSubscriptionId,
       subscription_status: orgStatus,
       subscription_period: params.billingCycle ?? null,
       current_period_end: params.currentPeriodEnd ?? null,

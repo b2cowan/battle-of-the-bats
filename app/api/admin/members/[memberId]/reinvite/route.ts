@@ -64,7 +64,7 @@ export async function POST(_req: Request, { params }: Params) {
       return NextResponse.json({ error: mlError?.message ?? 'Failed to generate invite link' }, { status: 500 });
     }
     const inviteUrl = (mlData as any).properties?.action_link ?? mlData.properties?.action_link;
-    const roleLabel = role === 'official' ? 'field official (scorekeeper)' : `team ${role}`;
+    const roleLabel = role === 'official' ? 'scorekeeper' : `team ${role}`;
     await getResend().emails.send({
       from: fromAddress,
       to: email,
@@ -113,12 +113,12 @@ export async function POST(_req: Request, { params }: Params) {
     .eq('id', memberId);
 
   const inviteUrl = (linkData as any).properties?.action_link ?? linkData.properties?.action_link;
-  const roleLabel = role === 'official' ? 'field official (scorekeeper)' : `team ${role}`;
+  const roleLabel = role === 'official' ? 'scorekeeper' : `team ${role}`;
   const officialNote = role === 'official'
-    ? `<p>As a field official, you'll have access to the score entry app to submit game results from your assigned diamonds.</p>`
+    ? `<p>As a scorekeeper, you'll have access to the scorekeeper app to submit game results from your assigned fields.</p>`
     : '';
   const officialNoteText = role === 'official'
-    ? `As a field official, you'll have access to the score entry app to submit game results from your assigned diamonds.\n\n`
+    ? `As a scorekeeper, you'll have access to the scorekeeper app to submit game results from your assigned fields.\n\n`
     : '';
 
   await getResend().emails.send({

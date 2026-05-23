@@ -88,11 +88,11 @@ const HL_REG_EXPORT_COLS: ExportColumnDef[] = [
 ];
 
 const REG_STATUS_STYLE: Record<LeagueRegistrationStatus, React.CSSProperties> = {
-  pending_review: { background: 'rgba(245,158,11,0.12)', color: '#F59E0B', border: '1px solid rgba(245,158,11,0.25)' },
+  pending_review: { background: 'rgba(var(--warning-rgb),0.12)', color: 'var(--warning)', border: '1px solid rgba(var(--warning-rgb),0.25)' },
   active:         { background: 'rgba(34,197,94,0.12)',  color: '#22C55E', border: '1px solid rgba(34,197,94,0.25)' },
   waitlisted:     { background: 'rgba(249,115,22,0.12)', color: '#F97316', border: '1px solid rgba(249,115,22,0.25)' },
-  declined:       { background: 'rgba(239,68,68,0.08)',  color: '#f87171', border: '1px solid rgba(239,68,68,0.2)' },
-  withdrawn:      { background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.3)', border: '1px solid rgba(255,255,255,0.08)' },
+  declined:       { background: 'rgba(var(--danger-rgb),0.08)',  color: '#f87171', border: '1px solid rgba(var(--danger-rgb),0.2)' },
+  withdrawn:      { background: 'var(--white-5)', color: 'var(--white-30)', border: '1px solid var(--white-8)' },
 };
 
 // ── Sub-components ─────────────────────────────────────────────────────────────
@@ -103,7 +103,7 @@ function StatusBadge({ status }: { status: LeagueRegistrationStatus }) {
       style={{
         display: 'inline-block',
         padding: '0.2rem 0.55rem',
-        borderRadius: 4,
+        borderRadius: '2px',
         fontSize: '0.68rem',
         fontWeight: 700,
         textTransform: 'uppercase' as const,
@@ -449,7 +449,7 @@ export default function RegistrationsPage() {
           </button>
           <button
             className={styles.iconBtn}
-            style={{ fontSize: '0.78rem', padding: '0.3rem 0.6rem', color: '#F59E0B', borderColor: 'rgba(245,158,11,0.3)' }}
+            style={{ fontSize: '0.78rem', padding: '0.3rem 0.6rem', color: 'var(--warning)', borderColor: 'rgba(var(--warning-rgb),0.3)' }}
             disabled={busy}
             onClick={() => patchStatus(reg.id, 'waitlisted')}
           >
@@ -517,7 +517,7 @@ export default function RegistrationsPage() {
         <div className={styles.pageHeaderLeft}>
           <Link
             href={`/${orgSlug}/admin/house-league/seasons/${seasonId}`}
-            style={{ color: 'rgba(255,255,255,0.4)', display: 'flex', alignItems: 'center', textDecoration: 'none' }}
+            style={{ color: 'var(--white-40)', display: 'flex', alignItems: 'center', textDecoration: 'none' }}
           >
             <ChevronLeft size={16} />
           </Link>
@@ -550,7 +550,7 @@ export default function RegistrationsPage() {
             </button>
             <button
               className={styles.iconBtn}
-              style={{ gap: '0.35rem', padding: '0.45rem 0.85rem', fontSize: '0.85rem', color: 'var(--logic-lime, #a3e635)', borderColor: 'rgba(163,230,53,0.3)' }}
+              style={{ gap: '0.35rem', padding: '0.45rem 0.85rem', fontSize: '0.85rem', color: 'var(--logic-lime)', borderColor: 'rgba(var(--logic-lime-rgb),0.3)' }}
               onClick={() => { setAddForm(BLANK_FORM); setAddOpen(true); }}
             >
               <Plus size={14} />
@@ -583,7 +583,7 @@ export default function RegistrationsPage() {
       </div>
 
       {/* ── Tabs ──────────────────────────────────────────────────────────── */}
-      <div style={{ display: 'flex', gap: '0.25rem', marginBottom: '1.25rem', flexWrap: 'wrap', borderBottom: '1px solid rgba(255,255,255,0.07)', paddingBottom: '0' }}>
+      <div style={{ display: 'flex', gap: '0.25rem', marginBottom: '1.25rem', flexWrap: 'wrap', borderBottom: '1px solid var(--white-8)', paddingBottom: '0' }}>
         {TABS.map(tab => (
           <button
             key={tab.key}
@@ -591,8 +591,8 @@ export default function RegistrationsPage() {
             style={{
               background: 'none',
               border: 'none',
-              borderBottom: activeTab === tab.key ? '2px solid var(--logic-lime, #a3e635)' : '2px solid transparent',
-              color: activeTab === tab.key ? 'var(--white-90, #f0f0f0)' : 'rgba(255,255,255,0.4)',
+              borderBottom: activeTab === tab.key ? '2px solid var(--logic-lime)' : '2px solid transparent',
+              color: activeTab === tab.key ? 'var(--white-90, #f0f0f0)' : 'var(--white-40)',
               fontWeight: activeTab === tab.key ? 700 : 400,
               fontSize: '0.85rem',
               padding: '0.5rem 0.75rem',
@@ -606,9 +606,9 @@ export default function RegistrationsPage() {
             {counts[tab.key] > 0 && (
               <span style={{
                 marginLeft: '0.4rem',
-                background: activeTab === tab.key ? 'rgba(163,230,53,0.15)' : 'rgba(255,255,255,0.07)',
-                color: activeTab === tab.key ? 'var(--logic-lime, #a3e635)' : 'rgba(255,255,255,0.4)',
-                borderRadius: 4,
+                background: activeTab === tab.key ? 'rgba(var(--logic-lime-rgb),0.15)' : 'var(--white-8)',
+                color: activeTab === tab.key ? 'var(--logic-lime)' : 'var(--white-40)',
+                borderRadius: '2px',
                 fontSize: '0.7rem',
                 fontWeight: 700,
                 padding: '0.1rem 0.4rem',
@@ -629,14 +629,14 @@ export default function RegistrationsPage() {
         <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.875rem' }}>
             <thead>
-              <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+              <tr style={{ borderBottom: '1px solid var(--white-8)' }}>
                 {[
                   'Player', 'Division', 'Guardian', 'Registered',
                   'Status',
                   'Fee Paid',
                   ...(activeTab !== 'declined_withdrawn' && canManageRegs ? ['Actions'] : []),
                 ].map(h => (
-                  <th key={h} style={{ padding: '0.5rem 0.75rem', textAlign: 'left', fontSize: '0.68rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'rgba(255,255,255,0.4)', whiteSpace: 'nowrap' }}>
+                  <th key={h} style={{ padding: '0.5rem 0.75rem', textAlign: 'left', fontSize: '0.68rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--white-40)', whiteSpace: 'nowrap' }}>
                     {h}
                   </th>
                 ))}
@@ -646,8 +646,8 @@ export default function RegistrationsPage() {
               {tabRegs.map(reg => (
                 <tr
                   key={reg.id}
-                  style={{ borderBottom: '1px solid rgba(255,255,255,0.04)', transition: 'background 0.1s' }}
-                  onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.02)')}
+                  style={{ borderBottom: '1px solid var(--white-5)', transition: 'background 0.1s' }}
+                  onMouseEnter={e => (e.currentTarget.style.background = 'var(--white-03)')}
                   onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
                 >
                   {/* Player */}
@@ -660,7 +660,7 @@ export default function RegistrationsPage() {
                         marginLeft: '0.5rem',
                         background: 'rgba(249,115,22,0.15)',
                         color: '#F97316',
-                        borderRadius: 4,
+                        borderRadius: '2px',
                         fontSize: '0.68rem',
                         fontWeight: 700,
                         padding: '0.1rem 0.4rem',
@@ -671,20 +671,20 @@ export default function RegistrationsPage() {
                   </td>
 
                   {/* Division */}
-                  <td style={{ padding: '0.65rem 0.75rem', color: 'rgba(255,255,255,0.6)', whiteSpace: 'nowrap' }}>
+                  <td style={{ padding: '0.65rem 0.75rem', color: 'var(--white-60)', whiteSpace: 'nowrap' }}>
                     {divisionName(reg.divisionId)}
                   </td>
 
                   {/* Guardian */}
                   <td style={{ padding: '0.65rem 0.75rem' }}>
-                    <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.82rem' }}>{reg.guardianEmail}</div>
+                    <div style={{ color: 'var(--white-70)', fontSize: '0.82rem' }}>{reg.guardianEmail}</div>
                     {reg.guardianPhone && (
-                      <div style={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.78rem' }}>{reg.guardianPhone}</div>
+                      <div style={{ color: 'var(--white-35)', fontSize: '0.78rem' }}>{reg.guardianPhone}</div>
                     )}
                   </td>
 
                   {/* Registered at */}
-                  <td style={{ padding: '0.65rem 0.75rem', color: 'rgba(255,255,255,0.4)', fontSize: '0.8rem', whiteSpace: 'nowrap' }}>
+                  <td style={{ padding: '0.65rem 0.75rem', color: 'var(--white-40)', fontSize: '0.8rem', whiteSpace: 'nowrap' }}>
                     {formatDate(reg.registeredAt)}
                   </td>
 
@@ -728,7 +728,7 @@ export default function RegistrationsPage() {
                 <X size={18} />
               </button>
             </div>
-            <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.9rem', margin: '0 0 1.25rem' }}>
+            <p style={{ color: 'var(--white-60)', fontSize: '0.9rem', margin: '0 0 1.25rem' }}>
               This will send a decline email to the parent. The spot will{' '}
               {season?.autoPromoteWaitlist ? 'automatically be offered to the next person on the waitlist.' : 'remain open for manual waitlist management.'}
             </p>
@@ -847,7 +847,7 @@ export default function RegistrationsPage() {
               </button>
               <button
                 className={styles.iconBtn}
-                style={{ fontSize: '0.875rem', padding: '0.5rem 1rem', color: 'var(--logic-lime, #a3e635)', borderColor: 'rgba(163,230,53,0.3)' }}
+                style={{ fontSize: '0.875rem', padding: '0.5rem 1rem', color: 'var(--logic-lime)', borderColor: 'rgba(var(--logic-lime-rgb),0.3)' }}
                 disabled={adding}
                 onClick={handleManualAdd}
               >
@@ -918,11 +918,11 @@ export default function RegistrationsPage() {
             <div
               style={{
                 padding: '0.5rem 0.75rem',
-                borderRadius: '6px',
-                background: recipientCount > 0 ? 'rgba(163,230,53,0.07)' : 'rgba(255,255,255,0.04)',
-                border: recipientCount > 0 ? '1px solid rgba(163,230,53,0.2)' : '1px solid rgba(255,255,255,0.07)',
+                borderRadius: '2px',
+                background: recipientCount > 0 ? 'rgba(var(--logic-lime-rgb),0.07)' : 'var(--white-5)',
+                border: recipientCount > 0 ? '1px solid rgba(var(--logic-lime-rgb),0.2)' : '1px solid var(--white-8)',
                 fontSize: '0.8rem',
-                color: recipientCount > 0 ? '#a3e635' : 'rgba(255,255,255,0.35)',
+                color: recipientCount > 0 ? 'var(--logic-lime)' : 'var(--white-35)',
                 marginBottom: '1.25rem',
               }}
             >
@@ -965,8 +965,8 @@ export default function RegistrationsPage() {
                 className={styles.iconBtn}
                 style={{
                   fontSize: '0.875rem', padding: '0.5rem 1.25rem',
-                  color: 'var(--logic-lime, #a3e635)',
-                  borderColor: 'rgba(163,230,53,0.3)',
+                  color: 'var(--logic-lime)',
+                  borderColor: 'rgba(var(--logic-lime-rgb),0.3)',
                   opacity: recipientCount === 0 ? 0.5 : 1,
                 }}
                 disabled={composeSending || recipientCount === 0}

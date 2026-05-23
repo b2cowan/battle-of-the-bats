@@ -11,6 +11,21 @@ import type { OrgPlan } from '@/lib/types';
 
 // ─── Interfaces ──────────────────────────────────────────────────────────────
 
+interface MembershipData {
+  byOrg: {
+    orgId:   string;
+    slug:    string;
+    name:    string;
+    planId:  string;
+    members: { userId: string; email: string; role: string }[];
+  }[];
+  byUser: {
+    userId: string;
+    email:  string;
+    orgs: { orgId: string; slug: string; name: string; planId: string; role: string }[];
+  }[];
+}
+
 interface OrgRow {
   id: string;
   slug: string;
@@ -21,8 +36,6 @@ interface OrgRow {
 
 interface Status {
   orgs: number;
-  orgId: string | null;
-  orgSlug: string | null;
   platformUsers: number;
   tournaments: number;
   leagueSeasons: number;
@@ -69,15 +82,6 @@ interface MockBillingConfig {
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
-const CREDENTIALS = [
-  { email: 'owner@dev.local',        role: 'Org Owner'        },
-  { email: 'admin@dev.local',        role: 'Org Admin'        },
-  { email: 'staff@dev.local',        role: 'Staff'            },
-  { email: 'coach@dev.local',        role: 'Coach'            },
-  { email: 'league-admin@dev.local', role: 'League Admin'     },
-  { email: 'treasurer@dev.local',    role: 'Treasurer'        },
-  { email: 'platform@dev.local',     role: 'Platform Admin'   },
-];
 
 const ORG_PLAN_OPTIONS: { value: OrgPlan; label: string; price: string }[] = [
   { value: 'tournament',      label: 'Tournament',  price: 'Free'    },
@@ -98,6 +102,159 @@ const PLAN_COLORS: Record<string, { text: string; border: string; bg: string }> 
 // (.env.local only — not set on Amplify dev or production)
 const PLAN_GATES_TOGGLE_ENABLED =
   process.env.NEXT_PUBLIC_DEV_PLAN_GATES_TOGGLE === 'true';
+
+// ─── Live credentials explorer ───────────────────────────────────────────────
+
+const ROLE_DISPLAY: Record<string, string> = {
+  owner: 'Owner', admin: 'Admin', staff: 'Staff', coach: 'Coach',
+  league_admin: 'League Admin', treasurer: 'Treasurer', official: 'Scorekeeper',
+};
+
+function LiveCredentials({ data }: { data: MembershipData | null }) {
+  const [view,            setView]            = useState<'byOrg' | 'byUser'>('byOrg');
+  const [selectedOrgId,   setSelectedOrgId]   = useState<string | null>(null);
+  const [selectedUserId,  setSelectedUserId]  = useState<string | null>(null);
+
+  // Auto-select first item when data loads or view changes
+  const activeOrgId  = selectedOrgId  ?? data?.byOrg[0]?.orgId  ?? null;
+  const activeUserId = selectedUserId ?? data?.byUser[0]?.userId ?? null;
+
+  const activeOrg  = data?.byOrg.find(o => o.orgId  === activeOrgId);
+  const activeUser = data?.byUser.find(u => u.userId === activeUserId);
+
+  return (
+    <div className={styles.liveCredBox}>
+      {/* Header row */}
+      <div className={styles.liveCredHeader}>
+        <span className={styles.liveCredLabel}>
+          DB Memberships — password: <code>devpass123</code>
+        </span>
+        <div className={styles.liveCredViewToggle}>
+          <button
+            className={`${styles.liveCredViewBtn} ${view === 'byOrg' ? styles.liveCredViewBtnActive : ''}`}
+            onClick={() => setView('byOrg')}
+          >
+            By Org
+          </button>
+          <button
+            className={`${styles.liveCredViewBtn} ${view === 'byUser' ? styles.liveCredViewBtnActive : ''}`}
+            onClick={() => setView('byUser')}
+          >
+            By User
+          </button>
+        </div>
+      </div>
+
+      {!data ? (
+        <div className={styles.credEmpty}>Loading memberships…</div>
+      ) : view === 'byOrg' ? (
+        <>
+          {/* Org pill selector */}
+          {data.byOrg.length === 0 ? (
+            <div className={styles.credEmpty}>No orgs seeded yet — seed an org first</div>
+          ) : (
+            <>
+              <div className={styles.credPills}>
+                {data.byOrg.map(org => {
+                  const pc = PLAN_COLORS[org.planId] ?? PLAN_COLORS.tournament;
+                  const isActive = org.orgId === activeOrgId;
+                  return (
+                    <button
+                      key={org.orgId}
+                      className={`${styles.credPill} ${isActive ? styles.credPillActive : ''}`}
+                      onClick={() => setSelectedOrgId(org.orgId)}
+                    >
+                      {org.slug}
+                      <span
+                        className={styles.planBadge}
+                        style={{ color: pc.text, borderColor: pc.border, background: pc.bg, fontSize: '0.5rem' }}
+                      >
+                        {org.planId.replace('_', ' ')}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Members of selected org */}
+              {activeOrg && (
+                <div className={styles.credDetail}>
+                  <div className={styles.credDetailHeader}>
+                    <span className={styles.credDetailTitle}>/{activeOrg.slug}/admin</span>
+                    <span className={styles.credDetailCount}>{activeOrg.members.length} member{activeOrg.members.length !== 1 ? 's' : ''}</span>
+                  </div>
+                  {activeOrg.members.length === 0 ? (
+                    <div className={styles.credEmpty}>No members — run Seed Users</div>
+                  ) : (
+                    activeOrg.members.map(m => (
+                      <div key={m.userId} className={styles.credDetailRow}>
+                        <code className={styles.credDetailEmail}>{m.email}</code>
+                        <span className={styles.credDetailRole}>{ROLE_DISPLAY[m.role] ?? m.role}</span>
+                      </div>
+                    ))
+                  )}
+                </div>
+              )}
+            </>
+          )}
+        </>
+      ) : (
+        <>
+          {/* User pill selector */}
+          {data.byUser.length === 0 ? (
+            <div className={styles.credEmpty}>No users seeded yet — seed an org + run Seed Users first</div>
+          ) : (
+            <>
+              <div className={styles.credPills}>
+                {data.byUser.map(u => (
+                  <button
+                    key={u.userId}
+                    className={`${styles.credPill} ${u.userId === activeUserId ? styles.credPillActive : ''}`}
+                    onClick={() => setSelectedUserId(u.userId)}
+                  >
+                    {u.email.replace('@dev.local', '')}
+                    <span style={{ fontSize: '0.55rem', color: 'rgba(255,255,255,0.3)' }}>
+                      {u.orgs.length} org{u.orgs.length !== 1 ? 's' : ''}
+                    </span>
+                  </button>
+                ))}
+              </div>
+
+              {/* Orgs for selected user */}
+              {activeUser && (
+                <div className={styles.credDetail}>
+                  <div className={styles.credDetailHeader}>
+                    <span className={styles.credDetailTitle}>{activeUser.email}</span>
+                    <span className={styles.credDetailCount}>{activeUser.orgs.length} org{activeUser.orgs.length !== 1 ? 's' : ''}</span>
+                  </div>
+                  {activeUser.orgs.length === 0 ? (
+                    <div className={styles.credEmpty}>No org memberships</div>
+                  ) : (
+                    activeUser.orgs.map(o => {
+                      const pc = PLAN_COLORS[o.planId] ?? PLAN_COLORS.tournament;
+                      return (
+                        <div key={o.orgId} className={styles.credDetailRow}>
+                          <code className={styles.credDetailSlug}>/{o.slug}</code>
+                          <span
+                            className={styles.planBadge}
+                            style={{ color: pc.text, borderColor: pc.border, background: pc.bg, fontSize: '0.5rem' }}
+                          >
+                            {o.planId.replace('_', ' ')}
+                          </span>
+                          <span className={styles.credDetailRole}>{ROLE_DISPLAY[o.role] ?? o.role}</span>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              )}
+            </>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
 
 // ─── Org seed modal ───────────────────────────────────────────────────────────
 
@@ -547,6 +704,9 @@ export default function DevDashboard() {
   const [mockBilling,     setMockBilling]     = useState<MockBillingConfig | null>(null);
   const [mockBillingBusy, setMockBillingBusy] = useState(false);
 
+  // Live memberships
+  const [memberships, setMemberships] = useState<MembershipData | null>(null);
+
   // Org seed modal
   const [orgModal, setOrgModal] = useState(false);
 
@@ -567,6 +727,11 @@ export default function DevDashboard() {
     if (res.ok) setMockBilling(await res.json());
   }, []);
 
+  const fetchMemberships = useCallback(async () => {
+    const res = await fetch('/api/dev/seed/memberships');
+    if (res.ok) setMemberships(await res.json());
+  }, []);
+
   useEffect(() => {
     window.queueMicrotask(() => { void fetchStatus(); });
   }, [fetchStatus]);
@@ -575,8 +740,9 @@ export default function DevDashboard() {
     window.queueMicrotask(() => {
       void fetchReadiness();
       void fetchMockBilling();
+      void fetchMemberships();
     });
-  }, [fetchReadiness, fetchMockBilling]);
+  }, [fetchReadiness, fetchMockBilling, fetchMemberships]);
 
   // ── Seed ────────────────────────────────────────────────────────────────────
 
@@ -593,6 +759,7 @@ export default function DevDashboard() {
       const data = await res.json() as SeedResult;
       setResults(r => ({ ...r, [key]: data }));
       await fetchStatus();
+      void fetchMemberships();
     } catch {
       setResults(r => ({ ...r, [key]: { ok: false, error: 'Network error' } }));
     } finally {
@@ -619,6 +786,7 @@ export default function DevDashboard() {
       const data = await res.json() as SeedResult;
       setOrgWipeResults(r => ({ ...r, [orgId]: data }));
       await fetchStatus();
+      void fetchMemberships();
     } catch {
       setOrgWipeResults(r => ({ ...r, [orgId]: { ok: false, error: 'Network error' } }));
     } finally {
@@ -639,6 +807,7 @@ export default function DevDashboard() {
       setResults({});
       setOrgWipeResults({});
       await fetchStatus();
+      void fetchMemberships();
     } catch {
       setWipeResult({ ok: false, error: 'Network error' });
     } finally {
@@ -704,8 +873,8 @@ export default function DevDashboard() {
       endpoint:    '/api/dev/seed/org',
       icon:        Building2,
       title:       'Org + Owner',
-      description: 'Creates dev-test-org. Choose a plan tier when you seed (or re-seed to change it).',
-      creates:     'dev-test-org, owner@dev.local (owner)',
+      description: 'Creates a plan-specific org (dev-tournament-org, dev-league-org, etc.). Re-seed to change its plan.',
+      creates:     'dev-{plan}-org, owner@dev.local (owner)',
       locked:      false,
       lockReason:  undefined as string | undefined,
       badges:      <StatusPill count={status?.orgs ?? 0} label="orgs" />,
@@ -715,8 +884,8 @@ export default function DevDashboard() {
       endpoint:    '/api/dev/seed/users',
       icon:        Users,
       title:       'User Set',
-      description: 'One account per org role — covers all permission levels',
-      creates:     'admin / staff / coach / league-admin / treasurer @dev.local',
+      description: 'Plan-appropriate roles for every seeded org — league & club add league-admin and treasurer',
+      creates:     'admin/staff/coach for all orgs; league-admin/treasurer for league & club',
       locked:      !hasOrg,
       lockReason:  'Seed Org + Owner first' as string | undefined,
       badges:      <StatusPill count={status?.orgUsers ?? 0} label="non-owner members" />,
@@ -816,23 +985,8 @@ export default function DevDashboard() {
       {/* Seed view */}
       {tab === 'seed' && (<>
 
-      {/* Credentials */}
-      <div className={styles.credBox}>
-        <div className={styles.credLabel}>All seed accounts — password: <code>devpass123</code></div>
-        <div className={styles.credGrid}>
-          {CREDENTIALS.map(c => (
-            <div key={c.email} className={styles.credRow}>
-              <code className={styles.credEmail}>{c.email}</code>
-              <span className={styles.credRole}>{c.role}</span>
-            </div>
-          ))}
-        </div>
-        {status?.orgSlug && (
-          <div className={styles.credOrg}>
-            Org slug: <code>/dev-test-org/admin</code>
-          </div>
-        )}
-      </div>
+      {/* Live DB membership explorer */}
+      <LiveCredentials data={memberships} />
 
       <ReadinessPanel readiness={readiness} onRefresh={fetchReadiness} />
       <MockBillingPanel

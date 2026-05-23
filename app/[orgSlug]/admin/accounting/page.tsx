@@ -353,7 +353,7 @@ export default function AccountingOverviewPage() {
           <div style={{ marginTop: '2rem' }}>
             <div style={{
               fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase',
-              letterSpacing: '0.06em', color: 'rgba(255,255,255,0.3)',
+              letterSpacing: '0.06em', color: 'var(--white-30)',
               marginBottom: '0.75rem',
             }}>
               Planning Tools
@@ -364,10 +364,10 @@ export default function AccountingOverviewPage() {
                 style={{
                   display: 'flex', alignItems: 'center', gap: '0.65rem',
                   padding: '0.75rem 1rem',
-                  background: 'rgba(255,255,255,0.04)',
-                  border: '1px solid rgba(255,255,255,0.08)',
-                  borderRadius: 8,
-                  color: 'rgba(255,255,255,0.75)',
+                  background: 'var(--white-5)',
+                  border: '1px solid var(--white-8)',
+                  borderRadius: '2px',
+                  color: 'var(--white-80)',
                   textDecoration: 'none',
                   fontSize: '0.88rem', fontWeight: 600,
                   transition: 'background 0.15s, border-color 0.15s',
@@ -375,7 +375,7 @@ export default function AccountingOverviewPage() {
               >
                 <DollarSign size={16} style={{ color: 'var(--logic-lime)' }} />
                 Org Budget
-                <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.35)', fontWeight: 400 }}>
+                <span style={{ fontSize: '0.75rem', color: 'var(--white-35)', fontWeight: 400 }}>
                   Season planning &amp; team allocations
                 </span>
               </Link>
@@ -384,10 +384,10 @@ export default function AccountingOverviewPage() {
                 style={{
                   display: 'flex', alignItems: 'center', gap: '0.65rem',
                   padding: '0.75rem 1rem',
-                  background: 'rgba(255,255,255,0.04)',
-                  border: '1px solid rgba(255,255,255,0.08)',
-                  borderRadius: 8,
-                  color: 'rgba(255,255,255,0.75)',
+                  background: 'var(--white-5)',
+                  border: '1px solid var(--white-8)',
+                  borderRadius: '2px',
+                  color: 'var(--white-80)',
                   textDecoration: 'none',
                   fontSize: '0.88rem', fontWeight: 600,
                   transition: 'background 0.15s, border-color 0.15s',
@@ -395,7 +395,7 @@ export default function AccountingOverviewPage() {
               >
                 <DollarSign size={16} style={{ color: 'var(--logic-lime)' }} />
                 Budget vs. Actual
-                <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.35)', fontWeight: 400 }}>
+                <span style={{ fontSize: '0.75rem', color: 'var(--white-35)', fontWeight: 400 }}>
                   Allocation &amp; team collection status
                 </span>
               </Link>
@@ -407,7 +407,7 @@ export default function AccountingOverviewPage() {
             <div style={{ marginTop: '2rem' }}>
               <div style={{
                 fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase',
-                letterSpacing: '0.06em', color: 'rgba(255,255,255,0.3)',
+                letterSpacing: '0.06em', color: 'var(--white-30)',
                 marginBottom: '0.75rem',
               }}>
                 Automated Reminders
@@ -416,14 +416,14 @@ export default function AccountingOverviewPage() {
                 <div style={{
                   display: 'flex', alignItems: 'center', gap: '1rem',
                   padding: '0.9rem 1.1rem',
-                  background: 'rgba(255,255,255,0.04)',
-                  border: '1px solid rgba(255,255,255,0.08)',
-                  borderRadius: 8,
+                  background: 'var(--white-5)',
+                  border: '1px solid var(--white-8)',
+                  borderRadius: '2px',
                 }}>
-                  <Bell size={16} style={{ color: 'rgba(255,255,255,0.4)', flexShrink: 0 }} />
+                  <Bell size={16} style={{ color: 'var(--white-40)', flexShrink: 0 }} />
                   <div style={{ flex: 1 }}>
-                    <p style={{ margin: 0, fontWeight: 600, color: 'rgba(255,255,255,0.85)', fontSize: '0.88rem' }}>Dues Reminders</p>
-                    <p style={{ margin: 0, fontSize: '0.78rem', color: 'rgba(255,255,255,0.4)' }}>
+                    <p style={{ margin: 0, fontWeight: 600, color: 'var(--white-80)', fontSize: '0.88rem' }}>Dues Reminders</p>
+                    <p style={{ margin: 0, fontSize: '0.78rem', color: 'var(--white-40)' }}>
                       Send 30-day or 7-day reminder emails to guardians for upcoming installments. Respects per-team coach toggle.
                     </p>
                   </div>
@@ -452,14 +452,14 @@ export default function AccountingOverviewPage() {
                 <div style={{
                   display: 'flex', alignItems: 'center', gap: '1rem',
                   padding: '0.9rem 1.1rem',
-                  background: 'rgba(255,255,255,0.04)',
-                  border: '1px solid rgba(255,255,255,0.08)',
-                  borderRadius: 8,
+                  background: 'var(--white-5)',
+                  border: '1px solid var(--white-8)',
+                  borderRadius: '2px',
                 }}>
-                  <Bell size={16} style={{ color: 'rgba(255,255,255,0.4)', flexShrink: 0 }} />
+                  <Bell size={16} style={{ color: 'var(--white-40)', flexShrink: 0 }} />
                   <div style={{ flex: 1 }}>
-                    <p style={{ margin: 0, fontWeight: 600, color: 'rgba(255,255,255,0.85)', fontSize: '0.88rem' }}>Allocation Reminders</p>
-                    <p style={{ margin: 0, fontSize: '0.78rem', color: 'rgba(255,255,255,0.4)' }}>
+                    <p style={{ margin: 0, fontWeight: 600, color: 'var(--white-80)', fontSize: '0.88rem' }}>Allocation Reminders</p>
+                    <p style={{ margin: 0, fontSize: '0.78rem', color: 'var(--white-40)' }}>
                       Send a reminder email to you listing all team allocation installments due within the next 30 days.
                     </p>
                   </div>

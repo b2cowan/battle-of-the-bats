@@ -183,10 +183,10 @@ export default function AdminDocumentsPage() {
                     {DOC_TYPE_LABELS[t.documentType] ?? t.documentType}
                   </span>
                 </td>
-                <td className={styles.td} style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.82rem', maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                <td className={styles.td} style={{ color: 'var(--white-60)', fontSize: '0.82rem', maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {t.fileName}
                 </td>
-                <td className={styles.td} style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.82rem' }}>
+                <td className={styles.td} style={{ color: 'var(--white-50)', fontSize: '0.82rem' }}>
                   {formatBytes(t.fileSize)}
                 </td>
                 <td className={styles.td}>
@@ -194,7 +194,7 @@ export default function AdminDocumentsPage() {
                     {t.isActive ? 'Active' : 'Inactive'}
                   </span>
                 </td>
-                <td className={styles.td} style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.82rem', whiteSpace: 'nowrap' }}>
+                <td className={styles.td} style={{ color: 'var(--white-50)', fontSize: '0.82rem', whiteSpace: 'nowrap' }}>
                   {new Date(t.createdAt).toLocaleDateString()}
                 </td>
                 <td className={styles.td} style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
@@ -251,7 +251,7 @@ export default function AdminDocumentsPage() {
           <div>
             <h1 className={styles.pageTitle}>Document Templates</h1>
             <p className={styles.pageSub}>
-              <Link href={`/${currentOrg?.slug}/admin/rep-teams`} style={{ color: 'rgba(255,255,255,0.4)', textDecoration: 'none' }}>
+              <Link href={`/${currentOrg?.slug}/admin/rep-teams`} style={{ color: 'var(--white-40)', textDecoration: 'none' }}>
                 Rep Teams
               </Link>
               {' → '}Documents
@@ -274,7 +274,7 @@ export default function AdminDocumentsPage() {
       {feedbackMsg && (
         <div style={{
           padding: '0.75rem 1rem',
-          borderRadius: 8,
+          borderRadius: '2px',
           marginBottom: '1rem',
           background: feedbackType === 'success' ? 'rgba(74,222,128,0.1)' : 'rgba(248,113,113,0.1)',
           border: `1px solid ${feedbackType === 'success' ? 'rgba(74,222,128,0.3)' : 'rgba(248,113,113,0.3)'}`,

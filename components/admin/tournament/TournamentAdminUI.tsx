@@ -68,15 +68,23 @@ export function ToolbarGroup({
   children,
   align = 'start',
   grow = false,
+  fullWidth = false,
   className,
 }: {
   children: React.ReactNode;
   align?: 'start' | 'end';
   grow?: boolean;
+  /** Forces this group onto its own row regardless of sibling content. */
+  fullWidth?: boolean;
   className?: string;
 }) {
   return (
-    <div className={clsx(styles.toolbarGroup, className)} data-align={align} data-grow={grow || undefined}>
+    <div
+      className={clsx(styles.toolbarGroup, className)}
+      data-align={align}
+      data-grow={grow || undefined}
+      data-full-width={fullWidth || undefined}
+    >
       {children}
     </div>
   );

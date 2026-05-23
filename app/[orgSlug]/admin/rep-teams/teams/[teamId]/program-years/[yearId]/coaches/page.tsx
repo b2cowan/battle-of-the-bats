@@ -178,7 +178,7 @@ export default function CoachManagementPage({
         <div className={styles.coachPanel}>
           <p className={styles.coachPanelTitle}>Current Coaches ({coaches.length})</p>
           {coaches.length === 0 ? (
-            <p style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.3)', margin: 0 }}>
+            <p style={{ fontSize: '0.85rem', color: 'var(--white-30)', margin: 0 }}>
               No coaches assigned yet.
             </p>
           ) : (
@@ -216,7 +216,7 @@ export default function CoachManagementPage({
           <div className={styles.coachPanel}>
             <p className={styles.coachPanelTitle}>Assign Coach</p>
             {availableMembers.length === 0 ? (
-              <p style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.3)', margin: 0 }}>
+              <p style={{ fontSize: '0.85rem', color: 'var(--white-30)', margin: 0 }}>
                 All org members are already assigned, or there are no other members to assign.
               </p>
             ) : (

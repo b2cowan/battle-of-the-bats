@@ -34,7 +34,7 @@ export async function GET(req: Request) {
 
   const { data, error } = await supabaseAdmin
     .from('tournaments')
-    .select('logo_url, hero_banner_url, theme_preset, theme_primary, theme_accent, theme_font, theme_card_style, color_mode')
+    .select('logo_url, hero_banner_url, theme_preset, theme_primary, theme_accent, theme_font, theme_card_style, color_mode, require_score_finalization')
     .eq('id', tournamentId)
     .eq('organization_id', ctx.org.id)
     .single();
@@ -58,6 +58,7 @@ export async function GET(req: Request) {
     themeFont:                data.theme_font,
     themeCardStyle:           data.theme_card_style,
     colorMode:                data.color_mode ?? 'dark',
+    requireScoreFinalization: data.require_score_finalization,
     publicHiddenPages:        normalizeHiddenPublicPages(pageData?.public_hidden_pages),
   });
 }
@@ -83,6 +84,7 @@ export async function PATCH(req: Request) {
     themeCardStyle?: string | null;
     colorMode?: 'dark' | 'light' | null;
     publicHiddenPages?: PublicPageKey[] | null;
+    requireScoreFinalization?: boolean | null;
   };
 
   const updates: Record<string, unknown> = {};
@@ -170,6 +172,7 @@ export async function PATCH(req: Request) {
 
   if ('colorMode'                in body) updates.color_mode                 = body.colorMode === 'light' ? 'light' : null;
   if ('publicHiddenPages'        in body) updates.public_hidden_pages        = normalizeHiddenPublicPages(body.publicHiddenPages);
+  if ('requireScoreFinalization' in body) updates.require_score_finalization = body.requireScoreFinalization;
 
   if (Object.keys(updates).length === 0) {
     return NextResponse.json({ ok: true });

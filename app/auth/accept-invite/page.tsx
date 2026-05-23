@@ -73,7 +73,7 @@ function AcceptInviteForm() {
     const role = data.role as string | null;
 
     if (slug) {
-      const dest = role === 'official' ? `/${slug}/official` : `/${slug}/admin`;
+      const dest = role === 'official' ? `/${slug}/scorekeeper` : `/${slug}/admin`;
       router.push(dest);
       router.refresh();
     } else {

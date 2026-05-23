@@ -123,19 +123,19 @@ const STATUS_CLASS: Record<LeagueGameStatus, string> = {
 const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
 const BTN_PRIMARY: React.CSSProperties = {
-  background: 'var(--logic-lime, #a3e635)', color: '#1a1f2e', border: 'none',
-  borderRadius: 7, padding: '0.4rem 0.85rem', fontSize: '0.82rem', fontWeight: 700,
+  background: 'var(--logic-lime)', color: '#1a1f2e', border: 'none',
+  borderRadius: '2px', padding: '0.4rem 0.85rem', fontSize: '0.82rem', fontWeight: 700,
   cursor: 'pointer', fontFamily: 'inherit',
 };
 const BTN_SECONDARY: React.CSSProperties = {
-  background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.7)',
-  border: '1px solid rgba(255,255,255,0.12)', borderRadius: 7,
+  background: 'var(--white-5)', color: 'var(--white-70)',
+  border: '1px solid rgba(255,255,255,0.12)', borderRadius: '2px',
   padding: '0.4rem 0.85rem', fontSize: '0.82rem', fontWeight: 600,
   cursor: 'pointer', fontFamily: 'inherit',
 };
 const BTN_DANGER: React.CSSProperties = {
-  background: 'rgba(239,68,68,0.1)', color: '#f87171',
-  border: '1px solid rgba(239,68,68,0.25)', borderRadius: 7,
+  background: 'rgba(var(--danger-rgb),0.1)', color: '#f87171',
+  border: '1px solid rgba(var(--danger-rgb),0.25)', borderRadius: '2px',
   padding: '0.4rem 0.85rem', fontSize: '0.82rem', fontWeight: 600,
   cursor: 'pointer', fontFamily: 'inherit',
 };
@@ -318,7 +318,7 @@ function GenerateModal({
           <button className={styles.modalCloseBtn} onClick={onClose}><X size={18} /></button>
         </div>
 
-        <p style={{ fontSize: '0.82rem', color: 'rgba(255,255,255,0.45)', marginBottom: '1rem' }}>
+        <p style={{ fontSize: '0.82rem', color: 'var(--white-45)', marginBottom: '1rem' }}>
           Round-robin: {teams.length} teams · {teams.length % 2 === 0 ? teams.length - 1 : teams.length} rounds · every team plays every other team once.
         </p>
 
@@ -354,14 +354,14 @@ function GenerateModal({
         {preview && (
           <>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-              <h3 style={{ margin: 0, fontSize: '0.78rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'rgba(255,255,255,0.4)' }}>
+              <h3 style={{ margin: 0, fontSize: '0.78rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--white-40)' }}>
                 Preview — {preview.length} games
               </h3>
               <button style={{ ...BTN_SECONDARY, padding: '0.2rem 0.5rem', fontSize: '0.72rem' }} onClick={() => setPreview(null)}>
                 Re-configure
               </button>
             </div>
-            <div style={{ maxHeight: 320, overflowY: 'auto', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 8 }}>
+            <div style={{ maxHeight: 320, overflowY: 'auto', border: '1px solid var(--white-8)', borderRadius: '2px' }}>
               <table className={styles.previewTable}>
                 <thead>
                   <tr>
@@ -537,7 +537,7 @@ function CancelPracticeModal({
           <button className={styles.modalCloseBtn} onClick={onClose}><X size={18} /></button>
         </div>
 
-        <p style={{ fontSize: '0.88rem', color: 'rgba(255,255,255,0.55)', marginBottom: '1rem' }}>
+        <p style={{ fontSize: '0.88rem', color: 'var(--white-60)', marginBottom: '1rem' }}>
           {teamName}{dt ? ` · ${dt.date} at ${dt.time}` : ''}
         </p>
 
@@ -548,13 +548,13 @@ function CancelPracticeModal({
                 key={s}
                 style={{
                   display: 'flex', alignItems: 'center', gap: '0.6rem',
-                  cursor: 'pointer', padding: '0.5rem 0.75rem', borderRadius: 7,
-                  border: `1px solid ${scope === s ? 'rgba(239,68,68,0.35)' : 'rgba(255,255,255,0.08)'}`,
-                  background: scope === s ? 'rgba(239,68,68,0.07)' : 'rgba(255,255,255,0.02)',
+                  cursor: 'pointer', padding: '0.5rem 0.75rem', borderRadius: '2px',
+                  border: `1px solid ${scope === s ? 'rgba(var(--danger-rgb),0.35)' : 'var(--white-8)'}`,
+                  background: scope === s ? 'rgba(var(--danger-rgb),0.07)' : 'var(--white-03)',
                 }}
               >
                 <input type="radio" value={s} checked={scope === s} onChange={() => setScope(s)} style={{ accentColor: '#f87171' }} />
-                <span style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.75)' }}>
+                <span style={{ fontSize: '0.85rem', color: 'var(--white-80)' }}>
                   {s === 'one' && 'Cancel this practice only'}
                   {s === 'remaining' && 'Cancel this and all remaining in the series'}
                   {s === 'all' && 'Cancel the entire series'}
@@ -928,7 +928,7 @@ export default function SchedulePage() {
       {/* Header */}
       <div className={styles.pageHeader}>
         <div className={styles.pageHeaderLeft}>
-          <Link href={backHref} style={{ color: 'rgba(255,255,255,0.4)', display: 'flex', alignItems: 'center' }}>
+          <Link href={backHref} style={{ color: 'var(--white-40)', display: 'flex', alignItems: 'center' }}>
             <ChevronLeft size={18} />
           </Link>
           <div className={styles.headerIcon}><Calendar size={22} /></div>
@@ -1213,7 +1213,7 @@ export default function SchedulePage() {
                         </div>
                       )}
                       {p.notes && (
-                        <div style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.35)', marginTop: '0.3rem', fontStyle: 'italic' }}>
+                        <div style={{ fontSize: '0.72rem', color: 'var(--white-35)', marginTop: '0.3rem', fontStyle: 'italic' }}>
                           {p.notes}
                         </div>
                       )}
@@ -1222,7 +1222,7 @@ export default function SchedulePage() {
                           {p.status === 'cancelled' ? 'Cancelled' : 'Practice'}
                         </span>
                         {clickable && (
-                          <span style={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.25)' }}>click to cancel</span>
+                          <span style={{ fontSize: '0.68rem', color: 'var(--white-30)' }}>click to cancel</span>
                         )}
                       </div>
                     </div>

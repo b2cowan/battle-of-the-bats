@@ -746,6 +746,149 @@
 .scoreForm { margin-top: 0.75rem; display: flex; flex-direction: column; gap: 0.5rem; }
 .scoreFormRow { display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap; }
 
+.attendanceSection {
+  margin-top: 0.9rem;
+  padding-top: 0.9rem;
+  border-top: 1px solid rgba(255,255,255,0.07);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.attendanceHeader {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  align-items: flex-start;
+}
+
+.attendanceTitle {
+  font-size: 0.95rem;
+  color: var(--white-90,#f0f0f0);
+  margin: 0 0 0.15rem;
+}
+
+.attendanceSummary,
+.attendanceUnsaved,
+.attendanceEmpty {
+  font-size: 0.78rem;
+  color: rgba(255,255,255,0.4);
+  margin: 0;
+}
+
+.attendanceBulkActions {
+  display: flex;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.attendanceList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.attendanceRow {
+  display: grid;
+  grid-template-columns: minmax(120px, 1fr) auto;
+  gap: 0.5rem;
+  align-items: center;
+  padding: 0.65rem;
+  background: rgba(255,255,255,0.035);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 8px;
+}
+
+.attendancePlayer {
+  min-width: 0;
+}
+
+.attendancePlayerName {
+  display: block;
+  font-size: 0.88rem;
+  color: var(--white-90,#f0f0f0);
+  font-weight: 650;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.attendanceStatusGroup {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.25rem;
+  grid-column: 1 / -1;
+}
+
+.attendanceStatusBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  min-height: 34px;
+  padding: 0.25rem 0.35rem;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 6px;
+  background: rgba(255,255,255,0.04);
+  color: rgba(255,255,255,0.58);
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.attendanceStatusBtn:hover {
+  background: rgba(255,255,255,0.07);
+  color: rgba(255,255,255,0.82);
+}
+
+.attendanceStatusBtnActive[data-status="attending"] {
+  background: rgba(34,197,94,0.16);
+  border-color: rgba(34,197,94,0.35);
+  color: #86efac;
+}
+
+.attendanceStatusBtnActive[data-status="absent"] {
+  background: rgba(239,68,68,0.14);
+  border-color: rgba(239,68,68,0.35);
+  color: #fca5a5;
+}
+
+.attendanceStatusBtnActive[data-status="late"] {
+  background: rgba(245,158,11,0.16);
+  border-color: rgba(245,158,11,0.35);
+  color: #fcd34d;
+}
+
+.attendanceStatusBtnActive[data-status="unknown"] {
+  background: rgba(148,163,184,0.13);
+  border-color: rgba(148,163,184,0.28);
+  color: #cbd5e1;
+}
+
+.attendanceNoteInput {
+  grid-column: 1 / -1;
+  min-height: 34px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.09);
+  border-radius: 6px;
+  color: var(--white-90,#f0f0f0);
+  padding: 0.35rem 0.55rem;
+  font-size: 0.82rem;
+}
+
+.attendanceNoteInput:focus {
+  outline: none;
+  border-color: rgba(var(--blueprint-blue-rgb), 0.5);
+}
+
+.attendanceFooter {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+}
+
 .deleteConfirm { display: flex; flex-direction: column; gap: 0.5rem; }
 .deleteConfirmMsg { font-size: 0.88rem; color: rgba(255,255,255,0.7); margin: 0; }
 .deleteConfirmBtns { display: flex; gap: 0.4rem; flex-wrap: wrap; }

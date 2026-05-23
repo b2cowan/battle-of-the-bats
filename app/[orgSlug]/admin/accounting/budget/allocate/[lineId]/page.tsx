@@ -377,19 +377,19 @@ export default function AllocateBudgetLinePage({ params }: { params: Promise<{ l
       <div className={styles.detailSection} style={{ marginBottom: '2rem' }}>
         <p className={styles.detailSectionTitle} style={{ marginBottom: '0.6rem' }}>Budget Line</p>
         <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '0.3rem 1rem', fontSize: '0.88rem' }}>
-          <span style={{ color: 'rgba(255,255,255,0.4)' }}>Description</span>
+          <span style={{ color: 'var(--white-40)' }}>Description</span>
           <span style={{ fontWeight: 600 }}>{lineInfo.description}</span>
-          <span style={{ color: 'rgba(255,255,255,0.4)' }}>Total</span>
+          <span style={{ color: 'var(--white-40)' }}>Total</span>
           <span>{fmt(total)}</span>
           {lineInfo.budget_categories && (
             <>
-              <span style={{ color: 'rgba(255,255,255,0.4)' }}>Category</span>
+              <span style={{ color: 'var(--white-40)' }}>Category</span>
               <span>{lineInfo.budget_categories.name}</span>
             </>
           )}
           {periods.length > 0 && (
             <>
-              <span style={{ color: 'rgba(255,255,255,0.4)' }}>Periods</span>
+              <span style={{ color: 'var(--white-40)' }}>Periods</span>
               <span>{periods.map(p => p.label).join(' · ')}</span>
             </>
           )}
@@ -402,17 +402,17 @@ export default function AllocateBudgetLinePage({ params }: { params: Promise<{ l
           <div key={s} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <div style={{
               width: 28, height: 28, borderRadius: '50%',
-              background: step >= s ? 'var(--blueprint-blue,#4fa3e0)' : 'rgba(255,255,255,0.08)',
-              color: step >= s ? '#fff' : 'rgba(255,255,255,0.3)',
+              background: step >= s ? 'var(--blueprint-blue,#4fa3e0)' : 'var(--white-8)',
+              color: step >= s ? '#fff' : 'var(--white-30)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               fontSize: '0.8rem', fontWeight: 700, flexShrink: 0,
             }}>
               {s}
             </div>
-            <span style={{ fontSize: '0.82rem', color: step === s ? 'rgba(255,255,255,0.8)' : 'rgba(255,255,255,0.3)' }}>
+            <span style={{ fontSize: '0.82rem', color: step === s ? 'var(--white-80)' : 'var(--white-30)' }}>
               {s === 1 ? 'Team Splits' : 'Review'}
             </span>
-            {s < 2 && <ChevronRight size={14} style={{ color: 'rgba(255,255,255,0.2)' }} />}
+            {s < 2 && <ChevronRight size={14} style={{ color: 'var(--white-20)' }} />}
           </div>
         ))}
       </div>
@@ -422,16 +422,16 @@ export default function AllocateBudgetLinePage({ params }: { params: Promise<{ l
         <div>
           {/* Period inheritance toggle */}
           {periods.length > 0 && (
-            <div style={{ marginBottom: '1.5rem', padding: '0.75rem 1rem', background: 'rgba(255,255,255,0.04)', borderRadius: 8, border: '1px solid rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <div style={{ marginBottom: '1.5rem', padding: '0.75rem 1rem', background: 'var(--white-5)', borderRadius: '2px', border: '1px solid var(--white-8)', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
               <input
                 type="checkbox"
                 id="inherit-periods"
                 checked={inheritPeriods}
                 onChange={e => handleInheritToggle(e.target.checked)}
               />
-              <label htmlFor="inherit-periods" style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.75)', cursor: 'pointer' }}>
+              <label htmlFor="inherit-periods" style={{ fontSize: '0.85rem', color: 'var(--white-80)', cursor: 'pointer' }}>
                 Inherit installment due dates from budget periods
-                <span style={{ display: 'block', fontSize: '0.76rem', color: 'rgba(255,255,255,0.4)' }}>
+                <span style={{ display: 'block', fontSize: '0.76rem', color: 'var(--white-40)' }}>
                   When using custom schedule, due dates will be pre-filled from this line&apos;s period dates.
                 </span>
               </label>
@@ -439,10 +439,10 @@ export default function AllocateBudgetLinePage({ params }: { params: Promise<{ l
           )}
 
           <p className={styles.hint} style={{ marginBottom: '1.5rem', fontSize: '0.88rem' }}>
-            Total: <strong style={{ color: 'rgba(255,255,255,0.8)' }}>{fmt(total)}</strong>
+            Total: <strong style={{ color: 'var(--white-80)' }}>{fmt(total)}</strong>
             {' '}— Allocated so far: <strong style={{ color: splitSum > total + 0.001 ? '#f87171' : '#4ade80' }}>{fmt(splitSum)}</strong>
             {total > splitSum + 0.001 && (
-              <span style={{ color: 'rgba(255,255,255,0.4)' }}> (unallocated: {fmt(total - splitSum)})</span>
+              <span style={{ color: 'var(--white-40)' }}> (unallocated: {fmt(total - splitSum)})</span>
             )}
           </p>
 
@@ -467,7 +467,7 @@ export default function AllocateBudgetLinePage({ params }: { params: Promise<{ l
             return (
               <div key={si} className={styles.detailSection} style={{ marginBottom: '1rem' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                  <span style={{ fontWeight: 700, fontSize: '0.9rem', color: 'rgba(255,255,255,0.7)' }}>
+                  <span style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--white-70)' }}>
                     Split {si + 1}
                   </span>
                   {splits.length > 1 && (
@@ -672,16 +672,16 @@ export default function AllocateBudgetLinePage({ params }: { params: Promise<{ l
           <div className={styles.detailSection} style={{ marginBottom: '1.5rem' }}>
             <p className={styles.detailSectionTitle}>Allocation Summary</p>
             <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '0.4rem 1rem', fontSize: '0.9rem' }}>
-              <span style={{ color: 'rgba(255,255,255,0.4)' }}>Budget line</span>
+              <span style={{ color: 'var(--white-40)' }}>Budget line</span>
               <span style={{ fontWeight: 600 }}>{lineInfo.description}</span>
-              <span style={{ color: 'rgba(255,255,255,0.4)' }}>Line total</span>
+              <span style={{ color: 'var(--white-40)' }}>Line total</span>
               <span>{fmt(total)}</span>
-              <span style={{ color: 'rgba(255,255,255,0.4)' }}>Allocated</span>
+              <span style={{ color: 'var(--white-40)' }}>Allocated</span>
               <span style={{ color: splitSum > total + 0.001 ? '#f87171' : '#4ade80' }}>{fmt(splitSum)}</span>
               {total > splitSum + 0.001 && (
                 <>
-                  <span style={{ color: 'rgba(255,255,255,0.4)' }}>Org retains</span>
-                  <span style={{ color: 'rgba(255,255,255,0.5)' }}>{fmt(total - splitSum)}</span>
+                  <span style={{ color: 'var(--white-40)' }}>Org retains</span>
+                  <span style={{ color: 'var(--white-50)' }}>{fmt(total - splitSum)}</span>
                 </>
               )}
             </div>
@@ -698,11 +698,11 @@ export default function AllocateBudgetLinePage({ params }: { params: Promise<{ l
                   <p className={styles.detailSectionTitle} style={{ margin: 0 }}>
                     {teamName} — {yearLabel ? `${yearLabel.name} (${yearLabel.year})` : '—'}
                   </p>
-                  <strong style={{ color: 'rgba(255,255,255,0.9)', fontSize: '0.95rem' }}>
+                  <strong style={{ color: 'var(--white-90)', fontSize: '0.95rem' }}>
                     {fmt(parseFloat(split.amount) || 0)}
                   </strong>
                 </div>
-                <div style={{ fontSize: '0.83rem', color: 'rgba(255,255,255,0.5)', marginBottom: '0.5rem' }}>
+                <div style={{ fontSize: '0.83rem', color: 'var(--white-50)', marginBottom: '0.5rem' }}>
                   {split.splitMethod === 'percentage' && `${split.splitValue}% of total`}
                   {split.splitMethod === 'sessions'   && `${split.splitValue} sessions`}
                   {split.splitMethod === 'fixed'      && 'Fixed amount'}
@@ -715,17 +715,17 @@ export default function AllocateBudgetLinePage({ params }: { params: Promise<{ l
                 <table style={{ width: '100%', fontSize: '0.82rem', borderCollapse: 'collapse' }}>
                   <thead>
                     <tr>
-                      <th style={{ textAlign: 'left', color: 'rgba(255,255,255,0.3)', paddingBottom: '0.3rem', fontWeight: 600 }}>#</th>
-                      <th style={{ textAlign: 'left', color: 'rgba(255,255,255,0.3)', paddingBottom: '0.3rem', fontWeight: 600 }}>Amount</th>
-                      <th style={{ textAlign: 'left', color: 'rgba(255,255,255,0.3)', paddingBottom: '0.3rem', fontWeight: 600 }}>Due Date</th>
+                      <th style={{ textAlign: 'left', color: 'var(--white-30)', paddingBottom: '0.3rem', fontWeight: 600 }}>#</th>
+                      <th style={{ textAlign: 'left', color: 'var(--white-30)', paddingBottom: '0.3rem', fontWeight: 600 }}>Amount</th>
+                      <th style={{ textAlign: 'left', color: 'var(--white-30)', paddingBottom: '0.3rem', fontWeight: 600 }}>Due Date</th>
                     </tr>
                   </thead>
                   <tbody>
                     {split.installments.map((inst, ii) => (
                       <tr key={ii}>
-                        <td style={{ color: 'rgba(255,255,255,0.4)', padding: '0.2rem 0' }}>{inst.installmentNumber}</td>
-                        <td style={{ color: 'rgba(255,255,255,0.8)', padding: '0.2rem 0' }}>{fmt(parseFloat(inst.amount) || 0)}</td>
-                        <td style={{ color: 'rgba(255,255,255,0.6)', padding: '0.2rem 0' }}>{inst.dueDate || '—'}</td>
+                        <td style={{ color: 'var(--white-40)', padding: '0.2rem 0' }}>{inst.installmentNumber}</td>
+                        <td style={{ color: 'var(--white-80)', padding: '0.2rem 0' }}>{fmt(parseFloat(inst.amount) || 0)}</td>
+                        <td style={{ color: 'var(--white-60)', padding: '0.2rem 0' }}>{inst.dueDate || '—'}</td>
                       </tr>
                     ))}
                   </tbody>

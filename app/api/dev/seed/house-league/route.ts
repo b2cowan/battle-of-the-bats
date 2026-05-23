@@ -2,7 +2,8 @@ import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { requireDevToolPlatformAdmin } from '@/lib/platform-auth';
 
-const DEV_ORG_SLUG = 'dev-test-org';
+// Fallback chain — first match wins; ordered by most-featured plan first
+const DEV_ORG_SLUGS = ['dev-club-org', 'dev-league-org', 'dev-tplus-org', 'dev-tournament-org', 'dev-test-org'];
 const SEASON_SLUG  = 'dev-league-2026';
 
 type SeedGame = {
@@ -18,12 +19,12 @@ export async function POST() {
   const auth = await requireDevToolPlatformAdmin();
   if (auth.response) return auth.response;
 
-  const { data: org } = await supabaseAdmin
+  const { data: orgRows } = await supabaseAdmin
     .from('organizations')
-    .select('id')
-    .eq('slug', DEV_ORG_SLUG)
-    .maybeSingle();
+    .select('id, slug')
+    .in('slug', DEV_ORG_SLUGS);
 
+  const org = DEV_ORG_SLUGS.map(s => orgRows?.find(o => o.slug === s)).find(Boolean);
   if (!org) return NextResponse.json({ error: 'Seed an org first.' }, { status: 400 });
 
   const log: string[] = [];

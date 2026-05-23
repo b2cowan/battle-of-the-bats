@@ -241,7 +241,7 @@ export default function OrgBudgetVsActualPage() {
 
           <td className={`${styles.td} ${styles.tdRight}`} style={{ width: '13%' }}>
             {line.allocated > 0 ? (
-              <span style={{ color: 'rgba(255,255,255,0.8)' }}>{fmt(line.allocated)}</span>
+              <span style={{ color: 'var(--white-80)' }}>{fmt(line.allocated)}</span>
             ) : (
               <span className={styles.varNeutral}>—</span>
             )}
@@ -446,7 +446,7 @@ export default function OrgBudgetVsActualPage() {
 
           {noData ? (
             <div className={styles.emptySection}>
-              No budget lines for {year}. <Link href={`${base}/accounting/budget`} style={{ color: 'rgba(255,255,255,0.6)' }}>Add lines in the Budget Planner →</Link>
+              No budget lines for {year}. <Link href={`${base}/accounting/budget`} style={{ color: 'var(--white-60)' }}>Add lines in the Budget Planner →</Link>
             </div>
           ) : (
             <>
@@ -495,7 +495,7 @@ export default function OrgBudgetVsActualPage() {
                 Posted expense entries across all org ledgers for {year}. Per-line mapping to budget items arrives in a future update.
               </p>
               {data.orgActuals.entries.length === 0 ? (
-                <p style={{ padding: '0.75rem 1rem', fontSize: '0.82rem', color: 'rgba(255,255,255,0.35)' }}>
+                <p style={{ padding: '0.75rem 1rem', fontSize: '0.82rem', color: 'var(--white-35)' }}>
                   No posted expense entries for {year}.
                 </p>
               ) : (
@@ -585,7 +585,7 @@ export default function OrgBudgetVsActualPage() {
                         </div>
                         <div>
                           <div className={styles.teamStatLabel}>Overdue</div>
-                          <div className={styles.teamStatValue} style={{ color: t.overdueCount > 0 ? '#f87171' : 'rgba(255,255,255,0.8)' }}>
+                          <div className={styles.teamStatValue} style={{ color: t.overdueCount > 0 ? '#f87171' : 'var(--white-80)' }}>
                             {t.overdueCount > 0 ? (
                               <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
                                 <AlertTriangle size={13} /> {t.overdueCount}

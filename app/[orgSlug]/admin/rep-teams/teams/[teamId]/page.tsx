@@ -142,7 +142,7 @@ export default function TeamOverviewPage({ params }: { params: { orgSlug: string
         <p className={styles.sectionTitle} style={{ margin: 0 }}>Program Years</p>
         <Link
           href={`${base}/rep-teams/teams/${team.id}/history`}
-          style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.4)', textDecoration: 'none' }}
+          style={{ fontSize: '0.78rem', color: 'var(--white-40)', textDecoration: 'none' }}
         >
           View history →
         </Link>
@@ -173,7 +173,7 @@ export default function TeamOverviewPage({ params }: { params: { orgSlug: string
                     {py.tryoutOpen && (
                       <span className={`${styles.badge} ${styles.badgeActive}`}>Tryouts Open</span>
                     )}
-                    <span style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.3)' }}>
+                    <span style={{ fontSize: '0.78rem', color: 'var(--white-30)' }}>
                       {py.rosterCount} players · {py.coachCount} coaches
                     </span>
                   </div>
@@ -222,7 +222,7 @@ export default function TeamOverviewPage({ params }: { params: { orgSlug: string
                 <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
                   <input type="checkbox" checked={yearForm.tryoutOpen}
                     onChange={e => setYearForm(f => ({ ...f, tryoutOpen: e.target.checked }))} />
-                  <span style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.6)' }}>Open for tryout signups</span>
+                  <span style={{ fontSize: '0.85rem', color: 'var(--white-60)' }}>Open for tryout signups</span>
                 </label>
               </div>
 

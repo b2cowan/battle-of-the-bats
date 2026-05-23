@@ -461,7 +461,7 @@ export default function ScheduleGenerator({ tournament, orgSlug, ageGroups, team
               <div className="form-group" style={{ marginBottom: '1.5rem' }}>
                 <label className="form-label">Teams per Pool</label>
                 {poolList.length === 0 ? (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem', background: 'var(--black-20)', borderRadius: 'var(--radius-sm)', color: 'var(--warning)', fontSize: '0.875rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem', background: 'var(--white-5)', borderRadius: '2px', color: 'var(--warning)', fontSize: '0.875rem' }}>
                     <AlertCircle size={14} /> No pools configured for this division. Go to Division Settings and add pools first.
                   </div>
                 ) : (
@@ -559,7 +559,7 @@ export default function ScheduleGenerator({ tournament, orgSlug, ageGroups, team
             </div>
 
             {generationMode === 'slot' && (
-              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', padding: '0.75rem 1rem', background: 'var(--white-5)', borderRadius: 'var(--radius-sm)', margin: '0.75rem 0', fontSize: '0.8rem', color: 'var(--white-60)', lineHeight: 1.5 }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', padding: '0.75rem 1rem', background: 'var(--white-5)', borderRadius: '2px', margin: '0.75rem 0', fontSize: '0.8rem', color: 'var(--white-60)', lineHeight: 1.5 }}>
                 <Info size={14} style={{ marginTop: '1px', flexShrink: 0, color: 'var(--blueprint-blue)' }} />
                 Team names will appear publicly only once all slots in each pool are assigned via the Slot Assignments tab.
               </div>

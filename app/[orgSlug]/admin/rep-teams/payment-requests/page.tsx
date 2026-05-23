@@ -47,8 +47,8 @@ function StatusBadge({ status }: { status: string }) {
   return (
     <span style={{
       background:    colors[status] ?? 'transparent',
-      color:         text[status]   ?? 'rgba(255,255,255,0.5)',
-      borderRadius:  6,
+      color:         text[status]   ?? 'var(--white-50)',
+      borderRadius: '2px',
       padding:       '0.2rem 0.55rem',
       fontSize:      '0.75rem',
       fontWeight:    600,
@@ -69,7 +69,7 @@ function TypeBadge({ type }: { type: string }) {
       gap:        '0.3rem',
       background: isPay ? 'rgba(248,113,113,0.1)' : 'rgba(74,222,128,0.1)',
       color:      isPay ? '#f87171' : '#4ade80',
-      borderRadius: 6,
+      borderRadius: '2px',
       padding:    '0.2rem 0.55rem',
       fontSize:   '0.75rem',
       fontWeight: 600,
@@ -187,10 +187,10 @@ export default function AdminPaymentRequestsPage() {
 
   const tabStyle = (active: boolean) => ({
     padding:       '0.5rem 1.1rem',
-    borderRadius:  8,
+    borderRadius: '2px',
     border:        'none',
-    background:    active ? 'rgba(255,255,255,0.08)' : 'transparent',
-    color:         active ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.4)',
+    background:    active ? 'var(--white-8)' : 'transparent',
+    color:         active ? 'var(--white-90)' : 'var(--white-40)',
     fontWeight:    active ? 600 : 400,
     fontSize:      '0.88rem',
     cursor:        'pointer',
@@ -218,7 +218,7 @@ export default function AdminPaymentRequestsPage() {
       {error && <p className={styles.errorText} style={{ marginBottom: '1rem' }}>{error}</p>}
 
       {/* Tabs */}
-      <div style={{ display: 'flex', gap: '0.25rem', marginBottom: '1.5rem', borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '0' }}>
+      <div style={{ display: 'flex', gap: '0.25rem', marginBottom: '1.5rem', borderBottom: '1px solid var(--white-8)', paddingBottom: '0' }}>
         <button type="button" style={tabStyle(tab === 'pending')} onClick={() => setTab('pending')}>
           Pending
           {pendingRequests.length > 0 && (
@@ -226,7 +226,7 @@ export default function AdminPaymentRequestsPage() {
               marginLeft: '0.4rem',
               background: '#facc15',
               color: '#000',
-              borderRadius: '999px',
+              borderRadius: '2px',
               fontSize: '0.7rem',
               fontWeight: 700,
               padding: '0.05rem 0.45rem',
@@ -254,29 +254,29 @@ export default function AdminPaymentRequestsPage() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
             {pendingRequests.map(r => (
               <div key={r.id} style={{
-                background:   'rgba(255,255,255,0.03)',
-                border:       '1px solid rgba(255,255,255,0.08)',
-                borderRadius: 10,
+                background:   'var(--white-03)',
+                border:       '1px solid var(--white-8)',
+                borderRadius: '2px',
                 padding:      '1rem 1.25rem',
               }}>
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', flexWrap: 'wrap' }}>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.3rem' }}>
-                      <span style={{ fontWeight: 700, color: 'rgba(255,255,255,0.9)', fontSize: '0.88rem' }}>
+                      <span style={{ fontWeight: 700, color: 'var(--white-90)', fontSize: '0.88rem' }}>
                         {r.teamName ?? r.teamId}
                       </span>
                       <TypeBadge type={r.requestType} />
-                      <span style={{ fontWeight: 700, color: 'rgba(255,255,255,0.85)', fontSize: '0.95rem' }}>
+                      <span style={{ fontWeight: 700, color: 'var(--white-80)', fontSize: '0.95rem' }}>
                         {fmt(r.amount)}
                       </span>
                     </div>
-                    <p style={{ margin: 0, color: 'rgba(255,255,255,0.75)', fontSize: '0.88rem' }}>{r.description}</p>
+                    <p style={{ margin: 0, color: 'var(--white-80)', fontSize: '0.88rem' }}>{r.description}</p>
                     <p className={styles.muted} style={{ margin: '0.2rem 0 0', fontSize: '0.78rem' }}>
                       Submitted {fmtDate(r.createdAt)}
                       {r.paymentMethod && ` · ${r.paymentMethod}`}
                     </p>
                     {r.notes && (
-                      <p style={{ margin: '0.35rem 0 0', fontSize: '0.8rem', color: 'rgba(255,255,255,0.5)', fontStyle: 'italic' }}>
+                      <p style={{ margin: '0.35rem 0 0', fontSize: '0.8rem', color: 'var(--white-50)', fontStyle: 'italic' }}>
                         {r.notes}
                       </p>
                     )}
@@ -293,7 +293,7 @@ export default function AdminPaymentRequestsPage() {
                           alignItems: 'center',
                           gap:        '0.35rem',
                           padding:    '0.4rem 0.85rem',
-                          borderRadius: 7,
+                          borderRadius: '2px',
                           border:     'none',
                           background: reviewing === r.id ? 'rgba(74,222,128,0.1)' : 'rgba(74,222,128,0.15)',
                           color:      '#4ade80',
@@ -314,7 +314,7 @@ export default function AdminPaymentRequestsPage() {
                           alignItems: 'center',
                           gap:        '0.35rem',
                           padding:    '0.4rem 0.85rem',
-                          borderRadius: 7,
+                          borderRadius: '2px',
                           border:     '1px solid rgba(248,113,113,0.25)',
                           background: 'transparent',
                           color:      '#f87171',
@@ -355,12 +355,12 @@ export default function AdminPaymentRequestsPage() {
               <tbody>
                 {historyRequests.map(r => (
                   <tr key={r.id} className={styles.tr}>
-                    <td className={styles.td} style={{ fontWeight: 600, color: 'rgba(255,255,255,0.8)', whiteSpace: 'nowrap' }}>
+                    <td className={styles.td} style={{ fontWeight: 600, color: 'var(--white-80)', whiteSpace: 'nowrap' }}>
                       {r.teamName ?? '—'}
                     </td>
                     <td className={styles.td}><TypeBadge type={r.requestType} /></td>
                     <td className={styles.td}>
-                      <span style={{ color: 'rgba(255,255,255,0.75)', fontSize: '0.85rem' }}>{r.description}</span>
+                      <span style={{ color: 'var(--white-80)', fontSize: '0.85rem' }}>{r.description}</span>
                       {r.denialReason && (
                         <p style={{ margin: '0.2rem 0 0', fontSize: '0.77rem', color: '#f87171', fontStyle: 'italic' }}>
                           Denied: {r.denialReason}
@@ -371,7 +371,7 @@ export default function AdminPaymentRequestsPage() {
                       {fmt(r.amount)}
                     </td>
                     <td className={styles.td}><StatusBadge status={r.status} /></td>
-                    <td className={styles.td} style={{ whiteSpace: 'nowrap', color: 'rgba(255,255,255,0.45)', fontSize: '0.82rem' }}>
+                    <td className={styles.td} style={{ whiteSpace: 'nowrap', color: 'var(--white-45)', fontSize: '0.82rem' }}>
                       {r.reviewedAt ? fmtDate(r.reviewedAt) : '—'}
                     </td>
                   </tr>

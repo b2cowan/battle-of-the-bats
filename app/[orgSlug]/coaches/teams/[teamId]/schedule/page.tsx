@@ -1,6 +1,6 @@
 'use client';
-import { useState, useEffect, useCallback } from 'react';
-import { Calendar, ChevronLeft, ChevronRight, Plus, X, Trophy, Swords, Shield, Dumbbell, Users, MoreHorizontal } from 'lucide-react';
+import { use, useState, useEffect, useCallback } from 'react';
+import { Calendar, CheckCircle2, ChevronLeft, ChevronRight, CircleHelp, CircleSlash, Clock3, Plus, Save, X, Trophy, Swords, Shield, Dumbbell, Users } from 'lucide-react';
 import Link from 'next/link';
 import { useCoaches } from '@/lib/coaches-context';
 import { useOrg } from '@/lib/org-context';
@@ -11,7 +11,7 @@ import {
 } from '@/lib/export';
 import ExportMenu from '@/components/admin/ExportMenu';
 import styles from '../../../coaches.module.css';
-import type { RepTeamEvent, RepEventType } from '@/lib/types';
+import type { RepAttendanceStatus, RepRosterPlayer, RepTeamEvent, RepTeamEventAttendance, RepEventType } from '@/lib/types';
 
 // ── Export definition ─────────────────────────────────────────────────────────
 
@@ -54,6 +54,17 @@ const EVENT_ICONS: Record<RepEventType, React.ElementType> = {
   team_event:          Users,
 };
 
+const ATTENDANCE_OPTIONS: {
+  value: RepAttendanceStatus;
+  label: string;
+  icon: React.ElementType;
+}[] = [
+  { value: 'unknown', label: 'Unknown', icon: CircleHelp },
+  { value: 'attending', label: 'In', icon: CheckCircle2 },
+  { value: 'absent', label: 'Out', icon: CircleSlash },
+  { value: 'late', label: 'Late', icon: Clock3 },
+];
+
 const DAYS_OF_WEEK = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
 type ViewMode = 'list' | 'week' | 'month';
@@ -74,6 +85,12 @@ interface EventForm {
   endDate: string;
   startTime: string;
   endTime: string;
+}
+
+interface AttendancePlayerRow {
+  player: RepRosterPlayer;
+  status: RepAttendanceStatus;
+  note: string;
 }
 
 const BLANK_FORM: EventForm = {
@@ -106,14 +123,6 @@ function fmtTime(iso: string) {
   return new Date(iso).toLocaleTimeString('en-CA', { hour: 'numeric', minute: '2-digit', hour12: true });
 }
 
-function fmtDateInput(iso: string) {
-  return iso.slice(0, 10);
-}
-
-function fmtTimeInput(iso: string) {
-  return new Date(iso).toTimeString().slice(0, 5);
-}
-
 function isoFromInputs(date: string, time: string) {
   return `${date}T${time}`;
 }
@@ -131,6 +140,16 @@ function weekKey(iso: string) {
 }
 
 // ── Components ────────────────────────────────────────────────────────────────
+
+function playerDisplayName(player: RepRosterPlayer) {
+  return [player.playerNumber ? `#${player.playerNumber}` : '', player.playerFirstName, player.playerLastName]
+    .filter(Boolean)
+    .join(' ');
+}
+
+function errorMessage(error: unknown, fallback: string) {
+  return error instanceof Error ? error.message : fallback;
+}
 
 function EventChip({ event, onClick }: { event: RepTeamEvent; onClick: () => void }) {
   const color = EVENT_COLORS[event.eventType];
@@ -181,9 +200,9 @@ function WLTWidget({ events }: { events: RepTeamEvent[] }) {
 export default function CoachesSchedulePage({
   params,
 }: {
-  params: { orgSlug: string; teamId: string };
+  params: Promise<{ orgSlug: string; teamId: string }>;
 }) {
-  const { orgSlug, teamId } = params;
+  const { orgSlug, teamId } = use(params);
   const { assignments, loading: ctxLoading } = useCoaches();
   const { currentOrg } = useOrg();
 
@@ -201,6 +220,11 @@ export default function CoachesSchedulePage({
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
   const [deleteConfirm, setDeleteConfirm] = useState<{ eventId: string; isRecurring: boolean } | null>(null);
+  const [attendanceRows, setAttendanceRows] = useState<AttendancePlayerRow[]>([]);
+  const [attendanceLoading, setAttendanceLoading] = useState(false);
+  const [attendanceSaving, setAttendanceSaving] = useState(false);
+  const [attendanceDirty, setAttendanceDirty] = useState(false);
+  const [attendanceError, setAttendanceError] = useState('');
 
   const base = `/${orgSlug}/coaches/teams/${teamId}`;
 
@@ -214,14 +238,60 @@ export default function CoachesSchedulePage({
       if (!res.ok) throw new Error(await res.text());
       const data = await res.json();
       setEvents(data.events ?? []);
-    } catch (e: any) {
-      setError(e.message ?? 'Failed to load events');
+    } catch (e: unknown) {
+      setError(errorMessage(e, 'Failed to load events'));
     } finally {
       setLoading(false);
     }
   }, [orgSlug, teamId]);
 
-  useEffect(() => { fetchEvents(); }, [fetchEvents]);
+  useEffect(() => {
+    void Promise.resolve().then(fetchEvents);
+  }, [fetchEvents]);
+
+  useEffect(() => {
+    if (!selectedEvent) {
+      return;
+    }
+
+    let cancelled = false;
+    const eventId = selectedEvent.id;
+
+    async function fetchAttendance() {
+      setAttendanceLoading(true);
+      setAttendanceError('');
+      setAttendanceDirty(false);
+      try {
+        const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/events/${eventId}/attendance`);
+        if (!res.ok) {
+          const d = await res.json().catch(() => ({ error: res.statusText }));
+          throw new Error(d.error ?? 'Failed to load attendance');
+        }
+        const data: {
+          players?: RepRosterPlayer[];
+          attendance?: RepTeamEventAttendance[];
+        } = await res.json();
+        if (cancelled) return;
+
+        const attendanceByPlayer = new Map((data.attendance ?? []).map(row => [row.playerId, row]));
+        setAttendanceRows((data.players ?? []).map(player => {
+          const existing = attendanceByPlayer.get(player.id);
+          return {
+            player,
+            status: existing?.status ?? 'unknown',
+            note: existing?.note ?? '',
+          };
+        }));
+      } catch (e: unknown) {
+        if (!cancelled) setAttendanceError(errorMessage(e, 'Failed to load attendance'));
+      } finally {
+        if (!cancelled) setAttendanceLoading(false);
+      }
+    }
+
+    fetchAttendance();
+    return () => { cancelled = true; };
+  }, [orgSlug, selectedEvent, teamId]);
 
   // ── Add event ───────────────────────────────────────────────────────────────
 
@@ -277,8 +347,8 @@ export default function CoachesSchedulePage({
       }
       setShowAddForm(false);
       await fetchEvents();
-    } catch (e: any) {
-      setSaveError(e.message);
+    } catch (e: unknown) {
+      setSaveError(errorMessage(e, 'Save failed'));
     } finally {
       setSaving(false);
     }
@@ -308,8 +378,8 @@ export default function CoachesSchedulePage({
       setSelectedEvent(updated);
       setScoreForm(null);
       await fetchEvents();
-    } catch (e: any) {
-      setSaveError(e.message);
+    } catch (e: unknown) {
+      setSaveError(errorMessage(e, 'Save failed'));
     } finally {
       setSaving(false);
     }
@@ -328,14 +398,54 @@ export default function CoachesSchedulePage({
       setDeleteConfirm(null);
       setSelectedEvent(null);
       await fetchEvents();
-    } catch (e: any) {
-      setSaveError(e.message);
+    } catch (e: unknown) {
+      setSaveError(errorMessage(e, 'Delete failed'));
     } finally {
       setSaving(false);
     }
   }
 
   // ── Export ──────────────────────────────────────────────────────────────────
+
+  function setPlayerAttendance(playerId: string, patch: Partial<Pick<AttendancePlayerRow, 'status' | 'note'>>) {
+    setAttendanceRows(rows => rows.map(row => (
+      row.player.id === playerId ? { ...row, ...patch } : row
+    )));
+    setAttendanceDirty(true);
+  }
+
+  function setAllAttendance(status: RepAttendanceStatus) {
+    setAttendanceRows(rows => rows.map(row => ({ ...row, status })));
+    setAttendanceDirty(true);
+  }
+
+  async function handleAttendanceSave() {
+    if (!selectedEvent) return;
+    setAttendanceSaving(true);
+    setAttendanceError('');
+    try {
+      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/events/${selectedEvent.id}/attendance`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          entries: attendanceRows.map(row => ({
+            playerId: row.player.id,
+            status: row.status,
+            note: row.note,
+          })),
+        }),
+      });
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({ error: res.statusText }));
+        throw new Error(d.error ?? 'Attendance save failed');
+      }
+      setAttendanceDirty(false);
+    } catch (e: unknown) {
+      setAttendanceError(errorMessage(e, 'Attendance save failed'));
+    } finally {
+      setAttendanceSaving(false);
+    }
+  }
 
   function buildExportRows() {
     return events.map(e => ({
@@ -668,6 +778,92 @@ export default function CoachesSchedulePage({
               {selectedEvent.description && <><dt>Notes</dt><dd>{selectedEvent.description}</dd></>}
               {selectedEvent.isRecurring && <><dt>Recurring</dt><dd>Yes (weekly practice)</dd></>}
             </dl>
+
+            <div className={styles.attendanceSection}>
+              <div className={styles.attendanceHeader}>
+                <div>
+                  <h3 className={styles.attendanceTitle}>Attendance</h3>
+                  <p className={styles.attendanceSummary}>
+                    {attendanceRows.length
+                      ? `${attendanceRows.filter(row => row.status === 'attending').length} in, ${attendanceRows.filter(row => row.status === 'absent').length} out, ${attendanceRows.filter(row => row.status === 'late').length} late`
+                      : 'No active players available'}
+                  </p>
+                </div>
+                <div className={styles.attendanceBulkActions}>
+                  <button
+                    type="button"
+                    className={styles.btnGhost}
+                    disabled={attendanceLoading || attendanceRows.length === 0}
+                    onClick={() => setAllAttendance('attending')}
+                  >
+                    <CheckCircle2 size={14} /> All in
+                  </button>
+                  <button
+                    type="button"
+                    className={styles.btnGhost}
+                    disabled={attendanceLoading || attendanceRows.length === 0}
+                    onClick={() => setAllAttendance('unknown')}
+                  >
+                    <CircleHelp size={14} /> Reset
+                  </button>
+                </div>
+              </div>
+
+              {attendanceLoading ? (
+                <div className={styles.attendanceEmpty}>Loading attendance...</div>
+              ) : attendanceRows.length === 0 ? (
+                <div className={styles.attendanceEmpty}>Add active players to the roster before marking attendance.</div>
+              ) : (
+                <div className={styles.attendanceList}>
+                  {attendanceRows.map(row => (
+                    <div key={row.player.id} className={styles.attendanceRow}>
+                      <div className={styles.attendancePlayer}>
+                        <span className={styles.attendancePlayerName}>{playerDisplayName(row.player)}</span>
+                      </div>
+                      <div className={styles.attendanceStatusGroup} role="group" aria-label={`Attendance for ${playerDisplayName(row.player)}`}>
+                        {ATTENDANCE_OPTIONS.map(option => {
+                          const Icon = option.icon;
+                          return (
+                            <button
+                              key={option.value}
+                              type="button"
+                              aria-pressed={row.status === option.value}
+                              className={`${styles.attendanceStatusBtn} ${row.status === option.value ? styles.attendanceStatusBtnActive : ''}`}
+                              data-status={option.value}
+                              onClick={() => setPlayerAttendance(row.player.id, { status: option.value })}
+                            >
+                              <Icon size={13} />
+                              {option.label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                      <input
+                        className={styles.attendanceNoteInput}
+                        value={row.note}
+                        onChange={e => setPlayerAttendance(row.player.id, { note: e.target.value })}
+                        placeholder="Note"
+                        aria-label={`Attendance note for ${playerDisplayName(row.player)}`}
+                        maxLength={500}
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div className={styles.attendanceFooter}>
+                <button
+                  type="button"
+                  className={styles.btnPrimary}
+                  disabled={!attendanceDirty || attendanceSaving || attendanceLoading}
+                  onClick={handleAttendanceSave}
+                >
+                  <Save size={14} /> {attendanceSaving ? 'Saving...' : 'Save attendance'}
+                </button>
+                {attendanceDirty && <span className={styles.attendanceUnsaved}>Unsaved changes</span>}
+              </div>
+              {attendanceError && <p className={styles.errorText}>{attendanceError}</p>}
+            </div>
 
             {/* Score */}
             {(selectedEvent.eventType === 'league_game' || selectedEvent.eventType === 'tournament_game' || selectedEvent.eventType === 'scrimmage') && (

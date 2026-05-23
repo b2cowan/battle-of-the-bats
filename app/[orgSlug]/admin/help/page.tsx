@@ -95,7 +95,7 @@ export default function AdminHelpHubPage() {
     { label: 'Create or run a tournament', href: `${helpBase}/tournaments#recipe-open-tournament-registration`, category: 'Tournaments', keywords: ['new tournament', 'schedule', 'score', 'results'] },
     { label: 'Invite a member or change roles', href: `${helpBase}/org#recipe-invite-member`, category: 'Org Admin', keywords: ['invite', 'member', 'role', 'access', 'capability'] },
     ...(canOrgAdmin ? [
-      { label: 'Invite or review a Team workspace link', href: `${helpBase}/org#recipe-review-team-link-request`, category: 'Org Admin', keywords: ['team workspace', 'team links', 'invite', 'approve', 'basic visibility'] },
+      { label: 'Invite, review, or bill a Team workspace', href: `${helpBase}/org#recipe-review-team-link-request`, category: 'Org Admin', keywords: ['team workspace', 'team links', 'invite', 'approve', 'basic visibility', 'org billing', 'team add-on'] },
     ] : []),
     { label: 'Understand plan limits and upgrades', href: `${helpBase}/org#recipe-handle-subscription-issue`, category: 'Subscription', keywords: ['billing', 'plan', 'upgrade', 'subscription', 'past due'] },
     { label: 'Export a spreadsheet, PDF, or calendar', href: `${helpBase}/exports`, category: 'Exports', keywords: ['excel', 'csv', 'pdf', 'ics', 'calendar'] },
@@ -121,7 +121,7 @@ export default function AdminHelpHubPage() {
       steps: [
         { label: 'Invite members and choose roles', href: `${helpBase}/org#recipe-invite-member` },
         { label: 'Fix a member access issue', href: `${helpBase}/org#recipe-fix-member-access` },
-        { label: 'Invite or review Team workspace links', href: `${helpBase}/org#recipe-review-team-link-request` },
+        { label: 'Invite, review, or bill Team workspace links', href: `${helpBase}/org#recipe-review-team-link-request` },
         { label: 'Turn on included modules', href: `${helpBase}/org#recipe-enable-modules` },
         { label: 'Handle billing or upgrade questions', href: `${helpBase}/org#recipe-handle-subscription-issue` },
       ],

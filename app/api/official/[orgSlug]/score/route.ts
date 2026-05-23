@@ -13,6 +13,7 @@ type TournamentRow = {
   name: string;
   year: number;
   status: string | null;
+  require_score_finalization: boolean | null;
 };
 
 type GameRow = {
@@ -36,6 +37,10 @@ type GameRow = {
   home_slot_id: string | null;
   away_slot_id: string | null;
   notes: string | null;
+  score_submitted_by_user_id: string | null;
+  score_submitted_by_email: string | null;
+  score_submitted_at: string | null;
+  score_submission_source: Game['scoreSubmissionSource'] | null;
 };
 
 type TeamRow = {
@@ -84,6 +89,7 @@ interface OfficialScoreEmptyState {
 interface OfficialScorePayload {
   date: string;
   tournamentIds: string[];
+  scorePolicyByTournamentId: Record<string, boolean>;
   cards: OfficialScoreCard[];
   diamonds: Diamond[];
   ageGroups: AgeGroup[];
@@ -97,10 +103,16 @@ function emptyState(reason: OfficialScoreEmptyReason, title: string, message: st
   return { reason, title, message };
 }
 
-function emptyPayload(date: string, tournamentIds: string[], state: OfficialScoreEmptyState): OfficialScorePayload {
+function emptyPayload(
+  date: string,
+  tournamentIds: string[],
+  state: OfficialScoreEmptyState,
+  scorePolicyByTournamentId: Record<string, boolean> = {},
+): OfficialScorePayload {
   return {
     date,
     tournamentIds,
+    scorePolicyByTournamentId,
     cards: [],
     diamonds: [],
     ageGroups: [],
@@ -147,6 +159,10 @@ function mapGame(row: GameRow): Game {
     homeSlotId: row.home_slot_id ?? undefined,
     awaySlotId: row.away_slot_id ?? undefined,
     notes: row.notes ?? undefined,
+    scoreSubmittedByUserId: row.score_submitted_by_user_id,
+    scoreSubmittedByEmail: row.score_submitted_by_email,
+    scoreSubmittedAt: row.score_submitted_at,
+    scoreSubmissionSource: row.score_submission_source,
   };
 }
 
@@ -172,10 +188,10 @@ function mapAgeGroup(row: AgeGroupRow): AgeGroup {
 }
 
 export async function GET(req: Request, { params }: Params) {
-  const ctx = await getAuthContextWithScope();
+  const { orgSlug } = await params;
+  const ctx = await getAuthContextWithScope({ orgSlug });
   if (!ctx) return unauthorized();
 
-  const { orgSlug } = await params;
   if (ctx.org.slug !== orgSlug) {
     return accessDeniedResponse('This scorekeeper link belongs to another organization.');
   }
@@ -191,7 +207,7 @@ export async function GET(req: Request, { params }: Params) {
 
   let tournamentQuery = supabaseAdmin
     .from('tournaments')
-    .select('id, name, year, status')
+    .select('id, name, year, status, require_score_finalization')
     .eq('organization_id', ctx.org.id)
     .neq('status', 'archived')
     .order('year', { ascending: false })
@@ -221,6 +237,12 @@ export async function GET(req: Request, { params }: Params) {
 
   const tournaments = (tournamentRows ?? []) as TournamentRow[];
   const tournamentIds = tournaments.map(tournament => tournament.id);
+  const scorePolicyByTournamentId = Object.fromEntries(
+    tournaments.map(tournament => [
+      tournament.id,
+      tournament.require_score_finalization ?? ctx.org.requireScoreFinalization ?? false,
+    ]),
+  );
   if (tournamentIds.length === 0) {
     const state = ctx.assignedTournamentIds === null
       ? emptyState(
@@ -259,7 +281,11 @@ export async function GET(req: Request, { params }: Params) {
       away_placeholder,
       home_slot_id,
       away_slot_id,
-      notes
+      notes,
+      score_submitted_by_user_id,
+      score_submitted_by_email,
+      score_submitted_at,
+      score_submission_source
     `)
     .in('tournament_id', tournamentIds)
     .eq('game_date', date)
@@ -279,6 +305,7 @@ export async function GET(req: Request, { params }: Params) {
         'No assigned games today',
         'Your tournament access is set, but there are no games scheduled for today.',
       ),
+      scorePolicyByTournamentId,
     ));
   }
 
@@ -339,6 +366,7 @@ export async function GET(req: Request, { params }: Params) {
   return NextResponse.json({
     date,
     tournamentIds,
+    scorePolicyByTournamentId,
     cards,
     diamonds,
     ageGroups,

@@ -19,7 +19,7 @@
 .headerIcon {
   width: 48px;
   height: 48px;
-  border-radius: 12px;
+  border-radius: 2px;
   background: rgba(var(--blueprint-blue-rgb), 0.12);
   color: var(--logic-lime);
   border: 1px solid rgba(var(--blueprint-blue-rgb), 0.3);
@@ -32,7 +32,7 @@
 .pageTitle {
   font-size: 1.75rem;
   font-weight: 900;
-  font-family: var(--font-display, sans-serif);
+  font-family: var(--font-data);
   margin: 0;
   color: var(--white-90, #f0f0f0);
   line-height: 1.1;
@@ -76,7 +76,7 @@
 
 .seasonCard {
   padding: 1.25rem 1.5rem;
-  border-radius: 12px;
+  border-radius: 2px;
   background: var(--surface, rgba(255,255,255,0.04));
   border: 1px solid var(--border, rgba(255,255,255,0.08));
   display: flex;
@@ -149,7 +149,7 @@
 .statusBadge {
   display: inline-block;
   padding: 0.2rem 0.55rem;
-  border-radius: 4px;
+  border-radius: 2px;
   font-size: 0.68rem;
   font-weight: 700;
   text-transform: uppercase;
@@ -168,7 +168,7 @@
 .ageGroupBadge {
   display: inline-block;
   padding: 0.2rem 0.55rem;
-  border-radius: 4px;
+  border-radius: 2px;
   font-size: 0.68rem;
   font-weight: 700;
   letter-spacing: 0.04em;
@@ -189,7 +189,7 @@
 /* ── Season detail header ─────────────────────────────────────────────────── */
 .seasonHeader {
   padding: 1.5rem;
-  border-radius: 12px;
+  border-radius: 2px;
   background: rgba(255,255,255,0.03);
   border: 1px solid rgba(255,255,255,0.08);
   margin-bottom: 1.75rem;
@@ -208,7 +208,7 @@
 .seasonHeaderName {
   font-size: 1.5rem;
   font-weight: 900;
-  font-family: var(--font-display, sans-serif);
+  font-family: var(--font-data);
   color: var(--white-90, #f0f0f0);
   margin: 0 0 0.5rem;
 }
@@ -282,7 +282,7 @@
 
 .divisionCard {
   padding: 1.25rem 1.5rem;
-  border-radius: 12px;
+  border-radius: 2px;
   background: var(--surface, rgba(255,255,255,0.04));
   border: 1px solid var(--border, rgba(255,255,255,0.08));
   display: flex;
@@ -331,13 +331,13 @@
 .capacityBar {
   height: 6px;
   background: rgba(255,255,255,0.08);
-  border-radius: 3px;
+  border-radius: 2px;
   overflow: hidden;
 }
 
 .capacityFill {
   height: 100%;
-  border-radius: 3px;
+  border-radius: 2px;
   background: var(--logic-lime, #a3e635);
   transition: width 0.3s ease;
 }
@@ -367,7 +367,7 @@
   color: var(--white-40, rgba(255,255,255,0.4));
   text-decoration: none;
   padding: 0.2rem 0.5rem;
-  border-radius: 4px;
+  border-radius: 2px;
   border: 1px solid rgba(255,255,255,0.08);
   transition: color 0.15s, border-color 0.15s;
 }
@@ -382,7 +382,7 @@
   align-items: center;
   gap: 0.75rem;
   padding: 0.75rem 1rem;
-  border-radius: 8px;
+  border-radius: 2px;
   background: rgba(255,255,255,0.02);
   border: 1px solid rgba(255,255,255,0.06);
   margin-bottom: 1.5rem;
@@ -420,13 +420,13 @@
   width: 100%;
   background: rgba(255,255,255,0.05);
   border: 1px solid rgba(255,255,255,0.12);
-  border-radius: 8px;
+  border-radius: 2px;
   padding: 0.55rem 0.75rem;
   color: var(--white-90, #f0f0f0);
   font-size: 0.9rem;
   box-sizing: border-box;
   transition: border-color 0.15s;
-  font-family: inherit;
+  font-family: var(--font-data);
 }
 .input:focus, .select:focus, .textarea:focus {
   outline: none;
@@ -487,7 +487,7 @@
   position: absolute;
   inset: 0;
   background: rgba(255,255,255,0.1);
-  border-radius: 11px;
+  border-radius: 2px;
   cursor: pointer;
   transition: background 0.2s;
   border: 1px solid rgba(255,255,255,0.12);
@@ -514,7 +514,7 @@
 
 .automationSection {
   border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 10px;
+  border-radius: 2px;
   padding: 0.75rem 1rem;
   margin-top: 0.5rem;
 }
@@ -544,7 +544,7 @@
 .modal {
   background: #1a1f2e;
   border: 1px solid rgba(255,255,255,0.12);
-  border-radius: 14px;
+  border-radius: 2px;
   width: 100%;
   max-width: 560px;
   padding: 1.5rem;
@@ -590,7 +590,7 @@
 .iconBtn {
   background: none;
   border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 6px;
+  border-radius: 2px;
   padding: 0.3rem 0.45rem;
   color: var(--white-40, rgba(255,255,255,0.4));
   cursor: pointer;
@@ -615,17 +615,17 @@
   padding: 0.75rem 1rem;
   background: rgba(255,255,255,0.02);
   border: 1px solid rgba(255,255,255,0.06);
-  border-radius: 8px;
+  border-radius: 2px;
 }
 
 .divSelect {
   background: rgba(255,255,255,0.05);
   border: 1px solid rgba(255,255,255,0.12);
-  border-radius: 8px;
+  border-radius: 2px;
   padding: 0.4rem 0.65rem;
   color: var(--white-90, #f0f0f0);
   font-size: 0.85rem;
-  font-family: inherit;
+  font-family: var(--font-data);
   cursor: pointer;
 }
 .divSelect option { background: #1a1f2e; }
@@ -668,11 +668,11 @@
   width: 100%;
   background: rgba(255,255,255,0.04);
   border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 7px;
+  border-radius: 2px;
   padding: 0.4rem 0.65rem;
   color: var(--white-80, rgba(255,255,255,0.8));
   font-size: 0.82rem;
-  font-family: inherit;
+  font-family: var(--font-data);
   margin-bottom: 0.5rem;
   box-sizing: border-box;
 }
@@ -683,7 +683,7 @@
 
 .poolDropZone {
   min-height: 100px;
-  border-radius: 8px;
+  border-radius: 2px;
   padding: 0.35rem;
   border: 1px solid transparent;
   transition: background 0.15s, border-color 0.15s;
@@ -721,7 +721,7 @@
   flex-shrink: 0;
   background: rgba(255,255,255,0.02);
   border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 10px;
+  border-radius: 2px;
   display: flex;
   flex-direction: column;
   min-height: 200px;
@@ -790,7 +790,7 @@
 /* ── Player cards ─────────────────────────────────────────────────────────── */
 .playerCard {
   padding: 0.45rem 0.6rem;
-  border-radius: 6px;
+  border-radius: 2px;
   background: rgba(255,255,255,0.04);
   border: 1px solid rgba(255,255,255,0.08);
   cursor: grab;
@@ -809,7 +809,7 @@
   background: #1a1f2e;
   border-color: rgba(96,165,250,0.45);
   box-shadow: 0 10px 28px rgba(0,0,0,0.55);
-  border-radius: 6px;
+  border-radius: 2px;
   padding: 0.45rem 0.6rem;
   width: 210px;
 }
@@ -864,7 +864,7 @@
 .draftTitle {
   font-size: 1rem;
   font-weight: 800;
-  font-family: var(--font-display, sans-serif);
+  font-family: var(--font-data);
   color: var(--white-90, #f0f0f0);
 }
 
@@ -886,7 +886,7 @@
 
 .draftTeamChip {
   padding: 0.18rem 0.5rem;
-  border-radius: 4px;
+  border-radius: 2px;
   font-size: 0.68rem;
   font-weight: 600;
   background: rgba(255,255,255,0.04);
@@ -912,7 +912,7 @@
   justify-content: space-between;
   gap: 0.75rem;
   padding: 0.5rem 0.7rem;
-  border-radius: 7px;
+  border-radius: 2px;
   background: rgba(255,255,255,0.02);
   border: 1px solid rgba(255,255,255,0.05);
   margin-bottom: 0.3rem;
@@ -957,13 +957,13 @@
   padding: 0.75rem 1rem;
   background: rgba(255,255,255,0.02);
   border: 1px solid rgba(255,255,255,0.06);
-  border-radius: 8px;
+  border-radius: 2px;
 }
 
 .viewToggle {
   display: flex;
   border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 7px;
+  border-radius: 2px;
   overflow: hidden;
 }
 
@@ -975,7 +975,7 @@
   border: none;
   color: rgba(255,255,255,0.4);
   cursor: pointer;
-  font-family: inherit;
+  font-family: var(--font-data);
   transition: background 0.15s, color 0.15s;
 }
 .viewToggleBtn + .viewToggleBtn {
@@ -1006,7 +1006,7 @@
 
 .gameCard {
   padding: 0.9rem 1rem;
-  border-radius: 10px;
+  border-radius: 2px;
   background: rgba(255,255,255,0.03);
   border: 1px solid rgba(255,255,255,0.08);
   cursor: pointer;
@@ -1148,7 +1148,7 @@
 .roundBadge {
   display: inline-block;
   padding: 0.1rem 0.4rem;
-  border-radius: 3px;
+  border-radius: 2px;
   background: rgba(255,255,255,0.06);
   color: rgba(255,255,255,0.4);
   font-size: 0.65rem;
@@ -1158,7 +1158,7 @@
 /* ── Practice cards ────────────────────────────────────────────────────────── */
 .practiceCard {
   padding: 0.9rem 1rem;
-  border-radius: 10px;
+  border-radius: 2px;
   background: rgba(167,139,250,0.05);
   border: 1px solid rgba(167,139,250,0.15);
   transition: border-color 0.15s, background 0.15s;
@@ -1188,7 +1188,7 @@
   color: rgba(167,139,250,0.7);
   background: rgba(167,139,250,0.08);
   border: 1px solid rgba(167,139,250,0.15);
-  border-radius: 4px;
+  border-radius: 2px;
   padding: 0.1rem 0.4rem;
   white-space: nowrap;
 }

@@ -1,207 +1,424 @@
+'use client';
+import { useState } from 'react';
 import {
   Sparkles, GitBranch, CreditCard, Database, FileText, FlaskConical,
-  ArrowRight, MessageSquare, Layers, Zap, Rocket,
+  Rocket, Bug, ArrowRight, MessageSquare, Zap, ChevronLeft, BookOpen,
+  Info, Terminal,
 } from 'lucide-react';
 import styles from './playbook.module.css';
 
-/* ─── Data ──────────────────────────────────────────────────────────────────── */
+/* ─── Types ──────────────────────────────────────────────────────────────────── */
 
-const AGENTS = [
+type AgentKey = 'design' | 'ux' | 'billing' | 'db' | 'plan' | 'uat' | 'release' | 'debug';
+type AccentColor = 'green' | 'blue' | 'yellow' | 'purple' | 'orange' | 'red' | 'cyan' | 'pink';
+
+interface AgentDef {
+  key: AgentKey;
+  cmd: string;
+  Icon: React.ElementType;
+  accent: AccentColor;
+  headline: string;
+  tags: string[];
+  loadsFrom: string[];
+  rules: string[];
+  examples: string[];
+  notes?: string[];
+  extraSections?: { title: string; content: React.ReactNode }[];
+}
+
+/* ─── Agent definitions ──────────────────────────────────────────────────────── */
+
+const AGENTS: AgentDef[] = [
   {
+    key: 'design',
     cmd: '/design',
     Icon: Sparkles,
+    accent: 'green',
     headline: 'Visual design review and token guidance',
     tags: ['Screenshots', 'Colour questions', 'Spacing', 'Component polish'],
-    accent: 'green' as const,
-  },
-  {
-    cmd: '/ux',
-    Icon: GitBranch,
-    headline: 'User flow and completeness review',
-    tags: ['Empty states', 'Error handling', 'Loading states', 'Role access gaps'],
-    accent: 'blue' as const,
-  },
-  {
-    cmd: '/billing',
-    Icon: CreditCard,
-    headline: 'Plan gating and Stripe guidance',
-    tags: ['Gate audits', 'Upsell copy', 'New feature flags', 'Downgrade logic'],
-    accent: 'yellow' as const,
-  },
-  {
-    cmd: '/db',
-    Icon: Database,
-    headline: 'Supabase schema, queries, and migrations',
-    tags: ['Query writing', 'New tables', 'RLS policies', 'Migration SQL'],
-    accent: 'purple' as const,
-  },
-  {
-    cmd: '/plan',
-    Icon: FileText,
-    headline: 'Implementation plans and PM briefs',
-    tags: ['Starting features', 'Tracking docs', 'PM briefs', 'TODO entries'],
-    accent: 'orange' as const,
-  },
-  {
-    cmd: '/uat',
-    Icon: FlaskConical,
-    headline: 'Playwright browser-based acceptance tests',
-    tags: ['Regression tests', 'Both plan tiers', 'Sign-off gate', 'Bug proposals'],
-    accent: 'red' as const,
-  },
-  {
-    cmd: '/release',
-    Icon: Rocket,
-    headline: 'Production release manager — push, monitor, fix',
-    tags: ['Pre-flight checks', 'dev → master push', 'Log analysis', 'Fix proposals'],
-    accent: 'cyan' as const,
-  },
-];
-
-const PIPELINE = [
-  {
-    cmd: '/plan',
-    label: 'Create tracking doc',
-    detail: 'Always first. Generates the plan file all subsequent agents update.',
-  },
-  {
-    cmd: '/billing',
-    label: 'Audit plan gates',
-    detail: 'Code-only. Fix broken gates before polishing anything above them.',
-  },
-  {
-    cmd: '/ux',
-    label: 'Review flows',
-    detail: 'Code-only. Empty states, error recovery, loading states — no browser needed.',
-  },
-  {
-    cmd: '/design',
-    label: 'Visual pass',
-    detail: 'Requires screenshots. Batch by area. Decisions carry forward automatically.',
-  },
-  {
-    cmd: '/uat',
-    label: 'Final validation',
-    detail: 'Runs Playwright across both plan tiers. Proposes fixes — you approve each one.',
-  },
-];
-
-const PROMPT_TIPS = [
-  {
-    cmd: '/design',
-    Icon: Sparkles,
-    accent: 'green' as const,
+    loadsFrom: [
+      'memory/design_system.md — full CSS token reference',
+      'memory/design_decisions.md — all past decisions (binding)',
+      'memory/design_principles.md — platform UX philosophy',
+      'memory/project_milton_bats_palette.md — Milton Softball theme rules',
+    ],
     rules: [
       'Always include a screenshot for visual questions — descriptions alone are ambiguous.',
       'State which plan tier and user role the screenshot shows.',
-      'Say what feels wrong if you know ("feels cluttered", "hierarchy is unclear").',
+      'Say what feels wrong if you know ("feels cluttered", "hierarchy unclear") — the agent will agree or push back with a reason.',
+      'The agent returns token names (--surface-2, --radius-sm), never raw hex values.',
+      'Every accepted decision gets written to memory/design_decisions.md and is binding in all future sessions — prompt "log any decisions we made" before closing.',
     ],
     examples: [
       '/design [screenshot] — tournament dashboard, free tier; hierarchy feels flat, what needs to change?',
+      '/design [screenshot] — teams page empty state; this needs a proper call to action',
       '/design what token should I use for a "payment pending" badge background?',
-      '/design — tournament review continued; dashboard signed off last session. Today: schedule page. [screenshot]',
+      '/design review app/[orgSlug]/admin/tournaments/teams/teams-admin.module.css — does the table styling match our system?',
+      '/design [screenshot] — is this modal consistent with the patterns we\'ve established?',
+      '/design — tournament review continued; dashboard signed off last session (decisions logged). Today: schedule page. [screenshot]',
+      '/design what radius and shadow should a confirmation modal use?',
+      '/design the filter chip bar looks inconsistent — [screenshot] — what\'s wrong with it?',
+    ],
+    notes: [
+      'Design decisions are the most persistent output of any agent session. They accumulate in memory/design_decisions.md and are automatically loaded in every future /design conversation — this is how visual consistency is maintained across weeks of development.',
+      'Do not mix /design with /ux in the same conversation. Visual review (design) and flow review (ux) need separate clean contexts.',
     ],
   },
   {
+    key: 'ux',
     cmd: '/ux',
     Icon: GitBranch,
-    accent: 'blue' as const,
+    accent: 'blue',
+    headline: 'User flow and completeness review',
+    tags: ['Empty states', 'Error handling', 'Loading states', 'Role access gaps'],
+    loadsFrom: [
+      'memory/project_ux_review.md — 27 findings from 2026-05-11 review, phase status',
+      'memory/design_principles.md — UX conventions (forms, tables, modals, empty states)',
+    ],
     rules: [
-      'Give a role (org admin, coach, public visitor) and an action (registering a team, viewing the schedule).',
-      'Pointing at a file path is faster than a screenshot for code-level reviews.',
+      'Give the agent a role (org admin, coach, public visitor) and an action (registering a team, viewing the schedule) — generic reviews are less useful.',
+      'Pointing at a file path is faster than a screenshot for code-level completeness reviews.',
       'Ask about specific failure scenarios: "what does the user see when the API call fails?"',
+      'The agent checks five things for every flow: happy path, edge cases, error path, recovery, and confirmation for destructive actions.',
+      '/ux is for flows and completeness — send visual/styling issues to /design instead.',
     ],
     examples: [
-      '/ux review app/[orgSlug]/admin/tournaments/teams/page.tsx — org admin, check empty states and error recovery',
+      '/ux review app/[orgSlug]/admin/tournaments/teams/page.tsx — org admin, check all five flow states',
       '/ux what does a free-tier org admin see when they try to access auto-schedule? Is the upgrade path clear?',
-      '/ux trace the full flow for a team registering for a tournament. What can go wrong at each step?',
+      '/ux trace the full flow for a team registering for a tournament — what can go wrong at each step?',
+      '/ux what happens when the bulk team approval API call fails halfway through?',
+      '/ux — audit all empty states in the tournament admin section. Which pages are missing them entirely?',
+      '/ux review app/[orgSlug]/admin/tournaments/schedule/page.tsx — what destructive actions are missing a confirmation step?',
+      '/ux [screenshot] — org admin trying to cancel a registration; is the recovery path obvious?',
+      '/ux what does a coach see if they navigate to a page they don\'t have permission to view?',
+    ],
+    extraSections: [
+      {
+        title: 'User roles the agent knows',
+        content: (
+          <table className={styles.roleTable}>
+            <thead><tr><th>Role</th><th>Access path</th><th>Primary tasks</th></tr></thead>
+            <tbody>
+              <tr><td><code>Org admin</code></td><td><code>/[orgSlug]/admin/</code></td><td>Full org management, billing, settings</td></tr>
+              <tr><td><code>Staff</code></td><td><code>/[orgSlug]/admin/</code></td><td>Scoped to assigned tournaments only</td></tr>
+              <tr><td><code>Coach</code></td><td><code>/[orgSlug]/coaches/</code></td><td>Own team: roster, events, expenses</td></tr>
+              <tr><td><code>Public / parent</code></td><td><code>/[orgSlug]/</code></td><td>Registration, schedules, scores</td></tr>
+              <tr><td><code>Platform admin</code></td><td><code>/platform-admin/</code></td><td>Cross-org oversight, billing, audit</td></tr>
+            </tbody>
+          </table>
+        ),
+      },
     ],
   },
   {
+    key: 'billing',
     cmd: '/billing',
     Icon: CreditCard,
-    accent: 'yellow' as const,
+    accent: 'yellow',
+    headline: 'Plan gating and Stripe guidance',
+    tags: ['Gate audits', 'Upsell copy', 'New feature flags', 'Downgrade logic'],
+    loadsFrom: [
+      'lib/plan-features.ts — FEATURE_MIN_PLAN map and hasPlanFeature()',
+      'lib/plan-config.ts + lib/plan-config-db.ts — plan configuration helpers',
+      'lib/plan-gating-server.ts — server-side gating utilities',
+      'lib/billing-retention.ts — downgrade and cancellation handling',
+      'components/billing/UpgradeGate.tsx — client-side upsell gate component',
+      'memory/project_stripe_plan.md — Stripe integration phase status',
+      'memory/project_pricing_strategy.md — tier names, prices, positioning rules',
+    ],
     rules: [
-      'Specify which features or pages you\'re auditing.',
-      'Ask in terms of plan tiers: "should this be locked on the free tier?"',
-      'When adding a new feature, ask for the full gate implementation: type union → FEATURE_MIN_PLAN → server guard → UpgradeGate.',
+      'Always use hasPlanFeature(org.plan_id, \'feature_key\') — never compare plan_id strings directly.',
+      'Price IDs are in the stripe_prices DB table (migration 048) — never hardcode them.',
+      'When adding a new gated feature: add to PlanFeature union → FEATURE_MIN_PLAN → server guard → UpgradeGate wrapper.',
+      'Use plan display names in copy: Tournament, Tournament Plus, League, Club — not Starter/Pro/Elite.',
+      'Upsell messaging: "available on Tournament Plus and above" — never "upgrade to unlock".',
+      'On downgrade: data is retained, access is gated — never hard-delete on plan change.',
     ],
     examples: [
       '/billing audit all plan gates in the tournament admin section — find missing locks and free-tier exposure',
       '/billing I want to add a "clone tournament" button — which plan, and walk me through the full implementation',
+      '/billing is the auto-schedule feature correctly gated? Check the schedule page and its API route.',
+      '/billing what upsell message should show when a free-tier admin tries to access sealed archives?',
       '/billing if an org downgrades from Tournament Plus to Tournament, what happens to their sealed archives?',
+      '/billing review the upsell messaging on app/[orgSlug]/admin/tournaments/archives/page.tsx — does it match our copy rules?',
+      '/billing we need a new "export registrations to PDF" feature — what plan should gate it and how do I implement the gate?',
+    ],
+    extraSections: [
+      {
+        title: 'Plan tiers',
+        content: (
+          <table className={styles.roleTable}>
+            <thead><tr><th>Plan ID</th><th>Display name</th><th>Monthly</th><th>Key unlock</th></tr></thead>
+            <tbody>
+              <tr><td><code>tournament</code></td><td>Tournament</td><td>Free</td><td>1 active tournament, manual scheduling</td></tr>
+              <tr><td><code>tournament_plus</code></td><td>Tournament Plus</td><td>$39</td><td>Auto-schedule, brackets, PDF exports</td></tr>
+              <tr><td><code>league</code></td><td>League</td><td>$89</td><td>Public org page, House League module</td></tr>
+              <tr><td><code>club</code></td><td>Club</td><td>$179</td><td>Accounting, Rep Teams, unlimited seats</td></tr>
+            </tbody>
+          </table>
+        ),
+      },
     ],
   },
   {
+    key: 'db',
     cmd: '/db',
     Icon: Database,
-    accent: 'purple' as const,
+    accent: 'purple',
+    headline: 'Supabase schema, queries, and migrations',
+    tags: ['Query writing', 'New tables', 'RLS policies', 'Migration SQL'],
+    loadsFrom: [
+      'memory/reference_db_schema.md — complete table+column list from dev Supabase 2026-05-11',
+      'lib/db.ts — Supabase client helpers and shared query utilities',
+      'lib/api-auth.ts — how routes resolve org context and authenticate',
+    ],
     rules: [
-      'Always ask the agent to verify a column or table exists before writing a query.',
-      'Include the route context: "this is a server-side API route, org-scoped".',
-      'Ask for the RLS policy alongside any new table migration.',
+      'Always verify a column or table exists in memory/reference_db_schema.md before writing a query.',
+      'Include route context: "this is a server-side API route, org-scoped" — it affects which client to use.',
+      'Ask for the RLS policy alongside any new table migration — never design a table without one.',
+      'Use supabaseAdmin (service role) only for platform-admin operations — never expose it to client components.',
+      'Every org-scoped query must filter by org_id even when RLS is present — defence in depth.',
+      'Never use DROP COLUMN or DROP TABLE without a deprecation plan — prefer nullable columns + soft deletes.',
+      'Add an index on every org_id column and every FK used in WHERE clauses.',
     ],
     examples: [
-      '/db — write a server-side query that fetches all active tournaments for an org including team counts. Org-scoped.',
-      '/db I need a table to store per-tournament notification preferences. Design the table, migration SQL, and RLS policy.',
+      '/db — I want to query all teams for a tournament grouped by age group and pool. What columns are available and what\'s the best join pattern?',
+      '/db — write a server-side query that fetches all active tournaments for an org, including team count per tournament. Org-scoped.',
+      '/db — I need a table to store per-tournament notification preferences. Design the table, migration SQL, and RLS policy.',
       '/db — review this migration SQL before I run it: [paste SQL]. Check for missing indexes and RLS gaps.',
+      '/db does the pool_id column exist on the teams table? I\'m getting a query error.',
+      '/db — write a migration to add a `cloned_from_id` nullable FK column to the tournaments table.',
+      '/db what\'s the correct pattern for a bulk update query that marks multiple teams as accepted?',
+    ],
+    notes: [
+      'Tables that do NOT exist (common mistakes): league_practices, rule_sections. The schema file has a full "does not exist" list — the agent checks this before writing any query.',
     ],
   },
   {
+    key: 'plan',
     cmd: '/plan',
     Icon: FileText,
-    accent: 'orange' as const,
+    accent: 'orange',
+    headline: 'Implementation plans and PM briefs',
+    tags: ['Starting features', 'Tracking docs', 'PM briefs', 'TODO entries'],
+    loadsFrom: [
+      'AGENCY_RULES.md — binding planning rules (PM brief required, doc structure, no code before plan)',
+      'TODO.md — current task list to avoid duplicating existing items',
+      'memory/feedback_doc_structure.md — doc structure rules',
+      'memory/feedback_docs_folder_convention.md — docs/active/ + docs/archive/ convention',
+    ],
     rules: [
-      'Describe the feature in plain English — the agent handles the technical structuring.',
-      'Mention the plan tier if the feature is gated.',
-      'The agent writes the PM brief first and waits before starting the implementation plan.',
+      'This agent must be invoked before starting any significant feature — AGENCY_RULES.md requires it.',
+      'The PM brief is produced first and is a blocking step — no implementation detail before it.',
+      'Plan files go in docs/active/ — never the repo root. Completed plans move to docs/archive/.',
+      'TODO.md gets one summary line per feature with a link to the plan file — no detail in TODO.md itself.',
+      'Every plan touching the DB lists the migration file as the first task.',
+      'Note which billing plan tier gates each feature in the plan.',
     ],
     examples: [
       '/plan — create a tournament section review plan covering all 20 admin pages for both plan tiers',
-      '/plan — I want to add email notifications when a team is approved. This is a Tournament Plus feature.',
-      '/plan — tournament review complete. Mark TOURNAMENT_REVIEW_PLAN.md done and move it to docs/archive/',
+      '/plan — I want to add email notifications when a team is approved for a tournament. This is a Tournament Plus feature.',
+      '/plan — create a plan for adding a "clone tournament" feature with full DB migration, API route, and UI.',
+      '/plan — mark phases 1 and 2 of TOURNAMENT_REVIEW_PLAN.md as complete.',
+      '/plan — the tournament review is done. Move TOURNAMENT_REVIEW_PLAN.md to docs/archive/ and update TODO.md.',
+      '/plan — write a PM brief for adding coach messaging to the coaches portal.',
+    ],
+    extraSections: [
+      {
+        title: 'What /plan produces for every request',
+        content: (
+          <ol className={styles.orderedList}>
+            <li><strong>PM Brief</strong> — plain-language outcome summary: what it does, why it matters, who benefits, expected impact, priority, success criteria.</li>
+            <li><strong>Plan file</strong> — saved to <code>docs/active/FEATURE_NAME_PLAN.md</code> with phased task checklist, file paths, SQL, and architectural decisions.</li>
+            <li><strong>TODO.md entry</strong> — one summary line linking to the plan file. Never more than one line per feature.</li>
+          </ol>
+        ),
+      },
     ],
   },
   {
+    key: 'uat',
     cmd: '/uat',
     Icon: FlaskConical,
-    accent: 'red' as const,
+    accent: 'red',
+    headline: 'Playwright browser-based acceptance tests',
+    tags: ['Regression tests', 'Both plan tiers', 'Sign-off gate', 'Bug proposals'],
+    loadsFrom: [
+      'tests/uat/scenarios/*.spec.ts — 58 tests across 5 suites',
+      'tests/uat/helpers/fixtures.ts — typed Playwright fixtures per role',
+      'UAT_FINDINGS.md — open findings log (checked before every run)',
+      '.env.local — UAT_ env vars (org slugs, credentials per role)',
+    ],
     rules: [
-      'Dev server must be running at localhost:3000 before invoking.',
-      'Use a named suite to keep runs fast: tournament-admin, plan-gating, auth, coaches, platform-admin.',
-      'After the run, the agent proposes fixes — reply "apply 1, 3" or "apply all" or "explain 2" before anything changes.',
+      'Dev server must be running at localhost:3000 before invoking — the agent checks this first.',
+      'Use a named suite to keep runs fast — running the full suite takes significantly longer.',
+      'The agent runs tests → analyses failures → proposes numbered fixes → STOPS. Nothing is changed without your approval.',
+      'Reply "apply 1, 3" or "apply all" or "explain 2" — the agent applies only what you approve.',
+      'Use /uat fix to re-propose fixes from UAT_FINDINGS.md without re-running tests (faster after manual changes).',
+      'Auth sessions expire — if tests fail on login, run auth-setup first.',
     ],
     examples: [
       '/uat tournament-admin',
       '/uat plan-gating',
-      '/uat fix   ← re-propose fixes from UAT_FINDINGS.md without re-running tests',
+      '/uat auth',
+      '/uat coaches',
+      '/uat platform-admin',
+      '/uat                              ← full suite (all 58 tests)',
+      '/uat fix                          ← re-propose from UAT_FINDINGS.md, no re-run',
+      '/uat setup                        ← print UAT_SETUP.md onboarding guide',
+    ],
+    extraSections: [
+      {
+        title: 'Test suites',
+        content: (
+          <table className={styles.roleTable}>
+            <thead><tr><th>Suite</th><th>What it covers</th></tr></thead>
+            <tbody>
+              <tr><td><code>auth</code></td><td>Login, session handling, redirect rules per role</td></tr>
+              <tr><td><code>plan-gating</code></td><td>Free vs. Plus feature access across all sections</td></tr>
+              <tr><td><code>tournament-admin</code></td><td>Tournament creation, teams, schedule, results</td></tr>
+              <tr><td><code>platform-admin</code></td><td>Org management, billing overrides, audit log</td></tr>
+              <tr><td><code>coaches</code></td><td>Coach portal: roster, events, expenses</td></tr>
+            </tbody>
+          </table>
+        ),
+      },
+    ],
+    notes: [
+      'Sign-off contract: the agent NEVER calls Edit, Write, or any file-modifying tool before you explicitly approve. "apply all" applies all proposals; "apply 1, 3" applies only those numbered fixes.',
     ],
   },
   {
+    key: 'release',
     cmd: '/release',
     Icon: Rocket,
-    accent: 'cyan' as const,
+    accent: 'cyan',
+    headline: 'Production release manager — push, monitor, fix',
+    tags: ['Pre-flight checks', 'dev → staging push', 'Promote staging → prod', 'Log analysis', 'Fix proposals'],
+    loadsFrom: [
+      'RELEASE_CONFIG.md — Amplify app ID (d3ld0l2bgmmlga), log group, stream filters',
+      'memory/feedback_branch_policy.md — dev is default; master = production',
+    ],
     rules: [
-      'Fill in memory/project_release_config.md with your Amplify app ID before first use.',
-      'The agent shows a full release summary and waits — you must type "push" to confirm before anything is sent to master.',
-      'On build failure: come back and run /release fix [paste error] or /release fix logs (requires AWS CLI).',
+      'Preferred production flow: /release dev → verify in browser → /release promote.',
+      '/release promote uses origin/dev (remote ref) not your local branch — uncommitted local work cannot reach production.',
+      '/release master pushes your local dev branch — use only when you know local is in sync with staging.',
+      'The agent shows a full release summary and STOPS — you must type "push" to confirm before anything is sent.',
+      'Master and promote releases show a prominent PRODUCTION WARNING in the summary — extra speed bump by design.',
+      'Pre-flight checks TypeScript before /release dev and /release master — TS errors block the push. /release promote skips the TS check (Amplify already built it successfully).',
+      'On failure: come back with /release fix [paste error] or /release fix logs [dev|master].',
+      'The agent never force-pushes — it uses --force-with-lease at most, and only in the undo path.',
     ],
     examples: [
-      '/release                   ← pre-flight checks + summary, then waits for "push"',
-      '/release preflight         ← checks only, no push',
-      '/release fix [paste Amplify build error output here]',
-      '/release setup             ← diagnose AWS CLI access, print IAM setup instructions',
+      '/release dev                      ← pre-flight + push local dev to staging; waits for "push"',
+      '/release promote                  ← promote origin/dev → master (safe: ignores local branch)',
+      '/release master                   ← push local dev directly to production (use promote instead)',
+      '/release preflight                ← checks only, no push, no target needed',
+      '/release fix logs dev             ← fetch CloudWatch dev stream logs and propose fixes',
+      '/release fix logs master          ← fetch CloudWatch master stream logs and propose fixes',
+      '/release fix [paste Amplify error output here]',
+      '/release setup                    ← diagnose AWS CLI access, print IAM policy',
+      '/release undo                     ← print safe revert instructions (never auto-executes)',
+    ],
+    extraSections: [
+      {
+        title: 'CloudWatch log config',
+        content: (
+          <table className={styles.roleTable}>
+            <thead><tr><th>Target</th><th>Log group</th><th>Stream filter</th></tr></thead>
+            <tbody>
+              <tr><td><code>dev</code></td><td><code>/aws/amplify/d3ld0l2bgmmlga</code></td><td><code>dev</code></td></tr>
+              <tr><td><code>master</code></td><td><code>/aws/amplify/d3ld0l2bgmmlga</code></td><td><code>master</code></td></tr>
+            </tbody>
+          </table>
+        ),
+      },
+    ],
+    notes: [
+      'AWS CLI is optional — /release dev and /release master work without it. You only need AWS CLI configured for /release fix logs (auto log fetching). Run /release setup to check what\'s installed.',
+    ],
+  },
+  {
+    key: 'debug',
+    cmd: '/debug',
+    Icon: Bug,
+    accent: 'pink',
+    headline: 'Screenshot and error investigation — find the root cause and fix it',
+    tags: ['Screenshot errors', 'API failures', 'Runtime crashes', 'Broken UI states'],
+    loadsFrom: [
+      'memory/reference_db_schema.md — table+column reference for DB error investigation',
+      'lib/api-auth.ts — org resolution and auth patterns (for 401/403 debugging)',
+      'lib/plan-features.ts — plan gating logic (for unexpected access errors)',
+      'lib/db.ts — Supabase client helpers',
+    ],
+    rules: [
+      'Accepts screenshots, pasted errors, file paths, or plain descriptions — any combination works.',
+      'The agent reads actual source files before proposing a fix — it never guesses from a description alone.',
+      'Root cause is stated in one sentence before any fix is proposed.',
+      'Fixes are proposed as numbered diffs with a confidence level — nothing is applied without your approval.',
+      'For DB errors: always verifies the column/table exists in memory/reference_db_schema.md before suggesting schema changes.',
+      'When a screenshot shows a UI error, the agent reads both the component AND the API route it calls.',
+      'Sign-off gate: "apply all", "apply 1, 3", "explain 2", "skip all" — same contract as /uat and /release.',
+      'If confidence is medium or lower, it says so prominently and explains why.',
+    ],
+    examples: [
+      '/debug [screenshot] — clicking Save on the teams form returns a 500; nothing shows in the UI',
+      '/debug [screenshot] — this badge shows "undefined" instead of the team name',
+      '/debug [screenshot] — the schedule page is blank after loading; no error visible',
+      '/debug — pasting terminal error:\n  TypeError: Cannot read properties of undefined (reading \'plan_id\')\n  at app/[orgSlug]/admin/page.tsx:42',
+      '/debug — app/api/admin/org/route.ts is returning 403 for org admin users; should not be blocked',
+      '/debug [screenshot] — modal opens but the Save button does nothing and there\'s no error',
+      '/debug — the Stripe webhook is firing but the plan is not updating in the DB',
+      '/debug [screenshot of browser console] — these are the errors on the dashboard for a Tournament Plus org',
+    ],
+    extraSections: [
+      {
+        title: 'Error types the agent investigates',
+        content: (
+          <table className={styles.roleTable}>
+            <thead><tr><th>Type</th><th>Signals</th></tr></thead>
+            <tbody>
+              <tr><td><code>RUNTIME_CRASH</code></td><td>500, uncaught exception, TypeError / ReferenceError in stack trace</td></tr>
+              <tr><td><code>AUTH_ERROR</code></td><td>401, 403, unexpected redirect to login</td></tr>
+              <tr><td><code>DB_ERROR</code></td><td>Query failure, column not found, RLS violation, empty result when data should exist</td></tr>
+              <tr><td><code>PLAN_GATE_BUG</code></td><td>Feature wrongly blocked on paid plan, or wrongly accessible on free tier</td></tr>
+              <tr><td><code>UI_BUG</code></td><td>Renders but data is wrong, undefined shown, broken layout</td></tr>
+              <tr><td><code>MISSING_STATE</code></td><td>Blank page, spinner that never resolves, empty list when data exists</td></tr>
+              <tr><td><code>STRIPE_ERROR</code></td><td>Webhook not firing, plan not updating after payment</td></tr>
+              <tr><td><code>ENV_MISSING</code></td><td>Undefined environment variable in runtime error</td></tr>
+            </tbody>
+          </table>
+        ),
+      },
+    ],
+    notes: [
+      'This agent is reactive — use it when something is broken and you need the cause and a fix fast. For systematic flow review use /ux; for automated regression catching use /uat.',
+      'After applying fixes, run /release dev to push to staging, or test locally first with npm run dev.',
     ],
   },
 ];
 
+/* ─── Pipeline data ──────────────────────────────────────────────────────────── */
+
+const PIPELINE = [
+  { cmd: '/plan',    label: 'Create tracking doc',   detail: 'Always first. Generates the plan file all subsequent agents update.' },
+  { cmd: '/billing', label: 'Audit plan gates',       detail: 'Code-only. Fix broken gates before polishing anything above them.' },
+  { cmd: '/ux',      label: 'Review flows',           detail: 'Code-only. Empty states, error recovery, loading — no browser needed.' },
+  { cmd: '/design',  label: 'Visual pass',            detail: 'Requires screenshots. Batch by area. Decisions carry forward automatically.' },
+  { cmd: '/uat',     label: 'Final validation',       detail: 'Playwright across both plan tiers. Proposes fixes — you approve each one.' },
+];
+
 const QUICK_REF = [
-  { trigger: 'Starting a new feature?', cmd: '/plan first — always.' },
+  { trigger: 'Starting a new feature?',         cmd: '/plan first — always.' },
   { trigger: 'Something looks visually wrong?', cmd: '/design + screenshot' },
-  { trigger: 'Flow or state missing?', cmd: '/ux + file path or screenshot' },
-  { trigger: 'Feature gated correctly?', cmd: '/billing to audit' },
-  { trigger: 'Writing a DB query?', cmd: '/db to verify schema and get the query' },
-  { trigger: 'Validating after changes?', cmd: '/uat [suite-name]' },
+  { trigger: 'Flow or state missing?',          cmd: '/ux + file path or screenshot' },
+  { trigger: 'Feature gated correctly?',        cmd: '/billing to audit' },
+  { trigger: 'Writing a DB query?',             cmd: '/db to verify schema and get the query' },
+  { trigger: 'Something is broken in the app?', cmd: '/debug + screenshot or paste the error' },
+  { trigger: 'Validating after changes?',       cmd: '/uat [suite-name]' },
+  { trigger: 'Push to staging?',                cmd: '/release dev → verify in browser' },
+  { trigger: 'Promote staging → production?',   cmd: '/release promote  (safest — ignores local branch)' },
+  { trigger: 'Build failed on Amplify?',        cmd: '/release fix [paste error]' },
 ];
 
 /* ─── Sub-components ─────────────────────────────────────────────────────────── */
@@ -219,81 +436,63 @@ function Prompt({ text }: { text: string }) {
   return <pre className={styles.prompt}>{text}</pre>;
 }
 
-/* ─── Main component ─────────────────────────────────────────────────────────── */
+/* ─── Overview page ──────────────────────────────────────────────────────────── */
 
-export default function AgentPlaybook() {
+function OverviewPage({ onSelect }: { onSelect: (key: AgentKey) => void }) {
   return (
     <div className={styles.playbook}>
-
-      {/* Intro */}
       <p className={styles.intro}>
-        Six custom agents live in <code>.claude/commands/</code>. Each one loads project-specific context —
-        your design tokens, DB schema, plan pricing, UX findings, and past decisions — so you never
-        re-explain the project from scratch. The memory files in <code>memory/</code> are the thread
-        that carries state between sessions.
+        Eight custom agents live in <code>.claude/commands/</code>. Click any tile to see full
+        instructions, sample prompts, and quick reference for that agent. General workflow
+        guidance — how to sequence agents and hand off between sessions — is below the tiles.
       </p>
 
-      {/* ── Agent Cards ─────────────────────────────────────────────────────── */}
-      <SectionHeader icon={Layers} label="The Six Agents" />
+      {/* Agent tiles */}
       <div className={styles.agentGrid}>
-        {AGENTS.map(({ cmd, Icon, headline, tags, accent }) => (
-          <div key={cmd} className={`${styles.agentCard} ${styles[`accent-${accent}`]}`}>
+        {AGENTS.map(({ key, cmd, Icon, accent, headline, tags }) => (
+          <button
+            key={key}
+            className={`${styles.agentCard} ${styles[`accent-${accent}`]} ${styles.agentCardClickable}`}
+            onClick={() => onSelect(key)}
+          >
             <div className={styles.agentCardTop}>
               <Icon size={15} className={styles.agentIcon} />
               <code className={styles.agentCmd}>{cmd}</code>
+              <ArrowRight size={12} className={styles.agentArrow} />
             </div>
             <div className={styles.agentHeadline}>{headline}</div>
             <div className={styles.agentTags}>
               {tags.map(t => <span key={t} className={styles.agentTag}>{t}</span>)}
             </div>
+          </button>
+        ))}
+      </div>
+
+      {/* How conversations work */}
+      <SectionHeader icon={MessageSquare} label="How Conversations Work" />
+      <div className={styles.rulesBox}>
+        {[
+          { bold: 'One agent per conversation', rest: ' — mixing two agents in the same chat bloats context. Use a fresh conversation for each step. Exception: /billing + /ux can share a conversation for short sessions (3–4 pages max).' },
+          { bold: 'Start each conversation with a handoff line', rest: ' — tell the agent where you left off and point it at the plan doc. It reads the file and continues without re-explaining the project.' },
+          { bold: 'The plan doc is the thread between sessions', rest: ' — agents update it with findings; the next agent reads it. Without a plan doc, findings scatter across conversations.' },
+          { bold: 'Never mix /plan or /uat with other agents', rest: ' — /plan needs a clean context; /uat runs tests then waits for sign-off before touching any file.' },
+        ].map(({ bold, rest }, i) => (
+          <div key={i} className={styles.rule}>
+            <span className={styles.ruleDot} />
+            <div><strong>{bold}</strong>{rest}</div>
           </div>
         ))}
       </div>
 
-      {/* ── Conversation Rules ───────────────────────────────────────────────── */}
-      <SectionHeader icon={MessageSquare} label="How Conversations Work" />
-      <div className={styles.rulesBox}>
-        <div className={styles.rule}>
-          <span className={styles.ruleDot} />
-          <div>
-            <strong>One agent per conversation</strong> — mixing two agents in the same chat bloats context.
-            Use a fresh conversation for each step. Exception: <code>/billing</code> + <code>/ux</code> can share
-            a conversation for short sessions (3–4 pages max).
-          </div>
-        </div>
-        <div className={styles.rule}>
-          <span className={styles.ruleDot} />
-          <div>
-            <strong>Start each conversation with a handoff line</strong> — tell the agent where you left off
-            and point it at the plan doc. It reads the file and continues without re-explaining the project.
-          </div>
-        </div>
-        <div className={styles.rule}>
-          <span className={styles.ruleDot} />
-          <div>
-            <strong>The plan doc is the thread</strong> — agents update it with findings; the next agent
-            reads it. Without a plan doc, findings scatter across conversations.
-          </div>
-        </div>
-        <div className={styles.rule}>
-          <span className={styles.ruleDot} />
-          <div>
-            <strong>Never combine <code>/plan</code> or <code>/uat</code></strong> with other agents —
-            <code>/plan</code> needs a clean context; <code>/uat</code> runs tests then waits for your
-            approval before any file is touched.
-          </div>
-        </div>
-      </div>
       <div className={styles.handoffExample}>
         <div className={styles.handoffLabel}>Sample handoff line</div>
         <Prompt text="/ux — continuing tournament review; dashboard and teams pages done\n(see docs/active/TOURNAMENT_REVIEW_PLAN.md), working on schedule page today" />
       </div>
 
-      {/* ── Pipeline ────────────────────────────────────────────────────────── */}
+      {/* Sequencing */}
       <SectionHeader icon={ArrowRight} label="Recommended Sequencing" />
       <p className={styles.pipelineIntro}>
-        For any significant review or feature, work through agents in this order.
-        Each layer filters noise for the next.
+        For any significant review or feature, work through agents in this order. Each layer filters noise for the next.
       </p>
       <div className={styles.pipeline}>
         {PIPELINE.map(({ cmd, label, detail }, i) => (
@@ -310,78 +509,11 @@ export default function AgentPlaybook() {
         ))}
       </div>
 
-      {/* ── Prompt Tips ─────────────────────────────────────────────────────── */}
-      <SectionHeader icon={Zap} label="Prompt Tips & Sample Prompts" />
-      <div className={styles.promptSections}>
-        {PROMPT_TIPS.map(({ cmd, Icon, accent, rules, examples }) => (
-          <div key={cmd} className={`${styles.promptSection} ${styles[`accent-${accent}`]}`}>
-            <div className={styles.promptSectionHeader}>
-              <Icon size={13} />
-              <code>{cmd}</code>
-            </div>
-            <ul className={styles.promptRules}>
-              {rules.map((r, i) => <li key={i}>{r}</li>)}
-            </ul>
-            <div className={styles.promptExamples}>
-              {examples.map((e, i) => <Prompt key={i} text={e} />)}
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* ── Tournament Pipeline Example ──────────────────────────────────────── */}
-      <SectionHeader icon={Layers} label="Full Example — Tournament Section Review" />
-      <p className={styles.pipelineIntro}>
-        Reviewing all 20 tournament admin pages for both the free and Tournament Plus tiers,
-        covering design, UX, billing gates, and bugs.
-      </p>
-      <div className={styles.exampleSteps}>
-        <div className={styles.exampleStep}>
-          <div className={styles.exampleStepCmd}>/plan</div>
-          <div className={styles.exampleStepBody}>
-            <div className={styles.exampleStepTitle}>Create the master tracking doc</div>
-            <Prompt text="/plan — create a tournament section review plan covering all 20 admin pages.\nI want to audit design, UX flows, plan gating, and bugs for both the\nfree Tournament tier and Tournament Plus. Include a checklist matrix:\none row per page, columns for billing check, UX review, design review, UAT status." />
-          </div>
-        </div>
-        <div className={styles.exampleStep}>
-          <div className={styles.exampleStepCmd}>/billing</div>
-          <div className={styles.exampleStepBody}>
-            <div className={styles.exampleStepTitle}>Audit all plan gates (no browser needed)</div>
-            <Prompt text="/billing — audit all plan gating in app/[orgSlug]/admin/tournaments/**\nFind: incorrectly locked free-tier features, Plus features without upsell\nmessaging, and any free-tier pages exposing Plus content.\nLog findings to docs/active/TOURNAMENT_REVIEW_PLAN.md." />
-          </div>
-        </div>
-        <div className={styles.exampleStep}>
-          <div className={styles.exampleStepCmd}>/ux</div>
-          <div className={styles.exampleStepBody}>
-            <div className={styles.exampleStepTitle}>UX code review — batch 4–6 pages per conversation</div>
-            <Prompt text="/ux — tournament review, billing audit complete (see TOURNAMENT_REVIEW_PLAN.md).\nReview these pages for both plan tiers:\n- app/[orgSlug]/admin/tournaments/page.tsx\n- app/[orgSlug]/admin/tournaments/dashboard/page.tsx\n- app/[orgSlug]/admin/tournaments/teams/page.tsx\nCheck: empty states, loading states, error recovery, destructive confirms.\nUpdate TOURNAMENT_REVIEW_PLAN.md with findings." />
-          </div>
-        </div>
-        <div className={styles.exampleStep}>
-          <div className={styles.exampleStepCmd}>/design</div>
-          <div className={styles.exampleStepBody}>
-            <div className={styles.exampleStepTitle}>Visual pass — batch by area, screenshots required</div>
-            <Prompt text="/design — tournament review, UX pass complete for dashboard and teams pages.\n[paste screenshot — tournament dashboard, free-tier org admin]\nThe page loads correctly but the layout feels unbalanced —\nhierarchy isn't guiding the eye anywhere useful. What needs to change?" />
-          </div>
-        </div>
-        <div className={styles.exampleStep}>
-          <div className={styles.exampleStepCmd}>/uat</div>
-          <div className={styles.exampleStepBody}>
-            <div className={styles.exampleStepTitle}>Final validation — dev server must be running</div>
-            <Prompt text="/uat tournament-admin" />
-            <p className={styles.exampleNote}>
-              Runs Playwright against both your free-tier org and Plus org. Reports failures, proposes
-              numbered fixes, waits for your approval. Reply: <code>apply 1, 3</code> or <code>apply all</code> or <code>explain 2</code>.
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* ── Quick Reference ──────────────────────────────────────────────────── */}
+      {/* Quick reference */}
       <SectionHeader icon={Zap} label="Quick Reference" />
       <div className={styles.quickRef}>
-        {QUICK_REF.map(({ trigger, cmd }) => (
-          <div key={trigger} className={styles.quickRefRow}>
+        {QUICK_REF.map(({ trigger, cmd }, i) => (
+          <div key={i} className={styles.quickRefRow}>
             <span className={styles.quickRefTrigger}>{trigger}</span>
             <code className={styles.quickRefCmd}>{cmd}</code>
           </div>
@@ -389,7 +521,7 @@ export default function AgentPlaybook() {
         <div className={styles.quickRefDivider} />
         <div className={styles.quickRefRow}>
           <span className={styles.quickRefTrigger}>Separate conversations (always)</span>
-          <code className={styles.quickRefCmd}>/plan · /uat</code>
+          <code className={styles.quickRefCmd}>/plan · /uat · /release</code>
         </div>
         <div className={styles.quickRefRow}>
           <span className={styles.quickRefTrigger}>Can combine (short sessions)</span>
@@ -401,16 +533,108 @@ export default function AgentPlaybook() {
         </div>
         <div className={styles.quickRefRow}>
           <span className={styles.quickRefTrigger}>Code-only, no browser needed</span>
-          <code className={styles.quickRefCmd}>/billing · /ux · /db · /plan</code>
+          <code className={styles.quickRefCmd}>/billing · /ux · /db · /plan · /release</code>
         </div>
       </div>
 
       <div className={styles.footer}>
         Full reference: <code>AGENT_PLAYBOOK.md</code> in the repo root ·
         Design decisions: <code>memory/design_decisions.md</code> ·
-        Open UAT findings: <code>UAT_FINDINGS.md</code>
+        Open UAT findings: <code>UAT_FINDINGS.md</code> ·
+        Release config: <code>RELEASE_CONFIG.md</code> ·
+        Agent commands: <code>.claude/commands/</code>
+      </div>
+    </div>
+  );
+}
+
+/* ─── Agent detail page ──────────────────────────────────────────────────────── */
+
+function AgentDetailPage({ agent, onBack }: { agent: AgentDef; onBack: () => void }) {
+  const { cmd, Icon, accent, headline, loadsFrom, rules, examples, notes, extraSections } = agent;
+
+  return (
+    <div className={styles.playbook}>
+
+      {/* Back button */}
+      <button className={styles.backBtn} onClick={onBack}>
+        <ChevronLeft size={13} />
+        All agents
+      </button>
+
+      {/* Agent header */}
+      <div className={`${styles.detailHeader} ${styles[`accent-${accent}`]}`}>
+        <Icon size={22} className={styles.detailHeaderIcon} />
+        <div>
+          <code className={styles.detailCmd}>{cmd}</code>
+          <div className={styles.detailHeadline}>{headline}</div>
+        </div>
+      </div>
+
+      {/* Context loaded on activation */}
+      <SectionHeader icon={BookOpen} label="Context loaded on activation" />
+      <div className={styles.loadsFrom}>
+        {loadsFrom.map((f, i) => (
+          <div key={i} className={styles.loadsFromRow}>
+            <Terminal size={11} className={styles.loadsFromIcon} />
+            <code className={styles.loadsFromText}>{f}</code>
+          </div>
+        ))}
+      </div>
+
+      {/* Extra sections (role tables, tier tables, etc.) */}
+      {extraSections?.map(({ title, content }) => (
+        <div key={title}>
+          <SectionHeader icon={Zap} label={title} />
+          {content}
+        </div>
+      ))}
+
+      {/* Rules */}
+      <SectionHeader icon={MessageSquare} label="Key rules" />
+      <div className={styles.rulesBox}>
+        {rules.map((r, i) => (
+          <div key={i} className={styles.rule}>
+            <span className={styles.ruleDot} />
+            <div>{r}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Important notes */}
+      {notes && notes.length > 0 && (
+        <>
+          <SectionHeader icon={Info} label="Important notes" />
+          <div className={styles.notesBox}>
+            {notes.map((n, i) => (
+              <div key={i} className={styles.noteRow}>
+                <Info size={12} className={styles.noteIcon} />
+                <div>{n}</div>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+
+      {/* Sample prompts */}
+      <SectionHeader icon={Terminal} label="Sample prompts" />
+      <div className={styles.promptExamples}>
+        {examples.map((e, i) => <Prompt key={i} text={e} />)}
       </div>
 
     </div>
   );
+}
+
+/* ─── Root component ─────────────────────────────────────────────────────────── */
+
+export default function AgentPlaybook() {
+  const [selected, setSelected] = useState<AgentKey | null>(null);
+  const agent = selected ? AGENTS.find(a => a.key === selected) : null;
+
+  if (agent) {
+    return <AgentDetailPage agent={agent} onBack={() => setSelected(null)} />;
+  }
+
+  return <OverviewPage onSelect={setSelected} />;
 }

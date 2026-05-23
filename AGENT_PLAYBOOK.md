@@ -12,7 +12,7 @@ Each agent is a slash command (e.g. `/design`, `/ux`) that activates a specialis
 
 ---
 
-## The Six Agents
+## The Eight Agents
 
 | Command | What it does | Best for |
 |---|---|---|
@@ -22,7 +22,8 @@ Each agent is a slash command (e.g. `/design`, `/ux`) that activates a specialis
 | `/db` | Supabase schema, queries, and migrations | Writing queries, new tables, RLS policies, migration SQL |
 | `/plan` | Implementation plans and PM briefs | Starting any new feature, creating tracking docs |
 | `/uat` | Playwright browser-based acceptance tests | Regression validation, finding bugs across both plan tiers |
-| `/release` | Production release manager | Pre-flight checks, push dev→master, analyse failures, propose fixes |
+| `/release` | Production release manager | Pre-flight checks, push dev→staging, promote staging→production, analyse failures, propose fixes |
+| `/debug` | Screenshot and error investigation | Runtime errors, broken UI states, API failures, 500s, undefined values |
 
 ---
 
@@ -104,6 +105,12 @@ what does an org admin see when there are no teams registered yet?
 - The dev server must be running at `localhost:3000` before invoking
 - After the run, the agent proposes fixes — you approve before anything changes
 - Use `/uat fix` to re-propose fixes without re-running tests
+
+**`/debug`**
+- Paste a screenshot, a terminal error, a network response, or just describe what's broken — any combination works
+- The agent reads source files before proposing a fix; it never guesses from a description alone
+- Approve fixes with "apply all", "apply 1, 3", "explain 2", or "skip all" — same sign-off gate as `/uat` and `/release`
+- Use it reactively when something is broken; for systematic flow review use `/ux` instead
 
 ---
 
@@ -375,6 +382,77 @@ Move TOURNAMENT_REVIEW_PLAN.md to docs/archive/ and update TODO.md.
 
 ---
 
+### `/release` — sample prompts
+
+```
+# Push local dev branch to staging (Amplify dev) — safe, no customer impact
+/release dev
+
+# Promote Amplify staging → production (safe: uses remote ref, ignores local branch)
+# Use this instead of /release master to avoid accidentally picking up uncommitted local work
+/release promote
+
+# Push local dev branch directly to production — use only when you know local = staging
+/release master
+
+# Pre-flight only — check TypeScript and sync without pushing
+/release preflight
+
+# Fetch CloudWatch logs after a failure and propose fixes
+/release fix logs dev
+/release fix logs master
+
+# Paste an error from the Amplify console directly
+/release fix [paste build or runtime error here]
+
+# Check if AWS CLI is configured and what access you have
+/release setup
+
+# Print safe revert instructions (never auto-executes)
+/release undo
+```
+
+**Recommended deploy flow:**
+```
+/release dev      → push local work to Amplify staging
+                    verify in browser
+/release promote  → promote the staging build to production
+```
+This ensures production always receives exactly what was built and verified in staging — no local branch state involved.
+
+---
+
+### `/debug` — sample prompts
+
+```
+# Screenshot of a UI error
+/debug [screenshot] — clicking Save on the teams form returns a 500; nothing shows in the UI
+
+# Undefined value shown in the browser
+/debug [screenshot] — this badge shows "undefined" instead of the team name
+
+# Blank page with no visible error
+/debug [screenshot] — the schedule page is blank after loading; no error visible
+
+# Paste a terminal error directly
+/debug — TypeError: Cannot read properties of undefined (reading 'plan_id')
+  at app/[orgSlug]/admin/page.tsx:42
+
+# API returning the wrong status
+/debug — app/api/admin/org/route.ts is returning 403 for org admin users; should not be blocked
+
+# Silent failure (no visible error)
+/debug [screenshot] — the modal opens but the Save button does nothing and there's no error
+
+# Stripe / billing issue
+/debug — the Stripe webhook is firing but the plan is not updating in the DB
+
+# Browser console errors
+/debug [screenshot of browser console] — these errors appear on the dashboard for a Tournament Plus org
+```
+
+---
+
 ### `/uat` — sample prompts
 
 ```
@@ -411,19 +489,21 @@ Something looks wrong visually? /design + screenshot.
 Flow or state missing?          /ux + file path or screenshot.
 Feature gated correctly?        /billing to audit.
 Writing a DB query?             /db to verify schema and get the query.
+Something is broken in the app? /debug + screenshot or paste the error.
 Validating after changes?       /uat [suite-name].
-Deploying to production?        /release (then type "push" to confirm).
+Push to staging?                /release dev → verify in browser.
+Promote staging → production?   /release promote (safest path — ignores local branch).
 Build failed on Amplify?        /release fix [paste error output].
 
 Separate conversations:  /plan, /uat, /release (always alone)
 Can combine sometimes:   /billing + /ux (code-only, short sessions)
 Requires browser:        /design (screenshots), /uat (Playwright)
-Code-only (no browser):  /billing, /ux, /db, /plan, /release
+Code-only (no browser):  /billing, /ux, /db, /plan, /release, /debug
 ```
 
 ---
 
-*This document covers the six custom agents in `.claude/commands/`. 
+*This document covers the eight custom agents in `.claude/commands/`. 
 For the full design token reference, see `memory/design_system.md`. 
 For past design decisions, see `memory/design_decisions.md`. 
 For open UAT findings, see `UAT_FINDINGS.md`.*

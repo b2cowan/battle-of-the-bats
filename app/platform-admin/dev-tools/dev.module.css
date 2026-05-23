@@ -734,6 +734,178 @@
   text-align: center;
 }
 
+/* ─── Live credentials explorer ─────────────────────────────────────────────── */
+.liveCredBox {
+  background: rgba(255,255,0,0.03);
+  border: 1px solid rgba(255,255,0,0.2);
+  border-radius: 8px;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.liveCredHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.85rem;
+  flex-wrap: wrap;
+}
+
+.liveCredLabel {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255,255,0,0.7);
+}
+
+.liveCredLabel code {
+  background: rgba(255,255,0,0.12);
+  padding: 0.1rem 0.35rem;
+  border-radius: 3px;
+  color: #ffff00;
+  font-size: 0.75rem;
+}
+
+.liveCredViewToggle {
+  display: flex;
+  gap: 0.25rem;
+  flex-shrink: 0;
+}
+
+.liveCredViewBtn {
+  font-family: var(--font-data, monospace);
+  font-size: 0.58rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 0.25rem 0.6rem;
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.12);
+  color: rgba(255,255,255,0.3);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.12s;
+}
+.liveCredViewBtn:hover { border-color: rgba(255,255,0,0.35); color: rgba(255,255,0,0.7); }
+
+.liveCredViewBtnActive {
+  background: rgba(255,255,0,0.1);
+  border-color: rgba(255,255,0,0.45);
+  color: #ffff00;
+}
+
+/* Pill selector row */
+.credPills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-bottom: 0.85rem;
+}
+
+.credPill {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-family: var(--font-data, monospace);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  padding: 0.28rem 0.65rem;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 4px;
+  color: rgba(255,255,255,0.5);
+  cursor: pointer;
+  transition: all 0.12s;
+  white-space: nowrap;
+}
+.credPill:hover { border-color: rgba(255,255,0,0.35); color: rgba(255,255,255,0.8); }
+
+.credPillActive {
+  background: rgba(255,255,0,0.08);
+  border-color: rgba(255,255,0,0.4);
+  color: #ffff00;
+}
+
+/* Detail panel */
+.credDetail {
+  background: rgba(0,0,0,0.2);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.credDetailHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.85rem;
+  background: rgba(255,255,255,0.03);
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+}
+
+.credDetailTitle {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: rgba(255,255,255,0.6);
+  letter-spacing: 0.04em;
+  flex: 1;
+}
+
+.credDetailCount {
+  font-size: 0.58rem;
+  color: rgba(255,255,255,0.25);
+  letter-spacing: 0.06em;
+}
+
+.credDetailRow {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.38rem 0.85rem;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+.credDetailRow:last-child { border-bottom: none; }
+
+.credDetailEmail {
+  flex: 1;
+  font-size: 0.72rem;
+  color: rgba(255,255,255,0.75);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.credDetailRole {
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.28);
+  flex-shrink: 0;
+}
+
+.credDetailSlug {
+  flex: 1;
+  font-size: 0.72rem;
+  color: rgba(255,255,255,0.75);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.credEmpty {
+  padding: 0.85rem;
+  font-size: 0.68rem;
+  color: rgba(255,255,255,0.2);
+  font-style: italic;
+  text-align: center;
+}
+
 /* ─── Tab strip ──────────────────────────────────────────────────────────────── */
 .tabs {
   display: flex;

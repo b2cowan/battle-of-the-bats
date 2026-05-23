@@ -9,6 +9,19 @@ import { hasPlanFeature, requiresTournamentPlusCopy } from '@/lib/plan-features'
 import styles from '../../branding/branding.module.css';
 
 type FeeMode = 'tournament' | 'age_group';
+type ScorePolicyMode = 'inherit' | 'review' | 'final';
+
+function scorePolicyModeFromValue(value: boolean | null | undefined): ScorePolicyMode {
+  if (value === true) return 'review';
+  if (value === false) return 'final';
+  return 'inherit';
+}
+
+function scorePolicyValue(mode: ScorePolicyMode): boolean | null {
+  if (mode === 'review') return true;
+  if (mode === 'final') return false;
+  return null;
+}
 
 export default function TournamentEventSettingsPage() {
   const { currentTournament } = useTournament();
@@ -27,7 +40,7 @@ export default function TournamentEventSettingsPage() {
   const [totalFeeDueDate, setTotalFeeDueDate] = useState('');
 
   // Scoring
-  const [requireFinalization, setRequireFinalization] = useState(false);
+  const [scorePolicyMode, setScorePolicyMode] = useState<ScorePolicyMode>('inherit');
   const [notifyTeamsOnComplete, setNotifyTeamsOnComplete] = useState(false);
   const [resultsNotifiedAt, setResultsNotifiedAt] = useState<string | null>(null);
   const [resultsNotificationSentCount, setResultsNotificationSentCount] = useState(0);
@@ -37,7 +50,7 @@ export default function TournamentEventSettingsPage() {
     startDate: '', endDate: '',
     feeMode: 'tournament' as FeeMode,
     depositAmount: '', depositDueDate: '', totalFeeAmount: '', totalFeeDueDate: '',
-    requireFinalization: false,
+    scorePolicyMode: 'inherit' as ScorePolicyMode,
     notifyTeamsOnComplete: false,
   });
 
@@ -60,7 +73,7 @@ export default function TournamentEventSettingsPage() {
     depositDueDate !== saved.depositDueDate ||
     totalFeeAmount !== saved.totalFeeAmount ||
     totalFeeDueDate !== saved.totalFeeDueDate ||
-    requireFinalization !== saved.requireFinalization ||
+    scorePolicyMode !== saved.scorePolicyMode ||
     notifyTeamsOnComplete !== saved.notifyTeamsOnComplete;
 
   useEffect(() => {
@@ -89,9 +102,9 @@ export default function TournamentEventSettingsPage() {
         setNotifyTeamsOnComplete(notify);
         setSaved(s => ({ ...s, startDate: sd, endDate: ed, feeMode: fm, depositAmount: da, depositDueDate: dd, totalFeeAmount: tf, totalFeeDueDate: td, notifyTeamsOnComplete: notify }));
       }
-      const rf = (branding as { requireScoreFinalization?: boolean }).requireScoreFinalization ?? false;
-      setRequireFinalization(rf);
-      setSaved(s => ({ ...s, requireFinalization: rf }));
+      const policyMode = scorePolicyModeFromValue((branding as { requireScoreFinalization?: boolean | null }).requireScoreFinalization);
+      setScorePolicyMode(policyMode);
+      setSaved(s => ({ ...s, scorePolicyMode: policyMode }));
     }).catch(() => { setErrorMsg('Failed to load settings'); setErrorOpen(true); });
   }, [tournamentId, orgParam, orgQuery]);
 
@@ -124,7 +137,7 @@ export default function TournamentEventSettingsPage() {
         fetch(`/api/admin/tournament-branding?tournamentId=${encodeURIComponent(tournamentId)}${orgParam}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ requireScoreFinalization: requireFinalization }),
+          body: JSON.stringify({ requireScoreFinalization: scorePolicyValue(scorePolicyMode) }),
         }),
       ]);
 
@@ -137,7 +150,7 @@ export default function TournamentEventSettingsPage() {
         throw new Error(d.error ?? 'Failed to save scoring settings');
       }
 
-      setSaved({ startDate, endDate, feeMode, depositAmount, depositDueDate, totalFeeAmount, totalFeeDueDate, requireFinalization, notifyTeamsOnComplete });
+      setSaved({ startDate, endDate, feeMode, depositAmount, depositDueDate, totalFeeAmount, totalFeeDueDate, scorePolicyMode, notifyTeamsOnComplete });
       setSuccessOpen(true);
     } catch (err: unknown) {
       setErrorMsg(err instanceof Error ? err.message : 'Something went wrong');
@@ -260,21 +273,30 @@ export default function TournamentEventSettingsPage() {
       <div className={styles.card}>
         <h2 className={styles.sectionTitle}>Score Finalization</h2>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-          <label className={styles.toggleRow}>
-            <span className={styles.toggleLabel}>Require admin finalization</span>
-            <input
-              type="checkbox"
-              checked={requireFinalization}
-              onChange={e => setRequireFinalization(e.target.checked)}
-              style={{ width: '18px', height: '18px', cursor: 'pointer', accentColor: 'var(--primary)' }}
-            />
-          </label>
+          <div className={styles.segmentedControl} role="radiogroup" aria-label="Score finalization policy">
+            {([
+              ['inherit', `Inherit org ${currentOrg?.requireScoreFinalization ? '(review)' : '(final)'}`],
+              ['review', 'Admin review'],
+              ['final', 'Final immediately'],
+            ] as const).map(([mode, label]) => (
+              <button
+                key={mode}
+                type="button"
+                role="radio"
+                aria-checked={scorePolicyMode === mode}
+                onClick={() => setScorePolicyMode(mode)}
+                className={`${styles.segmentButton} ${scorePolicyMode === mode ? styles.segmentButtonActive : ''}`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
           <p className={styles.descriptionText}>
-            When enabled, scores submitted by field officials are visible immediately but are not marked final
-            until an admin reviews them in the Results page. When disabled, submissions are immediately final.
+            Admin review sends scorekeeper submissions to Pending Review until an admin finalizes them in Results.
+            Final immediately makes scorekeeper submissions final as soon as they are saved.
           </p>
           <p className={styles.inheritNote} style={{ marginTop: '0.5rem' }}>
-            When not set, this tournament inherits the organization-level finalization setting.
+            Inherit uses the organization-level setting from Organization Settings.
           </p>
         </div>
       </div>

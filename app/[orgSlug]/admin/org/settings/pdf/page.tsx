@@ -302,7 +302,7 @@ export default function PdfSettingsPage() {
                 style={{
                   width: '40px', height: '36px', padding: '2px 4px',
                   background: 'transparent', border: '1px solid var(--border)',
-                  borderRadius: 'var(--radius-sm)', cursor: 'pointer',
+                  borderRadius: '2px', cursor: 'pointer',
                 }}
               />
               <input
@@ -391,7 +391,7 @@ export default function PdfSettingsPage() {
             padding: '0.65rem 0.875rem',
             background: 'var(--white-5)',
             border: '1px solid var(--white-10)',
-            borderRadius: 'var(--radius-sm)',
+            borderRadius: '2px',
             fontFamily: 'monospace',
             fontSize: '0.83rem',
             color: 'var(--white-60)',
@@ -464,13 +464,13 @@ const planBadge: React.CSSProperties = {
   color: 'var(--blueprint-blue)',
   background: 'rgba(var(--blueprint-blue-rgb),0.12)',
   border: '1px solid rgba(var(--blueprint-blue-rgb),0.25)',
-  padding: '1px 6px', borderRadius: '4px',
+  padding: '1px 6px', borderRadius: '2px',
 };
 
 function radioLabel(active: boolean): React.CSSProperties {
   return {
     display: 'flex', alignItems: 'flex-start', gap: '0.65rem',
-    padding: '0.75rem', borderRadius: 'var(--radius-sm)', cursor: 'pointer',
+    padding: '0.75rem', borderRadius: '2px', cursor: 'pointer',
     background: active ? 'rgba(var(--blueprint-blue-rgb),0.08)' : 'transparent',
     border: active ? '1px solid rgba(var(--blueprint-blue-rgb),0.3)' : '1px solid var(--white-8)',
     marginBottom: '0',

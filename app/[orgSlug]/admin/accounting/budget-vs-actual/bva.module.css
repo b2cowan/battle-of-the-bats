@@ -15,7 +15,7 @@
 .pageHeaderLeft { display: flex; align-items: center; gap: 1rem; }
 
 .headerIcon {
-  width: 48px; height: 48px; border-radius: 12px;
+  width: 48px; height: 48px; border-radius: 2px;
   background: rgba(var(--blueprint-blue-rgb), 0.12);
   color: var(--logic-lime);
   border: 1px solid rgba(var(--blueprint-blue-rgb), 0.3);
@@ -24,7 +24,7 @@
 
 .pageTitle {
   font-size: 1.75rem; font-weight: 900;
-  font-family: var(--font-display, sans-serif);
+  font-family: var(--font-data);
   margin: 0; color: #f0f0f0; line-height: 1.1;
 }
 .pageSub { margin: 0.25rem 0 0; color: rgba(255,255,255,0.4); font-size: 0.9rem; }
@@ -42,7 +42,7 @@
 }
 .yearSelect {
   background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12);
-  color: rgba(255,255,255,0.85); border-radius: 6px;
+  color: rgba(255,255,255,0.85); border-radius: 2px;
   padding: 0.35rem 0.65rem; font-size: 0.88rem; cursor: pointer;
 }
 
@@ -51,7 +51,7 @@
   padding: 1.5rem 2rem;
   background: rgba(255,255,255,0.04);
   border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 12px;
+  border-radius: 2px;
   margin-bottom: 1.25rem;
   display: flex; align-items: center; gap: 2rem; flex-wrap: wrap;
 }
@@ -68,7 +68,7 @@
 }
 .summaryCard {
   background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 10px; padding: 0.9rem 1.1rem;
+  border-radius: 2px; padding: 0.9rem 1.1rem;
 }
 .summaryLabel { font-size: 0.73rem; color: rgba(255,255,255,0.4); margin-bottom: 0.3rem; }
 .summaryValue { font-size: 1.25rem; font-weight: 700; color: rgba(255,255,255,0.9); font-variant-numeric: tabular-nums; }
@@ -147,13 +147,13 @@
 .badgeAllocated {
   display: inline-flex; align-items: center; gap: 0.3rem;
   background: rgba(74,222,128,0.1); color: #4ade80;
-  border: 1px solid rgba(74,222,128,0.22); border-radius: 4px;
+  border: 1px solid rgba(74,222,128,0.22); border-radius: 2px;
   font-size: 0.7rem; font-weight: 700; padding: 0.12rem 0.4rem; white-space: nowrap;
 }
 .badgeUnallocated {
   display: inline-flex; align-items: center; gap: 0.3rem;
   background: rgba(251,191,36,0.08); color: #fbbf24;
-  border: 1px solid rgba(251,191,36,0.2); border-radius: 4px;
+  border: 1px solid rgba(251,191,36,0.2); border-radius: 2px;
   font-size: 0.7rem; font-weight: 700; padding: 0.12rem 0.4rem; white-space: nowrap;
 }
 
@@ -161,7 +161,7 @@
 .actualsPanel {
   background: rgba(255,255,255,0.03);
   border: 1px solid rgba(255,255,255,0.07);
-  border-radius: 10px;
+  border-radius: 2px;
   margin-bottom: 2rem;
   overflow: hidden;
 }
@@ -200,7 +200,7 @@
 .teamCard {
   background: rgba(255,255,255,0.04);
   border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 10px; padding: 1rem 1.1rem;
+  border-radius: 2px; padding: 1rem 1.1rem;
   text-decoration: none; display: block;
   transition: background 0.15s, border-color 0.15s;
 }
@@ -212,7 +212,7 @@
 .teamCardName { font-size: 0.88rem; font-weight: 700; color: rgba(255,255,255,0.85); }
 
 .statusBadge {
-  font-size: 0.68rem; font-weight: 700; border-radius: 4px; padding: 0.12rem 0.4rem;
+  font-size: 0.68rem; font-weight: 700; border-radius: 2px; padding: 0.12rem 0.4rem;
 }
 .statusOnTrack { background: rgba(74,222,128,0.12); color: #4ade80; border: 1px solid rgba(74,222,128,0.22); }
 .statusBehind  { background: rgba(251,191,36,0.1);  color: #fbbf24; border: 1px solid rgba(251,191,36,0.2);  }
@@ -235,7 +235,7 @@
 .emptySection {
   padding: 2rem; text-align: center; color: rgba(255,255,255,0.35);
   font-size: 0.88rem; border: 1px dashed rgba(255,255,255,0.08);
-  border-radius: 10px; margin-bottom: 2rem;
+  border-radius: 2px; margin-bottom: 2rem;
 }
 
 .errorText { color: #f87171; font-size: 0.82rem; margin: 0 0 1rem; }

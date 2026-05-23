@@ -330,8 +330,9 @@ async function requestJson<T>(input: RequestInfo | URL, init?: RequestInit): Pro
   return data as T;
 }
 
-async function markStartupTask(taskId: StartupActionTaskId | LeagueStartupActionTaskId, status: 'complete' | 'skipped') {
-  return requestJson<StartupProgress>('/api/admin/org/startup-tasks', {
+async function markStartupTask(taskId: StartupActionTaskId | LeagueStartupActionTaskId, status: 'complete' | 'skipped', orgSlug?: string) {
+  const orgParam = orgSlug ? `?orgSlug=${encodeURIComponent(orgSlug)}` : '';
+  return requestJson<StartupProgress>(`/api/admin/org/startup-tasks${orgParam}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ taskId, status }),
@@ -402,10 +403,11 @@ export default function OnboardingPage() {
   }
 
   const refreshStartup = useCallback(async () => {
-    const progress = await requestJson<StartupProgress>('/api/admin/org/startup-tasks');
+    const orgParam = currentOrg?.slug ? `?orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
+    const progress = await requestJson<StartupProgress>(`/api/admin/org/startup-tasks${orgParam}`);
     setStartupProgress(progress);
     return progress;
-  }, []);
+  }, [currentOrg?.slug]);
 
   useEffect(() => {
     if (loading || !currentOrg) return;
@@ -1162,7 +1164,7 @@ export default function OnboardingPage() {
     try {
       if (draftSkipped.tournament) {
         for (const taskId of STARTUP_ORDER) {
-          await markStartupTask(taskId, 'skipped');
+          await markStartupTask(taskId, 'skipped', currentOrg?.slug);
         }
         await requestJson<{ ok: boolean }>('/api/admin/org/complete-onboarding', { method: 'POST' });
         await refreshOrgContext();
@@ -1247,7 +1249,7 @@ export default function OnboardingPage() {
     try {
       if (leagueDraftSkipped.league_season) {
         for (const taskId of LEAGUE_STARTUP_ORDER) {
-          await markStartupTask(taskId, 'skipped');
+          await markStartupTask(taskId, 'skipped', currentOrg?.slug);
         }
         await requestJson<{ ok: boolean }>('/api/admin/org/complete-onboarding', { method: 'POST' });
         await refreshOrgContext();
@@ -1274,10 +1276,10 @@ export default function OnboardingPage() {
         }),
       })));
 
-      await markStartupTask('league_season', 'complete');
-      await markStartupTask('league_divisions', divisions.length > 0 ? 'complete' : 'skipped');
-      await markStartupTask('league_registration', leagueDraftSkipped.league_registration ? 'skipped' : 'complete');
-      await markStartupTask('league_tournament', 'skipped');
+      await markStartupTask('league_season', 'complete', currentOrg?.slug);
+      await markStartupTask('league_divisions', divisions.length > 0 ? 'complete' : 'skipped', currentOrg?.slug);
+      await markStartupTask('league_registration', leagueDraftSkipped.league_registration ? 'skipped' : 'complete', currentOrg?.slug);
+      await markStartupTask('league_tournament', 'skipped', currentOrg?.slug);
       await requestJson<{ ok: boolean }>('/api/admin/org/complete-onboarding', { method: 'POST' });
       await refreshStartup();
       await refreshOrgContext();

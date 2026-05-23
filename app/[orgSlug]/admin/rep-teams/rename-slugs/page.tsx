@@ -228,7 +228,7 @@ export default function RenameSlugPage() {
                   : `${changedRenames.length} team${changedRenames.length !== 1 ? 's' : ''} will be renamed`}
               </span>
               {saved && (
-                <span style={{ fontSize: '0.85rem', color: 'var(--logic-lime, #a3e635)' }}>
+                <span style={{ fontSize: '0.85rem', color: 'var(--logic-lime)' }}>
                   ✓ Saved
                 </span>
               )}

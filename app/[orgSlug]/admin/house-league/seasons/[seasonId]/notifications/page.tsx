@@ -139,7 +139,7 @@ export default function NotificationsPage() {
           <button
             type="button"
             onClick={() => setPreview(false)}
-            style={{ fontSize: '0.82rem', color: 'rgba(255,255,255,0.4)', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.3rem', padding: 0 }}
+            style={{ fontSize: '0.82rem', color: 'var(--white-40)', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.3rem', padding: 0 }}
           >
             <ArrowLeft size={13} /> Back to compose
           </button>
@@ -158,24 +158,24 @@ export default function NotificationsPage() {
         {/* Email preview */}
         <div style={{
           background: '#1a1a2e',
-          border: '1px solid rgba(255,255,255,0.1)',
-          borderRadius: '0.5rem',
+          border: '1px solid var(--white-10)',
+          borderRadius: '2px',
           padding: '1.5rem',
           marginBottom: '1.5rem',
           maxWidth: '600px',
         }}>
-          <div style={{ borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '0.75rem', marginBottom: '1rem' }}>
-            <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.35)', marginBottom: '0.25rem' }}>FROM</div>
+          <div style={{ borderBottom: '1px solid var(--white-10)', paddingBottom: '0.75rem', marginBottom: '1rem' }}>
+            <div style={{ fontSize: '0.75rem', color: 'var(--white-35)', marginBottom: '0.25rem' }}>FROM</div>
             <div style={{ fontSize: '0.9rem' }}>FieldLogicHQ — {currentOrg?.name}</div>
           </div>
-          <div style={{ borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '0.75rem', marginBottom: '1rem' }}>
-            <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.35)', marginBottom: '0.25rem' }}>SUBJECT</div>
+          <div style={{ borderBottom: '1px solid var(--white-10)', paddingBottom: '0.75rem', marginBottom: '1rem' }}>
+            <div style={{ fontSize: '0.75rem', color: 'var(--white-35)', marginBottom: '0.25rem' }}>SUBJECT</div>
             <div style={{ fontSize: '0.9rem', fontWeight: 600 }}>{subject}</div>
           </div>
-          <div style={{ fontSize: '0.9rem', lineHeight: 1.6, whiteSpace: 'pre-wrap', color: 'rgba(255,255,255,0.85)' }}>
+          <div style={{ fontSize: '0.9rem', lineHeight: 1.6, whiteSpace: 'pre-wrap', color: 'var(--white-80)' }}>
             {message}
           </div>
-          <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '0.75rem', marginTop: '1rem', fontSize: '0.75rem', color: 'rgba(255,255,255,0.3)' }}>
+          <div style={{ borderTop: '1px solid var(--white-10)', paddingTop: '0.75rem', marginTop: '1rem', fontSize: '0.75rem', color: 'var(--white-30)' }}>
             Sent by {currentOrg?.name} via FieldLogicHQ
           </div>
         </div>
@@ -215,7 +215,7 @@ export default function NotificationsPage() {
       <div style={{ marginBottom: '1rem' }}>
         <Link
           href={`${base}/house-league/seasons/${seasonId}/registrations`}
-          style={{ fontSize: '0.82rem', color: 'rgba(255,255,255,0.4)', textDecoration: 'none' }}
+          style={{ fontSize: '0.82rem', color: 'var(--white-40)', textDecoration: 'none' }}
         >
           ← Registrations
         </Link>
@@ -235,7 +235,7 @@ export default function NotificationsPage() {
         <div style={{
           background: 'rgba(34,197,94,0.1)',
           border: '1px solid rgba(34,197,94,0.3)',
-          borderRadius: '0.4rem',
+          borderRadius: '2px',
           padding: '0.75rem 1rem',
           marginBottom: '1.5rem',
           fontSize: '0.88rem',
@@ -267,9 +267,9 @@ export default function NotificationsPage() {
                   alignItems: 'flex-start',
                   gap: '0.6rem',
                   padding: '0.6rem 0.75rem',
-                  borderRadius: '0.375rem',
-                  border: `1px solid ${audience === opt.value ? 'rgba(59,130,246,0.6)' : 'rgba(255,255,255,0.08)'}`,
-                  background: audience === opt.value ? 'rgba(59,130,246,0.08)' : 'transparent',
+                  borderRadius: '2px',
+                  border: `1px solid ${audience === opt.value ? 'rgba(var(--info-rgb),0.6)' : 'var(--white-8)'}`,
+                  background: audience === opt.value ? 'rgba(var(--info-rgb),0.08)' : 'transparent',
                   cursor: 'pointer',
                 }}
               >
@@ -283,7 +283,7 @@ export default function NotificationsPage() {
                 />
                 <div>
                   <div style={{ fontSize: '0.88rem', fontWeight: 600 }}>{opt.label}</div>
-                  <div style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.4)' }}>{opt.desc}</div>
+                  <div style={{ fontSize: '0.78rem', color: 'var(--white-40)' }}>{opt.desc}</div>
                 </div>
               </label>
             ))}
@@ -343,9 +343,9 @@ export default function NotificationsPage() {
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
               <thead>
-                <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+                <tr style={{ borderBottom: '1px solid var(--white-10)' }}>
                   {['Date', 'Subject', 'Audience', 'Sent', 'Skipped'].map(h => (
-                    <th key={h} style={{ textAlign: 'left', padding: '0.4rem 0.75rem', color: 'rgba(255,255,255,0.4)', fontWeight: 600, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    <th key={h} style={{ textAlign: 'left', padding: '0.4rem 0.75rem', color: 'var(--white-40)', fontWeight: 600, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                       {h}
                     </th>
                   ))}
@@ -353,12 +353,12 @@ export default function NotificationsPage() {
               </thead>
               <tbody>
                 {log.map(entry => (
-                  <tr key={entry.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-                    <td style={{ padding: '0.5rem 0.75rem', color: 'rgba(255,255,255,0.5)', whiteSpace: 'nowrap' }}>{formatDateTime(entry.sentAt)}</td>
+                  <tr key={entry.id} style={{ borderBottom: '1px solid var(--white-5)' }}>
+                    <td style={{ padding: '0.5rem 0.75rem', color: 'var(--white-50)', whiteSpace: 'nowrap' }}>{formatDateTime(entry.sentAt)}</td>
                     <td style={{ padding: '0.5rem 0.75rem' }}>{entry.subject}</td>
-                    <td style={{ padding: '0.5rem 0.75rem', color: 'rgba(255,255,255,0.6)' }}>{entry.audience}</td>
+                    <td style={{ padding: '0.5rem 0.75rem', color: 'var(--white-60)' }}>{entry.audience}</td>
                     <td style={{ padding: '0.5rem 0.75rem', textAlign: 'center' }}>{entry.countSent}</td>
-                    <td style={{ padding: '0.5rem 0.75rem', textAlign: 'center', color: entry.countSkipped > 0 ? 'rgba(255,255,255,0.4)' : 'inherit' }}>{entry.countSkipped}</td>
+                    <td style={{ padding: '0.5rem 0.75rem', textAlign: 'center', color: entry.countSkipped > 0 ? 'var(--white-40)' : 'inherit' }}>{entry.countSkipped}</td>
                   </tr>
                 ))}
               </tbody>

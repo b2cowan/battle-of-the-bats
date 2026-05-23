@@ -309,7 +309,7 @@ Stripe Dashboard work for the owner:
 
 ### Direct Team Checkout
 
-Phase 2B/2D implementation status: checkout/recovery plumbing complete; public Team signup UI complete; Stripe sandbox verification still pending real Team price IDs.
+Phase 2B/2D/2E implementation status: checkout/recovery plumbing complete; public Team signup UI complete; Stripe sandbox verification support complete; real Stripe sandbox org Team add-on checkout/webhook smoke passed.
 
 Implemented:
 
@@ -668,12 +668,12 @@ Implemented in Phase 2D:
 
 Remaining after Phase 2D:
 
-- Direct Team Stripe checkout. **Phase 2B plumbing and Phase 2D public UI complete; end-to-end Stripe sandbox verification pending Stripe price IDs.**
-- Webhook recovery and subscription-state sync. **Phase 2B plumbing complete; end-to-end Stripe sandbox verification pending Stripe price IDs.**
+- Direct Team Stripe checkout. **Phase 2B plumbing, Phase 2D public UI, and Phase 2E verification support are complete; real Stripe sandbox org Team add-on checkout smoke passed.**
+- Webhook recovery and subscription-state sync. **Phase 2B plumbing and Phase 2E readiness checks are complete; real Stripe sandbox webhook smoke passed.**
 - Team-first coaches portal landing/redirect. **Phase 2C complete.**
 - Team-scoped access gates across the rep-team/coaches routes. **Phase 2C complete for standalone Team workspaces.**
 
-Phase 2E implementation status: verification support complete; real Stripe sandbox smoke pending account setup.
+Phase 2E implementation status: complete; real Stripe sandbox checkout/webhook smoke passed on 2026-05-23.
 
 Implemented in Phase 2E:
 
@@ -682,6 +682,7 @@ Implemented in Phase 2E:
 - Platform Admin > Dev Tools includes a dev-only Mock Billing control that can temporarily enable, disable, or clear the mock billing override without editing `.env.local`; the override resets when the dev server restarts.
 - When `STRIPE_SECRET_KEY` is present, the readiness check retrieves Stripe price metadata and warns if amount, currency, interval, or active status do not match Team expectations.
 - The readiness check distinguishes local mock/direct-provisioning smoke from real Stripe Checkout smoke.
+- Final real Stripe sandbox checkout smoke passed for the org Team add-on path with Stripe Checkout and webhook delivery.
 
 Exact Stripe setup steps for sandbox verification:
 
@@ -717,7 +718,7 @@ Exact Stripe setup steps for sandbox verification:
 Tasks:
 
 - Add coach-facing Team signup flow. **Phase 2D complete.**
-- Create checkout for Team monthly/seasonal billing. **Phase 2B/2D complete; Stripe sandbox verification pending.**
+- Create checkout for Team monthly/seasonal billing. **Phase 2B/2D complete; Phase 2E closed by user sign-off.**
 - On successful checkout, create workspace org, rep team, program year, coach assignment, workspace row, entitlement row, and team ledger. **Phase 2A/2B complete.**
 - Set the workspace organization's tournament limit and module entitlements to allow free-tier tournaments.
 - Route user to the coaches portal. **Phase 2C complete.**
@@ -773,6 +774,10 @@ Acceptance criteria:
 
 Phase 4A implementation status: basic visibility link foundation complete.
 
+Phase 4B implementation status: org-initiated Basic visibility invitations complete.
+
+Phase 4C implementation status: org billing takeover for linked Team workspaces complete.
+
 Implemented in Phase 4A:
 
 - Standalone Team coaches can open `/{orgSlug}/coaches/link-org` and request a parent organization link by org slug or contact email.
@@ -782,7 +787,28 @@ Implemented in Phase 4A:
 - Link request, approval, and decline actions write org audit log entries and platform lifecycle events.
 - Coaches Portal and Organization Admin navigation now expose the link flow, and the help center documents coach request and org review behavior.
 
-Dev smoke path:
+Implemented in Phase 4B:
+
+- Organization owners/admins can open `/{orgSlug}/admin/org/team-links` and invite a standalone Team workspace by workspace slug or primary coach email.
+- Org invitations create `team_org_links` rows with `status = 'invited'`, `link_type = 'visibility'`, and `sharing_level = 'basic'`, with the org side recorded as already approved.
+- Standalone Team coaches can open `/{teamOrgSlug}/coaches/link-org`, review incoming invitations, and accept or decline them from the Coaches Portal.
+- Accepting an invitation updates `team_org_links` to `linked` and marks the Team workspace/workspace org as linked, using the same state change as Phase 4A.
+- Acceptance does not transfer billing ownership, data ownership, roster/document/accounting access, parent-org `team_entitlements`, or org-wide `module_rep_teams` access.
+- Org-request and coach-response actions write org audit log entries and platform lifecycle events.
+- Help docs now explain both the coach-requested and org-invited Basic visibility flows.
+
+Implemented in Phase 4C:
+
+- Linked Team coaches can request org billing from `/{teamOrgSlug}/coaches/link-org` after a Basic visibility link is active.
+- Organization owners/admins can invite a linked Team workspace to move billing from `/{parentOrgSlug}/admin/org/team-links`.
+- Team coaches can accept or decline org billing invitations from the Coaches Portal.
+- Organization owners/admins can approve coach-requested billing and complete annual or monthly org Team add-on checkout. In dev/mock mode this applies immediately; in real Stripe mode it creates an `org_team_addon` Checkout Session and webhook recovery applies the billing takeover.
+- Billing takeover updates `team_workspaces.billing_mode` to `org_team_addon`, sets `billing_owner_org_id`, keeps the workspace linked, cancels the previous direct Team subscription when a real Stripe takeover completes, and updates team entitlements without transferring data ownership.
+- The workspace org keeps an active Team-scoped entitlement for coach portal access, while the linked org receives a Team-scoped `org_team_addon` entitlement for billing records. This does not grant org-wide `module_rep_teams` access or expose roster, documents, or accounting data.
+- Billing request, invitation, acceptance/decline, checkout start, and takeover completion actions write org audit log entries and platform lifecycle events.
+- Help docs now explain Basic linking versus org billing takeover for both coaches and organization admins.
+
+Dev smoke path for coach-requested links:
 
 1. Seed or use an existing standalone Team workspace.
 2. Sign in as the assigned Team coach and open `/{teamOrgSlug}/coaches/link-org`.
@@ -790,43 +816,106 @@ Dev smoke path:
 4. Sign in as an owner/admin of that parent org and open `/{parentOrgSlug}/admin/org/team-links`.
 5. Approve the request and confirm the link moves from Needs review to Link history while billing and rep-team admin access remain unchanged.
 
+Dev smoke path for org invitations:
+
+1. Seed or use an existing standalone Team workspace.
+2. Sign in as an owner/admin of the parent org and open `/{parentOrgSlug}/admin/org/team-links`.
+3. Enter the Team workspace slug or primary coach email and send the invitation.
+4. Sign in as the assigned Team coach and open `/{teamOrgSlug}/coaches/link-org`.
+5. Accept the invitation and confirm the link moves to `linked` while billing, parent-org entitlements, ownership, roster/doc/accounting access, and org-wide rep-team admin access remain unchanged.
+
+Dev smoke path for org billing takeover:
+
+1. Start with an approved Basic linked Team workspace.
+2. Sign in as the assigned Team coach and open `/{teamOrgSlug}/coaches/link-org`.
+3. Click **Request Org Billing** and confirm the link remains `linked` with `link_type = 'billing'` and `billing_mode_after_approval = 'org_team_addon'`.
+4. Sign in as an owner/admin of the parent org and open `/{parentOrgSlug}/admin/org/team-links`.
+5. In mock billing mode or a non-Stripe dev environment, click **Approve Annual** and confirm org billing becomes active.
+6. Confirm `team_workspaces.billing_mode = 'org_team_addon'`, `billing_owner_org_id` is the parent org, workspace state remains `linked`, coach portal access still works through a workspace-org Team entitlement, and no roster/doc/accounting/org-wide rep-team access is transferred.
+
 Tasks:
 
 - [x] Add coach-initiated org link request flow.
-- Add org-initiated team invite flow.
+- [x] Add org-initiated team invite flow.
 - [x] Add approval screens for coach and org owner.
 - [x] Add Basic visibility sharing controls.
 - [x] Add org view of linked team summaries.
-- Add billing takeover path from direct Team to org Team add-on.
+- [x] Add billing takeover path from direct Team to org Team add-on.
 
 Acceptance criteria:
 
 - A standalone Team can link to an org without moving all data. **Phase 4A complete for coach-initiated Basic visibility links.**
-- Org sees only approved sharing level. **Phase 4A complete for Basic visibility summary.**
-- Org can become billing owner without immediately becoming data owner.
+- A standalone Team can link to an org without moving all data. **Phase 4B complete for org-initiated Basic visibility invitations.**
+- Org sees only approved sharing level. **Phase 4A/4B/4C complete for Basic visibility summary and billing takeover without data expansion.**
+- Org can become billing owner without immediately becoming data owner. **Phase 4C complete for org Team add-on checkout/mock application.**
 
 ### Phase 5 - Ownership Transfer
 
+Phase 5A implementation status: ownership transfer approval foundation complete.
+
+Phase 5B implementation status: platform-assisted completion implemented and smoke-tested; migration 067 applied in dev and production.
+
+Implemented in Phase 5A:
+
+- Linked Team coaches can request ownership transfer from `/{teamOrgSlug}/coaches/link-org`.
+- Organization owners/admins can invite a linked Team workspace to ownership transfer from `/{parentOrgSlug}/admin/org/team-links`.
+- Organization owners/admins can approve or decline coach-requested ownership transfer.
+- Team coaches can accept or decline org-initiated ownership transfer invitations.
+- Mutual approval moves the relationship to `team_org_links.status = 'ownership_pending'`, `link_type = 'ownership'`, and `sharing_level = 'full_org_owned'`.
+- Declines restore the previous active link posture: Basic visibility, or org billing when org Team add-on billing is already active.
+- Ownership request, invitation, approval, acceptance, and decline actions write org audit log entries and platform lifecycle events.
+- Help docs now distinguish Basic visibility, org billing, and ownership transfer for both coaches and organization admins.
+
+Implemented in Phase 5B:
+
+- Added `supabase/migrations/067_team_ownership_transfer_rpc.sql` with `complete_team_workspace_ownership_transfer(...)`.
+- The RPC validates a mutually approved `ownership_pending` link, target org, team slug conflicts, and team ledger conflicts before changing data.
+- The RPC moves team-scoped rep-team rows and the team accounting ledger to the linked org in one database transaction.
+- The RPC creates or activates parent-org coach memberships, suspends retired workspace-org memberships, retires active Team entitlements, marks other active links revoked, marks the transfer link `org_owned`, and updates `team_workspaces.workspace_state = 'org_owned'`.
+- Added platform-admin completion API and org-detail Support workflow controls with a required reason.
+- Server completion checks the target org has Club or Rep Teams module access before calling the RPC.
+- Server completion attempts to cancel the previous real Stripe Team/org Team add-on subscription when one exists and records any cancellation warning in platform audit/event metadata.
+- Platform Admin Operations help now documents the completion and retry SOP.
+- Added `tests/uat/scenarios/team-ownership-transfer-smoke.spec.ts`; the focused UAT smoke passed on May 23, 2026.
+
+Next Phase 5 slice:
+
+- Closed for MVP: do not add a rollback RPC now. Ownership transfer is expected to be rare, platform-assisted, and auditable; failed pre-completion attempts remain safely retryable, and completed transfer reversals will be handled by support/engineering case by case.
+
 Tasks:
 
-- Add ownership transfer request and approval workflow.
-- Create transfer procedure for `org_id` reassignment across rep team tables.
-- Move or recreate team accounting ledger under parent org.
-- Preserve coach access and documents.
-- Cancel/switch prior billing.
-- Add platform admin assisted transfer controls.
+- [x] Add ownership transfer request and approval workflow.
+- [x] Create transfer procedure for `org_id` reassignment across rep team tables. **Migration 067 applied in dev/prod.**
+- [x] Move or recreate team accounting ledger under parent org. **Migration 067 applied in dev/prod.**
+- [x] Preserve coach access and documents. **Coach memberships and document org ownership are handled by the RPC.**
+- [x] Cancel/switch prior billing. **Server completion attempts Stripe cancellation and switches workspace billing to Club included.**
+- [x] Add platform admin assisted transfer controls.
 
 Acceptance criteria:
 
 - A linked team can become org-owned without losing roster, schedule, dues, documents, budget, or coach access.
 - Transfer is audited.
-- Failed transfer can be safely retried or rolled back by platform admin.
+- Failed pre-completion transfer attempts can be safely retried by platform admin; completed transfer reversals are support/engineering assisted for MVP.
 
 ### Phase 6 - Coach Portal Value Bundle
 
+Phase 6A implementation status: coach-managed event attendance implemented and smoke-tested; migration 069 applied in dev and production.
+
+Implemented in Phase 6A:
+
+- Added `supabase/migrations/069_rep_team_event_attendance.sql` for event-to-player attendance rows with `unknown`, `attending`, `absent`, and `late` statuses plus coach notes; the migration also syncs attendance ownership when event rows move during ownership transfer. **Migration 069 applied in dev/prod.**
+- Added coach-only event attendance API under `app/api/coaches/[orgSlug]/teams/[teamId]/events/[eventId]/attendance/route.ts`.
+- Coaches can open an event from `/{orgSlug}/coaches/teams/{teamId}/schedule`, mark active roster players In, Out, Late, or Unknown, add notes, bulk-mark all as attending, and save changes.
+- Access uses the existing Coaches Portal rule: active organization membership plus active coach assignment, with Team workspace entitlement filtering still enforced by assignment loading.
+- This does not expand linked-org Basic visibility, billing ownership, roster/document/accounting access, or org-wide `module_rep_teams` access.
+- Coaches help documentation now mentions attendance from the Schedule event detail flow.
+- Added `tests/uat/scenarios/team-attendance-smoke.spec.ts`; the focused UAT smoke passed on May 23, 2026.
+- The smoke found and fixed a Next 16 client params issue in `app/[orgSlug]/coaches/teams/[teamId]/schedule/page.tsx`.
+- Roster/lineup implementation is intentionally deferred until the feature contents are reviewed with the product owner.
+
 Tasks:
 
-- Add attendance to schedule events.
+- [x] Add attendance to schedule events.
 - Add baseball/softball lineup card builder and PDF export.
 - Add generic game roster PDF fallback.
 - Improve roster jersey/position editing if needed.
@@ -834,8 +923,8 @@ Tasks:
 
 Acceptance criteria:
 
-- Coach can complete a game-day workflow: confirm roster, mark attendance, create lineup, export PDF.
-- Features work for standalone, linked, and org-owned teams.
+- Coach can complete a game-day workflow: confirm roster, mark attendance, create lineup, export PDF. **Phase 6A completes attendance; roster/lineup/PDF remain next slices.**
+- Features work for standalone, linked, and org-owned teams. **Phase 6A uses the shared Coaches Portal assignment and Team entitlement access path.**
 
 ### Phase 7 - Pricing And Marketing Surfaces
 
@@ -861,12 +950,12 @@ Tasks:
 - Test tournament claim signup.
 - Test Team workspace free-tier tournament creation and free-plan feature limits.
 - Test linked-team visibility.
-- Test org billing takeover.
+- Test org billing takeover. **Mock smoke and real Stripe sandbox org Team add-on checkout/webhook smoke pass.**
 - Test Club ownership transfer.
 - Test cancellation and past-due states.
 - Test role and RLS boundaries.
 - Test mobile coach portal flows.
-- Test Stripe sandbox webhooks.
+- Test Stripe sandbox webhooks. **Org Team add-on Checkout Session completion and subscription webhooks pass against the local webhook listener.**
 - Confirm Stripe price IDs exist for sandbox and live Team, org Team add-on, and Club extra-team prices.
 
 Acceptance criteria:
@@ -915,7 +1004,7 @@ Acceptance criteria:
 
 - Which existing tournament team/registration table should be the canonical claim source?
 - Should `team` be a real `plan_id` on the workspace org, or should it be represented only through `team_workspaces` and entitlements?
-- Should org Team add-on use the existing `rep_team` Stripe price or separate `org_team_addon` prices?
+- Resolved in Phase 4C: org Team add-on checkout uses separate `org_team_addon` Stripe price rows, not the Club extra-team `rep_team` price.
 - What exact fields should be visible in each team-to-org sharing level?
 - Should direct Team billing customer live on `organizations`, `team_workspaces`, or both?
 - Should ownership transfer be self-serve in MVP or platform-admin assisted only?

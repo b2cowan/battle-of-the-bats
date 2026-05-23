@@ -270,7 +270,7 @@ export default function AdminSchedulePage({
               </button>
             ))}
           </div>
-          <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.35)', alignSelf: 'center' }}>
+          <span style={{ fontSize: '0.75rem', color: 'var(--white-35)', alignSelf: 'center' }}>
             Read-only
           </span>
         </div>

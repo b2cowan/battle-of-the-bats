@@ -863,8 +863,8 @@ export default function TournamentSetupWizard({
                         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                         padding: '0.65rem 0.9rem',
                         border: '1px solid var(--border-2)',
-                        borderRadius: 8,
-                        background: 'var(--surface-1, rgba(255,255,255,0.03))',
+                        borderRadius: '2px',
+                        background: 'var(--surface-1, var(--white-03))',
                         cursor: 'pointer', textAlign: 'left', color: 'inherit',
                         transition: 'border-color 0.15s',
                       }}
@@ -1292,8 +1292,8 @@ export default function TournamentSetupWizard({
                   <div style={{
                     position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0,
                     background: 'var(--surface-2, #1e1e2e)',
-                    border: '1px solid var(--border, rgba(255,255,255,0.1))',
-                    borderRadius: '0.4rem', zIndex: 50,
+                    border: '1px solid var(--border, var(--white-10))',
+                    borderRadius: '2px', zIndex: 50,
                     maxHeight: '200px', overflowY: 'auto',
                     boxShadow: '0 4px 16px rgba(0,0,0,0.4)',
                   }}>
@@ -1311,12 +1311,12 @@ export default function TournamentSetupWizard({
                         style={{
                           display: 'block', width: '100%', textAlign: 'left',
                           padding: '0.5rem 0.75rem', background: 'none', border: 'none',
-                          cursor: 'pointer', borderBottom: '1px solid var(--border, rgba(255,255,255,0.07))',
+                          cursor: 'pointer', borderBottom: '1px solid var(--border, var(--white-8))',
                           color: 'inherit',
                         }}
                       >
                         <span style={{ display: 'block', fontWeight: 600, fontSize: '0.85rem' }}>{v.name}</span>
-                        {v.address && <span style={{ display: 'block', fontSize: '0.75rem', color: 'var(--white-40, rgba(255,255,255,0.4))' }}>{v.address}</span>}
+                        {v.address && <span style={{ display: 'block', fontSize: '0.75rem', color: 'var(--white-40, var(--white-40))' }}>{v.address}</span>}
                       </button>
                     ))}
                   </div>
@@ -1365,7 +1365,7 @@ export default function TournamentSetupWizard({
                 <div key={item.key} className={styles.venueCard} style={{ padding: '0.5rem 0.75rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem' }}>
                   <div>
                     <span style={{ display: 'block', fontWeight: 600, fontSize: '0.85rem' }}>{item.name}</span>
-                    {item.address && <span style={{ display: 'block', fontSize: '0.75rem', color: 'var(--white-40, rgba(255,255,255,0.4))' }}>{item.address}</span>}
+                    {item.address && <span style={{ display: 'block', fontSize: '0.75rem', color: 'var(--white-40, var(--white-40))' }}>{item.address}</span>}
                   </div>
                   <button type="button" className={styles.iconOnlyButton} onClick={() => setVenueQueue(prev => prev.filter(q => q.key !== item.key))} aria-label={`Remove ${item.name}`} style={{ flexShrink: 0 }}>
                     <Trash2 size={14} />

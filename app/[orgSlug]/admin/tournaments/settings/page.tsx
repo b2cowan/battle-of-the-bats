@@ -65,7 +65,7 @@ export default function TournamentSettingsAccessPage() {
       href: `${base}/settings/members`,
       icon: Users2,
       title: 'Staff & access',
-      description: 'Invite admins, staff, and officials, then assign people to the tournaments they should manage.',
+      description: 'Invite admins, staff, and scorekeepers, then assign people to the tournaments they should manage.',
       meta: canManageMembers ? 'Manage access' : 'Owner/admin only',
       enabled: canManageMembers,
       comingSoon: false,

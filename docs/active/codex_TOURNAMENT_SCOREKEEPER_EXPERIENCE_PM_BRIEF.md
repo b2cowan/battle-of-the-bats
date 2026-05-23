@@ -1,6 +1,6 @@
 # Tournament Scorekeeper Experience PM Brief
 
-> Status: Planning only - no implementation started
+> Status: Implementation slice 7 complete - shared scoring service now centralizes score submit/finalize/revert rules for admin Results and Scorekeeper APIs; migrations 066 and 068 applied in dev and production
 > Created: 2026-05-22
 > Detailed plan: [codex_TOURNAMENT_SCOREKEEPER_EXPERIENCE_PLAN.md](codex_TOURNAMENT_SCOREKEEPER_EXPERIENCE_PLAN.md)
 
@@ -9,6 +9,14 @@
 Create a dedicated mobile-first scorekeeper workspace for tournament day. Invited scorekeepers land directly in a focused route where they can see today's accessible games, filter by field/division/team/status, tap a game, enter the score, and understand whether the result is final or waiting for admin review.
 
 Admin Results & Scoring remains the review and closeout surface for organizers. Admins use it to finalize pending scores, correct/revert results, export, and manage the official tournament record.
+
+Pending-review scores are still useful on tournament day, so they remain visible in Results, public schedule/bracket views, and standings where the product already exposes them. The important distinction is labeling and authority: public/day-of views can show "Pending", while Results & Scoring is where an admin makes the result official.
+
+Admins can now open the Scorekeeper View directly from Results & Scoring in a new tab. That gives organizers a fast way to test the field workflow or use it at the venue while preserving Results & Scoring as the review desk.
+
+Score submissions now carry review metadata. Results & Scoring can show who last submitted or corrected the visible score, when it happened, and whether it came from the Scorekeeper View or the admin Results surface.
+
+The admin and scorekeeper score-writing APIs now share one scoring service. The user-facing workflow is intentionally the same, but validation, finalization policy, audit metadata, finalized/cancelled conflicts, and revert behavior are applied consistently no matter where the score is entered.
 
 ## Why It Matters
 

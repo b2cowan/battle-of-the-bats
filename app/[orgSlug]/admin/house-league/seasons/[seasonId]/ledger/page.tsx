@@ -67,14 +67,14 @@ export default function LedgerPage() {
   if (!canView) {
     return (
       <div className={styles.page}>
-        <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.9rem' }}>You don&apos;t have access to this page.</p>
+        <p style={{ color: 'var(--white-40)', fontSize: '0.9rem' }}>You don&apos;t have access to this page.</p>
       </div>
     );
   }
   if (loading) {
     return (
       <div className={styles.page}>
-        <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.9rem' }}>Loading…</p>
+        <p style={{ color: 'var(--white-40)', fontSize: '0.9rem' }}>Loading…</p>
       </div>
     );
   }
@@ -93,7 +93,7 @@ export default function LedgerPage() {
             <DollarSign size={22} />
           </div>
           <div>
-            <div style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.4)', marginBottom: '0.2rem' }}>
+            <div style={{ fontSize: '0.72rem', color: 'var(--white-40)', marginBottom: '0.2rem' }}>
               <Link href={`/${orgSlug}/admin/house-league`} style={{ color: 'inherit', textDecoration: 'none' }}>
                 House League
               </Link>
@@ -125,11 +125,11 @@ export default function LedgerPage() {
       {(data?.feePerReg ?? 0) === 0 && (
         <div style={{
           padding: '1rem 1.25rem',
-          borderRadius: '8px',
-          background: 'rgba(255,255,255,0.03)',
-          border: '1px solid rgba(255,255,255,0.08)',
+          borderRadius: '2px',
+          background: 'var(--white-03)',
+          border: '1px solid var(--white-8)',
           fontSize: '0.875rem',
-          color: 'rgba(255,255,255,0.4)',
+          color: 'var(--white-40)',
           marginBottom: '1.5rem',
         }}>
           No registration fee is configured for this season. Set a fee amount in the season settings to track payments here.
@@ -141,9 +141,9 @@ export default function LedgerPage() {
         <div style={{
           padding: '2.5rem 1.5rem',
           textAlign: 'center',
-          border: '1px dashed rgba(255,255,255,0.1)',
-          borderRadius: '10px',
-          color: 'rgba(255,255,255,0.35)',
+          border: '1px dashed var(--white-10)',
+          borderRadius: '2px',
+          color: 'var(--white-35)',
           fontSize: '0.9rem',
         }}>
           No fee entries yet. Entries are created automatically when registrations are approved (if auto-generate fees is enabled).
@@ -192,17 +192,17 @@ export default function LedgerPage() {
                           isPaid
                             ? { background: 'rgba(74,222,128,0.1)', color: '#4ade80', border: '1px solid rgba(74,222,128,0.25)' }
                             : isVoid
-                              ? { background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.3)' }
+                              ? { background: 'var(--white-5)', color: 'var(--white-30)' }
                               : { background: 'rgba(251,191,36,0.1)', color: '#fbbf24', border: '1px solid rgba(251,191,36,0.25)' }
                         }
                       >
                         {isPaid ? 'Paid' : isVoid ? 'Void' : 'Pending'}
                       </span>
                     </td>
-                    <td style={{ color: 'rgba(255,255,255,0.5)', whiteSpace: 'nowrap' }}>
+                    <td style={{ color: 'var(--white-50)', whiteSpace: 'nowrap' }}>
                       {fmtDate(e.updatedAt)}
                     </td>
-                    <td style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.8rem' }}>
+                    <td style={{ color: 'var(--white-40)', fontSize: '0.8rem' }}>
                       {e.description}
                     </td>
                   </tr>
@@ -213,11 +213,11 @@ export default function LedgerPage() {
         </div>
       )}
 
-      <p style={{ marginTop: '1rem', fontSize: '0.72rem', color: 'rgba(255,255,255,0.3)' }}>
+      <p style={{ marginTop: '1rem', fontSize: '0.72rem', color: 'var(--white-30)' }}>
         Fee status is managed from the{' '}
         <Link
           href={`/${orgSlug}/admin/house-league/seasons/${seasonId}/registrations`}
-          style={{ color: 'rgba(255,255,255,0.5)', textDecoration: 'underline' }}
+          style={{ color: 'var(--white-50)', textDecoration: 'underline' }}
         >
           Registrations
         </Link>
@@ -231,17 +231,17 @@ function SummaryTile({ label, value, sub, color }: { label: string; value: strin
   return (
     <div style={{
       padding: '1rem 1.25rem',
-      borderRadius: '10px',
-      background: 'rgba(255,255,255,0.03)',
-      border: '1px solid rgba(255,255,255,0.07)',
+      borderRadius: '2px',
+      background: 'var(--white-03)',
+      border: '1px solid var(--white-8)',
     }}>
-      <div style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'rgba(255,255,255,0.35)', marginBottom: '0.4rem' }}>
+      <div style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--white-35)', marginBottom: '0.4rem' }}>
         {label}
       </div>
       <div style={{ fontSize: '1.5rem', fontWeight: 800, color, fontVariantNumeric: 'tabular-nums', lineHeight: 1.1, marginBottom: '0.25rem' }}>
         {value}
       </div>
-      <div style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.3)' }}>
+      <div style={{ fontSize: '0.72rem', color: 'var(--white-30)' }}>
         {sub}
       </div>
     </div>

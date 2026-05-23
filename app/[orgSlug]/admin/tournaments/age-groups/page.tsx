@@ -322,7 +322,7 @@ export default function AgeGroupsPage() {
                     onChange={e => setForm(f => ({ ...f, maxAge: e.target.value }))} placeholder="Blank for no maximum" />
                 </div>
               </div>
-              <div className="form-group" style={{ marginBottom: '1.5rem', background: 'var(--white-5)', padding: '1rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-2)' }}>
+              <div className="form-group" style={{ marginBottom: '1.5rem', background: 'var(--white-5)', padding: '1rem', borderRadius: '2px', border: '1px solid var(--border-2)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: form.usePools ? '1rem' : 0 }}>
                   <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
                     <input type="checkbox" checked={form.usePools} onChange={e => setForm(f => ({ ...f, usePools: e.target.checked, poolCount: e.target.checked ? (Number(f.poolCount) < 2 ? '2' : f.poolCount) : '0' }))} />
@@ -437,7 +437,7 @@ export default function AgeGroupsPage() {
                       alignItems: 'center',
                       background: 'var(--white-5)', 
                       padding: '0.5rem 0.75rem', 
-                      borderRadius: 'var(--radius-sm)', 
+                      borderRadius: '2px', 
                       border: '1px solid var(--border-2)' 
                     }}>
                       <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>

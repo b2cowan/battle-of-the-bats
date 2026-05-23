@@ -16,7 +16,7 @@
   height: 48px;
   background: rgba(var(--blueprint-blue-rgb), 0.12);
   border: 1px solid rgba(var(--blueprint-blue-rgb), 0.3);
-  border-radius: 12px;
+  border-radius: 2px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -24,7 +24,7 @@
 }
 
 .pageTitle {
-  font-family: var(--font-display);
+  font-family: var(--font-data);
   font-size: 1.75rem;
   font-weight: 900;
   color: var(--white);
@@ -106,7 +106,7 @@
   .responsiveTable :global(tr) {
     padding: 0.85rem;
     border: 1px solid var(--border-subtle);
-    border-radius: var(--radius-md);
+    border-radius: 2px;
     background: var(--bg-surface);
   }
 

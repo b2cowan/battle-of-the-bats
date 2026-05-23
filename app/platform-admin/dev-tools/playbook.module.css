@@ -34,10 +34,9 @@
   padding-bottom: 0.5rem;
   border-bottom: 1px solid rgba(255,255,0,0.12);
 }
-
 .sectionHeader svg { flex-shrink: 0; }
 
-/* ─── Agent cards ────────────────────────────────────────────────────────────── */
+/* ─── Agent tile grid ────────────────────────────────────────────────────────── */
 .agentGrid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
@@ -51,9 +50,25 @@
   border-radius: 8px;
   padding: 0.85rem 1rem;
   border-left-width: 3px;
-  transition: background 0.15s;
+  text-align: left;
+  width: 100%;
+  font-family: var(--font-data, monospace);
 }
-.agentCard:hover { background: rgba(255,255,255,0.04); }
+
+.agentCardClickable {
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, transform 0.1s;
+}
+
+.agentCardClickable:hover {
+  background: rgba(255,255,255,0.055);
+  transform: translateY(-1px);
+}
+
+.agentCardClickable:hover .agentArrow {
+  opacity: 1;
+  transform: translateX(2px);
+}
 
 .agentCardTop {
   display: flex;
@@ -68,6 +83,14 @@
   font-size: 0.88rem;
   font-weight: 800;
   letter-spacing: 0.03em;
+  flex: 1;
+}
+
+.agentArrow {
+  opacity: 0.25;
+  transition: opacity 0.15s, transform 0.15s;
+  flex-shrink: 0;
+  color: rgba(255,255,255,0.5);
 }
 
 .agentHeadline {
@@ -97,32 +120,118 @@
 
 /* ─── Accent colours ─────────────────────────────────────────────────────────── */
 .accent-green  { border-left-color: rgba(34,197,94,0.6); }
-.accent-green  .agentIcon, .accent-green  .agentCmd { color: #4ade80; }
-.accent-green  .promptSectionHeader { color: #4ade80; }
+.accent-green  .agentIcon, .accent-green  .agentCmd,
+.accent-green  .detailHeaderIcon, .accent-green .detailCmd { color: #4ade80; }
 
 .accent-blue   { border-left-color: rgba(59,130,246,0.6); }
-.accent-blue   .agentIcon, .accent-blue   .agentCmd { color: #60a5fa; }
-.accent-blue   .promptSectionHeader { color: #60a5fa; }
+.accent-blue   .agentIcon, .accent-blue   .agentCmd,
+.accent-blue   .detailHeaderIcon, .accent-blue .detailCmd { color: #60a5fa; }
 
 .accent-yellow { border-left-color: rgba(255,255,0,0.5); }
-.accent-yellow .agentIcon, .accent-yellow .agentCmd { color: #ffff00; }
-.accent-yellow .promptSectionHeader { color: #ffff00; }
+.accent-yellow .agentIcon, .accent-yellow .agentCmd,
+.accent-yellow .detailHeaderIcon, .accent-yellow .detailCmd { color: #ffff00; }
 
 .accent-purple { border-left-color: rgba(167,139,250,0.6); }
-.accent-purple .agentIcon, .accent-purple .agentCmd { color: #a78bfa; }
-.accent-purple .promptSectionHeader { color: #a78bfa; }
+.accent-purple .agentIcon, .accent-purple .agentCmd,
+.accent-purple .detailHeaderIcon, .accent-purple .detailCmd { color: #a78bfa; }
 
 .accent-orange { border-left-color: rgba(251,146,60,0.6); }
-.accent-orange .agentIcon, .accent-orange .agentCmd { color: #fb923c; }
-.accent-orange .promptSectionHeader { color: #fb923c; }
+.accent-orange .agentIcon, .accent-orange .agentCmd,
+.accent-orange .detailHeaderIcon, .accent-orange .detailCmd { color: #fb923c; }
 
 .accent-red    { border-left-color: rgba(239,68,68,0.6); }
-.accent-red    .agentIcon, .accent-red    .agentCmd { color: #f87171; }
-.accent-red    .promptSectionHeader { color: #f87171; }
+.accent-red    .agentIcon, .accent-red    .agentCmd,
+.accent-red    .detailHeaderIcon, .accent-red .detailCmd { color: #f87171; }
 
 .accent-cyan   { border-left-color: rgba(34,211,238,0.6); }
-.accent-cyan   .agentIcon, .accent-cyan   .agentCmd { color: #22d3ee; }
-.accent-cyan   .promptSectionHeader { color: #22d3ee; }
+.accent-cyan   .agentIcon, .accent-cyan   .agentCmd,
+.accent-cyan   .detailHeaderIcon, .accent-cyan .detailCmd { color: #22d3ee; }
+
+.accent-pink   { border-left-color: rgba(244,114,182,0.6); }
+.accent-pink   .agentIcon, .accent-pink   .agentCmd,
+.accent-pink   .detailHeaderIcon, .accent-pink .detailCmd { color: #f472b6; }
+
+/* ─── Back button ────────────────────────────────────────────────────────────── */
+.backBtn {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-family: var(--font-data, monospace);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.35);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  margin-bottom: 1.5rem;
+  transition: color 0.15s;
+}
+.backBtn:hover { color: rgba(255,255,0,0.7); }
+
+/* ─── Agent detail header ────────────────────────────────────────────────────── */
+.detailHeader {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  background: rgba(255,255,255,0.025);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-left-width: 4px;
+  border-radius: 8px;
+  padding: 1.1rem 1.25rem;
+  margin-bottom: 0.25rem;
+}
+
+.detailHeaderIcon {
+  flex-shrink: 0;
+  margin-top: 0.15rem;
+}
+
+.detailCmd {
+  font-size: 1.3rem;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  display: block;
+  margin-bottom: 0.25rem;
+}
+
+.detailHeadline {
+  font-size: 0.75rem;
+  color: rgba(255,255,255,0.45);
+  line-height: 1.4;
+}
+
+/* ─── Loads from ─────────────────────────────────────────────────────────────── */
+.loadsFrom {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  background: rgba(0,0,0,0.25);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 6px;
+  padding: 0.75rem 1rem;
+}
+
+.loadsFromRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.loadsFromIcon {
+  color: rgba(255,255,0,0.4);
+  flex-shrink: 0;
+  margin-top: 0.15rem;
+}
+
+.loadsFromText {
+  font-size: 0.66rem;
+  color: rgba(255,255,255,0.45);
+  line-height: 1.5;
+  word-break: break-word;
+}
 
 /* ─── Conversation rules ─────────────────────────────────────────────────────── */
 .rulesBox {
@@ -133,7 +242,7 @@
   border: 1px solid rgba(255,255,255,0.07);
   border-radius: 8px;
   padding: 1rem 1.25rem;
-  margin-bottom: 1rem;
+  margin-bottom: 0.5rem;
 }
 
 .rule {
@@ -155,12 +264,9 @@
   flex-shrink: 0;
 }
 
-.rule strong {
-  color: rgba(255,255,255,0.78);
-  display: inline;
-}
+.rule strong { color: rgba(255,255,255,0.78); }
 
-.rule code {
+.rule code, .rulesBox code {
   color: #ffff00;
   background: rgba(255,255,0,0.08);
   padding: 0.05rem 0.3rem;
@@ -168,15 +274,31 @@
   font-size: 0.7rem;
 }
 
-.handoffExample { margin-bottom: 0.5rem; }
+/* ─── Notes box ──────────────────────────────────────────────────────────────── */
+.notesBox {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  background: rgba(255,220,0,0.04);
+  border: 1px solid rgba(255,220,0,0.15);
+  border-radius: 8px;
+  padding: 0.85rem 1rem;
+}
 
-.handoffLabel {
-  font-size: 0.58rem;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: rgba(255,255,255,0.2);
-  margin-bottom: 0.4rem;
+.noteRow {
+  display: grid;
+  grid-template-columns: 16px 1fr;
+  gap: 0.6rem;
+  align-items: start;
+  font-size: 0.7rem;
+  line-height: 1.55;
+  color: rgba(255,255,255,0.45);
+}
+
+.noteIcon {
+  color: rgba(255,220,0,0.5);
+  margin-top: 0.15rem;
+  flex-shrink: 0;
 }
 
 /* ─── Prompt blocks ──────────────────────────────────────────────────────────── */
@@ -193,6 +315,25 @@
   word-break: break-word;
   font-family: var(--font-data, monospace);
   margin: 0;
+}
+
+.promptExamples {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-bottom: 2rem;
+}
+
+/* ─── Handoff example ────────────────────────────────────────────────────────── */
+.handoffExample { margin-bottom: 0.5rem; }
+
+.handoffLabel {
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.2);
+  margin-bottom: 0.4rem;
 }
 
 /* ─── Pipeline ───────────────────────────────────────────────────────────────── */
@@ -216,9 +357,7 @@
   gap: 0.75rem;
   padding: 0.75rem 0;
   border-bottom: 1px solid rgba(255,255,255,0.05);
-  position: relative;
 }
-
 .pipelineStep:last-child { border-bottom: none; }
 
 .pipelineNum {
@@ -267,107 +406,6 @@
   line-height: 1.5;
 }
 
-/* ─── Prompt tips sections ───────────────────────────────────────────────────── */
-.promptSections {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  margin-bottom: 0.5rem;
-}
-
-.promptSection {
-  background: rgba(255,255,255,0.02);
-  border: 1px solid rgba(255,255,255,0.07);
-  border-radius: 8px;
-  border-left-width: 3px;
-  overflow: hidden;
-}
-
-.promptSectionHeader {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.65rem 1rem;
-  font-size: 0.78rem;
-  font-weight: 800;
-  border-bottom: 1px solid rgba(255,255,255,0.06);
-  background: rgba(0,0,0,0.2);
-}
-
-.promptSectionHeader code {
-  font-size: 0.78rem;
-  font-weight: 800;
-}
-
-.promptRules {
-  margin: 0.75rem 1rem 0.5rem 1.75rem;
-  padding: 0;
-  font-size: 0.68rem;
-  color: rgba(255,255,255,0.42);
-  line-height: 1.6;
-  display: flex;
-  flex-direction: column;
-  gap: 0.3rem;
-}
-
-.promptExamples {
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-  padding: 0.5rem 1rem 0.9rem;
-}
-
-/* ─── Full example steps ─────────────────────────────────────────────────────── */
-.exampleSteps {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  margin-bottom: 0.5rem;
-}
-
-.exampleStep {
-  display: grid;
-  grid-template-columns: 72px 1fr;
-  gap: 0.75rem;
-  align-items: start;
-}
-
-.exampleStepCmd {
-  font-size: 0.72rem;
-  font-weight: 800;
-  color: #ffff00;
-  background: rgba(255,255,0,0.08);
-  border: 1px solid rgba(255,255,0,0.2);
-  border-radius: 5px;
-  padding: 0.3rem 0.5rem;
-  text-align: center;
-  margin-top: 0.1rem;
-  white-space: nowrap;
-}
-
-.exampleStepBody { min-width: 0; }
-
-.exampleStepTitle {
-  font-size: 0.72rem;
-  font-weight: 700;
-  color: rgba(255,255,255,0.6);
-  margin-bottom: 0.4rem;
-}
-
-.exampleNote {
-  font-size: 0.66rem;
-  color: rgba(255,255,255,0.32);
-  line-height: 1.55;
-  margin-top: 0.5rem;
-}
-
-.exampleNote code {
-  color: #ffff00;
-  background: rgba(255,255,0,0.08);
-  padding: 0.05rem 0.3rem;
-  border-radius: 3px;
-}
-
 /* ─── Quick reference ────────────────────────────────────────────────────────── */
 .quickRef {
   background: rgba(255,255,255,0.02);
@@ -385,7 +423,6 @@
   padding: 0.55rem 1rem;
   border-bottom: 1px solid rgba(255,255,255,0.05);
 }
-
 .quickRefRow:last-child { border-bottom: none; }
 
 .quickRefTrigger {
@@ -404,7 +441,69 @@
 .quickRefDivider {
   height: 1px;
   background: rgba(255,255,0,0.1);
-  margin: 0.25rem 0;
+}
+
+/* ─── Role / tier tables ─────────────────────────────────────────────────────── */
+.roleTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.66rem;
+  margin-bottom: 0.5rem;
+}
+
+.roleTable thead tr {
+  background: rgba(0,0,0,0.3);
+}
+
+.roleTable th {
+  text-align: left;
+  padding: 0.45rem 0.75rem;
+  font-size: 0.55rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(255,255,0,0.5);
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+.roleTable td {
+  padding: 0.45rem 0.75rem;
+  color: rgba(255,255,255,0.5);
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  line-height: 1.45;
+}
+
+.roleTable tr:last-child td { border-bottom: none; }
+
+.roleTable td:first-child code,
+.roleTable code {
+  color: #ffff00;
+  background: rgba(255,255,0,0.08);
+  padding: 0.05rem 0.3rem;
+  border-radius: 3px;
+  font-size: 0.66rem;
+}
+
+/* ─── Ordered list ───────────────────────────────────────────────────────────── */
+.orderedList {
+  margin: 0;
+  padding: 0.5rem 0 0.5rem 1.4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  font-size: 0.7rem;
+  line-height: 1.55;
+  color: rgba(255,255,255,0.45);
+}
+
+.orderedList strong { color: rgba(255,255,255,0.72); }
+
+.orderedList code {
+  color: #ffff00;
+  background: rgba(255,255,0,0.08);
+  padding: 0.05rem 0.3rem;
+  border-radius: 3px;
+  font-size: 0.68rem;
 }
 
 /* ─── Footer ─────────────────────────────────────────────────────────────────── */

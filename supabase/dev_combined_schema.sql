@@ -119,7 +119,14 @@ CREATE TABLE IF NOT EXISTS games (
   away_placeholder text,
   notes            text,
   home_slot_id     uuid    REFERENCES pool_slots(id) ON DELETE SET NULL,
-  away_slot_id     uuid    REFERENCES pool_slots(id) ON DELETE SET NULL
+  away_slot_id     uuid    REFERENCES pool_slots(id) ON DELETE SET NULL,
+  score_submitted_by_user_id uuid REFERENCES auth.users(id) ON DELETE SET NULL,
+  score_submitted_by_email text,
+  score_submitted_at timestamptz,
+  score_submission_source text CHECK (
+    score_submission_source IS NULL
+    OR score_submission_source IN ('scorekeeper', 'admin_results', 'system')
+  )
 );
 
 CREATE TABLE IF NOT EXISTS announcements (

@@ -312,7 +312,7 @@ export default function AdminDashboard() {
       <header className="flex items-center justify-between border-b border-blueprint-blue/60 pb-4 mb-8">
         <div>
           <div className="hud-label mb-1">{currentOrg?.name ?? 'Admin'}</div>
-          <h1 className="font-sans font-extrabold text-2xl uppercase tracking-tighter text-fl-text">
+          <h1 className="font-mono font-bold text-2xl uppercase tracking-tight" style={{ color: 'var(--logic-lime)' }}>
             {currentTournament?.name ?? currentOrg?.name ?? 'Admin'}
           </h1>
         </div>
@@ -332,7 +332,7 @@ export default function AdminDashboard() {
         <>
           {/* Clone from past tournament — shown only when other tournaments exist */}
           {otherTournaments.length > 0 && (
-            <div style={{ marginBottom: '1.5rem', padding: '1rem 1.25rem', border: '1px solid var(--border-2)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', background: 'var(--surface-1, rgba(255,255,255,0.02))' }}>
+            <div style={{ marginBottom: '1.5rem', padding: '1rem 1.25rem', border: '1px solid var(--border-2)', borderRadius: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', background: 'var(--white-03)' }}>
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.2rem' }}>
                   <Copy size={14} style={{ color: 'var(--logic-lime)' }} />
@@ -344,7 +344,7 @@ export default function AdminDashboard() {
               </div>
               <button
                 type="button"
-                className="btn btn-outline btn-sm"
+                className="btn btn-outline btn-data"
                 style={{ flexShrink: 0 }}
                 onClick={openPopulateModal}
               >
@@ -403,7 +403,7 @@ export default function AdminDashboard() {
                   padding: '0.45rem 0.75rem',
                   background: 'transparent',
                   border: '1px solid var(--border-2)',
-                  borderRadius: 6,
+                  borderRadius: 2,
                   cursor: 'pointer',
                   color: 'var(--white-50)',
                   fontSize: '0.8rem',
@@ -845,8 +845,8 @@ export default function AdminDashboard() {
                           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                           padding: '0.65rem 0.9rem',
                           border: `1px solid ${populateSelected?.id === t.id ? 'var(--logic-lime)' : 'var(--border-2)'}`,
-                          borderRadius: 8,
-                          background: 'var(--surface-1, rgba(255,255,255,0.03))',
+                          borderRadius: 0,
+                          background: 'var(--white-03)',
                           cursor: 'pointer', textAlign: 'left', color: 'inherit',
                         }}
                       >

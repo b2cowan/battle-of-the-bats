@@ -779,10 +779,10 @@ export default function OrgSettingsPage() {
             />
           </label>
           <p className={styles.hint}>
-            When enabled, scores submitted by field officials are visible to the public immediately
+            When enabled, scores submitted by scorekeepers are visible to the public immediately
             but are not marked final until an admin reviews and finalizes them in the Results page.
-            Officials can correct a submitted score until it is finalized.
-            When disabled, an official&apos;s submission is immediately final.
+            Scorekeepers can correct a submitted score until it is finalized.
+            When disabled, a scorekeeper&apos;s submission is immediately final.
           </p>
         </div>
       </div>
@@ -802,12 +802,12 @@ export default function OrgSettingsPage() {
       </div>
 
       {/* ── Danger Zone ──────────────────────────────────────────────────────── */}
-      <div className={styles.card} style={{ borderColor: 'rgba(239,68,68,0.2)', marginTop: '1.5rem' }}>
+      <div className={styles.card} style={{ borderColor: 'rgba(var(--danger-rgb),0.2)', marginTop: '1.5rem' }}>
         <h2 className={styles.sectionTitle} style={{ color: '#f87171' }}>Danger Zone</h2>
 
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '1.5rem', flexWrap: 'wrap' }}>
           <div>
-            <p style={{ margin: '0 0 0.25rem', fontWeight: 600, fontSize: '0.9rem', color: 'var(--white-80, rgba(255,255,255,0.8))' }}>
+            <p style={{ margin: '0 0 0.25rem', fontWeight: 600, fontSize: '0.9rem', color: 'var(--white-80, var(--white-80))' }}>
               Delete Organization
             </p>
             <p className={styles.hint} style={{ margin: 0 }}>

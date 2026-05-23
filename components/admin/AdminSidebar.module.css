@@ -89,7 +89,7 @@
 }
 
 .logoMain {
-  font-family: var(--font-display, var(--font-sans, system-ui, sans-serif));
+  font-family: var(--font-data);
   font-size: 1rem;
   font-weight: 900;
   letter-spacing: 0;

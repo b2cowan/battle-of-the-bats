@@ -162,6 +162,43 @@ const platformAdminHelp: HelpPageContent = {
       ],
     },
     {
+      id: 'team-ownership-transfer',
+      group: 'Support SOP',
+      heading: 'How to complete Team ownership transfer',
+      summary: 'Finish a mutually approved standalone Team transfer from the organization detail support workflow.',
+      keywords: ['team ownership transfer', 'standalone team', 'org owned team', 'rep teams', 'platform assisted transfer'],
+      searchText: 'complete standalone team ownership transfer platform assisted org owned rep team roster documents accounting ledger',
+      links: [
+        { label: 'Organizations', href: '/platform-admin/orgs' },
+        { label: 'Audit Log', href: '/platform-admin/audit' },
+      ],
+      content: (
+        <>
+          <p>Use this only after the Team coach and organization have both approved ownership transfer from Team Links. Basic visibility and org billing do not require this step.</p>
+          <ol>
+            <li>Open the target organization from <strong>Organizations</strong>.</li>
+            <li>Confirm the account has Club or Rep Teams module access.</li>
+            <li>Open <strong>Support</strong> and review <strong>Team Ownership Transfers</strong>.</li>
+            <li>Confirm the Team name, workspace slug, current billing mode, and customer request.</li>
+            <li>Enter a reason, then click <strong>Complete Transfer</strong>.</li>
+            <li>Review the audit log and, if Stripe cancellation reports a warning, finish the cancellation manually in Stripe.</li>
+          </ol>
+          <p>The transfer moves team-scoped rep-team records and the team ledger under the organization, creates coach membership access in the parent org, retires active Team entitlements, marks the link org-owned, and suspends the retired workspace-org memberships.</p>
+        </>
+      ),
+      faqs: [
+        {
+          id: 'faq-team-transfer-retry',
+          question: 'What if the transfer fails?',
+          answer: (
+            <p>The database move runs as one transaction. If it fails, no partial data reassignment should remain. Read the error, resolve conflicts such as duplicate team slugs, and retry from the same organization detail page.</p>
+          ),
+          answerText: 'The database move is transactional. Resolve conflicts such as duplicate team slugs and retry.',
+          keywords: ['retry', 'failed transfer', 'duplicate slug'],
+        },
+      ],
+    },
+    {
       id: 'bulk-operations',
       group: 'Billing & Product SOP',
       heading: 'How to run guarded bulk operations',

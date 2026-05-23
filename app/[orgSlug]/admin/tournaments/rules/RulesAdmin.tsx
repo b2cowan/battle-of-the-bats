@@ -388,7 +388,7 @@ export default function RulesAdmin({ tournament, orgSlug }: Props) {
       </header>
 
       {error && (
-        <div className="card" style={{ background: 'rgba(239,68,68,0.1)', marginBottom: '2rem' }}>
+        <div className="card" style={{ background: 'rgba(var(--danger-rgb),0.1)', marginBottom: '2rem' }}>
           <div className="flex gap-3 items-center text-danger">
             <AlertCircle size={20} />
             <p style={{ fontWeight: 600 }}>{error}</p>
@@ -630,7 +630,7 @@ export default function RulesAdmin({ tournament, orgSlug }: Props) {
         .icon-btn-ghost:hover { background: var(--white-10); color: var(--white); }
         .icon-btn-success { background: var(--success); color: var(--white); border: none; padding: 4px; border-radius: 4px; cursor: pointer; }
         .icon-btn-danger { background: none; border: none; color: var(--white-10); cursor: pointer; padding: 4px; border-radius: 4px; display: flex; align-items: center; justify-content: center; }
-        .icon-btn-danger:hover { background: rgba(239,68,68,0.1); color: var(--danger); }
+        .icon-btn-danger:hover { background: rgba(var(--danger-rgb),0.1); color: var(--danger); }
         .btn-xs { padding: 2px 6px; font-size: 0.65rem; font-weight: 700; }
         .divider-lg { height: 1px; background: var(--border); margin: 0.5rem 0; }
         .empty-state-card { padding: 2rem; background: var(--bg-surface); border: 2px dashed var(--border-subtle); border-radius: var(--radius-md); display: flex; flex-direction: column; align-items: center; gap: 1rem; color: var(--text-tertiary); }

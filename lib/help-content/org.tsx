@@ -16,7 +16,7 @@ const orgHelp: HelpPageContent = {
             <li><strong>Create your first tournament.</strong> Head to <strong>Tournaments</strong>, click <strong>New Tournament</strong>, and fill in the name, year, and URL slug.</li>
             <li><strong>Set up your org branding.</strong> In <strong>Settings</strong>, upload your logo, pick a colour theme, and confirm your URL slug before you share any links publicly.</li>
             <li><strong>Enable your first module.</strong> If your plan includes House League, Rep Teams, or other modules, go to <strong>Subscription</strong> and request activation. Each module unlocks a new section in the admin panel.</li>
-            <li><strong>Invite field officials.</strong> Officials don't use the main admin area — they receive a direct scoring link. Add them via <strong>Members → Invite Member</strong> using the Official role.</li>
+            <li><strong>Invite scorekeepers.</strong> Scorekeepers don't use the main admin area — they receive a direct scoring link. Add them via <strong>Members → Invite Member</strong> using the Scorekeeper role.</li>
           </ol>
         </>
       ),
@@ -34,7 +34,7 @@ const orgHelp: HelpPageContent = {
             <li><strong>League Admin</strong> — Manages house league seasons, registrations, teams, and schedules. Scoped to the House League module.</li>
             <li><strong>League Registrar</strong> — Reviews and processes house league registrations only. Cannot manage seasons or schedules.</li>
             <li><strong>Coach</strong> — Accesses the Coaches Portal for their assigned rep team. Cannot access the main admin panel.</li>
-            <li><strong>Official</strong> — Submits scores for their assigned games only via the scorekeeper app. Does not access the admin panel at all.</li>
+            <li><strong>Scorekeeper</strong> — Submits scores for their assigned games only via the scorekeeper app. Does not access the admin panel at all.</li>
           </ul>
           <p>Owners can grant or revoke individual capabilities on any member via <strong>Members → Manage</strong>. This lets you fine-tune access without changing someone's base role.</p>
         </>
@@ -44,9 +44,9 @@ const orgHelp: HelpPageContent = {
       id: 'recipe-review-team-link-request',
       group: 'How-to recipes',
       heading: 'How to invite or review Team workspace links',
-      summary: 'Invite a standalone Team workspace or approve/decline Basic visibility requests from Team coaches.',
-      keywords: ['team links', 'team workspace', 'invite team', 'approve request', 'parent organization', 'basic visibility'],
-      searchText: 'invite review approve decline team workspace link request standalone team parent organization club association basic visibility sharing billing ownership roster documents accounting',
+      summary: 'Invite a standalone Team workspace, approve Basic visibility requests, take over billing, and start ownership transfer approval when both sides agree.',
+      keywords: ['team links', 'team workspace', 'invite team', 'approve request', 'parent organization', 'basic visibility', 'org billing', 'team add-on', 'ownership transfer'],
+      searchText: 'invite review approve decline team workspace link request standalone team parent organization club association basic visibility sharing billing transfer org team add-on ownership roster documents accounting',
       links: [
         { label: 'Team Links', href: '../org/team-links' },
       ],
@@ -63,7 +63,8 @@ const orgHelp: HelpPageContent = {
             <li>Use Link history later to confirm what was approved or declined.</li>
           </ol>
           <p>Approving a coach request or receiving a coach&apos;s acceptance creates a <strong>Basic visibility</strong> link only. It does not transfer billing, ownership, player roster access, documents, accounting data, or org-wide rep-team admin access.</p>
-          <p>Billing takeover and full ownership transfer are separate workflows because they affect money, data ownership, and access.</p>
+          <p>After the Basic link is active, use the <strong>Org billing</strong> section to invite the coach to move billing, or approve a coach&apos;s billing request. Choose annual or monthly checkout when both sides have approved. The Team becomes an org-paid Team add-on, but Basic sharing stays in place and the coach keeps operational ownership.</p>
+          <p>Use <strong>Ownership transfer</strong> only when the Team should become org-owned. Phase 5A records mutual approval from the coach and organization; final roster, schedule, document, budget, and accounting reassignment is platform-assisted.</p>
         </>
       ),
       faqs: [
@@ -80,10 +81,28 @@ const orgHelp: HelpPageContent = {
         {
           id: 'faq-team-link-invite-access',
           question: 'Can we invite a Team workspace without taking over the team?',
-          answerText: 'Yes. Sending a Basic visibility invitation only asks the coach to confirm the association. Acceptance does not move billing, ownership, roster, documents, accounting, or rep-team administration.',
+          answerText: 'Yes. Sending a Basic visibility invitation only asks the coach to confirm the association. Billing takeover is a separate action after the Basic link is active.',
           keywords: ['invite team workspace', 'basic visibility', 'ownership', 'billing'],
           answer: (
-            <p>Yes. Sending a Basic visibility invitation only asks the coach to confirm the association. Acceptance does not move billing, ownership, roster, documents, accounting, or rep-team administration.</p>
+            <p>Yes. Sending a Basic visibility invitation only asks the coach to confirm the association. Billing takeover is a separate action after the Basic link is active.</p>
+          ),
+        },
+        {
+          id: 'faq-team-link-ownership-transfer',
+          question: 'When should we use ownership transfer?',
+          answerText: 'Use ownership transfer only when the Team should become a normal org-owned rep team. It is separate from Basic visibility and org billing because it changes data ownership and access for roster, documents, schedule, budget, and accounting records.',
+          keywords: ['ownership transfer', 'org owned team', 'club transfer', 'roster access'],
+          answer: (
+            <p>Use ownership transfer only when the Team should become a normal org-owned rep team. It is separate from Basic visibility and org billing because it changes data ownership and access for roster, documents, schedule, budget, and accounting records.</p>
+          ),
+        },
+        {
+          id: 'faq-team-link-org-billing',
+          question: 'What happens when we take over billing for a linked Team?',
+          answerText: 'Your organization becomes the payer for that Team add-on. The Team workspace remains coach-operated, and this does not unlock roster, documents, accounting, ownership, or org-wide rep-team admin access.',
+          keywords: ['org billing', 'team add-on', 'billing transfer', 'organization pays'],
+          answer: (
+            <p>Your organization becomes the payer for that Team add-on. The Team workspace remains coach-operated, and this does not unlock roster, documents, accounting, ownership, or org-wide rep-team admin access.</p>
           ),
         },
       ],
@@ -92,9 +111,9 @@ const orgHelp: HelpPageContent = {
       id: 'recipe-invite-member',
       group: 'How-to recipes',
       heading: 'How to invite a member and choose the right role',
-      summary: 'Add a new admin, staff member, treasurer, registrar, coach, or official without over-granting access.',
-      keywords: ['invite member', 'role', 'permissions', 'staff', 'admin', 'treasurer', 'registrar', 'coach', 'official'],
-      searchText: 'invite member choose role permissions owner admin staff treasurer league admin league registrar coach official resend pending invite seats',
+      summary: 'Add a new admin, staff member, treasurer, registrar, coach, or scorekeeper without over-granting access.',
+      keywords: ['invite member', 'role', 'permissions', 'staff', 'admin', 'treasurer', 'registrar', 'coach', 'scorekeeper'],
+      searchText: 'invite member choose role permissions owner admin staff treasurer league admin league registrar coach scorekeeper resend pending invite seats',
       links: [
         { label: 'Members', href: '../org/members' },
       ],
@@ -106,22 +125,22 @@ const orgHelp: HelpPageContent = {
             <li>Click <strong>Invite Member</strong>.</li>
             <li>Enter the person's email address.</li>
             <li>Choose the lowest role that matches their job. Use <strong>Admin</strong> only for trusted co-organizers who need broad access.</li>
-            <li>If the person only needs a narrow workflow, use a scoped role such as <strong>Treasurer</strong>, <strong>League Registrar</strong>, <strong>Coach</strong>, or <strong>Official</strong>.</li>
+            <li>If the person only needs a narrow workflow, use a scoped role such as <strong>Treasurer</strong>, <strong>League Registrar</strong>, <strong>Coach</strong>, or <strong>Scorekeeper</strong>.</li>
             <li>Send the invite, then confirm the person appears as <strong>Pending</strong> until they accept.</li>
           </ol>
           <p>If they do not receive the email, ask them to check spam first. Then use the resend option from their pending invite row.</p>
-          <p><strong>Access rule of thumb:</strong> owners manage billing and organization settings, admins run operations, staff handle day-of tasks, and officials should normally use scoring links rather than the main admin panel.</p>
+          <p><strong>Access rule of thumb:</strong> owners manage billing and organization settings, admins run operations, staff handle day-of tasks, and scorekeepers should normally use scoring links rather than the main admin panel.</p>
         </>
       ),
       faqs: [
         {
           id: 'faq-best-role-for-helper',
           question: 'What role should I give a new volunteer?',
-          answerText: 'Choose the narrowest role that lets them do their job. Use Staff for day-of operations, Treasurer for accounting, League Registrar for registration review, Coach for team portal access, and Official for score entry.',
+          answerText: 'Choose the narrowest role that lets them do their job. Use Staff for day-of operations, Treasurer for accounting, League Registrar for registration review, Coach for team portal access, and Scorekeeper for score entry.',
           keywords: ['role', 'volunteer', 'permissions', 'least access'],
           popular: true,
           answer: (
-            <p>Choose the narrowest role that lets them do their job. Use <strong>Staff</strong> for day-of tournament help, <strong>Treasurer</strong> for accounting, <strong>League Registrar</strong> for registration review, <strong>Coach</strong> for coach portal access, and <strong>Official</strong> for score entry.</p>
+            <p>Choose the narrowest role that lets them do their job. Use <strong>Staff</strong> for day-of tournament help, <strong>Treasurer</strong> for accounting, <strong>League Registrar</strong> for registration review, <strong>Coach</strong> for coach portal access, and <strong>Scorekeeper</strong> for score entry.</p>
           ),
         },
       ],
@@ -220,12 +239,12 @@ const orgHelp: HelpPageContent = {
           <p>Once a member has accepted, click <strong>Manage</strong> on their row to:</p>
           <ul>
             <li>Change their role</li>
-            <li>Restrict them to specific tournaments (useful for staff and officials at multi-event orgs)</li>
+            <li>Restrict them to specific tournaments (useful for staff and scorekeepers at multi-event orgs)</li>
             <li>Grant or revoke individual capabilities beyond their role defaults</li>
             <li>Suspend or reinstate their access</li>
           </ul>
           <p>To resend an invitation to someone who hasn't accepted yet, click the mail icon on their row. Pending invites appear with a "Pending" status badge.</p>
-          <p><strong>Seat limits:</strong> Your plan determines how many non-official seats you can have. Officials are free on most plans. If you're near your limit, a banner will appear on the Members page with an upgrade link.</p>
+          <p><strong>Seat limits:</strong> Your plan determines how many non-scorekeeper seats you can have. Scorekeepers are free on most plans. If you're near your limit, a banner will appear on the Members page with an upgrade link.</p>
         </>
       ),
     },
@@ -269,7 +288,7 @@ const orgHelp: HelpPageContent = {
             <li>Consider the timing — avoid changing mid-tournament</li>
           </ul>
           <p><strong>Branding</strong> — Free Tournament orgs use FieldLogicHQ default public styling. Tournament Plus and higher can upload logos, choose tournament colours, and control more of the public tournament appearance. Public organization page branding is part of the broader public-site tiers.</p>
-          <p><strong>Score finalization</strong> — When enabled, official score submissions are visible to the public but not marked final until an admin reviews them in the Results page. Useful if your org requires a second review before results are official.</p>
+          <p><strong>Score finalization</strong> — When enabled, scorekeeper submissions are visible to the public but not marked final until an admin reviews them in the Results page. Useful if your org requires a second review before results are final.</p>
         </>
       ),
     },

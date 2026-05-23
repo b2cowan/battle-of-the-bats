@@ -302,7 +302,7 @@ export default function ProgramYearOverviewPage({
               <tbody>
                 {players.map(p => (
                   <tr key={p.id}>
-                    <td className={styles.td} style={{ color: 'rgba(255,255,255,0.45)', width: '3rem' }}>
+                    <td className={styles.td} style={{ color: 'var(--white-45)', width: '3rem' }}>
                       {p.playerNumber ?? '—'}
                     </td>
                     <td className={styles.td}>{p.playerFirstName}</td>

@@ -1,4 +1,4 @@
-﻿/* ─── Schedule-Specific Styles ────────────────────────────────────────────── */
+/* ─── Schedule-Specific Styles ────────────────────────────────────────────── */
 /* Common styles live in ../admin-common.module.css                           */
 
 /* ─── Generator Overlay & Modal ───────────────────────────────────────────── */
@@ -15,9 +15,9 @@
 }
 
 .generatorModal {
-  background: var(--bg-surface);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
+  background: var(--surface);
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.25);
+  border-radius: 2px;
   width: 100%;
   max-width: 700px;
   max-height: 90vh;
@@ -27,7 +27,7 @@
 
 .generatorHeader {
   padding: 1.25rem 1.5rem;
-  border-bottom: 1px solid var(--border-subtle);
+  border-bottom: 1px solid rgba(var(--blueprint-blue-rgb), 0.2);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -37,7 +37,7 @@
   margin: 0;
   font-size: 1.25rem;
   font-weight: 700;
-  color: var(--white);
+  color: var(--logic-lime);
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -54,8 +54,8 @@
   gap: 0.75rem;
   margin-top: 0.5rem;
   padding: 1rem;
-  background: var(--bg-inset);
-  border-radius: var(--radius-md);
+  background: var(--bg-2);
+  border-radius: 2px;
 }
 
 .diamondCheck {
@@ -76,14 +76,14 @@
   align-items: center;
   justify-content: space-between;
   padding: 0.75rem 1rem;
-  background: var(--bg-inset);
-  border-radius: var(--radius-md);
+  background: var(--bg-2);
+  border-radius: 2px;
   font-size: 0.9rem;
 }
 
 .previewTableWrap {
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.2);
+  border-radius: 2px;
   overflow: hidden;
   margin-bottom: 1.5rem;
 }
@@ -94,7 +94,7 @@
 }
 
 .previewTableWrap th {
-  background: var(--bg-inset);
+  background: var(--bg-2);
   text-align: left;
   padding: 0.75rem;
   font-size: 0.8rem;
@@ -105,7 +105,7 @@
 
 .previewTableWrap td {
   padding: 0.75rem;
-  border-top: 1px solid var(--border-subtle);
+  border-top: 1px solid rgba(var(--blueprint-blue-rgb), 0.15);
   font-size: 0.9rem;
   color: var(--white-80);
 }
@@ -116,16 +116,16 @@
   justify-content: flex-end;
   gap: 1rem;
   padding: 1.25rem 1.5rem;
-  border-top: 1px solid var(--border-subtle);
+  border-top: 1px solid rgba(var(--blueprint-blue-rgb), 0.2);
   margin-top: auto;
 }
 
 .errorBanner {
-  background: rgba(239,68,68,0.1);
-  border: 1px solid rgba(239,68,68,0.3);
+  background: rgba(var(--danger-rgb), 0.1);
+  border: 1px solid rgba(var(--danger-rgb), 0.3);
   color: #f87171;
   padding: 0.75rem;
-  border-radius: var(--radius-sm);
+  border-radius: 2px;
   margin-bottom: 1rem;
   font-size: 0.85rem;
   display: flex;
@@ -139,18 +139,18 @@
   gap: 0.75rem;
   margin-top: 0.5rem;
   padding: 1rem;
-  background: var(--bg-inset);
-  border-radius: var(--radius-md);
+  background: var(--bg-2);
+  border-radius: 2px;
 }
 
 .dateSlotRow {
   display: flex;
   align-items: flex-start;
   gap: 1rem;
-  background: var(--bg-surface);
+  background: var(--surface);
   padding: 0.75rem;
-  border-radius: var(--radius-xs);
-  border: 1px solid var(--border-subtle);
+  border-radius: 2px;
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.2);
 }
 
 .dateSlotRow .formGroup {
@@ -169,7 +169,7 @@
 .scoreTeam { text-align: center; }
 
 .scoreTeamName {
-  font-family: var(--font-display);
+  font-family: var(--font-data);
   font-size: 1.1rem;
   font-weight: 800;
   color: var(--white);
@@ -181,7 +181,7 @@
 .scoreInput {
   width: 90px !important;
   text-align: center;
-  font-family: var(--font-display);
+  font-family: var(--font-data);
   font-size: 2rem !important;
   font-weight: 900;
   color: var(--logic-lime) !important;
@@ -196,7 +196,7 @@
 }
 
 .scoreSep {
-  font-family: var(--font-display);
+  font-family: var(--font-data);
   font-size: 2rem;
   font-weight: 900;
   color: var(--white-30);
@@ -210,5 +210,5 @@
 }
 
 .expanded {
-  background: var(--bg-inset);
+  background: var(--bg-2);
 }

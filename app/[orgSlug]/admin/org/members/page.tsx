@@ -19,7 +19,7 @@ import styles from './members.module.css';
 const ROLE_INVITE_DESCRIPTIONS: Record<'admin' | 'staff' | 'official', string> = {
   admin: 'Tournament architect — can create tournaments, define age groups, manage registrations, build schedules, manage contacts and diamonds, post rules, send communications, and manage members. Cannot access org settings or subscription.',
   staff: 'Tournament operator — updates game times and diamond assignments during events, submits scores, and posts announcements. Cannot create or delete tournaments, manage registrations, or send communications.',
-  official: 'Score entry only. Officials receive a direct link to the scorekeeper app and can submit results from their assigned diamonds. They do not access the main admin area.',
+  official: 'Score entry only. Scorekeepers receive a direct link to the scorekeeper app and can submit results from their assigned fields. They do not access the main admin area.',
 };
 
 const ROLE_MATRIX: { label: string; owner: boolean; admin: boolean; staff: boolean; official: boolean }[] = [
@@ -27,7 +27,7 @@ const ROLE_MATRIX: { label: string; owner: boolean; admin: boolean; staff: boole
   { label: 'Manage registrations',              owner: true,  admin: true,  staff: false, official: false },
   { label: 'Manage schedule & brackets',        owner: true,  admin: true,  staff: false, official: false },
   { label: 'Update game times & diamonds',      owner: true,  admin: true,  staff: true,  official: false },
-  { label: 'Submit & finalize scores',          owner: true,  admin: true,  staff: true,  official: true  },
+  { label: 'Submit scores',                     owner: true,  admin: true,  staff: true,  official: true  },
   { label: 'Manage contacts & diamonds',        owner: true,  admin: true,  staff: false, official: false },
   { label: 'Post announcements',                owner: true,  admin: true,  staff: true,  official: false },
   { label: 'Post / edit rules documents',       owner: true,  admin: true,  staff: false, official: false },
@@ -68,7 +68,7 @@ const ROLE_LABELS: Record<OrgRole, string> = {
   owner: 'Owner',
   admin: 'Admin',
   staff: 'Staff',
-  official: 'Official',
+  official: 'Scorekeeper',
   league_admin: 'League Admin',
   league_registrar: 'League Registrar',
   treasurer: 'Treasurer',
@@ -83,7 +83,7 @@ const ROLE_TOOLTIP: Record<OrgRole, string> = {
   league_admin:     'Manages house league seasons, registrations, teams, and schedules.',
   league_registrar: 'Reviews and processes house league registrations only.',
   coach:            'Accesses the Coaches Portal for their assigned rep team. Cannot access the admin panel.',
-  official:         'Submits scores for assigned games only.',
+  official:         'Submits scores for assigned games only through the scorekeeper app.',
 };
 
 const ROLE_BADGE: Record<OrgRole, string> = {
@@ -136,7 +136,7 @@ const CAPABILITY_LABELS: Record<Capability, string> = {
   manage_registrations:      'Manage registrations',
   manage_schedule_structure: 'Manage schedule & brackets',
   update_schedule:           'Update game times & diamonds',
-  submit_scores:             'Submit & finalize scores',
+  submit_scores:             'Submit scores',
   manage_contacts:           'Manage contacts & diamonds',
   post_announcements:        'Post announcements',
   post_rules:                'Post / edit rules documents',
@@ -679,7 +679,7 @@ export default function MembersPage() {
                 <th>Owner</th>
                 <th>Admin</th>
                 <th>Staff</th>
-                <th>Official</th>
+                <th>Scorekeeper</th>
               </tr>
             </thead>
             <tbody>
@@ -698,10 +698,10 @@ export default function MembersPage() {
             <strong>Owner</strong> is assigned at org creation and cannot be transferred here — contact support to transfer ownership.
             {' '}<strong>Admin</strong> is the co-organizer role (full tournament management, member management, no subscription/settings).
             {' '}<strong>Staff</strong> are day-of operators (schedule updates, scores, announcements only).
-            {' '}<strong>Officials</strong> receive a separate scorekeeper link and are not expected to use the admin area.
+            {' '}<strong>Scorekeepers</strong> receive a separate scorekeeper link and are not expected to use the admin area.
           </p>
           <p className={styles.roleRefNote} style={{ marginTop: '0.5rem' }}>
-            <strong>Tournament assignments:</strong> Staff and officials can be restricted to specific tournaments.
+            <strong>Tournament assignments:</strong> Staff and scorekeepers can be restricted to specific tournaments.
             Click <strong>Manage</strong> on any member row to edit tournament access. A member with no assignments sees all tournaments.
           </p>
           <p className={styles.roleRefNote} style={{ marginTop: '0.5rem' }}>
@@ -718,7 +718,7 @@ export default function MembersPage() {
           <strong>{seatCount}</strong> of <strong>{seatLimit >= 9999 ? 'Unlimited' : seatLimit}</strong> staff seats used
           {planCfg.officialsFreeSeats && officialCount > 0 && (
             <span style={{ marginLeft: '0.5rem', color: 'var(--text-muted)', fontWeight: 400 }}>
-              · {officialCount} official{officialCount === 1 ? '' : 's'} (free on this plan)
+              · {officialCount} scorekeeper{officialCount === 1 ? '' : 's'} (free on this plan)
             </span>
           )}
         </span>
@@ -750,7 +750,7 @@ export default function MembersPage() {
             {renderMemberTable(nonOfficials)}
             {officials.length > 0 && (
               <div style={{ marginTop: '2rem' }}>
-                <h2 className={styles.pageTitle} style={{ fontSize: '1rem', marginBottom: '0.75rem' }}>Field Officials</h2>
+                <h2 className={styles.pageTitle} style={{ fontSize: '1rem', marginBottom: '0.75rem' }}>Scorekeepers</h2>
                 {renderMemberTable(officials)}
               </div>
             )}
@@ -790,7 +790,7 @@ export default function MembersPage() {
                 >
                   <option value="admin">Admin</option>
                   <option value="staff">Staff</option>
-                  <option value="official">Field Official (scorekeeper)</option>
+                  <option value="official">Scorekeeper</option>
                 </select>
                 <p className={styles.roleHint}>{ROLE_INVITE_DESCRIPTIONS[inviteRole]}</p>
               </div>
@@ -838,7 +838,7 @@ export default function MembersPage() {
                 >
                   <option value="admin">Admin</option>
                   <option value="staff">Staff</option>
-                  <option value="official">Official</option>
+                  <option value="official">Scorekeeper</option>
                 </select>
                 <div className={styles.field} style={{ marginTop: '0.75rem', marginBottom: 0 }}>
                   <label className={styles.label}>
@@ -934,7 +934,7 @@ export default function MembersPage() {
                       <tbody>
                         {/* Section: Module Access */}
                         <tr>
-                          <td colSpan={3} style={{ padding: '0.35rem 0.75rem', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--white-20)', background: 'var(--bg-3, rgba(255,255,255,0.03))', borderTop: '1px solid var(--border)' }}>
+                          <td colSpan={3} style={{ padding: '0.35rem 0.75rem', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--white-20)', background: 'var(--bg-3, var(--white-03))', borderTop: '1px solid var(--border)' }}>
                             Module Access
                           </td>
                         </tr>
@@ -974,7 +974,7 @@ export default function MembersPage() {
 
                         {/* Section: Action Capabilities */}
                         <tr>
-                          <td colSpan={3} style={{ padding: '0.35rem 0.75rem', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--white-20)', background: 'var(--bg-3, rgba(255,255,255,0.03))', borderTop: '1px solid var(--border)' }}>
+                          <td colSpan={3} style={{ padding: '0.35rem 0.75rem', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--white-20)', background: 'var(--bg-3, var(--white-03))', borderTop: '1px solid var(--border)' }}>
                             Action Capabilities
                           </td>
                         </tr>

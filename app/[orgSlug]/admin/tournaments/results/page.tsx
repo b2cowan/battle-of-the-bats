@@ -1,6 +1,7 @@
 'use client';
 import React, { useState, useEffect, useCallback } from 'react';
-import { Trophy, X, Check, RefreshCw } from 'lucide-react';
+import Link from 'next/link';
+import { ExternalLink, Trophy, X, Check, RefreshCw } from 'lucide-react';
 import { formatTime } from '@/lib/utils';
 import { useTournament } from '@/lib/tournament-context';
 import { useOrg } from '@/lib/org-context';
@@ -17,6 +18,7 @@ import styles from '../schedule/schedule-admin.module.css';
 import FeedbackModal from '@/components/FeedbackModal';
 import HelpCallout from '@/components/help/HelpCallout';
 import { hasPlanFeature } from '@/lib/plan-features';
+import { formatScoreSubmittedAt, scoreSubmissionSourceLabel } from '@/lib/tournament-score-audit';
 import {
   StatusLegendPopover,
   ToolbarGroup,
@@ -28,7 +30,7 @@ import {
 } from '@/components/admin/tournament/TournamentAdminUI';
 
 // ── Export column definitions ─────────────────────────────────────────────
-// No sensitive fields on this surface — results data is public/operational.
+// Admin-only export now includes score submission audit metadata for review.
 const RESULTS_EXPORT_COLS: ExportColumnDef[] = [
   { label: 'Date',       key: 'date'      },
   { label: 'Time',       key: 'time'      },
@@ -38,6 +40,9 @@ const RESULTS_EXPORT_COLS: ExportColumnDef[] = [
   { label: 'Away Team',  key: 'awayTeam'  },
   { label: 'Away Score', key: 'awayScore' },
   { label: 'Status',     key: 'status'    },
+  { label: 'Submitted By', key: 'submittedBy' },
+  { label: 'Submitted At', key: 'submittedAt' },
+  { label: 'Submission Source', key: 'submissionSource' },
 ];
 
 type ResultsFilter = 'pending' | 'submitted' | 'completed';
@@ -47,7 +52,7 @@ export default function AdminResultsPage() {
   const { currentOrg } = useOrg();
   const tournamentId = currentTournament?.id;
   const orgSlug = currentOrg?.slug;
-  const requiresFinalization = currentOrg?.requireScoreFinalization ?? false;
+  const requiresFinalization = currentTournament?.requireScoreFinalization ?? currentOrg?.requireScoreFinalization ?? false;
   const [games, setGames] = useState<Game[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
   const [ageGroups, setAgeGroups] = useState<AgeGroup[]>([]);
@@ -231,6 +236,9 @@ export default function AdminResultsPage() {
       awayTeam:  getTeamName(g.awayTeamId),
       awayScore: g.awayScore != null ? g.awayScore : '',
       status:    g.status,
+      submittedBy: g.scoreSubmittedByEmail ?? '',
+      submittedAt: formatScoreSubmittedAt(g.scoreSubmittedAt),
+      submissionSource: g.scoreSubmissionSource ? scoreSubmissionSourceLabel(g.scoreSubmissionSource) : '',
     }));
   }
 
@@ -304,6 +312,9 @@ export default function AdminResultsPage() {
           getTeamName(g.awayTeamId),
           g.awayScore != null ? g.awayScore : '—',
           g.status,
+          g.scoreSubmittedByEmail ?? '',
+          formatScoreSubmittedAt(g.scoreSubmittedAt),
+          g.scoreSubmissionSource ? scoreSubmissionSourceLabel(g.scoreSubmissionSource) : '',
         ]),
       }));
 
@@ -344,6 +355,16 @@ export default function AdminResultsPage() {
         icon={<Trophy size={20} />}
         title="Results & Scoring"
         subtitle={currentTournament ? `${currentTournament.name} (${currentTournament.year})` : 'Enter scores and finalize tournament outcomes'}
+        actions={currentOrg?.slug ? (
+          <Link
+            href={`/${currentOrg.slug}/scorekeeper`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn btn-outline btn-sm"
+          >
+            <ExternalLink size={14} /> Open Scorekeeper View
+          </Link>
+        ) : null}
       />
 
       <TournamentAdminToolbar ariaLabel="Results controls">
@@ -403,12 +424,12 @@ export default function AdminResultsPage() {
                   },
                   {
                     label: 'Pending Review',
-                    description: 'Score submitted by a field official - visible to the public but not yet final. Use Finalize to confirm it.',
+                    description: 'Score submitted by a scorekeeper - visible to the public but not yet final. Use Finalize to confirm it.',
                     tone: 'warning',
                   },
                   {
                     label: 'Completed',
-                    description: 'Score is finalized and locked. Cannot be changed without unsealing the tournament.',
+                    description: 'Score is finalized. Admins can still correct or revert the result if needed.',
                     tone: 'success',
                   },
                 ]}
@@ -445,7 +466,7 @@ export default function AdminResultsPage() {
         <HelpCallout
           variant="info"
           title="No scores submitted yet"
-          body="Scores appear here as officials submit them from the field. Results are live — no refresh needed once a game is scored."
+          body="Scores appear here as scorekeepers submit them from the field. Results are live — no refresh needed once a game is scored."
         />
       )}
 

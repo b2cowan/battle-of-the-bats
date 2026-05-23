@@ -124,13 +124,13 @@ export default function AllocationsPage() {
                       </div>
                     )}
                   </td>
-                  <td className={styles.td} style={{ color: 'rgba(255,255,255,0.55)' }}>{a.teamCount}</td>
+                  <td className={styles.td} style={{ color: 'var(--white-60)' }}>{a.teamCount}</td>
                   <td className={styles.td} style={{ fontVariantNumeric: 'tabular-nums' }}>{fmt(a.totalAmount)}</td>
                   <td className={styles.td} style={{ color: '#4ade80', fontVariantNumeric: 'tabular-nums' }}>
                     {fmt(a.collected)}
                   </td>
                   <td className={styles.td} style={{
-                    color: a.outstanding > 0 ? (a.overdueCount > 0 ? '#f87171' : 'rgba(255,255,255,0.75)') : '#4ade80',
+                    color: a.outstanding > 0 ? (a.overdueCount > 0 ? '#f87171' : 'var(--white-80)') : '#4ade80',
                     fontVariantNumeric: 'tabular-nums',
                   }}>
                     {fmt(a.outstanding)}

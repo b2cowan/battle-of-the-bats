@@ -49,7 +49,7 @@
 .title {
   font-size: 1.5rem;
   font-weight: 900;
-  font-family: var(--font-display, sans-serif);
+  font-family: var(--font-data);
   color: var(--white-90, #f0f0f0);
   margin: 0;
   line-height: 1.15;
@@ -75,7 +75,7 @@
   padding: 1.25rem 1.5rem;
   background: var(--surface, rgba(255,255,255,0.04));
   border: 1px solid var(--border, rgba(255,255,255,0.08));
-  border-radius: 12px;
+  border-radius: 2px;
   transition: border-color 0.2s;
 }
 
@@ -128,7 +128,7 @@
   gap: 0.9rem;
   padding: 0.85rem 1rem;
   border: 1px solid var(--border, rgba(255,255,255,0.08));
-  border-radius: 8px;
+  border-radius: 2px;
   background: rgba(255, 255, 255, 0.025);
 }
 
@@ -147,7 +147,7 @@
   margin-left: 0.5rem;
   padding: 0.1rem 0.4rem;
   border: 1px solid var(--border, rgba(255,255,255,0.08));
-  border-radius: 999px;
+  border-radius: 2px;
   color: var(--white-40, rgba(255,255,255,0.4));
   font-size: 0.62rem;
   font-weight: 800;
@@ -189,7 +189,7 @@
   text-decoration: none;
   white-space: nowrap;
   padding: 0.4rem 0.85rem;
-  border-radius: 7px;
+  border-radius: 2px;
   border: 1px solid rgba(var(--blueprint-blue-rgb), 0.3);
   background: transparent;
   cursor: pointer;
@@ -255,7 +255,7 @@
 .planStage {
   width: min(1040px, 100%);
   border: 1px solid rgba(var(--blueprint-blue-rgb), 0.25);
-  border-radius: 8px;
+  border-radius: 2px;
   background: #080b12;
   box-shadow: 0 24px 80px rgba(0, 0, 0, 0.5);
   padding: 1.25rem;
@@ -275,7 +275,7 @@
   max-height: min(780px, calc(100vh - 3rem));
   overflow-y: auto;
   border: 1px solid rgba(var(--blueprint-blue-rgb), 0.25);
-  border-radius: 8px;
+  border-radius: 2px;
   background: #080b12;
   box-shadow: 0 24px 80px rgba(0, 0, 0, 0.5);
   padding: 1.25rem;
@@ -297,7 +297,7 @@
 .wizardProgressBar {
   height: 5px;
   overflow: hidden;
-  border-radius: 999px;
+  border-radius: 2px;
   background: rgba(255, 255, 255, 0.08);
 }
 
@@ -371,7 +371,7 @@
 .setupBlock {
   padding: 1rem;
   border: 1px solid var(--border, rgba(255,255,255,0.08));
-  border-radius: 8px;
+  border-radius: 2px;
   background: rgba(255,255,255,0.025);
 }
 
@@ -408,7 +408,7 @@
   color: var(--white-60, rgba(255,255,255,0.6));
   background: var(--black-20, rgba(0,0,0,0.2));
   border: 1px solid var(--border, rgba(255,255,255,0.08));
-  border-radius: 7px;
+  border-radius: 2px;
   cursor: pointer;
   font-weight: 800;
 }
@@ -437,7 +437,7 @@
   color: var(--white-55, rgba(255,255,255,0.55));
   background: rgba(255,255,255,0.025);
   border: 1px solid var(--border, rgba(255,255,255,0.08));
-  border-radius: 8px;
+  border-radius: 2px;
   cursor: pointer;
 }
 
@@ -513,7 +513,7 @@
 .divisionInlineShell {
   padding: 0.35rem;
   border: 1px solid var(--border, rgba(255,255,255,0.08));
-  border-radius: 8px;
+  border-radius: 2px;
   background: rgba(255,255,255,0.02);
 }
 
@@ -530,7 +530,7 @@
   gap: 0.6rem;
   padding: 0.65rem;
   border: 1px solid var(--border, rgba(255,255,255,0.08));
-  border-radius: 8px;
+  border-radius: 2px;
   background: rgba(255,255,255,0.025);
 }
 
@@ -544,7 +544,7 @@
 .venueComposer {
   padding: 1rem;
   border: 1px solid rgba(var(--blueprint-blue-rgb), 0.25);
-  border-radius: 8px;
+  border-radius: 2px;
   background: rgba(var(--blueprint-blue-rgb), 0.045);
 }
 
@@ -590,7 +590,7 @@
 .venueCard {
   padding: 0.8rem;
   border: 1px solid var(--border, rgba(255,255,255,0.08));
-  border-radius: 8px;
+  border-radius: 2px;
   background: rgba(255,255,255,0.025);
 }
 
@@ -637,7 +637,7 @@
   color: var(--white-45, rgba(255,255,255,0.45));
   background: transparent;
   border: 1px solid transparent;
-  border-radius: 7px;
+  border-radius: 2px;
   cursor: pointer;
 }
 
@@ -651,7 +651,7 @@
   margin-top: 0.65rem;
   padding: 0.75rem;
   border: 1px solid rgba(var(--blueprint-blue-rgb), 0.22);
-  border-radius: 8px;
+  border-radius: 2px;
   background: rgba(var(--blueprint-blue-rgb), 0.055);
 }
 
@@ -695,7 +695,7 @@
   padding: 1rem;
   color: var(--white-35, rgba(255,255,255,0.35));
   border: 1px dashed var(--border, rgba(255,255,255,0.08));
-  border-radius: 8px;
+  border-radius: 2px;
   text-align: center;
   font-size: 0.85rem;
 }
@@ -707,7 +707,7 @@
   gap: 1rem;
   padding: 1rem;
   border: 1px solid var(--border, rgba(255,255,255,0.08));
-  border-radius: 8px;
+  border-radius: 2px;
   background: rgba(255,255,255,0.025);
 }
 
@@ -717,7 +717,7 @@
   gap: 0.55rem;
   padding: 1rem;
   border: 1px solid var(--border, rgba(255,255,255,0.08));
-  border-radius: 8px;
+  border-radius: 2px;
   background: rgba(255,255,255,0.025);
 }
 
@@ -755,7 +755,7 @@
   gap: 1rem;
   padding: 1rem;
   border: 1px solid rgba(74, 222, 128, 0.22);
-  border-radius: 8px;
+  border-radius: 2px;
   background: rgba(74, 222, 128, 0.035);
 }
 
@@ -790,7 +790,7 @@
 .modalTitle {
   margin: 0;
   color: var(--white-90, #f0f0f0);
-  font-family: var(--font-display, sans-serif);
+  font-family: var(--font-data);
   font-size: 1.2rem;
   font-weight: 900;
 }
@@ -810,7 +810,7 @@
   justify-content: center;
   flex-shrink: 0;
   border: 1px solid var(--border, rgba(255,255,255,0.08));
-  border-radius: 8px;
+  border-radius: 2px;
   background: rgba(255, 255, 255, 0.04);
   color: var(--white-70, rgba(255,255,255,0.7));
   cursor: pointer;
@@ -827,13 +827,13 @@
   margin-bottom: 1rem;
   padding: 0.2rem;
   border: 1px solid rgba(var(--blueprint-blue-rgb), 0.3);
-  border-radius: 8px;
+  border-radius: 2px;
   background: rgba(var(--blueprint-blue-rgb), 0.08);
 }
 
 .toggleOption {
   border: 0;
-  border-radius: 6px;
+  border-radius: 2px;
   background: transparent;
   color: var(--white-40, rgba(255,255,255,0.4));
   cursor: pointer;
@@ -857,7 +857,7 @@
   flex-direction: column;
   min-height: 510px;
   border: 1px solid var(--border, rgba(255,255,255,0.08));
-  border-radius: 8px;
+  border-radius: 2px;
   background: rgba(255, 255, 255, 0.035);
   padding: 1rem;
 }
@@ -883,7 +883,7 @@
 
 .planCardHeader span {
   padding: 0.18rem 0.45rem;
-  border-radius: 999px;
+  border-radius: 2px;
   background: rgba(74, 222, 128, 0.12);
   color: #86efac;
   font-size: 0.66rem;
@@ -948,7 +948,7 @@
   gap: 0.5rem;
   margin-top: 1rem;
   border: 1px solid rgba(248, 113, 113, 0.35);
-  border-radius: 8px;
+  border-radius: 2px;
   background: rgba(248, 113, 113, 0.08);
   color: #fecaca;
   font-size: 0.82rem;

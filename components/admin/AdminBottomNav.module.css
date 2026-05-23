@@ -29,7 +29,7 @@
     text-decoration: none;
     background: none;
     border: none;
-    font-family: inherit;
+    font-family: var(--font-data);
     color: rgba(255, 255, 255, 0.4);
     transition: color 0.18s ease;
     cursor: pointer;
@@ -46,7 +46,7 @@
     justify-content: center;
     width: 46px;
     height: 30px;
-    border-radius: 999px;
+    border-radius: 2px;
     transition: background 0.18s ease;
   }
 
@@ -94,7 +94,7 @@
     max-height: min(74vh, 620px);
     background: #1A1530;
     border: 1px solid rgba(139, 47, 201, 0.35);
-    border-radius: 16px;
+    border-radius: 2px;
     box-shadow: 0 -8px 32px rgba(0,0,0,0.65), 0 0 24px rgba(139,47,201,0.15);
     overflow-y: auto;
     animation: slideUpMenu 0.18s ease;
@@ -119,13 +119,13 @@
   .seasonSelect {
     background: rgba(255,255,255,0.06);
     border: 1px solid rgba(139,47,201,0.3);
-    border-radius: 8px;
+    border-radius: 2px;
     color: #fff;
     font-size: 0.875rem;
     padding: 0.45rem 0.7rem;
     width: 100%;
     cursor: pointer;
-    font-family: inherit;
+    font-family: var(--font-data);
   }
 
   .seasonSelect:focus { outline: none; border-color: #a855f7; }
@@ -138,14 +138,14 @@
     gap: 0.35rem;
     background: rgba(139,47,201,0.18);
     border: 1px solid rgba(139,47,201,0.4);
-    border-radius: 8px;
+    border-radius: 2px;
     color: #c084fc;
     font-size: 0.8rem;
     font-weight: 700;
     letter-spacing: 0.06em;
     padding: 0.35rem 0.75rem;
     cursor: pointer;
-    font-family: inherit;
+    font-family: var(--font-data);
     text-align: center;
     transition: background 0.15s ease;
   }
@@ -184,7 +184,7 @@
     border: none;
     width: 100%;
     text-align: left;
-    font-family: inherit;
+    font-family: var(--font-data);
     cursor: pointer;
     transition: background 0.15s ease, color 0.15s ease;
   }

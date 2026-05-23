@@ -56,9 +56,9 @@ const coachesHelp: HelpPageContent = {
       id: 'recipe-link-parent-org',
       group: 'How-to recipes',
       heading: 'How to manage parent organization links',
-      summary: 'Request a Basic visibility link or respond when a club or association invites your standalone Team workspace.',
-      keywords: ['team workspace', 'link organization', 'parent org', 'club', 'visibility link', 'basic sharing', 'team invitation'],
-      searchText: 'standalone team workspace request parent organization link org club association invitation accept decline basic visibility sharing billing ownership roster documents accounting',
+      summary: 'Request a Basic visibility link, respond to org invitations, ask a linked organization to take over Team billing, or start ownership transfer approval.',
+      keywords: ['team workspace', 'link organization', 'parent org', 'club', 'visibility link', 'basic sharing', 'team invitation', 'org billing', 'ownership transfer'],
+      searchText: 'standalone team workspace request parent organization link org club association invitation accept decline basic visibility sharing billing transfer org billing organization pays ownership roster documents accounting',
       links: [
         { label: 'Link Organization', href: '../link-org' },
       ],
@@ -73,18 +73,38 @@ const coachesHelp: HelpPageContent = {
           </ol>
           <p>If an organization invites your Team workspace first, open <strong>Link Organization</strong>, review the invitation, then click <strong>Accept Invitation</strong> or <strong>Decline</strong>.</p>
           <p>The first link type is <strong>Basic visibility</strong>. It records the association only. It does not transfer billing, ownership, roster access, player documents, accounting data, or full rep-team admin rights.</p>
-          <p>If the parent organization should pay for the team or fully own the team later, that requires a separate approval flow.</p>
+          <p>After the Basic link is active, use <strong>Request Org Billing</strong> if the parent organization should pay for the Team subscription. If the organization invites you to move billing first, review the billing invitation here and choose <strong>Accept Billing Invite</strong> or <strong>Decline Billing</strong>.</p>
+          <p>Org billing keeps your Coaches Portal and team data in the Team workspace. It does not give the organization roster, document, accounting, or org-wide rep-team admin access.</p>
+          <p>Use <strong>Request Ownership Transfer</strong> only when the team should become fully org-owned. Both sides can approve from Team Links, then a platform-assisted transfer moves roster, schedule, documents, budget, and accounting ownership in a later step.</p>
         </>
       ),
       faqs: [
         {
           id: 'faq-team-link-billing-transfer',
           question: 'Does linking my Team workspace move billing to the organization?',
-          answerText: 'No. The Basic visibility link only records that the team is associated with the organization. Billing transfer is a separate approval flow.',
+          answerText: 'No. The Basic visibility link only records that the team is associated with the organization. Use Request Org Billing after the Basic link is active if the organization should pay.',
           keywords: ['billing transfer', 'team link', 'organization pays'],
           popular: true,
           answer: (
-            <p>No. The Basic visibility link only records that your Team workspace is associated with the organization. Billing transfer is a separate approval flow.</p>
+            <p>No. The Basic visibility link only records that your Team workspace is associated with the organization. Use <strong>Request Org Billing</strong> after the Basic link is active if the organization should pay.</p>
+          ),
+        },
+        {
+          id: 'faq-team-link-org-billing-access',
+          question: 'What changes if the organization pays for my Team?',
+          answerText: 'The organization becomes the billing owner for this Team subscription. You keep the Coaches Portal and operational ownership, and Basic sharing still does not expose roster, documents, accounting, or full rep-team administration.',
+          keywords: ['org billing', 'billing transfer', 'team add-on', 'organization access'],
+          answer: (
+            <p>The organization becomes the billing owner for this Team subscription. You keep the Coaches Portal and operational ownership, and Basic sharing still does not expose roster, documents, accounting, or full rep-team administration.</p>
+          ),
+        },
+        {
+          id: 'faq-team-link-ownership-transfer',
+          question: 'What changes when I request ownership transfer?',
+          answerText: 'Ownership transfer is stronger than Basic visibility or org billing. It means the team is preparing to become org-owned, with roster, documents, schedule, budget, and accounting moving under the organization after platform-assisted transfer is completed.',
+          keywords: ['ownership transfer', 'org owned', 'team transfer', 'club owns team'],
+          answer: (
+            <p>Ownership transfer is stronger than Basic visibility or org billing. It means the team is preparing to become org-owned, with roster, documents, schedule, budget, and accounting moving under the organization after platform-assisted transfer is completed.</p>
           ),
         },
         {
@@ -212,7 +232,8 @@ const coachesHelp: HelpPageContent = {
             <li><strong>Tournament Game</strong> — a single game inside a tournament event.</li>
             <li><strong>Team Event</strong> — team meetings, fundraisers, or anything else.</li>
           </ul>
-          <p>Events are visible to you and your org admin. Switch between List, Week, and Month views using the toggle at the top right.</p>
+          <p>Open an event to mark attendance for active roster players. Use <strong>In</strong>, <strong>Out</strong>, <strong>Late</strong>, or <strong>Unknown</strong>, and add a short note when needed.</p>
+          <p>Events are visible to you and your org admin. Attendance is coach-managed and stays inside the team workflow. Switch between List, Week, and Month views using the toggle at the top right.</p>
         </>
       ),
     },

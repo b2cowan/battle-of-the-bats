@@ -65,10 +65,10 @@ function playerMeta(r: LeagueRegistration) {
 }
 
 const BTN_PRIMARY: React.CSSProperties = {
-  background: 'var(--logic-lime, #a3e635)',
+  background: 'var(--logic-lime)',
   color: '#1a1f2e',
   border: 'none',
-  borderRadius: 7,
+  borderRadius: '2px',
   padding: '0.4rem 0.85rem',
   fontSize: '0.82rem',
   fontWeight: 700,
@@ -77,10 +77,10 @@ const BTN_PRIMARY: React.CSSProperties = {
 };
 
 const BTN_SECONDARY: React.CSSProperties = {
-  background: 'rgba(255,255,255,0.06)',
-  color: 'rgba(255,255,255,0.7)',
+  background: 'var(--white-5)',
+  color: 'var(--white-70)',
   border: '1px solid rgba(255,255,255,0.12)',
-  borderRadius: 7,
+  borderRadius: '2px',
   padding: '0.4rem 0.85rem',
   fontSize: '0.82rem',
   fontWeight: 600,
@@ -89,10 +89,10 @@ const BTN_SECONDARY: React.CSSProperties = {
 };
 
 const BTN_DANGER: React.CSSProperties = {
-  background: 'rgba(239,68,68,0.1)',
+  background: 'rgba(var(--danger-rgb),0.1)',
   color: '#f87171',
-  border: '1px solid rgba(239,68,68,0.25)',
-  borderRadius: 7,
+  border: '1px solid rgba(var(--danger-rgb),0.25)',
+  borderRadius: '2px',
   padding: '0.4rem 0.85rem',
   fontSize: '0.82rem',
   fontWeight: 600,
@@ -257,7 +257,7 @@ function CreateTeamsModal({
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1rem' }}>
           {names.map((name, i) => (
             <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.35)', width: 20, textAlign: 'right', flexShrink: 0 }}>
+              <span style={{ fontSize: '0.75rem', color: 'var(--white-35)', width: 20, textAlign: 'right', flexShrink: 0 }}>
                 {i + 1}.
               </span>
               <input
@@ -333,7 +333,7 @@ function EditTeamModal({
               type="color"
               value={form.color}
               onChange={e => set('color', e.target.value)}
-              style={{ width: '100%', height: 38, background: 'none', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 8, cursor: 'pointer', padding: 2 }}
+              style={{ width: '100%', height: 38, background: 'none', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '2px', cursor: 'pointer', padding: 2 }}
             />
           </div>
           <div className={styles.field}>
@@ -783,7 +783,7 @@ export default function TeamsPage() {
       {/* Header */}
       <div className={styles.pageHeader}>
         <div className={styles.pageHeaderLeft}>
-          <Link href={backHref} style={{ color: 'rgba(255,255,255,0.4)', display: 'flex', alignItems: 'center' }}>
+          <Link href={backHref} style={{ color: 'var(--white-40)', display: 'flex', alignItems: 'center' }}>
             <ChevronLeft size={18} />
           </Link>
           <div className={styles.headerIcon}><Users size={22} /></div>
@@ -948,8 +948,8 @@ export default function TeamsPage() {
               <h2 className={styles.modalTitle}>Delete Team</h2>
               <button className={styles.modalCloseBtn} onClick={() => setDeleteTeam(null)}><X size={18} /></button>
             </div>
-            <p style={{ fontSize: '0.88rem', color: 'rgba(255,255,255,0.6)', marginBottom: '1rem' }}>
-              Delete <strong style={{ color: 'rgba(255,255,255,0.85)' }}>{deleteTeam.name}</strong>?
+            <p style={{ fontSize: '0.88rem', color: 'var(--white-60)', marginBottom: '1rem' }}>
+              Delete <strong style={{ color: 'var(--white-80)' }}>{deleteTeam.name}</strong>?
               This can only be done if no players are assigned to this team.
             </p>
             <div className={styles.modalFooter}>
@@ -969,9 +969,9 @@ export default function TeamsPage() {
               <h2 className={styles.modalTitle}>Randomize Players?</h2>
               <button className={styles.modalCloseBtn} onClick={() => setShowRandomizeConfirm(false)}><X size={18} /></button>
             </div>
-            <p style={{ fontSize: '0.88rem', color: 'rgba(255,255,255,0.6)', marginBottom: '1rem' }}>
-              This will assign <strong style={{ color: 'rgba(255,255,255,0.85)' }}>{pool.length} player{pool.length !== 1 ? 's' : ''}</strong> to{' '}
-              <strong style={{ color: 'rgba(255,255,255,0.85)' }}>{divTeams.length} team{divTeams.length !== 1 ? 's' : ''}</strong> randomly.
+            <p style={{ fontSize: '0.88rem', color: 'var(--white-60)', marginBottom: '1rem' }}>
+              This will assign <strong style={{ color: 'var(--white-80)' }}>{pool.length} player{pool.length !== 1 ? 's' : ''}</strong> to{' '}
+              <strong style={{ color: 'var(--white-80)' }}>{divTeams.length} team{divTeams.length !== 1 ? 's' : ''}</strong> randomly.
               Already-assigned players are not affected.
             </p>
             <div className={styles.modalFooter}>
@@ -989,8 +989,8 @@ export default function TeamsPage() {
               <h2 className={styles.modalTitle}>Clear All Assignments?</h2>
               <button className={styles.modalCloseBtn} onClick={() => setShowClearConfirm(false)}><X size={18} /></button>
             </div>
-            <p style={{ fontSize: '0.88rem', color: 'rgba(255,255,255,0.6)', marginBottom: '1rem' }}>
-              This will remove all <strong style={{ color: 'rgba(255,255,255,0.85)' }}>{assignedCount} player assignment{assignedCount !== 1 ? 's' : ''}</strong> for{' '}
+            <p style={{ fontSize: '0.88rem', color: 'var(--white-60)', marginBottom: '1rem' }}>
+              This will remove all <strong style={{ color: 'var(--white-80)' }}>{assignedCount} player assignment{assignedCount !== 1 ? 's' : ''}</strong> for{' '}
               {selectedDiv?.name}. Any in-progress draft will also be cleared. This cannot be undone.
             </p>
             <div className={styles.modalFooter}>

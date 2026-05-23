@@ -69,7 +69,7 @@ export default function OrgAdminHub() {
     <div className="p-8 max-w-4xl">
       <header className="border-b border-blueprint-blue/60 pb-4 mb-8">
         <div className="hud-label mb-1">Organization</div>
-        <h1 className="font-sans font-extrabold text-2xl uppercase tracking-tighter text-fl-text">
+        <h1 className="font-extrabold text-2xl uppercase tracking-tighter">
           {currentOrg?.name ?? 'Organization Admin'}
         </h1>
       </header>
@@ -85,7 +85,7 @@ export default function OrgAdminHub() {
               <Icon size={28} />
             </div>
             <div>
-              <div className="font-sans font-bold text-fl-text text-base uppercase tracking-wide">{label}</div>
+              <div className="font-bold text-fl-text text-base uppercase tracking-wide">{label}</div>
               <div className="text-data-gray text-sm mt-1">{desc}</div>
             </div>
           </Link>

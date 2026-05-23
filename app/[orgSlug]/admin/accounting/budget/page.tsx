@@ -746,7 +746,7 @@ export default function OrgBudgetPage() {
                 </div>
 
                 {showPeriodsForm && (
-                  <div style={{ marginTop: '0.75rem', paddingLeft: '0.5rem', borderLeft: '2px solid rgba(255,255,255,0.08)' }}>
+                  <div style={{ marginTop: '0.75rem', paddingLeft: '0.5rem', borderLeft: '2px solid var(--white-8)' }}>
                     <p className={styles.hint} style={{ marginBottom: '0.6rem' }}>
                       Break this budget line into monthly or phase-based amounts. Totals must equal the line total.
                     </p>

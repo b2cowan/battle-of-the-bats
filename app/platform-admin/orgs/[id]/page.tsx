@@ -38,6 +38,16 @@ type InternalNoteRow = {
   updated_at: string;
 };
 
+type OwnershipTransferRow = {
+  id: string;
+  team_workspace_id: string;
+  rep_team_id: string;
+  linked_org_id: string;
+  approved_by_team_user_id: string | null;
+  approved_by_org_user_id: string | null;
+  updated_at: string;
+};
+
 async function getOrgDetail(id: string) {
   const { data: org, error } = await supabaseAdmin
     .from('organizations')
@@ -166,6 +176,74 @@ async function getInternalNotes(orgId: string) {
   }));
 }
 
+async function getPendingOwnershipTransfers(orgId: string) {
+  const { data: links, error } = await supabaseAdmin
+    .from('team_org_links')
+    .select('id, team_workspace_id, rep_team_id, linked_org_id, approved_by_team_user_id, approved_by_org_user_id, updated_at')
+    .eq('linked_org_id', orgId)
+    .eq('status', 'ownership_pending')
+    .eq('link_type', 'ownership')
+    .order('updated_at', { ascending: false });
+
+  if (error) {
+    console.warn('[platform-admin] ownership transfer read failed', error);
+    return [];
+  }
+
+  const rows = (links ?? []) as OwnershipTransferRow[];
+  if (rows.length === 0) return [];
+
+  const workspaceIds = [...new Set(rows.map(row => row.team_workspace_id))];
+  const teamIds = [...new Set(rows.map(row => row.rep_team_id))];
+
+  const [workspacesRes, teamsRes] = await Promise.all([
+    supabaseAdmin
+      .from('team_workspaces')
+      .select('id, workspace_org_id, workspace_state, billing_mode')
+      .in('id', workspaceIds),
+    supabaseAdmin
+      .from('rep_teams')
+      .select('id, name, slug')
+      .in('id', teamIds),
+  ]);
+
+  const workspaceRows = (workspacesRes.data ?? []) as Array<{
+    id: string;
+    workspace_org_id: string;
+    workspace_state: string | null;
+    billing_mode: string | null;
+  }>;
+  const workspaceOrgIds = [...new Set(workspaceRows.map(row => row.workspace_org_id))];
+  const orgsRes = workspaceOrgIds.length
+    ? await supabaseAdmin
+        .from('organizations')
+        .select('id, name, slug')
+        .in('id', workspaceOrgIds)
+    : { data: [] };
+
+  const workspaceMap = new Map(workspaceRows.map(row => [row.id, row]));
+  const orgMap = new Map(((orgsRes.data ?? []) as Array<{ id: string; name: string; slug: string }>).map(row => [row.id, row]));
+  const teamMap = new Map(((teamsRes.data ?? []) as Array<{ id: string; name: string; slug: string | null }>).map(row => [row.id, row]));
+
+  return rows.map(row => {
+    const workspace = workspaceMap.get(row.team_workspace_id);
+    const workspaceOrg = workspace ? orgMap.get(workspace.workspace_org_id) : null;
+    const team = teamMap.get(row.rep_team_id);
+    return {
+      linkId: row.id,
+      teamWorkspaceId: row.team_workspace_id,
+      repTeamId: row.rep_team_id,
+      teamName: team?.name ?? 'Team workspace',
+      teamSlug: team?.slug ?? null,
+      workspaceOrgName: workspaceOrg?.name ?? 'Team workspace',
+      workspaceOrgSlug: workspaceOrg?.slug ?? null,
+      billingMode: workspace?.billing_mode ?? null,
+      updatedAt: row.updated_at,
+      readyForCompletion: Boolean(row.approved_by_team_user_id && row.approved_by_org_user_id),
+    };
+  });
+}
+
 function fmtDate(iso: string) {
   return new Date(iso).toLocaleDateString('en-CA', {
     year: 'numeric', month: 'short', day: 'numeric',
@@ -203,7 +281,7 @@ export default async function OrgDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const [auth, org, members, tournaments, overrides, auditEvents, internalNotes] = await Promise.all([
+  const [auth, org, members, tournaments, overrides, auditEvents, internalNotes, pendingOwnershipTransfers] = await Promise.all([
     getPlatformAdminContext(),
     getOrgDetail(id),
     getMembers(id),
@@ -211,6 +289,7 @@ export default async function OrgDetailPage({
     getOverrides(id),
     getRecentAuditEvents(id),
     getInternalNotes(id),
+    getPendingOwnershipTransfers(id),
   ]);
 
   if (!org) notFound();
@@ -421,6 +500,7 @@ export default async function OrgDetailPage({
         tournaments={tournaments}
         auditEvents={auditEvents}
         auditHref={`/platform-admin/audit?q=${encodeURIComponent(org.name as string)}`}
+        pendingOwnershipTransfers={pendingOwnershipTransfers}
       />
     </div>
   );

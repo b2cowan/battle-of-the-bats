@@ -6,6 +6,15 @@ import {
   listTeamOrgLinksForLinkedOrg,
   reviewTeamOrgLink,
 } from '@/lib/team-org-links';
+import {
+  declineOrgTeamAddonBillingRequest,
+  inviteOrgTeamAddonBilling,
+  startOrgTeamAddonCheckout,
+} from '@/lib/team-org-billing';
+import {
+  declineTeamOwnershipTransferRequest,
+  inviteTeamOwnershipTransfer,
+} from '@/lib/team-ownership-transfer';
 
 export async function GET(req: NextRequest) {
   const orgSlug = req.nextUrl.searchParams.get('orgSlug') ?? undefined;
@@ -25,7 +34,7 @@ export async function POST(req: NextRequest) {
   if (ctx.role !== 'owner' && ctx.role !== 'admin') return forbidden();
   if (isTeamWorkspaceOrg(ctx.org)) return forbidden();
 
-  let body: { linkId?: unknown; action?: unknown; target?: unknown };
+  let body: { linkId?: unknown; action?: unknown; target?: unknown; billingCycle?: unknown };
   try {
     body = await req.json();
   } catch {
@@ -49,10 +58,85 @@ export async function POST(req: NextRequest) {
   }
 
   const linkId = typeof body.linkId === 'string' ? body.linkId.trim() : '';
-  const action = body.action === 'approve' || body.action === 'decline' ? body.action : null;
+  const action = typeof body.action === 'string' ? body.action : '';
 
   if (!linkId || !action) {
     return NextResponse.json({ error: 'linkId and action are required.' }, { status: 400 });
+  }
+
+  if (action === 'invite_billing') {
+    const result = await inviteOrgTeamAddonBilling({
+      orgId: ctx.org.id,
+      linkId,
+      actorUserId: ctx.user.id,
+      actorEmail: ctx.user.email ?? null,
+    });
+    if (!result.ok) {
+      return NextResponse.json({ error: result.error }, { status: result.status });
+    }
+    return NextResponse.json({ link: result.link });
+  }
+
+  if (action === 'decline_billing') {
+    const result = await declineOrgTeamAddonBillingRequest({
+      orgId: ctx.org.id,
+      linkId,
+      actorUserId: ctx.user.id,
+      actorEmail: ctx.user.email ?? null,
+    });
+    if (!result.ok) {
+      return NextResponse.json({ error: result.error }, { status: result.status });
+    }
+    return NextResponse.json({ link: result.link });
+  }
+
+  if (action === 'approve_billing') {
+    const result = await startOrgTeamAddonCheckout({
+      org: ctx.org,
+      linkId,
+      billingCycle: body.billingCycle,
+      actorUserId: ctx.user.id,
+      actorEmail: ctx.user.email ?? null,
+    });
+    if (!result.ok) {
+      return NextResponse.json({ error: result.error }, { status: result.status });
+    }
+    return NextResponse.json({
+      link: result.link,
+      applied: result.applied ?? false,
+      url: result.url ?? null,
+      billingCycle: result.billingCycle ?? null,
+    });
+  }
+
+  if (action === 'invite_ownership') {
+    const result = await inviteTeamOwnershipTransfer({
+      orgId: ctx.org.id,
+      linkId,
+      actorUserId: ctx.user.id,
+      actorEmail: ctx.user.email ?? null,
+    });
+    if (!result.ok) {
+      return NextResponse.json({ error: result.error }, { status: result.status });
+    }
+    return NextResponse.json({ link: result.link });
+  }
+
+  if (action === 'decline_ownership') {
+    const result = await declineTeamOwnershipTransferRequest({
+      orgId: ctx.org.id,
+      linkId,
+      actorUserId: ctx.user.id,
+      actorEmail: ctx.user.email ?? null,
+    });
+    if (!result.ok) {
+      return NextResponse.json({ error: result.error }, { status: result.status });
+    }
+    return NextResponse.json({ link: result.link });
+  }
+
+  if (action !== 'approve' && action !== 'decline') {
+    return NextResponse.json({ error: 'Unsupported Team link action.' }, { status: 400 });
   }
 
   const result = await reviewTeamOrgLink({

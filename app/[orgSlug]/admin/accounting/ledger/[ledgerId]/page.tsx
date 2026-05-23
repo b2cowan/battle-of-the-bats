@@ -632,7 +632,7 @@ export default function LedgerDetailPage() {
 
             <div className={styles.field}>
               <label className={styles.label}>From</label>
-              <div style={{ padding: '0.55rem 0.75rem', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', fontSize: '0.9rem', color: 'var(--white-60)' }}>
+              <div style={{ padding: '0.55rem 0.75rem', background: 'var(--white-03)', border: '1px solid var(--white-8)', borderRadius: '2px', fontSize: '0.9rem', color: 'var(--white-60)' }}>
                 {ledger?.name ?? 'This ledger'}
               </div>
             </div>

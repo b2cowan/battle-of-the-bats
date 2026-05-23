@@ -122,7 +122,7 @@ export default function StandingsPage() {
   if (!canView) {
     return (
       <div className={styles.page}>
-        <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.9rem' }}>
+        <p style={{ color: 'var(--white-40)', fontSize: '0.9rem' }}>
           You don&apos;t have access to this page.
         </p>
       </div>
@@ -131,7 +131,7 @@ export default function StandingsPage() {
   if (loading) {
     return (
       <div className={styles.page}>
-        <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.9rem' }}>Loading…</p>
+        <p style={{ color: 'var(--white-40)', fontSize: '0.9rem' }}>Loading…</p>
       </div>
     );
   }
@@ -145,7 +145,7 @@ export default function StandingsPage() {
             <BarChart2 size={22} />
           </div>
           <div>
-            <div style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.4)', marginBottom: '0.2rem' }}>
+            <div style={{ fontSize: '0.72rem', color: 'var(--white-40)', marginBottom: '0.2rem' }}>
               <Link href={`/${orgSlug}/admin/house-league`} style={{ color: 'inherit', textDecoration: 'none' }}>
                 House League
               </Link>
@@ -193,14 +193,14 @@ export default function StandingsPage() {
 
       {/* Standings table */}
       {standingsLoading ? (
-        <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.9rem' }}>Loading standings…</p>
+        <p style={{ color: 'var(--white-40)', fontSize: '0.9rem' }}>Loading standings…</p>
       ) : standings.length === 0 ? (
         <div style={{
           padding: '2.5rem 1.5rem',
           textAlign: 'center',
-          border: '1px dashed rgba(255,255,255,0.1)',
-          borderRadius: '10px',
-          color: 'rgba(255,255,255,0.35)',
+          border: '1px dashed var(--white-10)',
+          borderRadius: '2px',
+          color: 'var(--white-35)',
           fontSize: '0.9rem',
         }}>
           No completed games yet — standings will appear once scores are entered.
@@ -224,8 +224,8 @@ export default function StandingsPage() {
             </thead>
             <tbody>
               {standings.map((row, i) => (
-                <tr key={row.team.id} style={i === 0 ? { background: 'rgba(163,230,53,0.04)' } : undefined}>
-                  <td style={{ textAlign: 'center', color: 'rgba(255,255,255,0.3)', fontWeight: 600 }}>
+                <tr key={row.team.id} style={i === 0 ? { background: 'rgba(var(--logic-lime-rgb),0.04)' } : undefined}>
+                  <td style={{ textAlign: 'center', color: 'var(--white-30)', fontWeight: 600 }}>
                     {i + 1}
                   </td>
                   <td>
@@ -233,7 +233,7 @@ export default function StandingsPage() {
                       {row.team.color && (
                         <span className={styles.teamDot} style={{ background: row.team.color }} />
                       )}
-                      <span style={{ fontWeight: 600, color: i === 0 ? '#a3e635' : '#f0f0f0' }}>
+                      <span style={{ fontWeight: 600, color: i === 0 ? 'var(--logic-lime)' : '#f0f0f0' }}>
                         {row.team.name}
                       </span>
                     </span>
@@ -252,7 +252,7 @@ export default function StandingsPage() {
                       ? '#4ade80'
                       : row.runDifferential < 0
                         ? '#f87171'
-                        : 'rgba(255,255,255,0.4)',
+                        : 'var(--white-40)',
                   }}>
                     {row.runDifferential > 0 ? '+' : ''}{row.runDifferential}
                   </td>
@@ -264,7 +264,7 @@ export default function StandingsPage() {
       )}
 
       {standings.length > 0 && (
-        <p style={{ marginTop: '1rem', fontSize: '0.72rem', color: 'rgba(255,255,255,0.3)' }}>
+        <p style={{ marginTop: '1rem', fontSize: '0.72rem', color: 'var(--white-30)' }}>
           Pts: W=2, T=1, L=0 &nbsp;·&nbsp; Tiebreaker: run differential, then runs for
         </p>
       )}

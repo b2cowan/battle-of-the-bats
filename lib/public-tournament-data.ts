@@ -39,14 +39,14 @@ function isPublicStatus(tournament: Tournament) {
   return PUBLIC_STATUSES.has(tournament.status);
 }
 
-function publicOrganization(org: Organization): PublicTournamentPageData['organization'] {
+function publicOrganization(org: Organization, tournament?: Tournament | null): PublicTournamentPageData['organization'] {
   return {
     id: org.id,
     name: org.name,
     slug: org.slug,
     logoUrl: org.logoUrl,
     contactEmail: org.contactEmail,
-    requireScoreFinalization: org.requireScoreFinalization,
+    requireScoreFinalization: tournament?.requireScoreFinalization ?? org.requireScoreFinalization,
   };
 }
 
@@ -78,7 +78,7 @@ export async function getPublicTournamentPageData(
   const sectionKey = section === 'context' ? null : section;
   const pageEnabled = !sectionKey || isPublicPageEnabled(tournament, sectionKey);
   const base: PublicTournamentPageData = {
-    organization: publicOrganization(org),
+    organization: publicOrganization(org, tournament),
     tournaments,
     tournament,
     pageEnabled,

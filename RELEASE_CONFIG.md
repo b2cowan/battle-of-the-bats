@@ -1,25 +1,56 @@
 # Release Manager Configuration
 
-Used by the `/release` agent. Fill in the `FILL_IN` values below before your first release.
+Used by the `/release` agent. All values below are confirmed and current.
 
 ---
 
 ## AWS / Amplify
 
-| Key                    | Value            | How to find it                                               |
-| ---------------------- | ---------------- | ------------------------------------------------------------ |
-| **Amplify app ID**     | `d3ld0l2bgmmlga` | Amplify console URL: `/apps/d1xxxxxxxxx/` — the `d1...` part |
-| **AWS region**         | `ca-central-1`   | Your Amplify app region (update if different)                |
-| **Master branch name** | `master`         | The branch that triggers CI/CD                               |
+| Key                    | Value              | Notes                                        |
+| ---------------------- | ------------------ | -------------------------------------------- |
+| **Amplify app ID**     | `d3ld0l2bgmmlga`   | From Amplify console URL                     |
+| **AWS region**         | `us-east-2`        | Confirmed 2026-05-23 — app is in us-east-2   |
+| **Dev branch**         | `dev`              | Staging environment — safe to deploy freely  |
+| **Production branch**  | `master`           | Production — requires explicit confirmation  |
 
-## CloudWatch
+## CloudWatch Logs
 
-| Key                   | Value            | How to find it                                 |
-| --------------------- | ---------------- | ---------------------------------------------- |
-| **Runtime log group** | `d3ld0l2bgmmlga` | CloudWatch → Log groups → search your app name |
-| **Build log group**   | `d3ld0l2bgmmlga` | Usually `/aws/amplify/[app-id]`                |
+All branches share one log group, separated by log stream prefix:
 
-> **Note:** The email stack memory has the CloudWatch log path for email-related errors. Runtime app errors live in a separate log group — check the Amplify console → your app → Monitoring tab to find the correct group name.
+| Target      | Log group                        | Stream filter  | Console shortcut |
+| ----------- | -------------------------------- | -------------- | ---------------- |
+| **dev**     | `/aws/amplify/d3ld0l2bgmmlga`   | `dev`          | Amplify → Monitoring → Hosting compute logs → dev stream |
+| **master**  | `/aws/amplify/d3ld0l2bgmmlga`   | `master`       | Amplify → Monitoring → Hosting compute logs → master stream |
+
+**AWS CLI log fetch commands:**
+
+```powershell
+# Dev environment logs (last 30 min, errors only)
+aws logs filter-log-events `
+  --log-group-name /aws/amplify/d3ld0l2bgmmlga `
+  --log-stream-name-prefix dev `
+  --start-time ([DateTimeOffset]::UtcNow.AddMinutes(-30).ToUnixTimeMilliseconds()) `
+  --filter-pattern "ERROR" `
+  --region us-east-2
+
+# Production logs (last 30 min, errors only)
+aws logs filter-log-events `
+  --log-group-name /aws/amplify/d3ld0l2bgmmlga `
+  --log-stream-name-prefix master `
+  --start-time ([DateTimeOffset]::UtcNow.AddMinutes(-30).ToUnixTimeMilliseconds()) `
+  --filter-pattern "ERROR" `
+  --region us-east-2
+```
+
+---
+
+## Amplify Console Links
+
+```
+Dev deployments:        https://console.aws.amazon.com/amplify/home#/apps/d3ld0l2bgmmlga/deployments
+Production deployments: https://console.aws.amazon.com/amplify/home#/apps/d3ld0l2bgmmlga/deployments
+Compute logs:           Amplify → Monitoring → Hosting compute logs
+```
 
 ---
 
@@ -32,12 +63,11 @@ aws configure
 ```
 
 You'll need:
-
 - **Access Key ID** and **Secret Access Key** — from IAM console
-- **Default region** — `ca-central-1` (or wherever your Amplify app lives)
+- **Default region** — `ca-central-1`
 - **Output format** — `json`
 
-**Minimum IAM permissions** (create a `fieldlogichq-deploy` IAM user with this policy):
+**Minimum IAM permissions** (attach to your IAM user):
 
 ```json
 {
@@ -59,28 +89,7 @@ You'll need:
 ```
 
 Verify it's working:
-
 ```powershell
 aws sts get-caller-identity
 aws amplify list-apps
 ```
-
----
-
-## Amplify console quick links
-
-```
-Deployments:  https://console.aws.amazon.com/amplify/home#/apps/[APP_ID]/deployments
-Build logs:   Click any build → "Build log" tab
-```
-
----
-
-## How the `/release` agent uses this file
-
-The agent reads this file on every invocation to get the Amplify app ID and log group names.
-Once you fill in the `FILL_IN` values, `/release fix logs` can fetch CloudWatch and Amplify
-build logs automatically instead of requiring you to paste them.
-
-Without the Amplify app ID filled in, `/release` still works for pre-flight checks and pushing —
-it just can't construct the exact console URL or fetch logs programmatically.

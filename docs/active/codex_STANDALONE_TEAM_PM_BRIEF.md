@@ -12,10 +12,13 @@ The product should still use the existing organization-scoped data model behind 
 - Phase 2B is complete for checkout plumbing: direct Team checkout, webhook recovery, subscription sync, and checkout completion redirect shell are implemented; Stripe sandbox price verification remains pending.
 - Phase 2C is complete: Team workspaces now default to the Coaches Portal, the landing page uses Team-first language, coach-facing access is filtered through active team entitlements plus coach assignment, and org-wide rep-team admin remains gated behind `module_rep_teams`.
 - Phase 2D is complete: `/team` is the public coach signup surface, Team-only account creation avoids normal org onboarding, and the form starts the existing Team checkout flow.
-- Phase 2E verification support is complete: Platform Admin Dev Tools now has a Team checkout readiness checker for Stripe price IDs, webhook secret, app URL, and Team availability. A real Stripe sandbox checkout still requires the external Stripe setup steps.
+- Phase 2E is closed by user sign-off: Platform Admin Dev Tools has a Team checkout readiness checker for Stripe price IDs, webhook secret, app URL, and Team availability, plus the mock-billing toggle and setup checklist.
 - Phase 3A is complete: tournament team contacts can open secure claim links, see prefilled team activation details, and proceed through Team checkout with email verification.
 - Phase 3B is complete: tournament organizers can select eligible teams from the tournament teams admin screen and send Team workspace claim invitations in bulk. Claimed, waitlisted, rejected, and missing-email teams are skipped so organizers do not need to manually manage claim safety rules.
 - Phase 4A is complete: standalone Team coaches can request a Basic visibility link to a parent organization, and organization owners/admins can approve or decline the request from Organization Admin. Approval records the association without transferring billing, ownership, roster/document/accounting access, or org-wide rep-team admin rights.
+- Phase 4B is complete: organization owners/admins can invite a standalone Team workspace to connect, and the Team coach can accept or decline from the Coaches Portal. Acceptance creates the same Basic visibility association as Phase 4A and still does not transfer billing, ownership, roster/document/accounting access, parent-org team entitlements, or org-wide rep-team admin rights.
+- Phase 4C is complete: once Basic linking is active, coaches can request org-paid Team billing or accept an org billing invitation, and organization owners/admins can approve and complete org Team add-on checkout. The organization becomes the payer while the coach keeps day-to-day ownership and Basic sharing remains the access boundary.
+- Phase 6A is complete and smoke-tested: coaches can open schedule events and mark active roster players In, Out, Late, or Unknown with optional notes. This adds the first game-day value feature without changing linked-org visibility or ownership boundaries.
 
 ## Strategic Shift
 
@@ -133,13 +136,13 @@ A coach lands on a Team page, starts a Team subscription, creates the team, and 
 
 ### Org Links A Team
 
-An organization invites an independent Team workspace to link, or the coach requests to link to the organization. Both sides approve. The link can start as visibility-only, org-billed, or full org-owned depending on the agreement.
+An organization invites an independent Team workspace to link, or the coach requests to link to the organization. The implemented first link is Basic visibility: both sides approve the association, but the coach keeps billing, ownership, roster, documents, accounting, and day-to-day team access. Once Basic linking is active, the coach and organization can also approve org-paid billing without expanding data access. Full org-owned transfer remains a later, higher-impact workflow.
 
 ### Org Takes Over Billing
 
 A Club, League, or Tournament Plus org can become the billing owner for a linked team. The team's operational workspace does not need to be destroyed or recreated. Billing switches first; full data ownership can happen later.
 
-Billing transfer must require approval from both sides: the coach/team owner and the organization owner.
+Billing transfer requires approval from both sides: the coach/team owner and the organization owner. The organization completes the org Team add-on checkout, while the coach keeps the Coaches Portal and Basic sharing remains the access boundary.
 
 ### Team Becomes Org-Owned
 
@@ -161,7 +164,7 @@ The first build should include:
 - Team billing/settings page with "link to organization" and "transfer billing" actions.
 - Platform admin visibility into team workspaces, links, and billing state.
 - Segment-first pricing entry for "I manage one competitive team."
-- Initial coaches portal value package: roster, schedule, dues, documents, budget, payment reminders, attendance, and baseball/softball lineup PDF.
+- Initial coaches portal value package: roster, schedule, dues, documents, budget, payment reminders, attendance, and baseball/softball lineup PDF. Attendance is implemented; roster/lineup contents should be reviewed with the product owner before that slice is built.
 
 ## Not In MVP
 

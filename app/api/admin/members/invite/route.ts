@@ -17,7 +17,7 @@ const ROLE_EMAIL_LABEL: Record<OrgRole, string> = {
   owner: 'owner',
   admin: 'administrator',
   staff: 'staff member',
-  official: 'field official (scorekeeper)',
+  official: 'scorekeeper',
   league_admin: 'league administrator',
   league_registrar: 'league registrar',
   treasurer: 'treasurer',
@@ -197,10 +197,10 @@ If you weren't expecting this, you can safely ignore this email.`,
   const inviteUrl = (linkData as any).properties?.action_link ?? linkData.properties?.action_link;
 
   const officialNote = role === 'official'
-    ? `<p>As a field official, you'll have access to the score entry app to submit game results from your assigned diamonds.</p>`
+    ? `<p>As a scorekeeper, you'll have access to the scorekeeper app to submit game results from your assigned fields.</p>`
     : '';
   const officialNoteText = role === 'official'
-    ? `As a field official, you'll have access to the score entry app to submit game results from your assigned diamonds.\n\n`
+    ? `As a scorekeeper, you'll have access to the scorekeeper app to submit game results from your assigned fields.\n\n`
     : '';
   await getResend().emails.send({
     from: fromAddress,

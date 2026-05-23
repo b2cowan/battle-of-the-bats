@@ -485,13 +485,13 @@ export default function TryoutsPage({
                       <td className={styles.tryoutTd} style={{ fontSize: '0.85rem' }}>
                         {reg.playerDateOfBirth
                           ? new Date(reg.playerDateOfBirth + 'T00:00:00').toLocaleDateString('en-CA')
-                          : <span style={{ color: 'rgba(255,255,255,0.25)' }}>—</span>}
+                          : <span style={{ color: 'var(--white-30)' }}>—</span>}
                       </td>
                       <td className={styles.tryoutTd} style={{ fontSize: '0.85rem' }}>
                         {reg.guardianEmail}
                       </td>
                       <td className={styles.tryoutTd}>
-                        <span style={{ fontSize: '0.82rem', color: 'rgba(255,255,255,0.4)' }}>
+                        <span style={{ fontSize: '0.82rem', color: 'var(--white-40)' }}>
                           {new Date(reg.submittedAt).toLocaleDateString('en-CA')}
                         </span>
                       </td>
@@ -562,7 +562,7 @@ export default function TryoutsPage({
                     {STATUS_LABEL[selected.status] ?? selected.status}
                   </span>
                 </div>
-                <span style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.35)' }}>
+                <span style={{ fontSize: '0.78rem', color: 'var(--white-35)' }}>
                   Submitted {new Date(selected.submittedAt).toLocaleDateString('en-CA')}
                 </span>
               </div>
@@ -587,7 +587,7 @@ export default function TryoutsPage({
                 {selected.playerNotes && (
                   <div className={styles.slideOverField}>
                     <span className={styles.slideOverFieldLabel}>Notes</span>
-                    <span style={{ color: 'rgba(255,255,255,0.7)', whiteSpace: 'pre-wrap', fontSize: '0.88rem' }}>
+                    <span style={{ color: 'var(--white-70)', whiteSpace: 'pre-wrap', fontSize: '0.88rem' }}>
                       {selected.playerNotes}
                     </span>
                   </div>

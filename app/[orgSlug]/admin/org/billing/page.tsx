@@ -84,7 +84,7 @@ const PLAN_FEATURES: Record<OrgPlan, string[]> = {
   tournament_plus: [
     'Everything in Tournament',
     'Unlimited tournament slots',
-    '10 staff seats - officials always free',
+    '10 staff seats - scorekeepers always free',
     'Custom registration questions and file uploads',
     'Excel/PDF registration exports and payment reminders',
     'Waitlist promotion and queue management',
@@ -432,7 +432,7 @@ export default function BillingPage() {
               Staff seats
               {seatUsage.officialsFree && seatUsage.officials > 0 && (
                 <span style={{ marginLeft: '0.5rem', fontWeight: 400, color: 'var(--white-30)' }}>
-                  · {seatUsage.officials} official{seatUsage.officials === 1 ? '' : 's'} free
+                  · {seatUsage.officials} scorekeeper{seatUsage.officials === 1 ? '' : 's'} free
                 </span>
               )}
             </span>

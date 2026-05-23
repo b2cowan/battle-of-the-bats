@@ -103,17 +103,17 @@ export default function TeamHistoryPage({
                     >
                       {y.status === 'archived' ? 'Archived' : 'Completed'}
                     </span>
-                    <span style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.35)' }}>
+                    <span style={{ fontSize: '0.78rem', color: 'var(--white-35)' }}>
                       {y.year}
                     </span>
-                    <span style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.35)' }}>
+                    <span style={{ fontSize: '0.78rem', color: 'var(--white-35)' }}>
                       {y.rosterCount} player{y.rosterCount !== 1 ? 's' : ''}
                     </span>
-                    <span style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.35)' }}>
+                    <span style={{ fontSize: '0.78rem', color: 'var(--white-35)' }}>
                       {record}
                     </span>
                     {y.tryoutTotal > 0 && (
-                      <span style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.35)' }}>
+                      <span style={{ fontSize: '0.78rem', color: 'var(--white-35)' }}>
                         Tryout acceptance: {acceptanceRate(y.tryoutTotal, y.tryoutAccepted)}
                       </span>
                     )}

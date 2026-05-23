@@ -3,7 +3,7 @@ import { supabaseAdmin } from './supabase-admin';
 import { getEffectiveTournamentLimit, PLAN_CONFIG } from './plan-config';
 import { createClient as createBrowserSupabaseClient } from './supabase-browser';
 import { getActiveTeamEntitledRepTeamIds } from './team-workspace-entitlements';
-import { Tournament, TournamentStatus, Diamond, Contact, AgeGroup, Pool, PoolSlot, Team, Game, Announcement, PlayoffConfig, RuleSection, RuleItem, Resource, Organization, OrganizationMember, OrgPlan, OrgRole, TournamentArchive, OrgPublicSiteContent, AccountingLedger, AccountingEntry, LedgerSummary, AccountingEntryStatus, AccountingEntryType, LeagueSeason, LeagueDivision, LeagueTeam, LeagueRegistration, LeagueGame, LeagueStandingsRow, LeagueSeasonSummary, LeagueRegistrationStatus, LeagueSeasonStatus, LeaguePractice, LeaguePracticeStatus, RepTeam, RepProgramYear, RepProgramYearStatus, RepTeamCoach, RepTryoutRegistration, RepTryoutRegistrationStatus, RepRosterPlayer, RepRosterStatus, RepTeamEvent, RepEventType, RepDocumentTemplate, RepDocumentType, RepPlayerDocument, RepCostAllocation, RepAllocationSplit, RepAllocationInstallment, RepPlayerDuesSchedule, RepPlayerDuesInstallment, RepTeamExpense, OrgPayee, TournamentRegistrationField, TournamentRegistrationFieldAnswer, TournamentRegistrationFieldType } from './types';
+import { Tournament, TournamentStatus, Diamond, Contact, AgeGroup, Pool, PoolSlot, Team, Game, Announcement, PlayoffConfig, RuleSection, RuleItem, Resource, Organization, OrganizationMember, OrgPlan, OrgRole, TournamentArchive, OrgPublicSiteContent, AccountingLedger, AccountingEntry, LedgerSummary, AccountingEntryStatus, AccountingEntryType, LeagueSeason, LeagueDivision, LeagueTeam, LeagueRegistration, LeagueGame, LeagueStandingsRow, LeagueSeasonSummary, LeagueRegistrationStatus, LeagueSeasonStatus, LeaguePractice, LeaguePracticeStatus, RepTeam, RepProgramYear, RepProgramYearStatus, RepTeamCoach, RepTryoutRegistration, RepTryoutRegistrationStatus, RepRosterPlayer, RepRosterStatus, RepTeamEvent, RepEventType, RepTeamEventAttendance, RepAttendanceStatus, RepDocumentTemplate, RepDocumentType, RepPlayerDocument, RepCostAllocation, RepAllocationSplit, RepAllocationInstallment, RepPlayerDuesSchedule, RepPlayerDuesInstallment, RepTeamExpense, OrgPayee, TournamentRegistrationField, TournamentRegistrationFieldAnswer, TournamentRegistrationFieldType } from './types';
 
 // Use the SSR browser client (cookie-based session) for writes that need auth;
 // falls back to anon client on the server where there is no window.
@@ -1378,6 +1378,10 @@ export async function updateGame(id: string, g: Partial<Game>, options: ReadOpti
   if (g.homeSlotId !== undefined) updates.home_slot_id = g.homeSlotId;
   if (g.awaySlotId !== undefined) updates.away_slot_id = g.awaySlotId;
   if (g.notes !== undefined) updates.notes = g.notes;
+  if (g.scoreSubmittedByUserId !== undefined) updates.score_submitted_by_user_id = g.scoreSubmittedByUserId;
+  if (g.scoreSubmittedByEmail !== undefined) updates.score_submitted_by_email = g.scoreSubmittedByEmail;
+  if (g.scoreSubmittedAt !== undefined) updates.score_submitted_at = g.scoreSubmittedAt;
+  if (g.scoreSubmissionSource !== undefined) updates.score_submission_source = g.scoreSubmissionSource;
 
   const writeClient = options.admin ? supabaseAdmin : authClient();
   const { error } = await writeClient.from('games').update(updates).eq('id', id);
@@ -1386,7 +1390,7 @@ export async function updateGame(id: string, g: Partial<Game>, options: ReadOpti
   // Trigger advancement
   if (g.status === 'completed' || (g.homeScore !== undefined && g.awayScore !== undefined)) {
     const fullGame = (await getGames(undefined, options)).find(x => x.id === id);
-    if (fullGame) await advancePlayoffs(fullGame, options);
+    if (fullGame?.status === 'completed') await advancePlayoffs(fullGame, options);
   }
 }
 
@@ -4370,6 +4374,66 @@ export async function deleteRepTeamEventsByRecurrenceParent(
   if (fromStartsAt) q = q.gte('starts_at', fromStartsAt);
   const { error } = await q;
   if (error) throw error;
+}
+
+// Team Event Attendance
+
+function mapRepTeamEventAttendance(r: any): RepTeamEventAttendance {
+  return {
+    id: r.id,
+    eventId: r.event_id,
+    playerId: r.player_id,
+    programYearId: r.program_year_id,
+    teamId: r.team_id,
+    orgId: r.org_id,
+    status: r.status,
+    note: r.note ?? null,
+    updatedBy: r.updated_by ?? null,
+    createdAt: r.created_at,
+    updatedAt: r.updated_at,
+  };
+}
+
+export async function getRepTeamEventAttendance(eventId: string): Promise<RepTeamEventAttendance[]> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_event_attendance')
+    .select('*')
+    .eq('event_id', eventId);
+  if (error) throw error;
+  return (data ?? []).map(mapRepTeamEventAttendance);
+}
+
+export async function upsertRepTeamEventAttendance(rows: {
+  eventId: string;
+  playerId: string;
+  programYearId: string;
+  teamId: string;
+  orgId: string;
+  status: RepAttendanceStatus;
+  note?: string | null;
+  updatedBy?: string | null;
+}[]): Promise<RepTeamEventAttendance[]> {
+  if (rows.length === 0) return [];
+
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_event_attendance')
+    .upsert(
+      rows.map(row => ({
+        event_id: row.eventId,
+        player_id: row.playerId,
+        program_year_id: row.programYearId,
+        team_id: row.teamId,
+        org_id: row.orgId,
+        status: row.status,
+        note: row.note?.trim() || null,
+        updated_by: row.updatedBy ?? null,
+        updated_at: new Date().toISOString(),
+      })),
+      { onConflict: 'event_id,player_id' },
+    )
+    .select();
+  if (error) throw error;
+  return (data ?? []).map(mapRepTeamEventAttendance);
 }
 
 // Document Templates

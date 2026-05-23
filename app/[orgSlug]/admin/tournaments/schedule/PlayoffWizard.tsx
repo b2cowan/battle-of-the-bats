@@ -303,7 +303,7 @@ export default function PlayoffWizard({ ageGroup, tournamentId, orgSlug, onClose
         <div style={{ padding: '1.5rem 2rem', borderBottom: '1px solid var(--border)', background: 'var(--surface-2)' }}>
           <div className="flex-between">
             <div className="flex gap-3">
-              <div className="flex-center" style={{ width: '40px', height: '40px', background: 'rgba(var(--blueprint-blue-rgb), 0.1)', borderRadius: '10px', color: 'var(--logic-lime)', border: '1px solid rgba(var(--blueprint-blue-rgb), 0.3)' }}>
+              <div className="flex-center" style={{ width: '40px', height: '40px', background: 'rgba(var(--blueprint-blue-rgb), 0.1)', borderRadius: '2px', color: 'var(--logic-lime)', border: '1px solid rgba(var(--blueprint-blue-rgb), 0.3)' }}>
                 <Trophy size={20} />
               </div>
               <div>
@@ -355,13 +355,13 @@ export default function PlayoffWizard({ ageGroup, tournamentId, orgSlug, onClose
               </div>
 
               {config.crossover === 'none' && ageGroup.pools && (
-                <div style={{ marginTop: '1.5rem', background: 'var(--black-20)', padding: '1.5rem', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border)' }}>
+                <div style={{ marginTop: '1.5rem', background: 'var(--bg-2)', padding: '1.5rem', borderRadius: '2px', border: '1px solid var(--border)' }}>
                   <h5 className="font-bold text-sm mb-4" style={{ color: 'var(--logic-lime)' }}>Per-Pool Independent Brackets</h5>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                     {ageGroup.pools.map(pool => {
                       const pConfig = config.splitConfigs?.[pool.id] || { teamsQualifying: 4, hasThirdPlace: false };
                       return (
-                        <div key={pool.id} style={{ display: 'grid', gridTemplateColumns: '1fr 2fr 1fr', gap: '2rem', alignItems: 'center', padding: '0.75rem', background: 'var(--surface)', borderRadius: 'var(--radius)', border: '1px solid var(--border)' }}>
+                        <div key={pool.id} style={{ display: 'grid', gridTemplateColumns: '1fr 2fr 1fr', gap: '2rem', alignItems: 'center', padding: '0.75rem', background: 'var(--surface)', borderRadius: '2px', border: '1px solid var(--border)' }}>
                           <span className="font-bold">{formatPoolName(pool.name)}</span>
                           <div className="flex gap-4 items-center">
                             <span className="text-xs text-muted">Qualifying:</span>
@@ -412,7 +412,7 @@ export default function PlayoffWizard({ ageGroup, tournamentId, orgSlug, onClose
               
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', maxWidth: '500px' }}>
                 {config.tieBreakers.map((b, i) => (
-                  <div key={b} className="flex-between" style={{ background: 'var(--surface)', padding: '0.6rem 0.85rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)' }}>
+                  <div key={b} className="flex-between" style={{ background: 'var(--surface)', padding: '0.6rem 0.85rem', borderRadius: '2px', border: '1px solid var(--border)' }}>
                     <div className="flex gap-3 items-center">
                       <span style={{ 
                         fontSize: '0.75rem', 
@@ -437,7 +437,7 @@ export default function PlayoffWizard({ ageGroup, tournamentId, orgSlug, onClose
                 Note: If 3 or more teams are tied, Head-to-Head is automatically skipped.
               </p>
 
-              <div style={{ marginTop: '2rem', padding: '1.25rem', background: 'rgba(var(--blueprint-blue-rgb), 0.08)', borderRadius: 'var(--radius)', border: '1px solid rgba(var(--blueprint-blue-rgb), 0.25)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ marginTop: '2rem', padding: '1.25rem', background: 'rgba(var(--blueprint-blue-rgb), 0.08)', borderRadius: '2px', border: '1px solid rgba(var(--blueprint-blue-rgb), 0.25)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
                   <h4 className="font-bold text-sm text-primary-light" style={{ marginBottom: '0.25rem' }}>Configure Brackets</h4>
                   <p className="text-muted text-xs">Generate the initial bracket layout based on your selections above. <br/><strong>Warning:</strong> Clicking this will reset the Custom Builder canvas.</p>
@@ -452,7 +452,7 @@ export default function PlayoffWizard({ ageGroup, tournamentId, orgSlug, onClose
             <section>
               <div className="flex-between" style={{ marginBottom: '1.5rem' }}>
                 <h4 className="text-label" style={{ opacity: 0.5 }}>3. Game Slots & Scheduling</h4>
-                <span className="badge badge-primary">{preview.length} Games</span>
+                <span className="badge badge-neutral">{preview.length} Games</span>
               </div>
 
               {templatePreview.length === 0 ? (
@@ -511,7 +511,7 @@ export default function PlayoffWizard({ ageGroup, tournamentId, orgSlug, onClose
       {showWarning && (
         <div className="modal-overlay" style={{ zIndex: 1000, background: 'rgba(0,0,0,0.8)' }} onClick={e => e.stopPropagation()}>
           <div className="card" style={{ maxWidth: '440px', width: '90%', padding: '2.5rem', textAlign: 'center', boxShadow: '0 25px 60px rgba(0,0,0,0.6)', border: '1px solid var(--danger)' }}>
-            <div className="flex-center mb-6" style={{ width: '70px', height: '70px', background: 'rgba(239, 68, 68, 0.1)', borderRadius: '100%', margin: '0 auto', color: 'var(--danger)' }}>
+            <div className="flex-center mb-6" style={{ width: '70px', height: '70px', background: 'rgba(var(--danger-rgb),0.1)', borderRadius: '100%', margin: '0 auto', color: 'var(--danger)' }}>
               <AlertCircle size={36} />
             </div>
             <h3 className="display-sm mb-3" style={{ fontSize: '1.4rem', color: 'var(--white)' }}>Replace Existing Bracket?</h3>

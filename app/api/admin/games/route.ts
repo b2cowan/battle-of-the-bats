@@ -2,12 +2,25 @@ import { createClient } from '@supabase/supabase-js';
 import { getAuthContextWithScope, unauthorized, forbidden, scopeGuard } from '@/lib/api-auth';
 import { hasCapability } from '@/lib/roles';
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { updateGame } from '@/lib/db';
 import { hasPlanFeature, requiresTournamentPlusCopy, type PlanFeature } from '@/lib/plan-features';
+import {
+  finalizeTournamentScore,
+  loadTournamentScoreGame,
+  revertTournamentScore,
+  submitTournamentScore,
+  TournamentScoringError,
+} from '@/lib/tournament-scoring-service';
 
 function planFeatureForbidden(feature: PlanFeature) {
   return new Response(JSON.stringify({ error: requiresTournamentPlusCopy(feature) }), {
     status: 403,
+    headers: { 'Content-Type': 'application/json' },
+  });
+}
+
+function scoringErrorResponse(error: TournamentScoringError) {
+  return new Response(JSON.stringify({ error: error.message }), {
+    status: error.status,
     headers: { 'Content-Type': 'application/json' },
   });
 }
@@ -51,6 +64,10 @@ export async function GET(req: Request) {
     bracketCode: g.bracket_code,
     homePlaceholder: g.home_placeholder,
     awayPlaceholder: g.away_placeholder,
+    scoreSubmittedByUserId: g.score_submitted_by_user_id,
+    scoreSubmittedByEmail: g.score_submitted_by_email,
+    scoreSubmittedAt: g.score_submitted_at,
+    scoreSubmissionSource: g.score_submission_source,
     notes: g.notes,
   }));
 
@@ -210,17 +227,10 @@ export async function PATCH(req: Request) {
       });
     }
 
-    // Look up the game's tournament once for scope enforcement on all action branches
-    const { data: gameRow } = await supabaseAdmin
-      .from('games')
-      .select('tournament_id, status')
-      .eq('id', id)
-      .single();
+    const gameRow = await loadTournamentScoreGame(id);
 
-    if (gameRow) {
-      const denied = scopeGuard(ctx, gameRow.tournament_id);
-      if (denied) return denied;
-    }
+    const denied = scopeGuard(ctx, gameRow.tournamentId);
+    if (denied) return denied;
 
     // ── update (time / diamond / location) ───────────────────────────────────
     if (action === 'update') {
@@ -240,43 +250,32 @@ export async function PATCH(req: Request) {
     // ── submit-score ─────────────────────────────────────────────────────────
     else if (action === 'submit-score') {
       if (!hasCapability(ctx.role, ctx.capabilities, 'submit_scores')) return forbidden();
-
-      const homeScore = body.homeScore;
-      const awayScore = body.awayScore;
-
-      if (homeScore === undefined || homeScore === null || awayScore === undefined || awayScore === null) {
-        return new Response(JSON.stringify({ error: 'homeScore and awayScore are required' }), {
-          status: 400,
-          headers: { 'Content-Type': 'application/json' },
-        });
-      }
-
-      // When finalization is required, official/staff submissions go to 'submitted';
-      // owner/admin go straight to 'completed'.
-      const requiresFinalization = ctx.org.requireScoreFinalization ?? false;
-      const finalStatus =
-        requiresFinalization && (ctx.role === 'official' || ctx.role === 'staff')
-          ? 'submitted'
-          : 'completed';
-
-      await updateGame(id, { homeScore, awayScore, status: finalStatus }, { admin: true });
+      await submitTournamentScore({
+        gameId: id,
+        game: gameRow,
+        homeScore: body.homeScore,
+        awayScore: body.awayScore,
+        actor: {
+          userId: ctx.user.id,
+          email: ctx.user.email ?? null,
+          role: ctx.role,
+          orgRequireScoreFinalization: ctx.org.requireScoreFinalization,
+        },
+        source: 'admin_results',
+        allowFinalizedEdit: true,
+      });
     }
 
     // ── finalize (submitted → completed, owner/admin only) ───────────────────
     else if (action === 'finalize') {
       if (!hasCapability(ctx.role, ctx.capabilities, 'seal_tournaments')) return forbidden();
-
-      // Only promote games that are actually in 'submitted' state
-      if (gameRow?.status === 'submitted') {
-        await updateGame(id, { status: 'completed' }, { admin: true });
-      }
+      await finalizeTournamentScore(id, gameRow);
     }
 
     // Revert a scored game back to scheduled and clear the recorded result.
     else if (action === 'revert-score') {
       if (!hasCapability(ctx.role, ctx.capabilities, 'submit_scores')) return forbidden();
-
-      await updateGame(id, { status: 'scheduled', homeScore: null, awayScore: null }, { admin: true });
+      await revertTournamentScore(id);
     }
 
     else {
@@ -292,6 +291,7 @@ export async function PATCH(req: Request) {
     });
 
   } catch (err: any) {
+    if (err instanceof TournamentScoringError) return scoringErrorResponse(err);
     console.error('Admin Games PATCH Error:', err);
     return new Response(JSON.stringify({ error: err.message || 'Unknown server error' }), {
       status: 500,

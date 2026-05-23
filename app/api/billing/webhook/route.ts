@@ -8,6 +8,7 @@ import {
   provisionTeamWorkspaceFromCheckoutMetadata,
   syncTeamWorkspaceSubscription,
 } from '@/lib/team-checkout';
+import { completeOrgTeamAddonBillingFromMetadata } from '@/lib/team-org-billing';
 import { sendEmail, SITE_URL } from '@/lib/email';
 import type { OrgPlan } from '@/lib/types';
 import type Stripe from 'stripe';
@@ -38,6 +39,15 @@ function subscriptionItemId(sub: Stripe.Subscription): string | null {
   return sub.items?.data?.[0]?.id ?? null;
 }
 
+async function cancelPriorTeamSubscription(subscriptionId: string | null | undefined, newSubscriptionId: string | null | undefined) {
+  if (!subscriptionId || subscriptionId === newSubscriptionId || !subscriptionId.startsWith('sub_')) return;
+  try {
+    await stripe.subscriptions.cancel(subscriptionId);
+  } catch (error) {
+    console.error('[billing webhook] could not cancel prior Team subscription:', error);
+  }
+}
+
 export async function POST(req: Request) {
   const rawBody = await req.text();
   const sig = req.headers.get('stripe-signature') ?? '';
@@ -64,6 +74,27 @@ export async function POST(req: Request) {
   switch (event.type) {
     case 'checkout.session.completed': {
       const session = event.data.object as Stripe.Checkout.Session;
+      if (session.metadata?.checkoutKind === 'org_team_addon') {
+        const subscriptionId = subscriptionIdFromSession(session);
+        const sub = subscriptionId
+          ? await stripe.subscriptions.retrieve(subscriptionId)
+          : null;
+
+        const result = await completeOrgTeamAddonBillingFromMetadata({
+          metadata: session.metadata,
+          stripeCustomerId: customerId,
+          stripeSubscriptionId: subscriptionId,
+          stripeSubscriptionItemId: sub ? subscriptionItemId(sub) : null,
+          subscriptionStatus: sub?.status ?? 'active',
+          currentPeriodEnd: sub ? toIso(sub.items?.data?.[0]?.current_period_end) : null,
+          sourceEventId: `${event.id}:org_team_addon_completed`,
+        });
+        if (result.ok) {
+          await cancelPriorTeamSubscription(result.previousTeamSubscriptionId, subscriptionId);
+        }
+        break;
+      }
+
       if (session.metadata?.checkoutKind === 'standalone_team') {
         const subscriptionId = subscriptionIdFromSession(session);
         const sub = subscriptionId
@@ -103,6 +134,22 @@ export async function POST(req: Request) {
       const priceId: string = sub.items?.data?.[0]?.price?.id ?? '';
       const matchedPlan = await getPlanFromPriceId(priceId);
       if (matchedPlan) {
+        if (matchedPlan.planId === 'org_team_addon') {
+          const result = await completeOrgTeamAddonBillingFromMetadata({
+            metadata: sub.metadata,
+            stripeCustomerId: customerId,
+            stripeSubscriptionId: sub.id,
+            stripeSubscriptionItemId: subscriptionItemId(sub),
+            subscriptionStatus: sub.status,
+            currentPeriodEnd: toIso(sub.items?.data?.[0]?.current_period_end),
+            sourceEventId: `${event.id}:org_team_addon_completed`,
+          });
+          if (result.ok) {
+            await cancelPriorTeamSubscription(result.previousTeamSubscriptionId, sub.id);
+          }
+          break;
+        }
+
         const planKey = matchedPlan.planId as OrgPlan;
         const billingCycle = matchedPlan.billingCycle as BillingCycle;
         if (planKey === 'team') {

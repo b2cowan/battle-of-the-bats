@@ -95,11 +95,11 @@ export default function PastProgramYearsPage() {
                   )}
                   <h2 style={{ fontSize: '1rem', fontWeight: 700, margin: 0 }}>{first.teamName}</h2>
                   {first.teamAgeGroup && (
-                    <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)' }}>{first.teamAgeGroup}</span>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--white-40)' }}>{first.teamAgeGroup}</span>
                   )}
                   <Link
                     href={`${base}/rep-teams/teams/${teamId}/history`}
-                    style={{ marginLeft: 'auto', fontSize: '0.78rem', color: 'rgba(255,255,255,0.5)', textDecoration: 'none' }}
+                    style={{ marginLeft: 'auto', fontSize: '0.78rem', color: 'var(--white-50)', textDecoration: 'none' }}
                   >
                     Full history →
                   </Link>
@@ -113,7 +113,7 @@ export default function PastProgramYearsPage() {
                           <span className={`${styles.badge} ${y.status === 'archived' ? styles.badgeArchived : styles.badgeCompleted}`}>
                             {y.status === 'archived' ? 'Archived' : 'Completed'}
                           </span>
-                          <span style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.35)' }}>
+                          <span style={{ fontSize: '0.78rem', color: 'var(--white-35)' }}>
                             {y.year} · {y.rosterCount} player{y.rosterCount !== 1 ? 's' : ''}
                           </span>
                         </div>

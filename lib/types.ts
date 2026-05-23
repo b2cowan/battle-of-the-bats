@@ -226,6 +226,7 @@ export interface TournamentRegistrationFieldAnswer {
 }
 
 export type GameStatus = 'scheduled' | 'submitted' | 'completed' | 'cancelled';
+export type ScoreSubmissionSource = 'scorekeeper' | 'admin_results' | 'system';
 
 export interface Game {
   id: string;
@@ -248,6 +249,10 @@ export interface Game {
   homeSlotId?: string;   // FK to pool_slots — set for slot-based games
   awaySlotId?: string;
   notes?: string;
+  scoreSubmittedByUserId?: string | null;
+  scoreSubmittedByEmail?: string | null;
+  scoreSubmittedAt?: string | null;
+  scoreSubmissionSource?: ScoreSubmissionSource | null;
 }
 
 export interface Announcement {
@@ -557,6 +562,7 @@ export type RepEventType =
   | 'league_game'
   | 'practice'
   | 'team_event';
+export type RepAttendanceStatus = 'unknown' | 'attending' | 'absent' | 'late';
 export type RepDocumentType = 'waiver' | 'medical_consent' | 'code_of_conduct' | 'other';
 
 export interface RepTeam {
@@ -661,6 +667,20 @@ export interface RepTeamEvent {
   isRecurring: boolean;
   recurrenceRule: Record<string, unknown> | null;
   recurrenceParentId: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface RepTeamEventAttendance {
+  id: string;
+  eventId: string;
+  playerId: string;
+  programYearId: string;
+  teamId: string;
+  orgId: string;
+  status: RepAttendanceStatus;
+  note: string | null;
+  updatedBy: string | null;
   createdAt: string;
   updatedAt: string;
 }

@@ -203,7 +203,7 @@ export default function AllocationDetailPage() {
         </div>
         <div className={styles.summaryCard}>
           <span className={styles.summaryCardLabel}>Outstanding</span>
-          <span className={styles.summaryCardValue} style={{ fontSize: '1.3rem', color: outstanding > 0 ? 'rgba(255,255,255,0.8)' : '#4ade80' }}>
+          <span className={styles.summaryCardValue} style={{ fontSize: '1.3rem', color: outstanding > 0 ? 'var(--white-80)' : '#4ade80' }}>
             {fmt(outstanding)}
           </span>
         </div>
@@ -237,10 +237,10 @@ export default function AllocationDetailPage() {
               onClick={() => setExpanded(prev => ({ ...prev, [split.id]: !prev[split.id] }))}
             >
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
-                <span style={{ fontWeight: 700, color: 'rgba(255,255,255,0.9)', fontSize: '0.95rem' }}>
+                <span style={{ fontWeight: 700, color: 'var(--white-90)', fontSize: '0.95rem' }}>
                   {teamName}
                 </span>
-                <span style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.4)' }}>
+                <span style={{ fontSize: '0.78rem', color: 'var(--white-40)' }}>
                   {fmt(split.amount)} total
                   {splitOverdue > 0 && (
                     <span style={{ color: '#f87171', marginLeft: '0.5rem' }}>
@@ -253,16 +253,16 @@ export default function AllocationDetailPage() {
               <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                 <span style={{ fontSize: '0.82rem', color: '#4ade80' }}>{fmt(splitCollected)} paid</span>
                 {splitOutstanding > 0 && (
-                  <span style={{ fontSize: '0.82rem', color: 'rgba(255,255,255,0.5)' }}>{fmt(splitOutstanding)} due</span>
+                  <span style={{ fontSize: '0.82rem', color: 'var(--white-50)' }}>{fmt(splitOutstanding)} due</span>
                 )}
-                {isOpen ? <ChevronUp size={16} style={{ color: 'rgba(255,255,255,0.3)', flexShrink: 0 }} /> : <ChevronDown size={16} style={{ color: 'rgba(255,255,255,0.3)', flexShrink: 0 }} />}
+                {isOpen ? <ChevronUp size={16} style={{ color: 'var(--white-30)', flexShrink: 0 }} /> : <ChevronDown size={16} style={{ color: 'var(--white-30)', flexShrink: 0 }} />}
               </div>
             </button>
 
             {isOpen && (
-              <div style={{ borderTop: '1px solid rgba(255,255,255,0.07)', padding: '1rem 1.25rem' }}>
+              <div style={{ borderTop: '1px solid var(--white-8)', padding: '1rem 1.25rem' }}>
                 {split.notes && (
-                  <p style={{ fontSize: '0.82rem', color: 'rgba(255,255,255,0.4)', marginBottom: '1rem' }}>
+                  <p style={{ fontSize: '0.82rem', color: 'var(--white-40)', marginBottom: '1rem' }}>
                     {split.notes}
                   </p>
                 )}
@@ -283,9 +283,9 @@ export default function AllocationDetailPage() {
                         const overdue = isOverdue(inst.dueDate, inst.paidAt);
                         return (
                           <tr key={inst.id} className={styles.tr}>
-                            <td className={styles.td} style={{ color: 'rgba(255,255,255,0.4)' }}>{inst.installmentNumber}</td>
+                            <td className={styles.td} style={{ color: 'var(--white-40)' }}>{inst.installmentNumber}</td>
                             <td className={styles.td} style={{ fontVariantNumeric: 'tabular-nums' }}>{fmt(inst.amount)}</td>
-                            <td className={styles.td} style={{ color: overdue ? '#f87171' : 'rgba(255,255,255,0.65)' }}>
+                            <td className={styles.td} style={{ color: overdue ? '#f87171' : 'var(--white-70)' }}>
                               {fmtDate(inst.dueDate)}
                               {overdue && (
                                 <AlertTriangle size={12} style={{ marginLeft: 4, verticalAlign: 'middle', color: '#f87171' }} />

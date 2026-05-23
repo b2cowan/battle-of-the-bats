@@ -383,7 +383,7 @@ export default function AdminSchedulePage() {
               planId={currentOrg?.planId}
               disabled={filtered.length === 0}
             />
-            <button className="btn btn-primary btn-sm" onClick={openAdd} disabled={!currentTournament}>
+            <button className="btn btn-lime btn-data" onClick={openAdd} disabled={!currentTournament}>
               <Plus size={16} /> Add Game
             </button>
           </>
@@ -421,8 +421,8 @@ export default function AdminSchedulePage() {
                       display: 'inline-flex', alignItems: 'center', gap: '0.3rem',
                       fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.04em',
                       color: 'var(--logic-lime)', padding: '0.2rem 0.55rem',
-                      background: 'rgba(163,230,53,0.1)', border: '1px solid rgba(163,230,53,0.25)',
-                      borderRadius: '20px',
+                      background: 'rgba(var(--logic-lime-rgb),0.1)', border: '1px solid rgba(var(--logic-lime-rgb),0.25)',
+                      borderRadius: '2px',
                     }}>
                       <Globe size={10} />
                       {vis === 'published_teams' ? 'Published — Team Names' : 'Published — Generic'}
@@ -450,16 +450,15 @@ export default function AdminSchedulePage() {
                       fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.04em',
                       color: 'var(--white-40)', padding: '0.2rem 0.55rem',
                       background: 'var(--white-5)', border: '1px solid var(--white-10)',
-                      borderRadius: '20px',
+                      borderRadius: '2px',
                     }}>
                       <EyeOff size={10} />
                       Not Published
                     </span>
                     <button
-                      className="btn btn-primary btn-sm"
+                      className="btn btn-lime btn-data"
                       onClick={() => setPublishModal({ mode: 'single', ageGroupId: filterGroup })}
                       disabled={!currentTournament}
-                      style={{ height: '28px', fontSize: '0.75rem', padding: '0 0.75rem' }}
                     >
                       <Globe size={12} /> Publish
                     </button>
@@ -662,7 +661,7 @@ export default function AdminSchedulePage() {
 
                 return (
                   <>
-                    <div style={{ marginBottom: '0.75rem', padding: '0.7rem 0.875rem', background: 'var(--white-5)', borderRadius: 'var(--radius-sm)', fontSize: '0.8rem', color: 'var(--white-40)' }}>
+                    <div style={{ marginBottom: '0.75rem', padding: '0.7rem 0.875rem', background: 'var(--white-5)', borderRadius: '2px', fontSize: '0.8rem', color: 'var(--white-40)' }}>
                       No slots configured for this division. Configure pools in Division Settings to use slot-based scheduling.
                     </div>
                     <div className="form-row form-row-2" style={{ marginBottom: '1rem' }}>
@@ -724,7 +723,7 @@ export default function AdminSchedulePage() {
                       <div style={{
                         position: 'absolute', top: 'calc(100% + 2px)', left: 0, right: 0, zIndex: 200,
                         background: '#0d0f18', border: '1px solid var(--border)',
-                        borderRadius: 'var(--radius-sm)', boxShadow: '0 8px 32px rgba(0,0,0,0.8)',
+                        borderRadius: '2px', boxShadow: '0 8px 32px rgba(0,0,0,0.8)',
                         maxHeight: '180px', overflowY: 'auto',
                       }}>
                         {filtered.map((d, i) => (
@@ -767,7 +766,7 @@ export default function AdminSchedulePage() {
                       value={form.bracketCode}
                       maxLength={3}
                       onChange={e => setForm(f => ({ ...f, bracketCode: e.target.value.toUpperCase() }))}
-                      style={{ fontFamily: 'var(--font-display)', letterSpacing: '0.05em', textTransform: 'uppercase' }}
+                      style={{ fontFamily: 'var(--font-data)', letterSpacing: '0.05em', textTransform: 'uppercase' }}
                     />
                   </div>
                   <div className="form-group">
@@ -982,7 +981,7 @@ function PublishScheduleModal({
               {mode === 'all' && targets.length > 0 && (
                 <div style={{
                   background: 'var(--white-5)', border: '1px solid var(--white-10)',
-                  borderRadius: 'var(--radius-sm)', padding: '0.75rem 1rem', marginBottom: '1.25rem',
+                  borderRadius: '2px', padding: '0.75rem 1rem', marginBottom: '1.25rem',
                 }}>
                   {targets.map(g => (
                     <div key={g.id} style={{
@@ -1004,7 +1003,7 @@ function PublishScheduleModal({
                 </p>
                 <label style={{
                   display: 'flex', alignItems: 'flex-start', gap: '0.65rem',
-                  padding: '0.75rem', borderRadius: 'var(--radius-sm)', cursor: 'pointer',
+                  padding: '0.75rem', borderRadius: '2px', cursor: 'pointer',
                   background: nameMode === 'generic' ? 'rgba(var(--blueprint-blue-rgb),0.08)' : 'transparent',
                   border: nameMode === 'generic' ? '1px solid rgba(var(--blueprint-blue-rgb),0.3)' : '1px solid transparent',
                   marginBottom: '0.4rem',
@@ -1020,11 +1019,11 @@ function PublishScheduleModal({
                 </label>
                 <label style={{
                   display: 'flex', alignItems: 'flex-start', gap: '0.65rem',
-                  padding: '0.75rem', borderRadius: 'var(--radius-sm)',
+                  padding: '0.75rem', borderRadius: '2px',
                   cursor: showTeamNamesOption ? 'pointer' : 'not-allowed',
                   opacity: showTeamNamesOption ? 1 : 0.45,
-                  background: nameMode === 'teams' ? 'rgba(163,230,53,0.06)' : 'transparent',
-                  border: nameMode === 'teams' ? '1px solid rgba(163,230,53,0.25)' : '1px solid transparent',
+                  background: nameMode === 'teams' ? 'rgba(var(--logic-lime-rgb),0.06)' : 'transparent',
+                  border: nameMode === 'teams' ? '1px solid rgba(var(--logic-lime-rgb),0.25)' : '1px solid transparent',
                 }}>
                   <input
                     type="radio"
@@ -1069,7 +1068,7 @@ function PublishScheduleModal({
                           fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.06em',
                           color: 'var(--blueprint-blue)', background: 'rgba(var(--blueprint-blue-rgb),0.12)',
                           border: '1px solid rgba(var(--blueprint-blue-rgb),0.25)',
-                          padding: '1px 6px', borderRadius: '4px',
+                          padding: '1px 6px', borderRadius: '2px',
                         }}>Tournament Plus</span>
                       )}
                     </div>
@@ -1083,7 +1082,7 @@ function PublishScheduleModal({
               </div>
 
               {error && (
-                <div style={{ marginBottom: '1rem', padding: '0.6rem 0.75rem', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 'var(--radius-sm)', fontSize: '0.82rem', color: '#f87171' }}>
+                <div style={{ marginBottom: '1rem', padding: '0.6rem 0.75rem', background: 'rgba(var(--danger-rgb),0.1)', border: '1px solid rgba(var(--danger-rgb),0.3)', borderRadius: '2px', fontSize: '0.82rem', color: '#f87171' }}>
                   {error}
                 </div>
               )}
@@ -1213,7 +1212,7 @@ function BracketColumns({ columns, onEdit, onDelete, formatDate }: any) {
             style={{
               textAlign: 'center',
               color: 'var(--logic-lime)',
-              fontFamily: 'var(--font-display)',
+              fontFamily: 'var(--font-data)',
               fontSize: '0.8rem',
               fontWeight: 900,
               textTransform: 'uppercase',
@@ -1250,29 +1249,28 @@ function BracketColumns({ columns, onEdit, onDelete, formatDate }: any) {
                 )}
                 <div className="card" style={{
                   padding: '0.75rem',
-                  border: '1px solid var(--white-10)',
-                  background: 'rgba(15, 15, 20, 0.98)',
-                  backdropFilter: 'blur(20px)',
+                  border: '1px solid rgba(var(--blueprint-blue-rgb), 0.2)',
+                  background: 'var(--surface)',
                   position: 'relative', zIndex: 1,
-                  boxShadow: '0 10px 25px rgba(0,0,0,0.4)',
-                  borderRadius: '10px'
+                  boxShadow: 'var(--shadow-sm)',
+                  borderRadius: '2px'
                 }}>
                   <div className="flex-between" style={{ marginBottom: '7px' }}>
                     <div style={{
                       fontSize: '0.6rem', fontWeight: 900, color: 'var(--logic-lime)',
                       background: 'rgba(var(--blueprint-blue-rgb), 0.1)', padding: '2px 8px',
-                      borderRadius: '4px', border: '1px solid rgba(var(--blueprint-blue-rgb), 0.2)', letterSpacing: '0.02em'
+                      borderRadius: '2px', border: '1px solid rgba(var(--blueprint-blue-rgb), 0.2)', letterSpacing: '0.02em'
                     }}>{g.bracketCode}</div>
                     <div className="flex gap-1.5">
                       <button className="btn btn-ghost btn-sm" onClick={() => onEdit(g)} title="Edit" style={{
                         height: '24px', width: '24px', padding: 0,
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        background: 'rgba(255,255,255,0.03)'
+                        background: 'var(--white-03)'
                       }}><Pencil size={11} /></button>
                       <button className="btn btn-ghost btn-sm text-danger" onClick={() => onDelete(g.id)} title="Delete" style={{
                         height: '24px', width: '24px', padding: 0,
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        background: 'rgba(255,255,255,0.03)'
+                        background: 'var(--white-03)'
                       }}><Trash2 size={11} /></button>
                     </div>
                   </div>
@@ -1280,26 +1278,26 @@ function BracketColumns({ columns, onEdit, onDelete, formatDate }: any) {
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '0.75rem' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <div style={{
-                        width: '28px', fontSize: '0.55rem', fontWeight: 900, color: 'var(--logic-lime)',
+                        width: '28px', fontSize: '0.55rem', fontWeight: 900, color: 'var(--data-gray)',
                         textAlign: 'center', background: 'rgba(var(--blueprint-blue-rgb), 0.1)', padding: '1px 0',
-                        borderRadius: '3px', border: '1px solid rgba(var(--blueprint-blue-rgb), 0.2)', letterSpacing: '0.02em'
+                        borderRadius: '2px', border: '1px solid rgba(var(--blueprint-blue-rgb), 0.2)', letterSpacing: '0.02em'
                       }}>VIS</div>
                       <div style={{
-                        fontWeight: '700', fontSize: '0.85rem', color: '#ffffff',
+                        fontWeight: '700', fontSize: '0.85rem', color: 'var(--white)',
                         flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
                       }}>
                         {g.awayPlaceholder || 'TBD'}
                       </div>
                     </div>
-                    <div style={{ height: '1px', background: 'rgba(255,255,255,0.03)' }} />
+                    <div style={{ height: '1px', background: 'var(--white-03)' }} />
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <div style={{
-                        width: '28px', fontSize: '0.55rem', fontWeight: 900, color: 'var(--logic-lime)',
+                        width: '28px', fontSize: '0.55rem', fontWeight: 900, color: 'var(--data-gray)',
                         textAlign: 'center', background: 'rgba(var(--blueprint-blue-rgb), 0.1)', padding: '1px 0',
-                        borderRadius: '3px', border: '1px solid rgba(var(--blueprint-blue-rgb), 0.2)', letterSpacing: '0.02em'
+                        borderRadius: '2px', border: '1px solid rgba(var(--blueprint-blue-rgb), 0.2)', letterSpacing: '0.02em'
                       }}>HOM</div>
                       <div style={{
-                        fontWeight: '700', fontSize: '0.85rem', color: '#ffffff',
+                        fontWeight: '700', fontSize: '0.85rem', color: 'var(--white)',
                         flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
                       }}>
                         {g.homePlaceholder || 'TBD'}
@@ -1309,7 +1307,7 @@ function BracketColumns({ columns, onEdit, onDelete, formatDate }: any) {
 
                   <div style={{
                     display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: '0.4rem',
-                    paddingTop: '0.6rem', borderTop: '1px solid rgba(255,255,255,0.05)',
+                    paddingTop: '0.6rem', borderTop: '1px solid var(--white-5)',
                     fontSize: '0.7rem', color: 'var(--white-40)'
                   }}>
                     <div className="flex items-center" style={{ gap: '5px' }}><Calendar size={10} className="text-primary-light opacity-50" /> {g.date ? formatDate(g.date) : 'TBD'}</div>
@@ -1347,7 +1345,6 @@ function PlayoffBracketView({ games, teams, ageGroup, canGeneratePlayoffs, onEdi
       <div style={{
         display: 'flex', flexDirection: 'column', gap: '3rem',
         padding: '2rem 0.75rem',
-        background: 'radial-gradient(circle at 50% 50%, rgba(var(--blueprint-blue-rgb), 0.06) 0%, transparent 70%)'
       }}>
         {pools.map((pool: any) => {
           const poolGames = games.filter((g: any) => inferGamePool(g, games, pools) === pool.name);
@@ -1357,7 +1354,7 @@ function PlayoffBracketView({ games, teams, ageGroup, canGeneratePlayoffs, onEdi
             <div key={pool.id}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.25rem' }}>
                 <Trophy size={16} style={{ color: 'var(--logic-lime)' }} />
-                <h3 style={{ color: 'var(--logic-lime)', fontFamily: 'var(--font-display)', fontSize: '0.85rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em', margin: 0 }}>
+                <h3 style={{ color: 'var(--logic-lime)', fontFamily: 'var(--font-data)', fontSize: '0.85rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em', margin: 0 }}>
                   {formatPoolName(pool.name)} Playoffs
                 </h3>
                 <div style={{ flex: 1, height: '1px', background: 'linear-gradient(to right, var(--blueprint-blue), transparent)' }} />
@@ -1391,7 +1388,6 @@ function PlayoffBracketView({ games, teams, ageGroup, canGeneratePlayoffs, onEdi
       overflowX: 'auto',
       padding: '2rem 0.75rem',
       minHeight: '500px',
-      background: 'radial-gradient(circle at 50% 50%, rgba(var(--blueprint-blue-rgb), 0.06) 0%, transparent 70%)'
     }}>
       <BracketColumns columns={columns} onEdit={onEdit} onDelete={onDelete} formatDate={formatDate} />
     </div>

@@ -31,7 +31,7 @@ const EVENT_TYPE_LABEL: Record<string, string> = {
 };
 
 const RESULT_COLOR: Record<string, string> = {
-  win: '#4ade80', loss: '#f87171', tie: 'rgba(255,255,255,0.5)',
+  win: '#4ade80', loss: '#f87171', tie: 'var(--white-50)',
 };
 
 function fmtDate(s: string) {
@@ -154,7 +154,7 @@ export default function PastYearDetailPage({
             </p>
           </div>
         </div>
-        <span style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.35)', alignSelf: 'center' }}>
+        <span style={{ fontSize: '0.8rem', color: 'var(--white-35)', alignSelf: 'center' }}>
           Read-only archive
         </span>
       </div>
@@ -165,18 +165,18 @@ export default function PastYearDetailPage({
       <div style={{ display: 'flex', gap: '1.5rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
         <div>
           <div style={{ fontSize: '1.4rem', fontWeight: 700 }}>{roster.length}</div>
-          <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)' }}>Players</div>
+          <div style={{ fontSize: '0.75rem', color: 'var(--white-40)' }}>Players</div>
         </div>
         <div>
           <div style={{ fontSize: '1.4rem', fontWeight: 700 }}>{coaches.length}</div>
-          <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)' }}>Coaches</div>
+          <div style={{ fontSize: '0.75rem', color: 'var(--white-40)' }}>Coaches</div>
         </div>
         {gameEvents.length > 0 && (
           <div>
             <div style={{ fontSize: '1.4rem', fontWeight: 700 }}>
               {wins}W – {losses}L – {ties}T
             </div>
-            <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)' }}>Record</div>
+            <div style={{ fontSize: '0.75rem', color: 'var(--white-40)' }}>Record</div>
           </div>
         )}
       </div>
@@ -212,13 +212,13 @@ export default function PastYearDetailPage({
               <tbody>
                 {roster.map(p => (
                   <tr key={p.id} className={styles.tr}>
-                    <td className={styles.td} style={{ color: 'rgba(255,255,255,0.4)', width: '2.5rem' }}>
+                    <td className={styles.td} style={{ color: 'var(--white-40)', width: '2.5rem' }}>
                       {p.playerNumber ?? '—'}
                     </td>
                     <td className={styles.td}>
                       {p.playerFirstName} {p.playerLastName}
                     </td>
-                    <td className={styles.td} style={{ color: 'rgba(255,255,255,0.5)' }}>
+                    <td className={styles.td} style={{ color: 'var(--white-50)' }}>
                       {p.guardianFirstName || p.guardianLastName
                         ? `${p.guardianFirstName ?? ''} ${p.guardianLastName ?? ''}`.trim()
                         : '—'}
@@ -258,14 +258,14 @@ export default function PastYearDetailPage({
                   .sort((a, b) => a.startsAt.localeCompare(b.startsAt))
                   .map(e => (
                     <tr key={e.id} className={styles.tr}>
-                      <td className={styles.td} style={{ color: 'rgba(255,255,255,0.5)', whiteSpace: 'nowrap' }}>
+                      <td className={styles.td} style={{ color: 'var(--white-50)', whiteSpace: 'nowrap' }}>
                         {fmtDate(e.startsAt)}
                       </td>
-                      <td className={styles.td} style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.78rem' }}>
+                      <td className={styles.td} style={{ color: 'var(--white-40)', fontSize: '0.78rem' }}>
                         {EVENT_TYPE_LABEL[e.eventType] ?? e.eventType}
                       </td>
                       <td className={styles.td}>{e.name}</td>
-                      <td className={styles.td} style={{ color: 'rgba(255,255,255,0.5)' }}>
+                      <td className={styles.td} style={{ color: 'var(--white-50)' }}>
                         {e.opponent ?? '—'}
                       </td>
                       <td className={styles.td}>
@@ -302,10 +302,10 @@ export default function PastYearDetailPage({
                 {coaches.map(c => (
                   <tr key={c.id} className={styles.tr}>
                     <td className={styles.td}>{c.displayName ?? c.email}</td>
-                    <td className={styles.td} style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.78rem' }}>
+                    <td className={styles.td} style={{ color: 'var(--white-50)', fontSize: '0.78rem' }}>
                       {c.coachRole === 'head_coach' ? 'Head Coach' : 'Assistant Coach'}
                     </td>
-                    <td className={styles.td} style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.78rem' }}>
+                    <td className={styles.td} style={{ color: 'var(--white-40)', fontSize: '0.78rem' }}>
                       {c.email}
                     </td>
                   </tr>
@@ -319,7 +319,7 @@ export default function PastYearDetailPage({
       {/* Documents tab */}
       {tab === 'documents' && (
         <div className={styles.emptyState} style={{ textAlign: 'left' }}>
-          <p style={{ marginBottom: '0.75rem', color: 'rgba(255,255,255,0.6)' }}>
+          <p style={{ marginBottom: '0.75rem', color: 'var(--white-60)' }}>
             Player documents are stored per-player and accessible from the roster page.
           </p>
           <p>

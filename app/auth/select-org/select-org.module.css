@@ -1,0 +1,168 @@
+/* ── Wider container for multi-org picker ─────────────────────────────────── */
+.container {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 520px;
+  background: var(--hud-surface);
+  border: 1px solid rgba(30, 58, 138, 0.5);
+  border-radius: 0;
+  padding: 2.5rem;
+  box-shadow: 0 0 0 1px rgba(30, 58, 138, 0.15), 0 0 24px rgba(30, 58, 138, 0.08);
+}
+
+/* ── Header ──────────────────────────────────────────────────────────────── */
+.header {
+  text-align: center;
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid rgba(30, 58, 138, 0.3);
+}
+
+.iconWrap {
+  width: 48px;
+  height: 48px;
+  border-radius: 0;
+  background: rgba(30, 58, 138, 0.1);
+  border: 1px solid rgba(30, 58, 138, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1.25rem;
+  color: var(--data-gray);
+}
+
+.title {
+  font-family: var(--font-data);
+  font-size: 1.1rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--logic-lime);
+  margin-bottom: 0.375rem;
+}
+
+.sub {
+  font-family: var(--font-data);
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  color: var(--data-gray);
+  text-transform: uppercase;
+}
+
+/* ── Org list ────────────────────────────────────────────────────────────── */
+.orgList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+/* ── Org item card ───────────────────────────────────────────────────────── */
+.orgItem {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0;
+  padding: 1rem 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.orgItem:hover {
+  border-color: rgba(30, 58, 138, 0.6);
+  background: rgba(30, 58, 138, 0.08);
+}
+
+.orgInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  min-width: 0;
+}
+
+.orgNameRow {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.orgName {
+  font-family: var(--font-data);
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--fl-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.planBadge {
+  font-family: var(--font-data);
+  font-size: 0.55rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  border-radius: 2px;
+  padding: 0.14rem 0.45rem;
+  border: 1px solid;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.roleMeta {
+  font-family: var(--font-data);
+  font-size: 0.65rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--data-gray);
+}
+
+.roleHighlight {
+  color: rgba(217, 249, 157, 0.65); /* logic-lime at 65% */
+}
+
+/* ── Enter button ────────────────────────────────────────────────────────── */
+.enterBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 1rem;
+  font-family: var(--font-data);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  background: var(--logic-lime);
+  color: #0f1123;
+  border: none;
+  border-radius: 2px;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 0.15s, color 0.15s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.enterBtn:hover {
+  background: #fff;
+  color: #0f1123;
+}
+
+/* ── Footer hint ─────────────────────────────────────────────────────────── */
+.footer {
+  margin-top: 1.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid rgba(30, 58, 138, 0.2);
+  text-align: center;
+  font-family: var(--font-data);
+  font-size: 0.65rem;
+  letter-spacing: 0.06em;
+  color: var(--data-gray);
+  opacity: 0.6;
+  text-transform: uppercase;
+}

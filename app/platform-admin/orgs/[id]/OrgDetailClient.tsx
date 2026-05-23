@@ -52,6 +52,19 @@ interface InternalNote {
   updatedAt: string;
 }
 
+interface PendingOwnershipTransfer {
+  linkId: string;
+  teamWorkspaceId: string;
+  repTeamId: string;
+  teamName: string;
+  teamSlug: string | null;
+  workspaceOrgName: string;
+  workspaceOrgSlug: string | null;
+  billingMode: string | null;
+  updatedAt: string;
+  readyForCompletion: boolean;
+}
+
 interface PlanOption {
   id: string;
   label: string;
@@ -76,6 +89,7 @@ interface Props {
   tournaments: Tournament[];
   auditEvents: AuditEvent[];
   auditHref: string;
+  pendingOwnershipTransfers: PendingOwnershipTransfer[];
 }
 
 type TabId = 'support' | 'billing' | 'entitlements' | 'people' | 'activity';
@@ -165,6 +179,7 @@ export default function OrgDetailClient({
   tournaments,
   auditEvents,
   auditHref,
+  pendingOwnershipTransfers: initialPendingOwnershipTransfers,
 }: Props) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<TabId>('support');
@@ -182,6 +197,11 @@ export default function OrgDetailClient({
   const [planSaving, setPlanSaving] = useState(false);
   const [planSaved, setPlanSaved] = useState(false);
   const [planError, setPlanError] = useState('');
+  const [pendingOwnershipTransfers, setPendingOwnershipTransfers] = useState(initialPendingOwnershipTransfers);
+  const [ownershipReasons, setOwnershipReasons] = useState<Record<string, string>>({});
+  const [ownershipSaving, setOwnershipSaving] = useState<Record<string, boolean>>({});
+  const [ownershipError, setOwnershipError] = useState<Record<string, string>>({});
+  const [ownershipSaved, setOwnershipSaved] = useState<Record<string, boolean>>({});
 
   async function handleIdentitySave(e: React.FormEvent) {
     e.preventDefault();
@@ -264,6 +284,42 @@ export default function OrgDetailClient({
       setPlanError('Network error');
     } finally {
       setPlanSaving(false);
+    }
+  }
+
+  async function handleOwnershipTransferComplete(linkId: string) {
+    const reason = ownershipReasons[linkId]?.trim() ?? '';
+    if (reason.length < 5) {
+      setOwnershipError(prev => ({ ...prev, [linkId]: 'Reason is required' }));
+      return;
+    }
+
+    setOwnershipSaving(prev => ({ ...prev, [linkId]: true }));
+    setOwnershipError(prev => ({ ...prev, [linkId]: '' }));
+    setOwnershipSaved(prev => ({ ...prev, [linkId]: false }));
+    try {
+      const res = await fetch(`/api/platform-admin/team-ownership-transfers/${linkId}/complete`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reason }),
+      });
+      const data = await res.json().catch((): ApiErrorBody => ({}));
+      if (!res.ok) {
+        setOwnershipError(prev => ({ ...prev, [linkId]: data.error ?? 'Ownership transfer failed' }));
+        return;
+      }
+      setPendingOwnershipTransfers(prev => prev.filter(transfer => transfer.linkId !== linkId));
+      setOwnershipReasons(prev => {
+        const next = { ...prev };
+        delete next[linkId];
+        return next;
+      });
+      setOwnershipSaved(prev => ({ ...prev, [linkId]: true }));
+      router.refresh();
+    } catch {
+      setOwnershipError(prev => ({ ...prev, [linkId]: 'Network error' }));
+    } finally {
+      setOwnershipSaving(prev => ({ ...prev, [linkId]: false }));
     }
   }
 
@@ -421,7 +477,7 @@ export default function OrgDetailClient({
     tournaments.length > parsedTournamentLimit;
   const planChanged = planId !== currentPlanId || parsedTournamentLimit !== currentTournamentLimit;
   const tabItems: Array<{ id: TabId; label: string; count?: number }> = [
-    { id: 'support', label: 'Support', count: notes.length },
+    { id: 'support', label: 'Support', count: notes.length + pendingOwnershipTransfers.length },
     { id: 'billing', label: 'Billing & Access', count: activeOverrides.length },
     { id: 'entitlements', label: 'Entitlements', count: addonEdits.length },
     { id: 'people', label: 'People & Tournaments', count: members.length + tournaments.length },
@@ -670,6 +726,58 @@ export default function OrgDetailClient({
                 </form>
               </section>
             )}
+
+            <section className={styles.section}>
+              <div className={styles.sectionHeader}>
+                <h3 className={styles.sectionTitle}>Team Ownership Transfers</h3>
+                {pendingOwnershipTransfers.length > 0 && <span className={styles.savedIndicator}>{pendingOwnershipTransfers.length} pending</span>}
+              </div>
+              {pendingOwnershipTransfers.length === 0 ? (
+                <p className={styles.emptyNote}>No Team ownership transfers are waiting for platform completion.</p>
+              ) : (
+                <div className={styles.noteTimeline}>
+                  {pendingOwnershipTransfers.map(transfer => (
+                    <article key={transfer.linkId} className={styles.noteItem}>
+                      <div className={styles.noteMeta}>
+                        <span>{transfer.teamName}</span>
+                        <span>{transfer.workspaceOrgSlug ? `/${transfer.workspaceOrgSlug}` : transfer.workspaceOrgName}</span>
+                        <span>{fmtDateTime(transfer.updatedAt)}</span>
+                      </div>
+                      <p className={styles.noteBody}>
+                        Ready to move roster, schedule, documents, budget, and team ledger into this organization.
+                        Current Team billing: {transfer.billingMode ?? 'unknown'}.
+                      </p>
+                      {canManageSupport || canManageBilling ? (
+                        <>
+                          <textarea
+                            className={styles.notesTextarea}
+                            value={ownershipReasons[transfer.linkId] ?? ''}
+                            onChange={event => setOwnershipReasons(prev => ({ ...prev, [transfer.linkId]: event.target.value }))}
+                            rows={3}
+                            placeholder="Reason for completing this ownership transfer"
+                          />
+                          <div className={styles.notesActions}>
+                            <button
+                              type="button"
+                              className={styles.saveBtn}
+                              onClick={() => handleOwnershipTransferComplete(transfer.linkId)}
+                              disabled={!transfer.readyForCompletion || ownershipSaving[transfer.linkId]}
+                            >
+                              {ownershipSaving[transfer.linkId] ? 'Completing...' : 'Complete Transfer'}
+                            </button>
+                            {!transfer.readyForCompletion && <span className={styles.warningNote}>Both coach and org approval are required.</span>}
+                            {ownershipError[transfer.linkId] && <span className={styles.rowError}>{ownershipError[transfer.linkId]}</span>}
+                            {ownershipSaved[transfer.linkId] && <span className={styles.savedIndicator}>Completed</span>}
+                          </div>
+                        </>
+                      ) : (
+                        <p className={styles.emptyNote}>Support or billing permission is required to complete this transfer.</p>
+                      )}
+                    </article>
+                  ))}
+                </div>
+              )}
+            </section>
           </div>
         )}
 

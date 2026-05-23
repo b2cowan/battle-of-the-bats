@@ -2,7 +2,7 @@
 
 import { FormEvent, use, useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Building2, Link2, RefreshCw } from 'lucide-react';
+import { Building2, CreditCard, Link2, RefreshCw } from 'lucide-react';
 import HelpCallout from '@/components/help/HelpCallout';
 import { useOrg } from '@/lib/org-context';
 import styles from '../coaches.module.css';
@@ -12,11 +12,21 @@ type LinkSummary = {
   status: string;
   linkType: string;
   sharingLevel: string;
+  requestedByUserId: string | null;
+  approvedByTeamUserId: string | null;
+  approvedByOrgUserId: string | null;
+  billingModeAfterApproval: string | null;
   createdAt: string;
   updatedAt: string;
   linkedOrg: { name: string; slug: string; contactEmail: string | null } | null;
   workspaceOrg: { name: string; slug: string } | null;
   repTeam: { name: string; ageGroup: string | null } | null;
+  workspace: {
+    workspaceState: string | null;
+    billingMode: string | null;
+    subscriptionStatus: string | null;
+    source: string | null;
+  } | null;
 };
 
 const STATUS_LABEL: Record<string, string> = {
@@ -122,6 +132,69 @@ export default function CoachLinkOrgPage({ params }: { params: Promise<{ orgSlug
     }
   }
 
+  async function billingAction(linkId: string, action: 'request_billing' | 'accept_billing' | 'decline_billing') {
+    setWorkingId(linkId);
+    setError(null);
+    setMessage(null);
+
+    try {
+      const res = await fetch(`/api/coaches/${orgSlug}/team-links`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ linkId, action }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error ?? 'Could not update the org billing request.');
+      if (action === 'request_billing') setMessage('Org billing request sent. The organization owner can review it from Team Links.');
+      if (action === 'accept_billing') setMessage('Org billing invitation accepted. The organization owner can now complete checkout.');
+      if (action === 'decline_billing') setMessage('Org billing invitation declined. The Basic link remains active.');
+      await loadLinks();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not update the org billing request.');
+    } finally {
+      setWorkingId(null);
+    }
+  }
+
+  function billingText(link: LinkSummary) {
+    if (link.linkType === 'ownership' && link.status === 'ownership_pending') {
+      if (link.approvedByOrgUserId && !link.approvedByTeamUserId) return 'Ownership transfer invited';
+      if (link.approvedByTeamUserId && !link.approvedByOrgUserId) return 'Ownership transfer requested';
+      if (link.approvedByTeamUserId && link.approvedByOrgUserId) return 'Ready for platform transfer';
+    }
+    const pendingBilling = link.linkType === 'billing' && link.billingModeAfterApproval === 'org_team_addon';
+    const activeOrgBilling = pendingBilling && link.workspace?.billingMode === 'org_team_addon';
+    if (activeOrgBilling) return 'Org billing active';
+    if (pendingBilling && link.approvedByOrgUserId && !link.approvedByTeamUserId) return 'Organization invited you to move billing';
+    if (pendingBilling && link.approvedByTeamUserId && !link.approvedByOrgUserId) return 'Waiting for organization billing approval';
+    if (pendingBilling && link.approvedByTeamUserId && link.approvedByOrgUserId) return 'Organization checkout pending';
+    return link.workspace?.billingMode === 'team_direct' ? 'Team pays direct' : link.workspace?.billingMode ?? 'Billing unchanged';
+  }
+
+  async function ownershipAction(linkId: string, action: 'request_ownership' | 'accept_ownership' | 'decline_ownership') {
+    setWorkingId(linkId);
+    setError(null);
+    setMessage(null);
+
+    try {
+      const res = await fetch(`/api/coaches/${orgSlug}/team-links`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ linkId, action }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error ?? 'Could not update the ownership transfer.');
+      if (action === 'request_ownership') setMessage('Ownership transfer requested. The organization owner can review it from Team Links.');
+      if (action === 'accept_ownership') setMessage('Ownership transfer accepted. Platform-assisted transfer can now be completed.');
+      if (action === 'decline_ownership') setMessage('Ownership transfer invitation declined. The existing link remains active.');
+      await loadLinks();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not update the ownership transfer.');
+    } finally {
+      setWorkingId(null);
+    }
+  }
+
   if (orgLoading || loading) {
     return <div className={styles.loadingState}>Loading organization links...</div>;
   }
@@ -154,7 +227,7 @@ export default function CoachLinkOrgPage({ params }: { params: Promise<{ orgSlug
           <div className={styles.headerIcon}><Building2 size={22} /></div>
           <div>
             <h1 className={styles.pageTitle}>Link Organization</h1>
-            <p className={styles.pageSub}>Request a basic visibility link to a parent organization.</p>
+            <p className={styles.pageSub}>Request a Basic visibility link or move approved Team billing to a parent organization.</p>
           </div>
         </div>
         <button type="button" className="btn btn-ghost btn-sm" onClick={loadLinks}>
@@ -164,8 +237,8 @@ export default function CoachLinkOrgPage({ params }: { params: Promise<{ orgSlug
 
       <HelpCallout
         variant="info"
-        title="Basic visibility only"
-        body="A linked organization can see that this Team workspace is associated with them. This does not transfer billing, ownership, roster access, documents, accounting details, or org-wide rep-team admin access."
+        title="Basic visibility first"
+        body="A Basic link records the parent organization association. You can separately request org billing, but that still does not transfer ownership, roster access, documents, accounting details, or org-wide rep-team admin access."
       />
 
       <section className={styles.detailSection}>
@@ -195,48 +268,126 @@ export default function CoachLinkOrgPage({ params }: { params: Promise<{ orgSlug
           <p className={styles.detailPlaceholder}>No organization link requests or invitations yet.</p>
         ) : (
           <div className={styles.linkList}>
-            {links.map(link => (
-              <article key={link.id} className={styles.linkCard}>
-                <div className={styles.linkCardHeader}>
-                  <div>
-                    <h3 className={styles.linkCardTitle}>{link.linkedOrg?.name ?? 'Organization'}</h3>
-                    <p className={styles.linkCardMeta}>
-                      {link.status === 'invited'
-                        ? 'This organization invited your Team workspace to connect.'
-                        : link.linkedOrg?.slug ? `/${link.linkedOrg.slug}` : 'Organization slug unavailable'}
-                    </p>
+            {links.map(link => {
+              const pendingBilling = link.linkType === 'billing' && link.billingModeAfterApproval === 'org_team_addon';
+              const activeOrgBilling = pendingBilling && link.workspace?.billingMode === 'org_team_addon';
+              const pendingOwnership = link.linkType === 'ownership' && link.status === 'ownership_pending';
+              const canRequestBilling = link.status === 'linked' && !pendingBilling && !activeOrgBilling && (link.workspace?.billingMode === 'team_direct' || link.workspace?.billingMode === 'platform_override');
+              const canRespondToBillingInvite = link.status === 'linked' && pendingBilling && link.approvedByOrgUserId && !link.approvedByTeamUserId;
+              const canRequestOwnership = link.status === 'linked' && !pendingOwnership && (!pendingBilling || activeOrgBilling);
+              const canRespondToOwnershipInvite = pendingOwnership && link.approvedByOrgUserId && !link.approvedByTeamUserId;
+
+              return (
+                <article key={link.id} className={styles.linkCard}>
+                  <div className={styles.linkCardHeader}>
+                    <div>
+                      <h3 className={styles.linkCardTitle}>{link.linkedOrg?.name ?? 'Organization'}</h3>
+                      <p className={styles.linkCardMeta}>
+                        {link.status === 'invited'
+                          ? 'This organization invited your Team workspace to connect.'
+                          : link.linkedOrg?.slug ? `/${link.linkedOrg.slug}` : 'Organization slug unavailable'}
+                      </p>
+                    </div>
+                    <span className={`${styles.badge} ${statusClass(link.status)}`}>
+                      {STATUS_LABEL[link.status] ?? link.status}
+                    </span>
                   </div>
-                  <span className={`${styles.badge} ${statusClass(link.status)}`}>
-                    {STATUS_LABEL[link.status] ?? link.status}
-                  </span>
-                </div>
-                <div className={styles.linkFacts}>
-                  <span>Sharing: Basic visibility</span>
-                  <span>Team: {link.repTeam?.name ?? 'Team workspace'}</span>
-                  <span>Updated {formatDate(link.updatedAt)}</span>
-                </div>
-                {link.status === 'invited' && (
-                  <div className="flex gap-2 mt-4 flex-wrap">
-                    <button
-                      type="button"
-                      className="btn btn-primary btn-sm"
-                      onClick={() => respondToInvite(link.id, 'accept')}
-                      disabled={workingId === link.id}
-                    >
-                      Accept Invitation
-                    </button>
-                    <button
-                      type="button"
-                      className="btn btn-danger btn-sm"
-                      onClick={() => respondToInvite(link.id, 'decline')}
-                      disabled={workingId === link.id}
-                    >
-                      Decline
-                    </button>
+                  <div className={styles.linkFacts}>
+                    <span>Sharing: Basic visibility</span>
+                    <span>Team: {link.repTeam?.name ?? 'Team workspace'}</span>
+                    <span>Billing: {billingText(link)}</span>
+                    <span>Updated {formatDate(link.updatedAt)}</span>
                   </div>
-                )}
-              </article>
-            ))}
+                  {link.status === 'invited' && (
+                    <div className="flex gap-2 mt-4 flex-wrap">
+                      <button
+                        type="button"
+                        className="btn btn-primary btn-sm"
+                        onClick={() => respondToInvite(link.id, 'accept')}
+                        disabled={workingId === link.id}
+                      >
+                        Accept Invitation
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn-danger btn-sm"
+                        onClick={() => respondToInvite(link.id, 'decline')}
+                        disabled={workingId === link.id}
+                      >
+                        Decline
+                      </button>
+                    </div>
+                  )}
+                  {canRequestBilling && (
+                    <div className="flex gap-2 mt-4 flex-wrap">
+                      <button
+                        type="button"
+                        className="btn btn-primary btn-sm"
+                        onClick={() => billingAction(link.id, 'request_billing')}
+                        disabled={workingId === link.id}
+                      >
+                        <CreditCard size={14} /> Request Org Billing
+                      </button>
+                    </div>
+                  )}
+                  {canRespondToBillingInvite && (
+                    <div className="flex gap-2 mt-4 flex-wrap">
+                      <button
+                        type="button"
+                        className="btn btn-primary btn-sm"
+                        onClick={() => billingAction(link.id, 'accept_billing')}
+                        disabled={workingId === link.id}
+                      >
+                        Accept Billing Invite
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn-danger btn-sm"
+                        onClick={() => billingAction(link.id, 'decline_billing')}
+                        disabled={workingId === link.id}
+                      >
+                        Decline Billing
+                      </button>
+                    </div>
+                  )}
+                  {canRequestOwnership && (
+                    <div className="flex gap-2 mt-4 flex-wrap">
+                      <button
+                        type="button"
+                        className="btn btn-ghost btn-sm"
+                        onClick={() => ownershipAction(link.id, 'request_ownership')}
+                        disabled={workingId === link.id}
+                      >
+                        Request Ownership Transfer
+                      </button>
+                    </div>
+                  )}
+                  {canRespondToOwnershipInvite && (
+                    <div className="flex gap-2 mt-4 flex-wrap">
+                      <button
+                        type="button"
+                        className="btn btn-primary btn-sm"
+                        onClick={() => ownershipAction(link.id, 'accept_ownership')}
+                        disabled={workingId === link.id}
+                      >
+                        Accept Ownership Transfer
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn-danger btn-sm"
+                        onClick={() => ownershipAction(link.id, 'decline_ownership')}
+                        disabled={workingId === link.id}
+                      >
+                        Decline Ownership
+                      </button>
+                    </div>
+                  )}
+                  {pendingOwnership && link.approvedByTeamUserId && link.approvedByOrgUserId && (
+                    <p className={styles.detailPlaceholder}>Both sides approved ownership transfer. A platform admin can complete the final data move.</p>
+                  )}
+                </article>
+              );
+            })}
           </div>
         )}
       </section>

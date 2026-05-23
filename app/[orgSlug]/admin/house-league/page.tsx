@@ -577,7 +577,7 @@ function SeasonCard({
       </div>
 
       {(season.seasonStartDate || season.seasonEndDate) && (
-        <p style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.35)', margin: '0 0 0.75rem' }}>
+        <p style={{ fontSize: '0.78rem', color: 'var(--white-35)', margin: '0 0 0.75rem' }}>
           {season.seasonStartDate ? formatDate(season.seasonStartDate) : '?'}
           {' — '}
           {season.seasonEndDate ? formatDate(season.seasonEndDate) : '?'}
@@ -592,7 +592,7 @@ function SeasonCard({
         {isAdmin && next && (
           confirmArchive ? (
             <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center', flexWrap: 'wrap' }}>
-              <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.5)' }}>Archive this season?</span>
+              <span style={{ fontSize: '0.75rem', color: 'var(--white-50)' }}>Archive this season?</span>
               <button
                 type="button"
                 className="btn btn-danger"

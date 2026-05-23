@@ -82,7 +82,7 @@ export default function ResetPasswordPage() {
           if (res.ok) {
             const { orgSlug, role } = await res.json();
             if (orgSlug) {
-              dest = role === 'official' ? `/${orgSlug}/official` : `/${orgSlug}/admin`;
+              dest = role === 'official' ? `/${orgSlug}/scorekeeper` : `/${orgSlug}/admin`;
             }
           }
         }

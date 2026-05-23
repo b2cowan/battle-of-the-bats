@@ -2,15 +2,12 @@ import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { requireDevToolPlatformAdmin } from '@/lib/platform-auth';
 
-const DEV_ORG_SLUG = 'dev-test-org';
-
 export async function GET() {
   const auth = await requireDevToolPlatformAdmin();
   if (auth.response) return auth.response;
 
   const [
     { count: orgs },
-    { data: orgRow },
     { data: orgRows },
     { count: platformUsers },
     { count: tournaments },
@@ -21,7 +18,6 @@ export async function GET() {
     { count: orgUsers },
   ] = await Promise.all([
     supabaseAdmin.from('organizations').select('*', { count: 'exact', head: true }),
-    supabaseAdmin.from('organizations').select('id, slug').eq('slug', DEV_ORG_SLUG).maybeSingle(),
     supabaseAdmin
       .from('organizations')
       .select('id, slug, name, plan_id, internal_notes')
@@ -36,19 +32,15 @@ export async function GET() {
       .neq('role', 'owner'),
   ]);
 
-  const devOrg = orgRow as { id?: string; slug?: string } | null;
-
   return NextResponse.json({
-    orgs:          orgs ?? 0,
-    orgId:         devOrg?.id ?? null,
-    orgSlug:       devOrg?.slug ?? null,
-    platformUsers: platformUsers ?? 0,
-    tournaments:   tournaments ?? 0,
-    leagueSeasons: leagueSeasons ?? 0,
-    repTeams:      repTeams ?? 0,
+    orgs:           orgs ?? 0,
+    platformUsers:  platformUsers ?? 0,
+    tournaments:    tournaments ?? 0,
+    leagueSeasons:  leagueSeasons ?? 0,
+    repTeams:       repTeams ?? 0,
     teamWorkspaces: teamWorkspaces ?? 0,
     teamClaims:     teamClaims ?? 0,
-    orgUsers:      orgUsers ?? 0,
+    orgUsers:       orgUsers ?? 0,
     orgList: (orgRows ?? []).map(o => ({
       id:        o.id,
       slug:      o.slug,
