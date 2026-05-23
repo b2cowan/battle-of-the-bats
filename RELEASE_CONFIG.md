@@ -6,18 +6,18 @@ Used by the `/release` agent. Fill in the `FILL_IN` values below before your fir
 
 ## AWS / Amplify
 
-| Key | Value | How to find it |
-|---|---|---|
-| **Amplify app ID** | `FILL_IN` | Amplify console URL: `/apps/d1xxxxxxxxx/` — the `d1...` part |
-| **AWS region** | `ca-central-1` | Your Amplify app region (update if different) |
-| **Master branch name** | `master` | The branch that triggers CI/CD |
+| Key                    | Value            | How to find it                                               |
+| ---------------------- | ---------------- | ------------------------------------------------------------ |
+| **Amplify app ID**     | `d3ld0l2bgmmlga` | Amplify console URL: `/apps/d1xxxxxxxxx/` — the `d1...` part |
+| **AWS region**         | `ca-central-1`   | Your Amplify app region (update if different)                |
+| **Master branch name** | `master`         | The branch that triggers CI/CD                               |
 
 ## CloudWatch
 
-| Key | Value | How to find it |
-|---|---|---|
-| **Runtime log group** | `FILL_IN` | CloudWatch → Log groups → search your app name |
-| **Build log group** | `FILL_IN` | Usually `/aws/amplify/[app-id]` |
+| Key                   | Value            | How to find it                                 |
+| --------------------- | ---------------- | ---------------------------------------------- |
+| **Runtime log group** | `d3ld0l2bgmmlga` | CloudWatch → Log groups → search your app name |
+| **Build log group**   | `d3ld0l2bgmmlga` | Usually `/aws/amplify/[app-id]`                |
 
 > **Note:** The email stack memory has the CloudWatch log path for email-related errors. Runtime app errors live in a separate log group — check the Amplify console → your app → Monitoring tab to find the correct group name.
 
@@ -32,6 +32,7 @@ aws configure
 ```
 
 You'll need:
+
 - **Access Key ID** and **Secret Access Key** — from IAM console
 - **Default region** — `ca-central-1` (or wherever your Amplify app lives)
 - **Output format** — `json`
@@ -58,6 +59,7 @@ You'll need:
 ```
 
 Verify it's working:
+
 ```powershell
 aws sts get-caller-identity
 aws amplify list-apps
