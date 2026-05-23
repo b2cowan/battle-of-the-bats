@@ -120,7 +120,7 @@ export default function TournamentsPage() {
             Your first tournament is free.
           </h2>
           <p className="font-mono text-xs text-data-gray mb-10">
-            No credit card required. Upgrade when you need custom registration, Excel and PDF exports, iCal schedule downloads, waitlists, cloning, and full branding.
+            No credit card required. Upgrade when you need custom registration, Excel and PDF exports, payment reminders, waitlist promotion, cloning, and full branding.
           </p>
           <Link
             href="/auth/signup"

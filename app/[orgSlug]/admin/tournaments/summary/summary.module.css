@@ -304,6 +304,13 @@
   .actionButtons {
     justify-content: flex-start;
   }
+
+  .actionButtons :global(.btn),
+  .printBtn {
+    justify-content: center;
+    min-height: 44px;
+    width: 100%;
+  }
 }
 
 @media print {

@@ -1,3 +1,4 @@
+/* eslint-disable react/no-unescaped-entities */
 import type { HelpPageContent } from './index';
 
 const accountingHelp: HelpPageContent = {
@@ -16,6 +17,118 @@ const accountingHelp: HelpPageContent = {
           </ul>
           <p>Create a tournament ledger as soon as you open a tournament. Create org sub-ledgers whenever you need to track a distinct budget bucket — for example, a capital fund or a bursary fund.</p>
           <p>The Accounting Overview page shows all ledgers side-by-side with their net balance. Use the date filter to see activity within any period.</p>
+        </>
+      ),
+    },
+    {
+      id: 'recipe-create-ledger',
+      group: 'How-to recipes',
+      heading: 'How to create the right ledger',
+      summary: 'Choose between a tournament ledger and an org sub-ledger before money starts moving.',
+      keywords: ['create ledger', 'tournament ledger', 'org sub-ledger', 'budget bucket'],
+      searchText: 'create ledger tournament ledger org sub-ledger budget bucket accounting overview income expense sponsorship grant fundraising',
+      content: (
+        <>
+          <p>Create a ledger when you need a distinct financial view for an event, fund, or operating bucket.</p>
+          <ol>
+            <li>Use a <strong>Tournament ledger</strong> for income and expenses tied to one tournament.</li>
+            <li>Use an <strong>Org sub-ledger</strong> for organization-wide money such as grants, sponsorships, operating costs, fundraising, or bursaries.</li>
+            <li>Name the ledger in a way your board will recognize in reports.</li>
+            <li>Add opening entries only if you are bringing forward balances from another system.</li>
+            <li>Review the Accounting Overview to confirm the new ledger appears in the correct group.</li>
+          </ol>
+          <p>If you are unsure where an entry belongs, choose the ledger that matches the reason the money was collected or spent.</p>
+        </>
+      ),
+      faqs: [
+        {
+          id: 'faq-which-ledger-to-use',
+          question: 'Should I use a tournament ledger or an org sub-ledger?',
+          answerText: 'Use a tournament ledger for one event. Use an org sub-ledger for broader organization funds, operating costs, grants, sponsorships, or fundraising.',
+          keywords: ['ledger type', 'tournament ledger', 'sub-ledger'],
+          popular: true,
+          answer: (
+            <p>Use a <strong>tournament ledger</strong> for one event. Use an <strong>org sub-ledger</strong> for broader organization funds, operating costs, grants, sponsorships, or fundraising.</p>
+          ),
+        },
+      ],
+    },
+    {
+      id: 'recipe-add-income-expense',
+      group: 'How-to recipes',
+      heading: 'How to add income or expenses',
+      summary: 'Record confirmed and expected money with useful descriptions, categories, and statuses.',
+      keywords: ['add income', 'add expense', 'entry', 'posted', 'pending', 'category'],
+      searchText: 'add income add expense ledger entry posted pending category description date amount receipt invoice tournament fees umpire diamond rental',
+      content: (
+        <>
+          <p>Every ledger entry should be understandable later without needing to remember the context.</p>
+          <ol>
+            <li>Open the ledger where the money belongs.</li>
+            <li>Click the action to add a new entry.</li>
+            <li>Choose <strong>Income</strong> for money received or <strong>Expense</strong> for money spent.</li>
+            <li>Enter a clear description, date, amount, and category.</li>
+            <li>Use <strong>Posted</strong> for confirmed transactions and <strong>Pending</strong> for expected invoices or deposits.</li>
+            <li>Save, then confirm the balance summary changed as expected.</li>
+          </ol>
+          <p>Use consistent category names. It makes exports and year-end reports much easier to filter.</p>
+        </>
+      ),
+    },
+    {
+      id: 'recipe-transfer-between-ledgers',
+      group: 'How-to recipes',
+      heading: 'How to transfer money between ledgers',
+      summary: 'Move funds without double-counting income or expenses in organization totals.',
+      keywords: ['transfer', 'move money', 'ledger transfer', 'double-counting'],
+      searchText: 'transfer money between ledgers move funds ledger transfer matching entries double-counting org totals posted pending source destination',
+      content: (
+        <>
+          <p>Use a transfer when money moves from one internal ledger to another.</p>
+          <ol>
+            <li>Open the source ledger.</li>
+            <li>Create a <strong>Transfer</strong> entry.</li>
+            <li>Select the destination ledger.</li>
+            <li>Enter the amount, date, and description.</li>
+            <li>Save and confirm both ledgers show matching transfer entries.</li>
+          </ol>
+          <p>Do not record the same movement as an expense in one ledger and income in another. A transfer keeps the organization total accurate.</p>
+        </>
+      ),
+      faqs: [
+        {
+          id: 'faq-transfer-vs-income-expense',
+          question: 'Why should I use a transfer instead of income and expense entries?',
+          answerText: 'Transfers create matching internal entries and avoid double-counting money in organization totals.',
+          keywords: ['transfer', 'double-counting', 'income expense'],
+          answer: (
+            <p>A transfer creates matching internal entries, so organization totals stay accurate. Recording the same movement as separate income and expense can double-count activity.</p>
+          ),
+        },
+      ],
+    },
+    {
+      id: 'recipe-board-report',
+      group: 'How-to recipes',
+      heading: 'How to prepare a board-ready financial report',
+      summary: 'Use date filters, categories, budget vs. actual, and exports to produce a clean treasurer report.',
+      keywords: ['board report', 'budget vs actual', 'treasurer report', 'export pdf', 'date range'],
+      searchText: 'board report treasurer report budget vs actual date range categories export pdf csv xlsx variance financial report monthly meeting',
+      links: [
+        { label: 'Exports & Downloads guide', href: '../help/exports' },
+      ],
+      content: (
+        <>
+          <p>For a monthly or year-end report, start broad and then drill into details.</p>
+          <ol>
+            <li>Open <strong>Accounting Overview</strong> and set the date range for the reporting period.</li>
+            <li>Review each ledger balance for unexpected pending or voided entries.</li>
+            <li>Open the relevant budget or ledger detail view.</li>
+            <li>Use consistent categories to group revenue and expenses.</li>
+            <li>Export <strong>Budget vs. Actual</strong> when you need a board packet with variance detail.</li>
+            <li>Export CSV or Excel when the treasurer needs to do additional spreadsheet analysis.</li>
+          </ol>
+          <p>Before sharing externally, remove unnecessary personal information and confirm the report period is correct.</p>
         </>
       ),
     },

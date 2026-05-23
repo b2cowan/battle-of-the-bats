@@ -5,16 +5,24 @@ import { getAuthContext, unauthorized } from '@/lib/api-auth';
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
-  const auth = await getAuthContext();
+  const searchParams = req.nextUrl.searchParams;
+  const orgSlug = searchParams.get('orgSlug') ?? undefined;
+  const requestedTournamentId = searchParams.get('tournamentId');
+  const auth = await getAuthContext({ orgSlug });
   if (!auth) return unauthorized();
 
   try {
     // Get all tournament IDs belonging to this org
-    const { data: orgTournaments } = await supabaseAdmin
+    let tournamentQuery = supabaseAdmin
       .from('tournaments')
       .select('id')
       .eq('organization_id', auth.org.id);
 
+    if (requestedTournamentId) {
+      tournamentQuery = tournamentQuery.eq('id', requestedTournamentId);
+    }
+
+    const { data: orgTournaments } = await tournamentQuery;
     const tournamentIds = (orgTournaments ?? []).map((t: { id: string }) => t.id);
 
     if (tournamentIds.length === 0) {

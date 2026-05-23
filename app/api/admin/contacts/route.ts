@@ -4,7 +4,8 @@ import { hasCapability } from '@/lib/roles';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 
 export async function GET(req: Request) {
-  const ctx = await getAuthContextWithScope();
+  const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
+  const ctx = await getAuthContextWithScope({ orgSlug });
   if (!ctx) return unauthorized();
 
   const tournamentId = new URL(req.url).searchParams.get('tournamentId');
@@ -32,7 +33,8 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
-  const ctx = await getAuthContextWithScope();
+  const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
+  const ctx = await getAuthContextWithScope({ orgSlug });
   if (!ctx) return unauthorized();
   if (!hasCapability(ctx.role, ctx.capabilities, 'create_tournaments')) return forbidden();
 

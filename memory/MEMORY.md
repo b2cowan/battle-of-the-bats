@@ -9,4 +9,8 @@
 - [Non-billing UAT remediation](non-billing-uat-remediation.md)
 - [Next.js framework conventions](nextjs-framework-conventions.md)
 - [Tournament Plus subscription positioning](tournament-plus-positioning.md)
+- [Tournament Experience Excellence](tournament-experience-excellence.md)
+- [Tournament scorekeeper experience](tournament-scorekeeper-experience.md)
 - [Export strategy](export-strategy.md)
+- [Help documentation planning rule](help-documentation-planning.md)
+- [Standalone Team workspace](standalone-team-workspace.md)

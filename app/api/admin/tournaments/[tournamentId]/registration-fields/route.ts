@@ -79,7 +79,8 @@ function parseFieldInput(body: Record<string, unknown>): TournamentRegistrationF
 }
 
 export async function GET(_req: NextRequest, { params }: RouteParams) {
-  const ctx = await getAuthContextWithScope();
+  const orgSlug = _req.nextUrl.searchParams.get('orgSlug') ?? undefined;
+  const ctx = await getAuthContextWithScope({ orgSlug });
   const { tournamentId } = await params;
   const scoped = await getScopedTournament(tournamentId, ctx);
   if ('response' in scoped) return scoped.response;
@@ -89,7 +90,8 @@ export async function GET(_req: NextRequest, { params }: RouteParams) {
 }
 
 export async function POST(req: NextRequest, { params }: RouteParams) {
-  const ctx = await getAuthContextWithScope();
+  const orgSlug = req.nextUrl.searchParams.get('orgSlug') ?? undefined;
+  const ctx = await getAuthContextWithScope({ orgSlug });
   if (!ctx) return unauthorized();
   if (!hasCapability(ctx.role, ctx.capabilities, 'create_tournaments')) return forbidden();
 

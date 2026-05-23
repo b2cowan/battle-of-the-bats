@@ -19,6 +19,7 @@ type ApplyResult = {
 
 const PLAN_LABELS: Record<string, string> = {
   tournament: 'Tournament',
+  team: 'Team',
   tournament_plus: 'Tournament Plus',
   league: 'League',
   club: 'Club',
@@ -38,7 +39,7 @@ const ACTION_LABELS: Record<BulkActionType, string> = {
   module_addon_enablement: 'Module Add-On',
 };
 
-const PLANS = ['tournament', 'tournament_plus', 'league', 'club'];
+const PLANS = ['tournament', 'team', 'tournament_plus', 'league', 'club'];
 const STATUSES = ['active', 'trialing', 'past_due', 'canceled'];
 const MODULE_OPTIONS = [
   { value: 'module_public_site', label: 'Public Site' },

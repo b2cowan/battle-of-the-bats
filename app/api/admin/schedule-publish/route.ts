@@ -8,7 +8,8 @@ import type { OrgPlan } from '@/lib/types';
 // POST /api/admin/schedule-publish
 // Body: { tournamentId, ageGroupIds: string[], visibility: 'published_generic' | 'published_teams', notify: boolean }
 export async function POST(req: Request) {
-  const ctx = await getAuthContextWithScope();
+  const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
+  const ctx = await getAuthContextWithScope({ orgSlug });
   if (!ctx) return unauthorized();
   if (!hasCapability(ctx.role, ctx.capabilities, 'create_tournaments')) return forbidden();
 

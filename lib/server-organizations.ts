@@ -24,6 +24,9 @@ type OrganizationRow = {
   onboarding_completed_at: string | null;
   enabled_addons: string[] | null;
   contact_email: string | null;
+  account_kind: Organization['accountKind'] | null;
+  team_workspace_status: Organization['teamWorkspaceStatus'] | null;
+  is_discoverable: boolean | null;
 };
 
 function mapOrganization(row: OrganizationRow): Organization {
@@ -49,6 +52,9 @@ function mapOrganization(row: OrganizationRow): Organization {
     onboardingCompletedAt: row.onboarding_completed_at ?? null,
     enabledAddons: row.enabled_addons ?? [],
     contactEmail: row.contact_email ?? null,
+    accountKind: row.account_kind ?? 'organization',
+    teamWorkspaceStatus: row.team_workspace_status ?? null,
+    isDiscoverable: row.is_discoverable ?? true,
   };
 }
 

@@ -23,7 +23,7 @@ export default async function OfficialLayout({
 }) {
   const { orgSlug } = await params;
 
-  const authCtx = await getAuthContextWithRole();
+  const authCtx = await getAuthContextWithRole({ orgSlug });
   if (!authCtx) {
     redirect(`/auth/login?next=/${orgSlug}/official`);
   }

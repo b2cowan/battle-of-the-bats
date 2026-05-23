@@ -1,6 +1,6 @@
 'use client';
 import Link from 'next/link';
-import { Users2, RefreshCw, MapPin, CreditCard, Settings, FileText } from 'lucide-react';
+import { Users2, RefreshCw, MapPin, CreditCard, Settings, FileText, Link2 } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 
 export default function OrgAdminHub() {
@@ -41,6 +41,12 @@ export default function OrgAdminHub() {
         desc: 'Configure header, logo, footer, and branding for all PDF exports',
         icon: FileText,
         href: `${base}/settings/pdf`,
+      },
+      {
+        label: 'Team Links',
+        desc: 'Invite standalone Team workspaces, review link requests, and see linked-team history',
+        icon: Link2,
+        href: `${base}/team-links`,
       },
     ] : []),
     ...(userRole === 'owner' ? [

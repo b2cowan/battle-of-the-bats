@@ -1,16 +1,32 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { requireDevToolPlatformAdmin } from '@/lib/platform-auth';
+import { PLAN_CONFIG } from '@/lib/plan-config';
+import type { OrgPlan } from '@/lib/types';
 
 const DEV_ORG_SLUG  = 'dev-test-org';
 const DEV_ORG_NAME  = 'Dev Test Org';
 const OWNER_EMAIL   = 'owner@dev.local';
 const DEV_PASSWORD  = 'devpass123';
 
-export async function POST() {
+const VALID_ORG_PLANS: OrgPlan[] = ['tournament', 'tournament_plus', 'league', 'club'];
+
+function isValidOrgPlan(plan: unknown): plan is OrgPlan {
+  return typeof plan === 'string' && VALID_ORG_PLANS.includes(plan as OrgPlan);
+}
+
+export async function POST(req: Request) {
   const auth = await requireDevToolPlatformAdmin();
   if (auth.response) return auth.response;
 
+  // Parse optional plan param — defaults to 'club' (full access for dev)
+  let plan: OrgPlan = 'club';
+  try {
+    const body = await req.json();
+    if (body?.plan && isValidOrgPlan(body.plan)) plan = body.plan;
+  } catch { /* no body or invalid JSON — use default */ }
+
+  const planConfig = PLAN_CONFIG[plan];
   const log: string[] = [];
 
   // Org
@@ -26,8 +42,8 @@ export async function POST() {
       .insert({
         name: DEV_ORG_NAME,
         slug: DEV_ORG_SLUG,
-        plan_id: 'club',
-        tournament_limit: 9999,
+        plan_id: plan,
+        tournament_limit: planConfig.tournamentLimit,
         subscription_status: 'active',
         is_public: false,
         enabled_addons: [],
@@ -36,9 +52,15 @@ export async function POST() {
       .single();
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     org = data;
-    log.push(`Created org: ${DEV_ORG_NAME}`);
+    log.push(`Created org: ${DEV_ORG_NAME} (plan: ${plan})`);
   } else {
-    log.push(`Org already exists: ${DEV_ORG_NAME}`);
+    // Update plan if caller explicitly requested one
+    const { error } = await supabaseAdmin
+      .from('organizations')
+      .update({ plan_id: plan, tournament_limit: planConfig.tournamentLimit })
+      .eq('id', org.id);
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    log.push(`Org already exists — updated to plan: ${plan}`);
   }
 
   // Auth user

@@ -27,10 +27,12 @@ function hasDivisionVisibility(data: unknown) {
 }
 
 export async function GET(req: Request) {
-  const ctx = await getAuthContextWithScope();
+  const url = new URL(req.url);
+  const orgSlug = url.searchParams.get('orgSlug') ?? undefined;
+  const ctx = await getAuthContextWithScope({ orgSlug });
   if (!ctx) return unauthorized();
 
-  const tournamentId = new URL(req.url).searchParams.get('tournamentId');
+  const tournamentId = url.searchParams.get('tournamentId');
   if (!tournamentId) return Response.json([]);
 
   const denied = scopeGuard(ctx, tournamentId);
@@ -48,7 +50,8 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
-  const ctx = await getAuthContextWithScope();
+  const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
+  const ctx = await getAuthContextWithScope({ orgSlug });
   if (!ctx) return unauthorized();
   if (!hasCapability(ctx.role, ctx.capabilities, 'create_tournaments')) return forbidden();
 

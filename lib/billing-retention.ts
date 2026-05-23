@@ -8,7 +8,7 @@ import type { Capability } from './roles';
 
 export const BILLING_RETENTION_DAYS = 90;
 
-const PLAN_ORDER: OrgPlan[] = ['tournament', 'tournament_plus', 'league', 'club'];
+const PLAN_ORDER: OrgPlan[] = ['tournament', 'team', 'tournament_plus', 'league', 'club'];
 
 export type BillingTournamentSummary = {
   id: string;

@@ -1,7 +1,9 @@
 'use client';
 
 import { Fragment, useMemo, useState } from 'react';
+import Link from 'next/link';
 import { Loader, Check, X } from 'lucide-react';
+import { PLAN_CONFIG } from '@/lib/plan-config';
 import type { PlanConfigOverrideRow } from '@/lib/plan-config-db';
 import type { FeatureMatrixRow } from '@/lib/plan-module-entitlements';
 import type { StripePriceRow } from '@/lib/stripe-prices';
@@ -13,15 +15,13 @@ import type {
 } from './page';
 import styles from './plans-pricing.module.css';
 
-type Tab = 'availability' | 'limits' | 'catalog' | 'prices';
+type Tab = 'plans' | 'catalog';
 type PriceEnvironmentTab = 'live' | 'sandbox';
 type CatalogView = 'planning' | 'matrix' | 'records';
 
 const TABS: { id: Tab; label: string }[] = [
-  { id: 'availability', label: 'Availability' },
-  { id: 'limits', label: 'Limits & Trials' },
+  { id: 'plans', label: 'Plans' },
   { id: 'catalog', label: 'Product Catalog' },
-  { id: 'prices', label: 'Stripe Prices' },
 ];
 
 const CATALOG_VIEWS: { id: CatalogView; label: string }[] = [
@@ -74,15 +74,61 @@ type ConfigDraft = {
   trial_days: string;
 };
 
-type ChangeRequestDraft = {
+type StripePriceUpdateProposal = {
+  kind: 'stripe_price_update';
+  stripePriceId: string;
+  planId: string;
+  billingCycle: string;
+  environment: string;
+  currentPriceId: string | null;
+  proposedPriceId: string | null;
+  changeNote: string | null;
+};
+
+type PriceChangeRequestDraft = {
+  row: StripePriceRow;
+  proposedPriceId: string;
+  changeNote: string;
   title: string;
-  request_type: string;
   priority: string;
-  target_plan_id: string;
-  target_addon_key: string;
-  effective_at: string;
   impact_summary: string;
   description: string;
+  target_plan_id: string | null;
+  target_addon_key: string | null;
+};
+
+type PlanGatingUpdateProposal = {
+  kind: 'plan_gating_update';
+  planId: string;
+  currentStatus: string;
+  proposedStatus: string;
+  changeNote: string | null;
+};
+
+type PlanConfigUpdateProposal = {
+  kind: 'plan_config_update';
+  planId: string;
+  current: {
+    tournamentLimit: number | null;
+    seatLimit: number | null;
+    trialDays: number | null;
+  };
+  proposed: {
+    tournamentLimit: number | null;
+    seatLimit: number | null;
+    trialDays: number | null;
+  };
+  changeNote: string | null;
+};
+
+type PlanChangeRequestDraft = {
+  request_type: string;
+  title: string;
+  priority: string;
+  impact_summary: string;
+  description: string;
+  target_plan_id: string;
+  proposal: PlanGatingUpdateProposal | PlanConfigUpdateProposal;
 };
 
 type CampaignDraft = {
@@ -106,34 +152,39 @@ type FeatureMatrixChange = {
   current: boolean;
   proposed: boolean;
 };
+type PriceProductGroup = {
+  planId: string;
+  label: string;
+  productName: string;
+  rows: StripePriceRow[];
+  monthly: StripePriceRow | null;
+  annual: StripePriceRow | null;
+};
 
-const PLAN_ORDER = ['tournament', 'tournament_plus', 'league', 'club'];
+const PLAN_ORDER = ['tournament', 'team', 'tournament_plus', 'league', 'club'];
 
 const PLAN_META: Record<string, { label: string; price: string; summary: string }> = {
   tournament: { label: 'Tournament', price: 'Free', summary: 'Starter event tier: 1 tournament, standard registration, FieldLogicHQ styling.' },
+  team: { label: 'Team', price: '$29/mo', summary: 'Standalone coach workspace with one rep team, coaches portal, and one free-tier tournament slot.' },
   tournament_plus: { label: 'Tournament Plus', price: '$39/mo', summary: 'Serious tournament operations: unlimited slots, 10 seats, registration control, branding, automation.' },
   league: { label: 'League', price: '$89/mo', summary: 'House league, registration, public organization page, and league workflows.' },
   club: { label: 'Club', price: '$179/mo', summary: 'Full club operations with accounting, rep teams, and coaches portal.' },
 };
 
 const PRICE_PLAN_LABELS: Record<string, string> = {
+  team: 'Team',
   tournament_plus: 'Tournament Plus',
   league: 'League',
   club: 'Club',
-  rep_team: 'Additional Rep Team',
+  org_team_addon: 'Org Team Add-on',
+  rep_team: 'Club Extra Rep Team',
 };
 
-const PRICE_PLAN_ORDER = ['tournament_plus', 'league', 'club', 'rep_team'];
-
-const CHANGE_REQUEST_TYPES = [
-  { value: 'plan_version', label: 'Plan Version' },
-  { value: 'feature_matrix', label: 'Feature Matrix' },
-  { value: 'addon', label: 'Add-on' },
-  { value: 'pricing', label: 'Pricing' },
-  { value: 'grandfathering', label: 'Grandfathering' },
-  { value: 'campaign', label: 'Campaign' },
-  { value: 'trial', label: 'Trial' },
-];
+const PRICE_PLAN_ORDER = ['team', 'tournament_plus', 'league', 'club', 'org_team_addon', 'rep_team'];
+const ADDON_CATALOG_KEY_BY_PRICE_PLAN: Record<string, string> = {
+  org_team_addon: 'org_team_addon',
+  rep_team: 'extra_rep_team',
+};
 
 const CHANGE_REQUEST_STATUSES = [
   { value: 'draft', label: 'Draft' },
@@ -211,6 +262,10 @@ function statusBreakdown(impact: PlanImpact | undefined) {
   return parts.map(([label, count]) => `${label} ${count}`).join(' / ');
 }
 
+function gatingStatusLabel(status: string | null | undefined) {
+  return status === 'live' ? 'Live' : 'Early Access';
+}
+
 function lastChangeText(updatedAt: string | null | undefined, by: string | null | undefined) {
   return `${formatDate(updatedAt)}${by ? ` by ${by}` : ''}`;
 }
@@ -230,6 +285,15 @@ function formatMoney(value: number | string | null | undefined) {
   }).format(parsed);
 }
 
+function cleanProductName(value: string | null | undefined) {
+  if (!value) return 'Not set';
+  return value
+    .replace(/\s*(?:-|\u2013|\u2014)\s*\$[\d,.]+(?:\s*[A-Z]{3})?/g, '')
+    .replace(/\(\s*\$[\d,.]+(?:\s*[A-Z]{3})?\s*\)/g, '')
+    .replace(/\s{2,}/g, ' ')
+    .trim();
+}
+
 function formatPlanList(planIds: string[] | null | undefined) {
   if (!planIds || planIds.length === 0) return 'None by default';
   return planIds.map(planLabel).join(', ');
@@ -241,6 +305,14 @@ function formatDateOnly(value: string | null | undefined) {
     month: 'short',
     day: 'numeric',
     year: 'numeric',
+  }).format(new Date(value));
+}
+
+function formatMonthDay(value: string | null | undefined) {
+  if (!value) return 'Not changed';
+  return new Intl.DateTimeFormat('en-CA', {
+    month: 'short',
+    day: 'numeric',
   }).format(new Date(value));
 }
 
@@ -303,6 +375,100 @@ function featureMatrixProposalChanges(
   );
 }
 
+function getStripePriceProposal(request: CatalogChangeRequestRow): StripePriceUpdateProposal | null {
+  if (!request.proposal || typeof request.proposal !== 'object') return null;
+  const proposal = request.proposal as Record<string, unknown>;
+
+  if (proposal.kind !== 'stripe_price_update') return null;
+  if (typeof proposal.stripePriceId !== 'string' || !proposal.stripePriceId.trim()) return null;
+  if (typeof proposal.planId !== 'string' || !proposal.planId.trim()) return null;
+  if (typeof proposal.billingCycle !== 'string' || !proposal.billingCycle.trim()) return null;
+  if (typeof proposal.environment !== 'string' || !proposal.environment.trim()) return null;
+
+  return {
+    kind: 'stripe_price_update',
+    stripePriceId: proposal.stripePriceId.trim(),
+    planId: proposal.planId.trim(),
+    billingCycle: proposal.billingCycle.trim(),
+    environment: proposal.environment.trim(),
+    currentPriceId: typeof proposal.currentPriceId === 'string' && proposal.currentPriceId.trim()
+      ? proposal.currentPriceId.trim()
+      : null,
+    proposedPriceId: typeof proposal.proposedPriceId === 'string' && proposal.proposedPriceId.trim()
+      ? proposal.proposedPriceId.trim()
+      : null,
+    changeNote: typeof proposal.changeNote === 'string' && proposal.changeNote.trim()
+      ? proposal.changeNote.trim()
+      : null,
+  };
+}
+
+function priceRequestTargets(row: StripePriceRow) {
+  if (PLAN_ORDER.includes(row.plan_id)) {
+    return { target_plan_id: row.plan_id, target_addon_key: null };
+  }
+
+  return { target_plan_id: null, target_addon_key: row.plan_id };
+}
+
+function buildPriceChangeRequestDraft(
+  row: StripePriceRow,
+  proposedPriceId: string,
+  changeNote: string,
+  planImpact: PlanImpact | undefined,
+): PriceChangeRequestDraft {
+  const planName = PRICE_PLAN_LABELS[row.plan_id] ?? row.plan_id;
+  const cycle = row.billing_cycle.charAt(0).toUpperCase() + row.billing_cycle.slice(1);
+  const environment = row.environment === 'live' ? 'Production' : 'Test';
+  const targets = priceRequestTargets(row);
+  const currentPrice = row.price_id ?? 'not set';
+  const nextPrice = proposedPriceId || 'clear current price ID';
+  const affected = row.plan_id === 'rep_team' || row.plan_id === 'org_team_addon'
+    ? 'new add-on purchases'
+    : impactSummary(planImpact);
+  const impactSummaryText = row.price_id
+    ? proposedPriceId
+      ? `${environment} ${cycle} ${planName}: update Stripe price from ${currentPrice} to ${nextPrice}; affects ${affected}.`
+      : `${environment} ${cycle} ${planName}: clear Stripe price ${currentPrice}; affects ${affected}.`
+    : proposedPriceId
+      ? `${environment} ${cycle} ${planName}: set Stripe price to ${nextPrice}; affects ${affected}.`
+      : `${environment} ${cycle} ${planName}: keep Stripe price unset; affects ${affected}.`;
+
+  return {
+    row,
+    proposedPriceId,
+    changeNote,
+    title: `${row.price_id ? 'Update' : 'Set'} ${environment} ${planName} ${cycle} Stripe price`,
+    priority: row.environment === 'live' ? 'high' : 'medium',
+    impact_summary: impactSummaryText,
+    description: [
+      `Current price ID: ${currentPrice}.`,
+      `Proposed price ID: ${nextPrice}.`,
+      `Scope: ${environment} ${cycle} row for ${planName}.`,
+      changeNote ? `Operator note: ${changeNote}` : 'Operator note: not provided.',
+    ].join('\n'),
+    ...targets,
+  };
+}
+
+function buildPriceProductGroups(rows: StripePriceRow[]): PriceProductGroup[] {
+  return PRICE_PLAN_ORDER
+    .map(planId => {
+      const groupRows = rows.filter(row => row.plan_id === planId);
+      if (groupRows.length === 0) return null;
+
+      return {
+        planId,
+        label: PRICE_PLAN_LABELS[planId] ?? planId,
+        productName: groupRows.find(row => row.product_name)?.product_name ?? 'Not set',
+        rows: groupRows,
+        monthly: groupRows.find(row => row.billing_cycle === 'monthly') ?? null,
+        annual: groupRows.find(row => row.billing_cycle === 'annual') ?? null,
+      };
+    })
+    .filter((group): group is PriceProductGroup => group !== null);
+}
+
 export default function PlansPricingClient({
   initialGating,
   initialConfig,
@@ -316,13 +482,13 @@ export default function PlansPricingClient({
   campaigns,
   canManageProduct,
 }: Props) {
-  const [activeTab, setActiveTab] = useState<Tab>('availability');
+  const [activeTab, setActiveTab] = useState<Tab>('plans');
   const [priceEnvironmentTab, setPriceEnvironmentTab] = useState<PriceEnvironmentTab>('live');
   const [catalogView, setCatalogView] = useState<CatalogView>('planning');
+  const [selectedPlanId, setSelectedPlanId] = useState<string | null>(null);
   const [catalogChangeRequests, setCatalogChangeRequests] = useState<CatalogChangeRequestRow[]>(changeRequests);
   const [catalogCampaigns, setCatalogCampaigns] = useState<CatalogCampaignRow[]>(campaigns);
   const [featureMatrixRows, setFeatureMatrixRows] = useState<FeatureMatrixRow[]>(featureMatrix);
-  const [selectedApprovalId, setSelectedApprovalId] = useState('');
   const [selectedFeaturePublishId, setSelectedFeaturePublishId] = useState('');
   const [featurePublishNote, setFeaturePublishNote] = useState('');
   const [featurePublishConfirming, setFeaturePublishConfirming] = useState(false);
@@ -331,22 +497,15 @@ export default function PlansPricingClient({
     () => new Map(planImpacts.map(impact => [impact.planId, impact])),
     [planImpacts],
   );
-  const approvedLiveChangeRequests = useMemo(
-    () => catalogChangeRequests.filter(request => request.status === 'approved' && request.request_type !== 'feature_matrix'),
-    [catalogChangeRequests],
-  );
   const approvedFeatureMatrixRequests = useMemo(
     () => catalogChangeRequests.filter(request => request.status === 'approved' && request.request_type === 'feature_matrix'),
     [catalogChangeRequests],
   );
-  const selectedApproval = approvedLiveChangeRequests.find(request => request.id === selectedApprovalId);
   const selectedFeaturePublishRequest = approvedFeatureMatrixRequests.find(request => request.id === selectedFeaturePublishId) ?? null;
   const selectedFeaturePublishEntitlements = selectedFeaturePublishRequest
     ? featureMatrixEntitlementsFromRequest(selectedFeaturePublishRequest)
     : null;
   const selectedFeaturePublishChanges = featureMatrixProposalChanges(featureMatrixRows, selectedFeaturePublishEntitlements);
-  const approvalRequired = activeTab === 'availability' || activeTab === 'limits' || activeTab === 'prices';
-  const hasSelectedApproval = !approvalRequired || Boolean(selectedApproval);
   const totalAccounts = planImpacts.reduce((sum, impact) => sum + impact.total, 0);
   const paidAccounts = planImpacts
     .filter(impact => impact.planId !== 'tournament')
@@ -356,61 +515,20 @@ export default function PlansPricingClient({
     0,
   );
 
-  const [gatingRows, setGatingRows] = useState<PlanGatingRow[]>(initialGating);
-  const [gatingBusy, setGatingBusy] = useState<string | null>(null);
-  const [gatingErrors, setGatingErrors] = useState<Record<string, string>>({});
+  const [gatingRows] = useState<PlanGatingRow[]>(initialGating);
   const [gatingNotes, setGatingNotes] = useState<Record<string, string>>({});
 
-  async function toggleGating(planKey: string, currentStatus: string) {
-    const nextStatus = currentStatus === 'live' ? 'early_access' : 'live';
-    const changeNote = (gatingNotes[planKey] ?? '').trim();
-
-    setGatingBusy(planKey);
-    setGatingErrors(e => ({ ...e, [planKey]: '' }));
-    try {
-      const res = await fetch('/api/platform-admin/plan-gating', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          planKey,
-          gatingStatus: nextStatus,
-          changeNote,
-          approvedChangeRequestId: selectedApprovalId,
-        }),
-      });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error ?? 'Request failed');
-
-      setGatingRows(prev => prev.map(row =>
-        row.plan_key === planKey
-          ? {
-              ...row,
-              gating_status: nextStatus,
-              updated_at: json.updated_at ?? new Date().toISOString(),
-              updated_by_email: json.updated_by_email ?? null,
-              last_change_note: json.last_change_note ?? null,
-            }
-          : row,
-      ));
-      setGatingNotes(prev => ({ ...prev, [planKey]: '' }));
-    } catch (err) {
-      setGatingErrors(e => ({ ...e, [planKey]: (err as Error).message }));
-    } finally {
-      setGatingBusy(null);
-    }
+  function getGatingRow(planId: string) {
+    return gatingRows.find(row => row.plan_key === planId);
   }
 
-  const sortedGating = [...gatingRows].sort(
-    (a, b) => PLAN_ORDER.indexOf(a.plan_key) - PLAN_ORDER.indexOf(b.plan_key),
-  );
-
-  const [configRows, setConfigRows] = useState<PlanConfigOverrideRow[]>(initialConfig);
+  const [configRows] = useState<PlanConfigOverrideRow[]>(initialConfig);
   const [configEditPlan, setConfigEditPlan] = useState<string | null>(null);
   const [configDraft, setConfigDraft] = useState<ConfigDraft | null>(null);
   const [configChangeNote, setConfigChangeNote] = useState('');
-  const [configSaving, setConfigSaving] = useState(false);
   const [configError, setConfigError] = useState('');
-  const [configSaved, setConfigSaved] = useState<string | null>(null);
+  const [planRequestDraft, setPlanRequestDraft] = useState<PlanChangeRequestDraft | null>(null);
+  const [planRequestError, setPlanRequestError] = useState('');
 
   function getConfigRow(planId: string) {
     return configRows.find(row => row.plan_id === planId);
@@ -426,7 +544,6 @@ export default function PlansPricingClient({
     });
     setConfigChangeNote('');
     setConfigError('');
-    setConfigSaved(null);
   }
 
   function cancelConfigEdit() {
@@ -436,9 +553,8 @@ export default function PlansPricingClient({
     setConfigError('');
   }
 
-  async function saveConfig(planId: string) {
+  function saveConfig(planId: string) {
     if (!configDraft) return;
-    setConfigSaving(true);
     setConfigError('');
 
     const parsedTournamentLimit = configDraft.tournament_limit.trim() === ''
@@ -451,82 +567,160 @@ export default function PlansPricingClient({
       ? null
       : parseInt(configDraft.trial_days, 10);
 
+    const parsedValues = [parsedTournamentLimit, parsedSeatLimit, parsedTrialDays];
+    if (parsedValues.some(value => value !== null && (!Number.isInteger(value) || value < 0))) {
+      setConfigError('Limits and trial days must be blank or non-negative whole numbers.');
+      return;
+    }
+
+    const row = getConfigRow(planId);
+    const current = {
+      tournamentLimit: row?.tournament_limit ?? null,
+      seatLimit: row?.seat_limit ?? null,
+      trialDays: row?.trial_days ?? null,
+    };
+    const proposed = {
+      tournamentLimit: parsedTournamentLimit,
+      seatLimit: parsedSeatLimit,
+      trialDays: parsedTrialDays,
+    };
+
+    if (
+      current.tournamentLimit === proposed.tournamentLimit &&
+      current.seatLimit === proposed.seatLimit &&
+      current.trialDays === proposed.trialDays
+    ) {
+      setConfigError('Make at least one limit or trial change before requesting review.');
+      return;
+    }
+
+    const planName = planLabel(planId);
+    const affected = impactSummary(impactsByPlan.get(planId));
+    const changeNote = configChangeNote.trim();
+    const trialOnly =
+      current.tournamentLimit === proposed.tournamentLimit &&
+      current.seatLimit === proposed.seatLimit &&
+      current.trialDays !== proposed.trialDays;
+
+    setPlanRequestDraft({
+      request_type: trialOnly ? 'trial' : 'plan_version',
+      title: `Update ${planName} limits and trials`,
+      priority: 'medium',
+      target_plan_id: planId,
+      impact_summary: `${planName}: limits/trials update affects ${affected}.`,
+      description: [
+        `Current limits: ${current.tournamentLimit ?? 'default'} tournaments, ${current.seatLimit ?? 'default'} seats, ${current.trialDays ?? 'default'} trial days.`,
+        `Proposed limits: ${proposed.tournamentLimit ?? 'default'} tournaments, ${proposed.seatLimit ?? 'default'} seats, ${proposed.trialDays ?? 'default'} trial days.`,
+        changeNote ? `Operator note: ${changeNote}` : 'Operator note: not provided.',
+      ].join('\n'),
+      proposal: {
+        kind: 'plan_config_update',
+        planId,
+        current,
+        proposed,
+        changeNote: changeNote || null,
+      },
+    });
+    setPlanRequestError('');
+  }
+
+  function startGatingRequest(planId: string, currentStatus: string) {
+    const proposedStatus = currentStatus === 'live' ? 'early_access' : 'live';
+    const planName = planLabel(planId);
+    const affected = impactSummary(impactsByPlan.get(planId));
+    const changeNote = (gatingNotes[planId] ?? '').trim();
+
+    setPlanRequestDraft({
+      request_type: 'plan_version',
+      title: `Update ${planName} availability to ${gatingStatusLabel(proposedStatus)}`,
+      priority: proposedStatus === 'live' ? 'medium' : 'low',
+      target_plan_id: planId,
+      impact_summary: `${planName}: ${gatingStatusLabel(currentStatus)} to ${gatingStatusLabel(proposedStatus)}; affects ${affected}.`,
+      description: [
+        `Current availability: ${gatingStatusLabel(currentStatus)}.`,
+        `Proposed availability: ${gatingStatusLabel(proposedStatus)}.`,
+        changeNote ? `Operator note: ${changeNote}` : 'Operator note: not provided.',
+      ].join('\n'),
+      proposal: {
+        kind: 'plan_gating_update',
+        planId,
+        currentStatus,
+        proposedStatus,
+        changeNote: changeNote || null,
+      },
+    });
+    setPlanRequestError('');
+  }
+
+  async function submitPlanChangeRequest() {
+    if (!planRequestDraft) return;
+
+    setCatalogBusy('plan-change-request');
+    setPlanRequestError('');
+    setCatalogSaved('');
     try {
-      const res = await fetch('/api/platform-admin/plan-config', {
-        method: 'PATCH',
+      const res = await fetch('/api/platform-admin/product-catalog/change-requests', {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          plan_id: planId,
-          tournament_limit: parsedTournamentLimit,
-          seat_limit: parsedSeatLimit,
-          trial_days: parsedTrialDays,
-          change_note: configChangeNote,
-          approved_change_request_id: selectedApprovalId,
+          request_type: planRequestDraft.request_type,
+          title: planRequestDraft.title,
+          priority: planRequestDraft.priority,
+          target_plan_id: planRequestDraft.target_plan_id,
+          target_addon_key: null,
+          effective_at: null,
+          impact_summary: planRequestDraft.impact_summary,
+          description: planRequestDraft.description,
+          submit_for_review: true,
+          proposal: planRequestDraft.proposal,
         }),
       });
       const json = await res.json();
-      if (!res.ok) throw new Error(json.error ?? 'Save failed');
+      if (!res.ok) throw new Error(json.error ?? 'Unable to create plan change request');
 
-      const updatedAt = json.updated_at ?? new Date().toISOString();
-      const updatedBy = json.updated_by_email ?? null;
-      const lastChangeNote = json.last_change_note ?? null;
-      setConfigRows(prev => {
-        const exists = prev.some(row => row.plan_id === planId);
-        if (exists) {
-          return prev.map(row => row.plan_id === planId
-            ? {
-                ...row,
-                tournament_limit: parsedTournamentLimit,
-                seat_limit: parsedSeatLimit,
-                trial_days: parsedTrialDays,
-                updated_at: updatedAt,
-                updated_by_email: updatedBy,
-                last_change_note: lastChangeNote,
-              }
-            : row,
-          );
-        }
-        return [...prev, {
-          id: '',
-          plan_id: planId,
-          tournament_limit: parsedTournamentLimit,
-          seat_limit: parsedSeatLimit,
-          trial_days: parsedTrialDays,
-          updated_at: updatedAt,
-          updated_by_email: updatedBy,
-          last_change_note: lastChangeNote,
-        }];
-      });
-
-      setConfigEditPlan(null);
-      setConfigDraft(null);
-      setConfigChangeNote('');
-      setConfigSaved(planId);
-      setTimeout(() => setConfigSaved(saved => saved === planId ? null : saved), 2000);
+      setCatalogChangeRequests(prev => [json.changeRequest, ...prev]);
+      if (planRequestDraft.proposal.kind === 'plan_gating_update') {
+        setGatingNotes(prev => ({ ...prev, [planRequestDraft.target_plan_id]: '' }));
+      } else {
+        cancelConfigEdit();
+      }
+      setPlanRequestDraft(null);
+      setCatalogSaved('Plan change request submitted for review');
     } catch (err) {
-      setConfigError((err as Error).message);
+      setPlanRequestError((err as Error).message);
     } finally {
-      setConfigSaving(false);
+      setCatalogBusy(null);
     }
   }
 
-  const [priceRows, setPriceRows] = useState<StripePriceRow[]>(() => sortPriceRows(initialPrices));
+  const [priceRows] = useState<StripePriceRow[]>(() => sortPriceRows(initialPrices));
   const [priceEditing, setPriceEditing] = useState<Record<string, string>>({});
   const [priceNotes, setPriceNotes] = useState<Record<string, string>>({});
-  const [priceSaving, setPriceSaving] = useState<string | null>(null);
   const [priceErrors, setPriceErrors] = useState<Record<string, string>>({});
   const [priceSaved, setPriceSaved] = useState<Record<string, boolean>>({});
+  const [priceRequestDraft, setPriceRequestDraft] = useState<PriceChangeRequestDraft | null>(null);
+  const [priceRequestError, setPriceRequestError] = useState('');
+  const [selectedPriceProductId, setSelectedPriceProductId] = useState<string | null>(null);
 
-  const [changeDraft, setChangeDraft] = useState<ChangeRequestDraft>({
-    title: '',
-    request_type: 'pricing',
-    priority: 'medium',
-    target_plan_id: '',
-    target_addon_key: '',
-    effective_at: '',
-    impact_summary: '',
-    description: '',
-  });
+  const pendingStripePriceRequests = useMemo(
+    () => catalogChangeRequests.filter(request => {
+      const proposal = getStripePriceProposal(request);
+      return Boolean(proposal && ['draft', 'needs_review', 'approved'].includes(request.status));
+    }),
+    [catalogChangeRequests],
+  );
+
+  const pendingStripePriceRequestByRow = useMemo(() => {
+    const pending = new Map<string, CatalogChangeRequestRow>();
+    for (const request of pendingStripePriceRequests) {
+      const proposal = getStripePriceProposal(request);
+      if (proposal && !pending.has(proposal.stripePriceId)) {
+        pending.set(proposal.stripePriceId, request);
+      }
+    }
+    return pending;
+  }, [pendingStripePriceRequests]);
+
   const [campaignDraft, setCampaignDraft] = useState<CampaignDraft>({
     title: '',
     campaign_type: 'promo',
@@ -572,112 +766,62 @@ export default function PlansPricingClient({
     setPriceErrors(errors => ({ ...errors, [id]: '' }));
   }
 
-  async function savePrice(row: StripePriceRow) {
+  function savePrice(row: StripePriceRow) {
     const priceId = (priceEditing[row.id] ?? '').trim();
     const changeNote = (priceNotes[row.id] ?? '').trim();
-    setPriceSaving(row.id);
-    setPriceErrors(errors => ({ ...errors, [row.id]: '' }));
-    try {
-      const res = await fetch('/api/platform-admin/stripe-prices', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          id: row.id,
-          price_id: priceId || null,
-          change_note: changeNote,
-          approved_change_request_id: selectedApprovalId,
-        }),
-      });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error ?? 'Save failed');
+    const planImpact = row.plan_id === 'rep_team' ? undefined : impactsByPlan.get(row.plan_id);
 
-      setPriceRows(prev => sortPriceRows(prev.map(item =>
-        item.id === row.id
-          ? {
-              ...item,
-              price_id: priceId || null,
-              updated_at: json.updated_at ?? new Date().toISOString(),
-              updated_by_email: json.updated_by_email ?? null,
-              last_change_note: json.last_change_note ?? null,
-            }
-          : item,
-      )));
-      setPriceEditing(editing => {
-        const next = { ...editing };
-        delete next[row.id];
-        return next;
-      });
-      setPriceNotes(notes => {
-        const next = { ...notes };
-        delete next[row.id];
-        return next;
-      });
-      setPriceSaved(saved => ({ ...saved, [row.id]: true }));
-      setTimeout(() => setPriceSaved(saved => ({ ...saved, [row.id]: false })), 2000);
-    } catch (err) {
-      setPriceErrors(errors => ({ ...errors, [row.id]: (err as Error).message }));
-    } finally {
-      setPriceSaving(null);
+    if (priceId && !priceId.startsWith('price_')) {
+      setPriceErrors(errors => ({ ...errors, [row.id]: 'price_id must start with price_' }));
+      return;
     }
+
+    setPriceRequestDraft(buildPriceChangeRequestDraft(row, priceId, changeNote, planImpact));
+    setPriceRequestError('');
+    setPriceErrors(errors => ({ ...errors, [row.id]: '' }));
   }
 
-  async function createChangeRequest() {
-    setCatalogBusy('change-request');
-    setCatalogError('');
+  async function submitPriceChangeRequest() {
+    if (!priceRequestDraft) return;
+
+    setCatalogBusy('price-change-request');
+    setPriceRequestError('');
     setCatalogSaved('');
     try {
       const res = await fetch('/api/platform-admin/product-catalog/change-requests', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          ...changeDraft,
-          target_plan_id: changeDraft.target_plan_id || null,
-          target_addon_key: changeDraft.target_addon_key || null,
-          effective_at: changeDraft.effective_at || null,
-          proposal: {},
+          request_type: 'pricing',
+          title: priceRequestDraft.title,
+          priority: priceRequestDraft.priority,
+          target_plan_id: priceRequestDraft.target_plan_id,
+          target_addon_key: priceRequestDraft.target_addon_key,
+          effective_at: null,
+          impact_summary: priceRequestDraft.impact_summary,
+          description: priceRequestDraft.description,
+          submit_for_review: true,
+          proposal: {
+            kind: 'stripe_price_update',
+            stripePriceId: priceRequestDraft.row.id,
+            planId: priceRequestDraft.row.plan_id,
+            billingCycle: priceRequestDraft.row.billing_cycle,
+            environment: priceRequestDraft.row.environment,
+            currentPriceId: priceRequestDraft.row.price_id,
+            proposedPriceId: priceRequestDraft.proposedPriceId || null,
+            changeNote: priceRequestDraft.changeNote || null,
+          },
         }),
       });
       const json = await res.json();
-      if (!res.ok) throw new Error(json.error ?? 'Unable to create change request');
+      if (!res.ok) throw new Error(json.error ?? 'Unable to create price change request');
 
       setCatalogChangeRequests(prev => [json.changeRequest, ...prev]);
-      setChangeDraft({
-        title: '',
-        request_type: 'pricing',
-        priority: 'medium',
-        target_plan_id: '',
-        target_addon_key: '',
-        effective_at: '',
-        impact_summary: '',
-        description: '',
-      });
-      setCatalogSaved('Change request created');
+      cancelPriceEdit(priceRequestDraft.row.id);
+      setPriceRequestDraft(null);
+      setCatalogSaved('Price change request submitted for review');
     } catch (err) {
-      setCatalogError((err as Error).message);
-    } finally {
-      setCatalogBusy(null);
-    }
-  }
-
-  async function updateChangeRequestStatus(id: string, status: string) {
-    setCatalogBusy(id);
-    setCatalogError('');
-    setCatalogSaved('');
-    try {
-      const res = await fetch('/api/platform-admin/product-catalog/change-requests', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, status }),
-      });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error ?? 'Unable to update change request');
-
-      setCatalogChangeRequests(prev => prev.map(item =>
-        item.id === id ? json.changeRequest : item,
-      ));
-      setCatalogSaved('Change request updated');
-    } catch (err) {
-      setCatalogError((err as Error).message);
+      setPriceRequestError((err as Error).message);
     } finally {
       setCatalogBusy(null);
     }
@@ -899,7 +1043,37 @@ export default function PlansPricingClient({
 
   const sandboxPriceRows = priceRows.filter(row => row.environment === 'sandbox');
   const livePriceRows = priceRows.filter(row => row.environment === 'live');
+  const currentPriceRows = priceEnvironmentTab === 'live' ? livePriceRows : sandboxPriceRows;
+  const priceProductGroups = buildPriceProductGroups(currentPriceRows);
+  const addonPriceProductGroups = priceProductGroups.filter(group => !PLAN_ORDER.includes(group.planId));
+  const selectedPriceProduct = selectedPriceProductId
+    ? priceProductGroups.find(group => group.planId === selectedPriceProductId) ?? null
+    : null;
   const matrixChanges = featureDraftChanges();
+  const selectedPlanMeta = selectedPlanId ? PLAN_META[selectedPlanId] ?? null : null;
+  const selectedPlanGating = selectedPlanId ? getGatingRow(selectedPlanId) ?? null : null;
+  const selectedPlanConfig = selectedPlanId ? getConfigRow(selectedPlanId) ?? null : null;
+  const selectedPlanDefaults = selectedPlanId ? configDefaults[selectedPlanId] : undefined;
+  const selectedPlanPendingRequests = selectedPlanId ? pendingRequestsForPlan(selectedPlanId) : [];
+  const selectedPlanFeatureCount = selectedPlanId ? featureCountForPlan(selectedPlanId) : 0;
+  const selectedPlanPricingGroups = selectedPlanId
+    ? [
+        ...priceProductGroups.filter(group => group.planId === selectedPlanId),
+        ...(selectedPlanId === 'club' ? addonPriceProductGroups : []),
+      ]
+    : [];
+
+  function displayPriceForSlot(planId: string, cycle: 'monthly' | 'annual') {
+    if (planId in PLAN_CONFIG) {
+      const planConfig = PLAN_CONFIG[planId as keyof typeof PLAN_CONFIG];
+      return formatMoney(cycle === 'monthly' ? planConfig.monthlyPrice : planConfig.annualPrice);
+    }
+
+    const addonKey = ADDON_CATALOG_KEY_BY_PRICE_PLAN[planId];
+    const addon = addonKey ? addonCatalog.find(item => item.addon_key === addonKey) : null;
+    const amount = cycle === 'monthly' ? addon?.monthly_price : addon?.annual_price;
+    return amount == null ? null : formatMoney(amount);
+  }
 
   function renderLastChange(
     updatedAt: string | null | undefined,
@@ -926,25 +1100,270 @@ export default function PlansPricingClient({
     );
   }
 
-  function renderPriceRows(sectionRows: StripePriceRow[]) {
+  function isActionableRequest(request: CatalogChangeRequestRow) {
+    return ['draft', 'needs_review', 'approved'].includes(request.status);
+  }
+
+  function requestTouchesPlan(request: CatalogChangeRequestRow, planId: string) {
+    const visiblePricePlanIds = new Set([
+      planId,
+      ...(planId === 'club' ? addonPriceProductGroups.map(group => group.planId) : []),
+    ]);
+    const priceProposal = getStripePriceProposal(request);
+    if (priceProposal) return visiblePricePlanIds.has(priceProposal.planId);
+    if (request.target_plan_id === planId) return true;
+    if (request.target_addon_key && visiblePricePlanIds.has(request.target_addon_key)) return true;
+
+    if (request.request_type === 'feature_matrix' && request.proposal && typeof request.proposal === 'object') {
+      const proposal = request.proposal as Record<string, unknown>;
+      const changes = Array.isArray(proposal.changes) ? proposal.changes : [];
+      return changes.some(change =>
+        Boolean(change) &&
+        typeof change === 'object' &&
+        (change as Record<string, unknown>).planId === planId,
+      );
+    }
+
+    return false;
+  }
+
+  function pendingRequestsForPlan(planId: string) {
+    return catalogChangeRequests.filter(request => isActionableRequest(request) && requestTouchesPlan(request, planId));
+  }
+
+  function featureCountForPlan(planId: string) {
+    return featureMatrixRows.filter(feature => Boolean(feature.includedPlans[planId])).length;
+  }
+
+  function configSummaryForPlan(planId: string) {
+    const row = getConfigRow(planId);
+    const defaults = configDefaults[planId];
+    const tournamentLimit = row?.tournament_limit ?? defaults?.tournamentLimit ?? 'N/A';
+    const seatLimit = row?.seat_limit ?? defaults?.seatLimit ?? 'N/A';
+    const trialDays = row?.trial_days ?? defaults?.trialDays ?? 'N/A';
+    const hasOverride = Boolean(row && (
+      row.tournament_limit != null ||
+      row.seat_limit != null ||
+      row.trial_days != null
+    ));
+    const tournamentLabel = tournamentLimit === 1 ? 'slot' : 'slots';
+
+    return {
+      primary: `${tournamentLimit} ${tournamentLabel} / ${seatLimit} seats`,
+      secondary: `${trialDays} trial${hasOverride ? ' / override' : ' / defaults'}`,
+    };
+  }
+
+  function priceSummaryForPlan(planId: string) {
+    if (planId === 'tournament') {
+      return { primary: 'Free', secondary: 'No Stripe price' };
+    }
+
+    const rows = priceRows.filter(row => row.plan_id === planId);
+    if (rows.length === 0) {
+      return { primary: 'No price slots', secondary: 'Not configured in Stripe Prices' };
+    }
+
+    const live = rows.filter(row => row.environment === 'live');
+    const sandbox = rows.filter(row => row.environment === 'sandbox');
+    const liveConfigured = live.filter(row => row.price_id).length;
+    const sandboxConfigured = sandbox.filter(row => row.price_id).length;
+    const pending = rows.filter(row => pendingStripePriceRequestByRow.has(row.id)).length;
+
+    return {
+      primary: `Live ${liveConfigured}/${live.length || 0}`,
+      secondary: `Test ${sandboxConfigured}/${sandbox.length || 0}${pending ? ` / ${pending} pending` : ''}`,
+    };
+  }
+
+  function latestRecordForPlan(planId: string) {
+    const candidates = [
+      getGatingRow(planId),
+      getConfigRow(planId),
+      ...priceRows.filter(row => row.plan_id === planId),
+    ].flatMap(item => item?.updated_at
+      ? [{
+          updated_at: item.updated_at,
+          updated_by_email: item.updated_by_email,
+          last_change_note: item.last_change_note,
+        }]
+      : [],
+    );
+
+    return candidates.sort((a, b) =>
+      new Date(b.updated_at ?? 0).getTime() - new Date(a.updated_at ?? 0).getTime(),
+    )[0] ?? null;
+  }
+
+  function renderSummaryStack(primary: string, secondary: string) {
+    return (
+      <div className={styles.planSummaryStack}>
+        <strong>{primary}</strong>
+        <span>{secondary}</span>
+      </div>
+    );
+  }
+
+  function renderCompactChange(updatedAt: string | null | undefined) {
+    return (
+      <span className={updatedAt ? styles.compactChange : styles.noteEmpty}>
+        {updatedAt ? formatMonthDay(updatedAt) : 'Not changed'}
+      </span>
+    );
+  }
+
+  function renderPlanOverviewRows() {
+    return PLAN_ORDER.map(planId => {
+      const meta = PLAN_META[planId] ?? { label: planId, price: 'Not set', summary: 'No summary configured.' };
+      const gating = getGatingRow(planId);
+      const isLive = gating?.gating_status === 'live';
+      const configSummary = configSummaryForPlan(planId);
+      const priceSummary = priceSummaryForPlan(planId);
+      const latest = latestRecordForPlan(planId);
+      const pending = pendingRequestsForPlan(planId);
+
+      return (
+        <tr
+          key={planId}
+          className={styles.row}
+          onClick={() => setSelectedPlanId(planId)}
+          onKeyDown={event => {
+            if (event.key === 'Enter' || event.key === ' ') {
+              event.preventDefault();
+              setSelectedPlanId(planId);
+            }
+          }}
+          tabIndex={0}
+          title="Open plan details"
+        >
+          <td className={styles.planName}>{meta.label}</td>
+          <td>
+            <span className={isLive ? styles.badgeLive : styles.badgeGated}>
+              {gating ? (isLive ? 'Live' : 'Early Access') : 'Not configured'}
+            </span>
+          </td>
+          <td>{renderImpact(planId)}</td>
+          <td>{renderSummaryStack(priceSummary.primary, priceSummary.secondary)}</td>
+          <td>{renderSummaryStack(configSummary.primary, configSummary.secondary)}</td>
+          <td>
+            {pending.length > 0 ? (
+              <Link
+                className={styles.pendingPlanLink}
+                href="/platform-admin/change-requests"
+                onClick={event => event.stopPropagation()}
+              >
+                {pending.length} pending
+              </Link>
+            ) : (
+              <span className={styles.noteEmpty}>None</span>
+            )}
+          </td>
+          <td>{renderCompactChange(latest?.updated_at)}</td>
+        </tr>
+      );
+    });
+  }
+
+  function priceCell(row: StripePriceRow | null, group: PriceProductGroup, cycle: 'monthly' | 'annual') {
+    const displayPrice = displayPriceForSlot(group.planId, cycle);
+
+    if (!row) {
+      return (
+        <div className={styles.priceStatusStack}>
+          {displayPrice && <strong className={styles.priceAmount}>{displayPrice}</strong>}
+          <span className={styles.priceStatusEmpty}>Missing slot</span>
+        </div>
+      );
+    }
+
+    const pendingRequest = pendingStripePriceRequestByRow.get(row.id);
+    const pendingProposal = pendingRequest ? getStripePriceProposal(pendingRequest) : null;
+
+    return (
+      <div className={styles.priceStatusStack}>
+        {displayPrice && <strong className={styles.priceAmount}>{displayPrice}</strong>}
+        <span className={row.price_id ? styles.priceStatusSet : styles.priceStatusEmpty}>
+          {row.price_id ? 'Configured' : 'Not set'}
+        </span>
+        {row.price_id && <small>{row.price_id}</small>}
+        {pendingRequest && (
+          <small className={styles.pendingPriceBadge}>
+            {optionLabel(CHANGE_REQUEST_STATUSES, pendingRequest.status)}: {pendingProposal?.proposedPriceId ?? 'clear price ID'}
+          </small>
+        )}
+      </div>
+    );
+  }
+
+  function productLastChange(group: PriceProductGroup) {
+    const latest = group.rows
+      .filter(row => row.updated_at)
+      .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())[0];
+
+    if (!latest) return renderLastChange(null, null, null);
+    return renderLastChange(latest.updated_at, latest.updated_by_email, latest.last_change_note);
+  }
+
+  function renderPriceProductRows(groups: PriceProductGroup[]) {
+    return (
+      <>
+        {groups.map(group => {
+          const planImpact = group.planId === 'rep_team' || group.planId === 'org_team_addon'
+            ? undefined
+            : impactsByPlan.get(group.planId);
+          const pendingCount = group.rows.filter(row => pendingStripePriceRequestByRow.has(row.id)).length;
+
+          return (
+            <tr key={group.planId} className={styles.row} onClick={() => setSelectedPriceProductId(group.planId)}>
+              <td className={styles.planName}>
+                {group.label}
+                <small className={styles.muted}>{cleanProductName(group.productName)}</small>
+              </td>
+              <td>{group.planId === 'rep_team' || group.planId === 'org_team_addon' ? 'Add-on purchases' : impactSummary(planImpact)}</td>
+              <td>{priceCell(group.monthly, group, 'monthly')}</td>
+              <td>{priceCell(group.annual, group, 'annual')}</td>
+              <td>{productLastChange(group)}</td>
+              <td className={styles.actionCell}>
+                {pendingCount > 0 && (
+                  <span className={styles.pendingCount}>{pendingCount} pending</span>
+                )}
+              </td>
+            </tr>
+          );
+        })}
+      </>
+    );
+  }
+
+  function renderPriceSlotRows(sectionRows: StripePriceRow[]) {
     return (
       <>
         {sectionRows.map(row => {
           const isEditing = row.id in priceEditing;
-          const isBusy = priceSaving === row.id;
+          const isBusy = false;
           const isSaved = priceSaved[row.id];
           const val = priceEditing[row.id] ?? (row.price_id ?? '');
-          const planImpact = row.plan_id === 'rep_team' ? undefined : impactsByPlan.get(row.plan_id);
+          const pendingRequest = pendingStripePriceRequestByRow.get(row.id);
+          const pendingProposal = pendingRequest ? getStripePriceProposal(pendingRequest) : null;
 
           return (
             <Fragment key={row.id}>
-              <tr className={styles.row} onClick={() => !isEditing && startPriceEdit(row)}>
-                <td className={styles.planName}>{PRICE_PLAN_LABELS[row.plan_id] ?? row.plan_id}</td>
+              <tr
+                className={styles.priceSlotRow}
+                onClick={() => !isEditing && startPriceEdit(row)}
+                onKeyDown={event => {
+                  if (isEditing) return;
+                  if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    startPriceEdit(row);
+                  }
+                }}
+                tabIndex={isEditing ? undefined : 0}
+                title={isEditing ? undefined : 'Click to edit'}
+              >
                 <td className={styles.muted}>
                   {row.billing_cycle.charAt(0).toUpperCase() + row.billing_cycle.slice(1)}
                 </td>
-                <td className={styles.muted}>{row.product_name ?? 'Not set'}</td>
-                <td>{row.plan_id === 'rep_team' ? 'Per-team add-on' : impactSummary(planImpact)}</td>
                 <td className={styles.priceIdCell}>
                   {isEditing ? (
                     <input
@@ -954,22 +1373,43 @@ export default function PlansPricingClient({
                       placeholder="price_..."
                       onChange={event => setPriceEditing(prev => ({ ...prev, [row.id]: event.target.value }))}
                       onKeyDown={event => {
-                        if (event.key === 'Enter' && hasSelectedApproval) savePrice(row);
+                        if (event.key === 'Enter') savePrice(row);
                         if (event.key === 'Escape') cancelPriceEdit(row.id);
                       }}
                       onClick={event => event.stopPropagation()}
                     />
                   ) : (
-                    <span className={row.price_id ? styles.priceIdSet : styles.priceIdEmpty}>
-                      {row.price_id ?? 'Not set - click to edit'}
-                    </span>
+                    <>
+                      <span className={row.price_id ? styles.priceIdSet : styles.priceIdEmpty}>
+                        {row.price_id ?? 'Not set - click to edit'}
+                      </span>
+                      {pendingRequest && (
+                        <span className={styles.pendingPriceBadge}>
+                          {optionLabel(CHANGE_REQUEST_STATUSES, pendingRequest.status)} request: {pendingProposal?.proposedPriceId ?? 'clear price ID'}
+                        </span>
+                      )}
+                    </>
                   )}
                 </td>
                 <td>{renderLastChange(row.updated_at, row.updated_by_email, row.last_change_note)}</td>
+                <td>
+                  {pendingRequest ? (
+                    <span className={styles.pendingPriceBadge}>
+                      {optionLabel(CHANGE_REQUEST_STATUSES, pendingRequest.status)} request
+                    </span>
+                  ) : (
+                    <span className={styles.noteEmpty}>None</span>
+                  )}
+                </td>
                 <td className={styles.actionCell} onClick={event => event.stopPropagation()}>
                   {isEditing ? (
                     <span className={styles.actionBtns}>
-                      <button className={styles.saveBtn} onClick={() => savePrice(row)} disabled={isBusy || !hasSelectedApproval} title="Save">
+                      <button
+                        className={styles.saveBtn}
+                        onClick={() => savePrice(row)}
+                        disabled={isBusy}
+                        title="Request approval"
+                      >
                         {isBusy ? <Loader size={12} className={styles.spin} /> : <Check size={12} />}
                       </button>
                       <button className={styles.cancelBtn} onClick={() => cancelPriceEdit(row.id)} disabled={isBusy} title="Cancel">
@@ -978,14 +1418,12 @@ export default function PlansPricingClient({
                     </span>
                   ) : isSaved ? (
                     <span className={styles.savedLabel}>Saved</span>
-                  ) : (
-                    <button className={styles.editBtn} onClick={() => startPriceEdit(row)}>Edit</button>
-                  )}
+                  ) : null}
                 </td>
               </tr>
               {isEditing && (
                 <tr className={styles.noteRow}>
-                  <td colSpan={7}>
+                  <td colSpan={5}>
                     <label>
                       <span>Change note</span>
                       <input
@@ -1000,13 +1438,305 @@ export default function PlansPricingClient({
               )}
               {priceErrors[row.id] && (
                 <tr className={styles.errorRow}>
-                  <td colSpan={7} className={styles.errorCell}>{priceErrors[row.id]}</td>
+                  <td colSpan={5} className={styles.errorCell}>{priceErrors[row.id]}</td>
                 </tr>
               )}
             </Fragment>
           );
         })}
       </>
+    );
+  }
+
+  function closeSelectedPlanModal() {
+    setSelectedPlanId(null);
+    if (configEditPlan) cancelConfigEdit();
+  }
+
+  function renderSelectedPlanModal() {
+    if (!selectedPlanId || !selectedPlanMeta) return null;
+
+    const isLive = selectedPlanGating?.gating_status === 'live';
+    const gatingStatus = selectedPlanGating?.gating_status ?? 'early_access';
+    const isConfigEditing = configEditPlan === selectedPlanId;
+    const latest = latestRecordForPlan(selectedPlanId);
+    const configSummary = configSummaryForPlan(selectedPlanId);
+    const priceSummary = priceSummaryForPlan(selectedPlanId);
+
+    return (
+      <div className={styles.modalBackdrop} role="presentation" onClick={closeSelectedPlanModal}>
+        <div
+          className={styles.planDetailModal}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="plan-detail-title"
+          onClick={event => event.stopPropagation()}
+        >
+          <div className={styles.modalHeader}>
+            <div>
+              <div className={styles.headerLabel}>Plan Workspace</div>
+              <h2 id="plan-detail-title" className={styles.modalTitle}>{selectedPlanMeta.label}</h2>
+            </div>
+            <button
+              type="button"
+              className={styles.cancelBtn}
+              onClick={closeSelectedPlanModal}
+              title="Close"
+            >
+              <X size={12} />
+            </button>
+          </div>
+
+          <div className={styles.planDetailSummary}>
+            <div>
+              <span>Status</span>
+              <strong>{isLive ? 'Live' : 'Early Access'}</strong>
+            </div>
+            <div>
+              <span>Impact</span>
+              <strong>{impactSummary(impactsByPlan.get(selectedPlanId))}</strong>
+            </div>
+            <div>
+              <span>Pricing</span>
+              <strong>{priceSummary.primary}</strong>
+            </div>
+            <div>
+              <span>Features</span>
+              <strong>{selectedPlanFeatureCount} modules</strong>
+            </div>
+            <div>
+              <span>Pending</span>
+              <strong>{selectedPlanPendingRequests.length}</strong>
+            </div>
+          </div>
+
+          <div className={styles.planDetailIntro}>
+            <p>{selectedPlanMeta.summary}</p>
+            {renderLastChange(latest?.updated_at, latest?.updated_by_email, latest?.last_change_note)}
+          </div>
+
+          <div className={styles.planDetailGrid}>
+            <section className={styles.planDetailPanel}>
+              <div className={styles.sectionHead}>
+                <h3 className={styles.sectionTitle}>Availability</h3>
+                <p className={styles.sectionDesc}>Availability edits create review requests from this plan.</p>
+              </div>
+              <div className={styles.planPanelBody}>
+                <span className={isLive ? styles.badgeLive : styles.badgeGated}>
+                  {selectedPlanGating ? (isLive ? 'Live' : 'Early Access') : 'Not configured'}
+                </span>
+                <label className={styles.fieldLabel}>
+                  <span>Change Note</span>
+                  <input
+                    className={styles.noteInput}
+                    value={gatingNotes[selectedPlanId] ?? ''}
+                    placeholder="Reason for this change"
+                    onChange={event => setGatingNotes(prev => ({ ...prev, [selectedPlanId]: event.target.value }))}
+                  />
+                </label>
+                <button
+                  className={isLive ? styles.deactivateBtn : styles.activateBtn}
+                  onClick={() => startGatingRequest(selectedPlanId, gatingStatus)}
+                  disabled={!canManageProduct}
+                >
+                  {isLive ? 'Request Early Access' : 'Request Live'}
+                </button>
+              </div>
+            </section>
+
+            <section className={styles.planDetailPanel}>
+              <div className={styles.sectionHead}>
+                <h3 className={styles.sectionTitle}>Limits &amp; Trials</h3>
+                <p className={styles.sectionDesc}>Limit edits create review requests from this plan.</p>
+              </div>
+              {isConfigEditing ? (
+                <div className={styles.planConfigForm}>
+                  <label className={styles.fieldLabel}>
+                    <span>Tournament Limit</span>
+                    <input
+                      autoFocus
+                      type="number"
+                      min={0}
+                      className={styles.numInput}
+                      value={configDraft?.tournament_limit ?? ''}
+                      placeholder={selectedPlanDefaults ? String(selectedPlanDefaults.tournamentLimit) : ''}
+                      onChange={event => setConfigDraft(draft => draft ? { ...draft, tournament_limit: event.target.value } : draft)}
+                    />
+                  </label>
+                  <label className={styles.fieldLabel}>
+                    <span>Seat Limit</span>
+                    <input
+                      type="number"
+                      min={0}
+                      className={styles.numInput}
+                      value={configDraft?.seat_limit ?? ''}
+                      placeholder={selectedPlanDefaults ? String(selectedPlanDefaults.seatLimit) : ''}
+                      onChange={event => setConfigDraft(draft => draft ? { ...draft, seat_limit: event.target.value } : draft)}
+                    />
+                  </label>
+                  <label className={styles.fieldLabel}>
+                    <span>Trial Days</span>
+                    <input
+                      type="number"
+                      min={0}
+                      className={styles.numInput}
+                      value={configDraft?.trial_days ?? ''}
+                      placeholder={selectedPlanDefaults ? String(selectedPlanDefaults.trialDays) : ''}
+                      onChange={event => setConfigDraft(draft => draft ? { ...draft, trial_days: event.target.value } : draft)}
+                    />
+                  </label>
+                  <label className={`${styles.fieldLabel} ${styles.fullWidth}`}>
+                    <span>Change Note</span>
+                    <input
+                      className={styles.noteInput}
+                      value={configChangeNote}
+                      placeholder={`Why are ${impactSummary(impactsByPlan.get(selectedPlanId))} being affected?`}
+                      onChange={event => setConfigChangeNote(event.target.value)}
+                    />
+                  </label>
+                  <div className={styles.formActions}>
+                    <span className={styles.actionBtns}>
+                      <button
+                        className={styles.saveBtn}
+                        onClick={() => saveConfig(selectedPlanId)}
+                        disabled={!canManageProduct}
+                        title="Request review"
+                      >
+                        <Check size={12} />
+                      </button>
+                      <button className={styles.cancelBtn} onClick={cancelConfigEdit} title="Cancel">
+                        <X size={12} />
+                      </button>
+                    </span>
+                  </div>
+                  {configError && <div className={`${styles.errorBanner} ${styles.fullWidth}`}>{configError}</div>}
+                </div>
+              ) : (
+                <div className={styles.planPanelBody}>
+                  {renderSummaryStack(configSummary.primary, configSummary.secondary)}
+                  <div className={styles.planMetricGrid}>
+                    <div>
+                      <span>Tournaments</span>
+                      <strong>{selectedPlanConfig?.tournament_limit ?? selectedPlanDefaults?.tournamentLimit ?? 'N/A'}</strong>
+                    </div>
+                    <div>
+                      <span>Seats</span>
+                      <strong>{selectedPlanConfig?.seat_limit ?? selectedPlanDefaults?.seatLimit ?? 'N/A'}</strong>
+                    </div>
+                    <div>
+                      <span>Trial Days</span>
+                      <strong>{selectedPlanConfig?.trial_days ?? selectedPlanDefaults?.trialDays ?? 'N/A'}</strong>
+                    </div>
+                  </div>
+                  <button className={styles.editBtn} onClick={() => startConfigEdit(selectedPlanId)} disabled={!canManageProduct}>
+                    Edit Limits
+                  </button>
+                </div>
+              )}
+            </section>
+
+            <section className={`${styles.planDetailPanel} ${styles.planDetailPanelWide}`}>
+              <div className={styles.sectionHead}>
+                <h3 className={styles.sectionTitle}>Pricing</h3>
+                <p className={styles.sectionDesc}>
+                  Plan and related add-on price edits create review requests.
+                </p>
+              </div>
+              <div className={styles.inlineTabs} role="tablist" aria-label="Plan price environment">
+                <button
+                  type="button"
+                  className={`${styles.inlineTab} ${priceEnvironmentTab === 'live' ? styles.inlineTabActive : ''}`}
+                  onClick={() => setPriceEnvironmentTab('live')}
+                  role="tab"
+                  aria-selected={priceEnvironmentTab === 'live'}
+                >
+                  Production
+                </button>
+                <button
+                  type="button"
+                  className={`${styles.inlineTab} ${priceEnvironmentTab === 'sandbox' ? styles.inlineTabActive : ''}`}
+                  onClick={() => setPriceEnvironmentTab('sandbox')}
+                  role="tab"
+                  aria-selected={priceEnvironmentTab === 'sandbox'}
+                >
+                  Test
+                </button>
+              </div>
+              <div className={styles.environmentNote}>
+                <span className={priceEnvironmentTab === 'live' ? styles.badgeLiveEnv : styles.badgeSandbox}>
+                  {priceEnvironmentTab === 'live' ? 'Production / Live Mode' : 'Test / Sandbox Mode'}
+                </span>
+                <span>Subscription pricing appears first; related add-ons appear below when available.</span>
+              </div>
+              <div className={styles.tableWrap}>
+                <table className={styles.table}>
+                  <thead>
+                    <tr>
+                      <th>Item</th>
+                      <th>Scope</th>
+                      <th>Monthly</th>
+                      <th>Annual</th>
+                      <th>Latest Change</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {selectedPlanPricingGroups.length === 0 ? (
+                      <tr>
+                        <td colSpan={6} className={styles.emptyCell}>
+                          {selectedPlanId === 'tournament'
+                            ? 'The free Tournament plan does not require Stripe price IDs.'
+                            : 'No Stripe price slots found for this plan or related add-ons in this environment.'}
+                        </td>
+                      </tr>
+                    ) : renderPriceProductRows(selectedPlanPricingGroups)}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+
+            <section className={styles.planDetailPanel}>
+              <div className={styles.sectionHead}>
+                <h3 className={styles.sectionTitle}>Feature Access</h3>
+                <p className={styles.sectionDesc}>Feature edits still use the Product Catalog matrix workflow.</p>
+              </div>
+              <div className={styles.planPanelBody}>
+                {renderSummaryStack(`${selectedPlanFeatureCount} modules enabled`, 'Published matrix')}
+                <button
+                  type="button"
+                  className={styles.editBtn}
+                  onClick={() => {
+                    closeSelectedPlanModal();
+                    setActiveTab('catalog');
+                    setCatalogView('matrix');
+                  }}
+                >
+                  Open Matrix
+                </button>
+              </div>
+            </section>
+
+            <section className={styles.planDetailPanel}>
+              <div className={styles.sectionHead}>
+                <h3 className={styles.sectionTitle}>Pending Changes</h3>
+                <p className={styles.sectionDesc}>Requests needing review or application for this plan.</p>
+              </div>
+              <div className={styles.planPanelBody}>
+                {selectedPlanPendingRequests.length > 0 ? (
+                  <>
+                    <strong className={styles.pendingPlanCount}>{selectedPlanPendingRequests.length} pending</strong>
+                    <Link className={styles.secondaryLink} href="/platform-admin/change-requests">
+                      Open Change Requests
+                    </Link>
+                  </>
+                ) : (
+                  <span className={styles.noteEmpty}>No pending requests for this plan.</span>
+                )}
+              </div>
+            </section>
+          </div>
+        </div>
+      </div>
     );
   }
 
@@ -1038,59 +1768,19 @@ export default function PlansPricingClient({
         </div>
       </section>
 
-      <section className={styles.impactPanel}>
-        {PLAN_ORDER.map(planId => {
-          const impact = impactsByPlan.get(planId);
-          const meta = PLAN_META[planId];
-          return (
-            <div key={planId} className={styles.impactCard}>
-              <span>{meta.label}</span>
-              <strong>{impactSummary(impact)}</strong>
-              <small>{statusBreakdown(impact)}</small>
-            </div>
-          );
-        })}
-      </section>
-
-      <section className={styles.approvalPanel}>
-        <div>
-          <div className={styles.sectionTitle}>Live Change Approval</div>
-          <p className={styles.sectionDesc}>
-            Availability, limits/trials, and Stripe price ID changes require an approved Product
-            Catalog change request before they can be applied. Feature Matrix requests publish from
-            the Product Catalog tab.
-          </p>
-        </div>
-        <label className={styles.approvalSelect}>
-          <span>Approved Request</span>
-          <select
-            className={styles.selectInput}
-            value={selectedApprovalId}
-            onChange={event => setSelectedApprovalId(event.target.value)}
-          >
-            <option value="">Select approved request</option>
-            {approvedLiveChangeRequests.map(request => (
-              <option key={request.id} value={request.id}>
-                {request.title}
-              </option>
-            ))}
-          </select>
-        </label>
-        <div className={styles.approvalMeta}>
-          {selectedApproval ? (
-            <>
-              <span className={styles.badgeLive}>Approved</span>
-              <span>{optionLabel(CHANGE_REQUEST_TYPES, selectedApproval.request_type)}</span>
-              <span>{selectedApproval.impact_summary ?? 'No impact summary'}</span>
-            </>
-          ) : (
-            <>
-              <span className={styles.badgeGated}>Required</span>
-              <span>{approvedLiveChangeRequests.length} approved request{approvedLiveChangeRequests.length === 1 ? '' : 's'} available</span>
-            </>
-          )}
-        </div>
-      </section>
+      {pendingStripePriceRequests.length > 0 && (
+        <section className={styles.pendingApprovalBanner}>
+          <div>
+            <div className={styles.sectionTitle}>Pricing Approval Queue</div>
+            <p className={styles.sectionDesc}>
+              {pendingStripePriceRequests.length} Stripe price change request{pendingStripePriceRequests.length === 1 ? '' : 's'} waiting for review or application.
+            </p>
+          </div>
+          <Link className={styles.activateBtn} href="/platform-admin/change-requests">
+            Review Requests
+          </Link>
+        </section>
+      )}
 
       <nav className={styles.tabBar}>
         {TABS.map(tab => (
@@ -1104,205 +1794,29 @@ export default function PlansPricingClient({
         ))}
       </nav>
 
-      <section className={styles.section} hidden={activeTab !== 'availability'}>
-        <p className={styles.sectionDesc}>
-          Controls whether each plan is available for self-serve checkout or shows an early-access CTA.
-          Subscriber impact is based on current customer accounts.
-        </p>
-        <div className={styles.tableWrap}>
-          <table className={styles.table}>
-            <thead>
-              <tr>
-                <th>Plan</th>
-                <th>Price</th>
-                <th>Subscriber Impact</th>
-                <th>Status</th>
-                <th>Last Change</th>
-                <th>Change Note</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              {sortedGating.map(row => {
-                const meta = PLAN_META[row.plan_key] ?? { label: row.plan_key, price: 'Not set', summary: 'No summary configured.' };
-                const isLive = row.gating_status === 'live';
-                const isBusy = gatingBusy === row.plan_key;
-                return (
-                  <Fragment key={row.plan_key}>
-                    <tr>
-                      <td className={styles.planName}>
-                        {meta.label}
-                        <small className={styles.muted}>{meta.summary}</small>
-                      </td>
-                      <td className={styles.muted}>{meta.price}</td>
-                      <td>{renderImpact(row.plan_key)}</td>
-                      <td>
-                        <span className={isLive ? styles.badgeLive : styles.badgeGated}>
-                          {isLive ? 'Live' : 'Early Access'}
-                        </span>
-                      </td>
-                      <td>{renderLastChange(row.updated_at, row.updated_by_email, row.last_change_note)}</td>
-                      <td>
-                        <input
-                          className={styles.noteInput}
-                          value={gatingNotes[row.plan_key] ?? ''}
-                          placeholder="Reason for this change"
-                          onChange={event => setGatingNotes(prev => ({ ...prev, [row.plan_key]: event.target.value }))}
-                        />
-                      </td>
-                      <td className={styles.actionCell}>
-                        <button
-                          className={isLive ? styles.deactivateBtn : styles.activateBtn}
-                          onClick={() => toggleGating(row.plan_key, row.gating_status)}
-                          disabled={isBusy || !hasSelectedApproval}
-                        >
-                          {isBusy
-                            ? <Loader size={12} className={styles.spin} />
-                            : isLive ? 'Set Early Access' : 'Set Live'}
-                        </button>
-                      </td>
-                    </tr>
-                    {gatingErrors[row.plan_key] && (
-                      <tr className={styles.errorRow}>
-                        <td colSpan={7} className={styles.errorCell}>{gatingErrors[row.plan_key]}</td>
-                      </tr>
-                    )}
-                  </Fragment>
-                );
-              })}
-            </tbody>
-          </table>
+      <section className={styles.section} hidden={activeTab !== 'plans'}>
+        <div className={styles.sectionHead}>
+          <h2 className={styles.sectionTitle}>Plan Workspace</h2>
+          <p className={styles.sectionDesc}>
+            Scan plan state, customer impact, pricing, limits, pending changes, and latest update.
+            Open a plan for details and scoped edits.
+          </p>
         </div>
-      </section>
-
-      <section className={styles.section} hidden={activeTab !== 'limits'}>
-        <p className={styles.sectionDesc}>
-          Override per-plan tournament slots, seat caps, and free trial lengths. Blank fields use the
-          code default shown as placeholder text.
-        </p>
         <div className={styles.tableWrap}>
-          <table className={styles.table}>
+          <table className={`${styles.table} ${styles.planOverviewTable}`}>
             <thead>
               <tr>
                 <th>Plan</th>
-                <th>Subscriber Impact</th>
-                <th>Tournament Limit</th>
-                <th>Seat Limit</th>
-                <th>Trial Days</th>
-                <th>Last Change</th>
-                <th></th>
+                <th>Status</th>
+                <th>Impact</th>
+                <th>Pricing</th>
+                <th>Limits &amp; Trials</th>
+                <th>Pending</th>
+                <th>Updated</th>
               </tr>
             </thead>
             <tbody>
-              {PLAN_ORDER.map(planId => {
-                const row = getConfigRow(planId);
-                const defaults = configDefaults[planId];
-                const meta = PLAN_META[planId];
-                const isEditing = configEditPlan === planId;
-                const isBusy = isEditing && configSaving;
-                const isSaved = configSaved === planId;
-
-                return (
-                  <Fragment key={planId}>
-                    <tr className={isEditing ? undefined : styles.row} onClick={() => !isEditing && startConfigEdit(planId)}>
-                      <td className={styles.planName}>
-                        {meta?.label ?? planId}
-                        {meta?.summary && <small className={styles.muted}>{meta.summary}</small>}
-                      </td>
-                      <td>{renderImpact(planId)}</td>
-                      <td>
-                        {isEditing ? (
-                          <input
-                            autoFocus
-                            type="number"
-                            min={0}
-                            className={styles.numInput}
-                            value={configDraft?.tournament_limit ?? ''}
-                            placeholder={defaults ? String(defaults.tournamentLimit) : ''}
-                            onChange={event => setConfigDraft(draft => draft ? { ...draft, tournament_limit: event.target.value } : draft)}
-                            onClick={event => event.stopPropagation()}
-                          />
-                        ) : (
-                          <span className={row?.tournament_limit != null ? styles.numValue : styles.numEmpty}>
-                            {row?.tournament_limit != null ? row.tournament_limit : 'Default'}
-                          </span>
-                        )}
-                      </td>
-                      <td>
-                        {isEditing ? (
-                          <input
-                            type="number"
-                            min={0}
-                            className={styles.numInput}
-                            value={configDraft?.seat_limit ?? ''}
-                            placeholder={defaults ? String(defaults.seatLimit) : ''}
-                            onChange={event => setConfigDraft(draft => draft ? { ...draft, seat_limit: event.target.value } : draft)}
-                            onClick={event => event.stopPropagation()}
-                          />
-                        ) : (
-                          <span className={row?.seat_limit != null ? styles.numValue : styles.numEmpty}>
-                            {row?.seat_limit != null ? row.seat_limit : 'Default'}
-                          </span>
-                        )}
-                      </td>
-                      <td>
-                        {isEditing ? (
-                          <input
-                            type="number"
-                            min={0}
-                            className={styles.numInput}
-                            value={configDraft?.trial_days ?? ''}
-                            placeholder={defaults ? String(defaults.trialDays) : ''}
-                            onChange={event => setConfigDraft(draft => draft ? { ...draft, trial_days: event.target.value } : draft)}
-                            onClick={event => event.stopPropagation()}
-                          />
-                        ) : (
-                          <span className={row?.trial_days != null ? styles.numValue : styles.numEmpty}>
-                            {row?.trial_days != null ? row.trial_days : 'Default'}
-                          </span>
-                        )}
-                      </td>
-                      <td>{renderLastChange(row?.updated_at, row?.updated_by_email, row?.last_change_note)}</td>
-                      <td className={styles.actionCell} onClick={event => event.stopPropagation()}>
-                        {isEditing ? (
-                          <span className={styles.actionBtns}>
-                            <button className={styles.saveBtn} onClick={() => saveConfig(planId)} disabled={isBusy || !hasSelectedApproval} title="Save">
-                              {isBusy ? <Loader size={12} className={styles.spin} /> : <Check size={12} />}
-                            </button>
-                            <button className={styles.cancelBtn} onClick={cancelConfigEdit} disabled={isBusy} title="Cancel">
-                              <X size={12} />
-                            </button>
-                          </span>
-                        ) : isSaved ? (
-                          <span className={styles.savedLabel}>Saved</span>
-                        ) : (
-                          <button className={styles.editBtn} onClick={() => startConfigEdit(planId)}>Edit</button>
-                        )}
-                      </td>
-                    </tr>
-                    {isEditing && (
-                      <tr className={styles.noteRow}>
-                        <td colSpan={7}>
-                          <label>
-                            <span>Change note</span>
-                            <input
-                              className={styles.noteInput}
-                              value={configChangeNote}
-                              placeholder={`Why are ${impactSummary(impactsByPlan.get(planId))} being affected?`}
-                              onChange={event => setConfigChangeNote(event.target.value)}
-                            />
-                          </label>
-                        </td>
-                      </tr>
-                    )}
-                    {isEditing && configError && (
-                      <tr className={styles.errorRow}>
-                        <td colSpan={7} className={styles.errorCell}>{configError}</td>
-                      </tr>
-                    )}
-                  </Fragment>
-                );
-              })}
+              {renderPlanOverviewRows()}
             </tbody>
           </table>
         </div>
@@ -1360,7 +1874,7 @@ export default function PlansPricingClient({
           </div>
           <p className={styles.catalogModeNote}>
             {catalogView === 'planning'
-              ? 'Track proposed changes and campaigns before anything becomes live.'
+              ? 'Campaign work stays here; request approvals and status changes live in the central queue.'
               : catalogView === 'matrix'
                 ? 'Review, draft, and publish plan/module entitlement changes.'
                 : 'Review baseline plan versions and add-on catalog records.'}
@@ -1369,162 +1883,20 @@ export default function PlansPricingClient({
 
         {catalogView === 'planning' && (
           <>
-        <section className={styles.governancePanel}>
-          <div className={styles.sectionHead}>
-            <h2 className={styles.sectionTitle}>Planned Changes</h2>
-            <p className={styles.sectionDesc}>
-              Track proposed pricing, entitlement, add-on, campaign, and grandfathering work before
-              anything changes for customers.
-            </p>
-          </div>
-
-          {canManageProduct && (
-            <div className={styles.formPanel}>
-              <label className={styles.fieldLabel}>
-                <span>Title</span>
-                <input
-                  className={styles.noteInput}
-                  value={changeDraft.title}
-                  placeholder="Example: League launch pricing update"
-                  onChange={event => setChangeDraft(draft => ({ ...draft, title: event.target.value }))}
-                />
-              </label>
-              <label className={styles.fieldLabel}>
-                <span>Type</span>
-                <select
-                  className={styles.selectInput}
-                  value={changeDraft.request_type}
-                  onChange={event => setChangeDraft(draft => ({ ...draft, request_type: event.target.value }))}
-                >
-                  {CHANGE_REQUEST_TYPES.map(option => (
-                    <option key={option.value} value={option.value}>{option.label}</option>
-                  ))}
-                </select>
-              </label>
-              <label className={styles.fieldLabel}>
-                <span>Priority</span>
-                <select
-                  className={styles.selectInput}
-                  value={changeDraft.priority}
-                  onChange={event => setChangeDraft(draft => ({ ...draft, priority: event.target.value }))}
-                >
-                  {PRIORITIES.map(option => (
-                    <option key={option.value} value={option.value}>{option.label}</option>
-                  ))}
-                </select>
-              </label>
-              <label className={styles.fieldLabel}>
-                <span>Target Plan</span>
-                <select
-                  className={styles.selectInput}
-                  value={changeDraft.target_plan_id}
-                  onChange={event => setChangeDraft(draft => ({ ...draft, target_plan_id: event.target.value }))}
-                >
-                  <option value="">No specific plan</option>
-                  {PLAN_ORDER.map(planId => (
-                    <option key={planId} value={planId}>{planLabel(planId)}</option>
-                  ))}
-                </select>
-              </label>
-              <label className={styles.fieldLabel}>
-                <span>Effective Date</span>
-                <input
-                  className={styles.noteInput}
-                  type="date"
-                  value={changeDraft.effective_at}
-                  onChange={event => setChangeDraft(draft => ({ ...draft, effective_at: event.target.value }))}
-                />
-              </label>
-              <label className={`${styles.fieldLabel} ${styles.fullWidth}`}>
-                <span>Impact Summary</span>
-                <input
-                  className={styles.noteInput}
-                  value={changeDraft.impact_summary}
-                  placeholder="Who is affected, and what needs review before approval?"
-                  onChange={event => setChangeDraft(draft => ({ ...draft, impact_summary: event.target.value }))}
-                />
-              </label>
-              <label className={`${styles.fieldLabel} ${styles.fullWidth}`}>
-                <span>Description</span>
-                <textarea
-                  className={styles.textArea}
-                  value={changeDraft.description}
-                  placeholder="Describe the proposed change, approval criteria, and launch notes."
-                  onChange={event => setChangeDraft(draft => ({ ...draft, description: event.target.value }))}
-                />
-              </label>
-              <div className={styles.formActions}>
-                <button
-                  className={styles.activateBtn}
-                  onClick={createChangeRequest}
-                  disabled={catalogBusy === 'change-request' || !changeDraft.title.trim()}
-                >
-                  {catalogBusy === 'change-request' ? <Loader size={12} className={styles.spin} /> : 'Add Request'}
-                </button>
+            {pendingStripePriceRequests.length > 0 && (
+              <div className={styles.inlineNotice}>
+                <strong>{pendingStripePriceRequests.length} pricing request{pendingStripePriceRequests.length === 1 ? '' : 's'} pending</strong>
+                <span>Approving a generated Stripe price request applies its proposed price ID and marks it implemented.</span>
               </div>
-            </div>
-          )}
+            )}
 
-          <div className={styles.tableWrap}>
-            <table className={styles.table}>
-              <thead>
-                <tr>
-                  <th>Request</th>
-                  <th>Status</th>
-                  <th>Priority</th>
-                  <th>Target</th>
-                  <th>Effective</th>
-                  <th>Owner</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody>
-                {catalogChangeRequests.length === 0 ? (
-                  <tr>
-                    <td colSpan={7} className={styles.emptyCell}>No product catalog change requests yet.</td>
-                  </tr>
-                ) : catalogChangeRequests.map(request => (
-                  <tr key={request.id}>
-                    <td className={styles.planName}>
-                      {request.title}
-                      <small className={styles.muted}>
-                        {optionLabel(CHANGE_REQUEST_TYPES, request.request_type)}
-                        {request.impact_summary ? ` / ${request.impact_summary}` : ''}
-                      </small>
-                    </td>
-                    <td>
-                      <span className={statusClass(request.status)}>
-                        {optionLabel(CHANGE_REQUEST_STATUSES, request.status)}
-                      </span>
-                    </td>
-                    <td className={styles.muted}>{optionLabel(PRIORITIES, request.priority)}</td>
-                    <td className={styles.muted}>
-                      {request.target_plan_id ? planLabel(request.target_plan_id) : request.target_addon_key ?? 'General'}
-                    </td>
-                    <td className={styles.muted}>{formatDateOnly(request.effective_at)}</td>
-                    <td className={styles.muted}>{request.created_by_email}</td>
-                    <td className={styles.actionCell}>
-                      {canManageProduct ? (
-                        <select
-                          className={styles.selectInput}
-                          value={request.status}
-                          disabled={catalogBusy === request.id}
-                          onChange={event => updateChangeRequestStatus(request.id, event.target.value)}
-                        >
-                          {CHANGE_REQUEST_STATUSES.map(option => (
-                            <option key={option.value} value={option.value}>{option.label}</option>
-                          ))}
-                        </select>
-                      ) : (
-                        <span className={styles.muted}>Read only</span>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
+            <div className={styles.inlineNotice}>
+              <strong>Change approvals moved</strong>
+              <span>Review, approve, reject, and apply catalog requests from the central Change Requests queue.</span>
+              <Link className={styles.secondaryLink} href="/platform-admin/change-requests">
+                Open Change Requests
+              </Link>
+            </div>
 
         <section className={styles.governancePanel}>
           <div className={styles.sectionHead}>
@@ -1804,6 +2176,57 @@ export default function PlansPricingClient({
                       </td>
                     </tr>
                   ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <section className={styles.catalogPanel}>
+            <div className={styles.sectionHead}>
+              <h2 className={styles.sectionTitle}>Add-on Stripe Prices</h2>
+              <p className={styles.sectionDesc}>
+                Add-on price slots stay with Product Catalog because they are not standalone plan rows.
+                Price edits still create review requests in Change Requests.
+              </p>
+            </div>
+            <div className={styles.inlineTabs} role="tablist" aria-label="Add-on price environment">
+              <button
+                type="button"
+                className={`${styles.inlineTab} ${priceEnvironmentTab === 'live' ? styles.inlineTabActive : ''}`}
+                onClick={() => setPriceEnvironmentTab('live')}
+                role="tab"
+                aria-selected={priceEnvironmentTab === 'live'}
+              >
+                Production
+              </button>
+              <button
+                type="button"
+                className={`${styles.inlineTab} ${priceEnvironmentTab === 'sandbox' ? styles.inlineTabActive : ''}`}
+                onClick={() => setPriceEnvironmentTab('sandbox')}
+                role="tab"
+                aria-selected={priceEnvironmentTab === 'sandbox'}
+              >
+                Test
+              </button>
+            </div>
+            <div className={styles.tableWrap}>
+              <table className={styles.table}>
+                <thead>
+                  <tr>
+                    <th>Product</th>
+                    <th>Impact</th>
+                    <th>Monthly</th>
+                    <th>Annual</th>
+                    <th>Latest Change</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {addonPriceProductGroups.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className={styles.emptyCell}>No add-on Stripe price slots found.</td>
+                    </tr>
+                  ) : renderPriceProductRows(addonPriceProductGroups)}
                 </tbody>
               </table>
             </div>
@@ -2089,63 +2512,275 @@ export default function PlansPricingClient({
         )}
       </section>
 
-      <section className={styles.section} hidden={activeTab !== 'prices'}>
-        <p className={styles.sectionDesc}>
-          Stripe price IDs for each plan and billing cycle. Production IDs are shown first for launch
-          review; test IDs remain one tab away for checkout testing.
-        </p>
+      {renderSelectedPlanModal()}
 
-        <div className={styles.inlineTabs} role="tablist" aria-label="Stripe price environment">
-          <button
-            type="button"
-            className={`${styles.inlineTab} ${priceEnvironmentTab === 'live' ? styles.inlineTabActive : ''}`}
-            onClick={() => setPriceEnvironmentTab('live')}
-            role="tab"
-            aria-selected={priceEnvironmentTab === 'live'}
+      {selectedPriceProduct && (
+        <div className={styles.modalBackdrop} role="presentation" onClick={() => setSelectedPriceProductId(null)}>
+          <div
+            className={styles.priceProductModal}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="price-product-title"
+            onClick={event => event.stopPropagation()}
           >
-            Production
-          </button>
-          <button
-            type="button"
-            className={`${styles.inlineTab} ${priceEnvironmentTab === 'sandbox' ? styles.inlineTabActive : ''}`}
-            onClick={() => setPriceEnvironmentTab('sandbox')}
-            role="tab"
-            aria-selected={priceEnvironmentTab === 'sandbox'}
-          >
-            Test
-          </button>
-        </div>
+            <div className={styles.modalHeader}>
+              <div>
+                <div className={styles.headerLabel}>
+                  {priceEnvironmentTab === 'live' ? 'Production Prices' : 'Test Prices'}
+                </div>
+                <h2 id="price-product-title" className={styles.modalTitle}>{selectedPriceProduct.label}</h2>
+              </div>
+              <button
+                type="button"
+                className={styles.cancelBtn}
+                onClick={() => setSelectedPriceProductId(null)}
+                title="Close"
+              >
+                <X size={12} />
+              </button>
+            </div>
 
-        <div className={styles.environmentNote}>
-          <span className={priceEnvironmentTab === 'live' ? styles.badgeLiveEnv : styles.badgeSandbox}>
-            {priceEnvironmentTab === 'live' ? 'Production / Live Mode' : 'Test / Sandbox Mode'}
-          </span>
-          <span>
-            {priceEnvironmentTab === 'live'
-              ? 'These are the price IDs used with live Stripe keys.'
-              : 'These are the price IDs used with test Stripe keys.'}
-          </span>
-        </div>
+            <div className={styles.productModalSummary}>
+              <span>{cleanProductName(selectedPriceProduct.productName)}</span>
+              <span className={priceEnvironmentTab === 'live' ? styles.badgeLiveEnv : styles.badgeSandbox}>
+                {priceEnvironmentTab === 'live' ? 'Production / Live Mode' : 'Test / Sandbox Mode'}
+              </span>
+            </div>
 
-        <div className={styles.tableWrap}>
-          <table className={styles.table}>
-            <thead>
-              <tr>
-                <th>Plan</th>
-                <th>Cycle</th>
-                <th>Product Name</th>
-                <th>Customer Impact</th>
-                <th>Price ID</th>
-                <th>Last Change</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              {renderPriceRows(priceEnvironmentTab === 'live' ? livePriceRows : sandboxPriceRows)}
-            </tbody>
-          </table>
+            <div className={styles.tableWrap}>
+              <table className={styles.table}>
+                <thead>
+                  <tr>
+                    <th>Cycle</th>
+                    <th>Price ID</th>
+                    <th>Last Change</th>
+                    <th>Pending</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {renderPriceSlotRows(selectedPriceProduct.rows)}
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
-      </section>
+      )}
+
+      {planRequestDraft && (
+        <div className={styles.modalBackdrop} role="presentation">
+          <div className={styles.requestModal} role="dialog" aria-modal="true" aria-labelledby="plan-request-title">
+            <div className={styles.modalHeader}>
+              <div>
+                <div className={styles.headerLabel}>Approval Request</div>
+                <h2 id="plan-request-title" className={styles.modalTitle}>Submit Plan Change</h2>
+              </div>
+              <button
+                type="button"
+                className={styles.cancelBtn}
+                onClick={() => setPlanRequestDraft(null)}
+                disabled={catalogBusy === 'plan-change-request'}
+                title="Close"
+              >
+                <X size={12} />
+              </button>
+            </div>
+
+            <div className={styles.requestSummary}>
+              <div>
+                <span>Plan</span>
+                <strong>{planLabel(planRequestDraft.target_plan_id)}</strong>
+              </div>
+              <div>
+                <span>Type</span>
+                <strong>{planRequestDraft.proposal.kind === 'plan_gating_update' ? 'Availability' : 'Limits & Trials'}</strong>
+              </div>
+              <div>
+                <span>Priority</span>
+                <strong>{optionLabel(PRIORITIES, planRequestDraft.priority)}</strong>
+              </div>
+              <div>
+                <span>Status</span>
+                <strong>Needs Review</strong>
+              </div>
+            </div>
+
+            {planRequestError && <div className={styles.errorBanner}>{planRequestError}</div>}
+
+            <div className={styles.modalForm}>
+              <label className={`${styles.fieldLabel} ${styles.fullWidth}`}>
+                <span>Title</span>
+                <input
+                  className={styles.noteInput}
+                  value={planRequestDraft.title}
+                  onChange={event => setPlanRequestDraft(draft => draft ? { ...draft, title: event.target.value } : draft)}
+                />
+              </label>
+              <label className={styles.fieldLabel}>
+                <span>Priority</span>
+                <select
+                  className={styles.selectInput}
+                  value={planRequestDraft.priority}
+                  onChange={event => setPlanRequestDraft(draft => draft ? { ...draft, priority: event.target.value } : draft)}
+                >
+                  {PRIORITIES.map(option => (
+                    <option key={option.value} value={option.value}>{option.label}</option>
+                  ))}
+                </select>
+              </label>
+              <label className={`${styles.fieldLabel} ${styles.fullWidth}`}>
+                <span>Impact Summary</span>
+                <input
+                  className={styles.noteInput}
+                  value={planRequestDraft.impact_summary}
+                  onChange={event => setPlanRequestDraft(draft => draft ? { ...draft, impact_summary: event.target.value } : draft)}
+                />
+              </label>
+              <label className={`${styles.fieldLabel} ${styles.fullWidth}`}>
+                <span>Description</span>
+                <textarea
+                  className={styles.textArea}
+                  value={planRequestDraft.description}
+                  onChange={event => setPlanRequestDraft(draft => draft ? { ...draft, description: event.target.value } : draft)}
+                />
+              </label>
+            </div>
+
+            <div className={styles.modalActions}>
+              <button
+                type="button"
+                className={styles.cancelBtn}
+                onClick={() => setPlanRequestDraft(null)}
+                disabled={catalogBusy === 'plan-change-request'}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className={styles.activateBtn}
+                onClick={submitPlanChangeRequest}
+                disabled={catalogBusy === 'plan-change-request' || !planRequestDraft.title.trim()}
+              >
+                {catalogBusy === 'plan-change-request'
+                  ? <Loader size={12} className={styles.spin} />
+                  : 'Submit for Review'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {priceRequestDraft && (
+        <div className={styles.modalBackdrop} role="presentation">
+          <div className={styles.requestModal} role="dialog" aria-modal="true" aria-labelledby="price-request-title">
+            <div className={styles.modalHeader}>
+              <div>
+                <div className={styles.headerLabel}>Approval Request</div>
+                <h2 id="price-request-title" className={styles.modalTitle}>Submit Price Change</h2>
+              </div>
+              <button
+                type="button"
+                className={styles.cancelBtn}
+                onClick={() => setPriceRequestDraft(null)}
+                disabled={catalogBusy === 'price-change-request'}
+                title="Close"
+              >
+                <X size={12} />
+              </button>
+            </div>
+
+            <div className={styles.requestSummary}>
+              <div>
+                <span>Plan</span>
+                <strong>{PRICE_PLAN_LABELS[priceRequestDraft.row.plan_id] ?? priceRequestDraft.row.plan_id}</strong>
+              </div>
+              <div>
+                <span>Cycle</span>
+                <strong>{priceRequestDraft.row.billing_cycle}</strong>
+              </div>
+              <div>
+                <span>Environment</span>
+                <strong>{priceRequestDraft.row.environment}</strong>
+              </div>
+              <div>
+                <span>Proposed</span>
+                <strong>{priceRequestDraft.proposedPriceId || 'Clear price ID'}</strong>
+              </div>
+            </div>
+
+            {priceRequestError && <div className={styles.errorBanner}>{priceRequestError}</div>}
+
+            <div className={styles.modalForm}>
+              <label className={`${styles.fieldLabel} ${styles.fullWidth}`}>
+                <span>Title</span>
+                <input
+                  className={styles.noteInput}
+                  value={priceRequestDraft.title}
+                  onChange={event => setPriceRequestDraft(draft => draft ? { ...draft, title: event.target.value } : draft)}
+                />
+              </label>
+              <label className={styles.fieldLabel}>
+                <span>Priority</span>
+                <select
+                  className={styles.selectInput}
+                  value={priceRequestDraft.priority}
+                  onChange={event => setPriceRequestDraft(draft => draft ? { ...draft, priority: event.target.value } : draft)}
+                >
+                  {PRIORITIES.map(option => (
+                    <option key={option.value} value={option.value}>{option.label}</option>
+                  ))}
+                </select>
+              </label>
+              <label className={`${styles.fieldLabel} ${styles.fullWidth}`}>
+                <span>Impact Summary</span>
+                <input
+                  className={styles.noteInput}
+                  value={priceRequestDraft.impact_summary}
+                  onChange={event => setPriceRequestDraft(draft => draft ? { ...draft, impact_summary: event.target.value } : draft)}
+                />
+              </label>
+              <label className={`${styles.fieldLabel} ${styles.fullWidth}`}>
+                <span>Change Note</span>
+                <input
+                  className={styles.noteInput}
+                  value={priceRequestDraft.changeNote}
+                  placeholder="Why is this Stripe price ID changing?"
+                  onChange={event => setPriceRequestDraft(draft => draft ? { ...draft, changeNote: event.target.value } : draft)}
+                />
+              </label>
+              <label className={`${styles.fieldLabel} ${styles.fullWidth}`}>
+                <span>Description</span>
+                <textarea
+                  className={styles.textArea}
+                  value={priceRequestDraft.description}
+                  onChange={event => setPriceRequestDraft(draft => draft ? { ...draft, description: event.target.value } : draft)}
+                />
+              </label>
+            </div>
+
+            <div className={styles.modalActions}>
+              <button
+                type="button"
+                className={styles.cancelBtn}
+                onClick={() => setPriceRequestDraft(null)}
+                disabled={catalogBusy === 'price-change-request'}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className={styles.activateBtn}
+                onClick={submitPriceChangeRequest}
+                disabled={catalogBusy === 'price-change-request' || !priceRequestDraft.title.trim()}
+              >
+                {catalogBusy === 'price-change-request'
+                  ? <Loader size={12} className={styles.spin} />
+                  : 'Submit for Review'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -80,6 +80,7 @@ export default function GameList({
           className="btn btn-primary btn-sm"
           onClick={(e) => { e.stopPropagation(); onScore(g); setOpenMenu(null); }}
           title={g.status === 'completed' ? 'Edit Score' : 'Enter Score'}
+          aria-label={g.status === 'completed' ? 'Edit Score' : 'Enter Score'}
         >
           <Trophy size={14} />
         </button>
@@ -228,6 +229,7 @@ export default function GameList({
                     className="btn btn-primary btn-sm"
                     onClick={(e) => { e.stopPropagation(); onScore(g); }}
                     title={g.status === 'completed' ? 'Edit Score' : g.status === 'submitted' ? 'Edit Submitted Score' : 'Enter Score'}
+                    aria-label={g.status === 'completed' ? 'Edit Score' : g.status === 'submitted' ? 'Edit Submitted Score' : 'Enter Score'}
                     style={{ padding: '8px', borderRadius: '8px', width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                   >
                     <Trophy size={16} />
@@ -463,7 +465,7 @@ export default function GameList({
                 <div className={s.poolSubHeader}>
                   <div className={s.poolDot} style={{ background: p.id === 'unassigned' ? 'var(--danger-light)' : 'var(--logic-lime)' }} />
                   <span className={s.poolSubLabel} style={{ color: p.id === 'unassigned' ? 'var(--danger-light)' : undefined }}>
-                    {p.id === 'unassigned' ? 'UNASSIGNED' : `${p.name.replace(/^Pool\s+/i, '').trim().toUpperCase()} POOL`}
+                    {p.id === 'unassigned' ? 'UNASSIGNED' : formatPoolName(p.name).toUpperCase()}
                   </span>
                   <span className={s.poolSubCount}>({poolGames.length})</span>
                 </div>

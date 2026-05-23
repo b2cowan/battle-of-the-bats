@@ -116,6 +116,7 @@ type CloneNameForm = {
 
 type TournamentSetupWizardProps = {
   isOpen: boolean;
+  orgSlug?: string;
   orgContactEmail?: string | null;
   /** Pass existing non-archived tournaments to enable the clone pre-step. */
   existingTournaments?: PastTournament[];
@@ -267,6 +268,7 @@ async function requestJson<T>(input: RequestInfo | URL, init?: RequestInit): Pro
 
 export default function TournamentSetupWizard({
   isOpen,
+  orgSlug,
   orgContactEmail,
   existingTournaments,
   canClone,
@@ -277,6 +279,8 @@ export default function TournamentSetupWizard({
   // ── Pre-step state (choose / clone-name) ─────────────────────────────────
   const hasPastTournaments = Boolean(existingTournaments && existingTournaments.length > 0);
   const [preStep, setPreStep] = useState<PreStepMode | null>(hasPastTournaments ? 'choose' : null);
+  const orgQuery = orgSlug ? `?orgSlug=${encodeURIComponent(orgSlug)}` : '';
+  const orgParam = orgSlug ? `&orgSlug=${encodeURIComponent(orgSlug)}` : '';
   const [cloneSource, setCloneSource] = useState<PastTournament | null>(null);
   const [cloneNameForm, setCloneNameForm] = useState<CloneNameForm>({
     name: '', slug: '', year: String(new Date().getFullYear() + 1),
@@ -349,8 +353,8 @@ export default function TournamentSetupWizard({
     setDataLoading(true);
     setContactForm({ name: '', email: orgContactEmail ?? '', phone: '', role: '' });
     Promise.all([
-      requestJson<ExistingVenue[]>('/api/admin/diamonds?scope=org').catch(() => []),
-      requestJson<ExistingTournament[]>('/api/admin/tournaments').catch(() => []),
+      requestJson<ExistingVenue[]>(`/api/admin/diamonds?scope=org${orgParam}`).catch(() => []),
+      requestJson<ExistingTournament[]>(`/api/admin/tournaments${orgQuery}`).catch(() => []),
     ]).then(([venues, tournaments]) => {
       setExistingVenues(venues);
       const names = tournaments
@@ -652,7 +656,7 @@ export default function TournamentSetupWizard({
       const allVenues = skipped.venues ? [] : venueQueue;
       const contact = skipped.contacts ? null : getContactDraft();
 
-      const created = await requestJson<CreatedTournament & { success: boolean }>('/api/admin/setup-tournament', {
+      const created = await requestJson<CreatedTournament & { success: boolean }>(`/api/admin/setup-tournament${orgQuery}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -664,7 +668,7 @@ export default function TournamentSetupWizard({
       });
 
       await Promise.all([
-        ...allVenues.map(row => requestJson<{ success: boolean }>('/api/admin/diamonds', {
+        ...allVenues.map(row => requestJson<{ success: boolean }>(`/api/admin/diamonds${orgQuery}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -680,7 +684,7 @@ export default function TournamentSetupWizard({
       ]);
 
       if (contact) {
-        await requestJson<{ success: boolean }>('/api/admin/contacts', {
+        await requestJson<{ success: boolean }>(`/api/admin/contacts${orgQuery}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -692,7 +696,7 @@ export default function TournamentSetupWizard({
           }),
         });
 
-        await requestJson<{ success: boolean }>('/api/admin/tournaments', {
+        await requestJson<{ success: boolean }>(`/api/admin/tournaments${orgQuery}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -918,7 +922,7 @@ export default function TournamentSetupWizard({
       setCloneWorking(true);
       setCloneError('');
       try {
-        const res = await fetch(`/api/admin/tournaments/${encodeURIComponent(cloneSource.id)}/clone`, {
+        const res = await fetch(`/api/admin/tournaments/${encodeURIComponent(cloneSource.id)}/clone${orgQuery}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({

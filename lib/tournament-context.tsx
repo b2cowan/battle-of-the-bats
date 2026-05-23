@@ -7,6 +7,7 @@ interface TournamentContextType {
   tournaments: Tournament[];
   /** Tournament admin is currently editing (may differ from the public active one) */
   currentTournament: Tournament | null;
+  loading: boolean;
   setCurrentTournament: (t: Tournament) => void;
   refresh: () => Promise<void>;
 }
@@ -14,11 +15,16 @@ interface TournamentContextType {
 const TournamentContext = createContext<TournamentContextType>({
   tournaments: [],
   currentTournament: null,
+  loading: true,
   setCurrentTournament: () => {},
   refresh: async () => {},
 });
 
 const ADMIN_T_KEY = 'botb_admin_tournament_id';
+
+function storageKey(orgSlug?: string) {
+  return orgSlug ? `${ADMIN_T_KEY}:${orgSlug}` : ADMIN_T_KEY;
+}
 
 type TournamentRow = {
   id: string;
@@ -55,23 +61,34 @@ function mapRow(r: TournamentRow): Tournament {
   };
 }
 
-export function TournamentProvider({ children }: { children: ReactNode }) {
+export function TournamentProvider({ children, orgSlug }: { children: ReactNode; orgSlug?: string }) {
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
   const [currentTournament, setCurrentState] = useState<Tournament | null>(null);
+  const [loading, setLoading] = useState(true);
 
   const refresh = useCallback(async () => {
+    setLoading(true);
     // Use the scoped API endpoint — server enforces org filter + assignment filter
-    const res = await fetch('/api/admin/tournaments');
-    const data: unknown = res.ok ? await res.json() : [];
-    const rows = Array.isArray(data) ? data as TournamentRow[] : [];
-    const ts = rows.map(mapRow).filter(t => t.status !== 'archived');
+    try {
+      const orgParam = orgSlug ? `?orgSlug=${encodeURIComponent(orgSlug)}` : '';
+      const res = await fetch(`/api/admin/tournaments${orgParam}`);
+      const data: unknown = res.ok ? await res.json() : [];
+      const rows = Array.isArray(data) ? data as TournamentRow[] : [];
+      const ts = rows.map(mapRow).filter(t => t.status !== 'archived');
 
-    setTournaments(ts);
-    const savedId = typeof window !== 'undefined' ? localStorage.getItem(ADMIN_T_KEY) : null;
-    const saved   = savedId ? ts.find(t => t.id === savedId) : null;
-    const active  = ts.find(t => t.status === 'active');
-    setCurrentState(saved ?? active ?? ts[0] ?? null);
-  }, []);
+      setTournaments(ts);
+      const savedId = typeof window !== 'undefined' ? localStorage.getItem(storageKey(orgSlug)) : null;
+      const saved   = savedId ? ts.find(t => t.id === savedId) : null;
+      const active  = ts.find(t => t.status === 'active');
+      setCurrentState(saved ?? active ?? ts[0] ?? null);
+    } catch (error) {
+      console.error('[tournament-context] Failed to load tournaments', error);
+      setTournaments([]);
+      setCurrentState(null);
+    } finally {
+      setLoading(false);
+    }
+  }, [orgSlug]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => { void refresh(); }, 0);
@@ -81,12 +98,12 @@ export function TournamentProvider({ children }: { children: ReactNode }) {
   function setCurrentTournament(t: Tournament) {
     setCurrentState(t);
     if (typeof window !== 'undefined') {
-      localStorage.setItem(ADMIN_T_KEY, t.id);
+      localStorage.setItem(storageKey(orgSlug), t.id);
     }
   }
 
   return (
-    <TournamentContext.Provider value={{ tournaments, currentTournament, setCurrentTournament, refresh }}>
+    <TournamentContext.Provider value={{ tournaments, currentTournament, loading, setCurrentTournament, refresh }}>
       {children}
     </TournamentContext.Provider>
   );

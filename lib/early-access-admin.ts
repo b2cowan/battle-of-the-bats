@@ -23,6 +23,7 @@ export const EARLY_ACCESS_STATUS_LABELS: Record<EarlyAccessStatus, string> = {
 };
 
 export const EARLY_ACCESS_PLAN_LABELS: Record<string, string> = {
+  team: 'Team',
   league: 'League',
   club: 'Club',
 };

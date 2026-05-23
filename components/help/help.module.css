@@ -349,15 +349,19 @@
 .quickAnswerLink {
   display: flex;
   align-items: center;
+  width: 100%;
   min-height: 36px;
   padding: 0.45rem 0;
   border-radius: 0;
   border: 0;
   background: transparent;
   color: rgba(255, 255, 255, 0.68);
+  font: inherit;
   font-size: 0.8rem;
   line-height: 1.35;
+  text-align: left;
   text-decoration: none;
+  cursor: pointer;
 }
 
 .quickAnswerLink:hover {
@@ -403,13 +407,27 @@
   display: flex;
   flex-direction: column;
   gap: 0.15rem;
+  width: 100%;
   padding: 0.25rem 0;
+  border: 0;
+  background: transparent;
   color: rgba(255, 255, 255, 0.74);
+  font: inherit;
+  text-align: left;
   text-decoration: none;
+  cursor: pointer;
 }
 
 .helpTocLink:hover {
   color: rgba(255, 255, 255, 0.95);
+}
+
+.helpTocLinkActive {
+  color: rgba(255, 255, 255, 0.96);
+}
+
+.helpTocLinkActive span {
+  color: #4fa3e0;
 }
 
 .helpTocLink span {
@@ -430,6 +448,134 @@
   display: flex;
   flex-direction: column;
   gap: 0;
+}
+
+.helpSearchResults,
+.helpArticle {
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.075);
+  background: rgba(255, 255, 255, 0.026);
+  padding: 1.35rem;
+}
+
+.helpResultHeader {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.85rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.helpResultHeader h2 {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.86);
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.helpResultHeader span {
+  color: rgba(255, 255, 255, 0.38);
+  font-size: 0.78rem;
+}
+
+.helpResultGroup {
+  margin-top: 1rem;
+}
+
+.helpResultGroup h3 {
+  margin: 0 0 0.65rem;
+  color: rgba(79, 163, 224, 0.85);
+  font-size: 0.72rem;
+  font-weight: 850;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.helpResultList {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.55rem;
+}
+
+.helpResultButton {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  width: 100%;
+  min-height: 76px;
+  padding: 0.8rem 0.95rem;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.075);
+  background: rgba(255, 255, 255, 0.028);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.helpResultButton:hover {
+  border-color: rgba(79, 163, 224, 0.28);
+  background: rgba(79, 163, 224, 0.055);
+}
+
+.helpResultButton span {
+  color: rgba(79, 163, 224, 0.82);
+  font-size: 0.68rem;
+  font-weight: 850;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.helpResultButton strong {
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 0.88rem;
+  line-height: 1.35;
+}
+
+.helpResultButton em {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  color: rgba(255, 255, 255, 0.42);
+  font-size: 0.78rem;
+  font-style: normal;
+  line-height: 1.45;
+}
+
+.helpArticle {
+  scroll-margin-top: 1.25rem;
+}
+
+.helpArticleMeta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.75rem;
+}
+
+.helpArticleMeta span,
+.helpArticleMeta em {
+  color: rgba(255, 255, 255, 0.38);
+  font-size: 0.68rem;
+  font-weight: 850;
+  font-style: normal;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.helpArticleMeta em {
+  color: rgba(79, 163, 224, 0.82);
+}
+
+.helpArticleTitle {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 1.18rem;
+  font-weight: 850;
+  line-height: 1.25;
 }
 
 .helpSection {
@@ -531,6 +677,53 @@
   font-weight: 600;
 }
 
+.helpArticleNav {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  margin-top: 1.4rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.helpArticleNavButton {
+  display: flex;
+  flex-direction: column;
+  gap: 0.18rem;
+  min-height: 62px;
+  padding: 0.75rem 0.9rem;
+  border-radius: 8px;
+  border: 1px solid rgba(79, 163, 224, 0.16);
+  background: rgba(79, 163, 224, 0.045);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.helpArticleNavButton:last-child {
+  text-align: right;
+}
+
+.helpArticleNavButton:hover {
+  border-color: rgba(79, 163, 224, 0.32);
+  background: rgba(79, 163, 224, 0.075);
+}
+
+.helpArticleNavButton span {
+  color: rgba(79, 163, 224, 0.82);
+  font-size: 0.68rem;
+  font-weight: 850;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.helpArticleNavButton strong {
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 0.82rem;
+  line-height: 1.35;
+}
+
 .helpFaqSection {
   margin-top: 1.5rem;
   padding-top: 1.5rem;
@@ -621,6 +814,15 @@
   font-size: 0.84rem;
 }
 
+.helpEmptyResults {
+  margin: 1.25rem 0;
+  padding: 1.2rem;
+  border-radius: 8px;
+  border: 1px dashed rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.025);
+  text-align: center;
+}
+
 @media (max-width: 980px) {
   .helpPage {
     grid-template-columns: 1fr;
@@ -656,15 +858,28 @@
     flex-direction: column;
     gap: 0.25rem;
   }
+
+  .helpSearchResults,
+  .helpArticle {
+    padding: 1rem;
+  }
+
+  .helpArticleNav {
+    grid-template-columns: 1fr;
+  }
+
+  .helpArticleNavButton:last-child {
+    text-align: left;
+  }
 }
 
 /* ── Help Hub ────────────────────────────────────────────────────────────── */
 .helpHub {
-  max-width: 800px;
+  max-width: 1080px;
 }
 
 .helpHubHeader {
-  margin-bottom: 2rem;
+  margin-bottom: 1.4rem;
 }
 
 .helpHubTitle {
@@ -689,8 +904,194 @@
   gap: 1rem;
 }
 
+.helpHubSearchPanel {
+  max-width: 720px;
+  margin: 0 0 1.4rem;
+}
+
+.helpHubFeatured,
+.helpHubRolePaths,
+.helpHubTasks,
+.helpHubGroup {
+  margin-top: 1.35rem;
+}
+
+.helpHubFeaturedGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.8rem;
+}
+
+.helpHubFeaturedCard {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  min-height: 150px;
+  padding: 1rem;
+  border-radius: 8px;
+  border: 1px solid rgba(79, 163, 224, 0.18);
+  background: rgba(79, 163, 224, 0.055);
+  color: inherit;
+  text-decoration: none;
+}
+
+.helpHubFeaturedCard:hover {
+  border-color: rgba(79, 163, 224, 0.35);
+  background: rgba(79, 163, 224, 0.085);
+}
+
+.helpHubFeaturedCard span,
+.helpHubCardMeta span,
+.helpHubCardMeta em,
+.helpHubTaskLink em {
+  font-size: 0.68rem;
+  font-weight: 800;
+  line-height: 1.3;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.helpHubFeaturedCard span {
+  color: #4fa3e0;
+}
+
+.helpHubFeaturedCard strong {
+  color: rgba(255, 255, 255, 0.88);
+  font-size: 0.94rem;
+  line-height: 1.35;
+}
+
+.helpHubFeaturedCard em {
+  color: rgba(255, 255, 255, 0.48);
+  font-size: 0.8rem;
+  font-style: normal;
+  line-height: 1.55;
+}
+
+.helpHubTaskGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.55rem;
+}
+
+.helpHubRolePathGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem;
+}
+
+.helpHubRolePathCard {
+  min-width: 0;
+  padding: 1rem;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.075);
+  background: rgba(255, 255, 255, 0.028);
+}
+
+.helpHubRolePathCard:hover {
+  border-color: rgba(79, 163, 224, 0.2);
+  background: rgba(79, 163, 224, 0.04);
+}
+
+.helpHubRolePathCard h3 {
+  margin: 0.55rem 0 0.35rem;
+  color: rgba(255, 255, 255, 0.88);
+  font-size: 0.96rem;
+  font-weight: 800;
+  line-height: 1.3;
+}
+
+.helpHubRolePathCard p {
+  margin: 0 0 0.75rem;
+  color: rgba(255, 255, 255, 0.46);
+  font-size: 0.82rem;
+  line-height: 1.55;
+}
+
+.helpHubRolePathCard ol {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.4rem;
+  margin: 0;
+  padding-left: 1.15rem;
+  color: rgba(79, 163, 224, 0.75);
+}
+
+.helpHubRolePathCard li {
+  padding-left: 0.1rem;
+  font-size: 0.82rem;
+  line-height: 1.4;
+}
+
+.helpHubRolePathCard a {
+  color: rgba(255, 255, 255, 0.76);
+  text-decoration: none;
+}
+
+.helpHubRolePathCard a:hover {
+  color: #4fa3e0;
+}
+
+.helpHubTaskLink {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  min-height: 46px;
+  padding: 0.7rem 0.85rem;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.075);
+  background: rgba(255, 255, 255, 0.028);
+  color: rgba(255, 255, 255, 0.78);
+  text-decoration: none;
+}
+
+.helpHubTaskLink:hover {
+  border-color: rgba(79, 163, 224, 0.24);
+  background: rgba(79, 163, 224, 0.05);
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.helpHubTaskLink span {
+  font-size: 0.84rem;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.helpHubTaskLink em {
+  flex-shrink: 0;
+  color: rgba(79, 163, 224, 0.78);
+  font-style: normal;
+}
+
+.helpHubGroupHeader {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.85rem;
+  padding-top: 1.1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.helpHubGroupHeader h2 {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 0.92rem;
+  font-weight: 850;
+  line-height: 1.3;
+}
+
+.helpHubGroupHeader span {
+  color: rgba(255, 255, 255, 0.38);
+  font-size: 0.78rem;
+}
+
 @media (max-width: 640px) {
-  .helpHubGrid {
+  .helpHubGrid,
+  .helpHubFeaturedGrid,
+  .helpHubRolePathGrid,
+  .helpHubTaskGrid {
     grid-template-columns: 1fr;
   }
 }
@@ -704,6 +1105,8 @@
   border: 1px solid rgba(255, 255, 255, 0.07);
   background: rgba(255, 255, 255, 0.03);
   transition: border-color 0.15s, background 0.15s;
+  color: inherit;
+  text-decoration: none;
 }
 
 .helpHubCard:hover {
@@ -717,6 +1120,28 @@
   color: rgba(255, 255, 255, 0.85);
   margin: 0;
   line-height: 1.3;
+}
+
+.helpHubCardMeta {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+}
+
+.helpHubCardMeta span {
+  color: rgba(255, 255, 255, 0.42);
+}
+
+.helpHubCardMeta em {
+  display: inline-flex;
+  align-items: center;
+  min-height: 20px;
+  padding: 0.15rem 0.38rem;
+  border-radius: 4px;
+  background: rgba(79, 163, 224, 0.1);
+  color: rgba(79, 163, 224, 0.82);
+  font-style: normal;
 }
 
 .helpHubCardDesc {

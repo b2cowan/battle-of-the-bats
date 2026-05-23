@@ -2,6 +2,7 @@ import { supabase } from './supabase';
 import { supabaseAdmin } from './supabase-admin';
 import { getEffectiveTournamentLimit, PLAN_CONFIG } from './plan-config';
 import { createClient as createBrowserSupabaseClient } from './supabase-browser';
+import { getActiveTeamEntitledRepTeamIds } from './team-workspace-entitlements';
 import { Tournament, TournamentStatus, Diamond, Contact, AgeGroup, Pool, PoolSlot, Team, Game, Announcement, PlayoffConfig, RuleSection, RuleItem, Resource, Organization, OrganizationMember, OrgPlan, OrgRole, TournamentArchive, OrgPublicSiteContent, AccountingLedger, AccountingEntry, LedgerSummary, AccountingEntryStatus, AccountingEntryType, LeagueSeason, LeagueDivision, LeagueTeam, LeagueRegistration, LeagueGame, LeagueStandingsRow, LeagueSeasonSummary, LeagueRegistrationStatus, LeagueSeasonStatus, LeaguePractice, LeaguePracticeStatus, RepTeam, RepProgramYear, RepProgramYearStatus, RepTeamCoach, RepTryoutRegistration, RepTryoutRegistrationStatus, RepRosterPlayer, RepRosterStatus, RepTeamEvent, RepEventType, RepDocumentTemplate, RepDocumentType, RepPlayerDocument, RepCostAllocation, RepAllocationSplit, RepAllocationInstallment, RepPlayerDuesSchedule, RepPlayerDuesInstallment, RepTeamExpense, OrgPayee, TournamentRegistrationField, TournamentRegistrationFieldAnswer, TournamentRegistrationFieldType } from './types';
 
 // Use the SSR browser client (cookie-based session) for writes that need auth;
@@ -2145,12 +2146,25 @@ export async function getPublicTournamentBySlug(orgId: string, slug: string): Pr
 export async function createOrganization(
   name: string,
   slug: string,
-  planId: OrgPlan = 'tournament'
+  planId: OrgPlan = 'tournament',
+  options: {
+    accountKind?: Organization['accountKind'];
+    teamWorkspaceStatus?: Organization['teamWorkspaceStatus'] | null;
+    isDiscoverable?: boolean;
+  } = {},
 ): Promise<Organization> {
   const limit = PLAN_CONFIG[planId]?.tournamentLimit ?? 1;
   const { data, error } = await supabaseAdmin
     .from('organizations')
-    .insert({ name, slug, plan_id: planId, tournament_limit: limit })
+    .insert({
+      name,
+      slug,
+      plan_id: planId,
+      tournament_limit: limit,
+      account_kind: options.accountKind ?? 'organization',
+      team_workspace_status: options.teamWorkspaceStatus ?? null,
+      is_discoverable: options.isDiscoverable ?? true,
+    })
     .select()
     .single();
   if (error) throw new Error(error.message);
@@ -2223,6 +2237,9 @@ function mapOrg(r: any): Organization {
     onboardingCompletedAt: r.onboarding_completed_at ?? null,
     enabledAddons:        r.enabled_addons ?? [],
     contactEmail:          r.contact_email ?? null,
+    accountKind:           r.account_kind ?? 'organization',
+    teamWorkspaceStatus:   r.team_workspace_status ?? null,
+    isDiscoverable:        r.is_discoverable ?? true,
   };
 }
 
@@ -3552,7 +3569,7 @@ export async function deleteRepTeam(teamId: string): Promise<void> {
 /**
  * Returns the number of rep teams in an org that have at least one program year
  * in 'draft' or 'active' status. Used to determine the billable quantity for the
- * Club plan rep-team add-on (first 3 free, $20/month per additional).
+ * Club plan rep-team add-on (first 3 free, $19/month per additional).
  */
 export async function getActiveRepTeamCount(orgId: string): Promise<number> {
   const { data, error } = await supabaseAdmin
@@ -3765,6 +3782,15 @@ export interface CoachingAssignment {
   upcomingEventsCount: number;
 }
 
+type CoachingAssignmentRow = {
+  id: string;
+  team_id: string;
+  program_year_id: string;
+  coach_role: string;
+  rep_teams?: { name?: string | null; slug?: string | null; color?: string | null } | null;
+  rep_program_years?: { name?: string | null; status?: RepProgramYearStatus | null } | null;
+};
+
 async function getCoachingBadges(
   programYearIds: string[],
 ): Promise<Map<string, { overdueInstallments: number; upcomingEventsCount: number }>> {
@@ -3836,6 +3862,17 @@ export async function getCoachingAssignmentsForUser(
   orgId: string,
   userId: string,
 ): Promise<CoachingAssignment[]> {
+  const { data: orgAccessRow, error: orgAccessError } = await supabaseAdmin
+    .from('organizations')
+    .select('account_kind, plan_id')
+    .eq('id', orgId)
+    .maybeSingle();
+
+  if (orgAccessError) throw orgAccessError;
+  const isTeamWorkspace =
+    orgAccessRow?.account_kind === 'team_workspace' ||
+    orgAccessRow?.plan_id === 'team';
+
   const { data, error } = await supabaseAdmin
     .from('rep_team_coaches')
     .select(`
@@ -3850,15 +3887,23 @@ export async function getCoachingAssignmentsForUser(
     .eq('user_id', userId);
   if (error) throw error;
 
-  const filtered = (data ?? []).filter((r: any) => {
+  const rows = (data ?? []) as CoachingAssignmentRow[];
+  const filtered = rows.filter(r => {
     const s = r.rep_program_years?.status;
     return s === 'draft' || s === 'active';
   });
 
-  const programYearIds = filtered.map((r: any) => r.program_year_id as string);
+  const entitledTeamIds = isTeamWorkspace
+    ? await getActiveTeamEntitledRepTeamIds(orgId)
+    : null;
+  const accessible = entitledTeamIds
+    ? filtered.filter(r => entitledTeamIds.has(r.team_id))
+    : filtered;
+
+  const programYearIds = accessible.map(r => r.program_year_id);
   const badges = await getCoachingBadges(programYearIds);
 
-  return filtered.map((r: any) => ({
+  return accessible.map(r => ({
     coachId: r.id,
     teamId: r.team_id,
     teamName: r.rep_teams?.name ?? '',

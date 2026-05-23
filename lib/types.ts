@@ -1,4 +1,6 @@
-export type OrgPlan = 'tournament' | 'tournament_plus' | 'league' | 'club';
+export type OrgPlan = 'tournament' | 'team' | 'tournament_plus' | 'league' | 'club';
+export type OrgAccountKind = 'organization' | 'team_workspace';
+export type TeamWorkspaceStatus = 'active' | 'linked' | 'org_owned' | 'archived';
 export type OrgRole = 'owner' | 'admin' | 'staff' | 'official' | 'league_admin' | 'league_registrar' | 'treasurer' | 'coach';
 export type SubscriptionStatus = 'active' | 'trialing' | 'past_due' | 'canceled';
 export type TournamentStatus = 'draft' | 'active' | 'completed' | 'archived';
@@ -29,6 +31,9 @@ export interface Organization {
   onboardingCompletedAt?: string | null;
   enabledAddons: string[];
   contactEmail?: string | null;
+  accountKind: OrgAccountKind;
+  teamWorkspaceStatus?: TeamWorkspaceStatus | null;
+  isDiscoverable: boolean;
 }
 
 export interface OrganizationMember {

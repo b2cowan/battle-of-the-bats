@@ -13,6 +13,7 @@ type ModalMode = 'add' | 'edit' | null;
 export default function AdminAnnouncementsPage() {
   const { currentTournament } = useTournament();
   const { currentOrg } = useOrg();
+  const orgSlug = currentOrg?.slug;
   const [items, setItems] = useState<Announcement[]>([]);
   const [ageGroups, setAgeGroups] = useState<AgeGroup[]>([]);
   const [modal, setModal] = useState<ModalMode>(null);
@@ -25,16 +26,18 @@ export default function AdminAnnouncementsPage() {
 
   async function refresh() {
     if (!currentTournament?.id) { setItems([]); return; }
-    const res = await fetch(`/api/admin/announcements?tournamentId=${currentTournament.id}`);
+    const orgParam = orgSlug ? `&orgSlug=${encodeURIComponent(orgSlug)}` : '';
+    const res = await fetch(`/api/admin/announcements?tournamentId=${currentTournament.id}${orgParam}`);
     setItems(res.ok ? await res.json() : []);
   }
-  useEffect(() => { refresh(); }, [currentTournament?.id]);
+  useEffect(() => { refresh(); }, [currentTournament?.id, orgSlug]);
   useEffect(() => {
     if (!currentTournament?.id) return;
-    fetch(`/api/admin/age-groups?tournamentId=${currentTournament.id}`)
+    const orgParam = orgSlug ? `&orgSlug=${encodeURIComponent(orgSlug)}` : '';
+    fetch(`/api/admin/age-groups?tournamentId=${currentTournament.id}${orgParam}`)
       .then(r => r.ok ? r.json() : [])
       .then(setAgeGroups);
-  }, [currentTournament?.id]);
+  }, [currentTournament?.id, orgSlug]);
 
   function openAdd() {
     setForm({ title: '', body: '', pinned: false, ageGroupIds: null });
@@ -59,14 +62,15 @@ export default function AdminAnnouncementsPage() {
       date: editing?.date ?? new Date().toISOString(),
       ageGroupIds: canTargetAnnouncements && form.ageGroupIds?.length ? form.ageGroupIds : null,
     };
+    const orgQuery = orgSlug ? `?orgSlug=${encodeURIComponent(orgSlug)}` : '';
     if (modal === 'add') {
-      await fetch('/api/admin/announcements', {
+      await fetch(`/api/admin/announcements${orgQuery}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'save', data }),
       });
     } else if (editing) {
-      await fetch('/api/admin/announcements', {
+      await fetch(`/api/admin/announcements${orgQuery}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'update', id: editing.id, data }),
@@ -77,7 +81,8 @@ export default function AdminAnnouncementsPage() {
   }
 
   async function togglePin(id: string, pinned: boolean) {
-    await fetch('/api/admin/announcements', {
+    const orgQuery = orgSlug ? `?orgSlug=${encodeURIComponent(orgSlug)}` : '';
+    await fetch(`/api/admin/announcements${orgQuery}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'update', id, data: { pinned: !pinned } }),
@@ -234,7 +239,8 @@ export default function AdminAnnouncementsPage() {
             <div className="modal-footer">
               <button className="btn btn-ghost" onClick={() => setDeleteId(null)}>Cancel</button>
               <button className="btn btn-danger" onClick={async () => {
-                await fetch('/api/admin/announcements', {
+                const orgQuery = orgSlug ? `?orgSlug=${encodeURIComponent(orgSlug)}` : '';
+                await fetch(`/api/admin/announcements${orgQuery}`, {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({ action: 'delete', id: deleteId }),

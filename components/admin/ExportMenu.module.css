@@ -36,11 +36,11 @@
   top: calc(100% + 0.35rem);
   right: 0;
   z-index: 200;
-  min-width: 230px;
-  background: var(--surface-2, #1e293b);
-  border: 1px solid var(--border-2, rgba(255, 255, 255, 0.12));
-  border-radius: var(--radius-sm, 6px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  min-width: 220px;
+  background: var(--hud-surface, #111827);
+  border: 1px solid rgba(30, 58, 138, 0.35);
+  border-radius: 2px;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.5);
   padding: 0.3rem 0;
   outline: none;
 }
@@ -90,14 +90,16 @@
 
 .menuItemLabel {
   display: block;
-  font-size: 0.875rem;
-  font-weight: 600;
+  font-family: var(--font-data);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
   line-height: 1.2;
 }
 
 .menuItemHint {
   display: block;
-  font-size: 0.75rem;
+  font-size: 0.68rem;
   color: var(--white-60, rgba(255, 255, 255, 0.55));
   line-height: 1.3;
   margin-top: 0.1rem;

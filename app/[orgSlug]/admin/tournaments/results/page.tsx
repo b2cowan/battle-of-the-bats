@@ -1,6 +1,6 @@
 'use client';
-import React, { useState, useEffect } from 'react';
-import { Trophy, X, Check, Search, RefreshCw } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Trophy, X, Check, RefreshCw } from 'lucide-react';
 import { formatTime } from '@/lib/utils';
 import { useTournament } from '@/lib/tournament-context';
 import { useOrg } from '@/lib/org-context';
@@ -17,6 +17,15 @@ import styles from '../schedule/schedule-admin.module.css';
 import FeedbackModal from '@/components/FeedbackModal';
 import HelpCallout from '@/components/help/HelpCallout';
 import { hasPlanFeature } from '@/lib/plan-features';
+import {
+  StatusLegendPopover,
+  ToolbarGroup,
+  ToolbarSearch,
+  ToolbarSegmentedControl,
+  ToolbarSelect,
+  TournamentAdminHeader,
+  TournamentAdminToolbar,
+} from '@/components/admin/tournament/TournamentAdminUI';
 
 // ── Export column definitions ─────────────────────────────────────────────
 // No sensitive fields on this surface — results data is public/operational.
@@ -34,8 +43,10 @@ const RESULTS_EXPORT_COLS: ExportColumnDef[] = [
 type ResultsFilter = 'pending' | 'submitted' | 'completed';
 
 export default function AdminResultsPage() {
-  const { currentTournament } = useTournament();
+  const { currentTournament, loading: tournamentLoading } = useTournament();
   const { currentOrg } = useOrg();
+  const tournamentId = currentTournament?.id;
+  const orgSlug = currentOrg?.slug;
   const requiresFinalization = currentOrg?.requireScoreFinalization ?? false;
   const [games, setGames] = useState<Game[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
@@ -65,41 +76,54 @@ export default function AdminResultsPage() {
   const canUsePDF = currentOrg ? hasPlanFeature(currentOrg.planId, 'pdf_exports') : false;
   const showPdfNudge = canUsePDF && pdfSettings !== null && Object.keys(pdfSettings).length === 0;
 
-  async function refresh() {
-    const tournamentId = currentTournament?.id;
-    if (!tournamentId) return;
-
-    setLoading(true);
-    const [gamesRes, teamsRes, groupsRes, diamondsRes] = await Promise.all([
-      fetch(`/api/admin/games?tournamentId=${encodeURIComponent(tournamentId)}`),
-      fetch(`/api/admin/teams?tournamentId=${encodeURIComponent(tournamentId)}`),
-      fetch(`/api/admin/age-groups?tournamentId=${encodeURIComponent(tournamentId)}`),
-      fetch(`/api/admin/diamonds?tournamentId=${encodeURIComponent(tournamentId)}`),
-    ]);
-
-    const allGames = gamesRes.ok ? await gamesRes.json() : [];
-    const allTeams = teamsRes.ok ? await teamsRes.json() : [];
-    const groups = groupsRes.ok ? await groupsRes.json() : [];
-    const allDiamonds = diamondsRes.ok ? await diamondsRes.json() : [];
-
-    setGames(allGames);
-    setTeams(allTeams.filter((t: any) => t.status === 'accepted'));
-    setAgeGroups(groups);
-    if (groups.length > 0 && !filterGroup) {
-      setFilterGroup(groups[0].id);
+  const refresh = useCallback(async () => {
+    if (tournamentLoading) return;
+    if (!tournamentId) {
+      setGames([]);
+      setTeams([]);
+      setAgeGroups([]);
+      setDiamonds([]);
+      setLoading(false);
+      return;
     }
-    setDiamonds(allDiamonds);
-    setLoading(false);
-  }
 
-  useEffect(() => { refresh(); }, [currentTournament?.id]);
+    try {
+      setLoading(true);
+      const orgParam = orgSlug ? `&orgSlug=${encodeURIComponent(orgSlug)}` : '';
+      const [gamesRes, teamsRes, groupsRes, diamondsRes] = await Promise.all([
+        fetch(`/api/admin/games?tournamentId=${encodeURIComponent(tournamentId)}${orgParam}`),
+        fetch(`/api/admin/teams?tournamentId=${encodeURIComponent(tournamentId)}${orgParam}`),
+        fetch(`/api/admin/age-groups?tournamentId=${encodeURIComponent(tournamentId)}${orgParam}`),
+        fetch(`/api/admin/diamonds?tournamentId=${encodeURIComponent(tournamentId)}${orgParam}`),
+      ]);
+
+      const allGames = gamesRes.ok ? await gamesRes.json() : [];
+      const allTeams = teamsRes.ok ? await teamsRes.json() : [];
+      const groups = groupsRes.ok ? await groupsRes.json() : [];
+      const allDiamonds = diamondsRes.ok ? await diamondsRes.json() : [];
+
+      setGames(allGames);
+      setTeams(allTeams.filter((t: any) => t.status === 'accepted'));
+      setAgeGroups(groups);
+      setFilterGroup(prev => prev || (groups.length > 0 ? groups[0].id : ''));
+      setDiamonds(allDiamonds);
+    } finally {
+      setLoading(false);
+    }
+  }, [tournamentId, tournamentLoading, orgSlug]);
 
   useEffect(() => {
-    fetch('/api/admin/org/pdf-settings')
+    const timer = window.setTimeout(() => { void refresh(); }, 0);
+    return () => window.clearTimeout(timer);
+  }, [refresh]);
+
+  useEffect(() => {
+    const orgQuery = orgSlug ? `?orgSlug=${encodeURIComponent(orgSlug)}` : '';
+    fetch(`/api/admin/org/pdf-settings${orgQuery}`)
       .then(r => r.ok ? r.json() : {})
       .then(data => setPdfSettings(data as OrgPdfSettings))
       .catch(() => setPdfSettings(null));
-  }, []);
+  }, [orgSlug]);
 
   function getTeamName(id: string) {
     return teams.find(t => t.id === id)?.name ?? 'TBD';
@@ -119,7 +143,8 @@ export default function AdminResultsPage() {
   }
 
   async function patchGame(body: Record<string, unknown>) {
-    const res = await fetch('/api/admin/games', {
+    const orgQuery = orgSlug ? `?orgSlug=${encodeURIComponent(orgSlug)}` : '';
+    const res = await fetch(`/api/admin/games${orgQuery}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
@@ -301,17 +326,99 @@ export default function AdminResultsPage() {
     );
   }
 
+  const statusFilterOptions = [
+    { key: 'pending'   as ResultsFilter, label: 'To Be Scored',   count: pendingCount },
+    { key: 'submitted' as ResultsFilter, label: 'Pending Review', count: submittedCount },
+    { key: 'completed' as ResultsFilter, label: 'Completed',      count: completedCount },
+  ];
+
+  const statusChipClass: Record<ResultsFilter, string> = {
+    pending: s.chip_pending,
+    submitted: s.chip_waitlist,
+    completed: s.chip_accepted,
+  };
+
   return (
     <div className={s.page}>
-      <div className={s.pageHeader}>
-        <div className={s.headerLeft}>
-          <div className={s.headerIcon}><Trophy size={20} /></div>
-          <div>
-            <h1 className={s.pageTitle}>Results & Scoring</h1>
-            <p className={s.pageSub}>Enter scores and finalize tournament outcomes</p>
+      <TournamentAdminHeader
+        icon={<Trophy size={20} />}
+        title="Results & Scoring"
+        subtitle={currentTournament ? `${currentTournament.name} (${currentTournament.year})` : 'Enter scores and finalize tournament outcomes'}
+      />
+
+      <TournamentAdminToolbar ariaLabel="Results controls">
+        <ToolbarGroup align="start">
+          <ToolbarSegmentedControl<'pool' | 'playoff'>
+            value={viewMode}
+            options={[
+              { value: 'pool', label: 'Round Robin' },
+              { value: 'playoff', label: 'Playoffs' },
+            ]}
+            onChange={setViewMode}
+            ariaLabel="View mode"
+          />
+          {ageGroups.length > 0 && (
+            <ToolbarSelect<string>
+              label="Division"
+              value={filterGroup}
+              options={ageGroups.map(g => ({ value: g.id, label: g.name }))}
+              onChange={setFilterGroup}
+            />
+          )}
+          {viewMode === 'pool' && (
+            <ToolbarSegmentedControl<'flat' | 'pools'>
+              value={groupMode}
+              options={[
+                { value: 'flat', label: 'Flat' },
+                { value: 'pools', label: 'Pools' },
+              ]}
+              onChange={setGroupMode}
+              ariaLabel="Grouping mode"
+            />
+          )}
+        </ToolbarGroup>
+
+        <ToolbarGroup grow>
+          <div className={s.statusFilters}>
+            {statusFilterOptions.map(({ key, label, count }) => (
+              <button
+                key={key}
+                type="button"
+                className={`${s.filterChip} ${statusChipClass[key]} ${selectedStatuses.includes(key) ? s.chipActive : ''}`}
+                onClick={() => setSelectedStatuses(prev => prev.includes(key) ? prev.filter(x => x !== key) : [...prev, key])}
+              >
+                <span>{label}</span>
+                <span className={s.chipCount}>{count}</span>
+              </button>
+            ))}
+            {requiresFinalization && (
+              <StatusLegendPopover
+                label="Score statuses"
+                title="Score Status Guide"
+                items={[
+                  {
+                    label: 'To Be Scored',
+                    description: 'Game is scheduled but no score has been submitted yet.',
+                    tone: 'neutral',
+                  },
+                  {
+                    label: 'Pending Review',
+                    description: 'Score submitted by a field official - visible to the public but not yet final. Use Finalize to confirm it.',
+                    tone: 'warning',
+                  },
+                  {
+                    label: 'Completed',
+                    description: 'Score is finalized and locked. Cannot be changed without unsealing the tournament.',
+                    tone: 'success',
+                  },
+                ]}
+              />
+            )}
           </div>
-        </div>
-        <div className={s.headerActions}>
+        </ToolbarGroup>
+
+        <ToolbarGroup align="end">
+          <ToolbarSearch value={searchQuery} onChange={setSearchQuery} placeholder="Search teams..." label="Search games" />
           <ExportMenu
             formats={['xlsx', 'csv', 'pdf']}
             onExportXLSX={handleExportXLSX}
@@ -320,56 +427,8 @@ export default function AdminResultsPage() {
             planId={currentOrg?.planId}
             disabled={filtered.length === 0}
           />
-        </div>
-      </div>
-
-      <div className={s.controlsBar}>
-        <div className={s.controlsLeft}>
-          <div className={s.viewToggle}>
-            <button className={`${s.toggleBtn} ${viewMode === 'pool' ? s.toggleActive : ''}`} onClick={() => setViewMode('pool')}>Round Robin</button>
-            <button className={`${s.toggleBtn} ${viewMode === 'playoff' ? s.toggleActive : ''}`} onClick={() => setViewMode('playoff')}>Playoffs</button>
-          </div>
-        </div>
-        <div className={s.controlsRight}>
-          <div className={s.controlGroup}>
-            <label className={s.controlLabel}>Division:</label>
-            <select className={`${s.controlSelect} form-input`} value={filterGroup} onChange={e => setFilterGroup(e.target.value)}>
-              {ageGroups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
-            </select>
-          </div>
-          {viewMode === 'pool' && (
-            <div className={s.viewToggle}>
-              <button className={`${s.toggleBtn} ${groupMode === 'flat' ? s.toggleActive : ''}`} onClick={() => setGroupMode('flat')}>Flat</button>
-              <button className={`${s.toggleBtn} ${groupMode === 'pools' ? s.toggleActive : ''}`} onClick={() => setGroupMode('pools')}>Pools</button>
-            </div>
-          )}
-        </div>
-      </div>
-
-      <div className={s.filtersRow}>
-        <div className={s.statusFilters}>
-          {([
-            { key: 'pending'   as ResultsFilter, label: 'TO BE SCORED',    count: pendingCount },
-            { key: 'submitted' as ResultsFilter, label: 'PENDING REVIEW',  count: submittedCount },
-            { key: 'completed' as ResultsFilter, label: 'COMPLETED',       count: completedCount },
-          ]).map(({ key, label, count }) => (
-            <button key={key} className={`${s.filterChip} ${selectedStatuses.includes(key) ? s.chipActive : ''}`} onClick={() => setSelectedStatuses(prev => prev.includes(key) ? prev.filter(x => x !== key) : [...prev, key])}>
-              {label} ({count})
-            </button>
-          ))}
-        </div>
-        <div className={s.searchWrapper}>
-          <Search size={16} className={s.searchIcon} />
-          <input type="text" placeholder="Search teams..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className={s.searchInput} />
-        </div>
-      </div>
-
-      {requiresFinalization && (
-        <p style={{ fontSize: '0.78rem', color: 'var(--white-30)', margin: '0.5rem 0 1rem', lineHeight: 1.5 }}>
-          <strong style={{ color: 'var(--warning, #f59e0b)' }}>Pending Review</strong> — score submitted by a field official; visible to the public but not yet final. Use <em>Finalize</em> to mark it complete.
-          {' '}<strong style={{ color: 'var(--success, #4ade80)' }}>Completed</strong> — score is final and locked.
-        </p>
-      )}
+        </ToolbarGroup>
+      </TournamentAdminToolbar>
 
       {showPdfNudge && (
         <HelpCallout
@@ -390,8 +449,13 @@ export default function AdminResultsPage() {
         />
       )}
 
-      {loading ? (
+      {tournamentLoading || loading ? (
         <div className="empty-state"><RefreshCw size={32} className="spin opacity-40" /><p>Loading games...</p></div>
+      ) : !currentTournament ? (
+        <div className="empty-state">
+          <Trophy size={40} style={{ opacity: 0.2 }} />
+          <p>No tournament selected.</p>
+        </div>
       ) : filtered.length === 0 && games.length > 0 ? (
         <div className="empty-state">
           <Trophy size={40} style={{ opacity: 0.2 }} />

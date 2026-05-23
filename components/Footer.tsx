@@ -24,7 +24,7 @@ export default function Footer() {
           <div className="col-span-6 md:col-span-2">
             <div className="hud-label mb-4">Platform</div>
             <ul className="space-y-2">
-              {([['Discover', '/discover'], ['Pricing', '/#pricing'], ['Sign In', '/auth/login']] as const).map(([label, href]) => (
+              {([['Discover', '/discover'], ['Team', '/team'], ['Pricing', '/#pricing'], ['Sign In', '/auth/login']] as const).map(([label, href]) => (
                 <li key={href}>
                   <Link href={href} className="font-mono text-xs text-data-gray hover:text-logic-lime transition-colors">
                     {label}

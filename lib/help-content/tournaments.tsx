@@ -1,3 +1,4 @@
+/* eslint-disable react/no-unescaped-entities */
 import type { HelpPageContent } from './index';
 
 const tournamentsHelp: HelpPageContent = {
@@ -87,6 +88,132 @@ const tournamentsHelp: HelpPageContent = {
           ),
         },
       ],
+    },
+    {
+      id: 'recipe-open-tournament-registration',
+      group: 'How-to recipes',
+      heading: 'How to open team registration',
+      summary: 'Activate the tournament and make at least one division available on the public registration form.',
+      keywords: ['open registration', 'team registration', 'activate tournament', 'public form', 'division open'],
+      searchText: 'open team registration activate tournament public registration form active draft division open capacity fees contact launch checklist',
+      links: [
+        { label: 'Manage Tournaments', href: '../tournaments/manage' },
+        { label: 'Age Groups', href: '../tournaments/age-groups' },
+      ],
+      content: (
+        <>
+          <p>Team registration opens only when the tournament and at least one division are ready.</p>
+          <ol>
+            <li>Finish the launch checklist: dates, public contact, divisions, and required public information.</li>
+            <li>Open <strong>Age Groups</strong> and confirm at least one division is accepting registrations.</li>
+            <li>Review capacities, fees, and custom registration questions before sharing the link.</li>
+            <li>Use <strong>Manage Tournaments</strong> to move the tournament from <strong>Draft</strong> to <strong>Active</strong>.</li>
+            <li>Open the public registration page and submit a quick internal test if your workflow allows it.</li>
+            <li>Share the public registration link with teams only after the form shows the right divisions and fees.</li>
+          </ol>
+          <p>If registration is not visible, check the tournament status and division registration settings first.</p>
+        </>
+      ),
+    },
+    {
+      id: 'recipe-review-tournament-teams',
+      group: 'How-to recipes',
+      heading: 'How to review team registrations',
+      summary: 'Approve, waitlist, reject, and track payment readiness for teams.',
+      keywords: ['review teams', 'approve registration', 'waitlist team', 'payment status', 'accepted teams'],
+      searchText: 'review team registrations approve accept waitlist reject pending payment deposit paid paid in full schedule eligibility selected teams bulk actions',
+      links: [
+        { label: 'Registrations', href: '../tournaments/teams' },
+      ],
+      content: (
+        <>
+          <p>Review teams regularly while registration is open so schedule planning starts from a clean accepted-team list.</p>
+          <ol>
+            <li>Open <strong>Registrations</strong> from tournament admin.</li>
+            <li>Filter by division or status if the list is large.</li>
+            <li>Open each pending team and confirm contacts, division, payment status, and custom question answers.</li>
+            <li>Move the team to <strong>Accepted</strong>, <strong>Waitlist</strong>, or <strong>Rejected</strong>.</li>
+            <li>Track deposit or full payment status as payments arrive.</li>
+            <li>Before building the schedule, confirm every team that should play is <strong>Accepted</strong>.</li>
+          </ol>
+          <p>Only accepted teams appear in schedule assignment controls. If a team is missing from the schedule builder, check its registration status.</p>
+        </>
+      ),
+    },
+    {
+      id: 'recipe-build-tournament-schedule',
+      group: 'How-to recipes',
+      heading: 'How to build and adjust the tournament schedule',
+      summary: 'Create games manually or generate round-robin schedules, then edit exceptions before game day.',
+      keywords: ['build schedule', 'generate schedule', 'round robin', 'edit games', 'venues'],
+      searchText: 'build tournament schedule generate round robin auto-generate accepted teams venues time slots edit games cancel restore public schedule playoffs',
+      links: [
+        { label: 'Schedule', href: '../tournaments/schedule' },
+      ],
+      content: (
+        <>
+          <p>Build the schedule after accepted teams, venues, and time slots are ready.</p>
+          <ol>
+            <li>Open <strong>Schedule</strong>.</li>
+            <li>Add games manually for small events or special matchups.</li>
+            <li>Use <strong>Auto-Generate</strong> for round-robin play when accepted teams and venue/time-slot data are complete.</li>
+            <li>Preview generated games before saving.</li>
+            <li>Edit individual games for field changes, rest gaps, weather adjustments, or custom matchups.</li>
+            <li>Use the public preview to confirm the schedule is readable for teams.</li>
+          </ol>
+          <p>There is no separate schedule publish button. Saved schedule changes flow to the public tournament pages.</p>
+        </>
+      ),
+    },
+    {
+      id: 'recipe-finalize-tournament-scores',
+      group: 'How-to recipes',
+      heading: 'How to enter, review, and finalize scores',
+      summary: 'Record results from admins or officials and understand pending review.',
+      keywords: ['enter scores', 'finalize scores', 'pending review', 'official submissions', 'results'],
+      searchText: 'enter scores finalize scores official submissions pending review results scoring completed games public standings correct score revert scheduled',
+      links: [
+        { label: 'Results & Scoring', href: '../tournaments/results' },
+      ],
+      content: (
+        <>
+          <p>Use <strong>Results &amp; Scoring</strong> to keep public results accurate during the event.</p>
+          <ol>
+            <li>Open the game that has a final result.</li>
+            <li>Enter home and away scores, or review the official's submitted score.</li>
+            <li>If score finalization is enabled, mark reviewed submissions as final.</li>
+            <li>Correct mistakes by editing the score or reverting the game to scheduled and re-entering it.</li>
+            <li>Check standings or bracket paths after important score changes.</li>
+          </ol>
+          <p>Pending review means a score has been submitted but still needs admin confirmation before it is treated as final.</p>
+        </>
+      ),
+    },
+    {
+      id: 'recipe-closeout-tournament',
+      group: 'How-to recipes',
+      heading: 'How to close out a tournament',
+      summary: 'Complete the event, share final results, archive when ready, and seal only after review.',
+      keywords: ['closeout', 'complete tournament', 'archive', 'seal', 'final results'],
+      searchText: 'closeout tournament complete archive seal final results post-event summary free tournament slot immutable snapshot board report results email',
+      links: [
+        { label: 'Manage Tournaments', href: '../tournaments/manage' },
+        { label: 'Past Tournaments', href: '../tournaments/archives' },
+      ],
+      content: (
+        <>
+          <p>Closeout should happen after game data is reviewed and teams no longer need operational updates.</p>
+          <ol>
+            <li>Confirm all scores, standings, and playoff results are complete.</li>
+            <li>Mark the tournament <strong>Completed</strong>.</li>
+            <li>Send or share public final results if your plan and workflow include post-event communication.</li>
+            <li>Export any registration, schedule, accounting, or results reports needed by your board.</li>
+            <li>Archive the tournament when it should leave active views and free its tournament slot.</li>
+            <li>Seal only after final review. Sealing creates a permanent snapshot and cannot be undone.</li>
+          </ol>
+          <p>Completed tournaments still count against plan limits until they are archived.</p>
+        </>
+      ),
     },
     {
       id: 'divisions-and-pools',
@@ -186,7 +313,7 @@ const tournamentsHelp: HelpPageContent = {
           <p>Teams register through the public tournament registration form once the tournament is active and at least one division is open.</p>
           <p>Each registration can be <strong>Pending</strong>, <strong>Accepted</strong>, <strong>Waitlist</strong>, or <strong>Rejected</strong>. Only accepted teams are eligible for schedule assignment and public competition views.</p>
           <p>Payment status helps admins track whether an accepted team has no schedule, pending payment, deposit paid, paid in full, or past due.</p>
-          <p>The free Tournament plan supports standard registration fields for a starter event. Tournament Plus adds the registration operations tools serious organizers usually need: custom questions, file collection, Excel/CSV export, bulk actions, and richer waitlist workflows.</p>
+          <p>The free Tournament plan supports standard registration fields, selected-row status updates, basic payment tracking, and waitlist collection for a starter event. Tournament Plus adds the registration operations tools serious organizers usually need: custom questions, file collection, Excel/PDF exports, payment reminders, and waitlist promotion workflows.</p>
           <p>Use <strong>Registration Questions</strong> when you need tournament-specific coach confirmations, dropdown answers, or uploaded documents. Submitted answers appear in admin registration details and registration exports.</p>
           <p>Use bulk actions only after filtering and selecting the exact registrations you want to change. Bulk actions update selected registrations only; they do not apply to hidden rows or every registration in the tournament.</p>
         </>
@@ -236,7 +363,7 @@ const tournamentsHelp: HelpPageContent = {
           answerText: 'Select the registrations you want to update, then choose the bulk action. Only selected registrations are changed.',
           keywords: ['bulk actions', 'selected teams', 'approve', 'reject', 'waitlist'],
           answer: (
-            <p>Select specific rows on the Registrations page, then choose a bulk action such as accept, reject, waitlist, mark deposit paid, or mark paid. Bulk actions are a Tournament Plus workflow and only affect the selected rows.</p>
+            <p>Select specific rows on the Registrations page, then choose a bulk action such as accept, reject, waitlist, mark deposit paid, or mark paid. Basic selected-row updates are available on all tournament plans and only affect the selected rows.</p>
           ),
         },
         {
@@ -245,7 +372,7 @@ const tournamentsHelp: HelpPageContent = {
           answerText: 'Waitlisted teams receive a numbered position in their division queue, and promotions compact the remaining queue.',
           keywords: ['waitlist', 'queue', 'promotion', 'position'],
           answer: (
-            <p>When a team joins or is moved to the waitlist, FieldLogicHQ assigns the next queue position for that division. When a waitlisted team is promoted, the remaining waitlist closes the gap so the queue stays in order.</p>
+            <p>When a team joins or is moved to the waitlist, FieldLogicHQ assigns the next queue position for that division. Tournament Plus adds promotion and queue-management tools; when a waitlisted team is promoted, the remaining waitlist closes the gap so the queue stays in order.</p>
           ),
         },
       ],

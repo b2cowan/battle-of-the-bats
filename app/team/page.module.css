@@ -1,0 +1,444 @@
+.page {
+  min-height: calc(100vh - var(--nav-height));
+  padding: calc(var(--nav-height) + 3rem) 1.5rem 4rem;
+  background:
+    linear-gradient(to right, rgba(var(--blueprint-blue-rgb), 0.06) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(var(--blueprint-blue-rgb), 0.06) 1px, transparent 1px),
+    var(--pitch-black);
+  background-size: 40px 40px;
+}
+
+.signupSurface {
+  width: min(1120px, 100%);
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(420px, 1fr);
+  gap: 3rem;
+  align-items: start;
+}
+
+.copyPane {
+  padding-top: 1.5rem;
+}
+
+.eyebrow,
+.formKicker,
+.priceLabel {
+  font-family: var(--font-data);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: uppercase;
+  color: var(--blueprint-blue);
+  margin-bottom: 0.65rem;
+}
+
+.title {
+  font-family: var(--font-data);
+  font-size: 3.2rem;
+  line-height: 1;
+  font-weight: 700;
+  color: var(--fl-text);
+  margin-bottom: 1rem;
+}
+
+.lede {
+  max-width: 54ch;
+  font-family: var(--font-data);
+  font-size: 0.95rem;
+  line-height: 1.75;
+  color: var(--data-gray);
+  margin-bottom: 2rem;
+}
+
+.pricePanel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.35);
+  background: rgba(var(--blueprint-blue-rgb), 0.06);
+  padding: 1.4rem;
+  margin-bottom: 1.5rem;
+}
+
+.price {
+  font-family: var(--font-data);
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--fl-text);
+  margin: 0;
+}
+
+.priceMeta,
+.sessionState,
+.footerRow span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-family: var(--font-data);
+  font-size: 0.75rem;
+  color: var(--logic-lime);
+}
+
+.benefitGrid {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.benefit {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.7rem;
+  align-items: start;
+  font-family: var(--font-data);
+  color: var(--data-gray);
+}
+
+.benefit svg {
+  color: var(--logic-lime);
+  margin-top: 0.15rem;
+}
+
+.benefit p {
+  color: var(--fl-text);
+  font-size: 0.8rem;
+  font-weight: 700;
+  margin: 0 0 0.2rem;
+}
+
+.benefit span {
+  display: block;
+  font-size: 0.74rem;
+  line-height: 1.55;
+}
+
+.formPane {
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.45);
+  background: var(--hud-surface);
+  padding: 2rem;
+  box-shadow: 0 0 0 1px rgba(var(--blueprint-blue-rgb), 0.12), 0 20px 60px rgba(0, 0, 0, 0.22);
+}
+
+.formHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1.5rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid rgba(var(--blueprint-blue-rgb), 0.24);
+  margin-bottom: 1.5rem;
+}
+
+.formHeader h2 {
+  font-family: var(--font-data);
+  font-size: 1.25rem;
+  line-height: 1.25;
+  color: var(--fl-text);
+  font-weight: 700;
+  margin: 0;
+}
+
+.formHeader svg {
+  color: var(--logic-lime);
+}
+
+.sectionBlock {
+  display: grid;
+  gap: 1rem;
+  padding: 1.2rem 0;
+  border-bottom: 1px solid rgba(var(--blueprint-blue-rgb), 0.18);
+}
+
+.sectionBlock:first-of-type {
+  padding-top: 0;
+}
+
+.sectionTitle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-family: var(--font-data);
+  font-size: 0.74rem;
+  color: var(--fl-text);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0;
+}
+
+.sectionTitle svg {
+  color: var(--blueprint-blue);
+}
+
+.field {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.field span {
+  font-family: var(--font-data);
+  font-size: 0.68rem;
+  color: var(--data-gray);
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.field input,
+.field select {
+  width: 100%;
+  min-height: 44px;
+  background: rgba(var(--blueprint-blue-rgb), 0.05);
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.4);
+  color: var(--fl-text);
+  font-family: var(--font-data);
+  font-size: 0.86rem;
+  padding: 0.75rem 0.85rem;
+  outline: none;
+}
+
+.field input:focus,
+.field select:focus {
+  border-color: var(--blueprint-blue);
+  box-shadow: 0 0 0 2px rgba(var(--blueprint-blue-rgb), 0.18);
+}
+
+.field input::placeholder {
+  color: rgba(255, 255, 255, 0.28);
+}
+
+.field input:disabled,
+.field select:disabled {
+  opacity: 0.58;
+  cursor: not-allowed;
+}
+
+.twoCol {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.previewLine {
+  font-family: var(--font-data);
+  font-size: 0.68rem;
+  line-height: 1.5;
+  color: var(--data-gray);
+  margin: 0;
+}
+
+.previewLine span {
+  color: var(--logic-lime);
+}
+
+.segmented,
+.authToggle {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.segmented {
+  grid-template-columns: 1fr 1fr;
+}
+
+.segmented button,
+.authToggle button {
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.35);
+  background: rgba(var(--blueprint-blue-rgb), 0.04);
+  color: var(--data-gray);
+  font-family: var(--font-data);
+  font-size: 0.76rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 0.8rem 0.9rem;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+
+.segmented button {
+  text-align: left;
+}
+
+.segmented button span {
+  display: block;
+  color: rgba(255, 255, 255, 0.48);
+  font-size: 0.68rem;
+  font-weight: 400;
+  text-transform: none;
+  margin-top: 0.2rem;
+}
+
+.segmented button:hover,
+.authToggle button:hover {
+  border-color: rgba(var(--blueprint-blue-rgb), 0.75);
+  color: var(--fl-text);
+}
+
+.segmented button:disabled,
+.authToggle button:disabled {
+  cursor: not-allowed;
+  opacity: 0.58;
+}
+
+.segmentActive,
+.authActive {
+  border-color: rgba(var(--logic-lime-rgb), 0.7) !important;
+  color: var(--fl-text) !important;
+  background: rgba(var(--logic-lime-rgb), 0.08) !important;
+}
+
+.authModeRow {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: center;
+}
+
+.authToggle {
+  grid-template-columns: 1fr 1fr;
+  width: 160px;
+}
+
+.authToggle button {
+  padding: 0.5rem;
+  font-size: 0.68rem;
+}
+
+.sessionState {
+  width: 100%;
+  margin-top: 1rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.28);
+  background: rgba(var(--logic-lime-rgb), 0.06);
+}
+
+.successBox,
+.errorBox {
+  margin-top: 1rem;
+  padding: 0.85rem 1rem;
+  font-family: var(--font-data);
+  font-size: 0.78rem;
+  line-height: 1.55;
+}
+
+.successBox {
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.32);
+  color: var(--logic-lime);
+  background: rgba(var(--logic-lime-rgb), 0.07);
+}
+
+.errorBox {
+  border: 1px solid rgba(239, 68, 68, 0.32);
+  color: #f87171;
+  background: rgba(239, 68, 68, 0.08);
+}
+
+.primaryButton {
+  width: 100%;
+  min-height: 48px;
+  margin-top: 1.25rem;
+  border: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+  background: var(--logic-lime);
+  color: var(--pitch-black);
+  font-family: var(--font-data);
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.15s, opacity 0.15s;
+}
+
+.primaryButton:hover:not(:disabled) {
+  background: #fff;
+}
+
+.primaryButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.footerRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 1rem;
+  font-family: var(--font-data);
+  font-size: 0.72rem;
+}
+
+.footerRow a {
+  color: var(--data-gray);
+  text-decoration: none;
+}
+
+.footerRow a:hover {
+  color: var(--logic-lime);
+}
+
+.inlineAction {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0.75rem 1rem;
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.5);
+  color: var(--logic-lime);
+  font-family: var(--font-data);
+  font-size: 0.76rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  text-decoration: none;
+}
+
+.inlineAction:hover {
+  background: rgba(var(--logic-lime-rgb), 0.1);
+}
+
+@media (max-width: 980px) {
+  .signupSurface {
+    grid-template-columns: 1fr;
+    gap: 2.25rem;
+  }
+
+  .copyPane {
+    padding-top: 0;
+  }
+
+  .title {
+    font-size: 2.45rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .page {
+    padding: calc(var(--nav-height) + 1.5rem) 1rem 3rem;
+  }
+
+  .formPane {
+    padding: 1.25rem;
+  }
+
+  .pricePanel,
+  .footerRow,
+  .authModeRow {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .pricePanel {
+    display: grid;
+  }
+
+  .twoCol,
+  .segmented {
+    grid-template-columns: 1fr;
+  }
+
+  .authToggle {
+    width: 100%;
+  }
+}

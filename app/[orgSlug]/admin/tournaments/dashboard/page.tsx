@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { AlertCircle, CheckCircle2, Copy, Info, Users, Calendar, Trophy, Megaphone, Tag, DollarSign, TrendingUp, MapPin, BookUser, BookOpen, Zap, Flag } from 'lucide-react';
+import { AlertCircle, CheckCircle2, ChevronDown, ChevronUp, Copy, Info, Users, Calendar, Trophy, Megaphone, Tag, DollarSign, TrendingUp, Zap, Flag } from 'lucide-react';
 import Link from 'next/link';
 import { useTournament } from '@/lib/tournament-context';
 import { useOrg } from '@/lib/org-context';
@@ -137,11 +137,14 @@ export default function AdminDashboard() {
   const { currentOrg } = useOrg();
   const router = useRouter();
   const base = `/${currentOrg?.slug ?? 'milton-bats'}/admin/tournaments`;
+  const orgQuery = currentOrg?.slug ? `?orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
+  const orgParam = currentOrg?.slug ? `&orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
   const [stats, setStats] = useState<DashboardStats>(EMPTY_STATS);
   const [statsError, setStatsError] = useState('');
   const [activating, setActivating] = useState(false);
   const [activateError, setActivateError] = useState('');
   const [showActivateConfirm, setShowActivateConfirm] = useState(false);
+  const [showOptionalItems, setShowOptionalItems] = useState(false);
 
   async function handleActivate() {
     if (!currentTournament?.id || activating) return;
@@ -149,7 +152,7 @@ export default function AdminDashboard() {
     setActivateError('');
     setShowActivateConfirm(false);
     try {
-      const res = await fetch('/api/admin/tournaments', {
+      const res = await fetch(`/api/admin/tournaments${orgQuery}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'set-status', id: currentTournament.id, data: { status: 'active' } }),
@@ -171,7 +174,7 @@ export default function AdminDashboard() {
     const controller = new AbortController();
     async function fetchStats(id: string) {
       try {
-        const res = await fetch(`/api/admin/tournament-dashboard?tournamentId=${encodeURIComponent(id)}`, { signal: controller.signal });
+        const res = await fetch(`/api/admin/tournament-dashboard?tournamentId=${encodeURIComponent(id)}${orgParam}`, { signal: controller.signal });
         const data = await res.json().catch(() => null) as Partial<DashboardStats> & { error?: string } | null;
         if (!res.ok) throw new Error(data?.error ?? 'Unable to load dashboard stats.');
         setStats({
@@ -205,7 +208,7 @@ export default function AdminDashboard() {
     }
     void fetchStats(tournamentId);
     return () => controller.abort();
-  }, [currentTournament?.id]);
+  }, [currentTournament?.id, orgParam]);
 
   // ── Populate-from state (draft dashboard only) ───────────────────────────
   type OtherTournament = { id: string; name: string; year: number | null; status: string | null };
@@ -223,7 +226,7 @@ export default function AdminDashboard() {
   useEffect(() => {
     const tournamentId = currentTournament?.id;
     if (!tournamentId) return;
-    fetch('/api/admin/tournaments', { cache: 'no-store' })
+    fetch(`/api/admin/tournaments${orgQuery}`, { cache: 'no-store' })
       .then(r => r.json())
       .then((data: unknown) => {
         if (!Array.isArray(data)) return;
@@ -233,7 +236,7 @@ export default function AdminDashboard() {
         setOtherTournaments(others);
       })
       .catch(() => {});
-  }, [currentTournament?.id]);
+  }, [currentTournament?.id, orgQuery]);
 
   async function handlePopulateConfirm() {
     if (!populateSelected || !currentTournament?.id) return;
@@ -241,7 +244,7 @@ export default function AdminDashboard() {
     setPopulateError('');
     try {
       const res = await fetch(
-        `/api/admin/tournaments/${encodeURIComponent(currentTournament.id)}/populate-from`,
+        `/api/admin/tournaments/${encodeURIComponent(currentTournament.id)}/populate-from${orgQuery}`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -302,12 +305,7 @@ export default function AdminDashboard() {
     { key: 'open-division', done: checklist.hasOpenDivision,  label: 'Registration open for at least one division', desc: 'Open a division when you are ready for teams to register.',          href: `${base}/age-groups`,  action: 'Open divisions'   },
   ];
 
-  const setupLinks = [
-    { href: `${base}/venues`,     icon: MapPin,    label: 'Venues',            desc: 'Add playing fields and addresses'       },
-    { href: `${base}/age-groups`, icon: Tag,       label: 'Divisions',         desc: 'Set up divisions and capacities'        },
-    { href: `${base}/contacts`,   icon: BookUser,  label: 'Contacts',          desc: 'Add coordinators and public email'      },
-    { href: `${base}/rules`,      icon: BookOpen,  label: 'Rules & Resources', desc: 'Upload documents for teams'             },
-  ];
+  const optionalDoneCount = [checklist.hasVenues, checklist.hasFees, checklist.hasRules, checklist.hasBranding].filter(Boolean).length;
 
   return (
     <div className={styles.page}>
@@ -363,9 +361,9 @@ export default function AdminDashboard() {
                 <p>Complete these items before activating registration and the public tournament page.</p>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexShrink: 0 }}>
-                <span className={checklist.ready ? styles.readyPill : styles.draftPill}>
-                  {checklist.ready ? 'Ready to activate' : 'Draft only'}
-                </span>
+                {checklist.ready && (
+                  <span className={styles.readyPill}>Ready to activate</span>
+                )}
                 <button
                   type="button"
                   className={styles.activateChip}
@@ -393,85 +391,121 @@ export default function AdminDashboard() {
                 );
               })}
 
-              <Link href={`${base}/venues`} className={`${styles.checklistNudge} ${checklist.hasVenues ? styles.nudgeDone : ''}`}>
-                <div className={styles.checklistIcon}>
-                  {checklist.hasVenues ? <CheckCircle2 size={18} /> : <Info size={18} />}
-                </div>
-                <div className={styles.checklistBody}>
-                  <strong style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    Venues & fields
-                    <span className={styles.nudgeTag}>Optional</span>
-                  </strong>
-                  <span>
-                    {checklist.hasVenues
-                      ? 'Playing fields are set up for this tournament.'
-                      : 'Add your playing fields so teams know where to show up.'}
-                  </span>
-                  <em style={{ color: checklist.hasVenues ? 'var(--logic-lime)' : 'var(--data-gray)' }}>
-                    {checklist.hasVenues ? 'Complete' : 'Add venues →'}
-                  </em>
-                </div>
-              </Link>
+              {/* Optional setup toggle */}
+              <button
+                type="button"
+                onClick={() => setShowOptionalItems(open => !open)}
+                style={{
+                  gridColumn: '1 / -1',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '0.45rem 0.75rem',
+                  background: 'transparent',
+                  border: '1px solid var(--border-2)',
+                  borderRadius: 6,
+                  cursor: 'pointer',
+                  color: 'var(--white-50)',
+                  fontSize: '0.8rem',
+                  marginTop: '0.25rem',
+                  textAlign: 'left',
+                }}
+              >
+                <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                  <Info size={13} />
+                  Optional setup
+                  {optionalDoneCount > 0 && (
+                    <span style={{ color: 'var(--logic-lime)', marginLeft: '0.15rem' }}>
+                      — {optionalDoneCount} of 4 complete
+                    </span>
+                  )}
+                </span>
+                {showOptionalItems ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+              </button>
 
-              <Link href={`${base}/settings/event`} className={`${styles.checklistNudge} ${checklist.hasFees ? styles.nudgeDone : ''}`}>
-                <div className={styles.checklistIcon}>
-                  {checklist.hasFees ? <CheckCircle2 size={18} /> : <Info size={18} />}
-                </div>
-                <div className={styles.checklistBody}>
-                  <strong style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    Fee schedule
-                    <span className={styles.nudgeTag}>Optional</span>
-                  </strong>
-                  <span>
-                    {checklist.hasFees
-                      ? 'Registration fees are configured for this tournament.'
-                      : 'Set registration fees so teams know what to expect when they sign up.'}
-                  </span>
-                  <em style={{ color: checklist.hasFees ? 'var(--logic-lime)' : 'var(--data-gray)' }}>
-                    {checklist.hasFees ? 'Complete' : 'Set up fees →'}
-                  </em>
-                </div>
-              </Link>
+              {showOptionalItems && (
+                <>
+                  <Link href={`${base}/venues`} className={`${styles.checklistNudge} ${checklist.hasVenues ? styles.nudgeDone : ''}`}>
+                    <div className={styles.checklistIcon}>
+                      {checklist.hasVenues ? <CheckCircle2 size={18} /> : <Info size={18} />}
+                    </div>
+                    <div className={styles.checklistBody}>
+                      <strong style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        Venues & fields
+                        <span className={styles.nudgeTag}>Optional</span>
+                      </strong>
+                      <span>
+                        {checklist.hasVenues
+                          ? 'Playing fields are set up for this tournament.'
+                          : 'Add your playing fields so teams know where to show up.'}
+                      </span>
+                      <em style={{ color: checklist.hasVenues ? 'var(--logic-lime)' : 'var(--data-gray)' }}>
+                        {checklist.hasVenues ? 'Complete' : 'Add venues →'}
+                      </em>
+                    </div>
+                  </Link>
 
-              <Link href={`${base}/rules`} className={`${styles.checklistNudge} ${checklist.hasRules ? styles.nudgeDone : ''}`}>
-                <div className={styles.checklistIcon}>
-                  {checklist.hasRules ? <CheckCircle2 size={18} /> : <Info size={18} />}
-                </div>
-                <div className={styles.checklistBody}>
-                  <strong style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    Rules & resources
-                    <span className={styles.nudgeTag}>Optional</span>
-                  </strong>
-                  <span>
-                    {checklist.hasRules
-                      ? 'Tournament rules and documents are published.'
-                      : 'Upload rulebooks or documents teams need before the tournament.'}
-                  </span>
-                  <em style={{ color: checklist.hasRules ? 'var(--logic-lime)' : 'var(--data-gray)' }}>
-                    {checklist.hasRules ? 'Complete' : 'Add rules →'}
-                  </em>
-                </div>
-              </Link>
+                  <Link href={`${base}/settings/event`} className={`${styles.checklistNudge} ${checklist.hasFees ? styles.nudgeDone : ''}`}>
+                    <div className={styles.checklistIcon}>
+                      {checklist.hasFees ? <CheckCircle2 size={18} /> : <Info size={18} />}
+                    </div>
+                    <div className={styles.checklistBody}>
+                      <strong style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        Fee schedule
+                        <span className={styles.nudgeTag}>Optional</span>
+                      </strong>
+                      <span>
+                        {checklist.hasFees
+                          ? 'Registration fees are configured for this tournament.'
+                          : 'Set registration fees so teams know what to expect when they sign up.'}
+                      </span>
+                      <em style={{ color: checklist.hasFees ? 'var(--logic-lime)' : 'var(--data-gray)' }}>
+                        {checklist.hasFees ? 'Complete' : 'Set up fees →'}
+                      </em>
+                    </div>
+                  </Link>
 
-              <Link href={`${base}/branding`} className={`${styles.checklistNudge} ${checklist.hasBranding ? styles.nudgeDone : ''}`}>
-                <div className={styles.checklistIcon}>
-                  {checklist.hasBranding ? <CheckCircle2 size={18} /> : <Info size={18} />}
-                </div>
-                <div className={styles.checklistBody}>
-                  <strong style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    Public site & branding
-                    <span className={styles.nudgeTag}>Optional</span>
-                  </strong>
-                  <span>
-                    {checklist.hasBranding
-                      ? 'Logo, banner, or color theme configured for this tournament.'
-                      : 'Set a logo, banner, and color theme for your public tournament page.'}
-                  </span>
-                  <em style={{ color: checklist.hasBranding ? 'var(--logic-lime)' : 'var(--data-gray)' }}>
-                    {checklist.hasBranding ? 'Customized' : 'Customize branding →'}
-                  </em>
-                </div>
-              </Link>
+                  <Link href={`${base}/rules`} className={`${styles.checklistNudge} ${checklist.hasRules ? styles.nudgeDone : ''}`}>
+                    <div className={styles.checklistIcon}>
+                      {checklist.hasRules ? <CheckCircle2 size={18} /> : <Info size={18} />}
+                    </div>
+                    <div className={styles.checklistBody}>
+                      <strong style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        Rules & resources
+                        <span className={styles.nudgeTag}>Optional</span>
+                      </strong>
+                      <span>
+                        {checklist.hasRules
+                          ? 'Tournament rules and documents are published.'
+                          : 'Upload rulebooks or documents teams need before the tournament.'}
+                      </span>
+                      <em style={{ color: checklist.hasRules ? 'var(--logic-lime)' : 'var(--data-gray)' }}>
+                        {checklist.hasRules ? 'Complete' : 'Add rules →'}
+                      </em>
+                    </div>
+                  </Link>
+
+                  <Link href={`${base}/branding`} className={`${styles.checklistNudge} ${checklist.hasBranding ? styles.nudgeDone : ''}`}>
+                    <div className={styles.checklistIcon}>
+                      {checklist.hasBranding ? <CheckCircle2 size={18} /> : <Info size={18} />}
+                    </div>
+                    <div className={styles.checklistBody}>
+                      <strong style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        Public site & branding
+                        <span className={styles.nudgeTag}>Optional</span>
+                      </strong>
+                      <span>
+                        {checklist.hasBranding
+                          ? 'Logo, banner, or color theme configured for this tournament.'
+                          : 'Set a logo, banner, and color theme for your public tournament page.'}
+                      </span>
+                      <em style={{ color: checklist.hasBranding ? 'var(--logic-lime)' : 'var(--data-gray)' }}>
+                        {checklist.hasBranding ? 'Customized' : 'Customize branding →'}
+                      </em>
+                    </div>
+                  </Link>
+                </>
+              )}
             </div>
 
             {activateError && (
@@ -481,18 +515,6 @@ export default function AdminDashboard() {
             )}
           </section>
 
-          {/* Setup quick links */}
-          <div className={styles.setupLinks}>
-            {setupLinks.map(link => (
-              <Link key={link.label} href={link.href} className={styles.setupLink}>
-                <div className={styles.setupLinkIcon}><link.icon size={15} /></div>
-                <div className={styles.setupLinkBody}>
-                  <strong>{link.label}</strong>
-                  <span>{link.desc}</span>
-                </div>
-              </Link>
-            ))}
-          </div>
         </>
       )}
 
@@ -689,7 +711,7 @@ export default function AdminDashboard() {
 
           <div className={styles.recentEvents}>
             <h2 className={styles.sectionTitle}>Recent Activity</h2>
-            <LiveEventLog tournamentId={currentTournament.id} />
+            <LiveEventLog tournamentId={currentTournament.id} orgSlug={currentOrg?.slug} />
           </div>
         </>
       )}

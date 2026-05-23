@@ -6,6 +6,14 @@ import { getTournamentRegistrationFields, saveTournamentRegistrationFieldAnswers
 import { hasPlanFeature } from '@/lib/plan-features';
 import { writePlatformEvent } from '@/lib/platform-events';
 import type { OrgPlan, TournamentRegistrationField } from '@/lib/types';
+import {
+  duplicateTournamentTeamMessage,
+  findDuplicateTournamentTeam,
+} from '@/lib/team-registration-duplicates';
+import {
+  buildTeamWorkspaceClaimUrl,
+  createTournamentTeamWorkspaceClaim,
+} from '@/lib/team-workspace-claims';
 
 const REGISTRATION_FILES_BUCKET = 'tournament-registration-files';
 const MAX_REGISTRATION_FILE_BYTES = 10 * 1024 * 1024;
@@ -240,6 +248,17 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Registration is not available for this tournament.' }, { status: 403 });
     }
 
+    const duplicateTeam = await findDuplicateTournamentTeam({
+      tournamentId,
+      ageGroupId,
+      teamName,
+    });
+    if (duplicateTeam) {
+      return NextResponse.json({
+        error: `${duplicateTournamentTeamMessage(teamName)} Contact the tournament organizer if you need to update it.`,
+      }, { status: 409 });
+    }
+
     let organization: OrganizationRow | null = null;
     if (tournament.organization_id) {
       const { data: orgData, error: orgError } = await supabaseAdmin
@@ -396,12 +415,12 @@ export async function POST(req: NextRequest) {
     const isWaitlist = finalStatus === 'waitlist';
     if (isWaitlist && tournament.organization_id) {
       await writePlatformEvent({
-        eventType: 'tournament_plus_feature_used',
+        eventType: 'tournament_registration_operation_used',
         source: 'app',
         orgId: tournament.organization_id,
         planId: organization.plan_id,
         metadata: {
-          feature: 'waitlist_automation',
+          feature: 'waitlist_collection',
           action: 'waitlist_join',
           tournamentId,
           ageGroupId,
@@ -417,6 +436,23 @@ export async function POST(req: NextRequest) {
       || organization.contact_email
       || undefined;
     const adminEmailToUse = tournament.contact_email || divisionContactEmail || footerContactEmail || ADMIN_EMAIL;
+    let teamWorkspaceClaimUrl: string | undefined;
+
+    if (!isWaitlist && data?.id) {
+      try {
+        const claim = await createTournamentTeamWorkspaceClaim({
+          tournamentId,
+          tournamentTeamId: data.id,
+          contactEmail: email,
+        });
+        teamWorkspaceClaimUrl = buildTeamWorkspaceClaimUrl(
+          claim.token,
+          req.headers.get('origin') ?? process.env.NEXT_PUBLIC_APP_URL,
+        );
+      } catch (claimError) {
+        console.error('Registration Team workspace claim creation error:', claimError);
+      }
+    }
 
     await Promise.allSettled([
       sendEmail(
@@ -424,7 +460,7 @@ export async function POST(req: NextRequest) {
         isWaitlist ? `Waitlist Confirmation - ${teamName}` : `Registration Received - ${teamName}`,
         isWaitlist
           ? waitlistConfirmationHtml({ teamName, coachName, ageGroupName, tournamentName, contactEmail: footerContactEmail })
-          : registrationConfirmationHtml({ teamName, coachName, ageGroupName, tournamentName, contactEmail: footerContactEmail })
+          : registrationConfirmationHtml({ teamName, coachName, ageGroupName, tournamentName, contactEmail: footerContactEmail, teamWorkspaceClaimUrl })
       ),
       sendEmail(
         adminEmailToUse,

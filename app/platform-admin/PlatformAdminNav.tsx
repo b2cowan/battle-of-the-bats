@@ -1,7 +1,7 @@
 ﻿'use client';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { LayoutDashboard, Building2, Users, ScrollText, Terminal, HelpCircle, LogOut, ArchiveRestore, Mail, SlidersHorizontal, Search, ListChecks } from 'lucide-react';
+import { LayoutDashboard, Building2, Users, ScrollText, Terminal, HelpCircle, LogOut, ArchiveRestore, Mail, SlidersHorizontal, Search, ListChecks, ClipboardCheck } from 'lucide-react';
 import { signOut } from '@/lib/auth';
 import styles from './platform-admin.module.css';
 
@@ -29,6 +29,7 @@ const BASE_NAV_GROUPS = [
   {
     label: 'Billing & Product',
     items: [
+      { href: '/platform-admin/change-requests', label: 'Change Requests', Icon: ClipboardCheck },
       { href: '/platform-admin/plans-pricing', label: 'Plans & Pricing', Icon: SlidersHorizontal },
       { href: '/platform-admin/bulk-operations', label: 'Bulk Operations', Icon: ListChecks },
     ],
@@ -38,7 +39,7 @@ const BASE_NAV_GROUPS = [
     items: [
       { href: '/platform-admin/users', label: 'Platform Users', Icon: Users },
       { href: '/platform-admin/audit', label: 'Audit Log', Icon: ScrollText },
-      { href: '/platform-admin/help', label: 'Help', Icon: HelpCircle },
+      { href: '/platform-admin/help', label: 'Help', Icon: HelpCircle, newWindow: true },
     ],
   },
 ];
@@ -75,13 +76,13 @@ export default function PlatformAdminNav({ sessionEmail }: { sessionEmail: strin
         {navGroups.map(group => (
           <div key={group.label} className={styles.navGroup}>
             <div className={styles.navGroupLabel}>{group.label}</div>
-            {group.items.map(({ href, label, Icon }) => (
+            {group.items.map(({ href, label, Icon, newWindow }) => (
               <Link
                 key={href}
                 href={href}
+                target={newWindow ? '_blank' : undefined}
+                rel={newWindow ? 'noopener noreferrer' : undefined}
                 className={`${styles.navLink} ${isActive(href) ? styles.navLinkActive : ''}`}
-                target={label === 'Help' ? '_blank' : undefined}
-                rel={label === 'Help' ? 'noopener noreferrer' : undefined}
               >
                 <Icon size={15} />
                 <span>{label}</span>

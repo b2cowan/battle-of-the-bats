@@ -45,7 +45,7 @@ export async function POST(req: Request) {
   }: { planKey: string; gatingStatus: string; changeNote?: string; approvedChangeRequestId?: string } = await req.json();
   const sanitizedNote = sanitizePlatformChangeNote(changeNote);
 
-  const validKeys = ['tournament', 'tournament_plus', 'league', 'club'];
+  const validKeys = ['tournament', 'team', 'tournament_plus', 'league', 'club'];
   const validStatuses = ['live', 'early_access'];
   if (!validKeys.includes(planKey) || !validStatuses.includes(gatingStatus)) {
     return new Response(JSON.stringify({ error: 'Invalid planKey or gatingStatus' }), {

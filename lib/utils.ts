@@ -32,7 +32,10 @@ export function downloadCSV(filename: string, headers: string[], rows: (string |
 }
 
 export function formatPoolName(name: string): string {
-  const bare = name.replace(/^Pool\s+/i, '').trim();
+  const bare = name
+    .replace(/^Pool\s+/i, '')
+    .replace(/\s+Pool$/i, '')
+    .trim();
   return `${bare} Pool`;
 }
 

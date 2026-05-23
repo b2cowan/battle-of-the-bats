@@ -21,6 +21,7 @@ interface SlotGame extends Omit<Game, 'id'> {
 
 interface GeneratorProps {
   tournament: Tournament;
+  orgSlug?: string;
   ageGroups: AgeGroup[];
   teams: Team[];
   diamonds: Diamond[];
@@ -28,7 +29,7 @@ interface GeneratorProps {
   onCancel: () => void;
 }
 
-export default function ScheduleGenerator({ tournament, ageGroups, teams, diamonds, onComplete, onCancel }: GeneratorProps) {
+export default function ScheduleGenerator({ tournament, orgSlug, ageGroups, teams, diamonds, onComplete, onCancel }: GeneratorProps) {
   const [selectedGroupId, setSelectedGroupId] = useState(ageGroups[0]?.id || '');
   const [gameLength, setGameLength] = useState(90);
   const [breakLength, setBreakLength] = useState(15);
@@ -49,6 +50,7 @@ export default function ScheduleGenerator({ tournament, ageGroups, teams, diamon
 
   const hasPreview = generatedGames.length > 0 || generatedSlotGames.length > 0;
   const previewCount = generatedGames.length || generatedSlotGames.length;
+  const orgQuery = orgSlug ? `?orgSlug=${encodeURIComponent(orgSlug)}` : '';
 
   const availableDates = useMemo(() => {
     if (!tournament.startDate || !tournament.endDate) return [];
@@ -296,12 +298,12 @@ export default function ScheduleGenerator({ tournament, ageGroups, teams, diamon
   async function commitTeams() {
     setCommitting(true);
     try {
-      await fetch('/api/admin/games', {
+      await fetch(`/api/admin/games${orgQuery}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'delete-division-games', ageGroupId: selectedGroupId }),
       });
-      const res = await fetch('/api/admin/games', {
+      const res = await fetch(`/api/admin/games${orgQuery}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'bulk-save', games: generatedGames, tournamentId: tournament.id, ageGroupId: selectedGroupId }),
@@ -320,14 +322,14 @@ export default function ScheduleGenerator({ tournament, ageGroups, teams, diamon
     setCommitting(true);
     try {
       // 1. Clear existing games for this division
-      await fetch('/api/admin/games', {
+      await fetch(`/api/admin/games${orgQuery}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'delete-division-games', ageGroupId: selectedGroupId }),
       });
 
       // 2. Ensure slot records exist (idempotent — slots pre-exist from pool config), get back their IDs
-      const ensureRes = await fetch('/api/admin/pool-slots', {
+      const ensureRes = await fetch(`/api/admin/pool-slots${orgQuery}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -370,7 +372,7 @@ export default function ScheduleGenerator({ tournament, ageGroups, teams, diamon
       });
 
       // 5. Bulk save
-      const saveRes = await fetch('/api/admin/games', {
+      const saveRes = await fetch(`/api/admin/games${orgQuery}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'bulk-save', games: gameRows, tournamentId: tournament.id, ageGroupId: selectedGroupId }),

@@ -23,7 +23,7 @@ const STATUS_BADGE: Record<SubscriptionStatus, string> = {
   canceled: 'badge-neutral',
 };
 
-const PLAN_ORDER: OrgPlan[] = ['tournament', 'tournament_plus', 'league', 'club'];
+const PLAN_ORDER: OrgPlan[] = ['tournament', 'team', 'tournament_plus', 'league', 'club'];
 
 type BillingTournamentSummary = {
   id: string;
@@ -57,6 +57,7 @@ type CancellationPreflight = {
 
 const PLAN_TAGLINE: Record<OrgPlan, string> = {
   tournament:      'A free starter plan for one small tournament or a first test run.',
+  team:            'A coach workspace for one rep team with roster, schedule, dues, documents, and one free-tier tournament slot.',
   tournament_plus: 'Serious tournament operations: registration control, branding, automation, and reporting.',
   league:          'Manage your league, registrations, and public presence — all in one place.',
   club:            'The complete operating system for your sports organization.',
@@ -66,19 +67,27 @@ const PLAN_FEATURES: Record<OrgPlan, string[]> = {
   tournament: [
     'Manual tournament scheduling',
     'Standard team registration fields',
+    'Selected-row registration updates and waitlist collection',
     'Basic standings and score entry',
     'Field and diamond management',
     'Default FieldLogicHQ public styling',
     'Public news posts and basic team email',
     '3 staff / admin seats · 1 tournament slot',
   ],
+  team: [
+    'One rep team workspace',
+    'Coaches portal for roster, schedule, dues, and documents',
+    'Team budget and payment reminder tools',
+    'One free-tier tournament slot for scrimmages or local events',
+    '3 staff / coach seats',
+  ],
   tournament_plus: [
     'Everything in Tournament',
     'Unlimited tournament slots',
     '10 staff seats - officials always free',
     'Custom registration questions and file uploads',
-    'CSV export and bulk registration actions',
-    'Division capacity and waitlist automation',
+    'Excel/PDF registration exports and payment reminders',
+    'Waitlist promotion and queue management',
     'Full branding control',
     'Automated schedule generation',
     'Playoff bracket generator',
@@ -102,7 +111,8 @@ const PLAN_FEATURES: Record<OrgPlan, string[]> = {
 };
 
 const PLAN_META_COPY: Record<OrgPlan, string> = {
-  tournament:      "You're on the free starter plan. Upgrade when you need custom registration, export, waitlists, branding, or repeat-event tools.",
+  tournament:      "You're on the free starter plan. Upgrade when you need custom registration, exports, payment reminders, waitlist promotion, branding, or repeat-event tools.",
+  team:            "You're on Team. Your coach workspace and one free-tier tournament slot are active.",
   tournament_plus: "You're on Tournament Plus. Your tournament operations tools are active; League and Club are coming soon while those broader workflows are refined.",
   league:          "You're on League. Need accounting or rep team tools? Club is the complete platform.",
   club:            "You're on the complete Club platform.",
@@ -595,7 +605,7 @@ export default function BillingPage() {
           </p>
           {downgradePreflight.targetPlan === 'tournament' && (
             <p className={styles.statusNote}>
-              Tournament Plus features become inactive on the free plan: custom tournament branding, custom registration controls, exports, bulk actions, waitlists, cloning, targeted announcements, and post-event summaries. Saved branding remains stored but public tournament pages use FieldLogicHQ defaults until you upgrade again.
+              Tournament Plus features become inactive on the free plan: custom tournament branding, custom registration controls, exports, payment reminders, waitlist promotion, cloning, targeted announcements, and post-event summaries. Saved branding remains stored but public tournament pages use FieldLogicHQ defaults until you upgrade again.
             </p>
           )}
           {downgradePreflight.requiresTournamentChoice ? (

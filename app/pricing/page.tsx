@@ -7,13 +7,13 @@ import styles from './page.module.css';
 
 export const metadata = {
   title: 'Pricing — FieldLogicHQ',
-  description: 'Simple, honest pricing for Canadian sports organizations. Tournament and Tournament Plus are available now; League and Club are coming soon.',
+  description: 'Simple, honest pricing for Canadian sports organizations. Tournament, Team, and Tournament Plus are available now; League and Club are coming soon.',
 };
 
 const TRUST_SIGNALS = [
   'Canadian pricing — billed in CAD',
   'No contracts — cancel anytime',
-  'Tournament and Tournament Plus available now',
+  'Tournament, Team, and Tournament Plus available now',
   'Plans can be changed at any time',
 ];
 
@@ -34,8 +34,8 @@ const COMPARISON_CATEGORIES = [
     rows: [
       { feature: 'Team registration form',          tournament: 'Standard fields', plus: 'Custom fields + files', league: 'Custom fields + files', club: 'Custom fields + files' },
       { feature: 'Registration exports (Excel, CSV, PDF)', tournament: '-',          plus: 'Included',              league: 'Included',              club: 'Included' },
-      { feature: 'Bulk registration actions',       tournament: '-',               plus: 'Included',              league: 'Included',              club: 'Included' },
-      { feature: 'Division capacity and waitlists', tournament: 'Basic review',    plus: 'Automation included',   league: 'Automation included',   club: 'Automation included' },
+      { feature: 'Selected-row registration updates', tournament: 'Included',       plus: 'Included',              league: 'Included',              club: 'Included' },
+      { feature: 'Division capacity and waitlists', tournament: 'Collection + review', plus: 'Promotion tools',    league: 'Promotion tools',       club: 'Promotion tools' },
       { feature: 'Payment and deposit tracking',    tournament: 'Basic tracking',  plus: 'Advanced reporting',    league: 'Advanced reporting',    club: 'Advanced reporting' },
     ],
   },
@@ -118,7 +118,7 @@ const COMPARISON_CATEGORIES = [
 const UPGRADE_BRIDGES = [
   {
     headline: 'Ready to run a serious tournament program?',
-    body: 'Tournament Plus adds the operational tools real organizers need: unlimited tournament slots, 10 staff seats, custom registration questions, file uploads, Excel and PDF exports for registrations, schedules, and results — check-in sheets, insurance documents, and field ops handouts — bulk actions, waitlists, full branding, cloning, targeted announcements, and post-event summaries.',
+    body: 'Tournament Plus adds the operational tools real organizers need: unlimited tournament slots, 10 staff seats, custom registration questions, file uploads, Excel and PDF exports for registrations, schedules, and results — check-in sheets, insurance documents, and field ops handouts — payment reminders, waitlist promotion, full branding, cloning, targeted announcements, and post-event summaries.',
     from: 'Tournament',
     to: 'Tournament Plus',
     cta: 'Start Free Trial',
@@ -210,7 +210,7 @@ export default async function PricingPage() {
             organization actually operates.
           </h1>
           <p className={styles.heroSub}>
-            Tournament and Tournament Plus are ready for self-serve signup today.
+            Tournament, Team, and Tournament Plus are ready for self-serve signup today.
             League and Club are previewed for early-access planning while those workflows are refined.
           </p>
           <div className={styles.trustRow}>
@@ -225,6 +225,27 @@ export default async function PricingPage() {
       </section>
 
       {/* ── Plans ────────────────────────────────────────────────────────── */}
+      <section className={styles.teamEntrySection}>
+        <div className="container">
+          <div className={styles.teamEntry}>
+            <div className={styles.teamEntryText}>
+              <p className={styles.teamEntryLabel}>For one competitive team</p>
+              <h2 className={styles.teamEntryTitle}>I manage one competitive team.</h2>
+              <p className={styles.teamEntryBody}>
+                Start a standalone Team workspace for one entitled rep team. Coaches land in the coaches portal with roster, schedule, documents, dues, budget, and team-scoped access.
+              </p>
+            </div>
+            <div className={styles.teamEntryPlan}>
+              <p className={styles.teamEntryPrice}>$29 CAD / mo</p>
+              <p className={styles.teamEntryNote}>or $290 CAD per season</p>
+            </div>
+            <Link href="/team" className={styles.teamEntryCta}>
+              Start Team Workspace
+            </Link>
+          </div>
+        </div>
+      </section>
+
       <section className={styles.plansSection}>
         <div className="container">
           <PricingSection gatingMap={gatingMap} />

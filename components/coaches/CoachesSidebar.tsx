@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { ArrowLeft, Users, Calendar, DollarSign, FileText, History, LayoutDashboard, HelpCircle } from 'lucide-react';
+import { ArrowLeft, Users, Calendar, DollarSign, FileText, History, LayoutDashboard, HelpCircle, Link2 } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
 import { useOrg } from '@/lib/org-context';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
@@ -28,6 +28,7 @@ export default function CoachesSidebar({ orgSlug }: { orgSlug: string }) {
     : null;
 
   const base = `/${orgSlug}/coaches`;
+  const isTeamWorkspace = currentOrg?.accountKind === 'team_workspace' || currentOrg?.planId === 'team';
 
   return (
     <nav className={styles.sidebar}>
@@ -89,6 +90,15 @@ export default function CoachesSidebar({ orgSlug }: { orgSlug: string }) {
       )}
       <div className={styles.sidebarDivider} />
       <div className={styles.sidebarSection}>
+        {isTeamWorkspace && (
+          <Link
+            href={`${base}/link-org`}
+            className={`${styles.sidebarItem}${pathname === `${base}/link-org` ? ` ${styles.sidebarItemActive}` : ''}`}
+          >
+            <Link2 size={14} />
+            Link Organization
+          </Link>
+        )}
         <Link
           href={`${base}/help`}
           className={`${styles.sidebarItem}${pathname === `${base}/help` ? ` ${styles.sidebarItemActive}` : ''}`}

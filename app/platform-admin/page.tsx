@@ -19,6 +19,7 @@ import {
 import { PLAN_CONFIG } from '@/lib/plan-config';
 import { getPlatformAuthContext } from '@/lib/platform-auth';
 import { getPreviousPlatformAdminVisit } from '@/lib/platform-admin-visits';
+import { supabaseAdmin } from '@/lib/supabase-admin';
 import {
   getCommandCenterStats,
   getLatestPlatformMetricSnapshot,
@@ -123,11 +124,18 @@ function fmtDateTime(iso: string) {
 export default async function PlatformOverviewPage() {
   const platformUser = await getPlatformAuthContext();
   const previousVisit = platformUser?.email ? await getPreviousPlatformAdminVisit(platformUser.email) : null;
-  const [stats, latestSnapshot] = await Promise.all([
+  const [stats, latestSnapshot, pricingRequestResult] = await Promise.all([
     getCommandCenterStats({ since: previousVisit?.visited_at ?? null }),
     getLatestPlatformMetricSnapshot(),
+    supabaseAdmin
+      .from('platform_catalog_change_requests')
+      .select('id', { count: 'exact', head: true })
+      .eq('request_type', 'pricing')
+      .in('status', ['draft', 'needs_review', 'approved'])
+      .contains('proposal', { kind: 'stripe_price_update' }),
   ]);
   const orgTotal = stats.totals.organizations;
+  const pendingPricingRequests = pricingRequestResult.count ?? 0;
   const lastVisitLabel = previousVisit ? `Last visit ${fmtDateTime(previousVisit.visited_at)}` : 'First tracked visit';
   const earlyAccessStatusRows = ['new', 'qualified', 'contacted', 'pilot_candidate', 'converted']
     .map(status => ({ status, count: stats.growth.earlyAccessByStatus[status] ?? 0 }))
@@ -165,6 +173,7 @@ export default async function PlatformOverviewPage() {
           <AlertItem label="Trials ending soon" value={stats.alerts.trialEndingSoon} tone={stats.alerts.trialEndingSoon > 0 ? 'warn' : 'neutral'} />
           <AlertItem label="New leads" value={stats.alerts.newEarlyAccessLeads} href="/platform-admin/early-access" tone={stats.alerts.newEarlyAccessLeads > 0 ? 'warn' : 'neutral'} />
           <AlertItem label="Retention records" value={stats.alerts.retentionAlertCount} href="/platform-admin/retention" tone={stats.alerts.retentionAlertCount > 0 ? 'warn' : 'neutral'} />
+          <AlertItem label="Price approvals" value={pendingPricingRequests} href="/platform-admin/change-requests" tone={pendingPricingRequests > 0 ? 'warn' : 'neutral'} />
           <AlertItem label="Expired overrides" value={stats.alerts.expiredOverrides} tone={stats.alerts.expiredOverrides > 0 ? 'warn' : 'neutral'} />
           <AlertItem label="Missing owners" value={stats.alerts.orgsWithoutOwner} tone={stats.alerts.orgsWithoutOwner > 0 ? 'warn' : 'neutral'} />
           <AlertItem label="Owner inactive" value={stats.alerts.orgsWithInactiveOwner} tone={stats.alerts.orgsWithInactiveOwner > 0 ? 'warn' : 'neutral'} />

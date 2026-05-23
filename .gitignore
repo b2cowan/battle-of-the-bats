@@ -13,6 +13,16 @@
 # testing
 /coverage
 
+# UAT agent — auth sessions (contain Supabase tokens) and generated results
+tests/uat/.auth/
+tests/uat/results/
+playwright-report/
+test-results/
+
+# local runtime artifacts
+dev-server.log
+tmp-*.png
+
 # next.js
 /.next/
 /out/

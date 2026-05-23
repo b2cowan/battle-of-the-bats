@@ -1,6 +1,6 @@
 import {
   sendEmail,
-  acceptanceHtml, rejectionHtml, paymentConfirmationHtml,
+  acceptanceHtml, rejectionHtml, paymentConfirmationHtml, manualTeamRegistrationHtml,
 } from '@/lib/email';
 import { getAuthContextWithScope, unauthorized, forbidden, scopeGuard } from '@/lib/api-auth';
 import { hasCapability } from '@/lib/roles';
@@ -11,12 +11,18 @@ import {
 } from '@/lib/db';
 import { hasPlanFeature, requiresTournamentPlusCopy } from '@/lib/plan-features';
 import { writePlatformEvent } from '@/lib/platform-events';
+import {
+  duplicateTournamentTeamMessage,
+  findDuplicateTournamentTeam,
+} from '@/lib/team-registration-duplicates';
 
 export async function GET(req: Request) {
-  const ctx = await getAuthContextWithScope();
+  const url = new URL(req.url);
+  const orgSlug = url.searchParams.get('orgSlug') ?? undefined;
+  const ctx = await getAuthContextWithScope({ orgSlug });
   if (!ctx) return unauthorized();
 
-  const tournamentId = new URL(req.url).searchParams.get('tournamentId');
+  const tournamentId = url.searchParams.get('tournamentId');
   if (!tournamentId) return new Response(JSON.stringify([]), { status: 200, headers: { 'Content-Type': 'application/json' } });
 
   const denied = scopeGuard(ctx, tournamentId);
@@ -39,7 +45,7 @@ export async function GET(req: Request) {
     email: t.email,
     players: t.players || [],
     status: t.status || 'accepted',
-    paymentStatus: t.payment_status || 'paid',
+    paymentStatus: t.payment_status || 'pending',
     registered_at: t.registered_at,
     registeredAt: t.registered_at,
     adminNotes: t.admin_notes,
@@ -80,7 +86,8 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
-  const ctx = await getAuthContextWithScope();
+  const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
+  const ctx = await getAuthContextWithScope({ orgSlug });
   if (!ctx) return unauthorized();
 
   if (!hasCapability(ctx.role, ctx.capabilities, 'create_tournaments')) return forbidden();
@@ -198,6 +205,104 @@ export async function POST(req: Request) {
     }
 
     // ── bulk update ───────────────────────────────────────────────────────────
+    if (body.action === 'create-team') {
+      const team = body.team as {
+        name?: string;
+        coach?: string;
+        email?: string;
+        ageGroupId?: string;
+        tournamentId?: string;
+        status?: string;
+        paymentStatus?: string;
+        notifyTeam?: boolean;
+      };
+
+      if (!team?.name?.trim() || !team.ageGroupId || !team.tournamentId) {
+        return new Response(JSON.stringify({ error: 'Team name, division, and tournament are required.' }), {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+
+      const denied = scopeGuard(ctx, team.tournamentId);
+      if (denied) return denied;
+
+      const { data: group } = await supabaseAdmin
+        .from('age_groups')
+        .select('id, name, tournament_id')
+        .eq('id', team.ageGroupId)
+        .single();
+
+      if (!group || group.tournament_id !== team.tournamentId) {
+        return new Response(JSON.stringify({ error: 'Division does not belong to this tournament.' }), {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+
+      if (team.notifyTeam && !team.email?.trim()) {
+        return new Response(JSON.stringify({ error: 'Email is required when notifying the team.' }), {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+
+      const duplicateTeam = await findDuplicateTournamentTeam({
+        tournamentId: team.tournamentId,
+        ageGroupId: team.ageGroupId,
+        teamName: team.name,
+      });
+      if (duplicateTeam) {
+        return new Response(JSON.stringify({ error: duplicateTournamentTeamMessage(team.name) }), {
+          status: 409,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+
+      const { data: tournament } = await supabaseAdmin
+        .from('tournaments')
+        .select('id, name, contact_email')
+        .eq('id', team.tournamentId)
+        .single();
+
+      const id = crypto.randomUUID();
+      const paymentStatus = team.paymentStatus === 'paid' ? 'paid' : 'pending';
+      const { error: insertErr } = await supabaseAdmin.from('teams').insert({
+        id,
+        tournament_id: team.tournamentId,
+        age_group_id: team.ageGroupId,
+        name: team.name.trim(),
+        coach: team.coach?.trim() ?? '',
+        email: team.email?.trim() ?? '',
+        players: [],
+        status: team.status ?? 'accepted',
+        payment_status: paymentStatus,
+        registered_at: new Date().toISOString(),
+      });
+
+      if (insertErr) throw insertErr;
+
+      if (team.notifyTeam && team.email?.trim()) {
+        await sendEmail(
+          team.email.trim(),
+          `Team Registered - ${team.name.trim()}`,
+          manualTeamRegistrationHtml({
+            teamName: team.name.trim(),
+            coachName: team.coach?.trim() ?? '',
+            ageGroupName: group.name ?? 'Division',
+            tournamentName: tournament?.name ?? 'Tournament',
+            paymentStatus,
+            contactEmail: tournament?.contact_email ?? ctx.org.contactEmail ?? undefined,
+          })
+        );
+      }
+
+      return new Response(JSON.stringify({ success: true, id }), {
+        status: 201,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
     let items: { id: string; updates: any }[] = [];
     if (body.ids && body.updates) {
       items = body.ids.map((id: string) => ({ id, updates: body.updates }));
@@ -208,13 +313,6 @@ export async function POST(req: Request) {
     if (items.length === 0) {
       return new Response(JSON.stringify({ error: 'No updates provided' }), { status: 400 });
     }
-    if (items.length > 1 && !hasPlanFeature(ctx.org.planId, 'bulk_registration_actions')) {
-      return new Response(JSON.stringify({ error: requiresTournamentPlusCopy('bulk_registration_actions') }), {
-        status: 403,
-        headers: { 'Content-Type': 'application/json' },
-      });
-    }
-
     const ids = items.map(i => i.id);
 
     // Fetch current records for email comparison and scope enforcement
@@ -233,8 +331,8 @@ export async function POST(req: Request) {
       }
     }
 
-    const upsertData = items.map(item => {
-      const dbUpdates: any = { id: item.id, ...item.updates };
+    const updateData = items.map(item => {
+      const dbUpdates: any = { ...item.updates };
       if (dbUpdates.poolId !== undefined) {
         dbUpdates.pool_id = dbUpdates.poolId || null;
         delete dbUpdates.poolId;
@@ -259,11 +357,16 @@ export async function POST(req: Request) {
         dbUpdates.waitlist_position = dbUpdates.waitlistPosition ?? null;
         delete dbUpdates.waitlistPosition;
       }
-      return dbUpdates;
+      return { id: item.id, updates: dbUpdates };
     });
 
-    const { error: updateErr } = await supabaseAdmin.from('teams').upsert(upsertData);
-    if (updateErr) throw updateErr;
+    for (const item of updateData) {
+      const { error: updateErr } = await supabaseAdmin
+        .from('teams')
+        .update(item.updates)
+        .eq('id', item.id);
+      if (updateErr) throw updateErr;
+    }
 
     // Release slots for teams being rejected
     for (const item of items) {
@@ -314,7 +417,8 @@ export async function POST(req: Request) {
 }
 
 export async function DELETE(req: Request) {
-  const ctx = await getAuthContextWithScope();
+  const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
+  const ctx = await getAuthContextWithScope({ orgSlug });
   if (!ctx) return unauthorized();
 
   if (!hasCapability(ctx.role, ctx.capabilities, 'create_tournaments')) return forbidden();

@@ -35,6 +35,7 @@ import styles from '../../admin-common.module.css';
 
 interface Props {
   tournament: Tournament;
+  orgSlug?: string;
 }
 
 const ICONS = [
@@ -96,7 +97,7 @@ function SortableResource({
 }
 
 // ── Main component ────────────────────────────────────────────────────────────
-export default function RulesAdmin({ tournament }: Props) {
+export default function RulesAdmin({ tournament, orgSlug }: Props) {
   const [rules, setRules]         = useState<RuleSection[]>([]);
   const [resources, setResources] = useState<Resource[]>([]);
   const [ageGroups, setAgeGroups] = useState<AgeGroup[]>([]);
@@ -157,7 +158,7 @@ export default function RulesAdmin({ tournament }: Props) {
     return () => { window.history.pushState = orig; };
   }, []);
 
-  useEffect(() => { fetchData(); }, [tournament.id]);
+  useEffect(() => { fetchData(); }, [tournament.id, orgSlug]);
 
   async function fetchData() {
     try {
@@ -166,7 +167,7 @@ export default function RulesAdmin({ tournament }: Props) {
       const [r, res, agRes] = await Promise.all([
         getRules(tournament.id),
         getResources(tournament.id),
-        fetch(`/api/admin/age-groups?tournamentId=${encodeURIComponent(tournament.id)}`),
+        fetch(`/api/admin/age-groups?tournamentId=${encodeURIComponent(tournament.id)}${orgSlug ? `&orgSlug=${encodeURIComponent(orgSlug)}` : ''}`),
       ]);
       const ag = agRes.ok ? await agRes.json() : [];
       setRules(r);
@@ -575,16 +576,16 @@ export default function RulesAdmin({ tournament }: Props) {
       <style jsx global>{`
         .single-column-layout { display: flex; flex-direction: column; gap: 4rem; padding-bottom: 5rem; }
         .content-section { display: flex; flex-direction: column; gap: 1.5rem; }
-        .section-header { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border); }
+        .section-header { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border-subtle); }
         .section-title { font-family: var(--font-display); font-size: 1.25rem; font-weight: 800; color: var(--white); margin: 0; }
         .add-form { display: flex; gap: 0.75rem; }
         .add-form .form-input { max-width: 300px; height: 38px; }
 
         .rules-stack { display: flex; flex-direction: column; gap: 1.5rem; }
-        .rule-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 1rem; overflow: hidden; transition: border-color 0.2s; }
+        .rule-card { background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); overflow: hidden; transition: border-color 0.2s; }
         .rule-card-dirty { border-color: var(--logic-lime); }
         .dirty-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--logic-lime); flex-shrink: 0; }
-        .rule-card-header { padding: 0.75rem 1.25rem; background: var(--white-05); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+        .rule-card-header { padding: 0.75rem 1.25rem; background: var(--bg-inset); border-bottom: 1px solid var(--border-subtle); display: flex; justify-content: space-between; align-items: center; }
         .rule-card-title-group { display: flex; align-items: center; gap: 1rem; flex: 1; }
         .icon-preview-box { width: 32px; height: 32px; background: rgba(var(--blueprint-blue-rgb), 0.1); border: 1px solid rgba(var(--blueprint-blue-rgb), 0.3); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: var(--logic-lime); flex-shrink: 0; }
         .icon-select { background: var(--bg-3); border: 1px solid var(--border); color: var(--white); border-radius: 6px; padding: 2px 6px; font-size: 0.8rem; }
@@ -596,7 +597,7 @@ export default function RulesAdmin({ tournament }: Props) {
         .delete-btn-mini { background: none; border: none; color: var(--white-10); cursor: pointer; padding: 6px; transition: color 0.2s; }
         .delete-btn-mini:hover { color: var(--danger); }
 
-        .applies-to-row { display: flex; align-items: center; gap: 0.75rem; padding: 0.4rem 1.25rem; background: var(--white-03); border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+        .applies-to-row { display: flex; align-items: center; gap: 0.75rem; padding: 0.4rem 1.25rem; background: var(--bg-inset); border-bottom: 1px solid var(--border-subtle); flex-wrap: wrap; }
         .applies-to-label { font-size: 0.7rem; font-weight: 700; color: var(--white-40); text-transform: uppercase; letter-spacing: 0.05em; white-space: nowrap; }
         .applies-to-check { display: flex; align-items: center; gap: 0.3rem; font-size: 0.8rem; color: var(--white-60); cursor: pointer; }
         .applies-to-check input[type="checkbox"] { accent-color: var(--blueprint-blue); }
@@ -608,10 +609,10 @@ export default function RulesAdmin({ tournament }: Props) {
         .item-textarea { flex: 1; background: transparent; border: none; outline: none; color: var(--white-80); font-size: 0.9rem; line-height: 1.5; resize: none; padding: 0; }
         .item-delete-btn { background: none; border: none; color: var(--white-10); cursor: pointer; opacity: 0; }
         .rule-item-row:hover .item-delete-btn { opacity: 1; color: var(--danger); }
-        .add-item-btn { align-self: flex-start; background: none; border: 1px dashed var(--border); color: var(--white-40); font-size: 0.7rem; font-weight: 700; padding: 0.3rem 0.8rem; border-radius: 99px; cursor: pointer; margin-top: 0.4rem; }
+        .add-item-btn { align-self: flex-start; background: none; border: 1px dashed var(--border-subtle); color: var(--text-tertiary); font-size: 0.7rem; font-weight: 700; padding: 0.3rem 0.8rem; border-radius: 99px; cursor: pointer; margin-top: 0.4rem; }
 
         .resource-list-stack { display: flex; flex-direction: column; gap: 0.5rem; }
-        .resource-edit-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 0.6rem; padding: 0.5rem 0.75rem; transition: transform 0.1s; }
+        .resource-edit-card { background: var(--bg-inset); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 0.5rem 0.75rem; transition: transform 0.1s; }
         .resource-edit-card.dragging { background: var(--bg-3); border-color: var(--blueprint-blue); }
         .resource-header { display: flex; align-items: center; gap: 0.75rem; }
         .resource-icon-box { width: 30px; height: 30px; background: var(--white-05); border-radius: 6px; display: flex; align-items: center; justify-content: center; color: var(--logic-lime); flex-shrink: 0; }
@@ -632,8 +633,22 @@ export default function RulesAdmin({ tournament }: Props) {
         .icon-btn-danger:hover { background: rgba(239,68,68,0.1); color: var(--danger); }
         .btn-xs { padding: 2px 6px; font-size: 0.65rem; font-weight: 700; }
         .divider-lg { height: 1px; background: var(--border); margin: 0.5rem 0; }
-        .empty-state-card { padding: 2rem; background: var(--bg-card); border: 2px dashed var(--border); border-radius: 1rem; display: flex; flex-direction: column; align-items: center; gap: 1rem; color: var(--white-20); }
+        .empty-state-card { padding: 2rem; background: var(--bg-surface); border: 2px dashed var(--border-subtle); border-radius: var(--radius-md); display: flex; flex-direction: column; align-items: center; gap: 1rem; color: var(--text-tertiary); }
         .spin { animation: spin 1s linear infinite; }
+        @media (max-width: 720px) {
+          .single-column-layout { gap: 2.5rem; padding-bottom: 3rem; }
+          .section-header { align-items: stretch; flex-direction: column; }
+          .add-form { flex-direction: column; width: 100%; }
+          .add-form .form-input { max-width: none; width: 100%; }
+          .add-form .btn { justify-content: center; min-height: 44px; width: 100%; }
+          .rule-card-header { align-items: flex-start; gap: 0.75rem; padding: 0.85rem; }
+          .rule-card-title-group { align-items: flex-start; flex-direction: column; gap: 0.65rem; min-width: 0; }
+          .rule-items-list { padding: 0.85rem; }
+          .rule-item-row { gap: 0.5rem; }
+          .applies-to-row { align-items: flex-start; flex-direction: column; padding: 0.75rem 0.85rem; }
+          .resource-header { align-items: flex-start; }
+          .resource-actions { flex-wrap: wrap; justify-content: flex-end; }
+        }
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
       `}</style>
     </div>

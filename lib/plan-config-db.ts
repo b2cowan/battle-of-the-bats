@@ -21,7 +21,7 @@ export type MergedPlanLimits = {
   trialDays: number;
 };
 
-const PLAN_ORDER: OrgPlan[] = ['tournament', 'tournament_plus', 'league', 'club'];
+const PLAN_ORDER: OrgPlan[] = ['tournament', 'team', 'tournament_plus', 'league', 'club'];
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -39,7 +39,7 @@ export async function getAllPlanConfigOverrideRows(): Promise<PlanConfigOverride
 
 /**
  * Returns merged config for all plans: DB non-null values win over PLAN_CONFIG defaults.
- * Always returns all four plans regardless of how many DB rows exist.
+ * Always returns all known plans regardless of how many DB rows exist.
  */
 export async function getPlanConfigOverrides(): Promise<Record<OrgPlan, MergedPlanLimits>> {
   const rows = await getAllPlanConfigOverrideRows();

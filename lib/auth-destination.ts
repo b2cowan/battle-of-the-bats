@@ -1,12 +1,16 @@
 import { supabaseAdmin } from './supabase-admin';
 import { createClient } from './supabase-server';
 import { isPlatformAdminEmail } from './platform-auth';
+import { isTeamWorkspaceOrg } from './team-workspace-entitlements';
+import type { OrgAccountKind, OrgPlan } from './types';
 
 type OrgRelation = {
   id?: string;
   slug?: string;
-  plan_id?: string;
+  plan_id?: OrgPlan;
   enabled_addons?: string[] | null;
+  account_kind?: OrgAccountKind | null;
+  team_workspace_status?: string | null;
 } | null;
 
 function isMissingStartupTasksColumn(error: { code?: string; message?: string } | null) {
@@ -59,7 +63,7 @@ export async function getAuthDestination() {
 
   const { data: member } = await supabaseAdmin
     .from('organization_members')
-    .select('organization_id, organizations(id, slug, plan_id, enabled_addons)')
+    .select('organization_id, organizations(id, slug, plan_id, enabled_addons, account_kind, team_workspace_status)')
     .eq('user_id', user.id)
     .eq('status', 'active')
     .maybeSingle();
@@ -72,6 +76,12 @@ export async function getAuthDestination() {
   if (slug) {
     const orgId = org?.id ?? member?.organization_id;
     const planId = org?.plan_id;
+    const accountKind = org?.account_kind ?? 'organization';
+
+    if (isTeamWorkspaceOrg({ accountKind, planId: planId ?? 'tournament' })) {
+      return `/${slug}/coaches`;
+    }
+
     const enabledAddons = org?.enabled_addons ?? [];
     const hasOnlyTournamentWorkspace =
       (planId === 'tournament' || planId === 'tournament_plus') &&

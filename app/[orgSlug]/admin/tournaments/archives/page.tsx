@@ -9,8 +9,9 @@ import { Tournament, TournamentArchive } from '@/lib/types';
 import FeedbackModal from '@/components/FeedbackModal';
 import styles from './archives-admin.module.css';
 
-async function getAdminArchives(): Promise<TournamentArchive[]> {
-  const res = await fetch('/api/admin/tournament-archives', { cache: 'no-store' });
+async function getAdminArchives(orgSlug?: string): Promise<TournamentArchive[]> {
+  const orgQuery = orgSlug ? `?orgSlug=${encodeURIComponent(orgSlug)}` : '';
+  const res = await fetch(`/api/admin/tournament-archives${orgQuery}`, { cache: 'no-store' });
   if (!res.ok) return [];
   const data = await res.json();
   return Array.isArray(data) ? data : [];
@@ -38,7 +39,7 @@ export default function AdminArchivesPage() {
     if (!currentOrg) return;
     const [ts, arcs] = await Promise.all([
       getTournamentsByOrg(currentOrg.id),
-      getAdminArchives(),
+      getAdminArchives(currentOrg.slug),
     ]);
     const sealedIds = new Set(arcs.map(a => a.tournamentId).filter(Boolean) as string[]);
     setArchives(arcs);
@@ -72,7 +73,8 @@ export default function AdminArchivesPage() {
 
   async function handleSeal(id: string) {
     try {
-      const res = await fetch('/api/admin/seal-tournament', {
+      const orgQuery = currentOrg?.slug ? `?orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
+      const res = await fetch(`/api/admin/seal-tournament${orgQuery}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ tournamentId: id }),
@@ -126,12 +128,20 @@ export default function AdminArchivesPage() {
         </div>
         {archives.length === 0 ? (
           <div className={styles.emptyState}>
-            {canSealArchives
-              ? 'No sealed records yet. Seal a completed or archived tournament to create a permanent snapshot.'
-              : 'No sealed records yet. Upgrade to Tournament Plus or higher to create permanent public archive snapshots.'}
+            <span className={styles.emptyIcon}>
+              {canSealArchives ? <Sparkles size={18} /> : <Lock size={18} />}
+            </span>
+            <div>
+              <strong className={styles.emptyTitle}>No sealed records yet</strong>
+              <p className={styles.emptyCopy}>
+                {canSealArchives
+                  ? 'Seal a completed or archived tournament to create a permanent public snapshot.'
+                  : 'Archived tournaments are still available. Tournament Plus unlocks permanent public archive snapshots.'}
+              </p>
+            </div>
           </div>
         ) : (
-          <div className="table-wrap">
+          <div className={`table-wrap ${styles.responsiveTable}`}>
             <table>
               <thead>
                 <tr>
@@ -148,28 +158,30 @@ export default function AdminArchivesPage() {
               <tbody>
                 {archives.map(a => (
                   <tr key={a.id}>
-                    <td>
+                    <td data-label="Season">
                       <span className="badge badge-primary">{a.season}</span>
                     </td>
-                    <td><strong>{a.tournamentName}</strong></td>
-                    <td style={{ color: 'var(--white-40)' }}>{a.division ?? '—'}</td>
-                    <td style={{ color: 'var(--logic-lime)', fontWeight: 700 }}>{a.winnerTeamName ?? '—'}</td>
-                    <td style={{ textAlign: 'right', color: 'var(--white-40)' }}>{a.totalTeams ?? '—'}</td>
-                    <td style={{ textAlign: 'right', color: 'var(--white-40)' }}>{a.totalGames ?? '—'}</td>
-                    <td style={{ textAlign: 'center' }}>
+                    <td data-label="Tournament"><strong>{a.tournamentName}</strong></td>
+                    <td data-label="Division" style={{ color: 'var(--white-40)' }}>{a.division ?? '—'}</td>
+                    <td data-label="Champion" style={{ color: 'var(--logic-lime)', fontWeight: 700 }}>{a.winnerTeamName ?? '—'}</td>
+                    <td data-label="Teams" style={{ textAlign: 'right', color: 'var(--white-40)' }}>{a.totalTeams ?? '—'}</td>
+                    <td data-label="Games" style={{ textAlign: 'right', color: 'var(--white-40)' }}>{a.totalGames ?? '—'}</td>
+                    <td data-label="Integrity" style={{ textAlign: 'center' }}>
                       {a.integrityHash
                         ? <span className="badge badge-success">VERIFIED</span>
                         : <span style={{ color: 'var(--white-20)' }}>—</span>
                       }
                     </td>
-                    <td>
-                      <Link
-                        href={`/${orgSlug}/archives/${a.id}`}
-                        className="btn btn-ghost btn-sm"
-                        title="View public archive record"
-                      >
-                        <ExternalLink size={13} />
-                      </Link>
+                    <td data-label="Actions">
+                      <div className={styles.rowActions}>
+                        <Link
+                          href={`/${orgSlug}/archives/${a.id}`}
+                          className="btn btn-ghost btn-sm"
+                          title="View public archive record"
+                        >
+                          <ExternalLink size={13} />
+                        </Link>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -187,10 +199,14 @@ export default function AdminArchivesPage() {
         </div>
         {archivedUnsealed.length === 0 ? (
           <div className={styles.emptyState}>
-            No archived tournaments are waiting to be sealed.
+            <span className={styles.emptyIcon}><Archive size={18} /></span>
+            <div>
+              <strong className={styles.emptyTitle}>Nothing waiting to seal</strong>
+              <p className={styles.emptyCopy}>Archived tournaments that still need a permanent snapshot will appear here.</p>
+            </div>
           </div>
         ) : (
-          <div className="table-wrap">
+          <div className={`table-wrap ${styles.responsiveTable}`}>
             <table>
               <thead>
                 <tr>
@@ -202,16 +218,18 @@ export default function AdminArchivesPage() {
               <tbody>
                 {archivedUnsealed.map(t => (
                   <tr key={t.id}>
-                    <td><strong>{t.name}</strong></td>
-                    <td><span className="badge badge-neutral">{t.year}</span></td>
-                    <td>
-                      <button
-                        className="btn btn-outline btn-sm"
-                        onClick={() => openSealConfirm(t)}
-                        title={canSealArchives ? 'Create an immutable archive record for this tournament' : 'Tournament Plus and above'}
-                      >
-                        {canSealArchives ? <Sparkles size={13} /> : <Lock size={13} />} Seal Now
-                      </button>
+                    <td data-label="Tournament"><strong>{t.name}</strong></td>
+                    <td data-label="Year"><span className="badge badge-neutral">{t.year}</span></td>
+                    <td data-label="Actions">
+                      <div className={styles.rowActions}>
+                        <button
+                          className="btn btn-outline btn-sm"
+                          onClick={() => openSealConfirm(t)}
+                          title={canSealArchives ? 'Create an immutable archive record for this tournament' : 'Tournament Plus and above'}
+                        >
+                          {canSealArchives ? <Sparkles size={13} /> : <Lock size={13} />} Seal Now
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}

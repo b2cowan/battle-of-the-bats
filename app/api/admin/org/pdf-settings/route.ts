@@ -10,8 +10,9 @@ import type { OrgPdfSettings } from '@/lib/export/pdf';
  * styling-only (not sensitive) and coaches portal pages need it to
  * produce branded exports.  Write access is still restricted to owner/admin.
  */
-export async function GET() {
-  const ctx = await getAuthContextWithRole();
+export async function GET(req: NextRequest) {
+  const orgSlug = req.nextUrl.searchParams.get('orgSlug') ?? undefined;
+  const ctx = await getAuthContextWithRole({ orgSlug });
   if (!ctx) return unauthorized();
 
   const { data, error } = await supabaseAdmin
@@ -33,7 +34,8 @@ export async function GET() {
  * Accessible to owner and admin roles.
  */
 export async function POST(req: NextRequest) {
-  const ctx = await getAuthContextWithRole();
+  const orgSlug = req.nextUrl.searchParams.get('orgSlug') ?? undefined;
+  const ctx = await getAuthContextWithRole({ orgSlug });
   if (!ctx) return unauthorized();
   if (ctx.role !== 'owner' && ctx.role !== 'admin') return forbidden();
 

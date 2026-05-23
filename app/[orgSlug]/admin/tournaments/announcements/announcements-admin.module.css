@@ -151,8 +151,41 @@
 }
 
 @media (max-width: 640px) {
+  .pageHeader {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .pageHeader :global(.btn) {
+    justify-content: center;
+    min-height: 44px;
+    width: 100%;
+  }
+
+  .headerLeft {
+    align-items: flex-start;
+    min-width: 0;
+  }
+
+  .headerIcon {
+    width: 42px;
+    height: 42px;
+  }
+
+  .pageTitle {
+    font-size: 1.45rem;
+    line-height: 1.15;
+  }
+
   .deliveryNote {
     align-items: stretch;
+    flex-direction: column;
+  }
+
+  .annHeader,
+  .annMeta,
+  .pinnedToggle {
+    align-items: flex-start;
     flex-direction: column;
   }
 }

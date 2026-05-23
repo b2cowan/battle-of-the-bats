@@ -57,13 +57,14 @@ export default function RegistrationFieldsSettingsPage() {
 
   const hasPlus = currentOrg ? hasPlanFeature(currentOrg.planId, 'custom_registration_fields') : false;
   const tournamentId = currentTournament?.id;
+  const orgQuery = currentOrg?.slug ? `?orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
 
   const load = useCallback(async () => {
     if (!tournamentId || !hasPlus) return;
     setLoading(true);
     setMessage('');
     try {
-      const res = await fetch(`/api/admin/tournaments/${encodeURIComponent(tournamentId)}/registration-fields`, { cache: 'no-store' });
+      const res = await fetch(`/api/admin/tournaments/${encodeURIComponent(tournamentId)}/registration-fields${orgQuery}`, { cache: 'no-store' });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? 'Unable to load registration questions.');
       setFields(data.fields ?? []);
@@ -73,7 +74,7 @@ export default function RegistrationFieldsSettingsPage() {
     } finally {
       setLoading(false);
     }
-  }, [tournamentId, hasPlus]);
+  }, [tournamentId, hasPlus, orgQuery]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => { void load(); }, 0);
@@ -86,7 +87,7 @@ export default function RegistrationFieldsSettingsPage() {
     setWorking('new');
     setMessage('');
     try {
-      const res = await fetch(`/api/admin/tournaments/${encodeURIComponent(tournamentId)}/registration-fields`, {
+      const res = await fetch(`/api/admin/tournaments/${encodeURIComponent(tournamentId)}/registration-fields${orgQuery}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -113,7 +114,7 @@ export default function RegistrationFieldsSettingsPage() {
     setWorking(field.id);
     setMessage('');
     try {
-      const res = await fetch(`/api/admin/tournaments/${encodeURIComponent(tournamentId)}/registration-fields/${encodeURIComponent(field.id)}`, {
+      const res = await fetch(`/api/admin/tournaments/${encodeURIComponent(tournamentId)}/registration-fields/${encodeURIComponent(field.id)}${orgQuery}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -138,7 +139,7 @@ export default function RegistrationFieldsSettingsPage() {
     if (!tournamentId || !window.confirm(`Archive "${field.label}"? Existing answers stay attached to registrations.`)) return;
     setWorking(field.id);
     try {
-      const res = await fetch(`/api/admin/tournaments/${encodeURIComponent(tournamentId)}/registration-fields/${encodeURIComponent(field.id)}`, {
+      const res = await fetch(`/api/admin/tournaments/${encodeURIComponent(tournamentId)}/registration-fields/${encodeURIComponent(field.id)}${orgQuery}`, {
         method: 'DELETE',
       });
       if (!res.ok) throw new Error('Unable to archive question.');
@@ -159,7 +160,7 @@ export default function RegistrationFieldsSettingsPage() {
     setFields(next);
     setWorking('reorder');
     try {
-      const res = await fetch(`/api/admin/tournaments/${encodeURIComponent(tournamentId)}/registration-fields`, {
+      const res = await fetch(`/api/admin/tournaments/${encodeURIComponent(tournamentId)}/registration-fields${orgQuery}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'reorder', fields: next.map((field, sortOrder) => ({ id: field.id, sortOrder })) }),
@@ -187,7 +188,7 @@ export default function RegistrationFieldsSettingsPage() {
         <div className={styles.pageHeader}>
           <Link href={base} className={styles.backBtn}><ArrowLeft size={13} /> Settings</Link>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '2rem' }}>
+        <div className={styles.settingsTitleRow}>
           <div className={styles.headerIcon}><ClipboardList size={20} /></div>
           <div>
             <h1 className={styles.pageTitle}>Registration Questions</h1>
@@ -220,7 +221,7 @@ export default function RegistrationFieldsSettingsPage() {
         <Link href={base} className={styles.backBtn}><ArrowLeft size={13} /> Settings</Link>
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '2rem' }}>
+      <div className={styles.settingsTitleRow}>
         <div className={styles.headerIcon}><ClipboardList size={20} /></div>
         <div>
           <h1 className={styles.pageTitle}>Registration Questions</h1>
@@ -234,8 +235,8 @@ export default function RegistrationFieldsSettingsPage() {
         </div>
       )}
 
-      <div className={styles.card} style={{ marginBottom: '1.5rem' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+      <div className={styles.card}>
+        <div className={styles.cardHeaderRow}>
           <h2 className={styles.sectionTitle} style={{ marginBottom: 0 }}>Active Questions</h2>
           <a href="#add-question-form" className="btn btn-outline btn-sm"><Plus size={14} /> Add Question</a>
         </div>
@@ -248,7 +249,7 @@ export default function RegistrationFieldsSettingsPage() {
             {fields.map((field, index) => {
               const edit = editing[field.id] ?? fieldToDraft(field);
               return (
-                <div key={field.id} style={{ border: '1px solid var(--white-10)', borderRadius: 8, padding: '1rem' }}>
+                <div key={field.id} className={styles.questionCard}>
                   <div className="form-row form-row-2">
                     <div className="form-group">
                       <label className="form-label">Question</label>

@@ -1,9 +1,11 @@
 'use client';
 import { useTournament } from '@/lib/tournament-context';
+import { useOrg } from '@/lib/org-context';
 import RulesAdmin from './RulesAdmin';
 
 export default function RulesAdminPage() {
   const { currentTournament } = useTournament();
+  const { currentOrg } = useOrg();
 
   if (!currentTournament) {
     return (
@@ -13,5 +15,5 @@ export default function RulesAdminPage() {
     );
   }
 
-  return <RulesAdmin tournament={currentTournament} />;
+  return <RulesAdmin tournament={currentTournament} orgSlug={currentOrg?.slug} />;
 }

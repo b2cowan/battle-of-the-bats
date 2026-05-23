@@ -8,6 +8,7 @@ import {
   RefreshCw, LogOut, X, ChevronRight, BookUser,
   Settings, Users2, LayoutGrid, CalendarDays, UserCheck,
   ExternalLink, BookOpen, Mail, Archive, FileText,
+  Link2,
 } from 'lucide-react';
 import { signOut } from '@/lib/auth';
 import { useOrg } from '@/lib/org-context';
@@ -35,6 +36,10 @@ const TOURNAMENT_MORE = [
 
 const ORG_MORE = [
   { key: 'org/diamonds', icon: MapPin, label: 'Diamonds' },
+];
+
+const ADMIN_ORG_MORE = [
+  { key: 'org/team-links', icon: Link2, label: 'Team Links' },
 ];
 
 const OWNER_ORG_MORE = [
@@ -79,6 +84,7 @@ export default function AdminBottomNav() {
   const allMoreKeys = [
     ...tournamentMore,
     ...ORG_MORE,
+    ...(userRole === 'owner' || userRole === 'admin' ? ADMIN_ORG_MORE : []),
     ...(userRole === 'owner' ? OWNER_ORG_MORE : []),
   ];
 
@@ -114,7 +120,8 @@ export default function AdminBottomNav() {
 
   async function handleSetLive() {
     if (!currentTournament) return;
-    const res = await fetch('/api/admin/tournaments', {
+    const orgQuery = currentOrg?.slug ? `?orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
+    const res = await fetch(`/api/admin/tournaments${orgQuery}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -286,6 +293,7 @@ export default function AdminBottomNav() {
             {/* Organization nav group */}
             <div className={styles.dropSectionLabel}>Organization</div>
             {dropNavItems(ORG_MORE)}
+            {(userRole === 'owner' || userRole === 'admin') && dropNavItems(ADMIN_ORG_MORE)}
             {userRole === 'owner' && dropNavItems(OWNER_ORG_MORE)}
 
             <div className={styles.dropDivider} />

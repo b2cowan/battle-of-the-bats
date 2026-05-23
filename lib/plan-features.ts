@@ -10,6 +10,7 @@ export type PlanFeature =
   | 'custom_registration_fields'
   | 'registration_export'
   | 'bulk_registration_actions'
+  | 'waitlist_collection'
   | 'waitlist_automation'
   | 'tournament_cloning'
   | 'targeted_tournament_announcements'
@@ -36,6 +37,7 @@ export type PlanFeature =
 
 export const PLAN_RANK: Record<OrgPlan, number> = {
   tournament:      0,
+  team:            0,
   tournament_plus: 1,
   league:          2,
   club:            3,
@@ -50,7 +52,8 @@ export const FEATURE_MIN_PLAN: Record<PlanFeature, OrgPlan> = {
   schedule_notification:             'tournament_plus',
   custom_registration_fields:        'tournament_plus',
   registration_export:               'tournament_plus',
-  bulk_registration_actions:         'tournament_plus',
+  bulk_registration_actions:         'tournament',
+  waitlist_collection:                'tournament',
   waitlist_automation:               'tournament_plus',
   tournament_cloning:                'tournament_plus',
   targeted_tournament_announcements: 'tournament_plus',
@@ -125,9 +128,11 @@ export function requiresTournamentPlusCopy(feature: PlanFeature): string {
     case 'registration_export':
       return 'Registration CSV export for insurance, check-in, and reporting is included with Tournament Plus, League, and Club.';
     case 'bulk_registration_actions':
-      return 'Bulk registration processing is included with Tournament Plus, League, and Club so you can approve, reject, waitlist, or message teams faster.';
+      return 'Basic selected-row registration updates are available on all tournament plans.';
+    case 'waitlist_collection':
+      return 'Overflow waitlist collection is available on all tournament plans.';
     case 'waitlist_automation':
-      return 'Division capacity and waitlist automation are included with Tournament Plus, League, and Club.';
+      return 'Waitlist promotion and queue management are included with Tournament Plus, League, and Club.';
     case 'tournament_cloning':
       return 'Tournament cloning is included with Tournament Plus, League, and Club so repeat events can start from last year\'s setup.';
     case 'targeted_tournament_announcements':

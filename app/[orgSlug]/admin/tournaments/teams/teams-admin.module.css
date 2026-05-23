@@ -1,20 +1,55 @@
 ﻿/* ─── Teams-Specific Styles ───────────────────────────────────────────────── */
 /* Common styles live in ../admin-common.module.css                           */
 
+/* ─── Flat Table Container ────────────────────────────────────────────────── */
+/* Wraps flat-view rows so compactList's gap:2.5rem applies to the whole      */
+/* table block, not to individual rows.                                       */
+.flatList {
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.2);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+/* Pool sub-sections inside flatList sit flush — margin handled via border-top on poolSubHeader */
+
+/* ─── Column Header Row ───────────────────────────────────────────────────── */
+.colHeader {
+  display: flex;
+  align-items: center;
+  padding: 0.4rem 1.5rem;
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--white-30);
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--border-2);
+  user-select: none;
+}
+
+.colHeader > * {
+  /* inherit the same flex widths as renderFlatRow cells */
+}
+
+@media (max-width: 768px) {
+  .colHeader { display: none; }
+  .flatList { border-radius: var(--radius-sm); }
+}
+
 /* ─── Bulk Action Bar ─────────────────────────────────────────────────────── */
 .bulkBar {
   position: sticky;
   top: 1rem;
   z-index: 100;
-  background: var(--blueprint-blue);
-  border-radius: var(--radius-lg);
-  padding: 1rem 1.5rem;
-  margin-bottom: 2rem;
+  background: rgba(var(--blueprint-blue-rgb), 0.18);
+  border-radius: 2px;
+  padding: 0.55rem 1rem;
+  margin-bottom: 1.25rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
-  border: 1px solid var(--logic-lime);
+  box-shadow: none;
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.4);
   animation: slideDown 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -54,7 +89,7 @@
 .summaryHeader { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; }
 .summaryHeader strong { font-size: 0.9rem; color: var(--white); }
 
-.capacityBadge, .fullBadge { font-size: 0.75rem; padding: 0.2rem 0.6rem; border-radius: 99px; font-weight: 700; }
+.capacityBadge, .fullBadge { font-family: var(--font-data); font-size: 0.58rem; padding: 0.15rem 0.45rem; border-radius: 2px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; }
 .capacityBadge { background: var(--white-10); color: var(--white-60); }
 .fullBadge { background: var(--danger-faint); color: var(--danger-light); border: 1px solid var(--danger-faint); }
 
@@ -133,14 +168,17 @@
 }
 
 .paymentFilter {
-  border: 1px solid var(--border-2);
-  border-radius: 999px;
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.2);
+  border-radius: 2px;
   background: transparent;
-  color: var(--white-50);
+  color: rgba(148, 163, 184, 0.5);
   cursor: pointer;
-  font-size: 0.78rem;
+  font-family: var(--font-data);
+  font-size: 0.6rem;
   font-weight: 700;
-  padding: 0.35rem 0.7rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.2rem 0.55rem;
   transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
 }
 
@@ -164,13 +202,13 @@
 .notesArea label, .transferGroup label { font-size: 0.75rem; text-transform: uppercase; font-weight: 900; color: var(--white-20); letter-spacing: 0.1em; }
 
 .notesArea textarea {
-  background: var(--black-30);
+  background: var(--bg-2);
   border: 1px solid var(--border-2);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius);
   color: var(--white-80);
-  padding: 1rem;
-  font-size: 0.95rem;
-  min-height: 100px;
+  padding: 0.65rem 0.75rem;
+  font-size: 0.875rem;
+  min-height: 72px;
   width: 100%;
   resize: vertical;
   transition: border-color 0.2s ease;
@@ -207,13 +245,357 @@
 
 .buttonGroup { display: flex; flex-wrap: wrap; gap: 0.75rem; }
 
+.teamRowMain {
+  min-height: 36px;
+  padding-top: 0.32rem;
+  padding-bottom: 0.32rem;
+}
+
+.compactExpandedRow {
+  padding: 0.8rem 1.25rem 1rem 5rem;
+}
+
+.teamDetailShell {
+  display: grid;
+  gap: 0.5rem;
+  width: 100%;
+  max-width: 920px;
+}
+
+.teamDetailMeta {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  color: var(--white-45);
+  font-size: 0.8rem;
+}
+
+.teamDetailMeta a {
+  color: var(--data-gray);
+  font-weight: 500;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.teamDetailMeta a:hover {
+  color: var(--fl-text);
+}
+
+.teamQuickActions {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.teamQuickActions :global(.btn) {
+  min-height: 30px;
+  padding: 0.32rem 0.65rem;
+  font-size: 0.78rem;
+}
+
+.teamDetailSection {
+  border-top: 1px solid var(--border-2);
+}
+
+.teamDetailSummary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  min-height: 1.75rem;
+  color: rgba(148, 163, 184, 0.55);
+  cursor: pointer;
+  font-family: var(--font-data);
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.teamDetailPanel {
+  padding: 0.2rem 0 0.55rem;
+}
+
+.paymentEditor {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(120px, 1fr));
+  gap: 0.75rem;
+}
+
+.paymentField {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.paymentField span {
+  color: var(--white-45);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.paymentField input {
+  width: 100%;
+  padding: 0.45rem 0.55rem;
+  border: 1px solid var(--border-2);
+  border-radius: 6px;
+  background: var(--hud-surface);
+  color: var(--fl-text);
+  font-size: 0.88rem;
+}
+
+.paymentDue {
+  margin: 0.65rem 0 0;
+  color: var(--white-50);
+  font-size: 0.8rem;
+}
+
+.paymentDue strong {
+  color: var(--white-85);
+}
+
+.answerList {
+  display: grid;
+  gap: 0.55rem;
+  color: var(--white-70);
+  font-size: 0.84rem;
+}
+
+.answerItem {
+  display: grid;
+  gap: 0.14rem;
+}
+
+.answerItem strong {
+  color: var(--white-85);
+}
+
+.notifyToggle {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+  margin-top: 1rem;
+  color: var(--white-70);
+  cursor: pointer;
+  font-size: 0.88rem;
+  line-height: 1.4;
+}
+
+.notifyToggle input {
+  margin-top: 0.15rem;
+  accent-color: var(--blueprint-blue);
+}
+
+/* ─── Selected Registration Actions ──────────────────────────────────────── */
+.registrationSelectionBar {
+  max-width: 100%;
+}
+
+.registrationSelectionBar :global(.btn) {
+  min-height: 28px;
+  padding: 0.26rem 0.5rem;
+  font-size: 0.72rem;
+}
+
+.registrationSelectionBar :global(.btn-primary) {
+  box-shadow: none;
+}
+
+.registrationSelectionBar :global(.btn-outline),
+.registrationSelectionBar :global(.btn-ghost) {
+  background: rgba(0, 0, 0, 0.12);
+}
+
+.claimInvitePanel {
+  margin: 0 2rem 1rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid rgba(var(--logic-lime-rgb, 194, 255, 74), 0.32);
+  border-radius: 8px;
+  background: rgba(var(--logic-lime-rgb, 194, 255, 74), 0.05);
+}
+
+.claimInviteHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.claimInviteHeader strong {
+  color: var(--white);
+}
+
+.claimInviteHeader p {
+  margin: 0.2rem 0 0;
+  color: var(--white-50);
+  font-size: 0.82rem;
+}
+
+.claimInviteList {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.claimInviteItem {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.55rem 0.65rem;
+  border: 1px solid var(--border-2);
+  border-radius: 6px;
+  background: var(--hud-surface);
+}
+
+.claimInviteItem strong,
+.claimInviteItem span {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.claimInviteItem strong {
+  color: var(--white);
+  font-size: 0.86rem;
+}
+
+.claimInviteItem span {
+  color: var(--white-45);
+  font-size: 0.76rem;
+}
+
+.claimInviteItem a {
+  color: var(--logic-lime);
+  font-size: 0.75rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-decoration: none;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.claimInviteItem a:hover {
+  text-decoration: underline;
+}
+
+.claimInviteMore {
+  margin: 0.2rem 0 0;
+  color: var(--white-45);
+  font-size: 0.78rem;
+}
+
+/* ─── Compact Toolbar Additions ──────────────────────────────────────────── */
+.selectCurrent {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-height: 28px;
+  color: rgba(148, 163, 184, 0.55);
+  cursor: pointer;
+  font-family: var(--font-data);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.selectCurrent input {
+  accent-color: var(--blueprint-blue);
+}
+
+.activeFilterBadge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 22px;
+  padding: 0.18rem 0.5rem;
+  border: 1px solid rgba(var(--logic-lime-rgb, 194, 255, 74), 0.3);
+  border-radius: 2px;
+  background: rgba(var(--logic-lime-rgb, 194, 255, 74), 0.06);
+  color: rgba(var(--logic-lime-rgb, 194, 255, 74), 0.8);
+  font-family: var(--font-data);
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.toolsSection {
+  display: grid;
+  gap: 0.55rem;
+  padding: 0.65rem 0.7rem;
+}
+
+.toolsSectionTitle {
+  color: var(--white-45);
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.toolsMetrics {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.toolsMetrics span {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.65rem;
+  color: var(--white-55);
+  font-size: 0.78rem;
+}
+
+.toolsMetrics strong {
+  color: var(--white);
+}
+
+.toolsFilterGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.toolsFilterButton {
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.2);
+  border-radius: 2px;
+  background: transparent;
+  color: rgba(148, 163, 184, 0.5);
+  cursor: pointer;
+  font-family: var(--font-data);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.2rem 0.5rem;
+}
+
+.toolsFilterButton:hover {
+  border-color: var(--white-20);
+  color: var(--white-80);
+}
+
+.toolsFilterButtonActive {
+  border-color: rgba(var(--logic-lime-rgb, 194, 255, 74), 0.45);
+  background: rgba(var(--logic-lime-rgb, 194, 255, 74), 0.08);
+  color: var(--logic-lime);
+}
+
 /* ─── Slot Board ──────────────────────────────────────────────────────────── */
 
 .slotBoard {
-  padding: 1.5rem 2rem;
+  padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 1rem;
 }
 
 .slotBoardCounts {
@@ -405,5 +787,62 @@
 
   .paymentMetrics {
     grid-template-columns: 1fr;
+  }
+
+  .compactExpandedRow {
+    padding: 0.75rem 1rem 0.9rem;
+  }
+
+  .teamRowMain {
+    min-height: 44px;
+    padding: 0.55rem 0.75rem;
+  }
+
+  .teamDetailShell {
+    gap: 0.55rem;
+  }
+
+  .teamDetailMeta {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 0.25rem;
+    font-size: 0.8rem;
+  }
+
+  .teamQuickActions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.45rem;
+  }
+
+  .teamQuickActions > * {
+    justify-content: center;
+    min-width: 0;
+  }
+
+  .teamDetailSummary {
+    min-height: 2.35rem;
+    font-size: 0.76rem;
+  }
+
+  .paymentEditor {
+    grid-template-columns: 1fr;
+  }
+
+  .registrationSelectionBar {
+    margin-bottom: 0.6rem;
+  }
+
+  .claimInvitePanel {
+    margin: 0 1rem 1rem;
+  }
+
+  .claimInviteHeader,
+  .claimInviteItem {
+    grid-template-columns: 1fr;
+  }
+
+  .claimInviteHeader {
+    display: grid;
   }
 }

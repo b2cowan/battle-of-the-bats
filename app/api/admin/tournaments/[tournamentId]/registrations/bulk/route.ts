@@ -7,7 +7,6 @@ import {
 } from '@/lib/email';
 import { getAuthContextWithScope, forbidden, scopeGuard, unauthorized } from '@/lib/api-auth';
 import { hasCapability } from '@/lib/roles';
-import { hasPlanFeature, requiresTournamentPlusCopy } from '@/lib/plan-features';
 import { writePlatformEvent } from '@/lib/platform-events';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 
@@ -74,7 +73,7 @@ async function trackBulkEvent(input: {
   status: 'attempted' | 'completed' | 'blocked';
 }) {
   await writePlatformEvent({
-    eventType: 'tournament_plus_feature_used',
+    eventType: 'tournament_registration_operation_used',
     source: 'app',
     orgId: input.orgId,
     actorUserId: input.userId,
@@ -153,7 +152,8 @@ async function sendStatusEmails(teams: TeamRow[], action: BulkAction, tournament
 }
 
 export async function POST(req: NextRequest, { params }: RouteParams) {
-  const ctx = await getAuthContextWithScope();
+  const orgSlug = req.nextUrl.searchParams.get('orgSlug') ?? undefined;
+  const ctx = await getAuthContextWithScope({ orgSlug });
   if (!ctx) return unauthorized();
   if (!hasCapability(ctx.role, ctx.capabilities, 'module_tournaments')) return forbidden();
   if (!hasCapability(ctx.role, ctx.capabilities, 'manage_registrations') && !hasCapability(ctx.role, ctx.capabilities, 'create_tournaments')) {
@@ -184,20 +184,6 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     selectedCount: ids.length,
     status: 'attempted',
   });
-
-  if (!hasPlanFeature(ctx.org.planId, 'bulk_registration_actions')) {
-    await trackBulkEvent({
-      orgId: ctx.org.id,
-      userId: ctx.user.id,
-      userEmail: ctx.user.email,
-      planId: ctx.org.planId,
-      tournamentId,
-      action: bulkAction,
-      selectedCount: ids.length,
-      status: 'blocked',
-    });
-    return json({ error: requiresTournamentPlusCopy('bulk_registration_actions') }, 403);
-  }
 
   const [{ data: tournament, error: tournamentError }, { data: teams, error: teamsError }, { data: ageGroupRows, error: ageGroupError }] = await Promise.all([
     supabaseAdmin

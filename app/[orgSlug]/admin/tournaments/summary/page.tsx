@@ -121,6 +121,7 @@ export default function TournamentSummaryPage() {
   const hasSummary = Boolean(currentOrg && hasPlanFeature(currentOrg.planId, 'post_tournament_summary'));
   const canClone = Boolean(currentOrg && hasPlanFeature(currentOrg.planId, 'tournament_cloning'));
   const subscriptionHref = `/${currentOrg?.slug ?? 'admin'}/admin/tournaments/settings/subscription`;
+  const orgQuery = currentOrg?.slug ? `?orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
   const completionRatio = useMemo(() => {
     if (!summary) return '0%';
     return percent(summary.scheduleTotals.completed, summary.scheduleTotals.total);
@@ -134,7 +135,7 @@ export default function TournamentSummaryPage() {
       setState('loading');
       setMessage('');
       try {
-        const res = await fetch(`/api/admin/tournaments/${encodeURIComponent(id)}/summary`, { cache: 'no-store' });
+        const res = await fetch(`/api/admin/tournaments/${encodeURIComponent(id)}/summary${orgQuery}`, { cache: 'no-store' });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error ?? 'Unable to load tournament summary.');
         if (!cancelled) {
@@ -150,7 +151,7 @@ export default function TournamentSummaryPage() {
     }
     void load();
     return () => { cancelled = true; };
-  }, [hasSummary, tournamentId]);
+  }, [hasSummary, tournamentId, orgQuery]);
 
   function slugify(value: string) {
     return value
@@ -164,7 +165,7 @@ export default function TournamentSummaryPage() {
   async function trackSummaryAction(action: 'print' | 'share_public_results' | 'renewal_cta_clicked') {
     if (!tournamentId) return;
     try {
-      await fetch(`/api/admin/tournaments/${encodeURIComponent(tournamentId)}/summary`, {
+      await fetch(`/api/admin/tournaments/${encodeURIComponent(tournamentId)}/summary${orgQuery}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action }),
@@ -188,7 +189,7 @@ export default function TournamentSummaryPage() {
     setCloneWorking(true);
     setMessage('');
     try {
-      const res = await fetch(`/api/admin/tournaments/${encodeURIComponent(tournamentId)}/clone`, {
+      const res = await fetch(`/api/admin/tournaments/${encodeURIComponent(tournamentId)}/clone${orgQuery}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

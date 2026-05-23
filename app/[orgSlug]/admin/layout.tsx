@@ -26,7 +26,7 @@ export default async function AdminLayout({
 }) {
   const { orgSlug } = await params;
 
-  const authCtx = await getAuthContextWithRole();
+  const authCtx = await getAuthContextWithRole({ orgSlug });
   if (!authCtx) {
     redirect(`/auth/login?next=/${orgSlug}/admin`);
   }
@@ -42,7 +42,7 @@ export default async function AdminLayout({
       initialUserRole={authCtx.role}
       initialUserCapabilities={authCtx.capabilities}
     >
-      <TournamentProvider>
+      <TournamentProvider orgSlug={orgSlug}>
         <LiveLogicProvider>
           <AdminChrome showDevTools={process.env.NEXT_PUBLIC_ENABLE_DEV_TOOLS === 'true'}>
             {children}

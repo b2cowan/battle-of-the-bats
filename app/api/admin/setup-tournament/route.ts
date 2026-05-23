@@ -84,7 +84,8 @@ function normalizeTournamentName(name: string) {
 }
 
 export async function POST(req: Request) {
-  const auth = await getAuthContext();
+  const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
+  const auth = await getAuthContext({ orgSlug });
   if (!auth) return unauthorized();
 
   const denied = await requireCapability(auth, 'create_tournaments');

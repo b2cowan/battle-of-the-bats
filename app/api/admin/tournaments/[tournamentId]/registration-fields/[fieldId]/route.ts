@@ -19,8 +19,8 @@ const FIELD_TYPES = new Set<TournamentRegistrationFieldType>([
 
 type RouteParams = { params: Promise<{ tournamentId: string; fieldId: string }> };
 
-async function guardField(tournamentId: string, fieldId: string) {
-  const ctx = await getAuthContextWithScope();
+async function guardField(tournamentId: string, fieldId: string, orgSlug?: string) {
+  const ctx = await getAuthContextWithScope({ orgSlug });
   if (!ctx) return { response: unauthorized() };
   if (!hasCapability(ctx.role, ctx.capabilities, 'create_tournaments')) return { response: forbidden() };
 
@@ -57,7 +57,8 @@ function parseOptions(value: unknown) {
 
 export async function PATCH(req: NextRequest, { params }: RouteParams) {
   const { tournamentId, fieldId } = await params;
-  const guarded = await guardField(tournamentId, fieldId);
+  const orgSlug = req.nextUrl.searchParams.get('orgSlug') ?? undefined;
+  const guarded = await guardField(tournamentId, fieldId, orgSlug);
   if ('response' in guarded) return guarded.response;
 
   const body = await req.json() as Record<string, unknown>;
@@ -93,7 +94,8 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
 
 export async function DELETE(_req: NextRequest, { params }: RouteParams) {
   const { tournamentId, fieldId } = await params;
-  const guarded = await guardField(tournamentId, fieldId);
+  const orgSlug = _req.nextUrl.searchParams.get('orgSlug') ?? undefined;
+  const guarded = await guardField(tournamentId, fieldId, orgSlug);
   if ('response' in guarded) return guarded.response;
 
   await archiveTournamentRegistrationField(fieldId);

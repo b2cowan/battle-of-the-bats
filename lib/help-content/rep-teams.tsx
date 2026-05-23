@@ -1,3 +1,4 @@
+/* eslint-disable react/no-unescaped-entities */
 import type { HelpPageContent } from './index';
 
 const repTeamsHelp: HelpPageContent = {
@@ -15,6 +16,139 @@ const repTeamsHelp: HelpPageContent = {
             <li><strong>Coach operators</strong> — manage their assigned team day-to-day from the Coaches Portal: roster, schedule, team finances, player documents. Coaches see only their own team.</li>
           </ul>
           <p>This separation keeps org-level decisions centralized while giving coaches the autonomy they need to operate efficiently.</p>
+        </>
+      ),
+    },
+    {
+      id: 'recipe-create-team-program-year',
+      group: 'How-to recipes',
+      heading: 'How to create a rep team and program year',
+      summary: 'Set up the team once, then create a program year for each competitive season.',
+      keywords: ['create rep team', 'program year', 'season', 'team setup', 'active year'],
+      searchText: 'create rep team add team program year competitive season slug active draft completed archived roster tryouts documents coaches',
+      content: (
+        <>
+          <p>Use a team record for the long-running franchise, and a program year for each season of activity.</p>
+          <ol>
+            <li>Go to <strong>Rep Teams</strong> and click <strong>Add Team</strong>.</li>
+            <li>Enter the team name, slug, sport, age group, and colour.</li>
+            <li>Open the team and create a <strong>Program Year</strong> for the upcoming season.</li>
+            <li>Keep the program year in <strong>Draft</strong> while you prepare tryouts, coaches, documents, and cost allocations.</li>
+            <li>Move the program year to <strong>Active</strong> when coaches and families should begin using it.</li>
+            <li>At the end of the season, complete and archive the program year instead of overwriting it.</li>
+          </ol>
+          <p>Create a new program year each season so rosters, finances, schedules, and documents remain historically accurate.</p>
+        </>
+      ),
+      faqs: [
+        {
+          id: 'faq-rep-team-vs-program-year',
+          question: 'What is the difference between a team and a program year?',
+          answerText: 'The team is the long-running franchise. The program year is one competitive season with its own roster, tryouts, documents, schedule, and finances.',
+          keywords: ['team', 'program year', 'season'],
+          popular: true,
+          answer: (
+            <p>The <strong>team</strong> is the long-running franchise. The <strong>program year</strong> is one season with its own roster, tryouts, documents, schedule, and finances.</p>
+          ),
+        },
+      ],
+    },
+    {
+      id: 'recipe-open-tryouts-review-applicants',
+      group: 'How-to recipes',
+      heading: 'How to open tryouts and review applicants',
+      summary: 'Turn on the public tryout form, process applications, and close registration when evaluations are done.',
+      keywords: ['tryouts', 'open registration', 'applicants', 'offer', 'accept', 'decline'],
+      searchText: 'open tryouts review applicants public tryout form registration pending review extend offer accept decline close registration add applicant',
+      content: (
+        <>
+          <p>Tryout registration belongs to a specific team program year.</p>
+          <ol>
+            <li>Open the team and select the correct program year.</li>
+            <li>Go to <strong>Tryouts</strong>.</li>
+            <li>Turn on <strong>Open Registration</strong> when families should be able to apply.</li>
+            <li>Review incoming applicants from <strong>Pending Review</strong>.</li>
+            <li>Use <strong>Extend Offer</strong> for players you want to invite onto the team.</li>
+            <li>Use <strong>Accept</strong> only when the player is confirmed for the roster.</li>
+            <li>Close registration when tryouts are finished so the public form is no longer available.</li>
+          </ol>
+          <p>If an applicant registered outside the form, use <strong>Add Applicant</strong> so the decision history stays with the program year.</p>
+        </>
+      ),
+    },
+    {
+      id: 'recipe-accept-player-to-roster',
+      group: 'How-to recipes',
+      heading: 'How to accept a player onto a rep roster',
+      summary: 'Move a player from tryout application to coach-visible roster.',
+      keywords: ['accept player', 'roster', 'offer extended', 'coach portal', 'tryout applicant'],
+      searchText: 'accept player roster tryout applicant offer extended accepted coach portal missing player pending review roster visibility',
+      content: (
+        <>
+          <p>A player becomes visible to the coach only after the application reaches the accepted state.</p>
+          <ol>
+            <li>Open the program year's <strong>Tryouts</strong> tab.</li>
+            <li>Find the applicant by player name or guardian email.</li>
+            <li>If the player is still pending, extend an offer first if your workflow requires an offer step.</li>
+            <li>Click <strong>Accept</strong> when the player is confirmed.</li>
+            <li>Open the roster or ask the coach to refresh the Coaches Portal.</li>
+            <li>If the player is still missing, confirm you accepted them in the same program year the coach is viewing.</li>
+          </ol>
+          <p>Declined and offer-only players do not appear on the active roster.</p>
+        </>
+      ),
+      faqs: [
+        {
+          id: 'faq-coach-missing-rep-player',
+          question: 'Why can a coach not see a player on the roster?',
+          answerText: 'The player may still be pending or offered, or the coach may be looking at a different program year.',
+          keywords: ['missing roster', 'coach portal', 'accepted player'],
+          popular: true,
+          answer: (
+            <p>Check the Tryouts tab. The player must be <strong>Accepted</strong>, not just offered or pending. Also confirm the coach is viewing the same program year.</p>
+          ),
+        },
+      ],
+    },
+    {
+      id: 'recipe-assign-coach-access',
+      group: 'How-to recipes',
+      heading: 'How to give a coach access to their team',
+      summary: 'Invite the coach, assign them to the correct team, and verify they only see their own program year.',
+      keywords: ['coach access', 'assign coach', 'coaches portal', 'member invite', 'team access'],
+      searchText: 'coach access assign coach invite coach coaches portal team program year member role missing team cannot access coach portal',
+      content: (
+        <>
+          <p>Coach access has two parts: the person needs a member account, and that account needs to be assigned to the team/program year.</p>
+          <ol>
+            <li>Invite the person from <strong>Members</strong> using the <strong>Coach</strong> role if they do not already have an account.</li>
+            <li>Open the rep team program year and go to the coaches area.</li>
+            <li>Add the coach to the correct team/program year.</li>
+            <li>Ask the coach to sign in and open the Coaches Portal.</li>
+            <li>If they cannot see the team, confirm their invite was accepted and that they were assigned to the active program year.</li>
+          </ol>
+          <p>Coaches should not be made full admins just to operate a team. The coach assignment keeps their access scoped to the team they manage.</p>
+        </>
+      ),
+    },
+    {
+      id: 'recipe-publish-document-templates',
+      group: 'How-to recipes',
+      heading: 'How to publish document templates for coaches',
+      summary: 'Create reusable document requirements that coaches can track for each player.',
+      keywords: ['document templates', 'waiver', 'medical form', 'coach documents', 'publish template'],
+      searchText: 'publish document templates coach documents player waiver medical consent code of conduct upload signed copies program year',
+      content: (
+        <>
+          <p>Use document templates for requirements that every team or player needs to complete.</p>
+          <ol>
+            <li>Go to <strong>Rep Teams &gt; Document Templates</strong>.</li>
+            <li>Create a template for the document type, such as waiver, medical form, or code of conduct.</li>
+            <li>Publish it for the appropriate program year.</li>
+            <li>Tell coaches to open their Documents tab and begin tracking completion.</li>
+            <li>Review completion status before roster deadlines or travel events.</li>
+          </ol>
+          <p>Templates are program-year specific. Re-publish or recreate them for the next season when requirements carry forward.</p>
         </>
       ),
     },

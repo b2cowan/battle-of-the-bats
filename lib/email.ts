@@ -58,6 +58,7 @@ const wrap = (content: string, contactEmail = ADMIN_EMAIL) => `
 export function registrationConfirmationHtml(p: {
   teamName: string; coachName: string; ageGroupName: string; tournamentName: string;
   contactEmail?: string;
+  teamWorkspaceClaimUrl?: string;
 }) {
   return wrap(`
     <h2 style="color:#fff;font-size:1.4rem;margin:0 0 1rem;">Registration Received!</h2>
@@ -73,6 +74,38 @@ export function registrationConfirmationHtml(p: {
       </p>
     </div>
     <p style="color:rgba(255,255,255,0.7);">Your registration is currently <strong style="color:#F59E0B;">pending review</strong>. If payment is required, the organizer will share payment instructions directly. FieldLogicHQ does not process online payments.</p>
+    ${p.teamWorkspaceClaimUrl ? `
+      <div style="background:#111827;border:1px solid rgba(190,242,100,0.35);border-radius:8px;padding:1.25rem;margin:1.5rem 0;">
+        <p style="margin:0 0 0.5rem;font-weight:700;color:#bef264;">Keep managing your season</p>
+        <p style="margin:0 0 1rem;color:rgba(255,255,255,0.72);line-height:1.6;">Activate a FieldLogicHQ Team workspace with your tournament team details prefilled.</p>
+        <a href="${p.teamWorkspaceClaimUrl}" style="display:inline-block;background:#bef264;color:#0b0f14;text-decoration:none;font-weight:800;padding:0.75rem 1rem;border-radius:4px;">Claim Team Workspace</a>
+      </div>
+    ` : ''}
+  `, p.contactEmail);
+}
+
+export function manualTeamRegistrationHtml(p: {
+  teamName: string; coachName: string; ageGroupName: string; tournamentName: string;
+  paymentStatus: 'pending' | 'paid';
+  contactEmail?: string;
+}) {
+  const paymentLine = p.paymentStatus === 'paid'
+    ? 'The organizer has marked your tournament fee as paid.'
+    : 'If payment is required, the organizer will follow up with payment instructions.';
+  return wrap(`
+    <h2 style="color:#fff;font-size:1.4rem;margin:0 0 1rem;">Team Registered</h2>
+    <p>Hi <strong>${p.coachName || 'Coach'}</strong>,</p>
+    <p><strong>${p.teamName}</strong> has been registered in the <strong>${p.ageGroupName}</strong> division for <strong>${p.tournamentName}</strong>.</p>
+    <div style="background:#1A1530;border:1px solid rgba(var(--primary-rgb),0.3);border-radius:8px;padding:1.25rem;margin:1.5rem 0;">
+      <p style="margin:0 0 0.5rem;font-weight:700;color:#A855F7;">Registration Details</p>
+      <p style="margin:0;line-height:1.8;">
+        Team: <strong>${p.teamName}</strong><br>
+        Coach: <strong>${p.coachName || 'Not provided'}</strong><br>
+        Division: <strong>${p.ageGroupName}</strong><br>
+        Tournament: <strong>${p.tournamentName}</strong>
+      </p>
+    </div>
+    <p style="color:rgba(255,255,255,0.7);">${paymentLine}</p>
   `, p.contactEmail);
 }
 
@@ -200,6 +233,33 @@ export function paymentReminderHtml(p: {
     </div>
     <div style="color:rgba(255,255,255,0.75);">${instructions}</div>
     <p style="color:rgba(255,255,255,0.55);font-size:0.86rem;">FieldLogicHQ records payment status for the organizer but does not process tournament payments online.</p>
+  `, p.contactEmail);
+}
+
+export function teamWorkspaceClaimInviteHtml(p: {
+  teamName: string;
+  coachName: string;
+  ageGroupName: string;
+  tournamentName: string;
+  claimUrl: string;
+  contactEmail?: string;
+}) {
+  const coachName = p.coachName.trim() ? p.coachName : 'Coach';
+  return wrap(`
+    <h2 style="color:#fff;font-size:1.4rem;margin:0 0 1rem;">Keep Managing Your Season</h2>
+    <p>Hi <strong>${escapeEmailHtml(coachName)}</strong>,</p>
+    <p>The organizer for <strong>${escapeEmailHtml(p.tournamentName)}</strong> has created a secure FieldLogicHQ Team workspace claim link for <strong>${escapeEmailHtml(p.teamName)}</strong>.</p>
+    <div style="background:#111827;border:1px solid rgba(190,242,100,0.35);border-radius:8px;padding:1.25rem;margin:1.5rem 0;">
+      <p style="margin:0 0 0.5rem;font-weight:700;color:#bef264;">Team Workspace</p>
+      <p style="margin:0;line-height:1.8;">
+        Team: <strong>${escapeEmailHtml(p.teamName)}</strong><br>
+        Division: <strong>${escapeEmailHtml(p.ageGroupName)}</strong><br>
+        Source tournament: <strong>${escapeEmailHtml(p.tournamentName)}</strong>
+      </p>
+    </div>
+    <p style="color:rgba(255,255,255,0.72);line-height:1.6;">Use this link to activate your workspace with the team details already filled in. For security, sign in or create your account with the email address that received this invite.</p>
+    <a href="${escapeEmailHtml(p.claimUrl)}" style="display:inline-block;background:#bef264;color:#0b0f14;text-decoration:none;font-weight:800;padding:0.75rem 1rem;border-radius:4px;margin:0.5rem 0 1rem;">Claim Team Workspace</a>
+    <p style="color:rgba(255,255,255,0.45);font-size:0.82rem;">If you do not manage this team, you can ignore this email.</p>
   `, p.contactEmail);
 }
 

@@ -1,6 +1,6 @@
 ﻿'use client';
-import React, { useState, useEffect } from 'react';
-import { Calendar, Plus, Pencil, Trash2, X, Check, Sparkles, Trophy, MapPin, Clock, Send, Globe, EyeOff } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Calendar, Plus, Pencil, Trash2, X, Check, Sparkles, Trophy, MapPin, Clock, Send, Globe, EyeOff, RefreshCw } from 'lucide-react';
 import { formatPoolName } from '@/lib/utils';
 import { saveGame, updateGame, deleteGame } from '@/lib/db';
 import { formatTime } from '@/lib/utils';
@@ -55,8 +55,10 @@ const emptyForm = {
 };
 
 export default function AdminSchedulePage() {
-  const { currentTournament } = useTournament();
+  const { currentTournament, loading: tournamentLoading } = useTournament();
   const { currentOrg } = useOrg();
+  const tournamentId = currentTournament?.id;
+  const orgSlug = currentOrg?.slug;
   const [games, setGames]       = useState<Game[]>([]);
   const [teams, setTeams]       = useState<Team[]>([]);
   const [ageGroups, setAgeGroups] = useState<AgeGroup[]>([]);
@@ -107,15 +109,22 @@ export default function AdminSchedulePage() {
     setShowPlayoffWizard(true);
   }
 
-  async function refresh() {
-    const tournamentId = currentTournament?.id;
-    if (!tournamentId) return;
+  const refresh = useCallback(async () => {
+    if (tournamentLoading) return;
+    if (!tournamentId) {
+      setGames([]);
+      setTeams([]);
+      setAgeGroups([]);
+      setDiamonds([]);
+      return;
+    }
+    const orgParam = orgSlug ? `&orgSlug=${encodeURIComponent(orgSlug)}` : '';
 
     const [gamesRes, teamsRes, groupsRes, diamondsRes] = await Promise.all([
-      fetch(`/api/admin/games?tournamentId=${encodeURIComponent(tournamentId)}`),
-      fetch(`/api/admin/teams?tournamentId=${encodeURIComponent(tournamentId)}`),
-      fetch(`/api/admin/age-groups?tournamentId=${encodeURIComponent(tournamentId)}`),
-      fetch(`/api/admin/diamonds?tournamentId=${encodeURIComponent(tournamentId)}`),
+      fetch(`/api/admin/games?tournamentId=${encodeURIComponent(tournamentId)}${orgParam}`),
+      fetch(`/api/admin/teams?tournamentId=${encodeURIComponent(tournamentId)}${orgParam}`),
+      fetch(`/api/admin/age-groups?tournamentId=${encodeURIComponent(tournamentId)}${orgParam}`),
+      fetch(`/api/admin/diamonds?tournamentId=${encodeURIComponent(tournamentId)}${orgParam}`),
     ]);
 
     const games = gamesRes.ok ? await gamesRes.json() : [];
@@ -126,20 +135,22 @@ export default function AdminSchedulePage() {
     setGames(games);
     setTeams(allTeams.filter((t: any) => t.status === 'accepted'));
     setAgeGroups(groups);
-    if (groups.length > 0 && !filterGroup) {
-      setFilterGroup(groups[0].id);
-    }
+    setFilterGroup(prev => prev || (groups.length > 0 ? groups[0].id : ''));
     setDiamonds(diamonds);
-  }
+  }, [tournamentId, tournamentLoading, orgSlug]);
   
-  useEffect(() => { refresh(); }, [currentTournament?.id]);
+  useEffect(() => {
+    const timer = window.setTimeout(() => { void refresh(); }, 0);
+    return () => window.clearTimeout(timer);
+  }, [refresh]);
 
   useEffect(() => {
-    fetch('/api/admin/org/pdf-settings')
+    const orgQuery = orgSlug ? `?orgSlug=${encodeURIComponent(orgSlug)}` : '';
+    fetch(`/api/admin/org/pdf-settings${orgQuery}`)
       .then(r => r.ok ? r.json() : {})
       .then(data => setPdfSettings(data as OrgPdfSettings))
       .catch(() => setPdfSettings(null));
-  }, []);
+  }, [orgSlug]);
 
   const groupTeams   = (id: string) => teams.filter(t => t.ageGroupId === id);
   const getTeamName  = (id: string) => teams.find(t => t.id === id)?.name ?? null;
@@ -151,7 +162,8 @@ export default function AdminSchedulePage() {
     if (!currentTournament?.id || !ageGroupId) { setModalSlots([]); return; }
     setModalSlotsLoading(true);
     try {
-      const res = await fetch(`/api/admin/pool-slots?tournamentId=${encodeURIComponent(currentTournament.id)}&ageGroupId=${encodeURIComponent(ageGroupId)}`);
+      const orgParam = currentOrg?.slug ? `&orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
+      const res = await fetch(`/api/admin/pool-slots?tournamentId=${encodeURIComponent(currentTournament.id)}&ageGroupId=${encodeURIComponent(ageGroupId)}${orgParam}`);
       setModalSlots(res.ok ? await res.json() : []);
     } catch { setModalSlots([]); }
     finally { setModalSlotsLoading(false); }
@@ -173,7 +185,8 @@ export default function AdminSchedulePage() {
       type: 'warning',
       confirmText: 'Unpublish',
       onConfirm: async () => {
-        await fetch('/api/admin/age-groups', {
+        const orgQuery = orgSlug ? `?orgSlug=${encodeURIComponent(orgSlug)}` : '';
+        await fetch(`/api/admin/age-groups${orgQuery}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ action: 'set-visibility', data: { id: ageGroupId, scheduleVisibility: 'unpublished' } }),
@@ -258,7 +271,8 @@ export default function AdminSchedulePage() {
   }
 
   async function handleVenueSaved(saved: Diamond) {
-    const res = await fetch(`/api/admin/diamonds?tournamentId=${encodeURIComponent(currentTournament!.id)}`);
+    const orgParam = orgSlug ? `&orgSlug=${encodeURIComponent(orgSlug)}` : '';
+    const res = await fetch(`/api/admin/diamonds?tournamentId=${encodeURIComponent(currentTournament!.id)}${orgParam}`);
     const updated: Diamond[] = res.ok ? await res.json() : [];
     setDiamonds(updated);
     setForm(f => ({ ...f, diamondId: saved.id, location: saved.name }));
@@ -539,7 +553,12 @@ export default function AdminSchedulePage() {
         />
       )}
 
-      {viewMode === 'playoff' && layoutMode === 'bracket' ? (
+      {tournamentLoading ? (
+        <div className="empty-state">
+          <RefreshCw size={32} className="spin" style={{ opacity: 0.4 }} />
+          <p>Loading tournament...</p>
+        </div>
+      ) : viewMode === 'playoff' && layoutMode === 'bracket' ? (
         <PlayoffBracketView
           games={filtered}
           teams={teams}
@@ -777,6 +796,7 @@ export default function AdminSchedulePage() {
       {showGenerator && currentTournament && canAutoGenerateSchedule && (
         <ScheduleGenerator 
           tournament={currentTournament}
+          orgSlug={orgSlug ?? ''}
           ageGroups={ageGroups}
           teams={teams}
           diamonds={diamonds}
@@ -792,6 +812,7 @@ export default function AdminSchedulePage() {
         <PlayoffWizard
           ageGroup={ageGroups.find(g => g.id === filterGroup)!}
           tournamentId={currentTournament?.id || ''}
+          orgSlug={orgSlug ?? ''}
           onClose={() => setShowPlayoffWizard(false)}
           onComplete={() => {
             setShowPlayoffWizard(false);
@@ -803,6 +824,7 @@ export default function AdminSchedulePage() {
       {addVenueOpen && currentTournament && (
         <AddVenueModal
           tournamentId={currentTournament.id}
+          orgSlug={orgSlug ?? ''}
           onClose={() => setAddVenueOpen(false)}
           onSaved={handleVenueSaved}
           zIndex={1100}
@@ -869,6 +891,7 @@ function PublishScheduleModal({
     setError(null);
     try {
       const ageGroupIds = targets.map(g => g.id);
+      const orgQuery = orgSlug ? `?orgSlug=${encodeURIComponent(orgSlug)}` : '';
 
       // In "all" mode, smart-assign: closed divisions get team names if nameMode is 'teams',
       // open divisions always get generic.
@@ -876,7 +899,7 @@ function PublishScheduleModal({
 
       if (allSameVisibility) {
         const visibility = nameMode === 'teams' ? 'published_teams' : 'published_generic';
-        const res = await fetch('/api/admin/schedule-publish', {
+        const res = await fetch(`/api/admin/schedule-publish${orgQuery}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ tournamentId: tournament.id, ageGroupIds, visibility, notify }),
@@ -891,12 +914,12 @@ function PublishScheduleModal({
         const openIds = targets.filter(g => !g.isClosed).map(g => g.id);
 
         const [r1, r2] = await Promise.all([
-          closedIds.length ? fetch('/api/admin/schedule-publish', {
+          closedIds.length ? fetch(`/api/admin/schedule-publish${orgQuery}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ tournamentId: tournament.id, ageGroupIds: closedIds, visibility: 'published_teams', notify }),
           }) : Promise.resolve(null),
-          openIds.length ? fetch('/api/admin/schedule-publish', {
+          openIds.length ? fetch(`/api/admin/schedule-publish${orgQuery}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ tournamentId: tournament.id, ageGroupIds: openIds, visibility: 'published_generic', notify: false }),

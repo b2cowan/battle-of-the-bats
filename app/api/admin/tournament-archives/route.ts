@@ -41,8 +41,9 @@ function mapArchive(row: ArchiveRow): TournamentArchive {
   };
 }
 
-export async function GET() {
-  const ctx = await getAuthContext();
+export async function GET(req: Request) {
+  const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
+  const ctx = await getAuthContext({ orgSlug });
   if (!ctx) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }

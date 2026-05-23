@@ -44,44 +44,80 @@
 }
 
 /* ── Override global utility classes within admin shell ── */
-/* Scoped so public org pages are unaffected */
+/* Scoped so public org pages are unaffected.               */
+/* Key principle: operational/terminal aesthetic — matches sidebar design language.
+   Zero or near-zero radius, monospace labels, muted text, no consumer-app theatrics. */
+
+/* ── Buttons: flat, square, no glow, no lift ── */
+.adminShell :global(.btn) {
+  border-radius: 2px;
+  box-shadow: none;
+}
+.adminShell :global(.btn:hover) {
+  transform: none;
+  box-shadow: none;
+}
 .adminShell :global(.btn-primary) {
   background: var(--blueprint-blue);
-  box-shadow: var(--glow-blue);
+  box-shadow: none;
 }
 .adminShell :global(.btn-primary:hover) {
-  background: rgba(var(--blueprint-blue-rgb), 0.85);
-  box-shadow: var(--glow-blue);
+  background: rgba(var(--blueprint-blue-rgb), 0.82);
+  box-shadow: none;
+  transform: none;
 }
-
 .adminShell :global(.btn-outline) {
   color: var(--logic-lime);
   border-color: rgba(var(--blueprint-blue-rgb), 0.6);
 }
 .adminShell :global(.btn-outline:hover) {
   background: rgba(var(--blueprint-blue-rgb), 0.12);
+  box-shadow: none;
   color: var(--logic-lime);
 }
 
+/* ── Badges: flat data tags, not pills ── */
+.adminShell :global(.badge) {
+  border-radius: 2px;
+  font-family: var(--font-data);
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  padding: 0.16rem 0.48rem;
+}
 .adminShell :global(.badge-primary),
 .adminShell :global(.badge-purple) {
   background: rgba(var(--blueprint-blue-rgb), 0.15);
   color: var(--logic-lime);
   border-color: rgba(var(--blueprint-blue-rgb), 0.3);
 }
+/* ── Tone down PAID/success badge — noticeable but not dominant ── */
+.adminShell :global(.badge-success) {
+  background: rgba(34, 197, 94, 0.07);
+  color: rgba(34, 197, 94, 0.72);
+  border-color: rgba(34, 197, 94, 0.22);
+}
 
+/* ── Form controls: square corners to match operational feel ── */
+.adminShell :global(.form-input),
+.adminShell :global(.form-select),
+.adminShell :global(.form-textarea) {
+  border-radius: 2px;
+}
 .adminShell :global(.form-input:focus),
 .adminShell :global(.form-select:focus),
 .adminShell :global(.form-textarea:focus) {
   border-color: var(--blueprint-blue);
-  box-shadow: 0 0 0 3px rgba(var(--blueprint-blue-rgb), 0.2);
+  box-shadow: 0 0 0 2px rgba(var(--blueprint-blue-rgb), 0.2);
 }
 
+/* ── Cards: reduce hover glow theatrics ── */
 .adminShell :global(.card:hover) {
   border-color: rgba(var(--blueprint-blue-rgb), 0.4);
-  box-shadow: var(--glow-blue);
+  box-shadow: none;
 }
 
+/* ── Accent text colour ── */
 .adminShell :global(.text-primary),
 .adminShell :global(.text-primary-light),
 .adminShell :global(.text-purple) {

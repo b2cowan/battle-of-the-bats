@@ -23,11 +23,13 @@ async function ensureBucket() {
 }
 
 export async function POST(req: Request) {
-  const ctx = await getAuthContextWithScope();
+  const url = new URL(req.url);
+  const orgSlug = url.searchParams.get('orgSlug') ?? undefined;
+  const ctx = await getAuthContextWithScope({ orgSlug });
   if (!ctx) return unauthorized();
   if (ctx.role !== 'owner') return forbidden();
 
-  const tournamentId = new URL(req.url).searchParams.get('tournamentId');
+  const tournamentId = url.searchParams.get('tournamentId');
   if (!tournamentId) return NextResponse.json({ error: 'Missing tournamentId' }, { status: 400 });
 
   const denied = scopeGuard(ctx, tournamentId);
@@ -73,11 +75,13 @@ export async function POST(req: Request) {
 }
 
 export async function DELETE(req: Request) {
-  const ctx = await getAuthContextWithScope();
+  const url = new URL(req.url);
+  const orgSlug = url.searchParams.get('orgSlug') ?? undefined;
+  const ctx = await getAuthContextWithScope({ orgSlug });
   if (!ctx) return unauthorized();
   if (ctx.role !== 'owner') return forbidden();
 
-  const tournamentId = new URL(req.url).searchParams.get('tournamentId');
+  const tournamentId = url.searchParams.get('tournamentId');
   if (!tournamentId) return NextResponse.json({ error: 'Missing tournamentId' }, { status: 400 });
 
   const denied = scopeGuard(ctx, tournamentId);

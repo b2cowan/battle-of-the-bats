@@ -221,8 +221,9 @@ async function sendCompletionResultsNotification(input: {
  * Returns tournaments for the calling user's org, filtered by their assignment scope.
  * Owners and unscoped users (no assignment rows) receive all tournaments.
  */
-export async function GET() {
-  const ctx = await getAuthContextWithScope();
+export async function GET(req: Request) {
+  const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
+  const ctx = await getAuthContextWithScope({ orgSlug });
   if (!ctx) return unauthorized();
 
   let query = supabaseAdmin
@@ -244,7 +245,8 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-  const ctx = await getAuthContextWithScope();
+  const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
+  const ctx = await getAuthContextWithScope({ orgSlug });
   if (!ctx) return unauthorized();
 
   try {

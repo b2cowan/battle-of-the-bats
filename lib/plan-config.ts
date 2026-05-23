@@ -41,6 +41,19 @@ export const PLAN_CONFIG: Record<OrgPlan, PlanConfig> = {
     moduleEntitlements: CORE_MODULES,
     gatingStatus: 'live',
   },
+  team: {
+    label: 'Team',
+    monthlyPrice: 29,
+    annualPrice: 290,
+    tournamentLimit: 1,
+    seatLimit: 3,
+    officialsFreeSeats: false,
+    trialDays: 0,
+    // Team gets free-tier tournament tooling. Rep-team access is intentionally
+    // team-scoped through team_entitlements, not org-wide module_rep_teams.
+    moduleEntitlements: CORE_MODULES,
+    gatingStatus: 'live',
+  },
   tournament_plus: {
     label: 'Tournament Plus',
     monthlyPrice: 39,

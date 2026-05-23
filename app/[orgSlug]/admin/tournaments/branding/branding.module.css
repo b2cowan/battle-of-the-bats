@@ -56,9 +56,9 @@
 
 .card {
   padding: 1.5rem;
-  border-radius: 12px;
-  background: var(--surface, rgba(255,255,255,0.04));
-  border: 1px solid var(--border, rgba(255,255,255,0.08));
+  border-radius: var(--radius-md);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
   margin-bottom: 1.25rem;
 }
 
@@ -89,7 +89,7 @@
   gap: 1rem;
   margin: 2rem 0 0.85rem;
   padding-top: 1rem;
-  border-top: 1px solid rgba(255,255,255,0.08);
+  border-top: 1px solid var(--border-subtle);
 }
 
 .advancedEyebrow {
@@ -135,8 +135,101 @@
 .lockedAdvanced {
   position: relative;
   background:
-    linear-gradient(135deg, rgba(255,255,255,0.045), rgba(255,255,255,0.02)),
-    var(--surface, rgba(255,255,255,0.04));
+    linear-gradient(135deg, rgba(var(--blueprint-blue-rgb), 0.045), transparent),
+    var(--bg-surface);
+}
+
+.settingsTitleRow {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.cardHeaderRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.segmentedControl {
+  display: inline-flex;
+  gap: 0.25rem;
+  padding: 0.2rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  background: var(--bg-inset);
+}
+
+.segmentButton {
+  padding: 0.25rem 0.6rem;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  font-family: var(--font-data);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.segmentButtonActive {
+  background: var(--blueprint-blue);
+  color: #fff;
+}
+
+.toggleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  cursor: pointer;
+}
+
+.toggleRowDisabled {
+  cursor: not-allowed;
+}
+
+.toggleLabel {
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.descriptionText {
+  margin: 0;
+  color: var(--text-tertiary);
+  font-size: 0.83rem;
+  line-height: 1.55;
+}
+
+.inlineUpsell {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  padding: 0.85rem 1rem;
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.25);
+  border-radius: var(--radius-sm);
+  background: rgba(var(--blueprint-blue-rgb), 0.08);
+}
+
+.inlineUpsell p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.questionCard {
+  padding: 1rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--bg-inset);
 }
 
 /* ── Logo ──────────────────────────────────── */
@@ -272,8 +365,8 @@
   width: 48px;
   height: 32px;
   padding: 0;
-  border: 1px solid var(--border, rgba(255,255,255,0.1));
-  border-radius: 4px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-xs);
   background: transparent;
   cursor: pointer;
 }
@@ -330,8 +423,8 @@
   gap: 0.2rem;
   padding: 0.25rem;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--bg-inset);
+  border: 1px solid var(--border-subtle);
 }
 
 .modeToggleBtn {
@@ -483,8 +576,8 @@
   min-height: 44px;
   padding: 0.55rem 0.85rem;
   border-radius: 8px;
-  border: 1px solid rgba(255,255,255,0.1);
-  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-inset);
   color: var(--white-80);
   font-weight: 800;
   cursor: pointer;
@@ -530,9 +623,9 @@
   gap: 0.55rem;
   min-height: 42px;
   padding: 0.5rem 0.65rem;
-  border: 1px solid var(--border, rgba(255,255,255,0.08));
-  border-radius: 6px;
-  background: rgba(255,255,255,0.035);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  background: var(--bg-inset);
   cursor: pointer;
   transition: border-color 0.15s, background 0.15s;
 }
@@ -595,8 +688,8 @@
 
 .fontBtn {
   padding: 0.75rem 1rem;
-  background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(255,255,255,0.08);
+  background: var(--bg-inset);
+  border: 1px solid var(--border-subtle);
   border-radius: 8px;
   text-align: left;
   cursor: pointer;
@@ -639,8 +732,8 @@
 
 .cardStyleBtn {
   padding: 0.75rem 1rem;
-  background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(255,255,255,0.08);
+  background: var(--bg-inset);
+  border: 1px solid var(--border-subtle);
   border-radius: 8px;
   cursor: pointer;
   transition: border-color 0.15s, background 0.15s;
@@ -705,7 +798,7 @@
   gap: 1rem;
   margin-top: 0.5rem;
   padding-top: 1rem;
-  border-top: 1px solid rgba(255,255,255,0.06);
+  border-top: 1px solid var(--border-subtle);
 }
 
 .unsavedLabel {
@@ -737,6 +830,13 @@
     grid-template-columns: 1fr;
   }
 
+  .settingsTitleRow,
+  .cardHeaderRow,
+  .toggleRow {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
   .advancedHeader {
     align-items: flex-start;
     flex-direction: column;
@@ -752,8 +852,40 @@
     width: 100%;
   }
 
+  .segmentedControl,
+  .segmentButton {
+    width: 100%;
+  }
+
+  .segmentButton {
+    flex: 1;
+    min-height: 38px;
+  }
+
+  .inlineUpsell {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .inlineUpsell :global(.btn) {
+    justify-content: center;
+    min-height: 44px;
+    width: 100%;
+  }
+
   .logoRow {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .formFooter {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .formFooter :global(.btn) {
+    justify-content: center;
+    min-height: 44px;
+    width: 100%;
   }
 }

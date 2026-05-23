@@ -153,7 +153,7 @@ export default function ExportMenu({
       <div className={`${styles.buttonGroup}${disabled || loading ? ` ${styles.buttonGroupDisabled}` : ''}`}>
         <button
           type="button"
-          className={`btn btn-outline btn-sm ${styles.primaryBtn}`}
+          className={`btn btn-outline btn-data ${styles.primaryBtn}`}
           onClick={handlePrimaryClick}
           disabled={disabled || loading}
           aria-label={`${label} as Excel`}
@@ -164,7 +164,7 @@ export default function ExportMenu({
         </button>
         <button
           type="button"
-          className={`btn btn-outline btn-sm ${styles.chevronBtn}`}
+          className={`btn btn-outline btn-data ${styles.chevronBtn}`}
           onClick={handleChevronClick}
           disabled={disabled || loading}
           aria-haspopup="menu"

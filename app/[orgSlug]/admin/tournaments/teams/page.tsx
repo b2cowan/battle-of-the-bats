@@ -90,6 +90,15 @@ type FeeMode = 'tournament' | 'age_group';
 type Status = 'pending' | 'accepted' | 'rejected' | 'waitlist';
 type BulkAction = 'accept' | 'reject' | 'waitlist' | 'mark_deposit_paid' | 'mark_paid';
 
+type TeamClaimInviteResult = {
+  teamId: string;
+  teamName: string;
+  email: string;
+  ageGroupName: string;
+  claimUrl: string;
+  emailed: boolean;
+};
+
 interface FeeSchedule {
   depositAmount: number | null;
   depositDueDate: string | null;
@@ -162,7 +171,7 @@ function matchesPaymentFilter(status: PaymentStatus, filter: PaymentFilter) {
 }
 
 export default function UnifiedTeamsPage() {
-  const { currentTournament } = useTournament();
+  const { currentTournament, loading: tournamentLoading } = useTournament();
   const { currentOrg } = useOrg();
   const [regs, setRegs] = useState<TeamRecord[]>([]);
   const [loading, setLoading] = useState(true);
@@ -195,22 +204,37 @@ export default function UnifiedTeamsPage() {
   const [paymentFilter, setPaymentFilter] = useState<PaymentFilter>('all');
   const [showReminderModal, setShowReminderModal] = useState(false);
   const [paymentInstructions, setPaymentInstructions] = useState('');
+  const [claimInviteResults, setClaimInviteResults] = useState<TeamClaimInviteResult[]>([]);
   const [feedback, setFeedback] = useState<{
     isOpen: boolean; title: string; message: string;
     type: 'primary' | 'danger' | 'warning' | 'success' | 'info';
     onConfirm?: () => void;
   }>({ isOpen: false, title: '', message: '', type: 'primary' });
+  const orgQuery = useMemo(() => currentOrg?.slug ? `?orgSlug=${encodeURIComponent(currentOrg.slug)}` : '', [currentOrg?.slug]);
+  const orgParam = useMemo(() => currentOrg?.slug ? `&orgSlug=${encodeURIComponent(currentOrg.slug)}` : '', [currentOrg?.slug]);
 
   const load = useCallback(async () => {
-    if (!currentTournament) return;
+    if (tournamentLoading) return;
+    if (!currentTournament) {
+      setRegs([]);
+      setAgeGroups([]);
+      setPoolSlots([]);
+      setErrorMsg(null);
+      setLoading(false);
+      setHasLoadedInitial(true);
+      return;
+    }
     setLoading(true);
     setErrorMsg(null);
     try {
+      const tournamentParam = `tournamentId=${encodeURIComponent(currentTournament.id)}`;
+      const orgParam = currentOrg?.slug ? `&orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
+      const orgOnlyParam = currentOrg?.slug ? `?orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
       const [rRes, adminTeamsRes, groupsRes, tRes] = await Promise.all([
-        fetch('/api/registrations', SAME_ORIGIN_FETCH),
-        fetch(`/api/admin/teams?tournamentId=${encodeURIComponent(currentTournament.id)}`, SAME_ORIGIN_FETCH),
-        fetch(`/api/admin/age-groups?tournamentId=${encodeURIComponent(currentTournament.id)}`, SAME_ORIGIN_FETCH),
-        fetch(`/api/admin/tournaments`, SAME_ORIGIN_FETCH),
+        fetch(`/api/registrations?${tournamentParam}${orgParam}`, SAME_ORIGIN_FETCH),
+        fetch(`/api/admin/teams?${tournamentParam}${orgParam}`, SAME_ORIGIN_FETCH),
+        fetch(`/api/admin/age-groups?${tournamentParam}${orgParam}`, SAME_ORIGIN_FETCH),
+        fetch(`/api/admin/tournaments${orgOnlyParam}`, SAME_ORIGIN_FETCH),
       ]);
 
       const groups = await readJsonArray<AgeGroup>(groupsRes, 'Divisions');
@@ -272,15 +296,16 @@ export default function UnifiedTeamsPage() {
       setLoading(false);
       setHasLoadedInitial(true);
     }
-  }, [currentTournament?.id, stableSortedIds.length, addForm.ageGroupId]);
+  }, [tournamentLoading, currentTournament?.id, currentOrg?.slug, selectedAgeGroupId, stableSortedIds.length, addForm.ageGroupId]);
 
   const loadPoolSlots = useCallback(async () => {
     if (!selectedAgeGroupId || !currentTournament) { setPoolSlots([]); return; }
     try {
-      const res = await fetch(`/api/admin/pool-slots?tournamentId=${encodeURIComponent(currentTournament.id)}&ageGroupId=${encodeURIComponent(selectedAgeGroupId)}`, SAME_ORIGIN_FETCH);
+      const orgParam = currentOrg?.slug ? `&orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
+      const res = await fetch(`/api/admin/pool-slots?tournamentId=${encodeURIComponent(currentTournament.id)}&ageGroupId=${encodeURIComponent(selectedAgeGroupId)}${orgParam}`, SAME_ORIGIN_FETCH);
       setPoolSlots(await readJsonArray<PoolSlot>(res, 'Pool slots'));
     } catch { setPoolSlots([]); }
-  }, [selectedAgeGroupId, currentTournament?.id]);
+  }, [selectedAgeGroupId, currentTournament?.id, currentOrg?.slug]);
 
   useEffect(() => { load(); }, [load]);
   useEffect(() => { loadPoolSlots(); }, [loadPoolSlots]);
@@ -303,7 +328,7 @@ export default function UnifiedTeamsPage() {
     const execute = async () => {
       setWorking(id);
       try {
-        const res = await fetch('/api/admin/teams', {
+        const res = await fetch(`/api/admin/teams${orgQuery}`, {
           credentials: 'same-origin',
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -334,7 +359,7 @@ export default function UnifiedTeamsPage() {
       onConfirm: async () => {
         setWorking(id);
         try {
-          const res = await fetch('/api/admin/teams', {
+          const res = await fetch(`/api/admin/teams${orgQuery}`, {
             credentials: 'same-origin',
             method: 'DELETE',
             headers: { 'Content-Type': 'application/json' },
@@ -374,7 +399,7 @@ export default function UnifiedTeamsPage() {
       onConfirm: async () => {
         setWorking('swap');
         try {
-          const res = await fetch('/api/admin/teams', {
+          const res = await fetch(`/api/admin/teams${orgQuery}`, {
             credentials: 'same-origin',
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -400,7 +425,7 @@ export default function UnifiedTeamsPage() {
       onConfirm: async () => {
         setWorking(teamId);
         try {
-          const res = await fetch('/api/admin/teams', {
+          const res = await fetch(`/api/admin/teams${orgQuery}`, {
             credentials: 'same-origin',
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -438,7 +463,7 @@ export default function UnifiedTeamsPage() {
           for (let i = slots.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
             if (i !== j) {
-              await fetch('/api/admin/teams', {
+              await fetch(`/api/admin/teams${orgQuery}`, {
                 credentials: 'same-origin',
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -477,7 +502,7 @@ export default function UnifiedTeamsPage() {
           const shuffled = [...acceptedTeams].sort(() => Math.random() - 0.5);
           const pools = group.pools || [];
           const updates = shuffled.map((team, i) => ({ id: team.id, updates: { poolId: pools[i % pools.length].id } }));
-          const res = await fetch('/api/admin/teams', {
+          const res = await fetch(`/api/admin/teams${orgQuery}`, {
             credentials: 'same-origin',
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -499,7 +524,7 @@ export default function UnifiedTeamsPage() {
     if (!currentTournament) return;
     setWorking('new');
     try {
-      const res = await fetch('/api/admin/teams', {
+      const res = await fetch(`/api/admin/teams${orgQuery}`, {
         credentials: 'same-origin',
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -566,12 +591,12 @@ export default function UnifiedTeamsPage() {
 
   function handleExportXLSX() {
     if (!guardExport()) return;
-    window.location.href = `/api/admin/tournaments/${encodeURIComponent(currentTournament!.id)}/registrations/export?format=xlsx`;
+    window.location.href = `/api/admin/tournaments/${encodeURIComponent(currentTournament!.id)}/registrations/export?format=xlsx${orgParam}`;
   }
 
   function handleExportCSV() {
     if (!guardExport()) return;
-    window.location.href = `/api/admin/tournaments/${encodeURIComponent(currentTournament!.id)}/registrations/export?format=csv`;
+    window.location.href = `/api/admin/tournaments/${encodeURIComponent(currentTournament!.id)}/registrations/export?format=csv${orgParam}`;
   }
 
   async function handleExportPDF() {
@@ -663,7 +688,7 @@ export default function UnifiedTeamsPage() {
       onConfirm: async () => {
         setWorking('bulk');
         try {
-          const res = await fetch(`/api/admin/tournaments/${encodeURIComponent(currentTournament.id)}/registrations/bulk`, {
+          const res = await fetch(`/api/admin/tournaments/${encodeURIComponent(currentTournament.id)}/registrations/bulk${orgQuery}`, {
             credentials: 'same-origin',
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -709,7 +734,7 @@ export default function UnifiedTeamsPage() {
 
     setWorking('payment-reminders');
     try {
-      const res = await fetch(`/api/admin/tournaments/${encodeURIComponent(currentTournament.id)}/registrations/payment-reminders`, {
+      const res = await fetch(`/api/admin/tournaments/${encodeURIComponent(currentTournament.id)}/registrations/payment-reminders${orgQuery}`, {
         credentials: 'same-origin',
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -739,6 +764,74 @@ export default function UnifiedTeamsPage() {
     }
   }
 
+  async function sendTeamClaimInvites() {
+    if (!currentTournament || selectedRegistrationIds.size === 0) return;
+
+    const selectedIds = [...selectedRegistrationIds];
+    const selectedTeams = regs.filter(team => selectedRegistrationIds.has(team.id));
+    const withEmail = selectedTeams.filter(team => team.email?.trim()).length;
+    const eligibleWithEmail = selectedTeams.filter(team => (team.status === 'accepted' || team.status === 'pending') && team.email?.trim()).length;
+
+    if (withEmail === 0) {
+      setFeedback({
+        isOpen: true,
+        title: 'No Team Contacts',
+        message: 'Select at least one pending or accepted registration with an email address before sending Team workspace claim invites.',
+        type: 'warning',
+      });
+      return;
+    }
+    if (eligibleWithEmail === 0) {
+      setFeedback({
+        isOpen: true,
+        title: 'No Eligible Teams',
+        message: 'Team workspace claim invites can be sent to pending or accepted teams with an email address. Waitlisted and rejected teams are skipped.',
+        type: 'warning',
+      });
+      return;
+    }
+
+    setFeedback({
+      isOpen: true,
+      title: 'Send Team Claim Invites?',
+      message: `This will create secure Team workspace claim links for ${selectedIds.length} selected registration${selectedIds.length === 1 ? '' : 's'} and email eligible team contacts. Pending and accepted teams are eligible; waitlist, rejected, missing-email, and already-claimed teams are skipped. ${eligibleWithEmail} selected registration${eligibleWithEmail === 1 ? ' has' : 's have'} both an email and an eligible status.`,
+      type: 'primary',
+      onConfirm: async () => {
+        setWorking('team-claims');
+        setClaimInviteResults([]);
+        try {
+          const res = await fetch(`/api/admin/tournaments/${encodeURIComponent(currentTournament.id)}/team-claims${orgQuery}`, {
+            credentials: 'same-origin',
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ids: selectedIds, sendEmail: true }),
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error ?? 'Team claim invites could not be sent.');
+
+          const skippedCount = data.skippedCount ?? 0;
+          const linksCreated = data.linksCreated ?? 0;
+          setClaimInviteResults(Array.isArray(data.results) ? data.results : []);
+          setFeedback({
+            isOpen: true,
+            title: linksCreated > 0 ? 'Team Claim Invites Sent' : 'No Invites Sent',
+            message: `${linksCreated} claim link${linksCreated === 1 ? '' : 's'} created. ${data.emailsSent ?? 0} email${(data.emailsSent ?? 0) === 1 ? '' : 's'} sent. ${skippedCount} selected registration${skippedCount === 1 ? ' was' : 's were'} skipped.`,
+            type: linksCreated > 0 ? 'success' : 'warning',
+          });
+        } catch (error) {
+          setFeedback({
+            isOpen: true,
+            title: 'Team Claim Invites Failed',
+            message: error instanceof Error ? error.message : 'Team claim invites could not be sent.',
+            type: 'danger',
+          });
+        } finally {
+          setWorking(null);
+        }
+      },
+    });
+  }
+
   const today = new Date().toISOString().split('T')[0];
   const selectedGroup = ageGroups.find(g => g.id === selectedAgeGroupId);
   const slotConfigured = poolSlots.length > 0;
@@ -751,11 +844,11 @@ export default function UnifiedTeamsPage() {
   const showPdfNudge = canUsePDF && pdfSettings !== null && Object.keys(pdfSettings).length === 0;
 
   useEffect(() => {
-    fetch('/api/admin/org/pdf-settings', SAME_ORIGIN_FETCH)
+    fetch(`/api/admin/org/pdf-settings${orgQuery}`, SAME_ORIGIN_FETCH)
       .then(r => r.ok ? r.json() : {})
       .then(data => setPdfSettings(data as OrgPdfSettings))
       .catch(() => setPdfSettings(null));
-  }, []);
+  }, [orgQuery]);
   const divRegs = regs.filter(r => r.age_group_id === selectedAgeGroupId);
   const waitlistTeams = divRegs.filter(r => r.waitlistPosition != null).sort((a, b) => (a.waitlistPosition ?? 0) - (b.waitlistPosition ?? 0));
   const filledSlotCount = poolSlots.filter(s => s.teamId !== null).length;
@@ -819,21 +912,21 @@ export default function UnifiedTeamsPage() {
           </div>
           <div className={styles.teamQuickActions}>
               {team.status !== 'accepted' && (
-                <button className="btn btn-primary btn-xs" onClick={() => patch(team.id, { status: 'accepted' }, `Accept "${team.name}"? An automated email will be sent.`)} disabled={busy}>Accept</button>
+                <button className="btn btn-primary btn-data" onClick={() => patch(team.id, { status: 'accepted' }, `Accept "${team.name}"? An automated email will be sent.`)} disabled={busy}>Accept</button>
               )}
               {team.status !== 'rejected' && (
-                <button className="btn btn-outline btn-xs" style={{ color: 'var(--danger-light)' }} onClick={() => patch(team.id, { status: 'rejected' }, `Reject "${team.name}"? An automated email will be sent.`)} disabled={busy}>Reject</button>
+                <button className="btn btn-outline btn-data" style={{ color: 'var(--danger)' }} onClick={() => patch(team.id, { status: 'rejected' }, `Reject "${team.name}"? An automated email will be sent.`)} disabled={busy}>Reject</button>
               )}
               {team.status === 'accepted' && !effectiveFee.totalFeeAmount ? (
-                <button className="btn btn-outline btn-xs" onClick={() => patch(team.id, { paymentStatus: team.paymentStatus === 'paid' ? 'pending' : 'paid' })} disabled={busy}>
+                <button className="btn btn-ghost btn-data" onClick={() => patch(team.id, { paymentStatus: team.paymentStatus === 'paid' ? 'pending' : 'paid' })} disabled={busy}>
                   {team.paymentStatus === 'paid' ? 'Mark Unpaid' : 'Mark Paid'}
                 </button>
               ) : null}
-              <button className="btn btn-ghost btn-xs" onClick={() => handleDelete(team.id, team.name)} disabled={busy} style={{ color: 'var(--danger-light)' }} aria-label={`Delete ${team.name}`}>
-                <Trash2 size={14} />
+              <button className="btn btn-ghost btn-xs" onClick={() => handleDelete(team.id, team.name)} disabled={busy} style={{ color: 'var(--danger)' }} aria-label={`Delete ${team.name}`}>
+                <Trash2 size={13} />
               </button>
               {team.status === 'accepted' && (
-                <a href={`/${currentOrg?.slug ?? ''}/teams/${team.id}`} target="_blank" className="btn btn-ghost btn-xs">Profile ↗</a>
+                <a href={`/${currentOrg?.slug ?? ''}/teams/${team.id}`} target="_blank" className="btn btn-ghost btn-data">Profile ↗</a>
               )}
             </div>
 
@@ -933,7 +1026,7 @@ export default function UnifiedTeamsPage() {
           <div style={{ flex: 2 }} className={s.primaryCell}><strong>{r.name}</strong></div>
           <div style={{ flex: 1.5 }} className={s.secondaryCell}>{r.coach}</div>
           <div style={{ width: 120 }}>
-            <span className={`badge badge-${r.status === 'accepted' ? 'success' : r.status === 'rejected' ? 'danger' : 'warning'}`}>{r.status}</span>
+            <span className={`badge badge-${r.status === 'accepted' ? 'neutral' : r.status === 'rejected' ? 'danger' : 'warning'}`}>{r.status}</span>
           </div>
           <div style={{ width: 120, paddingLeft: '1rem' }}>
             {r.status === 'accepted' && pStatus !== 'no-schedule'
@@ -975,7 +1068,7 @@ export default function UnifiedTeamsPage() {
             pdfFeatureKey="pdf_exports"
             disabled={regs.length === 0}
           />
-          <button className="btn btn-primary btn-sm" onClick={openAddTeamModal} disabled={!currentTournament}><Plus size={16} /> Add Team</button>
+          <button className="btn btn-primary btn-data" onClick={openAddTeamModal} disabled={!currentTournament}><Plus size={14} /> Add Team</button>
           </>
         )}
       />
@@ -1139,32 +1232,68 @@ export default function UnifiedTeamsPage() {
         onClear={() => setSelectedRegistrations([])}
         className={styles.registrationSelectionBar}
       >
-        <button type="button" className="btn btn-primary btn-xs" onClick={() => runBulkAction('accept')} disabled={working === 'bulk'}>
+        <button type="button" className="btn btn-primary btn-data" onClick={() => runBulkAction('accept')} disabled={working === 'bulk'}>
           Accept
         </button>
-        <button type="button" className="btn btn-outline btn-xs" onClick={() => runBulkAction('waitlist')} disabled={working === 'bulk'}>
+        <button type="button" className="btn btn-outline btn-data" onClick={() => runBulkAction('waitlist')} disabled={working === 'bulk'}>
           Waitlist
         </button>
-        <button type="button" className="btn btn-outline btn-xs" onClick={() => runBulkAction('mark_deposit_paid')} disabled={working === 'bulk'}>
+        <button type="button" className="btn btn-outline btn-data" onClick={() => runBulkAction('mark_deposit_paid')} disabled={working === 'bulk'}>
           Deposit
         </button>
-        <button type="button" className="btn btn-outline btn-xs" onClick={() => runBulkAction('mark_paid')} disabled={working === 'bulk'}>
+        <button type="button" className="btn btn-outline btn-data" onClick={() => runBulkAction('mark_paid')} disabled={working === 'bulk'}>
           Paid
         </button>
         {paymentToolsAvailable && (
           <button
             type="button"
-            className="btn btn-outline btn-xs"
+            className="btn btn-outline btn-data"
             onClick={() => setShowReminderModal(true)}
             disabled={working === 'payment-reminders'}
           >
-            <Mail size={13} /> Reminder
+            <Mail size={12} /> Reminder
           </button>
         )}
-        <button type="button" className="btn btn-outline btn-xs" style={{ color: 'var(--danger-light)' }} onClick={() => runBulkAction('reject')} disabled={working === 'bulk'}>
+        <button
+          type="button"
+          className="btn btn-outline btn-data"
+          onClick={sendTeamClaimInvites}
+          disabled={working === 'team-claims'}
+        >
+          <Mail size={12} /> Team Claim
+        </button>
+        <button type="button" className="btn btn-outline btn-data" style={{ color: 'var(--danger)' }} onClick={() => runBulkAction('reject')} disabled={working === 'bulk'}>
           Reject
         </button>
       </SelectionActionBar>
+
+      {claimInviteResults.length > 0 && (
+        <div className={styles.claimInvitePanel}>
+          <div className={styles.claimInviteHeader}>
+            <div>
+              <strong>Team claim invites ready</strong>
+              <p>{claimInviteResults.length} secure claim link{claimInviteResults.length === 1 ? '' : 's'} generated from the last send.</p>
+            </div>
+            <button type="button" className="btn btn-ghost btn-xs" onClick={() => setClaimInviteResults([])}>
+              <X size={14} /> Clear
+            </button>
+          </div>
+          <div className={styles.claimInviteList}>
+            {claimInviteResults.slice(0, 6).map(result => (
+              <div key={result.teamId} className={styles.claimInviteItem}>
+                <div>
+                  <strong>{result.teamName}</strong>
+                  <span>{result.ageGroupName} - {result.email} - {result.emailed ? 'emailed' : 'link only'}</span>
+                </div>
+                <a href={result.claimUrl} target="_blank" rel="noreferrer">Open claim</a>
+              </div>
+            ))}
+            {claimInviteResults.length > 6 && (
+              <p className={styles.claimInviteMore}>Showing 6 of {claimInviteResults.length}. Emails were sent to every generated contact.</p>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Summary modal */}
       {showSummaryModal && (
@@ -1213,7 +1342,7 @@ export default function UnifiedTeamsPage() {
             <div key={pool.id} className={styles.slotPoolSection}>
               <div className={styles.slotPoolHeader}>
                 <div className={styles.slotPoolDot} />
-                <span>{formatPoolName(pool.name)} Pool</span>
+                <span>{formatPoolName(pool.name)}</span>
                 <span className={styles.slotPoolCount}>{slots.filter(s => s.teamId).length}/{slots.length}</span>
               </div>
 
@@ -1248,7 +1377,7 @@ export default function UnifiedTeamsPage() {
                         <>
                           <span className={styles.slotTeamName}>{team.name}</span>
                           <span className={styles.slotCoach}>{team.coach}</span>
-                          <span className={`badge badge-${team.status === 'accepted' ? 'success' : team.status === 'rejected' ? 'danger' : 'warning'}`} style={{ flexShrink: 0 }}>{team.status}</span>
+                          <span className={`badge badge-${team.status === 'accepted' ? 'neutral' : team.status === 'rejected' ? 'danger' : 'warning'}`} style={{ flexShrink: 0 }}>{team.status}</span>
                           {team.status === 'accepted' && teamPaymentStatus && teamPaymentStatus !== 'no-schedule' && (
                             <span className={`badge badge-${PAYMENT_STATUS_STYLE[teamPaymentStatus]}`} style={{ flexShrink: 0 }}>
                               {PAYMENT_STATUS_LABEL[teamPaymentStatus]}
@@ -1326,39 +1455,56 @@ export default function UnifiedTeamsPage() {
           {!hasLoadedInitial ? (
             <div className="empty-state"><RefreshCw size={32} className="spin" style={{ opacity: 0.4 }} /><p>Loading…</p></div>
           ) : flatDisplay.length === 0 ? (
-            <div className="empty-state"><Users size={40} style={{ opacity: 0.2 }} /><p>No teams matching filters.</p></div>
+            <div className="empty-state">
+              <Users size={40} style={{ opacity: 0.2 }} />
+              <p>{!currentTournament ? 'No tournament selected.' : ageGroups.length === 0 ? 'No divisions configured yet.' : 'No teams matching filters.'}</p>
+            </div>
           ) : (
             <div className={s.compactList}>
-              {viewMode === 'flat' ? (
-                flatDisplay.map(r => renderFlatRow(r))
-              ) : (
-                (() => {
-                  const pools = selectedGroup?.pools || [];
-                  const byPool = flatDisplay.reduce((acc, r) => {
-                    const pid = r.poolId || 'unassigned';
-                    if (!acc[pid]) acc[pid] = [];
-                    acc[pid].push(r);
-                    return acc;
-                  }, {} as Record<string, TeamRecord[]>);
+              {/* Column header + rows wrapped in flatList so compactList's
+                  gap:2.5rem applies to the whole table block, not each row */}
+              <div className={styles.flatList}>
+                {/* ── Column headers ── */}
+                <div className={styles.colHeader}>
+                  <div style={{ width: 32 }} />
+                  <div style={{ flex: 2 }}>Team</div>
+                  <div style={{ flex: 1.5 }}>Coach</div>
+                  <div style={{ width: 120 }}>Status</div>
+                  <div style={{ width: 120, paddingLeft: '1rem' }}>Payment</div>
+                  <div style={{ width: 40 }} />
+                </div>
 
-                  return [{ id: 'unassigned', name: 'Unassigned' }, ...pools].map(p => {
-                    const teamsInPool = byPool[p.id] || [];
-                    if (teamsInPool.length === 0) return null;
-                    return (
-                      <div key={p.id} className={s.poolSubSection}>
-                        <div className={s.poolSubHeader}>
-                          <div className={s.poolDot} style={{ background: p.id === 'unassigned' ? 'var(--danger-light)' : 'var(--logic-lime)' }} />
-                          <span className={s.poolSubLabel} style={{ color: p.id === 'unassigned' ? 'var(--danger-light)' : undefined }}>
-                            {p.id === 'unassigned' ? 'UNASSIGNED' : `${p.name.replace(/^Pool\s+/i, '').trim().toUpperCase()} POOL`}
-                          </span>
-                          <span className={s.poolSubCount}>({teamsInPool.length})</span>
+                {viewMode === 'flat' ? (
+                  flatDisplay.map(r => renderFlatRow(r))
+                ) : (
+                  (() => {
+                    const pools = selectedGroup?.pools || [];
+                    const byPool = flatDisplay.reduce((acc, r) => {
+                      const pid = r.poolId || 'unassigned';
+                      if (!acc[pid]) acc[pid] = [];
+                      acc[pid].push(r);
+                      return acc;
+                    }, {} as Record<string, TeamRecord[]>);
+
+                    return [{ id: 'unassigned', name: 'Unassigned' }, ...pools].map(p => {
+                      const teamsInPool = byPool[p.id] || [];
+                      if (teamsInPool.length === 0) return null;
+                      return (
+                        <div key={p.id} className={s.poolSubSection} style={{ marginTop: 0 }}>
+                          <div className={s.poolSubHeader}>
+                            <div className={s.poolDot} style={{ background: p.id === 'unassigned' ? 'var(--danger-light)' : 'var(--logic-lime)' }} />
+                            <span className={s.poolSubLabel} style={{ color: p.id === 'unassigned' ? 'var(--danger-light)' : undefined }}>
+                              {p.id === 'unassigned' ? 'Unassigned' : formatPoolName(p.name)}
+                            </span>
+                            <span className={s.poolSubCount}>({teamsInPool.length})</span>
+                          </div>
+                          {teamsInPool.map(r => renderFlatRow(r))}
                         </div>
-                        {teamsInPool.map(r => renderFlatRow(r))}
-                      </div>
-                    );
-                  });
-                })()
-              )}
+                      );
+                    });
+                  })()
+                )}
+              </div>
             </div>
           )}
         </>

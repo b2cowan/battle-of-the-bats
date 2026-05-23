@@ -6,7 +6,8 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { hasPlanFeature, requiresTournamentPlusCopy } from '@/lib/plan-features';
 
 export async function POST(req: Request) {
-  const ctx = await getAuthContextWithScope();
+  const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
+  const ctx = await getAuthContextWithScope({ orgSlug });
   if (!ctx) return unauthorized();
 
   if (!hasCapability(ctx.role, ctx.capabilities, 'seal_tournaments')) {

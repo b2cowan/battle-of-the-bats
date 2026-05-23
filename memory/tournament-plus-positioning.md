@@ -8,13 +8,14 @@ Free Tournament remains the starter tier:
 - 1 non-archived tournament.
 - 3 staff/admin seats.
 - Standard team registration fields.
+- Basic selected-row registration updates and overflow waitlist collection.
 - FieldLogicHQ default public styling.
 - Basic scheduling, scores, standings, public results, news, and team/contact email.
 
 Tournament Plus is the paid operations tier:
 - Unlimited tournament slots via `tournamentLimit: 9999`.
 - 10 staff/admin seats.
-- Registration control: custom questions, file collection, CSV export, bulk actions, waitlists.
+- Registration control: custom questions, file collection, Excel/PDF exports, payment reminders, waitlist promotion, and queue management.
 - Payment readiness: Plus-gated payment dashboard, payment filters, and selected-team reminders for manual fee/deposit collection.
 - Full tournament branding.
 - Automation, playoffs, sealed archives, cloning, targeted announcements, and post-event summaries.
@@ -52,8 +53,9 @@ Tournament Plus is the paid operations tier:
 - Public team registration renders Plus-only custom questions and validates required answers on both the client and `/api/register`.
 - File answers upload through the public registration route into the private `tournament-registration-files` bucket path; stored answer rows keep the storage path in `file_url`, not a public link.
 - Admin registration detail rows include submitted custom answers. The server-side registration CSV export is Plus-gated and includes standard registration, payment/waitlist fields, and one column per custom question.
-- Waitlist promotion automation and multi-row registration updates are Plus-gated. The Registrations page now has row selection and a stable bulk action bar for accept, reject, waitlist, mark deposit paid, and mark paid.
-- Bulk registration actions and waitlist joins/promotions write `tournament_plus_feature_used` events with feature/action metadata and selected row counts where applicable.
+- Basic multi-row registration updates are available on all tournament plans. The Registrations page has row selection and a stable bulk action bar for accept, reject, waitlist, mark deposit paid, and mark paid.
+- Waitlist collection is available on all tournament plans. Waitlist promotion/queue management remains Plus-gated.
+- Basic bulk registration actions and waitlist joins write `tournament_registration_operation_used` events. Plus waitlist promotions continue to write `tournament_plus_feature_used` events with `feature: waitlist_automation`.
 - The separate "email selected" workflow remains deferred; it should likely share targeting and safety behavior with the planned targeted announcements work.
 
 ## Phase 4 implementation notes
@@ -106,7 +108,7 @@ Tournament Plus is the paid operations tier:
 
 ## Phase 7 rollout notes
 
-- Tournament Plus rollout code audit is complete for free-vs-Plus branding behavior, locked-feature gates, registration custom fields/details/export, payment/waitlist export data, selected-row bulk actions, waitlist queue preservation, public CTA source tracking, targeted communication safety, and post-event notification idempotency.
+- Tournament Plus rollout code audit is complete for free-vs-Plus branding behavior, locked-feature gates, registration custom fields/details/export, payment/waitlist export data, selected-row bulk action availability, waitlist queue preservation, public CTA source tracking, targeted communication safety, and post-event notification idempotency.
 - Tournament help content now covers Registration Questions, bulk registration actions, waitlist queue behavior, targeted communication, tournament-local subscription prompts, post-event results notification, and post-event summaries.
 - Online tournament payment collection remains separate from launch; manual payment readiness is the current Phase 4 value.
 - The final browser smoke pass for Phase 3 registration control and communication workflows is complete.

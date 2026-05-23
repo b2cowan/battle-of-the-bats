@@ -21,10 +21,11 @@ function timeAgo(iso: string): string {
 }
 
 export async function GET(req: Request) {
-  const ctx = await getAuthContextWithScope();
+  const { searchParams } = new URL(req.url);
+  const orgSlug = searchParams.get('orgSlug') ?? undefined;
+  const ctx = await getAuthContextWithScope({ orgSlug });
   if (!ctx) return unauthorized();
 
-  const { searchParams } = new URL(req.url);
   const tournamentId = searchParams.get('tournamentId');
   if (!tournamentId) return NextResponse.json([]);
 

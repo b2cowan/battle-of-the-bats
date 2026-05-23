@@ -5,6 +5,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import {
   LayoutGrid, Calendar, Users, DollarSign, FileText,
   History, MoreHorizontal, X, ChevronRight, LogOut,
+  Link2,
 } from 'lucide-react';
 import { signOut } from '@/lib/auth';
 import { useOrg } from '@/lib/org-context';
@@ -30,10 +31,12 @@ export default function CoachesBottomNav() {
   const teamMatch    = pathname.match(/\/coaches\/teams\/([^/]+)/);
   const currentTeamId = teamMatch?.[1] ?? null;
   const teamBase     = currentTeamId ? `${base}/teams/${currentTeamId}` : null;
+  const isTeamWorkspace = currentOrg?.accountKind === 'team_workspace' || currentOrg?.planId === 'team';
 
   const isOnTeamMore = currentTeamId
     ? TEAM_MORE.some(({ key }) => pathname.startsWith(`${base}/teams/${currentTeamId}${key}`))
     : false;
+  const isOnWorkspaceMore = isTeamWorkspace && pathname.startsWith(`${base}/link-org`);
   const isOnSchedule = currentTeamId
     ? pathname.startsWith(`${base}/teams/${currentTeamId}/schedule`)
     : false;
@@ -49,7 +52,10 @@ export default function CoachesBottomNav() {
     return () => document.removeEventListener('mousedown', handleClick);
   }, [moreOpen]);
 
-  useEffect(() => { setMoreOpen(false); }, [pathname]);
+  useEffect(() => {
+    const frame = window.requestAnimationFrame(() => setMoreOpen(false));
+    return () => window.cancelAnimationFrame(frame);
+  }, [pathname]);
 
   async function handleLogout() {
     await signOut();
@@ -89,7 +95,7 @@ export default function CoachesBottomNav() {
       {/* More */}
       <div ref={moreRef} className={styles.moreWrap}>
         <button
-          className={`${styles.tab} ${(moreOpen || isOnTeamMore) ? styles.active : ''}`}
+          className={`${styles.tab} ${(moreOpen || isOnTeamMore || isOnWorkspaceMore) ? styles.active : ''}`}
           onClick={() => setMoreOpen(o => !o)}
           id="coaches-mob-more"
           aria-haspopup="true"
@@ -98,9 +104,9 @@ export default function CoachesBottomNav() {
           <span className={styles.iconWrap}>
             {moreOpen
               ? <X size={22} strokeWidth={2} />
-              : <MoreHorizontal size={22} strokeWidth={(moreOpen || isOnTeamMore) ? 2.5 : 1.8} />
+              : <MoreHorizontal size={22} strokeWidth={(moreOpen || isOnTeamMore || isOnWorkspaceMore) ? 2.5 : 1.8} />
             }
-            {isOnTeamMore && !moreOpen && <span className={styles.activeDot} />}
+            {(isOnTeamMore || isOnWorkspaceMore) && !moreOpen && <span className={styles.activeDot} />}
           </span>
           <span className={styles.label}>More</span>
         </button>
@@ -126,6 +132,21 @@ export default function CoachesBottomNav() {
                     </Link>
                   );
                 })}
+                <div className={styles.dropDivider} />
+              </>
+            )}
+            {isTeamWorkspace && (
+              <>
+                <div className={styles.dropSectionLabel}>Workspace</div>
+                <Link
+                  href={`${base}/link-org`}
+                  className={`${styles.dropItem} ${isOnWorkspaceMore ? styles.dropActive : ''}`}
+                  role="menuitem"
+                >
+                  <Link2 size={17} />
+                  <span>Link Organization</span>
+                  <ChevronRight size={14} className={styles.dropChevron} />
+                </Link>
                 <div className={styles.dropDivider} />
               </>
             )}

@@ -8,6 +8,7 @@ import styles from './tournament-growth.module.css';
 
 type CoachTournamentAwarenessBannerProps = {
   orgSlug: string;
+  isTeamWorkspace?: boolean;
 };
 
 type HasTournamentsResponse = {
@@ -15,7 +16,7 @@ type HasTournamentsResponse = {
   hasTournaments: boolean;
 };
 
-export default function CoachTournamentAwarenessBanner({ orgSlug }: CoachTournamentAwarenessBannerProps) {
+export default function CoachTournamentAwarenessBanner({ orgSlug, isTeamWorkspace = false }: CoachTournamentAwarenessBannerProps) {
   const [shouldShow, setShouldShow] = useState(false);
   const dismissKey = `flhq-acq-dismiss-coach_portal_banner-${orgSlug}`;
   const href = useMemo(() => `/${orgSlug}/admin/org/tournaments?source=coach_portal_banner`, [orgSlug]);
@@ -52,8 +53,12 @@ export default function CoachTournamentAwarenessBanner({ orgSlug }: CoachTournam
         <Trophy size={18} />
       </div>
       <div className={styles.bannerBody}>
-        <strong>Your org can run tournaments here too</strong>
-        <span>Coaches often organize events. Start setup in the tournament admin area, or share this with your org owner.</span>
+        <strong>{isTeamWorkspace ? 'Your team can run local tournaments here too' : 'Your org can run tournaments here too'}</strong>
+        <span>
+          {isTeamWorkspace
+            ? 'Set up a quick round robin or exhibition weekend from this Team workspace.'
+            : 'Coaches often organize events. Start setup in the tournament admin area, or share this with your org owner.'}
+        </span>
       </div>
       <Link
         href={href}

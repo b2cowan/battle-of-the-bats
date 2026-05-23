@@ -7,6 +7,7 @@ import {
   ChevronRight, MapPin, BookUser, BookOpen, CreditCard, Settings, Paintbrush,
   Users2, Archive, ArrowLeft, Mail, Globe, DollarSign,
   CalendarDays, ClipboardList, FileText, UserCheck, ExternalLink, HelpCircle,
+  Link2,
 } from 'lucide-react';
 import { signOut } from '@/lib/auth';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
@@ -271,6 +272,11 @@ export default function AdminSidebar() {
                 'org/billing', CreditCard, 'Subscription',
                 `${base}/org/billing`,
                 pathname.startsWith(`${base}/org/billing`),
+              )}
+              {(userRole === 'owner' || userRole === 'admin') && navLink(
+                'org/team-links', Link2, 'Team Links',
+                `${base}/org/team-links`,
+                pathname.startsWith(`${base}/org/team-links`),
               )}
               {userRole === 'owner' && navLink(
                 'org/settings', Settings, 'Settings',

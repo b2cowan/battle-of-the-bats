@@ -2,7 +2,7 @@ import { getAuthContextWithScope, unauthorized, forbidden, scopeGuard } from '@/
 import { hasCapability } from '@/lib/roles';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 
-function mapSlot(s: any) {
+function mapSlot(s: any, teamNames = new Map<string, string>()) {
   return {
     id: s.id,
     poolId: s.pool_id,
@@ -11,15 +11,29 @@ function mapSlot(s: any) {
     slotNumber: s.slot_number,
     displayName: s.display_name,
     teamId: s.team_id ?? null,
-    teamName: s.teams?.name ?? null,
+    teamName: s.team_id ? teamNames.get(s.team_id) ?? null : null,
   };
 }
 
+async function getTeamNamesForSlots(slots: Array<{ team_id?: string | null }>) {
+  const teamIds = [...new Set(slots.map(slot => slot.team_id).filter(Boolean))] as string[];
+  if (teamIds.length === 0) return new Map<string, string>();
+
+  const { data, error } = await supabaseAdmin
+    .from('teams')
+    .select('id, name')
+    .in('id', teamIds);
+  if (error) throw error;
+
+  return new Map((data ?? []).map(team => [team.id as string, team.name as string]));
+}
+
 export async function GET(req: Request) {
-  const ctx = await getAuthContextWithScope();
+  const url = new URL(req.url);
+  const orgSlug = url.searchParams.get('orgSlug') ?? undefined;
+  const ctx = await getAuthContextWithScope({ orgSlug });
   if (!ctx) return unauthorized();
 
-  const url = new URL(req.url);
   const tournamentId = url.searchParams.get('tournamentId');
   const ageGroupId = url.searchParams.get('ageGroupId');
 
@@ -30,7 +44,7 @@ export async function GET(req: Request) {
 
   let query = supabaseAdmin
     .from('pool_slots')
-    .select('*, teams(name)')
+    .select('*')
     .eq('tournament_id', tournamentId)
     .order('slot_number', { ascending: true });
 
@@ -39,11 +53,18 @@ export async function GET(req: Request) {
   const { data, error } = await query;
   if (error) return new Response(JSON.stringify({ error: error.message }), { status: 500, headers: { 'Content-Type': 'application/json' } });
 
-  return new Response(JSON.stringify((data ?? []).map(mapSlot)), { status: 200, headers: { 'Content-Type': 'application/json' } });
+  try {
+    const slots = data ?? [];
+    const teamNames = await getTeamNamesForSlots(slots);
+    return new Response(JSON.stringify(slots.map(slot => mapSlot(slot, teamNames))), { status: 200, headers: { 'Content-Type': 'application/json' } });
+  } catch (err: any) {
+    return new Response(JSON.stringify({ error: err.message || 'Unknown error' }), { status: 500, headers: { 'Content-Type': 'application/json' } });
+  }
 }
 
 export async function POST(req: Request) {
-  const ctx = await getAuthContextWithScope();
+  const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
+  const ctx = await getAuthContextWithScope({ orgSlug });
   if (!ctx) return unauthorized();
 
   if (!hasCapability(ctx.role, ctx.capabilities, 'manage_schedule_structure')) return forbidden();
@@ -108,7 +129,8 @@ export async function POST(req: Request) {
         allCreated.push(...(poolSlots ?? []));
       }
 
-      return new Response(JSON.stringify({ slots: allCreated.map(mapSlot) }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+      const teamNames = await getTeamNamesForSlots(allCreated);
+      return new Response(JSON.stringify({ slots: allCreated.map(slot => mapSlot(slot, teamNames)) }), { status: 200, headers: { 'Content-Type': 'application/json' } });
     }
 
     // ── sync-capacity ─────────────────────────────────────────────────────────
@@ -170,14 +192,15 @@ export async function POST(req: Request) {
 
         const { data: finalSlots, error: finalErr } = await supabaseAdmin
           .from('pool_slots')
-          .select('*, teams(name)')
+          .select('*')
           .eq('pool_id', poolId)
           .order('slot_number', { ascending: true });
         if (finalErr) throw finalErr;
         allSlots.push(...(finalSlots ?? []));
       }
 
-      return Response.json({ slots: allSlots.map(mapSlot), warnings });
+      const teamNames = await getTeamNamesForSlots(allSlots);
+      return Response.json({ slots: allSlots.map(slot => mapSlot(slot, teamNames)), warnings });
     }
 
     // ── assign ────────────────────────────────────────────────────────────────

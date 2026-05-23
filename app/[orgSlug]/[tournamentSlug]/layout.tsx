@@ -26,7 +26,7 @@ export default async function TournamentLayout({
 
   const canUseAdvancedBranding = canUseAdvancedTournamentBranding(org);
   const isFreeTournamentPlan = org.planId === 'tournament';
-  const authCtx = await getAuthContext().catch(() => null);
+  const authCtx = await getAuthContext({ orgSlug }).catch(() => null);
   const showAcquisitionBanner = isFreeTournamentPlan && (!authCtx || authCtx.org.id !== org.id);
   const effectiveColorMode = canUseAdvancedBranding ? tournament.colorMode ?? 'dark' : 'dark';
   // Free public tournament pages always use the FieldLogicHQ default theme, even if old branding values exist.

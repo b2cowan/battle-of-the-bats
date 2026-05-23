@@ -15,9 +15,13 @@ This app depends on Supabase during request handling, including `proxy.ts` sessi
 
 After starting the dev server, verify `http://localhost:3000/platform-admin/login?next=%2Fplatform-admin` returns HTTP 200 and check the server log for no Supabase `EACCES` fetch failures.
 
-## Restart rule — always clear and restart after significant changes
+## Restart rule - keep the dev server running unless a restart is required
 
-After any session that adds new files, deletes files, or makes changes to shared modules (e.g. `lib/db.ts`, `lib/types.ts`, any context provider), the dev server **must** be restarted before handing off to the user for browser testing.
+Do not restart the dev server after routine page, component, style, or copy edits. Prefer leaving the existing `npm run dev` process up and relying on Next.js hot reload so the user can keep testing without avoidable downtime.
+
+After any session that adds new files, deletes files, changes shared modules (e.g. `lib/db.ts`, `lib/types.ts`, any context provider), changes `proxy.ts`, or changes config/package/env behavior, the dev server **must** be restarted before handing off to the user for browser testing.
+
+Batch restart-required changes and restart once near handoff whenever possible.
 
 **Important — stop the server BEFORE deleting `.next` on Windows.** Node.js holds file locks on chunks in the running cache. Deleting `.next` while the server is running causes partial deletion; the server then runs with a corrupted cache and returns 500 for all routes.
 

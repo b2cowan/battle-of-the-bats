@@ -9,7 +9,15 @@ export type PlatformEventType =
   | 'tournament_plus_upgrade_gate_clicked'
   | 'tournament_plus_acquisition_cta_viewed'
   | 'tournament_plus_acquisition_cta_clicked'
-  | 'tournament_plus_feature_used';
+  | 'tournament_plus_feature_used'
+  | 'tournament_registration_operation_used'
+  | 'team_workspace_created'
+  | 'team_org_link_requested'
+  | 'team_org_link_invited'
+  | 'team_org_link_approved'
+  | 'team_org_link_declined'
+  | 'team_org_link_invite_accepted'
+  | 'team_org_link_invite_declined';
 
 export type PlatformEventInput = {
   eventType: PlatformEventType;

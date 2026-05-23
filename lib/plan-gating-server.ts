@@ -6,7 +6,7 @@ import type { OrgPlan } from './types';
 
 export type PlanGatingMap = Record<OrgPlan, boolean>; // true = gated (early_access)
 
-const ALL_PLANS: OrgPlan[] = ['tournament', 'tournament_plus', 'league', 'club'];
+const ALL_PLANS: OrgPlan[] = ['tournament', 'team', 'tournament_plus', 'league', 'club'];
 
 function fromPlanConfig(): PlanGatingMap {
   return Object.fromEntries(
@@ -27,7 +27,8 @@ function allLive(): PlanGatingMap {
  *   4. PLAN_CONFIG.gatingStatus — fallback if DB is unavailable
  */
 export async function getPlanGatingMap(): Promise<PlanGatingMap> {
-  if (process.env.NEXT_PUBLIC_ENABLE_DEV_TOOLS === 'true') {
+  // Cookie-based override is only available when the local-only plan gates toggle is enabled
+  if (process.env.NEXT_PUBLIC_DEV_PLAN_GATES_TOGGLE === 'true') {
     const cookieStore = await cookies();
     if (cookieStore.get('dev_plan_gates')?.value === 'live') return allLive();
   }

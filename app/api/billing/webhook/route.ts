@@ -4,6 +4,10 @@ import { getPlanFromPriceId } from '@/lib/stripe-prices';
 import { restoreRetainedDowngradeTournaments, retentionDeadline } from '@/lib/billing-retention';
 import { supabaseAdmin, getOrgOwnerEmail } from '@/lib/supabase-admin';
 import { isPastDueTransition, isRecoveryTransition, writePlatformEvent } from '@/lib/platform-events';
+import {
+  provisionTeamWorkspaceFromCheckoutMetadata,
+  syncTeamWorkspaceSubscription,
+} from '@/lib/team-checkout';
 import { sendEmail, SITE_URL } from '@/lib/email';
 import type { OrgPlan } from '@/lib/types';
 import type Stripe from 'stripe';
@@ -18,10 +22,21 @@ function toIso(unixSeconds: number | null | undefined): string | null {
 
 const PLAN_RANK: Record<OrgPlan, number> = {
   tournament: 0,
+  team: 0,
   tournament_plus: 1,
   league: 2,
   club: 3,
 };
+
+function subscriptionIdFromSession(session: Stripe.Checkout.Session): string | null {
+  return typeof session.subscription === 'string'
+    ? session.subscription
+    : session.subscription?.id ?? null;
+}
+
+function subscriptionItemId(sub: Stripe.Subscription): string | null {
+  return sub.items?.data?.[0]?.id ?? null;
+}
 
 export async function POST(req: Request) {
   const rawBody = await req.text();
@@ -49,6 +64,26 @@ export async function POST(req: Request) {
   switch (event.type) {
     case 'checkout.session.completed': {
       const session = event.data.object as Stripe.Checkout.Session;
+      if (session.metadata?.checkoutKind === 'standalone_team') {
+        const subscriptionId = subscriptionIdFromSession(session);
+        const sub = subscriptionId
+          ? await stripe.subscriptions.retrieve(subscriptionId)
+          : null;
+
+        await provisionTeamWorkspaceFromCheckoutMetadata({
+          metadata: session.metadata,
+          stripeCustomerId: customerId,
+          stripeSubscriptionId: subscriptionId,
+          stripeSubscriptionItemId: sub ? subscriptionItemId(sub) : null,
+          subscriptionStatus: sub?.status ?? 'active',
+          billingCycle: session.metadata.billingCycle ?? null,
+          currentPeriodEnd: sub ? toIso(sub.items?.data?.[0]?.current_period_end) : null,
+          eventSource: 'stripe',
+          sourceEventId: `${event.id}:team_workspace_created`,
+        });
+        break;
+      }
+
       const orgId = session.metadata?.orgId;
       if (orgId && customerId) {
         // Defensively ensure stripe_customer_id is set — create-checkout sets it before
@@ -70,6 +105,32 @@ export async function POST(req: Request) {
       if (matchedPlan) {
         const planKey = matchedPlan.planId as OrgPlan;
         const billingCycle = matchedPlan.billingCycle as BillingCycle;
+        if (planKey === 'team') {
+          const provisionResult = await provisionTeamWorkspaceFromCheckoutMetadata({
+            metadata: sub.metadata,
+            stripeCustomerId: customerId,
+            stripeSubscriptionId: sub.id,
+            stripeSubscriptionItemId: subscriptionItemId(sub),
+            subscriptionStatus: sub.status,
+            billingCycle,
+            currentPeriodEnd: toIso(sub.items?.data?.[0]?.current_period_end),
+            eventSource: 'stripe',
+            sourceEventId: `${event.id}:team_workspace_created`,
+          });
+
+          if (!provisionResult.provisioned && provisionResult.reason === 'not_team_checkout') {
+            await syncTeamWorkspaceSubscription({
+              stripeCustomerId: customerId,
+              stripeSubscriptionId: sub.id,
+              stripeSubscriptionItemId: subscriptionItemId(sub),
+              subscriptionStatus: sub.status,
+              billingCycle,
+              currentPeriodEnd: toIso(sub.items?.data?.[0]?.current_period_end),
+            });
+          }
+          break;
+        }
+
         const cfg = PLAN_CONFIG[planKey];
         if (!cfg) break;
         // current_period_end moved to SubscriptionItem in API 2026-04-22.dahlia
@@ -145,6 +206,27 @@ export async function POST(req: Request) {
     }
 
     case 'customer.subscription.deleted': {
+      const sub = event.data.object as Stripe.Subscription;
+      const syncedTeamWorkspace = await syncTeamWorkspaceSubscription({
+        stripeCustomerId: customerId,
+        stripeSubscriptionId: sub.id,
+        stripeSubscriptionItemId: subscriptionItemId(sub),
+        subscriptionStatus: 'canceled',
+        currentPeriodEnd: toIso(sub.items?.data?.[0]?.current_period_end),
+      });
+
+      if (syncedTeamWorkspace) {
+        await writePlatformEvent({
+          eventType: 'subscription_canceled',
+          source: 'stripe',
+          sourceEventId: `${event.id}:team_subscription_canceled`,
+          planId: 'team',
+          subscriptionStatus: 'canceled',
+          metadata: { stripeCustomerId: customerId, stripeSubscriptionId: sub.id, scope: 'team_workspace' },
+        });
+        break;
+      }
+
       const { data: org } = await supabaseAdmin
         .from('organizations')
         .select('id, name, plan_id, subscription_status')

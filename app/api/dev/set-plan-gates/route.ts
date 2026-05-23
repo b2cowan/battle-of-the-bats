@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
 
 export async function POST(req: Request) {
-  if (process.env.NEXT_PUBLIC_ENABLE_DEV_TOOLS !== 'true') {
+  // Plan gates toggle is only enabled locally — not on Amplify dev
+  if (process.env.NEXT_PUBLIC_DEV_PLAN_GATES_TOGGLE !== 'true') {
     return NextResponse.json({ error: 'Not available' }, { status: 403 });
   }
 

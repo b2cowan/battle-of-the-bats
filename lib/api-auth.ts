@@ -13,6 +13,10 @@ export interface AuthContext {
   org: Organization;
 }
 
+type AuthContextOptions = {
+  orgSlug?: string;
+};
+
 export interface AuthContextWithScope extends AuthContext {
   role: OrgRole;
   capabilities: Record<string, boolean> | null;
@@ -36,18 +40,19 @@ type AuthOrgRow = {
   onboarding_completed_at: string | null;
   enabled_addons: string[] | null;
   contact_email: string | null;
+  account_kind: Organization['accountKind'] | null;
+  team_workspace_status: Organization['teamWorkspaceStatus'] | null;
+  is_discoverable: boolean | null;
 };
 
-/**
- * Extracts the authenticated user and their organization from the request session cookie.
- * Returns null if the request is unauthenticated or the user has no org.
- * Use in all /api/admin/* route handlers before touching the database.
- */
-export async function getAuthContext(): Promise<AuthContext | null> {
-  assertSafeSupabaseServerEnvironment('API auth Supabase client');
+type AuthMemberOrgRow = {
+  organizations: AuthOrgRow | null;
+};
+
+export async function getAuthenticatedUser(): Promise<User | null> {
+  assertSafeSupabaseServerEnvironment('API user auth Supabase client');
 
   const cookieStore = await cookies();
-
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -60,6 +65,16 @@ export async function getAuthContext(): Promise<AuthContext | null> {
   );
 
   const { data: { user } } = await supabase.auth.getUser();
+  return user ?? null;
+}
+
+/**
+ * Extracts the authenticated user and their organization from the request session cookie.
+ * Returns null if the request is unauthenticated or the user has no org.
+ * Use in all /api/admin/* route handlers before touching the database.
+ */
+export async function getAuthContext(options: AuthContextOptions = {}): Promise<AuthContext | null> {
+  const user = await getAuthenticatedUser();
   if (!user) return null;
 
   // Use admin client — anon client can't read organization_members under RLS
@@ -69,9 +84,13 @@ export async function getAuthContext(): Promise<AuthContext | null> {
     .select('organizations(*)')
     .eq('user_id', user.id)
     .neq('status', 'suspended')
-    .single<{ organizations: AuthOrgRow | null }>();
+    .returns<AuthMemberOrgRow[]>();
 
-  const orgRow = memberData?.organizations;
+  const membership = options.orgSlug
+    ? memberData?.find(row => row.organizations?.slug === options.orgSlug)
+    : memberData?.find(row => row.organizations !== null);
+
+  const orgRow = membership?.organizations;
   if (!orgRow) return null;
 
   const org: Organization = {
@@ -90,6 +109,9 @@ export async function getAuthContext(): Promise<AuthContext | null> {
     onboardingCompletedAt: orgRow.onboarding_completed_at ?? null,
     enabledAddons: orgRow.enabled_addons ?? [],
     contactEmail: orgRow.contact_email ?? null,
+    accountKind: orgRow.account_kind ?? 'organization',
+    teamWorkspaceStatus: orgRow.team_workspace_status ?? null,
+    isDiscoverable: orgRow.is_discoverable ?? true,
   };
 
   return { user, org };
@@ -102,8 +124,8 @@ export interface AuthContextWithRole extends AuthContext {
   repGroupIds: string[] | null;
 }
 
-export async function getAuthContextWithRole(): Promise<AuthContextWithRole | null> {
-  const ctx = await getAuthContext();
+export async function getAuthContextWithRole(options: AuthContextOptions = {}): Promise<AuthContextWithRole | null> {
+  const ctx = await getAuthContext(options);
   if (!ctx) return null;
 
   const { data: member } = await supabaseAdmin
@@ -111,7 +133,7 @@ export async function getAuthContextWithRole(): Promise<AuthContextWithRole | nu
     .select('id, role, capabilities')
     .eq('organization_id', ctx.org.id)
     .eq('user_id', ctx.user.id)
-    .single();
+    .maybeSingle();
 
   if (!member) return null;
 
@@ -149,8 +171,8 @@ export function repGroupScopeGuard(ctx: AuthContextWithRole, teamGroupId: string
  * assignedTournamentIds === null means the user is unrestricted (owner, or no assignment rows).
  * Routes that filter by tournament must use this instead of getAuthContext().
  */
-export async function getAuthContextWithScope(): Promise<AuthContextWithScope | null> {
-  const ctx = await getAuthContext();
+export async function getAuthContextWithScope(options: AuthContextOptions = {}): Promise<AuthContextWithScope | null> {
+  const ctx = await getAuthContext(options);
   if (!ctx) return null;
 
   const { data: member } = await supabaseAdmin
@@ -158,7 +180,7 @@ export async function getAuthContextWithScope(): Promise<AuthContextWithScope | 
     .select('id, role, capabilities')
     .eq('organization_id', ctx.org.id)
     .eq('user_id', ctx.user.id)
-    .single();
+    .maybeSingle();
 
   if (!member) return null;
 

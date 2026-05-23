@@ -52,13 +52,15 @@ function roundLabel(code: string | null): string {
 }
 
 export async function GET(req: Request) {
-  const ctx = await getAuthContextWithScope();
+  const searchParams = new URL(req.url).searchParams;
+  const orgSlug = searchParams.get('orgSlug') ?? undefined;
+  const ctx = await getAuthContextWithScope({ orgSlug });
   if (!ctx) return unauthorized();
 
   if (!hasCapability(ctx.role, ctx.capabilities, 'module_tournaments')) return forbidden();
   if (!hasModuleEntitlement(ctx.org, 'module_tournaments')) return forbidden();
 
-  const tournamentId = new URL(req.url).searchParams.get('tournamentId');
+  const tournamentId = searchParams.get('tournamentId');
   if (!tournamentId) {
     return Response.json({ error: 'Missing tournamentId' }, { status: 400 });
   }

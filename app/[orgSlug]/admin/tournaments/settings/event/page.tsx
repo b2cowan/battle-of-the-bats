@@ -49,6 +49,8 @@ export default function TournamentEventSettingsPage() {
   const tournamentId = currentTournament?.id;
   const canUsePostEventNotifications = Boolean(currentOrg && hasPlanFeature(currentOrg.planId, 'post_tournament_summary'));
   const subscriptionHref = `/${currentOrg?.slug ?? 'admin'}/admin/tournaments/settings/subscription`;
+  const orgQuery = currentOrg?.slug ? `?orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
+  const orgParam = currentOrg?.slug ? `&orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
 
   const isDirty =
     startDate !== saved.startDate ||
@@ -65,8 +67,8 @@ export default function TournamentEventSettingsPage() {
     if (!tournamentId) return;
 
     Promise.all([
-      fetch(`/api/admin/tournaments`).then(r => r.ok ? r.json() : []),
-      fetch(`/api/admin/tournament-branding?tournamentId=${encodeURIComponent(tournamentId)}`).then(r => r.ok ? r.json() : {}),
+      fetch(`/api/admin/tournaments${orgQuery}`).then(r => r.ok ? r.json() : []),
+      fetch(`/api/admin/tournament-branding?tournamentId=${encodeURIComponent(tournamentId)}${orgParam}`).then(r => r.ok ? r.json() : {}),
     ]).then(([tournaments, branding]) => {
       const t = Array.isArray(tournaments) ? tournaments.find((row: { id: string }) => row.id === tournamentId) : null;
       if (t) {
@@ -91,14 +93,14 @@ export default function TournamentEventSettingsPage() {
       setRequireFinalization(rf);
       setSaved(s => ({ ...s, requireFinalization: rf }));
     }).catch(() => { setErrorMsg('Failed to load settings'); setErrorOpen(true); });
-  }, [tournamentId]);
+  }, [tournamentId, orgParam, orgQuery]);
 
   async function handleSave() {
     if (!tournamentId || !currentTournament || saving) return;
     setSaving(true);
     try {
       const [tournamentRes, brandingRes] = await Promise.all([
-        fetch('/api/admin/tournaments', {
+        fetch(`/api/admin/tournaments${orgQuery}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -119,7 +121,7 @@ export default function TournamentEventSettingsPage() {
             },
           }),
         }),
-        fetch(`/api/admin/tournament-branding?tournamentId=${encodeURIComponent(tournamentId)}`, {
+        fetch(`/api/admin/tournament-branding?tournamentId=${encodeURIComponent(tournamentId)}${orgParam}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ requireScoreFinalization: requireFinalization }),
@@ -169,7 +171,7 @@ export default function TournamentEventSettingsPage() {
         </Link>
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '2rem' }}>
+      <div className={styles.settingsTitleRow}>
         <div className={styles.headerIcon}><Settings2 size={20} /></div>
         <div>
           <h1 className={styles.pageTitle}>Event Settings</h1>
@@ -178,7 +180,7 @@ export default function TournamentEventSettingsPage() {
       </div>
 
       {/* Dates */}
-      <div className={styles.card} style={{ marginBottom: '1.5rem' }}>
+      <div className={styles.card}>
         <h2 className={styles.sectionTitle}>Tournament Dates</h2>
         <div className="form-row form-row-2">
           <div className="form-group">
@@ -212,28 +214,16 @@ export default function TournamentEventSettingsPage() {
       </div>
 
       {/* Fee Schedule */}
-      <div className={styles.card} style={{ marginBottom: '1.5rem' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+      <div className={styles.card}>
+        <div className={styles.cardHeaderRow}>
           <h2 className={styles.sectionTitle} style={{ margin: 0 }}>Fee Schedule</h2>
-          <div style={{ display: 'flex', gap: '0.25rem', background: 'var(--white-5)', padding: '0.2rem', borderRadius: 'var(--radius-sm)' }}>
+          <div className={styles.segmentedControl}>
             {(['tournament', 'age_group'] as const).map(mode => (
               <button
                 key={mode}
                 type="button"
                 onClick={() => setFeeMode(mode)}
-                style={{
-                  padding: '0.25rem 0.6rem',
-                  fontSize: '0.7rem',
-                  fontFamily: 'var(--font-data)',
-                  fontWeight: 700,
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.06em',
-                  border: '1px solid transparent',
-                  borderRadius: 'var(--radius-sm)',
-                  cursor: 'pointer',
-                  background: feeMode === mode ? 'var(--blueprint-blue)' : 'transparent',
-                  color: feeMode === mode ? '#fff' : 'var(--data-gray)',
-                }}
+                className={`${styles.segmentButton} ${feeMode === mode ? styles.segmentButtonActive : ''}`}
               >
                 {mode === 'tournament' ? 'By Tournament' : 'By Division'}
               </button>
@@ -260,7 +250,7 @@ export default function TournamentEventSettingsPage() {
             </div>
           </div>
         ) : (
-          <p style={{ fontSize: '0.82rem', color: 'var(--data-gray)', lineHeight: 1.55, margin: 0 }}>
+          <p className={styles.descriptionText}>
             Fee amounts and due dates are set per division. Edit each division to configure its fee schedule.
           </p>
         )}
@@ -270,8 +260,8 @@ export default function TournamentEventSettingsPage() {
       <div className={styles.card}>
         <h2 className={styles.sectionTitle}>Score Finalization</h2>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-          <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', cursor: 'pointer' }}>
-            <span style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--white-80)' }}>Require admin finalization</span>
+          <label className={styles.toggleRow}>
+            <span className={styles.toggleLabel}>Require admin finalization</span>
             <input
               type="checkbox"
               checked={requireFinalization}
@@ -279,7 +269,7 @@ export default function TournamentEventSettingsPage() {
               style={{ width: '18px', height: '18px', cursor: 'pointer', accentColor: 'var(--primary)' }}
             />
           </label>
-          <p style={{ fontSize: '0.83rem', color: 'var(--white-40)', lineHeight: 1.55, margin: 0 }}>
+          <p className={styles.descriptionText}>
             When enabled, scores submitted by field officials are visible immediately but are not marked final
             until an admin reviews them in the Results page. When disabled, submissions are immediately final.
           </p>
@@ -289,11 +279,11 @@ export default function TournamentEventSettingsPage() {
         </div>
       </div>
 
-      <div className={styles.card} style={{ marginTop: '1.5rem' }}>
+      <div className={styles.card}>
         <h2 className={styles.sectionTitle}>Post-Event Results Notification</h2>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
-          <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', cursor: canUsePostEventNotifications ? 'pointer' : 'not-allowed' }}>
-            <span style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--white-80)' }}>
+          <label className={`${styles.toggleRow} ${!canUsePostEventNotifications ? styles.toggleRowDisabled : ''}`}>
+            <span className={styles.toggleLabel}>
               Email accepted teams when results are finalized
             </span>
             <input
@@ -304,7 +294,7 @@ export default function TournamentEventSettingsPage() {
               style={{ width: '18px', height: '18px', cursor: canUsePostEventNotifications ? 'pointer' : 'not-allowed', accentColor: 'var(--primary)' }}
             />
           </label>
-          <p style={{ fontSize: '0.83rem', color: 'var(--white-40)', lineHeight: 1.55, margin: 0 }}>
+          <p className={styles.descriptionText}>
             When enabled, accepted team contacts receive one email with public standings, schedule, and team links the first time this tournament is marked completed.
           </p>
           {resultsNotifiedAt && (
@@ -313,8 +303,8 @@ export default function TournamentEventSettingsPage() {
             </p>
           )}
           {!canUsePostEventNotifications && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
-              <p style={{ fontSize: '0.82rem', color: 'var(--white-45)', lineHeight: 1.5, margin: 0 }}>
+            <div className={styles.inlineUpsell}>
+              <p>
                 {requiresTournamentPlusCopy('post_tournament_summary')}
               </p>
               <Link href={subscriptionHref} className="btn btn-outline btn-sm">Review Tournament Plus</Link>

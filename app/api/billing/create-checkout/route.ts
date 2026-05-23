@@ -48,7 +48,7 @@ export async function POST(req: Request) {
   if (!auth) return unauthorized();
 
   const { planKey, returnTo, billingCycle: requestedBillingCycle }: {
-    planKey: 'tournament_plus' | 'league' | 'club';
+    planKey: 'team' | 'tournament_plus' | 'league' | 'club';
     returnTo?: string;
     billingCycle?: unknown;
   } = await req.json();
@@ -56,6 +56,12 @@ export async function POST(req: Request) {
   const plan = PLAN_CONFIG[planKey as OrgPlan];
   if (!plan) {
     return new Response(JSON.stringify({ error: 'Invalid plan' }), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+  if (planKey === 'team') {
+    return new Response(JSON.stringify({ error: 'Use Team checkout to create a standalone Team workspace.' }), {
       status: 400,
       headers: { 'Content-Type': 'application/json' },
     });

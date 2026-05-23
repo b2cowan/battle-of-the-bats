@@ -6,7 +6,6 @@ import { ArrowLeft, Image as ImageIcon, Lock, Palette, Upload } from 'lucide-rea
 import { useTournament } from '@/lib/tournament-context';
 import { useOrg } from '@/lib/org-context';
 import FeedbackModal from '@/components/FeedbackModal';
-import UpgradeGate from '@/components/billing/UpgradeGate';
 import { PRESETS, FONT_OPTIONS, CARD_STYLE_OPTIONS, resolveTheme } from '@/lib/themes';
 import { PUBLIC_PAGE_OPTIONS, normalizeHiddenPublicPages, type PublicPageKey } from '@/lib/public-pages';
 import { hasPlanFeature } from '@/lib/plan-features';
@@ -60,10 +59,11 @@ export default function TournamentBrandingPage() {
   const canUseAdvancedBranding = currentOrg?.planId
     ? hasPlanFeature(currentOrg.planId, 'advanced_tournament_branding')
     : false;
+  const orgParam = currentOrg?.slug ? `&orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
 
   useEffect(() => {
     if (!tournamentId) return;
-    fetch(`/api/admin/tournament-branding?tournamentId=${encodeURIComponent(tournamentId)}`)
+    fetch(`/api/admin/tournament-branding?tournamentId=${encodeURIComponent(tournamentId)}${orgParam}`)
       .then(r => r.json())
       .then((data: BrandingSettings) => {
         setSaved(data);
@@ -82,7 +82,7 @@ export default function TournamentBrandingPage() {
         }
       })
       .catch(() => showError('Failed to load branding settings'));
-  }, [tournamentId, canUseAdvancedBranding]);
+  }, [tournamentId, canUseAdvancedBranding, orgParam]);
 
   const isDirty = useMemo(() => {
     if (!saved) return false;
@@ -141,7 +141,7 @@ export default function TournamentBrandingPage() {
             publicHiddenPages: normalizedHiddenPages,
           };
 
-      const res = await fetch(`/api/admin/tournament-branding?tournamentId=${encodeURIComponent(tournamentId)}`, {
+      const res = await fetch(`/api/admin/tournament-branding?tournamentId=${encodeURIComponent(tournamentId)}${orgParam}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(requestBody),
@@ -182,13 +182,13 @@ export default function TournamentBrandingPage() {
 
   async function handleLogoChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
-    if (!file || !tournamentId) return;
+    if (!file || !tournamentId || !canUseAdvancedBranding) return;
     setLogoPreview(URL.createObjectURL(file));
     setLogoUploading(true);
     try {
       const fd = new FormData();
       fd.append('file', file);
-      const res = await fetch(`/api/admin/tournament-logo?tournamentId=${encodeURIComponent(tournamentId)}`, { method: 'POST', body: fd });
+      const res = await fetch(`/api/admin/tournament-logo?tournamentId=${encodeURIComponent(tournamentId)}${orgParam}`, { method: 'POST', body: fd });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? 'Upload failed');
       setLogoPreview(data.logoUrl);
@@ -205,10 +205,10 @@ export default function TournamentBrandingPage() {
   }
 
   async function handleRemoveLogo() {
-    if (!tournamentId) return;
+    if (!tournamentId || !canUseAdvancedBranding) return;
     setLogoUploading(true);
     try {
-      const res = await fetch(`/api/admin/tournament-logo?tournamentId=${encodeURIComponent(tournamentId)}`, { method: 'DELETE' });
+      const res = await fetch(`/api/admin/tournament-logo?tournamentId=${encodeURIComponent(tournamentId)}${orgParam}`, { method: 'DELETE' });
       if (!res.ok) throw new Error('Remove failed');
       setLogoPreview(null);
       setSaved(prev => prev ? { ...prev, logoUrl: null } : null);
@@ -229,7 +229,7 @@ export default function TournamentBrandingPage() {
     try {
       const fd = new FormData();
       fd.append('file', file);
-      const res = await fetch(`/api/admin/tournament-hero-banner?tournamentId=${encodeURIComponent(tournamentId)}`, { method: 'POST', body: fd });
+      const res = await fetch(`/api/admin/tournament-hero-banner?tournamentId=${encodeURIComponent(tournamentId)}${orgParam}`, { method: 'POST', body: fd });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? 'Upload failed');
       setBannerPreview(data.heroBannerUrl);
@@ -246,10 +246,10 @@ export default function TournamentBrandingPage() {
   }
 
   async function handleRemoveBanner() {
-    if (!tournamentId) return;
+    if (!tournamentId || !canUseAdvancedBranding) return;
     setBannerUploading(true);
     try {
-      const res = await fetch(`/api/admin/tournament-hero-banner?tournamentId=${encodeURIComponent(tournamentId)}`, { method: 'DELETE' });
+      const res = await fetch(`/api/admin/tournament-hero-banner?tournamentId=${encodeURIComponent(tournamentId)}${orgParam}`, { method: 'DELETE' });
       if (!res.ok) throw new Error('Remove failed');
       setBannerPreview(null);
       setSaved(prev => prev ? { ...prev, heroBannerUrl: null } : null);
@@ -296,14 +296,51 @@ export default function TournamentBrandingPage() {
         </div>
       </div>
 
-      <UpgradeGate
-        requiredPlan="tournament_plus"
-        feature="Tournament branding"
-        description="Tournament Plus unlocks tournament logos, custom color presets, light mode, hero banners, fonts, and public card styles."
-      >
-        <>
       <div className={styles.card}>
-        <h2 className={styles.sectionTitle}>Tournament Logo</h2>
+        <h2 className={styles.sectionTitle}>Public Pages</h2>
+        <p className={styles.compactNote}>
+          Choose which pages appear on this tournament&apos;s public site.
+        </p>
+        <div className={styles.pageSelectorGrid}>
+          {PUBLIC_PAGE_OPTIONS.map(page => {
+            const checked = !publicHiddenPages.includes(page.key);
+            return (
+              <label key={page.key} className={styles.pageSelector}>
+                <input
+                  type="checkbox"
+                  checked={checked}
+                  onChange={() => togglePublicPage(page.key)}
+                />
+                <span>
+                  <strong>{page.label}</strong>
+                </span>
+              </label>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className={styles.advancedHeader}>
+        <div>
+          <p className={styles.advancedEyebrow}>Advanced Branding</p>
+        </div>
+        <span className={styles.planBadge}>Tournament Plus</span>
+      </div>
+
+      {!canUseAdvancedBranding && (
+        <p className={styles.upgradeNote} style={{ marginBottom: '1rem' }}>
+          Tournament Plus unlocks tournament logos, custom color presets, light mode, hero banners, fonts, and public card styles.{' '}
+          <Link href={`/${currentOrg?.slug ?? 'admin'}/admin/tournaments/settings/subscription`}>
+            Upgrade
+          </Link>
+          .
+        </p>
+      )}
+      <div className={advancedCardClass}>
+        <div className={styles.sectionTitleRow}>
+          <h2 className={styles.sectionTitle}>Tournament Logo</h2>
+          {!canUseAdvancedBranding && <span className={styles.lockedBadge}>Locked</span>}
+        </div>
         <div className={styles.logoRow}>
           <div className={styles.logoPreview}>
             {logoPreview
@@ -312,14 +349,17 @@ export default function TournamentBrandingPage() {
             }
           </div>
           <div className={styles.logoActions}>
-            <button type="button" className="btn btn-outline" onClick={() => fileInputRef.current?.click()} disabled={logoUploading}>
+            <button type="button" className="btn btn-outline" onClick={() => fileInputRef.current?.click()} disabled={logoUploading || !canUseAdvancedBranding}>
               <Upload size={15} />
               {logoUploading ? 'Uploading...' : logoPreview ? 'Replace Logo' : 'Upload Logo'}
             </button>
-            {logoPreview && (
+            {logoPreview && canUseAdvancedBranding && (
               <button type="button" className="btn btn-ghost" onClick={handleRemoveLogo} disabled={logoUploading}>
                 Remove
               </button>
+            )}
+            {!canUseAdvancedBranding && (
+              <p className={styles.upgradeNote}>Tournament logos are available on Tournament Plus and higher plans.</p>
             )}
             <p className={styles.logoHint}>JPG, PNG, or WebP - max 2 MB. Falls back to organization logo when not set.</p>
           </div>
@@ -327,8 +367,11 @@ export default function TournamentBrandingPage() {
         <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp" onChange={handleLogoChange} style={{ display: 'none' }} />
       </div>
 
-      <div className={styles.card}>
-        <h2 className={styles.sectionTitle}>Theme</h2>
+      <div className={advancedCardClass}>
+        <div className={styles.sectionTitleRow}>
+          <h2 className={styles.sectionTitle}>Theme</h2>
+          {!canUseAdvancedBranding && <span className={styles.lockedBadge}>Locked</span>}
+        </div>
         <p className={styles.compactNote}>
           Choose the public site color palette and background mode for this tournament.
         </p>
@@ -341,9 +384,10 @@ export default function TournamentBrandingPage() {
               title={preset.name}
               aria-label={preset.name}
               aria-pressed={presetKey === key}
-              className={`${styles.swatch} ${presetKey === key ? styles.swatchActive : ''}`}
+              className={`${styles.swatch} ${presetKey === key ? styles.swatchActive : ''} ${!canUseAdvancedBranding ? styles.swatchLocked : ''}`}
               style={{ background: preset.primary }}
-              onClick={() => setPresetKey(key)}
+              onClick={() => canUseAdvancedBranding && setPresetKey(key)}
+              disabled={!canUseAdvancedBranding}
             >
               {presetKey === key && <span className={styles.swatchCheck}>✓</span>}
             </button>
@@ -355,6 +399,7 @@ export default function TournamentBrandingPage() {
             aria-pressed={presetKey === 'custom'}
             className={`${styles.swatch} ${styles.swatchCustom} ${presetKey === 'custom' ? styles.swatchActive : ''} ${!canUseAdvancedBranding ? styles.swatchLocked : ''}`}
             onClick={() => canUseAdvancedBranding && setPresetKey('custom')}
+            disabled={!canUseAdvancedBranding}
           >
             {presetKey === 'custom' && canUseAdvancedBranding
               ? <span className={styles.swatchCheck}>✓</span>
@@ -385,7 +430,8 @@ export default function TournamentBrandingPage() {
                 type="button"
                 aria-pressed={colorMode === m}
                 className={`${styles.modeToggleBtn} ${colorMode === m ? styles.modeToggleBtnActive : ''}`}
-                onClick={() => setColorMode(m)}
+                onClick={() => canUseAdvancedBranding && setColorMode(m)}
+                disabled={!canUseAdvancedBranding}
               >
                 {m === 'dark' ? 'Dark' : 'Light'}
               </button>
@@ -422,46 +468,6 @@ export default function TournamentBrandingPage() {
 
         <p className={styles.inheritNote}>When not set, this tournament inherits the organization color theme.</p>
       </div>
-        </>
-      </UpgradeGate>
-
-      <div className={styles.card}>
-        <h2 className={styles.sectionTitle}>Public Pages</h2>
-        <p className={styles.compactNote}>
-          Choose which pages appear on this tournament&apos;s public site.
-        </p>
-        <div className={styles.pageSelectorGrid}>
-          {PUBLIC_PAGE_OPTIONS.map(page => {
-            const checked = !publicHiddenPages.includes(page.key);
-            return (
-              <label key={page.key} className={styles.pageSelector}>
-                <input
-                  type="checkbox"
-                  checked={checked}
-                  onChange={() => togglePublicPage(page.key)}
-                />
-                <span>
-                  <strong>{page.label}</strong>
-                </span>
-              </label>
-            );
-          })}
-        </div>
-      </div>
-
-      <UpgradeGate
-        requiredPlan="tournament_plus"
-        feature="Advanced tournament branding"
-        description="Tournament Plus unlocks hero banners, custom fonts, and public card styles for a polished event site."
-      >
-        <>
-      <div className={styles.advancedHeader}>
-        <div>
-          <p className={styles.advancedEyebrow}>Advanced</p>
-        </div>
-        <span className={styles.planBadge}>Tournament Plus</span>
-      </div>
-
       <div className={advancedCardClass}>
         <div className={styles.sectionTitleRow}>
           <h2 className={styles.sectionTitle}>Hero Banner</h2>
@@ -485,7 +491,7 @@ export default function TournamentBrandingPage() {
             <ImageIcon size={15} />
             {bannerUploading ? 'Uploading...' : bannerPreview ? 'Replace Banner' : 'Upload Banner'}
           </button>
-          {bannerPreview && (
+          {bannerPreview && canUseAdvancedBranding && (
             <button type="button" className="btn btn-ghost" onClick={handleRemoveBanner} disabled={bannerUploading}>
               Remove
             </button>
@@ -553,9 +559,6 @@ export default function TournamentBrandingPage() {
         )}
         <p className={styles.inheritNote}>When not set, this tournament inherits the organization card style.</p>
       </div>
-        </>
-      </UpgradeGate>
-
       <div className={styles.formFooter}>
         {isDirty && <span className={styles.unsavedLabel}>Unsaved changes</span>}
         <button type="button" className="btn btn-primary" onClick={handleSave} disabled={saving || !isDirty}>

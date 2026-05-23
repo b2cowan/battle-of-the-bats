@@ -24,7 +24,7 @@ function timeAgo(iso: string): string {
   return `${d}d ago`;
 }
 
-export function LiveEventLog({ tournamentId }: { tournamentId: string }) {
+export function LiveEventLog({ tournamentId, orgSlug }: { tournamentId: string; orgSlug?: string }) {
   const [events, setEvents] = useState<EnrichedEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const supabase = createClient();
@@ -32,12 +32,13 @@ export function LiveEventLog({ tournamentId }: { tournamentId: string }) {
   const fetchHistory = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/admin/tournament-activity?tournamentId=${tournamentId}&limit=30`);
+      const orgParam = orgSlug ? `&orgSlug=${encodeURIComponent(orgSlug)}` : '';
+      const res = await fetch(`/api/admin/tournament-activity?tournamentId=${tournamentId}&limit=30${orgParam}`);
       if (res.ok) setEvents(await res.json());
     } finally {
       setLoading(false);
     }
-  }, [tournamentId]);
+  }, [tournamentId, orgSlug]);
 
   useEffect(() => { void fetchHistory(); }, [fetchHistory]);
 

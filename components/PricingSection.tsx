@@ -44,6 +44,7 @@ const PLANS: Plan[] = [
     features: [
       'Manual tournament scheduling',
       'Basic standard team registration',
+      'Selected-row status updates and waitlist collection',
       'Score entry and results',
       'Standings',
       'Field and diamond management',
@@ -78,8 +79,8 @@ const PLANS: Plan[] = [
       'Registration exports — Excel, CSV, and PDF for check-in, insurance, and reporting',
       'Schedule and results exports with iCal calendar download',
       'Customizable PDF templates with your logo, header, and footer',
-      'Bulk registration actions',
-      'Division capacity and waitlist automation',
+      'Payment reminders and readiness reporting',
+      'Waitlist promotion and queue management',
       'Full branding control',
       'Automated schedule generation',
       'Playoff bracket generator',

@@ -36,11 +36,12 @@ interface Props {
   initialStatus: string;
 }
 
-const PLANS = ['tournament', 'tournament_plus', 'league', 'club'] as const;
+const PLANS = ['tournament', 'team', 'tournament_plus', 'league', 'club'] as const;
 const STATUSES = ['active', 'trialing', 'past_due', 'canceled'] as const;
 
 const PLAN_LABELS: Record<string, string> = {
   tournament:      'Tournament',
+  team:            'Team',
   tournament_plus: 'Tournament Plus',
   league:          'League',
   club:            'Club',

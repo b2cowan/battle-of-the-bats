@@ -20,7 +20,7 @@ import { PLAN_CONFIG } from '@/lib/plan-config';
 import type { OrgPlan } from '@/lib/types';
 import styles from './UpgradeGate.module.css';
 
-const PLAN_ORDER: OrgPlan[] = ['tournament', 'tournament_plus', 'league', 'club'];
+const PLAN_ORDER: OrgPlan[] = ['tournament', 'team', 'tournament_plus', 'league', 'club'];
 
 interface UpgradeGateProps {
   /** Minimum plan required to see children. */

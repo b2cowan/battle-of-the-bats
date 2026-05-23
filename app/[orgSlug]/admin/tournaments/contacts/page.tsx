@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { BookUser, Plus, Pencil, Trash2, X, Check, Mail, Phone, CheckCircle2, Circle, Info } from 'lucide-react';
 import { useTournament } from '@/lib/tournament-context';
+import { useOrg } from '@/lib/org-context';
 import { Contact } from '@/lib/types';
 import styles from '../age-groups/admin-page.module.css';
 
@@ -16,6 +17,9 @@ async function requestJson<T>(url: string, init?: RequestInit): Promise<T> {
 
 export default function AdminContactsPage() {
   const { currentTournament } = useTournament();
+  const { currentOrg } = useOrg();
+  const orgQuery = currentOrg?.slug ? `?orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
+  const orgParam = currentOrg?.slug ? `&orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [modal, setModal] = useState<ModalMode>(null);
   const [editing, setEditing] = useState<Contact | null>(null);
@@ -25,16 +29,16 @@ export default function AdminContactsPage() {
 
   const refresh = useCallback(async () => {
     if (!currentTournament?.id) { setContacts([]); return; }
-    const rows = await requestJson<Contact[]>(`/api/admin/contacts?tournamentId=${currentTournament.id}`);
+    const rows = await requestJson<Contact[]>(`/api/admin/contacts?tournamentId=${currentTournament.id}${orgParam}`);
     setContacts(rows);
-  }, [currentTournament?.id]);
+  }, [currentTournament?.id, orgParam]);
 
   useEffect(() => { void refresh(); }, [refresh]);
 
   async function setPublicContact(email: string) {
     if (!currentTournament) return;
     setSettingNotif(email);
-    await fetch('/api/admin/tournaments', {
+    await fetch(`/api/admin/tournaments${orgQuery}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -70,13 +74,13 @@ export default function AdminContactsPage() {
       role: form.role.trim() || undefined,
     };
     if (modal === 'add') {
-      await requestJson('/api/admin/contacts', {
+      await requestJson(`/api/admin/contacts${orgQuery}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'save', data }),
       });
       if (form.setAsPublic) {
-        await fetch('/api/admin/tournaments', {
+        await fetch(`/api/admin/tournaments${orgQuery}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ action: 'set-contact-email', id: currentTournament.id, data: { contactEmail: data.email } }),
@@ -84,7 +88,7 @@ export default function AdminContactsPage() {
       }
 
     } else if (editing) {
-      await requestJson('/api/admin/contacts', {
+      await requestJson(`/api/admin/contacts${orgQuery}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'update', id: editing.id, data }),
@@ -148,7 +152,7 @@ export default function AdminContactsPage() {
         </div>
       </div>
 
-      <div className="table-wrap">
+      <div className={`table-wrap ${styles.responsiveTable}`}>
         <table>
           <thead>
             <tr>
@@ -162,26 +166,26 @@ export default function AdminContactsPage() {
           </thead>
           <tbody>
             {contacts.length === 0 ? (
-              <tr><td colSpan={6} style={{ textAlign: 'center', color: 'var(--white-30)', padding: '2rem' }}>No contacts added yet.</td></tr>
+              <tr><td colSpan={6} className={styles.emptyTableCell}>No contacts added yet.</td></tr>
             ) : contacts.map(c => {
               const isNotifContact = currentTournament?.contactEmail === c.email;
               return (
                 <tr key={c.id}>
-                  <td><strong>{c.name}</strong></td>
-                  <td>{c.role ? <span className="badge badge-primary">{c.role}</span> : '—'}</td>
-                  <td>
+                  <td data-label="Name"><strong>{c.name}</strong></td>
+                  <td data-label="Role">{c.role ? <span className="badge badge-primary">{c.role}</span> : '—'}</td>
+                  <td data-label="Email">
                     <a href={`mailto:${c.email}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, color: 'var(--white-60)' }}>
                       <Mail size={12} /> {c.email}
                     </a>
                   </td>
-                  <td>
+                  <td data-label="Phone">
                     {c.phone ? (
                       <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, color: 'var(--white-60)' }}>
                         <Phone size={12} /> {c.phone}
                       </span>
                     ) : '—'}
                   </td>
-                  <td>
+                  <td data-label="Public Contact">
                     {isNotifContact ? (
                       <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', color: 'var(--logic-lime)', fontSize: '0.8rem', fontWeight: 700 }}>
                         <CheckCircle2 size={15} /> Public contact
@@ -198,8 +202,8 @@ export default function AdminContactsPage() {
                       </button>
                     )}
                   </td>
-                  <td>
-                    <div className="flex gap-1">
+                  <td data-label="Actions">
+                    <div className={styles.mobileActions}>
                       <button className="btn btn-ghost btn-sm" onClick={() => openEdit(c)}><Pencil size={13} /></button>
                       <button className="btn btn-danger btn-sm" onClick={() => setDeleteId(c.id)}><Trash2 size={13} /></button>
                     </div>
@@ -278,7 +282,7 @@ export default function AdminContactsPage() {
             <div className="modal-footer">
               <button className="btn btn-ghost" onClick={() => setDeleteId(null)}>Cancel</button>
               <button className="btn btn-danger" onClick={async () => {
-                await requestJson('/api/admin/contacts', {
+                await requestJson(`/api/admin/contacts${orgQuery}`, {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({ action: 'delete', id: deleteId }),

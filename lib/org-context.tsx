@@ -55,7 +55,8 @@ export function OrgProvider({
     setUser(authUser);
 
     try {
-      const res = await fetch('/api/org-context', { cache: 'no-store' });
+      const orgParam = initialOrg?.slug ? `?orgSlug=${encodeURIComponent(initialOrg.slug)}` : '';
+      const res = await fetch(`/api/org-context${orgParam}`, { cache: 'no-store' });
       if (res.ok) {
         const data = await res.json();
         setCurrentOrg(data.org ?? null);

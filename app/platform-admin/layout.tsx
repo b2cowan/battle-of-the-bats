@@ -27,6 +27,15 @@ export default async function PlatformAdminLayout({
     redirect('/platform-admin/login?next=/platform-admin');
   }
 
+  if (pathname.startsWith('/platform-admin/help')) {
+    return (
+      <main className={`${styles.main} ${styles.helpMain}`}>
+        <PlatformVisitRecorder />
+        {children}
+      </main>
+    );
+  }
+
   return (
     <div className={styles.shell}>
       <PlatformAdminNav sessionEmail={user.email ?? ''} />

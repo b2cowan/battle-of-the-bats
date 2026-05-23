@@ -10,11 +10,12 @@ import FeedbackModal from '@/components/FeedbackModal';
 interface Props {
   ageGroup: AgeGroup;
   tournamentId: string;
+  orgSlug?: string;
   onClose: () => void;
   onComplete: () => void;
 }
 
-export default function PlayoffWizard({ ageGroup, tournamentId, onClose, onComplete }: Props) {
+export default function PlayoffWizard({ ageGroup, tournamentId, orgSlug, onClose, onComplete }: Props) {
   const [loading, setLoading] = useState(false);
   const [tournament, setTournament] = useState<Tournament | null>(null);
   const [teams, setTeams] = useState<Team[]>([]);
@@ -35,17 +36,19 @@ export default function PlayoffWizard({ ageGroup, tournamentId, onClose, onCompl
   const [templatePreview, setTemplatePreview] = useState<any[]>([]);
   const [showConfirm, setShowConfirm] = useState(false);
   const [showWarning, setShowWarning] = useState(false);
+  const orgQuery = orgSlug ? `?orgSlug=${encodeURIComponent(orgSlug)}` : '';
+  const orgParam = orgSlug ? `&orgSlug=${encodeURIComponent(orgSlug)}` : '';
 
   useEffect(() => {
     getTournament(tournamentId).then(setTournament);
     Promise.all([
-      fetch(`/api/admin/diamonds?tournamentId=${encodeURIComponent(tournamentId)}`).then(r => r.ok ? r.json() : []),
-      fetch(`/api/admin/teams?tournamentId=${encodeURIComponent(tournamentId)}`).then(r => r.ok ? r.json() : []),
+      fetch(`/api/admin/diamonds?tournamentId=${encodeURIComponent(tournamentId)}${orgParam}`).then(r => r.ok ? r.json() : []),
+      fetch(`/api/admin/teams?tournamentId=${encodeURIComponent(tournamentId)}${orgParam}`).then(r => r.ok ? r.json() : []),
     ]).then(([ds, all]) => {
       setDiamonds(ds);
       setTeams((all as any[]).filter(t => t.ageGroupId === ageGroup.id && t.status === 'accepted'));
     });
-  }, [tournamentId, ageGroup.id]);
+  }, [tournamentId, ageGroup.id, orgParam]);
 
   useEffect(() => {
     if (config.crossover === 'standard' && (ageGroup.pools?.length || 0) !== 2) {
@@ -268,7 +271,7 @@ export default function PlayoffWizard({ ageGroup, tournamentId, onClose, onCompl
         };
       });
 
-      const deleteRes = await fetch('/api/admin/games', {
+      const deleteRes = await fetch(`/api/admin/games${orgQuery}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'delete-division-playoff-games', ageGroupId: ageGroup.id }),
@@ -276,7 +279,7 @@ export default function PlayoffWizard({ ageGroup, tournamentId, onClose, onCompl
       const deleteData = await deleteRes.json();
       if (!deleteRes.ok) throw new Error(deleteData.error || 'Failed to clear existing playoff games');
 
-      const saveRes = await fetch('/api/admin/games', {
+      const saveRes = await fetch(`/api/admin/games${orgQuery}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'bulk-save', games: gameRows, tournamentId, ageGroupId: ageGroup.id }),

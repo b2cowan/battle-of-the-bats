@@ -13,6 +13,7 @@ const MARKETING_NAV_LINKS = [
   { href: '/platform/house-league', label: 'House League' },
   { href: '/platform/rep-teams',    label: 'Rep Teams'    },
   { href: '/platform/accounting',   label: 'Accounting'   },
+  { href: '/team',                  label: 'Team'         },
   { href: '/pricing',               label: 'Pricing'      },
 ];
 
@@ -34,6 +35,7 @@ function isMarketingPath(pathname: string) {
     pathname === '/' ||
     pathname.startsWith('/discover') ||
     pathname.startsWith('/platform') ||
+    pathname.startsWith('/team') ||
     pathname.startsWith('/pricing') ||
     pathname.startsWith('/auth')
   );

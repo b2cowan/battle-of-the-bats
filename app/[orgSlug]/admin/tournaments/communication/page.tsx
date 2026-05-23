@@ -51,6 +51,7 @@ function toggleSetValue<T>(set: Set<T>, value: T) {
 export default function AdminCommunicationPage() {
   const { currentTournament } = useTournament();
   const { currentOrg } = useOrg();
+  const orgSlug = currentOrg?.slug;
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
   const [ageGroups, setAgeGroups] = useState<AgeGroup[]>([]);
@@ -81,10 +82,11 @@ export default function AdminCommunicationPage() {
 
       setLoading(true);
       const tournamentId = encodeURIComponent(currentTournament.id);
+      const orgParam = orgSlug ? `&orgSlug=${encodeURIComponent(orgSlug)}` : '';
       const [contactsRes, teamsRes, groupsRes] = await Promise.all([
-        fetch(`/api/admin/contacts?tournamentId=${tournamentId}`),
-        fetch(`/api/admin/teams?tournamentId=${tournamentId}`),
-        fetch(`/api/admin/age-groups?tournamentId=${tournamentId}`),
+        fetch(`/api/admin/contacts?tournamentId=${tournamentId}${orgParam}`),
+        fetch(`/api/admin/teams?tournamentId=${tournamentId}${orgParam}`),
+        fetch(`/api/admin/age-groups?tournamentId=${tournamentId}${orgParam}`),
       ]);
 
       setContacts(contactsRes.ok ? await contactsRes.json() : []);
@@ -94,7 +96,7 @@ export default function AdminCommunicationPage() {
     }
 
     void load();
-  }, [currentTournament?.id]);
+  }, [currentTournament?.id, orgSlug]);
 
   const ageGroupNameById = useMemo(() => new Map(ageGroups.map(group => [group.id, group.name])), [ageGroups]);
   const canTargetAnnouncements = currentOrg ? hasPlanFeature(currentOrg.planId, 'targeted_tournament_announcements') : false;
@@ -200,7 +202,8 @@ export default function AdminCommunicationPage() {
     setStatus(null);
 
     try {
-      const res = await fetch('/api/send-message', {
+      const orgQuery = orgSlug ? `?orgSlug=${encodeURIComponent(orgSlug)}` : '';
+      const res = await fetch(`/api/send-message${orgQuery}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

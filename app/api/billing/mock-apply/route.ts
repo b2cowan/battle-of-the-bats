@@ -7,6 +7,7 @@ import type { OrgPlan, SubscriptionStatus } from '@/lib/types';
 
 const PLAN_RANK: Record<OrgPlan, number> = {
   tournament: 0,
+  team: 0,
   tournament_plus: 1,
   league: 2,
   club: 3,

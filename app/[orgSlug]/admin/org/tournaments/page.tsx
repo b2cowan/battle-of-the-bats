@@ -1,6 +1,6 @@
 ﻿'use client';
-import { useState, useEffect, use, useCallback } from 'react';
-import { RefreshCw, Plus, Check, X, Trash2, Pencil, ExternalLink } from 'lucide-react';
+import { useState, useEffect, use, useCallback, type CSSProperties } from 'react';
+import { RefreshCw, Plus, Check, X, Trash2, Pencil, ExternalLink, ChevronDown, ChevronUp, HelpCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useTournament } from '@/lib/tournament-context';
 import { useOrg } from '@/lib/org-context';
@@ -35,8 +35,9 @@ function getTodayDateValue() {
   return year && month && day ? `${year}-${month}-${day}` : new Date().toISOString().slice(0, 10);
 }
 
-async function getAdminArchives(): Promise<TournamentArchive[]> {
-  const res = await fetch('/api/admin/tournament-archives', { cache: 'no-store' });
+async function getAdminArchives(orgSlug?: string): Promise<TournamentArchive[]> {
+  const orgQuery = orgSlug ? `?orgSlug=${encodeURIComponent(orgSlug)}` : '';
+  const res = await fetch(`/api/admin/tournament-archives${orgQuery}`, { cache: 'no-store' });
   if (!res.ok) return [];
   const data = await res.json();
   return Array.isArray(data) ? data : [];
@@ -108,8 +109,9 @@ function mapAdminTournament(row: AdminTournamentRow): Tournament {
   };
 }
 
-async function getAdminTournaments(): Promise<Tournament[]> {
-  const res = await fetch('/api/admin/tournaments', { cache: 'no-store' });
+async function getAdminTournaments(orgSlug?: string): Promise<Tournament[]> {
+  const orgQuery = orgSlug ? `?orgSlug=${encodeURIComponent(orgSlug)}` : '';
+  const res = await fetch(`/api/admin/tournaments${orgQuery}`, { cache: 'no-store' });
   if (!res.ok) return [];
   const data: unknown = await res.json();
   if (!Array.isArray(data)) return [];
@@ -143,6 +145,7 @@ export default function AdminTournamentsPage({
   const [editing, setEditing]   = useState<Tournament | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [sealedTournamentIds, setSealedTournamentIds] = useState<Set<string>>(new Set());
+  const [showLifecycle, setShowLifecycle] = useState(false);
   const [feedback, setFeedback] = useState<{
     isOpen: boolean;
     title: string;
@@ -180,8 +183,8 @@ export default function AdminTournamentsPage({
   const refresh = useCallback(async () => {
     if (currentOrg) {
       const [ts, archives] = await Promise.all([
-        getAdminTournaments(),
-        getAdminArchives(),
+        getAdminTournaments(currentOrg.slug),
+        getAdminArchives(currentOrg.slug),
       ]);
       setTournaments(ts);
       setSealedTournamentIds(new Set(archives.map(a => a.tournamentId).filter(Boolean) as string[]));
@@ -210,7 +213,8 @@ export default function AdminTournamentsPage({
       setSlugStatus('checking');
       setSlugMessage('Checking URL availability...');
       try {
-        const res = await fetch('/api/admin/tournaments', {
+        const orgQuery = currentOrg?.slug ? `?orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
+        const res = await fetch(`/api/admin/tournaments${orgQuery}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -229,7 +233,7 @@ export default function AdminTournamentsPage({
     }, !modal || !form.slug ? 0 : 350);
 
     return () => window.clearTimeout(timer);
-  }, [modal, form.slug, editing?.id]);
+  }, [modal, form.slug, editing?.id, currentOrg?.slug]);
 
   function openAdd() {
     const limit = currentOrg?.tournamentLimit ?? 9999;
@@ -333,7 +337,8 @@ export default function AdminTournamentsPage({
           migration: null
         };
 
-        const res = await fetch('/api/admin/setup-tournament', {
+        const orgQuery = currentOrg?.slug ? `?orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
+        const res = await fetch(`/api/admin/setup-tournament${orgQuery}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(setupData)
@@ -346,7 +351,8 @@ export default function AdminTournamentsPage({
         if (!res.ok) throw new Error(result.error || 'Setup failed');
         setCreatedTournament({ name: data.name, slug: data.slug });
       } else if (editing) {
-        const res = await fetch('/api/admin/tournaments', {
+        const orgQuery = currentOrg?.slug ? `?orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
+        const res = await fetch(`/api/admin/tournaments${orgQuery}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -445,7 +451,8 @@ export default function AdminTournamentsPage({
 
   async function applyTournamentStatus(id: string, status: TournamentStatus) {
     try {
-      const res = await fetch('/api/admin/tournaments', {
+      const orgQuery = currentOrg?.slug ? `?orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
+      const res = await fetch(`/api/admin/tournaments${orgQuery}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'set-status', id, data: { status } }),
@@ -468,7 +475,8 @@ export default function AdminTournamentsPage({
 
   async function handleSetStatus(tournament: Tournament, status: TournamentStatus) {
     if (status === 'active') {
-      const agRes = await fetch(`/api/admin/age-groups?tournamentId=${encodeURIComponent(tournament.id)}`);
+      const orgParam = currentOrg?.slug ? `&orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
+      const agRes = await fetch(`/api/admin/age-groups?tournamentId=${encodeURIComponent(tournament.id)}${orgParam}`);
       const ageGroups: any[] = agRes.ok ? await agRes.json() : [];
       const blockers: string[] = [];
       const reminders: string[] = [];
@@ -516,7 +524,8 @@ export default function AdminTournamentsPage({
 
   async function handleSeal(id: string) {
     try {
-      const res = await fetch('/api/admin/seal-tournament', {
+      const orgQuery = currentOrg?.slug ? `?orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
+      const res = await fetch(`/api/admin/seal-tournament${orgQuery}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ tournamentId: id }),
@@ -539,7 +548,8 @@ export default function AdminTournamentsPage({
   async function handleDelete() {
     if (!deleteId) return;
     try {
-      const res = await fetch('/api/admin/tournaments', {
+      const orgQuery = currentOrg?.slug ? `?orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
+      const res = await fetch(`/api/admin/tournaments${orgQuery}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'delete', id: deleteId })
@@ -573,40 +583,50 @@ export default function AdminTournamentsPage({
             <p className={styles.pageSub}>Manage tournament years — create a new season and set which one is live</p>
           </div>
         </div>
+        <div className={styles.headerActions}>
+          {tournamentLimit < 9999 && (
+            <span className={`${styles.slotCount} ${tournamentLimitReached ? styles.slotCountLimit : ''}`}>
+              {occupiedTournamentSlotCount} / {tournamentLimitLabel} slots
+            </span>
+          )}
+          <button
+            className="btn btn-primary btn-sm"
+            onClick={openAdd}
+            disabled={loadingData}
+            id="tournament-add-btn"
+          >
+            <Plus size={16} /> New Tournament
+          </button>
+        </div>
+      </div>
+
+      <div className={styles.lifecycleToggleRow}>
         <button
-          className="btn btn-primary btn-sm"
-          onClick={openAdd}
-          disabled={loadingData}
-          id="tournament-add-btn"
+          type="button"
+          onClick={() => setShowLifecycle(open => !open)}
+          className={styles.lifecycleToggle}
         >
-          <Plus size={16} /> New Tournament
+          <HelpCircle size={12} />
+          How statuses work
+          {showLifecycle ? <ChevronUp size={11} /> : <ChevronDown size={11} />}
         </button>
       </div>
 
-      <div className={styles.lifecycleStrip}>
-        <div className={styles.lifecycleItems}>
-          <div className={styles.lifecycleItem}>
-            <strong>Draft</strong>
-            <span>Private — admins only</span>
-          </div>
-          <div className={styles.lifecycleItem}>
-            <strong>Active</strong>
-            <span>Registration open to public</span>
-          </div>
-          <div className={styles.lifecycleItem}>
-            <strong>Completed</strong>
-            <span>Event over — archive to free slot</span>
-          </div>
-          <div className={styles.lifecycleItem}>
-            <strong>Archived</strong>
-            <span>Hidden — slot freed</span>
-          </div>
+      {showLifecycle && (
+        <div className={styles.lifecycleGrid}>
+          {[
+            { label: 'Draft',     desc: 'Private — admins only',              color: 'rgba(148,163,184,0.55)' },
+            { label: 'Active',    desc: 'Registration open to public',        color: 'var(--logic-lime)'       },
+            { label: 'Completed', desc: 'Event over — archive to free a slot', color: '#f6c453'               },
+            { label: 'Archived',  desc: 'Hidden — slot freed',                color: 'rgba(148,163,184,0.3)'  },
+          ].map(({ label, desc, color }) => (
+            <div key={label} className={styles.lifecycleCard} style={{ '--lifecycle-color': color } as CSSProperties}>
+              <strong>{label}</strong>
+              <span>{desc}</span>
+            </div>
+          ))}
         </div>
-        <div className={styles.lifecycleCount}>
-          <span className={styles.lifecycleCountValue}>{occupiedTournamentSlotCount} / {tournamentLimitLabel}</span>
-          <span className={styles.lifecycleCountLabel}>slots used</span>
-        </div>
-      </div>
+      )}
 
       {/* F3 — soft upsell when tournament slot limit is reached */}
       {tournamentLimitReached && currentOrg && currentOrg.planId === 'tournament' && (
@@ -664,7 +684,7 @@ export default function AdminTournamentsPage({
         ) : null;
       })()}
 
-      <div className="table-wrap">
+      <div className={`table-wrap ${styles.responsiveTable}`}>
         <table>
           <thead>
             <tr>
@@ -689,16 +709,15 @@ export default function AdminTournamentsPage({
               </tr>
             ) : tournaments.map(t => (
               <tr key={t.id}>
-                <td>
+                <td data-label="Tournament">
                   <strong>{t.name}</strong>
                 </td>
-                <td>
+                <td data-label="Year">
                   <span className="badge badge-primary">{t.year}</span>
                 </td>
-                <td>
+                <td data-label="Status">
                   <select
-                    className="form-input"
-                    style={{ padding: '0.25rem 0.5rem', fontSize: '0.8rem', minWidth: '120px' }}
+                    className={`form-input ${styles.statusSelect}`}
                     value={t.status}
                     disabled={sealedTournamentIds.has(t.id)}
                     onChange={e => handleSetStatus(t, e.target.value as TournamentStatus)}
@@ -710,8 +729,8 @@ export default function AdminTournamentsPage({
                     <option value="archived">Archived</option>
                   </select>
                 </td>
-                <td>
-                  <div className="flex gap-1 flex-wrap">
+                <td data-label="Actions">
+                  <div className={styles.rowActions}>
                     {t.status === 'completed' && (
                       sealedTournamentIds.has(t.id) ? (
                         <span className="badge badge-neutral" title="This tournament has been sealed to the Digital Ledger">
@@ -1023,6 +1042,7 @@ export default function AdminTournamentsPage({
 
       <TournamentSetupWizard
         isOpen={setupWizardOpen}
+        orgSlug={currentOrg?.slug}
         orgContactEmail={currentOrg?.contactEmail}
         existingTournaments={tournaments
           .filter(t => t.status !== 'archived')

@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { Tag, Plus, Pencil, Trash2, X, Check, ChevronUp, ChevronDown, Trophy } from 'lucide-react';
 import { useTournament } from '@/lib/tournament-context';
+import { useOrg } from '@/lib/org-context';
 import type { AgeGroup, Contact } from '@/lib/types';
 import styles from './admin-page.module.css';
 
@@ -26,11 +27,12 @@ type AgeGroupFormPayload = {
   totalFeeDueDate?: string | null;
 };
 
-async function loadAgeGroupState(tournamentId?: string) {
+async function loadAgeGroupState(tournamentId?: string, orgSlug?: string) {
   if (!tournamentId) return { groups: [] as AgeGroup[], contacts: [] as Contact[] };
+  const orgParam = orgSlug ? `&orgSlug=${encodeURIComponent(orgSlug)}` : '';
   const [groupsRes, contactsRes] = await Promise.all([
-    fetch(`/api/admin/age-groups?tournamentId=${encodeURIComponent(tournamentId)}`),
-    fetch(`/api/admin/contacts?tournamentId=${encodeURIComponent(tournamentId)}`),
+    fetch(`/api/admin/age-groups?tournamentId=${encodeURIComponent(tournamentId)}${orgParam}`),
+    fetch(`/api/admin/contacts?tournamentId=${encodeURIComponent(tournamentId)}${orgParam}`),
   ]);
   const groups: AgeGroup[]  = groupsRes.ok   ? await groupsRes.json()   : [];
   const contacts: Contact[] = contactsRes.ok ? await contactsRes.json() : [];
@@ -49,6 +51,7 @@ function normalizeTieBreakers(values: string[]): TieBreaker[] {
 
 export default function AgeGroupsPage() {
   const { currentTournament } = useTournament();
+  const { currentOrg } = useOrg();
   const [groups, setGroups] = useState<AgeGroup[]>([]);
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [modal, setModal] = useState<ModalMode>(null);
@@ -63,7 +66,7 @@ export default function AgeGroupsPage() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
   async function refresh() {
-    const next = await loadAgeGroupState(currentTournament?.id);
+    const next = await loadAgeGroupState(currentTournament?.id, currentOrg?.slug);
     setGroups(next.groups);
     setContacts(next.contacts);
   }
@@ -72,7 +75,7 @@ export default function AgeGroupsPage() {
     let cancelled = false;
 
     async function load() {
-      const next = await loadAgeGroupState(currentTournament?.id);
+      const next = await loadAgeGroupState(currentTournament?.id, currentOrg?.slug);
       if (cancelled) return;
       setGroups(next.groups);
       setContacts(next.contacts);
@@ -80,7 +83,7 @@ export default function AgeGroupsPage() {
 
     void load();
     return () => { cancelled = true; };
-  }, [currentTournament?.id]);
+  }, [currentTournament?.id, currentOrg?.slug]);
 
   function openAdd() {
     setForm({
@@ -154,7 +157,8 @@ export default function AgeGroupsPage() {
     };
 
     try {
-      const res = await fetch('/api/admin/age-groups', {
+      const orgQuery = currentOrg?.slug ? `?orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
+      const res = await fetch(`/api/admin/age-groups${orgQuery}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
@@ -176,7 +180,8 @@ export default function AgeGroupsPage() {
   async function handleDelete() {
     if (!deleteId) return;
     try {
-      const res = await fetch('/api/admin/age-groups', {
+      const orgQuery = currentOrg?.slug ? `?orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
+      const res = await fetch(`/api/admin/age-groups${orgQuery}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'delete', id: deleteId })
@@ -222,7 +227,7 @@ export default function AgeGroupsPage() {
         </button>
       </div>
 
-      <div className="table-wrap">
+      <div className={`table-wrap ${styles.responsiveTable}`}>
         <table>
           <thead>
             <tr>
@@ -238,11 +243,11 @@ export default function AgeGroupsPage() {
           </thead>
           <tbody>
             {groups.length === 0 ? (
-              <tr><td colSpan={5} style={{ textAlign: 'center', color: 'var(--white-30)', padding: '2rem' }}>No divisions yet. Add one to get started.</td></tr>
+              <tr><td colSpan={8} className={styles.emptyTableCell}>No divisions yet. Add one to get started.</td></tr>
             ) : groups.map(g => (
               <tr key={g.id}>
-                <td><span className="badge badge-primary" style={{ fontSize: '0.875rem' }}>{g.name}</span></td>
-                <td>
+                <td data-label="Division"><span className="badge badge-primary" style={{ fontSize: '0.875rem' }}>{g.name}</span></td>
+                <td data-label="Pools">
                   {(g.poolCount || 0) >= 2 && g.pools && g.pools.length > 0 ? (
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem' }}>
                       {g.pools.map(p => (
@@ -255,15 +260,15 @@ export default function AgeGroupsPage() {
                     <span style={{ color: 'var(--white-20)', fontSize: '0.75rem' }}>No pools</span>
                   )}
                 </td>
-                <td>{g.minAge ?? 'Any'}</td>
-                <td>{g.maxAge ?? 'Any'}</td>
-                <td>{g.order}</td>
-                <td>{g.capacity || ''}</td>
-                <td>
+                <td data-label="Min Age">{g.minAge ?? 'Any'}</td>
+                <td data-label="Max Age">{g.maxAge ?? 'Any'}</td>
+                <td data-label="Order">{g.order}</td>
+                <td data-label="Capacity">{g.capacity || 'No limit'}</td>
+                <td data-label="Status">
                   {g.isClosed ? <span className="badge badge-danger">Closed</span> : <span className="badge badge-success">Open</span>}
                 </td>
-                <td>
-                  <div className="flex gap-1">
+                <td data-label="Actions">
+                  <div className={styles.mobileActions}>
                     <button className="btn btn-ghost btn-sm" onClick={() => openEdit(g)} id={`edit-age-group-${g.id}`}><Pencil size={13} /></button>
                     <button className="btn btn-danger btn-sm" onClick={() => setDeleteId(g.id)} id={`delete-age-group-${g.id}`}><Trash2 size={13} /></button>
                   </div>

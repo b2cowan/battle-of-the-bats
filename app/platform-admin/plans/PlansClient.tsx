@@ -13,12 +13,13 @@ import styles from './plans.module.css';
 
 const PLAN_META: Record<string, { label: string; price: string }> = {
   tournament:      { label: 'Tournament',      price: 'Free'      },
+  team:            { label: 'Team',            price: '$29/mo'    },
   tournament_plus: { label: 'Tournament Plus', price: '$39/mo'    },
   league:          { label: 'League',          price: '$89/mo'    },
   club:            { label: 'Club',            price: '$179/mo'   },
 };
 
-const ORDER = ['tournament', 'tournament_plus', 'league', 'club'];
+const ORDER = ['tournament', 'team', 'tournament_plus', 'league', 'club'];
 
 function formatDate(value: string | null) {
   if (!value) return '—';

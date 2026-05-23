@@ -18,7 +18,7 @@ import type { OrgPlan } from '@/lib/types';
 import PricingSection from '@/components/PricingSection';
 import styles from './onboarding.module.css';
 
-const PLAN_ORDER: OrgPlan[] = ['tournament', 'tournament_plus', 'league', 'club'];
+const PLAN_ORDER: OrgPlan[] = ['tournament', 'team', 'tournament_plus', 'league', 'club'];
 const STARTUP_ORDER = ['tournament', 'divisions', 'welcome', 'venues', 'contacts'] as const;
 const WIZARD_ORDER = ['plan', ...STARTUP_ORDER, 'review'] as const;
 const LEAGUE_STARTUP_ORDER = ['league_season', 'league_divisions', 'league_registration', 'league_tournament'] as const;
@@ -357,6 +357,7 @@ export default function OnboardingPage() {
   const [stepError, setStepError] = useState('');
   const [gatingMap, setGatingMap] = useState<Record<OrgPlan, boolean>>(() => ({
     tournament: PLAN_CONFIG.tournament.gatingStatus === 'early_access',
+    team: PLAN_CONFIG.team.gatingStatus === 'early_access',
     tournament_plus: PLAN_CONFIG.tournament_plus.gatingStatus === 'early_access',
     league: PLAN_CONFIG.league.gatingStatus === 'early_access',
     club: PLAN_CONFIG.club.gatingStatus === 'early_access',

@@ -6,13 +6,15 @@ import type { StripePriceRow } from '@/lib/stripe-prices';
 import styles from './stripe-prices.module.css';
 
 const PLAN_LABELS: Record<string, string> = {
+  team:            'Team',
   tournament_plus: 'Tournament Plus',
   league:          'League',
   club:            'Club',
-  rep_team:        'Additional Rep Team',
+  org_team_addon:  'Org Team Add-on',
+  rep_team:        'Club Extra Rep Team',
 };
 
-const PLAN_ORDER = ['tournament_plus', 'league', 'club', 'rep_team'];
+const PLAN_ORDER = ['team', 'tournament_plus', 'league', 'club', 'org_team_addon', 'rep_team'];
 
 function sortRows(rows: StripePriceRow[]): StripePriceRow[] {
   return [...rows].sort((a, b) => {

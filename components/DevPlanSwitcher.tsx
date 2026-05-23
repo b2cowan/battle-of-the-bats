@@ -3,7 +3,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useOrg } from '@/lib/org-context';
 
-const PLANS = ['tournament', 'tournament_plus', 'league', 'club'] as const;
+const PLANS = ['tournament', 'team', 'tournament_plus', 'league', 'club'] as const;
 
 export default function DevPlanSwitcher() {
   const { currentOrg, refresh } = useOrg();

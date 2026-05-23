@@ -96,7 +96,8 @@ function paymentDue(team: TeamExportRow, fee: FeeRow) {
 }
 
 export async function GET(req: NextRequest, { params }: RouteParams) {
-  const ctx = await getAuthContextWithScope();
+  const orgSlug = req.nextUrl.searchParams.get('orgSlug') ?? undefined;
+  const ctx = await getAuthContextWithScope({ orgSlug });
   if (!ctx) return unauthorized();
   if (!hasCapability(ctx.role, ctx.capabilities, 'module_tournaments')) return forbidden();
 

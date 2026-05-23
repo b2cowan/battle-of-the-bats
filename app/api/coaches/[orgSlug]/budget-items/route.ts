@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getAuthContext, unauthorized, forbidden } from '@/lib/api-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { getCoachingAssignmentsForUser } from '@/lib/db';
 import type { BudgetCategoryWithItems, BudgetItem } from '@/lib/types';
 
 function mapItem(row: Record<string, unknown>): BudgetItem {
@@ -17,6 +18,17 @@ function mapItem(row: Record<string, unknown>): BudgetItem {
   };
 }
 
+async function resolveCoachContext(orgSlug: string) {
+  const ctx = await getAuthContext();
+  if (!ctx) return { error: unauthorized() };
+  if (ctx.org.slug !== orgSlug) return { error: forbidden() };
+
+  const assignments = await getCoachingAssignmentsForUser(ctx.org.id, ctx.user.id);
+  if (!assignments.length) return { error: forbidden() };
+
+  return { ctx };
+}
+
 // GET /api/coaches/[orgSlug]/budget-items
 // Returns platform defaults + org custom categories/items visible to coaches.
 // Only 'team' and 'both' scoped categories are returned (org-only categories
@@ -26,9 +38,9 @@ export async function GET(
   { params }: { params: Promise<{ orgSlug: string }> },
 ) {
   const { orgSlug } = await params;
-  const ctx = await getAuthContext();
-  if (!ctx) return unauthorized();
-  if (ctx.org.slug !== orgSlug) return forbidden();
+  const resolved = await resolveCoachContext(orgSlug);
+  if ('error' in resolved) return resolved.error;
+  const { ctx } = resolved;
 
   const { data, error } = await supabaseAdmin
     .from('budget_categories')
@@ -66,9 +78,9 @@ export async function POST(
   { params }: { params: Promise<{ orgSlug: string }> },
 ) {
   const { orgSlug } = await params;
-  const ctx = await getAuthContext();
-  if (!ctx) return unauthorized();
-  if (ctx.org.slug !== orgSlug) return forbidden();
+  const resolved = await resolveCoachContext(orgSlug);
+  if ('error' in resolved) return resolved.error;
+  const { ctx } = resolved;
 
   const body = await req.json();
   const catId: string = typeof body.categoryId === 'string' ? body.categoryId.trim() : '';

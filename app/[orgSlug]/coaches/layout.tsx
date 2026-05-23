@@ -4,6 +4,7 @@ import { getAuthContext } from '@/lib/api-auth';
 import { getCoachingAssignmentsForUser } from '@/lib/db';
 import { OrgProvider } from '@/lib/org-context';
 import { CoachesProvider } from '@/lib/coaches-context';
+import { isTeamWorkspaceOrg } from '@/lib/team-workspace-entitlements';
 import CoachesSidebar from '@/components/coaches/CoachesSidebar';
 import CoachesBottomNav from '@/components/coaches/CoachesBottomNav';
 import styles from './coaches.module.css';
@@ -17,7 +18,7 @@ export default async function CoachesLayout({
 }) {
   const { orgSlug } = await params;
 
-  const authCtx = await getAuthContext();
+  const authCtx = await getAuthContext({ orgSlug });
   if (!authCtx) {
     redirect(`/auth/login?next=/${orgSlug}/coaches`);
   }
@@ -29,20 +30,25 @@ export default async function CoachesLayout({
 
   if (assignments.length === 0) {
     const { name: orgName, contactEmail } = authCtx.org;
+    const isTeamWorkspace = isTeamWorkspaceOrg(authCtx.org);
     return (
       <OrgProvider>
         <div className={styles.notAssigned}>
-          <h2>Not assigned to any teams</h2>
-          <p>You don&apos;t have an active coaching assignment for {orgName}.</p>
+          <h2>{isTeamWorkspace ? 'Team workspace not ready' : 'Not assigned to any teams'}</h2>
+          <p>
+            {isTeamWorkspace
+              ? `Your coach assignment or team entitlement is not active for ${orgName}.`
+              : `You don't have an active coaching assignment for ${orgName}.`}
+          </p>
           <p className={styles.notAssignedContact}>
             {contactEmail ? (
               <>Questions? <a href={`mailto:${contactEmail}`} className={styles.notAssignedEmailLink}>{contactEmail}</a></>
             ) : (
-              <>Questions? Contact your org admin.</>
+              <>{isTeamWorkspace ? 'Questions? Contact FieldLogicHQ support.' : 'Questions? Contact your org admin.'}</>
             )}
           </p>
           <Link href={`/${orgSlug}`} className={styles.notAssignedBack}>
-            ← Back to {orgName}
+            {isTeamWorkspace ? 'Back to workspace home' : `Back to ${orgName}`}
           </Link>
         </div>
       </OrgProvider>

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getAuthContext, unauthorized, forbidden } from '@/lib/api-auth';
 import { getCoachingAssignmentsForUser, searchOrgPayees, createOrgPayee } from '@/lib/db';
+import { isTeamWorkspaceOrg } from '@/lib/team-workspace-entitlements';
 
 async function resolveCoachContext(orgSlug: string) {
   const ctx = await getAuthContext();
@@ -8,7 +9,7 @@ async function resolveCoachContext(orgSlug: string) {
   if (ctx.org.slug !== orgSlug) return { error: forbidden() };
   const assignments = await getCoachingAssignmentsForUser(ctx.org.id, ctx.user.id);
   if (!assignments.length) return { error: forbidden() };
-  return { ctx };
+  return { ctx, assignments };
 }
 
 export async function GET(
@@ -18,10 +19,11 @@ export async function GET(
   const { orgSlug } = await params;
   const resolved = await resolveCoachContext(orgSlug);
   if ('error' in resolved) return resolved.error;
-  const { ctx } = resolved;
+  const { ctx, assignments } = resolved;
 
   const q = new URL(req.url).searchParams.get('q') ?? '';
-  const payees = await searchOrgPayees(ctx.org.id, q);
+  const teamId = isTeamWorkspaceOrg(ctx.org) ? assignments[0]?.teamId : undefined;
+  const payees = await searchOrgPayees(ctx.org.id, q, teamId);
   return NextResponse.json({ payees });
 }
 
@@ -32,7 +34,7 @@ export async function POST(
   const { orgSlug } = await params;
   const resolved = await resolveCoachContext(orgSlug);
   if ('error' in resolved) return resolved.error;
-  const { ctx } = resolved;
+  const { ctx, assignments } = resolved;
 
   const body = await req.json();
   const name: string = typeof body.name === 'string' ? body.name.trim() : '';
@@ -42,10 +44,12 @@ export async function POST(
   if (name.length > 200) return NextResponse.json({ error: 'name must be 200 characters or fewer' }, { status: 400 });
 
   try {
-    const payee = await createOrgPayee({ orgId: ctx.org.id, name, notes, createdBy: ctx.user.id });
+    const teamId = isTeamWorkspaceOrg(ctx.org) ? assignments[0]?.teamId : undefined;
+    const payee = await createOrgPayee({ orgId: ctx.org.id, teamId, name, notes, createdBy: ctx.user.id });
     return NextResponse.json({ payee }, { status: 201 });
-  } catch (e: any) {
-    if (e?.code === '23505') return NextResponse.json({ error: 'A payee with that name already exists' }, { status: 409 });
+  } catch (e: unknown) {
+    const error = e as { code?: string };
+    if (error.code === '23505') return NextResponse.json({ error: 'A payee with that name already exists' }, { status: 409 });
     throw e;
   }
 }

@@ -16,19 +16,29 @@
 .headerLeft { display: flex; align-items: center; gap: 1rem; }
 
 .headerIcon {
-  width: 48px;
-  height: 48px;
-  background: rgba(var(--blueprint-blue-rgb), 0.12);
-  border-radius: 12px;
+  width: 30px;
+  height: 30px;
+  background: rgba(var(--blueprint-blue-rgb), 0.1);
+  border-radius: 2px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: var(--logic-lime);
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.3);
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.28);
+  flex-shrink: 0;
 }
 
-.pageTitle { font-family: var(--font-display); font-size: 1.75rem; font-weight: 900; color: var(--white); margin: 0; }
-.pageSub { font-size: 0.9rem; color: var(--white-30); margin: 0.25rem 0 0 0; }
+.pageKicker {
+  font-family: var(--font-data);
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(148, 163, 184, 0.55);
+  margin: 0 0 0.1rem;
+}
+.pageTitle { font-family: var(--font-data); font-size: 1.05rem; font-weight: 700; color: var(--fl-text); margin: 0; letter-spacing: 0.02em; text-transform: uppercase; }
+.pageSub { font-family: var(--font-data); font-size: 0.68rem; color: var(--data-gray); margin: 0.1rem 0 0 0; letter-spacing: 0.02em; }
 
 .headerActions {
   display: flex;
@@ -39,9 +49,9 @@
 /* ─── Controls Bar ────────────────────────────────────────────────────────── */
 .controlsBar {
   background: var(--black-20);
-  border: 1px solid var(--border-2);
-  border-radius: var(--radius-md);
-  padding: 1rem;
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.2);
+  border-radius: 2px;
+  padding: 0.65rem 1rem;
   margin-bottom: 1.5rem;
   display: flex;
   align-items: center;
@@ -59,31 +69,36 @@
 }
 
 .controlLabel {
-  font-size: 0.75rem;
+  font-family: var(--font-data);
+  font-size: 0.62rem;
   text-transform: uppercase;
-  font-weight: 800;
+  font-weight: 700;
   color: var(--white-40);
-  letter-spacing: 0.05em;
+  letter-spacing: 0.1em;
   white-space: nowrap;
 }
 
 .controlSelect {
-  height: 32px;
+  height: 28px;
   padding: 0 0.75rem;
   min-width: 120px;
-  font-size: 0.85rem;
+  font-family: var(--font-data);
+  font-size: 0.72rem;
+  letter-spacing: 0.03em;
   background: var(--black-30);
-  border-color: var(--white-10);
+  border-radius: 2px;
+  border-color: rgba(var(--blueprint-blue-rgb), 0.25);
+  color: var(--data-gray);
 }
 
 /* ─── View Toggle (Flat/Pools) ────────────────────────────────────────────── */
 .viewToggle {
   display: flex;
   background: var(--black-30);
-  border: 1px solid var(--white-10);
-  border-radius: 6px;
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.25);
+  border-radius: 2px;
   padding: 2px;
-  height: 32px;
+  height: 28px;
 }
 
 .toggleBtn {
@@ -119,17 +134,17 @@
 .filterChip {
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.35rem 0.7rem;
-  border-radius: 0;
+  gap: 0.4rem;
+  padding: 0.2rem 0.55rem;
+  border-radius: 2px;
   font-family: var(--font-data);
-  font-size: 0.625rem;
+  font-size: 0.58rem;
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(0, 0, 0, 0.18);
-  color: rgba(148, 163, 184, 0.5);
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.18);
+  background: transparent;
+  color: rgba(148, 163, 184, 0.45);
   cursor: pointer;
   transition: border-color 0.15s, background 0.15s, color 0.15s;
 }
@@ -148,7 +163,7 @@
 .chip_waitlist::before { background: var(--blueprint-blue, #60a5fa); }
 .chip_rejected::before { background: #ef4444; }
 
-.filterChip:hover { border-color: rgba(255, 255, 255, 0.2); color: rgba(148, 163, 184, 0.75); }
+.filterChip:hover { border-color: rgba(var(--blueprint-blue-rgb), 0.4); color: rgba(148, 163, 184, 0.75); }
 
 .chipActive.chip_pending  { border-color: rgba(246, 196, 83, 0.5);  background: rgba(246, 196, 83, 0.08);  color: #f6c453; }
 .chipActive.chip_accepted { border-color: rgba(204, 255, 102, 0.5); background: rgba(204, 255, 102, 0.07); color: #ccff66; }
@@ -184,20 +199,22 @@
 
 .searchInput {
   width: 100%;
-  background: var(--black-20);
-  border: 1px solid var(--border-2);
-  border-radius: 99px;
-  padding: 0.5rem 1rem 0.5rem 2.5rem;
-  color: var(--white);
-  font-size: 0.9rem;
-  transition: all 0.2s ease;
+  background: var(--black-30);
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.25);
+  border-radius: 2px;
+  padding: 0.3rem 0.85rem 0.3rem 2.1rem;
+  color: var(--data-gray);
+  font-family: var(--font-data);
+  font-size: 0.72rem;
+  letter-spacing: 0.02em;
+  transition: border-color 0.15s ease, background 0.15s ease;
 }
 
 .searchInput:focus {
   outline: none;
-  border-color: var(--blueprint-blue);
+  border-color: rgba(var(--blueprint-blue-rgb), 0.6);
   background: var(--black-30);
-  box-shadow: 0 0 0 2px rgba(var(--blueprint-blue-rgb), 0.15);
+  box-shadow: 0 0 0 2px rgba(var(--blueprint-blue-rgb), 0.12);
 }
 
 /* ─── Group Sections (Division/Pool headers) ──────────────────────────────── */
@@ -205,8 +222,8 @@
 
 .groupSection {
   background: var(--black-10);
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--border-2);
+  border-radius: 2px;
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.2);
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -226,7 +243,7 @@
   gap: 1.5rem;
 }
 
-.groupHeader strong { font-family: var(--font-display); font-size: 1.25rem; font-weight: 900; color: var(--logic-lime); }
+.groupHeader strong { font-family: var(--font-data); font-size: 0.9rem; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; color: var(--logic-lime); }
 
 /* ─── Pool Sub-Sections (used inside group sections) ──────────────────────── */
 .poolSubSection {
@@ -243,10 +260,11 @@
   align-items: center;
   gap: 0.6rem;
   margin-bottom: 0;
-  padding: 0.75rem 1.5rem;
-  background: var(--white-05);
-  border-top: 1px solid var(--white-10);
-  border-bottom: 1px solid var(--white-10);
+  padding: 0.45rem 1.5rem 0.45rem 1rem;
+  background: var(--black-20);
+  border-top: 1px solid var(--border-2);
+  border-bottom: 1px solid var(--border-2);
+  border-left: 3px solid var(--border);
   width: 100%;
 }
 
@@ -257,9 +275,12 @@
 }
 
 .poolSubLabel {
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: var(--white-60);
+  font-family: var(--font-data);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--data-gray);
 }
 
 .poolSubCount {
@@ -270,34 +291,36 @@
 /* ─── Table Header ────────────────────────────────────────────────────────── */
 .tableHeader {
   display: flex;
-  padding: 0.75rem 1.5rem;
-  font-size: 0.75rem;
+  padding: 0.5rem 1.5rem;
+  font-family: var(--font-data);
+  font-size: 0.58rem;
   text-transform: uppercase;
-  color: var(--white-20);
-  font-weight: 800;
-  letter-spacing: 0.1em;
-  background: var(--black-10);
+  color: var(--white-30);
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--border-2);
 }
 
 /* ─── Row Layout ──────────────────────────────────────────────────────────── */
-.row { border-bottom: 1px solid var(--border-1); transition: background 0.2s ease; }
+.row { border-bottom: 1px solid var(--border-2); transition: background 0.2s ease; }
 .row:last-child { border-bottom: none; }
 .rowSelected { background: rgba(var(--blueprint-blue-rgb), 0.05); }
 
-.rowMain { display: flex; align-items: center; padding: 0.75rem 1.5rem; min-height: 56px; }
+.rowMain { display: flex; align-items: center; padding: 0.38rem 1.5rem; min-height: 36px; }
 
-.primaryCell { font-size: 1rem; color: var(--white); font-weight: 700; }
-.secondaryCell { font-size: 0.9rem; color: var(--white-30); }
+.primaryCell { font-family: var(--font-data); font-size: 0.8rem; color: var(--fl-text); font-weight: 600; letter-spacing: 0.02em; }
+.secondaryCell { font-family: var(--font-data); font-size: 0.72rem; color: var(--data-gray); letter-spacing: 0.02em; }
 
 /* ─── Icon Button ─────────────────────────────────────────────────────────── */
 .iconBtn {
   background: none;
   border: none;
-  color: var(--white-20);
+  color: var(--white-25);
   cursor: pointer;
   padding: 4px;
-  border-radius: 8px;
-  transition: all 0.2s ease;
+  border-radius: 4px;
+  transition: background 0.15s ease, color 0.15s ease;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -308,9 +331,10 @@
 /* ─── Expanded Row ────────────────────────────────────────────────────────── */
 .expandedRow {
   background: var(--black-20);
-  padding: 1.5rem 2.5rem 2rem 4rem;
-  border-top: 1px solid var(--border-1);
-  animation: adminSlideDown 0.2s ease-out;
+  padding: 1rem 2rem 1.25rem 3.5rem;
+  border-top: 1px solid var(--border-2);
+  border-left: 2px solid rgba(var(--blueprint-blue-rgb), 0.35);
+  animation: adminSlideDown 0.15s ease-out;
 }
 
 @keyframes adminSlideDown {
@@ -343,7 +367,7 @@
   right: 0;
   background: var(--surface-2);
   border: 1px solid rgba(var(--blueprint-blue-rgb), 0.3);
-  border-radius: var(--radius-sm);
+  border-radius: 4px;
   box-shadow: 0 4px 12px rgba(0,0,0,0.5);
   z-index: 100;
   margin-top: 0.25rem;
@@ -359,6 +383,34 @@
 }
 
 @media (max-width: 768px) {
+  .pageHeader {
+    align-items: flex-start;
+  }
+
+  .headerLeft {
+    min-width: 0;
+  }
+
+  .headerIcon {
+    width: 42px;
+    height: 42px;
+  }
+
+  .pageTitle {
+    font-size: 0.95rem;
+  }
+
+  .headerActions {
+    flex-wrap: wrap;
+    width: 100%;
+  }
+
+  .headerActions :global(.btn) {
+    flex: 1 1 10rem;
+    justify-content: center;
+    min-height: 44px;
+  }
+
   .controlsBar { flex-direction: column; align-items: stretch; }
   .controlsRight { flex-direction: column; align-items: stretch; }
   .controlsLeft { flex-direction: column; align-items: stretch; }

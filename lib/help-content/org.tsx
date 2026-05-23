@@ -41,6 +41,178 @@ const orgHelp: HelpPageContent = {
       ),
     },
     {
+      id: 'recipe-review-team-link-request',
+      group: 'How-to recipes',
+      heading: 'How to invite or review Team workspace links',
+      summary: 'Invite a standalone Team workspace or approve/decline Basic visibility requests from Team coaches.',
+      keywords: ['team links', 'team workspace', 'invite team', 'approve request', 'parent organization', 'basic visibility'],
+      searchText: 'invite review approve decline team workspace link request standalone team parent organization club association basic visibility sharing billing ownership roster documents accounting',
+      links: [
+        { label: 'Team Links', href: '../org/team-links' },
+      ],
+      content: (
+        <>
+          <p>Owners and admins can manage Basic visibility links with standalone Team workspaces from <strong>Org Admin &gt; Team Links</strong>.</p>
+          <ol>
+            <li>Open <strong>Org Admin &gt; Team Links</strong>.</li>
+            <li>To invite a Team workspace, enter the workspace URL slug or primary coach email, then click <strong>Send Invite</strong>.</li>
+            <li>The coach reviews the invitation from their Coaches Portal and chooses <strong>Accept Invitation</strong> or <strong>Decline</strong>.</li>
+            <li>For coach-requested links, review the workspace name, team name, requested sharing level, and current billing mode.</li>
+            <li>Click <strong>Approve Link</strong> if the team should be associated with your organization.</li>
+            <li>Click <strong>Decline</strong> if the team is not part of your organization.</li>
+            <li>Use Link history later to confirm what was approved or declined.</li>
+          </ol>
+          <p>Approving a coach request or receiving a coach&apos;s acceptance creates a <strong>Basic visibility</strong> link only. It does not transfer billing, ownership, player roster access, documents, accounting data, or org-wide rep-team admin access.</p>
+          <p>Billing takeover and full ownership transfer are separate workflows because they affect money, data ownership, and access.</p>
+        </>
+      ),
+      faqs: [
+        {
+          id: 'faq-basic-team-link-access',
+          question: 'What can we see after approving a Basic visibility link?',
+          answerText: 'You can see the approved association and basic Team workspace summary. You do not receive roster, documents, accounting, billing, or full rep-team admin access from this approval.',
+          keywords: ['basic visibility', 'team link access', 'roster', 'documents', 'billing'],
+          popular: true,
+          answer: (
+            <p>You can see the approved association and basic Team workspace summary. You do not receive roster, documents, accounting, billing, or full rep-team admin access from this approval.</p>
+          ),
+        },
+        {
+          id: 'faq-team-link-invite-access',
+          question: 'Can we invite a Team workspace without taking over the team?',
+          answerText: 'Yes. Sending a Basic visibility invitation only asks the coach to confirm the association. Acceptance does not move billing, ownership, roster, documents, accounting, or rep-team administration.',
+          keywords: ['invite team workspace', 'basic visibility', 'ownership', 'billing'],
+          answer: (
+            <p>Yes. Sending a Basic visibility invitation only asks the coach to confirm the association. Acceptance does not move billing, ownership, roster, documents, accounting, or rep-team administration.</p>
+          ),
+        },
+      ],
+    },
+    {
+      id: 'recipe-invite-member',
+      group: 'How-to recipes',
+      heading: 'How to invite a member and choose the right role',
+      summary: 'Add a new admin, staff member, treasurer, registrar, coach, or official without over-granting access.',
+      keywords: ['invite member', 'role', 'permissions', 'staff', 'admin', 'treasurer', 'registrar', 'coach', 'official'],
+      searchText: 'invite member choose role permissions owner admin staff treasurer league admin league registrar coach official resend pending invite seats',
+      links: [
+        { label: 'Members', href: '../org/members' },
+      ],
+      content: (
+        <>
+          <p>Use this when someone needs access to help run the organization, a tournament, house league, rep teams, accounting, or score entry.</p>
+          <ol>
+            <li>Go to <strong>Org Admin &gt; Members</strong>.</li>
+            <li>Click <strong>Invite Member</strong>.</li>
+            <li>Enter the person's email address.</li>
+            <li>Choose the lowest role that matches their job. Use <strong>Admin</strong> only for trusted co-organizers who need broad access.</li>
+            <li>If the person only needs a narrow workflow, use a scoped role such as <strong>Treasurer</strong>, <strong>League Registrar</strong>, <strong>Coach</strong>, or <strong>Official</strong>.</li>
+            <li>Send the invite, then confirm the person appears as <strong>Pending</strong> until they accept.</li>
+          </ol>
+          <p>If they do not receive the email, ask them to check spam first. Then use the resend option from their pending invite row.</p>
+          <p><strong>Access rule of thumb:</strong> owners manage billing and organization settings, admins run operations, staff handle day-of tasks, and officials should normally use scoring links rather than the main admin panel.</p>
+        </>
+      ),
+      faqs: [
+        {
+          id: 'faq-best-role-for-helper',
+          question: 'What role should I give a new volunteer?',
+          answerText: 'Choose the narrowest role that lets them do their job. Use Staff for day-of operations, Treasurer for accounting, League Registrar for registration review, Coach for team portal access, and Official for score entry.',
+          keywords: ['role', 'volunteer', 'permissions', 'least access'],
+          popular: true,
+          answer: (
+            <p>Choose the narrowest role that lets them do their job. Use <strong>Staff</strong> for day-of tournament help, <strong>Treasurer</strong> for accounting, <strong>League Registrar</strong> for registration review, <strong>Coach</strong> for coach portal access, and <strong>Official</strong> for score entry.</p>
+          ),
+        },
+      ],
+    },
+    {
+      id: 'recipe-fix-member-access',
+      group: 'How-to recipes',
+      heading: 'How to fix member access problems',
+      summary: 'Troubleshoot missing pages, locked buttons, pending invites, suspended users, and module access.',
+      keywords: ['member cannot access', 'missing page', 'permission', 'suspended', 'pending invite', 'module access'],
+      searchText: 'member cannot access missing page locked button permission role capability suspended pending invite resend module not enabled subscription seat limit',
+      links: [
+        { label: 'Members', href: '../org/members' },
+        { label: 'Billing', href: '../org/billing' },
+      ],
+      content: (
+        <>
+          <p>When someone says they cannot see a page or action, check these items in order:</p>
+          <ol>
+            <li><strong>Confirm they accepted the invite.</strong> Pending members cannot use the admin panel yet. Resend the invite if needed.</li>
+            <li><strong>Check whether their account is suspended.</strong> Suspended members stay listed but cannot access protected workflows.</li>
+            <li><strong>Review their role.</strong> A registrar will not see accounting, a treasurer will not see tournament setup, and an official normally will not see the admin panel.</li>
+            <li><strong>Review individual capabilities.</strong> Owners can grant or remove specific capabilities from a member's manage screen.</li>
+            <li><strong>Check whether the module is enabled.</strong> A member cannot access House League, Rep Teams, Accounting, or public-site features if the org does not have that module active.</li>
+            <li><strong>Check seat limits.</strong> If you are at the plan's seat limit, new non-official users may require an upgrade before they can be added.</li>
+          </ol>
+          <p>If all of those look correct and access is still wrong, capture the user's email, role, expected page, and exact error message before contacting support.</p>
+        </>
+      ),
+      faqs: [
+        {
+          id: 'faq-member-missing-module',
+          question: 'Why can a member not see House League, Rep Teams, or Accounting?',
+          answerText: 'The member needs both a role/capability that allows the workflow and an enabled module on the organization plan.',
+          keywords: ['missing module', 'module access', 'house league', 'rep teams', 'accounting'],
+          popular: true,
+          answer: (
+            <p>They need both the right member access and the right organization module. Check their role/capabilities on <strong>Members</strong>, then confirm the module is enabled from billing or subscription settings.</p>
+          ),
+        },
+      ],
+    },
+    {
+      id: 'recipe-enable-modules',
+      group: 'How-to recipes',
+      heading: 'How to turn on modules included in your plan',
+      summary: 'Enable House League, Rep Teams, Accounting, or public organization pages when your plan includes them.',
+      keywords: ['enable module', 'activate module', 'house league', 'rep teams', 'accounting', 'public organization page'],
+      searchText: 'enable module activate module included in plan house league rep teams accounting public organization page subscription billing upgrade module missing',
+      links: [
+        { label: 'Billing', href: '../org/billing' },
+      ],
+      content: (
+        <>
+          <p>Modules appear in the admin navigation only after they are active for your organization.</p>
+          <ol>
+            <li>Go to <strong>Org Admin &gt; Billing</strong>.</li>
+            <li>Review your current plan and included modules.</li>
+            <li>Open the module area and activate any included module you want to use.</li>
+            <li>Refresh the admin panel. The new module should appear in the navigation for members with matching access.</li>
+            <li>If the module is locked, review upgrade options or contact support if you believe it should already be included.</li>
+          </ol>
+          <p>Activating a module gives the organization the feature. Members still need the correct role or capability before they can use it.</p>
+        </>
+      ),
+    },
+    {
+      id: 'recipe-handle-subscription-issue',
+      group: 'How-to recipes',
+      heading: 'How to handle billing, past-due, or upgrade issues',
+      summary: 'Know what owners should check before contacting support about subscription access.',
+      keywords: ['billing', 'subscription', 'past due', 'upgrade', 'payment method', 'plan limit', 'stripe'],
+      searchText: 'billing subscription past due payment failed update payment method manage subscription stripe checkout upgrade plan limit seat limit tournament slot module locked',
+      links: [
+        { label: 'Billing', href: '../org/billing' },
+      ],
+      content: (
+        <>
+          <p>Only owners can manage billing. If an admin sees a locked module or plan limit, ask an owner to review the subscription.</p>
+          <ol>
+            <li>Go to <strong>Org Admin &gt; Billing</strong>.</li>
+            <li>Check the current plan, active modules, tournament slot usage, and seat usage.</li>
+            <li>If payment is past due, open <strong>Manage Subscription</strong> and update the payment method in Stripe.</li>
+            <li>If a workflow is locked by plan, choose the appropriate upgrade or contact support for help choosing a plan.</li>
+            <li>If the plan looks correct but access is still locked, note the organization name, expected feature, and screenshot of the billing page before contacting support.</li>
+          </ol>
+          <p>During active events, do not wait until the day of play to resolve billing blockers. Check access during setup so support has time to help.</p>
+        </>
+      ),
+    },
+    {
       heading: 'Inviting and managing members',
       content: (
         <>
@@ -77,7 +249,7 @@ const orgHelp: HelpPageContent = {
       content: (
         <>
           <p>The <strong>Subscription</strong> page (visible to Owners only) shows your current plan, tournament slot usage, seat usage, and available upgrades.</p>
-          <p>The free Tournament plan is meant for one starter event with standard registration and FieldLogicHQ default public styling. Tournament Plus is the serious tournament operations plan: unlimited tournament slots, 10 staff seats, custom registration questions, Excel and PDF exports for registrations, schedules, and results — useful for check-in sheets, insurance submissions, and post-event board reports — bulk actions, waitlists, full branding, automation, cloning, and post-event reporting.</p>
+          <p>The free Tournament plan is meant for one starter event with standard registration, basic selected-row registration updates, waitlist collection, and FieldLogicHQ default public styling. Tournament Plus is the serious tournament operations plan: unlimited tournament slots, 10 staff seats, custom registration questions, Excel and PDF exports for registrations, schedules, and results — useful for check-in sheets, insurance submissions, and post-event board reports — payment reminders, waitlist promotion, full branding, automation, cloning, and post-event reporting.</p>
           <p>To upgrade to Tournament Plus, click <strong>Upgrade to Tournament Plus</strong>. You'll be taken to secure Stripe Checkout to enter payment details. Your first payment is collected automatically after the 14-day trial. League and Club are shown as coming soon until those tiers open for self-serve checkout.</p>
           <p>If you're on a paid plan, use <strong>Manage Subscription</strong> to update your payment method, view past invoices, or cancel. This opens the Stripe customer portal.</p>
           <p><strong>Past-due payments:</strong> If a payment fails, your access stays active during a grace period. Update your payment method via <strong>Manage Subscription</strong> before the grace period ends to avoid service interruption.</p>

@@ -12,7 +12,6 @@ export const TOURNAMENT_PLUS_LOCKED_FEATURES = [
   'advanced_tournament_branding',
   'custom_registration_fields',
   'registration_export',
-  'bulk_registration_actions',
   'waitlist_automation',
   'tournament_cloning',
   'targeted_tournament_announcements',

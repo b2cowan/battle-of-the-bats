@@ -12,6 +12,7 @@ function buildAddress(street: string, city: string, province: string, postalCode
 
 interface Props {
   tournamentId: string;
+  orgSlug?: string;
   onClose: () => void;
   /** Called with the saved Diamond after a successful save. */
   onSaved: (venue: Diamond) => void;
@@ -20,7 +21,7 @@ interface Props {
   zIndex?: number;
 }
 
-export default function AddVenueModal({ tournamentId, onClose, onSaved, existing, zIndex = 1100 }: Props) {
+export default function AddVenueModal({ tournamentId, orgSlug, onClose, onSaved, existing, zIndex = 1100 }: Props) {
   const isEdit = !!existing;
   const [form, setForm] = useState({
     name:       existing?.name       ?? '',
@@ -51,14 +52,17 @@ export default function AddVenueModal({ tournamentId, onClose, onSaved, existing
       },
     };
 
-    await fetch('/api/admin/diamonds', {
+    const orgQuery = orgSlug ? `?orgSlug=${encodeURIComponent(orgSlug)}` : '';
+    const orgParam = orgSlug ? `&orgSlug=${encodeURIComponent(orgSlug)}` : '';
+
+    await fetch(`/api/admin/diamonds${orgQuery}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     });
 
     // Re-fetch the list and hand the saved record back to the caller.
-    const listRes = await fetch(`/api/admin/diamonds?tournamentId=${encodeURIComponent(tournamentId)}`);
+    const listRes = await fetch(`/api/admin/diamonds?tournamentId=${encodeURIComponent(tournamentId)}${orgParam}`);
     const updated: Diamond[] = listRes.ok ? await listRes.json() : [];
     const saved = isEdit
       ? updated.find(d => d.id === existing!.id)

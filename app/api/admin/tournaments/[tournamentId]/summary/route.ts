@@ -181,8 +181,9 @@ async function trackSummaryEvent(input: {
   });
 }
 
-export async function GET(_req: NextRequest, { params }: RouteParams) {
-  const ctx = await getAuthContextWithScope();
+export async function GET(req: NextRequest, { params }: RouteParams) {
+  const orgSlug = req.nextUrl.searchParams.get('orgSlug') ?? undefined;
+  const ctx = await getAuthContextWithScope({ orgSlug });
   if (!ctx) return unauthorized();
   if (!hasCapability(ctx.role, ctx.capabilities, 'module_tournaments')) return forbidden();
 
@@ -352,7 +353,8 @@ export async function GET(_req: NextRequest, { params }: RouteParams) {
 }
 
 export async function POST(req: NextRequest, { params }: RouteParams) {
-  const ctx = await getAuthContextWithScope();
+  const orgSlug = req.nextUrl.searchParams.get('orgSlug') ?? undefined;
+  const ctx = await getAuthContextWithScope({ orgSlug });
   if (!ctx) return unauthorized();
   if (!hasCapability(ctx.role, ctx.capabilities, 'module_tournaments')) return forbidden();
 

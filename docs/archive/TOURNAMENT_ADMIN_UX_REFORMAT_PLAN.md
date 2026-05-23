@@ -43,15 +43,17 @@ Role and plan behavior should remain unchanged. Owners and authorized tournament
 
 Build a small reusable tournament-admin UI layer before changing pages. This phase should not redesign page behavior by itself.
 
+Status: Completed. Shared primitives now live in `components/admin/tournament/`.
+
 Tasks:
 
-- Decide whether shared pieces live in `components/admin/` or a more focused `components/admin/tournament/` folder.
-- Add a compact admin toolbar pattern with responsive wrapping rules.
-- Add reusable toolbar controls for selects, segmented controls, search, icon buttons, overflow menus, and compact status chips.
-- Add a contextual selection action bar that can render inline on desktop and as a sticky bottom bar on mobile.
-- Add a compact locked-feature presentation for plan-gated tools.
-- Add a legend/popover pattern for explanatory status text.
-- Extend or replace duplicated page-header CSS with a shared page header pattern where useful.
+- [x] Decide whether shared pieces live in `components/admin/` or a more focused `components/admin/tournament/` folder.
+- [x] Add a compact admin toolbar pattern with responsive wrapping rules.
+- [x] Add reusable toolbar controls for selects, segmented controls, search, icon buttons, overflow menus, and compact status chips.
+- [x] Add a contextual selection action bar that can render inline on desktop and as a sticky bottom bar on mobile.
+- [x] Add a compact locked-feature presentation for plan-gated tools.
+- [x] Add a legend/popover pattern for explanatory status text.
+- [x] Extend or replace duplicated page-header CSS with a shared page header pattern where useful.
 
 Candidate primitives:
 
@@ -79,20 +81,24 @@ Acceptance criteria:
 
 Target: `app/[orgSlug]/admin/tournaments/teams/page.tsx`
 
+Status: First implementation complete. Phase 2B smoke/mobile verification passed for desktop and 390x844; richer data-state verification remains.
+
 Problem:
 
 Registrations currently stacks page header, action buttons, summary/randomize controls, division/view/search controls, payment readiness, bulk actions, and status filters before the first registrant. This is the highest-priority page because the core record list can be pushed entirely below the fold.
 
 Plan:
 
-- Replace the separate controls bar, payment panel, bulk panel, and status/search row with one compact toolbar plus contextual surfaces.
-- Keep primary desktop controls visible: division, view mode when relevant, search, status filters, Add Team.
-- Move Summary, Randomize, Swap Mode, Export, payment reminders, and locked Plus tools into an overflow Tools menu where possible.
-- For Plus orgs, compress payment metrics into a one-line summary chip or expandable payment drawer.
-- For non-Plus orgs, remove the full Payment Readiness upsell panel from above the list. Show a locked payment item in Tools and a small inline badge where payment actions appear.
-- Show bulk actions only after selection. Use a contextual action bar, sticky at the bottom on mobile.
-- Move "Select current division" into the list header or contextual selection bar, not a permanent standalone panel.
-- Preserve slot-board behavior, waitlist promotion, payment status display, row expansion, and add-team modal.
+- [x] Replace the separate controls bar, payment panel, bulk panel, and status/search row with one compact toolbar plus contextual surfaces.
+- [x] Keep primary desktop controls visible: division, view mode when relevant, search, status filters, Add Team.
+- [x] Move Summary, Randomize, Swap Mode, payment readiness, and locked Plus tools into an overflow Tools menu where possible.
+- [x] For Plus orgs, compress payment metrics into the Tools menu instead of a full-width panel.
+- [x] For non-Plus orgs, remove the full Payment Readiness upsell panel from above the list. Show a locked payment item in Tools.
+- [x] Show bulk actions only after selection. Use a contextual action bar, sticky at the bottom on mobile.
+- [x] Replace ambiguous "Select current division" wording with "Select all visible" and hide it when no rows can be selected.
+- [x] Preserve slot-board behavior, waitlist promotion, payment status display, row expansion, and add-team modal.
+- [x] Route manual team creation through the admin teams API and reset the Add Team modal on open, cancel, close, and successful save.
+- [x] Browser visual verification at desktop and mobile smoke widths; tablet/data-rich verification remains for Phase H.
 
 Mobile requirements:
 
@@ -146,11 +152,11 @@ Results repeats the Schedule pattern with page header, controls bar, filters row
 
 Plan:
 
-- Adopt the shared toolbar.
-- Keep view mode, division, score-status filter, and search in one compact toolbar.
-- Move the Pending Review explanation into a `StatusLegendPopover`.
-- Keep Export in a toolbar menu or compact header action.
-- Preserve scoring modal, finalization behavior, and existing GameList modes.
+- [x] Adopt the shared toolbar.
+- [x] Keep view mode, division, score-status filter, search, and Export in one compact toolbar.
+- [x] Move the Pending Review explanation into a `StatusLegendPopover`.
+- [x] Preserve scoring modal, finalization behavior, and existing GameList modes.
+- [x] Browser/mobile smoke verification passed at desktop and 390x844; data-rich score-entry verification remains for Phase H.
 
 Mobile requirements:
 
@@ -366,9 +372,8 @@ This order fixes the worst UX regression first, then carries the same reusable l
 
 ## Open Decisions
 
-- Should Phase 0 introduce new shared React components, or first consolidate CSS classes in `admin-common.module.css` and add components only as pages adopt them?
+- Resolved: Phase 0 introduces shared React components in `components/admin/tournament/`, with CSS modules colocated there. Existing page CSS can be migrated incrementally during page phases.
 - Should toolbar overflow menus use an existing local menu pattern, a lightweight custom component, or plain disclosure buttons?
 - Should Registrations payment metrics remain visible for Plus users as a compact strip, or move fully into a drawer?
 - Should mobile bulk actions be a sticky bottom bar or an explicit bottom sheet opened by a selected-count button?
 - Should Schedule and Results share a single page-toolbar implementation with page-specific action slots?
-
