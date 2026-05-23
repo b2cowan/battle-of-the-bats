@@ -5,7 +5,7 @@ import { Game, Team, AgeGroup, Diamond } from '@/lib/types';
 import { formatTime, formatPoolName } from '@/lib/utils';
 import { scoreSubmissionSummary } from '@/lib/tournament-score-audit';
 import { Pool } from '@/lib/types';
-import s from '@/app/admin/admin-common.module.css';
+import s from '../../../admin-common.module.css';
 import styles from '../schedule-admin.module.css';
 
 interface GameListProps {
@@ -22,12 +22,12 @@ interface GameListProps {
   onDelete?: (id: string) => void;
   onCancel?: (id: string) => void;
   onSchedule?: (id: string) => void;
-  onSave?: (gameId: string, data: { date: string; time: string; diamondId: string; notes: string }) => Promise<void>;
+  onSave?: (gameId: string, data: { date: string; time: string; diamondId: string; notes: string; homeTeamId: string; awayTeamId: string }) => Promise<void>;
   onCreateVenue?: () => void;
   mode: 'planning' | 'scoring';
 }
 
-type EditFields = { date: string; time: string; diamondId: string; notes: string };
+type EditFields = { date: string; time: string; diamondId: string; notes: string; homeTeamId: string; awayTeamId: string };
 
 export default function GameList({
   games, teams, ageGroups, diamonds, viewMode, groupByPool, pools: poolsProp,
@@ -61,6 +61,8 @@ export default function GameList({
             time: game.time ?? '',
             diamondId: game.diamondId ?? '',
             notes: game.notes ?? '',
+            homeTeamId: game.homeTeamId ?? '',
+            awayTeamId: game.awayTeamId ?? '',
           },
         };
       });
@@ -226,13 +228,15 @@ export default function GameList({
       time: g.time ?? '',
       diamondId: g.diamondId ?? '',
       notes: g.notes ?? '',
+      homeTeamId: g.homeTeamId ?? '',
+      awayTeamId: g.awayTeamId ?? '',
     };
     const isSaving = saving.has(g.id);
 
     const handleDiscard = () => {
       setEditState(prev => ({
         ...prev,
-        [g.id]: { date: g.date ?? '', time: g.time ?? '', diamondId: g.diamondId ?? '', notes: g.notes ?? '' },
+        [g.id]: { date: g.date ?? '', time: g.time ?? '', diamondId: g.diamondId ?? '', notes: g.notes ?? '', homeTeamId: g.homeTeamId ?? '', awayTeamId: g.awayTeamId ?? '' },
       }));
       setSaveErrors(prev => { const n = { ...prev }; delete n[g.id]; return n; });
       setExpanded(prev => { const next = new Set(prev); next.delete(g.id); return next; });
@@ -359,6 +363,38 @@ export default function GameList({
                   <option value="__create__">＋ Add venue…</option>
                 </select>
               </div>
+              {/* Home / Away Teams — only shown for direct-team games (not slot-based) */}
+              {!g.homeSlotId && !g.awaySlotId && (
+                <div className={styles.formFieldFull} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                  <div className={styles.formField}>
+                    <label className={styles.formLabel}>Home Team</label>
+                    <select
+                      className={styles.formSelect}
+                      value={edit.homeTeamId}
+                      onChange={e => setEditState(prev => ({ ...prev, [g.id]: { ...prev[g.id], homeTeamId: e.target.value } }))}
+                    >
+                      <option value="">— TBD —</option>
+                      {teams.filter(t => t.ageGroupId === g.ageGroupId).map(t => (
+                        <option key={t.id} value={t.id}>{t.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className={styles.formField}>
+                    <label className={styles.formLabel}>Away Team</label>
+                    <select
+                      className={styles.formSelect}
+                      value={edit.awayTeamId}
+                      onChange={e => setEditState(prev => ({ ...prev, [g.id]: { ...prev[g.id], awayTeamId: e.target.value } }))}
+                    >
+                      <option value="">— TBD —</option>
+                      {teams.filter(t => t.ageGroupId === g.ageGroupId).map(t => (
+                        <option key={t.id} value={t.id}>{t.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              )}
+
               {/* Notes — full width */}
               <div className={`${styles.formField} ${styles.formFieldFull}`}>
                 <label className={styles.formLabel}>Notes</label>
@@ -419,7 +455,7 @@ export default function GameList({
   const pools = currentAgeGroup?.pools || [];
 
   return (
-    <div>
+    <div className={s.flatList}>
       <div className={s.tableHeader} style={{ gap: '1rem' }}>
         <div style={{ flex: '0 0 150px' }}>Date</div>
         <div style={{ flex: '0 0 130px' }}>Location</div>

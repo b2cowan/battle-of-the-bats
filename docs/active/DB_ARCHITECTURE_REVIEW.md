@@ -1,9 +1,9 @@
 # FieldLogicHQ — Database Architecture Review
 
 > **Maintained by:** `/dba` agent  
-> **Last reviewed:** 2026-05-23 (priority Q&A + migration 070 review)  
-> **Schema source:** `memory/reference_db_schema.md` (captured 2026-05-11 from `fieldlogichq-dev`)  
-> **Tables reviewed:** 43 across 5 modules (tournament, league, rep teams, accounting, platform)
+> **Last reviewed:** 2026-05-23 (standalone team workspace module + dev/prod divergence audit)  
+> **Schema source:** `memory/reference_db_schema.md` (captured 2026-05-23 from dev + prod)  
+> **Tables reviewed:** ~82 across 9 modules (tournament, league, rep teams, standalone team workspace, accounting, stripe, org/platform core, platform admin, CRM)
 
 ---
 
@@ -12,14 +12,104 @@
 | Severity | Open | Addressed | Accepted Risk |
 |---|---|---|---|
 | Critical | 0 | 0 | 0 |
-| High | 0 | 3 | 1 |
-| Medium | 0 | 3 | 1 |
-| Low | 0 | 0 | 3 |
-| Advisory | 4 | 0 | 0 |
+| High | 3 | 3 | 1 |
+| Medium | 3 | 3 | 1 |
+| Low | 2 | 0 | 3 |
+| Advisory | 5 | 1 | 0 |
 
 ---
 
 ## Open Findings
+
+---
+
+### [2026-05-23] — Finding #10: `league_practices` exists in prod but not dev
+
+**Severity:** High  
+**Finding:** The `league_practices` table (`id`, `season_id`, `division_id`, `team_id`, `scheduled_at`, `ends_at`, `location`, `notes`, `status`, `recurrence_group_id`, `created_at`, `updated_at`) exists in production but does not exist in the dev database. A migration was applied to prod but skipped dev. This means dev is behind, any code referencing `league_practices` will fail on dev, and any future dev migration that touches league tables must account for the missing table to avoid conflicts.  
+**Tables affected:** `league_practices`  
+**Recommendation:** Write and apply a corrective migration to dev that creates `league_practices` matching the prod definition. Verify column types, nullability, and any indexes or RLS policies are in sync. Once applied, add to migration numbering sequence so it doesn't conflict. If `league_practices` is intentionally a prod-only experiment (not yet built in the UI), document why and suppress dev drift warnings.  
+**Status:** Open
+
+---
+
+### [2026-05-23] — Finding #11: Duplicate FK constraints on tournament tables in prod
+
+**Severity:** Medium  
+**Finding:** The prod database has duplicate FK constraints on several tournament sub-tables: e.g. `games` has both `fk_games_tournament` AND `games_tournament_id_fkey` pointing to the same column. Similar duplicates exist on `age_groups`, `contacts`, `diamonds`, `announcements`, and `teams`. Duplicate constraints mean Postgres enforces the same referential integrity check twice on every INSERT/UPDATE, adds overhead to `pg_constraint` lookups, and creates confusion in schema introspection tools.  
+**Tables affected:** `games`, `age_groups`, `contacts`, `diamonds`, `announcements`, `teams` (prod only)  
+**Recommendation:** In a cleanup migration, `ALTER TABLE … DROP CONSTRAINT` the auto-named `*_fkey` duplicates, keeping only the explicitly-named `fk_*` constraints. Run against prod only (dev doesn't have the duplicates). Wrap in a transaction. Test that the surviving named constraints still block orphan inserts before merging.  
+**Status:** Open
+
+---
+
+### [2026-05-23] — Finding #15: `team_entitlements` — dual nullable owner FKs with no NOT NULL guard
+
+**Severity:** Medium  
+**Finding:** `team_entitlements` has `org_id` (FK → organizations.id, nullable) and `rep_team_id` (FK → rep_teams.id, nullable). Both are nullable. A row with both NULL is a dangling entitlement — no org owns it, no team owns it — and the RLS system cannot scope it to any tenant. There is no visible CHECK constraint requiring at least one to be non-null.  
+**Tables affected:** `team_entitlements`  
+**Recommendation:** Add `CHECK (org_id IS NOT NULL OR rep_team_id IS NOT NULL)` to `team_entitlements`. Also verify that RLS SELECT policies are defined and reference at least one of these columns (not just `team_workspace_id`) so entitlement reads stay tenant-scoped even when a row has only one of the two.  
+**Status:** Open
+
+---
+
+### [2026-05-23] — Finding #16: `team_org_links` has no direct `org_id` — 2-hop chain via `team_workspaces`
+
+**Severity:** Medium  
+**Finding:** `team_org_links` carries `team_workspace_id` but no direct org tenancy column. The primary org context is `team_workspace_id → team_workspaces.workspace_org_id` — a 2-hop join. Any RLS policy or cross-org lookup on link records requires traversing through `team_workspaces`.  
+**Tables affected:** `team_org_links`  
+**Recommendation:** Evaluate adding `workspace_org_id` (denormalized from `team_workspaces`) to `team_org_links` — the same pattern used for `league_games`, `rep_allocation_installments`, and `rep_player_dues_installments`. If the table is low-traffic (org setup, not scorekeeper-hot-path), accepted risk may be reasonable; document the decision explicitly.  
+**Status:** Open
+
+---
+
+### [2026-05-23] — Finding #17: `games.game_time` type mismatch — `text` in dev, `time without time zone` in prod
+
+**Severity:** High  
+**Finding:** The `games` table predates the migration system; its column types were set manually and differ between environments. Dev has `game_time text`; prod has `game_time time without time zone`. This matters for two reasons: (1) any time string the app stores that is not a valid PostgreSQL time literal (e.g. `"2:30 PM"`, `""`, `"TBD"`) will be accepted silently in dev but fail with a cast error in prod; (2) `ORDER BY game_time` is lexicographic in dev and temporal in prod — dev test results will not match prod sort order for times like `"9:00"` vs `"10:00"` (string sort puts `"9"` after `"10"`).  
+**Tables affected:** `games`  
+**Recommendation:** Audit what values the app actually stores in `game_time`. If all stored values are valid time literals (`HH:MM` or `HH:MM:SS`), apply a migration to dev to `ALTER COLUMN game_time TYPE time using game_time::time` to match prod. If the app ever stores non-time strings, apply the opposite migration in prod (`ALTER COLUMN game_time TYPE text`) to match dev. Do not leave the types inconsistent — dev testing will not reflect prod behavior.  
+**Status:** Open
+
+---
+
+### [2026-05-23] — Finding #18: `games.bracket_id` type mismatch — `text` in dev, `uuid` in prod
+
+**Severity:** High  
+**Finding:** `games.bracket_id` is `text` in dev and `uuid` in prod. Same pre-migration origin as Finding #17. Any code path that passes a non-UUID value (empty string, `"none"`, auto-incremented integers used in bracket logic) will succeed in dev but throw a type error in prod. Implicit casts from `text` → `uuid` in query parameters will also behave differently. This is an active production risk for any bracket feature.  
+**Tables affected:** `games`  
+**Recommendation:** Determine the canonical type. If `bracket_id` is always a UUID (FK to a bracket record), standardize to `uuid` in both environments. If it can hold non-UUID sentinel values, standardize to `text` in both. Apply a single corrective migration to whichever environment is wrong. The migration must be wrapped in a transaction with a `BEGIN/COMMIT` block. Do not include this in the same migration as any data-change — type coercion on a live table should be isolated.  
+**Status:** Open
+
+---
+
+### [2026-05-23] — Finding #19: `league_seasons.draft_state` column exists in prod only
+
+**Severity:** Medium  
+**Finding:** A `draft_state jsonb` column exists on `league_seasons` in prod but has no corresponding migration in the codebase (migrations 001–075 don't add it). It was added directly to the prod database. If any UI or API code reads or writes `draft_state`, it will fail in dev with "column does not exist". Dev cannot be used to test any draft/placement feature that uses this column.  
+**Tables affected:** `league_seasons`  
+**Recommendation:** If this column is actively used, write a migration to add it to dev: `ALTER TABLE league_seasons ADD COLUMN IF NOT EXISTS draft_state jsonb;` — then apply. If it was experimental and is not referenced by any app code, drop it from prod and document the decision. Either way, eliminate the divergence before the next league feature ships.  
+**Status:** Open
+
+---
+
+### [2026-05-23] — Finding #20: `pools` nullability drift — `age_group_id` and `created_at` nullable in prod, NOT NULL in dev
+
+**Severity:** Low  
+**Finding:** `pools.age_group_id` and `pools.created_at` are `NOT NULL` in dev but nullable in prod. This is the inverse of the typical drift pattern (prod is usually stricter). New inserts from app code that always provide these values will succeed in both environments. The risk is: (1) prod silently accepts incomplete rows that dev would reject; (2) any future query that assumes `age_group_id IS NOT NULL` may behave unexpectedly on prod rows with nulls.  
+**Tables affected:** `pools`  
+**Recommendation:** Apply a constraint-tightening migration to prod: check for any existing NULL rows first (`SELECT COUNT(*) FROM pools WHERE age_group_id IS NULL OR created_at IS NULL`), then `ALTER TABLE pools ALTER COLUMN age_group_id SET NOT NULL; ALTER TABLE pools ALTER COLUMN created_at SET NOT NULL DEFAULT now();`. Only proceed if no NULL rows exist. If NULL rows are found, investigate and backfill before tightening.  
+**Status:** Open
+
+---
+
+### [2026-05-23] — Finding #12: Duplicate indexes on `org_audit_log` in prod
+
+**Severity:** Low  
+**Finding:** Prod has two indexes on `org_audit_log(org_id, created_at DESC)`: `idx_audit_log_org` and `idx_audit_org`. Both index identical columns with identical sort. The duplicate adds write overhead on every audit event insert (which fires frequently during platform admin operations) and wastes storage.  
+**Tables affected:** `org_audit_log` (prod only)  
+**Recommendation:** Drop the auto-named or older duplicate (`idx_audit_org` or whichever was created first) in a cleanup migration applied to prod only. Confirm the remaining index satisfies all existing query plans before dropping.  
+**Status:** Open
 
 ---
 
@@ -141,6 +231,25 @@ The three-level rep financial structure — `rep_cost_allocations` → `rep_allo
 
 ---
 
+### [2026-05-23] — Advisory: `team_workspaces` dual org FK naming — justified exception, requires documentation
+
+`team_workspaces` has two FKs to `organizations.id`: `workspace_org_id` (the team's primary tenant org) and `billing_owner_org_id` (who pays — may differ). Convention says FK to `organizations.id` should be `org_id`, but a table cannot have two columns with the same name. The descriptive naming here is the correct approach for this case. **`workspace_org_id` must be the RLS tenancy anchor** — all policies on `team_workspaces` and its child tables (`team_org_links`, `team_workspace_claims`, `team_entitlements`) should scope via this column. Confirm RLS policies enforce this. Add a migration comment noting the naming exception.
+
+---
+
+### [2026-05-23] — Advisory: `team_workspace_claims` — no direct `org_id`, 2-hop via `team_workspaces`
+
+`team_workspace_claims` chains to tenancy via `team_workspace_id → team_workspaces.workspace_org_id`. This is a 2-hop chain (same as pre-fix league_games). The table is low-traffic (claim tokens, one-time setup events) so accepted risk is reasonable — but confirm an RLS SELECT policy exists and joins correctly through `team_workspaces` before this module goes to production.
+
+---
+
+### [2026-05-23] — Good: `billing_retained_records` + `billing_retention_intents` — fully audited, clean
+
+**Status: Addressed (advisory)**  
+Both tables are defined in migrations 038 + 039. Both have direct `org_id NOT NULL` (FK → organizations.id). Both have RLS enabled with SELECT policies scoped to `org_id` (restricted to org owners). Index coverage is complete: `(org_id, created_at DESC)` on intents, `(org_id, retained_state, retention_until)` on records, plus purpose-specific partial indexes for expiry processing. The `billing_retained_records` unique partial index (`record_type, record_id WHERE retained_state IN ('retained_inactive','pending_purge')`) correctly prevents duplicate active retention entries per record. No findings.
+
+---
+
 ---
 
 ### [2026-05-23] — Migration 070: missing `org_id` index on `rep_team_lineups`
@@ -194,6 +303,15 @@ Migration N+3 — DROP tournaments.organization_id (after N verified in prod)
 
 | # | Short title | Severity | Addressed in |
 |---|---|---|---|
+| 1 | `organization_id → org_id` rename on `tournaments` | High | Migrations 072+073 — dev + prod (2026-05-23) |
+| 2 | Tournament sub-tables: 2-hop RLS chain | High | Accepted Risk (2026-05-23) — `can_access_tournament()` SECURITY DEFINER fn collapses chain |
+| 3 | `teams.players` vestigial jsonb column | Medium | Accepted Risk (2026-05-23) — never written, never read; drop before any roster feature |
+| 4 | `league_games` no `org_id` — 2-hop chain | Medium | Migration 075 — dev + prod (2026-05-23) |
+| 5 | `rep_player_dues_installments` no `org_id` — 3-hop | Medium | Migration 074 — dev + prod (2026-05-23) |
+| 6 | `rep_allocation_installments` no `org_id` — 2-hop | Medium | Migration 074 — dev + prod (2026-05-23) |
+| 7 | `contacts` tournament-only — no cross-module pattern | Low | Accepted Risk (2026-05-23) — revisit if CRM planned |
+| 8 | `announcements` tournament-only | Low | Accepted Risk (2026-05-23) — prefer new table if league feature ships |
+| 9 | `resources` tournament-only | Low | Accepted Risk (2026-05-23) — flag before non-tournament doc feature |
 | 13 | Missing `org_id` index on `rep_team_lineups` | High | Migration 071 — dev + prod (2026-05-23) |
 | 14 | No write RLS policies on lineup tables | High | Migration 071 — dev + prod (2026-05-23) |
 
@@ -202,7 +320,11 @@ Migration N+3 — DROP tournaments.organization_id (after N verified in prod)
 ## Trigger checklist — when to re-run `/dba`
 
 - [ ] Before merging any migration that adds a new table
-- [ ] Before the Stripe billing migration ships
+- [ ] Before the Stripe billing migration ships — billing retention tables ✅ clean; `stripe_prices` ✅ clean; remaining Stripe tables not yet written
 - [ ] Before slot-first roster Phase 2 ships
 - [ ] Before coaching standalone tables ship
+- [ ] After Findings #17+#18 (`games` type mismatches) are resolved — code audit required first
+- [ ] After Finding #19 (`league_seasons.draft_state` drift) is resolved
+- [ ] After Finding #10 (`league_practices` dev/prod sync) is resolved
+- [ ] After Finding #11 (duplicate FK constraints in prod) is cleaned up
 - [ ] Quarterly health check (next: 2026-08-01)

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { getBootstrapAdminEmails, requireDevToolPlatformAdmin } from '@/lib/platform-auth';
+import { getBootstrapAdminEmails, requireDevToolUserAuth } from '@/lib/platform-auth';
 import type { User } from '@supabase/supabase-js';
 
 /**
@@ -166,7 +166,7 @@ async function wipeAll(
 
 // ── Handler ──────────────────────────────────────────────────────────────────
 export async function POST(req: Request) {
-  const auth = await requireDevToolPlatformAdmin();
+  const auth = await requireDevToolUserAuth();
   if (auth.response) return auth.response;
 
   const protectedEmails = Array.from(new Set([

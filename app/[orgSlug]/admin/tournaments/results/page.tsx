@@ -360,7 +360,7 @@ export default function AdminResultsPage() {
             href={`/${currentOrg.slug}/scorekeeper`}
             target="_blank"
             rel="noopener noreferrer"
-            className="btn btn-outline btn-sm"
+            className="btn btn-outline btn-data"
           >
             <ExternalLink size={14} /> Open Scorekeeper View
           </Link>
@@ -439,7 +439,6 @@ export default function AdminResultsPage() {
         </ToolbarGroup>
 
         <ToolbarGroup align="end">
-          <ToolbarSearch value={searchQuery} onChange={setSearchQuery} placeholder="Search teams..." label="Search games" />
           <ExportMenu
             formats={['xlsx', 'csv', 'pdf']}
             onExportXLSX={handleExportXLSX}
@@ -448,6 +447,10 @@ export default function AdminResultsPage() {
             planId={currentOrg?.planId}
             disabled={filtered.length === 0}
           />
+        </ToolbarGroup>
+
+        <ToolbarGroup fullWidth>
+          <ToolbarSearch value={searchQuery} onChange={setSearchQuery} placeholder="Search teams..." label="Search games" />
         </ToolbarGroup>
       </TournamentAdminToolbar>
 
@@ -503,8 +506,8 @@ export default function AdminResultsPage() {
         <div className="modal-overlay" onClick={() => setEditing(null)}>
           <div className="modal" style={{ maxWidth: 440 }} onClick={e => e.stopPropagation()}>
             <div className="modal-header">
-              <h3>Enter Score</h3>
-              <button className="btn btn-ghost btn-sm" onClick={() => setEditing(null)}><X size={16} /></button>
+              <h3 style={{ fontFamily: 'var(--font-data)', fontSize: '0.95rem', textTransform: 'uppercase', color: 'var(--logic-lime)', margin: 0 }}>Enter Score</h3>
+              <button className="btn btn-ghost btn-data" onClick={() => setEditing(null)}><X size={16} /></button>
             </div>
             <div className={styles.scoreInputArea}>
               <div className={styles.scoreTeam}>

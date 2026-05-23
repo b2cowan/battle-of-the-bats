@@ -237,11 +237,13 @@ export async function PATCH(req: Request) {
       if (!hasCapability(ctx.role, ctx.capabilities, 'update_schedule')) return forbidden();
 
       const updates: Record<string, unknown> = {};
-      if (body.date      !== undefined) updates.game_date  = body.date;
-      if (body.time      !== undefined) updates.game_time  = body.time;
-      if (body.location  !== undefined) updates.location   = body.location;
-      if (body.diamondId !== undefined) updates.diamond_id = body.diamondId;
-      if (body.notes     !== undefined) updates.notes      = body.notes;
+      if (body.date       !== undefined) updates.game_date    = body.date;
+      if (body.time       !== undefined) updates.game_time    = body.time;
+      if (body.location   !== undefined) updates.location     = body.location;
+      if (body.diamondId  !== undefined) updates.diamond_id   = body.diamondId;
+      if (body.notes      !== undefined) updates.notes        = body.notes;
+      if (body.homeTeamId !== undefined) updates.home_team_id = body.homeTeamId || null;
+      if (body.awayTeamId !== undefined) updates.away_team_id = body.awayTeamId || null;
 
       const { error } = await supabase.from('games').update(updates).eq('id', id);
       if (error) throw error;

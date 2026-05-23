@@ -3,6 +3,7 @@ import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 import type { User } from '@supabase/supabase-js';
 import { supabaseAdmin } from './supabase-admin';
+import { getAuthenticatedUser } from './api-auth';
 
 export type PlatformRole = 'super_admin' | 'support' | 'billing' | 'product' | 'growth' | 'read_only';
 
@@ -146,4 +147,42 @@ export async function requireDevToolPlatformAdmin(): Promise<
     };
   }
   return auth;
+}
+
+/**
+ * Dev-tool access that requires NEXT_PUBLIC_ENABLE_DEV_TOOLS=true + any authenticated
+ * Supabase user. Use for seed/wipe/status/memberships — routes you need after testing
+ * the signup flow (which replaces the platform-admin session cookie with the new org
+ * user's session). More sensitive operations (platform user seeding, plan gates) keep
+ * requireDevToolPlatformAdmin.
+ *
+ * Never set NEXT_PUBLIC_ENABLE_DEV_TOOLS=true in production. The production guard here
+ * is a belt-and-suspenders fallback only.
+ */
+export async function requireDevToolUserAuth(): Promise<
+  { user: User; role: PlatformRole; response: null } | { user: null; role: null; response: NextResponse }
+> {
+  if (process.env.NEXT_PUBLIC_ENABLE_DEV_TOOLS !== 'true') {
+    return {
+      user: null,
+      role: null,
+      response: NextResponse.json({ error: 'Not found' }, { status: 404 }),
+    };
+  }
+  if (process.env.NODE_ENV === 'production') {
+    return {
+      user: null,
+      role: null,
+      response: NextResponse.json({ error: 'Not found' }, { status: 404 }),
+    };
+  }
+  const user = await getAuthenticatedUser();
+  if (!user) {
+    return {
+      user: null,
+      role: null,
+      response: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }),
+    };
+  }
+  return { user, role: 'super_admin', response: null };
 }

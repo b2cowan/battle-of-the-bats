@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { requireDevToolPlatformAdmin } from '@/lib/platform-auth';
+import { requireDevToolUserAuth } from '@/lib/platform-auth';
 
 export interface OrgMember {
   userId: string;
@@ -34,7 +34,7 @@ export interface MembershipData {
 }
 
 export async function GET() {
-  const auth = await requireDevToolPlatformAdmin();
+  const auth = await requireDevToolUserAuth();
   if (auth.response) return auth.response;
 
   // 1. All active org memberships with org info

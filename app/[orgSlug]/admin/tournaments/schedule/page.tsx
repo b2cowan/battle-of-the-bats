@@ -273,7 +273,7 @@ export default function AdminSchedulePage() {
     refresh();
   }
 
-  async function handleSaveGame(gameId: string, data: { date: string; time: string; diamondId: string; notes: string }) {
+  async function handleSaveGame(gameId: string, data: { date: string; time: string; diamondId: string; notes: string; homeTeamId: string; awayTeamId: string }) {
     const orgParam = orgSlug ? `?orgSlug=${encodeURIComponent(orgSlug)}` : '';
     const diamond = data.diamondId ? diamonds.find(d => d.id === data.diamondId) : null;
     await fetch(`/api/admin/games${orgParam}`, {
@@ -287,6 +287,8 @@ export default function AdminSchedulePage() {
         diamondId: data.diamondId || undefined,
         location: diamond?.name || undefined,
         notes: data.notes || undefined,
+        homeTeamId: data.homeTeamId,
+        awayTeamId: data.awayTeamId,
       }),
     });
     await refresh();

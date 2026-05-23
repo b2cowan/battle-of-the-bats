@@ -226,6 +226,14 @@
   flex-direction: column;
 }
 
+/* ─── Flat Table Container ─────────────────────────────────────────────────── */
+/* Wraps header + rows so the table has a defined boundary; mirrors teams-admin */
+.flatList {
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.2);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
 .compactListContent {
   display: flex;
   flex-direction: column;

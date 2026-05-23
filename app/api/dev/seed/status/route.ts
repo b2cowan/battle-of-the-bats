@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { requireDevToolPlatformAdmin } from '@/lib/platform-auth';
+import { requireDevToolUserAuth } from '@/lib/platform-auth';
 
 export async function GET() {
-  const auth = await requireDevToolPlatformAdmin();
+  const auth = await requireDevToolUserAuth();
   if (auth.response) return auth.response;
 
   const [

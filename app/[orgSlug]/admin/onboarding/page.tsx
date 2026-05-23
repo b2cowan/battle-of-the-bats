@@ -492,7 +492,7 @@ export default function OnboardingPage() {
     const activePlan = normalizePlanId(currentOrg.planId);
     if (activePlan !== 'tournament' && activePlan !== 'tournament_plus') return;
 
-    const shouldResumeAfterPlan = continueSetup || planSelectionSucceeded;
+    const shouldResumeAfterPlan = planSelectionSucceeded;
     void showWizardStep(getWizardResumeStep(startupProgress, shouldResumeAfterPlan));
   }, [loading, currentOrg, userRole, planChoiceRequired, continueSetup, planSelectionSucceeded, startupProgress, activeModal, planChooserOpen, wizardDismissed, workflowRedirecting]);
 
@@ -527,6 +527,15 @@ export default function OnboardingPage() {
     router.replace(getPostOnboardingHref(currentOrg, { hasTournament: false }));
   }
 
+  async function advancePlanStep(selectedPlan: OrgPlan) {
+    const newPlan = normalizePlanId(selectedPlan);
+    if (newPlan === 'league' || newPlan === 'club') {
+      await showWizardStep('league-season');
+    } else {
+      await advanceWizard('plan');
+    }
+  }
+
   async function choosePlan(planKey: OrgPlan, selectedBillingCycle: 'monthly' | 'annual' = 'monthly') {
     if (!currentOrg || planLoading) return;
     setPlanError('');
@@ -543,7 +552,7 @@ export default function OnboardingPage() {
       if (planChoiceRequired) {
         router.replace(`/${currentOrg.slug}/admin/onboarding?success=1`);
       } else if (activeModal === 'plan') {
-        await advanceWizard('plan');
+        await advancePlanStep(planKey);
       }
       return;
     }
@@ -563,7 +572,7 @@ export default function OnboardingPage() {
         if (planChoiceRequired) {
           router.replace(`/${currentOrg.slug}/admin/onboarding?success=1`);
         } else if (activeModal === 'plan') {
-          await advanceWizard('plan');
+          await advancePlanStep(planKey);
         }
       } catch (err) {
         setPlanError(err instanceof Error ? err.message : 'Plan selection failed');
@@ -594,7 +603,7 @@ export default function OnboardingPage() {
         if (planChoiceRequired) {
           router.replace(`/${currentOrg.slug}/admin/onboarding?success=1`);
         } else if (activeModal === 'plan') {
-          await advanceWizard('plan');
+          await advancePlanStep(planKey);
         }
         return;
       }

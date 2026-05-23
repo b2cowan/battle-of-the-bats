@@ -1,21 +1,10 @@
 import { NextResponse } from 'next/server';
-import {
-  getBillingMockConfig,
-  setBillingMockRuntimeOverride,
-  type BillingMockConfig,
-} from '@/lib/billing-mock';
+import type { BillingMockConfig } from '@/lib/billing-mock';
 import { requireDevToolPlatformAdmin } from '@/lib/platform-auth';
 
 type MockBillingPayload = {
   enabled?: unknown;
 };
-
-function configResponse(config: BillingMockConfig = getBillingMockConfig()) {
-  return NextResponse.json({
-    ok: true,
-    ...config,
-  });
-}
 
 async function authorizeDevTool() {
   const auth = await requireDevToolPlatformAdmin();
@@ -32,7 +21,9 @@ export async function GET() {
   const response = await authorizeDevTool();
   if (response) return response;
 
-  return configResponse();
+  const { getBillingMockConfig } = await import('@/lib/billing-mock');
+  const config: BillingMockConfig = getBillingMockConfig();
+  return NextResponse.json({ ok: true, ...config });
 }
 
 export async function POST(req: Request) {
@@ -46,6 +37,8 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'enabled must be true, false, or null' }, { status: 400 });
   }
 
+  const { setBillingMockRuntimeOverride, getBillingMockConfig } = await import('@/lib/billing-mock');
   setBillingMockRuntimeOverride(value);
-  return configResponse();
+  const config: BillingMockConfig = getBillingMockConfig();
+  return NextResponse.json({ ok: true, ...config });
 }

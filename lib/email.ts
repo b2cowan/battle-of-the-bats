@@ -43,15 +43,15 @@ export { ADMIN_EMAIL, SITE_URL };
 // ── Email templates ────────────────────────────────────────────────────────────
 
 const wrap = (content: string, contactEmail = ADMIN_EMAIL) => `
-<div style="font-family:Inter,sans-serif;background:#0D0B14;color:#fff;max-width:600px;margin:0 auto;padding:2rem;border-radius:12px;border:1px solid rgba(var(--primary-rgb),0.3);">
-  <div style="margin-bottom:1.5rem;">
-    <span style="font-size:1.75rem;font-weight:900;color:#A855F7;letter-spacing:0.04em;">FIELDLOGICHQ</span>
+<div style="font-family:Inter,-apple-system,BlinkMacSystemFont,sans-serif;background:#111827;color:#F1F5F9;max-width:600px;margin:0 auto;padding:2.5rem 2rem;border:1px solid rgba(30,58,138,0.25);">
+  <div style="margin-bottom:1.75rem;padding-bottom:1.25rem;border-bottom:1px solid rgba(30,58,138,0.2);">
+    <span style="font-size:0.75rem;font-weight:900;color:#D9F99D;letter-spacing:0.16em;text-transform:uppercase;">FIELDLOGICHQ</span>
   </div>
   ${content}
   <hr style="border:none;border-top:1px solid rgba(255,255,255,0.08);margin:2rem 0;" />
-  <p style="color:rgba(255,255,255,0.4);font-size:0.8rem;margin:0;">
-    Questions? Reply to this email or contact
-    <a href="mailto:${contactEmail}" style="color:#A855F7;">${contactEmail}</a>
+  <p style="color:rgba(241,245,249,0.4);font-size:0.8rem;margin:0;">
+    Questions? Contact
+    <a href="mailto:${contactEmail}" style="color:#D9F99D;">${contactEmail}</a>
   </p>
 </div>`;
 
@@ -64,21 +64,21 @@ export function registrationConfirmationHtml(p: {
     <h2 style="color:#fff;font-size:1.4rem;margin:0 0 1rem;">Registration Received!</h2>
     <p>Hi <strong>${p.coachName}</strong>,</p>
     <p>We've received your registration for <strong>${p.teamName}</strong> in the <strong>${p.ageGroupName}</strong> division for <strong>${p.tournamentName}</strong>.</p>
-    <div style="background:#1A1530;border:1px solid rgba(var(--primary-rgb),0.3);border-radius:8px;padding:1.25rem;margin:1.5rem 0;">
-      <p style="margin:0 0 0.5rem;font-weight:700;color:#A855F7;">Registration Details</p>
-      <p style="margin:0;line-height:1.8;">
+    <div style="background:#0F172A;border:1px solid rgba(30,58,138,0.25);border-left:3px solid rgba(30,58,138,0.5);padding:1.25rem;margin:1.5rem 0;">
+      <p style="margin:0 0 0.5rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#D9F99D;">Registration Details</p>
+      <p style="margin:0;line-height:1.8;color:rgba(241,245,249,0.85);">
         Team: <strong>${p.teamName}</strong><br>
         Coach: <strong>${p.coachName}</strong><br>
         Division: <strong>${p.ageGroupName}</strong><br>
         Tournament: <strong>${p.tournamentName}</strong>
       </p>
     </div>
-    <p style="color:rgba(255,255,255,0.7);">Your registration is currently <strong style="color:#F59E0B;">pending review</strong>. If payment is required, the organizer will share payment instructions directly. FieldLogicHQ does not process online payments.</p>
+    <p style="color:rgba(241,245,249,0.7);">Your registration is currently <strong style="color:#F59E0B;">pending review</strong>. If payment is required, the organizer will share payment instructions directly. FieldLogicHQ does not process online payments.</p>
     ${p.teamWorkspaceClaimUrl ? `
-      <div style="background:#111827;border:1px solid rgba(190,242,100,0.35);border-radius:8px;padding:1.25rem;margin:1.5rem 0;">
-        <p style="margin:0 0 0.5rem;font-weight:700;color:#bef264;">Keep this team organized after the tournament</p>
-        <p style="margin:0 0 1rem;color:rgba(255,255,255,0.72);line-height:1.6;">Activate a FieldLogicHQ Team workspace with your tournament team details prefilled. You can manage roster, schedule, dues, documents, attendance, lineups, and a quick local tournament from the Coaches Portal.</p>
-        <a href="${p.teamWorkspaceClaimUrl}" style="display:inline-block;background:#bef264;color:#0b0f14;text-decoration:none;font-weight:800;padding:0.75rem 1rem;border-radius:4px;">Claim Team Workspace</a>
+      <div style="background:#0F172A;border:1px solid rgba(217,249,157,0.3);border-left:3px solid rgba(217,249,157,0.5);padding:1.25rem;margin:1.5rem 0;">
+        <p style="margin:0 0 0.5rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#D9F99D;">Keep this team organized after the tournament</p>
+        <p style="margin:0 0 1rem;color:rgba(241,245,249,0.72);line-height:1.6;">Activate a FieldLogicHQ Team workspace with your tournament team details prefilled. You can manage roster, schedule, dues, documents, attendance, lineups, and a quick local tournament from the Coaches Portal.</p>
+        <a href="${p.teamWorkspaceClaimUrl}" style="display:inline-block;background:#D9F99D;color:#0b0f14;text-decoration:none;font-weight:800;padding:0.75rem 1rem;border-radius:2px;font-size:0.82rem;letter-spacing:0.06em;">Claim Team Workspace</a>
       </div>
     ` : ''}
   `, p.contactEmail);
@@ -96,9 +96,9 @@ export function manualTeamRegistrationHtml(p: {
     <h2 style="color:#fff;font-size:1.4rem;margin:0 0 1rem;">Team Registered</h2>
     <p>Hi <strong>${p.coachName || 'Coach'}</strong>,</p>
     <p><strong>${p.teamName}</strong> has been registered in the <strong>${p.ageGroupName}</strong> division for <strong>${p.tournamentName}</strong>.</p>
-    <div style="background:#1A1530;border:1px solid rgba(var(--primary-rgb),0.3);border-radius:8px;padding:1.25rem;margin:1.5rem 0;">
-      <p style="margin:0 0 0.5rem;font-weight:700;color:#A855F7;">Registration Details</p>
-      <p style="margin:0;line-height:1.8;">
+    <div style="background:#0F172A;border:1px solid rgba(30,58,138,0.25);border-left:3px solid rgba(30,58,138,0.5);padding:1.25rem;margin:1.5rem 0;">
+      <p style="margin:0 0 0.5rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#D9F99D;">Registration Details</p>
+      <p style="margin:0;line-height:1.8;color:rgba(241,245,249,0.85);">
         Team: <strong>${p.teamName}</strong><br>
         Coach: <strong>${p.coachName || 'Not provided'}</strong><br>
         Division: <strong>${p.ageGroupName}</strong><br>
@@ -116,15 +116,15 @@ export function adminNotificationHtml(p: {
   return wrap(`
     <h2 style="color:#fff;font-size:1.4rem;margin:0 0 1rem;">📋 New Team Registration</h2>
     <p>A new team has registered for <strong>${p.tournamentName}</strong>:</p>
-    <div style="background:#1A1530;border:1px solid rgba(var(--primary-rgb),0.3);border-radius:8px;padding:1.25rem;margin:1rem 0;">
-      <p style="margin:0;line-height:1.8;">
+    <div style="background:#0F172A;border:1px solid rgba(30,58,138,0.25);border-left:3px solid rgba(30,58,138,0.5);padding:1.25rem;margin:1rem 0;">
+      <p style="margin:0;line-height:1.8;color:rgba(241,245,249,0.85);">
         Team: <strong>${p.teamName}</strong><br>
         Coach: <strong>${p.coachName}</strong><br>
         Division: <strong>${p.ageGroupName}</strong><br>
-        Contact: <a href="mailto:${p.email}" style="color:#A855F7;">${p.email}</a>
+        Contact: <a href="mailto:${p.email}" style="color:#D9F99D;">${p.email}</a>
       </p>
     </div>
-    <a href="${adminUrl}" style="display:inline-block;background:#8B2FC9;color:#fff;padding:0.75rem 1.75rem;border-radius:8px;text-decoration:none;font-weight:700;margin-top:0.5rem;">Review in Admin Panel →</a>
+    <a href="${adminUrl}" style="display:inline-block;background:#1E3A8A;color:#fff;padding:0.75rem 1.75rem;border-radius:2px;text-decoration:none;font-weight:700;font-size:0.82rem;letter-spacing:0.06em;margin-top:0.5rem;">Review in Admin Panel →</a>
   `);
 }
 
@@ -138,12 +138,12 @@ export function acceptanceHtml(p: {
     <h2 style="color:#22C55E;font-size:1.4rem;margin:0 0 1rem;">🎉 Team Accepted!</h2>
     <p>Hi <strong>${p.coachName}</strong>,</p>
     <p>Great news! <strong>${p.teamName}</strong> has been accepted into the <strong>${p.ageGroupName}</strong> division for <strong>${p.tournamentName}</strong>.</p>
-    <div style="background:#1A1530;border:2px solid rgba(34,197,94,0.4);border-radius:8px;padding:1.5rem;margin:1.5rem 0;">
-      <p style="margin:0 0 0.75rem;color:#22C55E;font-weight:700;font-size:1.05rem;">Payment Instructions</p>
-      <p style="margin:0 0 0.75rem;">If payment is required, the tournament organizer will follow up with instructions for paying outside FieldLogicHQ.</p>
-      <p style="margin:1rem 0 0;color:rgba(255,255,255,0.5);font-size:0.85rem;">Questions? Contact <a href="mailto:${contact}" style="color:#A855F7;">${contact}</a>.</p>
+    <div style="background:#0F172A;border:1px solid rgba(34,197,94,0.35);border-left:3px solid rgba(34,197,94,0.6);padding:1.5rem;margin:1.5rem 0;">
+      <p style="margin:0 0 0.75rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#22C55E;">Payment Instructions</p>
+      <p style="margin:0 0 0.75rem;color:rgba(241,245,249,0.8);">If payment is required, the tournament organizer will follow up with instructions for paying outside FieldLogicHQ.</p>
+      <p style="margin:1rem 0 0;color:rgba(241,245,249,0.45);font-size:0.85rem;">Questions? Contact <a href="mailto:${contact}" style="color:#D9F99D;">${contact}</a>.</p>
     </div>
-    <a href="${profileUrl}" style="display:inline-block;background:#8B2FC9;color:#fff;padding:0.75rem 1.75rem;border-radius:8px;text-decoration:none;font-weight:700;">View Team Profile →</a>
+    <a href="${profileUrl}" style="display:inline-block;background:#1E3A8A;color:#fff;padding:0.75rem 1.75rem;border-radius:2px;text-decoration:none;font-weight:700;font-size:0.82rem;letter-spacing:0.06em;">View Team Profile →</a>
   `, p.contactEmail);
 }
 
@@ -155,16 +155,16 @@ export function waitlistConfirmationHtml(p: {
     <h2 style="color:#F59E0B;font-size:1.4rem;margin:0 0 1rem;">You're on the Waitlist</h2>
     <p>Hi <strong>${p.coachName}</strong>,</p>
     <p>Thanks for registering <strong>${p.teamName}</strong> for the <strong>${p.ageGroupName}</strong> division of <strong>${p.tournamentName}</strong>.</p>
-    <div style="background:#1A1530;border:1px solid rgba(245,158,11,0.3);border-radius:8px;padding:1.25rem;margin:1.5rem 0;">
-      <p style="margin:0 0 0.5rem;font-weight:700;color:#F59E0B;">Waitlist Status</p>
-      <p style="margin:0;line-height:1.8;">
+    <div style="background:#0F172A;border:1px solid rgba(245,158,11,0.3);border-left:3px solid rgba(245,158,11,0.5);padding:1.25rem;margin:1.5rem 0;">
+      <p style="margin:0 0 0.5rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#F59E0B;">Waitlist Status</p>
+      <p style="margin:0;line-height:1.8;color:rgba(241,245,249,0.85);">
         Team: <strong>${p.teamName}</strong><br>
         Coach: <strong>${p.coachName}</strong><br>
         Division: <strong>${p.ageGroupName}</strong><br>
         Tournament: <strong>${p.tournamentName}</strong>
       </p>
     </div>
-    <p style="color:rgba(255,255,255,0.7);">The <strong>${p.ageGroupName}</strong> division is currently full. Your team has been added to the waitlist and you will be notified by email if a spot becomes available.</p>
+    <p style="color:rgba(241,245,249,0.7);">The <strong>${p.ageGroupName}</strong> division is currently full. Your team has been added to the waitlist and you will be notified by email if a spot becomes available.</p>
   `, p.contactEmail);
 }
 
@@ -177,8 +177,8 @@ export function rejectionHtml(p: {
     <h2 style="color:#EF4444;font-size:1.4rem;margin:0 0 1rem;">Registration Update</h2>
     <p>Hi <strong>${p.coachName}</strong>,</p>
     <p>Thank you for your interest in <strong>${p.tournamentName}</strong>. Unfortunately, we are unable to accommodate <strong>${p.teamName}</strong> in the <strong>${p.ageGroupName}</strong> division at this time.</p>
-    <p style="color:rgba(255,255,255,0.7);">This may be due to division capacity or eligibility requirements. Please contact us if you have any questions.</p>
-    <a href="mailto:${contact}" style="display:inline-block;background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.4);color:#f87171;padding:0.75rem 1.75rem;border-radius:8px;text-decoration:none;font-weight:700;margin-top:0.5rem;">Contact Us</a>
+    <p style="color:rgba(241,245,249,0.7);">This may be due to division capacity or eligibility requirements. Please contact us if you have any questions.</p>
+    <a href="mailto:${contact}" style="display:inline-block;background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.35);color:#f87171;padding:0.75rem 1.75rem;border-radius:2px;text-decoration:none;font-weight:700;font-size:0.82rem;letter-spacing:0.06em;margin-top:0.5rem;">Contact Us</a>
   `, contact);
 }
 
@@ -222,17 +222,17 @@ export function paymentReminderHtml(p: {
     <h2 style="color:#fff;font-size:1.4rem;margin:0 0 1rem;">Tournament Payment Reminder</h2>
     <p>Hi <strong>${escapeEmailHtml(p.coachName)}</strong>,</p>
     <p>This is a friendly reminder that payment is still outstanding for <strong>${escapeEmailHtml(p.teamName)}</strong> in the <strong>${escapeEmailHtml(p.ageGroupName)}</strong> division of <strong>${escapeEmailHtml(p.tournamentName)}</strong>.</p>
-    <div style="background:#1A1530;border:1px solid rgba(245,158,11,0.35);border-radius:8px;padding:1.25rem;margin:1.5rem 0;">
-      <p style="margin:0 0 0.5rem;font-weight:700;color:#F59E0B;">Payment Details</p>
-      <p style="margin:0;line-height:1.8;">
+    <div style="background:#0F172A;border:1px solid rgba(245,158,11,0.35);border-left:3px solid rgba(245,158,11,0.5);padding:1.25rem;margin:1.5rem 0;">
+      <p style="margin:0 0 0.5rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#F59E0B;">Payment Details</p>
+      <p style="margin:0;line-height:1.8;color:rgba(241,245,249,0.85);">
         Amount due: <strong>${escapeEmailHtml(p.amountDue)}</strong><br>
         ${p.dueDate ? `Due date: <strong>${escapeEmailHtml(p.dueDate)}</strong><br>` : ''}
         Team: <strong>${escapeEmailHtml(p.teamName)}</strong><br>
         Division: <strong>${escapeEmailHtml(p.ageGroupName)}</strong>
       </p>
     </div>
-    <div style="color:rgba(255,255,255,0.75);">${instructions}</div>
-    <p style="color:rgba(255,255,255,0.55);font-size:0.86rem;">FieldLogicHQ records payment status for the organizer but does not process tournament payments online.</p>
+    <div style="color:rgba(241,245,249,0.75);">${instructions}</div>
+    <p style="color:rgba(241,245,249,0.45);font-size:0.86rem;">FieldLogicHQ records payment status for the organizer but does not process tournament payments online.</p>
   `, p.contactEmail);
 }
 
@@ -249,17 +249,17 @@ export function teamWorkspaceClaimInviteHtml(p: {
     <h2 style="color:#fff;font-size:1.4rem;margin:0 0 1rem;">Keep Managing Your Season</h2>
     <p>Hi <strong>${escapeEmailHtml(coachName)}</strong>,</p>
     <p>The organizer for <strong>${escapeEmailHtml(p.tournamentName)}</strong> has created a secure FieldLogicHQ Team workspace claim link for <strong>${escapeEmailHtml(p.teamName)}</strong>.</p>
-    <div style="background:#111827;border:1px solid rgba(190,242,100,0.35);border-radius:8px;padding:1.25rem;margin:1.5rem 0;">
-      <p style="margin:0 0 0.5rem;font-weight:700;color:#bef264;">Team Workspace</p>
-      <p style="margin:0;line-height:1.8;">
+    <div style="background:#0F172A;border:1px solid rgba(217,249,157,0.3);border-left:3px solid rgba(217,249,157,0.5);padding:1.25rem;margin:1.5rem 0;">
+      <p style="margin:0 0 0.5rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#D9F99D;">Team Workspace</p>
+      <p style="margin:0;line-height:1.8;color:rgba(241,245,249,0.85);">
         Team: <strong>${escapeEmailHtml(p.teamName)}</strong><br>
         Division: <strong>${escapeEmailHtml(p.ageGroupName)}</strong><br>
         Source tournament: <strong>${escapeEmailHtml(p.tournamentName)}</strong>
       </p>
     </div>
-    <p style="color:rgba(255,255,255,0.72);line-height:1.6;">Use this link to activate your workspace with the team details already filled in. Team gives your coaches one place for roster, schedule, dues, documents, attendance, lineups, and quick local tournaments. For security, sign in or create your account with the email address that received this invite.</p>
-    <a href="${escapeEmailHtml(p.claimUrl)}" style="display:inline-block;background:#bef264;color:#0b0f14;text-decoration:none;font-weight:800;padding:0.75rem 1rem;border-radius:4px;margin:0.5rem 0 1rem;">Claim Team Workspace</a>
-    <p style="color:rgba(255,255,255,0.45);font-size:0.82rem;">If you do not manage this team, you can ignore this email.</p>
+    <p style="color:rgba(241,245,249,0.72);line-height:1.6;">Use this link to activate your workspace with the team details already filled in. Team gives your coaches one place for roster, schedule, dues, documents, attendance, lineups, and quick local tournaments. For security, sign in or create your account with the email address that received this invite.</p>
+    <a href="${escapeEmailHtml(p.claimUrl)}" style="display:inline-block;background:#D9F99D;color:#0b0f14;text-decoration:none;font-weight:800;padding:0.75rem 1rem;border-radius:2px;font-size:0.82rem;letter-spacing:0.06em;margin:0.5rem 0 1rem;">Claim Team Workspace</a>
+    <p style="color:rgba(241,245,249,0.4);font-size:0.82rem;">If you do not manage this team, you can ignore this email.</p>
   `, p.contactEmail);
 }
 
@@ -277,24 +277,24 @@ export function tournamentResultsFinalizedHtml(p: {
     <h2 style="color:#fff;font-size:1.4rem;margin:0 0 1rem;">Final Results Are Posted</h2>
     <p>Hi <strong>${escapeEmailHtml(p.coachName)}</strong>,</p>
     <p>The organizer has finalized results for <strong>${escapeEmailHtml(p.tournamentName)}</strong>. You can review standings, scores, and team information from the public tournament site.</p>
-    <div style="background:#1A1530;border:1px solid rgba(168,85,247,0.35);border-radius:8px;padding:1.25rem;margin:1.5rem 0;">
-      <p style="margin:0 0 0.75rem;font-weight:700;color:#A855F7;">Tournament Links</p>
+    <div style="background:#0F172A;border:1px solid rgba(30,58,138,0.25);border-left:3px solid rgba(30,58,138,0.5);padding:1.25rem;margin:1.5rem 0;">
+      <p style="margin:0 0 0.75rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#D9F99D;">Tournament Links</p>
       <p style="margin:0;line-height:1.9;">
-        <a href="${escapeEmailHtml(p.resultsUrl)}" style="color:#A855F7;">View standings and results</a><br>
-        <a href="${escapeEmailHtml(p.scheduleUrl)}" style="color:#A855F7;">View schedule</a><br>
-        <a href="${escapeEmailHtml(p.teamsUrl)}" style="color:#A855F7;">View teams</a>
+        <a href="${escapeEmailHtml(p.resultsUrl)}" style="color:#D9F99D;">View standings and results</a><br>
+        <a href="${escapeEmailHtml(p.scheduleUrl)}" style="color:#D9F99D;">View schedule</a><br>
+        <a href="${escapeEmailHtml(p.teamsUrl)}" style="color:#D9F99D;">View teams</a>
       </p>
     </div>
-    <p style="color:rgba(255,255,255,0.65);font-size:0.88rem;">Thanks for being part of the tournament.</p>
+    <p style="color:rgba(241,245,249,0.65);font-size:0.88rem;">Thanks for being part of the tournament.</p>
     ${p.teamUrl ? `
-      <div style="background:#111827;border:1px solid rgba(190,242,100,0.35);border-radius:8px;padding:1.25rem;margin:1.5rem 0;">
-        <p style="margin:0 0 0.5rem;font-weight:700;color:#bef264;">Keep this team going</p>
-        <p style="margin:0 0 1rem;color:rgba(255,255,255,0.72);line-height:1.6;">Turn the tournament team into a season workspace for roster, schedule, dues, documents, attendance, and lineups.</p>
-        <a href="${escapeEmailHtml(p.teamUrl)}" style="display:inline-block;background:#bef264;color:#0b0f14;text-decoration:none;font-weight:800;padding:0.75rem 1rem;border-radius:4px;">Explore Team Workspace</a>
+      <div style="background:#0F172A;border:1px solid rgba(217,249,157,0.3);border-left:3px solid rgba(217,249,157,0.5);padding:1.25rem;margin:1.5rem 0;">
+        <p style="margin:0 0 0.5rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#D9F99D;">Keep this team going</p>
+        <p style="margin:0 0 1rem;color:rgba(241,245,249,0.72);line-height:1.6;">Turn the tournament team into a season workspace for roster, schedule, dues, documents, attendance, and lineups.</p>
+        <a href="${escapeEmailHtml(p.teamUrl)}" style="display:inline-block;background:#D9F99D;color:#0b0f14;text-decoration:none;font-weight:800;padding:0.75rem 1rem;border-radius:2px;font-size:0.82rem;letter-spacing:0.06em;">Explore Team Workspace</a>
       </div>
     ` : ''}
-    <p style="color:rgba(255,255,255,0.45);font-size:0.82rem;line-height:1.55;margin-top:1.5rem;">
-      Running your own tournament? <a href="${escapeEmailHtml(p.fieldLogicUrl)}" style="color:#A855F7;">See how FieldLogicHQ helps organizers manage registration, schedules, results, and post-event reporting.</a>
+    <p style="color:rgba(241,245,249,0.4);font-size:0.82rem;line-height:1.55;margin-top:1.5rem;">
+      Running your own tournament? <a href="${escapeEmailHtml(p.fieldLogicUrl)}" style="color:#D9F99D;">See how FieldLogicHQ helps organizers manage registration, schedules, results, and post-event reporting.</a>
     </p>
   `, p.contactEmail);
 }
@@ -315,16 +315,16 @@ export function leagueRegistrationApprovedHtml(p: {
     <h2 style="color:#22C55E;font-size:1.4rem;margin:0 0 1rem;">✅ Registration Approved!</h2>
     <p>Hi <strong>${p.guardianFirstName}</strong>,</p>
     <p>Great news — <strong>${p.playerFirstName} ${p.playerLastName}</strong>'s registration for <strong>${p.seasonName}</strong> has been approved.</p>
-    <div style="background:#1A1530;border:1px solid rgba(34,197,94,0.3);border-radius:8px;padding:1.25rem;margin:1.5rem 0;">
-      <p style="margin:0 0 0.5rem;font-weight:700;color:#22C55E;">Registration Details</p>
-      <p style="margin:0;line-height:1.8;">
+    <div style="background:#0F172A;border:1px solid rgba(34,197,94,0.3);border-left:3px solid rgba(34,197,94,0.5);padding:1.25rem;margin:1.5rem 0;">
+      <p style="margin:0 0 0.5rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#22C55E;">Registration Details</p>
+      <p style="margin:0;line-height:1.8;color:rgba(241,245,249,0.85);">
         Player: <strong>${p.playerFirstName} ${p.playerLastName}</strong><br>
         Season: <strong>${p.seasonName}</strong><br>
         Division: <strong>${p.divisionName}</strong><br>
         Reference: <strong style="font-family:monospace;">#${ref}</strong>
       </p>
     </div>
-    <p style="color:rgba(255,255,255,0.7);">We look forward to seeing ${p.playerFirstName} on the field! Watch for further updates from your league administrator.</p>
+    <p style="color:rgba(241,245,249,0.7);">We look forward to seeing ${p.playerFirstName} on the field! Watch for further updates from your league administrator.</p>
   `, p.contactEmail);
 }
 
@@ -342,16 +342,16 @@ export function leagueRegistrationPendingHtml(p: {
     <h2 style="color:#fff;font-size:1.4rem;margin:0 0 1rem;">Registration Received</h2>
     <p>Hi <strong>${p.guardianFirstName}</strong>,</p>
     <p>We've received the registration for <strong>${p.playerFirstName} ${p.playerLastName}</strong> in <strong>${p.seasonName}</strong>. A league administrator will review it shortly.</p>
-    <div style="background:#1A1530;border:1px solid rgba(var(--primary-rgb),0.3);border-radius:8px;padding:1.25rem;margin:1.5rem 0;">
-      <p style="margin:0 0 0.5rem;font-weight:700;color:#A855F7;">Registration Details</p>
-      <p style="margin:0;line-height:1.8;">
+    <div style="background:#0F172A;border:1px solid rgba(30,58,138,0.25);border-left:3px solid rgba(30,58,138,0.5);padding:1.25rem;margin:1.5rem 0;">
+      <p style="margin:0 0 0.5rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#D9F99D;">Registration Details</p>
+      <p style="margin:0;line-height:1.8;color:rgba(241,245,249,0.85);">
         Player: <strong>${p.playerFirstName} ${p.playerLastName}</strong><br>
         Season: <strong>${p.seasonName}</strong><br>
         Division: <strong>${p.divisionName}</strong><br>
         Reference: <strong style="font-family:monospace;">#${ref}</strong>
       </p>
     </div>
-    <p style="color:rgba(255,255,255,0.7);">Your registration status is currently <strong style="color:#F59E0B;">pending review</strong>. You will receive another email once a decision has been made. No payment is required until your registration is approved.</p>
+    <p style="color:rgba(241,245,249,0.7);">Your registration status is currently <strong style="color:#F59E0B;">pending review</strong>. You will receive another email once a decision has been made. No payment is required until your registration is approved.</p>
   `, p.contactEmail);
 }
 
@@ -370,9 +370,9 @@ export function leagueRegistrationWaitlistHtml(p: {
     <h2 style="color:#F59E0B;font-size:1.4rem;margin:0 0 1rem;">You're on the Waitlist</h2>
     <p>Hi <strong>${p.guardianFirstName}</strong>,</p>
     <p>We've received the registration for <strong>${p.playerFirstName} ${p.playerLastName}</strong> for <strong>${p.seasonName}</strong>.</p>
-    <div style="background:#1A1530;border:1px solid rgba(245,158,11,0.3);border-radius:8px;padding:1.25rem;margin:1.5rem 0;">
-      <p style="margin:0 0 0.5rem;font-weight:700;color:#F59E0B;">Waitlist Status</p>
-      <p style="margin:0;line-height:1.8;">
+    <div style="background:#0F172A;border:1px solid rgba(245,158,11,0.3);border-left:3px solid rgba(245,158,11,0.5);padding:1.25rem;margin:1.5rem 0;">
+      <p style="margin:0 0 0.5rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#F59E0B;">Waitlist Status</p>
+      <p style="margin:0;line-height:1.8;color:rgba(241,245,249,0.85);">
         Player: <strong>${p.playerFirstName} ${p.playerLastName}</strong><br>
         Season: <strong>${p.seasonName}</strong><br>
         Division: <strong>${p.divisionName}</strong><br>
@@ -380,7 +380,7 @@ export function leagueRegistrationWaitlistHtml(p: {
         Reference: <strong style="font-family:monospace;">#${ref}</strong>
       </p>
     </div>
-    <p style="color:rgba(255,255,255,0.7);"><strong>${p.divisionName}</strong> is currently full. ${p.playerFirstName} has been added to the waitlist at position <strong>#${p.waitlistPosition}</strong>. You will be contacted if a spot becomes available.</p>
+    <p style="color:rgba(241,245,249,0.7);"><strong>${p.divisionName}</strong> is currently full. ${p.playerFirstName} has been added to the waitlist at position <strong>#${p.waitlistPosition}</strong>. You will be contacted if a spot becomes available.</p>
   `, p.contactEmail);
 }
 
@@ -400,16 +400,16 @@ export function leagueAdminApprovedHtml(p: {
     <h2 style="color:#22C55E;font-size:1.4rem;margin:0 0 1rem;">✅ Registration Approved!</h2>
     <p>Hi <strong>${p.guardianFirstName}</strong>,</p>
     <p>Great news! <strong>${p.playerFirstName} ${p.playerLastName}</strong>'s registration for <strong>${p.seasonName}</strong> — <strong>${p.divisionName}</strong> has been approved.</p>
-    <div style="background:#1A1530;border:1px solid rgba(34,197,94,0.3);border-radius:8px;padding:1.25rem;margin:1.5rem 0;">
-      <p style="margin:0 0 0.5rem;font-weight:700;color:#22C55E;">Registration Details</p>
-      <p style="margin:0;line-height:1.8;">
+    <div style="background:#0F172A;border:1px solid rgba(34,197,94,0.3);border-left:3px solid rgba(34,197,94,0.5);padding:1.25rem;margin:1.5rem 0;">
+      <p style="margin:0 0 0.5rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#22C55E;">Registration Details</p>
+      <p style="margin:0;line-height:1.8;color:rgba(241,245,249,0.85);">
         Player: <strong>${p.playerFirstName} ${p.playerLastName}</strong><br>
         Season: <strong>${p.seasonName}</strong><br>
         Division: <strong>${p.divisionName}</strong><br>
         Reference: <strong style="font-family:monospace;">#${ref}</strong>
       </p>
     </div>
-    <p style="color:rgba(255,255,255,0.7);">We look forward to seeing ${p.playerFirstName} on the field! Watch for further updates from your league administrator.</p>
+    <p style="color:rgba(241,245,249,0.7);">We look forward to seeing ${p.playerFirstName} on the field! Watch for further updates from your league administrator.</p>
   `, p.contactEmail);
 }
 
@@ -428,9 +428,9 @@ export function leagueAdminWaitlistedHtml(p: {
     <h2 style="color:#F59E0B;font-size:1.4rem;margin:0 0 1rem;">Added to Waitlist</h2>
     <p>Hi <strong>${p.guardianFirstName}</strong>,</p>
     <p>Unfortunately <strong>${p.divisionName}</strong> is currently full. <strong>${p.playerFirstName} ${p.playerLastName}</strong> has been added to the waitlist at position <strong>#${p.waitlistPosition}</strong>.</p>
-    <div style="background:#1A1530;border:1px solid rgba(245,158,11,0.3);border-radius:8px;padding:1.25rem;margin:1.5rem 0;">
-      <p style="margin:0 0 0.5rem;font-weight:700;color:#F59E0B;">Waitlist Status</p>
-      <p style="margin:0;line-height:1.8;">
+    <div style="background:#0F172A;border:1px solid rgba(245,158,11,0.3);border-left:3px solid rgba(245,158,11,0.5);padding:1.25rem;margin:1.5rem 0;">
+      <p style="margin:0 0 0.5rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#F59E0B;">Waitlist Status</p>
+      <p style="margin:0;line-height:1.8;color:rgba(241,245,249,0.85);">
         Player: <strong>${p.playerFirstName} ${p.playerLastName}</strong><br>
         Season: <strong>${p.seasonName}</strong><br>
         Division: <strong>${p.divisionName}</strong><br>
@@ -438,7 +438,7 @@ export function leagueAdminWaitlistedHtml(p: {
         Reference: <strong style="font-family:monospace;">#${ref}</strong>
       </p>
     </div>
-    <p style="color:rgba(255,255,255,0.7);">You will be contacted if a spot becomes available. No payment is required until your registration is approved.</p>
+    <p style="color:rgba(241,245,249,0.7);">You will be contacted if a spot becomes available. No payment is required until your registration is approved.</p>
   `, p.contactEmail);
 }
 
@@ -456,16 +456,16 @@ export function leagueWaitlistPromotedHtml(p: {
     <h2 style="color:#22C55E;font-size:1.4rem;margin:0 0 1rem;">🎉 You're Off the Waitlist!</h2>
     <p>Hi <strong>${p.guardianFirstName}</strong>,</p>
     <p><strong>${p.playerFirstName} ${p.playerLastName}</strong> has been moved off the waitlist and is now registered for <strong>${p.divisionName}</strong>. Welcome!</p>
-    <div style="background:#1A1530;border:1px solid rgba(34,197,94,0.3);border-radius:8px;padding:1.25rem;margin:1.5rem 0;">
-      <p style="margin:0 0 0.5rem;font-weight:700;color:#22C55E;">Registration Details</p>
-      <p style="margin:0;line-height:1.8;">
+    <div style="background:#0F172A;border:1px solid rgba(34,197,94,0.3);border-left:3px solid rgba(34,197,94,0.5);padding:1.25rem;margin:1.5rem 0;">
+      <p style="margin:0 0 0.5rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#22C55E;">Registration Details</p>
+      <p style="margin:0;line-height:1.8;color:rgba(241,245,249,0.85);">
         Player: <strong>${p.playerFirstName} ${p.playerLastName}</strong><br>
         Season: <strong>${p.seasonName}</strong><br>
         Division: <strong>${p.divisionName}</strong><br>
         Reference: <strong style="font-family:monospace;">#${ref}</strong>
       </p>
     </div>
-    <p style="color:rgba(255,255,255,0.7);">We look forward to seeing ${p.playerFirstName} on the field! Watch for further updates from your league administrator.</p>
+    <p style="color:rgba(241,245,249,0.7);">We look forward to seeing ${p.playerFirstName} on the field! Watch for further updates from your league administrator.</p>
   `, p.contactEmail);
 }
 
@@ -483,7 +483,7 @@ export function leagueRegistrationDeclinedHtml(p: {
     <h2 style="color:#EF4444;font-size:1.4rem;margin:0 0 1rem;">Registration Update</h2>
     <p>Hi <strong>${p.guardianFirstName}</strong>,</p>
     <p>We're sorry — <strong>${p.playerFirstName} ${p.playerLastName}</strong>'s registration for <strong>${p.seasonName}</strong> — <strong>${p.divisionName}</strong> was not approved.</p>
-    <p style="color:rgba(255,255,255,0.7);">Please contact <a href="mailto:${contact}" style="color:#A855F7;">${contact}</a> for more information.</p>
+    <p style="color:rgba(241,245,249,0.7);">Please contact <a href="mailto:${contact}" style="color:#D9F99D;">${contact}</a> for more information.</p>
   `, contact);
 }
 
@@ -500,16 +500,16 @@ export function leagueBroadcastHtml(p: {
     .map(l => l.trim() ? `<p style="margin:0 0 0.75rem;line-height:1.6;">${l}</p>` : '<br>')
     .join('');
   return `
-<div style="font-family:Inter,sans-serif;background:#0D0B14;color:#fff;max-width:600px;margin:0 auto;padding:2rem;border-radius:12px;border:1px solid rgba(255,255,255,0.1);">
-  <div style="margin-bottom:1.5rem;">
-    <span style="font-size:1.1rem;font-weight:800;color:#a3e635;letter-spacing:0.02em;">${p.orgName}</span>
-    <span style="display:block;font-size:0.75rem;color:rgba(255,255,255,0.4);margin-top:0.15rem;">${p.seasonName}</span>
+<div style="font-family:Inter,-apple-system,BlinkMacSystemFont,sans-serif;background:#111827;color:#F1F5F9;max-width:600px;margin:0 auto;padding:2.5rem 2rem;border:1px solid rgba(30,58,138,0.25);">
+  <div style="margin-bottom:1.75rem;padding-bottom:1.25rem;border-bottom:1px solid rgba(30,58,138,0.2);">
+    <span style="font-size:0.85rem;font-weight:800;color:#D9F99D;letter-spacing:0.04em;">${p.orgName}</span>
+    <span style="display:block;font-size:0.7rem;color:rgba(241,245,249,0.4);margin-top:0.2rem;letter-spacing:0.04em;">${p.seasonName}</span>
   </div>
-  <h2 style="color:#f0f0f0;font-size:1.25rem;margin:0 0 1.25rem;font-weight:700;">${p.subject}</h2>
-  <div style="color:rgba(255,255,255,0.8);">${bodyLines}</div>
+  <h2 style="color:#F1F5F9;font-size:1.15rem;margin:0 0 1.25rem;font-weight:700;">${p.subject}</h2>
+  <div style="color:rgba(241,245,249,0.8);">${bodyLines}</div>
   <hr style="border:none;border-top:1px solid rgba(255,255,255,0.08);margin:2rem 0;" />
-  <p style="color:rgba(255,255,255,0.35);font-size:0.78rem;margin:0;">
-    Questions? Contact <a href="mailto:${contact}" style="color:#a3e635;">${contact}</a>
+  <p style="color:rgba(241,245,249,0.35);font-size:0.78rem;margin:0;">
+    Questions? Contact <a href="mailto:${contact}" style="color:#D9F99D;">${contact}</a>
   </p>
 </div>`;
 }
@@ -530,15 +530,15 @@ export function tryoutRegistrationConfirmationHtml(p: {
     <h2 style="color:#fff;font-size:1.4rem;margin:0 0 1rem;">Tryout Application Received</h2>
     <p>Hi <strong>${p.guardianFirstName}</strong>,</p>
     <p>We've received <strong>${p.playerFirstName} ${p.playerLastName}</strong>'s tryout application for the <strong>${p.teamName}</strong> <strong>${p.yearName}</strong> program.</p>
-    <div style="background:#1A1530;border:1px solid rgba(var(--primary-rgb),0.3);border-radius:8px;padding:1.25rem;margin:1.5rem 0;">
-      <p style="margin:0 0 0.5rem;font-weight:700;color:#A855F7;">Application Details</p>
-      <p style="margin:0;line-height:1.8;">
+    <div style="background:#0F172A;border:1px solid rgba(30,58,138,0.25);border-left:3px solid rgba(30,58,138,0.5);padding:1.25rem;margin:1.5rem 0;">
+      <p style="margin:0 0 0.5rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#D9F99D;">Application Details</p>
+      <p style="margin:0;line-height:1.8;color:rgba(241,245,249,0.85);">
         Player: <strong>${p.playerFirstName} ${p.playerLastName}</strong><br>
         Program: <strong>${p.teamName} — ${p.yearName}</strong><br>
         Reference: <strong style="font-family:monospace;">#${ref}</strong>
       </p>
     </div>
-    <p style="color:rgba(255,255,255,0.7);">Our coaching staff will review all applications and be in touch. No further action is required at this time.</p>
+    <p style="color:rgba(241,245,249,0.7);">Our coaching staff will review all applications and be in touch. No further action is required at this time.</p>
   `, p.contactEmail);
 }
 
@@ -554,17 +554,16 @@ export function tryoutOfferHtml(p: {
 }) {
   const contact = p.contactEmail ?? ADMIN_EMAIL;
   return wrap(`
-    <h2 style="color:#a3e635;font-size:1.4rem;margin:0 0 1rem;">Offer Extended</h2>
+    <h2 style="color:#D9F99D;font-size:1.4rem;margin:0 0 1rem;">Offer Extended</h2>
     <p>Hi <strong>${p.guardianFirstName}</strong>,</p>
     <p>We&apos;re pleased to let you know that <strong>${p.playerFirstName} ${p.playerLastName}</strong> has been extended an offer to join the <strong>${p.teamName}</strong> <strong>${p.yearName}</strong> program.</p>
-    <div style="background:#1A1530;border:1px solid rgba(163,230,53,0.3);border-radius:8px;padding:1.25rem;margin:1.5rem 0;">
-      <p style="margin:0 0 0.5rem;font-weight:700;color:#a3e635;">Next Steps</p>
-      <p style="margin:0;line-height:1.8;color:rgba(255,255,255,0.75);">
-        Please reply to this email to confirm whether <strong>${p.playerFirstName}</strong> will be accepting this offer.<br>
+    <div style="background:#0F172A;border:1px solid rgba(217,249,157,0.3);border-left:3px solid rgba(217,249,157,0.5);padding:1.25rem;margin:1.5rem 0;">
+      <p style="margin:0 0 0.5rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#D9F99D;">Next Steps</p>
+      <p style="margin:0;line-height:1.8;color:rgba(241,245,249,0.75);">
+        Please contact the coaching staff to confirm whether <strong>${p.playerFirstName}</strong> will be accepting this offer.<br>
         Program: <strong>${p.teamName} — ${p.yearName}</strong>
       </p>
     </div>
-    <p style="color:rgba(255,255,255,0.6);">Questions? Contact us at <a href="mailto:${contact}" style="color:#a3e635;">${contact}</a></p>
   `, p.contactEmail);
 }
 
@@ -580,13 +579,13 @@ export function tryoutAcceptedHtml(p: {
     <h2 style="color:#4ade80;font-size:1.4rem;margin:0 0 1rem;">Welcome to the Team!</h2>
     <p>Hi <strong>${p.guardianFirstName}</strong>,</p>
     <p><strong>${p.playerFirstName} ${p.playerLastName}</strong> has been added to the <strong>${p.teamName}</strong> <strong>${p.yearName}</strong> roster. Welcome!</p>
-    <div style="background:#1A1530;border:1px solid rgba(74,222,128,0.3);border-radius:8px;padding:1.25rem;margin:1.5rem 0;">
-      <p style="margin:0;line-height:1.8;color:rgba(255,255,255,0.75);">
+    <div style="background:#0F172A;border:1px solid rgba(74,222,128,0.3);border-left:3px solid rgba(74,222,128,0.5);padding:1.25rem;margin:1.5rem 0;">
+      <p style="margin:0;line-height:1.8;color:rgba(241,245,249,0.85);">
         Program: <strong>${p.teamName} — ${p.yearName}</strong><br>
         Player: <strong>${p.playerFirstName} ${p.playerLastName}</strong>
       </p>
     </div>
-    <p style="color:rgba(255,255,255,0.6);">Your coaching staff will be in touch with more details. We look forward to a great season!</p>
+    <p style="color:rgba(241,245,249,0.6);">Your coaching staff will be in touch with more details. We look forward to a great season!</p>
   `, p.contactEmail);
 }
 
@@ -603,7 +602,7 @@ export function tryoutDeclinedHtml(p: {
     <h2 style="color:#f0f0f0;font-size:1.4rem;margin:0 0 1rem;">Tryout Update</h2>
     <p>Hi <strong>${p.guardianFirstName}</strong>,</p>
     <p>Thank you for registering <strong>${p.playerFirstName} ${p.playerLastName}</strong> for the <strong>${p.teamName}</strong> <strong>${p.yearName}</strong> program. After reviewing all applications, we are unfortunately unable to extend an offer at this time.</p>
-    <p style="color:rgba(255,255,255,0.6);">We appreciate <strong>${p.playerFirstName}</strong>&apos;s interest and encourage them to try again in the future. Please reach out to <a href="mailto:${contact}" style="color:#a3e635;">${contact}</a> if you have any questions.</p>
+    <p style="color:rgba(241,245,249,0.6);">We appreciate <strong>${p.playerFirstName}</strong>&apos;s interest and encourage them to try again in the future. Please reach out to <a href="mailto:${contact}" style="color:#D9F99D;">${contact}</a> if you have any questions.</p>
   `, p.contactEmail);
 }
 
@@ -611,9 +610,9 @@ export function passwordResetHtml(resetLink: string) {
   return wrap(`
     <h2 style="color:#fff;font-size:1.4rem;margin:0 0 1rem;">Reset Your Password</h2>
     <p>We received a request to reset the password for your <strong>FieldLogicHQ</strong> account.</p>
-    <p style="color:rgba(255,255,255,0.7);">Click the button below to set a new password. This link expires in 1 hour.</p>
-    <a href="${resetLink}" style="display:inline-block;background:#8B2FC9;color:#fff;padding:0.75rem 1.75rem;border-radius:8px;text-decoration:none;font-weight:700;margin:1.5rem 0;">Reset Password &rarr;</a>
-    <p style="color:rgba(255,255,255,0.4);font-size:0.82rem;">If you didn't request a password reset, you can safely ignore this email. Your password will not change.</p>
+    <p style="color:rgba(241,245,249,0.7);">Click the button below to set a new password. This link expires in 1 hour.</p>
+    <a href="${resetLink}" style="display:inline-block;background:#D9F99D;color:#0b0f14;padding:0.75rem 1.75rem;border-radius:2px;text-decoration:none;font-weight:800;font-size:0.82rem;letter-spacing:0.06em;margin:1.5rem 0;">Reset Password &rarr;</a>
+    <p style="color:rgba(241,245,249,0.35);font-size:0.82rem;">If you didn't request a password reset, you can safely ignore this email. Your password will not change.</p>
   `);
 }
 
@@ -621,13 +620,13 @@ export function platformPasswordResetHtml(resetLink: string) {
   return `
 <div style="font-family:monospace,sans-serif;background:#090d09;color:#e8efe8;max-width:480px;margin:0 auto;padding:2rem;border:1px solid rgba(163,230,53,0.2);">
   <div style="margin-bottom:1.5rem;padding-bottom:1rem;border-bottom:1px solid rgba(163,230,53,0.12);">
-    <span style="font-size:0.65rem;font-weight:900;color:#a3e635;letter-spacing:0.18em;text-transform:uppercase;">FIELDLOGICHQ</span>
+    <span style="font-size:0.65rem;font-weight:900;color:#D9F99D;letter-spacing:0.18em;text-transform:uppercase;">FIELDLOGICHQ</span>
     <span style="display:block;font-size:0.6rem;color:rgba(255,255,255,0.35);letter-spacing:0.12em;text-transform:uppercase;margin-top:0.2rem;">Staff Access</span>
   </div>
-  <h2 style="color:#e8efe8;font-size:1rem;font-weight:700;margin:0 0 1rem;letter-spacing:0.04em;text-transform:uppercase;">Reset Your Password</h2>
-  <p style="color:rgba(255,255,255,0.6);font-size:0.85rem;line-height:1.65;margin:0 0 1.5rem;">We received a password reset request for your FieldLogicHQ staff account. Click below to set a new password. This link expires in 1 hour.</p>
-  <a href="${resetLink}" style="display:inline-block;background:#a3e635;color:#090d09;padding:0.7rem 1.5rem;text-decoration:none;font-weight:800;font-size:0.72rem;letter-spacing:0.1em;text-transform:uppercase;">Reset Password &rarr;</a>
-  <p style="color:rgba(255,255,255,0.22);font-size:0.75rem;margin:1.75rem 0 0;line-height:1.55;">If you didn't request this, you can safely ignore this email. Your password will not change.</p>
+  <h2 style="color:#F1F5F9;font-size:1rem;font-weight:700;margin:0 0 1rem;letter-spacing:0.04em;text-transform:uppercase;">Reset Your Password</h2>
+  <p style="color:rgba(241,245,249,0.6);font-size:0.85rem;line-height:1.65;margin:0 0 1.5rem;">We received a password reset request for your FieldLogicHQ staff account. Click below to set a new password. This link expires in 1 hour.</p>
+  <a href="${resetLink}" style="display:inline-block;background:#D9F99D;color:#090d09;padding:0.7rem 1.5rem;text-decoration:none;font-weight:800;font-size:0.72rem;letter-spacing:0.1em;text-transform:uppercase;">Reset Password &rarr;</a>
+  <p style="color:rgba(241,245,249,0.22);font-size:0.75rem;margin:1.75rem 0 0;line-height:1.55;">If you didn't request this, you can safely ignore this email. Your password will not change.</p>
 </div>`;
 }
 
@@ -639,8 +638,8 @@ export function signupVerificationHtml(p: {
     <h2 style="color:#fff;font-size:1.4rem;margin:0 0 1rem;">Verify Your Email</h2>
     <p>Welcome to <strong>FieldLogicHQ</strong>.</p>
     <p>Confirm your email address to continue setting up <strong>${p.orgName}</strong>.</p>
-    <a href="${p.verifyUrl}" style="display:inline-block;background:#8B2FC9;color:#fff;padding:0.75rem 1.75rem;border-radius:8px;text-decoration:none;font-weight:700;margin:1.5rem 0;">Verify Email &rarr;</a>
-    <p style="color:rgba(255,255,255,0.4);font-size:0.82rem;">If you did not create this account, you can safely ignore this email.</p>
+    <a href="${p.verifyUrl}" style="display:inline-block;background:#D9F99D;color:#0b0f14;padding:0.75rem 1.75rem;border-radius:2px;text-decoration:none;font-weight:800;font-size:0.82rem;letter-spacing:0.06em;margin:1.5rem 0;">Verify Email &rarr;</a>
+    <p style="color:rgba(241,245,249,0.35);font-size:0.82rem;">If you did not create this account, you can safely ignore this email.</p>
   `);
 }
 
@@ -660,12 +659,12 @@ export function schedulePublishedHtml(p: {
     <h2 style="color:#fff;font-size:1.4rem;margin:0 0 1rem;">Your Schedule is Live!</h2>
     <p>Hi <strong>${p.coachName}</strong>,</p>
     <p>The schedule for <strong>${p.tournamentName}</strong> has been published. You can now view game times, dates, and locations on the public tournament page.</p>
-    <div style="background:#1A1530;border:1px solid rgba(var(--primary-rgb),0.3);border-radius:8px;padding:1.25rem;margin:1.5rem 0;">
-      <p style="margin:0 0 0.5rem;font-weight:700;color:#A855F7;">Published Divisions</p>
-      <ul style="margin:0;padding-left:1.25rem;line-height:1.8;color:rgba(255,255,255,0.8);">${divisionList}</ul>
+    <div style="background:#0F172A;border:1px solid rgba(30,58,138,0.25);border-left:3px solid rgba(30,58,138,0.5);padding:1.25rem;margin:1.5rem 0;">
+      <p style="margin:0 0 0.5rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#D9F99D;">Published Divisions</p>
+      <ul style="margin:0;padding-left:1.25rem;line-height:1.8;color:rgba(241,245,249,0.8);">${divisionList}</ul>
     </div>
-    <p style="color:rgba(255,255,255,0.65);font-size:0.88rem;">${nameNote}</p>
-    <a href="${p.scheduleUrl}" style="display:inline-block;background:#8B2FC9;color:#fff;padding:0.75rem 1.75rem;border-radius:8px;text-decoration:none;font-weight:700;margin-top:0.5rem;">View Schedule &rarr;</a>
+    <p style="color:rgba(241,245,249,0.65);font-size:0.88rem;">${nameNote}</p>
+    <a href="${p.scheduleUrl}" style="display:inline-block;background:#D9F99D;color:#0b0f14;padding:0.75rem 1.75rem;border-radius:2px;text-decoration:none;font-weight:800;font-size:0.82rem;letter-spacing:0.06em;margin-top:0.5rem;">View Schedule &rarr;</a>
   `, p.contactEmail);
 }
 
@@ -692,10 +691,10 @@ export function billingRetentionWarningHtml(p: {
     <h2 style="color:#fff;font-size:1.4rem;margin:0 0 1rem;">${title}</h2>
     <p>Hi,</p>
     <p>${body}</p>
-    <div style="background:#1A1530;border:1px solid rgba(245,158,11,0.35);border-radius:8px;padding:1.25rem;margin:1.5rem 0;">
-      <p style="margin:0 0 0.75rem;font-weight:700;color:#F59E0B;">${p.orgName}</p>
-      <ul style="margin:0;padding-left:1.25rem;color:rgba(255,255,255,0.72);">${rows}</ul>
+    <div style="background:#0F172A;border:1px solid rgba(245,158,11,0.35);border-left:3px solid rgba(245,158,11,0.5);padding:1.25rem;margin:1.5rem 0;">
+      <p style="margin:0 0 0.75rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#F59E0B;">${p.orgName}</p>
+      <ul style="margin:0;padding-left:1.25rem;color:rgba(241,245,249,0.72);">${rows}</ul>
     </div>
-    <a href="${p.retentionUrl}" style="display:inline-block;background:#8B2FC9;color:#fff;padding:0.75rem 1.75rem;border-radius:8px;text-decoration:none;font-weight:700;">Review Subscription</a>
+    <a href="${p.retentionUrl}" style="display:inline-block;background:#1E3A8A;color:#fff;padding:0.75rem 1.75rem;border-radius:2px;text-decoration:none;font-weight:700;font-size:0.82rem;letter-spacing:0.06em;">Review Subscription</a>
   `);
 }

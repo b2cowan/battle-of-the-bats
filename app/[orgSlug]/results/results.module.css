@@ -52,7 +52,7 @@
 }
 
 .scoreName {
-  font-family: var(--font-display, sans-serif);
+  font-family: var(--font-data);
   font-size: 1.3rem;
   font-weight: 800;
   color: var(--white-60);
@@ -64,7 +64,7 @@
 .away .scoreName { text-align: right; }
 
 .score {
-  font-family: var(--font-display);
+  font-family: var(--font-data);
   font-size: 2.5rem;
   font-weight: 900;
   color: var(--white-60);
@@ -76,20 +76,20 @@
 .winner .scoreName { color: var(--white); }
 .winner .score {
   color: var(--primary-light);
-  text-shadow: 0 0 20px rgba(168,85,247,0.5);
+  text-shadow: 0 0 20px rgba(var(--primary-rgb), 0.5);
 }
 
 .winIcon { color: var(--warning); flex-shrink: 0; }
 
 .scoreDash {
-  font-family: var(--font-display);
+  font-family: var(--font-data);
   font-size: 1.5rem;
   color: var(--white-30);
 }
 
 .tieLabel {
   text-align: center;
-  font-family: var(--font-display);
+  font-family: var(--font-data);
   font-size: 0.8rem;
   font-weight: 700;
   letter-spacing: 0.1em;
@@ -106,16 +106,16 @@
 .summarySection {
   margin-top: 2rem;
   margin-bottom: 3rem;
-  background: var(--bg-card);
+  background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 1.5rem;
+  border-radius: var(--radius-lg);
   overflow: hidden;
   box-shadow: 0 10px 30px -10px rgba(0,0,0,0.3);
 }
 
 .summaryHeader {
   padding: 1.25rem 1.5rem;
-  background: rgba(168,85,247,0.05);
+  background: rgba(var(--primary-rgb), 0.05);
   border-bottom: 1px solid var(--border);
   display: flex;
   align-items: center;
@@ -126,7 +126,7 @@
   color: var(--white-60);
   background: var(--white-10);
   padding: 0.35rem 0.75rem;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   font-weight: 800;
   letter-spacing: 0.05em;
   text-transform: uppercase;
@@ -144,14 +144,14 @@
   font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  color: var(--white-40);
+  color: var(--data-gray);
   background: rgba(255,255,255,0.02);
   border-bottom: 1px solid var(--border);
 }
 
 .standingsTable td {
   padding: 1rem 1.5rem;
-  border-bottom: 1px solid var(--border-subtle);
+  border-bottom: 1px solid var(--border-2);
   font-size: 0.95rem;
   color: var(--white-80);
 }
@@ -167,7 +167,7 @@
 }
 
 .statValue {
-  font-family: var(--font-display);
+  font-family: var(--font-data);
   font-weight: 800;
   color: var(--white);
 }
@@ -178,13 +178,13 @@
   font-weight: 500;
   background: var(--white-5);
   padding: 0.2rem 0.6rem;
-  border-radius: 2rem;
+  border-radius: var(--radius-xl);
 }
 
 .stickyCol {
   position: sticky;
   left: 0;
-  background: var(--bg-card);
+  background: var(--surface);
   z-index: 10;
   box-shadow: 2px 0 8px rgba(0,0,0,0.4);
 }
@@ -195,14 +195,14 @@
 }
 
 .topRow .stickyCol {
-  background: #1a1528; /* Solid dark color to prevent transparency issues */
+  background: var(--surface);
 }
 
 .topRow td {
-  background: rgba(250, 204, 21, 0.05);
-  border-bottom: 1px solid rgba(250, 204, 21, 0.2);
+  background: rgba(var(--warning-rgb), 0.05);
+  border-bottom: 1px solid rgba(var(--warning-rgb), 0.2);
 }
 
 .topRow td:first-child {
-  border-left: 3px solid rgba(250, 204, 21, 0.5);
+  border-left: 3px solid rgba(var(--warning-rgb), 0.5);
 }
