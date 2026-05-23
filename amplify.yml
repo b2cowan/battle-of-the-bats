@@ -13,6 +13,8 @@ frontend:
         - echo "RESEND_FROM=$RESEND_FROM" >> .env.production
         - echo "PLATFORM_ADMIN_EMAILS=$PLATFORM_ADMIN_EMAILS" >> .env.production
         - echo "NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL" >> .env.production
+        - echo "STRIPE_SECRET_KEY=$STRIPE_SECRET_KEY" >> .env.production
+        - echo "STRIPE_WEBHOOK_SECRET=$STRIPE_WEBHOOK_SECRET" >> .env.production
         - pnpm run build
   artifacts:
     baseDirectory: .next
