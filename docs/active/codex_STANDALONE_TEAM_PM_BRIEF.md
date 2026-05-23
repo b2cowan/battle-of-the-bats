@@ -19,6 +19,13 @@ The product should still use the existing organization-scoped data model behind 
 - Phase 4B is complete: organization owners/admins can invite a standalone Team workspace to connect, and the Team coach can accept or decline from the Coaches Portal. Acceptance creates the same Basic visibility association as Phase 4A and still does not transfer billing, ownership, roster/document/accounting access, parent-org team entitlements, or org-wide rep-team admin rights.
 - Phase 4C is complete: once Basic linking is active, coaches can request org-paid Team billing or accept an org billing invitation, and organization owners/admins can approve and complete org Team add-on checkout. The organization becomes the payer while the coach keeps day-to-day ownership and Basic sharing remains the access boundary.
 - Phase 6A is complete and smoke-tested: coaches can open schedule events and mark active roster players In, Out, Late, or Unknown with optional notes. This adds the first game-day value feature without changing linked-org visibility or ownership boundaries.
+- Phase 6B/6C are complete and smoke-tested: coaches can save baseball/softball lineups in Everyone bats or 9 player ball mode, export lineup PDFs, and see a data-driven Season setup checklist on the team overview.
+- Phase 7A is complete and smoke-tested: public pricing now starts with a segment choice, presents Team as the path for one competitive team, defaults the Team CTA to seasonal signup, and keeps organization pricing/onboarding unchanged.
+- Phase 7B is complete and smoke-tested: the public Team page now acts as a coach-specific landing page around the existing signup form, emphasizing tournament continuity, season operations, game-day tools, quick local tournaments, and parent-org readiness.
+- Phase 7C is complete and smoke-tested: tournament registration confirmation, public tournament banners, registration/claim emails, and post-event results emails now tell coaches how to keep tournament teams organized in a Team workspace while preserving existing organizer CTAs.
+- Phase 7D is complete: billing surfaces now guide Team coaches toward parent-org linking and org billing when appropriate, and guide organizations with three or more active org-paid Team add-ons toward Club as the better multi-team operating model. These prompts are informational and do not change access, ownership, or billing state by themselves.
+- Phase 8 focused automated launch verification is complete: pricing, direct Team mock checkout, tournament-claim mock checkout, one free-tier Team tournament slot, Basic org linking, coach attendance access boundaries, lineup/checklist, and platform-assisted ownership transfer all pass. Remaining launch checks are manual Stripe/mobile/cancellation checks rather than new product functionality.
+- Phase 9 is complete for launch cleanup: coach, organization, and platform-admin help now explain Team, season rollover, free-tier local tournaments, org linking, billing transfer, ownership transfer, Team add-ons versus Club, and launch readiness. A dedicated owner launch checklist now covers Stripe Dashboard setup, FieldLogicHQ price rows, manual sandbox smokes, and release notes.
 
 ## Strategic Shift
 
@@ -163,8 +170,8 @@ The first build should include:
 - Free-tier tournament creation for Team workspaces, positioned as quick local tournaments or exhibition weekends with other nearby teams.
 - Team billing/settings page with "link to organization" and "transfer billing" actions.
 - Platform admin visibility into team workspaces, links, and billing state.
-- Segment-first pricing entry for "I manage one competitive team."
-- Initial coaches portal value package: roster, schedule, dues, documents, budget, payment reminders, attendance, and baseball/softball lineup PDF. Attendance is implemented; roster/lineup contents should be reviewed with the product owner before that slice is built.
+- Segment-first pricing entry for "I manage one competitive team." Implemented and smoke-tested on public pricing.
+- Initial coaches portal value package: roster, schedule, dues, documents, budget, payment reminders, attendance, first-run setup checklist, and baseball/softball lineup PDF. Attendance is implemented. Roster position fields, lineup building, and the coach overview setup checklist are implemented and smoke-tested: coaches can choose Everyone bats or 9 player ball, plan defensive positions by inning, treat Bench as an inning position in Everyone bats, and export lineup PDFs. Public pricing and the Team landing page now explain this package without requiring coaches to understand Club pricing.
 
 ## Not In MVP
 
@@ -217,16 +224,16 @@ The foundation should be designed up front so that direct Team, tournament-claim
 
 ## Launch Documentation And Stripe Prep
 
-At the end of the project, the release must include help documentation for:
+Phase 9 delivered launch documentation for:
 
 - What the Team plan includes.
-- How coaches create and roll over seasons.
+- How coaches create and roll over seasons while preserving history.
 - How free-tier Team tournaments work and when to upgrade to Tournament Plus.
 - How org linking and Basic sharing work.
 - How billing transfer works and why both sides approve it.
 - How Team, org Team add-ons, Club included teams, and Club extra teams differ.
 
-The release must also include a Stripe account checklist for the owner. The expected Stripe updates are:
+The release now includes `docs/active/codex_STANDALONE_TEAM_LAUNCH_CHECKLIST.md` as the owner checklist. The expected Stripe updates remain:
 
 - Create Team monthly price at **$29 CAD**.
 - Create Team annual/seasonal price at **$290 CAD**.

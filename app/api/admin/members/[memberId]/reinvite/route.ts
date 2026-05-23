@@ -9,6 +9,10 @@ function getResend() {
   return _resend;
 }
 
+function getActionLink(data: unknown) {
+  return (data as { properties?: { action_link?: string | null } }).properties?.action_link ?? null;
+}
+
 type Params = { params: Promise<{ memberId: string }> };
 
 export async function POST(_req: Request, { params }: Params) {
@@ -47,6 +51,14 @@ export async function POST(_req: Request, { params }: Params) {
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://fieldlogichq.ca';
   const fromAddress = process.env.RESEND_FROM ?? 'noreply@fieldlogichq.ca';
+  const roleLabel = role === 'official' ? 'scorekeeper' : `team ${role}`;
+  const officialNote = role === 'official'
+    ? `<p>As a scorekeeper, you'll have access to the scorekeeper app to submit game results from your assigned tournaments. After setup, you'll land directly in Scorekeeper View.</p>`
+    : '';
+  const officialNoteText = role === 'official'
+    ? `As a scorekeeper, you'll have access to the scorekeeper app to submit game results from your assigned tournaments. After setup, you'll land directly in Scorekeeper View.\n\n`
+    : '';
+  const inviteAction = role === 'official' ? 'Accept Scorekeeper Invite' : 'Accept Invitation';
 
   const next = encodeURIComponent(`/auth/accept-invite?org=${org.slug}`);
   const redirectTo = `${appUrl}/auth/callback?next=${next}`;
@@ -63,8 +75,7 @@ export async function POST(_req: Request, { params }: Params) {
     if (mlError || !mlData) {
       return NextResponse.json({ error: mlError?.message ?? 'Failed to generate invite link' }, { status: 500 });
     }
-    const inviteUrl = (mlData as any).properties?.action_link ?? mlData.properties?.action_link;
-    const roleLabel = role === 'official' ? 'scorekeeper' : `team ${role}`;
+    const inviteUrl = getActionLink(mlData);
     await getResend().emails.send({
       from: fromAddress,
       to: email,
@@ -75,18 +86,19 @@ export async function POST(_req: Request, { params }: Params) {
 <body style="font-family: sans-serif; max-width: 480px; margin: 0 auto; padding: 2rem; color: #1a1a2e;">
   <h2 style="margin-top: 0;">You're invited!</h2>
   <p>You've been invited to join <strong>${org.name}</strong> on <strong>FieldLogicHQ</strong> as a ${roleLabel}.</p>
+  ${officialNote}
   <p>Click the button below to accept your invitation and set up your account:</p>
   <p style="margin: 1.5rem 0;">
     <a href="${inviteUrl}"
        style="background: #7c3aed; color: #fff; padding: 0.75rem 1.5rem; border-radius: 8px; text-decoration: none; font-weight: 700; display: inline-block;">
-      Accept Invitation
+      ${inviteAction}
     </a>
   </p>
   <p style="font-size: 0.85rem; color: #666;">If you weren't expecting this invitation, you can safely ignore this email.</p>
   <p style="font-size: 0.85rem; color: #666;">This link will expire in 24 hours.</p>
 </body>
 </html>`,
-      text: `You've been invited to join ${org.name} on FieldLogicHQ as a ${roleLabel}.\n\nAccept your invitation here:\n${inviteUrl}\n\nThis link will expire in 24 hours.`,
+      text: `You've been invited to join ${org.name} on FieldLogicHQ as a ${roleLabel}.\n\n${officialNoteText}Accept your invitation here:\n${inviteUrl}\n\nThis link will expire in 24 hours.`,
     });
     // Refresh invited_at timestamp
     await supabaseAdmin
@@ -112,15 +124,7 @@ export async function POST(_req: Request, { params }: Params) {
     .update({ invited_at: new Date().toISOString() })
     .eq('id', memberId);
 
-  const inviteUrl = (linkData as any).properties?.action_link ?? linkData.properties?.action_link;
-  const roleLabel = role === 'official' ? 'scorekeeper' : `team ${role}`;
-  const officialNote = role === 'official'
-    ? `<p>As a scorekeeper, you'll have access to the scorekeeper app to submit game results from your assigned fields.</p>`
-    : '';
-  const officialNoteText = role === 'official'
-    ? `As a scorekeeper, you'll have access to the scorekeeper app to submit game results from your assigned fields.\n\n`
-    : '';
-
+  const inviteUrl = getActionLink(linkData);
   await getResend().emails.send({
     from: fromAddress,
     to: email,
@@ -136,7 +140,7 @@ export async function POST(_req: Request, { params }: Params) {
   <p style="margin: 1.5rem 0;">
     <a href="${inviteUrl}"
        style="background: #7c3aed; color: #fff; padding: 0.75rem 1.5rem; border-radius: 8px; text-decoration: none; font-weight: 700; display: inline-block;">
-      Accept Invitation
+      ${inviteAction}
     </a>
   </p>
   <p style="font-size: 0.85rem; color: #666;">If you weren't expecting this invitation, you can safely ignore this email.</p>

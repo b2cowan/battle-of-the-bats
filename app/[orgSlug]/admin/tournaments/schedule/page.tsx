@@ -254,8 +254,43 @@ export default function AdminSchedulePage() {
     refresh();
   }
 
-  async function markCancelled(id: string) { await updateGame(id, { status: 'cancelled' }); refresh(); }
-  async function markScheduled(id: string) { await updateGame(id, { status: 'scheduled', homeScore: null, awayScore: null }); refresh(); }
+  async function markCancelled(id: string) {
+    const orgParam = orgSlug ? `?orgSlug=${encodeURIComponent(orgSlug)}` : '';
+    await fetch(`/api/admin/games${orgParam}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'cancel', id }),
+    });
+    refresh();
+  }
+  async function markScheduled(id: string) {
+    const orgParam = orgSlug ? `?orgSlug=${encodeURIComponent(orgSlug)}` : '';
+    await fetch(`/api/admin/games${orgParam}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'revert-to-scheduled', id }),
+    });
+    refresh();
+  }
+
+  async function handleSaveGame(gameId: string, data: { date: string; time: string; diamondId: string; notes: string }) {
+    const orgParam = orgSlug ? `?orgSlug=${encodeURIComponent(orgSlug)}` : '';
+    const diamond = data.diamondId ? diamonds.find(d => d.id === data.diamondId) : null;
+    await fetch(`/api/admin/games${orgParam}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'update',
+        id: gameId,
+        date: data.date || undefined,
+        time: data.time || undefined,
+        diamondId: data.diamondId || undefined,
+        location: diamond?.name || undefined,
+        notes: data.notes || undefined,
+      }),
+    });
+    await refresh();
+  }
 
   function handleDeleteRequest(id: string) {
     setFeedback({
@@ -491,7 +526,6 @@ export default function AdminSchedulePage() {
           )}
         </ToolbarGroup>
         <ToolbarGroup align="end">
-          <ToolbarSearch value={search} onChange={setSearch} placeholder="Search teams..." label="Search games" />
           <ToolbarMenu label="Tools">
             {viewMode === 'pool' ? (
               <ToolbarMenuItem
@@ -528,6 +562,10 @@ export default function AdminSchedulePage() {
               );
             })()}
           </ToolbarMenu>
+        </ToolbarGroup>
+        {/* Row 2: search always on its own full-width row */}
+        <ToolbarGroup fullWidth>
+          <ToolbarSearch value={search} onChange={setSearch} placeholder="Search teams..." label="Search games" />
         </ToolbarGroup>
       </TournamentAdminToolbar>
 
@@ -585,10 +623,11 @@ export default function AdminSchedulePage() {
               viewMode={viewMode}
               groupByPool={groupMode === 'pools'}
               pools={ageGroups.find(g => g.id === filterGroup)?.pools}
-              onEdit={openEdit}
               onDelete={handleDeleteRequest}
               onCancel={markCancelled}
               onSchedule={markScheduled}
+              onSave={handleSaveGame}
+              onCreateVenue={() => setAddVenueOpen(true)}
               mode="planning"
             />
           )}
@@ -599,7 +638,9 @@ export default function AdminSchedulePage() {
         <div className="modal-overlay" onClick={() => setModal(null)}>
           <div className="modal modal-lg" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
-              <h3>{modal === 'add' ? 'Add Game' : 'Edit Game'}</h3>
+              <h3 style={{ fontFamily: 'var(--font-data)', fontSize: '0.95rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--logic-lime)', margin: 0 }}>
+                {modal === 'add' ? 'Add Game' : 'Edit Game'}
+              </h3>
               <button className="btn btn-ghost btn-sm" onClick={() => setModal(null)}><X size={16} /></button>
             </div>
             <form onSubmit={handleSubmit}>

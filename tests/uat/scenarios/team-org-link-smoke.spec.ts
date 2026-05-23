@@ -133,6 +133,9 @@ test.describe.serial('standalone Team org-link smoke', () => {
     await expect(coachPage.getByRole('heading', { name: 'Link Organization' })).toBeVisible({
       timeout: 30_000,
     })
+    await expect(coachPage.getByText('When the club should pay')).toBeVisible({
+      timeout: 30_000,
+    })
     await coachPage.getByLabel('Organization slug or contact email').fill(state.linkedOrgSlug)
     await coachPage.getByRole('button', { name: 'Send Request' }).click()
     await expect(
@@ -358,6 +361,9 @@ test.describe.serial('standalone Team org-link smoke', () => {
 
     await coachPage.goto(`/${state.workspaceSlug}/coaches/link-org`)
     await expect(coachPage.getByRole('heading', { name: 'Link Organization' })).toBeVisible({
+      timeout: 30_000,
+    })
+    await expect(coachPage.getByText('When the club should pay')).toBeVisible({
       timeout: 30_000,
     })
     await coachPage.getByRole('button', { name: 'Request Org Billing' }).click()

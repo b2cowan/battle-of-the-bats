@@ -39,7 +39,7 @@
   bottom: 1rem;
   z-index: 75;
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  grid-template-columns: auto minmax(0, 1fr) auto auto auto;
   align-items: center;
   gap: 0.85rem;
   width: min(760px, calc(100vw - 2rem));
@@ -98,6 +98,7 @@
 }
 
 .bannerCta,
+.bannerSecondaryCta,
 .confirmationLink {
   display: inline-flex;
   align-items: center;
@@ -113,7 +114,14 @@
   white-space: nowrap;
 }
 
+.bannerSecondaryCta {
+  background: transparent;
+  color: var(--logic-lime, #d9f99d);
+  border: 1px solid rgba(217,249,157,0.4);
+}
+
 .bannerCta:hover,
+.bannerSecondaryCta:hover,
 .confirmationLink:hover {
   filter: brightness(0.96);
 }
@@ -164,6 +172,7 @@
   }
 
   .bannerCta,
+  .bannerSecondaryCta,
   .confirmationLink {
     grid-column: 1 / -1;
     width: 100%;

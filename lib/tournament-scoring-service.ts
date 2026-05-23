@@ -1,6 +1,6 @@
-import { updateGame } from './db';
+import { updateGame as updateGameRecord } from './db';
 import { getEffectiveScoreFinalization } from './tournament-score-policy';
-import type { GameStatus, OrgRole, ScoreSubmissionSource } from './types';
+import type { Game, GameStatus, OrgRole, ScoreSubmissionSource } from './types';
 import { supabaseAdmin } from './supabase-admin';
 
 export type TournamentScoreGame = {
@@ -27,6 +27,22 @@ type SubmitScoreInput = {
 
 type StatusCode = 400 | 404 | 409 | 500;
 
+type UpdateGameForScoring = (
+  id: string,
+  game: Partial<Game>,
+  options?: { admin?: boolean },
+) => Promise<void>;
+
+export type TournamentScoringServiceDependencies = {
+  loadGame: (gameId: string) => Promise<TournamentScoreGame>;
+  updateGame: UpdateGameForScoring;
+  getEffectiveScoreFinalization: (
+    tournamentId: string,
+    orgRequireScoreFinalization: boolean,
+  ) => Promise<boolean>;
+  now?: () => string;
+};
+
 export class TournamentScoringError extends Error {
   status: StatusCode;
 
@@ -49,7 +65,7 @@ function parseScore(value: unknown) {
   return value;
 }
 
-export async function loadTournamentScoreGame(gameId: string): Promise<TournamentScoreGame> {
+async function loadTournamentScoreGameFromDb(gameId: string): Promise<TournamentScoreGame> {
   const { data, error } = await supabaseAdmin
     .from('games')
     .select('tournament_id, status')
@@ -65,58 +81,82 @@ export async function loadTournamentScoreGame(gameId: string): Promise<Tournamen
   };
 }
 
-export async function submitTournamentScore(input: SubmitScoreInput) {
-  const game = input.game ?? await loadTournamentScoreGame(input.gameId);
-  if (game.status === 'cancelled') {
-    throw new TournamentScoringError('This game has been cancelled and cannot be scored.', 409);
-  }
-  if (game.status === 'completed' && !input.allowFinalizedEdit) {
-    throw new TournamentScoringError('This score has already been finalized.', 409);
+export function createTournamentScoringService(deps: TournamentScoringServiceDependencies) {
+  async function loadTournamentScoreGame(gameId: string): Promise<TournamentScoreGame> {
+    return deps.loadGame(gameId);
   }
 
-  const homeScore = parseScore(input.homeScore);
-  const awayScore = parseScore(input.awayScore);
+  async function submitTournamentScore(input: SubmitScoreInput) {
+    const game = input.game ?? await deps.loadGame(input.gameId);
+    if (game.status === 'cancelled') {
+      throw new TournamentScoringError('This game has been cancelled and cannot be scored.', 409);
+    }
+    if (game.status === 'completed' && !input.allowFinalizedEdit) {
+      throw new TournamentScoringError('This score has already been finalized.', 409);
+    }
 
-  const requiresFinalization = await getEffectiveScoreFinalization(
-    game.tournamentId,
-    input.actor.orgRequireScoreFinalization ?? false,
-  );
-  const status: GameStatus =
-    requiresFinalization && (input.actor.role === 'official' || input.actor.role === 'staff')
-      ? 'submitted'
-      : 'completed';
+    const homeScore = parseScore(input.homeScore);
+    const awayScore = parseScore(input.awayScore);
 
-  await updateGame(input.gameId, {
-    homeScore,
-    awayScore,
-    status,
-    scoreSubmittedByUserId: input.actor.userId,
-    scoreSubmittedByEmail: input.actor.email ?? null,
-    scoreSubmittedAt: new Date().toISOString(),
-    scoreSubmissionSource: input.source,
-  }, { admin: true });
+    const requiresFinalization = await deps.getEffectiveScoreFinalization(
+      game.tournamentId,
+      input.actor.orgRequireScoreFinalization ?? false,
+    );
+    const status: GameStatus =
+      requiresFinalization && (input.actor.role === 'official' || input.actor.role === 'staff')
+        ? 'submitted'
+        : 'completed';
 
-  return { status };
-}
+    await deps.updateGame(input.gameId, {
+      homeScore,
+      awayScore,
+      status,
+      scoreSubmittedByUserId: input.actor.userId,
+      scoreSubmittedByEmail: input.actor.email ?? null,
+      scoreSubmittedAt: deps.now ? deps.now() : new Date().toISOString(),
+      scoreSubmissionSource: input.source,
+    }, { admin: true });
 
-export async function finalizeTournamentScore(gameId: string, game?: TournamentScoreGame) {
-  const scoreGame = game ?? await loadTournamentScoreGame(gameId);
-  if (scoreGame.status === 'submitted') {
-    await updateGame(gameId, { status: 'completed' }, { admin: true });
+    return { status };
   }
-  return { status: scoreGame.status === 'submitted' ? 'completed' as const : scoreGame.status };
+
+  async function finalizeTournamentScore(gameId: string, game?: TournamentScoreGame) {
+    const scoreGame = game ?? await deps.loadGame(gameId);
+    if (scoreGame.status === 'submitted') {
+      await deps.updateGame(gameId, { status: 'completed' }, { admin: true });
+    }
+    return { status: scoreGame.status === 'submitted' ? 'completed' as const : scoreGame.status };
+  }
+
+  async function revertTournamentScore(gameId: string) {
+    await deps.updateGame(gameId, {
+      status: 'scheduled',
+      homeScore: null,
+      awayScore: null,
+      scoreSubmittedByUserId: null,
+      scoreSubmittedByEmail: null,
+      scoreSubmittedAt: null,
+      scoreSubmissionSource: null,
+    }, { admin: true });
+
+    return { status: 'scheduled' as const };
+  }
+
+  return {
+    loadTournamentScoreGame,
+    submitTournamentScore,
+    finalizeTournamentScore,
+    revertTournamentScore,
+  };
 }
 
-export async function revertTournamentScore(gameId: string) {
-  await updateGame(gameId, {
-    status: 'scheduled',
-    homeScore: null,
-    awayScore: null,
-    scoreSubmittedByUserId: null,
-    scoreSubmittedByEmail: null,
-    scoreSubmittedAt: null,
-    scoreSubmissionSource: null,
-  }, { admin: true });
+const tournamentScoringService = createTournamentScoringService({
+  loadGame: loadTournamentScoreGameFromDb,
+  updateGame: updateGameRecord,
+  getEffectiveScoreFinalization,
+});
 
-  return { status: 'scheduled' as const };
-}
+export const loadTournamentScoreGame = tournamentScoringService.loadTournamentScoreGame;
+export const submitTournamentScore = tournamentScoringService.submitTournamentScore;
+export const finalizeTournamentScore = tournamentScoringService.finalizeTournamentScore;
+export const revertTournamentScore = tournamentScoringService.revertTournamentScore;

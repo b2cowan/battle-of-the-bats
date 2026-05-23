@@ -72,7 +72,7 @@ export async function GET(req: Request) {
     .from('tournaments')
     .select('start_date, end_date, contact_email, fee_schedule_mode, deposit_amount, deposit_due_date, total_fee_amount, total_fee_due_date, logo_url, hero_banner_url, theme_preset, theme_primary')
     .eq('id', tournamentId)
-    .eq('organization_id', ctx.org.id)
+    .eq('org_id', ctx.org.id)
     .maybeSingle();
 
   if (tournamentError) {

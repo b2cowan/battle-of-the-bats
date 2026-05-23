@@ -15,7 +15,7 @@ type TournamentRow = {
   status: string | null;
   start_date: string | null;
   end_date: string | null;
-  organization_id: string | null;
+  org_id: string | null;
   fee_schedule_mode: string | null;
   deposit_amount: number | null;
   deposit_due_date: string | null;
@@ -216,12 +216,12 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
 
   const { data: tournament, error: tournamentError } = await supabaseAdmin
     .from('tournaments')
-    .select('id, name, slug, year, status, start_date, end_date, organization_id, fee_schedule_mode, deposit_amount, deposit_due_date, total_fee_amount, total_fee_due_date')
+    .select('id, name, slug, year, status, start_date, end_date, org_id, fee_schedule_mode, deposit_amount, deposit_due_date, total_fee_amount, total_fee_due_date')
     .eq('id', tournamentId)
     .maybeSingle<TournamentRow>();
 
   if (tournamentError) return NextResponse.json({ error: tournamentError.message }, { status: 500 });
-  if (!tournament || tournament.organization_id !== ctx.org.id) return forbidden();
+  if (!tournament || tournament.org_id !== ctx.org.id) return forbidden();
   if (!tournament.slug) return NextResponse.json({ error: 'Tournament slug is required to build public summary links.' }, { status: 500 });
 
   const [{ data: ageGroups, error: ageGroupsError }, { data: teams, error: teamsError }, { data: games, error: gamesError }, { data: archives, error: archivesError }] = await Promise.all([
@@ -399,12 +399,12 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
 
   const { data: tournament, error } = await supabaseAdmin
     .from('tournaments')
-    .select('id, organization_id')
+    .select('id, org_id')
     .eq('id', tournamentId)
-    .maybeSingle<{ id: string; organization_id: string | null }>();
+    .maybeSingle<{ id: string; org_id: string | null }>();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  if (!tournament || tournament.organization_id !== ctx.org.id) return forbidden();
+  if (!tournament || tournament.org_id !== ctx.org.id) return forbidden();
 
   await trackSummaryEvent({
     orgId: ctx.org.id,

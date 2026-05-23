@@ -221,10 +221,7 @@
 .compactList { display: flex; flex-direction: column; gap: 2.5rem; }
 
 .groupSection {
-  background: var(--black-10);
-  border-radius: 2px;
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.2);
-  overflow: hidden;
+  /* Flat table structure — no outer card border or background */
   display: flex;
   flex-direction: column;
 }
@@ -235,15 +232,15 @@
 }
 
 .groupHeader {
-  padding: 1rem 1.5rem;
-  background: var(--black-20);
-  border-bottom: 1px solid var(--border-2);
+  padding: 0.38rem 1.5rem;
+  background: var(--surface-2);
+  border-bottom: 1px solid rgba(var(--logic-lime-rgb), 0.18);
   display: flex;
   align-items: center;
-  gap: 1.5rem;
+  gap: 1rem;
 }
 
-.groupHeader strong { font-family: var(--font-data); font-size: 0.9rem; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; color: var(--logic-lime); }
+.groupHeader strong { font-family: var(--font-data); font-size: 0.72rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--logic-lime); }
 
 /* ─── Pool Sub-Sections (used inside group sections) ──────────────────────── */
 .poolSubSection {
@@ -293,15 +290,17 @@
 /* ─── Table Header ────────────────────────────────────────────────────────── */
 .tableHeader {
   display: flex;
-  padding: 0.5rem 1.5rem;
+  align-items: center;
+  padding: 0.4rem 1.5rem;
   font-family: var(--font-data);
   font-size: 0.58rem;
   text-transform: uppercase;
-  color: var(--white-30);
+  color: var(--data-gray);
   font-weight: 700;
   letter-spacing: 0.12em;
   background: var(--surface-2);
   border-bottom: 1px solid rgba(var(--logic-lime-rgb), 0.18);
+  user-select: none;
 }
 
 /* ─── Row Layout ──────────────────────────────────────────────────────────── */

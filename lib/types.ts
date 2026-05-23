@@ -636,6 +636,8 @@ export interface RepRosterPlayer {
   playerLastName: string;
   playerDateOfBirth: string | null;
   playerNumber: string | null;
+  primaryPosition: string | null;
+  secondaryPosition: string | null;
   status: RepRosterStatus;
   guardianFirstName: string | null;
   guardianLastName: string | null;
@@ -646,6 +648,8 @@ export interface RepRosterPlayer {
   createdAt: string;
   updatedAt: string;
 }
+
+export type RepLineupMode = 'nine_player' | 'everyone_bats';
 
 export interface RepTeamEvent {
   id: string;
@@ -681,6 +685,32 @@ export interface RepTeamEventAttendance {
   status: RepAttendanceStatus;
   note: string | null;
   updatedBy: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface RepTeamLineup {
+  id: string;
+  eventId: string;
+  programYearId: string;
+  teamId: string;
+  orgId: string;
+  lineupMode: RepLineupMode;
+  inningCount: number;
+  notes: string | null;
+  updatedBy: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface RepTeamLineupEntry {
+  id: string;
+  lineupId: string;
+  playerId: string;
+  battingOrder: number | null;
+  starter: boolean;
+  inningPositions: Record<string, string>;
+  notes: string | null;
   createdAt: string;
   updatedAt: string;
 }

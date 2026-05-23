@@ -28,6 +28,7 @@ const coachesHelp: HelpPageContent = {
       content: (
         <>
           <p>Use this checklist the first time you open the Coaches Portal for a new season.</p>
+          <p>The team overview shows <strong>Season setup</strong> progress for roster, schedule, lineup, budget, and Team workspace linking tasks.</p>
           <ol>
             <li>Sign in using the email address your org invited.</li>
             <li>Confirm you are viewing the correct team and program year.</li>
@@ -48,6 +49,52 @@ const coachesHelp: HelpPageContent = {
           popular: true,
           answer: (
             <p>Your invite may not be accepted, or your org admin may not have assigned you to the active program year yet. Ask the admin to confirm your coach assignment.</p>
+          ),
+        },
+      ],
+    },
+    {
+      id: 'recipe-team-workspace-season-tournaments',
+      group: 'How-to recipes',
+      heading: 'How Team workspaces, seasons, and local tournaments work',
+      summary: 'Understand what Team includes, how season history is preserved, and what the included local tournament slot can be used for.',
+      keywords: ['team plan', 'standalone team', 'season rollover', 'program year', 'free tournament', 'local tournament', 'tournament plus'],
+      searchText: 'standalone Team plan season rollover program year history team name age group roster schedule dues budget free-tier tournament one slot round robin scrimmage exhibition Tournament Plus upgrade',
+      content: (
+        <>
+          <p><strong>Team</strong> is built for one competitive team. It includes the Coaches Portal for roster, schedule, dues, documents, budget, attendance, lineup cards, reminders, and setup progress.</p>
+          <p>Your Team workspace is the long-term home for the team. Each <strong>program year</strong> is a season inside that workspace, so a team can update its name, age group, roster, schedule, dues plan, documents, and budget for the new season while keeping previous seasons available as history.</p>
+          <p>Team also includes one free-tier local tournament slot. Use it for simple round robins, scrimmage days, exhibition weekends, or informal events with nearby teams. It follows the free Tournament plan limits: one non-archived tournament at a time and no Tournament Plus features such as advanced registration fields, enhanced branding, unlimited tournament slots, cloning, or post-event reporting.</p>
+          <p>If you need a larger or more official tournament operation, use Tournament Plus or ask your organization whether the event should run from an organization account.</p>
+        </>
+      ),
+      faqs: [
+        {
+          id: 'faq-team-season-rollover',
+          question: 'Can my Team change names or age groups next season?',
+          answerText: 'Yes. The workspace stays the same, but each program year can carry its own season identity, roster, schedule, dues, documents, budget, attendance, and lineup history.',
+          keywords: ['season rollover', 'team name', 'age group', 'program year', 'history'],
+          popular: true,
+          answer: (
+            <p>Yes. The workspace stays the same, but each program year can carry its own season identity, roster, schedule, dues, documents, budget, attendance, and lineup history.</p>
+          ),
+        },
+        {
+          id: 'faq-team-free-tournament-slot',
+          question: 'What can I use the included tournament slot for?',
+          answerText: 'Use it for one simple non-archived local tournament at a time, such as a round robin, scrimmage day, or exhibition weekend. It does not include Tournament Plus features.',
+          keywords: ['free tournament', 'local tournament', 'round robin', 'scrimmage', 'Tournament Plus'],
+          answer: (
+            <p>Use it for one simple non-archived local tournament at a time, such as a round robin, scrimmage day, or exhibition weekend. It does not include Tournament Plus features. Archive or finish the old event before creating another, or move to Tournament Plus when you need serious tournament operations.</p>
+          ),
+        },
+        {
+          id: 'faq-team-billing-models',
+          question: 'How is Team different from an org Team add-on or Club team?',
+          answerText: 'Direct Team is paid by the coach or manager. An org Team add-on is paid by a linked organization but still coach-operated. Club included or extra teams are org-owned rep teams under the organization.',
+          keywords: ['direct Team', 'org Team add-on', 'Club included', 'Club extra team', 'billing'],
+          answer: (
+            <p><strong>Direct Team</strong> is paid by the coach or manager. An <strong>org Team add-on</strong> is paid by a linked organization but still coach-operated. <strong>Club included</strong> and <strong>Club extra</strong> teams are org-owned rep teams under the organization&apos;s normal Club access and oversight.</p>
           ),
         },
       ],
@@ -74,11 +121,22 @@ const coachesHelp: HelpPageContent = {
           <p>If an organization invites your Team workspace first, open <strong>Link Organization</strong>, review the invitation, then click <strong>Accept Invitation</strong> or <strong>Decline</strong>.</p>
           <p>The first link type is <strong>Basic visibility</strong>. It records the association only. It does not transfer billing, ownership, roster access, player documents, accounting data, or full rep-team admin rights.</p>
           <p>After the Basic link is active, use <strong>Request Org Billing</strong> if the parent organization should pay for the Team subscription. If the organization invites you to move billing first, review the billing invitation here and choose <strong>Accept Billing Invite</strong> or <strong>Decline Billing</strong>.</p>
+          <p>The Subscription page may also point you back to <strong>Link Organization</strong> when your Team could be paid by a parent club. That prompt is only a shortcut to this approval flow.</p>
           <p>Org billing keeps your Coaches Portal and team data in the Team workspace. It does not give the organization roster, document, accounting, or org-wide rep-team admin access.</p>
           <p>Use <strong>Request Ownership Transfer</strong> only when the team should become fully org-owned. Both sides can approve from Team Links, then a platform-assisted transfer moves roster, schedule, documents, budget, and accounting ownership in a later step.</p>
         </>
       ),
       faqs: [
+        {
+          id: 'faq-standalone-team-plan-includes',
+          question: 'What does the standalone Team plan include?',
+          answerText: 'Team is for one competitive team. It includes the Coaches Portal for roster, schedule, dues, documents, budget, attendance, lineups, setup checklist, reminders, and one free-tier local tournament slot. It is priced at $290 CAD per season or $29 CAD month-to-month.',
+          keywords: ['team plan', 'team pricing', 'standalone team', 'one competitive team'],
+          popular: true,
+          answer: (
+            <p>Team is for one competitive team. It includes the Coaches Portal for roster, schedule, dues, documents, budget, attendance, lineups, setup checklist, reminders, and one free-tier local tournament slot. It is priced at <strong>$290 CAD per season</strong> or <strong>$29 CAD month-to-month</strong>.</p>
+          ),
+        },
         {
           id: 'faq-team-link-billing-transfer',
           question: 'Does linking my Team workspace move billing to the organization?',
@@ -132,6 +190,7 @@ const coachesHelp: HelpPageContent = {
             <li>Open <strong>Roster</strong>.</li>
             <li>Click <strong>Add Player</strong> for a manual addition.</li>
             <li>Enter the player and guardian details your org needs for communications and records.</li>
+            <li>Add jersey number and primary/secondary positions when you want roster exports and lineup cards to prefill cleanly.</li>
             <li>Set the player to <strong>Active</strong> if they should count for dues and document tracking.</li>
             <li>Use <strong>Inactive</strong> for players who should remain in history but not count in current workflows.</li>
           </ol>
@@ -155,6 +214,7 @@ const coachesHelp: HelpPageContent = {
             <li>Enter date, time, location, opponent, and notes where relevant.</li>
             <li>Use recurrence for weekly practices so you do not need to enter each one manually.</li>
             <li>Switch between list, week, and month views to review the full calendar.</li>
+            <li>Open a game or scrimmage to mark attendance and build a baseball/softball lineup card.</li>
             <li>After games, enter scores where the event type supports it.</li>
           </ol>
           <p>Events are visible to you and your org admin. Use clear names and locations so everyone sees the same plan.</p>
@@ -233,6 +293,7 @@ const coachesHelp: HelpPageContent = {
             <li><strong>Team Event</strong> — team meetings, fundraisers, or anything else.</li>
           </ul>
           <p>Open an event to mark attendance for active roster players. Use <strong>In</strong>, <strong>Out</strong>, <strong>Late</strong>, or <strong>Unknown</strong>, and add a short note when needed.</p>
+          <p>For league games, tournament games, and scrimmages, open the lineup section to choose <strong>Everyone bats</strong> or <strong>9 player ball</strong>. Everyone bats keeps every active player in the batting order and lets you use Bench as an inning-by-inning position. 9 player ball keeps nine starters separate from the bench while still letting you plan substitutions by inning.</p>
           <p>Events are visible to you and your org admin. Attendance is coach-managed and stays inside the team workflow. Switch between List, Week, and Month views using the toggle at the top right.</p>
         </>
       ),

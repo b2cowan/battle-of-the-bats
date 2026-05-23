@@ -151,6 +151,10 @@
 .accent-pink   .agentIcon, .accent-pink   .agentCmd,
 .accent-pink   .detailHeaderIcon, .accent-pink .detailCmd { color: #f472b6; }
 
+.accent-teal   { border-left-color: rgba(45,212,191,0.6); }
+.accent-teal   .agentIcon, .accent-teal   .agentCmd,
+.accent-teal   .detailHeaderIcon, .accent-teal .detailCmd { color: #2dd4bf; }
+
 /* ─── Back button ────────────────────────────────────────────────────────────── */
 .backBtn {
   display: flex;

@@ -46,7 +46,7 @@ export async function POST(req: Request) {
     const { error: archiveError } = await supabaseAdmin
       .from('tournaments')
       .update({ status: 'archived', is_active: false })
-      .eq('organization_id', ctx.org.id)
+      .eq('org_id', ctx.org.id)
       .in('id', retainedIds);
     if (archiveError) return Response.json({ error: archiveError.message }, { status: 500 });
 

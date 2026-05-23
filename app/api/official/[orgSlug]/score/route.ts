@@ -208,7 +208,7 @@ export async function GET(req: Request, { params }: Params) {
   let tournamentQuery = supabaseAdmin
     .from('tournaments')
     .select('id, name, year, status, require_score_finalization')
-    .eq('organization_id', ctx.org.id)
+    .eq('org_id', ctx.org.id)
     .neq('status', 'archived')
     .order('year', { ascending: false })
     .order('name', { ascending: true });

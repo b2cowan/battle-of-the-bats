@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { Sparkles } from 'lucide-react';
 import { useEffect } from 'react';
-import { buildTournamentAcquisitionHref, trackTournamentAcquisition } from './tournament-acquisition';
+import { buildTeamWorkspaceAcquisitionHref, trackTournamentAcquisition } from './tournament-acquisition';
 import styles from './tournament-growth.module.css';
 
 type RegistrationConfirmationCtaProps = {
@@ -17,7 +17,7 @@ export default function RegistrationConfirmationCta({
   tournamentSlug,
   tournamentName,
 }: RegistrationConfirmationCtaProps) {
-  const href = buildTournamentAcquisitionHref({
+  const href = buildTeamWorkspaceAcquisitionHref({
     source: 'registration_confirmation',
     orgSlug,
     tournamentSlug,
@@ -42,8 +42,8 @@ export default function RegistrationConfirmationCta({
         <Sparkles size={18} />
       </div>
       <div className={styles.confirmationBody}>
-        <strong>Run a tournament like {tournamentName}</strong>
-        <span>FieldLogicHQ helps organizers manage registration, schedules, scores, and public updates.</span>
+        <strong>Keep this team organized after {tournamentName}</strong>
+        <span>Check your confirmation email for a secure Team claim link, or preview the season workspace now.</span>
       </div>
       <Link
         href={href}
@@ -58,7 +58,7 @@ export default function RegistrationConfirmationCta({
           ctaHref: href,
         })}
       >
-        View plans
+        Preview Team
       </Link>
     </div>
   );

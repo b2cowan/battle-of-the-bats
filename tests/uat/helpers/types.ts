@@ -47,6 +47,7 @@ export type UATRole =
   | 'org_owner'
   | 'org_admin'
   | 'coach'
+  | 'scorekeeper'
   | 'unauthenticated';
 
 /** Environment config loaded from process.env */
@@ -57,6 +58,8 @@ export interface UATEnv {
   orgOwner:      { email: string; password: string };
   orgAdmin:      { email: string; password: string };
   coach:         { email: string; password: string };
+  scorekeeper?:     { email: string; password: string };
+  plusScorekeeper?: { email: string; password: string };
 }
 
 /** Load and validate UAT env vars — throws a descriptive error if any are missing */
@@ -84,5 +87,11 @@ export function loadUATEnv(): UATEnv {
     orgOwner:      { email: process.env.UAT_ORG_OWNER_EMAIL!,      password: process.env.UAT_ORG_OWNER_PASSWORD! },
     orgAdmin:      { email: process.env.UAT_ORG_ADMIN_EMAIL!,      password: process.env.UAT_ORG_ADMIN_PASSWORD! },
     coach:         { email: process.env.UAT_COACH_EMAIL!,          password: process.env.UAT_COACH_PASSWORD! },
+    scorekeeper: process.env.UAT_SCOREKEEPER_EMAIL && process.env.UAT_SCOREKEEPER_PASSWORD
+      ? { email: process.env.UAT_SCOREKEEPER_EMAIL, password: process.env.UAT_SCOREKEEPER_PASSWORD }
+      : undefined,
+    plusScorekeeper: process.env.UAT_PLUS_SCOREKEEPER_EMAIL && process.env.UAT_PLUS_SCOREKEEPER_PASSWORD
+      ? { email: process.env.UAT_PLUS_SCOREKEEPER_EMAIL, password: process.env.UAT_PLUS_SCOREKEEPER_PASSWORD }
+      : undefined,
   };
 }

@@ -153,7 +153,7 @@ export async function POST(req: Request) {
     const { count: slugCount, error: slugError } = await supabase
       .from('tournaments')
       .select('*', { count: 'exact', head: true })
-      .eq('organization_id', auth.org.id)
+      .eq('org_id', auth.org.id)
       .eq('slug', slug)
       .neq('status', 'archived');
 
@@ -165,7 +165,7 @@ export async function POST(req: Request) {
     const { data: existingNames, error: nameError } = await supabase
       .from('tournaments')
       .select('name')
-      .eq('organization_id', auth.org.id)
+      .eq('org_id', auth.org.id)
       .neq('status', 'archived');
 
     if (nameError) throw nameError;
@@ -178,7 +178,7 @@ export async function POST(req: Request) {
       const { count: occupiedSlotCount, error: limitError } = await supabase
         .from('tournaments')
         .select('*', { count: 'exact', head: true })
-        .eq('organization_id', auth.org.id)
+        .eq('org_id', auth.org.id)
         .neq('status', 'archived');
 
       if (limitError) throw limitError;
@@ -203,7 +203,7 @@ export async function POST(req: Request) {
         is_active:       false,
         start_date:      startDate,
         end_date:        endDate,
-        organization_id: auth.org.id,
+        org_id: auth.org.id,
       })
       .select()
       .single();

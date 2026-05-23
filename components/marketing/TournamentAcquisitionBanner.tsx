@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { Trophy, X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { usePathname } from 'next/navigation';
-import { buildTournamentAcquisitionHref, trackTournamentAcquisition } from './tournament-acquisition';
+import { buildTeamWorkspaceAcquisitionHref, buildTournamentAcquisitionHref, trackTournamentAcquisition } from './tournament-acquisition';
 import styles from './tournament-growth.module.css';
 
 type TournamentAcquisitionBannerProps = {
@@ -23,6 +23,12 @@ export default function TournamentAcquisitionBanner({
   const dismissKey = `flhq-acq-dismiss-public_tournament_banner-${orgSlug}-${tournamentSlug}`;
   const hiddenForFlow = pathname?.endsWith('/register') || pathname?.includes('/official');
   const href = useMemo(() => buildTournamentAcquisitionHref({
+    source: 'public_tournament_banner',
+    orgSlug,
+    tournamentSlug,
+    surface: 'public_home',
+  }), [orgSlug, tournamentSlug]);
+  const teamHref = useMemo(() => buildTeamWorkspaceAcquisitionHref({
     source: 'public_tournament_banner',
     orgSlug,
     tournamentSlug,
@@ -59,9 +65,24 @@ export default function TournamentAcquisitionBanner({
         <Trophy size={18} />
       </div>
       <div className={styles.bannerBody}>
-        <strong>Run a tournament like {tournamentName}</strong>
-        <span>Start free, then add registration control, branding, and automation when your event grows.</span>
+        <strong>Keep teams organized after {tournamentName}</strong>
+        <span>Coaches can turn a tournament team into a season workspace; organizers can still start their own event free.</span>
       </div>
+      <Link
+        href={teamHref}
+        className={styles.bannerSecondaryCta}
+        onClick={() => trackTournamentAcquisition({
+          eventType: 'tournament_plus_acquisition_cta_clicked',
+          acquisitionSource: 'public_tournament_banner',
+          surface: 'public_home',
+          orgSlug,
+          tournamentSlug,
+          currentPath: window.location.pathname,
+          ctaHref: teamHref,
+        })}
+      >
+        Team workspace
+      </Link>
       <Link
         href={href}
         className={styles.bannerCta}
@@ -75,7 +96,7 @@ export default function TournamentAcquisitionBanner({
           ctaHref: href,
         })}
       >
-        See plans
+        Run an event
       </Link>
       <button
         type="button"

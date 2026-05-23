@@ -7,11 +7,21 @@ import { useOrg } from '@/lib/org-context';
 import HelpCallout from '@/components/help/HelpCallout';
 import {
   downloadXLSX, generateCSV, downloadCSVBlob, downloadICS,
-  buildFilename, serializeRows, serializeHeaders, type ExportColumnDef, type ICSEventInput,
+  buildFilename, serializeRows, serializeHeaders, downloadPDF, DEFAULT_PDF_SETTINGS,
+  type ExportColumnDef, type ICSEventInput, type OrgPdfSettings,
 } from '@/lib/export';
 import ExportMenu from '@/components/admin/ExportMenu';
 import styles from '../../../coaches.module.css';
-import type { RepAttendanceStatus, RepRosterPlayer, RepTeamEvent, RepTeamEventAttendance, RepEventType } from '@/lib/types';
+import type {
+  RepAttendanceStatus,
+  RepLineupMode,
+  RepRosterPlayer,
+  RepTeamEvent,
+  RepTeamEventAttendance,
+  RepTeamLineup,
+  RepTeamLineupEntry,
+  RepEventType,
+} from '@/lib/types';
 
 // ── Export definition ─────────────────────────────────────────────────────────
 
@@ -65,6 +75,8 @@ const ATTENDANCE_OPTIONS: {
   { value: 'late', label: 'Late', icon: Clock3 },
 ];
 
+const GAME_EVENT_TYPES: RepEventType[] = ['league_game', 'tournament_game', 'scrimmage'];
+const LINEUP_POSITIONS = ['', 'P', 'C', '1B', '2B', '3B', 'SS', 'LF', 'CF', 'RF', 'OF', 'DH', 'EH', 'Bench'];
 const DAYS_OF_WEEK = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
 type ViewMode = 'list' | 'week' | 'month';
@@ -91,6 +103,14 @@ interface AttendancePlayerRow {
   player: RepRosterPlayer;
   status: RepAttendanceStatus;
   note: string;
+}
+
+interface LineupPlayerRow {
+  player: RepRosterPlayer;
+  battingOrder: string;
+  starter: boolean;
+  inningPositions: Record<string, string>;
+  notes: string;
 }
 
 const BLANK_FORM: EventForm = {
@@ -145,6 +165,38 @@ function playerDisplayName(player: RepRosterPlayer) {
   return [player.playerNumber ? `#${player.playerNumber}` : '', player.playerFirstName, player.playerLastName]
     .filter(Boolean)
     .join(' ');
+}
+
+function isLineupEvent(event: RepTeamEvent | null) {
+  return event ? GAME_EVENT_TYPES.includes(event.eventType) : false;
+}
+
+function sortLineupRows(rows: LineupPlayerRow[]) {
+  return [...rows].sort((a, b) => {
+    const aOrder = Number(a.battingOrder) || 999;
+    const bOrder = Number(b.battingOrder) || 999;
+    if (aOrder !== bOrder) return aOrder - bOrder;
+    if (a.starter !== b.starter) return a.starter ? -1 : 1;
+    return playerDisplayName(a.player).localeCompare(playerDisplayName(b.player));
+  });
+}
+
+function buildLineupRows(
+  players: RepRosterPlayer[],
+  entries: RepTeamLineupEntry[],
+  mode: RepLineupMode,
+) {
+  const entriesByPlayer = new Map(entries.map(entry => [entry.playerId, entry]));
+  return players.map((player, index) => {
+    const existing = entriesByPlayer.get(player.id);
+    return {
+      player,
+      battingOrder: existing?.battingOrder ? String(existing.battingOrder) : mode === 'everyone_bats' ? String(index + 1) : index < 9 ? String(index + 1) : '',
+      starter: existing?.starter ?? (mode === 'everyone_bats' ? true : index < 9),
+      inningPositions: existing?.inningPositions ?? {},
+      notes: existing?.notes ?? '',
+    };
+  });
 }
 
 function errorMessage(error: unknown, fallback: string) {
@@ -225,6 +277,15 @@ export default function CoachesSchedulePage({
   const [attendanceSaving, setAttendanceSaving] = useState(false);
   const [attendanceDirty, setAttendanceDirty] = useState(false);
   const [attendanceError, setAttendanceError] = useState('');
+  const [lineupMode, setLineupMode] = useState<RepLineupMode>('everyone_bats');
+  const [lineupInningCount, setLineupInningCount] = useState(7);
+  const [lineupNotes, setLineupNotes] = useState('');
+  const [lineupRows, setLineupRows] = useState<LineupPlayerRow[]>([]);
+  const [lineupLoading, setLineupLoading] = useState(false);
+  const [lineupSaving, setLineupSaving] = useState(false);
+  const [lineupDirty, setLineupDirty] = useState(false);
+  const [lineupError, setLineupError] = useState('');
+  const [pdfSettings, setPdfSettings] = useState<OrgPdfSettings | null>(null);
 
   const base = `/${orgSlug}/coaches/teams/${teamId}`;
 
@@ -250,6 +311,13 @@ export default function CoachesSchedulePage({
   }, [fetchEvents]);
 
   useEffect(() => {
+    fetch('/api/admin/org/pdf-settings')
+      .then(r => r.ok ? r.json() : {})
+      .then(d => setPdfSettings(d as OrgPdfSettings))
+      .catch(() => setPdfSettings(null));
+  }, []);
+
+  useEffect(() => {
     if (!selectedEvent) {
       return;
     }
@@ -259,22 +327,33 @@ export default function CoachesSchedulePage({
 
     async function fetchAttendance() {
       setAttendanceLoading(true);
+      setLineupLoading(isLineupEvent(selectedEvent));
       setAttendanceError('');
+      setLineupError('');
       setAttendanceDirty(false);
+      setLineupDirty(false);
       try {
-        const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/events/${eventId}/attendance`);
+        const lineupCapable = isLineupEvent(selectedEvent);
+        const res = await fetch(
+          lineupCapable
+            ? `/api/coaches/${orgSlug}/teams/${teamId}/events/${eventId}/lineup`
+            : `/api/coaches/${orgSlug}/teams/${teamId}/events/${eventId}/attendance`,
+        );
         if (!res.ok) {
           const d = await res.json().catch(() => ({ error: res.statusText }));
-          throw new Error(d.error ?? 'Failed to load attendance');
+          throw new Error(d.error ?? 'Failed to load event details');
         }
         const data: {
           players?: RepRosterPlayer[];
           attendance?: RepTeamEventAttendance[];
+          lineup?: RepTeamLineup | null;
+          entries?: RepTeamLineupEntry[];
         } = await res.json();
         if (cancelled) return;
 
+        const players = data.players ?? [];
         const attendanceByPlayer = new Map((data.attendance ?? []).map(row => [row.playerId, row]));
-        setAttendanceRows((data.players ?? []).map(player => {
+        setAttendanceRows(players.map(player => {
           const existing = attendanceByPlayer.get(player.id);
           return {
             player,
@@ -282,10 +361,20 @@ export default function CoachesSchedulePage({
             note: existing?.note ?? '',
           };
         }));
+        if (lineupCapable) {
+          const mode = data.lineup?.lineupMode ?? 'everyone_bats';
+          setLineupMode(mode);
+          setLineupInningCount(data.lineup?.inningCount ?? 7);
+          setLineupNotes(data.lineup?.notes ?? '');
+          setLineupRows(buildLineupRows(players, data.entries ?? [], mode));
+        } else {
+          setLineupRows([]);
+        }
       } catch (e: unknown) {
         if (!cancelled) setAttendanceError(errorMessage(e, 'Failed to load attendance'));
       } finally {
         if (!cancelled) setAttendanceLoading(false);
+        if (!cancelled) setLineupLoading(false);
       }
     }
 
@@ -357,6 +446,15 @@ export default function CoachesSchedulePage({
   // ── Score entry ─────────────────────────────────────────────────────────────
 
   const [scoreForm, setScoreForm] = useState<{ homeScore: string; awayScore: string; result: string } | null>(null);
+
+  function closeSelectedEvent() {
+    setSelectedEvent(null);
+    setScoreForm(null);
+    setSaveError('');
+    setLineupRows([]);
+    setLineupError('');
+    setLineupDirty(false);
+  }
 
   async function handleScoreSave() {
     if (!selectedEvent || !scoreForm) return;
@@ -445,6 +543,104 @@ export default function CoachesSchedulePage({
     } finally {
       setAttendanceSaving(false);
     }
+  }
+
+  function updateLineupRow(playerId: string, patch: Partial<LineupPlayerRow>) {
+    setLineupRows(rows => rows.map(row => (
+      row.player.id === playerId ? { ...row, ...patch } : row
+    )));
+    setLineupDirty(true);
+  }
+
+  function updateLineupPosition(playerId: string, inning: number, position: string) {
+    setLineupRows(rows => rows.map(row => (
+      row.player.id === playerId
+        ? {
+          ...row,
+          inningPositions: {
+            ...row.inningPositions,
+            [String(inning)]: position,
+          },
+        }
+        : row
+    )));
+    setLineupDirty(true);
+  }
+
+  function handleLineupModeChange(mode: RepLineupMode) {
+    setLineupMode(mode);
+    setLineupRows(rows => rows.map((row, index) => (
+      mode === 'everyone_bats'
+        ? { ...row, starter: true, battingOrder: row.battingOrder || String(index + 1) }
+        : { ...row, starter: index < 9, battingOrder: index < 9 ? row.battingOrder || String(index + 1) : '' }
+    )));
+    setLineupDirty(true);
+  }
+
+  async function handleLineupSave() {
+    if (!selectedEvent) return;
+    setLineupSaving(true);
+    setLineupError('');
+    try {
+      const rows = lineupRows.map(row => ({
+        playerId: row.player.id,
+        battingOrder: lineupMode === 'nine_player' && !row.starter ? null : row.battingOrder,
+        starter: lineupMode === 'nine_player' ? row.starter : true,
+        inningPositions: row.inningPositions,
+        notes: row.notes,
+      }));
+      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/events/${selectedEvent.id}/lineup`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          lineupMode,
+          inningCount: lineupInningCount,
+          notes: lineupNotes,
+          entries: rows,
+        }),
+      });
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({ error: res.statusText }));
+        throw new Error(d.error ?? 'Lineup save failed');
+      }
+      const data: { entries?: RepTeamLineupEntry[]; lineup?: RepTeamLineup } = await res.json();
+      setLineupDirty(false);
+      if (data.entries) {
+        setLineupRows(buildLineupRows(lineupRows.map(row => row.player), data.entries, data.lineup?.lineupMode ?? lineupMode));
+      }
+    } catch (e: unknown) {
+      setLineupError(errorMessage(e, 'Lineup save failed'));
+    } finally {
+      setLineupSaving(false);
+    }
+  }
+
+  async function handleLineupPDF() {
+    if (!selectedEvent || lineupRows.length === 0) return;
+    const settings: OrgPdfSettings = {
+      ...DEFAULT_PDF_SETTINGS,
+      ...(pdfSettings && Object.keys(pdfSettings).length > 0 ? pdfSettings : {}),
+      orientation: 'landscape',
+      reportDensity: 'compact',
+    };
+    const inningHeaders = Array.from({ length: lineupInningCount }, (_, index) => `${index + 1}`);
+    const headers = ['Bat', 'Player', 'Role', ...inningHeaders, 'Notes'];
+    const rows = sortLineupRows(lineupRows).map(row => [
+      lineupMode === 'nine_player' && !row.starter ? '' : row.battingOrder,
+      playerDisplayName(row.player),
+      lineupMode === 'nine_player' ? row.starter ? 'Starter' : 'Bench' : 'Hitter',
+      ...inningHeaders.map(inning => row.inningPositions[inning] || ''),
+      row.notes,
+    ]);
+    const teamName = assignment?.teamName ?? teamId;
+    await downloadPDF(
+      buildFilename({ org: currentOrg?.slug ?? orgSlug, dataset: 'lineup', scope: selectedEvent.name || teamName }, 'pdf'),
+      lineupMode === 'nine_player' ? '9 Player Ball Lineup' : 'Everyone Bats Lineup',
+      `${teamName} - ${selectedEvent.name} - ${fmtDate(selectedEvent.startsAt)}`,
+      headers,
+      rows,
+      settings,
+    );
   }
 
   function buildExportRows() {
@@ -748,7 +944,7 @@ export default function CoachesSchedulePage({
 
       {/* ── Detail slide-over ─────────────────────────────────────────────── */}
       {selectedEvent && (
-        <div className={styles.modalOverlay} onClick={() => { setSelectedEvent(null); setScoreForm(null); setSaveError(''); }}>
+        <div className={styles.modalOverlay} onClick={closeSelectedEvent}>
           <div className={styles.slideOver} onClick={e => e.stopPropagation()}>
             <div className={styles.modalHeader}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
@@ -757,7 +953,7 @@ export default function CoachesSchedulePage({
                   {EVENT_LABELS[selectedEvent.eventType]}
                 </span>
               </div>
-              <button className={styles.modalCloseBtn} onClick={() => { setSelectedEvent(null); setScoreForm(null); }}>
+              <button className={styles.modalCloseBtn} onClick={closeSelectedEvent}>
                 <X size={18} />
               </button>
             </div>
@@ -864,6 +1060,155 @@ export default function CoachesSchedulePage({
               </div>
               {attendanceError && <p className={styles.errorText}>{attendanceError}</p>}
             </div>
+
+            {isLineupEvent(selectedEvent) && (
+              <div className={styles.lineupSection}>
+                <div className={styles.lineupHeader}>
+                  <div>
+                    <h3 className={styles.attendanceTitle}>Lineup</h3>
+                    <p className={styles.attendanceSummary}>
+                      {lineupMode === 'nine_player'
+                        ? `${lineupRows.filter(row => row.starter).length} starters, ${lineupRows.filter(row => !row.starter).length} bench`
+                        : `${lineupRows.length} hitters`}
+                    </p>
+                  </div>
+                  <div className={styles.lineupControls}>
+                    <label className={styles.lineupControlLabel}>
+                      <span>Format</span>
+                      <select
+                        className={styles.select}
+                        aria-label="Lineup format"
+                        value={lineupMode}
+                        onChange={e => handleLineupModeChange(e.target.value as RepLineupMode)}
+                      >
+                        <option value="everyone_bats">Everyone bats</option>
+                        <option value="nine_player">9 player ball</option>
+                      </select>
+                    </label>
+                    <label className={styles.lineupControlLabel}>
+                      <span>Innings</span>
+                      <select
+                        className={styles.select}
+                        aria-label="Lineup innings"
+                        value={lineupInningCount}
+                        onChange={e => { setLineupInningCount(Number(e.target.value)); setLineupDirty(true); }}
+                      >
+                        {Array.from({ length: 12 }, (_, index) => index + 1).map(count => (
+                          <option key={count} value={count}>{count}</option>
+                        ))}
+                      </select>
+                    </label>
+                  </div>
+                </div>
+
+                {lineupLoading ? (
+                  <div className={styles.attendanceEmpty}>Loading lineup...</div>
+                ) : lineupRows.length === 0 ? (
+                  <div className={styles.attendanceEmpty}>Add active players to the roster before creating a lineup.</div>
+                ) : (
+                  <div className={styles.lineupTableWrap}>
+                    <table className={styles.lineupTable}>
+                      <thead>
+                        <tr>
+                          <th>Bat</th>
+                          {lineupMode === 'nine_player' && <th>Start</th>}
+                          <th>Player</th>
+                          {Array.from({ length: lineupInningCount }, (_, index) => (
+                            <th key={index + 1}>{index + 1}</th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {sortLineupRows(lineupRows).map(row => (
+                          <tr key={row.player.id}>
+                            <td>
+                              <input
+                                className={styles.lineupOrderInput}
+                                type="number"
+                                min={1}
+                                max={99}
+                                value={lineupMode === 'nine_player' && !row.starter ? '' : row.battingOrder}
+                                disabled={lineupMode === 'nine_player' && !row.starter}
+                                onChange={e => updateLineupRow(row.player.id, { battingOrder: e.target.value })}
+                                aria-label={`Batting order for ${playerDisplayName(row.player)}`}
+                              />
+                            </td>
+                            {lineupMode === 'nine_player' && (
+                              <td>
+                                <input
+                                  type="checkbox"
+                                  checked={row.starter}
+                                  onChange={e => updateLineupRow(row.player.id, {
+                                    starter: e.target.checked,
+                                    battingOrder: e.target.checked && !row.battingOrder
+                                      ? String(Math.min(lineupRows.filter(r => r.starter).length + 1, 9))
+                                      : row.battingOrder,
+                                  })}
+                                  aria-label={`Starter for ${playerDisplayName(row.player)}`}
+                                />
+                              </td>
+                            )}
+                            <td className={styles.lineupPlayerCell}>
+                              <span>{playerDisplayName(row.player)}</span>
+                              {(row.player.primaryPosition || row.player.secondaryPosition) && (
+                                <small>{[row.player.primaryPosition, row.player.secondaryPosition].filter(Boolean).join(' / ')}</small>
+                              )}
+                            </td>
+                            {Array.from({ length: lineupInningCount }, (_, index) => {
+                              const inning = index + 1;
+                              return (
+                                <td key={inning}>
+                                  <select
+                                    className={styles.lineupPositionSelect}
+                                    value={row.inningPositions[String(inning)] ?? ''}
+                                    onChange={e => updateLineupPosition(row.player.id, inning, e.target.value)}
+                                    aria-label={`Inning ${inning} position for ${playerDisplayName(row.player)}`}
+                                  >
+                                    {LINEUP_POSITIONS.map(position => (
+                                      <option key={position || 'blank'} value={position}>{position || '-'}</option>
+                                    ))}
+                                  </select>
+                                </td>
+                              );
+                            })}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+
+                <textarea
+                  className={styles.textarea}
+                  rows={2}
+                  value={lineupNotes}
+                  onChange={e => { setLineupNotes(e.target.value); setLineupDirty(true); }}
+                  placeholder="Lineup notes"
+                  maxLength={1000}
+                />
+
+                <div className={styles.attendanceFooter}>
+                  <button
+                    type="button"
+                    className={styles.btnPrimary}
+                    disabled={!lineupDirty || lineupSaving || lineupLoading || lineupRows.length === 0}
+                    onClick={handleLineupSave}
+                  >
+                    <Save size={14} /> {lineupSaving ? 'Saving...' : 'Save lineup'}
+                  </button>
+                  <button
+                    type="button"
+                    className={styles.btnGhost}
+                    disabled={lineupRows.length === 0}
+                    onClick={handleLineupPDF}
+                  >
+                    Lineup PDF
+                  </button>
+                  {lineupDirty && <span className={styles.attendanceUnsaved}>Unsaved changes</span>}
+                </div>
+                {lineupError && <p className={styles.errorText}>{lineupError}</p>}
+              </div>
+            )}
 
             {/* Score */}
             {(selectedEvent.eventType === 'league_game' || selectedEvent.eventType === 'tournament_game' || selectedEvent.eventType === 'scrimmage') && (

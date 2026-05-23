@@ -16,7 +16,7 @@ const orgHelp: HelpPageContent = {
             <li><strong>Create your first tournament.</strong> Head to <strong>Tournaments</strong>, click <strong>New Tournament</strong>, and fill in the name, year, and URL slug.</li>
             <li><strong>Set up your org branding.</strong> In <strong>Settings</strong>, upload your logo, pick a colour theme, and confirm your URL slug before you share any links publicly.</li>
             <li><strong>Enable your first module.</strong> If your plan includes House League, Rep Teams, or other modules, go to <strong>Subscription</strong> and request activation. Each module unlocks a new section in the admin panel.</li>
-            <li><strong>Invite scorekeepers.</strong> Scorekeepers don't use the main admin area — they receive a direct scoring link. Add them via <strong>Members → Invite Member</strong> using the Scorekeeper role.</li>
+            <li><strong>Invite scorekeepers.</strong> Scorekeepers don't use the main admin area. Add them via <strong>Members → Invite Member</strong> using the Scorekeeper role, then assign the tournaments they should score.</li>
           </ol>
         </>
       ),
@@ -34,7 +34,7 @@ const orgHelp: HelpPageContent = {
             <li><strong>League Admin</strong> — Manages house league seasons, registrations, teams, and schedules. Scoped to the House League module.</li>
             <li><strong>League Registrar</strong> — Reviews and processes house league registrations only. Cannot manage seasons or schedules.</li>
             <li><strong>Coach</strong> — Accesses the Coaches Portal for their assigned rep team. Cannot access the main admin panel.</li>
-            <li><strong>Scorekeeper</strong> — Submits scores for their assigned games only via the scorekeeper app. Does not access the admin panel at all.</li>
+            <li><strong>Scorekeeper</strong> — Submits scores for assigned tournaments via Scorekeeper View at <code>/{'{orgSlug}'}/scorekeeper</code>. Does not access the admin panel at all.</li>
           </ul>
           <p>Owners can grant or revoke individual capabilities on any member via <strong>Members → Manage</strong>. This lets you fine-tune access without changing someone's base role.</p>
         </>
@@ -64,6 +64,8 @@ const orgHelp: HelpPageContent = {
           </ol>
           <p>Approving a coach request or receiving a coach&apos;s acceptance creates a <strong>Basic visibility</strong> link only. It does not transfer billing, ownership, player roster access, documents, accounting data, or org-wide rep-team admin access.</p>
           <p>After the Basic link is active, use the <strong>Org billing</strong> section to invite the coach to move billing, or approve a coach&apos;s billing request. Choose annual or monthly checkout when both sides have approved. The Team becomes an org-paid Team add-on, but Basic sharing stays in place and the coach keeps operational ownership.</p>
+          <p>Use org-paid Team add-ons when your organization wants to pay for one or two coach-operated teams without taking over roster, document, accounting, or rep-team administration. Use Club when the organization needs the full multi-team operating layer: rep-team administration, accounting oversight, house league, public site, staff access, and lower extra-team pricing.</p>
+          <p>If your organization is paying for three or more linked Team add-ons, Team Links and Billing may show a Club value nudge. This is guidance only: Team add-ons can stay active, and Club or ownership transfer still requires the normal approval path.</p>
           <p>Use <strong>Ownership transfer</strong> only when the Team should become org-owned. Phase 5A records mutual approval from the coach and organization; final roster, schedule, document, budget, and accounting reassignment is platform-assisted.</p>
         </>
       ),
@@ -105,6 +107,34 @@ const orgHelp: HelpPageContent = {
             <p>Your organization becomes the payer for that Team add-on. The Team workspace remains coach-operated, and this does not unlock roster, documents, accounting, ownership, or org-wide rep-team admin access.</p>
           ),
         },
+        {
+          id: 'faq-team-addon-vs-club',
+          question: 'When should we use Team add-ons instead of Club?',
+          answerText: 'Use Team add-ons for a small number of coach-operated linked teams. Club is the better fit when the organization needs multi-team oversight, full rep-team administration, accounting, staff access, public site, house league, or lower extra-team pricing.',
+          keywords: ['team add-on', 'club', 'multi-team', 'pricing', 'rep teams'],
+          popular: true,
+          answer: (
+            <p>Use Team add-ons for a small number of coach-operated linked teams. Club is the better fit when the organization needs multi-team oversight, full rep-team administration, accounting, staff access, public site, house league, or lower extra-team pricing.</p>
+          ),
+        },
+        {
+          id: 'faq-team-tournament-plus',
+          question: 'Do linked Team workspaces include Tournament Plus features?',
+          answerText: 'No. Team includes one free-tier local tournament slot for simple events. Tournament Plus features such as unlimited tournament slots, advanced registration controls, enhanced branding, cloning, and post-event reporting require Tournament Plus or a higher organization plan.',
+          keywords: ['Team tournaments', 'Tournament Plus', 'free tournament slot', 'upgrade'],
+          answer: (
+            <p>No. Team includes one free-tier local tournament slot for simple events. Tournament Plus features such as unlimited tournament slots, advanced registration controls, enhanced branding, cloning, and post-event reporting require Tournament Plus or a higher organization plan.</p>
+          ),
+        },
+        {
+          id: 'faq-team-link-club-nudge',
+          question: 'Why do we see a Club value nudge?',
+          answerText: 'The nudge appears when the organization is paying for three or more linked Team add-ons. Club is usually the better multi-team operating layer, but the prompt does not change billing, sharing, ownership, or access by itself.',
+          keywords: ['club nudge', 'multi-team', 'team add-on', 'club value'],
+          answer: (
+            <p>The nudge appears when the organization is paying for three or more linked Team add-ons. Club is usually the better multi-team operating layer, but the prompt does not change billing, sharing, ownership, or access by itself.</p>
+          ),
+        },
       ],
     },
     {
@@ -126,10 +156,11 @@ const orgHelp: HelpPageContent = {
             <li>Enter the person's email address.</li>
             <li>Choose the lowest role that matches their job. Use <strong>Admin</strong> only for trusted co-organizers who need broad access.</li>
             <li>If the person only needs a narrow workflow, use a scoped role such as <strong>Treasurer</strong>, <strong>League Registrar</strong>, <strong>Coach</strong>, or <strong>Scorekeeper</strong>.</li>
+            <li>For scorekeepers, assign the tournaments they should score so their Scorekeeper View stays focused on the right event.</li>
             <li>Send the invite, then confirm the person appears as <strong>Pending</strong> until they accept.</li>
           </ol>
           <p>If they do not receive the email, ask them to check spam first. Then use the resend option from their pending invite row.</p>
-          <p><strong>Access rule of thumb:</strong> owners manage billing and organization settings, admins run operations, staff handle day-of tasks, and scorekeepers should normally use scoring links rather than the main admin panel.</p>
+          <p><strong>Access rule of thumb:</strong> owners manage billing and organization settings, admins run operations, staff handle day-of tasks, and scorekeepers use <code>/{'{orgSlug}'}/scorekeeper</code> rather than the main admin panel.</p>
         </>
       ),
       faqs: [
@@ -140,7 +171,16 @@ const orgHelp: HelpPageContent = {
           keywords: ['role', 'volunteer', 'permissions', 'least access'],
           popular: true,
           answer: (
-            <p>Choose the narrowest role that lets them do their job. Use <strong>Staff</strong> for day-of tournament help, <strong>Treasurer</strong> for accounting, <strong>League Registrar</strong> for registration review, <strong>Coach</strong> for coach portal access, and <strong>Scorekeeper</strong> for score entry.</p>
+            <p>Choose the narrowest role that lets them do their job. Use <strong>Staff</strong> for day-of tournament help, <strong>Treasurer</strong> for accounting, <strong>League Registrar</strong> for registration review, <strong>Coach</strong> for coach portal access, and <strong>Scorekeeper</strong> for field score entry.</p>
+          ),
+        },
+        {
+          id: 'faq-scorekeeper-member-access',
+          question: 'What access does a scorekeeper get?',
+          answerText: 'Scorekeepers get the lightweight Scorekeeper View for assigned tournaments and do not get the main admin panel.',
+          keywords: ['scorekeeper', 'official', 'scorekeeper access', 'assigned tournaments'],
+          answer: (
+            <p>Scorekeepers get the lightweight <strong>Scorekeeper View</strong> for assigned tournaments. They can enter scores and see scoring states, but they do not get registrations, settings, billing, exports, communications, or the main admin panel.</p>
           ),
         },
       ],
@@ -162,7 +202,8 @@ const orgHelp: HelpPageContent = {
           <ol>
             <li><strong>Confirm they accepted the invite.</strong> Pending members cannot use the admin panel yet. Resend the invite if needed.</li>
             <li><strong>Check whether their account is suspended.</strong> Suspended members stay listed but cannot access protected workflows.</li>
-            <li><strong>Review their role.</strong> A registrar will not see accounting, a treasurer will not see tournament setup, and an official normally will not see the admin panel.</li>
+            <li><strong>Review their role.</strong> A registrar will not see accounting, a treasurer will not see tournament setup, and a scorekeeper normally will not see the admin panel.</li>
+            <li><strong>For scorekeepers, review tournament assignment.</strong> If they cannot find games, confirm they are assigned to the tournament and that games exist for the selected date.</li>
             <li><strong>Review individual capabilities.</strong> Owners can grant or remove specific capabilities from a member's manage screen.</li>
             <li><strong>Check whether the module is enabled.</strong> A member cannot access House League, Rep Teams, Accounting, or public-site features if the org does not have that module active.</li>
             <li><strong>Check seat limits.</strong> If you are at the plan's seat limit, new non-official users may require an upgrade before they can be added.</li>
@@ -244,6 +285,7 @@ const orgHelp: HelpPageContent = {
             <li>Suspend or reinstate their access</li>
           </ul>
           <p>To resend an invitation to someone who hasn't accepted yet, click the mail icon on their row. Pending invites appear with a "Pending" status badge.</p>
+          <p><strong>Scorekeeper links:</strong> Scorekeepers use <code>/{'{orgSlug}'}/scorekeeper</code>. Admins can also open Scorekeeper View from Results &amp; Scoring when they need to test the field workflow.</p>
           <p><strong>Seat limits:</strong> Your plan determines how many non-scorekeeper seats you can have. Scorekeepers are free on most plans. If you're near your limit, a banner will appear on the Members page with an upgrade link.</p>
         </>
       ),
@@ -269,6 +311,7 @@ const orgHelp: HelpPageContent = {
         <>
           <p>The <strong>Subscription</strong> page (visible to Owners only) shows your current plan, tournament slot usage, seat usage, and available upgrades.</p>
           <p>The free Tournament plan is meant for one starter event with standard registration, basic selected-row registration updates, waitlist collection, and FieldLogicHQ default public styling. Tournament Plus is the serious tournament operations plan: unlimited tournament slots, 10 staff seats, custom registration questions, Excel and PDF exports for registrations, schedules, and results — useful for check-in sheets, insurance submissions, and post-event board reports — payment reminders, waitlist promotion, full branding, automation, cloning, and post-event reporting.</p>
+          <p>Team add-ons are separate from Club extra teams. A linked org-paid Team add-on pays for a coach-operated standalone Team workspace. Club included or extra teams are org-owned rep teams under Club. Club includes the first three active rep teams, then uses the lower Club extra-team rate for additional active teams.</p>
           <p>To upgrade to Tournament Plus, click <strong>Upgrade to Tournament Plus</strong>. You'll be taken to secure Stripe Checkout to enter payment details. Your first payment is collected automatically after the 14-day trial. League and Club are shown as coming soon until those tiers open for self-serve checkout.</p>
           <p>If you're on a paid plan, use <strong>Manage Subscription</strong> to update your payment method, view past invoices, or cancel. This opens the Stripe customer portal.</p>
           <p><strong>Past-due payments:</strong> If a payment fails, your access stays active during a grace period. Update your payment method via <strong>Manage Subscription</strong> before the grace period ends to avoid service interruption.</p>
@@ -288,7 +331,7 @@ const orgHelp: HelpPageContent = {
             <li>Consider the timing — avoid changing mid-tournament</li>
           </ul>
           <p><strong>Branding</strong> — Free Tournament orgs use FieldLogicHQ default public styling. Tournament Plus and higher can upload logos, choose tournament colours, and control more of the public tournament appearance. Public organization page branding is part of the broader public-site tiers.</p>
-          <p><strong>Score finalization</strong> — When enabled, scorekeeper submissions are visible to the public but not marked final until an admin reviews them in the Results page. Useful if your org requires a second review before results are final.</p>
+          <p><strong>Score finalization</strong> — When enabled, scorekeeper submissions are visible to the public but not marked final until an admin reviews them in the Results page. Individual tournaments can inherit this organization setting or override it in Event Settings. Useful if your org requires a second review before results are final.</p>
         </>
       ),
     },

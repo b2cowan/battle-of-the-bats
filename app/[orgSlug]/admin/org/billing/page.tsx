@@ -1,7 +1,8 @@
 'use client';
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { CreditCard, CheckCircle, Archive, ShieldOff } from 'lucide-react';
+import { CreditCard, CheckCircle, Archive, ShieldOff, Link2, UsersRound } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { useTournament } from '@/lib/tournament-context';
 import { PLAN_CONFIG } from '@/lib/plan-config';
@@ -119,6 +120,26 @@ const PLAN_META_COPY: Record<OrgPlan, string> = {
 };
 
 const COMING_SOON_PLANS = new Set<OrgPlan>(['league', 'club']);
+const CLUB_VALUE_TEAM_COUNT = 3;
+
+type TeamLinkForBillingSummary = {
+  id: string;
+  teamWorkspaceId: string;
+  status: string;
+  linkType: string;
+  billingModeAfterApproval: string | null;
+  workspace: {
+    billingMode: string | null;
+    subscriptionStatus: string | null;
+  } | null;
+};
+
+type TeamLinkBillingSummary = {
+  activeOrgPaidTeamCount: number;
+  connectedTeamCount?: number;
+  clubValueThreshold?: number;
+  showClubValueNudge?: boolean;
+};
 
 export default function BillingPage() {
   const { currentOrg, refresh: refreshOrg, userRole } = useOrg();
@@ -146,6 +167,7 @@ export default function BillingPage() {
   const [repTeamAddon, setRepTeamAddon]   = useState<{
     activeCount: number; billableCount: number;
   } | null>(null);
+  const [teamLinkBillingSummary, setTeamLinkBillingSummary] = useState<TeamLinkBillingSummary | null>(null);
 
   async function refreshBillingState() {
     await Promise.all([refreshOrg(), refreshTournaments()]);
@@ -174,6 +196,53 @@ export default function BillingPage() {
       })
       .catch(() => {});
   }, [currentOrg]);
+
+  useEffect(() => {
+    if (!currentOrg) return;
+    if (currentOrg.accountKind === 'team_workspace' || currentOrg.planId === 'team') {
+      return;
+    }
+    if (userRole !== 'owner' && userRole !== 'admin') {
+      return;
+    }
+
+    fetch(`/api/admin/org/team-links?orgSlug=${encodeURIComponent(currentOrg.slug)}`, { cache: 'no-store' })
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        const links = Array.isArray(data?.links) ? data.links as TeamLinkForBillingSummary[] : [];
+        if (data?.billingSummary && typeof data.billingSummary.activeOrgPaidTeamCount === 'number') {
+          setTeamLinkBillingSummary({
+            activeOrgPaidTeamCount: data.billingSummary.activeOrgPaidTeamCount,
+            clubValueThreshold: data.billingSummary.clubValueThreshold,
+            showClubValueNudge: data.billingSummary.showClubValueNudge,
+          });
+          return;
+        }
+        const activeOrgPaidTeamIds = new Set(
+          links
+            .filter(link => (
+              link.status === 'linked' &&
+              link.linkType === 'billing' &&
+              link.billingModeAfterApproval === 'org_team_addon' &&
+              link.workspace?.billingMode === 'org_team_addon' &&
+              link.workspace.subscriptionStatus !== 'canceled'
+            ))
+            .map(link => link.teamWorkspaceId),
+        );
+        const connectedTeamIds = new Set(
+          links
+            .filter(link => ['linked', 'ownership_pending', 'org_owned'].includes(link.status))
+            .map(link => link.teamWorkspaceId),
+        );
+        setTeamLinkBillingSummary({
+          activeOrgPaidTeamCount: activeOrgPaidTeamIds.size,
+          connectedTeamCount: connectedTeamIds.size,
+        });
+      })
+      .catch(() => {
+        setTeamLinkBillingSummary(null);
+      });
+  }, [currentOrg, userRole]);
 
   async function handleUpgrade(planKey: 'tournament_plus' | 'league' | 'club') {
     setLoading(planKey);
@@ -339,6 +408,13 @@ export default function BillingPage() {
   const downgradePlans = PLAN_ORDER.filter(p => PLAN_ORDER.indexOf(p) < PLAN_ORDER.indexOf(currentPlanKey));
   const hasPaidPlan    = currentPlanKey !== 'tournament';
   const canManageBilling = userRole === 'owner';
+  const isTeamWorkspaceBilling = currentOrg.accountKind === 'team_workspace' || currentPlanKey === 'team';
+  const showClubValueNudge =
+    !isTeamWorkspaceBilling &&
+    currentPlanKey !== 'club' &&
+    (userRole === 'owner' || userRole === 'admin') &&
+    (teamLinkBillingSummary?.showClubValueNudge ??
+      (teamLinkBillingSummary?.activeOrgPaidTeamCount ?? 0) >= CLUB_VALUE_TEAM_COUNT);
 
   function getPrice(planKey: OrgPlan): string {
     if (COMING_SOON_PLANS.has(planKey)) return 'Coming soon';
@@ -392,6 +468,41 @@ export default function BillingPage() {
         </div>
         <span className={`badge ${STATUS_BADGE[status]}`}>{STATUS_LABEL[status]}</span>
       </div>
+
+      {isTeamWorkspaceBilling && (
+        <div className={styles.billingNudgeCard}>
+          <div className={styles.billingNudgeIcon}><Link2 size={18} /></div>
+          <div className={styles.billingNudgeBody}>
+            <h2 className={styles.billingNudgeTitle}>Parent organization paying for this Team?</h2>
+            <p className={styles.billingNudgeCopy}>
+              Start with a Basic visibility link, then ask the organization to take over billing. Your Coaches Portal stays coach-operated, and roster, document, accounting, and ownership access do not move.
+            </p>
+          </div>
+          <Link className="btn btn-primary btn-sm" href={`/${currentOrg.slug}/coaches/link-org`}>
+            Link Parent Org
+          </Link>
+        </div>
+      )}
+
+      {showClubValueNudge && (
+        <div className={styles.billingNudgeCard}>
+          <div className={styles.billingNudgeIcon}><UsersRound size={18} /></div>
+          <div className={styles.billingNudgeBody}>
+            <h2 className={styles.billingNudgeTitle}>Club may be the better multi-team home</h2>
+            <p className={styles.billingNudgeCopy}>
+              This organization is paying for {teamLinkBillingSummary?.activeOrgPaidTeamCount ?? CLUB_VALUE_TEAM_COUNT} linked Team add-ons. Club is designed for multi-team oversight, accounting, and lower extra-team pricing while existing links can stay narrow until both sides approve a transfer.
+            </p>
+          </div>
+          <div className={styles.billingNudgeActions}>
+            <Link className="btn btn-primary btn-sm" href={`/${currentOrg.slug}/admin/org/team-links`}>
+              Review Team Links
+            </Link>
+            <Link className="btn btn-ghost btn-sm" href="/pricing#club">
+              View Club Preview
+            </Link>
+          </div>
+        </div>
+      )}
 
       {status === 'past_due' && (
         <p className={`${styles.statusNote} ${styles.statusNoteWarning}`}>
@@ -471,7 +582,7 @@ export default function BillingPage() {
             </span>
             <span className={styles.usageCount}>
               {repTeamAddon.billableCount > 0
-                ? `${repTeamAddon.billableCount} billed — ${currentOrg.subscriptionPeriod === 'annual' ? '$200 CAD / year' : '$20 CAD / month'} each`
+                ? `${repTeamAddon.billableCount} billed — ${currentOrg.subscriptionPeriod === 'annual' ? '$190 CAD / year' : '$19 CAD / month'} each`
                 : `${repTeamAddon.activeCount} active · within free threshold`}
             </span>
           </div>

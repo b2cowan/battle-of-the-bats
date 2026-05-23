@@ -241,6 +241,12 @@ export default function CoachLinkOrgPage({ params }: { params: Promise<{ orgSlug
         body="A Basic link records the parent organization association. You can separately request org billing, but that still does not transfer ownership, roster access, documents, accounting details, or org-wide rep-team admin access."
       />
 
+      <HelpCallout
+        variant="tip"
+        title="When the club should pay"
+        body="After a Basic link is active, use Request Org Billing on the linked organization card. The organization can approve annual or monthly Team add-on billing while your workspace stays coach-operated."
+      />
+
       <section className={styles.detailSection}>
         <h2 className={styles.detailSectionTitle}>Request parent org review</h2>
         <form className={styles.linkForm} onSubmit={handleSubmit}>

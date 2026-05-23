@@ -58,6 +58,93 @@
   border-bottom: 1px solid rgba(var(--blueprint-blue-rgb), 0.2);
 }
 
+.segmentSection {
+  padding: 0 0 4rem;
+  border-bottom: 1px solid rgba(var(--blueprint-blue-rgb), 0.2);
+}
+
+.sectionIntro {
+  margin-bottom: 1.5rem;
+}
+
+.sectionEyebrow {
+  font-family: var(--font-data);
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--blueprint-blue);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 0.4rem;
+}
+
+.segmentGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+}
+
+.segmentCard {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  min-height: 220px;
+  padding: 1.35rem;
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.28);
+  background: rgba(var(--blueprint-blue-rgb), 0.035);
+  text-decoration: none;
+  transition: border-color 0.15s, background 0.15s, transform 0.15s;
+}
+
+.segmentCard:hover {
+  border-color: rgba(var(--blueprint-blue-rgb), 0.55);
+  background: rgba(var(--blueprint-blue-rgb), 0.06);
+  transform: translateY(-1px);
+}
+
+.segmentCardFeatured {
+  border-color: rgba(var(--logic-lime-rgb), 0.5);
+  background: rgba(var(--logic-lime-rgb), 0.045);
+}
+
+.segmentCardFeatured:hover {
+  border-color: rgba(var(--logic-lime-rgb), 0.75);
+  background: rgba(var(--logic-lime-rgb), 0.07);
+}
+
+.segmentEyebrow {
+  font-family: var(--font-data);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--blueprint-blue);
+}
+
+.segmentTitle {
+  font-family: var(--font-data);
+  font-size: 1.08rem;
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--fl-text);
+}
+
+.segmentBody {
+  font-family: var(--font-data);
+  font-size: 0.76rem;
+  line-height: 1.6;
+  color: var(--data-gray);
+  flex: 1;
+}
+
+.segmentCta {
+  font-family: var(--font-data);
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--logic-lime);
+}
+
 .teamEntry {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto auto;
@@ -94,6 +181,34 @@
   line-height: 1.6;
   color: var(--data-gray);
   margin: 0;
+}
+
+.teamFeatureList {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.45rem 1rem;
+  margin-top: 1rem;
+  padding: 0;
+  list-style: none;
+}
+
+.teamFeatureList li {
+  position: relative;
+  padding-left: 1rem;
+  font-family: var(--font-data);
+  font-size: 0.74rem;
+  line-height: 1.5;
+  color: var(--data-gray);
+}
+
+.teamFeatureList li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.55em;
+  width: 5px;
+  height: 5px;
+  background: var(--logic-lime);
 }
 
 .teamEntryPlan {
@@ -511,6 +626,10 @@ details[open] .faqQuestion::after {
 
 /* ── Responsive ──────────────────────────────────────────────────────────── */
 @media (max-width: 900px) {
+  .segmentGrid {
+    grid-template-columns: 1fr;
+  }
+
   .teamEntry {
     grid-template-columns: 1fr;
     align-items: stretch;
@@ -525,6 +644,10 @@ details[open] .faqQuestion::after {
 
   .teamEntryCta {
     width: 100%;
+  }
+
+  .teamFeatureList {
+    grid-template-columns: 1fr;
   }
 
   .bridgeGrid {

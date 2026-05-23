@@ -137,12 +137,12 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     supabaseAdmin
       .from('tournaments')
       .select('*', { count: 'exact', head: true })
-      .eq('organization_id', ctx.org.id)
+      .eq('org_id', ctx.org.id)
       .neq('status', 'archived'),
     supabaseAdmin
       .from('tournaments')
       .select('*', { count: 'exact', head: true })
-      .eq('organization_id', ctx.org.id)
+      .eq('org_id', ctx.org.id)
       .eq('slug', slug)
       .neq('status', 'archived'),
   ]);

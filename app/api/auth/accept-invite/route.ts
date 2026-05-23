@@ -3,7 +3,7 @@ import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 
-export async function POST(req: Request) {
+async function getAuthenticatedUser() {
   const cookieStore = await cookies();
 
   const supabase = createServerClient(
@@ -18,6 +18,42 @@ export async function POST(req: Request) {
   );
 
   const { data: { user } } = await supabase.auth.getUser();
+  return user;
+}
+
+function orgSlugFromRelation(organizations: unknown) {
+  if (Array.isArray(organizations)) {
+    return (organizations[0] as { slug?: string } | undefined)?.slug ?? null;
+  }
+
+  return (organizations as { slug?: string } | null)?.slug ?? null;
+}
+
+export async function GET() {
+  const user = await getAuthenticatedUser();
+  if (!user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const { data: member } = await supabaseAdmin
+    .from('organization_members')
+    .select('role, status, organizations(slug)')
+    .eq('user_id', user.id)
+    .in('status', ['invited', 'active'])
+    .order('status', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  return NextResponse.json({
+    ok: true,
+    orgSlug: orgSlugFromRelation(member?.organizations ?? null),
+    role: member?.role ?? null,
+    status: member?.status ?? null,
+  });
+}
+
+export async function POST(req: Request) {
+  const user = await getAuthenticatedUser();
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
@@ -47,7 +83,7 @@ export async function POST(req: Request) {
       .eq('user_id', user.id)
       .maybeSingle();
 
-    const orgSlug = (existing?.organizations as any)?.slug ?? null;
+    const orgSlug = orgSlugFromRelation(existing?.organizations ?? null);
     const role = existing?.role ?? null;
     return NextResponse.json({ ok: true, orgSlug, role, alreadyAccepted: true });
   }
@@ -67,6 +103,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  const orgSlug = (member.organizations as any)?.slug ?? null;
+  const orgSlug = orgSlugFromRelation(member.organizations);
   return NextResponse.json({ ok: true, orgSlug, role: member.role });
 }

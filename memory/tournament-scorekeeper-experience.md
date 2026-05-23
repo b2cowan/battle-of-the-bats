@@ -4,8 +4,8 @@
 
 Build a dedicated mobile-first tournament scorekeeper experience instead of relying on the full admin Results & Scoring page for day-of score entry.
 
-Detailed plan: `docs/active/codex_TOURNAMENT_SCOREKEEPER_EXPERIENCE_PLAN.md`.
-PM brief: `docs/active/codex_TOURNAMENT_SCOREKEEPER_EXPERIENCE_PM_BRIEF.md`.
+Detailed plan: `docs/archive/codex_TOURNAMENT_SCOREKEEPER_EXPERIENCE_PLAN.md`.
+PM brief: `docs/archive/codex_TOURNAMENT_SCOREKEEPER_EXPERIENCE_PM_BRIEF.md`.
 
 ## Product shape
 
@@ -28,4 +28,14 @@ PM brief: `docs/active/codex_TOURNAMENT_SCOREKEEPER_EXPERIENCE_PM_BRIEF.md`.
 - Results & Scoring now has an admin "Open Scorekeeper View" action that opens `/{orgSlug}/scorekeeper` in a new tab for day-of testing/use without changing scorekeeper permissions.
 - Score submission audit metadata is implemented via migration 068, which was applied in dev and production: games record submitter user id, submitter email snapshot, submitted timestamp, and source (`scorekeeper` or `admin_results`). Results & Scoring expanded rows and exports show this metadata when present.
 - Shared scoring rules now live in `lib/tournament-scoring-service.ts`; admin Results and Scorekeeper APIs use it for score validation, finalization policy, audit metadata, finalized/cancelled conflicts, finalize, and revert. Admin Results still permits finalized-score correction while Scorekeeper View blocks finalized-score edits.
+- Focused scorekeeper UAT now lives in `tests/uat/scenarios/tournament-scorekeeper-smoke.spec.ts` and passed on 2026-05-23 with the normal shared auth setup. It creates disposable tournament/game/scorekeeper data and verifies scorekeeper pending review, immediate final, audit metadata, admin Results review/export/finalize, finalized-score rejection, admin correction, and revert.
+- UAT auth setup now waits for authenticated page evidence as well as URL movement, which better matches multi-org users that can land on the workspace picker.
+- Lower-level shared scoring-service coverage now lives in `tests/uat/scenarios/tournament-scoring-service.spec.ts` and passed on 2026-05-23. It uses injected service dependencies to test score policy, validation, finalized/cancelled conflicts, admin correction, finalize, and revert without live Supabase writes.
+- Manual browser sign-off checklist now lives in `docs/archive/codex_TOURNAMENT_SCOREKEEPER_BROWSER_SIGNOFF.md`.
+- Help documentation has been updated in the help hub, tournament help, and org/member help to cover Scorekeeper View, scorekeeper assignment scope, pending review, audit metadata, admin correction/revert responsibilities, and the scorekeeper route.
+- Manual browser sign-off has been marked complete.
+- Persistent UAT scorekeeper users are documented and seeded by `tests/uat/create-uat-accounts.sql`: `uat-scorekeeper@uat-test-org.local` for Free Tournament and `uat-plus-scorekeeper@uat-plus-org.local` for Tournament Plus. They use the standard UAT password and are protected by the dev wipe route when the env vars are present. On 2026-05-23, the configured Supabase environment was updated: Free scorekeeper had 0 current active-tournament assignments because `uat-test-org` had no active tournament rows; Plus scorekeeper had 1 active-tournament assignment.
+- Invite/first-login polish is complete and statically verified: accept-invite can read the current user's invite context so scorekeeper setup copy can be role-specific, existing scorekeeper users get a login link with `next=/{orgSlug}/scorekeeper`, and new/re-invite emails frame the workflow around Scorekeeper View for assigned tournament games.
+- Invite-to-first-score UAT now lives in `tests/uat/scenarios/tournament-scorekeeper-invite.spec.ts` and passed on 2026-05-23. It uses a generated Supabase invite link, pending official membership, tournament assignment, scorekeeper-specific accept-invite copy, Scorekeeper View landing, first score submission, and pending-review audit/status assertions.
+- Project planning docs were archived from `docs/active` to `docs/archive` after MVP completion.
 - Existing tournament assignment scope is tournament-level, not field-level. Field/venue assignments are optional future scope unless product requires scorekeepers to see only their assigned field.

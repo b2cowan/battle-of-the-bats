@@ -29,6 +29,22 @@ export function buildTournamentAcquisitionHref(input: {
   return `/pricing?${params.toString()}`;
 }
 
+export function buildTeamWorkspaceAcquisitionHref(input: {
+  source: TournamentPlusAcquisitionSource;
+  orgSlug: string;
+  tournamentSlug?: string | null;
+  surface?: TournamentPlusMarketingSurface;
+}) {
+  const params = new URLSearchParams({
+    billing: 'annual',
+    source: input.source,
+    orgSlug: input.orgSlug,
+  });
+  if (input.tournamentSlug) params.set('tournamentSlug', input.tournamentSlug);
+  if (input.surface) params.set('surface', input.surface);
+  return `/team?${params.toString()}`;
+}
+
 export function trackTournamentAcquisition(payload: TournamentAcquisitionPayload) {
   try {
     void fetch('/api/public/tournament-plus-event', {

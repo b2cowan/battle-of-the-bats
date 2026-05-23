@@ -68,6 +68,12 @@ UAT_ORG_ADMIN_PASSWORD=UATPassword2026!
 # Must match v_coach_email + v_password in the SQL script
 UAT_COACH_EMAIL=uat-coach@uat-test-org.local
 UAT_COACH_PASSWORD=UATPassword2026!
+
+# Optional manual scorekeeper accounts seeded by tests/uat/create-uat-accounts.sql
+UAT_SCOREKEEPER_EMAIL=uat-scorekeeper@uat-test-org.local
+UAT_SCOREKEEPER_PASSWORD=UATPassword2026!
+UAT_PLUS_SCOREKEEPER_EMAIL=uat-plus-scorekeeper@uat-plus-org.local
+UAT_PLUS_SCOREKEEPER_PASSWORD=UATPassword2026!
 ```
 
 > **Wipe protection:** The `UAT_*_EMAIL` vars are also read by the dev-tools

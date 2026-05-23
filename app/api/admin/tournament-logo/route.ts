@@ -67,7 +67,7 @@ export async function POST(req: Request) {
     .from('tournaments')
     .update({ logo_url: logoUrl })
     .eq('id', tournamentId)
-    .eq('organization_id', ctx.org.id);
+    .eq('org_id', ctx.org.id);
 
   if (dbError) return NextResponse.json({ error: dbError.message }, { status: 500 });
 
@@ -102,7 +102,7 @@ export async function DELETE(req: Request) {
     .from('tournaments')
     .update({ logo_url: null })
     .eq('id', tournamentId)
-    .eq('organization_id', ctx.org.id);
+    .eq('org_id', ctx.org.id);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 

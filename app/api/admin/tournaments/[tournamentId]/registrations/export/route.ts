@@ -36,7 +36,7 @@ type FeeRow = {
 type TournamentExportRow = FeeRow & {
   id: string;
   name: string;
-  organization_id: string | null;
+  org_id: string | null;
   fee_schedule_mode: string | null;
 };
 
@@ -107,12 +107,12 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
 
   const { data: tournament, error: tournamentError } = await supabaseAdmin
     .from('tournaments')
-    .select('id, name, organization_id, fee_schedule_mode, deposit_amount, deposit_due_date, total_fee_amount, total_fee_due_date')
+    .select('id, name, org_id, fee_schedule_mode, deposit_amount, deposit_due_date, total_fee_amount, total_fee_due_date')
     .eq('id', tournamentId)
     .maybeSingle<TournamentExportRow>();
 
   if (tournamentError) return NextResponse.json({ error: tournamentError.message }, { status: 500 });
-  if (!tournament || tournament.organization_id !== ctx.org.id) return forbidden();
+  if (!tournament || tournament.org_id !== ctx.org.id) return forbidden();
 
   await writePlatformEvent({
     eventType: 'tournament_plus_feature_used',

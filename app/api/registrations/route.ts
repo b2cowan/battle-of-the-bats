@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
     let tournamentQuery = supabaseAdmin
       .from('tournaments')
       .select('id')
-      .eq('organization_id', auth.org.id);
+      .eq('org_id', auth.org.id);
 
     if (requestedTournamentId) {
       tournamentQuery = tournamentQuery.eq('id', requestedTournamentId);

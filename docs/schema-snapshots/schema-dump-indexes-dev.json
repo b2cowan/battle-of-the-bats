@@ -1,0 +1,1112 @@
+[
+  {
+    "tablename": "accounting_entries",
+    "indexname": "accounting_entries_entry_date_idx",
+    "indexdef": "CREATE INDEX accounting_entries_entry_date_idx ON public.accounting_entries USING btree (ledger_id, entry_date DESC)"
+  },
+  {
+    "tablename": "accounting_entries",
+    "indexname": "accounting_entries_ledger_id_idx",
+    "indexdef": "CREATE INDEX accounting_entries_ledger_id_idx ON public.accounting_entries USING btree (ledger_id)"
+  },
+  {
+    "tablename": "accounting_entries",
+    "indexname": "accounting_entries_pkey",
+    "indexdef": "CREATE UNIQUE INDEX accounting_entries_pkey ON public.accounting_entries USING btree (id)"
+  },
+  {
+    "tablename": "accounting_ledgers",
+    "indexname": "accounting_ledgers_org_id_entity_type_entity_id_key",
+    "indexdef": "CREATE UNIQUE INDEX accounting_ledgers_org_id_entity_type_entity_id_key ON public.accounting_ledgers USING btree (org_id, entity_type, entity_id)"
+  },
+  {
+    "tablename": "accounting_ledgers",
+    "indexname": "accounting_ledgers_pkey",
+    "indexdef": "CREATE UNIQUE INDEX accounting_ledgers_pkey ON public.accounting_ledgers USING btree (id)"
+  },
+  {
+    "tablename": "age_groups",
+    "indexname": "age_groups_pkey",
+    "indexdef": "CREATE UNIQUE INDEX age_groups_pkey ON public.age_groups USING btree (id)"
+  },
+  {
+    "tablename": "announcements",
+    "indexname": "announcements_pkey",
+    "indexdef": "CREATE UNIQUE INDEX announcements_pkey ON public.announcements USING btree (id)"
+  },
+  {
+    "tablename": "billing_retained_records",
+    "indexname": "billing_retained_records_pkey",
+    "indexdef": "CREATE UNIQUE INDEX billing_retained_records_pkey ON public.billing_retained_records USING btree (id)"
+  },
+  {
+    "tablename": "billing_retained_records",
+    "indexname": "idx_billing_retained_records_active_unique",
+    "indexdef": "CREATE UNIQUE INDEX idx_billing_retained_records_active_unique ON public.billing_retained_records USING btree (record_type, record_id) WHERE ((retained_state = ANY (ARRAY['retained_inactive'::text, 'pending_purge'::text])) AND (record_id IS NOT NULL))"
+  },
+  {
+    "tablename": "billing_retained_records",
+    "indexname": "idx_billing_retained_records_org",
+    "indexdef": "CREATE INDEX idx_billing_retained_records_org ON public.billing_retained_records USING btree (org_id, retained_state, retention_until)"
+  },
+  {
+    "tablename": "billing_retained_records",
+    "indexname": "idx_billing_retained_records_pending_purge",
+    "indexdef": "CREATE INDEX idx_billing_retained_records_pending_purge ON public.billing_retained_records USING btree (pending_purge_at) WHERE (retained_state = 'pending_purge'::text)"
+  },
+  {
+    "tablename": "billing_retained_records",
+    "indexname": "idx_billing_retained_records_retention",
+    "indexdef": "CREATE INDEX idx_billing_retained_records_retention ON public.billing_retained_records USING btree (retention_until, retained_state)"
+  },
+  {
+    "tablename": "billing_retained_records",
+    "indexname": "idx_billing_retained_records_warning",
+    "indexdef": "CREATE INDEX idx_billing_retained_records_warning ON public.billing_retained_records USING btree (retention_until, warning_sent_at) WHERE (retained_state = 'retained_inactive'::text)"
+  },
+  {
+    "tablename": "billing_retention_intents",
+    "indexname": "billing_retention_intents_pkey",
+    "indexdef": "CREATE UNIQUE INDEX billing_retention_intents_pkey ON public.billing_retention_intents USING btree (id)"
+  },
+  {
+    "tablename": "billing_retention_intents",
+    "indexname": "idx_billing_retention_intents_org",
+    "indexdef": "CREATE INDEX idx_billing_retention_intents_org ON public.billing_retention_intents USING btree (org_id, created_at DESC)"
+  },
+  {
+    "tablename": "billing_retention_intents",
+    "indexname": "idx_billing_retention_intents_retention",
+    "indexdef": "CREATE INDEX idx_billing_retention_intents_retention ON public.billing_retention_intents USING btree (retention_until, status)"
+  },
+  {
+    "tablename": "budget_categories",
+    "indexname": "budget_categories_org_idx",
+    "indexdef": "CREATE INDEX budget_categories_org_idx ON public.budget_categories USING btree (org_id)"
+  },
+  {
+    "tablename": "budget_categories",
+    "indexname": "budget_categories_pkey",
+    "indexdef": "CREATE UNIQUE INDEX budget_categories_pkey ON public.budget_categories USING btree (id)"
+  },
+  {
+    "tablename": "budget_items",
+    "indexname": "budget_items_category_idx",
+    "indexdef": "CREATE INDEX budget_items_category_idx ON public.budget_items USING btree (category_id)"
+  },
+  {
+    "tablename": "budget_items",
+    "indexname": "budget_items_org_idx",
+    "indexdef": "CREATE INDEX budget_items_org_idx ON public.budget_items USING btree (org_id)"
+  },
+  {
+    "tablename": "budget_items",
+    "indexname": "budget_items_pkey",
+    "indexdef": "CREATE UNIQUE INDEX budget_items_pkey ON public.budget_items USING btree (id)"
+  },
+  {
+    "tablename": "budget_items",
+    "indexname": "budget_items_unique_default_name",
+    "indexdef": "CREATE UNIQUE INDEX budget_items_unique_default_name ON public.budget_items USING btree (category_id, lower(name)) WHERE (org_id IS NULL)"
+  },
+  {
+    "tablename": "budget_items",
+    "indexname": "budget_items_unique_org_name",
+    "indexdef": "CREATE UNIQUE INDEX budget_items_unique_org_name ON public.budget_items USING btree (category_id, org_id, lower(name)) WHERE (org_id IS NOT NULL)"
+  },
+  {
+    "tablename": "contacts",
+    "indexname": "contacts_pkey",
+    "indexdef": "CREATE UNIQUE INDEX contacts_pkey ON public.contacts USING btree (id)"
+  },
+  {
+    "tablename": "diamonds",
+    "indexname": "diamonds_pkey",
+    "indexdef": "CREATE UNIQUE INDEX diamonds_pkey ON public.diamonds USING btree (id)"
+  },
+  {
+    "tablename": "early_access_leads",
+    "indexname": "early_access_leads_email_normalized_key",
+    "indexdef": "CREATE UNIQUE INDEX early_access_leads_email_normalized_key ON public.early_access_leads USING btree (email_normalized)"
+  },
+  {
+    "tablename": "early_access_leads",
+    "indexname": "early_access_leads_pkey",
+    "indexdef": "CREATE UNIQUE INDEX early_access_leads_pkey ON public.early_access_leads USING btree (id)"
+  },
+  {
+    "tablename": "early_access_leads",
+    "indexname": "idx_early_access_leads_converted_at",
+    "indexdef": "CREATE INDEX idx_early_access_leads_converted_at ON public.early_access_leads USING btree (converted_at DESC) WHERE (converted_at IS NOT NULL)"
+  },
+  {
+    "tablename": "early_access_leads",
+    "indexname": "idx_early_access_leads_created_at",
+    "indexdef": "CREATE INDEX idx_early_access_leads_created_at ON public.early_access_leads USING btree (created_at DESC)"
+  },
+  {
+    "tablename": "early_access_leads",
+    "indexname": "idx_early_access_leads_features_interested",
+    "indexdef": "CREATE INDEX idx_early_access_leads_features_interested ON public.early_access_leads USING gin (features_interested)"
+  },
+  {
+    "tablename": "early_access_leads",
+    "indexname": "idx_early_access_leads_follow_up_due_at",
+    "indexdef": "CREATE INDEX idx_early_access_leads_follow_up_due_at ON public.early_access_leads USING btree (follow_up_due_at) WHERE (follow_up_due_at IS NOT NULL)"
+  },
+  {
+    "tablename": "early_access_leads",
+    "indexname": "idx_early_access_leads_internal_status",
+    "indexdef": "CREATE INDEX idx_early_access_leads_internal_status ON public.early_access_leads USING btree (internal_status, created_at DESC)"
+  },
+  {
+    "tablename": "early_access_leads",
+    "indexname": "idx_early_access_leads_plan_interest",
+    "indexdef": "CREATE INDEX idx_early_access_leads_plan_interest ON public.early_access_leads USING gin (plan_interest)"
+  },
+  {
+    "tablename": "early_access_leads",
+    "indexname": "idx_early_access_leads_status",
+    "indexdef": "CREATE INDEX idx_early_access_leads_status ON public.early_access_leads USING btree (status, created_at DESC)"
+  },
+  {
+    "tablename": "games",
+    "indexname": "games_pkey",
+    "indexdef": "CREATE UNIQUE INDEX games_pkey ON public.games USING btree (id)"
+  },
+  {
+    "tablename": "games",
+    "indexname": "games_score_submitted_at_idx",
+    "indexdef": "CREATE INDEX games_score_submitted_at_idx ON public.games USING btree (tournament_id, score_submitted_at DESC) WHERE (score_submitted_at IS NOT NULL)"
+  },
+  {
+    "tablename": "games",
+    "indexname": "idx_games_away_slot_id",
+    "indexdef": "CREATE INDEX idx_games_away_slot_id ON public.games USING btree (away_slot_id)"
+  },
+  {
+    "tablename": "games",
+    "indexname": "idx_games_home_slot_id",
+    "indexdef": "CREATE INDEX idx_games_home_slot_id ON public.games USING btree (home_slot_id)"
+  },
+  {
+    "tablename": "league_divisions",
+    "indexname": "league_divisions_pkey",
+    "indexdef": "CREATE UNIQUE INDEX league_divisions_pkey ON public.league_divisions USING btree (id)"
+  },
+  {
+    "tablename": "league_email_log",
+    "indexname": "league_email_log_pkey",
+    "indexdef": "CREATE UNIQUE INDEX league_email_log_pkey ON public.league_email_log USING btree (id)"
+  },
+  {
+    "tablename": "league_games",
+    "indexname": "league_games_division_idx",
+    "indexdef": "CREATE INDEX league_games_division_idx ON public.league_games USING btree (division_id)"
+  },
+  {
+    "tablename": "league_games",
+    "indexname": "league_games_pkey",
+    "indexdef": "CREATE UNIQUE INDEX league_games_pkey ON public.league_games USING btree (id)"
+  },
+  {
+    "tablename": "league_games",
+    "indexname": "league_games_schedule_idx",
+    "indexdef": "CREATE INDEX league_games_schedule_idx ON public.league_games USING btree (season_id, scheduled_at)"
+  },
+  {
+    "tablename": "league_games",
+    "indexname": "league_games_season_idx",
+    "indexdef": "CREATE INDEX league_games_season_idx ON public.league_games USING btree (season_id)"
+  },
+  {
+    "tablename": "league_notification_log",
+    "indexname": "league_notification_log_pkey",
+    "indexdef": "CREATE UNIQUE INDEX league_notification_log_pkey ON public.league_notification_log USING btree (id)"
+  },
+  {
+    "tablename": "league_registrations",
+    "indexname": "league_registrations_division_idx",
+    "indexdef": "CREATE INDEX league_registrations_division_idx ON public.league_registrations USING btree (division_id)"
+  },
+  {
+    "tablename": "league_registrations",
+    "indexname": "league_registrations_guardian_idx",
+    "indexdef": "CREATE INDEX league_registrations_guardian_idx ON public.league_registrations USING btree (guardian_email)"
+  },
+  {
+    "tablename": "league_registrations",
+    "indexname": "league_registrations_pkey",
+    "indexdef": "CREATE UNIQUE INDEX league_registrations_pkey ON public.league_registrations USING btree (id)"
+  },
+  {
+    "tablename": "league_registrations",
+    "indexname": "league_registrations_season_idx",
+    "indexdef": "CREATE INDEX league_registrations_season_idx ON public.league_registrations USING btree (season_id)"
+  },
+  {
+    "tablename": "league_registrations",
+    "indexname": "league_registrations_status_idx",
+    "indexdef": "CREATE INDEX league_registrations_status_idx ON public.league_registrations USING btree (season_id, status)"
+  },
+  {
+    "tablename": "league_seasons",
+    "indexname": "league_seasons_org_id_slug_key",
+    "indexdef": "CREATE UNIQUE INDEX league_seasons_org_id_slug_key ON public.league_seasons USING btree (org_id, slug)"
+  },
+  {
+    "tablename": "league_seasons",
+    "indexname": "league_seasons_pkey",
+    "indexdef": "CREATE UNIQUE INDEX league_seasons_pkey ON public.league_seasons USING btree (id)"
+  },
+  {
+    "tablename": "league_teams",
+    "indexname": "league_teams_pkey",
+    "indexdef": "CREATE UNIQUE INDEX league_teams_pkey ON public.league_teams USING btree (id)"
+  },
+  {
+    "tablename": "org_audit_log",
+    "indexname": "idx_audit_log_org",
+    "indexdef": "CREATE INDEX idx_audit_log_org ON public.org_audit_log USING btree (org_id, created_at DESC)"
+  },
+  {
+    "tablename": "org_audit_log",
+    "indexname": "org_audit_log_pkey",
+    "indexdef": "CREATE UNIQUE INDEX org_audit_log_pkey ON public.org_audit_log USING btree (id)"
+  },
+  {
+    "tablename": "org_budget_lines",
+    "indexname": "org_budget_lines_org_year_idx",
+    "indexdef": "CREATE INDEX org_budget_lines_org_year_idx ON public.org_budget_lines USING btree (org_id, season_year)"
+  },
+  {
+    "tablename": "org_budget_lines",
+    "indexname": "org_budget_lines_pkey",
+    "indexdef": "CREATE UNIQUE INDEX org_budget_lines_pkey ON public.org_budget_lines USING btree (id)"
+  },
+  {
+    "tablename": "org_budget_periods",
+    "indexname": "org_budget_periods_line_idx",
+    "indexdef": "CREATE INDEX org_budget_periods_line_idx ON public.org_budget_periods USING btree (budget_line_id)"
+  },
+  {
+    "tablename": "org_budget_periods",
+    "indexname": "org_budget_periods_pkey",
+    "indexdef": "CREATE UNIQUE INDEX org_budget_periods_pkey ON public.org_budget_periods USING btree (id)"
+  },
+  {
+    "tablename": "org_internal_notes",
+    "indexname": "idx_org_internal_notes_org_deleted_time",
+    "indexdef": "CREATE INDEX idx_org_internal_notes_org_deleted_time ON public.org_internal_notes USING btree (org_id, deleted_at DESC) WHERE (deleted_at IS NOT NULL)"
+  },
+  {
+    "tablename": "org_internal_notes",
+    "indexname": "idx_org_internal_notes_org_time",
+    "indexdef": "CREATE INDEX idx_org_internal_notes_org_time ON public.org_internal_notes USING btree (org_id, created_at DESC) WHERE (deleted_at IS NULL)"
+  },
+  {
+    "tablename": "org_internal_notes",
+    "indexname": "org_internal_notes_pkey",
+    "indexdef": "CREATE UNIQUE INDEX org_internal_notes_pkey ON public.org_internal_notes USING btree (id)"
+  },
+  {
+    "tablename": "org_member_rep_group_scopes",
+    "indexname": "idx_org_member_rep_group_scopes_member",
+    "indexdef": "CREATE INDEX idx_org_member_rep_group_scopes_member ON public.org_member_rep_group_scopes USING btree (member_id)"
+  },
+  {
+    "tablename": "org_member_rep_group_scopes",
+    "indexname": "org_member_rep_group_scopes_pkey",
+    "indexdef": "CREATE UNIQUE INDEX org_member_rep_group_scopes_pkey ON public.org_member_rep_group_scopes USING btree (member_id, group_id)"
+  },
+  {
+    "tablename": "org_member_tournament_assignments",
+    "indexname": "idx_omta_org_member",
+    "indexdef": "CREATE INDEX idx_omta_org_member ON public.org_member_tournament_assignments USING btree (org_member_id)"
+  },
+  {
+    "tablename": "org_member_tournament_assignments",
+    "indexname": "idx_omta_tournament",
+    "indexdef": "CREATE INDEX idx_omta_tournament ON public.org_member_tournament_assignments USING btree (tournament_id)"
+  },
+  {
+    "tablename": "org_member_tournament_assignments",
+    "indexname": "org_member_tournament_assignmen_org_member_id_tournament_id_key",
+    "indexdef": "CREATE UNIQUE INDEX org_member_tournament_assignmen_org_member_id_tournament_id_key ON public.org_member_tournament_assignments USING btree (org_member_id, tournament_id)"
+  },
+  {
+    "tablename": "org_member_tournament_assignments",
+    "indexname": "org_member_tournament_assignments_pkey",
+    "indexdef": "CREATE UNIQUE INDEX org_member_tournament_assignments_pkey ON public.org_member_tournament_assignments USING btree (id)"
+  },
+  {
+    "tablename": "org_overrides",
+    "indexname": "idx_org_overrides_org",
+    "indexdef": "CREATE INDEX idx_org_overrides_org ON public.org_overrides USING btree (org_id, created_at DESC)"
+  },
+  {
+    "tablename": "org_overrides",
+    "indexname": "org_overrides_pkey",
+    "indexdef": "CREATE UNIQUE INDEX org_overrides_pkey ON public.org_overrides USING btree (id)"
+  },
+  {
+    "tablename": "org_payees",
+    "indexname": "idx_org_payees_org_id",
+    "indexdef": "CREATE INDEX idx_org_payees_org_id ON public.org_payees USING btree (org_id)"
+  },
+  {
+    "tablename": "org_payees",
+    "indexname": "idx_org_payees_org_name",
+    "indexdef": "CREATE UNIQUE INDEX idx_org_payees_org_name ON public.org_payees USING btree (org_id, lower(name)) WHERE (team_id IS NULL)"
+  },
+  {
+    "tablename": "org_payees",
+    "indexname": "idx_org_payees_team_id",
+    "indexdef": "CREATE INDEX idx_org_payees_team_id ON public.org_payees USING btree (team_id)"
+  },
+  {
+    "tablename": "org_payees",
+    "indexname": "idx_org_payees_team_name",
+    "indexdef": "CREATE UNIQUE INDEX idx_org_payees_team_name ON public.org_payees USING btree (org_id, team_id, lower(name)) WHERE (team_id IS NOT NULL)"
+  },
+  {
+    "tablename": "org_payees",
+    "indexname": "org_payees_pkey",
+    "indexdef": "CREATE UNIQUE INDEX org_payees_pkey ON public.org_payees USING btree (id)"
+  },
+  {
+    "tablename": "org_public_site_content",
+    "indexname": "org_public_site_content_org_id_key",
+    "indexdef": "CREATE UNIQUE INDEX org_public_site_content_org_id_key ON public.org_public_site_content USING btree (org_id)"
+  },
+  {
+    "tablename": "org_public_site_content",
+    "indexname": "org_public_site_content_pkey",
+    "indexdef": "CREATE UNIQUE INDEX org_public_site_content_pkey ON public.org_public_site_content USING btree (id)"
+  },
+  {
+    "tablename": "organization_members",
+    "indexname": "organization_members_organization_id_user_id_key",
+    "indexdef": "CREATE UNIQUE INDEX organization_members_organization_id_user_id_key ON public.organization_members USING btree (organization_id, user_id)"
+  },
+  {
+    "tablename": "organization_members",
+    "indexname": "organization_members_pkey",
+    "indexdef": "CREATE UNIQUE INDEX organization_members_pkey ON public.organization_members USING btree (id)"
+  },
+  {
+    "tablename": "organizations",
+    "indexname": "organizations_pkey",
+    "indexdef": "CREATE UNIQUE INDEX organizations_pkey ON public.organizations USING btree (id)"
+  },
+  {
+    "tablename": "organizations",
+    "indexname": "organizations_slug_key",
+    "indexdef": "CREATE UNIQUE INDEX organizations_slug_key ON public.organizations USING btree (slug)"
+  },
+  {
+    "tablename": "plan_config_overrides",
+    "indexname": "plan_config_overrides_pkey",
+    "indexdef": "CREATE UNIQUE INDEX plan_config_overrides_pkey ON public.plan_config_overrides USING btree (id)"
+  },
+  {
+    "tablename": "plan_config_overrides",
+    "indexname": "plan_config_overrides_plan_id_key",
+    "indexdef": "CREATE UNIQUE INDEX plan_config_overrides_plan_id_key ON public.plan_config_overrides USING btree (plan_id)"
+  },
+  {
+    "tablename": "plan_gating",
+    "indexname": "plan_gating_pkey",
+    "indexdef": "CREATE UNIQUE INDEX plan_gating_pkey ON public.plan_gating USING btree (plan_key)"
+  },
+  {
+    "tablename": "platform_addon_catalog",
+    "indexname": "idx_platform_addon_catalog_status_label",
+    "indexdef": "CREATE INDEX idx_platform_addon_catalog_status_label ON public.platform_addon_catalog USING btree (status, label)"
+  },
+  {
+    "tablename": "platform_addon_catalog",
+    "indexname": "platform_addon_catalog_addon_key_key",
+    "indexdef": "CREATE UNIQUE INDEX platform_addon_catalog_addon_key_key ON public.platform_addon_catalog USING btree (addon_key)"
+  },
+  {
+    "tablename": "platform_addon_catalog",
+    "indexname": "platform_addon_catalog_pkey",
+    "indexdef": "CREATE UNIQUE INDEX platform_addon_catalog_pkey ON public.platform_addon_catalog USING btree (id)"
+  },
+  {
+    "tablename": "platform_admin_visits",
+    "indexname": "idx_platform_admin_visits_actor_time",
+    "indexdef": "CREATE INDEX idx_platform_admin_visits_actor_time ON public.platform_admin_visits USING btree (actor_email, visited_at DESC)"
+  },
+  {
+    "tablename": "platform_admin_visits",
+    "indexname": "idx_platform_admin_visits_path_time",
+    "indexdef": "CREATE INDEX idx_platform_admin_visits_path_time ON public.platform_admin_visits USING btree (path, visited_at DESC)"
+  },
+  {
+    "tablename": "platform_admin_visits",
+    "indexname": "platform_admin_visits_pkey",
+    "indexdef": "CREATE UNIQUE INDEX platform_admin_visits_pkey ON public.platform_admin_visits USING btree (id)"
+  },
+  {
+    "tablename": "platform_audit_log",
+    "indexname": "idx_platform_audit_actor",
+    "indexdef": "CREATE INDEX idx_platform_audit_actor ON public.platform_audit_log USING btree (actor_email, created_at DESC)"
+  },
+  {
+    "tablename": "platform_audit_log",
+    "indexname": "idx_platform_audit_org",
+    "indexdef": "CREATE INDEX idx_platform_audit_org ON public.platform_audit_log USING btree (org_id, created_at DESC)"
+  },
+  {
+    "tablename": "platform_audit_log",
+    "indexname": "platform_audit_log_pkey",
+    "indexdef": "CREATE UNIQUE INDEX platform_audit_log_pkey ON public.platform_audit_log USING btree (id)"
+  },
+  {
+    "tablename": "platform_bulk_operations",
+    "indexname": "idx_platform_bulk_operations_actor_time",
+    "indexdef": "CREATE INDEX idx_platform_bulk_operations_actor_time ON public.platform_bulk_operations USING btree (created_by_email, created_at DESC)"
+  },
+  {
+    "tablename": "platform_bulk_operations",
+    "indexname": "idx_platform_bulk_operations_time",
+    "indexdef": "CREATE INDEX idx_platform_bulk_operations_time ON public.platform_bulk_operations USING btree (created_at DESC)"
+  },
+  {
+    "tablename": "platform_bulk_operations",
+    "indexname": "platform_bulk_operations_pkey",
+    "indexdef": "CREATE UNIQUE INDEX platform_bulk_operations_pkey ON public.platform_bulk_operations USING btree (id)"
+  },
+  {
+    "tablename": "platform_catalog_campaigns",
+    "indexname": "idx_platform_catalog_campaigns_dates",
+    "indexdef": "CREATE INDEX idx_platform_catalog_campaigns_dates ON public.platform_catalog_campaigns USING btree (starts_at, ends_at)"
+  },
+  {
+    "tablename": "platform_catalog_campaigns",
+    "indexname": "idx_platform_catalog_campaigns_status_time",
+    "indexdef": "CREATE INDEX idx_platform_catalog_campaigns_status_time ON public.platform_catalog_campaigns USING btree (status, created_at DESC)"
+  },
+  {
+    "tablename": "platform_catalog_campaigns",
+    "indexname": "platform_catalog_campaigns_campaign_key_key",
+    "indexdef": "CREATE UNIQUE INDEX platform_catalog_campaigns_campaign_key_key ON public.platform_catalog_campaigns USING btree (campaign_key)"
+  },
+  {
+    "tablename": "platform_catalog_campaigns",
+    "indexname": "platform_catalog_campaigns_pkey",
+    "indexdef": "CREATE UNIQUE INDEX platform_catalog_campaigns_pkey ON public.platform_catalog_campaigns USING btree (id)"
+  },
+  {
+    "tablename": "platform_catalog_change_applications",
+    "indexname": "idx_platform_catalog_change_applications_request_time",
+    "indexdef": "CREATE INDEX idx_platform_catalog_change_applications_request_time ON public.platform_catalog_change_applications USING btree (change_request_id, applied_at DESC)"
+  },
+  {
+    "tablename": "platform_catalog_change_applications",
+    "indexname": "idx_platform_catalog_change_applications_surface_time",
+    "indexdef": "CREATE INDEX idx_platform_catalog_change_applications_surface_time ON public.platform_catalog_change_applications USING btree (surface, applied_at DESC)"
+  },
+  {
+    "tablename": "platform_catalog_change_applications",
+    "indexname": "platform_catalog_change_applications_pkey",
+    "indexdef": "CREATE UNIQUE INDEX platform_catalog_change_applications_pkey ON public.platform_catalog_change_applications USING btree (id)"
+  },
+  {
+    "tablename": "platform_catalog_change_requests",
+    "indexname": "idx_platform_catalog_change_requests_effective",
+    "indexdef": "CREATE INDEX idx_platform_catalog_change_requests_effective ON public.platform_catalog_change_requests USING btree (effective_at) WHERE (effective_at IS NOT NULL)"
+  },
+  {
+    "tablename": "platform_catalog_change_requests",
+    "indexname": "idx_platform_catalog_change_requests_status_time",
+    "indexdef": "CREATE INDEX idx_platform_catalog_change_requests_status_time ON public.platform_catalog_change_requests USING btree (status, created_at DESC)"
+  },
+  {
+    "tablename": "platform_catalog_change_requests",
+    "indexname": "platform_catalog_change_requests_pkey",
+    "indexdef": "CREATE UNIQUE INDEX platform_catalog_change_requests_pkey ON public.platform_catalog_change_requests USING btree (id)"
+  },
+  {
+    "tablename": "platform_events",
+    "indexname": "idx_platform_events_org_time",
+    "indexdef": "CREATE INDEX idx_platform_events_org_time ON public.platform_events USING btree (org_id, occurred_at DESC)"
+  },
+  {
+    "tablename": "platform_events",
+    "indexname": "idx_platform_events_source_event",
+    "indexdef": "CREATE UNIQUE INDEX idx_platform_events_source_event ON public.platform_events USING btree (source, source_event_id) WHERE (source_event_id IS NOT NULL)"
+  },
+  {
+    "tablename": "platform_events",
+    "indexname": "idx_platform_events_type_time",
+    "indexdef": "CREATE INDEX idx_platform_events_type_time ON public.platform_events USING btree (event_type, occurred_at DESC)"
+  },
+  {
+    "tablename": "platform_events",
+    "indexname": "platform_events_pkey",
+    "indexdef": "CREATE UNIQUE INDEX platform_events_pkey ON public.platform_events USING btree (id)"
+  },
+  {
+    "tablename": "platform_metric_snapshots",
+    "indexname": "idx_platform_metric_snapshots_date",
+    "indexdef": "CREATE INDEX idx_platform_metric_snapshots_date ON public.platform_metric_snapshots USING btree (snapshot_date DESC)"
+  },
+  {
+    "tablename": "platform_metric_snapshots",
+    "indexname": "platform_metric_snapshots_pkey",
+    "indexdef": "CREATE UNIQUE INDEX platform_metric_snapshots_pkey ON public.platform_metric_snapshots USING btree (id)"
+  },
+  {
+    "tablename": "platform_metric_snapshots",
+    "indexname": "platform_metric_snapshots_snapshot_date_key",
+    "indexdef": "CREATE UNIQUE INDEX platform_metric_snapshots_snapshot_date_key ON public.platform_metric_snapshots USING btree (snapshot_date)"
+  },
+  {
+    "tablename": "platform_plan_module_entitlements",
+    "indexname": "platform_plan_module_entitlements_pkey",
+    "indexdef": "CREATE UNIQUE INDEX platform_plan_module_entitlements_pkey ON public.platform_plan_module_entitlements USING btree (plan_id, module_key)"
+  },
+  {
+    "tablename": "platform_plan_versions",
+    "indexname": "idx_platform_plan_versions_status_time",
+    "indexdef": "CREATE INDEX idx_platform_plan_versions_status_time ON public.platform_plan_versions USING btree (status, created_at DESC)"
+  },
+  {
+    "tablename": "platform_plan_versions",
+    "indexname": "platform_plan_versions_pkey",
+    "indexdef": "CREATE UNIQUE INDEX platform_plan_versions_pkey ON public.platform_plan_versions USING btree (id)"
+  },
+  {
+    "tablename": "platform_plan_versions",
+    "indexname": "platform_plan_versions_version_key_key",
+    "indexdef": "CREATE UNIQUE INDEX platform_plan_versions_version_key_key ON public.platform_plan_versions USING btree (version_key)"
+  },
+  {
+    "tablename": "platform_users",
+    "indexname": "platform_users_email_key",
+    "indexdef": "CREATE UNIQUE INDEX platform_users_email_key ON public.platform_users USING btree (email)"
+  },
+  {
+    "tablename": "platform_users",
+    "indexname": "platform_users_pkey",
+    "indexdef": "CREATE UNIQUE INDEX platform_users_pkey ON public.platform_users USING btree (id)"
+  },
+  {
+    "tablename": "pool_slots",
+    "indexname": "idx_pool_slots_pool_id",
+    "indexdef": "CREATE INDEX idx_pool_slots_pool_id ON public.pool_slots USING btree (pool_id)"
+  },
+  {
+    "tablename": "pool_slots",
+    "indexname": "idx_pool_slots_team_id",
+    "indexdef": "CREATE INDEX idx_pool_slots_team_id ON public.pool_slots USING btree (team_id)"
+  },
+  {
+    "tablename": "pool_slots",
+    "indexname": "idx_pool_slots_tournament_id",
+    "indexdef": "CREATE INDEX idx_pool_slots_tournament_id ON public.pool_slots USING btree (tournament_id)"
+  },
+  {
+    "tablename": "pool_slots",
+    "indexname": "pool_slots_pkey",
+    "indexdef": "CREATE UNIQUE INDEX pool_slots_pkey ON public.pool_slots USING btree (id)"
+  },
+  {
+    "tablename": "pool_slots",
+    "indexname": "pool_slots_pool_id_slot_number_key",
+    "indexdef": "CREATE UNIQUE INDEX pool_slots_pool_id_slot_number_key ON public.pool_slots USING btree (pool_id, slot_number)"
+  },
+  {
+    "tablename": "pools",
+    "indexname": "pools_pkey",
+    "indexdef": "CREATE UNIQUE INDEX pools_pkey ON public.pools USING btree (id)"
+  },
+  {
+    "tablename": "rep_allocation_installments",
+    "indexname": "rep_allocation_installments_pkey",
+    "indexdef": "CREATE UNIQUE INDEX rep_allocation_installments_pkey ON public.rep_allocation_installments USING btree (id)"
+  },
+  {
+    "tablename": "rep_allocation_installments",
+    "indexname": "rep_allocation_installments_split_id_installment_number_key",
+    "indexdef": "CREATE UNIQUE INDEX rep_allocation_installments_split_id_installment_number_key ON public.rep_allocation_installments USING btree (split_id, installment_number)"
+  },
+  {
+    "tablename": "rep_allocation_splits",
+    "indexname": "rep_allocation_splits_allocation_id_team_id_key",
+    "indexdef": "CREATE UNIQUE INDEX rep_allocation_splits_allocation_id_team_id_key ON public.rep_allocation_splits USING btree (allocation_id, team_id)"
+  },
+  {
+    "tablename": "rep_allocation_splits",
+    "indexname": "rep_allocation_splits_pkey",
+    "indexdef": "CREATE UNIQUE INDEX rep_allocation_splits_pkey ON public.rep_allocation_splits USING btree (id)"
+  },
+  {
+    "tablename": "rep_allocation_splits",
+    "indexname": "rep_allocation_splits_team_idx",
+    "indexdef": "CREATE INDEX rep_allocation_splits_team_idx ON public.rep_allocation_splits USING btree (team_id, program_year_id)"
+  },
+  {
+    "tablename": "rep_budget_lines",
+    "indexname": "rep_budget_lines_pkey",
+    "indexdef": "CREATE UNIQUE INDEX rep_budget_lines_pkey ON public.rep_budget_lines USING btree (id)"
+  },
+  {
+    "tablename": "rep_budget_lines",
+    "indexname": "rep_budget_lines_team_year_idx",
+    "indexdef": "CREATE INDEX rep_budget_lines_team_year_idx ON public.rep_budget_lines USING btree (team_id, program_year_id)"
+  },
+  {
+    "tablename": "rep_budget_periods",
+    "indexname": "rep_budget_periods_line_idx",
+    "indexdef": "CREATE INDEX rep_budget_periods_line_idx ON public.rep_budget_periods USING btree (budget_line_id)"
+  },
+  {
+    "tablename": "rep_budget_periods",
+    "indexname": "rep_budget_periods_pkey",
+    "indexdef": "CREATE UNIQUE INDEX rep_budget_periods_pkey ON public.rep_budget_periods USING btree (id)"
+  },
+  {
+    "tablename": "rep_cost_allocations",
+    "indexname": "rep_cost_allocations_budget_line_idx",
+    "indexdef": "CREATE INDEX rep_cost_allocations_budget_line_idx ON public.rep_cost_allocations USING btree (source_budget_line_id) WHERE (source_budget_line_id IS NOT NULL)"
+  },
+  {
+    "tablename": "rep_cost_allocations",
+    "indexname": "rep_cost_allocations_pkey",
+    "indexdef": "CREATE UNIQUE INDEX rep_cost_allocations_pkey ON public.rep_cost_allocations USING btree (id)"
+  },
+  {
+    "tablename": "rep_document_templates",
+    "indexname": "rep_document_templates_org_idx",
+    "indexdef": "CREATE INDEX rep_document_templates_org_idx ON public.rep_document_templates USING btree (org_id, team_id)"
+  },
+  {
+    "tablename": "rep_document_templates",
+    "indexname": "rep_document_templates_pkey",
+    "indexdef": "CREATE UNIQUE INDEX rep_document_templates_pkey ON public.rep_document_templates USING btree (id)"
+  },
+  {
+    "tablename": "rep_dues_credits",
+    "indexname": "rep_dues_credits_pkey",
+    "indexdef": "CREATE UNIQUE INDEX rep_dues_credits_pkey ON public.rep_dues_credits USING btree (id)"
+  },
+  {
+    "tablename": "rep_fundraiser_entries",
+    "indexname": "rep_fundraiser_entries_fundraiser_id_player_id_key",
+    "indexdef": "CREATE UNIQUE INDEX rep_fundraiser_entries_fundraiser_id_player_id_key ON public.rep_fundraiser_entries USING btree (fundraiser_id, player_id)"
+  },
+  {
+    "tablename": "rep_fundraiser_entries",
+    "indexname": "rep_fundraiser_entries_fundraiser_idx",
+    "indexdef": "CREATE INDEX rep_fundraiser_entries_fundraiser_idx ON public.rep_fundraiser_entries USING btree (fundraiser_id)"
+  },
+  {
+    "tablename": "rep_fundraiser_entries",
+    "indexname": "rep_fundraiser_entries_pkey",
+    "indexdef": "CREATE UNIQUE INDEX rep_fundraiser_entries_pkey ON public.rep_fundraiser_entries USING btree (id)"
+  },
+  {
+    "tablename": "rep_fundraiser_entries",
+    "indexname": "rep_fundraiser_entries_player_idx",
+    "indexdef": "CREATE INDEX rep_fundraiser_entries_player_idx ON public.rep_fundraiser_entries USING btree (player_id)"
+  },
+  {
+    "tablename": "rep_fundraisers",
+    "indexname": "rep_fundraisers_pkey",
+    "indexdef": "CREATE UNIQUE INDEX rep_fundraisers_pkey ON public.rep_fundraisers USING btree (id)"
+  },
+  {
+    "tablename": "rep_fundraisers",
+    "indexname": "rep_fundraisers_team_year_idx",
+    "indexdef": "CREATE INDEX rep_fundraisers_team_year_idx ON public.rep_fundraisers USING btree (team_id, program_year_id)"
+  },
+  {
+    "tablename": "rep_player_documents",
+    "indexname": "rep_player_documents_pkey",
+    "indexdef": "CREATE UNIQUE INDEX rep_player_documents_pkey ON public.rep_player_documents USING btree (id)"
+  },
+  {
+    "tablename": "rep_player_documents",
+    "indexname": "rep_player_documents_player_idx",
+    "indexdef": "CREATE INDEX rep_player_documents_player_idx ON public.rep_player_documents USING btree (player_id)"
+  },
+  {
+    "tablename": "rep_player_documents",
+    "indexname": "rep_player_documents_team_idx",
+    "indexdef": "CREATE INDEX rep_player_documents_team_idx ON public.rep_player_documents USING btree (team_id, org_id)"
+  },
+  {
+    "tablename": "rep_player_dues_installments",
+    "indexname": "rep_player_dues_installments_due_idx",
+    "indexdef": "CREATE INDEX rep_player_dues_installments_due_idx ON public.rep_player_dues_installments USING btree (due_date) WHERE (paid_at IS NULL)"
+  },
+  {
+    "tablename": "rep_player_dues_installments",
+    "indexname": "rep_player_dues_installments_pkey",
+    "indexdef": "CREATE UNIQUE INDEX rep_player_dues_installments_pkey ON public.rep_player_dues_installments USING btree (id)"
+  },
+  {
+    "tablename": "rep_player_dues_installments",
+    "indexname": "rep_player_dues_installments_schedule_id_installment_number_key",
+    "indexdef": "CREATE UNIQUE INDEX rep_player_dues_installments_schedule_id_installment_number_key ON public.rep_player_dues_installments USING btree (schedule_id, installment_number)"
+  },
+  {
+    "tablename": "rep_player_dues_schedules",
+    "indexname": "rep_player_dues_schedules_pkey",
+    "indexdef": "CREATE UNIQUE INDEX rep_player_dues_schedules_pkey ON public.rep_player_dues_schedules USING btree (id)"
+  },
+  {
+    "tablename": "rep_player_dues_schedules",
+    "indexname": "rep_player_dues_schedules_program_year_id_player_id_key",
+    "indexdef": "CREATE UNIQUE INDEX rep_player_dues_schedules_program_year_id_player_id_key ON public.rep_player_dues_schedules USING btree (program_year_id, player_id)"
+  },
+  {
+    "tablename": "rep_program_years",
+    "indexname": "rep_program_years_pkey",
+    "indexdef": "CREATE UNIQUE INDEX rep_program_years_pkey ON public.rep_program_years USING btree (id)"
+  },
+  {
+    "tablename": "rep_program_years",
+    "indexname": "rep_program_years_team_id_year_key",
+    "indexdef": "CREATE UNIQUE INDEX rep_program_years_team_id_year_key ON public.rep_program_years USING btree (team_id, year)"
+  },
+  {
+    "tablename": "rep_roster_players",
+    "indexname": "rep_roster_players_email_idx",
+    "indexdef": "CREATE INDEX rep_roster_players_email_idx ON public.rep_roster_players USING btree (guardian_email)"
+  },
+  {
+    "tablename": "rep_roster_players",
+    "indexname": "rep_roster_players_pkey",
+    "indexdef": "CREATE UNIQUE INDEX rep_roster_players_pkey ON public.rep_roster_players USING btree (id)"
+  },
+  {
+    "tablename": "rep_roster_players",
+    "indexname": "rep_roster_players_year_idx",
+    "indexdef": "CREATE INDEX rep_roster_players_year_idx ON public.rep_roster_players USING btree (program_year_id)"
+  },
+  {
+    "tablename": "rep_season_surplus",
+    "indexname": "rep_season_surplus_pkey",
+    "indexdef": "CREATE UNIQUE INDEX rep_season_surplus_pkey ON public.rep_season_surplus USING btree (id)"
+  },
+  {
+    "tablename": "rep_season_surplus",
+    "indexname": "rep_season_surplus_program_year_id_key",
+    "indexdef": "CREATE UNIQUE INDEX rep_season_surplus_program_year_id_key ON public.rep_season_surplus USING btree (program_year_id)"
+  },
+  {
+    "tablename": "rep_team_coaches",
+    "indexname": "rep_team_coaches_pkey",
+    "indexdef": "CREATE UNIQUE INDEX rep_team_coaches_pkey ON public.rep_team_coaches USING btree (id)"
+  },
+  {
+    "tablename": "rep_team_coaches",
+    "indexname": "rep_team_coaches_program_year_id_user_id_key",
+    "indexdef": "CREATE UNIQUE INDEX rep_team_coaches_program_year_id_user_id_key ON public.rep_team_coaches USING btree (program_year_id, user_id)"
+  },
+  {
+    "tablename": "rep_team_coaches",
+    "indexname": "rep_team_coaches_user_idx",
+    "indexdef": "CREATE INDEX rep_team_coaches_user_idx ON public.rep_team_coaches USING btree (org_id, user_id)"
+  },
+  {
+    "tablename": "rep_team_event_attendance",
+    "indexname": "rep_team_event_attendance_event_id_player_id_key",
+    "indexdef": "CREATE UNIQUE INDEX rep_team_event_attendance_event_id_player_id_key ON public.rep_team_event_attendance USING btree (event_id, player_id)"
+  },
+  {
+    "tablename": "rep_team_event_attendance",
+    "indexname": "rep_team_event_attendance_event_idx",
+    "indexdef": "CREATE INDEX rep_team_event_attendance_event_idx ON public.rep_team_event_attendance USING btree (event_id)"
+  },
+  {
+    "tablename": "rep_team_event_attendance",
+    "indexname": "rep_team_event_attendance_pkey",
+    "indexdef": "CREATE UNIQUE INDEX rep_team_event_attendance_pkey ON public.rep_team_event_attendance USING btree (id)"
+  },
+  {
+    "tablename": "rep_team_event_attendance",
+    "indexname": "rep_team_event_attendance_player_idx",
+    "indexdef": "CREATE INDEX rep_team_event_attendance_player_idx ON public.rep_team_event_attendance USING btree (player_id, event_id)"
+  },
+  {
+    "tablename": "rep_team_event_attendance",
+    "indexname": "rep_team_event_attendance_team_idx",
+    "indexdef": "CREATE INDEX rep_team_event_attendance_team_idx ON public.rep_team_event_attendance USING btree (team_id, program_year_id)"
+  },
+  {
+    "tablename": "rep_team_events",
+    "indexname": "rep_team_events_parent_idx",
+    "indexdef": "CREATE INDEX rep_team_events_parent_idx ON public.rep_team_events USING btree (parent_event_id)"
+  },
+  {
+    "tablename": "rep_team_events",
+    "indexname": "rep_team_events_pkey",
+    "indexdef": "CREATE UNIQUE INDEX rep_team_events_pkey ON public.rep_team_events USING btree (id)"
+  },
+  {
+    "tablename": "rep_team_events",
+    "indexname": "rep_team_events_year_idx",
+    "indexdef": "CREATE INDEX rep_team_events_year_idx ON public.rep_team_events USING btree (program_year_id, starts_at)"
+  },
+  {
+    "tablename": "rep_team_expenses",
+    "indexname": "rep_team_expenses_pkey",
+    "indexdef": "CREATE UNIQUE INDEX rep_team_expenses_pkey ON public.rep_team_expenses USING btree (id)"
+  },
+  {
+    "tablename": "rep_team_expenses",
+    "indexname": "rep_team_expenses_year_idx",
+    "indexdef": "CREATE INDEX rep_team_expenses_year_idx ON public.rep_team_expenses USING btree (program_year_id)"
+  },
+  {
+    "tablename": "rep_team_groups",
+    "indexname": "idx_rep_team_groups_org_name",
+    "indexdef": "CREATE UNIQUE INDEX idx_rep_team_groups_org_name ON public.rep_team_groups USING btree (org_id, lower(name))"
+  },
+  {
+    "tablename": "rep_team_groups",
+    "indexname": "rep_team_groups_pkey",
+    "indexdef": "CREATE UNIQUE INDEX rep_team_groups_pkey ON public.rep_team_groups USING btree (id)"
+  },
+  {
+    "tablename": "rep_team_payment_requests",
+    "indexname": "rep_team_payment_requests_org_status_idx",
+    "indexdef": "CREATE INDEX rep_team_payment_requests_org_status_idx ON public.rep_team_payment_requests USING btree (org_id, status)"
+  },
+  {
+    "tablename": "rep_team_payment_requests",
+    "indexname": "rep_team_payment_requests_pkey",
+    "indexdef": "CREATE UNIQUE INDEX rep_team_payment_requests_pkey ON public.rep_team_payment_requests USING btree (id)"
+  },
+  {
+    "tablename": "rep_team_payment_requests",
+    "indexname": "rep_team_payment_requests_team_status_idx",
+    "indexdef": "CREATE INDEX rep_team_payment_requests_team_status_idx ON public.rep_team_payment_requests USING btree (team_id, status)"
+  },
+  {
+    "tablename": "rep_teams",
+    "indexname": "rep_teams_org_id_slug_key",
+    "indexdef": "CREATE UNIQUE INDEX rep_teams_org_id_slug_key ON public.rep_teams USING btree (org_id, slug)"
+  },
+  {
+    "tablename": "rep_teams",
+    "indexname": "rep_teams_pkey",
+    "indexdef": "CREATE UNIQUE INDEX rep_teams_pkey ON public.rep_teams USING btree (id)"
+  },
+  {
+    "tablename": "rep_tryout_registrations",
+    "indexname": "rep_tryout_registrations_email_idx",
+    "indexdef": "CREATE INDEX rep_tryout_registrations_email_idx ON public.rep_tryout_registrations USING btree (guardian_email)"
+  },
+  {
+    "tablename": "rep_tryout_registrations",
+    "indexname": "rep_tryout_registrations_pkey",
+    "indexdef": "CREATE UNIQUE INDEX rep_tryout_registrations_pkey ON public.rep_tryout_registrations USING btree (id)"
+  },
+  {
+    "tablename": "rep_tryout_registrations",
+    "indexname": "rep_tryout_registrations_status_idx",
+    "indexdef": "CREATE INDEX rep_tryout_registrations_status_idx ON public.rep_tryout_registrations USING btree (program_year_id, status)"
+  },
+  {
+    "tablename": "rep_tryout_registrations",
+    "indexname": "rep_tryout_registrations_year_idx",
+    "indexdef": "CREATE INDEX rep_tryout_registrations_year_idx ON public.rep_tryout_registrations USING btree (program_year_id)"
+  },
+  {
+    "tablename": "resources",
+    "indexname": "resources_pkey",
+    "indexdef": "CREATE UNIQUE INDEX resources_pkey ON public.resources USING btree (id)"
+  },
+  {
+    "tablename": "rule_items",
+    "indexname": "rule_items_pkey",
+    "indexdef": "CREATE UNIQUE INDEX rule_items_pkey ON public.rule_items USING btree (id)"
+  },
+  {
+    "tablename": "rules",
+    "indexname": "rules_pkey",
+    "indexdef": "CREATE UNIQUE INDEX rules_pkey ON public.rules USING btree (id)"
+  },
+  {
+    "tablename": "stripe_prices",
+    "indexname": "stripe_prices_pkey",
+    "indexdef": "CREATE UNIQUE INDEX stripe_prices_pkey ON public.stripe_prices USING btree (id)"
+  },
+  {
+    "tablename": "stripe_prices",
+    "indexname": "stripe_prices_plan_id_billing_cycle_environment_key",
+    "indexdef": "CREATE UNIQUE INDEX stripe_prices_plan_id_billing_cycle_environment_key ON public.stripe_prices USING btree (plan_id, billing_cycle, environment)"
+  },
+  {
+    "tablename": "team_entitlements",
+    "indexname": "team_entitlements_active_source_unique",
+    "indexdef": "CREATE UNIQUE INDEX team_entitlements_active_source_unique ON public.team_entitlements USING btree (org_id, rep_team_id, source) WHERE (status = ANY (ARRAY['active'::text, 'trialing'::text, 'past_due'::text]))"
+  },
+  {
+    "tablename": "team_entitlements",
+    "indexname": "team_entitlements_org_team_idx",
+    "indexdef": "CREATE INDEX team_entitlements_org_team_idx ON public.team_entitlements USING btree (org_id, rep_team_id, status)"
+  },
+  {
+    "tablename": "team_entitlements",
+    "indexname": "team_entitlements_pkey",
+    "indexdef": "CREATE UNIQUE INDEX team_entitlements_pkey ON public.team_entitlements USING btree (id)"
+  },
+  {
+    "tablename": "team_entitlements",
+    "indexname": "team_entitlements_workspace_idx",
+    "indexdef": "CREATE INDEX team_entitlements_workspace_idx ON public.team_entitlements USING btree (team_workspace_id, status)"
+  },
+  {
+    "tablename": "team_org_links",
+    "indexname": "team_org_links_active_unique",
+    "indexdef": "CREATE UNIQUE INDEX team_org_links_active_unique ON public.team_org_links USING btree (team_workspace_id, linked_org_id) WHERE (status = ANY (ARRAY['requested'::text, 'invited'::text, 'linked'::text, 'ownership_pending'::text, 'org_owned'::text]))"
+  },
+  {
+    "tablename": "team_org_links",
+    "indexname": "team_org_links_linked_org_idx",
+    "indexdef": "CREATE INDEX team_org_links_linked_org_idx ON public.team_org_links USING btree (linked_org_id, status)"
+  },
+  {
+    "tablename": "team_org_links",
+    "indexname": "team_org_links_pkey",
+    "indexdef": "CREATE UNIQUE INDEX team_org_links_pkey ON public.team_org_links USING btree (id)"
+  },
+  {
+    "tablename": "team_org_links",
+    "indexname": "team_org_links_workspace_idx",
+    "indexdef": "CREATE INDEX team_org_links_workspace_idx ON public.team_org_links USING btree (team_workspace_id, status)"
+  },
+  {
+    "tablename": "team_workspace_claims",
+    "indexname": "team_workspace_claims_contact_email_idx",
+    "indexdef": "CREATE INDEX team_workspace_claims_contact_email_idx ON public.team_workspace_claims USING btree (lower(contact_email), status)"
+  },
+  {
+    "tablename": "team_workspace_claims",
+    "indexname": "team_workspace_claims_pkey",
+    "indexdef": "CREATE UNIQUE INDEX team_workspace_claims_pkey ON public.team_workspace_claims USING btree (id)"
+  },
+  {
+    "tablename": "team_workspace_claims",
+    "indexname": "team_workspace_claims_token_hash_unique",
+    "indexdef": "CREATE UNIQUE INDEX team_workspace_claims_token_hash_unique ON public.team_workspace_claims USING btree (claim_token_hash)"
+  },
+  {
+    "tablename": "team_workspace_claims",
+    "indexname": "team_workspace_claims_tournament_idx",
+    "indexdef": "CREATE INDEX team_workspace_claims_tournament_idx ON public.team_workspace_claims USING btree (tournament_id, status)"
+  },
+  {
+    "tablename": "team_workspaces",
+    "indexname": "team_workspaces_pkey",
+    "indexdef": "CREATE UNIQUE INDEX team_workspaces_pkey ON public.team_workspaces USING btree (id)"
+  },
+  {
+    "tablename": "team_workspaces",
+    "indexname": "team_workspaces_rep_team_unique",
+    "indexdef": "CREATE UNIQUE INDEX team_workspaces_rep_team_unique ON public.team_workspaces USING btree (rep_team_id)"
+  },
+  {
+    "tablename": "team_workspaces",
+    "indexname": "team_workspaces_source_tournament_idx",
+    "indexdef": "CREATE INDEX team_workspaces_source_tournament_idx ON public.team_workspaces USING btree (source_tournament_id, source_tournament_team_id)"
+  },
+  {
+    "tablename": "team_workspaces",
+    "indexname": "team_workspaces_state_idx",
+    "indexdef": "CREATE INDEX team_workspaces_state_idx ON public.team_workspaces USING btree (workspace_state, subscription_status)"
+  },
+  {
+    "tablename": "team_workspaces",
+    "indexname": "team_workspaces_workspace_org_unique",
+    "indexdef": "CREATE UNIQUE INDEX team_workspaces_workspace_org_unique ON public.team_workspaces USING btree (workspace_org_id)"
+  },
+  {
+    "tablename": "teams",
+    "indexname": "idx_teams_slot_id",
+    "indexdef": "CREATE INDEX idx_teams_slot_id ON public.teams USING btree (slot_id)"
+  },
+  {
+    "tablename": "teams",
+    "indexname": "teams_pkey",
+    "indexdef": "CREATE UNIQUE INDEX teams_pkey ON public.teams USING btree (id)"
+  },
+  {
+    "tablename": "tournament_archives",
+    "indexname": "tournament_archives_org_season",
+    "indexdef": "CREATE INDEX tournament_archives_org_season ON public.tournament_archives USING btree (org_id, season DESC, sealed_at DESC)"
+  },
+  {
+    "tablename": "tournament_archives",
+    "indexname": "tournament_archives_pkey",
+    "indexdef": "CREATE UNIQUE INDEX tournament_archives_pkey ON public.tournament_archives USING btree (id)"
+  },
+  {
+    "tablename": "tournament_archives",
+    "indexname": "tournament_archives_tournament_id_unique",
+    "indexdef": "CREATE UNIQUE INDEX tournament_archives_tournament_id_unique ON public.tournament_archives USING btree (tournament_id) WHERE (tournament_id IS NOT NULL)"
+  },
+  {
+    "tablename": "tournament_registration_field_answers",
+    "indexname": "tournament_registration_field_answ_registration_id_field_id_key",
+    "indexdef": "CREATE UNIQUE INDEX tournament_registration_field_answ_registration_id_field_id_key ON public.tournament_registration_field_answers USING btree (registration_id, field_id)"
+  },
+  {
+    "tablename": "tournament_registration_field_answers",
+    "indexname": "tournament_registration_field_answers_field_idx",
+    "indexdef": "CREATE INDEX tournament_registration_field_answers_field_idx ON public.tournament_registration_field_answers USING btree (field_id)"
+  },
+  {
+    "tablename": "tournament_registration_field_answers",
+    "indexname": "tournament_registration_field_answers_pkey",
+    "indexdef": "CREATE UNIQUE INDEX tournament_registration_field_answers_pkey ON public.tournament_registration_field_answers USING btree (id)"
+  },
+  {
+    "tablename": "tournament_registration_field_answers",
+    "indexname": "tournament_registration_field_answers_registration_idx",
+    "indexdef": "CREATE INDEX tournament_registration_field_answers_registration_idx ON public.tournament_registration_field_answers USING btree (registration_id)"
+  },
+  {
+    "tablename": "tournament_registration_fields",
+    "indexname": "tournament_registration_fields_org_idx",
+    "indexdef": "CREATE INDEX tournament_registration_fields_org_idx ON public.tournament_registration_fields USING btree (org_id)"
+  },
+  {
+    "tablename": "tournament_registration_fields",
+    "indexname": "tournament_registration_fields_pkey",
+    "indexdef": "CREATE UNIQUE INDEX tournament_registration_fields_pkey ON public.tournament_registration_fields USING btree (id)"
+  },
+  {
+    "tablename": "tournament_registration_fields",
+    "indexname": "tournament_registration_fields_tournament_idx",
+    "indexdef": "CREATE INDEX tournament_registration_fields_tournament_idx ON public.tournament_registration_fields USING btree (tournament_id, is_archived, sort_order)"
+  },
+  {
+    "tablename": "tournaments",
+    "indexname": "idx_tournaments_created_at",
+    "indexdef": "CREATE INDEX idx_tournaments_created_at ON public.tournaments USING btree (created_at DESC)"
+  },
+  {
+    "tablename": "tournaments",
+    "indexname": "idx_tournaments_results_notified_at",
+    "indexdef": "CREATE INDEX idx_tournaments_results_notified_at ON public.tournaments USING btree (results_notified_at DESC) WHERE (results_notified_at IS NOT NULL)"
+  },
+  {
+    "tablename": "tournaments",
+    "indexname": "tournaments_organization_slug_live_unique",
+    "indexdef": "CREATE UNIQUE INDEX tournaments_organization_slug_live_unique ON public.tournaments USING btree (organization_id, slug) WHERE (status <> 'archived'::text)"
+  },
+  {
+    "tablename": "tournaments",
+    "indexname": "tournaments_pkey",
+    "indexdef": "CREATE UNIQUE INDEX tournaments_pkey ON public.tournaments USING btree (id)"
+  }
+]

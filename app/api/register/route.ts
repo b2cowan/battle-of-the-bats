@@ -31,7 +31,7 @@ type TournamentRow = {
   id: string;
   name: string;
   contact_email: string | null;
-  organization_id: string | null;
+  org_id: string | null;
   status: string | null;
   public_hidden_pages: unknown;
 };
@@ -222,7 +222,7 @@ export async function POST(req: NextRequest) {
         .maybeSingle<AgeGroupRow>(),
       supabaseAdmin
         .from('tournaments')
-        .select('id, name, contact_email, organization_id, status, public_hidden_pages')
+        .select('id, name, contact_email, org_id, status, public_hidden_pages')
         .eq('id', tournamentId)
         .maybeSingle<TournamentRow>(),
     ]);
@@ -260,11 +260,11 @@ export async function POST(req: NextRequest) {
     }
 
     let organization: OrganizationRow | null = null;
-    if (tournament.organization_id) {
+    if (tournament.org_id) {
       const { data: orgData, error: orgError } = await supabaseAdmin
         .from('organizations')
         .select('id, contact_email, is_public, plan_id, subscription_status')
-        .eq('id', tournament.organization_id)
+        .eq('id', tournament.org_id)
         .maybeSingle<OrganizationRow>();
 
       if (orgError) {
@@ -413,11 +413,11 @@ export async function POST(req: NextRequest) {
     }
 
     const isWaitlist = finalStatus === 'waitlist';
-    if (isWaitlist && tournament.organization_id) {
+    if (isWaitlist && tournament.org_id) {
       await writePlatformEvent({
         eventType: 'tournament_registration_operation_used',
         source: 'app',
-        orgId: tournament.organization_id,
+        orgId: tournament.org_id,
         planId: organization.plan_id,
         metadata: {
           feature: 'waitlist_collection',
@@ -432,7 +432,7 @@ export async function POST(req: NextRequest) {
     const ageGroupName = ageGroup.name;
     const tournamentName = tournament.name;
     const footerContactEmail = tournament.contact_email
-      || (tournament.organization_id ? await getOrgOwnerEmail(tournament.organization_id) : undefined)
+      || (tournament.org_id ? await getOrgOwnerEmail(tournament.org_id) : undefined)
       || organization.contact_email
       || undefined;
     const adminEmailToUse = tournament.contact_email || divisionContactEmail || footerContactEmail || ADMIN_EMAIL;

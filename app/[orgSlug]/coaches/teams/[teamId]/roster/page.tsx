@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useCallback } from 'react';
+import { use, useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { Users, ChevronRight, Plus, X } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
@@ -27,6 +27,8 @@ const ROSTER_EXPORT_COLS: ExportColumnDef[] = [
   { label: '#',              key: 'playerNumber',      format: 'text' },
   { label: 'First Name',     key: 'playerFirstName',   format: 'text' },
   { label: 'Last Name',      key: 'playerLastName',    format: 'text' },
+  { label: 'Primary Position', key: 'primaryPosition',  format: 'text' },
+  { label: 'Secondary Position', key: 'secondaryPosition', format: 'text' },
   { label: 'Date of Birth',  key: 'playerDateOfBirth', format: 'date',     sensitive: true },
   { label: 'Guardian Name',  key: 'guardianName',      format: 'text',     sensitive: true },
   { label: 'Guardian Email', key: 'guardianEmail',     format: 'text',     sensitive: true },
@@ -39,6 +41,7 @@ const ROSTER_EXPORT_COLS: ExportColumnDef[] = [
 interface AddForm {
   playerFirstName: string; playerLastName: string;
   playerDateOfBirth: string; playerNumber: string;
+  primaryPosition: string; secondaryPosition: string;
   guardianFirstName: string; guardianLastName: string;
   guardianEmail: string; guardianPhone: string;
   notes: string;
@@ -46,18 +49,24 @@ interface AddForm {
 
 const BLANK: AddForm = {
   playerFirstName: '', playerLastName: '', playerDateOfBirth: '',
-  playerNumber: '', guardianFirstName: '', guardianLastName: '',
+  playerNumber: '', primaryPosition: '', secondaryPosition: '',
+  guardianFirstName: '', guardianLastName: '',
   guardianEmail: '', guardianPhone: '', notes: '',
 };
+
+function errorMessage(error: unknown, fallback: string) {
+  return error instanceof Error ? error.message : fallback;
+}
 
 export default function RosterPage({
   params,
 }: {
-  params: { orgSlug: string; teamId: string };
+  params: Promise<{ orgSlug: string; teamId: string }>;
 }) {
+  const { orgSlug, teamId } = use(params);
   const { assignments, loading: assignmentsLoading } = useCoaches();
   const { currentOrg } = useOrg();
-  const assignment = assignments.find(a => a.teamId === params.teamId);
+  const assignment = assignments.find(a => a.teamId === teamId);
 
   const [players, setPlayers] = useState<RepRosterPlayer[]>([]);
   const [programYear, setProgramYear] = useState<RepProgramYear | null>(null);
@@ -83,19 +92,19 @@ export default function RosterPage({
   const load = useCallback(async () => {
     setFetching(true);
     try {
-      const res = await fetch(`/api/coaches/${params.orgSlug}/teams/${params.teamId}/roster`);
+      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/roster`);
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? 'Failed to load roster');
       setPlayers(data.players ?? []);
       setProgramYear(data.programYear ?? null);
-    } catch (e: any) {
-      showFeedback('danger', e.message ?? 'Failed to load.');
+    } catch (e: unknown) {
+      showFeedback('danger', errorMessage(e, 'Failed to load.'));
     } finally {
       setFetching(false);
     }
-  }, [params.orgSlug, params.teamId]);
+  }, [orgSlug, teamId]);
 
-  useEffect(() => { if (!assignmentsLoading) load(); }, [assignmentsLoading, load]);
+  useEffect(() => { if (!assignmentsLoading) void Promise.resolve().then(load); }, [assignmentsLoading, load]);
 
   useEffect(() => {
     fetch('/api/admin/org/pdf-settings')
@@ -109,7 +118,7 @@ export default function RosterPage({
     setTogglingId(player.id);
     try {
       const res = await fetch(
-        `/api/coaches/${params.orgSlug}/teams/${params.teamId}/roster/${player.id}`,
+        `/api/coaches/${orgSlug}/teams/${teamId}/roster/${player.id}`,
         {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
@@ -119,8 +128,8 @@ export default function RosterPage({
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? 'Failed to update status');
       setPlayers(prev => prev.map(p => p.id === player.id ? data.player : p));
-    } catch (e: any) {
-      showFeedback('danger', e.message ?? 'Failed to update status.');
+    } catch (e: unknown) {
+      showFeedback('danger', errorMessage(e, 'Failed to update status.'));
     } finally {
       setTogglingId(null);
     }
@@ -134,7 +143,7 @@ export default function RosterPage({
     setAdding(true);
     try {
       const res = await fetch(
-        `/api/coaches/${params.orgSlug}/teams/${params.teamId}/roster`,
+        `/api/coaches/${orgSlug}/teams/${teamId}/roster`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -143,6 +152,8 @@ export default function RosterPage({
             playerLastName:    addForm.playerLastName.trim(),
             playerDateOfBirth: addForm.playerDateOfBirth || null,
             playerNumber:      addForm.playerNumber.trim() || null,
+            primaryPosition:   addForm.primaryPosition.trim() || null,
+            secondaryPosition: addForm.secondaryPosition.trim() || null,
             guardianFirstName: addForm.guardianFirstName.trim(),
             guardianLastName:  addForm.guardianLastName.trim(),
             guardianEmail:     addForm.guardianEmail.trim(),
@@ -157,20 +168,22 @@ export default function RosterPage({
       setAddForm(BLANK);
       await load();
       showFeedback('success', `${addForm.playerFirstName} ${addForm.playerLastName} added to roster.`);
-    } catch (e: any) {
-      showFeedback('danger', e.message ?? 'Failed to add player.');
+    } catch (e: unknown) {
+      showFeedback('danger', errorMessage(e, 'Failed to add player.'));
     } finally {
       setAdding(false);
     }
   }
 
-  const base = `/${params.orgSlug}/coaches/teams/${params.teamId}`;
+  const base = `/${orgSlug}/coaches/teams/${teamId}`;
 
   // ── Export helpers ───────────────────────────────────────────────────────────
 
   function buildRosterExportSrc() {
     return players.map(p => ({
       playerNumber:      p.playerNumber ?? '',
+      primaryPosition:   p.primaryPosition ?? '',
+      secondaryPosition: p.secondaryPosition ?? '',
       playerFirstName:   p.playerFirstName,
       playerLastName:    p.playerLastName,
       playerDateOfBirth: p.playerDateOfBirth ?? '',
@@ -188,7 +201,7 @@ export default function RosterPage({
     const headers = serializeHeaders(ROSTER_EXPORT_COLS);
     const rows = serializeRows(buildRosterExportSrc(), ROSTER_EXPORT_COLS);
     await downloadXLSX(
-      buildFilename({ org: currentOrg?.slug ?? params.orgSlug, dataset: 'roster', scope: assignment?.teamName ?? params.teamId }, 'xlsx'),
+      buildFilename({ org: currentOrg?.slug ?? orgSlug, dataset: 'roster', scope: assignment?.teamName ?? teamId }, 'xlsx'),
       headers, rows, 'Roster',
     );
   }
@@ -198,7 +211,7 @@ export default function RosterPage({
     const headers = serializeHeaders(ROSTER_EXPORT_COLS, true);
     const rows = serializeRows(buildRosterExportSrc(), ROSTER_EXPORT_COLS, true);
     await downloadXLSX(
-      buildFilename({ org: currentOrg?.slug ?? params.orgSlug, dataset: 'roster-with-contacts', scope: assignment?.teamName ?? params.teamId }, 'xlsx'),
+      buildFilename({ org: currentOrg?.slug ?? orgSlug, dataset: 'roster-with-contacts', scope: assignment?.teamName ?? teamId }, 'xlsx'),
       headers, rows, 'Roster',
     );
   }
@@ -207,7 +220,7 @@ export default function RosterPage({
     const headers = serializeHeaders(ROSTER_EXPORT_COLS);
     const rows = serializeRows(buildRosterExportSrc(), ROSTER_EXPORT_COLS);
     downloadCSVBlob(
-      buildFilename({ org: currentOrg?.slug ?? params.orgSlug, dataset: 'roster', scope: assignment?.teamName ?? params.teamId }, 'csv'),
+      buildFilename({ org: currentOrg?.slug ?? orgSlug, dataset: 'roster', scope: assignment?.teamName ?? teamId }, 'csv'),
       generateCSV(headers, rows),
     );
   }
@@ -219,12 +232,12 @@ export default function RosterPage({
       ...(pdfSettings && Object.keys(pdfSettings).length > 0 ? pdfSettings : {}),
     };
     const includeGuardian = settings.includeGuardianContacts;
-    const teamName = assignment?.teamName ?? params.teamId;
+    const teamName = assignment?.teamName ?? teamId;
     const programYearName = programYear?.name ?? assignment?.programYearName ?? '';
 
     // Build PDF-specific headers — DOB always included; guardian columns conditional
     const pdfHeaders = [
-      '#', 'First Name', 'Last Name', 'Date of Birth',
+      '#', 'First Name', 'Last Name', 'Primary', 'Secondary', 'Date of Birth',
       ...(includeGuardian ? ['Guardian Name', 'Guardian Email', 'Guardian Phone'] : []),
       'Source', 'Status',
     ];
@@ -234,6 +247,8 @@ export default function RosterPage({
       r.playerNumber,
       r.playerFirstName,
       r.playerLastName,
+      r.primaryPosition,
+      r.secondaryPosition,
       r.playerDateOfBirth,
       ...(includeGuardian ? [r.guardianName, r.guardianEmail, r.guardianPhone] : []),
       r.source,
@@ -241,7 +256,7 @@ export default function RosterPage({
     ]);
 
     await downloadPDF(
-      buildFilename({ org: currentOrg?.slug ?? params.orgSlug, dataset: 'roster', scope: teamName }, 'pdf'),
+      buildFilename({ org: currentOrg?.slug ?? orgSlug, dataset: 'roster', scope: teamName }, 'pdf'),
       'Team Roster',
       `${teamName} — ${programYearName}`,
       pdfHeaders,
@@ -264,7 +279,7 @@ export default function RosterPage({
     <div className={styles.page}>
       {/* Breadcrumb */}
       <div className={styles.breadcrumb}>
-        <Link href={`/${params.orgSlug}/coaches`}>Coaches Portal</Link>
+        <Link href={`/${orgSlug}/coaches`}>Coaches Portal</Link>
         <span><ChevronRight size={12} /></span>
         <Link href={base}>{assignment.teamName}</Link>
         <span><ChevronRight size={12} /></span>
@@ -311,7 +326,7 @@ export default function RosterPage({
           variant="info"
           title="PDF settings not configured"
           body="Your export will use default FieldLogicHQ branding. Configure your header, logo, and footer once and all future PDFs will use those settings."
-          cta={{ label: 'Configure PDF Settings', href: `/${params.orgSlug}/admin/org` }}
+          cta={{ label: 'Configure PDF Settings', href: `/${orgSlug}/admin/org` }}
           dismissible
           localStorageKey="flhq-pdf-nudge-roster"
         />
@@ -332,6 +347,7 @@ export default function RosterPage({
               <tr>
                 <th className={styles.th}>#</th>
                 <th className={styles.th}>Player</th>
+                <th className={styles.th}>Positions</th>
                 <th className={styles.th}>Guardian Email</th>
                 <th className={styles.th}>Phone</th>
                 <th className={styles.th}>Source</th>
@@ -347,6 +363,9 @@ export default function RosterPage({
                   </td>
                   <td className={styles.td}>
                     <span className={styles.playerName}>{p.playerFirstName} {p.playerLastName}</span>
+                  </td>
+                  <td className={styles.td} style={{ fontSize: '0.85rem' }}>
+                    {[p.primaryPosition, p.secondaryPosition].filter(Boolean).join(' / ') || <span style={{ opacity: 0.3 }}>-</span>}
                   </td>
                   <td className={styles.td} style={{ fontSize: '0.85rem' }}>
                     {p.guardianEmail
@@ -433,6 +452,22 @@ export default function RosterPage({
                   value={addForm.playerNumber}
                   onChange={e => setAddForm(f => ({ ...f, playerNumber: e.target.value }))}
                   maxLength={10} />
+              </div>
+              <div className={styles.field}>
+                <label className={styles.label} htmlFor="add-primary-position">Primary Position</label>
+                <input id="add-primary-position" className={styles.input} type="text"
+                  value={addForm.primaryPosition}
+                  onChange={e => setAddForm(f => ({ ...f, primaryPosition: e.target.value }))}
+                  placeholder="SS"
+                  maxLength={20} />
+              </div>
+              <div className={styles.field}>
+                <label className={styles.label} htmlFor="add-secondary-position">Secondary Position</label>
+                <input id="add-secondary-position" className={styles.input} type="text"
+                  value={addForm.secondaryPosition}
+                  onChange={e => setAddForm(f => ({ ...f, secondaryPosition: e.target.value }))}
+                  placeholder="OF"
+                  maxLength={20} />
               </div>
               <div className={styles.field}>
                 <label className={styles.label} htmlFor="add-gfn">

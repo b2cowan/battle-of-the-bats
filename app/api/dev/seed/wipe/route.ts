@@ -13,6 +13,8 @@ function getUATProtectedEmails(): string[] {
     'UAT_ORG_OWNER_EMAIL',
     'UAT_ORG_ADMIN_EMAIL',
     'UAT_COACH_EMAIL',
+    'UAT_SCOREKEEPER_EMAIL',
+    'UAT_PLUS_SCOREKEEPER_EMAIL',
   ] as const;
   return keys
     .map(k => (process.env[k] ?? '').trim().toLowerCase())

@@ -22,11 +22,11 @@ export default function AdminHelpHubPage() {
   const cards: HelpHubCard[] = [
     {
       title: 'Tournaments',
-      desc:  'Create tournaments, manage the lifecycle, build schedules, enter scores, and seal final results.',
+      desc:  'Create tournaments, manage the lifecycle, build schedules, run scorekeepers, enter scores, and seal final results.',
       href:  `${helpBase}/tournaments`,
       category: 'Customer Guides',
       audience: 'Tournament admins',
-      keywords: ['create tournament', 'schedule', 'scores', 'results', 'archive', 'teams'],
+      keywords: ['create tournament', 'schedule', 'scorekeeper', 'scores', 'results', 'archive', 'teams'],
       featured: true,
     },
     ...(canHouseLeague ? [
@@ -93,6 +93,7 @@ export default function AdminHelpHubPage() {
 
   const quickLinks: HelpHubQuickLink[] = [
     { label: 'Create or run a tournament', href: `${helpBase}/tournaments#recipe-open-tournament-registration`, category: 'Tournaments', keywords: ['new tournament', 'schedule', 'score', 'results'] },
+    { label: 'Set up scorekeepers and finalize scores', href: `${helpBase}/tournaments#recipe-finalize-tournament-scores`, category: 'Tournaments', keywords: ['scorekeeper', 'pending review', 'finalize', 'results'] },
     { label: 'Invite a member or change roles', href: `${helpBase}/org#recipe-invite-member`, category: 'Org Admin', keywords: ['invite', 'member', 'role', 'access', 'capability'] },
     ...(canOrgAdmin ? [
       { label: 'Invite, review, or bill a Team workspace', href: `${helpBase}/org#recipe-review-team-link-request`, category: 'Org Admin', keywords: ['team workspace', 'team links', 'invite', 'approve', 'basic visibility', 'org billing', 'team add-on'] },
@@ -129,13 +130,13 @@ export default function AdminHelpHubPage() {
     {
       title: 'Tournament Admin',
       audience: 'Tournament operators',
-      desc: 'Follow this path to open registration, prepare teams, build the schedule, run scores, and close out the event.',
-      keywords: ['tournament admin', 'operator', 'registration', 'schedule', 'scores', 'closeout'],
+      desc: 'Follow this path to open registration, prepare teams, build the schedule, run scorekeepers, review scores, and close out the event.',
+      keywords: ['tournament admin', 'operator', 'registration', 'schedule', 'scorekeepers', 'scores', 'closeout'],
       steps: [
         { label: 'Open team registration', href: `${helpBase}/tournaments#recipe-open-tournament-registration` },
         { label: 'Review team registrations', href: `${helpBase}/tournaments#recipe-review-tournament-teams` },
         { label: 'Build and adjust the schedule', href: `${helpBase}/tournaments#recipe-build-tournament-schedule` },
-        { label: 'Enter and finalize scores', href: `${helpBase}/tournaments#recipe-finalize-tournament-scores` },
+        { label: 'Set up scorekeepers and finalize scores', href: `${helpBase}/tournaments#recipe-finalize-tournament-scores` },
         { label: 'Close out the tournament', href: `${helpBase}/tournaments#recipe-closeout-tournament` },
       ],
     },

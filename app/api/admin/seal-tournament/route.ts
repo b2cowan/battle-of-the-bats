@@ -37,7 +37,7 @@ export async function POST(req: Request) {
     .from('tournaments')
     .select('*')
     .eq('id', tournamentId)
-    .eq('organization_id', ctx.org.id)
+    .eq('org_id', ctx.org.id)
     .single();
 
   if (!tournament) {
@@ -92,7 +92,7 @@ export async function POST(req: Request) {
   const snapshot = {
     tournament: {
       id:             tournament.id,
-      organizationId: tournament.organization_id,
+      organizationId: tournament.org_id,
       year:           tournament.year,
       name:           tournament.name,
       isActive:       tournament.is_active,

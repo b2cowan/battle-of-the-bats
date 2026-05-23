@@ -37,9 +37,12 @@ async function loginOrgUser(
   await page.locator('#login-password').fill(password);
   await page.locator('#login-submit').click();
 
-  // Wait for signIn + Next.js redirect to fully resolve.
-  // Uses a URL predicate so it doesn't pass while still on the login page.
-  await page.waitForURL(url => !url.pathname.startsWith('/auth/login'), { timeout: 20_000 });
+  // Multi-org users can land on the workspace picker while the URL transition is
+  // still settling, so wait for either authenticated page evidence or navigation.
+  await expect.poll(async () => {
+    if (!new URL(page.url()).pathname.startsWith('/auth/login')) return true;
+    return page.getByText(`Logged in as ${email}`).isVisible();
+  }, { timeout: 45_000 }).toBe(true);
 
   await page.context().storageState({ path: savePath });
 }
@@ -57,7 +60,10 @@ async function loginPlatformAdmin(
 
   // Wait for signIn + platform_users DB check + Next.js redirect to fully resolve.
   // The layout does a Supabase query before redirecting, so this can take several seconds.
-  await page.waitForURL(url => !url.pathname.startsWith('/platform-admin/login'), { timeout: 20_000 });
+  await expect.poll(async () => {
+    if (!new URL(page.url()).pathname.startsWith('/platform-admin/login')) return true;
+    return page.getByRole('heading', { name: /Platform Admin|Dashboard|Organizations/ }).isVisible();
+  }, { timeout: 45_000 }).toBe(true);
 
   await page.context().storageState({ path: savePath });
 }

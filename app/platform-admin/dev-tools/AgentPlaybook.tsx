@@ -3,14 +3,14 @@ import { useState } from 'react';
 import {
   Sparkles, GitBranch, CreditCard, Database, FileText, FlaskConical,
   Rocket, Bug, ArrowRight, MessageSquare, Zap, ChevronLeft, BookOpen,
-  Info, Terminal,
+  Info, Terminal, Gauge,
 } from 'lucide-react';
 import styles from './playbook.module.css';
 
 /* ─── Types ──────────────────────────────────────────────────────────────────── */
 
-type AgentKey = 'design' | 'ux' | 'billing' | 'db' | 'plan' | 'uat' | 'release' | 'debug';
-type AccentColor = 'green' | 'blue' | 'yellow' | 'purple' | 'orange' | 'red' | 'cyan' | 'pink';
+type AgentKey = 'design' | 'ux' | 'billing' | 'db' | 'dba' | 'plan' | 'uat' | 'release' | 'debug';
+type AccentColor = 'green' | 'blue' | 'yellow' | 'purple' | 'orange' | 'red' | 'cyan' | 'pink' | 'teal';
 
 interface AgentDef {
   key: AgentKey;
@@ -192,6 +192,64 @@ const AGENTS: AgentDef[] = [
     ],
     notes: [
       'Tables that do NOT exist (common mistakes): league_practices, rule_sections. The schema file has a full "does not exist" list — the agent checks this before writing any query.',
+    ],
+  },
+  {
+    key: 'dba',
+    cmd: '/dba',
+    Icon: Gauge,
+    accent: 'teal',
+    headline: 'Strategic database architecture review',
+    tags: ['Schema health', 'Multi-tenant integrity', 'Indexing strategy', 'Migration safety gate'],
+    loadsFrom: [
+      'memory/reference_db_schema.md — complete table+column list (43 tables across 5 modules)',
+      'docs/active/DB_ARCHITECTURE_REVIEW.md — running findings log; 9 open findings on record',
+      'AGENCY_RULES.md — platform context (multi-tenant, Canadian sports orgs, modular billing)',
+      'memory/project_pricing_strategy.md — four billing tiers; which tables must be plan-aware',
+    ],
+    rules: [
+      '/db writes queries and migrations; /dba reviews schema design before those migrations are written.',
+      'Always give context: "before merging Phase X", "reviewing new module Y", or "quarterly check".',
+      'Run /dba before any migration that introduces a new table — review first, write SQL second.',
+      'Every accepted finding gets written to docs/active/DB_ARCHITECTURE_REVIEW.md with a severity and status.',
+      'The agent checks multi-tenant scoping first — every table must reach org_id in ≤1 hop.',
+      'FK naming rule: org foreign keys must always be named org_id, not organization_id (see Finding #1).',
+      '/dba never writes application code or feature queries — architecture decisions only.',
+    ],
+    examples: [
+      '/dba — I\'m about to add three new tables for the Stripe billing module. Review the proposed schema before I write the migration.',
+      '/dba — quarterly schema health check; what are the highest-priority open findings?',
+      '/dba — we just shipped slot-first roster Phase 2. Are the new tables consistent with existing patterns?',
+      '/dba — what\'s the risk level of the tournaments.organization_id → org_id rename? Can we do it safely now?',
+      '/dba — the coaching standalone plan will need new entitlement tables. What should they look like?',
+      '/dba — review the current status of all open findings and update statuses.',
+      '/dba — is our indexing strategy solid for an org with 500 tournaments and 10,000 teams?',
+    ],
+    notes: [
+      '/dba is strategic (is the schema sound at scale?); /db is tactical (write me a query). Keep them in separate conversations.',
+      'The findings log in docs/active/DB_ARCHITECTURE_REVIEW.md persists across sessions — every /dba conversation inherits and updates it.',
+      'Finding #1 (tournaments.organization_id vs org_id) is the highest-impact quick win and should be resolved before new tournament-adjacent tables are added.',
+    ],
+    extraSections: [
+      {
+        title: 'Open findings (as of 2026-05-23)',
+        content: (
+          <table className={styles.roleTable}>
+            <thead><tr><th>Finding</th><th>Severity</th></tr></thead>
+            <tbody>
+              <tr><td><code>tournaments</code> uses <code>organization_id</code> not <code>org_id</code></td><td>High</td></tr>
+              <tr><td>10 tournament sub-tables have no direct <code>org_id</code> (2-hop RLS chain)</td><td>High</td></tr>
+              <tr><td><code>teams.players</code> column — unknown type, likely stale denormalization</td><td>Medium</td></tr>
+              <tr><td><code>league_games</code> no direct <code>org_id</code> (2-hop chain via season)</td><td>Medium</td></tr>
+              <tr><td><code>rep_player_dues_installments</code> no <code>org_id</code> (3-hop chain)</td><td>Medium</td></tr>
+              <tr><td><code>rep_allocation_installments</code> no <code>org_id</code> (2-hop chain)</td><td>Medium</td></tr>
+              <tr><td><code>contacts</code> table is tournament-scoped only — no shared contact model</td><td>Low</td></tr>
+              <tr><td><code>announcements</code> is tournament-scoped only</td><td>Low</td></tr>
+              <tr><td><code>resources</code> is tournament-scoped only</td><td>Low</td></tr>
+            </tbody>
+          </table>
+        ),
+      },
     ],
   },
   {
@@ -414,6 +472,8 @@ const QUICK_REF = [
   { trigger: 'Flow or state missing?',          cmd: '/ux + file path or screenshot' },
   { trigger: 'Feature gated correctly?',        cmd: '/billing to audit' },
   { trigger: 'Writing a DB query?',             cmd: '/db to verify schema and get the query' },
+  { trigger: 'New table or migration coming?',  cmd: '/dba before writing the migration SQL' },
+  { trigger: 'Schema health check?',            cmd: '/dba — quarterly review or after new module ships' },
   { trigger: 'Something is broken in the app?', cmd: '/debug + screenshot or paste the error' },
   { trigger: 'Validating after changes?',       cmd: '/uat [suite-name]' },
   { trigger: 'Push to staging?',                cmd: '/release dev → verify in browser' },
@@ -442,7 +502,7 @@ function OverviewPage({ onSelect }: { onSelect: (key: AgentKey) => void }) {
   return (
     <div className={styles.playbook}>
       <p className={styles.intro}>
-        Eight custom agents live in <code>.claude/commands/</code>. Click any tile to see full
+        Nine custom agents live in <code>.claude/commands/</code>. Click any tile to see full
         instructions, sample prompts, and quick reference for that agent. General workflow
         guidance — how to sequence agents and hand off between sessions — is below the tiles.
       </p>
@@ -533,13 +593,14 @@ function OverviewPage({ onSelect }: { onSelect: (key: AgentKey) => void }) {
         </div>
         <div className={styles.quickRefRow}>
           <span className={styles.quickRefTrigger}>Code-only, no browser needed</span>
-          <code className={styles.quickRefCmd}>/billing · /ux · /db · /plan · /release</code>
+          <code className={styles.quickRefCmd}>/billing · /ux · /db · /dba · /plan · /release</code>
         </div>
       </div>
 
       <div className={styles.footer}>
         Full reference: <code>AGENT_PLAYBOOK.md</code> in the repo root ·
         Design decisions: <code>memory/design_decisions.md</code> ·
+        DB architecture: <code>docs/active/DB_ARCHITECTURE_REVIEW.md</code> ·
         Open UAT findings: <code>UAT_FINDINGS.md</code> ·
         Release config: <code>RELEASE_CONFIG.md</code> ·
         Agent commands: <code>.claude/commands/</code>

@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { forbidden, getAuthContextWithRole, unauthorized } from '@/lib/api-auth';
-import { isTeamWorkspaceOrg } from '@/lib/team-workspace-entitlements';
+import {
+  getActiveTeamEntitlementsForOrg,
+  isTeamWorkspaceOrg,
+  shouldShowClubValueNudge,
+} from '@/lib/team-workspace-entitlements';
 import {
   createTeamOrgLinkInvite,
   listTeamOrgLinksForLinkedOrg,
@@ -23,8 +27,24 @@ export async function GET(req: NextRequest) {
   if (ctx.role !== 'owner' && ctx.role !== 'admin') return forbidden();
   if (isTeamWorkspaceOrg(ctx.org)) return forbidden();
 
-  const links = await listTeamOrgLinksForLinkedOrg(ctx.org.id);
-  return NextResponse.json({ links });
+  const [links, entitlements] = await Promise.all([
+    listTeamOrgLinksForLinkedOrg(ctx.org.id),
+    getActiveTeamEntitlementsForOrg(ctx.org.id),
+  ]);
+  const activeOrgPaidTeamCount = new Set(
+    entitlements
+      .filter(entitlement => entitlement.source === 'org_team_addon')
+      .map(entitlement => entitlement.repTeamId),
+  ).size;
+
+  return NextResponse.json({
+    links,
+    billingSummary: {
+      activeOrgPaidTeamCount,
+      clubValueThreshold: 3,
+      showClubValueNudge: shouldShowClubValueNudge(activeOrgPaidTeamCount),
+    },
+  });
 }
 
 export async function POST(req: NextRequest) {

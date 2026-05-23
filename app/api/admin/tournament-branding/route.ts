@@ -36,7 +36,7 @@ export async function GET(req: Request) {
     .from('tournaments')
     .select('logo_url, hero_banner_url, theme_preset, theme_primary, theme_accent, theme_font, theme_card_style, color_mode, require_score_finalization')
     .eq('id', tournamentId)
-    .eq('organization_id', ctx.org.id)
+    .eq('org_id', ctx.org.id)
     .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
@@ -46,7 +46,7 @@ export async function GET(req: Request) {
     .from('tournaments')
     .select('public_hidden_pages')
     .eq('id', tournamentId)
-    .eq('organization_id', ctx.org.id)
+    .eq('org_id', ctx.org.id)
     .maybeSingle();
 
   return NextResponse.json({
@@ -182,7 +182,7 @@ export async function PATCH(req: Request) {
     .from('tournaments')
     .update(updates)
     .eq('id', tournamentId)
-    .eq('organization_id', ctx.org.id);
+    .eq('org_id', ctx.org.id);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 

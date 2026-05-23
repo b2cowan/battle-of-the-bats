@@ -76,8 +76,8 @@ export function registrationConfirmationHtml(p: {
     <p style="color:rgba(255,255,255,0.7);">Your registration is currently <strong style="color:#F59E0B;">pending review</strong>. If payment is required, the organizer will share payment instructions directly. FieldLogicHQ does not process online payments.</p>
     ${p.teamWorkspaceClaimUrl ? `
       <div style="background:#111827;border:1px solid rgba(190,242,100,0.35);border-radius:8px;padding:1.25rem;margin:1.5rem 0;">
-        <p style="margin:0 0 0.5rem;font-weight:700;color:#bef264;">Keep managing your season</p>
-        <p style="margin:0 0 1rem;color:rgba(255,255,255,0.72);line-height:1.6;">Activate a FieldLogicHQ Team workspace with your tournament team details prefilled.</p>
+        <p style="margin:0 0 0.5rem;font-weight:700;color:#bef264;">Keep this team organized after the tournament</p>
+        <p style="margin:0 0 1rem;color:rgba(255,255,255,0.72);line-height:1.6;">Activate a FieldLogicHQ Team workspace with your tournament team details prefilled. You can manage roster, schedule, dues, documents, attendance, lineups, and a quick local tournament from the Coaches Portal.</p>
         <a href="${p.teamWorkspaceClaimUrl}" style="display:inline-block;background:#bef264;color:#0b0f14;text-decoration:none;font-weight:800;padding:0.75rem 1rem;border-radius:4px;">Claim Team Workspace</a>
       </div>
     ` : ''}
@@ -257,7 +257,7 @@ export function teamWorkspaceClaimInviteHtml(p: {
         Source tournament: <strong>${escapeEmailHtml(p.tournamentName)}</strong>
       </p>
     </div>
-    <p style="color:rgba(255,255,255,0.72);line-height:1.6;">Use this link to activate your workspace with the team details already filled in. For security, sign in or create your account with the email address that received this invite.</p>
+    <p style="color:rgba(255,255,255,0.72);line-height:1.6;">Use this link to activate your workspace with the team details already filled in. Team gives your coaches one place for roster, schedule, dues, documents, attendance, lineups, and quick local tournaments. For security, sign in or create your account with the email address that received this invite.</p>
     <a href="${escapeEmailHtml(p.claimUrl)}" style="display:inline-block;background:#bef264;color:#0b0f14;text-decoration:none;font-weight:800;padding:0.75rem 1rem;border-radius:4px;margin:0.5rem 0 1rem;">Claim Team Workspace</a>
     <p style="color:rgba(255,255,255,0.45);font-size:0.82rem;">If you do not manage this team, you can ignore this email.</p>
   `, p.contactEmail);
@@ -270,6 +270,7 @@ export function tournamentResultsFinalizedHtml(p: {
   scheduleUrl: string;
   teamsUrl: string;
   fieldLogicUrl: string;
+  teamUrl?: string;
   contactEmail?: string;
 }) {
   return wrap(`
@@ -285,6 +286,13 @@ export function tournamentResultsFinalizedHtml(p: {
       </p>
     </div>
     <p style="color:rgba(255,255,255,0.65);font-size:0.88rem;">Thanks for being part of the tournament.</p>
+    ${p.teamUrl ? `
+      <div style="background:#111827;border:1px solid rgba(190,242,100,0.35);border-radius:8px;padding:1.25rem;margin:1.5rem 0;">
+        <p style="margin:0 0 0.5rem;font-weight:700;color:#bef264;">Keep this team going</p>
+        <p style="margin:0 0 1rem;color:rgba(255,255,255,0.72);line-height:1.6;">Turn the tournament team into a season workspace for roster, schedule, dues, documents, attendance, and lineups.</p>
+        <a href="${escapeEmailHtml(p.teamUrl)}" style="display:inline-block;background:#bef264;color:#0b0f14;text-decoration:none;font-weight:800;padding:0.75rem 1rem;border-radius:4px;">Explore Team Workspace</a>
+      </div>
+    ` : ''}
     <p style="color:rgba(255,255,255,0.45);font-size:0.82rem;line-height:1.55;margin-top:1.5rem;">
       Running your own tournament? <a href="${escapeEmailHtml(p.fieldLogicUrl)}" style="color:#A855F7;">See how FieldLogicHQ helps organizers manage registration, schedules, results, and post-event reporting.</a>
     </p>

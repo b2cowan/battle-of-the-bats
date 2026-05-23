@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useCallback } from 'react';
+import { use, useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { ChevronRight } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
@@ -16,6 +16,7 @@ const STATUS_CSS: Record<string, string> = {
 interface EditForm {
   playerFirstName: string; playerLastName: string;
   playerDateOfBirth: string; playerNumber: string;
+  primaryPosition: string; secondaryPosition: string;
   guardianFirstName: string; guardianLastName: string;
   guardianEmail: string; guardianPhone: string;
   notes: string; adminNotes: string;
@@ -27,6 +28,8 @@ function playerToForm(p: RepRosterPlayer): EditForm {
     playerLastName:    p.playerLastName,
     playerDateOfBirth: p.playerDateOfBirth ?? '',
     playerNumber:      p.playerNumber ?? '',
+    primaryPosition:   p.primaryPosition ?? '',
+    secondaryPosition: p.secondaryPosition ?? '',
     guardianFirstName: p.guardianFirstName ?? '',
     guardianLastName:  p.guardianLastName ?? '',
     guardianEmail:     p.guardianEmail ?? '',
@@ -36,13 +39,18 @@ function playerToForm(p: RepRosterPlayer): EditForm {
   };
 }
 
+function errorMessage(error: unknown, fallback: string) {
+  return error instanceof Error ? error.message : fallback;
+}
+
 export default function PlayerDetailPage({
   params,
 }: {
-  params: { orgSlug: string; teamId: string; playerId: string };
+  params: Promise<{ orgSlug: string; teamId: string; playerId: string }>;
 }) {
+  const { orgSlug, teamId, playerId } = use(params);
   const { assignments, loading: assignmentsLoading } = useCoaches();
-  const assignment = assignments.find(a => a.teamId === params.teamId);
+  const assignment = assignments.find(a => a.teamId === teamId);
 
   const [player, setPlayer] = useState<RepRosterPlayer | null>(null);
   const [form, setForm] = useState<EditForm | null>(null);
@@ -62,26 +70,28 @@ export default function PlayerDetailPage({
     setFetching(true);
     try {
       const res = await fetch(
-        `/api/coaches/${params.orgSlug}/teams/${params.teamId}/roster/${params.playerId}`,
+        `/api/coaches/${orgSlug}/teams/${teamId}/roster/${playerId}`,
       );
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? 'Failed to load player');
       setPlayer(data.player);
       setForm(playerToForm(data.player));
-    } catch (e: any) {
-      showFeedback('danger', e.message ?? 'Failed to load.');
+    } catch (e: unknown) {
+      showFeedback('danger', errorMessage(e, 'Failed to load.'));
     } finally {
       setFetching(false);
     }
-  }, [params.orgSlug, params.teamId, params.playerId]);
+  }, [orgSlug, teamId, playerId]);
 
-  useEffect(() => { if (!assignmentsLoading) load(); }, [assignmentsLoading, load]);
+  useEffect(() => { if (!assignmentsLoading) void Promise.resolve().then(load); }, [assignmentsLoading, load]);
 
   const isDirty = player && form && (
     form.playerFirstName   !== player.playerFirstName   ||
     form.playerLastName    !== player.playerLastName    ||
     form.playerDateOfBirth !== (player.playerDateOfBirth ?? '') ||
     form.playerNumber      !== (player.playerNumber ?? '')      ||
+    form.primaryPosition   !== (player.primaryPosition ?? '')   ||
+    form.secondaryPosition !== (player.secondaryPosition ?? '') ||
     form.guardianFirstName !== (player.guardianFirstName ?? '') ||
     form.guardianLastName  !== (player.guardianLastName ?? '')  ||
     form.guardianEmail     !== (player.guardianEmail ?? '')     ||
@@ -95,7 +105,7 @@ export default function PlayerDetailPage({
     setSaving(true);
     try {
       const res = await fetch(
-        `/api/coaches/${params.orgSlug}/teams/${params.teamId}/roster/${params.playerId}`,
+        `/api/coaches/${orgSlug}/teams/${teamId}/roster/${playerId}`,
         {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
@@ -104,6 +114,8 @@ export default function PlayerDetailPage({
             playerLastName:     form.playerLastName.trim(),
             playerDateOfBirth:  form.playerDateOfBirth || null,
             playerNumber:       form.playerNumber.trim() || null,
+            primaryPosition:    form.primaryPosition.trim() || null,
+            secondaryPosition:  form.secondaryPosition.trim() || null,
             guardianFirstName:  form.guardianFirstName.trim(),
             guardianLastName:   form.guardianLastName.trim(),
             guardianEmail:      form.guardianEmail.trim(),
@@ -118,8 +130,8 @@ export default function PlayerDetailPage({
       setPlayer(data.player);
       setForm(playerToForm(data.player));
       showFeedback('success', 'Player saved.');
-    } catch (e: any) {
-      showFeedback('danger', e.message ?? 'Failed to save.');
+    } catch (e: unknown) {
+      showFeedback('danger', errorMessage(e, 'Failed to save.'));
     } finally {
       setSaving(false);
     }
@@ -131,7 +143,7 @@ export default function PlayerDetailPage({
     setTogglingStatus(true);
     try {
       const res = await fetch(
-        `/api/coaches/${params.orgSlug}/teams/${params.teamId}/roster/${params.playerId}`,
+        `/api/coaches/${orgSlug}/teams/${teamId}/roster/${playerId}`,
         {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
@@ -142,14 +154,14 @@ export default function PlayerDetailPage({
       if (!res.ok) throw new Error(data.error ?? 'Failed to update status');
       setPlayer(data.player);
       setForm(playerToForm(data.player));
-    } catch (e: any) {
-      showFeedback('danger', e.message ?? 'Failed to update status.');
+    } catch (e: unknown) {
+      showFeedback('danger', errorMessage(e, 'Failed to update status.'));
     } finally {
       setTogglingStatus(false);
     }
   }
 
-  const base = `/${params.orgSlug}/coaches/teams/${params.teamId}`;
+  const base = `/${orgSlug}/coaches/teams/${teamId}`;
 
   if (assignmentsLoading || fetching) return <p className={styles.muted}>Loading…</p>;
   if (!assignment) {
@@ -166,7 +178,7 @@ export default function PlayerDetailPage({
     <div className={styles.page}>
       {/* Breadcrumb */}
       <div className={styles.breadcrumb}>
-        <Link href={`/${params.orgSlug}/coaches`}>Coaches Portal</Link>
+        <Link href={`/${orgSlug}/coaches`}>Coaches Portal</Link>
         <span><ChevronRight size={12} /></span>
         <Link href={base}>{assignment.teamName}</Link>
         <span><ChevronRight size={12} /></span>
@@ -235,6 +247,20 @@ export default function PlayerDetailPage({
               value={form.playerNumber}
               onChange={e => setForm(f => f ? { ...f, playerNumber: e.target.value } : f)}
               maxLength={10} />
+          </div>
+          <div className={styles.field}>
+            <label className={styles.label} htmlFor="primary-position">Primary Position</label>
+            <input id="primary-position" className={styles.input} type="text"
+              value={form.primaryPosition}
+              onChange={e => setForm(f => f ? { ...f, primaryPosition: e.target.value } : f)}
+              maxLength={20} />
+          </div>
+          <div className={styles.field}>
+            <label className={styles.label} htmlFor="secondary-position">Secondary Position</label>
+            <input id="secondary-position" className={styles.input} type="text"
+              value={form.secondaryPosition}
+              onChange={e => setForm(f => f ? { ...f, secondaryPosition: e.target.value } : f)}
+              maxLength={20} />
           </div>
           <div className={`${styles.field} ${styles.formGridFull}`}>
             <label className={styles.label} htmlFor="pnotes">Notes</label>
@@ -306,9 +332,9 @@ export default function PlayerDetailPage({
       {/* Documents */}
       <div className={styles.detailSection}>
         <PlayerDocumentsSection
-          orgSlug={params.orgSlug}
-          teamId={params.teamId}
-          playerId={params.playerId}
+          orgSlug={orgSlug}
+          teamId={teamId}
+          playerId={playerId}
         />
       </div>
 

@@ -212,3 +212,118 @@
 .expanded {
   background: var(--bg-2);
 }
+
+/* ─── Inline Edit Form (planning mode expanded row) ──────────────────────── */
+.inlineForm {
+  border-top: 1px solid var(--border-2);
+  background: var(--bg-2);
+  animation: adminSlideDown 0.15s ease-out;
+}
+
+.inlineFormBody {
+  display: grid;
+  grid-template-columns: 130px 110px 1fr;
+  gap: 0.55rem 1rem;
+  padding: 0.75rem 1.5rem 0.6rem;
+}
+
+.formField {
+  display: flex;
+  flex-direction: column;
+  gap: 0.22rem;
+  min-width: 0;
+}
+
+/* Spans all grid columns — used for Notes textarea */
+.formFieldFull {
+  grid-column: 1 / -1;
+}
+
+.formLabel {
+  font-family: var(--font-data);
+  font-size: 0.55rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--white-30);
+}
+
+.formInput,
+.formSelect {
+  width: 100%;
+  height: 28px;
+  padding: 0 0.6rem;
+  background: var(--black-30);
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.28);
+  border-radius: 2px;
+  color: var(--fl-text);
+  font-family: var(--font-data);
+  font-size: 0.78rem;
+  letter-spacing: 0.02em;
+  color-scheme: dark;
+}
+
+.formSelect {
+  padding-right: 1.6rem;
+  cursor: pointer;
+}
+
+.formInput:focus,
+.formSelect:focus {
+  outline: none;
+  border-color: var(--blueprint-blue);
+  box-shadow: 0 0 0 2px rgba(var(--blueprint-blue-rgb), 0.15);
+}
+
+.formTextarea {
+  width: 100%;
+  padding: 0.35rem 0.6rem;
+  background: var(--black-30);
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.28);
+  border-radius: 2px;
+  color: var(--fl-text);
+  font-family: var(--font-data);
+  font-size: 0.78rem;
+  letter-spacing: 0.02em;
+  resize: none;
+  min-height: 50px;
+  line-height: 1.45;
+}
+
+.formTextarea:focus {
+  outline: none;
+  border-color: var(--blueprint-blue);
+  box-shadow: 0 0 0 2px rgba(var(--blueprint-blue-rgb), 0.15);
+}
+
+.inlineFormFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.4rem 1.5rem 0.55rem;
+  border-top: 1px solid rgba(var(--blueprint-blue-rgb), 0.1);
+}
+
+.saveError {
+  font-family: var(--font-data);
+  font-size: 0.68rem;
+  color: var(--danger, #ef4444);
+}
+
+@media (max-width: 768px) {
+  .inlineFormBody {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  /* On mobile, venue spans both columns */
+  .inlineFormBody .formField:nth-child(3) {
+    grid-column: 1 / -1;
+  }
+
+  .inlineFormFooter {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.6rem;
+  }
+}

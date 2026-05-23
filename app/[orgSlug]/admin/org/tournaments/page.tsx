@@ -67,7 +67,7 @@ type DivisionRow = {
 
 type AdminTournamentRow = {
   id: string;
-  organization_id?: string | null;
+  org_id?: string | null;
   year: number;
   name: string;
   slug?: string | null;
@@ -92,7 +92,7 @@ function mapAdminTournament(row: AdminTournamentRow): Tournament {
   const status: TournamentStatus = row.status ?? (row.is_active ? 'active' : 'draft');
   return {
     id: row.id,
-    organizationId: row.organization_id ?? undefined,
+    organizationId: row.org_id ?? undefined,
     year: row.year,
     name: row.name,
     slug: row.slug ?? '',

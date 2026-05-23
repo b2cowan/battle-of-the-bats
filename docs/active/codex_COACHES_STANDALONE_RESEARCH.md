@@ -76,7 +76,7 @@ Current internal pricing context:
 | Tournament Plus | $39 CAD/month | Serious tournament operations tier |
 | League | $89 CAD/month | Coming soon/early access |
 | Club | $179 CAD/month | Includes rep teams, coaches portal, accounting, house league, public site |
-| Additional Club rep team | $20 CAD/month or $200 CAD/year | Club only; first 3 active rep teams included |
+| Additional Club rep team | $19 CAD/month or $190 CAD/year | Club only; first 3 active rep teams included |
 
 Recommended Team price:
 

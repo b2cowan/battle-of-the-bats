@@ -906,85 +906,86 @@ export default function UnifiedTeamsPage() {
     return (
       <div className={`${s.expandedRow} ${styles.compactExpandedRow}`}>
         <div className={styles.teamDetailShell}>
-          <div className={styles.teamDetailMeta}>
-            {team.email ? <a href={`mailto:${team.email}`}>{team.email}</a> : <span>Email not provided</span>}
-            <span>Registered {new Date(team.registered_at).toLocaleDateString()}</span>
-          </div>
-          <div className={styles.teamQuickActions}>
+          {/* ── Single row: meta left, actions right ── */}
+          <div className={styles.teamDetailMetaRow}>
+            <div className={styles.teamDetailMeta}>
+              {team.email ? <a href={`mailto:${team.email}`}>{team.email}</a> : <span>Email not provided</span>}
+              <span>Registered {new Date(team.registered_at).toLocaleDateString()}</span>
+            </div>
+            <div className={styles.teamQuickActions}>
               {team.status !== 'accepted' && (
                 <button className="btn btn-primary btn-data" onClick={() => patch(team.id, { status: 'accepted' }, `Accept "${team.name}"? An automated email will be sent.`)} disabled={busy}>Accept</button>
               )}
               {team.status !== 'rejected' && (
-                <button className="btn btn-outline btn-data" style={{ color: 'var(--danger)' }} onClick={() => patch(team.id, { status: 'rejected' }, `Reject "${team.name}"? An automated email will be sent.`)} disabled={busy}>Reject</button>
+                <button className="btn btn-ghost btn-data" style={{ color: 'rgba(var(--danger-rgb), 0.65)', borderColor: 'transparent', background: 'transparent' }} onClick={() => patch(team.id, { status: 'rejected' }, `Reject "${team.name}"? An automated email will be sent.`)} disabled={busy}>Reject</button>
               )}
               {team.status === 'accepted' && !effectiveFee.totalFeeAmount ? (
                 <button className="btn btn-ghost btn-data" onClick={() => patch(team.id, { paymentStatus: team.paymentStatus === 'paid' ? 'pending' : 'paid' })} disabled={busy}>
                   {team.paymentStatus === 'paid' ? 'Mark Unpaid' : 'Mark Paid'}
                 </button>
               ) : null}
-              <button className="btn btn-ghost btn-xs" onClick={() => handleDelete(team.id, team.name)} disabled={busy} style={{ color: 'var(--danger)' }} aria-label={`Delete ${team.name}`}>
-                <Trash2 size={13} />
+              <button className="btn btn-ghost btn-data" onClick={() => handleDelete(team.id, team.name)} disabled={busy} style={{ color: 'rgba(var(--danger-rgb), 0.45)', borderColor: 'transparent', background: 'transparent', padding: '0.3rem 0.45rem' }} aria-label={`Delete ${team.name}`}>
+                <Trash2 size={12} />
               </button>
-              {team.status === 'accepted' && (
-                <a href={`/${currentOrg?.slug ?? ''}/teams/${team.id}`} target="_blank" className="btn btn-ghost btn-data">Profile ↗</a>
-              )}
             </div>
+          </div>
 
-            {team.status === 'accepted' && effectiveFee.totalFeeAmount ? (
-              <details className={styles.teamDetailSection}>
-                <summary className={styles.teamDetailSummary}>
-                  Payment
-                  <span className={`badge badge-${PAYMENT_STATUS_STYLE[pStatus]}`}>{PAYMENT_STATUS_LABEL[pStatus]}</span>
-                </summary>
-                <div className={styles.teamDetailPanel}>
-                  <div className={styles.paymentEditor}>
-                    <label className={styles.paymentField}>
-                      <span>Deposit Paid ($)</span>
-                      <input type="number" min="0" step="0.01" defaultValue={team.depositPaid || ''} placeholder="0.00"
-                        onBlur={e => { const val = parseFloat(e.target.value) || 0; if (val !== team.depositPaid) patch(team.id, { depositPaid: val }); }} />
-                    </label>
-                    <label className={styles.paymentField}>
-                      <span>Total Paid ($)</span>
-                      <input type="number" min="0" step="0.01" defaultValue={team.totalPaid || ''} placeholder="0.00"
-                        onBlur={e => { const val = parseFloat(e.target.value) || 0; if (val !== team.totalPaid) patch(team.id, { totalPaid: val }); }} />
-                    </label>
-                  </div>
-                  {due && (
-                    <p className={styles.paymentDue}>
-                      {due.label}: <strong>{formatMoney(due.amount)}</strong>
-                      {due.dueDate ? ` by ${new Date(due.dueDate).toLocaleDateString()}` : ''}
-                    </p>
-                  )}
-                </div>
-              </details>
-            ) : null}
-
+          {/* ── Collapsible sections ── */}
+          {team.status === 'accepted' && effectiveFee.totalFeeAmount ? (
             <details className={styles.teamDetailSection}>
-              <summary className={styles.teamDetailSummary}>Admin notes</summary>
+              <summary className={styles.teamDetailSummary}>
+                Payment
+                <span className={`badge badge-${PAYMENT_STATUS_STYLE[pStatus]}`}>{PAYMENT_STATUS_LABEL[pStatus]}</span>
+              </summary>
               <div className={styles.teamDetailPanel}>
-                <div className={styles.notesArea}>
-                  <textarea placeholder="Private notes..." defaultValue={team.adminNotes} onBlur={e => e.target.value !== team.adminNotes && patch(team.id, { adminNotes: e.target.value })} />
+                <div className={styles.paymentEditor}>
+                  <label className={styles.paymentField}>
+                    <span>Deposit Paid ($)</span>
+                    <input type="number" min="0" step="0.01" defaultValue={team.depositPaid || ''} placeholder="0.00"
+                      onBlur={e => { const val = parseFloat(e.target.value) || 0; if (val !== team.depositPaid) patch(team.id, { depositPaid: val }); }} />
+                  </label>
+                  <label className={styles.paymentField}>
+                    <span>Total Paid ($)</span>
+                    <input type="number" min="0" step="0.01" defaultValue={team.totalPaid || ''} placeholder="0.00"
+                      onBlur={e => { const val = parseFloat(e.target.value) || 0; if (val !== team.totalPaid) patch(team.id, { totalPaid: val }); }} />
+                  </label>
+                </div>
+                {due && (
+                  <p className={styles.paymentDue}>
+                    {due.label}: <strong>{formatMoney(due.amount)}</strong>
+                    {due.dueDate ? ` by ${new Date(due.dueDate).toLocaleDateString()}` : ''}
+                  </p>
+                )}
+              </div>
+            </details>
+          ) : null}
+
+          <details className={styles.teamDetailSection}>
+            <summary className={styles.teamDetailSummary}>Admin notes</summary>
+            <div className={styles.teamDetailPanel}>
+              <div className={styles.notesArea}>
+                <textarea placeholder="Private notes..." defaultValue={team.adminNotes} onBlur={e => e.target.value !== team.adminNotes && patch(team.id, { adminNotes: e.target.value })} />
+              </div>
+            </div>
+          </details>
+
+          {team.customAnswers && team.customAnswers.length > 0 && (
+            <details className={styles.teamDetailSection}>
+              <summary className={styles.teamDetailSummary}>Registration answers</summary>
+              <div className={styles.teamDetailPanel}>
+                <div className={styles.answerList}>
+                  {team.customAnswers.map(answer => (
+                    <div key={answer.fieldId} className={styles.answerItem}>
+                      <strong>{answer.label}</strong>
+                      <span>{answer.value || '-'}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
             </details>
-
-            {team.customAnswers && team.customAnswers.length > 0 && (
-              <details className={styles.teamDetailSection}>
-                <summary className={styles.teamDetailSummary}>Registration answers</summary>
-                <div className={styles.teamDetailPanel}>
-                  <div className={styles.answerList}>
-                    {team.customAnswers.map(answer => (
-                      <div key={answer.fieldId} className={styles.answerItem}>
-                        <strong>{answer.label}</strong>
-                        <span>{answer.value || '-'}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </details>
-            )}
-          </div>
+          )}
         </div>
+      </div>
     );
   }
 

@@ -12,7 +12,7 @@ export async function GET() {
   const { count, error } = await supabaseAdmin
     .from('tournaments')
     .select('id', { count: 'exact', head: true })
-    .eq('organization_id', ctx.org.id)
+    .eq('org_id', ctx.org.id)
     .neq('status', 'archived');
 
   if (error) {

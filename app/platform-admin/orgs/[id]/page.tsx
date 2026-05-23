@@ -100,7 +100,7 @@ async function getTournaments(orgId: string) {
   const { data } = await supabaseAdmin
     .from('tournaments')
     .select('id, name, status, start_date, end_date')
-    .eq('organization_id', orgId)
+    .eq('org_id', orgId)
     .neq('status', 'archived')
     .order('start_date', { ascending: false });
 

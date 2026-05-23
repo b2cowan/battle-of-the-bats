@@ -37,14 +37,14 @@ export async function POST() {
     .from('tournaments')
     .select('id')
     .eq('slug', SLUG)
-    .eq('organization_id', org.id)
+    .eq('org_id', org.id)
     .maybeSingle();
 
   if (!tournament) {
     const { data, error } = await supabaseAdmin
       .from('tournaments')
       .insert({
-        organization_id: org.id,
+        org_id: org.id,
         name: 'Dev Tournament 2026',
         slug: SLUG,
         year: YEAR,

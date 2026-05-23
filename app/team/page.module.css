@@ -48,7 +48,48 @@
   font-size: 0.95rem;
   line-height: 1.75;
   color: var(--data-gray);
-  margin-bottom: 2rem;
+  margin-bottom: 1.4rem;
+}
+
+.heroActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1.35rem;
+}
+
+.heroPrimary,
+.heroSecondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  padding: 0 1rem;
+  font-family: var(--font-data);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-decoration: none;
+}
+
+.heroPrimary {
+  background: var(--logic-lime);
+  color: var(--pitch-black);
+}
+
+.heroPrimary:hover {
+  background: #fff;
+}
+
+.heroSecondary {
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.45);
+  color: var(--data-gray);
+}
+
+.heroSecondary:hover {
+  border-color: rgba(var(--blueprint-blue-rgb), 0.75);
+  color: var(--fl-text);
 }
 
 .pricePanel {
@@ -60,6 +101,69 @@
   background: rgba(var(--blueprint-blue-rgb), 0.06);
   padding: 1.4rem;
   margin-bottom: 1.5rem;
+}
+
+.workspacePreview {
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.32);
+  background:
+    linear-gradient(135deg, rgba(var(--blueprint-blue-rgb), 0.08), rgba(var(--logic-lime-rgb), 0.035)),
+    rgba(255,255,255,0.025);
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.previewHeader {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: flex-start;
+  margin-bottom: 0.85rem;
+}
+
+.previewHeader strong {
+  display: block;
+  color: var(--fl-text);
+  font-family: var(--font-data);
+  font-size: 0.95rem;
+}
+
+.previewKicker {
+  display: block;
+  font-family: var(--font-data);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--blueprint-blue);
+  margin-bottom: 0.2rem;
+}
+
+.previewBadge {
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.32);
+  background: rgba(var(--logic-lime-rgb), 0.08);
+  color: var(--logic-lime);
+  padding: 0.2rem 0.55rem;
+  font-family: var(--font-data);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.previewGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.45rem;
+}
+
+.previewGrid span {
+  min-height: 34px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.035);
+  color: var(--data-gray);
+  display: flex;
+  align-items: center;
+  padding: 0 0.65rem;
+  font-family: var(--font-data);
+  font-size: 0.72rem;
 }
 
 .price {
@@ -84,6 +188,90 @@
 .benefitGrid {
   display: grid;
   gap: 0.9rem;
+}
+
+.valueGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.valueCard {
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.22);
+  background: rgba(var(--blueprint-blue-rgb), 0.035);
+  padding: 0.85rem;
+}
+
+.valueCard p {
+  margin: 0 0 0.3rem;
+  color: var(--fl-text);
+  font-family: var(--font-data);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.valueCard span {
+  display: block;
+  color: var(--data-gray);
+  font-family: var(--font-data);
+  font-size: 0.71rem;
+  line-height: 1.55;
+}
+
+.workflowPanel {
+  border-left: 2px solid rgba(var(--logic-lime-rgb), 0.48);
+  padding-left: 1rem;
+  margin-bottom: 1.1rem;
+}
+
+.workflowTitle {
+  margin: 0 0 0.7rem;
+  color: var(--fl-text);
+  font-family: var(--font-data);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.workflowSteps {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.workflowStep {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.65rem;
+  align-items: start;
+}
+
+.workflowStep > span {
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.34);
+  color: var(--logic-lime);
+  font-family: var(--font-data);
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+
+.workflowStep p {
+  margin: 0 0 0.15rem;
+  color: var(--fl-text);
+  font-family: var(--font-data);
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+.workflowStep small {
+  display: block;
+  color: var(--data-gray);
+  font-family: var(--font-data);
+  font-size: 0.7rem;
+  line-height: 1.45;
 }
 
 .benefit {
@@ -434,7 +622,9 @@
   }
 
   .twoCol,
-  .segmented {
+  .segmented,
+  .valueGrid,
+  .previewGrid {
     grid-template-columns: 1fr;
   }
 

@@ -199,6 +199,46 @@ const platformAdminHelp: HelpPageContent = {
       ],
     },
     {
+      id: 'team-launch-readiness',
+      group: 'Launch SOP',
+      heading: 'How to verify Team launch readiness',
+      summary: 'Confirm Stripe prices, readiness checks, manual smokes, and customer-facing help before Team launch.',
+      keywords: ['team launch', 'stripe prices', 'readiness', 'team checkout', 'org team add-on', 'club extra team'],
+      searchText: 'Team launch readiness Stripe price IDs sandbox live direct checkout org Team add-on Club extra team cancellation past due mobile coach portal help documentation',
+      links: [
+        { label: 'Dev Tools', href: '/platform-admin/dev-tools' },
+        { label: 'Stripe Prices', href: '/platform-admin/stripe-prices' },
+        { label: 'Plans & Pricing', href: '/platform-admin/plans-pricing' },
+      ],
+      content: (
+        <>
+          <p>Use this before opening Team self-serve checkout or supporting the first external Team customers.</p>
+          <ol>
+            <li>Confirm Stripe has sandbox and live recurring prices for direct Team at <strong>$29 CAD monthly</strong> and <strong>$290 CAD annual/seasonal</strong>.</li>
+            <li>Confirm Stripe has sandbox and live recurring prices for org Team add-ons at <strong>$29 CAD monthly</strong> and <strong>$290 CAD annual/seasonal</strong>.</li>
+            <li>Confirm Stripe has new sandbox and live recurring prices for Club extra rep teams at <strong>$19 CAD monthly</strong> and <strong>$190 CAD annual</strong>. Do not reuse the old $20/$200 price IDs.</li>
+            <li>Paste each <code>price_...</code> ID into the matching sandbox or live row in <strong>Stripe Prices</strong> or <strong>Plans &amp; Pricing</strong>.</li>
+            <li>Run <strong>Dev Tools &gt; Team checkout readiness</strong> and resolve any missing app URL, webhook secret, Team gate, or price-row failures.</li>
+            <li>Complete manual sandbox smokes for direct Team checkout, tournament-claim checkout, org Team add-on checkout, cancellation or past-due simulation, and Club extra-team quantity billing.</li>
+            <li>Ask the product owner to visually check the public pricing page, Team signup page, and mobile Coaches Portal flows.</li>
+          </ol>
+          <p>Customer-facing help should explain Team, season rollover, the one free-tier local tournament slot, Basic org linking, billing transfer, ownership transfer, and the difference between direct Team, org Team add-ons, Club included teams, and Club extra teams.</p>
+        </>
+      ),
+      faqs: [
+        {
+          id: 'faq-team-launch-missing-price',
+          question: 'What if a Team checkout readiness row reports a missing price?',
+          answer: (
+            <p>Create or confirm the Stripe price in the correct Stripe environment, paste the new <code>price_...</code> ID into the matching FieldLogicHQ price row, then rerun the readiness check before testing checkout.</p>
+          ),
+          answerText: 'Create or confirm the Stripe price, paste the price ID into the matching price row, and rerun readiness before testing checkout.',
+          keywords: ['missing price', 'readiness', 'Stripe price'],
+          popular: true,
+        },
+      ],
+    },
+    {
       id: 'bulk-operations',
       group: 'Billing & Product SOP',
       heading: 'How to run guarded bulk operations',

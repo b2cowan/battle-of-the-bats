@@ -91,7 +91,7 @@ export async function POST(req: Request) {
       .from('tournaments')
       .select('id')
       .eq('id', tournamentId)
-      .eq('organization_id', ctx.org.id)
+      .eq('org_id', ctx.org.id)
       .single();
     if (tournamentError || !tournament) {
       return NextResponse.json({ error: 'Tournament not found' }, { status: 404 });

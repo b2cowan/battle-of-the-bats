@@ -9,6 +9,12 @@ import styles from '../auth.module.css';
 
 type PageState = 'waiting' | 'ready' | 'submitting' | 'expired';
 
+type InviteContext = {
+  orgSlug: string | null;
+  role: string | null;
+  status: string | null;
+};
+
 function AcceptInviteForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -19,9 +25,18 @@ function AcceptInviteForm() {
   const [displayName, setDisplayName] = useState('');
   const [showPw, setShowPw] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  const [inviteContext, setInviteContext] = useState<InviteContext | null>(null);
 
   useEffect(() => {
     const supabase = createClient();
+
+    async function loadInviteContext() {
+      const response = await fetch('/api/auth/accept-invite', { cache: 'no-store' });
+      if (!response.ok) return;
+
+      const data = await response.json().catch(() => null) as InviteContext | null;
+      if (data) setInviteContext(data);
+    }
 
     // The /auth/callback page handles token exchange (PKCE or implicit flow) and
     // redirects here with a clean URL once the session is in cookies. We rely on
@@ -29,6 +44,7 @@ function AcceptInviteForm() {
     // raw tokens in the URL.
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (session && (event === 'SIGNED_IN' || event === 'INITIAL_SESSION')) {
+        void loadInviteContext();
         setPageState('ready');
       }
     });
@@ -70,7 +86,7 @@ function AcceptInviteForm() {
     const data = await res.json();
 
     const slug = data.orgSlug ?? orgSlugParam;
-    const role = data.role as string | null;
+    const role = (data.role as string | null) ?? inviteContext?.role ?? null;
 
     if (slug) {
       const dest = role === 'official' ? `/${slug}/scorekeeper` : `/${slug}/admin`;
@@ -82,6 +98,14 @@ function AcceptInviteForm() {
       router.refresh();
     }
   }
+
+  const isScorekeeperInvite = inviteContext?.role === 'official';
+  const title = isScorekeeperInvite ? 'Set Up Scorekeeper Access' : 'Accept Invitation';
+  const subtitle = isScorekeeperInvite ? 'FieldLogicHQ - Scorekeeper App' : 'FieldLogicHQ - Tournament Management Platform';
+  const introCopy = isScorekeeperInvite
+    ? 'Create a password to open the scorekeeper workspace for assigned tournament games.'
+    : 'Create a password to finish setting up your account.';
+  const submitCopy = isScorekeeperInvite ? 'Create Password & Open Scorekeeper' : 'Create Password & Continue';
 
   if (pageState === 'expired') {
     return (
@@ -117,8 +141,8 @@ function AcceptInviteForm() {
             <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
           </svg>
         </div>
-        <h1 className={styles.title}>Accept Invitation</h1>
-        <p className={styles.sub}>FieldLogicHQ — Tournament Management Platform</p>
+        <h1 className={styles.title}>{title}</h1>
+        <p className={styles.sub}>{subtitle}</p>
       </div>
 
       {pageState === 'waiting' && (
@@ -130,7 +154,7 @@ function AcceptInviteForm() {
       {(pageState === 'ready' || pageState === 'submitting') && (
         <>
           <p style={{ fontFamily: 'var(--font-data)', fontSize: '0.78rem', color: 'var(--data-gray)', marginBottom: '1.25rem', lineHeight: 1.5 }}>
-            Create a password to finish setting up your account.
+            {introCopy}
           </p>
           <form onSubmit={handleSubmit} className={styles.form}>
             <div className="form-group">
@@ -174,7 +198,7 @@ function AcceptInviteForm() {
               className={styles.submitBtn}
               disabled={pageState === 'submitting'}
             >
-              {pageState === 'submitting' ? 'Setting up your account…' : 'Create Password & Continue'}
+              {pageState === 'submitting' ? 'Setting up your account...' : submitCopy}
             </button>
           </form>
         </>

@@ -69,6 +69,8 @@ export async function PATCH(
     playerLastName:   body.playerLastName   !== undefined ? String(body.playerLastName).trim()   : undefined,
     playerDateOfBirth:body.playerDateOfBirth !== undefined ? (body.playerDateOfBirth || null)     : undefined,
     playerNumber:     body.playerNumber     !== undefined ? (body.playerNumber?.trim() || null)   : undefined,
+    primaryPosition:  body.primaryPosition  !== undefined ? (body.primaryPosition?.trim() || null) : undefined,
+    secondaryPosition:body.secondaryPosition!== undefined ? (body.secondaryPosition?.trim() || null) : undefined,
     status:           body.status           !== undefined ? body.status as RepRosterStatus        : undefined,
     guardianFirstName:body.guardianFirstName !== undefined ? String(body.guardianFirstName).trim(): undefined,
     guardianLastName: body.guardianLastName  !== undefined ? String(body.guardianLastName).trim() : undefined,

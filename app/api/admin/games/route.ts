@@ -247,6 +247,20 @@ export async function PATCH(req: Request) {
       if (error) throw error;
     }
 
+    // ── cancel (scheduled → cancelled) ───────────────────────────────────────
+    else if (action === 'cancel') {
+      if (!hasCapability(ctx.role, ctx.capabilities, 'update_schedule')) return forbidden();
+      const { error } = await supabase.from('games').update({ status: 'cancelled' }).eq('id', id);
+      if (error) throw error;
+    }
+
+    // ── revert-to-scheduled (cancelled → scheduled) ──────────────────────────
+    else if (action === 'revert-to-scheduled') {
+      if (!hasCapability(ctx.role, ctx.capabilities, 'update_schedule')) return forbidden();
+      const { error } = await supabase.from('games').update({ status: 'scheduled' }).eq('id', id);
+      if (error) throw error;
+    }
+
     // ── submit-score ─────────────────────────────────────────────────────────
     else if (action === 'submit-score') {
       if (!hasCapability(ctx.role, ctx.capabilities, 'submit_scores')) return forbidden();

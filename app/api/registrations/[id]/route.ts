@@ -23,7 +23,7 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ id: str
       .select(`
         *,
         age_groups!teams_age_group_id_fkey (name),
-        tournaments!teams_tournament_id_fkey (name, contact_email, organization_id)
+        tournaments!teams_tournament_id_fkey (name, contact_email, org_id)
       `)
       .eq('id', id)
       .single();
@@ -50,7 +50,7 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ id: str
     }
 
     const tournamentData = current.tournaments as any;
-    const orgOwnerId = tournamentData?.organization_id;
+    const orgOwnerId = tournamentData?.org_id;
     const contactEmail = tournamentData?.contact_email
       || (orgOwnerId ? await getOrgOwnerEmail(orgOwnerId) : undefined)
       || undefined;

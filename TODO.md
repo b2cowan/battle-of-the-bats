@@ -33,6 +33,22 @@ This file tracks the ongoing tasks for the FieldLogicHQ platform (multi-tenant s
 
 - [x] **Standalone Team Phase 6A** - Coach-managed attendance implemented and smoke-tested: migration 069 applied in dev/prod, and coaches can mark event attendance for active roster players from the Coaches Portal schedule without changing linked-org visibility or ownership boundaries.
 
+- [x] **Standalone Team Phase 6B** - Roster positions and lineup builder implemented and smoke-tested: migrations 070 and 071 applied in dev/prod; Coaches Portal schedule supports 9 player ball/everyone bats lineup planning and lineup PDF export, and the focused lineup smoke passes.
+
+- [x] **Standalone Team Phase 6C** - First-run Team workspace checklist implemented and smoke-tested: the coach team overview now shows data-driven season setup progress for roster, positions, calendar, lineups, budget, and optional parent-org linking without changing linked-org visibility or ownership boundaries.
+
+- [x] **Standalone Team Phase 7A** - Segment-first public pricing implemented and smoke-tested: `/pricing` now separates tournament, organization, and one-team buyers, sends Team buyers to the seasonal `/team` signup path, and highlights implemented Team value without changing org onboarding.
+
+- [x] **Standalone Team Phase 7B** - Public Team landing page refreshed and smoke-tested: `/team` now explains the coach-specific season workspace, tournament continuity, free-tier local tournaments, and implemented Coaches Portal value while preserving the existing signup/checkout flow.
+
+- [x] **Standalone Team Phase 7C** - Tournament-to-Team CTAs updated and smoke-tested: registration confirmation, public tournament banner, registration/claim emails, and post-event results emails now point coaches toward Team season workspaces while preserving existing tournament organizer CTAs.
+
+- [x] **Standalone Team Phase 7D** - Billing-page upsells implemented: Team billing points coaches to the parent-org link/org billing flow, and org billing/Team Links show a Club value nudge at 3+ active org-paid Team add-ons without changing access or ownership.
+
+- [x] **Standalone Team Phase 8** - Focused launch verification complete: pricing, direct mock checkout, tournament-claim mock checkout, Team free-tier tournament limit, Basic org linking, attendance/RLS, lineups/checklist, and ownership transfer smokes pass; remaining Stripe/mobile/cancellation items are manual launch checks.
+
+- [x] **Standalone Team Phase 9** - Help documentation and launch cleanup complete: coach/org/platform-admin help explains Team, season rollover, local tournaments, linking, billing transfer, ownership transfer, Team add-ons versus Club, and owner launch readiness; stale Club extra-team pricing copy now shows $19/$190.
+
 - [ ] **Standalone Team workspace model** — Build-ready plan and PM brief for tournament-to-team acquisition, standalone coach workspaces, org linking, billing transfer, and coaches portal enhancements (see [implementation plan](docs/active/codex_STANDALONE_TEAM_IMPLEMENTATION_PLAN.md) and [PM brief](docs/active/codex_STANDALONE_TEAM_PM_BRIEF.md))
 
 - [ ] **Public tournament mobile experience** - Mobile-first plan and PM brief for public registration, schedule controls, hidden/empty states, post-event story, and first-viewport trust (see [implementation plan](docs/active/codex_PUBLIC_TOURNAMENT_MOBILE_EXPERIENCE_PLAN.md) and [PM brief](docs/active/codex_PUBLIC_TOURNAMENT_MOBILE_EXPERIENCE_PM_BRIEF.md))
@@ -182,7 +198,7 @@ This file tracks the ongoing tasks for the FieldLogicHQ platform (multi-tenant s
 
 - [ ] **Online tournament payment collection research** - Decide whether future tournament entry payments should use Stripe Connect, manual payment links, or another architecture before building payment processing (see [TOURNAMENT_PLUS_ENHANCEMENT_PLAN.md](docs/archive/TOURNAMENT_PLUS_ENHANCEMENT_PLAN.md) Phase 4.3)
 
-- [ ] **Tournament scorekeeper experience** - Dedicated mobile-first scorekeeper/day-of scoring plan for role access, route strategy, score entry, pending review, admin Results integration, data/API changes, and UAT. Slice 7 complete: shared scoring service centralizes score submit/finalize/revert rules for admin Results and Scorekeeper APIs; migrations 066 and 068 applied in dev/prod (see [implementation plan](docs/active/codex_TOURNAMENT_SCOREKEEPER_EXPERIENCE_PLAN.md) and [PM brief](docs/active/codex_TOURNAMENT_SCOREKEEPER_EXPERIENCE_PM_BRIEF.md))
+- [x] **Tournament scorekeeper experience** - MVP complete and archived: dedicated mobile-first scorekeeper/day-of scoring flow, invite-to-first-score UAT, durable Free/Plus scorekeeper UAT users, shared scoring service, admin Results integration, help docs, and migrations 066/068 applied in dev/prod (see [implementation plan](docs/archive/codex_TOURNAMENT_SCOREKEEPER_EXPERIENCE_PLAN.md), [PM brief](docs/archive/codex_TOURNAMENT_SCOREKEEPER_EXPERIENCE_PM_BRIEF.md), and [browser sign-off](docs/archive/codex_TOURNAMENT_SCOREKEEPER_BROWSER_SIGNOFF.md))
 
 - [ ] **Tournament help documentation UX review** - Upgrade tournament help with grouped contents, search, quick answers, and FAQs (see [TOURNAMENT_HELP_DOCS_REVIEW_PLAN.md](TOURNAMENT_HELP_DOCS_REVIEW_PLAN.md))
 

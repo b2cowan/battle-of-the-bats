@@ -11,6 +11,10 @@ function getResend() {
   return _resend;
 }
 
+function getActionLink(data: unknown) {
+  return (data as { properties?: { action_link?: string | null } }).properties?.action_link ?? null;
+}
+
 const INVITABLE_ROLES: OrgRole[] = ['admin', 'staff', 'official', 'league_admin', 'league_registrar', 'treasurer'];
 
 const ROLE_EMAIL_LABEL: Record<OrgRole, string> = {
@@ -78,6 +82,14 @@ export async function POST(req: Request) {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://fieldlogichq.ca';
   const fromAddress = process.env.RESEND_FROM ?? 'noreply@fieldlogichq.ca';
   const roleLabel = ROLE_EMAIL_LABEL[role] ?? role;
+  const signInPath = role === 'official'
+    ? `/auth/login?next=${encodeURIComponent(`/${org.slug}/scorekeeper`)}`
+    : '/auth/login';
+  const signInUrl = `${appUrl}${signInPath}`;
+  const signInAction = role === 'official' ? 'Open Scorekeeper View' : 'Sign In';
+  const existingUserNote = role === 'official'
+    ? 'Sign in to open Scorekeeper View and submit assigned game results.'
+    : 'No action is required - just sign in to get started:';
 
   if (existingUser) {
     // Check they're not already in THIS org
@@ -138,11 +150,11 @@ export async function POST(req: Request) {
 <body style="font-family: sans-serif; max-width: 480px; margin: 0 auto; padding: 2rem; color: #1a1a2e;">
   <h2 style="margin-top: 0;">You've been added to ${org.name}</h2>
   <p>You now have access to <strong>${org.name}</strong> on <strong>FieldLogicHQ</strong> as a ${roleLabel}.</p>
-  <p>No action is required — just sign in to get started:</p>
+  <p>${existingUserNote}</p>
   <p style="margin: 1.5rem 0;">
-    <a href="${appUrl}/auth/login"
+    <a href="${signInUrl}"
        style="background: #7c3aed; color: #fff; padding: 0.75rem 1.5rem; border-radius: 8px; text-decoration: none; font-weight: 700; display: inline-block;">
-      Sign In
+      ${signInAction}
     </a>
   </p>
   <p style="font-size: 0.85rem; color: #666;">If you weren't expecting this, you can safely ignore this email.</p>
@@ -150,8 +162,8 @@ export async function POST(req: Request) {
 </html>`,
       text: `You've been added to ${org.name} on FieldLogicHQ as a ${roleLabel}.
 
-No action is required — just sign in to get started:
-${appUrl}/auth/login
+${existingUserNote}
+${signInUrl}
 
 If you weren't expecting this, you can safely ignore this email.`,
     });
@@ -175,7 +187,7 @@ If you weren't expecting this, you can safely ignore this email.`,
   }
 
   // Create pending member row (no accepted_at)
-  const newUserId = (linkData.user as any)?.id;
+  const newUserId = linkData.user?.id;
   if (newUserId) {
     await supabaseAdmin
       .from('organization_members')
@@ -194,14 +206,15 @@ If you weren't expecting this, you can safely ignore this email.`,
   }
 
   // Send invite email via Resend
-  const inviteUrl = (linkData as any).properties?.action_link ?? linkData.properties?.action_link;
+  const inviteUrl = getActionLink(linkData);
 
   const officialNote = role === 'official'
-    ? `<p>As a scorekeeper, you'll have access to the scorekeeper app to submit game results from your assigned fields.</p>`
+    ? `<p>As a scorekeeper, you'll have access to the scorekeeper app to submit game results from your assigned tournaments. After setup, you'll land directly in Scorekeeper View.</p>`
     : '';
   const officialNoteText = role === 'official'
-    ? `As a scorekeeper, you'll have access to the scorekeeper app to submit game results from your assigned fields.\n\n`
+    ? `As a scorekeeper, you'll have access to the scorekeeper app to submit game results from your assigned tournaments. After setup, you'll land directly in Scorekeeper View.\n\n`
     : '';
+  const inviteAction = role === 'official' ? 'Accept Scorekeeper Invite' : 'Accept Invitation';
   await getResend().emails.send({
     from: fromAddress,
     to: email,
@@ -217,7 +230,7 @@ If you weren't expecting this, you can safely ignore this email.`,
   <p style="margin: 1.5rem 0;">
     <a href="${inviteUrl}"
        style="background: #7c3aed; color: #fff; padding: 0.75rem 1.5rem; border-radius: 8px; text-decoration: none; font-weight: 700; display: inline-block;">
-      Accept Invitation
+      ${inviteAction}
     </a>
   </p>
   <p style="font-size: 0.85rem; color: #666;">If you weren't expecting this invitation, you can safely ignore this email.</p>

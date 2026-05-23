@@ -120,7 +120,7 @@ export async function getNonArchivedTournaments(orgId: string): Promise<BillingT
   const { data, error } = await supabaseAdmin
     .from('tournaments')
     .select('id, name, slug, status, year, start_date, end_date')
-    .eq('organization_id', orgId)
+    .eq('org_id', orgId)
     .neq('status', 'archived')
     .order('year', { ascending: false })
     .order('name', { ascending: true });
@@ -194,7 +194,7 @@ export async function restoreRetainedDowngradeTournaments(
   const { count: currentCount, error: countError } = await supabaseAdmin
     .from('tournaments')
     .select('id', { count: 'exact', head: true })
-    .eq('organization_id', orgId)
+    .eq('org_id', orgId)
     .neq('status', 'archived');
 
   if (countError) throw countError;
@@ -245,7 +245,7 @@ export async function restoreRetainedDowngradeTournaments(
     const { error: tournamentError } = await supabaseAdmin
       .from('tournaments')
       .update({ status, is_active: status === 'active' })
-      .eq('organization_id', orgId)
+      .eq('org_id', orgId)
       .eq('id', row.record_id);
 
     if (tournamentError) continue;
@@ -259,7 +259,7 @@ export async function restoreRetainedDowngradeTournaments(
       await supabaseAdmin
         .from('tournaments')
         .update({ status: 'archived', is_active: false })
-        .eq('organization_id', orgId)
+        .eq('org_id', orgId)
         .eq('id', row.record_id);
       continue;
     }

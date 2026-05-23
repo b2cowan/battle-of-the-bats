@@ -22,7 +22,7 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.12em;
-  color: var(--white-30);
+  color: var(--data-gray);
   background: var(--surface-2);
   border-bottom: 1px solid rgba(var(--logic-lime-rgb), 0.18);
   user-select: none;
@@ -263,6 +263,14 @@
   max-width: 920px;
 }
 
+/* Single row: meta left, actions right */
+.teamDetailMetaRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
 .teamDetailMeta {
   display: flex;
   align-items: center;
@@ -270,6 +278,7 @@
   flex-wrap: wrap;
   color: var(--white-45);
   font-size: 0.8rem;
+  min-width: 0;
 }
 
 .teamDetailMeta a {
@@ -282,21 +291,16 @@
   color: var(--fl-text);
 }
 
+/* Actions inline with meta, right-aligned */
 .teamQuickActions {
   display: flex;
   align-items: center;
-  gap: 0.4rem;
-  flex-wrap: wrap;
-}
-
-.teamQuickActions :global(.btn) {
-  min-height: 30px;
-  padding: 0.32rem 0.65rem;
-  font-size: 0.78rem;
+  gap: 0.3rem;
+  flex-shrink: 0;
 }
 
 .teamDetailSection {
-  border-top: 1px solid var(--border-2);
+  border-top: 1px solid rgba(var(--blueprint-blue-rgb), 0.18);
 }
 
 .teamDetailSummary {
@@ -810,15 +814,14 @@
     font-size: 0.8rem;
   }
 
-  .teamQuickActions {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0.45rem;
+  .teamDetailMetaRow {
+    flex-wrap: wrap;
+    gap: 0.5rem;
   }
 
-  .teamQuickActions > * {
-    justify-content: center;
-    min-width: 0;
+  .teamQuickActions {
+    flex-wrap: wrap;
+    gap: 0.4rem;
   }
 
   .teamDetailSummary {

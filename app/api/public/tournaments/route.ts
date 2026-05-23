@@ -30,8 +30,8 @@ export async function GET(req: Request) {
     // Fetch active tournaments for this batch, then counts (sequential — counts need tournament IDs)
     const { data: tournaments, error: tError } = await supabaseAdmin
       .from('tournaments')
-      .select('id, name, year, start_date, end_date, is_active, organization_id')
-      .in('organization_id', orgIds)
+      .select('id, name, year, start_date, end_date, is_active, org_id')
+      .in('org_id', orgIds)
       .eq('status', 'active');
 
     if (tError) throw tError;
@@ -60,7 +60,7 @@ export async function GET(req: Request) {
     // Build lookup maps
     const tournamentByOrg: Record<string, (typeof tournaments)[0]> = {};
     for (const t of tournaments || []) {
-      tournamentByOrg[t.organization_id] = t;
+      tournamentByOrg[t.org_id] = t;
     }
 
     const agCount: Record<string, number> = {};

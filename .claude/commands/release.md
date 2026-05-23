@@ -22,8 +22,8 @@ Confirm: _"Release agent ready. Target: [dev / master / not specified]. AWS CLI:
 
 ```
 /release                   → ask which target (dev or master) then run pre-flight
-/release dev               → pre-flight + push current branch to dev (staging)
-/release master            → pre-flight + push dev → master (production)
+/release dev               → auto-commit any uncommitted changes (message generated from diff), then push to dev (staging)
+/release master            → pre-flight + push dev → master (production) — requires clean working tree
 /release prod              → alias for /release master
 /release preflight         → pre-flight checks only, no push, no target required
 /release preflight dev     → pre-flight checks scoped to dev target
@@ -63,8 +63,19 @@ Run these in order. Stop and report if any fail.
 git branch --show-current
 git status --short
 ```
-- Must have **no uncommitted changes** — if dirty, show the file list and stop
 - Note the current branch for the sync check
+- If the working tree is **dirty** (dev target only):
+  1. Run `git diff --stat HEAD` to understand the scope of changes
+  2. Read the changed file list and diff stat — do **not** read every file, just use names + stat to infer intent
+  3. Generate a conventional commit message that accurately describes what is being committed (e.g. `feat: tournament scorekeeper UX + standalone team workspace phases 2-6`)
+  4. Stage everything and prepare the commit — but **do not run `git commit` yet**; include the proposed message in the Release Summary below so the user can see and approve it alongside the push
+  5. Commit format must include the Co-Authored-By trailer:
+     ```
+     [generated subject line]
+
+     Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+     ```
+- If the target is **master** and the tree is dirty: warn and stop — changes must be committed to dev first before a production release
 
 ### 1b — Sync check
 ```powershell
@@ -94,12 +105,17 @@ After all checks pass:
 
 Target:   [dev (staging) / master (PRODUCTION)]
 Push:     current branch → [TARGET]
-Commits:  [N commits ahead of target]
+Commits:  [N commits ahead of target, not counting the pending commit if dirty]
 TS check: ✅ clean
 AWS CLI:  [✅ available / ⚠️  not configured — log fetching unavailable]
 
-Commits in this release:
-[git log --oneline list]
+[If working tree was dirty, include this block:]
+Pending commit (will be created on "push"):
+  [generated commit subject line]
+  Files: [N modified, N untracked — brief grouping e.g. "admin pages, API routes, lib/types.ts, migrations"]
+
+Commits already in this release:
+[git log --oneline list, or "(none — this commit is the release)" if no prior commits ahead of target]
 
 Amplify console (to monitor after push):
 https://console.aws.amazon.com/amplify/home#/apps/d3ld0l2bgmmlga/deployments
@@ -110,13 +126,25 @@ If target is **master**, add a prominent warning:
 ⚠️  PRODUCTION RELEASE — this will update the live site for all customers.
 ```
 
-**STOP. Do not push until the user replies "push".**
+**STOP. Do not commit or push until the user replies "push".**
 
 ---
 
-## Phase 2 — Push
+## Phase 2 — Commit (if needed) then Push
 
 Only execute after explicit "push" confirmation.
+
+**If the working tree was dirty (dev target):**
+Run the commit first using a PowerShell here-string so the multi-line message is passed correctly:
+```powershell
+git add -A
+git commit -m @'
+[generated subject line]
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+'@
+```
+Confirm the commit SHA, then proceed to push.
 
 **Dev target:**
 ```powershell

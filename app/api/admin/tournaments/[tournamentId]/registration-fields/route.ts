@@ -30,14 +30,14 @@ async function getScopedTournament(tournamentId: string, ctx: Awaited<ReturnType
 
   const { data: tournament, error } = await supabaseAdmin
     .from('tournaments')
-    .select('id, organization_id')
+    .select('id, org_id')
     .eq('id', tournamentId)
-    .maybeSingle<{ id: string; organization_id: string | null }>();
+    .maybeSingle<{ id: string; org_id: string | null }>();
 
   if (error) {
     return { response: NextResponse.json({ error: error.message }, { status: 500 }) };
   }
-  if (!tournament || tournament.organization_id !== ctx.org.id) {
+  if (!tournament || tournament.org_id !== ctx.org.id) {
     return { response: forbidden() };
   }
 

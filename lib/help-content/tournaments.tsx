@@ -1,4 +1,3 @@
-/* eslint-disable react/no-unescaped-entities */
 import type { HelpPageContent } from './index';
 
 const tournamentsHelp: HelpPageContent = {
@@ -174,15 +173,17 @@ const tournamentsHelp: HelpPageContent = {
       searchText: 'enter scores finalize scores scorekeeper submissions pending review results scoring completed games public standings correct score revert scheduled',
       links: [
         { label: 'Results & Scoring', href: '../tournaments/results' },
+        { label: 'Scorekeeper View', href: '../../scorekeeper' },
       ],
       content: (
         <>
           <p>Use <strong>Results &amp; Scoring</strong> to keep public results accurate during the event.</p>
           <ol>
             <li>Open the game that has a final result.</li>
-            <li>Enter home and away scores, or review the scorekeeper's submitted score.</li>
-            <li>If score finalization is enabled, mark reviewed submissions as final.</li>
-            <li>Correct mistakes by editing the score or reverting the game to scheduled and re-entering it.</li>
+            <li>Enter home and away scores from Results &amp; Scoring, or open <strong>Scorekeeper View</strong> for the lightweight day-of workflow.</li>
+            <li>Review submitted scores, including who submitted the current visible score, when it was submitted, and whether it came from Scorekeeper View or Results &amp; Scoring.</li>
+            <li>If score finalization is enabled, mark reviewed scorekeeper submissions as final.</li>
+            <li>Correct mistakes by editing the score or reverting the game to scheduled and re-entering it. Revert clears the current score submission metadata.</li>
             <li>Check standings or bracket paths after important score changes.</li>
           </ol>
           <p>Pending review means a score has been submitted but still needs admin confirmation before it is treated as final.</p>
@@ -435,23 +436,35 @@ const tournamentsHelp: HelpPageContent = {
       searchText: 'results scoring scorekeepers score submission pending review completed finalization final public results revert score edit score',
       links: [
         { label: 'Results & Scoring', href: '../tournaments/results' },
+        { label: 'Scorekeeper View', href: '../../scorekeeper' },
       ],
       content: (
         <>
-          <p>Admins can enter or edit scores from <strong>Results & Scoring</strong>. Scorekeepers use their separate scoring interface from the field.</p>
-          <p>If score finalization is enabled, scorekeeper submissions appear as <strong>Pending Review</strong> until an admin finalizes them. Completed scores are treated as final results.</p>
-          <p>Public result pages update from the game data in FieldLogicHQ. If a score is wrong, edit it from Results & Scoring or revert it to scheduled and enter the corrected result.</p>
+          <p>Admins can enter, review, finalize, correct, export, or revert scores from <strong>Results &amp; Scoring</strong>. Scorekeepers use <strong>Scorekeeper View</strong>, a separate field-focused interface at <code>/{'{orgSlug}'}/scorekeeper</code>.</p>
+          <p>If score finalization is enabled, scorekeeper submissions appear as <strong>Pending Review</strong> until an admin finalizes them. If finalization is disabled, scorekeeper submissions become completed scores immediately.</p>
+          <p>Results &amp; Scoring shows current submission metadata when it exists: who submitted or corrected the visible score, when it happened, and whether it came from Scorekeeper View or the admin results surface.</p>
+          <p>Public result pages update from the game data in FieldLogicHQ. Pending Review scores can appear as submitted results, but only completed scores are treated as final for workflows such as playoff advancement.</p>
+          <p>If a score is wrong, edit it from Results &amp; Scoring or revert it to scheduled and enter the corrected result. Reverting clears the current visible score and current score submission metadata.</p>
         </>
       ),
       faqs: [
         {
           id: 'faq-scorekeeper-score-submit',
           question: 'How do scorekeepers submit scores?',
-          answerText: 'Scorekeepers use the scorekeeper app and submit assigned game scores from the field.',
+          answerText: 'Scorekeepers use Scorekeeper View at the organization scorekeeper route and submit assigned game scores from the field.',
           keywords: ['scorekeepers', 'scorekeeper', 'submit score'],
           popular: true,
           answer: (
-            <p>Scorekeepers use the scorekeeper app for your organization. They see the games available to them and submit scores from that focused interface.</p>
+            <p>Scorekeepers use <strong>Scorekeeper View</strong> at <code>/{'{orgSlug}'}/scorekeeper</code>. They see the games available to them, filter by date, field, division, team, or status, and submit scores from that focused interface.</p>
+          ),
+        },
+        {
+          id: 'faq-open-scorekeeper-view',
+          question: 'How do admins open the scorekeeper workflow?',
+          answerText: 'Admins can open Scorekeeper View from Results & Scoring or visit the organization scorekeeper route directly if they have scoring access.',
+          keywords: ['open scorekeeper view', 'scorekeeper route', 'day of scoring'],
+          answer: (
+            <p>Use the <strong>Open Scorekeeper View</strong> action from Results &amp; Scoring, or visit <code>/{'{orgSlug}'}/scorekeeper</code> directly. Opening the lightweight view does not grant admin access to scorekeepers; route permissions still come from member role and capability checks.</p>
           ),
         },
         {
@@ -461,7 +474,16 @@ const tournamentsHelp: HelpPageContent = {
           keywords: ['pending review', 'finalize', 'score finalization'],
           popular: true,
           answer: (
-            <p>It means a score was submitted but is waiting for admin confirmation. Use <strong>Finalize</strong> to mark it complete.</p>
+            <p>It means a score was submitted but is waiting for admin confirmation. Use <strong>Finalize</strong> in Results &amp; Scoring to mark it complete.</p>
+          ),
+        },
+        {
+          id: 'faq-scorekeeper-edit-final',
+          question: 'Can scorekeepers edit submitted scores?',
+          answerText: 'Scorekeepers can correct a Pending Review score before admin finalization, but they cannot edit finalized scores from Scorekeeper View.',
+          keywords: ['edit score', 'correct score', 'finalized score', 'pending review'],
+          answer: (
+            <p>Scorekeepers can correct a Pending Review score before an admin finalizes it. Once a score is completed or finalized, corrections stay in <strong>Results &amp; Scoring</strong> as an admin action.</p>
           ),
         },
         {
@@ -479,7 +501,7 @@ const tournamentsHelp: HelpPageContent = {
           answerText: 'Admins can revert a scored game to scheduled, which clears the score and lets them enter it again.',
           keywords: ['undo score', 'revert score', 'clear score'],
           answer: (
-            <p>Yes. Revert the game to scheduled from Results & Scoring, then enter the corrected score. Reverting clears the existing score, so confirm before doing it.</p>
+            <p>Yes. Revert the game to scheduled from Results &amp; Scoring, then enter the corrected score. Reverting clears the existing score and current submission metadata, so confirm before doing it.</p>
           ),
         },
       ],
@@ -544,7 +566,7 @@ const tournamentsHelp: HelpPageContent = {
           answerText: 'Use tournament scoring settings to control score finalization behavior.',
           keywords: ['score finalization', 'pending review', 'scorekeepers', 'scoring settings'],
           answer: (
-            <p>Open <strong>Settings & Access</strong>, then <strong>Event Settings</strong>. Choose whether this tournament inherits the organization setting, sends scorekeeper submissions to Pending Review, or finalizes scorekeeper submissions immediately.</p>
+            <p>Open <strong>Settings &amp; Access</strong>, then <strong>Event Settings</strong>. Choose whether this tournament inherits the organization setting, sends scorekeeper submissions to Pending Review, or finalizes scorekeeper submissions immediately. Admin score entry from Results &amp; Scoring remains an admin action and can finalize/correct scores.</p>
           ),
         },
         {

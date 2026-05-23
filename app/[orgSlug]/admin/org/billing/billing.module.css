@@ -55,6 +55,58 @@
   margin-bottom: 1rem;
 }
 
+.billingNudgeCard {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  border-radius: 2px;
+  background: rgba(var(--blueprint-blue-rgb), 0.08);
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.28);
+  margin-bottom: 1rem;
+}
+
+.billingNudgeIcon {
+  width: 36px;
+  height: 36px;
+  border-radius: 2px;
+  background: rgba(var(--logic-lime-rgb), 0.1);
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.24);
+  color: var(--logic-lime);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.billingNudgeBody {
+  flex: 1;
+  min-width: 0;
+}
+
+.billingNudgeTitle {
+  margin: 0 0 0.3rem;
+  color: var(--white-90, #f0f0f0);
+  font-size: 0.9rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.billingNudgeCopy {
+  margin: 0;
+  color: var(--white-55, rgba(255,255,255,0.55));
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.billingNudgeActions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
 .currentLeft {
   display: flex;
   align-items: center;
@@ -576,6 +628,7 @@
 
 @media (max-width: 640px) {
   .currentCard,
+  .billingNudgeCard,
   .usageHeader,
   .upgradeHeader,
   .billingTools,
@@ -588,6 +641,13 @@
     width: 100%;
     justify-content: center;
     white-space: normal;
+  }
+
+  .billingNudgeCard > a,
+  .billingNudgeActions,
+  .billingNudgeActions > a {
+    width: 100%;
+    justify-content: center;
   }
 
   .billingToggle {

@@ -77,7 +77,7 @@ export async function PUT(req: Request, { params }: Params) {
     const { data: validTournaments } = await supabaseAdmin
       .from('tournaments')
       .select('id')
-      .eq('organization_id', ctx.org.id)
+      .eq('org_id', ctx.org.id)
       .in('id', tournamentIds);
 
     const validIds = new Set((validTournaments ?? []).map(t => t.id));

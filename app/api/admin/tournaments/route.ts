@@ -141,7 +141,7 @@ async function sendCompletionResultsNotification(input: {
     .from('tournaments')
     .update({ results_notified_at: notifiedAt })
     .eq('id', tournament.id)
-    .eq('organization_id', ctx.org.id)
+    .eq('org_id', ctx.org.id)
     .is('results_notified_at', null)
     .select('id');
 
@@ -177,6 +177,7 @@ async function sendCompletionResultsNotification(input: {
   const scheduleUrl = `${SITE_URL}/${ctx.org.slug}/${tournament.slug}/schedule`;
   const teamsUrl = `${SITE_URL}/${ctx.org.slug}/${tournament.slug}/teams`;
   const fieldLogicUrl = `${SITE_URL}/pricing?source=post_event_results_email`;
+  const teamUrl = `${SITE_URL}/team?billing=annual&source=post_event_results_email&orgSlug=${encodeURIComponent(ctx.org.slug)}&tournamentSlug=${encodeURIComponent(tournament.slug)}`;
   const contactEmail = tournament.contact_email || ctx.org.contactEmail || undefined;
   let sent = 0;
 
@@ -191,6 +192,7 @@ async function sendCompletionResultsNotification(input: {
         scheduleUrl,
         teamsUrl,
         fieldLogicUrl,
+        teamUrl,
         contactEmail,
       }),
     );
@@ -201,7 +203,7 @@ async function sendCompletionResultsNotification(input: {
     .from('tournaments')
     .update({ results_notification_sent_count: sent })
     .eq('id', tournament.id)
-    .eq('organization_id', ctx.org.id);
+    .eq('org_id', ctx.org.id);
 
   if (updateError) throw updateError;
 
@@ -229,7 +231,7 @@ export async function GET(req: Request) {
   let query = supabaseAdmin
     .from('tournaments')
     .select('*')
-    .eq('organization_id', ctx.org.id)
+    .eq('org_id', ctx.org.id)
     .order('year', { ascending: false });
 
   if (ctx.assignedTournamentIds !== null) {
@@ -280,7 +282,7 @@ export async function POST(req: Request) {
         const { count, error: limitError } = await supabase
           .from('tournaments')
           .select('*', { count: 'exact', head: true })
-          .eq('organization_id', ctx.org.id)
+          .eq('org_id', ctx.org.id)
           .neq('status', 'archived')
           .neq('id', id);
 
@@ -302,7 +304,7 @@ export async function POST(req: Request) {
           .from('tournaments')
           .select('start_date, end_date, contact_email')
           .eq('id', id)
-          .eq('organization_id', ctx.org.id)
+          .eq('org_id', ctx.org.id)
           .single();
         if (tournamentError) throw tournamentError;
 
@@ -331,7 +333,7 @@ export async function POST(req: Request) {
           .from('tournaments')
           .select('id, name, slug, status, contact_email, notify_teams_on_complete, results_notified_at')
           .eq('id', id)
-          .eq('organization_id', ctx.org.id)
+          .eq('org_id', ctx.org.id)
           .single();
         if (tournamentError) throw tournamentError;
         completionNotificationTournament = tournamentRow as CompletionNotificationTournament;
@@ -341,7 +343,7 @@ export async function POST(req: Request) {
         .from('tournaments')
         .update({ status: newStatus, is_active: newStatus === 'active' })
         .eq('id', id)
-        .eq('organization_id', ctx.org.id);
+        .eq('org_id', ctx.org.id);
 
       if (error) throw error;
 
@@ -363,7 +365,7 @@ export async function POST(req: Request) {
       let slugQuery = supabase
         .from('tournaments')
         .select('*', { count: 'exact', head: true })
-        .eq('organization_id', ctx.org.id)
+        .eq('org_id', ctx.org.id)
         .eq('slug', data.slug)
         .neq('status', 'archived');
 
@@ -394,7 +396,7 @@ export async function POST(req: Request) {
         const { data: existingNames, error: nameError } = await supabase
           .from('tournaments')
           .select('name')
-          .eq('organization_id', ctx.org.id)
+          .eq('org_id', ctx.org.id)
           .neq('status', 'archived')
           .neq('id', id);
         if (nameError) throw nameError;
@@ -412,7 +414,7 @@ export async function POST(req: Request) {
         const { count } = await supabase
           .from('tournaments')
           .select('*', { count: 'exact', head: true })
-          .eq('organization_id', ctx.org.id)
+          .eq('org_id', ctx.org.id)
           .eq('slug', slug)
           .neq('status', 'archived')
           .neq('id', id);
@@ -472,7 +474,7 @@ export async function POST(req: Request) {
         .from('tournaments')
         .update(updates)
         .eq('id', id)
-        .eq('organization_id', ctx.org.id);
+        .eq('org_id', ctx.org.id);
 
       if (error) throw error;
     }
@@ -484,7 +486,7 @@ export async function POST(req: Request) {
         .from('tournaments')
         .update({ contact_email: contactEmail })
         .eq('id', id)
-        .eq('organization_id', ctx.org.id);
+        .eq('org_id', ctx.org.id);
 
       if (error) throw error;
     }
@@ -498,7 +500,7 @@ export async function POST(req: Request) {
         .from('tournaments')
         .delete()
         .eq('id', id)
-        .eq('organization_id', ctx.org.id);
+        .eq('org_id', ctx.org.id);
 
       if (error) throw error;
     }

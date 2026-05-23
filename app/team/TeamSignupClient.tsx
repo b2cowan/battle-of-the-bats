@@ -47,6 +47,19 @@ const SPORT_OPTIONS = [
   'Other',
 ] as const;
 
+const VALUE_POINTS = [
+  ['Roster and documents', 'Keep player details, jersey numbers, positions, and season documents in one coach-owned workspace.'],
+  ['Schedule and game day', 'Plan practices, games, attendance, and baseball/softball lineups from the same calendar.'],
+  ['Dues and budget', 'Track player dues, expenses, payment requests, budget lines, and reminders without a club admin account.'],
+  ['Parent-org ready', 'Link a club later for Basic visibility or billing without transferring roster, documents, accounting, or ownership.'],
+] as const;
+
+const WORKFLOW_STEPS = [
+  ['1', 'Activate the team', 'Start from scratch or claim a tournament team contact.'],
+  ['2', 'Run the season', 'Use the Coaches Portal for roster, schedule, dues, documents, attendance, and lineups.'],
+  ['3', 'Grow locally', 'Create a free-tier round robin or exhibition weekend when nearby teams want more games.'],
+] as const;
+
 const AUTH_ERRORS: Record<string, string> = {
   invalid_credentials: 'Incorrect email or password. Please try again.',
   email_not_confirmed: 'Please verify your email before signing in.',
@@ -286,31 +299,81 @@ export default function TeamSignupClient({ teamIsGated, claim = null }: TeamSign
       <section className={styles.signupSurface}>
         <div className={styles.copyPane}>
           <p className={styles.eyebrow}>{claim ? 'Tournament team claim' : 'Standalone Team workspace'}</p>
-          <h1 className={styles.title}>{claim ? 'Claim your Team workspace' : 'Team workspace'}</h1>
+          <h1 className={styles.title}>{claim ? 'Claim your Team workspace' : 'From tournament weekend to season workspace.'}</h1>
           <p className={styles.lede}>
             {claim
               ? `${claim.tournamentName} already has your team details. Confirm the season setup, create or sign into the contact account, and activate your coach portal.`
-              : 'One competitive team gets its own coach portal for the season: roster, schedule, player documents, dues, budget, and a free local tournament slot.'}
+              : 'One competitive team gets its own Coaches Portal for roster, schedule, dues, budget, documents, attendance, lineups, reminders, and a free local tournament slot.'}
           </p>
+
+          {!claim && (
+            <div className={styles.heroActions}>
+              <a href="#team-signup-form" className={styles.heroPrimary}>Start Team workspace</a>
+              <Link href="/pricing#team-pricing" className={styles.heroSecondary}>Compare Team pricing</Link>
+            </div>
+          )}
 
           <div className={styles.pricePanel}>
             <div>
-              <p className={styles.priceLabel}>Selected plan</p>
+              <p className={styles.priceLabel}>Team plan</p>
               <p className={styles.price}>{planPrice}</p>
             </div>
             <div className={styles.priceMeta}>
               <ShieldCheck size={16} />
-              Team-scoped access only
+              One competitive team
             </div>
           </div>
+
+          {!claim && (
+            <>
+              <div className={styles.workspacePreview} aria-label="Team workspace preview">
+                <div className={styles.previewHeader}>
+                  <div>
+                    <span className={styles.previewKicker}>Coaches Portal</span>
+                    <strong>Season setup</strong>
+                  </div>
+                  <span className={styles.previewBadge}>5 of 7</span>
+                </div>
+                <div className={styles.previewGrid}>
+                  {['Roster ready', 'Calendar built', 'Lineup PDF', 'Budget next'].map(item => (
+                    <span key={item}>{item}</span>
+                  ))}
+                </div>
+              </div>
+
+              <div className={styles.valueGrid}>
+                {VALUE_POINTS.map(([label, body]) => (
+                  <div className={styles.valueCard} key={label}>
+                    <p>{label}</p>
+                    <span>{body}</span>
+                  </div>
+                ))}
+              </div>
+
+              <div className={styles.workflowPanel}>
+                <p className={styles.workflowTitle}>Keep the team running after the tournament</p>
+                <div className={styles.workflowSteps}>
+                  {WORKFLOW_STEPS.map(([step, label, body]) => (
+                    <div className={styles.workflowStep} key={step}>
+                      <span>{step}</span>
+                      <div>
+                        <p>{label}</p>
+                        <small>{body}</small>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
 
           <div className={styles.benefitGrid}>
             {[
               claim
                 ? ['Prefilled claim', 'Your tournament team details start the workspace setup.']
-                : ['Coach-owned', 'The buyer lands in the coaches portal, not org onboarding.'],
-              ['One team', 'Access is limited to the entitled rep team and active coach.'],
-              ['Club-safe', 'Club org rep-team modules stay behind Club entitlements.'],
+                : ['Coach-owned', 'The buyer lands in the Coaches Portal, not org onboarding.'],
+              ['Team-scoped', 'Access is limited to the entitled rep team and active coach.'],
+              ['Club-safe', 'Parent organizations do not receive roster, document, accounting, or ownership access unless both sides approve a transfer.'],
             ].map(([label, body]) => (
               <div className={styles.benefit} key={label}>
                 <Check size={14} />
@@ -323,7 +386,7 @@ export default function TeamSignupClient({ teamIsGated, claim = null }: TeamSign
           </div>
         </div>
 
-        <form className={styles.formPane} onSubmit={handleSubmit}>
+        <form id="team-signup-form" className={styles.formPane} onSubmit={handleSubmit}>
           <div className={styles.formHeader}>
             <div>
               <p className={styles.formKicker}>{claim ? 'Secure claim' : 'Start setup'}</p>

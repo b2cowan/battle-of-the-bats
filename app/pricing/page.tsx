@@ -17,6 +17,40 @@ const TRUST_SIGNALS = [
   'Plans can be changed at any time',
 ];
 
+const BUYER_SEGMENTS = [
+  {
+    eyebrow: 'Tournament organizer',
+    title: 'I run tournaments.',
+    body: 'Start with a free event, then add registration control, exports, automation, branding, and post-event reporting when the tournament grows.',
+    href: '#org-plans',
+    cta: 'Compare tournament plans',
+  },
+  {
+    eyebrow: 'League or club leader',
+    title: 'I run a league or club.',
+    body: 'Preview the broader platform for public pages, house league seasons, accounting, rep teams, permissions, and organization-wide oversight.',
+    href: '#org-plans',
+    cta: 'Review org plans',
+  },
+  {
+    eyebrow: 'Coach or team manager',
+    title: 'I manage one competitive team.',
+    body: 'Buy one Team workspace for roster, schedule, dues, documents, budget, attendance, lineups, reminders, and optional parent-org linking.',
+    href: '/team?billing=annual',
+    cta: 'Start Team workspace',
+    featured: true,
+  },
+];
+
+const TEAM_FEATURES = [
+  'Coach-scoped roster, jersey numbers, and primary/secondary positions',
+  'Schedule, attendance, baseball/softball lineups, and lineup PDF export',
+  'Player dues, budget, expenses, payment reminders, and team documents',
+  'Season setup checklist and previous-season history',
+  'One free-tier local tournament slot for round robins or exhibition weekends',
+  'Optional Basic visibility link to a parent organization without transferring ownership',
+];
+
 const COMPARISON_CATEGORIES = [
   {
     label: 'Tournaments & Scheduling',
@@ -155,7 +189,11 @@ const FAQS = [
   },
   {
     q: 'Is the platform only for tournaments?',
-    a: 'No. Tournament management is the live entry point today. League and Club are the next parts of the platform, covering registrations, public-facing league operations, accounting, rep teams, and organization-wide administration.',
+    a: 'No. Tournament and Team are live self-serve products today. League and Club are the next organization-wide parts of the platform, covering registrations, public-facing league operations, accounting, rep teams, and administration.',
+  },
+  {
+    q: 'What if I only manage one competitive team?',
+    a: 'Use Team. It is a standalone workspace for one competitive team with roster, schedule, dues, budget, documents, attendance, lineups, and optional parent-organization linking. It does not require creating a full club account.',
   },
   {
     q: 'Can I buy League or Club today?',
@@ -224,30 +262,70 @@ export default async function PricingPage() {
         </div>
       </section>
 
-      {/* ── Plans ────────────────────────────────────────────────────────── */}
+      {/* ── Segment picker ───────────────────────────────────────────────── */}
+      <section className={styles.segmentSection} aria-labelledby="pricing-segments-title">
+        <div className="container">
+          <div className={styles.sectionIntro}>
+            <p className={styles.sectionEyebrow}>Start with your role</p>
+            <h2 id="pricing-segments-title" className={styles.sectionTitle}>What are you managing?</h2>
+            <p className={styles.sectionSub}>
+              Choose the path that matches the job in front of you. Team is for one coach-run competitive team; organization plans are for tournaments, leagues, and clubs.
+            </p>
+          </div>
+          <div className={styles.segmentGrid}>
+            {BUYER_SEGMENTS.map(segment => (
+              <Link
+                key={segment.title}
+                href={segment.href}
+                className={`${styles.segmentCard} ${segment.featured ? styles.segmentCardFeatured : ''}`}
+              >
+                <span className={styles.segmentEyebrow}>{segment.eyebrow}</span>
+                <span className={styles.segmentTitle}>{segment.title}</span>
+                <span className={styles.segmentBody}>{segment.body}</span>
+                <span className={styles.segmentCta}>{segment.cta} →</span>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── Team plan ────────────────────────────────────────────────────── */}
       <section className={styles.teamEntrySection}>
         <div className="container">
-          <div className={styles.teamEntry}>
+          <div className={styles.teamEntry} id="team-pricing">
             <div className={styles.teamEntryText}>
               <p className={styles.teamEntryLabel}>For one competitive team</p>
               <h2 className={styles.teamEntryTitle}>I manage one competitive team.</h2>
               <p className={styles.teamEntryBody}>
-                Start a standalone Team workspace for one entitled rep team. Coaches land in the coaches portal with roster, schedule, documents, dues, budget, and team-scoped access.
+                Start a standalone Team workspace for one rep team. Coaches land in the Coaches Portal with the day-to-day tools they need, plus a clean path to link a parent club later without giving that club roster, document, accounting, billing, or ownership access.
               </p>
+              <ul className={styles.teamFeatureList}>
+                {TEAM_FEATURES.map(feature => (
+                  <li key={feature}>{feature}</li>
+                ))}
+              </ul>
             </div>
             <div className={styles.teamEntryPlan}>
-              <p className={styles.teamEntryPrice}>$29 CAD / mo</p>
-              <p className={styles.teamEntryNote}>or $290 CAD per season</p>
+              <p className={styles.teamEntryPrice}>$290 CAD</p>
+              <p className={styles.teamEntryNote}>per season, or $29 CAD month-to-month</p>
+              <p className={styles.teamEntryNote}>Includes one free-tier local tournament slot for informal events with nearby teams.</p>
             </div>
-            <Link href="/team" className={styles.teamEntryCta}>
+            <Link href="/team?billing=annual" className={styles.teamEntryCta}>
               Start Team Workspace
             </Link>
           </div>
         </div>
       </section>
 
-      <section className={styles.plansSection}>
+      <section className={styles.plansSection} id="org-plans">
         <div className="container">
+          <div className={styles.sectionIntro}>
+            <p className={styles.sectionEyebrow}>For organizations</p>
+            <h2 className={styles.sectionTitle}>Tournament, League, and Club plans</h2>
+            <p className={styles.sectionSub}>
+              Use these plans when you manage events or organization-wide operations. If you only need one competitive team workspace, use Team instead.
+            </p>
+          </div>
           <PricingSection gatingMap={gatingMap} />
         </div>
       </section>

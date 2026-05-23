@@ -901,6 +901,10 @@ Acceptance criteria:
 
 Phase 6A implementation status: coach-managed event attendance implemented and smoke-tested; migration 069 applied in dev and production.
 
+Phase 6B implementation status: roster positions and baseball/softball lineup builder implemented and smoke-tested; migration 070 applied in dev and production.
+
+Phase 6C implementation status: first-run Team workspace setup checklist implemented on the coach team overview and smoke-tested through the lineup path.
+
 Implemented in Phase 6A:
 
 - Added `supabase/migrations/069_rep_team_event_attendance.sql` for event-to-player attendance rows with `unknown`, `attending`, `absent`, and `late` statuses plus coach notes; the migration also syncs attendance ownership when event rows move during ownership transfer. **Migration 069 applied in dev/prod.**
@@ -911,49 +915,139 @@ Implemented in Phase 6A:
 - Coaches help documentation now mentions attendance from the Schedule event detail flow.
 - Added `tests/uat/scenarios/team-attendance-smoke.spec.ts`; the focused UAT smoke passed on May 23, 2026.
 - The smoke found and fixed a Next 16 client params issue in `app/[orgSlug]/coaches/teams/[teamId]/schedule/page.tsx`.
-- Roster/lineup implementation is intentionally deferred until the feature contents are reviewed with the product owner.
+
+Implemented in Phase 6B:
+
+- Added `supabase/migrations/070_rep_team_lineups.sql` for roster primary/secondary positions, event-level lineups, lineup entries, RLS read policies, and a lineup scope-sync trigger tied to `rep_team_events`. **Migration 070 applied in dev/prod. Migration 071 lineup RLS fix also applied in dev/prod.**
+- Coaches can store roster position metadata from the roster add/edit flows, and roster XLSX/CSV/PDF exports include position columns.
+- Coaches can open league games, tournament games, or scrimmages from the schedule and build a lineup in either `Everyone bats` or `9 player ball` mode.
+- `Everyone bats` includes every active roster player in the batting order and uses `Bench` as an optional inning-by-inning defensive position.
+- `9 player ball` separates nine starters from the bench, while still allowing bench players to receive inning-by-inning defensive positions for planned substitutions.
+- Added lineup PDF export from the game detail panel.
+- Added `tests/uat/scenarios/team-lineup-smoke.spec.ts` for the 9 player ball and everyone bats save path; the focused UAT smoke passed on May 23, 2026.
+- This remains coach-scoped and does not expand linked-org Basic visibility, billing ownership, roster/document/accounting access, or org-wide `module_rep_teams` access.
+
+Implemented in Phase 6C:
+
+- Added a data-driven `Season setup` checklist to `/{orgSlug}/coaches/teams/{teamId}` using existing coach-scoped roster, events, and budget APIs.
+- Checklist progress covers active roster, jersey/position details, calendar events, game lineup readiness, budget setup, and Team-only parent organization linking.
+- The parent-organization checklist item appears only for standalone Team workspaces and links to the existing Basic visibility link flow; it does not grant linked orgs roster, document, accounting, billing, ownership, or org-wide `module_rep_teams` access.
+- Fixed the coach team overview page to use the Next 16 client `use(params)` pattern.
+- Added checklist assertions to `tests/uat/scenarios/team-lineup-smoke.spec.ts`.
 
 Tasks:
 
 - [x] Add attendance to schedule events.
-- Add baseball/softball lineup card builder and PDF export.
-- Add generic game roster PDF fallback.
-- Improve roster jersey/position editing if needed.
-- Add first-run checklist for Team workspaces.
+- [x] Apply migration 070 in dev/prod.
+- [x] Add baseball/softball lineup card builder and PDF export.
+- [x] Add generic game roster PDF fallback through roster PDF position columns and lineup PDF export.
+- [x] Improve roster jersey/position editing for lineup setup.
+- [x] Add first-run checklist for Team workspaces.
 
 Acceptance criteria:
 
-- Coach can complete a game-day workflow: confirm roster, mark attendance, create lineup, export PDF. **Phase 6A completes attendance; roster/lineup/PDF remain next slices.**
-- Features work for standalone, linked, and org-owned teams. **Phase 6A uses the shared Coaches Portal assignment and Team entitlement access path.**
+- Coach can complete a game-day workflow: confirm roster, mark attendance, create lineup, export PDF. **Phase 6A completes attendance; Phase 6B implements and smoke-tests roster positions, lineups, and lineup PDF.**
+- Coach can see first-run season setup progress from the team overview. **Phase 6C adds the data-driven checklist and extends the lineup smoke.**
+- Features work for standalone, linked, and org-owned teams. **Phase 6A/6B/6C use the shared Coaches Portal assignment and Team entitlement access path.**
 
 ### Phase 7 - Pricing And Marketing Surfaces
 
+Phase 7A implementation status: segment-first public pricing entry implemented and smoke-tested for the Team buyer path.
+
+Phase 7B implementation status: public Team landing page refreshed and added to the pricing Team smoke path.
+
+Phase 7C implementation status: tournament-to-Team CTA copy and email paths updated and the Team acquisition URL path smoke-tested.
+
+Phase 7D implementation status: billing-page Team-to-org link and multi-team Club value nudges implemented; focused smoke coverage updated.
+
+Implemented in Phase 7A:
+
+- `/pricing` now starts with a role-based segment picker: "I run tournaments," "I run a league or club," and "I manage one competitive team."
+- The Team segment and Team pricing panel point to `/team?billing=annual`, making seasonal pricing the default public presentation while preserving month-to-month choice on the Team signup page.
+- Team pricing copy now reflects the implemented MVP: roster, schedule, dues, documents, budget, attendance, lineups, setup checklist, reminders, optional parent-org linking, and one free-tier local tournament slot.
+- Organization plan cards remain in the existing shared `PricingSection`, so normal org onboarding and Club/Tournament behavior are unchanged.
+- Footer pricing navigation now points to canonical `/pricing`.
+- Added `tests/uat/scenarios/pricing-team-smoke.spec.ts` for the public pricing Team segment and CTA path.
+- Coaches help documentation now explains what the standalone Team plan includes and the $290 CAD season / $29 CAD month-to-month framing.
+
+Implemented in Phase 7B:
+
+- `/team` now presents a coach-specific landing story before and around the existing signup form: "From tournament weekend to season workspace."
+- The landing copy highlights tournament-team continuity, Coaches Portal season operations, attendance, lineups, dues, budget, documents, setup progress, parent-org readiness, and free-tier local tournaments.
+- The signup form and checkout plumbing are unchanged; `/team?billing=annual` still defaults to seasonal pricing while preserving the monthly toggle.
+- Added `/team` landing assertions to `tests/uat/scenarios/pricing-team-smoke.spec.ts`.
+
+Implemented in Phase 7C:
+
+- Added a Team-specific tournament acquisition href helper that sends coach-facing tournament CTAs to `/team?billing=annual` while preserving source, org slug, tournament slug, and marketing surface context.
+- Registration confirmation success CTA now tells coaches to keep the registered team organized after the tournament and points to the Team landing page while the secure claim link remains email-only.
+- Public tournament acquisition banner now includes a Team workspace CTA for coaches and preserves the existing organizer event/pricing CTA.
+- Tournament registration confirmation email and organizer-sent claim invite email now explain Team season workspace value: roster, schedule, dues, documents, attendance, lineups, and quick local tournaments.
+- Post-event results email now includes a Team workspace link for coaches who want to keep the team going after results are posted.
+
+Implemented in Phase 7D:
+
+- Team workspace Subscription now shows a parent-organization billing nudge that sends coaches to the existing `/{teamOrgSlug}/coaches/link-org` Basic link and org billing approval flow.
+- Organization Subscription now fetches existing Team Links and shows a Club value nudge when the organization is already paying for 3+ active linked Team add-ons.
+- Organization Admin > Team Links shows the same Club value cue at the point where owners/admins manage Team add-on billing.
+- The nudges are informational only: they do not transfer billing, ownership, roster/document/accounting access, or org-wide `module_rep_teams` access.
+- Help docs now explain the coach billing shortcut and the 3+ paid Team Club value nudge.
+
 Tasks:
 
-- Add segment-first pricing selector.
-- Add coach/team landing page.
-- Add tournament-to-team CTAs in registration confirmation, public tournament surfaces, and emails.
-- Add Team messaging that highlights included free-tier local tournaments as a way to invite nearby teams.
-- Add billing-page upsells from Team to org link and from multi-team orgs to Club.
+- [x] Add segment-first pricing selector.
+- [x] Add coach/team landing page.
+- [x] Add tournament-to-team CTAs in registration confirmation, public tournament surfaces, and emails.
+- [x] Add Team messaging that highlights included free-tier local tournaments as a way to invite nearby teams.
+- [x] Add billing-page upsells from Team to org link and from multi-team orgs to Club.
 
 Acceptance criteria:
 
-- Coaches can understand Team without reading Club pricing.
-- Tournament participants see a relevant follow-up CTA.
-- Organizations with multiple paid teams are nudged toward Club.
+- Coaches can understand Team without reading Club pricing. **Phase 7A complete for public pricing; Phase 7B complete for the Team landing page.**
+- Tournament participants see a relevant follow-up CTA. **Phase 7C updates registration confirmation, public tournament banners, and emails.**
+- Organizations with multiple paid teams are nudged toward Club. **Phase 7D complete for Subscription and Team Links informational nudges at 3+ active org-paid Team add-ons.**
 
 ### Phase 8 - Verification And Launch
 
+Phase 8 implementation status: focused automated launch verification is passing for public Team acquisition, direct mock checkout, tournament claim mock checkout, Team free-tier tournament slot limits, Basic org linking, coach-scoped attendance/RLS, lineup/checklist, and platform-assisted ownership transfer. Real Stripe org Team add-on checkout/webhook smoke is already passing; direct real Stripe Team checkout, cancellation/past-due simulations, mobile visual sign-off, and live Stripe price confirmation remain manual launch checks.
+
+Automated Phase 8 verification run on May 23, 2026:
+
+- `tests/uat/scenarios/pricing-team-smoke.spec.ts`: passed.
+- `tests/uat/scenarios/team-direct-checkout-smoke.spec.ts`: passed. This temporarily enables dev mock billing through the platform-admin dev API, verifies direct Team checkout creates `team_direct` workspace/entitlement state, verifies tournament-claim checkout writes source tournament/team IDs and marks the claim claimed, and verifies a Team workspace can create one free-tier tournament but receives a 403 on a second non-archived tournament.
+- `tests/uat/scenarios/team-org-link-smoke.spec.ts`: Basic coach-requested and org-invited visibility paths passed; the mock org-billing subtest skipped because this environment has Stripe configured without mock mode.
+- `tests/uat/scenarios/team-attendance-smoke.spec.ts`: passed, including the linked-org owner 403 against the coach attendance API.
+- `tests/uat/scenarios/team-lineup-smoke.spec.ts`: passed, including Season setup checklist, 9 player ball, and Everyone bats save paths.
+- `tests/uat/scenarios/team-ownership-transfer-smoke.spec.ts`: passed.
+- `npx.cmd tsc --noEmit`: passed.
+- Focused ESLint for the new direct/claim checkout smoke: passed.
+
+Phase 8 readiness matrix:
+
+| Area | Status | Evidence / Remaining Check |
+| --- | --- | --- |
+| Direct Team signup | Automated mock pass | `team-direct-checkout-smoke` covers checkout API, workspace state, entitlement state, redirect, and Team one-slot tournament limit. Real Stripe direct Team checkout remains a manual sandbox launch check. |
+| Tournament claim signup | Automated mock pass | `team-direct-checkout-smoke` covers claim token checkout, source tournament/team persistence, and claim status update. Real Stripe claim checkout remains covered by the same manual direct Team sandbox path. |
+| Team free-tier tournament creation | Automated pass | Direct smoke creates one Team tournament and confirms the second non-archived tournament is blocked by the plan limit. |
+| Linked-team visibility | Automated pass | Org link smoke covers Basic visibility approval/invite state; attendance smoke confirms linked org owner cannot read coach-scoped attendance API. |
+| Org billing takeover | Prior pass / current skip | Mock and real Stripe org Team add-on checkout/webhook smoke passed previously; current mixed suite skipped only the mock subtest because Stripe is configured without mock mode. |
+| Club ownership transfer | Automated pass | Ownership transfer smoke verifies platform-admin completion, org-owned state, ledger/team reassignment, retired entitlements, and workspace membership suspension. |
+| Role and RLS boundaries | Automated partial pass | Coach entitlement gates are exercised by attendance/lineup/link smokes; linked org API denial is covered. Full manual role/RLS review remains a launch checklist item. |
+| Mobile coach portal flows | Manual | Browser visual verification remains user-owned per agency rules. |
+| Cancellation and past-due states | Manual / Stripe simulation | Existing sync code maps Stripe states, but Team-specific direct cancellation and payment-failure simulation remain launch checks. |
+| Stripe sandbox webhooks | Prior pass / manual direct remains | Org Team add-on webhook smoke passed. Direct Team real Stripe checkout/webhook still needs the final manual sandbox run. |
+| Stripe price IDs | Manual | Readiness checker exists; live and sandbox Team/org Team add-on/Club extra-team price rows should be confirmed before launch. |
+
 Tasks:
 
-- Test direct Team signup.
-- Test tournament claim signup.
-- Test Team workspace free-tier tournament creation and free-plan feature limits.
-- Test linked-team visibility.
+- [x] Test direct Team signup.
+- [x] Test tournament claim signup.
+- [x] Test Team workspace free-tier tournament creation and free-plan feature limits.
+- [x] Test linked-team visibility.
 - Test org billing takeover. **Mock smoke and real Stripe sandbox org Team add-on checkout/webhook smoke pass.**
-- Test Club ownership transfer.
-- Test cancellation and past-due states.
-- Test role and RLS boundaries.
+- [x] Test Club ownership transfer.
+- [ ] Test cancellation and past-due states.
+- [x] Test role and RLS boundaries. **Focused automated coverage passes for coach entitlement access and linked-org API denial; full manual policy review remains recommended before launch.**
 - Test mobile coach portal flows.
 - Test Stripe sandbox webhooks. **Org Team add-on Checkout Session completion and subscription webhooks pass against the local webhook listener.**
 - Confirm Stripe price IDs exist for sandbox and live Team, org Team add-on, and Club extra-team prices.
@@ -963,29 +1057,39 @@ Acceptance criteria:
 - No lower-tier org can see unentitled rep teams.
 - Coach cannot access unrelated org admin modules.
 - Linked org cannot see sensitive data beyond its sharing level.
-- Billing state and entitlement state stay synchronized.
-- Platform admin has enough visibility to support beta customers.
-- Stripe sandbox checkout and webhook flows pass for direct Team, org Team add-on, and Club extra-team billing.
+- Billing state and entitlement state stay synchronized. **Automated mock checkout and org billing/ownership smokes validate Team entitlement state; cancellation/past-due still needs Stripe simulation.**
+- Platform admin has enough visibility to support beta customers. **Ownership transfer smoke confirms platform-admin support completion path; Dev Tools readiness checker exists for Team checkout.**
+- Stripe sandbox checkout and webhook flows pass for direct Team, org Team add-on, and Club extra-team billing. **Org Team add-on passed; direct Team and Club extra-team remain final manual sandbox launch checks.**
 
 ### Phase 9 - Help Documentation And Launch Cleanup
 
+Phase 9 implementation status: complete for launch documentation, help content, owner checklist, and stale Club extra-team pricing copy.
+
+Implemented in Phase 9:
+
+- Expanded coach help with a Team workspace, season rollover, and local tournament guide. It explains Team value, program-year season history, one non-archived free-tier tournament slot, and the Tournament Plus boundary.
+- Expanded organization help with Team add-on versus Club guidance, linked Team tournament boundaries, billing transfer language, and Club extra-team positioning.
+- Expanded platform-admin help with a Team launch readiness SOP covering Stripe price rows, readiness checks, manual sandbox smokes, cancellation/past-due simulation, and mobile visual sign-off.
+- Added `docs/active/codex_STANDALONE_TEAM_LAUNCH_CHECKLIST.md` for owner-facing Stripe Dashboard setup, FieldLogicHQ price-row confirmation, manual sandbox smokes, customer-facing documentation checks, and release notes.
+- Updated stale Club extra-team pricing references from $20/$200 to $19/$190 in active pricing copy.
+
 Tasks:
 
-- Add or update help documentation for the Team plan.
-- Document season rollover: changing team name, age group, roster, schedule, dues, and budget by season while preserving history.
-- Document free-tier Team tournaments: one non-archived tournament at a time, scrimmage/round-robin use case, and Tournament Plus upgrade path.
-- Document org linking, Basic sharing, higher sharing levels, and org-owned transfer.
-- Document billing transfer and the two-sided approval requirement.
-- Document the difference between direct Team, org Team add-on, Club included teams, and Club extra teams.
-- Update pricing/help copy anywhere Club extra-team pricing appears so it shows $19/$190 instead of $20/$200.
-- Add release notes or internal owner checklist covering required Stripe Dashboard setup.
+- [x] Add or update help documentation for the Team plan.
+- [x] Document season rollover: changing team name, age group, roster, schedule, dues, and budget by season while preserving history.
+- [x] Document free-tier Team tournaments: one non-archived tournament at a time, scrimmage/round-robin use case, and Tournament Plus upgrade path.
+- [x] Document org linking, Basic sharing, higher sharing levels, and org-owned transfer.
+- [x] Document billing transfer and the two-sided approval requirement.
+- [x] Document the difference between direct Team, org Team add-on, Club included teams, and Club extra teams.
+- [x] Update pricing/help copy anywhere Club extra-team pricing appears so it shows $19/$190 instead of $20/$200.
+- [x] Add release notes or internal owner checklist covering required Stripe Dashboard setup.
 
 Acceptance criteria:
 
-- A coach can understand Team from public pricing, coach landing copy, and in-app help.
-- An org owner can understand when to use Team add-ons versus Club.
-- A platform admin or owner can verify all Stripe products/prices needed before launch.
-- Help docs do not imply Team includes Tournament Plus features or formal tournament archiving.
+- A coach can understand Team from public pricing, coach landing copy, and in-app help. **Phase 9 adds in-app help for Team, seasons, history, and free-tier local tournaments.**
+- An org owner can understand when to use Team add-ons versus Club. **Phase 9 adds org help explaining coach-operated Team add-ons versus Club's multi-team operating model.**
+- A platform admin or owner can verify all Stripe products/prices needed before launch. **Phase 9 adds platform-admin readiness help and a dedicated launch checklist.**
+- Help docs do not imply Team includes Tournament Plus features or formal tournament archiving. **Phase 9 explicitly states Team tournaments are limited to the free-tier one-slot model and that Tournament Plus features require an upgrade.**
 
 ## Risks And Mitigations
 

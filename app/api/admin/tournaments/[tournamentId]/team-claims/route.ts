@@ -21,7 +21,7 @@ type TeamRow = {
 type TournamentRow = {
   id: string;
   name: string;
-  organization_id: string | null;
+  org_id: string | null;
   contact_email: string | null;
 };
 
@@ -120,7 +120,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
   ] = await Promise.all([
     supabaseAdmin
       .from('tournaments')
-      .select('id, name, organization_id, contact_email')
+      .select('id, name, org_id, contact_email')
       .eq('id', tournamentId)
       .maybeSingle<TournamentRow>(),
     supabaseAdmin
@@ -142,7 +142,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
   if (teamsError) return json({ error: teamsError.message }, 500);
   if (ageGroupError) return json({ error: ageGroupError.message }, 500);
   if (claimsError) return json({ error: claimsError.message }, 500);
-  if (!tournament || tournament.organization_id !== ctx.org.id) return forbidden();
+  if (!tournament || tournament.org_id !== ctx.org.id) return forbidden();
 
   const selectedTeams = (teams ?? []) as TeamRow[];
   if (selectedTeams.length !== ids.length || selectedTeams.some(team => team.tournament_id !== tournamentId)) {

@@ -84,7 +84,7 @@ async function buildProgress(
   const { data: tournaments, error: tournamentError } = await supabaseAdmin
     .from('tournaments')
     .select('id, year, name, slug, status, start_date, end_date, contact_email')
-    .eq('organization_id', orgId)
+    .eq('org_id', orgId)
     .neq('status', 'archived')
     .order('year', { ascending: false });
 

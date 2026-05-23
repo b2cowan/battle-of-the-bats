@@ -317,14 +317,14 @@ export async function POST(req: Request) {
           const { data: tournaments } = await supabaseAdmin
             .from('tournaments')
             .select('id, name, slug, status, year, start_date, end_date')
-            .eq('organization_id', org.id)
+            .eq('org_id', org.id)
             .neq('status', 'archived');
 
           if (intent && tournaments && tournaments.length > 0) {
             await supabaseAdmin
               .from('tournaments')
               .update({ status: 'archived', is_active: false })
-              .eq('organization_id', org.id)
+              .eq('org_id', org.id)
               .in('id', tournaments.map(t => t.id));
 
             await supabaseAdmin

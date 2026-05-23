@@ -15,7 +15,7 @@ export async function GET(req: Request) {
     let tournamentQuery = supabaseAdmin
       .from('tournaments')
       .select('id, name, year')
-      .eq('organization_id', ctx.org.id)
+      .eq('org_id', ctx.org.id)
       .order('year', { ascending: false });
 
     if (ctx.assignedTournamentIds !== null) {

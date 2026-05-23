@@ -37,7 +37,7 @@ async function hasNonArchivedTournament(orgId: string) {
   const { data } = await supabaseAdmin
     .from('tournaments')
     .select('id')
-    .eq('organization_id', orgId)
+    .eq('org_id', orgId)
     .neq('status', 'archived')
     .limit(1)
     .maybeSingle();

@@ -3,7 +3,7 @@ import { supabaseAdmin } from './supabase-admin';
 import { getEffectiveTournamentLimit, PLAN_CONFIG } from './plan-config';
 import { createClient as createBrowserSupabaseClient } from './supabase-browser';
 import { getActiveTeamEntitledRepTeamIds } from './team-workspace-entitlements';
-import { Tournament, TournamentStatus, Diamond, Contact, AgeGroup, Pool, PoolSlot, Team, Game, Announcement, PlayoffConfig, RuleSection, RuleItem, Resource, Organization, OrganizationMember, OrgPlan, OrgRole, TournamentArchive, OrgPublicSiteContent, AccountingLedger, AccountingEntry, LedgerSummary, AccountingEntryStatus, AccountingEntryType, LeagueSeason, LeagueDivision, LeagueTeam, LeagueRegistration, LeagueGame, LeagueStandingsRow, LeagueSeasonSummary, LeagueRegistrationStatus, LeagueSeasonStatus, LeaguePractice, LeaguePracticeStatus, RepTeam, RepProgramYear, RepProgramYearStatus, RepTeamCoach, RepTryoutRegistration, RepTryoutRegistrationStatus, RepRosterPlayer, RepRosterStatus, RepTeamEvent, RepEventType, RepTeamEventAttendance, RepAttendanceStatus, RepDocumentTemplate, RepDocumentType, RepPlayerDocument, RepCostAllocation, RepAllocationSplit, RepAllocationInstallment, RepPlayerDuesSchedule, RepPlayerDuesInstallment, RepTeamExpense, OrgPayee, TournamentRegistrationField, TournamentRegistrationFieldAnswer, TournamentRegistrationFieldType } from './types';
+import { Tournament, TournamentStatus, Diamond, Contact, AgeGroup, Pool, PoolSlot, Team, Game, Announcement, PlayoffConfig, RuleSection, RuleItem, Resource, Organization, OrganizationMember, OrgPlan, OrgRole, TournamentArchive, OrgPublicSiteContent, AccountingLedger, AccountingEntry, LedgerSummary, AccountingEntryStatus, AccountingEntryType, LeagueSeason, LeagueDivision, LeagueTeam, LeagueRegistration, LeagueGame, LeagueStandingsRow, LeagueSeasonSummary, LeagueRegistrationStatus, LeagueSeasonStatus, LeaguePractice, LeaguePracticeStatus, RepTeam, RepProgramYear, RepProgramYearStatus, RepTeamCoach, RepTryoutRegistration, RepTryoutRegistrationStatus, RepRosterPlayer, RepRosterStatus, RepTeamEvent, RepEventType, RepTeamEventAttendance, RepAttendanceStatus, RepLineupMode, RepTeamLineup, RepTeamLineupEntry, RepDocumentTemplate, RepDocumentType, RepPlayerDocument, RepCostAllocation, RepAllocationSplit, RepAllocationInstallment, RepPlayerDuesSchedule, RepPlayerDuesInstallment, RepTeamExpense, OrgPayee, TournamentRegistrationField, TournamentRegistrationFieldAnswer, TournamentRegistrationFieldType } from './types';
 
 // Use the SSR browser client (cookie-based session) for writes that need auth;
 // falls back to anon client on the server where there is no window.
@@ -42,7 +42,7 @@ export async function saveTournament(t: Omit<Tournament, 'id'>): Promise<Tournam
   if (t.isActive && t.organizationId) {
     await authClient().from('tournaments')
       .update({ is_active: false, status: 'completed' })
-      .eq('organization_id', t.organizationId);
+      .eq('org_id', t.organizationId);
   }
 
   const { data, error } = await authClient()
@@ -151,11 +151,11 @@ export async function initializeAgeGroups(targetTid: string, selectedDivisions: 
 
 export async function updateTournament(id: string, t: Partial<Tournament>): Promise<void> {
   if (t.isActive) {
-    const { data: existing } = await supabase.from('tournaments').select('organization_id').eq('id', id).single();
-    if (existing?.organization_id) {
+    const { data: existing } = await supabase.from('tournaments').select('org_id').eq('id', id).single();
+    if (existing?.org_id) {
       await authClient().from('tournaments')
         .update({ is_active: false, status: 'completed' })
-        .eq('organization_id', existing.organization_id)
+        .eq('org_id', existing.org_id)
         .neq('id', id);
     }
   }
@@ -176,11 +176,11 @@ export async function deleteTournament(id: string): Promise<void> {
 }
 
 export async function setActiveTournament(id: string): Promise<void> {
-  const { data: t } = await supabase.from('tournaments').select('organization_id').eq('id', id).single();
-  if (t?.organization_id) {
+  const { data: t } = await supabase.from('tournaments').select('org_id').eq('id', id).single();
+  if (t?.org_id) {
     await authClient().from('tournaments')
       .update({ is_active: false, status: 'completed' })
-      .eq('organization_id', t.organization_id)
+      .eq('org_id', t.org_id)
       .neq('id', id);
   }
   await authClient().from('tournaments').update({ is_active: true, status: 'active' }).eq('id', id);
@@ -240,14 +240,14 @@ export async function cloneTournament(
       .from('tournaments')
       .select('*')
       .eq('id', sourceTournamentId)
-      .eq('organization_id', orgId)
+      .eq('org_id', orgId)
       .maybeSingle();
 
     if (sourceError) throw sourceError;
     if (!source) throw new Error('Source tournament not found.');
 
     const tournamentInsert: Record<string, unknown> = {
-      organization_id: orgId,
+      org_id: orgId,
       year: options.year,
       name: options.name,
       slug: options.slug,
@@ -587,7 +587,7 @@ export async function cloneTournament(
     };
   } catch (error) {
     if (targetTournamentId) {
-      await supabaseAdmin.from('tournaments').delete().eq('id', targetTournamentId).eq('organization_id', orgId);
+      await supabaseAdmin.from('tournaments').delete().eq('id', targetTournamentId).eq('org_id', orgId);
     }
     throw error;
   }
@@ -623,8 +623,8 @@ export async function populateTournamentFrom(
   }
 
   const [{ data: destination, error: destError }, { data: source, error: sourceError }] = await Promise.all([
-    supabaseAdmin.from('tournaments').select('*').eq('id', destinationTournamentId).eq('organization_id', orgId).maybeSingle(),
-    supabaseAdmin.from('tournaments').select('*').eq('id', sourceTournamentId).eq('organization_id', orgId).maybeSingle(),
+    supabaseAdmin.from('tournaments').select('*').eq('id', destinationTournamentId).eq('org_id', orgId).maybeSingle(),
+    supabaseAdmin.from('tournaments').select('*').eq('id', sourceTournamentId).eq('org_id', orgId).maybeSingle(),
   ]);
   if (destError) throw destError;
   if (sourceError) throw sourceError;
@@ -2107,7 +2107,7 @@ export async function getTournamentsByOrg(orgId: string, options: ReadOptions = 
   const { data, error } = await readClient(options)
     .from('tournaments')
     .select('*')
-    .eq('organization_id', orgId)
+    .eq('org_id', orgId)
     .order('year', { ascending: false });
   if (error) return [];
   return (data || []).map(mapTournament);
@@ -2122,7 +2122,7 @@ export async function getTournamentBySlug(orgId: string, slug: string): Promise<
   const { data, error } = await supabaseAdmin
     .from('tournaments')
     .select('*')
-    .eq('organization_id', orgId)
+    .eq('org_id', orgId)
     .eq('slug', slug)
     .neq('status', 'archived')
     .single();
@@ -2137,7 +2137,7 @@ export async function getPublicTournamentBySlug(orgId: string, slug: string): Pr
   const { data, error } = await supabaseAdmin
     .from('tournaments')
     .select('*')
-    .eq('organization_id', orgId)
+    .eq('org_id', orgId)
     .eq('slug', slug)
     .in('status', ['active', 'completed'])
     .maybeSingle();
@@ -4068,6 +4068,8 @@ function mapRepRosterPlayer(r: any): RepRosterPlayer {
     playerLastName: r.player_last_name,
     playerDateOfBirth: r.player_date_of_birth,
     playerNumber: r.player_number,
+    primaryPosition: r.primary_position ?? null,
+    secondaryPosition: r.secondary_position ?? null,
     status: r.status,
     source: r.source,
     guardianFirstName: r.guardian_first_name,
@@ -4111,6 +4113,8 @@ export async function createRepRosterPlayer(fields: {
   playerLastName: string;
   playerDateOfBirth?: string | null;
   playerNumber?: string | null;
+  primaryPosition?: string | null;
+  secondaryPosition?: string | null;
   guardianFirstName?: string | null;
   guardianLastName?: string | null;
   guardianEmail?: string | null;
@@ -4130,6 +4134,8 @@ export async function createRepRosterPlayer(fields: {
       player_last_name: fields.playerLastName,
       player_date_of_birth: fields.playerDateOfBirth ?? null,
       player_number: fields.playerNumber ?? null,
+      primary_position: fields.primaryPosition ?? null,
+      secondary_position: fields.secondaryPosition ?? null,
       guardian_first_name: fields.guardianFirstName ?? null,
       guardian_last_name: fields.guardianLastName ?? null,
       guardian_email: fields.guardianEmail ?? null,
@@ -4148,6 +4154,8 @@ export async function updateRepRosterPlayer(playerId: string, fields: {
   playerLastName?: string;
   playerDateOfBirth?: string | null;
   playerNumber?: string | null;
+  primaryPosition?: string | null;
+  secondaryPosition?: string | null;
   status?: RepRosterStatus;
   guardianFirstName?: string | null;
   guardianLastName?: string | null;
@@ -4161,6 +4169,8 @@ export async function updateRepRosterPlayer(playerId: string, fields: {
   if (fields.playerLastName !== undefined) patch.player_last_name = fields.playerLastName;
   if (fields.playerDateOfBirth !== undefined) patch.player_date_of_birth = fields.playerDateOfBirth;
   if (fields.playerNumber !== undefined) patch.player_number = fields.playerNumber;
+  if (fields.primaryPosition !== undefined) patch.primary_position = fields.primaryPosition;
+  if (fields.secondaryPosition !== undefined) patch.secondary_position = fields.secondaryPosition;
   if (fields.status !== undefined) patch.status = fields.status;
   if (fields.guardianFirstName !== undefined) patch.guardian_first_name = fields.guardianFirstName;
   if (fields.guardianLastName !== undefined) patch.guardian_last_name = fields.guardianLastName;
@@ -4434,6 +4444,124 @@ export async function upsertRepTeamEventAttendance(rows: {
     .select();
   if (error) throw error;
   return (data ?? []).map(mapRepTeamEventAttendance);
+}
+
+// Team Lineups
+
+function mapRepTeamLineup(r: any): RepTeamLineup {
+  return {
+    id: r.id,
+    eventId: r.event_id,
+    programYearId: r.program_year_id,
+    teamId: r.team_id,
+    orgId: r.org_id,
+    lineupMode: r.lineup_mode,
+    inningCount: r.inning_count,
+    notes: r.notes ?? null,
+    updatedBy: r.updated_by ?? null,
+    createdAt: r.created_at,
+    updatedAt: r.updated_at,
+  };
+}
+
+function mapRepTeamLineupEntry(r: any): RepTeamLineupEntry {
+  return {
+    id: r.id,
+    lineupId: r.lineup_id,
+    playerId: r.player_id,
+    battingOrder: r.batting_order ?? null,
+    starter: r.starter ?? true,
+    inningPositions: (r.inning_positions ?? {}) as Record<string, string>,
+    notes: r.notes ?? null,
+    createdAt: r.created_at,
+    updatedAt: r.updated_at,
+  };
+}
+
+export async function getRepTeamLineupForEvent(eventId: string): Promise<RepTeamLineup | null> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_lineups')
+    .select('*')
+    .eq('event_id', eventId)
+    .maybeSingle();
+  if (error) throw error;
+  return data ? mapRepTeamLineup(data) : null;
+}
+
+export async function getRepTeamLineupEntries(lineupId: string): Promise<RepTeamLineupEntry[]> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_lineup_entries')
+    .select('*')
+    .eq('lineup_id', lineupId)
+    .order('batting_order', { ascending: true, nullsFirst: false });
+  if (error) throw error;
+  return (data ?? []).map(mapRepTeamLineupEntry);
+}
+
+export async function upsertRepTeamLineup(fields: {
+  eventId: string;
+  programYearId: string;
+  teamId: string;
+  orgId: string;
+  lineupMode: RepLineupMode;
+  inningCount: number;
+  notes?: string | null;
+  updatedBy?: string | null;
+}): Promise<RepTeamLineup> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_lineups')
+    .upsert(
+      {
+        event_id: fields.eventId,
+        program_year_id: fields.programYearId,
+        team_id: fields.teamId,
+        org_id: fields.orgId,
+        lineup_mode: fields.lineupMode,
+        inning_count: fields.inningCount,
+        notes: fields.notes?.trim() || null,
+        updated_by: fields.updatedBy ?? null,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: 'event_id' },
+    )
+    .select()
+    .single();
+  if (error) throw error;
+  return mapRepTeamLineup(data);
+}
+
+export async function replaceRepTeamLineupEntries(
+  lineupId: string,
+  entries: {
+    playerId: string;
+    battingOrder?: number | null;
+    starter?: boolean;
+    inningPositions?: Record<string, string>;
+    notes?: string | null;
+  }[],
+): Promise<RepTeamLineupEntry[]> {
+  const { error: deleteError } = await supabaseAdmin
+    .from('rep_team_lineup_entries')
+    .delete()
+    .eq('lineup_id', lineupId);
+  if (deleteError) throw deleteError;
+
+  if (entries.length === 0) return [];
+
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_lineup_entries')
+    .insert(entries.map(entry => ({
+      lineup_id: lineupId,
+      player_id: entry.playerId,
+      batting_order: entry.battingOrder ?? null,
+      starter: entry.starter ?? true,
+      inning_positions: entry.inningPositions ?? {},
+      notes: entry.notes?.trim() || null,
+      updated_at: new Date().toISOString(),
+    })))
+    .select();
+  if (error) throw error;
+  return (data ?? []).map(mapRepTeamLineupEntry);
 }
 
 // Document Templates

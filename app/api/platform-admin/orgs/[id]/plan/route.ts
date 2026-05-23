@@ -50,7 +50,7 @@ export async function PATCH(
   const { count: nonArchivedTournamentCount } = await supabaseAdmin
     .from('tournaments')
     .select('*', { count: 'exact', head: true })
-    .eq('organization_id', id)
+    .eq('org_id', id)
     .neq('status', 'archived');
 
   const updatePayload: {

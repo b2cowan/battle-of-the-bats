@@ -1,12 +1,15 @@
 # Tournament Scorekeeper Experience PM Brief
 
-> Status: Implementation slice 7 complete - shared scoring service now centralizes score submit/finalize/revert rules for admin Results and Scorekeeper APIs; migrations 066 and 068 applied in dev and production
+> Status: Implementation slice 12 complete - scorekeeper invite and first-login UX polish is implemented and statically verified
 > Created: 2026-05-22
 > Detailed plan: [codex_TOURNAMENT_SCOREKEEPER_EXPERIENCE_PLAN.md](codex_TOURNAMENT_SCOREKEEPER_EXPERIENCE_PLAN.md)
+> Browser sign-off: [codex_TOURNAMENT_SCOREKEEPER_BROWSER_SIGNOFF.md](codex_TOURNAMENT_SCOREKEEPER_BROWSER_SIGNOFF.md)
 
 ## Proposed Functionality
 
 Create a dedicated mobile-first scorekeeper workspace for tournament day. Invited scorekeepers land directly in a focused route where they can see today's accessible games, filter by field/division/team/status, tap a game, enter the score, and understand whether the result is final or waiting for admin review.
+
+The invitation path now supports that product story end to end. Admins invite a member as Scorekeeper, use the member management modal to restrict them to specific tournaments when needed, and the email/acceptance flow tells the scorekeeper they are setting up scorekeeper access rather than a generic admin account. New scorekeepers land in Scorekeeper View after creating a password; existing scorekeeper users receive a login link that opens Scorekeeper View directly.
 
 Admin Results & Scoring remains the review and closeout surface for organizers. Admins use it to finalize pending scores, correct/revert results, export, and manage the official tournament record.
 
@@ -29,10 +32,13 @@ A dedicated route makes FieldLogicHQ feel ready for event day, not just setup da
 Scorekeepers get a simple, fast workflow:
 
 - Open the scorekeeper link.
+- Accept the invite or sign in directly to Scorekeeper View.
 - See the right games for today.
 - Filter quickly by field, division, team, or status.
 - Enter scores with large mobile inputs.
 - Know whether the score is final or pending review.
+
+Admins also get help documentation for setting up scorekeepers, opening Scorekeeper View, understanding assignment scope, reviewing audit metadata, and keeping corrections/finalization in Results & Scoring.
 
 Organizers get better control:
 
@@ -48,6 +54,18 @@ Scorekeepers are authenticated users, not public link holders. The current `offi
 Scorekeepers can submit scores for assigned tournaments. They cannot access the main admin area, registration management, settings, billing, communication, exports, or post-event summary tools.
 
 Owners/admins continue to manage invites, assignments, review, finalization, and corrections.
+
+The admin setup path is:
+
+- Invite the user as Scorekeeper.
+- Manage that member's tournament assignments when the event should be scoped.
+- Keep Results & Scoring open for review/finalization while scorekeepers submit from the field.
+
+The scorekeeper first-run path is:
+
+- Open invite, create password, and land in Scorekeeper View.
+- Use today's game list and filters to find the first assigned game.
+- Submit the score and receive pending-review or finalized feedback immediately.
 
 ## Plan-Tier Impact
 
@@ -72,6 +90,33 @@ This should come after the core admin Results page is stable, which it now is, a
 - Admins can finalize and revert from Results & Scoring.
 - Empty, loading, denied, and error states are distinct and understandable.
 - Free Tournament and Tournament Plus both pass the scorekeeper UAT flow.
+
+## Latest UAT Evidence
+
+On 2026-05-23, the focused scorekeeper UAT passed with the normal shared auth setup:
+
+`pnpm.cmd exec playwright test --config playwright.config.ts --project=uat tests/uat/scenarios/tournament-scorekeeper-smoke.spec.ts`
+
+Result: 5 passed in 1.4m.
+
+On 2026-05-23, the lower-level shared scoring-service coverage also passed:
+
+`pnpm.cmd exec playwright test --config playwright.config.ts --project=uat --no-deps tests/uat/scenarios/tournament-scoring-service.spec.ts`
+
+Result: 7 passed in 2.5s.
+
+Manual sign-off is marked complete. Durable UAT scorekeeper accounts are seeded for future manual testing:
+
+- Free Tournament: `uat-scorekeeper@uat-test-org.local`
+- Tournament Plus: `uat-plus-scorekeeper@uat-plus-org.local`
+
+On 2026-05-23, the invite-to-first-score UAT passed:
+
+`pnpm.cmd exec playwright test --config playwright.config.ts --project=uat --no-deps tests/uat/scenarios/tournament-scorekeeper-invite.spec.ts`
+
+Result: 1 passed in 40.0s.
+
+This scenario verifies the first-run product promise: generated invite link, pending scorekeeper membership, tournament assignment, scorekeeper-specific accept-invite copy, Scorekeeper View landing, first score submission, and pending-review score metadata.
 
 ## Key Product Decisions Needed
 

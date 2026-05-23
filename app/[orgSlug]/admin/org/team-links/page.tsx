@@ -1,12 +1,13 @@
 'use client';
 
 import { FormEvent, use, useCallback, useEffect, useState } from 'react';
-import { Clock, CreditCard, Link2, RefreshCw, Send, ShieldCheck } from 'lucide-react';
+import { Clock, CreditCard, Link2, RefreshCw, Send, ShieldCheck, UsersRound } from 'lucide-react';
 import HelpCallout from '@/components/help/HelpCallout';
 import { useOrg } from '@/lib/org-context';
 
 type LinkSummary = {
   id: string;
+  teamWorkspaceId: string;
   status: string;
   linkType: string;
   sharingLevel: string;
@@ -27,6 +28,12 @@ type LinkSummary = {
   } | null;
 };
 
+type BillingSummary = {
+  activeOrgPaidTeamCount: number;
+  clubValueThreshold: number;
+  showClubValueNudge: boolean;
+};
+
 const STATUS_LABEL: Record<string, string> = {
   requested: 'Needs review',
   invited: 'Invited',
@@ -38,6 +45,7 @@ const STATUS_LABEL: Record<string, string> = {
 };
 
 const REVIEWABLE_STATUSES = new Set(['requested']);
+const CLUB_VALUE_TEAM_COUNT = 3;
 
 function formatDate(value: string) {
   return new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric', year: 'numeric' }).format(new Date(value));
@@ -57,6 +65,7 @@ export default function OrgTeamLinksPage({ params }: { params: Promise<{ orgSlug
   const [loading, setLoading] = useState(true);
   const [inviting, setInviting] = useState(false);
   const [workingId, setWorkingId] = useState<string | null>(null);
+  const [billingSummary, setBillingSummary] = useState<BillingSummary | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
 
@@ -70,6 +79,11 @@ export default function OrgTeamLinksPage({ params }: { params: Promise<{ orgSlug
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error ?? 'Could not load Team link requests.');
       setLinks(Array.isArray(data.links) ? data.links : []);
+      setBillingSummary(
+        data.billingSummary && typeof data.billingSummary.activeOrgPaidTeamCount === 'number'
+          ? data.billingSummary
+          : null,
+      );
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not load Team link requests.');
     } finally {
@@ -195,6 +209,19 @@ export default function OrgTeamLinksPage({ params }: { params: Promise<{ orgSlug
   const linkedLinks = links.filter(link => link.status === 'linked');
   const ownershipLinks = links.filter(link => link.linkType === 'ownership' && (link.status === 'ownership_pending' || link.status === 'org_owned'));
   const historyLinks = links.filter(link => !REVIEWABLE_STATUSES.has(link.status) && link.status !== 'invited' && link.status !== 'ownership_pending');
+  const fallbackActiveOrgPaidTeamCount = new Set(
+    links
+      .filter(link => (
+        link.status === 'linked' &&
+        link.linkType === 'billing' &&
+        link.billingModeAfterApproval === 'org_team_addon' &&
+        link.workspace?.billingMode === 'org_team_addon' &&
+        link.workspace.subscriptionStatus !== 'canceled'
+      ))
+      .map(link => link.teamWorkspaceId),
+  ).size;
+  const activeOrgPaidTeamCount = billingSummary?.activeOrgPaidTeamCount ?? fallbackActiveOrgPaidTeamCount;
+  const showClubValueNudge = billingSummary?.showClubValueNudge ?? activeOrgPaidTeamCount >= CLUB_VALUE_TEAM_COUNT;
 
   if (orgLoading || loading) {
     return <div className="p-8 text-data-gray">Loading Team links...</div>;
@@ -235,6 +262,22 @@ export default function OrgTeamLinksPage({ params }: { params: Promise<{ orgSlug
         body="Inviting or approving a Team workspace records the Basic association only after both sides agree. Org billing transfer is separate and still does not transfer ownership or unlock player, document, accounting, or org-wide rep-team access."
         cta={{ label: 'Read the guide', href: `/${orgSlug}/admin/help/org#recipe-review-team-link-request` }}
       />
+
+      {showClubValueNudge && (
+        <div className="card p-5 mb-6 border-blueprint-blue/40 bg-blueprint-blue/10">
+          <div className="flex items-start gap-3">
+            <div className="w-9 h-9 border border-logic-lime/30 bg-logic-lime/10 text-logic-lime flex items-center justify-center shrink-0">
+              <UsersRound size={17} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h2 className="font-bold uppercase tracking-wide text-fl-text text-sm">Club may be a better value now</h2>
+              <p className="text-data-gray text-sm mt-2 leading-relaxed">
+                This organization is paying for {activeOrgPaidTeamCount} linked Team add-ons. Team add-ons can stay active, but Club is the cleaner multi-team operating layer for oversight, accounting, rep-team administration, and lower extra-team pricing.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {error && <div className="card p-4 mb-4 text-red-300 border-red-500/40">{error}</div>}
       {message && <div className="card p-4 mb-4 text-green-300 border-green-500/40">{message}</div>}

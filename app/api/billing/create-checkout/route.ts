@@ -34,7 +34,7 @@ async function resetStartupTasksForEditableOnboarding(orgId: string, enabled: bo
   const { count, error } = await supabaseAdmin
     .from('tournaments')
     .select('id', { count: 'exact', head: true })
-    .eq('organization_id', orgId)
+    .eq('org_id', orgId)
     .neq('status', 'archived');
 
   if (error) throw error;

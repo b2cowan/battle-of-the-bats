@@ -28,7 +28,7 @@ function storageKey(orgSlug?: string) {
 
 type TournamentRow = {
   id: string;
-  organization_id?: string | null;
+  org_id?: string | null;
   year: number;
   name: string;
   slug?: string | null;
@@ -46,7 +46,7 @@ function mapRow(r: TournamentRow): Tournament {
   const status: TournamentStatus = r.status ?? (r.is_active ? 'active' : 'completed');
   return {
     id:             r.id,
-    organizationId: r.organization_id ?? undefined,
+    organizationId: r.org_id ?? undefined,
     year:           r.year,
     name:           r.name,
     slug:           r.slug ?? '',

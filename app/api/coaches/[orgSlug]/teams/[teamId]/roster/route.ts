@@ -69,6 +69,8 @@ export async function POST(
     playerLastName: playerLastName.trim(),
     playerDateOfBirth: body.playerDateOfBirth?.trim() || null,
     playerNumber: body.playerNumber?.trim() || null,
+    primaryPosition: body.primaryPosition?.trim() || null,
+    secondaryPosition: body.secondaryPosition?.trim() || null,
     guardianFirstName: guardianFirstName.trim(),
     guardianLastName: guardianLastName.trim(),
     guardianEmail: guardianEmail.trim(),

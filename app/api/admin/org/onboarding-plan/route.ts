@@ -40,7 +40,7 @@ export async function POST(req: Request) {
     supabaseAdmin
       .from('tournaments')
       .select('id', { count: 'exact', head: true })
-      .eq('organization_id', ctx.org.id)
+      .eq('org_id', ctx.org.id)
       .neq('status', 'archived'),
     supabaseAdmin
       .from('organizations')

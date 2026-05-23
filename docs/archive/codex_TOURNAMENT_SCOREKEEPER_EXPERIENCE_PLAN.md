@@ -1,9 +1,10 @@
 # Tournament Scorekeeper Experience Plan
 
-> Status: Implementation slice 7 complete - shared scoring service now centralizes score submit/finalize/revert rules for admin Results and Scorekeeper APIs; migrations 066 and 068 applied in dev and production
+> Status: Implementation slice 12 complete - scorekeeper invite and first-login UX polish is implemented and statically verified
 > Created: 2026-05-22
 > Parent context: Tournament Experience Excellence
 > PM brief: [codex_TOURNAMENT_SCOREKEEPER_EXPERIENCE_PM_BRIEF.md](codex_TOURNAMENT_SCOREKEEPER_EXPERIENCE_PM_BRIEF.md)
+> Browser sign-off: [codex_TOURNAMENT_SCOREKEEPER_BROWSER_SIGNOFF.md](codex_TOURNAMENT_SCOREKEEPER_BROWSER_SIGNOFF.md)
 
 ## Product Decision
 
@@ -59,6 +60,15 @@ Implementation slice 7 shared scoring service:
 - Admin Results and Scorekeeper APIs both call the shared service while keeping route-level auth, capability, and tournament-scope checks in the route handlers.
 - Admin Results can still correct finalized scores; Scorekeeper View still blocks finalized-score edits.
 - Error messages are now shared for invalid scores, missing games, cancelled games, and finalized score conflicts.
+
+Implementation slice 12 invite and first-login polish:
+
+- Existing login destination logic already sends single-membership `official` users to `/{orgSlug}/scorekeeper`.
+- Invite acceptance already redirects accepted `official` users to `/{orgSlug}/scorekeeper`.
+- The accept-invite page now reads invite context so scorekeeper invitations can use scorekeeper-specific setup copy before the user creates a password.
+- Existing-user scorekeeper notifications now point directly to `/auth/login?next=/{orgSlug}/scorekeeper` instead of a generic login destination.
+- New-user invite and re-invite emails now explain that scorekeepers use Scorekeeper View for assigned tournament games and label the CTA as a scorekeeper invite.
+- Focused UAT now covers the invite-to-first-score path with a generated Supabase invite link, pending official membership, tournament assignment, accept-invite setup, Scorekeeper View landing, and first pending-review score submission.
 
 ## Product Manager UX Summary
 
@@ -124,6 +134,25 @@ MVP:
 - Invite email explains that the user gets a scorekeeper workspace, not admin access.
 - After accepting the invite, official users redirect to the scorekeeper landing route.
 - Admin can manage tournament assignments from the existing member management modal.
+
+Admin setup journey:
+
+1. Admin opens Members from the org settings area or Tournament Settings.
+2. Admin chooses Invite Member, enters the scorekeeper's email, and selects Scorekeeper.
+3. The invite email tells the scorekeeper they will use Scorekeeper View for assigned tournament games.
+4. If the event should be scoped, the admin opens Manage on that member and checks the tournaments the scorekeeper should see. Leaving all tournaments unchecked keeps the current unrestricted behavior.
+5. On event day, the admin can open Results & Scoring for review/finalization and can also use "Open Scorekeeper View" to verify the field workflow.
+
+Scorekeeper first-run journey:
+
+1. Scorekeeper opens the invite email.
+2. New users accept the invite, set their display name/password, and see scorekeeper-specific setup copy.
+3. Existing users are sent to login with a scorekeeper `next` destination.
+4. The scorekeeper lands at `/{orgSlug}/scorekeeper`.
+5. The first screen shows today's accessible games, status counts, date/today control, team search, field filter, division filter, and status tabs.
+6. The scorekeeper taps a scoreable game card, enters home/away scores, and saves.
+7. The confirmation says either "Score sent for review" or "Score finalized" based on the tournament score finalization setting.
+8. Results & Scoring receives the submitted score with submitter metadata for admin review, finalization, correction, export, or revert.
 
 Recommended product language changes:
 
@@ -464,14 +493,30 @@ Required:
 - [x] Show submitter/time metadata in Results & Scoring if audit metadata exists.
 - [x] Confirm Pending Review, Finalize, Revert, exports, standings, and playoff advancement continue to use one shared source of truth.
 - [x] Update tournament help content.
+- [x] Update help hub, tournament help, and org/member help for Scorekeeper View, assignment scope, pending review, audit metadata, and admin correction/revert responsibilities.
 
 ### Phase 4 - Hardening And UAT Prep
 
-- [ ] Add focused unit/integration coverage for score policy and access scope.
-- [ ] Add UAT seed data for free and Plus scorekeeper users.
-- [ ] Run TypeScript, focused lint, and whitespace checks.
-- [ ] Restart dev server only if implementation changes route files, shared modules, `proxy.ts`, migrations, or config.
-- [ ] Prepare browser sign-off checklist for the user.
+- [x] Add focused unit/integration-style coverage for shared score policy, validation, finalized/cancelled conflicts, admin correction, finalize, and revert rules.
+- [x] Add focused scorekeeper UAT data setup inside the Playwright scenario.
+- [x] Add scorekeeper UAT covering pending-review submission, immediate-final submission, audit metadata, admin review/export/finalize, finalized-score rejection, admin correction, and revert.
+- [x] Add permanent UAT seed data for Free and Plus scorekeeper users.
+- [x] Run TypeScript, focused lint, and whitespace checks for the scoring-service coverage slice.
+- [x] Restart dev server after UAT harness changes, clear stale `.next`, and verify `/platform-admin/login?next=%2Fplatform-admin` returns HTTP 200 with no Supabase `EACCES` failures.
+- [x] Prepare browser sign-off checklist for the user.
+- [x] Mark manual browser sign-off complete.
+
+### Phase 4A - Invite And First-Login Polish
+
+- [x] Confirm `official` login destination resolves to `/{orgSlug}/scorekeeper`.
+- [x] Confirm invite acceptance resolves `official` users to `/{orgSlug}/scorekeeper`.
+- [x] Add scorekeeper-aware accept-invite copy.
+- [x] Point existing-user scorekeeper notifications directly to the Scorekeeper View login destination.
+- [x] Update new-user invite and re-invite email copy for assigned tournament scorekeeping.
+- [x] Add focused invite-to-first-score UAT coverage.
+- [x] Run the invite-to-first-score UAT scenario.
+- [x] Run focused TypeScript, lint, and whitespace checks for touched auth/invite files.
+- [x] Restart dev server after auth/API route changes and verify platform-admin login smoke.
 
 ### Phase 5 - Future Enhancements
 
@@ -497,6 +542,14 @@ Per project rule, user browser verification is expected unless explicitly reques
 - One scorekeeper with no tournament assignment.
 - One scorekeeper assigned to a tournament with no games today.
 - One staff/admin user with score submission access.
+
+Persistent scorekeeper users:
+
+- Free Tournament org: `uat-scorekeeper@uat-test-org.local`
+- Tournament Plus org: `uat-plus-scorekeeper@uat-plus-org.local`
+- Passwords are documented in `UAT_SETUP.md` and mirrored in local `.env.local`.
+- `tests/uat/create-uat-accounts.sql` creates the users, active official memberships, and assignment rows for all currently active tournaments in each UAT org.
+- 2026-05-23 seed result against the configured Supabase environment: Free scorekeeper created with 0 current active-tournament assignments because `uat-test-org` has no active tournament rows; Plus scorekeeper created with 1 active-tournament assignment.
 
 ### Browser Matrix
 
@@ -537,6 +590,22 @@ Routes:
 - `git diff --check` passes.
 - API tests or manual API probes confirm 401/403/409/200 behavior.
 - If `proxy.ts`, shared auth, route files, migrations, or config change, restart the dev server with network access and verify `/platform-admin/login?next=%2Fplatform-admin` returns HTTP 200 with no Supabase `EACCES` failures.
+
+### Latest UAT Result
+
+- 2026-05-23: `pnpm.cmd exec playwright test --config playwright.config.ts --project=uat tests/uat/scenarios/tournament-scorekeeper-smoke.spec.ts` passed: 5 passed in 1.4m.
+- The run covered shared UAT auth setup plus the focused scorekeeper smoke scenario.
+- The scenario creates disposable tournaments, teams, games, and scorekeeper membership/assignments, then cleans them up after the run.
+
+### Latest Lower-Level Coverage Result
+
+- 2026-05-23: `pnpm.cmd exec playwright test --config playwright.config.ts --project=uat --no-deps tests/uat/scenarios/tournament-scoring-service.spec.ts` passed: 7 passed in 2.5s.
+- The service spec uses injected dependencies instead of live Supabase writes and covers pending review, immediate final, admin final submission, invalid score rejection, cancelled/finalized conflicts, admin finalized-score correction, finalize, and revert audit clearing.
+
+### Latest Invite-To-First-Score UAT Result
+
+- 2026-05-23: `pnpm.cmd exec playwright test --config playwright.config.ts --project=uat --no-deps tests/uat/scenarios/tournament-scorekeeper-invite.spec.ts` passed: 1 passed in 40.0s.
+- The scenario creates a generated Supabase invite link, pending scorekeeper membership, tournament assignment, active tournament/game data, accepts the invite in a fresh browser context, verifies Scorekeeper View landing, submits the first score for review, and confirms game audit/status metadata.
 
 ## Open Decisions
 

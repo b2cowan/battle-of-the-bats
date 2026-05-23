@@ -41,7 +41,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     .from('tournaments')
     .select('id, status, name')
     .eq('id', destinationTournamentId)
-    .eq('organization_id', ctx.org.id)
+    .eq('org_id', ctx.org.id)
     .maybeSingle();
   if (destError) return json({ error: destError.message }, 500);
   if (!destination) return json({ error: 'Destination tournament not found.' }, 404);
@@ -54,7 +54,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     .from('tournaments')
     .select('id, name')
     .eq('id', sourceTournamentId)
-    .eq('organization_id', ctx.org.id)
+    .eq('org_id', ctx.org.id)
     .maybeSingle();
   if (sourceError) return json({ error: sourceError.message }, 500);
   if (!source) return json({ error: 'Source tournament not found.' }, 404);
