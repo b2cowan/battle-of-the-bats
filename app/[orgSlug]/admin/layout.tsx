@@ -44,7 +44,7 @@ export default async function AdminLayout({
     >
       <TournamentProvider orgSlug={orgSlug}>
         <LiveLogicProvider>
-          <AdminChrome showDevTools={process.env.NEXT_PUBLIC_ENABLE_DEV_TOOLS === 'true'}>
+          <AdminChrome>
             {children}
           </AdminChrome>
         </LiveLogicProvider>

@@ -3,17 +3,14 @@
 import { usePathname } from 'next/navigation';
 import AdminSidebar from '@/components/admin/AdminSidebar';
 import AdminBottomNav from '@/components/admin/AdminBottomNav';
-import DevPlanSwitcher from '@/components/DevPlanSwitcher';
 import { LiveLogicRail } from '@/components/live-logic/LiveLogicRail';
 import AdminTitleManager from './AdminTitleManager';
 import styles from './admin.module.css';
 
 export default function AdminChrome({
   children,
-  showDevTools,
 }: {
   children: React.ReactNode;
-  showDevTools: boolean;
 }) {
   const pathname = usePathname();
   const isOnboarding = pathname.endsWith('/admin/onboarding');
@@ -38,7 +35,6 @@ export default function AdminChrome({
         </main>
       </div>
       {!isFocused && <AdminBottomNav />}
-      {showDevTools && !isFocused && <DevPlanSwitcher />}
       {!isFocused && <LiveLogicRail />}
     </>
   );

@@ -43,17 +43,9 @@ export function OrgProvider({
   const [userCapabilities, setUserCapabilities] = useState<Record<string, boolean> | null>(initialUserCapabilities);
   const [loading, setLoading] = useState(!initialOrg || !initialUserRole);
 
-  const load = useCallback(async (authUser: User | null) => {
-    if (!authUser) {
-      setUser(null);
-      setCurrentOrg(null);
-      setUserRole(null);
-      setUserCapabilities(null);
-      setLoading(false);
-      return;
-    }
-    setUser(authUser);
-
+  // Fetches fresh org/role data from the API. Called by refresh() on explicit user actions
+  // (billing changes, settings saves, etc.) — NOT on every auth state event.
+  const doFetchOrgContext = useCallback(async () => {
     try {
       const orgParam = initialOrg?.slug ? `?orgSlug=${encodeURIComponent(initialOrg.slug)}` : '';
       const res = await fetch(`/api/org-context${orgParam}`, { cache: 'no-store' });
@@ -74,14 +66,36 @@ export function OrgProvider({
         setUserCapabilities(null);
       }
     }
-    setLoading(false);
   }, [initialOrg]);
+
+  const load = useCallback(async (authUser: User | null) => {
+    if (!authUser) {
+      setUser(null);
+      setCurrentOrg(null);
+      setUserRole(null);
+      setUserCapabilities(null);
+      setLoading(false);
+      return;
+    }
+    setUser(authUser);
+
+    // When the server already provided initialOrg, auth was already verified server-side.
+    // Skip the redundant client-side fetch — auth state events (INITIAL_SESSION,
+    // TOKEN_REFRESHED, etc.) firing after hydration would otherwise generate a storm of
+    // 401s in deployed environments where SSR cookies aren't forwarded to API routes.
+    if (!initialOrg) {
+      await doFetchOrgContext();
+    }
+
+    setLoading(false);
+  }, [initialOrg, doFetchOrgContext]);
 
   const refresh = useCallback(async () => {
     const supabase = createClient();
     const { data: { user: authUser } } = await supabase.auth.getUser();
-    await load(authUser);
-  }, [load]);
+    setUser(authUser);
+    if (authUser) await doFetchOrgContext();
+  }, [doFetchOrgContext]);
 
   useEffect(() => {
     const supabase = createClient();
