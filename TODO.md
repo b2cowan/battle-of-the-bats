@@ -5,6 +5,13 @@ This file tracks the ongoing tasks for the FieldLogicHQ platform (multi-tenant s
 
 ---
 
+- [ ] **Brand Strategy** — umbrella positioning, four segment profiles, site architecture, Coach Portal bridge messaging (see [BRAND_STRATEGY.md](docs/active/BRAND_STRATEGY.md))
+- [ ] **Persona landing pages** — build `/for-tournament-organizers`, `/for-leagues`, `/for-clubs`, `/for-coaches` segment pages per brand strategy site architecture
+- [ ] **Homepage persona routing** — update hero section with four-path self-selection above the fold
+- [ ] **Pricing page copy** — write full plan cards, comparison table, FAQ, Coach Portal row (see `docs/active/PRICING_PAGE_COPY.md` once created)
+
+---
+
 - [x] **Shared Design/UX agent guidance** - Claude `/design` and `/ux` commands now point to shared Claude/Codex review guidance, with a Codex sub-agent coordination playbook in `memory/agents/`.
 
 - [x] **Standalone Team Phase 1 foundation migration** - Migration 065 applied in dev and production.

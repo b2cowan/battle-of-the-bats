@@ -1528,6 +1528,10 @@ export async function getStandings(ageGroupId: string, config?: PlayoffConfig, o
 export async function getAnnouncements(tournamentId?: string, options: ReadOptions = {}): Promise<Announcement[]> {
   const client = options.admin ? supabaseAdmin : supabase;
   let query = client.from('announcements').select('*')
+    // Only return records that are posted to the site.
+    // Email-only communications (channel_site=false) are admin-internal and must not appear publicly.
+    // The column defaults to true, so existing rows are unaffected.
+    .eq('channel_site', true)
     .order('pinned', { ascending: false })
     .order('published_at', { ascending: false });
   if (tournamentId) query = query.eq('tournament_id', tournamentId);

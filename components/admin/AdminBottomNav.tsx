@@ -5,10 +5,10 @@ import { usePathname, useRouter } from 'next/navigation';
 import {
   Users, Calendar, Trophy, Megaphone,
   MoreHorizontal, LayoutDashboard, Tag, MapPin,
-  RefreshCw, LogOut, X, ChevronRight, BookUser,
+  RefreshCw, LogOut, X, ChevronRight, ChevronDown, BookUser,
   Settings, Users2, LayoutGrid, CalendarDays, UserCheck,
   ExternalLink, BookOpen, Mail, Archive, FileText,
-  Link2,
+  Link2, type LucideIcon,
 } from 'lucide-react';
 import { signOut } from '@/lib/auth';
 import { useOrg } from '@/lib/org-context';
@@ -21,28 +21,43 @@ const PRIMARY_KEYS = [
   { key: 'tournaments/results',  icon: Trophy,   label: 'Results'       },
 ];
 
-const TOURNAMENT_MORE = [
+type NavItem = {
+  key: string;
+  icon: LucideIcon;
+  label: string;
+};
+
+const OVERVIEW_MORE: NavItem[] = [
   { key: 'tournaments/dashboard',     icon: LayoutDashboard, label: 'Dashboard'     },
-  { key: 'tournaments/announcements', icon: Megaphone,       label: 'News Posts'    },
-  { key: 'tournaments/communication', icon: Mail,            label: 'Communication' },
+];
+
+const SETUP_MORE: NavItem[] = [
   { key: 'tournaments/rules',         icon: BookOpen,        label: 'Rules & Resources' },
   { key: 'tournaments/contacts',      icon: BookUser,        label: 'Contacts'      },
   { key: 'tournaments/venues',        icon: MapPin,          label: 'Venues'        },
   { key: 'tournaments/age-groups',    icon: Tag,             label: 'Divisions'     },
   { key: 'tournaments/manage',        icon: RefreshCw,       label: 'Manage'        },
   { key: 'tournaments/settings',      icon: Settings,        label: 'Settings'      },
+];
+
+const COMMUNICATION_MORE: NavItem[] = [
+  { key: 'tournaments/announcements', icon: Megaphone,       label: 'News Posts'    },
+  { key: 'tournaments/communication', icon: Mail,            label: 'Communication' },
+];
+
+const HISTORY_MORE: NavItem[] = [
   { key: 'tournaments/archives',      icon: Archive,         label: 'Past Tournaments' },
 ];
 
-const ORG_MORE = [
+const WORKSPACE_MORE: NavItem[] = [
   { key: 'org/diamonds', icon: MapPin, label: 'Diamonds' },
 ];
 
-const ADMIN_ORG_MORE = [
+const ADMIN_WORKSPACE_MORE: NavItem[] = [
   { key: 'org/team-links', icon: Link2, label: 'Team Links' },
 ];
 
-const OWNER_ORG_MORE = [
+const OWNER_WORKSPACE_MORE: NavItem[] = [
   { key: 'org/members',  icon: Users2,   label: 'Members'  },
   { key: 'org/settings', icon: Settings, label: 'Settings' },
 ];
@@ -77,19 +92,21 @@ export default function AdminBottomNav() {
   const isHouseLeague = pathname.startsWith(`${base}/house-league`);
   const isModule      = isRepTeams || isHouseLeague || pathname.startsWith(`${base}/org`) || pathname.startsWith(`${base}/public-site`) || pathname.startsWith(`${base}/accounting`);
   const showTournamentSummary = currentTournament?.status === 'completed' || currentTournament?.status === 'archived';
-  const tournamentMore = showTournamentSummary
-    ? [
-        ...TOURNAMENT_MORE.slice(0, 3),
-        { key: 'tournaments/summary', icon: FileText, label: 'Summary' },
-        ...TOURNAMENT_MORE.slice(3),
-      ]
-    : TOURNAMENT_MORE;
+  const historyMore: NavItem[] = showTournamentSummary
+    ? [{ key: 'tournaments/summary', icon: FileText, label: 'Summary' }, ...HISTORY_MORE]
+    : HISTORY_MORE;
+  const workspaceMore: NavItem[] = [
+    ...WORKSPACE_MORE,
+    ...(userRole === 'owner' || userRole === 'admin' ? ADMIN_WORKSPACE_MORE : []),
+    ...(userRole === 'owner' ? OWNER_WORKSPACE_MORE : []),
+  ];
 
   const allMoreKeys = [
-    ...tournamentMore,
-    ...ORG_MORE,
-    ...(userRole === 'owner' || userRole === 'admin' ? ADMIN_ORG_MORE : []),
-    ...(userRole === 'owner' ? OWNER_ORG_MORE : []),
+    ...OVERVIEW_MORE,
+    ...SETUP_MORE,
+    ...COMMUNICATION_MORE,
+    ...historyMore,
+    ...workspaceMore,
   ];
 
   const isMoreActive = allMoreKeys.some(item => {
@@ -122,7 +139,7 @@ export default function AdminBottomNav() {
     if (t) setCurrentTournament(t);
   }
 
-  function dropNavItems(items: typeof TOURNAMENT_MORE) {
+  function dropNavItems(items: NavItem[]) {
     return items.map(({ key, icon: Icon, label }) => {
       const href   = key ? `${base}/${key}` : base;
       const active = key === ''
@@ -228,19 +245,23 @@ export default function AdminBottomNav() {
             {/* Tournament switcher */}
             {tournaments.length > 0 && (
               <div className={styles.tournamentBlock}>
-                <span className={styles.blockLabel}>Season</span>
-                <select
-                  className={styles.seasonSelect}
-                  value={currentTournament?.id ?? ''}
-                  onChange={e => handleTournamentChange(e.target.value)}
-                  id="admin-mob-tournament-select"
-                >
-                  {tournaments.map(t => (
-                    <option key={t.id} value={t.id}>
-                      {t.name}{t.isActive ? ' ✓' : ''}
-                    </option>
-                  ))}
-                </select>
+                <span className={styles.blockLabel}>Current tournament</span>
+                <div className={styles.seasonSelectShell}>
+                  <select
+                    className={styles.seasonSelect}
+                    value={currentTournament?.id ?? ''}
+                    onChange={e => handleTournamentChange(e.target.value)}
+                    id="admin-mob-tournament-select"
+                    aria-label="Current tournament"
+                  >
+                    {tournaments.map(t => (
+                      <option key={t.id} value={t.id}>
+                        {t.name}{t.isActive ? ' - Live' : ''}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown size={16} className={styles.seasonChevron} aria-hidden />
+                </div>
                 {currentTournament && !currentTournament.isActive && (
                   <Link
                     className={styles.setLiveBtn}
@@ -271,17 +292,31 @@ export default function AdminBottomNav() {
 
             <div className={styles.dropDivider} />
 
-            {/* Tournament nav group */}
-            <div className={styles.dropSectionLabel}>Tournament</div>
-            {dropNavItems(tournamentMore)}
+            <div className={styles.dropSectionLabel}>Overview</div>
+            {dropNavItems(OVERVIEW_MORE)}
 
             <div className={styles.dropDivider} />
 
-            {/* Organization nav group */}
-            <div className={styles.dropSectionLabel}>Organization</div>
-            {dropNavItems(ORG_MORE)}
-            {(userRole === 'owner' || userRole === 'admin') && dropNavItems(ADMIN_ORG_MORE)}
-            {userRole === 'owner' && dropNavItems(OWNER_ORG_MORE)}
+            <div className={styles.dropSectionLabel}>Setup</div>
+            {dropNavItems(SETUP_MORE)}
+
+            <div className={styles.dropDivider} />
+
+            <div className={styles.dropSectionLabel}>Communication</div>
+            {dropNavItems(COMMUNICATION_MORE)}
+
+            <div className={styles.dropDivider} />
+
+            <div className={styles.dropSectionLabel}>History</div>
+            {dropNavItems(historyMore)}
+
+            {workspaceMore.length > 0 && (
+              <>
+                <div className={styles.dropDivider} />
+                <div className={styles.dropSectionLabel}>Workspace</div>
+                {dropNavItems(workspaceMore)}
+              </>
+            )}
 
             <div className={styles.dropDivider} />
 

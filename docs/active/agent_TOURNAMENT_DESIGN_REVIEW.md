@@ -67,10 +67,10 @@ Pages rendered inside the tournament context (sidebar shows tournament nav).
 | Page | Route | File | Notes | 📸 Screenshotted | 👁 Reviewed | 📝 Decisions Logged | ✅ Done |
 |---|---|---|---|:---:|:---:|:---:|:---:|
 | Dashboard | `/{orgSlug}/admin/tournaments/dashboard` | `app/[orgSlug]/admin/tournaments/dashboard/page.tsx` | CSS: `dashboard.module.css` | [ ] | [ ] | [ ] | [ ] |
-| Registrations / Teams | `/{orgSlug}/admin/tournaments/teams` | `app/[orgSlug]/admin/tournaments/teams/page.tsx` | CSS: `teams-admin.module.css` | [ ] | [ ] | [ ] | [ ] |
-| Schedule | `/{orgSlug}/admin/tournaments/schedule` | `app/[orgSlug]/admin/tournaments/schedule/page.tsx` | CSS: `schedule-admin.module.css`; sub-components: `Generator.tsx`, `PlayoffWizard.tsx`, `GameList.tsx`, `BracketBuilder.tsx` | [ ] | [ ] | [ ] | [ ] |
-| Results | `/{orgSlug}/admin/tournaments/results` | `app/[orgSlug]/admin/tournaments/results/page.tsx` | | [ ] | [ ] | [ ] | [ ] |
-| Announcements | `/{orgSlug}/admin/tournaments/announcements` | `app/[orgSlug]/admin/tournaments/announcements/page.tsx` | CSS: `announcements-admin.module.css` | [ ] | [ ] | [ ] | [ ] |
+| Registrations / Teams | `/{orgSlug}/admin/tournaments/teams` | `app/[orgSlug]/admin/tournaments/teams/page.tsx` | CSS: `teams-admin.module.css` | [x] | [x] | [x] | [ ] |
+| Schedule | `/{orgSlug}/admin/tournaments/schedule` | `app/[orgSlug]/admin/tournaments/schedule/page.tsx` | CSS: `schedule-admin.module.css`; sub-components: `Generator.tsx`, `PlayoffWizard.tsx`, `GameList.tsx`, `BracketBuilder.tsx` | [x] | [x] | [x] | [ ] |
+| Results | `/{orgSlug}/admin/tournaments/results` | `app/[orgSlug]/admin/tournaments/results/page.tsx` | | [x] | [x] | [x] | [ ] |
+| Announcements | `/{orgSlug}/admin/tournaments/announcements` | `app/[orgSlug]/admin/tournaments/announcements/page.tsx` | CSS: `announcements-admin.module.css` | [x] | [x] | [x] | [x] |
 | Communication | `/{orgSlug}/admin/tournaments/communication` | `app/[orgSlug]/admin/tournaments/communication/page.tsx` | CSS: `communication.module.css` | [ ] | [ ] | [ ] | [ ] |
 | Rules | `/{orgSlug}/admin/tournaments/rules` | `app/[orgSlug]/admin/tournaments/rules/page.tsx` | Sub-component: `RulesAdmin.tsx` | [ ] | [ ] | [ ] | [ ] |
 | Branding | `/{orgSlug}/admin/tournaments/branding` | `app/[orgSlug]/admin/tournaments/branding/page.tsx` | CSS: `branding.module.css` | [ ] | [ ] | [ ] | [ ] |
@@ -116,7 +116,7 @@ Pages rendered inside the tournament context (sidebar shows tournament nav).
 | 1 — Shared Shell & Navigation | 11 | 0 |
 | 2 — Admin Hub & Onboarding | 3 | 0 |
 | 3 — Tournament Entry Points | 3 | 0 |
-| 4 — Active Tournament Pages | 13 | 0 |
+| 4 — Active Tournament Pages | 13 | 1 |
 | 5 — Settings Sub-Pages | 7 | 0 |
 | 6 — Public Preview Shell | 4 | 0 |
 | **Total** | **41** | **0** |

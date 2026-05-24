@@ -6,7 +6,7 @@ import { saveGame, updateGame, deleteGame } from '@/lib/db';
 import { formatTime } from '@/lib/utils';
 import { useTournament } from '@/lib/tournament-context';
 import { useOrg } from '@/lib/org-context';
-import { hasPlanFeature } from '@/lib/plan-features';
+import { hasPlanFeature, requiresTournamentPlusCopy } from '@/lib/plan-features';
 import {
   downloadXLSX, generateCSV, downloadCSVBlob, downloadICS,
   buildFilename, serializeRows, serializeHeaders, type ExportColumnDef,
@@ -18,7 +18,6 @@ import PlayoffWizard from './PlayoffWizard';
 import GameList from './components/GameList';
 import { Game, Team, AgeGroup, Diamond, PoolSlot } from '@/lib/types';
 import s from '../../admin-common.module.css';
-import styles from './schedule-admin.module.css';
 import FeedbackModal from '@/components/FeedbackModal';
 import HelpCallout from '@/components/help/HelpCallout';
 import AddVenueModal from '@/components/admin/AddVenueModal';
@@ -101,11 +100,37 @@ export default function AdminSchedulePage() {
   const canGeneratePlayoffs = currentOrg ? hasPlanFeature(currentOrg.planId, 'playoff_generator') : false;
   const canNotify = currentOrg ? hasPlanFeature(currentOrg.planId, 'schedule_notification') : false;
 
+  function showScheduleUpgrade(title: string, feature: 'auto_schedule' | 'playoff_generator') {
+    setFeedback({
+      isOpen: true,
+      title,
+      message: requiresTournamentPlusCopy(feature),
+      type: 'warning',
+    });
+  }
+
   function openGenerator() {
+    if (!canAutoGenerateSchedule) {
+      showScheduleUpgrade('Auto-Generate Requires Tournament Plus', 'auto_schedule');
+      return;
+    }
     setShowGenerator(true);
   }
 
   function openPlayoffWizard() {
+    if (!canGeneratePlayoffs) {
+      showScheduleUpgrade('Playoff Wizard Requires Tournament Plus', 'playoff_generator');
+      return;
+    }
+    if (!filterGroup) {
+      setFeedback({
+        isOpen: true,
+        title: 'Choose a Division First',
+        message: 'Select a division before opening the Playoff Wizard.',
+        type: 'info',
+      });
+      return;
+    }
     setShowPlayoffWizard(true);
   }
 
@@ -410,20 +435,9 @@ export default function AdminSchedulePage() {
         title="Schedule Management"
         subtitle={currentTournament ? `${currentTournament.name} (${currentTournament.year})` : 'Plan tournament games'}
         actions={
-          <>
-            <ExportMenu
-              formats={['xlsx', 'csv', 'ics', 'pdf']}
-              onExportXLSX={handleExportXLSX}
-              onExportCSV={handleExportCSV}
-              onExportICS={handleExportICS}
-              onExportPDF={handleExportPDF}
-              planId={currentOrg?.planId}
-              disabled={filtered.length === 0}
-            />
-            <button className="btn btn-lime btn-data" onClick={openAdd} disabled={!currentTournament}>
-              <Plus size={16} /> Add Game
-            </button>
-          </>
+          <button className="btn btn-lime btn-data" onClick={openAdd} disabled={!currentTournament}>
+            <Plus size={16} /> Add Game
+          </button>
         }
       />
 
@@ -528,6 +542,15 @@ export default function AdminSchedulePage() {
           )}
         </ToolbarGroup>
         <ToolbarGroup align="end">
+          <ExportMenu
+            formats={['xlsx', 'csv', 'ics', 'pdf']}
+            onExportXLSX={handleExportXLSX}
+            onExportCSV={handleExportCSV}
+            onExportICS={handleExportICS}
+            onExportPDF={handleExportPDF}
+            planId={currentOrg?.planId}
+            disabled={filtered.length === 0}
+          />
           <ToolbarMenu label="Tools">
             {viewMode === 'pool' ? (
               <ToolbarMenuItem

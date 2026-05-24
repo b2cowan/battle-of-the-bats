@@ -15,7 +15,7 @@
 | Critical | 0 | 0 | 0 |
 | High | 0 | 7 | 1 |
 | Medium | 0 | 4 | 2 |
-| Low | 1 | 3 | 3 |
+| Low | 0 | 4 | 3 |
 | Advisory | 6 | 1 | 0 |
 
 ---
@@ -106,7 +106,7 @@
 **Recommendation:** Two-part migration 081 (`supabase/migrations/081_pools_nullability_prod.sql`):  
 - Part A (dev only): `ALTER TABLE pools ADD COLUMN IF NOT EXISTS created_at timestamptz NOT NULL DEFAULT now();`  
 - Part B (prod only, optional): backfill NULLs then tighten `display_order` — run pre-check first: `SELECT COUNT(*) FROM pools WHERE display_order IS NULL;`  
-**Status:** Open — Migration 081 Part A applied to dev 2026-05-24 (`created_at` added). Part B (prod `display_order` tightening) pending pre-check: `SELECT COUNT(*) FROM pools WHERE display_order IS NULL;`. Apply to prod when convenient. Checks 17–18 in `docs/validate_db_state.sql` track both envs.
+**Status:** Addressed — Migration 081 Part A applied to dev 2026-05-24 (added `created_at`). Migration 081 Part B applied to prod 2026-05-24 (tightened `display_order` NOT NULL). Both environments verified clean via `validate_db_state.sql` — 19/19 checks passing on prod, 18/19 on dev (check 19 expected FAIL on dev — no duplicates, just auto-named constraints).
 
 ---
 

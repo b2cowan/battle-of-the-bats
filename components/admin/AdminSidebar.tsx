@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import {
-  LayoutDashboard, Users, Calendar, Trophy, Megaphone, Tag, LogOut, Home,
+  LayoutDashboard, Users, Calendar, Trophy, Tag, LogOut, Home,
   ChevronRight, MapPin, BookUser, BookOpen, CreditCard, Settings, Paintbrush,
   Users2, Archive, ArrowLeft, Mail, Globe, DollarSign,
   CalendarDays, ClipboardList, FileText, UserCheck, ExternalLink, HelpCircle,
@@ -29,11 +29,10 @@ const TOUR_GROUPS: TourGroup[] = [
     label: 'Operations',
     defaultOpenFor: ['active', 'completed'],
     items: [
-      { key: 'registrations',  icon: Users,     label: 'Registrations' },
-      { key: 'schedule',      icon: Calendar,  label: 'Schedule'      },
-      { key: 'results',       icon: Trophy,    label: 'Results'       },
-      { key: 'announcements', icon: Megaphone, label: 'News Posts'    },
-      { key: 'communication', icon: Mail,      label: 'Communication' },
+      { key: 'registrations',  icon: Users,     label: 'Registrations'   },
+      { key: 'schedule',      icon: Calendar,  label: 'Schedule'        },
+      { key: 'results',       icon: Trophy,    label: 'Results'         },
+      { key: 'communication', icon: Mail,      label: 'Communications'  },
     ],
   },
   {

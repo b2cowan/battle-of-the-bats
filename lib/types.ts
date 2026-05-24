@@ -265,6 +265,26 @@ export interface Announcement {
   ageGroupIds?: string[] | null; // null = all divisions
 }
 
+/** Unified communication record — can be a site post, an email send, or both. */
+export interface Communication {
+  id: string;
+  tournamentId: string;
+  title: string;
+  body: string;
+  pinned: boolean;
+  ageGroupIds: string[] | null;
+  channelSite: boolean;
+  channelEmail: boolean;
+  emailTargeting: Record<string, unknown> | null;
+  emailRecipientCount: number | null;
+  emailSuccessCount: number | null;
+  emailFailedCount: number | null;
+  emailFailedAddresses: string[] | null;
+  emailSentAt: string | null;
+  sentByEmail: string | null;
+  createdAt: string;
+}
+
 export interface RuleSection {
   id: string;
   tournamentId: string;

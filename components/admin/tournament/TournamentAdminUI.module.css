@@ -624,23 +624,30 @@
     bottom: calc(76px + env(safe-area-inset-bottom));
     left: 0.75rem;
     z-index: 90;
-    align-items: center;
-    flex-direction: row;
-    overflow-x: auto;
-    padding: 0.4rem;
+    align-items: stretch;
+    flex-direction: column;
+    overflow: visible;
+    padding: 0.5rem;
     box-shadow: 0 16px 36px rgba(0, 0, 0, 0.42);
   }
 
+  .selectionSummary {
+    width: 100%;
+  }
+
   .selectionActions {
+    width: 100%;
     flex: 1 1 auto;
-    flex-wrap: nowrap;
+    flex-wrap: wrap;
     justify-content: flex-start;
-    overflow-x: auto;
+    overflow: visible;
   }
 
   .selectionBar :global(.btn-xs),
   .selectionActions :global(.btn) {
+    flex: 1 1 calc(50% - 0.25rem);
     min-height: 44px;
+    justify-content: center;
   }
 
   .compactUpsell {

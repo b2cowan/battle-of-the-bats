@@ -252,6 +252,50 @@
   padding-bottom: 0.32rem;
 }
 
+.selectionCell {
+  width: 32px;
+  display: flex;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.selectionCheckbox {
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  display: grid;
+  place-content: center;
+  flex-shrink: 0;
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.42);
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.05);
+  cursor: pointer;
+}
+
+.selectionCheckbox::before {
+  content: "";
+  width: 5px;
+  height: 9px;
+  border: solid var(--logic-lime);
+  border-width: 0 2px 2px 0;
+  opacity: 0;
+  transform: rotate(45deg) translateY(-1px);
+}
+
+.selectionCheckbox:checked {
+  border-color: rgba(var(--logic-lime-rgb, 194, 255, 74), 0.85);
+  background: rgba(var(--logic-lime-rgb, 194, 255, 74), 0.14);
+}
+
+.selectionCheckbox:checked::before {
+  opacity: 1;
+}
+
+.selectionCheckbox:focus-visible {
+  outline: 2px solid rgba(var(--logic-lime-rgb, 194, 255, 74), 0.45);
+  outline-offset: 2px;
+}
+
 .compactExpandedRow {
   padding: 0.8rem 1.25rem 1rem 5rem;
 }
@@ -512,6 +556,36 @@
 
 .selectCurrent input {
   accent-color: var(--blueprint-blue);
+}
+
+.multiSelectToggle,
+.multiSelectDone {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 28px;
+  padding: 0.26rem 0.62rem;
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.24);
+  border-radius: 2px;
+  background: rgba(0, 0, 0, 0.12);
+  color: rgba(148, 163, 184, 0.65);
+  cursor: pointer;
+  font-family: var(--font-data);
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.multiSelectToggle[data-active="true"] {
+  border-color: rgba(var(--logic-lime-rgb, 194, 255, 74), 0.4);
+  background: rgba(var(--logic-lime-rgb, 194, 255, 74), 0.08);
+  color: var(--logic-lime);
+}
+
+.multiSelectDone {
+  color: rgba(148, 163, 184, 0.55);
 }
 
 .activeFilterBadge {
@@ -835,6 +909,22 @@
 
   .registrationSelectionBar {
     margin-bottom: 0.6rem;
+  }
+
+  .registrationSelectionBar :global(.btn) {
+    flex: 1 1 calc(50% - 0.25rem);
+    min-height: 44px;
+    min-width: 0;
+    white-space: normal;
+  }
+
+  .multiSelectToggle,
+  .multiSelectDone {
+    min-height: 44px;
+  }
+
+  .selectionCell {
+    width: 28px;
   }
 
   .claimInvitePanel {

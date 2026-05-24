@@ -202,6 +202,7 @@ export default function UnifiedTeamsPage() {
   const [swapMode, setSwapMode] = useState(false);
   const [swapFirstSlotId, setSwapFirstSlotId] = useState<string | null>(null);
   const [selectedRegistrationIds, setSelectedRegistrationIds] = useState<Set<string>>(new Set());
+  const [multiSelectMode, setMultiSelectMode] = useState(false);
   const [paymentFilter, setPaymentFilter] = useState<PaymentFilter>('all');
   const [showReminderModal, setShowReminderModal] = useState(false);
   const [paymentInstructions, setPaymentInstructions] = useState('');
@@ -739,6 +740,11 @@ export default function UnifiedTeamsPage() {
     setSelectedRegistrationIds(new Set(ids));
   }
 
+  function clearRegistrationSelection() {
+    setSelectedRegistrationIds(new Set());
+    setMultiSelectMode(false);
+  }
+
   async function runBulkAction(action: BulkAction) {
     if (!currentTournament || selectedRegistrationIds.size === 0) return;
     const selectedCount = selectedRegistrationIds.size;
@@ -790,6 +796,7 @@ export default function UnifiedTeamsPage() {
           const data = await res.json();
           if (!res.ok) throw new Error(data.error ?? 'Bulk action failed.');
           setSelectedRegistrationIds(new Set());
+          setMultiSelectMode(false);
           await Promise.all([load(), loadPoolSlots()]);
           setFeedback({
             isOpen: true,
@@ -1114,26 +1121,31 @@ export default function UnifiedTeamsPage() {
     : flatDisplay;
   const visibleSelectableIds = selectableRows.map(row => row.id);
   const allVisibleSelected = visibleSelectableIds.length > 0 && visibleSelectableIds.every(id => selectedRegistrationIds.has(id));
+  const selectionModeActive = multiSelectMode || selectedRegistrationIds.size > 0;
   const divisionOptions = ageGroups.length
     ? ageGroups.map(g => ({ value: g.id, label: g.name }))
     : [{ value: '', label: 'No divisions' }];
 
   const renderFlatRow = (r: TeamRecord) => {
     const isExpanded = expanded.has(r.id);
+    const isSelected = selectedRegistrationIds.has(r.id);
     const effectiveFee = getEffectiveFee(r, ageGroups, feeMode, feeSchedule);
     const pStatus = computePaymentStatus(r, effectiveFee, today);
 
     return (
-      <div key={r.id} className={s.row}>
+      <div key={r.id} className={`${s.row} ${isSelected ? s.rowSelected : ''}`}>
         <div className={`${s.rowMain} ${styles.teamRowMain}`}>
-          <div style={{ width: 32, display: 'flex', justifyContent: 'center' }}>
-            <input
-              type="checkbox"
-              checked={selectedRegistrationIds.has(r.id)}
-              onChange={() => toggleRegistrationSelection(r.id)}
-              aria-label={`Select ${r.name}`}
-            />
-          </div>
+          {selectionModeActive && (
+            <div className={styles.selectionCell}>
+              <input
+                type="checkbox"
+                className={styles.selectionCheckbox}
+                checked={isSelected}
+                onChange={() => toggleRegistrationSelection(r.id)}
+                aria-label={`Select ${r.name}`}
+              />
+            </div>
+          )}
           <div style={{ flex: 2 }} className={s.primaryCell}><strong>{r.name}</strong></div>
           <div style={{ flex: 1.5 }} className={s.secondaryCell}>{r.coach}</div>
           <div style={{ width: 120 }}>
@@ -1181,15 +1193,6 @@ export default function UnifiedTeamsPage() {
               <ClipboardList size={15} />
             </Link>
           )}
-          <ExportMenu
-            formats={['xlsx', 'csv', 'pdf']}
-            onExportXLSX={handleExportXLSX}
-            onExportCSV={handleExportCSV}
-            onExportPDF={handleExportPDF}
-            planId={currentOrg?.planId}
-            pdfFeatureKey="pdf_exports"
-            disabled={regs.length === 0}
-          />
           <button className="btn btn-lime btn-data" onClick={openAddTeamModal} disabled={!currentTournament}><Plus size={14} /> Add Team</button>
           </>
         )}
@@ -1237,19 +1240,40 @@ export default function UnifiedTeamsPage() {
         </ToolbarGroup>
 
         <ToolbarGroup align="end">
+          <ExportMenu
+            formats={['xlsx', 'csv', 'pdf']}
+            onExportXLSX={handleExportXLSX}
+            onExportCSV={handleExportCSV}
+            onExportPDF={handleExportPDF}
+            planId={currentOrg?.planId}
+            pdfFeatureKey="pdf_exports"
+            disabled={regs.length === 0}
+          />
           {visibleSelectableIds.length > 0 && (
-          <label className={styles.selectCurrent}>
-            <input
-              type="checkbox"
-              checked={allVisibleSelected}
-              disabled={visibleSelectableIds.length === 0}
-              onChange={() => {
+            <button
+              type="button"
+              className={styles.multiSelectToggle}
+              data-active={selectionModeActive || undefined}
+              onClick={() => {
+                if (!selectionModeActive) {
+                  setMultiSelectMode(true);
+                  return;
+                }
                 if (allVisibleSelected) setSelectedRegistrations([]);
                 else setSelectedRegistrations(visibleSelectableIds);
               }}
-            />
-            Select all visible
-          </label>
+            >
+              {selectionModeActive ? (allVisibleSelected ? 'Clear visible' : 'Select visible') : 'Select many'}
+            </button>
+          )}
+          {selectionModeActive && (
+            <button
+              type="button"
+              className={styles.multiSelectDone}
+              onClick={clearRegistrationSelection}
+            >
+              Done
+            </button>
           )}
           <ToolbarMenu label="Tools">
             <ToolbarMenuItem
@@ -1354,7 +1378,7 @@ export default function UnifiedTeamsPage() {
       <SelectionActionBar
         selectedCount={selectedRegistrationIds.size}
         label={`${selectedRegistrationIds.size} selected`}
-        onClear={() => setSelectedRegistrations([])}
+        onClear={clearRegistrationSelection}
         className={styles.registrationSelectionBar}
       >
         <button type="button" className="btn btn-primary btn-data" onClick={() => runBulkAction('accept')} disabled={working === 'bulk'}>
@@ -1482,15 +1506,16 @@ export default function UnifiedTeamsPage() {
                 return (
                   <div
                     key={slot.id}
-                    className={`${styles.slotRow} ${!team ? styles.slotRowEmpty : ''} ${isSwapSelected ? styles.slotRowSwapSelected : ''}`}
+                    className={`${styles.slotRow} ${!team ? styles.slotRowEmpty : ''} ${team && selectedRegistrationIds.has(team.id) ? s.rowSelected : ''} ${isSwapSelected ? styles.slotRowSwapSelected : ''}`}
                     onClick={swapMode ? () => handleSwapSlots(slot.id) : undefined}
                     style={swapMode ? { cursor: 'pointer' } : undefined}
                   >
                     <div className={styles.slotRowMain}>
-                      {team && (
+                      {team && selectionModeActive && (
                         <span onClick={e => e.stopPropagation()} style={{ display: 'flex', alignItems: 'center' }}>
                           <input
                             type="checkbox"
+                            className={styles.selectionCheckbox}
                             checked={selectedRegistrationIds.has(team.id)}
                             onChange={() => toggleRegistrationSelection(team.id)}
                             aria-label={`Select ${team.name}`}
@@ -1544,13 +1569,16 @@ export default function UnifiedTeamsPage() {
                 <span className={styles.slotPoolCount}>{waitlistTeams.length} team{waitlistTeams.length !== 1 ? 's' : ''}</span>
               </div>
               {waitlistTeams.map(team => (
-                <div key={team.id} className={styles.waitlistRow}>
-                  <input
-                    type="checkbox"
-                    checked={selectedRegistrationIds.has(team.id)}
-                    onChange={() => toggleRegistrationSelection(team.id)}
-                    aria-label={`Select ${team.name}`}
-                  />
+                <div key={team.id} className={`${styles.waitlistRow} ${selectedRegistrationIds.has(team.id) ? s.rowSelected : ''}`}>
+                  {selectionModeActive && (
+                    <input
+                      type="checkbox"
+                      className={styles.selectionCheckbox}
+                      checked={selectedRegistrationIds.has(team.id)}
+                      onChange={() => toggleRegistrationSelection(team.id)}
+                      aria-label={`Select ${team.name}`}
+                    />
+                  )}
                   <span className={styles.waitlistPosition}>#{team.waitlistPosition}</span>
                   <span className={styles.slotTeamName}>{team.name}</span>
                   <span className={styles.slotCoach}>{team.coach}</span>

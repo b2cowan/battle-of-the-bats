@@ -1,45 +1,50 @@
 'use client';
-import { useEffect, useMemo, useState } from 'react';
-import { AlertCircle, CheckCircle2, Mail, RefreshCw, Send, Users } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  AlertCircle, CheckCircle2, Globe, Lock,
+  Mail, MoreHorizontal, Pencil, Plus, RefreshCw, RotateCcw, Send,
+  Star, Trash2, Users, X,
+} from 'lucide-react';
 import { useTournament } from '@/lib/tournament-context';
 import { useOrg } from '@/lib/org-context';
-import { hasPlanFeature, requiresTournamentPlusCopy } from '@/lib/plan-features';
-import { AgeGroup, Contact, Team } from '@/lib/types';
+import { AgeGroup, Communication, Team } from '@/lib/types';
 import styles from './communication.module.css';
 
-type Status = Team['status'];
-type PaymentStatus = Team['paymentStatus'];
-type StatusMessage = { type: 'success' | 'error'; msg: string };
-type RecipientPreview = {
-  email: string;
-  name: string;
-  detail: string;
-  source: 'Team' | 'Contact' | 'Team + Contact';
-};
+// ─── Types ────────────────────────────────────────────────────────────────────
 
-const TEAM_STATUS_OPTIONS: { value: Status; label: string }[] = [
-  { value: 'accepted', label: 'Accepted teams' },
-  { value: 'pending', label: 'Pending teams' },
-  { value: 'waitlist', label: 'Waitlisted teams' },
-  { value: 'rejected', label: 'Rejected teams' },
+type HistoryFilter = 'all' | 'site' | 'email';
+
+// ─── Quick templates (free for all plans) ────────────────────────────────────
+
+const QUICK_TEMPLATES = [
+  {
+    label: 'Schedule Published',
+    title: 'Schedule is live — {{tournament}}',
+    body: 'Hi teams,\n\nThe schedule for {{tournament}} is now live. You can view game times, dates, and locations on the tournament site.\n\nSee you on the field!',
+  },
+  {
+    label: 'Payment Reminder',
+    title: 'Reminder: Payment outstanding — {{tournament}}',
+    body: 'Hi teams,\n\nThis is a friendly reminder that payment for {{tournament}} is still outstanding. Please arrange payment at your earliest convenience to secure your spot.\n\nThank you!',
+  },
+  {
+    label: 'Weather Update',
+    title: '⚠️ Weather update — {{tournament}}',
+    body: 'Hi teams,\n\nDue to weather conditions, we have an update regarding {{tournament}}. [Add details here.]\n\nWe will share further updates as soon as they are available. Thank you for your patience.',
+  },
+  {
+    label: 'Welcome & Info',
+    title: 'Welcome to {{tournament}} — important info',
+    body: 'Hi teams,\n\nWe are excited to welcome you to {{tournament}}! Here is some important information:\n\n• [Parking / venue info]\n• [Check-in instructions]\n• [Schedule link]\n\nSee you there!',
+  },
+  {
+    label: 'Results Posted',
+    title: 'Final results are in — {{tournament}}',
+    body: 'Hi teams,\n\nThe final results for {{tournament}} are now posted. Thank you to all teams and families for a great tournament!\n\n[Add any closing remarks here.]\n\nHope to see you next year!',
+  },
 ];
 
-const PAYMENT_STATUS_OPTIONS: { value: PaymentStatus; label: string }[] = [
-  { value: 'pending', label: 'Payment pending' },
-  { value: 'paid', label: 'Marked paid' },
-];
-
-function normalizeEmail(email: string) {
-  return email.trim().toLowerCase();
-}
-
-function statusLabel(status: Status) {
-  return TEAM_STATUS_OPTIONS.find(option => option.value === status)?.label.replace(' teams', '') ?? status;
-}
-
-function paymentStatusLabel(status: PaymentStatus) {
-  return PAYMENT_STATUS_OPTIONS.find(option => option.value === status)?.label ?? status;
-}
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function toggleSetValue<T>(set: Set<T>, value: T) {
   const next = new Set(set);
@@ -48,413 +53,588 @@ function toggleSetValue<T>(set: Set<T>, value: T) {
   return next;
 }
 
+function formatDate(iso: string) {
+  const d = new Date(iso.includes('T') ? iso : iso + 'T12:00:00');
+  return d.toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+function getDraftKey(tournamentId: string) {
+  return `comm-draft-${tournamentId}`;
+}
+
+// ─── Component ────────────────────────────────────────────────────────────────
+
 export default function AdminCommunicationPage() {
   const { currentTournament } = useTournament();
   const { currentOrg } = useOrg();
-  const orgSlug = currentOrg?.slug;
-  const [contacts, setContacts] = useState<Contact[]>([]);
-  const [teams, setTeams] = useState<Team[]>([]);
-  const [ageGroups, setAgeGroups] = useState<AgeGroup[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [sending, setSending] = useState(false);
-  const [status, setStatus] = useState<StatusMessage | null>(null);
+  const orgSlug  = currentOrg?.slug;
+  const orgQuery = orgSlug ? `?orgSlug=${encodeURIComponent(orgSlug)}` : '?';
+  const orgParam = orgSlug ? `&orgSlug=${encodeURIComponent(orgSlug)}` : '';
+  const billingHref = `/${orgSlug}/admin/org/billing`;
 
-  const [includeTeams, setIncludeTeams] = useState(true);
-  const [includeContacts, setIncludeContacts] = useState(false);
-  const [selectedTeamStatuses, setSelectedTeamStatuses] = useState<Set<Status>>(() => new Set(['accepted']));
-  const [selectedPaymentStatuses, setSelectedPaymentStatuses] = useState<Set<PaymentStatus>>(() => new Set());
-  const [selectedAgeGroups, setSelectedAgeGroups] = useState<Set<string>>(() => new Set());
-  const [selectedTeamIds, setSelectedTeamIds] = useState<Set<string>>(() => new Set());
-  const [selectedContactRoles, setSelectedContactRoles] = useState<Set<string>>(() => new Set());
-  const [recipientsOpen, setRecipientsOpen] = useState(false);
-  const [subject, setSubject] = useState('');
-  const [message, setMessage] = useState('');
+  // ── Data ────────────────────────────────────────────────────────────────────
+  const [communications, setCommunications] = useState<Communication[]>([]);
+  const [teams,     setTeams]    = useState<Team[]>([]);
+  const [ageGroups, setAgeGroups] = useState<AgeGroup[]>([]);
+  const [loading,   setLoading]  = useState(true);
+  const [sending,   setSending]  = useState(false);
+
+  // ── View state ──────────────────────────────────────────────────────────────
+  const [isComposing,   setIsComposing]   = useState(false);
+  const [historyFilter, setHistoryFilter] = useState<HistoryFilter>('all');
+  const [editingId,     setEditingId]     = useState<string | null>(null);
+  const [deleteId,      setDeleteId]      = useState<string | null>(null);
+  const [overflowOpen,  setOverflowOpen]  = useState<string | null>(null);
+  const [sendResult,    setSendResult]    = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
+
+  // ── Compose fields ──────────────────────────────────────────────────────────
+  const [title,       setTitle]       = useState('');
+  const [body,        setBody]        = useState('');
+  const [channelSite, setChannelSite] = useState(true);
+  const [channelEmail,setChannelEmail]= useState(false);
+  const [pinned,      setPinned]      = useState(false);
+  const [siteAgeGroupIds, setSiteAgeGroupIds] = useState<Set<string>>(() => new Set());
+  const [draftRestored, setDraftRestored] = useState(false);
+  const [activeTemplate, setActiveTemplate] = useState<string | null>(null);
+
+  const draftTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // ── Load data ────────────────────────────────────────────────────────────────
+  const loadData = useCallback(async () => {
+    if (!currentTournament?.id) {
+      setCommunications([]); setTeams([]); setAgeGroups([]);
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    const tid = encodeURIComponent(currentTournament.id);
+    const [commsRes, teamsRes, groupsRes] = await Promise.all([
+      fetch(`/api/admin/communications?tournamentId=${tid}${orgParam}`),
+      fetch(`/api/admin/teams?tournamentId=${tid}${orgParam}`),
+      fetch(`/api/admin/age-groups?tournamentId=${tid}${orgParam}`),
+    ]);
+    setCommunications(commsRes.ok ? await commsRes.json() : []);
+    setTeams(teamsRes.ok ? await teamsRes.json() : []);
+    setAgeGroups(groupsRes.ok ? await groupsRes.json() : []);
+    setLoading(false);
+  }, [currentTournament?.id, orgParam]);
+
+  useEffect(() => { void loadData(); }, [loadData]);
+
+  // ── Draft persistence ────────────────────────────────────────────────────────
+  useEffect(() => {
+    if (!isComposing || !currentTournament?.id || editingId) return;
+    const raw = localStorage.getItem(getDraftKey(currentTournament.id));
+    if (!raw) return;
+    try {
+      const d = JSON.parse(raw);
+      if (d.title || d.body) {
+        setTitle(d.title ?? '');
+        setBody(d.body ?? '');
+        setChannelSite(d.channelSite ?? true);
+        setChannelEmail(d.channelEmail ?? false);
+        setPinned(d.pinned ?? false);
+        setDraftRestored(true);
+      }
+    } catch { /* ignore corrupt drafts */ }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isComposing]);
 
   useEffect(() => {
-    async function load() {
-      if (!currentTournament?.id) {
-        setContacts([]);
-        setTeams([]);
-        setAgeGroups([]);
-        setLoading(false);
-        return;
+    if (!isComposing || !currentTournament?.id || editingId) return;
+    if (draftTimer.current) clearTimeout(draftTimer.current);
+    draftTimer.current = setTimeout(() => {
+      if (title || body) {
+        localStorage.setItem(
+          getDraftKey(currentTournament.id),
+          JSON.stringify({ title, body, channelSite, channelEmail, pinned }),
+        );
       }
+    }, 800);
+    return () => { if (draftTimer.current) clearTimeout(draftTimer.current); };
+  }, [title, body, channelSite, channelEmail, pinned, isComposing, editingId, currentTournament?.id]);
 
-      setLoading(true);
-      const tournamentId = encodeURIComponent(currentTournament.id);
-      const orgParam = orgSlug ? `&orgSlug=${encodeURIComponent(orgSlug)}` : '';
-      const [contactsRes, teamsRes, groupsRes] = await Promise.all([
-        fetch(`/api/admin/contacts?tournamentId=${tournamentId}${orgParam}`),
-        fetch(`/api/admin/teams?tournamentId=${tournamentId}${orgParam}`),
-        fetch(`/api/admin/age-groups?tournamentId=${tournamentId}${orgParam}`),
-      ]);
+  // ── Derived data ─────────────────────────────────────────────────────────────
+  const ageGroupNameById = useMemo(() => new Map(ageGroups.map(g => [g.id, g.name])), [ageGroups]);
+  const acceptedTeamCount = useMemo(() => teams.filter(t => t.status === 'accepted').length, [teams]);
 
-      setContacts(contactsRes.ok ? await contactsRes.json() : []);
-      setTeams(teamsRes.ok ? await teamsRes.json() : []);
-      setAgeGroups(groupsRes.ok ? await groupsRes.json() : []);
-      setLoading(false);
+  // ── Compose helpers ──────────────────────────────────────────────────────────
+  function openNewMessage() {
+    setEditingId(null);
+    setIsComposing(true);
+    setSendResult(null);
+    setDraftRestored(false);
+  }
+
+  function openEdit(item: Communication) {
+    setTitle(item.title);
+    setBody(item.body);
+    setPinned(item.pinned);
+    setSiteAgeGroupIds(new Set(item.ageGroupIds ?? []));
+    setChannelSite(item.channelSite);
+    setChannelEmail(false);
+    setEditingId(item.id);
+    setIsComposing(true);
+    setSendResult(null);
+    setDraftRestored(false);
+    setOverflowOpen(null);
+  }
+
+  function cancelCompose() {
+    setIsComposing(false);
+    setEditingId(null);
+    setTitle(''); setBody(''); setPinned(false);
+    setSiteAgeGroupIds(new Set());
+    setChannelSite(true); setChannelEmail(false);
+    setDraftRestored(false);
+    setActiveTemplate(null);
+  }
+
+  function applyTemplate(tpl: typeof QUICK_TEMPLATES[number]) {
+    const tName = currentTournament?.name ?? 'the tournament';
+    setTitle(tpl.title.replace('{{tournament}}', tName));
+    setBody(tpl.body.replace(/{{tournament}}/g, tName));
+    setActiveTemplate(tpl.label);
+  }
+
+  function saveDraftAndClose() {
+    if (currentTournament?.id && (title || body)) {
+      localStorage.setItem(
+        getDraftKey(currentTournament.id),
+        JSON.stringify({ title, body, channelSite, channelEmail, pinned }),
+      );
     }
+    cancelCompose();
+  }
 
-    void load();
-  }, [currentTournament?.id, orgSlug]);
+  function clearDraft() {
+    if (currentTournament?.id) localStorage.removeItem(getDraftKey(currentTournament.id));
+    setDraftRestored(false);
+  }
 
-  const ageGroupNameById = useMemo(() => new Map(ageGroups.map(group => [group.id, group.name])), [ageGroups]);
-  const canTargetAnnouncements = currentOrg ? hasPlanFeature(currentOrg.planId, 'targeted_tournament_announcements') : false;
-
-  const contactRoles = useMemo(() => {
-    return Array.from(new Set(contacts.map(contact => contact.role).filter((role): role is string => Boolean(role)))).sort();
-  }, [contacts]);
-
-  const filteredTeams = useMemo(() => {
-    if (!canTargetAnnouncements) return teams;
-    if (!includeTeams) return [];
-    if (selectedTeamIds.size > 0) return teams.filter(team => selectedTeamIds.has(team.id));
-
-    return teams.filter(team => {
-      const matchesStatus = selectedTeamStatuses.size === 0 || selectedTeamStatuses.has(team.status);
-      const matchesPaymentStatus = selectedPaymentStatuses.size === 0 || selectedPaymentStatuses.has(team.paymentStatus);
-      const matchesDivision = selectedAgeGroups.size === 0 || selectedAgeGroups.has(team.ageGroupId);
-      return matchesStatus && matchesPaymentStatus && matchesDivision;
-    });
-  }, [canTargetAnnouncements, includeTeams, selectedAgeGroups, selectedPaymentStatuses, selectedTeamIds, selectedTeamStatuses, teams]);
-
-  const filteredContacts = useMemo(() => {
-    if (!canTargetAnnouncements) return [];
-    if (!includeContacts) return [];
-    return contacts.filter(contact => selectedContactRoles.size === 0 || selectedContactRoles.has(contact.role ?? ''));
-  }, [canTargetAnnouncements, contacts, includeContacts, selectedContactRoles]);
-
-  const recipients = useMemo<RecipientPreview[]>(() => {
-    const byEmail = new Map<string, RecipientPreview>();
-
-    for (const team of filteredTeams) {
-      const email = normalizeEmail(team.email);
-      if (!email) continue;
-
-      byEmail.set(email, {
-        email,
-        name: team.name,
-        detail: `${ageGroupNameById.get(team.ageGroupId) ?? 'Division'} - ${statusLabel(team.status)} - ${paymentStatusLabel(team.paymentStatus)}`,
-        source: 'Team',
-      });
-    }
-
-    for (const contact of filteredContacts) {
-      const email = normalizeEmail(contact.email);
-      if (!email) continue;
-
-      const existing = byEmail.get(email);
-      if (existing) {
-        byEmail.set(email, {
-          ...existing,
-          source: 'Team + Contact',
-          detail: `${existing.detail} - ${contact.role || 'Contact'}`,
-        });
-      } else {
-        byEmail.set(email, {
-          email,
-          name: contact.name,
-          detail: contact.role || 'Contact',
-          source: 'Contact',
-        });
-      }
-    }
-
-    return Array.from(byEmail.values()).sort((a, b) => a.name.localeCompare(b.name));
-  }, [ageGroupNameById, filteredContacts, filteredTeams]);
-
-  const recipientSummary = useMemo(() => {
-    if (!canTargetAnnouncements) return 'all registered teams';
-
-    const parts: string[] = [];
-
-    if (includeTeams) {
-      if (selectedTeamIds.size > 0) {
-        parts.push(`${selectedTeamIds.size} individual team${selectedTeamIds.size === 1 ? '' : 's'}`);
-      } else {
-        const statusText = selectedTeamStatuses.size === 0
-          ? 'all team statuses'
-          : Array.from(selectedTeamStatuses).map(item => statusLabel(item).toLowerCase()).join(', ');
-        const divisionText = selectedAgeGroups.size === 0
-          ? ''
-          : ` in ${selectedAgeGroups.size} division${selectedAgeGroups.size === 1 ? '' : 's'}`;
-        const paymentText = selectedPaymentStatuses.size === 0
-          ? ''
-          : ` with ${Array.from(selectedPaymentStatuses).map(item => paymentStatusLabel(item).toLowerCase()).join(', ')}`;
-        parts.push(`${statusText} teams${divisionText}${paymentText}`);
-      }
-    }
-
-    if (includeContacts) {
-      parts.push(selectedContactRoles.size === 0
-        ? 'all contacts'
-        : `${selectedContactRoles.size} contact role${selectedContactRoles.size === 1 ? '' : 's'}`);
-    }
-
-    return parts.length > 0 ? parts.join(' + ') : 'No audience selected';
-  }, [canTargetAnnouncements, includeContacts, includeTeams, selectedAgeGroups.size, selectedContactRoles.size, selectedPaymentStatuses, selectedTeamIds.size, selectedTeamStatuses]);
-
-  async function handleSend(e: React.FormEvent) {
+  // ── Submit ───────────────────────────────────────────────────────────────────
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!currentTournament?.id || recipients.length === 0) return;
-
+    if (!currentTournament?.id) return;
     setSending(true);
-    setStatus(null);
+    setSendResult(null);
 
     try {
-      const orgQuery = orgSlug ? `?orgSlug=${encodeURIComponent(orgSlug)}` : '';
-      const res = await fetch(`/api/send-message${orgQuery}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          tournamentId: currentTournament.id,
-          targeting: {
-            includeTeams: canTargetAnnouncements ? includeTeams : true,
-            includeContacts: canTargetAnnouncements ? includeContacts : false,
-            teamStatuses: canTargetAnnouncements ? Array.from(selectedTeamStatuses) : [],
-            paymentStatuses: canTargetAnnouncements ? Array.from(selectedPaymentStatuses) : [],
-            ageGroupIds: canTargetAnnouncements ? Array.from(selectedAgeGroups) : [],
-            teamIds: canTargetAnnouncements ? Array.from(selectedTeamIds) : [],
-            contactRoles: canTargetAnnouncements ? Array.from(selectedContactRoles) : [],
-          },
-          subject,
-          message,
-        }),
-      });
+      if (editingId) {
+        const res = await fetch(`/api/admin/communications${orgQuery}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'update',
+            id: editingId,
+            data: { title: title.trim(), body: body.trim(), pinned, ageGroupIds: Array.from(siteAgeGroupIds) },
+          }),
+        });
+        const json = await res.json();
+        if (!res.ok) throw new Error(json.error || 'Failed to update.');
+        setSendResult({ type: 'success', msg: 'Post updated.' });
+      } else {
+        const res = await fetch(`/api/admin/communications${orgQuery}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'save',
+            data: {
+              tournamentId: currentTournament.id,
+              title: title.trim(),
+              body: body.trim(),
+              channelSite,
+              channelEmail,
+              pinned,
+              ageGroupIds: Array.from(siteAgeGroupIds),
+              targeting: null, // always send to all accepted teams
+            },
+          }),
+        });
+        const json = await res.json();
+        if (!res.ok) throw new Error(json.error || 'Failed to send.');
 
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Failed to send messages');
+        if (currentTournament.id) localStorage.removeItem(getDraftKey(currentTournament.id));
 
-      const sent = data?.results?.success ?? recipients.length;
-      const failed = data?.results?.failed ?? 0;
-      setStatus({ type: 'success', msg: `Finished sending. Success: ${sent}, Failed: ${failed}.` });
-      setSubject('');
-      setMessage('');
+        const r = json.emailResults;
+        if (channelEmail && r) {
+          const warn = r.failed > 0;
+          setSendResult({
+            type: warn ? 'error' : 'success',
+            msg: warn
+              ? `Sent to ${r.sent} · ${r.failed} failed to deliver`
+              : `Sent to ${r.sent} recipient${r.sent === 1 ? '' : 's'}`,
+          });
+        } else {
+          setSendResult({
+            type: 'success',
+            msg: channelSite && channelEmail ? 'Posted to site and sent by email.' : channelSite ? 'Posted to site.' : 'Email sent.',
+          });
+        }
+      }
+
+      await loadData();
+      cancelCompose();
     } catch (err: unknown) {
-      setStatus({ type: 'error', msg: err instanceof Error ? err.message : 'Failed to send messages' });
+      setSendResult({ type: 'error', msg: err instanceof Error ? err.message : 'Something went wrong.' });
     } finally {
       setSending(false);
     }
   }
 
-  if (loading) return <div className="empty-state"><RefreshCw className="spin" /><p>Loading recipients...</p></div>;
+  // ── Delete ───────────────────────────────────────────────────────────────────
+  async function handleDelete() {
+    if (!deleteId) return;
+    await fetch(`/api/admin/communications${orgQuery}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'delete', id: deleteId }),
+    });
+    setDeleteId(null);
+    await loadData();
+  }
+
+  // ── Toggle pin ────────────────────────────────────────────────────────────────
+  async function handleTogglePin(item: Communication) {
+    setOverflowOpen(null);
+    await fetch(`/api/admin/communications${orgQuery}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'toggle-pin', id: item.id }),
+    });
+    await loadData();
+  }
+
+  // ── Filtered history ─────────────────────────────────────────────────────────
+  const filteredHistory = useMemo(() => {
+    if (historyFilter === 'site')  return communications.filter(c => c.channelSite);
+    if (historyFilter === 'email') return communications.filter(c => c.channelEmail);
+    return communications;
+  }, [communications, historyFilter]);
+
+  const sendButtonLabel = useMemo(() => {
+    if (editingId) return 'Save Changes';
+    if (channelSite && channelEmail) return `Post & Send${acceptedTeamCount > 0 ? ` to ${acceptedTeamCount}` : ''}`;
+    if (channelEmail)  return `Send${acceptedTeamCount > 0 ? ` to ${acceptedTeamCount}` : ''}`;
+    return 'Post to Site';
+  }, [editingId, channelSite, channelEmail, acceptedTeamCount]);
+
+  // ─────────────────────────────────────────────────────────────────────────────
+
+  if (loading) return <div className="empty-state"><RefreshCw className="spin" /><p>Loading communications…</p></div>;
 
   return (
     <div className={styles.page}>
+
+      {/* ── Header ─────────────────────────────────────────────────────────── */}
       <div className={styles.pageHeader}>
         <div className={styles.headerLeft}>
           <div className={styles.headerIcon}><Mail size={20} /></div>
           <div>
-            <h1 className={styles.pageTitle}>Communication Hub</h1>
-            <p className={styles.pageSub}>Send email to tournament teams or tournament contacts with a verified recipient preview.</p>
+            <h1 className={styles.pageTitle}>Communications</h1>
+            <p className={styles.pageSub}>Post updates to your site, email your teams, or both — from one place.</p>
           </div>
         </div>
+        {!isComposing && (
+          <button className="btn btn-lime btn-data" onClick={openNewMessage} disabled={!currentTournament}>
+            <Plus size={15} /> New Message
+          </button>
+        )}
       </div>
 
-      <form onSubmit={handleSend} className={styles.composer}>
-        <div className={`${styles.section} ${styles.recipientSection}`}>
-          <div className={styles.recipientHeader}>
-            <h3><Users size={18} /> 1. Recipients</h3>
-            {canTargetAnnouncements && (
-              <button
-                type="button"
-                className="btn btn-outline btn-sm"
-                onClick={() => setRecipientsOpen(open => !open)}
-                aria-expanded={recipientsOpen}
-              >
-                {recipientsOpen ? 'Done' : 'Edit Recipients'}
-              </button>
+      {/* ── Result banner ───────────────────────────────────────────────────── */}
+      {sendResult && !isComposing && (
+        <div className={`${styles.resultBanner} ${sendResult.type === 'success' ? styles.resultSuccess : styles.resultError}`}>
+          {sendResult.type === 'success' ? <CheckCircle2 size={16} /> : <AlertCircle size={16} />}
+          <span>{sendResult.msg}</span>
+          <button className={styles.bannerDismiss} onClick={() => setSendResult(null)}><X size={14} /></button>
+        </div>
+      )}
+
+      {/* ── Compose panel ──────────────────────────────────────────────────── */}
+      {isComposing && (
+        <form className={styles.composePanel} onSubmit={handleSubmit}>
+
+          <div className={styles.composePanelHeader}>
+            <span className={styles.composePanelTitle}>{editingId ? 'Edit Post' : 'New Message'}</span>
+            <button type="button" className="btn btn-ghost btn-sm" onClick={cancelCompose}>
+              <X size={14} /> Cancel
+            </button>
+          </div>
+
+          {/* Draft restored notice */}
+          {draftRestored && (
+            <div className={styles.draftNotice}>
+              <RotateCcw size={13} /> Draft restored
+              <button type="button" className={styles.draftClear} onClick={clearDraft}>Clear</button>
+            </div>
+          )}
+
+          {/* Quick templates */}
+          {!editingId && (
+            <div className={styles.templateRow}>
+              <span className={styles.templateLabel}>Templates:</span>
+              {QUICK_TEMPLATES.map(tpl => (
+                <button
+                  key={tpl.label}
+                  type="button"
+                  className={`${styles.templateChip} ${activeTemplate === tpl.label ? styles.templateChipActive : ''}`}
+                  onClick={() => applyTemplate(tpl)}
+                >
+                  {tpl.label}
+                </button>
+              ))}
+              {(title || body) && (
+                <button type="button" className={styles.draftClear} onClick={() => { setTitle(''); setBody(''); setActiveTemplate(null); }}>
+                  × Clear
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* Title */}
+          <div className={styles.formGroup}>
+            <label className="form-label">Title *</label>
+            <input
+              className="form-input"
+              value={title}
+              onChange={e => setTitle(e.target.value)}
+              placeholder="e.g. Schedule is live — U14 Boys"
+              required
+            />
+          </div>
+
+          {/* Body */}
+          <div className={styles.formGroup}>
+            <label className="form-label">Message *</label>
+            <textarea
+              className="form-textarea"
+              rows={7}
+              value={body}
+              onChange={e => setBody(e.target.value)}
+              placeholder="Write your message here…"
+              required
+            />
+          </div>
+
+          {/* ── Channels ──────────────────────────────────────────────────── */}
+          <div className={styles.channelsSection}>
+            <span className={styles.channelsSectionLabel}>Channels</span>
+
+            {/* Site post */}
+            <div className={`${styles.channelRow} ${channelSite ? styles.channelActive : ''}`}>
+              <label className={styles.channelToggle}>
+                <input type="checkbox" checked={channelSite} onChange={e => setChannelSite(e.target.checked)} disabled={!!editingId} />
+                <Globe size={15} />
+                <span className={styles.channelName}>Post to site</span>
+                <span className={styles.channelDesc}>Appears on the public tournament News page</span>
+              </label>
+
+              {channelSite && (
+                <div className={styles.channelOptions}>
+                  <label className={styles.pinLabel}>
+                    <input type="checkbox" checked={pinned} onChange={e => setPinned(e.target.checked)} />
+                    <Star size={13} fill={pinned ? 'currentColor' : 'none'} />
+                    Pin at top of News page
+                  </label>
+
+                  {/* Division visibility — T+ only, shown inline when divisions exist */}
+                  {ageGroups.length > 0 && (
+                    <div className={styles.divisionFilter}>
+                      <span className={styles.divisionFilterLabel}>Show for:</span>
+                      <label className={styles.smallCheckLabel}>
+                        <input type="checkbox" checked={siteAgeGroupIds.size === 0} onChange={() => setSiteAgeGroupIds(new Set())} />
+                        All divisions
+                      </label>
+                      {ageGroups.map(g => (
+                        <label key={g.id} className={styles.smallCheckLabel}>
+                          <input
+                            type="checkbox"
+                            checked={siteAgeGroupIds.has(g.id)}
+                            onChange={() => setSiteAgeGroupIds(prev => toggleSetValue(prev, g.id))}
+                          />
+                          {g.name}
+                        </label>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Email channel */}
+            {!editingId && (
+              <div className={`${styles.channelRow} ${channelEmail ? styles.channelActive : ''}`}>
+                <label className={styles.channelToggle}>
+                  <input type="checkbox" checked={channelEmail} onChange={e => setChannelEmail(e.target.checked)} />
+                  <Send size={15} />
+                  <span className={styles.channelName}>Email recipients</span>
+                  <span className={styles.channelDesc}>Send directly to team inboxes</span>
+                </label>
+
+                {channelEmail && (
+                  <div className={styles.channelOptions}>
+                    <div className={styles.recipientLine}>
+                      <Users size={13} />
+                      <span>
+                        All accepted teams
+                        {acceptedTeamCount > 0 && <span className={styles.recipientCount}> · {acceptedTeamCount} recipient{acceptedTeamCount === 1 ? '' : 's'}</span>}
+                      </span>
+                    </div>
+                    <a href={billingHref} className={styles.targetingHint}>
+                      <Lock size={10} /> Tournament Plus unlocks sends to specific divisions or registration statuses
+                    </a>
+                  </div>
+                )}
+              </div>
             )}
           </div>
 
-          <div className={styles.recipientSummary}>
-            <div>
-              <strong>{recipientSummary}</strong>
-              <span>{recipients.length} deduped recipient{recipients.length === 1 ? '' : 's'} selected</span>
-            </div>
+          {/* ── Actions ───────────────────────────────────────────────────── */}
+          <div className={styles.composeActions}>
+            {!editingId && (
+              <button type="button" className="btn btn-ghost btn-sm" onClick={saveDraftAndClose}>
+                Save Draft
+              </button>
+            )}
+            <button
+              type="submit"
+              className="btn btn-primary"
+              disabled={sending || (!channelSite && !channelEmail)}
+            >
+              {sending
+                ? <><RefreshCw className="spin" size={16} /> Sending…</>
+                : <><Send size={16} /> {sendButtonLabel}</>}
+            </button>
           </div>
 
-          {recipientsOpen && (
-            <div className={styles.recipientDetails}>
-              {!canTargetAnnouncements && (
-                <div className={styles.lockedTargeting}>
-                  <strong>Tournament Plus unlocks targeted sends.</strong>
-                  <span>{requiresTournamentPlusCopy('targeted_tournament_announcements')}</span>
-                </div>
-              )}
-
-              {canTargetAnnouncements && (
-              <>
-              <div className={styles.audienceToggle}>
-                <label className={`${styles.audienceOption} ${includeTeams ? styles.audienceActive : ''}`}>
-                  <input type="checkbox" checked={includeTeams} onChange={e => setIncludeTeams(e.target.checked)} />
-                  Teams
-                </label>
-                <label className={`${styles.audienceOption} ${includeContacts ? styles.audienceActive : ''}`}>
-                  <input type="checkbox" checked={includeContacts} onChange={e => setIncludeContacts(e.target.checked)} />
-                  Contacts
-                </label>
-              </div>
-
-              <div className={styles.filters}>
-                {includeTeams && (
-                  <>
-                    <div className={styles.filterCard}>
-                      <label className="form-label">Team Status</label>
-                      <p className={styles.filterHelp}>Used unless individual teams are selected.</p>
-                      {TEAM_STATUS_OPTIONS.map(option => (
-                        <label key={option.value} className={styles.checkboxLabel}>
-                          <input
-                            type="checkbox"
-                            checked={selectedTeamStatuses.has(option.value)}
-                            onChange={() => setSelectedTeamStatuses(prev => toggleSetValue(prev, option.value))}
-                          />
-                          {option.label}
-                        </label>
-                      ))}
-                    </div>
-
-                    <div className={styles.filterCard}>
-                      <label className="form-label">Payment Status</label>
-                      <p className={styles.filterHelp}>Leave blank for all payment states.</p>
-                      {PAYMENT_STATUS_OPTIONS.map(option => (
-                        <label key={option.value} className={styles.checkboxLabel}>
-                          <input
-                            type="checkbox"
-                            checked={selectedPaymentStatuses.has(option.value)}
-                            onChange={() => setSelectedPaymentStatuses(prev => toggleSetValue(prev, option.value))}
-                          />
-                          {option.label}
-                        </label>
-                      ))}
-                    </div>
-
-                    <div className={styles.filterCard}>
-                      <label className="form-label">Divisions</label>
-                      <p className={styles.filterHelp}>Leave blank for all divisions.</p>
-                      {ageGroups.length === 0 ? (
-                        <p className={styles.emptyHint}>No divisions configured.</p>
-                      ) : ageGroups.map(group => (
-                        <label key={group.id} className={styles.checkboxLabel}>
-                          <input
-                            type="checkbox"
-                            checked={selectedAgeGroups.has(group.id)}
-                            onChange={() => setSelectedAgeGroups(prev => toggleSetValue(prev, group.id))}
-                          />
-                          {group.name}
-                        </label>
-                      ))}
-                    </div>
-
-                    <div className={styles.filterCard} style={{ gridColumn: '1 / -1' }}>
-                      <label className="form-label">Individual Teams</label>
-                      <p className={styles.filterHelp}>Optional. If selected, these teams override status and division filters.</p>
-                      <div className={styles.scrollList}>
-                        {teams.length === 0 ? (
-                          <p className={styles.emptyHint}>No teams registered yet.</p>
-                        ) : teams.map(team => (
-                          <label key={team.id} className={styles.checkboxLabel}>
-                            <input
-                              type="checkbox"
-                              checked={selectedTeamIds.has(team.id)}
-                              onChange={() => setSelectedTeamIds(prev => toggleSetValue(prev, team.id))}
-                            />
-                            <span>
-                              {team.name}
-                              <small>{ageGroupNameById.get(team.ageGroupId) ?? 'Division'} - {statusLabel(team.status)}</small>
-                            </span>
-                          </label>
-                        ))}
-                      </div>
-                    </div>
-                  </>
-                )}
-
-                {includeContacts && (
-                  <div className={styles.filterCard}>
-                    <label className="form-label">Contact Roles</label>
-                    <p className={styles.filterHelp}>Leave blank for all tournament contacts.</p>
-                    {contactRoles.length === 0 ? (
-                      <p className={styles.emptyHint}>No contact roles defined.</p>
-                    ) : contactRoles.map(role => (
-                      <label key={role} className={styles.checkboxLabel}>
-                        <input
-                          type="checkbox"
-                          checked={selectedContactRoles.has(role)}
-                          onChange={() => setSelectedContactRoles(prev => toggleSetValue(prev, role))}
-                        />
-                        {role}
-                      </label>
-                    ))}
-                  </div>
-                )}
-              </div>
-              </>
-              )}
-
-              <div className={styles.recipientPreview}>
-                {recipients.length === 0 ? (
-                  <p className={styles.emptyHint}>Choose at least one team or contact audience to preview recipients.</p>
-                ) : recipients.slice(0, 12).map(recipient => (
-                  <div key={recipient.email} className={styles.recipientRow}>
-                    <div>
-                      <strong>{recipient.name}</strong>
-                      <span>{recipient.email}</span>
-                    </div>
-                    <small>{recipient.source} - {recipient.detail}</small>
-                  </div>
-                ))}
-                {recipients.length > 12 && <p className={styles.previewMore}>+{recipients.length - 12} more recipients</p>}
-              </div>
-
-              <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.75rem', paddingTop: '0.75rem', borderTop: '1px solid var(--border-2)' }}>
-                <button type="button" className="btn btn-outline btn-sm" onClick={() => setRecipientsOpen(false)}>Done</button>
-              </div>
+          {/* Inline result (errors during compose) */}
+          {sendResult && isComposing && (
+            <div className={`${styles.inlineResult} ${sendResult.type === 'success' ? styles.inlineSuccess : styles.inlineError}`}>
+              {sendResult.type === 'success' ? <CheckCircle2 size={15} /> : <AlertCircle size={15} />}
+              {sendResult.msg}
             </div>
           )}
-        </div>
+        </form>
+      )}
 
-        <div className={styles.section}>
-          <h3><Send size={18} /> 2. Compose Message</h3>
-          <div className={styles.formGroup}>
-            <label>Subject</label>
-            <input
-              className="form-input"
-              value={subject}
-              onChange={e => setSubject(e.target.value)}
-              placeholder="e.g. Important Tournament Update"
-              required
-            />
+      {/* ── History ────────────────────────────────────────────────────────── */}
+      <div className={styles.historySection}>
+        {communications.length > 0 && (
+          <div className={styles.filterTabs}>
+            {(['all', 'site', 'email'] as HistoryFilter[]).map(f => (
+              <button
+                key={f}
+                className={`${styles.filterTab} ${historyFilter === f ? styles.filterTabActive : ''}`}
+                onClick={() => setHistoryFilter(f)}
+              >
+                {f === 'all' ? 'All' : f === 'site' ? <><Globe size={12} /> Site Posts</> : <><Mail size={12} /> Emails</>}
+              </button>
+            ))}
           </div>
-          <div className={styles.formGroup}>
-            <label>Message Body</label>
-            <textarea
-              className="form-textarea"
-              rows={10}
-              value={message}
-              onChange={e => setMessage(e.target.value)}
-              placeholder="Write the email message recipients should receive..."
-              required
-            />
+        )}
+
+        {filteredHistory.length === 0 && !isComposing && (
+          <div className="empty-state">
+            <Mail size={40} />
+            <p className={styles.emptyTitle}>No communications yet</p>
+            <p>Post an update to your site, email your teams, or both — from one place.</p>
+            <button className={`btn btn-lime ${styles.emptyCta}`} onClick={openNewMessage} disabled={!currentTournament}>
+              <Plus size={15} /> New Message
+            </button>
           </div>
+        )}
 
-          <button
-            type="submit"
-            className="btn btn-primary btn-lg"
-            style={{ width: '100%' }}
-            disabled={sending || recipients.length === 0}
-          >
-            {sending ? <><RefreshCw className="spin" size={18} /> Sending...</> : <><Send size={18} /> Send Email to {recipients.length} Recipients</>}
-          </button>
-        </div>
-      </form>
+        {filteredHistory.map(item => (
+          <div key={item.id} className={`${styles.commCard} ${item.pinned ? styles.commCardPinned : ''}`}>
+            <div className={styles.cardHeader}>
+              <div className={styles.cardMeta}>
+                {item.pinned && (
+                  <span className="badge badge-primary"><Star size={9} fill="currentColor" /> Pinned</span>
+                )}
+                <span className={styles.cardDate}>{formatDate(item.createdAt)}</span>
+              </div>
 
-      {status && (
-        <div className={`${styles.statusCard} ${status.type === 'success' ? styles.statusSuccess : styles.statusError}`}>
-          {status.type === 'success' ? <CheckCircle2 size={18} /> : <AlertCircle size={18} />}
-          {status.msg}
+              <div className={styles.cardActions}>
+                {item.channelSite && (
+                  <button className="btn btn-ghost btn-sm" onClick={() => openEdit(item)} title="Edit site post">
+                    <Pencil size={13} />
+                  </button>
+                )}
+                <div className={styles.overflowWrap}>
+                  <button
+                    className="btn btn-ghost btn-sm"
+                    onClick={() => setOverflowOpen(prev => prev === item.id ? null : item.id)}
+                    title="More actions"
+                  >
+                    <MoreHorizontal size={15} />
+                  </button>
+                  {overflowOpen === item.id && (
+                    <div className={styles.overflowMenu}>
+                      {item.channelSite && (
+                        <button onClick={() => handleTogglePin(item)}>
+                          <Star size={13} fill={item.pinned ? 'currentColor' : 'none'} />
+                          {item.pinned ? 'Unpin' : 'Pin at top'}
+                        </button>
+                      )}
+                      {item.channelEmail && !!item.emailFailedCount && item.emailFailedCount > 0 && !!item.emailFailedAddresses?.length && (
+                        <button onClick={() => { navigator.clipboard.writeText(item.emailFailedAddresses!.join('\n')); setOverflowOpen(null); }}>
+                          <AlertCircle size={13} />
+                          Copy {item.emailFailedCount} failed address{item.emailFailedCount === 1 ? '' : 'es'}
+                        </button>
+                      )}
+                      <button className={styles.deleteAction} onClick={() => { setDeleteId(item.id); setOverflowOpen(null); }}>
+                        <Trash2 size={13} /> Delete
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <h3 className={styles.cardTitle}>{item.title}</h3>
+            <p className={styles.cardPreview}>{item.body.length > 140 ? item.body.slice(0, 140) + '…' : item.body}</p>
+
+            <div className={styles.cardFooter}>
+              <div className={styles.channelBadges}>
+                {item.channelSite && (
+                  <span className={styles.badgeSite}><Globe size={11} /> Site Post</span>
+                )}
+                {item.channelEmail && (
+                  <span className={`${styles.badgeEmail} ${item.emailFailedCount ? styles.badgeEmailWarn : ''}`}>
+                    <Mail size={11} />
+                    {item.emailFailedCount
+                      ? `${item.emailSuccessCount} sent · ⚠ ${item.emailFailedCount} failed`
+                      : `Emailed · ${item.emailSuccessCount ?? item.emailRecipientCount ?? 0}`}
+                  </span>
+                )}
+              </div>
+              {item.sentByEmail && <span className={styles.sentBy}>{item.sentByEmail}</span>}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* ── Delete confirm ──────────────────────────────────────────────────── */}
+      {deleteId && (
+        <div className="modal-overlay" onClick={() => setDeleteId(null)}>
+          <div className="modal" style={{ maxWidth: 440 }} onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>Delete communication?</h3>
+              <button className="btn btn-ghost btn-sm" onClick={() => setDeleteId(null)}><X size={16} /></button>
+            </div>
+            <p style={{ color: 'var(--white-60)', fontSize: '0.9rem', margin: '0 0 1.25rem' }}>
+              This removes the record permanently. If this was a site post, it will be removed from the public News page immediately.
+            </p>
+            <div className="modal-footer">
+              <button className="btn btn-ghost" onClick={() => setDeleteId(null)}>Cancel</button>
+              <button className="btn btn-danger" onClick={handleDelete}><Trash2 size={14} /> Delete</button>
+            </div>
+          </div>
         </div>
       )}
+
+      {overflowOpen && <div className={styles.overflowBackdrop} onClick={() => setOverflowOpen(null)} />}
     </div>
   );
 }
