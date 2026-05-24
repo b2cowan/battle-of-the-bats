@@ -12,6 +12,8 @@ import { stripe } from '@/lib/stripe';
 import { getPlanFromPriceId, getStripePriceId } from '@/lib/stripe-prices';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { writePlatformEvent } from '@/lib/platform-events';
+import { sendEmail, planDowngradedHtml, SITE_URL } from '@/lib/email';
+import type { OrgPlan } from '@/lib/types';
 
 type ConfirmBody = {
   targetPlan?: unknown;
@@ -214,6 +216,27 @@ export async function POST(req: Request) {
         { status: 500 },
       );
     }
+  }
+
+  if (actorEmail) {
+    const fromPlanLabel = PLAN_CONFIG[ctx.org.planId as OrgPlan]?.label ?? ctx.org.planId;
+    const toPlanLabel = PLAN_CONFIG[targetPlan]?.label ?? targetPlan;
+    const retentionDate = new Date(retentionUntil).toLocaleDateString('en-CA', {
+      year: 'numeric', month: 'long', day: 'numeric',
+    });
+    const billingUrl = `${SITE_URL}/${ctx.org.slug}/admin/org/billing`;
+    await sendEmail(
+      actorEmail,
+      `Your ${ctx.org.name} plan has been updated`,
+      planDowngradedHtml({
+        orgName: ctx.org.name,
+        fromPlanLabel,
+        toPlanLabel,
+        retainedTournaments: retainedTournaments.length,
+        retentionUntil: retentionDate,
+        billingUrl,
+      }),
+    );
   }
 
   return Response.json({

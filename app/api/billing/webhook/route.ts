@@ -9,7 +9,7 @@ import {
   syncTeamWorkspaceSubscription,
 } from '@/lib/team-checkout';
 import { completeOrgTeamAddonBillingFromMetadata } from '@/lib/team-org-billing';
-import { sendEmail, trialEndingHtml, SITE_URL } from '@/lib/email';
+import { sendEmail, trialEndingHtml, welcomeBackHtml, teamWorkspaceCancelledHtml, SITE_URL } from '@/lib/email';
 import type { OrgPlan } from '@/lib/types';
 import type Stripe from 'stripe';
 
@@ -166,6 +166,13 @@ export async function POST(req: Request) {
           });
 
           if (!provisionResult.provisioned && provisionResult.reason === 'not_team_checkout') {
+            // Snapshot previous status before sync for reactivation detection
+            const { data: prevWs } = await supabaseAdmin
+              .from('team_workspaces')
+              .select('workspace_org_id, subscription_status')
+              .eq('stripe_subscription_id', sub.id)
+              .maybeSingle();
+
             await syncTeamWorkspaceSubscription({
               stripeCustomerId: customerId,
               stripeSubscriptionId: sub.id,
@@ -174,6 +181,35 @@ export async function POST(req: Request) {
               billingCycle,
               currentPeriodEnd: toIso(sub.items?.data?.[0]?.current_period_end),
             });
+
+            // Welcome back email when a canceled team workspace reactivates
+            if (
+              prevWs?.workspace_org_id &&
+              prevWs.subscription_status === 'canceled' &&
+              (sub.status === 'active' || sub.status === 'trialing')
+            ) {
+              const [wsOwnerEmail, wsOrg] = await Promise.all([
+                getOrgOwnerEmail(prevWs.workspace_org_id),
+                supabaseAdmin
+                  .from('organizations')
+                  .select('name, slug')
+                  .eq('id', prevWs.workspace_org_id)
+                  .maybeSingle()
+                  .then(r => r.data),
+              ]);
+              if (wsOwnerEmail && wsOrg) {
+                await sendEmail(
+                  wsOwnerEmail,
+                  `Welcome back — ${wsOrg.name}`,
+                  welcomeBackHtml({
+                    orgName: wsOrg.name,
+                    planLabel: 'Team',
+                    restoredTournaments: 0,
+                    dashboardUrl: `${SITE_URL}/${wsOrg.slug}/coaches`,
+                  }),
+                );
+              }
+            }
           }
           break;
         }
@@ -198,11 +234,11 @@ export async function POST(req: Request) {
             current_period_end: currentPeriodEnd,
           })
           .eq('stripe_customer_id', customerId)
-          .select('id')
+          .select('id, name, slug')
           .maybeSingle();
 
         if (updatedOrg) {
-          await restoreRetainedDowngradeTournaments(updatedOrg.id, cfg.tournamentLimit);
+          const restoreResult = await restoreRetainedDowngradeTournaments(updatedOrg.id, cfg.tournamentLimit);
 
           const previousPlan = currentOrg?.plan_id as OrgPlan | undefined;
           const previousStatus = currentOrg?.subscription_status as string | null | undefined;
@@ -246,6 +282,26 @@ export async function POST(req: Request) {
               subscriptionStatus: sub.status,
               metadata: { stripeSubscriptionId: sub.id, priceId, billingCycle },
             });
+
+            // Welcome back email — only for resubscriptions (canceled → active/trialing),
+            // not for payment recovery (past_due → active) which is a different context.
+            if (previousStatus === 'canceled') {
+              const ownerEmail = await getOrgOwnerEmail(updatedOrg.id);
+              if (ownerEmail) {
+                const planLabel = PLAN_CONFIG[planKey]?.label ?? planKey;
+                const dashboardUrl = `${SITE_URL}/${updatedOrg.slug}/admin`;
+                await sendEmail(
+                  ownerEmail,
+                  `Welcome back to FieldLogicHQ — ${updatedOrg.name}`,
+                  welcomeBackHtml({
+                    orgName: updatedOrg.name,
+                    planLabel,
+                    restoredTournaments: restoreResult.restoredCount,
+                    dashboardUrl,
+                  }),
+                );
+              }
+            }
           }
         }
       }
@@ -271,6 +327,34 @@ export async function POST(req: Request) {
           subscriptionStatus: 'canceled',
           metadata: { stripeCustomerId: customerId, stripeSubscriptionId: sub.id, scope: 'team_workspace' },
         });
+
+        // Team workspace cancellation email
+        const { data: cancelledWs } = await supabaseAdmin
+          .from('team_workspaces')
+          .select('workspace_org_id')
+          .eq('stripe_subscription_id', sub.id)
+          .maybeSingle();
+        if (cancelledWs?.workspace_org_id) {
+          const [wsOwnerEmail, wsOrg] = await Promise.all([
+            getOrgOwnerEmail(cancelledWs.workspace_org_id),
+            supabaseAdmin
+              .from('organizations')
+              .select('name, slug')
+              .eq('id', cancelledWs.workspace_org_id)
+              .maybeSingle()
+              .then(r => r.data),
+          ]);
+          if (wsOwnerEmail && wsOrg) {
+            await sendEmail(
+              wsOwnerEmail,
+              `Your ${wsOrg.name} Team workspace has been cancelled`,
+              teamWorkspaceCancelledHtml({
+                workspaceName: wsOrg.name,
+                resubscribeUrl: `${SITE_URL}/pricing`,
+              }),
+            );
+          }
+        }
         break;
       }
 

@@ -711,6 +711,65 @@ export function trialEndingHtml(p: {
   `);
 }
 
+export function planDowngradedHtml(p: {
+  orgName: string;
+  fromPlanLabel: string;
+  toPlanLabel: string;
+  retainedTournaments: number;
+  retentionUntil?: string;
+  billingUrl: string;
+}) {
+  const retainedNote = p.retainedTournaments > 0 && p.retentionUntil
+    ? `<p style="margin:0;line-height:1.75;color:rgba(241,245,249,0.8);">${p.retainedTournaments} tournament${p.retainedTournaments === 1 ? '' : 's'} that exceed the ${p.toPlanLabel} limit have been archived and retained until <strong>${p.retentionUntil}</strong>. They will be restored if you upgrade again before that date.</p>`
+    : `<p style="margin:0;line-height:1.75;color:rgba(241,245,249,0.8);">Your account is active on the ${p.toPlanLabel} plan.</p>`;
+
+  return wrap(`
+    <h2 style="color:#F1F5F9;font-size:1.3rem;font-weight:700;margin:0 0 1rem;">Plan updated</h2>
+    <p style="margin:0 0 1rem;">Your <strong>${p.orgName}</strong> subscription has been changed from <strong>${p.fromPlanLabel}</strong> to <strong>${p.toPlanLabel}</strong>.</p>
+    <div style="background:#0F172A;border:1px solid rgba(30,58,138,0.25);border-left:3px solid rgba(30,58,138,0.5);padding:1.25rem;margin:1.5rem 0;">
+      <p style="margin:0 0 0.5rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#D9F99D;">What changed</p>
+      ${retainedNote}
+    </div>
+    <a href="${p.billingUrl}" style="display:inline-block;background:#1E3A8A;color:#fff;padding:0.75rem 1.75rem;border-radius:2px;text-decoration:none;font-weight:700;font-size:0.82rem;letter-spacing:0.06em;">Manage Billing &rarr;</a>
+  `);
+}
+
+export function teamWorkspaceCancelledHtml(p: {
+  workspaceName: string;
+  resubscribeUrl: string;
+}) {
+  return wrap(`
+    <h2 style="color:#F1F5F9;font-size:1.3rem;font-weight:700;margin:0 0 1rem;">Team workspace cancelled</h2>
+    <p style="margin:0 0 1rem;">Your <strong>${p.workspaceName}</strong> Team workspace subscription has been cancelled. The workspace is now inactive.</p>
+    <div style="background:#0F172A;border:1px solid rgba(245,158,11,0.3);border-left:3px solid rgba(245,158,11,0.5);padding:1.25rem;margin:1.5rem 0;">
+      <p style="margin:0 0 0.5rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#F59E0B;">Your data</p>
+      <p style="margin:0;line-height:1.75;color:rgba(241,245,249,0.8);">Your team data is retained and can be restored by resubscribing.</p>
+    </div>
+    <a href="${p.resubscribeUrl}" style="display:inline-block;background:#1E3A8A;color:#fff;padding:0.75rem 1.75rem;border-radius:2px;text-decoration:none;font-weight:700;font-size:0.82rem;letter-spacing:0.06em;">Resubscribe</a>
+  `);
+}
+
+export function welcomeBackHtml(p: {
+  orgName: string;
+  planLabel: string;
+  restoredTournaments: number;
+  dashboardUrl: string;
+}) {
+  const restoredNote = p.restoredTournaments > 0
+    ? `<p style="margin:0;line-height:1.75;color:rgba(241,245,249,0.8);">We've restored <strong>${p.restoredTournaments} tournament${p.restoredTournaments === 1 ? '' : 's'}</strong> to your account — everything is exactly as you left it.</p>`
+    : `<p style="margin:0;line-height:1.75;color:rgba(241,245,249,0.8);">Your account is active and ready to go.</p>`;
+
+  return wrap(`
+    <h2 style="color:#D9F99D;font-size:1.3rem;font-weight:700;margin:0 0 1rem;">Welcome back!</h2>
+    <p style="margin:0 0 1rem;">Your <strong>${p.planLabel}</strong> subscription for <strong>${p.orgName}</strong> is active again.</p>
+    <div style="background:#0F172A;border:1px solid rgba(34,197,94,0.3);border-left:3px solid rgba(34,197,94,0.5);padding:1.25rem;margin:1.5rem 0;">
+      <p style="margin:0 0 0.5rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#22C55E;">Your account</p>
+      ${restoredNote}
+    </div>
+    <a href="${p.dashboardUrl}" style="display:inline-block;background:#D9F99D;color:#0b0f14;padding:0.75rem 1.75rem;border-radius:2px;text-decoration:none;font-weight:800;font-size:0.82rem;letter-spacing:0.06em;">Go to Dashboard &rarr;</a>
+  `);
+}
+
 export function cancellationConfirmationHtml(p: {
   orgName: string;
   planLabel: string;

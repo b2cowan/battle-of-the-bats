@@ -7,6 +7,7 @@ import { getStripePriceId } from '@/lib/stripe-prices';
 import { getPlanGatingMap } from '@/lib/plan-gating-server';
 import { isRecoveryTransition, writePlatformEvent } from '@/lib/platform-events';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { sendEmail, welcomeBackHtml, SITE_URL } from '@/lib/email';
 import type { OrgPlan } from '@/lib/types';
 
 function appendSuccess(url: string) {
@@ -120,6 +121,21 @@ export async function POST(req: Request) {
         subscriptionStatus: 'trialing',
         metadata: { billingCycle, restoredCount: restoreResult.restoredCount },
       });
+
+      if (auth.org.subscriptionStatus === 'canceled' && auth.user.email) {
+        const planLabel = PLAN_CONFIG[planKey as OrgPlan]?.label ?? planKey;
+        const dashboardUrl = `${SITE_URL}/${auth.org.slug}/admin`;
+        await sendEmail(
+          auth.user.email,
+          `Welcome back to FieldLogicHQ — ${auth.org.name}`,
+          welcomeBackHtml({
+            orgName: auth.org.name,
+            planLabel,
+            restoredTournaments: restoreResult.restoredCount,
+            dashboardUrl,
+          }),
+        );
+      }
     }
 
     return new Response(
