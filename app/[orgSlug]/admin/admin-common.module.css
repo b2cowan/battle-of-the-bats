@@ -85,7 +85,7 @@
   font-family: var(--font-data);
   font-size: 0.72rem;
   letter-spacing: 0.03em;
-  background: var(--black-30);
+  background: var(--bg-2);
   border-radius: 2px;
   border-color: rgba(var(--blueprint-blue-rgb), 0.25);
   color: var(--data-gray);
@@ -94,7 +94,7 @@
 /* ─── View Toggle (Flat/Pools) ────────────────────────────────────────────── */
 .viewToggle {
   display: flex;
-  background: var(--black-30);
+  background: var(--bg-2);
   border: 1px solid rgba(var(--blueprint-blue-rgb), 0.25);
   border-radius: 2px;
   padding: 2px;
@@ -199,7 +199,7 @@
 
 .searchInput {
   width: 100%;
-  background: var(--black-30);
+  background: var(--bg-2);
   border: 1px solid rgba(var(--blueprint-blue-rgb), 0.25);
   border-radius: 2px;
   padding: 0.3rem 0.85rem 0.3rem 2.1rem;
@@ -213,7 +213,7 @@
 .searchInput:focus {
   outline: none;
   border-color: rgba(var(--blueprint-blue-rgb), 0.6);
-  background: var(--black-30);
+  background: var(--bg-2);
   box-shadow: 0 0 0 2px rgba(var(--blueprint-blue-rgb), 0.12);
 }
 
@@ -320,6 +320,50 @@
 
 .primaryCell { font-family: var(--font-data); font-size: 0.8rem; color: var(--fl-text); font-weight: 500; letter-spacing: 0.02em; }
 .secondaryCell { font-family: var(--font-data); font-size: 0.72rem; color: var(--data-gray); letter-spacing: 0.02em; }
+
+/* ─── Game-row responsive columns ─────────────────────────────────────────── */
+/* Applied to date, venue, and matchup cells in GameList rows and the header.  */
+/* flex-shrink hierarchy: date (0, never yields) → venue (3, yields first)    */
+/*                        → matchup (1, last to shrink, most important)        */
+.gameColDate {
+  flex: 0 0 130px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.gameColVenue {
+  flex: 0 3 180px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.gameColMatchup {
+  /* flex-basis: 200px establishes a real space claim so shrink math activates.
+     Without it (flex-basis: 0) matchup contributes 0 to the shrink pool and
+     venue never gives up space — it stays at 180px while matchup starves.     */
+  flex: 2 1 200px;
+  min-width: 0;
+}
+
+/* Status-badge slot in scoring mode.
+   96px matches the planning-mode status area and fits "PENDING REVIEW" comfortably. */
+.gameStatusSlot {
+  width: 96px;
+  display: flex;
+  justify-content: flex-end;
+  flex-shrink: 0;
+}
+
+/* At medium desktop widths venue yields before matchup — basis drops 180→120px.
+   Matchup gets ~60px more space, enough for full team names at ~940px viewport. */
+@media (max-width: 1100px) {
+  .gameColVenue { flex-basis: 120px; }
+}
+
+@media (max-width: 680px) {
+  .gameColVenue   { display: none; }          /* frees ~120px for team names */
+  .gameStatusSlot { width: auto; }            /* badge sized to its content  */
+}
 
 /* ─── Icon Button ─────────────────────────────────────────────────────────── */
 .iconBtn {

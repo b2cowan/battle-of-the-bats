@@ -1,9 +1,10 @@
 # FieldLogicHQ — Database Architecture Review
 
 > **Maintained by:** `/dba` agent  
-> **Last reviewed:** 2026-05-23 (standalone team workspace module + dev/prod divergence audit)  
-> **Schema source:** `memory/reference_db_schema.md` (captured 2026-05-23 from dev + prod)  
-> **Tables reviewed:** ~82 across 9 modules (tournament, league, rep teams, standalone team workspace, accounting, stripe, org/platform core, platform admin, CRM)
+> **Last reviewed:** 2026-05-24 (schema rebuilt from live dump — 85 tables; residual games FK duplicates found (Finding #21); migration 082 written)  
+> **Schema source:** `memory/reference_db_schema.md` — rebuilt 2026-05-24 from `docs/schema-snapshots/schema_dumps.json` (live dev + prod queries)  
+> **Tables reviewed:** 85 across 9 modules (tournament, league, rep teams, standalone team workspace, accounting, stripe, org/platform core, platform admin, CRM)  
+> **Validation:** `docs/validate_db_state.sql` — checks 17–18 added (pools); check 19 added (games FK duplicates). Will FAIL on prod until migrations 081 Part B and 082 applied.
 
 ---
 
@@ -12,10 +13,10 @@
 | Severity | Open | Addressed | Accepted Risk |
 |---|---|---|---|
 | Critical | 0 | 0 | 0 |
-| High | 3 | 3 | 1 |
-| Medium | 3 | 3 | 1 |
-| Low | 2 | 0 | 3 |
-| Advisory | 5 | 1 | 0 |
+| High | 0 | 7 | 1 |
+| Medium | 0 | 4 | 2 |
+| Low | 1 | 3 | 3 |
+| Advisory | 6 | 1 | 0 |
 
 ---
 
@@ -29,7 +30,7 @@
 **Finding:** The `league_practices` table (`id`, `season_id`, `division_id`, `team_id`, `scheduled_at`, `ends_at`, `location`, `notes`, `status`, `recurrence_group_id`, `created_at`, `updated_at`) exists in production but does not exist in the dev database. A migration was applied to prod but skipped dev. This means dev is behind, any code referencing `league_practices` will fail on dev, and any future dev migration that touches league tables must account for the missing table to avoid conflicts.  
 **Tables affected:** `league_practices`  
 **Recommendation:** Write and apply a corrective migration to dev that creates `league_practices` matching the prod definition. Verify column types, nullability, and any indexes or RLS policies are in sync. Once applied, add to migration numbering sequence so it doesn't conflict. If `league_practices` is intentionally a prod-only experiment (not yet built in the UI), document why and suppress dev drift warnings.  
-**Status:** Open
+**Status:** Addressed — migration 077 applied to dev 2026-05-24. Migration 078 added `org_id` (NOT NULL, backfilled from `league_seasons`, indexed, RLS policy simplified to direct lookup) to both dev and prod 2026-05-24. `AgentPlaybook.tsx` note updated. `league_practices` is now fully consistent with the league module schema pattern.
 
 ---
 
@@ -39,7 +40,7 @@
 **Finding:** The prod database has duplicate FK constraints on several tournament sub-tables: e.g. `games` has both `fk_games_tournament` AND `games_tournament_id_fkey` pointing to the same column. Similar duplicates exist on `age_groups`, `contacts`, `diamonds`, `announcements`, and `teams`. Duplicate constraints mean Postgres enforces the same referential integrity check twice on every INSERT/UPDATE, adds overhead to `pg_constraint` lookups, and creates confusion in schema introspection tools.  
 **Tables affected:** `games`, `age_groups`, `contacts`, `diamonds`, `announcements`, `teams` (prod only)  
 **Recommendation:** In a cleanup migration, `ALTER TABLE … DROP CONSTRAINT` the auto-named `*_fkey` duplicates, keeping only the explicitly-named `fk_*` constraints. Run against prod only (dev doesn't have the duplicates). Wrap in a transaction. Test that the surviving named constraints still block orphan inserts before merging.  
-**Status:** Open
+**Status:** Addressed — migration 080 applied to prod 2026-05-24. All 6 `*_tournament_id_fkey` duplicates dropped. All 6 `fk_*_tournament` constraints retained. Verified via `validate_db_state.sql` — 16/16 checks passing.
 
 ---
 
@@ -49,7 +50,7 @@
 **Finding:** `team_entitlements` has `org_id` (FK → organizations.id, nullable) and `rep_team_id` (FK → rep_teams.id, nullable). Both are nullable. A row with both NULL is a dangling entitlement — no org owns it, no team owns it — and the RLS system cannot scope it to any tenant. There is no visible CHECK constraint requiring at least one to be non-null.  
 **Tables affected:** `team_entitlements`  
 **Recommendation:** Add `CHECK (org_id IS NOT NULL OR rep_team_id IS NOT NULL)` to `team_entitlements`. Also verify that RLS SELECT policies are defined and reference at least one of these columns (not just `team_workspace_id`) so entitlement reads stay tenant-scoped even when a row has only one of the two.  
-**Status:** Open
+**Status:** Closed — Incorrect finding (2026-05-24). Migration 065 source reviewed directly: `org_id` is defined as `uuid NOT NULL` and `rep_team_id` is defined as `uuid NOT NULL`. The dangling-row scenario is structurally impossible. The schema snapshot that generated this finding was incorrect. No migration needed. The related RLS concern (no client policies) is captured separately as an Advisory finding.
 
 ---
 
@@ -59,47 +60,67 @@
 **Finding:** `team_org_links` carries `team_workspace_id` but no direct org tenancy column. The primary org context is `team_workspace_id → team_workspaces.workspace_org_id` — a 2-hop join. Any RLS policy or cross-org lookup on link records requires traversing through `team_workspaces`.  
 **Tables affected:** `team_org_links`  
 **Recommendation:** Evaluate adding `workspace_org_id` (denormalized from `team_workspaces`) to `team_org_links` — the same pattern used for `league_games`, `rep_allocation_installments`, and `rep_player_dues_installments`. If the table is low-traffic (org setup, not scorekeeper-hot-path), accepted risk may be reasonable; document the decision explicitly.  
-**Status:** Open
+**Status:** Accepted Risk — Decision 2026-05-24. Two mitigating factors: (1) `team_org_links` already has a direct `linked_org_id NOT NULL` column — for a parent org's admin looking up links they're party to, this is a direct FK with an index. The 2-hop only applies to lookups from the team side (workspace_org_id context), which are service-role mediated (no direct client RLS needed). (2) The table is low-traffic (one-time setup/link events, not a hot write path). Adding a denormalized `workspace_org_id` column introduces write overhead and a new drift failure mode without meaningful RLS or query benefit at current volume. Flag before adding any client-side RLS policy to this table.
 
 ---
 
 ### [2026-05-23] — Finding #17: `games.game_time` type mismatch — `text` in dev, `time without time zone` in prod
 
 **Severity:** High  
-**Finding:** The `games` table predates the migration system; its column types were set manually and differ between environments. Dev has `game_time text`; prod has `game_time time without time zone`. This matters for two reasons: (1) any time string the app stores that is not a valid PostgreSQL time literal (e.g. `"2:30 PM"`, `""`, `"TBD"`) will be accepted silently in dev but fail with a cast error in prod; (2) `ORDER BY game_time` is lexicographic in dev and temporal in prod — dev test results will not match prod sort order for times like `"9:00"` vs `"10:00"` (string sort puts `"9"` after `"10"`).  
+**Finding:** The `games` table predates the migration system; its column types were set manually and differ between environments. Dev has `game_time text`; prod has `game_time time without time zone`. Two confirmed impacts: (1) `ORDER BY game_time` is lexicographic in dev and temporal in prod — the seeder writes `'9:00'` (no leading zero) which sorts *after* `'10:00'` as a string but *before* as a time. Schedules display in wrong order in dev. (2) Any non-`HH:MM` string would be silently accepted in dev but rejected by prod's stricter type. Code audit confirms all write paths produce valid `HH:MM` time literals — prod type is correct.  
 **Tables affected:** `games`  
-**Recommendation:** Audit what values the app actually stores in `game_time`. If all stored values are valid time literals (`HH:MM` or `HH:MM:SS`), apply a migration to dev to `ALTER COLUMN game_time TYPE time using game_time::time` to match prod. If the app ever stores non-time strings, apply the opposite migration in prod (`ALTER COLUMN game_time TYPE text`) to match dev. Do not leave the types inconsistent — dev testing will not reflect prod behavior.  
-**Status:** Open
+**Recommendation:** Apply migration 076 to dev only: `ALTER TABLE games ALTER COLUMN game_time TYPE time without time zone USING game_time::time;`. All existing dev values cast cleanly. Do not touch prod — it is already correct.  
+**Status:** Addressed — migration 076 applied to dev 2026-05-24. `game_time` is now `time without time zone` in both environments. Sort order corrected.
 
 ---
 
 ### [2026-05-23] — Finding #18: `games.bracket_id` type mismatch — `text` in dev, `uuid` in prod
 
 **Severity:** High  
-**Finding:** `games.bracket_id` is `text` in dev and `uuid` in prod. Same pre-migration origin as Finding #17. Any code path that passes a non-UUID value (empty string, `"none"`, auto-incremented integers used in bracket logic) will succeed in dev but throw a type error in prod. Implicit casts from `text` → `uuid` in query parameters will also behave differently. This is an active production risk for any bracket feature.  
+**Finding:** `games.bracket_id` is `text` in dev and `uuid` in prod. Code audit confirms the only write source is `crypto.randomUUID()` in `PlayoffWizard.tsx` — values are always UUID or NULL. The `'default'` string seen in `GameList.tsx` is a UI-only fallback for grouping, never stored. Prod's `uuid` type is correct; dev silently accepts any string without format validation.  
 **Tables affected:** `games`  
-**Recommendation:** Determine the canonical type. If `bracket_id` is always a UUID (FK to a bracket record), standardize to `uuid` in both environments. If it can hold non-UUID sentinel values, standardize to `text` in both. Apply a single corrective migration to whichever environment is wrong. The migration must be wrapped in a transaction with a `BEGIN/COMMIT` block. Do not include this in the same migration as any data-change — type coercion on a live table should be isolated.  
-**Status:** Open
+**Recommendation:** Include in migration 076 (dev only): verify `SELECT COUNT(*) FROM games WHERE bracket_id IS NOT NULL AND bracket_id !~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'` returns 0, then `ALTER TABLE games ALTER COLUMN bracket_id TYPE uuid USING bracket_id::uuid;`. Do not touch prod.  
+**Status:** Addressed — migration 076 applied to dev 2026-05-24. `bracket_id` is now `uuid` in both environments.
 
 ---
 
 ### [2026-05-23] — Finding #19: `league_seasons.draft_state` column exists in prod only
 
-**Severity:** Medium  
-**Finding:** A `draft_state jsonb` column exists on `league_seasons` in prod but has no corresponding migration in the codebase (migrations 001–075 don't add it). It was added directly to the prod database. If any UI or API code reads or writes `draft_state`, it will fail in dev with "column does not exist". Dev cannot be used to test any draft/placement feature that uses this column.  
+**Severity:** ~~Medium~~ → **High** (severity upgraded after code audit)  
+**Finding:** A `draft_state jsonb` column exists on `league_seasons` in prod but has no corresponding migration in the codebase. It was added directly to the prod database as part of Phase 5G (Team Placement + Draft Tools) implementation. App code fully depends on it: `lib/types.ts` (`LeagueSeason.draftState`), `lib/db.ts` mapper, `draft/route.ts` (`loadDraft()` / `saveDraft()`), and `placement/route.ts` (clears on finalization). Without this column, any dev test of the draft/placement feature fails with "column draft_state does not exist".  
 **Tables affected:** `league_seasons`  
-**Recommendation:** If this column is actively used, write a migration to add it to dev: `ALTER TABLE league_seasons ADD COLUMN IF NOT EXISTS draft_state jsonb;` — then apply. If it was experimental and is not referenced by any app code, drop it from prod and document the decision. Either way, eliminate the divergence before the next league feature ships.  
-**Status:** Open
+**Recommendation:** Migration 079 (dev only): `ALTER TABLE league_seasons ADD COLUMN IF NOT EXISTS draft_state jsonb;`  
+**Status:** Addressed — migration 079 applied to dev 2026-05-24.
 
 ---
 
-### [2026-05-23] — Finding #20: `pools` nullability drift — `age_group_id` and `created_at` nullable in prod, NOT NULL in dev
+### [2026-05-23] — Finding #20: `pools` column drift — `created_at` missing from dev; `display_order` nullable in prod
 
 **Severity:** Low  
-**Finding:** `pools.age_group_id` and `pools.created_at` are `NOT NULL` in dev but nullable in prod. This is the inverse of the typical drift pattern (prod is usually stricter). New inserts from app code that always provide these values will succeed in both environments. The risk is: (1) prod silently accepts incomplete rows that dev would reject; (2) any future query that assumes `age_group_id IS NOT NULL` may behave unexpectedly on prod rows with nulls.  
+**Finding:** Direct schema inspection (2026-05-24) revealed the original finding was incorrect. Actual drift:  
+- `pools.created_at` — EXISTS in prod (`timestamptz NOT NULL DEFAULT now()`), **completely missing from dev**. Any dev code or test that reads `created_at` from `pools` will fail with "column does not exist".  
+- `pools.display_order` — `NOT NULL` in dev, **nullable in prod** (default 0). Inverse drift; low practical risk since all app writes provide this value and the default is 0.  
+- `pools.age_group_id` — originally claimed nullable in prod; **actually NOT NULL in both environments**. The original schema snapshot was wrong.  
+
 **Tables affected:** `pools`  
-**Recommendation:** Apply a constraint-tightening migration to prod: check for any existing NULL rows first (`SELECT COUNT(*) FROM pools WHERE age_group_id IS NULL OR created_at IS NULL`), then `ALTER TABLE pools ALTER COLUMN age_group_id SET NOT NULL; ALTER TABLE pools ALTER COLUMN created_at SET NOT NULL DEFAULT now();`. Only proceed if no NULL rows exist. If NULL rows are found, investigate and backfill before tightening.  
-**Status:** Open
+**Recommendation:** Two-part migration 081 (`supabase/migrations/081_pools_nullability_prod.sql`):  
+- Part A (dev only): `ALTER TABLE pools ADD COLUMN IF NOT EXISTS created_at timestamptz NOT NULL DEFAULT now();`  
+- Part B (prod only, optional): backfill NULLs then tighten `display_order` — run pre-check first: `SELECT COUNT(*) FROM pools WHERE display_order IS NULL;`  
+**Status:** Open — Migration 081 Part A applied to dev 2026-05-24 (`created_at` added). Part B (prod `display_order` tightening) pending pre-check: `SELECT COUNT(*) FROM pools WHERE display_order IS NULL;`. Apply to prod when convenient. Checks 17–18 in `docs/validate_db_state.sql` track both envs.
+
+---
+
+### [2026-05-24] — Finding #21: Residual duplicate FK constraints on `games.age_group_id` and `games.away_team_id` (prod only)
+
+**Severity:** Low  
+**Finding:** Migration 080 cleaned up `*_tournament_id_fkey` duplicates on six tournament sub-tables, but missed two additional duplicate FKs on `games` pointing to non-tournament tables. Live schema inspection confirms prod has both constraints on each column:  
+- `games.age_group_id` → `games_age_group_id_fkey` (auto-named) AND `fk_games_age_group` (explicit) — both point to `age_groups.id`  
+- `games.away_team_id` → `games_away_team_id_fkey` (auto-named) AND `fk_games_away_team` (explicit) — both point to `teams.id`  
+
+Dev has only the auto-named versions (`games_*_fkey`), which is correct for dev. Prod should keep only the explicit `fk_*` names to match its convention. `games.diamond_id` does NOT have this problem — prod has only `fk_games_diamond`.  
+**Tables affected:** `games` (prod only)  
+**Recommendation:** Migration 082 (prod only): `DROP CONSTRAINT IF EXISTS games_age_group_id_fkey` and `DROP CONSTRAINT IF EXISTS games_away_team_id_fkey`. Keep `fk_games_age_group` and `fk_games_away_team`.  
+**Status:** Addressed — Migration 082 applied to prod 2026-05-24. `games_age_group_id_fkey` and `games_away_team_id_fkey` dropped. `fk_games_age_group` and `fk_games_away_team` retained. Run `validate_db_state.sql` check 19 to confirm.
 
 ---
 
@@ -109,7 +130,7 @@
 **Finding:** Prod has two indexes on `org_audit_log(org_id, created_at DESC)`: `idx_audit_log_org` and `idx_audit_org`. Both index identical columns with identical sort. The duplicate adds write overhead on every audit event insert (which fires frequently during platform admin operations) and wastes storage.  
 **Tables affected:** `org_audit_log` (prod only)  
 **Recommendation:** Drop the auto-named or older duplicate (`idx_audit_org` or whichever was created first) in a cleanup migration applied to prod only. Confirm the remaining index satisfies all existing query plans before dropping.  
-**Status:** Open
+**Status:** Addressed — migration 080 applied to prod 2026-05-24. `idx_audit_org` dropped, `idx_audit_log_org` retained. Verified via `validate_db_state.sql`.
 
 ---
 
@@ -204,6 +225,16 @@
 ---
 
 ## Advisory Notes
+
+---
+
+### [2026-05-24] — Advisory: `team_entitlements`, `team_org_links`, `team_workspace_claims` — RLS-enabled but no client policies defined
+
+**Severity:** Advisory  
+**Finding:** All three team workspace foundation tables (`team_entitlements`, `team_org_links`, `team_workspace_claims`) have RLS enabled but zero client-facing policies. Access is intentionally service-role-mediated — all app routes use the service role client, so the RLS enforcement layer is bypassed entirely. Migration 065 documents this explicitly: *"Keep new foundation tables service-role/API mediated until product routes are built."* The standalone Team workspace has now shipped and this pattern is confirmed correct for the current implementation. No RLS failures have been observed.  
+**Tables affected:** `team_entitlements`, `team_org_links`, `team_workspace_claims`  
+**Recommendation:** These tables must never be queried from a client-side Supabase instance (`createClientComponentClient`, `createServerActionClient`, etc.) — only service role. Before adding any coach portal, team owner, or org admin direct DB access to these tables, write explicit RLS SELECT/INSERT/UPDATE/DELETE policies first and run `/dba` to review them. Pattern reference: migration 071 (lineup tables) shows how to write coach + org admin write policies with `WITH CHECK` clauses.  
+**Status:** Advisory — Deliberate design, confirmed correct for current implementation. Flag before any client-side direct DB access is added to these tables.
 
 ---
 
@@ -314,6 +345,15 @@ Migration N+3 — DROP tournaments.organization_id (after N verified in prod)
 | 9 | `resources` tournament-only | Low | Accepted Risk (2026-05-23) — flag before non-tournament doc feature |
 | 13 | Missing `org_id` index on `rep_team_lineups` | High | Migration 071 — dev + prod (2026-05-23) |
 | 14 | No write RLS policies on lineup tables | High | Migration 071 — dev + prod (2026-05-23) |
+| 17 | `games.game_time` — text in dev, time in prod (sort bug) | High | Migration 076 — dev only (2026-05-24) |
+| 18 | `games.bracket_id` — text in dev, uuid in prod | High | Migration 076 — dev only (2026-05-24) |
+| 10 | `league_practices` missing from dev | High | Migrations 077+078 — dev+prod (2026-05-24) |
+| 11 | Duplicate FK constraints on tournament sub-tables (prod) | Medium | Migration 080 — prod only (2026-05-24) |
+| 12 | Duplicate indexes on `org_audit_log` (prod) | Low | Migration 080 — prod only (2026-05-24) |
+| 19 | `league_seasons.draft_state` missing from dev | High | Migration 079 — dev only (2026-05-24) |
+| 21 | Residual duplicate FK constraints on `games.age_group_id` and `games.away_team_id` (prod) | Low | Migration 082 — prod only (2026-05-24) |
+| 15 | `team_entitlements` dual nullable FKs | Medium | Closed — Incorrect finding (2026-05-24). Migration 065 already enforces NOT NULL on both `org_id` and `rep_team_id`. Schema snapshot was wrong. |
+| 16 | `team_org_links` no direct `org_id` — 2-hop | Medium | Accepted Risk (2026-05-24) — `linked_org_id` direct FK covers parent org lookups; team-side lookups are service-role mediated |
 
 ---
 
@@ -323,8 +363,9 @@ Migration N+3 — DROP tournaments.organization_id (after N verified in prod)
 - [ ] Before the Stripe billing migration ships — billing retention tables ✅ clean; `stripe_prices` ✅ clean; remaining Stripe tables not yet written
 - [ ] Before slot-first roster Phase 2 ships
 - [ ] Before coaching standalone tables ship
-- [ ] After Findings #17+#18 (`games` type mismatches) are resolved — code audit required first
-- [ ] After Finding #19 (`league_seasons.draft_state` drift) is resolved
-- [ ] After Finding #10 (`league_practices` dev/prod sync) is resolved
-- [ ] After Finding #11 (duplicate FK constraints in prod) is cleaned up
+- [x] Findings #17+#18 (`games` type mismatches) — migration 076 applied to dev 2026-05-24 ✅
+- [x] Finding #19 (`league_seasons.draft_state`) — migration 079 applied to dev 2026-05-24 ✅
+- [x] Finding #10 (`league_practices` dev sync) — migration 077 applied to dev 2026-05-24 ✅
+- [x] `league_practices` org_id — migration 078 applied to dev + prod 2026-05-24 ✅
+- [x] Findings #11 + #12 (prod constraint + index cleanup) — migration 080 applied to prod 2026-05-24 ✅
 - [ ] Quarterly health check (next: 2026-08-01)

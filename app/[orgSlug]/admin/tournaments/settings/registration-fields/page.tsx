@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowDown, ArrowLeft, ArrowUp, ClipboardList, Lock, Plus, Save, Trash2 } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
@@ -47,7 +48,11 @@ function fieldToDraft(field: TournamentRegistrationField): DraftField {
 export default function RegistrationFieldsSettingsPage() {
   const { currentOrg } = useOrg();
   const { currentTournament } = useTournament();
+  const searchParams = useSearchParams();
+  const fromRegistrations = searchParams.get('from') === 'registrations';
   const base = `/${currentOrg?.slug ?? 'admin'}/admin/tournaments/settings`;
+  const backHref = fromRegistrations ? `/${currentOrg?.slug ?? 'admin'}/admin/tournaments/registrations` : base;
+  const backLabel = fromRegistrations ? 'Registrations' : 'Settings';
   const [fields, setFields] = useState<TournamentRegistrationField[]>([]);
   const [draft, setDraft] = useState<DraftField>(() => emptyDraft());
   const [editing, setEditing] = useState<Record<string, DraftField>>({});
@@ -186,7 +191,7 @@ export default function RegistrationFieldsSettingsPage() {
     return (
       <div className={styles.page}>
         <div className={styles.pageHeader}>
-          <Link href={base} className={styles.backBtn}><ArrowLeft size={13} /> Settings</Link>
+          <Link href={backHref} className={styles.backBtn}><ArrowLeft size={13} /> {backLabel}</Link>
         </div>
         <div className={styles.settingsTitleRow}>
           <div className={styles.headerIcon}><ClipboardList size={20} /></div>
@@ -218,7 +223,7 @@ export default function RegistrationFieldsSettingsPage() {
   return (
     <div className={styles.page}>
       <div className={styles.pageHeader}>
-        <Link href={base} className={styles.backBtn}><ArrowLeft size={13} /> Settings</Link>
+        <Link href={backHref} className={styles.backBtn}><ArrowLeft size={13} /> {backLabel}</Link>
       </div>
 
       <div className={styles.settingsTitleRow}>

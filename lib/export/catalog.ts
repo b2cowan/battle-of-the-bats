@@ -93,7 +93,7 @@ export const EXPORT_CATALOG: ExportCatalogEntry[] = [
     label: 'Tournament Registrations',
     module: 'tournaments',
     page: 'Teams & Registrations',
-    file: 'app/[orgSlug]/admin/tournaments/teams/page.tsx',
+    file: 'app/[orgSlug]/admin/tournaments/registrations/page.tsx',
     formats: ['xlsx', 'csv', 'pdf'],
     defaultFormat: 'xlsx',
     minPlan: 'tournament_plus',

@@ -108,7 +108,7 @@ export default function AdminAnnouncementsPage() {
           <strong>Public post only</strong>
           <span>These updates appear on the public tournament News page. To send an email, use Communication.</span>
         </div>
-        <Link className="btn btn-outline btn-sm" href="../communication">
+        <Link className="btn btn-outline btn-sm" href="communication">
           <Mail size={14} /> Email Teams
         </Link>
       </div>
@@ -116,7 +116,7 @@ export default function AdminAnnouncementsPage() {
       <div className={styles.annList}>
         {items.length === 0 ? (
           <div className="empty-state">
-            <Megaphone size={40} />
+            <Megaphone size={40} className={styles.emptyIcon} />
             <p>No public news posts yet. Create one above.</p>
           </div>
         ) : items.map(ann => (
@@ -158,33 +158,33 @@ export default function AdminAnnouncementsPage() {
               This will publish to the public tournament News page only. It will not email teams, coaches, or contacts.
             </p>
             <form onSubmit={handleSubmit}>
-              <div className="form-group" style={{ marginBottom: '1rem' }}>
+              <div className={`form-group ${styles.modalFormGroup}`}>
                 <label className="form-label">Title *</label>
                 <input className="form-input" placeholder="Public post title" value={form.title}
                   onChange={e => setForm(f => ({ ...f, title: e.target.value }))} required />
               </div>
-              <div className="form-group" style={{ marginBottom: '1.5rem' }}>
+              <div className={`form-group ${styles.modalFormGroupLg}`}>
                 <label className="form-label">Body *</label>
-                <textarea className="form-textarea" placeholder="Write the public News page update here..." rows={12} value={form.body}
-                  onChange={e => setForm(f => ({ ...f, body: e.target.value }))} required style={{ fontSize: '1rem', lineHeight: '1.6' }} />
+                <textarea className={`form-textarea ${styles.modalTextarea}`} placeholder="Write the public News page update here..." rows={5} value={form.body}
+                  onChange={e => setForm(f => ({ ...f, body: e.target.value }))} required />
               </div>
               {ageGroups.length > 0 && (
-                <div className="form-group" style={{ marginBottom: '1.5rem' }}>
+                <div className={`form-group ${styles.modalFormGroupLg}`}>
                   <label className="form-label">News Page Visibility</label>
                   {canTargetAnnouncements ? (
                     <>
                       <p className={styles.fieldHelp}>Controls where this post appears on the public site. It does not select email recipients.</p>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', marginTop: '0.5rem' }}>
-                        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.9rem' }}>
+                      <div className={styles.modalCheckList}>
+                        <label className={styles.modalCheckLabel}>
                           <input
                             type="checkbox"
                             checked={!form.ageGroupIds?.length}
                             onChange={() => setForm(f => ({ ...f, ageGroupIds: null }))}
                           />
-                          All divisions <span style={{ color: 'var(--white-40)', fontSize: '0.75rem' }}>(default)</span>
+                          All divisions <span className={styles.fieldNote}>(default)</span>
                         </label>
                         {ageGroups.map(g => (
-                          <label key={g.id} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.9rem' }}>
+                          <label key={g.id} className={styles.modalCheckLabel}>
                             <input
                               type="checkbox"
                               checked={form.ageGroupIds?.includes(g.id) ?? false}
@@ -230,12 +230,12 @@ export default function AdminAnnouncementsPage() {
 
       {deleteId && (
         <div className="modal-overlay" onClick={() => setDeleteId(null)}>
-          <div className="modal" style={{ maxWidth: 400 }} onClick={e => e.stopPropagation()}>
+          <div className={`modal ${styles.deleteModal}`} onClick={e => e.stopPropagation()}>
             <div className="modal-header">
               <h3>Delete Public Post?</h3>
               <button className="btn btn-ghost btn-sm" onClick={() => setDeleteId(null)}><X size={16} /></button>
             </div>
-            <p style={{ color: 'var(--white-60)' }}>This will permanently remove this post from the public News page.</p>
+            <p className={styles.deleteBody}>This will permanently remove this post from the public News page.</p>
             <div className="modal-footer">
               <button className="btn btn-ghost" onClick={() => setDeleteId(null)}>Cancel</button>
               <button className="btn btn-danger" onClick={async () => {

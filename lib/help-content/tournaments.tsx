@@ -122,7 +122,7 @@ const tournamentsHelp: HelpPageContent = {
       keywords: ['review teams', 'approve registration', 'waitlist team', 'payment status', 'accepted teams'],
       searchText: 'review team registrations approve accept waitlist reject pending payment deposit paid paid in full schedule eligibility selected teams bulk actions',
       links: [
-        { label: 'Registrations', href: '../tournaments/teams' },
+        { label: 'Registrations', href: '../tournaments/registrations' },
       ],
       content: (
         <>
@@ -306,7 +306,7 @@ const tournamentsHelp: HelpPageContent = {
       keywords: ['registrations', 'teams', 'accepted', 'pending', 'waitlist', 'rejected', 'payments'],
       searchText: 'teams registrations public form pending accepted waitlist rejected payment status no schedule deposit paid paid in full past due export accepted teams schedule builder',
       links: [
-        { label: 'Registrations', href: '../tournaments/teams' },
+        { label: 'Registrations', href: '../tournaments/registrations' },
         { label: 'Registration Questions', href: '../tournaments/settings/registration-fields' },
       ],
       content: (

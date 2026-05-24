@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { CreditCard, CheckCircle, Archive, ShieldOff, Link2, UsersRound } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { useTournament } from '@/lib/tournament-context';
@@ -145,6 +145,7 @@ export default function BillingPage() {
   const { currentOrg, refresh: refreshOrg, userRole } = useOrg();
   const { tournaments, refresh: refreshTournaments }  = useTournament();
   const searchParams     = useSearchParams();
+  const router           = useRouter();
 
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'annual'>('monthly');
   const [loading, setLoading]           = useState<OrgPlan | null>(null);
@@ -398,6 +399,20 @@ export default function BillingPage() {
     return <div className={styles.page}><p style={{ color: 'var(--white-40)' }}>Loading…</p></div>;
   }
 
+  // Tournament and Tournament Plus orgs have no org-level modules beyond core.
+  // After a successful subscription action, redirect them back to their tournament
+  // workspace rather than leaving them stranded in the org admin shell.
+  const isTournamentOnlyOrg =
+    (currentOrg.planId === 'tournament' || currentOrg.planId === 'tournament_plus') &&
+    currentOrg.accountKind !== 'team_workspace';
+
+  function handleSuccessClose() {
+    setSuccessOpen(false);
+    if (isTournamentOnlyOrg && currentOrg) {
+      router.push(`/${currentOrg.slug}/admin/tournaments`);
+    }
+  }
+
   const currentPlanKey = currentOrg.planId;
   const currentPlan    = PLAN_CONFIG[currentPlanKey];
   const status         = currentOrg.subscriptionStatus;
@@ -440,6 +455,132 @@ export default function BillingPage() {
     const days = PLAN_CONFIG[planKey].trialDays;
     if (days === 90) return 'Early-access trial details collected in Stripe';
     return `${days}-day trial · Payment details collected in Stripe`;
+  }
+
+  // ── Cancelled-state view: stripped page with reactivate CTA ──────────────
+  if (status === 'canceled') {
+    const isComingSoon = COMING_SOON_PLANS.has(currentPlanKey);
+    const canSelfServeReactivate =
+      !isTeamWorkspaceBilling && !isComingSoon && currentPlanKey !== 'tournament';
+
+    return (
+      <div className={styles.page}>
+        <div className={styles.pageHeader}>
+          <div className={styles.headerLeft}>
+            <div className={styles.headerIcon}><CreditCard size={20} /></div>
+            <div>
+              <h1 className={styles.pageTitle}>Subscription</h1>
+              <p className={styles.pageSub}>Manage your plan and payment method</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Cancelled plan card */}
+        <div className={styles.currentCard}>
+          <div className={styles.currentLeft}>
+            <div>
+              <div className={styles.planName}>{currentPlan.label} Plan</div>
+              <div className={styles.planTagline}>{PLAN_TAGLINE[currentPlanKey]}</div>
+              <div className={styles.planPrice}>
+                {currentPlan.monthlyPrice === 0
+                  ? 'Free forever'
+                  : `$${currentPlan.monthlyPrice} CAD / month`}
+              </div>
+            </div>
+          </div>
+          <span className={`badge ${STATUS_BADGE[status]}`}>{STATUS_LABEL[status]}</span>
+        </div>
+
+        <p className={`${styles.statusNote} ${styles.statusNoteDanger}`}>
+          Your subscription has been canceled. Public pages and modules are suspended while retained data remains restorable during the retention window.
+        </p>
+
+        {/* Self-serve reactivation (tournament_plus) */}
+        {canSelfServeReactivate && (
+          <div className={styles.reactivateCard}>
+            <div className={styles.reactivateHeader}>
+              <div>
+                <h2 className={`${styles.sectionTitle} ${styles.sectionTitleLime}`}>
+                  Reactivate your account
+                </h2>
+                <p className={styles.reactivateCopy}>
+                  Pick up where you left off — everything below comes back on day one:
+                </p>
+              </div>
+              <div className={styles.billingToggle}>
+                <button
+                  className={`${styles.toggleOption} ${billingCycle === 'monthly' ? styles.toggleActive : ''}`}
+                  onClick={() => setBillingCycle('monthly')}
+                >
+                  Monthly
+                </button>
+                <button
+                  className={`${styles.toggleOption} ${billingCycle === 'annual' ? styles.toggleActive : ''}`}
+                  onClick={() => setBillingCycle('annual')}
+                >
+                  Annual
+                </button>
+              </div>
+            </div>
+
+            <ul className={styles.featureList}>
+              {PLAN_FEATURES[currentPlanKey].map(f => (
+                <li key={f}>
+                  <CheckCircle size={13} />
+                  {f}
+                </li>
+              ))}
+            </ul>
+
+            <div className={styles.reactivatePricing}>
+              <span className={styles.priceAmount}>{getPrice(currentPlanKey)}</span>
+              {getSavings(currentPlanKey) && (
+                <span className={styles.savingsBadge}>{getSavings(currentPlanKey)}</span>
+              )}
+            </div>
+
+            <button
+              className={`btn btn-primary ${styles.planButton}`}
+              onClick={() => handleUpgrade(currentPlanKey as 'tournament_plus' | 'league' | 'club')}
+              disabled={loading === currentPlanKey}
+              id="billing-reactivate-btn"
+            >
+              {loading === currentPlanKey ? 'Redirecting…' : `Reactivate ${currentPlan.label}`}
+            </button>
+          </div>
+        )}
+
+        {/* Team workspace reactivation */}
+        {isTeamWorkspaceBilling && (
+          <div className={styles.reactivateCard}>
+            <h2 className={`${styles.sectionTitle} ${styles.sectionTitleLime}`}>
+              Reactivate your Team workspace
+            </h2>
+            <p className={styles.reactivateCopy}>
+              Team workspaces are reactivated through a new Team subscription. Visit the pricing page to get started.
+            </p>
+            <Link className="btn btn-primary" href="/pricing#team">
+              View Team Plans
+            </Link>
+          </div>
+        )}
+
+        <FeedbackModal
+          isOpen={successOpen}
+          onClose={handleSuccessClose}
+          title={successTitle}
+          message={successMsg}
+          type="success"
+        />
+        <FeedbackModal
+          isOpen={errorOpen}
+          onClose={() => setErrorOpen(false)}
+          title="Something went wrong"
+          message={errorMsg}
+          type="danger"
+        />
+      </div>
+    );
   }
 
   return (
@@ -509,11 +650,6 @@ export default function BillingPage() {
       {status === 'past_due' && (
         <p className={`${styles.statusNote} ${styles.statusNoteWarning}`}>
           Your last payment failed. Your access remains active during the grace period — please update your payment method via <strong>Manage Subscription</strong> below to avoid service interruption.
-        </p>
-      )}
-      {status === 'canceled' && (
-        <p className={`${styles.statusNote} ${styles.statusNoteDanger}`}>
-          Your subscription has been canceled. Public pages and modules are suspended while retained data remains restorable during the retention window.
         </p>
       )}
 
@@ -809,7 +945,7 @@ export default function BillingPage() {
 
       <FeedbackModal
         isOpen={successOpen}
-        onClose={() => setSuccessOpen(false)}
+        onClose={handleSuccessClose}
         title={successTitle}
         message={successMsg}
         type="success"

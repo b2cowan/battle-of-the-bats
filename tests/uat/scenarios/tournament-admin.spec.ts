@@ -31,7 +31,7 @@ test.describe('Tournament admin / hub', () => {
 
 test.describe('Tournament admin / registrations', () => {
   test('registrations page loads', async ({ ownerPage, orgSlug }) => {
-    await ownerPage.goto(`/${orgSlug}/admin/tournaments/teams`);
+    await ownerPage.goto(`/${orgSlug}/admin/tournaments/registrations`);
     await expect(ownerPage).not.toHaveURL(/\/auth\/login/);
     await expect(ownerPage.locator('main').first()).toBeVisible({ timeout: 8_000 });
     await expect(ownerPage.locator('text=Something went wrong')).not.toBeVisible();
@@ -42,7 +42,7 @@ test.describe('Tournament admin / registrations', () => {
     ownerPage.on('console', msg => {
       if (msg.type() === 'error') consoleErrors.push(msg.text());
     });
-    await ownerPage.goto(`/${orgSlug}/admin/tournaments/teams`);
+    await ownerPage.goto(`/${orgSlug}/admin/tournaments/registrations`);
     await ownerPage.waitForLoadState('networkidle');
     // Filter out known benign browser extension / third-party errors
     const appErrors = consoleErrors.filter(e =>
@@ -54,7 +54,7 @@ test.describe('Tournament admin / registrations', () => {
   });
 
   test('admin toolbar renders above registration list', async ({ ownerPage, orgSlug }) => {
-    await ownerPage.goto(`/${orgSlug}/admin/tournaments/teams`);
+    await ownerPage.goto(`/${orgSlug}/admin/tournaments/registrations`);
     // The toolbar should appear before the list — it's the primary nav element on the page
     const toolbar = ownerPage.locator(
       '[class*="toolbar"], [class*="AdminToolbar"], [role="toolbar"]'
@@ -63,7 +63,7 @@ test.describe('Tournament admin / registrations', () => {
   });
 
   test('registration search/filter is accessible', async ({ ownerPage, orgSlug }) => {
-    await ownerPage.goto(`/${orgSlug}/admin/tournaments/teams`);
+    await ownerPage.goto(`/${orgSlug}/admin/tournaments/registrations`);
     // A search input or filter select should exist
     const filterEl = ownerPage.locator(
       'input[type="search"], input[placeholder*="search" i], input[placeholder*="filter" i], select[aria-label*="division" i], [class*="search"]'

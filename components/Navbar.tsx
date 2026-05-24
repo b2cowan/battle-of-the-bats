@@ -25,11 +25,6 @@ const TOURNAMENT_NAV_KEYS = [
   { key: 'rules',     label: 'Rules'     },
 ];
 
-const ORG_NAV_LINKS = [
-  { key: 'home',        label: 'Home',        anchor: '' },
-  { key: 'tournaments', label: 'Tournaments',  anchor: '#tournaments' },
-];
-
 function isMarketingPath(pathname: string) {
   return (
     pathname === '/' ||
@@ -122,22 +117,6 @@ export default function Navbar() {
             )}
             {orgName && <span className={styles.orgName}>{orgName}</span>}
           </Link>
-
-          <div className={styles.links}>
-            {ORG_NAV_LINKS.map(l => {
-              const href = `/${orgSlug}${l.anchor}`;
-              const isActive = l.key === 'home' && pathname === `/${orgSlug}`;
-              return (
-                <Link
-                  key={l.key}
-                  href={href}
-                  className={`${styles.link} ${isActive ? styles.active : ''}`}
-                >
-                  {l.label}
-                </Link>
-              );
-            })}
-          </div>
 
           <div className={styles.actions} />
         </div>

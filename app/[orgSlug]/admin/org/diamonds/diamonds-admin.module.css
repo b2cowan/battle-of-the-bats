@@ -26,8 +26,148 @@
 .pageTitle { font-family: var(--font-display); font-size: 1.75rem; font-weight: 900; color: var(--white); }
 .pageSub   { color: var(--white-60); font-size: 0.9rem; }
 
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
 .diamondName {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+}
+
+.rowActions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.25rem;
+  flex-wrap: wrap;
+}
+
+.emptyTableCell {
+  text-align: center;
+}
+
+.responsiveTable {
+  overflow: hidden;
+}
+
+@media (max-width: 760px) {
+  .page {
+    max-width: none;
+  }
+
+  .pageHeader {
+    align-items: flex-start;
+    flex-direction: column;
+    margin-bottom: 1rem;
+  }
+
+  .headerLeft {
+    align-items: flex-start;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .headerIcon {
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+  }
+
+  .pageTitle {
+    font-size: 1.25rem;
+    overflow-wrap: anywhere;
+  }
+
+  .pageSub {
+    margin-top: 0.2rem;
+    font-size: 0.82rem;
+    line-height: 1.4;
+  }
+
+  .headerActions {
+    width: 100%;
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .headerActions :global(.btn),
+  .headerActions :global(button) {
+    width: 100%;
+    min-height: 44px;
+    justify-content: center;
+  }
+
+  .responsiveTable {
+    overflow: visible;
+    border: 0;
+    background: transparent;
+  }
+
+  .responsiveTable table,
+  .responsiveTable thead,
+  .responsiveTable tbody,
+  .responsiveTable tr,
+  .responsiveTable th,
+  .responsiveTable td {
+    display: block;
+    width: 100%;
+  }
+
+  .responsiveTable thead {
+    display: none;
+  }
+
+  .responsiveTable tbody {
+    display: grid;
+    gap: 0.75rem;
+  }
+
+  .responsiveTable tr {
+    padding: 0.85rem;
+    border: 1px solid rgba(var(--blueprint-blue-rgb), 0.22);
+    border-radius: 2px;
+    background: var(--surface);
+  }
+
+  .responsiveTable td {
+    display: grid;
+    grid-template-columns: minmax(5.75rem, 0.4fr) 1fr;
+    gap: 0.75rem;
+    align-items: start;
+    padding: 0.45rem 0;
+    border: 0;
+  }
+
+  .responsiveTable td::before {
+    content: attr(data-label);
+    color: var(--white-40);
+    font-size: 0.7rem;
+    font-weight: 800;
+    line-height: 1.35;
+    text-transform: uppercase;
+  }
+
+  .rowActions {
+    justify-content: flex-start;
+  }
+
+  .rowActions :global(.btn) {
+    min-height: 44px;
+  }
+
+  .emptyTableCell {
+    display: block;
+    padding: 1.4rem 0.75rem !important;
+    text-align: left !important;
+  }
+
+  .emptyTableCell::before {
+    content: none !important;
+  }
 }

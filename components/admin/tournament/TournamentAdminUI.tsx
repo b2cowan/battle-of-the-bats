@@ -274,7 +274,8 @@ export function ToolbarMenuItem({
       className={styles.menuItem}
       role="menuitem"
       disabled={disabled}
-      onClick={locked ? undefined : onSelect}
+      data-locked={locked || undefined}
+      onClick={onSelect}
       title={locked && lockTitle ? lockTitle : undefined}
     >
       {icon && <span className={styles.menuItemIcon}>{icon}</span>}

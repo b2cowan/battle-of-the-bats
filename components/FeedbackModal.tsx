@@ -6,8 +6,12 @@ interface FeedbackModalProps {
   onConfirm?: () => void; // If provided, shows Cancel button and acts as confirm
   title: string;
   message: string;
-  /** Optional list of item names shown below the message (e.g. team names in a bulk action) */
-  items?: string[];
+  /**
+   * Optional list shown below the message (e.g. team names in a bulk action).
+   * Items with a `note` are rendered dimmed with the note in warning colour —
+   * use for ineligible entries (missing email, wrong status, etc.).
+   */
+  items?: Array<{ label: string; note?: string }>;
   confirmText?: string;
   cancelText?: string;
   type?: 'danger' | 'primary' | 'warning' | 'success' | 'info';
@@ -56,18 +60,31 @@ export default function FeedbackModal({
               listStyle: 'none',
               background: 'var(--white-05)',
               borderRadius: 8,
-              maxHeight: 180,
+              maxHeight: 200,
               overflowY: 'auto',
               display: 'flex',
               flexDirection: 'column',
               gap: '0.3rem',
             }}>
-              {items.map((item, i) => (
-                <li key={i} style={{ fontSize: '0.8rem', color: 'var(--white-60)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <span style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--white-30)', flexShrink: 0 }} />
-                  {item}
-                </li>
-              ))}
+              {items.map((item, i) => {
+                const ineligible = !!item.note;
+                return (
+                  <li key={i} style={{ fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <span style={{
+                      width: 5, height: 5, borderRadius: '50%', flexShrink: 0,
+                      background: ineligible ? 'rgba(var(--warning-rgb,220,150,50),0.5)' : 'var(--white-30)',
+                    }} />
+                    <span style={{ color: ineligible ? 'var(--white-30)' : 'var(--white-70)', flex: 1 }}>
+                      {item.label}
+                    </span>
+                    {item.note && (
+                      <span style={{ color: 'rgba(var(--warning-rgb,220,150,50),0.8)', fontSize: '0.72rem', flexShrink: 0 }}>
+                        {item.note}
+                      </span>
+                    )}
+                  </li>
+                );
+              })}
             </ul>
           )}
         </div>

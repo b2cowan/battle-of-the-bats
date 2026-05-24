@@ -91,7 +91,7 @@
   padding: 0.45rem 0.6rem;
   border: 1px solid rgba(var(--blueprint-blue-rgb), 0.2);
   border-radius: 2px;
-  background: var(--bg-inset);
+  background: var(--surface);
 }
 
 .toolbar[data-sticky="true"] {
@@ -134,7 +134,7 @@
 
 .label {
   font-family: var(--font-data);
-  color: var(--text-tertiary);
+  color: rgba(148, 163, 184, 0.55);
   font-size: 0.62rem;
   font-weight: 700;
   letter-spacing: 0.1em;
@@ -148,7 +148,7 @@
   padding: 0 1.9rem 0 0.7rem;
   border: 1px solid rgba(var(--blueprint-blue-rgb), 0.25);
   border-radius: 2px;
-  background: var(--black-30);
+  background: var(--bg-2);
   color: var(--data-gray);
   color-scheme: dark;
   font-family: var(--font-data);
@@ -180,7 +180,7 @@
   padding: 0 0.85rem 0 2.15rem;
   border: 1px solid rgba(var(--blueprint-blue-rgb), 0.25);
   border-radius: 2px;
-  background: var(--black-30);
+  background: var(--bg-2);
   color: var(--data-gray);
   font-family: var(--font-data);
   font-size: 0.72rem;
@@ -201,7 +201,7 @@
   padding: 2px;
   border: 1px solid rgba(var(--blueprint-blue-rgb), 0.25);
   border-radius: 2px;
-  background: var(--black-30);
+  background: var(--bg-2);
 }
 
 .segment {
@@ -254,7 +254,7 @@
   padding: 0 0.65rem;
   border: 1px solid rgba(var(--blueprint-blue-rgb), 0.25);
   border-radius: 2px;
-  background: var(--black-30);
+  background: var(--bg-2);
   color: rgba(148, 163, 184, 0.6);
   cursor: pointer;
   font-family: var(--font-data);
@@ -316,6 +316,10 @@
   opacity: 0.55;
 }
 
+.menuItem[data-locked="true"] {
+  cursor: pointer;
+}
+
 .menuItemIcon {
   flex-shrink: 0;
   margin-top: 0.1rem;
@@ -344,13 +348,13 @@
 .menuItemLock {
   flex-shrink: 0;
   margin-top: 0.12rem;
-  color: var(--warning, #f59e0b);
+  color: var(--warning);
 }
 
 .menuSeparator {
   height: 1px;
   margin: 0.35rem 0.2rem;
-  background: var(--border-subtle);
+  background: rgba(var(--blueprint-blue-rgb), 0.2);
 }
 
 .selectionBar {
@@ -434,7 +438,7 @@
 
 .compactUpsellText {
   margin: 0.15rem 0 0;
-  color: var(--text-secondary);
+  color: var(--white-50);
   font-size: 0.78rem;
   line-height: 1.4;
 }
@@ -450,7 +454,7 @@
   gap: 0.35rem;
   height: 32px;
   padding: 0 0.65rem;
-  border: 1px solid var(--border-subtle);
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.2);
   border-radius: 2px;
   background: transparent;
   color: var(--white-60);
@@ -472,9 +476,9 @@
   z-index: 180;
   width: min(20rem, calc(100vw - 2rem));
   padding: 0.75rem;
-  border: 1px solid var(--border-subtle);
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.2);
   border-radius: 2px;
-  background: var(--bg-raised, #111827);
+  background: var(--hud-surface);
   box-shadow: 0 18px 38px rgba(0, 0, 0, 0.42);
 }
 
@@ -505,9 +509,9 @@
   background: var(--white-30);
 }
 
-.legendDot[data-tone="success"] { background: var(--success, #22c55e); }
-.legendDot[data-tone="warning"] { background: var(--warning, #f59e0b); }
-.legendDot[data-tone="danger"] { background: var(--danger, #ef4444); }
+.legendDot[data-tone="success"] { background: var(--success); }
+.legendDot[data-tone="warning"] { background: var(--warning); }
+.legendDot[data-tone="danger"] { background: var(--danger); }
 .legendDot[data-tone="info"] { background: var(--blueprint-blue); }
 .legendDot[data-tone="neutral"] { background: var(--white-30); }
 
@@ -517,7 +521,7 @@
 
 .legendContent strong {
   display: block;
-  color: var(--white-85);
+  color: var(--white-80);
   font-size: 0.8rem;
 }
 
@@ -591,15 +595,33 @@
     max-width: none;
   }
 
+  .select,
+  .searchInput,
+  .menuButton,
+  .legendButton {
+    min-height: 44px;
+  }
+
   .segmented {
+    min-height: 44px;
+    height: auto;
     max-width: 100%;
     overflow-x: auto;
+  }
+
+  .segment {
+    min-height: 38px;
+    height: auto;
+  }
+
+  .menuItem {
+    min-height: 44px;
   }
 
   .selectionBar {
     position: sticky;
     right: 0.75rem;
-    bottom: 0.75rem;
+    bottom: calc(76px + env(safe-area-inset-bottom));
     left: 0.75rem;
     z-index: 90;
     align-items: center;
@@ -614,6 +636,11 @@
     flex-wrap: nowrap;
     justify-content: flex-start;
     overflow-x: auto;
+  }
+
+  .selectionBar :global(.btn-xs),
+  .selectionActions :global(.btn) {
+    min-height: 44px;
   }
 
   .compactUpsell {

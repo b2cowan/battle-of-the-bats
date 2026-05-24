@@ -29,7 +29,7 @@ const TOUR_GROUPS: TourGroup[] = [
     label: 'Operations',
     defaultOpenFor: ['active', 'completed'],
     items: [
-      { key: 'teams',         icon: Users,     label: 'Registrations' },
+      { key: 'registrations',  icon: Users,     label: 'Registrations' },
       { key: 'schedule',      icon: Calendar,  label: 'Schedule'      },
       { key: 'results',       icon: Trophy,    label: 'Results'       },
       { key: 'announcements', icon: Megaphone, label: 'News Posts'    },
@@ -77,6 +77,7 @@ export default function AdminSidebar() {
   const { currentOrg, userRole, userCapabilities } = useOrg();
   const base = `/${currentOrg?.slug ?? 'milton-bats'}/admin`;
   const currentOrgSlug = currentOrg?.slug;
+  const isCanceled = currentOrg?.subscriptionStatus === 'canceled';
   const { tournaments, currentTournament, setCurrentTournament } = useTournament();
 
   const isOrgAdmin     = pathname.startsWith(`${base}/org`);
@@ -220,7 +221,20 @@ export default function AdminSidebar() {
     </Link>
   );
 
-  const maybeBackLink = hasOnlyTournamentWorkspace ? null : backLink;
+  // Tournament-only orgs live entirely in the tournaments section; the org admin
+  // shell is only accessible for billing/account management. Show a contextual
+  // back link to tournaments rather than nothing or "All Sections".
+  const tournamentBackLink = (
+    <Link href={`${base}/tournaments`} className={`${styles.navItem} ${styles.backLink}`} id="admin-nav-back-tournaments">
+      <ArrowLeft size={15} />
+      <span>Tournaments</span>
+    </Link>
+  );
+
+  const maybeBackLink = isCanceled ? null
+    : (hasOnlyTournamentWorkspace && isOrgAdmin) ? tournamentBackLink
+    : hasOnlyTournamentWorkspace ? null
+    : backLink;
   const tournamentPreviewHref = currentOrg?.slug && currentTournament
     ? `/${currentOrg.slug}/admin/tournaments/preview/${currentTournament.slug}`
     : null;
@@ -256,14 +270,16 @@ export default function AdminSidebar() {
         <>
           {maybeBackLink}
           <div className={styles.navSection}>
-            <div className={styles.sectionHeader}>Organization Admin</div>
+            <div className={styles.sectionHeader}>
+              {hasOnlyTournamentWorkspace ? 'Account' : 'Organization Admin'}
+            </div>
             <nav className={styles.nav}>
-              {canSeeMembersNav && navLink(
+              {!isCanceled && canSeeMembersNav && navLink(
                 'org/members', Users2, 'Members',
                 `${base}/org/members`,
                 pathname.startsWith(`${base}/org/members`),
               )}
-              {navLink(
+              {!isCanceled && navLink(
                 'org/diamonds', MapPin, 'Diamonds',
                 `${base}/org/diamonds`,
                 pathname.startsWith(`${base}/org/diamonds`),
@@ -273,12 +289,12 @@ export default function AdminSidebar() {
                 `${base}/org/billing`,
                 pathname.startsWith(`${base}/org/billing`),
               )}
-              {(userRole === 'owner' || userRole === 'admin') && navLink(
+              {!isCanceled && (userRole === 'owner' || userRole === 'admin') && navLink(
                 'org/team-links', Link2, 'Team Links',
                 `${base}/org/team-links`,
                 pathname.startsWith(`${base}/org/team-links`),
               )}
-              {userRole === 'owner' && navLink(
+              {!isCanceled && userRole === 'owner' && navLink(
                 'org/settings', Settings, 'Settings',
                 `${base}/org/settings`,
                 pathname.startsWith(`${base}/org/settings`),

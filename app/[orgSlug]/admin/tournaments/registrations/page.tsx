@@ -1,6 +1,7 @@
 'use client';
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Users, X, RefreshCw, ChevronDown, ChevronUp, AlertCircle, Plus, Trash2, LayoutDashboard, ArrowLeftRight, Mail } from 'lucide-react';
+import Link from 'next/link';
+import { Users, X, RefreshCw, ChevronDown, ChevronUp, AlertCircle, Plus, Trash2, LayoutDashboard, ArrowLeftRight, Mail, Pencil, ClipboardList } from 'lucide-react';
 import { formatPoolName } from '@/lib/utils';
 import { useTournament } from '@/lib/tournament-context';
 import { useOrg } from '@/lib/org-context';
@@ -205,9 +206,11 @@ export default function UnifiedTeamsPage() {
   const [showReminderModal, setShowReminderModal] = useState(false);
   const [paymentInstructions, setPaymentInstructions] = useState('');
   const [claimInviteResults, setClaimInviteResults] = useState<TeamClaimInviteResult[]>([]);
+  const [editingTeam, setEditingTeam] = useState<TeamRecord | null>(null);
+  const [editForm, setEditForm] = useState({ name: '', coach: '', email: '' });
   const [feedback, setFeedback] = useState<{
     isOpen: boolean; title: string; message: string;
-    items?: string[];
+    items?: Array<{ label: string; note?: string }>;
     confirmText?: string;
     type: 'primary' | 'danger' | 'warning' | 'success' | 'info';
     onConfirm?: () => void;
@@ -376,6 +379,72 @@ export default function UnifiedTeamsPage() {
           setWorking(null);
         }
       }
+    });
+  }
+
+  function openEditModal(team: TeamRecord) {
+    setEditingTeam(team);
+    setEditForm({ name: team.name, coach: team.coach, email: team.email ?? '' });
+  }
+
+  function closeEditModal() {
+    setEditingTeam(null);
+    setEditForm({ name: '', coach: '', email: '' });
+  }
+
+  async function handleSaveEdit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!editingTeam) return;
+    const updates = {
+      name: editForm.name.trim(),
+      coach: editForm.coach.trim(),
+      email: editForm.email.trim(),
+    };
+    if (!updates.name) return; // guarded by required attr but just in case
+    closeEditModal();
+    await patch(editingTeam.id, updates);
+  }
+
+  function sendSingleWorkspaceInvite(team: TeamRecord) {
+    if (!currentTournament) return;
+    setFeedback({
+      isOpen: true,
+      title: 'Send Coach Workspace Invite?',
+      message: `${team.name} will receive a secure link to access their team's workspace.`,
+      items: [{ label: team.name, note: undefined }],
+      confirmText: 'Send Invite',
+      type: 'primary',
+      onConfirm: async () => {
+        setWorking('team-claims');
+        try {
+          const res = await fetch(`/api/admin/tournaments/${encodeURIComponent(currentTournament.id)}/team-claims${orgQuery}`, {
+            credentials: 'same-origin',
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ids: [team.id], sendEmail: true }),
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error ?? 'Workspace invite could not be sent.');
+          const linksCreated = data.linksCreated ?? 0;
+          setFeedback({
+            isOpen: true,
+            title: linksCreated > 0 ? 'Workspace Invite Sent' : 'No Invite Sent',
+            message: linksCreated > 0
+              ? `Invite link created and email sent to ${team.email}.`
+              : 'This team may have already claimed their workspace.',
+            type: linksCreated > 0 ? 'success' : 'warning',
+          });
+        } catch (error) {
+          setFeedback({
+            isOpen: true,
+            title: 'Workspace Invite Failed',
+            message: error instanceof Error ? error.message : 'Workspace invite could not be sent.',
+            type: 'danger',
+          });
+        } finally {
+          setWorking(null);
+        }
+      },
     });
   }
 
@@ -676,7 +745,7 @@ export default function UnifiedTeamsPage() {
 
     const selectedTeamNames = regs
       .filter(r => selectedRegistrationIds.has(r.id))
-      .map(r => r.name);
+      .map(r => ({ label: r.name }));
 
     const titleMap: Record<BulkAction, string> = {
       accept:            `Accept ${selectedCount} Team${selectedCount === 1 ? '' : 's'}?`,
@@ -815,13 +884,18 @@ export default function UnifiedTeamsPage() {
       return;
     }
 
-    const eligibleTeams = selectedTeams.filter(t => (t.status === 'accepted' || t.status === 'pending') && t.email?.trim());
+    const inviteItems = selectedTeams.map(t => {
+      if (!t.email?.trim()) return { label: t.name, note: 'missing email' };
+      if (t.status === 'waitlist') return { label: t.name, note: 'waitlisted' };
+      if (t.status === 'rejected') return { label: t.name, note: 'rejected' };
+      return { label: t.name };
+    });
 
     setFeedback({
       isOpen: true,
       title: 'Send Coach Workspace Invites?',
-      message: `Each eligible coach will receive a secure link to access their team's workspace — for roster management, schedule, and team communication. ${eligibleWithEmail} of ${selectedIds.length} selected team${selectedIds.length === 1 ? '' : 's'} will be emailed. Waitlisted, rejected, missing-email, and already-claimed teams are skipped.`,
-      items: eligibleTeams.map(t => t.name),
+      message: `Each eligible coach will receive a secure link to access their team's workspace — for roster management, schedule, and team communication.`,
+      items: inviteItems,
       confirmText: 'Send Invites',
       type: 'primary',
       onConfirm: async () => {
@@ -952,6 +1026,14 @@ export default function UnifiedTeamsPage() {
                   {team.paymentStatus === 'paid' ? 'Mark Unpaid' : 'Mark Paid'}
                 </button>
               ) : null}
+              {(team.status === 'accepted' || team.status === 'pending') && team.email?.trim() && (
+                <button className="btn btn-ghost btn-data" onClick={() => sendSingleWorkspaceInvite(team)} disabled={busy || working === 'team-claims'} style={{ borderColor: 'transparent', background: 'transparent', padding: '0.3rem 0.45rem' }} aria-label={`Send workspace invite to ${team.name}`} title="Send workspace invite">
+                  <Mail size={12} />
+                </button>
+              )}
+              <button className="btn btn-ghost btn-data" onClick={() => openEditModal(team)} disabled={busy} style={{ borderColor: 'transparent', background: 'transparent', padding: '0.3rem 0.45rem' }} aria-label={`Edit ${team.name}`}>
+                <Pencil size={12} />
+              </button>
               <button className="btn btn-ghost btn-data" onClick={() => handleDelete(team.id, team.name)} disabled={busy} style={{ color: 'rgba(var(--danger-rgb), 0.45)', borderColor: 'transparent', background: 'transparent', padding: '0.3rem 0.45rem' }} aria-label={`Delete ${team.name}`}>
                 <Trash2 size={12} />
               </button>
@@ -1088,6 +1170,17 @@ export default function UnifiedTeamsPage() {
         subtitle="Manage all teams and signups in one place"
         actions={(
           <>
+          {currentOrg && hasPlanFeature(currentOrg.planId, 'custom_registration_fields') && (
+            <Link
+              href={`/${currentOrg.slug}/admin/tournaments/settings/registration-fields?from=registrations`}
+              className="btn btn-ghost btn-data"
+              title="Configure registration questions"
+              aria-label="Configure registration questions"
+              style={{ borderColor: 'transparent', background: 'transparent', padding: '0.3rem 0.45rem', color: 'var(--logic-lime)' }}
+            >
+              <ClipboardList size={15} />
+            </Link>
+          )}
           <ExportMenu
             formats={['xlsx', 'csv', 'pdf']}
             onExportXLSX={handleExportXLSX}
@@ -1624,6 +1717,55 @@ export default function UnifiedTeamsPage() {
                 {working === 'payment-reminders' ? 'Sending...' : 'Send Reminders'}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Team Details modal */}
+      {editingTeam && (
+        <div className="modal-overlay" onClick={closeEditModal}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>Edit Team Details</h3>
+              <button className="btn btn-ghost btn-sm" onClick={closeEditModal}><X size={16} /></button>
+            </div>
+            <form onSubmit={handleSaveEdit}>
+              <div style={{ padding: '1.5rem 2rem', display: 'grid', gap: '1rem' }}>
+                <div className="form-group">
+                  <label className="form-label">Team Name *</label>
+                  <input
+                    className="form-input"
+                    value={editForm.name}
+                    onChange={e => setEditForm(f => ({ ...f, name: e.target.value }))}
+                    required
+                  />
+                </div>
+                <div className="form-row form-row-2">
+                  <div className="form-group">
+                    <label className="form-label">Coach</label>
+                    <input
+                      className="form-input"
+                      value={editForm.coach}
+                      onChange={e => setEditForm(f => ({ ...f, coach: e.target.value }))}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Email</label>
+                    <input
+                      className="form-input"
+                      type="email"
+                      value={editForm.email}
+                      onChange={e => setEditForm(f => ({ ...f, email: e.target.value }))}
+                      placeholder="coach@example.com"
+                    />
+                  </div>
+                </div>
+              </div>
+              <div className="modal-footer">
+                <button type="button" className="btn btn-ghost" onClick={closeEditModal}>Cancel</button>
+                <button type="submit" className="btn btn-primary" disabled={!!working}>Save Changes</button>
+              </div>
+            </form>
           </div>
         </div>
       )}

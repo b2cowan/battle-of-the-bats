@@ -69,7 +69,7 @@ what does an org admin see when there are no teams registered yet?
 | Weak | Strong |
 |---|---|
 | `/design can you look at this` | `/design [screenshot] — tournament dashboard, free tier; hierarchy feels flat, what's wrong?` |
-| `/ux check this page` | `/ux review app/[orgSlug]/admin/tournaments/teams/page.tsx — org admin role, check empty states and error recovery` |
+| `/ux check this page` | `/ux review app/[orgSlug]/admin/tournaments/registrations/page.tsx — org admin role, check empty states and error recovery` |
 | `/billing is this right` | `/billing audit all plan gates in the tournament admin section — looking for missing locks and incorrect free-tier exposure` |
 | `/plan I need a new feature` | `/plan — create an implementation plan for adding email notifications when a team is approved for a tournament` |
 
@@ -191,7 +191,7 @@ Log your findings to docs/active/TOURNAMENT_REVIEW_PLAN.md.
 Starting UX code review. Review these pages for both Tournament and Tournament Plus states:
 - app/[orgSlug]/admin/tournaments/page.tsx
 - app/[orgSlug]/admin/tournaments/dashboard/page.tsx
-- app/[orgSlug]/admin/tournaments/teams/page.tsx
+- app/[orgSlug]/admin/tournaments/registrations/page.tsx
 Check each for: empty states, loading states, error recovery, 
 destructive action confirms, and role-appropriate messaging.
 Update TOURNAMENT_REVIEW_PLAN.md with findings.
@@ -270,7 +270,7 @@ Update TODO.md to reflect this is complete.
 /design what token should I use for a "payment pending" badge background?
 
 # Component review
-/design review app/[orgSlug]/admin/tournaments/teams/teams-admin.module.css — 
+/design review app/[orgSlug]/admin/tournaments/registrations/teams-admin.module.css — 
 does the table styling match our established design system?
 
 # Consistency check
@@ -288,7 +288,7 @@ last session. Today doing the age-groups page. [screenshot]
 
 ```
 # File-based review (no screenshot needed)
-/ux review app/[orgSlug]/admin/tournaments/teams/page.tsx — 
+/ux review app/[orgSlug]/admin/tournaments/registrations/page.tsx — 
 org admin role; check all five flow states: happy path, empty, error, edge cases, recovery
 
 # Role + action framing

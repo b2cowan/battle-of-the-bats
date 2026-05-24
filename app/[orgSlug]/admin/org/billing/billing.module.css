@@ -626,13 +626,51 @@
   margin: 0;
 }
 
+/* ── Reactivate card (cancelled account state) ───────── */
+.reactivateCard {
+  padding: 1.5rem;
+  border-radius: 2px;
+  background: rgba(var(--logic-lime-rgb), 0.04);
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.22);
+  margin-bottom: 1.5rem;
+}
+
+.reactivateHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.reactivateCopy {
+  margin: 0.25rem 0 0;
+  color: var(--white-55, rgba(255,255,255,0.55));
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+.reactivatePricing {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 0.5rem 0 1.25rem;
+  flex-wrap: wrap;
+}
+
+.sectionTitleLime {
+  color: var(--logic-lime) !important;
+}
+
 @media (max-width: 640px) {
   .currentCard,
   .billingNudgeCard,
   .usageHeader,
   .upgradeHeader,
   .billingTools,
-  .reviewHeader {
+  .reviewHeader,
+  .reactivateHeader {
     align-items: flex-start;
     flex-direction: column;
   }

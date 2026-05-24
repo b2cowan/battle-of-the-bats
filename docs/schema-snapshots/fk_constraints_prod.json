@@ -1,0 +1,50 @@
+[
+  {
+    "conname": "age_groups_tournament_id_fkey",
+    "table_name": "age_groups"
+  },
+  {
+    "conname": "fk_age_groups_tournament",
+    "table_name": "age_groups"
+  },
+  {
+    "conname": "announcements_tournament_id_fkey",
+    "table_name": "announcements"
+  },
+  {
+    "conname": "fk_announcements_tournament",
+    "table_name": "announcements"
+  },
+  {
+    "conname": "contacts_tournament_id_fkey",
+    "table_name": "contacts"
+  },
+  {
+    "conname": "fk_contacts_tournament",
+    "table_name": "contacts"
+  },
+  {
+    "conname": "diamonds_tournament_id_fkey",
+    "table_name": "diamonds"
+  },
+  {
+    "conname": "fk_diamonds_tournament",
+    "table_name": "diamonds"
+  },
+  {
+    "conname": "fk_games_tournament",
+    "table_name": "games"
+  },
+  {
+    "conname": "games_tournament_id_fkey",
+    "table_name": "games"
+  },
+  {
+    "conname": "fk_teams_tournament",
+    "table_name": "teams"
+  },
+  {
+    "conname": "teams_tournament_id_fkey",
+    "table_name": "teams"
+  }
+]

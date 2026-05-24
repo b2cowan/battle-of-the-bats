@@ -58,8 +58,12 @@ export default function AdminHubClient() {
 
   const [attention, setAttention] = useState<AttentionSummary | null>(null);
   const [startupProgress, setStartupProgress] = useState<StartupProgress | null>(null);
+  const [startupErrorOrgSlug, setStartupErrorOrgSlug] = useState<string | null>(null);
+  const [startupTimeoutOrgSlug, setStartupTimeoutOrgSlug] = useState<string | null>(null);
 
   const hasOnlyTournamentWorkspace = canSeeTournaments && !canSeePublicSite && !canSeeAccounting && !canSeeHouseLeague && !canSeeRepTeams;
+  const startupError = currentOrg ? startupErrorOrgSlug === currentOrg.slug : false;
+  const startupTimedOut = currentOrg ? startupTimeoutOrgSlug === currentOrg.slug && !startupProgress : false;
 
   // Tournament-only workspaces should never show the org hub. Wait for startup
   // progress so we can distinguish "resume setup" from "owner skipped setup."
@@ -89,22 +93,69 @@ export default function AdminHubClient() {
   }, [loading, userRole, currentOrg, hasOnlyTournamentWorkspace, startupProgress, base, router]);
 
   useEffect(() => {
+    if (!hasOnlyTournamentWorkspace || startupProgress || loading || !currentOrg) {
+      return;
+    }
+
+    const orgSlug = currentOrg.slug;
+    const timer = window.setTimeout(() => setStartupTimeoutOrgSlug(orgSlug), 5000);
+    return () => window.clearTimeout(timer);
+  }, [hasOnlyTournamentWorkspace, startupProgress, loading, currentOrg]);
+
+  useEffect(() => {
     if (loading || !currentOrg) return;
     fetch('/api/admin/attention-summary')
       .then(r => r.ok ? r.json() : null)
       .then(data => { if (data) setAttention(data); })
       .catch(() => {});
 
-    fetch(`/api/admin/org/startup-tasks?orgSlug=${encodeURIComponent(currentOrg.slug)}`)
-      .then(r => r.ok ? r.json() : null)
-      .then(data => { if (data) setStartupProgress(data); })
-      .catch(() => {});
+    const orgSlug = currentOrg.slug;
+    fetch(`/api/admin/org/startup-tasks?orgSlug=${encodeURIComponent(orgSlug)}`)
+      .then(r => {
+        if (!r.ok) throw new Error('Startup tasks unavailable');
+        return r.json();
+      })
+      .then(data => {
+        setStartupProgress(data);
+        setStartupErrorOrgSlug(current => current === orgSlug ? null : current);
+        setStartupTimeoutOrgSlug(current => current === orgSlug ? null : current);
+      })
+      .catch(() => setStartupErrorOrgSlug(orgSlug));
   }, [loading, currentOrg]);
 
   if (loading || !userRole) {
     return (
       <div className="flex items-center justify-center h-64">
         <span className="hud-label">Loading...</span>
+      </div>
+    );
+  }
+
+  if (hasOnlyTournamentWorkspace && (startupError || startupTimedOut)) {
+    return (
+      <div className="p-6 max-w-xl">
+        <div className="card p-6">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.75rem' }}>
+            <AlertCircle size={18} style={{ color: 'var(--warning)', flexShrink: 0 }} />
+            <h1 style={{ margin: 0, color: 'var(--white)', fontSize: '1rem', fontWeight: 900 }}>
+              Tournament management is ready
+            </h1>
+          </div>
+          <p style={{ margin: '0 0 1rem', color: 'var(--white-60)', fontSize: '0.88rem', lineHeight: 1.5 }}>
+            We could not confirm your setup status, so choose where to continue.
+          </p>
+          <div style={{ display: 'grid', gap: '0.65rem' }}>
+            <Link className="btn btn-primary" href={`${base}/tournaments/dashboard`}>
+              Open tournament dashboard
+            </Link>
+            <Link className="btn btn-ghost" href={`${base}/tournaments`}>
+              Manage tournaments
+            </Link>
+            <Link className="btn btn-ghost" href={`${base}/onboarding?continueSetup=1`}>
+              Resume setup
+            </Link>
+          </div>
+        </div>
       </div>
     );
   }
@@ -167,7 +218,7 @@ export default function AdminHubClient() {
     if (attention.pendingTournamentCount > 0) {
       attentionItems.push({
         label: `${attention.pendingTournamentCount} pending tournament registration${attention.pendingTournamentCount === 1 ? '' : 's'}`,
-        href: `${base}/tournaments/teams`,
+        href: `${base}/tournaments/registrations`,
       });
     }
     if (canSeeHouseLeague && attention.pendingLeagueCount > 0) {
@@ -232,7 +283,7 @@ export default function AdminHubClient() {
               { label: 'House League', desc: 'Recreational seasons, registrations, scheduling, and standings — League plan', icon: CalendarDays, plan: 'league' },
               { label: 'Accounting', desc: 'Income, expenses, and financial activity across the org and tournaments — Club plan', icon: DollarSign, plan: 'club' },
               { label: 'Rep Teams', desc: 'Competitive team programs, tryouts, rosters, player documents, and team finances — Club plan', icon: Users, plan: 'club' },
-            ] as const).map(({ label, desc, icon: Icon }) => (
+            ] as const).map(({ label, desc }) => (
               <Link
                 key={label}
                 href={`${base}/org/billing`}

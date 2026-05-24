@@ -6,7 +6,32 @@ import { assertSafeSupabaseServerEnvironment } from './lib/supabase-safety';
 export async function proxy(request: NextRequest) {
   assertSafeSupabaseServerEnvironment('Proxy Supabase client');
 
-  let supabaseResponse = NextResponse.next({ request });
+  // Compute pathname first so it's available for request-header forwarding.
+  // Server Components read headers() from REQUEST headers only — setting them
+  // on the response (supabaseResponse.headers.set) does NOT make them available
+  // via headers() in layouts/pages. We must forward via NextResponse.next request option.
+  const { pathname } = request.nextUrl;
+  const segments = pathname.split('/').filter(Boolean);
+
+  // Build augmented request headers that include x-pathname and x-org-slug
+  // so Server Components can read them via headers() without re-parsing the URL.
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set('x-pathname', pathname);
+  if (segments.length >= 1) {
+    requestHeaders.set('x-org-slug', segments[0]);
+  }
+
+  // Redirect legacy /[orgSlug]/admin/tournaments/teams → /[orgSlug]/admin/tournaments/registrations
+  if (segments.length >= 4 && segments[1] === 'admin' && segments[2] === 'tournaments' && segments[3] === 'teams') {
+    const url = request.nextUrl.clone();
+    const remainingPath = segments.slice(4).join('/');
+    url.pathname = `/${segments[0]}/admin/tournaments/registrations${remainingPath ? '/' + remainingPath : ''}`;
+    return NextResponse.redirect(url, { status: 301 });
+  }
+
+  let supabaseResponse = NextResponse.next({
+    request: { headers: requestHeaders },
+  });
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -20,7 +45,18 @@ export async function proxy(request: NextRequest) {
           cookiesToSet.forEach(({ name, value }) =>
             request.cookies.set(name, value)
           );
-          supabaseResponse = NextResponse.next({ request });
+          // Rebuild the Cookie header from the updated request.cookies so that
+          // Server Components reading cookies() see the refreshed session tokens.
+          // requestHeaders was snapshotted at the start of the request — we must
+          // re-derive the cookie string here or auth will fail on token refresh.
+          const updatedHeaders = new Headers(requestHeaders);
+          updatedHeaders.set(
+            'cookie',
+            request.cookies.getAll().map(c => `${c.name}=${c.value}`).join('; ')
+          );
+          supabaseResponse = NextResponse.next({
+            request: { headers: updatedHeaders },
+          });
           cookiesToSet.forEach(({ name, value, options }) =>
             supabaseResponse.cookies.set(name, value, options)
           );
@@ -31,9 +67,6 @@ export async function proxy(request: NextRequest) {
 
   // Refresh the session if expired - required to keep Server Components in sync
   const { data: { user } } = await supabase.auth.getUser();
-
-  const { pathname } = request.nextUrl;
-  const segments = pathname.split('/').filter(Boolean);
 
   // Protect /[orgSlug]/admin/* routes - second path segment must be 'admin'
   const isOrgAdmin = segments.length >= 2 && segments[1] === 'admin';
@@ -59,19 +92,12 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // Expose pathname to server layouts so they can make route-aware decisions
-  supabaseResponse.headers.set('x-pathname', pathname);
-
-  // Pass org slug downstream so server components can read it without re-parsing the URL
-  if (segments.length >= 1) {
-    supabaseResponse.headers.set('x-org-slug', segments[0]);
-  }
-
   return supabaseResponse;
 }
 
 export const config = {
   matcher: [
+    '/:slug/admin',
     '/:slug/admin/:path*',
     '/:slug/scorekeeper/:path*',
     '/admin',

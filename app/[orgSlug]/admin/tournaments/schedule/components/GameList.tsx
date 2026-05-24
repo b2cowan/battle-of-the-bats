@@ -178,9 +178,9 @@ export default function GameList({
           {/* ── Compact row — scores always visible inline with team names ── */}
           <div className={s.rowMain} style={{ gap: '1rem' }}>
             {/* Date + Time */}
-            <div style={{ flex: '0 0 130px' }}>
+            <div className={s.gameColDate}>
               <div style={{ fontFamily: 'var(--font-data)', fontWeight: 700, fontSize: '0.8rem', color: 'var(--fl-text)', letterSpacing: '0.01em' }}>
-                {g.date ? formatDate(g.date) : 'TBD'}
+                {g.date ? formatShortDate(g.date) : 'TBD'}
               </div>
               <div style={{ fontFamily: 'var(--font-data)', fontSize: '0.68rem', color: 'var(--data-gray)', marginTop: '1px' }}>
                 {g.time ? formatTime(g.time) : '—'}
@@ -188,7 +188,7 @@ export default function GameList({
             </div>
 
             {/* Location — wider column, 2-line wrap */}
-            <div style={{ flex: '0 0 180px', overflow: 'hidden' }}>
+            <div className={s.gameColVenue}>
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: '4px', fontSize: '0.72rem', color: 'var(--data-gray)', fontFamily: 'var(--font-data)' }}>
                 <MapPin size={11} style={{ flexShrink: 0, marginTop: '2px' }} />
                 <span style={{ overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', lineHeight: '1.35' }}>
@@ -198,7 +198,7 @@ export default function GameList({
             </div>
 
             {/* Matchup — symmetric: [W/L · score · Away]  VS  [Home · score · W/L] */}
-            <div style={{ flex: '2 1 0', minWidth: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem' }}>
+            <div className={s.gameColMatchup} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem' }}>
 
               {/* Away side — right-aligned: W/L · score/input · team name */}
               <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '0.5rem', minWidth: 0 }}>
@@ -267,15 +267,13 @@ export default function GameList({
               {(g.homeSlotId || g.awaySlotId) && !g.isPlayoff && (
                 <span className="badge badge-neutral" style={{ fontSize: '0.65rem', letterSpacing: '0.05em' }}>SLOT</span>
               )}
-              <div style={{ width: 80, display: 'flex', justifyContent: 'flex-end' }}>{statusBadge(g.status)}</div>
-              {/* Finalize — quick-access, no edit required */}
-              <div style={{ width: 70, display: 'flex', justifyContent: 'center' }}>
-                {!isExpanded && onFinalize && g.status === 'submitted' && (
-                  <button className="btn btn-success btn-data" onClick={e => { e.stopPropagation(); onFinalize(g.id); }}>
-                    Finalize
-                  </button>
-                )}
-              </div>
+              <div className={s.gameStatusSlot}>{statusBadge(g.status)}</div>
+              {/* Finalize — quick-access, rendered only when relevant (no fixed-width wrapper) */}
+              {!isExpanded && onFinalize && g.status === 'submitted' && (
+                <button className="btn btn-success btn-data" onClick={e => { e.stopPropagation(); onFinalize(g.id); }}>
+                  Finalize
+                </button>
+              )}
               {/* Pencil — only visible when not editing */}
               <div style={{ width: 28, display: 'flex', justifyContent: 'center' }}>
                 {!isExpanded && (
@@ -369,7 +367,7 @@ export default function GameList({
           style={{ cursor: isCompleted ? 'default' : 'pointer', gap: '1rem' }}
         >
           {/* Date + Time — single line */}
-          <div style={{ flex: '0 0 130px', fontFamily: 'var(--font-data)', whiteSpace: 'nowrap', overflow: 'hidden' }}>
+          <div className={s.gameColDate} style={{ fontFamily: 'var(--font-data)', whiteSpace: 'nowrap' }}>
             <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--fl-text)' }}>
               {g.date ? formatShortDate(g.date) : 'TBD'}
             </span>
@@ -379,7 +377,7 @@ export default function GameList({
           </div>
 
           {/* Location — wider column, 2-line wrap */}
-          <div style={{ flex: '0 0 180px', display: 'flex', alignItems: 'flex-start', gap: '4px', overflow: 'hidden', fontFamily: 'var(--font-data)', fontSize: '0.72rem', color: 'var(--data-gray)' }}>
+          <div className={s.gameColVenue} style={{ display: 'flex', alignItems: 'flex-start', gap: '4px', fontFamily: 'var(--font-data)', fontSize: '0.72rem', color: 'var(--data-gray)' }}>
             <MapPin size={11} style={{ flexShrink: 0, opacity: 0.55, marginTop: '2px' }} />
             <span style={{ overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', lineHeight: '1.35' }}>
               {g.diamondId ? getDiamondName(g.diamondId) : (g.location || '—')}
@@ -387,7 +385,7 @@ export default function GameList({
           </div>
 
           {/* Matchup */}
-          <div style={{ flex: '2 1 0', minWidth: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.65rem' }}>
+          <div className={s.gameColMatchup} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.65rem' }}>
             <div style={{ flex: 1, textAlign: 'right', fontFamily: 'var(--font-data)', fontSize: '0.82rem', fontWeight: 700, color: 'var(--fl-text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               {resolveTeam(g.awayTeamId, g.awayPlaceholder)}
             </div>
@@ -558,9 +556,9 @@ export default function GameList({
   return (
     <div className={s.flatList}>
       <div className={s.tableHeader} style={{ gap: '1rem' }}>
-        <div style={{ flex: '0 0 130px' }}>Date</div>
-        <div style={{ flex: '0 0 180px' }}>Location</div>
-        <div style={{ flex: '2 1 0', textAlign: 'center' }}>Matchup</div>
+        <div className={s.gameColDate}>Date</div>
+        <div className={s.gameColVenue}>Location</div>
+        <div className={s.gameColMatchup} style={{ textAlign: 'center' }}>Matchup</div>
         <div style={{ flex: '0 0 96px' }} />
         <div style={{ flex: '0 0 28px' }} />
       </div>

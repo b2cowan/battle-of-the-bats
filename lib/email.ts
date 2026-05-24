@@ -42,17 +42,12 @@ export { ADMIN_EMAIL, SITE_URL };
 
 // ── Email templates ────────────────────────────────────────────────────────────
 
-const wrap = (content: string, contactEmail = ADMIN_EMAIL) => `
+const wrap = (content: string) => `
 <div style="font-family:Inter,-apple-system,BlinkMacSystemFont,sans-serif;background:#111827;color:#F1F5F9;max-width:600px;margin:0 auto;padding:2.5rem 2rem;border:1px solid rgba(30,58,138,0.25);">
   <div style="margin-bottom:1.75rem;padding-bottom:1.25rem;border-bottom:1px solid rgba(30,58,138,0.2);">
     <span style="font-size:0.75rem;font-weight:900;color:#D9F99D;letter-spacing:0.16em;text-transform:uppercase;">FIELDLOGICHQ</span>
   </div>
   ${content}
-  <hr style="border:none;border-top:1px solid rgba(255,255,255,0.08);margin:2rem 0;" />
-  <p style="color:rgba(241,245,249,0.4);font-size:0.8rem;margin:0;">
-    Questions? Contact
-    <a href="mailto:${contactEmail}" style="color:#D9F99D;">${contactEmail}</a>
-  </p>
 </div>`;
 
 export function registrationConfirmationHtml(p: {
@@ -81,7 +76,7 @@ export function registrationConfirmationHtml(p: {
         <a href="${p.teamWorkspaceClaimUrl}" style="display:inline-block;background:#D9F99D;color:#0b0f14;text-decoration:none;font-weight:800;padding:0.75rem 1rem;border-radius:2px;font-size:0.82rem;letter-spacing:0.06em;">Claim Team Workspace</a>
       </div>
     ` : ''}
-  `, p.contactEmail);
+  `);
 }
 
 export function manualTeamRegistrationHtml(p: {
@@ -106,7 +101,7 @@ export function manualTeamRegistrationHtml(p: {
       </p>
     </div>
     <p style="color:rgba(255,255,255,0.7);">${paymentLine}</p>
-  `, p.contactEmail);
+  `);
 }
 
 export function adminNotificationHtml(p: {
@@ -144,7 +139,7 @@ export function acceptanceHtml(p: {
       <p style="margin:1rem 0 0;color:rgba(241,245,249,0.45);font-size:0.85rem;">Questions? Contact <a href="mailto:${contact}" style="color:#D9F99D;">${contact}</a>.</p>
     </div>
     <a href="${profileUrl}" style="display:inline-block;background:#1E3A8A;color:#fff;padding:0.75rem 1.75rem;border-radius:2px;text-decoration:none;font-weight:700;font-size:0.82rem;letter-spacing:0.06em;">View Team Profile →</a>
-  `, p.contactEmail);
+  `);
 }
 
 export function waitlistConfirmationHtml(p: {
@@ -165,7 +160,7 @@ export function waitlistConfirmationHtml(p: {
       </p>
     </div>
     <p style="color:rgba(241,245,249,0.7);">The <strong>${p.ageGroupName}</strong> division is currently full. Your team has been added to the waitlist and you will be notified by email if a spot becomes available.</p>
-  `, p.contactEmail);
+  `);
 }
 
 export function rejectionHtml(p: {
@@ -179,7 +174,7 @@ export function rejectionHtml(p: {
     <p>Thank you for your interest in <strong>${p.tournamentName}</strong>. Unfortunately, we are unable to accommodate <strong>${p.teamName}</strong> in the <strong>${p.ageGroupName}</strong> division at this time.</p>
     <p style="color:rgba(241,245,249,0.7);">This may be due to division capacity or eligibility requirements. Please contact us if you have any questions.</p>
     <a href="mailto:${contact}" style="display:inline-block;background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.35);color:#f87171;padding:0.75rem 1.75rem;border-radius:2px;text-decoration:none;font-weight:700;font-size:0.82rem;letter-spacing:0.06em;margin-top:0.5rem;">Contact Us</a>
-  `, contact);
+  `);
 }
 
 export function paymentConfirmationHtml(p: {
@@ -191,7 +186,7 @@ export function paymentConfirmationHtml(p: {
     <p>Hi <strong>${p.coachName}</strong>,</p>
     <p>The tournament organizer has recorded payment for <strong>${p.teamName}</strong>. Your registration for the <strong>${p.ageGroupName}</strong> division of <strong>${p.tournamentName}</strong> is now marked <strong style="color:#22C55E;">paid</strong>.</p>
     <p style="color:rgba(255,255,255,0.7);">Stay tuned for schedule announcements. We look forward to seeing you on the diamond!</p>
-  `, p.contactEmail);
+  `);
 }
 
 function escapeEmailHtml(value: string): string {
@@ -233,7 +228,7 @@ export function paymentReminderHtml(p: {
     </div>
     <div style="color:rgba(241,245,249,0.75);">${instructions}</div>
     <p style="color:rgba(241,245,249,0.45);font-size:0.86rem;">FieldLogicHQ records payment status for the organizer but does not process tournament payments online.</p>
-  `, p.contactEmail);
+  `);
 }
 
 export function teamWorkspaceClaimInviteHtml(p: {
@@ -260,7 +255,7 @@ export function teamWorkspaceClaimInviteHtml(p: {
     <p style="color:rgba(241,245,249,0.72);line-height:1.6;">Use this link to activate your workspace with the team details already filled in. Team gives your coaches one place for roster, schedule, dues, documents, attendance, lineups, and quick local tournaments. For security, sign in or create your account with the email address that received this invite.</p>
     <a href="${escapeEmailHtml(p.claimUrl)}" style="display:inline-block;background:#D9F99D;color:#0b0f14;text-decoration:none;font-weight:800;padding:0.75rem 1rem;border-radius:2px;font-size:0.82rem;letter-spacing:0.06em;margin:0.5rem 0 1rem;">Claim Team Workspace</a>
     <p style="color:rgba(241,245,249,0.4);font-size:0.82rem;">If you do not manage this team, you can ignore this email.</p>
-  `, p.contactEmail);
+  `);
 }
 
 export function tournamentResultsFinalizedHtml(p: {
@@ -296,7 +291,7 @@ export function tournamentResultsFinalizedHtml(p: {
     <p style="color:rgba(241,245,249,0.4);font-size:0.82rem;line-height:1.55;margin-top:1.5rem;">
       Running your own tournament? <a href="${escapeEmailHtml(p.fieldLogicUrl)}" style="color:#D9F99D;">See how FieldLogicHQ helps organizers manage registration, schedules, results, and post-event reporting.</a>
     </p>
-  `, p.contactEmail);
+  `);
 }
 
 // ── House League registration emails ──────────────────────────────────────────
@@ -325,7 +320,7 @@ export function leagueRegistrationApprovedHtml(p: {
       </p>
     </div>
     <p style="color:rgba(241,245,249,0.7);">We look forward to seeing ${p.playerFirstName} on the field! Watch for further updates from your league administrator.</p>
-  `, p.contactEmail);
+  `);
 }
 
 export function leagueRegistrationPendingHtml(p: {
@@ -352,7 +347,7 @@ export function leagueRegistrationPendingHtml(p: {
       </p>
     </div>
     <p style="color:rgba(241,245,249,0.7);">Your registration status is currently <strong style="color:#F59E0B;">pending review</strong>. You will receive another email once a decision has been made. No payment is required until your registration is approved.</p>
-  `, p.contactEmail);
+  `);
 }
 
 export function leagueRegistrationWaitlistHtml(p: {
@@ -381,7 +376,7 @@ export function leagueRegistrationWaitlistHtml(p: {
       </p>
     </div>
     <p style="color:rgba(241,245,249,0.7);"><strong>${p.divisionName}</strong> is currently full. ${p.playerFirstName} has been added to the waitlist at position <strong>#${p.waitlistPosition}</strong>. You will be contacted if a spot becomes available.</p>
-  `, p.contactEmail);
+  `);
 }
 
 // ── House League admin-triggered status-change emails ─────────────────────────
@@ -410,7 +405,7 @@ export function leagueAdminApprovedHtml(p: {
       </p>
     </div>
     <p style="color:rgba(241,245,249,0.7);">We look forward to seeing ${p.playerFirstName} on the field! Watch for further updates from your league administrator.</p>
-  `, p.contactEmail);
+  `);
 }
 
 export function leagueAdminWaitlistedHtml(p: {
@@ -439,7 +434,7 @@ export function leagueAdminWaitlistedHtml(p: {
       </p>
     </div>
     <p style="color:rgba(241,245,249,0.7);">You will be contacted if a spot becomes available. No payment is required until your registration is approved.</p>
-  `, p.contactEmail);
+  `);
 }
 
 export function leagueWaitlistPromotedHtml(p: {
@@ -466,7 +461,7 @@ export function leagueWaitlistPromotedHtml(p: {
       </p>
     </div>
     <p style="color:rgba(241,245,249,0.7);">We look forward to seeing ${p.playerFirstName} on the field! Watch for further updates from your league administrator.</p>
-  `, p.contactEmail);
+  `);
 }
 
 export function leagueRegistrationDeclinedHtml(p: {
@@ -484,7 +479,7 @@ export function leagueRegistrationDeclinedHtml(p: {
     <p>Hi <strong>${p.guardianFirstName}</strong>,</p>
     <p>We're sorry — <strong>${p.playerFirstName} ${p.playerLastName}</strong>'s registration for <strong>${p.seasonName}</strong> — <strong>${p.divisionName}</strong> was not approved.</p>
     <p style="color:rgba(241,245,249,0.7);">Please contact <a href="mailto:${contact}" style="color:#D9F99D;">${contact}</a> for more information.</p>
-  `, contact);
+  `);
 }
 
 export function leagueBroadcastHtml(p: {
@@ -507,10 +502,6 @@ export function leagueBroadcastHtml(p: {
   </div>
   <h2 style="color:#F1F5F9;font-size:1.15rem;margin:0 0 1.25rem;font-weight:700;">${p.subject}</h2>
   <div style="color:rgba(241,245,249,0.8);">${bodyLines}</div>
-  <hr style="border:none;border-top:1px solid rgba(255,255,255,0.08);margin:2rem 0;" />
-  <p style="color:rgba(241,245,249,0.35);font-size:0.78rem;margin:0;">
-    Questions? Contact <a href="mailto:${contact}" style="color:#D9F99D;">${contact}</a>
-  </p>
 </div>`;
 }
 
@@ -539,7 +530,7 @@ export function tryoutRegistrationConfirmationHtml(p: {
       </p>
     </div>
     <p style="color:rgba(241,245,249,0.7);">Our coaching staff will review all applications and be in touch. No further action is required at this time.</p>
-  `, p.contactEmail);
+  `);
 }
 
 // ── Rep Teams tryout status emails ───────────────────────────────────────────
@@ -564,7 +555,7 @@ export function tryoutOfferHtml(p: {
         Program: <strong>${p.teamName} — ${p.yearName}</strong>
       </p>
     </div>
-  `, p.contactEmail);
+  `);
 }
 
 export function tryoutAcceptedHtml(p: {
@@ -586,7 +577,7 @@ export function tryoutAcceptedHtml(p: {
       </p>
     </div>
     <p style="color:rgba(241,245,249,0.6);">Your coaching staff will be in touch with more details. We look forward to a great season!</p>
-  `, p.contactEmail);
+  `);
 }
 
 export function tryoutDeclinedHtml(p: {
@@ -603,7 +594,7 @@ export function tryoutDeclinedHtml(p: {
     <p>Hi <strong>${p.guardianFirstName}</strong>,</p>
     <p>Thank you for registering <strong>${p.playerFirstName} ${p.playerLastName}</strong> for the <strong>${p.teamName}</strong> <strong>${p.yearName}</strong> program. After reviewing all applications, we are unfortunately unable to extend an offer at this time.</p>
     <p style="color:rgba(241,245,249,0.6);">We appreciate <strong>${p.playerFirstName}</strong>&apos;s interest and encourage them to try again in the future. Please reach out to <a href="mailto:${contact}" style="color:#D9F99D;">${contact}</a> if you have any questions.</p>
-  `, p.contactEmail);
+  `);
 }
 
 export function passwordResetHtml(resetLink: string) {
@@ -665,7 +656,7 @@ export function schedulePublishedHtml(p: {
     </div>
     <p style="color:rgba(241,245,249,0.65);font-size:0.88rem;">${nameNote}</p>
     <a href="${p.scheduleUrl}" style="display:inline-block;background:#D9F99D;color:#0b0f14;padding:0.75rem 1.75rem;border-radius:2px;text-decoration:none;font-weight:800;font-size:0.82rem;letter-spacing:0.06em;margin-top:0.5rem;">View Schedule &rarr;</a>
-  `, p.contactEmail);
+  `);
 }
 
 export function billingRetentionWarningHtml(p: {
@@ -717,5 +708,27 @@ export function trialEndingHtml(p: {
     </div>
     <p style="color:rgba(241,245,249,0.7);margin:0 0 1.5rem;">To update your payment method or review your plan before the trial ends, visit your billing settings.</p>
     <a href="${p.billingUrl}" style="display:inline-block;background:#D9F99D;color:#0b0f14;padding:0.75rem 1.75rem;border-radius:2px;text-decoration:none;font-weight:800;font-size:0.82rem;letter-spacing:0.06em;">Manage Billing &rarr;</a>
+  `);
+}
+
+export function cancellationConfirmationHtml(p: {
+  orgName: string;
+  planLabel: string;
+  retentionUntil: string;
+  retainedTournaments: number;
+  resubscribeUrl: string;
+}) {
+  const retainedNote = p.retainedTournaments > 0
+    ? `Your ${p.retainedTournaments} tournament${p.retainedTournaments === 1 ? '' : 's'} have been archived and your data is retained until <strong>${p.retentionUntil}</strong>. If you resubscribe before that date, everything will be restored.`
+    : `Your account data is retained until <strong>${p.retentionUntil}</strong>. If you resubscribe before that date, everything will be restored.`;
+
+  return wrap(`
+    <h2 style="color:#F1F5F9;font-size:1.3rem;font-weight:700;margin:0 0 1rem;">Subscription cancelled</h2>
+    <p style="margin:0 0 1rem;">Your <strong>${p.planLabel}</strong> subscription for <strong>${p.orgName}</strong> has been cancelled. Your organization is now inactive.</p>
+    <div style="background:#0F172A;border:1px solid rgba(245,158,11,0.3);border-left:3px solid rgba(245,158,11,0.5);padding:1.25rem;margin:1.5rem 0;">
+      <p style="margin:0 0 0.5rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#F59E0B;">Your data</p>
+      <p style="margin:0;line-height:1.75;color:rgba(241,245,249,0.8);">${retainedNote}</p>
+    </div>
+    <a href="${p.resubscribeUrl}" style="display:inline-block;background:#1E3A8A;color:#fff;padding:0.75rem 1.75rem;border-radius:2px;text-decoration:none;font-weight:700;font-size:0.82rem;letter-spacing:0.06em;">Resubscribe</a>
   `);
 }

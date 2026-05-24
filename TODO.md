@@ -5,6 +5,8 @@ This file tracks the ongoing tasks for the FieldLogicHQ platform (multi-tenant s
 
 ---
 
+- [x] **Shared Design/UX agent guidance** - Claude `/design` and `/ux` commands now point to shared Claude/Codex review guidance, with a Codex sub-agent coordination playbook in `memory/agents/`.
+
 - [x] **Standalone Team Phase 1 foundation migration** - Migration 065 applied in dev and production.
 
 - [x] **Standalone Team Phase 2A** - Team provisioning service implemented: lightweight workspace org, rep team, active program year, coach assignment, workspace row, entitlement row, team ledger, and dev seed route.
@@ -74,7 +76,13 @@ This file tracks the ongoing tasks for the FieldLogicHQ platform (multi-tenant s
 
 ## 🚀 Active Tasks (Priority Order)
 
+- [ ] **Multi-org creation for existing users** — Logged-in users cannot currently self-serve a second organization; `/auth/signup` creates a new user + org together and rejects existing emails. Build: a `/create-org` page for authenticated users, a `POST /api/auth/create-org` route that creates an org and links the existing `user_id` as owner (no new auth user), and a "＋ Create new organization" entry point on the `select-org` page. This is separate from reactivation — a user who cancelled Tournament Plus and now wants a League workspace is starting a new subscription, not reinstating the old one. (see pending plan doc)
+
 - [ ] **Tournament admin design review** — Systematic design review of all 41 tournament admin pages and shared navigation components; one checkpoint row per page with screenshotted / reviewed / decisions logged / done columns (see [agent_TOURNAMENT_DESIGN_REVIEW.md](docs/active/agent_TOURNAMENT_DESIGN_REVIEW.md))
+
+- [ ] **Tournament owner/admin mobile implementation** - Mobile-first owner/admin improvements for base Tournament, starting with shared foundations and highest-use workflows (see [implementation plan](docs/active/codex_TOURNAMENT_OWNER_MOBILE_IMPLEMENTATION_PLAN.md), [PM brief](docs/active/codex_TOURNAMENT_OWNER_MOBILE_PM_BRIEF.md), and [review](docs/active/codex_TOURNAMENT_OWNER_MOBILE_REVIEW.md))
+  - [x] P0 shared mobile foundation slice implemented and static verified.
+  - [ ] Authenticated 390x844 browser walkthrough for core admin tournament routes.
 
 - [x] **Export Enhancements** - Standardized XLSX-first exports, CSV secondary, iCal schedules, branded PDF reports, export catalog, help docs, plan gates, and pricing/marketing updates (see [MERGED_EXPORTS_IMPLEMENTATION_PLAN.md](docs/archive/MERGED_EXPORTS_IMPLEMENTATION_PLAN.md))
   - [x] Phase B — Shared export foundation: lib/export/ layer, ExportMenu component, plan feature keys, exceljs (replaces xlsx — CVE), ics, jspdf, jspdf-autotable installed and audited clean

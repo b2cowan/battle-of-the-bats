@@ -7,6 +7,9 @@ import {
 import { writePlatformEvent } from '@/lib/platform-events';
 import { stripe } from '@/lib/stripe';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { sendEmail, cancellationConfirmationHtml, SITE_URL } from '@/lib/email';
+import { PLAN_CONFIG } from '@/lib/plan-config';
+import type { OrgPlan } from '@/lib/types';
 
 export async function POST(req: Request) {
   const ctx = await getAuthContextWithRole();
@@ -49,6 +52,17 @@ export async function POST(req: Request) {
       .eq('org_id', ctx.org.id)
       .in('id', retainedIds);
     if (archiveError) return Response.json({ error: archiveError.message }, { status: 500 });
+
+    // Supersede any existing active retained records for these tournaments before
+    // inserting fresh ones — prevents unique constraint violations if a prior retention
+    // event left stale rows (e.g. after a test reset or a resubscription that did not
+    // clean up billing_retained_records).
+    await supabaseAdmin
+      .from('billing_retained_records')
+      .update({ retained_state: 'purged' })
+      .eq('org_id', ctx.org.id)
+      .in('record_id', retainedIds)
+      .in('retained_state', ['retained_inactive', 'pending_purge']);
 
     const { error: recordError } = await supabaseAdmin
       .from('billing_retained_records')
@@ -154,6 +168,25 @@ export async function POST(req: Request) {
         { status: 500 },
       );
     }
+  }
+
+  if (actorEmail) {
+    const planLabel = PLAN_CONFIG[ctx.org.planId as OrgPlan]?.label ?? ctx.org.planId;
+    const retentionDate = new Date(retentionUntil).toLocaleDateString('en-CA', {
+      year: 'numeric', month: 'long', day: 'numeric',
+    });
+    const resubscribeUrl = `${SITE_URL}/${ctx.org.slug}/admin/org/billing`;
+    await sendEmail(
+      actorEmail,
+      `Your ${ctx.org.name} subscription has been cancelled`,
+      cancellationConfirmationHtml({
+        orgName: ctx.org.name,
+        planLabel,
+        retentionUntil: retentionDate,
+        retainedTournaments: preflight.tournaments.length,
+        resubscribeUrl,
+      }),
+    );
   }
 
   return Response.json({

@@ -3,14 +3,14 @@ import { useState } from 'react';
 import {
   Sparkles, GitBranch, CreditCard, Database, FileText, FlaskConical,
   Rocket, Bug, ArrowRight, MessageSquare, Zap, ChevronLeft, BookOpen,
-  Info, Terminal, Gauge,
+  Info, Terminal, Gauge, Megaphone,
 } from 'lucide-react';
 import styles from './playbook.module.css';
 
 /* ─── Types ──────────────────────────────────────────────────────────────────── */
 
-type AgentKey = 'design' | 'ux' | 'billing' | 'db' | 'dba' | 'plan' | 'uat' | 'release' | 'debug';
-type AccentColor = 'green' | 'blue' | 'yellow' | 'purple' | 'orange' | 'red' | 'cyan' | 'pink' | 'teal';
+type AgentKey = 'design' | 'ux' | 'billing' | 'db' | 'dba' | 'plan' | 'uat' | 'release' | 'debug' | 'marketing';
+type AccentColor = 'green' | 'blue' | 'yellow' | 'purple' | 'orange' | 'red' | 'cyan' | 'pink' | 'teal' | 'lime';
 
 interface AgentDef {
   key: AgentKey;
@@ -53,7 +53,7 @@ const AGENTS: AgentDef[] = [
       '/design [screenshot] — tournament dashboard, free tier; hierarchy feels flat, what needs to change?',
       '/design [screenshot] — teams page empty state; this needs a proper call to action',
       '/design what token should I use for a "payment pending" badge background?',
-      '/design review app/[orgSlug]/admin/tournaments/teams/teams-admin.module.css — does the table styling match our system?',
+      '/design review app/[orgSlug]/admin/tournaments/registrations/teams-admin.module.css — does the table styling match our system?',
       '/design [screenshot] — is this modal consistent with the patterns we\'ve established?',
       '/design — tournament review continued; dashboard signed off last session (decisions logged). Today: schedule page. [screenshot]',
       '/design what radius and shadow should a confirmation modal use?',
@@ -83,7 +83,7 @@ const AGENTS: AgentDef[] = [
       '/ux is for flows and completeness — send visual/styling issues to /design instead.',
     ],
     examples: [
-      '/ux review app/[orgSlug]/admin/tournaments/teams/page.tsx — org admin, check all five flow states',
+      '/ux review app/[orgSlug]/admin/tournaments/registrations/page.tsx — org admin, check all five flow states',
       '/ux what does a free-tier org admin see when they try to access auto-schedule? Is the upgrade path clear?',
       '/ux trace the full flow for a team registering for a tournament — what can go wrong at each step?',
       '/ux what happens when the bulk team approval API call fails halfway through?',
@@ -191,7 +191,7 @@ const AGENTS: AgentDef[] = [
       '/db what\'s the correct pattern for a bulk update query that marks multiple teams as accepted?',
     ],
     notes: [
-      'Tables that do NOT exist (common mistakes): league_practices, rule_sections. The schema file has a full "does not exist" list — the agent checks this before writing any query.',
+      'Tables that do NOT exist (common mistakes): rule_sections. The schema file has a full "does not exist" list — the agent checks this before writing any query.',
     ],
   },
   {
@@ -454,6 +454,64 @@ const AGENTS: AgentDef[] = [
       'After applying fixes, run /release dev to push to staging, or test locally first with npm run dev.',
     ],
   },
+  {
+    key: 'marketing',
+    cmd: '/marketing',
+    Icon: Megaphone,
+    accent: 'lime',
+    headline: 'Brand voice, public copy, and conversion strategy',
+    tags: ['Landing page copy', 'Pricing page', 'Upsell wording', 'Email concepts'],
+    loadsFrom: [
+      'memory/marketing_brand_voice.md — tone, vocabulary, forbidden phrases, copy patterns',
+      'memory/project_pricing_strategy.md — tier names, prices, and positioning narrative',
+      'app/page.tsx — live corporate landing page (copy review baseline)',
+      'docs/active/PRICING_PAGE_COPY.md — approved pricing page copy canon (if it exists)',
+    ],
+    rules: [
+      '/marketing owns copy wording; /billing owns gate mechanics — keep them in separate conversations.',
+      '/design owns visual layout; /marketing owns what the words say — never recommend colours or spacing.',
+      'Always use full plan names: Tournament, Tournament Plus, League, Club — never "Pro", "Plus-only", or "paid tier".',
+      'Forbidden words: "unlock", "powerful", "robust", "seamless", "supercharge", "game-changing". See memory/marketing_brand_voice.md for the full list.',
+      'Upgrade copy rule: "available on Tournament Plus and above" — never "upgrade to unlock".',
+      'The free Tournament plan is a real product, not a trial — copy must never imply otherwise.',
+      'Accepted copy goes into docs/active/PRICING_PAGE_COPY.md — this is the canonical copy record. Create the file on first accepted section if it doesn\'t exist.',
+      'Copy output format: Current → Proposed → Why. Multiple options as Option A / Option B with a recommendation.',
+    ],
+    examples: [
+      '/marketing review the hero section of app/page.tsx — does the headline connect to the core promise?',
+      '/marketing write three headline options for the Tournament Plus plan card',
+      '/marketing what should the upsell gate say when a free-tier admin tries to access auto-scheduling?',
+      '/marketing — our lifecycle email for "first tournament created" needs a subject line and opening paragraph',
+      '/marketing — review all the module card taglines in app/page.tsx for brand voice consistency',
+      '/marketing write the FAQ section for the pricing page — cover: free tier, cancellation, seat limits, annual vs monthly',
+      '/marketing how should we describe FieldLogicHQ to someone currently using spreadsheets to run their league?',
+      '/marketing the billing page upgrade CTA feels generic — rewrite it for a League-tier org considering upgrading to Club',
+    ],
+    extraSections: [
+      {
+        title: 'What /marketing owns vs. other agents',
+        content: (
+          <table className={styles.roleTable}>
+            <thead><tr><th>Task</th><th>Owner</th></tr></thead>
+            <tbody>
+              <tr><td>Landing page + pricing page copy</td><td><code>/marketing</code></td></tr>
+              <tr><td>In-app upsell message <em>wording</em></td><td><code>/marketing</code></td></tr>
+              <tr><td>Brand voice rules and vocabulary</td><td><code>/marketing</code></td></tr>
+              <tr><td>Lifecycle email copy concepts</td><td><code>/marketing</code></td></tr>
+              <tr><td>Conversion nudge strategy (where, why)</td><td><code>/marketing</code></td></tr>
+              <tr><td>Gate mechanics + UpgradeGate implementation</td><td><code>/billing</code></td></tr>
+              <tr><td>Visual layout, colours, spacing</td><td><code>/design</code></td></tr>
+              <tr><td>Email sending infrastructure</td><td>General agent</td></tr>
+            </tbody>
+          </table>
+        ),
+      },
+    ],
+    notes: [
+      '/marketing is a copy and strategy agent — it presents copy for your approval; it never edits source files directly. Apply accepted copy yourself or ask the general agent to apply it.',
+      'The canonical copy record lives in docs/active/PRICING_PAGE_COPY.md. Ask /marketing to create it if it doesn\'t exist yet.',
+    ],
+  },
 ];
 
 /* ─── Pipeline data ──────────────────────────────────────────────────────────── */
@@ -467,18 +525,21 @@ const PIPELINE = [
 ];
 
 const QUICK_REF = [
-  { trigger: 'Starting a new feature?',         cmd: '/plan first — always.' },
-  { trigger: 'Something looks visually wrong?', cmd: '/design + screenshot' },
-  { trigger: 'Flow or state missing?',          cmd: '/ux + file path or screenshot' },
-  { trigger: 'Feature gated correctly?',        cmd: '/billing to audit' },
-  { trigger: 'Writing a DB query?',             cmd: '/db to verify schema and get the query' },
-  { trigger: 'New table or migration coming?',  cmd: '/dba before writing the migration SQL' },
-  { trigger: 'Schema health check?',            cmd: '/dba — quarterly review or after new module ships' },
-  { trigger: 'Something is broken in the app?', cmd: '/debug + screenshot or paste the error' },
-  { trigger: 'Validating after changes?',       cmd: '/uat [suite-name]' },
-  { trigger: 'Push to staging?',                cmd: '/release dev → verify in browser' },
-  { trigger: 'Promote staging → production?',   cmd: '/release promote  (safest — ignores local branch)' },
-  { trigger: 'Build failed on Amplify?',        cmd: '/release fix [paste error]' },
+  { trigger: 'Starting a new feature?',              cmd: '/plan first — always.' },
+  { trigger: 'Something looks visually wrong?',      cmd: '/design + screenshot' },
+  { trigger: 'Flow or state missing?',               cmd: '/ux + file path or screenshot' },
+  { trigger: 'Feature gated correctly?',             cmd: '/billing to audit' },
+  { trigger: 'Writing a DB query?',                  cmd: '/db to verify schema and get the query' },
+  { trigger: 'New table or migration coming?',       cmd: '/dba before writing the migration SQL' },
+  { trigger: 'Schema health check?',                 cmd: '/dba — quarterly review or after new module ships' },
+  { trigger: 'Something is broken in the app?',      cmd: '/debug + screenshot or paste the error' },
+  { trigger: 'Validating after changes?',            cmd: '/uat [suite-name]' },
+  { trigger: 'Push to staging?',                     cmd: '/release dev → verify in browser' },
+  { trigger: 'Promote staging → production?',        cmd: '/release promote  (safest — ignores local branch)' },
+  { trigger: 'Build failed on Amplify?',             cmd: '/release fix [paste error]' },
+  { trigger: 'Landing page or pricing copy?',        cmd: '/marketing — owns all public-facing copy' },
+  { trigger: 'In-app upsell message wording?',       cmd: '/marketing (wording) + /billing (mechanics)' },
+  { trigger: 'Brand voice question or email copy?',  cmd: '/marketing' },
 ];
 
 /* ─── Sub-components ─────────────────────────────────────────────────────────── */
@@ -502,7 +563,7 @@ function OverviewPage({ onSelect }: { onSelect: (key: AgentKey) => void }) {
   return (
     <div className={styles.playbook}>
       <p className={styles.intro}>
-        Nine custom agents live in <code>.claude/commands/</code>. Click any tile to see full
+        Ten custom agents live in <code>.claude/commands/</code>. Click any tile to see full
         instructions, sample prompts, and quick reference for that agent. General workflow
         guidance — how to sequence agents and hand off between sessions — is below the tiles.
       </p>
@@ -585,7 +646,7 @@ function OverviewPage({ onSelect }: { onSelect: (key: AgentKey) => void }) {
         </div>
         <div className={styles.quickRefRow}>
           <span className={styles.quickRefTrigger}>Can combine (short sessions)</span>
-          <code className={styles.quickRefCmd}>/billing + /ux</code>
+          <code className={styles.quickRefCmd}>/billing + /ux · /marketing + /billing</code>
         </div>
         <div className={styles.quickRefRow}>
           <span className={styles.quickRefTrigger}>Requires browser</span>
@@ -593,7 +654,7 @@ function OverviewPage({ onSelect }: { onSelect: (key: AgentKey) => void }) {
         </div>
         <div className={styles.quickRefRow}>
           <span className={styles.quickRefTrigger}>Code-only, no browser needed</span>
-          <code className={styles.quickRefCmd}>/billing · /ux · /db · /dba · /plan · /release</code>
+          <code className={styles.quickRefCmd}>/billing · /ux · /db · /dba · /plan · /release · /marketing</code>
         </div>
       </div>
 

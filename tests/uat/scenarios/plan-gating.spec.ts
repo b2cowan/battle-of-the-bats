@@ -29,7 +29,7 @@ test.describe('Plan gating / free plan (tournament tier)', () => {
   });
 
   test('registrations page loads on free plan', async ({ ownerPage, orgSlug }) => {
-    await ownerPage.goto(`/${orgSlug}/admin/tournaments/teams`);
+    await ownerPage.goto(`/${orgSlug}/admin/tournaments/registrations`);
     await expect(ownerPage).not.toHaveURL(/\/auth\/login/);
     await expect(ownerPage.locator('main, [class*="main"]').first()).toBeVisible();
   });
@@ -45,7 +45,7 @@ test.describe('Plan gating / free plan (tournament tier)', () => {
 
   test('PDF export is gated on free plan', async ({ ownerPage, orgSlug }) => {
     // Navigate to a page with export controls (registrations or results)
-    await ownerPage.goto(`/${orgSlug}/admin/tournaments/teams`);
+    await ownerPage.goto(`/${orgSlug}/admin/tournaments/registrations`);
     // PDF option should either be absent or show a locked state
     const pdfLockedOrAbsent = ownerPage.locator(
       '[class*="locked"][aria-label*="pdf" i], [data-feature="pdf_exports"], [class*="upgrade"]:has-text("PDF")'
@@ -140,7 +140,7 @@ test.describe('Plan gating / role-based capability', () => {
   });
 
   test('org-admin can access registrations', async ({ adminPage, orgSlug }) => {
-    await adminPage.goto(`/${orgSlug}/admin/tournaments/teams`);
+    await adminPage.goto(`/${orgSlug}/admin/tournaments/registrations`);
     await expect(adminPage).not.toHaveURL(/\/auth\/login/);
     await expect(adminPage.locator('main').first()).toBeVisible();
   });

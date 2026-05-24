@@ -374,7 +374,18 @@ export default function AdminResultsPage() {
           )}
         </ToolbarGroup>
 
-        <ToolbarGroup grow>
+        <ToolbarGroup align="end">
+          <ExportMenu
+            formats={['xlsx', 'csv', 'pdf']}
+            onExportXLSX={handleExportXLSX}
+            onExportCSV={handleExportCSV}
+            onExportPDF={handleExportPDF}
+            planId={currentOrg?.planId}
+            disabled={filtered.length === 0}
+          />
+        </ToolbarGroup>
+
+        <ToolbarGroup fullWidth>
           <div className={s.statusFilters}>
             {statusFilterOptions.map(({ key, label, count }) => (
               <button
@@ -411,20 +422,6 @@ export default function AdminResultsPage() {
               />
             )}
           </div>
-        </ToolbarGroup>
-
-        <ToolbarGroup align="end">
-          <ExportMenu
-            formats={['xlsx', 'csv', 'pdf']}
-            onExportXLSX={handleExportXLSX}
-            onExportCSV={handleExportCSV}
-            onExportPDF={handleExportPDF}
-            planId={currentOrg?.planId}
-            disabled={filtered.length === 0}
-          />
-        </ToolbarGroup>
-
-        <ToolbarGroup fullWidth>
           <ToolbarSearch value={searchQuery} onChange={setSearchQuery} placeholder="Search teams..." label="Search games" />
         </ToolbarGroup>
       </TournamentAdminToolbar>

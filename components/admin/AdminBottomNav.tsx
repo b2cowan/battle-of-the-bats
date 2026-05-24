@@ -16,7 +16,7 @@ import { useTournament } from '@/lib/tournament-context';
 import styles from './AdminBottomNav.module.css';
 
 const PRIMARY_KEYS = [
-  { key: 'tournaments/teams',    icon: Users,    label: 'Registrations' },
+  { key: 'tournaments/registrations', icon: Users, label: 'Registrations' },
   { key: 'tournaments/schedule', icon: Calendar, label: 'Schedule'      },
   { key: 'tournaments/results',  icon: Trophy,   label: 'Results'       },
 ];
@@ -55,7 +55,7 @@ export default function AdminBottomNav() {
   const orgSlug = currentOrg?.slug ?? 'milton-bats';
   const [moreOpen, setMoreOpen] = useState(false);
   const moreRef   = useRef<HTMLDivElement>(null);
-  const { tournaments, currentTournament, setCurrentTournament, refresh } = useTournament();
+  const { tournaments, currentTournament, setCurrentTournament } = useTournament();
   const tournamentPreviewLabel =
     currentTournament?.status === 'draft'
       ? 'Preview Draft Site'
@@ -68,6 +68,10 @@ export default function AdminBottomNav() {
       : currentTournament?.status === 'completed'
         ? 'Preview the completed tournament site.'
         : 'Preview the public tournament site.';
+  const inactiveTournamentCtaLabel =
+    currentTournament?.status === 'draft'
+      ? 'Review launch checklist'
+      : 'Open dashboard';
 
   const isRepTeams    = pathname.startsWith(`${base}/rep-teams`);
   const isHouseLeague = pathname.startsWith(`${base}/house-league`);
@@ -116,27 +120,6 @@ export default function AdminBottomNav() {
   function handleTournamentChange(id: string) {
     const t = tournaments.find(x => x.id === id);
     if (t) setCurrentTournament(t);
-  }
-
-  async function handleSetLive() {
-    if (!currentTournament) return;
-    const orgQuery = currentOrg?.slug ? `?orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
-    const res = await fetch(`/api/admin/tournaments${orgQuery}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        action: 'set-status',
-        id: currentTournament.id,
-        data: { status: 'active' },
-      }),
-    });
-    const result = await res.json().catch(() => ({}));
-    if (!res.ok) {
-      window.alert(result.error ?? 'This tournament is not ready to go live.');
-      return;
-    }
-    await refresh();
-    setMoreOpen(false);
   }
 
   function dropNavItems(items: typeof TOURNAMENT_MORE) {
@@ -259,9 +242,13 @@ export default function AdminBottomNav() {
                   ))}
                 </select>
                 {currentTournament && !currentTournament.isActive && (
-                  <button className={styles.setLiveBtn} onClick={handleSetLive} id="admin-mob-set-live">
-                    Set as Live
-                  </button>
+                  <Link
+                    className={styles.setLiveBtn}
+                    href={`${base}/tournaments/dashboard`}
+                    id="admin-mob-review-launch"
+                  >
+                    {inactiveTournamentCtaLabel}
+                  </Link>
                 )}
                 {currentTournament && (
                   <Link

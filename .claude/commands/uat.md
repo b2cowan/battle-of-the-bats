@@ -107,7 +107,7 @@ Suite: [suite name]   Tests: [total]   ✅ [passed]   ❌ [failed]
 
 | # | Severity | Route | Role | Description |
 |---|----------|-------|------|-------------|
-| F-001 | critical | /[org]/admin/tournaments/teams | org_owner | Toolbar not rendered |
+| F-001 | critical | /[org]/admin/tournaments/registrations | org_owner | Toolbar not rendered |
 ...
 
 ---
