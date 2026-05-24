@@ -75,7 +75,7 @@ Set the default value to the production value, then add a branch-level override 
 | `STRIPE_SECRET_KEY` | Per-branch | Live secret key (`sk_live_...`) | Test secret key (`sk_test_...`) |
 | `RESEND_API_KEY` | Per-branch | Production Resend key | Dev Resend key *(see Resend note)* |
 | `RESEND_FROM` | All branches | `FieldLogicHQ <noreply@fieldlogichq.ca>` | Same (or dev-specific sender) |
-| `PLATFORM_ADMIN_EMAILS` | All branches | `b2cowan@gmail.com` | Same |
+| `PLATFORM_ADMIN_EMAILS` | All branches | `fieldlogichq@gmail.com` | Same |
 
 ### `amplify.yml` impact
 

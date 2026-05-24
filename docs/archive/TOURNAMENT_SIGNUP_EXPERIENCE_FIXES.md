@@ -506,7 +506,7 @@ Acceptance criteria:
 Priority: Medium
 
 Problem:
-The public tournament registration closed/not-open message links to `b2cowan@gmail.com`.
+The public tournament registration closed/not-open message links to `fieldlogichq@gmail.com`.
 
 User impact:
 External orgs expose the wrong contact email, and parents/coaches may contact the platform owner instead of the tournament organizer.

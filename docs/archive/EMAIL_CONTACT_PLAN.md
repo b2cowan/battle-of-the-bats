@@ -3,7 +3,7 @@
 ## Goal
 Allow each tournament to designate a contact person whose email appears in the
 "Questions? Contact..." footer of all coach-facing emails. Remove the hardcoded
-`b2cowan@gmail.com` from email templates. Admins set this from the existing
+`fieldlogichq@gmail.com` from email templates. Admins set this from the existing
 Contacts admin page.
 
 ## DB Migration (run in Supabase SQL editor)
