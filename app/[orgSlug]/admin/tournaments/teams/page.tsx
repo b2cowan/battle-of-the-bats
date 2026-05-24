@@ -207,6 +207,8 @@ export default function UnifiedTeamsPage() {
   const [claimInviteResults, setClaimInviteResults] = useState<TeamClaimInviteResult[]>([]);
   const [feedback, setFeedback] = useState<{
     isOpen: boolean; title: string; message: string;
+    items?: string[];
+    confirmText?: string;
     type: 'primary' | 'danger' | 'warning' | 'success' | 'info';
     onConfirm?: () => void;
   }>({ isOpen: false, title: '', message: '', type: 'primary' });
@@ -672,18 +674,40 @@ export default function UnifiedTeamsPage() {
     if (!currentTournament || selectedRegistrationIds.size === 0) return;
     const selectedCount = selectedRegistrationIds.size;
 
-    const label: Record<BulkAction, string> = {
-      accept: 'accept',
-      reject: 'reject',
-      waitlist: 'move to the waitlist',
-      mark_deposit_paid: 'mark deposit paid',
-      mark_paid: 'mark paid',
+    const selectedTeamNames = regs
+      .filter(r => selectedRegistrationIds.has(r.id))
+      .map(r => r.name);
+
+    const titleMap: Record<BulkAction, string> = {
+      accept:            `Accept ${selectedCount} Team${selectedCount === 1 ? '' : 's'}?`,
+      reject:            `Reject ${selectedCount} Team${selectedCount === 1 ? '' : 's'}?`,
+      waitlist:          `Move to Waitlist?`,
+      mark_deposit_paid: 'Mark Deposit Paid?',
+      mark_paid:         'Mark Paid in Full?',
+    };
+
+    const messageMap: Record<BulkAction, string> = {
+      accept:            `The following ${selectedCount} team${selectedCount === 1 ? '' : 's'} will be accepted. Each team contact will receive an automated confirmation email.`,
+      reject:            `The following ${selectedCount} team${selectedCount === 1 ? '' : 's'} will be rejected. Each team contact will receive an automated email.`,
+      waitlist:          `The following ${selectedCount} team${selectedCount === 1 ? '' : 's'} will be moved to the waitlist.`,
+      mark_deposit_paid: `Deposit will be marked as paid for the following ${selectedCount} team${selectedCount === 1 ? '' : 's'}.`,
+      mark_paid:         `The following ${selectedCount} team${selectedCount === 1 ? '' : 's'} will be marked as paid in full.`,
+    };
+
+    const confirmMap: Record<BulkAction, string> = {
+      accept:            'Accept Teams',
+      reject:            'Reject Teams',
+      waitlist:          'Move to Waitlist',
+      mark_deposit_paid: 'Mark Deposit Paid',
+      mark_paid:         'Mark Paid in Full',
     };
 
     setFeedback({
       isOpen: true,
-      title: 'Run Bulk Action?',
-      message: `This will ${label[action]} ${selectedCount} selected registration${selectedCount === 1 ? '' : 's'}.`,
+      title: titleMap[action],
+      message: messageMap[action],
+      items: selectedTeamNames,
+      confirmText: confirmMap[action],
       type: action === 'reject' ? 'warning' : 'primary',
       onConfirm: async () => {
         setWorking('bulk');
@@ -776,7 +800,7 @@ export default function UnifiedTeamsPage() {
       setFeedback({
         isOpen: true,
         title: 'No Team Contacts',
-        message: 'Select at least one pending or accepted registration with an email address before sending Team workspace claim invites.',
+        message: 'Select at least one pending or accepted team with an email address before sending workspace invites.',
         type: 'warning',
       });
       return;
@@ -785,16 +809,20 @@ export default function UnifiedTeamsPage() {
       setFeedback({
         isOpen: true,
         title: 'No Eligible Teams',
-        message: 'Team workspace claim invites can be sent to pending or accepted teams with an email address. Waitlisted and rejected teams are skipped.',
+        message: 'Workspace invites can only be sent to pending or accepted teams with an email address. All selected teams are either waitlisted, rejected, or missing an email.',
         type: 'warning',
       });
       return;
     }
 
+    const eligibleTeams = selectedTeams.filter(t => (t.status === 'accepted' || t.status === 'pending') && t.email?.trim());
+
     setFeedback({
       isOpen: true,
-      title: 'Send Team Claim Invites?',
-      message: `This will create secure Team workspace claim links for ${selectedIds.length} selected registration${selectedIds.length === 1 ? '' : 's'} and email eligible team contacts. Pending and accepted teams are eligible; waitlist, rejected, missing-email, and already-claimed teams are skipped. ${eligibleWithEmail} selected registration${eligibleWithEmail === 1 ? ' has' : 's have'} both an email and an eligible status.`,
+      title: 'Send Coach Workspace Invites?',
+      message: `Each eligible coach will receive a secure link to access their team's workspace — for roster management, schedule, and team communication. ${eligibleWithEmail} of ${selectedIds.length} selected team${selectedIds.length === 1 ? '' : 's'} will be emailed. Waitlisted, rejected, missing-email, and already-claimed teams are skipped.`,
+      items: eligibleTeams.map(t => t.name),
+      confirmText: 'Send Invites',
       type: 'primary',
       onConfirm: async () => {
         setWorking('team-claims');
@@ -814,15 +842,15 @@ export default function UnifiedTeamsPage() {
           setClaimInviteResults(Array.isArray(data.results) ? data.results : []);
           setFeedback({
             isOpen: true,
-            title: linksCreated > 0 ? 'Team Claim Invites Sent' : 'No Invites Sent',
-            message: `${linksCreated} claim link${linksCreated === 1 ? '' : 's'} created. ${data.emailsSent ?? 0} email${(data.emailsSent ?? 0) === 1 ? '' : 's'} sent. ${skippedCount} selected registration${skippedCount === 1 ? ' was' : 's were'} skipped.`,
+            title: linksCreated > 0 ? 'Workspace Invites Sent' : 'No Invites Sent',
+            message: `${linksCreated} invite link${linksCreated === 1 ? '' : 's'} created and ${data.emailsSent ?? 0} email${(data.emailsSent ?? 0) === 1 ? '' : 's'} sent.${skippedCount > 0 ? ` ${skippedCount} team${skippedCount === 1 ? ' was' : 's were'} skipped (ineligible or missing email).` : ''}`,
             type: linksCreated > 0 ? 'success' : 'warning',
           });
         } catch (error) {
           setFeedback({
             isOpen: true,
-            title: 'Team Claim Invites Failed',
-            message: error instanceof Error ? error.message : 'Team claim invites could not be sent.',
+            title: 'Workspace Invites Failed',
+            message: error instanceof Error ? error.message : 'Coach workspace invites could not be sent.',
             type: 'danger',
           });
         } finally {
@@ -1264,7 +1292,7 @@ export default function UnifiedTeamsPage() {
           onClick={sendTeamClaimInvites}
           disabled={working === 'team-claims'}
         >
-          <Mail size={12} /> Team Claim
+          <Mail size={12} /> Workspace Invite
         </button>
         <button type="button" className="btn btn-outline btn-data" style={{ color: 'var(--danger)' }} onClick={() => runBulkAction('reject')} disabled={working === 'bulk'}>
           Reject
@@ -1600,7 +1628,7 @@ export default function UnifiedTeamsPage() {
         </div>
       )}
 
-      <FeedbackModal {...feedback} onClose={() => setFeedback(f => ({ ...f, isOpen: false, onConfirm: undefined }))} />
+      <FeedbackModal {...feedback} onClose={() => setFeedback(f => ({ ...f, isOpen: false, onConfirm: undefined, items: undefined, confirmText: undefined }))} />
     </div>
   );
 }

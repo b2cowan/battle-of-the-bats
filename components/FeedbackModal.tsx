@@ -6,6 +6,8 @@ interface FeedbackModalProps {
   onConfirm?: () => void; // If provided, shows Cancel button and acts as confirm
   title: string;
   message: string;
+  /** Optional list of item names shown below the message (e.g. team names in a bulk action) */
+  items?: string[];
   confirmText?: string;
   cancelText?: string;
   type?: 'danger' | 'primary' | 'warning' | 'success' | 'info';
@@ -17,6 +19,7 @@ export default function FeedbackModal({
   onConfirm,
   title,
   message,
+  items,
   confirmText = 'Confirm',
   cancelText = 'Cancel',
   type = 'primary'
@@ -34,7 +37,7 @@ export default function FeedbackModal({
 
   return (
     <div className="modal-overlay" onClick={onClose} style={{ zIndex: 1000 }}>
-      <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 400 }}>
+      <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 480 }}>
         <div className="modal-header">
           <div className="flex items-center gap-2">
             {getIcon()}
@@ -46,6 +49,27 @@ export default function FeedbackModal({
         </div>
         <div style={{ padding: '1.5rem', color: 'var(--white-80)', lineHeight: 1.5 }}>
           {message}
+          {items && items.length > 0 && (
+            <ul style={{
+              margin: '0.75rem 0 0',
+              padding: '0.5rem 0.75rem',
+              listStyle: 'none',
+              background: 'var(--white-05)',
+              borderRadius: 8,
+              maxHeight: 180,
+              overflowY: 'auto',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '0.3rem',
+            }}>
+              {items.map((item, i) => (
+                <li key={i} style={{ fontSize: '0.8rem', color: 'var(--white-60)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <span style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--white-30)', flexShrink: 0 }} />
+                  {item}
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
         <div className="modal-footer" style={{ gap: '0.75rem' }}>
           <button className="btn btn-ghost" onClick={onClose}>

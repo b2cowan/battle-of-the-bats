@@ -9,7 +9,7 @@ import {
   syncTeamWorkspaceSubscription,
 } from '@/lib/team-checkout';
 import { completeOrgTeamAddonBillingFromMetadata } from '@/lib/team-org-billing';
-import { sendEmail, SITE_URL } from '@/lib/email';
+import { sendEmail, trialEndingHtml, SITE_URL } from '@/lib/email';
 import type { OrgPlan } from '@/lib/types';
 import type Stripe from 'stripe';
 
@@ -502,11 +502,7 @@ export async function POST(req: Request) {
       await sendEmail(
         ownerEmail,
         `Your ${planLabel} trial ends ${trialEndDate}`,
-        `<p>Hi,</p>
-<p>Your FieldLogicHQ <strong>${planLabel}</strong> trial for <strong>${org.name}</strong> ends on <strong>${trialEndDate}</strong>.</p>
-<p>Your payment method on file will be charged automatically when the trial expires. No action is needed if you'd like to continue.</p>
-<p>To update your payment method before then, visit your <a href="${billingUrl}">billing settings</a>.</p>
-<p>— The FieldLogicHQ team</p>`,
+        trialEndingHtml({ orgName: org.name, planLabel, trialEndDate, billingUrl }),
       );
       break;
     }

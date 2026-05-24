@@ -22,6 +22,8 @@ interface Plan {
   freeNote: string;
   trialNote: string;
   features: string[];
+  /** Short list used inside the onboarding wizard modal — 4–5 key differentiators only */
+  compactFeatures: string[];
   cta: string;
   ctaHref: string;
   initialPlanInterest?: string[];
@@ -54,6 +56,13 @@ const PLANS: Plan[] = [
       'Powered by FieldLogicHQ badge',
       '3 staff / admin seats',
       '1 tournament slot',
+    ],
+    compactFeatures: [
+      '1 tournament slot',
+      'Manual scheduling & score entry',
+      'Basic team registration',
+      'Public results & standings',
+      '3 staff / admin seats',
     ],
     cta: 'Get Started Free',
     ctaHref: '/auth/signup',
@@ -89,6 +98,13 @@ const PLANS: Plan[] = [
       'Post-tournament summary reporting',
       'Unlimited officials seats',
     ],
+    compactFeatures: [
+      'Everything in Tournament',
+      'Unlimited tournament slots',
+      'Registration Control Bundle',
+      'Full branding control',
+      '10 staff / admin seats',
+    ],
     cta: 'Start Free Trial',
     ctaHref: '/auth/signup',
   },
@@ -114,6 +130,13 @@ const PLANS: Plan[] = [
       'Advanced member roles and permissions',
       '10 staff / admin seats',
     ],
+    compactFeatures: [
+      'Everything in Tournament Plus',
+      'House League module',
+      'Public organization page',
+      'Registration workflows',
+      '10 staff / admin seats',
+    ],
     cta: 'Start Free Trial',
     ctaHref: '/auth/signup',
     initialPlanInterest: ['league'],
@@ -137,6 +160,12 @@ const PLANS: Plan[] = [
       'Rep Teams module - tryouts, rosters, player documents, coaches portal, team finances',
       'Unlimited staff / admin seats',
     ],
+    compactFeatures: [
+      'Everything in League',
+      'Accounting — org ledger & invoicing',
+      'Rep Teams — rosters, tryouts & coaches portal',
+      'Unlimited staff / admin seats',
+    ],
     cta: 'Start Free Trial',
     ctaHref: '/auth/signup',
     initialPlanInterest: ['club'],
@@ -154,9 +183,11 @@ interface PricingSectionProps {
   disabledPlans?: OrgPlan[];
   ctaLabel?: (planKey: OrgPlan) => string | undefined;
   initialBilling?: Billing;
+  /** Use condensed 5-item feature list and tighter spacing — for wizard/modal contexts */
+  compact?: boolean;
 }
 
-export default function PricingSection({ gatingMap, onChoosePlan, currentPlan, planLoading, disabledPlans, ctaLabel, initialBilling = 'monthly' }: PricingSectionProps) {
+export default function PricingSection({ gatingMap, onChoosePlan, currentPlan, planLoading, disabledPlans, ctaLabel, initialBilling = 'monthly', compact = false }: PricingSectionProps) {
   const [billing, setBilling] = useState<Billing>(initialBilling);
 
   function getSignupHref(plan: Plan) {
@@ -172,7 +203,7 @@ export default function PricingSection({ gatingMap, onChoosePlan, currentPlan, p
   return (
     <>
       {/* Billing toggle */}
-      <div className={styles.toggleWrap}>
+      <div className={`${styles.toggleWrap} ${compact ? styles.toggleWrapCompact : ''}`}>
         <div className={styles.togglePill} role="group" aria-label="Billing period">
           <button
             onClick={() => setBilling('monthly')}
@@ -195,7 +226,7 @@ export default function PricingSection({ gatingMap, onChoosePlan, currentPlan, p
       </div>
 
       {/* Plan cards */}
-      <div className={styles.pricingGrid}>
+      <div className={`${styles.pricingGrid} ${compact ? styles.pricingGridCompact : ''}`}>
         {PLANS.map(plan => {
           const isGated = gatingMap[plan.key] ?? false;
           const isCurrent = !!onChoosePlan && currentPlan === plan.key;
@@ -243,7 +274,7 @@ export default function PricingSection({ gatingMap, onChoosePlan, currentPlan, p
 
               {/* Band 4: features */}
               <ul className={styles.planFeatures}>
-                {plan.features.map(f => (
+                {(compact ? plan.compactFeatures : plan.features).map(f => (
                   <li key={f} className={styles.planRow}>
                     <Check size={13} className={styles.rowCheck} />
                     <span>{f}</span>

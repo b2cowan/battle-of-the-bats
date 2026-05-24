@@ -57,6 +57,29 @@ async function hasSkippedFirstTournamentWizard(orgId: string) {
   return hasSkippedTournamentSetup(data?.startup_tasks);
 }
 
+/**
+ * Returns true when the user has explicitly selected a plan during onboarding.
+ * Paid plans (tournament_plus and above) are always considered explicitly chosen
+ * because they went through Stripe checkout. For the free tournament plan, we
+ * require startup_tasks.plan === 'complete', which is written when the user
+ * clicks a plan CTA on the ?choosePlan=1 full-page chooser.
+ */
+async function hasExplicitPlanChoice(orgId: string, planId: OrgPlan): Promise<boolean> {
+  if (planId !== 'tournament') return true;
+
+  const { data, error } = await supabaseAdmin
+    .from('organizations')
+    .select('startup_tasks')
+    .eq('id', orgId)
+    .single();
+
+  if (isMissingStartupTasksColumn(error)) return false;
+  if (error) return false;
+  const tasks = data?.startup_tasks;
+  if (!tasks || typeof tasks !== 'object' || Array.isArray(tasks)) return false;
+  return (tasks as Record<string, { status?: unknown }>).plan?.status === 'complete';
+}
+
 /** Compute the post-login destination for a single active org membership. */
 export async function getDestinationForMembership(member: MemberRow): Promise<string> {
   const orgRelation = member.organizations;
@@ -104,7 +127,12 @@ export async function getDestinationForMembership(member: MemberRow): Promise<st
       return `/${slug}/admin/tournaments`;
     }
 
-    return `/${slug}/admin/onboarding?continueSetup=1`;
+    // Route to the required full-page plan chooser until the user has explicitly
+    // selected a plan. Once chosen, use the resumable wizard (?continueSetup=1).
+    const planChosen = await hasExplicitPlanChoice(orgId, planId ?? 'tournament');
+    return planChosen
+      ? `/${slug}/admin/onboarding?continueSetup=1`
+      : `/${slug}/admin/onboarding?choosePlan=1`;
   }
 
   return `/${slug}/admin`;

@@ -252,6 +252,19 @@
   color: var(--fl-text);
 }
 
+/* ── Compact variant — onboarding wizard modal ────────────────────────── */
+.toggleWrapCompact {
+  margin-bottom: 1.25rem;
+}
+
+.pricingGridCompact .planCard {
+  padding: 1.25rem;
+}
+
+.pricingGridCompact .planAmount {
+  font-size: 2rem;
+}
+
 /* ── Responsive ───────────────────────────────────────────────────────── */
 @media (max-width: 1100px) {
   .pricingGrid {

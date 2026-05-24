@@ -98,6 +98,10 @@ export function isLowerPlan(fromPlan: OrgPlan, targetPlan: OrgPlan): boolean {
   return PLAN_ORDER.indexOf(targetPlan) < PLAN_ORDER.indexOf(fromPlan);
 }
 
+export function isOrganizationDowngradeTarget(targetPlan: OrgPlan): boolean {
+  return targetPlan !== 'team';
+}
+
 export function retentionDeadline(from = new Date()): string {
   const d = new Date(from);
   d.setDate(d.getDate() + BILLING_RETENTION_DAYS);

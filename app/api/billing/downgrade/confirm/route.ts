@@ -2,6 +2,7 @@ import { getAuthContextWithRole, forbidden, unauthorized } from '@/lib/api-auth'
 import {
   buildDowngradePreflight,
   isLowerPlan,
+  isOrganizationDowngradeTarget,
   normalizePlan,
   retentionDeadline,
   writeOrgBillingAudit,
@@ -32,6 +33,9 @@ export async function POST(req: Request) {
   const targetPlan = normalizePlan(body.targetPlan);
   if (!targetPlan) {
     return Response.json({ error: 'Choose a valid target plan.' }, { status: 400 });
+  }
+  if (!isOrganizationDowngradeTarget(targetPlan)) {
+    return Response.json({ error: 'Team is a standalone product, not an organization downgrade target.' }, { status: 400 });
   }
   if (!isLowerPlan(ctx.org.planId, targetPlan)) {
     return Response.json({ error: 'You can only confirm a downgrade to a lower plan.' }, { status: 400 });

@@ -330,7 +330,7 @@ async function requestJson<T>(input: RequestInfo | URL, init?: RequestInit): Pro
   return data as T;
 }
 
-async function markStartupTask(taskId: StartupActionTaskId | LeagueStartupActionTaskId, status: 'complete' | 'skipped', orgSlug?: string) {
+async function markStartupTask(taskId: StartupActionTaskId | LeagueStartupActionTaskId | 'plan', status: 'complete' | 'skipped', orgSlug?: string) {
   const orgParam = orgSlug ? `?orgSlug=${encodeURIComponent(orgSlug)}` : '';
   return requestJson<StartupProgress>(`/api/admin/org/startup-tasks${orgParam}`, {
     method: 'POST',
@@ -550,6 +550,7 @@ export default function OnboardingPage() {
     if (planKey === activePlan) {
       setPlanChooserOpen(false);
       if (planChoiceRequired) {
+        await markStartupTask('plan', 'complete', currentOrg.slug);
         router.replace(`/${currentOrg.slug}/admin/onboarding?success=1`);
       } else if (activeModal === 'plan') {
         await advancePlanStep(planKey);
@@ -570,6 +571,7 @@ export default function OnboardingPage() {
         resetWorkflowDraftState();
         setPlanChooserOpen(false);
         if (planChoiceRequired) {
+          await markStartupTask('plan', 'complete', currentOrg.slug);
           router.replace(`/${currentOrg.slug}/admin/onboarding?success=1`);
         } else if (activeModal === 'plan') {
           await advancePlanStep(planKey);
@@ -601,6 +603,7 @@ export default function OnboardingPage() {
         resetWorkflowDraftState();
         setPlanChooserOpen(false);
         if (planChoiceRequired) {
+          await markStartupTask('plan', 'complete', currentOrg.slug);
           router.replace(`/${currentOrg.slug}/admin/onboarding?success=1`);
         } else if (activeModal === 'plan') {
           await advancePlanStep(planKey);
@@ -1364,6 +1367,7 @@ export default function OnboardingPage() {
           planLoading={planLoading}
           disabledPlans={disabledPlans}
           initialBilling={searchParams.get('billing') === 'annual' ? 'annual' : 'monthly'}
+          compact={embedded}
           ctaLabel={(planKey) => {
             if (required && planKey === 'tournament') return 'Start with Tournament';
             if (!required && planKey === 'tournament' && planKey !== activePlanId) return 'Continue free';
@@ -1384,6 +1388,7 @@ export default function OnboardingPage() {
     allowSkip?: boolean;
     saveDisabled?: boolean;
     hidePrimaryAction?: boolean;
+    wide?: boolean;
   }) {
     const wizardOrder = getWizardOrder(options.stepId);
     const stepNumber = (wizardOrder as readonly string[]).indexOf(options.stepId) + 1;
@@ -1392,7 +1397,7 @@ export default function OnboardingPage() {
 
     return (
       <div className={styles.modalOverlay} role="presentation">
-        <div className={styles.workflowModal} role="dialog" aria-modal="true" aria-labelledby="workflow-modal-title">
+        <div className={`${styles.workflowModal} ${options.wide ? styles.workflowModalWide : ''}`} role="dialog" aria-modal="true" aria-labelledby="workflow-modal-title">
           <div className={styles.wizardChrome}>
             <span>Step {stepNumber}/{wizardOrder.length}</span>
             <div className={styles.wizardProgressBar} aria-hidden="true">
@@ -1461,7 +1466,7 @@ export default function OnboardingPage() {
         'Start free or choose an upgrade',
         'Start free for one small tournament, or upgrade when you need registration control, branding, automation, and repeat-event tools.',
         renderPlanChooser(false, true),
-        { stepId: 'plan', saveLabel: 'Continue', onSave: () => advanceWizard('plan'), hidePrimaryAction: true }
+        { stepId: 'plan', saveLabel: 'Continue', onSave: () => advanceWizard('plan'), hidePrimaryAction: true, wide: true }
       );
     }
 

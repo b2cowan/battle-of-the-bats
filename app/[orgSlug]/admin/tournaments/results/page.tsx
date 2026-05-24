@@ -1,7 +1,7 @@
 'use client';
 import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { ExternalLink, Trophy, X, Check, RefreshCw } from 'lucide-react';
+import { ExternalLink, Trophy, RefreshCw } from 'lucide-react';
 import { formatTime } from '@/lib/utils';
 import { useTournament } from '@/lib/tournament-context';
 import { useOrg } from '@/lib/org-context';
@@ -14,7 +14,6 @@ import ExportMenu from '@/components/admin/ExportMenu';
 import { Game, Team, AgeGroup, Diamond } from '@/lib/types';
 import GameList from '../schedule/components/GameList';
 import s from '../../admin-common.module.css';
-import styles from '../schedule/schedule-admin.module.css';
 import FeedbackModal from '@/components/FeedbackModal';
 import HelpCallout from '@/components/help/HelpCallout';
 import { hasPlanFeature } from '@/lib/plan-features';
@@ -58,10 +57,6 @@ export default function AdminResultsPage() {
   const [ageGroups, setAgeGroups] = useState<AgeGroup[]>([]);
   const [diamonds, setDiamonds] = useState<Diamond[]>([]);
   const [loading, setLoading] = useState(true);
-
-  const [editing, setEditing] = useState<Game | null>(null);
-  const [scores, setScores] = useState({ home: '', away: '' });
-  const [showErrors, setShowErrors] = useState(false);
 
   const [filterGroup, setFilterGroup] = useState('');
   const [selectedStatuses, setSelectedStatuses] = useState<ResultsFilter[]>(['pending', 'submitted']);
@@ -138,15 +133,6 @@ export default function AdminResultsPage() {
     return ageGroups.find(g => g.id === id)?.name ?? '—';
   }
 
-  function openScore(g: Game) {
-    setScores({
-      home: g.homeScore !== null && g.homeScore !== undefined ? String(g.homeScore) : '',
-      away: g.awayScore !== null && g.awayScore !== undefined ? String(g.awayScore) : ''
-    });
-    setShowErrors(false);
-    setEditing(g);
-  }
-
   async function patchGame(body: Record<string, unknown>) {
     const orgQuery = orgSlug ? `?orgSlug=${encodeURIComponent(orgSlug)}` : '';
     const res = await fetch(`/api/admin/games${orgQuery}`, {
@@ -160,19 +146,8 @@ export default function AdminResultsPage() {
     }
   }
 
-  async function handleSaveScore() {
-    if (!editing) return;
-    if (scores.home === '' || scores.away === '') {
-      setShowErrors(true);
-      return;
-    }
-    await patchGame({
-      action: 'submit-score',
-      id: editing.id,
-      homeScore: Number(scores.home),
-      awayScore: Number(scores.away),
-    });
-    setEditing(null);
+  async function handleSaveScore(id: string, homeScore: number, awayScore: number) {
+    await patchGame({ action: 'submit-score', id, homeScore, awayScore });
     refresh();
   }
 
@@ -494,7 +469,7 @@ export default function AdminResultsPage() {
             diamonds={diamonds}
             viewMode={viewMode}
             groupByPool={groupMode === 'pools'}
-            onScore={openScore}
+            onSaveScore={handleSaveScore}
             onFinalize={finalizeGame}
             onSchedule={markScheduled}
             mode="scoring"
@@ -502,64 +477,7 @@ export default function AdminResultsPage() {
         </div>
       ) : null}
 
-      {editing && (
-        <div className="modal-overlay" onClick={() => setEditing(null)}>
-          <div className="modal" style={{ maxWidth: 440 }} onClick={e => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3 style={{ fontFamily: 'var(--font-data)', fontSize: '0.95rem', textTransform: 'uppercase', color: 'var(--logic-lime)', margin: 0 }}>Enter Score</h3>
-              <button className="btn btn-ghost btn-data" onClick={() => setEditing(null)}><X size={16} /></button>
-            </div>
-            <div className={styles.scoreInputArea}>
-              <div className={styles.scoreTeam}>
-                <div className={styles.scoreTeamName}>{getTeamName(editing.homeTeamId) || editing.homePlaceholder}</div>
-                <input 
-                  className={`form-input ${styles.scoreInput} ${showErrors && scores.home === '' ? 'border-danger' : ''}`} 
-                  type="text"
-                  inputMode="numeric"
-                  placeholder="0"
-                  value={scores.home} 
-                  onChange={e => {
-                    const val = e.target.value;
-                    if (val === '' || /^\d+$/.test(val)) {
-                      setScores(s => ({ ...s, home: val }));
-                    }
-                  }} 
-                  autoFocus 
-                  style={showErrors && scores.home === '' ? { borderColor: 'var(--danger)', boxShadow: '0 0 0 1px var(--danger)' } : {}}
-                />
-                <div className={styles.scoreTeamLabel}>Home</div>
-              </div>
-              <div className={styles.scoreSep}>–</div>
-              <div className={styles.scoreTeam}>
-                <div className={styles.scoreTeamName}>{getTeamName(editing.awayTeamId) || editing.awayPlaceholder}</div>
-                <input 
-                  className={`form-input ${styles.scoreInput} ${showErrors && scores.away === '' ? 'border-danger' : ''}`} 
-                  type="text"
-                  inputMode="numeric"
-                  placeholder="0"
-                  value={scores.away} 
-                  onChange={e => {
-                    const val = e.target.value;
-                    if (val === '' || /^\d+$/.test(val)) {
-                      setScores(s => ({ ...s, away: val }));
-                    }
-                  }}
-                  style={showErrors && scores.away === '' ? { borderColor: 'var(--danger)', boxShadow: '0 0 0 1px var(--danger)' } : {}}
-                />
-                <div className={styles.scoreTeamLabel}>Away</div>
-              </div>
-            </div>
-            <div className="modal-footer">
-              <button className="btn btn-ghost" onClick={() => setEditing(null)}>Cancel</button>
-              <button className="btn btn-primary" onClick={handleSaveScore}>
-                <Check size={14} /> Save Result
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      <FeedbackModal 
+      <FeedbackModal
         {...feedback} 
         onClose={() => setFeedback(f => ({ ...f, isOpen: false, onConfirm: undefined }))} 
       />

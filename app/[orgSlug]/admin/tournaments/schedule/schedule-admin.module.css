@@ -203,6 +203,70 @@
   padding-top: 1.5rem;
 }
 
+/* ─── Inline Score (scoring mode) ────────────────────────────────────────── */
+
+/* Read-only score number shown beside team name */
+.scoreInlineValue {
+  font-family: var(--font-data);
+  font-size: 1rem;
+  font-weight: 900;
+  flex-shrink: 0;
+  letter-spacing: 0.02em;
+  line-height: 1;
+}
+
+/* Compact score input — same position as the score number */
+.scoreInlineInput {
+  width: 48px;
+  height: 28px;
+  padding: 0;
+  text-align: center;
+  background: rgba(var(--blueprint-blue-rgb), 0.12);
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.45);
+  border-radius: 2px;
+  color: var(--fl-text);
+  font-family: var(--font-data);
+  font-size: 1rem;
+  font-weight: 900;
+  flex-shrink: 0;
+}
+
+.scoreInlineInput:focus {
+  outline: none;
+  border-color: var(--logic-lime);
+  box-shadow: 0 0 0 2px rgba(var(--logic-lime-rgb), 0.12);
+  color: var(--logic-lime);
+}
+
+/* Slim action bar — appears below the row when editing is active */
+.scoreActionBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.3rem 1.5rem;
+  border-top: 1px solid rgba(var(--blueprint-blue-rgb), 0.12);
+  background: rgba(var(--blueprint-blue-rgb), 0.04);
+  gap: 0.5rem;
+  animation: adminSlideDown 0.12s ease-out;
+}
+
+.scoreActionBarLeft {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.scoreActionBarAudit {
+  font-family: var(--font-data);
+  font-size: 0.62rem;
+  color: var(--data-gray);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 /* ─── Game Row Cell ───────────────────────────────────────────────────────── */
 .cell {
   font-size: 0.95rem;

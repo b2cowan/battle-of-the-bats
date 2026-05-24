@@ -1,6 +1,6 @@
 ﻿'use client';
 import { useState } from 'react';
-import { ChevronDown, ChevronUp, MapPin, Trophy, Pencil, X, AlertCircle, Trash2, Check } from 'lucide-react';
+import { ChevronDown, ChevronUp, MapPin, Pencil, X, AlertCircle, Trash2, Check } from 'lucide-react';
 import { Game, Team, AgeGroup, Diamond } from '@/lib/types';
 import { formatTime, formatPoolName } from '@/lib/utils';
 import { scoreSubmissionSummary } from '@/lib/tournament-score-audit';
@@ -17,26 +17,33 @@ interface GameListProps {
   groupByPool: boolean;
   pools?: Pool[];
   onEdit?: (g: Game) => void;
-  onScore?: (g: Game) => void;
   onFinalize?: (id: string) => void;
   onDelete?: (id: string) => void;
   onCancel?: (id: string) => void;
   onSchedule?: (id: string) => void;
   onSave?: (gameId: string, data: { date: string; time: string; diamondId: string; notes: string; homeTeamId: string; awayTeamId: string }) => Promise<void>;
+  onSaveScore?: (gameId: string, homeScore: number, awayScore: number) => Promise<void>;
   onCreateVenue?: () => void;
   mode: 'planning' | 'scoring';
 }
 
 type EditFields = { date: string; time: string; diamondId: string; notes: string; homeTeamId: string; awayTeamId: string };
 
+type ScoreFields = { home: string; away: string };
+
 export default function GameList({
   games, teams, ageGroups, diamonds, viewMode, groupByPool, pools: poolsProp,
-  onEdit, onScore, onFinalize, onDelete, onCancel, onSchedule, onSave, onCreateVenue, mode
+  onEdit, onFinalize, onDelete, onCancel, onSchedule, onSave, onSaveScore, onCreateVenue, mode
 }: GameListProps) {
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [editState, setEditState] = useState<Record<string, EditFields>>({});
   const [saving, setSaving] = useState<Set<string>>(new Set());
   const [saveErrors, setSaveErrors] = useState<Record<string, string>>({});
+
+  // Scoring-mode inline state
+  const [scoreState, setScoreState] = useState<Record<string, ScoreFields>>({});
+  const [scoreSaving, setScoreSaving] = useState<Set<string>>(new Set());
+  const [scoreErrors, setScoreErrors] = useState<Record<string, string>>({});
 
   const getTeamName = (id: string) => teams.find(t => t.id === id)?.name ?? null;
   const resolveTeam = (id: string, placeholder?: string) => getTeamName(id) ?? placeholder ?? 'TBD';
@@ -63,6 +70,19 @@ export default function GameList({
             notes: game.notes ?? '',
             homeTeamId: game.homeTeamId ?? '',
             awayTeamId: game.awayTeamId ?? '',
+          },
+        };
+      });
+    }
+    // Initialize score state the first time a scoring-mode row expands
+    if (isExpanding && game && mode === 'scoring') {
+      setScoreState(prev => {
+        if (prev[id]) return prev;
+        return {
+          ...prev,
+          [id]: {
+            home: game.homeScore != null ? String(game.homeScore) : '',
+            away: game.awayScore != null ? String(game.awayScore) : '',
           },
         };
       });
@@ -118,11 +138,47 @@ export default function GameList({
 
     // ── SCORING MODE ──────────────────────────────────────────────────────────
     if (mode === 'scoring') {
+      const score = scoreState[g.id] ?? { home: '', away: '' };
+      const isScoringBusy = scoreSaving.has(g.id);
+      const hasExistingScore = g.status === 'completed' || g.status === 'submitted';
+
+      // Derived win/loss/tie for colour coding
+      const awayWon  = hasScoredResult && (g.awayScore ?? 0) > (g.homeScore ?? 0);
+      const homeWon  = hasScoredResult && (g.homeScore ?? 0) > (g.awayScore ?? 0);
+      const isTie    = hasScoredResult && g.awayScore === g.homeScore;
+
+      const handleScoreDiscard = () => {
+        setScoreState(prev => { const n = { ...prev }; delete n[g.id]; return n; });
+        setScoreErrors(prev => { const n = { ...prev }; delete n[g.id]; return n; });
+        setExpanded(prev => { const next = new Set(prev); next.delete(g.id); return next; });
+      };
+
+      const handleScoreSave = async () => {
+        if (!onSaveScore) return;
+        if (score.home === '' || score.away === '') {
+          setScoreErrors(prev => ({ ...prev, [g.id]: 'Both scores are required.' }));
+          return;
+        }
+        setScoreSaving(prev => new Set(prev).add(g.id));
+        setScoreErrors(prev => { const n = { ...prev }; delete n[g.id]; return n; });
+        try {
+          await onSaveScore(g.id, Number(score.home), Number(score.away));
+          setScoreState(prev => { const n = { ...prev }; delete n[g.id]; return n; });
+          setExpanded(prev => { const next = new Set(prev); next.delete(g.id); return next; });
+        } catch (err: unknown) {
+          const msg = err instanceof Error ? err.message : 'Save failed — please try again.';
+          setScoreErrors(prev => ({ ...prev, [g.id]: msg }));
+        } finally {
+          setScoreSaving(prev => { const next = new Set(prev); next.delete(g.id); return next; });
+        }
+      };
+
       return (
-        <div key={g.id} className={`${s.row} ${isExpanded ? styles.expanded : ''}`}>
-          <div className={s.rowMain} onClick={() => toggleExpand(g.id, g)} style={{ cursor: 'pointer', gap: '1rem' }}>
+        <div key={g.id} className={s.row}>
+          {/* ── Compact row — scores always visible inline with team names ── */}
+          <div className={s.rowMain} style={{ gap: '1rem' }}>
             {/* Date + Time */}
-            <div style={{ flex: '0 0 120px' }}>
+            <div style={{ flex: '0 0 130px' }}>
               <div style={{ fontFamily: 'var(--font-data)', fontWeight: 700, fontSize: '0.8rem', color: 'var(--fl-text)', letterSpacing: '0.01em' }}>
                 {g.date ? formatDate(g.date) : 'TBD'}
               </div>
@@ -130,91 +186,136 @@ export default function GameList({
                 {g.time ? formatTime(g.time) : '—'}
               </div>
             </div>
-            {/* Location */}
-            <div style={{ flex: '0 0 140px', overflow: 'hidden' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.72rem', color: 'var(--data-gray)', fontFamily: 'var(--font-data)' }}>
-                <MapPin size={11} style={{ flexShrink: 0 }} />
-                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+
+            {/* Location — wider column, 2-line wrap */}
+            <div style={{ flex: '0 0 180px', overflow: 'hidden' }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '4px', fontSize: '0.72rem', color: 'var(--data-gray)', fontFamily: 'var(--font-data)' }}>
+                <MapPin size={11} style={{ flexShrink: 0, marginTop: '2px' }} />
+                <span style={{ overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', lineHeight: '1.35' }}>
                   {g.diamondId ? getDiamondName(g.diamondId) : (g.location || 'TBD')}
                 </span>
               </div>
             </div>
-            {/* Teams */}
+
+            {/* Matchup — symmetric: [W/L · score · Away]  VS  [Home · score · W/L] */}
             <div style={{ flex: '2 1 0', minWidth: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem' }}>
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', flex: 1, minWidth: 0, overflow: 'hidden' }}>
-                <div style={{ fontFamily: 'var(--font-data)', fontSize: '0.85rem', fontWeight: 700, color: hasScoredResult && (g.awayScore ?? 0) > (g.homeScore ?? 0) ? 'var(--white)' : 'var(--fl-text)', textAlign: 'right', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%' }}>
-                  {resolveTeam(g.awayTeamId, g.awayPlaceholder)}
-                </div>
-                {hasScoredResult && (
-                  <div style={{ marginTop: '3px', fontSize: '0.75rem', fontWeight: 900, color: (g.awayScore ?? 0) > (g.homeScore ?? 0) ? 'var(--success)' : (g.awayScore === g.homeScore) ? 'var(--warning)' : 'var(--danger)', fontFamily: 'var(--font-data)', letterSpacing: '0.05em' }}>
-                    {(g.awayScore ?? 0) > (g.homeScore ?? 0) ? 'W' : (g.awayScore === g.homeScore) ? 'T' : 'L'} {g.awayScore}
-                  </div>
+
+              {/* Away side — right-aligned: W/L · score/input · team name */}
+              <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '0.5rem', minWidth: 0 }}>
+                {/* W/L indicator — outer left, only in view mode */}
+                {hasScoredResult && !isExpanded && (
+                  <span style={{ fontFamily: 'var(--font-data)', fontSize: '1rem', fontWeight: 900, flexShrink: 0, color: awayWon ? 'var(--success)' : isTie ? 'var(--warning)' : 'rgba(var(--danger-rgb), 0.6)' }}>
+                    {awayWon ? 'W' : isTie ? 'T' : 'L'}
+                  </span>
                 )}
+                {/* Score or input */}
+                {isExpanded ? (
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    value={score.away}
+                    onChange={e => { const v = e.target.value; if (v === '' || /^\d+$/.test(v)) setScoreState(prev => ({ ...prev, [g.id]: { ...prev[g.id], away: v } })); }}
+                    className={styles.scoreInlineInput}
+                    placeholder="0"
+                    autoFocus
+                  />
+                ) : hasScoredResult ? (
+                  <span className={styles.scoreInlineValue} style={{ color: awayWon ? 'var(--success)' : isTie ? 'var(--warning)' : 'rgba(var(--danger-rgb), 0.65)' }}>
+                    {g.awayScore}
+                  </span>
+                ) : null}
+                {/* Team name */}
+                <span style={{ fontFamily: 'var(--font-data)', fontSize: '0.85rem', fontWeight: 700, color: 'var(--fl-text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  {resolveTeam(g.awayTeamId, g.awayPlaceholder)}
+                </span>
               </div>
+
               <div style={{ color: 'var(--white-30)', fontFamily: 'var(--font-data)', fontWeight: 900, fontSize: '0.6rem', letterSpacing: '0.12em', flexShrink: 0 }}>VS</div>
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', flex: 1, minWidth: 0, overflow: 'hidden' }}>
-                <div style={{ fontFamily: 'var(--font-data)', fontSize: '0.85rem', fontWeight: 700, color: hasScoredResult && (g.homeScore ?? 0) > (g.awayScore ?? 0) ? 'var(--white)' : 'var(--fl-text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%' }}>
+
+              {/* Home side — left-aligned: team name · score/input · W/L */}
+              <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: '0.5rem', minWidth: 0 }}>
+                {/* Team name */}
+                <span style={{ fontFamily: 'var(--font-data)', fontSize: '0.85rem', fontWeight: 700, color: 'var(--fl-text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                   {resolveTeam(g.homeTeamId, g.homePlaceholder)}
-                </div>
-                {hasScoredResult && (
-                  <div style={{ marginTop: '3px', fontSize: '0.75rem', fontWeight: 900, color: (g.homeScore ?? 0) > (g.awayScore ?? 0) ? 'var(--success)' : (g.homeScore === g.awayScore) ? 'var(--warning)' : 'var(--danger)', fontFamily: 'var(--font-data)', letterSpacing: '0.05em' }}>
-                    {(g.homeScore ?? 0) > (g.awayScore ?? 0) ? 'W' : (g.homeScore === g.awayScore) ? 'T' : 'L'} {g.homeScore}
-                  </div>
+                </span>
+                {/* Score or input */}
+                {isExpanded ? (
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    value={score.home}
+                    onChange={e => { const v = e.target.value; if (v === '' || /^\d+$/.test(v)) setScoreState(prev => ({ ...prev, [g.id]: { ...prev[g.id], home: v } })); }}
+                    className={styles.scoreInlineInput}
+                    placeholder="0"
+                  />
+                ) : hasScoredResult ? (
+                  <span className={styles.scoreInlineValue} style={{ color: homeWon ? 'var(--success)' : isTie ? 'var(--warning)' : 'rgba(var(--danger-rgb), 0.65)' }}>
+                    {g.homeScore}
+                  </span>
+                ) : null}
+                {/* W/L indicator — outer right, only in view mode */}
+                {hasScoredResult && !isExpanded && (
+                  <span style={{ fontFamily: 'var(--font-data)', fontSize: '1rem', fontWeight: 900, flexShrink: 0, color: homeWon ? 'var(--success)' : isTie ? 'var(--warning)' : 'rgba(var(--danger-rgb), 0.6)' }}>
+                    {homeWon ? 'W' : isTie ? 'T' : 'L'}
+                  </span>
                 )}
               </div>
             </div>
-            {/* Scoring actions */}
-            <div className="flex justify-end items-center gap-2">
+
+            {/* Right rail — status badge · Finalize · Edit pencil (fixed-width slots) */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexShrink: 0 }}>
               {(g.homeSlotId || g.awaySlotId) && !g.isPlayoff && (
-                <span className="badge badge-neutral" style={{ fontSize: '0.65rem', letterSpacing: '0.05em', flexShrink: 0 }}>SLOT</span>
+                <span className="badge badge-neutral" style={{ fontSize: '0.65rem', letterSpacing: '0.05em' }}>SLOT</span>
               )}
-              <div className="flex items-center gap-2">
-                {onScore && (
-                  <button className="btn btn-primary btn-sm" onClick={(e) => { e.stopPropagation(); onScore(g); }} title={g.status === 'completed' ? 'Edit Score' : g.status === 'submitted' ? 'Edit Submitted Score' : 'Enter Score'} style={{ padding: '8px', borderRadius: '2px', width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <Trophy size={16} />
-                  </button>
-                )}
-                {onFinalize && g.status === 'submitted' && (
-                  <button className="btn btn-success btn-sm" onClick={(e) => { e.stopPropagation(); onFinalize(g.id); }} title="Finalize Score" style={{ fontSize: '0.7rem', padding: '4px 8px' }}>
+              <div style={{ width: 80, display: 'flex', justifyContent: 'flex-end' }}>{statusBadge(g.status)}</div>
+              {/* Finalize — quick-access, no edit required */}
+              <div style={{ width: 70, display: 'flex', justifyContent: 'center' }}>
+                {!isExpanded && onFinalize && g.status === 'submitted' && (
+                  <button className="btn btn-success btn-data" onClick={e => { e.stopPropagation(); onFinalize(g.id); }}>
                     Finalize
                   </button>
                 )}
-                <div style={{ width: '90px', display: 'flex', justifyContent: 'center' }}>{statusBadge(g.status)}</div>
+              </div>
+              {/* Pencil — only visible when not editing */}
+              <div style={{ width: 28, display: 'flex', justifyContent: 'center' }}>
+                {!isExpanded && (
+                  <button
+                    className={s.iconBtn}
+                    title={hasExistingScore ? 'Edit score' : 'Enter score'}
+                    onClick={e => { e.stopPropagation(); toggleExpand(g.id, g); }}
+                  >
+                    <Pencil size={14} />
+                  </button>
+                )}
               </div>
             </div>
-            <div style={{ width: 24, textAlign: 'right' }}>
-              <button className={s.iconBtn}>{isExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}</button>
-            </div>
           </div>
+
+          {/* ── Slim action bar — only while editing ── */}
           {isExpanded && (
-            <div className={s.expandedRow}>
-              <div className={s.expandedContent}>
-                <div className={s.expandedInfo}>
-                  <div className="flex flex-col gap-3">
-                    <div className="flex flex-col gap-1">
-                      <span className="text-label" style={{ fontSize: '0.65rem' }}>Notes</span>
-                      <p className="text-sm text-white-60 mt-1">{g.notes || '—'}</p>
-                    </div>
-                    {scoreAuditSummary && (
-                      <div className="flex flex-col gap-1">
-                        <span className="text-label" style={{ fontSize: '0.65rem' }}>Score submission</span>
-                        <p className="text-sm text-white-60 mt-1">{scoreAuditSummary}</p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-                <div className={s.expandedActions}>
-                  <div className="flex gap-2">
-                    {onEdit && <button className="btn btn-ghost btn-sm" onClick={() => onEdit(g)} title="Edit Details"><Pencil size={14} /></button>}
-                    {g.status === 'scheduled' && onCancel && (
-                      <button className="btn btn-ghost btn-sm text-danger" onClick={() => onCancel(g.id)} title="Cancel Game"><X size={14} /></button>
-                    )}
-                    {g.status === 'cancelled' && onSchedule && (
-                      <button className="btn btn-ghost btn-sm" onClick={() => onSchedule(g.id)} title="Revert to Scheduled"><AlertCircle size={14} /></button>
-                    )}
-                    {onDelete && <button className="btn btn-danger btn-sm" onClick={() => onDelete(g.id)} title="Delete Game"><Trash2 size={14} /></button>}
-                  </div>
-                </div>
+            <div className={styles.scoreActionBar}>
+              <div className={styles.scoreActionBarLeft}>
+                {hasExistingScore && onSchedule && (
+                  <button className="btn btn-ghost btn-data" style={{ color: 'rgba(var(--warning-rgb), 0.8)', flexShrink: 0 }} onClick={e => { e.stopPropagation(); onSchedule(g.id); }}>
+                    <X size={13} /> Revert Score
+                  </button>
+                )}
+                {hasExistingScore && scoreAuditSummary && (
+                  <span className={styles.scoreActionBarAudit}>{scoreAuditSummary}</span>
+                )}
+                {scoreErrors[g.id] && (
+                  <span className={styles.saveError}>{scoreErrors[g.id]}</span>
+                )}
+              </div>
+              <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center', flexShrink: 0 }}>
+                <button className="btn btn-ghost btn-data" onClick={handleScoreDiscard}>Discard</button>
+                <button
+                  className="btn btn-lime btn-data"
+                  disabled={isScoringBusy || !onSaveScore}
+                  onClick={handleScoreSave}
+                >
+                  {isScoringBusy ? 'Saving…' : <><Check size={13} /> Save Result</>}
+                </button>
               </div>
             </div>
           )}
@@ -268,7 +369,7 @@ export default function GameList({
           style={{ cursor: isCompleted ? 'default' : 'pointer', gap: '1rem' }}
         >
           {/* Date + Time — single line */}
-          <div style={{ flex: '0 0 150px', fontFamily: 'var(--font-data)', whiteSpace: 'nowrap', overflow: 'hidden' }}>
+          <div style={{ flex: '0 0 130px', fontFamily: 'var(--font-data)', whiteSpace: 'nowrap', overflow: 'hidden' }}>
             <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--fl-text)' }}>
               {g.date ? formatShortDate(g.date) : 'TBD'}
             </span>
@@ -277,10 +378,10 @@ export default function GameList({
             </span>
           </div>
 
-          {/* Location */}
-          <div style={{ flex: '0 0 130px', display: 'flex', alignItems: 'center', gap: '4px', overflow: 'hidden', fontFamily: 'var(--font-data)', fontSize: '0.72rem', color: 'var(--data-gray)' }}>
-            <MapPin size={11} style={{ flexShrink: 0, opacity: 0.55 }} />
-            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          {/* Location — wider column, 2-line wrap */}
+          <div style={{ flex: '0 0 180px', display: 'flex', alignItems: 'flex-start', gap: '4px', overflow: 'hidden', fontFamily: 'var(--font-data)', fontSize: '0.72rem', color: 'var(--data-gray)' }}>
+            <MapPin size={11} style={{ flexShrink: 0, opacity: 0.55, marginTop: '2px' }} />
+            <span style={{ overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', lineHeight: '1.35' }}>
               {g.diamondId ? getDiamondName(g.diamondId) : (g.location || '—')}
             </span>
           </div>
@@ -363,15 +464,15 @@ export default function GameList({
                   <option value="__create__">＋ Add venue…</option>
                 </select>
               </div>
-              {/* Home / Away Teams — only shown for direct-team games (not slot-based) */}
+              {/* Away / Home Teams — order matches row display (away left, home right) */}
               {!g.homeSlotId && !g.awaySlotId && (
                 <div className={styles.formFieldFull} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                   <div className={styles.formField}>
-                    <label className={styles.formLabel}>Home Team</label>
+                    <label className={styles.formLabel}>Away Team</label>
                     <select
                       className={styles.formSelect}
-                      value={edit.homeTeamId}
-                      onChange={e => setEditState(prev => ({ ...prev, [g.id]: { ...prev[g.id], homeTeamId: e.target.value } }))}
+                      value={edit.awayTeamId}
+                      onChange={e => setEditState(prev => ({ ...prev, [g.id]: { ...prev[g.id], awayTeamId: e.target.value } }))}
                     >
                       <option value="">— TBD —</option>
                       {teams.filter(t => t.ageGroupId === g.ageGroupId).map(t => (
@@ -380,11 +481,11 @@ export default function GameList({
                     </select>
                   </div>
                   <div className={styles.formField}>
-                    <label className={styles.formLabel}>Away Team</label>
+                    <label className={styles.formLabel}>Home Team</label>
                     <select
                       className={styles.formSelect}
-                      value={edit.awayTeamId}
-                      onChange={e => setEditState(prev => ({ ...prev, [g.id]: { ...prev[g.id], awayTeamId: e.target.value } }))}
+                      value={edit.homeTeamId}
+                      onChange={e => setEditState(prev => ({ ...prev, [g.id]: { ...prev[g.id], homeTeamId: e.target.value } }))}
                     >
                       <option value="">— TBD —</option>
                       {teams.filter(t => t.ageGroupId === g.ageGroupId).map(t => (
@@ -457,8 +558,8 @@ export default function GameList({
   return (
     <div className={s.flatList}>
       <div className={s.tableHeader} style={{ gap: '1rem' }}>
-        <div style={{ flex: '0 0 150px' }}>Date</div>
-        <div style={{ flex: '0 0 130px' }}>Location</div>
+        <div style={{ flex: '0 0 130px' }}>Date</div>
+        <div style={{ flex: '0 0 180px' }}>Location</div>
         <div style={{ flex: '2 1 0', textAlign: 'center' }}>Matchup</div>
         <div style={{ flex: '0 0 96px' }} />
         <div style={{ flex: '0 0 28px' }} />

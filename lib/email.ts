@@ -698,3 +698,24 @@ export function billingRetentionWarningHtml(p: {
     <a href="${p.retentionUrl}" style="display:inline-block;background:#1E3A8A;color:#fff;padding:0.75rem 1.75rem;border-radius:2px;text-decoration:none;font-weight:700;font-size:0.82rem;letter-spacing:0.06em;">Review Subscription</a>
   `);
 }
+
+export function trialEndingHtml(p: {
+  orgName: string;
+  planLabel: string;
+  trialEndDate: string;
+  billingUrl: string;
+}) {
+  return wrap(`
+    <h2 style="color:#F1F5F9;font-size:1.3rem;font-weight:700;margin:0 0 1rem;">Your trial ends soon</h2>
+    <p style="margin:0 0 1rem;">Your FieldLogicHQ <strong>${p.planLabel}</strong> trial for <strong>${p.orgName}</strong> ends on <strong>${p.trialEndDate}</strong>.</p>
+    <div style="background:#0F172A;border:1px solid rgba(30,58,138,0.25);border-left:3px solid rgba(30,58,138,0.5);padding:1.25rem;margin:1.5rem 0;">
+      <p style="margin:0 0 0.5rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#D9F99D;">What happens next</p>
+      <p style="margin:0;line-height:1.75;color:rgba(241,245,249,0.8);">
+        Your payment method on file will be charged automatically when the trial expires.<br>
+        No action is needed if you'd like to continue.
+      </p>
+    </div>
+    <p style="color:rgba(241,245,249,0.7);margin:0 0 1.5rem;">To update your payment method or review your plan before the trial ends, visit your billing settings.</p>
+    <a href="${p.billingUrl}" style="display:inline-block;background:#D9F99D;color:#0b0f14;padding:0.75rem 1.75rem;border-radius:2px;text-decoration:none;font-weight:800;font-size:0.82rem;letter-spacing:0.06em;">Manage Billing &rarr;</a>
+  `);
+}

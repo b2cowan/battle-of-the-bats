@@ -405,7 +405,9 @@ export default function BillingPage() {
   const usageLimit     = currentOrg.tournamentLimit;
   const usagePct       = usageLimit >= 9999 ? 0 : Math.min(100, Math.round((usageCount / usageLimit) * 100));
   const upgradePlans   = PLAN_ORDER.filter(p => PLAN_ORDER.indexOf(p) > PLAN_ORDER.indexOf(currentPlanKey));
-  const downgradePlans = PLAN_ORDER.filter(p => PLAN_ORDER.indexOf(p) < PLAN_ORDER.indexOf(currentPlanKey));
+  const downgradePlans = PLAN_ORDER.filter(p =>
+    p !== 'team' && PLAN_ORDER.indexOf(p) < PLAN_ORDER.indexOf(currentPlanKey)
+  );
   const hasPaidPlan    = currentPlanKey !== 'tournament';
   const canManageBilling = userRole === 'owner';
   const isTeamWorkspaceBilling = currentOrg.accountKind === 'team_workspace' || currentPlanKey === 'team';
