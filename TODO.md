@@ -7,7 +7,7 @@ This file tracks the ongoing tasks for the FieldLogicHQ platform (multi-tenant s
 
 - [x] **Tournament contact model refactor** — contacts table retired, staff member FKs in place, notify_mode routing live, Event Settings promoted to sidebar, member title field added, removal impact warning wired; migrations 088–090 applied dev + prod (see [plan](docs/active/TOURNAMENT_CONTACT_REFACTOR_PLAN.md) and [PM brief](docs/active/TOURNAMENT_CONTACT_REFACTOR_PM_BRIEF.md))
   - [x] Unified sign-in/context switcher foundation: `/home`, shared context resolver, `/auth/select-org` compatibility redirect, and same-org Coaches Portal shortcut scoping
-- [x] **Tournament Coach Portal** — authenticated coach accounts at registration, now routed through `/coaches/join` and `/coaches/tournaments` with legacy `/my` redirects, auth-destination routing, resend-access admin action, and workspace invite removed (see [plan](docs/active/TOURNAMENT_COACH_PORTAL_PLAN.md) and [PM brief](docs/active/TOURNAMENT_COACH_PORTAL_PM_BRIEF.md))
+- [x] **Tournament Coach Portal** — authenticated coach accounts at registration, now routed through `/coaches/join` and `/coaches/tournaments` with legacy `/my` redirects, auth-destination routing, resend-access admin action, and workspace invite removed (see [plan](docs/archive/TOURNAMENT_COACH_PORTAL_PLAN.md) and [PM brief](docs/archive/TOURNAMENT_COACH_PORTAL_PM_BRIEF.md))
 - [ ] **Venue Hierarchy & Org Library** — two-tier venues (Venue → Facilities), Facility Type dropdown, org venue library for League/Club plans, import-from-library into tournaments, import-from-past for Tournament/Plus; migrations 094–096 (see [plan](docs/active/VENUE_HIERARCHY_PLAN.md))
 - [ ] **Rules & Resources UX improvements** — custom modals, inline add-section, Browse Samples drawer, public page suppression (see [plan](docs/active/RULES_PAGE_UX_IMPROVEMENTS_PLAN.md) and [PM brief](docs/active/RULES_PAGE_UX_IMPROVEMENTS_PM_BRIEF.md))
   - [x] Phase 1 — Custom confirmation modals (delete section, delete resource)
@@ -32,7 +32,7 @@ This file tracks the ongoing tasks for the FieldLogicHQ platform (multi-tenant s
 - [ ] **Brand Strategy** — umbrella positioning, four segment profiles, site architecture, Coach Portal bridge messaging (see [BRAND_STRATEGY.md](docs/active/BRAND_STRATEGY.md))
 - [ ] **Persona landing pages** — build `/for-tournament-organizers`, `/for-leagues`, `/for-clubs`, `/for-coaches` segment pages per brand strategy site architecture
 - [ ] **Homepage persona routing** — update hero section with four-path self-selection above the fold
-- [x] **Pricing page copy** - approved copy applied to `app/pricing/page.tsx`; canonical record in `docs/active/PRICING_PAGE_COPY.md`, with Coaches Portal unification tracked in the unified plan
+- [x] **Pricing page copy** - approved copy applied to `app/pricing/page.tsx`; canonical record in `docs/archive/PRICING_PAGE_COPY.md`, with Coaches Portal unification tracked in the unified plan
 
 ---
 
@@ -394,7 +394,7 @@ This file tracks the ongoing tasks for the FieldLogicHQ platform (multi-tenant s
 - [x] Moved all tournament operational pages from `admin/{page}` to `admin/tournaments/{page}` — matches module URL pattern used by house-league, rep-teams, and accounting
 
 ### Role-Based UX Improvement Review — Phases 1–5
-*(see [UX_REVIEW_PLAN.md](docs/active/UX_REVIEW_PLAN.md))*
+*(see [UX_REVIEW_PLAN.md](docs/archive/UX_REVIEW_PLAN.md))*
 
 **Phase 1 — Critical bugs & multi-tenancy**
 - [x] **1A** — Replace default `/{orgSlug}` page: FieldLogicHQ-branded placeholder (no public site), tournament selector for 2+ active tournaments
