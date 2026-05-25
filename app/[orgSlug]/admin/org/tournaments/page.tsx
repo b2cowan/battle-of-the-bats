@@ -101,7 +101,7 @@ function mapAdminTournament(row: AdminTournamentRow): Tournament {
     startDate: row.start_date ?? undefined,
     endDate: row.end_date ?? undefined,
     contactEmail: row.contact_email ?? undefined,
-    feeScheduleMode: (row.fee_schedule_mode as 'tournament' | 'age_group') ?? 'tournament',
+    feeScheduleMode: (row.fee_schedule_mode as 'tournament' | 'division') ?? 'tournament',
     depositAmount: row.deposit_amount ?? null,
     depositDueDate: row.deposit_due_date ?? null,
     totalFeeAmount: row.total_fee_amount ?? null,
@@ -162,7 +162,7 @@ export default function AdminTournamentsPage({
     endDate: '',
   });
   const [feeForm, setFeeForm] = useState({
-    feeScheduleMode: 'tournament' as 'tournament' | 'age_group',
+    feeScheduleMode: 'tournament' as 'tournament' | 'division',
     depositAmount: '',
     depositDueDate: '',
     totalFeeAmount: '',
@@ -476,16 +476,16 @@ export default function AdminTournamentsPage({
   async function handleSetStatus(tournament: Tournament, status: TournamentStatus) {
     if (status === 'active') {
       const orgParam = currentOrg?.slug ? `&orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
-      const agRes = await fetch(`/api/admin/age-groups?tournamentId=${encodeURIComponent(tournament.id)}${orgParam}`);
-      const ageGroups: any[] = agRes.ok ? await agRes.json() : [];
+      const agRes = await fetch(`/api/admin/divisions?tournamentId=${encodeURIComponent(tournament.id)}${orgParam}`);
+      const divisions: any[] = agRes.ok ? await agRes.json() : [];
       const blockers: string[] = [];
       const reminders: string[] = [];
 
       if (!tournament.startDate || !tournament.endDate) blockers.push('Add tournament start and end dates.');
-      if (ageGroups.length === 0) blockers.push('Add at least one division.');
+      if (divisions.length === 0) blockers.push('Add at least one division.');
       if (!tournament.contactEmail && !currentOrg?.contactEmail) blockers.push('Add a public contact email.');
-      if (ageGroups.length > 0 && ageGroups.every(g => g.isClosed)) blockers.push('Open at least one division for registration.');
-      if (ageGroups.some(g => !g.capacity)) reminders.push('Review division capacities.');
+      if (divisions.length > 0 && divisions.every(g => g.isClosed)) blockers.push('Open at least one division for registration.');
+      if (divisions.some(g => !g.capacity)) reminders.push('Review division capacities.');
 
       if (blockers.length > 0) {
         setFeedback({

@@ -4,16 +4,31 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { provisionStandaloneTeamWorkspace, TeamWorkspaceProvisioningError } from '@/lib/team-workspace-provisioning';
 
 const DEV_TEAM_WORKSPACE_SLUG = 'dev-standalone-team';
+const STANDALONE_OWNER_EMAIL  = 'standalone-owner@dev.local';
+const DEV_PASSWORD             = 'devpass123';
 
-async function findSeedOwner(fallbackUserId: string, fallbackEmail: string | null | undefined) {
+async function findOrCreateSeedOwner() {
   const { data } = await supabaseAdmin.auth.admin.listUsers();
-  const coach = data?.users.find(user => user.email?.toLowerCase() === 'coach@dev.local');
 
-  return {
-    userId: coach?.id ?? fallbackUserId,
-    email: coach?.email ?? fallbackEmail ?? null,
-    usedCoachSeed: Boolean(coach),
-  };
+  // Prefer coach@dev.local if the User Set has been seeded
+  const coach = data?.users.find(u => u.email?.toLowerCase() === 'coach@dev.local');
+  if (coach) {
+    return { userId: coach.id, email: coach.email ?? STANDALONE_OWNER_EMAIL, source: 'coach@dev.local' };
+  }
+
+  // Fall back to a dedicated synthetic owner — never use the real platform admin account
+  let owner = data?.users.find(u => u.email?.toLowerCase() === STANDALONE_OWNER_EMAIL);
+  if (!owner) {
+    const { data: created, error } = await supabaseAdmin.auth.admin.createUser({
+      email:         STANDALONE_OWNER_EMAIL,
+      password:      DEV_PASSWORD,
+      email_confirm: true,
+    });
+    if (error) throw new Error(`Failed to create standalone owner: ${error.message}`);
+    owner = created.user;
+  }
+
+  return { userId: owner.id, email: STANDALONE_OWNER_EMAIL, source: STANDALONE_OWNER_EMAIL };
 }
 
 export async function POST() {
@@ -21,6 +36,7 @@ export async function POST() {
   if (auth.response) return auth.response;
 
   const log: string[] = [];
+  let owner: { userId: string; email: string; source: string };
 
   const { data: existingOrg, error: existingError } = await supabaseAdmin
     .from('organizations')
@@ -53,10 +69,14 @@ export async function POST() {
     });
   }
 
-  const owner = await findSeedOwner(auth.user.id, auth.user.email);
-  log.push(owner.usedCoachSeed
+  try {
+    owner = await findOrCreateSeedOwner();
+  } catch (e) {
+    return NextResponse.json({ error: (e as Error).message, log }, { status: 500 });
+  }
+  log.push(owner.source === 'coach@dev.local'
     ? 'Using coach@dev.local as standalone Team owner'
-    : 'coach@dev.local not found - using current platform admin as standalone Team owner');
+    : `Using ${owner.source} as standalone Team owner (seed User Set to use coach@dev.local instead)`);
 
   try {
     const result = await provisionStandaloneTeamWorkspace({
@@ -67,7 +87,7 @@ export async function POST() {
       teamName: 'Dev Standalone U13 Bats',
       teamSlug: 'dev-standalone-u13-bats',
       sport: 'softball',
-      ageGroup: 'U13',
+      division: 'U13',
       seasonName: `${new Date().getFullYear()} Dev Standalone Season`,
       seasonYear: new Date().getFullYear(),
       source: 'platform_admin',

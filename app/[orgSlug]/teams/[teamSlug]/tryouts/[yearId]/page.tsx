@@ -76,9 +76,9 @@ export default async function TryoutLandingPage({
           >
             {programYear.name} Tryouts
           </h1>
-          {team.ageGroup && (
+          {team.division && (
             <div style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.5)', marginTop: '0.25rem' }}>
-              {team.ageGroup}
+              {team.division}
             </div>
           )}
         </div>

@@ -7,7 +7,7 @@ function mapSlot(s: any, teamNames = new Map<string, string>()) {
     id: s.id,
     poolId: s.pool_id,
     tournamentId: s.tournament_id,
-    ageGroupId: s.age_group_id,
+    divisionId: s.division_id,
     slotNumber: s.slot_number,
     displayName: s.display_name,
     teamId: s.team_id ?? null,
@@ -35,7 +35,7 @@ export async function GET(req: Request) {
   if (!ctx) return unauthorized();
 
   const tournamentId = url.searchParams.get('tournamentId');
-  const ageGroupId = url.searchParams.get('ageGroupId');
+  const divisionId = url.searchParams.get('divisionId');
 
   if (!tournamentId) return new Response(JSON.stringify([]), { status: 200, headers: { 'Content-Type': 'application/json' } });
 
@@ -48,7 +48,7 @@ export async function GET(req: Request) {
     .eq('tournament_id', tournamentId)
     .order('slot_number', { ascending: true });
 
-  if (ageGroupId) query = query.eq('age_group_id', ageGroupId);
+  if (divisionId) query = query.eq('division_id', divisionId);
 
   const { data, error } = await query;
   if (error) return new Response(JSON.stringify({ error: error.message }), { status: 500, headers: { 'Content-Type': 'application/json' } });
@@ -75,12 +75,12 @@ export async function POST(req: Request) {
 
     // ── ensure ────────────────────────────────────────────────────────────────
     // Creates missing slot records for each requested pool. Idempotent.
-    // Body: { action, tournamentId, ageGroupId, pools: [{ poolId, slotCount, namePrefix }] }
+    // Body: { action, tournamentId, divisionId, pools: [{ poolId, slotCount, namePrefix }] }
     // Returns: { slots: PoolSlot[] }
     if (action === 'ensure') {
-      const { tournamentId, ageGroupId, pools } = body as {
+      const { tournamentId, divisionId, pools } = body as {
         tournamentId: string;
-        ageGroupId: string;
+        divisionId: string;
         pools: { poolId: string; slotCount: number; namePrefix: string }[];
       };
 
@@ -105,7 +105,7 @@ export async function POST(req: Request) {
             toInsert.push({
               pool_id: poolId,
               tournament_id: tournamentId,
-              age_group_id: ageGroupId,
+              division_id: divisionId,
               slot_number: n,
               display_name: `${namePrefix} Team ${n}`,
             });
@@ -136,12 +136,12 @@ export async function POST(req: Request) {
     // ── sync-capacity ─────────────────────────────────────────────────────────
     // Brings each pool's slot count into line with slotCount.
     // Inserts missing slots; removes empty slots above slotCount; never deletes filled slots.
-    // Body: { action, tournamentId, ageGroupId, pools: [{ poolId, slotCount, namePrefix }] }
+    // Body: { action, tournamentId, divisionId, pools: [{ poolId, slotCount, namePrefix }] }
     // Returns: { slots: PoolSlot[], warnings: string[] }
     if (action === 'sync-capacity') {
-      const { tournamentId, ageGroupId, pools } = body as {
+      const { tournamentId, divisionId, pools } = body as {
         tournamentId: string;
-        ageGroupId: string;
+        divisionId: string;
         pools: { poolId: string; slotCount: number; namePrefix: string }[];
       };
 
@@ -167,7 +167,7 @@ export async function POST(req: Request) {
             toInsert.push({
               pool_id:       poolId,
               tournament_id: tournamentId,
-              age_group_id:  ageGroupId,
+              division_id:  divisionId,
               slot_number:   n,
               display_name:  namePrefix ? `${namePrefix} Team ${n}` : `Team ${n}`,
             });

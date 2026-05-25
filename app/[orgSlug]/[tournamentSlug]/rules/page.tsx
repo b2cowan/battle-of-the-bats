@@ -1,16 +1,16 @@
 import { cookies } from 'next/headers';
 import { BookOpen, FileText, Shield, AlertCircle, CheckCircle, Download, ExternalLink } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
-import { getOrganizationBySlug, getPublicTournamentBySlug, getRules, getResources, getAgeGroups } from '@/lib/db';
+import { getOrganizationBySlug, getPublicTournamentBySlug, getRules, getResources, getDivisions } from '@/lib/db';
 import { notFound } from 'next/navigation';
 import { isPublicPageEnabled } from '@/lib/public-pages';
-import type { AgeGroup, Resource, RuleSection } from '@/lib/types';
+import type { Division, Resource, RuleSection } from '@/lib/types';
 import DivisionFilterBar from '@/components/DivisionFilterBar';
 import styles from '../../rules/rules.module.css';
 
 export const dynamic = 'force-dynamic';
 
-type DisplayRuleSection = Pick<RuleSection, 'title' | 'icon' | 'ageGroupIds'> & {
+type DisplayRuleSection = Pick<RuleSection, 'title' | 'icon' | 'divisionIds'> & {
   items: Array<{ content: string }>;
 };
 type DisplayResource = Pick<Resource, 'label' | 'url'>;
@@ -41,13 +41,13 @@ export default async function RulesPage({
 
   let allRules: RuleSection[] = [];
   let resources: Resource[] = [];
-  let ageGroups: AgeGroup[] = [];
+  let divisions: Division[] = [];
 
   if (tournament) {
-    [allRules, resources, ageGroups] = await Promise.all([
+    [allRules, resources, divisions] = await Promise.all([
       getRules(tournament.id, { admin: true }),
       getResources(tournament.id, { admin: true }),
-      getAgeGroups(tournament.id, { admin: true }),
+      getDivisions(tournament.id, { admin: true }),
     ]);
   }
 
@@ -55,12 +55,12 @@ export default async function RulesPage({
   const hasResources = resources.length > 0;
   const hasContent   = hasRules || hasResources;
 
-  const preferredGroup = prefName ? ageGroups.find(g => g.name === prefName) : null;
-  const hasTaggedContent = allRules.some(r => r.ageGroupIds?.length);
+  const preferredGroup = prefName ? divisions.find(g => g.name === prefName) : null;
+  const hasTaggedContent = allRules.some(r => r.divisionIds?.length);
   const isFiltering = !!preferredGroup && view !== 'all' && hasTaggedContent;
 
   const displayRules: DisplayRuleSection[] = isFiltering
-    ? allRules.filter(r => !r.ageGroupIds?.length || r.ageGroupIds.includes(preferredGroup!.id))
+    ? allRules.filter(r => !r.divisionIds?.length || r.divisionIds.includes(preferredGroup!.id))
     : allRules;
 
   const contactEmail = tournament?.contactEmail ?? org?.contactEmail ?? null;
@@ -92,10 +92,10 @@ export default async function RulesPage({
 
           {hasRules && (
             <>
-              {hasTaggedContent && prefName && ageGroups.length > 0 && (
+              {hasTaggedContent && prefName && divisions.length > 0 && (
                 <DivisionFilterBar
                   orgSlug={orgSlug}
-                  ageGroups={ageGroups}
+                  divisions={divisions}
                   activeName={prefName}
                   isFiltering={isFiltering}
                   viewAllHref={`/${orgSlug}/${tournamentSlug}/rules?view=all`}

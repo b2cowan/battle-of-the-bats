@@ -24,7 +24,7 @@ function mapRow(a: any): Communication {
     title: a.title,
     body: a.body,
     pinned: a.pinned ?? false,
-    ageGroupIds: a.age_group_ids ?? null,
+    divisionIds: a.division_ids ?? null,
     channelSite: a.channel_site ?? true,
     channelEmail: a.channel_email ?? false,
     emailTargeting: a.email_targeting ?? null,
@@ -43,7 +43,7 @@ type RecipientTargeting = {
   includeContacts?: boolean;
   teamStatuses?: string[];
   paymentStatuses?: string[];
-  ageGroupIds?: string[];
+  divisionIds?: string[];
   teamIds?: string[];
   contactRoles?: string[];
 };
@@ -56,12 +56,12 @@ async function resolveRecipients(tournamentId: string, targeting: RecipientTarge
     // Default: include teams
     const teamStatuses  = stringSet(targeting?.teamStatuses);
     const paymentStatuses = stringSet(targeting?.paymentStatuses);
-    const ageGroupIds   = stringSet(targeting?.ageGroupIds);
+    const divisionIds   = stringSet(targeting?.divisionIds);
     const teamIds       = stringSet(targeting?.teamIds);
 
     const { data: teams, error: teamsError } = await supabaseAdmin
       .from('teams')
-      .select('id, email, status, payment_status, age_group_id')
+      .select('id, email, status, payment_status, division_id')
       .eq('tournament_id', tournamentId);
 
     if (teamsError) throw teamsError;
@@ -72,7 +72,7 @@ async function resolveRecipients(tournamentId: string, targeting: RecipientTarge
         teamIds.size === 0 &&
         (teamStatuses.size === 0 || teamStatuses.has(team.status)) &&
         (paymentStatuses.size === 0 || paymentStatuses.has(team.payment_status ?? 'pending')) &&
-        (ageGroupIds.size === 0 || ageGroupIds.has(team.age_group_id));
+        (divisionIds.size === 0 || divisionIds.has(team.division_id));
 
       if (!selectedById && !selectedByFilters) continue;
       const email = normalizeEmail(team.email);
@@ -80,21 +80,7 @@ async function resolveRecipients(tournamentId: string, targeting: RecipientTarge
     }
   }
 
-  if (targeting?.includeContacts) {
-    const contactRoles = stringSet(targeting.contactRoles);
-    const { data: contacts, error: contactsError } = await supabaseAdmin
-      .from('contacts')
-      .select('email, role')
-      .eq('tournament_id', tournamentId);
-
-    if (contactsError) throw contactsError;
-
-    for (const contact of contacts ?? []) {
-      if (contactRoles.size > 0 && !contactRoles.has(contact.role)) continue;
-      const email = normalizeEmail(contact.email);
-      if (email && !recipientMap.has(email)) recipientMap.set(email, email);
-    }
-  }
+  // contacts table removed — includeContacts is a no-op; targeting by org member is not yet implemented
 
   return Array.from(recipientMap.keys());
 }
@@ -108,7 +94,7 @@ function usesAdvancedTargeting(targeting: RecipientTargeting | null): boolean {
 
   return Boolean(
     targeting.includeContacts ||
-    stringSet(targeting.ageGroupIds).size > 0 ||
+    stringSet(targeting.divisionIds).size > 0 ||
     stringSet(targeting.teamIds).size > 0 ||
     stringSet(targeting.contactRoles).size > 0 ||
     stringSet(targeting.paymentStatuses).size > 0 ||
@@ -168,8 +154,8 @@ export async function POST(req: Request) {
       }
 
       // Division-targeted site posts require T+
-      const hasAgeGroupFilter = Array.isArray(data.ageGroupIds) && data.ageGroupIds.length > 0;
-      if (hasAgeGroupFilter && !hasPlanFeature(ctx.org.planId, 'targeted_tournament_announcements')) {
+      const hasDivisionFilter = Array.isArray(data.divisionIds) && data.divisionIds.length > 0;
+      if (hasDivisionFilter && !hasPlanFeature(ctx.org.planId, 'targeted_tournament_announcements')) {
         return NextResponse.json({ error: requiresTournamentPlusCopy('targeted_tournament_announcements') }, { status: 403 });
       }
 
@@ -189,7 +175,7 @@ export async function POST(req: Request) {
           body:           data.body.trim(),
           published_at:   new Date().toISOString(),
           pinned:         Boolean(data.pinned),
-          age_group_ids:  hasAgeGroupFilter ? data.ageGroupIds : null,
+          division_ids:  hasDivisionFilter ? data.divisionIds : null,
           channel_site:   channelSite,
           channel_email:  channelEmail,
           email_targeting: channelEmail ? (targeting ?? null) : null,
@@ -302,12 +288,12 @@ export async function POST(req: Request) {
       if (data.title    !== undefined) updates.title          = String(data.title).trim();
       if (data.body     !== undefined) updates.body           = String(data.body).trim();
       if (data.pinned   !== undefined) updates.pinned         = Boolean(data.pinned);
-      if (data.ageGroupIds !== undefined) {
-        const hasFilter = Array.isArray(data.ageGroupIds) && data.ageGroupIds.length > 0;
+      if (data.divisionIds !== undefined) {
+        const hasFilter = Array.isArray(data.divisionIds) && data.divisionIds.length > 0;
         if (hasFilter && !hasPlanFeature(ctx.org.planId, 'targeted_tournament_announcements')) {
           return NextResponse.json({ error: requiresTournamentPlusCopy('targeted_tournament_announcements') }, { status: 403 });
         }
-        updates.age_group_ids = hasFilter ? data.ageGroupIds : null;
+        updates.division_ids = hasFilter ? data.divisionIds : null;
       }
 
       const { error: updateErr } = await supabaseAdmin

@@ -49,7 +49,7 @@ export async function GET(req: Request) {
   const games = (data ?? []).map((g: any) => ({
     id: g.id,
     tournamentId: g.tournament_id,
-    ageGroupId: g.age_group_id,
+    divisionId: g.division_id,
     homeTeamId: g.home_team_id,
     awayTeamId: g.away_team_id,
     date: g.game_date,
@@ -93,7 +93,7 @@ export async function POST(req: Request) {
     }
 
     const supabase = createClient(url, key);
-    const { action, games, tournamentId, ageGroupId } = await req.json();
+    const { action, games, tournamentId, divisionId } = await req.json();
 
     // Scope check: scoped users may only write to their assigned tournaments
     if (tournamentId) {
@@ -123,7 +123,7 @@ export async function POST(req: Request) {
 
       const rows = games.map((g: any) => ({
         tournament_id:    g.tournamentId,
-        age_group_id:     g.ageGroupId,
+        division_id:     g.divisionId,
         home_team_id:     g.homeTeamId   || null,
         away_team_id:     g.awayTeamId   || null,
         game_date:        g.date,
@@ -145,12 +145,12 @@ export async function POST(req: Request) {
       if (error) throw error;
     }
 
-    else if (action === 'delete-division-games' && ageGroupId) {
-      // Look up the age_group's tournament to scope-check before deleting
+    else if (action === 'delete-division-games' && divisionId) {
+      // Look up the division's tournament to scope-check before deleting
       const { data: ag } = await supabaseAdmin
-        .from('age_groups')
+        .from('divisions')
         .select('tournament_id')
-        .eq('id', ageGroupId)
+        .eq('id', divisionId)
         .single();
 
       if (ag) {
@@ -162,15 +162,15 @@ export async function POST(req: Request) {
         return planFeatureForbidden('auto_schedule');
       }
 
-      const { error } = await supabase.from('games').delete().eq('age_group_id', ageGroupId);
+      const { error } = await supabase.from('games').delete().eq('division_id', divisionId);
       if (error) throw error;
     }
 
-    else if (action === 'delete-division-playoff-games' && ageGroupId) {
+    else if (action === 'delete-division-playoff-games' && divisionId) {
       const { data: ag } = await supabaseAdmin
-        .from('age_groups')
+        .from('divisions')
         .select('tournament_id')
-        .eq('id', ageGroupId)
+        .eq('id', divisionId)
         .single();
 
       if (ag) {
@@ -182,7 +182,7 @@ export async function POST(req: Request) {
         return planFeatureForbidden('playoff_generator');
       }
 
-      const { error } = await supabase.from('games').delete().eq('age_group_id', ageGroupId).eq('is_playoff', true);
+      const { error } = await supabase.from('games').delete().eq('division_id', divisionId).eq('is_playoff', true);
       if (error) throw error;
     }
 

@@ -22,7 +22,7 @@ type BulkAction =
 type TeamRow = {
   id: string;
   tournament_id: string;
-  age_group_id: string;
+  division_id: string;
   name: string;
   coach: string | null;
   email: string | null;
@@ -43,7 +43,7 @@ type TournamentRow = {
   total_fee_amount: number | null;
 };
 
-type AgeGroupFeeRow = {
+type DivisionFeeRow = {
   id: string;
   name: string;
   deposit_amount: number | null;
@@ -89,11 +89,11 @@ async function trackBulkEvent(input: {
   });
 }
 
-async function getNextWaitlistPosition(ageGroupId: string) {
+async function getNextWaitlistPosition(divisionId: string) {
   const { data, error } = await supabaseAdmin
     .from('teams')
     .select('waitlist_position')
-    .eq('age_group_id', ageGroupId)
+    .eq('division_id', divisionId)
     .not('waitlist_position', 'is', null)
     .order('waitlist_position', { ascending: false })
     .limit(1)
@@ -105,10 +105,10 @@ async function getNextWaitlistPosition(ageGroupId: string) {
 function effectiveFee(
   team: TeamRow,
   tournament: TournamentRow,
-  ageGroups: Map<string, AgeGroupFeeRow>,
+  divisions: Map<string, DivisionFeeRow>,
 ) {
-  const group = ageGroups.get(team.age_group_id);
-  if (tournament.fee_schedule_mode === 'age_group' && group?.total_fee_amount != null) {
+  const group = divisions.get(team.division_id);
+  if (tournament.fee_schedule_mode === 'division' && group?.total_fee_amount != null) {
     return {
       depositAmount: group.deposit_amount ?? null,
       totalFeeAmount: group.total_fee_amount ?? null,
@@ -125,16 +125,16 @@ async function releaseTeamSlot(team: TeamRow) {
   await supabaseAdmin.from('pool_slots').update({ team_id: null }).eq('id', team.slot_id);
 }
 
-async function sendStatusEmails(teams: TeamRow[], action: BulkAction, tournamentName: string, ageGroups: Map<string, AgeGroupFeeRow>) {
+async function sendStatusEmails(teams: TeamRow[], action: BulkAction, tournamentName: string, divisions: Map<string, DivisionFeeRow>) {
   if (action !== 'accept' && action !== 'reject' && action !== 'mark_paid') return;
 
   for (const team of teams) {
     if (!team.email) continue;
-    const ageGroupName = ageGroups.get(team.age_group_id)?.name ?? 'Division';
+    const divisionName = divisions.get(team.division_id)?.name ?? 'Division';
     const payload = {
       teamName: team.name,
       coachName: team.coach ?? '',
-      ageGroupName,
+      divisionName,
       tournamentName,
       teamId: team.id,
     };
@@ -185,7 +185,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     status: 'attempted',
   });
 
-  const [{ data: tournament, error: tournamentError }, { data: teams, error: teamsError }, { data: ageGroupRows, error: ageGroupError }] = await Promise.all([
+  const [{ data: tournament, error: tournamentError }, { data: teams, error: teamsError }, { data: divisionRows, error: divisionError }] = await Promise.all([
     supabaseAdmin
       .from('tournaments')
       .select('id, name, org_id, fee_schedule_mode, deposit_amount, total_fee_amount')
@@ -193,17 +193,17 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
       .maybeSingle<TournamentRow>(),
     supabaseAdmin
       .from('teams')
-      .select('id, tournament_id, age_group_id, name, coach, email, status, payment_status, slot_id, waitlist_position, deposit_paid, total_paid')
+      .select('id, tournament_id, division_id, name, coach, email, status, payment_status, slot_id, waitlist_position, deposit_paid, total_paid')
       .in('id', ids),
     supabaseAdmin
-      .from('age_groups')
+      .from('divisions')
       .select('id, name, deposit_amount, total_fee_amount')
       .eq('tournament_id', tournamentId),
   ]);
 
   if (tournamentError) return json({ error: tournamentError.message }, 500);
   if (teamsError) return json({ error: teamsError.message }, 500);
-  if (ageGroupError) return json({ error: ageGroupError.message }, 500);
+  if (divisionError) return json({ error: divisionError.message }, 500);
   if (!tournament || tournament.org_id !== ctx.org.id) return forbidden();
 
   const selectedTeams = (teams ?? []) as TeamRow[];
@@ -211,7 +211,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     return json({ error: 'One or more registrations are outside this tournament.' }, 400);
   }
 
-  const ageGroups = new Map((ageGroupRows ?? []).map(group => [group.id, group as AgeGroupFeeRow]));
+  const divisions = new Map((divisionRows ?? []).map(group => [group.id, group as DivisionFeeRow]));
 
   const updates: Array<{ id: string; patch: Record<string, unknown> }> = [];
   let nextWaitlistByGroup = new Map<string, number>();
@@ -227,22 +227,22 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
       patch.slot_id = null;
       await releaseTeamSlot(team);
     } else if (bulkAction === 'waitlist') {
-      let nextPosition = nextWaitlistByGroup.get(team.age_group_id);
-      if (nextPosition == null) nextPosition = await getNextWaitlistPosition(team.age_group_id);
+      let nextPosition = nextWaitlistByGroup.get(team.division_id);
+      if (nextPosition == null) nextPosition = await getNextWaitlistPosition(team.division_id);
       patch.status = 'waitlist';
       patch.waitlist_position = nextPosition;
       patch.slot_id = null;
-      nextWaitlistByGroup = new Map(nextWaitlistByGroup).set(team.age_group_id, nextPosition + 1);
+      nextWaitlistByGroup = new Map(nextWaitlistByGroup).set(team.division_id, nextPosition + 1);
       await releaseTeamSlot(team);
     } else if (bulkAction === 'mark_deposit_paid') {
-      const fee = effectiveFee(team, tournament, ageGroups);
+      const fee = effectiveFee(team, tournament, divisions);
       if (fee.depositAmount != null) patch.deposit_paid = Math.max(Number(team.deposit_paid ?? 0), Number(fee.depositAmount));
       if (fee.totalFeeAmount && fee.depositAmount && Number(fee.depositAmount) >= Number(fee.totalFeeAmount)) {
         patch.total_paid = Math.max(Number(team.total_paid ?? 0), Number(fee.totalFeeAmount));
         patch.payment_status = 'paid';
       }
     } else if (bulkAction === 'mark_paid') {
-      const fee = effectiveFee(team, tournament, ageGroups);
+      const fee = effectiveFee(team, tournament, divisions);
       patch.payment_status = 'paid';
       if (fee.depositAmount != null) patch.deposit_paid = Math.max(Number(team.deposit_paid ?? 0), Number(fee.depositAmount));
       if (fee.totalFeeAmount != null) patch.total_paid = Math.max(Number(team.total_paid ?? 0), Number(fee.totalFeeAmount));
@@ -255,7 +255,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     if (error) return json({ error: error.message }, 500);
   }
 
-  await sendStatusEmails(selectedTeams, bulkAction, tournament.name, ageGroups);
+  await sendStatusEmails(selectedTeams, bulkAction, tournament.name, divisions);
 
   await trackBulkEvent({
     orgId: ctx.org.id,

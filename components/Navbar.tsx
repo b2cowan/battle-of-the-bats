@@ -58,6 +58,8 @@ export default function Navbar() {
 
   /* ── Marketing nav (/, /discover, /auth/*) ── */
   if (isMarketingPath(pathname)) {
+    const isProtectedCoachesPortalPath = pathname.startsWith('/coaches/tournaments');
+
     return (
       <nav className={cn(
         'fixed top-0 left-0 right-0 z-50 transition-all duration-300',
@@ -88,17 +90,26 @@ export default function Navbar() {
           </div>
 
           <div className="flex items-center gap-3">
+            {isProtectedCoachesPortalPath ? (
+              <Link
+                href="/coaches/tournaments"
+                className="font-mono text-xs uppercase tracking-widest text-data-gray hover:text-fl-text border border-blueprint-blue/40 hover:border-blueprint-blue px-4 py-2 transition-colors"
+              >
+                Portal
+              </Link>
+            ) : (
+              <Link
+                href="/auth/login"
+                className="font-mono text-xs uppercase tracking-widest text-data-gray hover:text-fl-text border border-blueprint-blue/40 hover:border-blueprint-blue px-4 py-2 transition-colors"
+              >
+                Sign In
+              </Link>
+            )}
             <Link
-              href="/auth/login"
-              className="font-mono text-xs uppercase tracking-widest text-data-gray hover:text-fl-text border border-blueprint-blue/40 hover:border-blueprint-blue px-4 py-2 transition-colors"
-            >
-              Sign In
-            </Link>
-            <Link
-              href="/auth/signup"
+              href={isProtectedCoachesPortalPath ? '/coaches/start' : '/auth/signup'}
               className="font-mono text-xs uppercase tracking-widest font-bold bg-logic-lime text-pitch-black px-4 py-2 hover:bg-white transition-colors"
             >
-              Get Started
+              {isProtectedCoachesPortalPath ? 'Upgrade' : 'Get Started'}
             </Link>
           </div>
         </div>

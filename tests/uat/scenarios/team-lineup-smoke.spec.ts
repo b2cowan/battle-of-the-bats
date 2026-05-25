@@ -38,7 +38,7 @@ test.describe.serial('standalone Team lineup smoke', () => {
     const provisioned = await provisionStandaloneTeamWorkspace({
       actorEmail: coachEmail,
       actorUserId: coachUser.user.id,
-      ageGroup: 'U15',
+      division: 'U15',
       billingMode: 'platform_override',
       entitlementSource: 'platform_override',
       eventSource: 'platform_admin',

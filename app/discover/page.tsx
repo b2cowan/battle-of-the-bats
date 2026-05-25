@@ -22,7 +22,7 @@ interface OrgCard {
   slug: string;
   logoUrl: string | null;
   tournament: TournamentData | null;
-  ageGroupCount: number;
+  divisionCount: number;
   teamCount: number;
 }
 
@@ -267,7 +267,7 @@ export default function DiscoverPage() {
                           </span>
                           <span className={styles.metaItem}>
                             <Layers size={13} />
-                            {org.ageGroupCount} division{org.ageGroupCount !== 1 ? 's' : ''}
+                            {org.divisionCount} division{org.divisionCount !== 1 ? 's' : ''}
                           </span>
                           <span className={styles.metaItem}>
                             <Users size={13} />
@@ -302,7 +302,7 @@ export default function DiscoverPage() {
                           </span>
                           <span className={styles.metaItem}>
                             <Layers size={13} />
-                            {org.ageGroupCount} division{org.ageGroupCount !== 1 ? 's' : ''}
+                            {org.divisionCount} division{org.divisionCount !== 1 ? 's' : ''}
                           </span>
                           <span className={styles.metaItem}>
                             <Users size={13} />

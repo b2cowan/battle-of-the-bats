@@ -5,6 +5,8 @@ This file tracks the ongoing tasks for the FieldLogicHQ platform (multi-tenant s
 
 ---
 
+- [x] **Tournament contact model refactor** — contacts table retired, staff member FKs in place, notify_mode routing live, Event Settings promoted to sidebar, member title field added, removal impact warning wired; migrations 088–090 applied dev + prod (see [plan](docs/active/TOURNAMENT_CONTACT_REFACTOR_PLAN.md) and [PM brief](docs/active/TOURNAMENT_CONTACT_REFACTOR_PM_BRIEF.md))
+  - [x] Unified sign-in/context switcher foundation: `/home`, shared context resolver, `/auth/select-org` compatibility redirect, and same-org Coaches Portal shortcut scoping
 - [x] **Tournament Coach Portal** — authenticated coach accounts at registration, now routed through `/coaches/join` and `/coaches/tournaments` with legacy `/my` redirects, auth-destination routing, resend-access admin action, and workspace invite removed (see [plan](docs/active/TOURNAMENT_COACH_PORTAL_PLAN.md) and [PM brief](docs/active/TOURNAMENT_COACH_PORTAL_PM_BRIEF.md))
 - [ ] **Rules & Resources UX improvements** — custom modals, inline add-section, Browse Samples drawer, public page suppression (see [plan](docs/active/RULES_PAGE_UX_IMPROVEMENTS_PLAN.md) and [PM brief](docs/active/RULES_PAGE_UX_IMPROVEMENTS_PM_BRIEF.md))
   - [x] Phase 1 — Custom confirmation modals (delete section, delete resource)
@@ -24,6 +26,8 @@ This file tracks the ongoing tasks for the FieldLogicHQ platform (multi-tenant s
 - [ ] **Unified Coaches Portal** - one portal for tournament-only coach records, paid standalone Coaches Portal workspaces, org-billed coach access, Club coach access, upgrade, cancellation fallback, and legacy route migration into `/coaches` (see [project plan](docs/active/COACHES_PORTAL_UNIFIED_PROJECT_PLAN.md) and [PM brief](docs/active/COACHES_PORTAL_UNIFIED_PM_BRIEF.md))
   - [x] Phase 1 route migration: `/coaches/join`, `/coaches/tournaments`, `/coaches/start`, paid claim/checkout aliases, auth destinations, emails, nav, and `/my`/`/team` compatibility redirects
   - [x] Remaining copy/help/admin-support audit for old "Team workspace" language
+  - [x] Phase 2B team-centric Basic Coaches Portal: persistent Basic coach team profiles, returning-coach team selector during tournament registration, registrations grouped by team, and upgrade path from Basic team history to Premium team management
+  - [ ] Phase 3 unified Premium workspace experience: `/coaches` coach-specific portal home and `/coaches/teams` premium selector started; remaining work is tournament-history surfacing inside premium dashboards and entitlement/security confirmation
 - [ ] **Brand Strategy** — umbrella positioning, four segment profiles, site architecture, Coach Portal bridge messaging (see [BRAND_STRATEGY.md](docs/active/BRAND_STRATEGY.md))
 - [ ] **Persona landing pages** — build `/for-tournament-organizers`, `/for-leagues`, `/for-clubs`, `/for-coaches` segment pages per brand strategy site architecture
 - [ ] **Homepage persona routing** — update hero section with four-path self-selection above the fold
@@ -71,7 +75,7 @@ This file tracks the ongoing tasks for the FieldLogicHQ platform (multi-tenant s
 
 - [x] **Standalone Team Phase 7C** - Tournament-to-Team CTAs updated and smoke-tested: registration confirmation, public tournament banner, registration/claim emails, and post-event results emails now point coaches toward Team season workspaces while preserving existing tournament organizer CTAs.
 
-- [x] **Standalone Team Phase 7D** - Billing-page upsells implemented: Team billing points coaches to the parent-org link/org billing flow, and org billing/Team Links show a Club value nudge at 3+ active org-paid Team add-ons without changing access or ownership.
+- [x] **Standalone Team Phase 7D** - Billing-page upsells implemented: Coaches Portal billing points coaches to the parent-org link/org billing flow, and org billing/Coaches Portal Links show a Club value nudge at 3+ active org-billed Premium portals without changing access or ownership.
 
 - [x] **Standalone Team Phase 8** - Focused launch verification complete: pricing, direct mock checkout, tournament-claim mock checkout, Team free-tier tournament limit, Basic org linking, attendance/RLS, lineups/checklist, and ownership transfer smokes pass; remaining Stripe/mobile/cancellation items are manual launch checks.
 
@@ -100,12 +104,15 @@ This file tracks the ongoing tasks for the FieldLogicHQ platform (multi-tenant s
 
 ## 🚀 Active Tasks (Priority Order)
 
+- [ ] **Divisions rename (age groups → divisions)** — Full-stack terminology rename: DB table `age_groups` → `divisions` (migration 092), all FK columns, TypeScript types, API routes, file names, and UI copy (see [docs/active/DIVISIONS_RENAME_PLAN.md](docs/active/DIVISIONS_RENAME_PLAN.md))
+
 - [ ] **Multi-org creation for existing users** — Logged-in users cannot currently self-serve a second organization; `/auth/signup` creates a new user + org together and rejects existing emails. Build: a `/create-org` page for authenticated users, a `POST /api/auth/create-org` route that creates an org and links the existing `user_id` as owner (no new auth user), and a "＋ Create new organization" entry point on the `select-org` page. This is separate from reactivation — a user who cancelled Tournament Plus and now wants a League workspace is starting a new subscription, not reinstating the old one. (see pending plan doc)
 
 - [ ] **Tournament admin design review** — Systematic design review of all 41 tournament admin pages and shared navigation components; one checkpoint row per page with screenshotted / reviewed / decisions logged / done columns (see [agent_TOURNAMENT_DESIGN_REVIEW.md](docs/active/agent_TOURNAMENT_DESIGN_REVIEW.md))
 
 - [ ] **Tournament owner/admin mobile implementation** - Mobile-first owner/admin improvements for base Tournament, starting with shared foundations and highest-use workflows (see [implementation plan](docs/active/codex_TOURNAMENT_OWNER_MOBILE_IMPLEMENTATION_PLAN.md), [PM brief](docs/active/codex_TOURNAMENT_OWNER_MOBILE_PM_BRIEF.md), and [review](docs/active/codex_TOURNAMENT_OWNER_MOBILE_REVIEW.md))
   - [x] P0 shared mobile foundation slice implemented and static verified.
+  - [x] Schedule admin mobile density/readability pass: compact header, balanced status filters, and two-line game rows.
   - [ ] Authenticated 390x844 browser walkthrough for core admin tournament routes.
 
 - [x] **Export Enhancements** - Standardized XLSX-first exports, CSV secondary, iCal schedules, branded PDF reports, export catalog, help docs, plan gates, and pricing/marketing updates (see [MERGED_EXPORTS_IMPLEMENTATION_PLAN.md](docs/archive/MERGED_EXPORTS_IMPLEMENTATION_PLAN.md))

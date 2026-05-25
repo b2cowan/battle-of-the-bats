@@ -4,7 +4,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import {
   LayoutDashboard, Users, Calendar, Trophy, Tag, LogOut, Home,
-  ChevronRight, MapPin, BookUser, BookOpen, CreditCard, Settings, Paintbrush,
+  ChevronRight, MapPin, BookOpen, CreditCard, Settings, Settings2, Paintbrush,
   Users2, Archive, ArrowLeft, Mail, Globe, DollarSign,
   CalendarDays, ClipboardList, FileText, UserCheck, ExternalLink, HelpCircle,
   Link2,
@@ -14,6 +14,7 @@ import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { useOrg } from '@/lib/org-context';
 import { useTournament } from '@/lib/tournament-context';
 import { hasCapability, type Capability } from '@/lib/roles';
+import { useCurrentOrgCoachAccess } from '@/lib/use-current-org-coach-access';
 import styles from './AdminSidebar.module.css';
 
 const TOUR_TOP = [
@@ -40,11 +41,11 @@ const TOUR_GROUPS: TourGroup[] = [
     label: 'Setup',
     defaultOpenFor: ['draft'],
     items: [
+      { key: 'settings/event',   icon: Settings2,    label: 'Event Settings'    },
       { key: 'venues',           icon: MapPin,       label: 'Venues'            },
-      { key: 'contacts',         icon: BookUser,     label: 'Contacts'          },
-      { key: 'age-groups',       icon: Tag,          label: 'Divisions'         },
+      { key: 'divisions',        icon: Tag,          label: 'Divisions'         },
       { key: 'rules',            icon: BookOpen,     label: 'Rules & Resources' },
-      { key: 'branding',          icon: Paintbrush,  label: 'Branding'          },
+      { key: 'branding',         icon: Paintbrush,   label: 'Branding'          },
     ],
   },
   {
@@ -133,6 +134,10 @@ export default function AdminSidebar() {
   const canSeeRepTeams = userRole
     ? canUseModule('module_rep_teams')
     : false;
+  const hasCurrentOrgCoachAccess = useCurrentOrgCoachAccess(
+    currentOrgSlug,
+    Boolean(canSeeRepTeams && !isCanceled),
+  );
 
   const hasOnlyTournamentWorkspace = !!currentOrg && canUseModule('module_tournaments') && !canSeePublicSite && !canSeeAccounting && !canSeeHouseLeague && !canSeeRepTeams;
   const showTournamentSummary = currentTournament?.status === 'completed' || currentTournament?.status === 'archived';
@@ -289,9 +294,9 @@ export default function AdminSidebar() {
                 pathname.startsWith(`${base}/org/billing`),
               )}
               {!isCanceled && (userRole === 'owner' || userRole === 'admin') && navLink(
-                'org/team-links', Link2, 'Team Links',
-                `${base}/org/team-links`,
-                pathname.startsWith(`${base}/org/team-links`),
+                'org/coaches-portal-links', Link2, 'Coaches Portal Links',
+                `${base}/org/coaches-portal-links`,
+                pathname.startsWith(`${base}/org/coaches-portal-links`) || pathname.startsWith(`${base}/org/team-links`),
               )}
               {!isCanceled && userRole === 'owner' && navLink(
                 'org/settings', Settings, 'Settings',
@@ -412,7 +417,7 @@ export default function AdminSidebar() {
               {navLink('rt-past', Archive, 'Past Seasons',
                 `${base}/rep-teams/past`,
                 pathname.startsWith(`${base}/rep-teams/past`))}
-              {navLink('rt-coaches-portal', ExternalLink, 'Coaches Portal',
+              {hasCurrentOrgCoachAccess && navLink('rt-coaches-portal', ExternalLink, 'Coaches Portal',
                 `/${currentOrg?.slug ?? ''}/coaches`,
                 pathname.startsWith(`/${currentOrg?.slug ?? ''}/coaches`))}
             </nav>

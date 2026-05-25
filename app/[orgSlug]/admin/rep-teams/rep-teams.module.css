@@ -135,7 +135,7 @@
   border: 1px solid rgba(163, 230, 53, 0.25);
 }
 
-.badgeAgeGroup {
+.badgeDivision {
   background: rgba(var(--blueprint-blue-rgb), 0.18);
   color: var(--blueprint-blue, #4fa3e0);
   border: 1px solid rgba(var(--blueprint-blue-rgb), 0.3);

@@ -22,7 +22,6 @@ type CloneBody = {
     | 'includePools'
     | 'includeSlots'
     | 'includeVenues'
-    | 'includeContacts'
     | 'includeBranding'
     | 'includePublicPages'
     | 'includeWelcome'
@@ -169,7 +168,6 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
       includePools,
       includeSlots,
       includeVenues: boolOption(selected.includeVenues, true),
-      includeContacts: boolOption(selected.includeContacts, true),
       includeBranding: boolOption(selected.includeBranding, true),
       includePublicPages: boolOption(selected.includePublicPages, true),
       includeWelcome: boolOption(selected.includeWelcome, true),

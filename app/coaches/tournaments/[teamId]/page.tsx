@@ -2,6 +2,7 @@ import { redirect, notFound } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase-server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { canUserAccessTournamentRegistration } from '@/lib/basic-coach-teams';
 import {
   COACHES_START_PATH,
   COACHES_TOURNAMENTS_PATH,
@@ -53,11 +54,20 @@ export default async function CoachTournamentRecordDetailPage({ params }: RouteP
 
   const email = user.email.toLowerCase();
 
+  const access = await canUserAccessTournamentRegistration({
+    userId: user.id,
+    email,
+    registrationId: teamId,
+  });
+
+  if (!access) {
+    notFound();
+  }
+
   const { data: team, error: teamError } = await supabaseAdmin
     .from('teams')
-    .select('id, name, coach, email, status, registered_at, tournament_id, age_group_id')
+    .select('id, name, coach, email, status, registered_at, tournament_id, division_id')
     .eq('id', teamId)
-    .ilike('email', email)
     .maybeSingle();
 
   if (teamError || !team) {
@@ -66,7 +76,7 @@ export default async function CoachTournamentRecordDetailPage({ params }: RouteP
 
   const [
     { data: tournament },
-    { data: ageGroup },
+    { data: division },
     { data: announcements },
     { data: games },
   ] = await Promise.all([
@@ -78,18 +88,18 @@ export default async function CoachTournamentRecordDetailPage({ params }: RouteP
           .maybeSingle()
       : Promise.resolve({ data: null }),
 
-    team.age_group_id
+    team.division_id
       ? supabaseAdmin
-          .from('age_groups')
+          .from('divisions')
           .select('id, name, schedule_visibility')
-          .eq('id', team.age_group_id)
+          .eq('id', team.division_id)
           .maybeSingle()
       : Promise.resolve({ data: null }),
 
     team.tournament_id
       ? supabaseAdmin
           .from('announcements')
-          .select('id, title, body, created_at, age_group_ids')
+          .select('id, title, body, created_at, division_ids')
           .eq('tournament_id', team.tournament_id)
           .order('created_at', { ascending: false })
       : Promise.resolve({ data: [] }),
@@ -116,15 +126,15 @@ export default async function CoachTournamentRecordDetailPage({ params }: RouteP
   }
 
   const relevantAnnouncements = ((announcements ?? []) as Array<{
-    id: string; title: string; body: string | null; created_at: string; age_group_ids: string[] | null;
+    id: string; title: string; body: string | null; created_at: string; division_ids: string[] | null;
   }>).filter(a => {
-    if (!a.age_group_ids || a.age_group_ids.length === 0) return true;
-    return team.age_group_id && a.age_group_ids.includes(team.age_group_id);
+    if (!a.division_ids || a.division_ids.length === 0) return true;
+    return team.division_id && a.division_ids.includes(team.division_id);
   });
 
   const scheduleVisible =
-    ageGroup?.schedule_visibility === 'published_teams' ||
-    ageGroup?.schedule_visibility === 'published_generic';
+    division?.schedule_visibility === 'published_teams' ||
+    division?.schedule_visibility === 'published_generic';
 
   const teamGames = (games ?? []) as Array<{
     id: string;
@@ -184,7 +194,7 @@ export default async function CoachTournamentRecordDetailPage({ params }: RouteP
           <dl className={styles.detailGrid}>
             <dt>Team</dt><dd>{team.name}</dd>
             {team.coach && <><dt>Coach</dt><dd>{team.coach}</dd></>}
-            {ageGroup && <><dt>Division</dt><dd>{ageGroup.name}</dd></>}
+            {division && <><dt>Division</dt><dd>{division.name}</dd></>}
             {dateRange && <><dt>Dates</dt><dd>{dateRange}</dd></>}
             <dt>Registered</dt>
             <dd>{new Date(team.registered_at).toLocaleDateString('en-CA', { year: 'numeric', month: 'long', day: 'numeric' })}</dd>

@@ -66,9 +66,9 @@ export async function POST(req: Request) {
   }
 
   // Fetch snapshot data
-  const [ageGroupsRes, teamsRes, gamesRes] = await Promise.all([
+  const [divisionsRes, teamsRes, gamesRes] = await Promise.all([
     supabaseAdmin
-      .from('age_groups')
+      .from('divisions')
       .select('*, pools(*)')
       .eq('tournament_id', tournamentId)
       .order('display_order', { ascending: true }),
@@ -85,7 +85,7 @@ export async function POST(req: Request) {
       .order('game_time', { ascending: true }),
   ]);
 
-  const ageGroups = ageGroupsRes.data ?? [];
+  const divisions = divisionsRes.data ?? [];
   const teams = teamsRes.data ?? [];
   const games = gamesRes.data ?? [];
 
@@ -99,21 +99,21 @@ export async function POST(req: Request) {
       startDate:      tournament.start_date ?? null,
       endDate:        tournament.end_date ?? null,
     },
-    ageGroups: ageGroups.map((ag: any) => ({
+    divisions: divisions.map((ag: any) => ({
       id:                     ag.id,
       tournamentId:           ag.tournament_id,
       name:                   ag.name,
       minAge:                 ag.min_age,
       maxAge:                 ag.max_age,
       order:                  ag.display_order,
-      contactId:              ag.contact_id ?? null,
+
       isClosed:               ag.is_closed,
       capacity:               ag.capacity,
       poolCount:              ag.pool_count,
       playoffConfig:          ag.playoff_config ?? null,
       pools: (ag.pools ?? []).map((p: any) => ({
         id:         p.id,
-        ageGroupId: p.age_group_id,
+        divisionId: p.division_id,
         name:       p.name,
         order:      p.display_order,
       })),
@@ -121,7 +121,7 @@ export async function POST(req: Request) {
     teams: teams.map((t: any) => ({
       id:            t.id,
       tournamentId:  t.tournament_id,
-      ageGroupId:    t.age_group_id,
+      divisionId:    t.division_id,
       name:          t.name,
       coach:         t.coach,
       email:         t.email,
@@ -133,7 +133,7 @@ export async function POST(req: Request) {
     games: games.map((g: any) => ({
       id:              g.id,
       tournamentId:    g.tournament_id,
-      ageGroupId:      g.age_group_id,
+      divisionId:      g.division_id,
       homeTeamId:      g.home_team_id,
       awayTeamId:      g.away_team_id,
       date:            g.game_date,
@@ -151,8 +151,8 @@ export async function POST(req: Request) {
   };
 
   const season = String(tournament.year);
-  const division = ageGroups.length > 0
-    ? ageGroups.map((ag: any) => ag.name).join(', ')
+  const division = divisions.length > 0
+    ? divisions.map((ag: any) => ag.name).join(', ')
     : null;
   const totalTeams = teams.length;
   const totalGames = games.filter((g: any) =>

@@ -4,7 +4,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 
 type ApiPool = {
   id: string;
-  ageGroupId: string;
+  divisionId: string;
   name: string;
   order: number;
 };
@@ -17,13 +17,13 @@ type DbPool = {
 
 // Creates missing slots and trims empty slots above capacity for every pool in a division.
 // Idempotent: safe to call after every save/update.
-async function syncSlots(tournamentId: string, ageGroupId: string, capacity: number | undefined) {
+async function syncSlots(tournamentId: string, divisionId: string, capacity: number | undefined) {
   if (!capacity || capacity <= 0) return;
 
   const { data: poolRows } = await supabaseAdmin
     .from('pools')
     .select('id, name')
-    .eq('age_group_id', ageGroupId)
+    .eq('division_id', divisionId)
     .order('display_order', { ascending: true });
 
   const pools = poolRows ?? [];
@@ -50,7 +50,7 @@ async function syncSlots(tournamentId: string, ageGroupId: string, capacity: num
         toInsert.push({
           pool_id:       pool.id,
           tournament_id: tournamentId,
-          age_group_id:  ageGroupId,
+          division_id:  divisionId,
           slot_number:   n,
           display_name:  namePrefix ? `${namePrefix} Team ${n}` : `Team ${n}`,
         });
@@ -80,7 +80,7 @@ export async function GET(req: Request) {
   if (denied) return denied;
 
   const { data, error } = await supabaseAdmin
-    .from('age_groups')
+    .from('divisions')
     .select('*, pools(*)')
     .eq('tournament_id', tournamentId)
     .order('display_order', { ascending: true });
@@ -94,7 +94,7 @@ export async function GET(req: Request) {
     minAge: group.min_age,
     maxAge: group.max_age,
     order: group.display_order,
-    contactId: group.contact_id,
+    contactMemberId: group.contact_member_id ?? null,
     isClosed: group.is_closed,
     capacity: group.capacity,
     poolCount: group.pool_count,
@@ -107,9 +107,9 @@ export async function GET(req: Request) {
     totalFeeAmount: group.total_fee_amount ?? null,
     totalFeeDueDate: group.total_fee_due_date ?? null,
     pools: ((group.pools ?? [])
-      .map((pool: { id: string; age_group_id: string; name: string; display_order: number }) => ({
+      .map((pool: { id: string; division_id: string; name: string; display_order: number }) => ({
         id: pool.id,
-        ageGroupId: pool.age_group_id,
+        divisionId: pool.division_id,
         name: pool.name,
         order: pool.display_order,
       })) as ApiPool[])
@@ -131,13 +131,13 @@ export async function POST(req: Request) {
       const denied = scopeGuard(ctx, data.tournamentId);
       if (denied) return denied;
 
-      const { data: insertedGroup, error } = await supabaseAdmin.from('age_groups').insert({
+      const { data: insertedGroup, error } = await supabaseAdmin.from('divisions').insert({
         tournament_id:           data.tournamentId,
         name:                    data.name,
         min_age:                 data.minAge,
         max_age:                 data.maxAge,
         display_order:           data.order,
-        contact_id:              data.contactId,
+        contact_member_id:       data.contactMemberId ?? null,
         is_closed:               data.isClosed,
         capacity:                data.capacity,
         pool_count:              data.poolCount,
@@ -156,7 +156,7 @@ export async function POST(req: Request) {
       if (insertedGroup?.id && poolCount >= 2) {
         const names = (data.poolNames || '').split(',').map((n: string) => n.trim());
         const poolRows = Array.from({ length: poolCount }).map((_, index) => ({
-          age_group_id: insertedGroup.id,
+          division_id: insertedGroup.id,
           name: names[index] || String.fromCharCode(65 + index),
           display_order: index,
         }));
@@ -171,7 +171,7 @@ export async function POST(req: Request) {
 
     else if (action === 'update' && id) {
       const { data: ag } = await supabaseAdmin
-        .from('age_groups')
+        .from('divisions')
         .select('tournament_id')
         .eq('id', id)
         .single();
@@ -181,12 +181,12 @@ export async function POST(req: Request) {
         if (denied) return denied;
       }
 
-      const { error: agError } = await supabaseAdmin.from('age_groups').update({
+      const { error: agError } = await supabaseAdmin.from('divisions').update({
         name:                    data.name,
         min_age:                 data.minAge,
         max_age:                 data.maxAge,
         display_order:           data.order,
-        contact_id:              data.contactId,
+        contact_member_id:       data.contactMemberId ?? null,
         is_closed:               data.isClosed,
         capacity:                data.capacity,
         pool_count:              data.poolCount,
@@ -207,7 +207,7 @@ export async function POST(req: Request) {
       const { data: existingPools } = await supabaseAdmin
         .from('pools')
         .select('*')
-        .eq('age_group_id', id)
+        .eq('division_id', id)
         .order('display_order', { ascending: true });
 
       const pools: DbPool[] = existingPools || [];
@@ -222,7 +222,7 @@ export async function POST(req: Request) {
           if (pools[i]) {
             await supabaseAdmin.from('pools').update({ name, display_order: i }).eq('id', pools[i].id);
           } else {
-            await supabaseAdmin.from('pools').insert({ age_group_id: id, name, display_order: i });
+            await supabaseAdmin.from('pools').insert({ division_id: id, name, display_order: i });
           }
         }
         if (pools.length > newPoolCount) {
@@ -242,14 +242,14 @@ export async function POST(req: Request) {
       if (!vis) throw new Error('scheduleVisibility required');
 
       if (agId) {
-        const { data: ag } = await supabaseAdmin.from('age_groups').select('tournament_id').eq('id', agId).single();
+        const { data: ag } = await supabaseAdmin.from('divisions').select('tournament_id').eq('id', agId).single();
         if (ag) { const denied = scopeGuard(ctx, ag.tournament_id); if (denied) return denied; }
-        const { error } = await supabaseAdmin.from('age_groups').update({ schedule_visibility: vis }).eq('id', agId);
+        const { error } = await supabaseAdmin.from('divisions').update({ schedule_visibility: vis }).eq('id', agId);
         if (error) throw error;
       } else if (tId) {
         const denied = scopeGuard(ctx, tId);
         if (denied) return denied;
-        const { error } = await supabaseAdmin.from('age_groups').update({ schedule_visibility: vis }).eq('tournament_id', tId);
+        const { error } = await supabaseAdmin.from('divisions').update({ schedule_visibility: vis }).eq('tournament_id', tId);
         if (error) throw error;
       } else {
         throw new Error('id or tournamentId required');
@@ -258,7 +258,7 @@ export async function POST(req: Request) {
 
     else if (action === 'delete' && id) {
       const { data: ag } = await supabaseAdmin
-        .from('age_groups')
+        .from('divisions')
         .select('tournament_id')
         .eq('id', id)
         .single();
@@ -268,7 +268,7 @@ export async function POST(req: Request) {
         if (denied) return denied;
       }
 
-      const { error } = await supabaseAdmin.from('age_groups').delete().eq('id', id);
+      const { error } = await supabaseAdmin.from('divisions').delete().eq('id', id);
       if (error) throw error;
     }
 
@@ -278,7 +278,7 @@ export async function POST(req: Request) {
     });
 
   } catch (err: unknown) {
-    console.error('Age Group Admin Error:', err);
+    console.error('Division Admin Error:', err);
     const message = err instanceof Error ? err.message : 'Unknown server error';
     return new Response(JSON.stringify({ error: message }), {
       status: 500,

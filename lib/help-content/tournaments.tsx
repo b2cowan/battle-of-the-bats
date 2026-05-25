@@ -97,14 +97,14 @@ const tournamentsHelp: HelpPageContent = {
       searchText: 'open team registration activate tournament public registration form active draft division open capacity fees contact launch checklist',
       links: [
         { label: 'Manage Tournaments', href: '../tournaments/manage' },
-        { label: 'Age Groups', href: '../tournaments/age-groups' },
+        { label: 'Divisions', href: '../tournaments/divisions' },
       ],
       content: (
         <>
           <p>Team registration opens only when the tournament and at least one division are ready.</p>
           <ol>
             <li>Finish the launch checklist: dates, public contact, divisions, and required public information.</li>
-            <li>Open <strong>Age Groups</strong> and confirm at least one division is accepting registrations.</li>
+            <li>Open <strong>Divisions</strong> and confirm at least one division is accepting registrations.</li>
             <li>Review capacities, fees, and custom registration questions before sharing the link.</li>
             <li>Use <strong>Manage Tournaments</strong> to move the tournament from <strong>Draft</strong> to <strong>Active</strong>.</li>
             <li>Open the public registration page and submit a quick internal test if your workflow allows it.</li>
@@ -221,15 +221,15 @@ const tournamentsHelp: HelpPageContent = {
       group: 'Setup',
       heading: 'Divisions, capacities, pools, and fees',
       summary: 'Control who can register and how teams are organized.',
-      keywords: ['division', 'age group', 'capacity', 'pool', 'fees', 'payment'],
-      searchText: 'age groups divisions capacity waitlist pools user selects pool fee schedule deposit total fee registration open closed',
+      keywords: ['division', 'division', 'capacity', 'pool', 'fees', 'payment'],
+      searchText: 'divisions divisions capacity waitlist pools user selects pool fee schedule deposit total fee registration open closed',
       links: [
-        { label: 'Age Groups', href: '../tournaments/age-groups' },
+        { label: 'Divisions', href: '../tournaments/divisions' },
         { label: 'Fee Settings', href: '../tournaments/manage' },
       ],
       content: (
         <>
-          <p>Divisions are the registration and competition groups inside a tournament. They can represent age groups, skill levels, adult brackets, or custom groupings.</p>
+          <p>Divisions are the registration and competition groups inside a tournament. They can represent divisions, skill levels, adult brackets, or custom groupings.</p>
           <p>Use <strong>capacity</strong> to set the number of teams a division can accept. If a division reaches capacity, admins can use waitlist status to hold additional teams.</p>
           <p>Use <strong>pools</strong> when a division needs smaller groups for round-robin play. If teams should choose a pool during registration, enable user-selectable pool registration for that division.</p>
           <p>Fee schedules can be set at the tournament level or per division. Payment status then appears beside accepted teams in the registrations view.</p>

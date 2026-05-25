@@ -182,7 +182,7 @@ const AGENTS: AgentDef[] = [
       'Add an index on every org_id column and every FK used in WHERE clauses.',
     ],
     examples: [
-      '/db — I want to query all teams for a tournament grouped by age group and pool. What columns are available and what\'s the best join pattern?',
+      '/db — I want to query all teams for a tournament grouped by division and pool. What columns are available and what\'s the best join pattern?',
       '/db — write a server-side query that fetches all active tournaments for an org, including team count per tournament. Org-scoped.',
       '/db — I need a table to store per-tournament notification preferences. Design the table, migration SQL, and RLS policy.',
       '/db — review this migration SQL before I run it: [paste SQL]. Check for missing indexes and RLS gaps.',

@@ -11,7 +11,7 @@ type RecipientTargeting = {
   includeContacts?: boolean;
   teamStatuses?: string[];
   paymentStatuses?: string[];
-  ageGroupIds?: string[];
+  divisionIds?: string[];
   teamIds?: string[];
   contactRoles?: string[];
 };
@@ -35,7 +35,7 @@ function usesAdvancedTargeting(target: RecipientTargeting | null) {
   const teamStatuses = stringSet(target.teamStatuses);
   return Boolean(
     target.includeContacts ||
-    stringSet(target.ageGroupIds).size > 0 ||
+    stringSet(target.divisionIds).size > 0 ||
     stringSet(target.teamIds).size > 0 ||
     stringSet(target.contactRoles).size > 0 ||
     stringSet(target.paymentStatuses).size > 0 ||
@@ -131,14 +131,14 @@ export async function POST(req: Request) {
     if (target) {
       const teamStatuses = stringSet(target.teamStatuses);
       const paymentStatuses = stringSet(target.paymentStatuses);
-      const ageGroupIds = stringSet(target.ageGroupIds);
+      const divisionIds = stringSet(target.divisionIds);
       const teamIds = stringSet(target.teamIds);
       const contactRoles = stringSet(target.contactRoles);
 
       if (target.includeTeams) {
         const { data: teams, error: teamsError } = await supabaseAdmin
           .from('teams')
-          .select('id, email, status, payment_status, age_group_id')
+          .select('id, email, status, payment_status, division_id')
           .eq('tournament_id', tournamentId);
         if (teamsError) return NextResponse.json({ error: teamsError.message }, { status: 500 });
 
@@ -148,7 +148,7 @@ export async function POST(req: Request) {
             teamIds.size === 0 &&
             (teamStatuses.size === 0 || teamStatuses.has(team.status)) &&
             (paymentStatuses.size === 0 || paymentStatuses.has(team.payment_status ?? 'pending')) &&
-            (ageGroupIds.size === 0 || ageGroupIds.has(team.age_group_id));
+            (divisionIds.size === 0 || divisionIds.has(team.division_id));
 
           if (!selectedById && !selectedByFilters) continue;
 
@@ -157,39 +157,13 @@ export async function POST(req: Request) {
         }
       }
 
-      if (target.includeContacts) {
-        const { data: contacts, error: contactsError } = await supabaseAdmin
-          .from('contacts')
-          .select('email, role')
-          .eq('tournament_id', tournamentId);
-        if (contactsError) return NextResponse.json({ error: contactsError.message }, { status: 500 });
-
-        for (const contact of contacts ?? []) {
-          if (contactRoles.size > 0 && !contactRoles.has(contact.role)) continue;
-          const email = normalizeEmail(contact.email);
-          if (email && !recipientMap.has(email)) recipientMap.set(email, { email, source: 'contact' });
-        }
-      }
+      // contacts table removed — includeContacts is a no-op
     } else {
       if (!recipients || !Array.isArray(recipients) || recipients.length === 0) {
         return NextResponse.json({ error: 'No recipients selected' }, { status: 400 });
       }
 
       const directRecipients = Array.from(new Set(recipients.map(normalizeEmail).filter(Boolean)));
-      const { data: contacts, error: contactsError } = await supabaseAdmin
-        .from('contacts')
-        .select('email')
-        .eq('tournament_id', tournamentId);
-      if (contactsError) {
-        return NextResponse.json({ error: contactsError.message }, { status: 500 });
-      }
-
-      const allowedRecipients = new Set((contacts ?? []).map(contact => normalizeEmail(contact.email)).filter(Boolean));
-      const unauthorizedRecipients = directRecipients.filter(email => !allowedRecipients.has(email));
-      if (unauthorizedRecipients.length > 0) {
-        return NextResponse.json({ error: 'One or more recipients are not contacts for this tournament.' }, { status: 403 });
-      }
-
       for (const email of directRecipients) {
         recipientMap.set(email, { email, source: 'direct' });
       }

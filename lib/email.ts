@@ -51,7 +51,7 @@ const wrap = (content: string) => `
 </div>`;
 
 export function registrationConfirmationHtml(p: {
-  teamName: string; coachName: string; ageGroupName: string; tournamentName: string;
+  teamName: string; coachName: string; divisionName: string; tournamentName: string;
   contactEmail?: string;
   coachEmail?: string;
 }) {
@@ -61,13 +61,13 @@ export function registrationConfirmationHtml(p: {
   return wrap(`
     <h2 style="color:#fff;font-size:1.4rem;margin:0 0 1rem;">Registration Received!</h2>
     <p>Hi <strong>${p.coachName}</strong>,</p>
-    <p>We've received your registration for <strong>${p.teamName}</strong> in the <strong>${p.ageGroupName}</strong> division for <strong>${p.tournamentName}</strong>.</p>
+    <p>We've received your registration for <strong>${p.teamName}</strong> in the <strong>${p.divisionName}</strong> division for <strong>${p.tournamentName}</strong>.</p>
     <div style="background:#0F172A;border:1px solid rgba(30,58,138,0.25);border-left:3px solid rgba(30,58,138,0.5);padding:1.25rem;margin:1.5rem 0;">
       <p style="margin:0 0 0.5rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#D9F99D;">Registration Details</p>
       <p style="margin:0;line-height:1.8;color:rgba(241,245,249,0.85);">
         Team: <strong>${p.teamName}</strong><br>
         Coach: <strong>${p.coachName}</strong><br>
-        Division: <strong>${p.ageGroupName}</strong><br>
+        Division: <strong>${p.divisionName}</strong><br>
         Tournament: <strong>${p.tournamentName}</strong>
       </p>
     </div>
@@ -81,7 +81,7 @@ export function registrationConfirmationHtml(p: {
 }
 
 export function manualTeamRegistrationHtml(p: {
-  teamName: string; coachName: string; ageGroupName: string; tournamentName: string;
+  teamName: string; coachName: string; divisionName: string; tournamentName: string;
   paymentStatus: 'pending' | 'paid';
   contactEmail?: string;
 }) {
@@ -91,13 +91,13 @@ export function manualTeamRegistrationHtml(p: {
   return wrap(`
     <h2 style="color:#fff;font-size:1.4rem;margin:0 0 1rem;">Team Registered</h2>
     <p>Hi <strong>${p.coachName || 'Coach'}</strong>,</p>
-    <p><strong>${p.teamName}</strong> has been registered in the <strong>${p.ageGroupName}</strong> division for <strong>${p.tournamentName}</strong>.</p>
+    <p><strong>${p.teamName}</strong> has been registered in the <strong>${p.divisionName}</strong> division for <strong>${p.tournamentName}</strong>.</p>
     <div style="background:#0F172A;border:1px solid rgba(30,58,138,0.25);border-left:3px solid rgba(30,58,138,0.5);padding:1.25rem;margin:1.5rem 0;">
       <p style="margin:0 0 0.5rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#D9F99D;">Registration Details</p>
       <p style="margin:0;line-height:1.8;color:rgba(241,245,249,0.85);">
         Team: <strong>${p.teamName}</strong><br>
         Coach: <strong>${p.coachName || 'Not provided'}</strong><br>
-        Division: <strong>${p.ageGroupName}</strong><br>
+        Division: <strong>${p.divisionName}</strong><br>
         Tournament: <strong>${p.tournamentName}</strong>
       </p>
     </div>
@@ -106,7 +106,7 @@ export function manualTeamRegistrationHtml(p: {
 }
 
 export function adminNotificationHtml(p: {
-  teamName: string; coachName: string; email: string; ageGroupName: string; tournamentName: string;
+  teamName: string; coachName: string; email: string; divisionName: string; tournamentName: string;
 }) {
   const adminUrl = `${SITE_URL}/admin/registrations`;
   return wrap(`
@@ -116,7 +116,7 @@ export function adminNotificationHtml(p: {
       <p style="margin:0;line-height:1.8;color:rgba(241,245,249,0.85);">
         Team: <strong>${p.teamName}</strong><br>
         Coach: <strong>${p.coachName}</strong><br>
-        Division: <strong>${p.ageGroupName}</strong><br>
+        Division: <strong>${p.divisionName}</strong><br>
         Contact: <a href="mailto:${p.email}" style="color:#D9F99D;">${p.email}</a>
       </p>
     </div>
@@ -125,7 +125,7 @@ export function adminNotificationHtml(p: {
 }
 
 export function acceptanceHtml(p: {
-  teamName: string; coachName: string; ageGroupName: string; tournamentName: string; teamId: string;
+  teamName: string; coachName: string; divisionName: string; tournamentName: string; teamId: string;
   contactEmail?: string;
   dashboardUrl?: string;
 }) {
@@ -134,7 +134,7 @@ export function acceptanceHtml(p: {
   return wrap(`
     <h2 style="color:#22C55E;font-size:1.4rem;margin:0 0 1rem;">🎉 Team Accepted!</h2>
     <p>Hi <strong>${p.coachName}</strong>,</p>
-    <p>Great news! <strong>${p.teamName}</strong> has been accepted into the <strong>${p.ageGroupName}</strong> division for <strong>${p.tournamentName}</strong>.</p>
+    <p>Great news! <strong>${p.teamName}</strong> has been accepted into the <strong>${p.divisionName}</strong> division for <strong>${p.tournamentName}</strong>.</p>
     <div style="background:#0F172A;border:1px solid rgba(34,197,94,0.35);border-left:3px solid rgba(34,197,94,0.6);padding:1.5rem;margin:1.5rem 0;">
       <p style="margin:0 0 0.75rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#22C55E;">Payment Instructions</p>
       <p style="margin:0 0 0.75rem;color:rgba(241,245,249,0.8);">If payment is required, the tournament organizer will follow up with instructions for paying outside FieldLogicHQ.</p>
@@ -145,48 +145,48 @@ export function acceptanceHtml(p: {
 }
 
 export function waitlistConfirmationHtml(p: {
-  teamName: string; coachName: string; ageGroupName: string; tournamentName: string;
+  teamName: string; coachName: string; divisionName: string; tournamentName: string;
   contactEmail?: string;
 }) {
   return wrap(`
     <h2 style="color:#F59E0B;font-size:1.4rem;margin:0 0 1rem;">You're on the Waitlist</h2>
     <p>Hi <strong>${p.coachName}</strong>,</p>
-    <p>Thanks for registering <strong>${p.teamName}</strong> for the <strong>${p.ageGroupName}</strong> division of <strong>${p.tournamentName}</strong>.</p>
+    <p>Thanks for registering <strong>${p.teamName}</strong> for the <strong>${p.divisionName}</strong> division of <strong>${p.tournamentName}</strong>.</p>
     <div style="background:#0F172A;border:1px solid rgba(245,158,11,0.3);border-left:3px solid rgba(245,158,11,0.5);padding:1.25rem;margin:1.5rem 0;">
       <p style="margin:0 0 0.5rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#F59E0B;">Waitlist Status</p>
       <p style="margin:0;line-height:1.8;color:rgba(241,245,249,0.85);">
         Team: <strong>${p.teamName}</strong><br>
         Coach: <strong>${p.coachName}</strong><br>
-        Division: <strong>${p.ageGroupName}</strong><br>
+        Division: <strong>${p.divisionName}</strong><br>
         Tournament: <strong>${p.tournamentName}</strong>
       </p>
     </div>
-    <p style="color:rgba(241,245,249,0.7);">The <strong>${p.ageGroupName}</strong> division is currently full. Your team has been added to the waitlist and you will be notified by email if a spot becomes available.</p>
+    <p style="color:rgba(241,245,249,0.7);">The <strong>${p.divisionName}</strong> division is currently full. Your team has been added to the waitlist and you will be notified by email if a spot becomes available.</p>
   `);
 }
 
 export function rejectionHtml(p: {
-  teamName: string; coachName: string; ageGroupName: string; tournamentName: string;
+  teamName: string; coachName: string; divisionName: string; tournamentName: string;
   contactEmail?: string;
 }) {
   const contact = p.contactEmail ?? ADMIN_EMAIL;
   return wrap(`
     <h2 style="color:#EF4444;font-size:1.4rem;margin:0 0 1rem;">Registration Update</h2>
     <p>Hi <strong>${p.coachName}</strong>,</p>
-    <p>Thank you for your interest in <strong>${p.tournamentName}</strong>. Unfortunately, we are unable to accommodate <strong>${p.teamName}</strong> in the <strong>${p.ageGroupName}</strong> division at this time.</p>
+    <p>Thank you for your interest in <strong>${p.tournamentName}</strong>. Unfortunately, we are unable to accommodate <strong>${p.teamName}</strong> in the <strong>${p.divisionName}</strong> division at this time.</p>
     <p style="color:rgba(241,245,249,0.7);">This may be due to division capacity or eligibility requirements. Please contact us if you have any questions.</p>
     <a href="mailto:${contact}" style="display:inline-block;background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.35);color:#f87171;padding:0.75rem 1.75rem;border-radius:2px;text-decoration:none;font-weight:700;font-size:0.82rem;letter-spacing:0.06em;margin-top:0.5rem;">Contact Us</a>
   `);
 }
 
 export function paymentConfirmationHtml(p: {
-  teamName: string; coachName: string; ageGroupName: string; tournamentName: string;
+  teamName: string; coachName: string; divisionName: string; tournamentName: string;
   contactEmail?: string;
 }) {
   return wrap(`
     <h2 style="color:#22C55E;font-size:1.4rem;margin:0 0 1rem;">Payment Recorded</h2>
     <p>Hi <strong>${p.coachName}</strong>,</p>
-    <p>The tournament organizer has recorded payment for <strong>${p.teamName}</strong>. Your registration for the <strong>${p.ageGroupName}</strong> division of <strong>${p.tournamentName}</strong> is now marked <strong style="color:#22C55E;">paid</strong>.</p>
+    <p>The tournament organizer has recorded payment for <strong>${p.teamName}</strong>. Your registration for the <strong>${p.divisionName}</strong> division of <strong>${p.tournamentName}</strong> is now marked <strong style="color:#22C55E;">paid</strong>.</p>
     <p style="color:rgba(255,255,255,0.7);">Stay tuned for schedule announcements. We look forward to seeing you on the diamond!</p>
   `);
 }
@@ -203,7 +203,7 @@ function escapeEmailHtml(value: string): string {
 export function paymentReminderHtml(p: {
   teamName: string;
   coachName: string;
-  ageGroupName: string;
+  divisionName: string;
   tournamentName: string;
   amountDue: string;
   dueDate?: string | null;
@@ -218,14 +218,14 @@ export function paymentReminderHtml(p: {
   return wrap(`
     <h2 style="color:#fff;font-size:1.4rem;margin:0 0 1rem;">Tournament Payment Reminder</h2>
     <p>Hi <strong>${escapeEmailHtml(p.coachName)}</strong>,</p>
-    <p>This is a friendly reminder that payment is still outstanding for <strong>${escapeEmailHtml(p.teamName)}</strong> in the <strong>${escapeEmailHtml(p.ageGroupName)}</strong> division of <strong>${escapeEmailHtml(p.tournamentName)}</strong>.</p>
+    <p>This is a friendly reminder that payment is still outstanding for <strong>${escapeEmailHtml(p.teamName)}</strong> in the <strong>${escapeEmailHtml(p.divisionName)}</strong> division of <strong>${escapeEmailHtml(p.tournamentName)}</strong>.</p>
     <div style="background:#0F172A;border:1px solid rgba(245,158,11,0.35);border-left:3px solid rgba(245,158,11,0.5);padding:1.25rem;margin:1.5rem 0;">
       <p style="margin:0 0 0.5rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#F59E0B;">Payment Details</p>
       <p style="margin:0;line-height:1.8;color:rgba(241,245,249,0.85);">
         Amount due: <strong>${escapeEmailHtml(p.amountDue)}</strong><br>
         ${p.dueDate ? `Due date: <strong>${escapeEmailHtml(p.dueDate)}</strong><br>` : ''}
         Team: <strong>${escapeEmailHtml(p.teamName)}</strong><br>
-        Division: <strong>${escapeEmailHtml(p.ageGroupName)}</strong>
+        Division: <strong>${escapeEmailHtml(p.divisionName)}</strong>
       </p>
     </div>
     <div style="color:rgba(241,245,249,0.75);">${instructions}</div>

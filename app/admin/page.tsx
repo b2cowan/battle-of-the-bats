@@ -2,25 +2,25 @@
 import { useState, useEffect } from 'react';
 import { LayoutDashboard, Users, Calendar, Trophy, Megaphone, Tag } from 'lucide-react';
 import Link from 'next/link';
-import { getTeams, getGames, getAnnouncements, getAgeGroups } from '@/lib/db';
+import { getTeams, getGames, getAnnouncements, getDivisions } from '@/lib/db';
 import { useTournament } from '@/lib/tournament-context';
 import styles from './dashboard.module.css';
 
 export default function AdminDashboard() {
   const { currentTournament } = useTournament();
   const [stats, setStats] = useState({
-    ageGroups: 0, teams: 0, scheduled: 0, completed: 0, announcements: 0,
+    divisions: 0, teams: 0, scheduled: 0, completed: 0, announcements: 0,
   });
 
   useEffect(() => {
     async function fetchStats() {
       const tid = currentTournament?.id;
       const games = await getGames(tid);
-      const ageGroups = await getAgeGroups(tid);
+      const divisions = await getDivisions(tid);
       const teams = await getTeams(tid);
       const announcements = await getAnnouncements(tid);
       setStats({
-        ageGroups: ageGroups.length,
+        divisions: divisions.length,
         teams: teams.length,
         scheduled: games.filter(g => g.status === 'scheduled').length,
         completed: games.filter(g => g.status === 'completed').length,
@@ -31,7 +31,7 @@ export default function AdminDashboard() {
   }, [currentTournament?.id]);
 
   const cards = [
-    { label: 'Divisions',  value: stats.ageGroups, icon: Tag,        href: '/admin/age-groups',    color: 'purple' },
+    { label: 'Divisions',  value: stats.divisions, icon: Tag,        href: '/admin/divisions',    color: 'purple' },
     { label: 'Teams',      value: stats.teams,     icon: Users,       href: '/admin/teams',          color: 'blue'   },
     { label: 'Scheduled',  value: stats.scheduled, icon: Calendar,    href: '/admin/schedule',       color: 'amber'  },
     { label: 'Completed',  value: stats.completed, icon: Trophy,      href: '/admin/results',        color: 'green'  },
@@ -64,7 +64,7 @@ export default function AdminDashboard() {
         <h2 className={styles.sectionTitle}>Quick Actions</h2>
         <div className={styles.actionsGrid}>
           {[
-            { href: '/admin/age-groups',    label: 'Manage Divisions',     desc: 'Add, edit, or remove divisions',     icon: Tag       },
+            { href: '/admin/divisions',    label: 'Manage Divisions',     desc: 'Add, edit, or remove divisions',     icon: Tag       },
             { href: '/admin/teams',         label: 'Manage Teams',         desc: 'Add teams and edit player rosters',  icon: Users     },
             { href: '/admin/schedule',      label: 'Schedule Games',       desc: 'Create and manage game schedule',    icon: Calendar  },
             { href: '/admin/results',       label: 'Post Results',         desc: 'Enter scores for completed games',   icon: Trophy    },

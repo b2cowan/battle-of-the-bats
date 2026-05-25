@@ -74,7 +74,7 @@ const NEXT_TRANSITION: Record<string, { status: LeagueSeasonStatus; label: strin
 
 interface EditForm {
   name: string;
-  ageGroup: string;
+  division: string;
   description: string;
   seasonStartDate: string;
   seasonEndDate: string;
@@ -90,7 +90,7 @@ interface EditForm {
 function seasonToEditForm(s: LeagueSeason): EditForm {
   return {
     name:                     s.name,
-    ageGroup:                 s.ageGroup ?? '',
+    division:                 s.division ?? '',
     description:              s.description ?? '',
     seasonStartDate:          s.seasonStartDate ?? '',
     seasonEndDate:            s.seasonEndDate ?? '',
@@ -187,7 +187,7 @@ export default function SeasonDetailPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name:                     editForm.name.trim() || undefined,
-          ageGroup:                 editForm.ageGroup.trim() || null,
+          division:                 editForm.division.trim() || null,
           description:              editForm.description.trim() || null,
           seasonStartDate:          editForm.seasonStartDate || null,
           seasonEndDate:            editForm.seasonEndDate   || null,
@@ -356,8 +356,8 @@ export default function SeasonDetailPage() {
           <div className={styles.seasonHeaderLeft}>
             <h1 className={styles.seasonHeaderName}>{season.name}</h1>
             <div className={styles.seasonHeaderBadges}>
-              {season.ageGroup && (
-                <span className={styles.ageGroupBadge}>{season.ageGroup}</span>
+              {season.division && (
+                <span className={styles.divisionBadge}>{season.division}</span>
               )}
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
                 <span className={`${styles.statusBadge} ${STATUS_CSS[season.status] ?? ''}`}>
@@ -534,13 +534,13 @@ export default function SeasonDetailPage() {
               </div>
 
               <div className={styles.field}>
-                <label className={styles.label} htmlFor="es-age">Age Group</label>
+                <label className={styles.label} htmlFor="es-age">Division</label>
                 <input
                   id="es-age"
                   className={styles.input}
                   type="text"
-                  value={editForm.ageGroup}
-                  onChange={e => setEditForm(f => f && ({ ...f, ageGroup: e.target.value }))}
+                  value={editForm.division}
+                  onChange={e => setEditForm(f => f && ({ ...f, division: e.target.value }))}
                   placeholder="e.g. U11, Adult"
                   maxLength={30}
                 />

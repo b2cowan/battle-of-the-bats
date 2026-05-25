@@ -85,7 +85,7 @@ export async function POST(req: Request) {
       name,
       slug,
       sport,
-      ageGroup: body.ageGroup?.trim() || null,
+      division: body.division?.trim() || null,
       description: body.description?.trim() || null,
       color: body.color?.trim() || null,
       groupId: body.groupId || null,

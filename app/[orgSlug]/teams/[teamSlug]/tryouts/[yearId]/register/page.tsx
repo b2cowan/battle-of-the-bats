@@ -76,9 +76,9 @@ export default async function TryoutRegisterPage({
           >
             Tryout Application — {programYear.name}
           </h1>
-          {team.ageGroup && (
+          {team.division && (
             <div style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.5)' }}>
-              {team.ageGroup}
+              {team.division}
             </div>
           )}
         </div>

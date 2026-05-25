@@ -94,8 +94,8 @@ export default function PastProgramYearsPage() {
                     <span style={{ width: 12, height: 12, borderRadius: '50%', background: first.teamColor, flexShrink: 0 }} />
                   )}
                   <h2 style={{ fontSize: '1rem', fontWeight: 700, margin: 0 }}>{first.teamName}</h2>
-                  {first.teamAgeGroup && (
-                    <span style={{ fontSize: '0.75rem', color: 'var(--white-40)' }}>{first.teamAgeGroup}</span>
+                  {first.teamDivision && (
+                    <span style={{ fontSize: '0.75rem', color: 'var(--white-40)' }}>{first.teamDivision}</span>
                   )}
                   <Link
                     href={`${base}/rep-teams/teams/${teamId}/history`}

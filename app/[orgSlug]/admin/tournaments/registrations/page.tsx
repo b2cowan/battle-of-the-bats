@@ -6,7 +6,7 @@ import { formatPoolName } from '@/lib/utils';
 import { useTournament } from '@/lib/tournament-context';
 import { useOrg } from '@/lib/org-context';
 import { hasPlanFeature, requiresTournamentPlusCopy } from '@/lib/plan-features';
-import { AgeGroup } from '@/lib/types';
+import { Division } from '@/lib/types';
 import { buildFilename, downloadPDF, DEFAULT_PDF_SETTINGS, type OrgPdfSettings } from '@/lib/export';
 import s from '../../admin-common.module.css';
 import styles from './teams-admin.module.css';
@@ -31,8 +31,8 @@ interface TeamRecord {
   name: string;
   coach: string;
   email: string;
-  age_group_id: string;
-  age_group_name: string;
+  division_id: string;
+  division_name: string;
   status: 'pending' | 'accepted' | 'rejected' | 'waitlist';
   paymentStatus: 'pending' | 'paid';
   depositPaid: number;
@@ -87,7 +87,7 @@ async function readJsonArray<T>(res: Response, label: string): Promise<T[]> {
 
 type PaymentStatus = 'paid' | 'deposit-paid' | 'pending' | 'past-due' | 'no-schedule';
 type PaymentFilter = 'all' | 'unpaid' | 'deposit-paid' | 'paid' | 'past-due';
-type FeeMode = 'tournament' | 'age_group';
+type FeeMode = 'tournament' | 'division';
 type Status = 'pending' | 'accepted' | 'rejected' | 'waitlist';
 type BulkAction = 'accept' | 'reject' | 'waitlist' | 'mark_deposit_paid' | 'mark_paid';
 
@@ -145,9 +145,9 @@ function formatMoney(value: number) {
   return new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD', maximumFractionDigits: 0 }).format(value);
 }
 
-function getEffectiveFee(team: TeamRecord, ageGroups: AgeGroup[], feeMode: FeeMode, feeSchedule: FeeSchedule): FeeSchedule {
-  const agFee = ageGroups.find(g => g.id === team.age_group_id);
-  if (feeMode === 'age_group' && agFee?.totalFeeAmount != null) {
+function getEffectiveFee(team: TeamRecord, divisions: Division[], feeMode: FeeMode, feeSchedule: FeeSchedule): FeeSchedule {
+  const agFee = divisions.find(g => g.id === team.division_id);
+  if (feeMode === 'division' && agFee?.totalFeeAmount != null) {
     return {
       depositAmount: agFee.depositAmount ?? null,
       depositDueDate: agFee.depositDueDate ?? null,
@@ -238,8 +238,8 @@ export default function UnifiedTeamsPage() {
   const [loading, setLoading] = useState(true);
   const [selectedStatuses, setSelectedStatuses] = useState<Status[]>(['pending', 'accepted', 'waitlist']);
   const [search, setSearch] = useState('');
-  const [ageGroups, setAgeGroups] = useState<AgeGroup[]>([]);
-  const [selectedAgeGroupId, setSelectedAgeGroupId] = useState<string>('');
+  const [divisions, setDivisions] = useState<Division[]>([]);
+  const [selectedDivisionId, setSelectedDivisionId] = useState<string>('');
   const [working, setWorking] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -249,7 +249,7 @@ export default function UnifiedTeamsPage() {
     name: '',
     coach: '',
     email: '',
-    ageGroupId: '',
+    divisionId: '',
     paymentStatus: 'pending' as 'pending' | 'paid',
     notifyTeam: false,
   });
@@ -282,7 +282,7 @@ export default function UnifiedTeamsPage() {
     if (tournamentLoading) return;
     if (!currentTournament) {
       setRegs([]);
-      setAgeGroups([]);
+      setDivisions([]);
       setPoolSlots([]);
       setErrorMsg(null);
       setLoading(false);
@@ -298,11 +298,11 @@ export default function UnifiedTeamsPage() {
       const [rRes, adminTeamsRes, groupsRes, tRes] = await Promise.all([
         fetch(`/api/registrations?${tournamentParam}${orgParam}`, SAME_ORIGIN_FETCH),
         fetch(`/api/admin/teams?${tournamentParam}${orgParam}`, SAME_ORIGIN_FETCH),
-        fetch(`/api/admin/age-groups?${tournamentParam}${orgParam}`, SAME_ORIGIN_FETCH),
+        fetch(`/api/admin/divisions?${tournamentParam}${orgParam}`, SAME_ORIGIN_FETCH),
         fetch(`/api/admin/tournaments${orgOnlyParam}`, SAME_ORIGIN_FETCH),
       ]);
 
-      const groups = await readJsonArray<AgeGroup>(groupsRes, 'Divisions');
+      const groups = await readJsonArray<Division>(groupsRes, 'Divisions');
       const adminTeams = await readJsonArray<any>(adminTeamsRes, 'Teams');
       const adminMap = new Map(adminTeams.map((t: any) => [t.id, t]));
 
@@ -322,20 +322,20 @@ export default function UnifiedTeamsPage() {
         };
       });
 
-      setAgeGroups(groups);
+      setDivisions(groups);
       if (groups.length) {
-        if (!selectedAgeGroupId || selectedAgeGroupId === 'all') {
-          setSelectedAgeGroupId(groups[0].id);
+        if (!selectedDivisionId || selectedDivisionId === 'all') {
+          setSelectedDivisionId(groups[0].id);
         }
-        if (!addForm.ageGroupId) {
-          setAddForm(f => ({ ...f, ageGroupId: groups[0].id }));
+        if (!addForm.divisionId) {
+          setAddForm(f => ({ ...f, divisionId: groups[0].id }));
         }
       }
 
       const tournaments = await readJsonArray<any>(tRes, 'Tournaments');
       const t = tournaments.find((x: any) => x.id === currentTournament.id);
       if (t) {
-        setFeeMode(t.fee_schedule_mode === 'age_group' ? 'age_group' : 'tournament');
+        setFeeMode(t.fee_schedule_mode === 'division' ? 'division' : 'tournament');
         setFeeSchedule({
           depositAmount: t.deposit_amount != null ? Number(t.deposit_amount) : null,
           depositDueDate: t.deposit_due_date ?? null,
@@ -362,16 +362,16 @@ export default function UnifiedTeamsPage() {
       setLoading(false);
       setHasLoadedInitial(true);
     }
-  }, [tournamentLoading, currentTournament?.id, currentOrg?.slug, selectedAgeGroupId, stableSortedIds.length, addForm.ageGroupId]);
+  }, [tournamentLoading, currentTournament?.id, currentOrg?.slug, selectedDivisionId, stableSortedIds.length, addForm.divisionId]);
 
   const loadPoolSlots = useCallback(async () => {
-    if (!selectedAgeGroupId || !currentTournament) { setPoolSlots([]); return; }
+    if (!selectedDivisionId || !currentTournament) { setPoolSlots([]); return; }
     try {
       const orgParam = currentOrg?.slug ? `&orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
-      const res = await fetch(`/api/admin/pool-slots?tournamentId=${encodeURIComponent(currentTournament.id)}&ageGroupId=${encodeURIComponent(selectedAgeGroupId)}${orgParam}`, SAME_ORIGIN_FETCH);
+      const res = await fetch(`/api/admin/pool-slots?tournamentId=${encodeURIComponent(currentTournament.id)}&divisionId=${encodeURIComponent(selectedDivisionId)}${orgParam}`, SAME_ORIGIN_FETCH);
       setPoolSlots(await readJsonArray<PoolSlot>(res, 'Pool slots'));
     } catch { setPoolSlots([]); }
-  }, [selectedAgeGroupId, currentTournament?.id, currentOrg?.slug]);
+  }, [selectedDivisionId, currentTournament?.id, currentOrg?.slug]);
 
   useEffect(() => { load(); }, [load]);
   useEffect(() => { loadPoolSlots(); }, [loadPoolSlots]);
@@ -379,11 +379,11 @@ export default function UnifiedTeamsPage() {
   useEffect(() => {
     setSelectedRegistrationIds(prev => {
       if (prev.size === 0) return prev;
-      const validIds = new Set(regs.filter(reg => reg.age_group_id === selectedAgeGroupId).map(reg => reg.id));
+      const validIds = new Set(regs.filter(reg => reg.division_id === selectedDivisionId).map(reg => reg.id));
       const next = new Set([...prev].filter(id => validIds.has(id)));
       return next.size === prev.size ? prev : next;
     });
-  }, [regs, selectedAgeGroupId]);
+  }, [regs, selectedDivisionId]);
 
   useEffect(() => {
     if (paymentInstructions || !currentTournament) return;
@@ -611,8 +611,8 @@ export default function UnifiedTeamsPage() {
   }
 
   async function randomizePools() {
-    if (!selectedAgeGroupId) return;
-    const group = ageGroups.find(g => g.id === selectedAgeGroupId);
+    if (!selectedDivisionId) return;
+    const group = divisions.find(g => g.id === selectedDivisionId);
     if (!group?.pools || group.pools.length <= 1) {
       setFeedback({ isOpen: true, title: 'Action Required', message: 'This division needs at least 2 pools to randomize.', type: 'warning' });
       return;
@@ -625,7 +625,7 @@ export default function UnifiedTeamsPage() {
       onConfirm: async () => {
         setWorking('randomizing');
         try {
-          const acceptedTeams = regs.filter(r => r.age_group_id === selectedAgeGroupId && r.status === 'accepted');
+          const acceptedTeams = regs.filter(r => r.division_id === selectedDivisionId && r.status === 'accepted');
           const shuffled = [...acceptedTeams].sort(() => Math.random() - 0.5);
           const pools = group.pools || [];
           const updates = shuffled.map((team, i) => ({ id: team.id, updates: { poolId: pools[i % pools.length].id } }));
@@ -661,7 +661,7 @@ export default function UnifiedTeamsPage() {
             name: addForm.name,
             coach: addForm.coach,
             email: addForm.email,
-            ageGroupId: addForm.ageGroupId,
+            divisionId: addForm.divisionId,
             tournamentId: currentTournament.id,
             status: 'accepted',
             paymentStatus: addForm.paymentStatus,
@@ -685,7 +685,7 @@ export default function UnifiedTeamsPage() {
       name: '',
       coach: '',
       email: '',
-      ageGroupId: selectedAgeGroupId || ageGroups[0]?.id || '',
+      divisionId: selectedDivisionId || divisions[0]?.id || '',
       paymentStatus: 'pending',
       notifyTeam: false,
     });
@@ -740,7 +740,7 @@ export default function UnifiedTeamsPage() {
     const acceptedRegs = regs.filter(r => r.status === 'accepted' || r.status === 'waitlist' || r.status === 'pending');
     const groupMap = new Map<string, typeof acceptedRegs>();
     for (const r of acceptedRegs) {
-      const div = r.age_group_name || 'Uncategorized';
+      const div = r.division_name || 'Uncategorized';
       if (!groupMap.has(div)) groupMap.set(div, []);
       groupMap.get(div)!.push(r);
     }
@@ -749,7 +749,7 @@ export default function UnifiedTeamsPage() {
       label,
       rows: divRegs.map(r => [
         r.name,
-        r.age_group_name,
+        r.division_name,
         r.coach,
         r.email,
         r.status.charAt(0).toUpperCase() + r.status.slice(1),
@@ -760,7 +760,7 @@ export default function UnifiedTeamsPage() {
 
     // Flat fallback for orgs without divisions
     const flatRows = acceptedRegs.map(r => [
-      r.name, r.age_group_name, r.coach, r.email,
+      r.name, r.division_name, r.coach, r.email,
       r.status.charAt(0).toUpperCase() + r.status.slice(1),
       r.slotId ? `Slot ${r.slotId}` : '—',
       r.paymentStatus === 'paid' ? 'Paid' : r.depositPaid > 0 ? 'Deposit' : 'Pending',
@@ -920,7 +920,7 @@ export default function UnifiedTeamsPage() {
   }
 
   const today = new Date().toISOString().split('T')[0];
-  const selectedGroup = ageGroups.find(g => g.id === selectedAgeGroupId);
+  const selectedGroup = divisions.find(g => g.id === selectedDivisionId);
   const slotConfigured = poolSlots.length > 0;
   const waitlistAutomationAvailable = currentOrg ? hasPlanFeature(currentOrg.planId, 'waitlist_automation') : false;
   const paymentToolsAvailable = currentOrg ? hasPlanFeature(currentOrg.planId, 'payment_readiness_tools') : false;
@@ -936,7 +936,7 @@ export default function UnifiedTeamsPage() {
       .then(data => setPdfSettings(data as OrgPdfSettings))
       .catch(() => setPdfSettings(null));
   }, [orgQuery]);
-  const divRegs = regs.filter(r => r.age_group_id === selectedAgeGroupId);
+  const divRegs = regs.filter(r => r.division_id === selectedDivisionId);
   const waitlistTeams = divRegs.filter(r => r.waitlistPosition != null).sort((a, b) => (a.waitlistPosition ?? 0) - (b.waitlistPosition ?? 0));
   const filledSlotCount = poolSlots.filter(s => s.teamId !== null).length;
   const pendingCount = divRegs.filter(r => r.status === 'pending').length;
@@ -950,7 +950,7 @@ export default function UnifiedTeamsPage() {
     let scheduled = 0;
 
     for (const team of accepted) {
-      const fee = getEffectiveFee(team, ageGroups, feeMode, feeSchedule);
+      const fee = getEffectiveFee(team, divisions, feeMode, feeSchedule);
       const status = computePaymentStatus(team, fee, today);
       if (fee.totalFeeAmount) {
         scheduled++;
@@ -971,7 +971,7 @@ export default function UnifiedTeamsPage() {
       depositComplete,
       pastDue,
     };
-  }, [ageGroups, divRegs, feeMode, feeSchedule, today]);
+  }, [divisions, divRegs, feeMode, feeSchedule, today]);
 
   const slotsByPool = useMemo(() => {
     if (!selectedGroup?.pools) return [];
@@ -985,7 +985,7 @@ export default function UnifiedTeamsPage() {
   }, [poolSlots, selectedGroup]);
 
   function renderExpandedTeamDetails(team: TeamRecord) {
-    const effectiveFee = getEffectiveFee(team, ageGroups, feeMode, feeSchedule);
+    const effectiveFee = getEffectiveFee(team, divisions, feeMode, feeSchedule);
     const pStatus = computePaymentStatus(team, effectiveFee, today);
     const due = getPaymentDue(team, effectiveFee);
     const busy = working === team.id;
@@ -1088,7 +1088,7 @@ export default function UnifiedTeamsPage() {
   const filtered = divRegs.filter(r => {
     const matchesStatus = selectedStatuses.length === 0 || selectedStatuses.includes(r.status);
     const matchesSearch = search === '' || r.name.toLowerCase().includes(search.toLowerCase()) || r.coach.toLowerCase().includes(search.toLowerCase());
-    const pStatus = computePaymentStatus(r, getEffectiveFee(r, ageGroups, feeMode, feeSchedule), today);
+    const pStatus = computePaymentStatus(r, getEffectiveFee(r, divisions, feeMode, feeSchedule), today);
     const matchesPayment = !paymentToolsAvailable || matchesPaymentFilter(pStatus, paymentFilter);
     return matchesStatus && matchesSearch && matchesPayment;
   });
@@ -1107,14 +1107,14 @@ export default function UnifiedTeamsPage() {
   const visibleSelectableIds = selectableRows.map(row => row.id);
   const allVisibleSelected = visibleSelectableIds.length > 0 && visibleSelectableIds.every(id => selectedRegistrationIds.has(id));
   const selectionModeActive = multiSelectMode || selectedRegistrationIds.size > 0;
-  const divisionOptions = ageGroups.length
-    ? ageGroups.map(g => ({ value: g.id, label: g.name }))
+  const divisionOptions = divisions.length
+    ? divisions.map(g => ({ value: g.id, label: g.name }))
     : [{ value: '', label: 'No divisions' }];
 
   const renderFlatRow = (r: TeamRecord) => {
     const isExpanded = expanded.has(r.id);
     const isSelected = selectedRegistrationIds.has(r.id);
-    const effectiveFee = getEffectiveFee(r, ageGroups, feeMode, feeSchedule);
+    const effectiveFee = getEffectiveFee(r, divisions, feeMode, feeSchedule);
     const pStatus = computePaymentStatus(r, effectiveFee, today);
     const paymentTooltip = getPaymentTooltip(r, effectiveFee, pStatus);
     const paymentSteps = getPaymentSymbolSteps(r, effectiveFee, today);
@@ -1250,10 +1250,10 @@ export default function UnifiedTeamsPage() {
         <ToolbarGroup grow className={styles.registrationContextGroup}>
           <ToolbarSelect
             label="Division"
-            value={selectedAgeGroupId}
+            value={selectedDivisionId}
             options={divisionOptions}
-            disabled={ageGroups.length === 0}
-            onChange={value => { setSelectedAgeGroupId(value); setSwapMode(false); setSwapFirstSlotId(null); }}
+            disabled={divisions.length === 0}
+            onChange={value => { setSelectedDivisionId(value); setSwapMode(false); setSwapFirstSlotId(null); }}
           />
         </ToolbarGroup>
 
@@ -1459,12 +1459,12 @@ export default function UnifiedTeamsPage() {
             </div>
             <div style={{ padding: '2rem' }}>
               <div className={styles.summaryGridModal}>
-                {ageGroups.map(g => {
-                  const groupRegs = regs.filter(r => r.age_group_id === g.id);
+                {divisions.map(g => {
+                  const groupRegs = regs.filter(r => r.division_id === g.id);
                   const accepted = groupRegs.filter(r => r.status === 'accepted').length;
                   const capacity = g.capacity || 0;
                   return (
-                    <div key={g.id} className={styles.summaryCardModal} onClick={() => { setSelectedAgeGroupId(g.id); setShowSummaryModal(false); }}>
+                    <div key={g.id} className={styles.summaryCardModal} onClick={() => { setSelectedDivisionId(g.id); setShowSummaryModal(false); }}>
                       <div className={styles.summaryHeader}>
                         <strong>{g.name}</strong>
                         {capacity > 0 && <span className={accepted >= capacity ? styles.fullBadge : styles.capacityBadge}>{accepted}/{capacity}</span>}
@@ -1502,7 +1502,7 @@ export default function UnifiedTeamsPage() {
                 const isExpanded = expanded.has(slot.id);
                 const isSwapSelected = swapFirstSlotId === slot.id;
                 const teamPaymentStatus = team
-                  ? computePaymentStatus(team, getEffectiveFee(team, ageGroups, feeMode, feeSchedule), today)
+                  ? computePaymentStatus(team, getEffectiveFee(team, divisions, feeMode, feeSchedule), today)
                   : null;
 
                 return (
@@ -1612,7 +1612,7 @@ export default function UnifiedTeamsPage() {
           ) : flatDisplay.length === 0 ? (
             <div className="empty-state">
               <Users size={40} style={{ opacity: 0.2 }} />
-              <p>{!currentTournament ? 'No tournament selected.' : ageGroups.length === 0 ? 'No divisions configured yet.' : 'No teams matching filters.'}</p>
+              <p>{!currentTournament ? 'No tournament selected.' : divisions.length === 0 ? 'No divisions configured yet.' : 'No teams matching filters.'}</p>
             </div>
           ) : (
             <div className={s.compactList}>
@@ -1682,8 +1682,8 @@ export default function UnifiedTeamsPage() {
               <div className="form-row form-row-2" style={{ marginTop: '1rem' }}>
                 <div className="form-group">
                   <label className="form-label">Division *</label>
-                  <select className="form-select" value={addForm.ageGroupId} onChange={e => setAddForm(f => ({ ...f, ageGroupId: e.target.value }))} required>
-                    {ageGroups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
+                  <select className="form-select" value={addForm.divisionId} onChange={e => setAddForm(f => ({ ...f, divisionId: e.target.value }))} required>
+                    {divisions.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
                   </select>
                 </div>
                 <div className="form-group">

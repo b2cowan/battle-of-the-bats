@@ -54,7 +54,7 @@ export async function POST(req: Request) {
       name,
       slug,
       sport:                        typeof body.sport === 'string' && body.sport ? body.sport : 'softball',
-      age_group:                    typeof body.ageGroup === 'string' && body.ageGroup ? body.ageGroup : null,
+      division:                    typeof body.division === 'string' && body.division ? body.division : null,
       description:                  typeof body.description === 'string' && body.description ? body.description : null,
       registration_fee:             typeof body.registrationFee === 'number' ? body.registrationFee : null,
       auto_generate_fees:           body.autoGenerateFees === true,

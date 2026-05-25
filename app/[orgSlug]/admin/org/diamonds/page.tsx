@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 import { useState, useCallback, useEffect } from 'react';
 import { MapPin, Plus, Pencil, Trash2, X, ExternalLink } from 'lucide-react'; // X used in delete confirm modal
 import { useTournament } from '@/lib/tournament-context';
@@ -13,7 +13,7 @@ import {
 } from '@/lib/export';
 import styles from './diamonds-admin.module.css';
 
-// ── Export ────────────────────────────────────────────────────────────────────
+// -- Export -------------------------------------------------------------------
 
 const VENUES_EXPORT_COLS: ExportColumnDef[] = [
   { label: 'Venue Name', key: 'name',    format: 'text' },
@@ -21,7 +21,7 @@ const VENUES_EXPORT_COLS: ExportColumnDef[] = [
   { label: 'Notes',      key: 'notes',   format: 'text' },
 ];
 
-// ─────────────────────────────────────────────────────────────────────────────
+// -----------------------------------------------------------------------------
 
 async function requestJson<T>(url: string, init?: RequestInit): Promise<T> {
   const res = await fetch(url, init);
@@ -56,7 +56,7 @@ export default function AdminDiamondsPage() {
 
   function handleSaved() { setModalOpen(false); refresh(); }
 
-  // ── Export ──────────────────────────────────────────────────────────────────
+  // -- Export -----------------------------------------------------------------
 
   function buildVenueRows() {
     return diamonds.map(d => ({
@@ -88,7 +88,7 @@ export default function AdminDiamondsPage() {
     downloadCSVBlob(filename, generateCSV(headers, data));
   }
 
-  // ────────────────────────────────────────────────────────────────────────────
+  // ---------------------------------------------------------------------------
 
   return (
     <div className={styles.page}>
@@ -107,67 +107,76 @@ export default function AdminDiamondsPage() {
             onExportCSV={handleExportCSV}
             disabled={diamonds.length === 0}
           />
-          <button className="btn btn-primary btn-sm" onClick={openAdd} id="diamond-add-btn" disabled={!currentTournament}>
+          <button className="btn btn-lime btn-data" onClick={openAdd} id="diamond-add-btn" disabled={!currentTournament}>
             <Plus size={16} /> Add Venue
           </button>
         </div>
       </div>
 
-      <div className={`table-wrap ${styles.responsiveTable}`}>
-        <table>
-          <thead>
-            <tr>
-              <th>Venue Name</th>
-              <th>Address</th>
-              <th>Notes</th>
-              <th>Maps</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {diamonds.length === 0 ? (
+      {diamonds.length === 0 ? (
+        <div className="empty-state">
+          <MapPin size={32} />
+          <h3>No venues added yet</h3>
+          <p>Add your first venue to assign locations to games.</p>
+          <button
+            className={`btn btn-lime ${styles.emptyCta}`}
+            onClick={openAdd}
+            disabled={!currentTournament}
+          >
+            <Plus size={16} /> Add Venue
+          </button>
+        </div>
+      ) : (
+        <div className={`table-wrap ${styles.responsiveTable}`}>
+          <table>
+            <thead>
               <tr>
-                <td className={styles.emptyTableCell} colSpan={5} style={{ textAlign: 'center', color: 'var(--white-30)', padding: '2rem' }}>
-                  No venues yet. Add one to get started.
-                </td>
+                <th>Venue Name</th>
+                <th>Address</th>
+                <th>Notes</th>
+                <th>Maps</th>
+                <th>Actions</th>
               </tr>
-            ) : diamonds.map(d => (
-              <tr key={d.id}>
-                <td data-label="Venue">
-                  <div className={styles.diamondName}>
-                    <MapPin size={13} style={{ color: 'var(--logic-lime)', flexShrink: 0 }} />
-                    <strong>{d.name}</strong>
-                  </div>
-                </td>
-                <td data-label="Address" style={{ color: 'var(--white-60)', fontSize: '0.875rem' }}>{d.address}</td>
-                <td data-label="Notes" style={{ color: 'var(--white-60)', fontSize: '0.875rem' }}>{d.notes || '-'}</td>
-                <td data-label="Maps">
-                  <a
-                    href={getMapsUrl(d.address || d.name)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="btn btn-ghost btn-sm"
-                    title="Open in Google Maps"
-                    id={`maps-diamond-${d.id}`}
-                  >
-                    <ExternalLink size={13} /> Maps
-                  </a>
-                </td>
-                <td data-label="Actions">
-                  <div className={styles.rowActions}>
-                    <button className="btn btn-ghost btn-sm" onClick={() => openEdit(d)} id={`edit-diamond-${d.id}`}>
-                      <Pencil size={13} />
-                    </button>
-                    <button className="btn btn-danger btn-sm" onClick={() => setDeleteId(d.id)} id={`delete-diamond-${d.id}`}>
-                      <Trash2 size={13} />
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody>
+              {diamonds.map(d => (
+                <tr key={d.id}>
+                  <td data-label="Venue">
+                    <div className={styles.diamondName}>
+                      <MapPin size={13} style={{ color: 'var(--logic-lime)', flexShrink: 0 }} />
+                      <strong>{d.name}</strong>
+                    </div>
+                  </td>
+                  <td data-label="Address" className={styles.cellMuted}>{d.address}</td>
+                  <td data-label="Notes" className={styles.cellMuted}>{d.notes || '-'}</td>
+                  <td data-label="Maps">
+                    <a
+                      href={getMapsUrl(d.address || d.name)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="btn btn-ghost btn-data"
+                      title="Open in Google Maps"
+                      id={`maps-diamond-${d.id}`}
+                    >
+                      <ExternalLink size={13} /> Maps
+                    </a>
+                  </td>
+                  <td data-label="Actions">
+                    <div className={styles.rowActions}>
+                      <button className="btn btn-ghost btn-data" onClick={() => openEdit(d)} id={`edit-diamond-${d.id}`}>
+                        <Pencil size={13} />
+                      </button>
+                      <button className="btn btn-danger btn-data" onClick={() => setDeleteId(d.id)} id={`delete-diamond-${d.id}`}>
+                        <Trash2 size={13} />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       {modalOpen && currentTournament && (
         <AddVenueModal
@@ -185,7 +194,7 @@ export default function AdminDiamondsPage() {
           <div className="modal" style={{ maxWidth: 400 }} onClick={e => e.stopPropagation()}>
             <div className="modal-header">
               <h3>Delete Venue?</h3>
-              <button className="btn btn-ghost btn-sm" onClick={() => setDeleteId(null)}><X size={16} /></button>
+              <button className="btn btn-ghost btn-data" onClick={() => setDeleteId(null)}><X size={16} /></button>
             </div>
             <p style={{ color: 'var(--white-60)' }}>
               Games linked to this venue will retain their location name but lose the Maps link.

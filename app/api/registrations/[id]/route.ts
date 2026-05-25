@@ -15,14 +15,14 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ id: str
   try {
     const { id } = await props.params;
     const body = await req.json();
-    const { status, payment_status, admin_notes, age_group_id, poolId } = body;
+    const { status, payment_status, admin_notes, division_id, poolId } = body;
 
     // Fetch current record with joined names and tournament contact email
     const { data: current, error: fetchErr } = await supabaseAdmin
       .from('teams')
       .select(`
         *,
-        age_groups!teams_age_group_id_fkey (name),
+        divisions (name),
         tournaments!teams_tournament_id_fkey (name, contact_email, org_id)
       `)
       .eq('id', id)
@@ -35,7 +35,7 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ id: str
     if (status !== undefined)         updates.status         = status;
     if (payment_status !== undefined) updates.payment_status = payment_status;
     if (admin_notes !== undefined)    updates.admin_notes    = admin_notes;
-    if (age_group_id !== undefined)   updates.age_group_id   = age_group_id;
+    if (division_id !== undefined)   updates.division_id   = division_id;
     if (poolId !== undefined)         updates.pool_id        = poolId;
 
     if (Object.keys(updates).length === 0) return NextResponse.json({ ok: true });
@@ -58,7 +58,7 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ id: str
     const p = {
       teamName:       current.name,
       coachName:      current.coach,
-      ageGroupName:   (current.age_groups as any)?.name ?? 'Division',
+      divisionName:   (current.divisions as any)?.name ?? 'Division',
       tournamentName: tournamentData?.name ?? 'Tournament',
       contactEmail,
       teamId:         id,
@@ -95,7 +95,7 @@ export async function GET(req: NextRequest, props: { params: Promise<{ id: strin
       .from('teams')
       .select(`
         *,
-        age_groups!teams_age_group_id_fkey (name),
+        divisions (name),
         tournaments!teams_tournament_id_fkey (name),
         pools:pool_id (name)
       `)
@@ -113,7 +113,7 @@ export async function GET(req: NextRequest, props: { params: Promise<{ id: strin
       team_name: team.name,
       coach_name: team.coach,
       email: team.email,
-      age_group_name: (team.age_groups as any)?.name || 'Division',
+      division_name: (team.divisions as any)?.name || 'Division',
       tournament_name: (team.tournaments as any)?.name || 'Tournament',
       status: team.status,
       payment_status: team.payment_status,

@@ -118,7 +118,7 @@ export default async function LeagueSeasonPage({
             >
               {STATUS_LABEL[season.status] ?? season.status}
             </span>
-            {season.ageGroup && (
+            {season.division && (
               <span
                 style={{
                   fontSize: '0.68rem',
@@ -130,7 +130,7 @@ export default async function LeagueSeasonPage({
                   border: '1px solid rgba(96,165,250,0.2)',
                 }}
               >
-                {season.ageGroup}
+                {season.division}
               </span>
             )}
           </div>

@@ -159,6 +159,206 @@
   display: inline;
 }
 
+.desktopTitle {
+  display: inline;
+}
+
+.mobileTitle {
+  display: none;
+}
+
+.desktopSubtitle {
+  display: inline;
+}
+
+.mobileSubtitle {
+  display: none;
+}
+
+@media (max-width: 760px) {
+  .desktopTitle {
+    display: none;
+  }
+
+  .mobileTitle {
+    display: inline;
+  }
+
+  .desktopSubtitle {
+    display: none;
+  }
+
+  .mobileSubtitle {
+    display: inline;
+  }
+}
+
+/* ─── Add Game button — icon-only collapse on mobile ─────────────────────── */
+.addGameLabel { display: inline; }
+
+@media (max-width: 760px) {
+  .addGameButton {
+    width: 32px;
+    min-width: 32px;
+    height: 28px;
+    min-height: 28px;
+    padding: 0 !important;
+    justify-content: center;
+    gap: 0;
+  }
+  .addGameLabel { display: none; }
+}
+
+/* Schedule rows become a compact two-line mobile grid so team names have room. */
+@media (max-width: 768px) {
+  .gameRowMain {
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    padding: 0.35rem 0.75rem !important;
+    min-height: 40px;
+  }
+
+  .planningGameRow {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    gap: 0.45rem 0.5rem !important;
+    align-items: center !important;
+    padding: 0.55rem 0.75rem !important;
+    min-height: 54px;
+  }
+
+  .planningDateCell {
+    grid-column: 1;
+    grid-row: 1;
+    min-width: 0;
+  }
+
+  .planningMatchup {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    gap: 0.55rem !important;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .planningTeamAway,
+  .planningTeamHome {
+    min-width: 0;
+    font-size: 0.82rem !important;
+  }
+
+  .planningTeamAway {
+    text-align: right !important;
+  }
+
+  .planningTeamHome {
+    text-align: left !important;
+  }
+
+  .planningVs {
+    align-self: center;
+  }
+
+  .planningStatusCell {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .gameRowMain :global([data-role="schedule-expand"]),
+  .planningExpandPlaceholder {
+    grid-column: 3;
+    grid-row: 1;
+  }
+}
+
+/* ─── Planning Mode Status Cell ──────────────────────────────────────────── */
+/* Replaces the `flex: 0 0 96px` inline style, adds mobile width collapse.  */
+.planningStatusCell {
+  flex: 0 0 96px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.35rem;
+  flex-shrink: 0;
+}
+
+@media (max-width: 768px) {
+  .planningStatusCell {
+    flex: 0 0 auto;
+    min-width: 0;
+    justify-content: flex-end;
+  }
+}
+
+/* ─── Desktop Badge / Mobile Compact Marker ──────────────────────────────── */
+/* Desktop: full badge text visible, marker hidden.                          */
+/* Mobile (≤768px): badge hidden, compact square initial shown instead.      */
+.desktopStatusBadge { display: inline-flex; }
+.gameStatusMarker   { display: none; }
+
+@media (max-width: 768px) {
+  .desktopStatusBadge { display: none; }
+
+  .gameStatusMarker {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.12rem;
+    height: 1.12rem;
+    border: 1px solid rgba(148, 163, 184, 0.28);
+    border-radius: 2px;
+    background: rgba(148, 163, 184, 0.08);
+    color: rgba(148, 163, 184, 0.72);
+    font-family: var(--font-data);
+    font-size: 0.55rem;
+    font-weight: 900;
+    line-height: 1;
+    flex-shrink: 0;
+  }
+
+  .gameStatusMarker[data-status="cancelled"] {
+    border-color: rgba(var(--danger-rgb), 0.48);
+    background: rgba(var(--danger-rgb), 0.08);
+    color: var(--danger);
+  }
+
+  .gameStatusMarker[data-status="completed"] {
+    border-color: rgba(var(--success-rgb), 0.45);
+    background: rgba(var(--success-rgb), 0.08);
+    color: var(--success);
+  }
+
+  .gameStatusMarker[data-status="submitted"] {
+    border-color: rgba(var(--warning-rgb), 0.48);
+    background: rgba(var(--warning-rgb), 0.08);
+    color: var(--warning);
+  }
+}
+
+/* ─── Schedule Status Filter Chips ──────────────────────────────────────── */
+/* Combined with s.statusFilters (admin-common) which provides base flex.   */
+/* This class adds mobile grid collapse + chip centering only.               */
+.scheduleStatusFilters {
+  flex-shrink: 0;
+}
+
+@media (max-width: 640px) {
+  .scheduleStatusFilters {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.45rem;
+    width: 100%;
+  }
+
+  .scheduleStatusFilters > button {
+    min-height: 34px;
+    justify-content: center;
+    padding-inline: 0.5rem;
+  }
+}
+
 /* ─── Score Entry (shared with Results) ───────────────────────────────────── */
 .scoreInputArea {
   display: flex;

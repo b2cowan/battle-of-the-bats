@@ -23,7 +23,7 @@ type TournamentRow = {
   total_fee_due_date: string | null;
 };
 
-type AgeGroupRow = {
+type DivisionRow = {
   id: string;
   name: string;
   capacity: number | null;
@@ -41,14 +41,14 @@ type TeamRow = {
   payment_status: string | null;
   deposit_paid: number | null;
   total_paid: number | null;
-  age_group_id: string | null;
+  division_id: string | null;
   waitlist_position: number | null;
   registered_at: string | null;
 };
 
 type GameRow = {
   id: string;
-  age_group_id: string | null;
+  division_id: string | null;
   home_team_id: string | null;
   away_team_id: string | null;
   home_score: number | null;
@@ -83,9 +83,9 @@ function numberValue(value: unknown) {
   return value == null ? 0 : Number(value);
 }
 
-function effectiveFee(team: TeamRow, tournament: TournamentRow, ageGroups: Map<string, AgeGroupRow>): FeeRow {
-  const group = team.age_group_id ? ageGroups.get(team.age_group_id) : null;
-  if (tournament.fee_schedule_mode === 'age_group' && group?.total_fee_amount != null) return group;
+function effectiveFee(team: TeamRow, tournament: TournamentRow, divisions: Map<string, DivisionRow>): FeeRow {
+  const group = team.division_id ? divisions.get(team.division_id) : null;
+  if (tournament.fee_schedule_mode === 'division' && group?.total_fee_amount != null) return group;
   return tournament;
 }
 
@@ -224,19 +224,19 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
   if (!tournament || tournament.org_id !== ctx.org.id) return forbidden();
   if (!tournament.slug) return NextResponse.json({ error: 'Tournament slug is required to build public summary links.' }, { status: 500 });
 
-  const [{ data: ageGroups, error: ageGroupsError }, { data: teams, error: teamsError }, { data: games, error: gamesError }, { data: archives, error: archivesError }] = await Promise.all([
+  const [{ data: divisions, error: divisionsError }, { data: teams, error: teamsError }, { data: games, error: gamesError }, { data: archives, error: archivesError }] = await Promise.all([
     supabaseAdmin
-      .from('age_groups')
+      .from('divisions')
       .select('id, name, capacity, display_order, deposit_amount, deposit_due_date, total_fee_amount, total_fee_due_date')
       .eq('tournament_id', tournamentId)
       .order('display_order', { ascending: true }),
     supabaseAdmin
       .from('teams')
-      .select('id, name, status, payment_status, deposit_paid, total_paid, age_group_id, waitlist_position, registered_at')
+      .select('id, name, status, payment_status, deposit_paid, total_paid, division_id, waitlist_position, registered_at')
       .eq('tournament_id', tournamentId),
     supabaseAdmin
       .from('games')
-      .select('id, age_group_id, home_team_id, away_team_id, home_score, away_score, status, is_playoff, bracket_code, game_date')
+      .select('id, division_id, home_team_id, away_team_id, home_score, away_score, status, is_playoff, bracket_code, game_date')
       .eq('tournament_id', tournamentId),
     supabaseAdmin
       .from('tournament_archives')
@@ -245,15 +245,15 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
       .order('sealed_at', { ascending: false }),
   ]);
 
-  if (ageGroupsError) return NextResponse.json({ error: ageGroupsError.message }, { status: 500 });
+  if (divisionsError) return NextResponse.json({ error: divisionsError.message }, { status: 500 });
   if (teamsError) return NextResponse.json({ error: teamsError.message }, { status: 500 });
   if (gamesError) return NextResponse.json({ error: gamesError.message }, { status: 500 });
   if (archivesError) return NextResponse.json({ error: archivesError.message }, { status: 500 });
 
-  const typedAgeGroups = (ageGroups ?? []) as AgeGroupRow[];
+  const typedDivisions = (divisions ?? []) as DivisionRow[];
   const typedTeams = (teams ?? []) as TeamRow[];
   const typedGames = (games ?? []) as GameRow[];
-  const ageGroupMap = new Map(typedAgeGroups.map(group => [group.id, group]));
+  const divisionMap = new Map(typedDivisions.map(group => [group.id, group]));
   const teamNames = new Map(typedTeams.map(team => [team.id, team.name]));
   const today = new Date().toISOString().split('T')[0];
 
@@ -267,7 +267,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
 
   const paymentTeams = typedTeams.filter(team => team.status === 'accepted');
   const paymentTotals = paymentTeams.reduce((acc, team) => {
-    const fee = effectiveFee(team, tournament, ageGroupMap);
+    const fee = effectiveFee(team, tournament, divisionMap);
     const expected = numberValue(fee.total_fee_amount);
     const collected = numberValue(team.total_paid);
     const depositAmount = numberValue(fee.deposit_amount);
@@ -289,9 +289,9 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
     playoffGames: typedGames.filter(game => game.is_playoff).length,
   };
 
-  const divisions = typedAgeGroups.map(group => {
-    const groupTeams = typedTeams.filter(team => team.age_group_id === group.id);
-    const groupGames = typedGames.filter(game => game.age_group_id === group.id);
+  const divisions = typedDivisions.map(group => {
+    const groupTeams = typedTeams.filter(team => team.division_id === group.id);
+    const groupGames = typedGames.filter(game => game.division_id === group.id);
     const standings = calculateStandings(groupTeams, groupGames);
     const champion = championFromFinal(groupGames, teamNames);
     return {

@@ -203,7 +203,6 @@ export default function TournamentSummaryPage() {
             includePools: true,
             includeSlots: true,
             includeVenues: true,
-            includeContacts: true,
             includeBranding: true,
             includePublicPages: true,
             includeWelcome: true,

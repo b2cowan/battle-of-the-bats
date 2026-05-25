@@ -2,13 +2,13 @@
 import React, { useState, useEffect } from 'react';
 import { Calendar, Plus, Pencil, Trash2, X, Check, Download, Sparkles, Trophy, MapPin, Clock, Search } from 'lucide-react';
 import { formatPoolName } from '@/lib/utils';
-import { getGames, saveGame, updateGame, deleteGame, getTeams, getAgeGroups, getDiamonds } from '@/lib/db';
+import { getGames, saveGame, updateGame, deleteGame, getTeams, getDivisions, getDiamonds } from '@/lib/db';
 import { downloadCSV, formatTime } from '@/lib/utils';
 import { useTournament } from '@/lib/tournament-context';
 import ScheduleGenerator from './Generator';
 import PlayoffWizard from './PlayoffWizard';
 import GameList from './components/GameList';
-import { Game, Team, AgeGroup, Diamond } from '@/lib/types';
+import { Game, Team, Division, Diamond } from '@/lib/types';
 import s from '../admin-common.module.css';
 import styles from './schedule-admin.module.css';
 import FeedbackModal from '@/components/FeedbackModal';
@@ -16,7 +16,7 @@ import FeedbackModal from '@/components/FeedbackModal';
 type ModalMode = 'add' | 'edit' | null;
 
 const emptyForm = {
-  ageGroupId: '', homeTeamId: '', awayTeamId: '',
+  divisionId: '', homeTeamId: '', awayTeamId: '',
   date: '', time: '09:00', location: '', diamondId: '', notes: null as string | null,
   bracketCode: '',
 };
@@ -25,7 +25,7 @@ export default function AdminSchedulePage() {
   const { currentTournament } = useTournament();
   const [games, setGames]       = useState<Game[]>([]);
   const [teams, setTeams]       = useState<Team[]>([]);
-  const [ageGroups, setAgeGroups] = useState<AgeGroup[]>([]);
+  const [divisions, setDivisions] = useState<Division[]>([]);
   const [diamonds, setDiamonds] = useState<Diamond[]>([]);
   const [modal, setModal]       = useState<ModalMode>(null);
   const [editing, setEditing]   = useState<Game | null>(null);
@@ -54,8 +54,8 @@ export default function AdminSchedulePage() {
     const allTeams = await getTeams(tournamentId);
     setTeams(allTeams.filter(t => t.status === 'accepted'));
     
-    const groups = await getAgeGroups(tournamentId);
-    setAgeGroups(groups);
+    const groups = await getDivisions(tournamentId);
+    setDivisions(groups);
     if (groups.length > 0 && !filterGroup) {
       setFilterGroup(groups[0].id);
     }
@@ -65,9 +65,9 @@ export default function AdminSchedulePage() {
   
   useEffect(() => { refresh(); }, [currentTournament?.id]);
 
-  const groupTeams   = (id: string) => teams.filter(t => t.ageGroupId === id);
+  const groupTeams   = (id: string) => teams.filter(t => t.divisionId === id);
   const getTeamName  = (id: string) => teams.find(t => t.id === id)?.name ?? 'TBD';
-  const getGroupName = (id: string) => ageGroups.find(g => g.id === id)?.name ?? '—';
+  const getGroupName = (id: string) => divisions.find(g => g.id === id)?.name ?? '—';
   const getDiamondName = (id?: string) => id ? (diamonds.find(d => d.id === id)?.name ?? '') : '';
 
   function handleDiamondChange(diamondId: string) {
@@ -76,14 +76,14 @@ export default function AdminSchedulePage() {
   }
 
   function openAdd() {
-    setForm({ ...emptyForm, ageGroupId: filterGroup || (ageGroups[0]?.id ?? '') });
+    setForm({ ...emptyForm, divisionId: filterGroup || (divisions[0]?.id ?? '') });
     setEditing(null);
     setModal('add');
   }
 
   function openEdit(g: Game) {
     setForm({
-      ageGroupId: g.ageGroupId,
+      divisionId: g.divisionId,
       homeTeamId: g.homeTeamId ?? '',
       awayTeamId: g.awayTeamId ?? '',
       date: g.date ?? '',
@@ -101,7 +101,7 @@ export default function AdminSchedulePage() {
     e.preventDefault();
     const data: Omit<Game, 'id'> = {
       tournamentId: currentTournament?.id ?? '',
-      ageGroupId:  form.ageGroupId,
+      divisionId:  form.divisionId,
       homeTeamId:  form.homeTeamId,
       awayTeamId:  form.awayTeamId,
       date:        form.date,
@@ -136,7 +136,7 @@ export default function AdminSchedulePage() {
 
   const scheduled = games;
   const filtered  = scheduled.filter(g => {
-    const matchesDivision = g.ageGroupId === filterGroup;
+    const matchesDivision = g.divisionId === filterGroup;
     const matchesView = viewMode === 'playoff' ? g.isPlayoff : !g.isPlayoff;
     const q = search.toLowerCase();
     const matchesSearch = q === '' || 
@@ -156,7 +156,7 @@ export default function AdminSchedulePage() {
     const rows = filtered.map(g => [
       g.date,
       formatTime(g.time),
-      getGroupName(g.ageGroupId),
+      getGroupName(g.divisionId),
       getTeamName(g.homeTeamId),
       getTeamName(g.awayTeamId),
       g.diamondId ? getDiamondName(g.diamondId) : g.location,
@@ -214,7 +214,7 @@ export default function AdminSchedulePage() {
           <div className={s.controlGroup}>
             <label className={s.controlLabel}>Division:</label>
             <select className={`${s.controlSelect} form-input`} value={filterGroup} onChange={e => setFilterGroup(e.target.value)}>
-              {ageGroups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
+              {divisions.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
             </select>
           </div>
           {viewMode === 'pool' && (
@@ -248,7 +248,7 @@ export default function AdminSchedulePage() {
         <PlayoffBracketView
           games={filtered}
           teams={teams}
-          ageGroup={ageGroups.find(g => g.id === filterGroup)}
+          division={divisions.find(g => g.id === filterGroup)}
           onEdit={openEdit}
           onDelete={handleDeleteRequest}
           getGroupName={getGroupName}
@@ -266,11 +266,11 @@ export default function AdminSchedulePage() {
             <GameList
               games={filtered}
               teams={teams}
-              ageGroups={ageGroups}
+              divisions={divisions}
               diamonds={diamonds}
               viewMode={viewMode}
               groupByPool={groupMode === 'pools'}
-              pools={ageGroups.find(g => g.id === filterGroup)?.pools}
+              pools={divisions.find(g => g.id === filterGroup)?.pools}
               onEdit={openEdit}
               onDelete={handleDeleteRequest}
               onCancel={markCancelled}
@@ -292,10 +292,10 @@ export default function AdminSchedulePage() {
               <div className="form-row form-row-3" style={{ marginBottom: '1rem' }}>
                 <div className="form-group">
                   <label className="form-label">Division *</label>
-                  <select className="form-select" value={form.ageGroupId}
-                    onChange={e => setForm(f => ({ ...f, ageGroupId: e.target.value, homeTeamId: '', awayTeamId: '' }))} required>
+                  <select className="form-select" value={form.divisionId}
+                    onChange={e => setForm(f => ({ ...f, divisionId: e.target.value, homeTeamId: '', awayTeamId: '' }))} required>
                     <option value="">Select...</option>
-                    {ageGroups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
+                    {divisions.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
                   </select>
                 </div>
                 <div className="form-group">
@@ -315,7 +315,7 @@ export default function AdminSchedulePage() {
                   <select className="form-select" value={form.homeTeamId}
                     onChange={e => setForm(f => ({ ...f, homeTeamId: e.target.value }))}>
                     <option value="">Select...</option>
-                    {groupTeams(form.ageGroupId).map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                    {groupTeams(form.divisionId).map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
                   </select>
                 </div>
                 <div className="form-group">
@@ -323,7 +323,7 @@ export default function AdminSchedulePage() {
                   <select className="form-select" value={form.awayTeamId}
                     onChange={e => setForm(f => ({ ...f, awayTeamId: e.target.value }))}>
                     <option value="">Select...</option>
-                    {groupTeams(form.ageGroupId).map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                    {groupTeams(form.divisionId).map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
                   </select>
                 </div>
               </div>
@@ -380,7 +380,7 @@ export default function AdminSchedulePage() {
       {showGenerator && currentTournament && (
         <ScheduleGenerator 
           tournament={currentTournament}
-          ageGroups={ageGroups}
+          divisions={divisions}
           teams={teams}
           diamonds={diamonds}
           onCancel={() => setShowGenerator(false)}
@@ -393,7 +393,7 @@ export default function AdminSchedulePage() {
 
       {showPlayoffWizard && filterGroup !== '' && (
         <PlayoffWizard
-          ageGroup={ageGroups.find(g => g.id === filterGroup)!}
+          division={divisions.find(g => g.id === filterGroup)!}
           tournamentId={currentTournament?.id || ''}
           onClose={() => setShowPlayoffWizard(false)}
           onComplete={() => {
@@ -635,7 +635,7 @@ function BracketColumns({ columns, onEdit, onDelete, formatDate }: any) {
   );
 }
 
-function PlayoffBracketView({ games, teams, ageGroup, onEdit, onDelete, getGroupName, formatDate, statusBadge }: any) {
+function PlayoffBracketView({ games, teams, division, onEdit, onDelete, getGroupName, formatDate, statusBadge }: any) {
   if (games.length === 0) {
     return (
       <div className="empty-state" style={{ padding: '4rem' }}>
@@ -646,7 +646,7 @@ function PlayoffBracketView({ games, teams, ageGroup, onEdit, onDelete, getGroup
     );
   }
 
-  const pools = ageGroup?.pools || [];
+  const pools = division?.pools || [];
   const isSplitMode = hasSplitPoolGames(games, pools);
 
   if (isSplitMode) {

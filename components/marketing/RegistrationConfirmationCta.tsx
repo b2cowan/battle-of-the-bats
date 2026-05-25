@@ -43,7 +43,7 @@ export default function RegistrationConfirmationCta({
       </div>
       <div className={styles.confirmationBody}>
         <strong>Keep this team organized after {tournamentName}</strong>
-        <span>Check your confirmation email for a secure Team claim link, or preview the season workspace now.</span>
+        <span>Check your confirmation email for a secure Coaches Portal claim link, or preview the season workspace now.</span>
       </div>
       <Link
         href={href}
@@ -58,7 +58,7 @@ export default function RegistrationConfirmationCta({
           ctaHref: href,
         })}
       >
-        Preview Team
+        Preview Coaches Portal
       </Link>
     </div>
   );

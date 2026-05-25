@@ -6,6 +6,8 @@
 
 **Unified routing update:** This completed implementation is the shipped foundation for Basic Coaches Portal, but customer-facing routes now migrate into `/coaches`. Use `/coaches/join` for the account step, `/coaches/tournaments` for tournament records, and `/coaches/start` for paid Coaches Portal signup. Current `/my` routes should remain only as redirects or compatibility aliases.
 
+**Next product direction:** Basic Coaches Portal should become team-centric. The shipped implementation finds tournament registrations by coach email; the next unified Coaches Portal phase should create or link a persistent Basic coach team profile when a coach creates/signs into their account after registration. Returning coaches should sign in during registration and select an existing team so that team's tournament history accumulates in one portal and can later upgrade into paid Coaches Portal tools.
+
 ---
 
 ## Core Decision
@@ -103,8 +105,8 @@ After a coach submits the tournament registration form, they are redirected to t
 
 **`app/my/registrations/[teamId]/page.tsx`** (Server Component)
 - Verifies `team.email ILIKE user.email` — 404 if mismatch
-- Parallel fetches: tournament, age group, announcements, games
-- Shows: status card with contextual description, registration details, schedule (if `schedule_visibility` is published), announcements (filtered by `age_group_ids`), CTAs
+- Parallel fetches: tournament, division, announcements, games
+- Shows: status card with contextual description, registration details, schedule (if `schedule_visibility` is published), announcements (filtered by `division_ids`), CTAs
 - Acceptance email CTA button links to `/my/registrations`
 
 **`app/my/registrations/[teamId]/detail.module.css`**
@@ -169,3 +171,4 @@ Embedded directly in the registrations pages:
 - [x] Update all Coaches Portal CTA URLs to `/coaches/start`.
 - [x] Add `not-found.tsx` under the registration detail route for cleaner 404 UX.
 - [x] Add a `/my/` index redirect to `/coaches/tournaments`.
+- [ ] Supersede email-only registration lookup with persistent Basic coach team profiles and explicit user/team/registration links, tracked as Phase 2B in `docs/active/COACHES_PORTAL_UNIFIED_PROJECT_PLAN.md`.

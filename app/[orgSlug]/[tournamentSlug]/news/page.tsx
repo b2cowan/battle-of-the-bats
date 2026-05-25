@@ -1,6 +1,6 @@
 import { cookies } from 'next/headers';
 import { Megaphone, Star, Calendar } from 'lucide-react';
-import { getAnnouncements, getOrganizationBySlug, getPublicTournamentBySlug, getAgeGroups } from '@/lib/db';
+import { getAnnouncements, getOrganizationBySlug, getPublicTournamentBySlug, getDivisions } from '@/lib/db';
 import { notFound } from 'next/navigation';
 import { isPublicPageEnabled } from '@/lib/public-pages';
 import { Announcement } from '@/lib/types';
@@ -26,17 +26,17 @@ export default async function NewsPage({
   const tournament = org ? await getPublicTournamentBySlug(org.id, tournamentSlug) : null;
   if (!tournament || !isPublicPageEnabled(tournament, 'news')) notFound();
 
-  const [allAnnouncements, ageGroups] = await Promise.all([
+  const [allAnnouncements, divisions] = await Promise.all([
     getAnnouncements(tournament.id, { admin: true }),
-    tournament ? getAgeGroups(tournament.id, { admin: true }) : Promise.resolve([]),
+    tournament ? getDivisions(tournament.id, { admin: true }) : Promise.resolve([]),
   ]);
 
-  const preferredGroup = prefName ? ageGroups.find(g => g.name === prefName) : null;
-  const hasTaggedContent = allAnnouncements.some(a => a.ageGroupIds?.length);
+  const preferredGroup = prefName ? divisions.find(g => g.name === prefName) : null;
+  const hasTaggedContent = allAnnouncements.some(a => a.divisionIds?.length);
   const isFiltering = !!preferredGroup && view !== 'all' && hasTaggedContent;
 
   const announcements = isFiltering
-    ? allAnnouncements.filter(a => !a.ageGroupIds?.length || a.ageGroupIds.includes(preferredGroup!.id))
+    ? allAnnouncements.filter(a => !a.divisionIds?.length || a.divisionIds.includes(preferredGroup!.id))
     : allAnnouncements;
 
   function formatDate(d: string) {
@@ -62,10 +62,10 @@ export default async function NewsPage({
 
       <div className="section">
         <div className="container">
-          {hasTaggedContent && prefName && ageGroups.length > 0 && (
+          {hasTaggedContent && prefName && divisions.length > 0 && (
             <DivisionFilterBar
               orgSlug={orgSlug}
-              ageGroups={ageGroups}
+              divisions={divisions}
               activeName={prefName}
               isFiltering={isFiltering}
               viewAllHref={`/${orgSlug}/${tournamentSlug}/news?view=all`}

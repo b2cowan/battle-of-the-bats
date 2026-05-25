@@ -31,7 +31,7 @@ const repTeamsHelp: HelpPageContent = {
           <p>Use a team record for the long-running franchise, and a program year for each season of activity.</p>
           <ol>
             <li>Go to <strong>Rep Teams</strong> and click <strong>Add Team</strong>.</li>
-            <li>Enter the team name, slug, sport, age group, and colour.</li>
+            <li>Enter the team name, slug, sport, division, and colour.</li>
             <li>Open the team and create a <strong>Program Year</strong> for the upcoming season.</li>
             <li>Keep the program year in <strong>Draft</strong> while you prepare tryouts, coaches, documents, and cost allocations.</li>
             <li>Move the program year to <strong>Active</strong> when coaches and families should begin using it.</li>
@@ -156,7 +156,7 @@ const repTeamsHelp: HelpPageContent = {
       heading: 'Creating teams and program years',
       content: (
         <>
-          <p>From the Rep Teams page, click <strong>Add Team</strong> to create a team. Set a name, URL slug, sport, and optional age group and colour. The slug appears in public URLs — choose it carefully.</p>
+          <p>From the Rep Teams page, click <strong>Add Team</strong> to create a team. Set a name, URL slug, sport, and optional division and colour. The slug appears in public URLs — choose it carefully.</p>
           <p>Once a team exists, open it and create a <strong>Program Year</strong>. A program year represents one competitive season for that team. All rosters, schedules, finances, tryouts, and documents are scoped to a program year. Create a new program year at the start of each season — this preserves full history for past years.</p>
           <p>Program years move through statuses: <strong>Draft → Active → Completed → Archived</strong>. Only one program year per team should be Active at a time.</p>
         </>

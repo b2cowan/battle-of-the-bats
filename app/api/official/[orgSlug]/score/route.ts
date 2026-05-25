@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { getAuthContextWithScope, unauthorized } from '@/lib/api-auth';
 import { hasCapability } from '@/lib/roles';
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import type { AgeGroup, Diamond, Game, GameStatus } from '@/lib/types';
+import type { Division, Diamond, Game, GameStatus } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
 
@@ -19,7 +19,7 @@ type TournamentRow = {
 type GameRow = {
   id: string;
   tournament_id: string;
-  age_group_id: string | null;
+  division_id: string | null;
   home_team_id: string | null;
   away_team_id: string | null;
   game_date: string;
@@ -56,7 +56,7 @@ type DiamondRow = {
   notes: string | null;
 };
 
-type AgeGroupRow = {
+type DivisionRow = {
   id: string;
   tournament_id: string;
   name: string;
@@ -92,7 +92,7 @@ interface OfficialScorePayload {
   scorePolicyByTournamentId: Record<string, boolean>;
   cards: OfficialScoreCard[];
   diamonds: Diamond[];
-  ageGroups: AgeGroup[];
+  divisions: Division[];
   emptyMessage: string;
   emptyState: OfficialScoreEmptyState | null;
 }
@@ -115,7 +115,7 @@ function emptyPayload(
     scorePolicyByTournamentId,
     cards: [],
     diamonds: [],
-    ageGroups: [],
+    divisions: [],
     emptyMessage: state.message,
     emptyState: state,
   };
@@ -141,7 +141,7 @@ function mapGame(row: GameRow): Game {
   return {
     id: row.id,
     tournamentId: row.tournament_id,
-    ageGroupId: row.age_group_id ?? '',
+    divisionId: row.division_id ?? '',
     homeTeamId: row.home_team_id ?? '',
     awayTeamId: row.away_team_id ?? '',
     date: row.game_date,
@@ -176,7 +176,7 @@ function mapDiamond(row: DiamondRow): Diamond {
   };
 }
 
-function mapAgeGroup(row: AgeGroupRow): AgeGroup {
+function mapDivision(row: DivisionRow): Division {
   return {
     id: row.id,
     tournamentId: row.tournament_id,
@@ -264,7 +264,7 @@ export async function GET(req: Request, { params }: Params) {
     .select(`
       id,
       tournament_id,
-      age_group_id,
+      division_id,
       home_team_id,
       away_team_id,
       game_date,
@@ -309,7 +309,7 @@ export async function GET(req: Request, { params }: Params) {
     ));
   }
 
-  const [teamsResult, diamondsResult, ageGroupsResult] = await Promise.all([
+  const [teamsResult, diamondsResult, divisionsResult] = await Promise.all([
     supabaseAdmin
       .from('teams')
       .select('id, name')
@@ -320,7 +320,7 @@ export async function GET(req: Request, { params }: Params) {
       .in('tournament_id', tournamentIds)
       .order('name', { ascending: true }),
     supabaseAdmin
-      .from('age_groups')
+      .from('divisions')
       .select('id, tournament_id, name, min_age, max_age, display_order')
       .in('tournament_id', tournamentIds)
       .order('display_order', { ascending: true }),
@@ -332,17 +332,17 @@ export async function GET(req: Request, { params }: Params) {
   if (diamondsResult.error) {
     return NextResponse.json({ error: diamondsResult.error.message }, { status: 500 });
   }
-  if (ageGroupsResult.error) {
-    return NextResponse.json({ error: ageGroupsResult.error.message }, { status: 500 });
+  if (divisionsResult.error) {
+    return NextResponse.json({ error: divisionsResult.error.message }, { status: 500 });
   }
 
   const teams = (teamsResult.data ?? []) as TeamRow[];
   const diamonds = ((diamondsResult.data ?? []) as DiamondRow[]).map(mapDiamond);
-  const ageGroups = ((ageGroupsResult.data ?? []) as AgeGroupRow[]).map(mapAgeGroup);
+  const divisions = ((divisionsResult.data ?? []) as DivisionRow[]).map(mapDivision);
 
   const teamNameById = new Map(teams.map(team => [team.id, team.name]));
   const diamondById = new Map(diamonds.map(diamond => [diamond.id, diamond]));
-  const ageGroupNameById = new Map(ageGroups.map(ageGroup => [ageGroup.id, ageGroup.name]));
+  const divisionNameById = new Map(divisions.map(division => [division.id, division.name]));
   const tournamentNameById = new Map(tournaments.map(tournament => [
     tournament.id,
     `${tournament.name} (${tournament.year})`,
@@ -353,7 +353,7 @@ export async function GET(req: Request, { params }: Params) {
     homeName: teamNameById.get(game.homeTeamId) ?? game.homePlaceholder ?? 'TBD',
     awayName: teamNameById.get(game.awayTeamId) ?? game.awayPlaceholder ?? 'TBD',
     diamond: game.diamondId ? diamondById.get(game.diamondId) ?? null : null,
-    divisionName: ageGroupNameById.get(game.ageGroupId) ?? '-',
+    divisionName: divisionNameById.get(game.divisionId) ?? '-',
     tournamentName: tournamentNameById.get(game.tournamentId) ?? null,
   }));
 
@@ -369,7 +369,7 @@ export async function GET(req: Request, { params }: Params) {
     scorePolicyByTournamentId,
     cards,
     diamonds,
-    ageGroups,
+    divisions,
     emptyMessage: '',
     emptyState: null,
   } satisfies OfficialScorePayload);

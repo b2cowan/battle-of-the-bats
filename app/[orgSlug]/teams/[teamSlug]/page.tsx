@@ -102,7 +102,7 @@ export default async function TeamPublicPage({
             >
               {team.name}
             </h1>
-            {team.ageGroup && (
+            {team.division && (
               <span
                 style={{
                   fontSize: '0.7rem',
@@ -116,7 +116,7 @@ export default async function TeamPublicPage({
                   border: `1px solid ${team.color ? `${team.color}44` : 'rgba(255,255,255,0.1)'}`,
                 }}
               >
-                {team.ageGroup}
+                {team.division}
               </span>
             )}
             {team.isArchived && (

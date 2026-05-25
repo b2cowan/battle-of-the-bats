@@ -44,7 +44,7 @@ export async function GET(req: Request) {
     const [{ data: agRows, error: agErr }, { data: teamRows, error: teErr }] =
       await Promise.all([
         supabaseAdmin
-          .from('age_groups')
+          .from('divisions')
           .select('tournament_id')
           .in('tournament_id', tournamentIds),
         supabaseAdmin
@@ -90,7 +90,7 @@ export async function GET(req: Request) {
                 isActive: t.is_active,
               }
             : null,
-          ageGroupCount: t ? (agCount[t.id] ?? 0) : 0,
+          divisionCount: t ? (agCount[t.id] ?? 0) : 0,
           teamCount:     t ? (teamCount[t.id] ?? 0) : 0,
         };
       })

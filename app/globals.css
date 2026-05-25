@@ -605,6 +605,34 @@ h1, h2, h3, h4, h5, h6 {
 .form-input::placeholder,
 .form-textarea::placeholder { color: var(--white-30); }
 
+/* Remove number input spinners globally — users type amounts, not click arrows */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
+
+/* Date inputs — dark popup + FieldLogicHQ logic-lime indicator icon */
+input[type="date"],
+input[type="datetime-local"] {
+  color-scheme: dark;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  border-radius: 2px;
+  padding: 3px;
+  opacity: 0.55;
+  transition: opacity 0.15s, background 0.15s;
+  /* Tint to logic-lime (#d9f99d) */
+  filter: brightness(0) saturate(100%) invert(91%) sepia(30%) saturate(600%) hue-rotate(58deg) brightness(108%);
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator:hover,
+input[type="datetime-local"]::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+  background: rgba(217, 249, 157, 0.12);
+}
+
 select option {
   background: var(--bg-2);
   color: var(--white);

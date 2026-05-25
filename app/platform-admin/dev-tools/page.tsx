@@ -32,6 +32,13 @@ interface OrgRow {
   name: string;
   plan_id: string;
   protected: boolean;
+  account_kind: string;
+}
+
+interface OrgSelectOption {
+  id: string;
+  slug: string;
+  plan_id: string;
 }
 
 interface Status {
@@ -609,9 +616,11 @@ function SeedCard({
   title,
   description,
   creates,
+  kind,
   locked,
   lockReason,
   statusBadges,
+  orgOptions,
   onSeed,
   busy,
   result,
@@ -620,13 +629,23 @@ function SeedCard({
   title: string;
   description: string;
   creates: string;
+  kind?: 'additive' | 'standalone';
   locked: boolean;
   lockReason?: string;
   statusBadges: React.ReactNode;
-  onSeed: () => void;
+  orgOptions?: OrgSelectOption[];
+  onSeed: (orgId?: string) => void;
   busy: boolean;
   result: SeedResult | null;
 }) {
+  const [selectedOrgId, setSelectedOrgId] = useState<string>('');
+
+  // Auto-select first org when options become available
+  const firstOrgId = orgOptions?.[0]?.id ?? '';
+  useEffect(() => {
+    if (firstOrgId && !selectedOrgId) setSelectedOrgId(firstOrgId);
+  }, [firstOrgId, selectedOrgId]);
+
   return (
     <div className={`${styles.card} ${locked ? styles.cardLocked : ''}`}>
       <div className={styles.cardHeader}>
@@ -634,7 +653,14 @@ function SeedCard({
           <Icon size={18} />
         </div>
         <div className={styles.cardMeta}>
-          <div className={styles.cardTitle}>{title}</div>
+          <div className={styles.cardTitle}>
+            {title}
+            {kind && (
+              <span className={kind === 'standalone' ? styles.kindBadgeStandalone : styles.kindBadgeAdditive}>
+                {kind === 'standalone' ? 'Standalone' : 'Additive'}
+              </span>
+            )}
+          </div>
           <div className={styles.cardDesc}>{description}</div>
         </div>
         {locked ? (
@@ -642,13 +668,32 @@ function SeedCard({
             <Lock size={14} />
           </div>
         ) : (
-          <button className={styles.seedBtn} onClick={onSeed} disabled={busy}>
+          <button
+            className={styles.seedBtn}
+            onClick={() => onSeed(orgOptions && selectedOrgId ? selectedOrgId : undefined)}
+            disabled={busy}
+          >
             {busy ? <Loader size={13} className={styles.spin} /> : 'Seed'}
           </button>
         )}
       </div>
       <div className={styles.cardFooter}>
         <div className={styles.creates}>Creates: {creates}</div>
+        {orgOptions && orgOptions.length > 0 && !locked && (
+          <div className={styles.orgSelectorRow}>
+            <span className={styles.orgSelectorLabel}>Into:</span>
+            <select
+              className={styles.orgSelect}
+              value={selectedOrgId}
+              onChange={e => setSelectedOrgId(e.target.value)}
+              disabled={busy}
+            >
+              {orgOptions.map(o => (
+                <option key={o.id} value={o.id}>{o.slug}</option>
+              ))}
+            </select>
+          </div>
+        )}
         <div className={styles.badges}>{statusBadges}</div>
       </div>
       {locked && lockReason && (
@@ -669,6 +714,23 @@ function SeedCard({
     </div>
   );
 }
+
+// ─── Card sections — static grouping, keys match CARDS ───────────────────────
+
+const CARD_SECTIONS: { label: string; sublabel?: string; keys: string[] }[] = [
+  { label: 'Platform Access', keys: ['platform-user'] },
+  { label: 'Orgs & Users',    keys: ['org', 'users']  },
+  {
+    label:    'Org Features',
+    sublabel: 'additive — seeds into an existing org',
+    keys:     ['tournament', 'house-league', 'rep-team'],
+  },
+  {
+    label:    'Standalone Products',
+    sublabel: 'creates its own org space',
+    keys:     ['team-workspace', 'team-claim'],
+  },
+];
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -856,6 +918,11 @@ export default function DevDashboard() {
 
   const hasOrg = (status?.orgs ?? 0) > 0;
 
+  // Org options for additive seeds — exclude team_workspace orgs and UAT-protected orgs
+  const addOrgOptions: OrgSelectOption[] = (status?.orgList ?? [])
+    .filter(o => !o.protected && o.account_kind !== 'team_workspace')
+    .map(o => ({ id: o.id, slug: o.slug, plan_id: o.plan_id }));
+
   const CARDS = [
     {
       key:         'platform-user',
@@ -864,8 +931,10 @@ export default function DevDashboard() {
       title:       'Platform Admin',
       description: 'A FieldLogicHQ staff account with access to /platform-admin',
       creates:     'platform@dev.local (platform admin)',
+      kind:        undefined as 'additive' | 'standalone' | undefined,
       locked:      false,
       lockReason:  undefined as string | undefined,
+      orgOptions:  undefined as OrgSelectOption[] | undefined,
       badges:      <StatusPill count={status?.platformUsers ?? 0} label="platform users" />,
     },
     {
@@ -875,8 +944,10 @@ export default function DevDashboard() {
       title:       'Org + Owner',
       description: 'Creates a plan-specific org (dev-tournament-org, dev-league-org, etc.). Re-seed to change its plan.',
       creates:     'dev-{plan}-org, owner@dev.local (owner)',
+      kind:        undefined as 'additive' | 'standalone' | undefined,
       locked:      false,
       lockReason:  undefined as string | undefined,
+      orgOptions:  undefined as OrgSelectOption[] | undefined,
       badges:      <StatusPill count={status?.orgs ?? 0} label="orgs" />,
     },
     {
@@ -886,8 +957,10 @@ export default function DevDashboard() {
       title:       'User Set',
       description: 'Plan-appropriate roles for every seeded org — league & club add league-admin and treasurer',
       creates:     'admin/staff/coach for all orgs; league-admin/treasurer for league & club',
+      kind:        undefined as 'additive' | 'standalone' | undefined,
       locked:      !hasOrg,
       lockReason:  'Seed Org + Owner first' as string | undefined,
+      orgOptions:  undefined as OrgSelectOption[] | undefined,
       badges:      <StatusPill count={status?.orgUsers ?? 0} label="non-owner members" />,
     },
     {
@@ -895,10 +968,12 @@ export default function DevDashboard() {
       endpoint:    '/api/dev/seed/tournament',
       icon:        Trophy,
       title:       'Tournament',
-      description: 'A full active tournament with two age groups, teams, and a round-robin schedule',
-      creates:     '1 tournament, 2 age groups, 8 teams, 12 games',
+      description: 'A full active tournament with two divisions, teams, and a round-robin schedule',
+      creates:     '1 tournament, 2 divisions, 8 teams, 12 games',
+      kind:        'additive' as 'additive' | 'standalone' | undefined,
       locked:      !hasOrg,
       lockReason:  'Seed Org + Owner first' as string | undefined,
+      orgOptions:  addOrgOptions,
       badges:      <StatusPill count={status?.tournaments ?? 0} label="tournaments" />,
     },
     {
@@ -908,8 +983,10 @@ export default function DevDashboard() {
       title:       'House League Season',
       description: 'An active recreational season with divisions, teams, games, and sample registrations',
       creates:     '1 season, 2 divisions, 6 teams, 6 games, 2 registrations',
+      kind:        'additive' as 'additive' | 'standalone' | undefined,
       locked:      !hasOrg,
       lockReason:  'Seed Org + Owner first' as string | undefined,
+      orgOptions:  addOrgOptions,
       badges:      <StatusPill count={status?.leagueSeasons ?? 0} label="seasons" />,
     },
     {
@@ -917,21 +994,25 @@ export default function DevDashboard() {
       endpoint:    '/api/dev/seed/rep-team',
       icon:        UserCheck,
       title:       'Rep Team',
-      description: 'A competitive team program with roster players, a coach, and upcoming events',
+      description: 'A competitive team program with roster players, a coach, and upcoming events — added to an existing org',
       creates:     '1 team, 1 program year, 3 players, 1 coach link, 2 events',
+      kind:        'additive' as 'additive' | 'standalone' | undefined,
       locked:      !hasOrg,
       lockReason:  'Seed Org + Owner first' as string | undefined,
+      orgOptions:  addOrgOptions,
       badges:      <StatusPill count={status?.repTeams ?? 0} label="rep teams" />,
     },
     {
       key:         'team-workspace',
       endpoint:    '/api/dev/seed/team-workspace',
-      icon:        UserCheck,
+      icon:        CreditCard,
       title:       'Coaches Portal Premium',
-      description: 'A lightweight Coaches Portal with one rep team, active season, coach assignment, entitlement, and ledger',
-      creates:     'dev-coaches-portal, one Premium portal',
+      description: 'A self-contained standalone Team workspace with its own org, rep team, season, coach, entitlement, and billing ledger',
+      creates:     'dev-standalone-team org + one Premium portal',
+      kind:        'standalone' as 'additive' | 'standalone' | undefined,
       locked:      false,
       lockReason:  undefined as string | undefined,
+      orgOptions:  undefined as OrgSelectOption[] | undefined,
       badges:      <StatusPill count={status?.teamWorkspaces ?? 0} label="premium portals" />,
     },
     {
@@ -941,8 +1022,10 @@ export default function DevDashboard() {
       title:       'Coaches Portal Claim Link',
       description: 'Creates a secure claim link for a dev tournament team contact',
       creates:     'one available Coaches Portal claim URL',
+      kind:        'standalone' as 'additive' | 'standalone' | undefined,
       locked:      (status?.tournaments ?? 0) === 0,
-      lockReason:  'Seed Tournament first' as string | undefined,
+      lockReason:  'Seed Tournament first — claim links attach to a tournament team contact' as string | undefined,
+      orgOptions:  undefined as OrgSelectOption[] | undefined,
       badges:      <StatusPill count={status?.teamClaims ?? 0} label="portal claims" />,
     },
   ];
@@ -995,25 +1078,43 @@ export default function DevDashboard() {
         onSetOverride={setMockBillingOverride}
       />
 
-      {/* Seed cards */}
+      {/* Seed cards — grouped by section */}
       <div className={styles.cards}>
-        {CARDS.map(card => (
-          <SeedCard
-            key={card.key}
-            icon={card.icon}
-            title={card.title}
-            description={card.description}
-            creates={card.creates}
-            locked={card.locked}
-            lockReason={card.lockReason}
-            statusBadges={card.badges}
-            onSeed={card.key === 'org'
-              ? () => setOrgModal(true)
-              : () => seed(card.key, card.endpoint)}
-            busy={busy[card.key] ?? false}
-            result={results[card.key] ?? null}
-          />
-        ))}
+        {CARD_SECTIONS.map((section, idx) => {
+          const sectionCards = CARDS.filter(c => section.keys.includes(c.key));
+          return (
+            <div key={section.label}>
+              <div
+                className={styles.sectionDivider}
+                style={idx === 0 ? { borderTop: 'none', marginTop: 0, paddingTop: 0 } : undefined}
+              >
+                <span className={styles.sectionLabel}>{section.label}</span>
+                {section.sublabel && (
+                  <span className={styles.sectionSublabel}>{section.sublabel}</span>
+                )}
+              </div>
+              {sectionCards.map(card => (
+                <SeedCard
+                  key={card.key}
+                  icon={card.icon}
+                  title={card.title}
+                  description={card.description}
+                  creates={card.creates}
+                  kind={card.kind}
+                  locked={card.locked}
+                  lockReason={card.lockReason}
+                  statusBadges={card.badges}
+                  orgOptions={card.orgOptions}
+                  onSeed={card.key === 'org'
+                    ? () => setOrgModal(true)
+                    : (orgId?: string) => seed(card.key, card.endpoint, orgId ? { orgId } : undefined)}
+                  busy={busy[card.key] ?? false}
+                  result={results[card.key] ?? null}
+                />
+              ))}
+            </div>
+          );
+        })}
       </div>
 
       {/* Org list — visible whenever status has loaded */}

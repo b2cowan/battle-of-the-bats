@@ -125,7 +125,7 @@ export default function TeamOverviewPage({ params }: { params: { orgSlug: string
           <div>
             <h1 className={styles.pageTitle}>{team.name}</h1>
             <p className={styles.pageSub}>
-              {team.sport}{team.ageGroup ? ` · ${team.ageGroup}` : ''}
+              {team.sport}{team.division ? ` · ${team.division}` : ''}
               {team.description ? ` — ${team.description}` : ''}
             </p>
           </div>

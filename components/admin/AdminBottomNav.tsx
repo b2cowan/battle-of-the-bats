@@ -13,6 +13,7 @@ import {
 import { signOut } from '@/lib/auth';
 import { useOrg } from '@/lib/org-context';
 import { useTournament } from '@/lib/tournament-context';
+import { useCurrentOrgCoachAccess } from '@/lib/use-current-org-coach-access';
 import styles from './AdminBottomNav.module.css';
 
 const PRIMARY_KEYS = [
@@ -38,7 +39,7 @@ const OPERATIONS_MORE: NavItem[] = [
 const SETUP_MORE: NavItem[] = [
   { key: 'tournaments/venues',        icon: MapPin,          label: 'Venues'        },
   { key: 'tournaments/contacts',      icon: BookUser,        label: 'Contacts'      },
-  { key: 'tournaments/age-groups',    icon: Tag,             label: 'Divisions'     },
+  { key: 'tournaments/divisions',      icon: Tag,             label: 'Divisions'     },
   { key: 'tournaments/rules',         icon: BookOpen,        label: 'Rules & Resources' },
   { key: 'tournaments/branding',      icon: Paintbrush,      label: 'Branding'      },
 ];
@@ -54,6 +55,7 @@ export default function AdminBottomNav() {
   const { currentOrg } = useOrg();
   const base = `/${currentOrg?.slug ?? 'milton-bats'}/admin`;
   const orgSlug = currentOrg?.slug ?? 'milton-bats';
+  const currentOrgSlug = currentOrg?.slug;
   const [moreOpen, setMoreOpen] = useState(false);
   const moreRef   = useRef<HTMLDivElement>(null);
   const { tournaments, currentTournament, setCurrentTournament } = useTournament();
@@ -77,6 +79,7 @@ export default function AdminBottomNav() {
   const isRepTeams    = pathname.startsWith(`${base}/rep-teams`);
   const isHouseLeague = pathname.startsWith(`${base}/house-league`);
   const isModule      = isRepTeams || isHouseLeague || pathname.startsWith(`${base}/org`) || pathname.startsWith(`${base}/public-site`) || pathname.startsWith(`${base}/accounting`);
+  const hasCurrentOrgCoachAccess = useCurrentOrgCoachAccess(currentOrgSlug, isRepTeams);
   const showTournamentSummary = currentTournament?.status === 'completed' || currentTournament?.status === 'archived';
   const operationsMore: NavItem[] = showTournamentSummary
     ? [...OPERATIONS_MORE, { key: 'tournaments/summary', icon: FileText, label: 'Summary' }]
@@ -145,7 +148,9 @@ export default function AdminBottomNav() {
   const modulePrimaryTabs = isRepTeams
     ? [
         { href: `${base}/rep-teams`,   icon: Users,      label: 'Rep Teams'  },
-        { href: `/${orgSlug}/coaches`, icon: UserCheck,  label: 'Coaches'    },
+        ...(hasCurrentOrgCoachAccess
+          ? [{ href: `/${orgSlug}/coaches`, icon: UserCheck, label: 'Coaches' }]
+          : []),
         { href: base,                  icon: LayoutGrid, label: 'Hub'        },
       ]
     : isHouseLeague

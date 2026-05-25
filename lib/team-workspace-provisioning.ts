@@ -9,6 +9,7 @@ import {
 import { writePlatformAuditLog } from './platform-audit';
 import { writePlatformEvent, type PlatformEventInput } from './platform-events';
 import { supabaseAdmin } from './supabase-admin';
+import { findBasicCoachTeamIdForTournamentRegistration } from './basic-coach-teams';
 import type {
   AccountingLedger,
   Organization,
@@ -34,7 +35,7 @@ export type ProvisionStandaloneTeamWorkspaceInput = {
   workspaceName?: string | null;
   workspaceSlug?: string | null;
   sport?: string | null;
-  ageGroup?: string | null;
+  division?: string | null;
   teamDescription?: string | null;
   teamColor?: string | null;
   seasonName?: string | null;
@@ -42,6 +43,7 @@ export type ProvisionStandaloneTeamWorkspaceInput = {
   source?: ProvisionSource;
   sourceTournamentId?: string | null;
   sourceTournamentTeamId?: string | null;
+  basicCoachTeamId?: string | null;
   billingMode?: TeamWorkspaceBillingMode;
   billingOwnerOrgId?: string | null;
   billingOwnerUserId?: string | null;
@@ -215,6 +217,9 @@ export async function provisionStandaloneTeamWorkspace(
   const entitlementSource = input.entitlementSource ?? 'team_plan';
   const entitlementStatus = input.entitlementStatus ?? subscriptionStatus;
   const workspaceSlug = await resolveUniqueOrgSlug(input.workspaceSlug ?? workspaceName);
+  const basicCoachTeamId = input.basicCoachTeamId !== undefined
+    ? input.basicCoachTeamId
+    : await findBasicCoachTeamIdForTournamentRegistration(input.sourceTournamentTeamId);
 
   let createdOrgId: string | null = null;
 
@@ -253,7 +258,7 @@ export async function provisionStandaloneTeamWorkspace(
       name: teamName,
       slug: teamSlug,
       sport,
-      ageGroup: input.ageGroup ?? null,
+      division: input.division ?? null,
       description: input.teamDescription ?? null,
       color: input.teamColor ?? null,
     });
@@ -279,6 +284,7 @@ export async function provisionStandaloneTeamWorkspace(
         source,
         source_tournament_id: input.sourceTournamentId ?? null,
         source_tournament_team_id: input.sourceTournamentTeamId ?? null,
+        basic_coach_team_id: basicCoachTeamId ?? null,
         workspace_state: 'independent',
         billing_mode: billingMode,
         billing_owner_org_id: input.billingOwnerOrgId ?? null,
@@ -291,6 +297,13 @@ export async function provisionStandaloneTeamWorkspace(
       .select('id')
       .single();
     if (workspaceError) throw workspaceError;
+
+    if (basicCoachTeamId) {
+      await supabaseAdmin
+        .from('basic_coach_teams')
+        .update({ team_workspace_id: workspace.id, updated_at: new Date().toISOString() })
+        .eq('id', basicCoachTeamId);
+    }
 
     const { data: entitlement, error: entitlementError } = await supabaseAdmin
       .from('team_entitlements')

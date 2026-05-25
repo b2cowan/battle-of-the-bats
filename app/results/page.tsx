@@ -1,8 +1,8 @@
 ﻿'use client';
 import { useState, useEffect } from 'react';
 import { Trophy } from 'lucide-react';
-import { getGames, getTeams, getAgeGroups, getDiamonds, getTournaments, getStandings } from '@/lib/db';
-import { Game, Team, AgeGroup, Diamond, Tournament } from '@/lib/types';
+import { getGames, getTeams, getDivisions, getDiamonds, getTournaments, getStandings } from '@/lib/db';
+import { Game, Team, Division, Diamond, Tournament } from '@/lib/types';
 import LocationLink from '@/components/LocationLink';
 import { formatTime, formatPoolName } from '@/lib/utils';
 import styles from './results.module.css';
@@ -10,7 +10,7 @@ import styles from './results.module.css';
 export default function ResultsPage() {
   const [games, setGames]         = useState<Game[]>([]);
   const [teams, setTeams]         = useState<Team[]>([]);
-  const [ageGroups, setAgeGroups] = useState<AgeGroup[]>([]);
+  const [divisions, setDivisions] = useState<Division[]>([]);
   const [diamonds, setDiamonds]   = useState<Diamond[]>([]);
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
   const [selectedTournament, setSelectedTournament] = useState<Tournament | null>(null);
@@ -25,9 +25,9 @@ export default function ResultsPage() {
       const tourn = active ?? ts[0] ?? null;
       setSelectedTournament(tourn);
       
-      // Auto-select first age group
-      const groups = await getAgeGroups(tourn?.id);
-      setAgeGroups(groups);
+      // Auto-select first division
+      const groups = await getDivisions(tourn?.id);
+      setDivisions(groups);
       if (groups.length > 0) setActiveGroup(groups[0].id);
     }
     init();
@@ -39,9 +39,9 @@ export default function ResultsPage() {
       setGames(await getGames(selectedTournament!.id));
       setTeams(await getTeams(selectedTournament!.id));
       setDiamonds(await getDiamonds(selectedTournament!.id));
-      // ageGroups are now fetched in init or when tournament changes
-      const groups = await getAgeGroups(selectedTournament!.id);
-      setAgeGroups(groups);
+      // divisions are now fetched in init or when tournament changes
+      const groups = await getDivisions(selectedTournament!.id);
+      setDivisions(groups);
       if (!activeGroup && groups.length > 0) setActiveGroup(groups[0].id);
     }
     fetchResults();
@@ -51,7 +51,7 @@ export default function ResultsPage() {
   const getDiamond  = (id?: string): Diamond | null => id ? diamonds.find(d => d.id === id) ?? null : null;
 
   const completed = games.filter(g => g.status === 'completed');
-  const groupResults = completed.filter(g => g.ageGroupId === activeGroup);
+  const groupResults = completed.filter(g => g.divisionId === activeGroup);
   
   // Filtering by pool
   const filtered = activePool === 'all' 
@@ -62,7 +62,7 @@ export default function ResultsPage() {
         return home?.poolId === activePool || away?.poolId === activePool;
       });
 
-  const currentGroup = ageGroups.find(g => g.id === activeGroup);
+  const currentGroup = divisions.find(g => g.id === activeGroup);
   const pools = currentGroup?.pools || [];
 
   const [standings, setStandings]   = useState<any[]>([]);
@@ -70,7 +70,7 @@ export default function ResultsPage() {
   useEffect(() => {
     if (!selectedTournament || !activeGroup) return;
     async function fetchStandings() {
-      const group = ageGroups.find(g => g.id === activeGroup);
+      const group = divisions.find(g => g.id === activeGroup);
       const results = await getStandings(activeGroup, group?.playoffConfig);
       setStandings(results.map(s => ({
         ...s,
@@ -108,7 +108,7 @@ export default function ResultsPage() {
 
           <div className="flex gap-2 mb-2" style={{ flexWrap: 'wrap', alignItems: 'center' }}>
             <div className="tabs" style={{ flex: 1, display: 'flex', gap: '8px' }}>
-              {ageGroups.map(g => (
+              {divisions.map(g => (
                 <button key={g.id}
                   className={`tab-btn ${activeGroup === g.id ? 'active' : ''}`}
                   onClick={() => setActiveGroup(g.id)}
@@ -353,7 +353,7 @@ export default function ResultsPage() {
                       <span className={styles.resultDate}>{formatDate(game.date)}</span>
                       {game.time && <span className={styles.resultTime}>{formatTime(game.time)}</span>}
                       <span className="badge badge-primary">
-                        {ageGroups.find(g => g.id === game.ageGroupId)?.name}
+                        {divisions.find(g => g.id === game.divisionId)?.name}
                       </span>
                       <LocationLink location={game.location} diamond={getDiamond(game.diamondId)} size="sm" />
                     </div>

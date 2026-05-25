@@ -16,7 +16,7 @@ import ExportMenu from '@/components/admin/ExportMenu';
 import ScheduleGenerator from './Generator';
 import PlayoffWizard from './PlayoffWizard';
 import GameList from './components/GameList';
-import { Game, Team, AgeGroup, Diamond, PoolSlot } from '@/lib/types';
+import { Game, Team, Division, Diamond, PoolSlot } from '@/lib/types';
 import s from '../../admin-common.module.css';
 import styles from './schedule-admin.module.css';
 import FeedbackModal from '@/components/FeedbackModal';
@@ -35,6 +35,20 @@ import {
 
 type ModalMode = 'add' | 'edit' | null;
 
+const STATUS_FILTERS: Array<{ key: string; label: string }> = [
+  { key: 'all',       label: 'All'       },
+  { key: 'scheduled', label: 'Scheduled' },
+  { key: 'cancelled', label: 'Cancelled' },
+  { key: 'completed', label: 'Final'     },
+];
+
+const STATUS_CHIP_CLASS: Record<string, string | undefined> = {
+  all:       'chip_all',
+  scheduled: 'chip_scheduled',
+  cancelled: 'chip_cancelled',
+  completed: 'chip_completed',
+};
+
 // ── Export column definitions ─────────────────────────────────────────────
 // No sensitive fields on this surface — schedule data is operational/public.
 const SCHEDULE_EXPORT_COLS: ExportColumnDef[] = [
@@ -48,7 +62,7 @@ const SCHEDULE_EXPORT_COLS: ExportColumnDef[] = [
 ];
 
 const emptyForm = {
-  ageGroupId: '', homeTeamId: '', awayTeamId: '',
+  divisionId: '', homeTeamId: '', awayTeamId: '',
   homeSlotId: '', awaySlotId: '',
   date: '', time: '09:00', location: '', diamondId: '', notes: null as string | null,
   bracketCode: '',
@@ -61,7 +75,7 @@ export default function AdminSchedulePage() {
   const orgSlug = currentOrg?.slug;
   const [games, setGames]       = useState<Game[]>([]);
   const [teams, setTeams]       = useState<Team[]>([]);
-  const [ageGroups, setAgeGroups] = useState<AgeGroup[]>([]);
+  const [divisions, setDivisions] = useState<Division[]>([]);
   const [diamonds, setDiamonds] = useState<Diamond[]>([]);
   const [modalSlots, setModalSlots] = useState<PoolSlot[]>([]);
   const [modalSlotsLoading, setModalSlotsLoading] = useState(false);
@@ -75,6 +89,7 @@ export default function AdminSchedulePage() {
   const [showGenerator, setShowGenerator] = useState(false);
   const [showPlayoffWizard, setShowPlayoffWizard] = useState(false);
   const [search, setSearch] = useState('');
+  const [filterStatus, setFilterStatus] = useState<string>('all');
   const [venueSearch, setVenueSearch] = useState('');
   const [venueDropdownOpen, setVenueDropdownOpen] = useState(false);
   const [addVenueOpen, setAddVenueOpen] = useState(false);
@@ -89,7 +104,7 @@ export default function AdminSchedulePage() {
 
   const [publishModal, setPublishModal] = useState<{
     mode: 'single' | 'all';
-    ageGroupId?: string;
+    divisionId?: string;
   } | null>(null);
 
   // PDF settings — fetched once on mount; used in handleExportPDF
@@ -140,7 +155,7 @@ export default function AdminSchedulePage() {
     if (!tournamentId) {
       setGames([]);
       setTeams([]);
-      setAgeGroups([]);
+      setDivisions([]);
       setDiamonds([]);
       return;
     }
@@ -149,7 +164,7 @@ export default function AdminSchedulePage() {
     const [gamesRes, teamsRes, groupsRes, diamondsRes] = await Promise.all([
       fetch(`/api/admin/games?tournamentId=${encodeURIComponent(tournamentId)}${orgParam}`),
       fetch(`/api/admin/teams?tournamentId=${encodeURIComponent(tournamentId)}${orgParam}`),
-      fetch(`/api/admin/age-groups?tournamentId=${encodeURIComponent(tournamentId)}${orgParam}`),
+      fetch(`/api/admin/divisions?tournamentId=${encodeURIComponent(tournamentId)}${orgParam}`),
       fetch(`/api/admin/diamonds?tournamentId=${encodeURIComponent(tournamentId)}${orgParam}`),
     ]);
 
@@ -160,7 +175,7 @@ export default function AdminSchedulePage() {
 
     setGames(games);
     setTeams(allTeams.filter((t: any) => t.status === 'accepted'));
-    setAgeGroups(groups);
+    setDivisions(groups);
     setFilterGroup(prev => prev || (groups.length > 0 ? groups[0].id : ''));
     setDiamonds(diamonds);
   }, [tournamentId, tournamentLoading, orgSlug]);
@@ -178,32 +193,32 @@ export default function AdminSchedulePage() {
       .catch(() => setPdfSettings(null));
   }, [orgSlug]);
 
-  const groupTeams   = (id: string) => teams.filter(t => t.ageGroupId === id);
+  const groupTeams   = (id: string) => teams.filter(t => t.divisionId === id);
   const getTeamName  = (id: string) => teams.find(t => t.id === id)?.name ?? null;
   const resolveTeam  = (id: string, placeholder?: string) => getTeamName(id) ?? placeholder ?? 'TBD';
-  const getGroupName = (id: string) => ageGroups.find(g => g.id === id)?.name ?? '—';
+  const getGroupName = (id: string) => divisions.find(g => g.id === id)?.name ?? '—';
   const getDiamondName = (id?: string) => id ? (diamonds.find(d => d.id === id)?.name ?? '') : '';
 
-  async function fetchModalSlots(ageGroupId: string) {
-    if (!currentTournament?.id || !ageGroupId) { setModalSlots([]); return; }
+  async function fetchModalSlots(divisionId: string) {
+    if (!currentTournament?.id || !divisionId) { setModalSlots([]); return; }
     setModalSlotsLoading(true);
     try {
       const orgParam = currentOrg?.slug ? `&orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
-      const res = await fetch(`/api/admin/pool-slots?tournamentId=${encodeURIComponent(currentTournament.id)}&ageGroupId=${encodeURIComponent(ageGroupId)}${orgParam}`);
+      const res = await fetch(`/api/admin/pool-slots?tournamentId=${encodeURIComponent(currentTournament.id)}&divisionId=${encodeURIComponent(divisionId)}${orgParam}`);
       setModalSlots(res.ok ? await res.json() : []);
     } catch { setModalSlots([]); }
     finally { setModalSlotsLoading(false); }
   }
 
   function handlePublishDone(updates: { id: string; scheduleVisibility: 'published_generic' | 'published_teams' }[]) {
-    setAgeGroups(prev => prev.map(g => {
+    setDivisions(prev => prev.map(g => {
       const u = updates.find(u => u.id === g.id);
       return u ? { ...g, scheduleVisibility: u.scheduleVisibility } : g;
     }));
     // Modal stays open to show success state; user closes it with "Done"
   }
 
-  function handleUnpublish(ageGroupId: string) {
+  function handleUnpublish(divisionId: string) {
     setFeedback({
       isOpen: true,
       title: 'Unpublish Division?',
@@ -212,28 +227,28 @@ export default function AdminSchedulePage() {
       confirmText: 'Unpublish',
       onConfirm: async () => {
         const orgQuery = orgSlug ? `?orgSlug=${encodeURIComponent(orgSlug)}` : '';
-        await fetch(`/api/admin/age-groups${orgQuery}`, {
+        await fetch(`/api/admin/divisions${orgQuery}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'set-visibility', data: { id: ageGroupId, scheduleVisibility: 'unpublished' } }),
+          body: JSON.stringify({ action: 'set-visibility', data: { id: divisionId, scheduleVisibility: 'unpublished' } }),
         });
-        setAgeGroups(prev => prev.map(g => g.id === ageGroupId ? { ...g, scheduleVisibility: 'unpublished' } : g));
+        setDivisions(prev => prev.map(g => g.id === divisionId ? { ...g, scheduleVisibility: 'unpublished' } : g));
       },
     });
   }
 
   function openAdd() {
-    const ageGroupId = filterGroup || (ageGroups[0]?.id ?? '');
-    setForm({ ...emptyForm, ageGroupId });
+    const divisionId = filterGroup || (divisions[0]?.id ?? '');
+    setForm({ ...emptyForm, divisionId });
     setVenueSearch('');
     setEditing(null);
     setModal('add');
-    fetchModalSlots(ageGroupId);
+    fetchModalSlots(divisionId);
   }
 
   function openEdit(g: Game) {
     setForm({
-      ageGroupId: g.ageGroupId,
+      divisionId: g.divisionId,
       homeTeamId: g.homeTeamId ?? '',
       awayTeamId: g.awayTeamId ?? '',
       homeSlotId: g.homeSlotId ?? '',
@@ -249,7 +264,7 @@ export default function AdminSchedulePage() {
     setVenueSearch(existingDiamond?.name ?? g.location ?? '');
     setEditing(g);
     setModal('edit');
-    fetchModalSlots(g.ageGroupId);
+    fetchModalSlots(g.divisionId);
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -259,7 +274,7 @@ export default function AdminSchedulePage() {
     const awaySlot = slotMode ? modalSlots.find(s => s.id === form.awaySlotId) : null;
     const data: Omit<Game, 'id'> = {
       tournamentId:    currentTournament?.id ?? '',
-      ageGroupId:      form.ageGroupId,
+      divisionId:      form.divisionId,
       homeTeamId:      slotMode ? '' : (form.homeTeamId || ''),
       awayTeamId:      slotMode ? '' : (form.awayTeamId || ''),
       homeSlotId:      homeSlot?.id,
@@ -344,14 +359,28 @@ export default function AdminSchedulePage() {
   }
 
   const scheduled = games;
+
+  // Division + view slice (no search, no status) — used for status chip counts
+  const divisionGames = scheduled.filter(g =>
+    g.divisionId === filterGroup &&
+    (viewMode === 'playoff' ? g.isPlayoff : !g.isPlayoff)
+  );
+  const statusCounts: Record<string, number> = {
+    all:       divisionGames.length,
+    scheduled: divisionGames.filter(g => g.status === 'scheduled').length,
+    cancelled: divisionGames.filter(g => g.status === 'cancelled').length,
+    completed: divisionGames.filter(g => g.status === 'completed').length,
+  };
+
   const filtered  = scheduled.filter(g => {
-    const matchesDivision = g.ageGroupId === filterGroup;
+    const matchesDivision = g.divisionId === filterGroup;
     const matchesView = viewMode === 'playoff' ? g.isPlayoff : !g.isPlayoff;
+    const matchesStatus = filterStatus === 'all' || g.status === filterStatus;
     const q = search.toLowerCase();
     const matchesSearch = q === '' ||
       resolveTeam(g.homeTeamId, g.homePlaceholder).toLowerCase().includes(q) ||
       resolveTeam(g.awayTeamId, g.awayPlaceholder).toLowerCase().includes(q);
-    return matchesDivision && matchesView && matchesSearch;
+    return matchesDivision && matchesView && matchesStatus && matchesSearch;
   });
 
   function formatDate(d: string) {
@@ -363,7 +392,7 @@ export default function AdminSchedulePage() {
     return filtered.map(g => ({
       date:     g.date ?? '',
       time:     formatTime(g.time),
-      division: getGroupName(g.ageGroupId),
+      division: getGroupName(g.divisionId),
       homeTeam: resolveTeam(g.homeTeamId, g.homePlaceholder),
       awayTeam: resolveTeam(g.awayTeamId, g.awayPlaceholder),
       location: g.diamondId ? getDiamondName(g.diamondId) : (g.location ?? ''),
@@ -394,7 +423,7 @@ export default function AdminSchedulePage() {
       .filter(g => g.date)
       .map(g => ({
         gameId:   g.id,
-        title:    `${resolveTeam(g.homeTeamId, g.homePlaceholder)} vs ${resolveTeam(g.awayTeamId, g.awayPlaceholder)} — ${getGroupName(g.ageGroupId)}`,
+        title:    `${resolveTeam(g.homeTeamId, g.homePlaceholder)} vs ${resolveTeam(g.awayTeamId, g.awayPlaceholder)} — ${getGroupName(g.divisionId)}`,
         date:     g.date,
         time:     g.time || undefined,
         location: g.diamondId ? getDiamondName(g.diamondId) : (g.location || undefined),
@@ -433,95 +462,58 @@ export default function AdminSchedulePage() {
     <div className={s.page}>
       <TournamentAdminHeader
         icon={<Calendar size={20} />}
-        title="Schedule Management"
-        subtitle={currentTournament ? `${currentTournament.name} (${currentTournament.year})` : 'Plan tournament games'}
+        title={(
+          <>
+            <span className={styles.desktopTitle}>Schedule Management</span>
+            <span className={styles.mobileTitle}>Schedule</span>
+          </>
+        )}
+        subtitle={currentTournament ? (
+          <>
+            <span className={styles.desktopSubtitle}>{currentTournament.name} ({currentTournament.year})</span>
+            <span className={styles.mobileSubtitle}>{currentTournament.name}</span>
+          </>
+        ) : 'Plan tournament games'}
+        mobileActionsInline
         actions={
-          <button className="btn btn-lime btn-data" onClick={openAdd} disabled={!currentTournament}>
-            <Plus size={16} /> Add Game
+          <button
+            className={`btn btn-lime btn-data ${styles.addGameButton}`}
+            onClick={openAdd}
+            disabled={!currentTournament}
+            aria-label="Add game"
+            title="Add game"
+          >
+            <Plus size={14} /> <span className={styles.addGameLabel}>Add Game</span>
           </button>
         }
       />
 
       <TournamentAdminToolbar ariaLabel="Schedule controls">
-        <ToolbarGroup align="start">
+        {/* ── Row 1: context controls (left/grow) ── */}
+        <ToolbarGroup grow>
+          {divisions.length > 0 && (
+            <ToolbarSelect<string>
+              label="Division"
+              value={filterGroup}
+              options={divisions.map(g => ({ value: g.id, label: g.name }))}
+              onChange={value => {
+                setFilterGroup(value);
+                setFilterStatus('all');
+              }}
+            />
+          )}
           <ToolbarSegmentedControl<'pool' | 'playoff'>
             value={viewMode}
             options={[
               { value: 'pool', label: 'Round Robin' },
               { value: 'playoff', label: 'Playoffs' },
             ]}
-            onChange={setViewMode}
+            onChange={value => {
+              setViewMode(value);
+              setFilterStatus('all');
+            }}
             ariaLabel="View mode"
           />
-          {ageGroups.length > 0 && (
-            <ToolbarSelect<string>
-              label="Division"
-              value={filterGroup}
-              options={ageGroups.map(g => ({ value: g.id, label: g.name }))}
-              onChange={setFilterGroup}
-            />
-          )}
-          {viewMode === 'pool' && (() => {
-            const ag = ageGroups.find(g => g.id === filterGroup);
-            const vis = ag?.scheduleVisibility ?? 'unpublished';
-            const isPublished = vis !== 'unpublished';
-            return (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                {isPublished ? (
-                  <>
-                    <span style={{
-                      display: 'inline-flex', alignItems: 'center', gap: '0.3rem',
-                      fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.04em',
-                      color: 'var(--logic-lime)', padding: '0.2rem 0.55rem',
-                      background: 'rgba(var(--logic-lime-rgb),0.1)', border: '1px solid rgba(var(--logic-lime-rgb),0.25)',
-                      borderRadius: '2px',
-                    }}>
-                      <Globe size={10} />
-                      {vis === 'published_teams' ? 'Published — Team Names' : 'Published — Generic'}
-                    </span>
-                    <button
-                      className="btn btn-ghost btn-sm"
-                      onClick={() => setPublishModal({ mode: 'single', ageGroupId: filterGroup })}
-                      style={{ height: '28px', fontSize: '0.75rem', padding: '0 0.6rem' }}
-                    >
-                      Update
-                    </button>
-                    <button
-                      className="btn btn-ghost btn-sm"
-                      onClick={() => handleUnpublish(filterGroup)}
-                      style={{ height: '28px', fontSize: '0.75rem', padding: '0 0.6rem', color: 'var(--white-40)' }}
-                      title="Unpublish this division"
-                    >
-                      <EyeOff size={12} />
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <span style={{
-                      display: 'inline-flex', alignItems: 'center', gap: '0.3rem',
-                      fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.04em',
-                      color: 'var(--white-40)', padding: '0.2rem 0.55rem',
-                      background: 'var(--white-5)', border: '1px solid var(--white-10)',
-                      borderRadius: '2px',
-                    }}>
-                      <EyeOff size={10} />
-                      Not Published
-                    </span>
-                    <button
-                      className={`btn btn-lime btn-data ${styles.mobileIconButton}`}
-                      onClick={() => setPublishModal({ mode: 'single', ageGroupId: filterGroup })}
-                      disabled={!currentTournament}
-                      aria-label="Publish schedule"
-                      title="Publish schedule"
-                    >
-                      <Globe size={12} />
-                      <span className={styles.mobileButtonLabel}>Publish</span>
-                    </button>
-                  </>
-                )}
-              </div>
-            );
-          })()}
           {viewMode === 'pool' && (
             <ToolbarSegmentedControl<'flat' | 'pools'>
               value={groupMode}
@@ -545,7 +537,54 @@ export default function AdminSchedulePage() {
             />
           )}
         </ToolbarGroup>
+
+        {/* ── Row 1: utility actions (right/end) — Publish · Export · Tools ── */}
         <ToolbarGroup align="end">
+          {/* Publish control — only for round-robin view */}
+          {viewMode === 'pool' && (() => {
+            const ag = divisions.find(g => g.id === filterGroup);
+            const vis = ag?.scheduleVisibility ?? 'unpublished';
+            const isPublished = vis !== 'unpublished';
+            return isPublished ? (
+              <>
+                <span style={{
+                  display: 'inline-flex', alignItems: 'center', gap: '0.3rem',
+                  fontSize: '0.62rem', fontWeight: 700, letterSpacing: '0.04em',
+                  color: 'var(--logic-lime)', padding: '0.2rem 0.55rem',
+                  background: 'rgba(var(--logic-lime-rgb),0.1)', border: '1px solid rgba(var(--logic-lime-rgb),0.25)',
+                  borderRadius: '2px', flexShrink: 0,
+                }}>
+                  <Globe size={10} />
+                  {vis === 'published_teams' ? 'Live · Teams' : 'Live · Generic'}
+                </span>
+                <button
+                  className="btn btn-ghost btn-data"
+                  onClick={() => setPublishModal({ mode: 'single', divisionId: filterGroup })}
+                >
+                  Update
+                </button>
+                <button
+                  className="btn btn-ghost btn-data"
+                  onClick={() => handleUnpublish(filterGroup)}
+                  style={{ color: 'var(--white-40)' }}
+                  title="Unpublish this division"
+                >
+                  <EyeOff size={12} />
+                </button>
+              </>
+            ) : (
+              <button
+                className={`btn btn-ghost btn-data ${styles.mobileIconButton}`}
+                onClick={() => setPublishModal({ mode: 'single', divisionId: filterGroup })}
+                disabled={!currentTournament}
+                aria-label="Publish schedule"
+                title="Publish schedule"
+              >
+                <Globe size={12} />
+                <span className={styles.mobileButtonLabel}>Publish</span>
+              </button>
+            );
+          })()}
           <ExportMenu
             formats={['xlsx', 'csv', 'ics', 'pdf']}
             onExportXLSX={handleExportXLSX}
@@ -578,7 +617,7 @@ export default function AdminSchedulePage() {
               />
             )}
             {viewMode === 'pool' && (() => {
-              const unpublished = ageGroups.filter(g => !g.scheduleVisibility || g.scheduleVisibility === 'unpublished');
+              const unpublished = divisions.filter(g => !g.scheduleVisibility || g.scheduleVisibility === 'unpublished');
               if (unpublished.length === 0) return null;
               return (
                 <ToolbarMenuItem
@@ -592,8 +631,25 @@ export default function AdminSchedulePage() {
             })()}
           </ToolbarMenu>
         </ToolbarGroup>
-        {/* Row 2: search always on its own full-width row */}
+
+        {/* ── Row 2: status filter chips + search ── */}
         <ToolbarGroup fullWidth>
+          <div className={`${s.statusFilters} ${styles.scheduleStatusFilters}`}>
+            {STATUS_FILTERS.map(({ key, label }) => {
+              const isActive = filterStatus === key;
+              const chipMod = STATUS_CHIP_CLASS[key];
+              return (
+                <button
+                  key={key}
+                  className={[s.filterChip, chipMod ? (s as Record<string, string>)[chipMod] : '', isActive ? s.chipActive : ''].filter(Boolean).join(' ')}
+                  onClick={() => setFilterStatus(isActive && key !== 'all' ? 'all' : key)}
+                >
+                  {label}
+                  <span className={s.chipCount}>({statusCounts[key] ?? 0})</span>
+                </button>
+              );
+            })}
+          </div>
           <ToolbarSearch value={search} onChange={setSearch} placeholder="Search teams..." label="Search games" />
         </ToolbarGroup>
       </TournamentAdminToolbar>
@@ -614,7 +670,7 @@ export default function AdminSchedulePage() {
           variant="info"
           title="No games scheduled yet"
           body={canAutoGenerateSchedule
-            ? 'Build your schedule by adding games manually, or use Auto-Generate to create a round-robin schedule from your age groups and teams. For playoffs, use the Playoff Wizard.'
+            ? 'Build your schedule by adding games manually, or use Auto-Generate to create a round-robin schedule from your divisions and teams. For playoffs, use the Playoff Wizard.'
             : 'Build your schedule by adding games manually. Auto-Generate and Playoff Wizard are available with Tournament Plus or higher.'}
         />
       )}
@@ -628,7 +684,7 @@ export default function AdminSchedulePage() {
         <PlayoffBracketView
           games={filtered}
           teams={teams}
-          ageGroup={ageGroups.find(g => g.id === filterGroup)}
+          division={divisions.find(g => g.id === filterGroup)}
           canGeneratePlayoffs={canGeneratePlayoffs}
           onEdit={openEdit}
           onDelete={handleDeleteRequest}
@@ -647,11 +703,11 @@ export default function AdminSchedulePage() {
             <GameList
               games={filtered}
               teams={teams}
-              ageGroups={ageGroups}
+              divisions={divisions}
               diamonds={diamonds}
               viewMode={viewMode}
               groupByPool={groupMode === 'pools'}
-              pools={ageGroups.find(g => g.id === filterGroup)?.pools}
+              pools={divisions.find(g => g.id === filterGroup)?.pools}
               onDelete={handleDeleteRequest}
               onCancel={markCancelled}
               onSchedule={markScheduled}
@@ -676,10 +732,10 @@ export default function AdminSchedulePage() {
               <div className="form-row form-row-3" style={{ marginBottom: '1rem' }}>
                 <div className="form-group">
                   <label className="form-label">Division *</label>
-                  <select className="form-select" value={form.ageGroupId}
-                    onChange={e => { setForm(f => ({ ...f, ageGroupId: e.target.value, homeTeamId: '', awayTeamId: '', homeSlotId: '', awaySlotId: '' })); fetchModalSlots(e.target.value); }} required>
+                  <select className="form-select" value={form.divisionId}
+                    onChange={e => { setForm(f => ({ ...f, divisionId: e.target.value, homeTeamId: '', awayTeamId: '', homeSlotId: '', awaySlotId: '' })); fetchModalSlots(e.target.value); }} required>
                     <option value="">Select...</option>
-                    {ageGroups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
+                    {divisions.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
                   </select>
                 </div>
                 <div className="form-group">
@@ -698,7 +754,7 @@ export default function AdminSchedulePage() {
                   return <div style={{ marginBottom: '1rem', padding: '0.7rem 0.875rem', fontSize: '0.85rem', color: 'var(--white-40)' }}>Loading slots…</div>;
                 }
 
-                const ag = ageGroups.find(g => g.id === form.ageGroupId);
+                const ag = divisions.find(g => g.id === form.divisionId);
                 const mPools = ag?.pools ?? [];
 
                 if (modalSlots.length > 0) {
@@ -739,14 +795,14 @@ export default function AdminSchedulePage() {
                         <label className="form-label">Home Team</label>
                         <select className="form-select" value={form.homeTeamId} onChange={e => setForm(f => ({ ...f, homeTeamId: e.target.value }))}>
                           <option value="">Select...</option>
-                          {groupTeams(form.ageGroupId).map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                          {groupTeams(form.divisionId).map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
                         </select>
                       </div>
                       <div className="form-group">
                         <label className="form-label">Away Team</label>
                         <select className="form-select" value={form.awayTeamId} onChange={e => setForm(f => ({ ...f, awayTeamId: e.target.value }))}>
                           <option value="">Select...</option>
-                          {groupTeams(form.ageGroupId).map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                          {groupTeams(form.divisionId).map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
                         </select>
                       </div>
                     </div>
@@ -866,7 +922,7 @@ export default function AdminSchedulePage() {
         <ScheduleGenerator 
           tournament={currentTournament}
           orgSlug={orgSlug ?? ''}
-          ageGroups={ageGroups}
+          divisions={divisions}
           teams={teams}
           diamonds={diamonds}
           onCancel={() => setShowGenerator(false)}
@@ -879,7 +935,7 @@ export default function AdminSchedulePage() {
 
       {showPlayoffWizard && filterGroup !== '' && canGeneratePlayoffs && (
         <PlayoffWizard
-          ageGroup={ageGroups.find(g => g.id === filterGroup)!}
+          division={divisions.find(g => g.id === filterGroup)!}
           tournamentId={currentTournament?.id || ''}
           orgSlug={orgSlug ?? ''}
           onClose={() => setShowPlayoffWizard(false)}
@@ -903,8 +959,8 @@ export default function AdminSchedulePage() {
       {publishModal && currentTournament && (
         <PublishScheduleModal
           mode={publishModal.mode}
-          ageGroupId={publishModal.ageGroupId}
-          ageGroups={ageGroups}
+          divisionId={publishModal.divisionId}
+          divisions={divisions}
           tournament={currentTournament}
           canNotify={canNotify}
           orgSlug={currentOrg?.slug ?? ''}
@@ -923,8 +979,8 @@ export default function AdminSchedulePage() {
 
 function PublishScheduleModal({
   mode,
-  ageGroupId,
-  ageGroups,
+  divisionId,
+  divisions,
   tournament,
   canNotify,
   orgSlug,
@@ -932,8 +988,8 @@ function PublishScheduleModal({
   onPublished,
 }: {
   mode: 'single' | 'all';
-  ageGroupId?: string;
-  ageGroups: import('@/lib/types').AgeGroup[];
+  divisionId?: string;
+  divisions: import('@/lib/types').Division[];
   tournament: import('@/lib/types').Tournament;
   canNotify: boolean;
   orgSlug: string;
@@ -941,8 +997,8 @@ function PublishScheduleModal({
   onPublished: (updates: { id: string; scheduleVisibility: 'published_generic' | 'published_teams' }[]) => void;
 }) {
   const targets = mode === 'single'
-    ? ageGroups.filter(g => g.id === ageGroupId)
-    : ageGroups.filter(g => !g.scheduleVisibility || g.scheduleVisibility === 'unpublished');
+    ? divisions.filter(g => g.id === divisionId)
+    : divisions.filter(g => !g.scheduleVisibility || g.scheduleVisibility === 'unpublished');
 
   const allClosed = targets.every(g => g.isClosed);
   const someClosed = targets.some(g => g.isClosed);
@@ -959,7 +1015,7 @@ function PublishScheduleModal({
     setLoading(true);
     setError(null);
     try {
-      const ageGroupIds = targets.map(g => g.id);
+      const divisionIds = targets.map(g => g.id);
       const orgQuery = orgSlug ? `?orgSlug=${encodeURIComponent(orgSlug)}` : '';
 
       // In "all" mode, smart-assign: closed divisions get team names if nameMode is 'teams',
@@ -971,12 +1027,12 @@ function PublishScheduleModal({
         const res = await fetch(`/api/admin/schedule-publish${orgQuery}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ tournamentId: tournament.id, ageGroupIds, visibility, notify }),
+          body: JSON.stringify({ tournamentId: tournament.id, divisionIds, visibility, notify }),
         });
         if (!res.ok) throw new Error((await res.json()).error ?? 'Failed to publish');
         const data = await res.json();
         setResult({ notified: data.notified ?? 0 });
-        onPublished(ageGroupIds.map(id => ({ id, scheduleVisibility: visibility })));
+        onPublished(divisionIds.map(id => ({ id, scheduleVisibility: visibility })));
       } else {
         // Mixed: closed → teams, open → generic (two separate requests)
         const closedIds = targets.filter(g => g.isClosed).map(g => g.id);
@@ -986,12 +1042,12 @@ function PublishScheduleModal({
           closedIds.length ? fetch(`/api/admin/schedule-publish${orgQuery}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ tournamentId: tournament.id, ageGroupIds: closedIds, visibility: 'published_teams', notify }),
+            body: JSON.stringify({ tournamentId: tournament.id, divisionIds: closedIds, visibility: 'published_teams', notify }),
           }) : Promise.resolve(null),
           openIds.length ? fetch(`/api/admin/schedule-publish${orgQuery}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ tournamentId: tournament.id, ageGroupIds: openIds, visibility: 'published_generic', notify: false }),
+            body: JSON.stringify({ tournamentId: tournament.id, divisionIds: openIds, visibility: 'published_generic', notify: false }),
           }) : Promise.resolve(null),
         ]);
 
@@ -1394,7 +1450,7 @@ function BracketColumns({ columns, onEdit, onDelete, formatDate }: any) {
   );
 }
 
-function PlayoffBracketView({ games, teams, ageGroup, canGeneratePlayoffs, onEdit, onDelete, getGroupName, formatDate, statusBadge }: any) {
+function PlayoffBracketView({ games, teams, division, canGeneratePlayoffs, onEdit, onDelete, getGroupName, formatDate, statusBadge }: any) {
   if (games.length === 0) {
     return (
       <div className="empty-state" style={{ padding: '4rem' }}>
@@ -1407,7 +1463,7 @@ function PlayoffBracketView({ games, teams, ageGroup, canGeneratePlayoffs, onEdi
     );
   }
 
-  const pools = ageGroup?.pools || [];
+  const pools = division?.pools || [];
   const isSplitMode = hasSplitPoolGames(games, pools);
 
   if (isSplitMode) {

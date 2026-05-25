@@ -80,7 +80,7 @@ export async function POST(req: Request) {
         workspaceName: checkoutRequest.workspaceName,
         workspaceSlug: checkoutRequest.workspaceSlug,
         sport: checkoutRequest.sport,
-        ageGroup: checkoutRequest.ageGroup,
+        division: checkoutRequest.division,
         seasonName: checkoutRequest.seasonName,
         seasonYear: checkoutRequest.seasonYear,
         source: checkoutRequest.source,

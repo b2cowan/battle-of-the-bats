@@ -18,20 +18,20 @@ type SetupDivision = {
 };
 
 type PoolInsertRow = {
-  age_group_id: string;
+  division_id: string;
   name: string;
   display_order: number;
 };
 
 type SeedTeam = {
   id: string;
-  age_group_id: string;
+  division_id: string;
   pool_id?: string | null;
 };
 
 type GameInsertRow = {
   tournament_id: string;
-  age_group_id: string;
+  division_id: string;
   home_team_id: string;
   away_team_id: string;
   game_date: string;
@@ -233,7 +233,7 @@ export async function POST(req: Request) {
       });
 
       const { data: insertedGroups, error: groupError } = await supabase
-        .from('age_groups')
+        .from('divisions')
         .insert(groupRows)
         .select();
 
@@ -248,7 +248,7 @@ export async function POST(req: Request) {
           for (let i = 0; i < poolCount; i++) {
             const name = names[i] || String.fromCharCode(65 + i);
             poolRows.push({
-              age_group_id: g.id,
+              division_id: g.id,
               name: name.startsWith('Pool ') ? name.replace('Pool ', '') : name,
               display_order: i
             });
@@ -289,46 +289,15 @@ export async function POST(req: Request) {
         }
       }
 
-      if (migration.contactIds && migration.contactIds.length > 0) {
-        const { data: sourceContacts } = await supabase
-          .from('contacts')
-          .select('*')
-          .in('id', migration.contactIds);
-        
-        if (sourceContacts && sourceContacts.length > 0) {
-          const rows = sourceContacts.map(c => ({
-            tournament_id: tid,
-            name: c.name,
-            email: c.email,
-            phone: c.phone,
-            role: c.role
-          }));
-          const { error: cErr } = await supabase.from('contacts').insert(rows);
-          if (cErr) console.error('Migration Error: Failed to clone contacts', cErr);
-          else console.log(`Migrated ${rows.length} contacts`);
-        }
-      }
+      // contacts table retired — migration.contactIds no longer cloned
     }
 
     // 4. Seed Data
     if (effectiveSeedData && Object.values(effectiveSeedData).some(v => v)) {
       log('Seeding Data', effectiveSeedData);
-      const { data: ageGroups } = await supabase.from('age_groups').select('*, pools(*)').eq('tournament_id', tid);
+      const { data: divisions } = await supabase.from('divisions').select('*, pools(*)').eq('tournament_id', tid);
       
-      if (ageGroups && ageGroups.length > 0) {
-        if (effectiveSeedData.contacts) {
-          const roles = ['Tournament Director', 'Registrar', 'Head Umpire', 'Diamond Manager', 'Volunteer Coordinator'];
-          const names = ['John Smith', 'Sarah Jenkins', 'Mike Miller', 'Lisa Wong', 'David Chen'];
-          const rows = names.map((name, i) => ({
-            tournament_id: tid,
-            name,
-            email: `${name.toLowerCase().replace(' ', '.')}@example.com`,
-            phone: `555-010${i}`,
-            role: roles[i]
-          }));
-          await supabase.from('contacts').insert(rows);
-        }
-
+      if (divisions && divisions.length > 0) {
         if (effectiveSeedData.diamonds) {
           const names = ['Memorial Park D1', 'Memorial Park D2', 'Lions Field', 'South Common', 'Milton Sports Center'];
           const rows = names.map((name, i) => ({
@@ -344,14 +313,14 @@ export async function POST(req: Request) {
           const teamNames = ['Milton Bats', 'Oakville Angels', 'Burlington Bulls', 'Mississauga Tigers', 'Hamilton Heat', 'Brampton Blazers', 'Toronto Titans', 'Guelph Gryphons'];
           const coaches = ['Coach Bob', 'Coach Alice', 'Coach Charlie', 'Coach Diana', 'Coach Ed', 'Coach Fiona', 'Coach Greg', 'Coach Heather'];
           
-          for (const group of ageGroups) {
+          for (const group of divisions) {
             const groupPools = group.pools || [];
             
             const teamRows = teamNames.map((name, i) => {
               const poolObj = groupPools.length > 0 ? groupPools[i % groupPools.length] : null;
               return {
                 tournament_id: tid,
-                age_group_id: group.id,
+                division_id: group.id,
                 name: `${name} ${group.name}`,
                 coach: coaches[i],
                 email: `coach${i}@example.com`,
@@ -414,9 +383,9 @@ export async function POST(req: Request) {
             let currentDayOffset = 0;
             const teamBusySlots = new Map<string, Set<string>>(); // teamId -> Set<date + time>
 
-            for (const group of ageGroups) {
+            for (const group of divisions) {
               const groupPools = group.pools || [];
-              const groupTeams = allTeams.filter(t => t.age_group_id === group.id);
+              const groupTeams = allTeams.filter(t => t.division_id === group.id);
               if (groupTeams.length < 2) continue;
 
               log(`Seeding matches for ${group.name}...`);
@@ -498,7 +467,7 @@ export async function POST(req: Request) {
                   if (!isHomeBusy && !isAwayBusy && hasGapH && hasGapA) {
                     gameRows.push({
                       tournament_id: tid,
-                      age_group_id: group.id,
+                      division_id: group.id,
                       home_team_id: home.id,
                       away_team_id: away.id,
                       game_date: dateStr,

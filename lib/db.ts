@@ -3,7 +3,7 @@ import { supabaseAdmin } from './supabase-admin';
 import { getEffectiveTournamentLimit, PLAN_CONFIG } from './plan-config';
 import { createClient as createBrowserSupabaseClient } from './supabase-browser';
 import { getActiveTeamEntitledRepTeamIds } from './team-workspace-entitlements';
-import { Tournament, TournamentStatus, Diamond, Contact, AgeGroup, Pool, PoolSlot, Team, Game, Announcement, PlayoffConfig, RuleSection, RuleItem, Resource, Organization, OrganizationMember, OrgPlan, OrgRole, TournamentArchive, OrgPublicSiteContent, AccountingLedger, AccountingEntry, LedgerSummary, AccountingEntryStatus, AccountingEntryType, LeagueSeason, LeagueDivision, LeagueTeam, LeagueRegistration, LeagueGame, LeagueStandingsRow, LeagueSeasonSummary, LeagueRegistrationStatus, LeagueSeasonStatus, LeaguePractice, LeaguePracticeStatus, RepTeam, RepProgramYear, RepProgramYearStatus, RepTeamCoach, RepTryoutRegistration, RepTryoutRegistrationStatus, RepRosterPlayer, RepRosterStatus, RepTeamEvent, RepEventType, RepTeamEventAttendance, RepAttendanceStatus, RepLineupMode, RepTeamLineup, RepTeamLineupEntry, RepDocumentTemplate, RepDocumentType, RepPlayerDocument, RepCostAllocation, RepAllocationSplit, RepAllocationInstallment, RepPlayerDuesSchedule, RepPlayerDuesInstallment, RepTeamExpense, OrgPayee, TournamentRegistrationField, TournamentRegistrationFieldAnswer, TournamentRegistrationFieldType } from './types';
+import { Tournament, TournamentStatus, Diamond, Division, Pool, PoolSlot, Team, Game, Announcement, PlayoffConfig, RuleSection, RuleItem, Resource, Organization, OrganizationMember, OrgPlan, OrgRole, TournamentArchive, OrgPublicSiteContent, AccountingLedger, AccountingEntry, LedgerSummary, AccountingEntryStatus, AccountingEntryType, LeagueSeason, LeagueDivision, LeagueTeam, LeagueRegistration, LeagueGame, LeagueStandingsRow, LeagueSeasonSummary, LeagueRegistrationStatus, LeagueSeasonStatus, LeaguePractice, LeaguePracticeStatus, RepTeam, RepProgramYear, RepProgramYearStatus, RepTeamCoach, RepTryoutRegistration, RepTryoutRegistrationStatus, RepRosterPlayer, RepRosterStatus, RepTeamEvent, RepEventType, RepTeamEventAttendance, RepAttendanceStatus, RepLineupMode, RepTeamLineup, RepTeamLineupEntry, RepDocumentTemplate, RepDocumentType, RepPlayerDocument, RepCostAllocation, RepAllocationSplit, RepAllocationInstallment, RepPlayerDuesSchedule, RepPlayerDuesInstallment, RepTeamExpense, OrgPayee, TournamentRegistrationField, TournamentRegistrationFieldAnswer, TournamentRegistrationFieldType } from './types';
 
 // Use the SSR browser client (cookie-based session) for writes that need auth;
 // falls back to anon client on the server where there is no window.
@@ -67,18 +67,6 @@ export async function saveTournament(t: Omit<Tournament, 'id'>): Promise<Tournam
   return mapTournament(data);
 }
 
-export async function cloneContacts(targetTid: string, sourceContacts: Contact[]): Promise<void> {
-  if (sourceContacts.length === 0) return;
-  const rows = sourceContacts.map(c => ({
-    tournament_id: targetTid,
-    name: c.name,
-    email: c.email,
-    phone: c.phone,
-    role: c.role
-  }));
-  await authClient().from('contacts').insert(rows);
-}
-
 export async function cloneDiamonds(targetTid: string, sourceDiamonds: Diamond[]): Promise<void> {
   if (sourceDiamonds.length === 0) return;
   const rows = sourceDiamonds.map(d => ({
@@ -90,7 +78,7 @@ export async function cloneDiamonds(targetTid: string, sourceDiamonds: Diamond[]
   await authClient().from('diamonds').insert(rows);
 }
 
-export async function initializeAgeGroups(targetTid: string, selectedDivisions: { name: string, capacity: number, poolCount: number, poolNames?: string, requiresPoolSelection: boolean }[]): Promise<void> {
+export async function initializeDivisions(targetTid: string, selectedDivisions: { name: string, capacity: number, poolCount: number, poolNames?: string, requiresPoolSelection: boolean }[]): Promise<void> {
   if (selectedDivisions.length === 0) return;
 
   const defaults: Record<string, { min: number, max: number, order: number }> = {
@@ -117,9 +105,9 @@ export async function initializeAgeGroups(targetTid: string, selectedDivisions: 
     };
   });
 
-  const { data: groups, error } = await authClient().from('age_groups').insert(rows).select();
+  const { data: groups, error } = await authClient().from('divisions').insert(rows).select();
   if (error) {
-    console.error('initializeAgeGroups error:', error);
+    console.error('initializeDivisions error:', error);
     throw error;
   }
 
@@ -132,7 +120,7 @@ export async function initializeAgeGroups(targetTid: string, selectedDivisions: 
       for (let i = 0; i < pCount; i++) {
         const name = names[i] || String.fromCharCode(65 + i);
         poolRows.push({
-          age_group_id: g.id,
+          division_id: g.id,
           name: name.startsWith('Pool ') ? name.replace('Pool ', '') : name, // Normalize: store 'A' instead of 'Pool A'
           display_order: i
         });
@@ -196,7 +184,6 @@ export type CloneTournamentOptions = {
   includePools?: boolean;
   includeSlots?: boolean;
   includeVenues?: boolean;
-  includeContacts?: boolean;
   includeBranding?: boolean;
   includePublicPages?: boolean;
   includeWelcome?: boolean;
@@ -208,7 +195,6 @@ export type CloneTournamentOptions = {
 export type CloneTournamentResult = {
   tournament: Tournament;
   copied: {
-    contacts: number;
     venues: number;
     divisions: number;
     pools: number;
@@ -294,7 +280,6 @@ export async function cloneTournament(
     targetTournamentId = target.id;
 
     const copied: CloneTournamentResult['copied'] = {
-      contacts: 0,
       venues: 0,
       divisions: 0,
       pools: 0,
@@ -304,37 +289,6 @@ export async function cloneTournament(
       welcome: false,
       registrationFields: 0,
     };
-
-    const contactIdMap = new Map<string, string>();
-    if (options.includeContacts) {
-      const { data: contacts, error } = await supabaseAdmin
-        .from('contacts')
-        .select('*')
-        .eq('tournament_id', sourceTournamentId)
-        .order('name', { ascending: true });
-      if (error) throw error;
-
-      if (contacts?.length) {
-        const rows = contacts.map(contact => ({
-          tournament_id: targetTournamentId,
-          name: contact.name,
-          email: contact.email,
-          phone: contact.phone,
-          role: contact.role,
-          is_notification_contact: contact.is_notification_contact ?? false,
-        }));
-        const { data: insertedContacts, error: insertError } = await supabaseAdmin
-          .from('contacts')
-          .insert(rows)
-          .select('id');
-        if (insertError) throw insertError;
-        contacts.forEach((contact, index) => {
-          const inserted = insertedContacts?.[index];
-          if (inserted?.id) contactIdMap.set(contact.id, inserted.id);
-        });
-        copied.contacts = insertedContacts?.length ?? 0;
-      }
-    }
 
     if (options.includeVenues) {
       const { data: venues, error } = await supabaseAdmin
@@ -359,27 +313,26 @@ export async function cloneTournament(
       }
     }
 
-    const ageGroupIdMap = new Map<string, string>();
+    const divisionIdMap = new Map<string, string>();
     const poolIdMap = new Map<string, string>();
 
     if (options.includeDivisions) {
-      const { data: ageGroups, error } = await supabaseAdmin
-        .from('age_groups')
+      const { data: divisions, error } = await supabaseAdmin
+        .from('divisions')
         .select('*')
         .eq('tournament_id', sourceTournamentId)
         .order('display_order', { ascending: true });
       if (error) throw error;
 
-      if (ageGroups?.length) {
+      if (divisions?.length) {
         const { data: insertedGroups, error: insertError } = await supabaseAdmin
-          .from('age_groups')
-          .insert(ageGroups.map(group => ({
+          .from('divisions')
+          .insert(divisions.map(group => ({
             tournament_id: targetTournamentId,
             name: group.name,
             min_age: group.min_age,
             max_age: group.max_age,
             display_order: group.display_order,
-            contact_id: group.contact_id ? contactIdMap.get(group.contact_id) ?? null : null,
             is_closed: false,
             capacity: group.capacity,
             pool_count: group.pool_count,
@@ -394,9 +347,9 @@ export async function cloneTournament(
           })))
           .select('id');
         if (insertError) throw insertError;
-        ageGroups.forEach((group, index) => {
+        divisions.forEach((group, index) => {
           const inserted = insertedGroups?.[index];
-          if (inserted?.id) ageGroupIdMap.set(group.id, inserted.id);
+          if (inserted?.id) divisionIdMap.set(group.id, inserted.id);
         });
         copied.divisions = insertedGroups?.length ?? 0;
 
@@ -404,7 +357,7 @@ export async function cloneTournament(
           const { data: pools, error: poolsError } = await supabaseAdmin
             .from('pools')
             .select('*')
-            .in('age_group_id', ageGroups.map(group => group.id))
+            .in('division_id', divisions.map(group => group.id))
             .order('display_order', { ascending: true });
           if (poolsError) throw poolsError;
 
@@ -412,7 +365,7 @@ export async function cloneTournament(
             const { data: insertedPools, error: poolInsertError } = await supabaseAdmin
               .from('pools')
               .insert(pools.map(pool => ({
-                age_group_id: ageGroupIdMap.get(pool.age_group_id),
+                division_id: divisionIdMap.get(pool.division_id),
                 name: pool.name,
                 display_order: pool.display_order,
               })))
@@ -436,12 +389,12 @@ export async function cloneTournament(
                 .map(slot => ({
                   pool_id: poolIdMap.get(slot.pool_id),
                   tournament_id: targetTournamentId,
-                  age_group_id: ageGroupIdMap.get(slot.age_group_id),
+                  division_id: divisionIdMap.get(slot.division_id),
                   slot_number: slot.slot_number,
                   display_name: slot.display_name,
                   team_id: null,
                 }))
-                .filter(slot => slot.pool_id && slot.age_group_id);
+                .filter(slot => slot.pool_id && slot.division_id);
 
               if (slotRows.length) {
                 const { data: insertedSlots, error: slotInsertError } = await supabaseAdmin
@@ -473,7 +426,7 @@ export async function cloneTournament(
             title: rule.title,
             icon: rule.icon,
             display_order: rule.display_order,
-            age_group_ids: remapUuidArray(rule.age_group_ids, ageGroupIdMap),
+            division_ids: remapUuidArray(rule.division_ids, divisionIdMap),
           })))
           .select('id');
         if (insertError) throw insertError;
@@ -545,7 +498,7 @@ export async function cloneTournament(
           body: welcome.body,
           published_at: new Date().toISOString(),
           pinned: true,
-          age_group_ids: remapUuidArray(welcome.age_group_ids, ageGroupIdMap),
+          division_ids: remapUuidArray(welcome.division_ids, divisionIdMap),
         });
         if (welcomeInsertError) throw welcomeInsertError;
         copied.welcome = true;
@@ -596,7 +549,6 @@ export async function cloneTournament(
 // --- Populate Tournament From Source ---
 export type PopulateTournamentResult = {
   copied: {
-    contacts: number;
     venues: number;
     divisions: number;
     pools: number;
@@ -633,14 +585,14 @@ export async function populateTournamentFrom(
   if (destination.status !== 'draft') throw new Error('Can only populate a draft tournament.');
 
   // ── Clear existing destination data ───────────────────────────────────────
-  const { data: existingAgeGroups } = await supabaseAdmin
-    .from('age_groups').select('id').eq('tournament_id', destinationTournamentId);
-  const existingAgeGroupIds = (existingAgeGroups ?? []).map(g => g.id);
+  const { data: existingDivisions } = await supabaseAdmin
+    .from('divisions').select('id').eq('tournament_id', destinationTournamentId);
+  const existingDivisionIds = (existingDivisions ?? []).map(g => g.id);
 
   let existingPoolIds: string[] = [];
-  if (existingAgeGroupIds.length > 0) {
+  if (existingDivisionIds.length > 0) {
     const { data: existingPools } = await supabaseAdmin
-      .from('pools').select('id').in('age_group_id', existingAgeGroupIds);
+      .from('pools').select('id').in('division_id', existingDivisionIds);
     existingPoolIds = (existingPools ?? []).map(p => p.id);
   }
 
@@ -659,8 +611,8 @@ export async function populateTournamentFrom(
     const { error } = await supabaseAdmin.from('pools').delete().in('id', existingPoolIds);
     if (error) throw error;
   }
-  if (existingAgeGroupIds.length > 0) {
-    const { error } = await supabaseAdmin.from('age_groups').delete().in('id', existingAgeGroupIds);
+  if (existingDivisionIds.length > 0) {
+    const { error } = await supabaseAdmin.from('divisions').delete().in('id', existingDivisionIds);
     if (error) throw error;
   }
   if (existingRuleIds.length > 0) {
@@ -669,7 +621,6 @@ export async function populateTournamentFrom(
   }
 
   await Promise.all([
-    supabaseAdmin.from('contacts').delete().eq('tournament_id', destinationTournamentId),
     supabaseAdmin.from('diamonds').delete().eq('tournament_id', destinationTournamentId),
     supabaseAdmin.from('resources').delete().eq('tournament_id', destinationTournamentId),
     supabaseAdmin.from('tournament_registration_fields').delete().eq('tournament_id', destinationTournamentId),
@@ -699,30 +650,12 @@ export async function populateTournamentFrom(
 
   // ── Copy related data from source to destination ───────────────────────────
   const copied: PopulateTournamentResult['copied'] = {
-    contacts: 0, venues: 0, divisions: 0, pools: 0, slots: 0,
+    venues: 0, divisions: 0, pools: 0, slots: 0,
     rules: 0, resources: 0, welcome: false, registrationFields: 0,
   };
 
-  const contactIdMap = new Map<string, string>();
-  const ageGroupIdMap = new Map<string, string>();
+  const divisionIdMap = new Map<string, string>();
   const poolIdMap = new Map<string, string>();
-
-  // Contacts
-  const { data: contacts, error: contactsError } = await supabaseAdmin
-    .from('contacts').select('*').eq('tournament_id', sourceTournamentId).order('name');
-  if (contactsError) throw contactsError;
-  if (contacts?.length) {
-    const { data: ins, error } = await supabaseAdmin.from('contacts').insert(
-      contacts.map(c => ({
-        tournament_id: destinationTournamentId,
-        name: c.name, email: c.email, phone: c.phone, role: c.role,
-        is_notification_contact: c.is_notification_contact ?? false,
-      }))
-    ).select('id');
-    if (error) throw error;
-    contacts.forEach((c, i) => { if (ins?.[i]?.id) contactIdMap.set(c.id, ins[i].id); });
-    copied.contacts = ins?.length ?? 0;
-  }
 
   // Venues
   const { data: venues, error: venuesError } = await supabaseAdmin
@@ -737,16 +670,15 @@ export async function populateTournamentFrom(
   }
 
   // Divisions + pools + slots
-  const { data: ageGroups, error: ageGroupsError } = await supabaseAdmin
-    .from('age_groups').select('*').eq('tournament_id', sourceTournamentId).order('display_order');
-  if (ageGroupsError) throw ageGroupsError;
-  if (ageGroups?.length) {
-    const { data: ins, error } = await supabaseAdmin.from('age_groups').insert(
-      ageGroups.map(g => ({
+  const { data: divisions, error: divisionsError } = await supabaseAdmin
+    .from('divisions').select('*').eq('tournament_id', sourceTournamentId).order('display_order');
+  if (divisionsError) throw divisionsError;
+  if (divisions?.length) {
+    const { data: ins, error } = await supabaseAdmin.from('divisions').insert(
+      divisions.map(g => ({
         tournament_id: destinationTournamentId,
         name: g.name, min_age: g.min_age, max_age: g.max_age,
         display_order: g.display_order,
-        contact_id: g.contact_id ? (contactIdMap.get(g.contact_id) ?? null) : null,
         is_closed: false,
         capacity: g.capacity,
         pool_count: g.pool_count, pool_names: g.pool_names,
@@ -760,15 +692,15 @@ export async function populateTournamentFrom(
       }))
     ).select('id');
     if (error) throw error;
-    ageGroups.forEach((g, i) => { if (ins?.[i]?.id) ageGroupIdMap.set(g.id, ins[i].id); });
+    divisions.forEach((g, i) => { if (ins?.[i]?.id) divisionIdMap.set(g.id, ins[i].id); });
     copied.divisions = ins?.length ?? 0;
 
     const { data: pools, error: poolsError } = await supabaseAdmin
-      .from('pools').select('*').in('age_group_id', ageGroups.map(g => g.id)).order('display_order');
+      .from('pools').select('*').in('division_id', divisions.map(g => g.id)).order('display_order');
     if (poolsError) throw poolsError;
     if (pools?.length) {
       const { data: insPools, error: poolError } = await supabaseAdmin.from('pools').insert(
-        pools.map(p => ({ age_group_id: ageGroupIdMap.get(p.age_group_id), name: p.name, display_order: p.display_order }))
+        pools.map(p => ({ division_id: divisionIdMap.get(p.division_id), name: p.name, display_order: p.display_order }))
       ).select('id');
       if (poolError) throw poolError;
       pools.forEach((p, i) => { if (insPools?.[i]?.id) poolIdMap.set(p.id, insPools[i].id); });
@@ -781,10 +713,10 @@ export async function populateTournamentFrom(
         .map(s => ({
           pool_id: poolIdMap.get(s.pool_id),
           tournament_id: destinationTournamentId,
-          age_group_id: ageGroupIdMap.get(s.age_group_id),
+          division_id: divisionIdMap.get(s.division_id),
           slot_number: s.slot_number, display_name: s.display_name, team_id: null,
         }))
-        .filter(s => s.pool_id && s.age_group_id);
+        .filter(s => s.pool_id && s.division_id);
       if (slotRows.length) {
         const { data: insSlots, error: slotError } = await supabaseAdmin.from('pool_slots').insert(slotRows).select('id');
         if (slotError) throw slotError;
@@ -802,7 +734,7 @@ export async function populateTournamentFrom(
       rules.map(r => ({
         tournament_id: destinationTournamentId,
         title: r.title, icon: r.icon, display_order: r.display_order,
-        age_group_ids: remapUuidArray(r.age_group_ids, ageGroupIdMap),
+        division_ids: remapUuidArray(r.division_ids, divisionIdMap),
       }))
     ).select('id');
     if (ruleError) throw ruleError;
@@ -842,7 +774,7 @@ export async function populateTournamentFrom(
       tournament_id: destinationTournamentId,
       title: 'Welcome!', body: welcome.body,
       published_at: new Date().toISOString(), pinned: true,
-      age_group_ids: remapUuidArray(welcome.age_group_ids, ageGroupIdMap),
+      division_ids: remapUuidArray(welcome.division_ids, divisionIdMap),
     });
     if (error) throw error;
     copied.welcome = true;
@@ -903,57 +835,14 @@ export async function deleteDiamond(id: string): Promise<void> {
   await authClient().from('diamonds').delete().eq('id', id);
 }
 
-// --- Contacts ---
-export async function getContacts(tournamentId?: string, options: ReadOptions = {}): Promise<Contact[]> {
-  let query = readClient(options).from('contacts').select('*').order('name', { ascending: true });
-  if (tournamentId) query = query.eq('tournament_id', tournamentId);
-  const { data, error } = await query;
-  if (error || !data) {
-    if (error) console.error('getContacts error', error);
-    return [];
-  }
-  return data.map((c: any) => ({
-    id: c.id,
-    tournamentId: c.tournament_id,
-    name: c.name,
-    email: c.email,
-    phone: c.phone,
-    role: c.role
-  }));
-}
-
-export async function saveContact(c: Omit<Contact, 'id'>): Promise<void> {
-  await authClient().from('contacts').insert({
-    tournament_id: c.tournamentId,
-    name: c.name,
-    email: c.email,
-    phone: c.phone,
-    role: c.role
-  });
-}
-
-export async function updateContact(id: string, c: Partial<Contact>): Promise<void> {
-  const updates: any = {};
-  if (c.tournamentId !== undefined) updates.tournament_id = c.tournamentId;
-  if (c.name !== undefined) updates.name = c.name;
-  if (c.email !== undefined) updates.email = c.email;
-  if (c.phone !== undefined) updates.phone = c.phone;
-  if (c.role !== undefined) updates.role = c.role;
-  await authClient().from('contacts').update(updates).eq('id', id);
-}
-
-export async function deleteContact(id: string): Promise<void> {
-  await authClient().from('contacts').delete().eq('id', id);
-}
-
-// --- Age Groups ---
-export async function getAgeGroups(tournamentId?: string, options: ReadOptions = {}): Promise<AgeGroup[]> {
+// --- Divisions ---
+export async function getDivisions(tournamentId?: string, options: ReadOptions = {}): Promise<Division[]> {
   const client = options.admin ? supabaseAdmin : supabase;
-  let query = client.from('age_groups').select('*, pools(*)').order('display_order', { ascending: true });
+  let query = client.from('divisions').select('*, pools(*)').order('display_order', { ascending: true });
   if (tournamentId) query = query.eq('tournament_id', tournamentId);
   const { data, error } = await query;
   if (error || !data) {
-    if (error) console.error('getAgeGroups error', error);
+    if (error) console.error('getDivisions error', error);
     return [];
   }
   return data.map((g: any) => ({
@@ -963,7 +852,6 @@ export async function getAgeGroups(tournamentId?: string, options: ReadOptions =
     minAge: g.min_age,
     maxAge: g.max_age,
     order: g.display_order,
-    contactId: g.contact_id,
     isClosed: g.is_closed,
     capacity: g.capacity,
     poolCount: g.pool_count,
@@ -977,21 +865,20 @@ export async function getAgeGroups(tournamentId?: string, options: ReadOptions =
     totalFeeDueDate: g.total_fee_due_date ?? null,
     pools: (g.pools || []).map((p: any) => ({
       id: p.id,
-      ageGroupId: p.age_group_id,
+      divisionId: p.division_id,
       name: p.name,
       order: p.display_order
     })).sort((a: any, b: any) => a.order - b.order)
   }));
 }
 
-export async function saveAgeGroup(g: Omit<AgeGroup, 'id'>): Promise<void> {
-  await authClient().from('age_groups').insert({
+export async function saveDivision(g: Omit<Division, 'id'>): Promise<void> {
+  await authClient().from('divisions').insert({
     tournament_id: g.tournamentId,
     name: g.name,
     min_age: g.minAge,
     max_age: g.maxAge,
     display_order: g.order,
-    contact_id: g.contactId,
     is_closed: g.isClosed || false,
     capacity: g.capacity,
     pool_count: g.poolCount || 1,
@@ -1001,14 +888,13 @@ export async function saveAgeGroup(g: Omit<AgeGroup, 'id'>): Promise<void> {
   });
 }
 
-export async function updateAgeGroup(id: string, g: Partial<AgeGroup>): Promise<void> {
+export async function updateDivision(id: string, g: Partial<Division>): Promise<void> {
   const updates: any = {};
   if (g.tournamentId !== undefined) updates.tournament_id = g.tournamentId;
   if (g.name !== undefined) updates.name = g.name;
   if (g.minAge !== undefined) updates.min_age = g.minAge;
   if (g.maxAge !== undefined) updates.max_age = g.maxAge;
   if (g.order !== undefined) updates.display_order = g.order;
-  if (g.contactId !== undefined) updates.contact_id = g.contactId;
   if (g.isClosed !== undefined) updates.is_closed = g.isClosed;
   if (g.capacity !== undefined) updates.capacity = g.capacity;
   if (g.poolCount !== undefined) updates.pool_count = g.poolCount;
@@ -1016,24 +902,24 @@ export async function updateAgeGroup(id: string, g: Partial<AgeGroup>): Promise<
   if (g.requiresPoolSelection !== undefined) updates.requires_pool_selection = g.requiresPoolSelection;
   if (g.playoffConfig !== undefined) updates.playoff_config = g.playoffConfig;
   if (g.scheduleVisibility !== undefined) updates.schedule_visibility = g.scheduleVisibility;
-  await authClient().from('age_groups').update(updates).eq('id', id);
+  await authClient().from('divisions').update(updates).eq('id', id);
 }
 
-export async function deleteAgeGroup(id: string): Promise<void> {
-  await authClient().from('age_groups').delete().eq('id', id);
+export async function deleteDivision(id: string): Promise<void> {
+  await authClient().from('divisions').delete().eq('id', id);
 }
 
 // --- Pools ---
-export async function getPools(ageGroupId: string): Promise<Pool[]> {
+export async function getPools(divisionId: string): Promise<Pool[]> {
   const { data, error } = await supabase
     .from('pools')
     .select('*')
-    .eq('age_group_id', ageGroupId)
+    .eq('division_id', divisionId)
     .order('display_order', { ascending: true });
   if (error || !data) return [];
   return data.map((p: any) => ({
     id: p.id,
-    ageGroupId: p.age_group_id,
+    divisionId: p.division_id,
     name: p.name,
     order: p.display_order
   }));
@@ -1041,7 +927,7 @@ export async function getPools(ageGroupId: string): Promise<Pool[]> {
 
 export async function savePool(p: Omit<Pool, 'id'>): Promise<string> {
   const { data, error } = await authClient().from('pools').insert({
-    age_group_id: p.ageGroupId,
+    division_id: p.divisionId,
     name: p.name,
     display_order: p.order
   }).select().single();
@@ -1070,7 +956,7 @@ export async function getTeams(tournamentId?: string, options: ReadOptions = {})
   return data.map((t: any) => ({
     id: t.id,
     tournamentId: t.tournament_id,
-    ageGroupId: t.age_group_id,
+    divisionId: t.division_id,
     name: t.name,
     coach: t.coach,
     email: t.email,
@@ -1089,7 +975,7 @@ export async function getTeams(tournamentId?: string, options: ReadOptions = {})
 export async function saveTeam(t: Omit<Team, 'id'> & { id?: string }): Promise<void> {
   const payload: any = {
     tournament_id: t.tournamentId,
-    age_group_id: t.ageGroupId,
+    division_id: t.divisionId,
     name: t.name,
     coach: t.coach,
     email: t.email,
@@ -1110,7 +996,7 @@ export async function saveTeam(t: Omit<Team, 'id'> & { id?: string }): Promise<v
 export async function updateTeam(id: string, t: Partial<Team>): Promise<void> {
   const updates: any = {};
   if (t.tournamentId !== undefined) updates.tournament_id = t.tournamentId;
-  if (t.ageGroupId !== undefined)   updates.age_group_id = t.ageGroupId;
+  if (t.divisionId !== undefined)   updates.division_id = t.divisionId;
   if (t.name !== undefined)         updates.name = t.name;
   if (t.coach !== undefined)        updates.coach = t.coach;
   if (t.email !== undefined)        updates.email = t.email;
@@ -1312,7 +1198,7 @@ export async function getGames(tournamentId?: string, options: ReadOptions = {})
   return data.map((g: any) => ({
     id: g.id,
     tournamentId: g.tournament_id,
-    ageGroupId: g.age_group_id,
+    divisionId: g.division_id,
     homeTeamId: g.home_team_id,
     awayTeamId: g.away_team_id,
     date: g.game_date,
@@ -1336,7 +1222,7 @@ export async function getGames(tournamentId?: string, options: ReadOptions = {})
 export async function saveGame(g: Omit<Game, 'id'>): Promise<void> {
   await authClient().from('games').insert({
     tournament_id: g.tournamentId,
-    age_group_id: g.ageGroupId,
+    division_id: g.divisionId,
     home_team_id: g.homeTeamId,
     away_team_id: g.awayTeamId,
     game_date: g.date,
@@ -1360,7 +1246,7 @@ export async function saveGame(g: Omit<Game, 'id'>): Promise<void> {
 export async function updateGame(id: string, g: Partial<Game>, options: ReadOptions = {}): Promise<void> {
   const updates: any = {};
   if (g.tournamentId !== undefined) updates.tournament_id = g.tournamentId;
-  if (g.ageGroupId !== undefined) updates.age_group_id = g.ageGroupId;
+  if (g.divisionId !== undefined) updates.division_id = g.divisionId;
   if (g.homeTeamId !== undefined) updates.home_team_id = g.homeTeamId;
   if (g.awayTeamId !== undefined) updates.away_team_id = g.awayTeamId;
   if (g.date !== undefined) updates.game_date = g.date;
@@ -1398,12 +1284,12 @@ export async function deleteGame(id: string): Promise<void> {
   await authClient().from('games').delete().eq('id', id);
 }
 
-export async function getStandings(ageGroupId: string, config?: PlayoffConfig, options: ReadOptions = {}) {
+export async function getStandings(divisionId: string, config?: PlayoffConfig, options: ReadOptions = {}) {
   const games = await getGames(undefined, options);
   const teams = await getTeams(undefined, options);
-  const groupTeams = teams.filter(t => t.ageGroupId === ageGroupId && t.status === 'accepted');
+  const groupTeams = teams.filter(t => t.divisionId === divisionId && t.status === 'accepted');
   const groupGames = games.filter(g =>
-    g.ageGroupId === ageGroupId &&
+    g.divisionId === divisionId &&
     (g.status === 'completed' || g.status === 'submitted') &&
     !g.isPlayoff
   );
@@ -1547,7 +1433,7 @@ export async function getAnnouncements(tournamentId?: string, options: ReadOptio
     body: a.body,
     date: a.published_at,
     pinned: a.pinned,
-    ageGroupIds: a.age_group_ids ?? null,
+    divisionIds: a.division_ids ?? null,
   }));
 }
 
@@ -1558,7 +1444,7 @@ export async function saveAnnouncement(a: Omit<Announcement, 'id'>): Promise<voi
     body: a.body,
     published_at: a.date,
     pinned: a.pinned || false,
-    age_group_ids: a.ageGroupIds?.length ? a.ageGroupIds : null,
+    division_ids: a.divisionIds?.length ? a.divisionIds : null,
   });
 }
 
@@ -1569,7 +1455,7 @@ export async function updateAnnouncement(id: string, a: Partial<Announcement>): 
   if (a.body !== undefined) updates.body = a.body;
   if (a.date !== undefined) updates.published_at = a.date;
   if (a.pinned !== undefined) updates.pinned = a.pinned;
-  if (a.ageGroupIds !== undefined) updates.age_group_ids = a.ageGroupIds?.length ? a.ageGroupIds : null;
+  if (a.divisionIds !== undefined) updates.division_ids = a.divisionIds?.length ? a.divisionIds : null;
   const { error } = await authClient().from('announcements').update(updates).eq('id', id);
   if (error) throw error;
 }
@@ -1580,23 +1466,10 @@ export async function deleteAnnouncement(id: string): Promise<void> {
 
 // --- Seeding ---
 export async function seedTournamentData(tid: string, options: {
-  contacts?: boolean, diamonds?: boolean, registrations?: boolean, schedule?: boolean, results?: boolean
+  diamonds?: boolean, registrations?: boolean, schedule?: boolean, results?: boolean
 }) {
-  const ageGroups = await getAgeGroups(tid);
-  if (ageGroups.length === 0) return;
-
-  if (options.contacts) {
-    const roles = ['Tournament Director', 'Registrar', 'Head Umpire', 'Diamond Manager', 'Volunteer Coordinator'];
-    const names = ['John Smith', 'Sarah Jenkins', 'Mike Miller', 'Lisa Wong', 'David Chen'];
-    const rows = names.map((name, i) => ({
-      tournament_id: tid,
-      name,
-      email: `${name.toLowerCase().replace(' ', '.')}@example.com`,
-      phone: `555-010${i}`,
-      role: roles[i]
-    }));
-    await authClient().from('contacts').insert(rows);
-  }
+  const divisions = await getDivisions(tid);
+  if (divisions.length === 0) return;
 
   if (options.diamonds) {
     const names = ['Memorial Park D1', 'Memorial Park D2', 'Lions Field', 'South Common', 'Milton Sports Center'];
@@ -1613,7 +1486,7 @@ export async function seedTournamentData(tid: string, options: {
     const defaultTeamNames = ['Milton Bats', 'Oakville Angels', 'Burlington Bulls', 'Mississauga Tigers', 'Hamilton Heat', 'Brampton Blazers', 'Toronto Titans', 'Guelph Gryphons', 'Kitchener Panthers', 'London Badgers', 'Windsor Selects', 'Whitby Eagles'];
     const defaultCoaches = ['Coach Bob', 'Coach Alice', 'Coach Charlie', 'Coach Diana', 'Coach Ed', 'Coach Fiona', 'Coach Greg', 'Coach Heather', 'Coach Ian', 'Coach Jack', 'Coach Ken', 'Coach Leo'];
 
-    for (const group of ageGroups) {
+    for (const group of divisions) {
       const capacity = group.capacity || 8;
       const teamRows: any[] = [];
 
@@ -1624,7 +1497,7 @@ export async function seedTournamentData(tid: string, options: {
 
         teamRows.push({
           tournament_id: tid,
-          age_group_id: group.id,
+          division_id: group.id,
           name: `${nameBase} ${group.name} ${i + 1}`,
           coach: coachBase,
           email: `coach${i}@example.com`,
@@ -1639,7 +1512,7 @@ export async function seedTournamentData(tid: string, options: {
       for (let i = 0; i < 2; i++) {
         teamRows.push({
           tournament_id: tid,
-          age_group_id: group.id,
+          division_id: group.id,
           name: `Waitlist Team ${i + 1} ${group.name}`,
           coach: `Waitlist Coach ${i + 1}`,
           email: `waitlist${i + 1}@example.com`,
@@ -1667,8 +1540,8 @@ export async function seedTournamentData(tid: string, options: {
     const tnt = await supabase.from('tournaments').select('*').eq('id', tid).single();
     const baseDate = tnt.data?.start_date || new Date().toISOString().split('T')[0];
 
-    for (const group of ageGroups) {
-      const groupTeams = teams.filter(t => t.ageGroupId === group.id);
+    for (const group of divisions) {
+      const groupTeams = teams.filter(t => t.divisionId === group.id);
       if (groupTeams.length < 2) continue;
 
       // Simple 2 games per division for seed
@@ -1679,7 +1552,7 @@ export async function seedTournamentData(tid: string, options: {
 
         gameRows.push({
           tournament_id: tid,
-          age_group_id: group.id,
+          division_id: group.id,
           home_team_id: home.id,
           away_team_id: away.id,
           game_date: baseDate,
@@ -1700,7 +1573,7 @@ export async function advancePlayoffs(game: Game, options: ReadOptions = {}) {
   if (game.status !== 'completed') return;
 
   const games = await getGames(game.tournamentId, options);
-  const playoffGames = games.filter(g => g.isPlayoff && g.ageGroupId === game.ageGroupId);
+  const playoffGames = games.filter(g => g.isPlayoff && g.divisionId === game.divisionId);
 
   if (playoffGames.length === 0) return;
 
@@ -1723,13 +1596,13 @@ export async function advancePlayoffs(game: Game, options: ReadOptions = {}) {
   }
 
   // 2. Check if all pool games are done to fill initial seeds
-  const poolGames = games.filter(g => g.ageGroupId === game.ageGroupId && !g.isPlayoff);
+  const poolGames = games.filter(g => g.divisionId === game.divisionId && !g.isPlayoff);
   const allPoolDone = poolGames.every(g => g.status === 'completed');
 
   if (allPoolDone && poolGames.length > 0) {
-    const ageGroup = (await getAgeGroups(game.tournamentId, options)).find(g => g.id === game.ageGroupId);
-    const standings = await getStandings(game.ageGroupId, ageGroup?.playoffConfig, options);
-    const pools = ageGroup?.pools || [];
+    const division = (await getDivisions(game.tournamentId, options)).find(g => g.id === game.divisionId);
+    const standings = await getStandings(game.divisionId, division?.playoffConfig, options);
+    const pools = division?.pools || [];
 
     for (const pg of playoffGames) {
       const updates: Partial<Game> = {};
@@ -1790,7 +1663,7 @@ export async function getRules(tournamentId: string, options: ReadOptions = {}):
       content: i.content,
       order: i.display_order
     })).sort((a: any, b: any) => a.order - b.order),
-    ageGroupIds: r.age_group_ids ?? null,
+    divisionIds: r.division_ids ?? null,
   }));
 }
 
@@ -1802,7 +1675,7 @@ export async function saveRuleSection(r: Omit<RuleSection, 'id' | 'items'>): Pro
       title: r.title,
       icon: r.icon,
       display_order: r.order,
-      age_group_ids: r.ageGroupIds?.length ? r.ageGroupIds : null,
+      division_ids: r.divisionIds?.length ? r.divisionIds : null,
     })
     .select()
     .single();
@@ -1819,7 +1692,7 @@ export async function updateRuleSection(id: string, r: Partial<RuleSection>): Pr
   if (r.title !== undefined) updates.title = r.title;
   if (r.icon !== undefined) updates.icon = r.icon;
   if (r.order !== undefined) updates.display_order = r.order;
-  if (r.ageGroupIds !== undefined) updates.age_group_ids = r.ageGroupIds?.length ? r.ageGroupIds : null;
+  if (r.divisionIds !== undefined) updates.division_ids = r.divisionIds?.length ? r.divisionIds : null;
   const { error } = await authClient().from('rules').update(updates).eq('id', id);
   if (error) throw error;
 }
@@ -2275,7 +2148,7 @@ function mapTournament(r: any): Tournament {
     startDate:      r.start_date ?? undefined,
     endDate:        r.end_date ?? undefined,
     contactEmail:   r.contact_email ?? undefined,
-    feeScheduleMode:          (r.fee_schedule_mode === 'age_group' ? 'age_group' : 'tournament'),
+    feeScheduleMode:          (r.fee_schedule_mode === 'division' ? 'division' : 'tournament'),
     depositAmount:            r.deposit_amount != null ? Number(r.deposit_amount) : null,
     depositDueDate:           r.deposit_due_date ?? null,
     totalFeeAmount:           r.total_fee_amount != null ? Number(r.total_fee_amount) : null,
@@ -2603,7 +2476,7 @@ export interface LeagueSeasonInput {
   name: string;
   slug: string;
   sport?: string;
-  ageGroup?: string | null;
+  division?: string | null;
   description?: string | null;
   registrationFee?: number | null;
   autoGenerateFees?: boolean;
@@ -2660,7 +2533,7 @@ function mapLeagueSeason(row: any): LeagueSeason {
     name:                      row.name,
     slug:                      row.slug,
     sport:                     row.sport,
-    ageGroup:                  row.age_group ?? null,
+    division:                  row.division ?? null,
     status:                    row.status,
     description:               row.description ?? null,
     registrationFee:           row.registration_fee != null ? Number(row.registration_fee) : null,
@@ -2786,7 +2659,7 @@ export async function createLeagueSeason(orgId: string, input: LeagueSeasonInput
       name:                        input.name,
       slug:                        input.slug,
       sport:                       input.sport ?? 'softball',
-      age_group:                   input.ageGroup ?? null,
+      division:                   input.division ?? null,
       description:                 input.description ?? null,
       registration_fee:            input.registrationFee ?? null,
       auto_generate_fees:          input.autoGenerateFees ?? false,
@@ -2812,7 +2685,7 @@ export async function updateLeagueSeason(
   if (input.name                      !== undefined) patch.name                        = input.name;
   if (input.slug                      !== undefined) patch.slug                        = input.slug;
   if (input.sport                     !== undefined) patch.sport                       = input.sport;
-  if (input.ageGroup                  !== undefined) patch.age_group                   = input.ageGroup;
+  if (input.division                  !== undefined) patch.division                   = input.division;
   if (input.description               !== undefined) patch.description                 = input.description;
   if (input.registrationFee           !== undefined) patch.registration_fee            = input.registrationFee;
   if (input.autoGenerateFees          !== undefined) patch.auto_generate_fees          = input.autoGenerateFees;
@@ -3393,7 +3266,7 @@ function mapRepTeam(r: any): RepTeam {
     name: r.name,
     slug: r.slug,
     sport: r.sport,
-    ageGroup: r.age_group ?? null,
+    division: r.division ?? null,
     groupId: r.group_id ?? null,
     groupName: r.rep_team_groups?.name ?? null,
     description: r.description ?? null,
@@ -3547,7 +3420,7 @@ export async function createRepTeam(orgId: string, fields: {
   name: string;
   slug: string;
   sport: string;
-  ageGroup?: string | null;
+  division?: string | null;
   description?: string | null;
   color?: string | null;
   groupId?: string | null;
@@ -3559,7 +3432,7 @@ export async function createRepTeam(orgId: string, fields: {
       name: fields.name,
       slug: fields.slug,
       sport: fields.sport,
-      age_group: fields.ageGroup ?? null,
+      division: fields.division ?? null,
       description: fields.description ?? null,
       color: fields.color ?? null,
       group_id: fields.groupId ?? null,
@@ -3573,7 +3446,7 @@ export async function createRepTeam(orgId: string, fields: {
 export async function updateRepTeam(teamId: string, fields: {
   name?: string;
   sport?: string;
-  ageGroup?: string | null;
+  division?: string | null;
   description?: string | null;
   color?: string | null;
   isArchived?: boolean;
@@ -3581,7 +3454,7 @@ export async function updateRepTeam(teamId: string, fields: {
   const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
   if (fields.name !== undefined) patch.name = fields.name;
   if (fields.sport !== undefined) patch.sport = fields.sport;
-  if (fields.ageGroup !== undefined) patch.age_group = fields.ageGroup;
+  if (fields.division !== undefined) patch.division = fields.division;
   if (fields.description !== undefined) patch.description = fields.description;
   if (fields.color !== undefined) patch.color = fields.color;
   if (fields.isArchived !== undefined) patch.is_archived = fields.isArchived;
@@ -5672,7 +5545,7 @@ export async function getRepPastProgramYears(orgId: string, scopeTeamIds?: strin
   const teamIds = [...new Set(years.map((y: any) => y.team_id))];
   const { data: teams, error: tErr } = await supabaseAdmin
     .from('rep_teams')
-    .select('id, name, color, age_group')
+    .select('id, name, color, division')
     .in('id', teamIds);
   if (tErr) throw tErr;
   const teamMap = new Map((teams ?? []).map((t: any) => [t.id, t]));
@@ -5695,7 +5568,7 @@ export async function getRepPastProgramYears(orgId: string, scopeTeamIds?: strin
       teamId: y.team_id,
       teamName: t?.name ?? '',
       teamColor: t?.color ?? null,
-      teamAgeGroup: t?.age_group ?? null,
+      teamDivision: t?.division ?? null,
       orgId: y.org_id,
       name: y.name,
       year: y.year,
@@ -5767,7 +5640,7 @@ export async function getRepTeamHistory(teamId: string): Promise<RepTeamHistoryY
     teamId: y.team_id,
     teamName: team.name,
     teamColor: team.color ?? null,
-    teamAgeGroup: team.ageGroup ?? null,
+    teamDivision: team.division ?? null,
     orgId: y.org_id,
     name: y.name,
     year: y.year,

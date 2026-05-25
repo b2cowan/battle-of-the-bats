@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { UserPlus, AlertCircle, ChevronDown, RefreshCw, CreditCard } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
 import { isPublicPageEnabled } from '@/lib/public-pages';
-import { AgeGroup, Tournament, Contact, TournamentRegistrationField } from '@/lib/types';
+import { Division, Tournament, TournamentRegistrationField } from '@/lib/types';
 import styles from '../../register/register.module.css';
 import { fetchPublicTournamentData } from '@/lib/public-tournament-client';
 
@@ -19,6 +19,11 @@ type FeeSchedule = {
 
 type CustomAnswerState = Record<string, string>;
 type CustomFileState = Record<string, File | null>;
+type BasicCoachTeamOption = {
+  id: string;
+  name: string;
+  primaryCoachName: string | null;
+};
 
 function formatAgeRange(minAge: number | null, maxAge: number | null) {
   if (minAge === null && maxAge === null) return '';
@@ -45,10 +50,10 @@ function formatDate(date: string | null) {
   });
 }
 
-function resolveFeeSchedule(tournament: Tournament | null, group: AgeGroup | undefined): FeeSchedule | null {
+function resolveFeeSchedule(tournament: Tournament | null, group: Division | undefined): FeeSchedule | null {
   if (!tournament || !group) return null;
 
-  if (tournament.feeScheduleMode === 'age_group' && group.totalFeeAmount != null) {
+  if (tournament.feeScheduleMode === 'division' && group.totalFeeAmount != null) {
     return {
       depositAmount: group.depositAmount ?? null,
       depositDueDate: group.depositDueDate ?? null,
@@ -74,8 +79,7 @@ export default function RegisterPage() {
   const orgSlug        = params.orgSlug as string;
   const tournamentSlug = params.tournamentSlug as string;
 
-  const [ageGroups, setAgeGroups]   = useState<AgeGroup[]>([]);
-  const [contacts, setContacts]     = useState<Contact[]>([]);
+  const [divisions, setDivisions]   = useState<Division[]>([]);
   const [tournament, setTournament] = useState<Tournament | null>(null);
   const [registrationFields, setRegistrationFields] = useState<TournamentRegistrationField[]>([]);
   const [contactEmail, setContactEmail] = useState<string | null>(null);
@@ -83,10 +87,14 @@ export default function RegisterPage() {
   const [step, setStep]             = useState<Step>('form');
   const [errorMsg, setErrorMsg]     = useState('');
   const [form, setForm] = useState({
-    teamName: '', coachName: '', email: '', ageGroupId: '',
+    teamName: '', coachName: '', email: '', divisionId: '',
   });
   const [customAnswers, setCustomAnswers] = useState<CustomAnswerState>({});
   const [customFiles, setCustomFiles] = useState<CustomFileState>({});
+  const [signedInCoachEmail, setSignedInCoachEmail] = useState<string | null>(null);
+  const [basicCoachTeams, setBasicCoachTeams] = useState<BasicCoachTeamOption[]>([]);
+  const [coachTeamMode, setCoachTeamMode] = useState<'new' | 'existing'>('new');
+  const [selectedBasicTeamId, setSelectedBasicTeamId] = useState('');
 
   useEffect(() => {
     async function init() {
@@ -95,8 +103,7 @@ export default function RegisterPage() {
       setTournament(current);
       setContactEmail(current?.contactEmail ?? data?.organization.contactEmail ?? null);
       if (current && data?.pageEnabled) {
-        setAgeGroups(data.ageGroups);
-        setContacts(data.contacts);
+        setDivisions(data.divisions);
         setRegistrationFields(data.registrationFields ?? []);
         fetchStats(current.id);
       }
@@ -113,11 +120,53 @@ export default function RegisterPage() {
     }
   }, [orgSlug, tournamentSlug]);
 
+  useEffect(() => {
+    async function loadCoachTeams() {
+      try {
+        const res = await fetch('/api/coaches/basic-teams', { cache: 'no-store' });
+        if (res.status === 401) return;
+        if (!res.ok) return;
+        const data = await res.json() as {
+          user?: { email?: string };
+          teams?: BasicCoachTeamOption[];
+        };
+        const userEmail = data.user?.email?.toLowerCase() ?? null;
+        setSignedInCoachEmail(userEmail);
+        setBasicCoachTeams(data.teams ?? []);
+        if (userEmail) {
+          setForm(f => ({ ...f, email: f.email || userEmail }));
+        }
+        if ((data.teams ?? []).length > 0) {
+          setCoachTeamMode('existing');
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    loadCoachTeams();
+  }, []);
+
+  function selectExistingCoachTeam(teamId: string) {
+    setSelectedBasicTeamId(teamId);
+    const team = basicCoachTeams.find(item => item.id === teamId);
+    if (!team) return;
+    setForm(f => ({
+      ...f,
+      teamName: team.name,
+      coachName: team.primaryCoachName || f.coachName,
+      email: signedInCoachEmail || f.email,
+    }));
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     try {
-      const selectedGroup = ageGroups.find(g => g.id === form.ageGroupId);
+      const selectedGroup = divisions.find(g => g.id === form.divisionId);
       if (!selectedGroup) throw new Error('Invalid division');
+      if (coachTeamMode === 'existing' && basicCoachTeams.length > 0 && !selectedBasicTeamId) {
+        throw new Error('Select a Coaches Portal team, or choose to create a new team profile.');
+      }
 
       const count = stats[selectedGroup.id] || 0;
       const isWaitlist = selectedGroup.capacity && count >= selectedGroup.capacity;
@@ -132,13 +181,16 @@ export default function RegisterPage() {
       const payload = new FormData();
       payload.append('teamName', form.teamName.trim());
       payload.append('coachName', form.coachName.trim());
-      payload.append('email', form.email.trim().toLowerCase());
-      payload.append('ageGroupId', form.ageGroupId);
-      payload.append('ageGroupName', selectedGroup.name);
-      payload.append('contactEmail', contacts.find(c => c.id === selectedGroup.contactId)?.email ?? '');
+      payload.append('email', (signedInCoachEmail || form.email).trim().toLowerCase());
+      payload.append('divisionId', form.divisionId);
+      payload.append('divisionName', selectedGroup.name);
+      // contactEmail is resolved server-side from organization_members
       payload.append('tournamentId', tournament?.id ?? '');
       payload.append('tournamentName', tournament?.name ?? '');
       payload.append('status', isWaitlist ? 'waitlist' : 'pending');
+      if (coachTeamMode === 'existing' && selectedBasicTeamId) {
+        payload.append('basicCoachTeamId', selectedBasicTeamId);
+      }
 
       for (const field of registrationFields) {
         if (field.fieldType === 'file') {
@@ -160,10 +212,17 @@ export default function RegisterPage() {
         throw new Error(error ?? 'Registration failed');
       }
 
+      const result = await res.json() as { id?: string };
+      if (signedInCoachEmail) {
+        router.push('/coaches/tournaments');
+        return;
+      }
+
       const joinUrl = new URL('/coaches/join', window.location.origin);
       joinUrl.searchParams.set('email', form.email);
       joinUrl.searchParams.set('next', '/coaches/tournaments');
       joinUrl.searchParams.set('registered', '1');
+      if (result.id) joinUrl.searchParams.set('registrationId', result.id);
       router.push(joinUrl.toString());
     } catch (err: unknown) {
       setErrorMsg(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
@@ -171,10 +230,10 @@ export default function RegisterPage() {
     }
   }
 
-  const isRegistrationOpen = tournament?.status === 'active' && ageGroups.length > 0;
+  const isRegistrationOpen = tournament?.status === 'active' && divisions.length > 0;
   const notOpen = !isRegistrationOpen;
 
-  const selectedGroup = ageGroups.find(g => g.id === form.ageGroupId);
+  const selectedGroup = divisions.find(g => g.id === form.divisionId);
   const isClosed = selectedGroup?.isClosed;
   const count = selectedGroup ? stats[selectedGroup.id] || 0 : 0;
   const isWaitlist = selectedGroup?.capacity && count >= selectedGroup.capacity;
@@ -266,6 +325,50 @@ export default function RegisterPage() {
                 </div>
 
                 <form onSubmit={handleSubmit}>
+                  {signedInCoachEmail && basicCoachTeams.length > 0 && (
+                    <div className="form-group" style={{ marginBottom: '1rem' }}>
+                      <label className="form-label">Coaches Portal Team</label>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', marginBottom: '0.75rem' }}>
+                        <button
+                          type="button"
+                          className={`btn ${coachTeamMode === 'existing' ? 'btn-primary' : 'btn-outline'} btn-sm`}
+                          onClick={() => setCoachTeamMode('existing')}
+                          disabled={step === 'submitting'}
+                        >
+                          Existing Team
+                        </button>
+                        <button
+                          type="button"
+                          className={`btn ${coachTeamMode === 'new' ? 'btn-primary' : 'btn-outline'} btn-sm`}
+                          onClick={() => {
+                            setCoachTeamMode('new');
+                            setSelectedBasicTeamId('');
+                          }}
+                          disabled={step === 'submitting'}
+                        >
+                          New Team
+                        </button>
+                      </div>
+                      {coachTeamMode === 'existing' && (
+                        <div className="select-wrapper">
+                          <select
+                            className="form-input"
+                            value={selectedBasicTeamId}
+                            onChange={e => selectExistingCoachTeam(e.target.value)}
+                            required
+                            disabled={step === 'submitting'}
+                          >
+                            <option value="" disabled>Select a team</option>
+                            {basicCoachTeams.map(team => (
+                              <option key={team.id} value={team.id}>{team.name}</option>
+                            ))}
+                          </select>
+                          <ChevronDown size={16} className="select-icon" />
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   <div className="form-row form-row-2" style={{ marginBottom: '1rem' }}>
                     <div className="form-group">
                       <label className="form-label">Team Name *</label>
@@ -275,7 +378,7 @@ export default function RegisterPage() {
                         value={form.teamName}
                         onChange={e => setForm(f => ({ ...f, teamName: e.target.value }))}
                         required
-                        disabled={step === 'submitting'}
+                        disabled={step === 'submitting' || coachTeamMode === 'existing'}
                         id="reg-team-name"
                       />
                     </div>
@@ -287,7 +390,7 @@ export default function RegisterPage() {
                         value={form.coachName}
                         onChange={e => setForm(f => ({ ...f, coachName: e.target.value }))}
                         required
-                        disabled={step === 'submitting'}
+                        disabled={step === 'submitting' || coachTeamMode === 'existing'}
                         id="reg-coach-name"
                       />
                     </div>
@@ -300,19 +403,19 @@ export default function RegisterPage() {
                         className="form-input"
                         type="email"
                         placeholder="coach@example.com"
-                        value={form.email}
+                        value={signedInCoachEmail || form.email}
                         onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
                         required
-                        disabled={step === 'submitting'}
+                        disabled={step === 'submitting' || !!signedInCoachEmail}
                         id="reg-email"
                       />
                     </div>
                     <div className="form-group">
                       <label className="form-label">Division *</label>
                       <div className="select-wrapper">
-                        <select className="form-input" value={form.ageGroupId} onChange={e => setForm(f => ({ ...f, ageGroupId: e.target.value }))} required>
+                        <select className="form-input" value={form.divisionId} onChange={e => setForm(f => ({ ...f, divisionId: e.target.value }))} required>
                           <option value="" disabled>Select a division</option>
-                          {ageGroups.map(g => {
+                          {divisions.map(g => {
                             const filled = stats[g.id] || 0;
                             const remaining = g.capacity ? Math.max(0, g.capacity - filled) : null;
                             const waitlistLabel = g.capacity && filled >= g.capacity ? ' (WAITLIST)' : '';

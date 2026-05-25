@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import { useTournament } from '@/lib/tournament-context';
 import { useOrg } from '@/lib/org-context';
-import { AgeGroup, Communication, Team } from '@/lib/types';
+import { Division, Communication, Team } from '@/lib/types';
 import styles from './communication.module.css';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -75,7 +75,7 @@ export default function AdminCommunicationPage() {
   // ── Data ────────────────────────────────────────────────────────────────────
   const [communications, setCommunications] = useState<Communication[]>([]);
   const [teams,     setTeams]    = useState<Team[]>([]);
-  const [ageGroups, setAgeGroups] = useState<AgeGroup[]>([]);
+  const [divisions, setDivisions] = useState<Division[]>([]);
   const [loading,   setLoading]  = useState(true);
   const [sending,   setSending]  = useState(false);
 
@@ -93,7 +93,7 @@ export default function AdminCommunicationPage() {
   const [channelSite, setChannelSite] = useState(true);
   const [channelEmail,setChannelEmail]= useState(false);
   const [pinned,      setPinned]      = useState(false);
-  const [siteAgeGroupIds, setSiteAgeGroupIds] = useState<Set<string>>(() => new Set());
+  const [siteDivisionIds, setSiteDivisionIds] = useState<Set<string>>(() => new Set());
   const [draftRestored, setDraftRestored] = useState(false);
   const [activeTemplate, setActiveTemplate] = useState<string | null>(null);
 
@@ -102,7 +102,7 @@ export default function AdminCommunicationPage() {
   // ── Load data ────────────────────────────────────────────────────────────────
   const loadData = useCallback(async () => {
     if (!currentTournament?.id) {
-      setCommunications([]); setTeams([]); setAgeGroups([]);
+      setCommunications([]); setTeams([]); setDivisions([]);
       setLoading(false);
       return;
     }
@@ -111,11 +111,11 @@ export default function AdminCommunicationPage() {
     const [commsRes, teamsRes, groupsRes] = await Promise.all([
       fetch(`/api/admin/communications?tournamentId=${tid}${orgParam}`),
       fetch(`/api/admin/teams?tournamentId=${tid}${orgParam}`),
-      fetch(`/api/admin/age-groups?tournamentId=${tid}${orgParam}`),
+      fetch(`/api/admin/divisions?tournamentId=${tid}${orgParam}`),
     ]);
     setCommunications(commsRes.ok ? await commsRes.json() : []);
     setTeams(teamsRes.ok ? await teamsRes.json() : []);
-    setAgeGroups(groupsRes.ok ? await groupsRes.json() : []);
+    setDivisions(groupsRes.ok ? await groupsRes.json() : []);
     setLoading(false);
   }, [currentTournament?.id, orgParam]);
 
@@ -155,7 +155,7 @@ export default function AdminCommunicationPage() {
   }, [title, body, channelSite, channelEmail, pinned, isComposing, editingId, currentTournament?.id]);
 
   // ── Derived data ─────────────────────────────────────────────────────────────
-  const ageGroupNameById = useMemo(() => new Map(ageGroups.map(g => [g.id, g.name])), [ageGroups]);
+  const divisionNameById = useMemo(() => new Map(divisions.map(g => [g.id, g.name])), [divisions]);
   const acceptedTeamCount = useMemo(() => teams.filter(t => t.status === 'accepted').length, [teams]);
 
   // ── Compose helpers ──────────────────────────────────────────────────────────
@@ -170,7 +170,7 @@ export default function AdminCommunicationPage() {
     setTitle(item.title);
     setBody(item.body);
     setPinned(item.pinned);
-    setSiteAgeGroupIds(new Set(item.ageGroupIds ?? []));
+    setSiteDivisionIds(new Set(item.divisionIds ?? []));
     setChannelSite(item.channelSite);
     setChannelEmail(false);
     setEditingId(item.id);
@@ -184,7 +184,7 @@ export default function AdminCommunicationPage() {
     setIsComposing(false);
     setEditingId(null);
     setTitle(''); setBody(''); setPinned(false);
-    setSiteAgeGroupIds(new Set());
+    setSiteDivisionIds(new Set());
     setChannelSite(true); setChannelEmail(false);
     setDraftRestored(false);
     setActiveTemplate(null);
@@ -227,7 +227,7 @@ export default function AdminCommunicationPage() {
           body: JSON.stringify({
             action: 'update',
             id: editingId,
-            data: { title: title.trim(), body: body.trim(), pinned, ageGroupIds: Array.from(siteAgeGroupIds) },
+            data: { title: title.trim(), body: body.trim(), pinned, divisionIds: Array.from(siteDivisionIds) },
           }),
         });
         const json = await res.json();
@@ -246,7 +246,7 @@ export default function AdminCommunicationPage() {
               channelSite,
               channelEmail,
               pinned,
-              ageGroupIds: Array.from(siteAgeGroupIds),
+              divisionIds: Array.from(siteDivisionIds),
               targeting: null, // always send to all accepted teams
             },
           }),
@@ -439,19 +439,19 @@ export default function AdminCommunicationPage() {
                   </label>
 
                   {/* Division visibility — T+ only, shown inline when divisions exist */}
-                  {ageGroups.length > 0 && (
+                  {divisions.length > 0 && (
                     <div className={styles.divisionFilter}>
                       <span className={styles.divisionFilterLabel}>Show for:</span>
                       <label className={styles.smallCheckLabel}>
-                        <input type="checkbox" checked={siteAgeGroupIds.size === 0} onChange={() => setSiteAgeGroupIds(new Set())} />
+                        <input type="checkbox" checked={siteDivisionIds.size === 0} onChange={() => setSiteDivisionIds(new Set())} />
                         All divisions
                       </label>
-                      {ageGroups.map(g => (
+                      {divisions.map(g => (
                         <label key={g.id} className={styles.smallCheckLabel}>
                           <input
                             type="checkbox"
-                            checked={siteAgeGroupIds.has(g.id)}
-                            onChange={() => setSiteAgeGroupIds(prev => toggleSetValue(prev, g.id))}
+                            checked={siteDivisionIds.has(g.id)}
+                            onChange={() => setSiteDivisionIds(prev => toggleSetValue(prev, g.id))}
                           />
                           {g.name}
                         </label>

@@ -830,7 +830,7 @@ export async function startOrgTeamAddonCheckout(input: {
     approvedByOrgEmail: input.actorEmail ?? null,
     previousTeamSubscriptionId: found.workspace.stripe_subscription_id,
   });
-  const returnTo = `/${input.org.slug}/admin/org/team-links`;
+  const returnTo = `/${input.org.slug}/admin/org/coaches-portal-links`;
   const session = await stripe.checkout.sessions.create({
     mode: 'subscription',
     customer: customerId,

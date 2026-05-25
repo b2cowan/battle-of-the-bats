@@ -17,7 +17,7 @@ import {
 import styles from './members.module.css';
 
 const ROLE_INVITE_DESCRIPTIONS: Record<'admin' | 'staff' | 'official', string> = {
-  admin: 'Tournament architect — can create tournaments, define age groups, manage registrations, build schedules, manage contacts and diamonds, post rules, send communications, and manage members. Cannot access org settings or subscription.',
+  admin: 'Tournament architect — can create tournaments, define divisions, manage registrations, build schedules, manage contacts and diamonds, post rules, send communications, and manage members. Cannot access org settings or subscription.',
   staff: 'Tournament operator — updates game times and diamond assignments during events, submits scores, and posts announcements. Cannot create or delete tournaments, manage registrations, or send communications.',
   official: 'Score entry only. Scorekeepers receive a direct link to the scorekeeper app and can submit results from their assigned fields. They do not access the main admin area.',
 };
@@ -43,6 +43,7 @@ interface Member {
   userId: string;
   email: string;
   displayName: string | null;
+  title: string | null;
   role: OrgRole;
   status: 'invited' | 'active' | 'suspended';
   capabilities: Record<string, boolean> | null;
@@ -185,12 +186,14 @@ export default function MembersPage() {
   const [manageTarget, setManageTarget] = useState<Member | null>(null);
   const [manageDraftRole, setManageDraftRole] = useState<OrgRole>('staff');
   const [manageDraftDisplayName, setManageDraftDisplayName] = useState('');
+  const [manageDraftTitle, setManageDraftTitle] = useState('');
   const [manageDraftAssignments, setManageDraftAssignments] = useState<string[]>([]);
   const [manageSaving, setManageSaving] = useState(false);
   const [manageSuspending, setManageSuspending] = useState(false);
   const [reinvitingId, setReinvitingId] = useState<string | null>(null);
   const [confirmRemoveId, setConfirmRemoveId] = useState<string | null>(null);
   const [removingId, setRemovingId] = useState<string | null>(null);
+  const [removeImpact, setRemoveImpact] = useState<{ tournamentCount: number; divisionCount: number } | null>(null);
   const [capDraft, setCapDraft] = useState<Record<string, boolean>>({});
   const [capSaving, setCapSaving] = useState(false);
   const [manageDraftRepGroupIds, setManageDraftRepGroupIds] = useState<string[]>([]);
@@ -283,6 +286,7 @@ export default function MembersPage() {
     setManageTarget(member);
     setManageDraftRole(member.role);
     setManageDraftDisplayName(member.displayName ?? '');
+    setManageDraftTitle(member.title ?? '');
     setManageDraftAssignments([...member.assignedTournamentIds]);
     setManageDraftRepGroupIds([...member.repGroupIds]);
     setCapDraft(member.capabilities ? { ...member.capabilities } : {});
@@ -322,6 +326,7 @@ export default function MembersPage() {
 
     const roleChanged = manageDraftRole !== manageTarget.role;
     const displayNameChanged = manageDraftDisplayName.trim() !== (manageTarget.displayName ?? '');
+    const titleChanged = manageDraftTitle.trim() !== (manageTarget.title ?? '');
     const assignmentsChanged =
       JSON.stringify([...manageDraftAssignments].sort()) !==
       JSON.stringify([...manageTarget.assignedTournamentIds].sort());
@@ -329,10 +334,11 @@ export default function MembersPage() {
       JSON.stringify([...manageDraftRepGroupIds].sort()) !==
       JSON.stringify([...manageTarget.repGroupIds].sort());
 
-    if (roleChanged || displayNameChanged) {
+    if (roleChanged || displayNameChanged || titleChanged) {
       const patchBody: Record<string, unknown> = {};
       if (roleChanged) patchBody.role = manageDraftRole;
       if (displayNameChanged) patchBody.displayName = manageDraftDisplayName.trim() || null;
+      if (titleChanged) patchBody.title = manageDraftTitle.trim() || null;
       const res = await fetch(`/api/admin/members/${manageTarget.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -343,8 +349,9 @@ export default function MembersPage() {
         errors.push(d.error ?? 'Role update failed');
       } else {
         const newDisplayName = displayNameChanged ? (manageDraftDisplayName.trim() || null) : manageTarget.displayName;
+        const newTitle = titleChanged ? (manageDraftTitle.trim() || null) : manageTarget.title;
         setMembers(prev => prev.map(m =>
-          m.id === manageTarget.id ? { ...m, role: manageDraftRole, displayName: newDisplayName } : m
+          m.id === manageTarget.id ? { ...m, role: manageDraftRole, displayName: newDisplayName, title: newTitle } : m
         ));
       }
     }
@@ -386,7 +393,7 @@ export default function MembersPage() {
       showError(errors.join('\n'));
     } else {
       closeManage();
-      if (roleChanged || assignmentsChanged || repGroupsChanged) showSuccess('Member updated.');
+      if (roleChanged || displayNameChanged || titleChanged || assignmentsChanged || repGroupsChanged) showSuccess('Member updated.');
     }
   }
 
@@ -444,6 +451,7 @@ export default function MembersPage() {
       showError(data.error ?? 'Remove failed');
     } else {
       setConfirmRemoveId(null);
+      setRemoveImpact(null);
       showSuccess(`${member.email} has been removed.`);
       loadMembers();
     }
@@ -550,14 +558,29 @@ export default function MembersPage() {
                   </div>
                 </td>
                 <td>
-                  <span className={`badge ${ROLE_BADGE[m.role]}`}>{ROLE_LABELS[m.role]}</span>
-                  <HelpTooltip title={ROLE_LABELS[m.role]} body={ROLE_TOOLTIP[m.role]} size="sm" />
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', flexWrap: 'wrap' }}>
+                    <span className={`badge ${ROLE_BADGE[m.role]}`}>{ROLE_LABELS[m.role]}</span>
+                    <HelpTooltip title={ROLE_LABELS[m.role]} body={ROLE_TOOLTIP[m.role]} size="sm" />
+                  </div>
+                  {m.title && (
+                    <div className={styles.memberTitle}>{m.title}</div>
+                  )}
                 </td>
                 <td>
                   <span className={`badge ${STATUS_BADGE[m.status]}`}>{STATUS_LABEL[m.status]}</span>
                 </td>
                 <td className={styles.dimCell}>{formatDate(m.lastSignIn)}</td>
                 <td>
+                  {isSelf && m.role === 'owner' && (
+                    <div className={styles.actionGroup}>
+                      <button
+                        className={`btn btn-outline btn-sm ${styles.manageBtn}`}
+                        onClick={() => openManage(m)}
+                      >
+                        Manage
+                      </button>
+                    </div>
+                  )}
                   {!isSelf && m.role !== 'owner' && (
                     <div className={styles.actionGroup}>
                       {m.status === 'invited' && (
@@ -576,6 +599,11 @@ export default function MembersPage() {
                             This will <strong>permanently delete</strong> their account.
                             They must be re-invited to regain access.
                           </p>
+                          {removeImpact && (removeImpact.tournamentCount > 0 || removeImpact.divisionCount > 0) && (
+                            <p className={styles.inlineConfirmText} style={{ color: 'var(--logic-amber, #F59E0B)', marginTop: '0.35rem' }}>
+                              ⚠ This member is the contact for{removeImpact.tournamentCount > 0 ? ` ${removeImpact.tournamentCount} tournament${removeImpact.tournamentCount !== 1 ? 's' : ''}` : ''}{removeImpact.tournamentCount > 0 && removeImpact.divisionCount > 0 ? ' and' : ''}{removeImpact.divisionCount > 0 ? ` ${removeImpact.divisionCount} division${removeImpact.divisionCount !== 1 ? 's' : ''}` : ''}. Those will reset to the tournament default on removal.
+                            </p>
+                          )}
                           <span className={styles.inlineConfirmRow} style={{ marginTop: '0.5rem' }}>
                             <button
                               className="btn btn-danger btn-sm"
@@ -588,7 +616,7 @@ export default function MembersPage() {
                             <button
                               className="btn btn-outline btn-sm"
                               style={{ fontSize: '0.72rem', padding: '0.2rem 0.5rem' }}
-                              onClick={() => setConfirmRemoveId(null)}
+                              onClick={() => { setConfirmRemoveId(null); setRemoveImpact(null); }}
                             >
                               Cancel
                             </button>
@@ -598,7 +626,15 @@ export default function MembersPage() {
                         <button
                           className={styles.iconBtnDanger}
                           title="Remove member"
-                          onClick={() => setConfirmRemoveId(m.id)}
+                          onClick={async () => {
+                            setConfirmRemoveId(m.id);
+                            setRemoveImpact(null);
+                            const impactRes = await fetch(`/api/admin/members/${m.id}`);
+                            if (impactRes.ok) {
+                              const impactData = await impactRes.json() as { tournamentCount: number; divisionCount: number };
+                              setRemoveImpact(impactData);
+                            }
+                          }}
                         >
                           <Trash2 size={15} />
                         </button>
@@ -829,18 +865,22 @@ export default function MembersPage() {
 
               {/* Role */}
               <div className={styles.modalSection}>
-                <div className={styles.modalSectionTitle}>Role</div>
-                <select
-                  className={styles.input}
-                  value={manageDraftRole}
-                  onChange={e => setManageDraftRole(e.target.value as OrgRole)}
-                  aria-label="Change role"
-                >
-                  <option value="admin">Admin</option>
-                  <option value="staff">Staff</option>
-                  <option value="official">Scorekeeper</option>
-                </select>
-                <div className={styles.field} style={{ marginTop: '0.75rem', marginBottom: 0 }}>
+                <div className={styles.modalSectionTitle}>
+                  {manageTarget.role === 'owner' ? 'Profile' : 'Role'}
+                </div>
+                {manageTarget.role !== 'owner' && (
+                  <select
+                    className={styles.input}
+                    value={manageDraftRole}
+                    onChange={e => setManageDraftRole(e.target.value as OrgRole)}
+                    aria-label="Change role"
+                  >
+                    <option value="admin">Admin</option>
+                    <option value="staff">Staff</option>
+                    <option value="official">Scorekeeper</option>
+                  </select>
+                )}
+                <div className={styles.field} style={{ marginTop: manageTarget.role === 'owner' ? 0 : '0.75rem', marginBottom: 0 }}>
                   <label className={styles.label}>
                     Display Name
                     <span className={styles.optional}>(optional)</span>
@@ -854,10 +894,24 @@ export default function MembersPage() {
                     placeholder="Shown in place of email in the member list"
                   />
                 </div>
+                <div className={styles.field} style={{ marginTop: '0.6rem', marginBottom: 0 }}>
+                  <label className={styles.label}>
+                    Title
+                    <span className={styles.optional}>(optional)</span>
+                  </label>
+                  <input
+                    type="text"
+                    className={styles.input}
+                    value={manageDraftTitle}
+                    onChange={e => setManageDraftTitle(e.target.value)}
+                    maxLength={80}
+                    placeholder="e.g. Tournament Director, U13 Convenor"
+                  />
+                </div>
               </div>
 
-              {/* Tournament Access */}
-              <div className={styles.modalSection}>
+              {/* Tournament Access — hidden for owner (always has full access) */}
+              {manageTarget.role !== 'owner' && <div className={styles.modalSection}>
                 <div className={styles.modalSectionTitle}>Tournament Access</div>
                 <p style={{ fontSize: '0.78rem', color: 'var(--white-30)', marginBottom: '0.5rem' }}>
                   Leave all unchecked to grant access to all tournaments.
@@ -883,10 +937,10 @@ export default function MembersPage() {
                     ? 'No restrictions — sees all tournaments.'
                     : `Restricted to ${manageDraftAssignments.length} tournament${manageDraftAssignments.length === 1 ? '' : 's'}.`}
                 </p>
-              </div>
+              </div>}
 
-              {/* Rep Team Group Access — shown when the org has groups and the member has rep teams access */}
-              {repGroups.length > 0 && hasCapability(manageDraftRole, Object.keys(capDraft).length > 0 ? capDraft : null, 'module_rep_teams') && (
+              {/* Rep Team Group Access — shown when the org has groups, member has rep teams access, and is not owner */}
+              {manageTarget.role !== 'owner' && repGroups.length > 0 && hasCapability(manageDraftRole, Object.keys(capDraft).length > 0 ? capDraft : null, 'module_rep_teams') && (
                 <div className={styles.modalSection}>
                   <div className={styles.modalSectionTitle}>Rep Team Group Access</div>
                   <p style={{ fontSize: '0.78rem', color: 'var(--white-30)', marginBottom: '0.5rem' }}>
@@ -914,8 +968,8 @@ export default function MembersPage() {
                 </div>
               )}
 
-              {/* Capability Overrides — owner-only */}
-              {userRole === 'owner' && (
+              {/* Capability Overrides — visible when the current user is owner and the target is not owner */}
+              {userRole === 'owner' && manageTarget.role !== 'owner' && (
                 <div className={styles.modalSection}>
                   <div className={styles.modalSectionTitle}>Capability Overrides</div>
                   <p style={{ fontSize: '0.75rem', color: 'var(--white-30)', marginBottom: '0.5rem', lineHeight: 1.45 }}>
@@ -1025,8 +1079,8 @@ export default function MembersPage() {
                 </div>
               )}
 
-              {/* Suspend / Reinstate — owner only, active members only */}
-              {userRole === 'owner' && manageTarget.status !== 'invited' && (
+              {/* Suspend / Reinstate — owner only, active non-owner members only */}
+              {userRole === 'owner' && manageTarget.role !== 'owner' && manageTarget.status !== 'invited' && (
                 <div className={styles.modalSection}>
                   <div className={styles.modalSectionTitle}>Actions</div>
                   {manageTarget.status === 'suspended' ? (

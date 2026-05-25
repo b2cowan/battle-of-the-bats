@@ -48,7 +48,7 @@ const orgHelp: HelpPageContent = {
       keywords: ['coaches portal links', 'coaches portal', 'invite coach portal', 'approve request', 'parent organization', 'basic visibility', 'org billing', 'coach portal billing', 'ownership transfer'],
       searchText: 'invite review approve decline coaches portal link request parent organization club association basic visibility sharing billing transfer org billing ownership roster documents accounting',
       links: [
-        { label: 'Coaches Portal Links', href: '../org/team-links' },
+        { label: 'Coaches Portal Links', href: '../org/coaches-portal-links' },
       ],
       content: (
         <>

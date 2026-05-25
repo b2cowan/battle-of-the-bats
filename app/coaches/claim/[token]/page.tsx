@@ -73,7 +73,7 @@ export default async function CoachesPortalClaimPage({ params }: PageProps) {
     contactEmail: claim.contactEmail,
     teamName: claim.tournamentTeam.name,
     coachName: claim.tournamentTeam.coachName,
-    ageGroup: claim.ageGroup.name,
+    division: claim.division.name,
     tournamentName: claim.tournament.name,
     seasonYear: claim.seasonYear,
   };

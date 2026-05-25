@@ -28,7 +28,7 @@ export type TeamClaimPrefill = {
   contactEmail: string;
   teamName: string;
   coachName: string | null;
-  ageGroup: string | null;
+  division: string | null;
   tournamentName: string;
   seasonYear: number;
 };
@@ -105,7 +105,7 @@ export default function TeamSignupClient({ teamIsGated, claim = null }: TeamSign
   const currentYear = new Date().getFullYear();
   const [teamName, setTeamName] = useState(claim?.teamName ?? '');
   const [sport, setSport] = useState('Softball');
-  const [ageGroup, setAgeGroup] = useState(claim?.ageGroup ?? '');
+  const [division, setDivision] = useState(claim?.division ?? '');
   const [seasonYear, setSeasonYear] = useState(String(claim?.seasonYear ?? currentYear));
   const [billingCycle, setBillingCycle] = useState<BillingCycle>(normalizeBilling(searchParams.get('billing')));
   const [authMode, setAuthMode] = useState<AuthMode>('signup');
@@ -119,7 +119,7 @@ export default function TeamSignupClient({ teamIsGated, claim = null }: TeamSign
 
   const busy = !!busyLabel;
   const cleanTeamName = teamName.trim();
-  const cleanAgeGroup = ageGroup.trim();
+  const cleanDivision = division.trim();
   const parsedSeasonYear = Number.parseInt(seasonYear, 10);
   const validSeasonYear = Number.isInteger(parsedSeasonYear) && parsedSeasonYear >= 2000 && parsedSeasonYear <= 2100;
   const previewSlug = slugPreview(cleanTeamName) || 'your-team';
@@ -143,14 +143,14 @@ export default function TeamSignupClient({ teamIsGated, claim = null }: TeamSign
           const draft = JSON.parse(stored) as Partial<{
             teamName: string;
             sport: string;
-            ageGroup: string;
+            division: string;
             seasonYear: string;
             billingCycle: BillingCycle;
             email: string;
           }>;
           if (draft.teamName) setTeamName(draft.teamName);
           if (draft.sport) setSport(draft.sport);
-          if (draft.ageGroup) setAgeGroup(draft.ageGroup);
+          if (draft.division) setDivision(draft.division);
           if (draft.seasonYear) setSeasonYear(draft.seasonYear);
           if (draft.billingCycle) setBillingCycle(draft.billingCycle);
           if (draft.email) setEmail(draft.email);
@@ -178,7 +178,7 @@ export default function TeamSignupClient({ teamIsGated, claim = null }: TeamSign
     window.sessionStorage.setItem(draftKey, JSON.stringify({
       teamName,
       sport,
-      ageGroup,
+      division,
       seasonYear,
       billingCycle,
       email,
@@ -253,7 +253,7 @@ export default function TeamSignupClient({ teamIsGated, claim = null }: TeamSign
         teamName: cleanTeamName,
         workspaceName: `${cleanTeamName} Coaches Portal`,
         sport,
-        ageGroup: cleanAgeGroup || null,
+        division: cleanDivision || null,
         seasonName,
         seasonYear: parsedSeasonYear,
         billingCycle,
@@ -427,8 +427,8 @@ export default function TeamSignupClient({ teamIsGated, claim = null }: TeamSign
               <label className={styles.field}>
                 <span>Age group</span>
                 <input
-                  value={ageGroup}
-                  onChange={event => setAgeGroup(event.target.value)}
+                  value={division}
+                  onChange={event => setDivision(event.target.value)}
                   placeholder="U15, 16U, Varsity"
                   autoComplete="off"
                   disabled={busy}

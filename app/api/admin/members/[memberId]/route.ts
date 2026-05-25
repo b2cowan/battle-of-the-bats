@@ -17,6 +17,44 @@ async function ownerCount(orgId: string): Promise<number> {
   return count ?? 0;
 }
 
+/**
+ * GET /api/admin/members/[memberId]
+ * Returns the contact-assignment impact for a member — how many tournaments and
+ * divisions list them as the primary contact. Used to warn before removal.
+ */
+export async function GET(_req: Request, { params }: Params) {
+  const ctx = await getAuthContextWithRole();
+  if (!ctx) return unauthorized();
+  if (!hasCapability(ctx.role, ctx.capabilities, 'manage_members')) return forbidden();
+
+  const { org } = ctx;
+  const { memberId } = await params;
+
+  // Confirm member belongs to this org
+  const { data: target } = await supabaseAdmin
+    .from('organization_members')
+    .select('id')
+    .eq('id', memberId)
+    .eq('organization_id', org.id)
+    .single();
+
+  if (!target) return NextResponse.json({ error: 'Member not found' }, { status: 404 });
+
+  const [{ count: tournamentCount }, { count: divisionCount }] = await Promise.all([
+    supabaseAdmin
+      .from('tournaments')
+      .select('id', { count: 'exact', head: true })
+      .eq('org_id', org.id)
+      .eq('default_contact_member_id', memberId),
+    supabaseAdmin
+      .from('divisions')
+      .select('id', { count: 'exact', head: true })
+      .eq('contact_member_id', memberId),
+  ]);
+
+  return NextResponse.json({ tournamentCount: tournamentCount ?? 0, divisionCount: divisionCount ?? 0 });
+}
+
 export async function DELETE(_req: Request, { params }: Params) {
   const ctx = await getAuthContextWithRole();
   if (!ctx) return unauthorized();
@@ -97,6 +135,7 @@ export async function PATCH(req: Request, { params }: Params) {
   if (hasRepGroupIdsUpdate && ctx.role !== 'owner' && ctx.role !== 'admin') return forbidden();
 
   const hasDisplayNameUpdate = 'displayName' in body;
+  const hasTitleUpdate = 'title' in body;
 
   const { data: target } = await supabaseAdmin
     .from('organization_members')
@@ -161,6 +200,11 @@ export async function PATCH(req: Request, { params }: Params) {
   if (hasDisplayNameUpdate) {
     const raw = typeof body.displayName === 'string' ? body.displayName.trim().slice(0, 60) : '';
     update.display_name = raw || null;
+  }
+
+  if (hasTitleUpdate) {
+    const raw = typeof body.title === 'string' ? body.title.trim().slice(0, 80) : '';
+    update.title = raw || null;
   }
 
   // Rep group scope update — replace all scope rows for this member

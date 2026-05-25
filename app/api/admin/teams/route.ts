@@ -39,7 +39,7 @@ export async function GET(req: Request) {
   const teams = (data ?? []).map((t: any) => ({
     id: t.id,
     tournamentId: t.tournament_id,
-    ageGroupId: t.age_group_id,
+    divisionId: t.division_id,
     name: t.name,
     coach: t.coach,
     email: t.email,
@@ -118,11 +118,11 @@ export async function POST(req: Request) {
       let slotId = targetSlotId ?? null;
 
       if (!slotId) {
-        // Find lowest empty slot for this age group, ordered by pool then slot_number
+        // Find lowest empty slot for this division, ordered by pool then slot_number
         const { data: emptySlots } = await supabaseAdmin
           .from('pool_slots')
           .select('id, slot_number, pools(display_order)')
-          .eq('age_group_id', team.age_group_id)
+          .eq('division_id', team.division_id)
           .is('team_id', null);
 
         const sorted = (emptySlots ?? []).sort((a: any, b: any) => {
@@ -144,7 +144,7 @@ export async function POST(req: Request) {
       const { data: remaining } = await supabaseAdmin
         .from('teams')
         .select('id, waitlist_position')
-        .eq('age_group_id', team.age_group_id)
+        .eq('division_id', team.division_id)
         .not('waitlist_position', 'is', null)
         .order('waitlist_position', { ascending: true });
 
@@ -163,7 +163,7 @@ export async function POST(req: Request) {
           feature: 'waitlist_automation',
           action: 'waitlist_promotion',
           tournamentId: team.tournament_id,
-          ageGroupId: team.age_group_id,
+          divisionId: team.division_id,
           registrationId: teamId,
         },
       });
@@ -210,14 +210,14 @@ export async function POST(req: Request) {
         name?: string;
         coach?: string;
         email?: string;
-        ageGroupId?: string;
+        divisionId?: string;
         tournamentId?: string;
         status?: string;
         paymentStatus?: string;
         notifyTeam?: boolean;
       };
 
-      if (!team?.name?.trim() || !team.ageGroupId || !team.tournamentId) {
+      if (!team?.name?.trim() || !team.divisionId || !team.tournamentId) {
         return new Response(JSON.stringify({ error: 'Team name, division, and tournament are required.' }), {
           status: 400,
           headers: { 'Content-Type': 'application/json' },
@@ -228,9 +228,9 @@ export async function POST(req: Request) {
       if (denied) return denied;
 
       const { data: group } = await supabaseAdmin
-        .from('age_groups')
+        .from('divisions')
         .select('id, name, tournament_id')
-        .eq('id', team.ageGroupId)
+        .eq('id', team.divisionId)
         .single();
 
       if (!group || group.tournament_id !== team.tournamentId) {
@@ -249,7 +249,7 @@ export async function POST(req: Request) {
 
       const duplicateTeam = await findDuplicateTournamentTeam({
         tournamentId: team.tournamentId,
-        ageGroupId: team.ageGroupId,
+        divisionId: team.divisionId,
         teamName: team.name,
       });
       if (duplicateTeam) {
@@ -270,7 +270,7 @@ export async function POST(req: Request) {
       const { error: insertErr } = await supabaseAdmin.from('teams').insert({
         id,
         tournament_id: team.tournamentId,
-        age_group_id: team.ageGroupId,
+        division_id: team.divisionId,
         name: team.name.trim(),
         coach: team.coach?.trim() ?? '',
         email: team.email?.trim() ?? '',
@@ -289,7 +289,7 @@ export async function POST(req: Request) {
           manualTeamRegistrationHtml({
             teamName: team.name.trim(),
             coachName: team.coach?.trim() ?? '',
-            ageGroupName: group.name ?? 'Division',
+            divisionName: group.name ?? 'Division',
             tournamentName: tournament?.name ?? 'Tournament',
             paymentStatus,
             contactEmail: tournament?.contact_email ?? ctx.org.contactEmail ?? undefined,
@@ -385,7 +385,7 @@ export async function POST(req: Request) {
       const p = {
         teamName:       current.name,
         coachName:      current.coach,
-        ageGroupName:   'Division',
+        divisionName:   'Division',
         tournamentName: 'Tournament',
         teamId:         current.id,
       };

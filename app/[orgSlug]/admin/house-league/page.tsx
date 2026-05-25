@@ -60,7 +60,7 @@ interface SeasonForm {
   name: string;
   slug: string;
   sport: string;
-  ageGroup: string;
+  division: string;
   description: string;
   seasonStartDate: string;
   seasonEndDate: string;
@@ -77,7 +77,7 @@ const BLANK_FORM: SeasonForm = {
   name: '',
   slug: '',
   sport: 'softball',
-  ageGroup: '',
+  division: '',
   description: '',
   seasonStartDate: '',
   seasonEndDate: '',
@@ -161,7 +161,7 @@ export default function HouseLeaguePage() {
           name:                     form.name.trim(),
           slug:                     form.slug.trim(),
           sport:                    form.sport || 'softball',
-          ageGroup:                 form.ageGroup.trim() || null,
+          division:                 form.division.trim() || null,
           description:              form.description.trim() || null,
           seasonStartDate:          form.seasonStartDate || null,
           seasonEndDate:            form.seasonEndDate   || null,
@@ -307,13 +307,13 @@ export default function HouseLeaguePage() {
               </div>
 
               <div className={styles.field}>
-                <label className={styles.label} htmlFor="hl-age-group">Age Group</label>
+                <label className={styles.label} htmlFor="hl-division">Division</label>
                 <input
-                  id="hl-age-group"
+                  id="hl-division"
                   className={styles.input}
                   type="text"
-                  value={form.ageGroup}
-                  onChange={e => setForm(f => ({ ...f, ageGroup: e.target.value }))}
+                  value={form.division}
+                  onChange={e => setForm(f => ({ ...f, division: e.target.value }))}
                   placeholder="e.g. U11, U13, Adult"
                   maxLength={30}
                 />
@@ -539,8 +539,8 @@ function SeasonCard({
       </div>
 
       <div className={styles.seasonCardMeta}>
-        {season.ageGroup && (
-          <span className={styles.ageGroupBadge}>{season.ageGroup}</span>
+        {season.division && (
+          <span className={styles.divisionBadge}>{season.division}</span>
         )}
         <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
           <span className={`${styles.statusBadge} ${STATUS_CSS[season.status] ?? ''}`}>

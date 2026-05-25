@@ -29,6 +29,15 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(url, { status: 301 });
   }
 
+  // Redirect legacy org-admin link URLs before auth so login next paths
+  // also use the Coaches Portal vocabulary.
+  if (segments.length >= 4 && segments[1] === 'admin' && segments[2] === 'org' && segments[3] === 'team-links') {
+    const url = request.nextUrl.clone();
+    const remainingPath = segments.slice(4).join('/');
+    url.pathname = `/${segments[0]}/admin/org/coaches-portal-links${remainingPath ? '/' + remainingPath : ''}`;
+    return NextResponse.redirect(url, { status: 307 });
+  }
+
   // Redirect legacy Basic coach portal routes before auth so old links do not
   // strand unauthenticated coaches on /my URLs.
   if (segments[0] === 'my') {
@@ -127,6 +136,13 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
+  if (segments[0] === 'home' && !user) {
+    const url = request.nextUrl.clone();
+    url.pathname = '/auth/login';
+    url.searchParams.set('next', pathname);
+    return NextResponse.redirect(url);
+  }
+
   return supabaseResponse;
 }
 
@@ -141,6 +157,7 @@ export const config = {
     '/platform-admin',
     '/platform-admin/:path*',
     '/platform-admin/login',
+    '/home',
     '/api/admin/:path*',
     '/api/scorekeeper/:path*',
     '/api/registrations',

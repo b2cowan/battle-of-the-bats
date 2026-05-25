@@ -3,21 +3,17 @@ import Link from 'next/link';
 import { createClient } from '@/lib/supabase-server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import {
+  getBasicCoachTournamentTeamsForUser,
+  type BasicCoachTeamRegistration,
+  type BasicCoachTournamentTeam,
+} from '@/lib/basic-coach-teams';
+import {
   COACHES_START_PATH,
   COACHES_TOURNAMENTS_PATH,
 } from '@/lib/coaches-portal-routes';
 import styles from '../../my/registrations/registrations.module.css';
 
 export const metadata = { title: 'Coaches Portal - Tournament Records' };
-
-type TeamRow = {
-  id: string;
-  name: string;
-  coach: string | null;
-  status: string;
-  registered_at: string;
-  tournament_id: string | null;
-};
 
 type TournamentRow = {
   id: string;
@@ -37,9 +33,14 @@ type OrgRow = {
 };
 
 type Registration = {
-  team: TeamRow;
+  team: BasicCoachTeamRegistration;
   tournament: TournamentRow | null;
   org: OrgRow | null;
+};
+
+type CoachTeamGroup = BasicCoachTournamentTeam & {
+  active: Registration[];
+  past: Registration[];
 };
 
 const STATUS_LABEL: Record<string, string> = {
@@ -73,13 +74,11 @@ export default async function CoachTournamentRecordsPage() {
 
   const email = user.email.toLowerCase();
 
-  const { data: teams, error: teamsError } = await supabaseAdmin
-    .from('teams')
-    .select('id, name, coach, status, registered_at, tournament_id')
-    .ilike('email', email)
-    .order('registered_at', { ascending: false });
-
-  if (teamsError) {
+  let coachTeams: BasicCoachTournamentTeam[] = [];
+  try {
+    coachTeams = await getBasicCoachTournamentTeamsForUser({ userId: user.id, email });
+  } catch (error) {
+    console.error('[coaches tournaments] load error:', error);
     return (
       <div className={styles.page}>
         <div className={styles.header}>
@@ -92,14 +91,14 @@ export default async function CoachTournamentRecordsPage() {
     );
   }
 
-  const teamList = (teams ?? []) as TeamRow[];
+  const registrationList = coachTeams.flatMap(team => team.registrations);
 
-  if (teamList.length === 0) {
+  if (registrationList.length === 0) {
     return (
       <div className={styles.page}>
         <div className={styles.header}>
           <h1 className={styles.title}>Coaches Portal</h1>
-          <p className={styles.sub}>Tournament records linked to <strong>{email}</strong></p>
+          <p className={styles.sub}>Basic team profiles and tournament history for <strong>{email}</strong></p>
         </div>
         <div className="card" style={{ padding: '2.5rem', textAlign: 'center' }}>
           <p style={{ color: 'var(--text-2)', marginBottom: '0.5rem' }}>No tournament records found for your account.</p>
@@ -114,7 +113,7 @@ export default async function CoachTournamentRecordsPage() {
     );
   }
 
-  const tournamentIds = [...new Set(teamList.map(t => t.tournament_id).filter(Boolean))] as string[];
+  const tournamentIds = [...new Set(registrationList.map(t => t.tournamentId).filter(Boolean))] as string[];
   const { data: tournamentsData } = tournamentIds.length > 0
     ? await supabaseAdmin
         .from('tournaments')
@@ -135,43 +134,71 @@ export default async function CoachTournamentRecordsPage() {
     ((orgsData ?? []) as OrgRow[]).map(o => [o.id, o])
   );
 
-  const registrations: Registration[] = teamList.map(team => {
-    const tournament = team.tournament_id ? tournamentMap.get(team.tournament_id) ?? null : null;
+  const registrationMap = new Map<string, Registration>();
+  for (const team of registrationList) {
+    const tournament = team.tournamentId ? tournamentMap.get(team.tournamentId) ?? null : null;
     const org = tournament?.org_id ? orgMap.get(tournament.org_id) ?? null : null;
-    return { team, tournament, org };
-  });
+    registrationMap.set(team.id, { team, tournament, org });
+  }
 
-  const active = registrations.filter(r => isActive(r.tournament));
-  const past   = registrations.filter(r => !isActive(r.tournament));
+  const teamGroups: CoachTeamGroup[] = coachTeams
+    .map(team => {
+      const registrations = team.registrations
+        .map(registration => registrationMap.get(registration.id))
+        .filter(Boolean) as Registration[];
+
+      return {
+        ...team,
+        active: registrations.filter(r => isActive(r.tournament)),
+        past: registrations.filter(r => !isActive(r.tournament)),
+      };
+    })
+    .filter(team => team.active.length > 0 || team.past.length > 0);
 
   return (
     <div className={styles.page}>
       <div className={styles.header}>
         <h1 className={styles.title}>Coaches Portal</h1>
-        <p className={styles.sub}>Tournament records linked to <strong>{email}</strong></p>
+        <p className={styles.sub}>Teams and tournament history linked to <strong>{email}</strong></p>
       </div>
 
-      {active.length > 0 && (
-        <section className={styles.section}>
-          <h2 className={styles.sectionTitle}>Active &amp; Upcoming</h2>
-          <div className={styles.list}>
-            {active.map(r => (
-              <RegistrationCard key={r.team.id} reg={r} />
-            ))}
-          </div>
-        </section>
-      )}
+      <div className={styles.teamList}>
+        {teamGroups.map(team => (
+          <section key={team.id} className={styles.teamGroup}>
+            <div className={styles.teamGroupHeader}>
+              <div>
+                <h2 className={styles.teamGroupTitle}>{team.name}</h2>
+                <p className={styles.teamGroupMeta}>
+                  {team.registrations.length === 1 ? '1 tournament record' : `${team.registrations.length} tournament records`}
+                  {team.primaryCoachName ? ` · ${team.primaryCoachName}` : ''}
+                </p>
+              </div>
+            </div>
 
-      {past.length > 0 && (
-        <section className={styles.section}>
-          <h2 className={styles.sectionTitle}>Past Tournaments</h2>
-          <div className={styles.list}>
-            {past.map(r => (
-              <RegistrationCard key={r.team.id} reg={r} />
-            ))}
-          </div>
-        </section>
-      )}
+            {team.active.length > 0 && (
+              <div className={styles.teamSection}>
+                <h3 className={styles.sectionTitle}>Active &amp; Upcoming</h3>
+                <div className={styles.list}>
+                  {team.active.map(r => (
+                    <RegistrationCard key={r.team.id} reg={r} />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {team.past.length > 0 && (
+              <div className={styles.teamSection}>
+                <h3 className={styles.sectionTitle}>Past Tournaments</h3>
+                <div className={styles.list}>
+                  {team.past.map(r => (
+                    <RegistrationCard key={r.team.id} reg={r} />
+                  ))}
+                </div>
+              </div>
+            )}
+          </section>
+        ))}
+      </div>
 
       <div className={styles.ctaSection}>
         <CtaCards />
@@ -195,10 +222,10 @@ function RegistrationCard({ reg }: { reg: Registration }) {
   return (
     <Link href={detailHref} className={styles.card}>
       <div className={styles.cardMain}>
-        <div className={styles.cardTitle}>{team.name}</div>
+        <div className={styles.cardTitle}>{tournament?.name ?? team.name}</div>
         {tournament && (
           <div className={styles.cardMeta}>
-            <span>{tournament.name}</span>
+            <span>{team.name}</span>
             {org && <span>{org.name}</span>}
             {dateRange && <span>{dateRange}</span>}
           </div>

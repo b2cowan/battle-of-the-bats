@@ -2,10 +2,10 @@
 import { useState, useEffect } from 'react';
 import { Calendar, Clock, Trophy, List, LayoutTemplate } from 'lucide-react';
 import { useParams } from 'next/navigation';
-import { Game, Team, AgeGroup, Diamond, Tournament } from '@/lib/types';
+import { Game, Team, Division, Diamond, Tournament } from '@/lib/types';
 import LocationLink from '@/components/LocationLink';
 import { formatTime, formatPoolName } from '@/lib/utils';
-import { getAgPref, setAgPref } from '@/lib/age-group-cookie';
+import { getDivisionPref, setDivisionPref } from '@/lib/division-cookie';
 import { isPublicPageEnabled } from '@/lib/public-pages';
 import YearSelector from '@/components/YearSelector';
 import styles from '../../schedule/schedule.module.css';
@@ -67,7 +67,7 @@ export default function SchedulePage() {
 
   const [games, setGames]           = useState<Game[]>([]);
   const [teams, setTeams]           = useState<Team[]>([]);
-  const [ageGroups, setAgeGroups]   = useState<AgeGroup[]>([]);
+  const [divisions, setDivisions]   = useState<Division[]>([]);
   const [diamonds, setDiamonds]     = useState<Diamond[]>([]);
   const [allTournaments, setAllTournaments] = useState<Tournament[]>([]);
   const [selectedTournament, setSelectedTournament] = useState<Tournament | null>(null);
@@ -83,7 +83,7 @@ export default function SchedulePage() {
       setLoading(true);
       const data = await fetchPublicTournamentData(orgSlug, tournamentSlug, 'schedule');
       const current = data?.tournament ?? null;
-      const groups = data?.ageGroups ?? [];
+      const groups = data?.divisions ?? [];
 
       setRequireFinalization(data?.organization.requireScoreFinalization ?? current?.requireScoreFinalization ?? true);
       setAllTournaments(data?.tournaments ?? []);
@@ -91,9 +91,9 @@ export default function SchedulePage() {
       setGames(data?.games ?? []);
       setTeams(data?.teams ?? []);
       setDiamonds(data?.diamonds ?? []);
-      setAgeGroups(groups);
+      setDivisions(groups);
       if (groups.length > 0) {
-        const pref = getAgPref(orgSlug);
+        const pref = getDivisionPref(orgSlug);
         const preferred = pref ? groups.find(g => g.name === pref) : null;
         setActiveGroup((preferred ?? groups[0]).id);
       }
@@ -107,7 +107,7 @@ export default function SchedulePage() {
   const getTeamDisplay = (game: Game, isHome: boolean) => {
     const id = isHome ? game.homeTeamId : game.awayTeamId;
     const ph = isHome ? game.homePlaceholder : game.awayPlaceholder;
-    const vis = ageGroups.find(g => g.id === game.ageGroupId)?.scheduleVisibility ?? 'unpublished';
+    const vis = divisions.find(g => g.id === game.divisionId)?.scheduleVisibility ?? 'unpublished';
     if (vis !== 'published_generic' && id && id !== NIL_UUID) {
       return teams.find(t => t.id === id)?.name ?? ph ?? 'TBD';
     }
@@ -126,14 +126,14 @@ export default function SchedulePage() {
   // ── derived data ───────────────────────────────────────────────────────────
 
   const bracketGames = games.filter(g =>
-    g.ageGroupId === activeGroup &&
+    g.divisionId === activeGroup &&
     g.status !== 'cancelled' &&
     !!g.isPlayoff
   );
 
   const filtered = games
     .filter(g =>
-      g.ageGroupId === activeGroup &&
+      g.divisionId === activeGroup &&
       (viewMode === 'playoff' ? g.isPlayoff : !g.isPlayoff)
     )
     .sort((a, b) => {
@@ -196,10 +196,10 @@ export default function SchedulePage() {
 
   const today = new Date().toISOString().split('T')[0];
 
-  const activeG = ageGroups.find(g => g.id === activeGroup);
+  const activeG = divisions.find(g => g.id === activeGroup);
   const pools   = activeG?.pools || [];
   const activeVisibility = activeG?.scheduleVisibility ?? 'unpublished';
-  const allUnpublished = ageGroups.length > 0 && ageGroups.every(g => (g.scheduleVisibility ?? 'unpublished') === 'unpublished');
+  const allUnpublished = divisions.length > 0 && divisions.every(g => (g.scheduleVisibility ?? 'unpublished') === 'unpublished');
 
   function inferPool(game: Game, allGames: Game[]): string | null {
     for (const pool of pools) {
@@ -236,14 +236,14 @@ export default function SchedulePage() {
     })
   );
 
-  const ageGroupTeamIds = new Set(
+  const divisionTeamIds = new Set(
     games
-      .filter(g => g.ageGroupId === activeGroup)
+      .filter(g => g.divisionId === activeGroup)
       .flatMap(g => [g.homeTeamId, g.awayTeamId])
       .filter((id): id is string => !!id && id !== NIL_UUID)
   );
-  const ageGroupTeams = teams
-    .filter(t => ageGroupTeamIds.has(t.id))
+  const divisionTeams = teams
+    .filter(t => divisionTeamIds.has(t.id))
     .sort((a, b) => a.name.localeCompare(b.name));
 
   const PoolHeader = ({ name }: { name: string }) => (
@@ -361,13 +361,13 @@ export default function SchedulePage() {
           ) : (
           <>
 
-          {/* ── age group tab bar ── */}
+          {/* ── division tab bar ── */}
           <div className="tabs flex-between" style={{ padding: '0.375rem 0.75rem', marginBottom: '0.75rem' }}>
             <div style={{ display: 'flex', gap: '0.5rem' }}>
-              {ageGroups.map(g => (
+              {divisions.map(g => (
                 <button key={g.id}
                   className={`tab-btn ${activeGroup === g.id ? 'active' : ''}`}
-                  onClick={() => { setActiveGroup(g.id); setSelectedTeamId(''); setAgPref(orgSlug, g.name); }}
+                  onClick={() => { setActiveGroup(g.id); setSelectedTeamId(''); setDivisionPref(orgSlug, g.name); }}
                   style={{ marginBottom: 0 }}
                   id={`schedule-tab-${g.name}`}>{g.name}</button>
               ))}
@@ -391,7 +391,7 @@ export default function SchedulePage() {
                 style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', minWidth: '160px' }}
               >
                 <option value="">All Teams</option>
-                {ageGroupTeams.map(t => (
+                {divisionTeams.map(t => (
                   <option key={t.id} value={t.id}>{t.name}</option>
                 ))}
               </select>

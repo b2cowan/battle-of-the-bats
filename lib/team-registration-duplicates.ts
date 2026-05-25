@@ -15,12 +15,12 @@ export function duplicateTournamentTeamMessage(teamName: string) {
 
 export async function findDuplicateTournamentTeam({
   tournamentId,
-  ageGroupId,
+  divisionId,
   teamName,
   excludeTeamId,
 }: {
   tournamentId: string;
-  ageGroupId: string;
+  divisionId: string;
   teamName: string;
   excludeTeamId?: string;
 }) {
@@ -31,7 +31,7 @@ export async function findDuplicateTournamentTeam({
     .from('teams')
     .select('id, name')
     .eq('tournament_id', tournamentId)
-    .eq('age_group_id', ageGroupId);
+    .eq('division_id', divisionId);
 
   if (error) throw error;
 

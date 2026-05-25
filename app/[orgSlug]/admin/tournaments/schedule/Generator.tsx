@@ -1,7 +1,7 @@
 'use client';
 import { useState, useMemo } from 'react';
 import { Sparkles, Check, X, RefreshCw, AlertCircle, Plus, Trash2, Info } from 'lucide-react';
-import { Team, AgeGroup, Diamond, Game, Tournament } from '@/lib/types';
+import { Team, Division, Diamond, Game, Tournament } from '@/lib/types';
 import { formatTime } from '@/lib/utils';
 import styles from './schedule-admin.module.css';
 
@@ -22,15 +22,15 @@ interface SlotGame extends Omit<Game, 'id'> {
 interface GeneratorProps {
   tournament: Tournament;
   orgSlug?: string;
-  ageGroups: AgeGroup[];
+  divisions: Division[];
   teams: Team[];
   diamonds: Diamond[];
   onComplete: () => void;
   onCancel: () => void;
 }
 
-export default function ScheduleGenerator({ tournament, orgSlug, ageGroups, teams, diamonds, onComplete, onCancel }: GeneratorProps) {
-  const [selectedGroupId, setSelectedGroupId] = useState(ageGroups[0]?.id || '');
+export default function ScheduleGenerator({ tournament, orgSlug, divisions, teams, diamonds, onComplete, onCancel }: GeneratorProps) {
+  const [selectedGroupId, setSelectedGroupId] = useState(divisions[0]?.id || '');
   const [gameLength, setGameLength] = useState(90);
   const [breakLength, setBreakLength] = useState(15);
   const [gamesPerTeam, setGamesPerTeam] = useState(3);
@@ -65,7 +65,7 @@ export default function ScheduleGenerator({ tournament, orgSlug, ageGroups, team
     return dates;
   }, [tournament.startDate, tournament.endDate]);
 
-  const currentGroup = useMemo(() => ageGroups.find(g => g.id === selectedGroupId), [ageGroups, selectedGroupId]);
+  const currentGroup = useMemo(() => divisions.find(g => g.id === selectedGroupId), [divisions, selectedGroupId]);
   const poolList = useMemo(() => (currentGroup?.pools?.length || 0) >= 1 ? currentGroup!.pools! : [], [currentGroup]);
 
   function defaultSlotCount(poolId: string): number {
@@ -125,7 +125,7 @@ export default function ScheduleGenerator({ tournament, orgSlug, ageGroups, team
   }
 
   function generateTeams(diamondList: Diamond[]) {
-    const groupTeams = teams.filter(t => t.ageGroupId === selectedGroupId);
+    const groupTeams = teams.filter(t => t.divisionId === selectedGroupId);
     if (groupTeams.length < 2) { setError('Need at least 2 teams to generate a schedule'); return; }
 
     const pools: Record<string, Team[]> = {};
@@ -175,7 +175,7 @@ export default function ScheduleGenerator({ tournament, orgSlug, ageGroups, team
         if (!busyTeams[timeKey].has(match.home.id) && !busyTeams[timeKey].has(match.away.id)) {
           newGames.push({
             tournamentId: tournament.id,
-            ageGroupId: selectedGroupId,
+            divisionId: selectedGroupId,
             homeTeamId: match.home.id,
             awayTeamId: match.away.id,
             date: slot.date,
@@ -253,7 +253,7 @@ export default function ScheduleGenerator({ tournament, orgSlug, ageGroups, team
           const awayName = `${homePool?.name ?? 'Pool'} Team ${match.awaySlotNum}`;
           newGames.push({
             tournamentId: tournament.id,
-            ageGroupId: selectedGroupId,
+            divisionId: selectedGroupId,
             homeTeamId: '',
             awayTeamId: '',
             date: slot.date,
@@ -301,12 +301,12 @@ export default function ScheduleGenerator({ tournament, orgSlug, ageGroups, team
       await fetch(`/api/admin/games${orgQuery}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'delete-division-games', ageGroupId: selectedGroupId }),
+        body: JSON.stringify({ action: 'delete-division-games', divisionId: selectedGroupId }),
       });
       const res = await fetch(`/api/admin/games${orgQuery}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'bulk-save', games: generatedGames, tournamentId: tournament.id, ageGroupId: selectedGroupId }),
+        body: JSON.stringify({ action: 'bulk-save', games: generatedGames, tournamentId: tournament.id, divisionId: selectedGroupId }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to save games');
@@ -325,7 +325,7 @@ export default function ScheduleGenerator({ tournament, orgSlug, ageGroups, team
       await fetch(`/api/admin/games${orgQuery}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'delete-division-games', ageGroupId: selectedGroupId }),
+        body: JSON.stringify({ action: 'delete-division-games', divisionId: selectedGroupId }),
       });
 
       // 2. Ensure slot records exist (idempotent — slots pre-exist from pool config), get back their IDs
@@ -335,7 +335,7 @@ export default function ScheduleGenerator({ tournament, orgSlug, ageGroups, team
         body: JSON.stringify({
           action: 'ensure',
           tournamentId: tournament.id,
-          ageGroupId: selectedGroupId,
+          divisionId: selectedGroupId,
           pools: poolList.map(pool => ({
             poolId: pool.id,
             slotCount: defaultSlotCount(pool.id),
@@ -356,7 +356,7 @@ export default function ScheduleGenerator({ tournament, orgSlug, ageGroups, team
         const awaySlot = slotMap[`${g.awayPoolId}-${g.awaySlotNumber}`];
         return {
           tournamentId: tournament.id,
-          ageGroupId: selectedGroupId,
+          divisionId: selectedGroupId,
           homeTeamId: null,
           awayTeamId: null,
           date: g.date,
@@ -375,7 +375,7 @@ export default function ScheduleGenerator({ tournament, orgSlug, ageGroups, team
       const saveRes = await fetch(`/api/admin/games${orgQuery}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'bulk-save', games: gameRows, tournamentId: tournament.id, ageGroupId: selectedGroupId }),
+        body: JSON.stringify({ action: 'bulk-save', games: gameRows, tournamentId: tournament.id, divisionId: selectedGroupId }),
       });
       if (!saveRes.ok) throw new Error((await saveRes.json()).error || 'Failed to save games');
       onComplete();
@@ -397,7 +397,7 @@ export default function ScheduleGenerator({ tournament, orgSlug, ageGroups, team
     setSelectedDiamonds(next);
   }
 
-  const divisionName = ageGroups.find(g => g.id === selectedGroupId)?.name ?? '';
+  const divisionName = divisions.find(g => g.id === selectedGroupId)?.name ?? '';
 
   return (
     <div className={styles.generatorOverlay}>
@@ -440,7 +440,7 @@ export default function ScheduleGenerator({ tournament, orgSlug, ageGroups, team
               <div className="form-group">
                 <label className="form-label">Division</label>
                 <select className="form-select" value={selectedGroupId} onChange={e => setSelectedGroupId(e.target.value)}>
-                  {ageGroups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
+                  {divisions.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
                 </select>
               </div>
               <div className="form-group">

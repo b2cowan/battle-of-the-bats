@@ -1,10 +1,10 @@
 ﻿'use client';
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Users, Check, X, CreditCard, RefreshCw, Mail, ChevronDown, ChevronUp, AlertCircle, Download, Plus, Trash2, MapPin, Search, LayoutDashboard } from 'lucide-react';
-import { saveTeam, updateTeam, deleteTeam, getTeams, getAgeGroups, savePool } from '@/lib/db';
+import { saveTeam, updateTeam, deleteTeam, getTeams, getDivisions, savePool } from '@/lib/db';
 import { downloadCSV, formatPoolName } from '@/lib/utils';
 import { useTournament } from '@/lib/tournament-context';
-import { AgeGroup, Team } from '@/lib/types';
+import { Division, Team } from '@/lib/types';
 import s from '../admin-common.module.css';
 import styles from './teams-admin.module.css';
 import FeedbackModal from '@/components/FeedbackModal';
@@ -14,8 +14,8 @@ interface TeamRecord {
   name: string;
   coach: string;
   email: string;
-  age_group_id: string;
-  age_group_name: string;
+  division_id: string;
+  division_name: string;
   tournament_name: string;
   status: 'pending' | 'accepted' | 'rejected' | 'waitlist';
   paymentStatus: 'pending' | 'paid';
@@ -32,14 +32,14 @@ export default function UnifiedTeamsPage() {
   const [loading, setLoading] = useState(true);
   const [selectedStatuses, setSelectedStatuses] = useState<Status[]>(['pending', 'accepted', 'waitlist']);
   const [search, setSearch]   = useState('');
-  const [ageGroups, setAgeGroups] = useState<AgeGroup[]>([]);
-  const [selectedAgeGroupId, setSelectedAgeGroupId] = useState<string>('');
+  const [divisions, setDivisions] = useState<Division[]>([]);
+  const [selectedDivisionId, setSelectedDivisionId] = useState<string>('');
   const [working, setWorking] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [showSummaryModal, setShowSummaryModal] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
-  const [addForm, setAddForm] = useState({ name: '', coach: '', email: '', ageGroupId: '' });
+  const [addForm, setAddForm] = useState({ name: '', coach: '', email: '', divisionId: '' });
   const [stableSortedIds, setStableSortedIds] = useState<string[]>([]);
   const [hasLoadedInitial, setHasLoadedInitial] = useState(false);
   const [viewMode, setViewMode] = useState<'flat' | 'pools'>('pools');
@@ -59,7 +59,7 @@ export default function UnifiedTeamsPage() {
       // 1. Fetch all data in parallel
       const [rRes, groups] = await Promise.all([
         fetch('/api/registrations'),
-        getAgeGroups(currentTournament.id)
+        getDivisions(currentTournament.id)
       ]);
       
       const rData = (await rRes.json()).map((r: any) => ({
@@ -69,13 +69,13 @@ export default function UnifiedTeamsPage() {
         adminNotes: r.admin_notes
       }));
 
-      setAgeGroups(groups);
+      setDivisions(groups);
       if (groups.length) {
-        if (!selectedAgeGroupId || selectedAgeGroupId === 'all') {
-          setSelectedAgeGroupId(groups[0].id);
+        if (!selectedDivisionId || selectedDivisionId === 'all') {
+          setSelectedDivisionId(groups[0].id);
         }
-        if (!addForm.ageGroupId) {
-          setAddForm(f => ({ ...f, ageGroupId: groups[0].id }));
+        if (!addForm.divisionId) {
+          setAddForm(f => ({ ...f, divisionId: groups[0].id }));
         }
       }
 
@@ -92,8 +92,8 @@ export default function UnifiedTeamsPage() {
             if (!a.poolId && b.poolId) return -1;
             if (a.poolId && !b.poolId) return 1;
             if (a.poolId && b.poolId) {
-              const ap = groups.find(g => g.id === a.age_group_id)?.pools?.find(p => p.id === a.poolId);
-              const bp = groups.find(g => g.id === b.age_group_id)?.pools?.find(p => p.id === b.poolId);
+              const ap = groups.find(g => g.id === a.division_id)?.pools?.find(p => p.id === a.poolId);
+              const bp = groups.find(g => g.id === b.division_id)?.pools?.find(p => p.id === b.poolId);
               return (ap?.name || '').localeCompare(bp?.name || '');
             }
           }
@@ -107,7 +107,7 @@ export default function UnifiedTeamsPage() {
       setLoading(false);
       setHasLoadedInitial(true);
     }
-  }, [currentTournament?.id, stableSortedIds.length, addForm.ageGroupId]);
+  }, [currentTournament?.id, stableSortedIds.length, addForm.divisionId]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -172,8 +172,8 @@ export default function UnifiedTeamsPage() {
   }
 
   async function randomizePools() {
-    if (!selectedAgeGroupId || selectedAgeGroupId === 'all') return;
-    const group = ageGroups.find(g => g.id === selectedAgeGroupId);
+    if (!selectedDivisionId || selectedDivisionId === 'all') return;
+    const group = divisions.find(g => g.id === selectedDivisionId);
     if (!group || !group.pools || group.pools.length <= 1) {
       setFeedback({
         isOpen: true,
@@ -192,7 +192,7 @@ export default function UnifiedTeamsPage() {
       onConfirm: async () => {
         setWorking('randomizing');
         try {
-          const acceptedTeams = regs.filter(r => r.age_group_id === selectedAgeGroupId && r.status === 'accepted');
+          const acceptedTeams = regs.filter(r => r.division_id === selectedDivisionId && r.status === 'accepted');
           if (acceptedTeams.length === 0) {
             setFeedback({
               isOpen: true,
@@ -251,7 +251,7 @@ export default function UnifiedTeamsPage() {
         name: addForm.name,
         coach: addForm.coach,
         email: addForm.email,
-        ageGroupId: addForm.ageGroupId,
+        divisionId: addForm.divisionId,
         tournamentId: currentTournament.id,
         status: 'accepted',
         paymentStatus: 'paid',
@@ -260,7 +260,7 @@ export default function UnifiedTeamsPage() {
       });
 
       setShowAddModal(false);
-      setAddForm({ name: '', coach: '', email: '', ageGroupId: ageGroups[0]?.id || '' });
+      setAddForm({ name: '', coach: '', email: '', divisionId: divisions[0]?.id || '' });
       load();
     } catch (e: any) {
       setErrorMsg(e.message);
@@ -271,7 +271,7 @@ export default function UnifiedTeamsPage() {
 
   const filtered = regs.filter(r => {
     const matchesStatus = selectedStatuses.length === 0 || selectedStatuses.includes(r.status);
-    const matchesDivision = r.age_group_id === selectedAgeGroupId;
+    const matchesDivision = r.division_id === selectedDivisionId;
     const matchesSearch = search === '' || 
       r.name.toLowerCase().includes(search.toLowerCase()) || 
       r.coach.toLowerCase().includes(search.toLowerCase());
@@ -286,14 +286,14 @@ export default function UnifiedTeamsPage() {
   const finalDisplay = [...sorted, ...newTeams];
 
   const grouped = finalDisplay.reduce((acc, r) => {
-    if (!acc[r.age_group_name]) acc[r.age_group_name] = [];
-    acc[r.age_group_name].push(r);
+    if (!acc[r.division_name]) acc[r.division_name] = [];
+    acc[r.division_name].push(r);
     return acc;
   }, {} as Record<string, TeamRecord[]>);
 
   function exportCSV() {
     const headers = ['Team', 'Coach', 'Email', 'Division', 'Pool', 'Status', 'Payment'];
-    const rows = filtered.map(r => [r.name, r.coach, r.email, r.age_group_name, r.poolId ? ageGroups.find(g => g.id === r.age_group_id)?.pools?.find(p => p.id === r.poolId)?.name || '-' : '-', r.status, r.paymentStatus]);
+    const rows = filtered.map(r => [r.name, r.coach, r.email, r.division_name, r.poolId ? divisions.find(g => g.id === r.division_id)?.pools?.find(p => p.id === r.poolId)?.name || '-' : '-', r.status, r.paymentStatus]);
     downloadCSV(`teams-regs-${new Date().toISOString().split('T')[0]}.csv`, headers, rows);
   }
 
@@ -310,7 +310,7 @@ export default function UnifiedTeamsPage() {
           {!hidePoolBadge && (
             <div style={{ flex: 1 }}>
               {(() => {
-                const g = ageGroups.find(x => x.id === r.age_group_id);
+                const g = divisions.find(x => x.id === r.division_id);
                 if (!g || (g.poolCount || 0) <= 1) return <span style={{ color: 'var(--white-20)', fontSize: '0.75rem' }}>No Pools</span>;
                 
                 const poolRecord = g.pools?.find(p => p.id === r.poolId);
@@ -338,7 +338,7 @@ export default function UnifiedTeamsPage() {
               </div>
               <div className={s.expandedActions}>
                 {(() => {
-                  const g = ageGroups.find(x => x.id === r.age_group_id);
+                  const g = divisions.find(x => x.id === r.division_id);
                   if (!g || (g.poolCount || 0) <= 1) return null;
                   return (
                     <div className={styles.transferGroup}><label>Pool Assignment</label>
@@ -413,15 +413,15 @@ export default function UnifiedTeamsPage() {
           <button className="btn btn-ghost btn-sm" onClick={() => setShowSummaryModal(true)} style={{ color: 'var(--primary-light)', gap: '0.5rem' }}>
             <LayoutDashboard size={14} /> Summary Dashboard
           </button>
-          <button className="btn btn-ghost btn-sm" onClick={randomizePools} disabled={loading || !selectedAgeGroupId} style={{ color: 'var(--primary-light)', gap: '0.5rem' }}>
+          <button className="btn btn-ghost btn-sm" onClick={randomizePools} disabled={loading || !selectedDivisionId} style={{ color: 'var(--primary-light)', gap: '0.5rem' }}>
             <RefreshCw size={14} className={working === 'randomizing' ? 'spin' : ''} /> Randomize Pools
           </button>
         </div>
         <div className={s.controlsRight}>
           <div className={s.controlGroup}>
             <label className={s.controlLabel}>Division:</label>
-            <select className={`${s.controlSelect} form-input`} value={selectedAgeGroupId} onChange={e => setSelectedAgeGroupId(e.target.value)}>
-              {ageGroups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
+            <select className={`${s.controlSelect} form-input`} value={selectedDivisionId} onChange={e => setSelectedDivisionId(e.target.value)}>
+              {divisions.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
             </select>
           </div>
           <div className={s.viewToggle}>
@@ -443,12 +443,12 @@ export default function UnifiedTeamsPage() {
             </div>
             <div style={{ padding: '2rem' }}>
               <div className={styles.summaryGridModal}>
-                {ageGroups.map(g => {
-                  const groupRegs = regs.filter(r => r.age_group_id === g.id);
+                {divisions.map(g => {
+                  const groupRegs = regs.filter(r => r.division_id === g.id);
                   const accepted = groupRegs.filter(r => r.status === 'accepted').length;
                   const capacity = g.capacity || 0;
                   return (
-                    <div key={g.id} className={styles.summaryCardModal} onClick={() => { setSelectedAgeGroupId(g.id); setShowSummaryModal(false); }}>
+                    <div key={g.id} className={styles.summaryCardModal} onClick={() => { setSelectedDivisionId(g.id); setShowSummaryModal(false); }}>
                       <div className={styles.summaryHeader}>
                         <strong>{g.name}</strong>
                         {capacity > 0 && <span className={accepted >= capacity ? styles.fullBadge : styles.capacityBadge}>{accepted}/{capacity}</span>}
@@ -488,9 +488,9 @@ export default function UnifiedTeamsPage() {
         <div className="empty-state"><Users size={40} style={{ opacity: 0.2 }} /><p>No teams matching filters.</p></div>
       ) : (
         <div className={s.compactList}>
-          {Object.entries(grouped).map(([ageGroup, groupRegs]) => (
-            <div key={ageGroup} className={s.groupSection}>
-              <div className={s.groupHeader}><strong>{ageGroup}</strong> <span className="badge badge-primary">{groupRegs.length} Teams</span></div>
+          {Object.entries(grouped).map(([division, groupRegs]) => (
+            <div key={division} className={s.groupSection}>
+              <div className={s.groupHeader}><strong>{division}</strong> <span className="badge badge-primary">{groupRegs.length} Teams</span></div>
               
               {viewMode === 'flat' ? (
                 <>
@@ -499,7 +499,7 @@ export default function UnifiedTeamsPage() {
               ) : (
                 <div className={s.compactListContent}>
                   {(() => {
-                    const g = ageGroups.find(x => x.id === groupRegs[0]?.age_group_id);
+                    const g = divisions.find(x => x.id === groupRegs[0]?.division_id);
                     const pools = g?.pools || [];
                     
                     // Group teams by poolId
@@ -544,7 +544,7 @@ export default function UnifiedTeamsPage() {
                 <div className="form-group"><label className="form-label">Email</label><input className="form-input" value={addForm.email} onChange={e => setAddForm(f => ({ ...f, email: e.target.value }))} /></div>
               </div>
               <div className="form-row form-row-2" style={{ marginTop: '1rem' }}>
-                <div className="form-group"><label className="form-label">Division *</label><select className="form-select" value={addForm.ageGroupId} onChange={e => setAddForm(f => ({ ...f, ageGroupId: e.target.value }))} required>{ageGroups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}</select></div>
+                <div className="form-group"><label className="form-label">Division *</label><select className="form-select" value={addForm.divisionId} onChange={e => setAddForm(f => ({ ...f, divisionId: e.target.value }))} required>{divisions.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}</select></div>
               </div>
               <div className="modal-footer"><button type="button" className="btn btn-ghost" onClick={() => setShowAddModal(false)}>Cancel</button><button type="submit" className="btn btn-primary" disabled={!!working}>Save Team</button></div>
             </form>

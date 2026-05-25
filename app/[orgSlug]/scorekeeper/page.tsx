@@ -15,7 +15,7 @@ import {
   X,
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase-browser';
-import type { AgeGroup, Diamond, Game, GameStatus } from '@/lib/types';
+import type { Division, Diamond, Game, GameStatus } from '@/lib/types';
 import { formatTime } from '@/lib/utils';
 import styles from './scorekeeper.module.css';
 
@@ -49,7 +49,7 @@ interface ScorekeeperResponse {
   scorePolicyByTournamentId: Record<string, boolean>;
   cards: GameCard[];
   diamonds: Diamond[];
-  ageGroups: AgeGroup[];
+  divisions: Division[];
   emptyMessage: string;
   emptyState: ScorekeeperEmptyState | null;
 }
@@ -119,7 +119,7 @@ export default function ScorekeeperPage() {
   const [date, setDate] = useState(todayString);
   const [cards, setCards] = useState<GameCard[]>([]);
   const [diamonds, setDiamonds] = useState<Diamond[]>([]);
-  const [ageGroups, setAgeGroups] = useState<AgeGroup[]>([]);
+  const [divisions, setDivisions] = useState<Division[]>([]);
   const [tournamentIds, setTournamentIds] = useState<string[]>([]);
   const [scorePolicies, setScorePolicies] = useState<Record<string, boolean>>({});
   const [emptyState, setEmptyState] = useState<ScorekeeperEmptyState | null>(null);
@@ -152,7 +152,7 @@ export default function ScorekeeperPage() {
       if (!response.ok) {
         setCards([]);
         setDiamonds([]);
-        setAgeGroups([]);
+        setDivisions([]);
         setTournamentIds([]);
         setScorePolicies({});
 
@@ -180,14 +180,14 @@ export default function ScorekeeperPage() {
 
       setCards(Array.isArray(data.cards) ? data.cards : []);
       setDiamonds(Array.isArray(data.diamonds) ? data.diamonds : []);
-      setAgeGroups(Array.isArray(data.ageGroups) ? data.ageGroups : []);
+      setDivisions(Array.isArray(data.divisions) ? data.divisions : []);
       setTournamentIds(Array.isArray(data.tournamentIds) ? data.tournamentIds : []);
       setScorePolicies(data.scorePolicyByTournamentId ?? {});
       setEmptyState(isEmptyState(data.emptyState) ? data.emptyState : null);
     } catch (error) {
       setCards([]);
       setDiamonds([]);
-      setAgeGroups([]);
+      setDivisions([]);
       setTournamentIds([]);
       setScorePolicies({});
       setNotice({
@@ -260,7 +260,7 @@ export default function ScorekeeperPage() {
 
     return cards.filter(card => {
       if (fieldFilter && card.game.diamondId !== fieldFilter) return false;
-      if (divisionFilter && card.game.ageGroupId !== divisionFilter) return false;
+      if (divisionFilter && card.game.divisionId !== divisionFilter) return false;
 
       if (statusFilter === 'open' && card.game.status !== 'scheduled') return false;
       if (statusFilter === 'pending' && card.game.status !== 'submitted') return false;
@@ -446,8 +446,8 @@ export default function ScorekeeperPage() {
 
         <select className={styles.select} value={divisionFilter} onChange={event => setDivisionFilter(event.target.value)}>
           <option value="">All divisions</option>
-          {ageGroups.map(ageGroup => (
-            <option key={ageGroup.id} value={ageGroup.id}>{ageGroup.name}</option>
+          {divisions.map(division => (
+            <option key={division.id} value={division.id}>{division.name}</option>
           ))}
         </select>
       </section>

@@ -50,7 +50,7 @@ type GameDayStats = {
 };
 
 type DashboardStats = {
-  ageGroups: number;
+  divisions: number;
   teams: number;
   scheduled: number;
   completed: number;
@@ -93,7 +93,7 @@ const EMPTY_GAME_DAY: GameDayStats = {
 };
 
 const EMPTY_STATS: DashboardStats = {
-  ageGroups: 0,
+  divisions: 0,
   teams: 0,
   scheduled: 0,
   completed: 0,
@@ -178,7 +178,7 @@ export default function AdminDashboard() {
         const data = await res.json().catch(() => null) as Partial<DashboardStats> & { error?: string } | null;
         if (!res.ok) throw new Error(data?.error ?? 'Unable to load dashboard stats.');
         setStats({
-          ageGroups:       data?.ageGroups       ?? 0,
+          divisions:       data?.divisions       ?? 0,
           teams:           data?.teams           ?? 0,
           scheduled:       data?.scheduled       ?? 0,
           completed:       data?.completed       ?? 0,
@@ -287,7 +287,7 @@ export default function AdminDashboard() {
 
   // Draft stats: only show what's relevant during setup
   const draftCards = [
-    { label: 'Divisions',  value: visibleStats.ageGroups,     icon: Tag,       key: 'age-groups'    },
+    { label: 'Divisions',  value: visibleStats.divisions,     icon: Tag,       key: 'divisions'    },
     { label: 'News Posts', value: visibleStats.announcements, icon: Mail,      key: 'communication' },
   ];
 
@@ -300,9 +300,9 @@ export default function AdminDashboard() {
 
   const checklistItems = [
     { key: 'dates',         done: checklist.hasDates,         label: 'Tournament dates',                        desc: 'Set a start and end date so teams know when the event runs.',              href: `${base}/settings/event`, action: 'Edit dates'    },
-    { key: 'divisions',     done: checklist.hasDivisions,     label: 'At least one division',                   desc: 'Create the divisions teams can register for.',                             href: `${base}/age-groups`,  action: 'Add divisions'    },
+    { key: 'divisions',     done: checklist.hasDivisions,     label: 'At least one division',                   desc: 'Create the divisions teams can register for.',                             href: `/divisions`,  action: 'Add divisions'    },
     { key: 'contact',       done: checklist.hasPublicContact, label: 'Public contact email',                    desc: 'Choose the email coaches can use for tournament questions.',               href: `${base}/contacts`,    action: 'Manage contacts'  },
-    { key: 'open-division', done: checklist.hasOpenDivision,  label: 'Registration open for at least one division', desc: 'Open a division when you are ready for teams to register.',          href: `${base}/age-groups`,  action: 'Open divisions'   },
+    { key: 'open-division', done: checklist.hasOpenDivision,  label: 'Registration open for at least one division', desc: 'Open a division when you are ready for teams to register.',          href: `/divisions`,  action: 'Open divisions'   },
   ];
 
   const optionalDoneCount = [checklist.hasVenues, checklist.hasFees, checklist.hasRules, checklist.hasBranding].filter(Boolean).length;

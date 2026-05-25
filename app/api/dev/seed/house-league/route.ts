@@ -15,19 +15,35 @@ type SeedGame = {
   status: string;
 };
 
-export async function POST() {
+export async function POST(request: Request) {
   const auth = await requireDevToolPlatformAdmin();
   if (auth.response) return auth.response;
 
-  const { data: orgRows } = await supabaseAdmin
-    .from('organizations')
-    .select('id, slug')
-    .in('slug', DEV_ORG_SLUGS);
+  const body = await request.json().catch(() => ({})) as { orgId?: string };
 
-  const org = DEV_ORG_SLUGS.map(s => orgRows?.find(o => o.slug === s)).find(Boolean);
+  let org: { id: string; slug: string } | undefined;
+
+  if (body.orgId) {
+    const { data } = await supabaseAdmin
+      .from('organizations')
+      .select('id, slug')
+      .eq('id', body.orgId)
+      .maybeSingle();
+    org = data ?? undefined;
+  }
+
+  if (!org) {
+    const { data: orgRows } = await supabaseAdmin
+      .from('organizations')
+      .select('id, slug')
+      .in('slug', DEV_ORG_SLUGS);
+    org = DEV_ORG_SLUGS.map(s => orgRows?.find(o => o.slug === s)).find(Boolean);
+  }
+
   if (!org) return NextResponse.json({ error: 'Seed an org first.' }, { status: 400 });
 
   const log: string[] = [];
+  log.push(`Seeding into org: ${org.slug}`);
 
   // Season
   let { data: season } = await supabaseAdmin
@@ -45,7 +61,7 @@ export async function POST() {
         name: 'Dev House League 2026',
         slug: SEASON_SLUG,
         sport: 'softball',
-        age_group: 'U10',
+        division: 'U10',
         status: 'active',
         registration_fee: 150,
         auto_generate_fees: false,

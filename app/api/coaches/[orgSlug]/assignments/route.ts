@@ -7,7 +7,7 @@ export async function GET(
   { params }: { params: Promise<{ orgSlug: string }> },
 ) {
   const { orgSlug } = await params;
-  const ctx = await getAuthContext();
+  const ctx = await getAuthContext({ orgSlug });
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   if (ctx.org.slug !== orgSlug) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 

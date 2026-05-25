@@ -27,7 +27,7 @@ export type TeamWorkspaceClaimPublic = {
     email: string | null;
     status: string | null;
   };
-  ageGroup: {
+  division: {
     id: string | null;
     name: string | null;
   };
@@ -58,14 +58,14 @@ type TournamentRow = {
 type TournamentTeamRow = {
   id: string;
   tournament_id: string | null;
-  age_group_id: string | null;
+  division_id: string | null;
   name: string;
   coach: string | null;
   email: string | null;
   status: string | null;
 };
 
-type AgeGroupRow = {
+type DivisionRow = {
   id: string;
   name: string;
 };
@@ -189,7 +189,7 @@ async function buildPublicClaim(row: ClaimRow, token: string): Promise<TeamWorks
     row.tournament_team_id
       ? supabaseAdmin
           .from('teams')
-          .select('id, tournament_id, age_group_id, name, coach, email, status')
+          .select('id, tournament_id, division_id, name, coach, email, status')
           .eq('id', row.tournament_team_id)
           .maybeSingle<TournamentTeamRow>()
       : Promise.resolve({ data: null, error: null }),
@@ -199,15 +199,15 @@ async function buildPublicClaim(row: ClaimRow, token: string): Promise<TeamWorks
   if (teamError) throw teamError;
   if (!tournament || !tournamentTeam) return null;
 
-  const { data: ageGroup, error: ageGroupError } = tournamentTeam.age_group_id
+  const { data: division, error: divisionError } = tournamentTeam.division_id
     ? await supabaseAdmin
-        .from('age_groups')
+        .from('divisions')
         .select('id, name')
-        .eq('id', tournamentTeam.age_group_id)
-        .maybeSingle<AgeGroupRow>()
+        .eq('id', tournamentTeam.division_id)
+        .maybeSingle<DivisionRow>()
     : { data: null, error: null };
 
-  if (ageGroupError) throw ageGroupError;
+  if (divisionError) throw divisionError;
 
   return {
     id: row.id,
@@ -231,9 +231,9 @@ async function buildPublicClaim(row: ClaimRow, token: string): Promise<TeamWorks
       email: tournamentTeam.email,
       status: tournamentTeam.status,
     },
-    ageGroup: {
-      id: ageGroup?.id ?? null,
-      name: ageGroup?.name ?? null,
+    division: {
+      id: division?.id ?? null,
+      name: division?.name ?? null,
     },
     seasonYear: seasonYearFromTournament(tournament),
   };

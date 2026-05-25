@@ -25,7 +25,7 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
-import { Tournament, RuleSection, Resource, AgeGroup } from '@/lib/types';
+import { Tournament, RuleSection, Resource, Division } from '@/lib/types';
 import {
   getRules, saveRuleSection, updateRuleSection, deleteRuleSection,
   saveRuleItem, updateRuleItem, deleteRuleItem,
@@ -99,11 +99,144 @@ function SortableResource({
   );
 }
 
+// ── Sortable rule card ────────────────────────────────────────────────────────
+function SortableRuleCard({
+  section, isDirtySection, activeDirtySectionId, divisions,
+  editingSectionId, editingSectionTitle,
+  setSwitchGuardTargetId, setEditingSectionId, setEditingSectionTitle,
+  commitSectionTitle, handleUpdateSectionIcon, handleUpdateSectionDivisions,
+  handleUpdateItem, handleAddItem, handleDeleteItem,
+  handleDeleteSection, handleDiscardSection, handleSaveSection, saving, disabled,
+}: any) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: section.id, disabled });
+  const style = { transform: CSS.Transform.toString(transform), transition, zIndex: isDragging ? 100 : 1, opacity: isDragging ? 0.5 : 1 };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`rule-card ${isDirtySection ? 'rule-card-dirty' : ''}${isDragging ? ' dragging' : ''}`}
+      onClickCapture={(e) => {
+        if (activeDirtySectionId && activeDirtySectionId !== section.id) {
+          const target = e.target as HTMLElement;
+          if (!target.closest('.section-save-bar')) {
+            e.stopPropagation();
+            setSwitchGuardTargetId(section.id);
+          }
+        }
+      }}
+    >
+      <div className="rule-card-header">
+        <div className="rule-card-drag-handle" {...attributes} {...listeners}>
+          <GripVertical size={16} />
+        </div>
+        <div className="rule-card-title-group">
+          <div className="icon-preview-box">
+            {(() => { const I = ICONS.find(i => i.name === (section.icon || 'Shield'))?.Icon || Shield; return <I size={20} />; })()}
+          </div>
+          <select
+            className="icon-select"
+            value={section.icon || 'Shield'}
+            onChange={e => handleUpdateSectionIcon(section.id, e.target.value)}
+          >
+            {ICONS.map(i => <option key={i.name} value={i.name}>{i.name}</option>)}
+          </select>
+
+          {editingSectionId === section.id ? (
+            <div className="flex gap-2 flex-1 items-center">
+              <input
+                autoFocus
+                className="inline-title-input editing"
+                value={editingSectionTitle}
+                onChange={e => setEditingSectionTitle(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') commitSectionTitle(); if (e.key === 'Escape') setEditingSectionId(null); }}
+              />
+              <button className="icon-btn-success" onClick={commitSectionTitle}><Check size={16} /></button>
+              <button className="icon-btn-ghost" onClick={() => setEditingSectionId(null)}><X size={16} /></button>
+            </div>
+          ) : (
+            <div className="flex gap-2 flex-1 items-center group">
+              <h3 className="card-title-text">{section.title}</h3>
+              {isDirtySection && <span className="dirty-dot" title="Unsaved changes" />}
+              <button className="edit-pencil-btn" onClick={() => { setEditingSectionId(section.id); setEditingSectionTitle(section.title); }}>
+                <Pencil size={14} />
+              </button>
+            </div>
+          )}
+        </div>
+        <button className="delete-btn-mini" onClick={() => handleDeleteSection(section.id)}>
+          <Trash2 size={16} />
+        </button>
+      </div>
+
+      {divisions.length > 0 && (
+        <div className="applies-to-row">
+          <span className="applies-to-label">Applies to:</span>
+          {divisions.map((g: any) => {
+            const allIds = divisions.map((ag: any) => ag.id);
+            const current = section.divisionIds ?? allIds;
+            return (
+              <label key={g.id} className="applies-to-check">
+                <input
+                  type="checkbox"
+                  checked={current.includes(g.id)}
+                  onChange={e => {
+                    const next = e.target.checked ? [...current, g.id] : current.filter((id: string) => id !== g.id);
+                    const result = next.length === 0 || next.length === allIds.length ? null : next;
+                    handleUpdateSectionDivisions(section.id, result);
+                  }}
+                />
+                {g.name}
+              </label>
+            );
+          })}
+        </div>
+      )}
+
+      <div className="rule-items-list">
+        {section.items.map((item: any) => (
+          <div key={item.id} className="rule-item-row group">
+            <GripVertical size={14} className="drag-handle" />
+            <textarea
+              rows={1}
+              className="item-textarea"
+              value={item.content || ''}
+              onChange={e => handleUpdateItem(item.id, e.target.value)}
+            />
+            <button className="item-delete-btn" onClick={() => handleDeleteItem(item.id)}><X size={14} /></button>
+          </div>
+        ))}
+        <button className="add-item-btn" onClick={() => handleAddItem(section.id)}><Plus size={14} /> Add Point</button>
+      </div>
+
+      {activeDirtySectionId === section.id && (
+        <div className="section-save-bar">
+          <button
+            className="btn btn-ghost btn-data"
+            onClick={() => handleDiscardSection(section.id)}
+            disabled={saving}
+          >
+            <X size={14} /> Discard
+          </button>
+          <button
+            className="btn btn-lime btn-data"
+            onClick={() => handleSaveSection(section.id)}
+            disabled={saving}
+          >
+            <Check size={14} />
+            {saving ? 'Saving…' : 'Save Changes'}
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── Main component ────────────────────────────────────────────────────────────
 export default function RulesAdmin({ tournament, orgSlug }: Props) {
   const [rules, setRules]         = useState<RuleSection[]>([]);
   const [resources, setResources] = useState<Resource[]>([]);
-  const [ageGroups, setAgeGroups] = useState<AgeGroup[]>([]);
+  const [divisions, setDivisions] = useState<Division[]>([]);
   const [loading, setLoading]     = useState(true);
   const [saving, setSaving]       = useState(false);
   const [error, setError]         = useState<string | null>(null);
@@ -193,12 +326,12 @@ export default function RulesAdmin({ tournament, orgSlug }: Props) {
       const [r, res, agRes] = await Promise.all([
         getRules(tournament.id),
         getResources(tournament.id),
-        fetch(`/api/admin/age-groups?tournamentId=${encodeURIComponent(tournament.id)}${orgSlug ? `&orgSlug=${encodeURIComponent(orgSlug)}` : ''}`),
+        fetch(`/api/admin/divisions?tournamentId=${encodeURIComponent(tournament.id)}${orgSlug ? `&orgSlug=${encodeURIComponent(orgSlug)}` : ''}`),
       ]);
       const ag = agRes.ok ? await agRes.json() : [];
       setRules(r);
       setResources(res);
-      setAgeGroups(ag);
+      setDivisions(ag);
       // Clear dirty state — fresh data from DB is now authoritative
       setDirtySections(new Set());
       setDirtyItems(new Set());
@@ -219,7 +352,7 @@ export default function RulesAdmin({ tournament, orgSlug }: Props) {
         ...Array.from(dirtySections).map(id => {
           const s = rules.find(r => r.id === id);
           if (!s) return Promise.resolve();
-          return updateRuleSection(id, { title: s.title, icon: s.icon, ageGroupIds: s.ageGroupIds });
+          return updateRuleSection(id, { title: s.title, icon: s.icon, divisionIds: s.divisionIds });
         }),
         ...Array.from(dirtyItems).map(id => {
           const item = rules.flatMap(s => s.items).find(i => i.id === id);
@@ -271,8 +404,8 @@ export default function RulesAdmin({ tournament, orgSlug }: Props) {
     setActiveDirtySectionId(id);
   }
 
-  function handleUpdateSectionAgeGroups(id: string, ageGroupIds: string[] | null) {
-    setRules(prev => prev.map(s => s.id === id ? { ...s, ageGroupIds } : s));
+  function handleUpdateSectionDivisions(id: string, divisionIds: string[] | null) {
+    setRules(prev => prev.map(s => s.id === id ? { ...s, divisionIds } : s));
     setDirtySections(prev => new Set(prev).add(id));
     setActiveDirtySectionId(id);
   }
@@ -294,7 +427,7 @@ export default function RulesAdmin({ tournament, orgSlug }: Props) {
     try {
       const s = rules.find(r => r.id === id);
       const sectionItems = s?.items ?? [];
-      if (s) await updateRuleSection(id, { title: s.title, icon: s.icon, ageGroupIds: s.ageGroupIds });
+      if (s) await updateRuleSection(id, { title: s.title, icon: s.icon, divisionIds: s.divisionIds });
       await Promise.all(
         sectionItems
           .filter(i => dirtyItems.has(i.id))
@@ -430,6 +563,22 @@ export default function RulesAdmin({ tournament, orgSlug }: Props) {
     finally { setSaving(false); }
   }
 
+  async function handleRulesDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIndex = rules.findIndex(s => s.id === active.id);
+    const newIndex = rules.findIndex(s => s.id === over.id);
+    const newArray = arrayMove(rules, oldIndex, newIndex);
+    setRules(newArray);
+    setSaving(true);
+    try {
+      for (let i = 0; i < newArray.length; i++) {
+        if (newArray[i].order !== i) await updateRuleSection(newArray[i].id, { order: i });
+      }
+    } catch { console.error('Failed to save rule section order'); }
+    finally { setSaving(false); }
+  }
+
   // ── Layout settings ───────────────────────────────────────────────────────
   async function handleLayoutChange(
     key: 'rulesLayout' | 'resourcesLayout',
@@ -557,164 +706,75 @@ export default function RulesAdmin({ tournament, orgSlug }: Props) {
             </div>
           </div>
 
-          <div className={`rules-stack${rulesLayout === 'columns' ? ' rules-stack--grid' : ''}`}>
-            {rules.map(section => {
-              const isDirtySection = dirtySections.has(section.id);
-              return (
-                <div
-                  key={section.id}
-                  className={`rule-card ${isDirtySection ? 'rule-card-dirty' : ''}`}
-                  onClickCapture={(e) => {
-                    if (activeDirtySectionId && activeDirtySectionId !== section.id) {
-                      const target = e.target as HTMLElement;
-                      if (!target.closest('.section-save-bar')) {
-                        e.stopPropagation();
-                        setSwitchGuardTargetId(section.id);
-                      }
-                    }
-                  }}
-                >
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleRulesDragEnd}>
+            <div className={`rules-stack${rulesLayout === 'columns' ? ' rules-stack--grid' : ''}`}>
+              <SortableContext items={rules.map(s => s.id)} strategy={verticalListSortingStrategy}>
+                {rules.map(section => (
+                  <SortableRuleCard
+                    key={section.id}
+                    section={section}
+                    disabled={!!activeDirtySectionId}
+                    isDirtySection={dirtySections.has(section.id)}
+                    activeDirtySectionId={activeDirtySectionId}
+                    divisions={divisions}
+                    editingSectionId={editingSectionId}
+                    editingSectionTitle={editingSectionTitle}
+                    setSwitchGuardTargetId={setSwitchGuardTargetId}
+                    setEditingSectionId={setEditingSectionId}
+                    setEditingSectionTitle={setEditingSectionTitle}
+                    commitSectionTitle={commitSectionTitle}
+                    handleUpdateSectionIcon={handleUpdateSectionIcon}
+                    handleUpdateSectionDivisions={handleUpdateSectionDivisions}
+                    handleUpdateItem={handleUpdateItem}
+                    handleAddItem={handleAddItem}
+                    handleDeleteItem={handleDeleteItem}
+                    handleDeleteSection={handleDeleteSection}
+                    handleDiscardSection={handleDiscardSection}
+                    handleSaveSection={handleSaveSection}
+                    saving={saving}
+                  />
+                ))}
+              </SortableContext>
+
+              {/* Phase 2 — Inline new-section card */}
+              {showNewSectionCard && (
+                <div className="rule-card new-section-card">
                   <div className="rule-card-header">
                     <div className="rule-card-title-group">
-                      <div className="icon-preview-box">
-                        {(() => { const I = ICONS.find(i => i.name === (section.icon || 'Shield'))?.Icon || Shield; return <I size={20} />; })()}
-                      </div>
-                      <select
-                        className="icon-select"
-                        value={section.icon || 'Shield'}
-                        onChange={e => handleUpdateSectionIcon(section.id, e.target.value)}
-                      >
-                        {ICONS.map(i => <option key={i.name} value={i.name}>{i.name}</option>)}
-                      </select>
-
-                      {editingSectionId === section.id ? (
-                        <div className="flex gap-2 flex-1 items-center">
-                          <input
-                            autoFocus
-                            className="inline-title-input editing"
-                            value={editingSectionTitle}
-                            onChange={e => setEditingSectionTitle(e.target.value)}
-                            onKeyDown={e => { if (e.key === 'Enter') commitSectionTitle(); if (e.key === 'Escape') setEditingSectionId(null); }}
-                          />
-                          <button className="icon-btn-success" onClick={commitSectionTitle}><Check size={16} /></button>
-                          <button className="icon-btn-ghost" onClick={() => setEditingSectionId(null)}><X size={16} /></button>
-                        </div>
-                      ) : (
-                        <div className="flex gap-2 flex-1 items-center group">
-                          <h3 className="card-title-text">{section.title}</h3>
-                          {isDirtySection && <span className="dirty-dot" title="Unsaved changes" />}
-                          <button className="edit-pencil-btn" onClick={() => { setEditingSectionId(section.id); setEditingSectionTitle(section.title); }}>
-                            <Pencil size={14} />
-                          </button>
-                        </div>
-                      )}
+                      <div className="icon-preview-box"><Shield size={20} /></div>
+                      <input
+                        autoFocus
+                        className="inline-title-input editing"
+                        placeholder="Section title..."
+                        value={newSectionTitleInline}
+                        onChange={e => setNewSectionTitleInline(e.target.value)}
+                        onKeyDown={e => {
+                          if (e.key === 'Enter' && newSectionTitleInline.trim()) handleAddInlineSection();
+                          if (e.key === 'Escape') { setShowNewSectionCard(false); setNewSectionTitleInline(''); }
+                        }}
+                      />
                     </div>
-                    <button className="delete-btn-mini" onClick={() => handleDeleteSection(section.id)}>
-                      <Trash2 size={16} />
-                    </button>
+                    <div className="flex gap-2">
+                      <button
+                        className="icon-btn-success"
+                        onClick={handleAddInlineSection}
+                        disabled={!newSectionTitleInline.trim() || saving}
+                        title="Confirm section"
+                      ><Check size={16} /></button>
+                      <button
+                        className="icon-btn-ghost"
+                        onClick={() => { setShowNewSectionCard(false); setNewSectionTitleInline(''); }}
+                        title="Cancel"
+                      ><X size={16} /></button>
+                    </div>
                   </div>
-
-                  {ageGroups.length > 0 && (
-                    <div className="applies-to-row">
-                      <span className="applies-to-label">Applies to:</span>
-                      {ageGroups.map(g => {
-                        const allIds = ageGroups.map(ag => ag.id);
-                        const current = section.ageGroupIds ?? allIds;
-                        return (
-                          <label key={g.id} className="applies-to-check">
-                            <input
-                              type="checkbox"
-                              checked={current.includes(g.id)}
-                              onChange={e => {
-                                const next = e.target.checked ? [...current, g.id] : current.filter(id => id !== g.id);
-                                const result = next.length === 0 || next.length === allIds.length ? null : next;
-                                handleUpdateSectionAgeGroups(section.id, result);
-                              }}
-                            />
-                            {g.name}
-                          </label>
-                        );
-                      })}
-                    </div>
-                  )}
-
                   <div className="rule-items-list">
-                    {section.items.map(item => (
-                      <div key={item.id} className="rule-item-row group">
-                        <GripVertical size={14} className="drag-handle" />
-                        <textarea
-                          rows={1}
-                          className="item-textarea"
-                          value={item.content || ''}
-                          onChange={e => handleUpdateItem(item.id, e.target.value)}
-                        />
-                        <button className="item-delete-btn" onClick={() => handleDeleteItem(item.id)}><X size={14} /></button>
-                      </div>
-                    ))}
-                    <button className="add-item-btn" onClick={() => handleAddItem(section.id)}><Plus size={14} /> Add Point</button>
-                  </div>
-
-                  {activeDirtySectionId === section.id && (
-                    <div className="section-save-bar">
-                      <button
-                        className="btn btn-ghost btn-data"
-                        onClick={() => handleDiscardSection(section.id)}
-                        disabled={saving}
-                      >
-                        <X size={14} /> Discard
-                      </button>
-                      <button
-                        className="btn btn-lime btn-data"
-                        onClick={() => handleSaveSection(section.id)}
-                        disabled={saving}
-                      >
-                        <Check size={14} />
-                        {saving ? 'Saving…' : 'Save Changes'}
-                      </button>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-
-            {/* Phase 2 — Inline new-section card */}
-            {showNewSectionCard && (
-              <div className="rule-card new-section-card">
-                <div className="rule-card-header">
-                  <div className="rule-card-title-group">
-                    <div className="icon-preview-box"><Shield size={20} /></div>
-                    <input
-                      autoFocus
-                      className="inline-title-input editing"
-                      placeholder="Section title..."
-                      value={newSectionTitleInline}
-                      onChange={e => setNewSectionTitleInline(e.target.value)}
-                      onKeyDown={e => {
-                        if (e.key === 'Enter' && newSectionTitleInline.trim()) handleAddInlineSection();
-                        if (e.key === 'Escape') { setShowNewSectionCard(false); setNewSectionTitleInline(''); }
-                      }}
-                    />
-                  </div>
-                  <div className="flex gap-2">
-                    <button
-                      className="icon-btn-success"
-                      onClick={handleAddInlineSection}
-                      disabled={!newSectionTitleInline.trim() || saving}
-                      title="Confirm section"
-                    ><Check size={16} /></button>
-                    <button
-                      className="icon-btn-ghost"
-                      onClick={() => { setShowNewSectionCard(false); setNewSectionTitleInline(''); }}
-                      title="Cancel"
-                    ><X size={16} /></button>
+                    <p style={{ color: 'var(--white-20)', fontSize: '0.8rem' }}>Confirm the section title to start adding rule points.</p>
                   </div>
                 </div>
-                <div className="rule-items-list">
-                  <p style={{ color: 'var(--white-20)', fontSize: '0.8rem' }}>Confirm the section title to start adding rule points.</p>
-                </div>
-              </div>
-            )}
-          </div>
+              )}
+            </div>
+          </DndContext>
         </section>
 
         <div className="divider-lg" />
@@ -898,7 +958,11 @@ export default function RulesAdmin({ tournament, orgSlug }: Props) {
         .rule-card-dirty { border-color: var(--logic-lime); }
         .new-section-card { border-style: dashed; border-color: var(--logic-lime); opacity: 0.85; }
         .dirty-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--logic-lime); flex-shrink: 0; }
-        .rule-card-header { padding: 0.75rem 1.25rem; background: var(--bg-inset); border-bottom: 1px solid var(--border-subtle); display: flex; justify-content: space-between; align-items: center; }
+        .rule-card-header { padding: 0.75rem 1.25rem; background: var(--bg-inset); border-bottom: 1px solid var(--border-subtle); display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; }
+        .rule-card-drag-handle { color: var(--white-10); cursor: grab; padding: 4px; margin-left: -6px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: color 0.2s; }
+        .rule-card-drag-handle:active { cursor: grabbing; color: var(--logic-lime); }
+        .rule-card:hover .rule-card-drag-handle { color: var(--white-30); }
+        .rule-card.dragging { border-color: var(--blueprint-blue); background: var(--bg-3); }
         .rule-card-title-group { display: flex; align-items: center; gap: 1rem; flex: 1; }
         .icon-preview-box { width: 32px; height: 32px; background: rgba(var(--blueprint-blue-rgb), 0.1); border: 1px solid rgba(var(--blueprint-blue-rgb), 0.3); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: var(--logic-lime); flex-shrink: 0; }
         .icon-select { background: var(--bg-3); border: 1px solid var(--border); color: var(--white); border-radius: 6px; padding: 2px 6px; font-size: 0.8rem; }

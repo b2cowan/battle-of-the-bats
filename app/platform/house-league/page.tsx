@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 const CAPABILITIES = [
   {
     name: 'Season Management',
-    desc: 'Create seasons with custom divisions and age groups. Activate and archive seasons independently — multiple can run at once.',
+    desc: 'Create seasons with custom divisions and divisions. Activate and archive seasons independently — multiple can run at once.',
   },
   {
     name: 'Registration Workflows',

@@ -18,7 +18,7 @@ export type TeamCheckoutRequest = {
   teamSlug: string | null;
   workspaceSlug: string | null;
   sport: string;
-  ageGroup: string | null;
+  division: string | null;
   seasonName: string;
   seasonYear: number;
   billingCycle: BillingCycle;
@@ -38,7 +38,7 @@ export type TeamCheckoutMetadata = {
   teamSlug: string | null;
   workspaceSlug: string | null;
   sport: string;
-  ageGroup: string | null;
+  division: string | null;
   seasonName: string;
   seasonYear: number;
   billingCycle: BillingCycle;
@@ -100,7 +100,7 @@ export function normalizeTeamCheckoutRequest(body: Record<string, unknown>): Tea
     teamSlug: cleanOptionalText(body.teamSlug, 80),
     workspaceSlug: cleanOptionalText(body.workspaceSlug, 80),
     sport,
-    ageGroup: cleanOptionalText(body.ageGroup, 80),
+    division: cleanOptionalText(body.division, 80),
     seasonName,
     seasonYear,
     billingCycle: normalizeBillingCycle(body.billingCycle),
@@ -128,7 +128,7 @@ export function buildTeamCheckoutMetadata(params: {
     teamSlug: metadataValue(params.request.teamSlug),
     workspaceSlug: metadataValue(params.request.workspaceSlug),
     sport: metadataValue(params.request.sport),
-    ageGroup: metadataValue(params.request.ageGroup),
+    division: metadataValue(params.request.division),
     seasonName: metadataValue(params.request.seasonName),
     seasonYear: metadataValue(params.request.seasonYear),
     billingCycle: metadataValue(params.request.billingCycle),
@@ -160,7 +160,7 @@ export function parseTeamCheckoutMetadata(metadata: Record<string, string> | nul
     teamSlug: metadata.teamSlug?.trim() || null,
     workspaceSlug: metadata.workspaceSlug?.trim() || null,
     sport: metadata.sport?.trim() || 'softball',
-    ageGroup: metadata.ageGroup?.trim() || null,
+    division: metadata.division?.trim() || null,
     seasonName,
     seasonYear: cleanYear(metadata.seasonYear),
     billingCycle: normalizeBillingCycle(metadata.billingCycle),
@@ -289,7 +289,7 @@ export async function provisionTeamWorkspaceFromCheckoutMetadata(params: {
     workspaceName: parsed.workspaceName,
     workspaceSlug: parsed.workspaceSlug,
     sport: parsed.sport,
-    ageGroup: parsed.ageGroup,
+    division: parsed.division,
     seasonName: parsed.seasonName,
     seasonYear: parsed.seasonYear,
     source: parsed.source,

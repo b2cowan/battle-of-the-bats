@@ -339,7 +339,7 @@ what happens to their sealed archives? Do they lose access or just visibility?
 
 ```
 # Schema check before writing a query
-/db — I want to query all teams for a tournament grouped by age group and pool.
+/db — I want to query all teams for a tournament grouped by division and pool.
 What columns are available on the teams table and what's the best join pattern?
 
 # Writing a query
@@ -364,7 +364,7 @@ Check for missing indexes, RLS gaps, and anything that could break existing quer
 ```
 # New feature
 /plan — I want to add the ability for org admins to set a registration 
-open/close date per age group, not just per tournament.
+open/close date per division, not just per tournament.
 This should be a Tournament Plus feature.
 
 # Review project

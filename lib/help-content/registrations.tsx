@@ -33,7 +33,7 @@ const registrationsHelp: HelpPageContent = {
           <p>Use this routine when registrations are actively coming in.</p>
           <ol>
             <li>Open <strong>Registrations</strong> and start on the <strong>Pending Review</strong> tab.</li>
-            <li>Filter by division if one age group has a deadline or capacity concern.</li>
+            <li>Filter by division if one division has a deadline or capacity concern.</li>
             <li>Open each registration and confirm the player, guardian contact, division, and payment information.</li>
             <li>Choose <strong>Approve</strong>, <strong>Waitlist</strong>, or <strong>Decline</strong>.</li>
             <li>Use the <strong>Fee Paid</strong> checkbox when payment tracking is separate from approval.</li>

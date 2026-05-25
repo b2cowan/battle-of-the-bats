@@ -1,6 +1,6 @@
 'use client';
 import React, { useState, useEffect } from 'react';
-import { AgeGroup, Team, Diamond } from '@/lib/types';
+import { Division, Team, Diamond } from '@/lib/types';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { useSortable } from '@dnd-kit/sortable';
@@ -32,7 +32,7 @@ interface Round {
 }
 
 interface BracketBuilderProps {
-  ageGroup: AgeGroup;
+  division: Division;
   teams: Team[];
   diamonds: Diamond[];
   defaultDate?: string;
@@ -116,7 +116,7 @@ function SortableMatchup({ matchup, options, usedOptions, diamonds, onUpdateCode
   );
 }
 
-export default function BracketBuilder({ ageGroup, teams, diamonds, defaultDate, templatePreview, baseOptions, onPreviewChange, crossover }: BracketBuilderProps) {
+export default function BracketBuilder({ division, teams, diamonds, defaultDate, templatePreview, baseOptions, onPreviewChange, crossover }: BracketBuilderProps) {
   const [rounds, setRounds] = useState<Round[]>([]);
 
   // Convert templatePreview to rounds when templatePreview changes
@@ -305,8 +305,8 @@ export default function BracketBuilder({ ageGroup, teams, diamonds, defaultDate,
 
   const allUsedOptions = new Set(rounds.flatMap(r => r.matchups.flatMap(m => [m.home.label, m.away.label].filter(l => l))));
 
-  const isSplitMode = crossover === 'none' && (ageGroup.pools?.length || 0) > 0;
-  const poolNames = ageGroup.pools?.map(p => p.name) || [];
+  const isSplitMode = crossover === 'none' && (division.pools?.length || 0) > 0;
+  const poolNames = division.pools?.map(p => p.name) || [];
 
   return (
     <div className={styles.builderContainer}>

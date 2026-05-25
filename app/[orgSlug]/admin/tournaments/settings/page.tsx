@@ -32,15 +32,6 @@ export default function TournamentSettingsAccessPage() {
   const canUseRegistrationQuestions = Boolean(currentOrg && hasPlanFeature(currentOrg.planId, 'custom_registration_fields'));
   const setupCards: SettingsCard[] = [
     {
-      href: `${base}/settings/event`,
-      icon: Settings2,
-      title: 'Event settings',
-      description: 'Set tournament dates, configure the registration fee schedule, and control score finalization policy.',
-      meta: isOwner ? 'Manage event settings' : 'Owner only',
-      enabled: isOwner,
-      comingSoon: false,
-    },
-    {
       href: `${base}/settings/registration-fields`,
       icon: ClipboardList,
       title: 'Registration questions',

@@ -11,7 +11,7 @@ type RouteParams = { params: Promise<{ tournamentId: string }> };
 type TeamRow = {
   id: string;
   tournament_id: string;
-  age_group_id: string;
+  division_id: string;
   name: string;
   coach: string | null;
   email: string | null;
@@ -32,7 +32,7 @@ type TournamentRow = {
   total_fee_due_date: string | null;
 };
 
-type AgeGroupFeeRow = {
+type DivisionFeeRow = {
   id: string;
   name: string;
   deposit_amount: number | null;
@@ -57,9 +57,9 @@ function cleanInstructions(value: unknown) {
   return value.trim().slice(0, 2000);
 }
 
-function effectiveFee(team: TeamRow, tournament: TournamentRow, ageGroups: Map<string, AgeGroupFeeRow>): FeeDetails {
-  const group = ageGroups.get(team.age_group_id);
-  if (tournament.fee_schedule_mode === 'age_group' && group?.total_fee_amount != null) {
+function effectiveFee(team: TeamRow, tournament: TournamentRow, divisions: Map<string, DivisionFeeRow>): FeeDetails {
+  const group = divisions.get(team.division_id);
+  if (tournament.fee_schedule_mode === 'division' && group?.total_fee_amount != null) {
     return {
       depositAmount: group.deposit_amount ?? null,
       depositDueDate: group.deposit_due_date ?? null,
@@ -174,7 +174,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     return json({ error: requiresTournamentPlusCopy('payment_readiness_tools') }, 403);
   }
 
-  const [{ data: tournament, error: tournamentError }, { data: teams, error: teamsError }, { data: ageGroupRows, error: ageGroupError }] = await Promise.all([
+  const [{ data: tournament, error: tournamentError }, { data: teams, error: teamsError }, { data: divisionRows, error: divisionError }] = await Promise.all([
     supabaseAdmin
       .from('tournaments')
       .select('id, name, org_id, contact_email, fee_schedule_mode, deposit_amount, deposit_due_date, total_fee_amount, total_fee_due_date')
@@ -182,17 +182,17 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
       .maybeSingle<TournamentRow>(),
     supabaseAdmin
       .from('teams')
-      .select('id, tournament_id, age_group_id, name, coach, email, status, deposit_paid, total_paid')
+      .select('id, tournament_id, division_id, name, coach, email, status, deposit_paid, total_paid')
       .in('id', ids),
     supabaseAdmin
-      .from('age_groups')
+      .from('divisions')
       .select('id, name, deposit_amount, deposit_due_date, total_fee_amount, total_fee_due_date')
       .eq('tournament_id', tournamentId),
   ]);
 
   if (tournamentError) return json({ error: tournamentError.message }, 500);
   if (teamsError) return json({ error: teamsError.message }, 500);
-  if (ageGroupError) return json({ error: ageGroupError.message }, 500);
+  if (divisionError) return json({ error: divisionError.message }, 500);
   if (!tournament || tournament.org_id !== ctx.org.id) return forbidden();
 
   const selectedTeams = (teams ?? []) as TeamRow[];
@@ -200,28 +200,28 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     return json({ error: 'One or more registrations are outside this tournament.' }, 400);
   }
 
-  const ageGroups = new Map((ageGroupRows ?? []).map(group => [group.id, group as AgeGroupFeeRow]));
+  const divisions = new Map((divisionRows ?? []).map(group => [group.id, group as DivisionFeeRow]));
   const contactEmail = tournament.contact_email ?? ctx.org.contactEmail ?? ctx.user.email ?? undefined;
 
   let emailsSent = 0;
   let skippedCount = 0;
 
   for (const team of selectedTeams) {
-    const fee = effectiveFee(team, tournament, ageGroups);
+    const fee = effectiveFee(team, tournament, divisions);
     const due = reminderAmountDue(team, fee);
     if (!team.email || team.status !== 'accepted' || !due || due.amount <= 0) {
       skippedCount++;
       continue;
     }
 
-    const ageGroupName = ageGroups.get(team.age_group_id)?.name ?? 'Division';
+    const divisionName = divisions.get(team.division_id)?.name ?? 'Division';
     await sendEmail(
       team.email,
       `Payment Reminder - ${tournament.name}`,
       paymentReminderHtml({
         teamName: team.name,
         coachName: team.coach ?? '',
-        ageGroupName,
+        divisionName,
         tournamentName: tournament.name,
         amountDue: formatCurrency(due.amount),
         dueDate: due.dueDate,

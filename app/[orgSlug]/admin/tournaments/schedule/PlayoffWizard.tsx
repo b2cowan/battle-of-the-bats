@@ -2,20 +2,20 @@
 import React, { useState, useEffect } from 'react';
 import { Trophy, Check, X, Calendar, AlertCircle, ChevronUp, ChevronDown } from 'lucide-react';
 import { getTournament } from '@/lib/db';
-import { AgeGroup, Team, Diamond, PlayoffConfig, Tournament } from '@/lib/types';
+import { Division, Team, Diamond, PlayoffConfig, Tournament } from '@/lib/types';
 import { formatPoolName } from '@/lib/utils';
 import BracketBuilder from './components/BracketBuilder';
 import FeedbackModal from '@/components/FeedbackModal';
 
 interface Props {
-  ageGroup: AgeGroup;
+  division: Division;
   tournamentId: string;
   orgSlug?: string;
   onClose: () => void;
   onComplete: () => void;
 }
 
-export default function PlayoffWizard({ ageGroup, tournamentId, orgSlug, onClose, onComplete }: Props) {
+export default function PlayoffWizard({ division, tournamentId, orgSlug, onClose, onComplete }: Props) {
   const [loading, setLoading] = useState(false);
   const [tournament, setTournament] = useState<Tournament | null>(null);
   const [teams, setTeams] = useState<Team[]>([]);
@@ -28,7 +28,7 @@ export default function PlayoffWizard({ ageGroup, tournamentId, orgSlug, onClose
       teamsQualifying: 4,
       tieBreakers: ['h2h', 'rd', 'rf', 'ra']
     };
-    return { ...defaults, ...(ageGroup.playoffConfig || {}) };
+    return { ...defaults, ...(division.playoffConfig || {}) };
   });
   const [activeTab, setActiveTab] = useState<'settings' | 'preview'>('settings');
   const [diamonds, setDiamonds] = useState<Diamond[]>([]);
@@ -46,15 +46,15 @@ export default function PlayoffWizard({ ageGroup, tournamentId, orgSlug, onClose
       fetch(`/api/admin/teams?tournamentId=${encodeURIComponent(tournamentId)}${orgParam}`).then(r => r.ok ? r.json() : []),
     ]).then(([ds, all]) => {
       setDiamonds(ds);
-      setTeams((all as any[]).filter(t => t.ageGroupId === ageGroup.id && t.status === 'accepted'));
+      setTeams((all as any[]).filter(t => t.divisionId === division.id && t.status === 'accepted'));
     });
-  }, [tournamentId, ageGroup.id, orgParam]);
+  }, [tournamentId, division.id, orgParam]);
 
   useEffect(() => {
-    if (config.crossover === 'standard' && (ageGroup.pools?.length || 0) !== 2) {
+    if (config.crossover === 'standard' && (division.pools?.length || 0) !== 2) {
       setConfig(prev => ({ ...prev, crossover: 'reseed' }));
     }
-  }, [ageGroup.pools?.length]);
+  }, [division.pools?.length]);
 
 
 
@@ -79,7 +79,7 @@ export default function PlayoffWizard({ ageGroup, tournamentId, orgSlug, onClose
   function generatePreview() {
     const games: any[] = [];
     const { crossover, hasThirdPlace, teamsQualifying } = config;
-    const pools = ageGroup.pools || [];
+    const pools = division.pools || [];
     
     // 1. No Crossover (Split Pool Championships)
     if (crossover === 'none' && pools.length >= 2) {
@@ -179,10 +179,10 @@ export default function PlayoffWizard({ ageGroup, tournamentId, orgSlug, onClose
   }
 
   const baseOptions = React.useMemo(() => {
-    if (config.crossover === 'none' && ageGroup.pools && ageGroup.pools.length > 0) {
+    if (config.crossover === 'none' && division.pools && division.pools.length > 0) {
       const options: string[] = [];
       const suffix = ['st', 'nd', 'rd', 'th', 'th', 'th', 'th', 'th'];
-      ageGroup.pools.forEach(pool => {
+      division.pools.forEach(pool => {
         const pConfig = config.splitConfigs?.[pool.id] || { teamsQualifying: config.teamsQualifying, hasThirdPlace: config.hasThirdPlace };
         const perPool = pConfig.teamsQualifying;
         for (let i = 1; i <= perPool; i++) {
@@ -191,21 +191,21 @@ export default function PlayoffWizard({ ageGroup, tournamentId, orgSlug, onClose
       });
       return options;
     }
-    if (config.crossover === 'standard' && ageGroup.pools && ageGroup.pools.length > 0) {
+    if (config.crossover === 'standard' && division.pools && division.pools.length > 0) {
       const options: string[] = [];
-      const numPools = ageGroup.pools.length;
+      const numPools = division.pools.length;
       const perPool = Math.ceil(config.teamsQualifying / numPools);
       const suffix = ['st', 'nd', 'rd', 'th', 'th', 'th', 'th', 'th'];
-      ageGroup.pools.forEach(pool => {
+      division.pools.forEach(pool => {
         for (let i = 1; i <= perPool; i++) {
           options.push(`${i}${suffix[i-1] || 'th'} Pool ${pool.name}`);
         }
       });
       return options;
     }
-    const numSeeds = ageGroup.capacity || teams.length || 16;
+    const numSeeds = division.capacity || teams.length || 16;
     return Array.from({length: numSeeds}, (_, i) => `Seed #${i + 1}`);
-  }, [config.crossover, config.teamsQualifying, config.splitConfigs, ageGroup.pools, ageGroup.capacity, teams.length]);
+  }, [config.crossover, config.teamsQualifying, config.splitConfigs, division.pools, division.capacity, teams.length]);
 
   function proceedAfterWarning() {
     setShowWarning(false);
@@ -254,7 +254,7 @@ export default function PlayoffWizard({ ageGroup, tournamentId, orgSlug, onClose
           : defaultBracketId;
         return {
           tournamentId,
-          ageGroupId: ageGroup.id,
+          divisionId: division.id,
           homeTeamId: null as any,
           awayTeamId: null as any,
           date: p.date || null,
@@ -274,7 +274,7 @@ export default function PlayoffWizard({ ageGroup, tournamentId, orgSlug, onClose
       const deleteRes = await fetch(`/api/admin/games${orgQuery}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'delete-division-playoff-games', ageGroupId: ageGroup.id }),
+        body: JSON.stringify({ action: 'delete-division-playoff-games', divisionId: division.id }),
       });
       const deleteData = await deleteRes.json();
       if (!deleteRes.ok) throw new Error(deleteData.error || 'Failed to clear existing playoff games');
@@ -282,7 +282,7 @@ export default function PlayoffWizard({ ageGroup, tournamentId, orgSlug, onClose
       const saveRes = await fetch(`/api/admin/games${orgQuery}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'bulk-save', games: gameRows, tournamentId, ageGroupId: ageGroup.id }),
+        body: JSON.stringify({ action: 'bulk-save', games: gameRows, tournamentId, divisionId: division.id }),
       });
       const saveData = await saveRes.json();
       if (!saveRes.ok) throw new Error(saveData.error || 'Failed to save playoff bracket');
@@ -308,7 +308,7 @@ export default function PlayoffWizard({ ageGroup, tournamentId, orgSlug, onClose
               </div>
               <div>
                 <h3 style={{ margin: 0 }}>Playoff Bracket Generator</h3>
-                <p className="text-label" style={{ color: 'var(--logic-lime)', marginTop: '0.25rem' }}>{ageGroup.name} Division</p>
+                <p className="text-label" style={{ color: 'var(--logic-lime)', marginTop: '0.25rem' }}>{division.name} Division</p>
               </div>
             </div>
             <button className="btn btn-ghost btn-sm" onClick={onClose} style={{ padding: '0.5rem' }}>
@@ -328,7 +328,7 @@ export default function PlayoffWizard({ ageGroup, tournamentId, orgSlug, onClose
                 <div className="form-group">
                   <label className="form-label">Crossover Rules</label>
                   <select className="form-select" value={config.crossover} onChange={e => setConfig({...config, crossover: e.target.value as any})}>
-                    {(ageGroup.pools?.length || 0) === 2 && <option value="standard">Standard (First A vs. Last B)</option>}
+                    {(division.pools?.length || 0) === 2 && <option value="standard">Standard (First A vs. Last B)</option>}
                     <option value="reseed">Top vs Bottom Reseed (Global Seeding)</option>
                     <option value="none">No Crossover (Split Pool Championship)</option>
                   </select>
@@ -354,11 +354,11 @@ export default function PlayoffWizard({ ageGroup, tournamentId, orgSlug, onClose
                 ) : null}
               </div>
 
-              {config.crossover === 'none' && ageGroup.pools && (
+              {config.crossover === 'none' && division.pools && (
                 <div style={{ marginTop: '1.5rem', background: 'var(--bg-2)', padding: '1.5rem', borderRadius: '2px', border: '1px solid var(--border)' }}>
                   <h5 className="font-bold text-sm mb-4" style={{ color: 'var(--logic-lime)' }}>Per-Pool Independent Brackets</h5>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                    {ageGroup.pools.map(pool => {
+                    {division.pools.map(pool => {
                       const pConfig = config.splitConfigs?.[pool.id] || { teamsQualifying: 4, hasThirdPlace: false };
                       return (
                         <div key={pool.id} style={{ display: 'grid', gridTemplateColumns: '1fr 2fr 1fr', gap: '2rem', alignItems: 'center', padding: '0.75rem', background: 'var(--surface)', borderRadius: '2px', border: '1px solid var(--border)' }}>
@@ -464,7 +464,7 @@ export default function PlayoffWizard({ ageGroup, tournamentId, orgSlug, onClose
                 </div>
               ) : (
                 <BracketBuilder 
-                  ageGroup={ageGroup} 
+                  division={division} 
                   teams={teams} 
                   diamonds={diamonds} 
                   defaultDate={tournament?.endDate || new Date().toISOString().split('T')[0]} 
@@ -515,7 +515,7 @@ export default function PlayoffWizard({ ageGroup, tournamentId, orgSlug, onClose
             </div>
             <h3 className="display-sm mb-3" style={{ fontSize: '1.4rem', color: 'var(--white)' }}>Replace Existing Bracket?</h3>
             <p className="text-muted" style={{ fontSize: '0.95rem', lineHeight: '1.6', marginBottom: '2.5rem' }}>
-              Generating a new playoff bracket will <strong style={{ color: 'var(--danger)' }}>delete all existing playoff games and scores</strong> for the {ageGroup.name} division. This action cannot be undone.
+              Generating a new playoff bracket will <strong style={{ color: 'var(--danger)' }}>delete all existing playoff games and scores</strong> for the {division.name} division. This action cannot be undone.
             </p>
             <div className="flex flex-col gap-3">
               <button className="btn btn-primary" style={{ background: 'var(--danger)', borderColor: 'var(--danger)' }} onClick={proceedAfterWarning}>

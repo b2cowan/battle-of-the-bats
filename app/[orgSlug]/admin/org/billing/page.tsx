@@ -637,7 +637,7 @@ export default function BillingPage() {
             </p>
           </div>
           <div className={styles.billingNudgeActions}>
-            <Link className="btn btn-primary btn-sm" href={`/${currentOrg.slug}/admin/org/team-links`}>
+            <Link className="btn btn-primary btn-sm" href={`/${currentOrg.slug}/admin/org/coaches-portal-links`}>
               Review Coaches Portal Links
             </Link>
             <Link className="btn btn-ghost btn-sm" href="/pricing#club">

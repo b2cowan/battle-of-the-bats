@@ -635,6 +635,14 @@
   color: var(--white-90, #f0f0f0);
 }
 
+/* ── Member title below role badge ───────────── */
+.memberTitle {
+  font-size: 0.72rem;
+  color: var(--white-30, rgba(255,255,255,0.3));
+  margin-top: 0.2rem;
+  line-height: 1.2;
+}
+
 /* ── Display name in member rows ─────────────── */
 .displayName {
   font-weight: 600;

@@ -27,7 +27,7 @@ const houseLeagueHelp: HelpPageContent = {
       heading: 'Creating and configuring a season',
       content: (
         <>
-          <p>From the House League page, click <strong>Create Season</strong>. Set a name, URL slug, sport, age group, and optional start/end dates. The slug appears in public URLs — choose it carefully.</p>
+          <p>From the House League page, click <strong>Create Season</strong>. Set a name, URL slug, sport, division, and optional start/end dates. The slug appears in public URLs — choose it carefully.</p>
           <p>After creation, open the season and add <strong>divisions</strong>. Each division is a sub-group within the season (e.g., "Division A", "Girls U11"). You can set a capacity per division to automatically cap registrations and start a waitlist.</p>
           <p>The <strong>Automation</strong> settings control whether registrations are auto-approved when a division has open spots, whether the waitlist auto-promotes when a spot opens, and whether accounting entries are auto-generated on approval.</p>
         </>
@@ -48,7 +48,7 @@ const houseLeagueHelp: HelpPageContent = {
           <p>Use this checklist when starting a new recreational season.</p>
           <ol>
             <li>Create the season from <strong>House League</strong> and keep it in <strong>Draft</strong> while you configure it.</li>
-            <li>Add each division or age group that families should be able to register for.</li>
+            <li>Add each division or division that families should be able to register for.</li>
             <li>Set capacity for each division so the system knows when to start a waitlist.</li>
             <li>Review automation settings: auto-approve, auto-waitlist, waitlist promotion, and accounting entry creation.</li>
             <li>Preview the public registration flow if available, then move the season to <strong>Registration Open</strong>.</li>

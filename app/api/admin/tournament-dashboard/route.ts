@@ -7,10 +7,10 @@ type GameRow = {
   status: string | null;
   is_playoff: boolean | null;
   bracket_code: string | null;
-  age_group_id: string | null;
+  division_id: string | null;
 };
 
-type AgeGroupRow = {
+type DivisionRow = {
   id: string;
   name: string;
   is_closed: boolean | null;
@@ -23,7 +23,7 @@ type AgeGroupRow = {
 
 type TeamPaymentRow = {
   id: string;
-  age_group_id: string;
+  division_id: string;
   status: string | null;
   deposit_paid: number | null;
   total_paid: number | null;
@@ -85,9 +85,9 @@ export async function GET(req: Request) {
 
   const t = tournament as TournamentFeeRow;
 
-  const [ageGroupsRes, teamsRes, gamesRes, announcementsRes, teamPaymentsRes, venuesRes, rulesRes] = await Promise.all([
+  const [divisionsRes, teamsRes, gamesRes, announcementsRes, teamPaymentsRes, venuesRes, rulesRes] = await Promise.all([
     supabaseAdmin
-      .from('age_groups')
+      .from('divisions')
       .select('id, name, is_closed, capacity, deposit_amount, deposit_due_date, total_fee_amount, total_fee_due_date', { count: 'exact' })
       .eq('tournament_id', tournamentId),
     supabaseAdmin
@@ -96,7 +96,7 @@ export async function GET(req: Request) {
       .eq('tournament_id', tournamentId),
     supabaseAdmin
       .from('games')
-      .select('status, is_playoff, bracket_code, age_group_id')
+      .select('status, is_playoff, bracket_code, division_id')
       .eq('tournament_id', tournamentId),
     supabaseAdmin
       .from('announcements')
@@ -104,7 +104,7 @@ export async function GET(req: Request) {
       .eq('tournament_id', tournamentId),
     supabaseAdmin
       .from('teams')
-      .select('id, age_group_id, status, deposit_paid, total_paid')
+      .select('id, division_id, status, deposit_paid, total_paid')
       .eq('tournament_id', tournamentId),
     supabaseAdmin
       .from('diamonds')
@@ -116,25 +116,25 @@ export async function GET(req: Request) {
       .eq('tournament_id', tournamentId),
   ]);
 
-  const queryError = ageGroupsRes.error ?? teamsRes.error ?? gamesRes.error ?? announcementsRes.error ?? teamPaymentsRes.error ?? venuesRes.error ?? rulesRes.error;
+  const queryError = divisionsRes.error ?? teamsRes.error ?? gamesRes.error ?? announcementsRes.error ?? teamPaymentsRes.error ?? venuesRes.error ?? rulesRes.error;
   if (queryError) {
     return Response.json({ error: queryError.message }, { status: 500 });
   }
 
   const games = (gamesRes.data ?? []) as GameRow[];
-  const ageGroups = (ageGroupsRes.data ?? []) as AgeGroupRow[];
+  const divisions = (divisionsRes.data ?? []) as DivisionRow[];
   const teamPayments = (teamPaymentsRes.data ?? []) as TeamPaymentRow[];
   const today = new Date().toISOString().split('T')[0];
 
   const hasDates = Boolean(t.start_date && t.end_date);
-  const hasDivisions = ageGroups.length > 0;
+  const hasDivisions = divisions.length > 0;
   const hasPublicContact = Boolean(t.contact_email || ctx.org.contactEmail);
-  const hasOpenDivision = hasDivisions && ageGroups.some(group => !group.is_closed);
+  const hasOpenDivision = hasDivisions && divisions.some(group => !group.is_closed);
   const hasBranding = Boolean((t as any).logo_url || (t as any).hero_banner_url || (t as any).theme_preset || (t as any).theme_primary);
   const hasVenues   = (venuesRes.count ?? 0) > 0;
   const hasRules    = (rulesRes.count ?? 0) > 0;
-  const hasFees     = t.fee_schedule_mode === 'age_group'
-    ? ageGroups.some(g => g.total_fee_amount != null && g.total_fee_amount > 0)
+  const hasFees     = t.fee_schedule_mode === 'division'
+    ? divisions.some(g => g.total_fee_amount != null && g.total_fee_amount > 0)
     : Boolean(t.total_fee_amount && t.total_fee_amount > 0);
 
   const isTournamentDay = hasDates && today >= t.start_date! && today <= t.end_date!;
@@ -144,9 +144,9 @@ export async function GET(req: Request) {
   const poolGames   = activeGames.filter(g => !g.is_playoff);
   const playoffGames = activeGames.filter(g => g.is_playoff);
 
-  const gameDayByDivision = ageGroups.map(g => {
-    const divPool    = poolGames.filter(gm => gm.age_group_id === g.id);
-    const divPlayoff = playoffGames.filter(gm => gm.age_group_id === g.id);
+  const gameDayByDivision = divisions.map(g => {
+    const divPool    = poolGames.filter(gm => gm.division_id === g.id);
+    const divPlayoff = playoffGames.filter(gm => gm.division_id === g.id);
 
     const completedPlayoffRounds = divPlayoff
       .filter(gm => gm.status === 'completed')
@@ -192,8 +192,8 @@ export async function GET(req: Request) {
   };
 
   // ── Registration stats ────────────────────────────────────────────
-  const byDivision = ageGroups.map(g => {
-    const groupTeams = teamPayments.filter(tm => tm.age_group_id === g.id);
+  const byDivision = divisions.map(g => {
+    const groupTeams = teamPayments.filter(tm => tm.division_id === g.id);
     return {
       id: g.id,
       name: g.name,
@@ -218,8 +218,8 @@ export async function GET(req: Request) {
   let totalCollected = 0;
 
   for (const tm of acceptedTeams) {
-    const ag = ageGroups.find(g => g.id === tm.age_group_id);
-    const fee = feeMode === 'age_group' && ag?.total_fee_amount != null
+    const ag = divisions.find(g => g.id === tm.division_id);
+    const fee = feeMode === 'division' && ag?.total_fee_amount != null
       ? { depositAmount: ag.deposit_amount, depositDueDate: ag.deposit_due_date, totalFeeAmount: ag.total_fee_amount, totalFeeDueDate: ag.total_fee_due_date }
       : { depositAmount: t.deposit_amount, depositDueDate: t.deposit_due_date, totalFeeAmount: t.total_fee_amount, totalFeeDueDate: t.total_fee_due_date };
 
@@ -252,7 +252,7 @@ export async function GET(req: Request) {
   }
 
   return Response.json({
-    ageGroups:     ageGroupsRes.count ?? ageGroups.length,
+    divisions:     divisionsRes.count ?? divisions.length,
     teams:         teamsRes.count ?? 0,
     scheduled:     games.filter(game => game.status === 'scheduled').length,
     completed:     games.filter(game => game.status === 'completed').length,

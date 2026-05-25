@@ -94,7 +94,7 @@ type LeagueSeasonForm = {
   name: string;
   slug: string;
   sport: string;
-  ageGroup: string;
+  division: string;
   description: string;
   seasonStartDate: string;
   seasonEndDate: string;
@@ -158,7 +158,7 @@ function getDefaultLeagueSeasonForm(): LeagueSeasonForm {
     name: defaultName,
     slug: generateSlug(defaultName),
     sport: 'softball',
-    ageGroup: '',
+    division: '',
     description: '',
     seasonStartDate: '',
     seasonEndDate: '',
@@ -955,7 +955,7 @@ export default function OnboardingPage() {
       name,
       slug,
       sport: leagueSeasonForm.sport || 'softball',
-      ageGroup: leagueSeasonForm.ageGroup.trim() || null,
+      division: leagueSeasonForm.division.trim() || null,
       description: leagueSeasonForm.description.trim() || null,
       seasonStartDate: leagueSeasonForm.seasonStartDate || null,
       seasonEndDate: leagueSeasonForm.seasonEndDate || null,
@@ -1515,8 +1515,8 @@ export default function OnboardingPage() {
                 Age group optional
                 <input
                   className="form-input"
-                  value={leagueSeasonForm.ageGroup}
-                  onChange={e => setLeagueSeasonForm(form => ({ ...form, ageGroup: e.target.value }))}
+                  value={leagueSeasonForm.division}
+                  onChange={e => setLeagueSeasonForm(form => ({ ...form, division: e.target.value }))}
                   placeholder="U11, Adult, All ages"
                 />
               </label>
@@ -1838,7 +1838,7 @@ export default function OnboardingPage() {
     if (activeModal === 'divisions') {
       return renderModalFrame(
         'Set up divisions',
-        'Add the age groups or divisions teams can register for. Pools or groups are optional when you need to split teams inside a division.',
+        'Add the divisions or divisions teams can register for. Pools or groups are optional when you need to split teams inside a division.',
         (
           <div className={styles.setupBlock}>
             <div className={styles.setupBlockHeader}>

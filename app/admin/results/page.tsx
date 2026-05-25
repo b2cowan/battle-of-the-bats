@@ -1,10 +1,10 @@
 'use client';
 import React, { useState, useEffect } from 'react';
 import { Trophy, X, Check, Search, RefreshCw, Users, Download } from 'lucide-react';
-import { getGames, updateGame, getTeams, getAgeGroups, getDiamonds } from '@/lib/db';
+import { getGames, updateGame, getTeams, getDivisions, getDiamonds } from '@/lib/db';
 import { downloadCSV, formatTime } from '@/lib/utils';
 import { useTournament } from '@/lib/tournament-context';
-import { Game, Team, AgeGroup, Diamond } from '@/lib/types';
+import { Game, Team, Division, Diamond } from '@/lib/types';
 import GameList from '../schedule/components/GameList';
 import s from '../admin-common.module.css';
 import styles from '../schedule/schedule-admin.module.css';
@@ -16,7 +16,7 @@ export default function AdminResultsPage() {
   const { currentTournament } = useTournament();
   const [games, setGames] = useState<Game[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
-  const [ageGroups, setAgeGroups] = useState<AgeGroup[]>([]);
+  const [divisions, setDivisions] = useState<Division[]>([]);
   const [diamonds, setDiamonds] = useState<Diamond[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -45,13 +45,13 @@ export default function AdminResultsPage() {
     const [allGames, allTeams, groups, allDiamonds] = await Promise.all([
       getGames(tournamentId),
       getTeams(tournamentId),
-      getAgeGroups(tournamentId),
+      getDivisions(tournamentId),
       getDiamonds(tournamentId)
     ]);
 
     setGames(allGames);
     setTeams(allTeams.filter(t => t.status === 'accepted'));
-    setAgeGroups(groups);
+    setDivisions(groups);
     if (groups.length > 0 && !filterGroup) {
       setFilterGroup(groups[0].id);
     }
@@ -66,7 +66,7 @@ export default function AdminResultsPage() {
   }
 
   function getGroupName(id: string) {
-    return ageGroups.find(g => g.id === id)?.name ?? '—';
+    return divisions.find(g => g.id === id)?.name ?? '—';
   }
 
   function openScore(g: Game) {
@@ -108,7 +108,7 @@ export default function AdminResultsPage() {
 
   // Compute counts for filter chips
   const divisionGames = games.filter(g => {
-    const matchesGroup = g.ageGroupId === filterGroup;
+    const matchesGroup = g.divisionId === filterGroup;
     const matchesView = viewMode === 'pool' ? !g.isPlayoff : g.isPlayoff;
     return matchesGroup && matchesView;
   });
@@ -116,7 +116,7 @@ export default function AdminResultsPage() {
   const completedCount = divisionGames.filter(g => g.status === 'completed').length;
 
   const filtered = games.filter(g => {
-    const matchesGroup = g.ageGroupId === filterGroup;
+    const matchesGroup = g.divisionId === filterGroup;
     const matchesStatus = selectedStatuses.length === 0 || 
       selectedStatuses.some(sf => sf === 'pending' ? g.status !== 'completed' : g.status === 'completed');
 
@@ -137,7 +137,7 @@ export default function AdminResultsPage() {
     const rows = filtered.map(g => [
       g.date,
       formatTime(g.time),
-      getGroupName(g.ageGroupId),
+      getGroupName(g.divisionId),
       getTeamName(g.homeTeamId),
       g.homeScore !== null && g.homeScore !== undefined ? String(g.homeScore) : '',
       getTeamName(g.awayTeamId),
@@ -176,7 +176,7 @@ export default function AdminResultsPage() {
           <div className={s.controlGroup}>
             <label className={s.controlLabel}>Division:</label>
             <select className={`${s.controlSelect} form-input`} value={filterGroup} onChange={e => setFilterGroup(e.target.value)}>
-              {ageGroups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
+              {divisions.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
             </select>
           </div>
           {viewMode === 'pool' && (
@@ -217,7 +217,7 @@ export default function AdminResultsPage() {
           <GameList
             games={filtered}
             teams={teams}
-            ageGroups={ageGroups}
+            divisions={divisions}
             diamonds={diamonds}
             viewMode={viewMode}
             groupByPool={groupMode === 'pools'}

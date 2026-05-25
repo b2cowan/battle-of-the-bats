@@ -37,7 +37,7 @@ export async function GET(req: Request) {
   const [teamsRes, gamesRes, announcementsRes] = await Promise.all([
     supabaseAdmin
       .from('teams')
-      .select('id, name, created_at, age_groups(name)')
+      .select('id, name, created_at, divisions(name)')
       .eq('tournament_id', tournamentId)
       .order('created_at', { ascending: false })
       .limit(limit),
@@ -61,7 +61,7 @@ export async function GET(req: Request) {
   const events: ActivityEvent[] = [];
 
   for (const row of teamsRes.data ?? []) {
-    const ag = Array.isArray(row.age_groups) ? row.age_groups[0] : row.age_groups;
+    const ag = Array.isArray(row.divisions) ? row.divisions[0] : row.divisions;
     const division = (ag as { name?: string } | null)?.name;
     events.push({
       id: `reg-${row.id}`,

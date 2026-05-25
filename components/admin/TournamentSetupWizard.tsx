@@ -931,7 +931,7 @@ export default function TournamentSetupWizard({
             endDate: cloneNameForm.endDate || null,
             options: {
               includeDivisions: true, includePools: true, includeSlots: true,
-              includeVenues: true, includeContacts: true, includeBranding: true,
+              includeVenues: true, includeBranding: true,
               includePublicPages: true, includeWelcome: true, includeRulesResources: true,
               includeRegistrationFields: true, includeFeeSchedule: true,
             },
@@ -1137,7 +1137,7 @@ export default function TournamentSetupWizard({
   if (activeStep === 'divisions') {
     return renderFrame(
       'Set up divisions',
-      'Add the age groups or divisions teams can register for. Pools are optional and can be configured per division.',
+      'Add the divisions or divisions teams can register for. Pools are optional and can be configured per division.',
       (
         <div className={styles.setupBlock}>
           <div className={styles.setupBlockHeader}>

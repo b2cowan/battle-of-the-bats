@@ -1,7 +1,7 @@
 ﻿'use client';
 import { useState } from 'react';
 import { ChevronDown, ChevronUp, MapPin, Pencil, X, AlertCircle, Trash2, Check } from 'lucide-react';
-import { Game, Team, AgeGroup, Diamond } from '@/lib/types';
+import { Game, Team, Division, Diamond } from '@/lib/types';
 import { formatTime, formatPoolName } from '@/lib/utils';
 import { scoreSubmissionSummary } from '@/lib/tournament-score-audit';
 import { Pool } from '@/lib/types';
@@ -11,7 +11,7 @@ import styles from '../schedule-admin.module.css';
 interface GameListProps {
   games: Game[];
   teams: Team[];
-  ageGroups: AgeGroup[];
+  divisions: Division[];
   diamonds: Diamond[];
   viewMode: 'pool' | 'playoff';
   groupByPool: boolean;
@@ -32,7 +32,7 @@ type EditFields = { date: string; time: string; diamondId: string; notes: string
 type ScoreFields = { home: string; away: string };
 
 export default function GameList({
-  games, teams, ageGroups, diamonds, viewMode, groupByPool, pools: poolsProp,
+  games, teams, divisions, diamonds, viewMode, groupByPool, pools: poolsProp,
   onEdit, onFinalize, onDelete, onCancel, onSchedule, onSave, onSaveScore, onCreateVenue, mode
 }: GameListProps) {
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
@@ -176,7 +176,7 @@ export default function GameList({
       return (
         <div key={g.id} className={s.row}>
           {/* ── Compact row — scores always visible inline with team names ── */}
-          <div className={s.rowMain} style={{ gap: '1rem' }}>
+          <div className={`${s.rowMain} ${styles.gameRowMain}`} style={{ gap: '1rem' }}>
             {/* Date + Time */}
             <div className={s.gameColDate}>
               <div style={{ fontFamily: 'var(--font-data)', fontWeight: 700, fontSize: '0.8rem', color: 'var(--fl-text)', letterSpacing: '0.01em' }}>
@@ -362,12 +362,12 @@ export default function GameList({
       <div key={g.id} className={`${s.row} ${isExpanded ? styles.expanded : ''}`}>
         {/* ── Compact planning row ── */}
         <div
-          className={s.rowMain}
+          className={`${s.rowMain} ${styles.gameRowMain} ${styles.planningGameRow}`}
           onClick={isCompleted ? undefined : () => toggleExpand(g.id, g)}
           style={{ cursor: isCompleted ? 'default' : 'pointer', gap: '1rem' }}
         >
           {/* Date + Time — single line */}
-          <div className={s.gameColDate} style={{ fontFamily: 'var(--font-data)', whiteSpace: 'nowrap' }}>
+          <div className={`${s.gameColDate} ${styles.planningDateCell}`} style={{ fontFamily: 'var(--font-data)', whiteSpace: 'nowrap' }}>
             <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--fl-text)' }}>
               {g.date ? formatShortDate(g.date) : 'TBD'}
             </span>
@@ -385,19 +385,26 @@ export default function GameList({
           </div>
 
           {/* Matchup */}
-          <div className={s.gameColMatchup} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.65rem' }}>
-            <div style={{ flex: 1, textAlign: 'right', fontFamily: 'var(--font-data)', fontSize: '0.82rem', fontWeight: 700, color: 'var(--fl-text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+          <div className={`${s.gameColMatchup} ${styles.planningMatchup}`} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.65rem' }}>
+            <div className={styles.planningTeamAway} style={{ flex: 1, textAlign: 'right', fontFamily: 'var(--font-data)', fontSize: '0.82rem', fontWeight: 700, color: 'var(--fl-text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               {resolveTeam(g.awayTeamId, g.awayPlaceholder)}
             </div>
-            <div style={{ fontFamily: 'var(--font-data)', fontSize: '0.58rem', fontWeight: 900, color: 'var(--white-25)', letterSpacing: '0.1em', flexShrink: 0 }}>VS</div>
-            <div style={{ flex: 1, fontFamily: 'var(--font-data)', fontSize: '0.82rem', fontWeight: 700, color: 'var(--fl-text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            <div className={styles.planningVs} style={{ fontFamily: 'var(--font-data)', fontSize: '0.58rem', fontWeight: 900, color: 'var(--white-25)', letterSpacing: '0.1em', flexShrink: 0 }}>VS</div>
+            <div className={styles.planningTeamHome} style={{ flex: 1, fontFamily: 'var(--font-data)', fontSize: '0.82rem', fontWeight: 700, color: 'var(--fl-text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               {resolveTeam(g.homeTeamId, g.homePlaceholder)}
             </div>
           </div>
 
-          {/* Fixed-width status area — always present so matchup column never shifts */}
-          <div style={{ flex: '0 0 96px', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '0.35rem' }}>
-            {g.status !== 'scheduled' && statusBadge(g.status)}
+          {/* Fixed-width status area — desktop: full badge; mobile: compact square marker */}
+          <div className={styles.planningStatusCell}>
+            {g.status !== 'scheduled' ? (
+              <>
+                <span className={styles.desktopStatusBadge}>{statusBadge(g.status)}</span>
+                <span className={styles.gameStatusMarker} data-status={g.status}>
+                  {g.status === 'completed' ? '✓' : '✕'}
+                </span>
+              </>
+            ) : null}
             {(g.homeSlotId || g.awaySlotId) && !g.isPlayoff && (
               <span className="badge badge-neutral" style={{ fontSize: '0.6rem', letterSpacing: '0.04em' }}>SLOT</span>
             )}
@@ -407,6 +414,7 @@ export default function GameList({
           {!isCompleted ? (
             <button
               className={s.iconBtn}
+              data-role="schedule-expand"
               onClick={e => { e.stopPropagation(); toggleExpand(g.id, g); }}
               style={{ flexShrink: 0 }}
               aria-label={isExpanded ? 'Collapse' : 'Expand'}
@@ -414,7 +422,7 @@ export default function GameList({
               {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
             </button>
           ) : (
-            <div style={{ width: 28, flexShrink: 0 }} />
+            <div className={styles.planningExpandPlaceholder} style={{ width: 28, flexShrink: 0 }} />
           )}
         </div>
 
@@ -473,7 +481,7 @@ export default function GameList({
                       onChange={e => setEditState(prev => ({ ...prev, [g.id]: { ...prev[g.id], awayTeamId: e.target.value } }))}
                     >
                       <option value="">— TBD —</option>
-                      {teams.filter(t => t.ageGroupId === g.ageGroupId).map(t => (
+                      {teams.filter(t => t.divisionId === g.divisionId).map(t => (
                         <option key={t.id} value={t.id}>{t.name}</option>
                       ))}
                     </select>
@@ -486,7 +494,7 @@ export default function GameList({
                       onChange={e => setEditState(prev => ({ ...prev, [g.id]: { ...prev[g.id], homeTeamId: e.target.value } }))}
                     >
                       <option value="">— TBD —</option>
-                      {teams.filter(t => t.ageGroupId === g.ageGroupId).map(t => (
+                      {teams.filter(t => t.divisionId === g.divisionId).map(t => (
                         <option key={t.id} value={t.id}>{t.name}</option>
                       ))}
                     </select>
@@ -511,17 +519,17 @@ export default function GameList({
             <div className={styles.inlineFormFooter}>
               <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
                 {onCancel && g.status === 'scheduled' && (
-                  <button className="btn btn-ghost btn-sm" style={{ color: 'var(--warning, #f59e0b)', fontSize: '0.72rem' }} onClick={() => onCancel(g.id)}>
+                  <button className="btn btn-ghost btn-data" style={{ color: 'var(--warning, #f59e0b)' }} onClick={() => onCancel(g.id)}>
                     <X size={13} /> Cancel Game
                   </button>
                 )}
                 {onSchedule && g.status === 'cancelled' && (
-                  <button className="btn btn-ghost btn-sm" style={{ fontSize: '0.72rem' }} onClick={() => onSchedule(g.id)}>
+                  <button className="btn btn-ghost btn-data" onClick={() => onSchedule(g.id)}>
                     <AlertCircle size={13} /> Reinstate
                   </button>
                 )}
                 {onDelete && (
-                  <button className="btn btn-danger btn-sm" style={{ fontSize: '0.72rem' }} onClick={() => onDelete(g.id)}>
+                  <button className="btn btn-danger btn-data" onClick={() => onDelete(g.id)}>
                     <Trash2 size={13} /> Delete
                   </button>
                 )}
@@ -530,14 +538,13 @@ export default function GameList({
                 )}
               </div>
               <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
-                <button className="btn btn-ghost btn-sm" style={{ fontSize: '0.72rem' }} onClick={handleDiscard}>
+                <button className="btn btn-ghost btn-data" onClick={handleDiscard}>
                   Discard
                 </button>
                 <button
-                  className="btn btn-lime btn-data btn-sm"
+                  className="btn btn-lime btn-data"
                   disabled={isSaving || !onSave}
                   onClick={handleSave}
-                  style={{ fontSize: '0.72rem' }}
                 >
                   {isSaving ? 'Saving…' : <><Check size={13} /> Save</>}
                 </button>
@@ -549,9 +556,9 @@ export default function GameList({
     );
   };
 
-  const firstGameGroupId = games[0]?.ageGroupId;
-  const currentAgeGroup = ageGroups.find(g => g.id === firstGameGroupId);
-  const pools = currentAgeGroup?.pools || [];
+  const firstGameGroupId = games[0]?.divisionId;
+  const currentDivision = divisions.find(g => g.id === firstGameGroupId);
+  const pools = currentDivision?.pools || [];
 
   return (
     <div className={s.flatList}>

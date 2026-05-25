@@ -1,8 +1,8 @@
 ﻿'use client';
 import { useState, useEffect } from 'react';
 import { Calendar, Clock, MapPin, Trophy, List, LayoutTemplate } from 'lucide-react';
-import { getGames, getTeams, getAgeGroups, getDiamonds, getTournaments } from '@/lib/db';
-import { Game, Team, AgeGroup, Diamond, Tournament } from '@/lib/types';
+import { getGames, getTeams, getDivisions, getDiamonds, getTournaments } from '@/lib/db';
+import { Game, Team, Division, Diamond, Tournament } from '@/lib/types';
 import LocationLink from '@/components/LocationLink';
 import { formatTime, formatPoolName } from '@/lib/utils';
 import styles from './schedule.module.css';
@@ -160,7 +160,7 @@ function PublicBracketColumns({ columns, getTeamDisplay, formatDateShort }: Brac
 export default function SchedulePage() {
   const [games, setGames]         = useState<Game[]>([]);
   const [teams, setTeams]         = useState<Team[]>([]);
-  const [ageGroups, setAgeGroups] = useState<AgeGroup[]>([]);
+  const [divisions, setDivisions] = useState<Division[]>([]);
   const [diamonds, setDiamonds]   = useState<Diamond[]>([]);
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
   const [selectedTournament, setSelectedTournament] = useState<Tournament | null>(null);
@@ -176,8 +176,8 @@ export default function SchedulePage() {
       const active = ts.find(t => t.isActive);
       const tourn = active ?? ts[0] ?? null;
       setSelectedTournament(tourn);
-      const groups = await getAgeGroups(tourn?.id);
-      setAgeGroups(groups);
+      const groups = await getDivisions(tourn?.id);
+      setDivisions(groups);
       if (groups.length > 0) setActiveGroup(groups[0].id);
     }
     init();
@@ -190,8 +190,8 @@ export default function SchedulePage() {
       setGames(await getGames(selectedTournament!.id));
       setTeams(await getTeams(selectedTournament!.id));
       setDiamonds(await getDiamonds(selectedTournament!.id));
-      const groups = await getAgeGroups(selectedTournament!.id);
-      setAgeGroups(groups);
+      const groups = await getDivisions(selectedTournament!.id);
+      setDivisions(groups);
       if (!activeGroup && groups.length > 0) setActiveGroup(groups[0].id);
       setLoading(false);
     }
@@ -211,7 +211,7 @@ export default function SchedulePage() {
 
   const filtered = games
     .filter(g =>
-      g.ageGroupId === activeGroup &&
+      g.divisionId === activeGroup &&
       g.status === 'scheduled' &&
       (viewMode === 'playoff' ? g.isPlayoff : !g.isPlayoff)
     )
@@ -241,7 +241,7 @@ export default function SchedulePage() {
   const today = new Date().toISOString().split('T')[0];
 
   // ── pool inference (for split playoff view) ───────────────────────────────
-  const activeG = ageGroups.find(g => g.id === activeGroup);
+  const activeG = divisions.find(g => g.id === activeGroup);
   const pools   = activeG?.pools || [];
 
   function inferPool(game: Game, allGames: Game[]): string | null {
@@ -295,7 +295,7 @@ export default function SchedulePage() {
         <div className="container">
           <span className="eyebrow"><Calendar size={12} /> Schedule</span>
           <h1 className="display-lg">Tournament Schedule</h1>
-          <p className="text-muted">View upcoming games by age group. All times are local.</p>
+          <p className="text-muted">View upcoming games by division. All times are local.</p>
         </div>
       </div>
 
@@ -305,7 +305,7 @@ export default function SchedulePage() {
           {/* ── tab bar ── */}
           <div className="tabs flex-between" style={{ padding: '0.375rem 0.75rem', marginBottom: viewMode === 'playoff' ? '0.75rem' : '2rem' }}>
             <div style={{ display: 'flex', gap: '0.5rem' }}>
-              {ageGroups.map(g => (
+              {divisions.map(g => (
                 <button key={g.id}
                   className={`tab-btn ${activeGroup === g.id ? 'active' : ''}`}
                   onClick={() => setActiveGroup(g.id)}
@@ -524,7 +524,7 @@ export default function SchedulePage() {
                         </div>
                         <div className={styles.gameMeta}>
                           <span className="badge badge-primary">
-                            {game.isPlayoff ? (game.bracketCode || 'Playoff') : (ageGroups.find(g => g.id === game.ageGroupId)?.name ?? '')}
+                            {game.isPlayoff ? (game.bracketCode || 'Playoff') : (divisions.find(g => g.id === game.divisionId)?.name ?? '')}
                           </span>
                           <LocationLink location={game.location} diamond={getDiamond(game.diamondId)} size="sm" />
                         </div>

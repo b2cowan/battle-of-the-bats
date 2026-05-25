@@ -20,7 +20,7 @@ type LinkSummary = {
   updatedAt: string;
   linkedOrg: { name: string; slug: string; contactEmail: string | null } | null;
   workspaceOrg: { name: string; slug: string } | null;
-  repTeam: { name: string; ageGroup: string | null } | null;
+  repTeam: { name: string; division: string | null } | null;
   workspace: {
     workspaceState: string | null;
     billingMode: string | null;

@@ -56,7 +56,7 @@ test.describe.serial('standalone Team attendance smoke', () => {
     const provisioned = await provisionStandaloneTeamWorkspace({
       actorEmail: coachEmail,
       actorUserId: coachUser.user.id,
-      ageGroup: 'U13',
+      division: 'U13',
       billingMode: 'platform_override',
       entitlementSource: 'platform_override',
       eventSource: 'platform_admin',

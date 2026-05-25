@@ -8,11 +8,11 @@ import type { Game, Team } from '@/lib/types';
 function computeStandings(
   teams: Team[],
   games: Game[],
-  ageGroupId: string
+  divisionId: string
 ) {
-  const groupTeams = teams.filter(t => t.ageGroupId === ageGroupId);
+  const groupTeams = teams.filter(t => t.divisionId === divisionId);
   const groupGames = games.filter(
-    g => g.ageGroupId === ageGroupId && !g.isPlayoff &&
+    g => g.divisionId === divisionId && !g.isPlayoff &&
       (g.status === 'completed' || g.status === 'submitted')
   );
 
@@ -77,7 +77,7 @@ export default async function ArchiveDetailPage({
   const isAdmin = ctx?.org?.id === archive.orgId;
 
   const { finalSnapshot: snap, tournamentName, season, sealedAt, integrityHash } = archive;
-  const { ageGroups, teams, games } = snap;
+  const { divisions, teams, games } = snap;
 
   const playoffGames = games.filter(g => g.isPlayoff && g.status === 'completed');
   const poolGames    = games.filter(g => !g.isPlayoff && (g.status === 'completed' || g.status === 'submitted'));
@@ -225,8 +225,8 @@ export default async function ArchiveDetailPage({
           </div>
         )}
 
-        {/* Standings — per age group, from snapshot */}
-        {ageGroups.length > 0 && poolGames.length > 0 && (
+        {/* Standings — per division, from snapshot */}
+        {divisions.length > 0 && poolGames.length > 0 && (
           <section style={{ marginBottom: '2.5rem' }}>
             <div
               style={{
@@ -238,7 +238,7 @@ export default async function ArchiveDetailPage({
             >
               Pool Play Standings
             </div>
-            {ageGroups.map(ag => {
+            {divisions.map(ag => {
               const standings = computeStandings(teams, games, ag.id);
               if (standings.length === 0) return null;
               return (
@@ -374,8 +374,8 @@ export default async function ArchiveDetailPage({
             <div style={{ ...hudLabel, fontSize: '0.6875rem', color: dataGray, marginBottom: '1rem' }}>
               Pool Play Results
             </div>
-            {ageGroups.map(ag => {
-              const agGames = poolGames.filter(g => g.ageGroupId === ag.id);
+            {divisions.map(ag => {
+              const agGames = poolGames.filter(g => g.divisionId === ag.id);
               if (agGames.length === 0) return null;
               return (
                 <div key={ag.id} style={{ marginBottom: '1.25rem' }}>

@@ -23,7 +23,7 @@ type TeamExportRow = {
   total_paid: number | null;
   registered_at: string | null;
   waitlist_position: number | null;
-  age_group_id: string | null;
+  division_id: string | null;
 };
 
 type FeeRow = {
@@ -40,7 +40,7 @@ type TournamentExportRow = FeeRow & {
   fee_schedule_mode: string | null;
 };
 
-type AgeGroupExportRow = FeeRow & {
+type DivisionExportRow = FeeRow & {
   id: string;
   name: string;
 };
@@ -60,9 +60,9 @@ function answerValue(answer: Awaited<ReturnType<typeof getTournamentRegistration
   return '';
 }
 
-function effectiveFee(team: TeamExportRow, tournament: TournamentExportRow, ageGroups: Map<string, AgeGroupExportRow>): FeeRow {
-  const group = team.age_group_id ? ageGroups.get(team.age_group_id) : null;
-  if (tournament.fee_schedule_mode === 'age_group' && group?.total_fee_amount != null) {
+function effectiveFee(team: TeamExportRow, tournament: TournamentExportRow, divisions: Map<string, DivisionExportRow>): FeeRow {
+  const group = team.division_id ? divisions.get(team.division_id) : null;
+  if (tournament.fee_schedule_mode === 'division' && group?.total_fee_amount != null) {
     return group;
   }
   return tournament;
@@ -128,14 +128,14 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
     return NextResponse.json({ error: requiresTournamentPlusCopy('registration_export') }, { status: 403 });
   }
 
-  const [{ data: teams, error: teamsError }, { data: ageGroups, error: groupsError }, fields] = await Promise.all([
+  const [{ data: teams, error: teamsError }, { data: divisions, error: groupsError }, fields] = await Promise.all([
     supabaseAdmin
       .from('teams')
-      .select('id, name, coach, email, status, payment_status, deposit_paid, total_paid, registered_at, waitlist_position, age_group_id')
+      .select('id, name, coach, email, status, payment_status, deposit_paid, total_paid, registered_at, waitlist_position, division_id')
       .eq('tournament_id', tournamentId)
       .order('registered_at', { ascending: true }),
     supabaseAdmin
-      .from('age_groups')
+      .from('divisions')
       .select('id, name, deposit_amount, deposit_due_date, total_fee_amount, total_fee_due_date')
       .eq('tournament_id', tournamentId),
     getTournamentRegistrationFields(tournamentId),
@@ -145,9 +145,9 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
   if (groupsError) return NextResponse.json({ error: groupsError.message }, { status: 500 });
 
   const typedTeams = (teams ?? []) as TeamExportRow[];
-  const typedAgeGroups = (ageGroups ?? []) as AgeGroupExportRow[];
-  const groupMap = new Map(typedAgeGroups.map(group => [group.id, group.name]));
-  const groupFeeMap = new Map(typedAgeGroups.map(group => [group.id, group]));
+  const typedDivisions = (divisions ?? []) as DivisionExportRow[];
+  const groupMap = new Map(typedDivisions.map(group => [group.id, group.name]));
+  const groupFeeMap = new Map(typedDivisions.map(group => [group.id, group]));
   const answers = await getTournamentRegistrationFieldAnswersForRegistrations(typedTeams.map(team => team.id));
   const answersByRegistration = new Map<string, Map<string, typeof answers[number]>>();
   for (const answer of answers) {
@@ -180,7 +180,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
     const due = paymentDue(team, fee);
     return [
       team.name,
-      team.age_group_id ? groupMap.get(team.age_group_id) ?? '' : '',
+      team.division_id ? groupMap.get(team.division_id) ?? '' : '',
       team.status ?? '',
       team.coach ?? '',
       team.email ?? '',

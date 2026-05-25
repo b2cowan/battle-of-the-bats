@@ -284,8 +284,8 @@ function TeamSlugRow({
             />
           )}
           {team.name}
-          {team.ageGroup && (
-            <span className={`${styles.badge} ${styles.badgeAgeGroup}`}>{team.ageGroup}</span>
+          {team.division && (
+            <span className={`${styles.badge} ${styles.badgeDivision}`}>{team.division}</span>
           )}
           {team.isArchived && (
             <span className={`${styles.badge} ${styles.badgeArchived}`}>Archived</span>

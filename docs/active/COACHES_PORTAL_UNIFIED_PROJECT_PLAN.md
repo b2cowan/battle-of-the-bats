@@ -10,7 +10,7 @@ FieldLogicHQ will ship one **Coaches Portal**.
 
 The tournament participant portal and the paid standalone Team workspace are not separate products. They are entitlement states inside the same coach-owned portal:
 
-- **Basic Coaches Portal:** free access created through tournament registration. It keeps tournament registrations, status, schedule, announcements, and historical tournament records.
+- **Basic Coaches Portal:** free access created through tournament registration. It keeps persistent coach team profiles, tournament registrations, status, schedule, announcements, and historical tournament records.
 - **Premium Coaches Portal:** paid standalone Coaches Portal, org-billed Coaches Portal add-on, or Club-included coach access. It adds the rep-team operating tools already built for Team workspaces.
 
 Public naming changes from **Team** to **Coaches Portal**. Internal technical names such as `team_workspaces`, `team_entitlements`, `team_org_links`, and `team_workspace_claims` can remain until a technical rename is worth the migration cost.
@@ -71,14 +71,17 @@ Implementation consequence:
 1. Coach registers a team for a tournament.
 2. Registration is saved immediately.
 3. Coach creates a FieldLogicHQ account or signs in.
-4. Coach lands in Coaches Portal and sees that tournament registration.
-5. Confirmation and acceptance emails link back to Coaches Portal.
+4. FieldLogicHQ creates or links a persistent Basic coach team profile for that coach and team.
+5. The tournament registration is attached to that persistent team profile.
+6. Coach lands in Coaches Portal and sees that team with the first tournament registration under it.
+7. Confirmation and acceptance emails link back to Coaches Portal.
 
 ### 2. Returning Tournament Coach
 
-1. Coach registers for another tournament with the same email or signs in during registration.
-2. The new registration is attached to the same coach identity.
-3. Coaches Portal shows both tournaments, with active events first and historical records below.
+1. Coach signs in during registration for another tournament.
+2. Coach selects an existing team profile or creates a new one.
+3. The new tournament registration is attached to the selected team profile.
+4. Coaches Portal shows that team once, with all active and historical tournament records underneath it.
 
 ### 3. Upgrade To Premium Coaches Portal
 
@@ -101,19 +104,19 @@ Implementation consequence:
 
 Basic access is granted by tournament participation.
 
-MVP identity rule:
+Identity rule:
 
-- A logged-in coach can see tournament `teams` registration records where `teams.email` matches the verified auth email.
-- Registration detail access must always verify the logged-in user can claim that email before rendering.
-- Email matching is acceptable for first release because tournament registration already stores coach email and lowercases it.
-
-Recommended follow-up:
-
-- Add an explicit coach-registration link table after the first build so email changes, multiple coach contacts, delegated access, and merged accounts can be handled without relying only on email matching.
+- Add a persistent Basic coach team profile for tournament participants.
+- Add explicit links between auth users, Basic coach team profiles, and tournament `teams` registration records.
+- Use tournament registration email only during the account/linking step, before the explicit Basic team link exists.
+- Do not render Coaches Portal records from email matching alone. The product is not live yet, so explicit Basic team links are the only portal access source.
+- Let returning coaches select an existing team during registration so the same team can accumulate tournament history across events.
+- Keep the Basic team profile distinct from paid premium workspace entitlement until upgrade; on upgrade, attach or convert the Basic profile to the Premium Coaches Portal workspace so history remains intact.
 
 Basic portal includes:
 
-- All current and historical tournament registrations tied to the coach.
+- All current and historical tournament registrations tied to the coach's team profiles.
+- A team-first view that lets a coach see each team once, then drill into the tournaments that team has entered.
 - Status: pending, accepted, waitlist, rejected, completed/archived.
 - Tournament facts: name, dates, location, organization, division.
 - Coach's own schedule once published.
@@ -289,18 +292,68 @@ Acceptance criteria:
 - Second tournament registration appears in the same portal.
 - Historical tournament records remain visible after events complete.
 
+### Phase 2B - Team-Centric Basic Coaches Portal
+
+Goal: replace the temporary registration-by-email model with persistent coach-owned team profiles that can carry tournament history and later upgrade into Premium Coaches Portal tools.
+
+Tasks:
+
+- [x] Add a Basic coach team identity model, likely as a lightweight table separate from paid `team_workspaces` until upgrade.
+- [x] Add explicit links from auth users to Basic coach team profiles.
+- [x] Add explicit links from Basic coach team profiles to tournament `teams` registration records.
+- [x] Backfill existing tournament coach access by grouping current registration records by verified coach email and team identity, creating explicit Basic team and registration links.
+- [x] Update first-time tournament registration account creation so creating/signing into a user also creates or links the submitted team profile.
+- [x] Update returning-coach tournament registration so signed-in coaches can select an existing team or create a new team before completing registration.
+- [x] Update `/coaches/tournaments` into a team-first Basic portal view: team cards first, tournament registrations under each team, active events before historical records.
+- [x] Ensure a paid Coaches Portal upgrade attaches premium workspace access to the same Basic team identity instead of creating an unrelated team record.
+- [x] Add future hooks for a tournament directory where coaches can register existing teams into listed tournaments.
+
+Implementation note, 2026-05-25:
+
+- Migration `091_basic_coach_team_profiles.sql` adds `basic_coach_teams`, `basic_coach_team_users`, `basic_coach_team_registrations`, and `team_workspaces.basic_coach_team_id`.
+- `/api/coaches/basic-teams` is the server-mediated link/list endpoint for Basic team profiles; client Supabase still does not query these tables directly.
+- `/coaches/join` links the saved tournament registration after account creation/sign-in. New accounts auto-create the Basic team; returning accounts can select an existing team or create a new one.
+- Public tournament registration shows an existing/new Basic team selector for signed-in coaches and immediately links the submitted registration when the signed-in email matches the registration email.
+- `/coaches/tournaments` now renders team-first groups from explicit Basic team links only.
+- Premium provisioning now carries `basic_coach_team_id` forward when the upgrade originates from a linked tournament registration.
+- Follow-up migration `092_basic_coach_team_explicit_access_only.sql` removes the unused `email_fallback` link source from the database constraint.
+
+Manual browser test script to run before launch:
+
+1. Register a tournament team as a new coach and confirm the saved registration sends the coach to `/coaches/join` with the registration id.
+2. Create the coach account and confirm `/coaches/tournaments` shows one Basic team with one tournament record.
+3. Sign in as the same coach before another tournament registration and select the existing Basic team.
+4. Confirm `/coaches/tournaments` shows one Basic team with two tournament records.
+5. Register a different team as the same coach and choose `New Team`.
+6. Confirm `/coaches/tournaments` shows two separate Basic team profiles.
+7. Try opening a registration detail while signed in as a different coach and confirm it returns the not-found state.
+8. Upgrade from a linked tournament registration and confirm `team_workspaces.basic_coach_team_id` is populated.
+
+Acceptance criteria:
+
+- A coach can register one team for a tournament, create/sign into their user, and see one Basic team with one tournament record.
+- The same coach can register that same team for another tournament by selecting the existing team and then see one team with two tournament records.
+- Registering a different team creates a separate Basic team profile under the same coach account.
+- Upgrading a Basic team to Premium keeps the same tournament history visible in the same Coaches Portal.
+- Email matching is no longer the only source of access for new registrations after this phase ships.
+
 ### Phase 3 - Unified Premium Workspace Experience
 
 Goal: premium tools appear in the same portal, not a separate product.
 
 Tasks:
 
-- [ ] Add entitlement-aware portal shell that shows basic and premium sections from one navigation model.
-- [ ] Surface premium workspace cards for direct, org-billed, and Club coach access.
+- [x] Add entitlement-aware portal shell that shows basic and premium sections from one navigation model.
+- [x] Surface premium workspace cards for direct, org-billed, and Club coach access.
 - [ ] Preserve tournament history in premium dashboards.
 - [ ] Connect tournament-claimed premium workspace history to the Basic tournament records view.
 - [ ] Confirm Team entitlement checks still require active entitlement plus active coach assignment.
 - [ ] Confirm linked-org Basic visibility does not expose roster, documents, accounting, billing, or org-wide rep-team admin access.
+
+Implementation note, 2026-05-25:
+
+- `/coaches` now acts as the coach-specific portal home. It shows Basic tournament records and Premium Coaches Portal workspace entries from the existing user context resolver, without duplicating the broader `/home` account switcher.
+- `/coaches/teams` lists Premium Coaches Portal workspaces only and links through to the existing org-scoped premium dashboards.
 
 Acceptance criteria:
 
@@ -373,7 +426,8 @@ Acceptance criteria:
 Manual and automated checks:
 
 - [ ] Register tournament team as a new coach and land in Coaches Portal Basic.
-- [ ] Register second tournament with same coach and see both registrations.
+- [ ] Register second tournament with same coach, select the existing team, and see both registrations under that team.
+- [ ] Register a different team with the same coach and confirm it appears as a separate Coaches Portal team context.
 - [ ] Verify accepted registration shows premium Coaches Portal CTA.
 - [ ] Upgrade from a tournament registration into premium Coaches Portal and keep tournament history.
 - [ ] Direct paid Coaches Portal checkout provisions premium entitlement.
@@ -424,7 +478,10 @@ Customer-facing readiness:
 - Resolved by product owner: remove legacy paid coach/team route references from customer-facing links and use `/coaches`.
 - Resolved by product owner: paid Coaches Portal remains gated until Stripe, cancellation, retention, and mobile launch checks pass.
 - Resolved by product owner: cancellation follows the Tournament-style model. Premium tools stop being actively available, premium data is archived for 90 days, and reactivation restores it during that window where possible.
-- Should Basic tournament access stay email-derived for MVP or get an explicit link table before launch? Recommendation: email-derived is acceptable for MVP, but add the link table before supporting email changes or delegated coach access.
+- Resolved by product owner, 2026-05-25: product is not live, so Basic tournament access should not stay email-derived. Explicit Basic team links are required before records appear in Coaches Portal.
+- Should the Basic team profile table be named and modeled as its own lightweight entity, or should it reuse `team_workspaces` from day one? Recommendation: keep Basic profiles separate and attach a `team_workspace` only when Premium is activated, because `team_workspaces` currently represents paid/team-management entitlement and provisioning.
+- Should Basic teams support multiple coaches in the first team-centric release? Recommendation: design the link table for multiple coaches but launch with the registering coach as primary owner until delegated access UX is ready.
+- Should duplicate team detection be automatic? Recommendation: avoid fuzzy auto-merge in the first release; let signed-in coaches explicitly select an existing team during registration.
 
 ## Final Recommendation
 

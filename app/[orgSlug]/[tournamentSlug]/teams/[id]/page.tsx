@@ -10,7 +10,7 @@ interface TeamProfile {
   team_name: string;
   coach_name: string;
   email: string;
-  age_group_name: string;
+  division_name: string;
   tournament_name: string;
   status: 'pending' | 'accepted' | 'rejected' | 'waitlist';
   payment_status: 'pending' | 'paid';
@@ -95,7 +95,7 @@ export default function TeamProfilePage({ params }: { params: Promise<{ orgSlug:
       <div className={styles.pageHeader}>
         <div className="container">
           <div className="flex items-center gap-2 mb-4">
-            <span className="badge badge-primary">{team.age_group_name}</span>
+            <span className="badge badge-primary">{team.division_name}</span>
             {team.pool && <span className="badge">{team.pool.replace(/^Pool\s+/i, '').trim()} Pool</span>}
           </div>
           <h1 className="display-lg">{team.team_name}</h1>
@@ -126,7 +126,7 @@ export default function TeamProfilePage({ params }: { params: Promise<{ orgSlug:
                   </div>
                   <div className={styles.infoItem}>
                     <label>Division</label>
-                    <strong>{team.age_group_name}</strong>
+                    <strong>{team.division_name}</strong>
                   </div>
                   {team.pool && (
                     <div className={styles.infoItem}>

@@ -433,7 +433,7 @@ const hasResources = resources.length > 0;
 const hasContent   = hasRules || hasResources;
 
 const displayRules = isFiltering
-  ? allRules.filter(r => !r.ageGroupIds?.length || r.ageGroupIds.includes(preferredGroup!.id))
+  ? allRules.filter(r => !r.divisionIds?.length || r.divisionIds.includes(preferredGroup!.id))
   : allRules;
 ```
 

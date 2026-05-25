@@ -2,9 +2,9 @@
 import { useState, useEffect } from 'react';
 import { Trophy } from 'lucide-react';
 import { useParams } from 'next/navigation';
-import { getAgPref, setAgPref } from '@/lib/age-group-cookie';
+import { getDivisionPref, setDivisionPref } from '@/lib/division-cookie';
 import { isPublicPageEnabled } from '@/lib/public-pages';
-import { AgeGroup, Tournament } from '@/lib/types';
+import { Division, Tournament } from '@/lib/types';
 import YearSelector from '@/components/YearSelector';
 import { formatPoolName } from '@/lib/utils';
 import styles from '../../standings/standings.module.css';
@@ -35,23 +35,23 @@ export default function StandingsPage() {
   const orgSlug        = params.orgSlug as string;
   const tournamentSlug = params.tournamentSlug as string;
 
-  const [ageGroups, setAgeGroups]         = useState<AgeGroup[]>([]);
+  const [divisions, setDivisions]         = useState<Division[]>([]);
   const [allTournaments, setAllTournaments] = useState<Tournament[]>([]);
   const [selectedTournament, setSelectedTournament] = useState<Tournament | null>(null);
   const [activeGroup, setActiveGroup]     = useState<string>('');
-  const [standingsByAgeGroup, setStandingsByAgeGroup] = useState<Record<string, StandingResult[]>>({});
+  const [standingsByDivision, setStandingsByDivision] = useState<Record<string, StandingResult[]>>({});
 
   useEffect(() => {
     async function init() {
       const data = await fetchPublicTournamentData(orgSlug, tournamentSlug, 'standings');
       const current = data?.tournament ?? null;
-      const groups = data?.ageGroups ?? [];
+      const groups = data?.divisions ?? [];
       setAllTournaments(data?.tournaments ?? []);
       setSelectedTournament(current);
-      setAgeGroups(groups);
-      setStandingsByAgeGroup(data?.standingsByAgeGroup ?? {});
+      setDivisions(groups);
+      setStandingsByDivision(data?.standingsByDivision ?? {});
       if (groups.length > 0) {
-        const pref = getAgPref(orgSlug);
+        const pref = getDivisionPref(orgSlug);
         const preferred = pref ? groups.find(g => g.name === pref) : null;
         setActiveGroup((preferred ?? groups[0]).id);
       }
@@ -59,9 +59,9 @@ export default function StandingsPage() {
     init();
   }, [orgSlug, tournamentSlug]);
 
-  const currentGroup = ageGroups.find(g => g.id === activeGroup);
+  const currentGroup = divisions.find(g => g.id === activeGroup);
   const standings: StandingRow[] = activeGroup
-    ? (standingsByAgeGroup[activeGroup] ?? []).map(s => ({ ...s, id: s.teamId, name: s.teamName }))
+    ? (standingsByDivision[activeGroup] ?? []).map(s => ({ ...s, id: s.teamId, name: s.teamName }))
     : [];
   const pools        = currentGroup?.pools || [];
 
@@ -101,11 +101,11 @@ export default function StandingsPage() {
 
           <div className="tabs" style={{ padding: '0.375rem 0.75rem', marginBottom: '2rem' }}>
             <div style={{ display: 'flex', gap: '0.5rem' }}>
-              {ageGroups.map(g => (
+              {divisions.map(g => (
                 <button
                   key={g.id}
                   className={`tab-btn ${activeGroup === g.id ? 'active' : ''}`}
-                  onClick={() => { setActiveGroup(g.id); setAgPref(orgSlug, g.name); }}
+                  onClick={() => { setActiveGroup(g.id); setDivisionPref(orgSlug, g.name); }}
                   id={`standings-tab-${g.name}`}
                 >
                   {g.name}

@@ -308,17 +308,17 @@ export async function POST(req: Request) {
           .single();
         if (tournamentError) throw tournamentError;
 
-        const { data: ageGroups, error: ageGroupsError } = await supabase
-          .from('age_groups')
+        const { data: divisions, error: divisionsError } = await supabase
+          .from('divisions')
           .select('id, is_closed')
           .eq('tournament_id', id);
-        if (ageGroupsError) throw ageGroupsError;
+        if (divisionsError) throw divisionsError;
 
         const blockers: string[] = [];
         if (!tournamentRow?.start_date || !tournamentRow?.end_date) blockers.push('add tournament dates');
-        if (!ageGroups?.length) blockers.push('add at least one division');
+        if (!divisions?.length) blockers.push('add at least one division');
         if (!tournamentRow?.contact_email && !ctx.org.contactEmail) blockers.push('add a public contact email');
-        if (ageGroups?.length && ageGroups.every(g => g.is_closed)) blockers.push('open at least one division');
+        if (divisions?.length && divisions.every(g => g.is_closed)) blockers.push('open at least one division');
         if (blockers.length > 0) {
           return Response.json(
             { error: `Before activating this tournament, please ${blockers.join(', ')}.` },
@@ -436,6 +436,32 @@ export async function POST(req: Request) {
           return Response.json({ error: 'Post-event result notifications are included with Tournament Plus, League, and Club.' }, { status: 403 });
         }
         updates.notify_teams_on_complete = wantsNotification;
+      }
+
+      // Contact model refactor fields (migration 088)
+      if ('defaultContactMemberId' in data) {
+        const memberId = data.defaultContactMemberId;
+        if (memberId !== null && memberId !== undefined) {
+          // Validate the member belongs to this org
+          const { data: member } = await supabase
+            .from('organization_members')
+            .select('id')
+            .eq('id', memberId)
+            .eq('organization_id', ctx.org.id)
+            .single();
+          if (!member) {
+            return Response.json({ error: 'Contact member not found in this organization.' }, { status: 400 });
+          }
+          updates.default_contact_member_id = memberId;
+        } else {
+          updates.default_contact_member_id = null;
+        }
+      }
+      if (data.notifyMode !== undefined) {
+        if (data.notifyMode !== 'all' && data.notifyMode !== 'assigned') {
+          return Response.json({ error: "notifyMode must be 'all' or 'assigned'." }, { status: 400 });
+        }
+        updates.notify_mode = data.notifyMode;
       }
 
       if (data.startDate !== undefined || data.endDate !== undefined) {

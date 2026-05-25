@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation';
 import { Calendar, Clock, Megaphone, Star, Trophy, Users, BookOpen, FileText, Download, ExternalLink, UserPlus, AlertCircle, ChevronDown } from 'lucide-react';
 import {
-  getAgeGroups,
+  getDivisions,
   getAnnouncements,
   getDiamonds,
   getGames,
@@ -12,7 +12,7 @@ import {
 } from '@/lib/db';
 import { getTournamentPreviewContext } from '@/lib/tournament-preview';
 import { isPublicPageEnabled, type PublicPageKey } from '@/lib/public-pages';
-import type { AgeGroup, Game, Resource, RuleSection, Team } from '@/lib/types';
+import type { Division, Game, Resource, RuleSection, Team } from '@/lib/types';
 import LocationLink from '@/components/LocationLink';
 import { formatPoolName, formatTime } from '@/lib/utils';
 import newsStyles from '@/app/[orgSlug]/news/news.module.css';
@@ -45,19 +45,19 @@ export default async function TournamentPreviewSectionPage({
   }
 
   if (section === 'schedule') {
-    const [games, teams, ageGroups, diamonds] = await Promise.all([
+    const [games, teams, divisions, diamonds] = await Promise.all([
       getGames(tournament.id, readOptions),
       getTeams(tournament.id, readOptions),
-      getAgeGroups(tournament.id, readOptions),
+      getDivisions(tournament.id, readOptions),
       getDiamonds(tournament.id, readOptions),
     ]);
-    return <PreviewSchedule games={games} teams={teams} ageGroups={ageGroups} diamonds={diamonds} />;
+    return <PreviewSchedule games={games} teams={teams} divisions={divisions} diamonds={diamonds} />;
   }
 
   if (section === 'standings') {
-    const ageGroups = await getAgeGroups(tournament.id, readOptions);
+    const divisions = await getDivisions(tournament.id, readOptions);
     const rowsByGroup = await Promise.all(
-      ageGroups.map(async group => ({
+      divisions.map(async group => ({
         group,
         standings: await getStandings(group.id, group.playoffConfig, readOptions),
       }))
@@ -66,11 +66,11 @@ export default async function TournamentPreviewSectionPage({
   }
 
   if (section === 'teams') {
-    const [teams, ageGroups] = await Promise.all([
+    const [teams, divisions] = await Promise.all([
       getTeams(tournament.id, readOptions),
-      getAgeGroups(tournament.id, readOptions),
+      getDivisions(tournament.id, readOptions),
     ]);
-    return <PreviewTeams teams={teams.filter(t => t.status === 'accepted')} ageGroups={ageGroups} />;
+    return <PreviewTeams teams={teams.filter(t => t.status === 'accepted')} divisions={divisions} />;
   }
 
   if (section === 'rules') {
@@ -81,15 +81,15 @@ export default async function TournamentPreviewSectionPage({
     return <PreviewRules rules={rules} resources={resources} contactEmail={tournament.contactEmail ?? org.contactEmail ?? null} />;
   }
 
-  const [teams, ageGroups] = await Promise.all([
+  const [teams, divisions] = await Promise.all([
     getTeams(tournament.id, readOptions),
-    getAgeGroups(tournament.id, readOptions),
+    getDivisions(tournament.id, readOptions),
   ]);
   return (
     <PreviewRegister
       tournamentName={tournament.name}
       contactEmail={tournament.contactEmail ?? org.contactEmail ?? null}
-      ageGroups={ageGroups}
+      divisions={divisions}
       teams={teams}
     />
   );
@@ -203,15 +203,15 @@ function AnnouncementCard({
 function PreviewSchedule({
   games,
   teams,
-  ageGroups,
+  divisions,
   diamonds,
 }: {
   games: Game[];
   teams: Team[];
-  ageGroups: AgeGroup[];
+  divisions: Division[];
   diamonds: Awaited<ReturnType<typeof getDiamonds>>;
 }) {
-  const sortedGroups = [...ageGroups].sort((a, b) => a.order - b.order);
+  const sortedGroups = [...divisions].sort((a, b) => a.order - b.order);
   const teamName = (id?: string, placeholder?: string) => {
     if (id && id !== NIL_UUID) return teams.find(t => t.id === id)?.name ?? 'TBD';
     return placeholder || 'TBD';
@@ -237,7 +237,7 @@ function PreviewSchedule({
             <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
               {sortedGroups.map(group => {
                 const groupGames = games
-                  .filter(game => game.ageGroupId === group.id)
+                  .filter(game => game.divisionId === group.id)
                   .sort((a, b) => `${a.date} ${a.time}`.localeCompare(`${b.date} ${b.time}`));
                 if (groupGames.length === 0) return null;
 
@@ -292,7 +292,7 @@ function PreviewSchedule({
 function PreviewStandings({
   rowsByGroup,
 }: {
-  rowsByGroup: Array<{ group: AgeGroup; standings: Awaited<ReturnType<typeof getStandings>> }>;
+  rowsByGroup: Array<{ group: Division; standings: Awaited<ReturnType<typeof getStandings>> }>;
 }) {
   const hasStandings = rowsByGroup.some(({ standings }) => standings.length > 0);
 
@@ -371,7 +371,7 @@ function PreviewStandings({
   );
 }
 
-function PreviewTeams({ teams, ageGroups }: { teams: Team[]; ageGroups: AgeGroup[] }) {
+function PreviewTeams({ teams, divisions }: { teams: Team[]; divisions: Division[] }) {
   return (
     <div className="page-content">
       <PageHeader
@@ -389,8 +389,8 @@ function PreviewTeams({ teams, ageGroups }: { teams: Team[]; ageGroups: AgeGroup
             </div>
           ) : (
             <div className={teamsStyles.divisionLayout}>
-              {ageGroups.map(group => {
-                const groupTeams = teams.filter(team => team.ageGroupId === group.id);
+              {divisions.map(group => {
+                const groupTeams = teams.filter(team => team.divisionId === group.id);
                 if (groupTeams.length === 0) return null;
                 return (
                   <div key={group.id} className={teamsStyles.groupSection}>
@@ -433,7 +433,7 @@ function PreviewRules({
 }) {
   const displayRules = rules.length > 0
     ? rules
-    : [{ id: 'fallback', tournamentId: '', title: 'Rules Coming Soon', icon: 'BookOpen', order: 0, ageGroupIds: null, items: [{ id: 'fallback-item', ruleId: 'fallback', content: 'The organizer has not published tournament rules yet.', order: 0 }] }];
+    : [{ id: 'fallback', tournamentId: '', title: 'Rules Coming Soon', icon: 'BookOpen', order: 0, divisionIds: null, items: [{ id: 'fallback-item', ruleId: 'fallback', content: 'The organizer has not published tournament rules yet.', order: 0 }] }];
 
   return (
     <div className="page-content">
@@ -507,17 +507,17 @@ function PreviewRules({
 function PreviewRegister({
   tournamentName,
   contactEmail,
-  ageGroups,
+  divisions,
   teams,
 }: {
   tournamentName: string;
   contactEmail: string | null;
-  ageGroups: AgeGroup[];
+  divisions: Division[];
   teams: Team[];
 }) {
-  const stats = Object.fromEntries(ageGroups.map(group => [
+  const stats = Object.fromEntries(divisions.map(group => [
     group.id,
-    teams.filter(team => team.ageGroupId === group.id).length,
+    teams.filter(team => team.divisionId === group.id).length,
   ]));
 
   return (
@@ -531,7 +531,7 @@ function PreviewRegister({
       <div className="section">
         <div className="container">
           <div className={registerStyles.formWrap}>
-            {ageGroups.length === 0 ? (
+            {divisions.length === 0 ? (
               <div className={`card ${registerStyles.closedCard}`}>
                 <AlertCircle size={40} style={{ color: 'var(--warning)', margin: '0 auto 1rem' }} />
                 <h3>Registration Not Open</h3>
@@ -569,7 +569,7 @@ function PreviewRegister({
                     <div className="select-wrapper">
                       <select className="form-input" disabled defaultValue="">
                         <option value="">Select a division</option>
-                        {ageGroups.map(group => {
+                        {divisions.map(group => {
                           const filled = stats[group.id] || 0;
                           const remaining = group.capacity ? Math.max(0, group.capacity - filled) : null;
                           const label = group.isClosed

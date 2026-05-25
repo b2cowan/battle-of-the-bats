@@ -1,7 +1,7 @@
 ﻿'use client';
 import { useState, useMemo } from 'react';
 import { Sparkles, Calendar, Clock, MapPin, Check, X, RefreshCw, AlertCircle, Plus, Trash2 } from 'lucide-react';
-import { Team, AgeGroup, Diamond, Game, Tournament } from '@/lib/types';
+import { Team, Division, Diamond, Game, Tournament } from '@/lib/types';
 import { saveGame } from '@/lib/db';
 import { formatTime } from '@/lib/utils';
 import styles from './schedule-admin.module.css';
@@ -14,15 +14,15 @@ interface DateSlot {
 
 interface GeneratorProps {
   tournament: Tournament;
-  ageGroups: AgeGroup[];
+  divisions: Division[];
   teams: Team[];
   diamonds: Diamond[];
   onComplete: () => void;
   onCancel: () => void;
 }
 
-export default function ScheduleGenerator({ tournament, ageGroups, teams, diamonds, onComplete, onCancel }: GeneratorProps) {
-  const [selectedGroupId, setSelectedGroupId] = useState(ageGroups[0]?.id || '');
+export default function ScheduleGenerator({ tournament, divisions, teams, diamonds, onComplete, onCancel }: GeneratorProps) {
+  const [selectedGroupId, setSelectedGroupId] = useState(divisions[0]?.id || '');
   const [gameLength, setGameLength] = useState(90); // minutes
   const [breakLength, setBreakLength] = useState(15); // minutes
   const [gamesPerTeam, setGamesPerTeam] = useState(3);
@@ -73,7 +73,7 @@ export default function ScheduleGenerator({ tournament, ageGroups, teams, diamon
     setError(null);
     if (dateSlots.some(s => !s.date)) { setError('Please select a date for all slots'); return; }
     
-    const groupTeams = teams.filter(t => t.ageGroupId === selectedGroupId);
+    const groupTeams = teams.filter(t => t.divisionId === selectedGroupId);
     if (groupTeams.length < 2) { setError('Need at least 2 teams to generate a schedule'); return; }
     
     const diamondList = diamonds.filter(d => selectedDiamonds.has(d.id));
@@ -81,7 +81,7 @@ export default function ScheduleGenerator({ tournament, ageGroups, teams, diamon
 
     // 1. Group teams by pool record
     const pools: Record<string, Team[]> = {};
-    const currentGroup = ageGroups.find(g => g.id === selectedGroupId);
+    const currentGroup = divisions.find(g => g.id === selectedGroupId);
     
     groupTeams.forEach(t => {
       // Priority: use the real pool record if it exists and pools are enabled
@@ -176,7 +176,7 @@ export default function ScheduleGenerator({ tournament, ageGroups, teams, diamon
         if (!isHomeBusy && !isAwayBusy) {
           newGames.push({
             tournamentId: tournament.id,
-            ageGroupId: selectedGroupId,
+            divisionId: selectedGroupId,
             homeTeamId: match.home.id,
             awayTeamId: match.away.id,
             date: slot.date,
@@ -212,7 +212,7 @@ export default function ScheduleGenerator({ tournament, ageGroups, teams, diamon
       await fetch('/api/admin/games', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'delete-division-games', ageGroupId: selectedGroupId })
+        body: JSON.stringify({ action: 'delete-division-games', divisionId: selectedGroupId })
       });
 
       // 2. Bulk save new games
@@ -223,7 +223,7 @@ export default function ScheduleGenerator({ tournament, ageGroups, teams, diamon
           action: 'bulk-save', 
           games: generatedGames,
           tournamentId: tournament.id,
-          ageGroupId: selectedGroupId 
+          divisionId: selectedGroupId 
         })
       });
 
@@ -259,7 +259,7 @@ export default function ScheduleGenerator({ tournament, ageGroups, teams, diamon
               <div className="form-group">
                 <label className="form-label">Division</label>
                 <select className="form-select" value={selectedGroupId} onChange={e => setSelectedGroupId(e.target.value)}>
-                  {ageGroups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
+                  {divisions.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
                 </select>
               </div>
               <div className="form-group">
@@ -345,7 +345,7 @@ export default function ScheduleGenerator({ tournament, ageGroups, teams, diamon
         ) : (
           <div className={styles.generatorPreview}>
             <div className={styles.previewStats}>
-              <span>Generated <strong>{generatedGames.length}</strong> games for <strong>{ageGroups.find(g => g.id === selectedGroupId)?.name}</strong></span>
+              <span>Generated <strong>{generatedGames.length}</strong> games for <strong>{divisions.find(g => g.id === selectedGroupId)?.name}</strong></span>
               <button className="btn btn-ghost btn-sm" onClick={() => setGeneratedGames([])}><RefreshCw size={14} /> Start Over</button>
             </div>
             
@@ -366,7 +366,7 @@ export default function ScheduleGenerator({ tournament, ageGroups, teams, diamon
                         <td>{homeTeam?.name} vs {awayTeam?.name}</td>
                         <td>
                           {(() => {
-                            const currentGroup = ageGroups.find(g => g.id === selectedGroupId);
+                            const currentGroup = divisions.find(g => g.id === selectedGroupId);
                             const usePools = (currentGroup?.poolCount || 0) >= 2;
                             const poolRecord = usePools ? currentGroup?.pools?.find(p => p.id === homeTeam?.poolId) : null;
                             const name = poolRecord ? poolRecord.name : (usePools ? 'Unassigned' : 'None');
@@ -402,7 +402,7 @@ export default function ScheduleGenerator({ tournament, ageGroups, teams, diamon
               </div>
               <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '0.5rem' }}>Commit Schedule?</h3>
               <p style={{ color: 'var(--white-60)', fontSize: '0.95rem', lineHeight: 1.5 }}>
-                This will save the generated schedule and <strong style={{ color: 'var(--danger)' }}>permanently clear</strong> any existing games for the <strong>{ageGroups.find(g => g.id === selectedGroupId)?.name}</strong> division.
+                This will save the generated schedule and <strong style={{ color: 'var(--danger)' }}>permanently clear</strong> any existing games for the <strong>{divisions.find(g => g.id === selectedGroupId)?.name}</strong> division.
               </p>
             </div>
             <div className="flex gap-1" style={{ justifyContent: 'center' }}>

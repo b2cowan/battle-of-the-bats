@@ -1,6 +1,5 @@
 import {
-  getAgeGroups,
-  getContacts,
+  getDivisions,
   getDiamonds,
   getGames,
   getOrganizationBySlug,
@@ -13,7 +12,7 @@ import {
 } from './db';
 import { hasPlanFeature } from './plan-features';
 import { isPublicPageEnabled, type PublicPageKey } from './public-pages';
-import type { AgeGroup, Contact, Diamond, Game, Organization, Resource, RuleSection, Team, Tournament, TournamentRegistrationField } from './types';
+import type { Division, Diamond, Game, Organization, Resource, RuleSection, Team, Tournament, TournamentRegistrationField } from './types';
 
 export type PublicTournamentSection = Extract<PublicPageKey, 'schedule' | 'standings' | 'teams' | 'rules' | 'register'> | 'context';
 
@@ -22,15 +21,14 @@ export type PublicTournamentPageData = {
   tournaments: Tournament[];
   tournament: Tournament | null;
   pageEnabled: boolean;
-  ageGroups: AgeGroup[];
-  contacts: Contact[];
+  divisions: Division[];
   diamonds: Diamond[];
   games: Game[];
   resources: Resource[];
   rules: RuleSection[];
   teams: Team[];
   registrationFields: TournamentRegistrationField[];
-  standingsByAgeGroup: Record<string, Awaited<ReturnType<typeof getStandings>>>;
+  standingsByDivision: Record<string, Awaited<ReturnType<typeof getStandings>>>;
 };
 
 const PUBLIC_STATUSES = new Set<Tournament['status']>(['active', 'completed']);
@@ -82,15 +80,14 @@ export async function getPublicTournamentPageData(
     tournaments,
     tournament,
     pageEnabled,
-    ageGroups: [],
-    contacts: [],
+    divisions: [],
     diamonds: [],
     games: [],
     resources: [],
     rules: [],
     teams: [],
     registrationFields: [],
-    standingsByAgeGroup: {},
+    standingsByDivision: {},
   };
 
   if (!tournament || !pageEnabled || section === 'context') {
@@ -98,52 +95,51 @@ export async function getPublicTournamentPageData(
   }
 
   if (section === 'schedule') {
-    const [games, teams, diamonds, ageGroups] = await Promise.all([
+    const [games, teams, diamonds, divisions] = await Promise.all([
       getGames(tournament.id, { admin: true }),
       getTeams(tournament.id, { admin: true }),
       getDiamonds(tournament.id, { admin: true }),
-      getAgeGroups(tournament.id, { admin: true }),
+      getDivisions(tournament.id, { admin: true }),
     ]);
-    return { ...base, games, teams: teams.filter(t => t.status === 'accepted'), diamonds, ageGroups };
+    return { ...base, games, teams: teams.filter(t => t.status === 'accepted'), diamonds, divisions };
   }
 
   if (section === 'teams') {
-    const [teams, ageGroups] = await Promise.all([
+    const [teams, divisions] = await Promise.all([
       getTeams(tournament.id, { admin: true }),
-      getAgeGroups(tournament.id, { admin: true }),
+      getDivisions(tournament.id, { admin: true }),
     ]);
-    return { ...base, teams: teams.filter(t => t.status === 'accepted'), ageGroups };
+    return { ...base, teams: teams.filter(t => t.status === 'accepted'), divisions };
   }
 
   if (section === 'standings') {
-    const ageGroups = await getAgeGroups(tournament.id, { admin: true });
+    const divisions = await getDivisions(tournament.id, { admin: true });
     const standingsEntries = await Promise.all(
-      ageGroups.map(async group => [
+      divisions.map(async group => [
         group.id,
         await getStandings(group.id, group.playoffConfig, { admin: true }),
       ] as const),
     );
-    return { ...base, ageGroups, standingsByAgeGroup: Object.fromEntries(standingsEntries) };
+    return { ...base, divisions, standingsByDivision: Object.fromEntries(standingsEntries) };
   }
 
   if (section === 'rules') {
-    const [rules, resources, ageGroups] = await Promise.all([
+    const [rules, resources, divisions] = await Promise.all([
       getRules(tournament.id, { admin: true }),
       getResources(tournament.id, { admin: true }),
-      getAgeGroups(tournament.id, { admin: true }),
+      getDivisions(tournament.id, { admin: true }),
     ]);
-    return { ...base, rules, resources, ageGroups };
+    return { ...base, rules, resources, divisions };
   }
 
   if (section === 'register') {
-    const [ageGroups, contacts, registrationFields] = await Promise.all([
-      getAgeGroups(tournament.id, { admin: true }),
-      getContacts(tournament.id, { admin: true }),
+    const [divisions, registrationFields] = await Promise.all([
+      getDivisions(tournament.id, { admin: true }),
       hasPlanFeature(org.planId, 'custom_registration_fields')
         ? getTournamentRegistrationFields(tournament.id)
         : Promise.resolve([]),
     ]);
-    return { ...base, ageGroups, contacts, registrationFields };
+    return { ...base, divisions, registrationFields };
   }
 
   return base;

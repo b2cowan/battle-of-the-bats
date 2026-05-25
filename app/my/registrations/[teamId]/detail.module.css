@@ -3,7 +3,7 @@
 .page {
   max-width: 720px;
   margin: 0 auto;
-  padding: 2rem 1.5rem 4rem;
+  padding: 6rem 1.5rem 4rem;
 }
 
 .breadcrumb {
@@ -253,7 +253,7 @@
 
 @media (max-width: 600px) {
   .page {
-    padding: 1.25rem 1rem 3rem;
+    padding: 5.25rem 1rem 3rem;
   }
 
   .header {

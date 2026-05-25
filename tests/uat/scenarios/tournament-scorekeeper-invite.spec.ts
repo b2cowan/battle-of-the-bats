@@ -67,8 +67,8 @@ async function createAssignedGame(input: {
 
   if (diamondError) throw diamondError
 
-  const { data: ageGroup, error: ageGroupError } = await supabaseAdmin
-    .from('age_groups')
+  const { data: division, error: divisionError } = await supabaseAdmin
+    .from('divisions')
     .insert({
       tournament_id: tournament.id,
       name: 'UAT Invite Division',
@@ -78,7 +78,7 @@ async function createAssignedGame(input: {
     .select('id')
     .single()
 
-  if (ageGroupError) throw ageGroupError
+  if (divisionError) throw divisionError
 
   const homeTeamName = `UAT Invite Home ${input.suffix}`
   const awayTeamName = `UAT Invite Away ${input.suffix}`
@@ -87,7 +87,7 @@ async function createAssignedGame(input: {
     .insert([
       {
         tournament_id: tournament.id,
-        age_group_id: ageGroup.id,
+        division_id: division.id,
         name: homeTeamName,
         coach: 'Home Coach',
         email: `invite-home-${input.suffix}@example.test`,
@@ -97,7 +97,7 @@ async function createAssignedGame(input: {
       },
       {
         tournament_id: tournament.id,
-        age_group_id: ageGroup.id,
+        division_id: division.id,
         name: awayTeamName,
         coach: 'Away Coach',
         email: `invite-away-${input.suffix}@example.test`,
@@ -119,7 +119,7 @@ async function createAssignedGame(input: {
     .from('games')
     .insert({
       tournament_id: tournament.id,
-      age_group_id: ageGroup.id,
+      division_id: division.id,
       home_team_id: homeTeam.id,
       away_team_id: awayTeam.id,
       game_date: today,

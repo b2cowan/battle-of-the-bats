@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { Calendar, Trophy, ChevronRight, Megaphone, Star, Eye } from 'lucide-react';
-import { getAnnouncements, getGames, getTeams, getAgeGroups, getDiamonds } from '@/lib/db';
+import { getAnnouncements, getGames, getTeams, getDivisions, getDiamonds } from '@/lib/db';
 import type { Organization, Tournament } from '@/lib/types';
 import { formatTime } from '@/lib/utils';
 import { isPublicPageEnabled } from '@/lib/public-pages';
@@ -10,7 +10,7 @@ import styles from '@/app/[orgSlug]/Home.module.css';
 
 type RegistrationState = 'open' | 'waitlist' | 'closed' | 'not-open' | 'completed';
 
-function getRegistrationState(tournament: Tournament, ageGroups: Awaited<ReturnType<typeof getAgeGroups>>, teams: Awaited<ReturnType<typeof getTeams>>): {
+function getRegistrationState(tournament: Tournament, divisions: Awaited<ReturnType<typeof getDivisions>>, teams: Awaited<ReturnType<typeof getTeams>>): {
   state: RegistrationState;
   label: string;
   detail: string;
@@ -29,7 +29,7 @@ function getRegistrationState(tournament: Tournament, ageGroups: Awaited<ReturnT
       detail: 'This tournament is still being prepared by the organizer.',
     };
   }
-  if (ageGroups.length === 0) {
+  if (divisions.length === 0) {
     return {
       state: 'not-open',
       label: 'Registration opens soon',
@@ -37,7 +37,7 @@ function getRegistrationState(tournament: Tournament, ageGroups: Awaited<ReturnT
     };
   }
 
-  const openGroups = ageGroups.filter(group => !group.isClosed);
+  const openGroups = divisions.filter(group => !group.isClosed);
   if (openGroups.length === 0) {
     return {
       state: 'closed',
@@ -47,7 +47,7 @@ function getRegistrationState(tournament: Tournament, ageGroups: Awaited<ReturnT
   }
 
   const hasDirectOpenSpot = openGroups.some(group => {
-    const registered = teams.filter(team => team.ageGroupId === group.id).length;
+    const registered = teams.filter(team => team.divisionId === group.id).length;
     return !group.capacity || registered < group.capacity;
   });
 
@@ -92,10 +92,10 @@ export default async function TournamentHomeContent({
     .slice(0, 4);
 
   const teams     = await getTeams(tournament.id, readOptions);
-  const ageGroups = await getAgeGroups(tournament.id, readOptions);
+  const divisions = await getDivisions(tournament.id, readOptions);
   const diamonds  = await getDiamonds(tournament.id, readOptions);
 
-  const registration = getRegistrationState(tournament, ageGroups, teams);
+  const registration = getRegistrationState(tournament, divisions, teams);
   const canRegister = registration.state === 'open' || registration.state === 'waitlist';
   const publicBase = `/${orgSlug}/${tournamentSlug}`;
   const adminTournamentBase = `/${orgSlug}/admin/tournaments`;
@@ -164,13 +164,13 @@ export default async function TournamentHomeContent({
     }
   }
 
-  const sortedAgeGroups = [...ageGroups].sort((a, b) => a.order - b.order);
-  const ageRange = sortedAgeGroups.length > 0
-    ? `${sortedAgeGroups[0].name} - ${sortedAgeGroups[sortedAgeGroups.length - 1].name}`
+  const sortedDivisions = [...divisions].sort((a, b) => a.order - b.order);
+  const ageRange = sortedDivisions.length > 0
+    ? `${sortedDivisions[0].name} - ${sortedDivisions[sortedDivisions.length - 1].name}`
     : 'Divisions TBA';
 
   const getTeamName     = (id: string) => teams.find(t => t.id === id)?.name ?? 'TBD';
-  const getAgeGroupName = (id: string) => ageGroups.find(g => g.id === id)?.name ?? '';
+  const getDivisionName = (id: string) => divisions.find(g => g.id === id)?.name ?? '';
   const getDiamond      = (id?: string) => id ? (diamonds.find(d => d.id === id) ?? null) : null;
 
   function formatDate(dateStr: string) {
@@ -254,7 +254,7 @@ export default async function TournamentHomeContent({
 
           <div className={styles.stats}>
             <div className={styles.stat}>
-              <span className={styles.statNum}>{ageGroups.length || 'TBA'}</span>
+              <span className={styles.statNum}>{divisions.length || 'TBA'}</span>
               <span className={styles.statLabel}>Divisions</span>
             </div>
             <div className={styles.statDivider} />
@@ -342,7 +342,7 @@ export default async function TournamentHomeContent({
                 <div key={game.id} className={`card ${styles.gameCard}`}>
                   <div className={styles.gameHeader}>
                     <span className="badge badge-primary">
-                      {game.isPlayoff && game.bracketCode ? game.bracketCode : getAgeGroupName(game.ageGroupId)}
+                      {game.isPlayoff && game.bracketCode ? game.bracketCode : getDivisionName(game.divisionId)}
                     </span>
                     <span className={styles.gameDate}>{formatDate(game.date)} - {formatTime(game.time)}</span>
                   </div>

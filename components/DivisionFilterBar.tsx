@@ -1,11 +1,11 @@
 'use client';
 import { useRouter } from 'next/navigation';
-import { setAgPref } from '@/lib/age-group-cookie';
-import type { AgeGroup } from '@/lib/types';
+import { setDivisionPref } from '@/lib/division-cookie';
+import type { Division } from '@/lib/types';
 
 interface Props {
   orgSlug: string;
-  ageGroups: AgeGroup[];
+  divisions: Division[];
   activeName: string;
   isFiltering: boolean;
   viewAllHref: string;
@@ -13,12 +13,12 @@ interface Props {
 }
 
 export default function DivisionFilterBar({
-  orgSlug, ageGroups, activeName, isFiltering, viewAllHref, backHref,
+  orgSlug, divisions, activeName, isFiltering, viewAllHref, backHref,
 }: Props) {
   const router = useRouter();
 
   function selectDivision(name: string) {
-    setAgPref(orgSlug, name);
+    setDivisionPref(orgSlug, name);
     if (isFiltering) {
       router.refresh();
     } else {
@@ -32,7 +32,7 @@ export default function DivisionFilterBar({
       marginBottom: '1.5rem', fontSize: '0.8rem', flexWrap: 'wrap',
     }}>
       <span style={{ color: 'var(--white-40)', marginRight: '0.1rem' }}>Division:</span>
-      {ageGroups.map(g => {
+      {divisions.map(g => {
         const isActive = g.name === activeName && isFiltering;
         return (
           <button

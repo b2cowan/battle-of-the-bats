@@ -35,11 +35,11 @@ interface TeamSummary {
 
 interface TeamForm {
   name: string; slug: string; sport: string;
-  ageGroup: string; description: string; color: string; groupId: string;
+  division: string; description: string; color: string; groupId: string;
 }
 
 const BLANK_FORM: TeamForm = {
-  name: '', slug: '', sport: 'softball', ageGroup: '', description: '', color: '', groupId: '',
+  name: '', slug: '', sport: 'softball', division: '', description: '', color: '', groupId: '',
 };
 
 export default function RepTeamsPage() {
@@ -144,7 +144,7 @@ export default function RepTeamsPage() {
           name: form.name.trim(),
           slug: form.slug.trim(),
           sport: form.sport || 'softball',
-          ageGroup: form.ageGroup.trim() || null,
+          division: form.division.trim() || null,
           description: form.description.trim() || null,
           color: form.color.trim() || null,
           groupId: form.groupId || null,
@@ -573,9 +573,9 @@ export default function RepTeamsPage() {
               </div>
 
               <div className={styles.field}>
-                <label className={styles.label} htmlFor="rt-age-group">Age Group</label>
-                <input id="rt-age-group" className={styles.input} type="text" value={form.ageGroup}
-                  onChange={e => setForm(f => ({ ...f, ageGroup: e.target.value }))}
+                <label className={styles.label} htmlFor="rt-division">Division</label>
+                <input id="rt-division" className={styles.input} type="text" value={form.division}
+                  onChange={e => setForm(f => ({ ...f, division: e.target.value }))}
                   placeholder="e.g. U13, U15, Senior" maxLength={30} />
               </div>
 
@@ -705,8 +705,8 @@ function TeamCard({ summary, base, canWrite, onArchive }: {
         {team.groupName && (
           <span className={`${styles.badge} ${styles.badgeGroup}`}>{team.groupName}</span>
         )}
-        {team.ageGroup && (
-          <span className={`${styles.badge} ${styles.badgeAgeGroup}`}>{team.ageGroup}</span>
+        {team.division && (
+          <span className={`${styles.badge} ${styles.badgeDivision}`}>{team.division}</span>
         )}
         {activeYear && (
           <span className={`${styles.badge} ${STATUS_CSS[activeYear.status] ?? styles.badgeDraft}`}>

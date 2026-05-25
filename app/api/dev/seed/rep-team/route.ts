@@ -6,19 +6,37 @@ import { requireDevToolPlatformAdmin } from '@/lib/platform-auth';
 const DEV_ORG_SLUGS = ['dev-club-org', 'dev-league-org', 'dev-tplus-org', 'dev-tournament-org', 'dev-test-org'];
 const TEAM_SLUG    = 'dev-rep-u15';
 
-export async function POST() {
+export async function POST(request: Request) {
   const auth = await requireDevToolPlatformAdmin();
   if (auth.response) return auth.response;
 
-  const { data: orgRows } = await supabaseAdmin
-    .from('organizations')
-    .select('id, slug')
-    .in('slug', DEV_ORG_SLUGS);
+  const body = await request.json().catch(() => ({})) as { orgId?: string };
 
-  const org = DEV_ORG_SLUGS.map(s => orgRows?.find(o => o.slug === s)).find(Boolean);
+  let org: { id: string; slug: string } | undefined;
+
+  // Use caller-provided orgId if given
+  if (body.orgId) {
+    const { data } = await supabaseAdmin
+      .from('organizations')
+      .select('id, slug')
+      .eq('id', body.orgId)
+      .maybeSingle();
+    org = data ?? undefined;
+  }
+
+  // Fallback: pick highest-plan dev org
+  if (!org) {
+    const { data: orgRows } = await supabaseAdmin
+      .from('organizations')
+      .select('id, slug')
+      .in('slug', DEV_ORG_SLUGS);
+    org = DEV_ORG_SLUGS.map(s => orgRows?.find(o => o.slug === s)).find(Boolean);
+  }
+
   if (!org) return NextResponse.json({ error: 'Seed an org first.' }, { status: 400 });
 
   const log: string[] = [];
+  log.push(`Seeding into org: ${org.slug}`);
 
   // Rep team
   let { data: team } = await supabaseAdmin
@@ -36,7 +54,7 @@ export async function POST() {
         name:        'Dev Rep U15',
         slug:        TEAM_SLUG,
         sport:       'softball',
-        age_group:   'U15',
+        division:   'U15',
         description: 'Dev seed rep team',
         color:       '#4fa3e0',
         is_archived: false,

@@ -59,11 +59,11 @@ const coachesHelp: HelpPageContent = {
       heading: 'How Coaches Portal Premium, seasons, and local tournaments work',
       summary: 'Understand what Premium includes, how season history is preserved, and what the included local tournament slot can be used for.',
       keywords: ['coaches portal premium', 'coach subscription', 'season rollover', 'program year', 'free tournament', 'local tournament', 'tournament plus'],
-      searchText: 'coaches portal premium season rollover program year history team name age group roster schedule dues budget free-tier tournament one slot round robin scrimmage exhibition Tournament Plus upgrade',
+      searchText: 'coaches portal premium season rollover program year history team name division roster schedule dues budget free-tier tournament one slot round robin scrimmage exhibition Tournament Plus upgrade',
       content: (
         <>
           <p><strong>Coaches Portal Premium</strong> is built for one competitive team. It adds roster, schedule, dues, documents, budget, attendance, lineup cards, reminders, and setup progress to the same portal that stores tournament records.</p>
-          <p>Your premium team space is the long-term home for the team. Each <strong>program year</strong> is a season, so a team can update its name, age group, roster, schedule, dues plan, documents, and budget for the new season while keeping previous seasons available as history.</p>
+          <p>Your premium team space is the long-term home for the team. Each <strong>program year</strong> is a season, so a team can update its name, division, roster, schedule, dues plan, documents, and budget for the new season while keeping previous seasons available as history.</p>
           <p>Premium also includes one free-tier local tournament slot. Use it for simple round robins, scrimmage days, exhibition weekends, or informal events with nearby teams. It follows the free Tournament plan limits: one non-archived tournament at a time and no Tournament Plus features such as advanced registration fields, enhanced branding, unlimited tournament slots, cloning, or post-event reporting.</p>
           <p>If you need a larger or more official tournament operation, use Tournament Plus or ask your organization whether the event should run from an organization account.</p>
         </>
@@ -71,9 +71,9 @@ const coachesHelp: HelpPageContent = {
       faqs: [
         {
           id: 'faq-team-season-rollover',
-          question: 'Can my team change names or age groups next season?',
+          question: 'Can my team change names or divisions next season?',
           answerText: 'Yes. The workspace stays the same, but each program year can carry its own season identity, roster, schedule, dues, documents, budget, attendance, and lineup history.',
-          keywords: ['season rollover', 'team name', 'age group', 'program year', 'history'],
+          keywords: ['season rollover', 'team name', 'division', 'program year', 'history'],
           popular: true,
           answer: (
             <p>Yes. The workspace stays the same, but each program year can carry its own season identity, roster, schedule, dues, documents, budget, attendance, and lineup history.</p>

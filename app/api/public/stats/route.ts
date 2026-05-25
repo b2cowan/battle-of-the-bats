@@ -51,7 +51,7 @@ export async function GET(req: Request) {
       });
     }
 
-    let query = supabaseAdmin.from('teams').select('age_group_id, status');
+    let query = supabaseAdmin.from('teams').select('division_id, status');
     if (tournamentId) {
       query = query.eq('tournament_id', tournamentId);
     }
@@ -62,11 +62,11 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: 'Failed to fetch stats' }, { status: 500 });
     }
 
-    // Count non-rejected registrations per age group
+    // Count non-rejected registrations per division
     const counts: Record<string, number> = {};
     for (const reg of data || []) {
       if (reg.status !== 'rejected') {
-        counts[reg.age_group_id] = (counts[reg.age_group_id] || 0) + 1;
+        counts[reg.division_id] = (counts[reg.division_id] || 0) + 1;
       }
     }
 

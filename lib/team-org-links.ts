@@ -53,7 +53,7 @@ type RepTeamLinkRow = {
   id: string;
   name: string;
   slug: string | null;
-  age_group: string | null;
+  division: string | null;
   color: string | null;
 };
 
@@ -86,7 +86,7 @@ export type TeamOrgLinkRepTeamSummary = {
   id: string;
   name: string;
   slug: string | null;
-  ageGroup: string | null;
+  division: string | null;
   color: string | null;
 };
 
@@ -154,7 +154,7 @@ function mapRepTeam(row: RepTeamLinkRow | undefined): TeamOrgLinkRepTeamSummary 
     id: row.id,
     name: row.name,
     slug: row.slug ?? null,
-    ageGroup: row.age_group ?? null,
+    division: row.division ?? null,
     color: row.color ?? null,
   };
 }
@@ -200,7 +200,7 @@ async function fetchRepTeamMap(teamIds: string[]): Promise<Map<string, RepTeamLi
   if (!teamIds.length) return new Map();
   const { data, error } = await supabaseAdmin
     .from('rep_teams')
-    .select('id, name, slug, age_group, color')
+    .select('id, name, slug, division, color')
     .in('id', teamIds);
   if (error) throw error;
   return new Map(((data ?? []) as RepTeamLinkRow[]).map(row => [row.id, row]));

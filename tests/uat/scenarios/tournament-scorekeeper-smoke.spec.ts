@@ -8,7 +8,7 @@ const OWNER_STORAGE = path.join(__dirname, '../.auth/org-owner.json')
 const SCOREKEEPER_PASSWORD = 'devpass123'
 
 type SmokeTournament = {
-  ageGroupId: string
+  divisionId: string
   awayTeamName: string
   gameId: string
   homeTeamName: string
@@ -75,8 +75,8 @@ async function createSmokeTournament(input: {
 
   if (diamondError) throw diamondError
 
-  const { data: ageGroup, error: ageGroupError } = await supabaseAdmin
-    .from('age_groups')
+  const { data: division, error: divisionError } = await supabaseAdmin
+    .from('divisions')
     .insert({
       tournament_id: tournament.id,
       name: `UAT ${input.label}`,
@@ -86,7 +86,7 @@ async function createSmokeTournament(input: {
     .select('id')
     .single()
 
-  if (ageGroupError) throw ageGroupError
+  if (divisionError) throw divisionError
 
   const homeTeamName = `UAT ${input.label} Home ${input.suffix}`
   const awayTeamName = `UAT ${input.label} Away ${input.suffix}`
@@ -95,7 +95,7 @@ async function createSmokeTournament(input: {
     .insert([
       {
         tournament_id: tournament.id,
-        age_group_id: ageGroup.id,
+        division_id: division.id,
         name: homeTeamName,
         coach: 'Home Coach',
         email: `home-${input.label}-${input.suffix}@example.test`,
@@ -105,7 +105,7 @@ async function createSmokeTournament(input: {
       },
       {
         tournament_id: tournament.id,
-        age_group_id: ageGroup.id,
+        division_id: division.id,
         name: awayTeamName,
         coach: 'Away Coach',
         email: `away-${input.label}-${input.suffix}@example.test`,
@@ -127,7 +127,7 @@ async function createSmokeTournament(input: {
     .from('games')
     .insert({
       tournament_id: tournament.id,
-      age_group_id: ageGroup.id,
+      division_id: division.id,
       home_team_id: homeTeam.id,
       away_team_id: awayTeam.id,
       game_date: today,
@@ -143,7 +143,7 @@ async function createSmokeTournament(input: {
   if (gameError) throw gameError
 
   return {
-    ageGroupId: ageGroup.id,
+    divisionId: division.id,
     awayTeamName,
     gameId: game.id,
     homeTeamName,

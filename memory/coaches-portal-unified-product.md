@@ -20,6 +20,10 @@ Implementation direction:
 - `/coaches/tournaments` replaces the idea of a separate `/my/registrations` product.
 - Legacy paid coach/team signup routes should redirect or forward into the `/coaches` route family before launch.
 - Existing `/{orgSlug}/coaches` implementation routes can remain for compatibility while the product-level IA is unified.
+- 2026-05-25 implementation note: unified sign-in now uses a shared context resolver and `/home` for multi-context users. It composes existing org admin, tournament dashboard/list, scorekeeper, Coaches Portal Basic, and Coaches Portal Premium destinations instead of creating a duplicate tournament dashboard. `/auth/select-org` is now a compatibility redirect through the same auth-destination logic.
+- 2026-05-25 product decision: Basic Coaches Portal should become team-centric. When a tournament coach creates/signs into a user, FieldLogicHQ should create or link a persistent Basic coach team profile. Future tournament registrations should let that coach select an existing team so tournament history accumulates under the team. Paid Premium upgrade should attach team-management tools to that same team identity instead of creating unrelated history.
+- 2026-05-25 Phase 2B implementation: migration `091_basic_coach_team_profiles.sql` adds Basic coach team profiles, user links, registration links, backfill from verified auth email + team name, and `team_workspaces.basic_coach_team_id`. `/api/coaches/basic-teams` mediates list/link access server-side. `/coaches/join` now links the saved registration after account creation/sign-in, returning signed-in coaches can choose an existing Basic team or create a new one, and `/coaches/tournaments` groups tournament history by explicit Basic team links only. Follow-up migration `092_basic_coach_team_explicit_access_only.sql` removes the unused email-fallback link source because the product is not live.
+- 2026-05-25 Phase 3 first slice: `/coaches` is now a coach-specific portal home with Basic tournament records and Premium workspace cards from the shared context resolver. `/coaches/teams` lists Premium Coaches Portal workspaces only and links into the existing org-scoped premium dashboards. This intentionally does not duplicate the broader `/home` context switcher.
 
 Access rules:
 
@@ -27,3 +31,4 @@ Access rules:
 - Paid standalone, org-billed, and Club coaches get Premium Coaches Portal through team-scoped entitlement plus coach assignment.
 - Linked-org Basic sharing must not expose roster, documents, accounting, billing, ownership, or org-wide rep-team admin access.
 - Do not query team workspace foundation tables from a client Supabase instance until explicit RLS policies are written.
+- Org admin navigation and the org dashboard only show the personal Coaches Portal shortcut when the signed-in user has a coach assignment in that same org. Coach access in another org must appear as a separate `/home` context.

@@ -188,7 +188,7 @@ function FeaturedSeasonCard({ season, orgSlug }: { season: LeagueSeason; orgSlug
         >
           {STATUS_LABEL[season.status] ?? season.status}
         </span>
-        {season.ageGroup && (
+        {season.division && (
           <span
             style={{
               fontSize: '0.68rem',
@@ -200,7 +200,7 @@ function FeaturedSeasonCard({ season, orgSlug }: { season: LeagueSeason; orgSlug
               border: '1px solid rgba(96,165,250,0.2)',
             }}
           >
-            {season.ageGroup}
+            {season.division}
           </span>
         )}
       </div>
@@ -306,8 +306,8 @@ function PastSeasonRow({ season, orgSlug }: { season: LeagueSeason; orgSlug: str
               {year}
             </span>
           )}
-          {season.ageGroup && (
-            <span style={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.35)' }}>{season.ageGroup}</span>
+          {season.division && (
+            <span style={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.35)' }}>{season.division}</span>
           )}
         </div>
         <span style={{ fontWeight: 700, color: '#e0e0e0', fontSize: '0.95rem' }}>{season.name}</span>

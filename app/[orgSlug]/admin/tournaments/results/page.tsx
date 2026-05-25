@@ -11,7 +11,7 @@ import {
   downloadPDF, DEFAULT_PDF_SETTINGS, type OrgPdfSettings,
 } from '@/lib/export';
 import ExportMenu from '@/components/admin/ExportMenu';
-import { Game, Team, AgeGroup, Diamond } from '@/lib/types';
+import { Game, Team, Division, Diamond } from '@/lib/types';
 import GameList from '../schedule/components/GameList';
 import s from '../../admin-common.module.css';
 import FeedbackModal from '@/components/FeedbackModal';
@@ -54,7 +54,7 @@ export default function AdminResultsPage() {
   const requiresFinalization = currentTournament?.requireScoreFinalization ?? currentOrg?.requireScoreFinalization ?? false;
   const [games, setGames] = useState<Game[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
-  const [ageGroups, setAgeGroups] = useState<AgeGroup[]>([]);
+  const [divisions, setDivisions] = useState<Division[]>([]);
   const [diamonds, setDiamonds] = useState<Diamond[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -81,7 +81,7 @@ export default function AdminResultsPage() {
     if (!tournamentId) {
       setGames([]);
       setTeams([]);
-      setAgeGroups([]);
+      setDivisions([]);
       setDiamonds([]);
       setLoading(false);
       return;
@@ -93,7 +93,7 @@ export default function AdminResultsPage() {
       const [gamesRes, teamsRes, groupsRes, diamondsRes] = await Promise.all([
         fetch(`/api/admin/games?tournamentId=${encodeURIComponent(tournamentId)}${orgParam}`),
         fetch(`/api/admin/teams?tournamentId=${encodeURIComponent(tournamentId)}${orgParam}`),
-        fetch(`/api/admin/age-groups?tournamentId=${encodeURIComponent(tournamentId)}${orgParam}`),
+        fetch(`/api/admin/divisions?tournamentId=${encodeURIComponent(tournamentId)}${orgParam}`),
         fetch(`/api/admin/diamonds?tournamentId=${encodeURIComponent(tournamentId)}${orgParam}`),
       ]);
 
@@ -104,7 +104,7 @@ export default function AdminResultsPage() {
 
       setGames(allGames);
       setTeams(allTeams.filter((t: any) => t.status === 'accepted'));
-      setAgeGroups(groups);
+      setDivisions(groups);
       setFilterGroup(prev => prev || (groups.length > 0 ? groups[0].id : ''));
       setDiamonds(allDiamonds);
     } finally {
@@ -130,7 +130,7 @@ export default function AdminResultsPage() {
   }
 
   function getGroupName(id: string) {
-    return ageGroups.find(g => g.id === id)?.name ?? '—';
+    return divisions.find(g => g.id === id)?.name ?? '—';
   }
 
   async function patchGame(body: Record<string, unknown>) {
@@ -171,7 +171,7 @@ export default function AdminResultsPage() {
 
   // Compute counts for filter chips
   const divisionGames = games.filter(g => {
-    const matchesGroup = g.ageGroupId === filterGroup;
+    const matchesGroup = g.divisionId === filterGroup;
     const matchesView = viewMode === 'pool' ? !g.isPlayoff : g.isPlayoff;
     return matchesGroup && matchesView;
   });
@@ -180,7 +180,7 @@ export default function AdminResultsPage() {
   const completedCount = divisionGames.filter(g => g.status === 'completed').length;
 
   const filtered = games.filter(g => {
-    const matchesGroup = g.ageGroupId === filterGroup;
+    const matchesGroup = g.divisionId === filterGroup;
     const matchesStatus = selectedStatuses.length === 0 ||
       selectedStatuses.some(sf =>
         sf === 'pending'    ? g.status === 'scheduled' :
@@ -205,7 +205,7 @@ export default function AdminResultsPage() {
     return filtered.map(g => ({
       date:      g.date ?? '',
       time:      formatTime(g.time),
-      division:  getGroupName(g.ageGroupId),
+      division:  getGroupName(g.divisionId),
       homeTeam:  getTeamName(g.homeTeamId),
       homeScore: g.homeScore != null ? g.homeScore : '',
       awayTeam:  getTeamName(g.awayTeamId),
@@ -248,8 +248,8 @@ export default function AdminResultsPage() {
     });
 
     const groupMap = new Map<string, typeof allFiltered>();
-    for (const ag of ageGroups) {
-      const divGames = allFiltered.filter(g => g.ageGroupId === ag.id);
+    for (const ag of divisions) {
+      const divGames = allFiltered.filter(g => g.divisionId === ag.id);
       if (divGames.length > 0) groupMap.set(ag.id, divGames);
     }
 
@@ -257,7 +257,7 @@ export default function AdminResultsPage() {
 
     // Champions callout: find winner of the last completed game per division
     const champLines: string[] = [];
-    for (const ag of ageGroups) {
+    for (const ag of divisions) {
       const divGames = (groupMap.get(ag.id) ?? []).filter(g => g.status === 'completed');
       if (divGames.length === 0) continue;
       const last = divGames[divGames.length - 1];
@@ -274,14 +274,14 @@ export default function AdminResultsPage() {
       ? `Champions — ${champLines.join('  ·  ')}`
       : currentTournament?.name;
 
-    const groups = ageGroups
+    const groups = divisions
       .filter(ag => groupMap.has(ag.id))
       .map(ag => ({
         label: ag.name,
         rows: (groupMap.get(ag.id) ?? []).map(g => [
           g.date ?? '',
           formatTime(g.time),
-          getGroupName(g.ageGroupId),
+          getGroupName(g.divisionId),
           getTeamName(g.homeTeamId),
           g.homeScore != null ? g.homeScore : '—',
           getTeamName(g.awayTeamId),
@@ -353,11 +353,11 @@ export default function AdminResultsPage() {
             onChange={setViewMode}
             ariaLabel="View mode"
           />
-          {ageGroups.length > 0 && (
+          {divisions.length > 0 && (
             <ToolbarSelect<string>
               label="Division"
               value={filterGroup}
-              options={ageGroups.map(g => ({ value: g.id, label: g.name }))}
+              options={divisions.map(g => ({ value: g.id, label: g.name }))}
               onChange={setFilterGroup}
             />
           )}
@@ -462,7 +462,7 @@ export default function AdminResultsPage() {
           <GameList
             games={filtered}
             teams={teams}
-            ageGroups={ageGroups}
+            divisions={divisions}
             diamonds={diamonds}
             viewMode={viewMode}
             groupByPool={groupMode === 'pools'}

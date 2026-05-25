@@ -1,32 +1,36 @@
 'use client';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Settings2 } from 'lucide-react';
+import { Settings2 } from 'lucide-react';
 import { useTournament } from '@/lib/tournament-context';
 import { useOrg } from '@/lib/org-context';
 import FeedbackModal from '@/components/FeedbackModal';
 import { hasPlanFeature, requiresTournamentPlusCopy } from '@/lib/plan-features';
 import styles from '../../branding/branding.module.css';
 
-type FeeMode = 'tournament' | 'age_group';
-type ScorePolicyMode = 'inherit' | 'review' | 'final';
-
-function scorePolicyModeFromValue(value: boolean | null | undefined): ScorePolicyMode {
-  if (value === true) return 'review';
-  if (value === false) return 'final';
-  return 'inherit';
+interface OrgMemberOption {
+  id: string;
+  email: string;
+  displayName: string | null;
+  title: string | null;
+  role: string;
 }
 
-function scorePolicyValue(mode: ScorePolicyMode): boolean | null {
-  if (mode === 'review') return true;
-  if (mode === 'final') return false;
-  return null;
+type FeeMode = 'tournament' | 'division';
+type ScorePolicyMode = 'review' | 'final';
+
+function scorePolicyModeFromValue(value: boolean | null | undefined): ScorePolicyMode {
+  // null/undefined (org inherit) is treated as admin-review in the UI
+  return value === false ? 'final' : 'review';
+}
+
+function scorePolicyValue(mode: ScorePolicyMode): boolean {
+  return mode === 'review';
 }
 
 export default function TournamentEventSettingsPage() {
   const { currentTournament } = useTournament();
   const { currentOrg, userRole } = useOrg();
-  const base = `/${currentOrg?.slug ?? 'admin'}/admin/tournaments/settings`;
 
   // Dates
   const [startDate, setStartDate] = useState('');
@@ -40,18 +44,26 @@ export default function TournamentEventSettingsPage() {
   const [totalFeeDueDate, setTotalFeeDueDate] = useState('');
 
   // Scoring
-  const [scorePolicyMode, setScorePolicyMode] = useState<ScorePolicyMode>('inherit');
+  const [scorePolicyMode, setScorePolicyMode] = useState<ScorePolicyMode>('review');
   const [notifyTeamsOnComplete, setNotifyTeamsOnComplete] = useState(false);
   const [resultsNotifiedAt, setResultsNotifiedAt] = useState<string | null>(null);
   const [resultsNotificationSentCount, setResultsNotificationSentCount] = useState(0);
+
+  // Contact model (Phase 3)
+  const [defaultContactMemberId, setDefaultContactMemberId] = useState<string | null>(null);
+  const [notifyMode, setNotifyMode] = useState<'all' | 'assigned'>('all');
+  const [orgMembers, setOrgMembers] = useState<OrgMemberOption[]>([]);
+  const [ownerMember, setOwnerMember] = useState<OrgMemberOption | null>(null);
 
   // Dirty tracking
   const [saved, setSaved] = useState({
     startDate: '', endDate: '',
     feeMode: 'tournament' as FeeMode,
     depositAmount: '', depositDueDate: '', totalFeeAmount: '', totalFeeDueDate: '',
-    scorePolicyMode: 'inherit' as ScorePolicyMode,
+    scorePolicyMode: 'review' as ScorePolicyMode,
     notifyTeamsOnComplete: false,
+    defaultContactMemberId: null as string | null,
+    notifyMode: 'all' as 'all' | 'assigned',
   });
 
   const [saving, setSaving] = useState(false);
@@ -74,7 +86,9 @@ export default function TournamentEventSettingsPage() {
     totalFeeAmount !== saved.totalFeeAmount ||
     totalFeeDueDate !== saved.totalFeeDueDate ||
     scorePolicyMode !== saved.scorePolicyMode ||
-    notifyTeamsOnComplete !== saved.notifyTeamsOnComplete;
+    notifyTeamsOnComplete !== saved.notifyTeamsOnComplete ||
+    defaultContactMemberId !== saved.defaultContactMemberId ||
+    notifyMode !== saved.notifyMode;
 
   useEffect(() => {
     if (!tournamentId) return;
@@ -82,7 +96,8 @@ export default function TournamentEventSettingsPage() {
     Promise.all([
       fetch(`/api/admin/tournaments${orgQuery}`).then(r => r.ok ? r.json() : []),
       fetch(`/api/admin/tournament-branding?tournamentId=${encodeURIComponent(tournamentId)}${orgParam}`).then(r => r.ok ? r.json() : {}),
-    ]).then(([tournaments, branding]) => {
+      fetch('/api/admin/members').then(r => r.ok ? r.json() : []),
+    ]).then(([tournaments, branding, members]) => {
       const t = Array.isArray(tournaments) ? tournaments.find((row: { id: string }) => row.id === tournamentId) : null;
       if (t) {
         const sd = t.start_date ?? '';
@@ -93,6 +108,8 @@ export default function TournamentEventSettingsPage() {
         const tf = t.total_fee_amount != null ? String(t.total_fee_amount) : '';
         const td = t.total_fee_due_date ?? '';
         const notify = Boolean(t.notify_teams_on_complete);
+        const contactId = t.default_contact_member_id ?? null;
+        const nm = (t.notify_mode === 'assigned' ? 'assigned' : 'all') as 'all' | 'assigned';
         setResultsNotifiedAt(t.results_notified_at ?? null);
         setResultsNotificationSentCount(t.results_notification_sent_count ?? 0);
         setStartDate(sd); setEndDate(ed);
@@ -100,11 +117,26 @@ export default function TournamentEventSettingsPage() {
         setDepositAmount(da); setDepositDueDate(dd);
         setTotalFeeAmount(tf); setTotalFeeDueDate(td);
         setNotifyTeamsOnComplete(notify);
-        setSaved(s => ({ ...s, startDate: sd, endDate: ed, feeMode: fm, depositAmount: da, depositDueDate: dd, totalFeeAmount: tf, totalFeeDueDate: td, notifyTeamsOnComplete: notify }));
+        setDefaultContactMemberId(contactId);
+        setNotifyMode(nm);
+        setSaved(s => ({ ...s, startDate: sd, endDate: ed, feeMode: fm, depositAmount: da, depositDueDate: dd, totalFeeAmount: tf, totalFeeDueDate: td, notifyTeamsOnComplete: notify, defaultContactMemberId: contactId, notifyMode: nm }));
       }
       const policyMode = scorePolicyModeFromValue((branding as { requireScoreFinalization?: boolean | null }).requireScoreFinalization);
       setScorePolicyMode(policyMode);
       setSaved(s => ({ ...s, scorePolicyMode: policyMode }));
+
+      // Populate contact picker — admin and staff only; owner shown separately as the default option
+      const allMembers = Array.isArray(members) ? members : [];
+      setOwnerMember(allMembers.find((m: OrgMemberOption) => m.role === 'owner') ?? null);
+      const eligible = allMembers
+        .filter((m: OrgMemberOption) => ['admin', 'staff'].includes(m.role))
+        .sort((a: OrgMemberOption, b: OrgMemberOption) => {
+          const roleOrder: Record<string, number> = { admin: 0, staff: 1 };
+          const roleDiff = (roleOrder[a.role] ?? 9) - (roleOrder[b.role] ?? 9);
+          if (roleDiff !== 0) return roleDiff;
+          return (a.displayName ?? a.email).localeCompare(b.displayName ?? b.email);
+        });
+      setOrgMembers(eligible);
     }).catch(() => { setErrorMsg('Failed to load settings'); setErrorOpen(true); });
   }, [tournamentId, orgParam, orgQuery]);
 
@@ -131,6 +163,8 @@ export default function TournamentEventSettingsPage() {
               totalFeeAmount:  totalFeeAmount  ? Number(totalFeeAmount)  : null,
               totalFeeDueDate: totalFeeDueDate || null,
               notifyTeamsOnComplete,
+              defaultContactMemberId,
+              notifyMode,
             },
           }),
         }),
@@ -150,7 +184,7 @@ export default function TournamentEventSettingsPage() {
         throw new Error(d.error ?? 'Failed to save scoring settings');
       }
 
-      setSaved({ startDate, endDate, feeMode, depositAmount, depositDueDate, totalFeeAmount, totalFeeDueDate, scorePolicyMode, notifyTeamsOnComplete });
+      setSaved({ startDate, endDate, feeMode, depositAmount, depositDueDate, totalFeeAmount, totalFeeDueDate, scorePolicyMode, notifyTeamsOnComplete, defaultContactMemberId, notifyMode });
       setSuccessOpen(true);
     } catch (err: unknown) {
       setErrorMsg(err instanceof Error ? err.message : 'Something went wrong');
@@ -178,12 +212,7 @@ export default function TournamentEventSettingsPage() {
 
   return (
     <div className={styles.page}>
-      <div className={styles.pageHeader}>
-        <Link href={base} className={styles.backBtn}>
-          <ArrowLeft size={13} /> Settings
-        </Link>
-      </div>
-
+      <div className={styles.settingsContent}>
       <div className={styles.settingsTitleRow}>
         <div className={styles.headerIcon}><Settings2 size={20} /></div>
         <div>
@@ -231,7 +260,7 @@ export default function TournamentEventSettingsPage() {
         <div className={styles.cardHeaderRow}>
           <h2 className={styles.sectionTitle} style={{ margin: 0 }}>Fee Schedule</h2>
           <div className={styles.segmentedControl}>
-            {(['tournament', 'age_group'] as const).map(mode => (
+            {(['tournament', 'division'] as const).map(mode => (
               <button
                 key={mode}
                 type="button"
@@ -275,9 +304,8 @@ export default function TournamentEventSettingsPage() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
           <div className={styles.segmentedControl} role="radiogroup" aria-label="Score finalization policy">
             {([
-              ['inherit', `Inherit org ${currentOrg?.requireScoreFinalization ? '(review)' : '(final)'}`],
-              ['review', 'Admin review'],
-              ['final', 'Final immediately'],
+              ['review', 'Admin Review'],
+              ['final',  'Final Immediately'],
             ] as const).map(([mode, label]) => (
               <button
                 key={mode}
@@ -295,12 +323,83 @@ export default function TournamentEventSettingsPage() {
             Admin review sends scorekeeper submissions to Pending Review until an admin finalizes them in Results.
             Final immediately makes scorekeeper submissions final as soon as they are saved.
           </p>
-          <p className={styles.inheritNote} style={{ marginTop: '0.5rem' }}>
-            Inherit uses the organization-level setting from Organization Settings.
+        </div>
+      </div>
+
+      {/* Public Contact */}
+      <div className={styles.card}>
+        <h2 className={styles.sectionTitle}>Public Contact</h2>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+          <p className={styles.descriptionText}>
+            This member's email appears in coach-facing registration emails and on the public tournament page.
+            Defaults to the organization owner if not set.
+          </p>
+          <div className="form-group">
+            <label className="form-label">Contact Member</label>
+            <select
+              className="form-input"
+              value={defaultContactMemberId ?? ''}
+              onChange={e => setDefaultContactMemberId(e.target.value || null)}
+              aria-label="Default contact member"
+            >
+              <option value="">
+                {ownerMember
+                  ? `${ownerMember.displayName ?? ownerMember.email} (owner)`
+                  : 'Organization Owner'}
+              </option>
+              {orgMembers.map(m => (
+                <option key={m.id} value={m.id}>
+                  {m.displayName ?? m.email}
+                  {m.title ? ` — ${m.title}` : ''}
+                  {' '}({m.role === 'owner' ? 'owner' : m.role})
+                </option>
+              ))}
+            </select>
+          </div>
+          {defaultContactMemberId && (() => {
+            const selected = orgMembers.find(m => m.id === defaultContactMemberId);
+            return selected ? (
+              <p className={styles.inheritNote}>
+                Emails will show: <strong style={{ color: 'var(--white-70, rgba(255,255,255,0.7))' }}>{selected.email}</strong>
+              </p>
+            ) : null;
+          })()}
+        </div>
+      </div>
+
+      {/* Registration Notifications */}
+      <div className={styles.card}>
+        <h2 className={styles.sectionTitle}>Registration Notifications</h2>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+          <div className={styles.segmentedControl} role="radiogroup" aria-label="Notification routing mode">
+            {([
+              ['all',      'All Registrations'],
+              ['assigned', 'Assigned Only'],
+            ] as const).map(([mode, label]) => (
+              <button
+                key={mode}
+                type="button"
+                role="radio"
+                aria-checked={notifyMode === mode}
+                onClick={() => setNotifyMode(mode)}
+                className={`${styles.segmentButton} ${notifyMode === mode ? styles.segmentButtonActive : ''}`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          <p className={styles.descriptionText}>
+            {notifyMode === 'all'
+              ? 'Organization owners and admins are notified for every registration. If a division has an assigned contact, they are notified too.'
+              : 'Only the division-assigned contact is notified. Owners and admins are not notified for divisions they\'ve delegated.'}
+          </p>
+          <p className={styles.inheritNote}>
+            Divisions without an assigned contact always notify tournament admins regardless of this setting.
           </p>
         </div>
       </div>
 
+      {/* Post-Event Results Notification — gated feature, last */}
       <div className={styles.card}>
         <h2 className={styles.sectionTitle}>Post-Event Results Notification</h2>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
@@ -329,7 +428,7 @@ export default function TournamentEventSettingsPage() {
               <p>
                 {requiresTournamentPlusCopy('post_tournament_summary')}
               </p>
-              <Link href={subscriptionHref} className="btn btn-outline btn-sm">Review Tournament Plus</Link>
+              <Link href={subscriptionHref} className="btn btn-outline btn-data">Review Tournament Plus</Link>
             </div>
           )}
         </div>
@@ -337,10 +436,12 @@ export default function TournamentEventSettingsPage() {
 
       <div className={styles.formFooter}>
         {isDirty && <span className={styles.unsavedLabel}>Unsaved changes</span>}
-        <button type="button" className="btn btn-primary" onClick={handleSave} disabled={saving || !isDirty}>
+        <button type="button" className="btn btn-lime btn-data" onClick={handleSave} disabled={saving || !isDirty}>
           {saving ? 'Saving…' : 'Save Changes'}
         </button>
       </div>
+
+      </div>{/* /settingsContent */}
 
       <FeedbackModal isOpen={successOpen} onClose={() => setSuccessOpen(false)} title="Saved" message="Event settings updated." type="success" />
       <FeedbackModal isOpen={errorOpen} onClose={() => setErrorOpen(false)} title="Error" message={errorMsg} type="danger" />

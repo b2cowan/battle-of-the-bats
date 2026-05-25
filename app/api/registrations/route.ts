@@ -35,7 +35,7 @@ export async function GET(req: NextRequest) {
         .select('*')
         .in('tournament_id', tournamentIds)
         .order('registered_at', { ascending: false }),
-      supabaseAdmin.from('age_groups').select('id, name'),
+      supabaseAdmin.from('divisions').select('id, name'),
       supabaseAdmin.from('tournaments').select('id, name'),
     ]);
 
@@ -46,7 +46,7 @@ export async function GET(req: NextRequest) {
 
     const flattened = teamsRes.data?.map((r: any) => ({
       ...r,
-      age_group_name: groupsMap.get(r.age_group_id) || 'Unknown Division',
+      division_name: groupsMap.get(r.division_id) || 'Unknown Division',
       tournament_name: r.tournament_id ? tournsMap.get(r.tournament_id) : 'Internal',
     }));
 

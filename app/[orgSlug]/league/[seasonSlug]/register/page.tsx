@@ -91,9 +91,9 @@ export default async function RegisterPage({
           >
             Register — {season.name}
           </h1>
-          {season.ageGroup && (
+          {season.division && (
             <div style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.5)' }}>
-              Age group: {season.ageGroup}
+              Age group: {season.division}
             </div>
           )}
         </div>

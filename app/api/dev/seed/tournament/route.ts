@@ -9,7 +9,7 @@ const SLUG = 'dev-tournament-2026';
 
 type SeedGame = {
   tournament_id: string;
-  age_group_id: string;
+  division_id: string;
   home_team_id: string;
   away_team_id: string;
   game_date: string;
@@ -18,19 +18,35 @@ type SeedGame = {
   is_playoff: boolean;
 };
 
-export async function POST() {
+export async function POST(request: Request) {
   const auth = await requireDevToolPlatformAdmin();
   if (auth.response) return auth.response;
 
-  const { data: orgRows } = await supabaseAdmin
-    .from('organizations')
-    .select('id, slug')
-    .in('slug', DEV_ORG_SLUGS);
+  const body = await request.json().catch(() => ({})) as { orgId?: string };
 
-  const org = DEV_ORG_SLUGS.map(s => orgRows?.find(o => o.slug === s)).find(Boolean);
+  let org: { id: string; slug: string } | undefined;
+
+  if (body.orgId) {
+    const { data } = await supabaseAdmin
+      .from('organizations')
+      .select('id, slug')
+      .eq('id', body.orgId)
+      .maybeSingle();
+    org = data ?? undefined;
+  }
+
+  if (!org) {
+    const { data: orgRows } = await supabaseAdmin
+      .from('organizations')
+      .select('id, slug')
+      .in('slug', DEV_ORG_SLUGS);
+    org = DEV_ORG_SLUGS.map(s => orgRows?.find(o => o.slug === s)).find(Boolean);
+  }
+
   if (!org) return NextResponse.json({ error: 'Seed an org first.' }, { status: 400 });
 
   const log: string[] = [];
+  log.push(`Seeding into org: ${org.slug}`);
 
   // Tournament
   let { data: tournament } = await supabaseAdmin
@@ -65,14 +81,14 @@ export async function POST() {
   }
 
   // Age groups
-  const ageGroupDefs = [
+  const divisionDefs = [
     { name: 'U11', min_age: 9,  max_age: 11 },
     { name: 'U13', min_age: 11, max_age: 13 },
   ];
 
-  const { data: ageGroups } = await supabaseAdmin
-    .from('age_groups')
-    .insert(ageGroupDefs.map((ag, i) => ({
+  const { data: divisions } = await supabaseAdmin
+    .from('divisions')
+    .insert(divisionDefs.map((ag, i) => ({
       tournament_id: tournament!.id,
       name: ag.name,
       min_age: ag.min_age,
@@ -83,18 +99,18 @@ export async function POST() {
     })))
     .select('id, name');
 
-  log.push(`Created age groups: ${ageGroups?.map(a => a.name).join(', ')}`);
+  log.push(`Created divisions: ${divisions?.map(a => a.name).join(', ')}`);
 
-  // Teams — 4 per age group
+  // Teams — 4 per division
   const teamNames = ['Eagles', 'Hawks', 'Lions', 'Bears'];
   const now = new Date().toISOString();
 
-  for (const ag of (ageGroups ?? [])) {
+  for (const ag of (divisions ?? [])) {
     const { data: teams } = await supabaseAdmin
       .from('teams')
       .insert(teamNames.map(name => ({
         tournament_id: tournament!.id,
-        age_group_id: ag.id,
+        division_id: ag.id,
         name: `${name} ${ag.name}`,
         coach: `Coach Dev`,
         email: `coach@dev.local`,
@@ -117,7 +133,7 @@ export async function POST() {
       for (let j = i + 1; j < teams.length; j++) {
         games.push({
           tournament_id:  tournament!.id,
-          age_group_id:   ag.id,
+          division_id:   ag.id,
           home_team_id:   teams[i].id,
           away_team_id:   teams[j].id,
           game_date:      gameDates[dateIdx % gameDates.length],

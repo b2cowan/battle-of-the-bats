@@ -71,7 +71,7 @@ export async function PATCH(
   const fields: Parameters<typeof updateRepTeam>[1] = {};
   if (typeof body.name === 'string') fields.name = body.name.trim();
   if (typeof body.sport === 'string') fields.sport = body.sport.trim();
-  if ('ageGroup' in body) fields.ageGroup = body.ageGroup?.trim() || null;
+  if ('division' in body) fields.division = body.division?.trim() || null;
   if ('description' in body) fields.description = body.description?.trim() || null;
   if ('color' in body) fields.color = body.color?.trim() || null;
   if (typeof body.isArchived === 'boolean') fields.isArchived = body.isArchived;

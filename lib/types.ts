@@ -67,7 +67,7 @@ export interface Tournament {
   startDate?: string;    // YYYY-MM-DD
   endDate?: string;      // YYYY-MM-DD
   contactEmail?: string; // shown in coach-facing email footers
-  feeScheduleMode?: 'tournament' | 'age_group';
+  feeScheduleMode?: 'tournament' | 'division';
   depositAmount?: number | null;
   depositDueDate?: string | null;   // YYYY-MM-DD
   totalFeeAmount?: number | null;
@@ -96,15 +96,6 @@ export interface Diamond {
   name: string;     // e.g. "Diamond 1 — Lions Park"
   address: string;  // full address for Google Maps
   notes?: string;   // parking info, field notes, etc.
-}
-
-export interface Contact {
-  id: string;
-  tournamentId: string;
-  name: string;
-  email: string;
-  phone?: string;
-  role?: string;
 }
 
 export interface PlayoffConfig {
@@ -142,14 +133,14 @@ export interface BracketConfig {
   consolation: BracketMatchup[];  // 3rd place / consolation bracket
 }
 
-export interface AgeGroup {
+export interface Division {
   id: string;
   tournamentId: string;
   name: string; // e.g. "U11"
   minAge: number | null;
   maxAge: number | null;
   order: number;
-  contactId?: string; // links to a managed Contact
+  contactMemberId?: string | null; // FK to organization_members
   isClosed?: boolean; // if true, public registration is disabled
   capacity?: number;  // threshold for waitlist
   poolCount?: number;
@@ -166,7 +157,7 @@ export interface AgeGroup {
 
 export interface Pool {
   id: string;
-  ageGroupId: string;
+  divisionId: string;
   name: string;
   order: number;
 }
@@ -175,7 +166,7 @@ export interface PoolSlot {
   id: string;
   poolId: string;
   tournamentId: string;
-  ageGroupId: string;
+  divisionId: string;
   slotNumber: number;
   displayName: string;  // e.g. "Pool A Team 1"
   teamId?: string | null;
@@ -192,7 +183,7 @@ export interface Player {
 export interface Team {
   id: string;
   tournamentId: string;
-  ageGroupId: string;
+  divisionId: string;
   name: string;
   coach: string;
   email: string;
@@ -244,7 +235,7 @@ export type ScoreSubmissionSource = 'scorekeeper' | 'admin_results' | 'system';
 export interface Game {
   id: string;
   tournamentId: string; // which tournament year this game belongs to
-  ageGroupId: string;
+  divisionId: string;
   homeTeamId: string;
   awayTeamId: string;
   date: string; // ISO date string YYYY-MM-DD
@@ -275,7 +266,7 @@ export interface Announcement {
   body: string;
   date: string; // ISO date string
   pinned: boolean;
-  ageGroupIds?: string[] | null; // null = all divisions
+  divisionIds?: string[] | null; // null = all divisions
 }
 
 /** Unified communication record — can be a site post, an email send, or both. */
@@ -285,7 +276,7 @@ export interface Communication {
   title: string;
   body: string;
   pinned: boolean;
-  ageGroupIds: string[] | null;
+  divisionIds: string[] | null;
   channelSite: boolean;
   channelEmail: boolean;
   emailTargeting: Record<string, unknown> | null;
@@ -305,7 +296,7 @@ export interface RuleSection {
   icon?: string;
   order: number;
   items: RuleItem[];
-  ageGroupIds?: string[] | null; // null = all divisions
+  divisionIds?: string[] | null; // null = all divisions
 }
 
 export interface RuleItem {
@@ -405,10 +396,10 @@ export interface TournamentArchive {
   orgId: string;
   tournamentName: string;
   season: string;               // String year, e.g. "2026"
-  division?: string;            // Comma-separated age group names
+  division?: string;            // Comma-separated division names
   finalSnapshot: {
     tournament: Tournament;
-    ageGroups: AgeGroup[];
+    divisions: Division[];
     teams: Team[];
     games: Game[];
   };
@@ -457,7 +448,7 @@ export interface LeagueSeason {
   name: string;
   slug: string;
   sport: string;
-  ageGroup: string | null;
+  division: string | null;
   status: LeagueSeasonStatus;
   description: string | null;
   registrationFee: number | null;
@@ -604,7 +595,7 @@ export interface RepTeam {
   name: string;
   slug: string;
   sport: string;
-  ageGroup: string | null;
+  division: string | null;
   groupId: string | null;
   groupName: string | null;
   description: string | null;
@@ -874,7 +865,7 @@ export interface RepPastProgramYear {
   teamId: string;
   teamName: string;
   teamColor: string | null;
-  teamAgeGroup: string | null;
+  teamDivision: string | null;
   orgId: string;
   name: string;
   year: number;

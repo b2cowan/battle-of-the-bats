@@ -37,8 +37,8 @@
 ### [2026-05-23] — Finding #11: Duplicate FK constraints on tournament tables in prod
 
 **Severity:** Medium  
-**Finding:** The prod database has duplicate FK constraints on several tournament sub-tables: e.g. `games` has both `fk_games_tournament` AND `games_tournament_id_fkey` pointing to the same column. Similar duplicates exist on `age_groups`, `contacts`, `diamonds`, `announcements`, and `teams`. Duplicate constraints mean Postgres enforces the same referential integrity check twice on every INSERT/UPDATE, adds overhead to `pg_constraint` lookups, and creates confusion in schema introspection tools.  
-**Tables affected:** `games`, `age_groups`, `contacts`, `diamonds`, `announcements`, `teams` (prod only)  
+**Finding:** The prod database has duplicate FK constraints on several tournament sub-tables: e.g. `games` has both `fk_games_tournament` AND `games_tournament_id_fkey` pointing to the same column. Similar duplicates exist on `divisions`, `contacts`, `diamonds`, `announcements`, and `teams`. Duplicate constraints mean Postgres enforces the same referential integrity check twice on every INSERT/UPDATE, adds overhead to `pg_constraint` lookups, and creates confusion in schema introspection tools.  
+**Tables affected:** `games`, `divisions`, `contacts`, `diamonds`, `announcements`, `teams` (prod only)  
 **Recommendation:** In a cleanup migration, `ALTER TABLE … DROP CONSTRAINT` the auto-named `*_fkey` duplicates, keeping only the explicitly-named `fk_*` constraints. Run against prod only (dev doesn't have the duplicates). Wrap in a transaction. Test that the surviving named constraints still block orphan inserts before merging.  
 **Status:** Addressed — migration 080 applied to prod 2026-05-24. All 6 `*_tournament_id_fkey` duplicates dropped. All 6 `fk_*_tournament` constraints retained. Verified via `validate_db_state.sql` — 16/16 checks passing.
 
@@ -100,7 +100,7 @@
 **Finding:** Direct schema inspection (2026-05-24) revealed the original finding was incorrect. Actual drift:  
 - `pools.created_at` — EXISTS in prod (`timestamptz NOT NULL DEFAULT now()`), **completely missing from dev**. Any dev code or test that reads `created_at` from `pools` will fail with "column does not exist".  
 - `pools.display_order` — `NOT NULL` in dev, **nullable in prod** (default 0). Inverse drift; low practical risk since all app writes provide this value and the default is 0.  
-- `pools.age_group_id` — originally claimed nullable in prod; **actually NOT NULL in both environments**. The original schema snapshot was wrong.  
+- `pools.division_id` — originally claimed nullable in prod; **actually NOT NULL in both environments**. The original schema snapshot was wrong.  
 
 **Tables affected:** `pools`  
 **Recommendation:** Two-part migration 081 (`supabase/migrations/081_pools_nullability_prod.sql`):  
@@ -110,17 +110,17 @@
 
 ---
 
-### [2026-05-24] — Finding #21: Residual duplicate FK constraints on `games.age_group_id` and `games.away_team_id` (prod only)
+### [2026-05-24] — Finding #21: Residual duplicate FK constraints on `games.division_id` and `games.away_team_id` (prod only)
 
 **Severity:** Low  
 **Finding:** Migration 080 cleaned up `*_tournament_id_fkey` duplicates on six tournament sub-tables, but missed two additional duplicate FKs on `games` pointing to non-tournament tables. Live schema inspection confirms prod has both constraints on each column:  
-- `games.age_group_id` → `games_age_group_id_fkey` (auto-named) AND `fk_games_age_group` (explicit) — both point to `age_groups.id`  
+- `games.division_id` → `games_division_id_fkey` (auto-named) AND `fk_games_division` (explicit) — both point to `divisions.id`  
 - `games.away_team_id` → `games_away_team_id_fkey` (auto-named) AND `fk_games_away_team` (explicit) — both point to `teams.id`  
 
 Dev has only the auto-named versions (`games_*_fkey`), which is correct for dev. Prod should keep only the explicit `fk_*` names to match its convention. `games.diamond_id` does NOT have this problem — prod has only `fk_games_diamond`.  
 **Tables affected:** `games` (prod only)  
-**Recommendation:** Migration 082 (prod only): `DROP CONSTRAINT IF EXISTS games_age_group_id_fkey` and `DROP CONSTRAINT IF EXISTS games_away_team_id_fkey`. Keep `fk_games_age_group` and `fk_games_away_team`.  
-**Status:** Addressed — Migration 082 applied to prod 2026-05-24. `games_age_group_id_fkey` and `games_away_team_id_fkey` dropped. `fk_games_age_group` and `fk_games_away_team` retained. Run `validate_db_state.sql` check 19 to confirm.
+**Recommendation:** Migration 082 (prod only): `DROP CONSTRAINT IF EXISTS games_division_id_fkey` and `DROP CONSTRAINT IF EXISTS games_away_team_id_fkey`. Keep `fk_games_division` and `fk_games_away_team`.  
+**Status:** Addressed — Migration 082 applied to prod 2026-05-24. `games_division_id_fkey` and `games_away_team_id_fkey` dropped. `fk_games_division` and `fk_games_away_team` retained. Run `validate_db_state.sql` check 19 to confirm.
 
 ---
 
@@ -147,8 +147,8 @@ Dev has only the auto-named versions (`games_*_fkey`), which is correct for dev.
 ### [2026-05-23] — Tournament sub-tables have no direct `org_id` — 2-hop RLS chain
 
 **Severity:** High  
-**Finding:** Tables `age_groups`, `games`, `teams`, `diamonds`, `pools`, `contacts`, `resources`, `rules`, `rule_items`, and `announcements` all scope to a tournament via `tournament_id` but carry no `org_id` column. Multi-tenant isolation depends entirely on a 2-hop join: `table → tournaments → organizations`. RLS policies on these tables must join through `tournaments` to enforce org scoping — if any policy is misconfigured, cross-org data leakage is possible. Query performance also suffers on org-wide lookups.  
-**Tables affected:** `age_groups`, `games`, `teams`, `diamonds`, `pools`, `contacts`, `resources`, `rules`, `rule_items`, `announcements`  
+**Finding:** Tables `divisions`, `games`, `teams`, `diamonds`, `pools`, `contacts`, `resources`, `rules`, `rule_items`, and `announcements` all scope to a tournament via `tournament_id` but carry no `org_id` column. Multi-tenant isolation depends entirely on a 2-hop join: `table → tournaments → organizations`. RLS policies on these tables must join through `tournaments` to enforce org scoping — if any policy is misconfigured, cross-org data leakage is possible. Query performance also suffers on org-wide lookups.  
+**Tables affected:** `divisions`, `games`, `teams`, `diamonds`, `pools`, `contacts`, `resources`, `rules`, `rule_items`, `announcements`  
 **Recommendation:** Evaluate adding a denormalized `org_id` column to at minimum `games` and `teams` (the highest-traffic tables). For lower-traffic tables, document the explicit RLS join requirement and add a comment to each table's migration file. Do not add `org_id` unless a query actually needs it — but audit each RLS policy to confirm the join is present.  
 **Status:** Accepted Risk — Decision 2026-05-23. The `tournaments` table is tiny (5–20 rows per org, ever) and the join cost is negligible — structurally different from the financial/league findings we fixed. The `can_access_tournament()` SECURITY DEFINER function (updated in migration 072) already collapses the RLS chain to a single function call for all sub-tables. Adding `org_id` to `games` (the highest-write table — scorekeeper updates fire constantly during tournaments) would introduce permanent write overhead and a new drift failure mode with no meaningful RLS or query benefit. All platform-admin cross-org queries use `supabaseAdmin` (service role, bypasses RLS) anyway. The Low findings #7–9 (`contacts`, `announcements`, `resources`) are closed on the same basis.
 
@@ -351,7 +351,7 @@ Migration N+3 — DROP tournaments.organization_id (after N verified in prod)
 | 11 | Duplicate FK constraints on tournament sub-tables (prod) | Medium | Migration 080 — prod only (2026-05-24) |
 | 12 | Duplicate indexes on `org_audit_log` (prod) | Low | Migration 080 — prod only (2026-05-24) |
 | 19 | `league_seasons.draft_state` missing from dev | High | Migration 079 — dev only (2026-05-24) |
-| 21 | Residual duplicate FK constraints on `games.age_group_id` and `games.away_team_id` (prod) | Low | Migration 082 — prod only (2026-05-24) |
+| 21 | Residual duplicate FK constraints on `games.division_id` and `games.away_team_id` (prod) | Low | Migration 082 — prod only (2026-05-24) |
 | 15 | `team_entitlements` dual nullable FKs | Medium | Closed — Incorrect finding (2026-05-24). Migration 065 already enforces NOT NULL on both `org_id` and `rep_team_id`. Schema snapshot was wrong. |
 | 16 | `team_org_links` no direct `org_id` — 2-hop | Medium | Accepted Risk (2026-05-24) — `linked_org_id` direct FK covers parent org lookups; team-side lookups are service-role mediated |
 

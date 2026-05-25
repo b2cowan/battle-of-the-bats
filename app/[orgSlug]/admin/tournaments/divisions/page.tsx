@@ -3,40 +3,57 @@ import { useState, useEffect } from 'react';
 import { Tag, Plus, Pencil, Trash2, X, Check, ChevronUp, ChevronDown, Trophy } from 'lucide-react';
 import { useTournament } from '@/lib/tournament-context';
 import { useOrg } from '@/lib/org-context';
-import type { AgeGroup, Contact } from '@/lib/types';
+import type { Division } from '@/lib/types';
+
+interface OrgMemberOption {
+  id: string;
+  email: string;
+  displayName: string | null;
+  title: string | null;
+  role: string;
+}
 import styles from './admin-page.module.css';
 
 type ModalMode = 'add' | 'edit' | null;
-type TieBreaker = NonNullable<AgeGroup['playoffConfig']>['tieBreakers'][number];
-type AgeGroupFormPayload = {
+type TieBreaker = NonNullable<Division['playoffConfig']>['tieBreakers'][number];
+type DivisionFormPayload = {
   tournamentId: string;
   name: string;
   minAge: number | null;
   maxAge: number | null;
   order: number;
-  contactId?: string;
+  contactMemberId?: string | null;
   capacity?: number;
   isClosed: boolean;
   poolCount: number;
   poolNames?: string;
   requiresPoolSelection: boolean;
-  playoffConfig: NonNullable<AgeGroup['playoffConfig']>;
+  playoffConfig: NonNullable<Division['playoffConfig']>;
   depositAmount?: number | null;
   depositDueDate?: string | null;
   totalFeeAmount?: number | null;
   totalFeeDueDate?: string | null;
 };
 
-async function loadAgeGroupState(tournamentId?: string, orgSlug?: string) {
-  if (!tournamentId) return { groups: [] as AgeGroup[], contacts: [] as Contact[] };
+async function loadDivisionState(tournamentId?: string, orgSlug?: string) {
+  if (!tournamentId) return { groups: [] as Division[], orgMembers: [] as OrgMemberOption[] };
   const orgParam = orgSlug ? `&orgSlug=${encodeURIComponent(orgSlug)}` : '';
-  const [groupsRes, contactsRes] = await Promise.all([
-    fetch(`/api/admin/age-groups?tournamentId=${encodeURIComponent(tournamentId)}${orgParam}`),
-    fetch(`/api/admin/contacts?tournamentId=${encodeURIComponent(tournamentId)}${orgParam}`),
+  const [groupsRes, membersRes] = await Promise.all([
+    fetch(`/api/admin/divisions?tournamentId=${encodeURIComponent(tournamentId)}${orgParam}`),
+    fetch('/api/admin/members'),
   ]);
-  const groups: AgeGroup[]  = groupsRes.ok   ? await groupsRes.json()   : [];
-  const contacts: Contact[] = contactsRes.ok ? await contactsRes.json() : [];
-  return { groups, contacts };
+  const groups: Division[] = groupsRes.ok ? await groupsRes.json() : [];
+  const allMembers: OrgMemberOption[] = membersRes.ok ? await membersRes.json() : [];
+  // Only owner/admin/staff are eligible as division contacts
+  const orgMembers = allMembers
+    .filter(m => ['owner', 'admin', 'staff'].includes(m.role))
+    .sort((a, b) => {
+      const roleOrder: Record<string, number> = { owner: 0, admin: 1, staff: 2 };
+      const roleDiff = (roleOrder[a.role] ?? 9) - (roleOrder[b.role] ?? 9);
+      if (roleDiff !== 0) return roleDiff;
+      return (a.displayName ?? a.email).localeCompare(b.displayName ?? b.email);
+    });
+  return { groups, orgMembers };
 }
 
 function getErrorMessage(err: unknown, fallback: string) {
@@ -49,15 +66,15 @@ function normalizeTieBreakers(values: string[]): TieBreaker[] {
   return normalized.length ? normalized : ['h2h', 'rd', 'rf', 'ra'];
 }
 
-export default function AgeGroupsPage() {
+export default function DivisionsPage() {
   const { currentTournament } = useTournament();
   const { currentOrg } = useOrg();
-  const [groups, setGroups] = useState<AgeGroup[]>([]);
-  const [contacts, setContacts] = useState<Contact[]>([]);
+  const [groups, setGroups] = useState<Division[]>([]);
+  const [orgMembers, setOrgMembers] = useState<OrgMemberOption[]>([]);
   const [modal, setModal] = useState<ModalMode>(null);
-  const [editing, setEditing] = useState<AgeGroup | null>(null);
+  const [editing, setEditing] = useState<Division | null>(null);
   const [form, setForm] = useState({
-    name: '', minAge: '', maxAge: '', order: '', contactId: '',
+    name: '', minAge: '', maxAge: '', order: '', contactMemberId: '',
     capacity: '', isClosed: false, poolCount: '0', poolNames: '',
     requiresPoolSelection: false, usePools: false,
     tieBreakers: ['h2h', 'rd', 'rf', 'ra'],
@@ -66,19 +83,19 @@ export default function AgeGroupsPage() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
   async function refresh() {
-    const next = await loadAgeGroupState(currentTournament?.id, currentOrg?.slug);
+    const next = await loadDivisionState(currentTournament?.id, currentOrg?.slug);
     setGroups(next.groups);
-    setContacts(next.contacts);
+    setOrgMembers(next.orgMembers);
   }
 
   useEffect(() => {
     let cancelled = false;
 
     async function load() {
-      const next = await loadAgeGroupState(currentTournament?.id, currentOrg?.slug);
+      const next = await loadDivisionState(currentTournament?.id, currentOrg?.slug);
       if (cancelled) return;
       setGroups(next.groups);
-      setContacts(next.contacts);
+      setOrgMembers(next.orgMembers);
     }
 
     void load();
@@ -88,7 +105,7 @@ export default function AgeGroupsPage() {
   function openAdd() {
     setForm({
       name: '', minAge: '', maxAge: '', order: String(groups.length + 1),
-      contactId: '', capacity: '', isClosed: false, poolCount: '0', poolNames: '',
+      contactMemberId: '', capacity: '', isClosed: false, poolCount: '0', poolNames: '',
       requiresPoolSelection: false, usePools: false,
       tieBreakers: ['h2h', 'rd', 'rf', 'ra'],
       depositAmount: '', depositDueDate: '', totalFeeAmount: '', totalFeeDueDate: '',
@@ -97,12 +114,12 @@ export default function AgeGroupsPage() {
     setModal('add');
   }
 
-  function openEdit(g: AgeGroup) {
+  function openEdit(g: Division) {
     setForm({
       name: g.name,
       minAge: g.minAge === null || g.minAge === undefined ? '' : String(g.minAge),
       maxAge: g.maxAge === null || g.maxAge === undefined ? '' : String(g.maxAge),
-      order: String(g.order), contactId: g.contactId || '',
+      order: String(g.order), contactMemberId: g.contactMemberId || '',
       capacity: g.capacity ? String(g.capacity) : '', isClosed: !!g.isClosed,
       poolCount: String(g.poolCount || 0), poolNames: g.poolNames || '',
       requiresPoolSelection: !!g.requiresPoolSelection,
@@ -134,13 +151,13 @@ export default function AgeGroupsPage() {
       alert('Minimum age cannot be greater than maximum age.');
       return;
     }
-    const data: AgeGroupFormPayload = {
+    const data: DivisionFormPayload = {
       tournamentId: currentTournament.id,
       name: form.name.trim(),
       minAge,
       maxAge,
       order: Number(form.order),
-      contactId: form.contactId || undefined,
+      contactMemberId: form.contactMemberId || null,
       capacity: form.capacity ? Number(form.capacity) : undefined,
       isClosed: form.isClosed,
       poolCount: Number(form.poolCount),
@@ -158,7 +175,7 @@ export default function AgeGroupsPage() {
 
     try {
       const orgQuery = currentOrg?.slug ? `?orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
-      const res = await fetch(`/api/admin/age-groups${orgQuery}`, {
+      const res = await fetch(`/api/admin/divisions${orgQuery}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
@@ -181,7 +198,7 @@ export default function AgeGroupsPage() {
     if (!deleteId) return;
     try {
       const orgQuery = currentOrg?.slug ? `?orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
-      const res = await fetch(`/api/admin/age-groups${orgQuery}`, {
+      const res = await fetch(`/api/admin/divisions${orgQuery}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'delete', id: deleteId })
@@ -222,7 +239,7 @@ export default function AgeGroupsPage() {
             <p className={styles.pageSub}>Manage tournament divisions and registration groups</p>
           </div>
         </div>
-        <button className="btn btn-primary btn-sm" onClick={openAdd} id="age-group-add-btn" disabled={!currentTournament}>
+        <button className="btn btn-primary btn-sm" onClick={openAdd} id="division-add-btn" disabled={!currentTournament}>
           <Plus size={16} /> Add Division
         </button>
       </div>
@@ -269,8 +286,8 @@ export default function AgeGroupsPage() {
                 </td>
                 <td data-label="Actions">
                   <div className={styles.mobileActions}>
-                    <button className="btn btn-ghost btn-sm" onClick={() => openEdit(g)} id={`edit-age-group-${g.id}`}><Pencil size={13} /></button>
-                    <button className="btn btn-danger btn-sm" onClick={() => setDeleteId(g.id)} id={`delete-age-group-${g.id}`}><Trash2 size={13} /></button>
+                    <button className="btn btn-ghost btn-sm" onClick={() => openEdit(g)} id={`edit-division-${g.id}`}><Pencil size={13} /></button>
+                    <button className="btn btn-danger btn-sm" onClick={() => setDeleteId(g.id)} id={`delete-division-${g.id}`}><Trash2 size={13} /></button>
                   </div>
                 </td>
               </tr>
@@ -302,13 +319,31 @@ export default function AgeGroupsPage() {
               </div>
               <div className="form-group" style={{ marginBottom: '1rem' }}>
                 <label className="form-label">Division Contact (Optional)</label>
-                <select className="form-select" value={form.contactId} onChange={e => setForm(f => ({ ...f, contactId: e.target.value }))}>
-                  <option value="">Default Admin Email</option>
-                  {contacts.map(c => <option key={c.id} value={c.id}>{c.name} ({c.email})</option>)}
+                <select
+                  className="form-select"
+                  value={form.contactMemberId}
+                  onChange={e => setForm(f => ({ ...f, contactMemberId: e.target.value }))}
+                >
+                  <option value="">Default (tournament contact)</option>
+                  {orgMembers.map(m => (
+                    <option key={m.id} value={m.id}>
+                      {m.displayName ?? m.email}{m.title ? ` — ${m.title}` : ''} ({m.role})
+                    </option>
+                  ))}
                 </select>
-                <p className="form-help" style={{ fontSize: '0.75rem', color: 'var(--white-30)', marginTop: '0.25rem' }}>
-                  If selected, new team registration notifications for this division will be sent to this contact instead of the default admin email.
-                </p>
+                {form.contactMemberId && (() => {
+                  const picked = orgMembers.find(m => m.id === form.contactMemberId);
+                  return picked ? (
+                    <p className="form-help" style={{ fontSize: '0.72rem', color: 'var(--white-40)', marginTop: '0.25rem' }}>
+                      Notifications for this division will go to <strong>{picked.email}</strong>
+                    </p>
+                  ) : null;
+                })()}
+                {!form.contactMemberId && (
+                  <p className="form-help" style={{ fontSize: '0.72rem', color: 'var(--white-30)', marginTop: '0.25rem' }}>
+                    Leave blank to use the tournament&apos;s default contact. Overriding routes notifications for this division to the selected staff member.
+                  </p>
+                )}
               </div>
               <div className="form-row form-row-2" style={{ marginBottom: '1.5rem' }}>
                 <div className="form-group">
@@ -459,7 +494,7 @@ export default function AgeGroupsPage() {
 
               <div className="modal-footer">
                 <button type="button" className="btn btn-ghost" onClick={() => setModal(null)}>Cancel</button>
-                <button type="submit" className="btn btn-primary" id="age-group-save-btn"><Check size={14} /> Save</button>
+                <button type="submit" className="btn btn-primary" id="division-save-btn"><Check size={14} /> Save</button>
               </div>
             </form>
           </div>
@@ -479,7 +514,7 @@ export default function AgeGroupsPage() {
             </p>
             <div className="modal-footer">
               <button className="btn btn-ghost" onClick={() => setDeleteId(null)}>Cancel</button>
-              <button className="btn btn-danger" onClick={handleDelete} id="confirm-delete-age-group"><Trash2 size={14} /> Delete</button>
+              <button className="btn btn-danger" onClick={handleDelete} id="confirm-delete-division"><Trash2 size={14} /> Delete</button>
             </div>
           </div>
         </div>

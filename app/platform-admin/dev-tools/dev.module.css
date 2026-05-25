@@ -947,3 +947,96 @@
   border-color: rgba(255,255,0,0.2);
   border-bottom-color: #090c12;
 }
+
+/* ─── Section dividers ───────────────────────────────────────────────────────── */
+.sectionDivider {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  padding: 0.9rem 0 0.35rem;
+  border-top: 1px solid rgba(255,255,255,0.06);
+  margin-top: 0.5rem;
+}
+
+.sectionLabel {
+  font-size: 0.55rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.28);
+}
+
+.sectionSublabel {
+  font-size: 0.55rem;
+  color: rgba(255,255,255,0.16);
+  letter-spacing: 0.04em;
+}
+
+/* ─── Kind badges (card title inline) ───────────────────────────────────────── */
+.kindBadgeAdditive,
+.kindBadgeStandalone {
+  display: inline-block;
+  font-size: 0.46rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 0.08rem 0.32rem;
+  border-radius: 2px;
+  border: 1px solid;
+  margin-left: 0.45rem;
+  vertical-align: middle;
+  position: relative;
+  top: -0.08em;
+}
+
+.kindBadgeAdditive {
+  color: rgba(99,179,237,0.7);
+  border-color: rgba(99,179,237,0.28);
+  background: rgba(99,179,237,0.07);
+}
+
+.kindBadgeStandalone {
+  color: rgba(167,139,250,0.7);
+  border-color: rgba(167,139,250,0.28);
+  background: rgba(167,139,250,0.07);
+}
+
+/* ─── Org selector in card footer ────────────────────────────────────────────── */
+.orgSelectorRow {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-shrink: 0;
+}
+
+.orgSelectorLabel {
+  font-size: 0.55rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.2);
+  white-space: nowrap;
+}
+
+.orgSelect {
+  font-family: var(--font-data, monospace);
+  font-size: 0.62rem;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.12);
+  color: rgba(255,255,255,0.55);
+  border-radius: 4px;
+  padding: 0.14rem 0.38rem;
+  cursor: pointer;
+  max-width: 160px;
+}
+
+.orgSelect:focus {
+  outline: none;
+  border-color: rgba(255,255,0,0.35);
+  color: rgba(255,255,255,0.8);
+}
+
+.orgSelect:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}

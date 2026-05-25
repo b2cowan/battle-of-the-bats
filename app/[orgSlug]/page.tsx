@@ -4,7 +4,7 @@ import { Calendar, ChevronRight, Star, Mail, ExternalLink, Archive, Users } from
 import {
   getOrganizationBySlug, getTournamentsByOrg,
   getOrgPublicSiteContent, getArchivesByOrg,
-  getLeagueSeasons, getAgeGroups, getOpenTryoutsByOrg,
+  getLeagueSeasons, getDivisions, getOpenTryoutsByOrg,
 } from '@/lib/db';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import styles from './Home.module.css';
@@ -41,7 +41,7 @@ export default async function HomePage({ params }: { params: Promise<{ orgSlug: 
 
     // Per-tournament age range helper
     async function tournamentAgeRange(tId: string) {
-      const groups = await getAgeGroups(tId, { admin: true });
+      const groups = await getDivisions(tId, { admin: true });
       const sorted = [...groups].sort((a, b) => a.order - b.order);
       if (sorted.length === 0) return null;
       return sorted.length === 1 ? sorted[0].name : `${sorted[0].name} – ${sorted[sorted.length - 1].name}`;

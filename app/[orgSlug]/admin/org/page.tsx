@@ -1,12 +1,17 @@
 'use client';
 import Link from 'next/link';
-import { Users2, RefreshCw, MapPin, CreditCard, Settings, FileText, Link2 } from 'lucide-react';
+import { Users2, RefreshCw, MapPin, CreditCard, Settings, FileText, Link2, UserCheck } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
+import { useCurrentOrgCoachAccess } from '@/lib/use-current-org-coach-access';
 
 export default function OrgAdminHub() {
   const { currentOrg, userRole, loading } = useOrg();
   const base = `/${currentOrg?.slug ?? ''}/admin/org`;
   const adminBase = `/${currentOrg?.slug ?? ''}/admin`;
+  const hasCurrentOrgCoachAccess = useCurrentOrgCoachAccess(
+    currentOrg?.slug,
+    Boolean(userRole === 'owner' || userRole === 'admin'),
+  );
 
   if (loading || !userRole) {
     return (
@@ -46,8 +51,14 @@ export default function OrgAdminHub() {
         label: 'Coaches Portal Links',
         desc: 'Invite paid Coaches Portals, review link requests, and see portal-link history',
         icon: Link2,
-        href: `${base}/team-links`,
+        href: `${base}/coaches-portal-links`,
       },
+      ...(hasCurrentOrgCoachAccess ? [{
+        label: 'My Coaches Portal',
+        desc: 'Open the team workspace assigned to you in this organization',
+        icon: UserCheck,
+        href: `/${currentOrg?.slug ?? ''}/coaches`,
+      }] : []),
     ] : []),
     ...(userRole === 'owner' ? [
       {

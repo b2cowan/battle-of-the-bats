@@ -110,7 +110,7 @@ test.describe.serial('standalone Team direct checkout smoke', () => {
         teamSlug: workspaceSlug,
         workspaceSlug,
         sport: 'softball',
-        ageGroup: 'U13',
+        division: 'U13',
         seasonName: `${teamName} ${new Date().getFullYear()}`,
         seasonYear: new Date().getFullYear(),
         billingCycle: 'annual',
@@ -251,8 +251,8 @@ test.describe.serial('standalone Team direct checkout smoke', () => {
     if (tournamentError) throw tournamentError
     sourceTournamentIds.push(tournament.id)
 
-    const { data: ageGroup, error: ageGroupError } = await supabaseAdmin
-      .from('age_groups')
+    const { data: division, error: divisionError } = await supabaseAdmin
+      .from('divisions')
       .insert({
         tournament_id: tournament.id,
         name: 'U13',
@@ -264,13 +264,13 @@ test.describe.serial('standalone Team direct checkout smoke', () => {
       })
       .select('id')
       .single()
-    if (ageGroupError) throw ageGroupError
+    if (divisionError) throw divisionError
 
     const { data: tournamentTeam, error: tournamentTeamError } = await supabaseAdmin
       .from('teams')
       .insert({
         tournament_id: tournament.id,
-        age_group_id: ageGroup.id,
+        division_id: division.id,
         name: teamName,
         coach: 'Claim Coach',
         email: coachEmail,
@@ -323,7 +323,7 @@ test.describe.serial('standalone Team direct checkout smoke', () => {
         teamSlug: workspaceSlug,
         workspaceSlug,
         sport: 'softball',
-        ageGroup: 'U13',
+        division: 'U13',
         seasonName: `${teamName} ${new Date().getFullYear()}`,
         seasonYear: new Date().getFullYear(),
         billingCycle: 'annual',

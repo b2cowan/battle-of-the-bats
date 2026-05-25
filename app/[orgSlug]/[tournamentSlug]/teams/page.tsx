@@ -3,9 +3,9 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Users, Search } from 'lucide-react';
 import { useParams } from 'next/navigation';
-import { getAgPref, setAgPref } from '@/lib/age-group-cookie';
+import { getDivisionPref, setDivisionPref } from '@/lib/division-cookie';
 import { isPublicPageEnabled } from '@/lib/public-pages';
-import { Team, AgeGroup, Tournament } from '@/lib/types';
+import { Team, Division, Tournament } from '@/lib/types';
 import YearSelector from '@/components/YearSelector';
 import styles from '../../teams/teams.module.css';
 import { fetchPublicTournamentData } from '@/lib/public-tournament-client';
@@ -16,7 +16,7 @@ export default function TeamsPage() {
   const tournamentSlug = params.tournamentSlug as string;
 
   const [teams, setTeams]           = useState<Team[]>([]);
-  const [ageGroups, setAgeGroups]   = useState<AgeGroup[]>([]);
+  const [divisions, setDivisions]   = useState<Division[]>([]);
   const [allTournaments, setAllTournaments] = useState<Tournament[]>([]);
   const [selectedTournament, setSelectedTournament] = useState<Tournament | null>(null);
   const [activeGroup, setActiveGroup] = useState<string>('all');
@@ -29,19 +29,19 @@ export default function TeamsPage() {
       setAllTournaments(data?.tournaments ?? []);
       setSelectedTournament(current);
       setTeams(data?.teams ?? []);
-      const groups = data?.ageGroups ?? [];
-      setAgeGroups(groups);
-      const pref = getAgPref(orgSlug);
+      const groups = data?.divisions ?? [];
+      setDivisions(groups);
+      const pref = getDivisionPref(orgSlug);
       const preferred = pref ? groups.find(g => g.name === pref) : null;
       if (preferred) setActiveGroup(preferred.id);
     }
     init();
   }, [orgSlug, tournamentSlug]);
 
-  const filtered = (activeGroup === 'all' ? teams : teams.filter(t => t.ageGroupId === activeGroup))
+  const filtered = (activeGroup === 'all' ? teams : teams.filter(t => t.divisionId === activeGroup))
     .filter(t => t.name.toLowerCase().includes(search.toLowerCase()));
 
-  const countByGroup = Object.fromEntries(ageGroups.map(g => [g.id, teams.filter(t => t.ageGroupId === g.id).length]));
+  const countByGroup = Object.fromEntries(divisions.map(g => [g.id, teams.filter(t => t.divisionId === g.id).length]));
   const totalCount = teams.length;
 
   if (selectedTournament && !isPublicPageEnabled(selectedTournament, 'teams')) {
@@ -94,10 +94,10 @@ export default function TeamsPage() {
               onClick={() => setActiveGroup('all')} id="teams-tab-all">
               All <span className={styles.tabCount}>{totalCount}</span>
             </button>
-            {ageGroups.map(g => (
+            {divisions.map(g => (
               <button key={g.id}
                 className={`tab-btn ${activeGroup === g.id ? 'active' : ''}`}
-                onClick={() => { setActiveGroup(g.id); setAgPref(orgSlug, g.name); }}
+                onClick={() => { setActiveGroup(g.id); setDivisionPref(orgSlug, g.name); }}
                 id={`teams-tab-${g.name}`}>
                 {g.name} <span className={styles.tabCount}>{countByGroup[g.id] || 0}</span>
               </button>
@@ -111,8 +111,8 @@ export default function TeamsPage() {
             </div>
           ) : (
             <div className={styles.divisionLayout}>
-              {ageGroups.filter(g => activeGroup === 'all' || g.id === activeGroup).map(group => {
-                const groupTeams = filtered.filter(t => t.ageGroupId === group.id);
+              {divisions.filter(g => activeGroup === 'all' || g.id === activeGroup).map(group => {
+                const groupTeams = filtered.filter(t => t.divisionId === group.id);
                 if (groupTeams.length === 0) return null;
 
                 const groupPools = (group.poolCount || 0) >= 2 ? (group.pools || []) : [];

@@ -1,7 +1,7 @@
 ﻿'use client';
 import { useState } from 'react';
 import { ChevronDown, ChevronUp, MapPin, Trophy, Pencil, X, AlertCircle, Trash2, MoreVertical } from 'lucide-react';
-import { Game, Team, AgeGroup, Diamond } from '@/lib/types';
+import { Game, Team, Division, Diamond } from '@/lib/types';
 import { formatTime, formatPoolName } from '@/lib/utils';
 import { Pool } from '@/lib/types';
 import s from '@/app/admin/admin-common.module.css';
@@ -10,7 +10,7 @@ import styles from '../schedule-admin.module.css';
 interface GameListProps {
   games: Game[];
   teams: Team[];
-  ageGroups: AgeGroup[];
+  divisions: Division[];
   diamonds: Diamond[];
   viewMode: 'pool' | 'playoff';
   groupByPool: boolean;
@@ -24,7 +24,7 @@ interface GameListProps {
 }
 
 export default function GameList({
-  games, teams, ageGroups, diamonds, viewMode, groupByPool, pools: poolsProp,
+  games, teams, divisions, diamonds, viewMode, groupByPool, pools: poolsProp,
   onEdit, onScore, onDelete, onCancel, onSchedule, mode
 }: GameListProps) {
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
@@ -313,15 +313,15 @@ export default function GameList({
     );
   };
 
-  const firstGameGroupId = games[0]?.ageGroupId;
-  const currentAgeGroup = ageGroups.find(g => g.id === firstGameGroupId);
-  const ageGroupName = currentAgeGroup?.name || 'All Games';
-  const pools = currentAgeGroup?.pools || [];
+  const firstGameGroupId = games[0]?.divisionId;
+  const currentDivision = divisions.find(g => g.id === firstGameGroupId);
+  const divisionName = currentDivision?.name || 'All Games';
+  const pools = currentDivision?.pools || [];
 
   return (
     <div className={s.groupSection}>
       <div className={s.groupHeader}>
-        <strong>{ageGroupName}</strong>
+        <strong>{divisionName}</strong>
         <span className="badge badge-primary">{sortedGames.length} Game{sortedGames.length !== 1 ? 's' : ''}</span>
       </div>
 

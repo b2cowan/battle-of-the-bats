@@ -1,12 +1,17 @@
-.page {
-  max-width: 720px;
+.page {}
+
+/* Constrains settings form content to a readable width, centred in the admin shell */
+.settingsContent {
+  max-width: 860px;
+  margin: 0 auto;
+  width: 100%;
 }
 
 .pageHeader {
   display: flex;
   align-items: center;
   gap: 1rem;
-  margin-bottom: 2rem;
+  margin-bottom: 1.25rem;
 }
 
 .backBtn {
@@ -40,7 +45,7 @@
 }
 
 .pageTitle {
-  font-size: 1.75rem;
+  font-size: 1.25rem;
   font-weight: 900;
   font-family: var(--font-data);
   margin: 0;
@@ -55,11 +60,11 @@
 }
 
 .card {
-  padding: 1.5rem;
+  padding: 1rem 1.25rem;
   border-radius: 2px;
   background: var(--bg-surface);
   border: 1px solid var(--border-subtle);
-  margin-bottom: 1.25rem;
+  margin-bottom: 0.75rem;
 }
 
 .sectionTitle {
@@ -68,7 +73,7 @@
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--white-40, rgba(255,255,255,0.4));
-  margin: 0 0 1.25rem;
+  margin: 0 0 0.75rem;
 }
 
 .sectionTitleRow {
@@ -143,7 +148,7 @@
   display: flex;
   align-items: center;
   gap: 1rem;
-  margin-bottom: 2rem;
+  margin-bottom: 1.25rem;
 }
 
 .cardHeaderRow {
@@ -156,6 +161,7 @@
 
 .segmentedControl {
   display: inline-flex;
+  align-self: flex-start;  /* prevent stretching when inside a flex column */
   gap: 0.25rem;
   padding: 0.2rem;
   border: 1px solid var(--border-subtle);
@@ -178,8 +184,8 @@
 }
 
 .segmentButtonActive {
-  background: var(--blueprint-blue);
-  color: #fff;
+  background: var(--logic-lime);
+  color: #0f1123;
 }
 
 .toggleRow {

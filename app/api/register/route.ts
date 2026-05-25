@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@/lib/supabase-server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { sendEmail, registrationConfirmationHtml, waitlistConfirmationHtml, adminNotificationHtml, ADMIN_EMAIL } from '@/lib/email';
 import { getOrgOwnerEmail } from '@/lib/supabase-admin';
 import { getTournamentRegistrationFields, saveTournamentRegistrationFieldAnswers } from '@/lib/db';
 import { hasPlanFeature } from '@/lib/plan-features';
 import { writePlatformEvent } from '@/lib/platform-events';
+import { linkTournamentRegistrationToBasicCoachTeam } from '@/lib/basic-coach-teams';
 import type { OrgPlan, TournamentRegistrationField } from '@/lib/types';
 import {
   duplicateTournamentTeamMessage,
@@ -18,9 +20,10 @@ type RegistrationRequestBody = {
   teamName?: unknown;
   coachName?: unknown;
   email?: unknown;
-  ageGroupId?: unknown;
+  divisionId?: unknown;
   tournamentId?: unknown;
   customFieldAnswers?: unknown;
+  basicCoachTeamId?: unknown;
 };
 
 type TournamentRow = {
@@ -30,15 +33,18 @@ type TournamentRow = {
   org_id: string | null;
   status: string | null;
   public_hidden_pages: unknown;
+  default_contact_member_id: string | null;
+  notify_mode: string | null;
 };
 
-type AgeGroupRow = {
+type DivisionRow = {
   id: string;
   name: string;
   capacity: number | null;
   is_closed: boolean | null;
   tournament_id: string;
-  contact_id: string | null;
+  contact_id: string | null;           // legacy — still selected for fallback safety
+  contact_member_id: string | null;    // new
 };
 
 type OrganizationRow = {
@@ -47,10 +53,6 @@ type OrganizationRow = {
   is_public: boolean | null;
   plan_id: OrgPlan;
   subscription_status: string | null;
-};
-
-type ContactRow = {
-  email: string | null;
 };
 
 type WaitlistRow = {
@@ -73,11 +75,11 @@ function isRegisterPageHidden(value: unknown) {
   return Array.isArray(value) && value.includes('register');
 }
 
-async function getNextWaitlistPosition(ageGroupId: string) {
+async function getNextWaitlistPosition(divisionId: string) {
   const { data: maxRow, error } = await supabaseAdmin
     .from('teams')
     .select('waitlist_position')
-    .eq('age_group_id', ageGroupId)
+    .eq('division_id', divisionId)
     .not('waitlist_position', 'is', null)
     .order('waitlist_position', { ascending: false })
     .limit(1)
@@ -87,21 +89,17 @@ async function getNextWaitlistPosition(ageGroupId: string) {
   return (maxRow?.waitlist_position ?? 0) + 1;
 }
 
-async function getDivisionContactEmail(contactId: string | null) {
-  if (!contactId) return null;
-
-  const { data: contact, error } = await supabaseAdmin
-    .from('contacts')
-    .select('email')
-    .eq('id', contactId)
-    .maybeSingle<ContactRow>();
-
-  if (error) {
-    console.error('Registration contact lookup error:', error);
-    return null;
-  }
-
-  return contact?.email ?? null;
+/** Resolve an org member's email from their member row ID. */
+async function getMemberEmail(memberId: string | null): Promise<string | null> {
+  if (!memberId) return null;
+  const { data: member } = await supabaseAdmin
+    .from('organization_members')
+    .select('user_id')
+    .eq('id', memberId)
+    .single();
+  if (!member?.user_id) return null;
+  const { data } = await supabaseAdmin.auth.admin.getUserById(member.user_id);
+  return data?.user?.email ?? null;
 }
 
 async function ensureRegistrationFilesBucket() {
@@ -124,8 +122,9 @@ async function parseRegistrationRequest(req: NextRequest) {
         teamName: formData.get('teamName'),
         coachName: formData.get('coachName'),
         email: formData.get('email'),
-        ageGroupId: formData.get('ageGroupId'),
+        divisionId: formData.get('divisionId'),
         tournamentId: formData.get('tournamentId'),
+        basicCoachTeamId: formData.get('basicCoachTeamId'),
       } satisfies RegistrationRequestBody,
       formData,
     };
@@ -200,31 +199,43 @@ export async function POST(req: NextRequest) {
     const teamName = cleanString(body.teamName);
     const coachName = cleanString(body.coachName);
     const email = cleanString(body.email).toLowerCase();
-    const ageGroupId = cleanString(body.ageGroupId);
+    const divisionId = cleanString(body.divisionId);
     const tournamentId = cleanString(body.tournamentId);
+    const basicCoachTeamId = cleanString(body.basicCoachTeamId) || null;
 
-    if (!teamName || !coachName || !email || !ageGroupId || !tournamentId) {
+    if (!teamName || !coachName || !email || !divisionId || !tournamentId) {
       return NextResponse.json({ error: 'Missing required registration details.' }, { status: 400 });
     }
 
+    let signedInCoach: { id: string; email: string } | null = null;
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user?.id && user.email) {
+      signedInCoach = { id: user.id, email: user.email.toLowerCase() };
+    }
+
+    if (basicCoachTeamId && (!signedInCoach || signedInCoach.email !== email)) {
+      return NextResponse.json({ error: 'Sign in with the coach email before selecting an existing Coaches Portal team.' }, { status: 401 });
+    }
+
     const [
-      { data: ageGroup, error: ageGroupError },
+      { data: division, error: divisionError },
       { data: tournament, error: tournamentError },
     ] = await Promise.all([
       supabaseAdmin
-        .from('age_groups')
-        .select('id, name, capacity, is_closed, tournament_id, contact_id')
-        .eq('id', ageGroupId)
-        .maybeSingle<AgeGroupRow>(),
+        .from('divisions')
+        .select('id, name, capacity, is_closed, tournament_id, contact_id, contact_member_id')
+        .eq('id', divisionId)
+        .maybeSingle<DivisionRow>(),
       supabaseAdmin
         .from('tournaments')
-        .select('id, name, contact_email, org_id, status, public_hidden_pages')
+        .select('id, name, contact_email, org_id, status, public_hidden_pages, default_contact_member_id, notify_mode')
         .eq('id', tournamentId)
         .maybeSingle<TournamentRow>(),
     ]);
 
-    if (ageGroupError) {
-      console.error('Registration division lookup error:', ageGroupError);
+    if (divisionError) {
+      console.error('Registration division lookup error:', divisionError);
       return NextResponse.json({ error: 'Unable to confirm division availability. Please try again.' }, { status: 500 });
     }
     if (tournamentError) {
@@ -234,10 +245,10 @@ export async function POST(req: NextRequest) {
     if (!tournament || tournament.status !== 'active') {
       return NextResponse.json({ error: 'Tournament registration is not open.' }, { status: 403 });
     }
-    if (!ageGroup || ageGroup.tournament_id !== tournamentId) {
+    if (!division || division.tournament_id !== tournamentId) {
       return NextResponse.json({ error: 'Invalid division for this tournament.' }, { status: 400 });
     }
-    if (ageGroup.is_closed) {
+    if (division.is_closed) {
       return NextResponse.json({ error: 'Registration for this division is closed.' }, { status: 403 });
     }
     if (isRegisterPageHidden(tournament.public_hidden_pages)) {
@@ -246,7 +257,7 @@ export async function POST(req: NextRequest) {
 
     const duplicateTeam = await findDuplicateTournamentTeam({
       tournamentId,
-      ageGroupId,
+      divisionId,
       teamName,
     });
     if (duplicateTeam) {
@@ -283,12 +294,17 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: customAnswerResult.error }, { status: 400 });
     }
 
-    const divisionContactEmail = await getDivisionContactEmail(ageGroup.contact_id);
+    // Resolve member-based contact emails in parallel.
+    // Division contact only matters when notify_mode is 'assigned'.
+    const [tournamentDefaultMemberEmail, divisionMemberEmail] = await Promise.all([
+      getMemberEmail(tournament.default_contact_member_id ?? null),
+      getMemberEmail(division.contact_member_id ?? null),
+    ]);
 
     const { count: slotCount, error: slotError } = await supabaseAdmin
       .from('pool_slots')
       .select('id', { count: 'exact', head: true })
-      .eq('age_group_id', ageGroupId);
+      .eq('division_id', divisionId);
 
     if (slotError) {
       console.error('Registration slot lookup error:', slotError);
@@ -302,7 +318,7 @@ export async function POST(req: NextRequest) {
       const { count: regCount, error: countError } = await supabaseAdmin
         .from('teams')
         .select('id', { count: 'exact', head: true })
-        .eq('age_group_id', ageGroupId)
+        .eq('division_id', divisionId)
         .neq('status', 'rejected');
 
       if (countError) {
@@ -310,7 +326,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: 'Unable to confirm division availability. Please try again.' }, { status: 500 });
       }
 
-      if (ageGroup.capacity && (regCount ?? 0) >= ageGroup.capacity) {
+      if (division.capacity && (regCount ?? 0) >= division.capacity) {
         finalStatus = 'waitlist';
       }
     }
@@ -321,7 +337,7 @@ export async function POST(req: NextRequest) {
         name: teamName,
         coach: coachName,
         email,
-        age_group_id: ageGroupId,
+        division_id: divisionId,
         tournament_id: tournamentId,
         status: finalStatus,
         payment_status: 'pending',
@@ -337,9 +353,23 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Registration could not be submitted. Please try again.' }, { status: 500 });
     }
 
+    if (data?.id && signedInCoach && signedInCoach.email === email) {
+      try {
+        await linkTournamentRegistrationToBasicCoachTeam({
+          userId: signedInCoach.id,
+          userEmail: signedInCoach.email,
+          registrationId: data.id,
+          basicCoachTeamId,
+          linkSource: 'registration_flow',
+        });
+      } catch (linkError) {
+        console.error('Registration Basic coach team link error:', linkError);
+      }
+    }
+
     if (slotConfigured && data?.id) {
       const { data: claimedSlotId, error: claimError } = await supabaseAdmin.rpc('claim_next_slot', {
-        p_age_group_id: ageGroupId,
+        p_division_id: divisionId,
         p_team_id: data.id,
       });
 
@@ -354,7 +384,7 @@ export async function POST(req: NextRequest) {
           .eq('id', data.id);
         if (updateError) console.error('Registration slot update error:', updateError);
       } else {
-        const pos = await getNextWaitlistPosition(ageGroupId);
+        const pos = await getNextWaitlistPosition(divisionId);
         const { error: waitlistError } = await supabaseAdmin
           .from('teams')
           .update({ status: 'waitlist', waitlist_position: pos })
@@ -363,7 +393,7 @@ export async function POST(req: NextRequest) {
         finalStatus = 'waitlist';
       }
     } else if (!slotConfigured && finalStatus === 'waitlist' && data?.id) {
-      const pos = await getNextWaitlistPosition(ageGroupId);
+      const pos = await getNextWaitlistPosition(divisionId);
       const { error: waitlistError } = await supabaseAdmin
         .from('teams')
         .update({ waitlist_position: pos })
@@ -419,32 +449,42 @@ export async function POST(req: NextRequest) {
           feature: 'waitlist_collection',
           action: 'waitlist_join',
           tournamentId,
-          ageGroupId,
+          divisionId,
           registrationId: data.id,
         },
       });
     }
 
-    const ageGroupName = ageGroup.name;
+    const divisionName = division.name;
     const tournamentName = tournament.name;
-    const footerContactEmail = tournament.contact_email
+
+    // Footer contact shown in team-facing emails — prefer new member system, fall back to legacy chain.
+    const footerContactEmail = tournamentDefaultMemberEmail
+      || tournament.contact_email
       || (tournament.org_id ? await getOrgOwnerEmail(tournament.org_id) : undefined)
-      || organization.contact_email
+      || organization?.contact_email
       || undefined;
-    const adminEmailToUse = tournament.contact_email || divisionContactEmail || footerContactEmail || ADMIN_EMAIL;
+
+    // Admin notification routing respects notify_mode:
+    //   'assigned' → send to division-specific contact if set; otherwise fall back to tournament default
+    //   'all'      → always send to tournament default contact (division assignment ignored)
+    const notifyMode = (tournament.notify_mode ?? 'all') as 'all' | 'assigned';
+    const adminEmailToUse = (notifyMode === 'assigned' && divisionMemberEmail)
+      ? divisionMemberEmail
+      : (tournamentDefaultMemberEmail || tournament.contact_email || footerContactEmail || ADMIN_EMAIL);
 
     await Promise.allSettled([
       sendEmail(
         email,
         isWaitlist ? `Waitlist Confirmation - ${teamName}` : `Registration Received - ${teamName}`,
         isWaitlist
-          ? waitlistConfirmationHtml({ teamName, coachName, ageGroupName, tournamentName, contactEmail: footerContactEmail })
-          : registrationConfirmationHtml({ teamName, coachName, ageGroupName, tournamentName, contactEmail: footerContactEmail, coachEmail: email })
+          ? waitlistConfirmationHtml({ teamName, coachName, divisionName, tournamentName, contactEmail: footerContactEmail })
+          : registrationConfirmationHtml({ teamName, coachName, divisionName, tournamentName, contactEmail: footerContactEmail, coachEmail: email })
       ),
       sendEmail(
         adminEmailToUse,
-        `New Registration: ${teamName} (${ageGroupName})${isWaitlist ? ' - Waitlist' : ''}`,
-        adminNotificationHtml({ teamName, coachName, email, ageGroupName, tournamentName })
+        `New Registration: ${teamName} (${divisionName})${isWaitlist ? ' - Waitlist' : ''}`,
+        adminNotificationHtml({ teamName, coachName, email, divisionName, tournamentName })
       ),
     ]);
 

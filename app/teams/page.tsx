@@ -2,13 +2,13 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Users, ChevronDown, ChevronUp, User, Search } from 'lucide-react';
-import { getTeams, getAgeGroups, getTournaments } from '@/lib/db';
-import { Team, AgeGroup, Tournament } from '@/lib/types';
+import { getTeams, getDivisions, getTournaments } from '@/lib/db';
+import { Team, Division, Tournament } from '@/lib/types';
 import styles from './teams.module.css';
 
 export default function TeamsPage() {
   const [teams, setTeams]         = useState<Team[]>([]);
-  const [ageGroups, setAgeGroups] = useState<AgeGroup[]>([]);
+  const [divisions, setDivisions] = useState<Division[]>([]);
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
   const [selectedTournament, setSelectedTournament] = useState<Tournament | null>(null);
   const [activeGroup, setActiveGroup] = useState<string>('all');
@@ -30,16 +30,16 @@ export default function TeamsPage() {
     async function fetchTeams() {
       const allTeams = await getTeams(selectedTournament!.id);
       setTeams(allTeams.filter(t => t.status === 'accepted'));
-      setAgeGroups(await getAgeGroups(selectedTournament!.id));
+      setDivisions(await getDivisions(selectedTournament!.id));
     }
     fetchTeams();
   }, [selectedTournament]);
 
-  const filtered = (activeGroup === 'all' ? teams : teams.filter(t => t.ageGroupId === activeGroup))
+  const filtered = (activeGroup === 'all' ? teams : teams.filter(t => t.divisionId === activeGroup))
     .filter(t => t.name.toLowerCase().includes(search.toLowerCase()));
-  const getGroupName = (id: string) => ageGroups.find(g => g.id === id)?.name ?? '—';
+  const getGroupName = (id: string) => divisions.find(g => g.id === id)?.name ?? '—';
   
-  const countByGroup = Object.fromEntries(ageGroups.map(g => [g.id, teams.filter(t => t.ageGroupId === g.id).length]));
+  const countByGroup = Object.fromEntries(divisions.map(g => [g.id, teams.filter(t => t.divisionId === g.id).length]));
   const totalCount = teams.length;
 
   function toggle(id: string) {
@@ -79,7 +79,7 @@ export default function TeamsPage() {
               onClick={() => setActiveGroup('all')} id="teams-tab-all">
               All <span className={styles.tabCount}>{totalCount}</span>
             </button>
-            {ageGroups.map(g => (
+            {divisions.map(g => (
               <button key={g.id}
                 className={`tab-btn ${activeGroup === g.id ? 'active' : ''}`}
                 onClick={() => setActiveGroup(g.id)}
@@ -96,8 +96,8 @@ export default function TeamsPage() {
             </div>
           ) : (
             <div className={styles.divisionLayout}>
-              {ageGroups.filter(g => activeGroup === 'all' || g.id === activeGroup).map(group => {
-                const groupTeams = filtered.filter(t => t.ageGroupId === group.id);
+              {divisions.filter(g => activeGroup === 'all' || g.id === activeGroup).map(group => {
+                const groupTeams = filtered.filter(t => t.divisionId === group.id);
                 if (groupTeams.length === 0) return null;
 
                 // 1. Get official pools for this group
