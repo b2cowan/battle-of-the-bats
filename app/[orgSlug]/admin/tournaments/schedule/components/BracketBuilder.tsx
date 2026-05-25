@@ -1,6 +1,6 @@
 'use client';
 import React, { useState, useEffect } from 'react';
-import { Division, Team, Diamond } from '@/lib/types';
+import { Division, Team, Venue } from '@/lib/types';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { useSortable } from '@dnd-kit/sortable';
@@ -21,7 +21,7 @@ export interface Matchup {
   away: Slot;
   date: string;
   time: string;
-  diamondId: string;
+  venueId: string;
   pool?: string;
 }
 
@@ -34,7 +34,7 @@ interface Round {
 interface BracketBuilderProps {
   division: Division;
   teams: Team[];
-  diamonds: Diamond[];
+  venues: Venue[];
   defaultDate?: string;
   templatePreview: any[];
   baseOptions: string[];
@@ -42,11 +42,11 @@ interface BracketBuilderProps {
   crossover?: string;
 }
 
-function SortableMatchup({ matchup, options, usedOptions, diamonds, onUpdateCode, onUpdate, onDelete }: {
+function SortableMatchup({ matchup, options, usedOptions, venues, onUpdateCode, onUpdate, onDelete }: {
   matchup: Matchup,
   options: string[],
   usedOptions: Set<string>,
-  diamonds: Diamond[],
+  venues: Venue[],
   onUpdateCode: (newCode: string) => void,
   onUpdate: (m: Matchup) => void,
   onDelete: () => void
@@ -107,16 +107,16 @@ function SortableMatchup({ matchup, options, usedOptions, diamonds, onUpdateCode
       <div className={styles.matchupFooter}>
         <input type="date" value={matchup.date} onChange={e => onUpdate({...matchup, date: e.target.value})} className={styles.dateInput} />
         <input type="time" value={matchup.time} onChange={e => onUpdate({...matchup, time: e.target.value})} className={styles.timeInput} />
-        <select value={matchup.diamondId} onChange={e => onUpdate({...matchup, diamondId: e.target.value})} className={styles.fieldSelect}>
+        <select value={matchup.venueId} onChange={e => onUpdate({...matchup, venueId: e.target.value})} className={styles.fieldSelect}>
           <option value="">Field...</option>
-          {diamonds.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+          {venues.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
         </select>
       </div>
     </div>
   );
 }
 
-export default function BracketBuilder({ division, teams, diamonds, defaultDate, templatePreview, baseOptions, onPreviewChange, crossover }: BracketBuilderProps) {
+export default function BracketBuilder({ division, teams, venues, defaultDate, templatePreview, baseOptions, onPreviewChange, crossover }: BracketBuilderProps) {
   const [rounds, setRounds] = useState<Round[]>([]);
 
   // Convert templatePreview to rounds when templatePreview changes
@@ -138,7 +138,7 @@ export default function BracketBuilder({ division, teams, diamonds, defaultDate,
         away: { label: p.away },
         date: p.date || defaultDate || '',
         time: p.time || '',
-        diamondId: p.diamondId || '',
+        venueId: p.venueId || '',
         pool: p.pool
       }))
     }));
@@ -159,7 +159,7 @@ export default function BracketBuilder({ division, teams, diamonds, defaultDate,
         code: m.code,
         date: m.date,
         time: m.time,
-        diamondId: m.diamondId,
+        venueId: m.venueId,
         pool: m.pool
       }))
     );
@@ -179,7 +179,7 @@ export default function BracketBuilder({ division, teams, diamonds, defaultDate,
             away: { label: '' },
             date: defaultDate || '',
             time: '',
-            diamondId: '',
+            venueId: '',
             pool: r.matchups[0]?.pool
           }]
         };
@@ -202,7 +202,7 @@ export default function BracketBuilder({ division, teams, diamonds, defaultDate,
             away: { label: '' },
             date: defaultDate || '',
             time: '',
-            diamondId: '',
+            venueId: '',
             pool: poolName
           }]
         };
@@ -227,7 +227,7 @@ export default function BracketBuilder({ division, teams, diamonds, defaultDate,
         away: { label: '' },
         date: defaultDate || '',
         time: '',
-        diamondId: '',
+        venueId: '',
         pool: poolName
       }]
     };
@@ -366,7 +366,7 @@ export default function BracketBuilder({ division, teams, diamonds, defaultDate,
                                   matchup={m}
                                   options={roundOptions}
                                   usedOptions={allUsedOptions}
-                                  diamonds={diamonds}
+                                  venues={venues}
                                   onUpdateCode={(newCode) => updateMatchupCode(m.id, m.code, newCode)}
                                   onUpdate={(newM) => updateMatchup(round.id, newM)}
                                   onDelete={() => deleteMatchup(round.id, m.id)}
@@ -427,7 +427,7 @@ export default function BracketBuilder({ division, teams, diamonds, defaultDate,
                           matchup={m}
                           options={roundOptions}
                           usedOptions={allUsedOptions}
-                          diamonds={diamonds}
+                          venues={venues}
                           onUpdateCode={(newCode) => updateMatchupCode(m.id, m.code, newCode)}
                           onUpdate={(newM) => updateMatchup(round.id, newM)}
                           onDelete={() => deleteMatchup(round.id, m.id)}

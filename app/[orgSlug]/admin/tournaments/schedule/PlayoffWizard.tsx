@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 import React, { useState, useEffect } from 'react';
 import { Trophy, Check, X, Calendar, AlertCircle, ChevronUp, ChevronDown } from 'lucide-react';
 import { getTournament } from '@/lib/db';
@@ -45,7 +45,7 @@ export default function PlayoffWizard({ division, tournamentId, orgSlug, onClose
       fetch(`/api/admin/venues?tournamentId=${encodeURIComponent(tournamentId)}${orgParam}`).then(r => r.ok ? r.json() : []),
       fetch(`/api/admin/teams?tournamentId=${encodeURIComponent(tournamentId)}${orgParam}`).then(r => r.ok ? r.json() : []),
     ]).then(([ds, all]) => {
-      setDiamonds(ds);
+      setVenues(ds);
       setTeams((all as any[]).filter(t => t.divisionId === division.id && t.status === 'accepted'));
     });
   }, [tournamentId, division.id, orgParam]);
@@ -167,7 +167,7 @@ export default function PlayoffWizard({ division, tournamentId, orgSlug, onClose
         // Otherwise, use the tournament end date if available.
         date: (existing?.date && existing.date !== today) ? existing.date : defaultDate, 
         time: existing?.time || '', 
-        diamondId: existing?.diamondId || '' 
+        venueId: existing?.venueId || '' 
       };
     }));
   }
@@ -224,7 +224,7 @@ export default function PlayoffWizard({ division, tournamentId, orgSlug, onClose
       return;
     }
 
-    if (preview.some(p => !p.date || !p.diamondId)) {
+    if (preview.some(p => !p.date || !p.venueId)) {
       setShowConfirm(true);
     } else {
       executeCreate();
@@ -259,8 +259,8 @@ export default function PlayoffWizard({ division, tournamentId, orgSlug, onClose
           awayTeamId: null as any,
           date: p.date || null,
           time: p.time || null,
-          location: diamonds.find(d => d.id === p.diamondId)?.name || 'TBD',
-          diamondId: p.diamondId || undefined,
+          location: venues.find(d => d.id === p.venueId)?.name || 'TBD',
+          venueId: p.venueId || undefined,
           status: 'scheduled',
           isPlayoff: true,
           bracketId,
@@ -466,7 +466,7 @@ export default function PlayoffWizard({ division, tournamentId, orgSlug, onClose
                 <BracketBuilder 
                   division={division} 
                   teams={teams} 
-                  diamonds={diamonds} 
+                  venues={venues}
                   defaultDate={tournament?.endDate || new Date().toISOString().split('T')[0]} 
                   templatePreview={templatePreview}
                   baseOptions={baseOptions}

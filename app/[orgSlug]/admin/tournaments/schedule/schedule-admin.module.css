@@ -159,6 +159,56 @@
   display: inline;
 }
 
+.scheduleToolbar {
+  align-items: center;
+}
+
+.scheduleDivisionGroup {
+  min-width: 12rem;
+}
+
+.scheduleModeGroup {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.scheduleActionsGroup {
+  flex-wrap: nowrap;
+}
+
+.desktopModeControl {
+  display: inline-flex;
+}
+
+.mobileModeSelect {
+  display: none;
+}
+
+.publishStatus {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  flex-shrink: 0;
+  padding: 0.2rem 0.55rem;
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.25);
+  border-radius: 2px;
+  background: rgba(var(--logic-lime-rgb), 0.1);
+  color: var(--logic-lime);
+  font-family: var(--font-data);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.publishButton:disabled {
+  border-color: rgba(148, 163, 184, 0.18) !important;
+  background: rgba(148, 163, 184, 0.08) !important;
+  color: rgba(148, 163, 184, 0.45) !important;
+  cursor: not-allowed;
+}
+
 .desktopTitle {
   display: inline;
 }
@@ -176,6 +226,89 @@
 }
 
 @media (max-width: 760px) {
+  .scheduleToolbar.scheduleToolbar {
+    align-items: center;
+    flex-direction: row;
+    gap: 0.45rem;
+    padding: 0.45rem;
+  }
+
+  .scheduleDivisionGroup {
+    order: 1;
+    flex: 1 1 0;
+    width: auto !important;
+    min-width: 0;
+    gap: 0.4rem;
+  }
+
+  .scheduleActionsGroup {
+    order: 2;
+    flex: 0 0 auto;
+    width: auto !important;
+    gap: 0.32rem;
+    justify-content: flex-end !important;
+    margin-left: auto;
+  }
+
+  .scheduleModeGroup {
+    order: 3;
+    flex: 1 1 100%;
+    width: 100% !important;
+    gap: 0.4rem;
+  }
+
+  .scheduleFilterGroup {
+    order: 4;
+    flex: 1 1 100%;
+    width: 100% !important;
+    gap: 0.5rem;
+  }
+
+  .desktopModeControl {
+    display: none !important;
+  }
+
+  .mobileModeSelect {
+    display: inline-flex !important;
+    align-items: center !important;
+    flex: 1 1 7rem;
+    width: auto !important;
+    min-width: 0;
+    flex-direction: row !important;
+  }
+
+  .scheduleDivisionSelect {
+    display: inline-flex !important;
+    align-items: center !important;
+    flex: 1 1 9rem;
+    width: auto !important;
+    min-width: 0;
+    flex-direction: row !important;
+  }
+
+  .scheduleDivisionSelect select,
+  .mobileModeSelect select {
+    min-width: 0;
+    width: 100%;
+    height: 28px;
+    min-height: 28px;
+    padding-left: 0.45rem;
+    padding-right: 1.45rem;
+    font-size: 0.64rem;
+  }
+
+  .mobileModeSelect span {
+    display: none;
+  }
+
+  .scheduleDivisionSelect span {
+    display: none;
+  }
+
+  .publishStatus {
+    display: none;
+  }
+
   .desktopTitle {
     display: none;
   }
@@ -344,18 +477,216 @@
   flex-shrink: 0;
 }
 
+.scheduleRefinementRow {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  width: 100%;
+  min-width: 0;
+}
+
+.scheduleStatusActive.scheduleStatusScheduled {
+  border-color: rgba(var(--blueprint-blue-rgb), 0.65);
+  background: rgba(var(--blueprint-blue-rgb), 0.14);
+  color: var(--blueprint-blue);
+}
+
+.scheduleStatusActive.scheduleStatusScheduled::before {
+  background: var(--blueprint-blue);
+}
+
+.venueFilterRoot {
+  position: relative;
+  flex: 1 1 100%;
+  width: 100%;
+  min-width: 0;
+}
+
+.venueFilterButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.4rem;
+  width: 100%;
+  height: 28px;
+  padding: 0 0.65rem;
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.25);
+  border-radius: 2px;
+  background: var(--bg-2);
+  color: rgba(148, 163, 184, 0.6);
+  cursor: pointer;
+  font-family: var(--font-data);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.venueFilterButton span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.venueFilterButton:hover:not(:disabled),
+.venueFilterButtonActive {
+  border-color: rgba(var(--logic-lime-rgb), 0.42);
+  background: rgba(var(--logic-lime-rgb), 0.07);
+  color: var(--logic-lime);
+}
+
+.venueFilterButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.venueFilterPanel {
+  position: absolute;
+  top: calc(100% + 0.35rem);
+  left: 0;
+  right: 0;
+  z-index: 210;
+  width: 100%;
+  max-width: 100%;
+  max-height: 18rem;
+  overflow-y: auto;
+  padding: 0.4rem;
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.3);
+  border-radius: 2px;
+  background: var(--hud-surface);
+  box-shadow: 0 18px 38px rgba(0, 0, 0, 0.55);
+}
+
+.venueFilterHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.35rem 0.4rem 0.45rem;
+  color: var(--white-50);
+  font-family: var(--font-data);
+  font-size: 0.58rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.venueFilterHeader button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  border: 0;
+  background: transparent;
+  color: var(--white-50);
+  cursor: pointer;
+  font-family: var(--font-data);
+  font-size: 0.58rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.venueFilterHeader button:hover {
+  color: var(--logic-lime);
+}
+
+.venueFilterList {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.venueFilterOption {
+  display: grid;
+  grid-template-columns: 1rem minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.45rem;
+  width: 100%;
+  min-height: 2rem;
+  padding: 0.35rem 0.45rem;
+  border: 1px solid transparent;
+  border-radius: 2px;
+  background: transparent;
+  color: var(--white-70);
+  cursor: pointer;
+  text-align: left;
+}
+
+.venueFilterOption:hover,
+.venueFilterOptionActive {
+  border-color: rgba(var(--logic-lime-rgb), 0.26);
+  background: rgba(var(--logic-lime-rgb), 0.07);
+  color: var(--white);
+}
+
+.venueFilterCheck {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--logic-lime);
+}
+
+.venueFilterName {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.venueFilterCount {
+  color: var(--white-40);
+  font-family: var(--font-data);
+  font-size: 0.68rem;
+}
+
 @media (max-width: 640px) {
-  .scheduleStatusFilters {
-    display: grid !important;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0.45rem;
+  .scheduleFilterGroup > label {
+    order: 1;
+    flex: 1 1 100%;
     width: 100%;
   }
 
+  .scheduleRefinementRow {
+    order: 2;
+    align-items: stretch;
+  }
+
+  .scheduleStatusFilters {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    flex: 1 1 auto;
+    gap: 0.38rem;
+    min-width: 0;
+  }
+
   .scheduleStatusFilters > button {
-    min-height: 34px;
+    min-height: 28px;
+    width: 100%;
     justify-content: center;
-    padding-inline: 0.5rem;
+    padding: 0.2rem 0.42rem;
+    font-size: 0.54rem;
+    letter-spacing: 0.03em;
+    gap: 0.28rem;
+  }
+
+  .venueFilterRoot {
+    order: 3;
+    flex: 1 1 100%;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .venueFilterButton {
+    justify-content: flex-start;
+    height: 34px;
+    padding-inline: 0.7rem;
+  }
+
+  .venueFilterPanel {
+    width: 100%;
+    max-width: 100%;
   }
 }
 
@@ -565,16 +896,58 @@
 .inlineFormFooter {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: stretch;
   gap: 0.5rem;
   padding: 0.4rem 1.5rem 0.55rem;
   border-top: 1px solid rgba(var(--blueprint-blue-rgb), 0.1);
+}
+
+.inlineFormActions {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  width: 100%;
+  min-width: 0;
+}
+
+.inlineCancelButton {
+  color: var(--warning, #f59e0b) !important;
+}
+
+.inlineActionSpacer {
+  flex: 1 1 auto;
+  min-width: 0.5rem;
 }
 
 .saveError {
   font-family: var(--font-data);
   font-size: 0.68rem;
   color: var(--danger, #ef4444);
+}
+
+.cancelledActionBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.45rem 1.5rem 0.55rem;
+  border-top: 1px solid rgba(var(--danger-rgb), 0.18);
+  background: rgba(var(--danger-rgb), 0.05);
+}
+
+.cancelledActionText {
+  min-width: 0;
+  color: var(--white-50);
+  font-family: var(--font-data);
+  font-size: 0.68rem;
+  line-height: 1.35;
+}
+
+.cancelledActions {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  gap: 0.4rem;
 }
 
 @media (max-width: 768px) {
@@ -602,8 +975,45 @@
   }
 
   .inlineFormFooter {
-    flex-direction: column;
+    padding-inline: 0.75rem;
+  }
+
+  .inlineFormActions {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.5rem;
+  }
+
+  .inlineFormActions :global(.btn) {
+    width: 100%;
+    min-width: 0;
+    min-height: 36px;
+    padding: 0.34rem 0.7rem;
+    font-size: 0.64rem;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+  }
+
+  .inlineActionSpacer {
+    display: none;
+  }
+
+  .cancelledActionBar {
     align-items: stretch;
-    gap: 0.6rem;
+    flex-direction: column;
+    gap: 0.45rem;
+    padding: 0.45rem 0.75rem 0.55rem;
+  }
+
+  .cancelledActionText {
+    font-size: 0.62rem;
+  }
+
+  .cancelledActions {
+    justify-content: flex-end;
+  }
+
+  .cancelledActions :global(.btn) {
+    min-height: 28px;
   }
 }

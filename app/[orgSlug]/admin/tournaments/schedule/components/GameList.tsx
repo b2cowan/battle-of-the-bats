@@ -1,5 +1,5 @@
 ﻿'use client';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ChevronDown, ChevronUp, MapPin, Pencil, X, AlertCircle, Trash2, Check } from 'lucide-react';
 import { Game, Team, Division, Venue } from '@/lib/types';
 import { formatTime, formatPoolName } from '@/lib/utils';
@@ -39,6 +39,7 @@ export default function GameList({
   const [editState, setEditState] = useState<Record<string, EditFields>>({});
   const [saving, setSaving] = useState<Set<string>>(new Set());
   const [saveErrors, setSaveErrors] = useState<Record<string, string>>({});
+  const previousStatusesRef = useRef<Map<string, string>>(new Map());
 
   // Scoring-mode inline state
   const [scoreState, setScoreState] = useState<Record<string, ScoreFields>>({});
@@ -48,6 +49,23 @@ export default function GameList({
   const getTeamName = (id: string) => teams.find(t => t.id === id)?.name ?? null;
   const resolveTeam = (id: string, placeholder?: string) => getTeamName(id) ?? placeholder ?? 'TBD';
   const getVenueName = (id?: string) => id ? (venues.find(d => d.id === id)?.name ?? '') : '';
+
+  useEffect(() => {
+    const previousStatuses = previousStatusesRef.current;
+    const newlyCancelled = games
+      .filter(g => g.status === 'cancelled' && previousStatuses.get(g.id) !== 'cancelled')
+      .map(g => g.id);
+
+    if (newlyCancelled.length > 0) {
+      setExpanded(prev => {
+        const next = new Set(prev);
+        newlyCancelled.forEach(id => next.delete(id));
+        return next;
+      });
+    }
+
+    previousStatusesRef.current = new Map(games.map(g => [g.id, g.status]));
+  }, [games]);
 
   function toggleExpand(id: string, game?: Game) {
     const isExpanding = !expanded.has(id);
@@ -357,14 +375,17 @@ export default function GameList({
     };
 
     const isCompleted = g.status === 'completed';
+    const isCancelled = g.status === 'cancelled';
+    const locksEditing = isCompleted;
+    const venueLabel = g.venueId ? getVenueName(g.venueId) : (g.location || '');
 
     return (
       <div key={g.id} className={`${s.row} ${isExpanded ? styles.expanded : ''}`}>
         {/* ── Compact planning row ── */}
         <div
           className={`${s.rowMain} ${styles.gameRowMain} ${styles.planningGameRow}`}
-          onClick={isCompleted ? undefined : () => toggleExpand(g.id, g)}
-          style={{ cursor: isCompleted ? 'default' : 'pointer', gap: '1rem' }}
+          onClick={locksEditing ? undefined : () => toggleExpand(g.id, g)}
+          style={{ cursor: locksEditing ? 'default' : 'pointer', gap: '1rem' }}
         >
           {/* Date + Time — single line */}
           <div className={`${s.gameColDate} ${styles.planningDateCell}`} style={{ fontFamily: 'var(--font-data)', whiteSpace: 'nowrap' }}>
@@ -376,13 +397,14 @@ export default function GameList({
             </span>
           </div>
 
-          {/* Location — wider column, 2-line wrap */}
-          <div className={s.gameColVenue} style={{ display: 'flex', alignItems: 'flex-start', gap: '4px', fontFamily: 'var(--font-data)', fontSize: '0.72rem', color: 'var(--data-gray)' }}>
-            <MapPin size={11} style={{ flexShrink: 0, opacity: 0.55, marginTop: '2px' }} />
-            <span style={{ overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', lineHeight: '1.35' }}>
-              {g.venueId ? getVenueName(g.venueId) : (g.location || '—')}
-            </span>
-          </div>
+          {venueLabel && (
+            <div className={s.gameColVenue} style={{ display: 'flex', alignItems: 'flex-start', gap: '4px', fontFamily: 'var(--font-data)', fontSize: '0.72rem', color: 'var(--data-gray)' }}>
+              <MapPin size={11} style={{ flexShrink: 0, opacity: 0.55, marginTop: '2px' }} />
+              <span style={{ overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', lineHeight: '1.35' }}>
+                {venueLabel}
+              </span>
+            </div>
+          )}
 
           {/* Matchup */}
           <div className={`${s.gameColMatchup} ${styles.planningMatchup}`} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.65rem' }}>
@@ -411,7 +433,7 @@ export default function GameList({
           </div>
 
           {/* Chevron — hidden for completed games */}
-          {!isCompleted ? (
+          {!locksEditing ? (
             <button
               className={s.iconBtn}
               data-role="schedule-expand"
@@ -426,8 +448,26 @@ export default function GameList({
           )}
         </div>
 
+        {isExpanded && isCancelled && (
+          <div className={styles.cancelledActionBar}>
+            <span className={styles.cancelledActionText}>Cancelled games must be reinstated before details can be changed.</span>
+            <div className={styles.cancelledActions}>
+              {onSchedule && (
+                <button className="btn btn-lime btn-data" onClick={() => onSchedule(g.id)}>
+                  <AlertCircle size={13} /> Reinstate
+                </button>
+              )}
+              {onDelete && (
+                <button className="btn btn-danger btn-data" onClick={() => onDelete(g.id)}>
+                  <Trash2 size={13} /> Delete
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* ── Inline edit panel ── */}
-        {isExpanded && (
+        {isExpanded && !isCancelled && (
           <div className={styles.inlineForm}>
             <div className={styles.inlineFormBody}>
               {/* Date */}
@@ -517,9 +557,9 @@ export default function GameList({
 
             {/* Footer */}
             <div className={styles.inlineFormFooter}>
-              <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
+              <div className={styles.inlineFormActions}>
                 {onCancel && g.status === 'scheduled' && (
-                  <button className="btn btn-ghost btn-data" style={{ color: 'var(--warning, #f59e0b)' }} onClick={() => onCancel(g.id)}>
+                  <button className={`btn btn-ghost btn-data ${styles.inlineCancelButton}`} onClick={() => onCancel(g.id)}>
                     <X size={13} /> Cancel Game
                   </button>
                 )}
@@ -536,8 +576,7 @@ export default function GameList({
                 {saveErrors[g.id] && (
                   <span className={styles.saveError}>{saveErrors[g.id]}</span>
                 )}
-              </div>
-              <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
+                <span className={styles.inlineActionSpacer} />
                 <button className="btn btn-ghost btn-data" onClick={handleDiscard}>
                   Discard
                 </button>

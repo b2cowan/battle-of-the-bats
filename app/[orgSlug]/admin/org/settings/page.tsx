@@ -756,7 +756,7 @@ export default function OrgSettingsPage() {
         >
           <p className={styles.themePreviewLabel} style={{ margin: '0 0 0.5rem' }}>Preview</p>
           <div className={styles.cardPreviewHeader}>
-            <span className={styles.cardPreviewTitle}>Diamond 1 · U12 Division</span>
+            <span className={styles.cardPreviewTitle}>Field 1 · U12 Division</span>
             <span className={styles.cardPreviewBadge}>Active</span>
           </div>
           <div className={styles.cardPreviewMeta}>Sat Jun 14 · 9:00 AM · Lions Park</div>

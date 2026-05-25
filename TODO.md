@@ -8,6 +8,7 @@ This file tracks the ongoing tasks for the FieldLogicHQ platform (multi-tenant s
 - [x] **Tournament contact model refactor** — contacts table retired, staff member FKs in place, notify_mode routing live, Event Settings promoted to sidebar, member title field added, removal impact warning wired; migrations 088–090 applied dev + prod (see [plan](docs/active/TOURNAMENT_CONTACT_REFACTOR_PLAN.md) and [PM brief](docs/active/TOURNAMENT_CONTACT_REFACTOR_PM_BRIEF.md))
   - [x] Unified sign-in/context switcher foundation: `/home`, shared context resolver, `/auth/select-org` compatibility redirect, and same-org Coaches Portal shortcut scoping
 - [x] **Tournament Coach Portal** — authenticated coach accounts at registration, now routed through `/coaches/join` and `/coaches/tournaments` with legacy `/my` redirects, auth-destination routing, resend-access admin action, and workspace invite removed (see [plan](docs/active/TOURNAMENT_COACH_PORTAL_PLAN.md) and [PM brief](docs/active/TOURNAMENT_COACH_PORTAL_PM_BRIEF.md))
+- [ ] **Venue Hierarchy & Org Library** — two-tier venues (Venue → Facilities), Facility Type dropdown, org venue library for League/Club plans, import-from-library into tournaments, import-from-past for Tournament/Plus; migrations 094–096 (see [plan](docs/active/VENUE_HIERARCHY_PLAN.md))
 - [ ] **Rules & Resources UX improvements** — custom modals, inline add-section, Browse Samples drawer, public page suppression (see [plan](docs/active/RULES_PAGE_UX_IMPROVEMENTS_PLAN.md) and [PM brief](docs/active/RULES_PAGE_UX_IMPROVEMENTS_PM_BRIEF.md))
   - [x] Phase 1 — Custom confirmation modals (delete section, delete resource)
   - [x] Phase 2 — Inline add-section blank-card flow
@@ -90,7 +91,7 @@ This file tracks the ongoing tasks for the FieldLogicHQ platform (multi-tenant s
   - [x] Role-based getting started paths added for customer and platform-admin help hubs
   - [x] Accepted complete by user; future refinements are usage-driven
 
-- [ ] **League onboarding wizard** - Guide League/Club owners through first house league setup with optional tournament setup branch (see [LEAGUE_ONBOARDING_WIZARD_PLAN.md](LEAGUE_ONBOARDING_WIZARD_PLAN.md))
+- [ ] **League onboarding wizard** - Guide League/Club owners through first house league setup with optional tournament setup branch (see [LEAGUE_ONBOARDING_WIZARD_PLAN.md](docs/active/LEAGUE_ONBOARDING_WIZARD_PLAN.md) and [PM brief](docs/active/LEAGUE_ONBOARDING_WIZARD_PM_BRIEF.md))
   - [x] First implementation: league startup tasks, onboarding wizard, remaining-step CTAs, and create-season modal alignment
   - [ ] Browser verification
 
@@ -105,6 +106,7 @@ This file tracks the ongoing tasks for the FieldLogicHQ platform (multi-tenant s
 ## 🚀 Active Tasks (Priority Order)
 
 - [x] **Divisions rename (age groups → divisions)** — Full-stack terminology rename: DB table `age_groups` → `divisions` (migration 093), all FK columns, TypeScript types, API routes, file names, and UI copy; migration 093 applied dev + prod (see [docs/archive/DIVISIONS_RENAME_PLAN.md](docs/archive/DIVISIONS_RENAME_PLAN.md))
+- [x] **Post-rename dead-code cleanup** — Deleted 25-file pre-multi-tenant `app/admin/` directory (redirected by layout, never reachable); fixed critical onboarding bug where `POST /api/admin/contacts` (dropped in migration 090) was still called in `saveSetupDraft` (now sets `contact_email` only); removed dead Contacts nav from AdminBottomNav; migrated `/api/admin/diamonds` → `/api/admin/venues` in all callers; fixed remaining "age group" → "Division" UI copy in team signup, league register, and onboarding
 
 - [ ] **Multi-org creation for existing users** — Logged-in users cannot currently self-serve a second organization; `/auth/signup` creates a new user + org together and rejects existing emails. Build: a `/create-org` page for authenticated users, a `POST /api/auth/create-org` route that creates an org and links the existing `user_id` as owner (no new auth user), and a "＋ Create new organization" entry point on the `select-org` page. This is separate from reactivation — a user who cancelled Tournament Plus and now wants a League workspace is starting a new subscription, not reinstating the old one. (see pending plan doc)
 
@@ -113,6 +115,7 @@ This file tracks the ongoing tasks for the FieldLogicHQ platform (multi-tenant s
 - [ ] **Tournament owner/admin mobile implementation** - Mobile-first owner/admin improvements for base Tournament, starting with shared foundations and highest-use workflows (see [implementation plan](docs/active/codex_TOURNAMENT_OWNER_MOBILE_IMPLEMENTATION_PLAN.md), [PM brief](docs/active/codex_TOURNAMENT_OWNER_MOBILE_PM_BRIEF.md), and [review](docs/active/codex_TOURNAMENT_OWNER_MOBILE_REVIEW.md))
   - [x] P0 shared mobile foundation slice implemented and static verified.
   - [x] Schedule admin mobile density/readability pass: compact header, balanced status filters, and two-line game rows.
+  - [x] Schedule admin follow-up: compact mobile mode selects, registrations-style status filters, locked cancelled-game actions, and published schedule edit flow.
   - [ ] Authenticated 390x844 browser walkthrough for core admin tournament routes.
 
 - [x] **Export Enhancements** - Standardized XLSX-first exports, CSV secondary, iCal schedules, branded PDF reports, export catalog, help docs, plan gates, and pricing/marketing updates (see [MERGED_EXPORTS_IMPLEMENTATION_PLAN.md](docs/archive/MERGED_EXPORTS_IMPLEMENTATION_PLAN.md))
@@ -239,7 +242,7 @@ This file tracks the ongoing tasks for the FieldLogicHQ platform (multi-tenant s
 
 - [x] **Tournament scorekeeper experience** - MVP complete and archived: dedicated mobile-first scorekeeper/day-of scoring flow, invite-to-first-score UAT, durable Free/Plus scorekeeper UAT users, shared scoring service, admin Results integration, help docs, and migrations 066/068 applied in dev/prod (see [implementation plan](docs/archive/codex_TOURNAMENT_SCOREKEEPER_EXPERIENCE_PLAN.md), [PM brief](docs/archive/codex_TOURNAMENT_SCOREKEEPER_EXPERIENCE_PM_BRIEF.md), and [browser sign-off](docs/archive/codex_TOURNAMENT_SCOREKEEPER_BROWSER_SIGNOFF.md))
 
-- [ ] **Tournament help documentation UX review** - Upgrade tournament help with grouped contents, search, quick answers, and FAQs (see [TOURNAMENT_HELP_DOCS_REVIEW_PLAN.md](TOURNAMENT_HELP_DOCS_REVIEW_PLAN.md))
+- [ ] **Tournament help documentation UX review** - Upgrade tournament help with grouped contents, search, quick answers, and FAQs (see [TOURNAMENT_HELP_DOCS_REVIEW_PLAN.md](docs/active/TOURNAMENT_HELP_DOCS_REVIEW_PLAN.md))
 
 - [ ] **QA Infrastructure** — Design and build a layered automated test suite (unit, integration, E2E smoke) with a test catalog, plan-gate matrix, post-release update workflow, CI/CD integration, and QA_RULES.md process documentation; use the prompt written 2026-05-21 as the starting brief for that session
 
@@ -253,7 +256,7 @@ This file tracks the ongoing tasks for the FieldLogicHQ platform (multi-tenant s
 ### 4. Stripe Integration — End-to-End Billing & Subscriptions
 *Reference plan archived at [STRIPE_INTEGRATION_PLAN.md](docs/archive/STRIPE_INTEGRATION_PLAN.md); live remaining work is tracked here.*
 
-- [ ] **Billing downgrade and data retention flow** - Add FieldLogicHQ-guided downgrade/cancel review with over-limit data retention choices (see [BILLING_DOWNGRADE_RETENTION_PLAN.md](BILLING_DOWNGRADE_RETENTION_PLAN.md))
+- [ ] **Billing downgrade and data retention flow** - Add FieldLogicHQ-guided downgrade/cancel review with over-limit data retention choices (see [BILLING_DOWNGRADE_RETENTION_PLAN.md](docs/active/BILLING_DOWNGRADE_RETENTION_PLAN.md) and [PM brief](docs/active/BILLING_DOWNGRADE_RETENTION_PM_BRIEF.md))
   - [x] First implementation slice: retention schema, owner review APIs/UI, cancellation suspension, and platform-admin retention queue
   - [x] Migration 038 applied in dev and production
   - [x] Retention expiry warnings and pending-purge processing
@@ -391,7 +394,7 @@ This file tracks the ongoing tasks for the FieldLogicHQ platform (multi-tenant s
 - [x] Moved all tournament operational pages from `admin/{page}` to `admin/tournaments/{page}` — matches module URL pattern used by house-league, rep-teams, and accounting
 
 ### Role-Based UX Improvement Review — Phases 1–5
-*(see [UX_REVIEW_PLAN.md](docs/archive/UX_REVIEW_PLAN.md))*
+*(see [UX_REVIEW_PLAN.md](docs/active/UX_REVIEW_PLAN.md))*
 
 **Phase 1 — Critical bugs & multi-tenancy**
 - [x] **1A** — Replace default `/{orgSlug}` page: FieldLogicHQ-branded placeholder (no public site), tournament selector for 2+ active tournaments

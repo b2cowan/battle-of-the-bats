@@ -24,8 +24,8 @@ const CAPABILITIES = [
     desc: 'Automated game scheduling across fields and time slots. Minimize conflicts, balance rest, and publish in one click.',
   },
   {
-    name: 'Field & Diamond Management',
-    desc: 'Define your field layout once. Scheduling and scorekeeping use it automatically across every event.',
+    name: 'Venue Management',
+    desc: 'Define your venue layout once. Scheduling and scorekeeping use it automatically across every event.',
   },
   {
     name: 'Tournament Archives',

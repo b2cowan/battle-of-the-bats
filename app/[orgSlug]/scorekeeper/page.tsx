@@ -15,7 +15,7 @@ import {
   X,
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase-browser';
-import type { Division, Diamond, Game, GameStatus } from '@/lib/types';
+import type { Division, Venue, Game, GameStatus } from '@/lib/types';
 import { formatTime } from '@/lib/utils';
 import styles from './scorekeeper.module.css';
 
@@ -32,7 +32,7 @@ interface GameCard {
   game: Game;
   homeName: string;
   awayName: string;
-  diamond: Diamond | null;
+  venue: Venue | null;
   divisionName: string;
   tournamentName: string | null;
 }
@@ -48,7 +48,7 @@ interface ScorekeeperResponse {
   tournamentIds: string[];
   scorePolicyByTournamentId: Record<string, boolean>;
   cards: GameCard[];
-  diamonds: Diamond[];
+  venues: Venue[];
   divisions: Division[];
   emptyMessage: string;
   emptyState: ScorekeeperEmptyState | null;
@@ -118,7 +118,7 @@ export default function ScorekeeperPage() {
 
   const [date, setDate] = useState(todayString);
   const [cards, setCards] = useState<GameCard[]>([]);
-  const [diamonds, setDiamonds] = useState<Diamond[]>([]);
+  const [venues, setVenues] = useState<Venue[]>([]);
   const [divisions, setDivisions] = useState<Division[]>([]);
   const [tournamentIds, setTournamentIds] = useState<string[]>([]);
   const [scorePolicies, setScorePolicies] = useState<Record<string, boolean>>({});
@@ -151,7 +151,7 @@ export default function ScorekeeperPage() {
 
       if (!response.ok) {
         setCards([]);
-        setDiamonds([]);
+        setVenues([]);
         setDivisions([]);
         setTournamentIds([]);
         setScorePolicies({});
@@ -179,14 +179,14 @@ export default function ScorekeeperPage() {
       }
 
       setCards(Array.isArray(data.cards) ? data.cards : []);
-      setDiamonds(Array.isArray(data.diamonds) ? data.diamonds : []);
+      setVenues(Array.isArray(data.venues) ? data.venues : []);
       setDivisions(Array.isArray(data.divisions) ? data.divisions : []);
       setTournamentIds(Array.isArray(data.tournamentIds) ? data.tournamentIds : []);
       setScorePolicies(data.scorePolicyByTournamentId ?? {});
       setEmptyState(isEmptyState(data.emptyState) ? data.emptyState : null);
     } catch (error) {
       setCards([]);
-      setDiamonds([]);
+      setVenues([]);
       setDivisions([]);
       setTournamentIds([]);
       setScorePolicies({});
@@ -259,7 +259,7 @@ export default function ScorekeeperPage() {
     const query = normalizedText(teamSearch);
 
     return cards.filter(card => {
-      if (fieldFilter && card.game.diamondId !== fieldFilter) return false;
+      if (fieldFilter && card.game.venueId !== fieldFilter) return false;
       if (divisionFilter && card.game.divisionId !== divisionFilter) return false;
 
       if (statusFilter === 'open' && card.game.status !== 'scheduled') return false;
@@ -271,7 +271,7 @@ export default function ScorekeeperPage() {
           card.homeName,
           card.awayName,
           card.divisionName,
-          card.diamond?.name,
+          card.venue?.name,
           card.tournamentName,
         ].map(normalizedText).join(' ');
         if (!haystack.includes(query)) return false;
@@ -439,8 +439,8 @@ export default function ScorekeeperPage() {
 
         <select className={styles.select} value={fieldFilter} onChange={event => setFieldFilter(event.target.value)}>
           <option value="">All fields</option>
-          {diamonds.map(diamond => (
-            <option key={diamond.id} value={diamond.id}>{diamond.name}</option>
+          {venues.map(venue => (
+            <option key={venue.id} value={venue.id}>{venue.name}</option>
           ))}
         </select>
 
@@ -503,7 +503,7 @@ export default function ScorekeeperPage() {
             const meta = [
               tournamentIds.length > 1 ? card.tournamentName : null,
               game.time ? formatTime(game.time) : 'Time TBD',
-              card.diamond?.name ?? game.location,
+              card.venue?.name ?? game.location,
               card.divisionName,
             ].filter(Boolean).join(' - ');
 

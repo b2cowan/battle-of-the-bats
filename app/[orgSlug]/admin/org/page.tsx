@@ -35,10 +35,10 @@ export default function OrgAdminHub() {
       href: `${adminBase}/tournaments/manage`,
     },
     {
-      label: 'Diamonds',
-      desc: 'Manage field locations and diamond assignments',
+      label: 'Venues',
+      desc: 'Manage venue locations and field assignments',
       icon: MapPin,
-      href: `${base}/diamonds`,
+      href: `${base}/venues`,
     },
     ...(userRole === 'owner' || userRole === 'admin' ? [
       {

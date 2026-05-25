@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { getAuthContextWithScope, unauthorized } from '@/lib/api-auth';
 import { hasCapability } from '@/lib/roles';
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import type { Division, Diamond, Game, GameStatus } from '@/lib/types';
+import type { Division, Venue, Game, GameStatus } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
 
@@ -48,7 +48,7 @@ type TeamRow = {
   name: string;
 };
 
-type DiamondRow = {
+type VenueRow = {
   id: string;
   tournament_id: string;
   name: string;
@@ -69,7 +69,7 @@ interface OfficialScoreCard {
   game: Game;
   homeName: string;
   awayName: string;
-  diamond: Diamond | null;
+  venue: Venue | null;
   divisionName: string;
   tournamentName: string | null;
 }
@@ -91,7 +91,7 @@ interface OfficialScorePayload {
   tournamentIds: string[];
   scorePolicyByTournamentId: Record<string, boolean>;
   cards: OfficialScoreCard[];
-  diamonds: Diamond[];
+  venues: Venue[];
   divisions: Division[];
   emptyMessage: string;
   emptyState: OfficialScoreEmptyState | null;
@@ -114,7 +114,7 @@ function emptyPayload(
     tournamentIds,
     scorePolicyByTournamentId,
     cards: [],
-    diamonds: [],
+    venues: [],
     divisions: [],
     emptyMessage: state.message,
     emptyState: state,
@@ -147,7 +147,7 @@ function mapGame(row: GameRow): Game {
     date: row.game_date,
     time: row.game_time ?? '',
     location: row.location ?? '',
-    diamondId: row.diamond_id ?? undefined,
+    venueId: row.diamond_id ?? undefined,
     homeScore: row.home_score,
     awayScore: row.away_score,
     status: toGameStatus(row.status),
@@ -166,7 +166,7 @@ function mapGame(row: GameRow): Game {
   };
 }
 
-function mapDiamond(row: DiamondRow): Diamond {
+function mapVenue(row: VenueRow): Venue {
   return {
     id: row.id,
     tournamentId: row.tournament_id,
@@ -309,7 +309,7 @@ export async function GET(req: Request, { params }: Params) {
     ));
   }
 
-  const [teamsResult, diamondsResult, divisionsResult] = await Promise.all([
+  const [teamsResult, venuesResult, divisionsResult] = await Promise.all([
     supabaseAdmin
       .from('teams')
       .select('id, name')
@@ -329,19 +329,19 @@ export async function GET(req: Request, { params }: Params) {
   if (teamsResult.error) {
     return NextResponse.json({ error: teamsResult.error.message }, { status: 500 });
   }
-  if (diamondsResult.error) {
-    return NextResponse.json({ error: diamondsResult.error.message }, { status: 500 });
+  if (venuesResult.error) {
+    return NextResponse.json({ error: venuesResult.error.message }, { status: 500 });
   }
   if (divisionsResult.error) {
     return NextResponse.json({ error: divisionsResult.error.message }, { status: 500 });
   }
 
   const teams = (teamsResult.data ?? []) as TeamRow[];
-  const diamonds = ((diamondsResult.data ?? []) as DiamondRow[]).map(mapDiamond);
+  const venues = ((venuesResult.data ?? []) as VenueRow[]).map(mapVenue);
   const divisions = ((divisionsResult.data ?? []) as DivisionRow[]).map(mapDivision);
 
   const teamNameById = new Map(teams.map(team => [team.id, team.name]));
-  const diamondById = new Map(diamonds.map(diamond => [diamond.id, diamond]));
+  const venueById = new Map(venues.map(venue => [venue.id, venue]));
   const divisionNameById = new Map(divisions.map(division => [division.id, division.name]));
   const tournamentNameById = new Map(tournaments.map(tournament => [
     tournament.id,
@@ -352,7 +352,7 @@ export async function GET(req: Request, { params }: Params) {
     game,
     homeName: teamNameById.get(game.homeTeamId) ?? game.homePlaceholder ?? 'TBD',
     awayName: teamNameById.get(game.awayTeamId) ?? game.awayPlaceholder ?? 'TBD',
-    diamond: game.diamondId ? diamondById.get(game.diamondId) ?? null : null,
+    venue: game.venueId ? venueById.get(game.venueId) ?? null : null,
     divisionName: divisionNameById.get(game.divisionId) ?? '-',
     tournamentName: tournamentNameById.get(game.tournamentId) ?? null,
   }));
@@ -368,7 +368,7 @@ export async function GET(req: Request, { params }: Params) {
     tournamentIds,
     scorePolicyByTournamentId,
     cards,
-    diamonds,
+    venues,
     divisions,
     emptyMessage: '',
     emptyState: null,

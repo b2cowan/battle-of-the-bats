@@ -262,8 +262,8 @@ const tournamentsHelp: HelpPageContent = {
       group: 'Setup',
       heading: 'Venues, contacts, communication, and rules',
       summary: 'Prepare the public information teams need before registration opens.',
-      keywords: ['venues', 'diamonds', 'contacts', 'public contact', 'communication', 'news posts', 'rules', 'resources'],
-      searchText: 'venues diamonds fields custom location contacts public contact email notifications communication news posts welcome message rules resources documents public site',
+      keywords: ['venues', 'fields', 'contacts', 'public contact', 'communication', 'news posts', 'rules', 'resources'],
+      searchText: 'venues fields custom location contacts public contact email notifications communication news posts welcome message rules resources documents public site',
       links: [
         { label: 'Venues', href: '../tournaments/venues' },
         { label: 'Contacts', href: '../tournaments/contacts' },

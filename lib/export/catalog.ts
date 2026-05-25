@@ -480,7 +480,7 @@ export const EXPORT_CATALOG: ExportCatalogEntry[] = [
     helpSummary: 'Export the member change history log — invites, role changes, suspensions, and removals. Visible to org owners only.',
   },
   {
-    id: 'org-diamonds-venues',
+    id: 'org-venues',
     label: 'Venues',
     module: 'org',
     page: 'Venues',

@@ -70,7 +70,7 @@ const PLAN_FEATURES: Record<OrgPlan, string[]> = {
     'Standard team registration fields',
     'Selected-row registration updates and waitlist collection',
     'Basic standings and score entry',
-    'Field and diamond management',
+    'Venue management',
     'Default FieldLogicHQ public styling',
     'Public news posts and basic team email',
     '3 staff / admin seats · 1 tournament slot',

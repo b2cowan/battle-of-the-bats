@@ -74,11 +74,11 @@ export default function AdminHelpHubPage() {
     }] : []),
     ...(canOrgAdmin ? [{
       title: 'Org Admin & Setup',
-      desc:  'Configure your organization settings, manage members, subscription, and diamonds.',
+      desc:  'Configure your organization settings, manage members, subscription, and venues.',
       href:  `${helpBase}/org`,
       category: 'Account Setup',
       audience: 'Owners and admins',
-      keywords: ['members', 'roles', 'invite', 'subscription', 'billing', 'settings', 'venues', 'diamonds'],
+      keywords: ['members', 'roles', 'invite', 'subscription', 'billing', 'settings', 'venues'],
       featured: true,
     }] : []),
     {

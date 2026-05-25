@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { Calendar, Clock, Trophy, List, LayoutTemplate } from 'lucide-react';
 import { useParams } from 'next/navigation';
-import { Game, Team, Division, Diamond, Tournament } from '@/lib/types';
+import { Game, Team, Division, Venue, Tournament } from '@/lib/types';
 import LocationLink from '@/components/LocationLink';
 import { formatTime, formatPoolName } from '@/lib/utils';
 import { getDivisionPref, setDivisionPref } from '@/lib/division-cookie';
@@ -68,7 +68,7 @@ export default function SchedulePage() {
   const [games, setGames]           = useState<Game[]>([]);
   const [teams, setTeams]           = useState<Team[]>([]);
   const [divisions, setDivisions]   = useState<Division[]>([]);
-  const [diamonds, setDiamonds]     = useState<Diamond[]>([]);
+  const [venues, setVenues]         = useState<Venue[]>([]);
   const [allTournaments, setAllTournaments] = useState<Tournament[]>([]);
   const [selectedTournament, setSelectedTournament] = useState<Tournament | null>(null);
   const [activeGroup, setActiveGroup]     = useState<string>('');
@@ -90,7 +90,7 @@ export default function SchedulePage() {
       setSelectedTournament(current);
       setGames(data?.games ?? []);
       setTeams(data?.teams ?? []);
-      setDiamonds(data?.diamonds ?? []);
+      setVenues(data?.venues ?? []);
       setDivisions(groups);
       if (groups.length > 0) {
         const pref = getDivisionPref(orgSlug);
@@ -114,7 +114,7 @@ export default function SchedulePage() {
     return ph ?? 'TBD';
   };
 
-  const getDiamond = (id?: string) => id ? diamonds.find(d => d.id === id) ?? null : null;
+  const getVenue = (id?: string) => id ? venues.find(d => d.id === id) ?? null : null;
 
   function getWinner(game: Game): 'home' | 'away' | 'tie' | null {
     if (game.homeScore == null || game.awayScore == null) return null;
@@ -167,7 +167,7 @@ export default function SchedulePage() {
         title:    `${getTeamDisplay(g, true)} vs ${getTeamDisplay(g, false)}${activeG ? ` — ${activeG.name}` : ''}`,
         date:     g.date,
         time:     g.time ?? undefined,
-        location: g.location ?? getDiamond(g.diamondId)?.name ?? undefined,
+        location: g.location ?? getVenue(g.venueId)?.name ?? undefined,
         url:      scheduleUrl,
         cancelled: g.status === 'cancelled',
       }));
@@ -310,7 +310,7 @@ export default function SchedulePage() {
 
         <div className={styles.gameMeta}>
           {typeLabel}
-          <LocationLink location={game.location} diamond={getDiamond(game.diamondId)} size="sm" />
+          <LocationLink location={game.location} venue={getVenue(game.venueId)} size="sm" />
         </div>
 
         {game.notes && <p className={styles.gameNotes}>{game.notes}</p>}

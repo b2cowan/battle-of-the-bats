@@ -14,7 +14,7 @@ const COMPARISON_CATEGORIES = [
       { feature: 'Tournament scheduling',        tournament: 'Manual',   plus: 'Manual + automated', league: 'Manual + automated', club: 'Manual + automated' },
       { feature: 'Playoff games / brackets',     tournament: 'Manual',   plus: 'Generator included', league: 'Generator included', club: 'Generator included' },
       { feature: 'Tournament archive flow',      tournament: 'Basic archive', plus: 'Sealed archives', league: 'Sealed archives', club: 'Sealed archives' },
-      { feature: 'Field and diamond management', tournament: '✓',        plus: '✓',         league: '✓',         club: '✓' },
+      { feature: 'Venue management',              tournament: '✓',        plus: '✓',         league: '✓',         club: '✓' },
       { feature: 'Score entry and standings',    tournament: '✓',        plus: '✓',         league: '✓',         club: '✓' },
     ],
   },

@@ -1,7 +1,7 @@
 'use client';
 import { useState, useMemo } from 'react';
 import { Sparkles, Check, X, RefreshCw, AlertCircle, Plus, Trash2, Info } from 'lucide-react';
-import { Team, Division, Diamond, Game, Tournament } from '@/lib/types';
+import { Team, Division, Venue, Game, Tournament } from '@/lib/types';
 import { formatTime } from '@/lib/utils';
 import styles from './schedule-admin.module.css';
 
@@ -24,17 +24,17 @@ interface GeneratorProps {
   orgSlug?: string;
   divisions: Division[];
   teams: Team[];
-  diamonds: Diamond[];
+  venues: Venue[];
   onComplete: () => void;
   onCancel: () => void;
 }
 
-export default function ScheduleGenerator({ tournament, orgSlug, divisions, teams, diamonds, onComplete, onCancel }: GeneratorProps) {
+export default function ScheduleGenerator({ tournament, orgSlug, divisions, teams, venues, onComplete, onCancel }: GeneratorProps) {
   const [selectedGroupId, setSelectedGroupId] = useState(divisions[0]?.id || '');
   const [gameLength, setGameLength] = useState(90);
   const [breakLength, setBreakLength] = useState(15);
   const [gamesPerTeam, setGamesPerTeam] = useState(3);
-  const [selectedDiamonds, setSelectedDiamonds] = useState<Set<string>>(new Set(diamonds.map(d => d.id)));
+  const [selectedVenues, setSelectedVenues] = useState<Set<string>>(new Set(venues.map(d => d.id)));
   const [dateSlots, setDateSlots] = useState<DateSlot[]>([
     { date: tournament.startDate || '', startTime: '09:00', endTime: '20:30' }
   ]);
@@ -94,8 +94,8 @@ export default function ScheduleGenerator({ tournament, orgSlug, divisions, team
     setDateSlots(next);
   }
 
-  function buildTimeSlots(diamondList: Diamond[]) {
-    const totalSlots: { date: string; time: string; diamond: Diamond }[] = [];
+  function buildTimeSlots(venueList: Venue[]) {
+    const totalSlots: { date: string; time: string; venue: Venue }[] = [];
     const sortedDates = [...dateSlots].sort((a, b) => a.date.localeCompare(b.date));
     const roundTo5 = (d: Date) => { const ms = 1000 * 60 * 5; return new Date(Math.ceil(d.getTime() / ms) * ms); };
 
@@ -104,7 +104,7 @@ export default function ScheduleGenerator({ tournament, orgSlug, divisions, team
       const end = new Date(`${slot.date}T${slot.endTime}`);
       while (current.getTime() + gameLength * 60000 <= end.getTime()) {
         const timeStr = current.toTimeString().slice(0, 5);
-        diamondList.forEach(diamond => totalSlots.push({ date: slot.date, time: timeStr, diamond }));
+        venueList.forEach(venue => totalSlots.push({ date: slot.date, time: timeStr, venue }));
         current = roundTo5(new Date(current.getTime() + (gameLength + breakLength) * 60000));
       }
     });
@@ -114,17 +114,17 @@ export default function ScheduleGenerator({ tournament, orgSlug, divisions, team
   function generate() {
     setError(null);
     if (dateSlots.some(s => !s.date)) { setError('Please select a date for all slots'); return; }
-    const diamondList = diamonds.filter(d => selectedDiamonds.has(d.id));
-    if (diamondList.length === 0) { setError('Select at least one diamond'); return; }
+    const venueList = venues.filter(d => selectedVenues.has(d.id));
+    if (venueList.length === 0) { setError('Select at least one venue'); return; }
 
     if (generationMode === 'slot') {
-      generateSlots(diamondList);
+      generateSlots(venueList);
     } else {
-      generateTeams(diamondList);
+      generateTeams(venueList);
     }
   }
 
-  function generateTeams(diamondList: Diamond[]) {
+  function generateTeams(venueList: Venue[]) {
     const groupTeams = teams.filter(t => t.divisionId === selectedGroupId);
     if (groupTeams.length < 2) { setError('Need at least 2 teams to generate a schedule'); return; }
 
@@ -156,7 +156,7 @@ export default function ScheduleGenerator({ tournament, orgSlug, divisions, team
 
     if (allMatchups.length === 0) { setError('No matchups could be generated. Check your pool assignments.'); return; }
 
-    const totalSlots = buildTimeSlots(diamondList);
+    const totalSlots = buildTimeSlots(venueList);
     if (totalSlots.length < allMatchups.length) {
       setError(`Not enough time slots to schedule ${allMatchups.length} games. Need ${allMatchups.length} slots, but only have ${totalSlots.length} available.`);
       return;
@@ -180,8 +180,8 @@ export default function ScheduleGenerator({ tournament, orgSlug, divisions, team
             awayTeamId: match.away.id,
             date: slot.date,
             time: slot.time,
-            location: slot.diamond.name,
-            diamondId: slot.diamond.id,
+            location: slot.venue.name,
+            venueId: slot.venue.id,
             status: 'scheduled',
           });
           busyTeams[timeKey].add(match.home.id);
@@ -192,7 +192,7 @@ export default function ScheduleGenerator({ tournament, orgSlug, divisions, team
         }
       }
       if (!assigned) {
-        setError(`Conflict detected: Could not find a free time slot for ${match.home.name} vs ${match.away.name} without double-booking a team. Try adding more dates or diamonds.`);
+        setError(`Conflict detected: Could not find a free time slot for ${match.home.name} vs ${match.away.name} without double-booking a team. Try adding more dates or venues.`);
         return;
       }
     }
@@ -201,7 +201,7 @@ export default function ScheduleGenerator({ tournament, orgSlug, divisions, team
     setGeneratedGames(newGames);
   }
 
-  function generateSlots(diamondList: Diamond[]) {
+  function generateSlots(venueList: Venue[]) {
     if (poolList.length === 0) {
       setError('Slot-based scheduling requires at least one pool to be configured. Go to Division Settings and add pools first.');
       return;
@@ -229,7 +229,7 @@ export default function ScheduleGenerator({ tournament, orgSlug, divisions, team
 
     if (allMatchups.length === 0) { setError('No matchups could be generated. Check slot counts per pool (minimum 2).'); return; }
 
-    const totalSlots = buildTimeSlots(diamondList);
+    const totalSlots = buildTimeSlots(venueList);
     if (totalSlots.length < allMatchups.length) {
       setError(`Not enough time slots for ${allMatchups.length} games. Need ${allMatchups.length} slots but have ${totalSlots.length}.`);
       return;
@@ -258,8 +258,8 @@ export default function ScheduleGenerator({ tournament, orgSlug, divisions, team
             awayTeamId: '',
             date: slot.date,
             time: slot.time,
-            location: slot.diamond.name,
-            diamondId: slot.diamond.id,
+            location: slot.venue.name,
+            venueId: slot.venue.id,
             status: 'scheduled',
             homePlaceholder: homeName,
             awayPlaceholder: awayName,
@@ -277,7 +277,7 @@ export default function ScheduleGenerator({ tournament, orgSlug, divisions, team
       }
       if (!assigned) {
         const homePool = poolList.find(p => p.id === match.homePoolId);
-        setError(`Conflict: no free slot for ${homePool?.name ?? 'Pool'} Team ${match.homeSlotNum} vs Team ${match.awaySlotNum}. Add more dates or diamonds.`);
+        setError(`Conflict: no free slot for ${homePool?.name ?? 'Pool'} Team ${match.homeSlotNum} vs Team ${match.awaySlotNum}. Add more dates or venues.`);
         return;
       }
     }
@@ -362,7 +362,7 @@ export default function ScheduleGenerator({ tournament, orgSlug, divisions, team
           date: g.date,
           time: g.time,
           location: g.location,
-          diamondId: g.diamondId,
+          venueId: g.venueId,
           status: 'scheduled',
           homeSlotId: homeSlot?.id ?? null,
           awaySlotId: awaySlot?.id ?? null,
@@ -391,10 +391,10 @@ export default function ScheduleGenerator({ tournament, orgSlug, divisions, team
     setGeneratedSlotGames([]);
   }
 
-  function toggleDiamond(id: string) {
-    const next = new Set(selectedDiamonds);
+  function toggleVenue(id: string) {
+    const next = new Set(selectedVenues);
     if (next.has(id)) next.delete(id); else next.add(id);
-    setSelectedDiamonds(next);
+    setSelectedVenues(next);
   }
 
   const divisionName = divisions.find(g => g.id === selectedGroupId)?.name ?? '';
@@ -531,11 +531,11 @@ export default function ScheduleGenerator({ tournament, orgSlug, divisions, team
             </div>
 
             <div className="form-group">
-              <label className="form-label">Available Diamonds</label>
-              <div className={styles.diamondGrid}>
-                {diamonds.map(d => (
-                  <label key={d.id} className={styles.diamondCheck}>
-                    <input type="checkbox" checked={selectedDiamonds.has(d.id)} onChange={() => toggleDiamond(d.id)} />
+              <label className="form-label">Available Venues</label>
+              <div className={styles.venueGrid}>
+                {venues.map(d => (
+                  <label key={d.id} className={styles.venueCheck}>
+                    <input type="checkbox" checked={selectedVenues.has(d.id)} onChange={() => toggleVenue(d.id)} />
                     {d.name}
                   </label>
                 ))}
@@ -568,7 +568,7 @@ export default function ScheduleGenerator({ tournament, orgSlug, divisions, team
             <div className={styles.previewTableWrap}>
               <table>
                 <thead>
-                  <tr><th>Date & Time</th><th>Matchup</th><th>Pool</th><th>Diamond</th></tr>
+                  <tr><th>Date & Time</th><th>Matchup</th><th>Pool</th><th>Venue</th></tr>
                 </thead>
                 <tbody>
                   {generationMode === 'slot' ? (

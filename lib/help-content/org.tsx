@@ -29,7 +29,7 @@ const orgHelp: HelpPageContent = {
           <ul>
             <li><strong>Owner</strong> — Full access. Owns the org, manages the subscription, and can do everything admins can. Assigned at org creation; ownership cannot be transferred through the admin panel.</li>
             <li><strong>Admin</strong> — Manages tournaments, house league, rep teams, and org settings. Cannot manage the subscription.</li>
-            <li><strong>Staff</strong> — Day-of operator. Updates game times and diamond assignments, submits scores, and posts announcements. Cannot create tournaments, manage registrations, or send communications.</li>
+            <li><strong>Staff</strong> — Day-of operator. Updates game times and venue assignments, submits scores, and posts announcements. Cannot create tournaments, manage registrations, or send communications.</li>
             <li><strong>Treasurer</strong> — Access to accounting and ledgers only. Cannot access tournament management or other admin areas.</li>
             <li><strong>League Admin</strong> — Manages house league seasons, registrations, teams, and schedules. Scoped to the House League module.</li>
             <li><strong>League Registrar</strong> — Reviews and processes house league registrations only. Cannot manage seasons or schedules.</li>

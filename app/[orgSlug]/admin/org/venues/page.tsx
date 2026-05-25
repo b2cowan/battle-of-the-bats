@@ -107,7 +107,7 @@ export default function AdminVenuesPage() {
             onExportCSV={handleExportCSV}
             disabled={venues.length === 0}
           />
-          <button className="btn btn-lime btn-data" onClick={openAdd} id="Venue-add-btn" disabled={!currentTournament}>
+          <button className="btn btn-lime btn-data" onClick={openAdd} id="venue-add-btn" disabled={!currentTournament}>
             <Plus size={16} /> Add Venue
           </button>
         </div>
@@ -156,17 +156,17 @@ export default function AdminVenuesPage() {
                       rel="noopener noreferrer"
                       className="btn btn-ghost btn-data"
                       title="Open in Google Maps"
-                      id={`maps-Venue-${d.id}`}
+                      id={`maps-venue-${d.id}`}
                     >
                       <ExternalLink size={13} /> Maps
                     </a>
                   </td>
                   <td data-label="Actions">
                     <div className={styles.rowActions}>
-                      <button className="btn btn-ghost btn-data" onClick={() => openEdit(d)} id={`edit-Venue-${d.id}`}>
+                      <button className="btn btn-ghost btn-data" onClick={() => openEdit(d)} id={`edit-venue-${d.id}`}>
                         <Pencil size={13} />
                       </button>
-                      <button className="btn btn-danger btn-data" onClick={() => setDeleteId(d.id)} id={`delete-Venue-${d.id}`}>
+                      <button className="btn btn-danger btn-data" onClick={() => setDeleteId(d.id)} id={`delete-venue-${d.id}`}>
                         <Trash2 size={13} />
                       </button>
                     </div>
@@ -203,16 +203,19 @@ export default function AdminVenuesPage() {
               <button className="btn btn-ghost" onClick={() => setDeleteId(null)}>Cancel</button>
               <button
                 className="btn btn-danger"
-                id="confirm-delete-Venue"
+                id="confirm-delete-venue"
                 onClick={async () => {
-                  const orgQuery = orgSlug ? `?orgSlug=${encodeURIComponent(orgSlug)}` : '';
-                  await requestJson<{ success: boolean }>(`/api/admin/venues${orgQuery}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ action: 'delete', id: deleteId }),
-                  });
-                  setDeleteId(null);
-                  refresh();
+                  try {
+                    const orgQuery = orgSlug ? `?orgSlug=${encodeURIComponent(orgSlug)}` : '';
+                    await requestJson<{ success: boolean }>(`/api/admin/venues${orgQuery}`, {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ action: 'delete', id: deleteId }),
+                    });
+                  } finally {
+                    setDeleteId(null);
+                    refresh();
+                  }
                 }}
               >
                 <Trash2 size={14} /> Delete

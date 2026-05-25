@@ -1040,10 +1040,7 @@ export default function OnboardingPage() {
 
   async function saveContactsStep() {
     try {
-      const email = contactForm.email.trim().toLowerCase();
-      if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-        throw new Error('Enter a valid contact email address, or skip this step.');
-      }
+      getContactDraft(); // validates email format; returns null if empty (both are fine to advance)
       setDraftSkipped(prev => ({ ...prev, contacts: false }));
       setStepError('');
       await advanceWizard('contacts');

@@ -177,7 +177,7 @@ export default function AdminHubClient() {
     },
     canSeeOrgAdmin && {
       label: 'Organization Admin',
-      desc: 'Members, subscription, settings, diamonds, and tournament records',
+      desc: 'Members, subscription, settings, venues, and tournament records',
       icon: Building2,
       href: `${base}/org`,
     },

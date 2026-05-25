@@ -17,8 +17,8 @@ import {
 import styles from './members.module.css';
 
 const ROLE_INVITE_DESCRIPTIONS: Record<'admin' | 'staff' | 'official', string> = {
-  admin: 'Tournament architect — can create tournaments, define divisions, manage registrations, build schedules, manage contacts and diamonds, post rules, send communications, and manage members. Cannot access org settings or subscription.',
-  staff: 'Tournament operator — updates game times and diamond assignments during events, submits scores, and posts announcements. Cannot create or delete tournaments, manage registrations, or send communications.',
+  admin: 'Tournament architect — can create tournaments, define divisions, manage registrations, build schedules, manage contacts and venues, post rules, send communications, and manage members. Cannot access org settings or subscription.',
+  staff: 'Tournament operator — updates game times and venue assignments during events, submits scores, and posts announcements. Cannot create or delete tournaments, manage registrations, or send communications.',
   official: 'Score entry only. Scorekeepers receive a direct link to the scorekeeper app and can submit results from their assigned fields. They do not access the main admin area.',
 };
 
@@ -26,9 +26,9 @@ const ROLE_MATRIX: { label: string; owner: boolean; admin: boolean; staff: boole
   { label: 'Create / delete tournaments',       owner: true,  admin: true,  staff: false, official: false },
   { label: 'Manage registrations',              owner: true,  admin: true,  staff: false, official: false },
   { label: 'Manage schedule & brackets',        owner: true,  admin: true,  staff: false, official: false },
-  { label: 'Update game times & diamonds',      owner: true,  admin: true,  staff: true,  official: false },
+  { label: 'Update game times & venues',         owner: true,  admin: true,  staff: true,  official: false },
   { label: 'Submit scores',                     owner: true,  admin: true,  staff: true,  official: true  },
-  { label: 'Manage contacts & diamonds',        owner: true,  admin: true,  staff: false, official: false },
+  { label: 'Manage contacts & venues',           owner: true,  admin: true,  staff: false, official: false },
   { label: 'Post announcements',                owner: true,  admin: true,  staff: true,  official: false },
   { label: 'Post / edit rules documents',       owner: true,  admin: true,  staff: false, official: false },
   { label: 'Send email communications',         owner: true,  admin: true,  staff: false, official: false },
@@ -79,7 +79,7 @@ const ROLE_LABELS: Record<OrgRole, string> = {
 const ROLE_TOOLTIP: Record<OrgRole, string> = {
   owner:            'Full access. Owns the org, manages the subscription, and can do everything admins can.',
   admin:            'Manages tournaments, house league, rep teams, and org settings. Cannot manage the subscription.',
-  staff:            'Day-of operator. Updates game times and diamond assignments, submits scores, and posts announcements. Cannot create tournaments or manage members.',
+  staff:            'Day-of operator. Updates game times and venue assignments, submits scores, and posts announcements. Cannot create tournaments or manage members.',
   treasurer:        'Access to accounting and ledgers only.',
   league_admin:     'Manages house league seasons, registrations, teams, and schedules.',
   league_registrar: 'Reviews and processes house league registrations only.',
@@ -136,9 +136,9 @@ const CAPABILITY_LABELS: Record<Capability, string> = {
   create_tournaments:        'Create / delete tournaments',
   manage_registrations:      'Manage registrations',
   manage_schedule_structure: 'Manage schedule & brackets',
-  update_schedule:           'Update game times & diamonds',
+  update_schedule:           'Update game times & venues',
   submit_scores:             'Submit scores',
-  manage_contacts:           'Manage contacts & diamonds',
+  manage_contacts:           'Manage contacts & venues',
   post_announcements:        'Post announcements',
   post_rules:                'Post / edit rules documents',
   send_communications:       'Send email communications',
