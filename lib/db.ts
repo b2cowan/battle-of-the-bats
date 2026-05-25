@@ -888,7 +888,7 @@ export async function saveDivision(g: Omit<Division, 'id'>): Promise<void> {
   });
 }
 
-export async function updateDivision(id: string, g: Partial<Division>): Promise<void> {
+export async function updateTournamentDivision(id: string, g: Partial<Division>): Promise<void> {
   const updates: any = {};
   if (g.tournamentId !== undefined) updates.tournament_id = g.tournamentId;
   if (g.name !== undefined) updates.name = g.name;
@@ -905,7 +905,7 @@ export async function updateDivision(id: string, g: Partial<Division>): Promise<
   await authClient().from('divisions').update(updates).eq('id', id);
 }
 
-export async function deleteDivision(id: string): Promise<void> {
+export async function deleteTournamentDivision(id: string): Promise<void> {
   await authClient().from('divisions').delete().eq('id', id);
 }
 
