@@ -49,7 +49,7 @@ const PLANS: Plan[] = [
       'Selected-row status updates and waitlist collection',
       'Score entry and results',
       'Standings',
-      'Field and diamond management',
+      'Venue management',
       'Public news posts',
       'Basic team/contact email',
       'Default FieldLogicHQ styling',

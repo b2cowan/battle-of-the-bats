@@ -61,7 +61,7 @@ const FREE_FEATURES = [
   'Standard team registration with waitlist collection',
   'Single and double-elimination brackets',
   'Score entry and live standings',
-  'Field and diamond management',
+  'Venue management',
   '3 staff / admin seats',
 ];
 

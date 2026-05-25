@@ -1,12 +1,12 @@
 'use client';
 import { MapPin, ExternalLink } from 'lucide-react';
-import { Diamond } from '@/lib/types';
+import { Venue } from '@/lib/types';
 
 interface Props {
   /** Display name / field name */
   location: string;
-  /** Optional matched Diamond record (provides address for Maps link) */
-  diamond?: Diamond | null;
+  /** Optional matched Venue record (provides address for Maps link) */
+  venue?: Venue | null;
   /** Visual size — 'sm' for tables, default for cards */
   size?: 'sm' | 'default';
 }
@@ -15,10 +15,10 @@ export function getMapsUrl(address: string): string {
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
 }
 
-export default function LocationLink({ location, diamond, size = 'default' }: Props) {
-  const address = diamond?.address;
+export default function LocationLink({ location, venue, size = 'default' }: Props) {
+  const address = venue?.address;
   const mapsUrl  = address ? getMapsUrl(address) : getMapsUrl(location);
-  const label    = location || diamond?.name || 'Location';
+  const label    = location || venue?.name || 'Location';
 
   const fontSize  = size === 'sm' ? '0.8rem'     : '0.85rem';
   const gap       = size === 'sm' ? '0.3rem'     : '0.35rem';

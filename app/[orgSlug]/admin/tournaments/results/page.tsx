@@ -11,7 +11,7 @@ import {
   downloadPDF, DEFAULT_PDF_SETTINGS, type OrgPdfSettings,
 } from '@/lib/export';
 import ExportMenu from '@/components/admin/ExportMenu';
-import { Game, Team, Division, Diamond } from '@/lib/types';
+import { Game, Team, Division, Venue } from '@/lib/types';
 import GameList from '../schedule/components/GameList';
 import s from '../../admin-common.module.css';
 import FeedbackModal from '@/components/FeedbackModal';
@@ -55,7 +55,7 @@ export default function AdminResultsPage() {
   const [games, setGames] = useState<Game[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
   const [divisions, setDivisions] = useState<Division[]>([]);
-  const [diamonds, setDiamonds] = useState<Diamond[]>([]);
+  const [venues, setVenues] = useState<Venue[]>([]);
   const [loading, setLoading] = useState(true);
 
   const [filterGroup, setFilterGroup] = useState('');
@@ -82,7 +82,7 @@ export default function AdminResultsPage() {
       setGames([]);
       setTeams([]);
       setDivisions([]);
-      setDiamonds([]);
+      setVenues([]);
       setLoading(false);
       return;
     }
@@ -90,23 +90,23 @@ export default function AdminResultsPage() {
     try {
       setLoading(true);
       const orgParam = orgSlug ? `&orgSlug=${encodeURIComponent(orgSlug)}` : '';
-      const [gamesRes, teamsRes, groupsRes, diamondsRes] = await Promise.all([
+      const [gamesRes, teamsRes, groupsRes, venuesRes] = await Promise.all([
         fetch(`/api/admin/games?tournamentId=${encodeURIComponent(tournamentId)}${orgParam}`),
         fetch(`/api/admin/teams?tournamentId=${encodeURIComponent(tournamentId)}${orgParam}`),
         fetch(`/api/admin/divisions?tournamentId=${encodeURIComponent(tournamentId)}${orgParam}`),
-        fetch(`/api/admin/diamonds?tournamentId=${encodeURIComponent(tournamentId)}${orgParam}`),
+        fetch(`/api/admin/venues?tournamentId=${encodeURIComponent(tournamentId)}${orgParam}`),
       ]);
 
       const allGames = gamesRes.ok ? await gamesRes.json() : [];
       const allTeams = teamsRes.ok ? await teamsRes.json() : [];
       const groups = groupsRes.ok ? await groupsRes.json() : [];
-      const allDiamonds = diamondsRes.ok ? await diamondsRes.json() : [];
+      const allVenues = venuesRes.ok ? await venuesRes.json() : [];
 
       setGames(allGames);
       setTeams(allTeams.filter((t: any) => t.status === 'accepted'));
       setDivisions(groups);
       setFilterGroup(prev => prev || (groups.length > 0 ? groups[0].id : ''));
-      setDiamonds(allDiamonds);
+      setVenues(allVenues);
     } finally {
       setLoading(false);
     }
@@ -463,7 +463,7 @@ export default function AdminResultsPage() {
             games={filtered}
             teams={teams}
             divisions={divisions}
-            diamonds={diamonds}
+            venues={venues}
             viewMode={viewMode}
             groupByPool={groupMode === 'pools'}
             onSaveScore={handleSaveScore}

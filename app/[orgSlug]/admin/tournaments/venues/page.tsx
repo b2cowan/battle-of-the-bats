@@ -1,1 +1,1 @@
-export { default } from '../../org/diamonds/page';
+﻿export { default } from '../../org/venues/page';

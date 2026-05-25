@@ -1,8 +1,9 @@
 # Divisions Rename — Implementation Plan
 
-> **Status:** Complete
+> **Status:** Complete ✅
 > **Created:** 2026-05-25
 > **Completed:** 2026-05-25
+> **Migration applied:** dev ✅ prod ✅
 > **Branch:** dev
 > **Migration:** 093
 
@@ -56,8 +57,8 @@ Rename every reference to "age group / age groups" across the full stack — dat
 - [x] Recreate `can_access_tournament_for_pool` function body (references `divisions` table)
 - [x] Recreate `claim_next_slot` function body (references `division_id` column)
 - [x] `UPDATE tournaments SET fee_schedule_mode = 'division' WHERE fee_schedule_mode = 'age_group'`
-- [ ] **Apply migration to dev DB** ← next step for user
-- [ ] **Apply migration to prod DB** ← after dev verified
+- [x] **Apply migration to dev DB** ✅ 2026-05-25
+- [x] **Apply migration to prod DB** ✅ 2026-05-25
 
 ### Phase 1 — TypeScript Types + DB Helpers
 - [x] `lib/types.ts` — `AgeGroup` → `Division`; all `ageGroupId` → `divisionId`, `ageGroupIds` → `divisionIds`, `ageGroups` → `divisions`; `feeScheduleMode 'age_group'` → `'division'`; `LeagueSeason.ageGroup` → `division`; `RepTeam.ageGroup` → `division`; `RepPastProgramYear.teamAgeGroup` → `teamDivision`
@@ -91,8 +92,8 @@ Rename every reference to "age group / age groups" across the full stack — dat
 - [x] `AGENT_PLAYBOOK.md` — updated
 - [x] `lib/help-content/tournaments.tsx` — hrefs updated
 - [x] UAT test files — selectors and labels updated
-- [ ] `memory/reference_db_schema.md` — update column/table names after migration confirmed
-- [ ] Archive docs — add terminology annotation block
+- [x] `memory/reference_db_schema.md` — updated
+- [ ] Archive docs — add terminology annotation block (low priority, deferred)
 
 ---
 

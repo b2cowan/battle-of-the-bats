@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { Calendar, Trophy, ChevronRight, Megaphone, Star, Eye } from 'lucide-react';
-import { getAnnouncements, getGames, getTeams, getDivisions, getDiamonds } from '@/lib/db';
+import { getAnnouncements, getGames, getTeams, getDivisions, getVenues } from '@/lib/db';
 import type { Organization, Tournament } from '@/lib/types';
 import { formatTime } from '@/lib/utils';
 import { isPublicPageEnabled } from '@/lib/public-pages';
@@ -93,7 +93,7 @@ export default async function TournamentHomeContent({
 
   const teams     = await getTeams(tournament.id, readOptions);
   const divisions = await getDivisions(tournament.id, readOptions);
-  const diamonds  = await getDiamonds(tournament.id, readOptions);
+  const venues  = await getVenues(tournament.id, readOptions);
 
   const registration = getRegistrationState(tournament, divisions, teams);
   const canRegister = registration.state === 'open' || registration.state === 'waitlist';
@@ -171,7 +171,7 @@ export default async function TournamentHomeContent({
 
   const getTeamName     = (id: string) => teams.find(t => t.id === id)?.name ?? 'TBD';
   const getDivisionName = (id: string) => divisions.find(g => g.id === id)?.name ?? '';
-  const getDiamond      = (id?: string) => id ? (diamonds.find(d => d.id === id) ?? null) : null;
+  const getVenue      = (id?: string) => id ? (venues.find(d => d.id === id) ?? null) : null;
 
   function formatDate(dateStr: string) {
     if (!dateStr) return 'TBD';
@@ -352,7 +352,7 @@ export default async function TournamentHomeContent({
                     <span className={styles.teamName}>{getTeamName(game.awayTeamId)}</span>
                   </div>
                   <div className={styles.gameLocation}>
-                    <LocationLink location={game.location} diamond={getDiamond(game.diamondId)} size="sm" />
+                    <LocationLink location={game.location} venue={getVenue(game.venueId)} size="sm" />
                   </div>
                 </div>
               ))}

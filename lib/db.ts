@@ -3,7 +3,7 @@ import { supabaseAdmin } from './supabase-admin';
 import { getEffectiveTournamentLimit, PLAN_CONFIG } from './plan-config';
 import { createClient as createBrowserSupabaseClient } from './supabase-browser';
 import { getActiveTeamEntitledRepTeamIds } from './team-workspace-entitlements';
-import { Tournament, TournamentStatus, Diamond, Division, Pool, PoolSlot, Team, Game, Announcement, PlayoffConfig, RuleSection, RuleItem, Resource, Organization, OrganizationMember, OrgPlan, OrgRole, TournamentArchive, OrgPublicSiteContent, AccountingLedger, AccountingEntry, LedgerSummary, AccountingEntryStatus, AccountingEntryType, LeagueSeason, LeagueDivision, LeagueTeam, LeagueRegistration, LeagueGame, LeagueStandingsRow, LeagueSeasonSummary, LeagueRegistrationStatus, LeagueSeasonStatus, LeaguePractice, LeaguePracticeStatus, RepTeam, RepProgramYear, RepProgramYearStatus, RepTeamCoach, RepTryoutRegistration, RepTryoutRegistrationStatus, RepRosterPlayer, RepRosterStatus, RepTeamEvent, RepEventType, RepTeamEventAttendance, RepAttendanceStatus, RepLineupMode, RepTeamLineup, RepTeamLineupEntry, RepDocumentTemplate, RepDocumentType, RepPlayerDocument, RepCostAllocation, RepAllocationSplit, RepAllocationInstallment, RepPlayerDuesSchedule, RepPlayerDuesInstallment, RepTeamExpense, OrgPayee, TournamentRegistrationField, TournamentRegistrationFieldAnswer, TournamentRegistrationFieldType } from './types';
+import { Tournament, TournamentStatus, Venue, Division, Pool, PoolSlot, Team, Game, Announcement, PlayoffConfig, RuleSection, RuleItem, Resource, Organization, OrganizationMember, OrgPlan, OrgRole, TournamentArchive, OrgPublicSiteContent, AccountingLedger, AccountingEntry, LedgerSummary, AccountingEntryStatus, AccountingEntryType, LeagueSeason, LeagueDivision, LeagueTeam, LeagueRegistration, LeagueGame, LeagueStandingsRow, LeagueSeasonSummary, LeagueRegistrationStatus, LeagueSeasonStatus, LeaguePractice, LeaguePracticeStatus, RepTeam, RepProgramYear, RepProgramYearStatus, RepTeamCoach, RepTryoutRegistration, RepTryoutRegistrationStatus, RepRosterPlayer, RepRosterStatus, RepTeamEvent, RepEventType, RepTeamEventAttendance, RepAttendanceStatus, RepLineupMode, RepTeamLineup, RepTeamLineupEntry, RepDocumentTemplate, RepDocumentType, RepPlayerDocument, RepCostAllocation, RepAllocationSplit, RepAllocationInstallment, RepPlayerDuesSchedule, RepPlayerDuesInstallment, RepTeamExpense, OrgPayee, TournamentRegistrationField, TournamentRegistrationFieldAnswer, TournamentRegistrationFieldType } from './types';
 
 // Use the SSR browser client (cookie-based session) for writes that need auth;
 // falls back to anon client on the server where there is no window.
@@ -67,9 +67,9 @@ export async function saveTournament(t: Omit<Tournament, 'id'>): Promise<Tournam
   return mapTournament(data);
 }
 
-export async function cloneDiamonds(targetTid: string, sourceDiamonds: Diamond[]): Promise<void> {
-  if (sourceDiamonds.length === 0) return;
-  const rows = sourceDiamonds.map(d => ({
+export async function cloneVenues(targetTid: string, sourceVenues: Venue[]): Promise<void> {
+  if (sourceVenues.length === 0) return;
+  const rows = sourceVenues.map(d => ({
     tournament_id: targetTid,
     name: d.name,
     address: d.address,
@@ -800,20 +800,20 @@ export async function populateTournamentFrom(
   return { copied };
 }
 
-// --- Diamonds ---
-export async function getDiamonds(tournamentId?: string, options: ReadOptions = {}): Promise<Diamond[]> {
+// --- Venues ---
+export async function getVenues(tournamentId?: string, options: ReadOptions = {}): Promise<Venue[]> {
   const client = options.admin ? supabaseAdmin : supabase;
   let query = client.from('diamonds').select('*').order('name', { ascending: true });
   if (tournamentId) query = query.eq('tournament_id', tournamentId);
   const { data, error } = await query;
   if (error || !data) {
-    if (error) console.error('getDiamonds error', error);
+    if (error) console.error('getVenues error', error);
     return [];
   }
   return data.map((d: any) => ({ id: d.id, tournamentId: d.tournament_id, name: d.name, address: d.address, notes: d.notes }));
 }
 
-export async function saveDiamond(d: Omit<Diamond, 'id'>): Promise<void> {
+export async function saveVenue(d: Omit<Venue, 'id'>): Promise<void> {
   await authClient().from('diamonds').insert({
     tournament_id: d.tournamentId,
     name: d.name,
@@ -822,7 +822,7 @@ export async function saveDiamond(d: Omit<Diamond, 'id'>): Promise<void> {
   });
 }
 
-export async function updateDiamond(id: string, d: Partial<Diamond>): Promise<void> {
+export async function updateVenue(id: string, d: Partial<Venue>): Promise<void> {
   const updates: any = {};
   if (d.tournamentId !== undefined) updates.tournament_id = d.tournamentId;
   if (d.name !== undefined) updates.name = d.name;
@@ -831,7 +831,7 @@ export async function updateDiamond(id: string, d: Partial<Diamond>): Promise<vo
   await authClient().from('diamonds').update(updates).eq('id', id);
 }
 
-export async function deleteDiamond(id: string): Promise<void> {
+export async function deleteVenue(id: string): Promise<void> {
   await authClient().from('diamonds').delete().eq('id', id);
 }
 
@@ -1204,7 +1204,7 @@ export async function getGames(tournamentId?: string, options: ReadOptions = {})
     date: g.game_date,
     time: g.game_time,
     location: g.location,
-    diamondId: g.diamond_id,
+    venueId: g.diamond_id,
     homeScore: g.home_score,
     awayScore: g.away_score,
     status: g.status,
@@ -1228,7 +1228,7 @@ export async function saveGame(g: Omit<Game, 'id'>): Promise<void> {
     game_date: g.date,
     game_time: g.time,
     location: g.location,
-    diamond_id: g.diamondId,
+    diamond_id: g.venueId,
     home_score: g.homeScore,
     away_score: g.awayScore,
     status: g.status || 'scheduled',
@@ -1252,7 +1252,7 @@ export async function updateGame(id: string, g: Partial<Game>, options: ReadOpti
   if (g.date !== undefined) updates.game_date = g.date;
   if (g.time !== undefined) updates.game_time = g.time;
   if (g.location !== undefined) updates.location = g.location;
-  if (g.diamondId !== undefined) updates.diamond_id = g.diamondId;
+  if (g.venueId !== undefined) updates.diamond_id = g.venueId;
   if (g.homeScore !== undefined) updates.home_score = g.homeScore;
   if (g.awayScore !== undefined) updates.away_score = g.awayScore;
   if (g.status !== undefined) updates.status = g.status;
@@ -1466,12 +1466,12 @@ export async function deleteAnnouncement(id: string): Promise<void> {
 
 // --- Seeding ---
 export async function seedTournamentData(tid: string, options: {
-  diamonds?: boolean, registrations?: boolean, schedule?: boolean, results?: boolean
+  venues?: boolean, registrations?: boolean, schedule?: boolean, results?: boolean
 }) {
   const divisions = await getDivisions(tid);
   if (divisions.length === 0) return;
 
-  if (options.diamonds) {
+  if (options.venues) {
     const names = ['Memorial Park D1', 'Memorial Park D2', 'Lions Field', 'South Common', 'Milton Sports Center'];
     const rows = names.map((name, i) => ({
       tournament_id: tid,
@@ -1533,8 +1533,8 @@ export async function seedTournamentData(tid: string, options: {
 
   if (options.schedule || options.results) {
     const teams = await getTeams(tid);
-    const diamonds = await getDiamonds(tid);
-    if (teams.length < 2 || diamonds.length === 0) return;
+    const venues = await getVenues(tid);
+    if (teams.length < 2 || venues.length === 0) return;
 
     const gameRows = [];
     const tnt = await supabase.from('tournaments').select('*').eq('id', tid).single();
@@ -1548,7 +1548,7 @@ export async function seedTournamentData(tid: string, options: {
       for (let i = 0; i < 2; i++) {
         const home = groupTeams[i % groupTeams.length];
         const away = groupTeams[(i + 1) % groupTeams.length];
-        const diamond = diamonds[i % diamonds.length];
+        const venue = venues[i % venues.length];
 
         gameRows.push({
           tournament_id: tid,
@@ -1557,8 +1557,8 @@ export async function seedTournamentData(tid: string, options: {
           away_team_id: away.id,
           game_date: baseDate,
           game_time: `${9 + i}:00`,
-          location: diamond.name,
-          diamond_id: diamond.id,
+          location: venue.name,
+          diamond_id: venue.id,
           status: options.results ? 'final' : 'scheduled',
           home_score: options.results ? Math.floor(Math.random() * 10) : null,
           away_score: options.results ? Math.floor(Math.random() * 10) : null

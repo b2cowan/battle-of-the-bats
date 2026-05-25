@@ -353,7 +353,7 @@ export default function TournamentSetupWizard({
     setDataLoading(true);
     setContactForm({ name: '', email: orgContactEmail ?? '', phone: '', role: '' });
     Promise.all([
-      requestJson<ExistingVenue[]>(`/api/admin/diamonds?scope=org${orgParam}`).catch(() => []),
+      requestJson<ExistingVenue[]>(`/api/admin/venues?scope=org${orgParam}`).catch(() => []),
       requestJson<ExistingTournament[]>(`/api/admin/tournaments${orgQuery}`).catch(() => []),
     ]).then(([venues, tournaments]) => {
       setExistingVenues(venues);
@@ -668,7 +668,7 @@ export default function TournamentSetupWizard({
       });
 
       await Promise.all([
-        ...allVenues.map(row => requestJson<{ success: boolean }>(`/api/admin/diamonds${orgQuery}`, {
+        ...allVenues.map(row => requestJson<{ success: boolean }>(`/api/admin/venues${orgQuery}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({

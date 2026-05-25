@@ -55,7 +55,7 @@ export async function GET(req: Request) {
     date: g.game_date,
     time: g.game_time,
     location: g.location,
-    diamondId: g.diamond_id,
+    venueId: g.diamond_id,
     homeScore: g.home_score,
     awayScore: g.away_score,
     status: g.status,
@@ -129,7 +129,7 @@ export async function POST(req: Request) {
         game_date:        g.date,
         game_time:        g.time,
         location:         g.location,
-        diamond_id:       g.diamondId    || null,
+        diamond_id:       g.venueId      || null,
         status:           g.status       || 'scheduled',
         is_playoff:       g.isPlayoff    || false,
         bracket_id:       g.bracketId    || null,
@@ -240,7 +240,7 @@ export async function PATCH(req: Request) {
       if (body.date       !== undefined) updates.game_date    = body.date;
       if (body.time       !== undefined) updates.game_time    = body.time;
       if (body.location   !== undefined) updates.location     = body.location;
-      if (body.diamondId  !== undefined) updates.diamond_id   = body.diamondId;
+      if (body.venueId    !== undefined) updates.diamond_id   = body.venueId;
       if (body.notes      !== undefined) updates.notes        = body.notes;
       if (body.homeTeamId !== undefined) updates.home_team_id = body.homeTeamId || null;
       if (body.awayTeamId !== undefined) updates.away_team_id = body.awayTeamId || null;

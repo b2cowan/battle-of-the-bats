@@ -16,7 +16,7 @@ import ExportMenu from '@/components/admin/ExportMenu';
 import ScheduleGenerator from './Generator';
 import PlayoffWizard from './PlayoffWizard';
 import GameList from './components/GameList';
-import { Game, Team, Division, Diamond, PoolSlot } from '@/lib/types';
+import { Game, Team, Division, Venue, PoolSlot } from '@/lib/types';
 import s from '../../admin-common.module.css';
 import styles from './schedule-admin.module.css';
 import FeedbackModal from '@/components/FeedbackModal';
@@ -64,7 +64,7 @@ const SCHEDULE_EXPORT_COLS: ExportColumnDef[] = [
 const emptyForm = {
   divisionId: '', homeTeamId: '', awayTeamId: '',
   homeSlotId: '', awaySlotId: '',
-  date: '', time: '09:00', location: '', diamondId: '', notes: null as string | null,
+  date: '', time: '09:00', location: '', venueId: '', notes: null as string | null,
   bracketCode: '',
 };
 
@@ -76,7 +76,7 @@ export default function AdminSchedulePage() {
   const [games, setGames]       = useState<Game[]>([]);
   const [teams, setTeams]       = useState<Team[]>([]);
   const [divisions, setDivisions] = useState<Division[]>([]);
-  const [diamonds, setDiamonds] = useState<Diamond[]>([]);
+  const [venues, setVenues] = useState<Venue[]>([]);
   const [modalSlots, setModalSlots] = useState<PoolSlot[]>([]);
   const [modalSlotsLoading, setModalSlotsLoading] = useState(false);
   const [modal, setModal]       = useState<ModalMode>(null);
@@ -156,28 +156,28 @@ export default function AdminSchedulePage() {
       setGames([]);
       setTeams([]);
       setDivisions([]);
-      setDiamonds([]);
+      setVenues([]);
       return;
     }
     const orgParam = orgSlug ? `&orgSlug=${encodeURIComponent(orgSlug)}` : '';
 
-    const [gamesRes, teamsRes, groupsRes, diamondsRes] = await Promise.all([
+    const [gamesRes, teamsRes, groupsRes, venuesRes] = await Promise.all([
       fetch(`/api/admin/games?tournamentId=${encodeURIComponent(tournamentId)}${orgParam}`),
       fetch(`/api/admin/teams?tournamentId=${encodeURIComponent(tournamentId)}${orgParam}`),
       fetch(`/api/admin/divisions?tournamentId=${encodeURIComponent(tournamentId)}${orgParam}`),
-      fetch(`/api/admin/diamonds?tournamentId=${encodeURIComponent(tournamentId)}${orgParam}`),
+      fetch(`/api/admin/venues?tournamentId=${encodeURIComponent(tournamentId)}${orgParam}`),
     ]);
 
     const games = gamesRes.ok ? await gamesRes.json() : [];
     const allTeams = teamsRes.ok ? await teamsRes.json() : [];
     const groups = groupsRes.ok ? await groupsRes.json() : [];
-    const diamonds = diamondsRes.ok ? await diamondsRes.json() : [];
+    const venues = venuesRes.ok ? await venuesRes.json() : [];
 
     setGames(games);
     setTeams(allTeams.filter((t: any) => t.status === 'accepted'));
     setDivisions(groups);
     setFilterGroup(prev => prev || (groups.length > 0 ? groups[0].id : ''));
-    setDiamonds(diamonds);
+    setVenues(venues);
   }, [tournamentId, tournamentLoading, orgSlug]);
   
   useEffect(() => {
@@ -197,7 +197,7 @@ export default function AdminSchedulePage() {
   const getTeamName  = (id: string) => teams.find(t => t.id === id)?.name ?? null;
   const resolveTeam  = (id: string, placeholder?: string) => getTeamName(id) ?? placeholder ?? 'TBD';
   const getGroupName = (id: string) => divisions.find(g => g.id === id)?.name ?? '—';
-  const getDiamondName = (id?: string) => id ? (diamonds.find(d => d.id === id)?.name ?? '') : '';
+  const getVenueName = (id?: string) => id ? (venues.find(d => d.id === id)?.name ?? '') : '';
 
   async function fetchModalSlots(divisionId: string) {
     if (!currentTournament?.id || !divisionId) { setModalSlots([]); return; }
@@ -256,12 +256,12 @@ export default function AdminSchedulePage() {
       date: g.date ?? '',
       time: g.time ?? '09:00',
       location: g.location ?? '',
-      diamondId: g.diamondId ?? '',
+      venueId: g.venueId ?? '',
       notes: g.notes ?? '',
       bracketCode: g.bracketCode ?? '',
     });
-    const existingDiamond = g.diamondId ? diamonds.find(d => d.id === g.diamondId) : null;
-    setVenueSearch(existingDiamond?.name ?? g.location ?? '');
+    const existingVenue = g.venueId ? venues.find(d => d.id === g.venueId) : null;
+    setVenueSearch(existingVenue?.name ?? g.location ?? '');
     setEditing(g);
     setModal('edit');
     fetchModalSlots(g.divisionId);
@@ -284,7 +284,7 @@ export default function AdminSchedulePage() {
       date:            form.date,
       time:            form.time,
       location:        form.location,
-      diamondId:       form.diamondId || undefined,
+      venueId:         form.venueId || undefined,
       notes:           form.notes || undefined,
       status:          editing?.status || 'scheduled',
       bracketCode:     form.bracketCode || undefined,
@@ -314,9 +314,9 @@ export default function AdminSchedulePage() {
     refresh();
   }
 
-  async function handleSaveGame(gameId: string, data: { date: string; time: string; diamondId: string; notes: string; homeTeamId: string; awayTeamId: string }) {
+  async function handleSaveGame(gameId: string, data: { date: string; time: string; venueId: string; notes: string; homeTeamId: string; awayTeamId: string }) {
     const orgParam = orgSlug ? `?orgSlug=${encodeURIComponent(orgSlug)}` : '';
-    const diamond = data.diamondId ? diamonds.find(d => d.id === data.diamondId) : null;
+    const venue = data.venueId ? venues.find(d => d.id === data.venueId) : null;
     await fetch(`/api/admin/games${orgParam}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
@@ -325,8 +325,8 @@ export default function AdminSchedulePage() {
         id: gameId,
         date: data.date || undefined,
         time: data.time || undefined,
-        diamondId: data.diamondId || undefined,
-        location: diamond?.name || undefined,
+        venueId: data.venueId || undefined,
+        location: venue?.name || undefined,
         notes: data.notes || undefined,
         homeTeamId: data.homeTeamId,
         awayTeamId: data.awayTeamId,
@@ -348,12 +348,12 @@ export default function AdminSchedulePage() {
     });
   }
 
-  async function handleVenueSaved(saved: Diamond) {
+  async function handleVenueSaved(saved: Venue) {
     const orgParam = orgSlug ? `&orgSlug=${encodeURIComponent(orgSlug)}` : '';
-    const res = await fetch(`/api/admin/diamonds?tournamentId=${encodeURIComponent(currentTournament!.id)}${orgParam}`);
-    const updated: Diamond[] = res.ok ? await res.json() : [];
-    setDiamonds(updated);
-    setForm(f => ({ ...f, diamondId: saved.id, location: saved.name }));
+    const res = await fetch(`/api/admin/venues?tournamentId=${encodeURIComponent(currentTournament!.id)}${orgParam}`);
+    const updated: Venue[] = res.ok ? await res.json() : [];
+    setVenues(updated);
+    setForm(f => ({ ...f, venueId: saved.id, location: saved.name }));
     setVenueSearch(saved.name);
     setAddVenueOpen(false);
   }
@@ -395,7 +395,7 @@ export default function AdminSchedulePage() {
       division: getGroupName(g.divisionId),
       homeTeam: resolveTeam(g.homeTeamId, g.homePlaceholder),
       awayTeam: resolveTeam(g.awayTeamId, g.awayPlaceholder),
-      location: g.diamondId ? getDiamondName(g.diamondId) : (g.location ?? ''),
+      location: g.venueId ? getVenueName(g.venueId) : (g.location ?? ''),
       status:   g.status,
     }));
   }
@@ -426,7 +426,7 @@ export default function AdminSchedulePage() {
         title:    `${resolveTeam(g.homeTeamId, g.homePlaceholder)} vs ${resolveTeam(g.awayTeamId, g.awayPlaceholder)} — ${getGroupName(g.divisionId)}`,
         date:     g.date,
         time:     g.time || undefined,
-        location: g.diamondId ? getDiamondName(g.diamondId) : (g.location || undefined),
+        location: g.venueId ? getVenueName(g.venueId) : (g.location || undefined),
         cancelled: g.status === 'cancelled',
       }));
     await downloadICS(
@@ -704,7 +704,7 @@ export default function AdminSchedulePage() {
               games={filtered}
               teams={teams}
               divisions={divisions}
-              diamonds={diamonds}
+              venues={venues}
               viewMode={viewMode}
               groupByPool={groupMode === 'pools'}
               pools={divisions.find(g => g.id === filterGroup)?.pools}
@@ -826,22 +826,22 @@ export default function AdminSchedulePage() {
                   <input
                     className="form-input"
                     style={{ paddingLeft: '2.1rem' }}
-                    placeholder={diamonds.length > 0 ? 'Search venues…' : 'Type a location…'}
+                    placeholder={venues.length > 0 ? 'Search venues…' : 'Type a location…'}
                     value={venueSearch}
                     autoComplete="off"
                     required
                     onChange={e => {
                       const v = e.target.value;
                       setVenueSearch(v);
-                      setForm(f => ({ ...f, location: v, diamondId: '' }));
+                      setForm(f => ({ ...f, location: v, venueId: '' }));
                       setVenueDropdownOpen(true);
                     }}
-                    onFocus={() => { if (diamonds.length > 0) setVenueDropdownOpen(true); }}
+                    onFocus={() => { if (venues.length > 0) setVenueDropdownOpen(true); }}
                     onBlur={() => setTimeout(() => setVenueDropdownOpen(false), 150)}
                   />
                   {venueDropdownOpen && (() => {
                     const q = venueSearch.toLowerCase();
-                    const filtered = diamonds.filter(d =>
+                    const filtered = venues.filter(d =>
                       !q || d.name.toLowerCase().includes(q) || (d.address || '').toLowerCase().includes(q)
                     );
                     if (filtered.length === 0) return null;
@@ -856,7 +856,7 @@ export default function AdminSchedulePage() {
                           <div
                             key={d.id}
                             onMouseDown={() => {
-                              setForm(f => ({ ...f, diamondId: d.id, location: d.name }));
+                              setForm(f => ({ ...f, venueId: d.id, location: d.name }));
                               setVenueSearch(d.name);
                               setVenueDropdownOpen(false);
                             }}
@@ -876,7 +876,7 @@ export default function AdminSchedulePage() {
                     );
                   })()}
                 </div>
-                {form.diamondId && (
+                {form.venueId && (
                   <div style={{ marginTop: '0.35rem', fontSize: '0.73rem', color: 'var(--white-40)', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
                     <Check size={11} style={{ color: 'var(--logic-lime)' }} /> Linked to saved venue
                   </div>
@@ -924,7 +924,7 @@ export default function AdminSchedulePage() {
           orgSlug={orgSlug ?? ''}
           divisions={divisions}
           teams={teams}
-          diamonds={diamonds}
+          venues={venues}
           onCancel={() => setShowGenerator(false)}
           onComplete={() => {
             setShowGenerator(false);

@@ -1,8 +1,8 @@
 ﻿'use client';
 import { useState, useEffect } from 'react';
 import { Calendar, Clock, MapPin, Trophy, List, LayoutTemplate } from 'lucide-react';
-import { getGames, getTeams, getDivisions, getDiamonds, getTournaments } from '@/lib/db';
-import { Game, Team, Division, Diamond, Tournament } from '@/lib/types';
+import { getGames, getTeams, getDivisions, getVenues, getTournaments } from '@/lib/db';
+import { Game, Team, Division, Venue, Tournament } from '@/lib/types';
 import LocationLink from '@/components/LocationLink';
 import { formatTime, formatPoolName } from '@/lib/utils';
 import styles from './schedule.module.css';
@@ -161,7 +161,7 @@ export default function SchedulePage() {
   const [games, setGames]         = useState<Game[]>([]);
   const [teams, setTeams]         = useState<Team[]>([]);
   const [divisions, setDivisions] = useState<Division[]>([]);
-  const [diamonds, setDiamonds]   = useState<Diamond[]>([]);
+  const [venues, setVenues]   = useState<Venue[]>([]);
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
   const [selectedTournament, setSelectedTournament] = useState<Tournament | null>(null);
   const [activeGroup, setActiveGroup]   = useState<string>('');
@@ -189,7 +189,7 @@ export default function SchedulePage() {
       setLoading(true);
       setGames(await getGames(selectedTournament!.id));
       setTeams(await getTeams(selectedTournament!.id));
-      setDiamonds(await getDiamonds(selectedTournament!.id));
+      setVenues(await getVenues(selectedTournament!.id));
       const groups = await getDivisions(selectedTournament!.id);
       setDivisions(groups);
       if (!activeGroup && groups.length > 0) setActiveGroup(groups[0].id);
@@ -207,7 +207,7 @@ export default function SchedulePage() {
     return ph || 'TBD';
   };
 
-  const getDiamond = (id?: string) => id ? diamonds.find(d => d.id === id) ?? null : null;
+  const getVenue = (id?: string) => id ? venues.find(d => d.id === id) ?? null : null;
 
   const filtered = games
     .filter(g =>
@@ -443,7 +443,7 @@ export default function SchedulePage() {
                                 </div>
                                 <div className={styles.gameMeta}>
                                   <span className="badge badge-primary">{activeG?.name ?? ''}</span>
-                                  <LocationLink location={game.location} diamond={getDiamond(game.diamondId)} size="sm" />
+                                  <LocationLink location={game.location} venue={getVenue(game.venueId)} size="sm" />
                                 </div>
                                 {game.notes && <p className={styles.gameNotes}>{game.notes}</p>}
                               </div>
@@ -490,7 +490,7 @@ export default function SchedulePage() {
                                     </div>
                                     <div className={styles.gameMeta}>
                                       <span className="badge badge-primary">{game.bracketCode || 'Playoff'}</span>
-                                      <LocationLink location={game.location} diamond={getDiamond(game.diamondId)} size="sm" />
+                                      <LocationLink location={game.location} venue={getVenue(game.venueId)} size="sm" />
                                     </div>
                                     {game.notes && <p className={styles.gameNotes}>{game.notes}</p>}
                                   </div>
@@ -526,7 +526,7 @@ export default function SchedulePage() {
                           <span className="badge badge-primary">
                             {game.isPlayoff ? (game.bracketCode || 'Playoff') : (divisions.find(g => g.id === game.divisionId)?.name ?? '')}
                           </span>
-                          <LocationLink location={game.location} diamond={getDiamond(game.diamondId)} size="sm" />
+                          <LocationLink location={game.location} venue={getVenue(game.venueId)} size="sm" />
                         </div>
                         {game.notes && <p className={styles.gameNotes}>{game.notes}</p>}
                       </div>

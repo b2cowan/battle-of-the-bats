@@ -5,7 +5,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import {
   Users, Calendar, Trophy,
   MoreHorizontal, LayoutDashboard, Tag, MapPin,
-  LogOut, X, ChevronRight, ChevronDown, BookUser,
+  LogOut, X, ChevronRight, ChevronDown,
   Settings, Paintbrush, LayoutGrid, CalendarDays, UserCheck,
   ExternalLink, BookOpen, Mail, Archive, FileText,
   type LucideIcon,
@@ -37,11 +37,10 @@ const OPERATIONS_MORE: NavItem[] = [
 ];
 
 const SETUP_MORE: NavItem[] = [
-  { key: 'tournaments/venues',        icon: MapPin,          label: 'Venues'        },
-  { key: 'tournaments/contacts',      icon: BookUser,        label: 'Contacts'      },
-  { key: 'tournaments/divisions',      icon: Tag,             label: 'Divisions'     },
-  { key: 'tournaments/rules',         icon: BookOpen,        label: 'Rules & Resources' },
-  { key: 'tournaments/branding',      icon: Paintbrush,      label: 'Branding'      },
+  { key: 'tournaments/venues',    icon: MapPin,     label: 'Venues'            },
+  { key: 'tournaments/divisions', icon: Tag,        label: 'Divisions'         },
+  { key: 'tournaments/rules',     icon: BookOpen,   label: 'Rules & Resources' },
+  { key: 'tournaments/branding',  icon: Paintbrush, label: 'Branding'          },
 ];
 
 const ADMIN_MORE: NavItem[] = [

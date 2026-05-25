@@ -284,9 +284,9 @@ export default function AdminSidebar() {
                 pathname.startsWith(`${base}/org/members`),
               )}
               {!isCanceled && navLink(
-                'org/diamonds', MapPin, 'Diamonds',
-                `${base}/org/diamonds`,
-                pathname.startsWith(`${base}/org/diamonds`),
+                'org/venues', MapPin, 'Venues',
+                `${base}/org/venues`,
+                pathname.startsWith(`${base}/org/venues`),
               )}
               {userRole === 'owner' && navLink(
                 'org/billing', CreditCard, 'Subscription',

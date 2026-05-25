@@ -270,22 +270,22 @@ export async function POST(req: Request) {
     if (migration && migration.sourceTournamentId) {
       console.log('Handling migration from tournament:', migration.sourceTournamentId);
       
-      if (migration.migrateDiamonds) {
-        const { data: sourceDiamonds } = await supabase
+      if (migration.migrateVenues) {
+        const { data: sourceVenues } = await supabase
           .from('diamonds')
           .select('*')
           .eq('tournament_id', migration.sourceTournamentId);
-        
-        if (sourceDiamonds && sourceDiamonds.length > 0) {
-          const rows = sourceDiamonds.map(d => ({
+
+        if (sourceVenues && sourceVenues.length > 0) {
+          const rows = sourceVenues.map(d => ({
             tournament_id: tid,
             name: d.name,
             address: d.address,
             notes: d.notes
           }));
           const { error: dErr } = await supabase.from('diamonds').insert(rows);
-          if (dErr) console.error('Migration Error: Failed to clone diamonds', dErr);
-          else console.log(`Migrated ${rows.length} diamonds`);
+          if (dErr) console.error('Migration Error: Failed to clone venues', dErr);
+          else console.log(`Migrated ${rows.length} venues`);
         }
       }
 
@@ -298,7 +298,7 @@ export async function POST(req: Request) {
       const { data: divisions } = await supabase.from('divisions').select('*, pools(*)').eq('tournament_id', tid);
       
       if (divisions && divisions.length > 0) {
-        if (effectiveSeedData.diamonds) {
+        if (effectiveSeedData.venues) {
           const names = ['Memorial Park D1', 'Memorial Park D2', 'Lions Field', 'South Common', 'Milton Sports Center'];
           const rows = names.map((name, i) => ({
             tournament_id: tid,
@@ -346,19 +346,19 @@ export async function POST(req: Request) {
             log('Teams Fetch Error', teamsFetchError);
           }
 
-          // 2. Fetch diamonds
-          const { data: diamonds, error: diamondsFetchError } = await supabase
+          // 2. Fetch venues
+          const { data: venues, error: venuesFetchError } = await supabase
             .from('diamonds')
             .select('*')
             .eq('tournament_id', tid);
-            
-          if (diamondsFetchError) {
-            log('Diamonds Fetch Error', diamondsFetchError);
-          }
-          
-          log(`Schedule Seed: Found ${allTeams?.length || 0} teams and ${diamonds?.length || 0} diamonds`);
 
-          if (allTeams && allTeams.length >= 2 && diamonds && diamonds.length > 0) {
+          if (venuesFetchError) {
+            log('Venues Fetch Error', venuesFetchError);
+          }
+
+          log(`Schedule Seed: Found ${allTeams?.length || 0} teams and ${venues?.length || 0} venues`);
+
+          if (allTeams && allTeams.length >= 2 && venues && venues.length > 0) {
             log('Starting schedule generation');
             const gameRows: GameInsertRow[] = [];
             const duration = scheduleParams?.gameDuration || 90;
@@ -379,7 +379,7 @@ export async function POST(req: Request) {
             }
 
             let currentMinute = (startHour * 60 + startMin);
-            let diamondIdx = 0;
+            let venueIdx = 0;
             let currentDayOffset = 0;
             const teamBusySlots = new Map<string, Set<string>>(); // teamId -> Set<date + time>
 
@@ -440,13 +440,13 @@ export async function POST(req: Request) {
                   if (currentMinute + duration > dailyLimitMinutes) {
                     currentDayOffset++;
                     currentMinute = (startHour * 60 + startMin);
-                    diamondIdx = 0;
+                    venueIdx = 0;
                   }
 
                   const hour = Math.floor(currentMinute / 60);
                   const min = currentMinute % 60;
                   const timeStr = `${hour.toString().padStart(2, '0')}:${min.toString().padStart(2, '0')}`;
-                  const diamond = diamonds[diamondIdx % diamonds.length];
+                  const venue = venues[venueIdx % venues.length];
 
                   const gameDate = new Date(scheduleStartStr + 'T12:00:00');
                   gameDate.setDate(gameDate.getDate() + currentDayOffset);
@@ -472,8 +472,8 @@ export async function POST(req: Request) {
                       away_team_id: away.id,
                       game_date: dateStr,
                       game_time: timeStr,
-                      location: diamond.name,
-                      diamond_id: diamond.id,
+                      location: venue.name,
+                      diamond_id: venue.id,
                       status: effectiveSeedData.results ? 'completed' : 'scheduled',
                       home_score: effectiveSeedData.results ? Math.floor(Math.random() * 8) : null,
                       away_score: effectiveSeedData.results ? Math.floor(Math.random() * 8) : null
@@ -490,8 +490,8 @@ export async function POST(req: Request) {
                     slotFound = true;
                   }
 
-                  diamondIdx++;
-                  if (diamondIdx % diamonds.length === 0) {
+                  venueIdx++;
+                  if (venueIdx % venues.length === 0) {
                     currentMinute += (duration + turnover);
                   }
                 }
@@ -507,9 +507,9 @@ export async function POST(req: Request) {
               log('No games generated for any group');
             }
           } else {
-            log('Skipping schedule seed: not enough teams/diamonds', { 
-              teamCount: allTeams?.length, 
-              diamondCount: diamonds?.length 
+            log('Skipping schedule seed: not enough teams/venues', {
+              teamCount: allTeams?.length,
+              venueCount: venues?.length
             });
           }
         }

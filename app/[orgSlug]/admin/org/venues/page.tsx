@@ -3,7 +3,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { MapPin, Plus, Pencil, Trash2, X, ExternalLink } from 'lucide-react'; // X used in delete confirm modal
 import { useTournament } from '@/lib/tournament-context';
 import { useOrg } from '@/lib/org-context';
-import { Diamond } from '@/lib/types';
+import { Venue } from '@/lib/types';
 import { getMapsUrl } from '@/components/LocationLink';
 import AddVenueModal from '@/components/admin/AddVenueModal';
 import ExportMenu from '@/components/admin/ExportMenu';
@@ -11,7 +11,7 @@ import {
   downloadXLSX, generateCSV, downloadCSVBlob,
   buildFilename, serializeRows, serializeHeaders, type ExportColumnDef,
 } from '@/lib/export';
-import styles from './diamonds-admin.module.css';
+import styles from './venues-admin.module.css';
 
 // -- Export -------------------------------------------------------------------
 
@@ -30,20 +30,20 @@ async function requestJson<T>(url: string, init?: RequestInit): Promise<T> {
   return data as T;
 }
 
-export default function AdminDiamondsPage() {
+export default function AdminVenuesPage() {
   const { currentTournament } = useTournament();
   const { currentOrg } = useOrg();
   const orgSlug = currentOrg?.slug;
-  const [diamonds, setDiamonds] = useState<Diamond[]>([]);
+  const [venues, setVenues] = useState<Venue[]>([]);
   const [modalOpen, setModalOpen] = useState(false);
-  const [editing, setEditing]     = useState<Diamond | undefined>(undefined);
+  const [editing, setEditing]     = useState<Venue | undefined>(undefined);
   const [deleteId, setDeleteId]   = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
-    if (!currentTournament) { setDiamonds([]); return; }
+    if (!currentTournament) { setVenues([]); return; }
     const orgParam = orgSlug ? `&orgSlug=${encodeURIComponent(orgSlug)}` : '';
-    const rows = await requestJson<Diamond[]>(`/api/admin/venues?tournamentId=${encodeURIComponent(currentTournament.id)}${orgParam}`);
-    setDiamonds(rows);
+    const rows = await requestJson<Venue[]>(`/api/admin/venues?tournamentId=${encodeURIComponent(currentTournament.id)}${orgParam}`);
+    setVenues(rows);
   }, [currentTournament, orgSlug]);
 
   useEffect(() => {
@@ -52,14 +52,14 @@ export default function AdminDiamondsPage() {
   }, [refresh]);
 
   function openAdd() { setEditing(undefined); setModalOpen(true); }
-  function openEdit(d: Diamond) { setEditing(d); setModalOpen(true); }
+  function openEdit(d: Venue) { setEditing(d); setModalOpen(true); }
 
   function handleSaved() { setModalOpen(false); refresh(); }
 
   // -- Export -----------------------------------------------------------------
 
   function buildVenueRows() {
-    return diamonds.map(d => ({
+    return venues.map(d => ({
       name:    d.name,
       address: d.address ?? '',
       notes:   d.notes ?? '',
@@ -105,15 +105,15 @@ export default function AdminDiamondsPage() {
             formats={['xlsx', 'csv']}
             onExportXLSX={handleExportXLSX}
             onExportCSV={handleExportCSV}
-            disabled={diamonds.length === 0}
+            disabled={venues.length === 0}
           />
-          <button className="btn btn-lime btn-data" onClick={openAdd} id="diamond-add-btn" disabled={!currentTournament}>
+          <button className="btn btn-lime btn-data" onClick={openAdd} id="Venue-add-btn" disabled={!currentTournament}>
             <Plus size={16} /> Add Venue
           </button>
         </div>
       </div>
 
-      {diamonds.length === 0 ? (
+      {venues.length === 0 ? (
         <div className="empty-state">
           <MapPin size={32} />
           <h3>No venues added yet</h3>
@@ -139,10 +139,10 @@ export default function AdminDiamondsPage() {
               </tr>
             </thead>
             <tbody>
-              {diamonds.map(d => (
+              {venues.map(d => (
                 <tr key={d.id}>
                   <td data-label="Venue">
-                    <div className={styles.diamondName}>
+                    <div className={styles.venueName}>
                       <MapPin size={13} style={{ color: 'var(--logic-lime)', flexShrink: 0 }} />
                       <strong>{d.name}</strong>
                     </div>
@@ -156,17 +156,17 @@ export default function AdminDiamondsPage() {
                       rel="noopener noreferrer"
                       className="btn btn-ghost btn-data"
                       title="Open in Google Maps"
-                      id={`maps-diamond-${d.id}`}
+                      id={`maps-Venue-${d.id}`}
                     >
                       <ExternalLink size={13} /> Maps
                     </a>
                   </td>
                   <td data-label="Actions">
                     <div className={styles.rowActions}>
-                      <button className="btn btn-ghost btn-data" onClick={() => openEdit(d)} id={`edit-diamond-${d.id}`}>
+                      <button className="btn btn-ghost btn-data" onClick={() => openEdit(d)} id={`edit-Venue-${d.id}`}>
                         <Pencil size={13} />
                       </button>
-                      <button className="btn btn-danger btn-data" onClick={() => setDeleteId(d.id)} id={`delete-diamond-${d.id}`}>
+                      <button className="btn btn-danger btn-data" onClick={() => setDeleteId(d.id)} id={`delete-Venue-${d.id}`}>
                         <Trash2 size={13} />
                       </button>
                     </div>
@@ -203,7 +203,7 @@ export default function AdminDiamondsPage() {
               <button className="btn btn-ghost" onClick={() => setDeleteId(null)}>Cancel</button>
               <button
                 className="btn btn-danger"
-                id="confirm-delete-diamond"
+                id="confirm-delete-Venue"
                 onClick={async () => {
                   const orgQuery = orgSlug ? `?orgSlug=${encodeURIComponent(orgSlug)}` : '';
                   await requestJson<{ success: boolean }>(`/api/admin/venues${orgQuery}`, {

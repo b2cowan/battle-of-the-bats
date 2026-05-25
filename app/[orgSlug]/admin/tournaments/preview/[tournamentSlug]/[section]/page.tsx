@@ -3,7 +3,7 @@ import { Calendar, Clock, Megaphone, Star, Trophy, Users, BookOpen, FileText, Do
 import {
   getDivisions,
   getAnnouncements,
-  getDiamonds,
+  getVenues,
   getGames,
   getResources,
   getRules,
@@ -45,13 +45,13 @@ export default async function TournamentPreviewSectionPage({
   }
 
   if (section === 'schedule') {
-    const [games, teams, divisions, diamonds] = await Promise.all([
+    const [games, teams, divisions, venues] = await Promise.all([
       getGames(tournament.id, readOptions),
       getTeams(tournament.id, readOptions),
       getDivisions(tournament.id, readOptions),
-      getDiamonds(tournament.id, readOptions),
+      getVenues(tournament.id, readOptions),
     ]);
-    return <PreviewSchedule games={games} teams={teams} divisions={divisions} diamonds={diamonds} />;
+    return <PreviewSchedule games={games} teams={teams} divisions={divisions} venues={venues} />;
   }
 
   if (section === 'standings') {
@@ -204,19 +204,19 @@ function PreviewSchedule({
   games,
   teams,
   divisions,
-  diamonds,
+  venues,
 }: {
   games: Game[];
   teams: Team[];
   divisions: Division[];
-  diamonds: Awaited<ReturnType<typeof getDiamonds>>;
+  venues: Awaited<ReturnType<typeof getVenues>>;
 }) {
   const sortedGroups = [...divisions].sort((a, b) => a.order - b.order);
   const teamName = (id?: string, placeholder?: string) => {
     if (id && id !== NIL_UUID) return teams.find(t => t.id === id)?.name ?? 'TBD';
     return placeholder || 'TBD';
   };
-  const diamond = (id?: string) => id ? diamonds.find(d => d.id === id) ?? null : null;
+  const getVenue = (id?: string) => id ? venues.find(d => d.id === id) ?? null : null;
 
   return (
     <div className="page-content">
@@ -271,7 +271,7 @@ function PreviewSchedule({
                               </div>
                               <div className={scheduleStyles.gameMeta}>
                                 {game.isPlayoff && <span className="badge badge-primary">{game.bracketCode || 'Playoff'}</span>}
-                                <LocationLink location={game.location} diamond={diamond(game.diamondId)} size="sm" />
+                                <LocationLink location={game.location} venue={getVenue(game.venueId)} size="sm" />
                               </div>
                             </div>
                           ))}

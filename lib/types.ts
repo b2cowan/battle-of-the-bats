@@ -90,10 +90,10 @@ export interface Tournament {
   settings?: TournamentSettings;
 }
 
-export interface Diamond {
+export interface Venue {
   id: string;
   tournamentId: string;
-  name: string;     // e.g. "Diamond 1 — Lions Park"
+  name: string;     // e.g. "Venue 1 — Lions Park"
   address: string;  // full address for Google Maps
   notes?: string;   // parking info, field notes, etc.
 }
@@ -241,7 +241,7 @@ export interface Game {
   date: string; // ISO date string YYYY-MM-DD
   time: string; // HH:MM
   location: string;      // display name (kept for backward compat)
-  diamondId?: string;    // links to a managed Diamond record
+  venueId?: string;      // links to a managed Venue record
   homeScore?: number | null;
   awayScore?: number | null;
   status: GameStatus;

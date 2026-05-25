@@ -93,7 +93,7 @@ export default async function RegisterPage({
           </h1>
           {season.division && (
             <div style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.5)' }}>
-              Age group: {season.division}
+              Division: {season.division}
             </div>
           )}
         </div>

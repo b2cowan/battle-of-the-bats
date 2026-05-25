@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { X, Check } from 'lucide-react';
-import { Diamond } from '@/lib/types';
+import { Venue } from '@/lib/types';
 
 const CANADIAN_PROVINCES = ['AB', 'BC', 'MB', 'NB', 'NL', 'NS', 'NT', 'NU', 'ON', 'PE', 'QC', 'SK', 'YT'];
 
@@ -14,10 +14,10 @@ interface Props {
   tournamentId: string;
   orgSlug?: string;
   onClose: () => void;
-  /** Called with the saved Diamond after a successful save. */
-  onSaved: (venue: Diamond) => void;
-  /** Supply an existing Diamond to switch into edit mode. */
-  existing?: Diamond;
+  /** Called with the saved Venue after a successful save. */
+  onSaved: (venue: Venue) => void;
+  /** Supply an existing Venue to switch into edit mode. */
+  existing?: Venue;
   zIndex?: number;
 }
 
@@ -55,15 +55,15 @@ export default function AddVenueModal({ tournamentId, orgSlug, onClose, onSaved,
     const orgQuery = orgSlug ? `?orgSlug=${encodeURIComponent(orgSlug)}` : '';
     const orgParam = orgSlug ? `&orgSlug=${encodeURIComponent(orgSlug)}` : '';
 
-    await fetch(`/api/admin/diamonds${orgQuery}`, {
+    await fetch(`/api/admin/venues${orgQuery}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     });
 
     // Re-fetch the list and hand the saved record back to the caller.
-    const listRes = await fetch(`/api/admin/diamonds?tournamentId=${encodeURIComponent(tournamentId)}${orgParam}`);
-    const updated: Diamond[] = listRes.ok ? await listRes.json() : [];
+    const listRes = await fetch(`/api/admin/venues?tournamentId=${encodeURIComponent(tournamentId)}${orgParam}`);
+    const updated: Venue[] = listRes.ok ? await listRes.json() : [];
     const saved = isEdit
       ? updated.find(d => d.id === existing!.id)
       : updated.find(d => d.name === form.name.trim());
@@ -78,14 +78,14 @@ export default function AddVenueModal({ tournamentId, orgSlug, onClose, onSaved,
       <div className="modal" onClick={e => e.stopPropagation()}>
         <div className="modal-header">
           <h3>{isEdit ? 'Edit Venue' : 'Add Venue'}</h3>
-          <button type="button" className="btn btn-ghost btn-sm" onClick={onClose}><X size={16} /></button>
+          <button type="button" className="btn btn-ghost btn-data" onClick={onClose}><X size={16} /></button>
         </div>
         <form onSubmit={handleSubmit}>
           <div className="form-group" style={{ marginBottom: '1rem' }}>
             <label className="form-label">Venue Name *</label>
             <input
               className="form-input"
-              placeholder="e.g. Lions Park — Diamond 1"
+              placeholder="e.g. Lions Park — Venue 1"
               value={form.name}
               onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
               required

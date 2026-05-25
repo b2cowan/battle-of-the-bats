@@ -1,6 +1,6 @@
 import {
   getDivisions,
-  getDiamonds,
+  getVenues,
   getGames,
   getOrganizationBySlug,
   getTournamentRegistrationFields,
@@ -12,7 +12,7 @@ import {
 } from './db';
 import { hasPlanFeature } from './plan-features';
 import { isPublicPageEnabled, type PublicPageKey } from './public-pages';
-import type { Division, Diamond, Game, Organization, Resource, RuleSection, Team, Tournament, TournamentRegistrationField } from './types';
+import type { Division, Venue, Game, Organization, Resource, RuleSection, Team, Tournament, TournamentRegistrationField } from './types';
 
 export type PublicTournamentSection = Extract<PublicPageKey, 'schedule' | 'standings' | 'teams' | 'rules' | 'register'> | 'context';
 
@@ -22,7 +22,7 @@ export type PublicTournamentPageData = {
   tournament: Tournament | null;
   pageEnabled: boolean;
   divisions: Division[];
-  diamonds: Diamond[];
+  venues: Venue[];
   games: Game[];
   resources: Resource[];
   rules: RuleSection[];
@@ -81,7 +81,7 @@ export async function getPublicTournamentPageData(
     tournament,
     pageEnabled,
     divisions: [],
-    diamonds: [],
+    venues: [],
     games: [],
     resources: [],
     rules: [],
@@ -95,13 +95,13 @@ export async function getPublicTournamentPageData(
   }
 
   if (section === 'schedule') {
-    const [games, teams, diamonds, divisions] = await Promise.all([
+    const [games, teams, venues, divisions] = await Promise.all([
       getGames(tournament.id, { admin: true }),
       getTeams(tournament.id, { admin: true }),
-      getDiamonds(tournament.id, { admin: true }),
+      getVenues(tournament.id, { admin: true }),
       getDivisions(tournament.id, { admin: true }),
     ]);
-    return { ...base, games, teams: teams.filter(t => t.status === 'accepted'), diamonds, divisions };
+    return { ...base, games, teams: teams.filter(t => t.status === 'accepted'), venues, divisions };
   }
 
   if (section === 'teams') {

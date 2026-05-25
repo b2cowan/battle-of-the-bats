@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Trophy, Check, X, Calendar, AlertCircle, ChevronUp, ChevronDown } from 'lucide-react';
 import { getTournament } from '@/lib/db';
-import { Division, Team, Diamond, PlayoffConfig, Tournament } from '@/lib/types';
+import { Division, Team, Venue, PlayoffConfig, Tournament } from '@/lib/types';
 import { formatPoolName } from '@/lib/utils';
 import BracketBuilder from './components/BracketBuilder';
 import FeedbackModal from '@/components/FeedbackModal';
@@ -31,7 +31,7 @@ export default function PlayoffWizard({ division, tournamentId, orgSlug, onClose
     return { ...defaults, ...(division.playoffConfig || {}) };
   });
   const [activeTab, setActiveTab] = useState<'settings' | 'preview'>('settings');
-  const [diamonds, setDiamonds] = useState<Diamond[]>([]);
+  const [venues, setVenues] = useState<Venue[]>([]);
   const [preview, setPreview] = useState<any[]>([]);
   const [templatePreview, setTemplatePreview] = useState<any[]>([]);
   const [showConfirm, setShowConfirm] = useState(false);
@@ -42,7 +42,7 @@ export default function PlayoffWizard({ division, tournamentId, orgSlug, onClose
   useEffect(() => {
     getTournament(tournamentId).then(setTournament);
     Promise.all([
-      fetch(`/api/admin/diamonds?tournamentId=${encodeURIComponent(tournamentId)}${orgParam}`).then(r => r.ok ? r.json() : []),
+      fetch(`/api/admin/venues?tournamentId=${encodeURIComponent(tournamentId)}${orgParam}`).then(r => r.ok ? r.json() : []),
       fetch(`/api/admin/teams?tournamentId=${encodeURIComponent(tournamentId)}${orgParam}`).then(r => r.ok ? r.json() : []),
     ]).then(([ds, all]) => {
       setDiamonds(ds);

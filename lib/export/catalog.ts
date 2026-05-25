@@ -481,10 +481,10 @@ export const EXPORT_CATALOG: ExportCatalogEntry[] = [
   },
   {
     id: 'org-diamonds-venues',
-    label: 'Diamonds / Venues',
+    label: 'Venues',
     module: 'org',
-    page: 'Diamonds & Venues',
-    file: 'app/[orgSlug]/admin/org/diamonds/page.tsx',
+    page: 'Venues',
+    file: 'app/[orgSlug]/admin/org/venues/page.tsx',
     formats: ['xlsx', 'csv'],
     defaultFormat: 'xlsx',
     audiences: ['org_admin'],

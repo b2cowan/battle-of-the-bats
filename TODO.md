@@ -104,7 +104,7 @@ This file tracks the ongoing tasks for the FieldLogicHQ platform (multi-tenant s
 
 ## 🚀 Active Tasks (Priority Order)
 
-- [x] **Divisions rename (age groups → divisions)** — Full-stack terminology rename: DB table `age_groups` → `divisions` (migration 093), all FK columns, TypeScript types, API routes, file names, and UI copy applied; migration 093 ready to apply to dev + prod (see [docs/active/DIVISIONS_RENAME_PLAN.md](docs/active/DIVISIONS_RENAME_PLAN.md))
+- [x] **Divisions rename (age groups → divisions)** — Full-stack terminology rename: DB table `age_groups` → `divisions` (migration 093), all FK columns, TypeScript types, API routes, file names, and UI copy; migration 093 applied dev + prod (see [docs/archive/DIVISIONS_RENAME_PLAN.md](docs/archive/DIVISIONS_RENAME_PLAN.md))
 
 - [ ] **Multi-org creation for existing users** — Logged-in users cannot currently self-serve a second organization; `/auth/signup` creates a new user + org together and rejects existing emails. Build: a `/create-org` page for authenticated users, a `POST /api/auth/create-org` route that creates an org and links the existing `user_id` as owner (no new auth user), and a "＋ Create new organization" entry point on the `select-org` page. This is separate from reactivation — a user who cancelled Tournament Plus and now wants a League workspace is starting a new subscription, not reinstating the old one. (see pending plan doc)
 

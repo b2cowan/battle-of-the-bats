@@ -95,13 +95,13 @@ export async function POST(req: Request) {
       });
       if (error) throw error;
     } else if (action === 'update' && id) {
-      const { data: diamond } = await supabaseAdmin
+      const { data: venue } = await supabaseAdmin
         .from('diamonds')
         .select('tournament_id')
         .eq('id', id)
         .single();
-      if (diamond) {
-        const denied = scopeGuard(ctx, diamond.tournament_id);
+      if (venue) {
+        const denied = scopeGuard(ctx, venue.tournament_id);
         if (denied) return denied;
       }
 
@@ -112,13 +112,13 @@ export async function POST(req: Request) {
       }).eq('id', id);
       if (error) throw error;
     } else if (action === 'delete' && id) {
-      const { data: diamond } = await supabaseAdmin
+      const { data: venue } = await supabaseAdmin
         .from('diamonds')
         .select('tournament_id')
         .eq('id', id)
         .single();
-      if (diamond) {
-        const denied = scopeGuard(ctx, diamond.tournament_id);
+      if (venue) {
+        const denied = scopeGuard(ctx, venue.tournament_id);
         if (denied) return denied;
       }
 
@@ -128,7 +128,7 @@ export async function POST(req: Request) {
         .eq('id', id);
       if (error) throw error;
     } else {
-      return NextResponse.json({ error: 'Unsupported diamond action.' }, { status: 400 });
+      return NextResponse.json({ error: 'Unsupported venue action.' }, { status: 400 });
     }
 
     return NextResponse.json({ success: true });

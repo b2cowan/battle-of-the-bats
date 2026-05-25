@@ -139,7 +139,7 @@ export async function POST(req: Request) {
       date:            g.game_date,
       time:            g.game_time,
       location:        g.location,
-      diamondId:       g.diamond_id ?? null,
+      venueId:         g.diamond_id ?? null,
       homeScore:       g.home_score ?? null,
       awayScore:       g.away_score ?? null,
       status:          g.status,

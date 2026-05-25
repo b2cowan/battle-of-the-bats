@@ -425,7 +425,7 @@ export default function TeamSignupClient({ teamIsGated, claim = null }: TeamSign
                 </select>
               </label>
               <label className={styles.field}>
-                <span>Age group</span>
+                <span>Division</span>
                 <input
                   value={division}
                   onChange={event => setDivision(event.target.value)}

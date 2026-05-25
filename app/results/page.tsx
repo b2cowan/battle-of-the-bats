@@ -1,8 +1,8 @@
 ﻿'use client';
 import { useState, useEffect } from 'react';
 import { Trophy } from 'lucide-react';
-import { getGames, getTeams, getDivisions, getDiamonds, getTournaments, getStandings } from '@/lib/db';
-import { Game, Team, Division, Diamond, Tournament } from '@/lib/types';
+import { getGames, getTeams, getDivisions, getVenues, getTournaments, getStandings } from '@/lib/db';
+import { Game, Team, Division, Venue, Tournament } from '@/lib/types';
 import LocationLink from '@/components/LocationLink';
 import { formatTime, formatPoolName } from '@/lib/utils';
 import styles from './results.module.css';
@@ -11,7 +11,7 @@ export default function ResultsPage() {
   const [games, setGames]         = useState<Game[]>([]);
   const [teams, setTeams]         = useState<Team[]>([]);
   const [divisions, setDivisions] = useState<Division[]>([]);
-  const [diamonds, setDiamonds]   = useState<Diamond[]>([]);
+  const [venues, setVenues]   = useState<Venue[]>([]);
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
   const [selectedTournament, setSelectedTournament] = useState<Tournament | null>(null);
   const [activeGroup, setActiveGroup] = useState<string>('');
@@ -38,7 +38,7 @@ export default function ResultsPage() {
     async function fetchResults() {
       setGames(await getGames(selectedTournament!.id));
       setTeams(await getTeams(selectedTournament!.id));
-      setDiamonds(await getDiamonds(selectedTournament!.id));
+      setVenues(await getVenues(selectedTournament!.id));
       // divisions are now fetched in init or when tournament changes
       const groups = await getDivisions(selectedTournament!.id);
       setDivisions(groups);
@@ -48,7 +48,7 @@ export default function ResultsPage() {
   }, [selectedTournament]);
 
   const getTeamName = (id: string) => teams.find(t => t.id === id)?.name ?? 'TBD';
-  const getDiamond  = (id?: string): Diamond | null => id ? diamonds.find(d => d.id === id) ?? null : null;
+  const getVenue  = (id?: string): Venue | null => id ? venues.find(d => d.id === id) ?? null : null;
 
   const completed = games.filter(g => g.status === 'completed');
   const groupResults = completed.filter(g => g.divisionId === activeGroup);
@@ -355,7 +355,7 @@ export default function ResultsPage() {
                       <span className="badge badge-primary">
                         {divisions.find(g => g.id === game.divisionId)?.name}
                       </span>
-                      <LocationLink location={game.location} diamond={getDiamond(game.diamondId)} size="sm" />
+                      <LocationLink location={game.location} venue={getVenue(game.venueId)} size="sm" />
                     </div>
                     <div className={styles.scoreRow}>
                       <div className={`${styles.teamScore} ${winner === 'home' ? styles.winner : ''}`}>

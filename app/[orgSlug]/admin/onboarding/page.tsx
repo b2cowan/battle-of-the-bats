@@ -378,7 +378,7 @@ export default function OnboardingPage() {
 
   const [venueDraft, setVenueDraft] = useState<VenueFields>(buildVenueDraft);
   const [venueRows, setVenueRows] = useState<VenueRow[]>([]);
-  const [contactForm, setContactForm] = useState({ name: '', email: '', phone: '', role: 'Tournament Director' });
+  const [contactForm, setContactForm] = useState({ email: '' });
   const [leagueSeasonForm, setLeagueSeasonForm] = useState<LeagueSeasonForm>(getDefaultLeagueSeasonForm);
   const [leagueSlugEdited, setLeagueSlugEdited] = useState(false);
   const [leagueDivisionPreset, setLeagueDivisionPreset] = useState<LeagueDivisionPreset>('youth');
@@ -634,7 +634,7 @@ export default function OnboardingPage() {
     resetLeagueSetupDraft();
     setVenueDraft(buildVenueDraft());
     setVenueRows([]);
-    setContactForm({ name: '', email: currentOrg?.contactEmail ?? '', phone: '', role: 'Tournament Director' });
+    setContactForm({ email: currentOrg?.contactEmail ?? '' });
     setStepError('');
   }
 
@@ -922,14 +922,9 @@ export default function OnboardingPage() {
 
   function getContactDraft() {
     const email = contactForm.email.trim().toLowerCase();
-    if (!contactForm.name.trim() || !email) throw new Error('Add a contact name and email, or skip this step.');
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error('Enter a valid public contact email.');
-    return {
-      name: contactForm.name.trim(),
-      email,
-      phone: contactForm.phone.trim() || undefined,
-      role: contactForm.role.trim() || undefined,
-    };
+    if (!email) return null;
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error('Enter a valid public contact email, or skip this step.');
+    return { email };
   }
 
   function getLeagueSeasonDraft() {
@@ -1045,7 +1040,10 @@ export default function OnboardingPage() {
 
   async function saveContactsStep() {
     try {
-      getContactDraft();
+      const email = contactForm.email.trim().toLowerCase();
+      if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        throw new Error('Enter a valid contact email address, or skip this step.');
+      }
       setDraftSkipped(prev => ({ ...prev, contacts: false }));
       setStepError('');
       await advanceWizard('contacts');
@@ -1113,7 +1111,7 @@ export default function OnboardingPage() {
       setVenueRows([]);
     }
     if (taskId === 'contacts') {
-      setContactForm({ name: '', email: '', phone: '', role: 'Tournament Director' });
+      setContactForm({ email: '' });
     }
   }
 
@@ -1202,7 +1200,7 @@ export default function OnboardingPage() {
         }),
       });
 
-      await Promise.all(venues.map(row => requestJson<{ success: boolean }>('/api/admin/diamonds', {
+      await Promise.all(venues.map(row => requestJson<{ success: boolean }>('/api/admin/venues', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -1217,18 +1215,7 @@ export default function OnboardingPage() {
       })));
 
       if (contact) {
-        await requestJson<{ success: boolean }>('/api/admin/contacts', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            action: 'save',
-            data: {
-              tournamentId: created.id,
-              ...contact,
-            },
-          }),
-        });
-
+        // contacts table retired (migration 090) — only the tournament contact_email is persisted
         await requestJson<{ success: boolean }>('/api/admin/tournaments', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -1512,7 +1499,7 @@ export default function OnboardingPage() {
                 </select>
               </label>
               <label className={styles.fieldLabel}>
-                Age group optional
+                Division optional
                 <input
                   className="form-input"
                   value={leagueSeasonForm.division}
@@ -1842,7 +1829,7 @@ export default function OnboardingPage() {
         (
           <div className={styles.setupBlock}>
             <div className={styles.setupBlockHeader}>
-              <span>Age groups and divisions</span>
+              <span>Divisions</span>
               <small>Max teams is the registration cap for that division.</small>
             </div>
             <div className={styles.presetGridCompact}>
@@ -2128,25 +2115,19 @@ export default function OnboardingPage() {
 
     if (activeModal === 'contacts') {
       return renderModalFrame(
-        'Add public contact',
-        'This contact is used as the tournament contact email coaches can rely on.',
+        'Set public contact email',
+        'This email is shown to coaches and teams as the tournament contact. You can update it later from tournament settings.',
         (
-          <div className={styles.modalGridTwo}>
+          <div>
             <label className={styles.fieldLabel}>
-              Name
-              <input className="form-input" value={contactForm.name} onChange={e => setContactForm(form => ({ ...form, name: e.target.value }))} placeholder="Jane Doe" />
-            </label>
-            <label className={styles.fieldLabel}>
-              Role
-              <input className="form-input" value={contactForm.role} onChange={e => setContactForm(form => ({ ...form, role: e.target.value }))} placeholder="Tournament Director" />
-            </label>
-            <label className={styles.fieldLabel}>
-              Email
-              <input className="form-input" type="email" value={contactForm.email} onChange={e => setContactForm(form => ({ ...form, email: e.target.value }))} placeholder="director@example.com" />
-            </label>
-            <label className={styles.fieldLabel}>
-              Phone
-              <input className="form-input" value={contactForm.phone} onChange={e => setContactForm(form => ({ ...form, phone: e.target.value }))} placeholder="Optional" />
+              Contact email <span style={{ color: 'var(--white-40)', fontWeight: 400 }}>optional</span>
+              <input
+                className="form-input"
+                type="email"
+                value={contactForm.email}
+                onChange={e => setContactForm(form => ({ ...form, email: e.target.value }))}
+                placeholder="director@example.com"
+              />
             </label>
           </div>
         ),
@@ -2158,7 +2139,7 @@ export default function OnboardingPage() {
       const divisionCount = draftSkipped.divisions ? 0 : divisionRows.filter(row => row.name.trim()).length;
       const venueCount = draftSkipped.venues ? 0 : venueRows.filter(row => hasVenueContent(row)).length;
       const welcomeIncluded = !draftSkipped.welcome && useWelcomeMsg && !!welcomeMsg.trim();
-      const contactIncluded = !draftSkipped.contacts && !!contactForm.name.trim() && !!contactForm.email.trim();
+      const contactIncluded = !draftSkipped.contacts && !!contactForm.email.trim();
 
       return renderModalFrame(
         draftSkipped.tournament ? 'Finish setup' : 'Review and save',
@@ -2168,7 +2149,7 @@ export default function OnboardingPage() {
         draftSkipped.tournament ? (
           <div className={styles.reviewPanel}>
             <div className={styles.emptyModalState}>
-              You skipped tournament creation, so no tournament, divisions, venues, or contacts will be created.
+              You skipped tournament creation, so no tournament, divisions, or venues will be created.
             </div>
           </div>
         ) : (

@@ -1,7 +1,7 @@
 ﻿'use client';
 import { useState } from 'react';
 import { ChevronDown, ChevronUp, MapPin, Pencil, X, AlertCircle, Trash2, Check } from 'lucide-react';
-import { Game, Team, Division, Diamond } from '@/lib/types';
+import { Game, Team, Division, Venue } from '@/lib/types';
 import { formatTime, formatPoolName } from '@/lib/utils';
 import { scoreSubmissionSummary } from '@/lib/tournament-score-audit';
 import { Pool } from '@/lib/types';
@@ -12,7 +12,7 @@ interface GameListProps {
   games: Game[];
   teams: Team[];
   divisions: Division[];
-  diamonds: Diamond[];
+  venues: Venue[];
   viewMode: 'pool' | 'playoff';
   groupByPool: boolean;
   pools?: Pool[];
@@ -21,18 +21,18 @@ interface GameListProps {
   onDelete?: (id: string) => void;
   onCancel?: (id: string) => void;
   onSchedule?: (id: string) => void;
-  onSave?: (gameId: string, data: { date: string; time: string; diamondId: string; notes: string; homeTeamId: string; awayTeamId: string }) => Promise<void>;
+  onSave?: (gameId: string, data: { date: string; time: string; venueId: string; notes: string; homeTeamId: string; awayTeamId: string }) => Promise<void>;
   onSaveScore?: (gameId: string, homeScore: number, awayScore: number) => Promise<void>;
   onCreateVenue?: () => void;
   mode: 'planning' | 'scoring';
 }
 
-type EditFields = { date: string; time: string; diamondId: string; notes: string; homeTeamId: string; awayTeamId: string };
+type EditFields = { date: string; time: string; venueId: string; notes: string; homeTeamId: string; awayTeamId: string };
 
 type ScoreFields = { home: string; away: string };
 
 export default function GameList({
-  games, teams, divisions, diamonds, viewMode, groupByPool, pools: poolsProp,
+  games, teams, divisions, venues, viewMode, groupByPool, pools: poolsProp,
   onEdit, onFinalize, onDelete, onCancel, onSchedule, onSave, onSaveScore, onCreateVenue, mode
 }: GameListProps) {
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
@@ -47,7 +47,7 @@ export default function GameList({
 
   const getTeamName = (id: string) => teams.find(t => t.id === id)?.name ?? null;
   const resolveTeam = (id: string, placeholder?: string) => getTeamName(id) ?? placeholder ?? 'TBD';
-  const getDiamondName = (id?: string) => id ? (diamonds.find(d => d.id === id)?.name ?? '') : '';
+  const getVenueName = (id?: string) => id ? (venues.find(d => d.id === id)?.name ?? '') : '';
 
   function toggleExpand(id: string, game?: Game) {
     const isExpanding = !expanded.has(id);
@@ -66,7 +66,7 @@ export default function GameList({
           [id]: {
             date: game.date ?? '',
             time: game.time ?? '',
-            diamondId: game.diamondId ?? '',
+            venueId: game.venueId ?? '',
             notes: game.notes ?? '',
             homeTeamId: game.homeTeamId ?? '',
             awayTeamId: game.awayTeamId ?? '',
@@ -192,7 +192,7 @@ export default function GameList({
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: '4px', fontSize: '0.72rem', color: 'var(--data-gray)', fontFamily: 'var(--font-data)' }}>
                 <MapPin size={11} style={{ flexShrink: 0, marginTop: '2px' }} />
                 <span style={{ overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', lineHeight: '1.35' }}>
-                  {g.diamondId ? getDiamondName(g.diamondId) : (g.location || 'TBD')}
+                  {g.venueId ? getVenueName(g.venueId) : (g.location || 'TBD')}
                 </span>
               </div>
             </div>
@@ -325,7 +325,7 @@ export default function GameList({
     const edit = editState[g.id] ?? {
       date: g.date ?? '',
       time: g.time ?? '',
-      diamondId: g.diamondId ?? '',
+      venueId: g.venueId ?? '',
       notes: g.notes ?? '',
       homeTeamId: g.homeTeamId ?? '',
       awayTeamId: g.awayTeamId ?? '',
@@ -335,7 +335,7 @@ export default function GameList({
     const handleDiscard = () => {
       setEditState(prev => ({
         ...prev,
-        [g.id]: { date: g.date ?? '', time: g.time ?? '', diamondId: g.diamondId ?? '', notes: g.notes ?? '', homeTeamId: g.homeTeamId ?? '', awayTeamId: g.awayTeamId ?? '' },
+        [g.id]: { date: g.date ?? '', time: g.time ?? '', venueId: g.venueId ?? '', notes: g.notes ?? '', homeTeamId: g.homeTeamId ?? '', awayTeamId: g.awayTeamId ?? '' },
       }));
       setSaveErrors(prev => { const n = { ...prev }; delete n[g.id]; return n; });
       setExpanded(prev => { const next = new Set(prev); next.delete(g.id); return next; });
@@ -380,7 +380,7 @@ export default function GameList({
           <div className={s.gameColVenue} style={{ display: 'flex', alignItems: 'flex-start', gap: '4px', fontFamily: 'var(--font-data)', fontSize: '0.72rem', color: 'var(--data-gray)' }}>
             <MapPin size={11} style={{ flexShrink: 0, opacity: 0.55, marginTop: '2px' }} />
             <span style={{ overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', lineHeight: '1.35' }}>
-              {g.diamondId ? getDiamondName(g.diamondId) : (g.location || '—')}
+              {g.venueId ? getVenueName(g.venueId) : (g.location || '—')}
             </span>
           </div>
 
@@ -455,17 +455,17 @@ export default function GameList({
                 <label className={styles.formLabel}>Venue</label>
                 <select
                   className={styles.formSelect}
-                  value={edit.diamondId}
+                  value={edit.venueId}
                   onChange={e => {
                     if (e.target.value === '__create__') {
                       onCreateVenue?.();
                     } else {
-                      setEditState(prev => ({ ...prev, [g.id]: { ...prev[g.id], diamondId: e.target.value } }));
+                      setEditState(prev => ({ ...prev, [g.id]: { ...prev[g.id], venueId: e.target.value } }));
                     }
                   }}
                 >
                   <option value="">— TBD —</option>
-                  {diamonds.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+                  {venues.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
                   <option disabled>──────────</option>
                   <option value="__create__">＋ Add venue…</option>
                 </select>
