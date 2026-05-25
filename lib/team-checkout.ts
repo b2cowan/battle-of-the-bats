@@ -87,7 +87,7 @@ export function normalizeTeamCheckoutRequest(body: Record<string, unknown>): Tea
   }
 
   const seasonYear = cleanYear(body.seasonYear);
-  const workspaceName = cleanText(body.workspaceName, `${teamName} Team Workspace`, 140);
+  const workspaceName = cleanText(body.workspaceName, `${teamName} Coaches Portal`, 140);
   const sport = cleanText(body.sport, 'softball', 60);
   const seasonName = cleanText(body.seasonName, `${teamName} ${seasonYear}`, 140);
   const returnTo = typeof body.returnTo === 'string' && body.returnTo.startsWith('/')

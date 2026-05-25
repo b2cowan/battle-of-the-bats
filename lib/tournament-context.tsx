@@ -40,6 +40,7 @@ type TournamentRow = {
   notify_teams_on_complete?: boolean | null;
   results_notified_at?: string | null;
   results_notification_sent_count?: number | null;
+  settings?: Record<string, unknown> | null;
 };
 
 function mapRow(r: TournamentRow): Tournament {
@@ -58,6 +59,7 @@ function mapRow(r: TournamentRow): Tournament {
     notifyTeamsOnComplete: Boolean(r.notify_teams_on_complete),
     resultsNotifiedAt: r.results_notified_at ?? null,
     resultsNotificationSentCount: r.results_notification_sent_count ?? 0,
+    settings:       (r.settings && typeof r.settings === 'object') ? r.settings : {},
   };
 }
 

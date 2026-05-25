@@ -28,7 +28,7 @@ const coachesHelp: HelpPageContent = {
       content: (
         <>
           <p>Use this checklist the first time you open the Coaches Portal for a new season.</p>
-          <p>The team overview shows <strong>Season setup</strong> progress for roster, schedule, lineup, budget, and Team workspace linking tasks.</p>
+          <p>The team overview shows <strong>Season setup</strong> progress for roster, schedule, lineup, budget, and parent organization linking tasks.</p>
           <ol>
             <li>Sign in using the email address your org invited.</li>
             <li>Confirm you are viewing the correct team and program year.</li>
@@ -56,22 +56,22 @@ const coachesHelp: HelpPageContent = {
     {
       id: 'recipe-team-workspace-season-tournaments',
       group: 'How-to recipes',
-      heading: 'How Team workspaces, seasons, and local tournaments work',
-      summary: 'Understand what Team includes, how season history is preserved, and what the included local tournament slot can be used for.',
-      keywords: ['team plan', 'standalone team', 'season rollover', 'program year', 'free tournament', 'local tournament', 'tournament plus'],
-      searchText: 'standalone Team plan season rollover program year history team name age group roster schedule dues budget free-tier tournament one slot round robin scrimmage exhibition Tournament Plus upgrade',
+      heading: 'How Coaches Portal Premium, seasons, and local tournaments work',
+      summary: 'Understand what Premium includes, how season history is preserved, and what the included local tournament slot can be used for.',
+      keywords: ['coaches portal premium', 'coach subscription', 'season rollover', 'program year', 'free tournament', 'local tournament', 'tournament plus'],
+      searchText: 'coaches portal premium season rollover program year history team name age group roster schedule dues budget free-tier tournament one slot round robin scrimmage exhibition Tournament Plus upgrade',
       content: (
         <>
-          <p><strong>Team</strong> is built for one competitive team. It includes the Coaches Portal for roster, schedule, dues, documents, budget, attendance, lineup cards, reminders, and setup progress.</p>
-          <p>Your Team workspace is the long-term home for the team. Each <strong>program year</strong> is a season inside that workspace, so a team can update its name, age group, roster, schedule, dues plan, documents, and budget for the new season while keeping previous seasons available as history.</p>
-          <p>Team also includes one free-tier local tournament slot. Use it for simple round robins, scrimmage days, exhibition weekends, or informal events with nearby teams. It follows the free Tournament plan limits: one non-archived tournament at a time and no Tournament Plus features such as advanced registration fields, enhanced branding, unlimited tournament slots, cloning, or post-event reporting.</p>
+          <p><strong>Coaches Portal Premium</strong> is built for one competitive team. It adds roster, schedule, dues, documents, budget, attendance, lineup cards, reminders, and setup progress to the same portal that stores tournament records.</p>
+          <p>Your premium team space is the long-term home for the team. Each <strong>program year</strong> is a season, so a team can update its name, age group, roster, schedule, dues plan, documents, and budget for the new season while keeping previous seasons available as history.</p>
+          <p>Premium also includes one free-tier local tournament slot. Use it for simple round robins, scrimmage days, exhibition weekends, or informal events with nearby teams. It follows the free Tournament plan limits: one non-archived tournament at a time and no Tournament Plus features such as advanced registration fields, enhanced branding, unlimited tournament slots, cloning, or post-event reporting.</p>
           <p>If you need a larger or more official tournament operation, use Tournament Plus or ask your organization whether the event should run from an organization account.</p>
         </>
       ),
       faqs: [
         {
           id: 'faq-team-season-rollover',
-          question: 'Can my Team change names or age groups next season?',
+          question: 'Can my team change names or age groups next season?',
           answerText: 'Yes. The workspace stays the same, but each program year can carry its own season identity, roster, schedule, dues, documents, budget, attendance, and lineup history.',
           keywords: ['season rollover', 'team name', 'age group', 'program year', 'history'],
           popular: true,
@@ -90,11 +90,20 @@ const coachesHelp: HelpPageContent = {
         },
         {
           id: 'faq-team-billing-models',
-          question: 'How is Team different from an org Team add-on or Club team?',
-          answerText: 'Direct Team is paid by the coach or manager. An org Team add-on is paid by a linked organization but still coach-operated. Club included or extra teams are org-owned rep teams under the organization.',
-          keywords: ['direct Team', 'org Team add-on', 'Club included', 'Club extra team', 'billing'],
+          question: 'How is paid Coaches Portal different from org-billed or Club coach access?',
+          answerText: 'Direct Premium is paid by the coach or manager. Org-billed Premium is paid by a linked organization but still coach-operated. Club included or extra teams are org-owned rep teams under the organization.',
+          keywords: ['direct coaches portal', 'org billed coaches portal', 'Club included', 'Club extra team', 'billing'],
           answer: (
-            <p><strong>Direct Team</strong> is paid by the coach or manager. An <strong>org Team add-on</strong> is paid by a linked organization but still coach-operated. <strong>Club included</strong> and <strong>Club extra</strong> teams are org-owned rep teams under the organization&apos;s normal Club access and oversight.</p>
+            <p><strong>Direct Premium</strong> is paid by the coach or manager. <strong>Org-billed Premium</strong> is paid by a linked organization but still coach-operated. <strong>Club included</strong> and <strong>Club extra</strong> teams are org-owned rep teams under the organization&apos;s normal Club access and oversight.</p>
+          ),
+        },
+        {
+          id: 'faq-coaches-portal-cancellation-retention',
+          question: 'What happens if I cancel Coaches Portal Premium?',
+          answerText: 'Your Basic tournament records stay available. Premium tools shut off, and premium team data is archived for 90 days so reactivation can restore it where possible.',
+          keywords: ['cancel', 'cancellation', 'retention', 'reactivate', 'archive', 'premium'],
+          answer: (
+            <p>Your Basic tournament records stay available in Coaches Portal. Premium tools stop being active, and premium team data is archived for <strong>90 days</strong>. If you reactivate during that retention window, FieldLogicHQ can restore the archived premium workspace where possible instead of starting from scratch.</p>
           ),
         },
       ],
@@ -103,57 +112,57 @@ const coachesHelp: HelpPageContent = {
       id: 'recipe-link-parent-org',
       group: 'How-to recipes',
       heading: 'How to manage parent organization links',
-      summary: 'Request a Basic visibility link, respond to org invitations, ask a linked organization to take over Team billing, or start ownership transfer approval.',
-      keywords: ['team workspace', 'link organization', 'parent org', 'club', 'visibility link', 'basic sharing', 'team invitation', 'org billing', 'ownership transfer'],
-      searchText: 'standalone team workspace request parent organization link org club association invitation accept decline basic visibility sharing billing transfer org billing organization pays ownership roster documents accounting',
+      summary: 'Request a Basic visibility link, respond to org invitations, ask a linked organization to take over Premium billing, or start ownership transfer approval.',
+      keywords: ['coaches portal', 'link organization', 'parent org', 'club', 'visibility link', 'basic sharing', 'organization invitation', 'org billing', 'ownership transfer'],
+      searchText: 'paid coaches portal request parent organization link org club association invitation accept decline basic visibility sharing billing transfer org billing organization pays ownership roster documents accounting',
       links: [
         { label: 'Link Organization', href: '../link-org' },
       ],
       content: (
         <>
-          <p>Use this when your standalone Team workspace belongs to a parent club, league, or association and you want that organization to recognize the connection.</p>
+          <p>Use this when your paid Coaches Portal team belongs to a parent club, league, or association and you want that organization to recognize the connection.</p>
           <ol>
             <li>Open <strong>Link Organization</strong> from the Coaches Portal.</li>
             <li>Enter the parent organization&apos;s URL slug or contact email.</li>
             <li>Review the request details and submit it for the organization to approve.</li>
             <li>Watch the request status from the same page.</li>
           </ol>
-          <p>If an organization invites your Team workspace first, open <strong>Link Organization</strong>, review the invitation, then click <strong>Accept Invitation</strong> or <strong>Decline</strong>.</p>
+          <p>If an organization invites your Coaches Portal first, open <strong>Link Organization</strong>, review the invitation, then click <strong>Accept Invitation</strong> or <strong>Decline</strong>.</p>
           <p>The first link type is <strong>Basic visibility</strong>. It records the association only. It does not transfer billing, ownership, roster access, player documents, accounting data, or full rep-team admin rights.</p>
-          <p>After the Basic link is active, use <strong>Request Org Billing</strong> if the parent organization should pay for the Team subscription. If the organization invites you to move billing first, review the billing invitation here and choose <strong>Accept Billing Invite</strong> or <strong>Decline Billing</strong>.</p>
-          <p>The Subscription page may also point you back to <strong>Link Organization</strong> when your Team could be paid by a parent club. That prompt is only a shortcut to this approval flow.</p>
-          <p>Org billing keeps your Coaches Portal and team data in the Team workspace. It does not give the organization roster, document, accounting, or org-wide rep-team admin access.</p>
-          <p>Use <strong>Request Ownership Transfer</strong> only when the team should become fully org-owned. Both sides can approve from Team Links, then a platform-assisted transfer moves roster, schedule, documents, budget, and accounting ownership in a later step.</p>
+          <p>After the Basic link is active, use <strong>Request Org Billing</strong> if the parent organization should pay for the Premium subscription. If the organization invites you to move billing first, review the billing invitation here and choose <strong>Accept Billing Invite</strong> or <strong>Decline Billing</strong>.</p>
+          <p>The Subscription page may also point you back to <strong>Link Organization</strong> when your Coaches Portal could be paid by a parent club. That prompt is only a shortcut to this approval flow.</p>
+          <p>Org billing keeps your Coaches Portal and team data coach-operated. It does not give the organization roster, document, accounting, or org-wide rep-team admin access.</p>
+          <p>Use <strong>Request Ownership Transfer</strong> only when the team should become fully org-owned. Both sides can approve from Coaches Portal Links, then a platform-assisted transfer moves roster, schedule, documents, budget, and accounting ownership in a later step.</p>
         </>
       ),
       faqs: [
         {
           id: 'faq-standalone-team-plan-includes',
-          question: 'What does the standalone Team plan include?',
-          answerText: 'Team is for one competitive team. It includes the Coaches Portal for roster, schedule, dues, documents, budget, attendance, lineups, setup checklist, reminders, and one free-tier local tournament slot. It is priced at $290 CAD per season or $29 CAD month-to-month.',
-          keywords: ['team plan', 'team pricing', 'standalone team', 'one competitive team'],
+          question: 'What does Coaches Portal Premium include?',
+          answerText: 'Coaches Portal Premium is for one competitive team. It includes roster, schedule, dues, documents, budget, attendance, lineups, setup checklist, reminders, and one free-tier local tournament slot. It is priced at $290 CAD per season or $29 CAD month-to-month.',
+          keywords: ['coaches portal premium', 'coach pricing', 'one competitive team'],
           popular: true,
           answer: (
-            <p>Team is for one competitive team. It includes the Coaches Portal for roster, schedule, dues, documents, budget, attendance, lineups, setup checklist, reminders, and one free-tier local tournament slot. It is priced at <strong>$290 CAD per season</strong> or <strong>$29 CAD month-to-month</strong>.</p>
+            <p>Coaches Portal Premium is for one competitive team. It includes roster, schedule, dues, documents, budget, attendance, lineups, setup checklist, reminders, and one free-tier local tournament slot. It is priced at <strong>$290 CAD per season</strong> or <strong>$29 CAD month-to-month</strong>.</p>
           ),
         },
         {
           id: 'faq-team-link-billing-transfer',
-          question: 'Does linking my Team workspace move billing to the organization?',
+          question: 'Does linking my Coaches Portal move billing to the organization?',
           answerText: 'No. The Basic visibility link only records that the team is associated with the organization. Use Request Org Billing after the Basic link is active if the organization should pay.',
           keywords: ['billing transfer', 'team link', 'organization pays'],
           popular: true,
           answer: (
-            <p>No. The Basic visibility link only records that your Team workspace is associated with the organization. Use <strong>Request Org Billing</strong> after the Basic link is active if the organization should pay.</p>
+            <p>No. The Basic visibility link only records that your Coaches Portal is associated with the organization. Use <strong>Request Org Billing</strong> after the Basic link is active if the organization should pay.</p>
           ),
         },
         {
           id: 'faq-team-link-org-billing-access',
-          question: 'What changes if the organization pays for my Team?',
-          answerText: 'The organization becomes the billing owner for this Team subscription. You keep the Coaches Portal and operational ownership, and Basic sharing still does not expose roster, documents, accounting, or full rep-team administration.',
-          keywords: ['org billing', 'billing transfer', 'team add-on', 'organization access'],
+          question: 'What changes if the organization pays for my Coaches Portal?',
+          answerText: 'The organization becomes the billing owner for this Premium subscription. You keep operational ownership, and Basic sharing still does not expose roster, documents, accounting, or full rep-team administration.',
+          keywords: ['org billing', 'billing transfer', 'coaches portal billing', 'organization access'],
           answer: (
-            <p>The organization becomes the billing owner for this Team subscription. You keep the Coaches Portal and operational ownership, and Basic sharing still does not expose roster, documents, accounting, or full rep-team administration.</p>
+            <p>The organization becomes the billing owner for this Premium subscription. You keep operational ownership, and Basic sharing still does not expose roster, documents, accounting, or full rep-team administration.</p>
           ),
         },
         {
@@ -168,10 +177,10 @@ const coachesHelp: HelpPageContent = {
         {
           id: 'faq-team-link-invitation-decline',
           question: 'What happens if I decline an organization invitation?',
-          answerText: 'Declining closes the Basic visibility invitation. It does not affect your Team workspace, billing, roster, documents, accounting, or coach access.',
+          answerText: 'Declining closes the Basic visibility invitation. It does not affect your Coaches Portal, billing, roster, documents, accounting, or coach access.',
           keywords: ['decline invitation', 'team link invite', 'organization invitation'],
           answer: (
-            <p>Declining closes the Basic visibility invitation. It does not affect your Team workspace, billing, roster, documents, accounting, or coach access.</p>
+            <p>Declining closes the Basic visibility invitation. It does not affect your Coaches Portal, billing, roster, documents, accounting, or coach access.</p>
           ),
         },
       ],

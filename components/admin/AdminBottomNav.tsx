@@ -3,12 +3,12 @@ import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
-  Users, Calendar, Trophy, Megaphone,
+  Users, Calendar, Trophy,
   MoreHorizontal, LayoutDashboard, Tag, MapPin,
-  RefreshCw, LogOut, X, ChevronRight, ChevronDown, BookUser,
-  Settings, Users2, LayoutGrid, CalendarDays, UserCheck,
+  LogOut, X, ChevronRight, ChevronDown, BookUser,
+  Settings, Paintbrush, LayoutGrid, CalendarDays, UserCheck,
   ExternalLink, BookOpen, Mail, Archive, FileText,
-  Link2, type LucideIcon,
+  type LucideIcon,
 } from 'lucide-react';
 import { signOut } from '@/lib/auth';
 import { useOrg } from '@/lib/org-context';
@@ -27,45 +27,31 @@ type NavItem = {
   label: string;
 };
 
-const OVERVIEW_MORE: NavItem[] = [
+const TOP_MORE: NavItem[] = [
   { key: 'tournaments/dashboard',     icon: LayoutDashboard, label: 'Dashboard'     },
 ];
 
+const OPERATIONS_MORE: NavItem[] = [
+  { key: 'tournaments/communication', icon: Mail, label: 'Communications' },
+];
+
 const SETUP_MORE: NavItem[] = [
-  { key: 'tournaments/rules',         icon: BookOpen,        label: 'Rules & Resources' },
-  { key: 'tournaments/contacts',      icon: BookUser,        label: 'Contacts'      },
   { key: 'tournaments/venues',        icon: MapPin,          label: 'Venues'        },
+  { key: 'tournaments/contacts',      icon: BookUser,        label: 'Contacts'      },
   { key: 'tournaments/age-groups',    icon: Tag,             label: 'Divisions'     },
-  { key: 'tournaments/manage',        icon: RefreshCw,       label: 'Manage'        },
-  { key: 'tournaments/settings',      icon: Settings,        label: 'Settings'      },
+  { key: 'tournaments/rules',         icon: BookOpen,        label: 'Rules & Resources' },
+  { key: 'tournaments/branding',      icon: Paintbrush,      label: 'Branding'      },
 ];
 
-const COMMUNICATION_MORE: NavItem[] = [
-  { key: 'tournaments/announcements', icon: Megaphone,       label: 'News Posts'    },
-  { key: 'tournaments/communication', icon: Mail,            label: 'Communication' },
-];
-
-const HISTORY_MORE: NavItem[] = [
+const ADMIN_MORE: NavItem[] = [
+  { key: 'tournaments/settings',      icon: Settings,        label: 'Settings & Access' },
   { key: 'tournaments/archives',      icon: Archive,         label: 'Past Tournaments' },
-];
-
-const WORKSPACE_MORE: NavItem[] = [
-  { key: 'org/diamonds', icon: MapPin, label: 'Diamonds' },
-];
-
-const ADMIN_WORKSPACE_MORE: NavItem[] = [
-  { key: 'org/team-links', icon: Link2, label: 'Team Links' },
-];
-
-const OWNER_WORKSPACE_MORE: NavItem[] = [
-  { key: 'org/members',  icon: Users2,   label: 'Members'  },
-  { key: 'org/settings', icon: Settings, label: 'Settings' },
 ];
 
 export default function AdminBottomNav() {
   const pathname  = usePathname();
   const router    = useRouter();
-  const { currentOrg, userRole } = useOrg();
+  const { currentOrg } = useOrg();
   const base = `/${currentOrg?.slug ?? 'milton-bats'}/admin`;
   const orgSlug = currentOrg?.slug ?? 'milton-bats';
   const [moreOpen, setMoreOpen] = useState(false);
@@ -92,21 +78,15 @@ export default function AdminBottomNav() {
   const isHouseLeague = pathname.startsWith(`${base}/house-league`);
   const isModule      = isRepTeams || isHouseLeague || pathname.startsWith(`${base}/org`) || pathname.startsWith(`${base}/public-site`) || pathname.startsWith(`${base}/accounting`);
   const showTournamentSummary = currentTournament?.status === 'completed' || currentTournament?.status === 'archived';
-  const historyMore: NavItem[] = showTournamentSummary
-    ? [{ key: 'tournaments/summary', icon: FileText, label: 'Summary' }, ...HISTORY_MORE]
-    : HISTORY_MORE;
-  const workspaceMore: NavItem[] = [
-    ...WORKSPACE_MORE,
-    ...(userRole === 'owner' || userRole === 'admin' ? ADMIN_WORKSPACE_MORE : []),
-    ...(userRole === 'owner' ? OWNER_WORKSPACE_MORE : []),
-  ];
+  const operationsMore: NavItem[] = showTournamentSummary
+    ? [...OPERATIONS_MORE, { key: 'tournaments/summary', icon: FileText, label: 'Summary' }]
+    : OPERATIONS_MORE;
 
   const allMoreKeys = [
-    ...OVERVIEW_MORE,
+    ...TOP_MORE,
+    ...operationsMore,
     ...SETUP_MORE,
-    ...COMMUNICATION_MORE,
-    ...historyMore,
-    ...workspaceMore,
+    ...ADMIN_MORE,
   ];
 
   const isMoreActive = allMoreKeys.some(item => {
@@ -292,8 +272,12 @@ export default function AdminBottomNav() {
 
             <div className={styles.dropDivider} />
 
-            <div className={styles.dropSectionLabel}>Overview</div>
-            {dropNavItems(OVERVIEW_MORE)}
+            {dropNavItems(TOP_MORE)}
+
+            <div className={styles.dropDivider} />
+
+            <div className={styles.dropSectionLabel}>Operations</div>
+            {dropNavItems(operationsMore)}
 
             <div className={styles.dropDivider} />
 
@@ -302,21 +286,8 @@ export default function AdminBottomNav() {
 
             <div className={styles.dropDivider} />
 
-            <div className={styles.dropSectionLabel}>Communication</div>
-            {dropNavItems(COMMUNICATION_MORE)}
-
-            <div className={styles.dropDivider} />
-
-            <div className={styles.dropSectionLabel}>History</div>
-            {dropNavItems(historyMore)}
-
-            {workspaceMore.length > 0 && (
-              <>
-                <div className={styles.dropDivider} />
-                <div className={styles.dropSectionLabel}>Workspace</div>
-                {dropNavItems(workspaceMore)}
-              </>
-            )}
+            <div className={styles.dropSectionLabel}>Admin</div>
+            {dropNavItems(ADMIN_MORE)}
 
             <div className={styles.dropDivider} />
 

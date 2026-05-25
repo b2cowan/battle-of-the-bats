@@ -82,28 +82,20 @@ const PLANS: Plan[] = [
     features: [
       'Everything in Tournament',
       'Unlimited tournament slots',
-      '10 staff / admin seats',
-      'Registration Control Bundle',
-      'Custom registration questions and file uploads',
-      'Registration exports — Excel, CSV, and PDF for check-in, insurance, and reporting',
-      'Schedule and results exports with iCal calendar download',
-      'Customizable PDF templates with your logo, header, and footer',
-      'Payment reminders and readiness reporting',
-      'Waitlist promotion and queue management',
-      'Full branding control',
-      'Automated schedule generation',
-      'Playoff bracket generator',
-      'Permanent sealed archives',
-      'Tournament cloning and targeted announcements',
-      'Post-tournament summary reporting',
-      'Unlimited officials seats',
+      'Automated schedule generation and playoff bracket builder',
+      'Custom registration fields, file uploads, and waitlist promotion',
+      'Registration exports — Excel, CSV, and PDF',
+      'Advanced payment tracking and post-tournament reporting',
+      'Full branding control — no FieldLogicHQ badge',
+      'Permanent sealed archives, tournament cloning, and targeted announcements',
+      '10 staff / admin seats · unlimited officials',
     ],
     compactFeatures: [
       'Everything in Tournament',
       'Unlimited tournament slots',
-      'Registration Control Bundle',
+      'Automated scheduling and bracket builder',
       'Full branding control',
-      '10 staff / admin seats',
+      '10 staff / admin seats · unlimited officials',
     ],
     cta: 'Start Free Trial',
     ctaHref: '/auth/signup',
@@ -145,7 +137,7 @@ const PLANS: Plan[] = [
   {
     key: 'club',
     name: 'Club',
-    tagline: 'A preview of the full club operating system for rep teams, accounting, and league workflows.',
+    tagline: 'The complete operating system for established clubs — tournaments, house league, rep teams, accounting, and coaching staff, all in one place.',
     monthlyPrice: '$179',
     annualPrice: '$1,790',
     annualTotal: '$1,790 CAD / year',
@@ -156,14 +148,22 @@ const PLANS: Plan[] = [
     trialNote: '90-day trial',
     features: [
       'Everything in League',
-      'Accounting module - org ledger, team invoicing, payment reconciliation, expense tracking',
-      'Rep Teams module - tryouts, rosters, player documents, coaches portal, team finances',
       'Unlimited staff / admin seats',
+      'Accounting module',
+      'Organization ledger and expense tracking',
+      'Team invoicing and payment reconciliation',
+      'Rep Teams module',
+      'Tryout registration and roster management',
+      'Player documents and season history',
+      'Team financial management',
+      'Coaches Portal — 3 team accounts included',
+      'Additional Coaches Portal accounts at $19/mo each',
     ],
     compactFeatures: [
       'Everything in League',
-      'Accounting — org ledger & invoicing',
-      'Rep Teams — rosters, tryouts & coaches portal',
+      'Accounting — org ledger, invoicing & reconciliation',
+      'Rep Teams — tryouts, rosters & documents',
+      'Coaches Portal — 3 accounts included',
       'Unlimited staff / admin seats',
     ],
     cta: 'Start Free Trial',
@@ -289,7 +289,7 @@ export default function PricingSection({ gatingMap, onChoosePlan, currentPlan, p
                   initialPlanInterest={plan.initialPlanInterest}
                   initialFeaturesInterested={plan.initialFeaturesInterested}
                 >
-                  Join Early Access
+                  Express interest
                 </EarlyAccessModalTrigger>
               ) : onChoosePlan ? (
                 <button

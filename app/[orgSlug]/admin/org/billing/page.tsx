@@ -58,7 +58,7 @@ type CancellationPreflight = {
 
 const PLAN_TAGLINE: Record<OrgPlan, string> = {
   tournament:      'A free starter plan for one small tournament or a first test run.',
-  team:            'A coach workspace for one rep team with roster, schedule, dues, documents, and one free-tier tournament slot.',
+  team:            'Coaches Portal Premium for one rep team with roster, schedule, dues, documents, and one free-tier tournament slot.',
   tournament_plus: 'Serious tournament operations: registration control, branding, automation, and reporting.',
   league:          'Manage your league, registrations, and public presence — all in one place.',
   club:            'The complete operating system for your sports organization.',
@@ -76,8 +76,8 @@ const PLAN_FEATURES: Record<OrgPlan, string[]> = {
     '3 staff / admin seats · 1 tournament slot',
   ],
   team: [
-    'One rep team workspace',
-    'Coaches portal for roster, schedule, dues, and documents',
+    'One rep team Coaches Portal',
+    'Premium tools for roster, schedule, dues, and documents',
     'Team budget and payment reminder tools',
     'One free-tier tournament slot for scrimmages or local events',
     '3 staff / coach seats',
@@ -113,7 +113,7 @@ const PLAN_FEATURES: Record<OrgPlan, string[]> = {
 
 const PLAN_META_COPY: Record<OrgPlan, string> = {
   tournament:      "You're on the free starter plan. Upgrade when you need custom registration, exports, payment reminders, waitlist promotion, branding, or repeat-event tools.",
-  team:            "You're on Team. Your coach workspace and one free-tier tournament slot are active.",
+  team:            "You're on Coaches Portal Premium. Your team tools and one free-tier tournament slot are active.",
   tournament_plus: "You're on Tournament Plus. Your tournament operations tools are active; League and Club are coming soon while those broader workflows are refined.",
   league:          "You're on League. Need accounting or rep team tools? Club is the complete platform.",
   club:            "You're on the complete Club platform.",
@@ -550,17 +550,17 @@ export default function BillingPage() {
           </div>
         )}
 
-        {/* Team workspace reactivation */}
+        {/* Coaches Portal reactivation */}
         {isTeamWorkspaceBilling && (
           <div className={styles.reactivateCard}>
             <h2 className={`${styles.sectionTitle} ${styles.sectionTitleLime}`}>
-              Reactivate your Team workspace
+              Reactivate Coaches Portal
             </h2>
             <p className={styles.reactivateCopy}>
-              Team workspaces are reactivated through a new Team subscription. Visit the pricing page to get started.
+              Coaches Portal Premium is reactivated through a new subscription. Start from Coaches Portal signup to get access back.
             </p>
-            <Link className="btn btn-primary" href="/pricing#team">
-              View Team Plans
+            <Link className="btn btn-primary" href="/coaches/start">
+              Start Coaches Portal
             </Link>
           </div>
         )}
@@ -616,7 +616,7 @@ export default function BillingPage() {
         <div className={styles.billingNudgeCard}>
           <div className={styles.billingNudgeIcon}><Link2 size={18} /></div>
           <div className={styles.billingNudgeBody}>
-            <h2 className={styles.billingNudgeTitle}>Parent organization paying for this Team?</h2>
+            <h2 className={styles.billingNudgeTitle}>Parent organization paying for this Coaches Portal?</h2>
             <p className={styles.billingNudgeCopy}>
               Start with a Basic visibility link, then ask the organization to take over billing. Your Coaches Portal stays coach-operated, and roster, document, accounting, and ownership access do not move.
             </p>
@@ -633,12 +633,12 @@ export default function BillingPage() {
           <div className={styles.billingNudgeBody}>
             <h2 className={styles.billingNudgeTitle}>Club may be the better multi-team home</h2>
             <p className={styles.billingNudgeCopy}>
-              This organization is paying for {teamLinkBillingSummary?.activeOrgPaidTeamCount ?? CLUB_VALUE_TEAM_COUNT} linked Team add-ons. Club is designed for multi-team oversight, accounting, and lower extra-team pricing while existing links can stay narrow until both sides approve a transfer.
+              This organization is paying for {teamLinkBillingSummary?.activeOrgPaidTeamCount ?? CLUB_VALUE_TEAM_COUNT} linked Premium portals. Club is designed for multi-team oversight, accounting, and lower extra-team pricing while existing links can stay narrow until both sides approve a transfer.
             </p>
           </div>
           <div className={styles.billingNudgeActions}>
             <Link className="btn btn-primary btn-sm" href={`/${currentOrg.slug}/admin/org/team-links`}>
-              Review Team Links
+              Review Coaches Portal Links
             </Link>
             <Link className="btn btn-ghost btn-sm" href="/pricing#club">
               View Club Preview

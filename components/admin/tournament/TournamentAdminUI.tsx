@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { Check, ChevronDown, HelpCircle, Lock, MoreHorizontal, Search, X } from 'lucide-react';
 import clsx from 'clsx';
 import styles from './TournamentAdminUI.module.css';
@@ -20,6 +20,7 @@ export function TournamentAdminHeader({
   subtitle,
   meta,
   actions,
+  mobileActionsInline = false,
   className,
 }: {
   icon?: React.ReactNode;
@@ -28,10 +29,11 @@ export function TournamentAdminHeader({
   subtitle?: React.ReactNode;
   meta?: React.ReactNode;
   actions?: React.ReactNode;
+  mobileActionsInline?: boolean;
   className?: string;
 }) {
   return (
-    <header className={clsx(styles.header, className)}>
+    <header className={clsx(styles.header, className)} data-mobile-actions={mobileActionsInline ? 'inline' : undefined}>
       <div className={styles.headerMain}>
         {icon && <div className={styles.headerIcon}>{icon}</div>}
         <div className={styles.headerCopy}>
@@ -205,6 +207,9 @@ export function ToolbarMenu({
 }) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const [panelStyle, setPanelStyle] = useState<CSSProperties | undefined>();
+  const buttonLabel = typeof label === 'string' ? label : 'Toolbar menu';
 
   useEffect(() => {
     if (!open) return;
@@ -225,6 +230,67 @@ export function ToolbarMenu({
     };
   }, [open]);
 
+  useEffect(() => {
+    if (!open) return;
+
+    function updatePanelPosition() {
+      const trigger = rootRef.current;
+      const panel = panelRef.current;
+      if (!trigger || !panel) return;
+
+      const margin = 12;
+      const triggerRect = trigger.getBoundingClientRect();
+      const viewportWidth = document.documentElement.clientWidth;
+      const viewportHeight = document.documentElement.clientHeight;
+      const panelWidth = Math.min(
+        Math.max(panel.offsetWidth, 240),
+        Math.max(viewportWidth - margin * 2, 180),
+      );
+      const desiredLeft = align === 'start'
+        ? triggerRect.left
+        : triggerRect.right - panelWidth;
+      const left = Math.max(
+        margin,
+        Math.min(desiredLeft, viewportWidth - panelWidth - margin),
+      );
+      const panelHeight = panel.offsetHeight;
+      const minimumUsefulHeight = Math.min(panelHeight, 160);
+      let top = triggerRect.bottom + 6;
+      let maxHeight = viewportHeight - top - margin;
+
+      if (maxHeight < minimumUsefulHeight) {
+        const availableAbove = triggerRect.top - margin - 6;
+        if (availableAbove > maxHeight) {
+          const visibleHeight = Math.min(panelHeight, availableAbove);
+          top = Math.max(margin, triggerRect.top - visibleHeight - 6);
+          maxHeight = visibleHeight;
+        } else {
+          top = margin;
+          maxHeight = viewportHeight - margin * 2;
+        }
+      }
+
+      setPanelStyle({
+        position: 'fixed',
+        top,
+        left,
+        width: panelWidth,
+        maxHeight,
+        overflowY: 'auto',
+      });
+    }
+
+    const frame = window.requestAnimationFrame(updatePanelPosition);
+    window.addEventListener('resize', updatePanelPosition);
+    window.addEventListener('scroll', updatePanelPosition, true);
+
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.removeEventListener('resize', updatePanelPosition);
+      window.removeEventListener('scroll', updatePanelPosition, true);
+    };
+  }, [open, align]);
+
   return (
     <div ref={rootRef} className={clsx(styles.menuRoot, className)}>
       <button
@@ -233,14 +299,16 @@ export function ToolbarMenu({
         disabled={disabled}
         aria-haspopup="menu"
         aria-expanded={open}
+        aria-label={buttonLabel}
+        title={buttonLabel}
         onClick={() => setOpen(current => !current)}
       >
         {icon ?? <MoreHorizontal size={15} aria-hidden />}
-        <span>{label}</span>
+        <span className={styles.menuButtonLabel}>{label}</span>
         <ChevronDown size={14} aria-hidden />
       </button>
       {open && (
-        <div className={styles.menuPanel} data-align={align} role="menu" onClick={event => {
+        <div ref={panelRef} className={styles.menuPanel} style={panelStyle} data-align={align} role="menu" onClick={event => {
           if ((event.target as HTMLElement).closest('button')) setOpen(false);
         }}>
           {children}

@@ -53,10 +53,6 @@
   border-bottom: 1px solid rgba(var(--blueprint-blue-rgb), 0.2);
 }
 
-.teamEntrySection {
-  padding: 0 0 4rem;
-  border-bottom: 1px solid rgba(var(--blueprint-blue-rgb), 0.2);
-}
 
 .segmentSection {
   padding: 0 0 4rem;
@@ -71,7 +67,7 @@
   font-family: var(--font-data);
   font-size: 0.65rem;
   font-weight: 700;
-  color: var(--blueprint-blue);
+  color: var(--logic-lime);
   letter-spacing: 0.08em;
   text-transform: uppercase;
   margin-bottom: 0.4rem;
@@ -101,14 +97,17 @@
   transform: translateY(-1px);
 }
 
+/* featured is no longer used — coming-soon cards use muted treatment */
 .segmentCardFeatured {
-  border-color: rgba(var(--logic-lime-rgb), 0.5);
-  background: rgba(var(--logic-lime-rgb), 0.045);
+  border-color: rgba(var(--blueprint-blue-rgb), 0.28);
+  background: rgba(var(--blueprint-blue-rgb), 0.035);
+  opacity: 0.72;
 }
 
 .segmentCardFeatured:hover {
-  border-color: rgba(var(--logic-lime-rgb), 0.75);
-  background: rgba(var(--logic-lime-rgb), 0.07);
+  border-color: rgba(var(--blueprint-blue-rgb), 0.45);
+  background: rgba(var(--blueprint-blue-rgb), 0.055);
+  opacity: 1;
 }
 
 .segmentEyebrow {
@@ -117,7 +116,7 @@
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--blueprint-blue);
+  color: var(--logic-lime);
 }
 
 .segmentTitle {
@@ -145,105 +144,99 @@
   color: var(--logic-lime);
 }
 
-.teamEntry {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto;
+
+/* ── Coaches Portal callout (compact, sits below org plan grid) ──────────── */
+.coachesCallout {
+  display: flex;
   align-items: center;
   gap: 2rem;
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.35);
-  background: rgba(var(--blueprint-blue-rgb), 0.055);
-  padding: 1.6rem;
+  margin-top: 1.25rem;
+  padding: 1.1rem 1.5rem;
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.25);
+  background: rgba(var(--blueprint-blue-rgb), 0.03);
 }
 
-.teamEntryLabel {
+.coachesCalloutInner {
+  display: flex;
+  align-items: baseline;
+  gap: 1.5rem;
+  flex: 1;
+  flex-wrap: wrap;
+}
+
+.coachesCalloutLabel {
   font-family: var(--font-data);
-  font-size: 0.65rem;
+  font-size: 0.6rem;
   font-weight: 700;
-  letter-spacing: 0;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--blueprint-blue);
-  margin-bottom: 0.35rem;
+  color: var(--logic-lime);
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
-.teamEntryTitle {
+.coachesCalloutPrice {
   font-family: var(--font-data);
-  font-size: 1.25rem;
-  line-height: 1.25;
+  font-size: 0.82rem;
   font-weight: 700;
   color: var(--fl-text);
-  margin-bottom: 0.45rem;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
-.teamEntryBody,
-.teamEntryNote {
+.coachesCalloutPriceSub {
   font-family: var(--font-data);
-  font-size: 0.76rem;
-  line-height: 1.6;
+  font-size: 0.7rem;
   color: var(--data-gray);
-  margin: 0;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
-.teamFeatureList {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.45rem 1rem;
-  margin-top: 1rem;
-  padding: 0;
-  list-style: none;
-}
-
-.teamFeatureList li {
-  position: relative;
-  padding-left: 1rem;
+.coachesCalloutBody {
   font-family: var(--font-data);
-  font-size: 0.74rem;
+  font-size: 0.73rem;
+  color: var(--data-gray);
   line-height: 1.5;
-  color: var(--data-gray);
-}
-
-.teamFeatureList li::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 0.55em;
-  width: 5px;
-  height: 5px;
-  background: var(--logic-lime);
-}
-
-.teamEntryPlan {
+  flex: 1;
   min-width: 180px;
-  border-left: 1px solid rgba(var(--blueprint-blue-rgb), 0.25);
-  padding-left: 2rem;
 }
 
-.teamEntryPrice {
-  font-family: var(--font-data);
-  font-size: 1.2rem;
-  font-weight: 700;
-  color: var(--logic-lime);
-  margin: 0 0 0.2rem;
-}
-
-.teamEntryCta {
+.coachesCalloutCta {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 44px;
-  padding: 0 1.25rem;
-  background: var(--logic-lime);
-  color: var(--pitch-black);
+  min-height: 38px;
+  padding: 0 1.1rem;
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.45);
+  background: transparent;
+  color: var(--logic-lime);
   font-family: var(--font-data);
-  font-size: 0.72rem;
+  font-size: 0.68rem;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0;
+  letter-spacing: 0.06em;
   text-decoration: none;
   white-space: nowrap;
+  flex-shrink: 0;
+  transition: background 0.15s, color 0.15s;
+  cursor: pointer;
 }
 
-.teamEntryCta:hover {
-  background: #fff;
+.coachesCalloutCta:hover {
+  background: rgba(var(--logic-lime-rgb), 0.1);
+  color: var(--fl-text);
+}
+
+@media (max-width: 900px) {
+  .coachesCallout {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  .coachesCalloutCta {
+    width: 100%;
+    justify-content: center;
+  }
 }
 
 /* ── Shared section headings ─────────────────────────────────────────────── */
@@ -315,18 +308,45 @@
 }
 
 .catRow td {
+  padding: 0;
+  background: rgba(var(--hud-surface-rgb, 17, 24, 39), 0.6);
+  border-top: 1px solid rgba(var(--blueprint-blue-rgb), 0.2);
+}
+
+.catToggle {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  width: 100%;
   padding: 0.5rem 1.25rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  font-family: var(--font-data);
   font-size: 0.6rem;
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--blueprint-blue);
-  background: rgba(var(--blueprint-blue-rgb), 0.06);
-  border-top: 1px solid rgba(var(--blueprint-blue-rgb), 0.2);
+  color: var(--logic-lime);
+}
+
+.catToggle:hover {
+  color: var(--fl-text);
+}
+
+.catChevron {
+  transition: transform 0.2s;
+  flex-shrink: 0;
+  opacity: 0.6;
+}
+
+.catChevronOpen {
+  transform: rotate(90deg);
 }
 
 .catLabel {
-  color: var(--blueprint-blue);
+  color: var(--logic-lime);
 }
 
 .dataRow:nth-child(even) {
@@ -380,7 +400,7 @@
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--blueprint-blue);
+  color: var(--logic-lime);
   margin-bottom: 0.75rem;
 }
 
@@ -627,26 +647,6 @@ details[open] .faqQuestion::after {
 /* ── Responsive ──────────────────────────────────────────────────────────── */
 @media (max-width: 900px) {
   .segmentGrid {
-    grid-template-columns: 1fr;
-  }
-
-  .teamEntry {
-    grid-template-columns: 1fr;
-    align-items: stretch;
-  }
-
-  .teamEntryPlan {
-    border-left: 0;
-    border-top: 1px solid rgba(var(--blueprint-blue-rgb), 0.25);
-    padding-left: 0;
-    padding-top: 1rem;
-  }
-
-  .teamEntryCta {
-    width: 100%;
-  }
-
-  .teamFeatureList {
     grid-template-columns: 1fr;
   }
 

@@ -70,9 +70,8 @@ Pages rendered inside the tournament context (sidebar shows tournament nav).
 | Registrations / Teams | `/{orgSlug}/admin/tournaments/teams` | `app/[orgSlug]/admin/tournaments/teams/page.tsx` | CSS: `teams-admin.module.css` | [x] | [x] | [x] | [ ] |
 | Schedule | `/{orgSlug}/admin/tournaments/schedule` | `app/[orgSlug]/admin/tournaments/schedule/page.tsx` | CSS: `schedule-admin.module.css`; sub-components: `Generator.tsx`, `PlayoffWizard.tsx`, `GameList.tsx`, `BracketBuilder.tsx` | [x] | [x] | [x] | [ ] |
 | Results | `/{orgSlug}/admin/tournaments/results` | `app/[orgSlug]/admin/tournaments/results/page.tsx` | | [x] | [x] | [x] | [ ] |
-| Announcements | `/{orgSlug}/admin/tournaments/announcements` | `app/[orgSlug]/admin/tournaments/announcements/page.tsx` | CSS: `announcements-admin.module.css` | [x] | [x] | [x] | [x] |
-| Communication | `/{orgSlug}/admin/tournaments/communication` | `app/[orgSlug]/admin/tournaments/communication/page.tsx` | CSS: `communication.module.css` | [ ] | [ ] | [ ] | [ ] |
-| Rules | `/{orgSlug}/admin/tournaments/rules` | `app/[orgSlug]/admin/tournaments/rules/page.tsx` | Sub-component: `RulesAdmin.tsx` | [ ] | [ ] | [ ] | [ ] |
+| Communication | `/{orgSlug}/admin/tournaments/communication` | `app/[orgSlug]/admin/tournaments/communication/page.tsx` | CSS: `communication.module.css`; supersedes old Announcements + old Communications pages | [x] | [x] | [x] | [x] |
+| Rules | `/{orgSlug}/admin/tournaments/rules` | `app/[orgSlug]/admin/tournaments/rules/page.tsx` | Sub-component: `RulesAdmin.tsx` | [x] | [x] | [x] | [x] |
 | Branding | `/{orgSlug}/admin/tournaments/branding` | `app/[orgSlug]/admin/tournaments/branding/page.tsx` | CSS: `branding.module.css` | [ ] | [ ] | [ ] | [ ] |
 | Contacts | `/{orgSlug}/admin/tournaments/contacts` | `app/[orgSlug]/admin/tournaments/contacts/page.tsx` | | [ ] | [ ] | [ ] | [ ] |
 | Age Groups | `/{orgSlug}/admin/tournaments/age-groups` | `app/[orgSlug]/admin/tournaments/age-groups/page.tsx` | CSS: `admin-page.module.css` | [ ] | [ ] | [ ] | [ ] |
@@ -116,10 +115,10 @@ Pages rendered inside the tournament context (sidebar shows tournament nav).
 | 1 — Shared Shell & Navigation | 11 | 0 |
 | 2 — Admin Hub & Onboarding | 3 | 0 |
 | 3 — Tournament Entry Points | 3 | 0 |
-| 4 — Active Tournament Pages | 13 | 1 |
+| 4 — Active Tournament Pages | 12 | 2 |
 | 5 — Settings Sub-Pages | 7 | 0 |
 | 6 — Public Preview Shell | 4 | 0 |
-| **Total** | **41** | **0** |
+| **Total** | **40** | **2** |
 
 ---
 

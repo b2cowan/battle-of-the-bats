@@ -14,7 +14,7 @@
  *  7. Disabled when no rows or disabled prop is true
  */
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, type CSSProperties } from 'react';
 import { Download, ChevronDown, FileSpreadsheet, FileText, Calendar, Lock } from 'lucide-react';
 import type { OrgPlan } from '@/lib/types';
 import type { PlanFeature } from '@/lib/plan-features';
@@ -95,6 +95,8 @@ export default function ExportMenu({
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const [menuStyle, setMenuStyle] = useState<CSSProperties | undefined>();
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -106,6 +108,64 @@ export default function ExportMenu({
     }
     document.addEventListener('mousedown', handleOutside);
     return () => document.removeEventListener('mousedown', handleOutside);
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+
+    function updateMenuPosition() {
+      const trigger = rootRef.current;
+      const menu = menuRef.current;
+      if (!trigger || !menu) return;
+
+      const margin = 12;
+      const triggerRect = trigger.getBoundingClientRect();
+      const viewportWidth = document.documentElement.clientWidth;
+      const viewportHeight = document.documentElement.clientHeight;
+      const menuWidth = Math.min(
+        Math.max(menu.offsetWidth, 220),
+        Math.max(viewportWidth - margin * 2, 160),
+      );
+      const left = Math.max(
+        margin,
+        Math.min(triggerRect.right - menuWidth, viewportWidth - menuWidth - margin),
+      );
+      const menuHeight = menu.offsetHeight;
+      const minimumUsefulHeight = Math.min(menuHeight, 160);
+      let top = triggerRect.bottom + 6;
+      let maxHeight = viewportHeight - top - margin;
+
+      if (maxHeight < minimumUsefulHeight) {
+        const availableAbove = triggerRect.top - margin - 6;
+        if (availableAbove > maxHeight) {
+          const visibleHeight = Math.min(menuHeight, availableAbove);
+          top = Math.max(margin, triggerRect.top - visibleHeight - 6);
+          maxHeight = visibleHeight;
+        } else {
+          top = margin;
+          maxHeight = viewportHeight - margin * 2;
+        }
+      }
+
+      setMenuStyle({
+        position: 'fixed',
+        top,
+        left,
+        width: menuWidth,
+        maxHeight,
+        overflowY: 'auto',
+      });
+    }
+
+    const frame = window.requestAnimationFrame(updateMenuPosition);
+    window.addEventListener('resize', updateMenuPosition);
+    window.addEventListener('scroll', updateMenuPosition, true);
+
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.removeEventListener('resize', updateMenuPosition);
+      window.removeEventListener('scroll', updateMenuPosition, true);
+    };
   }, [open]);
 
   // Close on Escape
@@ -160,7 +220,7 @@ export default function ExportMenu({
           title="Download Excel (.xlsx)"
         >
           <Download size={14} aria-hidden />
-          {loading ? 'Exporting…' : label}
+          <span className={styles.primaryLabel}>{loading ? 'Exporting...' : label}</span>
         </button>
         <button
           type="button"
@@ -178,7 +238,13 @@ export default function ExportMenu({
 
       {/* ── Dropdown menu ─────────────────────────────────────────────── */}
       {open && (
-        <div className={styles.menu} role="menu" aria-label="Export options">
+        <div
+          ref={menuRef}
+          className={styles.menu}
+          style={menuStyle}
+          role="menu"
+          aria-label="Export options"
+        >
           {/* Always: Excel */}
           <button
             role="menuitem"

@@ -1,18 +1,14 @@
-import { Suspense } from 'react';
-import TeamSignupClient from './TeamSignupClient';
-import { getPlanGatingMap } from '@/lib/plan-gating-server';
+import { redirect } from 'next/navigation';
+import {
+  COACHES_START_PATH,
+  pathWithSearchParams,
+  type SearchParamsRecord,
+} from '@/lib/coaches-portal-routes';
 
-export const metadata = {
-  title: 'Team Workspace - FieldLogicHQ',
-  description: 'Create a standalone Team workspace for one competitive team, with coach-scoped roster, schedule, documents, dues, and budget tools.',
+type PageProps = {
+  searchParams: Promise<SearchParamsRecord>;
 };
 
-export default async function TeamSignupPage() {
-  const gatingMap = await getPlanGatingMap();
-
-  return (
-    <Suspense fallback={null}>
-      <TeamSignupClient teamIsGated={gatingMap.team} />
-    </Suspense>
-  );
+export default async function LegacyTeamPage({ searchParams }: PageProps) {
+  redirect(pathWithSearchParams(COACHES_START_PATH, await searchParams, { normalizeNext: true }));
 }

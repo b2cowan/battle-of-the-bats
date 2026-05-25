@@ -108,8 +108,8 @@ export async function GET() {
           'billing_mock',
           'Mock billing mode',
           billingMock.source === 'runtime_override'
-            ? 'Dev Tools override is enabled; dev Team checkout can provision without Stripe.'
-            : 'ENABLE_BILLING_MOCK_PORTAL is enabled; dev Team checkout can provision without Stripe.',
+            ? 'Dev Tools override is enabled; dev Coaches Portal checkout can provision without Stripe.'
+            : 'ENABLE_BILLING_MOCK_PORTAL is enabled; dev Coaches Portal checkout can provision without Stripe.',
         )
       : check('warn', 'billing_mock', 'Mock billing mode', 'Mock billing is off. Real Stripe checkout requires test price IDs and webhook forwarding.'),
     isStripeConfigured()
@@ -122,8 +122,8 @@ export async function GET() {
       ? check('pass', 'app_url', 'Application URL', `NEXT_PUBLIC_APP_URL=${process.env.NEXT_PUBLIC_APP_URL}`)
       : check('fail', 'app_url', 'Application URL', 'Set NEXT_PUBLIC_APP_URL=http://localhost:3000 for local Stripe checkout.'),
     gatingMap.team
-      ? check('fail', 'team_gating', 'Team plan availability', 'Team is gated; self-serve checkout will return 403.')
-      : check('pass', 'team_gating', 'Team plan availability', 'Team is live for self-serve checkout.'),
+      ? check('fail', 'team_gating', 'Coaches Portal availability', 'Coaches Portal is gated; self-serve checkout will return 403.')
+      : check('pass', 'team_gating', 'Coaches Portal availability', 'Coaches Portal is live for self-serve checkout.'),
   ];
 
   checks.push(
@@ -148,7 +148,7 @@ export async function GET() {
       'Enter those price IDs in Platform Admin > Plans & Pricing > Stripe Prices for Team sandbox rows.',
       'Run `stripe listen --forward-to localhost:3000/api/billing/webhook` and copy its whsec_ value into STRIPE_WEBHOOK_SECRET.',
       'Restart `npm run dev` after editing .env.local.',
-      'Visit /team?billing=annual, complete checkout with a Stripe test card, and confirm redirect to /{orgSlug}/coaches?success=1.',
+      'Visit /coaches/start?billing=annual, complete checkout with a Stripe test card, and confirm redirect to /{orgSlug}/coaches?success=1.',
     ],
   });
 }

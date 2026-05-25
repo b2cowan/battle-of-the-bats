@@ -9,7 +9,7 @@ export async function getTournamentPreviewContext(orgSlug: string, tournamentSlu
   org: Organization;
   tournament: Tournament;
 }> {
-  const ctx = await getAuthContextWithScope();
+  const ctx = await getAuthContextWithScope({ orgSlug });
   if (!ctx || ctx.org.slug !== orgSlug) notFound();
 
   const tournament = await getTournamentBySlug(ctx.org.id, tournamentSlug);

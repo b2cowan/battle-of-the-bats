@@ -6,6 +6,17 @@ export type SubscriptionStatus = 'active' | 'trialing' | 'past_due' | 'canceled'
 export type TournamentStatus = 'draft' | 'active' | 'completed' | 'archived';
 export type PublicPageKey = 'news' | 'schedule' | 'standings' | 'teams' | 'rules' | 'register';
 
+/**
+ * Per-tournament display/behaviour preferences stored as JSONB in tournaments.settings.
+ * Add new optional keys here as features require them — no migration needed for new keys.
+ */
+export interface TournamentSettings {
+  /** Public rules page layout for the rule-section grid. Default: 'columns' (2-col). */
+  rulesLayout?: 'columns' | 'single';
+  /** Public rules page layout for the resources list. Default: 'list' (stacked). */
+  resourcesLayout?: 'list' | 'grid';
+}
+
 export interface Organization {
   id: string;
   name: string;
@@ -75,6 +86,8 @@ export interface Tournament {
   notifyTeamsOnComplete?: boolean;
   resultsNotifiedAt?: string | null;
   resultsNotificationSentCount?: number;
+  /** Per-tournament display/behaviour preferences. See TournamentSettings. */
+  settings?: TournamentSettings;
 }
 
 export interface Diamond {

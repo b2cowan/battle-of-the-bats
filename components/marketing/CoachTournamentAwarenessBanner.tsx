@@ -56,7 +56,7 @@ export default function CoachTournamentAwarenessBanner({ orgSlug, isTeamWorkspac
         <strong>{isTeamWorkspace ? 'Your team can run local tournaments here too' : 'Your org can run tournaments here too'}</strong>
         <span>
           {isTeamWorkspace
-            ? 'Set up a quick round robin or exhibition weekend from this Team workspace.'
+            ? 'Set up a quick round robin or exhibition weekend from this Coaches Portal.'
             : 'Coaches often organize events. Start setup in the tournament admin area, or share this with your org owner.'}
         </span>
       </div>

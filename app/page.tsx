@@ -2,59 +2,64 @@ import Link from 'next/link';
 import styles from './page.module.css';
 import AnimateIn from '@/components/AnimateIn';
 import PricingSection from '@/components/PricingSection';
+import EarlyAccessModalTrigger from '@/components/EarlyAccessModalTrigger';
 import { getPlanGatingMap } from '@/lib/plan-gating-server';
 
 const MODULE_CARDS = [
   {
     id: '01',
-    name: 'Tournaments',
-    href: '/platform/tournaments',
-    plan: 'All plans · Free to start',
-    tagline: 'Run your tournament without the spreadsheets.',
+    name: 'Tournament Organizer',
+    href: '/for-tournament-organizers',
+    plan: 'Tournament · Free to start',
+    tagline: 'From team registration to final standings — without the spreadsheets.',
     features: [
-      'Single and double-elimination bracket builder',
-      'Live scorekeeping — results update in real time',
       'Custom team registration with waitlist management',
-      'Automated scheduling across fields and time slots',
+      'Schedule generator across fields and time slots',
+      'Single and double-elimination brackets',
+      'Live score entry — standings update the moment you save',
+      'Tournament archives — every past event preserved',
     ],
   },
   {
     id: '02',
-    name: 'House League',
-    href: '/platform/house-league',
-    plan: 'Coming soon',
-    tagline: 'From registration to final standings, in one dashboard.',
+    name: 'House League Admin',
+    href: '/for-leagues',
+    plan: 'League · Coming soon',
+    tagline: 'From first registration to final standings, in one dashboard.',
     features: [
       'Player registration and waitlist management',
       'Draft tools and team building',
       'Auto-generated schedules and standings',
-      'Automated parent notifications',
+      'Automated parent notifications — no manual emails',
+      'One dashboard from opening day to final standings',
     ],
   },
   {
     id: '03',
-    name: 'Rep Teams',
-    href: '/platform/rep-teams',
-    plan: 'Coming soon',
-    tagline: 'Coaches run their team. You run the org.',
+    name: 'Club Executive',
+    href: '/for-clubs',
+    plan: 'Club · Coming soon',
+    tagline: 'Your executive team gets visibility. Coaches run their own teams.',
     features: [
-      'Tryout registration and player intake',
-      'Roster management by program year',
-      'Dedicated coaches portal with differentiated access',
-      'Player documents and team accounting',
+      'Tournaments, house league, and rep teams under one roof',
+      'Coaches manage their own roster, lineups, and team budget',
+      'Organization-wide visibility into rosters, documents, and finances',
+      'Tryout registration and program year management',
+      'Organization ledger, team invoicing, and financial reporting',
     ],
   },
   {
     id: '04',
-    name: 'Accounting',
-    href: '/platform/accounting',
-    plan: 'Coming soon',
-    tagline: 'Financial tracking built for volunteer-run clubs.',
+    name: 'Head Coach',
+    href: '/for-coaches',
+    plan: 'Coaches Portal · Coming soon',
+    tagline: 'Manage your team. Not your inbox.',
     features: [
-      'Org ledger with categorized entries',
-      'Team invoicing and payment tracking',
-      'Expense logging and transfer reconciliation',
-      'Excel and PDF exports — ledgers, budget vs. actual, and dues statements',
+      'Full roster management with positions and season history',
+      'Lineup builder with game-by-game history — exportable to PDF',
+      'Team budget, player dues, and payment tracking',
+      'Document management — consent forms, medical notes, eligibility',
+      'Works standalone — no organization account required',
     ],
   },
 ];
@@ -63,7 +68,7 @@ const STEPS = [
   {
     num: '01',
     label: 'SET UP YOUR ORGANIZATION',
-    desc: 'Create your org and set up the tournament tools you need today. League and club modules can be added as they open.',
+    desc: 'Create your organization and set up the tournament tools you need today. League and club modules can be added as they open.',
   },
   {
     num: '02',
@@ -91,10 +96,58 @@ const PLATFORM_BENEFITS = [
   {
     id: 'BEN-003',
     module: 'Rep Teams module',
-    entry: 'Coaches manage their own roster, documents, and team finances independently. Org admins get visibility without owning the day-to-day.',
+    entry: 'Coaches manage their own roster, documents, and team finances independently. Organization admins get visibility without owning the day-to-day.',
+  },
+  {
+    id: 'BEN-004',
+    module: 'Coaches Portal',
+    entry: 'The roster in a group text, the lineup in a notes app, and team fees tracked in someone\'s head. The Coaches Portal puts all of it in one place — whether or not your organization is on FieldLogicHQ.',
   },
 ];
 // id field kept for React key only — not rendered
+
+const PERSONAS = [
+  {
+    id: 'tournament',
+    label: 'Tournament',
+    question: 'Running a tournament?',
+    body: 'From team registration to final standings — brackets, schedule, live scores, all in one place.',
+    badge: 'Free to start · no credit card',
+    isLive: true,
+    cta: "I'm a tournament organizer",
+    href: '/for-tournament-organizers',
+  },
+  {
+    id: 'league',
+    label: 'League',
+    question: 'Managing a house league season?',
+    body: 'Player registration, draft, schedule, standings, and parent notifications — from first signup to final game.',
+    badge: 'Coming soon · express interest',
+    isLive: false,
+    cta: 'I run a house league',
+    href: '/for-leagues',
+  },
+  {
+    id: 'club',
+    label: 'Club',
+    question: 'Running a club with rep teams?',
+    body: 'Tournaments, house league, rep teams, and accounting in one place. Your executive team gets visibility. Coaches run their own teams.',
+    badge: 'Coming soon · express interest',
+    isLive: false,
+    cta: 'I run a club',
+    href: '/for-clubs',
+  },
+  {
+    id: 'coaches',
+    label: 'Coaches Portal',
+    question: 'Coaching a single team?',
+    body: 'Roster, lineups, budget, and documents — a complete team workspace, whether or not your organization is on FieldLogicHQ.',
+    badge: 'Coming soon · express interest',
+    isLive: false,
+    cta: "I'm a coach",
+    href: '/for-coaches',
+  },
+];
 
 export default async function HomePage() {
   const gatingMap = await getPlanGatingMap();
@@ -122,8 +175,8 @@ export default async function HomePage() {
             </h1>
 
             <p className={styles.heroSub}>
-              Everything your organization needs to run tournaments now, with house league
-              and club operations coming next as the platform expands.
+              Purpose-built for the people running community sports organizations on evenings
+              and weekends — from your first tournament to a full club program.
             </p>
 
             <div className={styles.heroActions}>
@@ -144,23 +197,37 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* ── Stats bar ─────────────────────────────────────────────────── */}
-      <section className={styles.statsBar}>
+      {/* ── Who is this for? ──────────────────────────────────────────── */}
+      <section className={styles.personaRouting}>
         <div className="container">
-          <div className={styles.statsBarInner}>
-            <div className={styles.statItem}>
-              <span className={styles.statNumber}>2 tiers live</span>
-              <span className={styles.statLabel}>Tournament and Tournament Plus</span>
+          <AnimateIn>
+            <p className={`${styles.eyebrow} text-center mb-8`}>Who is this for?</p>
+          </AnimateIn>
+          <AnimateIn>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {PERSONAS.map((p) => (
+                <Link
+                  key={p.id}
+                  href={p.href}
+                  className="border border-blueprint-blue/30 p-6 flex flex-col gap-3 hover:border-blueprint-blue/60 transition-colors"
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <span className="font-mono text-[10px] text-blueprint-blue uppercase tracking-widest font-bold">
+                      {p.label}
+                    </span>
+                    <span className={`font-mono text-[9px] uppercase tracking-widest text-right leading-relaxed ${p.isLive ? 'text-logic-lime' : 'text-data-gray/40'}`}>
+                      {p.badge}
+                    </span>
+                  </div>
+                  <p className="font-mono text-sm font-bold text-fl-text leading-snug">{p.question}</p>
+                  <p className="font-mono text-xs text-data-gray/70 leading-relaxed flex-1">{p.body}</p>
+                  <span className={`font-mono text-[10px] uppercase tracking-widest ${p.isLive ? 'text-logic-lime' : 'text-data-gray/50'}`}>
+                    {p.cta} →
+                  </span>
+                </Link>
+              ))}
             </div>
-            <div className={styles.statItem}>
-              <span className={styles.statNumber}>Free plan</span>
-              <span className={styles.statLabel}>No credit card, no time limit</span>
-            </div>
-            <div className={styles.statItem}>
-              <span className={styles.statNumber}>CAD pricing</span>
-              <span className={styles.statLabel}>Built for Canadian organizations</span>
-            </div>
-          </div>
+          </AnimateIn>
         </div>
       </section>
 
@@ -169,10 +236,10 @@ export default async function HomePage() {
         <div className="container">
           <AnimateIn>
             <div className={styles.sectionHead}>
-              <p className={styles.eyebrow}>Modules</p>
-              <h2 className={styles.sectionTitle}>Everything your organization needs</h2>
+              <p className={styles.eyebrow}>Built for your role</p>
+              <h2 className={styles.sectionTitle}>One platform. Four ways to use it.</h2>
               <p className={styles.sectionSub}>
-                Tournament tools are live now. House league, rep teams, and accounting show where the platform is headed next.
+                Tournament organizers can start today — free, no credit card required. League, Club, and Coaches Portal are in development.
               </p>
             </div>
           </AnimateIn>
@@ -200,7 +267,7 @@ export default async function HomePage() {
                     href={mod.href}
                     className="font-mono text-xs text-logic-lime uppercase tracking-widest hover:text-fl-text transition-colors self-start"
                   >
-                    Learn more →
+                    This is me →
                   </Link>
                 </div>
               ))}
@@ -217,7 +284,7 @@ export default async function HomePage() {
               <p className={styles.eyebrow}>How It Works</p>
               <h2 className={styles.sectionTitle}>Up and running in a day</h2>
               <p className={styles.sectionSub}>
-                No manual needed. Set up your org, open your programs, run your whole season.
+                No manual needed. Set up your organization, open your programs, run your whole season.
               </p>
             </div>
           </AnimateIn>
@@ -250,7 +317,33 @@ export default async function HomePage() {
             </div>
           </AnimateIn>
           <PricingSection gatingMap={gatingMap} />
-          <div className="flex justify-center mt-8">
+
+          {/* Coaches Portal callout — matches pricing page coachesCallout treatment */}
+          <div className="mt-3 flex items-center gap-8 flex-wrap border border-blueprint-blue/25 px-6 py-4" style={{ background: 'rgba(30,58,138,0.03)' }}>
+            <div className="flex items-baseline gap-6 flex-1 flex-wrap">
+              <span className="font-mono text-[0.6rem] font-bold uppercase tracking-widest text-logic-lime whitespace-nowrap flex-shrink-0">
+                Coaches Portal
+              </span>
+              <span className="font-mono text-[0.82rem] font-bold text-fl-text whitespace-nowrap flex-shrink-0">
+                $29 CAD <span className="font-normal text-[0.72rem] text-data-gray">/mo</span>
+              </span>
+              <span className="font-mono text-[0.7rem] text-data-gray whitespace-nowrap flex-shrink-0">
+                or $290/season — save two months
+              </span>
+              <span className="font-mono text-[0.73rem] text-data-gray leading-relaxed flex-1 min-w-[180px]">
+                A standalone workspace for one rep team — roster, lineups, budget, and schedule. No organization account needed. Coming soon.
+              </span>
+            </div>
+            <EarlyAccessModalTrigger
+              className="inline-flex items-center justify-center min-h-[38px] px-4 border border-logic-lime/40 bg-transparent text-logic-lime font-mono text-[0.68rem] font-bold uppercase tracking-widest whitespace-nowrap flex-shrink-0 hover:bg-logic-lime/10 hover:text-fl-text transition-colors cursor-pointer"
+              initialPlanInterest={['coaches_portal']}
+              initialFeaturesInterested={['roster', 'lineups', 'budget', 'team_documents']}
+            >
+              Express interest →
+            </EarlyAccessModalTrigger>
+          </div>
+
+          <div className="flex justify-center mt-6">
             <Link
               href="/pricing"
               className="font-mono text-xs uppercase tracking-widest text-data-gray border border-blueprint-blue/30 px-6 py-2.5 hover:border-blueprint-blue hover:text-fl-text transition-colors"
@@ -285,54 +378,27 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* ── Positioning ───────────────────────────────────────────────── */}
-      <section className={styles.showcase}>
-        <div className="container">
-          <div className={styles.showcaseCard}>
-            <div className={styles.showcaseText}>
-              <h2>Built for how Canadian sport actually runs</h2>
-              <p>
-                Your org isn&apos;t just running a tournament. You&apos;re managing house league
-                registrations, rep team tryouts, field bookings, and a treasurer who tracks
-                dues in a spreadsheet — all with volunteers, on nights and weekends, for the
-                kids in your community. FieldLogicHQ is purpose-built for exactly that.
-              </p>
-            </div>
-            <div className={styles.showcaseActions}>
-              <Link
-                href="/auth/signup"
-                className="font-mono text-xs uppercase tracking-widest font-bold bg-logic-lime text-pitch-black px-6 py-3 hover:bg-white transition-colors"
-              >
-                Start Your Organization →
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* ── Bottom CTA ────────────────────────────────────────────────── */}
       <section className={styles.ctaSection}>
         <div className={styles.ctaBg} />
         <div className="container">
-          <h2 className={styles.ctaTitle}>
-            Your organization deserves{' '}
-            <span className={styles.heroAccent}>a real platform.</span>
-          </h2>
+          <p className={`${styles.eyebrow} mb-6`}>Built for how community sport actually runs</p>
           <p className={styles.ctaSub}>
-            Join organizations that have moved on from spreadsheets.
+            Your organization isn&apos;t just running a tournament. You&apos;re managing house league
+            registrations, rep team tryouts, field bookings, and a treasurer who tracks
+            dues in a spreadsheet — all with volunteers, on nights and weekends, for the
+            kids in your community.
           </p>
+          <h2 className={styles.ctaTitle}>
+            Your season belongs{' '}
+            <span className={styles.heroAccent}>on a real platform.</span>
+          </h2>
           <div className={styles.ctaActions}>
             <Link
               href="/auth/signup"
               className="font-mono text-sm font-bold uppercase tracking-widest bg-logic-lime text-pitch-black px-8 py-4 hover:bg-white transition-colors"
             >
               Start Your Organization
-            </Link>
-            <Link
-              href="/pricing"
-              className="font-mono text-sm uppercase tracking-widest text-data-gray border border-blueprint-blue/40 px-8 py-4 hover:border-blueprint-blue hover:text-fl-text transition-colors"
-            >
-              View pricing →
             </Link>
           </div>
         </div>

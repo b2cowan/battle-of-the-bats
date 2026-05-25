@@ -1945,7 +1945,7 @@ export async function deleteResource(id: string): Promise<void> {
       const parts = res.url.split('/');
       const fileName = parts[parts.length - 1].split('?')[0]; // Remove query params
 
-      await supabase.storage.from('resources').remove([fileName]);
+      await authClient().storage.from('resources').remove([fileName]);
     } catch (err) {
       console.error('Error removing file from storage:', err);
     }
@@ -1961,7 +1961,7 @@ export async function uploadResourceFile(file: File): Promise<string | null> {
     const fileName = `${Date.now()}-${cleanName}`;
     const filePath = fileName;
 
-    const { error } = await supabase.storage
+    const { error } = await authClient().storage
       .from('resources')
       .upload(filePath, file, {
         cacheControl: '3600',
@@ -1973,7 +1973,7 @@ export async function uploadResourceFile(file: File): Promise<string | null> {
       throw error;
     }
 
-    const { data: { publicUrl } } = supabase.storage
+    const { data: { publicUrl } } = authClient().storage
       .from('resources')
       .getPublicUrl(filePath);
 
@@ -2290,7 +2290,33 @@ function mapTournament(r: any): Tournament {
     colorMode:                (r.color_mode === 'light' ? 'light' : null) as 'light' | null,
     publicHiddenPages:        Array.isArray(r.public_hidden_pages) ? r.public_hidden_pages : [],
     requireScoreFinalization: r.require_score_finalization ?? null,
+    settings:                 (r.settings && typeof r.settings === 'object') ? r.settings : {},
   };
+}
+
+/**
+ * Merge-patch the tournament settings JSONB column.
+ * Only supplied keys are changed; all other existing keys are preserved.
+ */
+export async function updateTournamentSettings(
+  tournamentId: string,
+  patch: import('./types').TournamentSettings,
+): Promise<void> {
+  // Read-merge-write: safe for settings (low-contention, admin-only, small payload).
+  const { data: current, error: readErr } = await authClient()
+    .from('tournaments')
+    .select('settings')
+    .eq('id', tournamentId)
+    .single();
+  if (readErr) throw readErr;
+
+  const merged = { ...(current?.settings ?? {}), ...patch };
+
+  const { error } = await authClient()
+    .from('tournaments')
+    .update({ settings: merged })
+    .eq('id', tournamentId);
+  if (error) throw error;
 }
 
 function mapArchive(r: any): TournamentArchive {

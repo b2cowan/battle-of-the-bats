@@ -53,8 +53,11 @@ const wrap = (content: string) => `
 export function registrationConfirmationHtml(p: {
   teamName: string; coachName: string; ageGroupName: string; tournamentName: string;
   contactEmail?: string;
-  teamWorkspaceClaimUrl?: string;
+  coachEmail?: string;
 }) {
+  const joinUrl = p.coachEmail
+    ? `${SITE_URL}/coaches/join?email=${encodeURIComponent(p.coachEmail)}&next=${encodeURIComponent('/coaches/tournaments')}&registered=1`
+    : `${SITE_URL}/coaches/join`;
   return wrap(`
     <h2 style="color:#fff;font-size:1.4rem;margin:0 0 1rem;">Registration Received!</h2>
     <p>Hi <strong>${p.coachName}</strong>,</p>
@@ -69,13 +72,11 @@ export function registrationConfirmationHtml(p: {
       </p>
     </div>
     <p style="color:rgba(241,245,249,0.7);">Your registration is currently <strong style="color:#F59E0B;">pending review</strong>. If payment is required, the organizer will share payment instructions directly. FieldLogicHQ does not process online payments.</p>
-    ${p.teamWorkspaceClaimUrl ? `
-      <div style="background:#0F172A;border:1px solid rgba(217,249,157,0.3);border-left:3px solid rgba(217,249,157,0.5);padding:1.25rem;margin:1.5rem 0;">
-        <p style="margin:0 0 0.5rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#D9F99D;">Keep this team organized after the tournament</p>
-        <p style="margin:0 0 1rem;color:rgba(241,245,249,0.72);line-height:1.6;">Activate a FieldLogicHQ Team workspace with your tournament team details prefilled. You can manage roster, schedule, dues, documents, attendance, lineups, and a quick local tournament from the Coaches Portal.</p>
-        <a href="${p.teamWorkspaceClaimUrl}" style="display:inline-block;background:#D9F99D;color:#0b0f14;text-decoration:none;font-weight:800;padding:0.75rem 1rem;border-radius:2px;font-size:0.82rem;letter-spacing:0.06em;">Claim Team Workspace</a>
-      </div>
-    ` : ''}
+    <div style="background:#0F172A;border:1px solid rgba(217,249,157,0.3);border-left:3px solid rgba(217,249,157,0.5);padding:1.25rem;margin:1.5rem 0;">
+      <p style="margin:0 0 0.5rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#D9F99D;">Track your registration</p>
+      <p style="margin:0 0 1rem;color:rgba(241,245,249,0.72);line-height:1.6;">Create a free FieldLogicHQ account to track your registration status, see your game schedule once it's published, and receive announcements from the organizer.</p>
+      <a href="${joinUrl}" style="display:inline-block;background:#D9F99D;color:#0b0f14;text-decoration:none;font-weight:800;padding:0.75rem 1rem;border-radius:2px;font-size:0.82rem;letter-spacing:0.06em;">Create Account &amp; Track Registration →</a>
+    </div>
   `);
 }
 
@@ -126,8 +127,9 @@ export function adminNotificationHtml(p: {
 export function acceptanceHtml(p: {
   teamName: string; coachName: string; ageGroupName: string; tournamentName: string; teamId: string;
   contactEmail?: string;
+  dashboardUrl?: string;
 }) {
-  const profileUrl = `${SITE_URL}/teams/${p.teamId}`;
+  const dashboardUrl = p.dashboardUrl ?? `${SITE_URL}/coaches/tournaments`;
   const contact = p.contactEmail ?? ADMIN_EMAIL;
   return wrap(`
     <h2 style="color:#22C55E;font-size:1.4rem;margin:0 0 1rem;">🎉 Team Accepted!</h2>
@@ -138,7 +140,7 @@ export function acceptanceHtml(p: {
       <p style="margin:0 0 0.75rem;color:rgba(241,245,249,0.8);">If payment is required, the tournament organizer will follow up with instructions for paying outside FieldLogicHQ.</p>
       <p style="margin:1rem 0 0;color:rgba(241,245,249,0.45);font-size:0.85rem;">Questions? Contact <a href="mailto:${contact}" style="color:#D9F99D;">${contact}</a>.</p>
     </div>
-    <a href="${profileUrl}" style="display:inline-block;background:#1E3A8A;color:#fff;padding:0.75rem 1.75rem;border-radius:2px;text-decoration:none;font-weight:700;font-size:0.82rem;letter-spacing:0.06em;">View Team Profile →</a>
+    <a href="${dashboardUrl}" style="display:inline-block;background:#1E3A8A;color:#fff;padding:0.75rem 1.75rem;border-radius:2px;text-decoration:none;font-weight:700;font-size:0.82rem;letter-spacing:0.06em;">View Your Registration Dashboard →</a>
   `);
 }
 
@@ -231,30 +233,21 @@ export function paymentReminderHtml(p: {
   `);
 }
 
-export function teamWorkspaceClaimInviteHtml(p: {
+export function coachAccessReminderHtml(p: {
   teamName: string;
   coachName: string;
-  ageGroupName: string;
   tournamentName: string;
-  claimUrl: string;
-  contactEmail?: string;
+  joinUrl: string;
+  loginUrl: string;
 }) {
   const coachName = p.coachName.trim() ? p.coachName : 'Coach';
   return wrap(`
-    <h2 style="color:#fff;font-size:1.4rem;margin:0 0 1rem;">Keep Managing Your Season</h2>
+    <h2 style="color:#fff;font-size:1.4rem;margin:0 0 1rem;">Your Registration Dashboard</h2>
     <p>Hi <strong>${escapeEmailHtml(coachName)}</strong>,</p>
-    <p>The organizer for <strong>${escapeEmailHtml(p.tournamentName)}</strong> has created a secure FieldLogicHQ Team workspace claim link for <strong>${escapeEmailHtml(p.teamName)}</strong>.</p>
-    <div style="background:#0F172A;border:1px solid rgba(217,249,157,0.3);border-left:3px solid rgba(217,249,157,0.5);padding:1.25rem;margin:1.5rem 0;">
-      <p style="margin:0 0 0.5rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#D9F99D;">Team Workspace</p>
-      <p style="margin:0;line-height:1.8;color:rgba(241,245,249,0.85);">
-        Team: <strong>${escapeEmailHtml(p.teamName)}</strong><br>
-        Division: <strong>${escapeEmailHtml(p.ageGroupName)}</strong><br>
-        Source tournament: <strong>${escapeEmailHtml(p.tournamentName)}</strong>
-      </p>
-    </div>
-    <p style="color:rgba(241,245,249,0.72);line-height:1.6;">Use this link to activate your workspace with the team details already filled in. Team gives your coaches one place for roster, schedule, dues, documents, attendance, lineups, and quick local tournaments. For security, sign in or create your account with the email address that received this invite.</p>
-    <a href="${escapeEmailHtml(p.claimUrl)}" style="display:inline-block;background:#D9F99D;color:#0b0f14;text-decoration:none;font-weight:800;padding:0.75rem 1rem;border-radius:2px;font-size:0.82rem;letter-spacing:0.06em;margin:0.5rem 0 1rem;">Claim Team Workspace</a>
-    <p style="color:rgba(241,245,249,0.4);font-size:0.82rem;">If you do not manage this team, you can ignore this email.</p>
+    <p>Here's your access link for <strong>${escapeEmailHtml(p.teamName)}</strong> in <strong>${escapeEmailHtml(p.tournamentName)}</strong>. Your dashboard shows your registration status, game schedule, and any announcements from the organizer.</p>
+    <a href="${escapeEmailHtml(p.joinUrl)}" style="display:inline-block;background:#D9F99D;color:#0b0f14;text-decoration:none;font-weight:800;padding:0.75rem 1rem;border-radius:2px;font-size:0.82rem;letter-spacing:0.06em;margin:1rem 0;">Create Account &amp; View Dashboard →</a>
+    <p style="color:rgba(241,245,249,0.55);font-size:0.85rem;">Already have an account? <a href="${escapeEmailHtml(p.loginUrl)}" style="color:#D9F99D;">Sign in instead →</a></p>
+    <p style="color:rgba(241,245,249,0.4);font-size:0.82rem;">If you did not register for this tournament, you can ignore this email.</p>
   `);
 }
 
@@ -284,8 +277,8 @@ export function tournamentResultsFinalizedHtml(p: {
     ${p.teamUrl ? `
       <div style="background:#0F172A;border:1px solid rgba(217,249,157,0.3);border-left:3px solid rgba(217,249,157,0.5);padding:1.25rem;margin:1.5rem 0;">
         <p style="margin:0 0 0.5rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#D9F99D;">Keep this team going</p>
-        <p style="margin:0 0 1rem;color:rgba(241,245,249,0.72);line-height:1.6;">Turn the tournament team into a season workspace for roster, schedule, dues, documents, attendance, and lineups.</p>
-        <a href="${escapeEmailHtml(p.teamUrl)}" style="display:inline-block;background:#D9F99D;color:#0b0f14;text-decoration:none;font-weight:800;padding:0.75rem 1rem;border-radius:2px;font-size:0.82rem;letter-spacing:0.06em;">Explore Team Workspace</a>
+        <p style="margin:0 0 1rem;color:rgba(241,245,249,0.72);line-height:1.6;">Upgrade your Coaches Portal for roster, schedule, dues, documents, attendance, and lineups.</p>
+        <a href="${escapeEmailHtml(p.teamUrl)}" style="display:inline-block;background:#D9F99D;color:#0b0f14;text-decoration:none;font-weight:800;padding:0.75rem 1rem;border-radius:2px;font-size:0.82rem;letter-spacing:0.06em;">Explore Coaches Portal</a>
       </div>
     ` : ''}
     <p style="color:rgba(241,245,249,0.4);font-size:0.82rem;line-height:1.55;margin-top:1.5rem;">
@@ -739,11 +732,11 @@ export function teamWorkspaceCancelledHtml(p: {
   resubscribeUrl: string;
 }) {
   return wrap(`
-    <h2 style="color:#F1F5F9;font-size:1.3rem;font-weight:700;margin:0 0 1rem;">Team workspace cancelled</h2>
-    <p style="margin:0 0 1rem;">Your <strong>${p.workspaceName}</strong> Team workspace subscription has been cancelled. The workspace is now inactive.</p>
+    <h2 style="color:#F1F5F9;font-size:1.3rem;font-weight:700;margin:0 0 1rem;">Coaches Portal cancelled</h2>
+    <p style="margin:0 0 1rem;">Your <strong>${p.workspaceName}</strong> Coaches Portal subscription has been cancelled. Premium tools are now inactive.</p>
     <div style="background:#0F172A;border:1px solid rgba(245,158,11,0.3);border-left:3px solid rgba(245,158,11,0.5);padding:1.25rem;margin:1.5rem 0;">
       <p style="margin:0 0 0.5rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#F59E0B;">Your data</p>
-      <p style="margin:0;line-height:1.75;color:rgba(241,245,249,0.8);">Your team data is retained and can be restored by resubscribing.</p>
+      <p style="margin:0;line-height:1.75;color:rgba(241,245,249,0.8);">Your premium team data is archived for the restore window and can be restored by resubscribing. Basic tournament records remain available in Coaches Portal.</p>
     </div>
     <a href="${p.resubscribeUrl}" style="display:inline-block;background:#1E3A8A;color:#fff;padding:0.75rem 1.75rem;border-radius:2px;text-decoration:none;font-weight:700;font-size:0.82rem;letter-spacing:0.06em;">Resubscribe</a>
   `);

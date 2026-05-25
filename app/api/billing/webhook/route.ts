@@ -44,7 +44,7 @@ async function cancelPriorTeamSubscription(subscriptionId: string | null | undef
   try {
     await stripe.subscriptions.cancel(subscriptionId);
   } catch (error) {
-    console.error('[billing webhook] could not cancel prior Team subscription:', error);
+    console.error('[billing webhook] could not cancel prior Coaches Portal subscription:', error);
   }
 }
 
@@ -328,7 +328,7 @@ export async function POST(req: Request) {
           metadata: { stripeCustomerId: customerId, stripeSubscriptionId: sub.id, scope: 'team_workspace' },
         });
 
-        // Team workspace cancellation email
+        // Coaches Portal cancellation email
         const { data: cancelledWs } = await supabaseAdmin
           .from('team_workspaces')
           .select('workspace_org_id')
@@ -347,10 +347,10 @@ export async function POST(req: Request) {
           if (wsOwnerEmail && wsOrg) {
             await sendEmail(
               wsOwnerEmail,
-              `Your ${wsOrg.name} Team workspace has been cancelled`,
+              `Your ${wsOrg.name} Coaches Portal has been cancelled`,
               teamWorkspaceCancelledHtml({
                 workspaceName: wsOrg.name,
-                resubscribeUrl: `${SITE_URL}/pricing`,
+                resubscribeUrl: `${SITE_URL}/coaches/start`,
               }),
             );
           }

@@ -36,9 +36,9 @@ export default function CoachesDashboard({
       <div className={styles.pageHeader}>
         <div className={styles.pageHeaderLeft}>
           <div>
-            <h1 className={styles.pageTitle}>{isTeamWorkspace ? 'Team Dashboard' : 'My Teams'}</h1>
+            <h1 className={styles.pageTitle}>{isTeamWorkspace ? 'Coaches Portal' : 'My Teams'}</h1>
             <p className={styles.pageSub}>
-              {currentOrg?.name} - {isTeamWorkspace ? 'Team Workspace' : 'Coaches Portal'}
+              {currentOrg?.name} - {isTeamWorkspace ? 'Coaches Portal Premium' : 'Coaches Portal'}
             </p>
           </div>
         </div>
@@ -47,8 +47,8 @@ export default function CoachesDashboard({
       {checkoutSucceeded && isTeamWorkspace && assignments.length > 0 && (
         <HelpCallout
           variant="info"
-          title="Team workspace ready"
-          body="Checkout is complete and your team workspace is active."
+          title="Coaches Portal ready"
+          body="Checkout is complete and your Coaches Portal is active."
           cta={{ label: `Open ${assignments[0].teamName}`, href: `/${orgSlug}/coaches/teams/${assignments[0].teamId}` }}
         />
       )}
@@ -56,10 +56,10 @@ export default function CoachesDashboard({
       {assignments.length > 0 && (
         <HelpCallout
           variant="info"
-          title={isTeamWorkspace ? 'Welcome to your Team workspace' : 'Welcome to your coaching portal'}
+          title={isTeamWorkspace ? 'Welcome to Coaches Portal Premium' : 'Welcome to your coaching portal'}
           body={
             isTeamWorkspace
-              ? 'This workspace is scoped to your entitled team, with roster, schedule, dues, budget, and documents in one place.'
+              ? 'This premium portal is scoped to your team, with roster, schedule, dues, budget, and documents in one place.'
               : "You're the operator - your org handles tryouts and setup; you run day-to-day. Start by exploring your team below."
           }
           dismissible
@@ -88,7 +88,7 @@ export default function CoachesDashboard({
           <p className={styles.emptyStateTitle}>No team assignments yet</p>
           <p className={styles.emptyStateSub}>
             {isTeamWorkspace
-              ? 'Your Team workspace exists, but your coach assignment is not active yet.'
+              ? 'Your Coaches Portal exists, but your coach assignment is not active yet.'
               : "You'll appear here once your org admin assigns you to a team."}
           </p>
         </div>

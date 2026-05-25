@@ -22,18 +22,6 @@ const ICON_MAP: Record<string, LucideIcon> = {
   CheckCircle: CheckCircle,
 };
 
-const FALLBACK_RULES: DisplayRuleSection[] = [
-  {
-    icon: 'BookOpen',
-    title: 'Rules Coming Soon',
-    items: [
-      { content: 'The organizer has not published tournament rules yet. Please check back before game day.' },
-    ],
-  },
-];
-
-const FALLBACK_RESOURCES: DisplayResource[] = [];
-
 export default async function RulesPage({
   params,
   searchParams,
@@ -63,18 +51,22 @@ export default async function RulesPage({
     ]);
   }
 
+  const hasRules     = allRules.length > 0;
+  const hasResources = resources.length > 0;
+  const hasContent   = hasRules || hasResources;
+
   const preferredGroup = prefName ? ageGroups.find(g => g.name === prefName) : null;
   const hasTaggedContent = allRules.some(r => r.ageGroupIds?.length);
   const isFiltering = !!preferredGroup && view !== 'all' && hasTaggedContent;
 
-  const displayRules = allRules.length > 0
-    ? (isFiltering
-        ? allRules.filter(r => !r.ageGroupIds?.length || r.ageGroupIds.includes(preferredGroup!.id))
-        : allRules)
-    : FALLBACK_RULES;
+  const displayRules: DisplayRuleSection[] = isFiltering
+    ? allRules.filter(r => !r.ageGroupIds?.length || r.ageGroupIds.includes(preferredGroup!.id))
+    : allRules;
 
-  const displayResources = resources.length > 0 ? resources : FALLBACK_RESOURCES;
   const contactEmail = tournament?.contactEmail ?? org?.contactEmail ?? null;
+
+  const rulesLayout     = tournament?.settings?.rulesLayout     ?? 'columns';
+  const resourcesLayout = tournament?.settings?.resourcesLayout ?? 'list';
 
   return (
     <div className="page-content">
@@ -91,51 +83,62 @@ export default async function RulesPage({
 
       <div className="section">
         <div className="container">
-          {hasTaggedContent && prefName && ageGroups.length > 0 && (
-            <DivisionFilterBar
-              orgSlug={orgSlug}
-              ageGroups={ageGroups}
-              activeName={prefName}
-              isFiltering={isFiltering}
-              viewAllHref={`/${orgSlug}/${tournamentSlug}/rules?view=all`}
-              backHref={`/${orgSlug}/${tournamentSlug}/rules`}
-            />
+          {!hasContent && (
+            <div className="card" style={{ textAlign: 'center', padding: '2rem' }}>
+              <BookOpen size={32} style={{ margin: '0 auto 1rem', opacity: 0.3, display: 'block' }} />
+              <p className="text-muted">Rules and resources for this tournament haven&apos;t been published yet. Check back before game day.</p>
+            </div>
           )}
 
-          <div className={styles.rulesGrid}>
-            {displayRules.map(section => {
-              const Icon = ICON_MAP[section.icon || 'Shield'] || Shield;
-              return (
-                <div key={section.title} className={`card ${styles.ruleCard}`}>
-                  <div className={styles.ruleCardHeader}>
-                    <div className={styles.ruleIcon}>
-                      <Icon size={20} />
-                    </div>
-                    <h2 className={styles.ruleTitle}>{section.title}</h2>
-                  </div>
-                  <ul className={styles.ruleList}>
-                    {section.items.map((item, i) => (
-                      <li key={i} className={styles.ruleItem}>
-                        <span className={styles.ruleBullet} />
-                        {item.content}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              );
-            })}
-          </div>
+          {hasRules && (
+            <>
+              {hasTaggedContent && prefName && ageGroups.length > 0 && (
+                <DivisionFilterBar
+                  orgSlug={orgSlug}
+                  ageGroups={ageGroups}
+                  activeName={prefName}
+                  isFiltering={isFiltering}
+                  viewAllHref={`/${orgSlug}/${tournamentSlug}/rules?view=all`}
+                  backHref={`/${orgSlug}/${tournamentSlug}/rules`}
+                />
+              )}
 
-          {displayResources.length > 0 && (
+              <div className={`${styles.rulesGrid}${rulesLayout === 'single' ? ` ${styles.rulesGridSingle}` : ''}`}>
+                {displayRules.map(section => {
+                  const Icon = ICON_MAP[section.icon || 'Shield'] || Shield;
+                  return (
+                    <div key={section.title} className={`card ${styles.ruleCard}`}>
+                      <div className={styles.ruleCardHeader}>
+                        <div className={styles.ruleIcon}>
+                          <Icon size={20} />
+                        </div>
+                        <h2 className={styles.ruleTitle}>{section.title}</h2>
+                      </div>
+                      <ul className={styles.ruleList}>
+                        {section.items.map((item, i) => (
+                          <li key={i} className={styles.ruleItem}>
+                            <span className={styles.ruleBullet} />
+                            {item.content}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  );
+                })}
+              </div>
+            </>
+          )}
+
+          {hasResources && (
             <div className={`card ${styles.resourcesCard}`}>
               <div className={styles.ruleCardHeader}>
                 <div className={styles.ruleIcon}>
                   <FileText size={20} />
                 </div>
-                <h2 className={styles.ruleTitle}>Downloads & Resources</h2>
+                <h2 className={styles.ruleTitle}>Downloads &amp; Resources</h2>
               </div>
-              <div className={styles.resourcesList} style={{ marginTop: '1.5rem' }}>
-                {displayResources.map(r => {
+              <div className={`${styles.resourcesList}${resourcesLayout === 'grid' ? ` ${styles.resourcesGrid}` : ''}`} style={{ marginTop: '1.5rem' }}>
+                {resources.map(r => {
                   const isSupabase = r.url.includes('supabase.co');
                   const downloadUrl = isSupabase ? `${r.url}?download=` : r.url;
                   const isExternal = !isSupabase && r.url.startsWith('http');
@@ -158,15 +161,17 @@ export default async function RulesPage({
             </div>
           )}
 
-          <div className={`card ${styles.disclaimerCard}`}>
-            <p>
-              <strong>Note:</strong> These rules are subject to change at the discretion of the tournament
-              director. Updates will be posted on the News & Announcements page.
-              {contactEmail && (
-                <> For questions or clarifications, contact the tournament office at <a href={`mailto:${contactEmail}`}>{contactEmail}</a>.</>
-              )}
-            </p>
-          </div>
+          {hasContent && (
+            <div className={`card ${styles.disclaimerCard}`}>
+              <p>
+                <strong>Note:</strong> These rules are subject to change at the discretion of the tournament
+                director. Updates will be posted on the News &amp; Announcements page.
+                {contactEmail && (
+                  <> For questions or clarifications, contact the tournament office at <a href={`mailto:${contactEmail}`}>{contactEmail}</a>.</>
+                )}
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </div>

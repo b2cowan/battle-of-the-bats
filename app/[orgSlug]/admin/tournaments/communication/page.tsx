@@ -357,7 +357,7 @@ export default function AdminCommunicationPage() {
 
           <div className={styles.composePanelHeader}>
             <span className={styles.composePanelTitle}>{editingId ? 'Edit Post' : 'New Message'}</span>
-            <button type="button" className="btn btn-ghost btn-sm" onClick={cancelCompose}>
+            <button type="button" className="btn btn-ghost btn-data" onClick={cancelCompose}>
               <X size={14} /> Cancel
             </button>
           </div>
@@ -493,13 +493,13 @@ export default function AdminCommunicationPage() {
           {/* ── Actions ───────────────────────────────────────────────────── */}
           <div className={styles.composeActions}>
             {!editingId && (
-              <button type="button" className="btn btn-ghost btn-sm" onClick={saveDraftAndClose}>
+              <button type="button" className="btn btn-ghost btn-data" onClick={saveDraftAndClose}>
                 Save Draft
               </button>
             )}
             <button
               type="submit"
-              className="btn btn-primary"
+              className="btn btn-lime btn-data"
               disabled={sending || (!channelSite && !channelEmail)}
             >
               {sending

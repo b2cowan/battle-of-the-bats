@@ -1,14 +1,13 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { UserPlus, CheckCircle, AlertCircle, ChevronDown, RefreshCw, Send, ShieldCheck, CreditCard } from 'lucide-react';
-import { useParams } from 'next/navigation';
+import { UserPlus, AlertCircle, ChevronDown, RefreshCw, CreditCard } from 'lucide-react';
+import { useParams, useRouter } from 'next/navigation';
 import { isPublicPageEnabled } from '@/lib/public-pages';
 import { AgeGroup, Tournament, Contact, TournamentRegistrationField } from '@/lib/types';
 import styles from '../../register/register.module.css';
 import { fetchPublicTournamentData } from '@/lib/public-tournament-client';
-import RegistrationConfirmationCta from '@/components/marketing/RegistrationConfirmationCta';
 
-type Step = 'form' | 'submitting' | 'success' | 'error';
+type Step = 'form' | 'submitting' | 'error';
 
 type FeeSchedule = {
   depositAmount: number | null;
@@ -71,6 +70,7 @@ function resolveFeeSchedule(tournament: Tournament | null, group: AgeGroup | und
 
 export default function RegisterPage() {
   const params         = useParams();
+  const router         = useRouter();
   const orgSlug        = params.orgSlug as string;
   const tournamentSlug = params.tournamentSlug as string;
 
@@ -160,7 +160,11 @@ export default function RegisterPage() {
         throw new Error(error ?? 'Registration failed');
       }
 
-      setStep('success');
+      const joinUrl = new URL('/coaches/join', window.location.origin);
+      joinUrl.searchParams.set('email', form.email);
+      joinUrl.searchParams.set('next', '/coaches/tournaments');
+      joinUrl.searchParams.set('registered', '1');
+      router.push(joinUrl.toString());
     } catch (err: unknown) {
       setErrorMsg(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
       setStep('error');
@@ -239,61 +243,6 @@ export default function RegisterPage() {
                   <div className={styles.stepNum}>3</div>
                   <span className={styles.stepText}>Next Steps</span>
                 </div>
-              </div>
-            )}
-
-            {step === 'success' && (
-              <div className={`card ${styles.successCard}`}>
-                <CheckCircle size={56} style={{ color: 'var(--success)', margin: '0 auto 1.5rem', display: 'block' }} />
-                <h2 className={styles.successTitle}>Registration Received!</h2>
-                <p className={styles.successText}>
-                  Your entry for <strong>{form.teamName}</strong> has been successfully submitted.
-                </p>
-
-                <div className={styles.successSteps}>
-                  <div className={styles.successItem}>
-                    <div className={styles.successIcon}><Send size={20} /></div>
-                    <div>
-                      <span className={styles.successTitleInner}>Confirmation Sent</span>
-                      <p className={styles.successDescInner}>Check <strong>{form.email}</strong> for your registration summary and next steps.</p>
-                    </div>
-                  </div>
-                  <div className={styles.successItem}>
-                    <div className={styles.successIcon}><ShieldCheck size={20} /></div>
-                    <div>
-                      <span className={styles.successTitleInner}>Admin Review</span>
-                      <p className={styles.successDescInner}>Our tournament director will review your team. This typically takes 24-48 hours.</p>
-                    </div>
-                  </div>
-                  <div className={styles.successItem}>
-                    <div className={styles.successIcon}><CreditCard size={20} /></div>
-                    <div>
-                      <span className={styles.successTitleInner}>Payment Instructions</span>
-                      <p className={styles.successDescInner}>If payment is required, the organizer will send instructions directly. FieldLogicHQ does not process online payments.</p>
-                    </div>
-                  </div>
-                </div>
-
-                {tournament && (
-                  <RegistrationConfirmationCta
-                    orgSlug={orgSlug}
-                    tournamentSlug={tournamentSlug}
-                    tournamentName={tournament.name}
-                  />
-                )}
-
-                <button
-                  className="btn btn-outline"
-                  style={{ marginTop: '1rem' }}
-                  onClick={() => {
-                    setStep('form');
-                    setForm({ teamName: '', coachName: '', email: '', ageGroupId: '' });
-                    setCustomAnswers({});
-                    setCustomFiles({});
-                  }}
-                >
-                  Register Another Team
-                </button>
               </div>
             )}
 

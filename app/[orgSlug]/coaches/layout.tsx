@@ -34,10 +34,10 @@ export default async function CoachesLayout({
     return (
       <OrgProvider>
         <div className={styles.notAssigned}>
-          <h2>{isTeamWorkspace ? 'Team workspace not ready' : 'Not assigned to any teams'}</h2>
+          <h2>{isTeamWorkspace ? 'Coaches Portal not ready' : 'Not assigned to any teams'}</h2>
           <p>
             {isTeamWorkspace
-              ? `Your coach assignment or team entitlement is not active for ${orgName}.`
+              ? `Your coach assignment or Premium entitlement is not active for ${orgName}.`
               : `You don't have an active coaching assignment for ${orgName}.`}
           </p>
           <p className={styles.notAssignedContact}>
@@ -48,7 +48,7 @@ export default async function CoachesLayout({
             )}
           </p>
           <Link href={`/${orgSlug}`} className={styles.notAssignedBack}>
-            {isTeamWorkspace ? 'Back to workspace home' : `Back to ${orgName}`}
+            {isTeamWorkspace ? 'Back to Coaches Portal home' : `Back to ${orgName}`}
           </Link>
         </div>
       </OrgProvider>

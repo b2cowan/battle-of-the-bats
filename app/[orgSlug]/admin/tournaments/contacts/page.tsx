@@ -254,7 +254,7 @@ export default function AdminContactsPage() {
                     type="checkbox"
                     checked={form.setAsPublic}
                     onChange={e => setForm(f => ({ ...f, setAsPublic: e.target.checked }))}
-                    style={{ width: 16, height: 16, accentColor: 'var(--blueprint-blue)' }}
+                    style={{ width: 16, height: 16 }}
                   />
                   Set as public contact for this tournament
                 </label>

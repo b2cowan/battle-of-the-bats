@@ -43,8 +43,8 @@ export default function OrgAdminHub() {
         href: `${base}/settings/pdf`,
       },
       {
-        label: 'Team Links',
-        desc: 'Invite standalone Team workspaces, review link requests, and see linked-team history',
+        label: 'Coaches Portal Links',
+        desc: 'Invite paid Coaches Portals, review link requests, and see portal-link history',
         icon: Link2,
         href: `${base}/team-links`,
       },

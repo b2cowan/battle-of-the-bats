@@ -138,6 +138,16 @@ export async function getDestinationForMembership(member: MemberRow): Promise<st
   return `/${slug}/admin`;
 }
 
+async function checkHasTournamentRegistrations(email: string | undefined): Promise<boolean> {
+  if (!email) return false;
+  const { count } = await supabaseAdmin
+    .from('teams')
+    .select('id', { count: 'exact', head: true })
+    .ilike('email', email)
+    .limit(1);
+  return (count ?? 0) > 0;
+}
+
 export async function getAuthDestination() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -157,6 +167,9 @@ export async function getAuthDestination() {
     .eq('status', 'active');
 
   if (!members || members.length === 0) {
+    // No org memberships — check if this is a tournament coach
+    const hasTournamentRegs = await checkHasTournamentRegistrations(user.email);
+    if (hasTournamentRegs) return '/coaches/tournaments';
     return '/auth/signup';
   }
 

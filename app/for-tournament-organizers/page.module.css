@@ -1,0 +1,493 @@
+/* ── Hero ────────────────────────────────────────────────────────────────── */
+.hero {
+  padding: 6rem 0 5rem;
+  border-bottom: 1px solid rgba(var(--blueprint-blue-rgb), 0.2);
+  position: relative;
+  overflow: hidden;
+}
+
+.heroBg {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 80% 60% at 15% 0%, rgba(var(--blueprint-blue-rgb), 0.1) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+.heroEyebrow {
+  font-family: var(--font-data);
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--logic-lime);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 1rem;
+}
+
+.heroTitle {
+  font-family: var(--font-display);
+  font-size: clamp(2.5rem, 6vw, 4.5rem);
+  font-weight: 900;
+  color: var(--fl-text);
+  line-height: 1.05;
+  margin-bottom: 1.5rem;
+  letter-spacing: -0.01em;
+}
+
+.heroAccent {
+  color: var(--logic-lime);
+}
+
+.heroSub {
+  font-family: var(--font-data);
+  font-size: 0.95rem;
+  color: var(--data-gray);
+  max-width: 52ch;
+  line-height: 1.7;
+  margin-bottom: 2.5rem;
+}
+
+.heroActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 2.5rem;
+}
+
+.trustRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem 2.5rem;
+}
+
+.trustItem {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--font-data);
+  font-size: 0.7rem;
+  color: var(--data-gray);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.trustDot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--logic-lime);
+  flex-shrink: 0;
+}
+
+/* ── Shared section ──────────────────────────────────────────────────────── */
+.section {
+  padding: 5rem 0;
+  border-bottom: 1px solid rgba(var(--blueprint-blue-rgb), 0.2);
+}
+
+.sectionEyebrow {
+  font-family: var(--font-data);
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--logic-lime);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 0.4rem;
+}
+
+.sectionTitle {
+  font-family: var(--font-data);
+  font-size: clamp(1.35rem, 3vw, 2rem);
+  font-weight: 700;
+  color: var(--fl-text);
+  margin-bottom: 0.6rem;
+  line-height: 1.2;
+}
+
+.sectionSub {
+  font-family: var(--font-data);
+  font-size: 0.85rem;
+  color: var(--data-gray);
+  max-width: 60ch;
+  line-height: 1.7;
+  margin-bottom: 2.5rem;
+}
+
+/* ── Pain section ────────────────────────────────────────────────────────── */
+.painGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+  margin-top: 1.75rem;
+}
+
+.painCard {
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.25);
+  background: rgba(var(--blueprint-blue-rgb), 0.03);
+  padding: 1.5rem;
+}
+
+.painCardTitle {
+  font-family: var(--font-data);
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--fl-text);
+  margin-bottom: 0.45rem;
+}
+
+.painCardBody {
+  font-family: var(--font-data);
+  font-size: 0.75rem;
+  color: var(--data-gray);
+  line-height: 1.65;
+}
+
+/* ── Steps / How it works ────────────────────────────────────────────────── */
+.stepsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+}
+
+.stepCard {
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.3);
+  padding: 1.75rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.stepNum {
+  font-family: var(--font-display);
+  font-size: 5rem;
+  font-weight: 900;
+  color: rgba(var(--blueprint-blue-rgb), 0.12);
+  line-height: 1;
+  position: absolute;
+  top: 0.75rem;
+  right: 1.25rem;
+  pointer-events: none;
+  user-select: none;
+}
+
+.stepLabel {
+  font-family: var(--font-data);
+  font-size: 0.6rem;
+  font-weight: 700;
+  color: var(--logic-lime);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 0.5rem;
+}
+
+.stepTitle {
+  font-family: var(--font-data);
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--fl-text);
+  margin-bottom: 0.5rem;
+}
+
+.stepBody {
+  font-family: var(--font-data);
+  font-size: 0.75rem;
+  color: var(--data-gray);
+  line-height: 1.65;
+}
+
+/* ── Plan comparison ─────────────────────────────────────────────────────── */
+.planGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  align-items: start;
+}
+
+.planCard {
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.3);
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.planCardFeatured {
+  border-color: rgba(var(--logic-lime-rgb), 0.4);
+  background: rgba(var(--logic-lime-rgb), 0.02);
+}
+
+.planName {
+  font-family: var(--font-data);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--logic-lime);
+  margin-bottom: 0.4rem;
+}
+
+.planPrice {
+  display: flex;
+  align-items: baseline;
+  gap: 0.25rem;
+  margin-bottom: 0.25rem;
+}
+
+.planAmount {
+  font-family: var(--font-display);
+  font-size: 2.5rem;
+  font-weight: 900;
+  color: var(--fl-text);
+  line-height: 1;
+}
+
+.planPeriod {
+  font-family: var(--font-data);
+  font-size: 0.8rem;
+  color: var(--data-gray);
+}
+
+.planNote {
+  font-family: var(--font-data);
+  font-size: 0.72rem;
+  color: var(--data-gray);
+}
+
+.planTagline {
+  font-family: var(--font-data);
+  font-size: 0.8rem;
+  color: var(--fl-text);
+  line-height: 1.55;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid rgba(var(--blueprint-blue-rgb), 0.2);
+}
+
+.planFeatureLabel {
+  font-family: var(--font-data);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--data-gray);
+  margin-bottom: 0.65rem;
+}
+
+.planFeatures {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  flex: 1;
+}
+
+.planFeatureItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+  font-family: var(--font-data);
+  font-size: 0.75rem;
+  color: var(--data-gray);
+  line-height: 1.5;
+}
+
+.planFeatureBullet {
+  color: var(--logic-lime);
+  flex-shrink: 0;
+}
+
+.planCta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-data);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-decoration: none;
+  padding: 0.85rem 1.5rem;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.planCtaFree {
+  background: transparent;
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.4);
+  color: var(--fl-text);
+}
+
+.planCtaFree:hover {
+  border-color: var(--blueprint-blue);
+  color: var(--logic-lime);
+}
+
+.planCtaPaid {
+  background: var(--logic-lime);
+  border: 1px solid var(--logic-lime);
+  color: var(--pitch-black);
+}
+
+.planCtaPaid:hover {
+  background: white;
+  border-color: white;
+}
+
+.planNote2 {
+  font-family: var(--font-data);
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.3);
+  text-align: center;
+  margin-top: 0.5rem;
+}
+
+/* ── Cross-sell ──────────────────────────────────────────────────────────── */
+.crossSellSection {
+  padding: 4rem 0;
+  border-bottom: 1px solid rgba(var(--blueprint-blue-rgb), 0.2);
+}
+
+.crossSellEyebrow {
+  font-family: var(--font-data);
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--data-gray);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 1.25rem;
+}
+
+.crossSellGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+}
+
+.crossSellCard {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  padding: 1.35rem;
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.22);
+  background: rgba(var(--blueprint-blue-rgb), 0.02);
+  text-decoration: none;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.crossSellCard:hover {
+  border-color: rgba(var(--blueprint-blue-rgb), 0.45);
+  background: rgba(var(--blueprint-blue-rgb), 0.05);
+}
+
+.crossSellLabel {
+  font-family: var(--font-data);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--logic-lime);
+}
+
+.crossSellQ {
+  font-family: var(--font-data);
+  font-size: 0.83rem;
+  font-weight: 700;
+  color: var(--fl-text);
+  line-height: 1.35;
+}
+
+.crossSellBody {
+  font-family: var(--font-data);
+  font-size: 0.73rem;
+  color: var(--data-gray);
+  line-height: 1.55;
+  flex: 1;
+}
+
+.crossSellCta {
+  font-family: var(--font-data);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--logic-lime);
+}
+
+/* ── Bottom CTA ──────────────────────────────────────────────────────────── */
+.ctaSection {
+  position: relative;
+  padding: 6rem 0;
+  text-align: center;
+  overflow: hidden;
+}
+
+.ctaBg {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at center, rgba(var(--blueprint-blue-rgb), 0.12) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.ctaTitle {
+  font-family: var(--font-data);
+  font-size: clamp(1.5rem, 3vw, 2.25rem);
+  font-weight: 700;
+  color: var(--fl-text);
+  margin-bottom: 1rem;
+  position: relative;
+  line-height: 1.25;
+}
+
+.ctaAccent {
+  color: var(--logic-lime);
+}
+
+.ctaSub {
+  font-family: var(--font-data);
+  font-size: 0.85rem;
+  color: var(--data-gray);
+  margin-bottom: 2.5rem;
+  position: relative;
+}
+
+.ctaActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: center;
+  position: relative;
+  margin-bottom: 1.5rem;
+}
+
+.ctaFootnote {
+  font-family: var(--font-data);
+  font-size: 0.68rem;
+  color: rgba(255, 255, 255, 0.2);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  position: relative;
+}
+
+/* ── Responsive ──────────────────────────────────────────────────────────── */
+@media (max-width: 900px) {
+  .planGrid {
+    grid-template-columns: 1fr;
+    max-width: 480px;
+  }
+
+  .crossSellGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .painGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .stepsGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .heroActions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}

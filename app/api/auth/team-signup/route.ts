@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { sendEmail, signupVerificationHtml } from '@/lib/email';
+import { COACHES_START_PATH, normalizeCoachPortalNext } from '@/lib/coaches-portal-routes';
 
 function shouldRequireEmailVerification() {
   const explicit = process.env.REQUIRE_SIGNUP_EMAIL_VERIFICATION;
@@ -10,11 +11,13 @@ function shouldRequireEmailVerification() {
 
 async function rollbackAuthUser(id: string) {
   const { error } = await supabaseAdmin.auth.admin.deleteUser(id);
-  if (error) console.error('Team signup rollback auth user error:', error);
+  if (error) console.error('Coaches Portal signup rollback auth user error:', error);
 }
 
 function normalizeNext(value: unknown): string {
-  return typeof value === 'string' && value.startsWith('/') ? value.slice(0, 240) : '/team';
+  return typeof value === 'string'
+    ? normalizeCoachPortalNext(value.slice(0, 240), COACHES_START_PATH)
+    : COACHES_START_PATH;
 }
 
 export async function POST(req: Request) {
@@ -89,7 +92,7 @@ export async function POST(req: Request) {
       await sendEmail(
         normalizedEmail,
         'Verify your FieldLogicHQ email',
-        signupVerificationHtml({ orgName: 'your Team workspace', verifyUrl }),
+        signupVerificationHtml({ orgName: 'your Coaches Portal', verifyUrl }),
       );
 
       return NextResponse.json({
@@ -101,7 +104,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ success: true, requiresEmailVerification: false, email: normalizedEmail });
   } catch (err) {
-    console.error('Team signup route error:', err);
+    console.error('Coaches Portal signup route error:', err);
     if (userId) {
       await rollbackAuthUser(userId).catch(() => {});
     }

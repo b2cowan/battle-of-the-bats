@@ -10,10 +10,6 @@ import {
   duplicateTournamentTeamMessage,
   findDuplicateTournamentTeam,
 } from '@/lib/team-registration-duplicates';
-import {
-  buildTeamWorkspaceClaimUrl,
-  createTournamentTeamWorkspaceClaim,
-} from '@/lib/team-workspace-claims';
 
 const REGISTRATION_FILES_BUCKET = 'tournament-registration-files';
 const MAX_REGISTRATION_FILE_BYTES = 10 * 1024 * 1024;
@@ -436,23 +432,6 @@ export async function POST(req: NextRequest) {
       || organization.contact_email
       || undefined;
     const adminEmailToUse = tournament.contact_email || divisionContactEmail || footerContactEmail || ADMIN_EMAIL;
-    let teamWorkspaceClaimUrl: string | undefined;
-
-    if (!isWaitlist && data?.id) {
-      try {
-        const claim = await createTournamentTeamWorkspaceClaim({
-          tournamentId,
-          tournamentTeamId: data.id,
-          contactEmail: email,
-        });
-        teamWorkspaceClaimUrl = buildTeamWorkspaceClaimUrl(
-          claim.token,
-          req.headers.get('origin') ?? process.env.NEXT_PUBLIC_APP_URL,
-        );
-      } catch (claimError) {
-        console.error('Registration Team workspace claim creation error:', claimError);
-      }
-    }
 
     await Promise.allSettled([
       sendEmail(
@@ -460,7 +439,7 @@ export async function POST(req: NextRequest) {
         isWaitlist ? `Waitlist Confirmation - ${teamName}` : `Registration Received - ${teamName}`,
         isWaitlist
           ? waitlistConfirmationHtml({ teamName, coachName, ageGroupName, tournamentName, contactEmail: footerContactEmail })
-          : registrationConfirmationHtml({ teamName, coachName, ageGroupName, tournamentName, contactEmail: footerContactEmail, teamWorkspaceClaimUrl })
+          : registrationConfirmationHtml({ teamName, coachName, ageGroupName, tournamentName, contactEmail: footerContactEmail, coachEmail: email })
       ),
       sendEmail(
         adminEmailToUse,

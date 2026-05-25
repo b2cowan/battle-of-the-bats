@@ -1,7 +1,7 @@
 'use client';
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import Link from 'next/link';
-import { Users, X, RefreshCw, ChevronDown, ChevronUp, AlertCircle, Plus, Trash2, LayoutDashboard, ArrowLeftRight, Mail, Pencil, ClipboardList } from 'lucide-react';
+import { Users, X, RefreshCw, ChevronDown, ChevronUp, AlertCircle, Plus, Trash2, LayoutDashboard, ArrowLeftRight, Mail, Pencil, ClipboardList, ExternalLink, ListChecks } from 'lucide-react';
 import { formatPoolName } from '@/lib/utils';
 import { useTournament } from '@/lib/tournament-context';
 import { useOrg } from '@/lib/org-context';
@@ -91,15 +91,6 @@ type FeeMode = 'tournament' | 'age_group';
 type Status = 'pending' | 'accepted' | 'rejected' | 'waitlist';
 type BulkAction = 'accept' | 'reject' | 'waitlist' | 'mark_deposit_paid' | 'mark_paid';
 
-type TeamClaimInviteResult = {
-  teamId: string;
-  teamName: string;
-  email: string;
-  ageGroupName: string;
-  claimUrl: string;
-  emailed: boolean;
-};
-
 interface FeeSchedule {
   depositAmount: number | null;
   depositDueDate: string | null;
@@ -130,6 +121,24 @@ const PAYMENT_FILTER_LABEL: Record<PaymentFilter, string> = {
   'deposit-paid': 'Deposit paid',
   paid: 'Paid in full',
   'past-due': 'Past due',
+};
+const APPROVAL_STATUS_LABEL: Record<Status, string> = {
+  pending: 'Pending',
+  accepted: 'Accepted',
+  waitlist: 'Waitlist',
+  rejected: 'Rejected',
+};
+const APPROVAL_STATUS_INITIAL: Record<Status, string> = {
+  pending: 'P',
+  accepted: 'A',
+  waitlist: 'W',
+  rejected: 'R',
+};
+const APPROVAL_STATUS_ORDER: Record<Status, number> = {
+  pending: 1,
+  accepted: 2,
+  waitlist: 3,
+  rejected: 4,
 };
 
 function formatMoney(value: number) {
@@ -163,6 +172,57 @@ function getPaymentDue(team: TeamRecord, fee: FeeSchedule) {
     dueDate: fee.totalFeeDueDate,
     label: 'Balance due',
   };
+}
+
+function hasDepositStep(fee: FeeSchedule) {
+  return Boolean(fee.depositAmount && fee.totalFeeAmount && fee.depositAmount < fee.totalFeeAmount);
+}
+
+function getPaymentTooltip(team: TeamRecord, fee: FeeSchedule, status: PaymentStatus) {
+  if (!fee.totalFeeAmount) return 'No payment schedule configured';
+  const parts = [PAYMENT_STATUS_LABEL[status]];
+  if (fee.depositAmount) {
+    parts.push(`Deposit ${formatMoney(team.depositPaid)} / ${formatMoney(fee.depositAmount)}`);
+  }
+  parts.push(`Total ${formatMoney(team.totalPaid)} / ${formatMoney(fee.totalFeeAmount)}`);
+  const due = getPaymentDue(team, fee);
+  if (due) {
+    const dueDate = due.dueDate ? ` by ${new Date(due.dueDate + 'T12:00:00').toLocaleDateString()}` : '';
+    parts.push(`${due.label}: ${formatMoney(due.amount)}${dueDate}`);
+  }
+  return parts.join(' - ');
+}
+
+function getPaymentSymbolSteps(team: TeamRecord, fee: FeeSchedule, today: string) {
+  if (!fee.totalFeeAmount) return [];
+
+  const fullPaid = team.totalPaid >= fee.totalFeeAmount;
+  const totalPastDue = Boolean(fee.totalFeeDueDate && today > fee.totalFeeDueDate && !fullPaid);
+
+  if (!hasDepositStep(fee)) {
+    return [{
+      key: 'total',
+      label: fullPaid ? 'Paid in full' : totalPastDue ? 'Past due' : 'Payment pending',
+      tone: fullPaid ? 'paid' : totalPastDue ? 'danger' : 'pending',
+    }];
+  }
+
+  const depositAmount = fee.depositAmount ?? 0;
+  const depositPaid = fullPaid || team.depositPaid >= depositAmount;
+  const depositPastDue = Boolean(fee.depositDueDate && today > fee.depositDueDate && !depositPaid);
+
+  return [
+    {
+      key: 'deposit',
+      label: depositPaid ? 'Deposit paid' : depositPastDue ? 'Deposit past due' : 'Deposit pending',
+      tone: depositPaid ? 'paid' : depositPastDue ? 'danger' : 'pending',
+    },
+    {
+      key: 'total',
+      label: fullPaid ? 'Paid in full' : totalPastDue ? 'Balance past due' : 'Balance pending',
+      tone: fullPaid ? 'paid' : totalPastDue ? 'danger' : 'pending',
+    },
+  ];
 }
 
 function matchesPaymentFilter(status: PaymentStatus, filter: PaymentFilter) {
@@ -206,7 +266,6 @@ export default function UnifiedTeamsPage() {
   const [paymentFilter, setPaymentFilter] = useState<PaymentFilter>('all');
   const [showReminderModal, setShowReminderModal] = useState(false);
   const [paymentInstructions, setPaymentInstructions] = useState('');
-  const [claimInviteResults, setClaimInviteResults] = useState<TeamClaimInviteResult[]>([]);
   const [editingTeam, setEditingTeam] = useState<TeamRecord | null>(null);
   const [editForm, setEditForm] = useState({ name: '', coach: '', email: '' });
   const [feedback, setFeedback] = useState<{
@@ -289,8 +348,9 @@ export default function UnifiedTeamsPage() {
 
       if (stableSortedIds.length === 0) {
         const initialSorted = [...rData].sort((a: any, b: any) => {
-          const statusOrder: any = { accepted: 1, waitlist: 2, pending: 3, rejected: 4 };
-          if (statusOrder[a.status] !== statusOrder[b.status]) return statusOrder[a.status] - statusOrder[b.status];
+          if (APPROVAL_STATUS_ORDER[a.status as Status] !== APPROVAL_STATUS_ORDER[b.status as Status]) {
+            return APPROVAL_STATUS_ORDER[a.status as Status] - APPROVAL_STATUS_ORDER[b.status as Status];
+          }
           if (a.paymentStatus !== b.paymentStatus) return a.paymentStatus === 'paid' ? -1 : 1;
           return new Date(b.registered_at).getTime() - new Date(a.registered_at).getTime();
         });
@@ -406,40 +466,35 @@ export default function UnifiedTeamsPage() {
     await patch(editingTeam.id, updates);
   }
 
-  function sendSingleWorkspaceInvite(team: TeamRecord) {
+  function resendAccessLink(team: TeamRecord) {
     if (!currentTournament) return;
     setFeedback({
       isOpen: true,
-      title: 'Send Coach Workspace Invite?',
-      message: `${team.name} will receive a secure link to access their team's workspace.`,
-      items: [{ label: team.name, note: undefined }],
-      confirmText: 'Send Invite',
+      title: 'Resend Access Link?',
+      message: `${team.name} will receive an email with a link to their registration dashboard.`,
+      items: [{ label: team.name, note: team.email }],
+      confirmText: 'Send Link',
       type: 'primary',
       onConfirm: async () => {
-        setWorking('team-claims');
+        setWorking('resend-access');
         try {
-          const res = await fetch(`/api/admin/tournaments/${encodeURIComponent(currentTournament.id)}/team-claims${orgQuery}`, {
-            credentials: 'same-origin',
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ ids: [team.id], sendEmail: true }),
-          });
+          const res = await fetch(
+            `/api/admin/tournaments/${encodeURIComponent(currentTournament.id)}/registrations/${encodeURIComponent(team.id)}/resend-access${orgQuery}`,
+            { credentials: 'same-origin', method: 'POST' },
+          );
           const data = await res.json();
-          if (!res.ok) throw new Error(data.error ?? 'Workspace invite could not be sent.');
-          const linksCreated = data.linksCreated ?? 0;
+          if (!res.ok) throw new Error(data.error ?? 'Access link could not be sent.');
           setFeedback({
             isOpen: true,
-            title: linksCreated > 0 ? 'Workspace Invite Sent' : 'No Invite Sent',
-            message: linksCreated > 0
-              ? `Invite link created and email sent to ${team.email}.`
-              : 'This team may have already claimed their workspace.',
-            type: linksCreated > 0 ? 'success' : 'warning',
+            title: 'Access Link Sent',
+            message: `An email with the dashboard link was sent to ${team.email}.`,
+            type: 'success',
           });
         } catch (error) {
           setFeedback({
             isOpen: true,
-            title: 'Workspace Invite Failed',
-            message: error instanceof Error ? error.message : 'Workspace invite could not be sent.',
+            title: 'Send Failed',
+            message: error instanceof Error ? error.message : 'Access link could not be sent.',
             type: 'danger',
           });
         } finally {
@@ -864,83 +919,6 @@ export default function UnifiedTeamsPage() {
     }
   }
 
-  async function sendTeamClaimInvites() {
-    if (!currentTournament || selectedRegistrationIds.size === 0) return;
-
-    const selectedIds = [...selectedRegistrationIds];
-    const selectedTeams = regs.filter(team => selectedRegistrationIds.has(team.id));
-    const withEmail = selectedTeams.filter(team => team.email?.trim()).length;
-    const eligibleWithEmail = selectedTeams.filter(team => (team.status === 'accepted' || team.status === 'pending') && team.email?.trim()).length;
-
-    if (withEmail === 0) {
-      setFeedback({
-        isOpen: true,
-        title: 'No Team Contacts',
-        message: 'Select at least one pending or accepted team with an email address before sending workspace invites.',
-        type: 'warning',
-      });
-      return;
-    }
-    if (eligibleWithEmail === 0) {
-      setFeedback({
-        isOpen: true,
-        title: 'No Eligible Teams',
-        message: 'Workspace invites can only be sent to pending or accepted teams with an email address. All selected teams are either waitlisted, rejected, or missing an email.',
-        type: 'warning',
-      });
-      return;
-    }
-
-    const inviteItems = selectedTeams.map(t => {
-      if (!t.email?.trim()) return { label: t.name, note: 'missing email' };
-      if (t.status === 'waitlist') return { label: t.name, note: 'waitlisted' };
-      if (t.status === 'rejected') return { label: t.name, note: 'rejected' };
-      return { label: t.name };
-    });
-
-    setFeedback({
-      isOpen: true,
-      title: 'Send Coach Workspace Invites?',
-      message: `Each eligible coach will receive a secure link to access their team's workspace — for roster management, schedule, and team communication.`,
-      items: inviteItems,
-      confirmText: 'Send Invites',
-      type: 'primary',
-      onConfirm: async () => {
-        setWorking('team-claims');
-        setClaimInviteResults([]);
-        try {
-          const res = await fetch(`/api/admin/tournaments/${encodeURIComponent(currentTournament.id)}/team-claims${orgQuery}`, {
-            credentials: 'same-origin',
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ ids: selectedIds, sendEmail: true }),
-          });
-          const data = await res.json();
-          if (!res.ok) throw new Error(data.error ?? 'Team claim invites could not be sent.');
-
-          const skippedCount = data.skippedCount ?? 0;
-          const linksCreated = data.linksCreated ?? 0;
-          setClaimInviteResults(Array.isArray(data.results) ? data.results : []);
-          setFeedback({
-            isOpen: true,
-            title: linksCreated > 0 ? 'Workspace Invites Sent' : 'No Invites Sent',
-            message: `${linksCreated} invite link${linksCreated === 1 ? '' : 's'} created and ${data.emailsSent ?? 0} email${(data.emailsSent ?? 0) === 1 ? '' : 's'} sent.${skippedCount > 0 ? ` ${skippedCount} team${skippedCount === 1 ? ' was' : 's were'} skipped (ineligible or missing email).` : ''}`,
-            type: linksCreated > 0 ? 'success' : 'warning',
-          });
-        } catch (error) {
-          setFeedback({
-            isOpen: true,
-            title: 'Workspace Invites Failed',
-            message: error instanceof Error ? error.message : 'Coach workspace invites could not be sent.',
-            type: 'danger',
-          });
-        } finally {
-          setWorking(null);
-        }
-      },
-    });
-  }
-
   const today = new Date().toISOString().split('T')[0];
   const selectedGroup = ageGroups.find(g => g.id === selectedAgeGroupId);
   const slotConfigured = poolSlots.length > 0;
@@ -1033,9 +1011,9 @@ export default function UnifiedTeamsPage() {
                   {team.paymentStatus === 'paid' ? 'Mark Unpaid' : 'Mark Paid'}
                 </button>
               ) : null}
-              {(team.status === 'accepted' || team.status === 'pending') && team.email?.trim() && (
-                <button className="btn btn-ghost btn-data" onClick={() => sendSingleWorkspaceInvite(team)} disabled={busy || working === 'team-claims'} style={{ borderColor: 'transparent', background: 'transparent', padding: '0.3rem 0.45rem' }} aria-label={`Send workspace invite to ${team.name}`} title="Send workspace invite">
-                  <Mail size={12} />
+              {team.email?.trim() && (
+                <button className="btn btn-ghost btn-data" onClick={() => resendAccessLink(team)} disabled={busy || working === 'resend-access'} style={{ borderColor: 'transparent', background: 'transparent', padding: '0.3rem 0.45rem' }} aria-label={`Resend dashboard access link to ${team.name}`} title="Resend access link">
+                  <ExternalLink size={12} />
                 </button>
               )}
               <button className="btn btn-ghost btn-data" onClick={() => openEditModal(team)} disabled={busy} style={{ borderColor: 'transparent', background: 'transparent', padding: '0.3rem 0.45rem' }} aria-label={`Edit ${team.name}`}>
@@ -1114,8 +1092,15 @@ export default function UnifiedTeamsPage() {
     const matchesPayment = !paymentToolsAvailable || matchesPaymentFilter(pStatus, paymentFilter);
     return matchesStatus && matchesSearch && matchesPayment;
   });
-  const sorted = stableSortedIds.map(id => filtered.find(r => r.id === id)).filter(Boolean) as TeamRecord[];
-  const flatDisplay = [...sorted, ...filtered.filter(r => !stableSortedIds.includes(r.id))];
+  const stableRank = new Map(stableSortedIds.map((id, index) => [id, index]));
+  const flatDisplay = [...filtered].sort((a, b) => {
+    const statusDelta = APPROVAL_STATUS_ORDER[a.status] - APPROVAL_STATUS_ORDER[b.status];
+    if (statusDelta !== 0) return statusDelta;
+    if (a.paymentStatus !== b.paymentStatus) return a.paymentStatus === 'paid' ? -1 : 1;
+    const rankDelta = (stableRank.get(a.id) ?? Number.MAX_SAFE_INTEGER) - (stableRank.get(b.id) ?? Number.MAX_SAFE_INTEGER);
+    if (rankDelta !== 0) return rankDelta;
+    return new Date(b.registered_at).getTime() - new Date(a.registered_at).getTime();
+  });
   const selectableRows = slotConfigured
     ? divRegs.filter(row => row.waitlistPosition != null || poolSlots.some(slot => slot.teamId === row.id))
     : flatDisplay;
@@ -1131,10 +1116,12 @@ export default function UnifiedTeamsPage() {
     const isSelected = selectedRegistrationIds.has(r.id);
     const effectiveFee = getEffectiveFee(r, ageGroups, feeMode, feeSchedule);
     const pStatus = computePaymentStatus(r, effectiveFee, today);
+    const paymentTooltip = getPaymentTooltip(r, effectiveFee, pStatus);
+    const paymentSteps = getPaymentSymbolSteps(r, effectiveFee, today);
 
     return (
       <div key={r.id} className={`${s.row} ${isSelected ? s.rowSelected : ''}`}>
-        <div className={`${s.rowMain} ${styles.teamRowMain}`}>
+        <div className={`${s.rowMain} ${styles.teamRowMain} ${selectionModeActive ? styles.teamRowSelecting : ''}`}>
           {selectionModeActive && (
             <div className={styles.selectionCell}>
               <input
@@ -1146,19 +1133,51 @@ export default function UnifiedTeamsPage() {
               />
             </div>
           )}
-          <div style={{ flex: 2 }} className={s.primaryCell}><strong>{r.name}</strong></div>
-          <div style={{ flex: 1.5 }} className={s.secondaryCell}>{r.coach}</div>
-          <div style={{ width: 120 }}>
-            <span className={`badge badge-${r.status === 'accepted' ? 'neutral' : r.status === 'rejected' ? 'danger' : 'warning'}`}>{r.status}</span>
+          <div className={`${s.primaryCell} ${styles.registrationNameCell}`}><strong>{r.name}</strong></div>
+          <div className={`${s.secondaryCell} ${styles.registrationCoachCell}`}>{r.coach}</div>
+          <div className={styles.registrationStatusCell}>
+            <span
+              className={styles.mobileStatusMarker}
+              data-status={r.status}
+              title={APPROVAL_STATUS_LABEL[r.status]}
+              aria-label={APPROVAL_STATUS_LABEL[r.status]}
+            >
+              {APPROVAL_STATUS_INITIAL[r.status]}
+            </span>
+            <span className={`badge badge-${r.status === 'accepted' ? 'neutral' : r.status === 'rejected' ? 'danger' : 'warning'} ${styles.desktopStatusBadge}`}>
+              {r.status}
+            </span>
           </div>
-          <div style={{ width: 120, paddingLeft: '1rem' }}>
-            {r.status === 'accepted' && pStatus !== 'no-schedule'
-              ? <span className={`badge badge-${PAYMENT_STATUS_STYLE[pStatus]}`}>{PAYMENT_STATUS_LABEL[pStatus]}</span>
-              : r.status === 'accepted'
-              ? <span className={`badge badge-${r.paymentStatus === 'paid' ? 'success' : 'warning'}`}>{r.paymentStatus}</span>
-              : '-'}
+          <div className={styles.registrationPaymentCell}>
+            {r.status === 'accepted' && pStatus !== 'no-schedule' ? (
+              <>
+                <span className={`badge badge-${PAYMENT_STATUS_STYLE[pStatus]} ${styles.desktopPaymentBadge}`} title={paymentTooltip}>
+                  {PAYMENT_STATUS_LABEL[pStatus]}
+                </span>
+                <span className={styles.paymentSymbolGroup} title={paymentTooltip} aria-label={paymentTooltip}>
+                  {paymentSteps.map(step => (
+                    <span key={step.key} className={styles.paymentSymbol} data-tone={step.tone} aria-hidden>
+                      $
+                    </span>
+                  ))}
+                </span>
+              </>
+            ) : r.status === 'accepted' ? (
+              <>
+                <span className={`badge badge-${r.paymentStatus === 'paid' ? 'success' : 'warning'} ${styles.desktopPaymentBadge}`}>
+                  {r.paymentStatus}
+                </span>
+                <span className={styles.paymentSymbolGroup} title={r.paymentStatus === 'paid' ? 'Paid' : 'Payment pending'} aria-label={r.paymentStatus === 'paid' ? 'Paid' : 'Payment pending'}>
+                  <span className={styles.paymentSymbol} data-tone={r.paymentStatus === 'paid' ? 'paid' : 'pending'} aria-hidden>
+                    $
+                  </span>
+                </span>
+              </>
+            ) : (
+              <span className={styles.paymentPlaceholder}>-</span>
+            )}
           </div>
-          <div style={{ width: 40, textAlign: 'right' }}>
+          <div className={styles.registrationExpandCell}>
             <button className={s.iconBtn} onClick={() => setExpanded(prev => {
               const set = new Set(prev);
               if (set.has(r.id)) set.delete(r.id);
@@ -1180,6 +1199,7 @@ export default function UnifiedTeamsPage() {
         icon={<Users size={20} />}
         title="Registrations"
         subtitle="Manage all teams and signups in one place"
+        mobileActionsInline
         actions={(
           <>
           {currentOrg && hasPlanFeature(currentOrg.planId, 'custom_registration_fields') && (
@@ -1193,7 +1213,16 @@ export default function UnifiedTeamsPage() {
               <ClipboardList size={15} />
             </Link>
           )}
-          <button className="btn btn-lime btn-data" onClick={openAddTeamModal} disabled={!currentTournament}><Plus size={14} /> Add Team</button>
+          <button
+            className={`btn btn-lime btn-data ${styles.addTeamButton}`}
+            onClick={openAddTeamModal}
+            disabled={!currentTournament}
+            aria-label="Add team"
+            title="Add team"
+          >
+            <Plus size={14} />
+            <span className={styles.addTeamLabel}>Add Team</span>
+          </button>
           </>
         )}
       />
@@ -1216,9 +1245,9 @@ export default function UnifiedTeamsPage() {
         </div>
       )}
 
-      <TournamentAdminToolbar ariaLabel="Registration controls">
+      <TournamentAdminToolbar ariaLabel="Registration controls" className={styles.registrationToolbar}>
         {/* ── Row 1: controls + end actions ── */}
-        <ToolbarGroup grow>
+        <ToolbarGroup grow className={styles.registrationContextGroup}>
           <ToolbarSelect
             label="Division"
             value={selectedAgeGroupId}
@@ -1226,6 +1255,9 @@ export default function UnifiedTeamsPage() {
             disabled={ageGroups.length === 0}
             onChange={value => { setSelectedAgeGroupId(value); setSwapMode(false); setSwapFirstSlotId(null); }}
           />
+        </ToolbarGroup>
+
+        <ToolbarGroup align="end" className={styles.registrationActionGroup}>
           {!slotConfigured && (
             <ToolbarSegmentedControl
               ariaLabel="Registration view"
@@ -1237,10 +1269,8 @@ export default function UnifiedTeamsPage() {
               onChange={setViewMode}
             />
           )}
-        </ToolbarGroup>
-
-        <ToolbarGroup align="end">
           <ExportMenu
+            className={styles.registrationUtilityStart}
             formats={['xlsx', 'csv', 'pdf']}
             onExportXLSX={handleExportXLSX}
             onExportCSV={handleExportCSV}
@@ -1254,6 +1284,8 @@ export default function UnifiedTeamsPage() {
               type="button"
               className={styles.multiSelectToggle}
               data-active={selectionModeActive || undefined}
+              aria-label={selectionModeActive ? (allVisibleSelected ? 'Clear visible registrations' : 'Select visible registrations') : 'Select many registrations'}
+              title={selectionModeActive ? (allVisibleSelected ? 'Clear visible' : 'Select visible') : 'Select many'}
               onClick={() => {
                 if (!selectionModeActive) {
                   setMultiSelectMode(true);
@@ -1263,7 +1295,10 @@ export default function UnifiedTeamsPage() {
                 else setSelectedRegistrations(visibleSelectableIds);
               }}
             >
-              {selectionModeActive ? (allVisibleSelected ? 'Clear visible' : 'Select visible') : 'Select many'}
+              <ListChecks size={13} aria-hidden />
+              <span className={styles.multiSelectLabel}>
+                {selectionModeActive ? (allVisibleSelected ? 'Clear visible' : 'Select visible') : 'Select many'}
+              </span>
             </button>
           )}
           {selectionModeActive && (
@@ -1271,8 +1306,11 @@ export default function UnifiedTeamsPage() {
               type="button"
               className={styles.multiSelectDone}
               onClick={clearRegistrationSelection}
+              aria-label="Done selecting registrations"
+              title="Done"
             >
-              Done
+              <X size={13} aria-hidden />
+              <span className={styles.multiSelectLabel}>Done</span>
             </button>
           )}
           <ToolbarMenu label="Tools">
@@ -1354,8 +1392,8 @@ export default function UnifiedTeamsPage() {
 
         {/* ── Row 2: filter chips + search — always on their own full-width row ── */}
         {!slotConfigured && (
-          <ToolbarGroup fullWidth>
-            <div className={s.statusFilters}>
+          <ToolbarGroup fullWidth className={styles.registrationFilterGroup}>
+            <div className={`${s.statusFilters} ${styles.registrationStatusFilters}`}>
               {(['pending', 'accepted', 'waitlist', 'rejected'] as Status[]).map(st => (
                 <button
                   key={st}
@@ -1403,46 +1441,10 @@ export default function UnifiedTeamsPage() {
             <Mail size={12} /> Reminder
           </button>
         )}
-        <button
-          type="button"
-          className="btn btn-outline btn-data"
-          onClick={sendTeamClaimInvites}
-          disabled={working === 'team-claims'}
-        >
-          <Mail size={12} /> Workspace Invite
-        </button>
         <button type="button" className="btn btn-outline btn-data" style={{ color: 'var(--danger)' }} onClick={() => runBulkAction('reject')} disabled={working === 'bulk'}>
           Reject
         </button>
       </SelectionActionBar>
-
-      {claimInviteResults.length > 0 && (
-        <div className={styles.claimInvitePanel}>
-          <div className={styles.claimInviteHeader}>
-            <div>
-              <strong>Team claim invites ready</strong>
-              <p>{claimInviteResults.length} secure claim link{claimInviteResults.length === 1 ? '' : 's'} generated from the last send.</p>
-            </div>
-            <button type="button" className="btn btn-ghost btn-xs" onClick={() => setClaimInviteResults([])}>
-              <X size={14} /> Clear
-            </button>
-          </div>
-          <div className={styles.claimInviteList}>
-            {claimInviteResults.slice(0, 6).map(result => (
-              <div key={result.teamId} className={styles.claimInviteItem}>
-                <div>
-                  <strong>{result.teamName}</strong>
-                  <span>{result.ageGroupName} - {result.email} - {result.emailed ? 'emailed' : 'link only'}</span>
-                </div>
-                <a href={result.claimUrl} target="_blank" rel="noreferrer">Open claim</a>
-              </div>
-            ))}
-            {claimInviteResults.length > 6 && (
-              <p className={styles.claimInviteMore}>Showing 6 of {claimInviteResults.length}. Emails were sent to every generated contact.</p>
-            )}
-          </div>
-        </div>
-      )}
 
       {/* Summary modal */}
       {showSummaryModal && (
@@ -1619,12 +1621,12 @@ export default function UnifiedTeamsPage() {
               <div className={styles.flatList}>
                 {/* ── Column headers ── */}
                 <div className={styles.colHeader}>
-                  <div style={{ width: 32 }} />
-                  <div style={{ flex: 2 }}>Team</div>
-                  <div style={{ flex: 1.5 }}>Coach</div>
-                  <div style={{ width: 120 }}>Status</div>
-                  <div style={{ width: 120, paddingLeft: '1rem' }}>Payment</div>
-                  <div style={{ width: 40 }} />
+                  {selectionModeActive && <div className={styles.selectionCell} />}
+                  <div className={styles.registrationNameCell}>Team</div>
+                  <div className={styles.registrationCoachCell}>Coach</div>
+                  <div className={styles.registrationStatusCell}>Status</div>
+                  <div className={styles.registrationPaymentCell}>Payment</div>
+                  <div className={styles.registrationExpandCell} />
                 </div>
 
                 {viewMode === 'flat' ? (

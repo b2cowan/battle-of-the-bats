@@ -14,6 +14,10 @@ import {
   WalletCards,
 } from 'lucide-react';
 import { getUser, signIn } from '@/lib/auth';
+import {
+  COACHES_CLAIM_PATH,
+  COACHES_START_PATH,
+} from '@/lib/coaches-portal-routes';
 import styles from './page.module.css';
 
 type BillingCycle = 'monthly' | 'annual';
@@ -34,7 +38,7 @@ type TeamSignupClientProps = {
   claim?: TeamClaimPrefill | null;
 };
 
-const DRAFT_KEY = 'fieldlogichq.team.signup.draft';
+const DRAFT_KEY = 'fieldlogichq.coaches.signup.draft';
 
 const SPORT_OPTIONS = [
   'Softball',
@@ -124,7 +128,8 @@ export default function TeamSignupClient({ teamIsGated, claim = null }: TeamSign
   const claimEmailMismatch = !!claim && isAuthenticated && !!email && email.trim().toLowerCase() !== claim.contactEmail.toLowerCase();
   const canSubmit = !teamIsGated && !claimEmailMismatch && cleanTeamName.length >= 2 && validSeasonYear && !!accountReady && !busy;
   const draftKey = claim ? `${DRAFT_KEY}.${claim.token.slice(0, 12)}` : DRAFT_KEY;
-  const claimReturnPath = claim ? `/team/claim/${encodeURIComponent(claim.token)}?billing=${billingCycle}` : `/team?billing=${billingCycle}`;
+  const claimPath = claim ? `${COACHES_CLAIM_PATH}/${encodeURIComponent(claim.token)}` : COACHES_START_PATH;
+  const claimReturnPath = `${claimPath}?billing=${billingCycle}`;
 
   const seasonName = useMemo(() => {
     return cleanTeamName ? `${cleanTeamName} ${parsedSeasonYear || currentYear}` : `Team ${parsedSeasonYear || currentYear}`;
@@ -181,7 +186,7 @@ export default function TeamSignupClient({ teamIsGated, claim = null }: TeamSign
   }
 
   function validateForm() {
-    if (teamIsGated) return 'Team workspace self-serve signup is not open yet.';
+    if (teamIsGated) return 'Coaches Portal self-serve signup is not open yet.';
     if (cleanTeamName.length < 2) return 'Enter your team name.';
     if (!validSeasonYear) return 'Season year must be a valid four-digit year.';
     if (!isAuthenticated && !email.trim()) return 'Enter your email address.';
@@ -210,7 +215,7 @@ export default function TeamSignupClient({ teamIsGated, claim = null }: TeamSign
       const signupRes = await fetch('/api/auth/team-signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, next: claim ? `/team/claim/${claim.token}` : '/team' }),
+        body: JSON.stringify({ email, password, next: claimPath }),
       });
       const signupPayload = await readJson(signupRes);
 
@@ -246,7 +251,7 @@ export default function TeamSignupClient({ teamIsGated, claim = null }: TeamSign
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         teamName: cleanTeamName,
-        workspaceName: `${cleanTeamName} Team Workspace`,
+        workspaceName: `${cleanTeamName} Coaches Portal`,
         sport,
         ageGroup: cleanAgeGroup || null,
         seasonName,
@@ -259,11 +264,11 @@ export default function TeamSignupClient({ teamIsGated, claim = null }: TeamSign
 
     const payload = await readJson(response);
     if (response.status === 401) {
-      window.location.assign(`/auth/login?next=${encodeURIComponent(claim ? `/team/claim/${claim.token}` : '/team')}`);
+      window.location.assign(`/auth/login?next=${encodeURIComponent(claimPath)}`);
       return;
     }
     if (!response.ok) {
-      throw new Error(getPayloadError(payload, 'Could not start Team checkout.'));
+      throw new Error(getPayloadError(payload, 'Could not start Coaches Portal checkout.'));
     }
     if (typeof payload.url !== 'string' || !payload.url) {
       throw new Error('Checkout did not return a destination URL.');
@@ -298,24 +303,24 @@ export default function TeamSignupClient({ teamIsGated, claim = null }: TeamSign
     <main className={styles.page}>
       <section className={styles.signupSurface}>
         <div className={styles.copyPane}>
-          <p className={styles.eyebrow}>{claim ? 'Tournament team claim' : 'Standalone Team workspace'}</p>
-          <h1 className={styles.title}>{claim ? 'Claim your Team workspace' : 'From tournament weekend to season workspace.'}</h1>
+          <p className={styles.eyebrow}>{claim ? 'Tournament team claim' : 'Coaches Portal Premium'}</p>
+          <h1 className={styles.title}>{claim ? 'Upgrade this team in Coaches Portal' : 'From tournament weekend to season workspace.'}</h1>
           <p className={styles.lede}>
             {claim
-              ? `${claim.tournamentName} already has your team details. Confirm the season setup, create or sign into the contact account, and activate your coach portal.`
+              ? `${claim.tournamentName} already has your team details. Confirm the season setup, create or sign into the contact account, and activate Coaches Portal Premium.`
               : 'One competitive team gets its own Coaches Portal for roster, schedule, dues, budget, documents, attendance, lineups, reminders, and a free local tournament slot.'}
           </p>
 
           {!claim && (
             <div className={styles.heroActions}>
-              <a href="#team-signup-form" className={styles.heroPrimary}>Start Team workspace</a>
-              <Link href="/pricing#team-pricing" className={styles.heroSecondary}>Compare Team pricing</Link>
+              <a href="#team-signup-form" className={styles.heroPrimary}>Start Coaches Portal</a>
+              <Link href="/pricing#team-pricing" className={styles.heroSecondary}>Compare pricing</Link>
             </div>
           )}
 
           <div className={styles.pricePanel}>
             <div>
-              <p className={styles.priceLabel}>Team plan</p>
+              <p className={styles.priceLabel}>Coaches Portal Premium</p>
               <p className={styles.price}>{planPrice}</p>
             </div>
             <div className={styles.priceMeta}>
@@ -326,7 +331,7 @@ export default function TeamSignupClient({ teamIsGated, claim = null }: TeamSign
 
           {!claim && (
             <>
-              <div className={styles.workspacePreview} aria-label="Team workspace preview">
+              <div className={styles.workspacePreview} aria-label="Coaches Portal preview">
                 <div className={styles.previewHeader}>
                   <div>
                     <span className={styles.previewKicker}>Coaches Portal</span>
@@ -390,7 +395,7 @@ export default function TeamSignupClient({ teamIsGated, claim = null }: TeamSign
           <div className={styles.formHeader}>
             <div>
               <p className={styles.formKicker}>{claim ? 'Secure claim' : 'Start setup'}</p>
-              <h2>{claim ? 'Activate from tournament' : 'Create your Team workspace'}</h2>
+              <h2>{claim ? 'Activate from tournament' : 'Create your Coaches Portal'}</h2>
             </div>
             <Users size={22} />
           </div>
@@ -441,7 +446,7 @@ export default function TeamSignupClient({ teamIsGated, claim = null }: TeamSign
               />
             </label>
             <p className={styles.previewLine}>
-              Workspace URL preview: <span>fieldlogichq.ca/{previewSlug}</span>
+              Portal URL preview: <span>fieldlogichq.ca/{previewSlug}</span>
             </p>
           </div>
 
@@ -542,7 +547,7 @@ export default function TeamSignupClient({ teamIsGated, claim = null }: TeamSign
             </div>
           )}
           {teamIsGated && (
-            <div className={styles.errorBox}>Team workspace self-serve signup is not open yet.</div>
+            <div className={styles.errorBox}>Coaches Portal self-serve signup is not open yet.</div>
           )}
           {error && <div className={styles.errorBox}>{error}</div>}
 

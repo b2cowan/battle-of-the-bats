@@ -4,7 +4,8 @@ import {
   BookOpen, FileText, Shield, AlertCircle, CheckCircle,
   Plus, Trash2, GripVertical, Upload,
   RefreshCw, Link as LinkIcon,
-  HelpCircle, Info, X, Check, ExternalLink, Pencil
+  HelpCircle, Info, X, Check, ExternalLink, Pencil,
+  LayoutList, LayoutGrid, Columns2
 } from 'lucide-react';
 import {
   DndContext,
@@ -29,8 +30,10 @@ import {
   getRules, saveRuleSection, updateRuleSection, deleteRuleSection,
   saveRuleItem, updateRuleItem, deleteRuleItem,
   getResources, saveResource, updateResource, deleteResource,
-  uploadResourceFile, seedRulesAndResources
+  uploadResourceFile
 } from '@/lib/db';
+import SamplesDrawer from './SamplesDrawer';
+import { SampleSection, SampleResource } from './rules-samples';
 import styles from '../../admin-common.module.css';
 
 interface Props {
@@ -72,8 +75,8 @@ function SortableResource({
             </div>
           </div>
           <div className="flex gap-2 justify-end mt-2">
-            <button className="btn btn-purple btn-xs" onClick={saveResourceEdit}><Check size={12} /> Save</button>
-            <button className="btn btn-outline btn-xs" onClick={() => setEditingResourceId(null)}><X size={12} /> Cancel</button>
+            <button className="btn btn-lime btn-data" onClick={saveResourceEdit}><Check size={12} /> Save</button>
+            <button className="btn btn-ghost btn-data" onClick={() => setEditingResourceId(null)}><X size={12} /> Cancel</button>
           </div>
         </div>
       ) : (
@@ -115,6 +118,22 @@ export default function RulesAdmin({ tournament, orgSlug }: Props) {
   const isDirtyRef   = useRef(isDirty);
   const pendingNavRef = useRef<(() => void) | null>(null);
 
+  // Per-section save/discard UX — only one section in "pending" state at a time
+  const [activeDirtySectionId, setActiveDirtySectionId] = useState<string | null>(null);
+  const [switchGuardTargetId,  setSwitchGuardTargetId]  = useState<string | null>(null);
+
+  // Phase 1 — confirmation modals
+  const [deleteConfirmSectionId,  setDeleteConfirmSectionId]  = useState<string | null>(null);
+  const [deleteConfirmResourceId, setDeleteConfirmResourceId] = useState<string | null>(null);
+
+  // Phase 2 — inline add-section
+  const [showNewSectionCard,    setShowNewSectionCard]    = useState(false);
+  const [newSectionTitleInline, setNewSectionTitleInline] = useState('');
+
+  // Phase 3 — samples drawer
+  const [showSamples,  setShowSamples]  = useState(false);
+  const [addingSample, setAddingSample] = useState<string | null>(null);
+
   // Inline edit states (UI only — values committed to `rules` state on confirm)
   const [editingSectionId,    setEditingSectionId]    = useState<string | null>(null);
   const [editingSectionTitle, setEditingSectionTitle] = useState('');
@@ -124,8 +143,15 @@ export default function RulesAdmin({ tournament, orgSlug }: Props) {
   const [editingResourceLabel, setEditingResourceLabel] = useState('');
   const [editingResourceUrl,   setEditingResourceUrl]   = useState('');
 
-  const [newSectionTitle, setNewSectionTitle] = useState('');
-  const [uploading,       setUploading]       = useState(false);
+  const [uploading, setUploading] = useState(false);
+
+  // Layout settings — initialised from tournament.settings; saved immediately on toggle
+  const [rulesLayout,     setRulesLayout]     = useState<'columns' | 'single'>(
+    tournament.settings?.rulesLayout ?? 'columns'
+  );
+  const [resourcesLayout, setResourcesLayout] = useState<'list' | 'grid'>(
+    tournament.settings?.resourcesLayout ?? 'list'
+  );
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -160,9 +186,9 @@ export default function RulesAdmin({ tournament, orgSlug }: Props) {
 
   useEffect(() => { fetchData(); }, [tournament.id, orgSlug]);
 
-  async function fetchData() {
+  async function fetchData(opts: { silent?: boolean } = {}) {
     try {
-      setLoading(true);
+      if (!opts.silent) setLoading(true);
       setError(null);
       const [r, res, agRes] = await Promise.all([
         getRules(tournament.id),
@@ -203,6 +229,7 @@ export default function RulesAdmin({ tournament, orgSlug }: Props) {
       ]);
       setDirtySections(new Set());
       setDirtyItems(new Set());
+      setActiveDirtySectionId(null);
     } catch (err) {
       console.error('[RulesAdmin] Save failed', err);
       alert('Save failed. Please try again.');
@@ -234,17 +261,20 @@ export default function RulesAdmin({ tournament, orgSlug }: Props) {
     if (!editingSectionId) return;
     setRules(prev => prev.map(s => s.id === editingSectionId ? { ...s, title: editingSectionTitle } : s));
     setDirtySections(prev => new Set(prev).add(editingSectionId));
+    setActiveDirtySectionId(editingSectionId);
     setEditingSectionId(null);
   }
 
   function handleUpdateSectionIcon(id: string, icon: string) {
     setRules(prev => prev.map(s => s.id === id ? { ...s, icon } : s));
     setDirtySections(prev => new Set(prev).add(id));
+    setActiveDirtySectionId(id);
   }
 
   function handleUpdateSectionAgeGroups(id: string, ageGroupIds: string[] | null) {
     setRules(prev => prev.map(s => s.id === id ? { ...s, ageGroupIds } : s));
     setDirtySections(prev => new Set(prev).add(id));
+    setActiveDirtySectionId(id);
   }
 
   // Item edits (local only → dirty)
@@ -253,30 +283,99 @@ export default function RulesAdmin({ tournament, orgSlug }: Props) {
       ...s,
       items: s.items.map(i => i.id === id ? { ...i, content } : i),
     })));
+    const parentSection = rules.find(s => s.items.some(i => i.id === id));
+    if (parentSection) setActiveDirtySectionId(parentSection.id);
     setDirtyItems(prev => new Set(prev).add(id));
   }
 
-  // ── Immediate mutations (add / delete — require refetch) ──────────────────
-  async function handleAddSection() {
-    if (!newSectionTitle.trim()) return;
+  // ── Per-section save / discard ────────────────────────────────────────────
+  async function handleSaveSection(id: string) {
     setSaving(true);
     try {
-      const id = await saveRuleSection({ tournamentId: tournament.id, title: newSectionTitle, icon: 'Shield', order: rules.length });
-      if (!id) throw new Error('Failed to save');
-      setNewSectionTitle('');
+      const s = rules.find(r => r.id === id);
+      const sectionItems = s?.items ?? [];
+      if (s) await updateRuleSection(id, { title: s.title, icon: s.icon, ageGroupIds: s.ageGroupIds });
+      await Promise.all(
+        sectionItems
+          .filter(i => dirtyItems.has(i.id))
+          .map(i => updateRuleItem(i.id, { content: i.content }))
+      );
+      setDirtySections(prev => { const n = new Set(prev); n.delete(id); return n; });
+      setDirtyItems(prev => {
+        const n = new Set(prev);
+        sectionItems.forEach(i => n.delete(i.id));
+        return n;
+      });
+      setActiveDirtySectionId(null);
+      setSwitchGuardTargetId(null);
+    } catch {
+      alert('Save failed. Please try again.');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleDiscardSection(id: string) {
+    const sectionItems = rules.find(r => r.id === id)?.items ?? [];
+    setDirtySections(prev => { const n = new Set(prev); n.delete(id); return n; });
+    setDirtyItems(prev => {
+      const n = new Set(prev);
+      sectionItems.forEach(i => n.delete(i.id));
+      return n;
+    });
+    setActiveDirtySectionId(null);
+    setSwitchGuardTargetId(null);
+    await fetchData({ silent: true });
+  }
+
+  function handleSwitchGuardSave() {
+    if (activeDirtySectionId) handleSaveSection(activeDirtySectionId);
+  }
+
+  function handleSwitchGuardDiscard() {
+    if (activeDirtySectionId) handleDiscardSection(activeDirtySectionId);
+  }
+
+  // ── Phase 2 — Inline add-section ─────────────────────────────────────────
+  async function handleAddInlineSection() {
+    if (!newSectionTitleInline.trim()) return;
+    setSaving(true);
+    try {
+      const id = await saveRuleSection({ tournamentId: tournament.id, title: newSectionTitleInline.trim(), icon: 'Shield', order: rules.length });
+      if (!id) throw new Error('Save returned null');
+      setShowNewSectionCard(false);
+      setNewSectionTitleInline('');
       await fetchData();
     } catch { alert('Error adding section.'); }
     finally { setSaving(false); }
   }
 
-  async function handleDeleteSection(id: string) {
-    if (!confirm('Delete this section and all its rules?')) return;
-    setSaving(true);
-    try { await deleteRuleSection(id); await fetchData(); }
-    catch { alert('Delete failed.'); }
-    finally { setSaving(false); }
+  // ── Phase 1 — Confirm-modal delete handlers ───────────────────────────────
+  function handleDeleteSection(id: string) {
+    setDeleteConfirmSectionId(id);
   }
 
+  async function confirmDeleteSection() {
+    if (!deleteConfirmSectionId) return;
+    setSaving(true);
+    try { await deleteRuleSection(deleteConfirmSectionId); await fetchData(); }
+    catch { alert('Delete failed.'); }
+    finally { setSaving(false); setDeleteConfirmSectionId(null); }
+  }
+
+  function handleDeleteResource(id: string) {
+    setDeleteConfirmResourceId(id);
+  }
+
+  async function confirmDeleteResource() {
+    if (!deleteConfirmResourceId) return;
+    setSaving(true);
+    try { await deleteResource(deleteConfirmResourceId); await fetchData(); }
+    catch { alert('Delete failed.'); }
+    finally { setSaving(false); setDeleteConfirmResourceId(null); }
+  }
+
+  // ── Immediate mutations ───────────────────────────────────────────────────
   async function handleAddItem(ruleId: string) {
     const section = rules.find(s => s.id === ruleId);
     if (!section) return;
@@ -315,14 +414,6 @@ export default function RulesAdmin({ tournament, orgSlug }: Props) {
     setEditingResourceId(null);
   }
 
-  async function handleDeleteResource(id: string) {
-    if (!confirm('Delete this resource?')) return;
-    setSaving(true);
-    try { await deleteResource(id); await fetchData(); }
-    catch { alert('Delete failed.'); }
-    finally { setSaving(false); }
-  }
-
   async function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
@@ -339,12 +430,53 @@ export default function RulesAdmin({ tournament, orgSlug }: Props) {
     finally { setSaving(false); }
   }
 
-  async function handleSeed() {
-    if (!confirm('Seed rules with the default set?')) return;
-    setLoading(true);
-    try { await seedRulesAndResources(tournament.id); await fetchData(); }
-    catch { alert('Seeding failed.'); }
-    finally { setLoading(false); }
+  // ── Layout settings ───────────────────────────────────────────────────────
+  async function handleLayoutChange(
+    key: 'rulesLayout' | 'resourcesLayout',
+    value: string,
+  ) {
+    // Optimistic update
+    if (key === 'rulesLayout')     setRulesLayout(value as 'columns' | 'single');
+    if (key === 'resourcesLayout') setResourcesLayout(value as 'list' | 'grid');
+
+    try {
+      const qs = orgSlug ? `?orgSlug=${encodeURIComponent(orgSlug)}` : '';
+      await fetch(`/api/admin/tournaments${qs}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'patch-settings',
+          id: tournament.id,
+          data: { settings: { [key]: value } },
+        }),
+      });
+    } catch (err) {
+      console.error('[RulesAdmin] Failed to save layout setting', err);
+    }
+  }
+
+  // ── Phase 3 — Sample add handlers ─────────────────────────────────────────
+  async function handleAddSampleSection(sample: SampleSection, index: number) {
+    setAddingSample(`section-${index}`);
+    try {
+      const id = await saveRuleSection({ tournamentId: tournament.id, title: sample.title, icon: sample.icon, order: rules.length });
+      if (id) {
+        for (let i = 0; i < sample.items.length; i++) {
+          await saveRuleItem({ ruleId: id, content: sample.items[i], order: i });
+        }
+      }
+      await fetchData();
+    } catch { alert('Failed to add sample.'); }
+    finally { setAddingSample(null); }
+  }
+
+  async function handleAddSampleResource(sample: SampleResource, index: number) {
+    setAddingSample(`resource-${index}`);
+    try {
+      await saveResource({ tournamentId: tournament.id, label: sample.label, url: sample.url || '#', order: resources.length });
+      await fetchData();
+    } catch { alert('Failed to add sample resource.'); }
+    finally { setAddingSample(null); }
   }
 
   // ── Loading state ─────────────────────────────────────────────────────────
@@ -373,16 +505,13 @@ export default function RulesAdmin({ tournament, orgSlug }: Props) {
           </div>
         </div>
         <div className={styles.headerActions}>
-          <button
-            className={`btn btn-sm ${isDirty ? 'btn-primary' : 'btn-ghost'}`}
-            onClick={handleSaveAll}
-            disabled={saving || !isDirty}
-          >
-            <Check size={14} />
-            {saving ? 'Saving…' : isDirty ? 'Save Changes' : 'All Saved'}
-          </button>
-          <button className="btn btn-purple btn-sm" onClick={handleSeed} disabled={saving}>
-            <RefreshCw size={14} /> Seed Default Data
+          {isDirty && (
+            <span className="header-unsaved-badge">
+              <AlertCircle size={12} /> Unsaved changes
+            </span>
+          )}
+          <button className="btn btn-outline btn-data" onClick={() => setShowSamples(true)}>
+            <BookOpen size={14} /> Browse Samples
           </button>
         </div>
       </header>
@@ -401,26 +530,50 @@ export default function RulesAdmin({ tournament, orgSlug }: Props) {
         <section className="content-section">
           <div className="section-header">
             <h2 className="section-title">Tournament Rules</h2>
-            <div className="add-form">
-              <input
-                type="text"
-                className="form-input"
-                placeholder="New section title..."
-                value={newSectionTitle}
-                onChange={e => setNewSectionTitle(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && handleAddSection()}
-              />
-              <button className="btn btn-purple" onClick={handleAddSection} disabled={saving}>
-                <Plus size={16} /> Add Section
+            <div className="section-header-actions">
+              <div className="layout-toggle-group">
+                <span className="layout-toggle-label">Public layout</span>
+                <div className="layout-toggle">
+                  <button
+                    className={`layout-toggle-btn${rulesLayout === 'single' ? ' active' : ''}`}
+                    onClick={() => handleLayoutChange('rulesLayout', 'single')}
+                    title="Single column"
+                  ><LayoutList size={15} /></button>
+                  <button
+                    className={`layout-toggle-btn${rulesLayout === 'columns' ? ' active' : ''}`}
+                    onClick={() => handleLayoutChange('rulesLayout', 'columns')}
+                    title="Two columns"
+                  ><Columns2 size={15} /></button>
+                </div>
+              </div>
+              <button
+                className="btn btn-lime btn-data"
+                onClick={() => { setShowNewSectionCard(true); setNewSectionTitleInline(''); }}
+                disabled={!!activeDirtySectionId}
+                title={activeDirtySectionId ? 'Save or discard the current section before adding a new one' : undefined}
+              >
+                <Plus size={14} /> Add Section
               </button>
             </div>
           </div>
 
-          <div className="rules-stack">
+          <div className={`rules-stack${rulesLayout === 'columns' ? ' rules-stack--grid' : ''}`}>
             {rules.map(section => {
               const isDirtySection = dirtySections.has(section.id);
               return (
-                <div key={section.id} className={`rule-card ${isDirtySection ? 'rule-card-dirty' : ''}`}>
+                <div
+                  key={section.id}
+                  className={`rule-card ${isDirtySection ? 'rule-card-dirty' : ''}`}
+                  onClickCapture={(e) => {
+                    if (activeDirtySectionId && activeDirtySectionId !== section.id) {
+                      const target = e.target as HTMLElement;
+                      if (!target.closest('.section-save-bar')) {
+                        e.stopPropagation();
+                        setSwitchGuardTargetId(section.id);
+                      }
+                    }
+                  }}
+                >
                   <div className="rule-card-header">
                     <div className="rule-card-title-group">
                       <div className="icon-preview-box">
@@ -500,9 +653,67 @@ export default function RulesAdmin({ tournament, orgSlug }: Props) {
                     ))}
                     <button className="add-item-btn" onClick={() => handleAddItem(section.id)}><Plus size={14} /> Add Point</button>
                   </div>
+
+                  {activeDirtySectionId === section.id && (
+                    <div className="section-save-bar">
+                      <button
+                        className="btn btn-ghost btn-data"
+                        onClick={() => handleDiscardSection(section.id)}
+                        disabled={saving}
+                      >
+                        <X size={14} /> Discard
+                      </button>
+                      <button
+                        className="btn btn-lime btn-data"
+                        onClick={() => handleSaveSection(section.id)}
+                        disabled={saving}
+                      >
+                        <Check size={14} />
+                        {saving ? 'Saving…' : 'Save Changes'}
+                      </button>
+                    </div>
+                  )}
                 </div>
               );
             })}
+
+            {/* Phase 2 — Inline new-section card */}
+            {showNewSectionCard && (
+              <div className="rule-card new-section-card">
+                <div className="rule-card-header">
+                  <div className="rule-card-title-group">
+                    <div className="icon-preview-box"><Shield size={20} /></div>
+                    <input
+                      autoFocus
+                      className="inline-title-input editing"
+                      placeholder="Section title..."
+                      value={newSectionTitleInline}
+                      onChange={e => setNewSectionTitleInline(e.target.value)}
+                      onKeyDown={e => {
+                        if (e.key === 'Enter' && newSectionTitleInline.trim()) handleAddInlineSection();
+                        if (e.key === 'Escape') { setShowNewSectionCard(false); setNewSectionTitleInline(''); }
+                      }}
+                    />
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      className="icon-btn-success"
+                      onClick={handleAddInlineSection}
+                      disabled={!newSectionTitleInline.trim() || saving}
+                      title="Confirm section"
+                    ><Check size={16} /></button>
+                    <button
+                      className="icon-btn-ghost"
+                      onClick={() => { setShowNewSectionCard(false); setNewSectionTitleInline(''); }}
+                      title="Cancel"
+                    ><X size={16} /></button>
+                  </div>
+                </div>
+                <div className="rule-items-list">
+                  <p style={{ color: 'var(--white-20)', fontSize: '0.8rem' }}>Confirm the section title to start adding rule points.</p>
+                </div>
+              </div>
+            )}
           </div>
         </section>
 
@@ -512,17 +723,34 @@ export default function RulesAdmin({ tournament, orgSlug }: Props) {
         <section className="content-section">
           <div className="section-header">
             <h2 className="section-title">Resources & Downloads</h2>
-            <div className="add-form">
-              <button className="btn btn-outline" onClick={handleAddResource}><LinkIcon size={14} /> Add Link</button>
-              <button className="btn btn-purple" onClick={() => document.getElementById('file-up-main')?.click()}>
-                <Upload size={14} /> {uploading ? 'Uploading…' : 'Upload File'}
-              </button>
-              <input type="file" id="file-up-main" hidden onChange={handleFileUpload} />
+            <div className="section-header-actions">
+              <div className="layout-toggle-group">
+                <span className="layout-toggle-label">Public layout</span>
+                <div className="layout-toggle">
+                  <button
+                    className={`layout-toggle-btn${resourcesLayout === 'list' ? ' active' : ''}`}
+                    onClick={() => handleLayoutChange('resourcesLayout', 'list')}
+                    title="Stacked list"
+                  ><LayoutList size={15} /></button>
+                  <button
+                    className={`layout-toggle-btn${resourcesLayout === 'grid' ? ' active' : ''}`}
+                    onClick={() => handleLayoutChange('resourcesLayout', 'grid')}
+                    title="Two-column grid"
+                  ><LayoutGrid size={15} /></button>
+                </div>
+              </div>
+              <div className="add-form">
+                <button className="btn btn-outline btn-data" onClick={handleAddResource}><LinkIcon size={14} /> Add Link</button>
+                <button className="btn btn-lime btn-data" onClick={() => document.getElementById('file-up-main')?.click()}>
+                  <Upload size={14} /> {uploading ? 'Uploading…' : 'Upload File'}
+                </button>
+                <input type="file" id="file-up-main" hidden onChange={handleFileUpload} />
+              </div>
             </div>
           </div>
 
           <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-            <div className="resource-list-stack">
+            <div className={`resource-list-stack${resourcesLayout === 'grid' ? ' resource-list-stack--grid' : ''}`}>
               <SortableContext items={resources.map(r => r.id)} strategy={verticalListSortingStrategy}>
                 {resources.map(res => (
                   <SortableResource
@@ -551,6 +779,70 @@ export default function RulesAdmin({ tournament, orgSlug }: Props) {
         </section>
       </div>
 
+      {/* ── Phase 1: Delete section confirm modal ── */}
+      {deleteConfirmSectionId !== null && (
+        <div className="modal-overlay" onClick={() => setDeleteConfirmSectionId(null)}>
+          <div className="modal" style={{ maxWidth: 420 }} onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>Delete Section?</h3>
+              <button className="btn btn-ghost btn-sm" onClick={() => setDeleteConfirmSectionId(null)}><X size={16} /></button>
+            </div>
+            <p style={{ color: 'var(--white-60)', padding: '0.25rem 0 1.25rem' }}>
+              This will permanently remove this section and all its rule points.
+            </p>
+            <div className="modal-footer">
+              <button className="btn btn-ghost" onClick={() => setDeleteConfirmSectionId(null)}>Cancel</button>
+              <button className="btn btn-danger" onClick={confirmDeleteSection} disabled={saving}>
+                {saving ? 'Deleting…' : 'Delete Section'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Phase 1: Delete resource confirm modal ── */}
+      {deleteConfirmResourceId !== null && (
+        <div className="modal-overlay" onClick={() => setDeleteConfirmResourceId(null)}>
+          <div className="modal" style={{ maxWidth: 420 }} onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>Delete Resource?</h3>
+              <button className="btn btn-ghost btn-sm" onClick={() => setDeleteConfirmResourceId(null)}><X size={16} /></button>
+            </div>
+            <p style={{ color: 'var(--white-60)', padding: '0.25rem 0 1.25rem' }}>
+              This will remove this link or file from the public Rules page.
+            </p>
+            <div className="modal-footer">
+              <button className="btn btn-ghost" onClick={() => setDeleteConfirmResourceId(null)}>Cancel</button>
+              <button className="btn btn-danger" onClick={confirmDeleteResource} disabled={saving}>
+                {saving ? 'Deleting…' : 'Delete Resource'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Switch-section guard modal ── */}
+      {switchGuardTargetId !== null && activeDirtySectionId && (
+        <div className="modal-overlay" onClick={() => setSwitchGuardTargetId(null)}>
+          <div className="modal" style={{ maxWidth: 420 }} onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>Unsaved Changes</h3>
+              <button className="btn btn-ghost btn-sm" onClick={() => setSwitchGuardTargetId(null)}><X size={16} /></button>
+            </div>
+            <p style={{ color: 'var(--white-60)', padding: '0.25rem 0 1.25rem' }}>
+              You have unsaved changes in this section. Save or discard before editing a different section.
+            </p>
+            <div className="modal-footer">
+              <button className="btn btn-ghost" onClick={() => setSwitchGuardTargetId(null)}>Keep editing</button>
+              <button className="btn btn-danger" onClick={handleSwitchGuardDiscard} disabled={saving}>Discard changes</button>
+              <button className="btn btn-primary" onClick={handleSwitchGuardSave} disabled={saving}>
+                {saving ? 'Saving…' : 'Save changes'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ── Navigation warning modal ── */}
       {showNavWarning && (
         <div className="modal-overlay" onClick={handleNavStay}>
@@ -573,17 +865,38 @@ export default function RulesAdmin({ tournament, orgSlug }: Props) {
         </div>
       )}
 
+      {/* ── Phase 3: Samples drawer ── */}
+      {showSamples && (
+        <SamplesDrawer
+          onAddSection={handleAddSampleSection}
+          onAddResource={handleAddSampleResource}
+          onClose={() => setShowSamples(false)}
+          adding={addingSample}
+        />
+      )}
+
       <style jsx global>{`
         .single-column-layout { display: flex; flex-direction: column; gap: 4rem; padding-bottom: 5rem; }
         .content-section { display: flex; flex-direction: column; gap: 1.5rem; }
         .section-header { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border-subtle); }
         .section-title { font-family: var(--font-display); font-size: 1.25rem; font-weight: 800; color: var(--white); margin: 0; }
+        .section-header-actions { display: flex; align-items: center; gap: 0.75rem; }
         .add-form { display: flex; gap: 0.75rem; }
+
+        /* Layout toggle — compact segmented control in section headers */
+        .layout-toggle-group { display: flex; align-items: center; gap: 0.4rem; }
+        .layout-toggle-label { font-family: var(--font-data); font-size: 0.6rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--white-20); white-space: nowrap; }
+        .layout-toggle { display: flex; align-items: center; background: var(--bg-inset); border: 1px solid var(--border-subtle); border-radius: 6px; overflow: hidden; }
+        .layout-toggle-btn { background: none; border: none; color: var(--white-30); cursor: pointer; padding: 5px 8px; display: flex; align-items: center; justify-content: center; transition: background 0.15s, color 0.15s; }
+        .layout-toggle-btn:hover { color: var(--white-70); background: var(--white-05); }
+        .layout-toggle-btn.active { color: var(--logic-lime); background: rgba(var(--logic-lime-rgb), 0.08); }
         .add-form .form-input { max-width: 300px; height: 38px; }
 
         .rules-stack { display: flex; flex-direction: column; gap: 1.5rem; }
+        .rules-stack--grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; align-items: start; }
         .rule-card { background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); overflow: hidden; transition: border-color 0.2s; }
         .rule-card-dirty { border-color: var(--logic-lime); }
+        .new-section-card { border-style: dashed; border-color: var(--logic-lime); opacity: 0.85; }
         .dirty-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--logic-lime); flex-shrink: 0; }
         .rule-card-header { padding: 0.75rem 1.25rem; background: var(--bg-inset); border-bottom: 1px solid var(--border-subtle); display: flex; justify-content: space-between; align-items: center; }
         .rule-card-title-group { display: flex; align-items: center; gap: 1rem; flex: 1; }
@@ -600,7 +913,6 @@ export default function RulesAdmin({ tournament, orgSlug }: Props) {
         .applies-to-row { display: flex; align-items: center; gap: 0.75rem; padding: 0.4rem 1.25rem; background: var(--bg-inset); border-bottom: 1px solid var(--border-subtle); flex-wrap: wrap; }
         .applies-to-label { font-size: 0.7rem; font-weight: 700; color: var(--white-40); text-transform: uppercase; letter-spacing: 0.05em; white-space: nowrap; }
         .applies-to-check { display: flex; align-items: center; gap: 0.3rem; font-size: 0.8rem; color: var(--white-60); cursor: pointer; }
-        .applies-to-check input[type="checkbox"] { accent-color: var(--blueprint-blue); }
 
         .rule-items-list { padding: 1rem 1.25rem; display: flex; flex-direction: column; gap: 0.4rem; }
         .rule-item-row { display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.3rem; border-radius: 6px; }
@@ -610,8 +922,11 @@ export default function RulesAdmin({ tournament, orgSlug }: Props) {
         .item-delete-btn { background: none; border: none; color: var(--white-10); cursor: pointer; opacity: 0; }
         .rule-item-row:hover .item-delete-btn { opacity: 1; color: var(--danger); }
         .add-item-btn { align-self: flex-start; background: none; border: 1px dashed var(--border-subtle); color: var(--text-tertiary); font-size: 0.7rem; font-weight: 700; padding: 0.3rem 0.8rem; border-radius: 99px; cursor: pointer; margin-top: 0.4rem; }
+        .section-save-bar { display: flex; justify-content: flex-end; gap: 0.75rem; padding: 0.75rem 1.25rem; background: var(--bg-inset); border-top: 1px solid var(--logic-lime); }
+        .header-unsaved-badge { display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.7rem; font-weight: 700; color: var(--logic-lime); letter-spacing: 0.05em; text-transform: uppercase; opacity: 0.8; }
 
         .resource-list-stack { display: flex; flex-direction: column; gap: 0.5rem; }
+        .resource-list-stack--grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; align-items: start; }
         .resource-edit-card { background: var(--bg-inset); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 0.5rem 0.75rem; transition: transform 0.1s; }
         .resource-edit-card.dragging { background: var(--bg-3); border-color: var(--blueprint-blue); }
         .resource-header { display: flex; align-items: center; gap: 0.75rem; }
@@ -628,16 +943,40 @@ export default function RulesAdmin({ tournament, orgSlug }: Props) {
         .resource-edit-card:hover .drag-handle-right { color: var(--white-30); }
         .icon-btn-ghost { background: none; border: none; color: var(--white-10); cursor: pointer; padding: 4px; border-radius: 4px; display: flex; align-items: center; justify-content: center; }
         .icon-btn-ghost:hover { background: var(--white-10); color: var(--white); }
-        .icon-btn-success { background: var(--success); color: var(--white); border: none; padding: 4px; border-radius: 4px; cursor: pointer; }
+        .icon-btn-success { background: var(--success); color: var(--white); border: none; padding: 4px; border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .icon-btn-success:disabled { opacity: 0.3; cursor: not-allowed; }
         .icon-btn-danger { background: none; border: none; color: var(--white-10); cursor: pointer; padding: 4px; border-radius: 4px; display: flex; align-items: center; justify-content: center; }
         .icon-btn-danger:hover { background: rgba(var(--danger-rgb),0.1); color: var(--danger); }
         .btn-xs { padding: 2px 6px; font-size: 0.65rem; font-weight: 700; }
         .divider-lg { height: 1px; background: var(--border); margin: 0.5rem 0; }
         .empty-state-card { padding: 2rem; background: var(--bg-surface); border: 2px dashed var(--border-subtle); border-radius: var(--radius-md); display: flex; flex-direction: column; align-items: center; gap: 1rem; color: var(--text-tertiary); }
         .spin { animation: spin 1s linear infinite; }
+
+        /* Phase 3 — Samples drawer */
+        .drawer-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 200; }
+        .samples-drawer { position: fixed; top: 0; right: 0; bottom: 0; width: min(480px, 100vw); background: var(--bg-surface); border-left: 1px solid var(--border-subtle); z-index: 201; display: flex; flex-direction: column; overflow: hidden; }
+        .drawer-header { padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border-subtle); display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; }
+        .drawer-title { font-family: var(--font-display); font-size: 1.1rem; font-weight: 800; color: var(--white); margin: 0; }
+        .drawer-sub { font-size: 0.75rem; color: var(--white-40); margin: 0.25rem 0 0; }
+        .drawer-tabs { display: flex; border-bottom: 1px solid var(--border-subtle); }
+        .drawer-tab { flex: 1; display: flex; align-items: center; justify-content: center; gap: 0.4rem; padding: 0.65rem; font-family: var(--font-data); font-size: 0.65rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; background: none; border: none; color: var(--white-30); cursor: pointer; border-bottom: 2px solid transparent; }
+        .drawer-tab.active { color: var(--logic-lime); border-bottom-color: var(--logic-lime); }
+        .drawer-body { flex: 1; overflow-y: auto; padding: 1rem 1.5rem; display: flex; flex-direction: column; gap: 0.75rem; }
+        .sample-card { background: var(--bg-inset); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 0.85rem 1rem; }
+        .sample-card-header { display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin-bottom: 0.5rem; }
+        .sample-title { font-family: var(--font-display); font-size: 0.9rem; font-weight: 700; color: var(--white); }
+        .sample-preview-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 0.3rem; }
+        .sample-preview-item { font-size: 0.75rem; color: var(--white-40); line-height: 1.4; padding-left: 0.75rem; position: relative; }
+        .sample-preview-item::before { content: '·'; position: absolute; left: 0; color: var(--white-20); }
+        .sample-preview-more { font-size: 0.7rem; color: var(--white-20); font-style: italic; padding-left: 0.75rem; }
+        .drawer-resources-note { font-size: 0.75rem; color: var(--white-40); background: var(--bg-inset); border: 1px solid var(--border-subtle); border-radius: 6px; padding: 0.5rem 0.75rem; margin-bottom: 0.25rem; }
+
         @media (max-width: 720px) {
           .single-column-layout { gap: 2.5rem; padding-bottom: 3rem; }
           .section-header { align-items: stretch; flex-direction: column; }
+          .section-header-actions { flex-wrap: wrap; }
+          .rules-stack--grid { grid-template-columns: 1fr; }
+          .resource-list-stack--grid { grid-template-columns: 1fr; }
           .add-form { flex-direction: column; width: 100%; }
           .add-form .form-input { max-width: none; width: 100%; }
           .add-form .btn { justify-content: center; min-height: 44px; width: 100%; }

@@ -252,6 +252,70 @@
   padding-bottom: 0.32rem;
 }
 
+.registrationNameCell {
+  flex: 2;
+  min-width: 0;
+}
+
+.registrationCoachCell {
+  flex: 1.5;
+  min-width: 0;
+}
+
+.registrationStatusCell,
+.registrationPaymentCell {
+  width: 120px;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.registrationPaymentCell {
+  padding-left: 1rem;
+}
+
+.registrationExpandCell {
+  width: 40px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.desktopStatusBadge,
+.desktopPaymentBadge {
+  display: inline-flex;
+}
+
+.mobileStatusMarker,
+.paymentSymbolGroup {
+  display: none;
+}
+
+.paymentPlaceholder {
+  color: var(--white-45);
+  font-family: var(--font-data);
+  font-size: 0.72rem;
+}
+
+.paymentSymbol {
+  color: rgba(148, 163, 184, 0.42);
+  font-family: var(--font-data);
+  font-size: 0.76rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.paymentSymbol[data-tone="paid"] {
+  color: var(--success);
+}
+
+.paymentSymbol[data-tone="danger"] {
+  color: var(--danger);
+}
+
+.paymentSymbol[data-tone="pending"] {
+  color: rgba(148, 163, 184, 0.42);
+}
+
 .selectionCell {
   width: 32px;
   display: flex;
@@ -283,8 +347,8 @@
 }
 
 .selectionCheckbox:checked {
-  border-color: rgba(var(--logic-lime-rgb, 194, 255, 74), 0.85);
-  background: rgba(var(--logic-lime-rgb, 194, 255, 74), 0.14);
+  border-color: rgba(var(--logic-lime-rgb, 217, 249, 157), 0.85);
+  background: rgba(var(--logic-lime-rgb, 217, 249, 157), 0.14);
 }
 
 .selectionCheckbox:checked::before {
@@ -292,7 +356,7 @@
 }
 
 .selectionCheckbox:focus-visible {
-  outline: 2px solid rgba(var(--logic-lime-rgb, 194, 255, 74), 0.45);
+  outline: 2px solid rgba(var(--logic-lime-rgb, 217, 249, 157), 0.45);
   outline-offset: 2px;
 }
 
@@ -434,7 +498,6 @@
 
 .notifyToggle input {
   margin-top: 0.15rem;
-  accent-color: var(--blueprint-blue);
 }
 
 /* ─── Selected Registration Actions ──────────────────────────────────────── */
@@ -457,88 +520,55 @@
   background: rgba(0, 0, 0, 0.12);
 }
 
-.claimInvitePanel {
-  margin: 0 2rem 1rem;
-  padding: 0.85rem 1rem;
-  border: 1px solid rgba(var(--logic-lime-rgb, 194, 255, 74), 0.32);
-  border-radius: 8px;
-  background: rgba(var(--logic-lime-rgb, 194, 255, 74), 0.05);
-}
-
-.claimInviteHeader {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 1rem;
-  margin-bottom: 0.75rem;
-}
-
-.claimInviteHeader strong {
-  color: var(--white);
-}
-
-.claimInviteHeader p {
-  margin: 0.2rem 0 0;
-  color: var(--white-50);
-  font-size: 0.82rem;
-}
-
-.claimInviteList {
-  display: grid;
-  gap: 0.45rem;
-}
-
-.claimInviteItem {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 1rem;
-  padding: 0.55rem 0.65rem;
-  border: 1px solid var(--border-2);
-  border-radius: 6px;
-  background: var(--hud-surface);
-}
-
-.claimInviteItem strong,
-.claimInviteItem span {
-  display: block;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.claimInviteItem strong {
-  color: var(--white);
-  font-size: 0.86rem;
-}
-
-.claimInviteItem span {
-  color: var(--white-45);
-  font-size: 0.76rem;
-}
-
-.claimInviteItem a {
-  color: var(--logic-lime);
-  font-size: 0.75rem;
-  font-weight: 900;
-  letter-spacing: 0.06em;
-  text-decoration: none;
-  text-transform: uppercase;
-  white-space: nowrap;
-}
-
-.claimInviteItem a:hover {
-  text-decoration: underline;
-}
-
-.claimInviteMore {
-  margin: 0.2rem 0 0;
-  color: var(--white-45);
-  font-size: 0.78rem;
-}
-
 /* ─── Compact Toolbar Additions ──────────────────────────────────────────── */
+.registrationToolbar {
+  row-gap: 0.55rem;
+}
+
+.registrationContextGroup {
+  min-width: 14rem;
+}
+
+.registrationActionGroup {
+  align-items: center;
+}
+
+.registrationUtilityStart {
+  display: inline-flex;
+}
+
+.registrationFilterGroup {
+  align-items: center;
+}
+
+.registrationStatusFilters {
+  min-width: 0;
+}
+
+.registrationStatusFilters > button {
+  justify-content: center;
+}
+
+.addTeamLabel {
+  display: inline;
+}
+
+@media (max-width: 760px) {
+  .addTeamButton {
+    width: 32px;
+    min-width: 32px;
+    height: 28px;
+    min-height: 28px;
+    padding: 0 !important;
+    justify-content: center;
+    gap: 0;
+  }
+
+  .addTeamLabel {
+    display: none;
+  }
+}
+
 .selectCurrent {
   display: inline-flex;
   align-items: center;
@@ -554,9 +584,7 @@
   white-space: nowrap;
 }
 
-.selectCurrent input {
-  accent-color: var(--blueprint-blue);
-}
+/* accent-color removed — global branded checkbox handles this */
 
 .multiSelectToggle,
 .multiSelectDone {
@@ -586,6 +614,10 @@
 
 .multiSelectDone {
   color: rgba(148, 163, 184, 0.55);
+}
+
+.multiSelectLabel {
+  display: inline;
 }
 
 .activeFilterBadge {
@@ -663,7 +695,7 @@
 }
 
 .toolsFilterButtonActive {
-  border-color: rgba(var(--logic-lime-rgb, 194, 255, 74), 0.45);
+  border-color: rgba(var(--logic-lime-rgb, 217, 249, 157), 0.45);
   background: rgba(var(--logic-lime-rgb, 194, 255, 74), 0.08);
   color: var(--logic-lime);
 }
@@ -873,8 +905,112 @@
   }
 
   .teamRowMain {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto auto;
+    grid-template-areas:
+      "status name payment expand";
+    align-items: center;
+    column-gap: 0.6rem;
     min-height: 44px;
-    padding: 0.55rem 0.75rem;
+    padding: 0.48rem 0.75rem;
+  }
+
+  .teamRowSelecting {
+    grid-template-columns: auto auto minmax(0, 1fr) auto auto;
+    grid-template-areas:
+      "select status name payment expand";
+  }
+
+  .registrationNameCell {
+    grid-area: name;
+    flex: initial;
+    min-width: 0;
+  }
+
+  .registrationNameCell strong {
+    display: block;
+    overflow-wrap: anywhere;
+    line-height: 1.25;
+  }
+
+  .registrationCoachCell {
+    display: none;
+  }
+
+  .registrationStatusCell {
+    grid-area: status;
+    width: auto;
+    padding-left: 0;
+  }
+
+  .registrationPaymentCell {
+    grid-area: payment;
+    width: auto;
+    min-width: 0;
+    padding-left: 0;
+    justify-content: flex-end;
+  }
+
+  .registrationExpandCell {
+    grid-area: expand;
+    width: auto;
+    text-align: right;
+  }
+
+  .desktopStatusBadge,
+  .desktopPaymentBadge {
+    display: none;
+  }
+
+  .mobileStatusMarker {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.12rem;
+    height: 1.12rem;
+    border: 1px solid rgba(148, 163, 184, 0.28);
+    border-radius: 2px;
+    background: rgba(148, 163, 184, 0.08);
+    color: rgba(148, 163, 184, 0.72);
+    font-family: var(--font-data);
+    font-size: 0.58rem;
+    font-weight: 900;
+    line-height: 1;
+  }
+
+  .mobileStatusMarker[data-status="pending"] {
+    border-color: rgba(245, 158, 11, 0.48);
+    background: rgba(245, 158, 11, 0.08);
+    color: var(--warning);
+  }
+
+  .mobileStatusMarker[data-status="accepted"] {
+    border-color: rgba(var(--logic-lime-rgb, 194, 255, 74), 0.45);
+    background: rgba(var(--logic-lime-rgb, 194, 255, 74), 0.08);
+    color: var(--logic-lime);
+  }
+
+  .mobileStatusMarker[data-status="waitlist"] {
+    border-color: rgba(var(--blueprint-blue-rgb), 0.48);
+    background: rgba(var(--blueprint-blue-rgb), 0.08);
+    color: var(--blueprint-blue);
+  }
+
+  .mobileStatusMarker[data-status="rejected"] {
+    border-color: rgba(var(--danger-rgb), 0.48);
+    background: rgba(var(--danger-rgb), 0.08);
+    color: var(--danger);
+  }
+
+  .paymentSymbolGroup {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.08rem;
+    min-height: 1.12rem;
+  }
+
+  .paymentPlaceholder {
+    display: none;
   }
 
   .teamDetailShell {
@@ -911,32 +1047,69 @@
     margin-bottom: 0.6rem;
   }
 
+  .registrationToolbar {
+    gap: 0.55rem;
+  }
+
+  .registrationContextGroup,
+  .registrationActionGroup,
+  .registrationFilterGroup {
+    width: 100%;
+  }
+
+  .registrationActionGroup {
+    flex-wrap: nowrap;
+  }
+
+  .registrationUtilityStart {
+    margin-left: auto;
+  }
+
+  .registrationFilterGroup {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 0.55rem;
+  }
+
+  .registrationStatusFilters {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.38rem;
+    width: 100%;
+  }
+
+  .registrationStatusFilters > button {
+    min-height: 28px;
+    width: 100%;
+  }
+
   .registrationSelectionBar :global(.btn) {
-    flex: 1 1 calc(50% - 0.25rem);
-    min-height: 44px;
+    flex: 1 1 calc(33.333% - 0.25rem);
+    min-height: 28px;
     min-width: 0;
+    padding: 0.2rem 0.36rem;
+    font-size: 0.62rem;
     white-space: normal;
   }
 
   .multiSelectToggle,
   .multiSelectDone {
-    min-height: 44px;
+    width: 32px;
+    min-width: 32px;
+    min-height: 28px;
+    padding: 0;
+    gap: 0;
+  }
+
+  .multiSelectLabel {
+    display: none;
   }
 
   .selectionCell {
+    grid-area: select;
+    align-self: start;
     width: 28px;
+    padding-top: 0.05rem;
   }
 
-  .claimInvitePanel {
-    margin: 0 1rem 1rem;
-  }
-
-  .claimInviteHeader,
-  .claimInviteItem {
-    grid-template-columns: 1fr;
-  }
-
-  .claimInviteHeader {
-    display: grid;
-  }
 }

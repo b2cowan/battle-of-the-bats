@@ -232,7 +232,6 @@
 .activeToggle input[type="checkbox"] {
   width: 16px;
   height: 16px;
-  accent-color: var(--blueprint-blue);
   cursor: pointer;
   flex-shrink: 0;
 }
@@ -349,9 +348,7 @@
   padding: 0.25rem 0;
 }
 
-.checkboxLabel input {
-  accent-color: var(--blueprint-blue);
-}
+/* accent-color removed — global branded checkbox handles this */
 
 .contactPicker {
   margin-top: 1rem;
@@ -401,7 +398,6 @@
 .divisionNameCell input[type='checkbox'] {
   width: 16px;
   height: 16px;
-  accent-color: var(--blueprint-blue);
 }
 
 .divisionNameInput {
@@ -476,7 +472,6 @@
 .subCheck input {
   width: 16px;
   height: 16px;
-  accent-color: var(--blueprint-blue);
 }
 
 .migrationSection textarea {

@@ -99,8 +99,8 @@ function SortableResource({
             </div>
           </div>
           <div className="flex gap-2 justify-end mt-2">
-            <button className="btn btn-purple btn-xs" onClick={saveResourceEdit}><Check size={12} /> Save</button>
-            <button className="btn btn-outline btn-xs" onClick={() => setEditingResourceId(null)}><X size={12} /> Cancel</button>
+            <button className="btn btn-lime btn-data" onClick={saveResourceEdit}><Check size={12} /> Save</button>
+            <button className="btn btn-ghost btn-data" onClick={() => setEditingResourceId(null)}><X size={12} /> Cancel</button>
           </div>
         </div>
       ) : (
@@ -381,7 +381,7 @@ export default function RulesAdmin({ tournament }: Props) {
           </div>
         </div>
         <div className={styles.headerActions}>
-          <button className="btn btn-purple btn-sm" onClick={handleSeed}>
+          <button className="btn btn-outline btn-data" onClick={handleSeed}>
             <RefreshCw size={14} /> Seed Default Data
           </button>
         </div>
@@ -410,7 +410,7 @@ export default function RulesAdmin({ tournament }: Props) {
                 value={newSectionTitle}
                 onChange={e => setNewSectionTitle(e.target.value)}
               />
-              <button className="btn btn-purple" onClick={handleAddSection} disabled={saving}>
+              <button className="btn btn-lime btn-data" onClick={handleAddSection} disabled={saving}>
                 <Plus size={16} /> Add Section
               </button>
             </div>
@@ -487,8 +487,8 @@ export default function RulesAdmin({ tournament }: Props) {
           <div className="section-header">
             <h2 className="section-title">Resources & Downloads</h2>
             <div className="add-form">
-              <button className="btn btn-outline" onClick={handleAddResource}><LinkIcon size={14} /> Add Link</button>
-              <button className="btn btn-purple" onClick={() => document.getElementById('file-up-main')?.click()}><Upload size={14} /> Upload File</button>
+              <button className="btn btn-outline btn-data" onClick={handleAddResource}><LinkIcon size={14} /> Add Link</button>
+              <button className="btn btn-lime btn-data" onClick={() => document.getElementById('file-up-main')?.click()}><Upload size={14} /> Upload File</button>
               <input type="file" id="file-up-main" hidden onChange={handleFileUpload} />
             </div>
           </div>

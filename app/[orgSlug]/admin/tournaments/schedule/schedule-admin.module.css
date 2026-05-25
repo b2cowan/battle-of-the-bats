@@ -67,9 +67,7 @@
   cursor: pointer;
 }
 
-.diamondCheck input {
-  accent-color: var(--blueprint-blue);
-}
+/* accent-color removed — global branded checkbox handles this */
 
 .previewStats {
   display: flex;
@@ -155,6 +153,10 @@
 
 .dateSlotRow .formGroup {
   margin-bottom: 0;
+}
+
+.mobileButtonLabel {
+  display: inline;
 }
 
 /* ─── Score Entry (shared with Results) ───────────────────────────────────── */
@@ -376,6 +378,20 @@
 }
 
 @media (max-width: 768px) {
+  .mobileIconButton {
+    width: 32px;
+    min-width: 32px;
+    height: 28px;
+    min-height: 28px;
+    padding: 0 !important;
+    justify-content: center;
+    gap: 0;
+  }
+
+  .mobileButtonLabel {
+    display: none;
+  }
+
   .inlineFormBody {
     grid-template-columns: 1fr 1fr;
   }

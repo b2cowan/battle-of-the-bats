@@ -260,21 +260,21 @@ const tournamentsHelp: HelpPageContent = {
     {
       id: 'venues-contacts-rules',
       group: 'Setup',
-      heading: 'Venues, contacts, announcements, and rules',
+      heading: 'Venues, contacts, communication, and rules',
       summary: 'Prepare the public information teams need before registration opens.',
-      keywords: ['venues', 'diamonds', 'contacts', 'public contact', 'announcements', 'rules', 'resources'],
-      searchText: 'venues diamonds fields custom location contacts public contact email notifications announcements welcome message rules resources documents public site',
+      keywords: ['venues', 'diamonds', 'contacts', 'public contact', 'communication', 'news posts', 'rules', 'resources'],
+      searchText: 'venues diamonds fields custom location contacts public contact email notifications communication news posts welcome message rules resources documents public site',
       links: [
         { label: 'Venues', href: '../tournaments/venues' },
         { label: 'Contacts', href: '../tournaments/contacts' },
-        { label: 'Announcements', href: '../tournaments/announcements' },
+        { label: 'Communication', href: '../tournaments/communication' },
         { label: 'Rules & Resources', href: '../tournaments/rules' },
       ],
       content: (
         <>
           <p>Add venues before building the schedule so games can use consistent field names. You can still type a custom location on an individual game if needed.</p>
           <p>The public contact email is the address teams see for tournament questions. If no tournament-specific contact is set, FieldLogicHQ may fall back to the organization contact where available.</p>
-          <p>Announcements and rules help teams self-serve key information. Use announcements for timely updates and rules/resources for durable documents or tournament policies.</p>
+          <p>Use Communication to publish news posts and send email updates to teams. Rules and resources are for durable documents and tournament policies.</p>
         </>
       ),
       faqs: [

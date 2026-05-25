@@ -297,6 +297,54 @@ img { max-width: 100%; display: block; }
 input, textarea, select { font-family: inherit; }
 ul, ol { list-style: none; }
 
+/* ─── Branded Checkbox ───────────────────────────────────────────────────── */
+/* Applies platform style to all checkboxes. Override per-component only     */
+/* for dimension changes (the .selectionCheckbox 18px variant, for example). */
+input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  display: grid;
+  place-content: center;
+  flex-shrink: 0;
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.42);
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.05);
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+input[type="checkbox"]::before {
+  content: "";
+  width: 4px;
+  height: 8px;
+  border: solid var(--logic-lime);
+  border-width: 0 2px 2px 0;
+  opacity: 0;
+  transform: rotate(45deg) translateY(-1px);
+  transition: opacity 0.12s ease;
+}
+
+input[type="checkbox"]:checked {
+  border-color: rgba(var(--logic-lime-rgb, 217, 249, 157), 0.85);
+  background: rgba(var(--logic-lime-rgb, 217, 249, 157), 0.14);
+}
+
+input[type="checkbox"]:checked::before {
+  opacity: 1;
+}
+
+input[type="checkbox"]:focus-visible {
+  outline: 2px solid rgba(var(--logic-lime-rgb, 217, 249, 157), 0.45);
+  outline-offset: 2px;
+}
+
+input[type="checkbox"]:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
 /* ─── Typography ────────────────────────────────────────────────────────────── */
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-display, sans-serif);
@@ -675,7 +723,7 @@ select option {
   color: var(--white-30);
 }
 
-.empty-state svg { margin: 0 auto 1rem; opacity: 0.4; }
+.empty-state > svg { margin: 0 auto 1rem; opacity: 0.4; }
 .empty-state p { font-size: 1.0625rem; }
 
 /* ─── Table ─────────────────────────────────────────────────────────────────── */

@@ -29,6 +29,27 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(url, { status: 301 });
   }
 
+  // Redirect legacy Basic coach portal routes before auth so old links do not
+  // strand unauthenticated coaches on /my URLs.
+  if (segments[0] === 'my') {
+    const url = request.nextUrl.clone();
+    if (segments[1] === 'join') {
+      url.pathname = '/coaches/join';
+      const next = url.searchParams.get('next');
+      if (next === '/my') {
+        url.searchParams.set('next', '/coaches/tournaments');
+      } else if (next?.startsWith('/my/registrations')) {
+        url.searchParams.set('next', next.replace('/my/registrations', '/coaches/tournaments'));
+      }
+    } else if (segments[1] === 'registrations') {
+      const remainingPath = segments.slice(2).join('/');
+      url.pathname = `/coaches/tournaments${remainingPath ? '/' + remainingPath : ''}`;
+    } else {
+      url.pathname = '/coaches/tournaments';
+    }
+    return NextResponse.redirect(url, { status: 307 });
+  }
+
   let supabaseResponse = NextResponse.next({
     request: { headers: requestHeaders },
   });
@@ -92,6 +113,20 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
+  // Protect Basic Coaches Portal tournament records while leaving signup,
+  // paid activation, claim, and checkout completion routes public.
+  const isRootCoachesSection = segments[0] === 'coaches';
+  const isPublicCoachesPath =
+    isRootCoachesSection &&
+    ['join', 'start', 'claim', 'checkout'].includes(segments[1] ?? '');
+
+  if (isRootCoachesSection && !isPublicCoachesPath && !user) {
+    const url = request.nextUrl.clone();
+    url.pathname = '/auth/login';
+    url.searchParams.set('next', pathname);
+    return NextResponse.redirect(url);
+  }
+
   return supabaseResponse;
 }
 
@@ -111,5 +146,9 @@ export const config = {
     '/api/registrations',
     '/api/org-context',
     '/api/dev/:path*',
+    '/my',
+    '/my/:path*',
+    '/coaches',
+    '/coaches/:path*',
   ],
 };

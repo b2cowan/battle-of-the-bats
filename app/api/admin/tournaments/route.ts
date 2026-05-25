@@ -177,7 +177,7 @@ async function sendCompletionResultsNotification(input: {
   const scheduleUrl = `${SITE_URL}/${ctx.org.slug}/${tournament.slug}/schedule`;
   const teamsUrl = `${SITE_URL}/${ctx.org.slug}/${tournament.slug}/teams`;
   const fieldLogicUrl = `${SITE_URL}/pricing?source=post_event_results_email`;
-  const teamUrl = `${SITE_URL}/team?billing=annual&source=post_event_results_email&orgSlug=${encodeURIComponent(ctx.org.slug)}&tournamentSlug=${encodeURIComponent(tournament.slug)}`;
+  const teamUrl = `${SITE_URL}/coaches/start?billing=annual&source=post_event_results_email&orgSlug=${encodeURIComponent(ctx.org.slug)}&tournamentSlug=${encodeURIComponent(tournament.slug)}`;
   const contactEmail = tournament.contact_email || ctx.org.contactEmail || undefined;
   let sent = 0;
 
@@ -476,6 +476,43 @@ export async function POST(req: Request) {
         .eq('id', id)
         .eq('org_id', ctx.org.id);
 
+      if (error) throw error;
+    }
+
+    // ── patch-settings ────────────────────────────────────────────────────────
+    else if (action === 'patch-settings' && id && data?.settings !== undefined) {
+      const denied = scopeGuard(ctx, id);
+      if (denied) return denied;
+
+      // Whitelist known settings keys so arbitrary data can't be injected.
+      const ALLOWED_SETTINGS_KEYS = new Set(['rulesLayout', 'resourcesLayout']);
+      const RULES_LAYOUT_VALUES   = new Set(['columns', 'single']);
+      const RESOURCES_LAYOUT_VALUES = new Set(['list', 'grid']);
+
+      const sanitized: Record<string, unknown> = {};
+      for (const [k, v] of Object.entries(data.settings as Record<string, unknown>)) {
+        if (!ALLOWED_SETTINGS_KEYS.has(k)) continue;
+        if (k === 'rulesLayout'     && !RULES_LAYOUT_VALUES.has(String(v))) continue;
+        if (k === 'resourcesLayout' && !RESOURCES_LAYOUT_VALUES.has(String(v))) continue;
+        sanitized[k] = v;
+      }
+
+      // Read current settings, merge, write back (atomic enough for low-contention admin prefs).
+      const { data: existing, error: readErr } = await supabase
+        .from('tournaments')
+        .select('settings')
+        .eq('id', id)
+        .eq('org_id', ctx.org.id)
+        .single();
+      if (readErr) throw readErr;
+
+      const merged = { ...(existing?.settings ?? {}), ...sanitized };
+
+      const { error } = await supabase
+        .from('tournaments')
+        .update({ settings: merged })
+        .eq('id', id)
+        .eq('org_id', ctx.org.id);
       if (error) throw error;
     }
 

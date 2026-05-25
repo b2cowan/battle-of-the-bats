@@ -313,7 +313,7 @@ export default function TournamentEventSettingsPage() {
               checked={notifyTeamsOnComplete}
               disabled={!canUsePostEventNotifications}
               onChange={e => setNotifyTeamsOnComplete(e.target.checked)}
-              style={{ width: '18px', height: '18px', cursor: canUsePostEventNotifications ? 'pointer' : 'not-allowed', accentColor: 'var(--primary)' }}
+              style={{ cursor: canUsePostEventNotifications ? 'pointer' : 'not-allowed' }}
             />
           </label>
           <p className={styles.descriptionText}>

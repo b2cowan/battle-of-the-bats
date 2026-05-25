@@ -67,9 +67,7 @@
   cursor: pointer;
 }
 
-.diamondCheck input {
-  accent-color: var(--primary);
-}
+/* accent-color removed — global branded checkbox handles this */
 
 .previewStats {
   display: flex;

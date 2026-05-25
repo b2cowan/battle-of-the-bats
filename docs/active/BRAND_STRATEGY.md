@@ -1,5 +1,20 @@
 # FieldLogicHQ Brand Strategy
 
+## Coaches Portal Unification Addendum
+
+**Added 2026-05-25.** The product previously described as Coach Portal, Team, or standalone Team is now one customer-facing product: **Coaches Portal**.
+
+Current rule:
+
+- Tournament participants receive Basic Coaches Portal access for tournament registrations, schedules, status, announcements, and history.
+- Paid standalone coaches, org-billed coaches, and Club coaches receive Premium Coaches Portal access in the same portal.
+- Upgrading adds premium tools without removing tournament history.
+- Canceling paid access returns the coach to Basic Coaches Portal rather than removing their account.
+- Use `/coaches` as the product route. Legacy coach/team signup routes should redirect into `/coaches` before launch.
+- Customer-facing copy should say Coaches Portal, not Team plan, Team subscription, or standalone Team.
+
+See `docs/active/COACHES_PORTAL_UNIFIED_PROJECT_PLAN.md` for the canonical implementation direction.
+
 *Last updated: 2026-05-24 — established in marketing strategy session*
 
 ---
@@ -246,7 +261,7 @@ The homepage's job is to help visitors recognize themselves and route to the rig
 /pricing                        → Full 4-tier table + team add-on row + coach standalone row
 /platform/[module]              → Module deep-dives (existing, keep as-is)
 /auth/signup                    → Tournament plan onboarding (default entry point)
-/team                           → Coach Portal signup (standalone team onboarding)
+/coaches                        → Coaches Portal entry and signup
 ```
 
 ### Homepage persona routing
@@ -284,9 +299,13 @@ Tournaments are the primary acquisition channel. The funnel:
 
 ## 10. Geographic Positioning
 
-**CAD pricing** is a concrete differentiator — call it out explicitly on pricing surfaces.
+**CAD pricing** is a concrete differentiator — call it out explicitly on pricing surfaces (stats bars, plan cards, footnotes).
 
-**"Built for Canadian organizations"** is appropriate on the homepage and about page, but should not be overclaimed as a permanent brand pillar if expansion to US markets is planned. Preferred framing: "Built for how community sport actually runs" with CAD pricing called out as a specific, factual benefit.
+**Do not use "Canadian" in headlines, hero copy, persona routing cards, or brand identity statements.** The platform is not scoped to Canada — using "Canadian" in positioning limits future expansion and excludes non-Canadian orgs who may be using or evaluating the product.
+
+**Preferred framing**: "Built for how community sport actually runs" — sport-agnostic, geography-neutral, still specific to the volunteer-operator context.
+
+**Where "Canadian" is acceptable**: factual callouts only — "Billed in CAD", "CAD pricing", plan card footnotes. Never as a brand identity claim.
 
 Do not promise "Canadian payment processing" as a feature unless local payment infrastructure is confirmed.
 

@@ -62,7 +62,7 @@ export async function POST(req: Request) {
     });
   }
   if (planKey === 'team') {
-    return new Response(JSON.stringify({ error: 'Use Team checkout to create a standalone Team workspace.' }), {
+    return new Response(JSON.stringify({ error: 'Use Coaches Portal checkout for coach-owned team subscriptions.' }), {
       status: 400,
       headers: { 'Content-Type': 'application/json' },
     });

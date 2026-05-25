@@ -5,10 +5,29 @@ This file tracks the ongoing tasks for the FieldLogicHQ platform (multi-tenant s
 
 ---
 
+- [x] **Tournament Coach Portal** — authenticated coach accounts at registration, now routed through `/coaches/join` and `/coaches/tournaments` with legacy `/my` redirects, auth-destination routing, resend-access admin action, and workspace invite removed (see [plan](docs/active/TOURNAMENT_COACH_PORTAL_PLAN.md) and [PM brief](docs/active/TOURNAMENT_COACH_PORTAL_PM_BRIEF.md))
+- [ ] **Rules & Resources UX improvements** — custom modals, inline add-section, Browse Samples drawer, public page suppression (see [plan](docs/active/RULES_PAGE_UX_IMPROVEMENTS_PLAN.md) and [PM brief](docs/active/RULES_PAGE_UX_IMPROVEMENTS_PM_BRIEF.md))
+  - [x] Phase 1 — Custom confirmation modals (delete section, delete resource)
+  - [x] Phase 2 — Inline add-section blank-card flow
+  - [x] Phase 3 — Browse Samples drawer (`rules-samples.ts`, `SamplesDrawer.tsx`)
+  - [x] Phase 4 — Public page: suppress empty sections, remove fallback rules
+  - [ ] Browser verification
+- [ ] **Tournament settings JSONB + layout controls** — `tournaments.settings` JSONB column, per-tournament rules/resources layout toggles (see [plan](docs/active/TOURNAMENT_SETTINGS_LAYOUT_PLAN.md))
+  - [x] Migration 086: `tournaments.settings jsonb NOT NULL DEFAULT '{}'`
+  - [x] Types: `TournamentSettings` interface + `settings?` on `Tournament`
+  - [x] DB: `mapTournament` reads settings; `updateTournamentSettings` helper
+  - [x] API: `patch-settings` action with key whitelist
+  - [x] Admin: layout toggle UI in Rules & Resources section headers
+  - [x] Public page: applies `rulesGridSingle` / `resourcesGrid` CSS variants
+  - [x] Apply migration to dev + prod DB
+  - [ ] Browser verification
+- [ ] **Unified Coaches Portal** - one portal for tournament-only coach records, paid standalone Coaches Portal workspaces, org-billed coach access, Club coach access, upgrade, cancellation fallback, and legacy route migration into `/coaches` (see [project plan](docs/active/COACHES_PORTAL_UNIFIED_PROJECT_PLAN.md) and [PM brief](docs/active/COACHES_PORTAL_UNIFIED_PM_BRIEF.md))
+  - [x] Phase 1 route migration: `/coaches/join`, `/coaches/tournaments`, `/coaches/start`, paid claim/checkout aliases, auth destinations, emails, nav, and `/my`/`/team` compatibility redirects
+  - [x] Remaining copy/help/admin-support audit for old "Team workspace" language
 - [ ] **Brand Strategy** — umbrella positioning, four segment profiles, site architecture, Coach Portal bridge messaging (see [BRAND_STRATEGY.md](docs/active/BRAND_STRATEGY.md))
 - [ ] **Persona landing pages** — build `/for-tournament-organizers`, `/for-leagues`, `/for-clubs`, `/for-coaches` segment pages per brand strategy site architecture
 - [ ] **Homepage persona routing** — update hero section with four-path self-selection above the fold
-- [ ] **Pricing page copy** — write full plan cards, comparison table, FAQ, Coach Portal row (see `docs/active/PRICING_PAGE_COPY.md` once created)
+- [x] **Pricing page copy** - approved copy applied to `app/pricing/page.tsx`; canonical record in `docs/active/PRICING_PAGE_COPY.md`, with Coaches Portal unification tracked in the unified plan
 
 ---
 
@@ -22,7 +41,7 @@ This file tracks the ongoing tasks for the FieldLogicHQ platform (multi-tenant s
 
 - [x] **Standalone Team Phase 2C** - Team-first landing and access gates implemented: Team workspaces default to the coaches portal, coaches landing/success copy is Team-aware, coach APIs enforce team entitlement plus active coach assignment, and org-wide rep-team admin remains module-gated.
 
-- [x] **Standalone Team Phase 2D** - Public Team signup surface implemented: `/team` collects team, season, billing, and coach account details, creates/signs in Team-only coach accounts, starts the existing Team checkout flow, and exposes the path from pricing/marketing navigation.
+- [x] **Standalone Team Phase 2D** - Legacy public Team signup surface implemented: collects team, season, billing, and coach account details, creates/signs in Team-only coach accounts, starts the existing Team checkout flow, and exposes the path from pricing/marketing navigation.
 
 - [x] **Standalone Team Phase 2E** - Stripe sandbox checkout verification complete: readiness checker, Dev Tools mock-billing toggle, setup checklist, and real Stripe sandbox org Team add-on checkout/webhook smoke are implemented and passing.
 
@@ -46,9 +65,9 @@ This file tracks the ongoing tasks for the FieldLogicHQ platform (multi-tenant s
 
 - [x] **Standalone Team Phase 6C** - First-run Team workspace checklist implemented and smoke-tested: the coach team overview now shows data-driven season setup progress for roster, positions, calendar, lineups, budget, and optional parent-org linking without changing linked-org visibility or ownership boundaries.
 
-- [x] **Standalone Team Phase 7A** - Segment-first public pricing implemented and smoke-tested: `/pricing` now separates tournament, organization, and one-team buyers, sends Team buyers to the seasonal `/team` signup path, and highlights implemented Team value without changing org onboarding.
+- [x] **Standalone Team Phase 7A** - Segment-first public pricing implemented and smoke-tested: `/pricing` now separates tournament, organization, and one-team buyers, sends Team buyers to the seasonal signup path, and highlights implemented Team value without changing org onboarding.
 
-- [x] **Standalone Team Phase 7B** - Public Team landing page refreshed and smoke-tested: `/team` now explains the coach-specific season workspace, tournament continuity, free-tier local tournaments, and implemented Coaches Portal value while preserving the existing signup/checkout flow.
+- [x] **Standalone Team Phase 7B** - Legacy public Team landing page refreshed and smoke-tested: the page explains the coach-specific season workspace, tournament continuity, free-tier local tournaments, and implemented Coaches Portal value while preserving the existing signup/checkout flow.
 
 - [x] **Standalone Team Phase 7C** - Tournament-to-Team CTAs updated and smoke-tested: registration confirmation, public tournament banner, registration/claim emails, and post-event results emails now point coaches toward Team season workspaces while preserving existing tournament organizer CTAs.
 
@@ -57,8 +76,6 @@ This file tracks the ongoing tasks for the FieldLogicHQ platform (multi-tenant s
 - [x] **Standalone Team Phase 8** - Focused launch verification complete: pricing, direct mock checkout, tournament-claim mock checkout, Team free-tier tournament limit, Basic org linking, attendance/RLS, lineups/checklist, and ownership transfer smokes pass; remaining Stripe/mobile/cancellation items are manual launch checks.
 
 - [x] **Standalone Team Phase 9** - Help documentation and launch cleanup complete: coach/org/platform-admin help explains Team, season rollover, local tournaments, linking, billing transfer, ownership transfer, Team add-ons versus Club, and owner launch readiness; stale Club extra-team pricing copy now shows $19/$190.
-
-- [ ] **Standalone Team workspace model** — Build-ready plan and PM brief for tournament-to-team acquisition, standalone coach workspaces, org linking, billing transfer, and coaches portal enhancements (see [implementation plan](docs/active/codex_STANDALONE_TEAM_IMPLEMENTATION_PLAN.md) and [PM brief](docs/active/codex_STANDALONE_TEAM_PM_BRIEF.md))
 
 - [ ] **Public tournament mobile experience** - Mobile-first plan and PM brief for public registration, schedule controls, hidden/empty states, post-event story, and first-viewport trust (see [implementation plan](docs/active/codex_PUBLIC_TOURNAMENT_MOBILE_EXPERIENCE_PLAN.md) and [PM brief](docs/active/codex_PUBLIC_TOURNAMENT_MOBILE_EXPERIENCE_PM_BRIEF.md))
 

@@ -61,7 +61,7 @@ export default function AccountingPage() {
               initialPlanInterest={['club']}
               initialFeaturesInterested={['accounting']}
             >
-              Join Early Access
+              Express interest
             </EarlyAccessModalTrigger>
             <Link
               href="/pricing"
@@ -133,7 +133,7 @@ export default function AccountingPage() {
             initialPlanInterest={['club']}
             initialFeaturesInterested={['accounting']}
           >
-            Join Early Access
+            Express interest
           </EarlyAccessModalTrigger>
         </div>
       </section>

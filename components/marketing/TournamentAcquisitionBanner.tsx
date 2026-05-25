@@ -66,7 +66,7 @@ export default function TournamentAcquisitionBanner({
       </div>
       <div className={styles.bannerBody}>
         <strong>Keep teams organized after {tournamentName}</strong>
-        <span>Coaches can turn a tournament team into a season workspace; organizers can still start their own event free.</span>
+        <span>Coaches can upgrade their free tournament records into a season workspace; organizers can still start their own event free.</span>
       </div>
       <Link
         href={teamHref}
@@ -81,7 +81,7 @@ export default function TournamentAcquisitionBanner({
           ctaHref: teamHref,
         })}
       >
-        Team workspace
+        Coaches Portal
       </Link>
       <Link
         href={href}

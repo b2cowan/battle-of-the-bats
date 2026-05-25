@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { AlertCircle, CheckCircle2, ChevronDown, ChevronUp, Copy, Info, Users, Calendar, Trophy, Megaphone, Tag, DollarSign, TrendingUp, Zap, Flag } from 'lucide-react';
+import { AlertCircle, CheckCircle2, ChevronDown, ChevronUp, Copy, Info, Users, Calendar, Trophy, Mail, Tag, DollarSign, TrendingUp, Zap, Flag } from 'lucide-react';
 import Link from 'next/link';
 import { useTournament } from '@/lib/tournament-context';
 import { useOrg } from '@/lib/org-context';
@@ -288,7 +288,7 @@ export default function AdminDashboard() {
   // Draft stats: only show what's relevant during setup
   const draftCards = [
     { label: 'Divisions',  value: visibleStats.ageGroups,     icon: Tag,       key: 'age-groups'    },
-    { label: 'News Posts', value: visibleStats.announcements, icon: Megaphone, key: 'announcements' },
+    { label: 'News Posts', value: visibleStats.announcements, icon: Mail,      key: 'communication' },
   ];
 
   // Live stats: full picture

@@ -205,7 +205,7 @@ export async function provisionStandaloneTeamWorkspace(
 ): Promise<ProvisionStandaloneTeamWorkspaceResult> {
   const ownerUserId = cleanRequiredText(input.ownerUserId, 'Owner user');
   const teamName = cleanRequiredText(input.teamName, 'Team name');
-  const workspaceName = cleanRequiredText(input.workspaceName ?? `${teamName} Team Workspace`, 'Workspace name');
+  const workspaceName = cleanRequiredText(input.workspaceName ?? `${teamName} Coaches Portal`, 'Workspace name');
   const seasonYear = normalizeSeasonYear(input.seasonYear);
   const seasonName = cleanRequiredText(input.seasonName ?? `${teamName} ${seasonYear}`, 'Season name');
   const sport = cleanRequiredText(input.sport ?? 'softball', 'Sport');

@@ -42,7 +42,7 @@ export function buildTeamWorkspaceAcquisitionHref(input: {
   });
   if (input.tournamentSlug) params.set('tournamentSlug', input.tournamentSlug);
   if (input.surface) params.set('surface', input.surface);
-  return `/team?${params.toString()}`;
+  return `/coaches/start?${params.toString()}`;
 }
 
 export function trackTournamentAcquisition(payload: TournamentAcquisitionPayload) {

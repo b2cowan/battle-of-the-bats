@@ -86,9 +86,9 @@
 
 .eyebrow {
   font-family: var(--font-data);
-  font-size: 0.625rem;
+  font-size: 0.75rem;
   font-weight: 700;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--blueprint-blue);
   margin-bottom: 0.75rem;
@@ -342,7 +342,7 @@
   font-family: var(--font-display);
   font-size: clamp(2rem, 5vw, 3.75rem);
   font-weight: 900;
-  margin-bottom: 1rem;
+  margin-bottom: 2.5rem;
   position: relative;
 }
 
@@ -359,6 +359,14 @@
   justify-content: center;
   flex-wrap: wrap;
   position: relative;
+}
+
+/* ── Persona Routing ─────────────────────────────────────────────────── */
+.personaRouting {
+  padding: 3.5rem 0;
+  background: var(--surface);
+  border-top: 1px solid var(--border-2);
+  border-bottom: 1px solid var(--border-2);
 }
 
 /* ── Stats bar ───────────────────────────────────────────────────────── */

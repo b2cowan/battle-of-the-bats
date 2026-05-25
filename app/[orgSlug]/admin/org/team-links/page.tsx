@@ -57,6 +57,13 @@ function badgeClass(status: string) {
   return 'border-yellow-400/35 text-yellow-300 bg-yellow-400/10';
 }
 
+function billingModeLabel(mode: string | null | undefined) {
+  if (mode === 'team_direct') return 'Coach pays direct';
+  if (mode === 'org_team_addon') return 'Org-billed Premium';
+  if (mode === 'platform_override') return 'Platform override';
+  return mode ?? 'Unknown';
+}
+
 export default function OrgTeamLinksPage({ params }: { params: Promise<{ orgSlug: string }> }) {
   const { orgSlug } = use(params);
   const { userRole, loading: orgLoading } = useOrg();
@@ -77,7 +84,7 @@ export default function OrgTeamLinksPage({ params }: { params: Promise<{ orgSlug
     try {
       const res = await fetch(`/api/admin/org/team-links?orgSlug=${encodeURIComponent(orgSlug)}`, { cache: 'no-store' });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error ?? 'Could not load Team link requests.');
+      if (!res.ok) throw new Error(data.error ?? 'Could not load Coaches Portal link requests.');
       setLinks(Array.isArray(data.links) ? data.links : []);
       setBillingSummary(
         data.billingSummary && typeof data.billingSummary.activeOrgPaidTeamCount === 'number'
@@ -85,7 +92,7 @@ export default function OrgTeamLinksPage({ params }: { params: Promise<{ orgSlug
           : null,
       );
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not load Team link requests.');
+      setError(err instanceof Error ? err.message : 'Could not load Coaches Portal link requests.');
     } finally {
       setLoading(false);
     }
@@ -110,11 +117,11 @@ export default function OrgTeamLinksPage({ params }: { params: Promise<{ orgSlug
         body: JSON.stringify({ linkId, action }),
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error ?? 'Could not review Team link request.');
-      setMessage(action === 'approve' ? 'Team link approved.' : 'Team link declined.');
+      if (!res.ok) throw new Error(data.error ?? 'Could not review Coaches Portal link request.');
+      setMessage(action === 'approve' ? 'Coaches Portal link approved.' : 'Coaches Portal link declined.');
       await loadLinks();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not review Team link request.');
+      setError(err instanceof Error ? err.message : 'Could not review Coaches Portal link request.');
     } finally {
       setWorkingId(null);
     }
@@ -134,12 +141,12 @@ export default function OrgTeamLinksPage({ params }: { params: Promise<{ orgSlug
         body: JSON.stringify({ target: inviteTarget }),
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error ?? 'Could not send the Team link invitation.');
+      if (!res.ok) throw new Error(data.error ?? 'Could not send the Coaches Portal link invitation.');
       setInviteTarget('');
-      setMessage(data.reusedExisting ? 'That Team link is already pending or active.' : 'Team link invitation sent.');
+      setMessage(data.reusedExisting ? 'That Coaches Portal link is already pending or active.' : 'Coaches Portal link invitation sent.');
       await loadLinks();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not send the Team link invitation.');
+      setError(err instanceof Error ? err.message : 'Could not send the Coaches Portal link invitation.');
     } finally {
       setInviting(false);
     }
@@ -156,17 +163,17 @@ export default function OrgTeamLinksPage({ params }: { params: Promise<{ orgSlug
         body: JSON.stringify({ linkId, action, billingCycle }),
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error ?? 'Could not update Team billing.');
+      if (!res.ok) throw new Error(data.error ?? 'Could not update Coaches Portal billing.');
       if (typeof data.url === 'string' && data.url) {
         window.location.assign(data.url);
         return;
       }
-      if (action === 'invite_billing') setMessage('Org billing invitation sent to the Team coach.');
+      if (action === 'invite_billing') setMessage('Org billing invitation sent to the coach.');
       if (action === 'decline_billing') setMessage('Org billing request declined. The Basic link remains active.');
-      if (action === 'approve_billing') setMessage(data.applied ? 'Org billing is now active for this Team.' : 'Org billing checkout started.');
+      if (action === 'approve_billing') setMessage(data.applied ? 'Org billing is now active for this Coaches Portal.' : 'Org billing checkout started.');
       await loadLinks();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not update Team billing.');
+      setError(err instanceof Error ? err.message : 'Could not update Coaches Portal billing.');
     } finally {
       setWorkingId(null);
     }
@@ -183,12 +190,12 @@ export default function OrgTeamLinksPage({ params }: { params: Promise<{ orgSlug
         body: JSON.stringify({ linkId, action }),
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error ?? 'Could not update Team ownership transfer.');
+      if (!res.ok) throw new Error(data.error ?? 'Could not update Coaches Portal ownership transfer.');
       if (action === 'invite_ownership') setMessage('Ownership transfer updated. When both sides approve, platform-assisted transfer can be completed.');
       if (action === 'decline_ownership') setMessage('Ownership transfer request declined. The existing link remains active.');
       await loadLinks();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not update Team ownership transfer.');
+      setError(err instanceof Error ? err.message : 'Could not update Coaches Portal ownership transfer.');
     } finally {
       setWorkingId(null);
     }
@@ -197,11 +204,11 @@ export default function OrgTeamLinksPage({ params }: { params: Promise<{ orgSlug
   function billingStatusText(link: LinkSummary) {
     const pendingBilling = link.linkType === 'billing' && link.billingModeAfterApproval === 'org_team_addon';
     const orgBillingActive = pendingBilling && link.workspace?.billingMode === 'org_team_addon';
-    if (orgBillingActive) return 'Org Team add-on active';
+    if (orgBillingActive) return 'Org-billed Premium active';
     if (pendingBilling && link.approvedByTeamUserId && !link.approvedByOrgUserId) return 'Coach requested org billing';
     if (pendingBilling && link.approvedByOrgUserId && !link.approvedByTeamUserId) return 'Waiting for coach approval';
     if (pendingBilling && link.approvedByOrgUserId && link.approvedByTeamUserId) return 'Ready for checkout';
-    return link.workspace?.billingMode === 'team_direct' ? 'Team pays direct' : link.workspace?.billingMode ?? 'Unchanged';
+    return billingModeLabel(link.workspace?.billingMode);
   }
 
   const pendingLinks = links.filter(link => REVIEWABLE_STATUSES.has(link.status));
@@ -224,7 +231,7 @@ export default function OrgTeamLinksPage({ params }: { params: Promise<{ orgSlug
   const showClubValueNudge = billingSummary?.showClubValueNudge ?? activeOrgPaidTeamCount >= CLUB_VALUE_TEAM_COUNT;
 
   if (orgLoading || loading) {
-    return <div className="p-8 text-data-gray">Loading Team links...</div>;
+    return <div className="p-8 text-data-gray">Loading Coaches Portal links...</div>;
   }
 
   if (!canReview) {
@@ -233,7 +240,7 @@ export default function OrgTeamLinksPage({ params }: { params: Promise<{ orgSlug
         <HelpCallout
           variant="warning"
           title="Owner or admin required"
-          body="Team link requests can be reviewed by organization owners and admins."
+          body="Coaches Portal link requests can be reviewed by organization owners and admins."
         />
       </div>
     );
@@ -245,10 +252,10 @@ export default function OrgTeamLinksPage({ params }: { params: Promise<{ orgSlug
         <div>
           <div className="hud-label mb-1">Organization Admin</div>
           <h1 className="font-extrabold text-2xl uppercase tracking-tighter">
-            Team Links
+            Coaches Portal Links
           </h1>
           <p className="text-data-gray text-sm mt-2 max-w-2xl">
-            Invite standalone Team workspaces to connect, review coach requests, and manage org-paid Team add-on billing.
+            Invite paid Coaches Portals to connect, review coach requests, and manage org-billed Premium access.
           </p>
         </div>
         <button type="button" className="btn btn-ghost btn-sm" onClick={loadLinks}>
@@ -259,7 +266,7 @@ export default function OrgTeamLinksPage({ params }: { params: Promise<{ orgSlug
       <HelpCallout
         variant="info"
         title="Approval creates a basic link"
-        body="Inviting or approving a Team workspace records the Basic association only after both sides agree. Org billing transfer is separate and still does not transfer ownership or unlock player, document, accounting, or org-wide rep-team access."
+        body="Inviting or approving a Coaches Portal records the Basic association only after both sides agree. Org billing transfer is separate and still does not transfer ownership or unlock player, document, accounting, or org-wide rep-team access."
         cta={{ label: 'Read the guide', href: `/${orgSlug}/admin/help/org#recipe-review-team-link-request` }}
       />
 
@@ -272,7 +279,7 @@ export default function OrgTeamLinksPage({ params }: { params: Promise<{ orgSlug
             <div className="flex-1 min-w-0">
               <h2 className="font-bold uppercase tracking-wide text-fl-text text-sm">Club may be a better value now</h2>
               <p className="text-data-gray text-sm mt-2 leading-relaxed">
-                This organization is paying for {activeOrgPaidTeamCount} linked Team add-ons. Team add-ons can stay active, but Club is the cleaner multi-team operating layer for oversight, accounting, rep-team administration, and lower extra-team pricing.
+                This organization is paying for {activeOrgPaidTeamCount} linked Premium portals. Org-billed portals can stay active, but Club is the cleaner multi-team operating layer for oversight, accounting, rep-team administration, and lower extra-team pricing.
               </p>
             </div>
           </div>
@@ -285,17 +292,17 @@ export default function OrgTeamLinksPage({ params }: { params: Promise<{ orgSlug
       <section className="mb-8">
         <div className="flex items-center gap-2 mb-3">
           <Send size={18} className="text-blueprint-blue" />
-          <h2 className="font-bold uppercase tracking-wide">Invite a Team workspace</h2>
+          <h2 className="font-bold uppercase tracking-wide">Invite a Coaches Portal</h2>
         </div>
         <div className="card p-5">
           <form className="flex items-end gap-3 flex-wrap" onSubmit={sendInvite}>
             <label className="grid gap-2 flex-1 min-w-64">
-              <span className="hud-label">Team workspace slug or primary coach email</span>
+              <span className="hud-label">Coaches Portal slug or primary coach email</span>
               <input
                 className="form-input"
                 value={inviteTarget}
                 onChange={event => setInviteTarget(event.target.value)}
-                placeholder="team-workspace-slug or coach@example.com"
+                placeholder="coach-portal-slug or coach@example.com"
                 disabled={inviting}
               />
             </label>
@@ -316,7 +323,7 @@ export default function OrgTeamLinksPage({ params }: { params: Promise<{ orgSlug
           <span className="hud-label">{pendingLinks.length}</span>
         </div>
         {pendingLinks.length === 0 ? (
-          <div className="card p-6 text-data-gray">No Team link requests need review.</div>
+          <div className="card p-6 text-data-gray">No Coaches Portal link requests need review.</div>
         ) : (
           <div className="grid gap-3">
             {pendingLinks.map(link => (
@@ -324,10 +331,10 @@ export default function OrgTeamLinksPage({ params }: { params: Promise<{ orgSlug
                 <div className="flex items-start justify-between gap-4 flex-wrap">
                   <div>
                     <div className="font-bold text-fl-text text-lg">
-                      {link.repTeam?.name ?? link.workspaceOrg?.name ?? 'Team workspace'}
+                      {link.repTeam?.name ?? link.workspaceOrg?.name ?? 'Coaches Portal'}
                     </div>
                     <div className="text-data-gray text-sm mt-1">
-                      {link.workspaceOrg?.name ?? 'Workspace'} wants a Basic visibility link.
+                      {link.workspaceOrg?.name ?? 'Coaches Portal'} wants a Basic visibility link.
                     </div>
                   </div>
                   <span className={`inline-flex px-2 py-1 text-xs uppercase font-bold border ${badgeClass(link.status)}`}>
@@ -340,12 +347,12 @@ export default function OrgTeamLinksPage({ params }: { params: Promise<{ orgSlug
                     <div className="text-fl-text">Basic visibility</div>
                   </div>
                   <div>
-                    <div className="hud-label">Workspace</div>
-                    <div className="text-fl-text">/{link.workspaceOrg?.slug ?? 'team'}</div>
+                    <div className="hud-label">Portal</div>
+                    <div className="text-fl-text">/{link.workspaceOrg?.slug ?? 'portal'}</div>
                   </div>
                   <div>
                     <div className="hud-label">Billing</div>
-                    <div className="text-fl-text">{link.workspace?.billingMode === 'team_direct' ? 'Team direct' : link.workspace?.billingMode ?? 'Unchanged'}</div>
+                    <div className="text-fl-text">{billingModeLabel(link.workspace?.billingMode)}</div>
                   </div>
                   <div>
                     <div className="hud-label">Requested</div>
@@ -379,11 +386,11 @@ export default function OrgTeamLinksPage({ params }: { params: Promise<{ orgSlug
       <section className="mb-8">
         <div className="flex items-center gap-2 mb-3">
           <Clock size={18} className="text-yellow-300" />
-          <h2 className="font-bold uppercase tracking-wide">Awaiting team response</h2>
+          <h2 className="font-bold uppercase tracking-wide">Awaiting coach response</h2>
           <span className="hud-label">{invitedLinks.length}</span>
         </div>
         {invitedLinks.length === 0 ? (
-          <div className="card p-6 text-data-gray">No Team invitations are waiting on a coach.</div>
+          <div className="card p-6 text-data-gray">No Coaches Portal invitations are waiting on a coach.</div>
         ) : (
           <div className="grid gap-3">
             {invitedLinks.map(link => (
@@ -391,10 +398,10 @@ export default function OrgTeamLinksPage({ params }: { params: Promise<{ orgSlug
                 <div className="flex items-center justify-between gap-3 flex-wrap">
                   <div>
                     <div className="font-bold text-fl-text">
-                      {link.repTeam?.name ?? link.workspaceOrg?.name ?? 'Team workspace'}
+                      {link.repTeam?.name ?? link.workspaceOrg?.name ?? 'Coaches Portal'}
                     </div>
                     <div className="text-data-gray text-sm">
-                      Waiting for the Team coach to accept or decline the Basic visibility invitation.
+                      Waiting for the coach to accept or decline the Basic visibility invitation.
                     </div>
                   </div>
                   <span className={`inline-flex px-2 py-1 text-xs uppercase font-bold border ${badgeClass(link.status)}`}>
@@ -407,12 +414,12 @@ export default function OrgTeamLinksPage({ params }: { params: Promise<{ orgSlug
                     <div className="text-fl-text">Basic visibility</div>
                   </div>
                   <div>
-                    <div className="hud-label">Workspace</div>
-                    <div className="text-fl-text">/{link.workspaceOrg?.slug ?? 'team'}</div>
+                    <div className="hud-label">Portal</div>
+                    <div className="text-fl-text">/{link.workspaceOrg?.slug ?? 'portal'}</div>
                   </div>
                   <div>
                     <div className="hud-label">Billing</div>
-                    <div className="text-fl-text">{link.workspace?.billingMode === 'team_direct' ? 'Team direct' : link.workspace?.billingMode ?? 'Unchanged'}</div>
+                    <div className="text-fl-text">{billingModeLabel(link.workspace?.billingMode)}</div>
                   </div>
                   <div>
                     <div className="hud-label">Invited</div>
@@ -432,7 +439,7 @@ export default function OrgTeamLinksPage({ params }: { params: Promise<{ orgSlug
           <span className="hud-label">{linkedLinks.length}</span>
         </div>
         {linkedLinks.length === 0 ? (
-          <div className="card p-6 text-data-gray">No linked Team workspaces are ready for billing transfer.</div>
+          <div className="card p-6 text-data-gray">No linked Coaches Portals are ready for billing transfer.</div>
         ) : (
           <div className="grid gap-3">
             {linkedLinks.map(link => {
@@ -447,7 +454,7 @@ export default function OrgTeamLinksPage({ params }: { params: Promise<{ orgSlug
                   <div className="flex items-start justify-between gap-4 flex-wrap">
                     <div>
                       <div className="font-bold text-fl-text">
-                        {link.repTeam?.name ?? link.workspaceOrg?.name ?? 'Team workspace'}
+                        {link.repTeam?.name ?? link.workspaceOrg?.name ?? 'Coaches Portal'}
                       </div>
                       <div className="text-data-gray text-sm mt-1">
                         {billingStatusText(link)}
@@ -459,15 +466,15 @@ export default function OrgTeamLinksPage({ params }: { params: Promise<{ orgSlug
                   </div>
                   <div className="grid sm:grid-cols-4 gap-3 mt-4 text-sm">
                     <div>
-                      <div className="hud-label">Workspace</div>
-                      <div className="text-fl-text">/{link.workspaceOrg?.slug ?? 'team'}</div>
+                      <div className="hud-label">Portal</div>
+                      <div className="text-fl-text">/{link.workspaceOrg?.slug ?? 'portal'}</div>
                     </div>
                     <div>
                       <div className="hud-label">Current billing</div>
-                      <div className="text-fl-text">{link.workspace?.billingMode ?? 'Unknown'}</div>
+                      <div className="text-fl-text">{billingModeLabel(link.workspace?.billingMode)}</div>
                     </div>
                     <div>
-                      <div className="hud-label">Team approval</div>
+                      <div className="hud-label">Coach approval</div>
                       <div className="text-fl-text">{link.approvedByTeamUserId ? 'Approved' : 'Waiting'}</div>
                     </div>
                     <div>
@@ -534,7 +541,7 @@ export default function OrgTeamLinksPage({ params }: { params: Promise<{ orgSlug
           <span className="hud-label">{linkedLinks.length + ownershipLinks.length}</span>
         </div>
         {linkedLinks.length === 0 && ownershipLinks.length === 0 ? (
-          <div className="card p-6 text-data-gray">No linked Team workspaces are ready for ownership transfer.</div>
+          <div className="card p-6 text-data-gray">No linked Coaches Portals are ready for ownership transfer.</div>
         ) : (
           <div className="grid gap-3">
             {[...ownershipLinks, ...linkedLinks.filter(link => link.linkType !== 'ownership')].map(link => {
@@ -551,13 +558,13 @@ export default function OrgTeamLinksPage({ params }: { params: Promise<{ orgSlug
                   <div className="flex items-start justify-between gap-4 flex-wrap">
                     <div>
                       <div className="font-bold text-fl-text">
-                        {link.repTeam?.name ?? link.workspaceOrg?.name ?? 'Team workspace'}
+                        {link.repTeam?.name ?? link.workspaceOrg?.name ?? 'Coaches Portal'}
                       </div>
                       <div className="text-data-gray text-sm mt-1">
                         {readyForPlatformTransfer
                           ? 'Both sides approved. Platform-assisted data transfer can be completed next.'
                           : waitingForCoach
-                            ? 'Waiting for the Team coach to accept ownership transfer.'
+                            ? 'Waiting for the coach to accept ownership transfer.'
                             : coachRequestedOwnership
                               ? 'Coach requested full ownership transfer.'
                               : 'Basic link is active. Ownership transfer is a separate, irreversible data move.'}
@@ -569,15 +576,15 @@ export default function OrgTeamLinksPage({ params }: { params: Promise<{ orgSlug
                   </div>
                   <div className="grid sm:grid-cols-4 gap-3 mt-4 text-sm">
                     <div>
-                      <div className="hud-label">Workspace</div>
-                      <div className="text-fl-text">/{link.workspaceOrg?.slug ?? 'team'}</div>
+                      <div className="hud-label">Portal</div>
+                      <div className="text-fl-text">/{link.workspaceOrg?.slug ?? 'portal'}</div>
                     </div>
                     <div>
                       <div className="hud-label">Current billing</div>
-                      <div className="text-fl-text">{link.workspace?.billingMode ?? 'Unknown'}</div>
+                      <div className="text-fl-text">{billingModeLabel(link.workspace?.billingMode)}</div>
                     </div>
                     <div>
-                      <div className="hud-label">Team approval</div>
+                      <div className="hud-label">Coach approval</div>
                       <div className="text-fl-text">{link.approvedByTeamUserId ? 'Approved' : 'Waiting'}</div>
                     </div>
                     <div>
@@ -634,7 +641,7 @@ export default function OrgTeamLinksPage({ params }: { params: Promise<{ orgSlug
           <span className="hud-label">{historyLinks.length}</span>
         </div>
         {historyLinks.length === 0 ? (
-          <div className="card p-6 text-data-gray">No reviewed Team links yet.</div>
+          <div className="card p-6 text-data-gray">No reviewed Coaches Portal links yet.</div>
         ) : (
           <div className="grid gap-3">
             {historyLinks.map(link => (
@@ -642,10 +649,10 @@ export default function OrgTeamLinksPage({ params }: { params: Promise<{ orgSlug
                 <div className="flex items-center justify-between gap-3 flex-wrap">
                   <div>
                     <div className="font-bold text-fl-text">
-                      {link.repTeam?.name ?? link.workspaceOrg?.name ?? 'Team workspace'}
+                      {link.repTeam?.name ?? link.workspaceOrg?.name ?? 'Coaches Portal'}
                     </div>
                     <div className="text-data-gray text-sm">
-                      {link.workspaceOrg?.slug ? `/${link.workspaceOrg.slug}` : 'Workspace slug unavailable'}
+                      {link.workspaceOrg?.slug ? `/${link.workspaceOrg.slug}` : 'Portal slug unavailable'}
                     </div>
                   </div>
                   <span className={`inline-flex px-2 py-1 text-xs uppercase font-bold border ${badgeClass(link.status)}`}>

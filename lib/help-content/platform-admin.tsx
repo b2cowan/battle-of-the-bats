@@ -164,26 +164,26 @@ const platformAdminHelp: HelpPageContent = {
     {
       id: 'team-ownership-transfer',
       group: 'Support SOP',
-      heading: 'How to complete Team ownership transfer',
-      summary: 'Finish a mutually approved standalone Team transfer from the organization detail support workflow.',
-      keywords: ['team ownership transfer', 'standalone team', 'org owned team', 'rep teams', 'platform assisted transfer'],
-      searchText: 'complete standalone team ownership transfer platform assisted org owned rep team roster documents accounting ledger',
+      heading: 'How to complete Coaches Portal ownership transfer',
+      summary: 'Finish a mutually approved Coaches Portal Premium transfer from the organization detail support workflow.',
+      keywords: ['coaches portal ownership transfer', 'premium portal', 'org owned team', 'rep teams', 'platform assisted transfer'],
+      searchText: 'complete coaches portal premium ownership transfer platform assisted org owned rep team roster documents accounting ledger',
       links: [
         { label: 'Organizations', href: '/platform-admin/orgs' },
         { label: 'Audit Log', href: '/platform-admin/audit' },
       ],
       content: (
         <>
-          <p>Use this only after the Team coach and organization have both approved ownership transfer from Team Links. Basic visibility and org billing do not require this step.</p>
+          <p>Use this only after the coach and organization have both approved ownership transfer from Coaches Portal Links. Basic visibility and org billing do not require this step.</p>
           <ol>
             <li>Open the target organization from <strong>Organizations</strong>.</li>
             <li>Confirm the account has Club or Rep Teams module access.</li>
-            <li>Open <strong>Support</strong> and review <strong>Team Ownership Transfers</strong>.</li>
-            <li>Confirm the Team name, workspace slug, current billing mode, and customer request.</li>
+            <li>Open <strong>Support</strong> and review <strong>Coaches Portal Ownership Transfers</strong>.</li>
+            <li>Confirm the team name, portal slug, current billing mode, and customer request.</li>
             <li>Enter a reason, then click <strong>Complete Transfer</strong>.</li>
             <li>Review the audit log and, if Stripe cancellation reports a warning, finish the cancellation manually in Stripe.</li>
           </ol>
-          <p>The transfer moves team-scoped rep-team records and the team ledger under the organization, creates coach membership access in the parent org, retires active Team entitlements, marks the link org-owned, and suspends the retired workspace-org memberships.</p>
+          <p>The transfer moves team-scoped rep-team records and the team ledger under the organization, creates coach membership access in the parent org, retires active Premium entitlements, marks the link org-owned, and suspends the retired portal memberships.</p>
         </>
       ),
       faqs: [
@@ -201,10 +201,10 @@ const platformAdminHelp: HelpPageContent = {
     {
       id: 'team-launch-readiness',
       group: 'Launch SOP',
-      heading: 'How to verify Team launch readiness',
-      summary: 'Confirm Stripe prices, readiness checks, manual smokes, and customer-facing help before Team launch.',
-      keywords: ['team launch', 'stripe prices', 'readiness', 'team checkout', 'org team add-on', 'club extra team'],
-      searchText: 'Team launch readiness Stripe price IDs sandbox live direct checkout org Team add-on Club extra team cancellation past due mobile coach portal help documentation',
+      heading: 'How to verify Coaches Portal Premium launch readiness',
+      summary: 'Confirm Stripe prices, readiness checks, manual smokes, and customer-facing help before Premium launch.',
+      keywords: ['coaches portal premium launch', 'stripe prices', 'readiness', 'coach checkout', 'org billed portal', 'club extra team'],
+      searchText: 'coaches portal premium launch readiness Stripe price IDs sandbox live direct checkout org billed premium Club extra team cancellation past due mobile coach portal help documentation',
       links: [
         { label: 'Dev Tools', href: '/platform-admin/dev-tools' },
         { label: 'Stripe Prices', href: '/platform-admin/stripe-prices' },
@@ -212,23 +212,23 @@ const platformAdminHelp: HelpPageContent = {
       ],
       content: (
         <>
-          <p>Use this before opening Team self-serve checkout or supporting the first external Team customers.</p>
+          <p>Use this before opening Coaches Portal Premium self-serve checkout or supporting the first external Premium customers.</p>
           <ol>
-            <li>Confirm Stripe has sandbox and live recurring prices for direct Team at <strong>$29 CAD monthly</strong> and <strong>$290 CAD annual/seasonal</strong>.</li>
-            <li>Confirm Stripe has sandbox and live recurring prices for org Team add-ons at <strong>$29 CAD monthly</strong> and <strong>$290 CAD annual/seasonal</strong>.</li>
+            <li>Confirm Stripe has sandbox and live recurring prices for direct Coaches Portal Premium at <strong>$29 CAD monthly</strong> and <strong>$290 CAD annual/seasonal</strong>.</li>
+            <li>Confirm Stripe has sandbox and live recurring prices for org-billed Coaches Portal Premium at <strong>$29 CAD monthly</strong> and <strong>$290 CAD annual/seasonal</strong>.</li>
             <li>Confirm Stripe has new sandbox and live recurring prices for Club extra rep teams at <strong>$19 CAD monthly</strong> and <strong>$190 CAD annual</strong>. Do not reuse the old $20/$200 price IDs.</li>
             <li>Paste each <code>price_...</code> ID into the matching sandbox or live row in <strong>Stripe Prices</strong> or <strong>Plans &amp; Pricing</strong>.</li>
-            <li>Run <strong>Dev Tools &gt; Team checkout readiness</strong> and resolve any missing app URL, webhook secret, Team gate, or price-row failures.</li>
-            <li>Complete manual sandbox smokes for direct Team checkout, tournament-claim checkout, org Team add-on checkout, cancellation or past-due simulation, and Club extra-team quantity billing.</li>
-            <li>Ask the product owner to visually check the public pricing page, Team signup page, and mobile Coaches Portal flows.</li>
+            <li>Run <strong>Dev Tools &gt; Coaches Portal checkout readiness</strong> and resolve any missing app URL, webhook secret, Premium gate, or price-row failures.</li>
+            <li>Complete manual sandbox smokes for direct Coaches Portal checkout, tournament-claim checkout, org-billed Coaches Portal checkout, cancellation or past-due simulation, and Club extra-team quantity billing.</li>
+            <li>Ask the product owner to visually check the public pricing page, Coaches Portal signup page, and mobile Coaches Portal flows.</li>
           </ol>
-          <p>Customer-facing help should explain Team, season rollover, the one free-tier local tournament slot, Basic org linking, billing transfer, ownership transfer, and the difference between direct Team, org Team add-ons, Club included teams, and Club extra teams.</p>
+          <p>Customer-facing help should explain Coaches Portal Premium, season rollover, the one free-tier local tournament slot, Basic org linking, billing transfer, ownership transfer, and the difference between direct Premium, org-billed Premium, Club included teams, and Club extra teams.</p>
         </>
       ),
       faqs: [
         {
           id: 'faq-team-launch-missing-price',
-          question: 'What if a Team checkout readiness row reports a missing price?',
+          question: 'What if a Coaches Portal checkout readiness row reports a missing price?',
           answer: (
             <p>Create or confirm the Stripe price in the correct Stripe environment, paste the new <code>price_...</code> ID into the matching FieldLogicHQ price row, then rerun the readiness check before testing checkout.</p>
           ),

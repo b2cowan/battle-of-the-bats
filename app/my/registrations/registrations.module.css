@@ -1,0 +1,162 @@
+/* ─── My Registrations ─────────────────────────────────────────────────────── */
+
+.page {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem 4rem;
+}
+
+.header {
+  margin-bottom: 2rem;
+}
+
+.title {
+  font-size: 1.75rem;
+  font-weight: 800;
+  margin: 0 0 0.4rem;
+  color: var(--white);
+}
+
+.sub {
+  color: var(--text-2);
+  font-size: 0.88rem;
+  margin: 0;
+}
+
+/* ─── Section ─────────────────────────────────────────────────────────────── */
+
+.section {
+  margin-bottom: 2.5rem;
+}
+
+.sectionTitle {
+  font-family: var(--font-data, monospace);
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--text-3);
+  margin: 0 0 0.75rem;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+/* ─── Registration Card ───────────────────────────────────────────────────── */
+
+.card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  background: var(--surface-2);
+  border: 1px solid var(--border-1);
+  border-radius: var(--radius-sm, 4px);
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.card:hover {
+  border-color: rgba(var(--logic-lime-rgb), 0.35);
+  background: var(--surface-3);
+}
+
+.cardMain {
+  flex: 1;
+  min-width: 0;
+}
+
+.cardTitle {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--white);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cardMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem 0.75rem;
+  margin-top: 0.25rem;
+  font-size: 0.78rem;
+  color: var(--text-2);
+}
+
+.cardMeta span + span::before {
+  content: '·';
+  margin-right: 0.75rem;
+}
+
+.cardStatus {
+  flex-shrink: 0;
+}
+
+/* ─── CTA Section ─────────────────────────────────────────────────────────── */
+
+.ctaSection {
+  margin-top: 3rem;
+  padding-top: 2rem;
+  border-top: 1px solid var(--border-1);
+}
+
+.ctaGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.ctaCard {
+  padding: 1.5rem;
+  background: var(--surface-2);
+  border: 1px solid var(--border-1);
+  border-radius: var(--radius-sm, 4px);
+}
+
+.ctaLabel {
+  font-family: var(--font-data, monospace);
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--logic-lime, #C2FF4A);
+  margin-bottom: 0.4rem;
+}
+
+.ctaTitle {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--white);
+  margin-bottom: 0.6rem;
+}
+
+.ctaDesc {
+  font-size: 0.83rem;
+  color: var(--text-2);
+  line-height: 1.55;
+  margin: 0 0 1.1rem;
+}
+
+@media (max-width: 640px) {
+  .page {
+    padding: 1.25rem 1rem 3rem;
+  }
+
+  .ctaGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .cardMeta span + span::before {
+    content: none;
+  }
+
+  .cardMeta {
+    flex-direction: column;
+    gap: 0.1rem;
+  }
+}

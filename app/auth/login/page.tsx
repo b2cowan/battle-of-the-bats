@@ -19,7 +19,7 @@ const AUTH_ERRORS: Record<string, string> = {
 function LoginForm() {
   const router       = useRouter();
   const searchParams = useSearchParams();
-  const [email, setEmail]       = useState('');
+  const [email, setEmail]       = useState(searchParams.get('email') ?? '');
   const [password, setPassword] = useState('');
   const [showPw, setShowPw]     = useState(false);
   const [error, setError]       = useState('');

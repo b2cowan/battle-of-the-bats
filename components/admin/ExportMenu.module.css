@@ -29,6 +29,10 @@
   padding-right: 0.4rem !important;
 }
 
+.primaryLabel {
+  display: inline;
+}
+
 /* ── Dropdown menu ────────────────────────────────────────────────────── */
 
 .menu {
@@ -37,12 +41,14 @@
   right: 0;
   z-index: 200;
   min-width: 220px;
+  max-width: calc(100vw - 1.5rem);
   background: var(--hud-surface, #111827);
   border: 1px solid rgba(30, 58, 138, 0.35);
   border-radius: 2px;
   box-shadow: 0 12px 28px rgba(0, 0, 0, 0.5);
   padding: 0.3rem 0;
   outline: none;
+  overflow-wrap: anywhere;
 }
 
 .menuItem {
@@ -114,4 +120,25 @@
   height: 1px;
   background: var(--border-2, rgba(255, 255, 255, 0.1));
   margin: 0.25rem 0;
+}
+
+@media (max-width: 760px) {
+  .primaryBtn,
+  .chevronBtn {
+    width: 32px !important;
+    min-width: 32px !important;
+    height: 28px !important;
+    min-height: 28px !important;
+    padding: 0 !important;
+    justify-content: center;
+    gap: 0 !important;
+  }
+
+  .primaryLabel {
+    display: none;
+  }
+
+  .menu {
+    min-width: min(220px, calc(100vw - 1.5rem));
+  }
 }

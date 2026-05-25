@@ -18,6 +18,7 @@ import PlayoffWizard from './PlayoffWizard';
 import GameList from './components/GameList';
 import { Game, Team, AgeGroup, Diamond, PoolSlot } from '@/lib/types';
 import s from '../../admin-common.module.css';
+import styles from './schedule-admin.module.css';
 import FeedbackModal from '@/components/FeedbackModal';
 import HelpCallout from '@/components/help/HelpCallout';
 import AddVenueModal from '@/components/admin/AddVenueModal';
@@ -507,11 +508,14 @@ export default function AdminSchedulePage() {
                       Not Published
                     </span>
                     <button
-                      className="btn btn-lime btn-data"
+                      className={`btn btn-lime btn-data ${styles.mobileIconButton}`}
                       onClick={() => setPublishModal({ mode: 'single', ageGroupId: filterGroup })}
                       disabled={!currentTournament}
+                      aria-label="Publish schedule"
+                      title="Publish schedule"
                     >
-                      <Globe size={12} /> Publish
+                      <Globe size={12} />
+                      <span className={styles.mobileButtonLabel}>Publish</span>
                     </button>
                   </>
                 )}

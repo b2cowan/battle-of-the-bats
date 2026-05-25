@@ -275,17 +275,23 @@
   opacity: 0.5;
 }
 
+.menuButtonLabel {
+  display: inline;
+}
+
 .menuPanel {
   position: absolute;
   top: calc(100% + 0.4rem);
   right: 0;
   z-index: 200;
   width: min(18rem, calc(100vw - 2rem));
+  max-width: calc(100vw - 1.5rem);
   padding: 0.35rem;
   border: 1px solid rgba(var(--blueprint-blue-rgb), 0.3);
   border-radius: 2px;
   background: var(--hud-surface);
   box-shadow: 0 18px 38px rgba(0, 0, 0, 0.55);
+  overflow-wrap: anywhere;
 }
 
 .menuPanel[data-align="start"] {
@@ -569,6 +575,23 @@
     justify-content: flex-start;
   }
 
+  .header[data-mobile-actions="inline"] {
+    align-items: flex-start;
+    flex-direction: row;
+  }
+
+  .header[data-mobile-actions="inline"] .headerMain {
+    flex: 1 1 auto;
+    width: auto;
+  }
+
+  .header[data-mobile-actions="inline"] .headerActions {
+    flex: 0 0 auto;
+    width: auto;
+    justify-content: flex-end;
+    margin-left: auto;
+  }
+
   .toolbar {
     align-items: stretch;
     flex-direction: column;
@@ -593,29 +616,43 @@
     width: 100%;
     min-width: 0;
     max-width: none;
+    flex: 0 0 auto;
   }
 
   .select,
   .searchInput,
-  .menuButton,
   .legendButton {
-    min-height: 44px;
+    min-height: 38px;
+  }
+
+  .menuButton {
+    width: 32px;
+    min-width: 32px;
+    height: 28px;
+    min-height: 28px;
+    padding: 0;
+    gap: 0;
+  }
+
+  .menuButtonLabel,
+  .menuButton > svg:last-child {
+    display: none;
   }
 
   .segmented {
-    min-height: 44px;
-    height: auto;
+    min-height: 28px;
+    height: 28px;
     max-width: 100%;
     overflow-x: auto;
   }
 
   .segment {
-    min-height: 38px;
-    height: auto;
+    min-height: 22px;
+    height: 22px;
   }
 
   .menuItem {
-    min-height: 44px;
+    min-height: 40px;
   }
 
   .selectionBar {
@@ -646,7 +683,7 @@
   .selectionBar :global(.btn-xs),
   .selectionActions :global(.btn) {
     flex: 1 1 calc(50% - 0.25rem);
-    min-height: 44px;
+    min-height: 28px;
     justify-content: center;
   }
 

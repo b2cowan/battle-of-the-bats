@@ -700,7 +700,7 @@ export default function RegistrationsPage() {
                       checked={reg.registrationFeePaid}
                       onChange={() => canManageRegs && toggleFeePaid(reg)}
                       disabled={!canManageRegs}
-                      style={{ cursor: canManageRegs ? 'pointer' : 'default', accentColor: '#22C55E', width: 15, height: 15 }}
+                      style={{ cursor: canManageRegs ? 'pointer' : 'default', width: 15, height: 15 }}
                       title={reg.registrationFeePaid ? 'Fee paid' : 'Fee not yet paid'}
                     />
                   </td>

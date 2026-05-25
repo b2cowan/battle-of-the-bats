@@ -43,48 +43,48 @@ const orgHelp: HelpPageContent = {
     {
       id: 'recipe-review-team-link-request',
       group: 'How-to recipes',
-      heading: 'How to invite or review Team workspace links',
-      summary: 'Invite a standalone Team workspace, approve Basic visibility requests, take over billing, and start ownership transfer approval when both sides agree.',
-      keywords: ['team links', 'team workspace', 'invite team', 'approve request', 'parent organization', 'basic visibility', 'org billing', 'team add-on', 'ownership transfer'],
-      searchText: 'invite review approve decline team workspace link request standalone team parent organization club association basic visibility sharing billing transfer org team add-on ownership roster documents accounting',
+      heading: 'How to invite or review Coaches Portal links',
+      summary: 'Invite a paid Coaches Portal, approve Basic visibility requests, take over billing, and start ownership transfer approval when both sides agree.',
+      keywords: ['coaches portal links', 'coaches portal', 'invite coach portal', 'approve request', 'parent organization', 'basic visibility', 'org billing', 'coach portal billing', 'ownership transfer'],
+      searchText: 'invite review approve decline coaches portal link request parent organization club association basic visibility sharing billing transfer org billing ownership roster documents accounting',
       links: [
-        { label: 'Team Links', href: '../org/team-links' },
+        { label: 'Coaches Portal Links', href: '../org/team-links' },
       ],
       content: (
         <>
-          <p>Owners and admins can manage Basic visibility links with standalone Team workspaces from <strong>Org Admin &gt; Team Links</strong>.</p>
+          <p>Owners and admins can manage Basic visibility links with paid Coaches Portals from <strong>Org Admin &gt; Coaches Portal Links</strong>.</p>
           <ol>
-            <li>Open <strong>Org Admin &gt; Team Links</strong>.</li>
-            <li>To invite a Team workspace, enter the workspace URL slug or primary coach email, then click <strong>Send Invite</strong>.</li>
+            <li>Open <strong>Org Admin &gt; Coaches Portal Links</strong>.</li>
+            <li>To invite a paid Coaches Portal, enter the portal URL slug or primary coach email, then click <strong>Send Invite</strong>.</li>
             <li>The coach reviews the invitation from their Coaches Portal and chooses <strong>Accept Invitation</strong> or <strong>Decline</strong>.</li>
-            <li>For coach-requested links, review the workspace name, team name, requested sharing level, and current billing mode.</li>
+            <li>For coach-requested links, review the portal name, team name, requested sharing level, and current billing mode.</li>
             <li>Click <strong>Approve Link</strong> if the team should be associated with your organization.</li>
             <li>Click <strong>Decline</strong> if the team is not part of your organization.</li>
             <li>Use Link history later to confirm what was approved or declined.</li>
           </ol>
           <p>Approving a coach request or receiving a coach&apos;s acceptance creates a <strong>Basic visibility</strong> link only. It does not transfer billing, ownership, player roster access, documents, accounting data, or org-wide rep-team admin access.</p>
-          <p>After the Basic link is active, use the <strong>Org billing</strong> section to invite the coach to move billing, or approve a coach&apos;s billing request. Choose annual or monthly checkout when both sides have approved. The Team becomes an org-paid Team add-on, but Basic sharing stays in place and the coach keeps operational ownership.</p>
-          <p>Use org-paid Team add-ons when your organization wants to pay for one or two coach-operated teams without taking over roster, document, accounting, or rep-team administration. Use Club when the organization needs the full multi-team operating layer: rep-team administration, accounting oversight, house league, public site, staff access, and lower extra-team pricing.</p>
-          <p>If your organization is paying for three or more linked Team add-ons, Team Links and Billing may show a Club value nudge. This is guidance only: Team add-ons can stay active, and Club or ownership transfer still requires the normal approval path.</p>
-          <p>Use <strong>Ownership transfer</strong> only when the Team should become org-owned. Phase 5A records mutual approval from the coach and organization; final roster, schedule, document, budget, and accounting reassignment is platform-assisted.</p>
+          <p>After the Basic link is active, use the <strong>Org billing</strong> section to invite the coach to move billing, or approve a coach&apos;s billing request. Choose annual or monthly checkout when both sides have approved. The portal becomes org-billed Coaches Portal Premium, but Basic sharing stays in place and the coach keeps operational ownership.</p>
+          <p>Use org-billed Coaches Portal when your organization wants to pay for one or two coach-operated teams without taking over roster, document, accounting, or rep-team administration. Use Club when the organization needs the full multi-team operating layer: rep-team administration, accounting oversight, house league, public site, staff access, and lower extra-team pricing.</p>
+          <p>If your organization is paying for three or more linked Premium portals, Coaches Portal Links and Billing may show a Club value nudge. This is guidance only: org-billed portals can stay active, and Club or ownership transfer still requires the normal approval path.</p>
+          <p>Use <strong>Ownership transfer</strong> only when the team should become org-owned. Phase 5A records mutual approval from the coach and organization; final roster, schedule, document, budget, and accounting reassignment is platform-assisted.</p>
         </>
       ),
       faqs: [
         {
           id: 'faq-basic-team-link-access',
           question: 'What can we see after approving a Basic visibility link?',
-          answerText: 'You can see the approved association and basic Team workspace summary. You do not receive roster, documents, accounting, billing, or full rep-team admin access from this approval.',
-          keywords: ['basic visibility', 'team link access', 'roster', 'documents', 'billing'],
+          answerText: 'You can see the approved association and basic Coaches Portal summary. You do not receive roster, documents, accounting, billing, or full rep-team admin access from this approval.',
+          keywords: ['basic visibility', 'coaches portal link access', 'roster', 'documents', 'billing'],
           popular: true,
           answer: (
-            <p>You can see the approved association and basic Team workspace summary. You do not receive roster, documents, accounting, billing, or full rep-team admin access from this approval.</p>
+            <p>You can see the approved association and basic Coaches Portal summary. You do not receive roster, documents, accounting, billing, or full rep-team admin access from this approval.</p>
           ),
         },
         {
           id: 'faq-team-link-invite-access',
-          question: 'Can we invite a Team workspace without taking over the team?',
+          question: 'Can we invite a Coaches Portal without taking over the team?',
           answerText: 'Yes. Sending a Basic visibility invitation only asks the coach to confirm the association. Billing takeover is a separate action after the Basic link is active.',
-          keywords: ['invite team workspace', 'basic visibility', 'ownership', 'billing'],
+          keywords: ['invite coaches portal', 'basic visibility', 'ownership', 'billing'],
           answer: (
             <p>Yes. Sending a Basic visibility invitation only asks the coach to confirm the association. Billing takeover is a separate action after the Basic link is active.</p>
           ),
@@ -100,39 +100,39 @@ const orgHelp: HelpPageContent = {
         },
         {
           id: 'faq-team-link-org-billing',
-          question: 'What happens when we take over billing for a linked Team?',
-          answerText: 'Your organization becomes the payer for that Team add-on. The Team workspace remains coach-operated, and this does not unlock roster, documents, accounting, ownership, or org-wide rep-team admin access.',
-          keywords: ['org billing', 'team add-on', 'billing transfer', 'organization pays'],
+          question: 'What happens when we take over billing for a linked Coaches Portal?',
+          answerText: 'Your organization becomes the payer for that Premium portal. The portal remains coach-operated, and this does not unlock roster, documents, accounting, ownership, or org-wide rep-team admin access.',
+          keywords: ['org billing', 'coaches portal billing', 'billing transfer', 'organization pays'],
           answer: (
-            <p>Your organization becomes the payer for that Team add-on. The Team workspace remains coach-operated, and this does not unlock roster, documents, accounting, ownership, or org-wide rep-team admin access.</p>
+            <p>Your organization becomes the payer for that Premium portal. The portal remains coach-operated, and this does not unlock roster, documents, accounting, ownership, or org-wide rep-team admin access.</p>
           ),
         },
         {
           id: 'faq-team-addon-vs-club',
-          question: 'When should we use Team add-ons instead of Club?',
-          answerText: 'Use Team add-ons for a small number of coach-operated linked teams. Club is the better fit when the organization needs multi-team oversight, full rep-team administration, accounting, staff access, public site, house league, or lower extra-team pricing.',
-          keywords: ['team add-on', 'club', 'multi-team', 'pricing', 'rep teams'],
+          question: 'When should we use org-billed Coaches Portal instead of Club?',
+          answerText: 'Use org-billed Coaches Portal for a small number of coach-operated linked teams. Club is the better fit when the organization needs multi-team oversight, full rep-team administration, accounting, staff access, public site, house league, or lower extra-team pricing.',
+          keywords: ['coaches portal billing', 'club', 'multi-team', 'pricing', 'rep teams'],
           popular: true,
           answer: (
-            <p>Use Team add-ons for a small number of coach-operated linked teams. Club is the better fit when the organization needs multi-team oversight, full rep-team administration, accounting, staff access, public site, house league, or lower extra-team pricing.</p>
+            <p>Use org-billed Coaches Portal for a small number of coach-operated linked teams. Club is the better fit when the organization needs multi-team oversight, full rep-team administration, accounting, staff access, public site, house league, or lower extra-team pricing.</p>
           ),
         },
         {
           id: 'faq-team-tournament-plus',
-          question: 'Do linked Team workspaces include Tournament Plus features?',
-          answerText: 'No. Team includes one free-tier local tournament slot for simple events. Tournament Plus features such as unlimited tournament slots, advanced registration controls, enhanced branding, cloning, and post-event reporting require Tournament Plus or a higher organization plan.',
-          keywords: ['Team tournaments', 'Tournament Plus', 'free tournament slot', 'upgrade'],
+          question: 'Do linked Coaches Portals include Tournament Plus features?',
+          answerText: 'No. Coaches Portal Premium includes one free-tier local tournament slot for simple events. Tournament Plus features such as unlimited tournament slots, advanced registration controls, enhanced branding, cloning, and post-event reporting require Tournament Plus or a higher organization plan.',
+          keywords: ['Coaches Portal tournaments', 'Tournament Plus', 'free tournament slot', 'upgrade'],
           answer: (
-            <p>No. Team includes one free-tier local tournament slot for simple events. Tournament Plus features such as unlimited tournament slots, advanced registration controls, enhanced branding, cloning, and post-event reporting require Tournament Plus or a higher organization plan.</p>
+            <p>No. Coaches Portal Premium includes one free-tier local tournament slot for simple events. Tournament Plus features such as unlimited tournament slots, advanced registration controls, enhanced branding, cloning, and post-event reporting require Tournament Plus or a higher organization plan.</p>
           ),
         },
         {
           id: 'faq-team-link-club-nudge',
           question: 'Why do we see a Club value nudge?',
-          answerText: 'The nudge appears when the organization is paying for three or more linked Team add-ons. Club is usually the better multi-team operating layer, but the prompt does not change billing, sharing, ownership, or access by itself.',
-          keywords: ['club nudge', 'multi-team', 'team add-on', 'club value'],
+          answerText: 'The nudge appears when the organization is paying for three or more linked Premium portals. Club is usually the better multi-team operating layer, but the prompt does not change billing, sharing, ownership, or access by itself.',
+          keywords: ['club nudge', 'multi-team', 'coaches portal billing', 'club value'],
           answer: (
-            <p>The nudge appears when the organization is paying for three or more linked Team add-ons. Club is usually the better multi-team operating layer, but the prompt does not change billing, sharing, ownership, or access by itself.</p>
+            <p>The nudge appears when the organization is paying for three or more linked Premium portals. Club is usually the better multi-team operating layer, but the prompt does not change billing, sharing, ownership, or access by itself.</p>
           ),
         },
       ],
@@ -311,7 +311,7 @@ const orgHelp: HelpPageContent = {
         <>
           <p>The <strong>Subscription</strong> page (visible to Owners only) shows your current plan, tournament slot usage, seat usage, and available upgrades.</p>
           <p>The free Tournament plan is meant for one starter event with standard registration, basic selected-row registration updates, waitlist collection, and FieldLogicHQ default public styling. Tournament Plus is the serious tournament operations plan: unlimited tournament slots, 10 staff seats, custom registration questions, Excel and PDF exports for registrations, schedules, and results — useful for check-in sheets, insurance submissions, and post-event board reports — payment reminders, waitlist promotion, full branding, automation, cloning, and post-event reporting.</p>
-          <p>Team add-ons are separate from Club extra teams. A linked org-paid Team add-on pays for a coach-operated standalone Team workspace. Club included or extra teams are org-owned rep teams under Club. Club includes the first three active rep teams, then uses the lower Club extra-team rate for additional active teams.</p>
+          <p>Org-billed Coaches Portal is separate from Club extra teams. It pays for a coach-operated Premium portal. Club included or extra teams are org-owned rep teams under Club. Club includes the first three active rep teams, then uses the lower Club extra-team rate for additional active teams.</p>
           <p>To upgrade to Tournament Plus, click <strong>Upgrade to Tournament Plus</strong>. You'll be taken to secure Stripe Checkout to enter payment details. Your first payment is collected automatically after the 14-day trial. League and Club are shown as coming soon until those tiers open for self-serve checkout.</p>
           <p>If you're on a paid plan, use <strong>Manage Subscription</strong> to update your payment method, view past invoices, or cancel. This opens the Stripe customer portal.</p>
           <p><strong>Past-due payments:</strong> If a payment fails, your access stays active during a grace period. Update your payment method via <strong>Manage Subscription</strong> before the grace period ends to avoid service interruption.</p>

@@ -26,7 +26,7 @@ export async function POST(req: Request) {
   try {
     checkoutRequest = normalizeTeamCheckoutRequest(await req.json() as Record<string, unknown>);
   } catch (error) {
-    return new Response(JSON.stringify({ error: error instanceof Error ? error.message : 'Invalid Team checkout request.' }), {
+    return new Response(JSON.stringify({ error: error instanceof Error ? error.message : 'Invalid Coaches Portal checkout request.' }), {
       status: 400,
       headers: { 'Content-Type': 'application/json' },
     });
@@ -34,7 +34,7 @@ export async function POST(req: Request) {
 
   const gatingMap = await getPlanGatingMap();
   if (gatingMap.team) {
-    return new Response(JSON.stringify({ error: 'Team checkout is not open for self-serve yet.' }), {
+    return new Response(JSON.stringify({ error: 'Coaches Portal checkout is not open for self-serve yet.' }), {
       status: 403,
       headers: { 'Content-Type': 'application/json' },
     });
@@ -128,7 +128,7 @@ export async function POST(req: Request) {
         });
       }
       console.error('[team checkout mock] provisioning error:', error);
-      return new Response(JSON.stringify({ error: 'Failed to create Team workspace.' }), {
+      return new Response(JSON.stringify({ error: 'Failed to create Coaches Portal.' }), {
         status: 500,
         headers: { 'Content-Type': 'application/json' },
       });
@@ -176,7 +176,7 @@ export async function POST(req: Request) {
       metadata,
     },
     metadata,
-    success_url: `${appUrl}/team/checkout/complete?session_id={CHECKOUT_SESSION_ID}`,
+    success_url: `${appUrl}/coaches/checkout/complete?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${appUrl}${checkoutRequest.returnTo}`,
   });
 

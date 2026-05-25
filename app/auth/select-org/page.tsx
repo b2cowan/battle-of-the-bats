@@ -79,6 +79,16 @@ export default async function SelectOrgPage() {
     redirect(dest);
   }
 
+  // Check if this user also has tournament registrations as a coach
+  const hasTournamentRegs = user.email
+    ? await supabaseAdmin
+        .from('teams')
+        .select('id', { count: 'exact', head: true })
+        .ilike('email', user.email)
+        .limit(1)
+        .then(({ count }) => (count ?? 0) > 0)
+    : false;
+
   // Compute destination for every org in parallel.
   const entries: OrgEntry[] = await Promise.all(
     members.map(async (member) => {
@@ -111,8 +121,32 @@ export default async function SelectOrgPage() {
             </svg>
           </div>
           <h1 className={styles.title}>Select Workspace</h1>
-          <p className={styles.sub}>You belong to {entries.length} organizations — choose one to continue</p>
+          <p className={styles.sub}>
+            You belong to {entries.length} organization{entries.length === 1 ? '' : 's'}
+            {hasTournamentRegs ? ' and have tournament registrations' : ''} — choose where to continue
+          </p>
         </div>
+
+        {/* Tournament registrations link (if coach email is recognised) */}
+        {hasTournamentRegs && (
+          <div className={styles.orgItem} style={{ marginBottom: '0.25rem' }}>
+            <div className={styles.orgInfo}>
+              <div className={styles.orgNameRow}>
+                <span className={styles.orgName}>Tournament Registrations</span>
+                <span className={styles.planBadge} style={{ color: '#d1d5db', borderColor: 'rgba(209,213,219,0.3)', background: 'rgba(209,213,219,0.06)' }}>
+                  Coach
+                </span>
+              </div>
+              <div className={styles.roleMeta}>Your registrations across all tournaments</div>
+            </div>
+            <Link href="/coaches/tournaments" className={styles.enterBtn}>
+              View
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <path d="M5 12h14M12 5l7 7-7 7" />
+              </svg>
+            </Link>
+          </div>
+        )}
 
         {/* Org list */}
         <div className={styles.orgList}>

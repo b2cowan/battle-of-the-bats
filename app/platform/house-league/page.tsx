@@ -64,7 +64,7 @@ export default function HouseLeaguePage() {
               initialPlanInterest={['league']}
               initialFeaturesInterested={['house_league', 'registration']}
             >
-              Join Early Access
+              Express interest
             </EarlyAccessModalTrigger>
             <Link
               href="/pricing"
@@ -136,7 +136,7 @@ export default function HouseLeaguePage() {
             initialPlanInterest={['league']}
             initialFeaturesInterested={['house_league', 'registration']}
           >
-            Join Early Access
+            Express interest
           </EarlyAccessModalTrigger>
         </div>
       </section>

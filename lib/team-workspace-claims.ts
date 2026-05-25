@@ -115,7 +115,7 @@ export function generateTeamWorkspaceClaimToken(): string {
 
 export function buildTeamWorkspaceClaimUrl(token: string, origin?: string | null): string {
   const baseUrl = (origin || process.env.NEXT_PUBLIC_APP_URL || 'https://www.fieldlogichq.ca').replace(/\/+$/, '');
-  return `${baseUrl}/team/claim/${encodeURIComponent(token)}`;
+  return `${baseUrl}/coaches/claim/${encodeURIComponent(token)}`;
 }
 
 export async function createTournamentTeamWorkspaceClaim(input: {

@@ -1980,6 +1980,7 @@ Column schemas are **identical** between dev and prod across all 85 tables (same
 | 27 | results_notified_at | timestamptz | YES | — |
 | 28 | results_notification_sent_count | int4 | NO | 0 |
 | 29 | org_id | uuid | NO | — |
+| 30 | settings | jsonb | NO | '{}' |
 
 **Foreign keys:** `org_id → organizations.id`
 

@@ -330,7 +330,7 @@ export default function PlayoffWizard({ ageGroup, tournamentId, onClose, onCompl
                     </div>
                     <div className="form-group" style={{ justifyContent: 'center' }}>
                        <label className="flex items-center gap-3 cursor-pointer">
-                        <input type="checkbox" checked={config.hasThirdPlace} onChange={e => setConfig({...config, hasThirdPlace: e.target.checked})} style={{ width: '18px', height: '18px', accentColor: 'var(--primary)' }} />
+                        <input type="checkbox" checked={config.hasThirdPlace} onChange={e => setConfig({...config, hasThirdPlace: e.target.checked})} />
                         <span className="text-sm font-bold">Include 3rd Place / Consolidation Game</span>
                       </label>
                     </div>
@@ -376,7 +376,6 @@ export default function PlayoffWizard({ ageGroup, tournamentId, onClose, onCompl
                                   [pool.id]: { ...pConfig, hasThirdPlace: e.target.checked } 
                                 }
                               })}
-                              style={{ width: '16px', height: '16px', accentColor: 'var(--primary)' }} 
                             />
                             <span className="text-xs font-bold">3rd Place</span>
                           </label>

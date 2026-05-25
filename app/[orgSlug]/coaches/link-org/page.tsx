@@ -45,6 +45,13 @@ function statusClass(status: string) {
   return styles.badgeUpcoming;
 }
 
+function billingModeLabel(mode: string | null | undefined) {
+  if (mode === 'team_direct') return 'Coach pays direct';
+  if (mode === 'org_team_addon') return 'Org-billed Premium';
+  if (mode === 'platform_override') return 'Platform override';
+  return mode ?? 'Billing unchanged';
+}
+
 function formatDate(value: string) {
   return new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric', year: 'numeric' }).format(new Date(value));
 }
@@ -123,7 +130,7 @@ export default function CoachLinkOrgPage({ params }: { params: Promise<{ orgSlug
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error ?? 'Could not review the organization invitation.');
-      setMessage(action === 'accept' ? 'Team invitation accepted.' : 'Team invitation declined.');
+      setMessage(action === 'accept' ? 'Organization invitation accepted.' : 'Organization invitation declined.');
       await loadLinks();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not review the organization invitation.');
@@ -145,7 +152,7 @@ export default function CoachLinkOrgPage({ params }: { params: Promise<{ orgSlug
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error ?? 'Could not update the org billing request.');
-      if (action === 'request_billing') setMessage('Org billing request sent. The organization owner can review it from Team Links.');
+      if (action === 'request_billing') setMessage('Org billing request sent. The organization owner can review it from Coaches Portal Links.');
       if (action === 'accept_billing') setMessage('Org billing invitation accepted. The organization owner can now complete checkout.');
       if (action === 'decline_billing') setMessage('Org billing invitation declined. The Basic link remains active.');
       await loadLinks();
@@ -168,7 +175,7 @@ export default function CoachLinkOrgPage({ params }: { params: Promise<{ orgSlug
     if (pendingBilling && link.approvedByOrgUserId && !link.approvedByTeamUserId) return 'Organization invited you to move billing';
     if (pendingBilling && link.approvedByTeamUserId && !link.approvedByOrgUserId) return 'Waiting for organization billing approval';
     if (pendingBilling && link.approvedByTeamUserId && link.approvedByOrgUserId) return 'Organization checkout pending';
-    return link.workspace?.billingMode === 'team_direct' ? 'Team pays direct' : link.workspace?.billingMode ?? 'Billing unchanged';
+    return billingModeLabel(link.workspace?.billingMode);
   }
 
   async function ownershipAction(linkId: string, action: 'request_ownership' | 'accept_ownership' | 'decline_ownership') {
@@ -184,7 +191,7 @@ export default function CoachLinkOrgPage({ params }: { params: Promise<{ orgSlug
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error ?? 'Could not update the ownership transfer.');
-      if (action === 'request_ownership') setMessage('Ownership transfer requested. The organization owner can review it from Team Links.');
+      if (action === 'request_ownership') setMessage('Ownership transfer requested. The organization owner can review it from Coaches Portal Links.');
       if (action === 'accept_ownership') setMessage('Ownership transfer accepted. Platform-assisted transfer can now be completed.');
       if (action === 'decline_ownership') setMessage('Ownership transfer invitation declined. The existing link remains active.');
       await loadLinks();
@@ -207,14 +214,14 @@ export default function CoachLinkOrgPage({ params }: { params: Promise<{ orgSlug
             <div className={styles.headerIcon}><Link2 size={22} /></div>
             <div>
               <h1 className={styles.pageTitle}>Link Organization</h1>
-              <p className={styles.pageSub}>Available for standalone Team workspaces.</p>
+              <p className={styles.pageSub}>Available for paid Coaches Portal teams.</p>
             </div>
           </div>
         </div>
         <HelpCallout
           variant="info"
           title="Already inside an organization"
-          body="Org-owned coach portals are already connected to their organization. Team-to-org linking is only needed for standalone Team workspaces."
+          body="Org-owned coach portals are already connected to their organization. Organization linking is only needed for paid Coaches Portal teams."
         />
       </div>
     );
@@ -227,7 +234,7 @@ export default function CoachLinkOrgPage({ params }: { params: Promise<{ orgSlug
           <div className={styles.headerIcon}><Building2 size={22} /></div>
           <div>
             <h1 className={styles.pageTitle}>Link Organization</h1>
-            <p className={styles.pageSub}>Request a Basic visibility link or move approved Team billing to a parent organization.</p>
+            <p className={styles.pageSub}>Request a Basic visibility link or move approved Premium billing to a parent organization.</p>
           </div>
         </div>
         <button type="button" className="btn btn-ghost btn-sm" onClick={loadLinks}>
@@ -244,7 +251,7 @@ export default function CoachLinkOrgPage({ params }: { params: Promise<{ orgSlug
       <HelpCallout
         variant="tip"
         title="When the club should pay"
-        body="After a Basic link is active, use Request Org Billing on the linked organization card. The organization can approve annual or monthly Team add-on billing while your workspace stays coach-operated."
+        body="After a Basic link is active, use Request Org Billing on the linked organization card. The organization can approve annual or monthly Coaches Portal billing while your portal stays coach-operated."
       />
 
       <section className={styles.detailSection}>
@@ -290,7 +297,7 @@ export default function CoachLinkOrgPage({ params }: { params: Promise<{ orgSlug
                       <h3 className={styles.linkCardTitle}>{link.linkedOrg?.name ?? 'Organization'}</h3>
                       <p className={styles.linkCardMeta}>
                         {link.status === 'invited'
-                          ? 'This organization invited your Team workspace to connect.'
+                          ? 'This organization invited your Coaches Portal to connect.'
                           : link.linkedOrg?.slug ? `/${link.linkedOrg.slug}` : 'Organization slug unavailable'}
                       </p>
                     </div>
@@ -300,7 +307,7 @@ export default function CoachLinkOrgPage({ params }: { params: Promise<{ orgSlug
                   </div>
                   <div className={styles.linkFacts}>
                     <span>Sharing: Basic visibility</span>
-                    <span>Team: {link.repTeam?.name ?? 'Team workspace'}</span>
+                    <span>Team: {link.repTeam?.name ?? 'Coaches Portal'}</span>
                     <span>Billing: {billingText(link)}</span>
                     <span>Updated {formatDate(link.updatedAt)}</span>
                   </div>

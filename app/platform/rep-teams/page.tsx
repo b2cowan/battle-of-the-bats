@@ -65,7 +65,7 @@ export default function RepTeamsPage() {
               initialPlanInterest={['club']}
               initialFeaturesInterested={['rep_teams', 'coach_portal']}
             >
-              Join Early Access
+              Express interest
             </EarlyAccessModalTrigger>
             <Link
               href="/pricing"
@@ -137,7 +137,7 @@ export default function RepTeamsPage() {
             initialPlanInterest={['club']}
             initialFeaturesInterested={['rep_teams', 'coach_portal']}
           >
-            Join Early Access
+            Express interest
           </EarlyAccessModalTrigger>
         </div>
       </section>

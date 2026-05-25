@@ -472,9 +472,9 @@ function ReadinessPanel({
       <div className={styles.readinessHeader}>
         <div className={styles.readinessIcon}><CreditCard size={17} /></div>
         <div className={styles.cardMeta}>
-          <div className={styles.cardTitle}>Team Checkout Readiness</div>
+          <div className={styles.cardTitle}>Coaches Portal Checkout Readiness</div>
           <div className={styles.cardDesc}>
-            Confirms Team price slots, app URL, plan gate, webhook secret, and Stripe price metadata.
+            Confirms Coaches Portal price slots, app URL, plan gate, webhook secret, and Stripe price metadata.
           </div>
         </div>
         <button className={styles.refreshBtn} onClick={onRefresh} title="Refresh checkout readiness">
@@ -485,7 +485,7 @@ function ReadinessPanel({
       {!readiness ? (
         <div className={styles.logOk}>
           <Loader size={12} className={styles.spin} />
-          <div>Checking Team checkout setup...</div>
+          <div>Checking Coaches Portal checkout setup...</div>
         </div>
       ) : (
         <>
@@ -927,23 +927,23 @@ export default function DevDashboard() {
       key:         'team-workspace',
       endpoint:    '/api/dev/seed/team-workspace',
       icon:        UserCheck,
-      title:       'Standalone Team',
-      description: 'A lightweight Team workspace with one rep team, active season, coach assignment, entitlement, and ledger',
-      creates:     'dev-standalone-team, one Team workspace',
+      title:       'Coaches Portal Premium',
+      description: 'A lightweight Coaches Portal with one rep team, active season, coach assignment, entitlement, and ledger',
+      creates:     'dev-coaches-portal, one Premium portal',
       locked:      false,
       lockReason:  undefined as string | undefined,
-      badges:      <StatusPill count={status?.teamWorkspaces ?? 0} label="team workspaces" />,
+      badges:      <StatusPill count={status?.teamWorkspaces ?? 0} label="premium portals" />,
     },
     {
       key:         'team-claim',
       endpoint:    '/api/dev/seed/team-claim',
       icon:        ClipboardList,
-      title:       'Team Claim Link',
+      title:       'Coaches Portal Claim Link',
       description: 'Creates a secure claim link for a dev tournament team contact',
-      creates:     'one available Team workspace claim URL',
+      creates:     'one available Coaches Portal claim URL',
       locked:      (status?.tournaments ?? 0) === 0,
       lockReason:  'Seed Tournament first' as string | undefined,
-      badges:      <StatusPill count={status?.teamClaims ?? 0} label="team claims" />,
+      badges:      <StatusPill count={status?.teamClaims ?? 0} label="portal claims" />,
     },
   ];
 
