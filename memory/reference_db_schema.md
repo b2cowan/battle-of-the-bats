@@ -16,16 +16,16 @@ Column schemas are **identical** between dev and prod across all 85 tables (same
 
 | Table | Column | Dev constraint name | Prod constraint name |
 |---|---|---|---|
-| age_groups | tournament_id | age_groups_tournament_id_fkey | fk_age_groups_tournament |
+| divisions | tournament_id | divisions_tournament_id_fkey | fk_divisions_tournament |
 | announcements | tournament_id | announcements_tournament_id_fkey | fk_announcements_tournament |
 | contacts | tournament_id | contacts_tournament_id_fkey | fk_contacts_tournament |
 | diamonds | tournament_id | diamonds_tournament_id_fkey | fk_diamonds_tournament |
 | games | diamond_id | games_diamond_id_fkey | fk_games_diamond |
 | games | away_team_id | games_away_team_id_fkey | fk_games_away_team |
-| games | age_group_id | games_age_group_id_fkey | fk_games_age_group |
+| games | division_id | games_division_id_fkey | fk_games_division |
 
 **Duplicate FK constraints in prod on `games`:**
-- `games_age_group_id_fkey` AND `fk_games_age_group` both exist on `games.age_group_id`
+- `games_division_id_fkey` AND `fk_games_division` both exist on `games.division_id`
 - `games_away_team_id_fkey` AND `fk_games_away_team` both exist on `games.away_team_id`
 
 **Non-standard FK name in both environments:**
@@ -35,7 +35,7 @@ Column schemas are **identical** between dev and prod across all 85 tables (same
 
 ## Module Key
 
-- **Tournament** — unprefixed tables: `tournaments`, `age_groups`, `teams`, `games`, `pools`, `pool_slots`, `diamonds`, `contacts`, `announcements`, `resources`, `rules`, `rule_items`, `tournament_archives`, `tournament_registration_fields`, `tournament_registration_field_answers`
+- **Tournament** — unprefixed tables: `tournaments`, `divisions`, `teams`, `games`, `pools`, `pool_slots`, `diamonds`, `contacts`, `announcements`, `resources`, `rules`, `rule_items`, `tournament_archives`, `tournament_registration_fields`, `tournament_registration_field_answers`
 - **Accounting** — `accounting_*`, `budget_categories`, `budget_items`, `org_budget_lines`, `org_budget_periods`
 - **League** — `league_*`
 - **Rep Teams** — `rep_*`
@@ -102,7 +102,7 @@ Column schemas are **identical** between dev and prod across all 85 tables (same
 
 ---
 
-### age_groups
+### divisions
 **Module:** Tournament | **RLS:** ENABLED | **Tenancy:** via `tournament_id → tournaments.org_id`
 
 | # | Column | Type | Nullable | Default |
@@ -143,7 +143,7 @@ Column schemas are **identical** between dev and prod across all 85 tables (same
 | 4 | body | text | YES | — |
 | 5 | published_at | timestamptz | NO | now() |
 | 6 | pinned | bool | NO | false |
-| 7 | age_group_ids | uuid[] | YES | — |
+| 7 | division_ids | uuid[] | YES | — |
 
 **Foreign keys:** `tournament_id → tournaments.id`
 
@@ -319,7 +319,7 @@ Column schemas are **identical** between dev and prod across all 85 tables (same
 |---|---|---|---|---|
 | 1 | id | uuid | NO | gen_random_uuid() |
 | 2 | tournament_id | uuid | YES | — |
-| 3 | age_group_id | uuid | YES | — |
+| 3 | division_id | uuid | YES | — |
 | 4 | home_team_id | uuid | YES | — |
 | 5 | away_team_id | uuid | YES | — |
 | 6 | game_date | date | YES | — |
@@ -342,11 +342,11 @@ Column schemas are **identical** between dev and prod across all 85 tables (same
 | 23 | score_submitted_at | timestamptz | YES | — |
 | 24 | score_submission_source | text | YES | — |
 
-**Foreign keys:** `tournament_id → tournaments.id`, `age_group_id → age_groups.id`, `home_team_id → teams.id`, `away_team_id → teams.id`, `diamond_id → diamonds.id`, `home_slot_id → pool_slots.id`, `away_slot_id → pool_slots.id`
+**Foreign keys:** `tournament_id → tournaments.id`, `division_id → divisions.id`, `home_team_id → teams.id`, `away_team_id → teams.id`, `diamond_id → diamonds.id`, `home_slot_id → pool_slots.id`, `away_slot_id → pool_slots.id`
 
 **Checks:** `score_submission_source IN ('scorekeeper','admin_results','system') OR NULL`
 
-**Note (prod divergence):** Duplicate FK constraints exist on `age_group_id` and `away_team_id` — both `games_*_fkey` and `fk_games_*` names.
+**Note (prod divergence):** Duplicate FK constraints exist on `division_id` and `away_team_id` — both `games_*_fkey` and `fk_games_*` names.
 
 ---
 
@@ -499,7 +499,7 @@ Column schemas are **identical** between dev and prod across all 85 tables (same
 | 3 | name | text | NO | — |
 | 4 | slug | text | NO | — |
 | 5 | sport | text | NO | 'softball' |
-| 6 | age_group | text | YES | — |
+| 6 | division | text | YES | — |
 | 7 | status | text | NO | 'draft' |
 | 8 | description | text | YES | — |
 | 9 | registration_fee | numeric | YES | — |
@@ -1062,28 +1062,28 @@ Column schemas are **identical** between dev and prod across all 85 tables (same
 | 1 | id | uuid | NO | gen_random_uuid() |
 | 2 | pool_id | uuid | NO | — |
 | 3 | tournament_id | uuid | NO | — |
-| 4 | age_group_id | uuid | NO | — |
+| 4 | division_id | uuid | NO | — |
 | 5 | slot_number | int4 | NO | — |
 | 6 | display_name | text | NO | — |
 | 7 | team_id | uuid | YES | — |
 | 8 | created_at | timestamptz | YES | now() |
 
-**Foreign keys:** `pool_id → pools.id`, `tournament_id → tournaments.id`, `age_group_id → age_groups.id`, `team_id → teams.id`
+**Foreign keys:** `pool_id → pools.id`, `tournament_id → tournaments.id`, `division_id → divisions.id`, `team_id → teams.id`
 
 ---
 
 ### pools
-**Module:** Tournament | **RLS:** ENABLED | **Tenancy:** via `age_group_id → age_groups.tournament_id → tournaments.org_id`
+**Module:** Tournament | **RLS:** ENABLED | **Tenancy:** via `division_id → divisions.tournament_id → tournaments.org_id`
 
 | # | Column | Type | Nullable | Default |
 |---|---|---|---|---|
 | 1 | id | uuid | NO | gen_random_uuid() |
-| 2 | age_group_id | uuid | NO | — |
+| 2 | division_id | uuid | NO | — |
 | 3 | name | text | NO | — |
 | 4 | display_order | int4 | NO | 0 |
 | 5 | created_at | timestamptz | NO | now() |
 
-**Foreign keys:** `age_group_id → age_groups.id`
+**Foreign keys:** `division_id → divisions.id`
 
 ---
 
@@ -1650,7 +1650,7 @@ Column schemas are **identical** between dev and prod across all 85 tables (same
 | 3 | name | text | NO | — |
 | 4 | slug | text | NO | — |
 | 5 | sport | text | NO | 'softball' |
-| 6 | age_group | text | YES | — |
+| 6 | division | text | YES | — |
 | 7 | description | text | YES | — |
 | 8 | color | text | YES | — |
 | 9 | is_archived | bool | NO | false |
@@ -1729,7 +1729,7 @@ Column schemas are **identical** between dev and prod across all 85 tables (same
 | 3 | title | text | NO | — |
 | 4 | display_order | int4 | NO | 0 |
 | 5 | icon | text | YES | — |
-| 6 | age_group_ids | uuid[] | YES | — |
+| 6 | division_ids | uuid[] | YES | — |
 
 **Foreign keys:** `tournament_id → tournaments.id`
 
@@ -1863,7 +1863,7 @@ Column schemas are **identical** between dev and prod across all 85 tables (same
 |---|---|---|---|---|
 | 1 | id | uuid | NO | gen_random_uuid() |
 | 2 | tournament_id | uuid | YES | — |
-| 3 | age_group_id | uuid | YES | — |
+| 3 | division_id | uuid | YES | — |
 | 4 | name | text | NO | — |
 | 5 | coach | text | YES | — |
 | 6 | email | text | YES | — |
@@ -1878,7 +1878,7 @@ Column schemas are **identical** between dev and prod across all 85 tables (same
 | 15 | waitlist_position | int4 | YES | — |
 | 16 | slot_id | uuid | YES | — |
 
-**Foreign keys:** `tournament_id → tournaments.id`, `age_group_id → age_groups.id`, `pool_id → pools.id`, `slot_id → pool_slots.id`
+**Foreign keys:** `tournament_id → tournaments.id`, `division_id → divisions.id`, `pool_id → pools.id`, `slot_id → pool_slots.id`
 
 ---
 
