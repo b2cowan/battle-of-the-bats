@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 const FOUNDING_SEASON_EXPIRES = '2027-01-01T00:00:00.000Z';
 
 async function getInitialData() {
-  const [batchesResult, optOutsResult, overridesResult, totalOrgsResult] = await Promise.all([
+  const [batchesResult, optOutsResult, overridesResult] = await Promise.all([
     supabaseAdmin
       .from('email_batches')
       .select('*')
@@ -29,21 +29,20 @@ async function getInitialData() {
       .select('org_id')
       .eq('type', 'comp_period')
       .eq('expires_at', FOUNDING_SEASON_EXPIRES),
-
-    supabaseAdmin
-      .from('organizations')
-      .select('id', { count: 'exact', head: true })
-      .eq('email_marketing_opt_out', false),
   ]);
 
-  const foundingOrgIds = (overridesResult.data ?? []).map(o => o.org_id as string);
-  const foundingCount = foundingOrgIds.length;
-  const optOutCount = optOutsResult.data?.length ?? 0;
+  const foundingOrgIdSet = new Set((overridesResult.data ?? []).map(o => o.org_id as string));
+  const foundingCount = foundingOrgIdSet.size;
+
+  // Only count opt-outs that belong to founding season orgs
+  const foundingOptOutOrgs = (optOutsResult.data ?? []).filter(o => foundingOrgIdSet.has(o.id as string));
+  const optOutCount = foundingOptOutOrgs.length;
+  // Active recipients = founding orgs that haven't opted out
+  const recipientCount = foundingCount - optOutCount;
 
   // Enrich opt-out orgs with owner email
-  const optOutOrgs = optOutsResult.data ?? [];
   const enrichedOptOuts = await Promise.all(
-    optOutOrgs.map(async (org) => {
+    foundingOptOutOrgs.map(async (org) => {
       const { data: member } = await supabaseAdmin
         .from('organization_members')
         .select('user_id')
@@ -71,7 +70,7 @@ async function getInitialData() {
   return {
     batches: (batchesResult.data ?? []) as EmailBatch[],
     optOuts: enrichedOptOuts,
-    recipientCount: foundingCount,
+    recipientCount,
     optOutCount,
   };
 }
