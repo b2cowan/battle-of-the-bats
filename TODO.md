@@ -56,7 +56,7 @@ This file tracks the ongoing tasks for the FieldLogicHQ platform (multi-tenant s
   - [x] Phase 4A: Auto-assign `comp_period` override on org signup
   - [x] Phase 4B: Platform admin founding season filter + cohort metric
   - [x] **Founding Season email infrastructure** — opt-out/unsubscribe (migrations 099–100, `lib/unsubscribe-token.ts`, `/unsubscribe` route + confirmed page), `lib/email-sender.ts`, `founding_welcome` template, platform admin `/platform-admin/email` dashboard (scheduled sends + sent history + opt-outs + preview modal + manual send trigger), `founding_welcome` wired into signup route; **migrations 099–100 need manual DB apply** (see [plan](docs/active/FOUNDING_SEASON_EMAIL_INFRA_PLAN.md))
-  - [ ] Phase 3 + Phase 5: Founding season email templates (9 emails) — blocked on email infrastructure above
+  - [x] Phase 3 + Phase 5: Founding season email templates (9 emails) — founding_checkin, founding_renewal, founding_final, spotlight_club/league/coaches_org/coaches_coach/club_last/full_picture; TEMPLATE_REGISTRY all built:true; audience functions for coach/club-last variants; dashboard previews all live
   - [ ] Phase 4C: January 2027 conversion flow — blocked on Stripe Phase G
 - [ ] **Brand Strategy** — umbrella positioning, four segment profiles, site architecture, Coach Portal bridge messaging (see [BRAND_STRATEGY.md](docs/active/BRAND_STRATEGY.md))
 - [x] **Persona landing pages** — built `/for-tournament-organizers`, `/for-leagues`, `/for-clubs`, `/for-coaches`; design QA pass complete 2026-05-25
