@@ -183,8 +183,10 @@
 }
 
 .scheduleSearch {
-  flex: 1 1 28rem;  /* grow to fill dead space between venue and chips */
-  max-width: none;
+  /* !important overrides the shared .search max-width/flex-basis from TournamentAdminUI.module.css
+     which lands on the same element and wins the cascade by bundle order */
+  flex: 1 1 28rem !important;
+  max-width: none !important;
   min-width: 18rem;
 }
 

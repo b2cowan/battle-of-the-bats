@@ -219,8 +219,9 @@
 /* ─── Search — grows to fill available space between venue and chips ─────────
    Overrides the shared .search max-width:22rem cap. */
 .resultsSearch {
-  flex: 1 1 14rem;
-  max-width: none;
+  /* !important guards against the shared .search class winning by bundle order */
+  flex: 1 1 14rem !important;
+  max-width: none !important;
   min-width: 13rem;
 }
 
