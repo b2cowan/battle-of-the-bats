@@ -183,8 +183,8 @@
 }
 
 .scheduleSearch {
-  flex: 0 1 28rem;
-  max-width: 30rem;
+  flex: 1 1 28rem;  /* grow to fill dead space between venue and chips */
+  max-width: none;
   min-width: 18rem;
 }
 

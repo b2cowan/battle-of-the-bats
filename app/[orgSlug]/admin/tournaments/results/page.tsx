@@ -460,7 +460,7 @@ export default function AdminResultsPage() {
 
         {/* ── Row 2: search + venue (desktop) + status filters ── */}
         <ToolbarGroup fullWidth>
-          <ToolbarSearch value={searchQuery} onChange={setSearchQuery} placeholder="Search teams..." label="Search games" />
+          <ToolbarSearch className={styles.resultsSearch} value={searchQuery} onChange={setSearchQuery} placeholder="Search teams..." label="Search games" />
           <div className={styles.resultsVenueDesktop}>
             <VenueFilterMenu
               options={venueFilterOptions}
