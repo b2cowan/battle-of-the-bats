@@ -647,6 +647,7 @@ export default function AdminSchedulePage() {
                   className={`btn btn-lime btn-data ${styles.publishButton} ${styles.mobileIconButton}`}
                   onClick={() => setPublishModal({ mode: 'single', divisionId: filterGroup })}
                   disabled={!canPublish}
+                  data-live={isPublished ? 'true' : undefined}
                   aria-label={isPublished ? 'Schedule already published' : 'Publish schedule'}
                   title={isPublished ? 'Schedule is already published. Saved edits are visible publicly.' : 'Publish schedule'}
                 >
