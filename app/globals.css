@@ -574,6 +574,7 @@ h1, h2, h3, h4, h5, h6 {
 .form-group { display: flex; flex-direction: column; gap: 0.4rem; }
 
 .form-label {
+  font-family: var(--font-data);
   font-size: 0.8rem;
   font-weight: 600;
   letter-spacing: 0.08em;
@@ -636,6 +637,16 @@ input[type="datetime-local"]::-webkit-calendar-picker-indicator:hover {
 select option {
   background: var(--bg-2);
   color: var(--white);
+}
+
+/* Venue / pool group headers in native <select> dropdowns.
+   Makes optgroup labels read as structural headers (blueprint-blue on dark)
+   rather than near-invisible gray-on-gray OS defaults. */
+select optgroup {
+  background: var(--hud-surface);
+  color: var(--white-50);
+  font-style: normal;
+  font-weight: 700;
 }
 
 .form-textarea { resize: vertical; min-height: 100px; }

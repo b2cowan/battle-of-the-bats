@@ -277,7 +277,7 @@ export default function AdminDashboard() {
   const isCompleted   = status === 'completed';
   const isLive        = isActive || isCompleted;
 
-  const statusColor = { active: 'var(--logic-lime)', draft: 'rgba(148,163,184,0.55)', completed: '#f6c453', archived: 'rgba(148,163,184,0.3)' }[status] ?? 'rgba(148,163,184,0.55)';
+  const statusColor = { active: 'var(--logic-lime)', draft: 'var(--white-60)', completed: '#f6c453', archived: 'rgba(148,163,184,0.4)' }[status] ?? 'var(--white-60)';
   const visibleStats  = currentTournament?.id ? stats : EMPTY_STATS;
   const checklist     = visibleStats.publishChecklist;
   const reg           = visibleStats.registration;
@@ -474,16 +474,16 @@ export default function AdminDashboard() {
                     </div>
                     <div className={styles.checklistBody}>
                       <strong style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        Public site & branding
+                        Public pages
                         <span className={styles.nudgeTag}>Optional</span>
                       </strong>
                       <span>
                         {checklist.hasBranding
-                          ? 'Logo, banner, or color theme configured for this tournament.'
-                          : 'Set a logo, banner, and color theme for your public tournament page.'}
+                          ? 'Your public tournament page is live and customized.'
+                          : 'Your public tournament page is ready. Control visibility and public presentation.'}
                       </span>
                       <em style={{ color: checklist.hasBranding ? 'var(--logic-lime)' : 'var(--data-gray)' }}>
-                        {checklist.hasBranding ? 'Customized' : 'Customize branding →'}
+                        {checklist.hasBranding ? 'Complete' : 'Manage public page →'}
                       </em>
                     </div>
                   </Link>
@@ -693,7 +693,6 @@ export default function AdminDashboard() {
           )}
 
           <div className={styles.recentEvents}>
-            <h2 className={styles.sectionTitle}>Recent Activity</h2>
             <LiveEventLog tournamentId={currentTournament.id} orgSlug={currentOrg?.slug} />
           </div>
         </>
@@ -873,8 +872,8 @@ export default function AdminDashboard() {
                   <div className="alert alert-danger" style={{ marginBottom: '0.75rem', fontSize: '0.82rem' }}>{populateError}</div>
                 )}
                 <div className="modal-footer">
-                  <button className="btn btn-ghost" onClick={() => setPopulateStep('pick')} disabled={populateWorking}>Back</button>
-                  <button className="btn btn-danger" onClick={handlePopulateConfirm} disabled={populateWorking}>
+                  <button className="btn btn-ghost btn-data" onClick={() => setPopulateStep('pick')} disabled={populateWorking}>Back</button>
+                  <button className="btn btn-danger btn-data" onClick={handlePopulateConfirm} disabled={populateWorking}>
                     {populateWorking ? 'Applying…' : 'Yes, replace setup'}
                   </button>
                 </div>
@@ -891,7 +890,7 @@ export default function AdminDashboard() {
                   <strong>{currentTournament?.name}</strong>'s setup has been updated from <strong>{populateSelected?.name}</strong>. Review your divisions and checklist to confirm everything looks right.
                 </p>
                 <div className="modal-footer">
-                  <button className="btn btn-primary" onClick={() => setPopulateOpen(false)}>Done</button>
+                  <button className="btn btn-primary btn-data" onClick={() => setPopulateOpen(false)}>Done</button>
                 </div>
               </>
             )}
@@ -913,10 +912,10 @@ export default function AdminDashboard() {
               <p style={{ fontSize: '0.8rem', color: 'var(--danger-light)', margin: '0 0 0.5rem' }}>{activateError}</p>
             )}
             <div className="modal-footer">
-              <button className="btn btn-ghost" onClick={() => { setShowActivateConfirm(false); setActivateError(''); }} disabled={activating}>
+              <button className="btn btn-ghost btn-data" onClick={() => { setShowActivateConfirm(false); setActivateError(''); }} disabled={activating}>
                 Cancel
               </button>
-              <button className="btn btn-primary" onClick={handleActivate} disabled={activating}>
+              <button className="btn btn-lime btn-data" onClick={handleActivate} disabled={activating}>
                 {activating ? 'Activating…' : 'Yes, activate'}
               </button>
             </div>

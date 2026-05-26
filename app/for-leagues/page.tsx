@@ -99,8 +99,8 @@ export default function ForLeaguesPage() {
         <div className="container">
           <p className={styles.heroEyebrow}>For house league administrators</p>
           <h1 className={styles.heroTitle}>
-            From first registration<br />
-            <span className={styles.heroAccent}>to final standings.</span>
+            One dashboard.<br />
+            <span className={styles.heroAccent}>The full season arc.</span>
           </h1>
           <p className={styles.heroSub}>
             Player registration, draft tools, scheduling, standings, and automated parent notifications

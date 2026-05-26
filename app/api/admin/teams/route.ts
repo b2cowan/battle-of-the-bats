@@ -357,6 +357,10 @@ export async function POST(req: Request) {
         dbUpdates.waitlist_position = dbUpdates.waitlistPosition ?? null;
         delete dbUpdates.waitlistPosition;
       }
+      if (dbUpdates.adminNotes !== undefined) {
+        dbUpdates.admin_notes = dbUpdates.adminNotes;
+        delete dbUpdates.adminNotes;
+      }
       return { id: item.id, updates: dbUpdates };
     });
 

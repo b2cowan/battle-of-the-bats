@@ -302,7 +302,7 @@ export default function DivisionsPage() {
           <div className="modal" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
               <h3>{modal === 'add' ? 'Add Division' : 'Edit Division'}</h3>
-              <button className="btn btn-ghost btn-sm" onClick={() => setModal(null)}><X size={16} /></button>
+              <button className="btn btn-ghost btn-data" onClick={() => setModal(null)}><X size={16} /></button>
             </div>
             <form onSubmit={handleSubmit}>
               <div className="form-row form-row-2" style={{ marginBottom: '1rem' }}>
@@ -480,10 +480,10 @@ export default function DivisionsPage() {
                         <span style={{ fontWeight: 600, fontSize: '0.85rem' }}>{breakerLabels[b]}</span>
                       </div>
                       <div style={{ display: 'flex', gap: '0.25rem' }}>
-                        <button type="button" className="btn btn-ghost btn-sm" style={{ padding: '0.15rem' }} onClick={() => moveBreaker(i, 'up')} disabled={i === 0}>
+                        <button type="button" className="btn btn-ghost btn-data" style={{ padding: '0.15rem' }} onClick={() => moveBreaker(i, 'up')} disabled={i === 0}>
                           <ChevronUp size={14} />
                         </button>
-                        <button type="button" className="btn btn-ghost btn-sm" style={{ padding: '0.15rem' }} onClick={() => moveBreaker(i, 'down')} disabled={i === form.tieBreakers.length - 1}>
+                        <button type="button" className="btn btn-ghost btn-data" style={{ padding: '0.15rem' }} onClick={() => moveBreaker(i, 'down')} disabled={i === form.tieBreakers.length - 1}>
                           <ChevronDown size={14} />
                         </button>
                       </div>
@@ -493,8 +493,8 @@ export default function DivisionsPage() {
               </div>
 
               <div className="modal-footer">
-                <button type="button" className="btn btn-ghost" onClick={() => setModal(null)}>Cancel</button>
-                <button type="submit" className="btn btn-primary" id="division-save-btn"><Check size={14} /> Save</button>
+                <button type="button" className="btn btn-ghost btn-data" onClick={() => setModal(null)}>Cancel</button>
+                <button type="submit" className="btn btn-primary btn-data" id="division-save-btn"><Check size={14} /> Save</button>
               </div>
             </form>
           </div>
@@ -507,14 +507,14 @@ export default function DivisionsPage() {
           <div className="modal" style={{ maxWidth: 400 }} onClick={e => e.stopPropagation()}>
             <div className="modal-header">
               <h3>Delete Division?</h3>
-              <button className="btn btn-ghost btn-sm" onClick={() => setDeleteId(null)}><X size={16} /></button>
+              <button className="btn btn-ghost btn-data" onClick={() => setDeleteId(null)}><X size={16} /></button>
             </div>
             <p style={{ color: 'var(--white-60)', marginBottom: '0.5rem' }}>
               This will permanently delete this division. Teams, games, and results in this division will remain but lose their division link.
             </p>
             <div className="modal-footer">
-              <button className="btn btn-ghost" onClick={() => setDeleteId(null)}>Cancel</button>
-              <button className="btn btn-danger" onClick={handleDelete} id="confirm-delete-division"><Trash2 size={14} /> Delete</button>
+              <button className="btn btn-ghost btn-data" onClick={() => setDeleteId(null)}>Cancel</button>
+              <button className="btn btn-danger btn-data" onClick={handleDelete} id="confirm-delete-division"><Trash2 size={14} /> Delete</button>
             </div>
           </div>
         </div>

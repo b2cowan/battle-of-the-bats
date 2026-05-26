@@ -76,6 +76,8 @@ The first Phase 4 billing/cancellation slice is now implemented:
 - Basic tournament records remain available in Coaches Portal after cancellation.
 - Canceled Premium workspaces no longer count as active Premium access on `/coaches` or `/coaches/teams`.
 - The canceled billing screen gives coaches a path back to Basic tournament records and a Reactivate Premium CTA.
+- Reactivation from the canceled billing screen restores the same Premium workspace during the retention window instead of creating a duplicate team.
+- Payment-failure state is mapped so `past_due` keeps Premium visible during grace, while `canceled` falls back to Basic records.
 
 ## Role And Access Differences
 

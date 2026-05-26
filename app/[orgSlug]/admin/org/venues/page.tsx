@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { getMapsUrl } from '@/components/LocationLink';
-import type { OrgVenue, FacilityType } from '@/lib/types';
+import type { OrgVenue, OrgVenueFacility, FacilityType } from '@/lib/types';
 import { FACILITY_TYPE_LABELS, FACILITY_TYPES } from '@/lib/types';
 import styles from './venues-admin.module.css';
 
@@ -109,8 +109,8 @@ function VenueModal({
             />
           </div>
           <div className="modal-footer">
-            <button type="button" className="btn btn-ghost" onClick={onClose}>Cancel</button>
-            <button type="submit" className="btn btn-primary" disabled={!name.trim() || saving}>
+            <button type="button" className="btn btn-ghost btn-data" onClick={onClose}>Cancel</button>
+            <button type="submit" className="btn btn-primary btn-data" disabled={!name.trim() || saving}>
               <Check size={14} /> {saving ? 'Saving…' : 'Save Venue'}
             </button>
           </div>
@@ -127,10 +127,12 @@ function VenueModal({
 function AddFacilityRow({
   orgSlug,
   orgVenueId,
+  existingFacilities,
   onAdded,
 }: {
   orgSlug?: string;
   orgVenueId: string;
+  existingFacilities: OrgVenueFacility[];
   onAdded: () => void;
 }) {
   const [name, setName]               = useState('');
@@ -138,8 +140,11 @@ function AddFacilityRow({
   const [saving, setSaving]           = useState(false);
   const nameRef                       = useRef<HTMLInputElement>(null);
 
+  const isDuplicate = name.trim().length > 0 &&
+    existingFacilities.some(f => f.name.toLowerCase() === name.trim().toLowerCase());
+
   async function handleAdd() {
-    if (!name.trim()) return;
+    if (!name.trim() || isDuplicate) return;
     setSaving(true);
     const orgQuery = orgSlug ? `?orgSlug=${encodeURIComponent(orgSlug)}` : '';
     try {
@@ -163,14 +168,21 @@ function AddFacilityRow({
   return (
     <div className={styles.addFacilityRow}>
       <div className={styles.addFacilityInputs}>
-        <input
-          ref={nameRef}
-          className={`form-input ${styles.addFacilityName}`}
-          placeholder="Facility name (e.g. Diamond 1, Rink North, Court A)"
-          value={name}
-          onChange={e => setName(e.target.value)}
-          onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); void handleAdd(); } }}
-        />
+        <div className={styles.facilityNameWrap}>
+          <input
+            ref={nameRef}
+            className={`form-input ${styles.addFacilityName}`}
+            placeholder="Facility name (e.g. Diamond 1, Rink North, Court A)"
+            value={name}
+            onChange={e => setName(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); void handleAdd(); } }}
+          />
+          {isDuplicate && (
+            <p className={styles.addFacilityError}>
+              A facility named &ldquo;{name.trim()}&rdquo; already exists in this venue.
+            </p>
+          )}
+        </div>
         <select
           className={`form-select ${styles.addFacilityType}`}
           value={facilityType}
@@ -185,7 +197,7 @@ function AddFacilityRow({
         <button
           className="btn btn-lime btn-data"
           onClick={() => void handleAdd()}
-          disabled={!name.trim() || saving}
+          disabled={!name.trim() || saving || isDuplicate}
         >
           <Plus size={13} /> {saving ? 'Adding…' : 'Add Facility'}
         </button>
@@ -298,7 +310,7 @@ function VenueCard({
               ))
             )}
           </div>
-          <AddFacilityRow orgSlug={orgSlug} orgVenueId={venue.id} onAdded={onRefresh} />
+          <AddFacilityRow orgSlug={orgSlug} orgVenueId={venue.id} existingFacilities={facilities} onAdded={onRefresh} />
         </div>
       )}
     </div>
@@ -312,6 +324,9 @@ function VenueCard({
 export default function OrgVenueLibraryPage() {
   const { currentOrg } = useOrg();
   const orgSlug = currentOrg?.slug;
+
+  // Venue Library is a League/Club feature only
+  const planAllowed = !!currentOrg && ['league', 'club'].includes(currentOrg.planId);
 
   const [venues, setVenues]     = useState<OrgVenue[]>([]);
   const [loading, setLoading]   = useState(true);
@@ -346,6 +361,16 @@ export default function OrgVenueLibraryPage() {
     });
     setDeleteId(null);
     void refresh();
+  }
+
+  if (!planAllowed) {
+    return (
+      <div className="empty-state">
+        <MapPin size={32} />
+        <h3>Venue Library not available</h3>
+        <p>The Venue Library is included in League and Club plans. Upgrade your subscription to manage a shared venue library across tournaments.</p>
+      </div>
+    );
   }
 
   return (
@@ -414,8 +439,8 @@ export default function OrgVenueLibraryPage() {
               Tournaments that already imported this venue are not affected.
             </p>
             <div className="modal-footer">
-              <button className="btn btn-ghost" onClick={() => setDeleteId(null)}>Cancel</button>
-              <button className="btn btn-danger" id="confirm-delete-org-venue" onClick={() => void confirmDelete()}>
+              <button className="btn btn-ghost btn-data" onClick={() => setDeleteId(null)}>Cancel</button>
+              <button className="btn btn-danger btn-data" id="confirm-delete-org-venue" onClick={() => void confirmDelete()}>
                 <Trash2 size={14} /> Delete
               </button>
             </div>

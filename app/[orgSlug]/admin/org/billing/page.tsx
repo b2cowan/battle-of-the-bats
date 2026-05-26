@@ -588,7 +588,10 @@ export default function BillingPage() {
             <p className={styles.reactivateCopy}>
               Start a new Premium subscription to restore team operations during the retention window.
             </p>
-            <Link className="btn btn-primary" href="/coaches/start">
+            <Link
+              className="btn btn-primary"
+              href={`/coaches/start?reactivateOrgSlug=${encodeURIComponent(currentOrg.slug)}&teamName=${encodeURIComponent(currentOrg.name.replace(/\s+Coaches Portal$/i, ''))}`}
+            >
               Reactivate Premium
             </Link>
           </div>

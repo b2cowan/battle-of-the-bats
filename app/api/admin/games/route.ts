@@ -56,6 +56,7 @@ export async function GET(req: Request) {
     time: g.game_time,
     location: g.location,
     venueId: g.diamond_id,
+    venueFacilityId: g.venue_facility_id ?? null,
     homeScore: g.home_score,
     awayScore: g.away_score,
     status: g.status,

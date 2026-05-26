@@ -389,13 +389,15 @@ Tasks:
 - [x] Archive premium workspace data for 90 days, matching canceled Tournament account retention.
 - [x] Disable active premium tools during the canceled state; show reactivation messaging instead.
 - [ ] Simulate direct cancellation and payment failure and confirm entitlement status changes.
-- [ ] Ensure reactivation during the 90-day retention window restores the archived workspace where possible instead of creating duplicates.
+- [x] Ensure reactivation during the 90-day retention window restores the archived workspace where possible instead of creating duplicates.
 
 Implementation note, 2026-05-25:
 
 - The billing page now treats team-workspace billing as **Coaches Portal billing**. Cancellation copy explains that Premium tools stop, premium data is retained for 90 days, and Basic tournament records remain available.
 - Coach-owned Premium cancellation now takes a separate server path from full organization cancellation. It cancels the `team_workspaces` subscription state, cancels `team_entitlements`, writes retention records, leaves Basic tournament records intact, and sends the Coaches Portal cancellation email.
 - Active Premium contexts now require an active, trialing, or past-due subscription. Canceled Premium workspaces no longer count as active Premium access, so Basic tournament records become the fallback surface and Premium upgrade/reactivation CTAs can appear again.
+- Reactivation from a canceled Coaches Portal billing page now carries the workspace slug into checkout metadata. Mock and Stripe checkout use that marker to restore the existing `team_workspaces` record, update subscription and entitlement status, restore retained Coaches Portal records, and avoid provisioning a duplicate workspace.
+- Payment-failure status mapping is ready for manual simulation: `past_due` maps to active Premium access during grace, while `canceled` maps to inactive Premium access and Basic fallback.
 - The wider organization cancellation path remains unchanged for Tournament, Tournament Plus, League, and Club organizations.
 
 Manual browser test script to run before launch:
@@ -407,6 +409,8 @@ Manual browser test script to run before launch:
 5. Visit `/coaches/tournaments` and confirm Basic tournament records remain available.
 6. Confirm the canceled workspace billing page shows the Basic tournament records link and Reactivate Premium CTA.
 7. Simulate/reactivate Premium during the retention window and confirm no duplicate workspace is created.
+8. Simulate a payment failure or mock `past_due` state and confirm Premium access remains visible with billing warning copy.
+9. Simulate final cancellation and confirm Premium access disappears while Basic tournament history remains.
 
 Acceptance criteria:
 

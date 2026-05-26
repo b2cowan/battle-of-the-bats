@@ -1255,19 +1255,36 @@ export default function UnifiedTeamsPage() {
             disabled={divisions.length === 0}
             onChange={value => { setSelectedDivisionId(value); setSwapMode(false); setSwapFirstSlotId(null); }}
           />
+          {/* Desktop only — fills left gap; hidden on mobile where it moves to the action group */}
+          {!slotConfigured && (
+            <div className={styles.segmentedDesktop}>
+              <ToolbarSegmentedControl
+                ariaLabel="Registration view"
+                value={viewMode}
+                options={[
+                  { value: 'flat', label: 'Flat' },
+                  { value: 'pools', label: 'Pools' },
+                ]}
+                onChange={setViewMode}
+              />
+            </div>
+          )}
         </ToolbarGroup>
 
         <ToolbarGroup align="end" className={styles.registrationActionGroup}>
+          {/* Mobile only — sits with Export/Tools; hidden on desktop where it moves to the context group */}
           {!slotConfigured && (
-            <ToolbarSegmentedControl
-              ariaLabel="Registration view"
-              value={viewMode}
-              options={[
-                { value: 'flat', label: 'Flat' },
-                { value: 'pools', label: 'Pools' },
-              ]}
-              onChange={setViewMode}
-            />
+            <div className={styles.segmentedMobile}>
+              <ToolbarSegmentedControl
+                ariaLabel="Registration view"
+                value={viewMode}
+                options={[
+                  { value: 'flat', label: 'Flat' },
+                  { value: 'pools', label: 'Pools' },
+                ]}
+                onChange={setViewMode}
+              />
+            </div>
           )}
           <ExportMenu
             className={styles.registrationUtilityStart}
@@ -1455,7 +1472,7 @@ export default function UnifiedTeamsPage() {
                 <LayoutDashboard size={20} style={{ color: 'var(--logic-lime)' }} />
                 <h3 style={{ margin: 0 }}>Tournament Summary</h3>
               </div>
-              <button className="btn btn-ghost btn-sm" onClick={() => setShowSummaryModal(false)}><X size={16} /></button>
+              <button className="btn btn-ghost btn-data" onClick={() => setShowSummaryModal(false)}><X size={16} /></button>
             </div>
             <div style={{ padding: '2rem' }}>
               <div className={styles.summaryGridModal}>
@@ -1475,7 +1492,7 @@ export default function UnifiedTeamsPage() {
                 })}
               </div>
             </div>
-            <div className="modal-footer"><button className="btn btn-primary" onClick={() => setShowSummaryModal(false)}>Close</button></div>
+            <div className="modal-footer"><button className="btn btn-primary btn-data" onClick={() => setShowSummaryModal(false)}>Close</button></div>
           </div>
         </div>
       )}
@@ -1671,7 +1688,7 @@ export default function UnifiedTeamsPage() {
           <div className="modal" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
               <h3>Add Team Manually</h3>
-              <button className="btn btn-ghost btn-sm" onClick={closeAddTeamModal}><X size={16} /></button>
+              <button className="btn btn-ghost btn-data" onClick={closeAddTeamModal}><X size={16} /></button>
             </div>
             <form onSubmit={handleAddTeam}>
               <div className="form-group"><label className="form-label">Team Name *</label><input className="form-input" value={addForm.name} onChange={e => setAddForm(f => ({ ...f, name: e.target.value }))} required /></div>
@@ -1703,8 +1720,8 @@ export default function UnifiedTeamsPage() {
                 <span>Notify team that they have been registered in this tournament</span>
               </label>
               <div className="modal-footer">
-                <button type="button" className="btn btn-ghost" onClick={closeAddTeamModal}>Cancel</button>
-                <button type="submit" className="btn btn-primary" disabled={!!working}>Save Team</button>
+                <button type="button" className="btn btn-ghost btn-data" onClick={closeAddTeamModal}>Cancel</button>
+                <button type="submit" className="btn btn-primary btn-data" disabled={!!working}>Save Team</button>
               </div>
             </form>
           </div>
@@ -1719,7 +1736,7 @@ export default function UnifiedTeamsPage() {
                 <Mail size={18} style={{ color: 'var(--logic-lime)' }} />
                 <h3 style={{ margin: 0 }}>Send Payment Reminders</h3>
               </div>
-              <button className="btn btn-ghost btn-sm" onClick={() => setShowReminderModal(false)}><X size={16} /></button>
+              <button className="btn btn-ghost btn-data" onClick={() => setShowReminderModal(false)}><X size={16} /></button>
             </div>
             <div style={{ padding: '1.5rem 2rem', display: 'grid', gap: '1rem' }}>
               <div className="alert alert-info" style={{ margin: 0 }}>
@@ -1737,10 +1754,10 @@ export default function UnifiedTeamsPage() {
               </div>
             </div>
             <div className="modal-footer">
-              <button type="button" className="btn btn-ghost" onClick={() => setShowReminderModal(false)}>Cancel</button>
+              <button type="button" className="btn btn-ghost btn-data" onClick={() => setShowReminderModal(false)}>Cancel</button>
               <button
                 type="button"
-                className="btn btn-primary"
+                className="btn btn-primary btn-data"
                 onClick={sendPaymentReminders}
                 disabled={working === 'payment-reminders' || paymentInstructions.trim().length === 0}
               >
@@ -1757,7 +1774,7 @@ export default function UnifiedTeamsPage() {
           <div className="modal" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
               <h3>Edit Team Details</h3>
-              <button className="btn btn-ghost btn-sm" onClick={closeEditModal}><X size={16} /></button>
+              <button className="btn btn-ghost btn-data" onClick={closeEditModal}><X size={16} /></button>
             </div>
             <form onSubmit={handleSaveEdit}>
               <div style={{ padding: '1.5rem 2rem', display: 'grid', gap: '1rem' }}>
@@ -1792,8 +1809,8 @@ export default function UnifiedTeamsPage() {
                 </div>
               </div>
               <div className="modal-footer">
-                <button type="button" className="btn btn-ghost" onClick={closeEditModal}>Cancel</button>
-                <button type="submit" className="btn btn-primary" disabled={!!working}>Save Changes</button>
+                <button type="button" className="btn btn-ghost btn-data" onClick={closeEditModal}>Cancel</button>
+                <button type="submit" className="btn btn-primary btn-data" disabled={!!working}>Save Changes</button>
               </div>
             </form>
           </div>

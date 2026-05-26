@@ -357,13 +357,14 @@
   text-transform: uppercase;
   text-decoration: none;
   padding: 0.85rem 1.5rem;
-  border: 0;
+  border: 1px solid transparent;
   cursor: pointer;
   transition: background 0.15s, color 0.15s, border-color 0.15s;
 }
 
 .planCtaPrimary {
   background: var(--logic-lime);
+  border-color: var(--logic-lime);
   color: var(--pitch-black);
 }
 
@@ -374,13 +375,13 @@
 
 .planCtaSecondary {
   background: transparent;
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.4) !important;
+  border-color: rgba(var(--blueprint-blue-rgb), 0.4);
   color: var(--fl-text);
   text-decoration: none;
 }
 
 .planCtaSecondary:hover {
-  border-color: var(--blueprint-blue) !important;
+  border-color: var(--blueprint-blue);
   color: var(--logic-lime);
 }
 
@@ -422,7 +423,7 @@
 .planNote2 {
   font-family: var(--font-data);
   font-size: 0.7rem;
-  color: rgba(255, 255, 255, 0.3);
+  color: var(--white-30);
   text-align: center;
   margin-top: 0.5rem;
 }
@@ -463,8 +464,8 @@
 }
 
 .crossSellCard:hover {
-  border-color: rgba(var(--blueprint-blue-rgb), 0.45);
-  background: rgba(var(--blueprint-blue-rgb), 0.05);
+  border-color: rgba(var(--logic-lime-rgb), 0.3);
+  background: rgba(var(--logic-lime-rgb), 0.03);
 }
 
 .crossSellLabel {
@@ -550,7 +551,7 @@
 .ctaFootnote {
   font-family: var(--font-data);
   font-size: 0.68rem;
-  color: rgba(255, 255, 255, 0.2);
+  color: var(--white-20);
   text-transform: uppercase;
   letter-spacing: 0.08em;
   position: relative;

@@ -317,7 +317,7 @@ export default function PlayoffWizard({ division, tournamentId, orgSlug, onClose
                 <p className="text-label" style={{ color: 'var(--logic-lime)', marginTop: '0.25rem' }}>{division.name} Division</p>
               </div>
             </div>
-            <button className="btn btn-ghost btn-sm" onClick={onClose} style={{ padding: '0.5rem' }}>
+            <button className="btn btn-ghost btn-data" onClick={onClose} style={{ padding: '0.5rem' }}>
               <X size={20} />
             </button>
           </div>
@@ -428,10 +428,10 @@ export default function PlayoffWizard({ division, tournamentId, orgSlug, onClose
                       <span className="font-bold" style={{ fontSize: '0.9rem' }}>{breakerLabels[b]}</span>
                     </div>
                     <div className="flex gap-1">
-                      <button className="btn btn-ghost btn-sm" style={{ padding: '0.2rem' }} onClick={() => moveBreaker(i, 'up')} disabled={i === 0}>
+                      <button className="btn btn-ghost btn-data" style={{ padding: '0.2rem' }} onClick={() => moveBreaker(i, 'up')} disabled={i === 0}>
                         <ChevronUp size={14} />
                       </button>
-                      <button className="btn btn-ghost btn-sm" style={{ padding: '0.2rem' }} onClick={() => moveBreaker(i, 'down')} disabled={i === config.tieBreakers.length - 1}>
+                      <button className="btn btn-ghost btn-data" style={{ padding: '0.2rem' }} onClick={() => moveBreaker(i, 'down')} disabled={i === config.tieBreakers.length - 1}>
                         <ChevronDown size={14} />
                       </button>
                     </div>
@@ -487,8 +487,8 @@ export default function PlayoffWizard({ division, tournamentId, orgSlug, onClose
 
         {/* Footer */}
         <div className="modal-footer" style={{ padding: '1.5rem 2rem', background: 'var(--surface-2)', margin: 0 }}>
-          <button className="btn btn-ghost" onClick={onClose} disabled={loading}>Cancel</button>
-          <button className="btn btn-primary" onClick={handleCreate} disabled={loading || preview.length === 0} style={{ padding: '0.75rem 2rem' }}>
+          <button className="btn btn-ghost btn-data" onClick={onClose} disabled={loading}>Cancel</button>
+          <button className="btn btn-primary btn-data" onClick={handleCreate} disabled={loading || preview.length === 0} style={{ padding: '0.75rem 2rem' }}>
             {loading ? 'Creating...' : <><Check size={18} /> Generate Playoff Bracket</>}
           </button>
         </div>

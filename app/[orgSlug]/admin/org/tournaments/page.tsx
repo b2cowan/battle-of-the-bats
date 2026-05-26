@@ -781,7 +781,7 @@ export default function AdminTournamentsPage({
           <div className="modal" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
               <h3>{modal === 'add' ? 'New Tournament' : 'Edit Tournament'}</h3>
-              <button className="btn btn-ghost btn-sm" onClick={() => setModal(null)}><X size={16} /></button>
+              <button className="btn btn-ghost btn-data" onClick={() => setModal(null)}><X size={16} /></button>
             </div>
             <form onSubmit={handleSubmit}>
               <div className="form-row form-row-2" style={{ marginBottom: '1rem' }}>
@@ -1025,8 +1025,8 @@ export default function AdminTournamentsPage({
                 </>
               )}
               <div className="modal-footer">
-                <button type="button" className="btn btn-ghost" onClick={() => setModal(null)}>Cancel</button>
-                <button type="submit" className="btn btn-primary" id="tournament-save-btn" disabled={saveDisabled}>
+                <button type="button" className="btn btn-ghost btn-data" onClick={() => setModal(null)}>Cancel</button>
+                <button type="submit" className="btn btn-primary btn-data" id="tournament-save-btn" disabled={saveDisabled}>
                   <Check size={14} /> Save
                 </button>
               </div>
@@ -1065,7 +1065,7 @@ export default function AdminTournamentsPage({
                 <Check size={20} style={{ color: 'var(--success, #22c55e)' }} />
                 <h3>Tournament Created</h3>
               </div>
-              <button className="btn btn-ghost btn-sm" onClick={() => setCreatedTournament(null)}><X size={16} /></button>
+              <button className="btn btn-ghost btn-data" onClick={() => setCreatedTournament(null)}><X size={16} /></button>
             </div>
             <div style={{ padding: '1.25rem 1.5rem' }}>
               <p style={{ color: 'var(--white-70)', marginBottom: '1.25rem' }}>
@@ -1086,7 +1086,7 @@ export default function AdminTournamentsPage({
               </div>
             </div>
             <div className="modal-footer" style={{ justifyContent: 'flex-end' }}>
-              <button className="btn btn-primary" onClick={() => setCreatedTournament(null)}>
+              <button className="btn btn-primary btn-data" onClick={() => setCreatedTournament(null)}>
                 Got it
               </button>
             </div>
@@ -1100,15 +1100,15 @@ export default function AdminTournamentsPage({
           <div className="modal" style={{ maxWidth: 420 }} onClick={e => e.stopPropagation()}>
             <div className="modal-header">
               <h3>Delete Tournament?</h3>
-              <button className="btn btn-ghost btn-sm" onClick={() => setDeleteId(null)}><X size={16} /></button>
+              <button className="btn btn-ghost btn-data" onClick={() => setDeleteId(null)}><X size={16} /></button>
             </div>
             <p style={{ color: 'var(--white-60)', marginBottom: '0.5rem' }}>
               Deleting this tournament will remove its record. Teams and games tagged to it will remain in storage
               but will no longer appear on any page.
             </p>
             <div className="modal-footer">
-              <button className="btn btn-ghost" onClick={() => setDeleteId(null)}>Cancel</button>
-              <button className="btn btn-danger" onClick={handleDelete} id="confirm-delete-tournament">
+              <button className="btn btn-ghost btn-data" onClick={() => setDeleteId(null)}>Cancel</button>
+              <button className="btn btn-danger btn-data" onClick={handleDelete} id="confirm-delete-tournament">
                 <Trash2 size={14} /> Delete
               </button>
             </div>

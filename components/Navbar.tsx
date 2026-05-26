@@ -9,12 +9,11 @@ import type { PublicPageKey } from '@/lib/public-pages';
 import styles from './Navbar.module.css';
 
 const MARKETING_NAV_LINKS = [
-  { href: '/platform/tournaments',  label: 'Tournaments'  },
-  { href: '/platform/house-league', label: 'House League' },
-  { href: '/platform/rep-teams',    label: 'Rep Teams'    },
-  { href: '/platform/accounting',   label: 'Accounting'   },
-  { href: '/coaches/start',         label: 'Coaches'      },
-  { href: '/pricing',               label: 'Pricing'      },
+  { href: '/for-tournament-organizers', label: 'Tournaments' },
+  { href: '/for-leagues',               label: 'Leagues'    },
+  { href: '/for-clubs',                 label: 'Clubs'      },
+  { href: '/for-coaches',               label: 'Coaches'    },
+  { href: '/pricing',                   label: 'Pricing'    },
 ];
 
 const TOURNAMENT_NAV_KEYS = [
@@ -30,9 +29,11 @@ function isMarketingPath(pathname: string) {
     pathname === '/' ||
     pathname.startsWith('/discover') ||
     pathname.startsWith('/platform') ||
+    pathname.startsWith('/for-') ||
     pathname.startsWith('/coaches') ||
     pathname.startsWith('/pricing') ||
-    pathname.startsWith('/auth')
+    pathname.startsWith('/auth') ||
+    pathname.startsWith('/my')
   );
 }
 

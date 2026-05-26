@@ -331,7 +331,7 @@
 .planNote2 {
   font-family: var(--font-data);
   font-size: 0.7rem;
-  color: rgba(255, 255, 255, 0.3);
+  color: var(--white-30);
   text-align: center;
   margin-top: 0.5rem;
 }
@@ -372,8 +372,8 @@
 }
 
 .crossSellCard:hover {
-  border-color: rgba(var(--blueprint-blue-rgb), 0.45);
-  background: rgba(var(--blueprint-blue-rgb), 0.05);
+  border-color: rgba(var(--logic-lime-rgb), 0.3);
+  background: rgba(var(--logic-lime-rgb), 0.03);
 }
 
 .crossSellLabel {
@@ -459,21 +459,23 @@
 .ctaFootnote {
   font-family: var(--font-data);
   font-size: 0.68rem;
-  color: rgba(255, 255, 255, 0.2);
+  color: var(--white-20);
   text-transform: uppercase;
   letter-spacing: 0.08em;
   position: relative;
 }
 
 /* ── Responsive ──────────────────────────────────────────────────────────── */
+@media (max-width: 1024px) {
+  .crossSellGrid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
 @media (max-width: 900px) {
   .planGrid {
     grid-template-columns: 1fr;
     max-width: 480px;
-  }
-
-  .crossSellGrid {
-    grid-template-columns: 1fr;
   }
 }
 
@@ -483,6 +485,10 @@
   }
 
   .stepsGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .crossSellGrid {
     grid-template-columns: 1fr;
   }
 

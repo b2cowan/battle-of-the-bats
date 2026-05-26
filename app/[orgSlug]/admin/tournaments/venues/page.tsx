@@ -2,13 +2,15 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import {
   MapPin, Plus, Pencil, Trash2, X, Check,
-  ChevronRight, ExternalLink, Download,
+  ChevronDown, Navigation, Download,
 } from 'lucide-react';
 import { useTournament } from '@/lib/tournament-context';
 import { useOrg } from '@/lib/org-context';
 import { getMapsUrl } from '@/components/LocationLink';
 import AddVenueModal from '@/components/admin/AddVenueModal';
 import ExportMenu from '@/components/admin/ExportMenu';
+import { TournamentAdminHeader } from '@/components/admin/tournament';
+import s from '../../admin-common.module.css';
 import {
   downloadXLSX, generateCSV, downloadCSVBlob,
   buildFilename, serializeRows, serializeHeaders, type ExportColumnDef,
@@ -48,11 +50,13 @@ function AddFacilityRow({
   orgSlug,
   venueId,
   tournamentId,
+  existingFacilities,
   onAdded,
 }: {
   orgSlug?: string;
   venueId: string;
   tournamentId: string;
+  existingFacilities: VenueFacility[];
   onAdded: () => void;
 }) {
   const [name, setName]                 = useState('');
@@ -60,8 +64,11 @@ function AddFacilityRow({
   const [saving, setSaving]             = useState(false);
   const nameRef                         = useRef<HTMLInputElement>(null);
 
+  const isDuplicate = name.trim().length > 0 &&
+    existingFacilities.some(f => f.name.toLowerCase() === name.trim().toLowerCase());
+
   async function handleAdd() {
-    if (!name.trim()) return;
+    if (!name.trim() || isDuplicate) return;
     setSaving(true);
     const orgQuery = orgSlug ? `?orgSlug=${encodeURIComponent(orgSlug)}` : '';
     try {
@@ -85,14 +92,21 @@ function AddFacilityRow({
   return (
     <div className={styles.addFacilityRow}>
       <div className={styles.addFacilityInputs}>
-        <input
-          ref={nameRef}
-          className={`form-input ${styles.addFacilityName}`}
-          placeholder="Facility name (e.g. Diamond 1, Rink North, Court A)"
-          value={name}
-          onChange={e => setName(e.target.value)}
-          onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); void handleAdd(); } }}
-        />
+        <div className={styles.facilityNameWrap}>
+          <input
+            ref={nameRef}
+            className={`form-input ${styles.addFacilityName}`}
+            placeholder="Facility name (e.g. Diamond 1, Rink North, Court A)"
+            value={name}
+            onChange={e => setName(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); void handleAdd(); } }}
+          />
+          {isDuplicate && (
+            <p className={styles.addFacilityError}>
+              A facility named &ldquo;{name.trim()}&rdquo; already exists in this venue.
+            </p>
+          )}
+        </div>
         <select
           className={`form-select ${styles.addFacilityType}`}
           value={facilityType}
@@ -107,9 +121,105 @@ function AddFacilityRow({
         <button
           className="btn btn-lime btn-data"
           onClick={() => void handleAdd()}
-          disabled={!name.trim() || saving}
+          disabled={!name.trim() || saving || isDuplicate}
         >
           <Plus size={13} /> {saving ? 'Adding…' : 'Add Facility'}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Inline edit-facility row
+// ---------------------------------------------------------------------------
+
+function EditFacilityRow({
+  facility,
+  orgSlug,
+  existingFacilities,
+  onSaved,
+  onCancel,
+}: {
+  facility: VenueFacility;
+  orgSlug?: string;
+  existingFacilities: VenueFacility[];
+  onSaved: () => void;
+  onCancel: () => void;
+}) {
+  const [name, setName]                 = useState(facility.name);
+  const [facilityType, setFacilityType] = useState<FacilityType>(facility.facilityType);
+  const [saving, setSaving]             = useState(false);
+
+  // Duplicate if another facility in the same venue already has this name (excluding self)
+  const isDuplicate = name.trim().length > 0 &&
+    name.trim().toLowerCase() !== facility.name.toLowerCase() &&
+    existingFacilities.some(f => f.name.toLowerCase() === name.trim().toLowerCase());
+
+  async function handleSave() {
+    if (!name.trim() || isDuplicate) return;
+    setSaving(true);
+    const orgQuery = orgSlug ? `?orgSlug=${encodeURIComponent(orgSlug)}` : '';
+    try {
+      await requestJson(`/api/admin/venues${orgQuery}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'update-facility',
+          id: facility.id,
+          data: { name: name.trim(), facilityType },
+        }),
+      });
+      onSaved();
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className={styles.facilityItemEdit}>
+      <div className={styles.facilityNameWrap}>
+        <input
+          className={`form-input ${styles.facilityEditName}`}
+          value={name}
+          onChange={e => setName(e.target.value)}
+          onKeyDown={e => {
+            if (e.key === 'Enter') { e.preventDefault(); void handleSave(); }
+            if (e.key === 'Escape') onCancel();
+          }}
+          autoFocus
+        />
+        {isDuplicate && (
+          <p className={styles.addFacilityError}>
+            A facility named &ldquo;{name.trim()}&rdquo; already exists in this venue.
+          </p>
+        )}
+      </div>
+      <select
+        className={`form-select ${styles.facilityEditType}`}
+        value={facilityType}
+        onChange={e => setFacilityType(e.target.value as FacilityType)}
+      >
+        {FACILITY_TYPES.map(t => (
+          <option key={t} value={t}>{FACILITY_TYPE_LABELS[t]}</option>
+        ))}
+      </select>
+      <div className={styles.facilityActions}>
+        <button
+          className="btn btn-ghost btn-data"
+          title="Cancel"
+          onClick={onCancel}
+          disabled={saving}
+        >
+          <X size={12} />
+        </button>
+        <button
+          className="btn btn-lime btn-data"
+          title="Save facility"
+          onClick={() => void handleSave()}
+          disabled={!name.trim() || saving || isDuplicate}
+        >
+          <Check size={12} /> {saving ? '…' : 'Save'}
         </button>
       </div>
     </div>
@@ -178,30 +288,21 @@ function ImportFromLibraryModal({
           <h3>Import from Venue Library</h3>
           <button className="btn btn-ghost btn-data" onClick={onClose}><X size={16} /></button>
         </div>
-        <p style={{ color: 'var(--white-60)', fontSize: '0.875rem', marginBottom: '1rem' }}>
+        <p className={styles.libraryNote}>
           Select venues to copy into this tournament. Each venue and its facilities will be imported as a local copy.
         </p>
         {loading ? (
-          <p style={{ color: 'var(--white-40)', textAlign: 'center', padding: '1.5rem 0' }}>Loading library…</p>
+          <p className={styles.libraryEmpty}>Loading library…</p>
         ) : orgVenues.length === 0 ? (
-          <p style={{ color: 'var(--white-40)', textAlign: 'center', padding: '1.5rem 0' }}>
+          <p className={styles.libraryEmpty}>
             Your org venue library is empty. Add venues in Org → Venues first.
           </p>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', maxHeight: '320px', overflowY: 'auto' }}>
+          <div className={styles.libraryVenueList}>
             {orgVenues.map(v => (
               <label
                 key={v.id}
-                style={{
-                  display: 'flex',
-                  alignItems: 'flex-start',
-                  gap: '0.75rem',
-                  padding: '0.65rem 0.75rem',
-                  borderRadius: '6px',
-                  border: `1px solid ${selected.has(v.id) ? 'rgba(var(--blueprint-blue-rgb), 0.5)' : 'rgba(var(--blueprint-blue-rgb), 0.18)'}`,
-                  background: selected.has(v.id) ? 'rgba(var(--blueprint-blue-rgb), 0.08)' : 'transparent',
-                  cursor: 'pointer',
-                }}
+                className={`${styles.libraryVenueItem} ${selected.has(v.id) ? styles.libraryVenueItemSelected : ''}`}
               >
                 <input
                   type="checkbox"
@@ -210,11 +311,11 @@ function ImportFromLibraryModal({
                   style={{ marginTop: '0.15rem', flexShrink: 0 }}
                 />
                 <div>
-                  <div style={{ fontWeight: 700, color: 'var(--white)', fontSize: '0.9rem' }}>{v.name}</div>
+                  <div className={styles.libraryVenueName}>{v.name}</div>
                   {v.address && (
-                    <div style={{ color: 'var(--white-50)', fontSize: '0.78rem' }}>{v.address}</div>
+                    <div className={styles.libraryVenueAddress}>{v.address}</div>
                   )}
-                  <div style={{ color: 'var(--white-40)', fontSize: '0.75rem', marginTop: '0.2rem' }}>
+                  <div className={styles.libraryVenueFacilities}>
                     {(v.facilities ?? []).length} {(v.facilities ?? []).length === 1 ? 'facility' : 'facilities'}:{' '}
                     {(v.facilities ?? []).map(f => f.name).join(', ') || '—'}
                   </div>
@@ -224,9 +325,9 @@ function ImportFromLibraryModal({
           </div>
         )}
         <div className="modal-footer">
-          <button className="btn btn-ghost" onClick={onClose}>Cancel</button>
+          <button className="btn btn-ghost btn-data" onClick={onClose}>Cancel</button>
           <button
-            className="btn btn-primary"
+            className="btn btn-lime btn-data"
             disabled={selected.size === 0 || importing}
             onClick={() => void handleImport()}
           >
@@ -240,7 +341,7 @@ function ImportFromLibraryModal({
 }
 
 // ---------------------------------------------------------------------------
-// Tournament venue card (expandable)
+// Tournament venue row (table format — mirrors GameList row structure)
 // ---------------------------------------------------------------------------
 
 function TournamentVenueCard({
@@ -258,7 +359,8 @@ function TournamentVenueCard({
   onDelete: (id: string) => void;
   onRefresh: () => void;
 }) {
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded]               = useState(false);
+  const [editingFacilityId, setEditingFacilityId] = useState<string | null>(null);
   const facilities: VenueFacility[] = venue.facilities ?? [];
 
   async function deleteFacility(facilityId: string) {
@@ -272,22 +374,26 @@ function TournamentVenueCard({
   }
 
   return (
-    <div className={`${styles.venueCard} ${expanded ? styles.expanded : ''}`}>
-      <div className={styles.venueHeader} onClick={() => setExpanded(x => !x)}>
-        <ChevronRight size={14} className={styles.expandIcon} />
-        <div className={styles.venueMeta}>
-          <div className={styles.venueName}>
-            <MapPin size={13} />
-            {venue.name}
-          </div>
-          {venue.address && (
-            <div className={styles.venueAddress}>{venue.address}</div>
-          )}
+    <div className={s.row}>
+      {/* ── Collapsed row ─────────────────────────────────────────── */}
+      <div className={s.rowMain} onClick={() => setExpanded(x => !x)}>
+        {/* Venue name */}
+        <div className={styles.venueColName}>
+          <MapPin size={12} className={styles.venueNameIcon} />
+          <span className={s.primaryCell}>{venue.name}</span>
         </div>
-        <span className={styles.facilityCount}>
-          {facilities.length} {facilities.length === 1 ? 'facility' : 'facilities'}
-        </span>
-        <div className={styles.venueActions} onClick={e => e.stopPropagation()}>
+        {/* Address */}
+        <div className={`${s.secondaryCell} ${styles.venueColAddress}`}>
+          {venue.address ?? '—'}
+        </div>
+        {/* Facility count */}
+        <div className={styles.venueColFacilities}>
+          <span className={styles.facilityCount}>
+            {facilities.length} {facilities.length === 1 ? 'facility' : 'facilities'}
+          </span>
+        </div>
+        {/* Action buttons */}
+        <div className={styles.venueColActions} onClick={e => e.stopPropagation()}>
           {venue.address && (
             <a
               href={getMapsUrl(venue.address)}
@@ -296,48 +402,83 @@ function TournamentVenueCard({
               className="btn btn-ghost btn-data"
               title="Open in Google Maps"
             >
-              <ExternalLink size={13} />
+              <Navigation size={13} />
             </a>
           )}
-          <button className="btn btn-ghost btn-data" title="Edit venue" onClick={() => onEdit(venue)}>
+          <button
+            className="btn btn-ghost btn-data"
+            title="Edit venue"
+            onClick={e => { e.stopPropagation(); onEdit(venue); }}
+          >
             <Pencil size={13} />
           </button>
-          <button className="btn btn-danger btn-data" title="Delete venue" onClick={() => onDelete(venue.id)}>
+          <button
+            className="btn btn-danger btn-data"
+            title="Delete venue"
+            onClick={e => { e.stopPropagation(); onDelete(venue.id); }}
+          >
             <Trash2 size={13} />
           </button>
         </div>
+        {/* Expand chevron */}
+        <div className={styles.venueColChevron}>
+          <ChevronDown
+            size={14}
+            className={`${styles.expandChevron} ${expanded ? styles.expandChevronOpen : ''}`}
+          />
+        </div>
       </div>
 
+      {/* ── Expanded: facility list + add facility ─────────────────── */}
       {expanded && (
-        <div className={styles.facilitySection}>
+        <div className={`${s.expandedRow} ${styles.facilityExpandedRow}`}>
           <div className={styles.facilityList}>
             {facilities.length === 0 ? (
               <p className={styles.facilityEmptyNote}>
                 No facilities yet — add one below to use this venue in scheduling.
               </p>
             ) : (
-              facilities.map(f => (
-                <div key={f.id} className={styles.facilityItem}>
-                  <span className={styles.facilityName}>{f.name}</span>
-                  <span className={styles.facilityTypeBadge}>{FACILITY_TYPE_LABELS[f.facilityType]}</span>
-                  {f.notes && <span className={styles.facilityNotes}>{f.notes}</span>}
-                  <div className={styles.facilityActions}>
-                    <button
-                      className="btn btn-danger btn-data"
-                      title="Remove facility"
-                      onClick={() => void deleteFacility(f.id)}
-                    >
-                      <Trash2 size={12} />
-                    </button>
+              facilities.map(f =>
+                editingFacilityId === f.id ? (
+                  <EditFacilityRow
+                    key={f.id}
+                    facility={f}
+                    orgSlug={orgSlug}
+                    existingFacilities={facilities.filter(other => other.id !== f.id)}
+                    onSaved={() => { setEditingFacilityId(null); onRefresh(); }}
+                    onCancel={() => setEditingFacilityId(null)}
+                  />
+                ) : (
+                  <div key={f.id} className={styles.facilityItem}>
+                    <span className={styles.facilityName}>{f.name}</span>
+                    <span className={styles.facilityTypeBadge}>{FACILITY_TYPE_LABELS[f.facilityType]}</span>
+                    {f.notes && <span className={styles.facilityNotes}>{f.notes}</span>}
+                    <div className={styles.facilityActions}>
+                      <button
+                        className="btn btn-ghost btn-data"
+                        title="Edit facility"
+                        onClick={() => setEditingFacilityId(f.id)}
+                      >
+                        <Pencil size={12} />
+                      </button>
+                      <button
+                        className="btn btn-danger btn-data"
+                        title="Remove facility"
+                        onClick={() => void deleteFacility(f.id)}
+                      >
+                        <Trash2 size={12} />
+                      </button>
+                    </div>
                   </div>
-                </div>
-              ))
+                )
+              )
             )}
           </div>
           <AddFacilityRow
             orgSlug={orgSlug}
             venueId={venue.id}
             tournamentId={tournamentId}
+            existingFacilities={facilities}
             onAdded={onRefresh}
           />
         </div>
@@ -355,14 +496,16 @@ export default function TournamentVenuesPage() {
   const { currentOrg }        = useOrg();
   const orgSlug               = currentOrg?.slug;
 
-  const [venues, setVenues]           = useState<Venue[]>([]);
+  const [venues, setVenues]             = useState<Venue[]>([]);
   const [addModalOpen, setAddModalOpen] = useState(false);
-  const [editing, setEditing]         = useState<Venue | undefined>(undefined);
-  const [deleteId, setDeleteId]       = useState<string | null>(null);
-  const [importOpen, setImportOpen]   = useState(false);
+  const [editing, setEditing]           = useState<Venue | undefined>(undefined);
+  const [deleteId, setDeleteId]         = useState<string | null>(null);
+  const [importOpen, setImportOpen]     = useState(false);
 
-  // Determines if org library import is available (org users only)
-  const hasOrgLibrary = !!currentOrg;
+  // Org venue library is only available on League and Club plans.
+  // Tournament / Tournament Plus subscribers have no org library — their entire
+  // experience is the tournament admin module only.
+  const hasOrgLibrary = !!currentOrg && ['league', 'club'].includes(currentOrg.planId);
 
   const refresh = useCallback(async () => {
     if (!currentTournament) { setVenues([]); return; }
@@ -414,41 +557,40 @@ export default function TournamentVenuesPage() {
 
   return (
     <div className={styles.page}>
-      <div className={styles.pageHeader}>
-        <div className={styles.headerLeft}>
-          <div className={styles.headerIcon}><MapPin size={20} /></div>
-          <div>
-            <h1 className={styles.pageTitle}>Venue Locations</h1>
-            <p className={styles.pageSub}>Playing venues and facilities for this tournament</p>
-          </div>
-        </div>
-        <div className={styles.headerActions}>
-          <ExportMenu
-            formats={['xlsx', 'csv']}
-            onExportXLSX={handleExportXLSX}
-            onExportCSV={handleExportCSV}
-            disabled={venues.length === 0}
-          />
-          {hasOrgLibrary && (
+      <TournamentAdminHeader
+        icon={<MapPin size={16} />}
+        title="Venues & Facilities"
+        subtitle="Playing venues and facilities for this tournament"
+        mobileActionsInline
+        actions={
+          <>
+            {hasOrgLibrary && (
+              <button
+                className="btn btn-ghost btn-data"
+                onClick={() => setImportOpen(true)}
+                disabled={!currentTournament}
+                title="Import from org venue library"
+              >
+                <Download size={14} /> Import from Library
+              </button>
+            )}
+            <ExportMenu
+              formats={['xlsx', 'csv']}
+              onExportXLSX={handleExportXLSX}
+              onExportCSV={handleExportCSV}
+              disabled={venues.length === 0}
+            />
             <button
-              className="btn btn-ghost btn-data"
-              onClick={() => setImportOpen(true)}
+              className="btn btn-lime btn-data"
+              onClick={() => { setEditing(undefined); setAddModalOpen(true); }}
+              id="venue-add-btn"
               disabled={!currentTournament}
-              title="Import from org venue library"
             >
-              <Download size={14} /> Import from Library
+              <Plus size={16} /> Add Venue
             </button>
-          )}
-          <button
-            className="btn btn-lime btn-data"
-            onClick={() => { setEditing(undefined); setAddModalOpen(true); }}
-            id="venue-add-btn"
-            disabled={!currentTournament}
-          >
-            <Plus size={16} /> Add Venue
-          </button>
-        </div>
-      </div>
+          </>
+        }
+      />
 
       {venues.length === 0 ? (
         <div className="empty-state">
@@ -479,29 +621,37 @@ export default function TournamentVenuesPage() {
           </div>
         </div>
       ) : (
-        <div className={styles.venueList}>
-          {venues.map(v => (
-            <TournamentVenueCard
-              key={v.id}
-              venue={v}
-              orgSlug={orgSlug}
-              tournamentId={currentTournament!.id}
-              onEdit={venue => { setEditing(venue); setAddModalOpen(true); }}
-              onDelete={id => setDeleteId(id)}
-              onRefresh={refresh}
-            />
-          ))}
+        <div className={styles.venueTableWrap}>
+          <div className={s.flatList}>
+            <div className={s.tableHeader}>
+              <div className={styles.venueColName}>Venue</div>
+              <div className={styles.venueColAddress}>Address</div>
+              <div className={styles.venueColFacilities} />
+              <div className={styles.venueColActions} />
+              <div className={styles.venueColChevron} />
+            </div>
+            {venues.map(v => (
+              <TournamentVenueCard
+                key={v.id}
+                venue={v}
+                orgSlug={orgSlug}
+                tournamentId={currentTournament!.id}
+                onEdit={venue => { setEditing(venue); setAddModalOpen(true); }}
+                onDelete={id => setDeleteId(id)}
+                onRefresh={refresh}
+              />
+            ))}
+          </div>
         </div>
       )}
 
-      {/* Add / edit venue modal (uses legacy AddVenueModal — backward compat) */}
       {addModalOpen && currentTournament && (
         <AddVenueModal
           tournamentId={currentTournament.id}
           orgSlug={orgSlug}
           existing={editing}
-          onClose={() => setAddModalOpen(false)}
-          onSaved={() => { setAddModalOpen(false); void refresh(); }}
+          onClose={() => { setAddModalOpen(false); setEditing(undefined); }}
+          onSaved={() => { setAddModalOpen(false); setEditing(undefined); void refresh(); }}
         />
       )}
 
@@ -527,9 +677,9 @@ export default function TournamentVenuesPage() {
               Games linked to this venue will retain their location name but lose the Maps link.
             </p>
             <div className="modal-footer">
-              <button className="btn btn-ghost" onClick={() => setDeleteId(null)}>Cancel</button>
+              <button className="btn btn-ghost btn-data" onClick={() => setDeleteId(null)}>Cancel</button>
               <button
-                className="btn btn-danger"
+                className="btn btn-danger btn-data"
                 id="confirm-delete-venue"
                 onClick={async () => {
                   const orgQuery = orgSlug ? `?orgSlug=${encodeURIComponent(orgSlug)}` : '';

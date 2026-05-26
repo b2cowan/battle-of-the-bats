@@ -29,10 +29,10 @@ This file tracks the ongoing tasks for the FieldLogicHQ platform (multi-tenant s
   - [x] Remaining copy/help/admin-support audit for old "Team workspace" language
   - [x] Phase 2B team-centric Basic Coaches Portal: persistent Basic coach team profiles, returning-coach team selector during tournament registration, registrations grouped by team, and upgrade path from Basic team history to Premium team management
   - [x] Phase 3 unified Premium workspace experience: `/coaches` coach-specific portal home, `/coaches/teams` premium selector, linked tournament history inside Premium team dashboards, upgrade CTA suppression for active Premium coaches, and entitlement/security confirmation
-  - [ ] Phase 4 billing/cancellation: Coaches Portal billing copy, Premium cancellation fallback to Basic records, canceled Premium access suppression, and 90-day Premium retention implemented; remaining work is direct cancellation/payment-failure simulation and duplicate-free reactivation verification
+  - [ ] Phase 4 billing/cancellation: Coaches Portal billing copy, Premium cancellation fallback to Basic records, canceled Premium access suppression, 90-day Premium retention, and duplicate-free reactivation implemented; remaining work is direct cancellation/payment-failure browser simulation
 - [ ] **Brand Strategy** — umbrella positioning, four segment profiles, site architecture, Coach Portal bridge messaging (see [BRAND_STRATEGY.md](docs/active/BRAND_STRATEGY.md))
-- [ ] **Persona landing pages** — build `/for-tournament-organizers`, `/for-leagues`, `/for-clubs`, `/for-coaches` segment pages per brand strategy site architecture
-- [ ] **Homepage persona routing** — update hero section with four-path self-selection above the fold
+- [x] **Persona landing pages** — built `/for-tournament-organizers`, `/for-leagues`, `/for-clubs`, `/for-coaches`; design QA pass complete 2026-05-25
+- [x] **Homepage persona routing** — persona grid moved into hero above the fold; nav updated to persona-first links; `/for-` paths added to marketing nav detection
 - [x] **Pricing page copy** - approved copy applied to `app/pricing/page.tsx`; canonical record in `docs/archive/PRICING_PAGE_COPY.md`, with Coaches Portal unification tracked in the unified plan
 
 ---
@@ -117,6 +117,7 @@ This file tracks the ongoing tasks for the FieldLogicHQ platform (multi-tenant s
   - [x] P0 shared mobile foundation slice implemented and static verified.
   - [x] Schedule admin mobile density/readability pass: compact header, balanced status filters, and two-line game rows.
   - [x] Schedule admin follow-up: compact mobile mode selects, registrations-style status filters, locked cancelled-game actions, and published schedule edit flow.
+  - [x] Schedule admin toolbar alignment follow-up: desktop filter row keeps filters right-aligned and shows Division label; mobile uses Division row, schedule-local side-by-side mode dropdowns, Venue plus compact actions on one row, then search/status filters; venue-less rows keep matchup alignment.
   - [ ] Authenticated 390x844 browser walkthrough for core admin tournament routes.
 
 - [x] **Export Enhancements** - Standardized XLSX-first exports, CSV secondary, iCal schedules, branded PDF reports, export catalog, help docs, plan gates, and pricing/marketing updates (see [MERGED_EXPORTS_IMPLEMENTATION_PLAN.md](docs/archive/MERGED_EXPORTS_IMPLEMENTATION_PLAN.md))

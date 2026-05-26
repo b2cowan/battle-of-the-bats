@@ -6,13 +6,14 @@ import { getStripePriceId } from '@/lib/stripe-prices';
 import {
   buildTeamCheckoutMetadata,
   normalizeTeamCheckoutRequest,
+  provisionTeamWorkspaceFromCheckoutMetadata,
 } from '@/lib/team-checkout';
 import {
-  markTeamWorkspaceClaimed,
   TeamWorkspaceClaimError,
   verifyTeamWorkspaceClaimForCheckout,
 } from '@/lib/team-workspace-claims';
-import { provisionStandaloneTeamWorkspace, TeamWorkspaceProvisioningError } from '@/lib/team-workspace-provisioning';
+import { TeamWorkspaceProvisioningError } from '@/lib/team-workspace-provisioning';
+import { supabaseAdmin } from '@/lib/supabase-admin';
 
 function appendSuccess(url: string) {
   return `${url}${url.includes('?') ? '&' : '?'}success=1`;
@@ -72,41 +73,57 @@ export async function POST(req: Request) {
   if (shouldApplyDirectly) {
     try {
       const now = Date.now();
-      const result = await provisionStandaloneTeamWorkspace({
+      const mockSubscriptionId = `mock_sub_team_${checkoutRequest.billingCycle}_${now}`;
+      const mockSubscriptionItemId = `mock_si_team_${now}`;
+      const metadata = buildTeamCheckoutMetadata({
         ownerUserId: user.id,
         ownerEmail: user.email,
-        teamName: checkoutRequest.teamName,
-        teamSlug: checkoutRequest.teamSlug,
-        workspaceName: checkoutRequest.workspaceName,
-        workspaceSlug: checkoutRequest.workspaceSlug,
-        sport: checkoutRequest.sport,
-        division: checkoutRequest.division,
-        seasonName: checkoutRequest.seasonName,
-        seasonYear: checkoutRequest.seasonYear,
-        source: checkoutRequest.source,
-        sourceTournamentId: checkoutRequest.sourceTournamentId,
-        sourceTournamentTeamId: checkoutRequest.sourceTournamentTeamId,
-        billingMode: 'team_direct',
-        billingOwnerUserId: user.id,
-        subscriptionStatus: 'active',
+        request: checkoutRequest,
+      });
+      const provisionResult = await provisionTeamWorkspaceFromCheckoutMetadata({
+        metadata,
         stripeCustomerId: `mock_cus_team_${now}`,
-        stripeSubscriptionId: `mock_sub_team_${checkoutRequest.billingCycle}_${now}`,
-        stripeSubscriptionItemId: `mock_si_team_${now}`,
-        entitlementSource: 'team_plan',
-        entitlementStatus: 'active',
+        stripeSubscriptionId: mockSubscriptionId,
+        stripeSubscriptionItemId: mockSubscriptionItemId,
+        subscriptionStatus: 'active',
+        billingCycle: checkoutRequest.billingCycle,
         eventSource: 'mock',
         sourceEventId: `mock_team_checkout_${now}`,
-        actorUserId: user.id,
-        actorEmail: user.email,
       });
 
-      if (checkoutRequest.teamWorkspaceClaimId) {
-        await markTeamWorkspaceClaimed({
-          claimId: checkoutRequest.teamWorkspaceClaimId,
-          teamWorkspaceId: result.teamWorkspaceId,
-          claimedByUserId: user.id,
+      if (!provisionResult.provisioned && (
+        provisionResult.reason === 'missing_subscription_id' ||
+        provisionResult.reason === 'not_team_checkout'
+      )) {
+        throw new Error('Could not apply Coaches Portal checkout.');
+      }
+
+      if (!provisionResult.provisioned && provisionResult.reason === 'reactivated') {
+        const { data: org, error: orgError } = await supabaseAdmin
+          .from('organizations')
+          .select('slug')
+          .eq('id', provisionResult.workspaceOrgId)
+          .maybeSingle<{ slug: string }>();
+        if (orgError) throw orgError;
+        if (!org?.slug) throw new Error('Reactivated Coaches Portal workspace was not found.');
+
+        return new Response(JSON.stringify({
+          url: appendSuccess(`${appUrl}/${org.slug}/coaches`),
+          applied: true,
+          reactivated: true,
+          planKey: 'team',
+          billingCycle: checkoutRequest.billingCycle,
+          orgSlug: org.slug,
+          teamWorkspaceId: provisionResult.teamWorkspaceId,
+          repTeamId: provisionResult.repTeamId,
+        }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
         });
       }
+
+      if (!provisionResult.provisioned) throw new Error('Could not create Coaches Portal.');
+      const { result } = provisionResult;
 
       return new Response(JSON.stringify({
         url: appendSuccess(`${appUrl}/${result.org.slug}/coaches`),

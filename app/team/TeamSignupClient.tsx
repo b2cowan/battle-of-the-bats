@@ -103,7 +103,10 @@ function getPayloadError(payload: Record<string, unknown>, fallback: string) {
 export default function TeamSignupClient({ teamIsGated, claim = null }: TeamSignupClientProps) {
   const searchParams = useSearchParams();
   const currentYear = new Date().getFullYear();
-  const [teamName, setTeamName] = useState(claim?.teamName ?? '');
+  const reactivationOrgSlug = searchParams.get('reactivateOrgSlug')?.trim() || null;
+  const reactivationTeamName = searchParams.get('teamName')?.trim() || '';
+  const isReactivation = Boolean(reactivationOrgSlug);
+  const [teamName, setTeamName] = useState(claim?.teamName ?? reactivationTeamName);
   const [sport, setSport] = useState('Softball');
   const [division, setDivision] = useState(claim?.division ?? '');
   const [seasonYear, setSeasonYear] = useState(String(claim?.seasonYear ?? currentYear));
@@ -130,6 +133,9 @@ export default function TeamSignupClient({ teamIsGated, claim = null }: TeamSign
   const draftKey = claim ? `${DRAFT_KEY}.${claim.token.slice(0, 12)}` : DRAFT_KEY;
   const claimPath = claim ? `${COACHES_CLAIM_PATH}/${encodeURIComponent(claim.token)}` : COACHES_START_PATH;
   const claimReturnPath = `${claimPath}?billing=${billingCycle}`;
+  const returnPath = isReactivation
+    ? `${COACHES_START_PATH}?reactivateOrgSlug=${encodeURIComponent(reactivationOrgSlug ?? '')}`
+    : claimReturnPath;
 
   const seasonName = useMemo(() => {
     return cleanTeamName ? `${cleanTeamName} ${parsedSeasonYear || currentYear}` : `Team ${parsedSeasonYear || currentYear}`;
@@ -257,8 +263,9 @@ export default function TeamSignupClient({ teamIsGated, claim = null }: TeamSign
         seasonName,
         seasonYear: parsedSeasonYear,
         billingCycle,
-        returnTo: claimReturnPath,
+        returnTo: returnPath,
         claimToken: claim?.token ?? null,
+        reactivateOrgSlug: reactivationOrgSlug,
       }),
     });
 
@@ -303,11 +310,13 @@ export default function TeamSignupClient({ teamIsGated, claim = null }: TeamSign
     <main className={styles.page}>
       <section className={styles.signupSurface}>
         <div className={styles.copyPane}>
-          <p className={styles.eyebrow}>{claim ? 'Tournament team claim' : 'Coaches Portal Premium'}</p>
-          <h1 className={styles.title}>{claim ? 'Upgrade this team in Coaches Portal' : 'From tournament weekend to season workspace.'}</h1>
+          <p className={styles.eyebrow}>{claim ? 'Tournament team claim' : isReactivation ? 'Coaches Portal reactivation' : 'Coaches Portal Premium'}</p>
+          <h1 className={styles.title}>{claim ? 'Upgrade this team in Coaches Portal' : isReactivation ? 'Reactivate Premium without starting over.' : 'From tournament weekend to season workspace.'}</h1>
           <p className={styles.lede}>
             {claim
               ? `${claim.tournamentName} already has your team details. Confirm the season setup, create or sign into the contact account, and activate Coaches Portal Premium.`
+              : isReactivation
+                ? 'Restart your Premium subscription during the retention window and restore the same team workspace instead of creating a duplicate.'
               : 'One competitive team gets its own Coaches Portal for roster, schedule, dues, budget, documents, attendance, lineups, reminders, and a free local tournament slot.'}
           </p>
 
@@ -395,7 +404,7 @@ export default function TeamSignupClient({ teamIsGated, claim = null }: TeamSign
           <div className={styles.formHeader}>
             <div>
               <p className={styles.formKicker}>{claim ? 'Secure claim' : 'Start setup'}</p>
-              <h2>{claim ? 'Activate from tournament' : 'Create your Coaches Portal'}</h2>
+              <h2>{claim ? 'Activate from tournament' : isReactivation ? 'Reactivate Premium' : 'Create your Coaches Portal'}</h2>
             </div>
             <Users size={22} />
           </div>
@@ -552,7 +561,7 @@ export default function TeamSignupClient({ teamIsGated, claim = null }: TeamSign
           {error && <div className={styles.errorBox}>{error}</div>}
 
           <button type="submit" className={styles.primaryButton} disabled={!canSubmit}>
-            <span>{busyLabel || (isAuthenticated ? 'Start checkout' : authMode === 'signup' ? 'Create account and checkout' : 'Sign in and checkout')}</span>
+            <span>{busyLabel || (isAuthenticated ? (isReactivation ? 'Start reactivation' : 'Start checkout') : authMode === 'signup' ? 'Create account and checkout' : 'Sign in and checkout')}</span>
             <ArrowRight size={16} />
           </button>
 

@@ -42,7 +42,7 @@ const TOUR_GROUPS: TourGroup[] = [
     defaultOpenFor: ['draft'],
     items: [
       { key: 'settings/event',   icon: Settings2,    label: 'Event Settings'    },
-      { key: 'venues',           icon: MapPin,       label: 'Venues'            },
+      { key: 'venues',           icon: MapPin,       label: 'Venues & Facilities' },
       { key: 'divisions',        icon: Tag,          label: 'Divisions'         },
       { key: 'rules',            icon: BookOpen,     label: 'Rules & Resources' },
       { key: 'branding',         icon: Paintbrush,   label: 'Branding'          },
@@ -140,6 +140,8 @@ export default function AdminSidebar() {
   );
 
   const hasOnlyTournamentWorkspace = !!currentOrg && canUseModule('module_tournaments') && !canSeePublicSite && !canSeeAccounting && !canSeeHouseLeague && !canSeeRepTeams;
+  // Org venue library is a League/Club feature — not available to Tournament or Tournament Plus subscribers
+  const hasOrgVenueLibrary = !!currentOrg && ['league', 'club'].includes(currentOrg.planId);
   const showTournamentSummary = currentTournament?.status === 'completed' || currentTournament?.status === 'archived';
   const tournamentGroups = TOUR_GROUPS.map(group =>
     group.key === 'operations' && showTournamentSummary
@@ -283,7 +285,7 @@ export default function AdminSidebar() {
                 `${base}/org/members`,
                 pathname.startsWith(`${base}/org/members`),
               )}
-              {!isCanceled && navLink(
+              {!isCanceled && hasOrgVenueLibrary && navLink(
                 'org/venues', MapPin, 'Venue Library',
                 `${base}/org/venues`,
                 pathname.startsWith(`${base}/org/venues`),

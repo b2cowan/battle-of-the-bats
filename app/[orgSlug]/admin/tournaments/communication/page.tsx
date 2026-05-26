@@ -621,14 +621,14 @@ export default function AdminCommunicationPage() {
           <div className="modal" style={{ maxWidth: 440 }} onClick={e => e.stopPropagation()}>
             <div className="modal-header">
               <h3>Delete communication?</h3>
-              <button className="btn btn-ghost btn-sm" onClick={() => setDeleteId(null)}><X size={16} /></button>
+              <button className="btn btn-ghost btn-data" onClick={() => setDeleteId(null)}><X size={16} /></button>
             </div>
             <p style={{ color: 'var(--white-60)', fontSize: '0.9rem', margin: '0 0 1.25rem' }}>
               This removes the record permanently. If this was a site post, it will be removed from the public News page immediately.
             </p>
             <div className="modal-footer">
-              <button className="btn btn-ghost" onClick={() => setDeleteId(null)}>Cancel</button>
-              <button className="btn btn-danger" onClick={handleDelete}><Trash2 size={14} /> Delete</button>
+              <button className="btn btn-ghost btn-data" onClick={() => setDeleteId(null)}>Cancel</button>
+              <button className="btn btn-danger btn-data" onClick={handleDelete}><Trash2 size={14} /> Delete</button>
             </div>
           </div>
         </div>

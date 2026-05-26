@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState, useCallback } from 'react';
 import { createClient } from '@/lib/supabase-browser';
-import { Users, Trophy, Megaphone, TrendingUp, Activity } from 'lucide-react';
+import { Users, Trophy, Megaphone, TrendingUp } from 'lucide-react';
 import type { ActivityEvent } from '@/app/api/admin/tournament-activity/route';
 
 type EnrichedEvent = ActivityEvent & { timeAgo: string };
@@ -91,21 +91,16 @@ export function LiveEventLog({ tournamentId, orgSlug }: { tournamentId: string; 
     setEvents(prev => [event, ...prev.filter(e => e.id !== event.id)].slice(0, 50));
   }
 
-  if (loading) {
-    return <div style={{ color: 'var(--white-30)', fontSize: '0.82rem' }}>Loading activity…</div>;
-  }
-
-  if (events.length === 0) {
-    return (
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem', padding: '2rem 0', color: 'var(--white-25)', fontSize: '0.82rem' }}>
-        <Activity size={28} style={{ opacity: 0.3 }} />
-        No activity yet. Events will appear here as registrations, scores, and announcements come in.
-      </div>
-    );
+  if (loading || events.length === 0) {
+    return null;
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '0', maxHeight: '320px', overflowY: 'auto' }}>
+    <div>
+      <h2 style={{ fontFamily: 'var(--font-data)', fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--logic-lime)', marginBottom: '1rem' }}>
+        Recent Activity
+      </h2>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '0', maxHeight: '320px', overflowY: 'auto' }}>
       {events.map((event, i) => {
         const cfg = TYPE_CONFIG[event.type];
         const Icon = cfg.icon;
@@ -130,6 +125,7 @@ export function LiveEventLog({ tournamentId, orgSlug }: { tournamentId: string; 
           </div>
         );
       })}
+      </div>
     </div>
   );
 }

@@ -845,14 +845,14 @@ export default function RulesAdmin({ tournament, orgSlug }: Props) {
           <div className="modal" style={{ maxWidth: 420 }} onClick={e => e.stopPropagation()}>
             <div className="modal-header">
               <h3>Delete Section?</h3>
-              <button className="btn btn-ghost btn-sm" onClick={() => setDeleteConfirmSectionId(null)}><X size={16} /></button>
+              <button className="btn btn-ghost btn-data" onClick={() => setDeleteConfirmSectionId(null)}><X size={16} /></button>
             </div>
             <p style={{ color: 'var(--white-60)', padding: '0.25rem 0 1.25rem' }}>
               This will permanently remove this section and all its rule points.
             </p>
             <div className="modal-footer">
-              <button className="btn btn-ghost" onClick={() => setDeleteConfirmSectionId(null)}>Cancel</button>
-              <button className="btn btn-danger" onClick={confirmDeleteSection} disabled={saving}>
+              <button className="btn btn-ghost btn-data" onClick={() => setDeleteConfirmSectionId(null)}>Cancel</button>
+              <button className="btn btn-danger btn-data" onClick={confirmDeleteSection} disabled={saving}>
                 {saving ? 'Deleting…' : 'Delete Section'}
               </button>
             </div>
@@ -866,14 +866,14 @@ export default function RulesAdmin({ tournament, orgSlug }: Props) {
           <div className="modal" style={{ maxWidth: 420 }} onClick={e => e.stopPropagation()}>
             <div className="modal-header">
               <h3>Delete Resource?</h3>
-              <button className="btn btn-ghost btn-sm" onClick={() => setDeleteConfirmResourceId(null)}><X size={16} /></button>
+              <button className="btn btn-ghost btn-data" onClick={() => setDeleteConfirmResourceId(null)}><X size={16} /></button>
             </div>
             <p style={{ color: 'var(--white-60)', padding: '0.25rem 0 1.25rem' }}>
               This will remove this link or file from the public Rules page.
             </p>
             <div className="modal-footer">
-              <button className="btn btn-ghost" onClick={() => setDeleteConfirmResourceId(null)}>Cancel</button>
-              <button className="btn btn-danger" onClick={confirmDeleteResource} disabled={saving}>
+              <button className="btn btn-ghost btn-data" onClick={() => setDeleteConfirmResourceId(null)}>Cancel</button>
+              <button className="btn btn-danger btn-data" onClick={confirmDeleteResource} disabled={saving}>
                 {saving ? 'Deleting…' : 'Delete Resource'}
               </button>
             </div>
@@ -887,15 +887,15 @@ export default function RulesAdmin({ tournament, orgSlug }: Props) {
           <div className="modal" style={{ maxWidth: 420 }} onClick={e => e.stopPropagation()}>
             <div className="modal-header">
               <h3>Unsaved Changes</h3>
-              <button className="btn btn-ghost btn-sm" onClick={() => setSwitchGuardTargetId(null)}><X size={16} /></button>
+              <button className="btn btn-ghost btn-data" onClick={() => setSwitchGuardTargetId(null)}><X size={16} /></button>
             </div>
             <p style={{ color: 'var(--white-60)', padding: '0.25rem 0 1.25rem' }}>
               You have unsaved changes in this section. Save or discard before editing a different section.
             </p>
             <div className="modal-footer">
-              <button className="btn btn-ghost" onClick={() => setSwitchGuardTargetId(null)}>Keep editing</button>
-              <button className="btn btn-danger" onClick={handleSwitchGuardDiscard} disabled={saving}>Discard changes</button>
-              <button className="btn btn-primary" onClick={handleSwitchGuardSave} disabled={saving}>
+              <button className="btn btn-ghost btn-data" onClick={() => setSwitchGuardTargetId(null)}>Keep editing</button>
+              <button className="btn btn-danger btn-data" onClick={handleSwitchGuardDiscard} disabled={saving}>Discard changes</button>
+              <button className="btn btn-primary btn-data" onClick={handleSwitchGuardSave} disabled={saving}>
                 {saving ? 'Saving…' : 'Save changes'}
               </button>
             </div>
@@ -909,15 +909,15 @@ export default function RulesAdmin({ tournament, orgSlug }: Props) {
           <div className="modal" style={{ maxWidth: 420 }} onClick={e => e.stopPropagation()}>
             <div className="modal-header">
               <h3>Unsaved Changes</h3>
-              <button className="btn btn-ghost btn-sm" onClick={handleNavStay}><X size={16} /></button>
+              <button className="btn btn-ghost btn-data" onClick={handleNavStay}><X size={16} /></button>
             </div>
             <p style={{ color: 'var(--white-60)', padding: '0.25rem 0 1.25rem' }}>
               You have unsaved rule edits. If you leave now those changes will be lost.
             </p>
             <div className="modal-footer">
-              <button className="btn btn-ghost" onClick={handleNavStay}>Stay &amp; keep editing</button>
-              <button className="btn btn-danger" onClick={handleNavLeave}>Leave without saving</button>
-              <button className="btn btn-primary" onClick={handleNavSaveAndLeave} disabled={saving}>
+              <button className="btn btn-ghost btn-data" onClick={handleNavStay}>Stay &amp; keep editing</button>
+              <button className="btn btn-danger btn-data" onClick={handleNavLeave}>Leave without saving</button>
+              <button className="btn btn-primary btn-data" onClick={handleNavSaveAndLeave} disabled={saving}>
                 {saving ? 'Saving…' : 'Save & leave'}
               </button>
             </div>

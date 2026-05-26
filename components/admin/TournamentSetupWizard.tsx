@@ -736,8 +736,8 @@ export default function TournamentSetupWizard({
               </div>
               <p style={{ color: 'var(--white-60)', marginBottom: '0.5rem' }}>Your progress will not be saved.</p>
               <div className="modal-footer">
-                <button className="btn btn-ghost" onClick={() => setCloseConfirmOpen(false)}>Keep working</button>
-                <button className="btn btn-danger" onClick={() => { setCloseConfirmOpen(false); onClose(); }}>Leave</button>
+                <button className="btn btn-ghost btn-data" onClick={() => setCloseConfirmOpen(false)}>Keep working</button>
+                <button className="btn btn-danger btn-data" onClick={() => { setCloseConfirmOpen(false); onClose(); }}>Leave</button>
               </div>
             </div>
           </div>
@@ -806,8 +806,8 @@ export default function TournamentSetupWizard({
               <div className="modal-header"><h3>Leave setup?</h3></div>
               <p style={{ color: 'var(--white-60)', marginBottom: '0.5rem' }}>Your progress will not be saved.</p>
               <div className="modal-footer">
-                <button className="btn btn-ghost" onClick={() => setCloseConfirmOpen(false)}>Keep working</button>
-                <button className="btn btn-danger" onClick={() => { setCloseConfirmOpen(false); onClose(); }}>Leave</button>
+                <button className="btn btn-ghost btn-data" onClick={() => setCloseConfirmOpen(false)}>Keep working</button>
+                <button className="btn btn-danger btn-data" onClick={() => { setCloseConfirmOpen(false); onClose(); }}>Leave</button>
               </div>
             </div>
           </div>
@@ -956,8 +956,8 @@ export default function TournamentSetupWizard({
               <div className="modal-header"><h3>Leave setup?</h3></div>
               <p style={{ color: 'var(--white-60)', marginBottom: '0.5rem' }}>Your progress will not be saved.</p>
               <div className="modal-footer">
-                <button className="btn btn-ghost" onClick={() => setCloseConfirmOpen(false)}>Keep working</button>
-                <button className="btn btn-danger" onClick={() => { setCloseConfirmOpen(false); onClose(); }}>Leave</button>
+                <button className="btn btn-ghost btn-data" onClick={() => setCloseConfirmOpen(false)}>Keep working</button>
+                <button className="btn btn-danger btn-data" onClick={() => { setCloseConfirmOpen(false); onClose(); }}>Leave</button>
               </div>
             </div>
           </div>

@@ -4,6 +4,62 @@ Newest entries first. All decisions here are binding in future sessions unless e
 
 ---
 
+### 2026-05-25 — Select optgroup labels: white-50 on hud-surface
+**Decision:** Native `<select>` `<optgroup>` group headers globally use `color: var(--white-50)`, `background: var(--hud-surface)`, `font-style: normal`, `font-weight: 700`. Applied via `globals.css` alongside the existing `select option` rule. Blueprint-blue was tried first but lacked contrast on the dark surface.
+**Rationale:** Browser default optgroup rendering produces a light-gray background and italic gray text — near-invisible on the dark HUD surface. `--white-50` is legible as a dimmed label/header while being clearly distinct from selectable options (`--white`). `font-style: normal` overrides the browser-default italic.
+**Applies to:** All `<optgroup>` elements globally (`app/globals.css`); most visible in schedule admin venue/slot selects.
+
+---
+
+### 2026-05-25 - Schedule admin: filter row alignment follow-up
+**Decision:** Schedule admin filter controls were refined after desktop/mobile review: (1) Desktop Row 2 is `ToolbarSearch` -> venue filter -> right-aligned status chips, so empty space sits between venue and filters instead of after the filters. (2) Desktop shows the Division label and hides mobile mode selects with stronger CSS specificity, preventing duplicate segmented/select controls. (3) Mobile uses a labeled full-width Division row, schedule-local native mode dropdowns that bypass the shared `ToolbarSelect` mobile `width: 100%` rule so they can sit side by side, Venue stretching beside compact icon actions, then Search and status filters. (4) Planning rows always render the venue column on desktop; empty venue cells are hidden visually but still reserve column space, preventing matchup drift between rows with and without venues. Empty venue cells are fully hidden on mobile to avoid a blank third row.
+**Rationale:** The filtering workflow should read as a single cluster, and game row columns must remain stable regardless of optional venue data.
+**Applies to:** `app/[orgSlug]/admin/tournaments/schedule/page.tsx`, `app/[orgSlug]/admin/tournaments/schedule/components/GameList.tsx`, `schedule-admin.module.css`.
+
+---
+
+### 2026-05-25 — Registrations: payment panel typography + toolbar layout
+**Decision:** (1) **Payment input fields**: `border-radius: 6px → 2px` (HUD sharp corners), `background: var(--hud-surface) → var(--bg-2)` (matches textarea, avoids lighter-than-panel artifact on `rgba(0,0,0,0.2)` expanded row), `font-family: var(--font-data)` added (mono numbers), `font-size: 0.88rem → 0.82rem` (standard data body size), `:focus { border-color: var(--blueprint-blue); outline: none }` added (matches textarea). (2) **Payment field labels** (`.paymentField span`): `font-family: var(--font-data)` added — without this they fell back to sans-serif despite uppercase/tight-letter-spacing treatment. (3) **"Deposit due" line** (`.paymentDue`): `font-family: var(--font-data)` added, `font-size: 0.8rem → 0.72rem` (tighter data density). (4) **FLAT|POOLS segmented control moved to context group**: Was in `align="end"` group alongside EXPORT/SELECT MANY/TOOLS. Moved to `grow` context group alongside DIVISION select. View mode is context, not utility — grouping it with Division closes the large dead-space gap on desktop between the single Division select and the action cluster. (5) **Filter row search right-aligned**: Added `justify-content: space-between` to `.registrationFilterGroup` so status filter chips stay left and search sits at the far right edge.
+**Rationale:** Input background using `var(--hud-surface)` (solid `#111827`) against an `rgba(0,0,0,0.2)` transparent expanded row panel produced a visually lighter floating box. `var(--bg-2)` (`#0F172A`) gives a consistent dark inset feel matching the textarea. Toolbar Row 1 had a single Division select stretching a `flex: 1` grow group, creating a wide empty middle zone on desktop. Moving FLAT|POOLS to the left group mirrors the schedule page layout standard where all context selectors live left, all utility actions live right.
+**Applies to:** `app/[orgSlug]/admin/tournaments/registrations/teams-admin.module.css` (`.paymentField span`, `.paymentField input`, `.paymentField input:focus`, `.paymentDue`, `.registrationFilterGroup`); `app/[orgSlug]/admin/tournaments/registrations/page.tsx` (toolbar group restructure).
+
+---
+
+### 2026-05-25 — Tournament Venues: Export in header (exception), inline edit, Navigation icon for Maps
+**Decision:** (1) **Export back in header** — for setup pages with no filter controls (Venues), Export lives in the header alongside Add Venue as a secondary ghost button. The "Export in toolbar" rule applies to operational pages (Registrations, Schedule) where export is filter-state-aware. No filters = no toolbar needed. (2) **Inline edit** — clicking the pencil icon on a venue card switches the card header to an inline edit form (Name, Address, Notes), auto-expanding to show the facilities panel simultaneously. Modal edit is removed for this surface; `AddVenueModal` is now Add-only. (3) **`Navigation` icon for Maps button** — replaces `ExternalLink`. The navigation arrow communicates "get directions / open in Maps" far more clearly than a generic new-tab icon. (4) **`venueCard.editing` border** — lime border (`rgba(--logic-lime-rgb, 0.35)`) on cards in edit mode; consistent with the lime active-state pattern used on segmented controls and active chips. (5) **`btn-primary` in `AddVenueModal` fixed** — replaced with `btn-lime btn-data` per the global ban on btn-primary outside modals (and then the broader btn-primary ban).
+**Rationale:** Removing the toolbar eliminates a full row of vertical dead space. Inline edit reduces modal proliferation and follows the schedule game row editing pattern already established. Navigation icon is universally understood as maps/directions. Editing border gives clear feedback without disrupting surrounding UI.
+**Applies to:** `app/[orgSlug]/admin/tournaments/venues/page.tsx`, `venues-admin.module.css`, `components/admin/AddVenueModal.tsx`.
+
+---
+
+### 2026-05-25 — Setup section pages: Export exception to toolbar rule
+**Decision:** Setup-section admin pages (Venues, Branding, Event Settings etc.) that have no filter controls may place ExportMenu in the `TournamentAdminHeader` actions alongside the primary CTA. The "Export belongs in toolbar" rule only applies when there is at least one filter control (division select, status chips, search) that makes the export filter-state-aware. A toolbar solely to hold Export creates a full row of dead space and is not justified.
+**Rationale:** The original toolbar-placement rule was written for Registrations and Schedule. Those pages have 3–7 filter controls; Export contextualises with them. A setup page with no filters has no filter context to preserve — the toolbar row is pure waste.
+**Applies to:** All setup-section admin pages globally.
+
+---
+
+### 2026-05-25 — Tournament Venues page: migrated to TournamentAdminHeader + toolbar; venue list max-width 860px
+**Decision:** (1) The tournament venues page (`app/[orgSlug]/admin/tournaments/venues/page.tsx`) was migrated from a hand-rolled custom header (`styles.pageHeader` / `styles.headerLeft`) to the shared `TournamentAdminHeader` + `TournamentAdminToolbar` components, matching Registrations and Schedule. (2) **Export and "Import from Library" moved to toolbar** (`ToolbarGroup align="end"`) — these are utility actions, not primary CTAs. (3) **"Add Venue" remains the sole lime CTA in the header** — one primary action only. (4) `.venueList { max-width: 860px }` — venues is a setup/config page with few items; the full-width list felt sprawling on wide monitors. This is an inner content constraint (not the `.page` wrapper), consistent with how branding.module.css constrains `.settingsContent`. (5) `venueCard border-radius: 8px → 4px` — sharpened toward HUD aesthetic. (6) `facilityEmptyNote` italic removed; `font-family: var(--font-data)` added. (7) `ImportFromLibraryModal` inline styles extracted to CSS classes (`.libraryNote`, `.libraryVenueList`, `.libraryVenueItem`, `.libraryVenueItemSelected`, `.libraryVenueName`, `.libraryVenueAddress`, `.libraryVenueFacilities`, `.libraryEmpty`) in `venues-admin.module.css`.
+**Rationale:** Header standardisation makes venues visually consistent with all other admin pages. The smaller `TournamentAdminHeader` (30px icon, 1.05rem lime monospace title, 0.5rem bottom margin vs the old 48px/1.25rem/1.25rem) directly addresses the "too big" space complaint. The `max-width: 860px` on the venue list follows the Event Settings pattern — setup-section pages with few items benefit from a contained width. The toolbar placement rule for Export is established and was violated.
+**Applies to:** `app/[orgSlug]/admin/tournaments/venues/page.tsx`, `app/[orgSlug]/admin/org/venues/venues-admin.module.css`. Note: the org venues page (`app/[orgSlug]/admin/org/venues/page.tsx`) still uses the old header classes (they remain in the CSS for backward compat) and is a candidate for the same migration in a future session.
+
+---
+
+### 2026-05-25 — btn-primary is banned from modals; modal confirm uses btn-lime
+**Decision:** `btn-primary` (navy gradient) is **banned everywhere** — including inside `.modal` wrappers. The earlier rule permitting it in modals is superseded. Modal confirm/destructive actions use `btn-lime btn-data` (positive/neutral confirms) or `btn-danger btn-data` (destructive confirms). Cancel/close actions use `btn-ghost btn-data`. The navy gradient is invisible on `--hud-surface` dark backgrounds and has no place in the platform's visual language.
+**Rationale:** The Activate Tournament confirmation modal made this explicit — `btn-primary` rendered as a near-invisible dark button on the dark modal background. `btn-lime` is the platform's single confirm action colour across all contexts.
+**Applies to:** All `.modal` wrappers globally. Supersedes all prior `btn-primary` modal permissions. Audit: grep for `btn-primary` anywhere in the codebase and replace.
+
+---
+
+### 2026-05-25 — Dashboard: ACTIVATE button intentionally compact
+**Decision:** The `.activateChip` button on the draft dashboard retains its original compact size (`padding: 0.35rem 0.7rem`) on all viewports including mobile. A 44px min-height override was tried and reverted — the larger size dominated the checklist header and felt visually out of proportion.
+**Rationale:** The button sits inline with the "Draft Launch Checklist" heading; a full-height touch target there over-weights a secondary action. The checklist item cards are the primary interaction surface.
+**Applies to:** `app/[orgSlug]/admin/tournaments/dashboard/dashboard.module.css` — `.activateChip`
+
+---
+
 ### 2026-05-25 — Modal buttons use btn-data; FeedbackModal fully audited
 **Decision:** All buttons inside `.modal` wrappers use `btn-data` as the size modifier — this overrides the earlier rule that said modal footer buttons use "default size." Confirmed preference after seeing both rendered. Specifically in `FeedbackModal.tsx`: (1) × close → `btn-ghost btn-data`, X icon reduced 16px → 14px. (2) Close/Cancel footer → `btn-ghost btn-data`. (3) Confirm footer → `btn-${type} btn-data`. (4) Header icon reduced 24px → 16px to match the 0.75rem h3 title. (5) Message body div set to `font-data 0.82rem --white-70 line-height:1.55` — message text was a bare string in a div, not a `<p>`, so the `.modal p` global rule didn't reach it. (6) Items list `borderRadius: 8` → `0` (sharp corners).
 **Rationale:** Default-size `.btn` is proportioned for standalone CTAs and page-level actions. Inside a compact HUD modal, `btn-data` keeps buttons consistent with the operational density of the admin shell. The size contrast between the small monospace title and a large default button was jarring.

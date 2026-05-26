@@ -152,8 +152,8 @@ export default function AddVenueModal({ tournamentId, orgSlug, onClose, onSaved,
           </div>
 
           <div className="modal-footer">
-            <button type="button" className="btn btn-ghost" onClick={onClose}>Cancel</button>
-            <button type="submit" className="btn btn-primary" disabled={!form.name.trim() || saving}>
+            <button type="button" className="btn btn-ghost btn-data" onClick={onClose}>Cancel</button>
+            <button type="submit" className="btn btn-lime btn-data" disabled={!form.name.trim() || saving}>
               <Check size={14} /> {saving ? 'Saving…' : 'Save Venue'}
             </button>
           </div>

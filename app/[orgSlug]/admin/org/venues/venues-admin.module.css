@@ -41,11 +41,13 @@
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  max-width: 860px;
+  margin: 0 auto;
 }
 
 .venueCard {
   border: 1px solid rgba(var(--blueprint-blue-rgb), 0.22);
-  border-radius: 8px;
+  border-radius: 4px;
   background: var(--surface);
   overflow: hidden;
 }
@@ -107,6 +109,7 @@
 }
 
 .facilityCount {
+  font-family: var(--font-data);
   color: var(--white-40);
   font-size: 0.78rem;
   font-weight: 600;
@@ -154,6 +157,7 @@
 }
 
 .facilityTypeBadge {
+  font-family: var(--font-data);
   font-size: 0.7rem;
   font-weight: 700;
   text-transform: uppercase;
@@ -161,7 +165,7 @@
   color: var(--white-40);
   background: rgba(var(--blueprint-blue-rgb), 0.12);
   border: 1px solid rgba(var(--blueprint-blue-rgb), 0.2);
-  border-radius: 4px;
+  border-radius: 2px;
   padding: 0.15rem 0.45rem;
   white-space: nowrap;
   flex-shrink: 0;
@@ -189,8 +193,8 @@
 
 .addFacilityRow {
   display: flex;
-  align-items: flex-start;
-  gap: 0.5rem;
+  align-items: center;
+  gap: 0.75rem;
   padding-top: 0.75rem;
   flex-wrap: wrap;
 }
@@ -204,9 +208,24 @@
   flex-wrap: wrap;
 }
 
-.addFacilityName {
+/* Wrapper gives the name input a column for its optional error message */
+.facilityNameWrap {
   flex: 1;
   min-width: 120px;
+  display: flex;
+  flex-direction: column;
+}
+
+.addFacilityName {
+  width: 100%;
+}
+
+.addFacilityError {
+  font-size: 0.7rem;
+  color: var(--danger, #e54c4c);
+  font-family: var(--font-data);
+  margin-top: 0.25rem;
+  padding: 0 0.1rem;
 }
 
 .addFacilityType {
@@ -221,11 +240,44 @@
   align-items: center;
 }
 
+/* Compact data-size overrides for inline add/edit inputs — matches btn-data sizing */
+.addFacilityName,
+.addFacilityType,
+.facilityEditName,
+.facilityEditType {
+  font-family: var(--font-data);
+  font-size: 0.78rem;
+  padding: 0.3rem 0.62rem;
+}
+
+/* ── Inline facility edit row ── */
+
+.facilityItemEdit {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0.25rem;
+  border-bottom: 1px solid rgba(var(--blueprint-blue-rgb), 0.1);
+}
+
+.facilityItemEdit:last-child {
+  border-bottom: none;
+}
+
+.facilityEditName {
+  width: 100%;
+}
+
+.facilityEditType {
+  width: 130px;
+  flex-shrink: 0;
+}
+
 .facilityEmptyNote {
   color: var(--white-40);
-  font-size: 0.8rem;
-  padding: 0.4rem 0.25rem;
-  font-style: italic;
+  font-size: 0.78rem;
+  font-family: var(--font-data);
+  padding: 0.5rem 0.25rem;
 }
 
 /* ── Misc ── */
@@ -240,6 +292,141 @@
   margin-bottom: 1rem;
   flex-wrap: wrap;
 }
+
+/* ── Import from Library modal ── */
+
+.libraryNote {
+  color: var(--white-60);
+  font-family: var(--font-data);
+  font-size: 0.82rem;
+  line-height: 1.55;
+  margin-bottom: 1rem;
+}
+
+.libraryEmpty {
+  color: var(--white-40);
+  font-family: var(--font-data);
+  font-size: 0.82rem;
+  text-align: center;
+  padding: 1.5rem 0;
+}
+
+.libraryVenueList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.libraryVenueItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.18);
+  border-radius: 0;
+  background: transparent;
+  cursor: pointer;
+  transition: border-color 0.1s, background 0.1s;
+}
+
+.libraryVenueItemSelected {
+  border-color: rgba(var(--blueprint-blue-rgb), 0.5);
+  background: rgba(var(--blueprint-blue-rgb), 0.08);
+}
+
+.libraryVenueName {
+  font-weight: 700;
+  color: var(--white);
+  font-size: 0.875rem;
+  font-family: var(--font-data);
+}
+
+.libraryVenueAddress {
+  color: var(--white-50);
+  font-size: 0.78rem;
+  margin-top: 0.1rem;
+}
+
+.libraryVenueFacilities {
+  color: var(--white-40);
+  font-size: 0.75rem;
+  font-family: var(--font-data);
+  margin-top: 0.2rem;
+}
+
+/* ── Tournament venues — table format (mirrors GameList) ── */
+
+.venueTableWrap {
+  max-width: 920px;
+  margin: 1.25rem auto 0;
+}
+
+/* Flex columns — must sum to match GameList column rhythm */
+.venueColName {
+  flex: 2 1 180px;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  overflow: hidden;
+}
+
+.venueColAddress {
+  flex: 3 1 220px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.venueColFacilities {
+  flex: 0 0 120px;
+  display: flex;
+  align-items: center;
+}
+
+.venueColActions {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+.venueColChevron {
+  flex: 0 0 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Inline decorators */
+.venueNameIcon {
+  color: var(--logic-lime);
+  flex-shrink: 0;
+}
+
+.expandChevron {
+  color: var(--white-30);
+  flex-shrink: 0;
+  transition: transform 0.15s;
+}
+
+.expandChevronOpen {
+  transform: rotate(180deg);
+}
+
+/* Expanded facility area — override default expandedRow padding */
+.facilityExpandedRow {
+  padding: 0.75rem 1.5rem 1rem !important;
+}
+
+@media (max-width: 600px) {
+  .venueColAddress { display: none; }
+}
+
+/* ────────────────────────────────────────────────────────── */
 
 @media (max-width: 760px) {
   .pageHeader {

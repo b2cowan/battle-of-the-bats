@@ -164,11 +164,6 @@
 }
 
 .scheduleDivisionGroup {
-  min-width: 12rem;
-}
-
-.scheduleModeGroup {
-  flex: 1 1 auto;
   min-width: 0;
 }
 
@@ -176,11 +171,61 @@
   flex-wrap: nowrap;
 }
 
+.scheduleExportButton,
+.scheduleToolsMenu {
+  flex-shrink: 0;
+}
+
+.scheduleFilterGroup {
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.5rem;
+}
+
+.scheduleSearch {
+  flex: 0 1 28rem;
+  max-width: 30rem;
+  min-width: 18rem;
+}
+
+.scheduleVenueDesktop {
+  flex: 1 1 13rem;
+  max-width: 22rem;
+  min-width: 0;
+}
+
+.scheduleVenueMobile {
+  display: none;
+}
+
+.scheduleVenueDesktop .venueFilterRoot,
+.scheduleVenueMobile .venueFilterRoot {
+  width: 100%;
+  max-width: none;
+}
+
 .desktopModeControl {
   display: inline-flex;
 }
 
 .mobileModeSelect {
+  display: none !important;
+}
+
+.mobileModeNative {
+  display: none;
+}
+
+/* Wrapper for the two mobile mode selects (Round Robin|Flat / List|Bracket).
+   Hidden on desktop; becomes a full-width flex row on mobile so the selects
+   always occupy their own dedicated row (row 2) above the venue + actions row. */
+.mobileModePair {
+  display: none;
+}
+
+/* Belt-and-suspenders: hide VIEW / GROUP labels whenever those selects show   */
+/* (they are display:none on desktop, but this covers intermediate breakpoints) */
+.mobileModeSelect > span {
   display: none;
 }
 
@@ -229,39 +274,84 @@
   .scheduleToolbar.scheduleToolbar {
     align-items: center;
     flex-direction: row;
+    flex-wrap: wrap;
     gap: 0.45rem;
     padding: 0.45rem;
   }
 
   .scheduleDivisionGroup {
     order: 1;
-    flex: 1 1 0;
-    width: auto !important;
-    min-width: 0;
+    flex: 1 1 100%;
+    width: 100% !important;
     gap: 0.4rem;
+    min-width: 0;
+  }
+
+  /* Row 2: mode selects — dedicated full-width row inside scheduleActionsGroup */
+  .mobileModePair {
+    display: flex;
+    flex: 1 1 100%;
+    width: 100% !important;
+    order: 1;
+    gap: 0.28rem;
   }
 
   .scheduleActionsGroup {
     order: 2;
-    flex: 0 0 auto;
-    width: auto !important;
-    gap: 0.32rem;
-    justify-content: flex-end !important;
-    margin-left: auto;
-  }
-
-  .scheduleModeGroup {
-    order: 3;
+    display: flex;
+    align-items: center;
     flex: 1 1 100%;
     width: 100% !important;
-    gap: 0.4rem;
+    flex-wrap: wrap;
+    gap: 0.28rem;
+    justify-content: flex-start !important;
+    margin-left: 0;
   }
 
   .scheduleFilterGroup {
-    order: 4;
+    order: 3;
     flex: 1 1 100%;
     width: 100% !important;
+    justify-content: flex-start;
     gap: 0.5rem;
+  }
+
+  .scheduleStatusFilters {
+    margin-left: 0;
+  }
+
+  .scheduleSearch {
+    flex: 1 1 100%;
+    width: 100%;
+    max-width: none;
+    min-width: 0;
+  }
+
+  .publishButton,
+  .scheduleExportButton,
+  .scheduleToolsMenu {
+    order: 2;
+  }
+
+  .scheduleExportButton,
+  .scheduleToolsMenu {
+    flex: 0 0 auto;
+    min-width: 0;
+  }
+
+  .scheduleVenueDesktop {
+    display: none;
+  }
+
+  .scheduleVenueMobile {
+    display: block;
+    order: 2;
+    flex: 1 1 0;
+    min-width: 0;
+  }
+
+  .scheduleVenueMobile .venueFilterButton {
+    height: 28px;
   }
 
   .desktopModeControl {
@@ -271,38 +361,64 @@
   .mobileModeSelect {
     display: inline-flex !important;
     align-items: center !important;
-    flex: 1 1 7rem;
+    order: 1;
+    flex: 1 1 calc(50% - 0.14rem);
     width: auto !important;
+    max-width: none;
     min-width: 0;
     flex-direction: row !important;
+  }
+
+  .mobileModeNative {
+    order: 1;
+    display: inline-flex;
+    flex: 1 1 calc(50% - 0.14rem);
+    min-width: 0;
+  }
+
+  .mobileViewModeSelect {
+    order: 1;
+  }
+
+  .mobileSubModeSelect {
+    order: 1;
   }
 
   .scheduleDivisionSelect {
+    order: 1;
     display: inline-flex !important;
-    align-items: center !important;
-    flex: 1 1 9rem;
-    width: auto !important;
+    align-items: stretch !important;
+    flex: 1 1 100%;
+    width: 100% !important;
     min-width: 0;
-    flex-direction: row !important;
+    flex-direction: column !important;
+    gap: 0.28rem;
+  }
+
+  .scheduleDivisionSelect > span {
+    display: block;
+    color: rgba(148, 163, 184, 0.58);
+    font-size: 0.58rem;
+    letter-spacing: 0.12em;
   }
 
   .scheduleDivisionSelect select,
-  .mobileModeSelect select {
+  .mobileModeSelect select,
+  .mobileModeNativeSelect {
     min-width: 0;
     width: 100%;
     height: 28px;
     min-height: 28px;
     padding-left: 0.45rem;
-    padding-right: 1.45rem;
+    padding-right: 1.25rem;
+    border: 1px solid rgba(var(--blueprint-blue-rgb), 0.25);
+    border-radius: 2px;
+    background: var(--bg-2);
+    color: var(--data-gray);
+    color-scheme: dark;
+    font-family: var(--font-data);
     font-size: 0.64rem;
-  }
-
-  .mobileModeSelect span {
-    display: none;
-  }
-
-  .scheduleDivisionSelect span {
-    display: none;
+    letter-spacing: 0.03em;
   }
 
   .publishStatus {
@@ -436,6 +552,10 @@
   display: flex; /* baseline for desktop (admin-common controls flex sizing)  */
 }
 
+.planningVenueCell[data-empty="true"] {
+  visibility: hidden;
+}
+
 @media (max-width: 768px) {
   .planningVenueCell {
     display: flex !important; /* override admin-common display: none           */
@@ -443,6 +563,10 @@
     grid-row: 3;
     font-size: 0.64rem;
     padding-top: 0.05rem;
+  }
+
+  .planningVenueCell[data-empty="true"] {
+    display: none !important;
   }
 }
 
@@ -569,14 +693,7 @@
 /* This class adds mobile grid collapse + chip centering only.               */
 .scheduleStatusFilters {
   flex-shrink: 0;
-}
-
-.scheduleRefinementRow {
-  display: flex;
-  align-items: center;
-  gap: 0.45rem;
-  width: 100%;
-  min-width: 0;
+  margin-left: auto;
 }
 
 .scheduleStatusActive.scheduleStatusScheduled {
@@ -591,8 +708,8 @@
 
 .venueFilterRoot {
   position: relative;
-  flex: 1 1 100%;
-  width: 100%;
+  flex: 1 1 13rem;
+  max-width: 22rem;
   min-width: 0;
 }
 
@@ -736,23 +853,18 @@
 }
 
 @media (max-width: 640px) {
-  .scheduleFilterGroup > label {
+  .scheduleSearch {
     order: 1;
-    flex: 1 1 100%;
-    width: 100%;
-  }
-
-  .scheduleRefinementRow {
-    order: 2;
-    align-items: stretch;
   }
 
   .scheduleStatusFilters {
+    order: 2;
     display: grid !important;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     flex: 1 1 auto;
     gap: 0.38rem;
     min-width: 0;
+    margin-left: 0;
   }
 
   .scheduleStatusFilters > button {
@@ -763,13 +875,6 @@
     font-size: 0.54rem;
     letter-spacing: 0.03em;
     gap: 0.28rem;
-  }
-
-  .venueFilterRoot {
-    order: 3;
-    flex: 1 1 100%;
-    width: 100%;
-    min-width: 0;
   }
 
   .venueFilterButton {

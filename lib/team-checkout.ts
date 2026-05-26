@@ -1,8 +1,9 @@
 import { normalizeBillingCycle, type BillingCycle } from './plan-config';
+import { writePlatformEvent, type PlatformEventInput } from './platform-events';
 import { supabaseAdmin } from './supabase-admin';
 import {
   provisionStandaloneTeamWorkspace,
-  type ProvisionStandaloneTeamWorkspaceInput,
+  TeamWorkspaceProvisioningError,
   type ProvisionStandaloneTeamWorkspaceResult,
 } from './team-workspace-provisioning';
 import {
@@ -28,6 +29,7 @@ export type TeamCheckoutRequest = {
   sourceTournamentId: string | null;
   sourceTournamentTeamId: string | null;
   teamWorkspaceClaimId: string | null;
+  reactivateOrgSlug: string | null;
 };
 
 export type TeamCheckoutMetadata = {
@@ -46,11 +48,37 @@ export type TeamCheckoutMetadata = {
   sourceTournamentId: string | null;
   sourceTournamentTeamId: string | null;
   teamWorkspaceClaimId: string | null;
+  reactivateOrgSlug: string | null;
 };
 
 export type TeamCheckoutProvisionResult =
   | { provisioned: true; result: ProvisionStandaloneTeamWorkspaceResult }
-  | { provisioned: false; reason: 'not_team_checkout' | 'already_exists' | 'missing_subscription_id'; workspaceOrgId?: string | null };
+  | {
+      provisioned: false;
+      reason: 'not_team_checkout' | 'already_exists' | 'missing_subscription_id' | 'reactivated';
+      workspaceOrgId?: string | null;
+      teamWorkspaceId?: string | null;
+      repTeamId?: string | null;
+    };
+
+type ReactivationWorkspace = {
+  id: string;
+  workspace_org_id: string;
+  rep_team_id: string;
+  billing_mode: string | null;
+  subscription_status: string | null;
+};
+
+type RetainedRecordRow = {
+  id: string;
+  record_type: string;
+  record_id: string | null;
+  metadata: {
+    previousStatus?: unknown;
+    retentionReason?: unknown;
+    teamWorkspaceId?: unknown;
+  } | null;
+};
 
 const TEAM_CHECKOUT_KIND = 'standalone_team';
 const METADATA_VERSION = '1';
@@ -110,6 +138,7 @@ export function normalizeTeamCheckoutRequest(body: Record<string, unknown>): Tea
     sourceTournamentId: null,
     sourceTournamentTeamId: null,
     teamWorkspaceClaimId: null,
+    reactivateOrgSlug: cleanOptionalText(body.reactivateOrgSlug, 120),
   };
 }
 
@@ -136,6 +165,7 @@ export function buildTeamCheckoutMetadata(params: {
     sourceTournamentId: metadataValue(params.request.sourceTournamentId),
     sourceTournamentTeamId: metadataValue(params.request.sourceTournamentTeamId),
     teamWorkspaceClaimId: metadataValue(params.request.teamWorkspaceClaimId),
+    reactivateOrgSlug: metadataValue(params.request.reactivateOrgSlug),
   };
 }
 
@@ -168,6 +198,7 @@ export function parseTeamCheckoutMetadata(metadata: Record<string, string> | nul
     sourceTournamentId: metadata.sourceTournamentId?.trim() || null,
     sourceTournamentTeamId: metadata.sourceTournamentTeamId?.trim() || null,
     teamWorkspaceClaimId: metadata.teamWorkspaceClaimId?.trim() || null,
+    reactivateOrgSlug: metadata.reactivateOrgSlug?.trim() || null,
   };
 }
 
@@ -238,6 +269,225 @@ export async function syncTeamWorkspaceSubscription(params: {
   return true;
 }
 
+function restoredTournamentStatus(value: unknown): 'draft' | 'active' | 'completed' {
+  return value === 'draft' || value === 'active' || value === 'completed'
+    ? value
+    : 'completed';
+}
+
+async function findReactivationWorkspace(parsed: TeamCheckoutMetadata): Promise<ReactivationWorkspace | null> {
+  if (!parsed.reactivateOrgSlug) return null;
+
+  const { data: org, error: orgError } = await supabaseAdmin
+    .from('organizations')
+    .select('id, slug, account_kind, plan_id, subscription_status')
+    .eq('slug', parsed.reactivateOrgSlug)
+    .maybeSingle<{
+      id: string;
+      slug: string;
+      account_kind: string | null;
+      plan_id: string | null;
+      subscription_status: string | null;
+    }>();
+
+  if (orgError) throw orgError;
+  if (!org) {
+    throw new TeamWorkspaceProvisioningError('reactivation_workspace_not_found', 'The Coaches Portal workspace to reactivate was not found.');
+  }
+  if (org.account_kind !== 'team_workspace' && org.plan_id !== 'team') {
+    throw new TeamWorkspaceProvisioningError('invalid_reactivation_workspace', 'Only Coaches Portal Premium workspaces can be reactivated here.');
+  }
+
+  const { data: member, error: memberError } = await supabaseAdmin
+    .from('organization_members')
+    .select('id, role, status')
+    .eq('organization_id', org.id)
+    .eq('user_id', parsed.ownerUserId)
+    .eq('status', 'active')
+    .maybeSingle<{ id: string; role: string; status: string }>();
+
+  if (memberError) throw memberError;
+  if (!member || member.role !== 'owner') {
+    throw new TeamWorkspaceProvisioningError('reactivation_not_owner', 'You must be the owner of this Coaches Portal workspace to reactivate it.');
+  }
+
+  const { data: workspace, error: workspaceError } = await supabaseAdmin
+    .from('team_workspaces')
+    .select('id, workspace_org_id, rep_team_id, billing_mode, subscription_status')
+    .eq('workspace_org_id', org.id)
+    .maybeSingle<ReactivationWorkspace>();
+
+  if (workspaceError) throw workspaceError;
+  if (!workspace) {
+    throw new TeamWorkspaceProvisioningError('reactivation_workspace_not_found', 'The Coaches Portal workspace to reactivate was not found.');
+  }
+  if (workspace.billing_mode !== 'team_direct') {
+    throw new TeamWorkspaceProvisioningError('org_billed_reactivation_not_supported', 'Org-billed Coaches Portal workspaces must be reactivated from the linked organization billing flow.');
+  }
+  if (workspace.subscription_status !== 'canceled' && org.subscription_status !== 'canceled') return null;
+
+  return workspace;
+}
+
+async function restoreCoachesPortalRetainedRecords(orgId: string, workspaceId: string) {
+  const { data, error } = await supabaseAdmin
+    .from('billing_retained_records')
+    .select('id, record_type, record_id, metadata')
+    .eq('org_id', orgId)
+    .in('retained_state', ['retained_inactive', 'pending_purge'])
+    .eq('metadata->>retentionReason', 'coaches_portal_cancellation');
+
+  if (error) throw error;
+
+  const retained = ((data ?? []) as RetainedRecordRow[]).filter(row => (
+    row.record_type === 'tournament' ||
+    row.metadata?.teamWorkspaceId === workspaceId
+  ));
+  if (retained.length === 0) return { restoredCount: 0, restoredTournamentIds: [] as string[] };
+
+  const restoredTournamentIds: string[] = [];
+  for (const record of retained.filter(row => row.record_type === 'tournament' && row.record_id)) {
+    if (!record.record_id) continue;
+    const { error: tournamentError } = await supabaseAdmin
+      .from('tournaments')
+      .update({
+        status: restoredTournamentStatus(record.metadata?.previousStatus),
+        is_active: restoredTournamentStatus(record.metadata?.previousStatus) === 'active',
+      })
+      .eq('org_id', orgId)
+      .eq('id', record.record_id);
+
+    if (!tournamentError) restoredTournamentIds.push(record.record_id);
+  }
+
+  const { error: recordError } = await supabaseAdmin
+    .from('billing_retained_records')
+    .update({ retained_state: 'restored' })
+    .in('id', retained.map(row => row.id));
+
+  if (recordError) throw recordError;
+  return { restoredCount: retained.length, restoredTournamentIds };
+}
+
+async function reactivateTeamWorkspaceFromParsedMetadata(params: {
+  parsed: TeamCheckoutMetadata;
+  stripeCustomerId: string | null;
+  stripeSubscriptionId: string;
+  stripeSubscriptionItemId?: string | null;
+  subscriptionStatus?: string | null;
+  billingCycle?: string | null;
+  currentPeriodEnd?: string | null;
+  eventSource: PlatformEventInput['source'];
+  sourceEventId?: string | null;
+}): Promise<TeamCheckoutProvisionResult | null> {
+  const workspace = await findReactivationWorkspace(params.parsed);
+  if (!workspace) return null;
+
+  const subscriptionStatus = params.subscriptionStatus ?? 'active';
+  const orgStatus = mapStripeStatusToOrgStatus(subscriptionStatus);
+  const entitlementStatus = mapStripeStatusToTeamEntitlementStatus(subscriptionStatus);
+  const now = new Date().toISOString();
+
+  const [{ error: workspaceError }, { error: orgError }] = await Promise.all([
+    supabaseAdmin
+      .from('team_workspaces')
+      .update({
+        stripe_customer_id: params.stripeCustomerId,
+        stripe_subscription_id: params.stripeSubscriptionId,
+        subscription_status: subscriptionStatus,
+        current_period_end: params.currentPeriodEnd ?? null,
+        billing_owner_user_id: params.parsed.ownerUserId,
+        updated_at: now,
+      })
+      .eq('id', workspace.id),
+    supabaseAdmin
+      .from('organizations')
+      .update({
+        stripe_customer_id: params.stripeCustomerId,
+        stripe_subscription_id: params.stripeSubscriptionId,
+        subscription_status: orgStatus,
+        subscription_period: params.billingCycle ?? params.parsed.billingCycle,
+        current_period_end: params.currentPeriodEnd ?? null,
+        billing_suspended_at: null,
+        billing_suspension_reason: null,
+        team_workspace_status: 'active',
+      })
+      .eq('id', workspace.workspace_org_id),
+  ]);
+
+  if (workspaceError) throw workspaceError;
+  if (orgError) throw orgError;
+
+  const { data: entitlement, error: entitlementLookupError } = await supabaseAdmin
+    .from('team_entitlements')
+    .select('id')
+    .eq('team_workspace_id', workspace.id)
+    .limit(1)
+    .maybeSingle<{ id: string }>();
+  if (entitlementLookupError) throw entitlementLookupError;
+
+  if (entitlement) {
+    const { error } = await supabaseAdmin
+      .from('team_entitlements')
+      .update({
+        status: entitlementStatus,
+        stripe_subscription_item_id: params.stripeSubscriptionItemId ?? null,
+        updated_at: now,
+      })
+      .eq('id', entitlement.id);
+    if (error) throw error;
+  } else {
+    const { error } = await supabaseAdmin
+      .from('team_entitlements')
+      .insert({
+        team_workspace_id: workspace.id,
+        org_id: workspace.workspace_org_id,
+        rep_team_id: workspace.rep_team_id,
+        source: 'team_plan',
+        status: entitlementStatus,
+        stripe_subscription_item_id: params.stripeSubscriptionItemId ?? null,
+      });
+    if (error) throw error;
+  }
+
+  const restoreResult = await restoreCoachesPortalRetainedRecords(workspace.workspace_org_id, workspace.id);
+
+  await writePlatformEvent({
+    eventType: 'subscription_recovered',
+    source: params.eventSource,
+    sourceEventId: params.sourceEventId ?? null,
+    orgId: workspace.workspace_org_id,
+    actorUserId: params.parsed.ownerUserId,
+    actorEmail: params.parsed.ownerEmail,
+    previousPlanId: 'team',
+    planId: 'team',
+    previousSubscriptionStatus: 'canceled',
+    subscriptionStatus: orgStatus,
+    metadata: {
+      scope: 'coaches_portal',
+      teamWorkspaceId: workspace.id,
+      restoredRetainedRecords: restoreResult.restoredCount,
+      restoredTournamentIds: restoreResult.restoredTournamentIds,
+    },
+  });
+
+  if (params.parsed.teamWorkspaceClaimId) {
+    await markTeamWorkspaceClaimed({
+      claimId: params.parsed.teamWorkspaceClaimId,
+      teamWorkspaceId: workspace.id,
+      claimedByUserId: params.parsed.ownerUserId,
+    });
+  }
+
+  return {
+    provisioned: false,
+    reason: 'reactivated',
+    workspaceOrgId: workspace.workspace_org_id,
+    teamWorkspaceId: workspace.id,
+    repTeamId: workspace.rep_team_id,
+  };
+}
+
 export async function provisionTeamWorkspaceFromCheckoutMetadata(params: {
   metadata: Record<string, string> | null | undefined;
   stripeCustomerId: string | null;
@@ -246,12 +496,25 @@ export async function provisionTeamWorkspaceFromCheckoutMetadata(params: {
   subscriptionStatus?: string | null;
   billingCycle?: string | null;
   currentPeriodEnd?: string | null;
-  eventSource: ProvisionStandaloneTeamWorkspaceInput['eventSource'];
+  eventSource: PlatformEventInput['source'];
   sourceEventId?: string | null;
 }): Promise<TeamCheckoutProvisionResult> {
   const parsed = parseTeamCheckoutMetadata(params.metadata);
   if (!parsed) return { provisioned: false, reason: 'not_team_checkout' };
   if (!params.stripeSubscriptionId) return { provisioned: false, reason: 'missing_subscription_id' };
+
+  const reactivation = await reactivateTeamWorkspaceFromParsedMetadata({
+    parsed,
+    stripeCustomerId: params.stripeCustomerId,
+    stripeSubscriptionId: params.stripeSubscriptionId,
+    stripeSubscriptionItemId: params.stripeSubscriptionItemId ?? null,
+    subscriptionStatus: params.subscriptionStatus ?? 'active',
+    billingCycle: params.billingCycle ?? parsed.billingCycle,
+    currentPeriodEnd: params.currentPeriodEnd ?? null,
+    eventSource: params.eventSource,
+    sourceEventId: params.sourceEventId ?? null,
+  });
+  if (reactivation) return reactivation;
 
   const { data: existing, error } = await supabaseAdmin
     .from('team_workspaces')

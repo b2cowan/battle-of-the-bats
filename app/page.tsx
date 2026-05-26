@@ -158,7 +158,7 @@ export default async function HomePage() {
         <div className={styles.heroBg} />
         <div className={styles.heroGrid} />
         <div className="container">
-          <div className={styles.heroContent}>
+          <div className={styles.heroHeader}>
             <div className="flex items-center gap-3 mb-8 justify-center">
               <span className="font-mono text-xs text-data-gray uppercase tracking-widest">
                 Free plan available
@@ -178,41 +178,18 @@ export default async function HomePage() {
               Purpose-built for the people running community sports organizations on evenings
               and weekends — from your first tournament to a full club program.
             </p>
-
-            <div className={styles.heroActions}>
-              <Link
-                href="/auth/signup"
-                className="font-mono text-sm font-bold uppercase tracking-widest bg-logic-lime text-pitch-black px-8 py-4 hover:bg-white transition-colors"
-              >
-                Start Your Organization
-              </Link>
-              <Link
-                href="/pricing"
-                className="font-mono text-sm uppercase tracking-widest text-data-gray border border-blueprint-blue/40 px-8 py-4 hover:border-blueprint-blue hover:text-fl-text transition-colors"
-              >
-                View pricing →
-              </Link>
-            </div>
           </div>
-        </div>
-      </section>
 
-      {/* ── Who is this for? ──────────────────────────────────────────── */}
-      <section className={styles.personaRouting}>
-        <div className="container">
           <AnimateIn>
-            <p className={`${styles.eyebrow} text-center mb-8`}>Who is this for?</p>
-          </AnimateIn>
-          <AnimateIn>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className={styles.heroPersonaGrid}>
               {PERSONAS.map((p) => (
                 <Link
                   key={p.id}
                   href={p.href}
-                  className="border border-blueprint-blue/30 p-6 flex flex-col gap-3 hover:border-blueprint-blue/60 transition-colors"
+                  className={styles.heroPersonaCard}
                 >
                   <div className="flex items-start justify-between gap-4">
-                    <span className="font-mono text-[10px] text-blueprint-blue uppercase tracking-widest font-bold">
+                    <span className="font-mono text-[10px] text-logic-lime uppercase tracking-widest font-bold">
                       {p.label}
                     </span>
                     <span className={`font-mono text-[9px] uppercase tracking-widest text-right leading-relaxed ${p.isLive ? 'text-logic-lime' : 'text-data-gray/40'}`}>
@@ -228,6 +205,18 @@ export default async function HomePage() {
               ))}
             </div>
           </AnimateIn>
+
+          <div className={styles.heroFooterNote}>
+            <span className="font-mono text-xs text-data-gray/50 uppercase tracking-widest">
+              Already know what you need?
+            </span>
+            <Link
+              href="/auth/signup"
+              className="font-mono text-xs uppercase tracking-widest text-logic-lime hover:text-fl-text transition-colors"
+            >
+              Start free →
+            </Link>
+          </div>
         </div>
       </section>
 
@@ -236,10 +225,10 @@ export default async function HomePage() {
         <div className="container">
           <AnimateIn>
             <div className={styles.sectionHead}>
-              <p className={styles.eyebrow}>Built for your role</p>
-              <h2 className={styles.sectionTitle}>One platform. Four ways to use it.</h2>
+              <p className={styles.eyebrow}>What&apos;s included</p>
+              <h2 className={styles.sectionTitle}>One platform. Every role.</h2>
               <p className={styles.sectionSub}>
-                Tournament organizers can start today — free, no credit card required. League, Club, and Coaches Portal are in development.
+                Tournament organizers can start today — free, no credit card required. League, Club, and Coaches Portal are in active development.
               </p>
             </div>
           </AnimateIn>

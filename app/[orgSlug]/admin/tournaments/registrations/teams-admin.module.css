@@ -443,6 +443,7 @@
 
 .paymentField span {
   color: var(--white-45);
+  font-family: var(--font-data);
   font-size: 0.68rem;
   font-weight: 800;
   letter-spacing: 0.06em;
@@ -453,16 +454,23 @@
   width: 100%;
   padding: 0.45rem 0.55rem;
   border: 1px solid var(--border-2);
-  border-radius: 6px;
-  background: var(--hud-surface);
+  border-radius: 2px;
+  background: var(--bg-2);
   color: var(--fl-text);
-  font-size: 0.88rem;
+  font-family: var(--font-data);
+  font-size: 0.82rem;
+}
+
+.paymentField input:focus {
+  border-color: var(--blueprint-blue);
+  outline: none;
 }
 
 .paymentDue {
   margin: 0.65rem 0 0;
   color: var(--white-50);
-  font-size: 0.8rem;
+  font-family: var(--font-data);
+  font-size: 0.72rem;
 }
 
 .paymentDue strong {
@@ -533,12 +541,17 @@
   align-items: center;
 }
 
+/* Dual-placement segmented control: one instance per breakpoint */
+.segmentedDesktop { display: flex; align-items: center; }
+.segmentedMobile  { display: none;  }
+
 .registrationUtilityStart {
   display: inline-flex;
 }
 
 .registrationFilterGroup {
   align-items: center;
+  justify-content: space-between;
 }
 
 .registrationStatusFilters {
@@ -1068,8 +1081,13 @@
   .registrationFilterGroup {
     align-items: stretch;
     flex-direction: column;
+    justify-content: flex-start;
     gap: 0.55rem;
   }
+
+  /* Swap segmented control to action group on mobile */
+  .segmentedDesktop { display: none; }
+  .segmentedMobile  { display: flex; align-items: center; }
 
   .registrationStatusFilters {
     display: grid;

@@ -524,7 +524,7 @@ export default function AdminSchedulePage() {
       />
 
       <TournamentAdminToolbar ariaLabel="Schedule controls" className={styles.scheduleToolbar}>
-        {/* ── Row 1: context controls (left/grow) ── */}
+        {/* ── Row 1 left: Division + view mode controls (grow) ── */}
         <ToolbarGroup grow className={styles.scheduleDivisionGroup}>
           {divisions.length > 0 && (
             <ToolbarSelect<string>
@@ -537,9 +537,7 @@ export default function AdminSchedulePage() {
               }}
             />
           )}
-        </ToolbarGroup>
-
-        <ToolbarGroup className={styles.scheduleModeGroup}>
+          {/* Desktop: segmented controls; Mobile: compact selects */}
           <ToolbarSegmentedControl<'pool' | 'playoff'>
             className={styles.desktopModeControl}
             value={viewMode}
@@ -547,22 +545,8 @@ export default function AdminSchedulePage() {
               { value: 'pool', label: 'Round Robin' },
               { value: 'playoff', label: 'Playoffs' },
             ]}
-            onChange={value => {
-              setViewMode(value);
-            }}
+            onChange={value => { setViewMode(value); }}
             ariaLabel="View mode"
-          />
-          <ToolbarSelect<'pool' | 'playoff'>
-            className={styles.mobileModeSelect}
-            label="View"
-            value={viewMode}
-            options={[
-              { value: 'pool', label: 'Round Robin' },
-              { value: 'playoff', label: 'Playoffs' },
-            ]}
-            onChange={value => {
-              setViewMode(value);
-            }}
           />
           {viewMode === 'pool' && (
             <>
@@ -575,16 +559,6 @@ export default function AdminSchedulePage() {
                 ]}
                 onChange={setGroupMode}
                 ariaLabel="Grouping mode"
-              />
-              <ToolbarSelect<'flat' | 'pools'>
-                className={styles.mobileModeSelect}
-                label="Group"
-                value={groupMode}
-                options={[
-                  { value: 'flat', label: 'Flat' },
-                  { value: 'pools', label: 'Pools' },
-                ]}
-                onChange={setGroupMode}
               />
             </>
           )}
@@ -600,22 +574,61 @@ export default function AdminSchedulePage() {
                 onChange={setLayoutMode}
                 ariaLabel="Layout mode"
               />
-              <ToolbarSelect<'list' | 'bracket'>
-                className={styles.mobileModeSelect}
-                label="Layout"
-                value={layoutMode}
-                options={[
-                  { value: 'list', label: 'List' },
-                  { value: 'bracket', label: 'Bracket' },
-                ]}
-                onChange={setLayoutMode}
-              />
             </>
           )}
         </ToolbarGroup>
 
-        {/* ── Row 1: utility actions (right/end) — Publish · Export · Tools ── */}
+        {/* ── Row 1 right: utility actions — Publish · Export · Tools ── */}
         <ToolbarGroup align="end" className={styles.scheduleActionsGroup}>
+          {/* Mobile row 2: Round Robin | Flat — dedicated row, hidden on desktop */}
+          <div className={styles.mobileModePair}>
+            <label className={`${styles.mobileModeNative} ${styles.mobileViewModeSelect}`}>
+              <span className="sr-only">View</span>
+              <select
+                className={styles.mobileModeNativeSelect}
+                value={viewMode}
+                onChange={event => { setViewMode(event.target.value as 'pool' | 'playoff'); }}
+              >
+                <option value="pool">Round Robin</option>
+                <option value="playoff">Playoffs</option>
+              </select>
+            </label>
+            {viewMode === 'pool' && (
+              <label className={`${styles.mobileModeNative} ${styles.mobileSubModeSelect}`}>
+                <span className="sr-only">Group</span>
+                <select
+                  className={styles.mobileModeNativeSelect}
+                  value={groupMode}
+                  onChange={event => { setGroupMode(event.target.value as 'flat' | 'pools'); }}
+                >
+                  <option value="flat">Flat</option>
+                  <option value="pools">Pools</option>
+                </select>
+              </label>
+            )}
+            {viewMode === 'playoff' && (
+              <label className={`${styles.mobileModeNative} ${styles.mobileSubModeSelect}`}>
+                <span className="sr-only">Layout</span>
+                <select
+                  className={styles.mobileModeNativeSelect}
+                  value={layoutMode}
+                  onChange={event => { setLayoutMode(event.target.value as 'list' | 'bracket'); }}
+                >
+                  <option value="list">List</option>
+                  <option value="bracket">Bracket</option>
+                </select>
+              </label>
+            )}
+          </div>
+          {/* Mobile row 3: Venue | action buttons — order:2 flows below the mode pair */}
+          <div className={styles.scheduleVenueMobile}>
+            <VenueFilterMenu
+              options={venueFilterOptions}
+              selectedKeys={selectedVenueKeys}
+              onToggle={key => setSelectedVenueKeys(prev => prev.includes(key) ? prev.filter(value => value !== key) : [...prev, key])}
+              onClear={() => setSelectedVenueKeys([])}
+            />
+          </div>
           {/* Publish control — only for round-robin view */}
           {viewMode === 'pool' && (() => {
             const ag = divisions.find(g => g.id === filterGroup);
@@ -644,6 +657,7 @@ export default function AdminSchedulePage() {
             );
           })()}
           <ExportMenu
+            className={styles.scheduleExportButton}
             formats={['xlsx', 'csv', 'ics', 'pdf']}
             onExportXLSX={handleExportXLSX}
             onExportCSV={handleExportCSV}
@@ -652,7 +666,7 @@ export default function AdminSchedulePage() {
             planId={currentOrg?.planId}
             disabled={filtered.length === 0}
           />
-          <ToolbarMenu label="Tools">
+          <ToolbarMenu label="Tools" className={styles.scheduleToolsMenu}>
             {viewMode === 'pool' ? (
               <ToolbarMenuItem
                 icon={<Sparkles size={14} />}
@@ -703,40 +717,40 @@ export default function AdminSchedulePage() {
           </ToolbarMenu>
         </ToolbarGroup>
 
-        {/* ── Row 2: status filter chips + search ── */}
+        {/* ── Row 2: search + venue + status filters ── */}
         <ToolbarGroup fullWidth className={styles.scheduleFilterGroup}>
-          <ToolbarSearch value={search} onChange={setSearch} placeholder="Search teams..." label="Search games" />
-          <div className={styles.scheduleRefinementRow}>
-            <div className={`${s.statusFilters} ${styles.scheduleStatusFilters}`}>
-              {STATUS_FILTERS.map(({ key, label }) => {
-                const isActive = selectedStatuses.includes(key);
-                const chipMod = STATUS_CHIP_CLASS[key];
-                return (
-                  <button
-                    key={key}
-                    className={[
-                      s.filterChip,
-                      styles.scheduleStatusChip,
-                      key === 'scheduled' ? styles.scheduleStatusScheduled : '',
-                      chipMod ? (s as Record<string, string>)[chipMod] : '',
-                      isActive ? s.chipActive : '',
-                      isActive ? styles.scheduleStatusActive : '',
-                    ].filter(Boolean).join(' ')}
-                    onClick={() => setSelectedStatuses(prev => isActive ? prev.filter(status => status !== key) : [...prev, key])}
-                  >
-                    {label.toUpperCase()}
-                    <span className={s.chipCount}>{statusCounts[key] ?? 0}</span>
-                  </button>
-                );
-              })}
-            </div>
+          <ToolbarSearch className={styles.scheduleSearch} value={search} onChange={setSearch} placeholder="Search teams..." label="Search games" />
+          <div className={styles.scheduleVenueDesktop}>
+            <VenueFilterMenu
+              options={venueFilterOptions}
+              selectedKeys={selectedVenueKeys}
+              onToggle={key => setSelectedVenueKeys(prev => prev.includes(key) ? prev.filter(value => value !== key) : [...prev, key])}
+              onClear={() => setSelectedVenueKeys([])}
+            />
           </div>
-          <VenueFilterMenu
-            options={venueFilterOptions}
-            selectedKeys={selectedVenueKeys}
-            onToggle={key => setSelectedVenueKeys(prev => prev.includes(key) ? prev.filter(value => value !== key) : [...prev, key])}
-            onClear={() => setSelectedVenueKeys([])}
-          />
+          <div className={`${s.statusFilters} ${styles.scheduleStatusFilters}`}>
+            {STATUS_FILTERS.map(({ key, label }) => {
+              const isActive = selectedStatuses.includes(key);
+              const chipMod = STATUS_CHIP_CLASS[key];
+              return (
+                <button
+                  key={key}
+                  className={[
+                    s.filterChip,
+                    styles.scheduleStatusChip,
+                    key === 'scheduled' ? styles.scheduleStatusScheduled : '',
+                    chipMod ? (s as Record<string, string>)[chipMod] : '',
+                    isActive ? s.chipActive : '',
+                    isActive ? styles.scheduleStatusActive : '',
+                  ].filter(Boolean).join(' ')}
+                  onClick={() => setSelectedStatuses(prev => isActive ? prev.filter(status => status !== key) : [...prev, key])}
+                >
+                  {label.toUpperCase()}
+                  <span className={s.chipCount}>{statusCounts[key] ?? 0}</span>
+                </button>
+              );
+            })}
+          </div>
         </ToolbarGroup>
       </TournamentAdminToolbar>
 
@@ -812,7 +826,7 @@ export default function AdminSchedulePage() {
               <h3 style={{ fontFamily: 'var(--font-data)', fontSize: '0.95rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--logic-lime)', margin: 0 }}>
                 {modal === 'add' ? 'Add Game' : 'Edit Game'}
               </h3>
-              <button className="btn btn-ghost btn-sm" onClick={() => setModal(null)}><X size={16} /></button>
+              <button className="btn btn-ghost btn-data" onClick={() => setModal(null)}><X size={16} /></button>
             </div>
             <form onSubmit={handleSubmit}>
               <div className="form-row form-row-3" style={{ marginBottom: '1rem' }}>
@@ -900,7 +914,7 @@ export default function AdminSchedulePage() {
                   <label className="form-label" style={{ margin: 0 }}>Venue *</label>
                   <button
                     type="button"
-                    className="btn btn-outline btn-sm"
+                    className="btn btn-outline btn-data"
                     style={{ height: '26px', fontSize: '0.75rem', padding: '0 0.6rem', gap: '0.25rem' }}
                     onClick={() => setAddVenueOpen(true)}
                   >
@@ -1012,8 +1026,8 @@ export default function AdminSchedulePage() {
                 </div>
               )}
               <div className="modal-footer">
-                <button type="button" className="btn btn-ghost" onClick={() => setModal(null)}>Cancel</button>
-                <button type="submit" className="btn btn-primary" id="schedule-save-btn"><Check size={14} /> Save Game</button>
+                <button type="button" className="btn btn-ghost btn-data" onClick={() => setModal(null)}>Cancel</button>
+                <button type="submit" className="btn btn-primary btn-data" id="schedule-save-btn"><Check size={14} /> Save Game</button>
               </div>
             </form>
           </div>
@@ -1280,7 +1294,7 @@ function PublishScheduleModal({
           <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <Globe size={16} style={{ color: 'var(--logic-lime)' }} /> {titleText}
           </h3>
-          <button className="btn btn-ghost btn-sm" onClick={onClose}><X size={16} /></button>
+          <button className="btn btn-ghost btn-data" onClick={onClose}><X size={16} /></button>
         </div>
 
         <div style={{ padding: '1.25rem 1.5rem' }}>
@@ -1293,7 +1307,7 @@ function PublishScheduleModal({
                   Notified {result.notified} team{result.notified !== 1 ? 's' : ''} by email.
                 </p>
               )}
-              <button className="btn btn-primary btn-sm" onClick={onClose} style={{ marginTop: '1rem' }}>Done</button>
+              <button className="btn btn-primary btn-data" onClick={onClose} style={{ marginTop: '1rem' }}>Done</button>
             </div>
           ) : (
             <>
@@ -1413,8 +1427,8 @@ function PublishScheduleModal({
               )}
 
               <div className="modal-footer" style={{ padding: 0, marginTop: 0 }}>
-                <button className="btn btn-ghost" onClick={onClose} disabled={loading}>Cancel</button>
-                <button className="btn btn-primary" onClick={handleConfirm} disabled={loading || targets.length === 0}>
+                <button className="btn btn-ghost btn-data" onClick={onClose} disabled={loading}>Cancel</button>
+                <button className="btn btn-primary btn-data" onClick={handleConfirm} disabled={loading || targets.length === 0}>
                   {loading ? 'Publishing…' : `Publish${targets.length > 1 ? ` ${targets.length} Divisions` : ''}`}
                 </button>
               </div>

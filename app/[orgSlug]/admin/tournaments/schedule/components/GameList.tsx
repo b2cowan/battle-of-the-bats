@@ -414,14 +414,21 @@ export default function GameList({
             )}
           </div>
 
-          {venueLabel && (
-            <div className={`${s.gameColVenue} ${styles.planningVenueCell}`} style={{ alignItems: 'flex-start', gap: '4px', fontFamily: 'var(--font-data)', fontSize: '0.72rem', color: 'var(--data-gray)' }}>
-              <MapPin size={11} style={{ flexShrink: 0, opacity: 0.55, marginTop: '2px' }} />
-              <span style={{ overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', lineHeight: '1.35' }}>
-                {venueLabel}
-              </span>
-            </div>
-          )}
+          <div
+            className={`${s.gameColVenue} ${styles.planningVenueCell}`}
+            data-empty={venueLabel ? undefined : 'true'}
+            aria-hidden={venueLabel ? undefined : true}
+            style={{ alignItems: 'flex-start', gap: '4px', fontFamily: 'var(--font-data)', fontSize: '0.72rem', color: 'var(--data-gray)' }}
+          >
+            {venueLabel && (
+              <>
+                <MapPin size={11} style={{ flexShrink: 0, opacity: 0.55, marginTop: '2px' }} />
+                <span style={{ overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', lineHeight: '1.35' }}>
+                  {venueLabel}
+                </span>
+              </>
+            )}
+          </div>
 
           {/* Matchup */}
           <div className={`${s.gameColMatchup} ${styles.planningMatchup}`} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.65rem' }}>
