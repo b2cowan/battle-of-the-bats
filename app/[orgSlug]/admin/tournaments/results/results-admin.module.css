@@ -216,6 +216,18 @@
   font-size: 0.68rem;
 }
 
+/* ─── Results status filter chips ────────────────────────────────────────────
+   margin-left:auto pushes chips right — mirrors scheduleStatusFilters.
+   min-height:28px matches the venue filter button height on desktop. */
+.resultsStatusFilters {
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.resultsStatusFilters > button {
+  min-height: 28px;
+}
+
 /* ─── Mobile overrides ─────────────────────────────────────────────────────── */
 @media (max-width: 760px) {
   /* Breathing room below toolbar — matches Schedule */
