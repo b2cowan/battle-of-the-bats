@@ -42,6 +42,180 @@
   color-scheme: dark;
 }
 
+/* ─── Venue filter — desktop wrapper ─────────────────────────────────────────
+   Sits in the fullWidth row between Search and status chips.
+   Hidden on mobile (venue button lives in resultsVenueMobile instead). */
+.resultsVenueDesktop {
+  flex: 1 1 13rem;
+  max-width: 22rem;
+  min-width: 0;
+}
+
+/* ─── Venue filter — mobile wrapper ──────────────────────────────────────────
+   Hidden on desktop. On mobile: order:2 in the actionsGroup flex container so
+   it flows below the mobileModePair (order:1), alongside the compact action
+   buttons. Fills available space so the venue button stretches to its row. */
+.resultsVenueMobile {
+  display: none;
+}
+
+/* Venue filter root fills its wrapper on both placements */
+.resultsVenueDesktop .venueFilterRoot,
+.resultsVenueMobile .venueFilterRoot {
+  width: 100%;
+  max-width: none;
+}
+
+/* ─── Venue filter component styles ─────────────────────────────────────────
+   Identical to schedule-admin.module.css — keeps the two pages visually
+   consistent without coupling them to a shared module. */
+
+.venueFilterRoot {
+  position: relative;
+  flex: 1 1 13rem;
+  max-width: 22rem;
+  min-width: 0;
+}
+
+.venueFilterButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.4rem;
+  width: 100%;
+  height: 28px;
+  padding: 0 0.65rem;
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.25);
+  border-radius: 2px;
+  background: var(--bg-2);
+  color: rgba(148, 163, 184, 0.6);
+  cursor: pointer;
+  font-family: var(--font-data);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.venueFilterButton span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.venueFilterButton:hover:not(:disabled),
+.venueFilterButtonActive {
+  border-color: rgba(var(--logic-lime-rgb), 0.42);
+  background: rgba(var(--logic-lime-rgb), 0.07);
+  color: var(--logic-lime);
+}
+
+.venueFilterButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.venueFilterPanel {
+  position: absolute;
+  top: calc(100% + 0.35rem);
+  left: 0;
+  right: 0;
+  z-index: 210;
+  width: 100%;
+  max-width: 100%;
+  max-height: 18rem;
+  overflow-y: auto;
+  padding: 0.4rem;
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.3);
+  border-radius: 2px;
+  background: var(--hud-surface);
+  box-shadow: 0 18px 38px rgba(0, 0, 0, 0.55);
+}
+
+.venueFilterHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.35rem 0.4rem 0.45rem;
+  color: var(--white-50);
+  font-family: var(--font-data);
+  font-size: 0.58rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.venueFilterHeader button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  border: 0;
+  background: transparent;
+  color: var(--white-50);
+  cursor: pointer;
+  font-family: var(--font-data);
+  font-size: 0.58rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.venueFilterHeader button:hover {
+  color: var(--logic-lime);
+}
+
+.venueFilterList {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.venueFilterOption {
+  display: grid;
+  grid-template-columns: 1rem minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.45rem;
+  width: 100%;
+  min-height: 2rem;
+  padding: 0.35rem 0.45rem;
+  border: 1px solid transparent;
+  border-radius: 2px;
+  background: transparent;
+  color: var(--white-70);
+  cursor: pointer;
+  text-align: left;
+}
+
+.venueFilterOption:hover,
+.venueFilterOptionActive {
+  border-color: rgba(var(--logic-lime-rgb), 0.26);
+  background: rgba(var(--logic-lime-rgb), 0.07);
+  color: var(--white);
+}
+
+.venueFilterCheck {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--logic-lime);
+}
+
+.venueFilterName {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.venueFilterCount {
+  color: var(--white-40);
+  font-family: var(--font-data);
+  font-size: 0.68rem;
+}
+
 /* ─── Mobile overrides ─────────────────────────────────────────────────────── */
 @media (max-width: 760px) {
   /* Breathing room below toolbar — matches Schedule */
@@ -69,8 +243,47 @@
     min-height: 34px;
   }
 
+  /* Desktop venue wrapper hidden on mobile */
+  .resultsVenueDesktop {
+    display: none;
+  }
+
+  /* Mobile venue wrapper: order:2 flows below mobileModePair (order:1),
+     fills remaining space alongside the compact action buttons */
+  .resultsVenueMobile {
+    display: block;
+    order: 2;
+    flex: 1 1 0;
+    min-width: 0;
+  }
+
+  /* Venue button: 34px to match mode-select touch target height */
+  .resultsVenueMobile .venueFilterButton {
+    height: 34px;
+  }
+
+  /* Panel: break out of narrow flex-item width so full venue names show */
+  .resultsVenueMobile .venueFilterPanel {
+    right: auto;
+    width: auto;
+    min-width: 240px;
+    max-width: calc(100vw - 1.5rem);
+  }
+
   /* Status chips — 34px touch target on mobile */
   .resultsStatusFilters > button {
     min-height: 34px;
+  }
+
+  /* Venue button sizing in the fullWidth row on very narrow screens */
+  .venueFilterButton {
+    justify-content: flex-start;
+    height: 34px;
+    padding-inline: 0.7rem;
+  }
+
+  .venueFilterPanel {
+    width: 100%;
+    max-width: 100%;
   }
 }
