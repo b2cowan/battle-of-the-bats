@@ -763,6 +763,73 @@ export function welcomeBackHtml(p: {
   `);
 }
 
+// ── Founding Season email templates ──────────────────────────────────────────
+
+/**
+ * founding_welcome — Email 1 of the Founding Season sequence.
+ *
+ * Fires at signup (transactional — bypasses opt-out check).
+ * Subject: "Your founding season starts now — Tournament Plus is free through Dec 31"
+ *
+ * Note: The unsubscribe footer is injected by email-sender.ts for all marketing
+ * emails. For this transactional welcome it is NOT injected (skipOptOutCheck=true),
+ * but a courtesy unsubscribe block is included inline via the footerHtml param
+ * so recipients still have a clear opt-out path.
+ */
+export function foundingWelcomeHtml(p: {
+  orgName: string;
+  firstName?: string;
+  setupUrl: string;
+  unsubscribeUrl?: string;
+}) {
+  const greeting = p.firstName ? `Hi ${p.firstName},` : 'Hi there,';
+  const unsubscribeBlock = p.unsubscribeUrl
+    ? `<div style="margin-top:2rem;padding-top:1.25rem;border-top:1px solid rgba(217,249,157,0.1);">
+        <p style="margin:0;color:rgba(241,245,249,0.3);font-size:0.72rem;line-height:1.55;">
+          You're receiving this because you signed up for FieldLogicHQ.&nbsp;
+          <a href="${p.unsubscribeUrl}" style="color:rgba(217,249,157,0.5);text-decoration:underline;">Unsubscribe</a>
+          &nbsp;·&nbsp; FieldLogicHQ · Canada
+        </p>
+      </div>`
+    : '';
+
+  return wrap(`
+    <h2 style="color:#D9F99D;font-size:1.35rem;font-weight:800;margin:0 0 1.25rem;letter-spacing:-0.01em;">
+      Your founding season starts now.
+    </h2>
+    <p style="margin:0 0 1rem;">${greeting}</p>
+    <p style="margin:0 0 1.25rem;line-height:1.7;">
+      You're in. <strong>${p.orgName}</strong> is set up on FieldLogicHQ and running
+      <strong>Tournament Plus free through December 31, 2026</strong> as a founding organization.
+    </p>
+
+    <div style="background:#0F172A;border:1px solid rgba(217,249,157,0.2);border-left:3px solid rgba(217,249,157,0.5);padding:1.25rem;margin:1.5rem 0;">
+      <p style="margin:0 0 0.75rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#D9F99D;">Tournament Plus ($39/month) gives you</p>
+      <ul style="margin:0;padding-left:1.25rem;line-height:1.9;color:rgba(241,245,249,0.8);">
+        <li>Auto-scheduling across any number of fields and time slots</li>
+        <li>Single and double-elimination brackets</li>
+        <li>Team communications and announcements</li>
+        <li>Tournament archives — every past event preserved</li>
+        <li>Up to 3 active tournaments at once</li>
+      </ul>
+    </div>
+
+    <p style="margin:0 0 1.5rem;line-height:1.7;color:rgba(241,245,249,0.8);">
+      All of it, <strong>free until January 1, 2027</strong>. No credit card required.
+    </p>
+
+    <a href="${p.setupUrl}" style="display:inline-block;background:#D9F99D;color:#0b0f14;text-decoration:none;font-weight:800;padding:0.8rem 1.5rem;font-size:0.82rem;letter-spacing:0.06em;">Set up your first tournament →</a>
+
+    <p style="margin:1.75rem 0 0;line-height:1.7;color:rgba(241,245,249,0.65);">
+      If anything doesn't work the way you'd expect, reply to this email.
+      We read everything.
+    </p>
+    <p style="margin:0.75rem 0 0;color:rgba(241,245,249,0.65);">— The FieldLogicHQ team</p>
+
+    ${unsubscribeBlock}
+  `);
+}
+
 export function cancellationConfirmationHtml(p: {
   orgName: string;
   planLabel: string;

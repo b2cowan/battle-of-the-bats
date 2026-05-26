@@ -1,7 +1,7 @@
 ﻿'use client';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { LayoutDashboard, Building2, Users, ScrollText, Terminal, HelpCircle, LogOut, ArchiveRestore, Mail, SlidersHorizontal, Search, ListChecks, ClipboardCheck, FileText } from 'lucide-react';
+import { LayoutDashboard, Building2, Users, ScrollText, Terminal, HelpCircle, LogOut, ArchiveRestore, Mail, Send, SlidersHorizontal, Search, ListChecks, ClipboardCheck, FileText } from 'lucide-react';
 import { signOut } from '@/lib/auth';
 import styles from './platform-admin.module.css';
 
@@ -24,6 +24,7 @@ const BASE_NAV_GROUPS = [
     label: 'Growth',
     items: [
       { href: '/platform-admin/early-access', label: 'Early Access', Icon: Mail },
+      { href: '/platform-admin/email', label: 'Email', Icon: Send },
     ],
   },
   {

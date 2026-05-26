@@ -1,0 +1,495 @@
+.page {
+  max-width: 1280px;
+}
+
+/* ── Page header ─────────────────────────────────────────────────────────── */
+.header {
+  border-bottom: 1px solid rgba(var(--logic-lime-rgb), 0.3);
+  padding-bottom: 1rem;
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.headerLabel {
+  font-family: var(--font-data);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--logic-lime);
+}
+
+.title {
+  font-weight: 800;
+  font-size: 1.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0;
+  color: var(--fl-text);
+  margin: 0.2rem 0 0;
+}
+
+/* ── Stats row ───────────────────────────────────────────────────────────── */
+.statsRow {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 2rem;
+}
+
+.statCard {
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.18);
+  background: rgba(255, 255, 255, 0.025);
+  padding: 0.9rem 1rem;
+}
+
+.statValue {
+  font-family: var(--font-data);
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: var(--fl-text);
+  line-height: 1;
+  margin-bottom: 0.3rem;
+}
+
+.statLabel {
+  font-family: var(--font-data);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--data-gray);
+}
+
+/* ── Section headers ─────────────────────────────────────────────────────── */
+.sectionHeader {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid rgba(var(--logic-lime-rgb), 0.12);
+}
+
+.sectionTitle {
+  font-family: var(--font-data);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--logic-lime);
+}
+
+.sectionNote {
+  font-family: var(--font-data);
+  font-size: 0.6rem;
+  color: var(--data-gray);
+}
+
+.section {
+  margin-bottom: 2.5rem;
+}
+
+/* ── Table ───────────────────────────────────────────────────────────────── */
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-data);
+  font-size: 0.7rem;
+}
+
+.table th {
+  text-align: left;
+  font-size: 0.55rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(var(--logic-lime-rgb), 0.5);
+  padding: 0.4rem 0.75rem;
+  border-bottom: 1px solid rgba(var(--logic-lime-rgb), 0.12);
+  white-space: nowrap;
+}
+
+.table td {
+  padding: 0.65rem 0.75rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  color: var(--fl-text);
+  vertical-align: middle;
+}
+
+.table tr:last-child td {
+  border-bottom: none;
+}
+
+.table tr:hover td {
+  background: rgba(var(--logic-lime-rgb), 0.03);
+}
+
+.emailKey {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.65rem;
+  color: var(--logic-lime);
+  white-space: nowrap;
+}
+
+.subject {
+  color: var(--fl-text);
+  max-width: 280px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sendDate {
+  white-space: nowrap;
+  color: var(--data-gray);
+}
+
+.audience {
+  color: var(--data-gray);
+  font-size: 0.62rem;
+}
+
+.recipientCount {
+  font-weight: 700;
+  color: var(--fl-text);
+  white-space: nowrap;
+}
+
+/* ── Status badges ───────────────────────────────────────────────────────── */
+.badge {
+  display: inline-block;
+  font-family: var(--font-data);
+  font-size: 0.52rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 0.2rem 0.5rem;
+  border: 1px solid;
+}
+
+.badgeScheduled {
+  color: rgba(var(--logic-lime-rgb), 0.7);
+  border-color: rgba(var(--logic-lime-rgb), 0.3);
+  background: rgba(var(--logic-lime-rgb), 0.06);
+}
+
+.badgeSent,
+.badgeComplete {
+  color: #4ade80;
+  border-color: rgba(74, 222, 128, 0.35);
+  background: rgba(74, 222, 128, 0.06);
+}
+
+.badgePending,
+.badgeRunning {
+  color: #f59e0b;
+  border-color: rgba(245, 158, 11, 0.35);
+  background: rgba(245, 158, 11, 0.06);
+}
+
+.badgeFailed {
+  color: #f87171;
+  border-color: rgba(248, 113, 113, 0.35);
+  background: rgba(248, 113, 113, 0.06);
+}
+
+.badgeNotBuilt {
+  color: rgba(241, 245, 249, 0.3);
+  border-color: rgba(255, 255, 255, 0.08);
+  background: transparent;
+}
+
+/* ── Action buttons ──────────────────────────────────────────────────────── */
+.actions {
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+}
+
+.btnAction {
+  font-family: var(--font-data);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.3rem 0.65rem;
+  border: 1px solid;
+  background: none;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.btnPreview {
+  color: var(--logic-lime);
+  border-color: rgba(var(--logic-lime-rgb), 0.3);
+}
+.btnPreview:hover {
+  background: rgba(var(--logic-lime-rgb), 0.1);
+}
+
+.btnSend {
+  color: #4ade80;
+  border-color: rgba(74, 222, 128, 0.3);
+}
+.btnSend:hover:not(:disabled) {
+  background: rgba(74, 222, 128, 0.08);
+}
+.btnSend:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.btnExpand {
+  color: var(--data-gray);
+  border-color: rgba(255, 255, 255, 0.1);
+  font-size: 0.55rem;
+}
+.btnExpand:hover {
+  color: var(--fl-text);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.btnResubscribe {
+  color: rgba(241, 245, 249, 0.5);
+  border-color: rgba(255, 255, 255, 0.12);
+  font-size: 0.55rem;
+}
+.btnResubscribe:hover:not(:disabled) {
+  color: var(--fl-text);
+  border-color: rgba(255, 255, 255, 0.25);
+}
+.btnResubscribe:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* ── Expandable sends sub-table ──────────────────────────────────────────── */
+.expandedRow td {
+  background: rgba(0, 0, 0, 0.25);
+  padding: 0;
+  border-bottom: 1px solid rgba(var(--logic-lime-rgb), 0.08);
+}
+
+.subTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-data);
+  font-size: 0.62rem;
+}
+
+.subTable th {
+  font-size: 0.5rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(var(--logic-lime-rgb), 0.4);
+  padding: 0.35rem 1rem;
+  text-align: left;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.subTable td {
+  padding: 0.45rem 1rem;
+  color: rgba(241, 245, 249, 0.65);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.025);
+}
+
+.subTable tr:last-child td {
+  border-bottom: none;
+}
+
+.resendId {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.58rem;
+  color: rgba(241, 245, 249, 0.35);
+}
+
+/* ── Preview modal ───────────────────────────────────────────────────────── */
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85);
+  z-index: 1000;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 2rem 1rem;
+  overflow-y: auto;
+}
+
+.modal {
+  background: #0b0f14;
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.25);
+  width: 100%;
+  max-width: 680px;
+  position: relative;
+}
+
+.modalHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid rgba(var(--logic-lime-rgb), 0.15);
+}
+
+.modalTitle {
+  font-family: var(--font-data);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--logic-lime);
+}
+
+.modalSubject {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--fl-text);
+  margin-top: 0.2rem;
+}
+
+.modalClose {
+  background: none;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: var(--data-gray);
+  width: 1.75rem;
+  height: 1.75rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  flex-shrink: 0;
+  transition: color 0.15s, border-color 0.15s;
+}
+.modalClose:hover {
+  color: var(--fl-text);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.modalBody {
+  padding: 1.25rem;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.previewFrame {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: #0b0f14;
+}
+
+.notBuiltNotice {
+  padding: 2rem;
+  text-align: center;
+  color: var(--data-gray);
+  font-family: var(--font-data);
+  font-size: 0.7rem;
+}
+
+/* ── Empty states ────────────────────────────────────────────────────────── */
+.emptyState {
+  padding: 1.5rem;
+  text-align: center;
+  font-family: var(--font-data);
+  font-size: 0.65rem;
+  color: var(--data-gray);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* ── Send confirmation dialog ────────────────────────────────────────────── */
+.confirmDialog {
+  padding: 1.5rem;
+}
+
+.confirmTitle {
+  font-family: var(--font-data);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #f87171;
+  margin-bottom: 0.75rem;
+}
+
+.confirmBody {
+  font-size: 0.82rem;
+  line-height: 1.65;
+  color: rgba(241, 245, 249, 0.75);
+  margin-bottom: 1.25rem;
+}
+
+.confirmActions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.btnConfirmSend {
+  background: rgba(74, 222, 128, 0.12);
+  border: 1px solid rgba(74, 222, 128, 0.35);
+  color: #4ade80;
+  font-family: var(--font-data);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.45rem 1rem;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.btnConfirmSend:hover:not(:disabled) {
+  background: rgba(74, 222, 128, 0.2);
+}
+.btnConfirmSend:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.btnCancel {
+  background: none;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: var(--data-gray);
+  font-family: var(--font-data);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.45rem 1rem;
+  cursor: pointer;
+}
+.btnCancel:hover {
+  color: var(--fl-text);
+}
+
+.sendingNote {
+  font-family: var(--font-data);
+  font-size: 0.62rem;
+  color: #f59e0b;
+  margin-top: 0.5rem;
+}
+
+/* ── Toast / result notification ─────────────────────────────────────────── */
+.resultBanner {
+  padding: 0.75rem 1rem;
+  font-family: var(--font-data);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  border: 1px solid;
+  margin-bottom: 1.25rem;
+}
+
+.resultSuccess {
+  color: #4ade80;
+  border-color: rgba(74, 222, 128, 0.3);
+  background: rgba(74, 222, 128, 0.06);
+}
+
+.resultError {
+  color: #f87171;
+  border-color: rgba(248, 113, 113, 0.3);
+  background: rgba(248, 113, 113, 0.06);
+}

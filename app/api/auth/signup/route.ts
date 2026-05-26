@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { createOrganization, createOrganizationMember } from '@/lib/db';
-import { sendEmail, signupVerificationHtml } from '@/lib/email';
+import { sendEmail, signupVerificationHtml, foundingWelcomeHtml } from '@/lib/email';
+import { sendMarketingEmail, createEmailBatch, finalizeBatch } from '@/lib/email-sender';
+import { buildUnsubscribeUrl } from '@/lib/unsubscribe-token';
 
 function slugify(name: string) {
   return name
@@ -126,6 +128,69 @@ export async function POST(req: Request) {
       await rollbackOrganization(org.id);
       await rollbackAuthUser(userId);
       return NextResponse.json({ error: 'Failed to link user to organization.' }, { status: 500 });
+    }
+
+    // Founding Season: auto-assign comp_period override
+    // Tournament Plus is free through December 31, 2026 for all founding organizations.
+    // This is non-fatal — org creation continues even if this insert fails.
+    const FOUNDING_SEASON_EXPIRES_AT = '2027-01-01T00:00:00.000Z';
+    if (new Date() < new Date(FOUNDING_SEASON_EXPIRES_AT)) {
+      const { error: compErr } = await supabaseAdmin.from('org_overrides').insert({
+        org_id: org.id,
+        type: 'comp_period',
+        value: null,
+        expires_at: FOUNDING_SEASON_EXPIRES_AT,
+        reason: 'Founding Season — Tournament Plus free through December 31, 2026',
+        created_by: 'system',
+      });
+      if (compErr) {
+        console.error('[signup] Founding season comp_period insert error:', compErr);
+      }
+    }
+
+    // ── Founding Season: send founding_welcome email ──────────────────────────
+    // Fires immediately at signup for every org created during the founding window.
+    // This is a transactional welcome email — it bypasses the opt-out check.
+    // Non-fatal: a Resend error or missing API key does not block the signup response.
+    if (new Date() < new Date(FOUNDING_SEASON_EXPIRES_AT)) {
+      try {
+        const setupUrl = `${origin}/${org.slug}/admin/onboarding`;
+        const unsubscribeUrl = buildUnsubscribeUrl(org.id);
+        const welcomeHtml = foundingWelcomeHtml({
+          orgName: normalizedOrgName,
+          setupUrl,
+          unsubscribeUrl,
+        });
+
+        // Create a single-send batch so it appears in the email dashboard
+        const batchId = await createEmailBatch({
+          emailKey: 'founding_welcome',
+          subject: 'Your founding season starts now — Tournament Plus is free through Dec 31',
+          triggeredBy: 'signup',
+          recipientCount: 1,
+        });
+
+        const result = await sendMarketingEmail({
+          emailKey: 'founding_welcome',
+          orgId: org.id,
+          toEmail: normalizedEmail,
+          subject: 'Your founding season starts now — Tournament Plus is free through Dec 31',
+          html: welcomeHtml,
+          batchId: batchId ?? undefined,
+          skipOptOutCheck: true, // transactional — always send regardless of opt-out
+        });
+
+        if (batchId) {
+          await finalizeBatch(batchId, result === 'failed' ? 'failed' : 'complete');
+        }
+
+        if (result === 'failed') {
+          console.warn('[signup] founding_welcome send failed — signup continues');
+        }
+      } catch (welcomeErr) {
+        // Never block signup on email failure
+        console.error('[signup] founding_welcome error (non-fatal):', welcomeErr);
+      }
     }
 
     if (requireVerification) {
