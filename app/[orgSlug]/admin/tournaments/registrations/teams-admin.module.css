@@ -558,8 +558,10 @@
   min-width: 0;
 }
 
+/* Desktop chip height matches venue button / Schedule + Results chips (28px) */
 .registrationStatusFilters > button {
   justify-content: center;
+  min-height: 28px;
 }
 
 .addTeamLabel {
