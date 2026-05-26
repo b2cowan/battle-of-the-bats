@@ -12,6 +12,7 @@ export type OrgRelation = {
   enabled_addons?: string[] | null;
   account_kind?: OrgAccountKind | null;
   team_workspace_status?: string | null;
+  subscription_status?: string | null;
   onboarding_completed_at?: string | null;
 } | null;
 
@@ -99,6 +100,10 @@ function isMissingStartupTasksColumn(error: { code?: string; message?: string } 
   return error.code === '42703' || error.code === 'PGRST204' || message.includes('startup_tasks');
 }
 
+function isActiveSubscriptionStatus(status: string | null | undefined) {
+  return status === undefined || status === null || ['active', 'trialing', 'past_due'].includes(status);
+}
+
 function hasSkippedTournamentSetup(value: unknown) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
   const task = (value as Record<string, { status?: unknown }>).tournament;
@@ -148,7 +153,7 @@ async function hasExplicitPlanChoice(orgId: string, planId: OrgPlan): Promise<bo
 async function getActiveMembershipRows(userId: string): Promise<ActiveMemberRow[]> {
   const { data } = await supabaseAdmin
     .from('organization_members')
-    .select('id, organization_id, role, organizations(id, slug, name, plan_id, enabled_addons, account_kind, team_workspace_status, onboarding_completed_at)')
+    .select('id, organization_id, role, organizations(id, slug, name, plan_id, subscription_status, enabled_addons, account_kind, team_workspace_status, onboarding_completed_at)')
     .eq('user_id', userId)
     .eq('status', 'active');
 
@@ -163,6 +168,7 @@ function buildMembershipContext(member: ActiveMemberRow): UserAccessContext | nu
 
   const planId = org?.plan_id ?? 'tournament';
   const roleLabel = formatRole(member.role);
+  const subscriptionIsActive = isActiveSubscriptionStatus(org?.subscription_status);
 
   if (member.role === 'official') {
     return {
@@ -183,6 +189,7 @@ function buildMembershipContext(member: ActiveMemberRow): UserAccessContext | nu
 
   const accountKind = org?.account_kind ?? 'organization';
   if (isTeamWorkspaceOrg({ accountKind, planId })) {
+    if (!subscriptionIsActive) return null;
     return {
       id: `coach-premium:${orgId}`,
       kind: 'coaches_premium',
@@ -200,6 +207,7 @@ function buildMembershipContext(member: ActiveMemberRow): UserAccessContext | nu
   }
 
   if (member.role === 'coach') {
+    if (!subscriptionIsActive) return null;
     return {
       id: `coach:${orgId}`,
       kind: 'coaches_premium',
@@ -241,6 +249,7 @@ function buildCoachAssignmentContext(params: {
   const slug = org?.slug;
   const orgId = org?.id ?? params.member.organization_id;
   if (!slug || !orgId || params.assignmentCount === 0) return null;
+  if (!isActiveSubscriptionStatus(org?.subscription_status)) return null;
 
   const detail = params.assignmentCount === 1 && params.firstTeamName
     ? params.firstTeamName

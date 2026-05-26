@@ -83,7 +83,9 @@ export default async function CoachesPortalPage() {
       <section className={styles.section}>
         <div className={styles.sectionHeader}>
           <h2 className={styles.sectionTitle}>Premium team workspaces</h2>
-          <Link href={COACHES_START_PATH} className="btn btn-ghost btn-sm">Explore Premium</Link>
+          {premiumContexts.length === 0 && (
+            <Link href={COACHES_START_PATH} className="btn btn-ghost btn-sm">Explore Premium</Link>
+          )}
         </div>
 
         {premiumContexts.length === 0 ? (

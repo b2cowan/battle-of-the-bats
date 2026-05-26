@@ -90,12 +90,66 @@ export interface Tournament {
   settings?: TournamentSettings;
 }
 
+// ---------------------------------------------------------------------------
+// Venue hierarchy — Venue (facility) → VenueFacility (playing surface)
+// ---------------------------------------------------------------------------
+
+export type FacilityType = 'diamond' | 'field' | 'court' | 'rink' | 'gym' | 'other';
+
+export const FACILITY_TYPE_LABELS: Record<FacilityType, string> = {
+  diamond: 'Diamond',
+  field:   'Field',
+  court:   'Court',
+  rink:    'Rink',
+  gym:     'Gym',
+  other:   'Other',
+};
+
+export const FACILITY_TYPES: FacilityType[] = ['diamond', 'field', 'court', 'rink', 'gym', 'other'];
+
+/** A playing surface within a tournament venue (e.g. "Diamond 1", "Rink North"). */
+export interface VenueFacility {
+  id: string;
+  venueId: string;
+  tournamentId: string;
+  name: string;                    // free text: "Diamond 1", "Court Sigma"
+  facilityType: FacilityType;
+  displayOrder: number;
+  notes?: string;
+  sourceOrgFacilityId?: string;    // set when imported from org venue library
+}
+
+/** A physical venue/facility location within a tournament (e.g. "Lions Park"). */
 export interface Venue {
   id: string;
   tournamentId: string;
-  name: string;     // e.g. "Venue 1 — Lions Park"
-  address: string;  // full address for Google Maps
-  notes?: string;   // parking info, field notes, etc.
+  name: string;                    // facility name: "Lions Park"
+  address?: string;                // full address for Google Maps
+  notes?: string;                  // facility-level notes
+  sourceOrgVenueId?: string;       // set when imported from org venue library
+  facilities?: VenueFacility[];    // populated when fetched with includeFacilities option
+}
+
+/** A playing surface within an org venue library entry. */
+export interface OrgVenueFacility {
+  id: string;
+  orgVenueId: string;
+  orgId: string;
+  name: string;
+  facilityType: FacilityType;
+  displayOrder: number;
+  notes?: string;
+}
+
+/** An org-level venue library entry (persists across tournaments). */
+export interface OrgVenue {
+  id: string;
+  orgId: string;
+  name: string;
+  address?: string;
+  notes?: string;
+  isActive: boolean;
+  facilities?: OrgVenueFacility[];
 }
 
 export interface PlayoffConfig {
@@ -240,8 +294,9 @@ export interface Game {
   awayTeamId: string;
   date: string; // ISO date string YYYY-MM-DD
   time: string; // HH:MM
-  location: string;      // display name (kept for backward compat)
-  venueId?: string;      // links to a managed Venue record
+  location: string;          // display name (kept for backward compat)
+  venueId?: string;          // links to a managed Venue record (diamonds.id)
+  venueFacilityId?: string;  // links to a venue_facilities record
   homeScore?: number | null;
   awayScore?: number | null;
   status: GameStatus;

@@ -284,7 +284,7 @@ export default function AdminSidebar() {
                 pathname.startsWith(`${base}/org/members`),
               )}
               {!isCanceled && navLink(
-                'org/venues', MapPin, 'Venues',
+                'org/venues', MapPin, 'Venue Library',
                 `${base}/org/venues`,
                 pathname.startsWith(`${base}/org/venues`),
               )}

@@ -7,6 +7,7 @@ import {
   type BasicCoachTeamRegistration,
   type BasicCoachTournamentTeam,
 } from '@/lib/basic-coach-teams';
+import { getUserAccessContexts } from '@/lib/user-contexts';
 import {
   COACHES_START_PATH,
   COACHES_TOURNAMENTS_PATH,
@@ -75,8 +76,14 @@ export default async function CoachTournamentRecordsPage() {
   const email = user.email.toLowerCase();
 
   let coachTeams: BasicCoachTournamentTeam[] = [];
+  let hasPremiumAccess = false;
   try {
-    coachTeams = await getBasicCoachTournamentTeamsForUser({ userId: user.id, email });
+    const [teams, contexts] = await Promise.all([
+      getBasicCoachTournamentTeamsForUser({ userId: user.id, email }),
+      getUserAccessContexts({ id: user.id, email }),
+    ]);
+    coachTeams = teams;
+    hasPremiumAccess = contexts.some(context => context.kind === 'coaches_premium');
   } catch (error) {
     console.error('[coaches tournaments] load error:', error);
     return (
@@ -107,7 +114,7 @@ export default async function CoachTournamentRecordsPage() {
           </p>
         </div>
         <div className={styles.ctaSection}>
-          <CtaCards />
+          <CtaCards hasPremiumAccess={hasPremiumAccess} />
         </div>
       </div>
     );
@@ -201,7 +208,7 @@ export default async function CoachTournamentRecordsPage() {
       </div>
 
       <div className={styles.ctaSection}>
-        <CtaCards />
+        <CtaCards hasPremiumAccess={hasPremiumAccess} />
       </div>
     </div>
   );
@@ -238,17 +245,19 @@ function RegistrationCard({ reg }: { reg: Registration }) {
   );
 }
 
-function CtaCards() {
+function CtaCards({ hasPremiumAccess }: { hasPremiumAccess: boolean }) {
   return (
     <div className={styles.ctaGrid}>
-      <div className={styles.ctaCard}>
-        <div className={styles.ctaLabel}>Take your season further</div>
-        <div className={styles.ctaTitle}>Coaches Portal Premium</div>
-        <p className={styles.ctaDesc}>
-          Manage your team year-round with roster, schedule, dues, budget, documents, and lineups in one place.
-        </p>
-        <Link href={COACHES_START_PATH} className="btn btn-outline btn-sm">Explore Premium</Link>
-      </div>
+      {!hasPremiumAccess && (
+        <div className={styles.ctaCard}>
+          <div className={styles.ctaLabel}>Take your season further</div>
+          <div className={styles.ctaTitle}>Coaches Portal Premium</div>
+          <p className={styles.ctaDesc}>
+            Manage your team year-round with roster, schedule, dues, budget, documents, and lineups in one place.
+          </p>
+          <Link href={COACHES_START_PATH} className="btn btn-outline btn-sm">Explore Premium</Link>
+        </div>
+      )}
       <div className={styles.ctaCard}>
         <div className={styles.ctaLabel}>Ready to run your own event?</div>
         <div className={styles.ctaTitle}>Host a Tournament</div>

@@ -28,6 +28,24 @@ export type BasicCoachTournamentTeam = BasicCoachTeam & {
   registrations: BasicCoachTeamRegistration[];
 };
 
+export type BasicCoachTournamentHistoryEntry = {
+  registration: BasicCoachTeamRegistration;
+  tournament: {
+    id: string;
+    name: string;
+    slug: string | null;
+    year: number | null;
+    startDate: string | null;
+    endDate: string | null;
+    status: string;
+  } | null;
+  org: {
+    id: string;
+    slug: string;
+    name: string;
+  } | null;
+};
+
 export type PendingTournamentRegistration = {
   id: string;
   name: string;
@@ -61,6 +79,23 @@ type TournamentTeamRow = {
 type RegistrationLinkRow = {
   basic_coach_team_id: string;
   tournament_team_id: string;
+};
+
+type TournamentRow = {
+  id: string;
+  name: string;
+  slug: string | null;
+  year: number | null;
+  start_date: string | null;
+  end_date: string | null;
+  org_id: string | null;
+  status: string;
+};
+
+type OrgRow = {
+  id: string;
+  slug: string;
+  name: string;
 };
 
 function normalizeEmail(email: string | null | undefined) {
@@ -317,6 +352,85 @@ export async function getBasicCoachTournamentTeamsForUser(params: {
     ...team,
     registrations: team.registrations.sort((a, b) => b.registeredAt.localeCompare(a.registeredAt)),
   }));
+}
+
+export async function getBasicCoachTournamentHistoryForTeam(
+  basicCoachTeamId: string,
+): Promise<BasicCoachTournamentHistoryEntry[]> {
+  const { data: links, error: linkError } = await supabaseAdmin
+    .from('basic_coach_team_registrations')
+    .select('tournament_team_id')
+    .eq('basic_coach_team_id', basicCoachTeamId);
+
+  if (linkError) throw linkError;
+
+  const registrationIds = [...new Set((links ?? []).map(link => link.tournament_team_id).filter(Boolean))];
+  if (registrationIds.length === 0) return [];
+
+  const { data: registrations, error: registrationError } = await supabaseAdmin
+    .from('teams')
+    .select('id, name, coach, email, status, registered_at, tournament_id, division_id')
+    .in('id', registrationIds);
+
+  if (registrationError) throw registrationError;
+
+  const tournamentIds = [...new Set(((registrations ?? []) as TournamentTeamRow[])
+    .map(row => row.tournament_id)
+    .filter(Boolean))] as string[];
+
+  const { data: tournaments, error: tournamentError } = tournamentIds.length > 0
+    ? await supabaseAdmin
+        .from('tournaments')
+        .select('id, name, slug, year, start_date, end_date, org_id, status')
+        .in('id', tournamentIds)
+    : { data: [], error: null };
+
+  if (tournamentError) throw tournamentError;
+
+  const tournamentRows = (tournaments ?? []) as TournamentRow[];
+  const tournamentMap = new Map(tournamentRows.map(tournament => [tournament.id, tournament]));
+
+  const orgIds = [...new Set(tournamentRows.map(tournament => tournament.org_id).filter(Boolean))] as string[];
+  const { data: orgs, error: orgError } = orgIds.length > 0
+    ? await supabaseAdmin
+        .from('organizations')
+        .select('id, slug, name')
+        .in('id', orgIds)
+    : { data: [], error: null };
+
+  if (orgError) throw orgError;
+
+  const orgMap = new Map(((orgs ?? []) as OrgRow[]).map(org => [org.id, org]));
+
+  return ((registrations ?? []) as TournamentTeamRow[])
+    .map(row => {
+      const registration = mapRegistration(row, basicCoachTeamId, 'explicit');
+      const tournament = row.tournament_id ? tournamentMap.get(row.tournament_id) ?? null : null;
+      const org = tournament?.org_id ? orgMap.get(tournament.org_id) ?? null : null;
+
+      return {
+        registration,
+        tournament: tournament
+          ? {
+              id: tournament.id,
+              name: tournament.name,
+              slug: tournament.slug,
+              year: tournament.year,
+              startDate: tournament.start_date,
+              endDate: tournament.end_date,
+              status: tournament.status,
+            }
+          : null,
+        org: org
+          ? {
+              id: org.id,
+              slug: org.slug,
+              name: org.name,
+            }
+          : null,
+      };
+    })
+    .sort((a, b) => b.registration.registeredAt.localeCompare(a.registration.registeredAt));
 }
 
 export async function getBasicCoachTournamentSummary(params: {

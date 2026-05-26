@@ -309,14 +309,14 @@ export default function AdminDashboard() {
 
   return (
     <div className={styles.page}>
-      <header className="flex items-center justify-between border-b border-blueprint-blue/60 pb-4 mb-8">
+      <header className="flex items-center justify-between border-b border-blueprint-blue/60 pb-4 mb-5">
         <div>
           <div className="hud-label mb-1">{currentOrg?.name ?? 'Admin'}</div>
-          <h1 className="font-mono font-bold text-2xl uppercase tracking-tight" style={{ color: 'var(--logic-lime)' }}>
+          <h1 className="font-mono font-bold text-xl uppercase tracking-tight" style={{ color: 'var(--logic-lime)' }}>
             {currentTournament?.name ?? currentOrg?.name ?? 'Admin'}
           </h1>
         </div>
-        <div className="hidden md:block">
+        <div>
           <span className="font-mono text-xs font-bold" style={{ color: statusColor }}>
             {status.toUpperCase()}
           </span>
@@ -361,9 +361,6 @@ export default function AdminDashboard() {
                 <p>Complete these items before activating registration and the public tournament page.</p>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexShrink: 0 }}>
-                {checklist.ready && (
-                  <span className={styles.readyPill}>Ready to activate</span>
-                )}
                 <button
                   type="button"
                   className={styles.activateChip}
@@ -395,21 +392,7 @@ export default function AdminDashboard() {
               <button
                 type="button"
                 onClick={() => setShowOptionalItems(open => !open)}
-                style={{
-                  gridColumn: '1 / -1',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  padding: '0.45rem 0.75rem',
-                  background: 'transparent',
-                  border: '1px solid var(--border-2)',
-                  borderRadius: 2,
-                  cursor: 'pointer',
-                  color: 'var(--white-50)',
-                  fontSize: '0.8rem',
-                  marginTop: '0.25rem',
-                  textAlign: 'left',
-                }}
+                className={styles.optionalToggle}
               >
                 <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                   <Info size={13} />
@@ -827,7 +810,7 @@ export default function AdminDashboard() {
                     <Copy size={17} style={{ color: 'var(--logic-lime)' }} />
                     <h3 style={{ margin: 0 }}>Clone setup from a past tournament</h3>
                   </div>
-                  <button className="btn btn-ghost btn-sm" onClick={() => setPopulateOpen(false)}>✕</button>
+                  <button className="btn btn-ghost btn-data" onClick={() => setPopulateOpen(false)}>✕</button>
                 </div>
 
                 {!canClone ? (
@@ -860,7 +843,7 @@ export default function AdminDashboard() {
                 )}
 
                 <div className="modal-footer">
-                  <button className="btn btn-ghost btn-sm" onClick={() => setPopulateOpen(false)}>Cancel</button>
+                  <button className="btn btn-ghost btn-data" onClick={() => setPopulateOpen(false)}>Cancel</button>
                 </div>
               </>
             )}
@@ -870,7 +853,7 @@ export default function AdminDashboard() {
               <>
                 <div className="modal-header">
                   <h3 style={{ margin: 0 }}>Replace setup with {populateSelected.name}?</h3>
-                  <button className="btn btn-ghost btn-sm" onClick={() => setPopulateOpen(false)}>✕</button>
+                  <button className="btn btn-ghost btn-data" onClick={() => setPopulateOpen(false)}>✕</button>
                 </div>
                 <div style={{ margin: '1rem 0', fontSize: '0.875rem', color: 'var(--white-70)', lineHeight: 1.6 }}>
                   <p style={{ margin: '0 0 0.75rem' }}>
@@ -890,8 +873,8 @@ export default function AdminDashboard() {
                   <div className="alert alert-danger" style={{ marginBottom: '0.75rem', fontSize: '0.82rem' }}>{populateError}</div>
                 )}
                 <div className="modal-footer">
-                  <button className="btn btn-ghost btn-sm" onClick={() => setPopulateStep('pick')} disabled={populateWorking}>Back</button>
-                  <button className="btn btn-danger btn-sm" onClick={handlePopulateConfirm} disabled={populateWorking}>
+                  <button className="btn btn-ghost" onClick={() => setPopulateStep('pick')} disabled={populateWorking}>Back</button>
+                  <button className="btn btn-danger" onClick={handlePopulateConfirm} disabled={populateWorking}>
                     {populateWorking ? 'Applying…' : 'Yes, replace setup'}
                   </button>
                 </div>
@@ -908,7 +891,7 @@ export default function AdminDashboard() {
                   <strong>{currentTournament?.name}</strong>'s setup has been updated from <strong>{populateSelected?.name}</strong>. Review your divisions and checklist to confirm everything looks right.
                 </p>
                 <div className="modal-footer">
-                  <button className="btn btn-primary btn-sm" onClick={() => setPopulateOpen(false)}>Done</button>
+                  <button className="btn btn-primary" onClick={() => setPopulateOpen(false)}>Done</button>
                 </div>
               </>
             )}
@@ -919,19 +902,21 @@ export default function AdminDashboard() {
       {/* ── ACTIVATE CONFIRMATION MODAL ──────────────────── */}
       {showActivateConfirm && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.7)' }}>
-          <div className="card" style={{ maxWidth: 420, width: '100%', padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            <h2 style={{ fontSize: '1.1rem', fontWeight: 700, margin: 0 }}>Activate tournament?</h2>
-            <p style={{ fontSize: '0.875rem', color: 'var(--data-gray)', margin: 0 }}>
+          <div className="modal" style={{ maxWidth: 420, width: '100%' }} onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3 style={{ margin: 0 }}>Activate tournament?</h3>
+            </div>
+            <p style={{ fontSize: '0.875rem', color: 'var(--data-gray)', margin: '0 0 0.5rem' }}>
               This will make the public tournament page live and open registration to teams. You can deactivate it later from the Manage page if needed.
             </p>
             {activateError && (
-              <p style={{ fontSize: '0.8rem', color: 'var(--danger-light)', margin: 0 }}>{activateError}</p>
+              <p style={{ fontSize: '0.8rem', color: 'var(--danger-light)', margin: '0 0 0.5rem' }}>{activateError}</p>
             )}
-            <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
-              <button className="btn btn-ghost btn-sm" onClick={() => { setShowActivateConfirm(false); setActivateError(''); }} disabled={activating}>
+            <div className="modal-footer">
+              <button className="btn btn-ghost" onClick={() => { setShowActivateConfirm(false); setActivateError(''); }} disabled={activating}>
                 Cancel
               </button>
-              <button className="btn btn-primary btn-sm" onClick={handleActivate} disabled={activating}>
+              <button className="btn btn-primary" onClick={handleActivate} disabled={activating}>
                 {activating ? 'Activating…' : 'Yes, activate'}
               </button>
             </div>

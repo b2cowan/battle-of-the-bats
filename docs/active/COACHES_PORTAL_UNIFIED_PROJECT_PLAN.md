@@ -345,15 +345,29 @@ Tasks:
 
 - [x] Add entitlement-aware portal shell that shows basic and premium sections from one navigation model.
 - [x] Surface premium workspace cards for direct, org-billed, and Club coach access.
-- [ ] Preserve tournament history in premium dashboards.
-- [ ] Connect tournament-claimed premium workspace history to the Basic tournament records view.
-- [ ] Confirm Team entitlement checks still require active entitlement plus active coach assignment.
-- [ ] Confirm linked-org Basic visibility does not expose roster, documents, accounting, billing, or org-wide rep-team admin access.
+- [x] Preserve tournament history in premium dashboards.
+- [x] Connect tournament-claimed premium workspace history to the Basic tournament records view.
+- [x] Confirm Team entitlement checks still require active entitlement plus active coach assignment.
+- [x] Confirm linked-org Basic visibility does not expose roster, documents, accounting, billing, or org-wide rep-team admin access.
 
 Implementation note, 2026-05-25:
 
 - `/coaches` now acts as the coach-specific portal home. It shows Basic tournament records and Premium Coaches Portal workspace entries from the existing user context resolver, without duplicating the broader `/home` account switcher.
 - `/coaches/teams` lists Premium Coaches Portal workspaces only and links through to the existing org-scoped premium dashboards.
+- Premium team overview now shows tournament history from the linked Basic coach team profile. The history API requires active team entitlement plus active coach assignment before returning records and can repair older tournament-claimed workspaces by attaching `team_workspaces.basic_coach_team_id` from the source tournament registration link.
+- Basic tournament record pages suppress paid Coaches Portal upgrade CTAs once the signed-in coach already has active Premium access. Tournament-hosting CTAs remain separate and lower weight.
+- Linked-org Basic visibility boundaries remain unchanged: this Phase 3 work reads only Basic tournament history for the coach's Premium team and does not broaden org access to roster, documents, accounting, billing, ownership, or org-wide rep-team administration.
+
+Manual browser test script to run before launch:
+
+1. Sign in as a coach with a Basic team that has at least one linked tournament registration and a Premium workspace attached to the same Basic team.
+2. Open `/coaches` and confirm the portal shows both Basic tournament records and the Premium workspace entry without duplicating the `/home` context switcher.
+3. Open `/coaches/teams` and confirm only Premium Coaches Portal workspaces are listed.
+4. Open the Premium team dashboard at `/{orgSlug}/coaches/teams/{teamId}` and confirm the tournament history panel lists linked tournament records with status badges.
+5. Click a history row and confirm it opens `/coaches/tournaments/{registrationId}`.
+6. Confirm `/coaches/tournaments` and `/coaches/tournaments/{registrationId}` no longer show the paid Premium upgrade CTA for that signed-in Premium coach.
+7. Sign in as a tournament-only Basic coach and confirm the paid Premium CTA still appears on accepted tournament records.
+8. Sign in as a coach without assignment to the Premium team and confirm the tournament-history API does not return records.
 
 Acceptance criteria:
 
@@ -367,15 +381,32 @@ Goal: make the subscription lifecycle match the promised customer journey.
 
 Tasks:
 
-- [ ] Rename public billing surfaces from Team to Coaches Portal.
+- [x] Rename public billing surfaces from Team to Coaches Portal.
 - [ ] Keep direct paid price at CAD $29/month and CAD $290/season unless owner changes pricing.
 - [ ] Keep org-billed Coaches Portal add-on at CAD $29/month and CAD $290/season.
 - [ ] Keep Club extra team at CAD $19/month and CAD $190/year.
-- [ ] On cancellation, downgrade coach to Basic Coaches Portal while preserving tournament records.
-- [ ] Archive premium workspace data for 90 days, matching canceled Tournament account retention.
-- [ ] Disable active premium tools during the canceled state; show reactivation messaging instead.
+- [x] On cancellation, downgrade coach to Basic Coaches Portal while preserving tournament records.
+- [x] Archive premium workspace data for 90 days, matching canceled Tournament account retention.
+- [x] Disable active premium tools during the canceled state; show reactivation messaging instead.
 - [ ] Simulate direct cancellation and payment failure and confirm entitlement status changes.
 - [ ] Ensure reactivation during the 90-day retention window restores the archived workspace where possible instead of creating duplicates.
+
+Implementation note, 2026-05-25:
+
+- The billing page now treats team-workspace billing as **Coaches Portal billing**. Cancellation copy explains that Premium tools stop, premium data is retained for 90 days, and Basic tournament records remain available.
+- Coach-owned Premium cancellation now takes a separate server path from full organization cancellation. It cancels the `team_workspaces` subscription state, cancels `team_entitlements`, writes retention records, leaves Basic tournament records intact, and sends the Coaches Portal cancellation email.
+- Active Premium contexts now require an active, trialing, or past-due subscription. Canceled Premium workspaces no longer count as active Premium access, so Basic tournament records become the fallback surface and Premium upgrade/reactivation CTAs can appear again.
+- The wider organization cancellation path remains unchanged for Tournament, Tournament Plus, League, and Club organizations.
+
+Manual browser test script to run before launch:
+
+1. Open a direct Coaches Portal Premium workspace billing page and confirm it says Coaches Portal billing, not generic full-org cancellation.
+2. Start cancellation review and confirm the modal says Premium tools become inactive while Basic tournament records remain available.
+3. Confirm cancellation in a mock/dev workspace and verify `team_workspaces.subscription_status = 'canceled'` and linked `team_entitlements.status = 'canceled'`.
+4. Visit `/coaches` and `/coaches/teams` as that coach and confirm the canceled Premium workspace is not shown as active Premium access.
+5. Visit `/coaches/tournaments` and confirm Basic tournament records remain available.
+6. Confirm the canceled workspace billing page shows the Basic tournament records link and Reactivate Premium CTA.
+7. Simulate/reactivate Premium during the retention window and confirm no duplicate workspace is created.
 
 Acceptance criteria:
 

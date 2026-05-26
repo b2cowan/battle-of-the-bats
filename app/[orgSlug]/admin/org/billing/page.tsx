@@ -385,7 +385,11 @@ export default function BillingPage() {
       await refreshBillingState();
       setCancelPreflight(null);
       setSuccessTitle('Account suspended');
-      setSuccessMsg('Public pages and modules have been shut down. Data is retained for 90 days.');
+      setSuccessMsg(
+        currentOrg?.accountKind === 'team_workspace' || currentOrg?.planId === 'team'
+          ? 'Coaches Portal Premium is inactive. Basic tournament records remain available and premium team data is retained for 90 days.'
+          : 'Public pages and modules have been shut down. Data is retained for 90 days.'
+      );
       setSuccessOpen(true);
     } catch (err: unknown) {
       setErrorMsg(err instanceof Error ? err.message : 'Cancellation failed.');
@@ -426,6 +430,14 @@ export default function BillingPage() {
   const hasPaidPlan    = currentPlanKey !== 'tournament';
   const canManageBilling = userRole === 'owner';
   const isTeamWorkspaceBilling = currentOrg.accountKind === 'team_workspace' || currentPlanKey === 'team';
+  const subscriptionTitle = isTeamWorkspaceBilling ? 'Coaches Portal billing' : 'Subscription';
+  const subscriptionSub = isTeamWorkspaceBilling
+    ? 'Manage Coaches Portal Premium billing and reactivation'
+    : 'Manage your plan and payment method';
+  const cancelReviewTitle = isTeamWorkspaceBilling ? 'Cancel Coaches Portal Premium' : 'Cancel account';
+  const cancelWarningCopy = isTeamWorkspaceBilling
+    ? `Premium tools will become inactive and premium team data is retained for ${cancelPreflight?.retentionDays ?? 90} days. Basic tournament records stay available in Coaches Portal.`
+    : `Cancellation suspends the full account. Public pages and modules shut down, and data is retained for ${cancelPreflight?.retentionDays ?? 90} days.`;
   const showClubValueNudge =
     !isTeamWorkspaceBilling &&
     currentPlanKey !== 'club' &&
@@ -469,8 +481,8 @@ export default function BillingPage() {
           <div className={styles.headerLeft}>
             <div className={styles.headerIcon}><CreditCard size={20} /></div>
             <div>
-              <h1 className={styles.pageTitle}>Subscription</h1>
-              <p className={styles.pageSub}>Manage your plan and payment method</p>
+              <h1 className={styles.pageTitle}>{subscriptionTitle}</h1>
+              <p className={styles.pageSub}>{subscriptionSub}</p>
             </div>
           </div>
         </div>
@@ -492,8 +504,25 @@ export default function BillingPage() {
         </div>
 
         <p className={`${styles.statusNote} ${styles.statusNoteDanger}`}>
-          Your subscription has been canceled. Public pages and modules are suspended while retained data remains restorable during the retention window.
+          {isTeamWorkspaceBilling
+            ? 'Your Coaches Portal Premium subscription has been canceled. Premium tools are inactive, premium team data remains in retention, and Basic tournament records stay available.'
+            : 'Your subscription has been canceled. Public pages and modules are suspended while retained data remains restorable during the retention window.'}
         </p>
+
+        {isTeamWorkspaceBilling && (
+          <div className={styles.billingNudgeCard}>
+            <div className={styles.billingNudgeIcon}><Archive size={18} /></div>
+            <div className={styles.billingNudgeBody}>
+              <h2 className={styles.billingNudgeTitle}>Basic records are still available</h2>
+              <p className={styles.billingNudgeCopy}>
+                Tournament registrations linked to your Basic coach team profile remain in Coaches Portal while Premium tools are inactive.
+              </p>
+            </div>
+            <Link className="btn btn-outline btn-sm" href="/coaches/tournaments">
+              Open Tournament Records
+            </Link>
+          </div>
+        )}
 
         {/* Self-serve reactivation (tournament_plus) */}
         {canSelfServeReactivate && (
@@ -557,10 +586,10 @@ export default function BillingPage() {
               Reactivate Coaches Portal
             </h2>
             <p className={styles.reactivateCopy}>
-              Coaches Portal Premium is reactivated through a new subscription. Start from Coaches Portal signup to get access back.
+              Start a new Premium subscription to restore team operations during the retention window.
             </p>
             <Link className="btn btn-primary" href="/coaches/start">
-              Start Coaches Portal
+              Reactivate Premium
             </Link>
           </div>
         )}
@@ -589,8 +618,8 @@ export default function BillingPage() {
         <div className={styles.headerLeft}>
           <div className={styles.headerIcon}><CreditCard size={20} /></div>
           <div>
-            <h1 className={styles.pageTitle}>Subscription</h1>
-            <p className={styles.pageSub}>Manage your plan and payment method</p>
+            <h1 className={styles.pageTitle}>{subscriptionTitle}</h1>
+            <p className={styles.pageSub}>{subscriptionSub}</p>
           </div>
         </div>
       </div>
@@ -815,12 +844,14 @@ export default function BillingPage() {
 
       {hasPaidPlan && canManageBilling && (
         <div className={styles.retentionCard}>
-          <h2 className={styles.sectionTitle}>Reduce or cancel plan</h2>
+          <h2 className={styles.sectionTitle}>{isTeamWorkspaceBilling ? 'Cancel Premium access' : 'Reduce or cancel plan'}</h2>
           <p className={styles.retentionCopy}>
-            Downgrades and cancellations run through a short review first so tournament data and retention choices are clear.
+            {isTeamWorkspaceBilling
+              ? 'Cancellation turns off Premium tools and keeps Basic tournament records available. Premium team data is retained for the restore window.'
+              : 'Downgrades and cancellations run through a short review first so tournament data and retention choices are clear.'}
           </p>
 
-          {downgradePlans.length > 0 && (
+          {!isTeamWorkspaceBilling && downgradePlans.length > 0 && (
             <div className={styles.changeGrid}>
               {downgradePlans.map(planKey => (
                 <button
@@ -837,7 +868,7 @@ export default function BillingPage() {
 
           <button className={`${styles.changeButton} ${styles.dangerButton}`} onClick={openCancelReview}>
             <ShieldOff size={13} />
-            <span>Cancel and suspend account</span>
+            <span>{isTeamWorkspaceBilling ? 'Cancel Premium' : 'Cancel and suspend account'}</span>
           </button>
         </div>
       )}
@@ -907,24 +938,30 @@ export default function BillingPage() {
       {cancelPreflight && (
         <div className={styles.reviewCard}>
           <div className={styles.reviewHeader}>
-            <h2 className={styles.sectionTitle}>Cancel account</h2>
+            <h2 className={styles.sectionTitle}>{cancelReviewTitle}</h2>
             <button className="btn btn-ghost" onClick={() => setCancelPreflight(null)}>Close</button>
           </div>
           <p className={`${styles.statusNote} ${styles.statusNoteDanger}`}>
-            Cancellation suspends the full account. Public pages and modules shut down, and data is retained for {cancelPreflight.retentionDays} days.
+            {cancelWarningCopy}
           </p>
           <div className={styles.cancelImpactGrid}>
             <section className={styles.cancelImpactSection}>
-              <h3>Archived during retention</h3>
+              <h3>{isTeamWorkspaceBilling ? 'Premium data retained' : 'Archived during retention'}</h3>
               <p>
-                {cancelPreflight.tournaments.length > 0
-                  ? `${cancelPreflight.tournaments.length} tournament${cancelPreflight.tournaments.length === 1 ? '' : 's'} will move into archive retention.`
-                  : 'No active tournament records need to be archived.'}
+                {isTeamWorkspaceBilling
+                  ? 'Roster, documents, accounting setup, schedule data, and local Premium tournament data stay restorable during the retention window.'
+                  : cancelPreflight.tournaments.length > 0
+                    ? `${cancelPreflight.tournaments.length} tournament${cancelPreflight.tournaments.length === 1 ? '' : 's'} will move into archive retention.`
+                    : 'No active tournament records need to be archived.'}
               </p>
             </section>
             <section className={styles.cancelImpactSection}>
-              <h3>Access suspended</h3>
-              <p>Based on your current plan, these areas will be unavailable while the account is canceled.</p>
+              <h3>{isTeamWorkspaceBilling ? 'Premium tools inactive' : 'Access suspended'}</h3>
+              <p>
+                {isTeamWorkspaceBilling
+                  ? 'Basic tournament records remain available, but these Premium areas stop being active.'
+                  : 'Based on your current plan, these areas will be unavailable while the account is canceled.'}
+              </p>
               <ul className={styles.impactList}>
                 {cancelPreflight.shutsDown.map(item => <li key={item}>{item}</li>)}
               </ul>

@@ -2,8 +2,9 @@ import { NextResponse } from 'next/server';
 import { getAuthContext, unauthorized } from '@/lib/api-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 
-export async function GET() {
-  const ctx = await getAuthContext();
+export async function GET(req: Request) {
+  const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
+  const ctx = await getAuthContext({ orgSlug });
   if (!ctx) return unauthorized();
 
   const { org } = ctx;

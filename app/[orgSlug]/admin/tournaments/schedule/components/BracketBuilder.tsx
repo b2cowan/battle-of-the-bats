@@ -22,6 +22,7 @@ export interface Matchup {
   date: string;
   time: string;
   venueId: string;
+  venueFacilityId?: string;
   pool?: string;
 }
 
@@ -107,9 +108,32 @@ function SortableMatchup({ matchup, options, usedOptions, venues, onUpdateCode, 
       <div className={styles.matchupFooter}>
         <input type="date" value={matchup.date} onChange={e => onUpdate({...matchup, date: e.target.value})} className={styles.dateInput} />
         <input type="time" value={matchup.time} onChange={e => onUpdate({...matchup, time: e.target.value})} className={styles.timeInput} />
-        <select value={matchup.venueId} onChange={e => onUpdate({...matchup, venueId: e.target.value})} className={styles.fieldSelect}>
-          <option value="">Field...</option>
-          {venues.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+        <select
+          value={matchup.venueFacilityId || matchup.venueId}
+          onChange={e => {
+            const val = e.target.value;
+            let parentVenueId = '';
+            let facilityId = '';
+            for (const v of venues) {
+              const fac = v.facilities?.find(f => f.id === val);
+              if (fac) { parentVenueId = v.id; facilityId = fac.id; break; }
+            }
+            if (!parentVenueId && venues.find(v => v.id === val)) parentVenueId = val;
+            onUpdate({ ...matchup, venueId: parentVenueId, venueFacilityId: facilityId || undefined });
+          }}
+          className={styles.fieldSelect}
+        >
+          <option value="">Field…</option>
+          {venues.filter(v => (v.facilities?.length ?? 0) > 0).map(v => (
+            <optgroup key={v.id} label={v.name}>
+              {v.facilities!.map(f => (
+                <option key={f.id} value={f.id}>{f.name}</option>
+              ))}
+            </optgroup>
+          ))}
+          {venues.filter(v => (v.facilities?.length ?? 0) === 0).map(v => (
+            <option key={v.id} value={v.id}>{v.name}</option>
+          ))}
         </select>
       </div>
     </div>
@@ -153,14 +177,15 @@ export default function BracketBuilder({ division, teams, venues, defaultDate, t
   useEffect(() => {
     const preview = rounds.flatMap(r =>
       r.matchups.map(m => ({
-        round: r.name,
-        home: m.home.label,
-        away: m.away.label,
-        code: m.code,
-        date: m.date,
-        time: m.time,
-        venueId: m.venueId,
-        pool: m.pool
+        round:           r.name,
+        home:            m.home.label,
+        away:            m.away.label,
+        code:            m.code,
+        date:            m.date,
+        time:            m.time,
+        venueId:         m.venueId,
+        venueFacilityId: m.venueFacilityId,
+        pool:            m.pool,
       }))
     );
     onPreviewChange(preview);

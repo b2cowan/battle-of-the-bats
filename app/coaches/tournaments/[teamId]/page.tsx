@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { createClient } from '@/lib/supabase-server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { canUserAccessTournamentRegistration } from '@/lib/basic-coach-teams';
+import { getUserAccessContexts } from '@/lib/user-contexts';
 import {
   COACHES_START_PATH,
   COACHES_TOURNAMENTS_PATH,
@@ -63,6 +64,9 @@ export default async function CoachTournamentRecordDetailPage({ params }: RouteP
   if (!access) {
     notFound();
   }
+
+  const contexts = await getUserAccessContexts({ id: user.id, email });
+  const hasPremiumAccess = contexts.some(context => context.kind === 'coaches_premium');
 
   const { data: team, error: teamError } = await supabaseAdmin
     .from('teams')
@@ -265,7 +269,7 @@ export default async function CoachTournamentRecordDetailPage({ params }: RouteP
       </section>
 
       <div className={styles.ctaSection}>
-        {team.status === 'accepted' && (
+        {team.status === 'accepted' && !hasPremiumAccess && (
           <div className={styles.ctaCard}>
             <div className={styles.ctaLabel}>Take your season further</div>
             <div className={styles.ctaTitle}>Coaches Portal Premium</div>

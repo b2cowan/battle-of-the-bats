@@ -289,7 +289,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
     playoffGames: typedGames.filter(game => game.is_playoff).length,
   };
 
-  const divisions = typedDivisions.map(group => {
+  const divisionSummaries = typedDivisions.map(group => {
     const groupTeams = typedTeams.filter(team => team.division_id === group.id);
     const groupGames = typedGames.filter(game => game.division_id === group.id);
     const standings = calculateStandings(groupTeams, groupGames);
@@ -337,7 +337,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
     registrationTotals,
     paymentTotals,
     scheduleTotals,
-    divisions,
+    divisions: divisionSummaries,
     archive: {
       sealed: (archives ?? []).length > 0,
       sealedAt: archives?.[0]?.sealed_at ?? null,

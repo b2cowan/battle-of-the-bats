@@ -32,10 +32,10 @@ export default function FeedbackModal({
 
   const getIcon = () => {
     switch (type) {
-      case 'danger': return <AlertCircle size={24} className="text-danger" />;
-      case 'warning': return <AlertCircle size={24} className="text-warning" />;
-      case 'success': return <CheckCircle size={24} className="text-success" />;
-      default: return <Info size={24} className="text-primary" />;
+      case 'danger': return <AlertCircle size={16} className="text-danger" />;
+      case 'warning': return <AlertCircle size={16} className="text-warning" />;
+      case 'success': return <CheckCircle size={16} className="text-success" />;
+      default: return <Info size={16} className="text-primary" />;
     }
   };
 
@@ -47,11 +47,11 @@ export default function FeedbackModal({
             {getIcon()}
             <h3 style={{ margin: 0 }}>{title}</h3>
           </div>
-          <button className="btn btn-ghost btn-sm" onClick={onClose}>
-            <X size={16} />
+          <button className="btn btn-ghost btn-data" onClick={onClose}>
+            <X size={14} />
           </button>
         </div>
-        <div style={{ padding: '1.5rem', color: 'var(--white-80)', lineHeight: 1.5 }}>
+        <div style={{ padding: '0.75rem 0', fontFamily: 'var(--font-data)', fontSize: '0.82rem', color: 'var(--white-70)', lineHeight: 1.55 }}>
           {message}
           {items && items.length > 0 && (
             <ul style={{
@@ -59,7 +59,7 @@ export default function FeedbackModal({
               padding: '0.5rem 0.75rem',
               listStyle: 'none',
               background: 'var(--white-05)',
-              borderRadius: 8,
+              borderRadius: 0,
               maxHeight: 200,
               overflowY: 'auto',
               display: 'flex',
@@ -88,13 +88,13 @@ export default function FeedbackModal({
             </ul>
           )}
         </div>
-        <div className="modal-footer" style={{ gap: '0.75rem' }}>
-          <button className="btn btn-ghost" onClick={onClose}>
+        <div className="modal-footer">
+          <button className="btn btn-ghost btn-data" onClick={onClose}>
             {onConfirm ? cancelText : 'Close'}
           </button>
           {onConfirm && (
-            <button 
-              className={`btn btn-${type === 'danger' ? 'danger' : 'primary'}`}
+            <button
+              className={`btn btn-${type === 'danger' ? 'danger' : 'primary'} btn-data`}
               onClick={() => {
                 onConfirm();
                 onClose();

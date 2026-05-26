@@ -1,6 +1,6 @@
 # Venue Hierarchy & Org Library Plan
 
-## Status: Ready to implement
+## Status: ✅ Complete — migrations applied dev + prod 2026-05-25
 
 ---
 
@@ -139,97 +139,88 @@ All three migrations apply to **dev then prod** after UI is tested.
 
 ## Implementation Phases
 
-### Phase 1 — DB Migrations
-- [ ] Write + apply migration 094 (dev)
-- [ ] Write + apply migration 095 (dev)
-- [ ] Write + apply migration 096 (dev) — data backfill
-- [ ] Verify: every existing `diamonds` row has exactly one `venue_facilities` child; all `games` with a `diamond_id` have a matching `venue_facility_id`
+### Phase 1 — DB Migrations ✅
+- [x] Write + apply migration 094 (dev + prod 2026-05-25)
+- [x] Write + apply migration 095 (dev + prod 2026-05-25)
+- [x] Write + apply migration 096 (dev + prod 2026-05-25) — data backfill
 
-### Phase 2 — Type System + `lib/db.ts`
+### Phase 2 — Type System + `lib/db.ts` ✅
 Files: `lib/types.ts`, `lib/db.ts`
 
-- [ ] Update `Venue` type → add `facilities?: VenueFacility[]`
-- [ ] Add `VenueFacility` type: `{ id, venueId, tournamentId, name, facilityType, displayOrder, notes, sourceOrgFacilityId? }`
-- [ ] Add `OrgVenue` type: `{ id, orgId, name, address, notes, isActive, facilities?: OrgVenueFacility[] }`
-- [ ] Add `OrgVenueFacility` type: `{ id, orgVenueId, orgId, name, facilityType, displayOrder, notes }`
-- [ ] Add `FACILITY_TYPES` constant: `['diamond','field','court','rink','gym','other']`
-- [ ] Add `FACILITY_TYPE_LABELS` map: `{ diamond: 'Diamond', field: 'Field', court: 'Court', rink: 'Rink', gym: 'Gym', other: 'Other' }`
-- [ ] Update `getVenues()` → return venues with nested `facilities[]` from `venue_facilities`
-- [ ] Update `saveVenue()` → accept parent venue + initial facility list
-- [ ] Update `updateVenue()` / `deleteVenue()` to handle cascade correctly
-- [ ] Add `addVenueFacility()`, `updateVenueFacility()`, `deleteVenueFacility()` helpers
-- [ ] Add `getOrgVenues()`, `saveOrgVenue()`, `updateOrgVenue()`, `deleteOrgVenue()` for library
-- [ ] Add `importOrgVenueToTournament(orgVenueId, tournamentId)` — copies venue + all facilities, sets `source_org_venue_id` / `source_org_facility_id`
-- [ ] Update `cloneTournament()` and `syncTournaments()` to include `venue_facilities` in copy
+- [x] `FacilityType`, `FACILITY_TYPES`, `FACILITY_TYPE_LABELS` added to `lib/types.ts`
+- [x] `VenueFacility`, `OrgVenueFacility`, `OrgVenue` interfaces added
+- [x] `Venue` updated: `facilities?: VenueFacility[]`, `sourceOrgVenueId?`
+- [x] `Game.venueFacilityId?: string` added
+- [x] `getVenues()` returns nested `facilities[]`; `getGames()` maps `venue_facility_id`
+- [x] `saveGame()` + `updateGame()` write `venue_facility_id`
+- [x] `saveVenue()`, `updateVenue()`, `deleteVenue()` use `supabaseAdmin`
+- [x] `getVenueFacilities()`, `addVenueFacility()`, `updateVenueFacility()`, `deleteVenueFacility()` added
+- [x] `getOrgVenues()`, `saveOrgVenue()`, `updateOrgVenue()`, `deleteOrgVenue()` added
+- [x] `addOrgVenueFacility()`, `updateOrgVenueFacility()`, `deleteOrgVenueFacility()` added
+- [x] `importOrgVenueToTournament()` added
+- [x] `cloneTournament()` copies `venue_facilities` for cloned venues
 
-### Phase 3 — API Layer
-Files: `app/api/admin/venues/route.ts`, new `app/api/admin/org/venues/route.ts`
+### Phase 3 — API Layer ✅
+Files: `app/api/admin/venues/route.ts`, `app/api/admin/org/venues/route.ts`, `app/api/admin/games/route.ts`
 
-- [ ] **`GET /api/admin/venues?tournamentId=`** — return venues with nested `facilities[]`; used by schedule admin + game editing
-- [ ] **`GET /api/admin/venues?scope=org`** — updated org-wide view with nested facilities
-- [ ] **`POST /api/admin/venues`** — extend actions: `save-venue`, `update-venue`, `delete-venue`, `add-facility`, `update-facility`, `delete-facility`, `import-from-org`, `import-from-past-tournament`
-- [ ] **`GET /api/admin/org/venues`** — org library CRUD (list with nested facilities)
-- [ ] **`POST /api/admin/org/venues`** — actions: `save`, `update`, `delete`, `add-facility`, `update-facility`, `delete-facility`
-- [ ] Update `app/api/official/[orgSlug]/score/route.ts` — query `venue_facilities` via `games.venue_facility_id`; return parent venue address for Maps; return facility name for display
+- [x] `GET /api/admin/venues?tournamentId=` — returns venues with nested `facilities[]`
+- [x] `GET /api/admin/venues?scope=past` — past-tournament import with facilities
+- [x] `POST /api/admin/venues` — `save-venue`, `update-venue`, `delete-venue`, `add-facility`, `update-facility`, `delete-facility`, `import-from-org`, `import-from-past`; backward-compat `save/update/delete` kept
+- [x] `GET /api/admin/org/venues` — org library with nested facilities
+- [x] `POST /api/admin/org/venues` — `save-venue`, `update-venue`, `delete-venue`, `add-facility`, `update-facility`, `delete-facility`
+- [x] `PATCH /api/admin/games` — `update` action now persists `venue_facility_id`
 
-### Phase 4 — Org Venue Library UI
-Files: `app/[orgSlug]/admin/org/venues/page.tsx`, new modal components
+### Phase 4 — Org Venue Library UI ✅
+Files: `app/[orgSlug]/admin/org/venues/page.tsx`, `venues-admin.module.css`
 
-- [ ] Rebuild `admin/org/venues/page.tsx` as **Org Venue Library**
-  - Remove tournament context picker (this page is org-level, not tournament-scoped)
-  - Expandable venue rows: venue name + address collapsed, expand to show facility list
-  - Inline facility list: name, facility type badge, notes, reorder handle (drag or up/down arrows), delete
-  - "Add Facility" inline row at bottom of expanded venue
-  - "Edit Venue" button → `EditOrgVenueModal` (name, address, notes)
-  - "Delete Venue" → confirm if it has been imported into any tournaments; warn but allow
-  - Empty state: "Your org venue library is empty — add venues here and import them into any tournament"
-- [ ] `AddOrgVenueModal.tsx` — name, address (street/city/province/postal), notes; on save → goes back to library
-- [ ] `AddFacilityRow.tsx` (inline, no modal) — name (text), Facility Type (dropdown), notes (optional), Save / Cancel
-- [ ] Delete `app/[orgSlug]/admin/org/diamonds/page.tsx` — redirect `admin/org/diamonds` → `admin/org/venues`
+- [x] Rebuilt as Org Venue Library (no tournament picker)
+- [x] Expandable venue cards with ChevronRight rotation, facility list, type badges
+- [x] Inline `AddFacilityRow` (Enter key, type dropdown)
+- [x] `VenueModal` for add/edit; delete confirm
+- [x] Empty states: library empty + venue has no facilities yet
+- [x] Sidebar label updated: "Venues" → "Venue Library"
 
-### Phase 5 — Tournament Venue UI
-Files: `app/[orgSlug]/admin/org/venues/page.tsx` (tournament tab or separate context)
+### Phase 5 — Tournament Venue UI ✅
+Files: `app/[orgSlug]/admin/tournaments/venues/page.tsx`
 
-The current `admin/org/venues` page showed tournament-scoped venues using the tournament context picker. After Phase 4 takes that page as the org library, tournament venue management needs a new home.
+- [x] Rebuilt as full `TournamentVenuesPage` (was a re-export of org/venues)
+- [x] Expandable `TournamentVenueCard` with inline `AddFacilityRow` (tournament-scoped)
+- [x] "Import from Library" modal (org venues with facilities, checkbox import)
+- [x] "Import from Past Tournament" flow
+- [x] `AddVenueModal` (backward compat) for local venue creation
+- [x] Import button shown only for org users
 
-**Decision:** Add a **"Venues" tab or section within the tournament admin** — either as part of the tournament setup flow or as a dedicated page at the existing location gated by whether a tournament is selected. For now, use the existing page with tournament picker as the **Tournament Venues** page and move it to `admin/org/tournament-venues` while `admin/org/venues` becomes the library.
+### Phase 6 — Schedule Builder + Game Editing ✅
+Files: `GameList.tsx`, `BracketBuilder.tsx`, `PlayoffWizard.tsx`, `schedule/page.tsx`
 
-- [ ] Rename current `admin/org/venues/page.tsx` → `admin/org/tournament-venues/page.tsx` (or equivalent)
-- [ ] Rebuild tournament venue page:
-  - Tournament picker at top (existing pattern)
-  - Venue list — expandable rows showing facilities
-  - "Add Venue" → `AddTournamentVenueModal` (creates local copy, not in org library)
-  - "Add from Org Library" button (org admins only) → `ImportFromOrgLibraryModal`
-  - "Import from Past Tournament" (for no-org Tournament/Plus users) → `ImportFromPastTournamentModal`
-  - Inline facility management per venue (same as org library)
-- [ ] `AddTournamentVenueModal.tsx` — name, address, notes → creates local tournament-scoped venue with one initial facility
-- [ ] `ImportFromOrgLibraryModal.tsx` — searchable list of org venues; select one or more; "Import Selected" → copies venue + facilities into tournament
-- [ ] `ImportFromPastTournamentModal.tsx` — dropdown of past tournaments from same org/user; select venue(s) to copy
+- [x] Game inline edit: venue dropdown → grouped `<optgroup>` by venue name, options = facilities
+- [x] `EditFields` + `onSave` callback include `venueFacilityId`
+- [x] `getVenueName()` returns "Lions Park — Diamond 1" format
+- [x] Modal add/edit combobox: search across all facilities ("Lions Park — Diamond 1" as searchable options)
+- [x] `BracketBuilder` dropdown uses `<optgroup>` with facilities; `Matchup.venueFacilityId` added
+- [x] `PlayoffWizard` builds location string with facility name when available
+- [x] Exports (XLSX, CSV, ICS) carry the full "Venue — Facility" display string
+- [x] Backward compat: venues without facilities fall through as flat options
 
-### Phase 6 — Schedule Builder + Game Editing
-Files: `app/[orgSlug]/admin/tournaments/schedule/Generator.tsx`, `BracketBuilder.tsx`, game edit forms
+### Phase 7 — Public Schedule + Scorekeeper ✅
+Files: `LocationLink.tsx`, `schedule/page.tsx` (public), `scorekeeper/page.tsx`
 
-- [ ] Update Generator.tsx diamond picker → `<optgroup>`-grouped facility selector
-  - Group by parent venue name
-  - Show facility name + type badge in each option
-  - Keep "select all / deselect all" per-venue group
-- [ ] Update game add/edit → venue dropdown uses grouped `<optgroup>` by venue name
-- [ ] Update game save/update API calls to write `venue_facility_id` (alongside or replacing `diamond_id`)
-- [ ] `PlayoffWizard.tsx` — same grouped dropdown for playoff game venue assignment
+- [x] `LocationLink.tsx` — already correct: uses `location` prop (full display string) + `venue.address` for Maps URL
+- [x] Public schedule — `game.location` carries "Lions Park — Diamond 1" automatically; no code change needed
+- [x] Scorekeeper card display — changed to `game.location || card.venue?.name` (prefers full location string)
+- [x] Scorekeeper filter — works at venue level (unchanged); facility-level filter deferred
 
-### Phase 7 — Public Schedule + Scorekeeper
-Files: `app/[orgSlug]/[tournamentSlug]/schedule/page.tsx`, `app/[orgSlug]/scorekeeper/page.tsx`, `components/LocationLink.tsx`
+### Phase 8 — DB Migrations to Prod ✅
+- [x] Applied migrations 094–096 to production (2026-05-25)
 
-- [ ] Update `LocationLink.tsx` → accept optional `parentVenue` (with address); use parent address for Maps URL if available; display as "Venue — Facility" format
-- [ ] Update public schedule `getVenue()` → resolve facility's parent venue for address; display "Lions Park — Diamond 2"
-- [ ] Update scorekeeper venue filter dropdown → grouped `<optgroup>` by parent venue
-- [ ] Update scorekeeper card display → show "Venue — Facility" format
-- [ ] Update scorekeeper API → return parent venue info alongside facility
+---
 
-### Phase 8 — DB Migrations to Prod
-- [ ] Apply migrations 094–096 to production
-- [ ] Verify data integrity on prod (spot-check venue + facility counts)
-- [ ] Monitor for any `diamond_id`-related errors in logs
+## Deferred / Future Enhancements
+
+- **Scorekeeper facility filter** — dropdown currently filters by venue; filtering by individual facility is a future enhancement
+- **Generator facility assignment** — schedule generator currently works at venue level; letting it assign specific facilities per round is a future enhancement  
+- **Scorekeeper API `venueFacilityId`** — `app/api/official/[orgSlug]/score/route.ts` doesn't yet return `venueFacilityId`; low priority since `game.location` carries the display string
+- **Facility drag-to-reorder** — `display_order` column exists; drag UI not implemented
 
 ---
 

@@ -3,7 +3,7 @@ import { use, useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useCoaches } from '@/lib/coaches-context';
 import { useOrg } from '@/lib/org-context';
-import { Archive, Calendar, CheckCircle2, Circle, DollarSign, FileText, Link2, Users } from 'lucide-react';
+import { Archive, Calendar, CheckCircle2, Circle, DollarSign, FileText, Link2, Trophy, Users } from 'lucide-react';
 import styles from '../../coaches.module.css';
 import type { RepRosterPlayer, RepTeamEvent } from '@/lib/types';
 
@@ -19,6 +19,20 @@ const STATUS_CSS: Record<string, string> = {
   active: styles.badgeActive,
   completed: styles.badgeCompleted,
   archived: styles.badgeArchived,
+};
+
+const REGISTRATION_STATUS_LABEL: Record<string, string> = {
+  accepted: 'Accepted',
+  pending: 'Pending Review',
+  waitlist: 'Waitlisted',
+  rejected: 'Not Accepted',
+};
+
+const REGISTRATION_STATUS_CSS: Record<string, string> = {
+  accepted: styles.badgeActive,
+  pending: styles.badgeUpcoming,
+  waitlist: styles.badgeManual,
+  rejected: styles.badgeOverdue,
 };
 
 const QUICK_LINKS = [
@@ -44,8 +58,51 @@ interface SetupItem {
   complete: boolean;
 }
 
+interface TournamentHistoryEntry {
+  registration: {
+    id: string;
+    name: string;
+    status: string;
+    registeredAt: string;
+  };
+  tournament: {
+    id: string;
+    name: string;
+    slug: string | null;
+    year: number | null;
+    startDate: string | null;
+    endDate: string | null;
+    status: string;
+  } | null;
+  org: {
+    id: string;
+    slug: string;
+    name: string;
+  } | null;
+}
+
 function errorMessage(error: unknown, fallback: string) {
   return error instanceof Error ? error.message : fallback;
+}
+
+function formatDateRange(startDate: string | null, endDate: string | null) {
+  if (!startDate) return null;
+  if (!endDate) {
+    return new Date(startDate).toLocaleDateString('en-CA', {
+      month: 'long',
+      day: 'numeric',
+      year: 'numeric',
+    });
+  }
+
+  return `${new Date(startDate).toLocaleDateString('en-CA', {
+    month: 'short',
+    day: 'numeric',
+  })} - ${new Date(endDate).toLocaleDateString('en-CA', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  })}`;
 }
 
 export default function TeamOverviewPage({
@@ -60,6 +117,9 @@ export default function TeamOverviewPage({
   const [setupStats, setSetupStats] = useState<SetupStats | null>(null);
   const [setupLoading, setSetupLoading] = useState(true);
   const [setupError, setSetupError] = useState('');
+  const [tournamentHistory, setTournamentHistory] = useState<TournamentHistoryEntry[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(true);
+  const [historyError, setHistoryError] = useState('');
 
   const loadSetup = useCallback(async () => {
     setSetupLoading(true);
@@ -98,9 +158,29 @@ export default function TeamOverviewPage({
     }
   }, [orgSlug, teamId]);
 
+  const loadTournamentHistory = useCallback(async () => {
+    setHistoryLoading(true);
+    setHistoryError('');
+    try {
+      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/tournament-history`);
+      if (!res.ok) throw new Error('Tournament history could not be loaded');
+
+      const data: { history?: TournamentHistoryEntry[] } = await res.json();
+      setTournamentHistory(data.history ?? []);
+    } catch (error: unknown) {
+      setHistoryError(errorMessage(error, 'Tournament history could not be loaded'));
+    } finally {
+      setHistoryLoading(false);
+    }
+  }, [orgSlug, teamId]);
+
   useEffect(() => {
     if (!loading) void Promise.resolve().then(loadSetup);
   }, [loading, loadSetup]);
+
+  useEffect(() => {
+    if (!loading) void Promise.resolve().then(loadTournamentHistory);
+  }, [loading, loadTournamentHistory]);
 
   if (loading) return <p className={styles.muted}>Loading...</p>;
 
@@ -211,6 +291,66 @@ export default function TeamOverviewPage({
           })}
         </div>
       </section>
+
+      {isTeamWorkspace && (
+        <section className={styles.tournamentHistoryPanel} aria-labelledby="tournament-history-title">
+          <div className={styles.setupHeader}>
+            <div>
+              <p className={styles.setupKicker}>Tournament history</p>
+              <h2 id="tournament-history-title" className={styles.setupTitle}>
+                {historyLoading
+                  ? 'Loading records'
+                  : tournamentHistory.length === 1
+                    ? '1 linked tournament'
+                    : `${tournamentHistory.length} linked tournaments`}
+              </h2>
+            </div>
+            <Trophy size={20} className={styles.tournamentHistoryIcon} />
+          </div>
+
+          {historyError && <p className={styles.errorText}>{historyError}</p>}
+          {!historyError && historyLoading && (
+            <p className={styles.tournamentHistoryEmpty}>Checking linked Basic records...</p>
+          )}
+          {!historyError && !historyLoading && tournamentHistory.length === 0 && (
+            <p className={styles.tournamentHistoryEmpty}>
+              No tournament registrations are linked to this Premium team yet.
+            </p>
+          )}
+          {!historyError && !historyLoading && tournamentHistory.length > 0 && (
+            <div className={styles.tournamentHistoryList}>
+              {tournamentHistory.map(entry => {
+                const statusLabel = REGISTRATION_STATUS_LABEL[entry.registration.status] ?? entry.registration.status;
+                const statusClass = REGISTRATION_STATUS_CSS[entry.registration.status] ?? styles.badgeManual;
+                const dateRange = formatDateRange(
+                  entry.tournament?.startDate ?? null,
+                  entry.tournament?.endDate ?? null,
+                );
+
+                return (
+                  <Link
+                    key={entry.registration.id}
+                    href={`/coaches/tournaments/${entry.registration.id}`}
+                    className={styles.tournamentHistoryItem}
+                  >
+                    <span className={styles.tournamentHistoryMain}>
+                      <span className={styles.tournamentHistoryName}>
+                        {entry.tournament?.name ?? entry.registration.name}
+                      </span>
+                      <span className={styles.tournamentHistoryMeta}>
+                        {entry.org?.name && <span>{entry.org.name}</span>}
+                        {dateRange && <span>{dateRange}</span>}
+                        <span>{entry.registration.name}</span>
+                      </span>
+                    </span>
+                    <span className={`${styles.badge} ${statusClass}`}>{statusLabel}</span>
+                  </Link>
+                );
+              })}
+            </div>
+          )}
+        </section>
+      )}
 
       <div className={styles.teamGrid} style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(200px,1fr))' }}>
         {QUICK_LINKS.map(({ label, href, icon: Icon, desc }) => (

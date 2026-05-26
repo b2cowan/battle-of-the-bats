@@ -63,7 +63,7 @@ const SCHEDULE_EXPORT_COLS: ExportColumnDef[] = [
 const emptyForm = {
   divisionId: '', homeTeamId: '', awayTeamId: '',
   homeSlotId: '', awaySlotId: '',
-  date: '', time: '09:00', location: '', venueId: '', notes: null as string | null,
+  date: '', time: '09:00', location: '', venueId: '', venueFacilityId: '', notes: null as string | null,
   bracketCode: '',
 };
 
@@ -88,7 +88,7 @@ export default function AdminSchedulePage() {
   const [showGenerator, setShowGenerator] = useState(false);
   const [showPlayoffWizard, setShowPlayoffWizard] = useState(false);
   const [search, setSearch] = useState('');
-  const [selectedStatuses, setSelectedStatuses] = useState<ScheduleStatusFilter[]>(['scheduled', 'cancelled', 'completed']);
+  const [selectedStatuses, setSelectedStatuses] = useState<ScheduleStatusFilter[]>(['scheduled']);
   const [selectedVenueKeys, setSelectedVenueKeys] = useState<string[]>([]);
   const [venueSearch, setVenueSearch] = useState('');
   const [venueDropdownOpen, setVenueDropdownOpen] = useState(false);
@@ -197,10 +197,16 @@ export default function AdminSchedulePage() {
   const getTeamName  = (id: string) => teams.find(t => t.id === id)?.name ?? null;
   const resolveTeam  = (id: string, placeholder?: string) => getTeamName(id) ?? placeholder ?? 'TBD';
   const getGroupName = (id: string) => divisions.find(g => g.id === id)?.name ?? '—';
-  const getVenueName = (id?: string) => id ? (venues.find(d => d.id === id)?.name ?? '') : '';
+  const getVenueName = (venueId?: string, facilityId?: string) => {
+    const venue = venueId ? venues.find(d => d.id === venueId) : null;
+    if (!venue) return '';
+    if (!facilityId) return venue.name;
+    const facility = venue.facilities?.find(f => f.id === facilityId);
+    return facility ? `${venue.name} — ${facility.name}` : venue.name;
+  };
   const getGameVenueKey = (g: Game) => g.venueId ? `venue:${g.venueId}` : `custom:${(g.location || '').trim() || '__none__'}`;
   const getGameVenueLabel = (g: Game) => {
-    if (g.venueId) return getVenueName(g.venueId) || g.location || 'Unknown venue';
+    if (g.venueId) return getVenueName(g.venueId, g.venueFacilityId) || g.location || 'Unknown venue';
     return g.location?.trim() || 'No venue';
   };
 
@@ -262,11 +268,16 @@ export default function AdminSchedulePage() {
       time: g.time ?? '09:00',
       location: g.location ?? '',
       venueId: g.venueId ?? '',
+      venueFacilityId: g.venueFacilityId ?? '',
       notes: g.notes ?? '',
       bracketCode: g.bracketCode ?? '',
     });
-    const existingVenue = g.venueId ? venues.find(d => d.id === g.venueId) : null;
-    setVenueSearch(existingVenue?.name ?? g.location ?? '');
+    const existingVenue    = g.venueId ? venues.find(d => d.id === g.venueId) : null;
+    const existingFacility = g.venueFacilityId ? existingVenue?.facilities?.find(f => f.id === g.venueFacilityId) : null;
+    setVenueSearch(
+      existingFacility ? `${existingVenue!.name} — ${existingFacility.name}` :
+      (existingVenue?.name ?? g.location ?? '')
+    );
     setEditing(g);
     setModal('edit');
     fetchModalSlots(g.divisionId);
@@ -286,11 +297,12 @@ export default function AdminSchedulePage() {
       awaySlotId:      awaySlot?.id,
       homePlaceholder: homeSlot?.displayName,
       awayPlaceholder: awaySlot?.displayName,
-      date:            form.date,
-      time:            form.time,
-      location:        form.location,
-      venueId:         form.venueId || undefined,
-      notes:           form.notes || undefined,
+      date:              form.date,
+      time:              form.time,
+      location:          form.location,
+      venueId:           form.venueId           || undefined,
+      venueFacilityId:   form.venueFacilityId   || undefined,
+      notes:             form.notes             || undefined,
       status:          editing?.status || 'scheduled',
       bracketCode:     form.bracketCode || undefined,
     };
@@ -319,22 +331,28 @@ export default function AdminSchedulePage() {
     refresh();
   }
 
-  async function handleSaveGame(gameId: string, data: { date: string; time: string; venueId: string; notes: string; homeTeamId: string; awayTeamId: string }) {
+  async function handleSaveGame(gameId: string, data: { date: string; time: string; venueId: string; venueFacilityId: string; notes: string; homeTeamId: string; awayTeamId: string }) {
     const orgParam = orgSlug ? `?orgSlug=${encodeURIComponent(orgSlug)}` : '';
-    const venue = data.venueId ? venues.find(d => d.id === data.venueId) : null;
+    const venue    = data.venueId ? venues.find(d => d.id === data.venueId) : null;
+    const facility = data.venueFacilityId ? venue?.facilities?.find(f => f.id === data.venueFacilityId) : null;
+    // Build a human-readable location string: "Lions Park — Diamond 1" or just "Lions Park"
+    const locationStr = facility
+      ? `${venue!.name} — ${facility.name}`
+      : (venue?.name || undefined);
     await fetch(`/api/admin/games${orgParam}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        action: 'update',
-        id: gameId,
-        date: data.date || undefined,
-        time: data.time || undefined,
-        venueId: data.venueId || undefined,
-        location: venue?.name || undefined,
-        notes: data.notes || undefined,
-        homeTeamId: data.homeTeamId,
-        awayTeamId: data.awayTeamId,
+        action:           'update',
+        id:               gameId,
+        date:             data.date             || undefined,
+        time:             data.time             || undefined,
+        venueId:          data.venueId          || undefined,
+        venueFacilityId:  data.venueFacilityId  || undefined,
+        location:         locationStr,
+        notes:            data.notes            || undefined,
+        homeTeamId:       data.homeTeamId,
+        awayTeamId:       data.awayTeamId,
       }),
     });
     await refresh();
@@ -412,7 +430,7 @@ export default function AdminSchedulePage() {
       division: getGroupName(g.divisionId),
       homeTeam: resolveTeam(g.homeTeamId, g.homePlaceholder),
       awayTeam: resolveTeam(g.awayTeamId, g.awayPlaceholder),
-      location: g.venueId ? getVenueName(g.venueId) : (g.location ?? ''),
+      location: g.venueId ? getVenueName(g.venueId, g.venueFacilityId) : (g.location ?? ''),
       status:   g.status,
     }));
   }
@@ -443,7 +461,7 @@ export default function AdminSchedulePage() {
         title:    `${resolveTeam(g.homeTeamId, g.homePlaceholder)} vs ${resolveTeam(g.awayTeamId, g.awayPlaceholder)} — ${getGroupName(g.divisionId)}`,
         date:     g.date,
         time:     g.time || undefined,
-        location: g.venueId ? getVenueName(g.venueId) : (g.location || undefined),
+        location: g.venueId ? getVenueName(g.venueId, g.venueFacilityId) : (g.location || undefined),
         cancelled: g.status === 'cancelled',
       }));
     await downloadICS(
@@ -901,7 +919,7 @@ export default function AdminSchedulePage() {
                     onChange={e => {
                       const v = e.target.value;
                       setVenueSearch(v);
-                      setForm(f => ({ ...f, location: v, venueId: '' }));
+                      setForm(f => ({ ...f, location: v, venueId: '', venueFacilityId: '' }));
                       setVenueDropdownOpen(true);
                     }}
                     onFocus={() => { if (venues.length > 0) setVenueDropdownOpen(true); }}
@@ -909,35 +927,50 @@ export default function AdminSchedulePage() {
                   />
                   {venueDropdownOpen && (() => {
                     const q = venueSearch.toLowerCase();
-                    const filtered = venues.filter(d =>
-                      !q || d.name.toLowerCase().includes(q) || (d.address || '').toLowerCase().includes(q)
-                    );
-                    if (filtered.length === 0) return null;
+                    // Build a flat list of facility-level entries for search
+                    type VenueOption = { venueId: string; facilityId: string; label: string; sublabel?: string };
+                    const options: VenueOption[] = [];
+                    for (const v of venues) {
+                      const facList = v.facilities ?? [];
+                      if (facList.length > 0) {
+                        for (const f of facList) {
+                          const label = `${v.name} — ${f.name}`;
+                          if (!q || label.toLowerCase().includes(q) || (v.address || '').toLowerCase().includes(q)) {
+                            options.push({ venueId: v.id, facilityId: f.id, label, sublabel: v.address || undefined });
+                          }
+                        }
+                      } else {
+                        if (!q || v.name.toLowerCase().includes(q) || (v.address || '').toLowerCase().includes(q)) {
+                          options.push({ venueId: v.id, facilityId: '', label: v.name, sublabel: v.address || undefined });
+                        }
+                      }
+                    }
+                    if (options.length === 0) return null;
                     return (
                       <div style={{
                         position: 'absolute', top: 'calc(100% + 2px)', left: 0, right: 0, zIndex: 200,
                         background: '#0d0f18', border: '1px solid var(--border)',
                         borderRadius: '2px', boxShadow: '0 8px 32px rgba(0,0,0,0.8)',
-                        maxHeight: '180px', overflowY: 'auto',
+                        maxHeight: '220px', overflowY: 'auto',
                       }}>
-                        {filtered.map((d, i) => (
+                        {options.map((opt, i) => (
                           <div
-                            key={d.id}
+                            key={`${opt.venueId}-${opt.facilityId}`}
                             onMouseDown={() => {
-                              setForm(f => ({ ...f, venueId: d.id, location: d.name }));
-                              setVenueSearch(d.name);
+                              setForm(f => ({ ...f, venueId: opt.venueId, venueFacilityId: opt.facilityId, location: opt.label }));
+                              setVenueSearch(opt.label);
                               setVenueDropdownOpen(false);
                             }}
                             style={{
                               padding: '0.55rem 0.875rem',
                               cursor: 'pointer',
-                              borderBottom: i < filtered.length - 1 ? '1px solid var(--border)' : 'none',
+                              borderBottom: i < options.length - 1 ? '1px solid var(--border)' : 'none',
                             }}
                             onMouseEnter={e => (e.currentTarget.style.background = 'var(--white-5)')}
                             onMouseLeave={e => (e.currentTarget.style.background = '')}
                           >
-                            <div style={{ fontWeight: 600, fontSize: '0.88rem', color: 'var(--white)' }}>{d.name}</div>
-                            {d.address && <div style={{ fontSize: '0.73rem', color: 'var(--white-40)', marginTop: '1px' }}>{d.address}</div>}
+                            <div style={{ fontWeight: 600, fontSize: '0.88rem', color: 'var(--white)' }}>{opt.label}</div>
+                            {opt.sublabel && <div style={{ fontSize: '0.73rem', color: 'var(--white-40)', marginTop: '1px' }}>{opt.sublabel}</div>}
                           </div>
                         ))}
                       </div>
@@ -946,7 +979,8 @@ export default function AdminSchedulePage() {
                 </div>
                 {form.venueId && (
                   <div style={{ marginTop: '0.35rem', fontSize: '0.73rem', color: 'var(--white-40)', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                    <Check size={11} style={{ color: 'var(--logic-lime)' }} /> Linked to saved venue
+                    <Check size={11} style={{ color: 'var(--logic-lime)' }} />
+                    {form.venueFacilityId ? 'Linked to saved facility' : 'Linked to saved venue'}
                   </div>
                 )}
               </div>

@@ -66,7 +66,7 @@ Pages rendered inside the tournament context (sidebar shows tournament nav).
 
 | Page | Route | File | Notes | 📸 Screenshotted | 👁 Reviewed | 📝 Decisions Logged | ✅ Done |
 |---|---|---|---|:---:|:---:|:---:|:---:|
-| Dashboard | `/{orgSlug}/admin/tournaments/dashboard` | `app/[orgSlug]/admin/tournaments/dashboard/page.tsx` | CSS: `dashboard.module.css` | [ ] | [ ] | [ ] | [ ] |
+| Dashboard | `/{orgSlug}/admin/tournaments/dashboard` | `app/[orgSlug]/admin/tournaments/dashboard/page.tsx` | CSS: `dashboard.module.css` | [x] | [x] | [x] | [x] |
 | Registrations / Teams | `/{orgSlug}/admin/tournaments/teams` | `app/[orgSlug]/admin/tournaments/teams/page.tsx` | CSS: `teams-admin.module.css` | [x] | [x] | [x] | [x] |
 | Schedule | `/{orgSlug}/admin/tournaments/schedule` | `app/[orgSlug]/admin/tournaments/schedule/page.tsx` | CSS: `schedule-admin.module.css`; sub-components: `Generator.tsx`, `PlayoffWizard.tsx`, `GameList.tsx`, `BracketBuilder.tsx` | [x] | [x] | [x] | [x] |
 | Results | `/{orgSlug}/admin/tournaments/results` | `app/[orgSlug]/admin/tournaments/results/page.tsx` | | [x] | [x] | [x] | [x] |
@@ -115,10 +115,10 @@ Pages rendered inside the tournament context (sidebar shows tournament nav).
 | 1 — Shared Shell & Navigation | 11 | 0 |
 | 2 — Admin Hub & Onboarding | 3 | 0 |
 | 3 — Tournament Entry Points | 3 | 0 |
-| 4 — Active Tournament Pages | 12 | 5 |
+| 4 — Active Tournament Pages | 12 | 6 |
 | 5 — Settings Sub-Pages | 7 | 1 |
 | 6 — Public Preview Shell | 4 | 0 |
-| **Total** | **40** | **6** |
+| **Total** | **40** | **7** |
 
 ---
 

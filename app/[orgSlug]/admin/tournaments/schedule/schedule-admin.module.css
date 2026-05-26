@@ -364,6 +364,10 @@
     grid-column: 1;
     grid-row: 1;
     min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.12rem;
   }
 
   .planningMatchup {
@@ -423,6 +427,96 @@
     min-width: 0;
     justify-content: flex-end;
   }
+}
+
+/* ─── Planning Venue Cell — intentional mobile override ─────────────────── */
+/* admin-common hides .gameColVenue at ≤768px; this class re-enables it for  */
+/* planning rows so venue is always visible inline below the matchup.         */
+.planningVenueCell {
+  display: flex; /* baseline for desktop (admin-common controls flex sizing)  */
+}
+
+@media (max-width: 768px) {
+  .planningVenueCell {
+    display: flex !important; /* override admin-common display: none           */
+    grid-column: 1 / -1;     /* full width, below matchup row                 */
+    grid-row: 3;
+    font-size: 0.64rem;
+    padding-top: 0.05rem;
+  }
+}
+
+/* ─── Planning Row Status Stripe ─────────────────────────────────────────── */
+/* 3px left border gives an instant colour signal while scrolling the list.  */
+/* Scheduled rows get no border — neutral / expected state.                  */
+.planningRow[data-status="cancelled"] {
+  border-left: 3px solid rgba(var(--danger-rgb), 0.55);
+}
+.planningRow[data-status="completed"] {
+  border-left: 3px solid rgba(var(--success-rgb), 0.48);
+}
+
+/* ─── Mobile Status Tag (below date) ─────────────────────────────────────── */
+/* Desktop: hidden — desktopStatusBadge in planningStatusCell covers it.     */
+/* Mobile (≤768px): shown below date/time text inside planningDateCell.      */
+.mobileStatusTag {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .mobileStatusTag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2rem;
+    font-family: var(--font-data);
+    font-size: 0.54rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+  .mobileStatusTag[data-status="cancelled"] {
+    color: var(--danger);
+  }
+  .mobileStatusTag[data-status="completed"] {
+    color: var(--success);
+  }
+}
+
+/* ─── Date Group Dividers ─────────────────────────────────────────────────── */
+/* Separates game rows by date in the flat list view.                         */
+.gameDateDivider {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.65rem 1rem 0.3rem;
+  font-family: var(--font-data);
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--white-30);
+}
+
+.gameDateDivider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border-2);
+}
+
+.gameDateTodayBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.08rem 0.35rem;
+  border-radius: 2px;
+  background: rgba(var(--logic-lime-rgb), 0.12);
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.3);
+  color: var(--logic-lime);
+  font-size: 0.5rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 /* ─── Desktop Badge / Mobile Compact Marker ──────────────────────────────── */

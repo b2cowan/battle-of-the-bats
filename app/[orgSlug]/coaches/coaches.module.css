@@ -390,6 +390,74 @@
   color: rgba(255,255,255,0.32);
 }
 
+.tournamentHistoryPanel {
+  background: rgba(255,255,255,0.035);
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.18);
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.tournamentHistoryIcon {
+  color: var(--logic-lime, #a3e635);
+  flex-shrink: 0;
+}
+
+.tournamentHistoryEmpty {
+  margin: 0;
+  color: rgba(255,255,255,0.38);
+  font-size: 0.84rem;
+  line-height: 1.5;
+}
+
+.tournamentHistoryList {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.tournamentHistoryItem {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 58px;
+  padding: 0.7rem 0.8rem;
+  background: rgba(255,255,255,0.028);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 8px;
+  text-decoration: none;
+  transition: border-color 0.12s, background 0.12s;
+}
+
+.tournamentHistoryItem:hover {
+  background: rgba(255,255,255,0.052);
+  border-color: rgba(var(--blueprint-blue-rgb),0.28);
+}
+
+.tournamentHistoryMain {
+  display: flex;
+  flex-direction: column;
+  gap: 0.18rem;
+  min-width: 0;
+}
+
+.tournamentHistoryName {
+  color: var(--white-90, #f0f0f0);
+  font-size: 0.9rem;
+  font-weight: 800;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tournamentHistoryMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.7rem;
+  color: rgba(255,255,255,0.38);
+  font-size: 0.76rem;
+}
+
 .badge {
   font-size: 0.72rem;
   font-weight: 600;

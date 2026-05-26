@@ -55,6 +55,28 @@ Phase 2B is now implemented in code. Basic tournament access is no longer only a
 - Existing email matching is used only to create explicit links during account/linking and migration backfill; portal access itself comes from Basic team links.
 - Premium upgrade provisioning can attach to the same Basic team identity so tournament history can carry forward.
 
+## Phase 3 Update - Premium In The Same Portal
+
+Phase 3 is now implemented as the first unified Premium experience:
+
+- `/coaches` is the coach-facing portal home, showing Basic tournament history and Premium workspace cards without copying the broader `/home` account switcher.
+- `/coaches/teams` lists only Premium Coaches Portal workspaces and links coaches into their existing team dashboard.
+- The Premium team overview shows linked tournament history from the same Basic team profile used during tournament registration.
+- Tournament-claimed Premium workspaces can repair their Basic-team link from the original registration if that link is missing.
+- Paid upgrade prompts are hidden for coaches who already have active Premium access, while tournament-hosting prompts remain separate.
+- Premium dashboard history requires active Premium team entitlement plus active coach assignment. Basic org visibility still does not expose roster, documents, accounting, billing, ownership, or org-wide rep-team admin access.
+
+## Phase 4 Update - Cancellation Fallback
+
+The first Phase 4 billing/cancellation slice is now implemented:
+
+- Coach-owned Premium billing now reads as Coaches Portal billing.
+- Canceling Coaches Portal Premium no longer behaves like a full organization shutdown in the customer-facing path.
+- Premium entitlement is canceled, Premium tools become inactive, and Premium team data is retained for the restore window.
+- Basic tournament records remain available in Coaches Portal after cancellation.
+- Canceled Premium workspaces no longer count as active Premium access on `/coaches` or `/coaches/teams`.
+- The canceled billing screen gives coaches a path back to Basic tournament records and a Reactivate Premium CTA.
+
 ## Role And Access Differences
 
 | User type | Portal access |

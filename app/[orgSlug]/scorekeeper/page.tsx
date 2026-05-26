@@ -503,7 +503,7 @@ export default function ScorekeeperPage() {
             const meta = [
               tournamentIds.length > 1 ? card.tournamentName : null,
               game.time ? formatTime(game.time) : 'Time TBD',
-              card.venue?.name ?? game.location,
+              game.location || card.venue?.name,
               card.divisionName,
             ].filter(Boolean).join(' - ');
 

@@ -798,16 +798,16 @@ tbody tr:hover { background: var(--white-10); }
 }
 
 .modal {
-  background: var(--bg-2);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  padding: 2rem;
+  background: var(--hud-surface);
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.4);
+  border-radius: 0;
+  padding: 1.5rem;
   width: 100%;
   max-width: 560px;
   max-height: 90vh;
   overflow-y: auto;
   animation: slideUp 0.25s ease;
-  box-shadow: var(--shadow-lg), var(--glow-sm);
+  box-shadow: var(--shadow-lg), var(--glow-blue);
 }
 
 .modal-lg { max-width: 800px; }
@@ -816,18 +816,36 @@ tbody tr:hover { background: var(--white-10); }
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid rgba(var(--blueprint-blue-rgb), 0.25);
 }
 
-.modal-header h3 { font-family: var(--font-display, sans-serif); font-size: 1.5rem; font-weight: 800; }
+.modal-header h3 {
+  font-family: var(--font-data);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--fl-text);
+  margin: 0;
+}
+
+.modal p {
+  font-family: var(--font-data);
+  font-size: 0.82rem;
+  color: var(--white-70);
+  line-height: 1.55;
+  margin: 0 0 0.5rem;
+}
 
 .modal-footer {
   display: flex;
   gap: 0.75rem;
   justify-content: flex-end;
-  margin-top: 1.5rem;
-  padding-top: 1.25rem;
-  border-top: 1px solid var(--border-2);
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(var(--blueprint-blue-rgb), 0.25);
 }
 
 /* ─── Keyframes ─────────────────────────────────────────────────────────────── */

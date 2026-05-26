@@ -96,7 +96,7 @@ export default function TournamentEventSettingsPage() {
     Promise.all([
       fetch(`/api/admin/tournaments${orgQuery}`).then(r => r.ok ? r.json() : []),
       fetch(`/api/admin/tournament-branding?tournamentId=${encodeURIComponent(tournamentId)}${orgParam}`).then(r => r.ok ? r.json() : {}),
-      fetch('/api/admin/members').then(r => r.ok ? r.json() : []),
+      fetch(`/api/admin/members${orgQuery}`).then(r => r.ok ? r.json() : []),
     ]).then(([tournaments, branding, members]) => {
       const t = Array.isArray(tournaments) ? tournaments.find((row: { id: string }) => row.id === tournamentId) : null;
       if (t) {

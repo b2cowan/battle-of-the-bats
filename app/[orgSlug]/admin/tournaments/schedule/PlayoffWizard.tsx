@@ -259,8 +259,14 @@ export default function PlayoffWizard({ division, tournamentId, orgSlug, onClose
           awayTeamId: null as any,
           date: p.date || null,
           time: p.time || null,
-          location: venues.find(d => d.id === p.venueId)?.name || 'TBD',
-          venueId: p.venueId || undefined,
+          location: (() => {
+            const v = venues.find(d => d.id === p.venueId);
+            if (!v) return 'TBD';
+            const f = p.venueFacilityId ? v.facilities?.find(f => f.id === p.venueFacilityId) : null;
+            return f ? `${v.name} — ${f.name}` : v.name;
+          })(),
+          venueId:         p.venueId         || undefined,
+          venueFacilityId: p.venueFacilityId || undefined,
           status: 'scheduled',
           isPlayoff: true,
           bracketId,

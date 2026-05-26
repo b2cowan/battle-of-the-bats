@@ -3,6 +3,7 @@ import 'server-only';
 import { PLAN_CONFIG } from './plan-config';
 import { getOrgOwnerEmail, supabaseAdmin } from './supabase-admin';
 import { billingRetentionWarningHtml, sendEmail, SITE_URL } from './email';
+import { isTeamWorkspaceOrg } from './team-workspace-entitlements';
 import type { Organization, OrgPlan } from './types';
 import type { Capability } from './roles';
 
@@ -161,6 +162,20 @@ export async function buildDowngradePreflight(
 
 export async function buildCancellationPreflight(org: Organization): Promise<CancellationPreflight> {
   const tournaments = await getNonArchivedTournaments(org.id);
+  if (isTeamWorkspaceOrg(org)) {
+    return {
+      currentPlan: org.planId,
+      activeTournamentCount: tournaments.length,
+      tournaments,
+      retentionDays: BILLING_RETENTION_DAYS,
+      shutsDown: [
+        'Premium roster, schedule, attendance, lineup, documents, dues, and budget tools',
+        'Coach-managed payment reminders and premium team documents',
+        'The Premium local tournament slot',
+      ],
+    };
+  }
+
   const planEntitlements = PLAN_CONFIG[org.planId]?.moduleEntitlements ?? [];
   const enabledModules = new Set<Capability>([
     ...planEntitlements,

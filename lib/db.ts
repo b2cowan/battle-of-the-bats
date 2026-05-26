@@ -3,7 +3,7 @@ import { supabaseAdmin } from './supabase-admin';
 import { getEffectiveTournamentLimit, PLAN_CONFIG } from './plan-config';
 import { createClient as createBrowserSupabaseClient } from './supabase-browser';
 import { getActiveTeamEntitledRepTeamIds } from './team-workspace-entitlements';
-import { Tournament, TournamentStatus, Venue, Division, Pool, PoolSlot, Team, Game, Announcement, PlayoffConfig, RuleSection, RuleItem, Resource, Organization, OrganizationMember, OrgPlan, OrgRole, TournamentArchive, OrgPublicSiteContent, AccountingLedger, AccountingEntry, LedgerSummary, AccountingEntryStatus, AccountingEntryType, LeagueSeason, LeagueDivision, LeagueTeam, LeagueRegistration, LeagueGame, LeagueStandingsRow, LeagueSeasonSummary, LeagueRegistrationStatus, LeagueSeasonStatus, LeaguePractice, LeaguePracticeStatus, RepTeam, RepProgramYear, RepProgramYearStatus, RepTeamCoach, RepTryoutRegistration, RepTryoutRegistrationStatus, RepRosterPlayer, RepRosterStatus, RepTeamEvent, RepEventType, RepTeamEventAttendance, RepAttendanceStatus, RepLineupMode, RepTeamLineup, RepTeamLineupEntry, RepDocumentTemplate, RepDocumentType, RepPlayerDocument, RepCostAllocation, RepAllocationSplit, RepAllocationInstallment, RepPlayerDuesSchedule, RepPlayerDuesInstallment, RepTeamExpense, OrgPayee, TournamentRegistrationField, TournamentRegistrationFieldAnswer, TournamentRegistrationFieldType } from './types';
+import { Tournament, TournamentStatus, Venue, VenueFacility, OrgVenue, OrgVenueFacility, FacilityType, Division, Pool, PoolSlot, Team, Game, Announcement, PlayoffConfig, RuleSection, RuleItem, Resource, Organization, OrganizationMember, OrgPlan, OrgRole, TournamentArchive, OrgPublicSiteContent, AccountingLedger, AccountingEntry, LedgerSummary, AccountingEntryStatus, AccountingEntryType, LeagueSeason, LeagueDivision, LeagueTeam, LeagueRegistration, LeagueGame, LeagueStandingsRow, LeagueSeasonSummary, LeagueRegistrationStatus, LeagueSeasonStatus, LeaguePractice, LeaguePracticeStatus, RepTeam, RepProgramYear, RepProgramYearStatus, RepTeamCoach, RepTryoutRegistration, RepTryoutRegistrationStatus, RepRosterPlayer, RepRosterStatus, RepTeamEvent, RepEventType, RepTeamEventAttendance, RepAttendanceStatus, RepLineupMode, RepTeamLineup, RepTeamLineupEntry, RepDocumentTemplate, RepDocumentType, RepPlayerDocument, RepCostAllocation, RepAllocationSplit, RepAllocationInstallment, RepPlayerDuesSchedule, RepPlayerDuesInstallment, RepTeamExpense, OrgPayee, TournamentRegistrationField, TournamentRegistrationFieldAnswer, TournamentRegistrationFieldType } from './types';
 
 // Use the SSR browser client (cookie-based session) for writes that need auth;
 // falls back to anon client on the server where there is no window.
@@ -657,16 +657,54 @@ export async function populateTournamentFrom(
   const divisionIdMap = new Map<string, string>();
   const poolIdMap = new Map<string, string>();
 
-  // Venues
+  // Venues + facilities (copy parent venues then their facilities)
   const { data: venues, error: venuesError } = await supabaseAdmin
     .from('diamonds').select('*').eq('tournament_id', sourceTournamentId).order('name');
   if (venuesError) throw venuesError;
   if (venues?.length) {
     const { data: ins, error } = await supabaseAdmin.from('diamonds').insert(
-      venues.map(v => ({ tournament_id: destinationTournamentId, name: v.name, address: v.address, notes: v.notes }))
+      venues.map(v => ({
+        tournament_id: destinationTournamentId,
+        name: v.name,
+        address: v.address,
+        notes: v.notes,
+        // source_org_venue_id intentionally not copied — new tournament gets a fresh local copy
+      }))
     ).select('id');
     if (error) throw error;
     copied.venues = ins?.length ?? 0;
+
+    // Copy venue_facilities for each cloned venue
+    if (ins?.length) {
+      const sourceVenueIds = venues.map(v => v.id);
+      const { data: srcFacilities } = await supabaseAdmin
+        .from('venue_facilities')
+        .select('*')
+        .in('venue_id', sourceVenueIds);
+
+      if (srcFacilities?.length) {
+        // Build old→new venue id map
+        const venueIdMap = new Map<string, string>();
+        venues.forEach((v, i) => { if (ins[i]) venueIdMap.set(v.id, ins[i].id); });
+
+        const facilityRows = srcFacilities
+          .filter(f => venueIdMap.has(f.venue_id))
+          .map(f => ({
+            venue_id:      venueIdMap.get(f.venue_id)!,
+            tournament_id: destinationTournamentId,
+            name:          f.name,
+            facility_type: f.facility_type,
+            display_order: f.display_order,
+            notes:         f.notes ?? null,
+            // source_org_facility_id intentionally not copied
+          }));
+
+        if (facilityRows.length) {
+          const { error: fErr } = await supabaseAdmin.from('venue_facilities').insert(facilityRows);
+          if (fErr) throw fErr;
+        }
+      }
+    }
   }
 
   // Divisions + pools + slots
@@ -800,8 +838,41 @@ export async function populateTournamentFrom(
   return { copied };
 }
 
-// --- Venues ---
-export async function getVenues(tournamentId?: string, options: ReadOptions = {}): Promise<Venue[]> {
+// --- Venues (tournament-scoped) ---
+
+function mapVenueRow(d: any, facilities?: VenueFacility[]): Venue {
+  return {
+    id:               d.id,
+    tournamentId:     d.tournament_id,
+    name:             d.name,
+    address:          d.address ?? undefined,
+    notes:            d.notes   ?? undefined,
+    sourceOrgVenueId: d.source_org_venue_id ?? undefined,
+    ...(facilities !== undefined ? { facilities } : {}),
+  };
+}
+
+function mapFacilityRow(f: any): VenueFacility {
+  return {
+    id:                   f.id,
+    venueId:              f.venue_id,
+    tournamentId:         f.tournament_id,
+    name:                 f.name,
+    facilityType:         f.facility_type as FacilityType,
+    displayOrder:         f.display_order,
+    notes:                f.notes ?? undefined,
+    sourceOrgFacilityId:  f.source_org_facility_id ?? undefined,
+  };
+}
+
+/**
+ * Returns tournament venues. Pass `includeFacilities: true` to get nested
+ * facilities[] on each venue — used by schedule builder and game editing.
+ */
+export async function getVenues(
+  tournamentId?: string,
+  options: ReadOptions & { includeFacilities?: boolean } = {},
+): Promise<Venue[]> {
   const client = options.admin ? supabaseAdmin : supabase;
   let query = client.from('diamonds').select('*').order('name', { ascending: true });
   if (tournamentId) query = query.eq('tournament_id', tournamentId);
@@ -810,29 +881,254 @@ export async function getVenues(tournamentId?: string, options: ReadOptions = {}
     if (error) console.error('getVenues error', error);
     return [];
   }
-  return data.map((d: any) => ({ id: d.id, tournamentId: d.tournament_id, name: d.name, address: d.address, notes: d.notes }));
+
+  if (!options.includeFacilities) {
+    return data.map((d: any) => mapVenueRow(d));
+  }
+
+  // Fetch facilities for all returned venue IDs in one query
+  const venueIds = data.map((d: any) => d.id);
+  if (venueIds.length === 0) return [];
+
+  const { data: facData, error: facError } = await client
+    .from('venue_facilities')
+    .select('*')
+    .in('venue_id', venueIds)
+    .order('display_order', { ascending: true });
+
+  if (facError) console.error('getVenues facilities error', facError);
+
+  const facilityByVenue = new Map<string, VenueFacility[]>();
+  for (const f of facData ?? []) {
+    const mapped = mapFacilityRow(f);
+    const arr = facilityByVenue.get(mapped.venueId) ?? [];
+    arr.push(mapped);
+    facilityByVenue.set(mapped.venueId, arr);
+  }
+
+  return data.map((d: any) => mapVenueRow(d, facilityByVenue.get(d.id) ?? []));
 }
 
-export async function saveVenue(d: Omit<Venue, 'id'>): Promise<void> {
-  await authClient().from('diamonds').insert({
-    tournament_id: d.tournamentId,
-    name: d.name,
-    address: d.address,
-    notes: d.notes
-  });
+export async function saveVenue(d: Omit<Venue, 'id'>): Promise<string> {
+  const { data, error } = await supabaseAdmin.from('diamonds').insert({
+    tournament_id:        d.tournamentId,
+    name:                 d.name,
+    address:              d.address ?? null,
+    notes:                d.notes   ?? null,
+    source_org_venue_id:  d.sourceOrgVenueId ?? null,
+  }).select('id').single();
+  if (error) throw error;
+  return data.id as string;
 }
 
-export async function updateVenue(id: string, d: Partial<Venue>): Promise<void> {
-  const updates: any = {};
-  if (d.tournamentId !== undefined) updates.tournament_id = d.tournamentId;
-  if (d.name !== undefined) updates.name = d.name;
-  if (d.address !== undefined) updates.address = d.address;
-  if (d.notes !== undefined) updates.notes = d.notes;
-  await authClient().from('diamonds').update(updates).eq('id', id);
+export async function updateVenue(id: string, d: Partial<Omit<Venue, 'facilities'>>): Promise<void> {
+  const updates: Record<string, unknown> = {};
+  if (d.name             !== undefined) updates.name                = d.name;
+  if (d.address          !== undefined) updates.address             = d.address ?? null;
+  if (d.notes            !== undefined) updates.notes               = d.notes   ?? null;
+  if (d.sourceOrgVenueId !== undefined) updates.source_org_venue_id = d.sourceOrgVenueId ?? null;
+  await supabaseAdmin.from('diamonds').update(updates).eq('id', id);
 }
 
 export async function deleteVenue(id: string): Promise<void> {
-  await authClient().from('diamonds').delete().eq('id', id);
+  // venue_facilities cascade-deletes via FK ON DELETE CASCADE
+  await supabaseAdmin.from('diamonds').delete().eq('id', id);
+}
+
+// --- Venue Facilities ---
+
+export async function getVenueFacilities(venueId: string, options: ReadOptions = {}): Promise<VenueFacility[]> {
+  const client = options.admin ? supabaseAdmin : supabase;
+  const { data, error } = await client
+    .from('venue_facilities')
+    .select('*')
+    .eq('venue_id', venueId)
+    .order('display_order', { ascending: true });
+  if (error) { console.error('getVenueFacilities error', error); return []; }
+  return (data ?? []).map(mapFacilityRow);
+}
+
+export async function addVenueFacility(f: Omit<VenueFacility, 'id'>): Promise<string> {
+  const { data, error } = await supabaseAdmin.from('venue_facilities').insert({
+    venue_id:               f.venueId,
+    tournament_id:          f.tournamentId,
+    name:                   f.name,
+    facility_type:          f.facilityType,
+    display_order:          f.displayOrder,
+    notes:                  f.notes ?? null,
+    source_org_facility_id: f.sourceOrgFacilityId ?? null,
+  }).select('id').single();
+  if (error) throw error;
+  return data.id as string;
+}
+
+export async function updateVenueFacility(id: string, f: Partial<VenueFacility>): Promise<void> {
+  const updates: Record<string, unknown> = {};
+  if (f.name          !== undefined) updates.name          = f.name;
+  if (f.facilityType  !== undefined) updates.facility_type = f.facilityType;
+  if (f.displayOrder  !== undefined) updates.display_order = f.displayOrder;
+  if (f.notes         !== undefined) updates.notes         = f.notes ?? null;
+  await supabaseAdmin.from('venue_facilities').update(updates).eq('id', id);
+}
+
+export async function deleteVenueFacility(id: string): Promise<void> {
+  await supabaseAdmin.from('venue_facilities').delete().eq('id', id);
+}
+
+// --- Org Venue Library ---
+
+function mapOrgVenueRow(v: any, facilities?: OrgVenueFacility[]): OrgVenue {
+  return {
+    id:       v.id,
+    orgId:    v.org_id,
+    name:     v.name,
+    address:  v.address  ?? undefined,
+    notes:    v.notes    ?? undefined,
+    isActive: v.is_active,
+    ...(facilities !== undefined ? { facilities } : {}),
+  };
+}
+
+function mapOrgFacilityRow(f: any): OrgVenueFacility {
+  return {
+    id:           f.id,
+    orgVenueId:   f.org_venue_id,
+    orgId:        f.org_id,
+    name:         f.name,
+    facilityType: f.facility_type as FacilityType,
+    displayOrder: f.display_order,
+    notes:        f.notes ?? undefined,
+  };
+}
+
+export async function getOrgVenues(orgId: string): Promise<OrgVenue[]> {
+  const { data, error } = await supabaseAdmin
+    .from('org_venues')
+    .select('*')
+    .eq('org_id', orgId)
+    .eq('is_active', true)
+    .order('name', { ascending: true });
+  if (error) { console.error('getOrgVenues error', error); return []; }
+
+  const venueIds = (data ?? []).map((v: any) => v.id);
+  if (venueIds.length === 0) return [];
+
+  const { data: facData, error: facError } = await supabaseAdmin
+    .from('org_venue_facilities')
+    .select('*')
+    .in('org_venue_id', venueIds)
+    .order('display_order', { ascending: true });
+  if (facError) console.error('getOrgVenues facilities error', facError);
+
+  const facilityByVenue = new Map<string, OrgVenueFacility[]>();
+  for (const f of facData ?? []) {
+    const mapped = mapOrgFacilityRow(f);
+    const arr = facilityByVenue.get(mapped.orgVenueId) ?? [];
+    arr.push(mapped);
+    facilityByVenue.set(mapped.orgVenueId, arr);
+  }
+
+  return (data ?? []).map((v: any) => mapOrgVenueRow(v, facilityByVenue.get(v.id) ?? []));
+}
+
+export async function saveOrgVenue(v: Omit<OrgVenue, 'id' | 'facilities'>): Promise<string> {
+  const { data, error } = await supabaseAdmin.from('org_venues').insert({
+    org_id:    v.orgId,
+    name:      v.name,
+    address:   v.address ?? null,
+    notes:     v.notes   ?? null,
+    is_active: v.isActive,
+  }).select('id').single();
+  if (error) throw error;
+  return data.id as string;
+}
+
+export async function updateOrgVenue(id: string, v: Partial<Omit<OrgVenue, 'id' | 'orgId' | 'facilities'>>): Promise<void> {
+  const updates: Record<string, unknown> = {};
+  if (v.name      !== undefined) updates.name      = v.name;
+  if (v.address   !== undefined) updates.address   = v.address ?? null;
+  if (v.notes     !== undefined) updates.notes     = v.notes   ?? null;
+  if (v.isActive  !== undefined) updates.is_active = v.isActive;
+  await supabaseAdmin.from('org_venues').update(updates).eq('id', id);
+}
+
+export async function deleteOrgVenue(id: string): Promise<void> {
+  // org_venue_facilities cascade via FK; mark inactive instead of hard-delete if preferred
+  await supabaseAdmin.from('org_venues').delete().eq('id', id);
+}
+
+export async function addOrgVenueFacility(f: Omit<OrgVenueFacility, 'id'>): Promise<string> {
+  const { data, error } = await supabaseAdmin.from('org_venue_facilities').insert({
+    org_venue_id:  f.orgVenueId,
+    org_id:        f.orgId,
+    name:          f.name,
+    facility_type: f.facilityType,
+    display_order: f.displayOrder,
+    notes:         f.notes ?? null,
+  }).select('id').single();
+  if (error) throw error;
+  return data.id as string;
+}
+
+export async function updateOrgVenueFacility(id: string, f: Partial<OrgVenueFacility>): Promise<void> {
+  const updates: Record<string, unknown> = {};
+  if (f.name          !== undefined) updates.name          = f.name;
+  if (f.facilityType  !== undefined) updates.facility_type = f.facilityType;
+  if (f.displayOrder  !== undefined) updates.display_order = f.displayOrder;
+  if (f.notes         !== undefined) updates.notes         = f.notes ?? null;
+  await supabaseAdmin.from('org_venue_facilities').update(updates).eq('id', id);
+}
+
+export async function deleteOrgVenueFacility(id: string): Promise<void> {
+  await supabaseAdmin.from('org_venue_facilities').delete().eq('id', id);
+}
+
+/**
+ * Imports an org venue (and all its facilities) into a tournament.
+ * Creates a local copy in the diamonds + venue_facilities tables.
+ * Changes to the copy don't affect the org library.
+ * Returns the new tournament venue id.
+ */
+export async function importOrgVenueToTournament(
+  orgVenueId: string,
+  tournamentId: string,
+): Promise<string> {
+  // Fetch org venue + facilities
+  const { data: ov, error: ovErr } = await supabaseAdmin
+    .from('org_venues')
+    .select('*, org_venue_facilities(*)')
+    .eq('id', orgVenueId)
+    .single();
+  if (ovErr || !ov) throw ovErr ?? new Error('Org venue not found');
+
+  // Create tournament-scoped venue (diamond)
+  const { data: newVenue, error: vErr } = await supabaseAdmin.from('diamonds').insert({
+    tournament_id:        tournamentId,
+    name:                 ov.name,
+    address:              ov.address ?? null,
+    notes:                ov.notes   ?? null,
+    source_org_venue_id:  orgVenueId,
+  }).select('id').single();
+  if (vErr || !newVenue) throw vErr ?? new Error('Failed to create tournament venue');
+
+  // Copy each facility
+  const facilities: any[] = ov.org_venue_facilities ?? [];
+  if (facilities.length > 0) {
+    const { error: fErr } = await supabaseAdmin.from('venue_facilities').insert(
+      facilities.map((f: any) => ({
+        venue_id:               newVenue.id,
+        tournament_id:          tournamentId,
+        name:                   f.name,
+        facility_type:          f.facility_type,
+        display_order:          f.display_order,
+        notes:                  f.notes ?? null,
+        source_org_facility_id: f.id,
+      }))
+    );
+    if (fErr) throw fErr;
+  }
+
+  return newVenue.id as string;
 }
 
 // --- Divisions ---
@@ -1205,6 +1501,7 @@ export async function getGames(tournamentId?: string, options: ReadOptions = {})
     time: g.game_time,
     location: g.location,
     venueId: g.diamond_id,
+    venueFacilityId: g.venue_facility_id,
     homeScore: g.home_score,
     awayScore: g.away_score,
     status: g.status,
@@ -1229,6 +1526,7 @@ export async function saveGame(g: Omit<Game, 'id'>): Promise<void> {
     game_time: g.time,
     location: g.location,
     diamond_id: g.venueId,
+    venue_facility_id: g.venueFacilityId ?? null,
     home_score: g.homeScore,
     away_score: g.awayScore,
     status: g.status || 'scheduled',
@@ -1252,7 +1550,8 @@ export async function updateGame(id: string, g: Partial<Game>, options: ReadOpti
   if (g.date !== undefined) updates.game_date = g.date;
   if (g.time !== undefined) updates.game_time = g.time;
   if (g.location !== undefined) updates.location = g.location;
-  if (g.venueId !== undefined) updates.diamond_id = g.venueId;
+  if (g.venueId          !== undefined) updates.diamond_id        = g.venueId;
+  if (g.venueFacilityId !== undefined) updates.venue_facility_id = g.venueFacilityId ?? null;
   if (g.homeScore !== undefined) updates.home_score = g.homeScore;
   if (g.awayScore !== undefined) updates.away_score = g.awayScore;
   if (g.status !== undefined) updates.status = g.status;

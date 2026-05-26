@@ -1,5 +1,5 @@
 ﻿'use client';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ChevronDown, ChevronUp, MapPin, Pencil, X, AlertCircle, Trash2, Check } from 'lucide-react';
 import { Game, Team, Division, Venue } from '@/lib/types';
 import { formatTime, formatPoolName } from '@/lib/utils';
@@ -21,13 +21,13 @@ interface GameListProps {
   onDelete?: (id: string) => void;
   onCancel?: (id: string) => void;
   onSchedule?: (id: string) => void;
-  onSave?: (gameId: string, data: { date: string; time: string; venueId: string; notes: string; homeTeamId: string; awayTeamId: string }) => Promise<void>;
+  onSave?: (gameId: string, data: { date: string; time: string; venueId: string; venueFacilityId: string; notes: string; homeTeamId: string; awayTeamId: string }) => Promise<void>;
   onSaveScore?: (gameId: string, homeScore: number, awayScore: number) => Promise<void>;
   onCreateVenue?: () => void;
   mode: 'planning' | 'scoring';
 }
 
-type EditFields = { date: string; time: string; venueId: string; notes: string; homeTeamId: string; awayTeamId: string };
+type EditFields = { date: string; time: string; venueId: string; venueFacilityId: string; notes: string; homeTeamId: string; awayTeamId: string };
 
 type ScoreFields = { home: string; away: string };
 
@@ -48,7 +48,13 @@ export default function GameList({
 
   const getTeamName = (id: string) => teams.find(t => t.id === id)?.name ?? null;
   const resolveTeam = (id: string, placeholder?: string) => getTeamName(id) ?? placeholder ?? 'TBD';
-  const getVenueName = (id?: string) => id ? (venues.find(d => d.id === id)?.name ?? '') : '';
+  const getVenueName = (venueId?: string, facilityId?: string) => {
+    const venue = venueId ? venues.find(d => d.id === venueId) : null;
+    if (!venue) return '';
+    if (!facilityId) return venue.name;
+    const facility = venue.facilities?.find(f => f.id === facilityId);
+    return facility ? `${venue.name} — ${facility.name}` : venue.name;
+  };
 
   useEffect(() => {
     const previousStatuses = previousStatusesRef.current;
@@ -85,6 +91,7 @@ export default function GameList({
             date: game.date ?? '',
             time: game.time ?? '',
             venueId: game.venueId ?? '',
+            venueFacilityId: game.venueFacilityId ?? '',
             notes: game.notes ?? '',
             homeTeamId: game.homeTeamId ?? '',
             awayTeamId: game.awayTeamId ?? '',
@@ -132,6 +139,8 @@ export default function GameList({
     }
     return 0;
   });
+
+  const today = useMemo(() => new Date().toISOString().split('T')[0], []);
 
   function statusBadge(status: string) {
     if (status === 'completed') return <span className="badge badge-success">Final</span>;
@@ -210,7 +219,7 @@ export default function GameList({
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: '4px', fontSize: '0.72rem', color: 'var(--data-gray)', fontFamily: 'var(--font-data)' }}>
                 <MapPin size={11} style={{ flexShrink: 0, marginTop: '2px' }} />
                 <span style={{ overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', lineHeight: '1.35' }}>
-                  {g.venueId ? getVenueName(g.venueId) : (g.location || 'TBD')}
+                  {g.venueId ? getVenueName(g.venueId, g.venueFacilityId) : (g.location || 'TBD')}
                 </span>
               </div>
             </div>
@@ -344,6 +353,7 @@ export default function GameList({
       date: g.date ?? '',
       time: g.time ?? '',
       venueId: g.venueId ?? '',
+      venueFacilityId: g.venueFacilityId ?? '',
       notes: g.notes ?? '',
       homeTeamId: g.homeTeamId ?? '',
       awayTeamId: g.awayTeamId ?? '',
@@ -353,7 +363,7 @@ export default function GameList({
     const handleDiscard = () => {
       setEditState(prev => ({
         ...prev,
-        [g.id]: { date: g.date ?? '', time: g.time ?? '', venueId: g.venueId ?? '', notes: g.notes ?? '', homeTeamId: g.homeTeamId ?? '', awayTeamId: g.awayTeamId ?? '' },
+        [g.id]: { date: g.date ?? '', time: g.time ?? '', venueId: g.venueId ?? '', venueFacilityId: g.venueFacilityId ?? '', notes: g.notes ?? '', homeTeamId: g.homeTeamId ?? '', awayTeamId: g.awayTeamId ?? '' },
       }));
       setSaveErrors(prev => { const n = { ...prev }; delete n[g.id]; return n; });
       setExpanded(prev => { const next = new Set(prev); next.delete(g.id); return next; });
@@ -377,28 +387,35 @@ export default function GameList({
     const isCompleted = g.status === 'completed';
     const isCancelled = g.status === 'cancelled';
     const locksEditing = isCompleted;
-    const venueLabel = g.venueId ? getVenueName(g.venueId) : (g.location || '');
+    const venueLabel = g.venueId ? getVenueName(g.venueId, g.venueFacilityId) : (g.location || '');
 
     return (
-      <div key={g.id} className={`${s.row} ${isExpanded ? styles.expanded : ''}`}>
+      <div key={g.id} className={`${s.row} ${styles.planningRow} ${isExpanded ? styles.expanded : ''}`} data-status={g.status}>
         {/* ── Compact planning row ── */}
         <div
           className={`${s.rowMain} ${styles.gameRowMain} ${styles.planningGameRow}`}
           onClick={locksEditing ? undefined : () => toggleExpand(g.id, g)}
           style={{ cursor: locksEditing ? 'default' : 'pointer', gap: '1rem' }}
         >
-          {/* Date + Time — single line */}
-          <div className={`${s.gameColDate} ${styles.planningDateCell}`} style={{ fontFamily: 'var(--font-data)', whiteSpace: 'nowrap' }}>
-            <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--fl-text)' }}>
-              {g.date ? formatShortDate(g.date) : 'TBD'}
-            </span>
-            <span style={{ fontSize: '0.75rem', color: 'var(--data-gray)', marginLeft: '0.4rem' }}>
-              {g.time ? `· ${formatTime(g.time)}` : '· —'}
-            </span>
+          {/* Date + Time — single line; status tag shown below on mobile */}
+          <div className={`${s.gameColDate} ${styles.planningDateCell}`} style={{ fontFamily: 'var(--font-data)' }}>
+            <div style={{ whiteSpace: 'nowrap' }}>
+              <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--fl-text)' }}>
+                {g.date ? formatShortDate(g.date) : 'TBD'}
+              </span>
+              <span style={{ fontSize: '0.75rem', color: 'var(--data-gray)', marginLeft: '0.4rem' }}>
+                {g.time ? `· ${formatTime(g.time)}` : '· —'}
+              </span>
+            </div>
+            {g.status !== 'scheduled' && (
+              <span className={styles.mobileStatusTag} data-status={g.status}>
+                {g.status === 'completed' ? '✓ Final' : g.status === 'submitted' ? '⚠ Pending' : '✕ Cancelled'}
+              </span>
+            )}
           </div>
 
           {venueLabel && (
-            <div className={s.gameColVenue} style={{ display: 'flex', alignItems: 'flex-start', gap: '4px', fontFamily: 'var(--font-data)', fontSize: '0.72rem', color: 'var(--data-gray)' }}>
+            <div className={`${s.gameColVenue} ${styles.planningVenueCell}`} style={{ alignItems: 'flex-start', gap: '4px', fontFamily: 'var(--font-data)', fontSize: '0.72rem', color: 'var(--data-gray)' }}>
               <MapPin size={11} style={{ flexShrink: 0, opacity: 0.55, marginTop: '2px' }} />
               <span style={{ overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', lineHeight: '1.35' }}>
                 {venueLabel}
@@ -417,16 +434,11 @@ export default function GameList({
             </div>
           </div>
 
-          {/* Fixed-width status area — desktop: full badge; mobile: compact square marker */}
+          {/* Fixed-width status area — desktop badge only; mobile handled by mobileStatusTag in date cell */}
           <div className={styles.planningStatusCell}>
-            {g.status !== 'scheduled' ? (
-              <>
-                <span className={styles.desktopStatusBadge}>{statusBadge(g.status)}</span>
-                <span className={styles.gameStatusMarker} data-status={g.status}>
-                  {g.status === 'completed' ? '✓' : '✕'}
-                </span>
-              </>
-            ) : null}
+            {g.status !== 'scheduled' && (
+              <span className={styles.desktopStatusBadge}>{statusBadge(g.status)}</span>
+            )}
             {(g.homeSlotId || g.awaySlotId) && !g.isPlayoff && (
               <span className="badge badge-neutral" style={{ fontSize: '0.6rem', letterSpacing: '0.04em' }}>SLOT</span>
             )}
@@ -490,22 +502,47 @@ export default function GameList({
                   onChange={e => setEditState(prev => ({ ...prev, [g.id]: { ...prev[g.id], time: e.target.value } }))}
                 />
               </div>
-              {/* Venue */}
+              {/* Venue / Facility */}
               <div className={styles.formField}>
-                <label className={styles.formLabel}>Venue</label>
+                <label className={styles.formLabel}>Venue / Facility</label>
                 <select
                   className={styles.formSelect}
-                  value={edit.venueId}
+                  value={edit.venueFacilityId || edit.venueId}
                   onChange={e => {
-                    if (e.target.value === '__create__') {
+                    const val = e.target.value;
+                    if (val === '__create__') {
                       onCreateVenue?.();
-                    } else {
-                      setEditState(prev => ({ ...prev, [g.id]: { ...prev[g.id], venueId: e.target.value } }));
+                      return;
                     }
+                    // Find which venue owns this facility ID
+                    let parentVenueId = '';
+                    let facilityId = '';
+                    for (const v of venues) {
+                      const fac = v.facilities?.find(f => f.id === val);
+                      if (fac) { parentVenueId = v.id; facilityId = fac.id; break; }
+                    }
+                    // Fallback: val might be a raw venueId (backward compat / venues without facilities)
+                    if (!parentVenueId && venues.find(v => v.id === val)) {
+                      parentVenueId = val;
+                    }
+                    setEditState(prev => ({
+                      ...prev,
+                      [g.id]: { ...prev[g.id], venueId: parentVenueId, venueFacilityId: facilityId },
+                    }));
                   }}
                 >
                   <option value="">— TBD —</option>
-                  {venues.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+                  {venues.filter(v => (v.facilities?.length ?? 0) > 0).map(v => (
+                    <optgroup key={v.id} label={v.name}>
+                      {v.facilities!.map(f => (
+                        <option key={f.id} value={f.id}>{f.name}</option>
+                      ))}
+                    </optgroup>
+                  ))}
+                  {/* Venues without facilities (pre-migration or newly created): show flat */}
+                  {venues.filter(v => (v.facilities?.length ?? 0) === 0).map(v => (
+                    <option key={v.id} value={v.id}>{v.name}</option>
+                  ))}
                   <option disabled>──────────</option>
                   <option value="__create__">＋ Add venue…</option>
                 </select>
@@ -741,10 +778,27 @@ export default function GameList({
           });
         })()}
 
-        {/* Pool View Flat or Single Pool */}
+        {/* Pool View Flat or Single Pool — grouped by date */}
         {viewMode === 'pool' && (!groupByPool || pools.length < 2) && (
           <div>
-            {sortedGames.map(g => renderRow(g))}
+            {(() => {
+              const grouped = sortedGames.reduce<Record<string, Game[]>>((acc, g) => {
+                const key = g.date || 'TBD';
+                (acc[key] ??= []).push(g);
+                return acc;
+              }, {});
+              return Object.entries(grouped).map(([date, dayGames]) => (
+                <div key={date}>
+                  <div className={styles.gameDateDivider}>
+                    {date !== 'TBD' ? formatShortDate(date) : 'Date TBD'}
+                    {date === today && (
+                      <span className={styles.gameDateTodayBadge}>Today</span>
+                    )}
+                  </div>
+                  {dayGames.map(g => renderRow(g))}
+                </div>
+              ));
+            })()}
           </div>
         )}
       </div>

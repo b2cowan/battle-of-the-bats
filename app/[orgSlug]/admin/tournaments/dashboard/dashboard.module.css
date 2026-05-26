@@ -1,4 +1,3 @@
-.page { max-width: 960px; }
 
 .statsGrid {
   display: grid;
@@ -90,28 +89,6 @@
   line-height: 1.5;
 }
 
-.readyPill,
-.draftPill {
-  flex-shrink: 0;
-  padding: 0.35rem 0.55rem;
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.35);
-  font-family: var(--font-data);
-  font-size: 0.625rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-}
-
-.readyPill {
-  border-color: rgba(204, 255, 102, 0.45);
-  background: rgba(204, 255, 102, 0.08);
-  color: var(--logic-lime);
-}
-
-.draftPill {
-  background: rgba(255, 255, 255, 0.04);
-  color: var(--data-gray);
-}
 
 .activateChip {
   display: inline-flex;
@@ -126,7 +103,7 @@
   text-transform: uppercase;
   border: 1px solid rgba(204, 255, 102, 0.5);
   background: rgba(204, 255, 102, 0.07);
-  color: #ccff66;
+  color: var(--logic-lime);
   cursor: pointer;
   flex-shrink: 0;
   transition: background 0.15s, border-color 0.15s;
@@ -139,7 +116,7 @@
   height: 6px;
   border-radius: 50%;
   flex-shrink: 0;
-  background: #ccff66;
+  background: var(--logic-lime);
 }
 
 .activateChip:hover:not(:disabled) {
@@ -148,8 +125,15 @@
 }
 
 .activateChip:disabled {
-  opacity: 0.35;
+  background: rgba(255, 255, 255, 0.04);
+  border-color: var(--border-2);
+  color: var(--white-30);
   cursor: not-allowed;
+  opacity: 1;
+}
+
+.activateChip:disabled::before {
+  opacity: 0;
 }
 
 .checklistGrid {
@@ -475,58 +459,21 @@
   color: var(--data-gray);
 }
 
-/* ── Setup quick links (draft mode) ─────────────────── */
-.setupLinks {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 0.75rem;
-  margin-bottom: 2.5rem;
-}
-
-.setupLink {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.75rem;
-  padding: 0.85rem;
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.22);
-  background: rgba(0,0,0,0.15);
-  color: inherit;
-  text-decoration: none;
-  transition: border-color 0.15s, background 0.15s;
-}
-
-.setupLink:hover {
-  border-color: rgba(var(--blueprint-blue-rgb), 0.55);
-  background: rgba(var(--blueprint-blue-rgb), 0.07);
-}
-
-.setupLinkIcon {
-  width: 30px;
-  height: 30px;
+/* ── Optional items toggle ───────────────────────────── */
+.optionalToggle {
+  grid-column: 1 / -1;
   display: flex;
   align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.3);
-  color: var(--data-gray);
-}
-
-.setupLinkBody strong {
-  display: block;
-  font-family: var(--font-data);
-  font-size: 0.7rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--fl-text);
-  margin-bottom: 0.2rem;
-}
-
-.setupLinkBody span {
-  font-family: var(--font-data);
-  font-size: 0.6rem;
-  color: var(--data-gray);
-  line-height: 1.4;
+  justify-content: space-between;
+  padding: 0.45rem 0.75rem;
+  background: transparent;
+  border: 1px solid var(--border-2);
+  border-radius: 2px;
+  cursor: pointer;
+  color: var(--white-50);
+  font-size: 0.8rem;
+  margin-top: 0.25rem;
+  text-align: left;
 }
 
 /* ── Wrap-up card (completed mode) ──────────────────── */

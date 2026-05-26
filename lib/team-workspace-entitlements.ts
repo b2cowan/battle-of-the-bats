@@ -53,6 +53,7 @@ export type TeamWorkspace = {
   source: TeamWorkspaceSource;
   sourceTournamentId: string | null;
   sourceTournamentTeamId: string | null;
+  basicCoachTeamId: string | null;
 };
 
 export type TeamEntitlement = {
@@ -87,6 +88,7 @@ type TeamWorkspaceRow = {
   source: TeamWorkspaceSource;
   source_tournament_id: string | null;
   source_tournament_team_id: string | null;
+  basic_coach_team_id: string | null;
 };
 
 type TeamEntitlementRow = {
@@ -116,6 +118,7 @@ function mapTeamWorkspace(row: TeamWorkspaceRow): TeamWorkspace {
     source: row.source,
     sourceTournamentId: row.source_tournament_id ?? null,
     sourceTournamentTeamId: row.source_tournament_team_id ?? null,
+    basicCoachTeamId: row.basic_coach_team_id ?? null,
   };
 }
 
