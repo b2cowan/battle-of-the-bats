@@ -145,9 +145,17 @@ export default function AdminResultsPage() {
   };
   const getGameVenueKey = (g: Game) =>
     g.venueId ? `venue:${g.venueId}` : `custom:${(g.location || '').trim() || '__none__'}`;
-  const getGameVenueLabel = (g: Game) => {
-    if (g.venueId) return getVenueName(g.venueId, g.venueFacilityId) || g.location || 'Unknown venue';
-    return g.location?.trim() || 'No venue';
+  const getGameVenueDisplay = (g: Game): { name: string; sublabel?: string } => {
+    if (g.venueId) {
+      const venue = venues.find(v => v.id === g.venueId);
+      if (!venue) return { name: g.location || 'Unknown venue' };
+      if (g.venueFacilityId) {
+        const facility = (venue as any).facilities?.find((f: any) => f.id === g.venueFacilityId);
+        if (facility) return { name: venue.name, sublabel: facility.name };
+      }
+      return { name: venue.name };
+    }
+    return { name: g.location?.trim() || 'No venue' };
   };
 
   async function patchGame(body: Record<string, unknown>) {
@@ -204,10 +212,11 @@ export default function AdminResultsPage() {
       if (existing) {
         existing.count += 1;
       } else {
-        map.set(key, { key, label: getGameVenueLabel(g), count: 1 });
+        const display = getGameVenueDisplay(g);
+        map.set(key, { key, label: display.name, sublabel: display.sublabel, count: 1 });
       }
       return map;
-    }, new Map<string, { key: string; label: string; count: number }>()),
+    }, new Map<string, { key: string; label: string; sublabel?: string; count: number }>()),
   ).map(([, option]) => option).sort((a, b) => a.label.localeCompare(b.label));
 
   const filtered = games.filter(g => {
@@ -574,7 +583,7 @@ function VenueFilterMenu({
   onToggle,
   onClear,
 }: {
-  options: Array<{ key: string; label: string; count: number }>;
+  options: Array<{ key: string; label: string; sublabel?: string; count: number }>;
   selectedKeys: string[];
   onToggle: (key: string) => void;
   onClear: () => void;
@@ -638,7 +647,7 @@ function VenueFilterMenu({
               aria-checked={selectedCount === 0}
             >
               <span className={styles.venueFilterCheck}>{selectedCount === 0 ? <Check size={12} /> : null}</span>
-              <span className={styles.venueFilterName}>All venues</span>
+              <span className={styles.venueFilterName}><span className={styles.venueFilterNamePrimary}>All venues</span></span>
               <span className={styles.venueFilterCount}>{options.reduce((t, o) => t + o.count, 0)}</span>
             </button>
             {options.map(option => {
@@ -653,7 +662,10 @@ function VenueFilterMenu({
                   aria-checked={isSelected}
                 >
                   <span className={styles.venueFilterCheck}>{isSelected ? <Check size={12} /> : null}</span>
-                  <span className={styles.venueFilterName}>{option.label}</span>
+                  <span className={styles.venueFilterName}>
+                    <span className={styles.venueFilterNamePrimary}>{option.label}</span>
+                    {option.sublabel && <span className={styles.venueFilterSublabel}>{option.sublabel}</span>}
+                  </span>
                   <span className={styles.venueFilterCount}>{option.count}</span>
                 </button>
               );

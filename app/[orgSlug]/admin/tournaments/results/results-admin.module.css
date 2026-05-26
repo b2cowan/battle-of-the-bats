@@ -201,13 +201,33 @@
   color: var(--logic-lime);
 }
 
+/* Flex-column wrapper — holds primary name + optional facility sublabel */
 .venueFilterName {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
   min-width: 0;
+  overflow: hidden;
+}
+
+/* Primary venue name */
+.venueFilterNamePrimary {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   font-size: 0.78rem;
   font-weight: 700;
+}
+
+/* Secondary facility name — smaller, more subdued */
+.venueFilterSublabel {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: var(--white-40);
+  line-height: 1.2;
 }
 
 .venueFilterCount {

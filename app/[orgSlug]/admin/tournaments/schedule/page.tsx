@@ -1,6 +1,6 @@
 ﻿'use client';
-import React, { useState, useEffect, useCallback } from 'react';
-import { Calendar, Plus, Pencil, Trash2, X, Check, Sparkles, Trophy, MapPin, Clock, Send, Globe, EyeOff, RefreshCw } from 'lucide-react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { Calendar, Plus, Pencil, Trash2, X, Check, Sparkles, Trophy, MapPin, Clock, Send, Globe, EyeOff, RefreshCw, AlertTriangle } from 'lucide-react';
 import { formatPoolName } from '@/lib/utils';
 import { saveGame, updateGame, deleteGame } from '@/lib/db';
 import { formatTime } from '@/lib/utils';
@@ -17,6 +17,7 @@ import ScheduleGenerator from './Generator';
 import PlayoffWizard from './PlayoffWizard';
 import GameList from './components/GameList';
 import { Game, Team, Division, Venue, PoolSlot } from '@/lib/types';
+import { checkVenueConflict, type ConflictResult } from '@/lib/schedule-conflict';
 import s from '../../admin-common.module.css';
 import styles from './schedule-admin.module.css';
 import FeedbackModal from '@/components/FeedbackModal';
@@ -112,6 +113,37 @@ export default function AdminSchedulePage() {
   const canUsePDF = currentOrg ? hasPlanFeature(currentOrg.planId, 'pdf_exports') : false;
   const showPdfNudge = canUsePDF && pdfSettings !== null && Object.keys(pdfSettings).length === 0;
 
+  // ── Real-time venue conflict check for the Add/Edit modal ────────────────
+  // Pure computation from already-loaded state — no extra fetch required.
+  const modalConflict = useMemo((): ConflictResult | null => {
+    if (!modal) return null;
+    if (!form.date || !form.time) return null;
+    if (!form.venueId && !form.venueFacilityId) return null;
+
+    return checkVenueConflict({
+      proposedGame: {
+        id: editing?.id ?? '__new__',
+        gameDate: form.date,
+        startTime: form.time,
+        status: 'scheduled',
+        venueId: form.venueId || null,
+        venueFacilityId: form.venueFacilityId || null,
+        divisionId: form.divisionId || null,
+      },
+      allGames: games.map(g => ({
+        id: g.id,
+        gameDate: g.date ?? null,
+        startTime: g.time ?? null,
+        status: g.status ?? null,
+        venueId: g.venueId ?? null,
+        venueFacilityId: g.venueFacilityId ?? null,
+        divisionId: g.divisionId ?? null,
+      })),
+      divisions,
+      tournament: currentTournament,
+    });
+  }, [modal, form.date, form.time, form.venueId, form.venueFacilityId, form.divisionId, editing?.id, games, divisions, currentTournament]);
+
   const canAutoGenerateSchedule = currentOrg ? hasPlanFeature(currentOrg.planId, 'auto_schedule') : false;
   const canGeneratePlayoffs = currentOrg ? hasPlanFeature(currentOrg.planId, 'playoff_generator') : false;
   const canNotify = currentOrg ? hasPlanFeature(currentOrg.planId, 'schedule_notification') : false;
@@ -205,9 +237,17 @@ export default function AdminSchedulePage() {
     return facility ? `${venue.name} — ${facility.name}` : venue.name;
   };
   const getGameVenueKey = (g: Game) => g.venueId ? `venue:${g.venueId}` : `custom:${(g.location || '').trim() || '__none__'}`;
-  const getGameVenueLabel = (g: Game) => {
-    if (g.venueId) return getVenueName(g.venueId, g.venueFacilityId) || g.location || 'Unknown venue';
-    return g.location?.trim() || 'No venue';
+  const getGameVenueDisplay = (g: Game): { name: string; sublabel?: string } => {
+    if (g.venueId) {
+      const venue = venues.find(v => v.id === g.venueId);
+      if (!venue) return { name: g.location || 'Unknown venue' };
+      if (g.venueFacilityId) {
+        const facility = venue.facilities?.find(f => f.id === g.venueFacilityId);
+        if (facility) return { name: venue.name, sublabel: facility.name };
+      }
+      return { name: venue.name };
+    }
+    return { name: g.location?.trim() || 'No venue' };
   };
 
   async function fetchModalSlots(divisionId: string) {
@@ -285,6 +325,8 @@ export default function AdminSchedulePage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    // Hard block: do not allow saving when a true overlap exists.
+    if (modalConflict?.kind === 'overlap') return;
     const slotMode = modalSlots.length > 0;
     const homeSlot = slotMode ? modalSlots.find(s => s.id === form.homeSlotId) : null;
     const awaySlot = slotMode ? modalSlots.find(s => s.id === form.awaySlotId) : null;
@@ -400,10 +442,11 @@ export default function AdminSchedulePage() {
       if (existing) {
         existing.count += 1;
       } else {
-        map.set(key, { key, label: getGameVenueLabel(g), count: 1 });
+        const display = getGameVenueDisplay(g);
+        map.set(key, { key, label: display.name, sublabel: display.sublabel, count: 1 });
       }
       return map;
-    }, new Map<string, { key: string; label: string; count: number }>()),
+    }, new Map<string, { key: string; label: string; sublabel?: string; count: number }>()),
   ).map(([, option]) => option).sort((a, b) => a.label.localeCompare(b.label));
 
   const filtered  = scheduled.filter(g => {
@@ -815,6 +858,7 @@ export default function AdminSchedulePage() {
               onSave={handleSaveGame}
               onCreateVenue={() => setAddVenueOpen(true)}
               mode="planning"
+              tournament={currentTournament}
             />
           )}
         </div>
@@ -1026,9 +1070,68 @@ export default function AdminSchedulePage() {
                     onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} />
                 </div>
               )}
+
+              {/* Venue conflict banner */}
+              {modalConflict && (
+                <div style={{
+                  marginTop: '0.75rem',
+                  padding: '0.7rem 0.875rem',
+                  borderRadius: '2px',
+                  background: modalConflict.kind === 'overlap'
+                    ? 'rgba(239, 68, 68, 0.08)'
+                    : 'rgba(251, 191, 36, 0.08)',
+                  border: `1px solid ${modalConflict.kind === 'overlap'
+                    ? 'rgba(239, 68, 68, 0.4)'
+                    : 'rgba(251, 191, 36, 0.35)'}`,
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.75rem', flexWrap: 'wrap' }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p style={{
+                        fontWeight: 700, fontSize: '0.82rem', margin: 0,
+                        color: modalConflict.kind === 'overlap' ? '#f87171' : '#fbbf24',
+                        display: 'flex', alignItems: 'center', gap: '0.35rem',
+                      }}>
+                        <AlertTriangle size={13} />
+                        {modalConflict.kind === 'overlap' ? 'Venue conflict — game windows overlap' : 'Buffer zone warning'}
+                      </p>
+                      <p style={{ fontSize: '0.78rem', color: 'var(--white-60)', margin: '0.3rem 0 0', lineHeight: 1.45 }}>
+                        {modalConflict.conflictingDivisionName} already has a game at this venue that{' '}
+                        {modalConflict.kind === 'overlap'
+                          ? 'physically overlaps this time. Change the time to save.'
+                          : 'ends within the required buffer window. You can still save or choose a cleaner slot.'}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      className="btn btn-outline btn-data"
+                      style={{ flexShrink: 0, whiteSpace: 'nowrap', fontSize: '0.8rem' }}
+                      onClick={() => setForm(f => ({ ...f, time: modalConflict.availableAt }))}
+                    >
+                      Use {modalConflict.availableAt} ↑
+                    </button>
+                  </div>
+                </div>
+              )}
+
               <div className="modal-footer">
                 <button type="button" className="btn btn-ghost btn-data" onClick={() => setModal(null)}>Cancel</button>
-                <button type="submit" className="btn btn-primary btn-data" id="schedule-save-btn"><Check size={14} /> Save Game</button>
+                {modalConflict?.kind === 'buffer' ? (
+                  <>
+                    <button type="submit" className="btn btn-outline btn-data" id="schedule-save-btn" style={{ borderColor: 'rgba(251,191,36,0.5)', color: '#fbbf24' }}>
+                      <Check size={14} /> Save Anyway
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    type="submit"
+                    className="btn btn-primary btn-data"
+                    id="schedule-save-btn"
+                    disabled={modalConflict?.kind === 'overlap'}
+                    title={modalConflict?.kind === 'overlap' ? 'Resolve the venue conflict before saving' : undefined}
+                  >
+                    <Check size={14} /> Save Game
+                  </button>
+                )}
               </div>
             </form>
           </div>
@@ -1100,7 +1203,7 @@ function VenueFilterMenu({
   onToggle,
   onClear,
 }: {
-  options: Array<{ key: string; label: string; count: number }>;
+  options: Array<{ key: string; label: string; sublabel?: string; count: number }>;
   selectedKeys: string[];
   onToggle: (key: string) => void;
   onClear: () => void;
@@ -1164,7 +1267,7 @@ function VenueFilterMenu({
               aria-checked={selectedCount === 0}
             >
               <span className={styles.venueFilterCheck}>{selectedCount === 0 ? <Check size={12} /> : null}</span>
-              <span className={styles.venueFilterName}>All venues</span>
+              <span className={styles.venueFilterName}><span className={styles.venueFilterNamePrimary}>All venues</span></span>
               <span className={styles.venueFilterCount}>{options.reduce((total, option) => total + option.count, 0)}</span>
             </button>
             {options.map(option => {
@@ -1179,7 +1282,10 @@ function VenueFilterMenu({
                   aria-checked={isSelected}
                 >
                   <span className={styles.venueFilterCheck}>{isSelected ? <Check size={12} /> : null}</span>
-                  <span className={styles.venueFilterName}>{option.label}</span>
+                  <span className={styles.venueFilterName}>
+                    <span className={styles.venueFilterNamePrimary}>{option.label}</span>
+                    {option.sublabel && <span className={styles.venueFilterSublabel}>{option.sublabel}</span>}
+                  </span>
                   <span className={styles.venueFilterCount}>{option.count}</span>
                 </button>
               );
