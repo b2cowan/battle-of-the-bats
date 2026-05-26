@@ -1,6 +1,5 @@
 'use client';
 import React, { useState, useEffect, useCallback } from 'react';
-import Link from 'next/link';
 import { ExternalLink, Trophy, RefreshCw } from 'lucide-react';
 import { formatTime } from '@/lib/utils';
 import { useTournament } from '@/lib/tournament-context';
@@ -14,6 +13,7 @@ import ExportMenu from '@/components/admin/ExportMenu';
 import { Game, Team, Division, Venue } from '@/lib/types';
 import GameList from '../schedule/components/GameList';
 import s from '../../admin-common.module.css';
+import styles from './results-admin.module.css';
 import FeedbackModal from '@/components/FeedbackModal';
 import HelpCallout from '@/components/help/HelpCallout';
 import { hasPlanFeature } from '@/lib/plan-features';
@@ -21,6 +21,8 @@ import { formatScoreSubmittedAt, scoreSubmissionSourceLabel } from '@/lib/tourna
 import {
   StatusLegendPopover,
   ToolbarGroup,
+  ToolbarMenu,
+  ToolbarMenuItem,
   ToolbarSearch,
   ToolbarSegmentedControl,
   ToolbarSelect,
@@ -330,29 +332,12 @@ export default function AdminResultsPage() {
         icon={<Trophy size={20} />}
         title="Results & Scoring"
         subtitle={currentTournament ? `${currentTournament.name} (${currentTournament.year})` : 'Enter scores and finalize tournament outcomes'}
-        actions={currentOrg?.slug ? (
-          <Link
-            href={`/${currentOrg.slug}/scorekeeper`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="btn btn-outline btn-data"
-          >
-            <ExternalLink size={14} /> Open Scorekeeper View
-          </Link>
-        ) : null}
       />
 
-      <TournamentAdminToolbar ariaLabel="Results controls">
+      <TournamentAdminToolbar ariaLabel="Results controls" className={styles.resultsToolbar}>
+        {/* ── Row 1 left: Division first, then view-mode controls ── */}
         <ToolbarGroup align="start">
-          <ToolbarSegmentedControl<'pool' | 'playoff'>
-            value={viewMode}
-            options={[
-              { value: 'pool', label: 'Round Robin' },
-              { value: 'playoff', label: 'Playoffs' },
-            ]}
-            onChange={setViewMode}
-            ariaLabel="View mode"
-          />
+          {/* Division always first — primary context selector, matches Schedule pattern */}
           {divisions.length > 0 && (
             <ToolbarSelect<string>
               label="Division"
@@ -361,8 +346,19 @@ export default function AdminResultsPage() {
               onChange={setFilterGroup}
             />
           )}
+          <ToolbarSegmentedControl<'pool' | 'playoff'>
+            className={styles.desktopModeControl}
+            value={viewMode}
+            options={[
+              { value: 'pool', label: 'Round Robin' },
+              { value: 'playoff', label: 'Playoffs' },
+            ]}
+            onChange={setViewMode}
+            ariaLabel="View mode"
+          />
           {viewMode === 'pool' && (
             <ToolbarSegmentedControl<'flat' | 'pools'>
+              className={styles.desktopModeControl}
               value={groupMode}
               options={[
                 { value: 'flat', label: 'Flat' },
@@ -374,7 +370,35 @@ export default function AdminResultsPage() {
           )}
         </ToolbarGroup>
 
+        {/* ── Row 1 right: utility actions — Export · Tools ── */}
         <ToolbarGroup align="end">
+          {/* Mobile row 2: Round Robin | Flat — dedicated row, hidden on desktop */}
+          <div className={styles.mobileModePair}>
+            <label className={styles.mobileModeNative}>
+              <span className="sr-only">View</span>
+              <select
+                className={styles.mobileModeNativeSelect}
+                value={viewMode}
+                onChange={e => setViewMode(e.target.value as 'pool' | 'playoff')}
+              >
+                <option value="pool">Round Robin</option>
+                <option value="playoff">Playoffs</option>
+              </select>
+            </label>
+            {viewMode === 'pool' && (
+              <label className={styles.mobileModeNative}>
+                <span className="sr-only">Group</span>
+                <select
+                  className={styles.mobileModeNativeSelect}
+                  value={groupMode}
+                  onChange={e => setGroupMode(e.target.value as 'flat' | 'pools')}
+                >
+                  <option value="flat">Flat</option>
+                  <option value="pools">Pools</option>
+                </select>
+              </label>
+            )}
+          </div>
           <ExportMenu
             formats={['xlsx', 'csv', 'pdf']}
             onExportXLSX={handleExportXLSX}
@@ -383,10 +407,22 @@ export default function AdminResultsPage() {
             planId={currentOrg?.planId}
             disabled={filtered.length === 0}
           />
+          {currentOrg?.slug && (
+            <ToolbarMenu label="Tools">
+              <ToolbarMenuItem
+                icon={<ExternalLink size={14} />}
+                label="Open Scorekeeper View"
+                hint="Open scoring interface in a new tab"
+                onSelect={() => window.open(`/${currentOrg!.slug}/scorekeeper`, '_blank', 'noopener,noreferrer')}
+              />
+            </ToolbarMenu>
+          )}
         </ToolbarGroup>
 
+        {/* ── Row 2: search + status filters — search first to match Schedule model ── */}
         <ToolbarGroup fullWidth>
-          <div className={s.statusFilters}>
+          <ToolbarSearch value={searchQuery} onChange={setSearchQuery} placeholder="Search teams..." label="Search games" />
+          <div className={`${s.statusFilters} ${styles.resultsStatusFilters}`}>
             {statusFilterOptions.map(({ key, label, count }) => (
               <button
                 key={key}
@@ -422,7 +458,6 @@ export default function AdminResultsPage() {
               />
             )}
           </div>
-          <ToolbarSearch value={searchQuery} onChange={setSearchQuery} placeholder="Search teams..." label="Search games" />
         </ToolbarGroup>
       </TournamentAdminToolbar>
 

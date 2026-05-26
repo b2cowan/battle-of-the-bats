@@ -567,11 +567,12 @@
 }
 
 @media (max-width: 760px) {
+  /* 32px touch target for icon-only Add Team button (up from 28px) */
   .addTeamButton {
     width: 32px;
     min-width: 32px;
-    height: 28px;
-    min-height: 28px;
+    height: 32px;
+    min-height: 32px;
     padding: 0 !important;
     justify-content: center;
     gap: 0;
@@ -1096,8 +1097,9 @@
     width: 100%;
   }
 
+  /* 34px touch target for status chips (up from 28px) */
   .registrationStatusFilters > button {
-    min-height: 28px;
+    min-height: 34px;
     width: 100%;
   }
 
@@ -1110,11 +1112,12 @@
     white-space: normal;
   }
 
+  /* 32px touch target for icon-mode multi-select buttons (up from 28px) */
   .multiSelectToggle,
   .multiSelectDone {
     width: 32px;
     min-width: 32px;
-    min-height: 28px;
+    min-height: 32px;
     padding: 0;
     gap: 0;
   }

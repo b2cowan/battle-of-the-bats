@@ -1,0 +1,76 @@
+/* ─── Results-Specific Styles ──────────────────────────────────────────────── */
+/* Common styles live in ../admin-common.module.css                             */
+
+/* ─── Desktop base ─────────────────────────────────────────────────────────── */
+
+/* Desktop segmented controls — inline on desktop, hidden on mobile */
+.desktopModeControl {
+  display: inline-flex;
+}
+
+/* mobileModePair: hidden on desktop, revealed as its own full-width row on mobile */
+.mobileModePair {
+  display: none;
+}
+
+/* Native <select> wrapper — flex child inside mobileModePair */
+.mobileModeNative {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex: 1;
+}
+
+/* Shared base for native selects — desktop-safe (not visible there anyway) */
+.mobileModeNativeSelect {
+  appearance: none;
+  width: 100%;
+  background: var(--hud-surface);
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.28);
+  border-radius: 2px;
+  color: var(--fl-text);
+  font-family: var(--font-data);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  cursor: pointer;
+  padding: 0 2rem 0 0.55rem;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='rgba(148%2C163%2C184%2C0.7)' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.45rem center;
+  color-scheme: dark;
+}
+
+/* ─── Mobile overrides ─────────────────────────────────────────────────────── */
+@media (max-width: 760px) {
+  /* Breathing room below toolbar — matches Schedule */
+  .resultsToolbar {
+    margin-bottom: 1.25rem;
+  }
+
+  /* Hide desktop segmented controls on mobile */
+  .desktopModeControl {
+    display: none !important;
+  }
+
+  /* mobileModePair: becomes its own full-width row (order:1 flows below Division) */
+  .mobileModePair {
+    display: flex;
+    flex: 1 1 100%;
+    width: 100% !important;
+    order: 1;
+    gap: 0.28rem;
+  }
+
+  /* Native selects fill their row at standard touch target height */
+  .mobileModeNativeSelect {
+    height: 34px;
+    min-height: 34px;
+  }
+
+  /* Status chips — 34px touch target on mobile */
+  .resultsStatusFilters > button {
+    min-height: 34px;
+  }
+}

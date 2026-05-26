@@ -1407,9 +1407,10 @@ export default function UnifiedTeamsPage() {
           </ToolbarMenu>
         </ToolbarGroup>
 
-        {/* ── Row 2: filter chips + search — always on their own full-width row ── */}
+        {/* ── Row 2: search + filter chips — search first to match Schedule model ── */}
         {!slotConfigured && (
           <ToolbarGroup fullWidth className={styles.registrationFilterGroup}>
+            <ToolbarSearch value={search} onChange={setSearch} placeholder="Search teams or coaches..." />
             <div className={`${s.statusFilters} ${styles.registrationStatusFilters}`}>
               {(['pending', 'accepted', 'waitlist', 'rejected'] as Status[]).map(st => (
                 <button
@@ -1422,7 +1423,6 @@ export default function UnifiedTeamsPage() {
                 </button>
               ))}
             </div>
-            <ToolbarSearch value={search} onChange={setSearch} placeholder="Search teams or coaches..." />
             {paymentToolsAvailable && paymentFilter !== 'all' && (
               <span className={styles.activeFilterBadge}>Payment: {PAYMENT_FILTER_LABEL[paymentFilter]}</span>
             )}
