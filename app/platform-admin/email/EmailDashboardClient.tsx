@@ -33,7 +33,7 @@ const SCHEDULED_EMAILS: ScheduledEmail[] = [
     sendDate: '~Day 60 post-signup',
     audience: 'Founding orgs, signed up ≥ 60 days ago',
     isTransactional: false,
-    templateBuilt: false,
+    templateBuilt: true,
   },
   {
     emailKey: 'founding_renewal',
@@ -41,7 +41,7 @@ const SCHEDULED_EMAILS: ScheduledEmail[] = [
     sendDate: 'Nov 1, 2026',
     audience: 'All founding season org owners',
     isTransactional: false,
-    templateBuilt: false,
+    templateBuilt: true,
   },
   {
     emailKey: 'founding_final',
@@ -49,7 +49,7 @@ const SCHEDULED_EMAILS: ScheduledEmail[] = [
     sendDate: 'Dec 15, 2026',
     audience: 'All founding season org owners',
     isTransactional: false,
-    templateBuilt: false,
+    templateBuilt: true,
   },
   {
     emailKey: 'spotlight_club',
@@ -57,7 +57,7 @@ const SCHEDULED_EMAILS: ScheduledEmail[] = [
     sendDate: 'Aug 1, 2026',
     audience: 'Org owners',
     isTransactional: false,
-    templateBuilt: false,
+    templateBuilt: true,
   },
   {
     emailKey: 'spotlight_league',
@@ -65,7 +65,7 @@ const SCHEDULED_EMAILS: ScheduledEmail[] = [
     sendDate: 'Sep 1, 2026',
     audience: 'Org owners',
     isTransactional: false,
-    templateBuilt: false,
+    templateBuilt: true,
   },
   {
     emailKey: 'spotlight_coaches_org',
@@ -73,7 +73,7 @@ const SCHEDULED_EMAILS: ScheduledEmail[] = [
     sendDate: 'Oct 1, 2026',
     audience: 'Org owners',
     isTransactional: false,
-    templateBuilt: false,
+    templateBuilt: true,
   },
   {
     emailKey: 'spotlight_coaches_coach',
@@ -81,7 +81,7 @@ const SCHEDULED_EMAILS: ScheduledEmail[] = [
     sendDate: 'Oct 1, 2026',
     audience: 'Coach accounts (tournament participants)',
     isTransactional: false,
-    templateBuilt: false,
+    templateBuilt: true,
   },
   {
     emailKey: 'spotlight_club_last',
@@ -89,7 +89,7 @@ const SCHEDULED_EMAILS: ScheduledEmail[] = [
     sendDate: 'Oct 15, 2026',
     audience: 'Org owners not yet on Club plan',
     isTransactional: false,
-    templateBuilt: false,
+    templateBuilt: true,
   },
   {
     emailKey: 'spotlight_full_picture',
@@ -97,7 +97,7 @@ const SCHEDULED_EMAILS: ScheduledEmail[] = [
     sendDate: 'Nov 15, 2026',
     audience: 'All founding season participants',
     isTransactional: false,
-    templateBuilt: false,
+    templateBuilt: true,
   },
 ];
 
@@ -233,8 +233,7 @@ function PreviewModal({
         <div className={styles.modalBody}>
           {email.templateBuilt ? (
             <div className={styles.previewFrame}>
-              {/* Inline preview for founding_welcome */}
-              <div dangerouslySetInnerHTML={{ __html: FOUNDING_WELCOME_PREVIEW }} />
+              <div dangerouslySetInnerHTML={{ __html: PREVIEW_MAP[email.emailKey] ?? FOUNDING_WELCOME_PREVIEW }} />
             </div>
           ) : (
             <div className={styles.notBuiltNotice}>
@@ -619,6 +618,186 @@ export default function EmailDashboardClient({
     </div>
   );
 }
+
+// ── Inline preview HTML for founding_welcome ──────────────────────────────────
+// This is a static preview — the real send generates HTML dynamically per org.
+
+// ── Shared outer wrapper used by all preview constants ───────────────────────
+const W = (content: string) => `
+<div style="font-family:Inter,-apple-system,BlinkMacSystemFont,sans-serif;background:#111827;color:#F1F5F9;max-width:600px;margin:0 auto;padding:2.5rem 2rem;border:1px solid rgba(30,58,138,0.25);">
+  <div style="margin-bottom:1.75rem;padding-bottom:1.25rem;border-bottom:1px solid rgba(30,58,138,0.2);">
+    <span style="font-size:0.75rem;font-weight:900;color:#D9F99D;letter-spacing:0.16em;text-transform:uppercase;">FIELDLOGICHQ</span>
+  </div>
+  ${content}
+</div>`;
+
+const FOUNDING_CHECKIN_PREVIEW = W(`
+  <h2 style="color:#D9F99D;font-size:1.35rem;font-weight:800;margin:0 0 1.25rem;">How's your season going?</h2>
+  <p style="margin:0 0 1rem;">Hi Demo User,</p>
+  <p style="margin:0 0 1.25rem;line-height:1.7;">It's been <strong>8 weeks</strong> since <strong>Demo Org</strong> joined FieldLogicHQ.</p>
+  <div style="background:#0F172A;border:1px solid rgba(217,249,157,0.2);border-left:3px solid rgba(217,249,157,0.5);padding:1.25rem;margin:1.5rem 0;">
+    <p style="margin:0 0 0.5rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#D9F99D;">Season so far</p>
+    <p style="margin:0;line-height:1.9;color:rgba(241,245,249,0.8);">You've run <strong>2 tournaments</strong> — <strong>47 games played</strong>.<br>That's 47 schedule exports and score entries you didn't have to do in a spreadsheet.</p>
+  </div>
+  <a href="#" style="display:inline-block;background:#D9F99D;color:#0b0f14;text-decoration:none;font-weight:800;padding:0.8rem 1.5rem;font-size:0.82rem;letter-spacing:0.06em;">Set up another tournament →</a>
+  <p style="margin:1.5rem 0 0;line-height:1.7;color:rgba(241,245,249,0.8);">We're also curious: what's working, and what isn't? Reply and tell us.</p>
+  <p style="margin:0.75rem 0 0;line-height:1.7;color:rgba(241,245,249,0.65);">Your founding season runs through December 31, 2026. Starting January 1, Tournament Plus is $39/month — or you can continue free on the Tournament plan.</p>
+  <p style="margin:1.25rem 0 0;color:rgba(241,245,249,0.65);">— The FieldLogicHQ team</p>
+`);
+
+const FOUNDING_RENEWAL_PREVIEW = W(`
+  <h2 style="color:#D9F99D;font-size:1.35rem;font-weight:800;margin:0 0 1.25rem;">Your founding season ends December 31 — here's what happens next.</h2>
+  <p style="margin:0 0 1rem;">Hi Demo User,</p>
+  <p style="margin:0 0 1.25rem;line-height:1.7;">Your FieldLogicHQ founding season ends December 31, 2026.</p>
+  <p style="margin:0 0 1.25rem;line-height:1.7;color:rgba(241,245,249,0.8);">Starting January 1, Tournament Plus is $39/month. Here's what that means for <strong>Demo Org</strong>:</p>
+  <div style="background:#0F172A;border:1px solid rgba(30,58,138,0.25);border-left:3px solid rgba(30,58,138,0.5);padding:1.25rem;margin:1.5rem 0;">
+    <p style="margin:0 0 0.5rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#D9F99D;">What happens to Demo Org</p>
+    <p style="margin:0 0 0.75rem;line-height:1.7;color:rgba(241,245,249,0.8);">Your <strong>1 active tournament</strong>, all registered teams, scores, and archives carry over automatically — nothing changes except the billing.</p>
+    <p style="margin:0;line-height:1.7;color:rgba(241,245,249,0.8);">Your <strong>3 past tournaments</strong> stay in your archives regardless of which plan you're on.</p>
+  </div>
+  <p style="margin:0 0 1rem;line-height:1.7;">To continue on Tournament Plus starting January 1:</p>
+  <a href="#" style="display:inline-block;background:#D9F99D;color:#0b0f14;text-decoration:none;font-weight:800;padding:0.8rem 1.5rem;font-size:0.82rem;letter-spacing:0.06em;">Add a payment method — takes 2 minutes →</a>
+  <p style="margin:1.5rem 0 0.5rem;line-height:1.7;color:rgba(241,245,249,0.8);">If $39/month isn't right, you can continue free on the Tournament plan: 1 active tournament, manual scheduling, no cost.</p>
+  <a href="#" style="display:inline-block;color:#D9F99D;text-decoration:none;font-weight:700;font-size:0.85rem;padding:0.4rem 0;">See plan comparison →</a>
+  <p style="margin:1.5rem 0 0;color:rgba(241,245,249,0.65);">Questions? Reply to this email.</p>
+  <p style="margin:0.75rem 0 0;color:rgba(241,245,249,0.65);">— The FieldLogicHQ team</p>
+`);
+
+const FOUNDING_FINAL_PREVIEW = W(`
+  <h2 style="color:#D9F99D;font-size:1.35rem;font-weight:800;margin:0 0 1.25rem;">2 weeks left in your founding season.</h2>
+  <p style="margin:0 0 1rem;">Hi Demo User,</p>
+  <p style="margin:0 0 1.25rem;line-height:1.7;">Quick reminder: your founding season ends in 16 days, on December 31.</p>
+  <p style="margin:0 0 1rem;line-height:1.7;color:rgba(241,245,249,0.8);">If you'd like to continue with Tournament Plus starting January 1 ($39/month), add a payment method now:</p>
+  <a href="#" style="display:inline-block;background:#D9F99D;color:#0b0f14;text-decoration:none;font-weight:800;padding:0.8rem 1.5rem;font-size:0.82rem;letter-spacing:0.06em;">Add payment method →</a>
+  <p style="margin:1.5rem 0 0;line-height:1.7;color:rgba(241,245,249,0.8);">Either way, everything you've built on FieldLogicHQ stays with you.</p>
+  <p style="margin:1.25rem 0 0;color:rgba(241,245,249,0.65);">— The FieldLogicHQ team</p>
+`);
+
+const SPOTLIGHT_CLUB_PREVIEW = W(`
+  <h2 style="color:#D9F99D;font-size:1.35rem;font-weight:800;margin:0 0 1.25rem;">Before your September season starts — Club is free through December 31.</h2>
+  <p style="margin:0 0 1rem;">Hi Demo User,</p>
+  <p style="margin:0 0 1.25rem;line-height:1.7;">Most clubs are planning their September season right now.<br>Tryouts. Rep team rosters. League registrations. Budget prep.</p>
+  <div style="background:#0F172A;border:1px solid rgba(217,249,157,0.2);border-left:3px solid rgba(217,249,157,0.5);padding:1.25rem;margin:1.5rem 0;">
+    <p style="margin:0 0 0.75rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#D9F99D;">Club on FieldLogicHQ puts your entire organization in one place</p>
+    <ul style="margin:0;padding-left:1.25rem;line-height:1.9;color:rgba(241,245,249,0.8);">
+      <li>Tournaments: same tools you're already using on your founding season</li>
+      <li>House League: registration, draft, schedule, standings, parent notifications — no manual emails</li>
+      <li>Rep Teams: tryouts, roster, lineups, and team budget</li>
+      <li>Accounting: org ledger, team invoicing, budget vs. actual</li>
+    </ul>
+  </div>
+  <p style="margin:0 0 1.5rem;line-height:1.7;">Club is normally <strong>$179/month</strong>. As a founding organization, <strong>Club is free through December 31, 2026</strong>.</p>
+  <a href="#" style="display:inline-block;background:#D9F99D;color:#0b0f14;text-decoration:none;font-weight:800;padding:0.8rem 1.5rem;font-size:0.82rem;letter-spacing:0.06em;">Start on Club — free through December 31 →</a>
+  <p style="margin:1.75rem 0 0;color:rgba(241,245,249,0.65);">— The FieldLogicHQ team</p>
+`);
+
+const SPOTLIGHT_LEAGUE_PREVIEW = W(`
+  <h2 style="color:#D9F99D;font-size:1.35rem;font-weight:800;margin:0 0 1.25rem;">What running a house league actually looks like on FieldLogicHQ.</h2>
+  <p style="margin:0 0 1rem;">Hi Demo User,</p>
+  <p style="margin:0 0 1.25rem;line-height:1.7;">You're running tournaments. But if <strong>Demo Org</strong> also runs a house league season — or if that's where you're headed — here's what that looks like.</p>
+  <div style="background:#0F172A;border:1px solid rgba(217,249,157,0.2);border-left:3px solid rgba(217,249,157,0.5);padding:1.25rem;margin:1.5rem 0;">
+    <p style="margin:0 0 0.75rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#D9F99D;">From opening registration to final standings</p>
+    <ul style="margin:0;padding-left:1.25rem;line-height:1.9;color:rgba(241,245,249,0.8);">
+      <li>Parents register players online. You set division limits; waitlists fill automatically.</li>
+      <li>Draft day uses a live board — pick order, team builds, no spreadsheet.</li>
+      <li>The schedule generates itself. Parents get automated game notifications without you sending a single email.</li>
+      <li>Standings update the moment scores are entered.</li>
+    </ul>
+  </div>
+  <p style="margin:0 0 1.5rem;line-height:1.7;">Available on League (<strong>$89/month</strong>) and Club (<strong>$179/month</strong>). Both are <strong>free through December 31, 2026</strong>.</p>
+  <a href="#" style="display:inline-block;background:#D9F99D;color:#0b0f14;text-decoration:none;font-weight:800;padding:0.8rem 1.5rem;font-size:0.82rem;letter-spacing:0.06em;">Get set up on League — free through December 31 →</a>
+  <p style="margin:1.75rem 0 0;color:rgba(241,245,249,0.65);">— The FieldLogicHQ team</p>
+`);
+
+const SPOTLIGHT_COACHES_ORG_PREVIEW = W(`
+  <h2 style="color:#D9F99D;font-size:1.35rem;font-weight:800;margin:0 0 1.25rem;">For the coaches on your teams — a workspace that's actually theirs.</h2>
+  <p style="margin:0 0 1rem;">Hi Demo User,</p>
+  <p style="margin:0 0 1.25rem;line-height:1.7;color:rgba(241,245,249,0.8);">The coaches managing teams in your tournaments are tracking rosters in group texts, lineups in notes apps, and team fees in someone's head.</p>
+  <div style="background:#0F172A;border:1px solid rgba(217,249,157,0.2);border-left:3px solid rgba(217,249,157,0.5);padding:1.25rem;margin:1.5rem 0;">
+    <p style="margin:0 0 0.75rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#D9F99D;">The Coaches Portal gives them one place for all of it</p>
+    <ul style="margin:0;padding-left:1.25rem;line-height:1.9;color:rgba(241,245,249,0.8);">
+      <li>Full roster management with season history</li>
+      <li>Lineup builder — plan your starting lineup, export to PDF</li>
+      <li>Team budget and player dues tracking</li>
+      <li>Document management: consent forms, medical notes, eligibility files</li>
+    </ul>
+  </div>
+  <p style="margin:0 0 1.5rem;line-height:1.7;">Standalone at <strong>$29/month</strong>, or included in League and Club plans.</p>
+  <p style="margin:0 0 0.75rem;line-height:1.7;">Know a coach who needs this?</p>
+  <a href="#" style="display:inline-block;color:#D9F99D;text-decoration:none;font-weight:700;font-size:0.85rem;padding:0.4rem 0;">Send them this link →</a>
+  <p style="margin:1.25rem 0 0.75rem;line-height:1.7;">Or express your own interest:</p>
+  <a href="#" style="display:inline-block;background:#D9F99D;color:#0b0f14;text-decoration:none;font-weight:800;padding:0.8rem 1.5rem;font-size:0.82rem;letter-spacing:0.06em;">I'm interested in the Coaches Portal →</a>
+  <p style="margin:1.75rem 0 0;color:rgba(241,245,249,0.65);">— The FieldLogicHQ team</p>
+`);
+
+const SPOTLIGHT_COACHES_COACH_PREVIEW = W(`
+  <h2 style="color:#D9F99D;font-size:1.35rem;font-weight:800;margin:0 0 1.25rem;">For the coaches on your teams — a workspace that's actually theirs.</h2>
+  <p style="margin:0 0 1rem;">Hi Demo Coach,</p>
+  <p style="margin:0 0 1.25rem;line-height:1.7;color:rgba(241,245,249,0.8);">You've been through a tournament on FieldLogicHQ. But managing your team between tournaments is still probably spread across your phone, email, and memory.</p>
+  <div style="background:#0F172A;border:1px solid rgba(217,249,157,0.2);border-left:3px solid rgba(217,249,157,0.5);padding:1.25rem;margin:1.5rem 0;">
+    <p style="margin:0 0 0.75rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#D9F99D;">The Coaches Portal is built for exactly that</p>
+    <ul style="margin:0;padding-left:1.25rem;line-height:1.9;color:rgba(241,245,249,0.8);">
+      <li>Your full roster, season over season</li>
+      <li>Lineups you can plan, save, and export to PDF</li>
+      <li>Team budget: dues in, expenses out, who owes what</li>
+      <li>Documents in one place — consent, medical, eligibility</li>
+    </ul>
+  </div>
+  <p style="margin:0 0 1.5rem;line-height:1.7;">No organization account required. Standalone at <strong>$29/month</strong>.</p>
+  <a href="#" style="display:inline-block;background:#D9F99D;color:#0b0f14;text-decoration:none;font-weight:800;padding:0.8rem 1.5rem;font-size:0.82rem;letter-spacing:0.06em;">I want the Coaches Portal →</a>
+  <p style="margin:1.75rem 0 0;color:rgba(241,245,249,0.65);">— The FieldLogicHQ team</p>
+`);
+
+const SPOTLIGHT_CLUB_LAST_PREVIEW = W(`
+  <h2 style="color:#D9F99D;font-size:1.35rem;font-weight:800;margin:0 0 1.25rem;">Last reminder — Club is still free through December 31.</h2>
+  <p style="margin:0 0 1rem;">Hi Demo User,</p>
+  <p style="margin:0 0 1.25rem;line-height:1.7;">A quick follow-up to our August note about Club.</p>
+  <p style="margin:0 0 1.25rem;line-height:1.7;color:rgba(241,245,249,0.8);">If <strong>Demo Org</strong> is running a house league, rep teams, or both alongside your tournaments — Club is free through December 31, 2026 as part of your founding season.</p>
+  <p style="margin:0 0 1.5rem;line-height:1.7;">After the new year, it's <strong>$179/month</strong>. Starting now, it costs nothing.</p>
+  <p style="margin:0 0 1.5rem;line-height:1.7;color:rgba(241,245,249,0.8);">The longer you wait to set it up, the deeper into the season you go on separate systems.</p>
+  <a href="#" style="display:inline-block;background:#D9F99D;color:#0b0f14;text-decoration:none;font-weight:800;padding:0.8rem 1.5rem;font-size:0.82rem;letter-spacing:0.06em;">Start on Club — free through December 31 →</a>
+  <p style="margin:1.75rem 0 0;color:rgba(241,245,249,0.65);">— The FieldLogicHQ team</p>
+`);
+
+const SPOTLIGHT_FULL_PICTURE_PREVIEW = W(`
+  <h2 style="color:#D9F99D;font-size:1.35rem;font-weight:800;margin:0 0 1.25rem;">Where FieldLogicHQ is headed — a note from the founding season.</h2>
+  <p style="margin:0 0 1rem;">Hi Demo User,</p>
+  <p style="margin:0 0 1.25rem;line-height:1.7;">You're one of the first organizations running on FieldLogicHQ. Here's a brief update on where things are headed.</p>
+  <div style="background:#0F172A;border:1px solid rgba(217,249,157,0.2);border-left:3px solid rgba(217,249,157,0.5);padding:1.25rem;margin:1.5rem 0;">
+    <p style="margin:0 0 0.75rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#D9F99D;">What's live today</p>
+    <ul style="margin:0;padding-left:1.25rem;line-height:1.9;color:rgba(241,245,249,0.8);">
+      <li>Tournament and Tournament Plus: free for your founding season through December 31</li>
+      <li>House League, Rep Teams, and Accounting: available on League and Club (also free through December 31)</li>
+      <li>Tournament Coach Portal for coaches tracking their teams</li>
+    </ul>
+  </div>
+  <div style="background:#0F172A;border:1px solid rgba(30,58,138,0.25);border-left:3px solid rgba(30,58,138,0.5);padding:1.25rem;margin:1.5rem 0;">
+    <p style="margin:0 0 0.75rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#D9F99D;">What's coming in 2027</p>
+    <ul style="margin:0;padding-left:1.25rem;line-height:1.9;color:rgba(241,245,249,0.8);">
+      <li>Coaches Portal standalone — a full season workspace for one team ($29/month)</li>
+      <li>Expanded public org site tools</li>
+    </ul>
+  </div>
+  <p style="margin:0 0 0.75rem;line-height:1.7;">If you know another organizer, league admin, or coach who should be here:</p>
+  <a href="#" style="display:inline-block;color:#D9F99D;text-decoration:none;font-weight:700;font-size:0.85rem;padding:0.4rem 0;">Share FieldLogicHQ →</a>
+  <p style="margin:1.25rem 0 0.75rem;line-height:1.7;">And if you haven't added a payment method yet:</p>
+  <a href="#" style="display:inline-block;background:#D9F99D;color:#0b0f14;text-decoration:none;font-weight:800;padding:0.8rem 1.5rem;font-size:0.82rem;letter-spacing:0.06em;">Continue after December 31 — takes 2 minutes →</a>
+  <p style="margin:1.75rem 0 0;color:rgba(241,245,249,0.65);">See you in 2027.</p>
+  <p style="margin:0.5rem 0 0;color:rgba(241,245,249,0.65);">— The FieldLogicHQ team</p>
+`);
+
+// Map emailKey → preview HTML
+const PREVIEW_MAP: Record<string, string> = {
+  founding_checkin: FOUNDING_CHECKIN_PREVIEW,
+  founding_renewal: FOUNDING_RENEWAL_PREVIEW,
+  founding_final: FOUNDING_FINAL_PREVIEW,
+  spotlight_club: SPOTLIGHT_CLUB_PREVIEW,
+  spotlight_league: SPOTLIGHT_LEAGUE_PREVIEW,
+  spotlight_coaches_org: SPOTLIGHT_COACHES_ORG_PREVIEW,
+  spotlight_coaches_coach: SPOTLIGHT_COACHES_COACH_PREVIEW,
+  spotlight_club_last: SPOTLIGHT_CLUB_LAST_PREVIEW,
+  spotlight_full_picture: SPOTLIGHT_FULL_PICTURE_PREVIEW,
+};
 
 // ── Inline preview HTML for founding_welcome ──────────────────────────────────
 // This is a static preview — the real send generates HTML dynamically per org.

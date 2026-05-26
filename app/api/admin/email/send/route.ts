@@ -15,7 +15,18 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getPlatformAdminContext } from '@/lib/platform-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { sendMarketingEmail, createEmailBatch, finalizeBatch } from '@/lib/email-sender';
-import { foundingWelcomeHtml } from '@/lib/email';
+import {
+  foundingWelcomeHtml,
+  foundingCheckinHtml,
+  foundingRenewalHtml,
+  foundingFinalHtml,
+  spotlightClubHtml,
+  spotlightLeagueHtml,
+  spotlightCoachesOrgHtml,
+  spotlightCoachesCoachHtml,
+  spotlightClubLastHtml,
+  spotlightFullPictureHtml,
+} from '@/lib/email';
 import { buildUnsubscribeUrl } from '@/lib/unsubscribe-token';
 
 const FOUNDING_SEASON_EXPIRES = '2027-01-01T00:00:00.000Z';
@@ -25,15 +36,15 @@ const SITE_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://www.fieldlogichq.ca
 // Add new entries here as templates are built in follow-up sessions.
 const TEMPLATE_REGISTRY: Record<string, { subject: string; built: boolean }> = {
   founding_welcome: { subject: 'Your founding season starts now — Tournament Plus is free through Dec 31', built: true },
-  founding_checkin: { subject: 'How\'s your season going? Update from FieldLogicHQ', built: false },
-  founding_renewal: { subject: 'Your founding season ends December 31 — here\'s what happens next', built: false },
-  founding_final: { subject: '2 weeks left in your founding season', built: false },
-  spotlight_club: { subject: 'Before your September season starts — Club is free through December 31', built: false },
-  spotlight_league: { subject: 'What running a house league actually looks like on FieldLogicHQ', built: false },
-  spotlight_coaches_org: { subject: 'For the coaches on your teams — a workspace that\'s actually theirs', built: false },
-  spotlight_coaches_coach: { subject: 'For the coaches on your teams — a workspace that\'s actually theirs', built: false },
-  spotlight_club_last: { subject: 'Last reminder — Club is still free through December 31', built: false },
-  spotlight_full_picture: { subject: 'Where FieldLogicHQ is headed — a note from the founding season', built: false },
+  founding_checkin: { subject: 'How\'s your season going? Update from FieldLogicHQ', built: true },
+  founding_renewal: { subject: 'Your founding season ends December 31 — here\'s what happens next', built: true },
+  founding_final: { subject: '2 weeks left in your founding season', built: true },
+  spotlight_club: { subject: 'Before your September season starts — Club is free through December 31', built: true },
+  spotlight_league: { subject: 'What running a house league actually looks like on FieldLogicHQ', built: true },
+  spotlight_coaches_org: { subject: 'For the coaches on your teams — a workspace that\'s actually theirs', built: true },
+  spotlight_coaches_coach: { subject: 'For the coaches on your teams — a workspace that\'s actually theirs', built: true },
+  spotlight_club_last: { subject: 'Last reminder — Club is still free through December 31', built: true },
+  spotlight_full_picture: { subject: 'Where FieldLogicHQ is headed — a note from the founding season', built: true },
 };
 
 // ── Audience fetchers ─────────────────────────────────────────────────────────
@@ -96,6 +107,112 @@ async function getFoundingSeasonRecipients(): Promise<
   }>;
 }
 
+// Same as getFoundingSeasonRecipients but excludes orgs already on league/club plan.
+async function getFoundingSeasonRecipientsNotOnClub(): Promise<
+  Array<{ orgId: string; orgName: string; ownerEmail: string; ownerName: string | null }>
+> {
+  const { data: overrides } = await supabaseAdmin
+    .from('org_overrides')
+    .select('org_id')
+    .eq('type', 'comp_period')
+    .eq('expires_at', FOUNDING_SEASON_EXPIRES);
+
+  if (!overrides?.length) return [];
+  const orgIds = overrides.map(o => o.org_id as string);
+
+  const { data: orgs } = await supabaseAdmin
+    .from('organizations')
+    .select('id, name, email_marketing_opt_out')
+    .in('id', orgIds)
+    .eq('email_marketing_opt_out', false)
+    .not('plan_id', 'in', '(league,club)');
+
+  if (!orgs?.length) return [];
+
+  const results = await Promise.all(
+    orgs.map(async (org) => {
+      const { data: member } = await supabaseAdmin
+        .from('organization_members')
+        .select('user_id')
+        .eq('organization_id', org.id)
+        .eq('role', 'owner')
+        .maybeSingle();
+
+      if (!member?.user_id) return null;
+
+      const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(member.user_id);
+      const email = authUser?.user?.email;
+      const name = authUser?.user?.user_metadata?.full_name as string | null ?? null;
+
+      if (!email) return null;
+      return { orgId: org.id as string, orgName: org.name as string, ownerEmail: email, ownerName: name };
+    })
+  );
+
+  return results.filter(Boolean) as Array<{
+    orgId: string; orgName: string; ownerEmail: string; ownerName: string | null;
+  }>;
+}
+
+// Coach recipients: coaches who participated in founding season tournaments.
+// Uses the founding org's ID for opt-out suppression (V1 simplification).
+async function getCoachRecipients(): Promise<
+  Array<{ orgId: string; orgName: string; ownerEmail: string; ownerName: string | null }>
+> {
+  const { data: overrides } = await supabaseAdmin
+    .from('org_overrides')
+    .select('org_id')
+    .eq('type', 'comp_period')
+    .eq('expires_at', FOUNDING_SEASON_EXPIRES);
+
+  if (!overrides?.length) return [];
+  const orgIds = overrides.map(o => o.org_id as string);
+
+  const { data: orgs } = await supabaseAdmin
+    .from('organizations')
+    .select('id, name, email_marketing_opt_out')
+    .in('id', orgIds)
+    .eq('email_marketing_opt_out', false);
+
+  if (!orgs?.length) return [];
+  const activeOrgIds = orgs.map(o => o.id as string);
+  const orgNameMap = Object.fromEntries(orgs.map(o => [o.id as string, o.name as string]));
+
+  const { data: coaches } = await supabaseAdmin
+    .from('organization_members')
+    .select('user_id, organization_id')
+    .in('organization_id', activeOrgIds)
+    .eq('role', 'coach');
+
+  if (!coaches?.length) return [];
+
+  const seen = new Set<string>();
+  const results = await Promise.all(
+    coaches
+      .filter(c => {
+        if (seen.has(c.user_id)) return false;
+        seen.add(c.user_id);
+        return true;
+      })
+      .map(async (coach) => {
+        const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(coach.user_id);
+        const email = authUser?.user?.email;
+        const name = authUser?.user?.user_metadata?.full_name as string | null ?? null;
+        if (!email) return null;
+        return {
+          orgId: coach.organization_id as string,
+          orgName: orgNameMap[coach.organization_id as string] ?? '',
+          ownerEmail: email,
+          ownerName: name,
+        };
+      })
+  );
+
+  return results.filter(Boolean) as Array<{
+    orgId: string; orgName: string; ownerEmail: string; ownerName: string | null;
+  }>;
+}
+
 export async function POST(request: NextRequest) {
   const auth = await getPlatformAdminContext();
   if (!auth) {
@@ -123,9 +240,17 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // founding_welcome is transactional (triggered per-signup). A manual batch send
-  // is supported for backfills but should be used carefully.
-  const recipients = await getFoundingSeasonRecipients();
+  // Select audience based on email key
+  type Recipient = { orgId: string; orgName: string; ownerEmail: string; ownerName: string | null };
+  let recipients: Recipient[];
+
+  if (emailKey === 'spotlight_coaches_coach') {
+    recipients = await getCoachRecipients();
+  } else if (emailKey === 'spotlight_club_last') {
+    recipients = await getFoundingSeasonRecipientsNotOnClub();
+  } else {
+    recipients = await getFoundingSeasonRecipients();
+  }
 
   if (!recipients.length) {
     return NextResponse.json({
@@ -161,8 +286,102 @@ export async function POST(request: NextRequest) {
         setupUrl: `${SITE_URL}/${recipient.orgId}/admin/tournaments`,
         unsubscribeUrl,
       });
+
+    } else if (emailKey === 'founding_checkin') {
+      // Per-org enrichment: weeks active, tournament count, game count
+      const [orgRes, tourneyRes] = await Promise.all([
+        supabaseAdmin.from('organizations').select('created_at').eq('id', recipient.orgId).single(),
+        supabaseAdmin.from('tournaments').select('id').eq('organization_id', recipient.orgId),
+      ]);
+      const createdAt = orgRes.data?.created_at ? new Date(orgRes.data.created_at as string) : new Date();
+      const weeksActive = Math.floor((Date.now() - createdAt.getTime()) / (7 * 24 * 60 * 60 * 1000));
+      const tournamentIds = (tourneyRes.data ?? []).map(t => t.id as string);
+      const tournamentCount = tournamentIds.length;
+      let gameCount = 0;
+      if (tournamentIds.length > 0) {
+        const { count } = await supabaseAdmin
+          .from('games')
+          .select('*', { count: 'exact', head: true })
+          .in('tournament_id', tournamentIds);
+        gameCount = count ?? 0;
+      }
+      html = foundingCheckinHtml({
+        orgName: recipient.orgName,
+        firstName: recipient.ownerName ?? undefined,
+        weeksActive,
+        tournamentCount,
+        gameCount,
+        setupUrl: `${SITE_URL}/${recipient.orgId}/admin/tournaments`,
+      });
+
+    } else if (emailKey === 'founding_renewal') {
+      const [activeRes, allRes] = await Promise.all([
+        supabaseAdmin.from('tournaments').select('id').eq('organization_id', recipient.orgId).eq('is_active', true),
+        supabaseAdmin.from('tournaments').select('id').eq('organization_id', recipient.orgId),
+      ]);
+      const activeTournamentCount = activeRes.data?.length ?? 0;
+      const pastTournamentCount = (allRes.data?.length ?? 0) - activeTournamentCount;
+      html = foundingRenewalHtml({
+        orgName: recipient.orgName,
+        firstName: recipient.ownerName ?? undefined,
+        activeTournamentCount,
+        pastTournamentCount,
+        billingUrl: `${SITE_URL}/${recipient.orgId}/admin/org/billing`,
+        planCompareUrl: `${SITE_URL}/pricing`,
+      });
+
+    } else if (emailKey === 'founding_final') {
+      html = foundingFinalHtml({
+        orgName: recipient.orgName,
+        firstName: recipient.ownerName ?? undefined,
+        hasPaymentMethod: false, // Stripe Phase G not yet live — always no-card branch
+        billingUrl: `${SITE_URL}/${recipient.orgId}/admin/org/billing`,
+      });
+
+    } else if (emailKey === 'spotlight_club') {
+      html = spotlightClubHtml({
+        orgName: recipient.orgName,
+        firstName: recipient.ownerName ?? undefined,
+        setupUrl: `${SITE_URL}/pricing`,
+      });
+
+    } else if (emailKey === 'spotlight_league') {
+      html = spotlightLeagueHtml({
+        orgName: recipient.orgName,
+        firstName: recipient.ownerName ?? undefined,
+        setupUrl: `${SITE_URL}/pricing`,
+      });
+
+    } else if (emailKey === 'spotlight_coaches_org') {
+      html = spotlightCoachesOrgHtml({
+        orgName: recipient.orgName,
+        firstName: recipient.ownerName ?? undefined,
+        coachShareUrl: `${SITE_URL}/for-coaches`,
+        interestUrl: `${SITE_URL}/for-coaches`,
+      });
+
+    } else if (emailKey === 'spotlight_coaches_coach') {
+      html = spotlightCoachesCoachHtml({
+        firstName: recipient.ownerName ?? undefined,
+        interestUrl: `${SITE_URL}/for-coaches`,
+      });
+
+    } else if (emailKey === 'spotlight_club_last') {
+      html = spotlightClubLastHtml({
+        orgName: recipient.orgName,
+        firstName: recipient.ownerName ?? undefined,
+        setupUrl: `${SITE_URL}/pricing`,
+      });
+
+    } else if (emailKey === 'spotlight_full_picture') {
+      html = spotlightFullPictureHtml({
+        firstName: recipient.ownerName ?? undefined,
+        shareUrl: SITE_URL,
+        billingUrl: `${SITE_URL}/${recipient.orgId}/admin/org/billing`,
+      });
+
     } else {
-      // Should not reach here (built: false guards above) but safety net
+      // Safety net — should not reach here given built: true guards above
       failed++;
       continue;
     }
