@@ -1,12 +1,26 @@
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import OrgsClient from './OrgsClient';
 
-async function getOrgs() {
-  const { data, error } = await supabaseAdmin
-    .from('organizations')
-    .select('id, name, slug, plan_id, subscription_status, created_at, enabled_addons, internal_notes')
-    .order('created_at', { ascending: false });
+async function getFoundingSeasonOrgIds(): Promise<Set<string>> {
+  const { data } = await supabaseAdmin
+    .from('org_overrides')
+    .select('org_id')
+    .eq('type', 'comp_period')
+    .is('revoked_at', null)
+    .gte('expires_at', '2026-12-31');
+  return new Set((data ?? []).map(r => r.org_id as string));
+}
 
+async function getOrgs() {
+  const [orgsResult, foundingSeasonOrgIds] = await Promise.all([
+    supabaseAdmin
+      .from('organizations')
+      .select('id, name, slug, plan_id, subscription_status, created_at, enabled_addons, internal_notes')
+      .order('created_at', { ascending: false }),
+    getFoundingSeasonOrgIds(),
+  ]);
+
+  const { data, error } = orgsResult;
   if (error || !data) return [];
 
   const orgIds = data.map(row => row.id as string);
@@ -34,6 +48,7 @@ async function getOrgs() {
     internalNotes:      (noteCounts.get(r.id as string) ?? 0) > 0
       ? `${noteCounts.get(r.id as string)} internal note${noteCounts.get(r.id as string) === 1 ? '' : 's'}`
       : ((r.internal_notes as string | null) ?? null),
+    isFoundingSeason:   foundingSeasonOrgIds.has(r.id as string),
   }));
 }
 

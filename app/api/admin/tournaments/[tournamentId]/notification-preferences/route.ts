@@ -33,24 +33,29 @@ export async function GET(req: Request, context: RouteContext) {
   if (!tournamentId) return badRequest('Missing tournamentId.');
 
   // Resolve orgSlug from the tournament row so we can scope auth correctly.
-  const { data: tourRow } = await supabaseAdmin
+  const { data: tourRow, error: tourErr } = await supabaseAdmin
     .from('tournaments')
-    .select('organization_id')
+    .select('org_id')
     .eq('id', tournamentId)
     .maybeSingle();
 
+  if (tourErr) console.error('[notif-prefs GET] tournament lookup error:', tourErr.message);
   if (!tourRow) return NextResponse.json({ error: 'Tournament not found.' }, { status: 404 });
 
-  const { data: orgRow } = await supabaseAdmin
+  const { data: orgRow, error: orgErr } = await supabaseAdmin
     .from('organizations')
     .select('slug')
-    .eq('id', tourRow.organization_id)
+    .eq('id', tourRow.org_id)
     .maybeSingle();
 
+  if (orgErr) console.error('[notif-prefs GET] org lookup error:', orgErr.message);
   if (!orgRow) return unauthorized();
 
   const ctx = await getAuthContextWithScope({ orgSlug: orgRow.slug });
-  if (!ctx) return unauthorized();
+  if (!ctx) {
+    console.error('[notif-prefs GET] auth failed for orgSlug:', orgRow.slug);
+    return unauthorized();
+  }
 
   const { data, error } = await supabaseAdmin
     .from('tournament_notification_preferences')
@@ -59,7 +64,7 @@ export async function GET(req: Request, context: RouteContext) {
     .eq('tournament_id', tournamentId);
 
   if (error) {
-    console.error('[tournament-notification-preferences GET]', error.message);
+    console.error('[notif-prefs GET] preferences query error:', error.message);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
@@ -78,24 +83,29 @@ export async function POST(req: Request, context: RouteContext) {
   if (!tournamentId) return badRequest('Missing tournamentId.');
 
   // Resolve org for auth scope
-  const { data: tourRow } = await supabaseAdmin
+  const { data: tourRow, error: tourErr } = await supabaseAdmin
     .from('tournaments')
-    .select('organization_id')
+    .select('org_id')
     .eq('id', tournamentId)
     .maybeSingle();
 
+  if (tourErr) console.error('[notif-prefs POST] tournament lookup error:', tourErr.message);
   if (!tourRow) return NextResponse.json({ error: 'Tournament not found.' }, { status: 404 });
 
-  const { data: orgRow } = await supabaseAdmin
+  const { data: orgRow, error: orgErr } = await supabaseAdmin
     .from('organizations')
     .select('slug')
-    .eq('id', tourRow.organization_id)
+    .eq('id', tourRow.org_id)
     .maybeSingle();
 
+  if (orgErr) console.error('[notif-prefs POST] org lookup error:', orgErr.message);
   if (!orgRow) return unauthorized();
 
   const ctx = await getAuthContextWithScope({ orgSlug: orgRow.slug });
-  if (!ctx) return unauthorized();
+  if (!ctx) {
+    console.error('[notif-prefs POST] auth failed for orgSlug:', orgRow.slug);
+    return unauthorized();
+  }
 
   const body = await req.json().catch(() => null);
   if (!body?.preferences || !Array.isArray(body.preferences) || body.preferences.length === 0) {

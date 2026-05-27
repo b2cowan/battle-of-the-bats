@@ -1,4 +1,4 @@
-.page { max-width: 900px; }
+﻿.page { max-width: 900px; }
 
 .header {
   border-bottom: 1px solid rgba(var(--logic-lime-rgb), 0.3);
@@ -76,7 +76,7 @@
   padding: 0.2rem 0.5rem;
   border: 1px solid rgba(251, 191, 36, 0.35);
   background: rgba(251, 191, 36, 0.07);
-  color: #fbbf24;
+  color: var(--warning);
 }
 
 .badgeLive {
@@ -226,7 +226,7 @@
 
 .errorCell {
   font-size: 0.65rem;
-  color: #f87171;
+  color: var(--danger);
   padding-left: 0.75rem;
 }
 

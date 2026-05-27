@@ -1,4 +1,4 @@
-.page { max-width: 1300px; }
+﻿.page { max-width: 1300px; }
 
 .header {
   border-bottom: 1px solid rgba(var(--logic-lime-rgb), 0.3);
@@ -263,7 +263,7 @@
 }
 
 .errorCallout {
-  color: #f87171;
+  color: var(--danger);
   border-color: rgba(248, 113, 113, 0.35);
   background: rgba(248, 113, 113, 0.06);
 }

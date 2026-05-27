@@ -34,31 +34,32 @@
   font-weight: 900;
   font-family: var(--font-data);
   margin: 0;
-  color: var(--white-90, #f0f0f0);
+  color: var(--logic-lime);
+  text-transform: uppercase;
   line-height: 1.1;
 }
 
 .pageSub {
   margin: 0.25rem 0 0;
-  color: var(--white-40, rgba(255,255,255,0.4));
+  color: var(--white-40);
   font-size: 0.9rem;
 }
 
 .muted {
-  color: var(--white-40, rgba(255,255,255,0.4));
+  color: var(--white-40);
   padding: 2rem;
 }
 
 .accessDenied {
   padding: 4rem 2rem;
   text-align: center;
-  color: var(--white-40, rgba(255,255,255,0.4));
+  color: var(--white-40);
 }
 .accessDenied h2 {
   font-size: 1.1rem;
   font-weight: 700;
   margin: 1rem 0 0.5rem;
-  color: var(--white-60, rgba(255,255,255,0.6));
+  color: var(--white-60);
 }
 .accessDenied p {
   font-size: 0.9rem;
@@ -77,15 +78,15 @@
 .seasonCard {
   padding: 1.25rem 1.5rem;
   border-radius: 2px;
-  background: var(--surface, rgba(255,255,255,0.04));
-  border: 1px solid var(--border, rgba(255,255,255,0.08));
+  background: var(--surface);
+  border: 1px solid var(--border);
   display: flex;
   flex-direction: column;
   gap: 0;
   transition: border-color 0.15s;
 }
 .seasonCard:hover {
-  border-color: rgba(255,255,255,0.15);
+  border-color: rgba(var(--blueprint-blue-rgb), 0.35);
 }
 
 .seasonCardTop {
@@ -106,7 +107,7 @@
 .seasonName {
   font-size: 1rem;
   font-weight: 700;
-  color: var(--white-90, #f0f0f0);
+  color: var(--white-90);
   line-height: 1.3;
 }
 
@@ -127,13 +128,13 @@
   font-size: 0.65rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: var(--white-40, rgba(255,255,255,0.4));
+  color: var(--white-40);
 }
 
 .statValue {
   font-size: 0.95rem;
   font-weight: 700;
-  color: var(--white-80, rgba(255,255,255,0.8));
+  color: var(--white-80);
 }
 
 .seasonCardActions {
@@ -158,10 +159,10 @@
 }
 
 .statusDraft              { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.5); }
-.statusRegistrationOpen   { background: rgba(74,222,128,0.12); color: #4ade80; border: 1px solid rgba(74,222,128,0.25); }
-.statusRegistrationClosed { background: rgba(251,191,36,0.12); color: #fbbf24; border: 1px solid rgba(251,191,36,0.25); }
-.statusActive             { background: rgba(96,165,250,0.12); color: #60a5fa; border: 1px solid rgba(96,165,250,0.25); }
-.statusCompleted          { background: rgba(167,139,250,0.12); color: #a78bfa; border: 1px solid rgba(167,139,250,0.25); }
+.statusRegistrationOpen   { background: rgba(var(--success-rgb), 0.12); color: var(--success); border: 1px solid rgba(var(--success-rgb), 0.25); }
+.statusRegistrationClosed { background: rgba(var(--warning-rgb), 0.12); color: var(--warning); border: 1px solid rgba(var(--warning-rgb), 0.25); }
+.statusActive             { background: rgba(var(--info-rgb), 0.12); color: var(--info); border: 1px solid rgba(var(--info-rgb), 0.25); }
+.statusCompleted          { background: rgba(167,139,250,0.12); color: #a78bfa; border: 1px solid rgba(167,139,250,0.25); } /* purple — no semantic token; intentional */
 .statusArchived           { background: rgba(255,255,255,0.04); color: rgba(255,255,255,0.3); }
 
 /* ── Age group badge ──────────────────────────────────────────────────────── */
@@ -173,7 +174,7 @@
   font-weight: 700;
   letter-spacing: 0.04em;
   background: rgba(var(--blueprint-blue-rgb), 0.12);
-  color: #60a5fa;
+  color: var(--info);
   white-space: nowrap;
 }
 
@@ -181,7 +182,7 @@
 .emptyState {
   text-align: center;
   padding: 3.5rem 1rem;
-  color: var(--white-40, rgba(255,255,255,0.4));
+  color: var(--white-40);
   font-size: 0.9rem;
 }
 .emptyState p { margin: 0.5rem 0 0; }
@@ -190,8 +191,8 @@
 .seasonHeader {
   padding: 1.5rem;
   border-radius: 2px;
-  background: rgba(255,255,255,0.03);
-  border: 1px solid rgba(255,255,255,0.08);
+  background: var(--white-03);
+  border: 1px solid var(--border-2);
   margin-bottom: 1.75rem;
 }
 
@@ -209,7 +210,7 @@
   font-size: 1.5rem;
   font-weight: 900;
   font-family: var(--font-data);
-  color: var(--white-90, #f0f0f0);
+  color: var(--white-90);
   margin: 0 0 0.5rem;
 }
 
@@ -246,13 +247,13 @@
   font-size: 0.65rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: var(--white-40, rgba(255,255,255,0.4));
+  color: var(--white-40);
 }
 
 .dateValue {
   font-size: 0.85rem;
   font-weight: 600;
-  color: var(--white-70, rgba(255,255,255,0.7));
+  color: var(--white-70);
 }
 
 /* ── Section header ───────────────────────────────────────────────────────── */
@@ -268,7 +269,7 @@
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--white-40, rgba(255,255,255,0.4));
+  color: var(--white-40);
   margin: 0;
 }
 
@@ -283,8 +284,8 @@
 .divisionCard {
   padding: 1.25rem 1.5rem;
   border-radius: 2px;
-  background: var(--surface, rgba(255,255,255,0.04));
-  border: 1px solid var(--border, rgba(255,255,255,0.08));
+  background: var(--surface);
+  border: 1px solid var(--border);
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
@@ -300,7 +301,7 @@
 .divisionName {
   font-size: 0.95rem;
   font-weight: 700;
-  color: var(--white-90, #f0f0f0);
+  color: var(--white-90);
 }
 
 .divisionCardActions {
@@ -323,14 +324,14 @@
 
 .capacityLabel {
   font-size: 0.68rem;
-  color: var(--white-40, rgba(255,255,255,0.4));
+  color: var(--white-40);
   text-transform: uppercase;
   letter-spacing: 0.06em;
 }
 
 .capacityBar {
   height: 6px;
-  background: rgba(255,255,255,0.08);
+  background: var(--white-8);
   border-radius: 2px;
   overflow: hidden;
 }
@@ -338,17 +339,17 @@
 .capacityFill {
   height: 100%;
   border-radius: 2px;
-  background: var(--logic-lime, #a3e635);
+  background: var(--logic-lime);
   transition: width 0.3s ease;
 }
 
 .capacityFillFull {
-  background: #f87171;
+  background: var(--danger);
 }
 
 .capacityText {
   font-size: 0.75rem;
-  color: var(--white-60, rgba(255,255,255,0.6));
+  color: var(--white-60);
   font-variant-numeric: tabular-nums;
 }
 
@@ -358,22 +359,22 @@
   gap: 0.4rem;
   flex-wrap: wrap;
   padding-top: 0.5rem;
-  border-top: 1px solid rgba(255,255,255,0.05);
+  border-top: 1px solid var(--white-05);
 }
 
 .divisionLink {
   font-size: 0.75rem;
   font-weight: 600;
-  color: var(--white-40, rgba(255,255,255,0.4));
+  color: var(--white-40);
   text-decoration: none;
   padding: 0.2rem 0.5rem;
   border-radius: 2px;
-  border: 1px solid rgba(255,255,255,0.08);
+  border: 1px solid var(--border-2);
   transition: color 0.15s, border-color 0.15s;
 }
 .divisionLink:hover {
-  color: var(--blueprint-blue, #60a5fa);
-  border-color: rgba(96,165,250,0.3);
+  color: var(--blueprint-blue);
+  border-color: rgba(var(--blueprint-blue-rgb), 0.3);
 }
 
 /* ── Lifecycle controls ───────────────────────────────────────────────────── */
@@ -394,13 +395,13 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: var(--white-40, rgba(255,255,255,0.4));
+  color: var(--white-40);
   margin-right: 0.25rem;
 }
 
 .lifecycleHint {
   font-size: 0.78rem;
-  color: var(--white-30, rgba(255,255,255,0.3));
+  color: var(--white-30);
   margin-left: auto;
 }
 
@@ -412,17 +413,17 @@
   display: block;
   font-size: 0.8rem;
   font-weight: 600;
-  color: var(--white-60, rgba(255,255,255,0.6));
+  color: var(--white-60);
   margin-bottom: 0.4rem;
 }
 
 .input, .select, .textarea {
   width: 100%;
-  background: rgba(255,255,255,0.05);
+  background: var(--white-05);
   border: 1px solid rgba(255,255,255,0.12);
   border-radius: 2px;
   padding: 0.55rem 0.75rem;
-  color: var(--white-90, #f0f0f0);
+  color: var(--white-90);
   font-size: 0.9rem;
   box-sizing: border-box;
   transition: border-color 0.15s;
@@ -430,14 +431,14 @@
 }
 .input:focus, .select:focus, .textarea:focus {
   outline: none;
-  border-color: var(--blueprint-blue, #60a5fa);
+  border-color: var(--blueprint-blue);
 }
-.select option { background: #1a1f2e; }
+.select option { background: var(--hud-surface); }
 .textarea { resize: vertical; min-height: 80px; }
 
 .hint {
   font-size: 0.78rem;
-  color: var(--white-40, rgba(255,255,255,0.4));
+  color: var(--white-40);
   margin: 0.3rem 0 0;
 }
 
@@ -455,7 +456,7 @@
   justify-content: space-between;
   gap: 1rem;
   padding: 0.75rem 0;
-  border-bottom: 1px solid rgba(255,255,255,0.05);
+  border-bottom: 1px solid var(--white-05);
 }
 .toggleRow:last-child { border-bottom: none; }
 
@@ -464,13 +465,13 @@
 .toggleTitle {
   font-size: 0.85rem;
   font-weight: 600;
-  color: var(--white-80, rgba(255,255,255,0.8));
+  color: var(--white-80);
   margin-bottom: 0.2rem;
 }
 
 .toggleDesc {
   font-size: 0.78rem;
-  color: var(--white-40, rgba(255,255,255,0.4));
+  color: var(--white-40);
   line-height: 1.4;
 }
 
@@ -486,7 +487,7 @@
 .toggleSlider {
   position: absolute;
   inset: 0;
-  background: rgba(255,255,255,0.1);
+  background: var(--white-10);
   border-radius: 2px;
   cursor: pointer;
   transition: background 0.2s;
@@ -499,21 +500,21 @@
   height: 16px;
   left: 2px;
   top: 2px;
-  background: rgba(255,255,255,0.6);
+  background: var(--white-60);
   border-radius: 50%;
   transition: transform 0.2s, background 0.2s;
 }
 .toggle input:checked + .toggleSlider {
-  background: var(--logic-lime, #a3e635);
-  border-color: var(--logic-lime, #a3e635);
+  background: var(--logic-lime);
+  border-color: var(--logic-lime);
 }
 .toggle input:checked + .toggleSlider::before {
   transform: translateX(18px);
-  background: #1a1f2e;
+  background: var(--hud-surface);
 }
 
 .automationSection {
-  border: 1px solid rgba(255,255,255,0.08);
+  border: 1px solid var(--border-2);
   border-radius: 2px;
   padding: 0.75rem 1rem;
   margin-top: 0.5rem;
@@ -524,7 +525,7 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  color: var(--white-40, rgba(255,255,255,0.4));
+  color: var(--white-40);
   margin: 0 0 0.5rem;
 }
 
@@ -542,7 +543,7 @@
 }
 
 .modal {
-  background: #1a1f2e;
+  background: var(--hud-surface);
   border: 1px solid rgba(255,255,255,0.12);
   border-radius: 2px;
   width: 100%;
@@ -560,22 +561,25 @@
 }
 
 .modalTitle {
-  font-size: 1rem;
+  font-family: var(--font-data);
+  font-size: 0.9rem;
   font-weight: 700;
-  color: var(--white-90, #f0f0f0);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--logic-lime);
   margin: 0;
 }
 
 .modalCloseBtn {
   background: none;
   border: none;
-  color: var(--white-40, rgba(255,255,255,0.4));
+  color: var(--white-40);
   cursor: pointer;
   padding: 0.25rem;
   display: flex;
   align-items: center;
 }
-.modalCloseBtn:hover { color: var(--white-80, rgba(255,255,255,0.8)); }
+.modalCloseBtn:hover { color: var(--white-80); }
 
 .modalFooter {
   display: flex;
@@ -589,18 +593,18 @@
 /* ── Action icon buttons ──────────────────────────────────────────────────── */
 .iconBtn {
   background: none;
-  border: 1px solid rgba(255,255,255,0.1);
+  border: 1px solid var(--white-10);
   border-radius: 2px;
   padding: 0.3rem 0.45rem;
-  color: var(--white-40, rgba(255,255,255,0.4));
+  color: var(--white-40);
   cursor: pointer;
   transition: color 0.15s, border-color 0.15s;
   display: flex;
   align-items: center;
   line-height: 1;
 }
-.iconBtn:hover          { color: var(--white-80, rgba(255,255,255,0.8)); border-color: rgba(255,255,255,0.25); }
-.iconBtnDanger:hover    { color: #f87171; border-color: rgba(248,113,113,0.4); }
+.iconBtn:hover          { color: var(--white-80); border-color: rgba(255,255,255,0.25); }
+.iconBtnDanger:hover    { color: var(--danger); border-color: rgba(var(--danger-rgb), 0.4); }
 .iconBtn:disabled       { opacity: 0.3; cursor: not-allowed; }
 
 /* ── Teams page ───────────────────────────────────────────────────────────── */
@@ -619,16 +623,16 @@
 }
 
 .divSelect {
-  background: rgba(255,255,255,0.05);
+  background: var(--white-05);
   border: 1px solid rgba(255,255,255,0.12);
   border-radius: 2px;
   padding: 0.4rem 0.65rem;
-  color: var(--white-90, #f0f0f0);
+  color: var(--white-90);
   font-size: 0.85rem;
   font-family: var(--font-data);
   cursor: pointer;
 }
-.divSelect option { background: #1a1f2e; }
+.divSelect option { background: var(--hud-surface); }
 
 .toolbarSep {
   width: 1px;
@@ -658,7 +662,7 @@
 
 .poolCount {
   font-size: 0.7rem;
-  color: var(--white-40, rgba(255,255,255,0.4));
+  color: var(--white-40);
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.06em;
@@ -667,10 +671,10 @@
 .poolSearch {
   width: 100%;
   background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(255,255,255,0.1);
+  border: 1px solid var(--white-10);
   border-radius: 2px;
   padding: 0.4rem 0.65rem;
-  color: var(--white-80, rgba(255,255,255,0.8));
+  color: var(--white-80);
   font-size: 0.82rem;
   font-family: var(--font-data);
   margin-bottom: 0.5rem;
@@ -678,7 +682,7 @@
 }
 .poolSearch:focus {
   outline: none;
-  border-color: var(--blueprint-blue, #60a5fa);
+  border-color: var(--blueprint-blue);
 }
 
 .poolDropZone {
@@ -689,15 +693,15 @@
   transition: background 0.15s, border-color 0.15s;
 }
 .poolDropZoneOver {
-  background: rgba(96,165,250,0.05);
-  border-color: rgba(96,165,250,0.25);
+  background: rgba(var(--info-rgb), 0.05);
+  border-color: rgba(var(--info-rgb), 0.25);
   border-style: dashed;
 }
 
 .poolEmpty {
   padding: 1.5rem 0.5rem;
   text-align: center;
-  color: var(--white-30, rgba(255,255,255,0.3));
+  color: var(--white-30);
   font-size: 0.78rem;
 }
 
@@ -720,7 +724,7 @@
   width: 210px;
   flex-shrink: 0;
   background: rgba(255,255,255,0.02);
-  border: 1px solid rgba(255,255,255,0.08);
+  border: 1px solid var(--border-2);
   border-radius: 2px;
   display: flex;
   flex-direction: column;
@@ -728,8 +732,8 @@
   transition: border-color 0.15s, background 0.15s;
 }
 .teamColumnOver {
-  background: rgba(96,165,250,0.05);
-  border-color: rgba(96,165,250,0.3);
+  background: rgba(var(--info-rgb), 0.05);
+  border-color: rgba(var(--info-rgb), 0.3);
   border-style: dashed;
 }
 
@@ -751,7 +755,7 @@
 .teamColumnName {
   font-size: 0.8rem;
   font-weight: 700;
-  color: var(--white-80, rgba(255,255,255,0.8));
+  color: var(--white-80);
   flex: 1;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -760,7 +764,7 @@
 
 .teamColumnCount {
   font-size: 0.68rem;
-  color: var(--white-40, rgba(255,255,255,0.4));
+  color: var(--white-40);
   white-space: nowrap;
 }
 
@@ -792,22 +796,22 @@
   padding: 0.45rem 0.6rem;
   border-radius: 2px;
   background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(255,255,255,0.08);
+  border: 1px solid var(--border-2);
   cursor: grab;
   user-select: none;
   touch-action: none;
   transition: border-color 0.12s, background 0.12s, opacity 0.15s;
 }
 .playerCard:hover {
-  border-color: rgba(255,255,255,0.18);
+  border-color: rgba(var(--blueprint-blue-rgb), 0.35);
   background: rgba(255,255,255,0.06);
 }
 .playerCardDragging { opacity: 0.25; }
 
 .playerCardOverlay {
   cursor: grabbing;
-  background: #1a1f2e;
-  border-color: rgba(96,165,250,0.45);
+  background: var(--hud-surface);
+  border-color: rgba(var(--info-rgb), 0.45);
   box-shadow: 0 10px 28px rgba(0,0,0,0.55);
   border-radius: 2px;
   padding: 0.45rem 0.6rem;
@@ -817,13 +821,13 @@
 .playerName {
   font-size: 0.79rem;
   font-weight: 600;
-  color: var(--white-80, rgba(255,255,255,0.8));
+  color: var(--white-80);
   line-height: 1.25;
 }
 
 .playerMeta {
   font-size: 0.67rem;
-  color: var(--white-40, rgba(255,255,255,0.4));
+  color: var(--white-40);
   margin-top: 0.12rem;
 }
 
@@ -833,7 +837,7 @@
   align-items: center;
   justify-content: center;
   padding: 3rem 1rem;
-  color: var(--white-40, rgba(255,255,255,0.4));
+  color: var(--white-40);
   text-align: center;
   font-size: 0.88rem;
 }
@@ -851,7 +855,7 @@
 
 .draftHeader {
   padding: 1rem 1.5rem;
-  border-bottom: 1px solid rgba(255,255,255,0.08);
+  border-bottom: 1px solid var(--border-2);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -865,12 +869,12 @@
   font-size: 1rem;
   font-weight: 800;
   font-family: var(--font-data);
-  color: var(--white-90, #f0f0f0);
+  color: var(--white-90);
 }
 
 .draftPickMeta {
   font-size: 0.78rem;
-  color: var(--logic-lime, #a3e635);
+  color: var(--logic-lime);
   font-weight: 600;
 }
 
@@ -891,13 +895,13 @@
   font-weight: 600;
   background: rgba(255,255,255,0.04);
   border: 1px solid rgba(255,255,255,0.07);
-  color: rgba(255,255,255,0.3);
+  color: var(--white-30);
   white-space: nowrap;
 }
 .draftTeamChipActive {
-  background: rgba(163,230,53,0.13);
-  border-color: rgba(163,230,53,0.4);
-  color: var(--logic-lime, #a3e635);
+  background: rgba(var(--logic-lime-rgb), 0.13);
+  border-color: rgba(var(--logic-lime-rgb), 0.4);
+  color: var(--logic-lime);
 }
 
 .draftBody {
@@ -914,17 +918,17 @@
   padding: 0.5rem 0.7rem;
   border-radius: 2px;
   background: rgba(255,255,255,0.02);
-  border: 1px solid rgba(255,255,255,0.05);
+  border: 1px solid var(--white-05);
   margin-bottom: 0.3rem;
   transition: background 0.1s;
 }
-.draftPlayerRow:hover { background: rgba(255,255,255,0.05); }
+.draftPlayerRow:hover { background: var(--white-05); }
 
 .draftPlayerInfo { flex: 1; min-width: 0; }
 
 .draftFooter {
   padding: 0.85rem 1.5rem;
-  border-top: 1px solid rgba(255,255,255,0.08);
+  border-top: 1px solid var(--border-2);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -939,12 +943,12 @@
 .draftCompleteTitle {
   font-size: 1.1rem;
   font-weight: 700;
-  color: var(--logic-lime, #a3e635);
+  color: var(--logic-lime);
   margin-bottom: 0.5rem;
 }
 .draftCompleteMsg {
   font-size: 0.88rem;
-  color: var(--white-50, rgba(255,255,255,0.5));
+  color: var(--white-50);
 }
 
 /* ── Schedule page ────────────────────────────────────────────────────────── */
@@ -962,7 +966,7 @@
 
 .viewToggle {
   display: flex;
-  border: 1px solid rgba(255,255,255,0.1);
+  border: 1px solid var(--white-10);
   border-radius: 2px;
   overflow: hidden;
 }
@@ -973,17 +977,17 @@
   font-weight: 600;
   background: none;
   border: none;
-  color: rgba(255,255,255,0.4);
+  color: var(--white-40);
   cursor: pointer;
   font-family: var(--font-data);
   transition: background 0.15s, color 0.15s;
 }
 .viewToggleBtn + .viewToggleBtn {
-  border-left: 1px solid rgba(255,255,255,0.1);
+  border-left: 1px solid var(--white-10);
 }
 .viewToggleBtnActive {
   background: rgba(255,255,255,0.08);
-  color: var(--white-80, rgba(255,255,255,0.8));
+  color: var(--white-80);
 }
 
 /* ── Week view ────────────────────────────────────────────────────────────── */
@@ -994,7 +998,7 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  color: var(--white-40, rgba(255,255,255,0.4));
+  color: var(--white-40);
   margin-bottom: 0.65rem;
 }
 
@@ -1007,13 +1011,13 @@
 .gameCard {
   padding: 0.9rem 1rem;
   border-radius: 2px;
-  background: rgba(255,255,255,0.03);
-  border: 1px solid rgba(255,255,255,0.08);
+  background: var(--white-03);
+  border: 1px solid var(--border-2);
   cursor: pointer;
   transition: border-color 0.15s, background 0.15s;
 }
 .gameCard:hover {
-  border-color: rgba(255,255,255,0.18);
+  border-color: rgba(var(--blueprint-blue-rgb), 0.35);
   background: rgba(255,255,255,0.05);
 }
 .gameCardCancelled { opacity: 0.45; }
@@ -1028,7 +1032,7 @@
 .gameTeamName {
   font-size: 0.85rem;
   font-weight: 700;
-  color: var(--white-80, rgba(255,255,255,0.8));
+  color: var(--white-80);
 }
 
 .gameVs {
@@ -1041,14 +1045,14 @@
 .gameScore {
   font-size: 1rem;
   font-weight: 800;
-  color: var(--logic-lime, #a3e635);
+  color: var(--logic-lime);
   font-variant-numeric: tabular-nums;
   margin-bottom: 0.35rem;
 }
 
 .gameCardMeta {
   font-size: 0.72rem;
-  color: var(--white-40, rgba(255,255,255,0.4));
+  color: var(--white-40);
   display: flex;
   gap: 0.75rem;
   flex-wrap: wrap;
@@ -1060,13 +1064,13 @@
   justify-content: space-between;
   margin-top: 0.5rem;
   padding-top: 0.5rem;
-  border-top: 1px solid rgba(255,255,255,0.05);
+  border-top: 1px solid var(--white-05);
 }
 
 /* Game status badges (extends .statusBadge) */
-.gameStatusScheduled  { background: rgba(96,165,250,0.1);  color: #60a5fa; border: 1px solid rgba(96,165,250,0.25); }
-.gameStatusCompleted  { background: rgba(74,222,128,0.1);  color: #4ade80; border: 1px solid rgba(74,222,128,0.25); }
-.gameStatusPostponed  { background: rgba(251,191,36,0.1);  color: #fbbf24; border: 1px solid rgba(251,191,36,0.25); }
+.gameStatusScheduled  { background: rgba(var(--info-rgb), 0.1);    color: var(--info);    border: 1px solid rgba(var(--info-rgb), 0.25); }
+.gameStatusCompleted  { background: rgba(var(--success-rgb), 0.1); color: var(--success); border: 1px solid rgba(var(--success-rgb), 0.25); }
+.gameStatusPostponed  { background: rgba(var(--warning-rgb), 0.1); color: var(--warning); border: 1px solid rgba(var(--warning-rgb), 0.25); }
 .gameStatusCancelled  { background: rgba(255,255,255,0.04); color: rgba(255,255,255,0.3); }
 
 /* ── List view ────────────────────────────────────────────────────────────── */
@@ -1083,13 +1087,13 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: var(--white-40, rgba(255,255,255,0.4));
+  color: var(--white-40);
   border-bottom: 1px solid rgba(255,255,255,0.07);
 }
 
 .scheduleTable td {
   padding: 0.55rem 0.75rem;
-  color: var(--white-70, rgba(255,255,255,0.7));
+  color: var(--white-70);
   border-bottom: 1px solid rgba(255,255,255,0.04);
   vertical-align: middle;
 }
@@ -1100,7 +1104,7 @@
 .scoreCell {
   font-weight: 700;
   font-variant-numeric: tabular-nums;
-  color: var(--logic-lime, #a3e635);
+  color: var(--logic-lime);
 }
 
 .teamDot {
@@ -1133,13 +1137,13 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.07em;
-  color: var(--white-40, rgba(255,255,255,0.4));
+  color: var(--white-40);
   border-bottom: 1px solid rgba(255,255,255,0.07);
 }
 
 .previewTable td {
   padding: 0.35rem 0.6rem;
-  color: var(--white-60, rgba(255,255,255,0.6));
+  color: var(--white-60);
   border-bottom: 1px solid rgba(255,255,255,0.04);
 }
 
@@ -1150,7 +1154,7 @@
   padding: 0.1rem 0.4rem;
   border-radius: 2px;
   background: rgba(255,255,255,0.06);
-  color: rgba(255,255,255,0.4);
+  color: var(--white-40);
   font-size: 0.65rem;
   font-weight: 700;
 }

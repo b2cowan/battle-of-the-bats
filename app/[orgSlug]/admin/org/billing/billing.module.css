@@ -705,3 +705,58 @@
   }
 }
 
+/* ── Founding Season Banner ──────────────────────────────────── */
+.foundingSeasonBanner {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  border-radius: 2px;
+  background: rgba(var(--logic-lime-rgb), 0.05);
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.35);
+  margin-bottom: 1rem;
+}
+
+.foundingSeasonIcon {
+  width: 36px;
+  height: 36px;
+  border-radius: 2px;
+  background: rgba(var(--logic-lime-rgb), 0.12);
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.28);
+  color: var(--logic-lime);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.foundingSeasonBody {
+  flex: 1;
+  min-width: 0;
+}
+
+.foundingSeasonEyebrow {
+  font-family: var(--font-data, monospace);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--logic-lime);
+  margin: 0 0 0.3rem;
+}
+
+.foundingSeasonTitle {
+  font-size: 0.9rem;
+  font-weight: 800;
+  color: var(--white-90, #f0f0f0);
+  margin: 0 0 0.3rem;
+  text-transform: uppercase;
+}
+
+.foundingSeasonCopy {
+  margin: 0;
+  color: var(--white-55, rgba(255,255,255,0.55));
+  font-size: 0.82rem;
+  line-height: 1.55;
+}
+

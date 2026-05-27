@@ -82,6 +82,8 @@ type PublishChecklist = {
   hasVenues: boolean;
   hasRules: boolean;
   hasFees: boolean;
+  hasGameTiming: boolean;
+  hasTieBreakers: boolean;
   ready: boolean;
 };
 
@@ -109,6 +111,8 @@ const EMPTY_STATS: DashboardStats = {
     hasVenues: false,
     hasRules: false,
     hasFees: false,
+    hasGameTiming: false,
+    hasTieBreakers: false,
     ready: false,
   },
   registration: { totalCapacity: 0, totalAccepted: 0, totalPending: 0, totalWaitlist: 0, byDivision: [] },
@@ -194,6 +198,8 @@ export default function AdminDashboard() {
             hasVenues:        data?.publishChecklist?.hasVenues        ?? false,
             hasRules:         data?.publishChecklist?.hasRules         ?? false,
             hasFees:          data?.publishChecklist?.hasFees          ?? false,
+            hasGameTiming:    data?.publishChecklist?.hasGameTiming    ?? false,
+            hasTieBreakers:   data?.publishChecklist?.hasTieBreakers   ?? false,
             ready:            data?.publishChecklist?.ready            ?? false,
           },
           registration: data?.registration ?? EMPTY_STATS.registration,
@@ -299,13 +305,16 @@ export default function AdminDashboard() {
   ];
 
   const checklistItems = [
-    { key: 'dates',         done: checklist.hasDates,         label: 'Tournament dates',                        desc: 'Set a start and end date so teams know when the event runs.',              href: `${base}/settings/event`, action: 'Edit dates'    },
-    { key: 'divisions',     done: checklist.hasDivisions,     label: 'At least one division',                   desc: 'Create the divisions teams can register for.',                             href: `/divisions`,  action: 'Add divisions'    },
-    { key: 'contact',       done: checklist.hasPublicContact, label: 'Public contact email',                    desc: 'Choose the email coaches can use for tournament questions.',               href: `${base}/contacts`,    action: 'Manage contacts'  },
-    { key: 'open-division', done: checklist.hasOpenDivision,  label: 'Registration open for at least one division', desc: 'Open a division when you are ready for teams to register.',          href: `/divisions`,  action: 'Open divisions'   },
+    { key: 'dates',         done: checklist.hasDates,         label: 'Tournament dates',                            desc: 'Set a start and end date so teams know when the event runs.',                          href: `${base}/settings/event`, action: 'Edit dates'              },
+    { key: 'divisions',     done: checklist.hasDivisions,     label: 'At least one division',                       desc: 'Create the divisions teams can register for.',                                         href: `/divisions`,              action: 'Add divisions'           },
+    { key: 'contact',       done: checklist.hasPublicContact, label: 'Public contact email',                        desc: 'Choose the email coaches can use for tournament questions.',                           href: `${base}/contacts`,        action: 'Manage contacts'         },
+    { key: 'open-division', done: checklist.hasOpenDivision,  label: 'Registration open for at least one division', desc: 'Open a division when you are ready for teams to register.',                            href: `/divisions`,              action: 'Open divisions'          },
+    { key: 'fees',          done: checklist.hasFees,          label: 'Payment setup confirmed',                     desc: 'Confirm how registration fees work — or mark the event as free.',                     href: `${base}/settings/event`, action: 'Configure payment setup' },
+    { key: 'game-timing',   done: checklist.hasGameTiming,    label: 'Game timing configured',                      desc: 'Set how long games run and whether individual divisions can override it.',             href: `${base}/settings/event`, action: 'Configure game timing'   },
+    { key: 'tie-breakers',  done: checklist.hasTieBreakers,   label: 'Tie-breaker rules configured',                desc: 'Choose how tied standings are broken for seedings and playoff advancement decisions.', href: `${base}/settings/event`, action: 'Configure tie-breakers'  },
   ];
 
-  const optionalDoneCount = [checklist.hasVenues, checklist.hasFees, checklist.hasRules, checklist.hasBranding].filter(Boolean).length;
+  const optionalDoneCount = [checklist.hasVenues, checklist.hasRules, checklist.hasBranding].filter(Boolean).length;
 
   return (
     <div className={styles.page}>
@@ -399,7 +408,7 @@ export default function AdminDashboard() {
                   Optional setup
                   {optionalDoneCount > 0 && (
                     <span style={{ color: 'var(--logic-lime)', marginLeft: '0.15rem' }}>
-                      — {optionalDoneCount} of 4 complete
+                      — {optionalDoneCount} of 3 complete
                     </span>
                   )}
                 </span>
@@ -424,26 +433,6 @@ export default function AdminDashboard() {
                       </span>
                       <em style={{ color: checklist.hasVenues ? 'var(--logic-lime)' : 'var(--data-gray)' }}>
                         {checklist.hasVenues ? 'Complete' : 'Add venues →'}
-                      </em>
-                    </div>
-                  </Link>
-
-                  <Link href={`${base}/settings/event`} className={`${styles.checklistNudge} ${checklist.hasFees ? styles.nudgeDone : ''}`}>
-                    <div className={styles.checklistIcon}>
-                      {checklist.hasFees ? <CheckCircle2 size={18} /> : <Info size={18} />}
-                    </div>
-                    <div className={styles.checklistBody}>
-                      <strong style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        Fee schedule
-                        <span className={styles.nudgeTag}>Optional</span>
-                      </strong>
-                      <span>
-                        {checklist.hasFees
-                          ? 'Registration fees are configured for this tournament.'
-                          : 'Set registration fees so teams know what to expect when they sign up.'}
-                      </span>
-                      <em style={{ color: checklist.hasFees ? 'var(--logic-lime)' : 'var(--data-gray)' }}>
-                        {checklist.hasFees ? 'Complete' : 'Set up fees →'}
                       </em>
                     </div>
                   </Link>

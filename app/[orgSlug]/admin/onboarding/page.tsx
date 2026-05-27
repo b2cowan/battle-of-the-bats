@@ -20,7 +20,7 @@ import styles from './onboarding.module.css';
 
 const PLAN_ORDER: OrgPlan[] = ['tournament', 'team', 'tournament_plus', 'league', 'club'];
 const STARTUP_ORDER = ['tournament', 'divisions', 'welcome', 'venues', 'contacts'] as const;
-const WIZARD_ORDER = ['plan', ...STARTUP_ORDER, 'review'] as const;
+const WIZARD_ORDER = ['plan', 'qualifying', ...STARTUP_ORDER, 'review'] as const;
 const LEAGUE_STARTUP_ORDER = ['league_season', 'league_divisions', 'league_registration', 'league_tournament'] as const;
 const LEAGUE_WIZARD_ORDER = ['league-season', 'league-divisions', 'league-registration', 'league-tournament', 'league-review'] as const;
 
@@ -367,6 +367,7 @@ export default function OnboardingPage() {
   const [planError, setPlanError] = useState('');
   const [draftSkipped, setDraftSkipped] = useState<DraftSkippedState>(getDefaultDraftSkipped);
   const [leagueDraftSkipped, setLeagueDraftSkipped] = useState<LeagueDraftSkippedState>(getDefaultLeagueDraftSkipped);
+  const [qualifyingAnswer, setQualifyingAnswer] = useState<string>('');
 
   const [tournamentForm, setTournamentForm] = useState(getDefaultTournamentForm);
   const [slugEdited, setSlugEdited] = useState(false);
@@ -534,6 +535,19 @@ export default function OnboardingPage() {
     } else {
       await advanceWizard('plan');
     }
+  }
+
+  async function saveQualifyingStep() {
+    // Fire-and-forget — non-blocking segmentation data only
+    if (qualifyingAnswer && currentOrg) {
+      const orgParam = `?orgSlug=${encodeURIComponent(currentOrg.slug)}`;
+      fetch(`/api/admin/org/onboarding-survey${orgParam}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tournamentsPerYear: qualifyingAnswer }),
+      }).catch(() => {});
+    }
+    await advanceWizard('qualifying');
   }
 
   async function choosePlan(planKey: OrgPlan, selectedBillingCycle: 'monthly' | 'annual' = 'monthly') {
@@ -1454,6 +1468,52 @@ export default function OnboardingPage() {
       );
     }
 
+    if (activeModal === 'qualifying') {
+      const QUALIFYING_OPTIONS = [
+        { value: '1', label: '1', sub: 'Just getting started' },
+        { value: '2-3', label: '2–3', sub: 'A few each season' },
+        { value: '4+', label: '4 or more', sub: 'Running a full tournament program' },
+      ];
+      const isFoundingSeasonWindow = new Date() < new Date('2027-01-01T00:00:00.000Z');
+      return renderModalFrame(
+        'One quick question',
+        'How many tournaments does your organization run per year? This helps us tailor the setup for you.',
+        (
+          <>
+            {isFoundingSeasonWindow && (
+              <div className={styles.foundingSeasonWelcome}>
+                <p className={styles.foundingSeasonWelcomeEyebrow}>Founding Season</p>
+                <p className={styles.foundingSeasonWelcomeTitle}>Welcome to your founding season.</p>
+                <p className={styles.foundingSeasonWelcomeCopy}>
+                  Tournament Plus is free through December 31, 2026. No credit card required.
+                  You&apos;ll receive a reminder before the standard $39/month rate applies in January 2027.
+                </p>
+              </div>
+            )}
+            <div className={styles.qualifyingOptions}>
+              {QUALIFYING_OPTIONS.map(opt => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  className={`${styles.qualifyingOption} ${qualifyingAnswer === opt.value ? styles.qualifyingOptionActive : ''}`}
+                  onClick={() => setQualifyingAnswer(opt.value)}
+                >
+                  <span className={styles.qualifyingOptionLabel}>{opt.label}</span>
+                  <span className={styles.qualifyingOptionSub}>{opt.sub}</span>
+                </button>
+              ))}
+            </div>
+          </>
+        ),
+        {
+          stepId: 'qualifying',
+          saveLabel: 'Continue',
+          onSave: saveQualifyingStep,
+          allowSkip: false,
+        }
+      );
+    }
+
     if (activeModal === 'league-season') {
       return renderModalFrame(
         'Create your first season',
@@ -2235,6 +2295,17 @@ export default function OnboardingPage() {
         <h1 className={styles.title}>Welcome to FieldLogicHQ</h1>
         <p className={styles.sub}>Let&apos;s get {currentOrg.name} set up in a few quick steps.</p>
       </div>
+
+      {new Date() < new Date('2027-01-01T00:00:00.000Z') && (
+        <div className={styles.foundingSeasonBanner}>
+          <p className={styles.foundingSeasonBannerEyebrow}>Founding Season</p>
+          <p className={styles.foundingSeasonBannerTitle}>Welcome to your founding season.</p>
+          <p className={styles.foundingSeasonBannerCopy}>
+            Your plan is free through December 31, 2026. No credit card required.
+            You&apos;ll receive a reminder before standard rates apply in January 2027.
+          </p>
+        </div>
+      )}
 
       <div className={styles.steps}>
           <div className={`${styles.step} ${styles.stepDone}`}>

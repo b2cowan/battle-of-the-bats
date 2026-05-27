@@ -1583,7 +1583,7 @@ export async function deleteGame(id: string): Promise<void> {
   await authClient().from('games').delete().eq('id', id);
 }
 
-export async function getStandings(divisionId: string, config?: PlayoffConfig, options: ReadOptions = {}) {
+export async function getStandings(divisionId: string, config?: PlayoffConfig, options: ReadOptions = {}, tournamentSettings?: import('./types').TournamentSettings) {
   const games = await getGames(undefined, options);
   const teams = await getTeams(undefined, options);
   const groupTeams = teams.filter(t => t.divisionId === divisionId && t.status === 'accepted');
@@ -1625,7 +1625,8 @@ export async function getStandings(divisionId: string, config?: PlayoffConfig, o
     };
   });
 
-  const breakers = config?.tieBreakers || ['h2h', 'rd', 'rf', 'ra'];
+  // Tie-breaker priority: division playoffConfig → tournament settings → hardcoded default
+  const breakers = config?.tieBreakers || tournamentSettings?.tie_breakers || ['h2h', 'rd', 'rf', 'ra'];
 
   function breakTies(tiedTeams: any[], breakerIndex: number): any[] {
     if (tiedTeams.length <= 1 || breakerIndex >= breakers.length) return tiedTeams;
@@ -1717,6 +1718,8 @@ export async function getAnnouncements(tournamentId?: string, options: ReadOptio
     // Email-only communications (channel_site=false) are admin-internal and must not appear publicly.
     // The column defaults to true, so existing rows are unaffected.
     .eq('channel_site', true)
+    // Exclude soft-deleted posts. Rows pre-migration-098 have deleted_at = null → unaffected.
+    .is('deleted_at', null)
     .order('pinned', { ascending: false })
     .order('published_at', { ascending: false });
   if (tournamentId) query = query.eq('tournament_id', tournamentId);

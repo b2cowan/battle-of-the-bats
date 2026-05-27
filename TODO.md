@@ -18,19 +18,27 @@ This file tracks the ongoing tasks for the FieldLogicHQ platform (multi-tenant s
   - [x] GameList inline editing — conflict check on time/venue change
   - [x] GameList read mode — conflict badges (red/amber) on rows
   - [x] Generator pre-population from tournament settings
+- [x] **Divisions UX Rework & Tournament Settings Inheritance** — scope controls for fees/game timing/tie-breakers at tournament level, dashboard activation gate, divisions modal inheritance model, table restructure (see [plan](docs/active/DIVISIONS_UX_REWORK_PLAN.md))
+  - [x] Phase 1 — PlayoffWizard: remove tie-breaker step (no effect on bracket generation)
+  - [x] Phase 2 — DB & types: `game_timing_scope`, `tie_breakers`, `tie_breaker_scope`, `fee_scope` in `tournaments.settings`; migration 102; API patch-settings additions
+  - [x] Phase 3 — Event Settings: scope selectors for all three categories, tie-breaker section, fee Free toggle
+  - [x] Phase 4 — Dashboard: `hasGameTiming` + `hasTieBreakers` + repurposed `hasFees` checklist items; grandfathering for active/completed tournaments
+  - [x] Phase 5 — Divisions modal: inheritance model (hide/show/require based on scope), Advanced accordion, Age Range merge, Display Order on Edit only
+  - [x] Phase 6 — Divisions table: `TournamentAdminHeader`, Teams fill column, drop Order column, `btn-data` fixes, empty state upgrade, loading state
 - [ ] **Notifications & Web Push** — in-app bell, per-user preferences, PWA + web push to phone (no native app) (see [plan](docs/active/NOTIFICATIONS_PLAN.md) and [PM brief](docs/active/NOTIFICATIONS_PM_BRIEF.md))
-  - [ ] Phase A — Migration 098 (notifications, push_subscriptions, notification_preferences tables) + `lib/notify.ts` + `/api/notifications` route
-  - [ ] Phase B — `NotificationBell.tsx` + `NotificationPanel.tsx` + wire into AdminSidebar
-  - [ ] Phase C — Wire `notify()` into 5 existing API routes (registration, status change, score, HL registration, coach access)
+  - [x] Phase A — Migration 101 (notifications, push_subscriptions, notification_preferences, tournament_notification_preferences) + `lib/notify.ts` + `/api/notifications` route
+  - [x] Phase B — `NotificationBell.tsx` + `NotificationPanel.tsx` + wire into AdminSidebar + CoachesSidebar
+  - [x] Phase C — Wire `notify()` into existing API routes: `registration_new` (public + manual), `registration_status_changed` (accept/reject), `score_submitted`, `house_league_registration_new`
   - [ ] Phase D — Preferences page (`/admin/org/notifications`) + API route + sidebar nav item
-  - [ ] Phase E — PWA manifest, service worker, VAPID keys, `lib/web-push.ts`, push subscribe/unsubscribe APIs, `PushPermissionPrompt.tsx`, push dispatch in `notify.ts`
+  - [x] **Phase D bug fix — Inverted toggle semantics** — per-event toggles show ON=muted (backwards); fix is UI-only, no DB/API changes (see [fix plan](docs/archive/NOTIFICATION_TOGGLE_UX_FIX.md))
+  - [x] Phase E — PWA manifest, service worker, VAPID keys, `lib/web-push.ts`, push subscribe/unsubscribe APIs, `PushPermissionPrompt.tsx`, push dispatch in `notify.ts`; `PushPermissionPrompt` wired into org prefs page; VAPID keys in `.env.local` (Amplify env vars required before deploying)
   - [ ] Phase F — Scheduled deadline reminders (deferred; decide cron mechanism first)
-- [ ] **Rules & Resources UX improvements** — custom modals, inline add-section, Browse Samples drawer, public page suppression (see [plan](docs/active/RULES_PAGE_UX_IMPROVEMENTS_PLAN.md) and [PM brief](docs/active/RULES_PAGE_UX_IMPROVEMENTS_PM_BRIEF.md))
+- [x] **Rules & Resources UX improvements** — custom modals, inline add-section, Browse Samples drawer, public page suppression; browser verified 2026-05-27 (see [plan](docs/archive/RULES_PAGE_UX_IMPROVEMENTS_PLAN.md) and [PM brief](docs/archive/RULES_PAGE_UX_IMPROVEMENTS_PM_BRIEF.md))
   - [x] Phase 1 — Custom confirmation modals (delete section, delete resource)
   - [x] Phase 2 — Inline add-section blank-card flow
   - [x] Phase 3 — Browse Samples drawer (`rules-samples.ts`, `SamplesDrawer.tsx`)
   - [x] Phase 4 — Public page: suppress empty sections, remove fallback rules
-  - [ ] Browser verification
+  - [x] Browser verification
 - [ ] **Tournament settings JSONB + layout controls** — `tournaments.settings` JSONB column, per-tournament rules/resources layout toggles (see [plan](docs/active/TOURNAMENT_SETTINGS_LAYOUT_PLAN.md))
   - [x] Migration 086: `tournaments.settings jsonb NOT NULL DEFAULT '{}'`
   - [x] Types: `TournamentSettings` interface + `settings?` on `Tournament`
@@ -59,6 +67,7 @@ This file tracks the ongoing tasks for the FieldLogicHQ platform (multi-tenant s
   - [x] Phase 3 + Phase 5: Founding season email templates (9 emails) — founding_checkin, founding_renewal, founding_final, spotlight_club/league/coaches_org/coaches_coach/club_last/full_picture; TEMPLATE_REGISTRY all built:true; audience functions for coach/club-last variants; dashboard previews all live
   - [ ] Phase 4C: January 2027 conversion flow — blocked on Stripe Phase G
 - [ ] **Brand Strategy** — umbrella positioning, four segment profiles, site architecture, Coach Portal bridge messaging (see [BRAND_STRATEGY.md](docs/active/BRAND_STRATEGY.md))
+- [ ] **Brand Foundations (GTM supplement)** — mission statement, elevator pitch, 0→50→500 acquisition sequencing, push+pull outreach plan, coach advocacy program, partnership motion, SEO content priorities, competitive differentiation framework (see [BRAND_FOUNDATIONS.md](docs/active/BRAND_FOUNDATIONS.md))
 - [x] **Persona landing pages** — built `/for-tournament-organizers`, `/for-leagues`, `/for-clubs`, `/for-coaches`; design QA pass complete 2026-05-25
 - [x] **Homepage persona routing** — persona grid moved into hero above the fold; nav updated to persona-first links; `/for-` paths added to marketing nav detection
 - [x] **Pricing page copy** - approved copy applied to `app/pricing/page.tsx`; canonical record in `docs/archive/PRICING_PAGE_COPY.md`, with Coaches Portal unification tracked in the unified plan
@@ -134,6 +143,12 @@ This file tracks the ongoing tasks for the FieldLogicHQ platform (multi-tenant s
   - [x] Create UAT test accounts in dev Supabase and populate `.env.local` (see UAT_SETUP.md)
 
 ## 🚀 Active Tasks (Priority Order)
+
+### ⚡ Next Priority After Design Review
+
+- [ ] **Stripe Phase G — Go live** — Production Stripe cutover: create live products/prices in Stripe Dashboard, configure production webhook, enter live price IDs via Platform Admin, set Amplify master-branch env var overrides, run smoke checklist. **Target: complete before July 2026** — founding season orgs need billing live before the Dec 31 offer window closes. (See [Stripe Integration section below](#4-stripe-integration--end-to-end-billing--subscriptions) for the full checklist)
+
+---
 
 - [x] **Divisions rename (age groups → divisions)** — Full-stack terminology rename: DB table `age_groups` → `divisions` (migration 093), all FK columns, TypeScript types, API routes, file names, and UI copy; migration 093 applied dev + prod (see [docs/archive/DIVISIONS_RENAME_PLAN.md](docs/archive/DIVISIONS_RENAME_PLAN.md))
 - [x] **Post-rename dead-code cleanup** — Deleted 25-file pre-multi-tenant `app/admin/` directory (redirected by layout, never reachable); fixed critical onboarding bug where `POST /api/admin/contacts` (dropped in migration 090) was still called in `saveSetupDraft` (now sets `contact_email` only); removed dead Contacts nav from AdminBottomNav; migrated `/api/admin/diamonds` → `/api/admin/venues` in all callers; fixed remaining "age group" → "Division" UI copy in team signup, league register, and onboarding

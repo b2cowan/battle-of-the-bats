@@ -1068,3 +1068,124 @@
     min-height: 0;
   }
 }
+
+/* ── Founding Season welcome (qualifying step modal) ─────────────────────── */
+.foundingSeasonWelcome {
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.35);
+  background: rgba(var(--logic-lime-rgb), 0.04);
+  padding: 0.9rem 1.1rem;
+  margin-bottom: 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.foundingSeasonWelcomeEyebrow {
+  font-family: var(--font-data);
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--logic-lime);
+}
+
+.foundingSeasonWelcomeTitle {
+  font-family: var(--font-data);
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--fl-text);
+  line-height: 1.2;
+}
+
+.foundingSeasonWelcomeCopy {
+  font-family: var(--font-data);
+  font-size: 0.75rem;
+  color: var(--data-gray);
+  line-height: 1.55;
+  margin-top: 0.15rem;
+}
+
+/* ── Founding Season banner (league/club checklist page) ──────────────────── */
+.foundingSeasonBanner {
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.35);
+  background: rgba(var(--logic-lime-rgb), 0.04);
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.foundingSeasonBannerEyebrow {
+  font-family: var(--font-data);
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--logic-lime);
+}
+
+.foundingSeasonBannerTitle {
+  font-family: var(--font-data);
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--fl-text);
+  line-height: 1.2;
+}
+
+.foundingSeasonBannerCopy {
+  font-family: var(--font-data);
+  font-size: 0.76rem;
+  color: var(--data-gray);
+  line-height: 1.55;
+  margin-top: 0.1rem;
+}
+
+/* ── Qualifying step ──────────────────────────────────────────────────────── */
+.qualifyingOptions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  padding: 0.25rem 0;
+}
+
+.qualifyingOption {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 1rem 1.25rem;
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.3);
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.qualifyingOption:hover {
+  border-color: rgba(var(--blueprint-blue-rgb), 0.6);
+  background: rgba(var(--blueprint-blue-rgb), 0.04);
+}
+
+.qualifyingOptionActive {
+  border-color: rgba(var(--logic-lime-rgb), 0.5);
+  background: rgba(var(--logic-lime-rgb), 0.05);
+}
+
+.qualifyingOptionLabel {
+  font-family: var(--font-data);
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--fl-text);
+  line-height: 1.2;
+}
+
+.qualifyingOptionActive .qualifyingOptionLabel {
+  color: var(--logic-lime);
+}
+
+.qualifyingOptionSub {
+  font-family: var(--font-data);
+  font-size: 0.75rem;
+  color: var(--data-gray);
+  line-height: 1.4;
+}

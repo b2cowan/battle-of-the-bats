@@ -1,36 +1,9 @@
 ﻿.page { max-width: 900px; }
 
-.pageHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 2rem;
-  flex-wrap: wrap;
-  gap: 1rem;
+/* ── Empty state ──────────────────────────────────── */
+.emptyState {
+  margin-top: 1rem;
 }
-
-.headerLeft { display: flex; align-items: center; gap: 1rem; }
-
-.headerIcon {
-  width: 48px;
-  height: 48px;
-  background: rgba(var(--blueprint-blue-rgb), 0.12);
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.3);
-  border-radius: 2px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--logic-lime);
-}
-
-.pageTitle {
-  font-family: var(--font-data);
-  font-size: 1.75rem;
-  font-weight: 900;
-  color: var(--white);
-}
-
-.pageSub { color: var(--white-60); font-size: 0.9rem; }
 
 .responsiveTable {
   overflow-x: visible;
@@ -46,39 +19,7 @@
   flex-wrap: wrap;
 }
 
-.emptyTableCell {
-  text-align: center;
-  color: var(--white-30);
-  padding: 2rem;
-}
-
 @media (max-width: 720px) {
-  .pageHeader {
-    align-items: stretch;
-    flex-direction: column;
-  }
-
-  .pageHeader > :global(.btn) {
-    justify-content: center;
-    min-height: 44px;
-    width: 100%;
-  }
-
-  .headerLeft {
-    align-items: flex-start;
-    min-width: 0;
-  }
-
-  .headerIcon {
-    width: 42px;
-    height: 42px;
-  }
-
-  .pageTitle {
-    font-size: 1.45rem;
-    line-height: 1.15;
-  }
-
   .responsiveTable {
     border: 0;
     overflow-x: visible;
@@ -150,15 +91,5 @@
     flex: 1 1 2.5rem;
     justify-content: center;
     min-height: 40px;
-  }
-
-  .emptyTableCell {
-    display: block !important;
-    border-bottom: 0 !important;
-    text-align: center;
-  }
-
-  .emptyTableCell::before {
-    content: none !important;
   }
 }

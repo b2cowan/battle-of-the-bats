@@ -159,9 +159,13 @@ export default async function HomePage() {
         <div className={styles.heroGrid} />
         <div className="container">
           <div className={styles.heroHeader}>
-            <div className="flex items-center gap-3 mb-8 justify-center">
+            <div className="flex items-center gap-3 mb-8 justify-center flex-wrap">
+              <span className="font-mono text-xs text-logic-lime uppercase tracking-widest font-bold">
+                Founding Season
+              </span>
+              <span className="font-mono text-xs text-data-gray/40">·</span>
               <span className="font-mono text-xs text-data-gray uppercase tracking-widest">
-                Free plan available
+                Tournament Plus free through Dec 31, 2026
               </span>
               <span className="font-mono text-xs text-data-gray/40">·</span>
               <span className="font-mono text-xs text-data-gray uppercase tracking-widest">
@@ -306,6 +310,32 @@ export default async function HomePage() {
             </div>
           </AnimateIn>
           <PricingSection gatingMap={gatingMap} />
+
+          {/* Founding Season callout card */}
+          <div className="mt-3 border border-logic-lime/40 p-6 flex flex-col gap-4" style={{ background: 'rgba(var(--logic-lime-rgb, 163 230 53) / 0.04)' }}>
+            <div className="flex items-center gap-3 flex-wrap">
+              <span className="font-mono text-[0.6rem] font-bold uppercase tracking-widest text-logic-lime">
+                Founding Season
+              </span>
+              <span className="font-mono text-[0.6rem] text-data-gray/40">·</span>
+              <span className="font-mono text-[0.6rem] uppercase tracking-widest text-data-gray/70">
+                Free through December 31, 2026
+              </span>
+            </div>
+            <p className="font-mono text-sm font-bold text-fl-text leading-snug">
+              Tournament Plus ($39/month) is free for organizations that sign up before the end of 2026.
+            </p>
+            <p className="font-mono text-xs text-data-gray/70 leading-relaxed">
+              We&apos;re in our founding season — we want real tournaments on the platform, not demos.
+              Sign up today and run Tournament Plus at no cost through December 31.
+            </p>
+            <Link
+              href="/auth/signup"
+              className="font-mono text-xs font-bold uppercase tracking-widest text-logic-lime hover:text-fl-text transition-colors self-start"
+            >
+              Start your organization →
+            </Link>
+          </div>
 
           {/* Coaches Portal callout — matches pricing page coachesCallout treatment */}
           <div className="mt-3 flex items-center gap-8 flex-wrap border border-blueprint-blue/25 px-6 py-4" style={{ background: 'rgba(30,58,138,0.03)' }}>

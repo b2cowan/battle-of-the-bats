@@ -4,6 +4,49 @@ Newest entries first. All decisions here are binding in future sessions unless e
 
 ---
 
+### 2026-05-26 — Public Site (Branding) page: accordion, locked-card redesign, renames, button fixes
+
+**Decision:** (1) **Rename** — sidebar nav item `Branding` → `Public Site`; page h1 → `Public Site`. The old name was too generic and didn't communicate that this controls the public-facing tournament website. (2) **Locked cards — compact row pattern** — when a feature requires Tournament Plus, the card renders only its title row + LOCKED badge + a one-line description of the feature (`.lockedHint`). No disabled form controls, no disabled swatches, no disabled grids. The `.lockedHint` is hidden on mobile (≤600px) since the consolidated upsell block covers it. (3) **Single consolidated upsell block** — one `CompactUpsell` component placed above all locked sections replaces the five individual per-card upgrade paragraphs. Free tier sees one CTA; not five. This uses the existing `CompactUpsell` component from `@/components/admin/tournament`. (4) **Mobile accordion** — on ≤600px, each section card collapses to its title row + chevron. Public Pages opens by default; all Advanced Branding sections start closed. On desktop (≥601px) all sections are always expanded. The `.accordionTrigger` button uses `pointer-events: none; cursor: default` on desktop so it behaves as a plain block wrapper. (5) **`TournamentAdminHeader`** replaces the hand-rolled header (48px icon, `margin-bottom: 2rem`, oversized title). Back link removed for consistency with Venues page migration. (6) **Background toggle active state** — `.modeToggleBtnActive` changed from `var(--primary)` navy to `var(--logic-lime)` + `#0f1123` text, matching all other segmented controls in the admin shell. (7) **Logo square** — `.logoPreview border-radius: 50%` → `2px`, matching the sharp-corner HUD aesthetic. Border changed from `2px solid var(--primary)` to `1px solid rgba(var(--primary-rgb), 0.35)`. (8) **Button fixes** — Save Changes: `btn-primary` → `btn btn-lime btn-data`; Upload/Remove buttons: `btn btn-outline btn-data` / `btn btn-ghost btn-data`. Mobile full-width override on `.modeToggle, .modeToggleBtn` removed.
+**Rationale:** Locked disabled UI creates a bad free-tier experience by showing features the user can't touch — overwhelming and scroll-heavy. The compact locked row + single upsell block is calmer and more effective. Accordion addresses ~2400px mobile scroll. All button and token fixes enforce prior binding decisions.
+**Applies to:** `app/[orgSlug]/admin/tournaments/branding/page.tsx`, `branding.module.css`, `components/admin/AdminSidebar.tsx`.
+
+---
+
+### 2026-05-26 — Mobile bottom nav More dropdown: every item belongs under a section header
+**Decision:** No nav item in the More dropdown exists outside a section header (Operations / Setup / Admin). Even a single-item section retains its header. The structural rule is: items always live under a subheader.
+**Rationale:** Retrofitting section labels when new items are added is avoidable friction. A consistent header-first structure keeps the dropdown scannable regardless of item count.
+**Applies to:** `components/admin/AdminBottomNav.tsx` — More dropdown section structure.
+
+---
+
+### 2026-05-26 — Mobile bottom nav: full design system alignment + 5-tab layout
+**Decision:** (1) **Color system** — all purple accent values (`#c084fc`, `rgba(139,47,201,...)`, `#1A1530`) replaced with design system tokens. Active tabs now use `var(--logic-lime)` + `rgba(var(--logic-lime-rgb), 0.12)` icon background + lime `activeDot` glow — matching the desktop sidebar active state exactly. Borders use `rgba(var(--blueprint-blue-rgb), ...)`. Nav bar background changed to `rgba(17,24,39,0.97)` (= `--hud-surface` at 97%, preserving `backdrop-filter` frosted-glass). Dropdown background changed to `var(--hud-surface)`. (2) **setLiveBtn** (inactive tournament CTA in dropdown) restyled from purple to lime ghost: `rgba(--logic-lime-rgb, 0.08)` background, `rgba(--logic-lime-rgb, 0.35)` border, `var(--logic-lime)` text. (3) **5-tab layout** — Dashboard added to `PRIMARY_KEYS` at position 0 (order: Dashboard → Registrations → Schedule → Results → More); removed from `OPERATIONS_MORE`. (4) **Preview Site** moved from `tournamentBlock` (prominent top position) to the dropdown footer — a muted `.dropUtilItem` link positioned between the last section divider and Logout, mirroring its placement in the desktop sidebar footer.
+**Rationale:** The purple accent predated the multi-org platform pivot and was never part of the design system. Mobile and desktop admin now share a single active-state color. 5 tabs is the mobile nav convention; Dashboard is the tournament command center and earns a primary slot. Preview Site is a utility action, not a primary workflow step — footer placement matches its priority.
+**Applies to:** `components/admin/AdminBottomNav.tsx`, `components/admin/AdminBottomNav.module.css`.
+
+---
+
+### 2026-05-26 — Results + Registrations: mobile toolbar standardized to Schedule model
+**Decision:** Both pages now match the Schedule 5-row mobile stack: (1) Division, (2) Round Robin | Flat [native selects], (3) action buttons, (4) Search, (5) Status chips. Specifics: **Results** — new `results-admin.module.css` with `mobileModePair` + `desktopModeControl` pattern (same as Schedule); start group reordered to Division → RR|PO → Flat|Pools on desktop; `ToolbarMenu (Tools)` added containing "Open Scorekeeper View" (moved out of header, header now bare like Schedule); fullWidth row swapped to Search then chips; chip touch targets 34px. **Registrations** — fullWidth row DOM order swapped: `ToolbarSearch` before chips div (fixes both desktop and mobile ordering simultaneously since `flex-direction: column` on mobile means DOM order = display order); chip touch targets 28px → 34px; multi-select icon buttons 28px → 32px; Add Team icon button 28px → 32px.
+**Rationale:** Consistent 5-row mobile order across all three pages reduces cognitive friction for admins switching between pages. Swapping DOM order is cleaner than CSS `order` hacks when flex-direction already controls stacking.
+**Applies to:** `app/[orgSlug]/admin/tournaments/results/page.tsx`, `results/results-admin.module.css`, `registrations/page.tsx`, `registrations/teams-admin.module.css`. Commit `07b4e25`.
+
+---
+
+### 2026-05-26 — Schedule admin: mobile touch targets, division label, publish live state
+**Decision:** (1) **Touch targets** — primary filter controls (mode selects, venue filter button) bumped from `28px` → `34px` height on mobile; secondary icon buttons (publish/export/tools, add game) bumped `28px` → `32px`. (2) **Division label** — `.scheduleDivisionSelect > span` color changed from `rgba(148,163,184,0.58)` to `var(--white-50)` — the faint slate tint was barely perceptible against the toolbar background; `--white-50` matches the `controlLabel` convention used elsewhere. (3) **Toolbar bottom margin** — `margin-bottom` bumped `1rem` → `1.25rem` on mobile to give breathing room between the 5-row toolbar and the game list below. (4) **Publish live state indicator** — `data-live="true"` attribute added to the publish button when `isPublished`; CSS rule `.publishButton[data-live]:disabled` overrides the gray disabled style to retain lime coloring (`rgba(--logic-lime-rgb, 0.35)` border, `0.07` background, `0.65` text), making the live state visible on mobile where the "Live · Teams" text badge is hidden.
+**Rationale:** 28px touch targets are below comfortable thumb-tap size for an admin operating on mobile. The lime live-state indicator closes a visibility gap where admins had no way to confirm a schedule was published without checking the public page. Division label at `--white-50` matches established toolbar label standards.
+**Applies to:** `app/[orgSlug]/admin/tournaments/schedule/schedule-admin.module.css`, `app/[orgSlug]/admin/tournaments/schedule/page.tsx`. The `34px` filter control / `32px` icon button pattern should be adopted on other mobile admin toolbars (registrations, results) in future sessions.
+
+---
+
+### 2026-05-26 — Schedule admin: mobile toolbar row order (mobileModePair)
+**Decision:** The two mobile mode selects (Round Robin/Playoffs and Flat/Pools or List/Bracket) are wrapped in a `div.mobileModePair` that is `display:none` on desktop and `display:flex; flex: 1 1 100%; order:1` on mobile. This gives them their own dedicated full-width row within `scheduleActionsGroup`, cleanly separating them from the venue filter and action buttons row below. Mobile toolbar now stacks: (1) Division, (2) Round Robin | Flat, (3) Venue | buttons, (4) Search, (5) Status filters.
+**Rationale:** Previously the mode selects relied on flex `order` alone, causing inconsistent rendering — Round Robin sometimes appeared full-width instead of 50%/50% beside Flat. The wrapper is an unambiguous full-row boundary.
+**Applies to:** `app/[orgSlug]/admin/tournaments/schedule/page.tsx`, `schedule-admin.module.css`.
+
+---
+
 ### 2026-05-25 — Select optgroup labels: white-50 on hud-surface
 **Decision:** Native `<select>` `<optgroup>` group headers globally use `color: var(--white-50)`, `background: var(--hud-surface)`, `font-style: normal`, `font-weight: 700`. Applied via `globals.css` alongside the existing `select option` rule. Blueprint-blue was tried first but lacked contrast on the dark surface.
 **Rationale:** Browser default optgroup rendering produces a light-gray background and italic gray text — near-invisible on the dark HUD surface. `--white-50` is legible as a dimmed label/header while being clearly distinct from selectable options (`--white`). `font-style: normal` overrides the browser-default italic.

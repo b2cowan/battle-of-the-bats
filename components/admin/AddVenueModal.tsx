@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { X, Check } from 'lucide-react';
 import { Venue } from '@/lib/types';
+import styles from './AddVenueModal.module.css';
 
 const CANADIAN_PROVINCES = ['AB', 'BC', 'MB', 'NB', 'NL', 'NS', 'NT', 'NU', 'ON', 'PE', 'QC', 'SK', 'YT'];
 
@@ -81,74 +82,71 @@ export default function AddVenueModal({ tournamentId, orgSlug, onClose, onSaved,
           <button type="button" className="btn btn-ghost btn-data" onClick={onClose}><X size={16} /></button>
         </div>
         <form onSubmit={handleSubmit}>
-          <div className="form-group" style={{ marginBottom: '1rem' }}>
-            <label className="form-label">Venue Name *</label>
-            <input
-              className="form-input"
-              placeholder="e.g. Lions Park — Venue 1"
-              value={form.name}
-              onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-              required
-              autoFocus
-            />
-          </div>
-
-          <div className="form-group" style={{ marginBottom: '0.75rem' }}>
-            <label className="form-label">Street Address</label>
-            <input
-              className="form-input"
-              placeholder="123 Main St"
-              value={form.street}
-              onChange={e => setForm(f => ({ ...f, street: e.target.value }))}
-            />
-          </div>
-
-          <div className="form-row form-row-2" style={{ marginBottom: '0.75rem' }}>
-            <div className="form-group">
-              <label className="form-label">City</label>
+          <div className={styles.form}>
+            <div className="form-group" style={{ marginBottom: '0.75rem' }}>
+              <label className="form-label">Venue Name *</label>
               <input
                 className="form-input"
-                placeholder="Milton"
-                value={form.city}
-                onChange={e => setForm(f => ({ ...f, city: e.target.value }))}
+                placeholder="e.g. Lions Park — Field 1"
+                value={form.name}
+                onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+                required
+                autoFocus
               />
             </div>
-            <div className="form-group">
-              <label className="form-label">Province</label>
-              <select
-                className="form-select"
-                value={form.province}
-                onChange={e => setForm(f => ({ ...f, province: e.target.value }))}
-              >
-                <option value="">Select province</option>
-                {CANADIAN_PROVINCES.map(p => <option key={p} value={p}>{p}</option>)}
-              </select>
+
+            <div className="form-group" style={{ marginBottom: '0.75rem' }}>
+              <label className="form-label">Street Address</label>
+              <input
+                className="form-input"
+                placeholder="123 Main St"
+                value={form.street}
+                onChange={e => setForm(f => ({ ...f, street: e.target.value }))}
+              />
             </div>
-          </div>
 
-          <div className="form-group" style={{ marginBottom: '1rem' }}>
-            <label className="form-label">Postal Code</label>
-            <input
-              className="form-input"
-              placeholder="A1A 1A1"
-              value={form.postalCode}
-              onChange={e => setForm(f => ({ ...f, postalCode: e.target.value.toUpperCase() }))}
-              style={{ maxWidth: '160px' }}
-            />
-            <span style={{ fontSize: '0.75rem', color: 'var(--white-30)', marginTop: '0.25rem', display: 'block' }}>
-              Used to generate a Google Maps link throughout the site.
-            </span>
-          </div>
+            <div className={styles.cityRow}>
+              <div className="form-group">
+                <label className="form-label">City</label>
+                <input
+                  className="form-input"
+                  placeholder="Milton"
+                  value={form.city}
+                  onChange={e => setForm(f => ({ ...f, city: e.target.value }))}
+                />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Province</label>
+                <select
+                  className="form-select"
+                  value={form.province}
+                  onChange={e => setForm(f => ({ ...f, province: e.target.value }))}
+                >
+                  <option value="">—</option>
+                  {CANADIAN_PROVINCES.map(p => <option key={p} value={p}>{p}</option>)}
+                </select>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Postal Code</label>
+                <input
+                  className="form-input"
+                  placeholder="A1A 1A1"
+                  value={form.postalCode}
+                  onChange={e => setForm(f => ({ ...f, postalCode: e.target.value.toUpperCase() }))}
+                />
+              </div>
+            </div>
 
-          <div className="form-group" style={{ marginBottom: '0.5rem' }}>
-            <label className="form-label">Notes</label>
-            <textarea
-              className="form-textarea"
-              placeholder="Parking info, directions, field-specific rules…"
-              rows={3}
-              value={form.notes}
-              onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
-            />
+            <div className="form-group" style={{ marginBottom: '0.5rem' }}>
+              <label className="form-label">Notes</label>
+              <textarea
+                className="form-textarea"
+                placeholder="Parking info, directions, field-specific rules…"
+                rows={2}
+                value={form.notes}
+                onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
+              />
+            </div>
           </div>
 
           <div className="modal-footer">

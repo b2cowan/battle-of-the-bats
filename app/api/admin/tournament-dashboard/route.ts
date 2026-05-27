@@ -38,6 +38,12 @@ type TournamentFeeRow = {
   deposit_due_date: string | null;
   total_fee_amount: number | null;
   total_fee_due_date: string | null;
+  logo_url: string | null;
+  hero_banner_url: string | null;
+  theme_preset: string | null;
+  theme_primary: string | null;
+  settings: Record<string, unknown> | null;
+  status: string | null;
 };
 
 const ROUND_ORDER = ['Quarterfinals', 'Semifinals', 'Finals'];
@@ -70,7 +76,7 @@ export async function GET(req: Request) {
 
   const { data: tournament, error: tournamentError } = await supabaseAdmin
     .from('tournaments')
-    .select('start_date, end_date, contact_email, fee_schedule_mode, deposit_amount, deposit_due_date, total_fee_amount, total_fee_due_date, logo_url, hero_banner_url, theme_preset, theme_primary')
+    .select('start_date, end_date, contact_email, fee_schedule_mode, deposit_amount, deposit_due_date, total_fee_amount, total_fee_due_date, logo_url, hero_banner_url, theme_preset, theme_primary, settings, status')
     .eq('id', tournamentId)
     .eq('org_id', ctx.org.id)
     .maybeSingle();
@@ -130,12 +136,26 @@ export async function GET(req: Request) {
   const hasDivisions = divisions.length > 0;
   const hasPublicContact = Boolean(t.contact_email || ctx.org.contactEmail);
   const hasOpenDivision = hasDivisions && divisions.some(group => !group.is_closed);
-  const hasBranding = Boolean((t as any).logo_url || (t as any).hero_banner_url || (t as any).theme_preset || (t as any).theme_primary);
+  const hasBranding = Boolean(t.logo_url || t.hero_banner_url || t.theme_preset || t.theme_primary);
   const hasVenues   = (venuesRes.count ?? 0) > 0;
   const hasRules    = (rulesRes.count ?? 0) > 0;
-  const hasFees     = t.fee_schedule_mode === 'division'
-    ? divisions.some(g => g.total_fee_amount != null && g.total_fee_amount > 0)
-    : Boolean(t.total_fee_amount && t.total_fee_amount > 0);
+
+  // Grandfathering: active/completed tournaments skip the new scope-gate requirements
+  const isGrandfathered = t.status === 'active' || t.status === 'completed';
+  const tSettings = (t.settings && typeof t.settings === 'object') ? t.settings : {};
+
+  // hasFees: repurposed — now means "fee approach explicitly configured" (fee_scope set, or free)
+  // Grandfathered tournaments auto-pass. New draft tournaments must set fee_scope.
+  const hasFees = isGrandfathered || tSettings.fee_scope != null;
+
+  // hasGameTiming: game_timing_scope explicitly set (not null)
+  const hasGameTiming = isGrandfathered || tSettings.game_timing_scope != null;
+
+  // hasTieBreakers: tie_breaker_scope explicitly set; if not per_division, tie_breakers array should also be present
+  const hasTieBreakers = isGrandfathered || (
+    tSettings.tie_breaker_scope != null &&
+    (tSettings.tie_breaker_scope === 'per_division' || Array.isArray(tSettings.tie_breakers))
+  );
 
   const isTournamentDay = hasDates && today >= t.start_date! && today <= t.end_date!;
 
@@ -268,7 +288,9 @@ export async function GET(req: Request) {
       hasVenues,
       hasRules,
       hasFees,
-      ready: hasDates && hasDivisions && hasPublicContact && hasOpenDivision,
+      hasGameTiming,
+      hasTieBreakers,
+      ready: hasDates && hasDivisions && hasPublicContact && hasOpenDivision && hasFees && hasGameTiming && hasTieBreakers,
     },
     registration: {
       totalCapacity,

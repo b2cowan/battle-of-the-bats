@@ -34,31 +34,31 @@
   font-weight: 900;
   font-family: var(--font-data);
   margin: 0;
-  color: var(--white-90, #f0f0f0);
+  color: var(--white-90);
   line-height: 1.1;
 }
 
 .pageSub {
   margin: 0.25rem 0 0;
-  color: var(--white-40, rgba(255,255,255,0.4));
+  color: var(--white-40);
   font-size: 0.9rem;
 }
 
 .muted {
-  color: var(--white-40, rgba(255,255,255,0.4));
+  color: var(--white-40);
   padding: 2rem;
 }
 
 .accessDenied {
   padding: 4rem 2rem;
   text-align: center;
-  color: var(--white-40, rgba(255,255,255,0.4));
+  color: var(--white-40);
 }
 .accessDenied h2 {
   font-size: 1.1rem;
   font-weight: 700;
   margin: 1rem 0 0.5rem;
-  color: var(--white-60, rgba(255,255,255,0.6));
+  color: var(--white-60);
 }
 .accessDenied p {
   font-size: 0.9rem;
@@ -70,7 +70,7 @@
 .emptyState {
   text-align: center;
   padding: 4rem 2rem;
-  color: var(--white-40, rgba(255,255,255,0.4));
+  color: var(--white-40);
   font-size: 0.9rem;
 }
 
@@ -82,7 +82,7 @@
 }
 
 .teamCard {
-  background: var(--card-bg, rgba(255,255,255,0.04));
+  background: var(--card-bg);
   border: 1px solid rgba(var(--blueprint-blue-rgb), 0.2);
   border-radius: 2px;
   padding: 1.25rem;
@@ -109,7 +109,7 @@
 .teamName {
   font-weight: 700;
   font-size: 1rem;
-  color: var(--white-90, #f0f0f0);
+  color: var(--white-90);
   line-height: 1.2;
 }
 
@@ -130,21 +130,21 @@
 }
 
 .badgeGroup {
-  background: rgba(163, 230, 53, 0.12);
-  color: #a3e635;
-  border: 1px solid rgba(163, 230, 53, 0.25);
+  background: rgba(var(--logic-lime-rgb), 0.12);
+  color: var(--logic-lime);
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.25);
 }
 
 .badgeDivision {
   background: rgba(var(--blueprint-blue-rgb), 0.18);
-  color: var(--blueprint-blue, #4fa3e0);
+  color: var(--blueprint-blue);
   border: 1px solid rgba(var(--blueprint-blue-rgb), 0.3);
 }
 
 .badgeDraft     { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.5); border: 1px solid rgba(255,255,255,0.12); }
-.badgeActive    { background: rgba(74,222,128,0.12); color: #4ade80; border: 1px solid rgba(74,222,128,0.25); }
-.badgeCompleted { background: rgba(251,191,36,0.12); color: #fbbf24; border: 1px solid rgba(251,191,36,0.25); }
-.badgeArchived  { background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.3); border: 1px solid rgba(255,255,255,0.08); }
+.badgeActive    { background: rgba(var(--success-rgb), 0.12); color: var(--success); border: 1px solid rgba(var(--success-rgb), 0.25); }
+.badgeCompleted { background: rgba(var(--warning-rgb), 0.12); color: var(--warning); border: 1px solid rgba(var(--warning-rgb), 0.25); }
+.badgeArchived  { background: var(--white-05); color: rgba(255,255,255,0.3); border: 1px solid var(--border-2); }
 
 .teamStats {
   display: flex;
@@ -152,8 +152,8 @@
 }
 
 .statItem { display: flex; flex-direction: column; gap: 0.1rem; }
-.statLabel { font-size: 0.7rem; color: rgba(255,255,255,0.35); text-transform: uppercase; letter-spacing: 0.04em; }
-.statValue { font-size: 1rem; font-weight: 700; color: var(--white-90, #f0f0f0); }
+.statLabel { font-size: 0.7rem; color: var(--white-35); text-transform: uppercase; letter-spacing: 0.04em; }
+.statValue { font-size: 1rem; font-weight: 700; color: var(--white-90); }
 
 .teamCardActions {
   margin-top: auto;
@@ -176,7 +176,7 @@
 }
 
 .modal {
-  background: var(--card-bg, #1a1f2e);
+  background: var(--card-bg);
   border: 1px solid rgba(var(--blueprint-blue-rgb), 0.3);
   border-radius: 2px;
   padding: 1.5rem;
@@ -196,7 +196,7 @@
 .modalTitle {
   font-size: 1.1rem;
   font-weight: 700;
-  color: var(--white-90, #f0f0f0);
+  color: var(--white-90);
   margin: 0;
 }
 
@@ -233,16 +233,16 @@
 .label {
   font-size: 0.8rem;
   font-weight: 600;
-  color: rgba(255,255,255,0.55);
+  color: var(--white-55);
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
 
 .input, .select, .textarea {
-  background: rgba(255,255,255,0.05);
+  background: var(--white-05);
   border: 1px solid rgba(255,255,255,0.12);
   border-radius: 2px;
-  color: var(--white-90, #f0f0f0);
+  color: var(--white-90);
   padding: 0.5rem 0.75rem;
   font-size: 0.9rem;
   width: 100%;
@@ -275,7 +275,7 @@
 }
 
 .yearCardLeft { display: flex; flex-direction: column; gap: 0.3rem; }
-.yearCardName { font-weight: 700; font-size: 0.95rem; color: var(--white-90, #f0f0f0); }
+.yearCardName { font-weight: 700; font-size: 0.95rem; color: var(--white-90); }
 .yearCardMeta { display: flex; gap: 0.5rem; align-items: center; }
 .yearCardRight { display: flex; gap: 0.5rem; flex-wrap: wrap; }
 
@@ -307,13 +307,13 @@
 .summaryCardValue {
   font-size: 1.75rem;
   font-weight: 900;
-  color: var(--white-90, #f0f0f0);
+  color: var(--white-90);
   line-height: 1;
 }
 
 .summaryCardLink {
   font-size: 0.78rem;
-  color: var(--blueprint-blue, #4fa3e0);
+  color: var(--blueprint-blue);
   margin-top: 0.25rem;
   text-decoration: none;
 }
@@ -361,7 +361,7 @@
 .coachPanelTitle {
   font-size: 0.85rem;
   font-weight: 700;
-  color: rgba(255,255,255,0.6);
+  color: var(--white-60);
   text-transform: uppercase;
   letter-spacing: 0.04em;
   margin: 0 0 1rem;
@@ -377,10 +377,10 @@
 }
 .coachRow:last-child { border-bottom: none; }
 
-.coachName { font-size: 0.9rem; color: var(--white-90, #f0f0f0); font-weight: 600; }
-.coachEmail { font-size: 0.78rem; color: rgba(255,255,255,0.35); }
+.coachName { font-size: 0.9rem; color: var(--white-90); font-weight: 600; }
+.coachEmail { font-size: 0.78rem; color: var(--white-35); }
 
-.badgeHeadCoach    { background: rgba(var(--blueprint-blue-rgb),0.15); color: var(--blueprint-blue,#4fa3e0); border: 1px solid rgba(var(--blueprint-blue-rgb),0.3); }
+.badgeHeadCoach    { background: rgba(var(--blueprint-blue-rgb),0.15); color: var(--blueprint-blue); border: 1px solid rgba(var(--blueprint-blue-rgb),0.3); }
 .badgeAssistant    { background: rgba(255,255,255,0.07); color: rgba(255,255,255,0.5); border: 1px solid rgba(255,255,255,0.12); }
 
 /* ── Danger confirm dialog ────────────────────────────────────────────────── */
@@ -396,8 +396,8 @@
 }
 
 .confirmBox {
-  background: var(--card-bg, #1a1f2e);
-  border: 1px solid rgba(248,113,113,0.3);
+  background: var(--card-bg);
+  border: 1px solid rgba(var(--danger-rgb), 0.3);
   border-radius: 2px;
   padding: 1.5rem;
   max-width: 420px;
@@ -407,13 +407,13 @@
 .confirmTitle {
   font-size: 1rem;
   font-weight: 700;
-  color: #f87171;
+  color: var(--danger);
   margin: 0 0 0.5rem;
 }
 
 .confirmMsg {
   font-size: 0.88rem;
-  color: rgba(255,255,255,0.55);
+  color: var(--white-55);
   margin: 0 0 1.25rem;
 }
 
@@ -453,7 +453,7 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: rgba(255,255,255,0.35);
+  color: var(--white-35);
   background: rgba(255,255,255,0.02);
   border-bottom: 1px solid rgba(255,255,255,0.07);
   white-space: nowrap;
@@ -461,8 +461,8 @@
 
 .td {
   padding: 0.7rem 1rem;
-  color: var(--white-90, #f0f0f0);
-  border-bottom: 1px solid rgba(255,255,255,0.05);
+  color: var(--white-90);
+  border-bottom: 1px solid var(--white-05);
   vertical-align: middle;
 }
 
@@ -494,7 +494,7 @@
   font-style: italic;
 }
 
-.badgeInfo { background: rgba(var(--blueprint-blue-rgb),0.15); color: var(--blueprint-blue,#4fa3e0); border: 1px solid rgba(var(--blueprint-blue-rgb),0.3); }
+.badgeInfo { background: rgba(var(--blueprint-blue-rgb),0.15); color: var(--blueprint-blue); border: 1px solid rgba(var(--blueprint-blue-rgb),0.3); }
 
 /* ── Rename slugs page ────────────────────────────────────────────────────── */
 .renameList { display: flex; flex-direction: column; gap: 0.5rem; }
@@ -513,19 +513,19 @@
 @media (max-width: 600px) { .renameRow { grid-template-columns: 1fr; } }
 
 .renameRowChanged {
-  border-color: rgba(163,230,53,0.35);
-  background: rgba(163,230,53,0.03);
+  border-color: rgba(var(--logic-lime-rgb), 0.35);
+  background: rgba(var(--logic-lime-rgb), 0.03);
 }
 .renameRowError {
-  border-color: rgba(248,113,113,0.4);
-  background: rgba(248,113,113,0.04);
+  border-color: rgba(var(--danger-rgb), 0.4);
+  background: rgba(var(--danger-rgb), 0.04);
 }
 
 .renameTeamInfo { display: flex; flex-direction: column; gap: 0.25rem; }
 .renameTeamName {
   font-size: 0.95rem;
   font-weight: 700;
-  color: var(--white-90, #f0f0f0);
+  color: var(--white-90);
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -533,17 +533,17 @@
 .renameCurrentSlug {
   font-size: 0.75rem;
   color: rgba(255,255,255,0.3);
-  font-family: var(--font-data, 'IBM Plex Mono', monospace);
+  font-family: var(--font-data);
 }
 
 .renameInputGroup { display: flex; flex-direction: column; gap: 0.3rem; }
 .renamePreview {
   font-size: 0.72rem;
   color: rgba(255,255,255,0.3);
-  font-family: var(--font-data, 'IBM Plex Mono', monospace);
+  font-family: var(--font-data);
 }
-.renamePreviewChanged { color: var(--logic-lime, #a3e635); }
-.renameInputError { font-size: 0.75rem; color: #f87171; margin: 0; }
+.renamePreviewChanged { color: var(--logic-lime); }
+.renameInputError { font-size: 0.75rem; color: var(--danger); margin: 0; }
 
 .renameSectionLabel {
   font-size: 0.72rem;
@@ -599,7 +599,7 @@
 .tryoutToggleLabel {
   font-size: 0.85rem;
   font-weight: 600;
-  color: rgba(255,255,255,0.6);
+  color: var(--white-60);
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -613,13 +613,13 @@
 }
 
 .tryoutUrlInput {
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.1);
+  background: var(--white-05);
+  border: 1px solid var(--white-10);
   border-radius: 2px;
-  color: rgba(255,255,255,0.6);
+  color: var(--white-60);
   padding: 0.35rem 0.6rem;
   font-size: 0.78rem;
-  font-family: var(--font-data, 'IBM Plex Mono', monospace);
+  font-family: var(--font-data);
   width: 340px;
   max-width: 100%;
   cursor: text;
@@ -652,23 +652,23 @@
 .tryoutTab:hover { color: rgba(255,255,255,0.7); }
 
 .tryoutTabActive {
-  color: var(--white-90, #f0f0f0);
-  border-bottom-color: var(--logic-lime, #a3e635);
+  color: var(--white-90);
+  border-bottom-color: var(--logic-lime);
 }
 
 .tryoutTabCount {
   font-size: 0.72rem;
   font-weight: 700;
-  background: rgba(255,255,255,0.1);
-  color: rgba(255,255,255,0.6);
+  background: var(--white-10);
+  color: var(--white-60);
   border-radius: 2px;
   padding: 0.05rem 0.45rem;
   min-width: 18px;
   text-align: center;
 }
 .tryoutTabActive .tryoutTabCount {
-  background: rgba(163,230,53,0.15);
-  color: var(--logic-lime, #a3e635);
+  background: rgba(var(--logic-lime-rgb), 0.15);
+  color: var(--logic-lime);
 }
 
 .tryoutTableWrap {
@@ -690,7 +690,7 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: rgba(255,255,255,0.35);
+  color: var(--white-35);
   background: rgba(255,255,255,0.02);
   border-bottom: 1px solid rgba(255,255,255,0.07);
   white-space: nowrap;
@@ -698,8 +698,8 @@
 
 .tryoutTd {
   padding: 0.7rem 1rem;
-  color: var(--white-90, #f0f0f0);
-  border-bottom: 1px solid rgba(255,255,255,0.05);
+  color: var(--white-90);
+  border-bottom: 1px solid var(--white-05);
   vertical-align: middle;
 }
 
@@ -716,8 +716,8 @@
 }
 
 /* ── Status badge variants (tryout-specific) ──────────────────────────────── */
-.badgePendingReview { background: rgba(251,191,36,0.1);  color: #fbbf24; border: 1px solid rgba(251,191,36,0.25); }
-.badgeOffered       { background: rgba(var(--blueprint-blue-rgb),0.15); color: var(--blueprint-blue,#4fa3e0); border: 1px solid rgba(var(--blueprint-blue-rgb),0.3); }
+.badgePendingReview { background: rgba(var(--warning-rgb), 0.1);  color: var(--warning); border: 1px solid rgba(var(--warning-rgb), 0.25); }
+.badgeOffered       { background: rgba(var(--blueprint-blue-rgb),0.15); color: var(--blueprint-blue); border: 1px solid rgba(var(--blueprint-blue-rgb),0.3); }
 
 /* ── Detail slide-over ────────────────────────────────────────────────────── */
 .slideOverBackdrop {
@@ -733,7 +733,7 @@
   width: 100%;
   max-width: 420px;
   height: 100%;
-  background: var(--card-bg, #1a1f2e);
+  background: var(--card-bg);
   border-left: 1px solid rgba(var(--blueprint-blue-rgb), 0.25);
   display: flex;
   flex-direction: column;
@@ -777,13 +777,13 @@
   gap: 0.15rem;
   margin-bottom: 0.65rem;
   font-size: 0.9rem;
-  color: var(--white-90, #f0f0f0);
+  color: var(--white-90);
 }
 .slideOverField:last-child { margin-bottom: 0; }
 
 .slideOverFieldLabel {
   font-size: 0.72rem;
-  color: rgba(255,255,255,0.35);
+  color: var(--white-35);
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
@@ -794,39 +794,39 @@
   align-items: center;
   gap: 0.4rem;
   font-size: 0.82rem;
-  color: rgba(255,255,255,0.35);
+  color: var(--white-35);
   margin-bottom: 1.5rem;
 }
 
-.breadcrumb a { color: rgba(255,255,255,0.55); text-decoration: none; }
+.breadcrumb a { color: var(--white-55); text-decoration: none; }
 .breadcrumb a:hover { color: rgba(255,255,255,0.8); }
 .breadcrumb span { color: rgba(255,255,255,0.25); }
 
 /* ── Calendar (Phase 6J) ──────────────────────────────────────────────────── */
 .viewToggle {
   display: flex;
-  border: 1px solid rgba(255,255,255,0.1);
+  border: 1px solid var(--white-10);
   border-radius: 2px;
   overflow: hidden;
 }
 .viewToggleBtn {
   background: none;
   border: none;
-  color: rgba(255,255,255,0.45);
+  color: var(--white-45);
   padding: 0.35rem 0.75rem;
   font-size: 0.82rem;
   cursor: pointer;
   transition: background 0.1s, color 0.1s;
 }
 .viewToggleBtn:hover { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.8); }
-.viewToggleBtnActive { background: rgba(var(--blueprint-blue-rgb),0.15); color: var(--blueprint-blue,#4fa3e0); font-weight: 600; }
+.viewToggleBtnActive { background: rgba(var(--blueprint-blue-rgb),0.15); color: var(--blueprint-blue); font-weight: 600; }
 
 .addEventWrap { position: relative; }
 .addEventMenu {
   position: absolute;
   right: 0;
   top: calc(100% + 4px);
-  background: var(--card-bg, #1a1f2e);
+  background: var(--card-bg);
   border: 1px solid rgba(var(--blueprint-blue-rgb),0.25);
   border-radius: 2px;
   padding: 0.35rem 0;
@@ -841,7 +841,7 @@
   width: 100%;
   background: none;
   border: none;
-  color: rgba(255,255,255,0.75);
+  color: var(--white-75);
   padding: 0.5rem 1rem;
   font-size: 0.88rem;
   cursor: pointer;
@@ -856,18 +856,18 @@
   align-items: center;
   gap: 1rem;
   background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(255,255,255,0.08);
+  border: 1px solid var(--border-2);
   border-radius: 2px;
   padding: 0.6rem 1.25rem;
   margin-bottom: 1.5rem;
 }
-.wltLabel { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: rgba(255,255,255,0.35); }
+.wltLabel { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--white-35); }
 .wltRow { display: flex; align-items: baseline; gap: 0.4rem; }
-.wltW  { font-size: 1.4rem; font-weight: 900; color: #22c55e; line-height: 1; }
-.wltL  { font-size: 1.4rem; font-weight: 900; color: #ef4444; line-height: 1; }
-.wltT  { font-size: 1.4rem; font-weight: 900; color: #f59e0b; line-height: 1; }
+.wltW  { font-size: 1.4rem; font-weight: 900; color: var(--success); line-height: 1; }
+.wltL  { font-size: 1.4rem; font-weight: 900; color: var(--danger); line-height: 1; }
+.wltT  { font-size: 1.4rem; font-weight: 900; color: var(--warning); line-height: 1; }
 .wltW small, .wltL small, .wltT small { font-size: 0.7rem; font-weight: 600; margin-left: 0.15rem; opacity: 0.7; }
-.wltSep { color: rgba(255,255,255,0.2); font-size: 1.1rem; }
+.wltSep { color: var(--white-20); font-size: 1.1rem; }
 
 /* Calendar nav bar */
 .calNav {
@@ -877,10 +877,10 @@
   margin-bottom: 1rem;
 }
 .calNavBtn {
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.1);
+  background: var(--white-05);
+  border: 1px solid var(--white-10);
   border-radius: 2px;
-  color: rgba(255,255,255,0.6);
+  color: var(--white-60);
   width: 32px;
   height: 32px;
   display: flex;
@@ -889,7 +889,7 @@
   cursor: pointer;
 }
 .calNavBtn:hover { background: rgba(255,255,255,0.09); }
-.calNavLabel { font-size: 0.95rem; font-weight: 700; color: var(--white-90,#f0f0f0); }
+.calNavLabel { font-size: 0.95rem; font-weight: 700; color: var(--white-90); }
 
 /* List view grouping */
 .calMonthGroup { margin-bottom: 1.75rem; }
@@ -922,7 +922,7 @@
 }
 .eventChip:hover { background: rgba(255,255,255,0.07); }
 .eventChipTime { font-size: 0.78rem; color: rgba(255,255,255,0.4); min-width: 5.5rem; }
-.eventChipName { font-size: 0.88rem; color: var(--white-90,#f0f0f0); flex: 1; }
+.eventChipName { font-size: 0.88rem; color: var(--white-90); flex: 1; }
 .eventChipResult { font-size: 0.7rem; font-weight: 700; }
 
 /* Week view */
@@ -941,7 +941,7 @@
 .calWeekDayLabel {
   font-size: 0.72rem;
   font-weight: 700;
-  color: rgba(255,255,255,0.35);
+  color: var(--white-35);
   padding: 0.5rem 0.6rem;
   border-bottom: 1px solid rgba(255,255,255,0.06);
 }
@@ -954,7 +954,7 @@
   grid-template-columns: repeat(7, 1fr);
   gap: 1px;
   background: rgba(255,255,255,0.06);
-  border: 1px solid rgba(255,255,255,0.08);
+  border: 1px solid var(--border-2);
   border-radius: 2px;
   overflow: hidden;
 }
@@ -969,20 +969,20 @@
   text-align: center;
 }
 .calMonthCell {
-  background: var(--pitch-black, #0a0d14);
+  background: var(--pitch-black);
   min-height: 80px;
   padding: 0.35rem;
   position: relative;
 }
 .calMonthCellToday { background: rgba(var(--blueprint-blue-rgb),0.07); }
-.calMonthDayNum { font-size: 0.78rem; color: rgba(255,255,255,0.35); }
+.calMonthDayNum { font-size: 0.78rem; color: var(--white-35); }
 .calMonthDayEvents { display: flex; flex-direction: column; gap: 2px; margin-top: 2px; }
 .calMonthEventDot {
   display: block;
   font-size: 0.68rem;
   padding: 1px 4px;
   border-radius: 2px;
-  color: #fff;
+  color: var(--white);
   border: none;
   cursor: pointer;
   text-align: left;
@@ -996,7 +996,7 @@
 
 /* Slide-over panel */
 .slideOver {
-  background: var(--card-bg, #1a1f2e);
+  background: var(--card-bg);
   border: 1px solid rgba(var(--blueprint-blue-rgb),0.3);
   border-radius: 2px;
   padding: 1.5rem;
@@ -1006,7 +1006,7 @@
   overflow-y: auto;
   margin-left: auto;
 }
-.slideOverTitle { font-size: 1.2rem; font-weight: 800; color: var(--white-90,#f0f0f0); margin: 0.5rem 0 1rem; }
+.slideOverTitle { font-size: 1.2rem; font-weight: 800; color: var(--white-90); margin: 0.5rem 0 1rem; }
 .slideOverDetails {
   display: grid;
   grid-template-columns: auto 1fr;
@@ -1014,8 +1014,8 @@
   font-size: 0.88rem;
   margin-bottom: 1rem;
 }
-.slideOverDetails dt { color: rgba(255,255,255,0.35); font-size: 0.78rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; white-space: nowrap; }
-.slideOverDetails dd { color: var(--white-90,#f0f0f0); margin: 0; }
+.slideOverDetails dt { color: var(--white-35); font-size: 0.78rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; white-space: nowrap; }
+.slideOverDetails dd { color: var(--white-90); margin: 0; }
 .slideOverActions { margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.07); display: flex; gap: 0.5rem; }
 
 .eventTypePill {
@@ -1042,12 +1042,12 @@
 .deleteConfirmBtns { display: flex; gap: 0.4rem; flex-wrap: wrap; }
 
 /* Error text */
-.errorText { color: #ef4444; font-size: 0.85rem; margin: 0; }
+.errorText { color: var(--danger); font-size: 0.85rem; margin: 0; }
 
 /* Button variants (calendar pages) */
 .btnPrimary {
   display: inline-flex; align-items: center; gap: 0.35rem;
-  background: var(--blueprint-blue,#4fa3e0); color: #fff;
+  background: var(--blueprint-blue); color: var(--white);
   border: none; border-radius: 2px; padding: 0.45rem 0.9rem;
   font-size: 0.88rem; font-weight: 600; cursor: pointer; transition: opacity 0.15s;
 }
@@ -1056,7 +1056,7 @@
 
 .btnSecondary {
   display: inline-flex; align-items: center; gap: 0.35rem;
-  background: rgba(255,255,255,0.07); color: rgba(255,255,255,0.75);
+  background: rgba(255,255,255,0.07); color: var(--white-75);
   border: 1px solid rgba(255,255,255,0.12); border-radius: 2px;
   padding: 0.45rem 0.9rem; font-size: 0.88rem; font-weight: 600; cursor: pointer;
 }
@@ -1064,16 +1064,16 @@
 
 .btnGhost {
   display: inline-flex; align-items: center; gap: 0.35rem;
-  background: none; border: none; color: rgba(255,255,255,0.45);
+  background: none; border: none; color: var(--white-45);
   font-size: 0.85rem; cursor: pointer; padding: 0.3rem 0.5rem;
 }
 .btnGhost:hover { color: rgba(255,255,255,0.8); }
 
 .btnDanger {
   display: inline-flex; align-items: center; gap: 0.35rem;
-  background: rgba(239,68,68,0.12); color: #f87171;
-  border: 1px solid rgba(239,68,68,0.25); border-radius: 2px;
+  background: rgba(var(--danger-rgb), 0.12); color: var(--danger);
+  border: 1px solid rgba(var(--danger-rgb), 0.25); border-radius: 2px;
   padding: 0.4rem 0.85rem; font-size: 0.85rem; font-weight: 600; cursor: pointer;
 }
-.btnDanger:hover { background: rgba(239,68,68,0.2); }
+.btnDanger:hover { background: rgba(var(--danger-rgb), 0.2); }
 .btnDanger:disabled { opacity: 0.5; cursor: not-allowed; }

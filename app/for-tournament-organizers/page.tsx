@@ -256,6 +256,30 @@ export default function ForTournamentOrganizersPage() {
         </div>
       </section>
 
+      {/* ── Founding Season ──────────────────────────────────────────────── */}
+      <section className={styles.section}>
+        <div className="container">
+          <div className={styles.foundingSeasonCard}>
+            <div className={styles.foundingSeasonEyebrow}>Running your first tournament this year?</div>
+            <h2 className={styles.foundingSeasonTitle}>
+              Tournament Plus is free for founding organizations through December 31, 2026.
+            </h2>
+            <p className={styles.foundingSeasonBody}>
+              Auto-scheduling, brackets, communications, and archives — at no cost while we build
+              our first season together. Normally $39/month. No credit card required.
+            </p>
+            <div className={styles.foundingSeasonActions}>
+              <Link
+                href="/auth/signup"
+                className="font-mono text-xs font-bold uppercase tracking-widest bg-logic-lime text-pitch-black px-8 py-4 hover:bg-white transition-colors"
+              >
+                Start free — no credit card required
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* ── Cross-sell ───────────────────────────────────────────────────── */}
       <section className={styles.crossSellSection}>
         <div className="container">
@@ -287,7 +311,7 @@ export default function ForTournamentOrganizersPage() {
             <span className={styles.ctaAccent}>starts here.</span>
           </h2>
           <p className={styles.ctaSub}>
-            Free to start. No credit card, no time limit. Tournament Plus includes a 14-day free trial.
+            Free to start. No credit card required. Tournament Plus is free through December 31, 2026 for founding organizations.
           </p>
           <div className={styles.ctaActions}>
             <Link

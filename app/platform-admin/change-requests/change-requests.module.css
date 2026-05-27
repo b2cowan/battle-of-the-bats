@@ -1,4 +1,4 @@
-.page {
+﻿.page {
   max-width: 1240px;
 }
 
@@ -130,13 +130,13 @@
 }
 
 .filterBar option {
-  background: #0f172a;
+  background: var(--structural-slate);
   color: #f8fafc;
 }
 
 .filterBar option:checked {
   background: #2563eb;
-  color: #ffffff;
+  color: var(--white);
 }
 
 .searchField {
@@ -361,7 +361,7 @@
 .severityHigh {
   border-color: rgba(251, 191, 36, 0.38);
   background: rgba(251, 191, 36, 0.08);
-  color: #fbbf24;
+  color: var(--warning);
 }
 
 .severityMedium {

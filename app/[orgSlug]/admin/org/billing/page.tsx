@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { CreditCard, CheckCircle, Archive, ShieldOff, Link2, UsersRound } from 'lucide-react';
+import { CreditCard, CheckCircle, Archive, ShieldOff, Link2, UsersRound, Star } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { useTournament } from '@/lib/tournament-context';
 import { PLAN_CONFIG } from '@/lib/plan-config';
@@ -168,6 +168,9 @@ export default function BillingPage() {
   const [repTeamAddon, setRepTeamAddon]   = useState<{
     activeCount: number; billableCount: number;
   } | null>(null);
+  const [foundingSeasonStatus, setFoundingSeasonStatus] = useState<{
+    isFoundingSeason: boolean; compUntil: string | null;
+  } | null>(null);
   const [teamLinkBillingSummary, setTeamLinkBillingSummary] = useState<TeamLinkBillingSummary | null>(null);
 
   async function refreshBillingState() {
@@ -179,6 +182,14 @@ export default function BillingPage() {
     fetch('/api/admin/members/count')
       .then(r => r.ok ? r.json() : null)
       .then(data => { if (data) setSeatUsage(data); })
+      .catch(() => {});
+  }, [currentOrg]);
+
+  useEffect(() => {
+    if (!currentOrg) return;
+    fetch(`/api/admin/org/founding-season-status?orgSlug=${encodeURIComponent(currentOrg.slug)}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(data => { if (data) setFoundingSeasonStatus(data); })
       .catch(() => {});
   }, [currentOrg]);
 
@@ -420,6 +431,12 @@ export default function BillingPage() {
   const currentPlanKey = currentOrg.planId;
   const currentPlan    = PLAN_CONFIG[currentPlanKey];
   const status         = currentOrg.subscriptionStatus;
+
+  // Founding season banner: show pre-October "no payment ask yet" state
+  const isTeamWorkspaceBilling = currentOrg.accountKind === 'team_workspace' || currentPlanKey === 'team';
+  const isFoundingSeason = foundingSeasonStatus?.isFoundingSeason ?? false;
+  const isBeforeOctober  = new Date() < new Date('2026-10-01T00:00:00.000Z');
+  const showFoundingSeasonBanner = isFoundingSeason && !isTeamWorkspaceBilling;
   const usageCount     = tournaments.filter(t => t.status !== 'archived').length;
   const usageLimit     = currentOrg.tournamentLimit;
   const usagePct       = usageLimit >= 9999 ? 0 : Math.min(100, Math.round((usageCount / usageLimit) * 100));
@@ -429,7 +446,6 @@ export default function BillingPage() {
   );
   const hasPaidPlan    = currentPlanKey !== 'tournament';
   const canManageBilling = userRole === 'owner';
-  const isTeamWorkspaceBilling = currentOrg.accountKind === 'team_workspace' || currentPlanKey === 'team';
   const subscriptionTitle = isTeamWorkspaceBilling ? 'Coaches Portal billing' : 'Subscription';
   const subscriptionSub = isTeamWorkspaceBilling
     ? 'Manage Coaches Portal Premium billing and reactivation'
@@ -643,6 +659,27 @@ export default function BillingPage() {
         </div>
         <span className={`badge ${STATUS_BADGE[status]}`}>{STATUS_LABEL[status]}</span>
       </div>
+
+      {showFoundingSeasonBanner && (
+        <div className={styles.foundingSeasonBanner}>
+          <div className={styles.foundingSeasonIcon}><Star size={16} /></div>
+          <div className={styles.foundingSeasonBody}>
+            <p className={styles.foundingSeasonEyebrow}>
+              {isBeforeOctober ? 'Founding Season Active' : 'Founding Season Active · Ends December 31'}
+            </p>
+            <h2 className={styles.foundingSeasonTitle}>
+              {isBeforeOctober
+                ? 'Tournament Plus is free through December 31, 2026.'
+                : 'Your founding season ends December 31.'}
+            </h2>
+            <p className={styles.foundingSeasonCopy}>
+              {isBeforeOctober
+                ? 'You\'re running Tournament Plus free through December 31, 2026 as a founding organization. Tournament Plus is normally $39/month — your plan renews on January 1, 2027. No credit card required until then.'
+                : 'Your founding season includes Tournament Plus free through December 31, 2026. Add a payment method now to continue without interruption on January 1.'}
+            </p>
+          </div>
+        </div>
+      )}
 
       {isTeamWorkspaceBilling && (
         <div className={styles.billingNudgeCard}>

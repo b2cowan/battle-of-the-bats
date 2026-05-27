@@ -248,9 +248,9 @@
 .logoPreview {
   width: 80px;
   height: 80px;
-  border-radius: 50%;
+  border-radius: 2px;
   background: rgba(0, 0, 0, 0.25);
-  border: 2px solid var(--primary);
+  border: 1px solid rgba(var(--primary-rgb), 0.35);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -451,9 +451,9 @@
 }
 
 .modeToggleBtnActive {
-  background: var(--primary);
-  color: #FFFFFF;
-  box-shadow: 0 8px 20px rgba(var(--primary-rgb), 0.28);
+  background: var(--logic-lime);
+  color: #0f1123;
+  box-shadow: 0 4px 12px rgba(var(--logic-lime-rgb), 0.25);
 }
 
 .modePreview {
@@ -829,8 +829,115 @@
   font-style: italic;
 }
 
+/* ── Locked compact state ────────────────────── */
+.lockedHint {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--white-40);
+  line-height: 1.5;
+}
+
+/* Locked card header: no bottom margin when hint is hidden on mobile */
+.lockedCardHeader {
+  margin-bottom: 0.75rem;
+}
+
+/* ── Upsell block margin ─────────────────────── */
+.upsellBlock {
+  margin-bottom: 0.75rem;
+}
+
+/* ── Accordion ───────────────────────────────── */
+
+/* Desktop: trigger is non-interactive; acts as a plain block wrapper */
+.accordionTrigger {
+  display: block;
+  width: 100%;
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  cursor: default;
+  pointer-events: none;
+}
+
+.chevron {
+  display: none;
+}
+
+/* Desktop: accordion body always visible */
+.accordionBody {
+  display: block;
+}
+
+/* Tight gap between trigger title and body on desktop */
+.accordionTrigger .sectionTitle {
+  margin-bottom: 0.75rem;
+}
+
+/* sectionTitleRow inside trigger keeps its standard spacing */
+.accordionTrigger .sectionTitleRow {
+  margin-bottom: 1.25rem;
+}
+
 @media (max-width: 600px) {
-  .pageSelectorGrid,
+  /* Mobile: trigger becomes an interactive button */
+  .accordionTrigger {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    cursor: pointer;
+    pointer-events: auto;
+    min-height: 36px;
+  }
+
+  /* Remove bottom spacing on title inside trigger — body handles its own top gap */
+  .accordionTrigger .sectionTitle,
+  .accordionTrigger .sectionTitleRow {
+    margin-bottom: 0;
+  }
+
+  /* Chevron visible on mobile */
+  .chevron {
+    display: block;
+    color: var(--white-40);
+    transition: transform 0.2s ease;
+    flex-shrink: 0;
+  }
+
+  .chevronOpen {
+    transform: rotate(180deg);
+  }
+
+  /* Collapsed by default */
+  .accordionBody {
+    display: none;
+  }
+
+  /* Expanded when open */
+  .accordionBody[data-open] {
+    display: block;
+    padding-top: 0.75rem;
+  }
+
+  /* Locked hint hidden on mobile — upsell block covers it */
+  .lockedHint {
+    display: none;
+  }
+
+  /* No bottom gap when hint is hidden */
+  .lockedCardHeader {
+    margin-bottom: 0;
+  }
+
+  .pageSelectorGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
   .fontGrid, .cardStyleGrid {
     grid-template-columns: 1fr;
   }
@@ -850,11 +957,6 @@
   .modeToggleRow {
     align-items: flex-start;
     flex-direction: column;
-  }
-
-  .modeToggle,
-  .modeToggleBtn {
-    width: 100%;
   }
 
   .segmentedControl,

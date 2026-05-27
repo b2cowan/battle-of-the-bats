@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@900&amp;display=swap');
+    </style>
+  </defs>
+
+  <!-- Background -->
+  <rect width="512" height="512" fill="#0a0a0f"/>
+
+  <!-- Blueprint-blue lower-right structural triangle -->
+  <polygon points="512,512 512,220 280,512" fill="#1E3A8A" opacity="0.45"/>
+
+  <!-- Second, smaller lime triangle accent -->
+  <polygon points="512,512 512,430 430,512" fill="#D9F99D" opacity="0.6"/>
+
+  <!-- Horizontal divider line (lime, partial) -->
+  <rect x="64" y="308" width="220" height="3" fill="#D9F99D" opacity="0.55"/>
+
+  <!-- FL lettermark — stacked, large -->
+  <!-- F on top, L below, offset right to balance the triangle -->
+  <text
+    x="192" y="224"
+    font-family="'Barlow Condensed', 'Arial Narrow', Impact, sans-serif"
+    font-weight="900"
+    font-size="192"
+    fill="#D9F99D"
+    text-anchor="middle"
+    letter-spacing="-8">F</text>
+
+  <text
+    x="192" y="420"
+    font-family="'Barlow Condensed', 'Arial Narrow', Impact, sans-serif"
+    font-weight="900"
+    font-size="172"
+    fill="#D9F99D"
+    text-anchor="middle"
+    letter-spacing="-8">L</text>
+
+  <!-- "HQ" sub-label, top right corner -->
+  <text
+    x="448" y="88"
+    font-family="'Barlow Condensed', 'Arial Narrow', Impact, sans-serif"
+    font-weight="900"
+    font-size="44"
+    fill="#1E3A8A"
+    text-anchor="middle">HQ</text>
+
+  <!-- Thin border -->
+  <rect x="0" y="0" width="512" height="512"
+        fill="none" stroke="#1E3A8A" stroke-width="8" opacity="0.6"/>
+</svg>

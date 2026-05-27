@@ -31,8 +31,9 @@ interface GeneratorProps {
 
 export default function ScheduleGenerator({ tournament, orgSlug, divisions, teams, venues, onComplete, onCancel }: GeneratorProps) {
   const [selectedGroupId, setSelectedGroupId] = useState(divisions[0]?.id || '');
-  const [gameLength, setGameLength] = useState(90);
-  const [breakLength, setBreakLength] = useState(15);
+  // Initialize from tournament settings so generator matches event-level defaults.
+  const [gameLength, setGameLength] = useState(tournament.settings?.game_duration_minutes ?? 90);
+  const [breakLength, setBreakLength] = useState(tournament.settings?.buffer_minutes ?? 15);
   const [gamesPerTeam, setGamesPerTeam] = useState(3);
   const [selectedVenues, setSelectedVenues] = useState<Set<string>>(new Set(venues.map(d => d.id)));
   const [dateSlots, setDateSlots] = useState<DateSlot[]>([

@@ -1,4 +1,4 @@
-.page {
+﻿.page {
   min-height: 100vh;
   display: flex;
   align-items: center;
@@ -122,7 +122,7 @@
   padding: 0.625rem 1rem;
   font-family: var(--font-data);
   font-size: 0.72rem;
-  color: #f87171;
+  color: var(--danger);
 }
 
 /* ── Submit ──────────────────────────────────────────────── */
@@ -142,7 +142,7 @@
   margin-top: 0.25rem;
 }
 
-.submitBtn:hover:not(:disabled) { background: #fff; }
+.submitBtn:hover:not(:disabled) { background: var(--white); }
 .submitBtn:disabled { opacity: 0.5; cursor: not-allowed; }
 
 /* ── Label row (label + forgot link side by side) ────────────── */

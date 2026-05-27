@@ -79,13 +79,26 @@ export async function GET(req: Request) {
   const denied = scopeGuard(ctx, tournamentId);
   if (denied) return denied;
 
-  const { data, error } = await supabaseAdmin
-    .from('divisions')
-    .select('*, pools(*)')
-    .eq('tournament_id', tournamentId)
-    .order('display_order', { ascending: true });
+  const [{ data, error }, teamsRes] = await Promise.all([
+    supabaseAdmin
+      .from('divisions')
+      .select('*, pools(*)')
+      .eq('tournament_id', tournamentId)
+      .order('display_order', { ascending: true }),
+    supabaseAdmin
+      .from('teams')
+      .select('division_id')
+      .eq('tournament_id', tournamentId)
+      .eq('status', 'accepted'),
+  ]);
 
   if (error) return Response.json({ error: error.message }, { status: 500 });
+
+  // Build accepted-count lookup keyed by division_id
+  const acceptedByDivision = ((teamsRes.data ?? []) as { division_id: string }[]).reduce<Record<string, number>>(
+    (acc, row) => { acc[row.division_id] = (acc[row.division_id] ?? 0) + 1; return acc; },
+    {},
+  );
 
   return Response.json((data ?? []).map(group => ({
     id: group.id,
@@ -106,6 +119,8 @@ export async function GET(req: Request) {
     depositDueDate: group.deposit_due_date ?? null,
     totalFeeAmount: group.total_fee_amount ?? null,
     totalFeeDueDate: group.total_fee_due_date ?? null,
+    settings: (group.settings && typeof group.settings === 'object') ? group.settings : {},
+    acceptedCount: acceptedByDivision[group.id] ?? 0,
     pools: ((group.pools ?? [])
       .map((pool: { id: string; division_id: string; name: string; display_order: number }) => ({
         id: pool.id,
@@ -149,6 +164,7 @@ export async function POST(req: Request) {
         total_fee_amount:        data.totalFeeAmount ?? null,
         total_fee_due_date:      data.totalFeeDueDate ?? null,
         schedule_visibility:     data.scheduleVisibility ?? 'unpublished',
+        settings:                data.settings ?? {},
       }).select('id').single();
       if (error) throw error;
 
@@ -198,6 +214,7 @@ export async function POST(req: Request) {
         total_fee_amount:        data.totalFeeAmount ?? null,
         total_fee_due_date:      data.totalFeeDueDate ?? null,
         schedule_visibility:     data.scheduleVisibility,
+        settings:                data.settings ?? {},
       }).eq('id', id);
       if (agError) throw agError;
 

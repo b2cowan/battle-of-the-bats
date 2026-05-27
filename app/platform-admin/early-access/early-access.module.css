@@ -1,4 +1,4 @@
-.page {
+﻿.page {
   max-width: 1280px;
 }
 
@@ -81,7 +81,7 @@
 }
 
 .metricWarn strong {
-  color: #fbbf24;
+  color: var(--warning);
 }
 
 .conversionGrid {
@@ -195,7 +195,7 @@
 }
 
 .error {
-  color: #f87171;
+  color: var(--danger);
   border-color: rgba(248, 113, 113, 0.35);
   background: rgba(248, 113, 113, 0.06);
 }
@@ -336,7 +336,7 @@
 }
 
 .followUpDue {
-  color: #fbbf24;
+  color: var(--warning);
   font-size: 0.6rem;
   margin-top: 0.28rem;
 }

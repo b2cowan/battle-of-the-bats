@@ -1,6 +1,6 @@
-.page {
+﻿.page {
   min-height: 100vh;
-  background: #090c12;
+  background: var(--pitch-black);
   padding: 2rem;
   max-width: 820px;
   margin: 0 auto;
@@ -34,7 +34,7 @@
   font-weight: 900;
   text-transform: uppercase;
   letter-spacing: -0.01em;
-  color: #f0f0f0;
+  color: var(--white-90);
 }
 
 .refreshBtn {
@@ -92,7 +92,7 @@
 
 .credEmail {
   font-size: 0.72rem;
-  color: rgba(255,255,255,0.75);
+  color: var(--white-75);
 }
 
 .credRole {
@@ -105,7 +105,7 @@
 .credOrg {
   margin-top: 0.5rem;
   font-size: 0.65rem;
-  color: rgba(255,255,255,0.35);
+  color: var(--white-35);
 }
 
 .credOrg code {
@@ -123,7 +123,7 @@
 
 .card {
   background: rgba(255,255,255,0.025);
-  border: 1px solid rgba(255,255,255,0.08);
+  border: 1px solid var(--border-2);
   border-radius: 8px;
   overflow: hidden;
   transition: border-color 0.15s;
@@ -155,7 +155,7 @@
 .cardTitle {
   font-size: 0.88rem;
   font-weight: 700;
-  color: #f0f0f0;
+  color: var(--white-90);
   margin-bottom: 0.2rem;
 }
 
@@ -187,7 +187,7 @@
 .seedBtn:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .lockWrap {
-  color: rgba(255,255,255,0.2);
+  color: var(--white-20);
   flex-shrink: 0;
   margin-top: 0.2rem;
 }
@@ -198,7 +198,7 @@
   justify-content: space-between;
   padding: 0.4rem 1rem;
   background: rgba(0,0,0,0.2);
-  border-top: 1px solid rgba(255,255,255,0.05);
+  border-top: 1px solid var(--white-05);
   gap: 1rem;
   flex-wrap: wrap;
 }
@@ -222,7 +222,7 @@
   padding: 0.15rem 0.45rem;
   background: rgba(34,197,94,0.1);
   border: 1px solid rgba(34,197,94,0.3);
-  color: #4ade80;
+  color: var(--success);
   border-radius: 3px;
 }
 
@@ -233,7 +233,7 @@
   text-transform: uppercase;
   padding: 0.15rem 0.45rem;
   background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(255,255,255,0.1);
+  border: 1px solid var(--white-10);
   color: rgba(255,255,255,0.25);
   border-radius: 3px;
 }
@@ -246,7 +246,7 @@
   padding: 0.15rem 0.45rem;
   background: rgba(245,158,11,0.1);
   border: 1px solid rgba(245,158,11,0.3);
-  color: #fbbf24;
+  color: var(--warning);
   border-radius: 3px;
 }
 
@@ -258,14 +258,14 @@
   padding: 0.15rem 0.45rem;
   background: rgba(239,68,68,0.1);
   border: 1px solid rgba(239,68,68,0.3);
-  color: #f87171;
+  color: var(--danger);
   border-radius: 3px;
 }
 
 /* Team checkout readiness */
 .readinessPanel {
   background: rgba(255,255,255,0.025);
-  border: 1px solid rgba(255,255,255,0.08);
+  border: 1px solid var(--border-2);
   border-radius: 8px;
   overflow: hidden;
   margin-bottom: 1.5rem;
@@ -323,7 +323,7 @@
 }
 
 .readinesspass svg { color: #86efac; }
-.readinesswarn svg { color: #fbbf24; }
+.readinesswarn svg { color: var(--warning); }
 .readinessfail svg { color: #fca5a5; }
 
 .readinessSteps {
@@ -486,7 +486,7 @@
   padding: 0.4rem 0.9rem;
   background: rgba(239,68,68,0.1);
   border: 1px solid rgba(239,68,68,0.4);
-  color: #f87171;
+  color: var(--danger);
   border-radius: 5px;
   cursor: pointer;
   flex-shrink: 0;
@@ -538,7 +538,7 @@
 }
 
 .modal {
-  background: #0d1117;
+  background: var(--structural-slate);
   border: 1px solid rgba(255,255,255,0.13);
   border-radius: 10px;
   padding: 1.5rem;
@@ -552,7 +552,7 @@
 .modalTitle {
   font-size: 0.85rem;
   font-weight: 800;
-  color: #f0f0f0;
+  color: var(--white-90);
   text-transform: uppercase;
   letter-spacing: 0.05em;
   margin: 0;
@@ -579,7 +579,7 @@
   gap: 0.18rem;
   padding: 0.65rem 0.8rem;
   border-radius: 6px;
-  border: 1px solid rgba(255,255,255,0.1);
+  border: 1px solid var(--white-10);
   background: transparent;
   cursor: pointer;
   transition: all 0.12s;
@@ -614,7 +614,7 @@
 /* ─── Org list panel ───────────────────────────────────────────────────────── */
 .orgListPanel {
   background: rgba(255,255,255,0.025);
-  border: 1px solid rgba(255,255,255,0.08);
+  border: 1px solid var(--border-2);
   border-radius: 8px;
   overflow: hidden;
   margin-bottom: 1.5rem;
@@ -632,7 +632,7 @@
 .orgListTitle {
   font-size: 0.65rem;
   font-weight: 700;
-  color: rgba(255,255,255,0.45);
+  color: var(--white-45);
   letter-spacing: 0.08em;
   text-transform: uppercase;
   flex: 1;
@@ -651,7 +651,7 @@
   flex: 1;
   font-family: var(--font-data, monospace);
   font-size: 0.72rem;
-  color: rgba(255,255,255,0.75);
+  color: var(--white-75);
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -684,7 +684,7 @@
   flex-shrink: 0;
   transition: all 0.12s;
 }
-.orgWipeBtn:hover:not(:disabled) { border-color: rgba(239,68,68,0.55); color: #f87171; background: rgba(239,68,68,0.07); }
+.orgWipeBtn:hover:not(:disabled) { border-color: rgba(239,68,68,0.55); color: var(--danger); background: rgba(239,68,68,0.07); }
 .orgWipeBtn:disabled { opacity: 0.35; cursor: not-allowed; }
 
 .orgWipeConfirm {
@@ -703,7 +703,7 @@
   padding: 0.22rem 0.55rem;
   background: rgba(239,68,68,0.1);
   border: 1px solid rgba(239,68,68,0.4);
-  color: #f87171;
+  color: var(--danger);
   border-radius: 4px;
   cursor: pointer;
   display: flex;
@@ -720,12 +720,12 @@
   text-transform: uppercase;
   padding: 0.22rem 0.55rem;
   background: transparent;
-  border: 1px solid rgba(255,255,255,0.1);
-  color: rgba(255,255,255,0.35);
+  border: 1px solid var(--white-10);
+  color: var(--white-35);
   border-radius: 4px;
   cursor: pointer;
 }
-.orgWipeNo:hover { border-color: rgba(255,255,255,0.22); color: rgba(255,255,255,0.6); }
+.orgWipeNo:hover { border-color: rgba(255,255,255,0.22); color: var(--white-60); }
 
 .orgEmptyMsg {
   padding: 0.9rem 1rem;
@@ -814,7 +814,7 @@
   letter-spacing: 0.04em;
   padding: 0.28rem 0.65rem;
   background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(255,255,255,0.1);
+  border: 1px solid var(--white-10);
   border-radius: 4px;
   color: rgba(255,255,255,0.5);
   cursor: pointer;
@@ -849,7 +849,7 @@
 .credDetailTitle {
   font-size: 0.65rem;
   font-weight: 700;
-  color: rgba(255,255,255,0.6);
+  color: var(--white-60);
   letter-spacing: 0.04em;
   flex: 1;
 }
@@ -872,7 +872,7 @@
 .credDetailEmail {
   flex: 1;
   font-size: 0.72rem;
-  color: rgba(255,255,255,0.75);
+  color: var(--white-75);
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -891,7 +891,7 @@
 .credDetailSlug {
   flex: 1;
   font-size: 0.72rem;
-  color: rgba(255,255,255,0.75);
+  color: var(--white-75);
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -901,7 +901,7 @@
 .credEmpty {
   padding: 0.85rem;
   font-size: 0.68rem;
-  color: rgba(255,255,255,0.2);
+  color: var(--white-20);
   font-style: italic;
   text-align: center;
 }
@@ -937,7 +937,7 @@
 }
 
 .tab:hover {
-  color: rgba(255,255,255,0.6);
+  color: var(--white-60);
   background: rgba(255,255,255,0.03);
 }
 
@@ -945,7 +945,7 @@
   color: #ffff00;
   background: rgba(255,255,0,0.06);
   border-color: rgba(255,255,0,0.2);
-  border-bottom-color: #090c12;
+  border-bottom-color: var(--pitch-black);
 }
 
 /* ─── Section dividers ───────────────────────────────────────────────────────── */
@@ -1014,7 +1014,7 @@
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: rgba(255,255,255,0.2);
+  color: var(--white-20);
   white-space: nowrap;
 }
 
@@ -1023,7 +1023,7 @@
   font-size: 0.62rem;
   background: rgba(255,255,255,0.04);
   border: 1px solid rgba(255,255,255,0.12);
-  color: rgba(255,255,255,0.55);
+  color: var(--white-55);
   border-radius: 4px;
   padding: 0.14rem 0.38rem;
   cursor: pointer;

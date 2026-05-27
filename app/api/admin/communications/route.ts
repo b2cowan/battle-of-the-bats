@@ -35,6 +35,7 @@ function mapRow(a: any): Communication {
     emailSentAt: a.email_sent_at ?? null,
     sentByEmail: a.sent_by_email ?? null,
     createdAt: a.published_at ?? a.created_at,
+    deletedAt: a.deleted_at ?? null,
   };
 }
 
@@ -329,7 +330,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: true });
     }
 
-    // ── delete ───────────────────────────────────────────────────────────────
+    // ── delete (soft) — sets deleted_at, removes from public site ────────────
     if (action === 'delete') {
       if (!id) return NextResponse.json({ error: 'Missing id.' }, { status: 400 });
 
@@ -346,10 +347,34 @@ export async function POST(req: Request) {
 
       const { error: deleteErr } = await supabaseAdmin
         .from('announcements')
-        .delete()
+        .update({ deleted_at: new Date().toISOString(), pinned: false })
         .eq('id', id);
 
       if (deleteErr) throw deleteErr;
+      return NextResponse.json({ success: true });
+    }
+
+    // ── restore — clears deleted_at, post returns to public site ─────────────
+    if (action === 'restore') {
+      if (!id) return NextResponse.json({ error: 'Missing id.' }, { status: 400 });
+
+      const { data: existing } = await supabaseAdmin
+        .from('announcements')
+        .select('tournament_id')
+        .eq('id', id)
+        .single();
+
+      if (existing) {
+        const denied = scopeGuard(ctx, existing.tournament_id);
+        if (denied) return denied;
+      }
+
+      const { error: restoreErr } = await supabaseAdmin
+        .from('announcements')
+        .update({ deleted_at: null })
+        .eq('id', id);
+
+      if (restoreErr) throw restoreErr;
       return NextResponse.json({ success: true });
     }
 

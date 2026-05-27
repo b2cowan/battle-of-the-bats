@@ -1,4 +1,4 @@
-.page {
+﻿.page {
   max-width: 1240px;
 }
 
@@ -150,7 +150,7 @@
 }
 
 .alertWarn .alertValue {
-  color: #fbbf24;
+  color: var(--warning);
 }
 
 .tabsShell {

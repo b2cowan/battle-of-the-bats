@@ -128,6 +128,16 @@
   gap: 0.3rem;
 }
 
+/* Shown in Push column header when browser doesn't support Web Push */
+.unsupportedNote {
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: var(--white-30, rgba(255,255,255,0.3));
+  text-transform: uppercase;
+  margin-left: 0.2rem;
+}
+
 /* ── Rows ────────────────────────────────────────────────────────────────────── */
 
 .row {

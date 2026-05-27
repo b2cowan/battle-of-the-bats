@@ -1,9 +1,10 @@
-﻿'use client';
+'use client';
 import { useState, useEffect } from 'react';
 import { Tag, Plus, Pencil, Trash2, X, Check, ChevronUp, ChevronDown, Trophy } from 'lucide-react';
 import { useTournament } from '@/lib/tournament-context';
 import { useOrg } from '@/lib/org-context';
-import type { Division } from '@/lib/types';
+import type { Division, DivisionSettings } from '@/lib/types';
+import { TournamentAdminHeader } from '@/components/admin/tournament';
 
 interface OrgMemberOption {
   id: string;
@@ -33,7 +34,16 @@ type DivisionFormPayload = {
   depositDueDate?: string | null;
   totalFeeAmount?: number | null;
   totalFeeDueDate?: string | null;
+  settings: DivisionSettings;
 };
+
+/** Format an age range pair into a compact readable string. */
+function formatAgeRange(min: number | null | undefined, max: number | null | undefined): string {
+  if (min == null && max == null) return 'Open';
+  if (min == null) return `Any–${max}`;
+  if (max == null) return `${min}+`;
+  return `${min}–${max}`;
+}
 
 async function loadDivisionState(tournamentId?: string, orgSlug?: string) {
   if (!tournamentId) return { groups: [] as Division[], orgMembers: [] as OrgMemberOption[] };
@@ -44,7 +54,6 @@ async function loadDivisionState(tournamentId?: string, orgSlug?: string) {
   ]);
   const groups: Division[] = groupsRes.ok ? await groupsRes.json() : [];
   const allMembers: OrgMemberOption[] = membersRes.ok ? await membersRes.json() : [];
-  // Only owner/admin/staff are eligible as division contacts
   const orgMembers = allMembers
     .filter(m => ['owner', 'admin', 'staff'].includes(m.role))
     .sort((a, b) => {
@@ -71,6 +80,7 @@ export default function DivisionsPage() {
   const { currentOrg } = useOrg();
   const [groups, setGroups] = useState<Division[]>([]);
   const [orgMembers, setOrgMembers] = useState<OrgMemberOption[]>([]);
+  const [loading, setLoading] = useState(true);
   const [modal, setModal] = useState<ModalMode>(null);
   const [editing, setEditing] = useState<Division | null>(null);
   const [form, setForm] = useState({
@@ -79,8 +89,12 @@ export default function DivisionsPage() {
     requiresPoolSelection: false, usePools: false,
     tieBreakers: ['h2h', 'rd', 'rf', 'ra'],
     depositAmount: '', depositDueDate: '', totalFeeAmount: '', totalFeeDueDate: '',
+    overrideGameTiming: false,
+    gameDurationMinutes: '',
+    bufferMinutes: '',
   });
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [advancedOpen, setAdvancedOpen] = useState(false);
 
   async function refresh() {
     const next = await loadDivisionState(currentTournament?.id, currentOrg?.slug);
@@ -92,10 +106,12 @@ export default function DivisionsPage() {
     let cancelled = false;
 
     async function load() {
+      setLoading(true);
       const next = await loadDivisionState(currentTournament?.id, currentOrg?.slug);
       if (cancelled) return;
       setGroups(next.groups);
       setOrgMembers(next.orgMembers);
+      setLoading(false);
     }
 
     void load();
@@ -109,12 +125,15 @@ export default function DivisionsPage() {
       requiresPoolSelection: false, usePools: false,
       tieBreakers: ['h2h', 'rd', 'rf', 'ra'],
       depositAmount: '', depositDueDate: '', totalFeeAmount: '', totalFeeDueDate: '',
+      overrideGameTiming: false, gameDurationMinutes: '', bufferMinutes: '',
     });
     setEditing(null);
     setModal('add');
+    setAdvancedOpen(false);
   }
 
   function openEdit(g: Division) {
+    const hasTimingOverride = typeof g.settings?.game_duration_minutes === 'number' || typeof g.settings?.buffer_minutes === 'number';
     setForm({
       name: g.name,
       minAge: g.minAge === null || g.minAge === undefined ? '' : String(g.minAge),
@@ -129,7 +148,17 @@ export default function DivisionsPage() {
       depositDueDate: g.depositDueDate ?? '',
       totalFeeAmount: g.totalFeeAmount != null ? String(g.totalFeeAmount) : '',
       totalFeeDueDate: g.totalFeeDueDate ?? '',
+      overrideGameTiming: hasTimingOverride,
+      gameDurationMinutes: g.settings?.game_duration_minutes != null ? String(g.settings.game_duration_minutes) : '',
+      bufferMinutes: g.settings?.buffer_minutes != null ? String(g.settings.buffer_minutes) : '',
     });
+    // Auto-expand advanced accordion if any overrides are present
+    const hasFeeOverride = g.depositAmount != null || g.totalFeeAmount != null;
+    const tournamentTBs = currentTournament?.settings?.tie_breakers ?? ['h2h', 'rd', 'rf', 'ra'];
+    const divTBs = g.playoffConfig?.tieBreakers ?? ['h2h', 'rd', 'rf', 'ra'];
+    const hasTBOverride = JSON.stringify(divTBs) !== JSON.stringify(tournamentTBs);
+    setAdvancedOpen(!!g.contactMemberId || hasTimingOverride || hasFeeOverride || hasTBOverride);
+
     setEditing(g);
     setModal('edit');
   }
@@ -151,12 +180,22 @@ export default function DivisionsPage() {
       alert('Minimum age cannot be greater than maximum age.');
       return;
     }
+    const divSettings: DivisionSettings = {};
+    const submittedGameTimingScope = currentTournament?.settings?.game_timing_scope ?? null;
+    const gd = parseInt(form.gameDurationMinutes, 10);
+    const buf = parseInt(form.bufferMinutes, 10);
+    if (form.overrideGameTiming || submittedGameTimingScope === 'per_division') {
+      if (!isNaN(gd) && gd > 0) divSettings.game_duration_minutes = gd;
+      if (!isNaN(buf) && buf >= 0) divSettings.buffer_minutes = buf;
+    }
+
     const data: DivisionFormPayload = {
       tournamentId: currentTournament.id,
       name: form.name.trim(),
       minAge,
       maxAge,
-      order: Number(form.order),
+      // On Add, auto-assign next order; on Edit, use the form value
+      order: modal === 'add' ? groups.length + 1 : Number(form.order),
       contactMemberId: form.contactMemberId || null,
       capacity: form.capacity ? Number(form.capacity) : undefined,
       isClosed: form.isClosed,
@@ -171,6 +210,7 @@ export default function DivisionsPage() {
       depositDueDate: form.depositDueDate || null,
       totalFeeAmount: form.totalFeeAmount ? Number(form.totalFeeAmount) : null,
       totalFeeDueDate: form.totalFeeDueDate || null,
+      settings: divSettings,
     };
 
     try {
@@ -178,15 +218,15 @@ export default function DivisionsPage() {
       const res = await fetch(`/api/admin/divisions${orgQuery}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           action: modal === 'add' ? 'save' : 'update',
           id: editing?.id,
-          data 
+          data
         })
       });
       const resData = await res.json() as { error?: string };
       if (!res.ok) throw new Error(resData.error || 'Failed to save');
-      
+
       setModal(null);
       refresh();
     } catch (err: unknown) {
@@ -204,7 +244,7 @@ export default function DivisionsPage() {
         body: JSON.stringify({ action: 'delete', id: deleteId })
       });
       if (!res.ok) throw new Error('Failed to delete');
-      setDeleteId(null); 
+      setDeleteId(null);
       refresh();
     } catch (err: unknown) {
       alert('Error deleting: ' + getErrorMessage(err, 'Unknown error'));
@@ -222,7 +262,7 @@ export default function DivisionsPage() {
     const newBreakers = [...form.tieBreakers];
     const targetIndex = direction === 'up' ? index - 1 : index + 1;
     if (targetIndex < 0 || targetIndex >= newBreakers.length) return;
-    
+
     const temp = newBreakers[index];
     newBreakers[index] = newBreakers[targetIndex];
     newBreakers[targetIndex] = temp;
@@ -231,70 +271,91 @@ export default function DivisionsPage() {
 
   return (
     <div className={styles.page}>
-      <div className={styles.pageHeader}>
-        <div className={styles.headerLeft}>
-          <div className={styles.headerIcon}><Tag size={20} /></div>
-          <div>
-            <h1 className={styles.pageTitle}>Divisions</h1>
-            <p className={styles.pageSub}>Manage tournament divisions and registration groups</p>
-          </div>
-        </div>
-        <button className="btn btn-primary btn-sm" onClick={openAdd} id="division-add-btn" disabled={!currentTournament}>
-          <Plus size={16} /> Add Division
-        </button>
-      </div>
+      <TournamentAdminHeader
+        icon={<Tag size={20} />}
+        title="Divisions"
+        subtitle="Manage tournament divisions and registration groups"
+        actions={
+          <button className="btn btn-lime btn-data" onClick={openAdd} id="division-add-btn" disabled={!currentTournament}>
+            <Plus size={16} /> Add Division
+          </button>
+        }
+      />
 
-      <div className={`table-wrap ${styles.responsiveTable}`}>
-        <table>
-          <thead>
-            <tr>
-              <th>Division</th>
-              <th>Pools</th>
-              <th>Min Age</th>
-              <th>Max Age</th>
-              <th>Order</th>
-              <th>Capacity</th>
-              <th>Status</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {groups.length === 0 ? (
-              <tr><td colSpan={8} className={styles.emptyTableCell}>No divisions yet. Add one to get started.</td></tr>
-            ) : groups.map(g => (
-              <tr key={g.id}>
-                <td data-label="Division"><span className="badge badge-primary" style={{ fontSize: '0.875rem' }}>{g.name}</span></td>
-                <td data-label="Pools">
-                  {(g.poolCount || 0) >= 2 && g.pools && g.pools.length > 0 ? (
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem' }}>
-                      {g.pools.map(p => (
-                        <span key={p.id} className="badge badge-neutral" style={{ fontSize: '0.65rem', textTransform: 'none' }}>
-                          {p.name}
-                        </span>
-                      ))}
-                    </div>
-                  ) : (
-                    <span style={{ color: 'var(--white-20)', fontSize: '0.75rem' }}>No pools</span>
-                  )}
-                </td>
-                <td data-label="Min Age">{g.minAge ?? 'Any'}</td>
-                <td data-label="Max Age">{g.maxAge ?? 'Any'}</td>
-                <td data-label="Order">{g.order}</td>
-                <td data-label="Capacity">{g.capacity || 'No limit'}</td>
-                <td data-label="Status">
-                  {g.isClosed ? <span className="badge badge-danger">Closed</span> : <span className="badge badge-success">Open</span>}
-                </td>
-                <td data-label="Actions">
-                  <div className={styles.mobileActions}>
-                    <button className="btn btn-ghost btn-sm" onClick={() => openEdit(g)} id={`edit-division-${g.id}`}><Pencil size={13} /></button>
-                    <button className="btn btn-danger btn-sm" onClick={() => setDeleteId(g.id)} id={`delete-division-${g.id}`}><Trash2 size={13} /></button>
-                  </div>
-                </td>
+      {loading ? (
+        <div className="table-wrap">
+          <table>
+            <tbody>
+              <tr><td colSpan={6} style={{ textAlign: 'center', color: 'var(--white-30)', padding: '2rem' }}>Loading…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      ) : groups.length === 0 ? (
+        <div className={`empty-state ${styles.emptyState}`}>
+          <div className="empty-icon"><Tag size={32} /></div>
+          <h4 className="display-sm">No divisions yet</h4>
+          <p className="text-muted">Add a division for each age group or category in this tournament.</p>
+          <button className="btn btn-lime" onClick={openAdd} disabled={!currentTournament}>
+            <Plus size={16} /> Add Division
+          </button>
+        </div>
+      ) : (
+        <div className={`table-wrap ${styles.responsiveTable}`}>
+          <table>
+            <thead>
+              <tr>
+                <th>Division</th>
+                <th>Teams</th>
+                <th>Age Range</th>
+                <th>Pools</th>
+                <th>Status</th>
+                <th>Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody>
+              {groups.map(g => (
+                <tr key={g.id}>
+                  <td data-label="Division">
+                    <span className="badge badge-primary" style={{ fontSize: '0.875rem' }}>{g.name}</span>
+                  </td>
+                  <td data-label="Teams">
+                    <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>
+                      {g.capacity
+                        ? `${g.acceptedCount ?? 0} / ${g.capacity}`
+                        : `${g.acceptedCount ?? 0} teams`}
+                    </span>
+                  </td>
+                  <td data-label="Age Range">
+                    <span style={{ fontSize: '0.85rem' }}>{formatAgeRange(g.minAge, g.maxAge)}</span>
+                  </td>
+                  <td data-label="Pools">
+                    {(g.poolCount || 0) >= 2 && g.pools && g.pools.length > 0 ? (
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem' }}>
+                        {g.pools.map(p => (
+                          <span key={p.id} className="badge badge-neutral" style={{ fontSize: '0.65rem', textTransform: 'none' }}>
+                            {p.name}
+                          </span>
+                        ))}
+                      </div>
+                    ) : (
+                      <span style={{ color: 'var(--white-20)', fontSize: '0.75rem' }}>No pools</span>
+                    )}
+                  </td>
+                  <td data-label="Status">
+                    {g.isClosed ? <span className="badge badge-danger">Closed</span> : <span className="badge badge-success">Open</span>}
+                  </td>
+                  <td data-label="Actions">
+                    <div className={styles.mobileActions}>
+                      <button className="btn btn-ghost btn-data" onClick={() => openEdit(g)} id={`edit-division-${g.id}`}><Pencil size={13} /></button>
+                      <button className="btn btn-danger btn-data" onClick={() => setDeleteId(g.id)} id={`delete-division-${g.id}`}><Trash2 size={13} /></button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       {/* Add/Edit Modal */}
       {modal && (
@@ -305,73 +366,63 @@ export default function DivisionsPage() {
               <button className="btn btn-ghost btn-data" onClick={() => setModal(null)}><X size={16} /></button>
             </div>
             <form onSubmit={handleSubmit}>
-              <div className="form-row form-row-2" style={{ marginBottom: '1rem' }}>
-                <div className="form-group">
-                  <label className="form-label">Division Name *</label>
-                  <input className="form-input" placeholder="e.g. U13" value={form.name}
-                    onChange={e => setForm(f => ({ ...f, name: e.target.value }))} required />
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Display Order *</label>
-                  <input className="form-input" type="number" min="1" value={form.order}
-                    onChange={e => setForm(f => ({ ...f, order: e.target.value }))} required />
-                </div>
-              </div>
+              {/* ── Section 1: Core Setup ── */}
               <div className="form-group" style={{ marginBottom: '1rem' }}>
-                <label className="form-label">Division Contact (Optional)</label>
-                <select
-                  className="form-select"
-                  value={form.contactMemberId}
-                  onChange={e => setForm(f => ({ ...f, contactMemberId: e.target.value }))}
-                >
-                  <option value="">Default (tournament contact)</option>
-                  {orgMembers.map(m => (
-                    <option key={m.id} value={m.id}>
-                      {m.displayName ?? m.email}{m.title ? ` — ${m.title}` : ''} ({m.role})
-                    </option>
-                  ))}
-                </select>
-                {form.contactMemberId && (() => {
-                  const picked = orgMembers.find(m => m.id === form.contactMemberId);
-                  return picked ? (
-                    <p className="form-help" style={{ fontSize: '0.72rem', color: 'var(--white-40)', marginTop: '0.25rem' }}>
-                      Notifications for this division will go to <strong>{picked.email}</strong>
-                    </p>
-                  ) : null;
-                })()}
-                {!form.contactMemberId && (
-                  <p className="form-help" style={{ fontSize: '0.72rem', color: 'var(--white-30)', marginTop: '0.25rem' }}>
-                    Leave blank to use the tournament&apos;s default contact. Overriding routes notifications for this division to the selected staff member.
-                  </p>
-                )}
+                <label className="form-label">Division Name *</label>
+                <input className="form-input" placeholder="e.g. U13" value={form.name}
+                  onChange={e => setForm(f => ({ ...f, name: e.target.value }))} required />
               </div>
+
+              <div style={{ marginBottom: '1.25rem' }}>
+                <label className="form-label" style={{ display: 'block', marginBottom: '0.5rem' }}>Age Range</label>
+                <div className="form-row form-row-2">
+                  <div className="form-group">
+                    <label className="form-label" style={{ fontSize: '0.7rem', color: 'var(--white-40)' }}>Min Age</label>
+                    <input className="form-input" type="number" value={form.minAge}
+                      onChange={e => setForm(f => ({ ...f, minAge: e.target.value }))} placeholder="Blank = no minimum" />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label" style={{ fontSize: '0.7rem', color: 'var(--white-40)' }}>Max Age</label>
+                    <input className="form-input" type="number" value={form.maxAge}
+                      onChange={e => setForm(f => ({ ...f, maxAge: e.target.value }))} placeholder="Blank = no maximum" />
+                  </div>
+                </div>
+              </div>
+
               <div className="form-row form-row-2" style={{ marginBottom: '1.5rem' }}>
                 <div className="form-group">
-                  <label className="form-label">Min Age</label>
-                  <input className="form-input" type="number" value={form.minAge}
-                    onChange={e => setForm(f => ({ ...f, minAge: e.target.value }))} placeholder="Blank for no minimum" />
+                  <label className="form-label">Capacity (Max Teams)</label>
+                  <input className="form-input" type="number" placeholder="e.g. 8" value={form.capacity}
+                    onChange={e => setForm(f => ({ ...f, capacity: e.target.value }))} />
+                  <p style={{ fontSize: '0.72rem', color: 'var(--white-30)', marginTop: '0.3rem', lineHeight: 1.4 }}>
+                    Leave blank for no limit. Teams are waitlisted when capacity is reached.
+                  </p>
                 </div>
-                <div className="form-group">
-                  <label className="form-label">Max Age</label>
-                  <input className="form-input" type="number" value={form.maxAge}
-                    onChange={e => setForm(f => ({ ...f, maxAge: e.target.value }))} placeholder="Blank for no maximum" />
+                <div className="form-group" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'flex-start' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', marginTop: '1.5rem' }}>
+                    <input type="checkbox" checked={form.isClosed} onChange={e => setForm(f => ({ ...f, isClosed: e.target.checked }))} style={{ width: 16, height: 16 }} />
+                    <span style={{ fontWeight: 500 }}>Close Registration</span>
+                  </label>
+                  <p style={{ fontSize: '0.72rem', color: 'var(--white-30)', marginTop: '0.3rem', lineHeight: 1.4 }}>
+                    Blocks all new registrations for this division immediately.
+                  </p>
                 </div>
               </div>
+
+              {/* ── Pools ── */}
               <div className="form-group" style={{ marginBottom: '1.5rem', background: 'var(--white-5)', padding: '1rem', borderRadius: '2px', border: '1px solid var(--border-2)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: form.usePools ? '1rem' : 0 }}>
                   <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
                     <input type="checkbox" checked={form.usePools} onChange={e => setForm(f => ({ ...f, usePools: e.target.checked, poolCount: e.target.checked ? (Number(f.poolCount) < 2 ? '2' : f.poolCount) : '0' }))} />
                     <span style={{ fontWeight: 600 }}>Enable Pools for this Division</span>
                   </label>
-                  
                   {form.usePools && (
-                    <div className="subCheck" title="When enabled, registrants choose their own pool on the signup form. When disabled, you assign pools manually from the Teams page.">
-                      <label style={{ fontSize: '0.7rem', color: 'var(--white-30)', textTransform: 'uppercase', fontWeight: 800 }}>Registrant picks pool:</label>
+                    <div className="subCheck" title="When enabled, registrants choose their own pool during sign-up. When disabled, you assign pools manually from the Registrations page.">
+                      <label style={{ fontSize: '0.7rem', color: 'var(--white-30)', textTransform: 'uppercase', fontWeight: 800 }}>Allow registrants to self-select a pool:</label>
                       <input type="checkbox" checked={form.requiresPoolSelection} onChange={e => setForm(f => ({ ...f, requiresPoolSelection: e.target.checked }))} />
                     </div>
                   )}
                 </div>
-
                 {form.usePools && (
                   <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
                     <div className="form-group">
@@ -379,19 +430,17 @@ export default function DivisionsPage() {
                       <input className="form-input" type="number" min="2" max="10" value={form.poolCount}
                         onChange={e => setForm(f => ({ ...f, poolCount: e.target.value }))} style={{ width: '70px' }} />
                     </div>
-                    
                     <div style={{ flex: 1, display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '0.75rem' }}>
                       {Array.from({ length: Number(form.poolCount) || 2 }).map((_, i) => {
                         const names = form.poolNames.split(',').map(n => n.trim());
                         const currentName = names[i] || '';
                         const defaultChar = String.fromCharCode(65 + i);
-                        
                         return (
                           <div key={i} className="form-group">
                             <label className="form-label" style={{ fontSize: '0.65rem' }}>{defaultChar} Label</label>
-                            <input 
-                              className="form-input" 
-                              placeholder={`e.g. Gold`}
+                            <input
+                              className="form-input"
+                              placeholder="e.g. Gold"
                               value={currentName}
                               style={{ height: '32px', fontSize: '0.85rem' }}
                               onChange={e => {
@@ -409,92 +458,263 @@ export default function DivisionsPage() {
                 )}
               </div>
 
-              <div className="form-row form-row-2" style={{ marginBottom: '1.5rem' }}>
-                <div className="form-group">
-                  <label className="form-label">Capacity (Max Teams)</label>
-                  <input className="form-input" type="number" placeholder="e.g. 8" value={form.capacity}
-                    onChange={e => setForm(f => ({ ...f, capacity: e.target.value }))} />
-                  <p style={{ fontSize: '0.72rem', color: 'var(--white-30)', marginTop: '0.3rem', lineHeight: 1.4 }}>
-                    When accepted teams reach this number, new registrations go to the waitlist automatically. Leave blank for no limit.
-                  </p>
-                </div>
-                <div className="form-group" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'flex-start' }}>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', marginTop: '1.5rem' }}>
-                    <input type="checkbox" checked={form.isClosed} onChange={e => setForm(f => ({ ...f, isClosed: e.target.checked }))} style={{ width: 16, height: 16 }} />
-                    <span style={{ fontWeight: 500 }}>Close Registration</span>
-                  </label>
-                  <p style={{ fontSize: '0.72rem', color: 'var(--white-30)', marginTop: '0.3rem', lineHeight: 1.4 }}>
-                    Blocks all new registrations for this division on the public form immediately.
-                  </p>
-                </div>
-              </div>
+              {/* ── Advanced Settings Accordion ── */}
+              {(() => {
+                const feeScope = currentTournament?.settings?.fee_scope ?? null;
+                const gameTimingScope = currentTournament?.settings?.game_timing_scope ?? null;
+                const tieBreakerScope = currentTournament?.settings?.tie_breaker_scope ?? null;
+                const tTieBreakers = normalizeTieBreakers(
+                  (currentTournament?.settings?.tie_breakers ?? ['h2h', 'rd', 'rf', 'ra']) as string[]
+                );
+                const tGameDuration = currentTournament?.settings?.game_duration_minutes ?? 90;
+                const tBufferMinutes = currentTournament?.settings?.buffer_minutes ?? 15;
 
-              {/* Fee Schedule Section */}
-              <div className="form-group" style={{ marginBottom: '1.5rem', borderTop: '1px solid var(--border-2)', paddingTop: '1.5rem' }}>
-                <label className="form-label" style={{ marginBottom: '0.75rem', display: 'block' }}>Fee Schedule (Division Override)</label>
-                <p style={{ fontSize: '0.72rem', color: 'var(--white-30)', marginBottom: '1rem', lineHeight: 1.5 }}>
-                  Set fees here only when the tournament uses per-division fee mode. Leave blank to inherit from tournament settings.
-                </p>
-                <div className="form-row form-row-2">
-                  <div className="form-group">
-                    <label className="form-label">Deposit Amount ($)</label>
-                    <input className="form-input" type="number" min="0" step="0.01" placeholder="e.g. 200" value={form.depositAmount} onChange={e => setForm(f => ({ ...f, depositAmount: e.target.value }))} />
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">Deposit Due Date</label>
-                    <input className="form-input" type="date" value={form.depositDueDate} onChange={e => setForm(f => ({ ...f, depositDueDate: e.target.value }))} />
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">Total Fee ($)</label>
-                    <input className="form-input" type="number" min="0" step="0.01" placeholder="e.g. 500" value={form.totalFeeAmount} onChange={e => setForm(f => ({ ...f, totalFeeAmount: e.target.value }))} />
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">Total Fee Due Date</label>
-                    <input className="form-input" type="date" value={form.totalFeeDueDate} onChange={e => setForm(f => ({ ...f, totalFeeDueDate: e.target.value }))} />
-                  </div>
-                </div>
-              </div>
+                const overrideCount = [
+                  !!form.contactMemberId,
+                  form.overrideGameTiming,
+                  !!(form.depositAmount || form.depositDueDate || form.totalFeeAmount || form.totalFeeDueDate),
+                  tieBreakerScope === 'allow_override' && JSON.stringify(form.tieBreakers) !== JSON.stringify(tTieBreakers),
+                ].filter(Boolean).length;
 
-              {/* Tie Breakers Section */}
-              <div className="form-group" style={{ marginBottom: '1.5rem', borderTop: '1px solid var(--border-2)', paddingTop: '1.5rem' }}>
-                <label className="form-label" style={{ marginBottom: '0.75rem', opacity: 0.8, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <Trophy size={14} /> Standing Tie-Breaker Hierarchy
-                </label>
-                <p className="form-help" style={{ fontSize: '0.7rem', color: 'var(--white-30)', marginBottom: '1rem' }}>
-                  Drag to reorder. These rules are used to rank teams in the standings and determine playoff seeding.
-                </p>
-                
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', maxWidth: '400px' }}>
-                  {form.tieBreakers.map((b, i) => (
-                    <div key={b} style={{ 
-                      display: 'flex', 
-                      justifyContent: 'space-between', 
-                      alignItems: 'center',
-                      background: 'var(--white-5)', 
-                      padding: '0.5rem 0.75rem', 
-                      borderRadius: '2px', 
-                      border: '1px solid var(--border-2)' 
-                    }}>
-                      <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
-                        <span style={{ fontSize: '0.75rem', fontWeight: 900, color: 'var(--logic-lime)', minWidth: '15px' }}>{i + 1}</span>
-                        <span style={{ fontWeight: 600, fontSize: '0.85rem' }}>{breakerLabels[b]}</span>
+                return (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => setAdvancedOpen(o => !o)}
+                      style={{
+                        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                        width: '100%', padding: '0.65rem 0.9rem',
+                        background: 'var(--white-03)', border: '1px solid var(--border-2)',
+                        borderRadius: advancedOpen ? '2px 2px 0 0' : '2px',
+                        cursor: 'pointer', color: 'inherit', marginBottom: advancedOpen ? 0 : '1.5rem',
+                      }}
+                    >
+                      <span style={{ fontWeight: 700, fontSize: '0.8rem', letterSpacing: '0.04em', textTransform: 'uppercase', color: 'var(--white-60)' }}>
+                        Advanced Settings
+                        {!advancedOpen && overrideCount > 0 && (
+                          <span style={{ marginLeft: '0.5rem', fontWeight: 600, fontSize: '0.75rem', color: 'var(--logic-lime)', textTransform: 'none', letterSpacing: 0 }}>
+                            ({overrideCount} override{overrideCount !== 1 ? 's' : ''})
+                          </span>
+                        )}
+                      </span>
+                      {advancedOpen ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
+                    </button>
+
+                    {advancedOpen && (
+                      <div style={{ border: '1px solid var(--border-2)', borderTop: 0, padding: '1.25rem 1rem', marginBottom: '1.5rem', borderRadius: '0 0 2px 2px', background: 'var(--white-02)' }}>
+
+                        {/* Division Contact */}
+                        <div className="form-group" style={{ marginBottom: '1.5rem' }}>
+                          <label className="form-label">Division Contact (Optional)</label>
+                          <select className="form-select" value={form.contactMemberId} onChange={e => setForm(f => ({ ...f, contactMemberId: e.target.value }))}>
+                            <option value="">Default (tournament contact)</option>
+                            {orgMembers.map(m => (
+                              <option key={m.id} value={m.id}>
+                                {m.displayName ?? m.email}{m.title ? ` — ${m.title}` : ''} ({m.role})
+                              </option>
+                            ))}
+                          </select>
+                          {form.contactMemberId && (() => {
+                            const picked = orgMembers.find(m => m.id === form.contactMemberId);
+                            return picked ? (
+                              <p className="form-help" style={{ fontSize: '0.72rem', color: 'var(--white-40)', marginTop: '0.25rem' }}>
+                                Notifications for this division will go to <strong>{picked.email}</strong>
+                              </p>
+                            ) : null;
+                          })()}
+                          {!form.contactMemberId && (
+                            <p className="form-help" style={{ fontSize: '0.72rem', color: 'var(--white-30)', marginTop: '0.25rem' }}>
+                              Leave blank to use the tournament&apos;s default contact.
+                            </p>
+                          )}
+                        </div>
+
+                        {/* Display Order — edit only */}
+                        {modal === 'edit' && (
+                          <div className="form-group" style={{ marginBottom: '1.5rem' }}>
+                            <label className="form-label">Display Order</label>
+                            <input className="form-input" type="number" min="1" value={form.order}
+                              onChange={e => setForm(f => ({ ...f, order: e.target.value }))} required />
+                            <p style={{ fontSize: '0.72rem', color: 'var(--white-30)', marginTop: '0.3rem', lineHeight: 1.4 }}>
+                              Adjust to change the position of this division in the divisions list.
+                            </p>
+                          </div>
+                        )}
+
+                        {/* Fee Schedule — conditional on fee_scope */}
+                        {feeScope !== 'tournament' && feeScope !== 'free' && (
+                          <div className="form-group" style={{ marginBottom: '1.5rem', borderTop: '1px solid var(--border-2)', paddingTop: '1.25rem' }}>
+                            <label className="form-label" style={{ marginBottom: '0.35rem', display: 'block' }}>
+                              Fee Schedule
+                              {feeScope === 'per_division' && <span style={{ marginLeft: '0.35rem', color: 'var(--danger-light)', fontSize: '0.75rem' }}>Required</span>}
+                              {feeScope === 'allow_override' && <span style={{ marginLeft: '0.35rem', color: 'var(--white-40)', fontSize: '0.75rem' }}>Optional override</span>}
+                            </label>
+                            {feeScope === 'allow_override' && (
+                              <p style={{ fontSize: '0.72rem', color: 'var(--white-30)', marginBottom: '0.75rem', lineHeight: 1.5 }}>
+                                Leave blank to inherit from tournament defaults.
+                              </p>
+                            )}
+                            {feeScope === 'per_division' && (
+                              <p style={{ fontSize: '0.72rem', color: 'var(--white-30)', marginBottom: '0.75rem', lineHeight: 1.5 }}>
+                                Fees must be set individually for each division in this tournament.
+                              </p>
+                            )}
+                            {!feeScope && (
+                              <p style={{ fontSize: '0.72rem', color: 'var(--white-30)', marginBottom: '0.75rem', lineHeight: 1.5 }}>
+                                Configure fee scope in Event Settings to control how fees apply across divisions.
+                              </p>
+                            )}
+                            <div className="form-row form-row-2">
+                              <div className="form-group">
+                                <label className="form-label">Deposit Amount ($)</label>
+                                <input className="form-input" type="number" min="0" step="0.01" placeholder="e.g. 200"
+                                  value={form.depositAmount} onChange={e => setForm(f => ({ ...f, depositAmount: e.target.value }))} />
+                              </div>
+                              <div className="form-group">
+                                <label className="form-label">Deposit Due Date</label>
+                                <input className="form-input" type="date" value={form.depositDueDate} onChange={e => setForm(f => ({ ...f, depositDueDate: e.target.value }))} />
+                              </div>
+                              <div className="form-group">
+                                <label className="form-label">Total Fee ($)</label>
+                                <input className="form-input" type="number" min="0" step="0.01" placeholder="e.g. 500"
+                                  value={form.totalFeeAmount}
+                                  onChange={e => setForm(f => ({ ...f, totalFeeAmount: e.target.value }))}
+                                  required={feeScope === 'per_division'} />
+                              </div>
+                              <div className="form-group">
+                                <label className="form-label">Total Fee Due Date</label>
+                                <input className="form-input" type="date" value={form.totalFeeDueDate} onChange={e => setForm(f => ({ ...f, totalFeeDueDate: e.target.value }))} />
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Game Timing — conditional on game_timing_scope */}
+                        {gameTimingScope !== 'tournament' && (
+                          <div className="form-group" style={{ marginBottom: '1.5rem', borderTop: '1px solid var(--border-2)', paddingTop: '1.25rem' }}>
+                            {gameTimingScope === 'per_division' ? (
+                              <>
+                                <label className="form-label" style={{ marginBottom: '0.35rem', display: 'block' }}>
+                                  Game Timing <span style={{ color: 'var(--danger-light)', fontSize: '0.75rem' }}>Required</span>
+                                </label>
+                                <p style={{ fontSize: '0.72rem', color: 'var(--white-30)', marginBottom: '0.75rem', lineHeight: 1.5 }}>
+                                  Game timing must be set for each division in this tournament.
+                                </p>
+                                <div className="form-row form-row-2">
+                                  <div className="form-group">
+                                    <label className="form-label">Game Duration (minutes)</label>
+                                    <input className="form-input" type="number" min="1" max="600" step="5"
+                                      placeholder="e.g. 90" value={form.gameDurationMinutes}
+                                      onChange={e => setForm(f => ({ ...f, gameDurationMinutes: e.target.value }))} required />
+                                  </div>
+                                  <div className="form-group">
+                                    <label className="form-label">Buffer Between Games (minutes)</label>
+                                    <input className="form-input" type="number" min="0" max="120" step="5"
+                                      placeholder="e.g. 15" value={form.bufferMinutes}
+                                      onChange={e => setForm(f => ({ ...f, bufferMinutes: e.target.value }))} />
+                                  </div>
+                                </div>
+                              </>
+                            ) : (
+                              <>
+                                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', marginBottom: '0.5rem' }}>
+                                  <input type="checkbox" checked={form.overrideGameTiming}
+                                    onChange={e => setForm(f => ({ ...f, overrideGameTiming: e.target.checked, gameDurationMinutes: e.target.checked ? f.gameDurationMinutes : '', bufferMinutes: e.target.checked ? f.bufferMinutes : '' }))} />
+                                  <span style={{ fontWeight: 600 }}>Override Game Timing for this Division</span>
+                                  {gameTimingScope === 'allow_override' && <span style={{ fontSize: '0.72rem', color: 'var(--white-40)' }}>Optional</span>}
+                                </label>
+                                {form.overrideGameTiming ? (
+                                  <div className="form-row form-row-2" style={{ marginTop: '0.75rem' }}>
+                                    <div className="form-group">
+                                      <label className="form-label">Game Duration (minutes)</label>
+                                      <input className="form-input" type="number" min="1" max="600" step="5"
+                                        placeholder={String(tGameDuration)} value={form.gameDurationMinutes}
+                                        onChange={e => setForm(f => ({ ...f, gameDurationMinutes: e.target.value }))} />
+                                    </div>
+                                    <div className="form-group">
+                                      <label className="form-label">Buffer Between Games (minutes)</label>
+                                      <input className="form-input" type="number" min="0" max="120" step="5"
+                                        placeholder={String(tBufferMinutes)} value={form.bufferMinutes}
+                                        onChange={e => setForm(f => ({ ...f, bufferMinutes: e.target.value }))} />
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <p style={{ fontSize: '0.72rem', color: 'var(--white-30)', marginTop: '0.35rem', lineHeight: 1.5 }}>
+                                    Inheriting tournament default: {tGameDuration} min games, {tBufferMinutes} min buffer.
+                                    {gameTimingScope === 'allow_override' && ' Check above to override for this division.'}
+                                  </p>
+                                )}
+                              </>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Tie-Breakers — conditional on tie_breaker_scope */}
+                        {tieBreakerScope !== 'tournament' && (
+                          <div className="form-group" style={{ borderTop: '1px solid var(--border-2)', paddingTop: '1.25rem' }}>
+                            <label className="form-label" style={{ marginBottom: '0.35rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                              <Trophy size={14} /> Standing Tie-Breaker Hierarchy
+                              {tieBreakerScope === 'per_division' && <span style={{ color: 'var(--danger-light)', fontSize: '0.75rem' }}>Required</span>}
+                            </label>
+                            {tieBreakerScope === 'allow_override' && (
+                              <p style={{ fontSize: '0.72rem', color: 'var(--white-30)', marginBottom: '0.75rem', lineHeight: 1.5 }}>
+                                Tournament default: {tTieBreakers.map(b => breakerLabels[b]).join(' → ')}. Reorder below to override for this division.
+                              </p>
+                            )}
+                            {tieBreakerScope === 'per_division' && (
+                              <p style={{ fontSize: '0.72rem', color: 'var(--white-30)', marginBottom: '0.75rem', lineHeight: 1.5 }}>
+                                Set the tie-breaker order for this division&apos;s standings and playoff seeding.
+                              </p>
+                            )}
+                            {!tieBreakerScope && (
+                              <p style={{ fontSize: '0.72rem', color: 'var(--white-30)', marginBottom: '0.75rem', lineHeight: 1.5 }}>
+                                Configure tie-breaker scope in Event Settings to control how standings are broken.
+                              </p>
+                            )}
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', maxWidth: '400px' }}>
+                              {form.tieBreakers.map((b, i) => (
+                                <div key={b} style={{
+                                  display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                                  background: 'var(--white-5)', padding: '0.5rem 0.75rem',
+                                  borderRadius: '2px', border: '1px solid var(--border-2)',
+                                }}>
+                                  <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+                                    <span style={{ fontSize: '0.75rem', fontWeight: 900, color: 'var(--logic-lime)', minWidth: '15px' }}>{i + 1}</span>
+                                    <span style={{ fontWeight: 600, fontSize: '0.85rem' }}>{breakerLabels[b]}</span>
+                                  </div>
+                                  <div style={{ display: 'flex', gap: '0.25rem' }}>
+                                    <button type="button" className="btn btn-ghost btn-data" style={{ padding: '0.15rem' }} onClick={() => moveBreaker(i, 'up')} disabled={i === 0}>
+                                      <ChevronUp size={14} />
+                                    </button>
+                                    <button type="button" className="btn btn-ghost btn-data" style={{ padding: '0.15rem' }} onClick={() => moveBreaker(i, 'down')} disabled={i === form.tieBreakers.length - 1}>
+                                      <ChevronDown size={14} />
+                                    </button>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                            {tieBreakerScope === 'allow_override' && JSON.stringify(form.tieBreakers) !== JSON.stringify(tTieBreakers) && (
+                              <button
+                                type="button"
+                                className="btn btn-ghost btn-data"
+                                style={{ marginTop: '0.5rem', fontSize: '0.72rem' }}
+                                onClick={() => setForm(f => ({ ...f, tieBreakers: [...tTieBreakers] }))}
+                              >
+                                Reset to tournament default
+                              </button>
+                            )}
+                          </div>
+                        )}
+
                       </div>
-                      <div style={{ display: 'flex', gap: '0.25rem' }}>
-                        <button type="button" className="btn btn-ghost btn-data" style={{ padding: '0.15rem' }} onClick={() => moveBreaker(i, 'up')} disabled={i === 0}>
-                          <ChevronUp size={14} />
-                        </button>
-                        <button type="button" className="btn btn-ghost btn-data" style={{ padding: '0.15rem' }} onClick={() => moveBreaker(i, 'down')} disabled={i === form.tieBreakers.length - 1}>
-                          <ChevronDown size={14} />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
+                    )}
+                  </>
+                );
+              })()}
 
               <div className="modal-footer">
                 <button type="button" className="btn btn-ghost btn-data" onClick={() => setModal(null)}>Cancel</button>
-                <button type="submit" className="btn btn-primary btn-data" id="division-save-btn"><Check size={14} /> Save</button>
+                <button type="submit" className="btn btn-lime btn-data" id="division-save-btn"><Check size={14} /> Save</button>
               </div>
             </form>
           </div>

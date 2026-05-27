@@ -17,9 +17,10 @@ import { useCurrentOrgCoachAccess } from '@/lib/use-current-org-coach-access';
 import styles from './AdminBottomNav.module.css';
 
 const PRIMARY_KEYS = [
-  { key: 'tournaments/registrations', icon: Users, label: 'Registrations' },
-  { key: 'tournaments/schedule', icon: Calendar, label: 'Schedule'      },
-  { key: 'tournaments/results',  icon: Trophy,   label: 'Results'       },
+  { key: 'tournaments/dashboard',     icon: LayoutDashboard, label: 'Dashboard'    },
+  { key: 'tournaments/registrations', icon: Users,           label: 'Teams'         },
+  { key: 'tournaments/schedule',      icon: Calendar,        label: 'Schedule'      },
+  { key: 'tournaments/results',       icon: Trophy,          label: 'Results'       },
 ];
 
 type NavItem = {
@@ -27,10 +28,6 @@ type NavItem = {
   icon: LucideIcon;
   label: string;
 };
-
-const TOP_MORE: NavItem[] = [
-  { key: 'tournaments/dashboard',     icon: LayoutDashboard, label: 'Dashboard'     },
-];
 
 const OPERATIONS_MORE: NavItem[] = [
   { key: 'tournaments/communication', icon: Mail, label: 'Communications' },
@@ -85,7 +82,6 @@ export default function AdminBottomNav() {
     : OPERATIONS_MORE;
 
   const allMoreKeys = [
-    ...TOP_MORE,
     ...operationsMore,
     ...SETUP_MORE,
     ...ADMIN_MORE,
@@ -230,22 +226,26 @@ export default function AdminBottomNav() {
             {tournaments.length > 0 && (
               <div className={styles.tournamentBlock}>
                 <span className={styles.blockLabel}>Current tournament</span>
-                <div className={styles.seasonSelectShell}>
-                  <select
-                    className={styles.seasonSelect}
-                    value={currentTournament?.id ?? ''}
-                    onChange={e => handleTournamentChange(e.target.value)}
-                    id="admin-mob-tournament-select"
-                    aria-label="Current tournament"
-                  >
-                    {tournaments.map(t => (
-                      <option key={t.id} value={t.id}>
-                        {t.name}{t.isActive ? ' - Live' : ''}
-                      </option>
-                    ))}
-                  </select>
-                  <ChevronDown size={16} className={styles.seasonChevron} aria-hidden />
-                </div>
+                {tournaments.length > 1 ? (
+                  <div className={styles.seasonSelectShell}>
+                    <select
+                      className={styles.seasonSelect}
+                      value={currentTournament?.id ?? ''}
+                      onChange={e => handleTournamentChange(e.target.value)}
+                      id="admin-mob-tournament-select"
+                      aria-label="Current tournament"
+                    >
+                      {tournaments.map(t => (
+                        <option key={t.id} value={t.id}>
+                          {t.name}{t.isActive ? ' - Live' : ''}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown size={16} className={styles.seasonChevron} aria-hidden />
+                  </div>
+                ) : (
+                  <span className={styles.switcherName}>{currentTournament?.name}</span>
+                )}
                 {currentTournament && !currentTournament.isActive && (
                   <Link
                     className={styles.setLiveBtn}
@@ -255,28 +255,11 @@ export default function AdminBottomNav() {
                     {inactiveTournamentCtaLabel}
                   </Link>
                 )}
-                {currentTournament && (
-                  <Link
-                    className={styles.setLiveBtn}
-                    href={`/${orgSlug}/admin/tournaments/preview/${currentTournament.slug}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    id="admin-mob-preview-site"
-                    title={tournamentPreviewTitle}
-                    aria-label={`${tournamentPreviewLabel} opens in a new tab`}
-                  >
-                    <ExternalLink size={13} /> {tournamentPreviewLabel}
-                  </Link>
-                )}
                 {currentTournament?.isActive && (
                   <span className={styles.livePill}>● Live</span>
                 )}
               </div>
             )}
-
-            <div className={styles.dropDivider} />
-
-            {dropNavItems(TOP_MORE)}
 
             <div className={styles.dropDivider} />
 
@@ -294,6 +277,22 @@ export default function AdminBottomNav() {
             {dropNavItems(ADMIN_MORE)}
 
             <div className={styles.dropDivider} />
+
+            {currentTournament && (
+              <Link
+                className={`${styles.dropItem} ${styles.dropUtilItem}`}
+                href={`/${orgSlug}/admin/tournaments/preview/${currentTournament.slug}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                id="admin-mob-preview-site"
+                title={tournamentPreviewTitle}
+                aria-label={`${tournamentPreviewLabel} opens in a new tab`}
+                role="menuitem"
+              >
+                <ExternalLink size={15} />
+                <span>{tournamentPreviewLabel}</span>
+              </Link>
+            )}
 
             <button
               className={`${styles.dropItem} ${styles.dropLogout}`}

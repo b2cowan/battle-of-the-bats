@@ -35,9 +35,21 @@
 
 /* ── Mobile: hide sidebar, use bottom nav instead ── */
 @media (max-width: 900px) {
-  .adminShell { flex-direction: column; }
+  .adminShell {
+    flex-direction: column;
+    /* App-shell pattern: lock to viewport height so adminMain's overflow-y:auto
+       handles all scrolling. Prevents body-scroll / overscroll into empty flex
+       space when page content is shorter than the screen. */
+    height: 100vh;
+    /* dvh adjusts for mobile browser chrome (URL bar showing/hiding) */
+    height: 100dvh;
+    overflow: hidden;
+  }
 
   .adminMain {
+    /* min-height: 0 is required for flex-grow to shrink properly inside
+       a fixed-height container (prevents the child from overflowing the parent). */
+    min-height: 0;
     padding: 1rem 1rem calc(80px + env(safe-area-inset-bottom));
   }
 

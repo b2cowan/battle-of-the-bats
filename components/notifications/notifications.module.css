@@ -1,0 +1,215 @@
+/* ── Bell button ───────────────────────────────────────────────────────────── */
+
+.bellWrap {
+  position: relative;
+  margin-left: auto;   /* push to right edge of the logo flex row */
+  flex-shrink: 0;
+}
+
+.bellBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: none;
+  border: none;
+  border-radius: 4px;
+  color: var(--white-40);
+  cursor: pointer;
+  transition: color 0.15s, background 0.15s;
+  position: relative;
+  padding: 0;
+}
+
+.bellBtn:hover {
+  color: var(--fl-text);
+  background: var(--white-8);
+}
+
+.bellBtn.hasUnread {
+  color: var(--fl-text);
+}
+
+.badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 16px;
+  height: 16px;
+  background: var(--danger);
+  color: #fff;
+  font-size: 0.6rem;
+  font-weight: 700;
+  font-family: var(--font-data);
+  letter-spacing: 0;
+  border-radius: 8px;
+  padding: 0 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  pointer-events: none;
+}
+
+/* ── Panel ─────────────────────────────────────────────────────────────────── */
+
+.panel {
+  position: fixed;
+  top: 8px;
+  left: 248px;        /* right edge of 240px sidebar + 8px gap */
+  width: 320px;
+  max-height: calc(100vh - 16px);
+  overflow-y: auto;
+  background: var(--surface, #111827);
+  border: 1px solid rgba(var(--blueprint-blue-rgb, 30 58 138), 0.35);
+  border-radius: 8px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Coaches portal — sidebar may be narrower; override via parent class if needed */
+.panelCoaches {
+  left: 248px;        /* same sidebar width */
+}
+
+.panelHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid rgba(var(--blueprint-blue-rgb, 30 58 138), 0.2);
+  flex-shrink: 0;
+}
+
+.panelTitle {
+  font-family: var(--font-data);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--white-60, rgba(255,255,255,0.6));
+  margin: 0;
+}
+
+.markAllBtn {
+  background: none;
+  border: none;
+  font-size: 0.72rem;
+  color: var(--blueprint-blue, #1E3A8A);
+  cursor: pointer;
+  padding: 0;
+  font-family: var(--font-ui, inherit);
+  transition: color 0.15s;
+}
+
+.markAllBtn:hover {
+  color: var(--fl-text);
+}
+
+/* ── Notification rows ─────────────────────────────────────────────────────── */
+
+.notifList {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.notifItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  padding: 0.7rem 1rem;
+  border-bottom: 1px solid var(--white-5, rgba(255,255,255,0.05));
+  cursor: pointer;
+  transition: background 0.12s;
+  text-decoration: none;
+  color: inherit;
+}
+
+.notifItem:last-child {
+  border-bottom: none;
+}
+
+.notifItem:hover {
+  background: var(--white-5, rgba(255,255,255,0.05));
+}
+
+.notifItem.unread {
+  background: rgba(var(--blueprint-blue-rgb, 30 58 138), 0.06);
+}
+
+.notifItem.unread:hover {
+  background: rgba(var(--blueprint-blue-rgb, 30 58 138), 0.12);
+}
+
+.notifDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--blueprint-blue, #1E3A8A);
+  flex-shrink: 0;
+  margin-top: 5px;
+}
+
+.notifContent {
+  flex: 1;
+  min-width: 0;
+}
+
+.notifTitle {
+  font-size: 0.82rem;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--fl-text);
+  margin: 0 0 0.2rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.notifRead .notifTitle {
+  font-weight: 400;
+  color: var(--white-60, rgba(255,255,255,0.6));
+}
+
+.notifBody {
+  font-size: 0.75rem;
+  color: var(--white-50, rgba(255,255,255,0.5));
+  margin: 0 0 0.2rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.notifTime {
+  font-family: var(--font-data);
+  font-size: 0.68rem;
+  color: var(--white-30, rgba(255,255,255,0.3));
+  margin: 0;
+}
+
+/* ── Empty + loading states ────────────────────────────────────────────────── */
+
+.emptyState {
+  padding: 2.5rem 1rem;
+  text-align: center;
+  color: var(--white-40, rgba(255,255,255,0.4));
+  font-size: 0.82rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.emptyIcon {
+  opacity: 0.35;
+}
+
+.loadingRow {
+  padding: 1.5rem 1rem;
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--white-30, rgba(255,255,255,0.3));
+}

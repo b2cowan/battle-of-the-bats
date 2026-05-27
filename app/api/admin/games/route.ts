@@ -3,6 +3,7 @@ import { getAuthContextWithScope, unauthorized, forbidden, scopeGuard } from '@/
 import { hasCapability } from '@/lib/roles';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { hasPlanFeature, requiresTournamentPlusCopy, type PlanFeature } from '@/lib/plan-features';
+import { notify } from '@/lib/notify';
 import {
   finalizeTournamentScore,
   loadTournamentScoreGame,
@@ -282,6 +283,15 @@ export async function PATCH(req: Request) {
         source: 'admin_results',
         allowFinalizedEdit: true,
       });
+      // Notify org admins of submitted score (fire-and-forget)
+      notify({
+        orgId: ctx.org.id,
+        tournamentId: gameRow.tournamentId,
+        eventType: 'score_submitted',
+        title: 'Score submitted',
+        body: `Submitted by ${ctx.user.email ?? 'an admin'}`,
+        link: `/${ctx.org.slug}/admin/tournaments/schedule?tournamentId=${gameRow.tournamentId}`,
+      }).catch(console.error);
     }
 
     // ── finalize (submitted → completed, owner/admin only) ───────────────────

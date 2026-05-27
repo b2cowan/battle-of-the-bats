@@ -1,4 +1,4 @@
-.page { max-width: 900px; }
+﻿.page { max-width: 900px; }
 
 .header {
   border-bottom: 1px solid rgba(var(--logic-lime-rgb), 0.3);
@@ -111,7 +111,7 @@
 .rowError {
   font-family: var(--font-data);
   font-size: 0.6rem;
-  color: #f87171;
+  color: var(--danger);
 }
 
 .emptyCell {
@@ -189,7 +189,7 @@
   padding: 0.2rem 0.5rem;
   background: rgba(34, 197, 94, 0.1);
   border: 1px solid rgba(34, 197, 94, 0.35);
-  color: #4ade80;
+  color: var(--success);
 }
 
 .badgeInactive {
@@ -214,7 +214,7 @@
   padding: 0.15rem 0.4rem;
   background: rgba(var(--blueprint-blue-rgb, 79, 163, 224), 0.12);
   border: 1px solid rgba(var(--blueprint-blue-rgb, 79, 163, 224), 0.3);
-  color: var(--blueprint-blue, #4fa3e0);
+  color: var(--blueprint-blue);
 }
 
 .roleBadge,
@@ -302,7 +302,7 @@
   color: var(--data-gray);
 }
 
-.required { color: #f87171; }
+.required { color: var(--danger); }
 
 .fieldInput {
   background: rgba(255, 255, 255, 0.04);
@@ -343,7 +343,7 @@
   padding: 0.35rem 0.75rem;
   background: rgba(239, 68, 68, 0.08);
   border: 1px solid rgba(239, 68, 68, 0.3);
-  color: #f87171;
+  color: var(--danger);
   cursor: pointer;
   transition: background 0.15s;
   white-space: nowrap;

@@ -1197,7 +1197,7 @@ export default function UnifiedTeamsPage() {
     <div className={s.page}>
       <TournamentAdminHeader
         icon={<Users size={20} />}
-        title="Registrations"
+        title="Teams"
         subtitle="Manage all teams and signups in one place"
         mobileActionsInline
         actions={(

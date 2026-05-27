@@ -45,6 +45,13 @@
 
 .switcherSelect option { background: var(--hud-surface); }
 
+.switcherName {
+  font-family: var(--font-data);
+  font-size: 0.8rem;
+  color: var(--fl-text);
+  padding: 0.35rem 0;
+}
+
 .setActiveBtn {
   background: rgba(var(--blueprint-blue-rgb), 0.1);
   border: 1px solid rgba(var(--blueprint-blue-rgb), 0.4);

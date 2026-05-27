@@ -1,4 +1,4 @@
-.page { max-width: 1300px; }
+﻿.page { max-width: 1300px; }
 
 .header {
   border-bottom: 1px solid rgba(var(--logic-lime-rgb), 0.3);
@@ -132,7 +132,7 @@
 
 .primaryText { color: var(--fl-text); font-weight: 700; }
 .emailText { color: var(--data-gray); font-family: monospace; margin-top: 0.15rem; }
-.userId { color: rgba(255,255,255,0.35); font-family: monospace; font-size: 0.62rem; margin-top: 0.15rem; }
+.userId { color: var(--white-35); font-family: monospace; font-size: 0.62rem; margin-top: 0.15rem; }
 .dateCell { color: var(--data-gray); white-space: nowrap; }
 .dimText { color: var(--data-gray); }
 
@@ -166,7 +166,7 @@
 }
 
 .badgeDanger {
-  color: #f87171;
+  color: var(--danger);
   border-color: rgba(248, 113, 113, 0.35);
   background: rgba(248, 113, 113, 0.06);
 }
@@ -238,6 +238,6 @@
 
 .rowError {
   margin-top: 0.45rem;
-  color: #f87171;
+  color: var(--danger);
   font-size: 0.62rem;
 }

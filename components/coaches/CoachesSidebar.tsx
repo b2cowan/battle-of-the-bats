@@ -4,6 +4,7 @@ import { usePathname } from 'next/navigation';
 import { ArrowLeft, Users, Calendar, DollarSign, FileText, History, LayoutDashboard, HelpCircle, Link2 } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
 import { useOrg } from '@/lib/org-context';
+import NotificationBell from '@/components/notifications/NotificationBell';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 
 const TEAM_NAV = [
@@ -33,7 +34,10 @@ export default function CoachesSidebar({ orgSlug }: { orgSlug: string }) {
   return (
     <nav className={styles.sidebar}>
       <div className={styles.sidebarHeader}>
-        <p className={styles.sidebarPortalLabel}>Coaches Portal</p>
+        <div className={styles.sidebarHeaderTop}>
+          <p className={styles.sidebarPortalLabel}>Coaches Portal</p>
+          {currentOrg?.id && <NotificationBell orgId={currentOrg.id} />}
+        </div>
         <p className={styles.sidebarOrgName}>{currentOrg?.name ?? orgSlug}</p>
         <Link href={`/${orgSlug}`} className={styles.sidebarBackLink}>
           <ArrowLeft size={12} />

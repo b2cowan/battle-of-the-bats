@@ -224,6 +224,13 @@ export default async function PricingPage() {
           </div>
           <PricingSection gatingMap={gatingMap} />
 
+          {/* Founding Season note */}
+          <p className={`${styles.sectionSub} mt-3 text-center`} style={{ fontSize: '0.78rem' }}>
+            Tournament Plus is free through December 31, 2026 for founding organizations.
+            Starting January 2027, the standard $39/month rate applies.
+            No contract. Cancel anytime.
+          </p>
+
           {/* Coaches Portal — compact callout below plan grid */}
           <div className={styles.coachesCallout} id="coaches-portal">
             <div className={styles.coachesCalloutInner}>
@@ -376,7 +383,7 @@ export default async function PricingPage() {
             <span style={{ color: 'var(--logic-lime)' }}>More sport.</span>
           </h2>
           <p className={styles.ctaSub}>
-            Start free with Tournament. Tournament Plus includes a 14-day trial.
+            Start free with Tournament. Tournament Plus is free through December 31, 2026 — no credit card required.
             League, Club, and the Coaches Portal are coming soon — express interest to be notified.
           </p>
           <div className={styles.ctaActions}>

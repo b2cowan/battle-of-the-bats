@@ -1,4 +1,12 @@
 export type OrgPlan = 'tournament' | 'team' | 'tournament_plus' | 'league' | 'club';
+
+// ── Tournament scope types ────────────────────────────────────────────────────
+/** How game timing (duration + buffer) is managed across divisions. */
+export type GameTimingScope = 'tournament' | 'allow_override' | 'per_division';
+/** How tie-breaker rules are managed across divisions. */
+export type TieBreakerScope = 'tournament' | 'allow_override' | 'per_division';
+/** How registration fees are managed across divisions. 'free' = no payment tracking. */
+export type FeeScope = 'tournament' | 'allow_override' | 'per_division' | 'free';
 export type OrgAccountKind = 'organization' | 'team_workspace';
 export type TeamWorkspaceStatus = 'active' | 'linked' | 'org_owned' | 'archived';
 export type OrgRole = 'owner' | 'admin' | 'staff' | 'official' | 'league_admin' | 'league_registrar' | 'treasurer' | 'coach';
@@ -15,6 +23,58 @@ export interface TournamentSettings {
   rulesLayout?: 'columns' | 'single';
   /** Public rules page layout for the resources list. Default: 'list' (stacked). */
   resourcesLayout?: 'list' | 'grid';
+  /**
+   * Default game duration in minutes for all divisions in this tournament.
+   * Individual divisions may override this via DivisionSettings. Default: 90.
+   */
+  game_duration_minutes?: number;
+  /**
+   * Minimum gap (in minutes) required between consecutive games at the same venue/facility.
+   * Buffer-zone violations are soft warnings; true overlap is a hard block. Default: 15.
+   */
+  buffer_minutes?: number;
+
+  // ── Scope controls (Phase 2 — Divisions UX Rework) ─────────────────────────
+  /**
+   * How game timing is configured. null = not yet decided (blocks activation).
+   * 'tournament' = one value for all divisions.
+   * 'allow_override' = tournament default, divisions may override.
+   * 'per_division' = each division must set its own value.
+   */
+  game_timing_scope?: GameTimingScope | null;
+  /**
+   * Tournament-level tie-breaker priority order. Used when tie_breaker_scope is
+   * 'tournament' or 'allow_override'. Divisions may store their own override in
+   * division.playoffConfig.tieBreakers.
+   */
+  tie_breakers?: ('h2h' | 'rf' | 'ra' | 'rd')[];
+  /**
+   * How tie-breaker rules are configured. null = not yet decided (blocks activation).
+   */
+  tie_breaker_scope?: TieBreakerScope | null;
+  /**
+   * How registration fees are configured. null = not yet decided (blocks activation).
+   * 'free' = organizer explicitly chose no payment tracking (valid confirmed state).
+   */
+  fee_scope?: FeeScope | null;
+}
+
+/**
+ * Per-division settings stored as JSONB in divisions.settings.
+ * When set, these override the parent tournament's settings for conflict detection.
+ * Add new optional keys here as features require them — no migration needed for new keys.
+ */
+export interface DivisionSettings {
+  /**
+   * Game duration override for this division (minutes).
+   * If omitted, inherits from TournamentSettings.game_duration_minutes or system default (90).
+   */
+  game_duration_minutes?: number;
+  /**
+   * Buffer override for this division (minutes).
+   * If omitted, inherits from TournamentSettings.buffer_minutes or system default (15).
+   */
+  buffer_minutes?: number;
 }
 
 export interface Organization {
@@ -197,6 +257,8 @@ export interface Division {
   contactMemberId?: string | null; // FK to organization_members
   isClosed?: boolean; // if true, public registration is disabled
   capacity?: number;  // threshold for waitlist
+  /** Number of accepted teams in this division. Populated by admin divisions API; may be absent in other contexts. */
+  acceptedCount?: number;
   poolCount?: number;
   poolNames?: string; // (Legacy) Comma separated
   requiresPoolSelection?: boolean; // if true, user picks pool during registration
@@ -207,6 +269,8 @@ export interface Division {
   totalFeeAmount?: number | null;
   totalFeeDueDate?: string | null;
   scheduleVisibility?: 'unpublished' | 'published_generic' | 'published_teams';
+  /** Per-division game timing overrides. See DivisionSettings. */
+  settings?: DivisionSettings;
 }
 
 export interface Pool {
@@ -214,6 +278,8 @@ export interface Pool {
   divisionId: string;
   name: string;
   order: number;
+  /** Per-pool settings. Reserved for future use. */
+  settings?: Record<string, unknown>;
 }
 
 export interface PoolSlot {
@@ -342,6 +408,7 @@ export interface Communication {
   emailSentAt: string | null;
   sentByEmail: string | null;
   createdAt: string;
+  deletedAt: string | null;
 }
 
 export interface RuleSection {
@@ -1087,4 +1154,45 @@ export interface PlatformUser {
   invitedBy: string | null;
   createdAt: string;
   updatedAt: string;
+}
+
+// ---------------------------------------------------------------------------
+// Notifications
+// ---------------------------------------------------------------------------
+
+export type NotificationEventType =
+  | 'registration_new'
+  | 'registration_status_changed'
+  | 'payment_received'
+  | 'payment_failed'
+  | 'roster_change_requested'
+  | 'score_submitted'
+  | 'score_disputed'
+  | 'registration_deadline_approaching'
+  | 'waitlist_opened'
+  | 'coach_access_requested'
+  | 'house_league_registration_new';
+
+export interface AppNotification {
+  id: string;
+  orgId: string;
+  eventType: NotificationEventType;
+  title: string;
+  body: string | null;
+  link: string | null;
+  readAt: string | null;
+  createdAt: string;
+  metadata: Record<string, unknown>;
+}
+
+export interface NotificationPreference {
+  eventType: NotificationEventType;
+  channelBell: boolean;
+  channelPush: boolean;
+  channelEmail: boolean;
+}
+
+export interface TournamentNotificationPreference {
+  eventType: NotificationEventType;
+  optedOut: boolean;
 }

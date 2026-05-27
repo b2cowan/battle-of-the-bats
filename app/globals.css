@@ -237,6 +237,7 @@ body {
   --logic-lime-rgb:      217, 249, 157;
   --hud-surface:         #111827;
   --structural-slate:    #0F172A;
+  --card-bg:             var(--hud-surface); /* ghost-token fix: coaches/rep-teams use this; resolves to --hud-surface */
   --data-gray:           #94A3B8;
   --fl-text:             #F1F5F9;
 

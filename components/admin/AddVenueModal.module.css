@@ -1,0 +1,41 @@
+/* AddVenueModal.module.css */
+
+/* ── City / Province / Postal — 3-column grid ── */
+.cityRow {
+  display: grid;
+  grid-template-columns: 1fr 96px 120px;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+  align-items: start;
+}
+
+/* ── Mobile: compact everything so it fits on one screen ── */
+@media (max-width: 640px) {
+  /* Compact input / select / textarea sizing */
+  .form :global(.form-input),
+  .form :global(.form-select),
+  .form :global(.form-textarea) {
+    font-family: var(--font-data);
+    font-size: 0.8125rem;
+    padding: 0.35rem 0.65rem;
+    min-height: unset;
+  }
+
+  /* Smaller labels */
+  .form :global(.form-label) {
+    font-size: 0.68rem;
+    margin-bottom: 0.2rem;
+  }
+
+  /* Tighter form-group spacing (form-group has its own margin-bottom — reset here) */
+  .form :global(.form-group) {
+    margin-bottom: 0.45rem !important;
+  }
+
+  /* Narrower province + postal columns on small screens */
+  .cityRow {
+    grid-template-columns: 1fr 64px 90px;
+    gap: 0.3rem;
+    margin-bottom: 0.45rem;
+  }
+}

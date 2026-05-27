@@ -41,8 +41,8 @@
   margin-bottom: 1.25rem;
 }
 
-.resultSuccess { background: rgba(34,197,94,0.1);  border: 1px solid rgba(34,197,94,0.3);  color: #4ade80; }
-.resultError   { background: rgba(239,68,68,0.1);  border: 1px solid rgba(239,68,68,0.3);  color: #f87171; }
+.resultSuccess { background: rgba(var(--success-rgb),0.1);  border: 1px solid rgba(var(--success-rgb),0.3);  color: var(--success); }
+.resultError   { background: rgba(var(--danger-rgb),0.1);  border: 1px solid rgba(var(--danger-rgb),0.3);  color: var(--danger); }
 
 .bannerDismiss {
   margin-left: auto;
@@ -57,11 +57,52 @@
 }
 .bannerDismiss:hover { opacity: 1; }
 
+/* ── Compose modal body ──────────────────────────────────────────────────── */
+
+.composeModalBody {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+  padding-bottom: 0.25rem;
+}
+
+/* ── Division visibility — vertical checklist ────────────────────────────── */
+
+.divisionCheckList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.divisionCheckRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--white-70);
+  cursor: pointer;
+  padding: 0.25rem 0.4rem;
+  border-radius: 2px;
+  transition: background 0.1s;
+  user-select: none;
+}
+.divisionCheckRow:hover { background: var(--white-05); }
+
+.divisionCheckIndent {
+  display: flex;
+  flex-direction: column;
+  gap: 0.05rem;
+  padding-left: 1rem;
+  border-left: 1px solid var(--border-2);
+  margin-left: 0.6rem;
+  margin-top: 0.05rem;
+}
+
 /* ── Compose panel ───────────────────────────────────────────────────────── */
 
 .composePanel {
-  background: var(--bg-surface);
-  border: 1px solid var(--border-subtle);
+  background: var(--hud-surface);
+  border: 1px solid var(--border-2);
   border-radius: 2px;
   padding: 1.5rem;
   margin: 0 auto 1.75rem;
@@ -81,21 +122,6 @@
   font-weight: 700;
   font-size: 1rem;
   color: var(--white);
-}
-
-/* ── Draft notice ──────────────────────────────────────────────────────────── */
-
-.draftNotice {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  font-size: 0.78rem;
-  color: var(--white-40);
-  padding: 0.35rem 0.6rem;
-  background: var(--bg-inset);
-  border-radius: 2px;
-  border: 1px solid var(--border-subtle);
-  width: fit-content;
 }
 
 .draftClear {
@@ -129,10 +155,11 @@
 }
 
 .templateChip {
-  background: var(--bg-inset);
-  border: 1px solid var(--border-subtle);
-  border-radius: 20px;
+  background: var(--bg-2);
+  border: 1px solid var(--border-2);
+  border-radius: 2px;
   padding: 0.28rem 0.75rem;
+  font-family: var(--font-data);
   font-size: 0.78rem;
   color: var(--white-60);
   cursor: pointer;
@@ -158,7 +185,7 @@
   display: flex;
   flex-direction: column;
   gap: 0;
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--border-2);
   border-radius: 2px;
   overflow: hidden;
 }
@@ -170,13 +197,13 @@
   letter-spacing: 0.07em;
   color: var(--white-30);
   padding: 0.5rem 1rem 0.35rem;
-  background: var(--bg-inset);
-  border-bottom: 1px solid var(--border-subtle);
+  background: var(--bg-2);
+  border-bottom: 1px solid var(--border-2);
 }
 
 .channelRow {
   padding: 0.85rem 1rem;
-  border-bottom: 1px solid var(--border-subtle);
+  border-bottom: 1px solid var(--border-2);
   transition: background 0.12s;
 }
 .channelRow:last-child { border-bottom: none; }
@@ -245,8 +272,8 @@
   color: var(--white-60);
   cursor: pointer;
   padding: 0.2rem 0.5rem;
-  background: var(--bg-inset);
-  border: 1px solid var(--border-subtle);
+  background: var(--bg-2);
+  border: 1px solid var(--border-2);
   border-radius: 2px;
 }
 /* accent-color removed — global branded checkbox handles this */
@@ -287,7 +314,7 @@
   justify-content: flex-end;
   gap: 0.75rem;
   padding-top: 0.5rem;
-  border-top: 1px solid var(--border-subtle);
+  border-top: 1px solid var(--border-2);
 }
 
 .inlineResult {
@@ -298,8 +325,8 @@
   border-radius: 2px;
   font-size: 0.85rem;
 }
-.inlineSuccess { background: rgba(34,197,94,0.08); border: 1px solid rgba(34,197,94,0.25); color: #4ade80; }
-.inlineError   { background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.25); color: #f87171; }
+.inlineSuccess { background: rgba(var(--success-rgb),0.08); border: 1px solid rgba(var(--success-rgb),0.25); color: var(--success); }
+.inlineError   { background: rgba(var(--danger-rgb),0.08); border: 1px solid rgba(var(--danger-rgb),0.25); color: var(--danger); }
 
 /* ── Empty state overrides ───────────────────────────────────────────────── */
 
@@ -327,8 +354,18 @@
 
 .filterTabs {
   display: flex;
-  gap: 0.35rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
   margin-bottom: 0.25rem;
+}
+
+.filterTabsLeft  { display: flex; gap: 0.35rem; }
+.filterTabsRight { display: flex; gap: 0.25rem; }
+
+.filterTabSmall {
+  padding: 0.25rem 0.6rem;
+  font-size: 0.75rem;
 }
 
 .filterTab {
@@ -337,8 +374,9 @@
   gap: 0.35rem;
   padding: 0.35rem 0.85rem;
   background: none;
-  border: 1px solid var(--border-subtle);
-  border-radius: 20px;
+  border: 1px solid var(--border-2);
+  border-radius: 2px;
+  font-family: var(--font-data);
   font-size: 0.8rem;
   color: var(--white-50);
   cursor: pointer;
@@ -346,16 +384,16 @@
 }
 .filterTab:hover { border-color: var(--border); color: var(--white-70); }
 .filterTabActive {
-  background: rgba(var(--blueprint-blue-rgb), 0.12);
-  border-color: rgba(var(--blueprint-blue-rgb), 0.4);
-  color: var(--white);
+  background: rgba(var(--logic-lime-rgb), 0.12);
+  border-color: rgba(var(--logic-lime-rgb), 0.4);
+  color: var(--logic-lime);
 }
 
 /* ── Communication cards ──────────────────────────────────────────────────── */
 
 .commCard {
-  background: var(--bg-surface);
-  border: 1px solid var(--border-subtle);
+  background: var(--hud-surface);
+  border: 1px solid var(--border-2);
   border-radius: 2px;
   padding: 1.1rem 1.25rem;
   display: flex;
@@ -419,7 +457,7 @@
   flex-wrap: wrap;
   gap: 0.5rem;
   padding-top: 0.45rem;
-  border-top: 1px solid var(--border-subtle);
+  border-top: 1px solid var(--border-2);
   margin-top: 0.1rem;
 }
 
@@ -430,33 +468,27 @@
   align-items: center;
   gap: 0.3rem;
   padding: 0.2rem 0.55rem;
-  border-radius: 20px;
+  border-radius: 2px;
   font-size: 0.72rem;
   font-weight: 600;
 }
 
 .badgeSite {
-  background: rgba(var(--blueprint-blue-rgb), 0.12);
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.3);
-  color: rgba(var(--blueprint-blue-rgb), 0.9);
-}
-/* Override for CSS variables that may use rgb form */
-.badgeSite {
-  color: #6eb6ff;
-  border-color: rgba(110,182,255,0.3);
-  background: rgba(110,182,255,0.08);
+  background: rgba(var(--info-rgb), 0.08);
+  border: 1px solid rgba(var(--info-rgb), 0.3);
+  color: var(--info);
 }
 
 .badgeEmail {
-  background: rgba(163,230,53,0.08);
-  border: 1px solid rgba(163,230,53,0.25);
-  color: rgba(163,230,53,0.85);
+  background: rgba(var(--logic-lime-rgb),0.08);
+  border: 1px solid rgba(var(--logic-lime-rgb),0.25);
+  color: rgba(var(--logic-lime-rgb),0.85);
 }
 
 .badgeEmailWarn {
-  background: rgba(234,179,8,0.08);
-  border-color: rgba(234,179,8,0.3);
-  color: #fbbf24;
+  background: rgba(var(--warning-rgb),0.08);
+  border-color: rgba(var(--warning-rgb),0.3);
+  color: var(--warning);
 }
 
 .sentBy {
@@ -472,7 +504,7 @@
   position: absolute;
   right: 0;
   top: calc(100% + 4px);
-  background: var(--bg-elevated, var(--bg-surface));
+  background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 2px;
   min-width: 190px;
@@ -489,7 +521,7 @@
   padding: 0.6rem 0.85rem;
   background: none;
   border: none;
-  border-bottom: 1px solid var(--border-subtle);
+  border-bottom: 1px solid var(--border-2);
   font-size: 0.85rem;
   color: var(--white-70);
   cursor: pointer;
@@ -499,8 +531,8 @@
 .overflowMenu button:last-child { border-bottom: none; }
 .overflowMenu button:hover { background: var(--white-05); color: var(--white); }
 
-.deleteAction { color: var(--danger, #f87171) !important; }
-.deleteAction:hover { background: rgba(239,68,68,0.08) !important; }
+.deleteAction { color: var(--danger); }
+.deleteAction:hover { background: rgba(var(--danger-rgb),0.08) !important; }
 
 .overflowBackdrop {
   position: fixed;
@@ -508,12 +540,309 @@
   z-index: 49;
 }
 
+/* ── Tab count badge ─────────────────────────────────────────────────────── */
+
+.tabCount {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 2px;
+  background: rgba(var(--blueprint-blue-rgb), 0.25);
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--white-60);
+  line-height: 1;
+}
+
+/* ── Email table ─────────────────────────────────────────────────────────── */
+
+.emailTable {
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.2);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.emailColHeader {
+  /* s.tableHeader provides: flex, padding, font, bg, border-bottom */
+}
+
+.emailRow {
+  cursor: pointer;
+  transition: background 0.12s;
+}
+.emailRow:hover { background: rgba(255, 255, 255, 0.03); }
+
+.emailRowMain {
+  /* s.rowMain provides: flex, align-items, padding, min-height */
+}
+
+/* ── Email table column widths (shared between header + rows) ────────────── */
+
+.emailColDate       { flex: 0 0 110px; min-width: 0; }
+.emailColSubject    { flex: 1 1 160px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.emailColRecipients { flex: 0 0 100px; min-width: 0; }
+.emailColStatus     { flex: 0 0 120px; min-width: 0; }
+.emailColSentBy     { flex: 0 0 200px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+@media (max-width: 960px) {
+  .emailColSentBy { flex-basis: 150px; }
+}
+@media (max-width: 768px) {
+  .emailColSentBy { display: none; }
+}
+@media (max-width: 520px) {
+  .emailColStatus { display: none; }
+}
+
+/* ── Email detail modal body ─────────────────────────────────────────────── */
+
+.emailDetailBody {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+  padding-bottom: 0.5rem;
+}
+
+.emailDetailField {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.emailDetailLabel {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--white-35);
+  font-family: var(--font-data);
+}
+
+.emailDetailValue {
+  font-size: 0.9rem;
+  color: var(--white-80);
+}
+
+.emailDetailBy {
+  color: var(--white-40);
+  font-size: 0.85rem;
+}
+
+.emailDetailLabelRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.emailDetailLabelCount {
+  font-size: 0.65rem;
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--white-40);
+  margin-left: 0.35rem;
+}
+
+/* ── Recipients summary row (inside Email Details modal) ────────────────── */
+
+.recipientsSummaryRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+/* ── Recipients modal body ───────────────────────────────────────────────── */
+
+.recipientsModalBody {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding-bottom: 0.25rem;
+}
+
+.recipientsModalMeta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-family: var(--font-data);
+  font-size: 0.78rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border-2);
+}
+
+/* ── Recipient list ─────────────────────────────────────────────────────── */
+
+.emailDetailRecipientList {
+  border: 1px solid var(--border-2);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.emailDetailRecipientRow {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.42rem 0.75rem;
+  border-bottom: 1px solid var(--border-2);
+  font-size: 0.82rem;
+}
+.emailDetailRecipientRow:last-child { border-bottom: none; }
+
+.recipientDelivered { background: rgba(var(--success-rgb), 0.04); }
+.recipientFailed    { background: rgba(var(--danger-rgb), 0.06); }
+
+.recipientIcon {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+}
+.recipientDelivered .recipientIcon { color: var(--success); }
+.recipientFailed    .recipientIcon { color: var(--danger); }
+
+.recipientName {
+  font-weight: 500;
+  color: var(--white-80);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 0 1 180px;
+  min-width: 0;
+}
+
+.recipientEmail {
+  font-family: var(--font-data);
+  font-size: 0.78rem;
+  color: var(--white-40);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1 1 0;
+  min-width: 0;
+  margin-left: auto;
+}
+
+.emailDetailMessage {
+  font-size: 0.85rem;
+  color: var(--white-60);
+  line-height: 1.65;
+  white-space: pre-wrap;
+  background: var(--bg-2);
+  border: 1px solid var(--border-2);
+  border-radius: 2px;
+  padding: 0.75rem;
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+/* ── Site Posts table columns ────────────────────────────────────────────── */
+
+.siteColHeader { /* inherits s.tableHeader */ }
+
+.siteColDate    { flex: 0 0 110px; min-width: 0; }
+.siteColTitle   { flex: 1 1 180px; min-width: 0; display: flex; align-items: center; gap: 0.4rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.siteColStatus  { flex: 0 0 90px;  min-width: 0; }
+.siteColPostedBy{ flex: 0 0 180px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.pinnedStar { color: var(--logic-lime); flex-shrink: 0; }
+
+/* Deleted row — muted to distinguish from live */
+.siteRowDeleted { opacity: 0.55; }
+.siteRowDeleted:hover { opacity: 0.75; }
+
+@media (max-width: 768px) {
+  .siteColPostedBy { display: none; }
+}
+@media (max-width: 520px) {
+  .siteColStatus { display: none; }
+}
+
+/* ── Recipients toggle (collapsible) ─────────────────────────────────────── */
+
+.recipientsToggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--border-2);
+  padding: 0.4rem 0 0.45rem;
+  cursor: pointer;
+  color: inherit;
+  text-align: left;
+  transition: border-color 0.12s;
+}
+.recipientsToggle:hover { border-color: var(--border); }
+
+.recipientsToggleRight {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+  color: var(--white-35);
+}
+
+.chevronOpen {
+  transform: rotate(180deg);
+  transition: transform 0.2s ease;
+}
+
+.recipientCopyRow {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0.4rem 0.75rem 0.4rem;
+  border-top: 1px solid var(--border-2);
+}
+
+/* ── Site post edit modal body ────────────────────────────────────────────── */
+
+.editModalBody {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+  padding-bottom: 0.5rem;
+}
+
+.inlineError {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 0.8rem;
+  border-radius: 2px;
+  font-size: 0.85rem;
+  background: rgba(var(--danger-rgb),0.08);
+  border: 1px solid rgba(var(--danger-rgb),0.25);
+  color: var(--danger);
+}
+
+/* ── Mobile secondary context (date + status below title in table rows) ─────── */
+
+.mobileMeta {
+  display: none;
+  width: 100%;
+  font-family: var(--font-data);
+  font-size: 0.68rem;
+  color: var(--data-gray);
+  margin-top: 0.1rem;
+  white-space: normal;
+}
+
 /* ── Responsive ──────────────────────────────────────────────────────────── */
 
 @media (max-width: 640px) {
-  .pageHeader { align-items: flex-start; }
-  .headerLeft { align-items: flex-start; }
-  .pageTitle { font-size: 1.45rem; }
+  /* Match TournamentAdminUI header proportions on mobile */
+  .pageHeader  { align-items: center; flex-wrap: nowrap; }
+  .headerLeft  { align-items: center; }
+  .headerIcon  { width: 28px; height: 28px; }
+  .pageSub     { display: none; }
+  .pageTitle   { font-size: 0.95rem; }
+  .headerBtnLabel { display: none; }  /* icon-only CTA on mobile */
+  /* Compose / channel layout */
   .composePanel { padding: 1rem; gap: 1rem; }
   .channelDesc { display: none; }
   .channelOptions { padding-left: 1.2rem; }
@@ -522,4 +851,12 @@
   .filterTabs { flex-wrap: wrap; }
   .composeActions { flex-wrap: wrap; }
   .composeActions .btn { flex: 1 1 auto; justify-content: center; }
+}
+
+@media (max-width: 520px) {
+  /* Show date+status sub-line when columns are hidden */
+  .mobileMeta { display: block; }
+  /* Allow title cells to wrap for the sub-line */
+  .siteColTitle  { flex-wrap: wrap; white-space: normal; overflow: visible; }
+  .emailColSubject { flex-wrap: wrap; white-space: normal; overflow: visible; }
 }

@@ -1,4 +1,4 @@
-.page { max-width: 1180px; }
+﻿.page { max-width: 1180px; }
 
 .header {
   border-bottom: 1px solid rgba(var(--logic-lime-rgb), 0.3);
@@ -70,7 +70,7 @@
 }
 
 .metricWarn strong {
-  color: #fbbf24;
+  color: var(--warning);
 }
 
 .attentionStrip {
@@ -122,7 +122,7 @@
   padding: 0.38rem 0.65rem;
   border: 1px solid rgba(251, 191, 36, 0.4);
   background: rgba(251, 191, 36, 0.08);
-  color: #fbbf24;
+  color: var(--warning);
   cursor: pointer;
 }
 
@@ -329,7 +329,7 @@
 }
 
 .badgePastDue {
-  color: #f87171;
+  color: var(--danger);
   border-color: rgba(248, 113, 113, 0.3);
   background: rgba(248, 113, 113, 0.06);
 }
@@ -535,4 +535,50 @@
   letter-spacing: 0.08em;
   color: var(--logic-lime);
   opacity: 0.7;
+}
+
+/* ── Founding Season ──────────────────────────────────────────────────────── */
+.metricHighlight {
+  border-color: rgba(var(--logic-lime-rgb), 0.5);
+  background: rgba(var(--logic-lime-rgb), 0.06);
+}
+
+.metricHighlight strong {
+  color: var(--logic-lime);
+}
+
+.foundingBadge {
+  display: inline-block;
+  font-family: var(--font-data);
+  font-size: 0.5rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 0.18rem 0.45rem;
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.45);
+  color: var(--logic-lime);
+  background: rgba(var(--logic-lime-rgb), 0.07);
+  white-space: nowrap;
+}
+
+.filterCheckbox {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: var(--font-data);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--data-gray);
+  cursor: pointer;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.filterCheckbox input[type='checkbox'] {
+  accent-color: var(--logic-lime);
+  width: 13px;
+  height: 13px;
+  cursor: pointer;
 }

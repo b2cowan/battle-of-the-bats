@@ -1,4 +1,4 @@
-/* ── Page shell ────────────────────────────────────────────────────────────── */
+﻿/* ── Page shell ────────────────────────────────────────────────────────────── */
 
 .page { max-width: 1180px; }
 
@@ -413,13 +413,13 @@
 }
 
 .selectInput option {
-  background: #0f172a;
+  background: var(--structural-slate);
   color: #f8fafc;
 }
 
 .selectInput option:checked {
   background: #2563eb;
-  color: #ffffff;
+  color: var(--white);
 }
 
 .textArea {
@@ -854,7 +854,7 @@
   padding: 0.15rem 0.45rem;
   border: 1px solid rgba(251, 191, 36, 0.34);
   background: rgba(251, 191, 36, 0.07);
-  color: #fbbf24;
+  color: var(--warning);
   font-family: var(--font-data);
   font-size: 0.58rem;
   font-weight: 700;
@@ -867,7 +867,7 @@
   display: block;
   font-family: var(--font-data);
   font-size: 0.75rem;
-  color: #fbbf24;
+  color: var(--warning);
 }
 
 .compactChange {
@@ -952,7 +952,7 @@
   padding: 0.2rem 0.5rem;
   border: 1px solid rgba(251, 191, 36, 0.35);
   background: rgba(251, 191, 36, 0.07);
-  color: #fbbf24;
+  color: var(--warning);
 }
 
 .badgeLiveEnv {
@@ -1288,7 +1288,7 @@
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #fbbf24;
+  color: var(--warning);
 }
 
 .priceSlotRow {
@@ -1322,7 +1322,7 @@
   font-family: var(--font-data);
   font-size: 0.6rem;
   line-height: 1.35;
-  color: #fbbf24;
+  color: var(--warning);
 }
 
 .priceInput {
@@ -1459,7 +1459,7 @@
 
 .errorCell {
   font-size: 0.65rem;
-  color: #f87171;
+  color: var(--danger);
   padding-left: 0.75rem;
 }
 

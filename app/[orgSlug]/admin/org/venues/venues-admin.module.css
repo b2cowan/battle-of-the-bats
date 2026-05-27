@@ -151,7 +151,8 @@
 
 .facilityName {
   flex: 1;
-  font-size: 0.875rem;
+  font-family: var(--font-data);
+  font-size: 0.82rem;
   color: var(--white-80);
   min-width: 0;
 }
@@ -422,7 +423,30 @@
   padding: 0.75rem 1.5rem 1rem !important;
 }
 
+/* Mobile-only add facility button (replaces the inline AddFacilityRow) */
+.mobileAddFacilityBtn {
+  width: 100%;
+  justify-content: center;
+  margin-top: 0.5rem;
+}
+
+/* Venue-level action bar inside the expanded area */
+.venueActionsBar {
+  display: flex;
+  align-items: stretch;  /* all buttons the same height */
+  gap: 0.35rem;
+  padding-bottom: 0.6rem;
+  margin-bottom: 0.5rem;
+  border-bottom: 1px solid rgba(var(--blueprint-blue-rgb), 0.15);
+}
+
+.venueActionsBar :global(.btn) {
+  flex: 1;                /* span full width equally */
+  justify-content: center;
+}
+
 @media (max-width: 600px) {
+  /* Hide address — name + facility count + chevron stay on one line */
   .venueColAddress { display: none; }
 }
 
@@ -495,4 +519,64 @@
     min-height: 44px;
     justify-content: center;
   }
+}
+
+/* ── Narrow mobile (< 600px) — overrides the 760px stacking above ────────── */
+@media (max-width: 600px) {
+  /* Add Facility: 2-row grid
+     Row 1: facility name (spans both cols)
+     Row 2: type select (col 1) + button (col 2) */
+  .addFacilityRow {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-areas:
+      "name name"
+      "type btn";
+    gap: 0.4rem;
+  }
+
+  /* display: contents makes facilityNameWrap + select direct grid children */
+  .addFacilityInputs {
+    display: contents;
+  }
+
+  /* facilityNameWrap is the direct grid child — spans the full "name name" row */
+  .facilityNameWrap {
+    grid-area: name;
+    min-width: 0;
+  }
+
+  .addFacilityName {
+    width: 100%;
+    font-size: 0.78rem;
+    padding: 0.3rem 0.62rem;
+    min-height: unset;
+  }
+
+  /* Row 2: type and button share the same 28px height */
+  .addFacilityType {
+    grid-area: type;
+    width: 100%;
+    font-size: 0.78rem;
+    padding: 0 0.62rem;
+    height: 28px;
+    min-height: unset;
+  }
+
+  .addFacilityActions {
+    grid-area: btn;
+    width: auto;
+    display: flex;
+  }
+
+  .addFacilityActions :global(.btn) {
+    flex: unset;
+    height: 28px;
+    min-height: unset;
+    white-space: nowrap;
+    padding: 0 0.65rem;
+  }
+
+  /* Add Venue header button: icon-only — hide text label */
+  .addVenueLabel { display: none; }
 }

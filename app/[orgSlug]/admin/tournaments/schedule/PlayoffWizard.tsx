@@ -1,6 +1,6 @@
 'use client';
 import React, { useState, useEffect } from 'react';
-import { Trophy, Check, X, Calendar, AlertCircle, ChevronUp, ChevronDown } from 'lucide-react';
+import { Trophy, Check, X, Calendar, AlertCircle } from 'lucide-react';
 import { getTournament } from '@/lib/db';
 import { Division, Team, Venue, PlayoffConfig, Tournament } from '@/lib/types';
 import { formatPoolName } from '@/lib/utils';
@@ -57,24 +57,6 @@ export default function PlayoffWizard({ division, tournamentId, orgSlug, onClose
   }, [division.pools?.length]);
 
 
-
-  const breakerLabels: Record<string, string> = {
-    h2h: 'Head-to-Head',
-    rd: 'Run Diff',
-    rf: 'Runs For',
-    ra: 'Runs Against'
-  };
-
-  function moveBreaker(index: number, direction: 'up' | 'down') {
-    const newBreakers = [...config.tieBreakers];
-    const targetIndex = direction === 'up' ? index - 1 : index + 1;
-    if (targetIndex < 0 || targetIndex >= newBreakers.length) return;
-    
-    const temp = newBreakers[index];
-    newBreakers[index] = newBreakers[targetIndex];
-    newBreakers[targetIndex] = temp;
-    setConfig({ ...config, tieBreakers: newBreakers });
-  }
 
   function generatePreview() {
     const games: any[] = [];
@@ -409,54 +391,20 @@ export default function PlayoffWizard({ division, tournamentId, orgSlug, onClose
               )}
             </section>
 
-            <div className="divider" style={{ margin: '0.5rem 0' }}></div>
-
-            {/* Step 2: Tie-Breakers */}
-            <section>
-              <h4 className="text-label" style={{ marginBottom: '0.75rem', opacity: 0.5 }}>2. Seeding Hierarchy (Tie-Breakers)</h4>
-              
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', maxWidth: '500px' }}>
-                {config.tieBreakers.map((b, i) => (
-                  <div key={b} className="flex-between" style={{ background: 'var(--surface)', padding: '0.6rem 0.85rem', borderRadius: '2px', border: '1px solid var(--border)' }}>
-                    <div className="flex gap-3 items-center">
-                      <span style={{ 
-                        fontSize: '0.75rem', 
-                        fontWeight: 900,
-                        color: 'var(--logic-lime)',
-                        minWidth: '14px'
-                      }}>{i + 1}</span>
-                      <span className="font-bold" style={{ fontSize: '0.9rem' }}>{breakerLabels[b]}</span>
-                    </div>
-                    <div className="flex gap-1">
-                      <button className="btn btn-ghost btn-data" style={{ padding: '0.2rem' }} onClick={() => moveBreaker(i, 'up')} disabled={i === 0}>
-                        <ChevronUp size={14} />
-                      </button>
-                      <button className="btn btn-ghost btn-data" style={{ padding: '0.2rem' }} onClick={() => moveBreaker(i, 'down')} disabled={i === config.tieBreakers.length - 1}>
-                        <ChevronDown size={14} />
-                      </button>
-                    </div>
-                  </div>
-                ))}
+            <div style={{ marginTop: '1.5rem', padding: '1.25rem', background: 'rgba(var(--blueprint-blue-rgb), 0.08)', borderRadius: '2px', border: '1px solid rgba(var(--blueprint-blue-rgb), 0.25)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <h4 className="font-bold text-sm text-primary-light" style={{ marginBottom: '0.25rem' }}>Configure Brackets</h4>
+                <p className="text-muted text-xs">Generate the initial bracket layout based on your selections above. <br/><strong>Warning:</strong> Clicking this will reset the Custom Builder canvas.</p>
               </div>
-              <p className="text-muted mt-3" style={{ fontSize: '0.8rem', fontStyle: 'italic', opacity: 0.7 }}>
-                Note: If 3 or more teams are tied, Head-to-Head is automatically skipped.
-              </p>
-
-              <div style={{ marginTop: '2rem', padding: '1.25rem', background: 'rgba(var(--blueprint-blue-rgb), 0.08)', borderRadius: '2px', border: '1px solid rgba(var(--blueprint-blue-rgb), 0.25)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div>
-                  <h4 className="font-bold text-sm text-primary-light" style={{ marginBottom: '0.25rem' }}>Configure Brackets</h4>
-                  <p className="text-muted text-xs">Generate the initial bracket layout based on your selections above. <br/><strong>Warning:</strong> Clicking this will reset the Custom Builder canvas.</p>
-                </div>
-                <button className="btn btn-primary" onClick={generatePreview}>Configure Brackets</button>
-              </div>
-            </section>
+              <button className="btn btn-primary" onClick={generatePreview}>Configure Brackets</button>
+            </div>
 
             <div className="divider"></div>
 
-            {/* Step 3: Game Slots */}
+            {/* Step 2: Game Slots */}
             <section>
               <div className="flex-between" style={{ marginBottom: '1.5rem' }}>
-                <h4 className="text-label" style={{ opacity: 0.5 }}>3. Game Slots & Scheduling</h4>
+                <h4 className="text-label" style={{ opacity: 0.5 }}>2. Game Slots & Scheduling</h4>
                 <span className="badge badge-neutral">{preview.length} Games</span>
               </div>
 

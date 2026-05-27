@@ -601,7 +601,7 @@
   padding: 0.25rem 0.6rem;
   background: transparent;
   border: 1px solid rgba(248, 113, 113, 0.35);
-  color: #f87171;
+  color: var(--danger);
   cursor: pointer;
   transition: background 0.15s, border-color 0.15s;
   white-space: nowrap;
@@ -609,7 +609,7 @@
 
 .revokeBtn:hover {
   background: rgba(248, 113, 113, 0.08);
-  border-color: #f87171;
+  border-color: var(--danger);
 }
 
 .confirmLabel {
@@ -627,8 +627,8 @@
   text-transform: uppercase;
   padding: 0.25rem 0.6rem;
   background: rgba(248, 113, 113, 0.1);
-  border: 1px solid #f87171;
-  color: #f87171;
+  border: 1px solid var(--danger);
+  color: var(--danger);
   cursor: pointer;
   white-space: nowrap;
 }
@@ -906,7 +906,7 @@
 .rowError {
   font-family: var(--font-data);
   font-size: 0.6rem;
-  color: #f87171;
+  color: var(--danger);
 }
 
 .warningNote {

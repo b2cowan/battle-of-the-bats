@@ -65,7 +65,10 @@ export default function TournamentNotificationPreferencesPage() {
       setError(null);
       try {
         const res = await fetch(`/api/admin/tournaments/${tournamentId}/notification-preferences`);
-        if (!res.ok) throw new Error('Failed to load preferences.');
+        if (!res.ok) {
+          const body = await res.json().catch(() => ({})) as { error?: string };
+          throw new Error(body.error ?? `Server error ${res.status}`);
+        }
         const { preferences } = await res.json() as { preferences: TournamentPref[] };
 
         const map = new Map<NotificationEventType, boolean>();
@@ -186,7 +189,7 @@ export default function TournamentNotificationPreferencesPage() {
           <thead>
             <tr>
               <th className={styles.thEvent}>Event</th>
-              <th className={styles.thMuted}>Muted</th>
+              <th className={styles.thMuted}>Receive</th>
             </tr>
           </thead>
           <tbody>
@@ -207,9 +210,9 @@ export default function TournamentNotificationPreferencesPage() {
                       </td>
                       <td className={styles.tdMuted}>
                         <Toggle
-                          checked={optedOut}
-                          onChange={v => handleEventToggle(et, v)}
-                          label={`Mute ${NOTIFICATION_EVENT_LABELS[et]} for this tournament`}
+                          checked={!optedOut}
+                          onChange={v => handleEventToggle(et, !v)}
+                          label={`Receive ${NOTIFICATION_EVENT_LABELS[et]} notifications for this tournament`}
                           disabled={saving}
                         />
                       </td>

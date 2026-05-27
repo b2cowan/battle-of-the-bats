@@ -1,7 +1,8 @@
 ﻿'use client';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ChevronDown, ChevronUp, MapPin, Pencil, X, AlertCircle, Trash2, Check } from 'lucide-react';
-import { Game, Team, Division, Venue } from '@/lib/types';
+import { ChevronDown, ChevronUp, MapPin, Pencil, X, AlertCircle, Trash2, Check, AlertTriangle } from 'lucide-react';
+import { Game, Team, Division, Venue, Tournament } from '@/lib/types';
+import { checkVenueConflict, buildConflictMap, type ConflictResult, type ConflictKind } from '@/lib/schedule-conflict';
 import { formatTime, formatPoolName } from '@/lib/utils';
 import { scoreSubmissionSummary } from '@/lib/tournament-score-audit';
 import { Pool } from '@/lib/types';
@@ -25,6 +26,8 @@ interface GameListProps {
   onSaveScore?: (gameId: string, homeScore: number, awayScore: number) => Promise<void>;
   onCreateVenue?: () => void;
   mode: 'planning' | 'scoring';
+  /** Tournament context used for conflict detection timing resolution. */
+  tournament?: Tournament | null;
 }
 
 type EditFields = { date: string; time: string; venueId: string; venueFacilityId: string; notes: string; homeTeamId: string; awayTeamId: string };
@@ -33,7 +36,7 @@ type ScoreFields = { home: string; away: string };
 
 export default function GameList({
   games, teams, divisions, venues, viewMode, groupByPool, pools: poolsProp,
-  onEdit, onFinalize, onDelete, onCancel, onSchedule, onSave, onSaveScore, onCreateVenue, mode
+  onEdit, onFinalize, onDelete, onCancel, onSchedule, onSave, onSaveScore, onCreateVenue, mode, tournament
 }: GameListProps) {
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [editState, setEditState] = useState<Record<string, EditFields>>({});
@@ -141,6 +144,63 @@ export default function GameList({
   });
 
   const today = useMemo(() => new Date().toISOString().split('T')[0], []);
+
+  // ── Conflict maps ─────────────────────────────────────────────────────────
+  // Read-mode badges: which saved games already conflict with each other.
+  const conflictMap = useMemo((): Map<string, ConflictKind> => {
+    if (!tournament || mode !== 'planning') return new Map();
+    return buildConflictMap(
+      games.map(g => ({
+        id: g.id,
+        gameDate: g.date ?? null,
+        startTime: g.time ?? null,
+        status: g.status ?? null,
+        venueId: g.venueId ?? null,
+        venueFacilityId: g.venueFacilityId ?? null,
+        divisionId: g.divisionId ?? null,
+      })),
+      divisions,
+      tournament,
+    );
+  }, [games, divisions, tournament, mode]);
+
+  // Inline-edit conflicts: conflict result for any currently expanded+editing row.
+  const inlineConflicts = useMemo((): Map<string, ConflictResult | null> => {
+    if (mode !== 'planning') return new Map();
+    const result = new Map<string, ConflictResult | null>();
+    for (const gameId of expanded) {
+      const edit = editState[gameId];
+      if (!edit || !edit.date || !edit.time) continue;
+      if (!edit.venueId && !edit.venueFacilityId) continue;
+      const game = games.find(g => g.id === gameId);
+      if (!game) continue;
+
+      const conflict = checkVenueConflict({
+        proposedGame: {
+          id: gameId,
+          gameDate: edit.date,
+          startTime: edit.time,
+          status: 'scheduled',
+          venueId: edit.venueId || null,
+          venueFacilityId: edit.venueFacilityId || null,
+          divisionId: game.divisionId || null,
+        },
+        allGames: games.map(g => ({
+          id: g.id,
+          gameDate: g.date ?? null,
+          startTime: g.time ?? null,
+          status: g.status ?? null,
+          venueId: g.venueId ?? null,
+          venueFacilityId: g.venueFacilityId ?? null,
+          divisionId: g.divisionId ?? null,
+        })),
+        divisions,
+        tournament: tournament ?? null,
+      });
+      result.set(gameId, conflict);
+    }
+    return result;
+  }, [expanded, editState, games, divisions, tournament, mode]);
 
   function statusBadge(status: string) {
     if (status === 'completed') return <span className="badge badge-success">Final</span>;
@@ -369,8 +429,12 @@ export default function GameList({
       setExpanded(prev => { const next = new Set(prev); next.delete(g.id); return next; });
     };
 
+    const inlineConflict = inlineConflicts.get(g.id) ?? null;
+
     const handleSave = async () => {
       if (!onSave) return;
+      // Hard block: do not allow saving when a true overlap exists.
+      if (inlineConflict?.kind === 'overlap') return;
       setSaving(prev => new Set(prev).add(g.id));
       setSaveErrors(prev => { const n = { ...prev }; delete n[g.id]; return n; });
       try {
@@ -449,6 +513,28 @@ export default function GameList({
             {(g.homeSlotId || g.awaySlotId) && !g.isPlayoff && (
               <span className="badge badge-neutral" style={{ fontSize: '0.6rem', letterSpacing: '0.04em' }}>SLOT</span>
             )}
+            {/* Conflict badge — read mode only (not while editing) */}
+            {!isExpanded && (() => {
+              const kind = conflictMap.get(g.id);
+              if (!kind) return null;
+              const isOverlap = kind === 'overlap';
+              return (
+                <span
+                  title={isOverlap ? 'Venue conflict: game windows overlap' : 'Buffer zone warning: games are too close together'}
+                  style={{
+                    display: 'inline-flex', alignItems: 'center', gap: '0.2rem',
+                    fontSize: '0.62rem', fontWeight: 700, letterSpacing: '0.04em',
+                    color: isOverlap ? '#f87171' : '#fbbf24',
+                    background: isOverlap ? 'rgba(239,68,68,0.1)' : 'rgba(251,191,36,0.1)',
+                    border: `1px solid ${isOverlap ? 'rgba(239,68,68,0.35)' : 'rgba(251,191,36,0.3)'}`,
+                    borderRadius: '2px', padding: '1px 5px',
+                  }}
+                >
+                  <AlertTriangle size={9} />
+                  {isOverlap ? 'CONFLICT' : 'BUFFER'}
+                </span>
+              );
+            })()}
           </div>
 
           {/* Chevron — hidden for completed games */}
@@ -599,6 +685,38 @@ export default function GameList({
               </div>
             </div>
 
+            {/* Inline conflict banner */}
+            {inlineConflict && (
+              <div style={{
+                margin: '0 0 0.5rem',
+                padding: '0.55rem 0.75rem',
+                borderRadius: '2px',
+                background: inlineConflict.kind === 'overlap' ? 'rgba(239,68,68,0.08)' : 'rgba(251,191,36,0.08)',
+                border: `1px solid ${inlineConflict.kind === 'overlap' ? 'rgba(239,68,68,0.4)' : 'rgba(251,191,36,0.35)'}`,
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                  <p style={{
+                    fontWeight: 700, fontSize: '0.78rem', margin: 0,
+                    color: inlineConflict.kind === 'overlap' ? '#f87171' : '#fbbf24',
+                    display: 'flex', alignItems: 'center', gap: '0.3rem',
+                  }}>
+                    <AlertTriangle size={12} />
+                    {inlineConflict.kind === 'overlap'
+                      ? `${inlineConflict.conflictingDivisionName} overlaps this slot`
+                      : `${inlineConflict.conflictingDivisionName} — within buffer window`}
+                  </p>
+                  <button
+                    type="button"
+                    className="btn btn-outline btn-data"
+                    style={{ fontSize: '0.75rem', height: '26px', padding: '0 0.5rem', whiteSpace: 'nowrap' }}
+                    onClick={() => setEditState(prev => ({ ...prev, [g.id]: { ...prev[g.id], time: inlineConflict.availableAt } }))}
+                  >
+                    Use {inlineConflict.availableAt} ↑
+                  </button>
+                </div>
+              </div>
+            )}
+
             {/* Footer */}
             <div className={styles.inlineFormFooter}>
               <div className={styles.inlineFormActions}>
@@ -624,13 +742,25 @@ export default function GameList({
                 <button className="btn btn-ghost btn-data" onClick={handleDiscard}>
                   Discard
                 </button>
-                <button
-                  className="btn btn-lime btn-data"
-                  disabled={isSaving || !onSave}
-                  onClick={handleSave}
-                >
-                  {isSaving ? 'Saving…' : <><Check size={13} /> Save</>}
-                </button>
+                {inlineConflict?.kind === 'buffer' ? (
+                  <button
+                    className="btn btn-outline btn-data"
+                    style={{ borderColor: 'rgba(251,191,36,0.5)', color: '#fbbf24' }}
+                    disabled={isSaving || !onSave}
+                    onClick={handleSave}
+                  >
+                    {isSaving ? 'Saving…' : <><Check size={13} /> Save Anyway</>}
+                  </button>
+                ) : (
+                  <button
+                    className="btn btn-lime btn-data"
+                    disabled={isSaving || !onSave || inlineConflict?.kind === 'overlap'}
+                    title={inlineConflict?.kind === 'overlap' ? 'Resolve the venue conflict before saving' : undefined}
+                    onClick={handleSave}
+                  >
+                    {isSaving ? 'Saving…' : <><Check size={13} /> Save</>}
+                  </button>
+                )}
               </div>
             </div>
           </div>

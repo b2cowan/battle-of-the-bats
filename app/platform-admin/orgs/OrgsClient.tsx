@@ -11,11 +11,12 @@ import styles from './orgs.module.css';
 // ── Export ────────────────────────────────────────────────────────────────────
 
 const ORGS_EXPORT_COLS: ExportColumnDef[] = [
-  { label: 'Name',   key: 'name',               format: 'text' },
-  { label: 'Slug',   key: 'slug',               format: 'text' },
-  { label: 'Plan',   key: 'planLabel',          format: 'text' },
-  { label: 'Status', key: 'subscriptionStatus', format: 'text' },
-  { label: 'Created', key: 'createdAt',         format: 'text' },
+  { label: 'Name',            key: 'name',               format: 'text' },
+  { label: 'Slug',            key: 'slug',               format: 'text' },
+  { label: 'Plan',            key: 'planLabel',          format: 'text' },
+  { label: 'Status',          key: 'subscriptionStatus', format: 'text' },
+  { label: 'Founding Season', key: 'isFoundingSeason',   format: 'text' },
+  { label: 'Created',         key: 'createdAt',          format: 'text' },
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -29,6 +30,7 @@ interface OrgRow {
   createdAt: string;
   enabledAddons: string[];
   internalNotes: string | null;
+  isFoundingSeason: boolean;
 }
 
 interface Props {
@@ -61,9 +63,10 @@ function statusClass(status: string) {
 }
 
 export default function OrgsClient({ orgs, initialStatus }: Props) {
-  const [search,       setSearch]       = useState('');
-  const [planFilter,   setPlanFilter]   = useState('');
-  const [statusFilter, setStatusFilter] = useState(initialStatus);
+  const [search,              setSearch]              = useState('');
+  const [planFilter,          setPlanFilter]          = useState('');
+  const [statusFilter,        setStatusFilter]        = useState(initialStatus);
+  const [foundingSeasonOnly,  setFoundingSeasonOnly]  = useState(false);
 
   const statusCounts = orgs.reduce<Record<string, number>>((acc, org) => {
     acc[org.subscriptionStatus] = (acc[org.subscriptionStatus] ?? 0) + 1;
@@ -73,14 +76,16 @@ export default function OrgsClient({ orgs, initialStatus }: Props) {
   const canceledCount = statusCounts.canceled ?? 0;
   const notesCount = orgs.filter(org => org.internalNotes).length;
   const activeOrTrialing = (statusCounts.active ?? 0) + (statusCounts.trialing ?? 0);
+  const foundingSeasonCount = orgs.filter(org => org.isFoundingSeason).length;
 
   const filteredOrgs = orgs.filter(o => {
     if (search) {
       const q = search.toLowerCase();
       if (!o.name.toLowerCase().includes(q) && !o.slug.toLowerCase().includes(q)) return false;
     }
-    if (planFilter   && o.planId             !== planFilter)   return false;
-    if (statusFilter && o.subscriptionStatus !== statusFilter) return false;
+    if (planFilter         && o.planId             !== planFilter)   return false;
+    if (statusFilter       && o.subscriptionStatus !== statusFilter) return false;
+    if (foundingSeasonOnly && !o.isFoundingSeason)                   return false;
     return true;
   });
 
@@ -92,6 +97,7 @@ export default function OrgsClient({ orgs, initialStatus }: Props) {
       slug:               o.slug,
       planLabel:          PLAN_LABELS[o.planId] ?? o.planId,
       subscriptionStatus: o.subscriptionStatus,
+      isFoundingSeason:   o.isFoundingSeason ? 'Yes' : 'No',
       createdAt:          fmtDate(o.createdAt),
     }));
   }
@@ -149,9 +155,9 @@ export default function OrgsClient({ orgs, initialStatus }: Props) {
           <span className={styles.metricLabel}>Active / Trial</span>
           <strong>{activeOrTrialing}</strong>
         </div>
-        <div className={styles.metric}>
-          <span className={styles.metricLabel}>Internal Notes</span>
-          <strong>{notesCount}</strong>
+        <div className={`${styles.metric} ${foundingSeasonCount > 0 ? styles.metricHighlight : ''}`}>
+          <span className={styles.metricLabel}>Founding Season</span>
+          <strong>{foundingSeasonCount}</strong>
         </div>
       </section>
 
@@ -216,10 +222,18 @@ export default function OrgsClient({ orgs, initialStatus }: Props) {
             <option value="">All statuses</option>
             {STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
           </select>
-          {(search || planFilter || statusFilter) && (
+          <label className={styles.filterCheckbox}>
+            <input
+              type="checkbox"
+              checked={foundingSeasonOnly}
+              onChange={e => setFoundingSeasonOnly(e.target.checked)}
+            />
+            Founding Season only
+          </label>
+          {(search || planFilter || statusFilter || foundingSeasonOnly) && (
             <button
               className={styles.filterClear}
-              onClick={() => { setSearch(''); setPlanFilter(''); setStatusFilter(''); }}
+              onClick={() => { setSearch(''); setPlanFilter(''); setStatusFilter(''); setFoundingSeasonOnly(false); }}
             >
               Clear
             </button>
@@ -246,6 +260,7 @@ export default function OrgsClient({ orgs, initialStatus }: Props) {
                 <th>Slug</th>
                 <th>Plan</th>
                 <th>Status</th>
+                <th>Cohort</th>
                 <th>Created</th>
                 <th></th>
               </tr>
@@ -253,7 +268,7 @@ export default function OrgsClient({ orgs, initialStatus }: Props) {
             <tbody>
               {filteredOrgs.length === 0 && (
                 <tr>
-                  <td colSpan={6} className={styles.emptyCell}>No organizations match the current filter.</td>
+                  <td colSpan={7} className={styles.emptyCell}>No organizations match the current filter.</td>
                 </tr>
               )}
               {filteredOrgs.map(org => (
@@ -272,6 +287,11 @@ export default function OrgsClient({ orgs, initialStatus }: Props) {
                     <span className={`${styles.badge} ${statusClass(org.subscriptionStatus)}`}>
                       {org.subscriptionStatus}
                     </span>
+                  </td>
+                  <td>
+                    {org.isFoundingSeason && (
+                      <span className={styles.foundingBadge}>Founding</span>
+                    )}
                   </td>
                   <td className={styles.dateCell}>{fmtDate(org.createdAt)}</td>
                   <td className={styles.actionsCell}>

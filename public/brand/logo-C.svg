@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+
+  <!-- Background -->
+  <rect width="512" height="512" fill="#0a0a0f"/>
+
+  <!-- Blueprint data-grid overlay (3×3) -->
+  <!-- Horizontal -->
+  <line x1="0"   y1="171" x2="512" y2="171" stroke="#1E3A8A" stroke-width="1" opacity="0.5"/>
+  <line x1="0"   y1="341" x2="512" y2="341" stroke="#1E3A8A" stroke-width="1" opacity="0.5"/>
+  <!-- Vertical -->
+  <line x1="171" y1="0"   x2="171" y2="512" stroke="#1E3A8A" stroke-width="1" opacity="0.5"/>
+  <line x1="341" y1="0"   x2="341" y2="512" stroke="#1E3A8A" stroke-width="1" opacity="0.5"/>
+
+  <!-- Corner dots at grid intersections — data terminal aesthetic -->
+  <circle cx="171" cy="171" r="3" fill="#1E3A8A" opacity="0.7"/>
+  <circle cx="341" cy="171" r="3" fill="#1E3A8A" opacity="0.7"/>
+  <circle cx="171" cy="341" r="3" fill="#1E3A8A" opacity="0.7"/>
+  <circle cx="341" cy="341" r="3" fill="#D9F99D" opacity="0.9"/>
+
+  <!-- Bold ">" chevron — the logic/forward mark, centered slightly left of center -->
+  <!-- Drawn as two thick lines meeting at a point -->
+  <!-- Upper arm: from (130, 110) to (310, 256) -->
+  <!-- Lower arm: from (130, 402) to (310, 256) -->
+  <polyline
+    points="130,108 318,256 130,404"
+    fill="none"
+    stroke="#D9F99D"
+    stroke-width="68"
+    stroke-linecap="square"
+    stroke-linejoin="miter"/>
+
+  <!-- Vertical accent bar on right — like a cursor/data insert mark -->
+  <rect x="360" y="130" width="14" height="252" fill="#D9F99D" opacity="0.7"/>
+
+  <!-- Tiny "HQ" label, bottom right, monospaced terminal style -->
+  <text
+    x="460" y="488"
+    font-family="'IBM Plex Mono', 'Courier New', monospace"
+    font-weight="700"
+    font-size="22"
+    fill="#1E3A8A"
+    text-anchor="middle"
+    opacity="0.8">HQ</text>
+</svg>

@@ -511,15 +511,63 @@ export async function POST(req: Request) {
       if (denied) return denied;
 
       // Whitelist known settings keys so arbitrary data can't be injected.
-      const ALLOWED_SETTINGS_KEYS = new Set(['rulesLayout', 'resourcesLayout']);
-      const RULES_LAYOUT_VALUES   = new Set(['columns', 'single']);
+      const ALLOWED_SETTINGS_KEYS = new Set([
+        'rulesLayout',
+        'resourcesLayout',
+        'game_duration_minutes',
+        'buffer_minutes',
+        // Scope controls (Phase 2 — Divisions UX Rework)
+        'game_timing_scope',
+        'tie_breakers',
+        'tie_breaker_scope',
+        'fee_scope',
+      ]);
+      const RULES_LAYOUT_VALUES     = new Set(['columns', 'single']);
       const RESOURCES_LAYOUT_VALUES = new Set(['list', 'grid']);
+      const GAME_TIMING_SCOPE_VALUES  = new Set(['tournament', 'allow_override', 'per_division']);
+      const TIE_BREAKER_SCOPE_VALUES  = new Set(['tournament', 'allow_override', 'per_division']);
+      const FEE_SCOPE_VALUES          = new Set(['tournament', 'allow_override', 'per_division', 'free']);
+      const TIE_BREAKER_VALID_VALUES  = new Set(['h2h', 'rf', 'ra', 'rd']);
 
       const sanitized: Record<string, unknown> = {};
       for (const [k, v] of Object.entries(data.settings as Record<string, unknown>)) {
         if (!ALLOWED_SETTINGS_KEYS.has(k)) continue;
         if (k === 'rulesLayout'     && !RULES_LAYOUT_VALUES.has(String(v))) continue;
         if (k === 'resourcesLayout' && !RESOURCES_LAYOUT_VALUES.has(String(v))) continue;
+        if (k === 'game_duration_minutes') {
+          const n = Number(v);
+          if (!Number.isInteger(n) || n < 1 || n > 600) continue;
+          sanitized[k] = n;
+          continue;
+        }
+        if (k === 'buffer_minutes') {
+          const n = Number(v);
+          if (!Number.isInteger(n) || n < 0 || n > 120) continue;
+          sanitized[k] = n;
+          continue;
+        }
+        if (k === 'game_timing_scope') {
+          if (v !== null && !GAME_TIMING_SCOPE_VALUES.has(String(v))) continue;
+          sanitized[k] = v ?? null;
+          continue;
+        }
+        if (k === 'tie_breaker_scope') {
+          if (v !== null && !TIE_BREAKER_SCOPE_VALUES.has(String(v))) continue;
+          sanitized[k] = v ?? null;
+          continue;
+        }
+        if (k === 'fee_scope') {
+          if (v !== null && !FEE_SCOPE_VALUES.has(String(v))) continue;
+          sanitized[k] = v ?? null;
+          continue;
+        }
+        if (k === 'tie_breakers') {
+          if (!Array.isArray(v)) continue;
+          const validated = (v as unknown[]).filter(b => TIE_BREAKER_VALID_VALUES.has(String(b))).map(String);
+          if (validated.length === 0) continue;
+          sanitized[k] = validated;
+          continue;
+        }
         sanitized[k] = v;
       }
 

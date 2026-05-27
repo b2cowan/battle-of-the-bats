@@ -77,8 +77,8 @@ const PLANS: Plan[] = [
     annualSavings: 'Save $78 - 2 months free. 14-day trial first',
     currency: 'CAD',
     period: '/mo',
-    freeNote: '14-day trial. Payment details at signup',
-    trialNote: '14-day trial',
+    freeNote: 'Free through Dec 31, 2026 · no credit card required',
+    trialNote: 'Free through Dec 31, 2026 · no credit card required',
     features: [
       'Everything in Tournament',
       'Unlimited tournament slots',
@@ -97,7 +97,7 @@ const PLANS: Plan[] = [
       'Full branding control',
       '10 staff / admin seats · unlimited officials',
     ],
-    cta: 'Start Free Trial',
+    cta: 'Start free — no credit card required',
     ctaHref: '/auth/signup',
   },
   {
@@ -250,6 +250,12 @@ export default function PricingSection({ gatingMap, onChoosePlan, currentPlan, p
                     <span className={styles.currentBadge}>Current plan</span>
                   )}
                 </div>
+                {!isGated && plan.key === 'tournament_plus' && (
+                  <div className={styles.foundingSeasonBadge}>
+                    <span className={styles.foundingSeasonBadgeLabel}>⬡ Founding Season — Free through Dec 31, 2026</span>
+                    <span className={styles.foundingSeasonBadgeSub}>Normally $39/month</span>
+                  </div>
+                )}
                 <p className={styles.planTagline}>{plan.tagline}</p>
               </div>
 

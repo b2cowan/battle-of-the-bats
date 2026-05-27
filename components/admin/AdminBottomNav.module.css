@@ -9,10 +9,11 @@
     left: 0;
     right: 0;
     z-index: 300;
-    background: rgba(20, 16, 31, 0.97);
+    /* var(--hud-surface) = #111827 = rgb(17,24,39) at 97% — preserves backdrop-filter frosted glass */
+    background: rgba(17, 24, 39, 0.97);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-    border-top: 1px solid rgba(139, 47, 201, 0.3);
+    border-top: 1px solid rgba(var(--blueprint-blue-rgb), 0.3);
     padding: 0.4rem 0 calc(0.4rem + env(safe-area-inset-bottom));
     justify-content: space-around;
     align-items: flex-start;
@@ -36,7 +37,7 @@
     min-width: 0;
   }
 
-  .tab.active { color: #c084fc; }
+  .tab.active { color: var(--logic-lime); }
   .tab:active { opacity: 0.65; }
 
   .iconWrap {
@@ -51,7 +52,7 @@
   }
 
   .tab.active .iconWrap {
-    background: rgba(139, 47, 201, 0.2);
+    background: rgba(var(--logic-lime-rgb), 0.12);
   }
 
   .activeDot {
@@ -62,8 +63,8 @@
     width: 4px;
     height: 4px;
     border-radius: 50%;
-    background: #c084fc;
-    box-shadow: 0 0 6px #c084fc;
+    background: var(--logic-lime);
+    box-shadow: 0 0 6px rgba(var(--logic-lime-rgb), 0.5);
   }
 
   .label {
@@ -93,10 +94,10 @@
     width: min(22rem, calc(100vw - 1rem));
     min-width: min(20rem, calc(100vw - 1rem));
     max-height: min(74vh, 620px);
-    background: #1A1530;
-    border: 1px solid rgba(139, 47, 201, 0.35);
+    background: var(--hud-surface);
+    border: 1px solid rgba(var(--blueprint-blue-rgb), 0.35);
     border-radius: 2px;
-    box-shadow: 0 -8px 32px rgba(0,0,0,0.65), 0 0 24px rgba(139,47,201,0.15);
+    box-shadow: 0 -8px 32px rgba(0,0,0,0.65), 0 0 24px rgba(var(--blueprint-blue-rgb), 0.1);
     overflow-y: auto;
     animation: slideUpMenu 0.18s ease;
   }
@@ -127,7 +128,7 @@
   .seasonSelect {
     appearance: none;
     background: rgba(255,255,255,0.075);
-    border: 1px solid rgba(139,47,201,0.44);
+    border: 1px solid rgba(var(--blueprint-blue-rgb), 0.44);
     border-radius: 2px;
     color: #fff;
     font-size: 0.9rem;
@@ -144,17 +145,24 @@
 
   .seasonSelect:focus {
     outline: none;
-    border-color: #c084fc;
-    box-shadow: 0 0 0 2px rgba(192, 132, 252, 0.18);
+    border-color: var(--blueprint-blue);
+    box-shadow: 0 0 0 2px rgba(var(--blueprint-blue-rgb), 0.18);
   }
 
-  .seasonSelect option { background: #1A1530; }
+  .seasonSelect option { background: var(--hud-surface); }
+
+  .switcherName {
+    font-family: var(--font-data);
+    font-size: 0.875rem;
+    color: rgba(255,255,255,0.85);
+    padding: 0.1rem 0;
+  }
 
   .seasonChevron {
     position: absolute;
     right: 0.72rem;
     pointer-events: none;
-    color: #c084fc;
+    color: var(--logic-lime);
   }
 
   .setLiveBtn {
@@ -162,10 +170,10 @@
     align-items: center;
     justify-content: center;
     gap: 0.35rem;
-    background: rgba(139,47,201,0.18);
-    border: 1px solid rgba(139,47,201,0.4);
+    background: rgba(var(--logic-lime-rgb), 0.08);
+    border: 1px solid rgba(var(--logic-lime-rgb), 0.35);
     border-radius: 2px;
-    color: #c084fc;
+    color: var(--logic-lime);
     font-size: 0.8rem;
     font-weight: 700;
     letter-spacing: 0.06em;
@@ -177,7 +185,7 @@
     transition: background 0.15s ease;
   }
 
-  .setLiveBtn:hover { background: rgba(139,47,201,0.32); }
+  .setLiveBtn:hover { background: rgba(var(--logic-lime-rgb), 0.15); }
 
   .livePill {
     font-size: 0.72rem;
@@ -217,11 +225,16 @@
     transition: background 0.15s ease, color 0.15s ease;
   }
 
-  .dropItem:hover { background: rgba(139, 47, 201, 0.12); color: #fff; }
+  .dropItem:hover { background: rgba(var(--blueprint-blue-rgb), 0.1); color: #fff; }
 
   .dropActive {
-    background: rgba(139, 47, 201, 0.15);
-    color: #c084fc;
+    background: rgba(var(--logic-lime-rgb), 0.08);
+    color: var(--logic-lime);
+  }
+
+  .dropActive:hover {
+    background: rgba(var(--logic-lime-rgb), 0.12);
+    color: var(--logic-lime);
   }
 
   .dropChevron {
@@ -235,6 +248,15 @@
     background: rgba(255, 255, 255, 0.07);
     margin: 0.2rem 0;
   }
+
+  /* ── Footer utility items (Preview Site) ──────────── */
+  .dropUtilItem {
+    color: rgba(255, 255, 255, 0.45);
+    font-size: 0.78rem;
+    font-weight: 500;
+  }
+
+  .dropUtilItem:hover { color: rgba(255, 255, 255, 0.72); background: rgba(var(--blueprint-blue-rgb), 0.07); }
 
   .dropLogout { color: #f87171; }
   .dropLogout:hover { background: rgba(239, 68, 68, 0.1); color: #f87171; }

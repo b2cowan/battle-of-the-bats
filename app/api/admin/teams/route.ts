@@ -11,6 +11,7 @@ import {
 } from '@/lib/db';
 import { hasPlanFeature, requiresTournamentPlusCopy } from '@/lib/plan-features';
 import { writePlatformEvent } from '@/lib/platform-events';
+import { notify } from '@/lib/notify';
 import {
   duplicateTournamentTeamMessage,
   findDuplicateTournamentTeam,
@@ -297,6 +298,16 @@ export async function POST(req: Request) {
         );
       }
 
+      // Notify org admins of manually-added registration (fire-and-forget)
+      notify({
+        orgId: ctx.org.id,
+        tournamentId: team.tournamentId,
+        eventType: 'registration_new',
+        title: `New registration: ${team.name.trim()}`,
+        body: `${group.name} · Added manually`,
+        link: `/${ctx.org.slug}/admin/tournaments/registrations?tournamentId=${team.tournamentId}`,
+      }).catch(console.error);
+
       return new Response(JSON.stringify({ success: true, id }), {
         status: 201,
         headers: { 'Content-Type': 'application/json' },
@@ -397,9 +408,27 @@ export async function POST(req: Request) {
       const updates = item.updates;
       if (updates.status === 'accepted' && current.status !== 'accepted') {
         await sendEmail(current.email, `Your Team Has Been Accepted — ${current.name}`, acceptanceHtml(p));
+        // Notify other org admins of the status change (fire-and-forget)
+        notify({
+          orgId: ctx.org.id,
+          tournamentId: current.tournament_id,
+          eventType: 'registration_status_changed',
+          title: `Registration accepted: ${current.name}`,
+          body: 'Team status changed to accepted',
+          link: `/${ctx.org.slug}/admin/tournaments/registrations?tournamentId=${current.tournament_id}`,
+        }).catch(console.error);
       }
       if (updates.status === 'rejected' && current.status !== 'rejected') {
         await sendEmail(current.email, `Registration Update — ${current.name}`, rejectionHtml(p));
+        // Notify other org admins of the status change (fire-and-forget)
+        notify({
+          orgId: ctx.org.id,
+          tournamentId: current.tournament_id,
+          eventType: 'registration_status_changed',
+          title: `Registration declined: ${current.name}`,
+          body: 'Team status changed to rejected',
+          link: `/${ctx.org.slug}/admin/tournaments/registrations?tournamentId=${current.tournament_id}`,
+        }).catch(console.error);
       }
       if ((updates.payment_status === 'paid' || updates.paymentStatus === 'paid') && current.payment_status !== 'paid') {
         await sendEmail(current.email, `Payment Recorded — ${current.name}`, paymentConfirmationHtml(p));

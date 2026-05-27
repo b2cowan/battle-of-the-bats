@@ -4,6 +4,7 @@ import { hasCapability } from '@/lib/roles';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { getLeagueSeasonById, createRegistration, createLeagueRegistrationFeeEntry } from '@/lib/db';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { notify } from '@/lib/notify';
 import type { LeagueRegistrationStatus } from '@/lib/types';
 
 function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
@@ -141,6 +142,15 @@ export async function POST(
       'pending', ctx!.user.id,
     ).catch(e => console.error('[ledger] manual add fee entry failed', e));
   }
+
+  // Notify org admins of new house league registration (fire-and-forget)
+  notify({
+    orgId: ctx!.org.id,
+    eventType: 'house_league_registration_new',
+    title: `New registration: ${playerFirstName} ${playerLastName}`,
+    body: season.name,
+    link: `/${ctx!.org.slug}/admin/house-league/seasons/${seasonId}/registrations`,
+  }).catch(console.error);
 
   return NextResponse.json(registration, { status: 201 });
 }

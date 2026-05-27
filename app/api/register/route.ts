@@ -7,6 +7,7 @@ import { getTournamentRegistrationFields, saveTournamentRegistrationFieldAnswers
 import { hasPlanFeature } from '@/lib/plan-features';
 import { writePlatformEvent } from '@/lib/platform-events';
 import { linkTournamentRegistrationToBasicCoachTeam } from '@/lib/basic-coach-teams';
+import { notify } from '@/lib/notify';
 import type { OrgPlan, TournamentRegistrationField } from '@/lib/types';
 import {
   duplicateTournamentTeamMessage,
@@ -49,6 +50,7 @@ type DivisionRow = {
 
 type OrganizationRow = {
   id: string;
+  slug: string;
   contact_email: string | null;
   is_public: boolean | null;
   plan_id: OrgPlan;
@@ -270,7 +272,7 @@ export async function POST(req: NextRequest) {
     if (tournament.org_id) {
       const { data: orgData, error: orgError } = await supabaseAdmin
         .from('organizations')
-        .select('id, contact_email, is_public, plan_id, subscription_status')
+        .select('id, slug, contact_email, is_public, plan_id, subscription_status')
         .eq('id', tournament.org_id)
         .maybeSingle<OrganizationRow>();
 
@@ -487,6 +489,18 @@ export async function POST(req: NextRequest) {
         adminNotificationHtml({ teamName, coachName, email, divisionName, tournamentName })
       ),
     ]);
+
+    // Notify org admins via bell / push / email per their preferences (fire-and-forget)
+    if (tournament.org_id && organization?.slug) {
+      notify({
+        orgId: tournament.org_id,
+        tournamentId,
+        eventType: 'registration_new',
+        title: `New registration: ${teamName}`,
+        body: `${divisionName}${isWaitlist ? ' · Waitlist' : ''}`,
+        link: `/${organization.slug}/admin/tournaments/registrations?tournamentId=${tournamentId}`,
+      }).catch(console.error);
+    }
 
     return NextResponse.json({ ok: true, id: data.id, status: finalStatus });
   } catch (e) {

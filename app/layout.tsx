@@ -5,6 +5,7 @@ import SiteChrome from '@/components/SiteChrome';
 import Footer from '@/components/Footer';
 import BottomNav from '@/components/BottomNav';
 import { OrgNavProvider } from '@/components/OrgNavContext';
+import ServiceWorkerRegistration from '@/components/ServiceWorkerRegistration';
 
 const inter = Inter({ 
   subsets: ['latin'],
@@ -31,11 +32,26 @@ export const metadata: Metadata = {
   },
   description: 'The all-in-one platform for Canadian sports organizations — tournaments, house leagues, rep teams, and accounting in one place.',
   manifest: '/manifest.json',
+  other: {
+    // PWA meta tags
+    'mobile-web-app-capable':             'yes',
+    'apple-mobile-web-app-capable':        'yes',
+    'apple-mobile-web-app-status-bar-style': 'black-translucent',
+    'apple-mobile-web-app-title':          'FieldLogicHQ',
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${inter.variable} ${barlow.variable} ${ibmPlexMono.variable}`} data-scroll-behavior="smooth">
+      <head>
+        {/* PWA theme colour — also controls browser address bar tint on Android */}
+        <meta name="theme-color" content="#0a0a0f" />
+        {/* Favicons — SVG primary (modern browsers), ICO fallback (legacy) */}
+        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+        {/* Apple touch icon for "Add to Home Screen" */}
+        <link rel="apple-touch-icon" href="/icons/pwa-192.png" />
+      </head>
       <body>
         <OrgNavProvider>
           <a href="#main-content" className="skip-link">Skip to content</a>
@@ -44,6 +60,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <Footer />
           <BottomNav />
         </OrgNavProvider>
+        {/* Service worker registration — browser-only, renders nothing */}
+        <ServiceWorkerRegistration />
       </body>
     </html>
   );

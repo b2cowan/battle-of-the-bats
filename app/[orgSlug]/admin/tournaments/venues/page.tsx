@@ -32,6 +32,22 @@ const VENUES_EXPORT_COLS: ExportColumnDef[] = [
 ];
 
 // ---------------------------------------------------------------------------
+// useMobile — reactively tracks whether viewport is ≤ 640px
+// ---------------------------------------------------------------------------
+
+function useMobile(breakpoint = 640): boolean {
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia(`(max-width: ${breakpoint}px)`);
+    setIsMobile(mq.matches);
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  }, [breakpoint]);
+  return isMobile;
+}
+
+// ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
@@ -96,7 +112,7 @@ function AddFacilityRow({
           <input
             ref={nameRef}
             className={`form-input ${styles.addFacilityName}`}
-            placeholder="Facility name (e.g. Diamond 1, Rink North, Court A)"
+            placeholder="Facility name (e.g. Diamond 1, Rink North)"
             value={name}
             onChange={e => setName(e.target.value)}
             onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); void handleAdd(); } }}
@@ -221,6 +237,119 @@ function EditFacilityRow({
         >
           <Check size={12} /> {saving ? '…' : 'Save'}
         </button>
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// FacilityModal — modal for add / edit of a facility (used on mobile)
+// ---------------------------------------------------------------------------
+
+function FacilityModal({
+  mode,
+  facility,
+  venueId,
+  tournamentId,
+  orgSlug,
+  existingFacilities = [],
+  onSaved,
+  onClose,
+}: {
+  mode: 'add' | 'edit';
+  facility?: VenueFacility;
+  venueId?: string;
+  tournamentId?: string;
+  orgSlug?: string;
+  existingFacilities?: VenueFacility[];
+  onSaved: () => void;
+  onClose: () => void;
+}) {
+  const [name, setName]                 = useState(facility?.name ?? '');
+  const [facilityType, setFacilityType] = useState<FacilityType>(facility?.facilityType ?? 'other');
+  const [saving, setSaving]             = useState(false);
+
+  const isDuplicate = name.trim().length > 0 &&
+    (mode === 'add' || name.trim().toLowerCase() !== facility?.name.toLowerCase()) &&
+    existingFacilities.some(f => f.name.toLowerCase() === name.trim().toLowerCase());
+
+  async function handleSave() {
+    if (!name.trim() || isDuplicate) return;
+    setSaving(true);
+    const orgQuery = orgSlug ? `?orgSlug=${encodeURIComponent(orgSlug)}` : '';
+    try {
+      if (mode === 'add') {
+        await requestJson(`/api/admin/venues${orgQuery}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'add-facility',
+            data: { venueId, tournamentId, name: name.trim(), facilityType },
+          }),
+        });
+      } else {
+        await requestJson(`/api/admin/venues${orgQuery}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'update-facility',
+            id: facility!.id,
+            data: { name: name.trim(), facilityType },
+          }),
+        });
+      }
+      onSaved();
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal" style={{ maxWidth: 420 }} onClick={e => e.stopPropagation()}>
+        <div className="modal-header">
+          <h3>{mode === 'add' ? 'Add Facility' : 'Edit Facility'}</h3>
+          <button className="btn btn-ghost btn-data" onClick={onClose}><X size={16} /></button>
+        </div>
+        <div className="form-group" style={{ marginBottom: '1rem' }}>
+          <label className="form-label">Facility Name *</label>
+          <input
+            className="form-input"
+            placeholder="e.g. Diamond 1, Rink North, Court A"
+            value={name}
+            onChange={e => setName(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); void handleSave(); } }}
+            autoFocus
+          />
+          {isDuplicate && (
+            <p style={{ color: 'var(--danger)', fontFamily: 'var(--font-data)', fontSize: '0.75rem', marginTop: '0.25rem' }}>
+              A facility with this name already exists in this venue.
+            </p>
+          )}
+        </div>
+        <div className="form-group" style={{ marginBottom: '0.5rem' }}>
+          <label className="form-label">Type</label>
+          <select
+            className="form-select"
+            value={facilityType}
+            onChange={e => setFacilityType(e.target.value as FacilityType)}
+          >
+            {FACILITY_TYPES.map(t => (
+              <option key={t} value={t}>{FACILITY_TYPE_LABELS[t]}</option>
+            ))}
+          </select>
+        </div>
+        <div className="modal-footer">
+          <button className="btn btn-ghost btn-data" onClick={onClose}>Cancel</button>
+          <button
+            className="btn btn-lime btn-data"
+            onClick={() => void handleSave()}
+            disabled={!name.trim() || isDuplicate || saving}
+          >
+            <Check size={14} />
+            {saving ? 'Saving…' : mode === 'add' ? 'Add Facility' : 'Save Changes'}
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -361,6 +490,8 @@ function TournamentVenueCard({
 }) {
   const [expanded, setExpanded]               = useState(false);
   const [editingFacilityId, setEditingFacilityId] = useState<string | null>(null);
+  const [facilityModal, setFacilityModal]     = useState<{ mode: 'add' | 'edit'; facility?: VenueFacility } | null>(null);
+  const isMobile                              = useMobile();
   const facilities: VenueFacility[] = venue.facilities ?? [];
 
   async function deleteFacility(facilityId: string) {
@@ -392,34 +523,6 @@ function TournamentVenueCard({
             {facilities.length} {facilities.length === 1 ? 'facility' : 'facilities'}
           </span>
         </div>
-        {/* Action buttons */}
-        <div className={styles.venueColActions} onClick={e => e.stopPropagation()}>
-          {venue.address && (
-            <a
-              href={getMapsUrl(venue.address)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="btn btn-ghost btn-data"
-              title="Open in Google Maps"
-            >
-              <Navigation size={13} />
-            </a>
-          )}
-          <button
-            className="btn btn-ghost btn-data"
-            title="Edit venue"
-            onClick={e => { e.stopPropagation(); onEdit(venue); }}
-          >
-            <Pencil size={13} />
-          </button>
-          <button
-            className="btn btn-danger btn-data"
-            title="Delete venue"
-            onClick={e => { e.stopPropagation(); onDelete(venue.id); }}
-          >
-            <Trash2 size={13} />
-          </button>
-        </div>
         {/* Expand chevron */}
         <div className={styles.venueColChevron}>
           <ChevronDown
@@ -429,9 +532,28 @@ function TournamentVenueCard({
         </div>
       </div>
 
-      {/* ── Expanded: facility list + add facility ─────────────────── */}
+      {/* ── Expanded: venue actions + facility list + add facility ─── */}
       {expanded && (
         <div className={`${s.expandedRow} ${styles.facilityExpandedRow}`}>
+          {/* Venue-level actions — moved here to keep the collapsed row clean */}
+          <div className={styles.venueActionsBar}>
+            {venue.address && (
+              <a
+                href={getMapsUrl(venue.address)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn btn-ghost btn-data"
+              >
+                <Navigation size={12} /> Maps
+              </a>
+            )}
+            <button className="btn btn-ghost btn-data" onClick={() => onEdit(venue)}>
+              <Pencil size={12} /> Edit Venue
+            </button>
+            <button className="btn btn-danger btn-data" onClick={() => onDelete(venue.id)}>
+              <Trash2 size={12} /> Delete
+            </button>
+          </div>
           <div className={styles.facilityList}>
             {facilities.length === 0 ? (
               <p className={styles.facilityEmptyNote}>
@@ -439,7 +561,8 @@ function TournamentVenueCard({
               </p>
             ) : (
               facilities.map(f =>
-                editingFacilityId === f.id ? (
+                editingFacilityId === f.id && !isMobile ? (
+                  /* Desktop: inline edit row */
                   <EditFacilityRow
                     key={f.id}
                     facility={f}
@@ -457,7 +580,10 @@ function TournamentVenueCard({
                       <button
                         className="btn btn-ghost btn-data"
                         title="Edit facility"
-                        onClick={() => setEditingFacilityId(f.id)}
+                        onClick={() => {
+                          if (isMobile) setFacilityModal({ mode: 'edit', facility: f });
+                          else setEditingFacilityId(f.id);
+                        }}
                       >
                         <Pencil size={12} />
                       </button>
@@ -474,14 +600,42 @@ function TournamentVenueCard({
               )
             )}
           </div>
-          <AddFacilityRow
-            orgSlug={orgSlug}
-            venueId={venue.id}
-            tournamentId={tournamentId}
-            existingFacilities={facilities}
-            onAdded={onRefresh}
-          />
+          {/* Desktop: inline add row / Mobile: button that opens modal */}
+          {isMobile ? (
+            <button
+              className={`btn btn-ghost btn-data ${styles.mobileAddFacilityBtn}`}
+              onClick={() => setFacilityModal({ mode: 'add' })}
+            >
+              <Plus size={13} /> Add Facility
+            </button>
+          ) : (
+            <AddFacilityRow
+              orgSlug={orgSlug}
+              venueId={venue.id}
+              tournamentId={tournamentId}
+              existingFacilities={facilities}
+              onAdded={onRefresh}
+            />
+          )}
         </div>
+      )}
+
+      {/* Facility modal — add or edit, mobile only */}
+      {facilityModal && (
+        <FacilityModal
+          mode={facilityModal.mode}
+          facility={facilityModal.facility}
+          venueId={venue.id}
+          tournamentId={tournamentId}
+          orgSlug={orgSlug}
+          existingFacilities={
+            facilityModal.mode === 'add'
+              ? facilities
+              : facilities.filter(f => f.id !== facilityModal.facility?.id)
+          }
+          onSaved={() => { setFacilityModal(null); onRefresh(); }}
+          onClose={() => setFacilityModal(null)}
+        />
       )}
     </div>
   );
@@ -585,8 +739,9 @@ export default function TournamentVenuesPage() {
               onClick={() => { setEditing(undefined); setAddModalOpen(true); }}
               id="venue-add-btn"
               disabled={!currentTournament}
+              title="Add venue"
             >
-              <Plus size={16} /> Add Venue
+              <Plus size={16} /> <span className={styles.addVenueLabel}>Add Venue</span>
             </button>
           </>
         }
@@ -626,8 +781,7 @@ export default function TournamentVenuesPage() {
             <div className={s.tableHeader}>
               <div className={styles.venueColName}>Venue</div>
               <div className={styles.venueColAddress}>Address</div>
-              <div className={styles.venueColFacilities} />
-              <div className={styles.venueColActions} />
+              <div className={styles.venueColFacilities}>Facilities</div>
               <div className={styles.venueColChevron} />
             </div>
             {venues.map(v => (

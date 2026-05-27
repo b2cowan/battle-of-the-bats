@@ -497,3 +497,46 @@
     align-items: stretch;
   }
 }
+
+/* ── Founding Season card ─────────────────────────────────────────────── */
+.foundingSeasonCard {
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.45);
+  background: rgba(var(--logic-lime-rgb), 0.04);
+  padding: 2.5rem 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.foundingSeasonEyebrow {
+  font-family: var(--font-data);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--logic-lime);
+}
+
+.foundingSeasonTitle {
+  font-family: var(--font-data);
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--fl-text);
+  line-height: 1.2;
+  text-transform: uppercase;
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+
+.foundingSeasonBody {
+  font-family: var(--font-data);
+  font-size: 0.82rem;
+  color: var(--data-gray);
+  line-height: 1.6;
+  margin: 0;
+  max-width: 56ch;
+}
+
+.foundingSeasonActions {
+  margin-top: 0.5rem;
+}
