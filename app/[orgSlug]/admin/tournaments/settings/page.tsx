@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { ArrowRight, ClipboardList, CreditCard, Lock, RefreshCw, Settings2, ShieldCheck, Users2, type LucideIcon } from 'lucide-react';
+import { ArrowRight, Bell, ClipboardList, CreditCard, Lock, RefreshCw, Settings2, ShieldCheck, Users2, type LucideIcon } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { hasCapability } from '@/lib/roles';
 import { hasPlanFeature, requiresTournamentPlusCopy, type PlanFeature } from '@/lib/plan-features';
@@ -47,6 +47,15 @@ export default function TournamentSettingsAccessPage() {
       title: 'Tournaments & seasons',
       description: 'Create new tournament seasons, rename or re-slug existing ones, manage lifecycle status, and archive completed events.',
       meta: 'Manage tournaments',
+      enabled: true,
+      comingSoon: false,
+    },
+    {
+      href: `${base}/settings/notifications`,
+      icon: Bell,
+      title: 'Tournament notifications',
+      description: 'Mute all notifications for this tournament, or opt out of individual event types. Settings are personal — only affect your account.',
+      meta: 'Manage notifications',
       enabled: true,
       comingSoon: false,
     },

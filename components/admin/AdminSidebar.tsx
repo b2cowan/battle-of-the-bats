@@ -7,8 +7,9 @@ import {
   ChevronRight, MapPin, BookOpen, CreditCard, Settings, Settings2, Paintbrush,
   Users2, Archive, ArrowLeft, Mail, Globe, DollarSign,
   CalendarDays, ClipboardList, FileText, UserCheck, ExternalLink, HelpCircle,
-  Link2,
+  Link2, Bell,
 } from 'lucide-react';
+import NotificationBell from '@/components/notifications/NotificationBell';
 import { signOut } from '@/lib/auth';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { useOrg } from '@/lib/org-context';
@@ -17,10 +18,6 @@ import { hasCapability, type Capability } from '@/lib/roles';
 import { useCurrentOrgCoachAccess } from '@/lib/use-current-org-coach-access';
 import styles from './AdminSidebar.module.css';
 
-const TOUR_TOP = [
-  { key: 'dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-];
-
 type TourNavItem = { key: string; icon: React.ElementType; label: string };
 type TourGroup   = { key: string; label: string; defaultOpenFor: string[]; items: TourNavItem[] };
 
@@ -28,12 +25,13 @@ const TOUR_GROUPS: TourGroup[] = [
   {
     key: 'operations',
     label: 'Operations',
-    defaultOpenFor: ['active', 'completed'],
+    defaultOpenFor: ['draft', 'active', 'completed'],
     items: [
-      { key: 'registrations',  icon: Users,     label: 'Registrations'   },
-      { key: 'schedule',      icon: Calendar,  label: 'Schedule'        },
-      { key: 'results',       icon: Trophy,    label: 'Results'         },
-      { key: 'communication', icon: Mail,      label: 'Communications'  },
+      { key: 'dashboard',      icon: LayoutDashboard, label: 'Dashboard'       },
+      { key: 'registrations',  icon: Users,           label: 'Teams'           },
+      { key: 'schedule',       icon: Calendar,        label: 'Schedule'        },
+      { key: 'results',        icon: Trophy,          label: 'Results'         },
+      { key: 'communication',  icon: Mail,            label: 'Communications'  },
     ],
   },
   {
@@ -45,7 +43,7 @@ const TOUR_GROUPS: TourGroup[] = [
       { key: 'venues',           icon: MapPin,       label: 'Venues & Facilities' },
       { key: 'divisions',        icon: Tag,          label: 'Divisions'         },
       { key: 'rules',            icon: BookOpen,     label: 'Rules & Resources' },
-      { key: 'branding',         icon: Paintbrush,   label: 'Branding'          },
+      { key: 'branding',         icon: Paintbrush,   label: 'Public Site'       },
     ],
   },
   {
@@ -269,6 +267,7 @@ export default function AdminSidebar() {
           </div>
           <div className={styles.logoSub}>{currentOrg?.name ?? 'Admin'}</div>
         </div>
+        {currentOrg?.id && <NotificationBell orgId={currentOrg.id} />}
       </div>
 
       {/* Org Admin mode */}
@@ -304,6 +303,11 @@ export default function AdminSidebar() {
                 'org/settings', Settings, 'Settings',
                 `${base}/org/settings`,
                 pathname.startsWith(`${base}/org/settings`),
+              )}
+              {!isCanceled && navLink(
+                'org/notifications', Bell, 'Notifications',
+                `${base}/org/notifications`,
+                pathname.startsWith(`${base}/org/notifications`),
               )}
             </nav>
           </div>
@@ -455,19 +459,25 @@ export default function AdminSidebar() {
           {maybeBackLink}
           {tournaments.length > 0 && (
             <div className={styles.tournamentSwitcher}>
-              <label className={styles.switcherLabel}>Editing Tournament</label>
-              <select
-                className={styles.switcherSelect}
-                value={currentTournament?.id ?? ''}
-                onChange={e => handleTournamentChange(e.target.value)}
-                id="admin-tournament-select"
-              >
-                {tournaments.map(t => (
-                  <option key={t.id} value={t.id}>
-                    {t.name}
-                  </option>
-                ))}
-              </select>
+              {tournaments.length > 1 ? (
+                <>
+                  <label className={styles.switcherLabel} htmlFor="admin-tournament-select">Editing Tournament</label>
+                  <select
+                    className={styles.switcherSelect}
+                    value={currentTournament?.id ?? ''}
+                    onChange={e => handleTournamentChange(e.target.value)}
+                    id="admin-tournament-select"
+                  >
+                    {tournaments.map(t => (
+                      <option key={t.id} value={t.id}>
+                        {t.name}
+                      </option>
+                    ))}
+                  </select>
+                </>
+              ) : (
+                <span className={styles.switcherName}>{currentTournament?.name}</span>
+              )}
               {currentTournament?.status === 'active'    && <span className={styles.activePill}>● Live</span>}
               {currentTournament?.status === 'draft'     && <span className={styles.activePill} style={{ opacity: 0.5 }}>Draft</span>}
               {currentTournament?.status === 'completed' && <span className={styles.activePill} style={{ opacity: 0.5 }}>Completed</span>}
@@ -477,10 +487,6 @@ export default function AdminSidebar() {
           <div className={styles.navSection}>
             {!hasOnlyTournamentWorkspace && <div className={styles.sectionHeader}>Tournament</div>}
             <nav className={styles.nav}>
-              {TOUR_TOP.map(item => {
-                const href = `${base}/tournaments/${item.key}`;
-                return navLink(item.key, item.icon, item.label, href, pathname.startsWith(href));
-              })}
               {tournamentGroups.map(group => {
                 const open      = isGroupOpen(group.key, group.items);
                 const allKeys = tournamentGroups.flatMap(g => g.items).map(i => i.key);

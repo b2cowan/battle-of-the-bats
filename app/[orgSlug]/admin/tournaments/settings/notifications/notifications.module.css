@@ -1,0 +1,303 @@
+/* ── Page shell ─────────────────────────────────────────────────────────────── */
+
+.page {
+  max-width: 680px;
+}
+
+.pageHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.75rem;
+}
+
+.headerLeft {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.headerIcon {
+  width: 48px;
+  height: 48px;
+  border-radius: 2px;
+  background: rgba(var(--blueprint-blue-rgb), 0.12);
+  color: var(--logic-lime);
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.pageTitle {
+  font-size: 1.75rem;
+  font-weight: 900;
+  font-family: var(--font-data);
+  margin: 0;
+  color: var(--white-90, #f0f0f0);
+  line-height: 1.1;
+}
+
+.pageSub {
+  margin: 0.25rem 0 0;
+  color: var(--white-40, rgba(255,255,255,0.4));
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.pageSub strong {
+  color: var(--white-70, rgba(255,255,255,0.7));
+}
+
+/* ── Error banner ────────────────────────────────────────────────────────────── */
+
+.errorBanner {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border-radius: 2px;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  color: #fca5a5;
+  font-size: 0.875rem;
+  margin-bottom: 1.25rem;
+}
+
+/* ── Master mute card ────────────────────────────────────────────────────────── */
+
+.muteCard {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.1rem 1.25rem;
+  border-radius: 2px;
+  background: var(--surface, rgba(255,255,255,0.04));
+  border: 1px solid var(--border, rgba(255,255,255,0.08));
+  margin-bottom: 1.5rem;
+  transition: border-color 0.18s ease, background 0.18s ease;
+}
+
+.muteCardActive {
+  background: rgba(239, 68, 68, 0.06);
+  border-color: rgba(239, 68, 68, 0.22);
+}
+
+.muteCardLeft {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.875rem;
+  flex: 1;
+}
+
+.muteIcon {
+  flex-shrink: 0;
+  margin-top: 0.15rem;
+  color: var(--white-40);
+}
+
+.muteCardActive .muteIcon {
+  color: #fca5a5;
+}
+
+.muteTitle {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--white-90);
+  margin-bottom: 0.2rem;
+}
+
+.muteSub {
+  font-size: 0.82rem;
+  color: var(--white-40);
+  line-height: 1.5;
+}
+
+/* ── Section label ───────────────────────────────────────────────────────────── */
+
+.sectionLabel {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--white-30, rgba(255,255,255,0.3));
+  margin-bottom: 0.6rem;
+}
+
+/* ── Table ───────────────────────────────────────────────────────────────────── */
+
+.tableWrap {
+  border-radius: 2px;
+  border: 1px solid var(--border, rgba(255,255,255,0.08));
+  overflow: hidden;
+  margin-bottom: 1rem;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table thead {
+  background: rgba(255,255,255,0.03);
+  border-bottom: 1px solid var(--border, rgba(255,255,255,0.08));
+}
+
+.table th {
+  padding: 0.6rem 1rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--white-40);
+  text-align: left;
+}
+
+.thEvent {
+  width: 100%;
+}
+
+.thMuted {
+  min-width: 80px;
+  text-align: center !important;
+}
+
+/* ── Rows ────────────────────────────────────────────────────────────────────── */
+
+.row {
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  transition: background 0.12s ease, opacity 0.12s ease;
+}
+
+.row:last-child {
+  border-bottom: none;
+}
+
+.row:hover {
+  background: rgba(255,255,255,0.02);
+}
+
+.rowMuted {
+  opacity: 0.55;
+}
+
+.tdEvent {
+  padding: 0.85rem 1rem;
+  vertical-align: middle;
+}
+
+.eventLabel {
+  display: block;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--white-90);
+  margin-bottom: 0.15rem;
+}
+
+.eventDesc {
+  display: block;
+  font-size: 0.77rem;
+  color: var(--white-35, rgba(255,255,255,0.35));
+  line-height: 1.45;
+}
+
+.tdMuted {
+  padding: 0.85rem 1rem;
+  text-align: center;
+  vertical-align: middle;
+}
+
+/* ── Toggle ─────────────────────────────────────────────────────────────────── */
+
+.toggle {
+  display: inline-block;
+  position: relative;
+  width: 36px;
+  height: 20px;
+  border-radius: 20px;
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.12);
+  cursor: pointer;
+  transition: background 0.18s ease, border-color 0.18s ease;
+  outline: none;
+}
+
+.toggle::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.45);
+  transition: transform 0.18s ease, background 0.18s ease;
+}
+
+.toggleOn {
+  background: #ef4444;
+  border-color: #ef4444;
+}
+
+.toggleOn::after {
+  background: #fff;
+  transform: translateX(16px);
+}
+
+.toggle:focus-visible {
+  outline: 2px solid var(--logic-lime);
+  outline-offset: 2px;
+}
+
+.toggleDisabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* ── Skeleton ────────────────────────────────────────────────────────────────── */
+
+.skeletonRow td {
+  padding: 0.85rem 1rem;
+}
+
+.skeletonLabel {
+  height: 13px;
+  border-radius: 2px;
+  background: rgba(255,255,255,0.06);
+  width: 55%;
+  animation: shimmer 1.4s ease-in-out infinite;
+}
+
+.skeletonToggle {
+  height: 20px;
+  width: 36px;
+  border-radius: 20px;
+  background: rgba(255,255,255,0.06);
+  margin: 0 auto;
+  animation: shimmer 1.4s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0%, 100% { opacity: 0.5; }
+  50%       { opacity: 1;   }
+}
+
+/* ── Misc ────────────────────────────────────────────────────────────────────── */
+
+.emptyState {
+  color: var(--white-40);
+  font-size: 0.9rem;
+}
+
+.footNote {
+  font-size: 0.8rem;
+  color: var(--white-30, rgba(255,255,255,0.3));
+  line-height: 1.55;
+  margin: 0;
+}
+
+.footNote strong {
+  color: var(--white-50, rgba(255,255,255,0.5));
+}
