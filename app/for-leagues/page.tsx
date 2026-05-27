@@ -82,7 +82,7 @@ const CROSS_SELLS = [
   {
     label: 'Coaches Portal',
     q: 'Do your coaches need their own workspace?',
-    body: 'A standalone portal for individual team coaches — roster, lineups, budget, and schedule. Available separately for coaches whose org is not yet on FieldLogicHQ.',
+    body: 'A complete workspace for one rep team — roster, lineups, budget, schedule, and documents. No org account needed. And when your organization joins FieldLogicHQ, their workspace carries over automatically.',
     cta: 'Express interest',
     initialPlanInterest: ['coaches_portal'],
     initialFeaturesInterested: ['roster', 'lineups', 'budget', 'team_documents'],
@@ -127,7 +127,7 @@ export default function ForLeaguesPage() {
             {' '}— League is in final refinement. Tournament and Tournament Plus are live today.
           </p>
           <div className={styles.trustRow}>
-            {['No contracts — cancel anytime', 'Billed in CAD', 'Plans can change at any time'].map(s => (
+            {['No contracts — cancel anytime', 'Billed in CAD', 'Upgrade or downgrade at any time'].map(s => (
               <div key={s} className={styles.trustItem}>
                 <span className={styles.trustDot} />
                 <span>{s}</span>
@@ -157,7 +157,7 @@ export default function ForLeaguesPage() {
       <section className={styles.section}>
         <div className="container">
           <p className={styles.sectionEyebrow}>How it works</p>
-          <h2 className={styles.sectionTitle}>One dashboard. The full season arc.</h2>
+          <h2 className={styles.sectionTitle}>Registration to final standings — four steps.</h2>
           <p className={styles.sectionSub}>
             From the moment registration opens to the final game night — everything runs in one place.
           </p>
@@ -180,8 +180,7 @@ export default function ForLeaguesPage() {
           <p className={styles.sectionEyebrow}>The plan</p>
           <h2 className={styles.sectionTitle}>League — built for the full season.</h2>
           <p className={styles.sectionSub}>
-            League is finishing its final workflows before self-serve checkout opens.
-            Express interest to be notified when it&apos;s ready for your organization.
+            League is opening soon. Express interest to be notified when self-serve checkout opens for your organization.
           </p>
           <div className={styles.planGrid}>
 

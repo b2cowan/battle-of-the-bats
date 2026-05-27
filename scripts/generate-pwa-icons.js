@@ -1,11 +1,27 @@
 /**
  * scripts/generate-pwa-icons.js
  *
- * One-time script to generate PWA icons from public/logo.png.
- * Letterboxes the logo onto a #0a0a0f background.
+ * Two-mark PWA icon system:
+ *   PRIMARY mark — FL monogram (Concept B) — used where letterforms are legible (192px+)
+ *   ICON mark    — chevron ">" (Concept C) — used at small sizes (badge, favicon)
+ *
+ * Defaults:
+ *   primary = public/brand/logo-B.svg
+ *   icon    = public/brand/logo-C.svg
+ *
+ * Override via CLI args:
+ *   node scripts/generate-pwa-icons.js [--primary <path>] [--icon <path>]
+ *   node scripts/generate-pwa-icons.js public/brand/logo-A.svg   (shorthand: sets primary only)
  *
  * Run: node scripts/generate-pwa-icons.js
  * Requires: sharp (devDependency)
+ *
+ * NOTE ON FONTS: logo-B.svg uses Barlow Condensed 900 for the "FL" lettermark.
+ * If Barlow Condensed is not installed as a system font, the PNG will fall back to
+ * Arial Narrow or Impact. For production-quality output with the correct font, either:
+ *   (a) Install Barlow Condensed as a system font (free from Google Fonts)
+ *   (b) Export the SVG text to paths in Inkscape/Figma first
+ *   (c) Use logo-C.svg (chevron) as the primary — it is fully font-independent
  */
 
 const sharp = require('sharp');
@@ -13,73 +29,146 @@ const path  = require('path');
 const fs    = require('fs');
 
 const ROOT      = path.join(__dirname, '..');
-// Accept an optional source file argument: node generate-pwa-icons.js public/brand/logo-C.svg
-const SRC       = process.argv[2]
-  ? path.resolve(ROOT, process.argv[2])
-  : path.join(ROOT, 'public', 'logo.png');
 const ICONS_DIR = path.join(ROOT, 'public', 'icons');
 
-// Background colour matching the app's --bg-base token
-const BG = { r: 10, g: 10, b: 15, alpha: 1 };
+// ── Argument parsing ──────────────────────────────────────────────────────────
 
-// Maskable safe zone: logo must fit inside the inner 80% circle.
-// At 512px that means the drawable area is ~410px, so we need 51px padding each side.
-// We use 110px padding (leaving ~292px logo area) to be comfortably inside the safe zone.
+function parseArgs() {
+  const args = process.argv.slice(2);
+  let primary = path.join(ROOT, 'public', 'brand', 'logo-B.svg');
+  let icon    = path.join(ROOT, 'public', 'brand', 'logo-C.svg');
+
+  for (let i = 0; i < args.length; i++) {
+    if (args[i] === '--primary' && args[i + 1]) {
+      primary = path.resolve(ROOT, args[++i]);
+    } else if (args[i] === '--icon' && args[i + 1]) {
+      icon = path.resolve(ROOT, args[++i]);
+    } else if (!args[i].startsWith('--')) {
+      // Positional arg: shorthand for primary
+      primary = path.resolve(ROOT, args[i]);
+    }
+  }
+  return { primary, icon };
+}
+
+// ── Size specs ────────────────────────────────────────────────────────────────
+//
+//  srcKey: 'primary' = FL monogram (Concept B)  — large, has letterforms
+//          'icon'    = chevron mark (Concept C)  — small, pure geometry
+//
+//  maskablePadding: extra canvas padding (px) for the maskable safe zone.
+//    Android clips to the inner 80% circle; content must stay within that.
+//    At 512px the safe zone diameter is ~410px, so minimum 51px padding.
+//    We use 56px (comfortable margin) for the maskable variant.
+
 const SIZES = [
-  { name: 'pwa-192.png',          size: 192, padding: 32  },
-  { name: 'pwa-512.png',          size: 512, padding: 88  },
-  { name: 'pwa-512-maskable.png', size: 512, padding: 110 }, // extra padding for maskable safe zone
-  { name: 'badge-72.png',         size: 72,  padding: 10, mono: true },
+  {
+    name:    'pwa-192.png',
+    size:    192,
+    srcKey:  'primary',   // FL mark — still readable at 192px
+  },
+  {
+    name:    'pwa-512.png',
+    size:    512,
+    srcKey:  'primary',
+  },
+  {
+    name:            'pwa-512-maskable.png',
+    size:            512,
+    srcKey:          'primary',
+    maskablePadding: 56,  // render FL at 400px and composite on 512px background
+  },
+  {
+    name:    'badge-72.png',
+    size:    72,
+    srcKey:  'icon',      // Chevron mark — still readable at 72px; FL is not
+  },
 ];
 
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+const BG = { r: 10, g: 10, b: 15, alpha: 1 }; // #0a0a0f
+
+async function renderSvgToBuffer(svgPath, size) {
+  const buf = fs.readFileSync(svgPath);
+  return sharp(buf)
+    .resize(size, size, { fit: 'fill' })
+    .png()
+    .toBuffer();
+}
+
+async function renderPngToBuffer(pngPath, logoSize) {
+  return sharp(pngPath)
+    .resize(logoSize, logoSize, { fit: 'inside', withoutEnlargement: false })
+    .png()
+    .toBuffer();
+}
+
+async function compositeOnBackground(logoBuffer, canvasSize, logoSize) {
+  const { width: lw, height: lh } = await sharp(logoBuffer).metadata();
+  const left = Math.round((canvasSize - (lw ?? logoSize)) / 2);
+  const top  = Math.round((canvasSize - (lh ?? logoSize)) / 2);
+
+  return sharp({
+    create: { width: canvasSize, height: canvasSize, channels: 4, background: BG },
+  })
+    .composite([{ input: logoBuffer, left, top }])
+    .png()
+    .toBuffer();
+}
+
+function isSvg(filePath) {
+  return filePath.toLowerCase().endsWith('.svg');
+}
+
+// ── Main ──────────────────────────────────────────────────────────────────────
+
 async function generate() {
-  if (!fs.existsSync(SRC)) {
-    console.error('ERROR: public/logo.png not found. Ensure the source logo exists before running this script.');
-    process.exit(1);
+  const { primary, icon } = parseArgs();
+
+  for (const src of [primary, icon]) {
+    if (!fs.existsSync(src)) {
+      console.error(`ERROR: Source file not found: ${src}`);
+      process.exit(1);
+    }
   }
 
   fs.mkdirSync(ICONS_DIR, { recursive: true });
 
+  const sources = { primary, icon };
+
   for (const spec of SIZES) {
-    const logoSize = spec.size - spec.padding * 2;
+    const srcPath = sources[spec.srcKey];
 
-    // Resize logo to fit within the letterbox area
-    let logoBuffer = await sharp(SRC)
-      .resize(logoSize, logoSize, { fit: 'inside', withoutEnlargement: false })
-      .png()
-      .toBuffer();
+    let outputBuffer;
 
-    // For the monochrome badge, convert to white silhouette
-    if (spec.mono) {
-      logoBuffer = await sharp(logoBuffer)
-        .greyscale()
-        .threshold(128)
-        .png()
-        .toBuffer();
+    if (spec.maskablePadding) {
+      // Maskable: render the logo smaller, then composite on a full-size background
+      const innerSize = spec.size - spec.maskablePadding * 2;
+      const logoBuffer = isSvg(srcPath)
+        ? await renderSvgToBuffer(srcPath, innerSize)
+        : await renderPngToBuffer(srcPath, innerSize);
+      outputBuffer = await compositeOnBackground(logoBuffer, spec.size, innerSize);
+
+    } else if (isSvg(srcPath)) {
+      // SVG input: render directly to target size (SVG already has background baked in)
+      outputBuffer = await renderSvgToBuffer(srcPath, spec.size);
+
+    } else {
+      // PNG input: legacy letterbox behaviour
+      const logoBuffer = await renderPngToBuffer(srcPath, spec.size);
+      outputBuffer = await compositeOnBackground(logoBuffer, spec.size, spec.size);
     }
 
-    const { width: lw, height: lh } = await sharp(logoBuffer).metadata();
-    const left = Math.round((spec.size - lw) / 2);
-    const top  = Math.round((spec.size - lh) / 2);
-
     const outPath = path.join(ICONS_DIR, spec.name);
+    await sharp(outputBuffer).png().toFile(outPath);
 
-    await sharp({
-      create: {
-        width:      spec.size,
-        height:     spec.size,
-        channels:   4,
-        background: BG,
-      },
-    })
-      .composite([{ input: logoBuffer, left, top }])
-      .png()
-      .toFile(outPath);
-
-    console.log(`✓ ${spec.name} (${spec.size}×${spec.size}) → ${outPath}`);
+    console.log(`✓ ${spec.name} (${spec.size}×${spec.size}) [${spec.srcKey} mark] → ${outPath}`);
   }
 
-  console.log('\nAll PWA icons generated successfully.');
+  console.log('\n✓ All PWA icons generated.');
+  console.log('  Primary mark :', primary);
+  console.log('  Icon mark    :', icon);
 }
 
 generate().catch(err => {

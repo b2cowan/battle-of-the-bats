@@ -1,8 +1,8 @@
-# Tournament Coach Portal — Implementation Plan
+﻿# Tournament Coach Portal — Implementation Plan
 
 **Created:** 2026-05-24  
 **Status:** Planning  
-**Related PM brief:** `docs/active/TOURNAMENT_COACH_PORTAL_PM_BRIEF.md`
+**Related PM brief:** `docs/projects/active/TOURNAMENT_COACH_PORTAL_PM_BRIEF.md`
 
 ---
 

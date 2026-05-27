@@ -1,8 +1,8 @@
-# Tournament Experience Excellence - Phase 1 Journey Audit
+﻿# Tournament Experience Excellence - Phase 1 Journey Audit
 
 > Status: Complete - static audit
 > Completed: 2026-05-22
-> Parent plan: `docs/archive/TOURNAMENT_EXPERIENCE_EXCELLENCE_PLAN.md`
+> Parent plan: `docs/projects/archive/TOURNAMENT_EXPERIENCE_EXCELLENCE_PLAN.md`
 
 ## Audit Method
 

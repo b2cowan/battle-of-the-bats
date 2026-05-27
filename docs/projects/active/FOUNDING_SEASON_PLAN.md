@@ -1,4 +1,4 @@
-# Founding Season — Go-to-Market Plan
+﻿# Founding Season — Go-to-Market Plan
 
 **Status:** Planning  
 **Target:** Tournament portal launch — 2026 founding cohort  
@@ -67,7 +67,7 @@ We're in our founding season — we want real tournaments on the platform, not d
 
 Recommended: **Option C** (pricing section) plus a smaller echo in the hero eyebrow row.
 
-### 1B. Pricing page (`app/pricing/page.tsx` + `docs/archive/PRICING_PAGE_COPY.md`)
+### 1B. Pricing page (`app/pricing/page.tsx` + `docs/projects/archive/PRICING_PAGE_COPY.md`)
 
 On the Tournament Plus plan card, add a "Founding Season" badge:
 
@@ -631,7 +631,7 @@ Before December 31, 2026, define the conversion action:
 | Asset | Location | Status |
 |---|---|---|
 | Founding season org filter + conversion tracking | Platform admin orgs page | [ ] |
-| `docs/active/PRICING_PAGE_COPY.md` | Updated with founding season copy | [ ] |
+| `docs/projects/active/PRICING_PAGE_COPY.md` | Updated with founding season copy | [ ] |
 
 ---
 

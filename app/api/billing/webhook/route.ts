@@ -10,6 +10,7 @@ import {
 } from '@/lib/team-checkout';
 import { completeOrgTeamAddonBillingFromMetadata } from '@/lib/team-org-billing';
 import { sendEmail, trialEndingHtml, welcomeBackHtml, teamWorkspaceCancelledHtml, SITE_URL } from '@/lib/email';
+import { notify } from '@/lib/notify';
 import type { OrgPlan } from '@/lib/types';
 import type Stripe from 'stripe';
 
@@ -541,7 +542,7 @@ export async function POST(req: Request) {
     case 'invoice.payment_failed': {
       const { data: currentOrg } = await supabaseAdmin
         .from('organizations')
-        .select('id, plan_id, subscription_status')
+        .select('id, slug, plan_id, subscription_status')
         .eq('stripe_customer_id', customerId)
         .maybeSingle();
       await supabaseAdmin
@@ -561,6 +562,16 @@ export async function POST(req: Request) {
           subscriptionStatus: 'past_due',
           metadata: { stripeCustomerId: customerId },
         });
+      }
+      // Notify org admins via bell — payment_failed email default is true for owners (per preferences)
+      if (currentOrg) {
+        notify({
+          orgId: currentOrg.id,
+          eventType: 'payment_failed',
+          title: 'Subscription payment failed',
+          body: 'Your subscription payment could not be processed. Please update your billing information.',
+          link: `/${currentOrg.slug}/admin/org/billing`,
+        }).catch(console.error);
       }
       break;
     }

@@ -1,8 +1,8 @@
-# PM Brief — Venue Conflict Prevention & Game Timing Settings
+﻿# PM Brief — Venue Conflict Prevention & Game Timing Settings
 
 **Created:** 2026-05-26  
 **Status:** Planned — not started  
-**Full plan:** `docs/active/VENUE_CONFLICT_PLAN.md`
+**Full plan:** `docs/projects/active/VENUE_CONFLICT_PLAN.md`
 
 ---
 

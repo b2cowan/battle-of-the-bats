@@ -1,4 +1,4 @@
-# UX Flow Agent Guidance
+﻿# UX Flow Agent Guidance
 
 ## Purpose
 
@@ -12,8 +12,8 @@ Before reviewing, load the available UX context:
 
 1. `memory/project_ux_review.md` - prior UX findings and phase status, if present.
 2. `memory/design_principles.md` - UX conventions for empty states, forms, tables, and modals, if present.
-3. `docs/active/UX_REVIEW_PLAN.md` - active finding descriptions, if present.
-4. `docs/archive/UX_REVIEW_PLAN.md` - archived finding descriptions, if no active plan exists.
+3. `docs/projects/active/UX_REVIEW_PLAN.md` - active finding descriptions, if present.
+4. `docs/projects/archive/UX_REVIEW_PLAN.md` - archived finding descriptions, if no active plan exists.
 5. Relevant feature memory and active plans, especially tournament, subscription, and mobile experience docs.
 
 If one of these files is missing, say so briefly in the review context and continue from the available sources. Do not duplicate old findings without checking whether they are still relevant.

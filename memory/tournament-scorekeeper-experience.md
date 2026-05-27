@@ -1,11 +1,11 @@
-# Tournament Scorekeeper Experience
+﻿# Tournament Scorekeeper Experience
 
 ## Current decision
 
 Build a dedicated mobile-first tournament scorekeeper experience instead of relying on the full admin Results & Scoring page for day-of score entry.
 
-Detailed plan: `docs/archive/codex_TOURNAMENT_SCOREKEEPER_EXPERIENCE_PLAN.md`.
-PM brief: `docs/archive/codex_TOURNAMENT_SCOREKEEPER_EXPERIENCE_PM_BRIEF.md`.
+Detailed plan: `docs/projects/archive/codex_TOURNAMENT_SCOREKEEPER_EXPERIENCE_PLAN.md`.
+PM brief: `docs/projects/archive/codex_TOURNAMENT_SCOREKEEPER_EXPERIENCE_PM_BRIEF.md`.
 
 ## Product shape
 
@@ -31,7 +31,7 @@ PM brief: `docs/archive/codex_TOURNAMENT_SCOREKEEPER_EXPERIENCE_PM_BRIEF.md`.
 - Focused scorekeeper UAT now lives in `tests/uat/scenarios/tournament-scorekeeper-smoke.spec.ts` and passed on 2026-05-23 with the normal shared auth setup. It creates disposable tournament/game/scorekeeper data and verifies scorekeeper pending review, immediate final, audit metadata, admin Results review/export/finalize, finalized-score rejection, admin correction, and revert.
 - UAT auth setup now waits for authenticated page evidence as well as URL movement, which better matches multi-org users that can land on the workspace picker.
 - Lower-level shared scoring-service coverage now lives in `tests/uat/scenarios/tournament-scoring-service.spec.ts` and passed on 2026-05-23. It uses injected service dependencies to test score policy, validation, finalized/cancelled conflicts, admin correction, finalize, and revert without live Supabase writes.
-- Manual browser sign-off checklist now lives in `docs/archive/codex_TOURNAMENT_SCOREKEEPER_BROWSER_SIGNOFF.md`.
+- Manual browser sign-off checklist now lives in `docs/projects/archive/codex_TOURNAMENT_SCOREKEEPER_BROWSER_SIGNOFF.md`.
 - Help documentation has been updated in the help hub, tournament help, and org/member help to cover Scorekeeper View, scorekeeper assignment scope, pending review, audit metadata, admin correction/revert responsibilities, and the scorekeeper route.
 - Manual browser sign-off has been marked complete.
 - Persistent UAT scorekeeper users are documented and seeded by `tests/uat/create-uat-accounts.sql`: `uat-scorekeeper@uat-test-org.local` for Free Tournament and `uat-plus-scorekeeper@uat-plus-org.local` for Tournament Plus. They use the standard UAT password and are protected by the dev wipe route when the env vars are present. On 2026-05-23, the configured Supabase environment was updated: Free scorekeeper had 0 current active-tournament assignments because `uat-test-org` had no active tournament rows; Plus scorekeeper had 1 active-tournament assignment.

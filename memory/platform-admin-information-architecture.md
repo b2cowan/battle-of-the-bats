@@ -1,4 +1,4 @@
-# Platform Admin Information Architecture
+﻿# Platform Admin Information Architecture
 
 - Phase 1.5 exists because the organization detail page became a long stack of unrelated support, billing, entitlement, people, and activity panels.
 - The org detail layout now prioritizes a compact account snapshot, a needs-attention strip, primary actions, and grouped workflow tabs.
@@ -42,7 +42,7 @@
 - Future Plans & Pricing cleanup should likely move toward a plan-centered workspace for Availability, Limits & Trials, Stripe Prices, and Feature Matrix, while keeping Product Catalog/Campaigns separate unless catalog records become directly editable.
 - Per user direction on May 21, 2026, browser verification should not be carried as a separate task item for the remaining Platform Admin cleanup unless explicitly requested.
 - Platform Admin Phases 1 through 6 are complete for launch scope. The remaining Phase 6 watch items are deferred to future usage-driven cleanup: table-heavy Customer Users/Audit Log, Org Detail duplicate facts after real support use, future Bulk Operations history drill-in, Early Access growth-field separation, and Retention Queue hard-purge policy copy.
-- The Platform Admin implementation plan and PM brief have been archived to `docs/archive/merged_PLATFORM_ADMIN_IMPLEMENTATION_PLAN.md` and `docs/archive/PLATFORM_ADMIN_PM_BRIEF.md`.
+- The Platform Admin implementation plan and PM brief have been archived to `docs/projects/archive/merged_PLATFORM_ADMIN_IMPLEMENTATION_PLAN.md` and `docs/projects/archive/PLATFORM_ADMIN_PM_BRIEF.md`.
 - On May 21, 2026, Help was expanded into a searchable customer plus platform-admin help center: `/platform-admin/help` links to shared customer guide content and an employee-only Platform Admin Operations guide for password resets, billing overrides, module access overrides, bulk operations, notes, audit, retention, product governance, and platform-user access.
 - The help guide layout was then changed from long-scroll documentation to a selected-topic article reader with searchable topic/question results, side-panel topic buttons, related FAQs, and previous/next topic navigation.
 - After initial browser verification, customer-facing help content was expanded with task recipes across Org Admin, Tournaments, House League, Registrations, Rep Teams, Coaches Portal, and Accounting.

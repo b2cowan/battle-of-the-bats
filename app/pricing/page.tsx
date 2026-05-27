@@ -13,8 +13,8 @@ export const metadata = {
 const TRUST_SIGNALS = [
   'Billed in CAD — no conversion surprises',
   'No contracts — cancel anytime',
-  'Free plan available — no credit card required',
-  'Plans can be changed at any time',
+  'Tournament is free — no credit card required',
+  'Upgrade or downgrade at any time',
 ];
 
 const BUYER_SEGMENTS: Array<{
@@ -59,10 +59,10 @@ const BUYER_SEGMENTS: Array<{
 const UPGRADE_BRIDGES = [
   {
     headline: 'Running more than one tournament a year?',
-    body: 'Tournament Plus removes the single-event limit and adds the tools that make repeat events sustainable: unlimited tournaments, automated scheduling, custom registration fields, file uploads, full export suite, payment reminders, waitlist promotion, and post-event archives. Ten staff seats and unlimited officials included.',
+    body: 'Tournament Plus removes the single-event limit and adds the tools that make repeat events sustainable: unlimited tournaments, automated scheduling, custom registration fields, file uploads, full export suite, payment reminders, waitlist promotion, and post-event archives. Five staff seats and unlimited officials included.',
     from: 'Tournament',
     to: 'Tournament Plus',
-    cta: 'Start 14-Day Trial',
+    cta: 'Start Free — No Credit Card',
     href: '/auth/signup',
     earlyAccess: false,
   },
@@ -111,8 +111,8 @@ const FAQS = [
     a: 'Tournament Plus is billed monthly or annually in Canadian dollars. Monthly billing renews automatically each month. Annual billing is charged once per year — you pay for 10 months and get 12, which works out to roughly two months free. No contracts, no penalties.',
   },
   {
-    q: 'What happens when my free trial ends?',
-    a: 'At the end of your 14-day Tournament Plus trial, your plan continues at the regular rate for the billing period you chose. We\'ll send a reminder before it ends. Cancel before the trial closes and you won\'t be charged. Your data stays available for 90 days after cancellation — nothing is deleted immediately.',
+    q: 'What happens after the Founding Season offer ends?',
+    a: 'Tournament Plus is free through December 31, 2026 for organizations that sign up during the founding season — no credit card required. Starting January 2027, the standard rate of $39/month applies. We\'ll send a reminder before the offer closes. Your data and settings stay in place regardless of what you choose at renewal.',
   },
   {
     q: 'Can I change plans later?',
@@ -120,7 +120,7 @@ const FAQS = [
   },
   {
     q: 'Do I need a credit card to get started?',
-    a: 'No card is required for the free Tournament plan. Tournament Plus trials use secure Stripe Checkout and collect payment details at signup, with the first payment charged automatically only after the trial ends.',
+    a: 'No card is required for Tournament. Tournament Plus trials use secure Stripe Checkout and collect payment details at signup, with the first payment charged automatically only after the trial ends.',
   },
   {
     q: 'What if we get stuck?',
@@ -238,7 +238,7 @@ export default async function PricingPage() {
               <span className={styles.coachesCalloutPrice}>$29 CAD <span style={{ fontWeight: 400, fontSize: '0.72rem' }}>/mo</span></span>
               <span className={styles.coachesCalloutPriceSub}>or $290/season — save two months</span>
               <span className={styles.coachesCalloutBody}>
-                A standalone workspace for one rep team — roster, lineups, budget, and schedule. No org account needed. Coming soon.
+                A standalone workspace for one rep team — roster, lineups, budget, and schedule. No org account needed. When your org joins Club, your workspace carries over automatically. Coming soon.
               </span>
             </div>
             <EarlyAccessModalTrigger
@@ -331,7 +331,7 @@ export default async function PricingPage() {
               {[
                 {
                   label: 'Available now',
-                  body: 'Tournament is the free plan — no credit card, no time limit. Tournament Plus adds registration control, schedule automation, brackets, archives, branding, and reporting.',
+                  body: 'Tournament is free — no credit card, no time limit. Tournament Plus adds registration control, schedule automation, brackets, archives, branding, and reporting.',
                 },
                 {
                   label: 'Coming next',

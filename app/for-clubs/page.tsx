@@ -121,7 +121,7 @@ export default function ForClubsPage() {
             {' '}— Club is in development. Tournament and Tournament Plus are live today.
           </p>
           <div className={styles.trustRow}>
-            {['No contracts — cancel anytime', 'Billed in CAD', 'Plans can change at any time'].map(s => (
+            {['No contracts — cancel anytime', 'Billed in CAD', 'Upgrade or downgrade at any time'].map(s => (
               <div key={s} className={styles.trustItem}>
                 <span className={styles.trustDot} />
                 <span>{s}</span>

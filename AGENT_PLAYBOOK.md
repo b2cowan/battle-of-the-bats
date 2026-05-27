@@ -1,4 +1,4 @@
-# FieldLogicHQ Agent Playbook
+﻿# FieldLogicHQ Agent Playbook
 
 A practical guide to working with your custom Claude Code agents — how to prompt them, when to use each one, and how to chain them together efficiently.
 
@@ -39,7 +39,7 @@ Since agents load fresh every time, tell them where you left off:
 
 ```
 /ux — continuing tournament review; dashboard and teams pages done 
-(see docs/active/TOURNAMENT_REVIEW_PLAN.md), working on schedule page today
+(see docs/projects/active/TOURNAMENT_REVIEW_PLAN.md), working on schedule page today
 ```
 
 The agent reads the plan doc, sees what's checked off, and continues without re-explaining the whole project.
@@ -162,7 +162,7 @@ Include a checklist matrix: one row per page, columns for billing gate check,
 UX review, design review, and UAT status.
 ```
 
-Output: `docs/active/TOURNAMENT_REVIEW_PLAN.md` — your scoreboard for the whole quest.
+Output: `docs/projects/active/TOURNAMENT_REVIEW_PLAN.md` — your scoreboard for the whole quest.
 
 ---
 
@@ -177,7 +177,7 @@ Audit all plan gating in the tournament admin section
 I want to know: which features are correctly locked to Tournament Plus, 
 which free-tier pages accidentally expose Plus features, and 
 which Plus-only pages are missing upsell messaging when accessed on the free tier.
-Log your findings to docs/active/TOURNAMENT_REVIEW_PLAN.md.
+Log your findings to docs/projects/active/TOURNAMENT_REVIEW_PLAN.md.
 ```
 
 ---
@@ -252,7 +252,7 @@ Once all pages are checked off in the plan doc and UAT passes cleanly:
 
 ```
 /plan — tournament review complete.
-Mark TOURNAMENT_REVIEW_PLAN.md as done and move it to docs/archive/.
+Mark TOURNAMENT_REVIEW_PLAN.md as done and move it to docs/projects/archive/.
 Update TODO.md to reflect this is complete.
 ```
 
@@ -377,7 +377,7 @@ Billing gates audited and UX code review done for all tournament pages.
 
 # Archive a completed plan
 /plan — the tournament review is done. 
-Move TOURNAMENT_REVIEW_PLAN.md to docs/archive/ and update TODO.md.
+Move TOURNAMENT_REVIEW_PLAN.md to docs/projects/archive/ and update TODO.md.
 ```
 
 ---

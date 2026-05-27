@@ -291,6 +291,7 @@ export async function PATCH(req: Request) {
         title: 'Score submitted',
         body: `Submitted by ${ctx.user.email ?? 'an admin'}`,
         link: `/${ctx.org.slug}/admin/tournaments/schedule?tournamentId=${gameRow.tournamentId}`,
+        excludeUserIds: [ctx.user.id],
       }).catch(console.error);
     }
 

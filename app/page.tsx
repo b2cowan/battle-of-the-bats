@@ -68,7 +68,7 @@ const STEPS = [
   {
     num: '01',
     label: 'SET UP YOUR ORGANIZATION',
-    desc: 'Create your organization and set up the tournament tools you need today. League and club modules can be added as they open.',
+    desc: 'Create your organization and set up the tournament tools you need today. League and Club modules can be added as they open.',
   },
   {
     num: '02',
@@ -78,7 +78,7 @@ const STEPS = [
   {
     num: '03',
     label: 'RUN YOUR WHOLE SEASON',
-    desc: 'Enter scores from the field, publish results, and preserve tournament history. Broader season operations are coming next.',
+    desc: 'Enter scores from the field, publish results, and keep your tournament history on record — every event your org has run, in one place.',
   },
 ];
 

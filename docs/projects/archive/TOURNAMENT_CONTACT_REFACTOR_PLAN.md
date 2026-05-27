@@ -1,8 +1,8 @@
-# Tournament Contact Model Refactor — Implementation Plan
+﻿# Tournament Contact Model Refactor — Implementation Plan
 
 **Status:** COMPLETE — all phases shipped; migrations 088–090 applied to dev + prod  
 **Branch:** dev  
-**Related PM brief:** `docs/active/TOURNAMENT_CONTACT_REFACTOR_PM_BRIEF.md`
+**Related PM brief:** `docs/projects/active/TOURNAMENT_CONTACT_REFACTOR_PM_BRIEF.md`
 
 ---
 

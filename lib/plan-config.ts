@@ -59,7 +59,7 @@ export const PLAN_CONFIG: Record<OrgPlan, PlanConfig> = {
     monthlyPrice: 39,
     annualPrice: 390,
     tournamentLimit: 9999,
-    seatLimit: 10,
+    seatLimit: 5,
     officialsFreeSeats: true,
     trialDays: 14,
     moduleEntitlements: CORE_MODULES,

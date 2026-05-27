@@ -104,7 +104,7 @@ The existing `tournaments.fee_schedule_mode` column has values `'tournament'` an
 - [x] Migration sets default `game_timing_scope = 'tournament'` for any existing tournament that already has `game_duration_minutes` explicitly set in settings (non-null)
 - [x] Migration sets default `fee_scope` from existing `fee_schedule_mode`: `'tournament'` → `'tournament'`, `'division'` → `'per_division'`
 - [x] Migration leaves `tie_breaker_scope = null` for all existing tournaments (requires explicit decision — shown as incomplete on dashboard)
-- [ ] Apply to dev DB first, then prod
+- [x] Apply to dev DB first, then prod — applied 2026-05-27
 
 #### Type changes (`lib/types.ts`)
 

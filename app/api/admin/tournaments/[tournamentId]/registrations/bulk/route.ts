@@ -9,6 +9,7 @@ import { getAuthContextWithScope, forbidden, scopeGuard, unauthorized } from '@/
 import { hasCapability } from '@/lib/roles';
 import { writePlatformEvent } from '@/lib/platform-events';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { notify } from '@/lib/notify';
 
 type RouteParams = { params: Promise<{ tournamentId: string }> };
 
@@ -256,6 +257,47 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
   }
 
   await sendStatusEmails(selectedTeams, bulkAction, tournament.name, divisions);
+
+  // Notify org admins of bulk status / payment changes (fire-and-forget, one notification per operation)
+  const count = selectedTeams.length;
+  const registrationsLink = `/${ctx.org.slug}/admin/tournaments/registrations?tournamentId=${tournamentId}`;
+  if (bulkAction === 'accept') {
+    notify({
+      orgId: ctx.org.id, tournamentId,
+      eventType: 'registration_status_changed',
+      title: `${count} registration${count === 1 ? '' : 's'} accepted`,
+      body: 'Bulk status update',
+      link: registrationsLink,
+      excludeUserIds: [ctx.user.id],
+    }).catch(console.error);
+  } else if (bulkAction === 'reject') {
+    notify({
+      orgId: ctx.org.id, tournamentId,
+      eventType: 'registration_status_changed',
+      title: `${count} registration${count === 1 ? '' : 's'} declined`,
+      body: 'Bulk status update',
+      link: registrationsLink,
+      excludeUserIds: [ctx.user.id],
+    }).catch(console.error);
+  } else if (bulkAction === 'waitlist') {
+    notify({
+      orgId: ctx.org.id, tournamentId,
+      eventType: 'registration_status_changed',
+      title: `${count} registration${count === 1 ? '' : 's'} moved to waitlist`,
+      body: 'Bulk status update',
+      link: registrationsLink,
+      excludeUserIds: [ctx.user.id],
+    }).catch(console.error);
+  } else if (bulkAction === 'mark_paid') {
+    notify({
+      orgId: ctx.org.id, tournamentId,
+      eventType: 'payment_received',
+      title: `${count} payment${count === 1 ? '' : 's'} recorded`,
+      body: 'Bulk payment update',
+      link: registrationsLink,
+      excludeUserIds: [ctx.user.id],
+    }).catch(console.error);
+  }
 
   await trackBulkEvent({
     orgId: ctx.org.id,

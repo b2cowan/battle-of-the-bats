@@ -1,9 +1,16 @@
 'use client';
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { Fragment, useState, useEffect, useRef, useCallback } from 'react';
 import { Bell, Mail, Smartphone, Info, AlertCircle } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
-import { ALL_EVENT_TYPES, NOTIFICATION_EVENT_LABELS, NOTIFICATION_EVENT_DESCRIPTIONS } from '@/lib/notification-labels';
+import {
+  NOTIFICATION_SECTIONS,
+  ALL_EVENT_TYPES,
+  NOTIFICATION_EVENT_LABELS,
+  NOTIFICATION_EVENT_DESCRIPTIONS,
+} from '@/lib/notification-labels';
 import type { NotificationEventType, NotificationPreference } from '@/lib/types';
+import type { Capability } from '@/lib/roles';
+import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import PushPermissionPrompt from '@/components/notifications/PushPermissionPrompt';
 import styles from './notifications.module.css';
 
@@ -66,6 +73,13 @@ export default function OrgNotificationPreferencesPage() {
 
   // Debounce refs per event type (used for bell/email — push uses explicit save after permission)
   const debounceRefs = useRef<Map<NotificationEventType, ReturnType<typeof setTimeout>>>(new Map());
+
+  // ── Visible sections — only show modules the org has enabled ──────────────
+
+  const visibleSections = NOTIFICATION_SECTIONS.filter(sec =>
+    sec.module === null ||
+    (currentOrg ? hasModuleEntitlement(currentOrg, sec.module as Capability) : false)
+  );
 
   // ── Detect push support on mount (client-only) ─────────────────────────────
 
@@ -255,7 +269,7 @@ export default function OrgNotificationPreferencesPage() {
         />
       )}
 
-      {/* Preferences table */}
+      {/* Preferences table — grouped by module */}
       <div className={styles.tableWrap}>
         <table className={styles.table}>
           <thead>
@@ -291,48 +305,60 @@ export default function OrgNotificationPreferencesPage() {
                     <td><div className={styles.skeletonToggle} /></td>
                   </tr>
                 ))
-              : ALL_EVENT_TYPES.map(et => {
-                  const pref     = prefs.get(et) ?? systemDefault(et, role);
-                  const isSaving = saving.has(et);
-                  const isPushPending = pendingPushEventType === et;
-                  return (
-                    <tr key={et} className={`${styles.row} ${isSaving ? styles.rowSaving : ''}`}>
-                      <td className={styles.tdEvent}>
-                        <span className={styles.eventLabel}>{NOTIFICATION_EVENT_LABELS[et]}</span>
-                        <span className={styles.eventDesc} title={NOTIFICATION_EVENT_DESCRIPTIONS[et]}>
-                          <Info size={12} />
-                          <span className={styles.descText}>{NOTIFICATION_EVENT_DESCRIPTIONS[et]}</span>
-                        </span>
-                      </td>
-                      <td className={styles.tdChannel}>
-                        <Toggle
-                          checked={pref.channelBell}
-                          onChange={v => handleToggle(et, 'channelBell', v)}
-                          label={`Bell notifications for ${NOTIFICATION_EVENT_LABELS[et]}`}
-                        />
-                      </td>
-                      <td className={styles.tdChannel}>
-                        <Toggle
-                          checked={pref.channelPush}
-                          onChange={v => handleToggle(et, 'channelPush', v)}
-                          label={`Push notifications for ${NOTIFICATION_EVENT_LABELS[et]}`}
-                          // Disable if: browser doesn't support push, or another event type's push is pending
-                          disabled={
-                            pushSupported === false ||
-                            (pendingPushEventType !== null && !isPushPending)
-                          }
-                        />
-                      </td>
-                      <td className={styles.tdChannel}>
-                        <Toggle
-                          checked={pref.channelEmail}
-                          onChange={v => handleToggle(et, 'channelEmail', v)}
-                          label={`Email notifications for ${NOTIFICATION_EVENT_LABELS[et]}`}
-                        />
+              : visibleSections.map((section, sIdx) => (
+                  <Fragment key={section.label}>
+                    {/* Section header row */}
+                    <tr className={`${styles.sectionHeaderRow} ${sIdx > 0 ? styles.sectionHeaderRowBorder : ''}`}>
+                      <td colSpan={4} className={styles.sectionHeaderCell}>
+                        {section.label}
                       </td>
                     </tr>
-                  );
-                })
+
+                    {/* Event rows for this section */}
+                    {section.eventTypes.map(et => {
+                      const pref          = prefs.get(et) ?? systemDefault(et, role);
+                      const isSaving      = saving.has(et);
+                      const isPushPending = pendingPushEventType === et;
+                      return (
+                        <tr key={et} className={`${styles.row} ${isSaving ? styles.rowSaving : ''}`}>
+                          <td className={styles.tdEvent}>
+                            <span className={styles.eventLabel}>{NOTIFICATION_EVENT_LABELS[et]}</span>
+                            <span className={styles.eventDesc} title={NOTIFICATION_EVENT_DESCRIPTIONS[et]}>
+                              <Info size={12} />
+                              <span className={styles.descText}>{NOTIFICATION_EVENT_DESCRIPTIONS[et]}</span>
+                            </span>
+                          </td>
+                          <td className={styles.tdChannel}>
+                            <Toggle
+                              checked={pref.channelBell}
+                              onChange={v => handleToggle(et, 'channelBell', v)}
+                              label={`Bell notifications for ${NOTIFICATION_EVENT_LABELS[et]}`}
+                            />
+                          </td>
+                          <td className={styles.tdChannel}>
+                            <Toggle
+                              checked={pref.channelPush}
+                              onChange={v => handleToggle(et, 'channelPush', v)}
+                              label={`Push notifications for ${NOTIFICATION_EVENT_LABELS[et]}`}
+                              // Disable if: browser doesn't support push, or another event type's push is pending
+                              disabled={
+                                pushSupported === false ||
+                                (pendingPushEventType !== null && !isPushPending)
+                              }
+                            />
+                          </td>
+                          <td className={styles.tdChannel}>
+                            <Toggle
+                              checked={pref.channelEmail}
+                              onChange={v => handleToggle(et, 'channelEmail', v)}
+                              label={`Email notifications for ${NOTIFICATION_EVENT_LABELS[et]}`}
+                            />
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </Fragment>
+                ))
             }
           </tbody>
         </table>

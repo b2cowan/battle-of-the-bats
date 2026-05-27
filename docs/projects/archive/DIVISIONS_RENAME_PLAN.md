@@ -1,4 +1,4 @@
-# Divisions Rename — Implementation Plan
+﻿# Divisions Rename — Implementation Plan
 
 > **Status:** Complete ✅
 > **Created:** 2026-05-25
@@ -88,7 +88,7 @@ Rename every reference to "age group / age groups" across the full stack — dat
 - [x] `age_group_name` aliased fields renamed to `division_name` in registrations and teams pages
 
 ### Phase 5 — Docs, Memory, and Tests
-- [x] `docs/active/*.md` — inline updates
+- [x] `docs/projects/active/*.md` — inline updates
 - [x] `AGENT_PLAYBOOK.md` — updated
 - [x] `lib/help-content/tournaments.tsx` — hrefs updated
 - [x] UAT test files — selectors and labels updated

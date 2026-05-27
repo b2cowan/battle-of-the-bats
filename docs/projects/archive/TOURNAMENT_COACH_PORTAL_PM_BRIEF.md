@@ -1,8 +1,8 @@
-# PM Brief — Tournament Coach Portal
+﻿# PM Brief — Tournament Coach Portal
 
 **Created:** 2026-05-24  
 **Status:** Planning  
-**Full plan:** `docs/active/TOURNAMENT_COACH_PORTAL_PLAN.md`
+**Full plan:** `docs/projects/active/TOURNAMENT_COACH_PORTAL_PLAN.md`
 
 ---
 

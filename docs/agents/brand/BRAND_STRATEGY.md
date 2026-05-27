@@ -1,4 +1,4 @@
-# FieldLogicHQ Brand Strategy
+﻿# FieldLogicHQ Brand Strategy
 
 ## Coaches Portal Unification Addendum
 
@@ -13,7 +13,7 @@ Current rule:
 - Use `/coaches` as the product route. Legacy coach/team signup routes should redirect into `/coaches` before launch.
 - Customer-facing copy should say Coaches Portal, not Team plan, Team subscription, or standalone Team.
 
-See `docs/active/COACHES_PORTAL_UNIFIED_PROJECT_PLAN.md` for the canonical implementation direction.
+See `docs/projects/active/COACHES_PORTAL_UNIFIED_PROJECT_PLAN.md` for the canonical implementation direction.
 
 *Last updated: 2026-05-24 — established in marketing strategy session*
 
@@ -341,4 +341,4 @@ Before publishing any public-facing copy, verify:
 
 ---
 
-*This document is the canonical brand reference. All persona pages, pricing copy, email copy, and in-app upsell messaging should be consistent with it. The approved pricing page copy lives in `docs/active/PRICING_PAGE_COPY.md`. Design decisions live in `memory/design_decisions.md`.*
+*This document is the canonical brand reference. All persona pages, pricing copy, email copy, and in-app upsell messaging should be consistent with it. The approved pricing page copy lives in `docs/agents/brand/PRICING_PAGE_COPY.md`. Design decisions live in `memory/design_decisions.md`.*

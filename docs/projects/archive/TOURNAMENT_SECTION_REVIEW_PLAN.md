@@ -1,4 +1,4 @@
-# Tournament Section — Design, UX & Bug Review
+﻿# Tournament Section — Design, UX & Bug Review
 
 > **Status:** In Progress - Phase H responsive hardening code pass complete; user browser sign-off pending
 > **Created:** 2026-05-21
@@ -337,7 +337,7 @@ Global pass criteria for every route:
 - [x] Dev server restart after Phase H shared styling changes: stop → clear `.next` → `npm run dev`; `/platform-admin/login?next=%2Fplatform-admin` returned HTTP 200 with no Supabase `EACCES`
 - [x] Dev server restart: stop → `rm -rf .next` → `npm run dev` → wait for Ready after Phase F shared styling changes; `/platform-admin/login?next=%2Fplatform-admin` returned HTTP 200 with no Supabase `EACCES`
 - [ ] User browser sign-off at desktop and mobile widths on at least: dashboard, registrations, schedule, results, settings hub
-- [ ] Archive `TOURNAMENT_ADMIN_UX_REFORMAT_PLAN.md` to `docs/archive/` once Phase H is verified
+- [ ] Archive `TOURNAMENT_ADMIN_UX_REFORMAT_PLAN.md` to `docs/projects/archive/` once Phase H is verified
 - [ ] Update `TODO.md`: mark this plan complete, move to Completed Projects
 
 ---

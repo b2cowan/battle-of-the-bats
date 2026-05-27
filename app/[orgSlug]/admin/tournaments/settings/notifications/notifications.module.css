@@ -8,46 +8,54 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 1rem;
   margin-bottom: 1.75rem;
 }
 
 .headerLeft {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 0.75rem;
 }
 
+/* Matches TournamentAdminUI .headerIcon exactly */
 .headerIcon {
-  width: 48px;
-  height: 48px;
+  width: 30px;
+  height: 30px;
   border-radius: 2px;
-  background: rgba(var(--blueprint-blue-rgb), 0.12);
+  background: rgba(var(--blueprint-blue-rgb), 0.08);
   color: var(--logic-lime);
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.3);
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.28);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
 }
 
+/* Matches TournamentAdminUI .title — explicit lime, not relying on global shim */
 .pageTitle {
-  font-size: 1.75rem;
-  font-weight: 900;
+  font-size: 1.05rem;
+  font-weight: 700;
   font-family: var(--font-data);
   margin: 0;
-  color: var(--white-90, #f0f0f0);
+  color: var(--logic-lime);
   line-height: 1.1;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
 }
 
+/* Matches TournamentAdminUI .subtitle */
 .pageSub {
-  margin: 0.25rem 0 0;
-  color: var(--white-40, rgba(255,255,255,0.4));
-  font-size: 0.9rem;
-  line-height: 1.5;
+  margin: 0.12rem 0 0;
+  color: var(--data-gray);
+  font-family: var(--font-data);
+  font-size: 0.68rem;
+  letter-spacing: 0.03em;
+  line-height: 1.4;
 }
 
 .pageSub strong {
-  color: var(--white-70, rgba(255,255,255,0.7));
+  color: var(--white-70);
 }
 
 /* ── Error banner ────────────────────────────────────────────────────────────── */
@@ -58,11 +66,60 @@
   gap: 0.5rem;
   padding: 0.75rem 1rem;
   border-radius: 2px;
-  background: rgba(239, 68, 68, 0.1);
-  border: 1px solid rgba(239, 68, 68, 0.25);
-  color: #fca5a5;
+  background: rgba(var(--danger-rgb), 0.1);
+  border: 1px solid rgba(var(--danger-rgb), 0.25);
+  color: var(--danger);
   font-size: 0.875rem;
   margin-bottom: 1.25rem;
+}
+
+/* ── Global channel card ─────────────────────────────────────────────────────── */
+
+.channelCard {
+  padding: 1rem 1.125rem;
+  border-radius: 2px;
+  border: 1px solid var(--border, rgba(255,255,255,0.08));
+  background: rgba(255,255,255,0.02);
+  margin-bottom: 0.875rem;
+}
+
+.channelCardLabel {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--white-40, rgba(255,255,255,0.4));
+  margin-bottom: 0.75rem;
+}
+
+.channelRow {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  margin-bottom: 0.625rem;
+}
+
+.channelItem {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: default;
+}
+
+.channelItemLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--white-70, rgba(255,255,255,0.7));
+}
+
+.channelNote {
+  font-size: 0.78rem;
+  color: var(--white-30, rgba(255,255,255,0.3));
+  margin: 0;
+  line-height: 1.5;
 }
 
 /* ── Master mute card ────────────────────────────────────────────────────────── */
@@ -74,15 +131,15 @@
   gap: 1rem;
   padding: 1.1rem 1.25rem;
   border-radius: 2px;
-  background: var(--surface, rgba(255,255,255,0.04));
-  border: 1px solid var(--border, rgba(255,255,255,0.08));
+  background: var(--surface);
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.2);
   margin-bottom: 1.5rem;
   transition: border-color 0.18s ease, background 0.18s ease;
 }
 
 .muteCardActive {
-  background: rgba(239, 68, 68, 0.06);
-  border-color: rgba(239, 68, 68, 0.22);
+  background: rgba(var(--danger-rgb), 0.06);
+  border-color: rgba(var(--danger-rgb), 0.22);
 }
 
 .muteCardLeft {
@@ -99,18 +156,20 @@
 }
 
 .muteCardActive .muteIcon {
-  color: #fca5a5;
+  color: var(--danger);
 }
 
 .muteTitle {
   font-size: 0.9rem;
   font-weight: 700;
+  font-family: var(--font-data);
   color: var(--white-90);
   margin-bottom: 0.2rem;
 }
 
 .muteSub {
   font-size: 0.82rem;
+  font-family: var(--font-data);
   color: var(--white-40);
   line-height: 1.5;
 }
@@ -120,9 +179,10 @@
 .sectionLabel {
   font-size: 0.7rem;
   font-weight: 700;
+  font-family: var(--font-data);
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--white-30, rgba(255,255,255,0.3));
+  color: rgba(var(--logic-lime-rgb), 0.65);
   margin-bottom: 0.6rem;
 }
 
@@ -130,7 +190,7 @@
 
 .tableWrap {
   border-radius: 2px;
-  border: 1px solid var(--border, rgba(255,255,255,0.08));
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.2);
   overflow: hidden;
   margin-bottom: 1rem;
 }
@@ -141,17 +201,18 @@
 }
 
 .table thead {
-  background: rgba(255,255,255,0.03);
-  border-bottom: 1px solid var(--border, rgba(255,255,255,0.08));
+  background: var(--surface-2);
+  border-bottom: 1px solid rgba(var(--logic-lime-rgb), 0.18);
 }
 
 .table th {
   padding: 0.6rem 1rem;
   font-size: 0.7rem;
   font-weight: 700;
+  font-family: var(--font-data);
   letter-spacing: 0.09em;
   text-transform: uppercase;
-  color: var(--white-40);
+  color: var(--data-gray);
   text-align: left;
 }
 
@@ -167,7 +228,7 @@
 /* ── Rows ────────────────────────────────────────────────────────────────────── */
 
 .row {
-  border-bottom: 1px solid rgba(255,255,255,0.05);
+  border-bottom: 1px solid var(--border-2);
   transition: background 0.12s ease, opacity 0.12s ease;
 }
 
@@ -176,7 +237,7 @@
 }
 
 .row:hover {
-  background: rgba(255,255,255,0.02);
+  background: var(--white-03);
 }
 
 .rowMuted {
@@ -192,6 +253,7 @@
   display: block;
   font-size: 0.88rem;
   font-weight: 600;
+  font-family: var(--font-data);
   color: var(--white-90);
   margin-bottom: 0.15rem;
 }
@@ -199,7 +261,8 @@
 .eventDesc {
   display: block;
   font-size: 0.77rem;
-  color: var(--white-35, rgba(255,255,255,0.35));
+  font-family: var(--font-data);
+  color: var(--data-gray);
   line-height: 1.45;
 }
 
@@ -210,6 +273,7 @@
 }
 
 /* ── Toggle ─────────────────────────────────────────────────────────────────── */
+/* border-radius: 20px is an intentional exception — pill shape IS the toggle affordance */
 
 .toggle {
   display: inline-block;
@@ -217,8 +281,8 @@
   width: 36px;
   height: 20px;
   border-radius: 20px;
-  background: rgba(255,255,255,0.1);
-  border: 1px solid rgba(255,255,255,0.12);
+  background: var(--white-10);
+  border: 1px solid rgba(255,255,255,0.12); /* between --white-10 and --white-20; intentional */
   cursor: pointer;
   transition: background 0.18s ease, border-color 0.18s ease;
   outline: none;
@@ -232,17 +296,18 @@
   width: 14px;
   height: 14px;
   border-radius: 50%;
-  background: rgba(255,255,255,0.45);
+  background: var(--white-45);
   transition: transform 0.18s ease, background 0.18s ease;
 }
 
+/* ON = receiving = positive = success green */
 .toggleOn {
-  background: #ef4444;
-  border-color: #ef4444;
+  background: var(--success);
+  border-color: var(--success);
 }
 
 .toggleOn::after {
-  background: #fff;
+  background: var(--white);
   transform: translateX(16px);
 }
 
@@ -265,7 +330,7 @@
 .skeletonLabel {
   height: 13px;
   border-radius: 2px;
-  background: rgba(255,255,255,0.06);
+  background: var(--white-05);
   width: 55%;
   animation: shimmer 1.4s ease-in-out infinite;
 }
@@ -273,8 +338,8 @@
 .skeletonToggle {
   height: 20px;
   width: 36px;
-  border-radius: 20px;
-  background: rgba(255,255,255,0.06);
+  border-radius: 20px; /* mirrors toggle pill shape */
+  background: var(--white-05);
   margin: 0 auto;
   animation: shimmer 1.4s ease-in-out infinite;
 }
@@ -291,13 +356,26 @@
   font-size: 0.9rem;
 }
 
-.footNote {
-  font-size: 0.8rem;
-  color: var(--white-30, rgba(255,255,255,0.3));
-  line-height: 1.55;
-  margin: 0;
+/* ── Responsive — matches TournamentAdminUI breakpoints exactly ──────────────── */
+
+@media (max-width: 760px) {
+  .headerIcon {
+    width: 28px;
+    height: 28px;
+  }
+
+  .pageTitle {
+    font-size: 0.95rem;
+  }
+
+  .pageSub {
+    font-size: 0.65rem;
+  }
 }
 
-.footNote strong {
-  color: var(--white-50, rgba(255,255,255,0.5));
+@media (max-width: 480px) {
+  /* Secondary context hidden at narrow widths — matches TournamentAdminUI .subtitle */
+  .pageSub {
+    display: none;
+  }
 }

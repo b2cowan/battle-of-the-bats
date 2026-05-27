@@ -1,4 +1,4 @@
-# Tournament Admin — Mobile Review Tracker
+﻿# Tournament Admin — Mobile Review Tracker
 
 > **Status:** In Progress
 > **Created:** 2026-05-25
@@ -6,9 +6,9 @@
 > **Scope:** Phone-sized viewport (390x844 primary; spot-check 375x667 and 430x932).
 > **Role under review:** Organization owner/admin on base Tournament subscription.
 > **Related docs:**
-> - Mobile findings: `docs/active/codex_TOURNAMENT_OWNER_MOBILE_REVIEW.md`
-> - Mobile implementation plan: `docs/active/codex_TOURNAMENT_OWNER_MOBILE_IMPLEMENTATION_PLAN.md`
-> - Desktop review tracker (separate scope): `docs/active/agent_TOURNAMENT_DESIGN_REVIEW.md`
+> - Mobile findings: `docs/projects/active/codex_TOURNAMENT_OWNER_MOBILE_REVIEW.md`
+> - Mobile implementation plan: `docs/projects/active/codex_TOURNAMENT_OWNER_MOBILE_IMPLEMENTATION_PLAN.md`
+> - Desktop review tracker (separate scope): `docs/projects/active/agent_TOURNAMENT_DESIGN_REVIEW.md`
 
 ---
 

@@ -32,6 +32,11 @@ export interface NotifyOptions {
    * (with staff scoped to the tournament when tournamentId is provided).
    */
   userIds?: string[];
+  /**
+   * User IDs to exclude from dispatch — typically the user who performed the action.
+   * Nobody should be notified about their own actions.
+   */
+  excludeUserIds?: string[];
 }
 
 interface ChannelPrefs {
@@ -127,9 +132,16 @@ export async function notify(opts: NotifyOptions): Promise<void> {
       }
     }
 
-    // ── 2. Dispatch per recipient ──────────────────────────────────────────────
+    // ── 2. Filter excluded users (actors should not receive their own actions) ──
 
-    for (const recipient of recipients) {
+    const excludeSet = new Set(opts.excludeUserIds ?? []);
+    const filteredRecipients = excludeSet.size > 0
+      ? recipients.filter(r => !excludeSet.has(r.userId))
+      : recipients;
+
+    // ── 3. Dispatch per recipient ──────────────────────────────────────────────
+
+    for (const recipient of filteredRecipients) {
 
       // 2a. Tournament-level opt-out check (Layer 2)
       if (opts.tournamentId) {

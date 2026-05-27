@@ -1,4 +1,4 @@
-# Standalone Team Workspace PM Brief
+﻿# Standalone Team Workspace PM Brief
 
 ## Proposed Functionality
 
@@ -233,7 +233,7 @@ Phase 9 delivered launch documentation for:
 - How billing transfer works and why both sides approve it.
 - How Team, org Team add-ons, Club included teams, and Club extra teams differ.
 
-The release now includes `docs/active/codex_STANDALONE_TEAM_LAUNCH_CHECKLIST.md` as the owner checklist. The expected Stripe updates remain:
+The release now includes `docs/projects/active/codex_STANDALONE_TEAM_LAUNCH_CHECKLIST.md` as the owner checklist. The expected Stripe updates remain:
 
 - Create Team monthly price at **$29 CAD**.
 - Create Team annual/seasonal price at **$290 CAD**.

@@ -1,6 +1,6 @@
-# Non-Billing UAT Remediation
+﻿# Non-Billing UAT Remediation
 
-Archived plan: [NON_BILLING_UAT_REMEDIATION_PLAN.md](../docs/archive/NON_BILLING_UAT_REMEDIATION_PLAN.md).
+Archived plan: [NON_BILLING_UAT_REMEDIATION_PLAN.md](../docs/projects/archive/NON_BILLING_UAT_REMEDIATION_PLAN.md).
 
 Completed:
 

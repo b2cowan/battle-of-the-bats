@@ -73,7 +73,7 @@ const PLUS_FEATURES = [
   'Advanced payment tracking and post-tournament reporting',
   'Full branding control — no FieldLogicHQ badge',
   'Permanent sealed archives and tournament cloning',
-  '10 staff seats · Unlimited officials',
+  '5 staff seats · Unlimited officials',
 ];
 
 const CROSS_SELLS = [
@@ -227,7 +227,7 @@ export default function ForTournamentOrganizersPage() {
                   <span className={styles.planAmount}>$39</span>
                   <span className={styles.planPeriod}>/month</span>
                 </div>
-                <p className={styles.planNote}>14-day free trial · $390/year — save two months</p>
+                <p className={styles.planNote}>Free through Dec 31, 2026 — Founding Season · $390/year from Jan 2027</p>
               </div>
               <p className={styles.planTagline}>
                 For organizers running more than one event a year, or who need custom registration, exports, and archives.
@@ -242,7 +242,7 @@ export default function ForTournamentOrganizersPage() {
                 ))}
               </div>
               <Link href="/auth/signup" className={`${styles.planCta} ${styles.planCtaPaid}`}>
-                Start 14-Day Trial →
+                Start Free — No Credit Card →
               </Link>
             </div>
 

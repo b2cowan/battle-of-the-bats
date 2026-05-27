@@ -1,7 +1,7 @@
-# PM Brief — Tournament Contact Model Refactor
+﻿# PM Brief — Tournament Contact Model Refactor
 
 **Status:** Planning + first unified sign-in slice implemented  
-**Plan:** `docs/active/TOURNAMENT_CONTACT_REFACTOR_PLAN.md`
+**Plan:** `docs/projects/active/TOURNAMENT_CONTACT_REFACTOR_PLAN.md`
 
 ---
 

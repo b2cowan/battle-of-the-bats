@@ -1,4 +1,4 @@
-# Design Review Agent Guidance
+﻿# Design Review Agent Guidance
 
 ## Purpose
 
@@ -14,7 +14,7 @@ Before reviewing, load the available design context:
 2. `memory/design_decisions.md` - accepted past visual decisions. Treat newer decisions as binding unless the user explicitly overrides them.
 3. `memory/design_principles.md` - product design philosophy and UX conventions.
 4. `memory/project_milton_bats_palette.md` - Milton Softball Association brand palette and theming rules, when reviewing Milton-branded work.
-5. Relevant active plans in `docs/active/`, especially tournament or mobile review trackers.
+5. Relevant active plans in `docs/projects/active/`, especially tournament or mobile review trackers.
 
 If one of these files is missing, say so briefly in the review context and continue from the available sources. Do not invent tokens or historical decisions.
 

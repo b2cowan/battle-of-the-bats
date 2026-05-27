@@ -16,21 +16,32 @@ These rules apply to all AI coding assistants working in this repository.
 
 ## Documentation Structure
 
-All planning and reference documentation must follow this two-tier structure:
+All planning and reference documentation follows a three-tier structure:
 
 ### `TODO.md` — High-level task list only
 - One line per task (or a small nested group for closely related sub-items)
 - Links to the relevant detailed plan file for full implementation notes
 - No file paths, SQL, code blocks, or step-by-step instructions
-- Example entry: `- [ ] **Item 1** — Generalized design token refactor (see DESIGN_SYSTEM_PLAN.md)`
+- Example entry: `- [ ] **Item 1** — Generalized design token refactor (see docs/projects/active/DESIGN_SYSTEM_PLAN.md)`
 
-### Dedicated plan files — Full implementation detail
-- Every significant feature or phase gets its own `.md` file in the repo root
-- Contains: goals, task checklists with file paths, SQL snippets, architectural decisions, build order
-- Named descriptively: `MULTI_TENANT_ARCHITECTURE.md`, `DESIGN_SYSTEM_PLAN.md`, etc.
-- Existing examples to follow: `MULTI_TENANT_ARCHITECTURE.md`, `DESIGN_SYSTEM_PLAN.md`
+### `docs/projects/` — Project plans with a lifespan
+- `docs/projects/active/` — plans for features currently in flight
+- `docs/projects/archive/` — completed or cancelled project plans
+- Every significant feature gets its own `_PLAN.md` + `_PM_BRIEF.md` pair in `docs/projects/active/`
+- When a project completes and is verified, move both files: `Move-Item docs/projects/active/X.md docs/projects/archive/X.md`
+- TODO.md links should always point to the current location
 
-When an agent is asked to write up an implementation plan, it must create a new dedicated file and add only a summary line to `TODO.md` that links to it.
+### `docs/agents/` — Living reference documents (never archived)
+- Per-agent subdirectories: `brand/`, `design/`, `db/`, `ops/`
+- These hold the canonical reference documents each agent loads on activation
+- **Do NOT move these to archive** — they evolve in place, they have no end date
+- When creating new reference content for an agent, write it to the agent's subfolder
+- `docs/agents/brand/` → `/marketing` agent (brand strategy, copy canon, pricing copy)
+- `docs/agents/design/` → `/design` agent (design reviews, visual guidelines)
+- `docs/agents/db/` → `/db` + `/dba` agents (architecture review, schema snapshots, SQL utilities)
+- `docs/agents/ops/` → `/release` + dev ops reference (setup guides, runbooks)
+
+When an agent is asked to write up an implementation plan, it must create a new dedicated file at `docs/projects/active/<PLAN_NAME>.md` and add only a summary line to `TODO.md` that links to it.
 
 ## Branch and Deployment Policy
 - **CRITICAL**: All commits go to the `dev` branch by default. Never commit or push to `master` unless the user explicitly requests a deployment.

@@ -1,8 +1,8 @@
-# Coaches Portal Unified Product PM Brief
+﻿# Coaches Portal Unified Product PM Brief
 
 **Created:** 2026-05-25  
 **Status:** Active canonical brief  
-**Full plan:** `docs/active/COACHES_PORTAL_UNIFIED_PROJECT_PLAN.md`
+**Full plan:** `docs/projects/active/COACHES_PORTAL_UNIFIED_PROJECT_PLAN.md`
 
 ## What This Is
 

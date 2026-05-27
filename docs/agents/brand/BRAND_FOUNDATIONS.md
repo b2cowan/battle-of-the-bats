@@ -1,9 +1,9 @@
-# FieldLogicHQ Brand Foundations
+﻿# FieldLogicHQ Brand Foundations
 
 **Created:** 2026-05-26  
 **Status:** Active — all sections open for execution  
 **Context:** Pre-revenue founding season. Tournament and Tournament Plus are the active acquisition tiers. League, Club, and Coaches Portal are marketed but not yet open for purchase.  
-**Depends on:** `docs/active/BRAND_STRATEGY.md` (positioning, voice, vocabulary, tier rules — canonical reference; do not duplicate here)
+**Depends on:** `docs/agents/brand/BRAND_STRATEGY.md` (positioning, voice, vocabulary, tier rules — canonical reference; do not duplicate here)
 
 ---
 
@@ -637,4 +637,4 @@ These items are not blocking for the strategy document but require answers befor
 
 ---
 
-*This document supplements `docs/active/BRAND_STRATEGY.md`, which remains the canonical reference for positioning, voice, vocabulary, and tier rules. Do not duplicate strategy rules here — reference the source document instead. Design decisions live in `memory/design_decisions.md`. Approved pricing copy lives in `docs/active/PRICING_PAGE_COPY.md` (to be created).*
+*This document supplements `docs/agents/brand/BRAND_STRATEGY.md`, which remains the canonical reference for positioning, voice, vocabulary, and tier rules. Do not duplicate strategy rules here — reference the source document instead. Design decisions live in `memory/design_decisions.md`. Approved pricing copy lives in `docs/agents/brand/PRICING_PAGE_COPY.md` (to be created).*

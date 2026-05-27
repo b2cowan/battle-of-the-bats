@@ -1,12 +1,12 @@
-# Platform Roadmap (Consolidated)
+﻿# Platform Roadmap (Consolidated)
 
 Authoritative source for all remaining and planned work on FieldLogicHQ. Supersedes four source plan files that are archived in place — consult them for historical context on shipped features.
 
-**Supersedes (archived to `docs/archive/`):**
-- [`ADMIN_HUB_NAVIGATION_PLAN.md`](docs/archive/ADMIN_HUB_NAVIGATION_PLAN.md) — all tasks complete
-- [`ARCHIVES_EXPANSION_PLAN.md`](docs/archive/ARCHIVES_EXPANSION_PLAN.md) — Phase A complete; deferred items carried forward here
-- [`MODULE_CAPABILITIES_PLAN.md`](docs/archive/MODULE_CAPABILITIES_PLAN.md) — Phase A complete; Phase B is a standing pattern (see Module Build Checklist)
-- [`PLATFORM_IMPROVEMENTS_PLAN.md`](docs/archive/PLATFORM_IMPROVEMENTS_PLAN.md) — Phases 1–3 complete; Phase 4 items reconciled here
+**Supersedes (archived to `docs/projects/archive/`):**
+- [`ADMIN_HUB_NAVIGATION_PLAN.md`](docs/projects/archive/ADMIN_HUB_NAVIGATION_PLAN.md) — all tasks complete
+- [`ARCHIVES_EXPANSION_PLAN.md`](docs/projects/archive/ARCHIVES_EXPANSION_PLAN.md) — Phase A complete; deferred items carried forward here
+- [`MODULE_CAPABILITIES_PLAN.md`](docs/projects/archive/MODULE_CAPABILITIES_PLAN.md) — Phase A complete; Phase B is a standing pattern (see Module Build Checklist)
+- [`PLATFORM_IMPROVEMENTS_PLAN.md`](docs/projects/archive/PLATFORM_IMPROVEMENTS_PLAN.md) — Phases 1–3 complete; Phase 4 items reconciled here
 
 ---
 

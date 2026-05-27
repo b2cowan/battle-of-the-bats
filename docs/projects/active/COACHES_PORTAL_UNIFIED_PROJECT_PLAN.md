@@ -1,8 +1,8 @@
-# Coaches Portal Unified Product Plan
+﻿# Coaches Portal Unified Product Plan
 
 **Created:** 2026-05-25  
 **Status:** Active canonical plan  
-**PM brief:** `docs/active/COACHES_PORTAL_UNIFIED_PM_BRIEF.md`
+**PM brief:** `docs/projects/active/COACHES_PORTAL_UNIFIED_PM_BRIEF.md`
 
 ## Product Decision
 
@@ -19,16 +19,16 @@ Public naming changes from **Team** to **Coaches Portal**. Internal technical na
 
 | Source | Disposition |
 | --- | --- |
-| `docs/active/TOURNAMENT_COACH_PORTAL_PLAN.md` | Shipped baseline. `/my/join`, `/my/registrations`, auth routing, email updates, and resend access are already implemented and must be treated as existing foundation work. |
-| `docs/archive/TOURNAMENT_COACH_PORTAL_PLAN.md` | Earlier draft source. Merged, but superseded by the active completed implementation record above. |
-| `docs/archive/TOURNAMENT_COACH_PORTAL_PM_BRIEF.md` | Merged into the unified PM brief. |
-| `docs/archive/codex_STANDALONE_TEAM_IMPLEMENTATION_PLAN.md` | Merged. Existing Team workspace implementation becomes Premium Coaches Portal entitlement. |
-| `docs/archive/codex_STANDALONE_TEAM_PM_BRIEF.md` | Merged into the unified PM brief. |
-| `docs/archive/codex_STANDALONE_TEAM_LAUNCH_CHECKLIST.md` | Merged into the launch readiness section below. |
-| `docs/archive/codex_COACHES_STANDALONE_RESEARCH.md` | Merged as research context for pricing, packaging, and V1 feature priorities. |
-| `docs/active/BRAND_STRATEGY.md` | Remains active brand source; updated to point at the unified Coaches Portal. |
-| `docs/active/PRICING_PAGE_COPY.md` | Remains active pricing copy; updated to treat Coaches Portal as the single product name and route target. |
-| `docs/active/DB_ARCHITECTURE_REVIEW.md` | Relevant advisory retained: team workspace foundation tables are service-role mediated until explicit client RLS policies are written. |
+| `docs/projects/active/TOURNAMENT_COACH_PORTAL_PLAN.md` | Shipped baseline. `/my/join`, `/my/registrations`, auth routing, email updates, and resend access are already implemented and must be treated as existing foundation work. |
+| `docs/projects/archive/TOURNAMENT_COACH_PORTAL_PLAN.md` | Earlier draft source. Merged, but superseded by the active completed implementation record above. |
+| `docs/projects/archive/TOURNAMENT_COACH_PORTAL_PM_BRIEF.md` | Merged into the unified PM brief. |
+| `docs/projects/archive/codex_STANDALONE_TEAM_IMPLEMENTATION_PLAN.md` | Merged. Existing Team workspace implementation becomes Premium Coaches Portal entitlement. |
+| `docs/projects/archive/codex_STANDALONE_TEAM_PM_BRIEF.md` | Merged into the unified PM brief. |
+| `docs/projects/archive/codex_STANDALONE_TEAM_LAUNCH_CHECKLIST.md` | Merged into the launch readiness section below. |
+| `docs/projects/archive/codex_COACHES_STANDALONE_RESEARCH.md` | Merged as research context for pricing, packaging, and V1 feature priorities. |
+| `docs/projects/active/BRAND_STRATEGY.md` | Remains active brand source; updated to point at the unified Coaches Portal. |
+| `docs/projects/active/PRICING_PAGE_COPY.md` | Remains active pricing copy; updated to treat Coaches Portal as the single product name and route target. |
+| `docs/projects/active/DB_ARCHITECTURE_REVIEW.md` | Relevant advisory retained: team workspace foundation tables are service-role mediated until explicit client RLS policies are written. |
 | Public/owner tournament mobile docs | Adjacent dependencies. Registration and admin UX should align with this plan, but those docs remain separate projects. |
 
 ## Existing Tournament Coach Portal Implementation

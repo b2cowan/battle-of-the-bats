@@ -306,6 +306,7 @@ export async function POST(req: Request) {
         title: `New registration: ${team.name.trim()}`,
         body: `${group.name} · Added manually`,
         link: `/${ctx.org.slug}/admin/tournaments/registrations?tournamentId=${team.tournamentId}`,
+        excludeUserIds: [ctx.user.id],
       }).catch(console.error);
 
       return new Response(JSON.stringify({ success: true, id }), {
@@ -416,6 +417,7 @@ export async function POST(req: Request) {
           title: `Registration accepted: ${current.name}`,
           body: 'Team status changed to accepted',
           link: `/${ctx.org.slug}/admin/tournaments/registrations?tournamentId=${current.tournament_id}`,
+          excludeUserIds: [ctx.user.id],
         }).catch(console.error);
       }
       if (updates.status === 'rejected' && current.status !== 'rejected') {
@@ -428,10 +430,32 @@ export async function POST(req: Request) {
           title: `Registration declined: ${current.name}`,
           body: 'Team status changed to rejected',
           link: `/${ctx.org.slug}/admin/tournaments/registrations?tournamentId=${current.tournament_id}`,
+          excludeUserIds: [ctx.user.id],
+        }).catch(console.error);
+      }
+      if (updates.status === 'waitlist' && current.status !== 'waitlist') {
+        notify({
+          orgId: ctx.org.id,
+          tournamentId: current.tournament_id,
+          eventType: 'registration_status_changed',
+          title: `Registration waitlisted: ${current.name}`,
+          body: 'Team status changed to waitlist',
+          link: `/${ctx.org.slug}/admin/tournaments/registrations?tournamentId=${current.tournament_id}`,
+          excludeUserIds: [ctx.user.id],
         }).catch(console.error);
       }
       if ((updates.payment_status === 'paid' || updates.paymentStatus === 'paid') && current.payment_status !== 'paid') {
         await sendEmail(current.email, `Payment Recorded — ${current.name}`, paymentConfirmationHtml(p));
+        // Notify org admins of received payment (fire-and-forget)
+        notify({
+          orgId: ctx.org.id,
+          tournamentId: current.tournament_id,
+          eventType: 'payment_received',
+          title: `Payment received: ${current.name}`,
+          body: 'Team payment recorded as paid',
+          link: `/${ctx.org.slug}/admin/tournaments/registrations?tournamentId=${current.tournament_id}`,
+          excludeUserIds: [ctx.user.id],
+        }).catch(console.error);
       }
     }
 

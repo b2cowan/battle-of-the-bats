@@ -1,9 +1,9 @@
-# Venue Conflict Prevention & Game Timing Settings — Implementation Plan
+﻿# Venue Conflict Prevention & Game Timing Settings — Implementation Plan
 
 **Created:** 2026-05-26  
 **Status:** Complete — shipped 2026-05-26  
 **Branch:** dev  
-**Related PM brief:** `docs/active/VENUE_CONFLICT_PM_BRIEF.md`
+**Related PM brief:** `docs/projects/active/VENUE_CONFLICT_PM_BRIEF.md`
 
 ---
 

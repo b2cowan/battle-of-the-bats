@@ -1,9 +1,10 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
-import { Bell, BellOff, AlertCircle } from 'lucide-react';
+import { Bell, BellOff, AlertCircle, Smartphone, Mail } from 'lucide-react';
 import { useTournament } from '@/lib/tournament-context';
-import { ALL_EVENT_TYPES, NOTIFICATION_EVENT_LABELS, NOTIFICATION_EVENT_DESCRIPTIONS } from '@/lib/notification-labels';
-import type { NotificationEventType } from '@/lib/types';
+import { useOrg } from '@/lib/org-context';
+import { TOURNAMENT_EVENT_TYPES, NOTIFICATION_EVENT_LABELS, NOTIFICATION_EVENT_DESCRIPTIONS } from '@/lib/notification-labels';
+import type { NotificationEventType, NotificationPreference } from '@/lib/types';
 import styles from './notifications.module.css';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -11,6 +12,12 @@ import styles from './notifications.module.css';
 interface TournamentPref {
   eventType: NotificationEventType;
   optedOut:  boolean;
+}
+
+interface Channels {
+  bell:  boolean;
+  push:  boolean;
+  email: boolean;
 }
 
 // ── Toggle ────────────────────────────────────────────────────────────────────
@@ -43,23 +50,30 @@ function Toggle({
 
 export default function TournamentNotificationPreferencesPage() {
   const { currentTournament } = useTournament();
+  const { currentOrg } = useOrg();
   const tournamentId = currentTournament?.id;
+  const orgSlug      = currentOrg?.slug;
 
-  // Map of eventType → optedOut
-  const [prefs, setPrefs] = useState<Map<NotificationEventType, boolean>>(new Map());
-  const [loading, setLoading]   = useState(true);
-  const [saving, setSaving]     = useState(false);
-  const [error, setError]       = useState<string | null>(null);
+  // ── Per-event opt-out state ───────────────────────────────────────────────
+  const [prefs, setPrefs]   = useState<Map<NotificationEventType, boolean>>(new Map());
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving]   = useState(false);
+  const [error, setError]     = useState<string | null>(null);
+
+  // ── Global channel state (bell / push / email) ────────────────────────────
+  // Derived from org-level notification preferences; treated as uniform across
+  // all tournament event types.  System defaults: bell on, push/email off.
+  const [channels, setChannels]         = useState<Channels>({ bell: true, push: false, email: false });
+  const [channelsLoading, setChannelsLoading] = useState(true);
+  const [channelsSaving, setChannelsSaving]   = useState(false);
 
   // ── Computed: are ALL event types opted out? → muted ───────────────────────
+  const isMuted = TOURNAMENT_EVENT_TYPES.every(et => prefs.get(et) === true);
 
-  const isMuted = ALL_EVENT_TYPES.every(et => prefs.get(et) === true);
-
-  // ── Load preferences ────────────────────────────────────────────────────────
+  // ── Load per-tournament opt-out prefs ───────────────────────────────────────
 
   useEffect(() => {
     if (!tournamentId) return;
-
     async function load() {
       setLoading(true);
       setError(null);
@@ -70,9 +84,8 @@ export default function TournamentNotificationPreferencesPage() {
           throw new Error(body.error ?? `Server error ${res.status}`);
         }
         const { preferences } = await res.json() as { preferences: TournamentPref[] };
-
         const map = new Map<NotificationEventType, boolean>();
-        for (const et of ALL_EVENT_TYPES) map.set(et, false);
+        for (const et of TOURNAMENT_EVENT_TYPES) map.set(et, false);
         for (const p of preferences) map.set(p.eventType, p.optedOut);
         setPrefs(map);
       } catch (e) {
@@ -81,18 +94,53 @@ export default function TournamentNotificationPreferencesPage() {
         setLoading(false);
       }
     }
-
     load();
   }, [tournamentId]);
 
-  // ── Save helper ─────────────────────────────────────────────────────────────
+  // ── Load global channel prefs (org-level) ────────────────────────────────
+
+  useEffect(() => {
+    if (!orgSlug) return;
+    async function loadChannels() {
+      setChannelsLoading(true);
+      try {
+        const res = await fetch(`/api/admin/org/notification-preferences?orgSlug=${orgSlug}`);
+        if (!res.ok) return;
+        const { preferences } = await res.json() as { preferences: NotificationPreference[] };
+
+        // Derive global channel state from saved tournament-event preferences.
+        // Bell: on unless the user explicitly saved bell=false for all of them.
+        // Push / Email: on if any tournament event type has it enabled.
+        const tournamentPrefs = preferences.filter(p =>
+          TOURNAMENT_EVENT_TYPES.includes(p.eventType)
+        );
+        if (tournamentPrefs.length === 0) {
+          // No saved rows — use system defaults
+          setChannels({ bell: true, push: false, email: false });
+        } else {
+          setChannels({
+            bell:  !tournamentPrefs.every(p => p.channelBell  === false),
+            push:  tournamentPrefs.some(p  => p.channelPush  === true),
+            email: tournamentPrefs.some(p  => p.channelEmail === true),
+          });
+        }
+      } catch {
+        // Non-fatal — channels fall back to system defaults
+      } finally {
+        setChannelsLoading(false);
+      }
+    }
+    loadChannels();
+  }, [orgSlug]);
+
+  // ── Save per-tournament opt-out prefs ────────────────────────────────────
 
   const save = useCallback(async (updated: Map<NotificationEventType, boolean>) => {
     if (!tournamentId) return;
     setSaving(true);
     setError(null);
     try {
-      const preferences = ALL_EVENT_TYPES.map(et => ({
+      const preferences = TOURNAMENT_EVENT_TYPES.map(et => ({
         eventType: et,
         optedOut:  updated.get(et) ?? false,
       }));
@@ -109,21 +157,53 @@ export default function TournamentNotificationPreferencesPage() {
     }
   }, [tournamentId]);
 
+  // ── Save global channel prefs (batch-saves all tournament event types) ────
+
+  const saveChannels = useCallback(async (next: Channels) => {
+    if (!orgSlug) return;
+    setChannelsSaving(true);
+    try {
+      const preferences = TOURNAMENT_EVENT_TYPES.map(et => ({
+        eventType:    et,
+        channelBell:  next.bell,
+        channelPush:  next.push,
+        channelEmail: next.email,
+      }));
+      await fetch(`/api/admin/org/notification-preferences?orgSlug=${orgSlug}`, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ preferences }),
+      });
+    } catch {
+      // Non-fatal
+    } finally {
+      setChannelsSaving(false);
+    }
+  }, [orgSlug]);
+
   // ── Master mute toggle ──────────────────────────────────────────────────────
 
   function handleMuteAll(mute: boolean) {
     const next = new Map<NotificationEventType, boolean>();
-    for (const et of ALL_EVENT_TYPES) next.set(et, mute);
+    for (const et of TOURNAMENT_EVENT_TYPES) next.set(et, mute);
     setPrefs(next);
     save(next);
   }
 
-  // ── Per-event toggle ────────────────────────────────────────────────────────
+  // ── Per-event opt-out toggle ────────────────────────────────────────────────
 
   function handleEventToggle(et: NotificationEventType, optedOut: boolean) {
     const next = new Map(prefs).set(et, optedOut);
     setPrefs(next);
     save(next);
+  }
+
+  // ── Channel toggle ─────────────────────────────────────────────────────────
+
+  function handleChannelToggle(channel: keyof Channels, value: boolean) {
+    const next = { ...channels, [channel]: value };
+    setChannels(next);
+    saveChannels(next);
   }
 
   // ── Render ──────────────────────────────────────────────────────────────────
@@ -161,6 +241,35 @@ export default function TournamentNotificationPreferencesPage() {
         </div>
       )}
 
+      {/* Global channel section */}
+      <div className={styles.channelCard}>
+        <div className={styles.channelCardLabel}>Receive via</div>
+        <div className={styles.channelRow}>
+          {([
+            { key: 'bell'  as const, Icon: Bell,       label: 'Bell'  },
+            { key: 'push'  as const, Icon: Smartphone,  label: 'Push'  },
+            { key: 'email' as const, Icon: Mail,        label: 'Email' },
+          ]).map(({ key, Icon, label }) => (
+            <label key={key} className={styles.channelItem}>
+              <Toggle
+                checked={channels[key]}
+                onChange={v => handleChannelToggle(key, v)}
+                label={`${label} notifications`}
+                disabled={channelsLoading || channelsSaving}
+              />
+              <span className={styles.channelItemLabel}>
+                <Icon size={13} />
+                {label}
+              </span>
+            </label>
+          ))}
+        </div>
+        <p className={styles.channelNote}>
+          Applies to all notifications on this page.
+          {channels.push && ' Push requires your browser to grant notification permission.'}
+        </p>
+      </div>
+
       {/* Master mute card */}
       <div className={`${styles.muteCard} ${isMuted ? styles.muteCardActive : ''}`}>
         <div className={styles.muteCardLeft}>
@@ -194,13 +303,13 @@ export default function TournamentNotificationPreferencesPage() {
           </thead>
           <tbody>
             {loading
-              ? ALL_EVENT_TYPES.map(et => (
+              ? TOURNAMENT_EVENT_TYPES.map(et => (
                   <tr key={et} className={styles.skeletonRow}>
                     <td><div className={styles.skeletonLabel} /></td>
                     <td><div className={styles.skeletonToggle} /></td>
                   </tr>
                 ))
-              : ALL_EVENT_TYPES.map(et => {
+              : TOURNAMENT_EVENT_TYPES.map(et => {
                   const optedOut = prefs.get(et) ?? false;
                   return (
                     <tr key={et} className={`${styles.row} ${optedOut ? styles.rowMuted : ''}`}>
@@ -223,11 +332,6 @@ export default function TournamentNotificationPreferencesPage() {
           </tbody>
         </table>
       </div>
-
-      <p className={styles.footNote}>
-        These opt-outs are tournament-specific. To adjust your default channels across all
-        tournaments, visit <strong>Org → Notification Preferences</strong>.
-      </p>
     </div>
   );
 }

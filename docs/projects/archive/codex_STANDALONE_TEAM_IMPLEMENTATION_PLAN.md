@@ -1,4 +1,4 @@
-# Standalone Team Workspace Implementation Plan
+﻿# Standalone Team Workspace Implementation Plan
 
 ## Purpose
 
@@ -1070,7 +1070,7 @@ Implemented in Phase 9:
 - Expanded coach help with a Team workspace, season rollover, and local tournament guide. It explains Team value, program-year season history, one non-archived free-tier tournament slot, and the Tournament Plus boundary.
 - Expanded organization help with Team add-on versus Club guidance, linked Team tournament boundaries, billing transfer language, and Club extra-team positioning.
 - Expanded platform-admin help with a Team launch readiness SOP covering Stripe price rows, readiness checks, manual sandbox smokes, cancellation/past-due simulation, and mobile visual sign-off.
-- Added `docs/active/codex_STANDALONE_TEAM_LAUNCH_CHECKLIST.md` for owner-facing Stripe Dashboard setup, FieldLogicHQ price-row confirmation, manual sandbox smokes, customer-facing documentation checks, and release notes.
+- Added `docs/projects/active/codex_STANDALONE_TEAM_LAUNCH_CHECKLIST.md` for owner-facing Stripe Dashboard setup, FieldLogicHQ price-row confirmation, manual sandbox smokes, customer-facing documentation checks, and release notes.
 - Updated stale Club extra-team pricing references from $20/$200 to $19/$190 in active pricing copy.
 
 Tasks:

@@ -1,11 +1,11 @@
-# Tournament Experience Excellence
+﻿# Tournament Experience Excellence
 
 ## Current decision
 
 Tournament and Tournament Plus UX should be treated as a top-level experience project, not only a page cleanup.
 
-The project plan is archived at `docs/archive/TOURNAMENT_EXPERIENCE_EXCELLENCE_PLAN.md`.
-The PM brief is archived at `docs/archive/TOURNAMENT_EXPERIENCE_EXCELLENCE_PM_BRIEF.md`.
+The project plan is archived at `docs/projects/archive/TOURNAMENT_EXPERIENCE_EXCELLENCE_PLAN.md`.
+The PM brief is archived at `docs/projects/archive/TOURNAMENT_EXPERIENCE_EXCELLENCE_PM_BRIEF.md`.
 
 ## Product frame
 
@@ -33,15 +33,15 @@ Tournament Plus should feel like the serious operating plan:
 
 Started on 2026-05-22.
 
-- Active implementation plan: `docs/active/codex_PUBLIC_TOURNAMENT_MOBILE_EXPERIENCE_PLAN.md`.
-- Active PM brief: `docs/active/codex_PUBLIC_TOURNAMENT_MOBILE_EXPERIENCE_PM_BRIEF.md`.
+- Active implementation plan: `docs/projects/active/codex_PUBLIC_TOURNAMENT_MOBILE_EXPERIENCE_PLAN.md`.
+- Active PM brief: `docs/projects/active/codex_PUBLIC_TOURNAMENT_MOBILE_EXPERIENCE_PM_BRIEF.md`.
 - Scope: public tournament home, registration, schedule controls, standings/results, teams, rules, news, hidden/empty states, post-event story, and mobile UAT.
 - Product decisions captured: public schedule should use a compact mobile control bar plus filter bottom sheet; public registration should gain a real Info -> Review -> Next Steps flow; hidden/empty states should show organizer contact and useful next links; the no-banner hero fallback should become event-information-led instead of abstract-only.
 - Tier posture: free Tournament remains a complete public event product with FieldLogicHQ default styling; Tournament Plus adds branding/customization, custom registration fields/files, targeted communication value, post-event summary/reporting, and richer branded recap moments.
 
 ## Phase 1 audit
 
-Phase 1 static journey audit is complete in `docs/archive/TOURNAMENT_EXPERIENCE_PHASE_1_JOURNEY_AUDIT.md`.
+Phase 1 static journey audit is complete in `docs/projects/archive/TOURNAMENT_EXPERIENCE_PHASE_1_JOURNEY_AUDIT.md`.
 
 Top findings:
 
@@ -111,7 +111,7 @@ Phase H code hardening is complete as of 2026-05-22.
 
 Prepared as of 2026-05-22.
 
-- The final browser sign-off checklist lives in `docs/archive/TOURNAMENT_SECTION_REVIEW_PLAN.md` under Phase H.
+- The final browser sign-off checklist lives in `docs/projects/archive/TOURNAMENT_SECTION_REVIEW_PLAN.md` under Phase H.
 - Use `uat-test-org` for Free Tournament and `uat-plus-org` for Tournament Plus unless newer seeded orgs are available.
 - Check desktop around 1440x1000 and mobile around 390x844.
 - Material issues to record: horizontal overflow, unreachable row/header actions, broken or clipped modals, stuck loading/wrong-org data, confusing Plus locks, or first useful content buried below excessive controls.

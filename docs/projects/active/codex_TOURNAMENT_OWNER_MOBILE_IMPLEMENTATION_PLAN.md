@@ -1,10 +1,10 @@
-# Tournament Owner/Admin Mobile Implementation Plan
+﻿# Tournament Owner/Admin Mobile Implementation Plan
 
 Started: 2026-05-24
 
 ## Purpose
 
-Implement the owner/admin mobile improvements identified in `docs/active/codex_TOURNAMENT_OWNER_MOBILE_REVIEW.md`, starting with shared mobile foundations and the highest-risk base Tournament workflows.
+Implement the owner/admin mobile improvements identified in `docs/projects/active/codex_TOURNAMENT_OWNER_MOBILE_REVIEW.md`, starting with shared mobile foundations and the highest-risk base Tournament workflows.
 
 ## Product Manager UX Summary
 
@@ -23,9 +23,9 @@ This avoids repeating the same mobile fixes page by page.
 
 ## Source Review
 
-- Review document: `docs/active/codex_TOURNAMENT_OWNER_MOBILE_REVIEW.md`
-- PM brief: `docs/active/codex_TOURNAMENT_OWNER_MOBILE_PM_BRIEF.md`
-- Active design tracker: `docs/active/agent_TOURNAMENT_DESIGN_REVIEW.md`
+- Review document: `docs/projects/active/codex_TOURNAMENT_OWNER_MOBILE_REVIEW.md`
+- PM brief: `docs/projects/active/codex_TOURNAMENT_OWNER_MOBILE_PM_BRIEF.md`
+- Active design tracker: `docs/projects/active/agent_TOURNAMENT_DESIGN_REVIEW.md`
 - Product memory: `memory/tournament-experience-excellence.md`
 - Plan gates: `lib/plan-features.ts`
 

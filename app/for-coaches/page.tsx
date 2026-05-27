@@ -156,8 +156,8 @@ export default function ForCoachesPage() {
           <p className={styles.sectionEyebrow}>The plan</p>
           <h2 className={styles.sectionTitle}>Coaches Portal — your team, your workspace.</h2>
           <p className={styles.sectionSub}>
-            One active tournament slot, one team account, all the tools. Available as standalone
-            or as part of a Club org subscription.
+            One team, one tournament at a time — roster, lineups, budget, schedule, and documents,
+            all in one place. Standalone, or as part of a Club subscription when your org joins.
           </p>
           <div className={styles.planGrid}>
 
@@ -244,7 +244,7 @@ export default function ForCoachesPage() {
               initialFeaturesInterested={['accounting', 'rep_teams', 'coach_portal']}
             >
               <span className={styles.crossSellLabel}>Club</span>
-              <span className={styles.crossSellQ}>Is your organization considering FieldLogicHQ?</span>
+              <span className={styles.crossSellQ}>Is your organization on FieldLogicHQ yet?</span>
               <span className={styles.crossSellBody}>
                 Club includes three Coaches Portal accounts for your coaching staff, plus tournaments,
                 house league, rep teams, and accounting — for the whole club, not just one team.
@@ -275,7 +275,7 @@ export default function ForCoachesPage() {
           </h2>
           <p className={styles.ctaSub}>
             Express interest in the Coaches Portal to be notified when it opens.
-            No commitment — just a place in the notification queue.
+            No commitment required.
           </p>
           <div className={styles.ctaActions}>
             <EarlyAccessModalTrigger

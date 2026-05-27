@@ -1,4 +1,4 @@
-# Coaches Portal Unified Product
+﻿# Coaches Portal Unified Product
 
 As of 2026-05-25, the tournament coach portal and the standalone Team workspace are unified under one customer-facing product: **Coaches Portal**.
 
@@ -11,8 +11,8 @@ Product decision:
 
 Canonical docs:
 
-- `docs/active/COACHES_PORTAL_UNIFIED_PROJECT_PLAN.md`
-- `docs/active/COACHES_PORTAL_UNIFIED_PM_BRIEF.md`
+- `docs/projects/active/COACHES_PORTAL_UNIFIED_PROJECT_PLAN.md`
+- `docs/projects/active/COACHES_PORTAL_UNIFIED_PM_BRIEF.md`
 
 Implementation direction:
 

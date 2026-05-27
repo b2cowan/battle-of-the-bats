@@ -1,4 +1,4 @@
-# Public Tournament Mobile Experience Plan
+﻿# Public Tournament Mobile Experience Plan
 
 ## Purpose
 
@@ -14,8 +14,8 @@ Free Tournament remains a complete public event presence with FieldLogicHQ defau
 
 ## Source Context
 
-- Archived journey audit: `docs/archive/TOURNAMENT_EXPERIENCE_PHASE_1_JOURNEY_AUDIT.md`
-- Archived admin section review: `docs/archive/TOURNAMENT_SECTION_REVIEW_PLAN.md`
+- Archived journey audit: `docs/projects/archive/TOURNAMENT_EXPERIENCE_PHASE_1_JOURNEY_AUDIT.md`
+- Archived admin section review: `docs/projects/archive/TOURNAMENT_SECTION_REVIEW_PLAN.md`
 - Memory: `memory/tournament-experience-excellence.md`
 - Current public routes: `app/[orgSlug]/[tournamentSlug]/**`
 - Shared public data: `lib/public-tournament-data.ts`, `lib/public-tournament-client.ts`, `lib/public-pages.ts`

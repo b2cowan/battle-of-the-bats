@@ -2,164 +2,333 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>FieldLogicHQ Logo Concepts</title>
+  <title>FieldLogicHQ Brand System</title>
   <style>
+    * { box-sizing: border-box; }
     body {
       background: #060608;
       color: #D9F99D;
       font-family: 'IBM Plex Mono', 'Courier New', monospace;
       margin: 0;
-      padding: 40px;
+      padding: 40px 48px;
     }
     h1 {
-      font-size: 0.75rem;
+      font-size: 0.7rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: rgba(30,58,138,0.9);
+      margin: 0 0 8px;
+    }
+    .subtitle {
+      font-size: 0.65rem;
+      color: rgba(217,249,157,0.35);
+      margin-bottom: 48px;
+      letter-spacing: 0.08em;
+    }
+
+    /* ── Section headers ── */
+    h2 {
+      font-size: 0.62rem;
       letter-spacing: 0.18em;
       text-transform: uppercase;
       color: #1E3A8A;
-      margin-bottom: 40px;
-      border-bottom: 1px solid #1E3A8A;
-      padding-bottom: 12px;
+      margin: 0 0 20px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid rgba(30,58,138,0.35);
     }
-    .grid {
+    .section { margin-bottom: 52px; }
+
+    /* ── Two-mark system ── */
+    .mark-system {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 32px;
-      margin-bottom: 60px;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      margin-bottom: 52px;
     }
-    .concept {
+    .mark-card {
+      border: 1px solid rgba(30,58,138,0.4);
       background: #0a0a0f;
-      border: 1px solid #1E3A8A;
     }
-    .concept img {
-      width: 100%;
-      display: block;
-    }
-    .concept-label {
-      padding: 12px 16px;
-      border-top: 1px solid rgba(30,58,138,0.4);
-    }
-    .concept-label strong {
-      display: block;
-      font-size: 0.72rem;
-      letter-spacing: 0.12em;
-      color: #D9F99D;
-      text-transform: uppercase;
-      margin-bottom: 4px;
-    }
-    .concept-label p {
-      margin: 0;
-      font-size: 0.68rem;
-      color: rgba(217,249,157,0.45);
-      line-height: 1.5;
-    }
-    .favicon-section h2 {
-      font-size: 0.72rem;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
-      color: #1E3A8A;
-      margin-bottom: 20px;
-    }
-    .favicon-row {
+    .mark-display {
+      padding: 32px;
       display: flex;
       align-items: center;
-      gap: 32px;
-      flex-wrap: wrap;
-    }
-    .favicon-swatch {
+      justify-content: center;
       background: #0a0a0f;
-      border: 1px solid #1E3A8A;
+      border-bottom: 1px solid rgba(30,58,138,0.25);
+    }
+    .mark-display img { display: block; }
+    .mark-meta {
+      padding: 14px 18px;
+    }
+    .mark-meta strong {
+      display: block;
+      font-size: 0.68rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #D9F99D;
+      margin-bottom: 5px;
+    }
+    .mark-meta p {
+      margin: 0;
+      font-size: 0.65rem;
+      color: rgba(217,249,157,0.4);
+      line-height: 1.6;
+    }
+    .tag {
+      display: inline-block;
+      font-size: 0.58rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 2px 6px;
+      margin-right: 6px;
+      margin-bottom: 8px;
+    }
+    .tag-primary { background: rgba(30,58,138,0.3); color: rgba(30,58,138,0.9); border: 1px solid rgba(30,58,138,0.4); }
+    .tag-icon    { background: rgba(217,249,157,0.08); color: rgba(217,249,157,0.55); border: 1px solid rgba(217,249,157,0.2); }
+
+    /* ── Usage table ── */
+    .usage-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.68rem;
+    }
+    .usage-table th {
+      text-align: left;
+      padding: 8px 14px;
+      font-size: 0.6rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: rgba(30,58,138,0.8);
+      border-bottom: 1px solid rgba(30,58,138,0.3);
+      background: rgba(30,58,138,0.06);
+    }
+    .usage-table td {
+      padding: 10px 14px;
+      color: rgba(217,249,157,0.55);
+      border-bottom: 1px solid rgba(30,58,138,0.12);
+      vertical-align: middle;
+    }
+    .usage-table tr:last-child td { border-bottom: none; }
+    .mark-b { color: #D9F99D; font-weight: bold; }
+    .mark-c { color: rgba(217,249,157,0.5); }
+
+    /* ── Generated icon sizes ── */
+    .icons-row {
+      display: flex;
+      gap: 24px;
+      flex-wrap: wrap;
+      align-items: flex-end;
+    }
+    .icon-swatch {
+      background: #0a0a0f;
+      border: 1px solid rgba(30,58,138,0.35);
       padding: 16px;
       text-align: center;
     }
-    .favicon-swatch img { display: block; margin: 0 auto; }
-    .favicon-swatch span {
+    .icon-swatch img { display: block; margin: 0 auto; }
+    .icon-swatch span {
       display: block;
-      font-size: 0.62rem;
-      color: rgba(217,249,157,0.45);
+      font-size: 0.58rem;
+      color: rgba(217,249,157,0.3);
       margin-top: 8px;
-      letter-spacing: 0.1em;
+      letter-spacing: 0.08em;
     }
-    .note {
-      margin-top: 48px;
-      padding: 16px;
+    .icon-swatch .mark-label {
+      display: block;
+      font-size: 0.55rem;
+      color: rgba(30,58,138,0.7);
+      margin-top: 2px;
+      letter-spacing: 0.08em;
+    }
+
+    /* ── Favicon row ── */
+    .favicon-row {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .fav-swatch {
       border: 1px solid rgba(30,58,138,0.35);
-      font-size: 0.72rem;
-      line-height: 1.7;
-      color: rgba(217,249,157,0.5);
-      max-width: 720px;
+      padding: 12px;
+      text-align: center;
     }
-    .note strong { color: #D9F99D; }
+    .fav-swatch img { display: block; margin: 0 auto; }
+    .fav-swatch span {
+      display: block;
+      font-size: 0.58rem;
+      color: rgba(217,249,157,0.3);
+      margin-top: 6px;
+    }
+
+    /* ── Note ── */
+    .note {
+      padding: 14px 18px;
+      border: 1px solid rgba(30,58,138,0.3);
+      font-size: 0.65rem;
+      line-height: 1.75;
+      color: rgba(217,249,157,0.4);
+      max-width: 740px;
+      margin-top: 40px;
+    }
+    .note strong { color: rgba(217,249,157,0.75); }
+    code { color: rgba(217,249,157,0.6); }
   </style>
 </head>
 <body>
 
-<h1>FieldLogicHQ — Logo Concepts</h1>
+<h1>FieldLogicHQ — Brand Identity System</h1>
+<div class="subtitle">Two-mark system · Primary (FL) + Icon (chevron) · 2026-05-27</div>
 
-<div class="grid">
-  <div class="concept">
-    <img src="logo-A.svg" alt="Concept A: HQ Lettermark">
-    <div class="concept-label">
-      <strong>A — HQ Lettermark</strong>
-      <p>Bold condensed "HQ" in logic-lime. Blueprint-blue border frame. Platform name in secondary blue. Most direct — communicates "headquarters" instantly.</p>
+<!-- ── Two-mark overview ── -->
+<h2>Two-mark system</h2>
+<div class="mark-system">
+
+  <div class="mark-card">
+    <div class="mark-display">
+      <img src="logo-B.svg" width="280" height="280" alt="Primary mark: FL monogram">
+    </div>
+    <div class="mark-meta">
+      <span class="tag tag-primary">Primary mark</span>
+      <strong>FL Monogram</strong>
+      <p>Used wherever size permits letterforms to be legible — PWA app icons (192px+),
+      marketing pages, app store listings, email headers, og:image. Blueprint-blue
+      structural triangle + logic-lime accent. "HQ" secondary label (top-right).</p>
     </div>
   </div>
 
-  <div class="concept">
-    <img src="logo-B.svg" alt="Concept B: FL Monogram">
-    <div class="concept-label">
-      <strong>B — FL Monogram + Triangle</strong>
-      <p>Stacked "FL" (FieldLogic) with blueprint-blue diagonal structural element. More visual, sport-adjacent (triangle evokes a pennant). Less immediately legible at small sizes.</p>
+  <div class="mark-card">
+    <div class="mark-display" style="background:#0a0a0f;">
+      <img src="logo-C.svg" width="280" height="280" alt="Icon mark: chevron">
+    </div>
+    <div class="mark-meta">
+      <span class="tag tag-icon">Icon mark</span>
+      <strong>Chevron ">" Logic Mark</strong>
+      <p>Used at constrained sizes where letterforms don't survive — browser favicon (16–64px),
+      Android notification badge (72px), touch bar, dock icon. Pure geometry,
+      zero font dependency. Renders identically in every context.</p>
     </div>
   </div>
 
-  <div class="concept">
-    <img src="logo-C.svg" alt="Concept C: Logic Mark (Chevron)">
-    <div class="concept-label">
-      <strong>C — Logic Mark (Chevron)</strong>
-      <p>A bold ">" in logic-lime on a blueprint data grid. Symbol-first — no letterform dependency. The chevron is both forward momentum and a programming/logic operator. The vertical bar evokes a cursor/terminal. Most distinctive and scalable; least literal.</p>
+</div>
+
+<!-- ── Usage rules ── -->
+<div class="section">
+  <h2>Size-based usage rules</h2>
+  <table class="usage-table">
+    <thead>
+      <tr>
+        <th>Context</th>
+        <th>Size</th>
+        <th>Mark</th>
+        <th>Rationale</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Browser tab favicon</td>
+        <td>16px, 32px</td>
+        <td><span class="mark-c">C — Chevron</span></td>
+        <td>FL letterforms are illegible below ~80px</td>
+      </tr>
+      <tr>
+        <td>Android notification badge</td>
+        <td>72px</td>
+        <td><span class="mark-c">C — Chevron</span></td>
+        <td>Monochrome context; geometry reads, letters don't</td>
+      </tr>
+      <tr>
+        <td>PWA home screen icon</td>
+        <td>192px</td>
+        <td><span class="mark-b">B — FL Monogram</span></td>
+        <td>Home screen gives sufficient canvas for the lettermark</td>
+      </tr>
+      <tr>
+        <td>PWA splash / store listing</td>
+        <td>512px</td>
+        <td><span class="mark-b">B — FL Monogram</span></td>
+        <td>Full mark with all detail visible</td>
+      </tr>
+      <tr>
+        <td>Email header</td>
+        <td>Any</td>
+        <td><span class="mark-b">B — FL Monogram</span></td>
+        <td>Inline image in email; brand context benefits from letterform</td>
+      </tr>
+      <tr>
+        <td>Marketing / og:image</td>
+        <td>Any</td>
+        <td><span class="mark-b">B — FL Monogram</span></td>
+        <td>Social share previews; lettermark identifies brand</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ── Generated icon files ── -->
+<div class="section">
+  <h2>Generated PWA icons  ·  public/icons/</h2>
+  <div class="icons-row">
+    <div class="icon-swatch">
+      <img src="../icons/pwa-512.png" width="192" height="192" alt="512px primary">
+      <span>pwa-512.png</span>
+      <span class="mark-label">primary mark (B)</span>
+    </div>
+    <div class="icon-swatch">
+      <img src="../icons/pwa-192.png" width="128" height="128" alt="192px primary">
+      <span>pwa-192.png</span>
+      <span class="mark-label">primary mark (B)</span>
+    </div>
+    <div class="icon-swatch">
+      <img src="../icons/pwa-512-maskable.png" width="96" height="96" alt="512px maskable">
+      <span>pwa-512-maskable.png</span>
+      <span class="mark-label">primary + safe-zone padding</span>
+    </div>
+    <div class="icon-swatch">
+      <img src="../icons/badge-72.png" width="72" height="72" alt="72px badge">
+      <span>badge-72.png</span>
+      <span class="mark-label">icon mark (C)</span>
     </div>
   </div>
 </div>
 
-<div class="favicon-section">
-  <h2>Favicon — All Sizes</h2>
+<!-- ── Favicon ── -->
+<div class="section">
+  <h2>Favicon  ·  public/favicon.svg</h2>
   <div class="favicon-row">
-    <div class="favicon-swatch" style="background:#0a0a0f;">
+    <div class="fav-swatch" style="background:#0a0a0f;">
       <img src="../favicon.svg" width="16" height="16" alt="16px">
-      <span>16px — tab</span>
+      <span>16px · tab</span>
     </div>
-    <div class="favicon-swatch" style="background:#0a0a0f;">
+    <div class="fav-swatch" style="background:#0a0a0f;">
       <img src="../favicon.svg" width="32" height="32" alt="32px">
-      <span>32px — bookmark</span>
+      <span>32px · bookmark</span>
     </div>
-    <div class="favicon-swatch" style="background:#0a0a0f;">
+    <div class="fav-swatch" style="background:#0a0a0f;">
       <img src="../favicon.svg" width="64" height="64" alt="64px">
-      <span>64px — taskbar</span>
+      <span>64px · taskbar</span>
     </div>
-    <div class="favicon-swatch" style="background:#0a0a0f;">
-      <img src="../favicon.svg" width="128" height="128" alt="128px">
-      <span>128px</span>
+    <div class="fav-swatch" style="background:#ffffff;">
+      <img src="../favicon.svg" width="32" height="32" alt="on white">
+      <span style="color:rgba(0,0,0,0.35);">on white</span>
     </div>
-    <div class="favicon-swatch" style="background:#ffffff;">
-      <img src="../favicon.svg" width="32" height="32" alt="32px on white">
-      <span style="color:rgba(0,0,0,0.4);">on white bg</span>
-    </div>
-    <div class="favicon-swatch" style="background:#f5f7fc;">
-      <img src="../favicon.svg" width="32" height="32" alt="32px on light">
-      <span style="color:rgba(0,0,0,0.4);">on light bg</span>
+    <div class="fav-swatch" style="background:#f5f7fc;">
+      <img src="../favicon.svg" width="32" height="32" alt="on light">
+      <span style="color:rgba(0,0,0,0.35);">on light</span>
     </div>
   </div>
 </div>
 
 <div class="note">
-  <strong>Note on fonts (Concepts A + B):</strong> These SVGs load Barlow Condensed 900 from Google Fonts for browser preview.
-  If you're offline, they will fall back to Arial Narrow or Impact.
-  Once you pick a concept, the letterforms can be <strong>converted to paths</strong> for a fully self-contained SVG
-  (no font dependency), which is what should be placed at <code>public/logo.png</code> via the icon generation script.<br><br>
-  <strong>Concept C (chevron)</strong> uses no fonts at all — pure geometry. It renders identically at every size, in every context.
-  The same mark is already used as the favicon.<br><br>
-  To generate all PWA icons from a chosen concept, run:<br>
-  <code>node scripts/generate-pwa-icons.js public/brand/logo-A.svg</code> (or B or C)
+  <strong>Regenerating icons after any SVG change:</strong><br>
+  <code>node scripts/generate-pwa-icons.js</code> — uses logo-B.svg (primary) + logo-C.svg (icon) by default<br>
+  <code>node scripts/generate-pwa-icons.js --primary public/brand/logo-A.svg</code> — override primary only<br><br>
+  <strong>Font note (Concept B):</strong> logo-B.svg loads Barlow Condensed 900 from Google Fonts for browser preview.
+  When generating PNGs via sharp, the system font fallback is used.
+  For a production-quality PNG exactly matching this preview, install
+  <strong>Barlow Condensed</strong> as a system font (free → fonts.google.com), then re-run the script.
+  Concept C (chevron) is always font-independent.
 </div>
 
 </body>

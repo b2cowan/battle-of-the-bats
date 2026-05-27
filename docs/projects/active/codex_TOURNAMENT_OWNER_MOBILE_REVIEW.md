@@ -1,4 +1,4 @@
-# Tournament Owner/Admin Mobile Review
+﻿# Tournament Owner/Admin Mobile Review
 
 Started: 2026-05-24
 
@@ -22,8 +22,8 @@ Guidance used:
 - `memory/tournament-free-tier-ux.md`
 - `memory/tournament-plus-positioning.md`
 - `memory/tournament-experience-excellence.md`
-- `docs/archive/TOURNAMENT_SECTION_REVIEW_PLAN.md`
-- `docs/archive/TOURNAMENT_EXPERIENCE_PHASE_1_JOURNEY_AUDIT.md`
+- `docs/projects/archive/TOURNAMENT_SECTION_REVIEW_PLAN.md`
+- `docs/projects/archive/TOURNAMENT_EXPERIENCE_PHASE_1_JOURNEY_AUDIT.md`
 
 Context note: the design/UX guidance refers to `memory/design_system.md`, `memory/design_decisions.md`, `memory/design_principles.md`, and `memory/project_ux_review.md`, but those files were not present in this checkout. This pass continued from available tournament-specific memory and active/archive plans.
 

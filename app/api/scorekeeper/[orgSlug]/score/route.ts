@@ -7,6 +7,7 @@ import {
   submitTournamentScore,
   TournamentScoringError,
 } from '@/lib/tournament-scoring-service';
+import { notify } from '@/lib/notify';
 
 export const dynamic = 'force-dynamic';
 
@@ -55,6 +56,17 @@ export async function PATCH(req: Request, { params }: Params) {
       source: 'scorekeeper',
       allowFinalizedEdit: false,
     });
+
+    // Notify org admins of submitted score (fire-and-forget)
+    notify({
+      orgId: ctx.org.id,
+      tournamentId: gameRow.tournamentId,
+      eventType: 'score_submitted',
+      title: 'Score submitted',
+      body: `Submitted by scorekeeper ${ctx.user.email ?? ''}`.trim(),
+      link: `/${ctx.org.slug}/admin/tournaments/schedule?tournamentId=${gameRow.tournamentId}`,
+      excludeUserIds: [ctx.user.id],
+    }).catch(console.error);
 
     return NextResponse.json({ success: true, status: result.status });
   } catch (err) {

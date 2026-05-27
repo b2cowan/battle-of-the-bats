@@ -1,4 +1,4 @@
-# FieldLogicHQ UX Flow Agent
+﻿# FieldLogicHQ UX Flow Agent
 
 Shared source of truth: `memory/agents/ux-flow-agent.md`. Load that file before applying the command-specific instructions below. If the shared guidance and this wrapper conflict, follow the shared guidance unless the user explicitly asks for Claude-command-specific behavior.
 
@@ -11,8 +11,8 @@ Before answering any question, read the shared guidance file and the available U
 1. `memory/agents/ux-flow-agent.md` — shared Claude/Codex UX flow review guidance
 2. `memory/project_ux_review.md` — 27 UX findings from the 2026-05-11 review; Phase 1 bugs are fixed; Phases 2–5 are open
 3. `memory/design_principles.md` — UX conventions section (empty states, forms, tables, modals)
-4. `docs/active/UX_REVIEW_PLAN.md` — full finding descriptions with file references (if it exists)
-5. `docs/archive/UX_REVIEW_PLAN.md` — archived finding descriptions when no active plan exists
+4. `docs/projects/active/UX_REVIEW_PLAN.md` — full finding descriptions with file references (if it exists)
+5. `docs/projects/archive/UX_REVIEW_PLAN.md` — archived finding descriptions when no active plan exists
 
 After reading, briefly confirm: _"UX context loaded — [N] open findings across [M] phases."_
 
@@ -92,7 +92,7 @@ When reviewing a page or flow, structure output as:
 ## Open UX findings (from 2026-05-11 review)
 
 Phase 1 bugs — all fixed as of 2026-05-14.
-Phases 2–5 — open; check `docs/active/UX_REVIEW_PLAN.md` for the full list before starting any UX work to avoid duplicating effort.
+Phases 2–5 — open; check `docs/projects/active/UX_REVIEW_PLAN.md` for the full list before starting any UX work to avoid duplicating effort.
 
 ---
 

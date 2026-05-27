@@ -1,4 +1,4 @@
-# Slot-First Roster & Schedule Architecture
+﻿# Slot-First Roster & Schedule Architecture
 
 ## PM Brief
 
@@ -232,7 +232,7 @@ Per-division dropdown next to the division selector:
 - Update `SCHEDULE_SLOT_PLAN.md` header noting it is superseded by this file
 - Update `supabase/dev_combined_schema.sql`
 - Update `TODO.md`
-- Archive old plan to `docs/archive/`
+- Archive old plan to `docs/projects/archive/`
 
 ---
 

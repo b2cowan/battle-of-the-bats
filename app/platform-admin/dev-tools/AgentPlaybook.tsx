@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 import { useState } from 'react';
 import {
   Sparkles, GitBranch, CreditCard, Database, FileText, FlaskConical,
@@ -203,7 +203,7 @@ const AGENTS: AgentDef[] = [
     tags: ['Schema health', 'Multi-tenant integrity', 'Indexing strategy', 'Migration safety gate'],
     loadsFrom: [
       'memory/reference_db_schema.md — complete table+column list (43 tables across 5 modules)',
-      'docs/active/DB_ARCHITECTURE_REVIEW.md — running findings log; 9 open findings on record',
+      'docs/agents/db/DB_ARCHITECTURE_REVIEW.md — running findings log; 9 open findings on record',
       'AGENCY_RULES.md — platform context (multi-tenant, Canadian sports orgs, modular billing)',
       'memory/project_pricing_strategy.md — four billing tiers; which tables must be plan-aware',
     ],
@@ -211,7 +211,7 @@ const AGENTS: AgentDef[] = [
       '/db writes queries and migrations; /dba reviews schema design before those migrations are written.',
       'Always give context: "before merging Phase X", "reviewing new module Y", or "quarterly check".',
       'Run /dba before any migration that introduces a new table — review first, write SQL second.',
-      'Every accepted finding gets written to docs/active/DB_ARCHITECTURE_REVIEW.md with a severity and status.',
+      'Every accepted finding gets written to docs/agents/db/DB_ARCHITECTURE_REVIEW.md with a severity and status.',
       'The agent checks multi-tenant scoping first — every table must reach org_id in ≤1 hop.',
       'FK naming rule: org foreign keys must always be named org_id, not organization_id (see Finding #1).',
       '/dba never writes application code or feature queries — architecture decisions only.',
@@ -227,7 +227,7 @@ const AGENTS: AgentDef[] = [
     ],
     notes: [
       '/dba is strategic (is the schema sound at scale?); /db is tactical (write me a query). Keep them in separate conversations.',
-      'The findings log in docs/active/DB_ARCHITECTURE_REVIEW.md persists across sessions — every /dba conversation inherits and updates it.',
+      'The findings log in docs/agents/db/DB_ARCHITECTURE_REVIEW.md persists across sessions — every /dba conversation inherits and updates it.',
       'Finding #1 (tournaments.organization_id vs org_id) is the highest-impact quick win and should be resolved before new tournament-adjacent tables are added.',
     ],
     extraSections: [
@@ -263,12 +263,12 @@ const AGENTS: AgentDef[] = [
       'AGENCY_RULES.md — binding planning rules (PM brief required, doc structure, no code before plan)',
       'TODO.md — current task list to avoid duplicating existing items',
       'memory/feedback_doc_structure.md — doc structure rules',
-      'memory/feedback_docs_folder_convention.md — docs/active/ + docs/archive/ convention',
+      'memory/feedback_docs_folder_convention.md — docs/projects/active/ + docs/projects/archive/ convention; agent docs in docs/agents/',
     ],
     rules: [
       'This agent must be invoked before starting any significant feature — AGENCY_RULES.md requires it.',
       'The PM brief is produced first and is a blocking step — no implementation detail before it.',
-      'Plan files go in docs/active/ — never the repo root. Completed plans move to docs/archive/.',
+      'Project plans go in docs/projects/active/ — never the repo root. Completed plans move to docs/projects/archive/. Agent reference docs go in docs/agents/.',
       'TODO.md gets one summary line per feature with a link to the plan file — no detail in TODO.md itself.',
       'Every plan touching the DB lists the migration file as the first task.',
       'Note which billing plan tier gates each feature in the plan.',
@@ -278,7 +278,7 @@ const AGENTS: AgentDef[] = [
       '/plan — I want to add email notifications when a team is approved for a tournament. This is a Tournament Plus feature.',
       '/plan — create a plan for adding a "clone tournament" feature with full DB migration, API route, and UI.',
       '/plan — mark phases 1 and 2 of TOURNAMENT_REVIEW_PLAN.md as complete.',
-      '/plan — the tournament review is done. Move TOURNAMENT_REVIEW_PLAN.md to docs/archive/ and update TODO.md.',
+      '/plan — the tournament review is done. Move TOURNAMENT_REVIEW_PLAN.md to docs/projects/archive/ and update TODO.md.',
       '/plan — write a PM brief for adding coach messaging to the coaches portal.',
     ],
     extraSections: [
@@ -287,7 +287,7 @@ const AGENTS: AgentDef[] = [
         content: (
           <ol className={styles.orderedList}>
             <li><strong>PM Brief</strong> — plain-language outcome summary: what it does, why it matters, who benefits, expected impact, priority, success criteria.</li>
-            <li><strong>Plan file</strong> — saved to <code>docs/active/FEATURE_NAME_PLAN.md</code> with phased task checklist, file paths, SQL, and architectural decisions.</li>
+            <li><strong>Plan file</strong> — saved to <code>docs/projects/active/FEATURE_NAME_PLAN.md</code> with phased task checklist, file paths, SQL, and architectural decisions.</li>
             <li><strong>TODO.md entry</strong> — one summary line linking to the plan file. Never more than one line per feature.</li>
           </ol>
         ),
@@ -465,7 +465,7 @@ const AGENTS: AgentDef[] = [
       'memory/marketing_brand_voice.md — tone, vocabulary, forbidden phrases, copy patterns',
       'memory/project_pricing_strategy.md — tier names, prices, and positioning narrative',
       'app/page.tsx — live corporate landing page (copy review baseline)',
-      'docs/active/PRICING_PAGE_COPY.md — approved pricing page copy canon (if it exists)',
+      'docs/agents/brand/PRICING_PAGE_COPY.md — approved pricing page copy canon (if it exists)',
     ],
     rules: [
       '/marketing owns copy wording; /billing owns gate mechanics — keep them in separate conversations.',
@@ -474,7 +474,7 @@ const AGENTS: AgentDef[] = [
       'Forbidden words: "unlock", "powerful", "robust", "seamless", "supercharge", "game-changing". See memory/marketing_brand_voice.md for the full list.',
       'Upgrade copy rule: "available on Tournament Plus and above" — never "upgrade to unlock".',
       'The free Tournament plan is a real product, not a trial — copy must never imply otherwise.',
-      'Accepted copy goes into docs/active/PRICING_PAGE_COPY.md — this is the canonical copy record. Create the file on first accepted section if it doesn\'t exist.',
+      'Accepted copy goes into docs/agents/brand/PRICING_PAGE_COPY.md — this is the canonical copy record. Create the file on first accepted section if it doesn\'t exist.',
       'Copy output format: Current → Proposed → Why. Multiple options as Option A / Option B with a recommendation.',
     ],
     examples: [
@@ -509,7 +509,7 @@ const AGENTS: AgentDef[] = [
     ],
     notes: [
       '/marketing is a copy and strategy agent — it presents copy for your approval; it never edits source files directly. Apply accepted copy yourself or ask the general agent to apply it.',
-      'The canonical copy record lives in docs/active/PRICING_PAGE_COPY.md. Ask /marketing to create it if it doesn\'t exist yet.',
+      'The canonical copy record lives in docs/agents/brand/PRICING_PAGE_COPY.md. Ask /marketing to create it if it doesn\'t exist yet.',
     ],
   },
 ];
@@ -607,7 +607,7 @@ function OverviewPage({ onSelect }: { onSelect: (key: AgentKey) => void }) {
 
       <div className={styles.handoffExample}>
         <div className={styles.handoffLabel}>Sample handoff line</div>
-        <Prompt text="/ux — continuing tournament review; dashboard and teams pages done\n(see docs/active/TOURNAMENT_REVIEW_PLAN.md), working on schedule page today" />
+        <Prompt text="/ux — continuing tournament review; dashboard and teams pages done\n(see docs/projects/active/TOURNAMENT_REVIEW_PLAN.md), working on schedule page today" />
       </div>
 
       {/* Sequencing */}
@@ -661,7 +661,7 @@ function OverviewPage({ onSelect }: { onSelect: (key: AgentKey) => void }) {
       <div className={styles.footer}>
         Full reference: <code>AGENT_PLAYBOOK.md</code> in the repo root ·
         Design decisions: <code>memory/design_decisions.md</code> ·
-        DB architecture: <code>docs/active/DB_ARCHITECTURE_REVIEW.md</code> ·
+        DB architecture: <code>docs/agents/db/DB_ARCHITECTURE_REVIEW.md</code> ·
         Open UAT findings: <code>UAT_FINDINGS.md</code> ·
         Release config: <code>RELEASE_CONFIG.md</code> ·
         Agent commands: <code>.claude/commands/</code>

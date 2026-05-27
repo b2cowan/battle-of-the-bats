@@ -1,4 +1,4 @@
-# Tournament Experience Excellence Plan
+﻿# Tournament Experience Excellence Plan
 
 > Status: Phase H responsive hardening code pass complete; final browser sign-off pending
 > Created: 2026-05-22
@@ -12,12 +12,12 @@ This project is the top-level experience spine for tournament work. It connects 
 
 Archived detailed plans in this project record:
 
-- `docs/archive/TOURNAMENT_ADMIN_UX_REFORMAT_PLAN.md` defines shared tournament-admin UI primitives and page-level reformat details.
-- `docs/archive/TOURNAMENT_SECTION_REVIEW_PLAN.md` is the archived admin page sweep for bugs, design consistency, plan gates, Plus polish, and mobile verification.
+- `docs/projects/archive/TOURNAMENT_ADMIN_UX_REFORMAT_PLAN.md` defines shared tournament-admin UI primitives and page-level reformat details.
+- `docs/projects/archive/TOURNAMENT_SECTION_REVIEW_PLAN.md` is the archived admin page sweep for bugs, design consistency, plan gates, Plus polish, and mobile verification.
 
 This project completed with those child plans archived and future scorekeeper/public-mobile work split into new planning prompts.
 
-Phase 1 journey audit findings live in `docs/archive/TOURNAMENT_EXPERIENCE_PHASE_1_JOURNEY_AUDIT.md`.
+Phase 1 journey audit findings live in `docs/projects/archive/TOURNAMENT_EXPERIENCE_PHASE_1_JOURNEY_AUDIT.md`.
 
 ## Product Manager UX Summary
 
@@ -399,8 +399,8 @@ Qualitative signals:
 
 Planning and tracking:
 
-- `docs/archive/TOURNAMENT_SECTION_REVIEW_PLAN.md`
-- `docs/archive/TOURNAMENT_ADMIN_UX_REFORMAT_PLAN.md`
+- `docs/projects/archive/TOURNAMENT_SECTION_REVIEW_PLAN.md`
+- `docs/projects/archive/TOURNAMENT_ADMIN_UX_REFORMAT_PLAN.md`
 - `TODO.md`
 - `memory/`
 
