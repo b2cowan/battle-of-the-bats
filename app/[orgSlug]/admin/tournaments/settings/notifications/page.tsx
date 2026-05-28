@@ -243,30 +243,31 @@ export default function TournamentNotificationPreferencesPage() {
 
       {/* Global channel section */}
       <div className={styles.channelCard}>
-        <div className={styles.channelCardLabel}>Receive via</div>
-        <div className={styles.channelRow}>
-          {([
-            { key: 'bell'  as const, Icon: Bell,       label: 'Bell'  },
-            { key: 'push'  as const, Icon: Smartphone,  label: 'Push'  },
-            { key: 'email' as const, Icon: Mail,        label: 'Email' },
-          ]).map(({ key, Icon, label }) => (
-            <label key={key} className={styles.channelItem}>
-              <Toggle
-                checked={channels[key]}
-                onChange={v => handleChannelToggle(key, v)}
-                label={`${label} notifications`}
-                disabled={channelsLoading || channelsSaving}
-              />
-              <span className={styles.channelItemLabel}>
-                <Icon size={13} />
-                {label}
-              </span>
-            </label>
-          ))}
+        <div className={styles.channelTop}>
+          <div className={styles.channelCardLabel}>Receive via</div>
+          <div className={styles.channelRow}>
+            {([
+              { key: 'bell'  as const, Icon: Bell,       label: 'Bell'  },
+              { key: 'push'  as const, Icon: Smartphone,  label: 'Push'  },
+              { key: 'email' as const, Icon: Mail,        label: 'Email' },
+            ]).map(({ key, Icon, label }) => (
+              <label key={key} className={styles.channelItem}>
+                <Toggle
+                  checked={channels[key]}
+                  onChange={v => handleChannelToggle(key, v)}
+                  label={`${label} notifications`}
+                  disabled={channelsLoading || channelsSaving}
+                />
+                <span className={styles.channelItemLabel}>
+                  <Icon size={13} />
+                  {label}
+                </span>
+              </label>
+            ))}
+          </div>
         </div>
         <p className={styles.channelNote}>
-          Applies to all notifications on this page.
-          {channels.push && ' Push requires your browser to grant notification permission.'}
+          Applies to all notifications on this page. Push requires your browser to grant notification permission.
         </p>
       </div>
 

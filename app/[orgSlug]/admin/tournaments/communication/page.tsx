@@ -67,7 +67,7 @@ export default function AdminCommunicationPage() {
   const orgSlug  = currentOrg?.slug;
   const orgQuery = orgSlug ? `?orgSlug=${encodeURIComponent(orgSlug)}` : '?';
   const orgParam = orgSlug ? `&orgSlug=${encodeURIComponent(orgSlug)}` : '';
-  const billingHref = `/${orgSlug}/admin/org/billing`;
+  const billingHref = `/${orgSlug}/admin/tournaments/settings/subscription`;
 
   // ── Data ────────────────────────────────────────────────────────────────────
   const [communications, setCommunications] = useState<Communication[]>([]);

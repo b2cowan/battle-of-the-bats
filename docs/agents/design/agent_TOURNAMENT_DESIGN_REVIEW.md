@@ -89,7 +89,6 @@ Pages rendered inside the tournament context (sidebar shows tournament nav).
 | Settings › Event details | `/{orgSlug}/admin/tournaments/settings/event` | `app/[orgSlug]/admin/tournaments/settings/event/page.tsx` | [x] | [x] | [x] | [x] |
 | Settings › Registration fields | `/{orgSlug}/admin/tournaments/settings/registration-fields` | `app/[orgSlug]/admin/tournaments/settings/registration-fields/page.tsx` | [ ] | [ ] | [ ] | [ ] |
 | Settings › Members & Access | `/{orgSlug}/admin/tournaments/settings/members` | `app/[orgSlug]/admin/tournaments/settings/members/page.tsx` | [ ] | [ ] | [ ] | [ ] |
-| Settings › Organization | `/{orgSlug}/admin/tournaments/settings/organization` | `app/[orgSlug]/admin/tournaments/settings/organization/page.tsx` | [ ] | [ ] | [ ] | [ ] |
 | Settings › Subscription / Billing | `/{orgSlug}/admin/tournaments/settings/subscription` | `app/[orgSlug]/admin/tournaments/settings/subscription/page.tsx` | [ ] | [ ] | [ ] | [ ] |
 | Settings shared CSS | — | `app/[orgSlug]/admin/tournaments/settings/settings-access.module.css` | [ ] | [ ] | [ ] | [ ] |
 

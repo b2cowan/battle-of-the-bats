@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { AlertCircle, CheckCircle2, ChevronDown, ChevronUp, Copy, Info, Users, Calendar, Trophy, Mail, Tag, DollarSign, TrendingUp, Zap, Flag } from 'lucide-react';
+import { AlertCircle, CheckCircle2, ChevronDown, ChevronUp, Copy, Info, Users, Calendar, Trophy, DollarSign, TrendingUp, Zap, Flag } from 'lucide-react';
 import Link from 'next/link';
 import { useTournament } from '@/lib/tournament-context';
 import { useOrg } from '@/lib/org-context';
@@ -123,6 +123,18 @@ function fmt(n: number) {
   return n.toLocaleString('en-CA', { style: 'currency', currency: 'CAD', maximumFractionDigits: 0 });
 }
 
+function fmtDateRange(start?: string, end?: string): string | null {
+  if (!start) return null;
+  const p = (d: string) => { const [y, m, day] = d.split('-').map(Number); return new Date(y, m - 1, day); };
+  const opts: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric' };
+  const full: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric', year: 'numeric' };
+  if (!end || end === start) return p(start).toLocaleDateString('en-CA', full);
+  const s = p(start), e = p(end);
+  return s.getFullYear() === e.getFullYear()
+    ? `${s.toLocaleDateString('en-CA', opts)} – ${e.toLocaleDateString('en-CA', full)}`
+    : `${s.toLocaleDateString('en-CA', full)} – ${e.toLocaleDateString('en-CA', full)}`;
+}
+
 function GaugeBar({ value, max, danger }: { value: number; max: number; danger?: boolean }) {
   const pct = max > 0 ? Math.min(100, Math.round((value / max) * 100)) : 0;
   const color = danger ? 'var(--danger-light)' : pct >= 100 ? 'var(--logic-lime)' : pct >= 75 ? '#f6c453' : 'var(--blueprint-blue)';
@@ -138,7 +150,7 @@ function GaugeBar({ value, max, danger }: { value: number; max: number; danger?:
 
 export default function AdminDashboard() {
   const { currentTournament, refresh: refreshTournaments } = useTournament();
-  const { currentOrg } = useOrg();
+  const { currentOrg, userRole } = useOrg();
   const router = useRouter();
   const base = `/${currentOrg?.slug ?? 'milton-bats'}/admin/tournaments`;
   const orgQuery = currentOrg?.slug ? `?orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
@@ -148,7 +160,10 @@ export default function AdminDashboard() {
   const [activating, setActivating] = useState(false);
   const [activateError, setActivateError] = useState('');
   const [showActivateConfirm, setShowActivateConfirm] = useState(false);
-  const [showOptionalItems, setShowOptionalItems] = useState(false);
+  const [showOptionalItems, setShowOptionalItems] = useState(true);
+  const [archiving, setArchiving] = useState(false);
+  const [showArchiveConfirm, setShowArchiveConfirm] = useState(false);
+  const [archiveError, setArchiveError] = useState('');
 
   async function handleActivate() {
     if (!currentTournament?.id || activating) return;
@@ -169,6 +184,28 @@ export default function AdminDashboard() {
       setActivateError(err instanceof Error ? err.message : 'Failed to activate tournament.');
     } finally {
       setActivating(false);
+    }
+  }
+
+  async function handleArchive() {
+    if (!currentTournament?.id || archiving) return;
+    setArchiving(true);
+    setArchiveError('');
+    setShowArchiveConfirm(false);
+    try {
+      const res = await fetch(`/api/admin/tournaments${orgQuery}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'set-status', id: currentTournament.id, data: { status: 'archived' } }),
+      });
+      const json = await res.json().catch(() => null) as { error?: string } | null;
+      if (!res.ok) throw new Error(json?.error ?? 'Failed to archive tournament.');
+      await refreshTournaments();
+      router.refresh();
+    } catch (err) {
+      setArchiveError(err instanceof Error ? err.message : 'Failed to archive tournament.');
+    } finally {
+      setArchiving(false);
     }
   }
 
@@ -291,12 +328,6 @@ export default function AdminDashboard() {
   const gd            = visibleStats.gameDay;
   const isTournamentDay = visibleStats.isTournamentDay;
 
-  // Draft stats: only show what's relevant during setup
-  const draftCards = [
-    { label: 'Divisions',  value: visibleStats.divisions,     icon: Tag,       key: 'divisions'    },
-    { label: 'News Posts', value: visibleStats.announcements, icon: Mail,      key: 'communication' },
-  ];
-
   // Live stats: full picture
   const liveCards = [
     { label: 'Teams',     value: visibleStats.teams,     icon: Users,    key: 'teams'    },
@@ -305,16 +336,22 @@ export default function AdminDashboard() {
   ];
 
   const checklistItems = [
-    { key: 'dates',         done: checklist.hasDates,         label: 'Tournament dates',                            desc: 'Set a start and end date so teams know when the event runs.',                          href: `${base}/settings/event`, action: 'Edit dates'              },
-    { key: 'divisions',     done: checklist.hasDivisions,     label: 'At least one division',                       desc: 'Create the divisions teams can register for.',                                         href: `/divisions`,              action: 'Add divisions'           },
-    { key: 'contact',       done: checklist.hasPublicContact, label: 'Public contact email',                        desc: 'Choose the email coaches can use for tournament questions.',                           href: `${base}/contacts`,        action: 'Manage contacts'         },
-    { key: 'open-division', done: checklist.hasOpenDivision,  label: 'Registration open for at least one division', desc: 'Open a division when you are ready for teams to register.',                            href: `/divisions`,              action: 'Open divisions'          },
-    { key: 'fees',          done: checklist.hasFees,          label: 'Payment setup confirmed',                     desc: 'Confirm how registration fees work — or mark the event as free.',                     href: `${base}/settings/event`, action: 'Configure payment setup' },
-    { key: 'game-timing',   done: checklist.hasGameTiming,    label: 'Game timing configured',                      desc: 'Set how long games run and whether individual divisions can override it.',             href: `${base}/settings/event`, action: 'Configure game timing'   },
-    { key: 'tie-breakers',  done: checklist.hasTieBreakers,   label: 'Tie-breaker rules configured',                desc: 'Choose how tied standings are broken for seedings and playoff advancement decisions.', href: `${base}/settings/event`, action: 'Configure tie-breakers'  },
+    { key: 'dates',         done: checklist.hasDates,        label: 'Tournament dates',                            desc: 'Set a start and end date so teams know when the event runs.',     href: `${base}/settings/event`, action: 'Edit dates'     },
+    { key: 'divisions',     done: checklist.hasDivisions,    label: 'At least one division',                       desc: 'Create the divisions teams can register for.',                     href: `${base}/divisions`,      action: 'Add divisions'  },
+    { key: 'open-division', done: checklist.hasOpenDivision, label: 'Registration open for at least one division', desc: 'Open a division when you are ready for teams to register.',        href: `${base}/divisions`,      action: 'Open divisions' },
+    { key: 'fees',          done: checklist.hasFees,         label: 'Fee approach confirmed',                      desc: 'Confirm how registration fees work — or mark the event as free.', href: `${base}/settings/event`, action: 'Configure fees' },
   ];
+  const completedCount = checklistItems.filter(i => i.done).length;
 
-  const optionalDoneCount = [checklist.hasVenues, checklist.hasRules, checklist.hasBranding].filter(Boolean).length;
+  const optionalItems = [
+    { key: 'contact',      done: checklist.hasPublicContact, label: 'Contact email',     desc: checklist.hasPublicContact ? 'A contact email is set for this tournament.' : 'Defaults to your org contact email. Override with a tournament-specific address.',                    href: `${base}/settings/event`, action: 'Review contact →'   },
+    { key: 'game-timing',  done: checklist.hasGameTiming,    label: 'Game timing',       desc: checklist.hasGameTiming    ? 'Game timing is configured for this tournament.' : 'Defaults to 90 min games / 15 min buffer, tournament-wide. Customize before building the schedule.', href: `${base}/settings/event`, action: 'Configure timing →' },
+    { key: 'tie-breakers', done: checklist.hasTieBreakers,   label: 'Tie-breaker rules', desc: checklist.hasTieBreakers   ? 'Tie-breaker rules are configured for this tournament.' : 'Defaults to H2H → Run Diff → Runs For → Runs Against. Customize before playoffs.',          href: `${base}/settings/event`, action: 'Configure rules →'  },
+    { key: 'venues',       done: checklist.hasVenues,        label: 'Venues & fields',   desc: checklist.hasVenues        ? 'Playing fields are set up for this tournament.' : 'Add your playing fields so teams know where to show up.',                                          href: `${base}/venues`,         action: 'Add venues →'       },
+    { key: 'rules',        done: checklist.hasRules,         label: 'Rules & resources', desc: checklist.hasRules         ? 'Tournament rules and documents are published.' : 'Upload rulebooks or documents teams need before the tournament.',                                   href: `${base}/rules`,          action: 'Add rules →'        },
+    { key: 'branding',     done: checklist.hasBranding,      label: 'Public page',       desc: checklist.hasBranding      ? 'Your public tournament page is live and customized.' : 'Control visibility and public presentation of your tournament page.',                        href: `${base}/branding`,       action: 'Manage page →'      },
+  ];
+  const optionalDoneCount = optionalItems.filter(i => i.done).length;
 
   return (
     <div className={styles.page}>
@@ -324,6 +361,11 @@ export default function AdminDashboard() {
           <h1 className="font-mono font-bold text-xl uppercase tracking-tight" style={{ color: 'var(--logic-lime)' }}>
             {currentTournament?.name ?? currentOrg?.name ?? 'Admin'}
           </h1>
+          {fmtDateRange(currentTournament?.startDate, currentTournament?.endDate) && (
+            <div className="hud-label mt-1" style={{ color: 'var(--white-50)', textTransform: 'none', letterSpacing: 'normal' }}>
+              {fmtDateRange(currentTournament?.startDate, currentTournament?.endDate)}
+            </div>
+          )}
         </div>
         <div>
           <span className="font-mono text-xs font-bold" style={{ color: statusColor }}>
@@ -337,7 +379,13 @@ export default function AdminDashboard() {
       )}
 
       {/* ── DRAFT DASHBOARD ─────────────────────────────── */}
-      {isDraft && (
+      {isDraft && !currentTournament?.id && (
+        <div style={{ padding: '2rem 0', color: 'var(--data-gray)', fontSize: '0.85rem' }}>
+          No tournament selected. Choose a tournament from the selector above to view its dashboard.
+        </div>
+      )}
+
+      {isDraft && currentTournament?.id && (
         <>
           {/* Clone from past tournament — shown only when other tournaments exist */}
           {otherTournaments.length > 0 && (
@@ -367,18 +415,12 @@ export default function AdminDashboard() {
             <div className={styles.checklistHeader}>
               <div>
                 <h2 className={styles.sectionTitle}>Draft Launch Checklist</h2>
-                <p>Complete these items before activating registration and the public tournament page.</p>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexShrink: 0 }}>
-                <button
-                  type="button"
-                  className={styles.activateChip}
-                  onClick={() => setShowActivateConfirm(true)}
-                  disabled={activating || !checklist.ready}
-                  title={!checklist.ready ? 'Complete all required items before activating' : 'Activate this tournament'}
-                >
-                  {activating ? 'Activating…' : 'Activate'}
-                </button>
+                <p>
+                  Complete these items before activating registration and the public tournament page.{' '}
+                  <span style={{ color: completedCount === checklistItems.length ? 'var(--logic-lime)' : 'var(--white-40)', fontWeight: 600 }}>
+                    {completedCount} / {checklistItems.length} required complete
+                  </span>
+                </p>
               </div>
             </div>
 
@@ -408,76 +450,30 @@ export default function AdminDashboard() {
                   Optional setup
                   {optionalDoneCount > 0 && (
                     <span style={{ color: 'var(--logic-lime)', marginLeft: '0.15rem' }}>
-                      — {optionalDoneCount} of 3 complete
+                      — {optionalDoneCount} of {optionalItems.length} complete
                     </span>
                   )}
                 </span>
                 {showOptionalItems ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
               </button>
 
-              {showOptionalItems && (
-                <>
-                  <Link href={`${base}/venues`} className={`${styles.checklistNudge} ${checklist.hasVenues ? styles.nudgeDone : ''}`}>
-                    <div className={styles.checklistIcon}>
-                      {checklist.hasVenues ? <CheckCircle2 size={18} /> : <Info size={18} />}
-                    </div>
-                    <div className={styles.checklistBody}>
-                      <strong style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        Venues & fields
-                        <span className={styles.nudgeTag}>Optional</span>
-                      </strong>
-                      <span>
-                        {checklist.hasVenues
-                          ? 'Playing fields are set up for this tournament.'
-                          : 'Add your playing fields so teams know where to show up.'}
-                      </span>
-                      <em style={{ color: checklist.hasVenues ? 'var(--logic-lime)' : 'var(--data-gray)' }}>
-                        {checklist.hasVenues ? 'Complete' : 'Add venues →'}
-                      </em>
-                    </div>
-                  </Link>
-
-                  <Link href={`${base}/rules`} className={`${styles.checklistNudge} ${checklist.hasRules ? styles.nudgeDone : ''}`}>
-                    <div className={styles.checklistIcon}>
-                      {checklist.hasRules ? <CheckCircle2 size={18} /> : <Info size={18} />}
-                    </div>
-                    <div className={styles.checklistBody}>
-                      <strong style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        Rules & resources
-                        <span className={styles.nudgeTag}>Optional</span>
-                      </strong>
-                      <span>
-                        {checklist.hasRules
-                          ? 'Tournament rules and documents are published.'
-                          : 'Upload rulebooks or documents teams need before the tournament.'}
-                      </span>
-                      <em style={{ color: checklist.hasRules ? 'var(--logic-lime)' : 'var(--data-gray)' }}>
-                        {checklist.hasRules ? 'Complete' : 'Add rules →'}
-                      </em>
-                    </div>
-                  </Link>
-
-                  <Link href={`${base}/branding`} className={`${styles.checklistNudge} ${checklist.hasBranding ? styles.nudgeDone : ''}`}>
-                    <div className={styles.checklistIcon}>
-                      {checklist.hasBranding ? <CheckCircle2 size={18} /> : <Info size={18} />}
-                    </div>
-                    <div className={styles.checklistBody}>
-                      <strong style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        Public pages
-                        <span className={styles.nudgeTag}>Optional</span>
-                      </strong>
-                      <span>
-                        {checklist.hasBranding
-                          ? 'Your public tournament page is live and customized.'
-                          : 'Your public tournament page is ready. Control visibility and public presentation.'}
-                      </span>
-                      <em style={{ color: checklist.hasBranding ? 'var(--logic-lime)' : 'var(--data-gray)' }}>
-                        {checklist.hasBranding ? 'Complete' : 'Manage public page →'}
-                      </em>
-                    </div>
-                  </Link>
-                </>
-              )}
+              {showOptionalItems && optionalItems.map(item => (
+                <Link key={item.key} href={item.href} className={`${styles.checklistNudge} ${item.done ? styles.nudgeDone : ''}`}>
+                  <div className={styles.checklistIcon}>
+                    {item.done ? <CheckCircle2 size={18} /> : <Info size={18} />}
+                  </div>
+                  <div className={styles.checklistBody}>
+                    <strong style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      {item.label}
+                      <span className={styles.nudgeTag}>Optional</span>
+                    </strong>
+                    <span>{item.desc}</span>
+                    <em style={{ color: item.done ? 'var(--logic-lime)' : 'var(--data-gray)' }}>
+                      {item.done ? 'Complete' : item.action}
+                    </em>
+                  </div>
+                </Link>
+              ))}
             </div>
 
             {activateError && (
@@ -485,6 +481,18 @@ export default function AdminDashboard() {
                 <span style={{ color: 'var(--danger-light)', fontSize: '0.8rem' }}>{activateError}</span>
               </div>
             )}
+
+            <div style={{ marginTop: '1.25rem', display: 'flex', justifyContent: 'flex-end' }}>
+              <button
+                type="button"
+                className="btn btn-lime btn-data"
+                onClick={() => setShowActivateConfirm(true)}
+                disabled={activating || !checklist.ready}
+                title={!checklist.ready ? 'Complete all required items before activating' : undefined}
+              >
+                {activating ? 'Activating…' : 'Activate tournament →'}
+              </button>
+            </div>
           </section>
 
         </>
@@ -774,6 +782,24 @@ export default function AdminDashboard() {
               View results →
             </Link>
           </div>
+
+          {/* Archive button — owner only */}
+          {userRole === 'owner' && (
+            <div style={{ marginTop: '1.5rem', display: 'flex', justifyContent: 'flex-end' }}>
+              {archiveError && (
+                <span style={{ fontSize: '0.8rem', color: 'var(--danger-light)', marginRight: '0.75rem', alignSelf: 'center' }}>{archiveError}</span>
+              )}
+              <button
+                type="button"
+                className="btn btn-ghost btn-data"
+                style={{ color: 'var(--white-40)', borderColor: 'var(--border-2)' }}
+                onClick={() => { setArchiveError(''); setShowArchiveConfirm(true); }}
+                disabled={archiving}
+              >
+                {archiving ? 'Archiving…' : 'Archive Tournament'}
+              </button>
+            </div>
+          )}
         </>
       )}
 
@@ -887,6 +913,32 @@ export default function AdminDashboard() {
         </div>
       )}
 
+      {/* ── ARCHIVE CONFIRMATION MODAL ───────────────────── */}
+      {showArchiveConfirm && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.7)' }}>
+          <div className="modal" style={{ maxWidth: 420, width: '100%' }} onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3 style={{ margin: 0 }}>Archive this tournament?</h3>
+              <button className="btn btn-ghost btn-data" onClick={() => setShowArchiveConfirm(false)}>✕</button>
+            </div>
+            <p style={{ fontSize: '0.875rem', color: 'var(--data-gray)', margin: '0 0 0.75rem' }}>
+              Archiving seals this tournament permanently. Archived tournaments are read-only and appear under Past Tournaments. <strong>This cannot be undone.</strong>
+            </p>
+            {archiveError && (
+              <p style={{ fontSize: '0.8rem', color: 'var(--danger-light)', margin: '0 0 0.5rem' }}>{archiveError}</p>
+            )}
+            <div className="modal-footer">
+              <button className="btn btn-ghost btn-data" onClick={() => setShowArchiveConfirm(false)} disabled={archiving}>
+                Cancel
+              </button>
+              <button className="btn btn-danger btn-data" onClick={handleArchive} disabled={archiving}>
+                {archiving ? 'Archiving…' : 'Archive Tournament'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ── ACTIVATE CONFIRMATION MODAL ──────────────────── */}
       {showActivateConfirm && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.7)' }}>
@@ -897,6 +949,14 @@ export default function AdminDashboard() {
             <p style={{ fontSize: '0.875rem', color: 'var(--data-gray)', margin: '0 0 0.5rem' }}>
               This will make the public tournament page live and open registration to teams. You can deactivate it later from the Manage page if needed.
             </p>
+            {currentTournament?.slug && (
+              <p style={{ fontSize: '0.8rem', color: 'var(--white-40)', margin: '0 0 0.5rem', wordBreak: 'break-all' }}>
+                Public URL:{' '}
+                <span style={{ color: 'var(--white-60)', fontFamily: 'monospace' }}>
+                  {typeof window !== 'undefined' ? window.location.origin : ''}/{currentOrg?.slug}/tournaments/{currentTournament.slug}
+                </span>
+              </p>
+            )}
             {activateError && (
               <p style={{ fontSize: '0.8rem', color: 'var(--danger-light)', margin: '0 0 0.5rem' }}>{activateError}</p>
             )}

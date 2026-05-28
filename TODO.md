@@ -25,6 +25,12 @@ This file tracks the ongoing tasks for the FieldLogicHQ platform (multi-tenant s
   - [x] Phase 4 — Dashboard: `hasGameTiming` + `hasTieBreakers` + repurposed `hasFees` checklist items; grandfathering for active/completed tournaments
   - [x] Phase 5 — Divisions modal: inheritance model (hide/show/require based on scope), Advanced accordion, Age Range merge, Display Order on Edit only
   - [x] Phase 6 — Divisions table: `TournamentAdminHeader`, Teams fill column, drop Order column, `btn-data` fixes, empty state upgrade, loading state
+- [x] **Tournament Admin Settings Restructure** — flatten Settings & Access hub, move tournament identity + lifecycle into Event Settings, `+` create button on sidebar switcher, Registration Questions to sidebar Setup group, Notification Prefs to sidebar Admin group, tier-aware card visibility, fix locked-card upgrade path (see [plan](docs/projects/archive/TOURNAMENT_SETTINGS_RESTRUCTURE_PLAN.md) and [PM brief](docs/projects/archive/TOURNAMENT_SETTINGS_RESTRUCTURE_PM_BRIEF.md))
+  - [x] Phase 1 — Event Settings: Tournament Name, Slug (owner-only, with warning), Year, Status selector (Draft/Active/Completed), slug availability check
+  - [x] Phase 1B — Dashboard: Archive button (completed + owner only, confirm modal)
+  - [x] Phase 2 — Sidebar: `+` create button with slot-limit gating (TournamentSetupWizard modal)
+  - [x] Phase 3 — Settings & Access hub: removed 3-tab structure, flat 3-card grid (Reg Questions/Staff/Billing), locked cards are now links to upgrade, League/Club gets redirect message
+  - [x] Phase 4 — Sidebar: Registration Questions nav item (Setup group, owner/admin only), Notification Prefs in Admin group, Event Settings role-gated (owner/admin), Settings & Access hidden for League/Club
 - [ ] **Notifications & Web Push** — in-app bell, per-user preferences, PWA + web push to phone (no native app) (see [plan](docs/projects/active/NOTIFICATIONS_PLAN.md) and [PM brief](docs/projects/active/NOTIFICATIONS_PM_BRIEF.md))
   - [x] Phase A — Migration 101 (notifications, push_subscriptions, notification_preferences, tournament_notification_preferences) + `lib/notify.ts` + `/api/notifications` route
   - [x] Phase B — `NotificationBell.tsx` + `NotificationPanel.tsx` + wire into AdminSidebar + CoachesSidebar

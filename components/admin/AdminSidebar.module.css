@@ -1,11 +1,29 @@
 .sidebar {
   width: 240px;
-  min-height: 100vh;
+  height: 100vh;
+  position: sticky;
+  top: 0;
   background: var(--pitch-black);
   border-right: 1px solid rgba(var(--blueprint-blue-rgb), 0.4);
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
+  overflow: hidden;
+}
+
+.sidebarScroll {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(var(--blueprint-blue-rgb), 0.3) transparent;
+  display: flex;
+  flex-direction: column;
+}
+
+.navSpacer {
+  flex: 1;
+  min-height: 1rem;
 }
 
 /* Tournament Switcher */
@@ -44,6 +62,40 @@
 }
 
 .switcherSelect option { background: var(--hud-surface); }
+
+/* Row wrapping the select/name + the + add button */
+.switcherRow {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  width: 100%;
+}
+.switcherRow .switcherSelect { flex: 1; min-width: 0; }
+.switcherRow .switcherName   { flex: 1; min-width: 0; }
+
+.switcherAddBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  border: 1px solid rgba(var(--blueprint-blue-rgb, 59,130,246), 0.35);
+  background: transparent;
+  color: rgba(148, 163, 184, 0.7);
+  cursor: pointer;
+  border-radius: 0;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+.switcherAddBtn:hover:not(:disabled) {
+  border-color: var(--logic-lime);
+  color: var(--logic-lime);
+  background: rgba(166, 233, 0, 0.06);
+}
+.switcherAddBtn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
 
 .switcherName {
   font-family: var(--font-data);
@@ -203,7 +255,8 @@
 }
 
 .navGroupHeader:hover {
-  color: rgba(148, 163, 184, 0.85);
+  color: rgba(148, 163, 184, 1);
+  background: rgba(var(--blueprint-blue-rgb), 0.04);
 }
 
 .navGroupHeaderActive {
@@ -224,11 +277,9 @@
   flex-direction: column;
 }
 
-/* Footer — pushed to bottom */
+/* Footer — always visible at bottom of sidebar */
 .footer {
-  margin-top: auto;
-  padding: 0.75rem 0;
-  border-top: 1px solid rgba(var(--blueprint-blue-rgb), 0.3);
+  border-top: 1px solid rgba(var(--blueprint-blue-rgb), 0.15);
   display: flex;
   flex-direction: column;
   gap: 0;
@@ -237,36 +288,39 @@
 .footerLink, .logoutBtn {
   display: flex;
   align-items: center;
-  gap: 0.625rem;
-  padding: 0.5rem 1.25rem;
+  gap: 0.75rem;
+  padding: 0.625rem 1.25rem;
+  border: none;
   border-left: 2px solid transparent;
   font-family: var(--font-data);
-  font-size: 0.625rem;
+  font-size: 0.7rem;
   font-weight: 500;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
   transition: all 0.15s;
+  background: none;
 }
 
 .footerLink {
   color: var(--data-gray);
-  border: none;
-  background: none;
 }
 
 .footerLink:hover {
   color: var(--fl-text);
+  border-left-color: rgba(var(--blueprint-blue-rgb), 0.5);
   background: rgba(var(--blueprint-blue-rgb), 0.05);
 }
 
 .logoutBtn {
-  color: rgba(239, 68, 68, 0.7);
-  border: none;
-  background: none;
+  color: rgba(var(--danger-rgb), 0.7);
   width: 100%;
 }
 
-.logoutBtn:hover { background: rgba(239, 68, 68, 0.08); color: #ef4444; }
+.logoutBtn:hover {
+  background: rgba(var(--danger-rgb), 0.08);
+  color: var(--danger);
+  border-left-color: rgba(var(--danger-rgb), 0.4);
+}
 
 /* Back-to-hub link */
 .backLink {

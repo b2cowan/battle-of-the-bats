@@ -58,7 +58,7 @@ type CancellationPreflight = {
 
 const PLAN_TAGLINE: Record<OrgPlan, string> = {
   tournament:      'A free starter plan for one small tournament or a first test run.',
-  team:            'Coaches Portal Premium for one rep team with roster, schedule, dues, documents, and one free-tier tournament slot.',
+  team:            'Built for rep team coaches who also run local tournaments — roster, schedule, dues, and documents for your team, plus a free tournament slot.',
   tournament_plus: 'Serious tournament operations: registration control, branding, automation, and reporting.',
   league:          'Manage your league, registrations, and public presence — all in one place.',
   club:            'The complete operating system for your sports organization.',
@@ -85,15 +85,11 @@ const PLAN_FEATURES: Record<OrgPlan, string[]> = {
   tournament_plus: [
     'Everything in Tournament',
     'Unlimited tournament slots',
-    '10 staff seats - scorekeepers always free',
-    'Custom registration questions and file uploads',
-    'Excel/PDF registration exports and payment reminders',
-    'Waitlist promotion and queue management',
+    'Custom registration — questions, file uploads, waitlists, and exports',
+    'Automated schedule generation and playoff brackets',
     'Full branding control',
-    'Automated schedule generation',
-    'Playoff bracket generator',
-    'Permanent sealed archives',
-    'Tournament cloning, targeted announcements, and summary reporting',
+    'Tournament cloning, announcements, and post-event archives',
+    '5 staff seats — scorekeepers always free',
   ],
   league: [
     'Everything in Tournament Plus',
@@ -444,6 +440,8 @@ export default function BillingPage() {
   const downgradePlans = PLAN_ORDER.filter(p =>
     p !== 'team' && PLAN_ORDER.indexOf(p) < PLAN_ORDER.indexOf(currentPlanKey)
   );
+  const primaryUpgradePlans = upgradePlans.filter(p => p === 'tournament_plus');
+  const secondaryUpgradePlans = upgradePlans.filter(p => p !== 'tournament_plus');
   const hasPaidPlan    = currentPlanKey !== 'tournament';
   const canManageBilling = userRole === 'owner';
   const subscriptionTitle = isTeamWorkspaceBilling ? 'Coaches Portal billing' : 'Subscription';
@@ -799,64 +797,135 @@ export default function BillingPage() {
       {/* Upgrade cards */}
       {upgradePlans.length > 0 && (
         <>
-          <div className={styles.upgradeHeader}>
-            <div>
-              <h2 className={styles.sectionTitle}>Compare upgrade options</h2>
-              <p className={styles.upgradeIntro}>Review the plans that unlock registration control, organizer productivity, and broader organization tools.</p>
-            </div>
-            <div className={styles.billingToggle}>
-              <button
-                className={`${styles.toggleOption} ${billingCycle === 'monthly' ? styles.toggleActive : ''}`}
-                onClick={() => setBillingCycle('monthly')}
-              >
-                Monthly
-              </button>
-              <button
-                className={`${styles.toggleOption} ${billingCycle === 'annual' ? styles.toggleActive : ''}`}
-                onClick={() => setBillingCycle('annual')}
-              >
-                Annual
-              </button>
-            </div>
-          </div>
-
-          <div className={styles.plansGrid}>
-            {upgradePlans.map(planKey => {
-              const plan = PLAN_CONFIG[planKey];
-              const savings = getSavings(planKey);
-              const isComingSoon = COMING_SOON_PLANS.has(planKey);
-              return (
-                <div key={planKey} className={`${styles.planCard} ${isComingSoon ? styles.planCardComingSoon : ''}`}>
-                  <div className={styles.planCardHeader}>
-                    <div className={styles.planCardName}>{plan.label}</div>
-                    {isComingSoon && <span className={styles.comingSoonBadge}>Coming soon</span>}
-                  </div>
-                  <div className={styles.planTaglineCard}>{PLAN_TAGLINE[planKey]}</div>
-                  <div className={styles.planCardPrice}>
-                    <span className={styles.priceAmount}>{getPrice(planKey)}</span>
-                  </div>
-                  {savings && <div className={styles.savingsBadge}>{savings}</div>}
-                  <ul className={styles.featureList}>
-                    {PLAN_FEATURES[planKey].map(f => (
-                      <li key={f}>
-                        <CheckCircle size={13} />
-                        {f}
-                      </li>
-                  ))}
-                  </ul>
-                  <button
-                    className={`btn btn-primary ${styles.planButton}`}
-                    onClick={() => handleUpgrade(planKey as 'tournament_plus' | 'league' | 'club')}
-                    disabled={isComingSoon || loading === planKey}
-                    id={`billing-upgrade-${planKey}`}
-                  >
-                    {isComingSoon ? 'Early access only' : loading === planKey ? 'Redirecting…' : `Upgrade to ${plan.label}`}
-                  </button>
-                  <p className={styles.trialNote}>{getTrialNote(planKey)}</p>
+          {primaryUpgradePlans.length > 0 && (
+            <>
+              <div className={styles.upgradeHeader}>
+                <div>
+                  <h2 className={styles.sectionTitle}>Get more from your tournaments</h2>
+                  <p className={styles.upgradeIntro}>Tournament Plus adds registration control, custom branding, exports, and scheduling automation — everything you need to run repeat events without the spreadsheet.</p>
                 </div>
-              );
-            })}
-          </div>
+                <div className={styles.billingToggle}>
+                  <button
+                    className={`${styles.toggleOption} ${billingCycle === 'monthly' ? styles.toggleActive : ''}`}
+                    onClick={() => setBillingCycle('monthly')}
+                  >
+                    Monthly
+                  </button>
+                  <button
+                    className={`${styles.toggleOption} ${billingCycle === 'annual' ? styles.toggleActive : ''}`}
+                    onClick={() => setBillingCycle('annual')}
+                  >
+                    Annual
+                  </button>
+                </div>
+              </div>
+              <div className={styles.plansGrid}>
+                {primaryUpgradePlans.map(planKey => {
+                  const plan = PLAN_CONFIG[planKey];
+                  const savings = getSavings(planKey);
+                  const isComingSoon = COMING_SOON_PLANS.has(planKey);
+                  return (
+                    <div key={planKey} className={`${styles.planCard} ${isComingSoon ? styles.planCardComingSoon : ''}`}>
+                      <div className={styles.planCardHeader}>
+                        <div className={styles.planCardName}>{plan.label}</div>
+                        {isComingSoon && <span className={styles.comingSoonBadge}>Coming soon</span>}
+                      </div>
+                      <div className={styles.planTaglineCard}>{PLAN_TAGLINE[planKey]}</div>
+                      <div className={styles.planCardPrice}>
+                        <span className={styles.priceAmount}>{getPrice(planKey)}</span>
+                      </div>
+                      {savings && <div className={styles.savingsBadge}>{savings}</div>}
+                      <ul className={styles.featureList}>
+                        {PLAN_FEATURES[planKey].map(f => (
+                          <li key={f}>
+                            <CheckCircle size={13} />
+                            {f}
+                          </li>
+                        ))}
+                      </ul>
+                      <button
+                        className={`btn btn-primary ${styles.planButton}`}
+                        onClick={() => handleUpgrade(planKey as 'tournament_plus' | 'league' | 'club')}
+                        disabled={isComingSoon || loading === planKey}
+                        id={`billing-upgrade-${planKey}`}
+                      >
+                        {isComingSoon ? 'Early access only' : loading === planKey ? 'Redirecting…' : `Upgrade to ${plan.label}`}
+                      </button>
+                      <p className={styles.trialNote}>{getTrialNote(planKey)}</p>
+                    </div>
+                  );
+                })}
+              </div>
+            </>
+          )}
+
+          {secondaryUpgradePlans.length > 0 && (
+            <>
+              <div className={styles.upgradeHeader}>
+                <div>
+                  <h2 className={styles.sectionTitle}>Managing more than tournaments?</h2>
+                  <p className={styles.upgradeIntro}>
+                    {secondaryUpgradePlans.includes('team')
+                      ? 'Team is built for rep team coaches who also run local events. League and Club are for year-round operations — registrations, house league seasons, rep teams, and accounting.'
+                      : 'League and Club are built for year-round operations — registrations, house league seasons, rep teams, and accounting. Different workflows for organizations running more than tournaments.'}
+                  </p>
+                </div>
+                {primaryUpgradePlans.length === 0 && (
+                  <div className={styles.billingToggle}>
+                    <button
+                      className={`${styles.toggleOption} ${billingCycle === 'monthly' ? styles.toggleActive : ''}`}
+                      onClick={() => setBillingCycle('monthly')}
+                    >
+                      Monthly
+                    </button>
+                    <button
+                      className={`${styles.toggleOption} ${billingCycle === 'annual' ? styles.toggleActive : ''}`}
+                      onClick={() => setBillingCycle('annual')}
+                    >
+                      Annual
+                    </button>
+                  </div>
+                )}
+              </div>
+              <div className={styles.plansGrid}>
+                {secondaryUpgradePlans.map(planKey => {
+                  const plan = PLAN_CONFIG[planKey];
+                  const savings = getSavings(planKey);
+                  const isComingSoon = COMING_SOON_PLANS.has(planKey);
+                  return (
+                    <div key={planKey} className={`${styles.planCard} ${isComingSoon ? styles.planCardComingSoon : ''}`}>
+                      <div className={styles.planCardHeader}>
+                        <div className={styles.planCardName}>{plan.label}</div>
+                        {isComingSoon && <span className={styles.comingSoonBadge}>Coming soon</span>}
+                      </div>
+                      <div className={styles.planTaglineCard}>{PLAN_TAGLINE[planKey]}</div>
+                      <div className={styles.planCardPrice}>
+                        <span className={styles.priceAmount}>{getPrice(planKey)}</span>
+                      </div>
+                      {savings && <div className={styles.savingsBadge}>{savings}</div>}
+                      <ul className={styles.featureList}>
+                        {PLAN_FEATURES[planKey].map(f => (
+                          <li key={f}>
+                            <CheckCircle size={13} />
+                            {f}
+                          </li>
+                        ))}
+                      </ul>
+                      <button
+                        className={`btn btn-primary ${styles.planButton}`}
+                        onClick={() => handleUpgrade(planKey as 'tournament_plus' | 'league' | 'club')}
+                        disabled={isComingSoon || loading === planKey}
+                        id={`billing-upgrade-${planKey}`}
+                      >
+                        {isComingSoon ? 'Early access only' : loading === planKey ? 'Redirecting…' : `Switch to ${plan.label}`}
+                      </button>
+                      <p className={styles.trialNote}>{getTrialNote(planKey)}</p>
+                    </div>
+                  );
+                })}
+              </div>
+            </>
+          )}
         </>
       )}
 

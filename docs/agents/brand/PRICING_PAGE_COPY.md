@@ -1,8 +1,73 @@
 # FieldLogicHQ — Pricing Page Copy
 
-**Status:** Ready for review
-**Date:** 2026-05-12
+**Status:** Live — Phase 2/3 audit amendments applied 2026-05-27  
+**Original draft:** 2026-05-12  
+**Last updated:** 2026-05-27  
 **Supersedes:** Previous three-tier + module add-on strategy (initial draft, no longer on disk)
+
+---
+
+## ⚠️ AMENDMENTS — Phase 1 + Phase 2/3 Brand Audit (applied 2026-05-27)
+
+The sections below document all copy changes applied to the live pages after the brand strategy audit. Where original draft copy in this document conflicts with an amendment, the amendment wins. The live page files are always the authoritative state; this document records the approved intent.
+
+### Phase 1 amendments (applied 2026-05-27)
+- `/for-tournament-organizers` planNote → "Free through Dec 31, 2026 — Founding Season · $390/year from Jan 2027"; CTA → "Start Free — No Credit Card →"
+- `/pricing` Bridge 1 CTA → "Start Free — No Credit Card" (not "Start Free Trial")
+- `/pricing` trust signal → "Tournament is free" (not "Tournament is the free plan")
+- `app/page.tsx` — "Club" capitalized in Step 01 How It Works desc
+- `/for-leagues` + `/for-clubs` — "Plans can change at any time" → "Upgrade or downgrade at any time"
+- `/for-leagues` plan section sub → "League is opening soon. Express interest to be notified when self-serve checkout opens for your organization."
+- `/for-coaches` ctaSub → "No commitment required."
+- `/for-coaches` cross-sell Q → "Is your organization on FieldLogicHQ yet?"
+- `lib/plan-config.ts` `tournament_plus.seatLimit` corrected 10 → 5 (also fixed in ComparisonTable, PLUS_FEATURES, pricing bridge body)
+
+### Phase 2 amendments (applied 2026-05-27)
+- `app/page.tsx` Step 03 desc → "Enter scores from the field, publish results, and keep your tournament history on record — every event your org has run, in one place." (removed roadmap hedge)
+- `/for-leagues` "How it works" H2 → "Registration to final standings — four steps." (was duplicate of H1)
+- `/for-leagues` Coaches Portal cross-sell body → "A complete workspace for one rep team — roster, lineups, budget, schedule, and documents. No org account needed. And when your organization joins FieldLogicHQ, their workspace carries over automatically."
+- `/for-coaches` plan section sub → "One team, one tournament at a time — roster, lineups, budget, schedule, and documents, all in one place. Standalone, or as part of a Club subscription when your org joins."
+- `/pricing` trust signals → "Tournament is free — no credit card required" + "Upgrade or downgrade at any time"
+- `/pricing` Coaches Portal callout body → added bridge sentence: "When your org joins Club, your workspace carries over automatically."
+- `/pricing` FAQ "What happens when my free trial ends?" → replaced with "What happens after the Founding Season offer ends?" (see Section 9 below for approved answer)
+- `/pricing` FAQ "Do I need a credit card?" → updated to reflect Founding Season (no card required for Tournament Plus through Dec 31, 2026)
+- `/pricing` "Express interest" stat body → removed "notification queue" language
+
+### Phase 3 amendments (applied 2026-05-27)
+- `/pricing` segment picker expanded from 3 → 4 cards: "League or club leader" split into "House league administrator" and "Club executive" as separate cards
+- `/pricing` upgrade bridge labels: "Tournament Plus → League" changed to "House league administrators"; "League → Club" changed to "Club executives"; body copy rewritten to remove tier-ladder framing and explicitly state no prior plan is required
+- `/pricing` ComparisonTable Availability section: "Free trial / 14 days" row → "Founding Season offer / Free through Dec 31, 2026"; "Payment details at signup" for Tournament Plus → "No (Founding Season)"
+
+### Sections in this document that are superseded by amendments
+- **Section 2 Trust Signals** — see amendment above for current approved copy
+- **Section 4 Card 2** — badge and CTA use "Founding Season" not "14-Day Free Trial"; see amendments
+- **Section 6 Upgrade Bridges** — Bridge 2 and Bridge 3 labels and body copy are superseded; see amendments
+- **Section 9 FAQ** — "What happens when my free trial ends?" and "Do I need a credit card?" are superseded; see Section 9 LIVE FAQ below
+- **Appendix tournament slots** — Tournament Plus tournament slots are unlimited (9999), not 3; config was corrected
+
+### ⏰ Post-Founding Season update checklist (before Jan 1, 2027)
+When December 31, 2026 passes, update the following before January billing activates:
+- [ ] Hero sub — remove "no credit card required" from Tournament Plus mention
+- [ ] Founding Season callout card on homepage and pricing page — remove or replace
+- [ ] FAQ "What happens after the Founding Season offer ends?" — replace with cancellation FAQ
+- [ ] FAQ "Do I need a credit card?" — update Tournament Plus answer
+- [ ] ComparisonTable Availability section — update "Founding Season offer" row and "Payment details at signup"
+- [ ] `lib/plan-config.ts` — review `trialDays` for `tournament_plus` before Stripe billing goes live
+- [ ] Update this document to remove all Founding Season references
+
+---
+
+## SECTION 9 — LIVE FAQ (authoritative — supersedes original Section 9)
+
+The following are the approved live FAQ answers as of 2026-05-27. The original Section 9 below retains useful framing guidance but the specific answers here take precedence.
+
+**Q: What happens after the Founding Season offer ends?**  
+A: Tournament Plus is free through December 31, 2026 for organizations that sign up during the founding season — no credit card required. Starting January 2027, the standard rate of $39/month applies. We'll send a reminder before the offer closes. Your data and settings stay in place regardless of what you choose at renewal.
+
+**Q: Do I need a credit card to get started?**  
+A: No. Tournament is free — no credit card, no time limit. During the Founding Season (through December 31, 2026), Tournament Plus is also free with no payment details required. Starting January 2027, paid plans use secure Stripe Checkout.
+
+*All other FAQ answers in original Section 9 remain approved and current.*
 
 ---
 

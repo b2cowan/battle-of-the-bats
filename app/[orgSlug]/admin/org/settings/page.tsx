@@ -21,7 +21,6 @@ interface OrgSettings {
   heroBannerUrl: string | null;
   themeFont: string;
   themeCardStyle: string;
-  requireScoreFinalization: boolean;
 }
 
 export default function OrgSettingsPage() {
@@ -49,7 +48,6 @@ export default function OrgSettingsPage() {
 
   const [fontKey, setFontKey]   = useState<string>('system');
   const [cardStyle, setCardStyle] = useState<string>('default');
-  const [requireFinalization, setRequireFinalization] = useState(false);
 
   const [successOpen, setSuccessOpen] = useState(false);
   const [successMsg, setSuccessMsg]   = useState('');
@@ -79,7 +77,6 @@ export default function OrgSettingsPage() {
         setHeroBannerPreview(data.heroBannerUrl);
         setFontKey(data.themeFont ?? 'system');
         setCardStyle(data.themeCardStyle ?? 'default');
-        setRequireFinalization(data.requireScoreFinalization ?? false);
         if (data.themePrimary) {
           setPresetKey('custom');
           setCustomPrimary(data.themePrimary);
@@ -105,10 +102,9 @@ export default function OrgSettingsPage() {
       form.isPublic !== settings.isPublic ||
       presetChanged ||
       fontKey !== (settings.themeFont     ?? 'system')  ||
-      cardStyle !== (settings.themeCardStyle ?? 'default') ||
-      requireFinalization !== (settings.requireScoreFinalization ?? false)
+      cardStyle !== (settings.themeCardStyle ?? 'default')
     );
-  }, [settings, form, presetKey, customPrimary, customAccent, fontKey, cardStyle, requireFinalization]);
+  }, [settings, form, presetKey, customPrimary, customAccent, fontKey, cardStyle]);
 
   // Warn on browser refresh / tab close when dirty
   useEffect(() => {
@@ -188,9 +184,8 @@ export default function OrgSettingsPage() {
           slug:     form.slug,
           isPublic: form.isPublic,
           ...themeBody,
-          themeFont:                fontKey,
-          themeCardStyle:           cardStyle,
-          requireScoreFinalization: requireFinalization,
+          themeFont:      fontKey,
+          themeCardStyle: cardStyle,
         }),
       });
       const data = await res.json();
@@ -202,9 +197,8 @@ export default function OrgSettingsPage() {
         slug: form.slug,
         isPublic: form.isPublic,
         ...themeBody,
-        themeFont:                fontKey,
-        themeCardStyle:           cardStyle,
-        requireScoreFinalization: requireFinalization,
+        themeFont:      fontKey,
+        themeCardStyle: cardStyle,
       } : null);
 
       setSuccessMsg('Settings saved.');
@@ -234,7 +228,6 @@ export default function OrgSettingsPage() {
     }
     setFontKey(settings.themeFont        ?? 'system');
     setCardStyle(settings.themeCardStyle ?? 'default');
-    setRequireFinalization(settings.requireScoreFinalization ?? false);
   }
 
   async function handleNavGuardSave() {
@@ -760,30 +753,6 @@ export default function OrgSettingsPage() {
             <span className={styles.cardPreviewBadge}>Active</span>
           </div>
           <div className={styles.cardPreviewMeta}>Sat Jun 14 · 9:00 AM · Lions Park</div>
-        </div>
-      </div>
-
-      {/* ── Scoring ───────────────────────────────────────────────────────────── */}
-      <div className={styles.card}>
-        <h2 className={styles.sectionTitle}>Scoring</h2>
-
-        <div className={styles.field}>
-          <label className={styles.toggleRow} htmlFor="settings-require-finalization">
-            <span className={styles.label} style={{ margin: 0 }}>Require admin finalization</span>
-            <input
-              id="settings-require-finalization"
-              type="checkbox"
-              className={styles.toggle}
-              checked={requireFinalization}
-              onChange={e => setRequireFinalization(e.target.checked)}
-            />
-          </label>
-          <p className={styles.hint}>
-            When enabled, scores submitted by scorekeepers are visible to the public immediately
-            but are not marked final until an admin reviews and finalizes them in the Results page.
-            Scorekeepers can correct a submitted score until it is finalized.
-            When disabled, a scorekeeper&apos;s submission is immediately final.
-          </p>
         </div>
       </div>
 

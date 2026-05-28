@@ -1,7 +1,6 @@
 'use client';
 import React, { useState, useEffect } from 'react';
 import { Trophy, Check, X, Calendar, AlertCircle } from 'lucide-react';
-import { getTournament } from '@/lib/db';
 import { Division, Team, Venue, PlayoffConfig, Tournament } from '@/lib/types';
 import { formatPoolName } from '@/lib/utils';
 import BracketBuilder from './components/BracketBuilder';
@@ -10,14 +9,14 @@ import FeedbackModal from '@/components/FeedbackModal';
 interface Props {
   division: Division;
   tournamentId: string;
+  tournament?: Tournament | null;
   orgSlug?: string;
   onClose: () => void;
   onComplete: () => void;
 }
 
-export default function PlayoffWizard({ division, tournamentId, orgSlug, onClose, onComplete }: Props) {
+export default function PlayoffWizard({ division, tournamentId, tournament = null, orgSlug, onClose, onComplete }: Props) {
   const [loading, setLoading] = useState(false);
-  const [tournament, setTournament] = useState<Tournament | null>(null);
   const [teams, setTeams] = useState<Team[]>([]);
   const [feedback, setFeedback] = useState<{isOpen: boolean; title: string; message: string; type: 'primary'|'danger'|'warning'|'success'|'info'}>({isOpen: false, title: '', message: '', type: 'primary'});
   const [config, setConfig] = useState<PlayoffConfig>(() => {
@@ -40,7 +39,6 @@ export default function PlayoffWizard({ division, tournamentId, orgSlug, onClose
   const orgParam = orgSlug ? `&orgSlug=${encodeURIComponent(orgSlug)}` : '';
 
   useEffect(() => {
-    getTournament(tournamentId).then(setTournament);
     Promise.all([
       fetch(`/api/admin/venues?tournamentId=${encodeURIComponent(tournamentId)}${orgParam}`).then(r => r.ok ? r.json() : []),
       fetch(`/api/admin/teams?tournamentId=${encodeURIComponent(tournamentId)}${orgParam}`).then(r => r.ok ? r.json() : []),

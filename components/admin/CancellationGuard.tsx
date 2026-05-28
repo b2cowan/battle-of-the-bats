@@ -13,6 +13,7 @@
 import { useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useOrg } from '@/lib/org-context';
+import { getBillingHref } from '@/lib/billing-urls';
 
 export function CancellationGuard() {
   const { currentOrg } = useOrg();
@@ -20,8 +21,7 @@ export function CancellationGuard() {
   const router = useRouter();
 
   const isCanceled = currentOrg?.subscriptionStatus === 'canceled';
-  const orgSlug = currentOrg?.slug;
-  const billingPath = orgSlug ? `/${orgSlug}/admin/org/billing` : null;
+  const billingPath = currentOrg ? getBillingHref(currentOrg.slug, currentOrg.planId) : null;
 
   useEffect(() => {
     if (!isCanceled || !billingPath) return;

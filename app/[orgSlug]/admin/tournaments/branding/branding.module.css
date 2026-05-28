@@ -32,12 +32,12 @@
 }
 
 .headerIcon {
-  width: 48px;
-  height: 48px;
+  width: 30px;
+  height: 30px;
   border-radius: 2px;
-  background: rgba(var(--blueprint-blue-rgb), 0.12);
+  background: rgba(var(--blueprint-blue-rgb), 0.08);
   color: var(--logic-lime);
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.3);
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.28);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -45,34 +45,38 @@
 }
 
 .pageTitle {
-  font-size: 1.25rem;
+  font-size: 1.05rem;
   font-weight: 900;
   font-family: var(--font-data);
   margin: 0;
-  color: var(--white-90, #f0f0f0);
+  color: var(--logic-lime);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
   line-height: 1.1;
 }
 
 .pageSub {
   margin: 0.25rem 0 0;
-  color: var(--white-40, rgba(255,255,255,0.4));
-  font-size: 0.9rem;
+  color: var(--data-gray);
+  font-size: 0.68rem;
+  font-family: var(--font-data);
 }
 
 .card {
   padding: 1rem 1.25rem;
   border-radius: 2px;
-  background: var(--bg-surface);
-  border: 1px solid var(--border-subtle);
+  background: var(--surface);
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.2);
   margin-bottom: 0.75rem;
 }
 
 .sectionTitle {
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--white-40, rgba(255,255,255,0.4));
+  color: rgba(var(--logic-lime-rgb), 0.65);
+  font-family: var(--font-data);
   margin: 0 0 0.75rem;
 }
 
@@ -94,7 +98,7 @@
   gap: 1rem;
   margin: 2rem 0 0.85rem;
   padding-top: 1rem;
-  border-top: 1px solid var(--border-subtle);
+  border-top: 1px solid rgba(var(--blueprint-blue-rgb), 0.2);
 }
 
 .advancedEyebrow {
@@ -141,7 +145,7 @@
   position: relative;
   background:
     linear-gradient(135deg, rgba(var(--blueprint-blue-rgb), 0.045), transparent),
-    var(--bg-surface);
+    var(--surface);
 }
 
 .settingsTitleRow {
@@ -164,9 +168,9 @@
   align-self: flex-start;  /* prevent stretching when inside a flex column */
   gap: 0.25rem;
   padding: 0.2rem;
-  border: 1px solid var(--border-subtle);
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.2);
   border-radius: 2px;
-  background: var(--bg-inset);
+  background: var(--bg-2);
 }
 
 .segmentButton {
@@ -174,7 +178,7 @@
   border: 1px solid transparent;
   border-radius: 2px;
   background: transparent;
-  color: var(--text-tertiary);
+  color: var(--data-gray);
   cursor: pointer;
   font-family: var(--font-data);
   font-size: 0.7rem;
@@ -201,16 +205,18 @@
 }
 
 .toggleLabel {
-  color: var(--text-primary);
-  font-size: 0.9rem;
+  color: var(--fl-text);
+  font-size: 0.85rem;
   font-weight: 600;
+  font-family: var(--font-data);
 }
 
 .descriptionText {
   margin: 0;
-  color: var(--text-tertiary);
-  font-size: 0.83rem;
+  color: var(--data-gray);
+  font-size: 0.8rem;
   line-height: 1.55;
+  font-family: var(--font-data);
 }
 
 .inlineUpsell {
@@ -226,16 +232,16 @@
 
 .inlineUpsell p {
   margin: 0;
-  color: var(--text-secondary);
+  color: var(--white-60);
   font-size: 0.82rem;
   line-height: 1.5;
 }
 
 .questionCard {
   padding: 1rem;
-  border: 1px solid var(--border-subtle);
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.2);
   border-radius: 2px;
-  background: var(--bg-inset);
+  background: var(--bg-2);
 }
 
 /* ── Logo ──────────────────────────────────── */
@@ -371,7 +377,7 @@
   width: 48px;
   height: 32px;
   padding: 0;
-  border: 1px solid var(--border-subtle);
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.2);
   border-radius: 2px;
   background: transparent;
   cursor: pointer;
@@ -380,7 +386,7 @@
 .lowContrastWarning {
   margin-top: 0.5rem;
   font-size: 0.78rem;
-  color: #fbbf24;
+  color: var(--warning);
 }
 
 .upgradeNote {
@@ -429,8 +435,8 @@
   gap: 0.2rem;
   padding: 0.25rem;
   border-radius: 2px;
-  background: var(--bg-inset);
-  border: 1px solid var(--border-subtle);
+  background: var(--bg-2);
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.2);
 }
 
 .modeToggleBtn {
@@ -582,8 +588,8 @@
   min-height: 44px;
   padding: 0.55rem 0.85rem;
   border-radius: 2px;
-  border: 1px solid var(--border-subtle);
-  background: var(--bg-inset);
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.2);
+  background: var(--bg-2);
   color: var(--white-80);
   font-weight: 800;
   cursor: pointer;
@@ -629,9 +635,9 @@
   gap: 0.55rem;
   min-height: 42px;
   padding: 0.5rem 0.65rem;
-  border: 1px solid var(--border-subtle);
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.2);
   border-radius: 2px;
-  background: var(--bg-inset);
+  background: var(--bg-2);
   cursor: pointer;
   transition: border-color 0.15s, background 0.15s;
 }
@@ -693,8 +699,8 @@
 
 .fontBtn {
   padding: 0.75rem 1rem;
-  background: var(--bg-inset);
-  border: 1px solid var(--border-subtle);
+  background: var(--bg-2);
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.2);
   border-radius: 2px;
   text-align: left;
   cursor: pointer;
@@ -737,8 +743,8 @@
 
 .cardStyleBtn {
   padding: 0.75rem 1rem;
-  background: var(--bg-inset);
-  border: 1px solid var(--border-subtle);
+  background: var(--bg-2);
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.2);
   border-radius: 2px;
   cursor: pointer;
   transition: border-color 0.15s, background 0.15s;
@@ -803,7 +809,7 @@
   gap: 1rem;
   margin-top: 0.5rem;
   padding-top: 1rem;
-  border-top: 1px solid var(--border-subtle);
+  border-top: 1px solid rgba(var(--blueprint-blue-rgb), 0.2);
 }
 
 .unsavedLabel {
@@ -816,9 +822,10 @@
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   color: var(--white-35);
   font-style: italic;
+  font-family: var(--font-data);
   margin-top: 0.75rem;
 }
 
@@ -845,6 +852,87 @@
 /* ── Upsell block margin ─────────────────────── */
 .upsellBlock {
   margin-bottom: 0.75rem;
+}
+
+/* ── Card divider ─────────────────────────────── */
+.cardDivider {
+  border: none;
+  border-top: 1px solid rgba(var(--blueprint-blue-rgb), 0.15);
+  margin: 1.25rem 0;
+}
+
+/* ── Sub-section label (within a card) ─────────── */
+.subSectionLabel {
+  margin: 0 0 0.65rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  font-family: var(--font-data);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--white-60);
+}
+
+/* ── Warning / confirm banners ─────────────────── */
+.warningBanner {
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-start;
+  padding: 0.6rem 0.75rem;
+  background: rgba(var(--warning-rgb), 0.05);
+  border: 1px solid rgba(var(--warning-rgb), 0.4);
+  border-radius: 2px;
+}
+
+.warningBanner p {
+  margin: 0;
+  font-size: 0.78rem;
+  font-family: var(--font-data);
+  color: var(--white-70);
+  line-height: 1.5;
+}
+
+.confirmBanner {
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-start;
+  padding: 0.6rem 0.75rem;
+  background: rgba(var(--logic-lime-rgb), 0.04);
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.25);
+  border-radius: 2px;
+}
+
+.confirmBanner p {
+  margin: 0;
+  font-size: 0.78rem;
+  font-family: var(--font-data);
+  color: var(--white-70);
+  line-height: 1.5;
+}
+
+/* ── Public URL preview ────────────────────────── */
+.urlPreview {
+  margin: 0.4rem 0 0;
+  font-family: var(--font-data);
+  font-size: 0.72rem;
+  color: var(--data-gray);
+  word-break: break-all;
+  line-height: 1.4;
+}
+
+.urlSlug {
+  color: var(--fl-text);
+  font-weight: 700;
+}
+
+/* ── Tie-breaker sortable row ──────────────────── */
+.tieBreakerRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--bg-2);
+  padding: 0.5rem 0.75rem;
+  border-radius: 2px;
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.2);
 }
 
 /* ── Accordion ───────────────────────────────── */

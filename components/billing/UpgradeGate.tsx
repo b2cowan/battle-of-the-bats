@@ -13,10 +13,10 @@
  */
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
 import { Lock } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { PLAN_CONFIG } from '@/lib/plan-config';
+import { getBillingHref } from '@/lib/billing-urls';
 import type { OrgPlan } from '@/lib/types';
 import styles from './UpgradeGate.module.css';
 
@@ -34,7 +34,6 @@ interface UpgradeGateProps {
 
 export default function UpgradeGate({ requiredPlan, feature, description, children }: UpgradeGateProps) {
   const { currentOrg } = useOrg();
-  const pathname = usePathname();
 
   if (!currentOrg) return null;
 
@@ -47,9 +46,7 @@ export default function UpgradeGate({ requiredPlan, feature, description, childr
   }
 
   const planLabel = PLAN_CONFIG[requiredPlan]?.label ?? requiredPlan;
-  const billingHref = pathname?.includes('/admin/tournaments')
-    ? `/${currentOrg.slug}/admin/tournaments/settings/subscription`
-    : `/${currentOrg.slug}/admin/org/billing`;
+  const billingHref = getBillingHref(currentOrg.slug, currentOrg.planId);
 
   return (
     <div className={styles.gate}>

@@ -5,6 +5,7 @@ import { useOrg } from '@/lib/org-context';
 import AdminSidebar from '@/components/admin/AdminSidebar';
 import AdminBottomNav from '@/components/admin/AdminBottomNav';
 import { CancellationGuard } from '@/components/admin/CancellationGuard';
+import { getBillingHref } from '@/lib/billing-urls';
 import { LiveLogicRail } from '@/components/live-logic/LiveLogicRail';
 import AdminTitleManager from './AdminTitleManager';
 import styles from './admin.module.css';
@@ -23,7 +24,7 @@ export default function AdminChrome({
   // and usePathname() provides the current path on both server and client, so both agree on this
   // output — no hydration mismatch, no content flash, no loop.
   const isCanceled = currentOrg?.subscriptionStatus === 'canceled';
-  const billingPath = currentOrg?.slug ? `/${currentOrg.slug}/admin/org/billing` : null;
+  const billingPath = currentOrg ? getBillingHref(currentOrg.slug, currentOrg.planId) : null;
   if (isCanceled && billingPath && !pathname.startsWith(billingPath)) {
     return <CancellationGuard />;
   }

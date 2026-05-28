@@ -290,7 +290,7 @@ export async function GET(req: Request) {
       hasFees,
       hasGameTiming,
       hasTieBreakers,
-      ready: hasDates && hasDivisions && hasPublicContact && hasOpenDivision && hasFees && hasGameTiming && hasTieBreakers,
+      ready: hasDates && hasDivisions && hasOpenDivision && hasFees,
     },
     registration: {
       totalCapacity,

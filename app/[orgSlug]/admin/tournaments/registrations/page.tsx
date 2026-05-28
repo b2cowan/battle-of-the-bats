@@ -1232,7 +1232,7 @@ export default function UnifiedTeamsPage() {
           variant="info"
           title="PDF settings not configured"
           body="Your PDF export will use default styling. Set up your header, logo, and footer once and all future PDFs will use those settings."
-          cta={{ label: 'Configure PDF Settings', href: `/${currentOrg?.slug}/admin/org/settings/pdf` }}
+          cta={{ label: 'Configure PDF Settings', href: `/${currentOrg?.slug}/admin/tournaments/settings/pdf` }}
           dismissible
           localStorageKey="flhq-pdf-nudge-registrations"
         />

@@ -107,9 +107,9 @@ const COMPARISON_CATEGORIES = [
     label: 'Availability',
     defaultOpen: false,
     rows: [
-      { feature: 'Self-serve signup',          tournament: 'Available now', plus: 'Available now', league: 'Coming soon', club: 'Coming soon' },
-      { feature: 'Free trial',                 tournament: '—',             plus: '14 days',       league: 'Express interest', club: 'Express interest' },
-      { feature: 'Payment details at signup',  tournament: '—',             plus: 'Yes',           league: 'Not yet',          club: 'Not yet' },
+      { feature: 'Self-serve signup',          tournament: 'Available now', plus: 'Available now',              league: 'Coming soon',      club: 'Coming soon' },
+      { feature: 'Founding Season offer',      tournament: '—',             plus: 'Free through Dec 31, 2026', league: 'Express interest', club: 'Express interest' },
+      { feature: 'Payment details at signup',  tournament: '—',             plus: 'No (Founding Season)',      league: 'Not yet',          club: 'Not yet' },
     ],
   },
 ];

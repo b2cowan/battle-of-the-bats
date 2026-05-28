@@ -187,7 +187,6 @@
 
 .lockedCard {
   opacity: 0.68;
-  pointer-events: none;
 }
 
 .comingSoonCard {

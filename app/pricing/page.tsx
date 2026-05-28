@@ -36,11 +36,22 @@ const BUYER_SEGMENTS: Array<{
     cta: 'See tournament plans',
   },
   {
-    eyebrow: 'League or club leader',
-    title: 'I run a league or a full club.',
-    body: 'One platform for the whole season — house league registration, rep teams, accounting, and org-wide oversight. Available soon; express interest now.',
-    href: '#org-plans',
-    cta: 'See League and Club',
+    eyebrow: 'House league administrator',
+    title: 'I run a house league season.',
+    body: 'Player registration, draft, scheduling, standings, and automated parent notifications — from opening day to final game, in one dashboard.',
+    cta: 'Express interest in League',
+    earlyAccess: true,
+    initialPlanInterest: ['league'],
+    initialFeaturesInterested: ['house_league', 'registration', 'public_site'],
+  },
+  {
+    eyebrow: 'Club executive',
+    title: 'I run a club with rep teams.',
+    body: 'Tournaments, house league, rep teams, and accounting in one place. Coaches manage their teams; you get the visibility without the constant check-ins.',
+    cta: 'Express interest in Club',
+    earlyAccess: true,
+    initialPlanInterest: ['club'],
+    initialFeaturesInterested: ['accounting', 'rep_teams', 'coach_portal'],
   },
   {
     eyebrow: 'Coach or team manager',
@@ -62,26 +73,29 @@ const UPGRADE_BRIDGES = [
     body: 'Tournament Plus removes the single-event limit and adds the tools that make repeat events sustainable: unlimited tournaments, automated scheduling, custom registration fields, file uploads, full export suite, payment reminders, waitlist promotion, and post-event archives. Five staff seats and unlimited officials included.',
     from: 'Tournament',
     to: 'Tournament Plus',
+    label: 'Tournament → Tournament Plus',
     cta: 'Start Free — No Credit Card',
     href: '/auth/signup',
     earlyAccess: false,
   },
   {
     headline: 'Running a full house league season?',
-    body: 'League adds everything beyond the tournament: a public organization page, house league registration and season management, division scheduling and standings, and advanced roles for registrars and program coordinators. Available soon — express interest to be notified when it opens.',
-    from: 'Tournament Plus',
-    to: 'League',
-    cta: 'Express interest',
+    body: 'League is the complete house league platform — player registration, draft, season scheduling, standings, and automated parent notifications in one dashboard. No tournament plan required — League is its own entry point for house league organizations. Available soon — express interest to be notified when it opens.',
+    from: null,
+    to: null,
+    label: 'House league administrators',
+    cta: 'Express interest in League',
     earlyAccess: true,
     initialPlanInterest: ['league'],
     initialFeaturesInterested: ['house_league', 'registration', 'public_site'],
   },
   {
-    headline: 'Running rep teams alongside your league?',
-    body: 'Club is the complete platform for established clubs — tournaments, house league, rep teams, and accounting in one place. Includes three Coaches Portal accounts for your coaching staff, with additional teams at $19/month. Available soon — express interest to be notified when it opens.',
-    from: 'League',
-    to: 'Club',
-    cta: 'Express interest',
+    headline: 'Running a club with rep teams, house league, and tournaments?',
+    body: 'Club is the complete platform — tournaments, house league, rep teams, and accounting in one place. Includes three Coaches Portal accounts for your coaching staff, with additional teams at $19/month. Start directly on Club — you don\'t need to have been on League first. Available soon — express interest to be notified when it opens.',
+    from: null,
+    to: null,
+    label: 'Club executives',
+    cta: 'Express interest in Club',
     earlyAccess: true,
     initialPlanInterest: ['club'],
     initialFeaturesInterested: ['accounting', 'rep_teams', 'coach_portal'],
@@ -120,7 +134,7 @@ const FAQS = [
   },
   {
     q: 'Do I need a credit card to get started?',
-    a: 'No card is required for Tournament. Tournament Plus trials use secure Stripe Checkout and collect payment details at signup, with the first payment charged automatically only after the trial ends.',
+    a: 'No. Tournament is free — no credit card, no time limit. During the Founding Season (through December 31, 2026), Tournament Plus is also free with no payment details required. Starting January 2027, paid plans use secure Stripe Checkout.',
   },
   {
     q: 'What if we get stuck?',
@@ -271,9 +285,9 @@ export default async function PricingPage() {
         <div className="container">
           <div className={styles.bridgeGrid}>
             {UPGRADE_BRIDGES.map(b => (
-              <div key={b.from} className={styles.bridgeCard}>
+              <div key={b.label} className={styles.bridgeCard}>
                 <div className={styles.bridgeLabel}>
-                  {b.from} → {b.to}
+                  {b.label}
                 </div>
                 <h3 className={styles.bridgeHeadline}>{b.headline}</h3>
                 <p className={styles.bridgeBody}>{b.body}</p>
@@ -339,7 +353,7 @@ export default async function PricingPage() {
                 },
                 {
                   label: 'Express interest',
-                  body: 'Share your details and module priorities before the broader plans launch. Nothing to buy yet — just a place in the notification queue.',
+                  body: 'Share your details and plan priorities. We\'ll notify you when self-serve checkout opens — no commitment required.',
                 },
               ].map(s => (
                 <div key={s.label} className={styles.clubStat}>
