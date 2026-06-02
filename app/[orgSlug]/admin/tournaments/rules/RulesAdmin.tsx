@@ -5,7 +5,7 @@ import {
   Plus, Trash2, GripVertical, Upload,
   RefreshCw, Link as LinkIcon,
   HelpCircle, Info, X, Check, ExternalLink, Pencil,
-  LayoutList, LayoutGrid, Columns2
+  LayoutList, LayoutGrid, Columns2, ChevronDown
 } from 'lucide-react';
 import {
   DndContext,
@@ -34,6 +34,7 @@ import {
 } from '@/lib/db';
 import SamplesDrawer from './SamplesDrawer';
 import { SampleSection, SampleResource } from './rules-samples';
+import { TournamentAdminHeader } from '@/components/admin/tournament';
 import styles from '../../admin-common.module.css';
 
 interface Props {
@@ -99,6 +100,47 @@ function SortableResource({
   );
 }
 
+// ── Icon picker ──────────────────────────────────────────────────────────────
+function IconPicker({ value, onChange }: { value: string; onChange: (name: string) => void }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: MouseEvent) => {
+      if (!ref.current?.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [open]);
+
+  const CurrentIcon = ICONS.find(i => i.name === value)?.Icon || Shield;
+
+  return (
+    <div ref={ref} style={{ position: 'relative', flexShrink: 0 }}>
+      <button className="icon-picker-btn" onClick={() => setOpen(v => !v)} title="Change icon" type="button">
+        <CurrentIcon size={16} />
+        <ChevronDown size={9} />
+      </button>
+      {open && (
+        <div className="icon-picker-panel">
+          {ICONS.map(({ name, Icon }) => (
+            <button
+              key={name}
+              type="button"
+              className={`icon-picker-option${value === name ? ' active' : ''}`}
+              onClick={() => { onChange(name); setOpen(false); }}
+              title={name}
+            >
+              <Icon size={16} />
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── Sortable rule card ────────────────────────────────────────────────────────
 function SortableRuleCard({
   section, isDirtySection, activeDirtySectionId, divisions,
@@ -131,16 +173,10 @@ function SortableRuleCard({
           <GripVertical size={16} />
         </div>
         <div className="rule-card-title-group">
-          <div className="icon-preview-box">
-            {(() => { const I = ICONS.find(i => i.name === (section.icon || 'Shield'))?.Icon || Shield; return <I size={20} />; })()}
-          </div>
-          <select
-            className="icon-select"
+          <IconPicker
             value={section.icon || 'Shield'}
-            onChange={e => handleUpdateSectionIcon(section.id, e.target.value)}
-          >
-            {ICONS.map(i => <option key={i.name} value={i.name}>{i.name}</option>)}
-          </select>
+            onChange={(name) => handleUpdateSectionIcon(section.id, name)}
+          />
 
           {editingSectionId === section.id ? (
             <div className="flex gap-2 flex-1 items-center">
@@ -645,25 +681,16 @@ export default function RulesAdmin({ tournament, orgSlug }: Props) {
   // ── Render ────────────────────────────────────────────────────────────────
   return (
     <div className={styles.page}>
-      <header className={styles.pageHeader}>
-        <div className={styles.headerLeft}>
-          <div className={styles.headerIcon}><BookOpen size={24} /></div>
-          <div>
-            <h1 className={styles.pageTitle}>Rules & Resources</h1>
-            <p className={styles.pageSub}>Manage rules and downloads for {tournament.name}.</p>
-          </div>
-        </div>
-        <div className={styles.headerActions}>
-          {isDirty && (
-            <span className="header-unsaved-badge">
-              <AlertCircle size={12} /> Unsaved changes
-            </span>
-          )}
-          <button className="btn btn-outline btn-data" onClick={() => setShowSamples(true)}>
-            <BookOpen size={14} /> Browse Samples
-          </button>
-        </div>
-      </header>
+      <TournamentAdminHeader
+        icon={<BookOpen size={20} />}
+        title="Rules & Resources"
+        subtitle={`Manage rules and downloads for ${tournament.name}.`}
+        actions={isDirty ? (
+          <span className="header-unsaved-badge">
+            <AlertCircle size={12} /> Unsaved changes
+          </span>
+        ) : undefined}
+      />
 
       {error && (
         <div className="card" style={{ background: 'rgba(var(--danger-rgb),0.1)', marginBottom: '2rem' }}>
@@ -677,7 +704,7 @@ export default function RulesAdmin({ tournament, orgSlug }: Props) {
       <div className="single-column-layout">
         {/* ── Rules sections ── */}
         <section className="content-section">
-          <div className="section-header">
+          <div className="section-header rules-section-header">
             <h2 className="section-title">Tournament Rules</h2>
             <div className="section-header-actions">
               <div className="layout-toggle-group">
@@ -695,13 +722,16 @@ export default function RulesAdmin({ tournament, orgSlug }: Props) {
                   ><Columns2 size={15} /></button>
                 </div>
               </div>
+              <button className="btn btn-outline btn-data" onClick={() => setShowSamples(true)} title="Browse samples">
+                <BookOpen size={14} /><span className="add-section-label"> Browse Samples</span>
+              </button>
               <button
                 className="btn btn-lime btn-data"
                 onClick={() => { setShowNewSectionCard(true); setNewSectionTitleInline(''); }}
                 disabled={!!activeDirtySectionId}
-                title={activeDirtySectionId ? 'Save or discard the current section before adding a new one' : undefined}
+                title={activeDirtySectionId ? 'Save or discard the current section before adding a new one' : 'Add section'}
               >
-                <Plus size={14} /> Add Section
+                <Plus size={14} /><span className="add-section-label"> Add Section</span>
               </button>
             </div>
           </div>
@@ -800,9 +830,9 @@ export default function RulesAdmin({ tournament, orgSlug }: Props) {
                 </div>
               </div>
               <div className="add-form">
-                <button className="btn btn-outline btn-data" onClick={handleAddResource}><LinkIcon size={14} /> Add Link</button>
-                <button className="btn btn-lime btn-data" onClick={() => document.getElementById('file-up-main')?.click()}>
-                  <Upload size={14} /> {uploading ? 'Uploading…' : 'Upload File'}
+                <button className="btn btn-outline btn-data" title="Add link" onClick={handleAddResource}><LinkIcon size={14} /><span className="res-btn-label"> Add Link</span></button>
+                <button className="btn btn-lime btn-data" title={uploading ? 'Uploading…' : 'Upload file'} onClick={() => document.getElementById('file-up-main')?.click()}>
+                  <Upload size={14} /><span className="res-btn-label"> {uploading ? 'Uploading…' : 'Upload File'}</span>
                 </button>
                 <input type="file" id="file-up-main" hidden onChange={handleFileUpload} />
               </div>
@@ -895,7 +925,7 @@ export default function RulesAdmin({ tournament, orgSlug }: Props) {
             <div className="modal-footer">
               <button className="btn btn-ghost btn-data" onClick={() => setSwitchGuardTargetId(null)}>Keep editing</button>
               <button className="btn btn-danger btn-data" onClick={handleSwitchGuardDiscard} disabled={saving}>Discard changes</button>
-              <button className="btn btn-primary btn-data" onClick={handleSwitchGuardSave} disabled={saving}>
+              <button className="btn btn-lime btn-data" onClick={handleSwitchGuardSave} disabled={saving}>
                 {saving ? 'Saving…' : 'Save changes'}
               </button>
             </div>
@@ -917,7 +947,7 @@ export default function RulesAdmin({ tournament, orgSlug }: Props) {
             <div className="modal-footer">
               <button className="btn btn-ghost btn-data" onClick={handleNavStay}>Stay &amp; keep editing</button>
               <button className="btn btn-danger btn-data" onClick={handleNavLeave}>Leave without saving</button>
-              <button className="btn btn-primary btn-data" onClick={handleNavSaveAndLeave} disabled={saving}>
+              <button className="btn btn-lime btn-data" onClick={handleNavSaveAndLeave} disabled={saving}>
                 {saving ? 'Saving…' : 'Save & leave'}
               </button>
             </div>
@@ -936,9 +966,10 @@ export default function RulesAdmin({ tournament, orgSlug }: Props) {
       )}
 
       <style jsx global>{`
-        .single-column-layout { display: flex; flex-direction: column; gap: 4rem; padding-bottom: 5rem; }
-        .content-section { display: flex; flex-direction: column; gap: 1.5rem; }
-        .section-header { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border-subtle); }
+        .single-column-layout { display: flex; flex-direction: column; gap: 4rem; padding-top: 1.25rem; padding-bottom: 5rem; }
+        .content-section { display: flex; flex-direction: column; gap: 0.5rem; }
+        .section-header { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border-subtle); margin-bottom: 0; text-align: left; }
+        .section-header h2 { margin-bottom: 0; }
         .section-title { font-family: var(--font-display); font-size: 1.25rem; font-weight: 800; color: var(--white); margin: 0; }
         .section-header-actions { display: flex; align-items: center; gap: 0.75rem; }
         .add-form { display: flex; gap: 0.75rem; }
@@ -965,7 +996,12 @@ export default function RulesAdmin({ tournament, orgSlug }: Props) {
         .rule-card.dragging { border-color: var(--blueprint-blue); background: var(--bg-3); }
         .rule-card-title-group { display: flex; align-items: center; gap: 1rem; flex: 1; }
         .icon-preview-box { width: 32px; height: 32px; background: rgba(var(--blueprint-blue-rgb), 0.1); border: 1px solid rgba(var(--blueprint-blue-rgb), 0.3); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: var(--logic-lime); flex-shrink: 0; }
-        .icon-select { background: var(--bg-3); border: 1px solid var(--border); color: var(--white); border-radius: 6px; padding: 2px 6px; font-size: 0.8rem; }
+        .icon-picker-btn { display: flex; align-items: center; gap: 2px; background: rgba(var(--blueprint-blue-rgb), 0.1); border: 1px solid rgba(var(--blueprint-blue-rgb), 0.3); border-radius: 6px; color: var(--logic-lime); cursor: pointer; padding: 4px 6px; transition: border-color 0.15s, background 0.15s; }
+        .icon-picker-btn:hover { border-color: rgba(var(--blueprint-blue-rgb), 0.6); background: rgba(var(--blueprint-blue-rgb), 0.18); }
+        .icon-picker-panel { position: absolute; top: calc(100% + 5px); left: 0; z-index: 60; background: var(--hud-surface); border: 1px solid rgba(var(--blueprint-blue-rgb), 0.4); border-radius: 6px; padding: 6px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 3px; box-shadow: var(--glow-blue); }
+        .icon-picker-option { display: flex; align-items: center; justify-content: center; width: 30px; height: 30px; border-radius: 4px; background: none; border: 1px solid transparent; color: var(--white-40); cursor: pointer; transition: all 0.12s; }
+        .icon-picker-option:hover { background: var(--white-05); color: var(--white); border-color: var(--border-subtle); }
+        .icon-picker-option.active { background: rgba(var(--logic-lime-rgb), 0.1); border-color: rgba(var(--logic-lime-rgb), 0.4); color: var(--logic-lime); }
         .card-title-text { font-family: var(--font-display); font-size: 1rem; font-weight: 800; color: var(--white); margin: 0; }
         .inline-title-input { background: var(--black-20); border: 1px solid var(--blueprint-blue); outline: none; color: var(--white); font-family: var(--font-display); font-size: 1rem; font-weight: 800; padding: 2px 8px; border-radius: 4px; width: 100%; }
         .edit-pencil-btn { background: none; border: none; color: var(--white-20); cursor: pointer; padding: 4px; opacity: 0; transition: opacity 0.2s; }
@@ -1035,22 +1071,45 @@ export default function RulesAdmin({ tournament, orgSlug }: Props) {
         .sample-preview-more { font-size: 0.7rem; color: var(--white-20); font-style: italic; padding-left: 0.75rem; }
         .drawer-resources-note { font-size: 0.75rem; color: var(--white-40); background: var(--bg-inset); border: 1px solid var(--border-subtle); border-radius: 6px; padding: 0.5rem 0.75rem; margin-bottom: 0.25rem; }
 
-        @media (max-width: 720px) {
-          .single-column-layout { gap: 2.5rem; padding-bottom: 3rem; }
-          .section-header { align-items: stretch; flex-direction: column; }
+        @media (max-width: 900px) {
+          .single-column-layout { gap: 1.75rem; padding-top: 0.65rem; padding-bottom: 3rem; }
+          .section-header { align-items: flex-start; padding-bottom: 0.25rem; border-bottom: none; }
+          .section-header-actions { flex-shrink: 0; flex-direction: row; flex-wrap: wrap; }
+          .content-section { gap: 1rem; }
+          /* Use .section-header h2 (specificity 0,1,1) to beat desktop .section-title (0,1,0) */
+          .section-header h2, .section-title { font-size: 0.85rem; font-family: var(--font-data); font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; }
+          .layout-toggle-group { display: none; }
           .section-header-actions { flex-wrap: wrap; }
+          /* card stack gap */
+          .rules-stack { gap: 0.65rem; }
           .rules-stack--grid { grid-template-columns: 1fr; }
           .resource-list-stack--grid { grid-template-columns: 1fr; }
-          .add-form { flex-direction: column; width: 100%; }
+          /* card header: tight padding, centre-aligned */
+          .rule-card-header { align-items: center; gap: 0.5rem; padding: 0.5rem 0.65rem; }
+          /* card title: data scale, not display hero */
+          .card-title-text { font-family: var(--font-data); font-size: 0.82rem; font-weight: 700; }
+          /* card title group: row, no wrap needed at this size */
+          .rule-card-title-group { flex-direction: row; flex-wrap: wrap; align-items: center; gap: 0.4rem; min-width: 0; }
+          /* rule items: tight padding and font */
+          .rule-items-list { padding: 0.45rem 0.65rem; gap: 0.2rem; }
+          .rule-item-row { gap: 0.4rem; }
+          .item-textarea { font-size: 0.82rem; line-height: 1.45; }
+          /* applies-to: tight */
+          .applies-to-row { flex-wrap: wrap; align-items: center; flex-direction: row; padding: 0.3rem 0.65rem; gap: 0.5rem; }
+          .applies-to-check { font-size: 0.75rem; }
+          /* save bar */
+          .section-save-bar { padding: 0.5rem 0.65rem; }
+          /* add-form (resources) */
+          .add-form { flex-direction: row; flex-wrap: wrap; width: auto; gap: 0.35rem; }
           .add-form .form-input { max-width: none; width: 100%; }
-          .add-form .btn { justify-content: center; min-height: 44px; width: 100%; }
-          .rule-card-header { align-items: flex-start; gap: 0.75rem; padding: 0.85rem; }
-          .rule-card-title-group { align-items: flex-start; flex-direction: column; gap: 0.65rem; min-width: 0; }
-          .rule-items-list { padding: 0.85rem; }
-          .rule-item-row { gap: 0.5rem; }
-          .applies-to-row { align-items: flex-start; flex-direction: column; padding: 0.75rem 0.85rem; }
+          .add-form .btn { min-height: unset; width: auto; }
           .resource-header { align-items: flex-start; }
           .resource-actions { flex-wrap: wrap; justify-content: flex-end; }
+          .res-btn-label { display: none; }
+        }
+        /* Match TournamentAdminHeader subtitle hide breakpoint */
+        @media (max-width: 480px) {
+          .add-section-label { display: none; }
         }
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
       `}</style>

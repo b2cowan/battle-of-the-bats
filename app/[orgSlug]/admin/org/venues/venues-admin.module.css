@@ -433,7 +433,8 @@
 /* Venue-level action bar inside the expanded area */
 .venueActionsBar {
   display: flex;
-  align-items: stretch;  /* all buttons the same height */
+  align-items: center;
+  justify-content: flex-end;
   gap: 0.35rem;
   padding-bottom: 0.6rem;
   margin-bottom: 0.5rem;
@@ -441,8 +442,6 @@
 }
 
 .venueActionsBar :global(.btn) {
-  flex: 1;                /* span full width equally */
-  justify-content: center;
 }
 
 @media (max-width: 600px) {

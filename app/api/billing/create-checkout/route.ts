@@ -1,7 +1,8 @@
 import { getAuthContext, unauthorized } from '@/lib/api-auth';
 import { restoreRetainedDowngradeTournaments } from '@/lib/billing-retention';
+import { getBillingHref } from '@/lib/billing-urls';
 import { isBillingMockEnabled, isStripeConfigured } from '@/lib/billing-mock';
-import { normalizeBillingCycle, PLAN_CONFIG } from '@/lib/plan-config';
+import { normalizeBillingCycle, PLAN_CONFIG, isFoundingSeasonActive, FOUNDING_SEASON_END } from '@/lib/plan-config';
 import { getPlanConfigOverride } from '@/lib/plan-config-db';
 import { getStripePriceId } from '@/lib/stripe-prices';
 import { getPlanGatingMap } from '@/lib/plan-gating-server';
@@ -18,6 +19,10 @@ function isMissingStartupTasksColumn(error: { code?: string; message?: string } 
   if (!error) return false;
   const message = error.message ?? '';
   return error.code === '42703' || error.code === 'PGRST204' || message.includes('startup_tasks');
+}
+
+function isOrgPlan(value: string | undefined): value is OrgPlan {
+  return Boolean(value && value in PLAN_CONFIG);
 }
 
 async function resetStartupTasksIfAvailable(orgId: string) {
@@ -44,23 +49,56 @@ async function resetStartupTasksForEditableOnboarding(orgId: string, enabled: bo
   await resetStartupTasksIfAvailable(orgId);
 }
 
+async function ensureFoundingSeasonCompPeriod(orgId: string, createdBy: string | null | undefined) {
+  const { data, error } = await supabaseAdmin
+    .from('org_overrides')
+    .select('id')
+    .eq('org_id', orgId)
+    .eq('type', 'comp_period')
+    .eq('expires_at', FOUNDING_SEASON_END)
+    .is('revoked_at', null)
+    .limit(1)
+    .maybeSingle();
+
+  if (error) throw error;
+  if (data) return;
+
+  const { error: insertError } = await supabaseAdmin
+    .from('org_overrides')
+    .insert({
+      org_id: orgId,
+      type: 'comp_period',
+      value: null,
+      expires_at: FOUNDING_SEASON_END,
+      reason: 'Founding Season - Tournament Plus free through December 31, 2026',
+      created_by: createdBy ?? 'system',
+    });
+
+  if (insertError) throw insertError;
+}
+
 export async function POST(req: Request) {
-  const auth = await getAuthContext();
+  const body = await req.json().catch(() => ({})) as {
+    planKey?: unknown;
+    returnTo?: unknown;
+    orgSlug?: unknown;
+    billingCycle?: unknown;
+  };
+  const orgSlug = typeof body.orgSlug === 'string' ? body.orgSlug : undefined;
+  const auth = await getAuthContext(orgSlug ? { orgSlug } : {});
   if (!auth) return unauthorized();
 
-  const { planKey, returnTo, billingCycle: requestedBillingCycle }: {
-    planKey: 'team' | 'tournament_plus' | 'league' | 'club';
-    returnTo?: string;
-    billingCycle?: unknown;
-  } = await req.json();
+  const planKey = typeof body.planKey === 'string' ? body.planKey : undefined;
+  const returnTo = typeof body.returnTo === 'string' ? body.returnTo : undefined;
+  const requestedBillingCycle = body.billingCycle;
   const billingCycle = normalizeBillingCycle(requestedBillingCycle);
-  const plan = PLAN_CONFIG[planKey as OrgPlan];
-  if (!plan) {
+  if (!isOrgPlan(planKey)) {
     return new Response(JSON.stringify({ error: 'Invalid plan' }), {
       status: 400,
       headers: { 'Content-Type': 'application/json' },
     });
   }
+  const plan = PLAN_CONFIG[planKey];
   if (planKey === 'team') {
     return new Response(JSON.stringify({ error: 'Use Coaches Portal checkout for coach-owned team subscriptions.' }), {
       status: 400,
@@ -69,7 +107,7 @@ export async function POST(req: Request) {
   }
 
   // Merge DB overrides over PLAN_CONFIG defaults for this plan
-  const mergedConfig = await getPlanConfigOverride(planKey as OrgPlan);
+  const mergedConfig = await getPlanConfigOverride(planKey);
 
   const gatingMap = await getPlanGatingMap();
   if (gatingMap[planKey]) {
@@ -80,7 +118,7 @@ export async function POST(req: Request) {
   }
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? '';
-  const fallbackReturnTo = `/${auth.org.slug}/admin/org/billing`;
+  const fallbackReturnTo = getBillingHref(auth.org.slug, auth.org.planId);
   const safeReturnTo = returnTo?.startsWith(`/${auth.org.slug}/admin/`)
     ? returnTo
     : fallbackReturnTo;
@@ -123,7 +161,7 @@ export async function POST(req: Request) {
       });
 
       if (auth.org.subscriptionStatus === 'canceled' && auth.user.email) {
-        const planLabel = PLAN_CONFIG[planKey as OrgPlan]?.label ?? planKey;
+        const planLabel = PLAN_CONFIG[planKey]?.label ?? planKey;
         const dashboardUrl = `${SITE_URL}/${auth.org.slug}/admin`;
         await sendEmail(
           auth.user.email,
@@ -151,6 +189,68 @@ export async function POST(req: Request) {
     );
   }
 
+  // Founding season: Tournament plan owners get Tournament Plus without Stripe.
+  const isFoundingSeasonTournamentUpgrade =
+    !shouldApplyDirectly &&
+    planKey === 'tournament_plus' &&
+    auth.org.planId === 'tournament' &&
+    isFoundingSeasonActive();
+
+  if (isFoundingSeasonTournamentUpgrade) {
+    const { error: orgError } = await supabaseAdmin
+      .from('organizations')
+      .update({
+        plan_id: 'tournament_plus',
+        tournament_limit: mergedConfig.tournamentLimit,
+        subscription_status: 'active',
+        stripe_subscription_id: null,
+        subscription_period: null,
+        current_period_end: FOUNDING_SEASON_END,
+      })
+      .eq('id', auth.org.id);
+
+    if (orgError) {
+      return new Response(JSON.stringify({ error: orgError.message }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
+    await ensureFoundingSeasonCompPeriod(auth.org.id, auth.user.email);
+
+    const restoreResult = await restoreRetainedDowngradeTournaments(auth.org.id, mergedConfig.tournamentLimit);
+    await resetStartupTasksForEditableOnboarding(auth.org.id, isOnboardingPlanSelection);
+
+    if (isRecoveryTransition(auth.org.subscriptionStatus, 'active')) {
+      await writePlatformEvent({
+        eventType: 'subscription_recovered',
+        source: 'founding_season',
+        orgId: auth.org.id,
+        actorUserId: auth.user.id,
+        actorEmail: auth.user.email,
+        previousPlanId: auth.org.planId,
+        planId: 'tournament_plus',
+        previousSubscriptionStatus: auth.org.subscriptionStatus,
+        subscriptionStatus: 'active',
+        metadata: { billingCycle, restoredCount: restoreResult.restoredCount, foundingSeason: true },
+      });
+    }
+
+    return new Response(
+      JSON.stringify({
+        url: appendSuccess(`${appUrl}${safeReturnTo}`),
+        applied: true,
+        planKey: 'tournament_plus',
+        billingCycle,
+        foundingSeason: true,
+        compUntil: FOUNDING_SEASON_END,
+        restoredCount: restoreResult.restoredCount,
+        remainingRetainedCount: restoreResult.remainingRetainedCount,
+      }),
+      { status: 200, headers: { 'Content-Type': 'application/json' } }
+    );
+  }
+
   // ── Production: real Stripe checkout ──────────────────────────────────────
   if (!isStripeConfigured()) {
     return new Response(JSON.stringify({ error: 'Stripe checkout is not configured.' }), {
@@ -159,7 +259,7 @@ export async function POST(req: Request) {
     });
   }
 
-  const priceId = await getStripePriceId(planKey as OrgPlan, billingCycle);
+  const priceId = await getStripePriceId(planKey, billingCycle);
   if (!priceId) {
     const cycleLabel = billingCycle === 'annual' ? 'Annual' : 'Monthly';
     return new Response(JSON.stringify({ error: `${cycleLabel} checkout is not configured for ${plan.label} yet.` }), {

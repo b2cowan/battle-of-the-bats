@@ -1,6 +1,8 @@
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import EarlyAccessModalTrigger from '@/components/EarlyAccessModalTrigger';
+import { PLAN_ARTICLE_CONTENT } from '@/lib/plan-article-content';
+import { PLAN_CONFIG, formatPriceAmount } from '@/lib/plan-config';
 import styles from './page.module.css';
 
 export const metadata: Metadata = {
@@ -9,61 +11,8 @@ export const metadata: Metadata = {
     'A complete workspace for one rep team — roster, lineups, budget, schedule, and documents. No org account needed. Your workspace carries over if your organization joins later.',
 };
 
-const PAIN_ITEMS = [
-  {
-    title: 'The roster lives in a group text.',
-    body: 'Player contact info, positions, and jersey numbers are scattered across messages. Getting a clean list means copying it from your phone to a spreadsheet.',
-  },
-  {
-    title: 'The lineup is in a notes app.',
-    body: 'No lineup history. When someone asks what you ran in January, there is no answer. Every game starts from scratch.',
-  },
-  {
-    title: 'Team fees are tracked in your head.',
-    body: 'You know roughly who has paid. The actual amounts, due dates, and payment history are a mental model — not a record.',
-  },
-  {
-    title: 'Travel documents get emailed in pieces.',
-    body: 'Medical forms come in one at a time. Consent forms go missing. You figure out what is missing when you are already at the hotel.',
-  },
-];
-
-const STEPS = [
-  {
-    num: '01',
-    label: 'Roster',
-    title: "Your team, not a group text.",
-    body: 'Build and manage your roster with positions, jersey numbers, contact info, and season history. Everything lives here — accessible from anywhere.',
-  },
-  {
-    num: '02',
-    label: 'Schedule and lineups',
-    title: 'Build lineups. Track attendance. Export to PDF.',
-    body: 'Enter your game schedule, track who showed up, and build lineups with full lineup history by game. Export a PDF for the bench in one click.',
-  },
-  {
-    num: '03',
-    label: 'Team budget',
-    title: 'Dues, expenses, and payment reminders in one place.',
-    body: 'Track team income and expenses. Log player dues and send payment reminders. No more mental accounting — the numbers are always in front of you.',
-  },
-  {
-    num: '04',
-    label: 'Documents',
-    title: "Missing paperwork is visible before it's a problem.",
-    body: 'Upload and track player documents — consent forms, medical notes, eligibility certificates. You see what is outstanding at a glance, not the night before a tournament.',
-  },
-];
-
-const PORTAL_FEATURES = [
-  'Full roster management — positions, jersey numbers, and season history',
-  'Game schedule, attendance tracking, and lineup builder with PDF export',
-  'Team budget, player dues, expense tracking, and payment reminders',
-  'Documents, season setup checklist, and year-over-year history',
-  'Tournaments included — run round robins, exhibition weekends, and local events',
-  'Tournament history included — every event your team has been part of, preserved',
-  'Link to your parent organization at any time, without transferring ownership',
-];
+const { painItems: PAIN_ITEMS, steps: STEPS, features: PORTAL_FEATURES } =
+  PLAN_ARTICLE_CONTENT.team;
 
 export default function ForCoachesPage() {
   return (
@@ -103,7 +52,7 @@ export default function ForCoachesPage() {
             {' '}— The Coaches Portal is in development. Express interest to be notified when it opens.
           </p>
           <div className={styles.trustRow}>
-            {['$29 CAD / month', '$290 / season — save two months', 'No org account needed'].map(s => (
+            {[`${formatPriceAmount(PLAN_CONFIG.team.monthlyPrice)} CAD / month`, `${formatPriceAmount(PLAN_CONFIG.team.annualPrice)} / season — save two months`, 'No org account needed'].map(s => (
               <div key={s} className={styles.trustItem}>
                 <span className={styles.trustDot} />
                 <span>{s}</span>
@@ -166,10 +115,10 @@ export default function ForCoachesPage() {
               <div>
                 <p className={styles.planName}>Coaches Portal</p>
                 <div className={styles.planPrice}>
-                  <span className={styles.planAmount}>$29</span>
+                  <span className={styles.planAmount}>{formatPriceAmount(PLAN_CONFIG.team.monthlyPrice)}</span>
                   <span className={styles.planPeriod}>/month</span>
                 </div>
-                <p className={styles.planNote}>$290/season — save two months · Standalone, no org required</p>
+                <p className={styles.planNote}>{formatPriceAmount(PLAN_CONFIG.team.annualPrice)}/season — save two months · Standalone, no org required</p>
               </div>
               <span className={styles.comingSoonBadge}>Coming soon</span>
               <p className={styles.planTagline}>

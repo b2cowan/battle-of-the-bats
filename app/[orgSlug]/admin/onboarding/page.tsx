@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { useTournament } from '@/lib/tournament-context';
-import { PLAN_CONFIG } from '@/lib/plan-config';
+import { PLAN_CONFIG, formatPriceAmount } from '@/lib/plan-config';
 import type { OrgPlan } from '@/lib/types';
 import PricingSection from '@/components/PricingSection';
 import styles from './onboarding.module.css';
@@ -606,6 +606,7 @@ export default function OnboardingPage() {
         body: JSON.stringify({
           planKey,
           billingCycle: selectedBillingCycle,
+          orgSlug: currentOrg.slug,
           returnTo: `/${currentOrg.slug}/admin/onboarding`,
         }),
       });
@@ -1486,7 +1487,7 @@ export default function OnboardingPage() {
                 <p className={styles.foundingSeasonWelcomeTitle}>Welcome to your founding season.</p>
                 <p className={styles.foundingSeasonWelcomeCopy}>
                   Tournament Plus is free through December 31, 2026. No credit card required.
-                  You&apos;ll receive a reminder before the standard $39/month rate applies in January 2027.
+                  You&apos;ll receive a reminder before the standard {formatPriceAmount(PLAN_CONFIG.tournament_plus.monthlyPrice)}/month rate applies in January 2027.
                 </p>
               </div>
             )}

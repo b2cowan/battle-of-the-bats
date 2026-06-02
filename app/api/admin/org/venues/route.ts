@@ -46,6 +46,8 @@ export async function GET(req: Request) {
 
   const ctx = await getAuthContextWithScope({ orgSlug });
   if (!ctx) return unauthorized();
+  // Org Venue Library is a League/Club org-admin feature (matches the page-level gate).
+  if (!['league', 'club'].includes(ctx.org.planId)) return forbidden();
 
   const { data: venues, error: vErr } = await supabaseAdmin
     .from('org_venues')
@@ -83,6 +85,8 @@ export async function POST(req: Request) {
   const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
   const ctx = await getAuthContextWithScope({ orgSlug });
   if (!ctx) return unauthorized();
+  // Org Venue Library is a League/Club org-admin feature (matches the page-level gate).
+  if (!['league', 'club'].includes(ctx.org.planId)) return forbidden();
   if (!hasCapability(ctx.role, ctx.capabilities, 'create_tournaments')) return forbidden();
 
   try {

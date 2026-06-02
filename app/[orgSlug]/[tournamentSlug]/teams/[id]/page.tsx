@@ -1,7 +1,7 @@
 'use client';
-import { useState, useEffect } from 'react';
-import { use } from 'react';
-import { Users, CheckCircle, Clock, CreditCard, AlertTriangle, Mail, MapPin } from 'lucide-react';
+import { useState, useEffect, use } from 'react';
+import Link from 'next/link';
+import { Users, Clock, AlertTriangle, MapPin, Star, Calendar } from 'lucide-react';
 import { formatTime } from '@/lib/utils';
 import styles from '../../../../teams/[id]/team-profile.module.css';
 
@@ -29,12 +29,48 @@ interface Game {
   status: string;
 }
 
+function followKey(orgSlug: string, tournamentSlug: string) {
+  return `fl_follow_team_${orgSlug}_${tournamentSlug}`;
+}
+
+function readFollowedTeamId(orgSlug: string, tournamentSlug: string) {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = window.localStorage.getItem(followKey(orgSlug, tournamentSlug));
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as { id?: string };
+    return parsed.id ?? null;
+  } catch {
+    return null;
+  }
+}
+
+function saveFollowedTeam(orgSlug: string, tournamentSlug: string, team: TeamProfile) {
+  if (typeof window === 'undefined') return;
+  window.localStorage.setItem(followKey(orgSlug, tournamentSlug), JSON.stringify({
+    id: team.id,
+    name: team.team_name,
+  }));
+}
+
+function clearFollowedTeam(orgSlug: string, tournamentSlug: string) {
+  if (typeof window === 'undefined') return;
+  window.localStorage.removeItem(followKey(orgSlug, tournamentSlug));
+}
+
 export default function TeamProfilePage({ params }: { params: Promise<{ orgSlug: string; tournamentSlug: string; id: string }> }) {
-  const { id } = use(params);
+  const { orgSlug, tournamentSlug, id } = use(params);
   const [team, setTeam]     = useState<TeamProfile | null>(null);
   const [games, setGames]   = useState<Game[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError]   = useState('');
+  const [followedTeamId, setFollowedTeamId] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Browser-local preference hydrates after the public page renders.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setFollowedTeamId(readFollowedTeamId(orgSlug, tournamentSlug));
+  }, [orgSlug, tournamentSlug]);
 
   useEffect(() => {
     async function load() {
@@ -51,7 +87,7 @@ export default function TeamProfilePage({ params }: { params: Promise<{ orgSlug:
 
         setTeam(rData);
         setGames(gData.games || []);
-      } catch (e: any) {
+      } catch {
         setError('Team not found.');
       } finally {
         setLoading(false);
@@ -89,17 +125,44 @@ export default function TeamProfilePage({ params }: { params: Promise<{ orgSlug:
     acc.ra += oppScore;
     return acc;
   }, { w: 0, l: 0, t: 0, ra: 0 });
+  const currentTeam = team;
+  const isFollowed = followedTeamId === currentTeam.id;
+  const scheduleHref = `/${orgSlug}/${tournamentSlug}/schedule`;
+
+  function toggleFollow() {
+    if (isFollowed) {
+      clearFollowedTeam(orgSlug, tournamentSlug);
+      setFollowedTeamId(null);
+    } else {
+      saveFollowedTeam(orgSlug, tournamentSlug, currentTeam);
+      setFollowedTeamId(currentTeam.id);
+    }
+  }
 
   return (
     <div className="page-content">
-      <div className={styles.pageHeader}>
+      <div className="public-page-header">
         <div className="container">
           <div className="flex items-center gap-2 mb-4">
             <span className="badge badge-primary">{team.division_name}</span>
             {team.pool && <span className="badge">{team.pool.replace(/^Pool\s+/i, '').trim()} Pool</span>}
           </div>
-          <h1 className="display-lg">{team.team_name}</h1>
+          <h1>{team.team_name}</h1>
           <p className="text-muted">{team.tournament_name}</p>
+          <div className={styles.profileActions}>
+            <button
+              type="button"
+              className={`btn ${isFollowed ? 'btn-lime' : 'btn-outline'} btn-sm`}
+              onClick={toggleFollow}
+              aria-pressed={isFollowed}
+            >
+              <Star size={15} fill={isFollowed ? 'currentColor' : 'none'} />
+              {isFollowed ? 'Following My Team' : 'Follow My Team'}
+            </button>
+            <Link href={scheduleHref} className="btn btn-ghost btn-sm">
+              <Calendar size={15} /> Schedule
+            </Link>
+          </div>
         </div>
       </div>
 
@@ -157,7 +220,6 @@ export default function TeamProfilePage({ params }: { params: Promise<{ orgSlug:
                       const oppScore = isHome ? g.away_score : g.home_score;
                       const won = hasResult && myScore! > oppScore!;
                       const lost = hasResult && myScore! < oppScore!;
-                      const tied = hasResult && myScore! === oppScore!;
 
                       return (
                         <div key={g.id} className={styles.gameRow}>

@@ -1,44 +1,267 @@
-.pageHeader {
-  background: linear-gradient(180deg, var(--bg-2) 0%, var(--bg) 100%);
-  border-bottom: 1px solid var(--border);
-  padding: 2rem 0 2.5rem;
-}
-
-.pageHeader h1 { color: var(--white); margin: 0.5rem 0; }
-
 .summarySection {
-  margin-top: 2rem;
-  margin-bottom: 3rem;
-  background: var(--bg-card);
+  margin: 0;
+  background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 1.5rem;
+  border-radius: var(--radius-lg);
   overflow: hidden;
   box-shadow: 0 10px 30px -10px rgba(0,0,0,0.3);
 }
 
 .summaryHeader {
   padding: 1.25rem 1.5rem;
-  background: rgba(168,85,247,0.05);
+  background: rgba(var(--primary-rgb),0.05);
   border-bottom: 1px solid var(--border);
   display: flex;
   align-items: center;
 }
 
-.rulesInfo {
-  font-size: 0.65rem;
+.standingsControls {
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.divisionSelect {
+  width: min(100%, 260px);
+}
+
+.resultsSummaryLine {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin: 0 0 0.85rem;
   color: var(--white-60);
-  background: var(--white-10);
-  padding: 0.35rem 0.75rem;
-  border-radius: 4px;
+  font-size: 0.8rem;
+  line-height: 1.35;
+}
+
+.resultsSummaryLine span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  min-height: 28px;
+  padding: 0.24rem 0.5rem;
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius-sm);
+  background: var(--white-5);
+}
+
+.resultsSummaryLine svg {
+  color: var(--primary-light);
+}
+
+.resultsSummaryLine strong {
+  color: var(--white);
+  font-family: var(--font-data);
+  font-size: 0.9rem;
+}
+
+.resultsSummaryGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin: 0 0 1rem;
+}
+
+.resultsSummaryCard {
+  min-height: 68px;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg-card);
+  color: var(--white-70);
+}
+
+.resultsSummaryCard svg {
+  color: var(--primary-light);
+  flex-shrink: 0;
+}
+
+.resultsSummaryCard strong {
+  display: block;
+  font-family: var(--font-data);
+  font-size: 1.35rem;
+  line-height: 1;
+  color: var(--white);
+}
+
+.resultsSummaryCard span {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 0.78rem;
+}
+
+.followBar {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) auto minmax(180px, 0.8fr) auto;
+  align-items: center;
+  gap: 0.85rem;
+  margin: 0 0 1.25rem;
+  padding: 0.9rem;
+  border: 1px solid rgba(var(--warning-rgb), 0.35);
+  border-radius: var(--radius-md);
+  background: rgba(var(--warning-rgb), 0.08);
+}
+
+.followMain,
+.followStats,
+.followResult,
+.followActions,
+.summaryTitle,
+.emptyActions,
+.scoreMeta,
+.scoreFooter {
+  display: flex;
+  align-items: center;
+}
+
+.followMain {
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.followMain svg {
+  color: var(--warning);
+  flex-shrink: 0;
+}
+
+.followMain span,
+.followResult span {
+  font-size: 0.75rem;
+  color: var(--white-50);
   font-weight: 800;
-  letter-spacing: 0.05em;
   text-transform: uppercase;
+}
+
+.followMain strong {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  color: var(--white);
+}
+
+.followStats {
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.followStats span {
+  padding: 0.25rem 0.5rem;
   border: 1px solid var(--white-10);
+  border-radius: var(--radius-sm);
+  background: var(--white-5);
+  color: var(--white-80);
+  font-family: var(--font-data);
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
+.followResult {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.followResult strong {
+  color: var(--white);
+  font-family: var(--font-data);
+  font-size: 1rem;
+}
+
+.followActions,
+.emptyActions {
+  gap: 0.5rem;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+.standingsStack {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.summaryHeaderMain {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 1rem;
+}
+
+.summaryTitle {
+  gap: 0.65rem;
+  min-width: 0;
+}
+
+.summaryTitle svg {
+  color: var(--primary-light);
+  flex-shrink: 0;
+}
+
+.summaryTitle h2 {
+  margin: 0;
+  color: var(--white);
+  font-size: 1.1rem;
+  font-weight: 800;
+  overflow-wrap: anywhere;
 }
 
 .standingsTable {
   width: 100%;
   border-collapse: collapse;
+}
+
+.tableFrame {
+  border: none;
+  border-radius: 0;
+}
+
+.statCenter {
+  text-align: center;
+}
+
+.mobileOnly {
+  display: none;
+}
+
+.recordCol {
+  text-align: center;
+}
+
+.recordPill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 3.5rem;
+  min-height: 1.5rem;
+  padding: 0.15rem 0.4rem;
+  border-radius: var(--radius-sm);
+  background: var(--white-5);
+  color: var(--white);
+  font-family: var(--font-data);
+  font-size: 0.78rem;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.topIcon {
+  color: var(--warning);
+  flex-shrink: 0;
+}
+
+.rdPositive {
+  color: var(--success);
+}
+
+.rdNegative {
+  color: var(--danger);
 }
 
 .standingsTable th {
@@ -47,14 +270,14 @@
   font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  color: var(--white-40);
-  background: rgba(255,255,255,0.02);
+  color: var(--data-gray);
+  background: var(--white-03);
   border-bottom: 1px solid var(--border);
 }
 
 .standingsTable td {
   padding: 1rem 1.5rem;
-  border-bottom: 1px solid var(--border-subtle);
+  border-bottom: 1px solid var(--border-2);
   font-size: 0.95rem;
   color: var(--white-80);
 }
@@ -67,10 +290,176 @@
   gap: 0.75rem;
   font-weight: 700;
   color: var(--white);
+  min-width: 0;
+}
+
+.teamCell span:first-of-type {
+  overflow-wrap: anywhere;
+}
+
+.pendingTeamBadge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 22px;
+  padding: 0.2rem 0.45rem;
+  border: 1px solid rgba(var(--warning-rgb), 0.35);
+  border-radius: var(--radius-sm);
+  background: rgba(var(--warning-rgb), 0.12);
+  color: var(--warning);
+  font-size: 0.68rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.standingsFooter {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: 0.6rem 1rem 0.7rem;
+  border-top: 1px solid var(--border-2);
+  background: var(--white-03);
+}
+
+.tieBreakerNote,
+.pendingNote {
+  margin: 0;
+  color: var(--white-55);
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
+.tieBreakerNote {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.55rem;
+}
+
+.tieBreakerNote span {
+  color: var(--white-45);
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.tieBreakerNote strong {
+  color: var(--white-75);
+  font-family: var(--font-data);
+  font-size: 0.76rem;
+  font-weight: 800;
+}
+
+.scoreSection {
+  padding-top: 0.5rem;
+}
+
+.scoreSectionHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.scoreSectionHeader h2 {
+  margin: 0.25rem 0;
+  color: var(--white);
+  font-size: 1.35rem;
+}
+
+.scoreSectionHeader p {
+  margin: 0;
+  max-width: 56rem;
+  color: var(--white-60);
+}
+
+.scoreList {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem;
+}
+
+.scoreCard {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg-card);
+}
+
+.scoreCardPending {
+  border-color: rgba(var(--warning-rgb), 0.35);
+  background: rgba(var(--warning-rgb), 0.06);
+}
+
+.scoreMeta {
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  color: var(--white-50);
+  font-size: 0.78rem;
+}
+
+.scoreMatchup {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.scoreTeam {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  min-width: 0;
+  color: var(--white-60);
+}
+
+.scoreTeamHome {
+  justify-content: flex-start;
+}
+
+.scoreTeamName {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 800;
+}
+
+.scoreTeam strong {
+  flex-shrink: 0;
+  font-family: var(--font-data);
+  font-size: 2rem;
+  line-height: 1;
+  color: var(--white-70);
+}
+
+.scoreWinner .scoreTeamName,
+.scoreWinner strong {
+  color: var(--primary-light);
+}
+
+.scoreVs {
+  color: var(--white-35);
+  font-size: 0.7rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.scoreFooter {
+  justify-content: space-between;
+  gap: 0.75rem;
+  color: var(--white-50);
+  font-size: 0.8rem;
+  flex-wrap: wrap;
 }
 
 .statValue {
-  font-family: var(--font-display);
+  font-family: var(--font-data);
   font-weight: 800;
   color: var(--white);
 }
@@ -81,13 +470,13 @@
   font-weight: 500;
   background: var(--white-5);
   padding: 0.2rem 0.6rem;
-  border-radius: 2rem;
+  border-radius: var(--radius-xl);
 }
 
 .stickyCol {
   position: sticky;
   left: 0;
-  background: var(--bg-card);
+  background: var(--surface);
   z-index: 10;
   box-shadow: 2px 0 8px rgba(0,0,0,0.4);
 }
@@ -98,14 +487,187 @@
 }
 
 .topRow .stickyCol {
-  background: #1a1528;
+  background: var(--surface);
 }
 
 .topRow td {
-  background: rgba(250, 204, 21, 0.05);
-  border-bottom: 1px solid rgba(250, 204, 21, 0.2);
+  background: rgba(var(--warning-rgb), 0.05);
+  border-bottom: 1px solid rgba(var(--warning-rgb), 0.2);
 }
 
 .topRow td:first-child {
-  border-left: 3px solid rgba(250, 204, 21, 0.5);
+  border-left: 3px solid rgba(var(--warning-rgb), 0.5);
+}
+
+/* ── Mobile: keep the table, freeze Team (left) + PTS (right) ──────────────────
+   Binding 2026-06-01: standings stays a table on mobile (cards consume too much
+   vertical space). Both numbers that matter — team and points — stay pinned while
+   the middle stat columns (W/L/T/RF/RA/RD) scroll between them. */
+@media (max-width: 640px) {
+  .standingsControls {
+    margin-bottom: 0.5rem;
+  }
+
+  .divisionSelect {
+    width: 100%;
+  }
+
+  .resultsSummaryLine {
+    gap: 0.3rem;
+    margin-bottom: 0.55rem;
+    font-size: 0.72rem;
+  }
+
+  .resultsSummaryLine span {
+    min-height: 24px;
+    padding: 0.18rem 0.38rem;
+  }
+
+  .resultsSummaryLine svg {
+    width: 11px;
+    height: 11px;
+  }
+
+  .followBar {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.45rem;
+    margin-bottom: 0.75rem;
+    padding: 0.6rem 0.7rem;
+  }
+
+  .followStats,
+  .followActions {
+    justify-content: flex-start;
+  }
+
+  .followMain span {
+    display: none;
+  }
+
+  .followMain strong {
+    font-size: 0.9rem;
+  }
+
+  .followStats span {
+    padding: 0.18rem 0.4rem;
+    font-size: 0.72rem;
+  }
+
+  .followResult {
+    flex-direction: row;
+    align-items: center;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+  }
+
+  .followResult span,
+  .followResult strong {
+    font-size: 0.74rem;
+  }
+
+  .followActions {
+    gap: 0.35rem;
+  }
+
+  .followActions :global(.btn) {
+    min-height: 34px;
+    padding: 0.35rem 0.55rem;
+    font-size: 0.72rem;
+  }
+
+  .summaryHeaderMain { gap: 0.5rem; }
+
+  .mobileOnly {
+    display: table-cell;
+  }
+
+  .desktopOnly {
+    display: none;
+  }
+
+  .standingsTable th,
+  .standingsTable td {
+    padding: 0.48rem 0.5rem;
+  }
+  .standingsTable th {
+    font-size: 0.62rem;
+    letter-spacing: 0.03em;
+  }
+  .standingsTable td { font-size: 0.8rem; }
+  .summaryHeader { padding: 0.75rem 0.85rem; }
+  .summaryTitle h2 { font-size: 1rem; }
+  .standingsFooter { padding: 0.55rem 0.75rem 0.65rem; }
+  .tieBreakerNote,
+  .pendingNote {
+    font-size: 0.72rem;
+    line-height: 1.35;
+  }
+  .tieBreakerNote strong { font-size: 0.72rem; }
+  .teamCell { gap: 0.35rem; }
+  .pendingTeamBadge {
+    min-height: 20px;
+    padding: 0.15rem 0.35rem;
+    font-size: 0.62rem;
+  }
+
+  .scoreSectionHeader {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .scoreSectionHeader h2 {
+    font-size: 1.15rem;
+  }
+
+  .scoreList {
+    grid-template-columns: 1fr;
+  }
+
+  .scoreCard {
+    padding: 0.85rem;
+  }
+
+  .scoreMatchup {
+    grid-template-columns: 1fr;
+    justify-items: stretch;
+    gap: 0.35rem;
+  }
+
+  .scoreTeam,
+  .scoreTeamHome {
+    justify-content: space-between;
+    padding: 0.2rem 0;
+  }
+
+  .scoreTeamName {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  .scoreTeam strong {
+    font-size: 1.7rem;
+  }
+
+  .scoreVs {
+    justify-self: center;
+  }
+
+  .scoreSection {
+    display: none;
+  }
+
+  .ptsCol {
+    position: sticky;
+    right: 0;
+    z-index: 10;
+    background: var(--surface);
+    box-shadow: -2px 0 8px rgba(0, 0, 0, 0.4);
+  }
+  .standingsTable th.ptsCol {
+    background: var(--bg-3);
+    z-index: 11;
+  }
+  /* Top (qualifying) row keeps its warning tint everywhere except the two frozen
+     cells, which must stay opaque so scrolled columns don't bleed through. */
+  .topRow .ptsCol { background: var(--surface); }
 }

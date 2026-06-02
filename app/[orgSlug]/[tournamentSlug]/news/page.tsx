@@ -1,4 +1,5 @@
 import { cookies } from 'next/headers';
+import Link from 'next/link';
 import { Megaphone, Star, Calendar } from 'lucide-react';
 import { getAnnouncements, getOrganizationBySlug, getPublicTournamentBySlug, getDivisions } from '@/lib/db';
 import { notFound } from 'next/navigation';
@@ -49,13 +50,19 @@ export default async function NewsPage({
 
   const pinned = announcements.filter(a => a.pinned);
   const regular = announcements.filter(a => !a.pinned);
+  const contactEmail = tournament.contactEmail ?? org?.contactEmail ?? null;
+  const homeHref = `/${orgSlug}/${tournamentSlug}`;
+  const scheduleHref = `/${orgSlug}/${tournamentSlug}/schedule`;
+  const rulesHref = `/${orgSlug}/${tournamentSlug}/rules`;
+  const showSchedulePage = isPublicPageEnabled(tournament, 'schedule');
+  const showRulesPage = isPublicPageEnabled(tournament, 'rules');
 
   return (
     <div className="page-content">
-      <div className={styles.pageHeader}>
+      <div className="public-page-header">
         <div className="container">
           <span className="eyebrow"><Megaphone size={12} /> News</span>
-          <h1 className="display-lg">News & Announcements</h1>
+          <h1>News & Announcements</h1>
           <p className="text-muted">Stay up to date with the latest tournament news, schedule changes, and announcements.</p>
         </div>
       </div>
@@ -76,7 +83,19 @@ export default async function NewsPage({
           {announcements.length === 0 ? (
             <div className="empty-state">
               <Megaphone size={48} />
-              <p>{isFiltering ? `No announcements for ${prefName}.` : 'No announcements yet. Check back soon!'}</p>
+              <p>
+                {isFiltering ? `No announcements for ${prefName}.` : 'No announcements yet. Check back soon.'}
+                {contactEmail ? <> Questions? Contact <a href={`mailto:${contactEmail}`}>{contactEmail}</a>.</> : null}
+              </p>
+              <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+                {isFiltering ? (
+                  <Link href={`/${orgSlug}/${tournamentSlug}/news?view=all`} className="btn btn-ghost btn-sm">View All News</Link>
+                ) : (
+                  <Link href={homeHref} className="btn btn-ghost btn-sm">Tournament Home</Link>
+                )}
+                {showSchedulePage && <Link href={scheduleHref} className="btn btn-ghost btn-sm">View Schedule</Link>}
+                {showRulesPage && <Link href={rulesHref} className="btn btn-ghost btn-sm">Tournament Rules</Link>}
+              </div>
             </div>
           ) : (
             <>

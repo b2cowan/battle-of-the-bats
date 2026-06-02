@@ -1,18 +1,17 @@
 ﻿.page {
-  max-width: 900px;
 }
 
 .pageHeader {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1.25rem;
   gap: 1rem;
 }
 
 .headerLeft {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 1rem;
 }
 
@@ -30,7 +29,7 @@
 }
 
 .pageTitle {
-  font-size: 1.75rem;
+  font-size: 1.25rem;
   font-weight: 900;
   font-family: var(--font-data);
   margin: 0;
@@ -82,7 +81,7 @@
   border-radius: 2px;
   background: var(--surface, rgba(255,255,255,0.04));
   border: 1px solid var(--border, rgba(255,255,255,0.08));
-  overflow: hidden;
+  overflow: visible;
 }
 
 .table {

@@ -1,6 +1,8 @@
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import EarlyAccessModalTrigger from '@/components/EarlyAccessModalTrigger';
+import { PLAN_ARTICLE_CONTENT } from '@/lib/plan-article-content';
+import { PLAN_CONFIG, formatPriceAmount } from '@/lib/plan-config';
 import styles from './page.module.css';
 
 export const metadata: Metadata = {
@@ -9,66 +11,8 @@ export const metadata: Metadata = {
     'Run your full house league season in one dashboard — registration, draft, scheduling, standings, and automated parent notifications. No spreadsheets, no reply-all emails.',
 };
 
-const PAIN_ITEMS = [
-  {
-    title: 'Registration is a Google Form.',
-    body: "You're emailing confirmations manually, cross-referencing a spreadsheet, and trying to remember who has and hasn't paid.",
-  },
-  {
-    title: 'The draft takes all night.',
-    body: 'Someone reads names off a printed list while coaches debate balance. You still end up adjusting teams by text message for a week.',
-  },
-  {
-    title: "Standings update when you remember to.",
-    body: "It's Tuesday. Two games happened Saturday. Three parents have already emailed asking why the standings haven't moved.",
-  },
-  {
-    title: 'The schedule conflict shows up on game day.',
-    body: 'Two teams, one field, no one noticed until someone called you at 8am on a Saturday.',
-  },
-];
-
-const STEPS = [
-  {
-    num: '01',
-    label: 'Registration',
-    title: 'Players register online.',
-    body: 'Your season page collects player info, contact details, and any division-specific questions. You review applications, accept players, and manage the waitlist — no Google Form, no inbox.',
-  },
-  {
-    num: '02',
-    label: 'Draft',
-    title: 'Build balanced teams before the first game.',
-    body: 'Assign players to divisions and teams from your registered pool. The draft happens in the dashboard — no printed lists, no floor-level sorting.',
-  },
-  {
-    num: '03',
-    label: 'Schedule and standings',
-    title: 'Games generate. Standings update automatically.',
-    body: 'Auto-generate game schedules across your fields and time slots. Standings update the moment scores are entered — parents see results in real time.',
-  },
-  {
-    num: '04',
-    label: 'Notifications',
-    title: "Parents are informed. You don't send a thing.",
-    body: 'Schedule changes, postponements, and standings updates go out automatically. No reply-all, no personal inbox, no Saturday morning phone calls.',
-  },
-];
-
-const LEAGUE_FEATURES = [
-  'Player registration per season — with waitlist management',
-  'Season and division setup',
-  'Draft tools and team building',
-  'Auto-generated schedules across fields and time slots',
-  'Live standings — update automatically as scores are entered',
-  'Automated parent notifications (schedule changes, postponements)',
-  'Public organization page',
-  'League-scoped communications',
-  'Advanced member roles — registrar, program coordinator',
-  'Registration and standings exports (Excel, CSV)',
-  'Unlimited tournaments included',
-  '10 staff seats · Unlimited officials (always free)',
-];
+const { painItems: PAIN_ITEMS, steps: STEPS, features: LEAGUE_FEATURES } =
+  PLAN_ARTICLE_CONTENT.league;
 
 const CROSS_SELLS = [
   {
@@ -189,10 +133,10 @@ export default function ForLeaguesPage() {
               <div>
                 <p className={styles.planName}>League</p>
                 <div className={styles.planPrice}>
-                  <span className={styles.planAmount}>$89</span>
+                  <span className={styles.planAmount}>{formatPriceAmount(PLAN_CONFIG.league.monthlyPrice)}</span>
                   <span className={styles.planPeriod}>/month</span>
                 </div>
-                <p className={styles.planNote}>$890/year — save two months</p>
+                <p className={styles.planNote}>{formatPriceAmount(PLAN_CONFIG.league.annualPrice)}/year — save two months</p>
               </div>
               <span className={styles.comingSoonBadge}>Coming soon</span>
               <p className={styles.planTagline}>
@@ -229,7 +173,7 @@ export default function ForLeaguesPage() {
                 when League opens.
               </p>
               <div className={styles.startNowPlans}>
-                {['Tournament — Free', 'Tournament Plus — $39/mo'].map(p => (
+                {[`Tournament — Free`, `Tournament Plus — ${formatPriceAmount(PLAN_CONFIG.tournament_plus.monthlyPrice)}/mo`].map(p => (
                   <span key={p} className={styles.startNowPlanBadge}>{p}</span>
                 ))}
               </div>

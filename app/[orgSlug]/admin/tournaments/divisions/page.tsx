@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { Tag, Plus, Pencil, Trash2, X, Check, ChevronUp, ChevronDown, Trophy } from 'lucide-react';
 import { useTournament } from '@/lib/tournament-context';
 import { useOrg } from '@/lib/org-context';
+import { usePageTitle } from '@/lib/usePageTitle';
 import type { Division, DivisionSettings } from '@/lib/types';
 import { TournamentAdminHeader } from '@/components/admin/tournament';
 
@@ -76,8 +77,9 @@ function normalizeTieBreakers(values: string[]): TieBreaker[] {
 }
 
 export default function DivisionsPage() {
-  const { currentTournament } = useTournament();
+  const { currentTournament, isLocked } = useTournament();
   const { currentOrg } = useOrg();
+  usePageTitle('Divisions');
   const [groups, setGroups] = useState<Division[]>([]);
   const [orgMembers, setOrgMembers] = useState<OrgMemberOption[]>([]);
   const [loading, setLoading] = useState(true);
@@ -275,80 +277,82 @@ export default function DivisionsPage() {
         icon={<Tag size={20} />}
         title="Divisions"
         subtitle="Manage tournament divisions and registration groups"
-        actions={
-          <button className="btn btn-lime btn-data" onClick={openAdd} id="division-add-btn" disabled={!currentTournament}>
-            <Plus size={16} /> Add Division
+        locked={isLocked}
+        mobileActionsInline
+        actions={!isLocked ? (
+          <button className={`btn btn-lime btn-data ${styles.addDivisionBtn}`} onClick={openAdd} id="division-add-btn" disabled={!currentTournament}>
+            <Plus size={16} />
+            <span className={styles.addDivisionLabel}> Add Division</span>
           </button>
-        }
+        ) : undefined}
       />
 
       {loading ? (
-        <div className="table-wrap">
-          <table>
-            <tbody>
-              <tr><td colSpan={6} style={{ textAlign: 'center', color: 'var(--white-30)', padding: '2rem' }}>Loading…</td></tr>
-            </tbody>
-          </table>
+        <div className={styles.loadingState}>
+          <span className={styles.loadingDot} />
+          <span className={styles.loadingDot} />
+          <span className={styles.loadingDot} />
         </div>
       ) : groups.length === 0 ? (
         <div className={`empty-state ${styles.emptyState}`}>
           <div className="empty-icon"><Tag size={32} /></div>
           <h4 className="display-sm">No divisions yet</h4>
           <p className="text-muted">Add a division for each age group or category in this tournament.</p>
-          <button className="btn btn-lime" onClick={openAdd} disabled={!currentTournament}>
-            <Plus size={16} /> Add Division
-          </button>
+          {!isLocked && (
+            <button className="btn btn-lime" onClick={openAdd} disabled={!currentTournament}>
+              <Plus size={16} /> Add Division
+            </button>
+          )}
         </div>
       ) : (
-        <div className={`table-wrap ${styles.responsiveTable}`}>
+        <div className="table-wrap">
           <table>
-            <thead>
+            <thead className={styles.tableHead}>
               <tr>
-                <th>Division</th>
-                <th>Teams</th>
-                <th>Age Range</th>
-                <th>Pools</th>
-                <th>Status</th>
-                <th>Actions</th>
+                <th className={styles.colDivision}>Division</th>
+                <th className={styles.colAge}>Age Range</th>
+                <th className={styles.colTeams}>Teams</th>
+                <th className={styles.colPools}>Pools</th>
+                <th className={styles.colStatus}>Status</th>
+                <th className={styles.colActions}>Actions</th>
               </tr>
             </thead>
             <tbody>
               {groups.map(g => (
                 <tr key={g.id}>
-                  <td data-label="Division">
-                    <span className="badge badge-primary" style={{ fontSize: '0.875rem' }}>{g.name}</span>
+                  <td className={styles.colDivision}>
+                    <span className={styles.divisionName}>{g.name}</span>
+                    <div className={styles.divisionMeta}>
+                      {formatAgeRange(g.minAge, g.maxAge)} · {g.capacity ? `${g.acceptedCount ?? 0}/${g.capacity}` : `${g.acceptedCount ?? 0} teams`}
+                    </div>
                   </td>
-                  <td data-label="Teams">
-                    <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>
-                      {g.capacity
-                        ? `${g.acceptedCount ?? 0} / ${g.capacity}`
-                        : `${g.acceptedCount ?? 0} teams`}
-                    </span>
+                  <td className={styles.colAge}>{formatAgeRange(g.minAge, g.maxAge)}</td>
+                  <td className={styles.colTeams}>
+                    {g.capacity
+                      ? `${g.acceptedCount ?? 0} / ${g.capacity}`
+                      : `${g.acceptedCount ?? 0} teams`}
                   </td>
-                  <td data-label="Age Range">
-                    <span style={{ fontSize: '0.85rem' }}>{formatAgeRange(g.minAge, g.maxAge)}</span>
-                  </td>
-                  <td data-label="Pools">
+                  <td className={styles.colPools}>
                     {(g.poolCount || 0) >= 2 && g.pools && g.pools.length > 0 ? (
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem' }}>
+                      <div className={styles.poolChips}>
                         {g.pools.map(p => (
-                          <span key={p.id} className="badge badge-neutral" style={{ fontSize: '0.65rem', textTransform: 'none' }}>
-                            {p.name}
-                          </span>
+                          <span key={p.id} className={styles.poolChip}>{p.name}</span>
                         ))}
                       </div>
                     ) : (
-                      <span style={{ color: 'var(--white-20)', fontSize: '0.75rem' }}>No pools</span>
+                      <span className={styles.mutedCell}>—</span>
                     )}
                   </td>
-                  <td data-label="Status">
+                  <td className={styles.colStatus}>
                     {g.isClosed ? <span className="badge badge-danger">Closed</span> : <span className="badge badge-success">Open</span>}
                   </td>
-                  <td data-label="Actions">
-                    <div className={styles.mobileActions}>
-                      <button className="btn btn-ghost btn-data" onClick={() => openEdit(g)} id={`edit-division-${g.id}`}><Pencil size={13} /></button>
-                      <button className="btn btn-danger btn-data" onClick={() => setDeleteId(g.id)} id={`delete-division-${g.id}`}><Trash2 size={13} /></button>
-                    </div>
+                  <td className={styles.colActions}>
+                    {!isLocked && (
+                      <div className={styles.rowActions}>
+                        <button className="btn btn-ghost btn-data" onClick={() => openEdit(g)} id={`edit-division-${g.id}`}><Pencil size={13} /></button>
+                        <button className="btn btn-danger btn-data" onClick={() => setDeleteId(g.id)} id={`delete-division-${g.id}`}><Trash2 size={13} /></button>
+                      </div>
+                    )}
                   </td>
                 </tr>
               ))}
@@ -373,52 +377,55 @@ export default function DivisionsPage() {
                   onChange={e => setForm(f => ({ ...f, name: e.target.value }))} required />
               </div>
 
+              {/* Age Range — compact inline */}
               <div style={{ marginBottom: '1.25rem' }}>
                 <label className="form-label" style={{ display: 'block', marginBottom: '0.5rem' }}>Age Range</label>
-                <div className="form-row form-row-2">
-                  <div className="form-group">
-                    <label className="form-label" style={{ fontSize: '0.7rem', color: 'var(--white-40)' }}>Min Age</label>
+                <div style={{ display: 'flex', alignItems: 'flex-end', gap: '0.5rem' }}>
+                  <div className="form-group" style={{ marginBottom: 0 }}>
+                    <label className="form-label" style={{ fontSize: '0.65rem', color: 'var(--white-40)' }}>Min</label>
                     <input className="form-input" type="number" value={form.minAge}
-                      onChange={e => setForm(f => ({ ...f, minAge: e.target.value }))} placeholder="Blank = no minimum" />
+                      onChange={e => setForm(f => ({ ...f, minAge: e.target.value }))} placeholder="Any" style={{ width: '80px' }} />
                   </div>
-                  <div className="form-group">
-                    <label className="form-label" style={{ fontSize: '0.7rem', color: 'var(--white-40)' }}>Max Age</label>
+                  <span style={{ color: 'var(--white-30)', fontFamily: 'var(--font-data)', paddingBottom: '8px', flexShrink: 0 }}>–</span>
+                  <div className="form-group" style={{ marginBottom: 0 }}>
+                    <label className="form-label" style={{ fontSize: '0.65rem', color: 'var(--white-40)' }}>Max</label>
                     <input className="form-input" type="number" value={form.maxAge}
-                      onChange={e => setForm(f => ({ ...f, maxAge: e.target.value }))} placeholder="Blank = no maximum" />
+                      onChange={e => setForm(f => ({ ...f, maxAge: e.target.value }))} placeholder="Any" style={{ width: '80px' }} />
                   </div>
                 </div>
               </div>
 
-              <div className="form-row form-row-2" style={{ marginBottom: '1.5rem' }}>
-                <div className="form-group">
-                  <label className="form-label">Capacity (Max Teams)</label>
+              {/* Capacity + Close Registration — fixed-width side by side, never wraps */}
+              <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'flex-start', marginBottom: '1.5rem' }}>
+                <div style={{ flex: '0 0 110px' }}>
+                  <label className="form-label">Capacity</label>
                   <input className="form-input" type="number" placeholder="e.g. 8" value={form.capacity}
                     onChange={e => setForm(f => ({ ...f, capacity: e.target.value }))} />
                   <p style={{ fontSize: '0.72rem', color: 'var(--white-30)', marginTop: '0.3rem', lineHeight: 1.4 }}>
-                    Leave blank for no limit. Teams are waitlisted when capacity is reached.
+                    No limit if blank.
                   </p>
                 </div>
-                <div className="form-group" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'flex-start' }}>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', marginTop: '1.5rem' }}>
-                    <input type="checkbox" checked={form.isClosed} onChange={e => setForm(f => ({ ...f, isClosed: e.target.checked }))} style={{ width: 16, height: 16 }} />
+                <div style={{ flex: 1, paddingTop: '1.35rem' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                    <input type="checkbox" checked={form.isClosed} onChange={e => setForm(f => ({ ...f, isClosed: e.target.checked }))} />
                     <span style={{ fontWeight: 500 }}>Close Registration</span>
                   </label>
                   <p style={{ fontSize: '0.72rem', color: 'var(--white-30)', marginTop: '0.3rem', lineHeight: 1.4 }}>
-                    Blocks all new registrations for this division immediately.
+                    Blocks all new registrations immediately.
                   </p>
                 </div>
               </div>
 
               {/* ── Pools ── */}
-              <div className="form-group" style={{ marginBottom: '1.5rem', background: 'var(--white-5)', padding: '1rem', borderRadius: '2px', border: '1px solid var(--border-2)' }}>
+              <div className="form-group" style={{ marginBottom: '1.25rem', background: 'var(--white-5)', padding: '0.75rem', borderRadius: '2px', border: '1px solid var(--border-2)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: form.usePools ? '1rem' : 0 }}>
                   <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
                     <input type="checkbox" checked={form.usePools} onChange={e => setForm(f => ({ ...f, usePools: e.target.checked, poolCount: e.target.checked ? (Number(f.poolCount) < 2 ? '2' : f.poolCount) : '0' }))} />
-                    <span style={{ fontWeight: 600 }}>Enable Pools for this Division</span>
+                    <span style={{ fontWeight: 600 }}>Enable pools</span>
                   </label>
                   {form.usePools && (
                     <div className="subCheck" title="When enabled, registrants choose their own pool during sign-up. When disabled, you assign pools manually from the Registrations page.">
-                      <label style={{ fontSize: '0.7rem', color: 'var(--white-30)', textTransform: 'uppercase', fontWeight: 800 }}>Allow registrants to self-select a pool:</label>
+                      <label style={{ fontSize: '0.7rem', color: 'var(--white-30)', textTransform: 'uppercase', fontWeight: 800 }}>Self-select pool:</label>
                       <input type="checkbox" checked={form.requiresPoolSelection} onChange={e => setForm(f => ({ ...f, requiresPoolSelection: e.target.checked }))} />
                     </div>
                   )}
@@ -426,7 +433,7 @@ export default function DivisionsPage() {
                 {form.usePools && (
                   <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
                     <div className="form-group">
-                      <label className="form-label" style={{ fontSize: '0.65rem' }}>Count (Min 2)</label>
+                      <label className="form-label" style={{ fontSize: '0.65rem' }}>Count</label>
                       <input className="form-input" type="number" min="2" max="10" value={form.poolCount}
                         onChange={e => setForm(f => ({ ...f, poolCount: e.target.value }))} style={{ width: '70px' }} />
                     </div>
@@ -458,7 +465,35 @@ export default function DivisionsPage() {
                 )}
               </div>
 
-              {/* ── Advanced Settings Accordion ── */}
+              {/* ── Division Contact ── */}
+              <div className="form-group" style={{ marginBottom: '1.5rem' }}>
+                <label className="form-label">
+                  Division Contact
+                  <span style={{ marginLeft: '0.4rem', fontWeight: 400, color: 'var(--white-40)', fontSize: '0.72rem', textTransform: 'none', letterSpacing: 0 }}>Optional</span>
+                </label>
+                <select className="form-select" value={form.contactMemberId} onChange={e => setForm(f => ({ ...f, contactMemberId: e.target.value }))}>
+                  <option value="">Default (tournament contact)</option>
+                  {orgMembers.map(m => (
+                    <option key={m.id} value={m.id}>
+                      {m.displayName ?? m.email}{m.title ? ` — ${m.title}` : ''} ({m.role})
+                    </option>
+                  ))}
+                </select>
+                {form.contactMemberId ? (() => {
+                  const picked = orgMembers.find(m => m.id === form.contactMemberId);
+                  return picked ? (
+                    <p className="form-help" style={{ fontSize: '0.72rem', color: 'var(--white-40)', marginTop: '0.25rem' }}>
+                      Notifications for this division will go to <strong>{picked.email}</strong>
+                    </p>
+                  ) : null;
+                })() : (
+                  <p className="form-help" style={{ fontSize: '0.72rem', color: 'var(--white-30)', marginTop: '0.25rem' }}>
+                    Leave blank to use the tournament&apos;s default contact.
+                  </p>
+                )}
+              </div>
+
+              {/* ── Division Overrides Accordion (only shown when tournament has per-division or allow_override scopes) ── */}
               {(() => {
                 const feeScope = currentTournament?.settings?.fee_scope ?? null;
                 const gameTimingScope = currentTournament?.settings?.game_timing_scope ?? null;
@@ -469,8 +504,14 @@ export default function DivisionsPage() {
                 const tGameDuration = currentTournament?.settings?.game_duration_minutes ?? 90;
                 const tBufferMinutes = currentTournament?.settings?.buffer_minutes ?? 15;
 
+                const showOverrides =
+                  (feeScope !== 'tournament' && feeScope !== 'free') ||
+                  gameTimingScope !== 'tournament' ||
+                  tieBreakerScope !== 'tournament';
+
+                if (!showOverrides) return null;
+
                 const overrideCount = [
-                  !!form.contactMemberId,
                   form.overrideGameTiming,
                   !!(form.depositAmount || form.depositDueDate || form.totalFeeAmount || form.totalFeeDueDate),
                   tieBreakerScope === 'allow_override' && JSON.stringify(form.tieBreakers) !== JSON.stringify(tTieBreakers),
@@ -490,10 +531,10 @@ export default function DivisionsPage() {
                       }}
                     >
                       <span style={{ fontWeight: 700, fontSize: '0.8rem', letterSpacing: '0.04em', textTransform: 'uppercase', color: 'var(--white-60)' }}>
-                        Advanced Settings
+                        Division Overrides
                         {!advancedOpen && overrideCount > 0 && (
                           <span style={{ marginLeft: '0.5rem', fontWeight: 600, fontSize: '0.75rem', color: 'var(--logic-lime)', textTransform: 'none', letterSpacing: 0 }}>
-                            ({overrideCount} override{overrideCount !== 1 ? 's' : ''})
+                            ({overrideCount} active)
                           </span>
                         )}
                       </span>
@@ -503,47 +544,9 @@ export default function DivisionsPage() {
                     {advancedOpen && (
                       <div style={{ border: '1px solid var(--border-2)', borderTop: 0, padding: '1.25rem 1rem', marginBottom: '1.5rem', borderRadius: '0 0 2px 2px', background: 'var(--white-02)' }}>
 
-                        {/* Division Contact */}
-                        <div className="form-group" style={{ marginBottom: '1.5rem' }}>
-                          <label className="form-label">Division Contact (Optional)</label>
-                          <select className="form-select" value={form.contactMemberId} onChange={e => setForm(f => ({ ...f, contactMemberId: e.target.value }))}>
-                            <option value="">Default (tournament contact)</option>
-                            {orgMembers.map(m => (
-                              <option key={m.id} value={m.id}>
-                                {m.displayName ?? m.email}{m.title ? ` — ${m.title}` : ''} ({m.role})
-                              </option>
-                            ))}
-                          </select>
-                          {form.contactMemberId && (() => {
-                            const picked = orgMembers.find(m => m.id === form.contactMemberId);
-                            return picked ? (
-                              <p className="form-help" style={{ fontSize: '0.72rem', color: 'var(--white-40)', marginTop: '0.25rem' }}>
-                                Notifications for this division will go to <strong>{picked.email}</strong>
-                              </p>
-                            ) : null;
-                          })()}
-                          {!form.contactMemberId && (
-                            <p className="form-help" style={{ fontSize: '0.72rem', color: 'var(--white-30)', marginTop: '0.25rem' }}>
-                              Leave blank to use the tournament&apos;s default contact.
-                            </p>
-                          )}
-                        </div>
-
-                        {/* Display Order — edit only */}
-                        {modal === 'edit' && (
-                          <div className="form-group" style={{ marginBottom: '1.5rem' }}>
-                            <label className="form-label">Display Order</label>
-                            <input className="form-input" type="number" min="1" value={form.order}
-                              onChange={e => setForm(f => ({ ...f, order: e.target.value }))} required />
-                            <p style={{ fontSize: '0.72rem', color: 'var(--white-30)', marginTop: '0.3rem', lineHeight: 1.4 }}>
-                              Adjust to change the position of this division in the divisions list.
-                            </p>
-                          </div>
-                        )}
-
                         {/* Fee Schedule — conditional on fee_scope */}
                         {feeScope !== 'tournament' && feeScope !== 'free' && (
-                          <div className="form-group" style={{ marginBottom: '1.5rem', borderTop: '1px solid var(--border-2)', paddingTop: '1.25rem' }}>
+                          <div className="form-group" style={{ marginBottom: '1.5rem' }}>
                             <label className="form-label" style={{ marginBottom: '0.35rem', display: 'block' }}>
                               Fee Schedule
                               {feeScope === 'per_division' && <span style={{ marginLeft: '0.35rem', color: 'var(--danger-light)', fontSize: '0.75rem' }}>Required</span>}

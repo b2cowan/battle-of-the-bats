@@ -157,6 +157,7 @@ export default function GameList({
         status: g.status ?? null,
         venueId: g.venueId ?? null,
         venueFacilityId: g.venueFacilityId ?? null,
+        scheduleFacilityLaneId: g.scheduleFacilityLaneId ?? null,
         divisionId: g.divisionId ?? null,
       })),
       divisions,
@@ -192,6 +193,7 @@ export default function GameList({
           status: g.status ?? null,
           venueId: g.venueId ?? null,
           venueFacilityId: g.venueFacilityId ?? null,
+          scheduleFacilityLaneId: g.scheduleFacilityLaneId ?? null,
           divisionId: g.divisionId ?? null,
         })),
         divisions,
@@ -261,17 +263,26 @@ export default function GameList({
       };
 
       return (
-        <div key={g.id} className={s.row}>
+        <div key={g.id} className={`${s.row} ${styles.scoringRow}`} data-status={g.status}>
           {/* ── Compact row — scores always visible inline with team names ── */}
-          <div className={`${s.rowMain} ${styles.gameRowMain}`} style={{ gap: '1rem' }}>
-            {/* Date + Time */}
-            <div className={s.gameColDate}>
-              <div style={{ fontFamily: 'var(--font-data)', fontWeight: 700, fontSize: '0.8rem', color: 'var(--fl-text)', letterSpacing: '0.01em' }}>
-                {g.date ? formatShortDate(g.date) : 'TBD'}
+          <div className={`${s.rowMain} ${styles.gameRowMain} ${styles.scoringGameRow}`} style={{ gap: '1rem' }}>
+            {/* Date · Time on one line (matches planning mode); status sub-line below on mobile */}
+            <div className={`${s.gameColDate} ${styles.scoringDateCell}`} style={{ fontFamily: 'var(--font-data)' }}>
+              <div style={{ whiteSpace: 'nowrap' }}>
+                <span style={{ fontWeight: 700, fontSize: '0.8rem', color: 'var(--fl-text)', letterSpacing: '0.01em' }}>
+                  {g.date ? formatShortDate(g.date) : 'TBD'}
+                </span>
+                <span style={{ fontSize: '0.72rem', color: 'var(--data-gray)', marginLeft: '0.4rem' }}>
+                  {g.time ? `· ${formatTime(g.time)}` : '· —'}
+                </span>
               </div>
-              <div style={{ fontFamily: 'var(--font-data)', fontSize: '0.68rem', color: 'var(--data-gray)', marginTop: '1px' }}>
-                {g.time ? formatTime(g.time) : '—'}
-              </div>
+              {!isExpanded && (
+                <span className={styles.scoringMobileStatus} data-status={g.status}>
+                  {g.status === 'completed' ? '✓ FINAL'
+                    : g.status === 'submitted' ? '⚠ REVIEWING'
+                    : 'SCHEDULED'}
+                </span>
+              )}
             </div>
 
             {/* Location — wider column, 2-line wrap */}
@@ -285,7 +296,7 @@ export default function GameList({
             </div>
 
             {/* Matchup — symmetric: [W/L · score · Away]  VS  [Home · score · W/L] */}
-            <div className={s.gameColMatchup} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem' }}>
+            <div className={`${s.gameColMatchup} ${styles.scoringMatchupCell}`} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem' }}>
 
               {/* Away side — right-aligned: W/L · score/input · team name */}
               <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '0.5rem', minWidth: 0 }}>
@@ -349,12 +360,13 @@ export default function GameList({
               </div>
             </div>
 
-            {/* Right rail — status badge · Finalize · Edit pencil (fixed-width slots) */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexShrink: 0 }}>
+            {/* Right rail — status (desktop) · Finalize · Edit pencil */}
+            <div className={styles.scoringRailCell} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexShrink: 0 }}>
               {(g.homeSlotId || g.awaySlotId) && !g.isPlayoff && (
                 <span className="badge badge-neutral" style={{ fontSize: '0.65rem', letterSpacing: '0.05em' }}>SLOT</span>
               )}
-              <div className={s.gameStatusSlot}>{statusBadge(g.status)}</div>
+              {/* Desktop-only status badge — hidden on mobile where scoringStatusRow renders it */}
+              <div className={`${s.gameStatusSlot} ${styles.desktopStatusSlot}`}>{statusBadge(g.status)}</div>
               {/* Finalize — quick-access, rendered only when relevant (no fixed-width wrapper) */}
               {!isExpanded && onFinalize && g.status === 'submitted' && (
                 <button className="btn btn-success btn-data" onClick={e => { e.stopPropagation(); onFinalize(g.id); }}>

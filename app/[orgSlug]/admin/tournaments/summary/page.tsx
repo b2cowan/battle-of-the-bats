@@ -1,12 +1,14 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import Link from 'next/link';
-import { CalendarDays, Copy, ExternalLink, FileText, Printer, RefreshCw, Trophy, Users } from 'lucide-react';
+import { ArrowRight, CalendarDays, CheckCircle2, Copy, ExternalLink, FileText, Printer, RefreshCw, Trophy, Users, X } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
+import { usePageTitle } from '@/lib/usePageTitle';
 import { hasPlanFeature, requiresTournamentPlusCopy } from '@/lib/plan-features';
 import { useTournament } from '@/lib/tournament-context';
-import type { Tournament } from '@/lib/types';
+import type { Tournament, CloneCopiedCounts } from '@/lib/types';
+import { copiedSummary } from '@/lib/utils';
 import styles from './summary.module.css';
 
 type SummaryData = {
@@ -91,6 +93,44 @@ type SummaryData = {
 
 type LoadState = 'idle' | 'loading' | 'ready' | 'error';
 
+type RepeatSetupForm = {
+  name: string;
+  slug: string;
+  year: string;
+  startDate: string;
+  endDate: string;
+  autoSlug: boolean;
+};
+
+type CloneResponse = {
+  tournament?: Tournament;
+  copied?: CloneCopiedCounts;
+  error?: string;
+};
+
+type RepeatSetupSuccess = {
+  sourceName: string;
+  tournament: Tournament;
+  copied?: CloneCopiedCounts;
+};
+
+const REPEAT_SETUP_INCLUDED = [
+  'Divisions, pools, and empty slot structure',
+  'Venues and playing surfaces',
+  'Rules, resources, and registration questions',
+  'Fee setup, public page settings, and branding',
+  'Welcome content for the new draft',
+];
+
+const REPEAT_SETUP_EXCLUDED = [
+  'Teams, registrations, and waitlists',
+  'Games, scores, standings, and champions',
+  'Payments, files, reminders, and message history',
+  'Archived summaries or private admin notes',
+];
+
+const REPEAT_SETUP_COPY_GROUPS = ['structure', 'venues', 'registration', 'publicPresence', 'content'];
+
 function formatMoney(value: number) {
   return new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD' }).format(value);
 }
@@ -108,27 +148,67 @@ function dateRange(summary: SummaryData | null) {
   return summary.tournament.startDate ?? summary.tournament.endDate ?? 'Dates not set';
 }
 
+function buildRepeatSetupForm(tournament: Tournament): RepeatSetupForm {
+  const nextYear = (tournament.year || new Date().getFullYear()) + 1;
+  const suggestedName = tournament.name.includes(String(tournament.year))
+    ? tournament.name.replace(String(tournament.year), String(nextYear))
+    : `${tournament.name} ${nextYear}`;
+
+  return {
+    name: suggestedName,
+    slug: slugify(suggestedName),
+    year: String(nextYear),
+    startDate: '',
+    endDate: '',
+    autoSlug: true,
+  };
+}
+
+function slugify(value: string) {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 80);
+}
+
+
+
 export default function TournamentSummaryPage() {
   const { currentOrg } = useOrg();
+  usePageTitle('Post-Event Summary');
   const { currentTournament, setCurrentTournament, refresh } = useTournament();
   const [summary, setSummary] = useState<SummaryData | null>(null);
   const [state, setState] = useState<LoadState>('idle');
   const [message, setMessage] = useState('');
   const [copied, setCopied] = useState('');
   const [cloneWorking, setCloneWorking] = useState(false);
+  const [repeatSetupOpen, setRepeatSetupOpen] = useState(false);
+  const [repeatSetupForm, setRepeatSetupForm] = useState<RepeatSetupForm | null>(null);
+  const [repeatSetupError, setRepeatSetupError] = useState('');
+  const [repeatSetupSuccess, setRepeatSetupSuccess] = useState<RepeatSetupSuccess | null>(null);
 
   const tournamentId = currentTournament?.id;
   const hasSummary = Boolean(currentOrg && hasPlanFeature(currentOrg.planId, 'post_tournament_summary'));
   const canClone = Boolean(currentOrg && hasPlanFeature(currentOrg.planId, 'tournament_cloning'));
   const subscriptionHref = `/${currentOrg?.slug ?? 'admin'}/admin/tournaments/settings/subscription`;
+  const tournamentAdminBase = `/${currentOrg?.slug ?? 'admin'}/admin/tournaments`;
   const orgQuery = currentOrg?.slug ? `?orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
+  const repeatSetupNextSteps = [
+    { label: 'Review event settings', href: `${tournamentAdminBase}/settings/event`, detail: 'Confirm dates, fees, and public contact details.' },
+    { label: 'Check divisions', href: `${tournamentAdminBase}/divisions`, detail: 'Adjust division names, capacity, pools, and fee overrides.' },
+    { label: 'Confirm venues', href: `${tournamentAdminBase}/venues`, detail: 'Make sure locations and playing surfaces still apply.' },
+    { label: 'Open draft dashboard', href: `${tournamentAdminBase}/dashboard`, detail: 'Use the launch checklist before activating registration.' },
+  ];
+  const activeRepeatSetupSuccess = (repeatSetupSuccess && currentTournament?.id === repeatSetupSuccess.tournament.id) ? repeatSetupSuccess : null;
   const completionRatio = useMemo(() => {
     if (!summary) return '0%';
     return percent(summary.scheduleTotals.completed, summary.scheduleTotals.total);
   }, [summary]);
 
   useEffect(() => {
-    if (!tournamentId || !hasSummary) return;
+    if (!tournamentId || !hasSummary || activeRepeatSetupSuccess) return;
     const id = tournamentId;
     let cancelled = false;
     async function load() {
@@ -151,16 +231,7 @@ export default function TournamentSummaryPage() {
     }
     void load();
     return () => { cancelled = true; };
-  }, [hasSummary, tournamentId, orgQuery]);
-
-  function slugify(value: string) {
-    return value
-      .trim()
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-+|-+$/g, '')
-      .slice(0, 80);
-  }
+  }, [hasSummary, tournamentId, orgQuery, activeRepeatSetupSuccess]);
 
   async function trackSummaryAction(action: 'print' | 'share_public_results' | 'renewal_cta_clicked') {
     if (!tournamentId) return;
@@ -175,19 +246,54 @@ export default function TournamentSummaryPage() {
     }
   }
 
-  async function handleStartNextTournament() {
-    if (!currentTournament || !tournamentId) return;
-    const nextYear = (currentTournament.year || new Date().getFullYear()) + 1;
-    const suggestedName = currentTournament.name.includes(String(currentTournament.year))
-      ? currentTournament.name.replace(String(currentTournament.year), String(nextYear))
-      : `${currentTournament.name} ${nextYear}`;
-    const name = window.prompt('Name for the next tournament draft', suggestedName)?.trim();
-    if (!name) return;
-    const slug = window.prompt('URL slug for the new tournament', slugify(name))?.trim();
-    if (!slug) return;
+  function openRepeatSetup() {
+    if (!currentTournament || !canClone) return;
+    setRepeatSetupForm(buildRepeatSetupForm(currentTournament));
+    setRepeatSetupError('');
+    setRepeatSetupOpen(true);
+  }
+
+  function closeRepeatSetup() {
+    if (cloneWorking) return;
+    setRepeatSetupOpen(false);
+    setRepeatSetupError('');
+  }
+
+  function updateRepeatSetupForm(update: Partial<RepeatSetupForm>) {
+    setRepeatSetupForm(form => form ? { ...form, ...update } : form);
+  }
+
+  async function handleRepeatSetupSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!currentTournament || !tournamentId || !repeatSetupForm) return;
+
+    const name = repeatSetupForm.name.trim().replace(/\s+/g, ' ');
+    const slug = slugify(repeatSetupForm.slug);
+    const year = Number(repeatSetupForm.year);
+    const startDate = repeatSetupForm.startDate || null;
+    const endDate = repeatSetupForm.endDate || null;
+
+    if (!name) {
+      setRepeatSetupError('Enter a tournament name.');
+      return;
+    }
+    if (!slug) {
+      setRepeatSetupError('Enter a public link.');
+      return;
+    }
+    if (!Number.isInteger(year) || year < 2000 || year > 2100) {
+      setRepeatSetupError('Choose a valid tournament year.');
+      return;
+    }
+    if (startDate && endDate && endDate < startDate) {
+      setRepeatSetupError('End date cannot be before start date.');
+      return;
+    }
 
     setCloneWorking(true);
     setMessage('');
+    setRepeatSetupError('');
+    const sourceName = currentTournament.name;
     try {
       const res = await fetch(`/api/admin/tournaments/${encodeURIComponent(tournamentId)}/clone${orgQuery}`, {
         method: 'POST',
@@ -195,9 +301,9 @@ export default function TournamentSummaryPage() {
         body: JSON.stringify({
           name,
           slug,
-          year: nextYear,
-          startDate: null,
-          endDate: null,
+          year,
+          startDate,
+          endDate,
           options: {
             includeDivisions: true,
             includePools: true,
@@ -210,15 +316,23 @@ export default function TournamentSummaryPage() {
             includeRegistrationFields: true,
             includeFeeSchedule: true,
           },
+          analytics: {
+            sourceSurface: 'summary',
+            selectedCopyGroups: REPEAT_SETUP_COPY_GROUPS,
+            warningCount: 0,
+            warningKeys: [],
+          },
         }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? 'Unable to clone tournament.');
-      setCurrentTournament(data.tournament as Tournament);
+      const data = await res.json() as CloneResponse;
+      if (!res.ok) throw new Error(data.error ?? 'Unable to create the next tournament draft.');
+      if (!data.tournament) throw new Error('No tournament was returned.');
+      setCurrentTournament(data.tournament);
       await refresh();
-      setMessage('Next tournament draft created.');
+      setRepeatSetupSuccess({ sourceName, tournament: data.tournament, copied: data.copied });
+      setRepeatSetupOpen(false);
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : 'Unable to clone tournament.');
+      setRepeatSetupError(error instanceof Error ? error.message : 'Unable to create the next tournament draft.');
     } finally {
       setCloneWorking(false);
     }
@@ -258,8 +372,57 @@ export default function TournamentSummaryPage() {
         <div className={styles.lockedCard}>
           <h2>Upgrade to keep the post-event record working for you</h2>
           <p>{requiresTournamentPlusCopy('post_tournament_summary')}</p>
-          <Link href={subscriptionHref} className="btn btn-primary" onClick={() => void trackSummaryAction('renewal_cta_clicked')}>Review Tournament Plus</Link>
+          <Link href={subscriptionHref} className="btn btn-lime btn-data" onClick={() => void trackSummaryAction('renewal_cta_clicked')}>Review Tournament Plus</Link>
         </div>
+      </div>
+    );
+  }
+
+  if (activeRepeatSetupSuccess) {
+    return (
+      <div className={styles.page}>
+        <div className={styles.pageHeader}>
+          <div className={styles.headerIcon}><CheckCircle2 size={21} /></div>
+          <div>
+            <h1 className={styles.pageTitle}>Next tournament draft created</h1>
+            <p className={styles.pageSub}>{activeRepeatSetupSuccess.tournament.name} now starts from {activeRepeatSetupSuccess.sourceName}</p>
+          </div>
+        </div>
+
+        <section className={styles.successHero}>
+          <div className={styles.successHeader}>
+            <span className={styles.successBadge}>Tournament Plus</span>
+            <h2>Reuse the setup, then review before launch.</h2>
+            <p>
+              The new tournament is a draft. Teams, registrations, games, scores, and payment history stayed behind so next year starts clean.
+            </p>
+          </div>
+
+          <div className={styles.successGrid}>
+            <div className={styles.successPanel}>
+              <h3>Copied forward</h3>
+              <ul className={styles.copySummaryList}>
+                {copiedSummary(activeRepeatSetupSuccess.copied).map(item => (
+                  <li key={item}><CheckCircle2 size={14} /> {item}</li>
+                ))}
+              </ul>
+            </div>
+            <div className={styles.successPanel}>
+              <h3>Next checks</h3>
+              <div className={styles.nextStepList}>
+                {repeatSetupNextSteps.map(step => (
+                  <Link key={step.href} href={step.href} className={styles.nextStepLink}>
+                    <span>
+                      <strong>{step.label}</strong>
+                      <small>{step.detail}</small>
+                    </span>
+                    <ArrowRight size={15} />
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
       </div>
     );
   }
@@ -335,8 +498,8 @@ export default function TournamentSummaryPage() {
 
           <section className={styles.actionsPanel}>
             <div>
-              <h2>Keep momentum after the final game</h2>
-              <p>Share the public record, print this recap, or start next year from the setup that already worked.</p>
+              <h2>Turn this event into the next starting point</h2>
+              <p>Share the public record, then reuse the setup that worked when it is time to build the next tournament.</p>
             </div>
             <div className={styles.actionButtons}>
               <button type="button" className="btn btn-outline btn-sm" onClick={() => copyPublicLink(summary.publicLinks.standings, 'Standings link')}>
@@ -346,11 +509,17 @@ export default function TournamentSummaryPage() {
                 <ExternalLink size={14} /> Public standings
               </Link>
               <Link className="btn btn-outline btn-sm" href={subscriptionHref} onClick={() => void trackSummaryAction('renewal_cta_clicked')}>
-                Keep Plus active
+                <ArrowRight size={14} /> Keep Plus active
               </Link>
-              <button type="button" className="btn btn-primary btn-sm" onClick={handleStartNextTournament} disabled={!canClone || cloneWorking}>
-                <RefreshCw size={14} /> {cloneWorking ? 'Creating draft...' : 'Start next tournament'}
-              </button>
+              {canClone ? (
+                <button type="button" className="btn btn-lime btn-sm" onClick={openRepeatSetup} disabled={cloneWorking}>
+                  <RefreshCw size={14} /> {cloneWorking ? 'Creating draft...' : 'Reuse this setup'}
+                </button>
+              ) : (
+                <Link className="btn btn-outline btn-sm" href={subscriptionHref}>
+                  <ArrowRight size={14} /> Review repeat-event setup
+                </Link>
+              )}
               {!canClone && <span className={styles.actionNote}>{requiresTournamentPlusCopy('tournament_cloning')}</span>}
             </div>
           </section>
@@ -386,6 +555,121 @@ export default function TournamentSummaryPage() {
             </div>
           </section>
         </>
+      )}
+
+      {repeatSetupOpen && repeatSetupForm && (
+        <div className="modal-overlay" onClick={closeRepeatSetup}>
+          <div className={`modal ${styles.repeatModal}`} role="dialog" aria-modal="true" aria-labelledby="repeat-setup-title" onClick={event => event.stopPropagation()}>
+            <div className="modal-header">
+              <div>
+                <h3 id="repeat-setup-title">Reuse this tournament setup</h3>
+                <p className={styles.repeatModalIntro}>Create a clean draft from {currentTournament.name}. You can review everything before publishing.</p>
+              </div>
+              <button type="button" className="btn btn-ghost btn-data" onClick={closeRepeatSetup} aria-label="Close repeat-event setup" disabled={cloneWorking}>
+                <X size={14} />
+              </button>
+            </div>
+
+            <form onSubmit={handleRepeatSetupSubmit}>
+              <div className={styles.repeatModalBody}>
+                <div className={styles.repeatFormGrid}>
+                  <label className={styles.fieldLabel}>
+                    Tournament name *
+                    <input
+                      className="form-input"
+                      value={repeatSetupForm.name}
+                      onChange={event => {
+                        const name = event.target.value;
+                        setRepeatSetupForm(form => form ? {
+                          ...form,
+                          name,
+                          ...(form.autoSlug ? { slug: slugify(name) } : {}),
+                        } : form);
+                      }}
+                      placeholder="e.g. Battle of the Bats 2027"
+                    />
+                  </label>
+                  <label className={styles.fieldLabel}>
+                    Year *
+                    <input
+                      className="form-input"
+                      type="number"
+                      min="2000"
+                      max="2100"
+                      value={repeatSetupForm.year}
+                      onChange={event => updateRepeatSetupForm({ year: event.target.value })}
+                    />
+                  </label>
+                  <label className={styles.fieldLabel}>
+                    Public link *
+                    <input
+                      className="form-input"
+                      value={repeatSetupForm.slug}
+                      onChange={event => updateRepeatSetupForm({
+                        slug: event.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-'),
+                        autoSlug: false,
+                      })}
+                      placeholder="battle-of-the-bats-2027"
+                    />
+                  </label>
+                  <label className={styles.fieldLabel}>
+                    Start date <span>optional</span>
+                    <input
+                      className="form-input"
+                      type="date"
+                      value={repeatSetupForm.startDate}
+                      onChange={event => updateRepeatSetupForm({ startDate: event.target.value })}
+                    />
+                  </label>
+                  <label className={styles.fieldLabel}>
+                    End date <span>optional</span>
+                    <input
+                      className="form-input"
+                      type="date"
+                      value={repeatSetupForm.endDate}
+                      min={repeatSetupForm.startDate || undefined}
+                      onChange={event => updateRepeatSetupForm({ endDate: event.target.value })}
+                    />
+                  </label>
+                </div>
+
+                <div className={styles.copyGrid}>
+                  <div className={styles.copyPanel}>
+                    <h4>Carried forward</h4>
+                    <ul className={styles.copyList}>
+                      {REPEAT_SETUP_INCLUDED.map(item => (
+                        <li key={item}><span className={styles.checkDot} /> {item}</li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div className={styles.copyPanel}>
+                    <h4>Never copied</h4>
+                    <ul className={styles.copyList}>
+                      {REPEAT_SETUP_EXCLUDED.map(item => (
+                        <li key={item}><span className={styles.neverDot} /> {item}</li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+
+                <p className={styles.modalNote}>
+                  The draft stays private until you activate it from the launch checklist.
+                </p>
+
+                {repeatSetupError && (
+                  <div className={styles.modalError}>{repeatSetupError}</div>
+                )}
+              </div>
+
+              <div className="modal-footer">
+                <button type="button" className="btn btn-ghost btn-data" onClick={closeRepeatSetup} disabled={cloneWorking}>Cancel</button>
+                <button type="submit" className="btn btn-lime btn-data" disabled={cloneWorking}>
+                  <RefreshCw size={14} /> {cloneWorking ? 'Creating draft...' : 'Create next tournament'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
     </div>
   );

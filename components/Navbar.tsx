@@ -62,59 +62,75 @@ export default function Navbar() {
     const isProtectedCoachesPortalPath = pathname.startsWith('/coaches/tournaments');
 
     return (
-      <nav className={cn(
-        'fixed top-0 left-0 right-0 z-50 transition-all duration-300',
-        'border-b border-blueprint-blue/30',
-        scrolled && 'border-blueprint-blue/80 bg-pitch-black/85 backdrop-blur-md',
-        !scrolled && 'bg-transparent'
-      )}>
-        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-          <Link href="/" className="flex items-center font-mono font-bold text-xl tracking-tighter">
-            <span className="text-fl-text">FIELD</span>
-            <span className="text-logic-lime">LOGIC</span>
-            <span className="text-data-gray/50">HQ</span>
-          </Link>
+      <>
+        <nav className={cn(
+          'fixed top-0 left-0 right-0 z-50 transition-all duration-300',
+          'border-b border-blueprint-blue/30',
+          scrolled && 'border-blueprint-blue/80 bg-pitch-black/85 backdrop-blur-md',
+          !scrolled && 'bg-transparent'
+        )}>
+          <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
+            <Link href="/" className="flex items-center font-mono font-bold text-xl tracking-tighter">
+              <span className="text-fl-text">FIELD</span>
+              <span className="text-logic-lime">LOGIC</span>
+              <span className="text-data-gray/50">HQ</span>
+            </Link>
 
-          <div className="hidden md:flex items-center gap-6">
+            <div className="hidden md:flex items-center gap-6">
+              {MARKETING_NAV_LINKS.map(({ href, label }) => (
+                <Link
+                  key={href}
+                  href={href}
+                  className={cn(
+                    'font-mono text-xs uppercase tracking-widest transition-colors',
+                    pathname.startsWith(href) ? 'text-logic-lime' : 'text-data-gray hover:text-fl-text'
+                  )}
+                >
+                  {label}
+                </Link>
+              ))}
+            </div>
+
+            <div className="flex items-center gap-3">
+              {isProtectedCoachesPortalPath ? (
+                <Link
+                  href="/coaches/tournaments"
+                  className="font-mono text-xs uppercase tracking-widest text-data-gray hover:text-fl-text border border-blueprint-blue/40 hover:border-blueprint-blue px-4 py-2 transition-colors"
+                >
+                  Portal
+                </Link>
+              ) : (
+                <Link
+                  href="/auth/login"
+                  className="font-mono text-xs uppercase tracking-widest text-data-gray hover:text-fl-text border border-blueprint-blue/40 hover:border-blueprint-blue px-4 py-2 transition-colors"
+                >
+                  Sign In
+                </Link>
+              )}
+              <Link
+                href={isProtectedCoachesPortalPath ? '/coaches/start' : '/auth/signup'}
+                className="font-mono text-xs uppercase tracking-widest font-bold bg-logic-lime text-pitch-black px-4 py-2 hover:bg-white transition-colors"
+              >
+                {isProtectedCoachesPortalPath ? 'Upgrade' : 'Get Started'}
+              </Link>
+            </div>
+          </div>
+        </nav>
+
+        {!isProtectedCoachesPortalPath && (
+          <nav className={styles.bottomNav} aria-label="Main navigation">
             {MARKETING_NAV_LINKS.map(({ href, label }) => (
               <Link
                 key={href}
                 href={href}
-                className={cn(
-                  'font-mono text-xs uppercase tracking-widest transition-colors',
-                  pathname.startsWith(href) ? 'text-logic-lime' : 'text-data-gray hover:text-fl-text'
-                )}
+                className={`${styles.bottomNavLink} ${pathname.startsWith(href) ? styles.bottomNavActive : ''}`}
               >
                 {label}
               </Link>
             ))}
-          </div>
-
-          <div className="flex items-center gap-3">
-            {isProtectedCoachesPortalPath ? (
-              <Link
-                href="/coaches/tournaments"
-                className="font-mono text-xs uppercase tracking-widest text-data-gray hover:text-fl-text border border-blueprint-blue/40 hover:border-blueprint-blue px-4 py-2 transition-colors"
-              >
-                Portal
-              </Link>
-            ) : (
-              <Link
-                href="/auth/login"
-                className="font-mono text-xs uppercase tracking-widest text-data-gray hover:text-fl-text border border-blueprint-blue/40 hover:border-blueprint-blue px-4 py-2 transition-colors"
-              >
-                Sign In
-              </Link>
-            )}
-            <Link
-              href={isProtectedCoachesPortalPath ? '/coaches/start' : '/auth/signup'}
-              className="font-mono text-xs uppercase tracking-widest font-bold bg-logic-lime text-pitch-black px-4 py-2 hover:bg-white transition-colors"
-            >
-              {isProtectedCoachesPortalPath ? 'Upgrade' : 'Get Started'}
-            </Link>
-          </div>
-        </div>
-      </nav>
+          </nav>
+        )}
+      </>
     );
   }
 
@@ -169,11 +185,12 @@ export default function Navbar() {
           {!tournamentHiddenPages.includes('register') && (
             <Link
               href={`/${orgSlug}/${tournamentSlug}/register`}
-              className="btn btn-primary btn-sm"
+              className="btn btn-lime btn-sm"
               id="nav-register-btn"
             >
               Register
             </Link>
+
           )}
         </div>
       </div>

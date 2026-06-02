@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { ArrowRight, Bell, CreditCard, Lock, ShieldCheck, Users2, type LucideIcon } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
+import { usePageTitle } from '@/lib/usePageTitle';
 import { hasCapability } from '@/lib/roles';
 import styles from './settings-access.module.css';
 
@@ -17,6 +18,7 @@ type SettingsCard = {
 
 export default function TournamentSettingsAccessPage() {
   const { currentOrg, userRole, userCapabilities } = useOrg();
+  usePageTitle('Settings');
   const base = `/${currentOrg?.slug ?? 'admin'}/admin/tournaments`;
   const subscriptionHref = `${base}/settings/subscription`;
   const isOwner = userRole === 'owner';

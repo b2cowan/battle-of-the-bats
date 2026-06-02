@@ -141,6 +141,126 @@
   gap: 0.75rem;
 }
 
+.reuseIntro {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.reuseTitleRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--white-90, #f0f0f0);
+}
+
+.reuseTitleRow svg {
+  color: var(--logic-lime);
+  flex-shrink: 0;
+}
+
+.reuseTitleRow strong {
+  font-size: 0.9rem;
+  font-weight: 900;
+}
+
+.reuseIntro p {
+  max-width: 660px;
+  margin: 0;
+  color: var(--white-50, rgba(255,255,255,0.5));
+  font-size: 0.82rem;
+  line-height: 1.55;
+}
+
+.plusBadge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 22px;
+  padding: 0.1rem 0.45rem;
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.3);
+  border-radius: 2px;
+  color: var(--logic-lime);
+  background: rgba(var(--logic-lime-rgb), 0.08);
+  font-size: 0.68rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.sourceList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.sourceButton {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  min-width: 0;
+  padding: 0.7rem 0.9rem;
+  border: 1px solid var(--border-2, rgba(255,255,255,0.1));
+  border-radius: 2px;
+  color: inherit;
+  background: var(--surface-1, rgba(255,255,255,0.03));
+  cursor: pointer;
+  text-align: left;
+}
+
+.sourceButton:hover {
+  border-color: rgba(var(--logic-lime-rgb), 0.38);
+  background: rgba(var(--logic-lime-rgb), 0.055);
+}
+
+.sourceButton span,
+.sourceButton small {
+  display: block;
+}
+
+.sourceButton span {
+  min-width: 0;
+}
+
+.sourceButton span span {
+  overflow: hidden;
+  color: var(--white-85, rgba(255,255,255,0.85));
+  font-size: 0.88rem;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sourceButton small {
+  margin-top: 0.2rem;
+  color: var(--white-40, rgba(255,255,255,0.4));
+  font-size: 0.74rem;
+}
+
+.sourceButton svg {
+  flex-shrink: 0;
+  color: var(--logic-lime);
+}
+
+.choiceDivider {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.choiceDivider span {
+  flex: 1;
+  height: 1px;
+  background: var(--border-2, rgba(255,255,255,0.1));
+}
+
+.choiceDivider strong {
+  color: var(--white-30, rgba(255,255,255,0.3));
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
 .modalGridTwo {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -445,6 +565,196 @@
   padding: 0.8rem 0.9rem;
 }
 
+.reuseCopyGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem;
+  margin-top: 1rem;
+}
+
+.reuseCopyPanel {
+  min-width: 0;
+  padding: 0.9rem;
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.18);
+  border-radius: 2px;
+  background: rgba(255,255,255,0.025);
+}
+
+.reuseCopyPanel h3 {
+  margin: 0 0 0.65rem;
+  color: var(--white-90, #f0f0f0);
+  font-size: 0.8rem;
+  font-weight: 900;
+}
+
+.copyOptionsHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.65rem;
+}
+
+.copyOptionsHeader h3 {
+  margin: 0;
+}
+
+.copyOptionsHeader span {
+  flex-shrink: 0;
+  color: var(--logic-lime);
+  font-size: 0.62rem;
+  font-weight: 900;
+  letter-spacing: 0.07em;
+  line-height: 1.4;
+  text-align: right;
+  text-transform: uppercase;
+}
+
+.copyOptionList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.copyOptionCard {
+  display: grid;
+  grid-template-columns: 1rem minmax(0, 1fr);
+  gap: 0.65rem;
+  align-items: flex-start;
+  padding: 0.65rem;
+  border: 1px solid var(--border, rgba(255,255,255,0.08));
+  border-radius: 2px;
+  background: rgba(255,255,255,0.02);
+  cursor: pointer;
+}
+
+.copyOptionCardOn {
+  border-color: rgba(var(--logic-lime-rgb), 0.32);
+  background: rgba(var(--logic-lime-rgb), 0.045);
+}
+
+.copyOptionCard input {
+  width: 16px;
+  height: 16px;
+  margin-top: 0.1rem;
+  accent-color: var(--logic-lime);
+}
+
+.copyOptionCard span {
+  display: flex;
+  flex-direction: column;
+  gap: 0.16rem;
+  min-width: 0;
+}
+
+.copyOptionCard strong {
+  color: var(--white-90, #f0f0f0);
+  font-size: 0.8rem;
+  line-height: 1.35;
+}
+
+.copyOptionCard em {
+  color: var(--white-60, rgba(255,255,255,0.6));
+  font-size: 0.74rem;
+  font-style: normal;
+  line-height: 1.4;
+}
+
+.copyOptionCard small {
+  color: var(--white-35, rgba(255,255,255,0.35));
+  font-size: 0.66rem;
+  line-height: 1.4;
+}
+
+.reuseCopyList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.reuseCopyList li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  color: var(--white-60, rgba(255,255,255,0.6));
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.checkDot,
+.neverDot {
+  flex: 0 0 auto;
+  width: 0.48rem;
+  height: 0.48rem;
+  margin-top: 0.34rem;
+  border-radius: 999px;
+}
+
+.checkDot {
+  background: var(--logic-lime);
+}
+
+.neverDot {
+  border: 1px solid rgba(255,255,255,0.35);
+  background: transparent;
+}
+
+.draftPrivacyNote {
+  margin: 1rem 0 0;
+  color: var(--white-50, rgba(255,255,255,0.5));
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
+.reuseWarningPanel {
+  margin-top: 0.85rem;
+  padding: 0.85rem;
+  border: 1px solid rgba(var(--warning-rgb), 0.28);
+  border-radius: 2px;
+  background: rgba(var(--warning-rgb), 0.055);
+}
+
+.reuseWarningHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-bottom: 0.6rem;
+  color: var(--warning);
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.reuseWarningPanel ul {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.reuseWarningPanel li {
+  display: flex;
+  flex-direction: column;
+  gap: 0.12rem;
+}
+
+.reuseWarningPanel li strong {
+  color: var(--white-85, rgba(255,255,255,0.85));
+  font-size: 0.78rem;
+}
+
+.reuseWarningPanel li span {
+  color: var(--white-55, rgba(255,255,255,0.55));
+  font-size: 0.74rem;
+  line-height: 1.45;
+}
+
 @media (max-width: 640px) {
   .modalOverlay {
     align-items: flex-start;
@@ -453,6 +763,7 @@
 
   .wizardChrome,
   .modalGridTwo,
+  .reuseCopyGrid,
   .presetGridCompact,
   .divisionInlineRow,
   .venueDraftGrid,
@@ -483,9 +794,14 @@
   .workflowModalFooter,
   .workflowFooterActions,
   .reviewItem,
+  .copyOptionsHeader,
   .poolControlsRow {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .copyOptionsHeader span {
+    text-align: left;
   }
 
   .reviewItem strong {

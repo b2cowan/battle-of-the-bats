@@ -42,7 +42,7 @@ export const PLAN_CONFIG: Record<OrgPlan, PlanConfig> = {
     gatingStatus: 'live',
   },
   team: {
-    label: 'Team',
+    label: 'Coaches Portal',
     monthlyPrice: 29,
     annualPrice: 290,
     tournamentLimit: 1,
@@ -52,14 +52,14 @@ export const PLAN_CONFIG: Record<OrgPlan, PlanConfig> = {
     // Team gets free-tier tournament tooling. Rep-team access is intentionally
     // team-scoped through team_entitlements, not org-wide module_rep_teams.
     moduleEntitlements: CORE_MODULES,
-    gatingStatus: 'live',
+    gatingStatus: 'early_access',
   },
   tournament_plus: {
     label: 'Tournament Plus',
     monthlyPrice: 39,
     annualPrice: 390,
     tournamentLimit: 9999,
-    seatLimit: 5,
+    seatLimit: 9999,
     officialsFreeSeats: true,
     trialDays: 14,
     moduleEntitlements: CORE_MODULES,
@@ -70,7 +70,7 @@ export const PLAN_CONFIG: Record<OrgPlan, PlanConfig> = {
     monthlyPrice: 89,
     annualPrice: 890,
     tournamentLimit: 9999,
-    seatLimit: 10,
+    seatLimit: 9999,
     officialsFreeSeats: true,
     trialDays: 30,
     moduleEntitlements: [
@@ -125,5 +125,49 @@ export function getEffectiveTournamentLimit(
 
 export function normalizeBillingCycle(value: unknown): BillingCycle {
   return value === 'annual' ? 'annual' : 'monthly';
+}
+
+// ─── Founding season campaign ─────────────────────────────────────────────────
+
+/**
+ * ISO end timestamp for the founding-season free Tournament Plus promotion.
+ * Overridable via the NEXT_PUBLIC_FOUNDING_SEASON_END env var (set in Amplify) so the
+ * date can change without a code PR. A platform-admin-editable setting is the eventual home.
+ */
+export const FOUNDING_SEASON_END =
+  process.env.NEXT_PUBLIC_FOUNDING_SEASON_END ?? '2027-01-01T00:00:00.000Z';
+const FOUNDING_SEASON_END_MS = new Date(FOUNDING_SEASON_END).getTime();
+
+/** Returns true while the global founding-season promotion is still active. */
+export function isFoundingSeasonActive(): boolean {
+  return Date.now() < FOUNDING_SEASON_END_MS;
+}
+
+// ─── Price display helpers ────────────────────────────────────────────────────
+
+function commaSeparate(n: number): string {
+  return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+}
+
+/**
+ * Formats a price amount as a dollar string. Returns "Free" for 0.
+ * Use this everywhere a plan price is displayed — never hardcode dollar amounts.
+ * Examples: formatPriceAmount(39) → "$39",  formatPriceAmount(1790) → "$1,790"
+ */
+export function formatPriceAmount(amount: number): string {
+  if (amount === 0) return 'Free';
+  return `$${commaSeparate(amount)}`;
+}
+
+/**
+ * Returns the annual savings label for a plan, e.g. "Save $78 — 2 months free".
+ * Returns null for free plans or when savings ≤ 0.
+ */
+export function formatAnnualSavings(planKey: OrgPlan): string | null {
+  const plan = PLAN_CONFIG[planKey];
+  if (plan.monthlyPrice === 0) return null;
+  const savings = plan.monthlyPrice * 12 - plan.annualPrice;
+  if (savings <= 0) return null;
+  return `Save $${commaSeparate(savings)} — 2 months free`;
 }
 

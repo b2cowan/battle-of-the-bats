@@ -24,7 +24,7 @@ No native app. No third-party push service. Uses the Web Push API + VAPID keys +
 |---|---|---|
 | Bell placement | Top-right corner of the logo block in the sidebar — always visible, no scroll | Phase B |
 | Coaches portal | Bell ships for both admin sidebar and coaches portal in the same phase | Phase B |
-| PWA icons | Generated from `public/logo.png` using a Node.js `sharp` script | Phase E |
+| PWA icons | Generated from FieldLogicHQ brand assets in `public/brand/` and `public/icons/` | Phase E |
 | Cron mechanism (Phase F) | Amplify EventBridge → triggers `/api/cron/deadline-reminders` protected by `CRON_SECRET` | Phase F |
 | Staff scoping | Only staff assigned to a tournament receive that tournament's event notifications | See notify() |
 | Preferences architecture | Two-layer: global defaults + per-tournament opt-out | See below |
@@ -348,30 +348,20 @@ Individual events (disabled / dimmed when muted):
 
 The "is muted" state is derived on GET: if every event type for `(user_id, tournament_id)` has `opted_out = true`, the client renders the mute toggle as active. The API does not store a separate `muted` flag.
 
-### D5. Wire into AdminSidebar
+### D5. Sidebar nav links — NOT added (decision 2026-05-29)
 
-**Org admin nav** — add "My Notifications" (Bell icon) between Coaches Portal Links and Settings:
-```
-Organization Admin
-  ├ Members
-  ├ Venue Library
-  ├ Subscription         (owners only)
-  ├ Coaches Portal Links (owners/admins)
-  ├ My Notifications     ← NEW — all active members
-  └ Settings             (owners only)
-```
+Notification preferences are reachable via the Settings pages and do not need dedicated sidebar nav items. Adding them to the nav creates redundant entry points and clutters the sidebar for a settings-style page that most users visit infrequently.
 
-**Tournament Setup nav** — add "Notifications" to the Setup group in `TOUR_GROUPS`:
-```javascript
-{ key: 'settings/notifications', icon: Bell, label: 'Notifications' }
-```
-Position: after `settings/event` (Event Settings).
+- **Org-level prefs** (`/admin/org/notifications`) — accessible from the Org Settings area, not in the sidebar nav.
+- **Tournament prefs** (`/admin/tournaments/settings/notifications`) — accessible under the tournament's Settings page, not in the Setup nav group.
+
+> **Do not re-add sidebar links for either page.** If discoverability becomes a problem, the right fix is a callout inside the notification bell panel ("Manage preferences →"), not a top-level nav item.
 
 ---
 
 ## Phase E — PWA + Web Push
 
-### E1. PWA icons — generate from `public/logo.png`
+### E1. PWA icons — generate from FieldLogicHQ brand assets
 
 Run a one-time Node.js script using `sharp`:
 ```bash

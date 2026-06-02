@@ -1,0 +1,325 @@
+/* ── Backdrop ──────────────────────────────────────────────────────────────── */
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 200;
+  animation: fadeIn 0.18s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* ── Panel ─────────────────────────────────────────────────────────────────── */
+
+.panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: min(540px, 100vw);
+  z-index: 201;
+  display: flex;
+  flex-direction: column;
+  background: #0e1117;
+  border-left: 1px solid rgba(255, 255, 255, 0.1);
+  animation: slideIn 0.22s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+@keyframes slideIn {
+  from { transform: translateX(100%); }
+  to   { transform: translateX(0); }
+}
+
+/* ── Panel header ──────────────────────────────────────────────────────────── */
+
+.panelHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.5rem 1.5rem 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  flex-shrink: 0;
+}
+
+.panelHeaderLeft {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.panelEyebrow {
+  font-family: var(--font-data, monospace);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--logic-lime);
+  margin: 0;
+}
+
+.panelHeadline {
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--white-90, #f0f0f0);
+  margin: 0;
+  line-height: 1.3;
+}
+
+.closeBtn {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 2px;
+  color: var(--white-45, rgba(255, 255, 255, 0.45));
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.15s, color 0.15s;
+}
+
+.closeBtn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--white-90, #f0f0f0);
+}
+
+/* ── Price strip ───────────────────────────────────────────────────────────── */
+
+.priceStrip {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1.5rem;
+  background: rgba(var(--blueprint-blue-rgb), 0.06);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  flex-shrink: 0;
+}
+
+.priceAmount {
+  font-size: 1rem;
+  font-weight: 900;
+  color: var(--white-90, #f0f0f0);
+}
+
+.priceSavings {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--logic-lime);
+  background: rgba(var(--logic-lime-rgb), 0.1);
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.2);
+  border-radius: 2px;
+  padding: 0.2rem 0.5rem;
+}
+
+/* ── Scrollable body ───────────────────────────────────────────────────────── */
+
+.panelBody {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.12) transparent;
+}
+
+.panelBody::-webkit-scrollbar {
+  width: 4px;
+}
+
+.panelBody::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 2px;
+}
+
+/* ── Sections ──────────────────────────────────────────────────────────────── */
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.sectionEyebrow {
+  font-family: var(--font-data, monospace);
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--white-35, rgba(255, 255, 255, 0.35));
+  margin: 0;
+}
+
+.sectionHeadline {
+  font-size: 0.9rem;
+  font-weight: 800;
+  color: var(--white-80, rgba(255, 255, 255, 0.8));
+  margin: 0;
+  line-height: 1.3;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+/* ── Pain cards ────────────────────────────────────────────────────────────── */
+
+.painGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.6rem;
+}
+
+.painCard {
+  padding: 0.85rem;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.painTitle {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--white-75, rgba(255, 255, 255, 0.75));
+  margin: 0 0 0.3rem;
+  line-height: 1.3;
+}
+
+.painBody {
+  font-size: 0.75rem;
+  color: var(--white-45, rgba(255, 255, 255, 0.45));
+  margin: 0;
+  line-height: 1.45;
+}
+
+/* ── Steps grid ────────────────────────────────────────────────────────────── */
+
+.stepsGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.6rem;
+}
+
+.stepCard {
+  padding: 0.85rem;
+  border-radius: 2px;
+  background: rgba(var(--blueprint-blue-rgb), 0.05);
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.18);
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.stepNum {
+  font-family: var(--font-data, monospace);
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--logic-lime);
+  letter-spacing: 0.06em;
+}
+
+.stepLabel {
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--white-30, rgba(255, 255, 255, 0.3));
+  margin: 0;
+}
+
+.stepTitle {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--white-80, rgba(255, 255, 255, 0.8));
+  margin: 0.25rem 0 0;
+  line-height: 1.3;
+}
+
+.stepBody {
+  font-size: 0.74rem;
+  color: var(--white-45, rgba(255, 255, 255, 0.45));
+  margin: 0;
+  line-height: 1.45;
+}
+
+/* ── Feature list ──────────────────────────────────────────────────────────── */
+
+.featureList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.featureList li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  color: var(--white-70, rgba(255, 255, 255, 0.7));
+  line-height: 1.4;
+}
+
+.featureIcon {
+  color: var(--logic-lime);
+  flex-shrink: 0;
+  margin-top: 0.1rem;
+}
+
+/* ── Footer ────────────────────────────────────────────────────────────────── */
+
+.panelFooter {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  flex-shrink: 0;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.upgradeBtn {
+  width: 100%;
+  justify-content: center;
+  min-height: 48px;
+}
+
+.cancelBtn {
+  width: 100%;
+  justify-content: center;
+  font-size: 0.8rem;
+  color: var(--white-35, rgba(255, 255, 255, 0.35));
+}
+
+.comingSoonNote {
+  font-size: 0.8rem;
+  color: var(--white-45, rgba(255, 255, 255, 0.45));
+  text-align: center;
+  margin: 0;
+  line-height: 1.5;
+  padding: 0.75rem;
+  background: rgba(var(--blueprint-blue-rgb), 0.06);
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.18);
+  border-radius: 2px;
+}
+
+/* ── Mobile ────────────────────────────────────────────────────────────────── */
+
+@media (max-width: 600px) {
+  .panel {
+    width: 100vw;
+  }
+
+  .painGrid,
+  .stepsGrid {
+    grid-template-columns: 1fr;
+  }
+}

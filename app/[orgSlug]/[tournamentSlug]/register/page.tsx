@@ -1,13 +1,14 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { UserPlus, AlertCircle, ChevronDown, RefreshCw, CreditCard } from 'lucide-react';
-import { useParams, useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { UserPlus, AlertCircle, ChevronDown, RefreshCw, CreditCard, CheckCircle } from 'lucide-react';
+import { useParams } from 'next/navigation';
 import { isPublicPageEnabled } from '@/lib/public-pages';
 import { Division, Tournament, TournamentRegistrationField } from '@/lib/types';
 import styles from '../../register/register.module.css';
 import { fetchPublicTournamentData } from '@/lib/public-tournament-client';
 
-type Step = 'form' | 'submitting' | 'error';
+type Step = 'form' | 'review' | 'submitting' | 'success' | 'error';
 
 type FeeSchedule = {
   depositAmount: number | null;
@@ -23,6 +24,12 @@ type BasicCoachTeamOption = {
   id: string;
   name: string;
   primaryCoachName: string | null;
+};
+
+type RegistrationConfirmation = {
+  id?: string;
+  status: 'pending' | 'waitlist';
+  joinHref: string;
 };
 
 function formatAgeRange(minAge: number | null, maxAge: number | null) {
@@ -75,7 +82,6 @@ function resolveFeeSchedule(tournament: Tournament | null, group: Division | und
 
 export default function RegisterPage() {
   const params         = useParams();
-  const router         = useRouter();
   const orgSlug        = params.orgSlug as string;
   const tournamentSlug = params.tournamentSlug as string;
 
@@ -95,6 +101,7 @@ export default function RegisterPage() {
   const [basicCoachTeams, setBasicCoachTeams] = useState<BasicCoachTeamOption[]>([]);
   const [coachTeamMode, setCoachTeamMode] = useState<'new' | 'existing'>('new');
   const [selectedBasicTeamId, setSelectedBasicTeamId] = useState('');
+  const [confirmation, setConfirmation] = useState<RegistrationConfirmation | null>(null);
 
   useEffect(() => {
     async function init() {
@@ -159,24 +166,42 @@ export default function RegisterPage() {
     }));
   }
 
-  async function handleSubmit(e: React.FormEvent) {
+  function validateRegistrationDetails() {
+    const selectedGroup = divisions.find(g => g.id === form.divisionId);
+    if (!selectedGroup) throw new Error('Select a division before reviewing your registration.');
+    if (coachTeamMode === 'existing' && basicCoachTeams.length > 0 && !selectedBasicTeamId) {
+      throw new Error('Select a Coaches Portal team, or choose to create a new team profile.');
+    }
+
+    const count = stats[selectedGroup.id] || 0;
+    const isWaitlist = Boolean(selectedGroup.capacity && count >= selectedGroup.capacity);
+    const missingField = registrationFields.find(field => {
+      if (!field.required) return false;
+      if (field.fieldType === 'file') return !customFiles[field.id];
+      if (field.fieldType === 'checkbox') return customAnswers[field.id] !== 'true';
+      return !customAnswers[field.id]?.trim();
+    });
+    if (missingField) throw new Error(`Please complete: ${missingField.label}`);
+
+    return { selectedGroup, isWaitlist };
+  }
+
+  function handleReview(e: React.FormEvent) {
     e.preventDefault();
     try {
-      const selectedGroup = divisions.find(g => g.id === form.divisionId);
-      if (!selectedGroup) throw new Error('Invalid division');
-      if (coachTeamMode === 'existing' && basicCoachTeams.length > 0 && !selectedBasicTeamId) {
-        throw new Error('Select a Coaches Portal team, or choose to create a new team profile.');
-      }
+      validateRegistrationDetails();
+      setErrorMsg('');
+      setStep('review');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch (err: unknown) {
+      setErrorMsg(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
+      setStep('error');
+    }
+  }
 
-      const count = stats[selectedGroup.id] || 0;
-      const isWaitlist = selectedGroup.capacity && count >= selectedGroup.capacity;
-      const missingField = registrationFields.find(field => {
-        if (!field.required) return false;
-        if (field.fieldType === 'file') return !customFiles[field.id];
-        if (field.fieldType === 'checkbox') return customAnswers[field.id] !== 'true';
-        return !customAnswers[field.id]?.trim();
-      });
-      if (missingField) throw new Error(`Please complete: ${missingField.label}`);
+  async function submitRegistration() {
+    try {
+      const { selectedGroup, isWaitlist } = validateRegistrationDetails();
 
       const payload = new FormData();
       payload.append('teamName', form.teamName.trim());
@@ -212,18 +237,22 @@ export default function RegisterPage() {
         throw new Error(error ?? 'Registration failed');
       }
 
-      const result = await res.json() as { id?: string };
-      if (signedInCoachEmail) {
-        router.push('/coaches/tournaments');
-        return;
+      const result = await res.json() as { id?: string; status?: 'pending' | 'waitlist' };
+      const status = result.status === 'waitlist' ? 'waitlist' : isWaitlist ? 'waitlist' : 'pending';
+      const joinUrl = signedInCoachEmail
+        ? new URL('/coaches/tournaments', window.location.origin)
+        : new URL('/coaches/join', window.location.origin);
+
+      if (!signedInCoachEmail) {
+        joinUrl.searchParams.set('email', form.email);
+        joinUrl.searchParams.set('next', '/coaches/tournaments');
+        joinUrl.searchParams.set('registered', '1');
+        if (result.id) joinUrl.searchParams.set('registrationId', result.id);
       }
 
-      const joinUrl = new URL('/coaches/join', window.location.origin);
-      joinUrl.searchParams.set('email', form.email);
-      joinUrl.searchParams.set('next', '/coaches/tournaments');
-      joinUrl.searchParams.set('registered', '1');
-      if (result.id) joinUrl.searchParams.set('registrationId', result.id);
-      router.push(joinUrl.toString());
+      setConfirmation({ id: result.id, status, joinHref: joinUrl.toString() });
+      setStep('success');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (err: unknown) {
       setErrorMsg(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
       setStep('error');
@@ -236,8 +265,30 @@ export default function RegisterPage() {
   const selectedGroup = divisions.find(g => g.id === form.divisionId);
   const isClosed = selectedGroup?.isClosed;
   const count = selectedGroup ? stats[selectedGroup.id] || 0 : 0;
-  const isWaitlist = selectedGroup?.capacity && count >= selectedGroup.capacity;
+  const isWaitlist = Boolean(selectedGroup?.capacity && count >= selectedGroup.capacity);
   const selectedFeeSchedule = resolveFeeSchedule(tournament, selectedGroup);
+  const homeHref = `/${orgSlug}/${tournamentSlug}`;
+  const scheduleHref = `/${orgSlug}/${tournamentSlug}/schedule`;
+  const rulesHref = `/${orgSlug}/${tournamentSlug}/rules`;
+  const showSchedulePage = Boolean(tournament && isPublicPageEnabled(tournament, 'schedule'));
+  const showRulesPage = Boolean(tournament && isPublicPageEnabled(tournament, 'rules'));
+
+  function stepClass(target: 'form' | 'review' | 'success') {
+    const done =
+      (target === 'form' && (step === 'review' || step === 'submitting' || step === 'success')) ||
+      (target === 'review' && step === 'success');
+    const active =
+      (target === 'form' && step === 'form') ||
+      (target === 'review' && (step === 'review' || step === 'submitting')) ||
+      (target === 'success' && step === 'success');
+    return `${styles.step} ${done ? styles.stepDone : ''} ${active ? styles.stepActive : ''}`;
+  }
+
+  function customAnswerLabel(field: TournamentRegistrationField) {
+    if (field.fieldType === 'file') return customFiles[field.id]?.name || 'No file selected';
+    if (field.fieldType === 'checkbox') return customAnswers[field.id] === 'true' ? 'Confirmed' : 'Not confirmed';
+    return customAnswers[field.id]?.trim() || 'No answer';
+  }
 
   if (tournament && !isPublicPageEnabled(tournament, 'register')) {
     return (
@@ -256,10 +307,10 @@ export default function RegisterPage() {
 
   return (
     <div className="page-content">
-      <div className={styles.pageHeader}>
+      <div className="public-page-header">
         <div className="container">
           <span className="eyebrow"><UserPlus size={12} /> Register</span>
-          <h1 className="display-lg">Team Registration</h1>
+          <h1>Team Registration</h1>
           <p className="text-muted">
             Register your team for {tournament?.name ?? 'the upcoming tournament'}.
             A confirmation email will be sent once your registration is reviewed. Payment is handled directly by the tournament organizer.
@@ -286,19 +337,19 @@ export default function RegisterPage() {
               </div>
             )}
 
-            {(step === 'form' || step === 'submitting') && !notOpen && (
+            {(step === 'form' || step === 'review' || step === 'submitting' || step === 'success') && !notOpen && (
               <div className={styles.steps}>
-                <div className={`${styles.step} ${styles.stepActive}`}>
+                <div className={stepClass('form')}>
                   <div className={styles.stepNum}>1</div>
                   <span className={styles.stepText}>Info</span>
                 </div>
                 <div className={styles.stepLine}></div>
-                <div className={styles.step}>
+                <div className={stepClass('review')}>
                   <div className={styles.stepNum}>2</div>
                   <span className={styles.stepText}>Review</span>
                 </div>
                 <div className={styles.stepLine}></div>
-                <div className={styles.step}>
+                <div className={stepClass('success')}>
                   <div className={styles.stepNum}>3</div>
                   <span className={styles.stepText}>Next Steps</span>
                 </div>
@@ -310,11 +361,168 @@ export default function RegisterPage() {
                 <AlertCircle size={40} style={{ color: 'var(--danger)', margin: '0 auto 1rem', display: 'block' }} />
                 <h3>Registration Failed</h3>
                 <p>{errorMsg}</p>
-                <button className="btn btn-primary" onClick={() => setStep('form')}>Try Again</button>
+                <button className="btn btn-lime" onClick={() => setStep('form')}>Try Again</button>
               </div>
             )}
 
-            {(step === 'form' || step === 'submitting') && !notOpen && (
+            {(step === 'review' || step === 'submitting') && !notOpen && selectedGroup && (
+              <div className={`card ${styles.reviewCard}`}>
+                <div className={styles.formHeader}>
+                  <div className={styles.formIcon}><UserPlus size={20} /></div>
+                  <div>
+                    <h2 className={styles.formTitle}>Review Registration</h2>
+                    <p className={styles.formSub}>{tournament?.name}</p>
+                  </div>
+                </div>
+
+                <div className={styles.reviewSummary}>
+                  <div>
+                    <span>Team</span>
+                    <strong>{form.teamName}</strong>
+                  </div>
+                  <div>
+                    <span>Coach / Contact</span>
+                    <strong>{form.coachName}</strong>
+                  </div>
+                  <div>
+                    <span>Email</span>
+                    <strong>{signedInCoachEmail || form.email}</strong>
+                  </div>
+                  <div>
+                    <span>Division</span>
+                    <strong>{selectedGroup.name}</strong>
+                  </div>
+                  <div>
+                    <span>Status after submit</span>
+                    <strong>{isWaitlist ? 'Waitlist' : 'Pending organizer review'}</strong>
+                  </div>
+                  {selectedFeeSchedule?.totalFeeAmount ? (
+                    <div>
+                      <span>Fee</span>
+                      <strong>{formatMoney(selectedFeeSchedule.totalFeeAmount)}</strong>
+                    </div>
+                  ) : null}
+                  {contactEmail ? (
+                    <div>
+                      <span>Organizer Contact</span>
+                      <strong>{contactEmail}</strong>
+                    </div>
+                  ) : null}
+                </div>
+
+                {isWaitlist && !isClosed && (
+                  <div className={styles.notice} style={{ marginTop: '1rem' }}>
+                    <AlertCircle size={20} />
+                    <p>This division is full. The final action below will add your team to the waitlist.</p>
+                  </div>
+                )}
+
+                {registrationFields.length > 0 && (
+                  <div className={styles.reviewAnswers}>
+                    <h3>Additional Details</h3>
+                    {registrationFields.map(field => (
+                      <div key={field.id}>
+                        <span>{field.label}</span>
+                        <strong>{customAnswerLabel(field)}</strong>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <div className={styles.paymentNotice} style={{ marginTop: '1.5rem' }}>
+                  <div className={styles.paymentNoticeHeader}>
+                    <CreditCard size={18} />
+                    <span>Payment handled by organizer</span>
+                  </div>
+                  {selectedFeeSchedule?.totalFeeAmount ? (
+                    <div className={styles.paymentDetails}>
+                      <div>
+                        <span>Total fee</span>
+                        <strong>{formatMoney(selectedFeeSchedule.totalFeeAmount)}</strong>
+                        {formatDate(selectedFeeSchedule.totalFeeDueDate) && (
+                          <em>Due {formatDate(selectedFeeSchedule.totalFeeDueDate)}</em>
+                        )}
+                      </div>
+                      {selectedFeeSchedule.depositAmount ? (
+                        <div>
+                          <span>Deposit</span>
+                          <strong>{formatMoney(selectedFeeSchedule.depositAmount)}</strong>
+                          {formatDate(selectedFeeSchedule.depositDueDate) && (
+                            <em>Due {formatDate(selectedFeeSchedule.depositDueDate)}</em>
+                          )}
+                        </div>
+                      ) : null}
+                    </div>
+                  ) : (
+                    <p>The organizer has not published a fee schedule for this division yet.</p>
+                  )}
+                  <p>FieldLogicHQ records registration and payment status for the organizer, but payments are made outside the platform.</p>
+                </div>
+
+                <div className={styles.reviewActions}>
+                  <button
+                    type="button"
+                    className="btn btn-ghost"
+                    onClick={() => setStep('form')}
+                    disabled={step === 'submitting'}
+                  >
+                    Edit Details
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-lime"
+                    onClick={submitRegistration}
+                    disabled={step === 'submitting' || isClosed}
+                  >
+                    {step === 'submitting' ? (
+                      <><RefreshCw size={18} className="spinner" /> Submitting...</>
+                    ) : isWaitlist ? 'Join Waitlist' : 'Submit Registration'}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {step === 'success' && confirmation && (
+              <div className={`card ${styles.successCard}`}>
+                <CheckCircle size={44} style={{ color: 'var(--success)', margin: '0 auto 1rem', display: 'block' }} />
+                <h3 className={styles.successTitle}>
+                  {confirmation.status === 'waitlist' ? 'Waitlist Request Received' : 'Registration Submitted'}
+                </h3>
+                <p className={styles.successText}>
+                  {confirmation.status === 'waitlist'
+                    ? `${form.teamName} has been added to the waitlist for ${selectedGroup?.name ?? 'this division'}.`
+                    : `${form.teamName} has been sent to the organizer for review.`}
+                </p>
+
+                <div className={styles.successSteps}>
+                  <div className={styles.successItem}>
+                    <CheckCircle size={18} className={styles.successIcon} />
+                    <div>
+                      <span className={styles.successTitleInner}>Watch your email</span>
+                      <span className={styles.successDescInner}>The organizer will follow up with approval, waitlist, and payment details.</span>
+                    </div>
+                  </div>
+                  <div className={styles.successItem}>
+                    <CheckCircle size={18} className={styles.successIcon} />
+                    <div>
+                      <span className={styles.successTitleInner}>Track the tournament</span>
+                      <span className={styles.successDescInner}>Use the public tournament pages for schedule, rules, and results updates.</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className={styles.successActions}>
+                  <Link href={confirmation.joinHref} className="btn btn-lime">
+                    {signedInCoachEmail ? 'Open Coaches Portal' : 'Create Coaches Portal Account'}
+                  </Link>
+                  {showSchedulePage && <Link href={scheduleHref} className="btn btn-outline">View Schedule</Link>}
+                  {showRulesPage && <Link href={rulesHref} className="btn btn-ghost">Tournament Rules</Link>}
+                  <Link href={homeHref} className="btn btn-ghost">Tournament Home</Link>
+                </div>
+              </div>
+            )}
+
+            {step === 'form' && !notOpen && (
               <div className={`card ${styles.formCard}`}>
                 <div className={styles.formHeader}>
                   <div className={styles.formIcon}><UserPlus size={20} /></div>
@@ -324,27 +532,25 @@ export default function RegisterPage() {
                   </div>
                 </div>
 
-                <form onSubmit={handleSubmit}>
+                <form onSubmit={handleReview}>
                   {signedInCoachEmail && basicCoachTeams.length > 0 && (
                     <div className="form-group" style={{ marginBottom: '1rem' }}>
                       <label className="form-label">Coaches Portal Team</label>
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', marginBottom: '0.75rem' }}>
                         <button
                           type="button"
-                          className={`btn ${coachTeamMode === 'existing' ? 'btn-primary' : 'btn-outline'} btn-sm`}
+                          className={`btn ${coachTeamMode === 'existing' ? 'btn-outline' : 'btn-ghost'} btn-sm`}
                           onClick={() => setCoachTeamMode('existing')}
-                          disabled={step === 'submitting'}
                         >
                           Existing Team
                         </button>
                         <button
                           type="button"
-                          className={`btn ${coachTeamMode === 'new' ? 'btn-primary' : 'btn-outline'} btn-sm`}
+                          className={`btn ${coachTeamMode === 'new' ? 'btn-outline' : 'btn-ghost'} btn-sm`}
                           onClick={() => {
                             setCoachTeamMode('new');
                             setSelectedBasicTeamId('');
                           }}
-                          disabled={step === 'submitting'}
                         >
                           New Team
                         </button>
@@ -356,7 +562,6 @@ export default function RegisterPage() {
                             value={selectedBasicTeamId}
                             onChange={e => selectExistingCoachTeam(e.target.value)}
                             required
-                            disabled={step === 'submitting'}
                           >
                             <option value="" disabled>Select a team</option>
                             {basicCoachTeams.map(team => (
@@ -378,7 +583,7 @@ export default function RegisterPage() {
                         value={form.teamName}
                         onChange={e => setForm(f => ({ ...f, teamName: e.target.value }))}
                         required
-                        disabled={step === 'submitting' || coachTeamMode === 'existing'}
+                        disabled={coachTeamMode === 'existing'}
                         id="reg-team-name"
                       />
                     </div>
@@ -390,7 +595,7 @@ export default function RegisterPage() {
                         value={form.coachName}
                         onChange={e => setForm(f => ({ ...f, coachName: e.target.value }))}
                         required
-                        disabled={step === 'submitting' || coachTeamMode === 'existing'}
+                        disabled={coachTeamMode === 'existing'}
                         id="reg-coach-name"
                       />
                     </div>
@@ -406,7 +611,7 @@ export default function RegisterPage() {
                         value={signedInCoachEmail || form.email}
                         onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
                         required
-                        disabled={step === 'submitting' || !!signedInCoachEmail}
+                        disabled={!!signedInCoachEmail}
                         id="reg-email"
                       />
                     </div>
@@ -516,7 +721,6 @@ export default function RegisterPage() {
                               value={customAnswers[field.id] ?? ''}
                               onChange={e => setCustomAnswers(prev => ({ ...prev, [field.id]: e.target.value }))}
                               required={field.required}
-                              disabled={step === 'submitting'}
                             />
                           )}
                           {field.fieldType === 'long_text' && (
@@ -526,7 +730,6 @@ export default function RegisterPage() {
                               value={customAnswers[field.id] ?? ''}
                               onChange={e => setCustomAnswers(prev => ({ ...prev, [field.id]: e.target.value }))}
                               required={field.required}
-                              disabled={step === 'submitting'}
                             />
                           )}
                           {field.fieldType === 'dropdown' && (
@@ -536,7 +739,6 @@ export default function RegisterPage() {
                                 value={customAnswers[field.id] ?? ''}
                                 onChange={e => setCustomAnswers(prev => ({ ...prev, [field.id]: e.target.value }))}
                                 required={field.required}
-                                disabled={step === 'submitting'}
                               >
                                 <option value="" disabled>Select an option</option>
                                 {field.options.map(option => (
@@ -553,7 +755,6 @@ export default function RegisterPage() {
                                 checked={customAnswers[field.id] === 'true'}
                                 onChange={e => setCustomAnswers(prev => ({ ...prev, [field.id]: e.target.checked ? 'true' : 'false' }))}
                                 required={field.required}
-                                disabled={step === 'submitting'}
                               />
                               <span>I confirm</span>
                             </label>
@@ -564,7 +765,6 @@ export default function RegisterPage() {
                               type="file"
                               onChange={e => setCustomFiles(prev => ({ ...prev, [field.id]: e.target.files?.[0] ?? null }))}
                               required={field.required}
-                              disabled={step === 'submitting'}
                             />
                           )}
                         </div>
@@ -574,13 +774,11 @@ export default function RegisterPage() {
 
                   <button
                     type="submit"
-                    className="btn btn-primary"
-                    disabled={step === 'submitting' || isClosed}
+                    className="btn btn-lime"
+                    disabled={isClosed}
                     style={{ width: '100%', padding: '0.875rem' }}
                   >
-                    {step === 'submitting' ? (
-                      <><RefreshCw size={18} className="spinner" /> Submitting…</>
-                    ) : isWaitlist ? 'Join Waitlist' : 'Submit Registration'}
+                    Review Registration
                   </button>
                 </form>
               </div>

@@ -3,11 +3,11 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import {
-  LayoutDashboard, Users, Calendar, Trophy, Tag, LogOut, Home,
-  ChevronRight, MapPin, BookOpen, CreditCard, Settings, Settings2, Paintbrush,
-  Users2, Archive, ArrowLeft, Mail, Globe, DollarSign,
+  LogOut, Home, Trophy,
+  ChevronRight, CreditCard, Settings,
+  Users2, ArrowLeft, Globe, DollarSign,
   CalendarDays, ClipboardList, FileText, UserCheck, ExternalLink, HelpCircle,
-  Link2, Bell, Plus,
+  Link2, Plus, MapPin, Mail, Archive, Users, Calendar,
 } from 'lucide-react';
 import TournamentSetupWizard from '@/components/admin/TournamentSetupWizard';
 import { hasPlanFeature, requiresTournamentPlusCopy } from '@/lib/plan-features';
@@ -18,47 +18,9 @@ import { useOrg } from '@/lib/org-context';
 import { useTournament } from '@/lib/tournament-context';
 import { hasCapability, type Capability } from '@/lib/roles';
 import { useCurrentOrgCoachAccess } from '@/lib/use-current-org-coach-access';
-import { getBillingHref } from '@/lib/billing-urls';
+import { getBillingHref, isTournamentTier } from '@/lib/billing-urls';
+import { TOUR_GROUPS, type TourNavItem, type TourGroup } from './admin-nav-config';
 import styles from './AdminSidebar.module.css';
-
-type TourNavItem = { key: string; icon: React.ElementType; label: string; roles?: string[] };
-type TourGroup   = { key: string; label: string; defaultOpenFor: string[]; items: TourNavItem[] };
-
-const TOUR_GROUPS: TourGroup[] = [
-  {
-    key: 'operations',
-    label: 'Operations',
-    defaultOpenFor: ['draft', 'active', 'completed'],
-    items: [
-      { key: 'dashboard',      icon: LayoutDashboard, label: 'Dashboard'       },
-      { key: 'registrations',  icon: Users,           label: 'Teams'           },
-      { key: 'schedule',       icon: Calendar,        label: 'Schedule'        },
-      { key: 'results',        icon: Trophy,          label: 'Results'         },
-      { key: 'communication',  icon: Mail,            label: 'Communications'  },
-    ],
-  },
-  {
-    key: 'setup',
-    label: 'Setup',
-    defaultOpenFor: ['draft'],
-    items: [
-      { key: 'settings/event', icon: Settings2,  label: 'Event Settings',       roles: ['owner', 'admin'] },
-      { key: 'venues',         icon: MapPin,     label: 'Venues & Facilities'   },
-      { key: 'divisions',      icon: Tag,        label: 'Divisions'             },
-      { key: 'rules',          icon: BookOpen,   label: 'Rules & Resources'     },
-      { key: 'branding',       icon: Paintbrush, label: 'Public Site'           },
-    ],
-  },
-  {
-    key: 'admin',
-    label: 'Admin',
-    defaultOpenFor: [],
-    items: [
-      { key: 'settings', icon: Settings, label: 'Settings & Access' },
-      { key: 'archives', icon: Archive,  label: 'Past Tournaments'  },
-    ],
-  },
-];
 
 type HouseLeagueSeasonOption = {
   id: string;
@@ -81,7 +43,9 @@ export default function AdminSidebar() {
   const isCanceled = currentOrg?.subscriptionStatus === 'canceled';
   const { tournaments, currentTournament, setCurrentTournament, refresh: refreshTournaments } = useTournament();
 
-  const isOrgAdmin     = pathname.startsWith(`${base}/org`);
+  // Tournament / Tournament Plus tiers have no org-admin concept — never treat them as
+  // being "in org admin" even if a URL slips through (proxy.ts + the org layout redirect them).
+  const isOrgAdmin     = pathname.startsWith(`${base}/org`) && !isTournamentTier(currentOrg?.planId);
   const isPublicSite   = pathname.startsWith(`${base}/public-site`);
   const isAccounting   = pathname.startsWith(`${base}/accounting`);
   const isHouseLeague  = pathname.startsWith(`${base}/house-league`);
@@ -251,21 +215,16 @@ export default function AdminSidebar() {
     : (hasOnlyTournamentWorkspace && isOrgAdmin) ? tournamentBackLink
     : hasOnlyTournamentWorkspace ? null
     : backLink;
+  const tournamentIsLive = currentTournament?.status === 'active' || currentTournament?.status === 'completed';
   const tournamentPreviewHref = currentOrg?.slug && currentTournament
-    ? `/${currentOrg.slug}/admin/tournaments/preview/${currentTournament.slug}`
+    ? tournamentIsLive
+      ? `/${currentOrg.slug}/${currentTournament.slug}`
+      : `/${currentOrg.slug}/admin/tournaments/preview/${currentTournament.slug}`
     : null;
-  const tournamentPreviewLabel =
-    currentTournament?.status === 'draft'
-      ? 'Preview Draft Site'
-      : currentTournament?.status === 'completed'
-        ? 'Preview Completed Site'
-        : 'Preview Site';
-  const tournamentPreviewTitle =
-    currentTournament?.status === 'draft'
-      ? 'Preview the private draft tournament site. It is not public until activated.'
-      : currentTournament?.status === 'completed'
-        ? 'Preview the completed tournament site.'
-        : 'Preview the public tournament site.';
+  const tournamentPreviewLabel = tournamentIsLive ? 'View Site' : 'Preview Site';
+  const tournamentPreviewTitle = tournamentIsLive
+    ? 'View the live public tournament site.'
+    : 'Preview the private draft tournament site. It is not public until activated.';
 
   return (
     <aside className={styles.sidebar}>
@@ -317,11 +276,7 @@ export default function AdminSidebar() {
                 `${base}/org/settings`,
                 pathname.startsWith(`${base}/org/settings`),
               )}
-              {!isCanceled && navLink(
-                'org/notifications', Bell, 'Notifications',
-                `${base}/org/notifications`,
-                pathname.startsWith(`${base}/org/notifications`),
-              )}
+
             </nav>
           </div>
         </>
@@ -650,6 +605,7 @@ export default function AdminSidebar() {
             year: t.year ?? null,
             status: t.status ?? null,
           }))}
+          sourceSurface="sidebar_create"
           canClone={canClone}
           upgradeCopy={cloneUpgradeCopy}
           onClose={() => setShowCreateModal(false)}

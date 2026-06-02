@@ -11,7 +11,8 @@
 import { supabaseAdmin } from './supabase-admin';
 import { sendEmail } from './email';
 import { sendWebPush } from './web-push';
-import type { NotificationEventType } from './types';
+import { hasPlanFeature, type PlanFeature } from './plan-features';
+import type { NotificationEventType, OrgPlan } from './types';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -27,6 +28,12 @@ export interface NotifyOptions {
   /** Relative path for deep-link, e.g. /slug/admin/tournaments/registrations */
   link?: string;
   metadata?: Record<string, unknown>;
+  /**
+   * Optional plan-feature gate (defense-in-depth). When set, notify() skips the
+   * entire dispatch if the org's plan does not include this feature — so a call
+   * site that forgets its own gate cannot leak a higher-tier notification.
+   */
+  requiredFeature?: PlanFeature;
   /**
    * Explicit recipient user IDs. If omitted, all active org members are notified
    * (with staff scoped to the tournament when tournamentId is provided).
@@ -81,6 +88,18 @@ export async function notify(opts: NotifyOptions): Promise<void> {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? '';
 
   try {
+    // ── 0. Optional plan-feature guard (defense-in-depth) ───────────────────────
+    if (opts.requiredFeature) {
+      const { data: orgRow } = await supabaseAdmin
+        .from('organizations')
+        .select('plan_id')
+        .eq('id', opts.orgId)
+        .maybeSingle();
+      if (!orgRow || !hasPlanFeature(orgRow.plan_id as OrgPlan, opts.requiredFeature)) {
+        return;
+      }
+    }
+
     // ── 1. Resolve recipients ──────────────────────────────────────────────────
 
     type Recipient = { userId: string; email: string; role: string };

@@ -58,6 +58,34 @@ function contrastRatio(hex: string): number {
   return (L1 + 0.05) / (L2 + 0.05);
 }
 
+/** Blend a hex colour toward white by `amount` (0–1). */
+function mixWithWhite(hex: string, amount: number): string {
+  const ch = (i: number) => {
+    const c = parseInt(hex.slice(i, i + 2), 16);
+    return Math.round(c + (255 - c) * amount).toString(16).padStart(2, '0');
+  };
+  return `#${ch(1)}${ch(3)}${ch(5)}`;
+}
+
+/**
+ * Guarantee an accent light enough to read as text on the near-black dark
+ * surface. A custom org colour can be arbitrarily dark; lift it toward white
+ * until its relative luminance clears a legibility floor (~6:1 on `--bg`).
+ * Already-bright values pass through unchanged. This is the contrast floor that
+ * stops a poorly-chosen brand colour from rendering as dark-on-dark text.
+ */
+function ensureLightTint(hex: string): string {
+  if (!HEX_RE.test(hex)) return hex;
+  const FLOOR = 0.30;
+  let out = hex;
+  let amount = 0.1;
+  while (relativeLuminance(out) < FLOOR && amount <= 1) {
+    out = mixWithWhite(hex, amount);
+    amount += 0.1;
+  }
+  return out;
+}
+
 export interface ResolvedTheme extends ThemeVars {
   isLowContrast: boolean;
 }
@@ -77,12 +105,14 @@ export function resolveTheme(
   if (customPrimary && HEX_RE.test(customPrimary)) {
     primary    = customPrimary;
     primaryRgb = hexToRgb(customPrimary);
-    // derive a lighter tint at 70% lightness if no custom accent given
-    primaryLight = customPrimary;
+    // No custom accent given — derive a readable light tint from the primary so
+    // --primary-light never renders as dark-on-dark text.
+    primaryLight = ensureLightTint(customPrimary);
   }
 
   if (customAccent && HEX_RE.test(customAccent)) {
-    primaryLight = customAccent;
+    // Honour the chosen accent but guarantee the text/accent token stays legible.
+    primaryLight = ensureLightTint(customAccent);
     accent       = customAccent;
   }
 

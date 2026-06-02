@@ -817,6 +817,24 @@
   color: var(--white-40);
 }
 
+.saveStatusLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.8rem;
+  font-family: var(--font-data);
+  color: var(--white-40);
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+.spinIcon {
+  animation: spin 1s linear infinite;
+}
+
 /* ── Inherit note ────────────────────────── */
 .inheritNote {
   display: inline-flex;

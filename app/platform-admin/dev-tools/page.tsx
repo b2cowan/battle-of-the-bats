@@ -59,6 +59,13 @@ interface SeedResult {
   error?: string;
 }
 
+interface DevUser {
+  userId: string;
+  email: string;
+  ownedOrgs: { orgId: string; slug: string; planId: string }[];
+  otherMemberships: { orgId: string; slug: string; role: string }[];
+}
+
 interface ReadinessCheck {
   key: string;
   label: string;
@@ -452,6 +459,179 @@ function OrgListPanel({
   );
 }
 
+// ─── User list panel ──────────────────────────────────────────────────────────
+
+function UserListPanel({
+  users,
+  onDeleteUser,
+  deletingUserId,
+  deleteResults,
+}: {
+  users: DevUser[];
+  onDeleteUser: (userId: string) => void;
+  deletingUserId: string | null;
+  deleteResults: Record<string, SeedResult>;
+}) {
+  const [confirmId, setConfirmId] = useState<string | null>(null);
+  const [modalUser, setModalUser] = useState<DevUser | null>(null);
+
+  function handleDeleteClick(user: DevUser) {
+    if (deletingUserId) return;
+    if (user.ownedOrgs.length > 0) {
+      setModalUser(user);
+    } else {
+      setConfirmId(confirmId === user.userId ? null : user.userId);
+    }
+  }
+
+  return (
+    <div className={styles.orgListPanel}>
+      <div className={styles.orgListHeader}>
+        <Users size={13} style={{ color: 'rgba(255,255,255,0.3)', flexShrink: 0 }} />
+        <span className={styles.orgListTitle}>Auth Users ({users.length})</span>
+      </div>
+
+      {users.length === 0 ? (
+        <div className={styles.orgEmptyMsg}>No deletable auth users</div>
+      ) : (
+        users.map(user => {
+          const isConfirming = confirmId === user.userId;
+          const isDeleting   = deletingUserId === user.userId;
+          const result       = deleteResults[user.userId];
+
+          return (
+            <div key={user.userId}>
+              <div className={styles.orgRow}>
+                <span className={styles.orgSlug}>{user.email}</span>
+
+                <div className={styles.userOrgTags}>
+                  {user.ownedOrgs.map(o => (
+                    <span key={o.orgId} className={`${styles.userOrgTag} ${styles.userOrgTagOwner}`}>
+                      /{o.slug} owner
+                    </span>
+                  ))}
+                  {user.otherMemberships.map(m => (
+                    <span key={m.orgId} className={styles.userOrgTag}>
+                      /{m.slug} {m.role}
+                    </span>
+                  ))}
+                  {user.ownedOrgs.length === 0 && user.otherMemberships.length === 0 && (
+                    <span className={styles.noOrgsText}>no orgs</span>
+                  )}
+                </div>
+
+                {isConfirming ? (
+                  <div className={styles.orgWipeConfirm}>
+                    <button
+                      className={styles.orgWipeYes}
+                      onClick={() => { onDeleteUser(user.userId); setConfirmId(null); }}
+                      disabled={isDeleting}
+                    >
+                      {isDeleting ? <Loader size={11} className={styles.spin} /> : 'Delete'}
+                    </button>
+                    <button
+                      className={styles.orgWipeNo}
+                      onClick={() => setConfirmId(null)}
+                    >
+                      No
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    className={styles.orgWipeBtn}
+                    onClick={() => handleDeleteClick(user)}
+                    disabled={deletingUserId !== null}
+                    title={`Delete ${user.email}`}
+                  >
+                    {isDeleting
+                      ? <Loader size={11} className={styles.spin} />
+                      : <Trash2 size={12} />
+                    }
+                  </button>
+                )}
+              </div>
+
+              {result && (
+                <div
+                  className={result.ok ? styles.logOk : styles.logErr}
+                  style={{ padding: '0.4rem 1rem', borderTop: '1px solid rgba(255,255,255,0.05)' }}
+                >
+                  {result.ok ? <CheckCircle size={11} /> : <AlertCircle size={11} />}
+                  <div className={styles.logLines}>
+                    {result.error && <div>{result.error}</div>}
+                    {result.log?.map((l, i) => <div key={i}>{l}</div>)}
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })
+      )}
+
+      {modalUser && (
+        <div className={styles.modalOverlay} onClick={() => setModalUser(null)}>
+          <div className={styles.modal} onClick={e => e.stopPropagation()}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <p className={styles.modalTitle}>Delete User</p>
+              <button
+                onClick={() => setModalUser(null)}
+                style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.35)', cursor: 'pointer', padding: '0.1rem' }}
+              >
+                <X size={15} />
+              </button>
+            </div>
+            <p style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.55)', margin: 0, lineHeight: 1.55 }}>
+              Deleting <strong style={{ color: 'var(--white-90)' }}>{modalUser.email}</strong> will also permanently delete the following owned org(s) and all their data:
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
+              {modalUser.ownedOrgs.map(o => {
+                const pc = PLAN_COLORS[o.planId] ?? PLAN_COLORS.tournament;
+                return (
+                  <div
+                    key={o.orgId}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: '0.5rem',
+                      padding: '0.4rem 0.7rem',
+                      background: 'rgba(239,68,68,0.05)',
+                      border: '1px solid rgba(239,68,68,0.15)',
+                      borderRadius: '5px',
+                    }}
+                  >
+                    <span style={{ fontFamily: 'var(--font-data, monospace)', fontSize: '0.72rem', color: 'var(--white-75)', flex: 1 }}>
+                      /{o.slug}
+                    </span>
+                    <span
+                      className={styles.planBadge}
+                      style={{ color: pc.text, borderColor: pc.border, background: pc.bg, fontSize: '0.5rem' }}
+                    >
+                      {o.planId.replace('_', ' ')}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+            <p style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.28)', margin: 0 }}>
+              This cannot be undone.
+            </p>
+            <div className={styles.modalActions}>
+              <button className={styles.wipeCancelBtn} onClick={() => setModalUser(null)}>
+                Cancel
+              </button>
+              <button
+                className={styles.wipeBtn}
+                style={{ fontSize: '0.65rem' }}
+                onClick={() => { onDeleteUser(modalUser.userId); setModalUser(null); }}
+              >
+                <Trash2 size={13} /> Delete User + Orgs
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Status pill ──────────────────────────────────────────────────────────────
 
 function StatusPill({ count, label }: { count: number; label: string }) {
@@ -769,6 +949,11 @@ export default function DevDashboard() {
   // Live memberships
   const [memberships, setMemberships] = useState<MembershipData | null>(null);
 
+  // Dev users (deletable auth users)
+  const [devUsers,          setDevUsers]          = useState<DevUser[]>([]);
+  const [deletingUserId,    setDeletingUserId]    = useState<string | null>(null);
+  const [userDeleteResults, setUserDeleteResults] = useState<Record<string, SeedResult>>({});
+
   // Org seed modal
   const [orgModal, setOrgModal] = useState(false);
 
@@ -794,6 +979,11 @@ export default function DevDashboard() {
     if (res.ok) setMemberships(await res.json());
   }, []);
 
+  const fetchDevUsers = useCallback(async () => {
+    const res = await fetch('/api/dev/users');
+    if (res.ok) setDevUsers(await res.json());
+  }, []);
+
   useEffect(() => {
     window.queueMicrotask(() => { void fetchStatus(); });
   }, [fetchStatus]);
@@ -803,8 +993,9 @@ export default function DevDashboard() {
       void fetchReadiness();
       void fetchMockBilling();
       void fetchMemberships();
+      void fetchDevUsers();
     });
-  }, [fetchReadiness, fetchMockBilling, fetchMemberships]);
+  }, [fetchReadiness, fetchMockBilling, fetchMemberships, fetchDevUsers]);
 
   // ── Seed ────────────────────────────────────────────────────────────────────
 
@@ -849,10 +1040,34 @@ export default function DevDashboard() {
       setOrgWipeResults(r => ({ ...r, [orgId]: data }));
       await fetchStatus();
       void fetchMemberships();
+      void fetchDevUsers();
     } catch {
       setOrgWipeResults(r => ({ ...r, [orgId]: { ok: false, error: 'Network error' } }));
     } finally {
       setWipingOrgId(null);
+    }
+  }
+
+  // ── Delete user ──────────────────────────────────────────────────────────────
+
+  async function handleDeleteUser(userId: string) {
+    setDeletingUserId(userId);
+    setUserDeleteResults(r => { const n = { ...r }; delete n[userId]; return n; });
+    try {
+      const res = await fetch('/api/dev/users', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ userId }),
+      });
+      const data = await res.json() as SeedResult;
+      setUserDeleteResults(r => ({ ...r, [userId]: data }));
+      await fetchStatus();
+      void fetchMemberships();
+      void fetchDevUsers();
+    } catch {
+      setUserDeleteResults(r => ({ ...r, [userId]: { ok: false, error: 'Network error' } }));
+    } finally {
+      setDeletingUserId(null);
     }
   }
 
@@ -868,8 +1083,10 @@ export default function DevDashboard() {
       setWipeResult(data);
       setResults({});
       setOrgWipeResults({});
+      setUserDeleteResults({});
       await fetchStatus();
       void fetchMemberships();
+      void fetchDevUsers();
     } catch {
       setWipeResult({ ok: false, error: 'Network error' });
     } finally {
@@ -1126,6 +1343,14 @@ export default function DevDashboard() {
           wipeResults={orgWipeResults}
         />
       )}
+
+      {/* Auth users — all deletable accounts including orphaned ones */}
+      <UserListPanel
+        users={devUsers}
+        onDeleteUser={handleDeleteUser}
+        deletingUserId={deletingUserId}
+        deleteResults={userDeleteResults}
+      />
 
       {/* Plan gates toggle — local only */}
       {PLAN_GATES_TOGGLE_ENABLED && (

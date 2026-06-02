@@ -8,39 +8,12 @@
   display: inline-flex;
 }
 
-/* mobileModePair: hidden on desktop, revealed as its own full-width row on mobile */
-.mobileModePair {
-  display: none;
+.mobileButtonLabel {
+  display: inline;
 }
 
-/* Native <select> wrapper — flex child inside mobileModePair */
-.mobileModeNative {
-  position: relative;
-  display: flex;
-  align-items: center;
-  flex: 1;
-}
-
-/* Shared base for native selects — desktop-safe (not visible there anyway) */
-.mobileModeNativeSelect {
-  appearance: none;
-  width: 100%;
-  background: var(--hud-surface);
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.28);
-  border-radius: 2px;
-  color: var(--fl-text);
-  font-family: var(--font-data);
-  font-size: 0.62rem;
-  font-weight: 700;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
-  cursor: pointer;
-  padding: 0 2rem 0 0.55rem;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='rgba(148%2C163%2C184%2C0.7)' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 0.45rem center;
-  color-scheme: dark;
-}
+/* (Settings trigger button removed — the active settings summary strip now
+   serves as the single entry point for the mobile settings sheet.) */
 
 /* ─── Venue filter — desktop wrapper ─────────────────────────────────────────
    Sits in the fullWidth row between Search and status chips.
@@ -259,72 +232,508 @@
 
 /* ─── Mobile overrides ─────────────────────────────────────────────────────── */
 @media (max-width: 760px) {
-  /* Breathing room below toolbar — matches Schedule */
+  /* Override column-stacking so division + action buttons share row 1.
+     The fullWidth group (search + chips) still breaks to its own row naturally
+     because it has flex: 1 1 100% which forces a line break in wrap mode. */
   .resultsToolbar {
+    flex-direction: row !important;
+    flex-wrap: wrap !important;
+    align-items: flex-end !important;
     margin-bottom: 1.25rem;
   }
 
-  /* Hide desktop segmented controls on mobile */
+  /* Division group expands to fill row 1 beside the action buttons */
+  .resultsStartGroup {
+    flex: 1 1 auto !important;
+    width: auto !important;
+  }
+
+  /* Action group stays compact — doesn't expand */
+  .resultsActionGroup {
+    flex: 0 0 auto !important;
+    width: auto !important;
+    justify-content: flex-end;
+  }
+
+  /* Match button height to the select's mobile height (38px).
+     Must use !important — toolbar buttons have height: 28px hardcoded. */
+  .resultsActionGroup :global(button) {
+    height: 38px !important;
+    min-height: 38px !important;
+  }
+
+  /* Hide desktop segmented controls on mobile — these live in the sheet now */
   .desktopModeControl {
     display: none !important;
   }
 
-  /* mobileModePair: becomes its own full-width row (order:1 flows below Division) */
-  .mobileModePair {
-    display: flex;
-    flex: 1 1 100%;
-    width: 100% !important;
-    order: 1;
-    gap: 0.28rem;
-  }
-
-  /* Native selects fill their row at standard touch target height */
-  .mobileModeNativeSelect {
-    height: 34px;
-    min-height: 34px;
-  }
-
-  /* Desktop venue wrapper hidden on mobile */
+  /* Desktop venue wrapper hidden on mobile — venue lives in the sheet */
   .resultsVenueDesktop {
     display: none;
-  }
-
-  /* Mobile venue wrapper: order:2 flows below mobileModePair (order:1),
-     fills remaining space alongside the compact action buttons */
-  .resultsVenueMobile {
-    display: block;
-    order: 2;
-    flex: 1 1 0;
-    min-width: 0;
-  }
-
-  /* Venue button: 34px to match mode-select touch target height */
-  .resultsVenueMobile .venueFilterButton {
-    height: 34px;
-  }
-
-  /* Panel: break out of narrow flex-item width so full venue names show */
-  .resultsVenueMobile .venueFilterPanel {
-    right: auto;
-    width: auto;
-    min-width: 240px;
-    max-width: calc(100vw - 1.5rem);
   }
 
   /* Status chips — 34px touch target on mobile */
   .resultsStatusFilters > button {
     min-height: 34px;
   }
+}
 
-  /* Venue button sizing in the fullWidth row on very narrow screens */
-  .venueFilterButton {
-    justify-content: flex-start;
-    height: 34px;
-    padding-inline: 0.7rem;
+/* ─── Narrow mobile (<640px): chips wrap to their own row below search ──────
+   Prevents the Completed chip from clipping off-screen. Mirrors the pattern
+   in schedule-admin.module.css (.scheduleStatusFilters at ≤640px). */
+@media (max-width: 640px) {
+  .resultsSearch {
+    order: 1;
+  }
+}
+
+/* ─── Status chips: hidden on mobile — appear in the settings sheet instead ── */
+@media (max-width: 760px) {
+  .resultsStatusFilters {
+    display: none !important;
+  }
+}
+
+/* ─── Mobile settings bottom sheet ──────────────────────────────────────────
+   Fixed overlay + slide-up panel. Desktop: never rendered (JS guard on state). */
+
+.sheetBackdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.62);
+  z-index: 490;
+  backdrop-filter: blur(2px);
+}
+
+.sheet {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 500;
+  background: var(--hud-surface);
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.35);
+  border-bottom: none;
+  border-radius: 12px 12px 0 0;
+  animation: sheetSlideUp 0.22s cubic-bezier(0.32, 0.72, 0, 1);
+  /* Don't render on desktop — settings button is hidden, but add safety guard */
+  max-width: 760px;
+  margin: 0 auto;
+}
+
+@keyframes sheetSlideUp {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+
+.sheetHandle {
+  width: 36px;
+  height: 4px;
+  background: rgba(var(--blueprint-blue-rgb), 0.35);
+  border-radius: 2px;
+  margin: 0.75rem auto 0;
+}
+
+.sheetBody {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 0.75rem 1.25rem 1.25rem;
+}
+
+.sheetSection {
+  padding: 0.75rem 0;
+  border-bottom: 1px solid rgba(var(--blueprint-blue-rgb), 0.15);
+}
+
+.sheetSection:last-of-type {
+  border-bottom: none;
+}
+
+.sheetSectionLabel {
+  font-family: var(--font-data);
+  font-size: 0.58rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(var(--logic-lime-rgb), 0.65);
+  margin-bottom: 0.6rem;
+}
+
+.sheetSegments {
+  display: flex;
+  gap: 0.35rem;
+}
+
+.sheetSeg {
+  flex: 1;
+  height: 36px;
+  font-family: var(--font-data);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.28);
+  border-radius: 2px;
+  background: transparent;
+  color: var(--data-gray);
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, color 0.15s;
+}
+
+.sheetSeg:hover {
+  border-color: rgba(var(--logic-lime-rgb), 0.35);
+  color: var(--fl-text);
+}
+
+.sheetSegActive {
+  border-color: rgba(var(--logic-lime-rgb), 0.5);
+  background: rgba(var(--logic-lime-rgb), 0.1);
+  color: var(--logic-lime);
+}
+
+.sheetVenueList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.sheetVenueOption {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  width: 100%;
+  min-height: 36px;
+  padding: 0.4rem 0.65rem;
+  border: 1px solid transparent;
+  border-radius: 2px;
+  background: transparent;
+  color: var(--white-60);
+  cursor: pointer;
+  font-family: var(--font-data);
+  font-size: 0.72rem;
+  text-align: left;
+  transition: border-color 0.15s, background 0.15s, color 0.15s;
+}
+
+.sheetVenueOption:hover {
+  border-color: rgba(var(--blueprint-blue-rgb), 0.3);
+  background: rgba(var(--blueprint-blue-rgb), 0.06);
+  color: var(--fl-text);
+}
+
+.sheetVenueActive {
+  border-color: rgba(var(--logic-lime-rgb), 0.4);
+  background: rgba(var(--logic-lime-rgb), 0.07);
+  color: var(--logic-lime);
+}
+
+.sheetVenueCount {
+  font-family: var(--font-data);
+  font-size: 0.65rem;
+  color: var(--data-gray);
+  flex-shrink: 0;
+}
+
+.sheetDone {
+  margin-top: 1rem;
+  width: 100%;
+  height: 42px;
+  font-family: var(--font-data);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.45);
+  border-radius: 2px;
+  background: rgba(var(--logic-lime-rgb), 0.08);
+  color: var(--logic-lime);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.sheetDone:hover {
+  background: rgba(var(--logic-lime-rgb), 0.14);
+}
+
+/* ─── Venue selector button inside the settings sheet ───────────────────────
+   Shows current selection ("All venues" / "Lions Park") + a right chevron.
+   Tapping opens the venue nested modal. */
+.venueSheetBtn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  width: 100%;
+  min-height: 40px;
+  padding: 0 0.65rem;
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.28);
+  border-radius: 2px;
+  background: var(--bg-2);
+  color: var(--data-gray);
+  cursor: pointer;
+  font-family: var(--font-data);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-align: left;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.venueSheetBtn:hover {
+  border-color: rgba(var(--logic-lime-rgb), 0.4);
+  color: var(--fl-text);
+}
+
+.venueSheetBtnActive {
+  border-color: rgba(var(--logic-lime-rgb), 0.4);
+  background: rgba(var(--logic-lime-rgb), 0.06);
+  color: var(--logic-lime);
+}
+
+/* ─── Venue nested modal ────────────────────────────────────────────────────
+   Slides up over the settings sheet. Higher z-index than the sheet (500). */
+.venueModalBackdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  z-index: 505;
+}
+
+.venueModal {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 510;
+  background: var(--hud-surface);
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.4);
+  border-bottom: none;
+  border-radius: 12px 12px 0 0;
+  max-height: 70vh;
+  display: flex;
+  flex-direction: column;
+  animation: sheetSlideUp 0.2s cubic-bezier(0.32, 0.72, 0, 1);
+  max-width: 760px;
+  margin: 0 auto;
+}
+
+.venueModalHandle {
+  width: 36px;
+  height: 4px;
+  background: rgba(var(--blueprint-blue-rgb), 0.35);
+  border-radius: 2px;
+  margin: 0.75rem auto 0;
+  flex-shrink: 0;
+}
+
+.venueModalHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.65rem 1.25rem 0.5rem;
+  border-bottom: 1px solid rgba(var(--blueprint-blue-rgb), 0.18);
+  flex-shrink: 0;
+}
+
+.venueModalBack {
+  border: none;
+  background: transparent;
+  color: var(--data-gray);
+  font-family: var(--font-data);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.12s;
+}
+
+.venueModalBack:hover { color: var(--logic-lime); }
+
+.venueModalTitle {
+  flex: 1;
+  font-family: var(--font-data);
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(var(--logic-lime-rgb), 0.65);
+  text-align: center;
+}
+
+.venueModalClear {
+  border: none;
+  background: transparent;
+  color: var(--data-gray);
+  font-family: var(--font-data);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.12s;
+}
+
+.venueModalClear:hover { color: var(--danger); }
+
+.venueModalList {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.5rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.venueModalOption {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  width: 100%;
+  min-height: 44px;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid transparent;
+  border-radius: 2px;
+  background: transparent;
+  color: var(--white-60);
+  cursor: pointer;
+  font-family: var(--font-data);
+  font-size: 0.78rem;
+  text-align: left;
+  transition: border-color 0.12s, background 0.12s, color 0.12s;
+}
+
+.venueModalOption:hover {
+  border-color: rgba(var(--blueprint-blue-rgb), 0.3);
+  background: rgba(var(--blueprint-blue-rgb), 0.06);
+  color: var(--fl-text);
+}
+
+.venueModalOptionActive {
+  border-color: rgba(var(--logic-lime-rgb), 0.4);
+  background: rgba(var(--logic-lime-rgb), 0.07);
+  color: var(--logic-lime);
+}
+
+.venueModalSublabel {
+  color: var(--data-gray);
+  font-size: 0.68rem;
+}
+
+.venueModalCount {
+  color: var(--data-gray);
+  font-family: var(--font-data);
+  font-size: 0.65rem;
+  flex-shrink: 0;
+}
+
+.venueModalFooter {
+  padding: 0.75rem 1.25rem 1.25rem;
+  flex-shrink: 0;
+  border-top: 1px solid rgba(var(--blueprint-blue-rgb), 0.18);
+}
+
+/* ─── Active settings summary strip ─────────────────────────────────────────
+   Appears on mobile when non-default settings are active (sheet is closed).
+   Hidden on desktop. */
+.activeSettingsSummary {
+  display: none;
+}
+
+@media (max-width: 760px) {
+  .activeSettingsSummary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    width: 100%;
+    padding: 0.4rem 0;
+    margin-bottom: 0.5rem;
+    border: none;
+    border-bottom: 1px solid rgba(var(--blueprint-blue-rgb), 0.18);
+    background: transparent;
+    cursor: pointer;
+    text-align: left;
   }
 
-  .venueFilterPanel {
-    width: 100%;
-    max-width: 100%;
+  .activeSettingsSummary:hover .activeSettingsSummaryIcon {
+    color: var(--logic-lime);
+  }
+
+/* ─── Summary strip: right-side wrapper + status count tally ─────────────── */
+.summaryRight {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.statusCountTally {
+  display: flex;
+  align-items: center;
+  gap: 0.32rem;
+}
+
+.tallyPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.18rem;
+  font-family: var(--font-data);
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  transition: opacity 0.12s;
+}
+
+.tallyDot {
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.tallyPending   { color: var(--info); }
+.tallyPending   .tallyDot { background: var(--info); }
+.tallySubmitted { color: var(--warning); }
+.tallySubmitted .tallyDot { background: var(--warning); }
+.tallyCompleted { color: var(--success); }
+.tallyCompleted .tallyDot { background: var(--success); }
+
+.tallyInactive { opacity: 0.28; }
+
+  .activeSettingsSummaryText {
+    font-family: var(--font-data);
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--logic-lime);
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .activeSettingsSummaryIcon {
+    color: var(--data-gray);
+    flex-shrink: 0;
+    transition: color 0.12s;
+  }
+
+  .mobileIconButton {
+    width: 32px;
+    min-width: 32px;
+    height: 32px;
+    min-height: 32px;
+    padding: 0 !important;
+    justify-content: center;
+    gap: 0;
+  }
+
+  .mobileButtonLabel {
+    display: none;
   }
 }

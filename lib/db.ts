@@ -1502,6 +1502,7 @@ export async function getGames(tournamentId?: string, options: ReadOptions = {})
     location: g.location,
     venueId: g.diamond_id,
     venueFacilityId: g.venue_facility_id,
+    scheduleFacilityLaneId: g.schedule_facility_lane_id ?? null,
     homeScore: g.home_score,
     awayScore: g.away_score,
     status: g.status,
@@ -1517,7 +1518,7 @@ export async function getGames(tournamentId?: string, options: ReadOptions = {})
 }
 
 export async function saveGame(g: Omit<Game, 'id'>): Promise<void> {
-  await authClient().from('games').insert({
+  const row: Record<string, unknown> = {
     tournament_id: g.tournamentId,
     division_id: g.divisionId,
     home_team_id: g.homeTeamId,
@@ -1538,7 +1539,9 @@ export async function saveGame(g: Omit<Game, 'id'>): Promise<void> {
     home_slot_id: g.homeSlotId,
     away_slot_id: g.awaySlotId,
     notes: g.notes
-  });
+  };
+  if (g.scheduleFacilityLaneId !== undefined) row.schedule_facility_lane_id = g.scheduleFacilityLaneId ?? null;
+  await authClient().from('games').insert(row);
 }
 
 export async function updateGame(id: string, g: Partial<Game>, options: ReadOptions = {}): Promise<void> {
@@ -1552,6 +1555,7 @@ export async function updateGame(id: string, g: Partial<Game>, options: ReadOpti
   if (g.location !== undefined) updates.location = g.location;
   if (g.venueId          !== undefined) updates.diamond_id        = g.venueId;
   if (g.venueFacilityId !== undefined) updates.venue_facility_id = g.venueFacilityId ?? null;
+  if (g.scheduleFacilityLaneId !== undefined) updates.schedule_facility_lane_id = g.scheduleFacilityLaneId ?? null;
   if (g.homeScore !== undefined) updates.home_score = g.homeScore;
   if (g.awayScore !== undefined) updates.away_score = g.awayScore;
   if (g.status !== undefined) updates.status = g.status;

@@ -1,6 +1,22 @@
-import { getAuthContextWithScope, unauthorized, forbidden, scopeGuard } from '@/lib/api-auth';
+import { getAuthContextWithScope, unauthorized, forbidden, scopeGuard, requireTournamentInOrg } from '@/lib/api-auth';
 import { hasCapability } from '@/lib/roles';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+
+function tournamentLockedResponse() {
+  return Response.json(
+    { error: 'This tournament is completed and locked. Set the status to Active in Event Settings to make changes.' },
+    { status: 409 },
+  );
+}
+
+async function isTournamentLocked(tournamentId: string): Promise<boolean> {
+  const { data } = await supabaseAdmin
+    .from('tournaments')
+    .select('status')
+    .eq('id', tournamentId)
+    .single();
+  return data?.status === 'completed';
+}
 
 type ApiPool = {
   id: string;
@@ -79,6 +95,9 @@ export async function GET(req: Request) {
   const denied = scopeGuard(ctx, tournamentId);
   if (denied) return denied;
 
+  const wrongOrg = await requireTournamentInOrg(ctx, tournamentId);
+  if (wrongOrg) return wrongOrg;
+
   const [{ data, error }, teamsRes] = await Promise.all([
     supabaseAdmin
       .from('divisions')
@@ -145,6 +164,9 @@ export async function POST(req: Request) {
     if (action === 'save') {
       const denied = scopeGuard(ctx, data.tournamentId);
       if (denied) return denied;
+      const wrongOrg = await requireTournamentInOrg(ctx, data.tournamentId);
+      if (wrongOrg) return wrongOrg;
+      if (await isTournamentLocked(data.tournamentId)) return tournamentLockedResponse();
 
       const { data: insertedGroup, error } = await supabaseAdmin.from('divisions').insert({
         tournament_id:           data.tournamentId,
@@ -195,6 +217,9 @@ export async function POST(req: Request) {
       if (ag) {
         const denied = scopeGuard(ctx, ag.tournament_id);
         if (denied) return denied;
+        const wrongOrg = await requireTournamentInOrg(ctx, ag.tournament_id);
+        if (wrongOrg) return wrongOrg;
+        if (await isTournamentLocked(ag.tournament_id)) return tournamentLockedResponse();
       }
 
       const { error: agError } = await supabaseAdmin.from('divisions').update({
@@ -260,12 +285,21 @@ export async function POST(req: Request) {
 
       if (agId) {
         const { data: ag } = await supabaseAdmin.from('divisions').select('tournament_id').eq('id', agId).single();
-        if (ag) { const denied = scopeGuard(ctx, ag.tournament_id); if (denied) return denied; }
+        if (ag) {
+          const denied = scopeGuard(ctx, ag.tournament_id);
+          if (denied) return denied;
+          const wrongOrg = await requireTournamentInOrg(ctx, ag.tournament_id);
+          if (wrongOrg) return wrongOrg;
+          if (await isTournamentLocked(ag.tournament_id)) return tournamentLockedResponse();
+        }
         const { error } = await supabaseAdmin.from('divisions').update({ schedule_visibility: vis }).eq('id', agId);
         if (error) throw error;
       } else if (tId) {
         const denied = scopeGuard(ctx, tId);
         if (denied) return denied;
+        const wrongOrg = await requireTournamentInOrg(ctx, tId);
+        if (wrongOrg) return wrongOrg;
+        if (await isTournamentLocked(tId)) return tournamentLockedResponse();
         const { error } = await supabaseAdmin.from('divisions').update({ schedule_visibility: vis }).eq('tournament_id', tId);
         if (error) throw error;
       } else {
@@ -283,6 +317,9 @@ export async function POST(req: Request) {
       if (ag) {
         const denied = scopeGuard(ctx, ag.tournament_id);
         if (denied) return denied;
+        const wrongOrg = await requireTournamentInOrg(ctx, ag.tournament_id);
+        if (wrongOrg) return wrongOrg;
+        if (await isTournamentLocked(ag.tournament_id)) return tournamentLockedResponse();
       }
 
       const { error } = await supabaseAdmin.from('divisions').delete().eq('id', id);

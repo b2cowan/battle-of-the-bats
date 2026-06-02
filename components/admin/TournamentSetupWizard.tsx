@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { AlertCircle, ArrowRight, Copy, Plus, Trash2, X } from 'lucide-react';
 import styles from './TournamentSetupWizard.module.css';
 
@@ -54,10 +54,6 @@ type VenueFields = {
   notes: string;
 };
 
-type VenueRow = VenueFields & {
-  id: string;
-};
-
 type QueuedVenue = {
   key: string;
   name: string;
@@ -89,17 +85,31 @@ type ContactDraft = {
 
 type SkippedState = Record<SkippableStep, boolean>;
 
-type CreatedTournament = {
-  id: string;
-  name: string;
-  slug: string;
-};
-
 type PastTournament = {
   id: string;
   name: string;
   year?: number | null;
   status?: string | null;
+};
+
+type CloneCopiedCounts = {
+  venues?: number;
+  divisions?: number;
+  pools?: number;
+  slots?: number;
+  rules?: number;
+  resources?: number;
+  welcome?: boolean;
+  registrationFields?: number;
+};
+
+type CreatedTournament = {
+  id: string;
+  name: string;
+  slug: string;
+  creationMethod?: 'blank' | 'reused_setup';
+  sourceName?: string;
+  copied?: CloneCopiedCounts;
 };
 
 /** Mode before the main wizard steps: pick clone source or start from scratch. */
@@ -114,12 +124,29 @@ type CloneNameForm = {
   autoSlug: boolean;
 };
 
+type CloneCopyOptionKey = 'structure' | 'venues' | 'registration' | 'publicPresence' | 'content';
+type CloneCopyOptions = Record<CloneCopyOptionKey, boolean>;
+type ReuseSetupWarning = {
+  key: string;
+  title: string;
+  description: string;
+};
+type ReuseSetupSourceSurface =
+  | 'sidebar_create'
+  | 'manage_tournaments_new_button'
+  | 'manage_tournaments_row'
+  | 'unknown';
+
 type TournamentSetupWizardProps = {
   isOpen: boolean;
   orgSlug?: string;
   orgContactEmail?: string | null;
   /** Pass existing non-archived tournaments to enable the clone pre-step. */
   existingTournaments?: PastTournament[];
+  /** Optional source tournament to preselect when opening from a list action. */
+  initialSourceTournamentId?: string | null;
+  /** Surface that opened the setup wizard, used for product analytics. */
+  sourceSurface?: ReuseSetupSourceSurface;
   /** Whether the org's plan includes tournament cloning. */
   canClone?: boolean;
   /** Upgrade copy shown if canClone is false. */
@@ -127,6 +154,59 @@ type TournamentSetupWizardProps = {
   onClose: () => void;
   onCreated: (tournament: CreatedTournament) => void | Promise<void>;
 };
+
+const DEFAULT_CLONE_COPY_OPTIONS: CloneCopyOptions = {
+  structure: true,
+  venues: true,
+  registration: true,
+  publicPresence: true,
+  content: true,
+};
+
+const REUSE_COPY_OPTION_GROUPS: Array<{
+  key: CloneCopyOptionKey;
+  title: string;
+  description: string;
+  details: string[];
+}> = [
+  {
+    key: 'structure',
+    title: 'Event structure',
+    description: 'Divisions, pools, and empty schedule slots',
+    details: ['Divisions', 'Pools', 'Empty schedule slots'],
+  },
+  {
+    key: 'venues',
+    title: 'Locations',
+    description: 'Venues and playing surfaces',
+    details: ['Venues', 'Playing surfaces'],
+  },
+  {
+    key: 'registration',
+    title: 'Registration setup',
+    description: 'Custom questions and fee setup',
+    details: ['Registration questions', 'Fee setup'],
+  },
+  {
+    key: 'publicPresence',
+    title: 'Public presence',
+    description: 'Branding and public page settings',
+    details: ['Branding', 'Public page visibility'],
+  },
+  {
+    key: 'content',
+    title: 'Content',
+    description: 'Rules, resources, and welcome content',
+    details: ['Rules and resources', 'Welcome content'],
+  },
+];
+
+const REUSE_SETUP_EXCLUDED = [
+  'Teams, registrations, and waitlists',
+  'Games, scores, standings, and champions',
+  'Payments, uploaded files, reminders, and message history',
+  'Archived summaries or private admin notes',
+];
 
 function generateSlug(name: string): string {
   return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
@@ -156,6 +236,120 @@ function getDefaultTournamentForm(existingNames: string[] = [], year = new Date(
     startDate: '',
     endDate: '',
   };
+}
+
+function getRepeatTournamentName(tournament: PastTournament) {
+  const nextYear = (tournament.year ?? new Date().getFullYear()) + 1;
+  const sourceYear = tournament.year ? String(tournament.year) : '';
+  const name = sourceYear && tournament.name.includes(sourceYear)
+    ? tournament.name.replace(sourceYear, String(nextYear))
+    : `${tournament.name} ${nextYear}`;
+  return { name, year: nextYear };
+}
+
+function getRepeatNameForm(tournament: PastTournament): CloneNameForm {
+  const repeat = getRepeatTournamentName(tournament);
+  return {
+    name: repeat.name,
+    slug: generateSlug(repeat.name),
+    year: String(repeat.year),
+    startDate: '',
+    endDate: '',
+    autoSlug: true,
+  };
+}
+
+function buildCloneApiOptions(options: CloneCopyOptions) {
+  return {
+    includeDivisions: options.structure,
+    includePools: options.structure,
+    includeSlots: options.structure,
+    includeVenues: options.venues,
+    includeBranding: options.publicPresence,
+    includePublicPages: options.publicPresence,
+    includeWelcome: options.content,
+    includeRulesResources: options.content,
+    includeRegistrationFields: options.registration,
+    includeFeeSchedule: options.registration,
+  };
+}
+
+function getReuseSetupWarnings(
+  source: PastTournament | null,
+  draftYear: number,
+  options: CloneCopyOptions,
+): ReuseSetupWarning[] {
+  const warnings: ReuseSetupWarning[] = [];
+  const sourceYear = typeof source?.year === 'number' ? source.year : null;
+  const yearGap = sourceYear && Number.isInteger(draftYear) ? draftYear - sourceYear : null;
+  const sourceStatus = source?.status ?? null;
+  const sourceIsUnfinished = sourceStatus === 'draft' || sourceStatus === 'active';
+
+  if (sourceStatus === 'draft') {
+    warnings.push({
+      key: 'source_draft',
+      title: 'Source is still a draft',
+      description: 'Treat this as a head start, then confirm unfinished setup before publishing the new tournament.',
+    });
+  } else if (sourceStatus === 'active') {
+    warnings.push({
+      key: 'source_active',
+      title: 'Source is still active',
+      description: 'Live-event setup can still change. Review copied settings once the new draft is created.',
+    });
+  }
+
+  if (yearGap !== null && yearGap > 1) {
+    warnings.push({
+      key: 'source_older_than_one_year',
+      title: `Source is ${yearGap} years older`,
+      description: 'Good for structure, but dates, contacts, fees, rules, and public copy may need a refresh.',
+    });
+  } else if (yearGap !== null && yearGap < 0) {
+    warnings.push({
+      key: 'draft_year_before_source',
+      title: 'Draft year is before the source year',
+      description: 'Double-check the year and name before creating this draft.',
+    });
+  }
+
+  if (options.registration && (sourceIsUnfinished || (yearGap !== null && yearGap >= 1))) {
+    warnings.push({
+      key: 'registration_setup_review',
+      title: 'Registration setup selected',
+      description: 'Review custom questions, fee amounts, due dates, and payment instructions before opening registration.',
+    });
+  }
+
+  if ((options.publicPresence || options.content) && (sourceIsUnfinished || (yearGap !== null && yearGap >= 1))) {
+    warnings.push({
+      key: 'public_content_review',
+      title: 'Public content selected',
+      description: 'Review sponsor names, rules, resources, welcome copy, and hidden-page settings before publishing.',
+    });
+  }
+
+  return warnings;
+}
+
+function getTournamentStatusLabel(status?: string | null) {
+  if (!status) return 'Tournament';
+  return status.charAt(0).toUpperCase() + status.slice(1);
+}
+
+function getSourceSortRank(status?: string | null) {
+  switch (status) {
+    case 'completed':
+      return 0;
+    case 'archived':
+      return 1;
+    case 'active':
+      return 2;
+    case 'draft':
+      return 3;
+    default:
+      return 4;
+  }
 }
 
 function getDefaultSkipped(): SkippedState {
@@ -225,10 +419,6 @@ function buildVenueDraft(): VenueFields {
   };
 }
 
-function buildVenueRow(index: number, draft: VenueFields = buildVenueDraft()): VenueRow {
-  return { ...draft, id: `venue-${index}` };
-}
-
 function normalizeVenueFields(venue: VenueFields): VenueFields {
   return {
     name: venue.name.trim(),
@@ -271,6 +461,8 @@ export default function TournamentSetupWizard({
   orgSlug,
   orgContactEmail,
   existingTournaments,
+  initialSourceTournamentId,
+  sourceSurface = 'unknown',
   canClone,
   upgradeCopy,
   onClose,
@@ -286,6 +478,7 @@ export default function TournamentSetupWizard({
     name: '', slug: '', year: String(new Date().getFullYear() + 1),
     startDate: '', endDate: '', autoSlug: true,
   });
+  const [cloneCopyOptions, setCloneCopyOptions] = useState<CloneCopyOptions>(DEFAULT_CLONE_COPY_OPTIONS);
   const [cloneWorking, setCloneWorking] = useState(false);
   const [cloneError, setCloneError] = useState('');
 
@@ -325,9 +518,20 @@ export default function TournamentSetupWizard({
     if (!isOpen) return;
     // Reset pre-step
     const hasPast = Boolean(existingTournaments && existingTournaments.length > 0);
-    setPreStep(hasPast ? 'choose' : null);
-    setCloneSource(null);
-    setCloneNameForm({ name: '', slug: '', year: String(new Date().getFullYear() + 1), startDate: '', endDate: '', autoSlug: true });
+    const initialSource = initialSourceTournamentId
+      ? existingTournaments?.find(tournament => tournament.id === initialSourceTournamentId) ?? null
+      : null;
+    if (initialSource && canClone) {
+      setPreStep('clone-name');
+      setCloneSource(initialSource);
+      setCloneNameForm(getRepeatNameForm(initialSource));
+      setCloneCopyOptions(DEFAULT_CLONE_COPY_OPTIONS);
+    } else {
+      setPreStep(hasPast ? 'choose' : null);
+      setCloneSource(null);
+      setCloneNameForm({ name: '', slug: '', year: String(new Date().getFullYear() + 1), startDate: '', endDate: '', autoSlug: true });
+      setCloneCopyOptions(DEFAULT_CLONE_COPY_OPTIONS);
+    }
     setCloneWorking(false);
     setCloneError('');
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -368,7 +572,7 @@ export default function TournamentSetupWizard({
       setDataLoading(false);
     }).catch(() => setDataLoading(false));
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen, orgContactEmail, existingTournaments?.length]);
+  }, [isOpen, orgContactEmail, existingTournaments?.length, initialSourceTournamentId, canClone]);
 
   if (!isOpen) return null;
 
@@ -707,7 +911,7 @@ export default function TournamentSetupWizard({
         });
       }
 
-      await onCreated({ id: created.id, name: created.name, slug: created.slug });
+      await onCreated({ id: created.id, name: created.name, slug: created.slug, creationMethod: 'blank' });
     } catch (err) {
       setStepError(err instanceof Error ? err.message : 'Unable to save setup.');
     } finally {
@@ -774,18 +978,18 @@ export default function TournamentSetupWizard({
           <div className={styles.workflowModalFooter}>
             <div>
               {!options.hideBack && (
-                <button type="button" className="btn btn-ghost" onClick={() => previousStep && setActiveStep(previousStep)} disabled={saving || !previousStep}>
+                <button type="button" className="btn btn-ghost btn-data" onClick={() => previousStep && setActiveStep(previousStep)} disabled={saving || !previousStep}>
                   Back
                 </button>
               )}
             </div>
             <div className={styles.workflowFooterActions}>
               {options.allowSkip && (
-                <button type="button" className="btn btn-ghost" onClick={() => skipStep(options.step as SkippableStep)} disabled={saving}>
+                <button type="button" className="btn btn-ghost btn-data" onClick={() => skipStep(options.step as SkippableStep)} disabled={saving}>
                   Skip
                 </button>
               )}
-              <button type="button" className="btn btn-primary" onClick={options.onSave} disabled={saving || (options.step === 'tournament' && dataLoading)}>
+              <button type="button" className="btn btn-lime btn-data" onClick={options.onSave} disabled={saving || (options.step === 'tournament' && dataLoading)}>
                 {saving ? 'Saving...' : (options.step === 'tournament' && dataLoading) ? 'Loading…' : options.saveLabel}
               </button>
             </div>
@@ -797,7 +1001,10 @@ export default function TournamentSetupWizard({
 
   // ── PRE-STEP: CHOOSE ──────────────────────────────────────────────────────
   if (preStep === 'choose') {
-    const sorted = [...(existingTournaments ?? [])].sort((a, b) => (b.year ?? 0) - (a.year ?? 0));
+    const sorted = [...(existingTournaments ?? [])].sort((a, b) => {
+      const rankDiff = getSourceSortRank(a.status) - getSourceSortRank(b.status);
+      return rankDiff || ((b.year ?? 0) - (a.year ?? 0));
+    });
     return (
       <div className={styles.modalOverlay} role="presentation">
         {closeConfirmOpen && (
@@ -816,7 +1023,7 @@ export default function TournamentSetupWizard({
           <div className={styles.modalHeader}>
             <div>
               <h2 className={styles.modalTitle}>New Tournament</h2>
-              <p className={styles.modalSub}>How do you want to set up this tournament?</p>
+              <p className={styles.modalSub}>Start blank, or reuse setup from an event you already ran.</p>
             </div>
             <button type="button" className={styles.modalClose} onClick={requestClose} aria-label="Close">
               <X size={18} />
@@ -824,69 +1031,49 @@ export default function TournamentSetupWizard({
           </div>
 
           <div className={styles.workflowModalBody}>
-            {/* Clone option */}
-            <div style={{ marginBottom: '1.5rem' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
-                <Copy size={15} style={{ color: 'var(--logic-lime)' }} />
-                <strong style={{ fontSize: '0.9rem' }}>Clone a past tournament</strong>
+            <div className={styles.reuseIntro}>
+              <div className={styles.reuseTitleRow}>
+                <Copy size={15} />
+                <strong>Reuse a previous tournament setup</strong>
                 {!canClone && upgradeCopy && (
-                  <span className="badge badge-warning" style={{ fontSize: '0.7rem' }}>Tournament Plus</span>
+                  <span className={styles.plusBadge}>Tournament Plus</span>
                 )}
               </div>
-              <p style={{ fontSize: '0.8rem', color: 'var(--white-50)', marginBottom: '0.85rem', lineHeight: 1.5 }}>
-                Copy divisions, venues, contacts, branding, and fees from an existing tournament into this one.
+              <p>
+                Best for annual tournaments, seasonal classics, and repeat events where the structure already worked.
               </p>
               {!canClone && upgradeCopy ? (
-                <div className="alert alert-warning" style={{ margin: 0, fontSize: '0.82rem' }}>{upgradeCopy}</div>
+                <div className="alert alert-warning">{upgradeCopy}</div>
               ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                <div className={styles.sourceList}>
                   {sorted.map(t => (
                     <button
                       key={t.id}
                       type="button"
                       onClick={() => {
-                        const nextYear = (t.year ?? new Date().getFullYear()) + 1;
-                        const defaultName = `${t.name} ${nextYear}`;
                         setCloneSource(t);
-                        setCloneNameForm({
-                          name: defaultName,
-                          slug: generateSlug(defaultName),
-                          year: String(nextYear),
-                          startDate: '',
-                          endDate: '',
-                          autoSlug: true,
-                        });
+                        setCloneNameForm(getRepeatNameForm(t));
+                        setCloneCopyOptions(DEFAULT_CLONE_COPY_OPTIONS);
                         setCloneError('');
                         setPreStep('clone-name');
                       }}
-                      style={{
-                        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                        padding: '0.65rem 0.9rem',
-                        border: '1px solid var(--border-2)',
-                        borderRadius: '2px',
-                        background: 'var(--surface-1, var(--white-03))',
-                        cursor: 'pointer', textAlign: 'left', color: 'inherit',
-                        transition: 'border-color 0.15s',
-                      }}
-                      onMouseEnter={e => (e.currentTarget.style.borderColor = 'var(--logic-lime)')}
-                      onMouseLeave={e => (e.currentTarget.style.borderColor = 'var(--border-2)')}
+                      className={styles.sourceButton}
                     >
                       <span>
-                        <span style={{ display: 'block', fontWeight: 600, fontSize: '0.88rem' }}>{t.name}</span>
-                        {t.year && <span style={{ display: 'block', fontSize: '0.75rem', color: 'var(--white-40)' }}>{t.year} · {t.status ?? 'tournament'}</span>}
+                        <span>{t.name}</span>
+                        <small>{[t.year, getTournamentStatusLabel(t.status)].filter(Boolean).join(' · ')}</small>
                       </span>
-                      <ArrowRight size={14} style={{ color: 'var(--logic-lime)', flexShrink: 0 }} />
+                      <ArrowRight size={14} />
                     </button>
                   ))}
                 </div>
               )}
             </div>
 
-            {/* Divider */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.25rem' }}>
-              <div style={{ flex: 1, height: 1, background: 'var(--border-2)' }} />
-              <span style={{ fontSize: '0.72rem', color: 'var(--white-30)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>or</span>
-              <div style={{ flex: 1, height: 1, background: 'var(--border-2)' }} />
+            <div className={styles.choiceDivider}>
+              <span />
+              <strong>or</strong>
+              <span />
             </div>
           </div>
 
@@ -895,10 +1082,10 @@ export default function TournamentSetupWizard({
             <div className={styles.workflowFooterActions}>
               <button
                 type="button"
-                className="btn btn-primary"
+                className="btn btn-lime btn-data"
                 onClick={() => { setPreStep(null); }}
               >
-                Start from scratch
+                Start blank tournament
               </button>
             </div>
           </div>
@@ -909,6 +1096,18 @@ export default function TournamentSetupWizard({
 
   // ── PRE-STEP: CLONE NAME ──────────────────────────────────────────────────
   if (preStep === 'clone-name') {
+    const selectedCopyCount = Object.values(cloneCopyOptions).filter(Boolean).length;
+    const selectedCopyLabel = `${selectedCopyCount} of ${REUSE_COPY_OPTION_GROUPS.length} setup areas selected`;
+    const selectedCopyGroups = REUSE_COPY_OPTION_GROUPS
+      .filter(option => cloneCopyOptions[option.key])
+      .map(option => option.key);
+    const cloneDraftYear = Number(cloneNameForm.year);
+    const reuseWarnings = getReuseSetupWarnings(cloneSource, cloneDraftYear, cloneCopyOptions);
+    const toggleCopyOption = (key: CloneCopyOptionKey) => {
+      setCloneCopyOptions(options => ({ ...options, [key]: !options[key] }));
+      setCloneError('');
+    };
+
     async function submitClone() {
       if (!cloneSource) return;
       const name = cloneNameForm.name.trim();
@@ -918,6 +1117,15 @@ export default function TournamentSetupWizard({
       if (!slug || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) { setCloneError('Enter a valid URL slug (lowercase letters, numbers, hyphens).'); return; }
       if (!Number.isInteger(year) || year < 2000 || year > 2100) { setCloneError('Enter a valid year.'); return; }
       if (cloneNameForm.startDate && cloneNameForm.startDate < getTodayDateValue()) { setCloneError('Start date cannot be before today.'); return; }
+      if (cloneNameForm.endDate && !cloneNameForm.startDate) { setCloneError('Choose a start date before setting an end date.'); return; }
+      if (cloneNameForm.startDate && cloneNameForm.endDate && cloneNameForm.endDate < cloneNameForm.startDate) {
+        setCloneError('End date cannot be before the start date.');
+        return;
+      }
+      if (selectedCopyCount === 0) {
+        setCloneError('Choose at least one setup area to reuse, or start a blank tournament.');
+        return;
+      }
 
       setCloneWorking(true);
       setCloneError('');
@@ -929,20 +1137,28 @@ export default function TournamentSetupWizard({
             name, slug, year,
             startDate: cloneNameForm.startDate || null,
             endDate: cloneNameForm.endDate || null,
-            options: {
-              includeDivisions: true, includePools: true, includeSlots: true,
-              includeVenues: true, includeBranding: true,
-              includePublicPages: true, includeWelcome: true, includeRulesResources: true,
-              includeRegistrationFields: true, includeFeeSchedule: true,
+            options: buildCloneApiOptions(cloneCopyOptions),
+            analytics: {
+              sourceSurface,
+              selectedCopyGroups,
+              warningCount: reuseWarnings.length,
+              warningKeys: reuseWarnings.map(warning => warning.key),
             },
           }),
         });
-        const data = await res.json() as { tournament?: { id: string; name: string; slug: string }; error?: string };
-        if (!res.ok) throw new Error(data.error ?? 'Clone failed.');
+        const data = await res.json() as { tournament?: { id: string; name: string; slug: string }; copied?: CloneCopiedCounts; error?: string };
+        if (!res.ok) throw new Error(data.error ?? 'Unable to create tournament draft.');
         if (!data.tournament) throw new Error('No tournament returned.');
-        await onCreated({ id: data.tournament.id, name: data.tournament.name, slug: data.tournament.slug });
+        await onCreated({
+          id: data.tournament.id,
+          name: data.tournament.name,
+          slug: data.tournament.slug,
+          creationMethod: 'reused_setup',
+          sourceName: cloneSource.name,
+          copied: data.copied,
+        });
       } catch (err) {
-        setCloneError(err instanceof Error ? err.message : 'Unable to clone tournament.');
+        setCloneError(err instanceof Error ? err.message : 'Unable to create tournament draft.');
       } finally {
         setCloneWorking(false);
       }
@@ -965,8 +1181,8 @@ export default function TournamentSetupWizard({
         <div className={styles.workflowModal} role="dialog" aria-modal="true">
           <div className={styles.modalHeader}>
             <div>
-              <h2 className={styles.modalTitle}>Clone from {cloneSource?.name}</h2>
-              <p className={styles.modalSub}>Name and date your new tournament. Everything else comes from the clone.</p>
+              <h2 className={styles.modalTitle}>Reuse setup from {cloneSource?.name}</h2>
+              <p className={styles.modalSub}>Name the new draft, then review the setup before publishing.</p>
             </div>
             <button type="button" className={styles.modalClose} onClick={requestClose} aria-label="Close">
               <X size={18} />
@@ -1040,9 +1256,60 @@ export default function TournamentSetupWizard({
               </label>
             </div>
 
-            <div className="alert alert-info" style={{ marginTop: '1rem', fontSize: '0.8rem' }}>
-              Divisions, venues, contacts, branding, fees, and rules will be copied from <strong>{cloneSource?.name}</strong>. Registrations and scores are never copied.
+            <div className={styles.reuseCopyGrid}>
+              <div className={styles.reuseCopyPanel}>
+                <div className={styles.copyOptionsHeader}>
+                  <h3>Setup to reuse</h3>
+                  <span>{selectedCopyLabel}</span>
+                </div>
+                <div className={styles.copyOptionList}>
+                  {REUSE_COPY_OPTION_GROUPS.map(option => (
+                    <label
+                      key={option.key}
+                      className={`${styles.copyOptionCard} ${cloneCopyOptions[option.key] ? styles.copyOptionCardOn : ''}`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={cloneCopyOptions[option.key]}
+                        onChange={() => toggleCopyOption(option.key)}
+                      />
+                      <span>
+                        <strong>{option.title}</strong>
+                        <em>{option.description}</em>
+                        <small>{option.details.join(' / ')}</small>
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+              <div className={styles.reuseCopyPanel}>
+                <h3>Never copied</h3>
+                <ul className={styles.reuseCopyList}>
+                  {REUSE_SETUP_EXCLUDED.map(item => (
+                    <li key={item}><span className={styles.neverDot} /> {item}</li>
+                  ))}
+                </ul>
+              </div>
             </div>
+
+            <p className={styles.draftPrivacyNote}>The new tournament stays private as a draft until you activate it.</p>
+
+            {reuseWarnings.length > 0 && (
+              <div className={styles.reuseWarningPanel}>
+                <div className={styles.reuseWarningHeader}>
+                  <AlertCircle size={15} />
+                  <strong>Review before publishing</strong>
+                </div>
+                <ul>
+                  {reuseWarnings.map(warning => (
+                    <li key={warning.title}>
+                      <strong>{warning.title}</strong>
+                      <span>{warning.description}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
 
             {cloneError && (
               <div className={styles.planError} style={{ marginTop: '0.75rem' }}>
@@ -1053,13 +1320,13 @@ export default function TournamentSetupWizard({
 
           <div className={styles.workflowModalFooter}>
             <div>
-              <button type="button" className="btn btn-ghost" onClick={() => { setPreStep('choose'); setCloneError(''); }} disabled={cloneWorking}>
+              <button type="button" className="btn btn-ghost btn-data" onClick={() => { setPreStep('choose'); setCloneError(''); }} disabled={cloneWorking}>
                 Back
               </button>
             </div>
             <div className={styles.workflowFooterActions}>
-              <button type="button" className="btn btn-primary" onClick={submitClone} disabled={cloneWorking}>
-                {cloneWorking ? 'Creating clone…' : 'Create clone'}
+              <button type="button" className="btn btn-lime btn-data" onClick={submitClone} disabled={cloneWorking}>
+                {cloneWorking ? 'Creating draft…' : 'Create tournament draft'}
               </button>
             </div>
           </div>

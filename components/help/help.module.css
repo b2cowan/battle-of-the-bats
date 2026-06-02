@@ -88,6 +88,28 @@
 }
 .calloutDismiss:hover { color: rgba(255, 255, 255, 0.55); }
 
+@media (max-width: 640px) {
+  .callout {
+    padding: 0.6rem 0.75rem;
+    border-radius: 0 4px 4px 0;
+  }
+
+  /* Hide the body text; title + CTA are enough on narrow screens */
+  .calloutText {
+    display: none;
+  }
+
+  .calloutTitle {
+    margin-bottom: 0.15rem;
+    font-size: 0.82rem;
+  }
+
+  .calloutCta {
+    margin-top: 0.3rem;
+    font-size: 0.78rem;
+  }
+}
+
 /* ── HelpTooltip ─────────────────────────────────────────────────────────── */
 .tooltip {
   position: relative;

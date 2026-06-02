@@ -71,6 +71,7 @@ const tournamentsHelp: HelpPageContent = {
       content: (
         <>
           <p>Click <strong>New Tournament</strong> from Manage Tournaments. The setup wizard saves the tournament as a draft so you can finish the details before anything appears publicly.</p>
+          <p>For repeat events, Tournament Plus can start the draft from a previous tournament so divisions, locations, registration setup, public settings, and content are ready for review.</p>
           <p>The <strong>URL slug</strong> is used in every public tournament link. Choose it carefully. Changing it later can break links already shared by email, social media, or team communications.</p>
           <p>The dashboard launch checklist shows what is still required before activation. When every required item is complete, use Manage Tournaments to change the status from <strong>Draft</strong> to <strong>Active</strong>.</p>
         </>
@@ -84,6 +85,65 @@ const tournamentsHelp: HelpPageContent = {
           popular: true,
           answer: (
             <p>The public URL changes immediately. Any previously shared links to registration, schedule, standings, rules, or results may stop working. Update external links before saving a new slug.</p>
+          ),
+        },
+      ],
+    },
+    {
+      id: 'repeat-event-setup',
+      group: 'Setup',
+      heading: 'Reuse setup for repeat tournaments',
+      summary: 'Start the next event from prior setup without bringing teams, scores, or payments along.',
+      keywords: ['reuse setup', 'repeat tournament', 'next year', 'previous tournament', 'Tournament Plus', 'clone'],
+      searchText: 'reuse setup previous tournament repeat event next year copy clone Tournament Plus draft divisions pools slots venues locations registration questions fees branding public pages rules resources welcome never copied teams registrations waitlists games scores standings champions payments uploaded files private notes',
+      links: [
+        { label: 'Manage Tournaments', href: '../tournaments/manage' },
+        { label: 'Dashboard', href: '../tournaments/dashboard' },
+        { label: 'Subscription', href: '../tournaments/settings/subscription' },
+      ],
+      content: (
+        <>
+          <p>Tournament Plus helps returning organizers turn a repeat event into review-and-adjust work instead of rebuilding from empty. Start from Manage Tournaments, the new tournament wizard, a draft dashboard prompt, or the completed tournament Summary page.</p>
+          <p>The reused tournament is always created as a draft. Review dates, fees, registration questions, public page visibility, rules, and welcome content before activation.</p>
+          <p>Default setup areas can include:</p>
+          <ul>
+            <li><strong>Event structure</strong> - divisions, pools, and empty schedule slots.</li>
+            <li><strong>Locations</strong> - venues and playing surfaces.</li>
+            <li><strong>Registration setup</strong> - custom questions and fee setup.</li>
+            <li><strong>Public presence</strong> - branding and public page visibility.</li>
+            <li><strong>Content</strong> - rules, resources, and welcome content.</li>
+          </ul>
+          <p><strong>Never copied:</strong> teams, registrations, waitlists, games, scores, standings, champions, payment status, reminders, uploaded files, message history, archived summaries, or private admin notes.</p>
+          <p>Free Tournament users may see the repeat-event value prompt, but creating a reused setup draft is available on Tournament Plus, League, and Club.</p>
+        </>
+      ),
+      faqs: [
+        {
+          id: 'faq-reuse-previous-tournament-setup',
+          question: 'Can I reuse a previous tournament setup?',
+          answerText: 'Tournament Plus can create a new draft from a previous tournament while leaving teams, results, payments, files, and history behind.',
+          keywords: ['reuse setup', 'previous tournament', 'next year', 'clone', 'Tournament Plus'],
+          popular: true,
+          answer: (
+            <p>Yes. Use <strong>Reuse setup</strong> from Manage Tournaments, the new tournament wizard, a draft dashboard prompt, or a completed tournament Summary page. Choose the setup areas to copy, then review the new draft before activation.</p>
+          ),
+        },
+        {
+          id: 'faq-repeat-event-never-copies',
+          question: 'What is never copied into the new draft?',
+          answerText: 'Teams, registrations, waitlists, games, scores, standings, champions, payments, files, message history, summaries, and private notes are not copied.',
+          keywords: ['never copied', 'teams', 'scores', 'payments', 'registrations', 'files'],
+          answer: (
+            <p>Operational history stays behind. The new draft does not copy teams, registrations, waitlists, games, scores, standings, champions, payments, uploaded files, message history, archived summaries, or private admin notes.</p>
+          ),
+        },
+        {
+          id: 'faq-review-reused-setup',
+          question: 'What should I review after reusing setup?',
+          answerText: 'Review dates, divisions, venues, registration questions, fees, public pages, rules, resources, and welcome copy before activating.',
+          keywords: ['review copied setup', 'activation', 'draft', 'warnings'],
+          answer: (
+            <p>Check the new draft before publishing: event dates, division capacities, venues, registration questions, fee amounts, public page visibility, rules, resources, and welcome/news copy. The workflow may also show review warnings when the source is old, still draft, or still active.</p>
           ),
         },
       ],
@@ -316,6 +376,7 @@ const tournamentsHelp: HelpPageContent = {
           <p>Payment status helps admins track whether an accepted team has no schedule, pending payment, deposit paid, paid in full, or past due.</p>
           <p>The free Tournament plan supports standard registration fields, selected-row status updates, basic payment tracking, and waitlist collection for a starter event. Tournament Plus adds the registration operations tools serious organizers usually need: custom questions, file collection, Excel/PDF exports, payment reminders, and waitlist promotion workflows.</p>
           <p>Use <strong>Registration Questions</strong> when you need tournament-specific coach confirmations, dropdown answers, or uploaded documents. Submitted answers appear in admin registration details and registration exports.</p>
+          <p>When you reuse setup from a previous tournament, the <strong>Registration setup</strong> option can bring forward custom questions and fee setup. Submitted answers, team registrations, payment statuses, and uploaded files are never copied.</p>
           <p>Use bulk actions only after filtering and selecting the exact registrations you want to change. Bulk actions update selected registrations only; they do not apply to hidden rows or every registration in the tournament.</p>
         </>
       ),
@@ -599,6 +660,7 @@ const tournamentsHelp: HelpPageContent = {
       links: [
         { label: 'Manage Tournaments', href: '../tournaments/manage' },
         { label: 'Past Tournaments', href: '../tournaments/archives' },
+        { label: 'Summary', href: '../tournaments/summary' },
       ],
       content: (
         <>
@@ -611,7 +673,7 @@ const tournamentsHelp: HelpPageContent = {
             <li><strong>Sealed</strong> - a permanent snapshot of final results has been created.</li>
           </ul>
           <p>Archive when you want to retire an event and free the slot. Seal only after scores and results are final. Sealing is permanent and cannot be undone.</p>
-          <p>For completed or archived tournaments, Tournament Plus adds a <strong>Summary</strong> page with registration totals, payment readiness, schedule progress, division recaps, public results links, print/share actions, and a prompt to start next year from the same setup.</p>
+          <p>For completed or archived tournaments, Tournament Plus adds a <strong>Summary</strong> page with registration totals, payment readiness, schedule progress, division recaps, public results links, print/share actions, and a prompt to reuse the setup for the next event.</p>
         </>
       ),
       faqs: [
@@ -659,7 +721,7 @@ const tournamentsHelp: HelpPageContent = {
           answerText: 'Tournament Plus gives completed or archived tournaments a printable recap and repeat-event planning surface.',
           keywords: ['summary', 'recap', 'post-event', 'clone next year', 'renewal'],
           answer: (
-            <p>The Summary page helps organizers share the public results record, print a recap, review registration and payment readiness, and start a future draft from the completed tournament setup.</p>
+            <p>The Summary page helps organizers share the public results record, print a recap, review registration and payment readiness, and create a future draft from the completed tournament setup.</p>
           ),
         },
       ],

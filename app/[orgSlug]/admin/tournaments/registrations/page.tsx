@@ -1,24 +1,31 @@
 'use client';
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import Link from 'next/link';
-import { Users, X, RefreshCw, ChevronDown, ChevronUp, AlertCircle, Plus, Trash2, LayoutDashboard, ArrowLeftRight, Mail, Pencil, ClipboardList, ExternalLink, ListChecks } from 'lucide-react';
+import { useSearchParams } from 'next/navigation';
+import { Users, X, RefreshCw, ChevronDown, ChevronUp, AlertCircle, Plus, SlidersHorizontal, Trash2, ArrowLeftRight, Mail, Pencil, ClipboardList, ExternalLink, ListChecks, Check } from 'lucide-react';
 import { formatPoolName } from '@/lib/utils';
 import { useTournament } from '@/lib/tournament-context';
 import { useOrg } from '@/lib/org-context';
+import { usePageTitle } from '@/lib/usePageTitle';
 import { hasPlanFeature, requiresTournamentPlusCopy } from '@/lib/plan-features';
+import {
+  buildRegistrationAttentionSummary,
+  getRegistrationAttentionBucket,
+  isRegistrationAttentionKey,
+  teamMatchesRegistrationAttentionKey,
+  type RegistrationAttentionContext,
+  type RegistrationAttentionField,
+  type RegistrationAttentionKey,
+} from '@/lib/registration-attention';
 import { Division } from '@/lib/types';
 import { buildFilename, downloadPDF, DEFAULT_PDF_SETTINGS, type OrgPdfSettings } from '@/lib/export';
 import s from '../../admin-common.module.css';
 import styles from './teams-admin.module.css';
 import FeedbackModal from '@/components/FeedbackModal';
 import ExportMenu from '@/components/admin/ExportMenu';
-import HelpCallout from '@/components/help/HelpCallout';
 import {
   SelectionActionBar,
   ToolbarGroup,
-  ToolbarMenu,
-  ToolbarMenuItem,
-  ToolbarMenuSeparator,
   ToolbarSearch,
   ToolbarSegmentedControl,
   ToolbarSelect,
@@ -53,6 +60,7 @@ interface TeamRecord {
 interface PoolSlot {
   id: string;
   poolId: string;
+  divisionId: string;
   slotNumber: number;
   displayName: string;
   teamId: string | null;
@@ -87,6 +95,7 @@ async function readJsonArray<T>(res: Response, label: string): Promise<T[]> {
 
 type PaymentStatus = 'paid' | 'deposit-paid' | 'pending' | 'past-due' | 'no-schedule';
 type PaymentFilter = 'all' | 'unpaid' | 'deposit-paid' | 'paid' | 'past-due';
+type ActivePaymentFilter = Exclude<PaymentFilter, 'all'>;
 type FeeMode = 'tournament' | 'division';
 type Status = 'pending' | 'accepted' | 'rejected' | 'waitlist';
 type BulkAction = 'accept' | 'reject' | 'waitlist' | 'mark_deposit_paid' | 'mark_paid';
@@ -232,8 +241,10 @@ function matchesPaymentFilter(status: PaymentStatus, filter: PaymentFilter) {
 }
 
 export default function UnifiedTeamsPage() {
-  const { currentTournament, loading: tournamentLoading } = useTournament();
+  const { currentTournament, isLocked, loading: tournamentLoading } = useTournament();
   const { currentOrg } = useOrg();
+  const searchParams = useSearchParams();
+  usePageTitle('Teams');
   const [regs, setRegs] = useState<TeamRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedStatuses, setSelectedStatuses] = useState<Status[]>(['pending', 'accepted', 'waitlist']);
@@ -243,7 +254,6 @@ export default function UnifiedTeamsPage() {
   const [working, setWorking] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [showSummaryModal, setShowSummaryModal] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [addForm, setAddForm] = useState({
     name: '',
@@ -259,11 +269,17 @@ export default function UnifiedTeamsPage() {
   const [feeMode, setFeeMode] = useState<FeeMode>('tournament');
   const [feeSchedule, setFeeSchedule] = useState<FeeSchedule>({ depositAmount: null, depositDueDate: null, totalFeeAmount: null, totalFeeDueDate: null });
   const [poolSlots, setPoolSlots] = useState<PoolSlot[]>([]);
+  const [allPoolSlots, setAllPoolSlots] = useState<PoolSlot[]>([]);
+  const [registrationFields, setRegistrationFields] = useState<RegistrationAttentionField[]>([]);
   const [swapMode, setSwapMode] = useState(false);
   const [swapFirstSlotId, setSwapFirstSlotId] = useState<string | null>(null);
   const [selectedRegistrationIds, setSelectedRegistrationIds] = useState<Set<string>>(new Set());
   const [multiSelectMode, setMultiSelectMode] = useState(false);
-  const [paymentFilter, setPaymentFilter] = useState<PaymentFilter>('all');
+  const [paymentFilters, setPaymentFilters] = useState<ActivePaymentFilter[]>([]);
+  const [mobileSettingsOpen, setMobileSettingsOpen] = useState(false);
+  const [activeAttentionKey, setActiveAttentionKey] = useState<RegistrationAttentionKey | null>(null);
+  const attentionQueryAppliedRef = useRef<string | null>(null);
+  const divisionQueryAppliedRef = useRef<string | null>(null);
   const [showReminderModal, setShowReminderModal] = useState(false);
   const [paymentInstructions, setPaymentInstructions] = useState('');
   const [editingTeam, setEditingTeam] = useState<TeamRecord | null>(null);
@@ -284,6 +300,8 @@ export default function UnifiedTeamsPage() {
       setRegs([]);
       setDivisions([]);
       setPoolSlots([]);
+      setAllPoolSlots([]);
+      setRegistrationFields([]);
       setErrorMsg(null);
       setLoading(false);
       setHasLoadedInitial(true);
@@ -295,16 +313,33 @@ export default function UnifiedTeamsPage() {
       const tournamentParam = `tournamentId=${encodeURIComponent(currentTournament.id)}`;
       const orgParam = currentOrg?.slug ? `&orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
       const orgOnlyParam = currentOrg?.slug ? `?orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
-      const [rRes, adminTeamsRes, groupsRes, tRes] = await Promise.all([
+      const canLoadRegistrationFields = currentOrg ? hasPlanFeature(currentOrg.planId, 'custom_registration_fields') : false;
+      const fieldsRequest = canLoadRegistrationFields
+        ? fetch(`/api/admin/tournaments/${encodeURIComponent(currentTournament.id)}/registration-fields${orgOnlyParam}`, SAME_ORIGIN_FETCH)
+        : Promise.resolve(null);
+      const [rRes, adminTeamsRes, groupsRes, tRes, allSlotsRes, fieldsRes] = await Promise.all([
         fetch(`/api/registrations?${tournamentParam}${orgParam}`, SAME_ORIGIN_FETCH),
         fetch(`/api/admin/teams?${tournamentParam}${orgParam}`, SAME_ORIGIN_FETCH),
         fetch(`/api/admin/divisions?${tournamentParam}${orgParam}`, SAME_ORIGIN_FETCH),
         fetch(`/api/admin/tournaments${orgOnlyParam}`, SAME_ORIGIN_FETCH),
+        fetch(`/api/admin/pool-slots?${tournamentParam}${orgParam}`, SAME_ORIGIN_FETCH),
+        fieldsRequest,
       ]);
 
       const groups = await readJsonArray<Division>(groupsRes, 'Divisions');
+      const allSlots = await readJsonArray<PoolSlot>(allSlotsRes, 'Pool slots');
       const adminTeams = await readJsonArray<any>(adminTeamsRes, 'Teams');
       const adminMap = new Map(adminTeams.map((t: any) => [t.id, t]));
+      let fields: RegistrationAttentionField[] = [];
+      if (fieldsRes) {
+        const fieldPayload = await readJsonResponse<{ fields?: RegistrationAttentionField[] }>(fieldsRes, 'Registration questions').catch(() => ({ fields: [] }));
+        fields = (fieldPayload.fields ?? []).map(field => ({
+          id: field.id,
+          label: field.label,
+          fieldType: field.fieldType,
+          required: Boolean(field.required),
+        }));
+      }
 
       const registrations = await readJsonArray<any>(rRes, 'Registrations');
       const rData = registrations.map((r: any) => {
@@ -323,6 +358,8 @@ export default function UnifiedTeamsPage() {
       });
 
       setDivisions(groups);
+      setAllPoolSlots(allSlots);
+      setRegistrationFields(fields);
       if (groups.length) {
         if (!selectedDivisionId || selectedDivisionId === 'all') {
           setSelectedDivisionId(groups[0].id);
@@ -362,7 +399,7 @@ export default function UnifiedTeamsPage() {
       setLoading(false);
       setHasLoadedInitial(true);
     }
-  }, [tournamentLoading, currentTournament?.id, currentOrg?.slug, selectedDivisionId, stableSortedIds.length, addForm.divisionId]);
+  }, [tournamentLoading, currentTournament?.id, currentOrg?.slug, currentOrg?.planId, selectedDivisionId, stableSortedIds.length, addForm.divisionId]);
 
   const loadPoolSlots = useCallback(async () => {
     if (!selectedDivisionId || !currentTournament) { setPoolSlots([]); return; }
@@ -726,7 +763,7 @@ export default function UnifiedTeamsPage() {
     window.location.href = `/api/admin/tournaments/${encodeURIComponent(currentTournament!.id)}/registrations/export?format=csv${orgParam}`;
   }
 
-  async function handleExportPDF() {
+  async function doPdfExport() {
     if (!guardExport()) return;
 
     const settings: OrgPdfSettings = {
@@ -780,6 +817,19 @@ export default function UnifiedTeamsPage() {
       settings,
       groups.length > 0 ? groups : undefined,
     );
+  }
+
+  async function handleExportPDF() {
+    if (
+      canUsePDF &&
+      pdfSettings !== null &&
+      Object.keys(pdfSettings).length === 0 &&
+      !localStorage.getItem('flhq-pdf-setup-warned')
+    ) {
+      setPdfWarningOpen(true);
+      return;
+    }
+    await doPdfExport();
   }
 
   function toggleRegistrationSelection(id: string) {
@@ -924,11 +974,13 @@ export default function UnifiedTeamsPage() {
   const slotConfigured = poolSlots.length > 0;
   const waitlistAutomationAvailable = currentOrg ? hasPlanFeature(currentOrg.planId, 'waitlist_automation') : false;
   const paymentToolsAvailable = currentOrg ? hasPlanFeature(currentOrg.planId, 'payment_readiness_tools') : false;
+  const commandCenterAvailable = paymentToolsAvailable;
+  const subscriptionHref = `/${currentOrg?.slug ?? 'admin'}/admin/tournaments/settings/subscription`;
 
   // PDF settings — fetched once on mount; used in handleExportPDF
   const [pdfSettings, setPdfSettings] = useState<OrgPdfSettings | null>(null);
   const canUsePDF = currentOrg ? hasPlanFeature(currentOrg.planId, 'pdf_exports') : false;
-  const showPdfNudge = canUsePDF && pdfSettings !== null && Object.keys(pdfSettings).length === 0;
+  const [pdfWarningOpen, setPdfWarningOpen] = useState(false);
 
   useEffect(() => {
     fetch(`/api/admin/org/pdf-settings${orgQuery}`, SAME_ORIGIN_FETCH)
@@ -936,6 +988,30 @@ export default function UnifiedTeamsPage() {
       .then(data => setPdfSettings(data as OrgPdfSettings))
       .catch(() => setPdfSettings(null));
   }, [orgQuery]);
+
+  // Restore view settings from localStorage when tournament changes.
+  useEffect(() => {
+    const tid = currentTournament?.id;
+    if (!tid) return;
+    try {
+      const raw = localStorage.getItem(`flhq-teams-${tid}`);
+      if (!raw) return;
+      const cached = JSON.parse(raw) as Partial<{ viewMode: 'flat' | 'pools'; selectedStatuses: Status[]; selectedDivisionId: string }>;
+      if (cached.viewMode === 'flat' || cached.viewMode === 'pools') setViewMode(cached.viewMode);
+      if (Array.isArray(cached.selectedStatuses) && cached.selectedStatuses.length > 0) setSelectedStatuses(cached.selectedStatuses);
+      if (cached.selectedDivisionId) setSelectedDivisionId(cached.selectedDivisionId);
+    } catch {}
+  }, [currentTournament?.id]);
+
+  // Persist view settings. Guard: only write once divisions are loaded.
+  useEffect(() => {
+    const tid = currentTournament?.id;
+    if (!tid || !selectedDivisionId || divisions.length === 0) return;
+    try {
+      localStorage.setItem(`flhq-teams-${tid}`, JSON.stringify({ viewMode, selectedStatuses, selectedDivisionId }));
+    } catch {}
+  }, [currentTournament?.id, viewMode, selectedStatuses, selectedDivisionId, divisions.length]);
+
   const divRegs = regs.filter(r => r.division_id === selectedDivisionId);
   const waitlistTeams = divRegs.filter(r => r.waitlistPosition != null).sort((a, b) => (a.waitlistPosition ?? 0) - (b.waitlistPosition ?? 0));
   const filledSlotCount = poolSlots.filter(s => s.teamId !== null).length;
@@ -972,6 +1048,45 @@ export default function UnifiedTeamsPage() {
       pastDue,
     };
   }, [divisions, divRegs, feeMode, feeSchedule, today]);
+
+  const slotConfiguredDivisionIds = useMemo(() => {
+    const ids = new Set(allPoolSlots.map(slot => slot.divisionId).filter(Boolean));
+    if (slotConfigured && selectedDivisionId) ids.add(selectedDivisionId);
+    return ids;
+  }, [allPoolSlots, selectedDivisionId, slotConfigured]);
+
+  const attentionContext = useMemo<RegistrationAttentionContext>(() => ({
+    divisions: divisions.map(group => ({
+      id: group.id,
+      name: group.name,
+      depositAmount: group.depositAmount,
+      depositDueDate: group.depositDueDate,
+      totalFeeAmount: group.totalFeeAmount,
+      totalFeeDueDate: group.totalFeeDueDate,
+    })),
+    requiredFields: registrationFields.filter(field => field.required),
+    feeMode,
+    feeSchedule,
+    slotConfiguredDivisionIds,
+    today,
+  }), [divisions, feeMode, feeSchedule, registrationFields, slotConfiguredDivisionIds, today]);
+
+  const attentionSummary = useMemo(() => buildRegistrationAttentionSummary(
+    regs.map(team => ({
+      id: team.id,
+      divisionId: team.division_id,
+      status: team.status,
+      paymentStatus: team.paymentStatus,
+      depositPaid: team.depositPaid,
+      totalPaid: team.totalPaid,
+      slotId: team.slotId,
+      waitlistPosition: team.waitlistPosition,
+      customAnswers: team.customAnswers,
+    })),
+    attentionContext,
+  ), [attentionContext, regs]);
+  const activeAttentionBucket = activeAttentionKey ? getRegistrationAttentionBucket(attentionSummary, activeAttentionKey) : null;
+  const activeAttentionLocked = Boolean(activeAttentionBucket?.plusOnly && !commandCenterAvailable);
 
   const slotsByPool = useMemo(() => {
     if (!selectedGroup?.pools) return [];
@@ -1089,8 +1204,19 @@ export default function UnifiedTeamsPage() {
     const matchesStatus = selectedStatuses.length === 0 || selectedStatuses.includes(r.status);
     const matchesSearch = search === '' || r.name.toLowerCase().includes(search.toLowerCase()) || r.coach.toLowerCase().includes(search.toLowerCase());
     const pStatus = computePaymentStatus(r, getEffectiveFee(r, divisions, feeMode, feeSchedule), today);
-    const matchesPayment = !paymentToolsAvailable || matchesPaymentFilter(pStatus, paymentFilter);
-    return matchesStatus && matchesSearch && matchesPayment;
+    const matchesPayment = !paymentToolsAvailable || paymentFilters.length === 0 || paymentFilters.some(f => matchesPaymentFilter(pStatus, f));
+    const matchesAttention = !activeAttentionKey || activeAttentionLocked || teamMatchesRegistrationAttentionKey({
+      id: r.id,
+      divisionId: r.division_id,
+      status: r.status,
+      paymentStatus: r.paymentStatus,
+      depositPaid: r.depositPaid,
+      totalPaid: r.totalPaid,
+      slotId: r.slotId,
+      waitlistPosition: r.waitlistPosition,
+      customAnswers: r.customAnswers,
+    }, activeAttentionKey, attentionContext);
+    return matchesStatus && matchesSearch && matchesPayment && matchesAttention;
   });
   const stableRank = new Map(stableSortedIds.map((id, index) => [id, index]));
   const flatDisplay = [...filtered].sort((a, b) => {
@@ -1101,7 +1227,7 @@ export default function UnifiedTeamsPage() {
     if (rankDelta !== 0) return rankDelta;
     return new Date(b.registered_at).getTime() - new Date(a.registered_at).getTime();
   });
-  const selectableRows = slotConfigured
+  const selectableRows = slotConfigured && !activeAttentionKey
     ? divRegs.filter(row => row.waitlistPosition != null || poolSlots.some(slot => slot.teamId === row.id))
     : flatDisplay;
   const visibleSelectableIds = selectableRows.map(row => row.id);
@@ -1110,6 +1236,130 @@ export default function UnifiedTeamsPage() {
   const divisionOptions = divisions.length
     ? divisions.map(g => ({ value: g.id, label: g.name }))
     : [{ value: '', label: 'No divisions' }];
+
+  const applyAttentionFilterState = useCallback((key: RegistrationAttentionKey) => {
+    setActiveAttentionKey(key);
+    setMobileSettingsOpen(false);
+    setSearch('');
+
+    if (key === 'pending_review') {
+      setSelectedStatuses(['pending']);
+      setPaymentFilters([]);
+      return;
+    }
+
+    if (key === 'waitlist') {
+      setSelectedStatuses(['waitlist']);
+      setPaymentFilters([]);
+      return;
+    }
+
+    if (key === 'unpaid') {
+      setSelectedStatuses(['accepted']);
+      setPaymentFilters(['unpaid']);
+      return;
+    }
+
+    if (key === 'past_due') {
+      setSelectedStatuses(['accepted']);
+      setPaymentFilters(['past-due']);
+      return;
+    }
+
+    if (key === 'unplaced') {
+      setSelectedStatuses(['accepted']);
+      setPaymentFilters([]);
+      return;
+    }
+
+    setSelectedStatuses(['pending', 'accepted', 'waitlist']);
+    setPaymentFilters([]);
+  }, []);
+
+  const showCommandCenterUpgrade = useCallback(() => {
+    setFeedback({
+      isOpen: true,
+      title: 'Tournament Plus Command Center',
+      message: 'Tournament Plus turns payment, required intake, and placement follow-ups into one focused command center.',
+      type: 'warning',
+    });
+  }, []);
+
+  const focusAttentionBucket = useCallback((key: RegistrationAttentionKey, divisionId?: string) => {
+    const bucket = getRegistrationAttentionBucket(attentionSummary, key);
+    if (bucket?.plusOnly && !commandCenterAvailable) {
+      setActiveAttentionKey(key);
+      showCommandCenterUpgrade();
+      return;
+    }
+
+    setActiveAttentionKey(key);
+    const divisionCounts = bucket?.divisionCounts ?? [];
+    const selectedDivisionHasCount = divisionCounts.some(row => row.divisionId === selectedDivisionId);
+    const targetDivisionId = divisionId
+      ?? (divisionCounts.length === 1 ? divisionCounts[0].divisionId : selectedDivisionHasCount ? selectedDivisionId : '');
+
+    if (!targetDivisionId && divisionCounts.length > 1) {
+      applyAttentionFilterState(key);
+      return;
+    }
+
+    if (targetDivisionId) {
+      setSelectedDivisionId(targetDivisionId);
+      setSwapMode(false);
+      setSwapFirstSlotId(null);
+    }
+
+    applyAttentionFilterState(key);
+  }, [applyAttentionFilterState, attentionSummary, commandCenterAvailable, selectedDivisionId, showCommandCenterUpgrade]);
+
+  const clearAttentionFocus = useCallback(() => {
+    setActiveAttentionKey(null);
+    setSelectedStatuses(['pending', 'accepted', 'waitlist']);
+    setPaymentFilters([]);
+  }, []);
+
+  const attentionParam = searchParams.get('attention');
+  const divisionParam = searchParams.get('division');
+  useEffect(() => {
+    if (!hasLoadedInitial || !currentTournament?.id || !divisionParam) return;
+    if (!divisions.some(group => group.id === divisionParam)) return;
+    const token = `${currentTournament.id}:${divisionParam}`;
+    if (divisionQueryAppliedRef.current === token) return;
+    divisionQueryAppliedRef.current = token;
+    setSelectedDivisionId(divisionParam);
+    setSwapMode(false);
+    setSwapFirstSlotId(null);
+  }, [currentTournament?.id, divisionParam, divisions, hasLoadedInitial]);
+
+  useEffect(() => {
+    if (!hasLoadedInitial || !currentTournament?.id || !isRegistrationAttentionKey(attentionParam)) return;
+    const validDivisionParam = divisionParam && divisions.some(group => group.id === divisionParam) ? divisionParam : undefined;
+    const token = `${currentTournament.id}:${attentionParam}:${validDivisionParam ?? ''}`;
+    if (attentionQueryAppliedRef.current === token) return;
+    attentionQueryAppliedRef.current = token;
+    focusAttentionBucket(attentionParam, validDivisionParam);
+  }, [attentionParam, currentTournament?.id, divisionParam, divisions, focusAttentionBucket, hasLoadedInitial]);
+
+  const hasNonDefaultFilters = paymentFilters.length > 0 ||
+    selectedStatuses.length !== 3 ||
+    !selectedStatuses.includes('pending') ||
+    !selectedStatuses.includes('accepted') ||
+    !selectedStatuses.includes('waitlist');
+
+  // Settings summary shown in the strip below the toolbar on mobile
+  const settingsSummary = !slotConfigured ? (() => {
+    const parts: string[] = [viewMode === 'pools' ? 'Pools' : 'Flat'];
+    const defaultSet = new Set<Status>(['pending', 'accepted', 'waitlist']);
+    const statusIsDefault = selectedStatuses.length === 3 && selectedStatuses.every(s => defaultSet.has(s));
+    if (!statusIsDefault && selectedStatuses.length > 0)
+      parts.push(selectedStatuses.map(s => APPROVAL_STATUS_INITIAL[s]).join(' '));
+    if (paymentFilters.length > 0) {
+      const SHORT: Record<ActivePaymentFilter, string> = { unpaid: 'Unpaid', 'deposit-paid': 'Deposit', paid: 'Paid', 'past-due': 'Past Due' };
+      parts.push(paymentFilters.map(f => SHORT[f]).join(' · '));
+    }
+    return parts.join(' · ');
+  })() : null;
 
   const renderFlatRow = (r: TeamRecord) => {
     const isExpanded = expanded.has(r.id);
@@ -1200,7 +1450,8 @@ export default function UnifiedTeamsPage() {
         title="Teams"
         subtitle="Manage all teams and signups in one place"
         mobileActionsInline
-        actions={(
+        locked={isLocked}
+        actions={!isLocked ? (
           <>
           {currentOrg && hasPlanFeature(currentOrg.planId, 'custom_registration_fields') && (
             <Link
@@ -1224,19 +1475,9 @@ export default function UnifiedTeamsPage() {
             <span className={styles.addTeamLabel}>Add Team</span>
           </button>
           </>
-        )}
+        ) : undefined}
       />
 
-      {showPdfNudge && (
-        <HelpCallout
-          variant="info"
-          title="PDF settings not configured"
-          body="Your PDF export will use default styling. Set up your header, logo, and footer once and all future PDFs will use those settings."
-          cta={{ label: 'Configure PDF Settings', href: `/${currentOrg?.slug}/admin/tournaments/settings/pdf` }}
-          dismissible
-          localStorageKey="flhq-pdf-nudge-registrations"
-        />
-      )}
 
       {errorMsg && (
         <div className="alert alert-danger" style={{ margin: '1rem 2rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
@@ -1245,9 +1486,10 @@ export default function UnifiedTeamsPage() {
         </div>
       )}
 
+
       <TournamentAdminToolbar ariaLabel="Registration controls" className={styles.registrationToolbar}>
         {/* ── Row 1: controls + end actions ── */}
-        <ToolbarGroup grow className={styles.registrationContextGroup}>
+        <ToolbarGroup grow className={`${styles.registrationContextGroup} ${styles.teamsStartGroup}`}>
           <ToolbarSelect
             label="Division"
             value={selectedDivisionId}
@@ -1271,21 +1513,7 @@ export default function UnifiedTeamsPage() {
           )}
         </ToolbarGroup>
 
-        <ToolbarGroup align="end" className={styles.registrationActionGroup}>
-          {/* Mobile only — sits with Export/Tools; hidden on desktop where it moves to the context group */}
-          {!slotConfigured && (
-            <div className={styles.segmentedMobile}>
-              <ToolbarSegmentedControl
-                ariaLabel="Registration view"
-                value={viewMode}
-                options={[
-                  { value: 'flat', label: 'Flat' },
-                  { value: 'pools', label: 'Pools' },
-                ]}
-                onChange={setViewMode}
-              />
-            </div>
-          )}
+        <ToolbarGroup align="end" className={`${styles.registrationActionGroup} ${styles.teamsActionGroup}`}>
           <ExportMenu
             className={styles.registrationUtilityStart}
             formats={['xlsx', 'csv', 'pdf']}
@@ -1330,175 +1558,227 @@ export default function UnifiedTeamsPage() {
               <span className={styles.multiSelectLabel}>Done</span>
             </button>
           )}
-          <ToolbarMenu label="Tools">
-            <ToolbarMenuItem
-              icon={<LayoutDashboard size={14} />}
-              label="Division summary"
-              hint="Review registrations and capacity by division"
-              onSelect={() => setShowSummaryModal(true)}
-            />
-            {slotConfigured ? (
-              <>
-                <ToolbarMenuItem
-                  icon={<RefreshCw size={14} className={working === 'randomizing' ? 'spin' : ''} />}
-                  label="Randomize slots"
-                  hint="Shuffle teams across configured slots"
-                  disabled={loading || working === 'randomizing'}
-                  onSelect={randomizeSlots}
-                />
-                <ToolbarMenuItem
-                  icon={<ArrowLeftRight size={14} />}
-                  label={swapMode ? 'Turn off swap mode' : 'Swap mode'}
-                  hint={swapMode ? 'Slot swapping is currently active' : 'Pick two slots to swap assignments'}
-                  onSelect={() => { setSwapMode(m => !m); setSwapFirstSlotId(null); }}
-                />
-              </>
-            ) : (
-              <ToolbarMenuItem
-                icon={<RefreshCw size={14} className={working === 'randomizing' ? 'spin' : ''} />}
-                label="Randomize pools"
-                hint="Distribute accepted teams across pools"
+          {slotConfigured ? (
+            <>
+              <button
+                type="button"
+                className={styles.multiSelectToggle}
+                data-active={swapMode ? 'true' : undefined}
+                onClick={() => { setSwapMode(m => !m); setSwapFirstSlotId(null); }}
+                aria-label={swapMode ? 'Turn off swap mode' : 'Swap mode'}
+                title={swapMode ? 'Turn off swap mode' : 'Swap mode'}
+              >
+                <ArrowLeftRight size={13} aria-hidden />
+                <span className={styles.multiSelectLabel}>{swapMode ? 'Swapping' : 'Swap'}</span>
+              </button>
+              <button
+                type="button"
+                className={styles.multiSelectToggle}
+                onClick={randomizeSlots}
                 disabled={loading || working === 'randomizing'}
-                onSelect={randomizePools}
-              />
-            )}
-            <ToolbarMenuSeparator />
-            {paymentToolsAvailable ? (
-              <>
-                <div className={styles.toolsSection} role="none">
-                  <div className={styles.toolsSectionTitle}>Payment readiness</div>
-                  <div className={styles.toolsMetrics}>
-                    <span><strong>{formatMoney(paymentSummary.collected)}</strong> collected</span>
-                    <span><strong>{formatMoney(paymentSummary.outstanding)}</strong> outstanding</span>
-                    <span><strong>{paymentSummary.pastDue}</strong> past due</span>
-                  </div>
-                </div>
-                {!slotConfigured && (
-                  <div className={styles.toolsSection} role="none">
-                    <div className={styles.toolsSectionTitle}>Payment filter</div>
-                    <div className={styles.toolsFilterGrid}>
-                      {(['all', 'unpaid', 'deposit-paid', 'paid', 'past-due'] as PaymentFilter[]).map(filter => (
-                        <button
-                          key={filter}
-                          type="button"
-                          className={`${styles.toolsFilterButton} ${paymentFilter === filter ? styles.toolsFilterButtonActive : ''}`}
-                          onClick={() => setPaymentFilter(filter)}
-                        >
-                          {PAYMENT_FILTER_LABEL[filter]}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </>
-            ) : (
-              <ToolbarMenuItem
-                locked
-                label="Payment readiness"
-                hint={requiresTournamentPlusCopy('payment_readiness_tools')}
-                onSelect={() => setFeedback({
-                  isOpen: true,
-                  title: 'Payment Tools Require Tournament Plus',
-                  message: requiresTournamentPlusCopy('payment_readiness_tools'),
-                  type: 'warning',
-                })}
-              />
-            )}
-          </ToolbarMenu>
+                aria-label="Randomize slots"
+                title="Shuffle teams across slots"
+              >
+                <RefreshCw size={13} className={working === 'randomizing' ? 'spin' : ''} aria-hidden />
+                <span className={styles.multiSelectLabel}>Randomize</span>
+              </button>
+            </>
+          ) : (
+            <button
+              type="button"
+              className={styles.multiSelectToggle}
+              onClick={randomizePools}
+              disabled={loading || working === 'randomizing'}
+              aria-label="Randomize pools"
+              title="Distribute accepted teams across pools"
+            >
+              <RefreshCw size={13} className={working === 'randomizing' ? 'spin' : ''} aria-hidden />
+              <span className={styles.multiSelectLabel}>Randomize</span>
+            </button>
+          )}
         </ToolbarGroup>
 
-        {/* ── Row 2: search + filter chips — search first to match Schedule model ── */}
-        {!slotConfigured && (
+        {/* ── Row 2: filter dropdowns (desktop) + search ── */}
+        {(!slotConfigured || activeAttentionKey) && (
           <ToolbarGroup fullWidth className={styles.registrationFilterGroup}>
-            <ToolbarSearch value={search} onChange={setSearch} placeholder="Search teams or coaches..." />
-            <div className={`${s.statusFilters} ${styles.registrationStatusFilters}`}>
-              {(['pending', 'accepted', 'waitlist', 'rejected'] as Status[]).map(st => (
-                <button
-                  key={st}
-                  className={`${s.filterChip} ${s[`chip_${st}`]} ${selectedStatuses.includes(st) ? s.chipActive : ''}`}
-                  onClick={() => setSelectedStatuses(prev => prev.includes(st) ? prev.filter(x => x !== st) : [...prev, st])}
-                >
-                  {st.toUpperCase()}
-                  <span className={s.chipCount}>{divRegs.filter(r => r.status === st).length}</span>
-                </button>
-              ))}
-            </div>
-            {paymentToolsAvailable && paymentFilter !== 'all' && (
-              <span className={styles.activeFilterBadge}>Payment: {PAYMENT_FILTER_LABEL[paymentFilter]}</span>
+            {!slotConfigured && (
+              <div className={styles.desktopFilterChips}>
+                <RegistrationFilterMenu
+                  heading="Status"
+                  allLabel="All statuses"
+                  options={(['pending', 'accepted', 'waitlist', 'rejected'] as Status[]).map(st => ({
+                    key: st,
+                    label: APPROVAL_STATUS_LABEL[st],
+                    count: divRegs.filter(r => r.status === st).length,
+                  }))}
+                  selectedKeys={selectedStatuses}
+                  isDefault={
+                    selectedStatuses.length === 3 &&
+                    selectedStatuses.includes('pending') &&
+                    selectedStatuses.includes('accepted') &&
+                    selectedStatuses.includes('waitlist')
+                  }
+                  onToggle={key => setSelectedStatuses(prev =>
+                    prev.includes(key as Status) ? prev.filter(x => x !== key) : [...prev, key as Status]
+                  )}
+                  onReset={() => setSelectedStatuses(['pending', 'accepted', 'waitlist'])}
+                />
+                {paymentToolsAvailable && (
+                  <RegistrationFilterMenu
+                    heading="Payment"
+                    allLabel="All payments"
+                    options={(['unpaid', 'deposit-paid', 'paid', 'past-due'] as ActivePaymentFilter[]).map(f => ({
+                      key: f,
+                      label: PAYMENT_FILTER_LABEL[f],
+                      count: divRegs.filter(r => {
+                        const ps = computePaymentStatus(r, getEffectiveFee(r, divisions, feeMode, feeSchedule), today);
+                        return matchesPaymentFilter(ps, f as PaymentFilter);
+                      }).length,
+                    }))}
+                    selectedKeys={paymentFilters}
+                    isDefault={paymentFilters.length === 0}
+                    onToggle={key => setPaymentFilters(prev =>
+                      prev.includes(key as ActivePaymentFilter) ? prev.filter(x => x !== key) : [...prev, key as ActivePaymentFilter]
+                    )}
+                    onReset={() => setPaymentFilters([])}
+                  />
+                )}
+              </div>
             )}
+            <ToolbarSearch value={search} onChange={setSearch} placeholder="Search teams or coaches..." />
           </ToolbarGroup>
         )}
       </TournamentAdminToolbar>
 
-      <SelectionActionBar
-        selectedCount={selectedRegistrationIds.size}
-        label={`${selectedRegistrationIds.size} selected`}
-        onClear={clearRegistrationSelection}
-        className={styles.registrationSelectionBar}
-      >
-        <button type="button" className="btn btn-primary btn-data" onClick={() => runBulkAction('accept')} disabled={working === 'bulk'}>
-          Accept
-        </button>
-        <button type="button" className="btn btn-outline btn-data" onClick={() => runBulkAction('waitlist')} disabled={working === 'bulk'}>
-          Waitlist
-        </button>
-        <button type="button" className="btn btn-outline btn-data" onClick={() => runBulkAction('mark_deposit_paid')} disabled={working === 'bulk'}>
-          Deposit
-        </button>
-        <button type="button" className="btn btn-outline btn-data" onClick={() => runBulkAction('mark_paid')} disabled={working === 'bulk'}>
-          Paid
-        </button>
-        {paymentToolsAvailable && (
-          <button
-            type="button"
-            className="btn btn-outline btn-data"
-            onClick={() => setShowReminderModal(true)}
-            disabled={working === 'payment-reminders'}
-          >
-            <Mail size={12} /> Reminder
-          </button>
-        )}
-        <button type="button" className="btn btn-outline btn-data" style={{ color: 'var(--danger)' }} onClick={() => runBulkAction('reject')} disabled={working === 'bulk'}>
-          Reject
-        </button>
-      </SelectionActionBar>
+      {/* ── Filters / settings bottom sheet ─────────────────── */}
+      {mobileSettingsOpen && (
+        <>
+          <div className={styles.sheetBackdrop} onClick={() => setMobileSettingsOpen(false)} aria-hidden />
+          <div className={styles.sheet} role="dialog" aria-modal="true" aria-label="View filters">
+            <div className={styles.sheetHandle} />
+            <div className={styles.sheetBody}>
+              {!slotConfigured && (
+                <div className={styles.sheetSection}>
+                  <div className={styles.sheetSectionLabel}>Grouping</div>
+                  <div className={styles.sheetSegments}>
+                    {(['flat', 'pools'] as const).map(v => (
+                      <button
+                        key={v}
+                        type="button"
+                        className={`${styles.sheetSeg} ${viewMode === v ? styles.sheetSegActive : ''}`}
+                        onClick={() => setViewMode(v)}
+                      >
+                        {v === 'flat' ? 'Flat' : 'Pools'}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
 
-      {/* Summary modal */}
-      {showSummaryModal && (
-        <div className="modal-overlay" onClick={() => setShowSummaryModal(false)}>
-          <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 800 }}>
-            <div className="modal-header">
-              <div className="flex items-center gap-2">
-                <LayoutDashboard size={20} style={{ color: 'var(--logic-lime)' }} />
-                <h3 style={{ margin: 0 }}>Tournament Summary</h3>
+              <div className={styles.sheetSection}>
+                <div className={styles.sheetSectionLabel}>Registration status</div>
+                <div className={styles.sheetSegments}>
+                  {(['pending', 'accepted', 'waitlist', 'rejected'] as Status[]).map(st => (
+                    <button
+                      key={st}
+                      type="button"
+                      className={`${styles.sheetSeg} ${selectedStatuses.includes(st) ? styles.sheetSegActive : ''}`}
+                      onClick={() => setSelectedStatuses(prev =>
+                        prev.includes(st) ? prev.filter(s => s !== st) : [...prev, st]
+                      )}
+                    >
+                      {APPROVAL_STATUS_LABEL[st]}
+                    </button>
+                  ))}
+                </div>
               </div>
-              <button className="btn btn-ghost btn-data" onClick={() => setShowSummaryModal(false)}><X size={16} /></button>
+
+              {paymentToolsAvailable && (
+                <div className={styles.sheetSection}>
+                  <div className={styles.sheetSectionLabel}>Payment status</div>
+                  <div className={styles.sheetSegments} style={{ flexWrap: 'wrap' }}>
+                    {(['unpaid', 'deposit-paid', 'paid', 'past-due'] as ActivePaymentFilter[]).map(f => (
+                      <button
+                        key={f}
+                        type="button"
+                        className={`${styles.sheetSeg} ${paymentFilters.includes(f) ? styles.sheetSegActive : ''}`}
+                        style={{ flex: '1 1 calc(50% - 0.35rem)' }}
+                        onClick={() => setPaymentFilters(prev =>
+                          prev.includes(f) ? prev.filter(x => x !== f) : [...prev, f]
+                        )}
+                      >
+                        {PAYMENT_FILTER_LABEL[f]}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {hasNonDefaultFilters && (
+                <button
+                  type="button"
+                  className={styles.attentionSheetClear}
+                  onClick={() => { setSelectedStatuses(['pending', 'accepted', 'waitlist']); setPaymentFilters([]); }}
+                >
+                  Reset filters
+                </button>
+              )}
+
+              <button type="button" className={styles.sheetDone} onClick={() => setMobileSettingsOpen(false)}>Done</button>
             </div>
-            <div style={{ padding: '2rem' }}>
-              <div className={styles.summaryGridModal}>
-                {divisions.map(g => {
-                  const groupRegs = regs.filter(r => r.division_id === g.id);
-                  const accepted = groupRegs.filter(r => r.status === 'accepted').length;
-                  const capacity = g.capacity || 0;
-                  return (
-                    <div key={g.id} className={styles.summaryCardModal} onClick={() => { setSelectedDivisionId(g.id); setShowSummaryModal(false); }}>
-                      <div className={styles.summaryHeader}>
-                        <strong>{g.name}</strong>
-                        {capacity > 0 && <span className={accepted >= capacity ? styles.fullBadge : styles.capacityBadge}>{accepted}/{capacity}</span>}
-                      </div>
-                      <div className={styles.summaryStats}>{groupRegs.filter(r => r.status === 'pending').length} Pending · {groupRegs.filter(r => r.status === 'waitlist').length} Waitlist</div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-            <div className="modal-footer"><button className="btn btn-primary btn-data" onClick={() => setShowSummaryModal(false)}>Close</button></div>
           </div>
-        </div>
+        </>
+      )}
+
+      {currentTournament && !slotConfigured && !mobileSettingsOpen && settingsSummary && (
+        <button
+          type="button"
+          className={styles.activeSettingsSummary}
+          onClick={() => setMobileSettingsOpen(true)}
+          aria-label={`View settings: ${settingsSummary}`}
+        >
+          <span className={styles.activeSettingsSummaryText}>{settingsSummary}</span>
+          <SlidersHorizontal size={12} className={styles.activeSettingsSummaryIcon} aria-hidden />
+        </button>
+      )}
+
+      {!isLocked && (
+        <SelectionActionBar
+          selectedCount={selectedRegistrationIds.size}
+          label={`${selectedRegistrationIds.size} selected`}
+          onClear={clearRegistrationSelection}
+          className={styles.registrationSelectionBar}
+        >
+          <button type="button" className="btn btn-primary btn-data" onClick={() => runBulkAction('accept')} disabled={working === 'bulk'}>
+            Accept
+          </button>
+          <button type="button" className="btn btn-outline btn-data" onClick={() => runBulkAction('waitlist')} disabled={working === 'bulk'}>
+            Waitlist
+          </button>
+          <button type="button" className="btn btn-outline btn-data" onClick={() => runBulkAction('mark_deposit_paid')} disabled={working === 'bulk'}>
+            Deposit
+          </button>
+          <button type="button" className="btn btn-outline btn-data" onClick={() => runBulkAction('mark_paid')} disabled={working === 'bulk'}>
+            Paid
+          </button>
+          {paymentToolsAvailable && (
+            <button
+              type="button"
+              className="btn btn-outline btn-data"
+              onClick={() => setShowReminderModal(true)}
+              disabled={working === 'payment-reminders'}
+            >
+              <Mail size={12} /> Reminder
+            </button>
+          )}
+          <button type="button" className="btn btn-outline btn-data" style={{ color: 'var(--danger)' }} onClick={() => runBulkAction('reject')} disabled={working === 'bulk'}>
+            Reject
+          </button>
+        </SelectionActionBar>
       )}
 
       {/* ── SLOT BOARD (divisions with pool slots configured) ─────────────────── */}
-      {slotConfigured ? (
+      {slotConfigured && !activeAttentionKey ? (
         <div className={styles.slotBoard}>
           <div className={styles.slotBoardCounts}>
             <span><strong>{filledSlotCount}</strong> / {poolSlots.length} slots filled</span>
@@ -1818,6 +2098,105 @@ export default function UnifiedTeamsPage() {
       )}
 
       <FeedbackModal {...feedback} onClose={() => setFeedback(f => ({ ...f, isOpen: false, onConfirm: undefined, items: undefined, confirmText: undefined }))} />
+      <FeedbackModal
+        isOpen={pdfWarningOpen}
+        onClose={() => { localStorage.setItem('flhq-pdf-setup-warned', '1'); setPdfWarningOpen(false); }}
+        onConfirm={() => { localStorage.setItem('flhq-pdf-setup-warned', '1'); void doPdfExport(); }}
+        title="PDF settings not configured"
+        message="This export will use default FieldLogicHQ styling — no custom header, logo, or footer. Visit Org Settings → PDF Settings to customize all future exports."
+        confirmText="Download anyway"
+        cancelText="Not now"
+        type="info"
+      />
+    </div>
+  );
+}
+
+function RegistrationFilterMenu({
+  heading,
+  allLabel,
+  options,
+  selectedKeys,
+  isDefault,
+  onToggle,
+  onReset,
+}: {
+  heading: string;
+  allLabel: string;
+  options: Array<{ key: string; label: string; count?: number }>;
+  selectedKeys: string[];
+  isDefault: boolean;
+  onToggle: (key: string) => void;
+  onReset: () => void;
+}) {
+  const [open, setOpen] = React.useState(false);
+  const rootRef = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    if (!open) return;
+    function onPointerDown(e: MouseEvent) {
+      if (!rootRef.current?.contains(e.target as Node)) setOpen(false);
+    }
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') setOpen(false);
+    }
+    document.addEventListener('mousedown', onPointerDown);
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', onPointerDown);
+      document.removeEventListener('keydown', onKeyDown);
+    };
+  }, [open]);
+
+  const buttonText = isDefault
+    ? allLabel
+    : selectedKeys.length === 1
+      ? (options.find(o => o.key === selectedKeys[0])?.label ?? allLabel)
+      : `${selectedKeys.length} ${heading.toLowerCase()}`;
+
+  return (
+    <div className={styles.regFilterRoot} ref={rootRef}>
+      <button
+        type="button"
+        className={`${styles.regFilterButton} ${!isDefault ? styles.regFilterButtonActive : ''}`}
+        onClick={() => setOpen(v => !v)}
+        aria-haspopup="menu"
+        aria-expanded={open}
+      >
+        <SlidersHorizontal size={12} aria-hidden />
+        <span>{buttonText}</span>
+      </button>
+      {open && (
+        <div className={styles.regFilterPanel} role="menu">
+          <div className={styles.regFilterHeader}>
+            <span>{heading}</span>
+            {!isDefault && (
+              <button type="button" onClick={() => { onReset(); setOpen(false); }}>
+                <X size={12} /> Reset
+              </button>
+            )}
+          </div>
+          <div className={styles.regFilterList}>
+            {options.map(opt => {
+              const isSelected = selectedKeys.includes(opt.key);
+              return (
+                <button
+                  key={opt.key}
+                  type="button"
+                  className={`${styles.regFilterOption} ${isSelected ? styles.regFilterOptionActive : ''}`}
+                  onClick={() => onToggle(opt.key)}
+                  role="menuitemcheckbox"
+                  aria-checked={isSelected}
+                >
+                  <span className={styles.regFilterCheck}>{isSelected ? <Check size={12} /> : null}</span>
+                  <span className={styles.regFilterName}>{opt.label}</span>
+                  {opt.count !== undefined && <span className={styles.regFilterCount}>{opt.count}</span>}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

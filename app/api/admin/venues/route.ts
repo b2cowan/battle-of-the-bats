@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getAuthContextWithScope, unauthorized, forbidden, scopeGuard } from '@/lib/api-auth';
+import { getAuthContextWithScope, unauthorized, forbidden, scopeGuard, requireTournamentInOrg } from '@/lib/api-auth';
 import { hasCapability } from '@/lib/roles';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 
@@ -143,6 +143,9 @@ export async function GET(req: Request) {
   const denied = scopeGuard(ctx, tournamentId);
   if (denied) return denied;
 
+  const wrongOrg = await requireTournamentInOrg(ctx, tournamentId);
+  if (wrongOrg) return wrongOrg;
+
   const { data, error } = await supabaseAdmin
     .from('diamonds')
     .select('*')
@@ -191,6 +194,8 @@ export async function POST(req: Request) {
     if (action === 'save-venue') {
       const denied = scopeGuard(ctx, data.tournamentId);
       if (denied) return denied;
+      const wrongOrg = await requireTournamentInOrg(ctx, data.tournamentId);
+      if (wrongOrg) return wrongOrg;
 
       const { data: newVenue, error } = await supabaseAdmin.from('diamonds').insert({
         tournament_id:       data.tournamentId,
@@ -210,6 +215,8 @@ export async function POST(req: Request) {
       if (existing) {
         const denied = scopeGuard(ctx, existing.tournament_id);
         if (denied) return denied;
+        const wrongOrg = await requireTournamentInOrg(ctx, existing.tournament_id);
+        if (wrongOrg) return wrongOrg;
       }
       const updates: Record<string, unknown> = {};
       if (data.name    !== undefined) updates.name    = data.name;
@@ -227,6 +234,8 @@ export async function POST(req: Request) {
       if (existing) {
         const denied = scopeGuard(ctx, existing.tournament_id);
         if (denied) return denied;
+        const wrongOrg = await requireTournamentInOrg(ctx, existing.tournament_id);
+        if (wrongOrg) return wrongOrg;
       }
       const { error } = await supabaseAdmin.from('diamonds').delete().eq('id', id);
       if (error) throw error;
@@ -239,6 +248,8 @@ export async function POST(req: Request) {
     if (action === 'save') {
       const denied = scopeGuard(ctx, data.tournamentId);
       if (denied) return denied;
+      const wrongOrg = await requireTournamentInOrg(ctx, data.tournamentId);
+      if (wrongOrg) return wrongOrg;
       const { data: newVenue, error } = await supabaseAdmin.from('diamonds').insert({
         tournament_id: data.tournamentId,
         name:          data.name,
@@ -263,6 +274,8 @@ export async function POST(req: Request) {
       if (existing) {
         const denied = scopeGuard(ctx, existing.tournament_id);
         if (denied) return denied;
+        const wrongOrg = await requireTournamentInOrg(ctx, existing.tournament_id);
+        if (wrongOrg) return wrongOrg;
       }
       const { error } = await supabaseAdmin.from('diamonds').update({
         name:    data.name,
@@ -279,6 +292,8 @@ export async function POST(req: Request) {
       if (existing) {
         const denied = scopeGuard(ctx, existing.tournament_id);
         if (denied) return denied;
+        const wrongOrg = await requireTournamentInOrg(ctx, existing.tournament_id);
+        if (wrongOrg) return wrongOrg;
       }
       const { error } = await supabaseAdmin.from('diamonds').delete().eq('id', id);
       if (error) throw error;
@@ -293,6 +308,8 @@ export async function POST(req: Request) {
       if (venue) {
         const denied = scopeGuard(ctx, venue.tournament_id);
         if (denied) return denied;
+        const wrongOrg = await requireTournamentInOrg(ctx, venue.tournament_id);
+        if (wrongOrg) return wrongOrg;
       }
       const { data: newFac, error } = await supabaseAdmin.from('venue_facilities').insert({
         venue_id:      data.venueId,
@@ -308,6 +325,14 @@ export async function POST(req: Request) {
 
     // -- update-facility ----------------------------------------------------
     if (action === 'update-facility' && id) {
+      const { data: fac } = await supabaseAdmin
+        .from('venue_facilities').select('tournament_id').eq('id', id).single();
+      if (fac) {
+        const denied = scopeGuard(ctx, fac.tournament_id);
+        if (denied) return denied;
+        const wrongOrg = await requireTournamentInOrg(ctx, fac.tournament_id);
+        if (wrongOrg) return wrongOrg;
+      }
       const updates: Record<string, unknown> = {};
       if (data.name          !== undefined) updates.name          = data.name;
       if (data.facilityType  !== undefined) updates.facility_type = data.facilityType;
@@ -320,6 +345,14 @@ export async function POST(req: Request) {
 
     // -- delete-facility ----------------------------------------------------
     if (action === 'delete-facility' && id) {
+      const { data: fac } = await supabaseAdmin
+        .from('venue_facilities').select('tournament_id').eq('id', id).single();
+      if (fac) {
+        const denied = scopeGuard(ctx, fac.tournament_id);
+        if (denied) return denied;
+        const wrongOrg = await requireTournamentInOrg(ctx, fac.tournament_id);
+        if (wrongOrg) return wrongOrg;
+      }
       const { error } = await supabaseAdmin.from('venue_facilities').delete().eq('id', id);
       if (error) throw error;
       return NextResponse.json({ success: true });
@@ -329,6 +362,8 @@ export async function POST(req: Request) {
     if (action === 'import-from-org') {
       const denied = scopeGuard(ctx, data.tournamentId);
       if (denied) return denied;
+      const wrongOrg = await requireTournamentInOrg(ctx, data.tournamentId);
+      if (wrongOrg) return wrongOrg;
 
       const { data: ov, error: ovErr } = await supabaseAdmin
         .from('org_venues')
@@ -375,10 +410,15 @@ export async function POST(req: Request) {
     if (action === 'import-from-past') {
       const denied = scopeGuard(ctx, data.tournamentId);
       if (denied) return denied;
+      const wrongOrg = await requireTournamentInOrg(ctx, data.tournamentId);
+      if (wrongOrg) return wrongOrg;
 
       const { data: srcVenue, error: svErr } = await supabaseAdmin
         .from('diamonds').select('*').eq('id', data.sourceVenueId).single();
       if (svErr || !srcVenue) return NextResponse.json({ error: 'Source venue not found' }, { status: 404 });
+      // Source venue must belong to the caller's org (prevents copying another org's venue)
+      const srcWrongOrg = await requireTournamentInOrg(ctx, srcVenue.tournament_id);
+      if (srcWrongOrg) return srcWrongOrg;
 
       const { data: newVenue, error: vErr } = await supabaseAdmin.from('diamonds').insert({
         tournament_id: data.tournamentId,

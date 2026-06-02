@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { sendEmail } from '@/lib/email';
-import { getAuthContextWithScope, scopeGuard, unauthorized, forbidden } from '@/lib/api-auth';
+import { getAuthContextWithScope, scopeGuard, unauthorized, forbidden, requireTournamentInOrg } from '@/lib/api-auth';
 import { hasCapability } from '@/lib/roles';
 import { hasPlanFeature, requiresTournamentPlusCopy } from '@/lib/plan-features';
 import { writePlatformEvent } from '@/lib/platform-events';
@@ -117,6 +117,9 @@ export async function GET(req: Request) {
   const denied = scopeGuard(ctx, tournamentId);
   if (denied) return denied;
 
+  const wrongOrg = await requireTournamentInOrg(ctx, tournamentId);
+  if (wrongOrg) return wrongOrg;
+
   const { data, error } = await supabaseAdmin
     .from('announcements')
     .select('*')
@@ -146,6 +149,9 @@ export async function POST(req: Request) {
 
       const denied = scopeGuard(ctx, data.tournamentId);
       if (denied) return denied;
+
+      const wrongOrg = await requireTournamentInOrg(ctx, data.tournamentId);
+      if (wrongOrg) return wrongOrg;
 
       const channelSite  = Boolean(data.channelSite);
       const channelEmail = Boolean(data.channelEmail);
@@ -285,6 +291,9 @@ export async function POST(req: Request) {
       const denied = scopeGuard(ctx, existing.tournament_id);
       if (denied) return denied;
 
+      const wrongOrg = await requireTournamentInOrg(ctx, existing.tournament_id);
+      if (wrongOrg) return wrongOrg;
+
       const updates: Record<string, unknown> = {};
       if (data.title    !== undefined) updates.title          = String(data.title).trim();
       if (data.body     !== undefined) updates.body           = String(data.body).trim();
@@ -319,6 +328,8 @@ export async function POST(req: Request) {
       if (existing) {
         const denied = scopeGuard(ctx, existing.tournament_id);
         if (denied) return denied;
+        const wrongOrg = await requireTournamentInOrg(ctx, existing.tournament_id);
+        if (wrongOrg) return wrongOrg;
       }
 
       const { error: updateErr } = await supabaseAdmin
@@ -343,6 +354,8 @@ export async function POST(req: Request) {
       if (existing) {
         const denied = scopeGuard(ctx, existing.tournament_id);
         if (denied) return denied;
+        const wrongOrg = await requireTournamentInOrg(ctx, existing.tournament_id);
+        if (wrongOrg) return wrongOrg;
       }
 
       const { error: deleteErr } = await supabaseAdmin
@@ -367,6 +380,8 @@ export async function POST(req: Request) {
       if (existing) {
         const denied = scopeGuard(ctx, existing.tournament_id);
         if (denied) return denied;
+        const wrongOrg = await requireTournamentInOrg(ctx, existing.tournament_id);
+        if (wrongOrg) return wrongOrg;
       }
 
       const { error: restoreErr } = await supabaseAdmin

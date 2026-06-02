@@ -12,7 +12,6 @@ import {
 import { hasPlanFeature } from '@/lib/plan-features';
 import ExportMenu from '@/components/admin/ExportMenu';
 import FeedbackModal from '@/components/FeedbackModal';
-import HelpCallout from '@/components/help/HelpCallout';
 import styles from './bva.module.css';
 
 // ── Export definition ─────────────────────────────────────────────────────────
@@ -84,7 +83,7 @@ export default function OrgBudgetVsActualPage() {
   // PDF settings — fetched once on mount; used in handleExportPDF
   const [pdfSettings, setPdfSettings] = useState<OrgPdfSettings | null>(null);
   const canUsePDF = currentOrg ? hasPlanFeature(currentOrg.planId, 'pdf_exports') : false;
-  const showPdfNudge = canUsePDF && pdfSettings !== null && Object.keys(pdfSettings).length === 0;
+  const [pdfWarningOpen, setPdfWarningOpen] = useState(false);
 
   // ── Export helpers ───────────────────────────────────────────────────────────
 
@@ -128,7 +127,7 @@ export default function OrgBudgetVsActualPage() {
     );
   }
 
-  async function handleExportPDF() {
+  async function doPdfExport() {
     if (!data) return;
     const settings: OrgPdfSettings = {
       ...DEFAULT_PDF_SETTINGS,
@@ -170,6 +169,19 @@ export default function OrgBudgetVsActualPage() {
       settings,
       groups,
     );
+  }
+
+  async function handleExportPDF() {
+    if (
+      canUsePDF &&
+      pdfSettings !== null &&
+      Object.keys(pdfSettings).length === 0 &&
+      !localStorage.getItem('flhq-pdf-setup-warned')
+    ) {
+      setPdfWarningOpen(true);
+      return;
+    }
+    await doPdfExport();
   }
 
   const load = useCallback(async (y: number) => {
@@ -371,16 +383,6 @@ export default function OrgBudgetVsActualPage() {
         </div>
       </div>
 
-      {showPdfNudge && (
-        <HelpCallout
-          variant="info"
-          title="PDF settings not configured"
-          body="Your export will use default FieldLogicHQ branding. Configure your header, logo, and footer once and all future PDFs will use those settings."
-          cta={{ label: 'Configure PDF Settings', href: `${base}/org` }}
-          dismissible
-          localStorageKey="flhq-pdf-nudge-bva"
-        />
-      )}
 
       {/* Year selector */}
       <div className={styles.yearRow}>
@@ -622,6 +624,16 @@ export default function OrgBudgetVsActualPage() {
         title="Coming Soon"
         message={feedbackMsg}
         type="success"
+      />
+      <FeedbackModal
+        isOpen={pdfWarningOpen}
+        onClose={() => { localStorage.setItem('flhq-pdf-setup-warned', '1'); setPdfWarningOpen(false); }}
+        onConfirm={() => { localStorage.setItem('flhq-pdf-setup-warned', '1'); void doPdfExport(); }}
+        title="PDF settings not configured"
+        message="This export will use default FieldLogicHQ styling — no custom header, logo, or footer. Visit Org Settings → PDF Settings to customize all future exports."
+        confirmText="Download anyway"
+        cancelText="Not now"
+        type="info"
       />
     </div>
   );

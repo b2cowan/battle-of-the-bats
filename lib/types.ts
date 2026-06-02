@@ -190,6 +190,19 @@ export interface Venue {
   facilities?: VenueFacility[];    // populated when fetched with includeFacilities option
 }
 
+/** A temporary schedule resource that can later be mapped to a real venue/facility. */
+export interface ScheduleFacilityLane {
+  id: string;
+  tournamentId: string;
+  divisionId: string;
+  label: string;
+  sortOrder: number;
+  resolvedVenueId?: string | null;
+  resolvedVenueFacilityId?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 /** A playing surface within an org venue library entry. */
 export interface OrgVenueFacility {
   id: string;
@@ -363,6 +376,8 @@ export interface Game {
   location: string;          // display name (kept for backward compat)
   venueId?: string;          // links to a managed Venue record (diamonds.id)
   venueFacilityId?: string;  // links to a venue_facilities record
+  scheduleFacilityLaneId?: string | null; // temporary generation lane, if venue is TBD
+  scheduleFacilityLaneLabel?: string | null;
   homeScore?: number | null;
   awayScore?: number | null;
   status: GameStatus;
@@ -1196,3 +1211,14 @@ export interface TournamentNotificationPreference {
   eventType: NotificationEventType;
   optedOut: boolean;
 }
+
+export type CloneCopiedCounts = {
+  venues?: number;
+  divisions?: number;
+  pools?: number;
+  slots?: number;
+  rules?: number;
+  resources?: number;
+  welcome?: boolean;
+  registrationFields?: number;
+};

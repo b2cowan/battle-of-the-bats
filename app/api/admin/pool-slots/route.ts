@@ -1,4 +1,4 @@
-import { getAuthContextWithScope, unauthorized, forbidden, scopeGuard } from '@/lib/api-auth';
+import { getAuthContextWithScope, unauthorized, forbidden, scopeGuard, requireTournamentInOrg } from '@/lib/api-auth';
 import { hasCapability } from '@/lib/roles';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 
@@ -41,6 +41,9 @@ export async function GET(req: Request) {
 
   const denied = scopeGuard(ctx, tournamentId);
   if (denied) return denied;
+
+  const wrongOrg = await requireTournamentInOrg(ctx, tournamentId);
+  if (wrongOrg) return wrongOrg;
 
   let query = supabaseAdmin
     .from('pool_slots')
@@ -86,6 +89,9 @@ export async function POST(req: Request) {
 
       const denied = scopeGuard(ctx, tournamentId);
       if (denied) return denied;
+
+      const wrongOrg = await requireTournamentInOrg(ctx, tournamentId);
+      if (wrongOrg) return wrongOrg;
 
       const allCreated: any[] = [];
 
@@ -147,6 +153,9 @@ export async function POST(req: Request) {
 
       const denied = scopeGuard(ctx, tournamentId);
       if (denied) return denied;
+
+      const wrongOrg = await requireTournamentInOrg(ctx, tournamentId);
+      if (wrongOrg) return wrongOrg;
 
       const allSlots: any[] = [];
       const warnings: string[] = [];
@@ -217,6 +226,9 @@ export async function POST(req: Request) {
       const denied = scopeGuard(ctx, slot.tournament_id);
       if (denied) return denied;
 
+      const wrongOrg = await requireTournamentInOrg(ctx, slot.tournament_id);
+      if (wrongOrg) return wrongOrg;
+
       // Set team on this slot
       const { error: updateErr } = await supabaseAdmin
         .from('pool_slots').update({ team_id: teamId }).eq('id', slotId);
@@ -255,6 +267,9 @@ export async function POST(req: Request) {
       const denied = scopeGuard(ctx, slot.tournament_id);
       if (denied) return denied;
 
+      const wrongOrg = await requireTournamentInOrg(ctx, slot.tournament_id);
+      if (wrongOrg) return wrongOrg;
+
       // Clear game team IDs for the entire pool (reverts public display to slot names)
       const { data: poolSlots } = await supabaseAdmin
         .from('pool_slots').select('id').eq('pool_id', slot.pool_id);
@@ -287,6 +302,9 @@ export async function POST(req: Request) {
 
       const denied = scopeGuard(ctx, slotA.tournament_id);
       if (denied) return denied;
+
+      const wrongOrg = await requireTournamentInOrg(ctx, slotA.tournament_id);
+      if (wrongOrg) return wrongOrg;
 
       // Clear game team IDs for the pool before swapping (pool may drop below fully-assigned)
       const { data: poolSlots } = await supabaseAdmin
@@ -331,6 +349,9 @@ export async function POST(req: Request) {
 
       const denied = scopeGuard(ctx, slot.tournament_id);
       if (denied) return denied;
+
+      const wrongOrg = await requireTournamentInOrg(ctx, slot.tournament_id);
+      if (wrongOrg) return wrongOrg;
 
       await Promise.all([
         supabaseAdmin.from('pool_slots').update({ display_name: displayName }).eq('id', slotId),

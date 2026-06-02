@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { Settings, Upload, Lock, Check, Image as ImageIcon, AlertTriangle, Library, X } from 'lucide-react';
 import { STOCK_LOGOS, STOCK_LOGO_CATEGORIES, isStockLogoUnlocked } from '@/lib/stock-logos';
 import { useOrg } from '@/lib/org-context';
+import { usePageTitle } from '@/lib/usePageTitle';
 import { useOrgNav } from '@/components/OrgNavContext';
 import FeedbackModal from '@/components/FeedbackModal';
 import HelpCallout from '@/components/help/HelpCallout';
@@ -26,6 +27,7 @@ interface OrgSettings {
 export default function OrgSettingsPage() {
   const router = useRouter();
   const { currentOrg, userRole, loading, refresh } = useOrg();
+  usePageTitle('Settings');
   const { setOrgNav } = useOrgNav();
 
   const [settings, setSettings] = useState<OrgSettings | null>(null);

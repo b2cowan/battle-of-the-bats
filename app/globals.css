@@ -372,8 +372,24 @@ h1, h2, h3, h4, h5, h6 {
   padding-top: var(--nav-height);
 }
 
-.section { padding: 2rem 0 4rem; }
+.section { padding: 1.5rem 0 3rem; }
 .section-sm { padding: 3rem 0; }
+
+/* Public tournament page header — compact, operational (not a marketing hero).
+   Shared by all /[orgSlug]/[tournamentSlug]/* public pages. */
+.public-page-header {
+  background: linear-gradient(180deg, var(--bg-2) 0%, var(--bg) 100%);
+  border-bottom: 1px solid var(--border);
+  padding: 1.25rem 0;
+}
+.public-page-header h1 {
+  color: var(--white);
+  font-size: clamp(1.5rem, 3.5vw, 2.25rem);
+  font-weight: 800;
+  line-height: 1.15;
+  margin: 0.25rem 0;
+}
+.public-page-header p { color: var(--white-60); max-width: 640px; }
 
 /* ─── Cards ─────────────────────────────────────────────────────────────────── */
 .card {
@@ -420,6 +436,7 @@ h1, h2, h3, h4, h5, h6 {
 .btn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 0.5rem;
   padding: 0.625rem 1.25rem;
   border-radius: var(--radius-sm);
@@ -607,6 +624,26 @@ h1, h2, h3, h4, h5, h6 {
 .form-input::placeholder,
 .form-textarea::placeholder { color: var(--white-30); }
 
+/* Select wrapper — positions a custom chevron icon over the native select arrow.
+   Hides the native arrow via appearance:none so only the custom icon shows.     */
+.select-wrapper {
+  position: relative;
+}
+.select-wrapper select.form-input,
+.select-wrapper select.form-select {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 2.5rem;
+}
+.select-icon {
+  position: absolute;
+  right: 0.875rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--white-30);
+  pointer-events: none;
+}
+
 /* Remove number input spinners globally — users type amounts, not click arrows */
 input[type="number"]::-webkit-inner-spin-button,
 input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
@@ -764,7 +801,9 @@ select optgroup {
 }
 
 .empty-state > svg { margin: 0 auto 1rem; opacity: 0.4; }
-.empty-state p { font-size: 1.0625rem; }
+/* Body copy lifts to white-60 — empty states (e.g. "schedule not published yet")
+   are the primary pre-event surface for parents and must stay legible (AA). */
+.empty-state p { font-size: 1.0625rem; color: var(--white-60); }
 
 /* ─── Table ─────────────────────────────────────────────────────────────────── */
 .table-wrap { overflow-x: auto; border-radius: var(--radius); border: 1px solid var(--border); }
@@ -928,9 +967,16 @@ tbody tr:hover { background: var(--white-10); }
 ::-webkit-scrollbar-thumb:hover { background: var(--primary); }
 
 /* ─── Responsive ─────────────────────────────────────────────────────────────── */
-@media (max-width: 768px) {
+/* The tournament public bottom nav shows ≤900px (where top-nav links hide), so
+   reserve space for it across the full 0–900px range to prevent content underlap. */
+@media (max-width: 900px) {
   :root { --bottom-nav-height: 72px; }
-  .section { padding: 3rem 0; }
+  main { padding-bottom: var(--bottom-nav-height); }
+  footer { padding-bottom: calc(var(--bottom-nav-height) + 1rem); }
+}
+
+@media (max-width: 768px) {
+  .section { padding: 1.25rem 0 2.5rem; }
   .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
   .form-row-2, .form-row-3 { grid-template-columns: 1fr; }
 
@@ -965,10 +1011,4 @@ tbody tr:hover { background: var(--white-10); }
     flex: 1 1 9rem;
     justify-content: center;
   }
-
-  /* Push page content above the bottom nav */
-  main { padding-bottom: var(--bottom-nav-height); }
-
-  /* Hide footer on mobile — bottom nav covers navigation */
-  footer { padding-bottom: calc(var(--bottom-nav-height) + 1rem); }
 }

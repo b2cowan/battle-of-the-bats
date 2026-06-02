@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Bell, BellOff, AlertCircle, Smartphone, Mail } from 'lucide-react';
 import { useTournament } from '@/lib/tournament-context';
 import { useOrg } from '@/lib/org-context';
+import { usePageTitle } from '@/lib/usePageTitle';
 import { TOURNAMENT_EVENT_TYPES, NOTIFICATION_EVENT_LABELS, NOTIFICATION_EVENT_DESCRIPTIONS } from '@/lib/notification-labels';
 import type { NotificationEventType, NotificationPreference } from '@/lib/types';
 import styles from './notifications.module.css';
@@ -51,6 +52,7 @@ function Toggle({
 export default function TournamentNotificationPreferencesPage() {
   const { currentTournament } = useTournament();
   const { currentOrg } = useOrg();
+  usePageTitle('Notifications');
   const tournamentId = currentTournament?.id;
   const orgSlug      = currentOrg?.slug;
 

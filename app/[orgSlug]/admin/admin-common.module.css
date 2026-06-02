@@ -180,6 +180,22 @@
 
 .chipActive .chipCount { opacity: 1; }
 
+/* Empty (zero-count) chips recede so non-zero counts draw the eye */
+.filterChip[data-empty]:not(.chipActive) {
+  opacity: 0.4;
+}
+
+/* ─── Payment filter chip variants ───────────────────────────────────────── */
+.chip_pay_unpaid::before  { background: #f59e0b; }
+.chip_pay_deposit::before { background: var(--blueprint-blue, #60a5fa); }
+.chip_pay_paid::before    { background: #22c55e; }
+.chip_pay_pastdue::before { background: #ef4444; }
+
+.chipActive.chip_pay_unpaid  { border-color: rgba(245, 158, 11, 0.5);  background: rgba(245, 158, 11, 0.08);  color: #f59e0b; }
+.chipActive.chip_pay_deposit { border-color: rgba(var(--blueprint-blue-rgb), 0.55); background: rgba(var(--blueprint-blue-rgb), 0.1); color: var(--blueprint-blue); }
+.chipActive.chip_pay_paid    { border-color: rgba(34, 197, 94, 0.5);   background: rgba(34, 197, 94, 0.08);   color: #22c55e; }
+.chipActive.chip_pay_pastdue { border-color: rgba(239, 68, 68, 0.5);   background: rgba(239, 68, 68, 0.08);   color: #ef4444; }
+
 /* ─── Schedule game-status chip variants ─────────────────────────────────── */
 .chip_all::before       { background: rgba(148, 163, 184, 0.45); }
 .chip_scheduled::before { background: rgba(148, 163, 184, 0.45); }

@@ -4,6 +4,7 @@ import AnimateIn from '@/components/AnimateIn';
 import PricingSection from '@/components/PricingSection';
 import EarlyAccessModalTrigger from '@/components/EarlyAccessModalTrigger';
 import { getPlanGatingMap } from '@/lib/plan-gating-server';
+import { PLAN_CONFIG, formatPriceAmount } from '@/lib/plan-config';
 
 const MODULE_CARDS = [
   {
@@ -323,7 +324,7 @@ export default async function HomePage() {
               </span>
             </div>
             <p className="font-mono text-sm font-bold text-fl-text leading-snug">
-              Tournament Plus ($39/month) is free for organizations that sign up before the end of 2026.
+              Tournament Plus ({formatPriceAmount(PLAN_CONFIG.tournament_plus.monthlyPrice)}/month) is free for organizations that sign up before the end of 2026.
             </p>
             <p className="font-mono text-xs text-data-gray/70 leading-relaxed">
               We&apos;re in our founding season — we want real tournaments on the platform, not demos.
@@ -344,10 +345,10 @@ export default async function HomePage() {
                 Coaches Portal
               </span>
               <span className="font-mono text-[0.82rem] font-bold text-fl-text whitespace-nowrap flex-shrink-0">
-                $29 CAD <span className="font-normal text-[0.72rem] text-data-gray">/mo</span>
+                {formatPriceAmount(PLAN_CONFIG.team.monthlyPrice)} CAD <span className="font-normal text-[0.72rem] text-data-gray">/mo</span>
               </span>
               <span className="font-mono text-[0.7rem] text-data-gray whitespace-nowrap flex-shrink-0">
-                or $290/season — save two months
+                or {formatPriceAmount(PLAN_CONFIG.team.annualPrice)}/season — save two months
               </span>
               <span className="font-mono text-[0.73rem] text-data-gray leading-relaxed flex-1 min-w-[180px]">
                 A standalone workspace for one rep team — roster, lineups, budget, and schedule. No organization account needed. Coming soon.

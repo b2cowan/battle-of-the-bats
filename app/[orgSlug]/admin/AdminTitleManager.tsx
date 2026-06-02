@@ -20,13 +20,14 @@ const ROUTE_LABELS: Array<[RegExp, string]> = [
   [/\/admin\/tournaments\/manage(?:\/.*)?$/, 'Manage Tournaments'],
   [/\/admin\/tournaments\/venues(?:\/.*)?$/, 'Venues'],
   [/\/admin\/tournaments\/divisions(?:\/.*)?$/, 'Divisions'],
-  [/\/admin\/tournaments\/teams(?:\/.*)?$/, 'Registrations'],
+  [/\/admin\/tournaments\/registrations(?:\/.*)?$/, 'Registrations'],
   [/\/admin\/tournaments\/schedule(?:\/.*)?$/, 'Schedule'],
   [/\/admin\/tournaments\/results(?:\/.*)?$/, 'Results'],
   [/\/admin\/tournaments\/rules(?:\/.*)?$/, 'Rules & Resources'],
   [/\/admin\/tournaments\/communication(?:\/.*)?$/, 'Communication'],
   [/\/admin\/tournaments\/archives(?:\/.*)?$/, 'Past Tournaments'],
-  [/\/admin\/tournaments\/settings\/branding(?:\/.*)?$/, 'Tournament Branding'],
+  [/\/admin\/tournaments\/branding(?:\/.*)?$/, 'Tournament Branding'],
+  [/\/admin\/tournaments\/summary(?:\/.*)?$/, 'Summary'],
   [/\/admin\/tournaments\/settings\/event(?:\/.*)?$/, 'Event Settings'],
   [/\/admin\/tournaments\/settings(?:\/.*)?$/, 'Tournament Settings'],
   [/\/admin\/tournaments(?:\/)?$/, 'Tournaments'],
@@ -34,6 +35,7 @@ const ROUTE_LABELS: Array<[RegExp, string]> = [
   [/\/admin\/rep-teams(?:\/.*)?$/, 'Rep Teams'],
   [/\/admin\/accounting(?:\/.*)?$/, 'Accounting'],
   [/\/admin\/public-site(?:\/.*)?$/, 'Public Site'],
+  [/\/admin\/org\/notifications(?:\/.*)?$/, 'Org Notifications'],
   [/\/admin(?:\/)?$/, 'Admin'],
 ];
 
@@ -43,8 +45,6 @@ function routeLabel(pathname: string) {
 
 function previewLabel(pathname: string, tournamentStatus?: string) {
   if (!pathname.includes('/admin/tournaments/preview/')) return null;
-  if (tournamentStatus === 'draft') return 'Preview Draft Site';
-  if (tournamentStatus === 'completed') return 'Preview Completed Site';
   return 'Preview Site';
 }
 

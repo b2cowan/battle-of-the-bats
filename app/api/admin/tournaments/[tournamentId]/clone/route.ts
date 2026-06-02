@@ -10,6 +10,22 @@ type RouteParams = { params: Promise<{ tournamentId: string }> };
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const SLUG_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+const COPY_GROUPS = ['structure', 'venues', 'registration', 'publicPresence', 'content'] as const;
+const WARNING_KEYS = [
+  'source_draft',
+  'source_active',
+  'source_older_than_one_year',
+  'draft_year_before_source',
+  'registration_setup_review',
+  'public_content_review',
+] as const;
+const SOURCE_SURFACES = [
+  'summary',
+  'sidebar_create',
+  'manage_tournaments_new_button',
+  'manage_tournaments_row',
+  'unknown',
+] as const;
 
 type CloneBody = {
   name?: unknown;
@@ -30,6 +46,12 @@ type CloneBody = {
     | 'includeFeeSchedule',
     unknown
   >>;
+  analytics?: {
+    sourceSurface?: unknown;
+    selectedCopyGroups?: unknown;
+    warningCount?: unknown;
+    warningKeys?: unknown;
+  };
 };
 
 function json(data: unknown, status = 200) {
@@ -55,14 +77,66 @@ function boolOption(value: unknown, fallback: boolean) {
   return typeof value === 'boolean' ? value : fallback;
 }
 
+function cleanList(value: unknown, allowed: readonly string[]) {
+  if (!Array.isArray(value)) return undefined;
+  const seen = new Set<string>();
+  const cleaned = value
+    .filter((item): item is string => typeof item === 'string' && allowed.includes(item))
+    .filter(item => {
+      if (seen.has(item)) return false;
+      seen.add(item);
+      return true;
+    });
+  return cleaned.length ? cleaned : undefined;
+}
+
+function cleanSourceSurface(value: unknown) {
+  return typeof value === 'string' && SOURCE_SURFACES.includes(value as typeof SOURCE_SURFACES[number])
+    ? value
+    : 'unknown';
+}
+
+function cleanWarningCount(value: unknown) {
+  if (typeof value !== 'number' || !Number.isFinite(value)) return 0;
+  return Math.max(0, Math.min(20, Math.trunc(value)));
+}
+
+function selectedCopyGroupsFromOptions(input: {
+  includeDivisions: boolean;
+  includePools: boolean;
+  includeSlots: boolean;
+  includeVenues: boolean;
+  includeBranding: boolean;
+  includePublicPages: boolean;
+  includeWelcome: boolean;
+  includeRulesResources: boolean;
+  includeRegistrationFields: boolean;
+  includeFeeSchedule: boolean;
+}) {
+  return [
+    input.includeDivisions || input.includePools || input.includeSlots ? 'structure' : '',
+    input.includeVenues ? 'venues' : '',
+    input.includeRegistrationFields || input.includeFeeSchedule ? 'registration' : '',
+    input.includeBranding || input.includePublicPages ? 'publicPresence' : '',
+    input.includeWelcome || input.includeRulesResources ? 'content' : '',
+  ].filter(Boolean);
+}
+
 async function trackCloneEvent(input: {
   orgId: string;
   userId: string;
   userEmail?: string | null;
   planId: string;
   sourceTournamentId: string;
+  sourceTournamentStatus?: string | null;
+  sourceTournamentYear?: number | null;
+  sourceSurface?: string;
+  targetYear?: number;
   targetTournamentId?: string;
   status: 'attempted' | 'blocked' | 'completed';
+  selectedCopyGroups?: string[];
+  warningCount?: number;
+  warningKeys?: string[];
   copied?: unknown;
 }) {
   await writePlatformEvent({
@@ -76,8 +150,15 @@ async function trackCloneEvent(input: {
       feature: 'tournament_cloning',
       action: 'clone_tournament',
       sourceTournamentId: input.sourceTournamentId,
+      sourceTournamentStatus: input.sourceTournamentStatus ?? null,
+      sourceTournamentYear: input.sourceTournamentYear ?? null,
+      sourceSurface: input.sourceSurface ?? 'unknown',
       targetTournamentId: input.targetTournamentId,
+      targetYear: input.targetYear,
       status: input.status,
+      selectedCopyGroups: input.selectedCopyGroups ?? [],
+      warningCount: input.warningCount ?? 0,
+      warningKeys: input.warningKeys ?? [],
       copied: input.copied,
     },
   });
@@ -111,12 +192,55 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
   if (startDate === undefined || endDate === undefined) return json({ error: 'Tournament dates must use YYYY-MM-DD format.' }, 400);
   if (startDate && endDate && endDate < startDate) return json({ error: 'End date cannot be before start date.' }, 400);
 
+  const { data: sourceMeta, error: sourceMetaError } = await supabaseAdmin
+    .from('tournaments')
+    .select('id, year, status')
+    .eq('id', tournamentId)
+    .eq('org_id', ctx.org.id)
+    .maybeSingle();
+  if (sourceMetaError) return json({ error: sourceMetaError.message }, 500);
+  if (!sourceMeta) return json({ error: 'Source tournament not found.' }, 404);
+
+  const selected = body.options ?? {};
+  const includeDivisions = boolOption(selected.includeDivisions, true);
+  const includePools = includeDivisions && boolOption(selected.includePools, true);
+  const includeSlots = includePools && boolOption(selected.includeSlots, true);
+  const includeVenues = boolOption(selected.includeVenues, true);
+  const includeBranding = boolOption(selected.includeBranding, true);
+  const includePublicPages = boolOption(selected.includePublicPages, true);
+  const includeWelcome = boolOption(selected.includeWelcome, true);
+  const includeRulesResources = boolOption(selected.includeRulesResources, true);
+  const includeRegistrationFields = boolOption(selected.includeRegistrationFields, true);
+  const includeFeeSchedule = boolOption(selected.includeFeeSchedule, true);
+  const derivedCopyGroups = selectedCopyGroupsFromOptions({
+    includeDivisions,
+    includePools,
+    includeSlots,
+    includeVenues,
+    includeBranding,
+    includePublicPages,
+    includeWelcome,
+    includeRulesResources,
+    includeRegistrationFields,
+    includeFeeSchedule,
+  });
+  const analytics = {
+    sourceSurface: cleanSourceSurface(body.analytics?.sourceSurface),
+    selectedCopyGroups: cleanList(body.analytics?.selectedCopyGroups, COPY_GROUPS) ?? derivedCopyGroups,
+    warningCount: cleanWarningCount(body.analytics?.warningCount),
+    warningKeys: cleanList(body.analytics?.warningKeys, WARNING_KEYS) ?? [],
+  };
+
   await trackCloneEvent({
     orgId: ctx.org.id,
     userId: ctx.user.id,
     userEmail: ctx.user.email,
     planId: ctx.org.planId,
     sourceTournamentId: tournamentId,
+    sourceTournamentStatus: sourceMeta.status,
+    sourceTournamentYear: sourceMeta.year,
+    targetYear: year,
+    ...analytics,
     status: 'attempted',
   });
 
@@ -127,6 +251,10 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
       userEmail: ctx.user.email,
       planId: ctx.org.planId,
       sourceTournamentId: tournamentId,
+      sourceTournamentStatus: sourceMeta.status,
+      sourceTournamentYear: sourceMeta.year,
+      targetYear: year,
+      ...analytics,
       status: 'blocked',
     });
     return json({ error: requiresTournamentPlusCopy('tournament_cloning') }, 403);
@@ -154,10 +282,6 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
   if ((slugCount ?? 0) > 0) return json({ error: 'A non-archived tournament already uses this URL.' }, 409);
 
   try {
-    const selected = body.options ?? {};
-    const includeDivisions = boolOption(selected.includeDivisions, true);
-    const includePools = includeDivisions && boolOption(selected.includePools, true);
-    const includeSlots = includePools && boolOption(selected.includeSlots, true);
     const result = await cloneTournament(tournamentId, ctx.org.id, {
       name,
       slug,
@@ -167,13 +291,13 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
       includeDivisions,
       includePools,
       includeSlots,
-      includeVenues: boolOption(selected.includeVenues, true),
-      includeBranding: boolOption(selected.includeBranding, true),
-      includePublicPages: boolOption(selected.includePublicPages, true),
-      includeWelcome: boolOption(selected.includeWelcome, true),
-      includeRulesResources: boolOption(selected.includeRulesResources, true),
-      includeRegistrationFields: boolOption(selected.includeRegistrationFields, true),
-      includeFeeSchedule: boolOption(selected.includeFeeSchedule, true),
+      includeVenues,
+      includeBranding,
+      includePublicPages,
+      includeWelcome,
+      includeRulesResources,
+      includeRegistrationFields,
+      includeFeeSchedule,
     } satisfies CloneTournamentOptions);
 
     await trackCloneEvent({
@@ -182,7 +306,11 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
       userEmail: ctx.user.email,
       planId: ctx.org.planId,
       sourceTournamentId: tournamentId,
+      sourceTournamentStatus: sourceMeta.status,
+      sourceTournamentYear: sourceMeta.year,
+      targetYear: year,
       targetTournamentId: result.tournament.id,
+      ...analytics,
       status: 'completed',
       copied: result.copied,
     });

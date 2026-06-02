@@ -3,7 +3,9 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Users2, UserPlus, ShieldCheck, BookOpen, ChevronDown, Settings2, Mail, Trash2, ScrollText } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
+import { usePageTitle } from '@/lib/usePageTitle';
 import { PLAN_CONFIG } from '@/lib/plan-config';
+import { getBillingHref, isTournamentTier } from '@/lib/billing-urls';
 import FeedbackModal from '@/components/FeedbackModal';
 import HelpTooltip from '@/components/help/HelpTooltip';
 import { ROLE_DEFAULTS, hasCapability } from '@/lib/roles';
@@ -170,6 +172,7 @@ function formatDate(iso: string | null): string {
 
 export default function MembersPage() {
   const { currentOrg, userRole, userCapabilities, user, loading } = useOrg();
+  usePageTitle('Members');
 
   const [members, setMembers] = useState<Member[]>([]);
   const [tournaments, setTournaments] = useState<TournamentOption[]>([]);
@@ -487,6 +490,11 @@ export default function MembersPage() {
   }
 
   const planCfg = currentOrg ? PLAN_CONFIG[currentOrg.planId] : PLAN_CONFIG.tournament;
+  const isTournamentPlan = isTournamentTier(currentOrg?.planId);
+  const billingHref = currentOrg ? getBillingHref(currentOrg.slug, currentOrg.planId) : '#';
+  const auditHref = isTournamentPlan
+    ? `/${currentOrg?.slug}/admin/tournaments/settings/members/audit`
+    : `/${currentOrg?.slug}/admin/org/members/audit`;
   const seatLimit = planCfg.seatLimit;
   const billableMembers = planCfg.officialsFreeSeats
     ? members.filter(m => m.role !== 'official')
@@ -666,13 +674,13 @@ export default function MembersPage() {
           <div className={styles.headerIcon}><Users2 size={20} /></div>
           <div>
             <h1 className={styles.pageTitle}>Members</h1>
-            <p className={styles.pageSub}>Manage who has access to your organization</p>
+            <p className={styles.pageSub}>{isTournamentPlan ? 'Manage who has access to your tournaments' : 'Manage who has access to your organization'}</p>
           </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
           {userRole === 'owner' && (
             <Link
-              href={`/${currentOrg?.slug}/admin/org/members/audit`}
+              href={auditHref}
               className="btn btn-outline btn-sm"
               style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}
             >
@@ -688,7 +696,7 @@ export default function MembersPage() {
             planId={currentOrg?.planId}
           />
           <button
-            className="btn btn-primary btn-sm"
+            className="btn btn-lime btn-data"
             onClick={() => setInviteOpen(true)}
             id="members-invite-btn"
           >
@@ -741,10 +749,21 @@ export default function MembersPage() {
             Click <strong>Manage</strong> on any member row to edit tournament access. A member with no assignments sees all tournaments.
           </p>
           <p className={styles.roleRefNote} style={{ marginTop: '0.5rem' }}>
-            <strong>Tournament Plus staffing pattern:</strong> Use the 10-seat Plus allowance for a lead organizer, registrar,
-            scheduler, communications lead, scorer manager, and payment or accounting contact. Start with Staff for operators,
-            then have the owner add only the capabilities that person needs.
+            <strong>Staffing tip:</strong> Start with Staff for day-of operators — they can update scores, manage schedules,
+            and post announcements. Use Admin only for people who also need to manage members or change settings.
           </p>
+          {currentOrg?.planId === 'tournament' && (
+            <p className={styles.roleRefNote} style={{ marginTop: '0.5rem' }}>
+              <strong>Seats:</strong> Your Tournament plan includes 3 staff seats (owner + 2 others). Scorekeepers count toward this limit.{' '}
+              <Link href={billingHref} style={{ color: 'var(--logic-lime)' }}>Upgrade to Tournament Plus</Link>{' '}
+              for unlimited seats and free scorekeepers.
+            </p>
+          )}
+          {currentOrg?.planId === 'tournament_plus' && (
+            <p className={styles.roleRefNote} style={{ marginTop: '0.5rem' }}>
+              <strong>Seats:</strong> Your Tournament Plus plan includes unlimited staff seats. Scorekeepers are always free and don&apos;t use a seat.
+            </p>
+          )}
         </div>
       </details>
 
@@ -757,9 +776,19 @@ export default function MembersPage() {
               · {officialCount} scorekeeper{officialCount === 1 ? '' : 's'} (free on this plan)
             </span>
           )}
+          {currentOrg?.planId === 'tournament' && (
+            <span style={{ display: 'block', fontSize: '0.78rem', color: 'var(--white-30)', fontWeight: 400, marginTop: '0.15rem' }}>
+              Tournament plan · upgrade to Tournament Plus for unlimited seats and free scorekeepers
+            </span>
+          )}
+          {currentOrg?.planId === 'tournament_plus' && (
+            <span style={{ display: 'block', fontSize: '0.78rem', color: 'var(--white-30)', fontWeight: 400, marginTop: '0.15rem' }}>
+              Tournament Plus · scorekeepers are always free
+            </span>
+          )}
         </span>
         {atLimit && (
-          <Link href={`/${currentOrg?.slug}/admin/org/billing`} className={styles.upgradeLink}>
+          <Link href={billingHref} className={styles.upgradeLink}>
             Upgrade to add more members →
           </Link>
         )}
@@ -769,7 +798,7 @@ export default function MembersPage() {
       {nearLimit && (
         <div className={styles.nudgeBanner}>
           You're using {seatCount} of {seatLimit} seats.{' '}
-          <Link href={`/${currentOrg?.slug}/admin/org/billing`} className={styles.nudgeLink}>
+          <Link href={billingHref} className={styles.nudgeLink}>
             Upgrade to add more →
           </Link>
         </div>
@@ -779,8 +808,19 @@ export default function MembersPage() {
       <div className={styles.tableWrap}>
         {fetching ? (
           <p className={styles.muted} style={{ padding: '1.5rem' }}>Loading members…</p>
-        ) : members.length === 0 ? (
-          <p className={styles.muted} style={{ padding: '1.5rem' }}>No members yet.</p>
+        ) : nonOfficials.length <= 1 && officials.length === 0 ? (
+          <div style={{ padding: '2rem 1.5rem', textAlign: 'center' }}>
+            <p style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--white-70)', marginBottom: '0.4rem' }}>
+              Invite your first team member
+            </p>
+            <p className={styles.muted} style={{ fontSize: '0.85rem', maxWidth: 400, margin: '0 auto 1rem' }}>
+              Add a Staff member to manage game-day operations, or a Scorekeeper to submit results from the field.
+            </p>
+            <button className="btn btn-lime btn-data" onClick={() => setInviteOpen(true)}>
+              <UserPlus size={15} />
+              Invite Member
+            </button>
+          </div>
         ) : (
           <>
             {renderMemberTable(nonOfficials)}
@@ -869,16 +909,28 @@ export default function MembersPage() {
                   {manageTarget.role === 'owner' ? 'Profile' : 'Role'}
                 </div>
                 {manageTarget.role !== 'owner' && (
-                  <select
-                    className={styles.input}
-                    value={manageDraftRole}
-                    onChange={e => setManageDraftRole(e.target.value as OrgRole)}
-                    aria-label="Change role"
-                  >
-                    <option value="admin">Admin</option>
-                    <option value="staff">Staff</option>
-                    <option value="official">Scorekeeper</option>
-                  </select>
+                  <>
+                    <select
+                      className={styles.input}
+                      value={manageDraftRole}
+                      onChange={e => setManageDraftRole(e.target.value as OrgRole)}
+                      aria-label="Change role"
+                    >
+                      <option value="admin">Admin</option>
+                      <option value="staff">Staff</option>
+                      <option value="official">Scorekeeper</option>
+                    </select>
+                    {planCfg.officialsFreeSeats && manageDraftRole === 'official' && (
+                      <p style={{ fontSize: '0.75rem', color: 'var(--white-30)', marginTop: '0.35rem' }}>
+                        Scorekeepers are free seats on your plan.
+                      </p>
+                    )}
+                  </>
+                )}
+                {manageTarget.role === 'owner' && (
+                  <p style={{ fontSize: '0.8rem', color: 'var(--white-30)', marginBottom: '0.75rem', lineHeight: 1.5 }}>
+                    Ownership cannot be transferred from this page — contact support if you need to change the org owner.
+                  </p>
                 )}
                 <div className={styles.field} style={{ marginTop: manageTarget.role === 'owner' ? 0 : '0.75rem', marginBottom: 0 }}>
                   <label className={styles.label}>

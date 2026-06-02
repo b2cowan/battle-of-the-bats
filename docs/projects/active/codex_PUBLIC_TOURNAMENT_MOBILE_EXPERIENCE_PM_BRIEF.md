@@ -78,3 +78,29 @@ Deliver in six phases:
 6. Verification, documentation, and handoff.
 
 The schedule and registration changes should be prioritized because they solve the most direct mobile workflow problems.
+
+## Progress - 2026-05-29
+
+First implementation slice is complete for the highest-friction coach participant paths:
+
+- Registration now has a real Info -> Review -> Next Steps flow, including waitlist confirmation inside the nav Register flow.
+- The public home hero remains registration-free by design; Register in the nav is the single registration entry point.
+- Schedule controls now use compact selects, segmented controls, icon calendar export, and mobile touch sizing. The planned bottom sheet remains a future enhancement.
+- Follow My Team now lets a public visitor save one tournament team on their device, mark it on the Teams page, open that team's schedule context, and toggle it from the team profile.
+- Teams, Schedule, Standings, Rules, and News empty states now include clearer guidance, organizer contact where available, and useful next links.
+
+## Progress - 2026-06-01
+
+Tournament Day Home Mode is implemented as the next public-home slice:
+
+- In-progress public tournament home pages now lead into a Tournament Day panel with Today's Games, Latest Finals, Field Shortcuts, and an Event Snapshot.
+- The home hero compacts during in-progress events so coaches and parents reach game-day information faster on mobile.
+- Follow My Team now extends to the home page with a browser-local My Team card showing the followed team's next game, latest result, and shortcuts to schedule/profile.
+- Mobile schedule filters now keep division and live Team/Coach search on the page, with a bottom sheet for Pool Play/Playoffs and List/Bracket view choices.
+- Mobile schedule rows now have looser spacing and a phone-first layout so time, matchup, score/status, and field details are easier to scan.
+- Mobile schedule typography and status pills were tightened again so the row feels less crowded while keeping team/score matchups centered beneath time/status.
+- Results/Standings now acts as the combined public record for the current Results redirect: mobile visitors see final-score counts, pending-review counts, games remaining, a followed-team record/latest-score panel, visible Pending badges in standings, and a Recent Scores section for final public record value.
+- Follow-up mobile review tightened the information split: Schedule now owns dense game-by-game score rows, while mobile Standings leads with the ranking table and uses only compact status/My Team context above it. The duplicate Recent Scores feed stays available for wider screens but is hidden on phones.
+- Follow-up visual hierarchy pass moved the standings tie-breaker order below the table and clarified the schedule row hierarchy so final scores, Pending/Cancelled state, and followed-team signals remain scannable.
+- Follow-up direction from product review: public Schedule/result rows now intentionally mirror the admin Results & Scoring row pattern. The public version keeps the compact date/status/matchup rhythm, preserves venue as muted public schedule context, and replaces the admin edit pencil rail with a followed-team star.
+- The full no-banner hero fallback redesign, post-event recap framing beyond Results/Standings, analytics surfaces, and mobile visual UAT remain open.

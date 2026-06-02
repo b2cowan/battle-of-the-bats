@@ -8,12 +8,9 @@ import {
   COACHES_TOURNAMENTS_PATH,
 } from '@/lib/coaches-portal-routes';
 import styles from './coaches-portal.module.css';
+import { pluralize } from '@/lib/utils';
 
 export const metadata = { title: 'Coaches Portal' };
-
-function pluralize(count: number, singular: string, plural = `${singular}s`) {
-  return count === 1 ? `1 ${singular}` : `${count} ${plural}`;
-}
 
 function getBasicContext(contexts: UserAccessContext[]) {
   return contexts.find(context => context.kind === 'coaches_basic') ?? null;

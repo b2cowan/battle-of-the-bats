@@ -92,10 +92,10 @@
 .link {
   padding: 0.4rem 0.875rem;
   border-radius: var(--radius-sm);
-  font-family: var(--font-display);
-  font-size: 1rem;
+  font-family: var(--font-data);
+  font-size: 0.8rem;
   font-weight: 700;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--white-60);
   transition: var(--transition);
@@ -133,55 +133,46 @@
   flex-shrink: 0;
 }
 
-.hamburger {
+/* Bottom nav (marketing pages, mobile only) */
+.bottomNav {
   display: none;
-  background: var(--white-10);
-  border: 1px solid var(--border-2);
-  border-radius: var(--radius-sm);
-  color: var(--white);
-  padding: 0.375rem;
-  transition: var(--transition);
-}
-
-.hamburger:hover { background: var(--white-30); }
-
-/* Mobile menu */
-.mobileMenu {
-  display: none;
-  flex-direction: column;
-  gap: 0.25rem;
-  padding: 1rem 1.5rem 1.5rem;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
   background: var(--nav-mobile-bg);
   backdrop-filter: blur(20px);
   border-top: 1px solid var(--border);
-  animation: slideDown 0.2s ease;
+  padding-bottom: env(safe-area-inset-bottom);
 }
 
-@keyframes slideDown {
-  from { opacity: 0; transform: translateY(-8px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-
-.mobileLink {
-  padding: 0.75rem 1rem;
-  border-radius: var(--radius-sm);
-  font-family: var(--font-display);
-  font-size: 1.1rem;
+.bottomNavLink {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.875rem 0.25rem;
+  font-family: var(--font-data);
+  font-size: 0.6rem;
   font-weight: 700;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.07em;
   text-transform: uppercase;
   color: var(--white-60);
+  white-space: nowrap;
+  border-top: 2px solid transparent;
   transition: var(--transition);
 }
 
-.mobileLink:hover { color: var(--white); background: var(--white-10); }
-.mobileActive { color: var(--white) !important; background: var(--primary-faint) !important; }
+.bottomNavLink:hover { color: var(--white); }
 
-.mobileRegister { margin-top: 0.5rem; justify-content: center; }
+.bottomNavActive {
+  color: var(--primary-light) !important;
+  border-top-color: var(--primary-light) !important;
+}
 
 /* Responsive */
 @media (max-width: 900px) {
   .links { display: none; }
-  .hamburger { display: flex; }
-  .mobileMenu { display: flex; }
+  .bottomNav { display: flex; }
 }

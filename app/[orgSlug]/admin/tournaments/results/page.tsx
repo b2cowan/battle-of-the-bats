@@ -1,9 +1,10 @@
 'use client';
 import React, { useState, useEffect, useCallback } from 'react';
-import { Check, ExternalLink, MapPin, Trophy, RefreshCw, X } from 'lucide-react';
+import { Check, ChevronRight, ExternalLink, MapPin, SlidersHorizontal, Trophy, RefreshCw, X } from 'lucide-react';
 import { formatTime } from '@/lib/utils';
 import { useTournament } from '@/lib/tournament-context';
 import { useOrg } from '@/lib/org-context';
+import { usePageTitle } from '@/lib/usePageTitle';
 import {
   downloadXLSX, generateCSV, downloadCSVBlob,
   buildFilename, serializeRows, serializeHeaders, type ExportColumnDef,
@@ -21,8 +22,6 @@ import { formatScoreSubmittedAt, scoreSubmissionSourceLabel } from '@/lib/tourna
 import {
   StatusLegendPopover,
   ToolbarGroup,
-  ToolbarMenu,
-  ToolbarMenuItem,
   ToolbarSearch,
   ToolbarSegmentedControl,
   ToolbarSelect,
@@ -51,6 +50,7 @@ type ResultsFilter = 'pending' | 'submitted' | 'completed';
 export default function AdminResultsPage() {
   const { currentTournament, loading: tournamentLoading } = useTournament();
   const { currentOrg } = useOrg();
+  usePageTitle('Results & Scoring');
   const tournamentId = currentTournament?.id;
   const orgSlug = currentOrg?.slug;
   const requiresFinalization = currentTournament?.requireScoreFinalization ?? currentOrg?.requireScoreFinalization ?? false;
@@ -66,6 +66,8 @@ export default function AdminResultsPage() {
   const [viewMode, setViewMode] = useState<'pool' | 'playoff'>('pool');
   const [groupMode, setGroupMode] = useState<'flat' | 'pools'>('pools');
   const [selectedVenueKeys, setSelectedVenueKeys] = useState<string[]>([]);
+  const [mobileSettingsOpen, setMobileSettingsOpen] = useState(false);
+  const [venueModalOpen, setVenueModalOpen] = useState(false);
   const [feedback, setFeedback] = useState<{
     isOpen: boolean;
     title: string;
@@ -77,7 +79,7 @@ export default function AdminResultsPage() {
   // PDF settings — fetched once; used in handleExportPDF
   const [pdfSettings, setPdfSettings] = useState<OrgPdfSettings | null>(null);
   const canUsePDF = currentOrg ? hasPlanFeature(currentOrg.planId, 'pdf_exports') : false;
-  const showPdfNudge = canUsePDF && pdfSettings !== null && Object.keys(pdfSettings).length === 0;
+  const [pdfWarningOpen, setPdfWarningOpen] = useState(false);
 
   const refresh = useCallback(async () => {
     if (tournamentLoading) return;
@@ -108,7 +110,16 @@ export default function AdminResultsPage() {
       setGames(allGames);
       setTeams(allTeams.filter((t: any) => t.status === 'accepted'));
       setDivisions(groups);
-      setFilterGroup(prev => prev || (groups.length > 0 ? groups[0].id : ''));
+      setFilterGroup(prev => {
+        // Keep current selection if still valid
+        if (prev && groups.some((g: any) => g.id === prev)) return prev;
+        // Restore from cache if the stored division still exists in this tournament
+        try {
+          const cachedGroup = (JSON.parse(localStorage.getItem(`flhq-results-${tournamentId}`) ?? '{}') as any).filterGroup as string | undefined;
+          if (cachedGroup && groups.some((g: any) => g.id === cachedGroup)) return cachedGroup;
+        } catch {}
+        return groups.length > 0 ? groups[0].id : '';
+      });
       setVenues(allVenues);
     } finally {
       setLoading(false);
@@ -127,6 +138,42 @@ export default function AdminResultsPage() {
       .then(data => setPdfSettings(data as OrgPdfSettings))
       .catch(() => setPdfSettings(null));
   }, [orgSlug]);
+
+  // Restore filter state from localStorage when the tournament changes.
+  useEffect(() => {
+    if (!tournamentId) return;
+    try {
+      const raw = localStorage.getItem(`flhq-results-${tournamentId}`);
+      if (!raw) return;
+      const cached = JSON.parse(raw) as Partial<{
+        selectedStatuses: ResultsFilter[];
+        viewMode: 'pool' | 'playoff';
+        groupMode: 'flat' | 'pools';
+        selectedVenueKeys: string[];
+      }>;
+      if (Array.isArray(cached.selectedStatuses) && cached.selectedStatuses.length > 0) {
+        setSelectedStatuses(cached.selectedStatuses);
+      }
+      if (cached.viewMode === 'pool' || cached.viewMode === 'playoff') setViewMode(cached.viewMode);
+      if (cached.groupMode === 'flat' || cached.groupMode === 'pools') setGroupMode(cached.groupMode);
+      if (Array.isArray(cached.selectedVenueKeys)) setSelectedVenueKeys(cached.selectedVenueKeys);
+    } catch {}
+  }, [tournamentId]);
+
+  // Persist filter state to localStorage. Guard: only write once divisions are loaded
+  // so we don't overwrite valid cache with empty default state on initial render.
+  useEffect(() => {
+    if (!tournamentId || !filterGroup || divisions.length === 0) return;
+    try {
+      localStorage.setItem(`flhq-results-${tournamentId}`, JSON.stringify({
+        filterGroup,
+        selectedStatuses,
+        viewMode,
+        groupMode,
+        selectedVenueKeys,
+      }));
+    } catch {}
+  }, [tournamentId, filterGroup, selectedStatuses, viewMode, groupMode, selectedVenueKeys, divisions.length]);
 
   function getTeamName(id: string) {
     return teams.find(t => t.id === id)?.name ?? 'TBD';
@@ -218,6 +265,7 @@ export default function AdminResultsPage() {
       return map;
     }, new Map<string, { key: string; label: string; sublabel?: string; count: number }>()),
   ).map(([, option]) => option).sort((a, b) => a.label.localeCompare(b.label));
+  const totalVenueCount = venueFilterOptions.reduce((t, o) => t + o.count, 0);
 
   const filtered = games.filter(g => {
     const matchesGroup = g.divisionId === filterGroup;
@@ -276,7 +324,7 @@ export default function AdminResultsPage() {
     );
   }
 
-  async function handleExportPDF() {
+  async function doPdfExport() {
     const settings: OrgPdfSettings = {
       ...DEFAULT_PDF_SETTINGS,
       ...(pdfSettings && Object.keys(pdfSettings).length > 0 ? pdfSettings : {}),
@@ -353,10 +401,23 @@ export default function AdminResultsPage() {
     );
   }
 
+  async function handleExportPDF() {
+    if (
+      canUsePDF &&
+      pdfSettings !== null &&
+      Object.keys(pdfSettings).length === 0 &&
+      !localStorage.getItem('flhq-pdf-setup-warned')
+    ) {
+      setPdfWarningOpen(true);
+      return;
+    }
+    await doPdfExport();
+  }
+
   const statusFilterOptions = [
-    { key: 'pending'   as ResultsFilter, label: 'To Be Scored',   count: pendingCount },
-    { key: 'submitted' as ResultsFilter, label: 'Pending Review', count: submittedCount },
-    { key: 'completed' as ResultsFilter, label: 'Completed',      count: completedCount },
+    { key: 'pending'   as ResultsFilter, label: 'Unscored',   count: pendingCount },
+    { key: 'submitted' as ResultsFilter, label: 'Reviewing',  count: submittedCount },
+    { key: 'completed' as ResultsFilter, label: 'Completed',  count: completedCount },
   ];
 
   const statusChipClass: Record<ResultsFilter, string> = {
@@ -364,6 +425,20 @@ export default function AdminResultsPage() {
     submitted: s.chip_waitlist,
     completed: s.chip_accepted,
   };
+
+  // Label shown in the venue button inside the sheet and in the summary strip
+  const venueLabel = selectedVenueKeys.length === 0
+    ? 'All venues'
+    : selectedVenueKeys.length === 1
+      ? (venueFilterOptions.find(o => o.key === selectedVenueKeys[0])?.label ?? '1 venue')
+      : `${selectedVenueKeys.length} venues`;
+
+  // Always-visible summary of current view settings for the strip outside the sheet
+  const settingsSummary = [
+    viewMode === 'pool' ? 'Round Robin' : 'Playoffs',
+    viewMode === 'pool' ? (groupMode === 'pools' ? 'Pools' : 'Flat') : null,
+    venueFilterOptions.length > 1 ? venueLabel : null,
+  ].filter(Boolean).join(' · ');
 
   return (
     <div className={s.page}>
@@ -375,7 +450,7 @@ export default function AdminResultsPage() {
 
       <TournamentAdminToolbar ariaLabel="Results controls" className={styles.resultsToolbar}>
         {/* ── Row 1 left: Division first, then view-mode controls ── */}
-        <ToolbarGroup align="start">
+        <ToolbarGroup align="start" className={styles.resultsStartGroup}>
           {/* Division always first — primary context selector, matches Schedule pattern */}
           {divisions.length > 0 && (
             <ToolbarSelect<string>
@@ -410,44 +485,9 @@ export default function AdminResultsPage() {
         </ToolbarGroup>
 
         {/* ── Row 1 right: utility actions — Export · Tools ── */}
-        <ToolbarGroup align="end">
-          {/* Mobile row 2: Round Robin | Flat — dedicated row, hidden on desktop */}
-          <div className={styles.mobileModePair}>
-            <label className={styles.mobileModeNative}>
-              <span className="sr-only">View</span>
-              <select
-                className={styles.mobileModeNativeSelect}
-                value={viewMode}
-                onChange={e => setViewMode(e.target.value as 'pool' | 'playoff')}
-              >
-                <option value="pool">Round Robin</option>
-                <option value="playoff">Playoffs</option>
-              </select>
-            </label>
-            {viewMode === 'pool' && (
-              <label className={styles.mobileModeNative}>
-                <span className="sr-only">Group</span>
-                <select
-                  className={styles.mobileModeNativeSelect}
-                  value={groupMode}
-                  onChange={e => setGroupMode(e.target.value as 'flat' | 'pools')}
-                >
-                  <option value="flat">Flat</option>
-                  <option value="pools">Pools</option>
-                </select>
-              </label>
-            )}
-          </div>
-          {/* Mobile row 3: venue filter — order:2 flows below mobileModePair, alongside action buttons */}
-          <div className={styles.resultsVenueMobile}>
-            <VenueFilterMenu
-              options={venueFilterOptions}
-              selectedKeys={selectedVenueKeys}
-              onToggle={key => setSelectedVenueKeys(prev => prev.includes(key) ? prev.filter(v => v !== key) : [...prev, key])}
-              onClear={() => setSelectedVenueKeys([])}
-            />
-          </div>
+        <ToolbarGroup align="end" className={styles.resultsActionGroup}>
           <ExportMenu
+            className={styles.resultsExportMenu}
             formats={['xlsx', 'csv', 'pdf']}
             onExportXLSX={handleExportXLSX}
             onExportCSV={handleExportCSV}
@@ -456,14 +496,16 @@ export default function AdminResultsPage() {
             disabled={filtered.length === 0}
           />
           {currentOrg?.slug && (
-            <ToolbarMenu label="Tools">
-              <ToolbarMenuItem
-                icon={<ExternalLink size={14} />}
-                label="Open Scorekeeper View"
-                hint="Open scoring interface in a new tab"
-                onSelect={() => window.open(`/${currentOrg!.slug}/scorekeeper`, '_blank', 'noopener,noreferrer')}
-              />
-            </ToolbarMenu>
+            <button
+              type="button"
+              className={`btn btn-ghost btn-data ${styles.mobileIconButton}`}
+              onClick={() => window.open(`/${currentOrg!.slug}/scorekeeper`, '_blank', 'noopener,noreferrer')}
+              title="Open scorekeeper view"
+              aria-label="Open scorekeeper view"
+            >
+              <ExternalLink size={12} />
+              <span className={styles.mobileButtonLabel}>Scorekeeper</span>
+            </button>
           )}
         </ToolbarGroup>
 
@@ -484,6 +526,7 @@ export default function AdminResultsPage() {
                 key={key}
                 type="button"
                 className={`${s.filterChip} ${statusChipClass[key]} ${selectedStatuses.includes(key) ? s.chipActive : ''}`}
+                data-empty={count === 0 ? 'true' : undefined}
                 onClick={() => setSelectedStatuses(prev => prev.includes(key) ? prev.filter(x => x !== key) : [...prev, key])}
               >
                 <span>{label}</span>
@@ -517,16 +560,198 @@ export default function AdminResultsPage() {
         </ToolbarGroup>
       </TournamentAdminToolbar>
 
-      {showPdfNudge && (
-        <HelpCallout
-          variant="info"
-          title="PDF settings not configured"
-          body="Your PDF export will use default styling. Set up your header, logo, and footer once and all future PDFs will use those settings."
-          cta={{ label: 'Configure PDF Settings', href: `/${currentOrg?.slug}/admin/tournaments/settings/pdf` }}
-          dismissible
-          localStorageKey="flhq-pdf-nudge-results"
-        />
+      {/* ── Mobile settings bottom sheet ────────────────────── */}
+      {mobileSettingsOpen && (
+        <>
+          <div
+            className={styles.sheetBackdrop}
+            onClick={() => setMobileSettingsOpen(false)}
+            aria-hidden
+          />
+          <div className={styles.sheet} role="dialog" aria-modal="true" aria-label="View settings">
+            <div className={styles.sheetHandle} />
+            <div className={styles.sheetBody}>
+              <div className={styles.sheetSection}>
+                <div className={styles.sheetSectionLabel}>Stage</div>
+                <div className={styles.sheetSegments}>
+                  {(['pool', 'playoff'] as const).map(v => (
+                    <button
+                      key={v}
+                      type="button"
+                      className={`${styles.sheetSeg} ${viewMode === v ? styles.sheetSegActive : ''}`}
+                      onClick={() => setViewMode(v)}
+                    >
+                      {v === 'pool' ? 'Round Robin' : 'Playoffs'}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {viewMode === 'pool' && (
+                <div className={styles.sheetSection}>
+                  <div className={styles.sheetSectionLabel}>Grouping</div>
+                  <div className={styles.sheetSegments}>
+                    {(['flat', 'pools'] as const).map(v => (
+                      <button
+                        key={v}
+                        type="button"
+                        className={`${styles.sheetSeg} ${groupMode === v ? styles.sheetSegActive : ''}`}
+                        onClick={() => setGroupMode(v)}
+                      >
+                        {v === 'flat' ? 'Flat' : 'Pools'}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {venueFilterOptions.length > 1 && (
+                <div className={styles.sheetSection}>
+                  <div className={styles.sheetSectionLabel}>Venue</div>
+                  <button
+                    type="button"
+                    className={`${styles.venueSheetBtn} ${selectedVenueKeys.length > 0 ? styles.venueSheetBtnActive : ''}`}
+                    onClick={() => setVenueModalOpen(true)}
+                  >
+                    <span>{venueLabel}</span>
+                    <ChevronRight size={13} aria-hidden />
+                  </button>
+                </div>
+              )}
+
+              <div className={styles.sheetSection}>
+                <div className={styles.sheetSectionLabel}>Game Status</div>
+                <div className={styles.sheetSegments}>
+                  {statusFilterOptions.map(({ key, label }) => (
+                    <button
+                      key={key}
+                      type="button"
+                      className={`${styles.sheetSeg} ${selectedStatuses.includes(key) ? styles.sheetSegActive : ''}`}
+                      onClick={() => setSelectedStatuses(prev =>
+                        prev.includes(key) ? prev.filter(s => s !== key) : [...prev, key]
+                      )}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <button
+                type="button"
+                className={styles.sheetDone}
+                onClick={() => setMobileSettingsOpen(false)}
+              >
+                Done
+              </button>
+            </div>
+          </div>
+
+          {/* ── Venue nested modal (slides over the settings sheet) ── */}
+          {venueModalOpen && (
+            <>
+              <div
+                className={styles.venueModalBackdrop}
+                onClick={() => setVenueModalOpen(false)}
+                aria-hidden
+              />
+              <div className={styles.venueModal} role="dialog" aria-modal="true" aria-label="Filter by venue">
+                <div className={styles.venueModalHandle} />
+                <div className={styles.venueModalHeader}>
+                  <button
+                    type="button"
+                    className={styles.venueModalBack}
+                    onClick={() => setVenueModalOpen(false)}
+                  >
+                    ← Back
+                  </button>
+                  <span className={styles.venueModalTitle}>Venue</span>
+                  {selectedVenueKeys.length > 0 && (
+                    <button
+                      type="button"
+                      className={styles.venueModalClear}
+                      onClick={() => setSelectedVenueKeys([])}
+                    >
+                      Clear
+                    </button>
+                  )}
+                </div>
+                <div className={styles.venueModalList}>
+                  <button
+                    type="button"
+                    className={`${styles.venueModalOption} ${selectedVenueKeys.length === 0 ? styles.venueModalOptionActive : ''}`}
+                    onClick={() => setSelectedVenueKeys([])}
+                  >
+                    <span>All venues</span>
+                    <span className={styles.venueModalCount}>{totalVenueCount}</span>
+                  </button>
+                  {venueFilterOptions.map(opt => {
+                    const isActive = selectedVenueKeys.includes(opt.key);
+                    return (
+                      <button
+                        key={opt.key}
+                        type="button"
+                        className={`${styles.venueModalOption} ${isActive ? styles.venueModalOptionActive : ''}`}
+                        onClick={() => setSelectedVenueKeys(prev =>
+                          prev.includes(opt.key) ? prev.filter(k => k !== opt.key) : [...prev, opt.key]
+                        )}
+                      >
+                        <span>
+                          {opt.label}
+                          {opt.sublabel && <span className={styles.venueModalSublabel}> — {opt.sublabel}</span>}
+                        </span>
+                        <span className={styles.venueModalCount}>{opt.count}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+                <div className={styles.venueModalFooter}>
+                  <button
+                    type="button"
+                    className={styles.sheetDone}
+                    onClick={() => setVenueModalOpen(false)}
+                  >
+                    Done
+                  </button>
+                </div>
+              </div>
+            </>
+          )}
+        </>
       )}
+
+      {/* ── Active settings summary strip (mobile only, outside sheet) ── */}
+      {currentTournament && !mobileSettingsOpen && (
+        <button
+          type="button"
+          className={styles.activeSettingsSummary}
+          onClick={() => setMobileSettingsOpen(true)}
+          aria-label={`View settings: ${settingsSummary}`}
+        >
+          <span className={styles.activeSettingsSummaryText}>{settingsSummary}</span>
+          <span className={styles.summaryRight}>
+            <span className={styles.statusCountTally} aria-hidden>
+              {statusFilterOptions.map(({ key, count }) => (
+                <span
+                  key={key}
+                  className={[
+                    styles.tallyPill,
+                    key === 'pending'   ? styles.tallyPending   : '',
+                    key === 'submitted' ? styles.tallySubmitted : '',
+                    key === 'completed' ? styles.tallyCompleted : '',
+                    !selectedStatuses.includes(key) ? styles.tallyInactive : '',
+                  ].filter(Boolean).join(' ')}
+                >
+                  <span className={styles.tallyDot} />
+                  {count}
+                </span>
+              ))}
+            </span>
+            <SlidersHorizontal size={12} className={styles.activeSettingsSummaryIcon} aria-hidden />
+          </span>
+        </button>
+      )}
+
 
       {!loading && currentTournament && games.length === 0 && (
         <HelpCallout
@@ -568,6 +793,16 @@ export default function AdminResultsPage() {
       <FeedbackModal
         {...feedback}
         onClose={() => setFeedback(f => ({ ...f, isOpen: false, onConfirm: undefined }))}
+      />
+      <FeedbackModal
+        isOpen={pdfWarningOpen}
+        onClose={() => { localStorage.setItem('flhq-pdf-setup-warned', '1'); setPdfWarningOpen(false); }}
+        onConfirm={() => { localStorage.setItem('flhq-pdf-setup-warned', '1'); void doPdfExport(); }}
+        title="PDF settings not configured"
+        message="This export will use default FieldLogicHQ styling — no custom header, logo, or footer. Visit Org Settings → PDF Settings to customize all future exports."
+        confirmText="Download anyway"
+        cancelText="Not now"
+        type="info"
       />
     </div>
   );

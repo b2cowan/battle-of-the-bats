@@ -12,6 +12,7 @@
 - [Tournament Plus subscription positioning](tournament-plus-positioning.md)
 - [Tournament Experience Excellence](tournament-experience-excellence.md)
 - [Tournament scorekeeper experience](tournament-scorekeeper-experience.md)
+- [Automated schedule generator](automated-schedule-generator.md)
 - [Export strategy](export-strategy.md)
 - [Help documentation planning rule](help-documentation-planning.md)
 - [Standalone Team workspace](standalone-team-workspace.md)

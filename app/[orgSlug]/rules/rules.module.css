@@ -1,12 +1,4 @@
-﻿.pageHeader {
-  background: linear-gradient(180deg, var(--bg-2) 0%, var(--bg) 100%);
-  border-bottom: 1px solid var(--border);
-  padding: 2rem 0 2.5rem;
-}
-
-.pageHeader h1 { color: var(--white); margin: 0.5rem 0; }
-.pageHeader p { max-width: 640px; }
-
+﻿
 .rulesGrid {
   display: grid;
   grid-template-columns: 1fr 1fr;

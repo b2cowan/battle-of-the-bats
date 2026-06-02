@@ -14,7 +14,7 @@ Free Tournament remains the starter tier:
 
 Tournament Plus is the paid operations tier:
 - Unlimited tournament slots via `tournamentLimit: 9999`.
-- 10 staff/admin seats.
+- Unlimited staff/admin seats.
 - Registration control: custom questions, file collection, Excel/PDF exports, payment reminders, waitlist promotion, and queue management.
 - Payment readiness: Plus-gated payment dashboard, payment filters, and selected-team reminders for manual fee/deposit collection.
 - Full tournament branding.
@@ -22,7 +22,7 @@ Tournament Plus is the paid operations tier:
 
 ## Phase 0 implementation notes
 
-- `lib/plan-config.ts` now sets Tournament Plus to unlimited tournament slots and 10 seats.
+- `lib/plan-config.ts` now sets Tournament Plus to unlimited tournament slots and unlimited seats.
 - `lib/plan-features.ts` now has explicit Plus feature keys for the planned registration, productivity, and reporting bundle.
 - `lib/tournament-plus-analytics.ts` defines event names, locked-feature IDs, acquisition sources, and marketing surfaces for future tracking.
 - Public pricing, signup/onboarding plan selection, admin billing, mock billing, platform-admin plan support copy, tournament marketing, and help content were updated to use the starter-vs-operations framing.
@@ -79,7 +79,7 @@ Tournament Plus is the paid operations tier:
 - Targeted/selected communication is now a Plus-gated workflow in the Communication Hub. Free Tournament can send only basic all-team email, while Plus can target by team status, payment status, division, selected teams, team/contact audience, and contact role.
 - Public News division visibility is also Plus-gated. Free Tournament posts remain all-division public News posts.
 - Targeted email attempts, blocked attempts, and completions write `tournament_plus_feature_used` events with `feature: targeted_tournament_announcements`.
-- Phase 5 staff workflow closed without new schema: the current role/capability model is enough for now. Plus's 10-seat allowance is positioned for a lead organizer, registrar, scheduler, communications lead, scorer manager, and payment/accounting contact, using Admin sparingly, Staff for operators, tournament assignments, and owner-only capability overrides.
+- Phase 5 staff workflow closed without new schema: the current role/capability model is enough for now. Plus includes unlimited seats — typical usage is a lead organizer, registrar, scheduler, communications lead, scorer manager, and payment/accounting contact, using Admin sparingly, Staff for operators, tournament assignments, and owner-only capability overrides.
 - Reusable tournament setup templates are deferred as a post-clone enhancement. Cloning remains the supported repeat-event setup workflow.
 - Settings & Access is grouped by user intent with tabs: Tournament setup, People & access, then Account. The standalone Plus productivity explanation was removed from the settings page so the page reads as a navigation surface, not mixed marketing/help copy.
 - Tournament/Tournament Plus users should not be sent from tournament admin into org admin billing for Plus gates. Tournament feature upgrade CTAs route to `/admin/tournaments/settings/subscription`, and Plus-only settings cards should be locked or hidden for free orgs instead of behaving like normal navigation.
@@ -119,3 +119,30 @@ Tournament Plus is the paid operations tier:
 Before launch, check Platform Admin plan config overrides for `tournament_plus`. DB overrides can supersede `PLAN_CONFIG` defaults, so any old 3-slot or 5-seat override must be cleared or updated.
 
 The free team/division complexity ceiling is deferred. The first launch should rely on feature gates and analytics before adding a size cap.
+
+## 2026-05-29 product value ranking
+
+The strongest next Tournament Plus value story is repeat-event setup: "never start from scratch again." Basic cloning already exists, so the active follow-up is Tournament Plus Repeat-Event Setup V2: make clone/next-year setup easier to discover, clearer about what copies, safer about what never copies, and connected to post-event retention. See `docs/projects/active/TOURNAMENT_PLUS_REPEAT_EVENT_SETUP_PLAN.md`.
+
+2026-05-29 first slice: the post-event Summary page now packages cloning as "Reuse this setup" instead of a prompt-based clone utility. Tournament Plus users get a draft form, carried-forward/never-copied lists, and a post-create draft screen with review links. The clone API and safe default exclusions remain unchanged.
+
+2026-05-29 setup wizard slice: the New Tournament setup wizard now says "Reuse a previous tournament setup," keeps "Start blank tournament" available, prioritizes completed/recent source choices, shows carried-forward and never-copied panels, and creates a "tournament draft" rather than a "clone." Manage Tournaments receives source/copy-count context and shows a reused-setup review checklist after creation.
+
+2026-05-29 draft dashboard slice: draft tournament dashboards now surface "Reuse setup from a previous tournament" when other tournaments exist. Plus users choose a source, confirm carried-forward versus never-copied data, and get a completion state with copied counts plus a review-before-publishing reminder. Free users see a Tournament Plus upgrade action instead of clone wording.
+
+2026-05-29 tournament list slice: Manage Tournaments now has a row-level "Reuse setup" action on non-archived tournaments. Plus users open the new-tournament wizard with that source preselected; Free users see "Reuse with Plus" routed to tournament-local subscription settings.
+
+2026-05-29 configurable copy options slice: the reused-setup draft flow now exposes grouped copy options before creation. Safe defaults remain on, and users can turn off event structure, locations, registration setup, public presence, or content. The selected groups map to the existing clone API flags.
+
+2026-05-29 stale-source guidance slice: the reused-setup confirmation now shows a "Review before publishing" advisory when the source is older, still draft/active, or selected registration/public/content groups deserve review. This is advisory only and does not block draft creation.
+
+2026-05-29 analytics metadata slice: repeat-event setup clone attempts/completions now record source surface, source tournament status/year, target year, selected copy groups, warning count, and warning keys. Draft-dashboard populate-from attempts/completions record the dashboard surface and source status/year too.
+
+2026-05-29 help copy alignment slice: tournament help now includes a dedicated "Reuse setup for repeat tournaments" topic. It tells organizers where to start the workflow, which setup groups can copy, what never copies, why the new tournament stays private as a draft, and what to review before activation. Related setup, registration, and closeout help now reinforce the same repeat-event language.
+
+Additional high-value ideas to preserve for later:
+
+- Registration Command Center V1 is now active implementation: dashboard attention panel plus Teams / Registrations attention strip for pending review, waitlist, unpaid, past-due, missing required intake/files, and unplaced accepted teams. See `docs/projects/active/REGISTRATION_COMMAND_CENTER_V1_PLAN.md`.
+- Schedule Generator Quality Report: explain conflicts avoided, venue usage, rest balance, unscheduled games, and warnings so auto-scheduling feels trustworthy.
+- Game-Day Command Center: scorekeeper links, unresolved games, publish state, recent score changes, and quick notices for active tournament operations.
+- Post-Event Wrap V2: stronger recap/archive/renewal loop, sponsor or association packet ideas, and decisions around a richer public recap.

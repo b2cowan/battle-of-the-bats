@@ -3,25 +3,18 @@ import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
-  Users, Calendar, Trophy,
-  MoreHorizontal, LayoutDashboard, Tag, MapPin,
+  Users, MoreHorizontal,
   LogOut, X, ChevronRight, ChevronDown,
-  Settings, Paintbrush, LayoutGrid, CalendarDays, UserCheck,
-  ExternalLink, BookOpen, Mail, Archive, FileText,
+  LayoutGrid, CalendarDays, UserCheck,
+  ExternalLink, FileText,
   type LucideIcon,
 } from 'lucide-react';
 import { signOut } from '@/lib/auth';
 import { useOrg } from '@/lib/org-context';
 import { useTournament } from '@/lib/tournament-context';
 import { useCurrentOrgCoachAccess } from '@/lib/use-current-org-coach-access';
+import { TOUR_GROUPS, type TourNavItem } from './admin-nav-config';
 import styles from './AdminBottomNav.module.css';
-
-const PRIMARY_KEYS = [
-  { key: 'tournaments/dashboard',     icon: LayoutDashboard, label: 'Dashboard'    },
-  { key: 'tournaments/registrations', icon: Users,           label: 'Teams'         },
-  { key: 'tournaments/schedule',      icon: Calendar,        label: 'Schedule'      },
-  { key: 'tournaments/results',       icon: Trophy,          label: 'Results'       },
-];
 
 type NavItem = {
   key: string;
@@ -29,44 +22,25 @@ type NavItem = {
   label: string;
 };
 
-const OPERATIONS_MORE: NavItem[] = [
-  { key: 'tournaments/communication', icon: Mail, label: 'Communications' },
-];
-
-const SETUP_MORE: NavItem[] = [
-  { key: 'tournaments/venues',    icon: MapPin,     label: 'Venues'            },
-  { key: 'tournaments/divisions', icon: Tag,        label: 'Divisions'         },
-  { key: 'tournaments/rules',     icon: BookOpen,   label: 'Rules & Resources' },
-  { key: 'tournaments/branding',  icon: Paintbrush, label: 'Branding'          },
-];
-
-const ADMIN_MORE: NavItem[] = [
-  { key: 'tournaments/settings',      icon: Settings,        label: 'Settings & Access' },
-  { key: 'tournaments/archives',      icon: Archive,         label: 'Past Tournaments' },
-];
+function prefixKey(item: TourNavItem): NavItem {
+  return { key: `tournaments/${item.key}`, icon: item.icon, label: item.label };
+}
 
 export default function AdminBottomNav() {
   const pathname  = usePathname();
   const router    = useRouter();
-  const { currentOrg } = useOrg();
+  const { currentOrg, userRole } = useOrg();
   const base = `/${currentOrg?.slug ?? 'milton-bats'}/admin`;
   const orgSlug = currentOrg?.slug ?? 'milton-bats';
   const currentOrgSlug = currentOrg?.slug;
   const [moreOpen, setMoreOpen] = useState(false);
   const moreRef   = useRef<HTMLDivElement>(null);
   const { tournaments, currentTournament, setCurrentTournament } = useTournament();
-  const tournamentPreviewLabel =
-    currentTournament?.status === 'draft'
-      ? 'Preview Draft Site'
-      : currentTournament?.status === 'completed'
-        ? 'Preview Completed Site'
-        : 'Preview Site';
-  const tournamentPreviewTitle =
-    currentTournament?.status === 'draft'
-      ? 'Preview the private draft tournament site. It is not public until activated.'
-      : currentTournament?.status === 'completed'
-        ? 'Preview the completed tournament site.'
-        : 'Preview the public tournament site.';
+  const tournamentIsLive = currentTournament?.status === 'active' || currentTournament?.status === 'completed';
+  const tournamentPreviewLabel = tournamentIsLive ? 'View Site' : 'Preview Site';
+  const tournamentPreviewTitle = tournamentIsLive
+    ? 'View the live public tournament site.'
+    : 'Preview the private draft tournament site. It is not public until activated.';
   const inactiveTournamentCtaLabel =
     currentTournament?.status === 'draft'
       ? 'Review launch checklist'
@@ -77,15 +51,23 @@ export default function AdminBottomNav() {
   const isModule      = isRepTeams || isHouseLeague || pathname.startsWith(`${base}/org`) || pathname.startsWith(`${base}/public-site`) || pathname.startsWith(`${base}/accounting`);
   const hasCurrentOrgCoachAccess = useCurrentOrgCoachAccess(currentOrgSlug, isRepTeams);
   const showTournamentSummary = currentTournament?.status === 'completed' || currentTournament?.status === 'archived';
-  const operationsMore: NavItem[] = showTournamentSummary
-    ? [...OPERATIONS_MORE, { key: 'tournaments/summary', icon: FileText, label: 'Summary' }]
-    : OPERATIONS_MORE;
 
-  const allMoreKeys = [
-    ...operationsMore,
-    ...SETUP_MORE,
-    ...ADMIN_MORE,
-  ];
+  // Derive sections from shared config so labels stay in sync with the desktop sidebar.
+  const opsItems   = TOUR_GROUPS.find(g => g.key === 'operations')!.items;
+  const setupItems = TOUR_GROUPS.find(g => g.key === 'setup')!.items;
+  const adminItems = TOUR_GROUPS.find(g => g.key === 'admin')!.items;
+
+  const PRIMARY_KEYS = opsItems.slice(0, 4).map(prefixKey);
+  const operationsMoreBase = opsItems.slice(4).map(prefixKey);
+  const operationsMore: NavItem[] = showTournamentSummary
+    ? [...operationsMoreBase, { key: 'tournaments/summary', icon: FileText, label: 'Summary' }]
+    : operationsMoreBase;
+  const setupMore = setupItems
+    .filter(item => !item.roles || item.roles.includes(userRole ?? ''))
+    .map(prefixKey);
+  const adminMore = adminItems.map(prefixKey);
+
+  const allMoreKeys = [...operationsMore, ...setupMore, ...adminMore];
 
   const isMoreActive = allMoreKeys.some(item => {
     const href = item.key ? `${base}/${item.key}` : base;
@@ -269,19 +251,21 @@ export default function AdminBottomNav() {
             <div className={styles.dropDivider} />
 
             <div className={styles.dropSectionLabel}>Setup</div>
-            {dropNavItems(SETUP_MORE)}
+            {dropNavItems(setupMore)}
 
             <div className={styles.dropDivider} />
 
             <div className={styles.dropSectionLabel}>Admin</div>
-            {dropNavItems(ADMIN_MORE)}
+            {dropNavItems(adminMore)}
 
             <div className={styles.dropDivider} />
 
             {currentTournament && (
               <Link
                 className={`${styles.dropItem} ${styles.dropUtilItem}`}
-                href={`/${orgSlug}/admin/tournaments/preview/${currentTournament.slug}`}
+                href={tournamentIsLive
+                  ? `/${orgSlug}/${currentTournament.slug}`
+                  : `/${orgSlug}/admin/tournaments/preview/${currentTournament.slug}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 id="admin-mob-preview-site"

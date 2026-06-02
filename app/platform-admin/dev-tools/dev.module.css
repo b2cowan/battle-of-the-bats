@@ -1040,3 +1040,39 @@
   opacity: 0.4;
   cursor: not-allowed;
 }
+
+/* ─── User list panel ────────────────────────────────────────────────────────── */
+.userOrgTags {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  flex-wrap: wrap;
+  flex-shrink: 0;
+  max-width: 55%;
+}
+
+.userOrgTag {
+  font-size: 0.54rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 0.1rem 0.35rem;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: rgba(255,255,255,0.3);
+  border-radius: 3px;
+  white-space: nowrap;
+}
+
+.userOrgTagOwner {
+  background: rgba(239,68,68,0.06);
+  border-color: rgba(239,68,68,0.25);
+  color: rgba(239,68,68,0.65);
+}
+
+.noOrgsText {
+  font-size: 0.62rem;
+  color: rgba(255,255,255,0.18);
+  font-style: italic;
+  flex-shrink: 0;
+}

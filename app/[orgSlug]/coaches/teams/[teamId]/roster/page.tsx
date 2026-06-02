@@ -83,7 +83,7 @@ export default function RosterPage({
   // PDF settings — fetched once on mount; used in handleExportPDF
   const [pdfSettings, setPdfSettings] = useState<OrgPdfSettings | null>(null);
   const canUsePDF = currentOrg ? hasPlanFeature(currentOrg.planId, 'pdf_exports') : false;
-  const showPdfNudge = canUsePDF && pdfSettings !== null && Object.keys(pdfSettings).length === 0;
+  const [pdfWarningOpen, setPdfWarningOpen] = useState(false);
 
   function showFeedback(type: 'success' | 'danger', msg: string) {
     setFeedbackType(type); setFeedbackMsg(msg); setFeedbackOpen(true);
@@ -225,7 +225,7 @@ export default function RosterPage({
     );
   }
 
-  async function handleExportPDF() {
+  async function doPdfExport() {
     if (!players.length) return;
     const settings: OrgPdfSettings = {
       ...DEFAULT_PDF_SETTINGS,
@@ -263,6 +263,19 @@ export default function RosterPage({
       pdfRows,
       settings,
     );
+  }
+
+  async function handleExportPDF() {
+    if (
+      canUsePDF &&
+      pdfSettings !== null &&
+      Object.keys(pdfSettings).length === 0 &&
+      !localStorage.getItem('flhq-pdf-setup-warned')
+    ) {
+      setPdfWarningOpen(true);
+      return;
+    }
+    await doPdfExport();
   }
 
   if (assignmentsLoading) return <p className={styles.muted}>Loading…</p>;
@@ -321,16 +334,6 @@ export default function RosterPage({
         </div>
       </div>
 
-      {showPdfNudge && (
-        <HelpCallout
-          variant="info"
-          title="PDF settings not configured"
-          body="Your export will use default FieldLogicHQ branding. Configure your header, logo, and footer once and all future PDFs will use those settings."
-          cta={{ label: 'Configure PDF Settings', href: `/${orgSlug}/admin/org` }}
-          dismissible
-          localStorageKey="flhq-pdf-nudge-roster"
-        />
-      )}
 
       {fetching ? (
         <p className={styles.muted}>Loading…</p>
@@ -539,6 +542,16 @@ export default function RosterPage({
         title={feedbackType === 'success' ? 'Done' : 'Error'}
         message={feedbackMsg}
         type={feedbackType}
+      />
+      <FeedbackModal
+        isOpen={pdfWarningOpen}
+        onClose={() => { localStorage.setItem('flhq-pdf-setup-warned', '1'); setPdfWarningOpen(false); }}
+        onConfirm={() => { localStorage.setItem('flhq-pdf-setup-warned', '1'); void doPdfExport(); }}
+        title="PDF settings not configured"
+        message="This export will use default FieldLogicHQ styling — no custom header, logo, or footer. Visit Org Settings → PDF Settings to customize all future exports."
+        confirmText="Download anyway"
+        cancelText="Not now"
+        type="info"
       />
     </div>
   );

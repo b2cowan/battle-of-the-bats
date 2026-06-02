@@ -1,10 +1,11 @@
 ﻿'use client';
 import { useState, useEffect, use, useCallback, type CSSProperties } from 'react';
-import { RefreshCw, Plus, Check, X, Trash2, Pencil, ExternalLink, ChevronDown, ChevronUp, HelpCircle } from 'lucide-react';
+import { RefreshCw, Plus, Check, X, Trash2, Pencil, ExternalLink, ChevronDown, ChevronUp, HelpCircle, Copy } from 'lucide-react';
 import Link from 'next/link';
 import { useTournament } from '@/lib/tournament-context';
 import { useOrg } from '@/lib/org-context';
-import { Tournament, TournamentStatus, TournamentArchive } from '@/lib/types';
+import { Tournament, TournamentStatus, TournamentArchive, CloneCopiedCounts } from '@/lib/types';
+import { copiedSummary } from '@/lib/utils';
 
 function generateSlug(name: string): string {
   return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
@@ -55,6 +56,15 @@ import styles from './tournaments-admin.module.css';
 type ModalMode = 'add' | 'edit' | null;
 type DivisionPreset = 'youth' | 'adult' | 'custom';
 type SlugStatus = 'idle' | 'checking' | 'available' | 'taken' | 'invalid';
+
+type CreatedTournamentNotice = {
+  name: string;
+  slug: string;
+  creationMethod?: 'blank' | 'reused_setup';
+  sourceName?: string;
+  copied?: CloneCopiedCounts;
+};
+
 type DivisionRow = {
   id: string;
   name: string;
@@ -142,6 +152,8 @@ export default function AdminTournamentsPage({
   const [loadingData, setLoadingData] = useState(true);
   const [modal, setModal]       = useState<ModalMode>(null);
   const [setupWizardOpen, setSetupWizardOpen] = useState(createOnLoad);
+  const [selectedReuseSourceId, setSelectedReuseSourceId] = useState<string | null>(null);
+  const [setupWizardSurface, setSetupWizardSurface] = useState<'manage_tournaments_new_button' | 'manage_tournaments_row'>('manage_tournaments_new_button');
   const [editing, setEditing]   = useState<Tournament | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [sealedTournamentIds, setSealedTournamentIds] = useState<Set<string>>(new Set());
@@ -171,7 +183,7 @@ export default function AdminTournamentsPage({
   const [slugEdited, setSlugEdited] = useState(false);
   const [slugStatus, setSlugStatus] = useState<SlugStatus>('idle');
   const [slugMessage, setSlugMessage] = useState('');
-  const [createdTournament, setCreatedTournament] = useState<{ name: string; slug: string } | null>(null);
+  const [createdTournament, setCreatedTournament] = useState<CreatedTournamentNotice | null>(null);
   const { refresh: refreshCtx } = useTournament();
   const { currentOrg } = useOrg();
 
@@ -252,6 +264,8 @@ export default function AdminTournamentsPage({
     setSlugStatus('idle');
     setSlugMessage('');
     setCreatedTournament(null);
+    setSelectedReuseSourceId(null);
+    setSetupWizardSurface('manage_tournaments_new_button');
     setForm(getDefaultTournamentForm());
     setEditing(null);
     setDivisionPreset('youth');
@@ -259,6 +273,22 @@ export default function AdminTournamentsPage({
     setDivisionRows(buildDivisionRows(DIVISION_PRESETS.youth));
     setUseWelcomeMsg(true);
     setWelcomeMsg('Welcome to our tournament! We are excited to host a great event for all participating teams.');
+    setSetupWizardOpen(true);
+  }
+
+  function openReuseSetup(tournament: Tournament) {
+    if (tournamentLimitReached) {
+      setFeedback({
+        isOpen: true,
+        title: 'Tournament Limit Reached',
+        message: `Archive an existing tournament before creating another draft, or upgrade for more tournament slots.`,
+        type: 'warning',
+      });
+      return;
+    }
+    setCreatedTournament(null);
+    setSelectedReuseSourceId(tournament.id);
+    setSetupWizardSurface('manage_tournaments_row');
     setSetupWizardOpen(true);
   }
 
@@ -572,6 +602,23 @@ export default function AdminTournamentsPage({
   const occupiedTournamentSlotCount = tournaments.filter(t => t.status !== 'archived').length;
   const tournamentLimitReached = tournamentLimit < 9999 && occupiedTournamentSlotCount >= tournamentLimit;
   const tournamentLimitLabel = tournamentLimit >= 9999 ? 'Unlimited' : tournamentLimit;
+  const canReuseSetup = Boolean(currentOrg && hasPlanFeature(currentOrg.planId, 'tournament_cloning'));
+  const subscriptionHref = `/${currentOrg?.slug ?? 'admin'}/admin/tournaments/settings/subscription`;
+  const createdFromReuse = createdTournament?.creationMethod === 'reused_setup';
+  const createdChecklist = createdFromReuse
+    ? [
+        'Review copied divisions, pools, and schedule structure',
+        'Confirm dates, fees, and public contact details',
+        'Check venues, public page settings, rules, and registration questions',
+        'Activate when you are ready to publish and accept registrations',
+      ]
+    : [
+        'Review and adjust your divisions',
+        'Add venue locations',
+        'Add a public contact',
+        'Activate when you are ready to publish and accept registrations',
+      ];
+  const copiedSetupItems = createdFromReuse ? copiedSummary(createdTournament?.copied) : [];
 
   return (
     <div className={styles.page}>
@@ -745,6 +792,30 @@ export default function AdminTournamentsPage({
                         >
                           Seal
                         </button>
+                      )
+                    )}
+                    {t.status !== 'archived' && (
+                      canReuseSetup ? (
+                        <button
+                          type="button"
+                          className={`btn btn-outline btn-sm ${styles.reuseAction}`}
+                          onClick={() => openReuseSetup(t)}
+                          id={`reuse-tournament-${t.id}`}
+                          title="Create a new draft using this tournament setup"
+                        >
+                          <Copy size={13} />
+                          <span>Reuse setup</span>
+                        </button>
+                      ) : (
+                        <Link
+                          className={`btn btn-outline btn-sm ${styles.reuseAction}`}
+                          href={subscriptionHref}
+                          id={`reuse-upgrade-tournament-${t.id}`}
+                          title="Reuse setup with Tournament Plus"
+                        >
+                          <Copy size={13} />
+                          <span>Reuse with Plus</span>
+                        </Link>
                       )
                     )}
                     {currentOrg && (
@@ -1047,12 +1118,24 @@ export default function AdminTournamentsPage({
         existingTournaments={tournaments
           .filter(t => t.status !== 'archived')
           .sort((a, b) => (b.year ?? 0) - (a.year ?? 0))}
-        canClone={Boolean(currentOrg && hasPlanFeature(currentOrg.planId, 'tournament_cloning'))}
+        initialSourceTournamentId={selectedReuseSourceId}
+        sourceSurface={setupWizardSurface}
+        canClone={canReuseSetup}
         upgradeCopy={requiresTournamentPlusCopy('tournament_cloning')}
-        onClose={() => setSetupWizardOpen(false)}
+        onClose={() => {
+          setSetupWizardOpen(false);
+          setSelectedReuseSourceId(null);
+        }}
         onCreated={async tournament => {
           setSetupWizardOpen(false);
-          setCreatedTournament({ name: tournament.name, slug: tournament.slug });
+          setSelectedReuseSourceId(null);
+          setCreatedTournament({
+            name: tournament.name,
+            slug: tournament.slug,
+            creationMethod: tournament.creationMethod,
+            sourceName: tournament.sourceName,
+            copied: tournament.copied,
+          });
           await refresh();
         }}
       />
@@ -1063,21 +1146,34 @@ export default function AdminTournamentsPage({
             <div className="modal-header">
               <div className="flex items-center gap-2">
                 <Check size={20} style={{ color: 'var(--success, #22c55e)' }} />
-                <h3>Tournament Created</h3>
+                <h3>{createdFromReuse ? 'Tournament Draft Created' : 'Tournament Created'}</h3>
               </div>
               <button className="btn btn-ghost btn-data" onClick={() => setCreatedTournament(null)}><X size={16} /></button>
             </div>
             <div style={{ padding: '1.25rem 1.5rem' }}>
               <p style={{ color: 'var(--white-70)', marginBottom: '1.25rem' }}>
-                <strong>{createdTournament.name}</strong> is saved as a draft. Here's what to finish before going live:
+                <strong>{createdTournament.name}</strong>{' '}
+                {createdFromReuse && createdTournament.sourceName
+                  ? <>is saved as a draft from <strong>{createdTournament.sourceName}</strong>. Review the copied setup before going live:</>
+                  : <>is saved as a draft. Here is what to finish before going live:</>}
               </p>
+              {createdFromReuse && copiedSetupItems.length > 0 && (
+                <div style={{ marginBottom: '1rem', padding: '0.75rem', border: '1px solid rgba(var(--logic-lime-rgb), 0.24)', background: 'rgba(var(--logic-lime-rgb), 0.055)' }}>
+                  <div style={{ marginBottom: '0.45rem', color: 'var(--logic-lime)', fontSize: '0.74rem', fontWeight: 900, textTransform: 'uppercase' }}>
+                    Copied forward
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                    {copiedSetupItems.map(item => (
+                      <div key={item} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem' }}>
+                        <Check size={13} style={{ color: 'var(--logic-lime)', flexShrink: 0, marginTop: '0.12rem' }} />
+                        <span style={{ fontSize: '0.82rem', color: 'var(--white-65)' }}>{item}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
-                {[
-                  'Review and adjust your divisions',
-                  'Add venue locations',
-                  'Add a public contact',
-                  'Activate when you\'re ready to publish and accept registrations',
-                ].map(item => (
+                {createdChecklist.map(item => (
                   <div key={item} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem' }}>
                     <Check size={14} style={{ color: 'var(--success, #22c55e)', flexShrink: 0, marginTop: '0.15rem' }} />
                     <span style={{ fontSize: '0.9rem', color: 'var(--white-70)' }}>{item}</span>
@@ -1086,7 +1182,7 @@ export default function AdminTournamentsPage({
               </div>
             </div>
             <div className="modal-footer" style={{ justifyContent: 'flex-end' }}>
-              <button className="btn btn-primary btn-data" onClick={() => setCreatedTournament(null)}>
+              <button className="btn btn-lime btn-data" onClick={() => setCreatedTournament(null)}>
                 Got it
               </button>
             </div>

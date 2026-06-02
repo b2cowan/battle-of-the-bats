@@ -1,4 +1,4 @@
-import { getAuthContextWithScope, unauthorized, forbidden, scopeGuard } from '@/lib/api-auth';
+import { getAuthContextWithScope, unauthorized, forbidden, scopeGuard, requireTournamentInOrg } from '@/lib/api-auth';
 import { hasCapability } from '@/lib/roles';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { sendEmail, schedulePublishedHtml, SITE_URL } from '@/lib/email';
@@ -27,6 +27,9 @@ export async function POST(req: Request) {
 
     const denied = scopeGuard(ctx, tournamentId);
     if (denied) return denied;
+
+    const wrongOrg = await requireTournamentInOrg(ctx, tournamentId);
+    if (wrongOrg) return wrongOrg;
 
     // Update schedule_visibility for all specified divisions.
     const { error: updateError } = await supabaseAdmin

@@ -1,6 +1,8 @@
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import EarlyAccessModalTrigger from '@/components/EarlyAccessModalTrigger';
+import { PLAN_ARTICLE_CONTENT } from '@/lib/plan-article-content';
+import { PLAN_CONFIG, formatPriceAmount } from '@/lib/plan-config';
 import styles from './page.module.css';
 
 export const metadata: Metadata = {
@@ -9,63 +11,8 @@ export const metadata: Metadata = {
     'One platform for tournaments, house league, rep teams, and org finances. Coaches run their teams independently — you keep full visibility without owning every task.',
 };
 
-const PAIN_ITEMS = [
-  {
-    title: 'Your coaching staff runs on WhatsApp.',
-    body: "Rosters live in personal phones. Lineups are in notes apps. You find out about tryout results when a coach mentions it at an AGM.",
-  },
-  {
-    title: "You can't see the team finances without asking.",
-    body: 'Coaches track dues on their own. The treasurer asks every spring. Nobody is ever quite sure where the money went.',
-  },
-  {
-    title: 'Tryouts run on email chains.',
-    body: 'Registration comes in through personal inboxes. Coaches pick teams independently. There is no central record of who tried out or who was cut.',
-  },
-  {
-    title: 'When a coach leaves, knowledge walks with them.',
-    body: "The contact list is in a personal Google Drive. The roster is someone's spreadsheet. The new coach inherits nothing.",
-  },
-];
-
-const MODULES = [
-  {
-    num: '01',
-    label: 'Tournaments',
-    title: 'Run events year-round.',
-    body: 'Registration, scheduling, brackets, and live scores — same tools your tournament organizers already use. Unlimited tournaments included.',
-  },
-  {
-    num: '02',
-    label: 'House League',
-    title: 'Full season management — included.',
-    body: 'Player registration, draft, schedules, standings, and parent notifications. Club includes the full house league module — no separate plan required.',
-  },
-  {
-    num: '03',
-    label: 'Rep Teams and Coaches Portal',
-    title: 'Coaches run their team. You run the org.',
-    body: 'Coaches get a dedicated portal to manage roster, lineups, documents, and team finances independently. You get org-wide visibility without owning the day-to-day.',
-  },
-  {
-    num: '04',
-    label: 'Accounting',
-    title: 'Finances in one place — not three spreadsheets.',
-    body: 'Org ledger, team invoicing, expense tracking, payment reconciliation, and board-ready PDF exports. The treasurer stops living in spreadsheets.',
-  },
-];
-
-const CLUB_FEATURES = [
-  'Everything in League (tournaments, house league, public org page)',
-  'Unlimited staff / admin seats',
-  'Accounting module — org ledger and expense tracking',
-  'Team invoicing and payment reconciliation',
-  'Rep Teams module — tryout registration and roster management',
-  'Player documents and season history',
-  'Team financial management',
-  'Coaches Portal — 3 team accounts included',
-  'Additional Coaches Portal accounts at $19/month each',
-];
+const { painItems: PAIN_ITEMS, steps: MODULES, features: CLUB_FEATURES } =
+  PLAN_ARTICLE_CONTENT.club;
 
 const CROSS_SELLS = [
   {
@@ -192,10 +139,10 @@ export default function ForClubsPage() {
               <div>
                 <p className={styles.planName}>Club</p>
                 <div className={styles.planPrice}>
-                  <span className={styles.planAmount}>$179</span>
+                  <span className={styles.planAmount}>{formatPriceAmount(PLAN_CONFIG.club.monthlyPrice)}</span>
                   <span className={styles.planPeriod}>/month</span>
                 </div>
-                <p className={styles.planNote}>$1,790/year — save two months</p>
+                <p className={styles.planNote}>{formatPriceAmount(PLAN_CONFIG.club.annualPrice)}/year — save two months</p>
               </div>
               <span className={styles.comingSoonBadge}>Coming soon</span>
               <p className={styles.planTagline}>
@@ -232,7 +179,7 @@ export default function ForClubsPage() {
                 to migrate.
               </p>
               <div className={styles.startNowPlans}>
-                {['Tournament — Free', 'Tournament Plus — $39/mo'].map(p => (
+                {[`Tournament — Free`, `Tournament Plus — ${formatPriceAmount(PLAN_CONFIG.tournament_plus.monthlyPrice)}/mo`].map(p => (
                   <span key={p} className={styles.startNowPlanBadge}>{p}</span>
                 ))}
               </div>

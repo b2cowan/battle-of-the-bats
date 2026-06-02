@@ -1,12 +1,16 @@
 'use client';
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { CreditCard, CheckCircle, Archive, ShieldOff, Link2, UsersRound, Star } from 'lucide-react';
+import { CreditCard, CheckCircle, Archive, ShieldOff, Link2, UsersRound, Star, ArrowRight, Users, CalendarRange, Building2 } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
+import { usePageTitle } from '@/lib/usePageTitle';
 import { useTournament } from '@/lib/tournament-context';
-import { PLAN_CONFIG } from '@/lib/plan-config';
+import { getBillingHref } from '@/lib/billing-urls';
+import { PLAN_CONFIG, isEffectivelyGated, isFoundingSeasonActive, formatPriceAmount, formatAnnualSavings } from '@/lib/plan-config';
+import { PLAN_ARTICLE_CONTENT } from '@/lib/plan-article-content';
 import FeedbackModal from '@/components/FeedbackModal';
+import PlanArticlePanel from '@/components/billing/PlanArticlePanel';
 import type { OrgPlan, SubscriptionStatus } from '@/lib/types';
 import styles from './billing.module.css';
 
@@ -23,8 +27,6 @@ const STATUS_BADGE: Record<SubscriptionStatus, string> = {
   past_due: 'badge-warning',
   canceled: 'badge-neutral',
 };
-
-const PLAN_ORDER: OrgPlan[] = ['tournament', 'team', 'tournament_plus', 'league', 'club'];
 
 type BillingTournamentSummary = {
   id: string;
@@ -89,14 +91,14 @@ const PLAN_FEATURES: Record<OrgPlan, string[]> = {
     'Automated schedule generation and playoff brackets',
     'Full branding control',
     'Tournament cloning, announcements, and post-event archives',
-    '5 staff seats — scorekeepers always free',
+    'Unlimited staff seats — scorekeepers always free',
   ],
   league: [
     'Everything in Tournament Plus',
     'Public organization page (branded)',
     'House League — registration, divisions, seasons, standings',
     'Advanced member roles and permissions',
-    '10 staff / admin seats',
+    'Unlimited staff / admin seats',
   ],
   club: [
     'Everything in League',
@@ -115,7 +117,21 @@ const PLAN_META_COPY: Record<OrgPlan, string> = {
   club:            "You're on the complete Club platform.",
 };
 
-const COMING_SOON_PLANS = new Set<OrgPlan>(['league', 'club']);
+type ProductShelfPlan = 'team' | 'league' | 'club';
+const PRODUCT_SHELF_PLANS: ProductShelfPlan[] = ['team', 'league', 'club'];
+
+const PRODUCT_SHELF_META: Record<ProductShelfPlan, { eyebrow: string; detailLabel: string }> = {
+  team:   { eyebrow: 'For rep teams',       detailLabel: 'Preview Coaches Portal' },
+  league: { eyebrow: 'For league programs', detailLabel: 'Preview League' },
+  club:   { eyebrow: 'For full clubs',      detailLabel: 'Preview Club' },
+};
+
+const PRODUCT_SHELF_ICON: Partial<Record<OrgPlan, React.ReactElement>> = {
+  team:   <Users size={18} />,
+  league: <CalendarRange size={18} />,
+  club:   <Building2 size={18} />,
+};
+
 const CLUB_VALUE_TEAM_COUNT = 3;
 
 type TeamLinkForBillingSummary = {
@@ -139,11 +155,13 @@ type TeamLinkBillingSummary = {
 
 export default function BillingPage() {
   const { currentOrg, refresh: refreshOrg, userRole } = useOrg();
+  usePageTitle('Plan & Billing');
   const { tournaments, refresh: refreshTournaments }  = useTournament();
   const searchParams     = useSearchParams();
   const router           = useRouter();
 
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'annual'>('monthly');
+  const [panelPlan, setPanelPlan]       = useState<'tournament_plus' | 'league' | 'club' | 'team' | null>(null);
   const [loading, setLoading]           = useState<OrgPlan | null>(null);
   const [portalLoading, setPortalLoading] = useState(false);
   const [successOpen, setSuccessOpen]     = useState(() => searchParams.get('success') === '1');
@@ -175,7 +193,7 @@ export default function BillingPage() {
 
   useEffect(() => {
     if (!currentOrg) return;
-    fetch('/api/admin/members/count')
+    fetch(`/api/admin/members/count?orgSlug=${encodeURIComponent(currentOrg.slug)}`)
       .then(r => r.ok ? r.json() : null)
       .then(data => { if (data) setSeatUsage(data); })
       .catch(() => {});
@@ -253,23 +271,34 @@ export default function BillingPage() {
   }, [currentOrg, userRole]);
 
   async function handleUpgrade(planKey: 'tournament_plus' | 'league' | 'club') {
+    if (!currentOrg) return;
     setLoading(planKey);
     try {
       const res = await fetch('/api/billing/create-checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ planKey, billingCycle }),
+        body: JSON.stringify({
+          planKey,
+          billingCycle,
+          orgSlug: currentOrg.slug,
+          returnTo: getBillingHref(currentOrg.slug, currentOrg.planId),
+        }),
       });
       const data = await res.json() as {
         url?: string;
         error?: string;
         applied?: boolean;
+        foundingSeason?: boolean;
+        compUntil?: string;
         restoredCount?: number;
         remainingRetainedCount?: number;
       };
       if (!res.ok) throw new Error(data.error ?? 'Checkout failed');
       if (data.applied) {
         await refreshBillingState();
+        if (data.foundingSeason) {
+          setFoundingSeasonStatus({ isFoundingSeason: true, compUntil: data.compUntil ?? null });
+        }
         setSuccessTitle('Plan updated');
         const remainingCopy = data.remainingRetainedCount
           ? ` ${data.remainingRetainedCount} retained tournament${data.remainingRetainedCount === 1 ? '' : 's'} still exceed this plan limit and remain in retention.`
@@ -436,12 +465,12 @@ export default function BillingPage() {
   const usageCount     = tournaments.filter(t => t.status !== 'archived').length;
   const usageLimit     = currentOrg.tournamentLimit;
   const usagePct       = usageLimit >= 9999 ? 0 : Math.min(100, Math.round((usageCount / usageLimit) * 100));
-  const upgradePlans   = PLAN_ORDER.filter(p => PLAN_ORDER.indexOf(p) > PLAN_ORDER.indexOf(currentPlanKey));
-  const downgradePlans = PLAN_ORDER.filter(p =>
-    p !== 'team' && PLAN_ORDER.indexOf(p) < PLAN_ORDER.indexOf(currentPlanKey)
-  );
-  const primaryUpgradePlans = upgradePlans.filter(p => p === 'tournament_plus');
-  const secondaryUpgradePlans = upgradePlans.filter(p => p !== 'tournament_plus');
+  const primaryUpgradePlans: OrgPlan[] = currentPlanKey === 'tournament' ? ['tournament_plus'] : [];
+  const productShelfPlans = isTeamWorkspaceBilling
+    ? []
+    : PRODUCT_SHELF_PLANS.filter(planKey => planKey !== currentPlanKey);
+  const downgradePlans: OrgPlan[] = currentPlanKey === 'tournament_plus' ? ['tournament'] : [];
+  const showSubscriptionOptions = primaryUpgradePlans.length > 0 || productShelfPlans.length > 0;
   const hasPaidPlan    = currentPlanKey !== 'tournament';
   const canManageBilling = userRole === 'owner';
   const subscriptionTitle = isTeamWorkspaceBilling ? 'Coaches Portal billing' : 'Subscription';
@@ -460,32 +489,44 @@ export default function BillingPage() {
       (teamLinkBillingSummary?.activeOrgPaidTeamCount ?? 0) >= CLUB_VALUE_TEAM_COUNT);
 
   function getPrice(planKey: OrgPlan): string {
-    if (COMING_SOON_PLANS.has(planKey)) return 'Coming soon';
+    if (isEffectivelyGated(planKey)) return 'Coming soon';
+    if (planKey === 'tournament_plus' && isFoundingSeasonActive()) return 'Free through Dec 31, 2026';
     const plan = PLAN_CONFIG[planKey];
     if (plan.monthlyPrice === 0) return 'Free';
-    if (billingCycle === 'annual') return `$${plan.annualPrice} CAD / year`;
-    return `$${plan.monthlyPrice} CAD / month`;
+    if (billingCycle === 'annual') return `${formatPriceAmount(plan.annualPrice)} CAD / year`;
+    return `${formatPriceAmount(plan.monthlyPrice)} CAD / month`;
+  }
+
+  function getShelfPrice(planKey: OrgPlan): string {
+    const plan = PLAN_CONFIG[planKey];
+    if (plan.monthlyPrice === 0) return 'Free';
+    return `from ${formatPriceAmount(plan.monthlyPrice)} CAD / month`;
   }
 
   function getSavings(planKey: OrgPlan): string | null {
-    if (COMING_SOON_PLANS.has(planKey)) return null;
+    if (isEffectivelyGated(planKey)) return null;
+    if (planKey === 'tournament_plus' && isFoundingSeasonActive()) return null;
     if (billingCycle !== 'annual') return null;
-    const plan = PLAN_CONFIG[planKey];
-    if (plan.monthlyPrice === 0) return null;
-    const savings = plan.monthlyPrice * 12 - plan.annualPrice;
-    return `Save $${savings} — 2 months free`;
+    return formatAnnualSavings(planKey);
   }
 
   function getTrialNote(planKey: OrgPlan): string {
-    if (COMING_SOON_PLANS.has(planKey)) return 'Early access only. Self-serve checkout is not open yet.';
+    if (isEffectivelyGated(planKey)) return 'Early access only. Self-serve checkout is not open yet.';
+    if (planKey === 'tournament_plus' && isFoundingSeasonActive()) return 'No credit card required until Jan 1, 2027';
     const days = PLAN_CONFIG[planKey].trialDays;
     if (days === 90) return 'Early-access trial details collected in Stripe';
     return `${days}-day trial · Payment details collected in Stripe`;
   }
 
+  function getUpgradeLoadingLabel(planKey: OrgPlan): string {
+    return currentPlanKey === 'tournament' && planKey === 'tournament_plus' && isFoundingSeasonActive()
+      ? 'Applying...'
+      : 'Redirecting...';
+  }
+
   // ── Cancelled-state view: stripped page with reactivate CTA ──────────────
   if (status === 'canceled') {
-    const isComingSoon = COMING_SOON_PLANS.has(currentPlanKey);
+    const isComingSoon = isEffectivelyGated(currentPlanKey);
     const canSelfServeReactivate =
       !isTeamWorkspaceBilling && !isComingSoon && currentPlanKey !== 'tournament';
 
@@ -510,7 +551,7 @@ export default function BillingPage() {
               <div className={styles.planPrice}>
                 {currentPlan.monthlyPrice === 0
                   ? 'Free forever'
-                  : `$${currentPlan.monthlyPrice} CAD / month`}
+                  : `${formatPriceAmount(currentPlan.monthlyPrice)} CAD / month`}
               </div>
             </div>
           </div>
@@ -583,12 +624,13 @@ export default function BillingPage() {
             </div>
 
             <button
-              className={`btn btn-primary ${styles.planButton}`}
+              className={`btn btn-lime btn-data ${styles.planButton}`}
               onClick={() => handleUpgrade(currentPlanKey as 'tournament_plus' | 'league' | 'club')}
               disabled={loading === currentPlanKey}
               id="billing-reactivate-btn"
             >
               {loading === currentPlanKey ? 'Redirecting…' : `Reactivate ${currentPlan.label}`}
+              {loading !== currentPlanKey && <ArrowRight size={14} />}
             </button>
           </div>
         )}
@@ -603,10 +645,11 @@ export default function BillingPage() {
               Start a new Premium subscription to restore team operations during the retention window.
             </p>
             <Link
-              className="btn btn-primary"
+              className="btn btn-lime btn-data"
               href={`/coaches/start?reactivateOrgSlug=${encodeURIComponent(currentOrg.slug)}&teamName=${encodeURIComponent(currentOrg.name.replace(/\s+Coaches Portal$/i, ''))}`}
             >
               Reactivate Premium
+              <ArrowRight size={14} />
             </Link>
           </div>
         )}
@@ -650,8 +693,21 @@ export default function BillingPage() {
             <div className={styles.planPrice}>
               {currentPlan.monthlyPrice === 0
                 ? 'Free forever'
-                : `$${currentPlan.monthlyPrice} CAD / month`}
+                : currentOrg.subscriptionPeriod === 'annual'
+                  ? `${formatPriceAmount(currentPlan.annualPrice)} CAD / year`
+                  : `${formatPriceAmount(currentPlan.monthlyPrice)} CAD / month`}
             </div>
+            {currentOrg.subscriptionPeriod && currentPlan.monthlyPrice > 0 && (
+              <div className={styles.planBillingCycle}>
+                Billed {currentOrg.subscriptionPeriod === 'annual' ? 'annually' : 'monthly'}
+              </div>
+            )}
+            {currentOrg.currentPeriodEnd && (
+              <div className={styles.planRenewalDate}>
+                {status === 'trialing' ? 'Trial ends ' : 'Renews '}
+                {new Date(currentOrg.currentPeriodEnd).toLocaleDateString('en-CA', { month: 'long', day: 'numeric', year: 'numeric' })}
+              </div>
+            )}
             <div className={styles.planMetaCopy}>{PLAN_META_COPY[currentPlanKey]}</div>
           </div>
         </div>
@@ -672,7 +728,7 @@ export default function BillingPage() {
             </h2>
             <p className={styles.foundingSeasonCopy}>
               {isBeforeOctober
-                ? 'You\'re running Tournament Plus free through December 31, 2026 as a founding organization. Tournament Plus is normally $39/month — your plan renews on January 1, 2027. No credit card required until then.'
+                ? `You're running Tournament Plus free through December 31, 2026 as a founding organization. Tournament Plus is normally ${formatPriceAmount(PLAN_CONFIG.tournament_plus.monthlyPrice)}/month — your plan renews on January 1, 2027. No credit card required until then.`
                 : 'Your founding season includes Tournament Plus free through December 31, 2026. Add a payment method now to continue without interruption on January 1.'}
             </p>
           </div>
@@ -688,8 +744,9 @@ export default function BillingPage() {
               Start with a Basic visibility link, then ask the organization to take over billing. Your Coaches Portal stays coach-operated, and roster, document, accounting, and ownership access do not move.
             </p>
           </div>
-          <Link className="btn btn-primary btn-sm" href={`/${currentOrg.slug}/coaches/link-org`}>
+          <Link className="btn btn-lime btn-data" href={`/${currentOrg.slug}/coaches/link-org`}>
             Link Parent Org
+            <ArrowRight size={14} />
           </Link>
         </div>
       )}
@@ -704,10 +761,11 @@ export default function BillingPage() {
             </p>
           </div>
           <div className={styles.billingNudgeActions}>
-            <Link className="btn btn-primary btn-sm" href={`/${currentOrg.slug}/admin/org/coaches-portal-links`}>
+            <Link className="btn btn-lime btn-data" href={`/${currentOrg.slug}/admin/org/coaches-portal-links`}>
               Review Coaches Portal Links
+              <ArrowRight size={14} />
             </Link>
-            <Link className="btn btn-ghost btn-sm" href="/pricing#club">
+            <Link className="btn btn-ghost btn-data" href="/pricing#club">
               View Club Preview
             </Link>
           </div>
@@ -734,7 +792,7 @@ export default function BillingPage() {
               className={styles.usageFill}
               style={{
                 width: `${usagePct}%`,
-                background: usagePct >= 100 ? 'var(--danger)' : usagePct >= 80 ? 'var(--warning, #f59e0b)' : 'var(--logic-lime)',
+                background: usagePct >= 100 ? 'var(--danger)' : usagePct >= 80 ? 'var(--warning)' : 'var(--logic-lime)',
               }}
             />
           </div>
@@ -795,7 +853,7 @@ export default function BillingPage() {
       )}
 
       {/* Upgrade cards */}
-      {upgradePlans.length > 0 && (
+      {showSubscriptionOptions && (
         <>
           {primaryUpgradePlans.length > 0 && (
             <>
@@ -804,73 +862,7 @@ export default function BillingPage() {
                   <h2 className={styles.sectionTitle}>Get more from your tournaments</h2>
                   <p className={styles.upgradeIntro}>Tournament Plus adds registration control, custom branding, exports, and scheduling automation — everything you need to run repeat events without the spreadsheet.</p>
                 </div>
-                <div className={styles.billingToggle}>
-                  <button
-                    className={`${styles.toggleOption} ${billingCycle === 'monthly' ? styles.toggleActive : ''}`}
-                    onClick={() => setBillingCycle('monthly')}
-                  >
-                    Monthly
-                  </button>
-                  <button
-                    className={`${styles.toggleOption} ${billingCycle === 'annual' ? styles.toggleActive : ''}`}
-                    onClick={() => setBillingCycle('annual')}
-                  >
-                    Annual
-                  </button>
-                </div>
-              </div>
-              <div className={styles.plansGrid}>
-                {primaryUpgradePlans.map(planKey => {
-                  const plan = PLAN_CONFIG[planKey];
-                  const savings = getSavings(planKey);
-                  const isComingSoon = COMING_SOON_PLANS.has(planKey);
-                  return (
-                    <div key={planKey} className={`${styles.planCard} ${isComingSoon ? styles.planCardComingSoon : ''}`}>
-                      <div className={styles.planCardHeader}>
-                        <div className={styles.planCardName}>{plan.label}</div>
-                        {isComingSoon && <span className={styles.comingSoonBadge}>Coming soon</span>}
-                      </div>
-                      <div className={styles.planTaglineCard}>{PLAN_TAGLINE[planKey]}</div>
-                      <div className={styles.planCardPrice}>
-                        <span className={styles.priceAmount}>{getPrice(planKey)}</span>
-                      </div>
-                      {savings && <div className={styles.savingsBadge}>{savings}</div>}
-                      <ul className={styles.featureList}>
-                        {PLAN_FEATURES[planKey].map(f => (
-                          <li key={f}>
-                            <CheckCircle size={13} />
-                            {f}
-                          </li>
-                        ))}
-                      </ul>
-                      <button
-                        className={`btn btn-primary ${styles.planButton}`}
-                        onClick={() => handleUpgrade(planKey as 'tournament_plus' | 'league' | 'club')}
-                        disabled={isComingSoon || loading === planKey}
-                        id={`billing-upgrade-${planKey}`}
-                      >
-                        {isComingSoon ? 'Early access only' : loading === planKey ? 'Redirecting…' : `Upgrade to ${plan.label}`}
-                      </button>
-                      <p className={styles.trialNote}>{getTrialNote(planKey)}</p>
-                    </div>
-                  );
-                })}
-              </div>
-            </>
-          )}
-
-          {secondaryUpgradePlans.length > 0 && (
-            <>
-              <div className={styles.upgradeHeader}>
-                <div>
-                  <h2 className={styles.sectionTitle}>Managing more than tournaments?</h2>
-                  <p className={styles.upgradeIntro}>
-                    {secondaryUpgradePlans.includes('team')
-                      ? 'Team is built for rep team coaches who also run local events. League and Club are for year-round operations — registrations, house league seasons, rep teams, and accounting.'
-                      : 'League and Club are built for year-round operations — registrations, house league seasons, rep teams, and accounting. Different workflows for organizations running more than tournaments.'}
-                  </p>
-                </div>
-                {primaryUpgradePlans.length === 0 && (
+                {!isFoundingSeasonActive() && (
                   <div className={styles.billingToggle}>
                     <button
                       className={`${styles.toggleOption} ${billingCycle === 'monthly' ? styles.toggleActive : ''}`}
@@ -887,37 +879,144 @@ export default function BillingPage() {
                   </div>
                 )}
               </div>
-              <div className={styles.plansGrid}>
-                {secondaryUpgradePlans.map(planKey => {
+              <div className={`${styles.plansGrid} ${styles.primaryPlansGrid}`}>
+                {primaryUpgradePlans.map(planKey => {
                   const plan = PLAN_CONFIG[planKey];
                   const savings = getSavings(planKey);
-                  const isComingSoon = COMING_SOON_PLANS.has(planKey);
+                  const isComingSoon = isEffectivelyGated(planKey);
+                  const article = planKey in PLAN_ARTICLE_CONTENT
+                    ? PLAN_ARTICLE_CONTENT[planKey as keyof typeof PLAN_ARTICLE_CONTENT]
+                    : null;
                   return (
-                    <div key={planKey} className={`${styles.planCard} ${isComingSoon ? styles.planCardComingSoon : ''}`}>
+                    <div key={planKey} className={`${styles.planCard} ${styles.featuredPlanCard} ${isComingSoon ? styles.planCardComingSoon : ''}`}>
                       <div className={styles.planCardHeader}>
                         <div className={styles.planCardName}>{plan.label}</div>
                         {isComingSoon && <span className={styles.comingSoonBadge}>Coming soon</span>}
                       </div>
-                      <div className={styles.planTaglineCard}>{PLAN_TAGLINE[planKey]}</div>
                       <div className={styles.planCardPrice}>
                         <span className={styles.priceAmount}>{getPrice(planKey)}</span>
                       </div>
                       {savings && <div className={styles.savingsBadge}>{savings}</div>}
-                      <ul className={styles.featureList}>
-                        {PLAN_FEATURES[planKey].map(f => (
-                          <li key={f}>
-                            <CheckCircle size={13} />
-                            {f}
-                          </li>
-                        ))}
-                      </ul>
+                      {article && (
+                        <div className={styles.planQuestion}>
+                          <p className={styles.planQuestionText}>{article.billingQuestion}</p>
+                          <p className={styles.planQuestionSub}>{article.billingSub}</p>
+                          <button
+                            className={`btn btn-ghost btn-data ${styles.articleButton}`}
+                            onClick={() => setPanelPlan(planKey as 'tournament_plus' | 'league' | 'club' | 'team')}
+                          >
+                            See what {plan.label} includes
+                            <ArrowRight size={13} />
+                          </button>
+                        </div>
+                      )}
                       <button
-                        className={`btn btn-primary ${styles.planButton}`}
+                        className={`btn btn-lime btn-data ${styles.planButton}`}
                         onClick={() => handleUpgrade(planKey as 'tournament_plus' | 'league' | 'club')}
                         disabled={isComingSoon || loading === planKey}
                         id={`billing-upgrade-${planKey}`}
                       >
-                        {isComingSoon ? 'Early access only' : loading === planKey ? 'Redirecting…' : `Switch to ${plan.label}`}
+                        {isComingSoon ? 'Early access only' : loading === planKey ? getUpgradeLoadingLabel(planKey) : `Upgrade to ${plan.label}`}
+                        {!isComingSoon && loading !== planKey && <ArrowRight size={14} />}
+                      </button>
+                      <p className={styles.trialNote}>{getTrialNote(planKey)}</p>
+                    </div>
+                  );
+                })}
+              </div>
+            </>
+          )}
+
+          {productShelfPlans.length > 0 && (
+            <>
+              <div className={styles.upgradeHeader}>
+                <div>
+                  <h2 className={styles.sectionTitle}>Managing more than tournaments?</h2>
+                  <p className={styles.upgradeIntro}>
+                    {productShelfPlans.includes('team')
+                      ? 'If you also manage a team, a league program, or a full club outside your tournament, these are the next FieldLogicHQ workspaces to watch.'
+                      : 'For organizations running more than tournament weekends, these plans bring year-round programs, teams, and finances into the same operating system.'}
+                  </p>
+                </div>
+              </div>
+              <div className={`${styles.plansGrid} ${styles.productShelfGrid}`}>
+                {productShelfPlans.map(planKey => {
+                  const plan = PLAN_CONFIG[planKey];
+                  const productMeta = PRODUCT_SHELF_META[planKey as ProductShelfPlan];
+                  const isComingSoon = isEffectivelyGated(planKey);
+                  const article = planKey in PLAN_ARTICLE_CONTENT
+                    ? PLAN_ARTICLE_CONTENT[planKey as keyof typeof PLAN_ARTICLE_CONTENT]
+                    : null;
+                  const icon = PRODUCT_SHELF_ICON[planKey];
+
+                  if (isComingSoon) {
+                    return (
+                      <div key={planKey} className={`${styles.planCard} ${styles.productCard} ${styles.planCardComingSoon}`}>
+                        <div className={styles.planCardHeader}>
+                          <div className={styles.productHeaderLeft}>
+                            {icon && <div className={styles.planCardIcon}>{icon}</div>}
+                            <div>
+                              {productMeta && <p className={styles.productEyebrow}>{productMeta.eyebrow}</p>}
+                              <div className={styles.planCardName}>{plan.label}</div>
+                            </div>
+                          </div>
+                          <span className={styles.comingSoonBadge}>Coming soon</span>
+                        </div>
+                        <div className={styles.planCardPrice}>
+                          <span className={styles.priceAmount}>{getShelfPrice(planKey)}</span>
+                        </div>
+                        {article && (
+                          <p className={styles.productValueProp}>{article.billingSub}</p>
+                        )}
+                        <button
+                          className={`btn btn-lime btn-data ${styles.planButton}`}
+                          onClick={() => setPanelPlan(planKey as 'tournament_plus' | 'league' | 'club' | 'team')}
+                          id={`billing-upgrade-${planKey}`}
+                        >
+                          See what {plan.label} includes
+                          <ArrowRight size={14} />
+                        </button>
+                        <p className={styles.trialNote}>{getTrialNote(planKey)}</p>
+                      </div>
+                    );
+                  }
+
+                  const savings = getSavings(planKey);
+                  return (
+                    <div key={planKey} className={`${styles.planCard} ${styles.productCard}`}>
+                      <div className={styles.planCardHeader}>
+                        <div className={styles.productHeaderLeft}>
+                          {icon && <div className={styles.planCardIcon}>{icon}</div>}
+                          <div>
+                            {productMeta && <p className={styles.productEyebrow}>{productMeta.eyebrow}</p>}
+                            <div className={styles.planCardName}>{plan.label}</div>
+                          </div>
+                        </div>
+                      </div>
+                      <div className={styles.planCardPrice}>
+                        <span className={styles.priceAmount}>{getPrice(planKey)}</span>
+                      </div>
+                      {savings && <div className={styles.savingsBadge}>{savings}</div>}
+                      {article && (
+                        <div className={`${styles.planQuestion} ${styles.productPitch}`}>
+                          <p className={styles.planQuestionText}>{article.billingQuestion}</p>
+                          <p className={styles.planQuestionSub}>{article.billingSub}</p>
+                          <button
+                            className={`btn btn-ghost btn-data ${styles.articleButton}`}
+                            onClick={() => setPanelPlan(planKey as 'tournament_plus' | 'league' | 'club' | 'team')}
+                          >
+                            See what {plan.label} includes
+                            <ArrowRight size={13} />
+                          </button>
+                        </div>
+                      )}
+                      <button
+                        className={`btn btn-lime btn-data ${styles.planButton}`}
+                        onClick={() => setPanelPlan(planKey as 'tournament_plus' | 'league' | 'club' | 'team')}
+                        id={`billing-upgrade-${planKey}`}
+                      >
+                        See what {plan.label} includes
+                        <ArrowRight size={14} />
                       </button>
                       <p className={styles.trialNote}>{getTrialNote(planKey)}</p>
                     </div>
@@ -929,15 +1028,15 @@ export default function BillingPage() {
         </>
       )}
 
-      {/* Billing portal (paid plans) */}
-      {hasPaidPlan && (
+      {/* Billing portal (paid plans, non-founding-season) */}
+      {hasPaidPlan && !showFoundingSeasonBanner && (
         <div className={styles.billingTools}>
           <div>
             <h2 className={styles.sectionTitle}>Billing tools</h2>
             <p className={styles.manageHint}>
               {canManageBilling
                 ? 'Open the secure billing portal for payment methods, invoices, and billing details.'
-                : 'Only organization owners can open payment methods, invoices, and billing details.'}
+                : 'Only organization owners can manage payment methods, invoices, billing details, and downgrade or cancel the plan.'}
             </p>
           </div>
           <button
@@ -951,7 +1050,31 @@ export default function BillingPage() {
         </div>
       )}
 
-      {hasPaidPlan && canManageBilling && (
+      {/* Founding season billing — no Stripe subscription exists yet */}
+      {showFoundingSeasonBanner && (
+        <div className={styles.billingTools}>
+          <div>
+            <h2 className={styles.sectionTitle}>Billing</h2>
+            <p className={styles.manageHint}>
+              {isBeforeOctober
+                ? "No billing action needed — your founding season runs free through December 31, 2026. We'll remind you when it's time to add a payment method."
+                : 'Your founding season ends December 31. Add a payment method now to keep Tournament Plus running without interruption from January 1, 2027.'}
+            </p>
+          </div>
+          {!isBeforeOctober && canManageBilling && (
+            <button
+              className="btn btn-outline"
+              onClick={() => handleUpgrade('tournament_plus')}
+              disabled={loading === 'tournament_plus'}
+            >
+              {loading === 'tournament_plus' ? 'Redirecting…' : 'Add payment method'}
+              {loading !== 'tournament_plus' && <ArrowRight size={14} />}
+            </button>
+          )}
+        </div>
+      )}
+
+      {hasPaidPlan && canManageBilling && !showFoundingSeasonBanner && (
         <div className={styles.retentionCard}>
           <h2 className={styles.sectionTitle}>{isTeamWorkspaceBilling ? 'Cancel Premium access' : 'Reduce or cancel plan'}</h2>
           <p className={styles.retentionCopy}>
@@ -1038,7 +1161,7 @@ export default function BillingPage() {
             placeholder="Optional note for your records"
             rows={3}
           />
-          <button className="btn btn-primary" onClick={confirmDowngrade} disabled={downgradeSaving}>
+          <button className="btn btn-lime btn-data" onClick={confirmDowngrade} disabled={downgradeSaving}>
             {downgradeSaving ? 'Applying…' : 'Confirm downgrade'}
           </button>
         </div>
@@ -1102,6 +1225,16 @@ export default function BillingPage() {
         title="Something went wrong"
         message={errorMsg}
         type="danger"
+      />
+
+      <PlanArticlePanel
+        planKey={panelPlan}
+        billingCycle={billingCycle}
+        onClose={() => setPanelPlan(null)}
+        onUpgrade={(key) => { setPanelPlan(null); if (key !== 'team') handleUpgrade(key); }}
+        upgradeLoading={loading as 'tournament_plus' | 'league' | 'club' | 'team' | null}
+        isComingSoon={panelPlan ? isEffectivelyGated(panelPlan as OrgPlan) : false}
+        canUpgrade={panelPlan === 'tournament_plus' && primaryUpgradePlans.includes('tournament_plus')}
       />
     </div>
   );

@@ -1,12 +1,4 @@
-﻿.pageHeader {
-  background: linear-gradient(180deg, var(--bg-2) 0%, var(--bg) 100%);
-  border-bottom: 1px solid var(--border);
-  padding: 2rem 0 2.5rem;
-}
-
-.pageHeader h1 { color: var(--white); margin: 0.5rem 0; }
-
-.pinnedSection { margin-bottom: 3rem; }
+﻿.pinnedSection { margin-bottom: 3rem; }
 
 .sectionLabel {
   display: flex;

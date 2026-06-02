@@ -4,6 +4,14 @@
   border-bottom: 1px solid var(--border-2);
 }
 
+.profileActions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-top: 1rem;
+}
+
 .profileLayout {
   display: grid;
   grid-template-columns: 320px 1fr;
@@ -219,4 +227,88 @@
 .contactNote a {
   color: var(--primary-light);
   font-weight: 600;
+}
+
+@media (max-width: 640px) {
+  .pageHeader {
+    padding: 2.5rem 0;
+  }
+
+  .profileActions {
+    align-items: stretch;
+  }
+
+  .profileActions > * {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .scheduleCard {
+    padding: 1.25rem;
+  }
+
+  .cardTitle {
+    font-size: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  .recordMain {
+    font-size: 3rem;
+  }
+
+  .infoItem strong {
+    overflow-wrap: anywhere;
+  }
+
+  .gameRow {
+    display: grid;
+    grid-template-columns: minmax(66px, auto) 1fr;
+    align-items: flex-start;
+    gap: 0.85rem;
+    padding: 1rem;
+  }
+
+  .gameDate {
+    min-width: 0;
+  }
+
+  .gameMatchup {
+    min-width: 0;
+  }
+
+  .opponentWrap {
+    align-items: flex-start;
+  }
+
+  .opponentName {
+    font-size: 1rem;
+    line-height: 1.25;
+    overflow-wrap: anywhere;
+  }
+
+  .location {
+    flex-wrap: wrap;
+    line-height: 1.35;
+  }
+
+  .gameResult {
+    grid-column: 1 / -1;
+    justify-content: flex-start;
+    min-width: 0;
+  }
+
+  .resultBadge,
+  .upcomingBadge {
+    max-width: 100%;
+  }
+
+  .upcomingBadge {
+    border-radius: var(--radius-sm);
+    white-space: normal;
+    line-height: 1.35;
+  }
+
+  .emptyGames {
+    padding: 2.5rem 0;
+  }
 }

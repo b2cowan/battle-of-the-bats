@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getAuthContextWithScope, unauthorized, scopeGuard } from '@/lib/api-auth';
+import { getAuthContextWithScope, unauthorized, scopeGuard, requireTournamentInOrg } from '@/lib/api-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 
 export type ActivityEvent = {
@@ -31,6 +31,9 @@ export async function GET(req: Request) {
 
   const denied = scopeGuard(ctx, tournamentId);
   if (denied) return denied;
+
+  const wrongOrg = await requireTournamentInOrg(ctx, tournamentId);
+  if (wrongOrg) return wrongOrg;
 
   const limit = Math.min(parseInt(searchParams.get('limit') ?? '30', 10), 50);
 

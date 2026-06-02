@@ -1,0 +1,18 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node scripts/refresh-db-schema.mjs",
+            "if": "Bash(*run-migration*)",
+            "timeout": 30,
+            "statusMessage": "Refreshing DB schema memory..."
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -5,6 +5,7 @@ import {
   ChevronRight, ExternalLink,
 } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
+import { usePageTitle } from '@/lib/usePageTitle';
 import { getMapsUrl } from '@/components/LocationLink';
 import type { OrgVenue, OrgVenueFacility, FacilityType } from '@/lib/types';
 import { FACILITY_TYPE_LABELS, FACILITY_TYPES } from '@/lib/types';
@@ -323,6 +324,7 @@ function VenueCard({
 
 export default function OrgVenueLibraryPage() {
   const { currentOrg } = useOrg();
+  usePageTitle('Venue Library');
   const orgSlug = currentOrg?.slug;
 
   // Venue Library is a League/Club feature only

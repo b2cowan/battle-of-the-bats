@@ -2,6 +2,7 @@
 import { Fragment, useState, useEffect, useRef, useCallback } from 'react';
 import { Bell, Mail, Smartphone, Info, AlertCircle } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
+import { usePageTitle } from '@/lib/usePageTitle';
 import {
   NOTIFICATION_SECTIONS,
   ALL_EVENT_TYPES,
@@ -55,6 +56,7 @@ function Toggle({
 
 export default function OrgNotificationPreferencesPage() {
   const { currentOrg, userRole } = useOrg();
+  usePageTitle('Notification Preferences');
   const orgSlug = currentOrg?.slug;
   const role    = userRole ?? 'staff';
 

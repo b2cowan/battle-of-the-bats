@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import { getAuthContextWithScope, unauthorized, forbidden, scopeGuard } from '@/lib/api-auth';
+import { getAuthContextWithScope, unauthorized, forbidden, scopeGuard, requireTournamentInOrg } from '@/lib/api-auth';
 import { hasCapability } from '@/lib/roles';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { hasPlanFeature, requiresTournamentPlusCopy, type PlanFeature } from '@/lib/plan-features';
@@ -11,6 +11,22 @@ import {
   submitTournamentScore,
   TournamentScoringError,
 } from '@/lib/tournament-scoring-service';
+
+function tournamentLockedResponse() {
+  return new Response(
+    JSON.stringify({ error: 'This tournament is completed and locked. Set the status to Active in Event Settings to make changes.' }),
+    { status: 409, headers: { 'Content-Type': 'application/json' } },
+  );
+}
+
+async function isTournamentLocked(tournamentId: string): Promise<boolean> {
+  const { data } = await supabaseAdmin
+    .from('tournaments')
+    .select('status')
+    .eq('id', tournamentId)
+    .single();
+  return data?.status === 'completed';
+}
 
 function planFeatureForbidden(feature: PlanFeature) {
   return new Response(JSON.stringify({ error: requiresTournamentPlusCopy(feature) }), {
@@ -38,6 +54,9 @@ export async function GET(req: Request) {
   const denied = scopeGuard(ctx, tournamentId);
   if (denied) return denied;
 
+  const wrongOrg = await requireTournamentInOrg(ctx, tournamentId);
+  if (wrongOrg) return wrongOrg;
+
   const { data, error } = await supabaseAdmin
     .from('games')
     .select('*')
@@ -58,6 +77,8 @@ export async function GET(req: Request) {
     location: g.location,
     venueId: g.diamond_id,
     venueFacilityId: g.venue_facility_id ?? null,
+    scheduleFacilityLaneId: g.schedule_facility_lane_id ?? null,
+    scheduleFacilityLaneLabel: g.schedule_facility_lane_label ?? null,
     homeScore: g.home_score,
     awayScore: g.away_score,
     status: g.status,
@@ -101,6 +122,8 @@ export async function POST(req: Request) {
     if (tournamentId) {
       const denied = scopeGuard(ctx, tournamentId);
       if (denied) return denied;
+      const wrongOrg = await requireTournamentInOrg(ctx, tournamentId);
+      if (wrongOrg) return wrongOrg;
     }
 
     if (action === 'bulk-save') {
@@ -115,15 +138,20 @@ export async function POST(req: Request) {
         return planFeatureForbidden(requiredFeature);
       }
 
-      // Verify every game in the batch belongs to a tournament in scope
+      // Verify every game in the batch belongs to a tournament in scope and is not locked
       for (const g of games) {
         if (g.tournamentId) {
           const denied = scopeGuard(ctx, g.tournamentId);
           if (denied) return denied;
+          const wrongOrg = await requireTournamentInOrg(ctx, g.tournamentId);
+          if (wrongOrg) return wrongOrg;
         }
       }
+      if (tournamentId && await isTournamentLocked(tournamentId)) return tournamentLockedResponse();
 
-      const rows = games.map((g: any) => ({
+      const usesFacilityLanes = games.some((g: any) => g.scheduleFacilityLaneId !== undefined);
+      const rows = games.map((g: any) => {
+        const row: Record<string, unknown> = {
         tournament_id:    g.tournamentId,
         division_id:     g.divisionId,
         home_team_id:     g.homeTeamId   || null,
@@ -132,6 +160,7 @@ export async function POST(req: Request) {
         game_time:        g.time,
         location:         g.location,
         diamond_id:       g.venueId      || null,
+        venue_facility_id: g.venueFacilityId || null,
         status:           g.status       || 'scheduled',
         is_playoff:       g.isPlayoff    || false,
         bracket_id:       g.bracketId    || null,
@@ -141,7 +170,10 @@ export async function POST(req: Request) {
         home_slot_id:     g.homeSlotId   || null,
         away_slot_id:     g.awaySlotId   || null,
         notes:            g.notes        || null,
-      }));
+        };
+        if (usesFacilityLanes) row.schedule_facility_lane_id = g.scheduleFacilityLaneId || null;
+        return row;
+      });
 
       const { error } = await supabase.from('games').insert(rows);
       if (error) throw error;
@@ -158,6 +190,9 @@ export async function POST(req: Request) {
       if (ag) {
         const denied = scopeGuard(ctx, ag.tournament_id);
         if (denied) return denied;
+        const wrongOrg = await requireTournamentInOrg(ctx, ag.tournament_id);
+        if (wrongOrg) return wrongOrg;
+        if (await isTournamentLocked(ag.tournament_id)) return tournamentLockedResponse();
       }
 
       if (!hasPlanFeature(ctx.org.planId, 'auto_schedule')) {
@@ -178,6 +213,9 @@ export async function POST(req: Request) {
       if (ag) {
         const denied = scopeGuard(ctx, ag.tournament_id);
         if (denied) return denied;
+        const wrongOrg = await requireTournamentInOrg(ctx, ag.tournament_id);
+        if (wrongOrg) return wrongOrg;
+        if (await isTournamentLocked(ag.tournament_id)) return tournamentLockedResponse();
       }
 
       if (!hasPlanFeature(ctx.org.planId, 'playoff_generator')) {
@@ -234,6 +272,11 @@ export async function PATCH(req: Request) {
     const denied = scopeGuard(ctx, gameRow.tournamentId);
     if (denied) return denied;
 
+    const wrongOrg = await requireTournamentInOrg(ctx, gameRow.tournamentId);
+    if (wrongOrg) return wrongOrg;
+
+    if (await isTournamentLocked(gameRow.tournamentId)) return tournamentLockedResponse();
+
     // ── update (time / diamond / location) ───────────────────────────────────
     if (action === 'update') {
       if (!hasCapability(ctx.role, ctx.capabilities, 'update_schedule')) return forbidden();
@@ -244,6 +287,7 @@ export async function PATCH(req: Request) {
       if (body.location         !== undefined) updates.location           = body.location;
       if (body.venueId          !== undefined) updates.diamond_id         = body.venueId;
       if (body.venueFacilityId  !== undefined) updates.venue_facility_id  = body.venueFacilityId || null;
+      if (body.scheduleFacilityLaneId !== undefined) updates.schedule_facility_lane_id = body.scheduleFacilityLaneId || null;
       if (body.notes            !== undefined) updates.notes              = body.notes;
       if (body.homeTeamId       !== undefined) updates.home_team_id       = body.homeTeamId || null;
       if (body.awayTeamId       !== undefined) updates.away_team_id       = body.awayTeamId || null;

@@ -19,7 +19,7 @@ export default async function TournamentLayout({
 }) {
   const { orgSlug, tournamentSlug } = await params;
   const org = await getOrganizationBySlug(orgSlug);
-  if (!org || !org.isPublic) notFound();
+  if (!org) notFound();
   if (org.subscriptionStatus === 'canceled') notFound();
   const tournament = await getPublicTournamentBySlug(org.id, tournamentSlug);
   if (!tournament) notFound();
@@ -83,6 +83,9 @@ export default async function TournamentLayout({
     '--hud-surface:     #FFFFFF',
     '--nav-bg-scrolled: rgba(245,247,252,0.95)',
     '--nav-mobile-bg:   rgba(245,247,252,0.99)',
+    // Accent text uses the (dark) org primary on light surfaces — the pale
+    // dark-mode tint would be unreadable on white.
+    '--primary-light:   var(--primary)',
   ].join('; ') : null;
 
   return (

@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowDown, ArrowLeft, ArrowUp, ClipboardList, Lock, Plus, Save, Trash2 } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
+import { usePageTitle } from '@/lib/usePageTitle';
 import { useTournament } from '@/lib/tournament-context';
 import { hasPlanFeature } from '@/lib/plan-features';
 import type { TournamentRegistrationField, TournamentRegistrationFieldType } from '@/lib/types';
@@ -47,6 +48,7 @@ function fieldToDraft(field: TournamentRegistrationField): DraftField {
 
 export default function RegistrationFieldsSettingsPage() {
   const { currentOrg } = useOrg();
+  usePageTitle('Registration Questions');
   const { currentTournament } = useTournament();
   const searchParams = useSearchParams();
   const fromRegistrations = searchParams.get('from') === 'registrations';

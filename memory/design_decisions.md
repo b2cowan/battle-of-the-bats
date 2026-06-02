@@ -4,6 +4,192 @@ Newest entries first. All decisions here are binding in future sessions unless e
 
 ---
 
+### 2026-06-01 — Rules admin mobile: data-density pass (cards + section headers)
+
+**Decision:** Comprehensive mobile tightening of `RulesAdmin.tsx` at `≤720px`:
+- **Section header**: row layout (no column flip), `border-bottom: none`, `padding-bottom: 0.15rem`, `gap: 0.35rem` to first card — eliminates the visual dead-zone the border + gap created.
+- **Section title**: demoted to `0.62rem --font-data uppercase white-30` — reads as a quiet label, not a structural heading.
+- **Card title**: switched from `--font-display 1rem 800` to `--font-data 0.82rem 700` on mobile — matches the operational data-density scale used across all other admin list pages.
+- **Card header padding**: `0.85rem → 0.5rem 0.65rem`, `align-items: flex-start → center`.
+- **Rule items list**: padding `0.85rem → 0.45rem 0.65rem`, gap `0.4rem → 0.2rem`.
+- **Textarea font**: `0.9rem → 0.82rem`, `line-height: 1.5 → 1.45`.
+- **Applies-to row**: padding `0.5rem 0.85rem → 0.3rem 0.65rem`, label font `0.8rem → 0.75rem`.
+- **Section save bar**: padding `0.75rem 1.25rem → 0.5rem 0.65rem`.
+- **Rules stack gap**: `1.5rem → 0.65rem` between cards.
+- **Section-to-section gap**: `2.5rem → 1.75rem`.
+**Rationale:** The page needs to show rule point text efficiently — a tournament may have 5–10 sections with multiple points each. The `--font-display` card title and generous padding were inherited from a desktop-first edit flow; mobile is a review/scan context where data density is the priority.
+**Applies to:** `RulesAdmin.tsx` inline `<style jsx global>` `@media (max-width: 720px)` block.
+
+---
+
+### 2026-06-01 — Divisions: flat-row table matching Schedule/Results/Teams pattern
+
+**Decision:** Replaced the card-flip responsive table with the standard admin flat-row pattern used by all other admin list pages:
+1. **`mobileActionsInline={true}`** added to `TournamentAdminHeader` + local CSS `flex-wrap: nowrap` override at ≤760px forces the "+" button to stay on the same line as the "DIVISIONS" title. Previously the flex-wrap caused the button to orphan on its own row below the header.
+2. **Flat-row table with column hiding** replaces the card-flip system. Five columns: Division / Age Range / Teams / Pools / Status / Actions. Pools hides at ≤768px; Age Range and Teams hide at ≤640px. Actions (edit + delete icon buttons) are always visible in a right-aligned `.rowActions` flex cluster.
+3. **`.divisionMeta` sub-line** inside the Division cell shows age range + team count at ≤640px only (compensates for the two hidden columns), rendered in `--white-40 0.68rem font-data` beneath the `badge-primary` name. No data is lost on mobile — it's just compacted.
+4. **Previous card-flip CSS removed** — no more `@media (max-width: 720px)` card block in `admin-page.module.css`.
+**Rationale:** Cards were inconsistent with every other admin list page; the flat-row + column-hiding pattern is the established platform standard. The orphaned "+" button was a layout bug from the un-gated `flex-wrap` on the header.
+**Applies to:** `app/[orgSlug]/admin/tournaments/divisions/admin-page.module.css`, `app/[orgSlug]/admin/tournaments/divisions/page.tsx`.
+
+---
+
+### 2026-06-01 — Divisions mobile: card layout remediation
+
+**Decision:** Six mobile-specific fixes applied to the Divisions admin page:
+1. **Removed `max-width: 900px`** from `.page` — enforces the global "no page-level max-width in admin shell" rule.
+2. **Fixed undefined CSS tokens** — `var(--bg-surface)` → `rgba(255,255,255,0.02)`, `var(--border-subtle)` → `var(--border-2)`, `var(--text-tertiary)` → `var(--white-40)`. All three were undefined in the design system.
+3. **Division name as card title** — on mobile, the `badge-primary` chrome (border, background, padding) is stripped; the name renders at `0.95rem var(--logic-lime) font-weight:700` as a full-width card heading with no label column (`grid-template-columns: 1fr`). Matches the pattern of treating the first data row as a card title rather than a styled badge.
+4. **Action buttons moved to top-right corner** — `td[data-label="Actions"]` is `position: absolute; top: 0.85rem; right: 0.85rem` on mobile; the `tr` is `position: relative`. The "ACTIONS" pseudo-label is suppressed. Each button is a 36×36px square icon (`flex: none; padding: 0`). The `tr` has `padding-right: 5.75rem` to keep card content from sliding under the buttons. Status row gets explicit `border-bottom: 0` since it's now the visually last row in flow.
+5. **Add Division collapses to icon-only on mobile** — below 760px, a `.addDivisionLabel` span is hidden and the button shrinks to 32×32px, matching the `addTeamButton` / `addGameButton` pattern on Registrations and Schedule.
+6. **"No pools" muted color** — `var(--white-20)` → `var(--white-30)` for minimum readable contrast on the dark card surface.
+**Rationale:** Three undefined tokens were causing unpredictable rendering. The full-text Add button and the ACTIONS row were inconsistent with all other admin mobile pages. The absolute-positioned action buttons eliminate a ~50px wasted row at the bottom of every card.
+**Applies to:** `app/[orgSlug]/admin/tournaments/divisions/admin-page.module.css`, `app/[orgSlug]/admin/tournaments/divisions/page.tsx`.
+
+---
+
+### 2026-06-01 — Public schedule: "matchups TBA" notice for placeholder-published divisions
+
+**Decision:** When a division's `scheduleVisibility === 'published_generic'` (published with placeholder/TBD names — times, fields, and scores are real but matchups are withheld), the public schedule shows an **info-tinted notice** above the games: *"Game times and locations are set — matchups will be announced soon."* (`.tbaNotice`, `Info` icon, `rgba(--info-rgb,…)` border/bg matching the "scheduled" status-strip colour). This sets expectations so a TBD grid isn't mistaken for a finalized schedule.
+**Rationale:** Owner raised that TBD games could give a false sense of a settled schedule. Truly `unpublished` divisions already show **no games** (existing empty state) — so the only gap was the deliberate `published_generic` state, which had no signal that names/matchups were still pending. A notice is preferred over hiding the grid because the times/fields ARE committed and useful (teams know when/where to show up); the org controls full secrecy by keeping a division `unpublished`. Confirms the three-state model: unpublished = nothing public; generic = committed grid + TBA notice, names withheld; teams = full names.
+**Applies to:** `components/public/ScheduleContent.tsx` (notice above main content, gated on `activeVisibility === 'published_generic'`), `app/[orgSlug]/schedule/schedule.module.css` (`.tbaNotice`).
+
+---
+
+### 2026-06-01 — Public schedule: drop ICS export, always-on team search, no TBD in team filters
+
+**Decision:** (1) **Removed the iCal/Calendar export** from the public schedule controls — `handleExportICS`, the `Calendar`/`Team Calendar` button (`.calendarButton`), and the `@/lib/export` import are gone. (2) **Team search is now always available** when the division is published — the gate dropped from `activeVisibility !== 'published_generic' && !== 'unpublished'` to just `!== 'unpublished'`. (3) **Team filters (search + "My Team Games") never surface unresolved "TBD" matchups.** `teamFiltered` now matches on the *displayed* names via `getTeamDisplay` (not the hidden underlying `team.name`), excludes any game where both slots display `TBD`, and for the followed-team path returns true only when the followed team's own slot resolves to a real (non-TBD) name. The old loose `homePlaceholder/awayPlaceholder` substring matching was dropped (placeholders already flow through `getTeamDisplay`).
+**Rationale:** Owner removed the calendar export and wanted a visible team search + "My Team Games" that doesn't list placeholder/TBD games. **Consequence (by design):** in `published_generic` ("placeholder names") mode every slot displays `TBD`, so name search and "My Team Games" return nothing — you can't filter a team by name when the org has chosen to hide names. The filters become meaningful once a division is published with real team names (`published_teams`). Flagged to owner.
+**Applies to:** `components/public/ScheduleContent.tsx` (`teamFiltered`, controls block, imports). `.calendarButton` CSS now unused (left in place).
+
+---
+
+### 2026-06-01 — Results scoring rows: date · time on one line (match planning mode)
+**Decision:** In `GameList.tsx`, the scoring-mode (Results) date cell now renders **`{date} · {time}` as two inline spans in a single `white-space: nowrap` div**, identical in structure to planning mode (Schedule). Previously it stacked the time in a separate block `<div>` under the date, so on mobile the row read "Jul 15" / "2:00 PM" on two lines — out of step with the Schedule rows ("Jul 15 · 9:00 AM"). The mobile status sub-line (`.scoringMobileStatus`: ✓ FINAL / ⚠ REVIEWING / SCHEDULED) stays below the date·time line; `.scoringDateCell` is now `flex-direction: column; gap: 0.12rem` on mobile to mirror `.planningDateCell`'s spacing. Applies to both desktop and mobile (the 130px desktop date column fits the inline format; planning already proved this).
+**Rationale:** User flagged the Results mobile rows looked "messed up" vs Schedule — the stacked date/time was the cause. Scoring and planning rows share `GameList` and should present date/time identically; the only legitimate difference between the two modes is the score inputs / status semantics, not the date format.
+**Applies to:** `app/[orgSlug]/admin/tournaments/schedule/components/GameList.tsx` (scoring date cell), `schedule-admin.module.css` (`.scoringDateCell` ≤768px). Mirrors the planning-mode date cell.
+
+---
+
+### 2026-06-01 — Public schedule: adopt admin flat-row layout (SUPERSEDES "tightened cards, not a list")
+
+**Decision:** After seeing both rendered, the owner chose the admin schedule/results **flat row** over the card treatment. This **overrides** the earlier same-day "tightened card rows (density), not a list" decision — the public schedule is now a list, matching the admin `GameList` anatomy. Row structure (desktop grid `76px 188px 1fr 116px`): **left status color-strip → time → location → matchup → status**. Specifics:
+- **Status color-strip** = `border-left: 3px solid` keyed off `data-status`, same mapping as admin: scheduled `rgba(--info-rgb,0.5)`, submitted `rgba(--warning-rgb,0.55)`, completed `rgba(--success-rgb,0.5)`, cancelled `rgba(--danger-rgb,0.55)`.
+- **Time** only (date lives in the date-group header), `--font-data`.
+- **Location** via `LocationLink`.
+- **Matchup** = `[awayScore] awayTeam  VS  homeTeam [homeScore]` — away on the left, home on the right (per owner spec), team names `--font-data`, scores shown only when present and colored by outcome (win `--success` / tie `--warning` / loss `rgba(--danger-rgb,0.7)`). **W/L/T letters dropped** — colour alone conveys outcome.
+- **Status** = `Final`/`Pending`/`Cancelled` badge (none for scheduled), plus a small lime follow-star and any playoff bracket badge.
+- Rows are **flat** (no `.card`): `border-bottom: 1px solid var(--border-2)`, `min-height: 2.85rem`, hover = `--white-03` bg (no translateX). Followed game = `rgba(--primary-rgb,0.07)` row tint. Mobile (≤768px) uses `grid-template-areas` so time/status flank a stacked matchup-over-location.
+**Rationale:** Owner found the flat admin row "cleanest" once both were live. Consistency between admin and public schedule reduces cognitive load and reuses the established status-strip + matchup language.
+**Applies to:** `components/public/ScheduleContent.tsx` (`renderGameCard`), `app/[orgSlug]/schedule/schedule.module.css` (`.gameRow` + `.timeCell/.locationCell/.matchupCell/.matchSide/.matchTeam/.matchScore/.matchVs/.statusCell/.followStar`). Mirrors `app/[orgSlug]/admin/tournaments/schedule/components/GameList.tsx`. The earlier card-density entry and the `.scoreChip/.outcomeLetter/.teams/.teamA/.teamB/.vsChip` classes are now obsolete (left in CSS, unused).
+
+---
+
+### 2026-06-01 — Public schedule rows: removed per-row clock icon + even single-line rhythm
+
+**Decision:** (1) **Clock icon removed** from `.gameTime` (`<Clock>` and its lucide import). It was decorative and rendered inconsistently — on two-digit-hour times ("10:00 AM") the 80px time grid track + no `flex-shrink:0` caused flexbox to collapse the SVG to ~0 width, so it appeared as a "dot" on some rows and vanished on others. Time text stands alone (admin results has no per-row clock either). (2) **Score chip flattened to a single row** — `.scoreChip` `flex-direction: column → row` so the FINAL/Pending badge sits inline beside the numbers instead of stacked above them; this makes scored rows the same height as unscored "VS" rows (the stacked badge was the real cause of uneven vertical rhythm, not padding). (3) **`.gameRow` gets `min-height: 2.75rem`** (and padding `0.45rem → 0.4rem`) for a steady ~44px row baseline + comfortable tap target. (4) **Matchup cap `max-width: 520px → 480px`** to group the team names a touch tighter.
+**Rationale:** The "can we do better with spacing" complaint was really row-height unevenness from the stacked score badge; flattening it + a min-height baseline gives even rhythm. The "dot on some times" was the clock icon clipping — removed rather than patched since it's decorative and off-pattern with admin.
+**Applies to:** `components/public/ScheduleContent.tsx` (`renderGameCard`, lucide import), `app/[orgSlug]/schedule/schedule.module.css` (`.gameRow`, `.scoreChip`, `.teams`).
+
+---
+
+### 2026-06-01 — Schedule toolbar mobile: Publish/Auto/Export collapse into one "Tools" menu
+**Decision:** On mobile (`≤760px`) the three Row-1 action controls — Publish/Unpublish (incl. the split "all published" option), the Auto/Generate menu, and the Export menu — are hidden (`.scheduleEndGroup { display: none }`) and replaced by a single **`Tools ▾`** dropdown (`MobileToolsMenu`, local to `schedule/page.tsx`) rendered on **Row 2, right of the search field**. The menu has three labelled sections — **Publish · Generate · Export** — each item wired to the same handlers the desktop controls use (no duplicated behaviour or new endpoints). Plan gating is preserved: locked Generate/PDF items show a `Lock` glyph + upgrade tooltip; the publish section mirrors desktop (Publish when unpublished; Unpublish this division / Unpublish all (N) when published, gated to round-robin view). With the action cluster gone from Row 1, the **division selector now reclaims the full first row** on mobile (it was previously squished sharing the row with three fixed-width buttons). Search drops from `flex: 1 1 100%` to `flex: 1 1 auto` so the Tools button sits beside it. Desktop is unchanged — the three separate controls remain.
+**Rationale:** The division `<select>` is the primary context control on this page; on a ~380px screen it was getting only `viewport − (3 buttons)` ≈ 180px and truncating long division names. Add Game (the top CTA) already lives in the header, so Publish/Auto/Export are all secondary on mobile and don't each need a visible button — a single overflow menu is the correct mobile pattern. Kept distinct from the existing view-settings bottom sheet (Stage/Grouping/Venue/Status), which is for passive view config; actions and view-settings stay separate surfaces. Establishes: when a dense admin toolbar's action cluster crowds the primary control on mobile, collapse the actions into one labelled Tools menu rather than shrinking the primary control.
+**Applies to:** `app/[orgSlug]/admin/tournaments/schedule/page.tsx` (`MobileToolsMenu`), `schedule-admin.module.css` (`.scheduleMobileTools`, `.scheduleEndGroup`/`.scheduleSearch` ≤760px).
+
+---
+
+### 2026-06-01 — Public schedule scores: color-coded W/L/T, no trophy (match admin results)
+
+**Decision:** The public schedule's scored-game rows drop the trophy icon and loser-dimming in favour of the admin results color model. Each score is flanked by a **W/L/T letter**, and both the letter and score are coloured by outcome: **win `var(--success)`**, **tie `var(--warning)`**, **loss `rgba(var(--danger-rgb), 0.65)`** (muted red). Team names stay neutral white (no dim, no trophy). Layout: `[W/L/T] [homeScore] – [awayScore] [W/L/T]` inside the existing centered score chip, with the FINAL/Pending badge above. New `.outcomeLetter` class (`font-data`, 900, 0.82rem); colours applied inline per game. The old `.winTeam/.loseTeam/.scoreWin/.winIcon` classes are now unused (left in CSS, harmless).
+**Rationale:** User asked the public results to read like the admin results page (`GameList` scoring rows), which uses exactly these semantic colours + W/L/T letters. Color-coding communicates outcome faster than a trophy and is consistent across admin + public.
+**Applies to:** `components/public/ScheduleContent.tsx` (`renderGameCard` scored branch), `app/[orgSlug]/schedule/schedule.module.css` (`.outcomeLetter`). Mirrors `app/[orgSlug]/admin/tournaments/schedule/components/GameList.tsx` scoring rows. Standings' 1st-place trophy is a leader indicator (different semantic) and was left unchanged.
+
+---
+
+### 2026-06-01 — Public schedule: tightened card rows (density), not a list
+
+**Decision:** The public schedule keeps its **card-row** layout but is compacted — a stacked/striped "list" was explicitly rejected. Rationale: public pages are consumer surfaces (parents/coaches) and must stay on the card visual language used across the rest of the public site; a dense list reads as an admin tool, its density win is mostly desktop-only (mobile columns collapse anyway), and it would force rework of the score chip / "My Team" highlight / winner + cancelled treatments. Compaction in `schedule.module.css`: `.gameRow` padding `0.625rem 1.25rem → 0.45rem 1rem`, gap `1.5rem → 1rem`; `.gamesList` gap `0.75rem → 0.5rem`; `.dateGroup` margin-bottom `1.75rem → 1.25rem`; `.dateLabel` margin/padding `1rem/0.5rem → 0.65rem/0.4rem`; and the key fix — **`.teams` is capped to `max-width: 520px; margin: 0 auto`** so the matchup groups in the center instead of spreading to the row's far edges (the wide dead zone on desktop). Net ≈2× games per screen. Search (team/coach) + Follow My Team remain the per-user scroll reducers; the team search only renders when a division is published with real names (generic/"placeholder" mode has nothing to filter).
+**Rationale:** Solves the "rows too big / too much scrolling" complaint while preserving consumer brand feel, touch ergonomics, and existing badge/score/highlight styling at low regression risk.
+**Applies to:** `app/[orgSlug]/schedule/schedule.module.css` (`.gameRow`, `.gamesList`, `.teams`, `.dateGroup`, `.dateLabel`). Any future public schedule density work stays card-based, not list-based.
+
+---
+
+### 2026-06-01 — Schedule Unpublish: split-button with "All published (N)" bulk option
+**Decision:** The toolbar Unpublish control is now a split button (`UnpublishControl`, local to `schedule/page.tsx`, mirroring the `ScheduleToolsMenu` dropdown pattern). When exactly **one** division is live it stays a plain `Unpublish` button (direct action, unchanged). When **2+** divisions are live it becomes `Unpublish ▾`, opening a menu with **"This division"** (current division name as sub-label) and **"All published (N)"**. Bulk unpublish (`handleUnpublishAll`) loops the existing per-division `set-visibility` API (no new endpoint) and confirms via `FeedbackModal` with an `items` list of the affected division names. The page's `feedback` state type gained an `items?` field to support that list.
+**Rationale:** Publishing is already a bulk operation (the Publish modal multi-selects divisions), but Unpublish was single-division only — an asymmetry that forced N round-trips to pull a multi-division tournament off the public page. Unpublish has no options (no name-mode/notify) and is reversible, so a full multi-select modal would be overkill; the split button adds the bulk path exactly where the per-division action already lives and self-hides when only one division is live (≤1 published → no dropdown). Establishes: paired publish/unpublish actions should have symmetric bulk capability; a split-button menu is the chosen pattern for "this one vs all" on a toolbar action.
+**Applies to:** `app/[orgSlug]/admin/tournaments/schedule/page.tsx` (`UnpublishControl`, `handleUnpublishAll`, `feedback` state).
+
+---
+
+### 2026-06-01 — Public tournament pages: mobile remediation direction (from deep design review)
+
+Four owner-confirmed decisions from the public-pages design evaluation. These govern the remediation work; see `docs/projects/active/PUBLIC_TOURNAMENT_MOBILE_POLISH_PLAN.md`.
+
+1. **Home page is state-dependent.** Before the event (`status !== 'active'`) the home page may keep a hero/landing treatment; once the tournament is **live/active** it must lead with data (today's / next games) and the oversized `display-xl` + `min-height: 100vh` hero must collapse on mobile. The marketing hero is a pre-event affordance, not a game-day one. Aligns the home page with the 2026-06-01 sub-page header-compaction decision (which called `display-lg`/hero sizing "inappropriate for operational lookup pages").
+2. **Standings stays a TABLE on mobile — no card layout.** Cards were tried and abandoned in past sessions for consuming too much vertical space on mobile; this is now binding for standings. The mobile fix: retain `<table>`, add a compact `≤640px` breakpoint (reduced cell padding/font), keep the **Team column frozen left**, and **freeze the PTS column right** (two sticky anchors) so the two numbers that matter — team and points — are always visible while W/L/T/RF/RA/RD scroll between them. Do NOT replace the table with stacked cards.
+3. **Schedule auto-scrolls to "today" on load** (all users, not only followed-team users), so the core game-day job is a glance, not scroll-and-hunt. The existing `.todayGroup` highlight stays.
+4. **Enforce a contrast floor on custom org accents.** Rather than expecting Tournament Plus customers to understand WCAG ratios, the platform guards accent luminance so a poorly-chosen custom `--primary` / `--primary-light` can't render as low-contrast (brand-damaging) text on light or dark surfaces. Implemented in the theming layer (`lib/themes.ts` / light-mode token overrides), not left to the customer.
+
+**Applies to:** `components/public/{TournamentHomeContent,StandingsContent,ScheduleContent}.tsx`, `app/[orgSlug]/{Home,standings,schedule}/*.module.css`, `app/globals.css` (`.empty-state` contrast), `lib/themes.ts`, `app/[orgSlug]/[tournamentSlug]/layout.tsx` (light-mode vars).
+
+---
+
+### 2026-06-01 — Schedule publish status: moved to header, renamed "Live · Generic" → "Published · Placeholder"
+**Decision:** The per-division publish-status pill (`.publishStatus`) was removed from the schedule toolbar's Row 1 action group and moved into the page header `actions`, positioned **left of the Add Game button**. The toolbar retains only the Publish/Unpublish *button* (the action); the read-only status no longer sits among the view/action controls. Wording changed from `Live · Teams` / `Live · Generic` to **`Published · Teams`** / **`Published · Placeholder`**: (1) "Placeholder" matches the publish modal's own "Placeholder names" radio option, eliminating the unexplained "Generic" term; (2) "Published" (not "Live") avoids semantic collision with the sidebar's tournament-level `● LIVE` activation dot, which means a different thing. The pill stays `display:none` below the mobile breakpoint as before.
+
+**Unpublished state added (same session):** The header now also reports the unpublished state with a muted neutral pill — **`Not Published`** (EyeOff icon, `.publishStatusDraft`: `--border-2` border, `--white-5` bg, `--data-gray` text). Lime stays reserved for the live "Published" states; the resting/default state must read quiet, not as an alert. The pill is suppressed when no single division is selected (`filterGroup === ''` / "All Divisions") since there's no single publish state to report. Net model: header always names the selected division's state (Not Published / Published · Placeholder / Published · Teams); toolbar carries only the matching action (Publish / Unpublish).
+**Rationale:** A read-only status rendered in lime (`--logic-lime`, the reserved CTA colour) inside a row of clickable controls inverted the visual hierarchy and pulled the eye to a non-actionable element. Status belongs in the header (orientation layer); actions belong in the toolbar. "Generic" was undocumented anywhere else in the UI and confused the user. Establishes: status displays move to the header; only actions live in the toolbar; status wording must match the dialog that produces the state.
+**Applies to:** `app/[orgSlug]/admin/tournaments/schedule/page.tsx` (`TournamentAdminHeader` actions + Row 1 publish group).
+
+---
+
+### 2026-06-01 — Schedule segmented toggles: solid primary fill replaces blue→lime gradient
+
+**Decision:** The `.segmentActive` state (Pool Play/Playoffs, List/Bracket) no longer uses `linear-gradient(135deg, var(--primary), var(--primary-light))` + `var(--glow-sm)` + `var(--bg)` text. It now matches the established public-page `[data-color-mode] .btn-primary` convention: **solid `var(--primary)` fill, `#FFFFFF` text, tight `box-shadow: 0 2px 8px rgba(var(--primary-rgb), 0.35)`**. Supporting changes in `schedule.module.css`: container `.segmentedControl` bg `--white-10` → `--white-5` + `1px solid var(--border-2)` for a defined edge; inactive `.segmentButton` text `--white-60` → `--white-70` with a new `:hover` (`--white` text + `--white-5` bg); removed the obsolete mobile `box-shadow: none` override.
+**Rationale:** The diagonal blue→lime gradient read as muddy/faded (user-reported), and gradients on functional controls violate the design principle "gradients on functional UI elements (decorative use only; never on buttons or form inputs)." `#FFFFFF` literal is intentional — the `--white` token flips to near-black in light color mode, but the active button always sits on the saturated org primary, mirroring the existing `[data-color-mode] .btn-primary` rule.
+**Applies to:** `app/[orgSlug]/schedule/schedule.module.css` — and any future public segmented control should follow the same solid-primary pattern, not a gradient.
+
+---
+
+### 2026-06-01 — Public tournament pages: compact header + tightened section rhythm
+
+**Decision:** Reduced the oversized hero-style header on all public tournament pages and centralized it.
+1. **New global `.public-page-header` class** (`globals.css`) replaces the per-module `.pageHeader` block that was duplicated identically across 6 public modules. Spec: `padding: 1.25rem 0` (was `2rem 0 2.5rem`); `h1 { font-size: clamp(1.5rem, 3.5vw, 2.25rem); line-height: 1.15; margin: 0.25rem 0 }` (was `display-lg` = `clamp(2.25rem, 6vw, 4rem)`, up to 64px); `p { color: var(--white-60); max-width: 640px }`. The `display-lg` class was removed from every public page `<h1>`.
+2. **Duplicated `.pageHeader` blocks deleted** from `schedule/standings/teams/rules/news/register` modules. Components/pages switched from `styles.pageHeader` → literal `className="public-page-header"`: `ScheduleContent`, `StandingsContent`, `TeamsContent`, `[tournamentSlug]/teams/[id]/page.tsx`, `rules/page.tsx`, `news/page.tsx`, `register/page.tsx`.
+3. **Register header folded into the neutral global** — previously had a distinct primary-tinted gradient (`rgba(--primary-rgb,0.12)`) and larger `4rem 0 3rem` padding; now consistent with all other public pages.
+4. **Global `.section` padding tightened**: desktop `2rem 0 4rem` → `1.5rem 0 3rem`; mobile (≤768px) `3rem 0` → `1.25rem 0 2.5rem` (mobile top padding was previously *larger* than desktop — backwards).
+5. **Schedule segmented controls** (`schedule.module.css`): `.segmentButton` min-height `40px → 34px` (desktop), `44px → 40px` (≤640px); padding `0.45rem 0.85rem → 0.4rem 0.8rem`; `.calendarButton` min-height `40 → 34`. `.segmentActive` `box-shadow` dropped at ≤640px.
+6. **Schedule spacing**: `.dateGroup` margin-bottom `2.5rem → 1.75rem`; unpublished/empty-state inline padding `4rem 0` / `3rem 0` → `2.5rem 0`.
+
+**Rationale:** `display-lg` is a marketing-hero size inappropriate for operational lookup pages (review heuristic: "avoid oversized hero-style treatments inside operational tools"). Combined with double-stacked header+section padding, ~130–150px was wasted above the fold on desktop, and two full-width glowing filter buttons dominated mobile. Centralizing the header also removes the 6-way duplication and prevents future drift. Root-level legacy single-tenant pages (`app/schedule`, `app/teams`, etc.) import their own co-located modules and were intentionally left untouched.
+**Applies to:** `globals.css`; all `app/[orgSlug]/{schedule,standings,teams,rules,news,register}/*.module.css`; `components/public/{Schedule,Standings,Teams}Content.tsx`; `app/[orgSlug]/[tournamentSlug]/{rules,news,register,teams/[id]}/page.tsx`.
+
+---
+
+### 2026-05-30 — Teams page: compact dropdown filter menus in Row 2 (desktop); mobile keeps bottom sheet
+
+**Decision:** Desktop Row 2 uses two compact dropdown buttons matching the Schedule page's `VenueFilterMenu` pattern: (1) **Status** button ("All statuses" / active status label / "N statuses") opens a checkmark panel with Pending/Accepted/Waitlist/Rejected + counts; default is P+A+W so button shows "All statuses" in that state. (2) **Payment** button ("All payments" / label / "N payments") opens a panel with Unpaid/Deposit paid/Paid in full/Past due + counts; only shown when `paymentToolsAvailable`. Panel header shows "Reset" when non-default. Active state (lime) fires when filter deviates from default. Component is `RegistrationFilterMenu` at bottom of `page.tsx`; styles are `regFilter*` classes in `teams-admin.module.css`. Both buttons live in `.desktopFilterChips` (hidden ≤640px). Mobile is unchanged — bottom sheet handles all filters.
+**Rationale:** Compact buttons match the venue filter aesthetic — one button per filter type, no chip sprawl. The panel checkmark model is more explicit about multi-select state than chips, especially for the status filter where the default is 3-of-4 selected. Mirrors an established pattern already in the codebase.
+**Applies to:** `app/[orgSlug]/admin/tournaments/registrations/page.tsx`, `registrations/teams-admin.module.css`.
+
+---
+
+### 2026-05-29 — Teams page: attention panel and drawer removed
+**Decision:** The "Needs Attention" banner strip and its associated bottom-sheet drawer have been removed from the Teams/Registrations admin page. The dashboard-level registration metrics (unpaid counts, waitlist counts by division) are the correct and sufficient surface for this aggregate view. The filter chips and payment filter on the Teams page give admins everything they need once they are in operational mode.
+**Rationale:** The banner was redundant — the page is already filtered by division, every team's status is visible inline, and the filter chips serve the same "show me problem teams" function the drawer was trying to provide. Aggregate cross-division metrics belong on the dashboard, not embedded in an operational list page. Removing the drawer also eliminates a broken UX path (the drawer opened a "CHOOSE DIVISION" picker that duplicated the division filter already at the top of the page).
+**Applies to:** `app/[orgSlug]/admin/tournaments/registrations/page.tsx` — `attentionPanel`, `attentionDrawerOpen` state, and all associated computed values removed. URL param deep-linking from dashboard (`?attention=unpaid&division=...`) is preserved.
+
+---
+
+### 2026-05-29 — Table wrappers with tooltips: use overflow: visible, not overflow: hidden
+**Decision:** Table wrapper divs (`.tableWrap` pattern) must use `overflow: visible` rather than `overflow: hidden`. `overflow: hidden` clips absolutely positioned tooltip balloons (`.tooltipPopover`) when they extend above the table header row, hiding the top portion of the popup. The tooltip's `z-index: 60` handles stacking over non-positioned `<th>` cells once clipping is removed. The `border-radius: 2px` wrapper border is unaffected visually at that small radius.
+**Rationale:** First discovered on the org Members page: top-row role tooltips were clipped by `.tableWrap { overflow: hidden }`. The same pattern would affect any table wrapper that uses this convention.
+**Applies to:** All `.tableWrap`-style wrappers globally — `app/[orgSlug]/admin/org/members/members.module.css` fixed; audit any other page using `overflow: hidden` on a table wrapper that also hosts `HelpTooltip`.
+
+---
+
 ### 2026-05-27 — Tournament Notifications page: 6 fixes from design review
 **Decision:** (1) `pageHeader margin-bottom` corrected to `1.25rem` (was `1.75rem`) — matches binding standard. (2) `.headerLeft align-items` corrected to `flex-start` (was `center`) — matches binding icon-box alignment decision. (3) `.channelItem cursor` corrected to `pointer` (was `default`) — `<label>` elements wrapping interactive toggles must use pointer cursor. (4) `.channelItemLabel font-size` reduced to `0.82rem` (was `0.85rem`) — matches the data body range (0.72–0.82rem) used in all other admin shell data text. (5) `.muteCardActive .muteSub` gets `color: var(--white-60)` — `--white-40` is low-contrast against the danger-tinted surface in the active/muted state. (6) `.muteCard background` changed from `var(--surface)` to `rgba(255,255,255,0.02)` — matches the channelCard background for surface parity between the two adjacent cards.
 **Rationale:** Fixes 1–2 enforce the binding page-header standard from the 2026-05-25 dashboard audit. Fix 3 is a basic interactive affordance. Fix 4 enforces data density. Fix 5 is a contrast improvement in an important destructive-state indicator. Fix 6 removes a surface token inconsistency between neighbouring cards.

@@ -20,6 +20,7 @@ export function TournamentAdminHeader({
   subtitle,
   meta,
   actions,
+  locked = false,
   mobileActionsInline = false,
   className,
 }: {
@@ -29,6 +30,8 @@ export function TournamentAdminHeader({
   subtitle?: React.ReactNode;
   meta?: React.ReactNode;
   actions?: React.ReactNode;
+  /** When true, renders a read-only banner below the header. */
+  locked?: boolean;
   mobileActionsInline?: boolean;
   className?: string;
 }) {
@@ -44,6 +47,12 @@ export function TournamentAdminHeader({
         </div>
       </div>
       {actions && <div className={styles.headerActions}>{actions}</div>}
+      {locked && (
+        <div className={styles.lockedBanner} role="status">
+          <Lock size={13} aria-hidden />
+          <span>This tournament is completed — all data is read-only. Change the status to <strong>Active</strong> in Event Settings to make edits.</span>
+        </div>
+      )}
     </header>
   );
 }

@@ -3,7 +3,7 @@
 import { Fragment, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { Loader, Check, X } from 'lucide-react';
-import { PLAN_CONFIG } from '@/lib/plan-config';
+import { PLAN_CONFIG, formatPriceAmount } from '@/lib/plan-config';
 import type { PlanConfigOverrideRow } from '@/lib/plan-config-db';
 import type { FeatureMatrixRow } from '@/lib/plan-module-entitlements';
 import type { StripePriceRow } from '@/lib/stripe-prices';
@@ -14,6 +14,7 @@ import type {
   ProductCatalogVersionRow,
 } from './page';
 import styles from './plans-pricing.module.css';
+import { pluralize } from '@/lib/utils';
 
 type Tab = 'plans' | 'catalog';
 type PriceEnvironmentTab = 'live' | 'sandbox';
@@ -165,10 +166,10 @@ const PLAN_ORDER = ['tournament', 'team', 'tournament_plus', 'league', 'club'];
 
 const PLAN_META: Record<string, { label: string; price: string; summary: string }> = {
   tournament: { label: 'Tournament', price: 'Free', summary: 'Starter event tier: 1 tournament, standard registration, FieldLogicHQ styling.' },
-  team: { label: 'Team', price: '$29/mo', summary: 'Standalone coach workspace with one rep team, coaches portal, and one free-tier tournament slot.' },
-  tournament_plus: { label: 'Tournament Plus', price: '$39/mo', summary: 'Serious tournament operations: unlimited slots, 10 seats, registration control, branding, automation.' },
-  league: { label: 'League', price: '$89/mo', summary: 'House league, registration, public organization page, and league workflows.' },
-  club: { label: 'Club', price: '$179/mo', summary: 'Full club operations with accounting, rep teams, and coaches portal.' },
+  team: { label: 'Team', price: `${formatPriceAmount(PLAN_CONFIG.team.monthlyPrice)}/mo`, summary: 'Standalone coach workspace with one rep team, coaches portal, and one free-tier tournament slot.' },
+  tournament_plus: { label: 'Tournament Plus', price: `${formatPriceAmount(PLAN_CONFIG.tournament_plus.monthlyPrice)}/mo`, summary: 'Serious tournament operations: unlimited slots, unlimited seats, registration control, branding, automation.' },
+  league: { label: 'League', price: `${formatPriceAmount(PLAN_CONFIG.league.monthlyPrice)}/mo`, summary: 'House league, registration, public organization page, and league workflows.' },
+  club: { label: 'Club', price: `${formatPriceAmount(PLAN_CONFIG.club.monthlyPrice)}/mo`, summary: 'Full club operations with accounting, rep teams, and coaches portal.' },
 };
 
 const PRICE_PLAN_LABELS: Record<string, string> = {
@@ -238,10 +239,6 @@ function formatDate(value: string | null | undefined) {
     minute: '2-digit',
     timeZoneName: 'short',
   }).format(new Date(value));
-}
-
-function pluralize(count: number, singular: string, plural = `${singular}s`) {
-  return `${count} ${count === 1 ? singular : plural}`;
 }
 
 function impactSummary(impact: PlanImpact | undefined) {

@@ -1,8 +1,13 @@
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import type { CloneCopiedCounts } from '@/lib/types';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
+}
+
+export function pluralize(count: number, singular: string, plural = `${singular}s`) {
+  return `${count} ${count === 1 ? singular : plural}`;
 }
 
 export function downloadCSV(filename: string, headers: string[], rows: (string | number | undefined | null)[][]) {
@@ -37,6 +42,21 @@ export function formatPoolName(name: string): string {
     .replace(/\s+Pool$/i, '')
     .trim();
   return `${bare} Pool`;
+}
+
+export function copiedSummary(copied?: CloneCopiedCounts | null): string[] {
+  if (!copied) return ['Setup copied with safe defaults.'];
+  const rows = [
+    copied.divisions ? `${copied.divisions} division${copied.divisions === 1 ? '' : 's'}` : '',
+    copied.pools ? `${copied.pools} pool${copied.pools === 1 ? '' : 's'}` : '',
+    copied.slots ? `${copied.slots} empty schedule slot${copied.slots === 1 ? '' : 's'}` : '',
+    copied.venues ? `${copied.venues} venue${copied.venues === 1 ? '' : 's'}` : '',
+    copied.registrationFields ? `${copied.registrationFields} registration question${copied.registrationFields === 1 ? '' : 's'}` : '',
+    copied.rules ? `${copied.rules} rule section${copied.rules === 1 ? '' : 's'}` : '',
+    copied.resources ? `${copied.resources} resource${copied.resources === 1 ? '' : 's'}` : '',
+    copied.welcome ? 'Welcome content' : '',
+  ].filter(Boolean) as string[];
+  return rows.length ? rows : ['Draft created with safe tournament defaults.'];
 }
 
 export function formatTime(timeStr: string): string {

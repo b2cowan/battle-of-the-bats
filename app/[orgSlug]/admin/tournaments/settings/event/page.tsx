@@ -1,9 +1,10 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { Settings2, ChevronUp, ChevronDown, AlertTriangle } from 'lucide-react';
+import { Settings2, ChevronUp, ChevronDown, AlertTriangle, Check, Loader2 } from 'lucide-react';
 import { useTournament } from '@/lib/tournament-context';
 import { useOrg } from '@/lib/org-context';
+import { usePageTitle } from '@/lib/usePageTitle';
 import FeedbackModal from '@/components/FeedbackModal';
 import { hasPlanFeature, requiresTournamentPlusCopy } from '@/lib/plan-features';
 import type { GameTimingScope, TieBreakerScope, FeeScope, TournamentStatus } from '@/lib/types';
@@ -44,6 +45,7 @@ function feeScopeToScheduleMode(scope: FeeScope | null): 'tournament' | 'divisio
 export default function TournamentEventSettingsPage() {
   const { currentTournament, refresh: refreshTournaments } = useTournament();
   const { currentOrg, userRole } = useOrg();
+  usePageTitle('Event Settings');
 
   // Tournament identity
   const [tournamentName, setTournamentName] = useState('');
@@ -85,7 +87,7 @@ export default function TournamentEventSettingsPage() {
   const [orgMembers, setOrgMembers] = useState<OrgMemberOption[]>([]);
   const [ownerMember, setOwnerMember] = useState<OrgMemberOption | null>(null);
 
-  // Dirty tracking
+  // Saved-state snapshot (for dirty tracking and auto-save slug/status guards)
   const [saved, setSaved] = useState({
     name: '', year: new Date().getFullYear(), slug: '', status: 'draft' as TournamentStatus,
     startDate: '', endDate: '',
@@ -102,8 +104,18 @@ export default function TournamentEventSettingsPage() {
     notifyMode: 'all' as 'all' | 'assigned',
   });
 
-  const [saving, setSaving] = useState(false);
-  const [successOpen, setSuccessOpen] = useState(false);
+  // Save lifecycle
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const [isInitialized, setIsInitialized] = useState(false);
+
+  // Status confirm modal
+  const [pendingStatusChange, setPendingStatusChange] = useState<TournamentStatus | null>(null);
+  const [statusConfirmOpen, setStatusConfirmOpen] = useState(false);
+
+  // Slug confirm modal
+  const [slugConfirmOpen, setSlugConfirmOpen] = useState(false);
+
+  // Error feedback
   const [errorOpen, setErrorOpen] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
@@ -115,27 +127,9 @@ export default function TournamentEventSettingsPage() {
   const orgQuery = currentOrg?.slug ? `?orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
   const orgParam = currentOrg?.slug ? `&orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
 
-  const isDirty =
-    tournamentName !== saved.name ||
-    tournamentYear !== saved.year ||
-    tournamentSlug !== saved.slug ||
-    tournamentStatus !== saved.status ||
-    startDate !== saved.startDate ||
-    endDate !== saved.endDate ||
-    feeScope !== saved.feeScope ||
-    depositAmount !== saved.depositAmount ||
-    depositDueDate !== saved.depositDueDate ||
-    totalFeeAmount !== saved.totalFeeAmount ||
-    totalFeeDueDate !== saved.totalFeeDueDate ||
-    gameTimingScope !== saved.gameTimingScope ||
-    gameDurationMinutes !== saved.gameDurationMinutes ||
-    bufferMinutes !== saved.bufferMinutes ||
-    tieBreakerScope !== saved.tieBreakerScope ||
-    JSON.stringify(tieBreakers) !== JSON.stringify(saved.tieBreakers) ||
-    scorePolicyMode !== saved.scorePolicyMode ||
-    notifyTeamsOnComplete !== saved.notifyTeamsOnComplete ||
-    defaultContactMemberId !== saved.defaultContactMemberId ||
-    notifyMode !== saved.notifyMode;
+  const slugHasChanged = tournamentSlug !== saved.slug;
+
+  // ── Data load ─────────────────────────────────────────────────────────────
 
   useEffect(() => {
     if (!tournamentId) return;
@@ -228,10 +222,14 @@ export default function TournamentEventSettingsPage() {
           return (a.displayName ?? a.email).localeCompare(b.displayName ?? b.email);
         });
       setOrgMembers(eligible);
+
+      // Mark initialized AFTER data is loaded so auto-save doesn't fire on mount
+      setIsInitialized(true);
     }).catch(() => { setErrorMsg('Failed to load settings'); setErrorOpen(true); });
   }, [tournamentId, orgParam, orgQuery]);
 
-  // Slug availability check — debounced 400 ms, only runs when slug differs from saved
+  // ── Slug availability check — debounced 400 ms ────────────────────────────
+
   useEffect(() => {
     if (!tournamentId) return;
     if (!tournamentSlug || tournamentSlug === saved.slug) {
@@ -264,6 +262,147 @@ export default function TournamentEventSettingsPage() {
     return () => { if (slugCheckRef.current) clearTimeout(slugCheckRef.current); };
   }, [tournamentSlug, tournamentId, orgQuery, saved.slug]);
 
+  // ── Core save — ref-based so auto-save always closes over latest state ────
+
+  const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const performSaveRef = useRef<((opts?: { slugOverride?: string; statusOverride?: TournamentStatus }) => Promise<void>) | null>(null);
+
+  useEffect(() => {
+    performSaveRef.current = async (opts) => {
+      if (!tournamentId || !currentTournament) return;
+      const slugToSave = opts?.slugOverride ?? saved.slug;
+      const newStatus = opts?.statusOverride;
+
+      setSaveStatus('saving');
+      try {
+        const [tournamentRes, brandingRes, schedulingRes] = await Promise.all([
+          fetch(`/api/admin/tournaments${orgQuery}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              action: 'update',
+              id: tournamentId,
+              data: {
+                year: tournamentYear,
+                name: tournamentName,
+                slug: slugToSave,
+                startDate: startDate || undefined,
+                endDate: endDate || undefined,
+                feeScheduleMode: feeScopeToScheduleMode(feeScope),
+                depositAmount:   depositAmount   ? Number(depositAmount)   : null,
+                depositDueDate:  depositDueDate  || null,
+                totalFeeAmount:  totalFeeAmount  ? Number(totalFeeAmount)  : null,
+                totalFeeDueDate: totalFeeDueDate || null,
+                notifyTeamsOnComplete,
+                defaultContactMemberId,
+                notifyMode,
+              },
+            }),
+          }),
+          fetch(`/api/admin/tournament-branding?tournamentId=${encodeURIComponent(tournamentId)}${orgParam}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ requireScoreFinalization: scorePolicyValue(scorePolicyMode) }),
+          }),
+          fetch(`/api/admin/tournaments${orgQuery}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              action: 'patch-settings',
+              id: tournamentId,
+              data: {
+                settings: {
+                  game_duration_minutes: gameDurationMinutes,
+                  buffer_minutes: bufferMinutes,
+                  game_timing_scope: gameTimingScope,
+                  tie_breakers: tieBreakers,
+                  tie_breaker_scope: tieBreakerScope,
+                  fee_scope: feeScope,
+                },
+              },
+            }),
+          }),
+        ]);
+
+        if (!tournamentRes.ok) {
+          const d = await tournamentRes.json();
+          throw new Error(d.error ?? 'Failed to save tournament settings');
+        }
+        if (!brandingRes.ok) {
+          const d = await brandingRes.json();
+          throw new Error(d.error ?? 'Failed to save scoring settings');
+        }
+        if (!schedulingRes.ok) {
+          const d = await schedulingRes.json();
+          throw new Error(d.error ?? 'Failed to save scheduling settings');
+        }
+
+        if (newStatus) {
+          const statusRes = await fetch(`/api/admin/tournaments${orgQuery}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              action: 'set-status',
+              id: tournamentId,
+              data: { status: newStatus },
+            }),
+          });
+          if (!statusRes.ok) {
+            const d = await statusRes.json();
+            throw new Error(d.error ?? 'Failed to update tournament status');
+          }
+        }
+
+        setSaved(prev => ({
+          name: tournamentName,
+          year: tournamentYear,
+          slug: slugToSave,
+          status: newStatus ?? prev.status,
+          startDate, endDate, feeScope,
+          depositAmount, depositDueDate, totalFeeAmount, totalFeeDueDate,
+          gameTimingScope, gameDurationMinutes, bufferMinutes,
+          tieBreakerScope, tieBreakers: [...tieBreakers],
+          scorePolicyMode, notifyTeamsOnComplete, defaultContactMemberId, notifyMode,
+        }));
+        refreshTournaments();
+        setSaveStatus('saved');
+        setTimeout(() => setSaveStatus(s => s === 'saved' ? 'idle' : s), 3000);
+      } catch (err: unknown) {
+        setSaveStatus('idle');
+        setErrorMsg(err instanceof Error ? err.message : 'Something went wrong');
+        setErrorOpen(true);
+      }
+    };
+  }, [
+    bufferMinutes, currentTournament, defaultContactMemberId, depositAmount,
+    depositDueDate, endDate, feeScope, gameDurationMinutes, gameTimingScope,
+    notifyMode, notifyTeamsOnComplete, orgParam, orgQuery, refreshTournaments,
+    saved.slug, scorePolicyMode, startDate, tieBreakerScope, tieBreakers,
+    totalFeeAmount, totalFeeDueDate, tournamentId, tournamentName,
+    tournamentYear,
+  ]);
+
+  // ── Auto-save effect — fires 1.2 s after any non-status, non-slug change ──
+
+  useEffect(() => {
+    if (!isInitialized || !tournamentId) return;
+    if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+    autoSaveTimerRef.current = setTimeout(() => {
+      performSaveRef.current?.();
+    }, 1200);
+    return () => { if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current); };
+  }, [
+    isInitialized, tournamentId,
+    tournamentName, tournamentYear, startDate, endDate,
+    feeScope, depositAmount, depositDueDate, totalFeeAmount, totalFeeDueDate,
+    gameTimingScope, gameDurationMinutes, bufferMinutes,
+    tieBreakers, tieBreakerScope,
+    scorePolicyMode, notifyTeamsOnComplete, defaultContactMemberId, notifyMode,
+  ]);
+
+  // ── Helpers ───────────────────────────────────────────────────────────────
+
   function moveTieBreaker(index: number, direction: 'up' | 'down') {
     setTieBreakers(prev => {
       const next = [...prev];
@@ -274,146 +413,35 @@ export default function TournamentEventSettingsPage() {
     });
   }
 
-  function handleDiscard() {
-    setTournamentName(saved.name);
-    setTournamentYear(saved.year);
-    setTournamentSlug(saved.slug);
-    setSlugStatus('idle');
-    setTournamentStatus(saved.status);
-    setStartDate(saved.startDate);
-    setEndDate(saved.endDate);
-    setFeeScope(saved.feeScope);
-    setDepositAmount(saved.depositAmount);
-    setDepositDueDate(saved.depositDueDate);
-    setTotalFeeAmount(saved.totalFeeAmount);
-    setTotalFeeDueDate(saved.totalFeeDueDate);
-    setGameTimingScope(saved.gameTimingScope);
-    setGameDurationMinutes(saved.gameDurationMinutes);
-    setBufferMinutes(saved.bufferMinutes);
-    setTieBreakerScope(saved.tieBreakerScope);
-    setTieBreakers([...saved.tieBreakers]);
-    setScorePolicyMode(saved.scorePolicyMode);
-    setNotifyTeamsOnComplete(saved.notifyTeamsOnComplete);
-    setDefaultContactMemberId(saved.defaultContactMemberId);
-    setNotifyMode(saved.notifyMode);
+  function handleStatusClick(s: TournamentStatus) {
+    if (s === tournamentStatus) return;
+    setPendingStatusChange(s);
+    setStatusConfirmOpen(true);
   }
 
-  async function handleSave() {
-    if (!tournamentId || !currentTournament || saving) return;
-
-    if (tournamentSlug !== saved.slug && (slugStatus === 'taken' || slugStatus === 'invalid')) {
-      setErrorMsg('Please fix the Public URL before saving.');
-      setErrorOpen(true);
-      return;
-    }
-    if (tournamentSlug !== saved.slug && slugStatus === 'checking') {
-      setErrorMsg('URL availability check in progress — please wait a moment and try again.');
-      setErrorOpen(true);
-      return;
-    }
-
-    if (tournamentStatus === 'completed' && saved.status === 'active') {
-      if (!window.confirm('Mark this tournament as completed? Registrations will close and results will be finalized.')) return;
-    }
-
-    setSaving(true);
-    try {
-      const [tournamentRes, brandingRes, schedulingRes] = await Promise.all([
-        fetch(`/api/admin/tournaments${orgQuery}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            action: 'update',
-            id: tournamentId,
-            data: {
-              year: tournamentYear,
-              name: tournamentName,
-              slug: tournamentSlug,
-              startDate: startDate || undefined,
-              endDate: endDate || undefined,
-              feeScheduleMode: feeScopeToScheduleMode(feeScope),
-              depositAmount:   depositAmount   ? Number(depositAmount)   : null,
-              depositDueDate:  depositDueDate  || null,
-              totalFeeAmount:  totalFeeAmount  ? Number(totalFeeAmount)  : null,
-              totalFeeDueDate: totalFeeDueDate || null,
-              notifyTeamsOnComplete,
-              defaultContactMemberId,
-              notifyMode,
-            },
-          }),
-        }),
-        fetch(`/api/admin/tournament-branding?tournamentId=${encodeURIComponent(tournamentId)}${orgParam}`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ requireScoreFinalization: scorePolicyValue(scorePolicyMode) }),
-        }),
-        fetch(`/api/admin/tournaments${orgQuery}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            action: 'patch-settings',
-            id: tournamentId,
-            data: {
-              settings: {
-                game_duration_minutes: gameDurationMinutes,
-                buffer_minutes: bufferMinutes,
-                game_timing_scope: gameTimingScope,
-                tie_breakers: tieBreakers,
-                tie_breaker_scope: tieBreakerScope,
-                fee_scope: feeScope,
-              },
-            },
-          }),
-        }),
-      ]);
-
-      if (!tournamentRes.ok) {
-        const d = await tournamentRes.json();
-        throw new Error(d.error ?? 'Failed to save tournament settings');
-      }
-      if (!brandingRes.ok) {
-        const d = await brandingRes.json();
-        throw new Error(d.error ?? 'Failed to save scoring settings');
-      }
-      if (!schedulingRes.ok) {
-        const d = await schedulingRes.json();
-        throw new Error(d.error ?? 'Failed to save scheduling settings');
-      }
-
-      if (tournamentStatus !== saved.status) {
-        const statusRes = await fetch(`/api/admin/tournaments${orgQuery}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            action: 'set-status',
-            id: tournamentId,
-            data: { status: tournamentStatus },
-          }),
-        });
-        if (!statusRes.ok) {
-          const d = await statusRes.json();
-          throw new Error(d.error ?? 'Failed to update tournament status');
-        }
-      }
-
-      setSaved({
-        name: tournamentName, year: tournamentYear, slug: tournamentSlug, status: tournamentStatus,
-        startDate, endDate,
-        feeScope,
-        depositAmount, depositDueDate, totalFeeAmount, totalFeeDueDate,
-        gameTimingScope, gameDurationMinutes, bufferMinutes,
-        tieBreakerScope, tieBreakers,
-        scorePolicyMode, notifyTeamsOnComplete, defaultContactMemberId, notifyMode,
-      });
-      refreshTournaments();
-      setSuccessOpen(true);
-    } catch (err: unknown) {
-      setErrorMsg(err instanceof Error ? err.message : 'Something went wrong');
-      setErrorOpen(true);
-    } finally {
-      setSaving(false);
-    }
+  function handleStatusConfirm() {
+    if (!pendingStatusChange) return;
+    const newStatus = pendingStatusChange;
+    setTournamentStatus(newStatus);
+    setPendingStatusChange(null);
+    setStatusConfirmOpen(false);
+    if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+    performSaveRef.current?.({ statusOverride: newStatus });
   }
+
+  function handleSlugConfirm() {
+    const newSlug = tournamentSlug;
+    setSlugConfirmOpen(false);
+    if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+    performSaveRef.current?.({ slugOverride: newSlug });
+  }
+
+  // Status modal copy
+  const statusModalProps = pendingStatusChange === 'active'
+    ? { type: 'primary' as const, title: 'Make Tournament Active?', message: 'The tournament will be publicly visible and open for team registrations.', confirmText: 'Make Active' }
+    : pendingStatusChange === 'completed'
+    ? { type: 'warning' as const, title: 'Mark as Completed?', message: `This tournament will be locked. Registrations close, and all event data — scores, standings, schedules, divisions, and team registrations — becomes read-only and final.${notifyTeamsOnComplete ? ' Team contacts will receive a results summary email.' : ''} You can reopen the tournament by setting the status back to Active.`, confirmText: 'Mark Completed' }
+    : { type: 'primary' as const, title: 'Move to Draft?', message: 'The tournament will be hidden from teams and the public.', confirmText: 'Move to Draft' };
 
   if (userRole !== 'owner' && userRole !== 'admin') {
     return (
@@ -434,7 +462,6 @@ export default function TournamentEventSettingsPage() {
   const showFeeInputs = feeScope === 'tournament' || feeScope === 'allow_override' || feeScope === null;
   const showTimingInputs = gameTimingScope !== 'per_division';
   const showTieBreakerList = tieBreakerScope !== 'per_division';
-  const slugHasChanged = tournamentSlug !== saved.slug;
 
   return (
     <div className={styles.page}>
@@ -492,7 +519,7 @@ export default function TournamentEventSettingsPage() {
                   type="button"
                   role="radio"
                   aria-checked={tournamentStatus === s}
-                  onClick={() => setTournamentStatus(s)}
+                  onClick={() => handleStatusClick(s)}
                   className={`${styles.segmentButton} ${tournamentStatus === s ? styles.segmentButtonActive : ''}`}
                 >
                   {label}
@@ -506,17 +533,6 @@ export default function TournamentEventSettingsPage() {
                 ? 'Active tournaments are open for registration and publicly visible. Activate once your divisions, fees, and game timing are configured.'
                 : 'Completed tournaments are closed to new registrations. Scores are finalized and public standings are displayed.'}
             </p>
-            {tournamentStatus !== saved.status && tournamentStatus === 'active' && (
-              <div className={styles.confirmBanner}>
-                <p>Activating this tournament will make it publicly visible and open for team registrations.</p>
-              </div>
-            )}
-            {tournamentStatus !== saved.status && tournamentStatus === 'completed' && (
-              <div className={styles.warningBanner}>
-                <AlertTriangle size={14} style={{ color: 'var(--warning)', flexShrink: 0, marginTop: '0.1rem' }} />
-                <p>Marking this tournament as completed closes registrations. If post-event notifications are enabled, teams will receive a results email.</p>
-              </div>
-            )}
           </div>
 
           <hr className={styles.cardDivider} />
@@ -585,6 +601,17 @@ export default function TournamentEventSettingsPage() {
                     <AlertTriangle size={14} style={{ color: 'var(--warning)', flexShrink: 0, marginTop: '0.1rem' }} />
                     <p>Changing the Public URL breaks all existing registration links, coach emails, and bookmarked pages.</p>
                   </div>
+                )}
+                {slugHasChanged && (
+                  <button
+                    type="button"
+                    className="btn btn-outline btn-data"
+                    style={{ marginTop: '0.65rem' }}
+                    disabled={slugStatus === 'checking' || slugStatus === 'taken' || slugStatus === 'invalid'}
+                    onClick={() => setSlugConfirmOpen(true)}
+                  >
+                    Update URL
+                  </button>
                 )}
               </div>
             </>
@@ -850,10 +877,10 @@ export default function TournamentEventSettingsPage() {
 
           <hr className={styles.cardDivider} />
 
-          {/* Registration Notifications */}
+          {/* Registration Alert Routing */}
           <div>
-            <p className={styles.subSectionLabel}>Registration Notifications</p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+            <div className={styles.cardHeaderRow} style={{ marginBottom: '0.5rem' }}>
+              <p className={styles.subSectionLabel} style={{ margin: 0 }}>Registration Alert Routing</p>
               <div className={styles.segmentedControl} role="radiogroup" aria-label="Notification routing mode">
                 {([
                   ['all',      'All Registrations'],
@@ -871,6 +898,8 @@ export default function TournamentEventSettingsPage() {
                   </button>
                 ))}
               </div>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
               <p className={styles.descriptionText}>
                 {notifyMode === 'all'
                   ? 'Organization owners and admins are notified for every registration. If a division has an assigned contact, they are notified too.'
@@ -945,20 +974,49 @@ export default function TournamentEventSettingsPage() {
           </div>
         </div>
 
+        {/* ── Save status footer ── */}
         <div className={styles.formFooter}>
-          {isDirty && <span className={styles.unsavedLabel}>Unsaved changes</span>}
-          {isDirty && (
-            <button type="button" className="btn btn-ghost btn-data" onClick={handleDiscard} disabled={saving}>
-              Discard
-            </button>
+          {saveStatus === 'saving' && (
+            <span className={styles.saveStatusLabel}>
+              <Loader2 size={12} className={styles.spinIcon} />
+              Saving…
+            </span>
           )}
-          <button type="button" className="btn btn-lime btn-data" onClick={handleSave} disabled={saving || !isDirty}>
-            {saving ? 'Saving…' : 'Save Changes'}
-          </button>
+          {saveStatus === 'saved' && (
+            <span className={styles.saveStatusLabel} style={{ color: 'var(--success)' }}>
+              <Check size={12} />
+              Saved
+            </span>
+          )}
+          {saveStatus === 'idle' && slugHasChanged && (
+            <span className={styles.unsavedLabel}>Public URL has unsaved changes</span>
+          )}
         </div>
       </div>
 
-      <FeedbackModal isOpen={successOpen} onClose={() => setSuccessOpen(false)} title="Saved" message="Event settings updated." type="success" />
+      {/* ── Status confirm modal ── */}
+      <FeedbackModal
+        isOpen={statusConfirmOpen}
+        onClose={() => { setStatusConfirmOpen(false); setPendingStatusChange(null); }}
+        onConfirm={handleStatusConfirm}
+        title={statusModalProps.title}
+        message={statusModalProps.message}
+        type={statusModalProps.type}
+        confirmText={statusModalProps.confirmText}
+      />
+
+      {/* ── Slug confirm modal ── */}
+      <FeedbackModal
+        isOpen={slugConfirmOpen}
+        onClose={() => setSlugConfirmOpen(false)}
+        onConfirm={handleSlugConfirm}
+        title="Update Public URL?"
+        message="Changing the URL breaks all existing registration links, coach emails, and bookmarked pages. This cannot be undone."
+        type="warning"
+        confirmText="Update URL"
+      />
+
+      {/* ── Error modal ── */}
       <FeedbackModal isOpen={errorOpen} onClose={() => setErrorOpen(false)} title="Error" message={errorMsg} type="danger" />
     </div>
   );

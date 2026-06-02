@@ -50,7 +50,10 @@ function publicOrganization(org: Organization, tournament?: Tournament | null): 
 
 async function getPublicContext(orgSlug: string, tournamentSlug: string | null) {
   const org = await getOrganizationBySlug(orgSlug);
-  if (!org || !org.isPublic || org.subscriptionStatus === 'canceled') return null;
+  // Tournament public pages are independent of the org's public-profile setting.
+  // org.isPublic gates the org home/league pages (League/Club only), NOT tournament pages —
+  // Tournament Plus organizers have no org profile but their tournaments must still be public.
+  if (!org || org.subscriptionStatus === 'canceled') return null;
 
   const tournaments = (await getTournamentsByOrg(org.id, { admin: true }))
     .filter(isPublicStatus)
@@ -113,14 +116,26 @@ export async function getPublicTournamentPageData(
   }
 
   if (section === 'standings') {
-    const divisions = await getDivisions(tournament.id, { admin: true });
+    const [divisions, games, teams, venues] = await Promise.all([
+      getDivisions(tournament.id, { admin: true }),
+      getGames(tournament.id, { admin: true }),
+      getTeams(tournament.id, { admin: true }),
+      getVenues(tournament.id, { admin: true }),
+    ]);
     const standingsEntries = await Promise.all(
       divisions.map(async group => [
         group.id,
         await getStandings(group.id, group.playoffConfig, { admin: true }),
       ] as const),
     );
-    return { ...base, divisions, standingsByDivision: Object.fromEntries(standingsEntries) };
+    return {
+      ...base,
+      divisions,
+      games,
+      teams: teams.filter(t => t.status === 'accepted'),
+      venues,
+      standingsByDivision: Object.fromEntries(standingsEntries),
+    };
   }
 
   if (section === 'rules') {

@@ -106,6 +106,7 @@ export interface ConflictGame {
   status?: string | null;
   venueId?: string | null;
   venueFacilityId?: string | null;
+  scheduleFacilityLaneId?: string | null;
   /** Which division this game belongs to (for resolving timing). */
   divisionId?: string | null;
 }
@@ -147,7 +148,7 @@ export function checkVenueConflict(params: CheckConflictParams): ConflictResult 
   const { proposedGame, allGames, divisions, tournament } = params;
 
   // No venue → no structured conflict check possible.
-  if (!proposedGame.venueId && !proposedGame.venueFacilityId) return null;
+  if (!proposedGame.venueId && !proposedGame.venueFacilityId && !proposedGame.scheduleFacilityLaneId) return null;
   if (!proposedGame.gameDate || !proposedGame.startTime) return null;
 
   const proposedStart = timeToMinutes(proposedGame.startTime);
@@ -169,6 +170,9 @@ export function checkVenueConflict(params: CheckConflictParams): ConflictResult 
     // Venue matching: facility first, then parent venue fallback.
     if (proposedGame.venueFacilityId) {
       return g.venueFacilityId === proposedGame.venueFacilityId;
+    }
+    if (proposedGame.scheduleFacilityLaneId) {
+      return g.scheduleFacilityLaneId === proposedGame.scheduleFacilityLaneId;
     }
     // Proposed has venueId only (no facility).
     return g.venueId === proposedGame.venueId && !g.venueFacilityId;
@@ -259,7 +263,7 @@ export function buildConflictMap(
 
   for (const game of allGames) {
     if (game.status === 'cancelled') continue;
-    if (!game.venueId && !game.venueFacilityId) continue;
+    if (!game.venueId && !game.venueFacilityId && !game.scheduleFacilityLaneId) continue;
     if (!game.gameDate || !game.startTime) continue;
 
     const conflict = checkVenueConflict({

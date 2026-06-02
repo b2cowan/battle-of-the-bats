@@ -1,8 +1,18 @@
 'use client';
 import { useState, useMemo } from 'react';
-import { Sparkles, Check, X, RefreshCw, AlertCircle, Plus, Trash2, Info } from 'lucide-react';
+import { Sparkles, Check, X, RefreshCw, AlertCircle, Plus, Trash2, Info, SlidersHorizontal } from 'lucide-react';
 import { Team, Division, Venue, Game, Tournament } from '@/lib/types';
 import { formatTime } from '@/lib/utils';
+import { buildScheduleMetrics } from '@/lib/schedule-metrics';
+import {
+  defaultSchedulePriorities,
+  generateScoredSchedule,
+  type ScheduleDraftMatchup,
+  type ScheduleDraftParticipant,
+  type ScheduleDraftSlot,
+  type SchedulePrioritySettings,
+} from '@/lib/schedule-generator';
+import ScheduleHealthPanel from './components/ScheduleHealthPanel';
 import styles from './schedule-admin.module.css';
 
 interface DateSlot {
@@ -13,10 +23,55 @@ interface DateSlot {
 
 // Extends Game with slot metadata so commit() can resolve real slot IDs after ensure
 interface SlotGame extends Omit<Game, 'id'> {
-  homePoolId: string;
+  homePoolId?: string | null;
   homeSlotNumber: number;
-  awayPoolId: string;
+  awayPoolId?: string | null;
   awaySlotNumber: number;
+}
+
+interface SlotPayload {
+  homePoolId?: string | null;
+  homeSlotNum: number;
+  awayPoolId?: string | null;
+  awaySlotNum: number;
+}
+
+interface DraftOptimizationSummary {
+  score: number;
+  healthScore: number;
+  candidateCount: number;
+}
+
+type PoolSlotEnsureRow = { poolId: string; slotNumber: number; id: string; displayName: string };
+type FacilityLaneEnsureRow = { id: string; label: string };
+
+interface ScheduleResource {
+  key: string;
+  venueId: string;
+  venueName: string;
+  venueFacilityId?: string | null;
+  label: string;
+}
+
+const DIVISION_SLOT_POOL_ID = '__division__';
+const EFFORT_DESCRIPTIONS: Record<number, string> = {
+  12: 'Fast checks fewer drafts and returns quicker.',
+  24: 'Balanced checks more drafts without making generation feel slow.',
+  40: 'Deep checks the most drafts for tougher schedules.',
+};
+
+function venueResourceKey(venueId: string) {
+  return `venue:${venueId}`;
+}
+
+function facilityResourceKey(facilityId: string) {
+  return `facility:${facilityId}`;
+}
+
+function getVenueResourceKeys(venue: Venue): string[] {
+  return venue.facilities?.length
+    ? venue.facilities.map(facility => facilityResourceKey(facility.id))
+    : [venueResourceKey(venue.id)];
 }
 
 interface GeneratorProps {
@@ -35,7 +90,11 @@ export default function ScheduleGenerator({ tournament, orgSlug, divisions, team
   const [gameLength, setGameLength] = useState(tournament.settings?.game_duration_minutes ?? 90);
   const [breakLength, setBreakLength] = useState(tournament.settings?.buffer_minutes ?? 15);
   const [gamesPerTeam, setGamesPerTeam] = useState(3);
-  const [selectedVenues, setSelectedVenues] = useState<Set<string>>(new Set(venues.map(d => d.id)));
+  const [selectedResourceKeys, setSelectedResourceKeys] = useState<Set<string>>(
+    () => new Set(venues.flatMap(getVenueResourceKeys)),
+  );
+  const [temporaryFacilityCount, setTemporaryFacilityCount] = useState(2);
+  const [priorities, setPriorities] = useState<SchedulePrioritySettings>(() => defaultSchedulePriorities());
   const [dateSlots, setDateSlots] = useState<DateSlot[]>([
     { date: tournament.startDate || '', startTime: '09:00', endTime: '20:30' }
   ]);
@@ -45,6 +104,7 @@ export default function ScheduleGenerator({ tournament, orgSlug, divisions, team
 
   const [generatedGames, setGeneratedGames] = useState<Omit<Game, 'id'>[]>([]);
   const [generatedSlotGames, setGeneratedSlotGames] = useState<SlotGame[]>([]);
+  const [draftSummary, setDraftSummary] = useState<DraftOptimizationSummary | null>(null);
   const [committing, setCommitting] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -68,9 +128,75 @@ export default function ScheduleGenerator({ tournament, orgSlug, divisions, team
 
   const currentGroup = useMemo(() => divisions.find(g => g.id === selectedGroupId), [divisions, selectedGroupId]);
   const poolList = useMemo(() => (currentGroup?.pools?.length || 0) >= 1 ? currentGroup!.pools! : [], [currentGroup]);
+  const selectedResources = useMemo(() => {
+    const resources: ScheduleResource[] = [];
+    for (const venue of venues) {
+      if (venue.facilities?.length) {
+        for (const facility of venue.facilities) {
+          const key = facilityResourceKey(facility.id);
+          if (!selectedResourceKeys.has(key)) continue;
+          resources.push({
+            key,
+            venueId: venue.id,
+            venueName: venue.name,
+            venueFacilityId: facility.id,
+            label: `${venue.name} - ${facility.name}`,
+          });
+        }
+      } else {
+        const key = venueResourceKey(venue.id);
+        if (!selectedResourceKeys.has(key)) continue;
+        resources.push({
+          key,
+          venueId: venue.id,
+          venueName: venue.name,
+          venueFacilityId: null,
+          label: venue.name,
+        });
+      }
+    }
+    return resources;
+  }, [venues, selectedResourceKeys]);
+  const selectedResourceCount = selectedResources.length;
+  const totalResourceCount = venues.reduce((total, venue) => total + (venue.facilities?.length || 1), 0);
+  const currentEffortDescription = EFFORT_DESCRIPTIONS[priorities.candidateCount] ?? EFFORT_DESCRIPTIONS[24];
+  const previewMetrics = useMemo(() => {
+    if (!hasPreview) return null;
+    const previewGames = generationMode === 'slot' ? generatedSlotGames : generatedGames;
+    return buildScheduleMetrics({
+      games: previewGames,
+      teams: generationMode === 'slot' ? [] : teams,
+      divisions,
+      venues,
+      tournament,
+      divisionId: selectedGroupId,
+      expectedGamesPerParticipant: gamesPerTeam,
+      gameDurationMinutes: gameLength,
+      bufferMinutes: breakLength,
+      maxGamesPerDay: priorities.maxGamesPerDay,
+    });
+  }, [
+    hasPreview,
+    generationMode,
+    generatedSlotGames,
+    generatedGames,
+    teams,
+    divisions,
+    venues,
+    tournament,
+    selectedGroupId,
+    gamesPerTeam,
+    gameLength,
+    breakLength,
+    priorities.maxGamesPerDay,
+  ]);
 
   function defaultSlotCount(poolId: string): number {
     if (slotCountOverride[poolId] !== undefined) return slotCountOverride[poolId];
+    if (poolId === DIVISION_SLOT_POOL_ID) {
+      const acceptedTeamCount = teams.filter(team => team.divisionId === selectedGroupId).length;
+      return acceptedTeamCount || currentGroup?.capacity || 4;
+    }
     const cap = currentGroup?.capacity || 0;
     const count = poolList.length || 1;
     return Math.floor(cap / count) || 4;
@@ -95,17 +221,44 @@ export default function ScheduleGenerator({ tournament, orgSlug, divisions, team
     setDateSlots(next);
   }
 
-  function buildTimeSlots(venueList: Venue[]) {
-    const totalSlots: { date: string; time: string; venue: Venue }[] = [];
+  function buildTimeSlots(resourceList: ScheduleResource[]): ScheduleDraftSlot[] {
+    const totalSlots: ScheduleDraftSlot[] = [];
     const sortedDates = [...dateSlots].sort((a, b) => a.date.localeCompare(b.date));
     const roundTo5 = (d: Date) => { const ms = 1000 * 60 * 5; return new Date(Math.ceil(d.getTime() / ms) * ms); };
+    const temporaryFacilities = Array.from(
+      { length: Math.max(1, Math.min(16, Math.round(temporaryFacilityCount) || 1)) },
+      (_, idx) => ({
+        id: `draft-facility-${idx + 1}`,
+        label: `Facility ${idx + 1}`,
+      }),
+    );
 
     sortedDates.forEach(slot => {
       let current = roundTo5(new Date(`${slot.date}T${slot.startTime}`));
       const end = new Date(`${slot.date}T${slot.endTime}`);
       while (current.getTime() + gameLength * 60000 <= end.getTime()) {
         const timeStr = current.toTimeString().slice(0, 5);
-        venueList.forEach(venue => totalSlots.push({ date: slot.date, time: timeStr, venue }));
+        if (resourceList.length === 0) {
+          temporaryFacilities.forEach(facility => totalSlots.push({
+            date: slot.date,
+            time: timeStr,
+            venueId: null,
+            venueName: facility.label,
+            venueFacilityId: null,
+            scheduleFacilityLaneId: facility.id,
+            scheduleFacilityLaneLabel: facility.label,
+          }));
+        } else {
+          resourceList.forEach(resource => {
+            totalSlots.push({
+              date: slot.date,
+              time: timeStr,
+              venueId: resource.venueId,
+              venueName: resource.label,
+              venueFacilityId: resource.venueFacilityId ?? null,
+            });
+          });
+        }
         current = roundTo5(new Date(current.getTime() + (gameLength + breakLength) * 60000));
       }
     });
@@ -115,17 +268,15 @@ export default function ScheduleGenerator({ tournament, orgSlug, divisions, team
   function generate() {
     setError(null);
     if (dateSlots.some(s => !s.date)) { setError('Please select a date for all slots'); return; }
-    const venueList = venues.filter(d => selectedVenues.has(d.id));
-    if (venueList.length === 0) { setError('Select at least one venue'); return; }
 
     if (generationMode === 'slot') {
-      generateSlots(venueList);
+      generateSlots(selectedResources);
     } else {
-      generateTeams(venueList);
+      generateTeams(selectedResources);
     }
   }
 
-  function generateTeams(venueList: Venue[]) {
+  function generateTeams(resourceList: ScheduleResource[]) {
     const groupTeams = teams.filter(t => t.divisionId === selectedGroupId);
     if (groupTeams.length < 2) { setError('Need at least 2 teams to generate a schedule'); return; }
 
@@ -142,7 +293,20 @@ export default function ScheduleGenerator({ tournament, orgSlug, divisions, team
     Object.values(pools).forEach(poolTeams => {
       if (poolTeams.length < 2) return;
       const teamsPool = [...poolTeams];
-      if (teamsPool.length % 2 !== 0) teamsPool.push({ id: 'BYE', name: 'BYE' } as any);
+      if (teamsPool.length % 2 !== 0) {
+        teamsPool.push({
+          id: 'BYE',
+          name: 'BYE',
+          tournamentId: tournament.id,
+          divisionId: selectedGroupId,
+          coach: '',
+          email: '',
+          players: [],
+          status: 'accepted',
+          paymentStatus: 'paid',
+          registeredAt: '',
+        });
+      }
       const n = teamsPool.length;
       const roundsToGenerate = Math.min(gamesPerTeam, n - 1);
       for (let round = 0; round < roundsToGenerate; round++) {
@@ -157,62 +321,84 @@ export default function ScheduleGenerator({ tournament, orgSlug, divisions, team
 
     if (allMatchups.length === 0) { setError('No matchups could be generated. Check your pool assignments.'); return; }
 
-    const totalSlots = buildTimeSlots(venueList);
+    const totalSlots = buildTimeSlots(resourceList);
     if (totalSlots.length < allMatchups.length) {
       setError(`Not enough time slots to schedule ${allMatchups.length} games. Need ${allMatchups.length} slots, but only have ${totalSlots.length} available.`);
       return;
     }
 
     const newGames: Omit<Game, 'id'>[] = [];
-    const busyTeams: Record<string, Set<string>> = {};
-    const availableSlots = [...totalSlots];
+    const participants: ScheduleDraftParticipant[] = groupTeams.map(team => ({
+      id: team.id,
+      label: team.name,
+      divisionId: team.divisionId,
+      status: team.status,
+    }));
+    const draftMatchups: ScheduleDraftMatchup<{ home: Team; away: Team }>[] = allMatchups.map(match => ({
+      homeParticipantId: match.home.id,
+      awayParticipantId: match.away.id,
+      homeLabel: match.home.name,
+      awayLabel: match.away.name,
+      homeMetric: { teamId: match.home.id },
+      awayMetric: { teamId: match.away.id },
+      poolId: match.home.poolId ?? null,
+      payload: match,
+    }));
+    const draft = generateScoredSchedule({
+      tournamentId: tournament.id,
+      divisionId: selectedGroupId,
+      matchups: draftMatchups,
+      slots: totalSlots,
+      participants,
+      expectedGamesPerParticipant: gamesPerTeam,
+      gameDurationMinutes: gameLength,
+      bufferMinutes: breakLength,
+      priorities,
+    });
 
-    for (const match of allMatchups) {
-      let assigned = false;
-      for (let i = 0; i < availableSlots.length; i++) {
-        const slot = availableSlots[i];
-        const timeKey = `${slot.date}T${slot.time}`;
-        if (!busyTeams[timeKey]) busyTeams[timeKey] = new Set();
-        if (!busyTeams[timeKey].has(match.home.id) && !busyTeams[timeKey].has(match.away.id)) {
-          newGames.push({
-            tournamentId: tournament.id,
-            divisionId: selectedGroupId,
-            homeTeamId: match.home.id,
-            awayTeamId: match.away.id,
-            date: slot.date,
-            time: slot.time,
-            location: slot.venue.name,
-            venueId: slot.venue.id,
-            status: 'scheduled',
-          });
-          busyTeams[timeKey].add(match.home.id);
-          busyTeams[timeKey].add(match.away.id);
-          availableSlots.splice(i, 1);
-          assigned = true;
-          break;
-        }
-      }
-      if (!assigned) {
-        setError(`Conflict detected: Could not find a free time slot for ${match.home.name} vs ${match.away.name} without double-booking a team. Try adding more dates or venues.`);
-        return;
-      }
-    }
-
-    setGeneratedSlotGames([]);
-    setGeneratedGames(newGames);
-  }
-
-  function generateSlots(venueList: Venue[]) {
-    if (poolList.length === 0) {
-      setError('Slot-based scheduling requires at least one pool to be configured. Go to Division Settings and add pools first.');
+    if (!draft) {
+      setError('No valid draft could be generated without overlapping a team. Try adding more dates or venues.');
       return;
     }
 
-    const allMatchups: { homePoolId: string; homeSlotNum: number; awayPoolId: string; awaySlotNum: number }[] = [];
+    draft.assignments.forEach(assignment => {
+      newGames.push({
+        tournamentId: tournament.id,
+        divisionId: selectedGroupId,
+        homeTeamId: assignment.homeParticipantId,
+        awayTeamId: assignment.awayParticipantId,
+        date: assignment.date,
+        time: assignment.time,
+        location: assignment.venueName,
+        venueId: assignment.venueId || undefined,
+        venueFacilityId: assignment.venueFacilityId ?? undefined,
+        scheduleFacilityLaneId: assignment.scheduleFacilityLaneId ?? null,
+        scheduleFacilityLaneLabel: assignment.scheduleFacilityLaneLabel ?? null,
+        status: 'scheduled',
+      });
+    });
 
-    poolList.forEach(pool => {
-      const count = defaultSlotCount(pool.id);
+    setGeneratedSlotGames([]);
+    setGeneratedGames(newGames);
+    setDraftSummary({ score: draft.score, healthScore: draft.metrics.healthScore, candidateCount: draft.candidateCount });
+  }
+
+  function generateSlots(resourceList: ScheduleResource[]) {
+    const allMatchups: ScheduleDraftMatchup<SlotPayload>[] = [];
+    const participantMap = new Map<string, ScheduleDraftParticipant>();
+
+    const addSlotRoundRobin = (params: { poolId: string | null; groupName: string; count: number }) => {
+      const { poolId, groupName, count } = params;
       if (count < 2) return;
+      for (let slotNum = 1; slotNum <= count; slotNum++) {
+        const participantId = `${poolId ?? selectedGroupId}-${slotNum}`;
+        participantMap.set(participantId, {
+          id: participantId,
+          label: `${groupName} Team ${slotNum}`,
+          divisionId: selectedGroupId,
+          status: 'accepted',
+        });
+      }
       const nums = Array.from({ length: count }, (_, i) => i + 1);
       if (nums.length % 2 !== 0) nums.push(0); // 0 = BYE
       const n = nums.length;
@@ -222,69 +408,96 @@ export default function ScheduleGenerator({ tournament, orgSlug, divisions, team
         for (let i = 0; i < n / 2; i++) {
           const home = rotation[i];
           const away = rotation[n - 1 - i];
-          if (home !== 0 && away !== 0) allMatchups.push({ homePoolId: pool.id, homeSlotNum: home, awayPoolId: pool.id, awaySlotNum: away });
+          if (home !== 0 && away !== 0) {
+            const homeId = `${poolId ?? selectedGroupId}-${home}`;
+            const awayId = `${poolId ?? selectedGroupId}-${away}`;
+            const homeName = `${groupName} Team ${home}`;
+            const awayName = `${groupName} Team ${away}`;
+            allMatchups.push({
+              homeParticipantId: homeId,
+              awayParticipantId: awayId,
+              homeLabel: homeName,
+              awayLabel: awayName,
+              homeMetric: { slotId: homeId, placeholder: homeName },
+              awayMetric: { slotId: awayId, placeholder: awayName },
+              poolId,
+              payload: { homePoolId: poolId, homeSlotNum: home, awayPoolId: poolId, awaySlotNum: away },
+            });
+          }
         }
         rotation.splice(1, 0, rotation.pop()!);
       }
-    });
+    };
 
-    if (allMatchups.length === 0) { setError('No matchups could be generated. Check slot counts per pool (minimum 2).'); return; }
+    if (poolList.length === 0) {
+      addSlotRoundRobin({
+        poolId: null,
+        groupName: currentGroup?.name ?? 'Division',
+        count: defaultSlotCount(DIVISION_SLOT_POOL_ID),
+      });
+    } else {
+      poolList.forEach(pool => {
+        addSlotRoundRobin({
+          poolId: pool.id,
+          groupName: pool.name,
+          count: defaultSlotCount(pool.id),
+        });
+      });
+    }
 
-    const totalSlots = buildTimeSlots(venueList);
+    if (allMatchups.length === 0) { setError('No matchups could be generated. Check slot counts (minimum 2).'); return; }
+
+    const totalSlots = buildTimeSlots(resourceList);
     if (totalSlots.length < allMatchups.length) {
       setError(`Not enough time slots for ${allMatchups.length} games. Need ${allMatchups.length} slots but have ${totalSlots.length}.`);
       return;
     }
 
     const newGames: SlotGame[] = [];
-    const busy: Record<string, Set<string>> = {};
-    const availableSlots = [...totalSlots];
+    const draft = generateScoredSchedule({
+      tournamentId: tournament.id,
+      divisionId: selectedGroupId,
+      matchups: allMatchups,
+      slots: totalSlots,
+      participants: Array.from(participantMap.values()),
+      expectedGamesPerParticipant: gamesPerTeam,
+      gameDurationMinutes: gameLength,
+      bufferMinutes: breakLength,
+      priorities,
+    });
 
-    for (const match of allMatchups) {
-      let assigned = false;
-      for (let i = 0; i < availableSlots.length; i++) {
-        const slot = availableSlots[i];
-        const timeKey = `${slot.date}T${slot.time}`;
-        if (!busy[timeKey]) busy[timeKey] = new Set();
-        const homeKey = `${match.homePoolId}-${match.homeSlotNum}`;
-        const awayKey = `${match.awayPoolId}-${match.awaySlotNum}`;
-        if (!busy[timeKey].has(homeKey) && !busy[timeKey].has(awayKey)) {
-          const homePool = poolList.find(p => p.id === match.homePoolId);
-          const homeName = `${homePool?.name ?? 'Pool'} Team ${match.homeSlotNum}`;
-          const awayName = `${homePool?.name ?? 'Pool'} Team ${match.awaySlotNum}`;
-          newGames.push({
-            tournamentId: tournament.id,
-            divisionId: selectedGroupId,
-            homeTeamId: '',
-            awayTeamId: '',
-            date: slot.date,
-            time: slot.time,
-            location: slot.venue.name,
-            venueId: slot.venue.id,
-            status: 'scheduled',
-            homePlaceholder: homeName,
-            awayPlaceholder: awayName,
-            homePoolId: match.homePoolId,
-            homeSlotNumber: match.homeSlotNum,
-            awayPoolId: match.awayPoolId,
-            awaySlotNumber: match.awaySlotNum,
-          });
-          busy[timeKey].add(homeKey);
-          busy[timeKey].add(awayKey);
-          availableSlots.splice(i, 1);
-          assigned = true;
-          break;
-        }
-      }
-      if (!assigned) {
-        const homePool = poolList.find(p => p.id === match.homePoolId);
-        setError(`Conflict: no free slot for ${homePool?.name ?? 'Pool'} Team ${match.homeSlotNum} vs Team ${match.awaySlotNum}. Add more dates or venues.`);
-        return;
-      }
+    if (!draft) {
+      setError('No valid slot draft could be generated without overlapping a slot. Try adding more dates or venues.');
+      return;
     }
+
+    draft.assignments.forEach(assignment => {
+      const match = assignment.payload;
+      newGames.push({
+        tournamentId: tournament.id,
+        divisionId: selectedGroupId,
+        homeTeamId: '',
+        awayTeamId: '',
+        date: assignment.date,
+        time: assignment.time,
+        location: assignment.venueName,
+        venueId: assignment.venueId || undefined,
+        venueFacilityId: assignment.venueFacilityId ?? undefined,
+        scheduleFacilityLaneId: assignment.scheduleFacilityLaneId ?? null,
+        scheduleFacilityLaneLabel: assignment.scheduleFacilityLaneLabel ?? null,
+        status: 'scheduled',
+        homePlaceholder: assignment.homeLabel,
+        awayPlaceholder: assignment.awayLabel,
+        homePoolId: match.homePoolId,
+        homeSlotNumber: match.homeSlotNum,
+        awayPoolId: match.awayPoolId,
+        awaySlotNumber: match.awaySlotNum,
+      });
+    });
 
     setGeneratedGames([]);
     setGeneratedSlotGames(newGames);
+    setDraftSummary({ score: draft.score, healthScore: draft.metrics.healthScore, candidateCount: draft.candidateCount });
   }
 
   async function commit() {
@@ -299,6 +512,7 @@ export default function ScheduleGenerator({ tournament, orgSlug, divisions, team
   async function commitTeams() {
     setCommitting(true);
     try {
+      const gamesToSave = await materializeTemporaryFacilityLanes(generatedGames);
       await fetch(`/api/admin/games${orgQuery}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -307,13 +521,13 @@ export default function ScheduleGenerator({ tournament, orgSlug, divisions, team
       const res = await fetch(`/api/admin/games${orgQuery}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'bulk-save', games: generatedGames, tournamentId: tournament.id, divisionId: selectedGroupId }),
+        body: JSON.stringify({ action: 'bulk-save', games: gamesToSave, tournamentId: tournament.id, divisionId: selectedGroupId }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to save games');
       onComplete();
-    } catch (e: any) {
-      setError(`Failed to save games: ${e.message}`);
+    } catch (e: unknown) {
+      setError(`Failed to save games: ${e instanceof Error ? e.message : 'Unknown error'}`);
     } finally {
       setCommitting(false);
     }
@@ -322,6 +536,7 @@ export default function ScheduleGenerator({ tournament, orgSlug, divisions, team
   async function commitSlots() {
     setCommitting(true);
     try {
+      const slotGamesToSave = await materializeTemporaryFacilityLanes(generatedSlotGames);
       // 1. Clear existing games for this division
       await fetch(`/api/admin/games${orgQuery}`, {
         method: 'POST',
@@ -329,33 +544,11 @@ export default function ScheduleGenerator({ tournament, orgSlug, divisions, team
         body: JSON.stringify({ action: 'delete-division-games', divisionId: selectedGroupId }),
       });
 
-      // 2. Ensure slot records exist (idempotent — slots pre-exist from pool config), get back their IDs
-      const ensureRes = await fetch(`/api/admin/pool-slots${orgQuery}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'ensure',
-          tournamentId: tournament.id,
-          divisionId: selectedGroupId,
-          pools: poolList.map(pool => ({
-            poolId: pool.id,
-            slotCount: defaultSlotCount(pool.id),
-            namePrefix: pool.name,
-          })),
-        }),
-      });
-      if (!ensureRes.ok) throw new Error((await ensureRes.json()).error || 'Failed to create slot records');
-      const { slots } = await ensureRes.json();
+      // 2. Save division-wide placeholders directly, or resolve pool slot IDs first.
+      let gameRows: Array<Record<string, unknown>>;
 
-      // 3. Build slot lookup: "poolId-slotNumber" → { id, displayName }
-      const slotMap: Record<string, { id: string; displayName: string }> = {};
-      (slots as any[]).forEach(s => { slotMap[`${s.poolId}-${s.slotNumber}`] = { id: s.id, displayName: s.displayName }; });
-
-      // 4. Build game rows with resolved slot IDs
-      const gameRows = generatedSlotGames.map(g => {
-        const homeSlot = slotMap[`${g.homePoolId}-${g.homeSlotNumber}`];
-        const awaySlot = slotMap[`${g.awayPoolId}-${g.awaySlotNumber}`];
-        return {
+      if (poolList.length === 0) {
+        gameRows = slotGamesToSave.map(g => ({
           tournamentId: tournament.id,
           divisionId: selectedGroupId,
           homeTeamId: null,
@@ -364,15 +557,62 @@ export default function ScheduleGenerator({ tournament, orgSlug, divisions, team
           time: g.time,
           location: g.location,
           venueId: g.venueId,
+          venueFacilityId: g.venueFacilityId,
+          scheduleFacilityLaneId: g.scheduleFacilityLaneId,
+          scheduleFacilityLaneLabel: g.scheduleFacilityLaneLabel,
           status: 'scheduled',
-          homeSlotId: homeSlot?.id ?? null,
-          awaySlotId: awaySlot?.id ?? null,
-          homePlaceholder: homeSlot?.displayName ?? g.homePlaceholder,
-          awayPlaceholder: awaySlot?.displayName ?? g.awayPlaceholder,
-        };
-      });
+          homeSlotId: null,
+          awaySlotId: null,
+          homePlaceholder: g.homePlaceholder,
+          awayPlaceholder: g.awayPlaceholder,
+        }));
+      } else {
+        const ensureRes = await fetch(`/api/admin/pool-slots${orgQuery}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'ensure',
+            tournamentId: tournament.id,
+            divisionId: selectedGroupId,
+            pools: poolList.map(pool => ({
+              poolId: pool.id,
+              slotCount: defaultSlotCount(pool.id),
+              namePrefix: pool.name,
+            })),
+          }),
+        });
+        if (!ensureRes.ok) throw new Error((await ensureRes.json()).error || 'Failed to create slot records');
+        const { slots } = await ensureRes.json();
 
-      // 5. Bulk save
+        // Build slot lookup: "poolId-slotNumber" to { id, displayName }.
+        const slotMap: Record<string, { id: string; displayName: string }> = {};
+        (slots as PoolSlotEnsureRow[]).forEach(s => { slotMap[`${s.poolId}-${s.slotNumber}`] = { id: s.id, displayName: s.displayName }; });
+
+        gameRows = slotGamesToSave.map(g => {
+          const homeSlot = slotMap[`${g.homePoolId}-${g.homeSlotNumber}`];
+          const awaySlot = slotMap[`${g.awayPoolId}-${g.awaySlotNumber}`];
+          return {
+            tournamentId: tournament.id,
+            divisionId: selectedGroupId,
+            homeTeamId: null,
+            awayTeamId: null,
+            date: g.date,
+            time: g.time,
+            location: g.location,
+            venueId: g.venueId,
+            venueFacilityId: g.venueFacilityId,
+            scheduleFacilityLaneId: g.scheduleFacilityLaneId,
+            scheduleFacilityLaneLabel: g.scheduleFacilityLaneLabel,
+            status: 'scheduled',
+            homeSlotId: homeSlot?.id ?? null,
+            awaySlotId: awaySlot?.id ?? null,
+            homePlaceholder: homeSlot?.displayName ?? g.homePlaceholder,
+            awayPlaceholder: awaySlot?.displayName ?? g.awayPlaceholder,
+          };
+        });
+      }
+
+      // 3. Bulk save
       const saveRes = await fetch(`/api/admin/games${orgQuery}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -380,8 +620,8 @@ export default function ScheduleGenerator({ tournament, orgSlug, divisions, team
       });
       if (!saveRes.ok) throw new Error((await saveRes.json()).error || 'Failed to save games');
       onComplete();
-    } catch (e: any) {
-      setError(`Failed to save schedule: ${e.message}`);
+    } catch (e: unknown) {
+      setError(`Failed to save schedule: ${e instanceof Error ? e.message : 'Unknown error'}`);
     } finally {
       setCommitting(false);
     }
@@ -390,12 +630,77 @@ export default function ScheduleGenerator({ tournament, orgSlug, divisions, team
   function reset() {
     setGeneratedGames([]);
     setGeneratedSlotGames([]);
+    setDraftSummary(null);
   }
 
-  function toggleVenue(id: string) {
-    const next = new Set(selectedVenues);
-    if (next.has(id)) next.delete(id); else next.add(id);
-    setSelectedVenues(next);
+  function toggleResource(key: string) {
+    setSelectedResourceKeys(current => {
+      const next = new Set(current);
+      if (next.has(key)) next.delete(key); else next.add(key);
+      return next;
+    });
+  }
+
+  function toggleVenueResources(venue: Venue) {
+    const keys = getVenueResourceKeys(venue);
+    const allSelected = keys.every(key => selectedResourceKeys.has(key));
+    setSelectedResourceKeys(current => {
+      const next = new Set(current);
+      keys.forEach(key => {
+        if (allSelected) next.delete(key);
+        else next.add(key);
+      });
+      return next;
+    });
+  }
+
+  function selectAllResources() {
+    setSelectedResourceKeys(new Set(venues.flatMap(getVenueResourceKeys)));
+  }
+
+  function clearResources() {
+    setSelectedResourceKeys(new Set());
+  }
+
+  function updatePriorities(updates: Partial<SchedulePrioritySettings>) {
+    setPriorities(current => ({ ...current, ...updates }));
+  }
+
+  async function materializeTemporaryFacilityLanes<T extends Omit<Game, 'id'>>(games: T[]): Promise<T[]> {
+    const labels = Array.from(new Set(
+      games
+        .filter(game => game.scheduleFacilityLaneId?.startsWith('draft-facility-'))
+        .map(game => game.scheduleFacilityLaneLabel || game.location)
+        .filter(Boolean),
+    ));
+    if (labels.length === 0) return games;
+
+    const res = await fetch(`/api/admin/schedule-facility-lanes${orgQuery}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'ensure',
+        tournamentId: tournament.id,
+        divisionId: selectedGroupId,
+        labels,
+      }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to prepare temporary facilities');
+
+    const laneByLabel = new Map((data.lanes as FacilityLaneEnsureRow[]).map(lane => [lane.label, lane.id]));
+    return games.map(game => {
+      if (!game.scheduleFacilityLaneId?.startsWith('draft-facility-')) return game;
+      const label = game.scheduleFacilityLaneLabel || game.location;
+      return {
+        ...game,
+        venueId: undefined,
+        venueFacilityId: undefined,
+        scheduleFacilityLaneId: laneByLabel.get(label) ?? game.scheduleFacilityLaneId,
+        scheduleFacilityLaneLabel: label,
+        location: label,
+      };
+    });
   }
 
   const divisionName = divisions.find(g => g.id === selectedGroupId)?.name ?? '';
@@ -432,7 +737,10 @@ export default function ScheduleGenerator({ tournament, orgSlug, divisions, team
               </div>
               {generationMode === 'slot' && (
                 <p style={{ marginTop: '0.5rem', fontSize: '0.8rem', color: 'var(--white-40)', lineHeight: 1.5 }}>
-                  Creates a schedule using placeholder names (e.g. "Pool A Team 1"). Team names appear publicly only once all slots in a pool are assigned.
+                  {poolList.length > 0
+                    ? <>Creates a schedule using placeholder names (e.g. &quot;Pool A Team 1&quot;). Team names appear publicly once all slots in a pool are assigned.</>
+                    : <>Creates a division-wide schedule using placeholder names (e.g. &quot;{currentGroup?.name ?? 'Division'} Team 1&quot;) without requiring pools.</>
+                  }
                 </p>
               )}
             </div>
@@ -457,30 +765,40 @@ export default function ScheduleGenerator({ tournament, orgSlug, divisions, team
               </div>
             </div>
 
-            {/* Slot count per pool (slot mode only) */}
+            {/* Slot count per pool or division (slot mode only) */}
             {generationMode === 'slot' && (
               <div className="form-group" style={{ marginBottom: '1.5rem' }}>
-                <label className="form-label">Teams per Pool</label>
+                <label className="form-label">{poolList.length === 0 ? 'Division Slots' : 'Teams per Pool'}</label>
                 {poolList.length === 0 ? (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem', background: 'var(--white-5)', borderRadius: '2px', color: 'var(--warning)', fontSize: '0.875rem' }}>
-                    <AlertCircle size={14} /> No pools configured for this division. Go to Division Settings and add pools first.
+                  <div className={styles.slotControlGrid}>
+                    <label className={styles.slotCountControl}>
+                      <span>{currentGroup?.name ?? 'Division'} slots</span>
+                      <input
+                        type="number"
+                        className="form-input"
+                        min="2"
+                        max="32"
+                        value={slotCountOverride[DIVISION_SLOT_POOL_ID] ?? defaultSlotCount(DIVISION_SLOT_POOL_ID)}
+                        onChange={e => setSlotCountOverride(prev => ({ ...prev, [DIVISION_SLOT_POOL_ID]: Number(e.target.value) }))}
+                      />
+                      <small>One placeholder team per slot.</small>
+                    </label>
                   </div>
                 ) : (
-                  <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+                  <div className={styles.slotControlGrid}>
                     {poolList.map(pool => (
-                      <div key={pool.id} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <span style={{ color: 'var(--white-60)', fontSize: '0.875rem', minWidth: '60px' }}>{pool.name}:</span>
+                      <label key={pool.id} className={styles.slotCountControl}>
+                        <span>{pool.name}</span>
                         <input
                           type="number"
                           className="form-input"
-                          style={{ width: '72px' }}
                           min="2"
                           max="16"
                           value={slotCountOverride[pool.id] ?? defaultSlotCount(pool.id)}
                           onChange={e => setSlotCountOverride(prev => ({ ...prev, [pool.id]: Number(e.target.value) }))}
                         />
-                        <span style={{ fontSize: '0.8rem', color: 'var(--white-40)' }}>slots</span>
-                      </div>
+                        <small>Placeholder teams in this pool.</small>
+                      </label>
                     ))}
                   </div>
                 )}
@@ -531,16 +849,157 @@ export default function ScheduleGenerator({ tournament, orgSlug, divisions, team
               </div>
             </div>
 
-            <div className="form-group">
-              <label className="form-label">Available Venues</label>
-              <div className={styles.venueGrid}>
-                {venues.map(d => (
-                  <label key={d.id} className={styles.venueCheck}>
-                    <input type="checkbox" checked={selectedVenues.has(d.id)} onChange={() => toggleVenue(d.id)} />
-                    {d.name}
-                  </label>
-                ))}
+            <div className={styles.priorityPanel}>
+              <div className={styles.priorityHeader}>
+                <span><Sparkles size={14} /> Scheduling Priorities</span>
+                <small>Best of {priorities.candidateCount}</small>
               </div>
+              <div className={styles.prioritySection}>
+                <div className={styles.prioritySectionHeader}>
+                  <span>Limits</span>
+                  <small>Hard caps used during generation</small>
+                </div>
+                <div className={styles.priorityGrid}>
+                  <label className={styles.priorityField} title="Caps how many games one team or slot can play in a day.">
+                    <span>Max / day</span>
+                    <input
+                      type="number"
+                      className="form-input"
+                      min="1"
+                      max="6"
+                      value={priorities.maxGamesPerDay}
+                      onChange={e => updatePriorities({ maxGamesPerDay: Number(e.target.value) })}
+                    />
+                    <small>Per team or slot.</small>
+                  </label>
+                  <label className={styles.priorityField} title="Minimum time between games for the same team or slot.">
+                    <span>Min rest</span>
+                    <input
+                      type="number"
+                      className="form-input"
+                      min="0"
+                      max="360"
+                      step="15"
+                      value={priorities.minRestMinutes}
+                      onChange={e => updatePriorities({ minRestMinutes: Number(e.target.value) })}
+                    />
+                    <small>Minutes between games.</small>
+                  </label>
+                </div>
+              </div>
+              <div className={styles.prioritySection}>
+                <div className={styles.prioritySectionHeader}>
+                  <span><SlidersHorizontal size={13} /> Preferences</span>
+                  <small>Scoring tradeoffs for better drafts</small>
+                </div>
+                <div className={styles.priorityPreferenceGrid}>
+                  <label className={styles.priorityField} title={currentEffortDescription}>
+                    <span>Effort</span>
+                    <select
+                      className="form-select"
+                      value={priorities.candidateCount}
+                      onChange={e => updatePriorities({ candidateCount: Number(e.target.value) })}
+                    >
+                      <option value={12}>Fast</option>
+                      <option value={24}>Balanced</option>
+                      <option value={40}>Deep</option>
+                    </select>
+                    <small>{currentEffortDescription}</small>
+                  </label>
+                  <label className={styles.priorityCheck} title="Scores drafts higher when teams have rest between games.">
+                    <input
+                      type="checkbox"
+                      checked={priorities.avoidBackToBack}
+                      onChange={e => updatePriorities({ avoidBackToBack: e.target.checked })}
+                    />
+                    <span>Avoid back-to-back</span>
+                  </label>
+                  <label className={styles.priorityCheck} title="Scores drafts higher when teams stay at the same selected facility.">
+                    <input
+                      type="checkbox"
+                      checked={priorities.reduceVenueChanges}
+                      onChange={e => updatePriorities({ reduceVenueChanges: e.target.checked })}
+                    />
+                    <span>Reduce facility moves</span>
+                  </label>
+                  <label className={styles.priorityCheck} title="Scores drafts higher when early and late games are spread more evenly.">
+                    <input
+                      type="checkbox"
+                      checked={priorities.balanceTimeSlots}
+                      onChange={e => updatePriorities({ balanceTimeSlots: e.target.checked })}
+                    />
+                    <span>Balance early/late</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <div className="form-group">
+              <label className="form-label">Available Facilities</label>
+              {venues.length > 0 && (
+                <div className={styles.facilityPickerHeader}>
+                  <span>{selectedResourceCount} / {totalResourceCount} selected</span>
+                  <div className={styles.facilityPickerActions}>
+                    <button type="button" className="btn btn-ghost btn-sm" onClick={selectAllResources}>All</button>
+                    <button type="button" className="btn btn-ghost btn-sm" onClick={clearResources}>None</button>
+                  </div>
+                </div>
+              )}
+              {venues.length > 0 && (
+                <div className={styles.facilityPicker}>
+                  {venues.map(venue => {
+                    const resourceKeys = getVenueResourceKeys(venue);
+                    const selectedCount = resourceKeys.filter(key => selectedResourceKeys.has(key)).length;
+                    const allSelected = selectedCount === resourceKeys.length;
+                    const facilities = venue.facilities ?? [];
+                    return (
+                      <div key={venue.id} className={styles.facilityVenueGroup}>
+                        <label className={styles.facilityVenueCheck}>
+                          <input type="checkbox" checked={allSelected} onChange={() => toggleVenueResources(venue)} />
+                          <span className={styles.facilityVenueName}>
+                            <strong>{venue.name}</strong>
+                            <small>{selectedCount} / {resourceKeys.length} selected</small>
+                          </span>
+                        </label>
+                        {facilities.length > 0 ? (
+                          <div className={styles.facilityChildGrid}>
+                            {facilities.map(facility => {
+                              const key = facilityResourceKey(facility.id);
+                              return (
+                                <label key={facility.id} className={styles.facilityCheck}>
+                                  <input type="checkbox" checked={selectedResourceKeys.has(key)} onChange={() => toggleResource(key)} />
+                                  <span>{facility.name}</span>
+                                </label>
+                              );
+                            })}
+                          </div>
+                        ) : (
+                          <p className={styles.facilityEmptyText}>No facilities listed. Selecting the venue uses one scheduling lane.</p>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+              {(venues.length === 0 || selectedResourceCount === 0) && (
+                <div className={styles.temporaryFacilityPanel}>
+                  <div>
+                    <strong>Use temporary facilities</strong>
+                    <span>Schedules can be generated now and resolved to real venues later.</span>
+                  </div>
+                  <label>
+                    <span>Facilities</span>
+                    <input
+                      type="number"
+                      className="form-input"
+                      min="1"
+                      max="16"
+                      value={temporaryFacilityCount}
+                      onChange={e => setTemporaryFacilityCount(Number(e.target.value))}
+                    />
+                  </label>
+                </div>
+              )}
             </div>
 
             {error && <div className={styles.errorBanner}><AlertCircle size={16} /> {error}</div>}
@@ -559,17 +1018,37 @@ export default function ScheduleGenerator({ tournament, orgSlug, divisions, team
               <button className="btn btn-ghost btn-sm" onClick={reset}><RefreshCw size={14} /> Start Over</button>
             </div>
 
+            {draftSummary && (
+              <div className={styles.optimizationSummary}>
+                <span><Sparkles size={13} /> Best of {draftSummary.candidateCount} drafts</span>
+                <strong>{draftSummary.score}</strong>
+                <small>Health {draftSummary.healthScore}/100</small>
+              </div>
+            )}
+
             {generationMode === 'slot' && (
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', padding: '0.75rem 1rem', background: 'var(--white-5)', borderRadius: '2px', margin: '0.75rem 0', fontSize: '0.8rem', color: 'var(--white-60)', lineHeight: 1.5 }}>
                 <Info size={14} style={{ marginTop: '1px', flexShrink: 0, color: 'var(--blueprint-blue)' }} />
-                Team names will appear publicly only once all slots in each pool are assigned via the Slot Assignments tab.
+                {poolList.length > 0
+                  ? 'Team names will appear publicly only once all slots in each pool are assigned via the Slot Assignments tab.'
+                  : 'This division-wide draft uses placeholders and does not require pools. Save it now, then assign real teams manually or regenerate team-based when teams are final.'
+                }
               </div>
+            )}
+
+            {previewMetrics && (
+              <ScheduleHealthPanel
+                metrics={previewMetrics}
+                title="Draft Health"
+                subtitle={`${divisionName} · ${generationMode === 'slot' ? 'Slot schedule' : 'Team schedule'}`}
+                showTeamTable
+              />
             )}
 
             <div className={styles.previewTableWrap}>
               <table>
                 <thead>
-                  <tr><th>Date & Time</th><th>Matchup</th><th>Pool</th><th>Venue</th></tr>
+                  <tr><th>Date & Time</th><th>Matchup</th><th>Group</th><th>Facility</th></tr>
                 </thead>
                 <tbody>
                   {generationMode === 'slot' ? (
@@ -581,7 +1060,7 @@ export default function ScheduleGenerator({ tournament, orgSlug, divisions, team
                             {new Date(g.date + 'T12:00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} at <strong>{formatTime(g.time)}</strong>
                           </td>
                           <td>{g.homePlaceholder} vs {g.awayPlaceholder}</td>
-                          <td><span className="badge badge-neutral">{pool?.name ?? '—'}</span></td>
+                          <td><span className="badge badge-neutral">{pool?.name ?? 'Division'}</span></td>
                           <td>{g.location}</td>
                         </tr>
                       );
@@ -635,7 +1114,7 @@ export default function ScheduleGenerator({ tournament, orgSlug, divisions, team
               <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '0.5rem' }}>Commit Schedule?</h3>
               <p style={{ color: 'var(--white-60)', fontSize: '0.95rem', lineHeight: 1.5 }}>
                 {generationMode === 'slot'
-                  ? <>This will save a slot-based schedule and <strong style={{ color: 'var(--danger)' }}>permanently clear</strong> any existing games for <strong>{divisionName}</strong>. Team names will appear publicly once all slots are assigned.</>
+                  ? <>This will save a slot-based schedule and <strong style={{ color: 'var(--danger)' }}>permanently clear</strong> any existing games for <strong>{divisionName}</strong>. {poolList.length > 0 ? 'Team names will appear publicly once all slots are assigned.' : 'Division-wide placeholders will be saved without pool assignments.'}</>
                   : <>This will save the generated schedule and <strong style={{ color: 'var(--danger)' }}>permanently clear</strong> any existing games for the <strong>{divisionName}</strong> division.</>
                 }
               </p>

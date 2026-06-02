@@ -35,7 +35,7 @@ export type PlatformEventType =
 
 export type PlatformEventInput = {
   eventType: PlatformEventType;
-  source: 'app' | 'stripe' | 'mock' | 'platform_admin' | 'migration_053';
+  source: 'app' | 'stripe' | 'mock' | 'platform_admin' | 'migration_053' | 'founding_season';
   sourceEventId?: string | null;
   orgId?: string | null;
   actorUserId?: string | null;

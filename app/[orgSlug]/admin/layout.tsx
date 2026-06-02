@@ -14,7 +14,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { orgSlug } = await params;
   const org = await getOrganizationBySlug(orgSlug);
-  return { title: org?.name ?? 'Admin' };
+  return { title: { default: 'Admin', template: `%s | ${org?.name ?? 'Admin'}` } };
 }
 
 export default async function AdminLayout({

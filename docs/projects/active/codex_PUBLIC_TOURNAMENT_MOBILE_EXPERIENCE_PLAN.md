@@ -25,12 +25,14 @@ Relevant archived findings:
 
 | ID | Topic | Status |
 | --- | --- | --- |
-| JNY-03 | Public registration stepper promises Review but submits directly | Open |
-| JNY-12 | Public schedule controls likely wrap/overflow on mobile | Open |
+| JNY-03 | Public registration stepper promises Review but submits directly | Implemented 2026-05-29 |
+| JNY-12 | Public schedule controls likely wrap/overflow on mobile | Implemented 2026-06-01 |
 | JNY-15 | Free Tournament post-event story needs clearer framing | Open |
 | JNY-16 | Public acquisition analytics surfaces are too coarse | Open |
-| JNY-17 | Public hidden/empty states need contact and next links | Open |
+| JNY-17 | Public hidden/empty states need contact and next links | Partially addressed 2026-05-29 |
 | JNY-18 | Public hero fallback is too abstract when no Plus banner exists | Open |
+
+2026-05-29 implementation note: the home hero intentionally keeps registration out of the hero because the public nav Register action owns team registration. Waitlist entry now happens inside the registration flow when a selected division is full.
 
 ## Goals
 
@@ -39,6 +41,7 @@ Relevant archived findings:
 - Convert schedule controls into a compact mobile pattern that handles many divisions, long team names, playoffs, brackets, and calendar export.
 - Make registration honest by either adding a real Review step or simplifying the stepper. This plan chooses a real Review step.
 - Standardize hidden, closed, unpublished, empty, and not-found states with organizer contact and useful next links.
+- Let public visitors follow one team on a device so parents and coaches can return directly to the schedule context they care about.
 - Clarify the public post-event story for both free Tournament and Tournament Plus.
 - Improve the public tournament first viewport, especially when no Plus hero banner is configured.
 - Keep free Tournament useful and complete while preserving Plus branding/customization value.
@@ -58,6 +61,7 @@ Relevant archived findings:
 | --- | --- | --- | --- |
 | Register a team | Submit team/contact/division/custom field details and understand payment next steps | Stepper shows Review but submit happens from Info | Info form leads to Review, then final submit, then Next Steps confirmation |
 | Check schedule | Find games by division, team, pool/playoff, list/bracket, and add calendar | Inline tabs/toggles/selects/calendar button can stack awkwardly | Compact control bar plus bottom sheet filters, with one calendar action |
+| Follow a team | Parents and coaches want one-tap access to their own team's schedule | Visitors must search/filter again on every visit | Browser-local Follow My Team preference highlights the team and focuses schedule context |
 | Find standings/results | Check live or final results by division/pool | Empty and pending states can feel generic | Clear standings/results state with schedule/results cross-links |
 | View teams | Confirm accepted teams and team profiles | Empty/hidden states are sparse | Division/pool team lists with helpful empty state and schedule/register links |
 | Read rules/news | Confirm tournament rules, resources, announcements, and updates | Empty states do not always guide next action | Rules/news empty states include organizer contact and nearby public links |
@@ -75,17 +79,16 @@ Desktop and wide tablet can keep an inline toolbar, cleaned up with CSS classes 
 Recommended mobile layout:
 
 - Top control bar under the page header:
-  - Native `select` for Division, or a single "Division" control if the bottom sheet owns all filters.
-  - "Filters" button showing active filter count.
+  - Native `select` for Division.
+  - Live Team/Coach search field on the page so results update as the visitor types.
+  - "Filters" button showing active view-filter count.
   - Calendar icon/text button with accessible label.
 - Bottom sheet contents:
-  - Division select.
-  - Team filter select with clear action.
   - Stage segmented control: Pool Play / Playoffs.
   - View segmented control when Playoffs is active: List / Bracket.
   - Reset and Apply actions.
 - Active summary line:
-  - Example: `U13 - Milton Thunder - Playoffs - Bracket`
+  - Example: `View Playoffs - Bracket`
   - Keep it short and wrap safely.
 - Calendar action:
   - Uses the currently selected scope.
@@ -96,8 +99,8 @@ Rationale:
 
 - Division and team names can be long.
 - The existing public route supports multiple axes of filtering.
-- Visitors mostly need one quick control at a time on phones.
-- A sheet can preserve all functionality without pushing games below a stack of controls.
+- Visitors mostly need division and team search as live page controls on phones.
+- A sheet can preserve less-frequent view controls without pushing games below a stack of controls.
 
 ### Registration Flow
 
@@ -269,13 +272,13 @@ Likely files:
 Tasks:
 
 - [ ] Extract public schedule controls from inline markup into a dedicated component.
-- [ ] Replace mobile division tabs with a compact select/filter pattern.
-- [ ] Add bottom sheet for division/team/stage/view filters on mobile.
-- [ ] Keep desktop toolbar readable and avoid inline style sprawl.
-- [ ] Replace emoji calendar button with icon/text and accessible label.
-- [ ] Preserve all existing filtering and iCal behavior.
-- [ ] Handle long division names and long team names.
-- [ ] Ensure bracket view is discoverable only when playoffs are active.
+- [x] Replace mobile division tabs with a compact select/filter pattern.
+- [x] Add bottom sheet for stage/view filters on mobile while keeping division and team search live on the page.
+- [x] Keep desktop toolbar readable and avoid inline style sprawl.
+- [x] Replace emoji calendar button with icon/text and accessible label.
+- [x] Preserve all existing filtering and iCal behavior.
+- [x] Handle long division names and long team names.
+- [x] Ensure bracket view is discoverable only when playoffs are active.
 
 Acceptance criteria:
 
@@ -283,6 +286,10 @@ Acceptance criteria:
 - No horizontal overflow at 375px, 390px, 430px.
 - Calendar export works for all visible games and selected team scope.
 - Pool/playoff and bracket/list choices survive filter changes where appropriate.
+
+2026-06-01 implementation note: mobile schedule controls now use a compact division/filter bar, a live on-page Team/Coach search field, and an accessible bottom sheet for Pool Play/Playoffs plus List/Bracket. The sheet uses draft values until Apply, includes Reset, locks body scroll while open, supports Escape close, and returns focus to the Filters button. Mobile game rows were loosened so time/status, matchup, and location breathe instead of compressing into the desktop grid.
+
+2026-06-01 refinement note: mobile schedule row typography and badges were reduced further, with centered team/score matchups below the time/status line and lighter date/control text for better small-screen scanability.
 
 ### Phase 3 - Public Registration Review Step
 
@@ -294,15 +301,15 @@ Likely files:
 
 Tasks:
 
-- [ ] Add `review` step state.
-- [ ] Validate required fields before Review.
-- [ ] Build mobile-friendly review summary.
-- [ ] Include division availability, waitlist state, closed state, fee/deposit details, payment note, and organizer contact.
-- [ ] Include Tournament Plus custom answers and file names.
-- [ ] Add Edit actions that return to Info without losing entered values.
-- [ ] Submit only from Review.
-- [ ] Update stepper active/done states and mobile spacing.
-- [ ] Add success next links to Schedule, Rules, and Home when visible.
+- [x] Add `review` step state.
+- [x] Validate required fields before Review.
+- [x] Build mobile-friendly review summary.
+- [x] Include division availability, waitlist state, closed state, fee/deposit details, payment note, and organizer contact.
+- [x] Include Tournament Plus custom answers and file names.
+- [x] Add Edit actions that return to Info without losing entered values.
+- [x] Submit only from Review.
+- [x] Update stepper active/done states and mobile spacing.
+- [x] Add success next links to Schedule, Rules, and Home when visible.
 
 Acceptance criteria:
 
@@ -322,7 +329,9 @@ Likely files:
 Tasks:
 
 - [ ] Redesign mobile hero fallback around event facts rather than abstract-only decoration.
-- [ ] Reduce mobile hero height so the next section is hinted on common viewport heights.
+- [x] Add state-dependent tournament-day home mode so in-progress events lead with useful games/results/venue information.
+- [x] Reduce the in-progress mobile hero height so the tournament-day panel appears sooner.
+- [x] Add the browser-local followed-team home card when a visitor has saved a team on the device.
 - [ ] Keep Tournament Plus banner behavior intact.
 - [ ] Prefer Final Standings/Results CTA when tournament status is completed and those pages are visible.
 - [ ] Add free post-event public record framing.
@@ -335,6 +344,8 @@ Acceptance criteria:
 - No banner fallback still feels trustworthy and event-specific.
 - Completed tournaments point visitors toward final standings/results where available.
 - Plus branding remains visible but does not reduce basic usability.
+
+2026-06-01 implementation note: the first Phase 4 slice adds Tournament Day Home Mode for in-progress/public-schedule events. The public home now shows a day panel with Today's Games, Latest Finals, Field Shortcuts, Event Snapshot, and a browser-local My Team card when a visitor has followed a team. The full event-specific fallback hero redesign and completed-event recap framing remain open.
 
 ### Phase 5 - Page-Specific Public Polish And Analytics Surfaces
 
@@ -352,7 +363,9 @@ Likely files:
 
 Tasks:
 
-- [ ] Standardize mobile empty states on Teams, Team Profile, Standings, Results, Rules, and News.
+- [ ] Standardize mobile empty states on Teams, Team Profile, Standings, Results, Rules, and News. First slice complete for Teams, Team Profile layout, Standings, Schedule, Rules, and News; Results still pending.
+- [x] Add browser-local Follow My Team preference across Teams, Team Profile, and Schedule.
+- [x] Improve public Results/Standings mobile clarity for final scores, pending-review scores, followed-team usefulness, and completed-tournament record value.
 - [ ] Add route-specific acquisition analytics surfaces such as `public_schedule`, `public_register`, `registration_confirmation`, and `public_powered_by_badge`.
 - [ ] Check long team names, division names, rules/resources, and news titles at mobile widths.
 - [ ] Ensure hidden nav pages are absent from nav but direct URLs remain useful.
@@ -362,6 +375,12 @@ Acceptance criteria:
 - Route-specific analytics surfaces are more precise than the current `public_home` default.
 - Empty states consistently tell visitors what to do next.
 - Public pages stay readable with long real-world tournament names and team names.
+
+2026-06-01 Results/Standings implementation note: `/{orgSlug}/{tournamentSlug}/results` continues to redirect into Standings, so the public Standings page now carries the combined Results & Standings experience. Mobile visitors see division-level counts for final scores, pending-review scores, and games remaining; followed-team visitors get a My Team record/latest-score panel with schedule/profile shortcuts; standings rows show a visible Pending badge instead of only an asterisk; and a Recent Scores section gives completed tournaments a clearer final public record. Shared public standings data now includes games, accepted teams, and venues so the score record can render from the public page payload.
+
+2026-06-02 density refinement note: after mobile review, the product split is Schedule owns game-by-game scores and Standings owns ranking/consequences. Mobile Standings now uses a compact `final / pending / remaining` line, a slim My Team strip, a reduced `Team / REC / RD / PTS` table, and hides the duplicate Recent Scores feed on phones. Mobile Schedule rows were tightened into dense game-log rows with time, matchup, score/status, and venue using less vertical space.
+
+2026-06-02 visual hierarchy refinement note: a follow-up mobile review found the standings header too cramped and the dense schedule rows too far from the admin Results & Scoring pattern. Standings now keeps tie-breaker order as footer context below the table instead of in the header. Public Schedule/result rows now mirror the admin scoring row structure: short date dividers, compact date/time plus status, centered W/L/T score matchups, muted venue context, and a followed-team star in the right rail instead of the admin edit pencil.
 
 ### Phase 6 - Verification, Docs, And Handoff
 

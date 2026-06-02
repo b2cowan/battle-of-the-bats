@@ -3,6 +3,7 @@ import PricingSection from '@/components/PricingSection';
 import EarlyAccessModalTrigger from '@/components/EarlyAccessModalTrigger';
 import ComparisonTable from './ComparisonTable';
 import { getPlanGatingMap } from '@/lib/plan-gating-server';
+import { PLAN_CONFIG, formatPriceAmount } from '@/lib/plan-config';
 import styles from './page.module.css';
 
 export const metadata = {
@@ -70,7 +71,7 @@ const BUYER_SEGMENTS: Array<{
 const UPGRADE_BRIDGES = [
   {
     headline: 'Running more than one tournament a year?',
-    body: 'Tournament Plus removes the single-event limit and adds the tools that make repeat events sustainable: unlimited tournaments, automated scheduling, custom registration fields, file uploads, full export suite, payment reminders, waitlist promotion, and post-event archives. Five staff seats and unlimited officials included.',
+    body: 'Tournament Plus removes the single-event limit and adds the tools that make repeat events sustainable: unlimited tournaments, automated scheduling, custom registration fields, file uploads, full export suite, payment reminders, waitlist promotion, and post-event archives. Unlimited staff seats and unlimited officials included.',
     from: 'Tournament',
     to: 'Tournament Plus',
     label: 'Tournament → Tournament Plus',
@@ -145,8 +146,8 @@ const FAQS = [
     a: 'Yes. The platform is sport-agnostic — used by softball associations, hockey organizations, soccer leagues, and baseball clubs. Field naming, team structures, scoring, and season setup all work across sports. If you run multiple associations, each one is managed as its own organization.',
   },
   {
-    q: 'Are officials counted against my seat limit?',
-    a: 'No — from Tournament Plus and above, officials seats are always free and never count against your staff/admin seat limit. The seat limit applies to administrative staff: people who create events, manage schedules, enter scores, and configure the organization.',
+    q: 'Is there a limit on how many staff accounts I can have?',
+    a: 'Not on any paid plan. Tournament Plus, League, and Club all include unlimited staff seats — add as many admins, schedulers, and scorekeepers as you need. The free Tournament tier includes 3 staff seats as a soft limit. On the free tier, officials count toward that limit; on all paid plans there is no staff seat limit at all.',
   },
   {
     q: 'Is there a setup fee or onboarding cost?',
@@ -241,7 +242,7 @@ export default async function PricingPage() {
           {/* Founding Season note */}
           <p className={`${styles.sectionSub} mt-3 text-center`} style={{ fontSize: '0.78rem' }}>
             Tournament Plus is free through December 31, 2026 for founding organizations.
-            Starting January 2027, the standard $39/month rate applies.
+            Starting January 2027, the standard {formatPriceAmount(PLAN_CONFIG.tournament_plus.monthlyPrice)}/month rate applies.
             No contract. Cancel anytime.
           </p>
 
@@ -249,8 +250,8 @@ export default async function PricingPage() {
           <div className={styles.coachesCallout} id="coaches-portal">
             <div className={styles.coachesCalloutInner}>
               <span className={styles.coachesCalloutLabel}>Coaches Portal</span>
-              <span className={styles.coachesCalloutPrice}>$29 CAD <span style={{ fontWeight: 400, fontSize: '0.72rem' }}>/mo</span></span>
-              <span className={styles.coachesCalloutPriceSub}>or $290/season — save two months</span>
+              <span className={styles.coachesCalloutPrice}>{formatPriceAmount(PLAN_CONFIG.team.monthlyPrice)} CAD <span style={{ fontWeight: 400, fontSize: '0.72rem' }}>/mo</span></span>
+              <span className={styles.coachesCalloutPriceSub}>or {formatPriceAmount(PLAN_CONFIG.team.annualPrice)}/season — save two months</span>
               <span className={styles.coachesCalloutBody}>
                 A standalone workspace for one rep team — roster, lineups, budget, and schedule. No org account needed. When your org joins Club, your workspace carries over automatically. Coming soon.
               </span>

@@ -69,6 +69,379 @@
 
 /* accent-color removed — global branded checkbox handles this */
 
+.facilityPickerHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  margin-top: 0.4rem;
+  padding: 0.4rem 0.55rem;
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.16);
+  background: rgba(var(--blueprint-blue-rgb), 0.04);
+}
+
+.facilityPickerHeader span {
+  color: var(--white-45);
+  font-family: var(--font-data);
+  font-size: 0.58rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.facilityPickerActions {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.facilityPicker {
+  display: grid;
+  gap: 0.55rem;
+  margin-top: 0.45rem;
+  padding: 0.65rem;
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.16);
+  background: var(--bg-2);
+}
+
+.facilityVenueGroup {
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.18);
+  background: var(--white-5);
+}
+
+.facilityVenueCheck {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+  padding: 0.55rem 0.65rem;
+  cursor: pointer;
+}
+
+.facilityVenueName {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.6rem;
+  min-width: 0;
+  width: 100%;
+}
+
+.facilityVenueName strong {
+  min-width: 0;
+  color: var(--white-85);
+  font-size: 0.82rem;
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+
+.facilityVenueName small {
+  flex: 0 0 auto;
+  color: var(--logic-lime);
+  font-family: var(--font-data);
+  font-size: 0.56rem;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.facilityChildGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(145px, 1fr));
+  gap: 0.4rem;
+  padding: 0 0.65rem 0.65rem 2rem;
+}
+
+.facilityCheck {
+  display: flex;
+  align-items: center;
+  gap: 0.42rem;
+  min-width: 0;
+  min-height: 30px;
+  padding: 0.32rem 0.45rem;
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.14);
+  background: rgba(var(--blueprint-blue-rgb), 0.05);
+  color: var(--white-70);
+  font-size: 0.76rem;
+  cursor: pointer;
+}
+
+.facilityCheck span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.facilityEmptyText {
+  margin: 0;
+  padding: 0 0.65rem 0.65rem 2rem;
+  color: var(--white-45);
+  font-size: 0.72rem;
+  line-height: 1.35;
+}
+
+.temporaryFacilityPanel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 92px;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0.55rem;
+  padding: 0.7rem 0.8rem;
+  border: 1px solid rgba(var(--warning-rgb), 0.24);
+  background: rgba(var(--warning-rgb), 0.06);
+  border-radius: 2px;
+}
+
+.temporaryFacilityPanel div,
+.temporaryFacilityPanel label {
+  min-width: 0;
+}
+
+.temporaryFacilityPanel strong,
+.temporaryFacilityPanel span {
+  display: block;
+}
+
+.temporaryFacilityPanel strong {
+  color: var(--warning);
+  font-family: var(--font-data);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.temporaryFacilityPanel span {
+  margin-top: 0.12rem;
+  color: var(--white-55);
+  font-size: 0.72rem;
+  line-height: 1.35;
+}
+
+.temporaryFacilityPanel label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.22rem;
+}
+
+.temporaryFacilityPanel label span {
+  margin: 0;
+  color: var(--white-45);
+  font-family: var(--font-data);
+  font-size: 0.55rem;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.slotControlGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 0.6rem;
+  margin-top: 0.5rem;
+}
+
+.slotCountControl {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 74px;
+  align-items: center;
+  gap: 0.45rem;
+  min-width: 0;
+  padding: 0.55rem 0.6rem;
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.18);
+  background: var(--white-5);
+}
+
+.slotCountControl span,
+.slotCountControl small {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.slotCountControl span {
+  color: var(--white-75);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.slotCountControl small {
+  grid-column: 1 / -1;
+  color: var(--white-45);
+  font-size: 0.68rem;
+  line-height: 1.3;
+}
+
+.priorityPanel {
+  margin: 1rem 0;
+  padding: 0.85rem;
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.22);
+  background: rgba(var(--blueprint-blue-rgb), 0.04);
+}
+
+.priorityHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.7rem;
+  margin-bottom: 0.7rem;
+}
+
+.priorityHeader span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.38rem;
+  color: var(--logic-lime);
+  font-family: var(--font-data);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.priorityHeader small {
+  color: var(--data-gray);
+  font-family: var(--font-data);
+  font-size: 0.58rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.prioritySection + .prioritySection {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid rgba(var(--blueprint-blue-rgb), 0.16);
+}
+
+.prioritySectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.45rem;
+}
+
+.prioritySectionHeader span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--white-70);
+  font-family: var(--font-data);
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.prioritySectionHeader small {
+  min-width: 0;
+  color: var(--white-40);
+  font-size: 0.66rem;
+  line-height: 1.3;
+  text-align: right;
+}
+
+.priorityGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.6rem;
+}
+
+.priorityPreferenceGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) repeat(3, minmax(0, 1fr));
+  gap: 0.45rem;
+  align-items: stretch;
+}
+
+.priorityField {
+  display: flex;
+  flex-direction: column;
+  gap: 0.28rem;
+  min-width: 0;
+  padding: 0.48rem 0.55rem;
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.14);
+  background: rgba(var(--blueprint-blue-rgb), 0.045);
+}
+
+.priorityField span {
+  color: var(--white-45);
+  font-family: var(--font-data);
+  font-size: 0.58rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.priorityField small {
+  min-width: 0;
+  color: var(--white-45);
+  font-size: 0.66rem;
+  line-height: 1.32;
+  overflow-wrap: anywhere;
+}
+
+.priorityCheck {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.42rem;
+  min-height: 100%;
+  padding: 0.55rem 0.55rem;
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.16);
+  background: var(--white-5);
+  color: var(--white-70);
+  font-family: var(--font-data);
+  font-size: 0.64rem;
+  font-weight: 700;
+}
+
+.priorityCheck input {
+  margin-top: 0.08rem;
+  flex: 0 0 auto;
+}
+
+.priorityCheck span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  line-height: 1.35;
+}
+
+.optimizationSummary {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 0.45rem;
+  margin: 0.75rem 0;
+  padding: 0.45rem 0.65rem;
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.2);
+  background: rgba(var(--logic-lime-rgb), 0.055);
+  color: var(--logic-lime);
+  font-family: var(--font-data);
+}
+
+.optimizationSummary span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-width: 0;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.optimizationSummary strong {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.optimizationSummary small {
+  color: var(--data-gray);
+  font-size: 0.58rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
 .previewStats {
   display: flex;
   align-items: center;
@@ -118,6 +491,377 @@
   margin-top: auto;
 }
 
+.healthPanel {
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.22);
+  background: var(--surface);
+  border-radius: 4px;
+  padding: 0;
+  margin: 0.65rem 0 0.85rem;
+}
+
+.healthSummary {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.62rem 0.75rem;
+  cursor: pointer;
+  list-style: none;
+}
+
+.healthSummary::-webkit-details-marker {
+  display: none;
+}
+
+.healthHeader {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.healthHeader h4 {
+  margin: 0;
+  font-family: var(--font-data);
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--white-85);
+}
+
+.healthHeader p {
+  margin: 0.15rem 0 0;
+  color: var(--white-50);
+  font-size: 0.68rem;
+  line-height: 1.35;
+}
+
+.healthScore {
+  min-width: 70px;
+  min-height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.14rem;
+  border-radius: 4px;
+  border: 1px solid currentColor;
+  background: var(--white-5);
+  font-family: var(--font-data);
+  padding: 0.22rem 0.5rem;
+}
+
+.healthScore span {
+  font-size: 1.05rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.healthScore small {
+  font-size: 0.56rem;
+  color: var(--white-50);
+  line-height: 1;
+  transform: translateY(0.08rem);
+}
+
+.healthScoreGood {
+  color: var(--success);
+  background: rgba(var(--success-rgb), 0.08);
+}
+
+.healthScoreWarning {
+  color: var(--warning);
+  background: rgba(var(--warning-rgb), 0.08);
+}
+
+.healthScoreDanger {
+  color: var(--danger);
+  background: rgba(var(--danger-rgb), 0.08);
+}
+
+.healthToggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.24rem;
+  color: rgba(var(--logic-lime-rgb), 0.72);
+  font-family: var(--font-data);
+  font-size: 0.58rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.healthToggle svg {
+  transition: transform 0.15s ease;
+}
+
+.healthPanel[open] .healthToggle svg {
+  transform: rotate(180deg);
+}
+
+.healthBody {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.5rem;
+  padding: 0 0.75rem 0.72rem;
+}
+
+.healthKpiGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.45rem;
+}
+
+.healthKpi {
+  min-width: 0;
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.16);
+  background: var(--white-5);
+  border-radius: 4px;
+  padding: 0.45rem 0.55rem;
+}
+
+.healthKpi span,
+.healthKpi small {
+  display: block;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.healthKpi span {
+  color: var(--white-45);
+  font-family: var(--font-data);
+  font-size: 0.54rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.healthKpi strong {
+  display: block;
+  color: var(--white-90);
+  font-size: 1rem;
+  line-height: 1.15;
+  margin-top: 0.12rem;
+}
+
+.healthKpi small {
+  color: var(--white-50);
+  font-size: 0.62rem;
+  margin-top: 0.08rem;
+}
+
+.healthKpi[data-tone="good"] strong {
+  color: var(--success);
+}
+
+.healthKpi[data-tone="warning"] strong {
+  color: var(--warning);
+}
+
+.healthKpi[data-tone="danger"] strong {
+  color: var(--danger);
+}
+
+.healthIssues {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.healthIssue {
+  display: flex;
+  align-items: center;
+  gap: 0.38rem;
+  border-radius: 4px;
+  padding: 0.34rem 0.5rem;
+  font-size: 0.68rem;
+  line-height: 1.35;
+  color: var(--white-70);
+}
+
+.healthIssue svg {
+  flex: 0 0 auto;
+}
+
+.healthIssue strong {
+  color: var(--white-85);
+}
+
+.healthIssueGood {
+  grid-column: 1 / -1;
+  color: var(--success);
+  background: rgba(var(--success-rgb), 0.08);
+  border: 1px solid rgba(var(--success-rgb), 0.22);
+}
+
+.healthIssueError {
+  color: #f87171;
+  background: rgba(var(--danger-rgb), 0.08);
+  border: 1px solid rgba(var(--danger-rgb), 0.26);
+}
+
+.healthIssueWarning {
+  color: #fbbf24;
+  background: rgba(var(--warning-rgb), 0.08);
+  border: 1px solid rgba(var(--warning-rgb), 0.24);
+}
+
+.healthIssueInfo {
+  color: var(--blueprint-blue);
+  background: rgba(var(--blueprint-blue-rgb), 0.08);
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.2);
+}
+
+.healthDetails {
+  grid-column: 1 / -1;
+}
+
+.healthDetailsSummary {
+  cursor: pointer;
+  width: max-content;
+  font-family: var(--font-data);
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(var(--logic-lime-rgb), 0.72);
+}
+
+.healthDetailsSummary:hover {
+  color: var(--logic-lime);
+}
+
+.healthTeamTableWrap {
+  margin-top: 0.55rem;
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.16);
+  border-radius: 4px;
+  overflow: auto;
+}
+
+.healthTeamTable {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 620px;
+}
+
+.healthTeamTable th,
+.healthTeamTable td {
+  padding: 0.55rem 0.65rem;
+  border-top: 1px solid rgba(var(--blueprint-blue-rgb), 0.12);
+  text-align: left;
+  white-space: nowrap;
+}
+
+.healthTeamTable th {
+  border-top: 0;
+  background: var(--white-5);
+  color: var(--white-45);
+  font-family: var(--font-data);
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.healthTeamTable td {
+  color: var(--white-75);
+  font-size: 0.78rem;
+}
+
+.facilityResolveBanner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin: -0.25rem 0 0.85rem;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid rgba(var(--warning-rgb), 0.28);
+  background: rgba(var(--warning-rgb), 0.07);
+  border-radius: 4px;
+}
+
+.facilityResolveCopy {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-width: 0;
+  color: var(--warning);
+}
+
+.facilityResolveCopy svg {
+  flex: 0 0 auto;
+}
+
+.facilityResolveCopy div {
+  min-width: 0;
+}
+
+.facilityResolveCopy strong,
+.facilityResolveCopy span {
+  display: block;
+  min-width: 0;
+}
+
+.facilityResolveCopy strong {
+  color: var(--warning);
+  font-family: var(--font-data);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.facilityResolveCopy span {
+  margin-top: 0.08rem;
+  color: var(--white-55);
+  font-size: 0.68rem;
+  line-height: 1.3;
+}
+
+.resolveFacilityList {
+  display: grid;
+  gap: 0.5rem;
+  padding-top: 0.5rem;
+}
+
+.resolveFacilityRow {
+  display: grid;
+  grid-template-columns: minmax(9rem, 0.8fr) minmax(12rem, 1.2fr);
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.55rem 0.65rem;
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.18);
+  background: var(--white-5);
+  border-radius: 4px;
+}
+
+.resolveFacilityRow div {
+  min-width: 0;
+}
+
+.resolveFacilityRow strong,
+.resolveFacilityRow span {
+  display: block;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.resolveFacilityRow strong {
+  color: var(--white-90);
+  font-size: 0.85rem;
+}
+
+.resolveFacilityRow span {
+  margin-top: 0.08rem;
+  color: var(--white-45);
+  font-family: var(--font-data);
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
 .errorBanner {
   background: rgba(var(--danger-rgb), 0.1);
   border: 1px solid rgba(var(--danger-rgb), 0.3);
@@ -129,6 +873,94 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
+}
+
+@media (max-width: 768px) {
+  .priorityGrid,
+  .priorityPreferenceGrid,
+  .slotControlGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .prioritySectionHeader,
+  .facilityPickerHeader,
+  .facilityVenueName {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .prioritySectionHeader small {
+    text-align: left;
+  }
+
+  .facilityPickerActions {
+    width: 100%;
+  }
+
+  .facilityPickerActions :global(.btn) {
+    flex: 1 1 0;
+    justify-content: center;
+  }
+
+  .facilityChildGrid {
+    grid-template-columns: 1fr;
+    padding-left: 0.65rem;
+  }
+
+  .facilityEmptyText {
+    padding-left: 0.65rem;
+  }
+
+  .optimizationSummary {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .optimizationSummary small {
+    grid-column: 1 / -1;
+  }
+
+  .healthPanel {
+    margin-top: 0.55rem;
+  }
+
+  .healthSummary {
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    padding: 0.58rem 0.65rem;
+  }
+
+  .healthToggle span {
+    display: none;
+  }
+
+  .healthHeader {
+    align-items: center;
+  }
+
+  .healthScore {
+    min-width: 66px;
+  }
+
+  .healthBody {
+    padding: 0 0.65rem 0.65rem;
+  }
+
+  .healthKpiGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .facilityResolveBanner {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .facilityResolveBanner :global(.btn) {
+    justify-content: center;
+    width: 100%;
+  }
+
+  .resolveFacilityRow {
+    grid-template-columns: 1fr;
+  }
 }
 
 .dateSlotList {
@@ -171,6 +1003,12 @@
   flex-wrap: nowrap;
 }
 
+/* Mobile-only Tools menu — hidden on desktop, where Publish/Auto/Export are
+   separate controls in the Row 1 action group. */
+.scheduleMobileTools {
+  display: none;
+}
+
 .scheduleExportButton,
 .scheduleToolsMenu {
   flex-shrink: 0;
@@ -185,9 +1023,9 @@
 .scheduleSearch {
   /* !important overrides the shared .search max-width/flex-basis from TournamentAdminUI.module.css
      which lands on the same element and wins the cascade by bundle order */
-  flex: 1 1 28rem !important;
+  flex: 1 1 14rem !important;
   max-width: none !important;
-  min-width: 18rem;
+  min-width: 13rem;
 }
 
 .scheduleVenueDesktop {
@@ -249,6 +1087,14 @@
   white-space: nowrap;
 }
 
+/* Unpublished / draft variant — neutral and quiet so it reads as a resting
+   default, not an alert. Lime is reserved for the live "Published" states. */
+.publishStatusDraft {
+  border-color: var(--border-2);
+  background: var(--white-5);
+  color: var(--data-gray);
+}
+
 .publishButton:disabled {
   border-color: rgba(148, 163, 184, 0.18) !important;
   background: rgba(148, 163, 184, 0.08) !important;
@@ -284,7 +1130,7 @@
 
 @media (max-width: 760px) {
   .scheduleToolbar.scheduleToolbar {
-    align-items: center;
+    align-items: flex-end;
     flex-direction: row;
     flex-wrap: wrap;
     gap: 0.45rem;
@@ -292,41 +1138,47 @@
     margin-bottom: 1.25rem; /* extra breathing room between toolbar and game list on mobile */
   }
 
-  .scheduleDivisionGroup {
-    order: 1;
-    flex: 1 1 100%;
-    width: 100% !important;
+  /* Division group expands to fill row 1 beside action buttons */
+  .scheduleStartGroup {
+    flex: 1 1 auto !important;
+    width: auto !important;
+    order: unset;
     gap: 0.4rem;
     min-width: 0;
   }
 
-  /* Row 2: mode selects — dedicated full-width row inside scheduleActionsGroup */
+  /* mobileModePair removed from toolbar — lives in the sheet now */
   .mobileModePair {
-    display: flex;
-    flex: 1 1 100%;
-    width: 100% !important;
-    order: 1;
-    gap: 0.28rem;
+    display: none !important;
   }
 
-  .scheduleActionsGroup {
-    order: 2;
-    display: flex;
-    align-items: center;
-    flex: 1 1 100%;
-    width: 100% !important;
-    flex-wrap: wrap;
-    gap: 0.28rem;
-    justify-content: flex-start !important;
-    margin-left: 0;
+  /* Desktop action cluster (Publish/Auto/Export) is hidden on mobile — these
+     collapse into the single Tools menu on Row 2. With this gone, the division
+     selector reclaims the full first row. */
+  .scheduleEndGroup {
+    display: none !important;
   }
+
+  /* Single Tools menu sits on Row 2, right of the search field.
+     order:3 keeps it last even though .scheduleSearch is order:1 at ≤640px —
+     otherwise the default order:0 placed Tools before search (far left) and its
+     right-anchored dropdown opened off the left edge of the screen. */
+  .scheduleMobileTools {
+    display: inline-flex;
+    flex: 0 0 auto;
+    order: 3;
+    margin-left: auto;
+  }
+
+  /* Match action button height to the select (38px).
+     Declared outside the 760px block so it beats .mobileIconButton at 768px. */
 
   .scheduleFilterGroup {
-    order: 3;
     flex: 1 1 100%;
     width: 100% !important;
     justify-content: flex-start;
     gap: 0.5rem;
+    order: unset;
   }
 
   .scheduleStatusFilters {
@@ -334,37 +1186,21 @@
   }
 
   .scheduleSearch {
-    flex: 1 1 100%;
-    width: 100%;
+    /* Share Row 2 with the Tools menu rather than taking the full width. */
+    flex: 1 1 auto;
+    width: auto;
     max-width: none;
     min-width: 0;
   }
 
-  .publishButton,
-  .scheduleExportButton,
-  .scheduleToolsMenu {
-    order: 2;
-  }
-
-  .scheduleExportButton,
-  .scheduleToolsMenu {
-    flex: 0 0 auto;
-    min-width: 0;
-  }
-
+  /* Desktop venue hidden on mobile — venue lives in the sheet */
   .scheduleVenueDesktop {
     display: none;
   }
 
+  /* scheduleVenueMobile no longer in toolbar */
   .scheduleVenueMobile {
-    display: block;
-    order: 2;
-    flex: 1 1 0;
-    min-width: 0;
-  }
-
-  .scheduleVenueMobile .venueFilterButton {
-    height: 34px; /* match mode-select touch target height */
+    display: none;
   }
 
   /* Panel: break out of the narrow flex-item width so full venue names show.
@@ -465,6 +1301,278 @@
   }
 }
 
+/* Height override for action buttons — at 768px to beat .mobileIconButton */
+@media (max-width: 768px) {
+  .scheduleEndGroup :global(button) {
+    height: 38px !important;
+    min-height: 38px !important;
+  }
+}
+
+/* ─── Mobile settings bottom sheet (Schedule) ───────────────────────────── */
+.sheetBackdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.62);
+  z-index: 490;
+  backdrop-filter: blur(2px);
+}
+
+.sheet {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 500;
+  background: var(--hud-surface);
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.35);
+  border-bottom: none;
+  border-radius: 12px 12px 0 0;
+  animation: schedSheetSlideUp 0.22s cubic-bezier(0.32, 0.72, 0, 1);
+  max-width: 760px;
+  margin: 0 auto;
+}
+
+@keyframes schedSheetSlideUp {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+
+.sheetHandle {
+  width: 36px; height: 4px;
+  background: rgba(var(--blueprint-blue-rgb), 0.35);
+  border-radius: 2px;
+  margin: 0.75rem auto 0;
+}
+
+.sheetBody {
+  display: flex;
+  flex-direction: column;
+  padding: 0.75rem 1.25rem 1.25rem;
+}
+
+.sheetSection {
+  padding: 0.75rem 0;
+  border-bottom: 1px solid rgba(var(--blueprint-blue-rgb), 0.15);
+}
+
+.sheetSection:last-of-type { border-bottom: none; }
+
+.sheetSectionLabel {
+  font-family: var(--font-data);
+  font-size: 0.58rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(var(--logic-lime-rgb), 0.65);
+  margin-bottom: 0.6rem;
+}
+
+.sheetSegments { display: flex; gap: 0.35rem; }
+
+.sheetSeg {
+  flex: 1;
+  height: 36px;
+  font-family: var(--font-data);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.28);
+  border-radius: 2px;
+  background: transparent;
+  color: var(--data-gray);
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, color 0.15s;
+}
+
+.sheetSeg:hover { border-color: rgba(var(--logic-lime-rgb), 0.35); color: var(--fl-text); }
+
+.sheetSegActive {
+  border-color: rgba(var(--logic-lime-rgb), 0.5);
+  background: rgba(var(--logic-lime-rgb), 0.1);
+  color: var(--logic-lime);
+}
+
+.venueSheetBtn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  width: 100%;
+  min-height: 40px;
+  padding: 0 0.65rem;
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.28);
+  border-radius: 2px;
+  background: var(--bg-2);
+  color: var(--data-gray);
+  cursor: pointer;
+  font-family: var(--font-data);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-align: left;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.venueSheetBtn:hover { border-color: rgba(var(--logic-lime-rgb), 0.4); color: var(--fl-text); }
+.venueSheetBtnActive { border-color: rgba(var(--logic-lime-rgb), 0.4); background: rgba(var(--logic-lime-rgb), 0.06); color: var(--logic-lime); }
+
+/* Venue nested modal */
+.venueModalBackdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.35); z-index: 505; }
+
+.venueModal {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  z-index: 510;
+  background: var(--hud-surface);
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.4);
+  border-bottom: none;
+  border-radius: 12px 12px 0 0;
+  max-height: 70vh;
+  display: flex;
+  flex-direction: column;
+  animation: schedSheetSlideUp 0.2s cubic-bezier(0.32, 0.72, 0, 1);
+  max-width: 760px;
+  margin: 0 auto;
+}
+
+.venueModalHandle { width: 36px; height: 4px; background: rgba(var(--blueprint-blue-rgb), 0.35); border-radius: 2px; margin: 0.75rem auto 0; flex-shrink: 0; }
+
+.venueModalHeader {
+  display: flex; align-items: center; gap: 0.5rem;
+  padding: 0.65rem 1.25rem 0.5rem;
+  border-bottom: 1px solid rgba(var(--blueprint-blue-rgb), 0.18);
+  flex-shrink: 0;
+}
+
+.venueModalBack { border: none; background: transparent; color: var(--data-gray); font-family: var(--font-data); font-size: 0.65rem; font-weight: 700; letter-spacing: 0.06em; cursor: pointer; padding: 0; transition: color 0.12s; }
+.venueModalBack:hover { color: var(--logic-lime); }
+
+.venueModalTitle { flex: 1; font-family: var(--font-data); font-size: 0.65rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(var(--logic-lime-rgb), 0.65); text-align: center; }
+
+.venueModalClear { border: none; background: transparent; color: var(--data-gray); font-family: var(--font-data); font-size: 0.65rem; font-weight: 700; letter-spacing: 0.06em; cursor: pointer; padding: 0; transition: color 0.12s; }
+.venueModalClear:hover { color: var(--danger); }
+
+.venueModalList { flex: 1; overflow-y: auto; padding: 0.5rem 1.25rem; display: flex; flex-direction: column; gap: 0.25rem; }
+
+.venueModalOption {
+  display: flex; align-items: center; justify-content: space-between; gap: 0.5rem;
+  width: 100%; min-height: 44px; padding: 0.5rem 0.65rem;
+  border: 1px solid transparent; border-radius: 2px;
+  background: transparent; color: var(--white-60);
+  cursor: pointer; font-family: var(--font-data); font-size: 0.78rem; text-align: left;
+  transition: border-color 0.12s, background 0.12s, color 0.12s;
+}
+
+.venueModalOption:hover { border-color: rgba(var(--blueprint-blue-rgb), 0.3); background: rgba(var(--blueprint-blue-rgb), 0.06); color: var(--fl-text); }
+.venueModalOptionActive { border-color: rgba(var(--logic-lime-rgb), 0.4); background: rgba(var(--logic-lime-rgb), 0.07); color: var(--logic-lime); }
+
+.venueModalSublabel { color: var(--data-gray); font-size: 0.68rem; }
+.venueModalCount { color: var(--data-gray); font-family: var(--font-data); font-size: 0.65rem; flex-shrink: 0; }
+.venueModalFooter { padding: 0.75rem 1.25rem 1.25rem; flex-shrink: 0; border-top: 1px solid rgba(var(--blueprint-blue-rgb), 0.18); }
+
+.sheetDone {
+  margin-top: 1rem; width: 100%; height: 42px;
+  font-family: var(--font-data); font-size: 0.7rem; font-weight: 700;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.45);
+  border-radius: 2px;
+  background: rgba(var(--logic-lime-rgb), 0.08);
+  color: var(--logic-lime);
+  cursor: pointer; transition: background 0.15s;
+}
+
+.sheetDone:hover { background: rgba(var(--logic-lime-rgb), 0.14); }
+
+/* ─── Status chips: hidden on mobile — appear in the settings sheet instead ── */
+@media (max-width: 760px) {
+  .scheduleStatusFilters {
+    display: none !important;
+  }
+}
+
+/* ─── Active settings summary strip (mobile only) ─────────────────────────── */
+.activeSettingsSummary { display: none; }
+
+@media (max-width: 760px) {
+  .activeSettingsSummary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    width: 100%;
+    padding: 0.4rem 0;
+    margin-bottom: 0.5rem;
+    border: none;
+    border-bottom: 1px solid rgba(var(--blueprint-blue-rgb), 0.18);
+    background: transparent;
+    cursor: pointer;
+    text-align: left;
+  }
+
+  .activeSettingsSummaryText {
+    font-family: var(--font-data);
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--logic-lime);
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .activeSettingsSummaryIcon {
+    color: var(--data-gray);
+    flex-shrink: 0;
+    transition: color 0.12s;
+  }
+
+  .activeSettingsSummary:hover .activeSettingsSummaryIcon { color: var(--logic-lime); }
+}
+
+/* ─── Summary strip: right-side wrapper + status count tally ────────────── */
+.summaryRight {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.statusCountTally {
+  display: flex;
+  align-items: center;
+  gap: 0.32rem;
+}
+
+.tallyPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.18rem;
+  font-family: var(--font-data);
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  transition: opacity 0.12s;
+}
+
+.tallyDot {
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.tallyScheduled { color: var(--info); }
+.tallyScheduled .tallyDot { background: var(--info); }
+.tallyCancelled { color: var(--danger); }
+.tallyCancelled .tallyDot { background: var(--danger); }
+.tallyCompleted { color: var(--success); }
+.tallyCompleted .tallyDot { background: var(--success); }
+
+.tallyInactive { opacity: 0.28; }
+
 /* ─── Add Game button — icon-only collapse on mobile ─────────────────────── */
 .addGameLabel { display: inline; }
 
@@ -549,6 +1657,83 @@
   }
 }
 
+/* ─── Scoring mode: 2-row grid on mobile so team names get full width ───── */
+/* desktopStatusSlot: shown on desktop inside the rail; hidden on mobile */
+.desktopStatusSlot {
+  display: flex;
+}
+
+@media (max-width: 768px) {
+  /* 2-column grid: date (auto) | matchup (1fr) | rail (auto)
+     Status moves into the date cell as a sub-line, matching planning mode. */
+  .scoringGameRow {
+    display: grid !important;
+    grid-template-columns: auto 1fr auto;
+    grid-template-areas:
+      "date . rail"
+      "matchup matchup matchup";
+    gap: 0.2rem 0.5rem !important;
+    align-items: start !important;
+    padding: 0.45rem 0.75rem !important;
+    min-height: 54px;
+  }
+
+  .scoringDateCell {
+    grid-area: date;
+    justify-self: start;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.12rem;
+  }
+
+  .scoringRailCell {
+    grid-area: rail;
+    justify-self: end;
+    align-self: center;
+  }
+
+  .scoringMatchupCell {
+    grid-area: matchup;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    min-width: 0;
+    width: 100%;
+  }
+
+  /* Rail badge hidden on mobile — scoringMobileStatus in date cell replaces it */
+  .desktopStatusSlot {
+    display: none !important;
+  }
+}
+
+/* ─── Scoring Mobile Status Tag (in date cell, below time) ─────────────────
+   Mirrors mobileStatusTag in planning mode. Hidden on desktop.             */
+.scoringMobileStatus {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .scoringMobileStatus {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2rem;
+    font-family: var(--font-data);
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    color: var(--info);
+    margin-top: 2px;
+  }
+  .scoringMobileStatus[data-status="submitted"] { color: var(--warning); }
+  .scoringMobileStatus[data-status="completed"] { color: var(--success); }
+}
+
 /* ─── Planning Mode Status Cell ──────────────────────────────────────────── */
 /* Replaces the `flex: 0 0 96px` inline style, adds mobile width collapse.  */
 .planningStatusCell {
@@ -594,12 +1779,27 @@
 }
 
 /* ─── Planning Row Status Stripe ─────────────────────────────────────────── */
-/* 3px left border gives an instant colour signal while scrolling the list.  */
-/* Scheduled rows get no border — neutral / expected state.                  */
+/* 3px left border mirrors the tally dot colours in the mobile summary strip. */
+.planningRow[data-status="scheduled"] {
+  border-left: 3px solid rgba(var(--info-rgb), 0.55);
+}
 .planningRow[data-status="cancelled"] {
   border-left: 3px solid rgba(var(--danger-rgb), 0.55);
 }
 .planningRow[data-status="completed"] {
+  border-left: 3px solid rgba(var(--success-rgb), 0.48);
+}
+
+/* ─── Scoring Row Status Stripe ──────────────────────────────────────────── */
+/* Same 3px stripe for scoring-mode rows (Results page).                     */
+/* Colours mirror the results tally dots: info=unscored, warning=reviewing.  */
+.scoringRow[data-status="scheduled"] {
+  border-left: 3px solid rgba(var(--info-rgb), 0.55);
+}
+.scoringRow[data-status="submitted"] {
+  border-left: 3px solid rgba(var(--warning-rgb), 0.55);
+}
+.scoringRow[data-status="completed"] {
   border-left: 3px solid rgba(var(--success-rgb), 0.48);
 }
 
@@ -906,23 +2106,7 @@
   }
 
   .scheduleStatusFilters {
-    order: 2;
-    display: grid !important;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    flex: 1 1 auto;
-    gap: 0.38rem;
-    min-width: 0;
-    margin-left: 0;
-  }
-
-  .scheduleStatusFilters > button {
-    min-height: 28px;
-    width: 100%;
-    justify-content: center;
-    padding: 0.2rem 0.42rem;
-    font-size: 0.54rem;
-    letter-spacing: 0.03em;
-    gap: 0.28rem;
+    display: none !important;
   }
 
   .venueFilterButton {

@@ -247,3 +247,25 @@ export function scopeGuard(ctx: AuthContextWithScope, tournamentId: string): Res
   }
   return null;
 }
+
+/**
+ * Object-level authorization guard: confirms the tournament belongs to the caller's org.
+ *
+ * `scopeGuard` only restricts a *non-owner* to their assigned tournaments — for an owner
+ * (and any member with no assignment rows) it is a no-op. It does NOT confirm the tournament
+ * belongs to the caller's org. Because admin routes mutate tournament-scoped rows via the
+ * RLS-bypassing `supabaseAdmin` client, every such route must ALSO call this guard so a member
+ * of Org A cannot act on Org B's tournament by passing its id.
+ *
+ * Returns a 403 Response if the tournament is missing or belongs to another org, else null.
+ */
+export async function requireTournamentInOrg(ctx: AuthContext, tournamentId: string): Promise<Response | null> {
+  const { data } = await supabaseAdmin
+    .from('tournaments')
+    .select('org_id')
+    .eq('id', tournamentId)
+    .single();
+
+  if (!data || data.org_id !== ctx.org.id) return forbidden();
+  return null;
+}

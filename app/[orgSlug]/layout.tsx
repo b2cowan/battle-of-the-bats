@@ -43,7 +43,10 @@ export async function generateMetadata({
   if (!org) return {};
   const activeTournament = await getActiveTournamentByOrg(org.id);
   return {
-    title: activeTournament?.name ?? org.name,
+    title: {
+      default: org.name,
+      template: `%s | ${org.name}`,
+    },
     openGraph: org.logoUrl ? { images: [{ url: org.logoUrl }] } : undefined,
   };
 }

@@ -33,6 +33,16 @@ The sections below document all copy changes applied to the live pages after the
 - `/pricing` FAQ "Do I need a credit card?" → updated to reflect Founding Season (no card required for Tournament Plus through Dec 31, 2026)
 - `/pricing` "Express interest" stat body → removed "notification queue" language
 
+### Phase 4 amendments (applied 2026-05-28)
+- Seat limits removed from all paid plans (Tournament Plus, League, Club). Free Tournament tier retains 3-seat limit as soft abuse guard only.
+- `lib/plan-config.ts` — `tournament_plus.seatLimit` and `league.seatLimit` set to 9999 (Unlimited)
+- All pricing copy updated: Tournament Plus and League now show "Unlimited staff / admin seats" everywhere
+- Comparison table Staff & Access row: Plus "5" → "Unlimited", League "10" → "Unlimited"
+- Appendix quick-reference table updated accordingly
+- FAQ "Are officials counted against my seat limit?" replaced with "Is there a limit on how many staff accounts I can have?" — answer clarifies unlimited on all paid plans, 3-seat soft limit on free tier only
+- In-app upgrade banner for seat limit now applies to free Tournament tier only
+- Members page: removed "Tournament Plus staffing pattern" note referencing 10-seat allowance
+
 ### Phase 3 amendments (applied 2026-05-27)
 - `/pricing` segment picker expanded from 3 → 4 cards: "League or club leader" split into "House league administrator" and "Club executive" as separate cards
 - `/pricing` upgrade bridge labels: "Tournament Plus → League" changed to "House league administrators"; "League → Club" changed to "Club executives"; body copy rewritten to remove tier-ladder framing and explicitly state no prior plan is required
@@ -197,8 +207,8 @@ Layout: four equal-width cards in a horizontal row. Club card is visually elevat
 - Email announcements and communications
 - Tournament archives and history
 - 3 non-archived tournament slots
-- 5 staff / admin seats
-- Unlimited officials seats (officials never count against your limit)
+- Unlimited staff / admin seats
+- Unlimited officials seats
 
 **"Not included" callout:**
 > This plan is built for tournament organizers who don't need league or club features. House league, accounting, and rep team management are not included — by design.
@@ -233,7 +243,7 @@ Layout: four equal-width cards in a horizontal row. Club card is visually elevat
 - House League module — registration, divisions, seasons, scheduling, standings
 - League-scoped communications
 - Advanced member roles and permissions
-- 10 staff / admin seats
+- Unlimited staff / admin seats
 
 **"What's next" upgrade nudge:**
 > Managing finances, tryouts, or competitive teams? → Club
@@ -302,8 +312,8 @@ Full breakdown, grouped by category. Shown below the pricing cards with a "Compa
 
 | Feature | Tournament | Tournament Plus | League | Club |
 |---------|-----------|-----------------|--------|------|
-| Staff / admin seats | 3 | 5 | 10 | Unlimited |
-| Officials seats | Counted toward limit | Unlimited (free) | Unlimited (free) | Unlimited (free) |
+| Staff / admin seats | 3 | Unlimited | Unlimited | Unlimited |
+| Officials seats | Counted toward limit | Unlimited | Unlimited | Unlimited |
 | Advanced member roles and permissions | — | — | ✓ | ✓ |
 
 ---
@@ -449,8 +459,8 @@ Short text fragments for use in banners, tooltips, and inline upgrade prompts th
 **When a user hits the 1-tournament limit (Tournament plan):**
 > Running more than one event? Tournament Plus gives you up to 3 non-archived tournament slots.
 
-**When a user tries to add a 4th staff member (Tournament plan):**
-> You've reached the seat limit on your current plan. Tournament Plus includes 5 seats — and officials are always free.
+**When a user tries to add a 4th staff member (Tournament free plan):**
+> You've reached the 3-seat staff limit on the free Tournament plan. Upgrade to Tournament Plus for unlimited staff seats.
 
 **When a user accesses a gated feature (communications):**
 > Email announcements are included on Tournament Plus and above. Upgrade to reach your participants directly from FieldLogicHQ.
@@ -472,10 +482,31 @@ Short text fragments for use in banners, tooltips, and inline upgrade prompts th
 
 ### Billing page plan comparison microcopy
 
-**Below plan name on billing page:**
+**Below plan name on billing page (current plan card):**
 - Tournament: You're on the free plan. Upgrade anytime — no credit card required until you're ready.
 - Tournament Plus: You're on Tournament Plus. Running a league or registration workflow? League unlocks those tools.
 - League: You're on League. Need accounting or rep team tools? Club is the complete platform.
+
+### Billing page upgrade card copy — question → action pattern (approved 2026-05-28)
+
+Feature lists have been removed from upgrade cards. Each card now shows a self-identifying question, a one-sentence value line, and a link to open the plan article panel. The upgrade button is separate and stays visible for users who don't need convincing.
+
+**Tournament Plus card:**
+- Question: "Ready to stop building your schedule by hand?"
+- Sub: "Tournament Plus handles schedule generation, brackets, and email communications — so you're not starting from scratch for every event."
+- Link: "See what Tournament Plus includes →"
+
+**League card:**
+- Question: "Does your organization run a year-round league, or need a public-facing presence?"
+- Sub: "League adds player registration, house league season management, a public org page, and automated parent notifications."
+- Link: "See what League includes →"
+
+**Club card:**
+- Question: "Coordinating rep teams or managing org finances outside the platform?"
+- Sub: "Club adds full accounting and rep team management — the two tools that take the most time from any volunteer organization."
+- Link: "See what Club includes →"
+
+**Article panel:** Clicking "See what [Plan] includes →" opens a right-side slide-out panel rendering the same content used by `/for-tournament-organizers`, `/for-leagues`, and `/for-clubs`. Content is sourced from `lib/plan-article-content.ts` — updating that file propagates to both the public pages and the billing panel.
 
 ### Annual upsell (on billing page, monthly subscribers)
 > Switch to annual billing and get two months free. No other changes to your plan — cancel anytime at renewal.
@@ -526,9 +557,9 @@ Short text fragments for use in banners, tooltips, and inline upgrade prompts th
 
 > Yes. The platform is sport-agnostic — it's used by softball associations, hockey organizations, soccer leagues, and baseball clubs. You configure your organization around your sport: field naming, team structures, scoring, and season setup all work across sports. If you run multiple associations, each one is managed as its own organization within the platform.
 
-**Q: Are officials counted against my seat limit?**
+**Q: Is there a limit on how many staff accounts I can have?**
 
-> No — from Tournament Plus and above, officials seats are always free and never count against your staff/admin seat limit. The seat limit applies to administrative staff: people who can create events, manage schedules, enter scores, and configure the organization. Officials have a more limited access role focused on game assignments and score reporting.
+> Not on any paid plan. Tournament Plus, League, and Club all include unlimited staff seats — add as many admins, schedulers, and scorekeepers as you need. The free Tournament tier includes 3 staff seats as a soft limit. On the free tier, officials count toward that limit; on all paid plans there is no staff seat limit at all.
 
 **Q: Is there a setup fee or onboarding cost?**
 
@@ -657,8 +688,8 @@ These are intended as guidance for sourcing real testimonials or writing represe
 | Monthly | Free | $39 | $89 | $179 |
 | Annual | Free | $390 | $890 | $1,790 |
 | Annual savings | — | $78 (~2 months) | $178 (~2 months) | $358 (~2 months) |
-| Staff seats | 3 | 5 | 10 | Unlimited |
-| Officials seats | Counted | Free | Free | Free |
+| Staff seats | 3 | Unlimited | Unlimited | Unlimited |
+| Officials seats | Counted toward 3-seat limit | Unlimited | Unlimited | Unlimited |
 | Non-archived tournament slots | 1 | 3 | Unlimited | Unlimited |
 | Automated scheduling | — | ✓ | ✓ | ✓ |
 | Bracket generator | — | ✓ | ✓ | ✓ |
@@ -668,5 +699,5 @@ These are intended as guidance for sourcing real testimonials or writing represe
 | House League module | — | — | ✓ | ✓ |
 | Accounting module | — | — | — | ✓ |
 | Rep Teams module | — | — | — | ✓ |
-| Unlimited staff seats | — | — | — | ✓ |
+| Unlimited staff seats | — | ✓ | ✓ | ✓ |
 | Free trial | — | 14 days | 30 days | 90 days |

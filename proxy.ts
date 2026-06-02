@@ -2,6 +2,7 @@ import { createServerClient } from '@supabase/ssr';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { assertSafeSupabaseServerEnvironment } from './lib/supabase-safety';
+import { isTournamentTier } from './lib/billing-urls';
 
 export async function proxy(request: NextRequest) {
   assertSafeSupabaseServerEnvironment('Proxy Supabase client');
@@ -31,7 +32,7 @@ export async function proxy(request: NextRequest) {
 
   // Redirect legacy org-admin link URLs before auth so login next paths
   // also use the Coaches Portal vocabulary.
-  if (segments.length >= 4 && segments[1] === 'admin' && segments[2] === 'org' && segments[3] === 'team-links') {
+  if (segments.length >= 4 && segments[0] !== 'api' && segments[1] === 'admin' && segments[2] === 'org' && segments[3] === 'team-links') {
     const url = request.nextUrl.clone();
     const remainingPath = segments.slice(4).join('/');
     url.pathname = `/${segments[0]}/admin/org/coaches-portal-links${remainingPath ? '/' + remainingPath : ''}`;
@@ -108,6 +109,25 @@ export async function proxy(request: NextRequest) {
     url.pathname = '/auth/login';
     url.searchParams.set('next', isLegacyAdmin ? '/admin' : pathname);
     return NextResponse.redirect(url);
+  }
+
+  // Tournament / Tournament Plus tiers have no org-admin concept — redirect them out
+  // of /[orgSlug]/admin/org/* before the page renders. The org-admin layout is the
+  // authoritative guard (and APIs gate themselves); this is the earliest-possible bounce.
+  const isOrgAdminSection =
+    segments[0] !== 'api' && segments[1] === 'admin' && segments[2] === 'org';
+  if (isOrgAdminSection && user) {
+    const { data: orgRow } = await supabase
+      .from('organizations')
+      .select('plan_id')
+      .eq('slug', segments[0])
+      .maybeSingle();
+    if (orgRow && isTournamentTier(orgRow.plan_id as string)) {
+      const url = request.nextUrl.clone();
+      url.pathname = `/${segments[0]}/admin/tournaments`;
+      url.search = '';
+      return NextResponse.redirect(url);
+    }
   }
 
   // Protect /platform-admin/* with an optimistic session check.

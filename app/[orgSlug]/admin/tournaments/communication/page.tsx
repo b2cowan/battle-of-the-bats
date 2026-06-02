@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { useTournament } from '@/lib/tournament-context';
 import { useOrg } from '@/lib/org-context';
+import { usePageTitle } from '@/lib/usePageTitle';
 import { Division, Communication, Team } from '@/lib/types';
 import s from '../../admin-common.module.css';
 import styles from './communication.module.css';
@@ -64,6 +65,7 @@ function formatDate(iso: string) {
 export default function AdminCommunicationPage() {
   const { currentTournament } = useTournament();
   const { currentOrg } = useOrg();
+  usePageTitle('Communications');
   const orgSlug  = currentOrg?.slug;
   const orgQuery = orgSlug ? `?orgSlug=${encodeURIComponent(orgSlug)}` : '?';
   const orgParam = orgSlug ? `&orgSlug=${encodeURIComponent(orgSlug)}` : '';

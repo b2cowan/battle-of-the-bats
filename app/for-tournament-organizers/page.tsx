@@ -1,6 +1,8 @@
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import EarlyAccessModalTrigger from '@/components/EarlyAccessModalTrigger';
+import { PLAN_ARTICLE_CONTENT } from '@/lib/plan-article-content';
+import { PLAN_CONFIG, formatPriceAmount } from '@/lib/plan-config';
 import styles from './page.module.css';
 
 export const metadata: Metadata = {
@@ -9,51 +11,8 @@ export const metadata: Metadata = {
     'From first team registration to final standings — without the spreadsheets. Brackets, live scoring, scheduling, and registration all in one place. Free to start, no credit card required.',
 };
 
-const PAIN_ITEMS = [
-  {
-    title: 'Teams register by email.',
-    body: "You're tracking 24 entries in a spreadsheet and chasing three teams for their roster form.",
-  },
-  {
-    title: 'You built the schedule by hand.',
-    body: 'Then two teams conflicted. Then a field flooded. Then you did it again.',
-  },
-  {
-    title: 'The bracket is on a whiteboard.',
-    body: 'Coaches crowd the table after every game to see who they play next.',
-  },
-  {
-    title: 'Next year, you start from scratch.',
-    body: "The spreadsheet is gone. The schedule is in someone's email. The bracket is a photo on a phone.",
-  },
-];
-
-const STEPS = [
-  {
-    num: '01',
-    label: 'Registration',
-    title: 'Teams register online.',
-    body: 'Your tournament page collects team details, contact info, and payment deposits. You review applications, approve teams, and manage the waitlist — no inbox required.',
-  },
-  {
-    num: '02',
-    label: 'Scheduling',
-    title: 'Games fill themselves in.',
-    body: 'Set your fields and time slots. The schedule generator fills games, minimizes conflicts, and balances rest. Publish in one click.',
-  },
-  {
-    num: '03',
-    label: 'Bracket',
-    title: 'No re-drawing after every round.',
-    body: 'Single or double elimination — seeding, bye assignment, and bracket advancement are handled automatically.',
-  },
-  {
-    num: '04',
-    label: 'Live results',
-    title: 'Everyone sees scores in real time.',
-    body: 'Enter scores from the sideline. Brackets advance immediately. Coaches and parents see standings the moment you save them — from anywhere.',
-  },
-];
+const { painItems: PAIN_ITEMS, steps: STEPS, features: PLUS_FEATURES } =
+  PLAN_ARTICLE_CONTENT.tournament_plus;
 
 const FREE_FEATURES = [
   '1 active tournament',
@@ -63,17 +22,6 @@ const FREE_FEATURES = [
   'Score entry and live standings',
   'Venue management',
   '3 staff / admin seats',
-];
-
-const PLUS_FEATURES = [
-  'Unlimited active tournaments',
-  'Automated schedule generation and playoff bracket builder',
-  'Custom registration fields, file uploads, and waitlist promotion',
-  'Registration exports — Excel, CSV, and PDF',
-  'Advanced payment tracking and post-tournament reporting',
-  'Full branding control — no FieldLogicHQ badge',
-  'Permanent sealed archives and tournament cloning',
-  '5 staff seats · Unlimited officials',
 ];
 
 const CROSS_SELLS = [
@@ -224,10 +172,10 @@ export default function ForTournamentOrganizersPage() {
               <div>
                 <p className={styles.planName}>Tournament Plus</p>
                 <div className={styles.planPrice}>
-                  <span className={styles.planAmount}>$39</span>
+                  <span className={styles.planAmount}>{formatPriceAmount(PLAN_CONFIG.tournament_plus.monthlyPrice)}</span>
                   <span className={styles.planPeriod}>/month</span>
                 </div>
-                <p className={styles.planNote}>Free through Dec 31, 2026 — Founding Season · $390/year from Jan 2027</p>
+                <p className={styles.planNote}>Free through Dec 31, 2026 — Founding Season · {formatPriceAmount(PLAN_CONFIG.tournament_plus.annualPrice)}/year from Jan 2027</p>
               </div>
               <p className={styles.planTagline}>
                 For organizers running more than one event a year, or who need custom registration, exports, and archives.
@@ -266,7 +214,7 @@ export default function ForTournamentOrganizersPage() {
             </h2>
             <p className={styles.foundingSeasonBody}>
               Auto-scheduling, brackets, communications, and archives — at no cost while we build
-              our first season together. Normally $39/month. No credit card required.
+              our first season together. Normally {formatPriceAmount(PLAN_CONFIG.tournament_plus.monthlyPrice)}/month. No credit card required.
             </p>
             <div className={styles.foundingSeasonActions}>
               <Link

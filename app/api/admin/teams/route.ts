@@ -2,9 +2,25 @@ import {
   sendEmail,
   acceptanceHtml, rejectionHtml, paymentConfirmationHtml, manualTeamRegistrationHtml,
 } from '@/lib/email';
-import { getAuthContextWithScope, unauthorized, forbidden, scopeGuard } from '@/lib/api-auth';
+import { getAuthContextWithScope, unauthorized, forbidden, scopeGuard, requireTournamentInOrg } from '@/lib/api-auth';
 import { hasCapability } from '@/lib/roles';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+
+function tournamentLockedResponse() {
+  return new Response(
+    JSON.stringify({ error: 'This tournament is completed and locked. Set the status to Active in Event Settings to make changes.' }),
+    { status: 409, headers: { 'Content-Type': 'application/json' } },
+  );
+}
+
+async function isTournamentLocked(tournamentId: string): Promise<boolean> {
+  const { data } = await supabaseAdmin
+    .from('tournaments')
+    .select('status')
+    .eq('id', tournamentId)
+    .single();
+  return data?.status === 'completed';
+}
 import {
   getTournamentRegistrationFieldAnswersForRegistrations,
   getTournamentRegistrationFields,
@@ -28,6 +44,9 @@ export async function GET(req: Request) {
 
   const denied = scopeGuard(ctx, tournamentId);
   if (denied) return denied;
+
+  const wrongOrg = await requireTournamentInOrg(ctx, tournamentId);
+  if (wrongOrg) return wrongOrg;
 
   const { data, error } = await supabaseAdmin
     .from('teams')
@@ -108,6 +127,9 @@ export async function POST(req: Request) {
 
       const denied = scopeGuard(ctx, team.tournament_id);
       if (denied) return denied;
+      const wrongOrg = await requireTournamentInOrg(ctx, team.tournament_id);
+      if (wrongOrg) return wrongOrg;
+      if (await isTournamentLocked(team.tournament_id)) return tournamentLockedResponse();
 
       if (!hasPlanFeature(ctx.org.planId, 'waitlist_automation')) {
         return new Response(JSON.stringify({ error: requiresTournamentPlusCopy('waitlist_automation') }), {
@@ -189,6 +211,9 @@ export async function POST(req: Request) {
 
       const denied = scopeGuard(ctx, slotA.tournament_id);
       if (denied) return denied;
+      const wrongOrg = await requireTournamentInOrg(ctx, slotA.tournament_id);
+      if (wrongOrg) return wrongOrg;
+      if (await isTournamentLocked(slotA.tournament_id)) return tournamentLockedResponse();
 
       // Swap team_id on pool_slots
       await supabaseAdmin.from('pool_slots').update({ team_id: slotB.team_id }).eq('id', slotAId);
@@ -227,6 +252,9 @@ export async function POST(req: Request) {
 
       const denied = scopeGuard(ctx, team.tournamentId);
       if (denied) return denied;
+      const wrongOrg = await requireTournamentInOrg(ctx, team.tournamentId);
+      if (wrongOrg) return wrongOrg;
+      if (await isTournamentLocked(team.tournamentId)) return tournamentLockedResponse();
 
       const { data: group } = await supabaseAdmin
         .from('divisions')
@@ -335,6 +363,12 @@ export async function POST(req: Request) {
 
     if (!currents) throw new Error('Could not find records to update');
 
+    // Org check (runs for owners too): every team must belong to a tournament in the caller's org
+    for (const tId of new Set((currents as Array<{ tournament_id: string }>).map(t => t.tournament_id))) {
+      const wrongOrg = await requireTournamentInOrg(ctx, tId);
+      if (wrongOrg) return wrongOrg;
+    }
+
     // Scope check: all teams must belong to an assigned tournament
     if (ctx.assignedTournamentIds !== null) {
       for (const team of currents) {
@@ -342,6 +376,10 @@ export async function POST(req: Request) {
         if (denied) return denied;
       }
     }
+
+    // Lock check: use the first record's tournament (bulk ops always target one tournament)
+    const bulkTournamentId = (currents[0] as any)?.tournament_id;
+    if (bulkTournamentId && await isTournamentLocked(bulkTournamentId)) return tournamentLockedResponse();
 
     const updateData = items.map(item => {
       const dbUpdates: any = { ...item.updates };
@@ -483,16 +521,23 @@ export async function DELETE(req: Request) {
   try {
     const { ids } = await req.json();
 
-    // Scope check: look up the teams to verify tournament membership
-    if (ctx.assignedTournamentIds !== null && ids?.length) {
+    // Look up the teams to verify org ownership (always — incl. owners) and tournament scope (scoped users)
+    if (ids?.length) {
       const { data: teams } = await supabaseAdmin
         .from('teams')
         .select('tournament_id')
         .in('id', ids);
 
-      for (const team of teams ?? []) {
-        const denied = scopeGuard(ctx, team.tournament_id);
-        if (denied) return denied;
+      for (const tId of new Set((teams ?? []).map(t => t.tournament_id as string))) {
+        const wrongOrg = await requireTournamentInOrg(ctx, tId);
+        if (wrongOrg) return wrongOrg;
+      }
+
+      if (ctx.assignedTournamentIds !== null) {
+        for (const team of teams ?? []) {
+          const denied = scopeGuard(ctx, team.tournament_id);
+          if (denied) return denied;
+        }
       }
     }
 

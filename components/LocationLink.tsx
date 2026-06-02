@@ -17,8 +17,10 @@ export function getMapsUrl(address: string): string {
 
 export default function LocationLink({ location, venue, size = 'default' }: Props) {
   const address = venue?.address;
-  const mapsUrl  = address ? getMapsUrl(address) : getMapsUrl(location);
-  const label    = location || venue?.name || 'Location';
+  const label   = location || venue?.name;
+  // Nothing meaningful to show — don't render a placeholder "Location" link.
+  if (!label) return null;
+  const mapsUrl = getMapsUrl(address || label);
 
   const fontSize  = size === 'sm' ? '0.8rem'     : '0.85rem';
   const gap       = size === 'sm' ? '0.3rem'     : '0.35rem';
@@ -35,7 +37,7 @@ export default function LocationLink({ location, venue, size = 'default' }: Prop
         alignItems: 'center',
         gap,
         fontSize,
-        color:      'var(--purple-light)',
+        color:      'var(--primary-light)',
         fontWeight: 500,
         transition: 'var(--transition)',
         textDecoration: 'none',

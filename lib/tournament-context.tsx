@@ -7,6 +7,8 @@ interface TournamentContextType {
   tournaments: Tournament[];
   /** Tournament admin is currently editing (may differ from the public active one) */
   currentTournament: Tournament | null;
+  /** True when the current tournament is completed — all data is read-only */
+  isLocked: boolean;
   loading: boolean;
   setCurrentTournament: (t: Tournament) => void;
   refresh: () => Promise<void>;
@@ -15,6 +17,7 @@ interface TournamentContextType {
 const TournamentContext = createContext<TournamentContextType>({
   tournaments: [],
   currentTournament: null,
+  isLocked: false,
   loading: true,
   setCurrentTournament: () => {},
   refresh: async () => {},
@@ -104,8 +107,10 @@ export function TournamentProvider({ children, orgSlug }: { children: ReactNode;
     }
   }
 
+  const isLocked = currentTournament?.status === 'completed';
+
   return (
-    <TournamentContext.Provider value={{ tournaments, currentTournament, loading, setCurrentTournament, refresh }}>
+    <TournamentContext.Provider value={{ tournaments, currentTournament, isLocked, loading, setCurrentTournament, refresh }}>
       {children}
     </TournamentContext.Provider>
   );

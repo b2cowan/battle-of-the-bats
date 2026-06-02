@@ -7,9 +7,42 @@ import { writePlatformEvent } from '@/lib/platform-events';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 
 type RouteParams = { params: Promise<{ tournamentId: string }> };
+const COPY_GROUPS = ['structure', 'venues', 'registration', 'publicPresence', 'content'] as const;
+const WARNING_KEYS = [
+  'source_draft',
+  'source_active',
+  'source_older_than_one_year',
+  'draft_year_before_source',
+  'registration_setup_review',
+  'public_content_review',
+] as const;
+const SOURCE_SURFACES = ['draft_dashboard', 'unknown'] as const;
 
 function json(data: unknown, status = 200) {
   return NextResponse.json(data, { status });
+}
+
+function cleanList(value: unknown, allowed: readonly string[]) {
+  if (!Array.isArray(value)) return [];
+  const seen = new Set<string>();
+  return value
+    .filter((item): item is string => typeof item === 'string' && allowed.includes(item))
+    .filter(item => {
+      if (seen.has(item)) return false;
+      seen.add(item);
+      return true;
+    });
+}
+
+function cleanSourceSurface(value: unknown) {
+  return typeof value === 'string' && SOURCE_SURFACES.includes(value as typeof SOURCE_SURFACES[number])
+    ? value
+    : 'unknown';
+}
+
+function cleanWarningCount(value: unknown) {
+  if (typeof value !== 'number' || !Number.isFinite(value)) return 0;
+  return Math.max(0, Math.min(20, Math.trunc(value)));
 }
 
 export async function POST(req: NextRequest, { params }: RouteParams) {
@@ -24,8 +57,22 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
   const denied = scopeGuard(ctx, destinationTournamentId);
   if (denied) return denied;
 
-  const body = await req.json() as { sourceTournamentId?: unknown };
+  const body = await req.json() as {
+    sourceTournamentId?: unknown;
+    analytics?: {
+      sourceSurface?: unknown;
+      selectedCopyGroups?: unknown;
+      warningCount?: unknown;
+      warningKeys?: unknown;
+    };
+  };
   const sourceTournamentId = typeof body.sourceTournamentId === 'string' ? body.sourceTournamentId.trim() : '';
+  const analytics = {
+    sourceSurface: cleanSourceSurface(body.analytics?.sourceSurface),
+    selectedCopyGroups: cleanList(body.analytics?.selectedCopyGroups, COPY_GROUPS),
+    warningCount: cleanWarningCount(body.analytics?.warningCount),
+    warningKeys: cleanList(body.analytics?.warningKeys, WARNING_KEYS),
+  };
 
   if (!sourceTournamentId) return json({ error: 'sourceTournamentId is required.' }, 400);
   if (sourceTournamentId === destinationTournamentId) {
@@ -52,7 +99,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
   // Verify source exists in this org
   const { data: source, error: sourceError } = await supabaseAdmin
     .from('tournaments')
-    .select('id, name')
+    .select('id, name, year, status')
     .eq('id', sourceTournamentId)
     .eq('org_id', ctx.org.id)
     .maybeSingle();
@@ -71,6 +118,9 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
       action: 'populate_tournament_from',
       sourceTournamentId,
       destinationTournamentId,
+      sourceTournamentStatus: source.status ?? null,
+      sourceTournamentYear: source.year ?? null,
+      ...analytics,
       status: 'attempted',
     },
   });
@@ -90,6 +140,9 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
         action: 'populate_tournament_from',
         sourceTournamentId,
         destinationTournamentId,
+        sourceTournamentStatus: source.status ?? null,
+        sourceTournamentYear: source.year ?? null,
+        ...analytics,
         status: 'completed',
         copied: result.copied,
       },

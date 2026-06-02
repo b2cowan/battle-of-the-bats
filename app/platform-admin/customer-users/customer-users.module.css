@@ -207,7 +207,288 @@
   font-size: 0.68rem;
 }
 
-.actionsCell { white-space: nowrap; }
+.actionsCell {
+  white-space: nowrap;
+  vertical-align: top;
+}
+
+/* ── Actions dropdown ──────────────────────────────────────────────────────── */
+
+.actionsMenu {
+  position: relative;
+  display: inline-block;
+}
+
+.menuList {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 4px);
+  min-width: 148px;
+  background: var(--fl-surface, #1a1a1a);
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.25);
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+}
+
+.menuItem {
+  display: block;
+  width: 100%;
+  padding: 0.52rem 0.8rem;
+  text-align: left;
+  font-family: var(--font-data);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--fl-text);
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.menuItem:hover { background: rgba(255, 255, 255, 0.06); }
+
+.menuItemDanger { color: var(--danger); }
+.menuItemDanger:hover { background: rgba(248, 113, 113, 0.08); }
+
+.menuDivider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.08);
+  margin: 0.2rem 0;
+}
+
+/* ── Confirmation modal ────────────────────────────────────────────────────── */
+
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+}
+
+.modalBox {
+  background: var(--fl-surface, #1a1a1a);
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.3);
+  padding: 1.75rem 2rem;
+  width: 100%;
+  max-width: 420px;
+}
+
+.modalTitle {
+  font-weight: 800;
+  font-size: 1rem;
+  text-transform: uppercase;
+  color: var(--fl-text);
+  margin-bottom: 0.75rem;
+}
+
+.modalBody {
+  font-family: var(--font-data);
+  font-size: 0.75rem;
+  color: var(--data-gray);
+  line-height: 1.5;
+  margin-bottom: 1.5rem;
+}
+
+.modalBody strong { color: var(--fl-text); }
+
+.modalActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.6rem;
+}
+
+.modalCancel {
+  font-family: var(--font-data);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.42rem 0.85rem;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: var(--data-gray);
+  cursor: pointer;
+}
+
+.modalCancel:hover { border-color: rgba(255, 255, 255, 0.35); color: var(--fl-text); }
+
+.modalConfirm {
+  font-family: var(--font-data);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.42rem 0.85rem;
+  background: rgba(var(--logic-lime-rgb), 0.1);
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.4);
+  color: var(--logic-lime);
+  cursor: pointer;
+}
+
+.modalConfirm:hover { background: rgba(var(--logic-lime-rgb), 0.2); }
+
+.modalConfirmDanger {
+  font-family: var(--font-data);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.42rem 0.85rem;
+  background: rgba(248, 113, 113, 0.1);
+  border: 1px solid rgba(248, 113, 113, 0.4);
+  color: var(--danger);
+  cursor: pointer;
+}
+
+.modalConfirmDanger:hover { background: rgba(248, 113, 113, 0.2); }
+
+.modalConfirmDanger:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ── Edit / form fields ────────────────────────────────────────────────────── */
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-bottom: 1rem;
+}
+
+.fieldLabel {
+  font-family: var(--font-data);
+  font-size: 0.55rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--data-gray);
+}
+
+.fieldInput {
+  width: 100%;
+  padding: 0.48rem 0.65rem;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.2);
+  color: var(--fl-text);
+  font-family: var(--font-data);
+  font-size: 0.75rem;
+  outline: none;
+}
+
+.fieldInput:focus {
+  border-color: rgba(var(--logic-lime-rgb), 0.5);
+}
+
+.fieldInput:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.modalError {
+  font-family: var(--font-data);
+  font-size: 0.65rem;
+  color: var(--danger);
+  margin-bottom: 0.75rem;
+}
+
+.modalBodySmall {
+  font-family: var(--font-data);
+  font-size: 0.68rem;
+  color: var(--data-gray);
+  margin-bottom: 1rem;
+  font-family: monospace;
+}
+
+/* ── Wide modal variant (notes) ────────────────────────────────────────────── */
+
+.modalBoxWide { max-width: 560px; }
+
+/* ── Notes modal ───────────────────────────────────────────────────────────── */
+
+.noteAddRow {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-bottom: 1.25rem;
+}
+
+.noteTextarea {
+  width: 100%;
+  padding: 0.55rem 0.65rem;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.2);
+  color: var(--fl-text);
+  font-family: var(--font-data);
+  font-size: 0.73rem;
+  line-height: 1.5;
+  resize: vertical;
+  outline: none;
+}
+
+.noteTextarea:focus { border-color: rgba(var(--logic-lime-rgb), 0.45); }
+.noteTextarea:disabled { opacity: 0.5; }
+
+.notesList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  max-height: 280px;
+  overflow-y: auto;
+  margin-bottom: 1.25rem;
+  padding-right: 0.25rem;
+}
+
+.notesEmpty {
+  font-family: var(--font-data);
+  font-size: 0.68rem;
+  color: var(--data-gray);
+  text-align: center;
+  padding: 1rem 0;
+}
+
+.noteRow {
+  padding: 0.65rem 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.noteBody {
+  font-family: var(--font-data);
+  font-size: 0.73rem;
+  color: var(--fl-text);
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+  margin-bottom: 0.4rem;
+}
+
+.noteMeta {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: var(--font-data);
+  font-size: 0.58rem;
+  color: var(--data-gray);
+}
+
+.noteDeleteBtn {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  background: transparent;
+  border: 0;
+  color: var(--data-gray);
+  cursor: pointer;
+  padding: 0.1rem;
+  opacity: 0.6;
+}
+
+.noteDeleteBtn:hover { color: var(--danger); opacity: 1; }
+.noteDeleteBtn:disabled { opacity: 0.3; cursor: not-allowed; }
 
 .linkBox {
   display: flex;

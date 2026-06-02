@@ -1,1987 +1,428 @@
 ---
-topic: Dev DB schema
-updated: 2026-05-24
-source: docs/schema-snapshots/schema_dumps.json
-tables: 85
-environments: dev, prod
+name: reference_db_schema
+description: Complete public schema table+column list — auto-generated 2026-06-01 from live fieldlogichq-dev Supabase project.
+metadata:
+  node_type: memory
+  type: reference
 ---
 
-# FieldLogicHQ — Complete Database Schema Reference
+# DB Schema Reference — 2026-06-01
 
-## Divergence Summary
-
-Column schemas are **identical** between dev and prod across all 85 tables (same columns, types, defaults, ordinal positions).
-
-**FK constraint naming divergence** — tournament-legacy tables use `fk_` prefix in prod vs `table_column_fkey` pattern in dev:
-
-| Table | Column | Dev constraint name | Prod constraint name |
-|---|---|---|---|
-| divisions | tournament_id | divisions_tournament_id_fkey | fk_divisions_tournament |
-| announcements | tournament_id | announcements_tournament_id_fkey | fk_announcements_tournament |
-| contacts | tournament_id | contacts_tournament_id_fkey | fk_contacts_tournament |
-| diamonds | tournament_id | diamonds_tournament_id_fkey | fk_diamonds_tournament |
-| games | diamond_id | games_diamond_id_fkey | fk_games_diamond |
-| games | away_team_id | games_away_team_id_fkey | fk_games_away_team |
-| games | division_id | games_division_id_fkey | fk_games_division |
-
-**Duplicate FK constraints in prod on `games`:**
-- `games_division_id_fkey` AND `fk_games_division` both exist on `games.division_id`
-- `games_away_team_id_fkey` AND `fk_games_away_team` both exist on `games.away_team_id`
-
-**Non-standard FK name in both environments:**
-- `rep_fundraiser_entries.credit_id` → constraint name `fk_fundraiser_entry_credit` (uses `fk_` prefix in both dev and prod)
+**Auto-generated** from live `fieldlogichq-dev` project (ref `npgnrxaitgbtbtvvykto`) via Management API.
+Run `node scripts/refresh-db-schema.mjs` to refresh after applying migrations.
 
 ---
 
-## Module Key
-
-- **Tournament** — unprefixed tables: `tournaments`, `divisions`, `teams`, `games`, `pools`, `pool_slots`, `diamonds`, `contacts`, `announcements`, `resources`, `rules`, `rule_items`, `tournament_archives`, `tournament_registration_fields`, `tournament_registration_field_answers`
-- **Accounting** — `accounting_*`, `budget_categories`, `budget_items`, `org_budget_lines`, `org_budget_periods`
-- **League** — `league_*`
-- **Rep Teams** — `rep_*`
-- **Standalone Team Workspace** — `team_*`
-- **Platform / Org Core** — `organizations`, `organization_members`, `org_*`, `platform_*`, `plan_*`, `stripe_prices`, `early_access_leads`
-
----
-
-## Tables (alphabetical)
-
----
-
-### accounting_entries
-**Module:** Accounting | **RLS:** ENABLED | **Tenancy:** via `ledger_id → accounting_ledgers.org_id`
-
-| # | Column | Type | Nullable | Default |
-|---|---|---|---|---|
-| 1 | id | uuid | NO | gen_random_uuid() |
-| 2 | ledger_id | uuid | NO | — |
-| 3 | entry_date | date | NO | — |
-| 4 | description | text | NO | — |
-| 5 | amount | numeric | NO | — |
-| 6 | entry_type | text | NO | — |
-| 7 | status | text | NO | 'posted' |
-| 8 | category | text | YES | — |
-| 9 | linked_entry_id | uuid | YES | — |
-| 10 | source_module | text | YES | — |
-| 11 | source_entity_id | uuid | YES | — |
-| 12 | created_by | uuid | YES | — |
-| 13 | created_at | timestamptz | NO | now() |
-| 14 | updated_at | timestamptz | NO | now() |
-| 15 | payment_method | text | YES | — |
-| 16 | payee_id | uuid | YES | — |
-| 17 | payee_payer | text | YES | — |
-| 18 | notes | text | YES | — |
-
-**Foreign keys:** `ledger_id → accounting_ledgers.id`, `linked_entry_id → accounting_entries.id` (self), `payee_id → org_payees.id`
-
-**Indexes:** `accounting_entries_pkey` (id), `accounting_entries_ledger_id_idx` (ledger_id), `accounting_entries_entry_date_idx` (ledger_id, entry_date DESC)
-
-**Checks:** `amount > 0`; `entry_type IN ('income','expense','transfer_in','transfer_out')`; `status IN ('pending','posted','void')`
-
----
-
-### accounting_ledgers
-**Module:** Accounting | **RLS:** ENABLED | **Tenancy:** direct `org_id`
-
-| # | Column | Type | Nullable | Default |
-|---|---|---|---|---|
-| 1 | id | uuid | NO | gen_random_uuid() |
-| 2 | org_id | uuid | NO | — |
-| 3 | entity_type | text | NO | — |
-| 4 | entity_id | uuid | YES | — |
-| 5 | name | text | NO | — |
-| 6 | currency | bpchar | NO | 'CAD' |
-| 7 | is_archived | bool | NO | false |
-| 8 | created_at | timestamptz | NO | now() |
-
-**Foreign keys:** `org_id → organizations.id`
-
-**Indexes:** `accounting_ledgers_pkey` (id), `accounting_ledgers_org_id_entity_type_entity_id_key` UNIQUE (org_id, entity_type, entity_id)
-
-**Checks:** `entity_type IN ('org','tournament','team','league_season')`
-
----
-
-### divisions
-**Module:** Tournament | **RLS:** ENABLED | **Tenancy:** via `tournament_id → tournaments.org_id`
-
-| # | Column | Type | Nullable | Default |
-|---|---|---|---|---|
-| 1 | id | uuid | NO | gen_random_uuid() |
-| 2 | tournament_id | uuid | YES | — |
-| 3 | name | text | NO | — |
-| 4 | min_age | int4 | YES | — |
-| 5 | max_age | int4 | YES | — |
-| 6 | display_order | int4 | NO | 0 |
-| 7 | contact_id | uuid | YES | — |
-| 8 | is_closed | bool | NO | false |
-| 9 | capacity | int4 | YES | — |
-| 10 | pool_count | int4 | YES | — |
-| 11 | pool_names | text | YES | — |
-| 12 | requires_pool_selection | bool | NO | false |
-| 13 | playoff_config | jsonb | YES | — |
-| 14 | deposit_amount | numeric | YES | — |
-| 15 | deposit_due_date | date | YES | — |
-| 16 | total_fee_amount | numeric | YES | — |
-| 17 | total_fee_due_date | date | YES | — |
-| 18 | schedule_visibility | text | NO | 'unpublished' |
-
-**Foreign keys:** `tournament_id → tournaments.id`, `contact_id → contacts.id`
-
-**Checks:** `schedule_visibility IN ('unpublished','published_generic','published_teams')`
-
----
+## Module: Tournament
 
 ### announcements
-**Module:** Tournament | **RLS:** ENABLED | **Tenancy:** via `tournament_id → tournaments.org_id`
-
-| # | Column | Type | Nullable | Default |
-|---|---|---|---|---|
-| 1 | id | uuid | NO | gen_random_uuid() |
-| 2 | tournament_id | uuid | YES | — |
-| 3 | title | text | NO | — |
-| 4 | body | text | YES | — |
-| 5 | published_at | timestamptz | NO | now() |
-| 6 | pinned | bool | NO | false |
-| 7 | division_ids | uuid[] | YES | — |
-
-**Foreign keys:** `tournament_id → tournaments.id`
-
----
-
-### billing_retained_records
-**Module:** Platform/Org Core | **RLS:** ENABLED | **Tenancy:** direct `org_id`
-
-| # | Column | Type | Nullable | Default |
-|---|---|---|---|---|
-| 1 | id | uuid | NO | gen_random_uuid() |
-| 2 | intent_id | uuid | NO | — |
-| 3 | org_id | uuid | NO | — |
-| 4 | record_type | text | NO | — |
-| 5 | record_id | uuid | YES | — |
-| 6 | display_name | text | NO | — |
-| 7 | retained_state | text | NO | 'retained_inactive' |
-| 8 | retained_at | timestamptz | NO | now() |
-| 9 | retention_until | timestamptz | NO | — |
-| 10 | extension_count | int4 | NO | 0 |
-| 11 | last_extended_at | timestamptz | YES | — |
-| 12 | last_extended_by | text | YES | — |
-| 13 | last_extension_reason | text | YES | — |
-| 14 | metadata | jsonb | NO | '{}' |
-| 15 | warning_sent_at | timestamptz | YES | — |
-| 16 | pending_purge_at | timestamptz | YES | — |
-| 17 | purge_notice_sent_at | timestamptz | YES | — |
-
-**Foreign keys:** `intent_id → billing_retention_intents.id`, `org_id → organizations.id`
-
-**Checks:** `retained_state IN ('retained_inactive','pending_purge','purged','restored')`; `record_type IN ('tournament','account')`
-
----
-
-### billing_retention_intents
-**Module:** Platform/Org Core | **RLS:** ENABLED | **Tenancy:** direct `org_id`
-
-| # | Column | Type | Nullable | Default |
-|---|---|---|---|---|
-| 1 | id | uuid | NO | gen_random_uuid() |
-| 2 | org_id | uuid | NO | — |
-| 3 | intent_type | text | NO | — |
-| 4 | status | text | NO | 'applied' |
-| 5 | from_plan | text | YES | — |
-| 6 | target_plan | text | YES | — |
-| 7 | keep_tournament_ids | uuid[] | NO | '{}' |
-| 8 | effective_at | timestamptz | NO | now() |
-| 9 | retention_until | timestamptz | NO | — |
-| 10 | reason | text | YES | — |
-| 11 | created_by | uuid | YES | — |
-| 12 | created_by_email | text | YES | — |
-| 13 | created_at | timestamptz | NO | now() |
-| 14 | updated_at | timestamptz | NO | now() |
-| 15 | applied_at | timestamptz | YES | — |
-
-**Foreign keys:** `org_id → organizations.id`
-
-**Checks:** `intent_type IN ('downgrade','cancellation')`; `status IN ('pending','applied','canceled','restored','purged')`
-
----
-
-### budget_categories
-**Module:** Accounting | **RLS:** ENABLED | **Tenancy:** direct `org_id`
-
-| # | Column | Type | Nullable | Default |
-|---|---|---|---|---|
-| 1 | id | uuid | NO | gen_random_uuid() |
-| 2 | org_id | uuid | YES | — |
-| 3 | name | text | NO | — |
-| 4 | scope | text | NO | 'both' |
-| 5 | sort_order | int4 | NO | 0 |
-| 6 | is_default | bool | NO | false |
-| 7 | created_at | timestamptz | NO | now() |
-
-**Foreign keys:** `org_id → organizations.id`
-
-**Checks:** `scope IN ('org','team','both')`
-
----
-
-### budget_items
-**Module:** Accounting | **RLS:** ENABLED | **Tenancy:** direct `org_id`
-
-| # | Column | Type | Nullable | Default |
-|---|---|---|---|---|
-| 1 | id | uuid | NO | gen_random_uuid() |
-| 2 | category_id | uuid | NO | — |
-| 3 | org_id | uuid | YES | — |
-| 4 | name | text | NO | — |
-| 5 | suggested_amount | numeric | YES | — |
-| 6 | sort_order | int4 | NO | 0 |
-| 7 | is_default | bool | NO | false |
-| 8 | is_misc | bool | NO | false |
-| 9 | created_at | timestamptz | NO | now() |
-
-**Foreign keys:** `category_id → budget_categories.id`, `org_id → organizations.id`
-
----
-
-### contacts
-**Module:** Tournament | **RLS:** ENABLED | **Tenancy:** via `tournament_id → tournaments.org_id`
-
-| # | Column | Type | Nullable | Default |
-|---|---|---|---|---|
-| 1 | id | uuid | NO | gen_random_uuid() |
-| 2 | tournament_id | uuid | YES | — |
-| 3 | name | text | NO | — |
-| 4 | email | text | YES | — |
-| 5 | phone | text | YES | — |
-| 6 | role | text | YES | — |
-| 7 | is_notification_contact | bool | NO | false |
-
-**Foreign keys:** `tournament_id → tournaments.id`
-
----
+id (uuid), tournament_id (uuid) → tournaments.id, title NOT NULL, body, published_at, pinned (boolean), division_ids, channel_site (boolean), channel_email (boolean), email_targeting (jsonb), email_recipient_count (integer), email_success_count (integer), email_failed_count (integer), email_failed_addresses, email_sent_at, sent_by_email, deleted_at
+- Indexes: announcements_channel_email_idx, announcements_channel_site_idx, announcements_deleted_at_idx
 
 ### diamonds
-**Module:** Tournament | **RLS:** ENABLED | **Tenancy:** via `tournament_id → tournaments.org_id`
+id (uuid), tournament_id (uuid) → tournaments.id, name NOT NULL, address, notes, source_org_venue_id (uuid) → org_venues.id
 
-| # | Column | Type | Nullable | Default |
-|---|---|---|---|---|
-| 1 | id | uuid | NO | gen_random_uuid() |
-| 2 | tournament_id | uuid | YES | — |
-| 3 | name | text | NO | — |
-| 4 | address | text | YES | — |
-| 5 | notes | text | YES | — |
-
-**Foreign keys:** `tournament_id → tournaments.id`
-
----
-
-### early_access_leads
-**Module:** Platform/Org Core | **RLS:** ENABLED | **Tenancy:** global (platform-admin only)
-
-| # | Column | Type | Nullable | Default |
-|---|---|---|---|---|
-| 1 | id | uuid | NO | gen_random_uuid() |
-| 2 | created_at | timestamptz | NO | now() |
-| 3 | updated_at | timestamptz | NO | now() |
-| 4 | last_submitted_at | timestamptz | NO | now() |
-| 5 | submission_count | int4 | NO | 1 |
-| 6 | status | text | NO | 'new' |
-| 7 | name | text | NO | — |
-| 8 | email | text | NO | — |
-| 9 | email_normalized | text | NO | — |
-| 10 | organization_name | text | YES | — |
-| 11 | role | text | YES | — |
-| 12 | sports | text | YES | — |
-| 13 | plan_interest | text[] | NO | '{}' |
-| 14 | features_interested | text[] | NO | '{}' |
-| 15 | notes | text | YES | — |
-| 16 | source_path | text | YES | — |
-| 17 | user_agent | text | YES | — |
-| 18 | release_notifications_consent | bool | NO | true |
-| 19 | metadata | jsonb | NO | '{}' |
-| 20 | internal_status | text | NO | 'new' |
-| 21 | internal_notes | text | YES | — |
-| 22 | last_contacted_at | timestamptz | YES | — |
-| 23 | last_contacted_by | text | YES | — |
-| 24 | converted_org_id | uuid | YES | — |
-| 25 | converted_at | timestamptz | YES | — |
-| 26 | follow_up_due_at | date | YES | — |
-| 27 | next_action | text | YES | — |
-
-**Foreign keys:** `converted_org_id → organizations.id`
-
----
+### divisions
+id (uuid), tournament_id (uuid) → tournaments.id, name NOT NULL, min_age (integer), max_age (integer), display_order (integer), is_closed (boolean), capacity (integer), pool_count (integer), pool_names, requires_pool_selection (boolean), playoff_config (jsonb), deposit_amount (numeric), deposit_due_date, total_fee_amount (numeric), total_fee_due_date, schedule_visibility, contact_member_id (uuid) → organization_members.id, settings (jsonb)
 
 ### games
-**Module:** Tournament | **RLS:** ENABLED | **Tenancy:** via `tournament_id → tournaments.org_id`
-
-| # | Column | Type | Nullable | Default |
-|---|---|---|---|---|
-| 1 | id | uuid | NO | gen_random_uuid() |
-| 2 | tournament_id | uuid | YES | — |
-| 3 | division_id | uuid | YES | — |
-| 4 | home_team_id | uuid | YES | — |
-| 5 | away_team_id | uuid | YES | — |
-| 6 | game_date | date | YES | — |
-| 7 | game_time | time | YES | — |
-| 8 | location | text | YES | — |
-| 9 | diamond_id | uuid | YES | — |
-| 10 | home_score | int4 | YES | — |
-| 11 | away_score | int4 | YES | — |
-| 12 | status | text | NO | 'scheduled' |
-| 13 | is_playoff | bool | NO | false |
-| 14 | bracket_id | uuid | YES | — |
-| 15 | bracket_code | text | YES | — |
-| 16 | home_placeholder | text | YES | — |
-| 17 | away_placeholder | text | YES | — |
-| 18 | notes | text | YES | — |
-| 19 | home_slot_id | uuid | YES | — |
-| 20 | away_slot_id | uuid | YES | — |
-| 21 | score_submitted_by_user_id | uuid | YES | — |
-| 22 | score_submitted_by_email | text | YES | — |
-| 23 | score_submitted_at | timestamptz | YES | — |
-| 24 | score_submission_source | text | YES | — |
-
-**Foreign keys:** `tournament_id → tournaments.id`, `division_id → divisions.id`, `home_team_id → teams.id`, `away_team_id → teams.id`, `diamond_id → diamonds.id`, `home_slot_id → pool_slots.id`, `away_slot_id → pool_slots.id`
-
-**Checks:** `score_submission_source IN ('scorekeeper','admin_results','system') OR NULL`
-
-**Note (prod divergence):** Duplicate FK constraints exist on `division_id` and `away_team_id` — both `games_*_fkey` and `fk_games_*` names.
-
----
-
-### league_divisions
-**Module:** League | **RLS:** ENABLED | **Tenancy:** via `season_id → league_seasons.org_id`
-
-| # | Column | Type | Nullable | Default |
-|---|---|---|---|---|
-| 1 | id | uuid | NO | gen_random_uuid() |
-| 2 | season_id | uuid | NO | — |
-| 3 | name | text | NO | — |
-| 4 | capacity | int4 | YES | — |
-| 5 | sort_order | int4 | NO | 0 |
-| 6 | created_at | timestamptz | NO | now() |
-
-**Foreign keys:** `season_id → league_seasons.id`
-
----
-
-### league_email_log
-**Module:** League | **RLS:** ENABLED | **Tenancy:** direct `org_id`
-
-| # | Column | Type | Nullable | Default |
-|---|---|---|---|---|
-| 1 | id | uuid | NO | gen_random_uuid() |
-| 2 | org_id | uuid | NO | — |
-| 3 | season_id | uuid | NO | — |
-| 4 | sent_by | uuid | NO | — |
-| 5 | sent_at | timestamptz | NO | now() |
-| 6 | subject | text | NO | — |
-| 7 | scope | text | NO | — |
-| 8 | audience | text | NO | — |
-| 9 | count_sent | int4 | NO | 0 |
-| 10 | count_skipped | int4 | NO | 0 |
-
-**Foreign keys:** `org_id → organizations.id`, `season_id → league_seasons.id`
-
----
-
-### league_games
-**Module:** League | **RLS:** ENABLED | **Tenancy:** direct `org_id`
-
-| # | Column | Type | Nullable | Default |
-|---|---|---|---|---|
-| 1 | id | uuid | NO | gen_random_uuid() |
-| 2 | season_id | uuid | NO | — |
-| 3 | division_id | uuid | NO | — |
-| 4 | home_team_id | uuid | NO | — |
-| 5 | away_team_id | uuid | NO | — |
-| 6 | scheduled_at | timestamptz | YES | — |
-| 7 | location | text | YES | — |
-| 8 | home_score | int4 | YES | — |
-| 9 | away_score | int4 | YES | — |
-| 10 | status | text | NO | 'scheduled' |
-| 11 | notes | text | YES | — |
-| 12 | created_at | timestamptz | NO | now() |
-| 13 | updated_at | timestamptz | NO | now() |
-| 14 | org_id | uuid | NO | — |
-
-**Foreign keys:** `season_id → league_seasons.id`, `division_id → league_divisions.id`, `home_team_id → league_teams.id`, `away_team_id → league_teams.id`, `org_id → organizations.id`
-
-**Checks:** `status IN ('scheduled','completed','cancelled','postponed')`
-
----
-
-### league_notification_log
-**Module:** League | **RLS:** ENABLED | **Tenancy:** via `season_id → league_seasons.org_id`
-
-| # | Column | Type | Nullable | Default |
-|---|---|---|---|---|
-| 1 | id | uuid | NO | gen_random_uuid() |
-| 2 | season_id | uuid | NO | — |
-| 3 | sent_by | uuid | YES | — |
-| 4 | audience_type | text | NO | — |
-| 5 | audience_label | text | YES | — |
-| 6 | subject | text | NO | — |
-| 7 | recipient_count | int4 | NO | — |
-| 8 | sent_at | timestamptz | NO | now() |
-
-**Foreign keys:** `season_id → league_seasons.id`
-
----
-
-### league_practices
-**Module:** League | **RLS:** ENABLED | **Tenancy:** direct `org_id`
-
-| # | Column | Type | Nullable | Default |
-|---|---|---|---|---|
-| 1 | id | uuid | NO | gen_random_uuid() |
-| 2 | season_id | uuid | NO | — |
-| 3 | division_id | uuid | YES | — |
-| 4 | team_id | uuid | NO | — |
-| 5 | scheduled_at | timestamptz | YES | — |
-| 6 | ends_at | timestamptz | YES | — |
-| 7 | location | text | YES | — |
-| 8 | notes | text | YES | — |
-| 9 | status | text | NO | 'scheduled' |
-| 10 | recurrence_group_id | uuid | YES | — |
-| 11 | created_at | timestamptz | NO | now() |
-| 12 | updated_at | timestamptz | NO | now() |
-| 13 | org_id | uuid | NO | — |
-
-**Foreign keys:** `season_id → league_seasons.id`, `division_id → league_divisions.id`, `team_id → league_teams.id`, `org_id → organizations.id`
-
-**Checks:** `status IN ('scheduled','cancelled')`
-
----
-
-### league_registrations
-**Module:** League | **RLS:** ENABLED | **Tenancy:** via `season_id → league_seasons.org_id`
-
-| # | Column | Type | Nullable | Default |
-|---|---|---|---|---|
-| 1 | id | uuid | NO | gen_random_uuid() |
-| 2 | season_id | uuid | NO | — |
-| 3 | division_id | uuid | YES | — |
-| 4 | player_first_name | text | NO | — |
-| 5 | player_last_name | text | NO | — |
-| 6 | player_date_of_birth | date | YES | — |
-| 7 | player_jersey_pref | text | YES | — |
-| 8 | player_position_pref | text | YES | — |
-| 9 | player_notes | text | YES | — |
-| 10 | guardian_first_name | text | NO | — |
-| 11 | guardian_last_name | text | NO | — |
-| 12 | guardian_email | text | NO | — |
-| 13 | guardian_phone | text | YES | — |
-| 14 | status | text | NO | 'pending_review' |
-| 15 | waitlist_position | int4 | YES | — |
-| 16 | team_id | uuid | YES | — |
-| 17 | registration_fee_paid | bool | NO | false |
-| 18 | fee_entry_id | uuid | YES | — |
-| 19 | admin_notes | text | YES | — |
-| 20 | source | text | NO | 'public_form' |
-| 21 | registered_at | timestamptz | NO | now() |
-| 22 | updated_at | timestamptz | NO | now() |
-
-**Foreign keys:** `season_id → league_seasons.id`, `division_id → league_divisions.id`, `team_id → league_teams.id`
-
-**Checks:** `status IN ('pending_review','active','waitlisted','declined','withdrawn')`; `source IN ('public_form','admin_manual')`
-
----
-
-### league_seasons
-**Module:** League | **RLS:** ENABLED | **Tenancy:** direct `org_id`
-
-| # | Column | Type | Nullable | Default |
-|---|---|---|---|---|
-| 1 | id | uuid | NO | gen_random_uuid() |
-| 2 | org_id | uuid | NO | — |
-| 3 | name | text | NO | — |
-| 4 | slug | text | NO | — |
-| 5 | sport | text | NO | 'softball' |
-| 6 | division | text | YES | — |
-| 7 | status | text | NO | 'draft' |
-| 8 | description | text | YES | — |
-| 9 | registration_fee | numeric | YES | — |
-| 10 | auto_generate_fees | bool | NO | false |
-| 11 | auto_approve_under_capacity | bool | NO | false |
-| 12 | auto_promote_waitlist | bool | NO | false |
-| 13 | registration_open_at | timestamptz | YES | — |
-| 14 | registration_close_at | timestamptz | YES | — |
-| 15 | season_start_date | date | YES | — |
-| 16 | season_end_date | date | YES | — |
-| 17 | waiver_text | text | YES | — |
-| 18 | created_at | timestamptz | NO | now() |
-| 19 | updated_at | timestamptz | NO | now() |
-| 20 | draft_state | jsonb | YES | — |
-
-**Foreign keys:** `org_id → organizations.id`
-
-**Checks:** `status IN ('draft','registration_open','registration_closed','active','completed','archived')`
-
----
-
-### league_teams
-**Module:** League | **RLS:** ENABLED | **Tenancy:** via `season_id → league_seasons.org_id`
-
-| # | Column | Type | Nullable | Default |
-|---|---|---|---|---|
-| 1 | id | uuid | NO | gen_random_uuid() |
-| 2 | season_id | uuid | NO | — |
-| 3 | division_id | uuid | NO | — |
-| 4 | name | text | NO | — |
-| 5 | color | text | YES | — |
-| 6 | coach_name | text | YES | — |
-| 7 | sort_order | int4 | NO | 0 |
-| 8 | created_at | timestamptz | NO | now() |
-
-**Foreign keys:** `season_id → league_seasons.id`, `division_id → league_divisions.id`
-
----
-
-### org_audit_log
-**Module:** Platform/Org Core | **RLS:** ENABLED | **Tenancy:** direct `org_id`
-
-| # | Column | Type | Nullable | Default |
-|---|---|---|---|---|
-| 1 | id | uuid | NO | gen_random_uuid() |
-| 2 | org_id | uuid | NO | — |
-| 3 | actor_id | uuid | YES | — |
-| 4 | target_id | uuid | YES | — |
-| 5 | action | text | NO | — |
-| 6 | payload | jsonb | YES | — |
-| 7 | created_at | timestamptz | NO | now() |
-
-**Foreign keys:** `org_id → organizations.id`
-
----
-
-### org_budget_lines
-**Module:** Accounting | **RLS:** ENABLED | **Tenancy:** direct `org_id`
-
-| # | Column | Type | Nullable | Default |
-|---|---|---|---|---|
-| 1 | id | uuid | NO | gen_random_uuid() |
-| 2 | org_id | uuid | NO | — |
-| 3 | season_year | int4 | NO | — |
-| 4 | category_id | uuid | YES | — |
-| 5 | item_id | uuid | YES | — |
-| 6 | description | text | NO | — |
-| 7 | total_amount | numeric | NO | — |
-| 8 | notes | text | YES | — |
-| 9 | sort_order | int4 | NO | 0 |
-| 10 | created_at | timestamptz | NO | now() |
-| 11 | updated_at | timestamptz | NO | now() |
-
-**Foreign keys:** `org_id → organizations.id`, `category_id → budget_categories.id`, `item_id → budget_items.id`
-
-**Checks:** `total_amount > 0`
-
----
-
-### org_budget_periods
-**Module:** Accounting | **RLS:** ENABLED | **Tenancy:** via `budget_line_id → org_budget_lines.org_id`
-
-| # | Column | Type | Nullable | Default |
-|---|---|---|---|---|
-| 1 | id | uuid | NO | gen_random_uuid() |
-| 2 | budget_line_id | uuid | NO | — |
-| 3 | period_label | text | NO | — |
-| 4 | period_date | date | YES | — |
-| 5 | amount | numeric | NO | — |
-| 6 | sort_order | int4 | NO | 0 |
-| 7 | created_at | timestamptz | NO | now() |
-
-**Foreign keys:** `budget_line_id → org_budget_lines.id`
-
-**Checks:** `amount > 0`
-
----
-
-### org_internal_notes
-**Module:** Platform/Org Core | **RLS:** ENABLED | **Tenancy:** direct `org_id`
-
-| # | Column | Type | Nullable | Default |
-|---|---|---|---|---|
-| 1 | id | uuid | NO | gen_random_uuid() |
-| 2 | org_id | uuid | NO | — |
-| 3 | body | text | NO | — |
-| 4 | created_by_email | text | NO | — |
-| 5 | updated_by_email | text | YES | — |
-| 6 | created_at | timestamptz | NO | now() |
-| 7 | updated_at | timestamptz | NO | now() |
-| 8 | deleted_at | timestamptz | YES | — |
-| 9 | deleted_by_email | text | YES | — |
-
-**Foreign keys:** `org_id → organizations.id`
-
----
-
-### org_member_rep_group_scopes
-**Module:** Rep Teams | **RLS:** ENABLED | **Tenancy:** via `member_id → organization_members.organization_id`
-
-| # | Column | Type | Nullable | Default |
-|---|---|---|---|---|
-| 1 | member_id | uuid | NO | — |
-| 2 | group_id | uuid | NO | — |
-
-**Foreign keys:** `member_id → organization_members.id`, `group_id → rep_team_groups.id`
-
-**Note:** Composite PK (member_id, group_id). Scopes an org member's rep-team access to specific groups.
-
----
-
-### org_member_tournament_assignments
-**Module:** Platform/Org Core | **RLS:** ENABLED | **Tenancy:** via `org_member_id → organization_members.organization_id`
-
-| # | Column | Type | Nullable | Default |
-|---|---|---|---|---|
-| 1 | id | uuid | NO | gen_random_uuid() |
-| 2 | org_member_id | uuid | NO | — |
-| 3 | tournament_id | uuid | NO | — |
-| 4 | created_at | timestamptz | NO | now() |
-
-**Foreign keys:** `org_member_id → organization_members.id`, `tournament_id → tournaments.id`
-
----
-
-### org_overrides
-**Module:** Platform/Org Core | **RLS:** ENABLED | **Tenancy:** direct `org_id`
-
-| # | Column | Type | Nullable | Default |
-|---|---|---|---|---|
-| 1 | id | uuid | NO | gen_random_uuid() |
-| 2 | org_id | uuid | NO | — |
-| 3 | type | text | NO | — |
-| 4 | value | text | YES | — |
-| 5 | expires_at | timestamptz | YES | — |
-| 6 | reason | text | NO | — |
-| 7 | created_by | text | NO | — |
-| 8 | created_at | timestamptz | NO | now() |
-| 9 | revoked_at | timestamptz | YES | — |
-| 10 | revoked_by | text | YES | — |
-
-**Foreign keys:** `org_id → organizations.id`
-
-**Checks:** `type IN ('subscription_status','comp_period')`
-
----
-
-### org_payees
-**Module:** Accounting | **RLS:** ENABLED | **Tenancy:** direct `org_id`
-
-| # | Column | Type | Nullable | Default |
-|---|---|---|---|---|
-| 1 | id | uuid | NO | gen_random_uuid() |
-| 2 | org_id | uuid | NO | — |
-| 3 | team_id | uuid | YES | — |
-| 4 | name | text | NO | — |
-| 5 | notes | text | YES | — |
-| 6 | is_active | bool | NO | true |
-| 7 | created_by | uuid | YES | — |
-| 8 | created_at | timestamptz | NO | now() |
-
-**Foreign keys:** `org_id → organizations.id`, `team_id → rep_teams.id`
-
-**Checks:** `char_length(TRIM(name)) > 0 AND char_length(name) <= 200`
-
----
-
-### org_public_site_content
-**Module:** Platform/Org Core | **RLS:** ENABLED | **Tenancy:** direct `org_id`
-
-| # | Column | Type | Nullable | Default |
-|---|---|---|---|---|
-| 1 | id | uuid | NO | gen_random_uuid() |
-| 2 | org_id | uuid | NO | — |
-| 3 | tagline | text | YES | — |
-| 4 | description | text | YES | — |
-| 5 | contact_email | text | YES | — |
-| 6 | social_instagram | text | YES | — |
-| 7 | social_facebook | text | YES | — |
-| 8 | social_x | text | YES | — |
-| 9 | social_website | text | YES | — |
-| 10 | show_upcoming_tournaments | bool | NO | true |
-| 11 | show_archives_link | bool | NO | true |
-| 12 | created_at | timestamptz | NO | now() |
-| 13 | updated_at | timestamptz | NO | now() |
-
-**Foreign keys:** `org_id → organizations.id`
-
----
-
-### organization_members
-**Module:** Platform/Org Core | **RLS:** ENABLED | **Tenancy:** via `organization_id`
-
-| # | Column | Type | Nullable | Default |
-|---|---|---|---|---|
-| 1 | id | uuid | NO | gen_random_uuid() |
-| 2 | organization_id | uuid | NO | — |
-| 3 | user_id | uuid | NO | — |
-| 4 | role | text | NO | 'admin' |
-| 5 | invited_at | timestamptz | NO | now() |
-| 6 | accepted_at | timestamptz | YES | — |
-| 7 | capabilities | jsonb | YES | — |
-| 8 | status | text | NO | 'active' |
-| 9 | display_name | text | YES | — |
-
-**Foreign keys:** `organization_id → organizations.id`
-
-**Checks:** `status IN ('invited','active','suspended')`; `char_length(display_name) <= 60`
-
----
-
-### organizations
-**Module:** Platform/Org Core | **RLS:** ENABLED | **Tenancy:** root table (IS the tenant)
-
-| # | Column | Type | Nullable | Default |
-|---|---|---|---|---|
-| 1 | id | uuid | NO | gen_random_uuid() |
-| 2 | name | text | NO | — |
-| 3 | slug | text | NO | — |
-| 4 | logo_url | text | YES | — |
-| 5 | plan_id | text | NO | 'starter' |
-| 6 | stripe_customer_id | text | YES | — |
-| 7 | stripe_subscription_id | text | YES | — |
-| 8 | subscription_status | text | NO | 'active' |
-| 9 | tournament_limit | int4 | NO | 1 |
-| 10 | is_public | bool | NO | true |
-| 11 | created_at | timestamptz | NO | now() |
-| 12 | theme_preset | text | YES | 'platform' |
-| 13 | theme_primary | text | YES | — |
-| 14 | theme_accent | text | YES | — |
-| 15 | hero_banner_url | text | YES | — |
-| 16 | theme_font | text | YES | 'system' |
-| 17 | theme_card_style | text | YES | 'default' |
-| 18 | require_score_finalization | bool | NO | false |
-| 19 | onboarding_completed_at | timestamptz | YES | — |
-| 20 | enabled_addons | jsonb | NO | '[]' |
-| 21 | internal_notes | text | YES | — |
-| 22 | billing_suspended_at | timestamptz | YES | — |
-| 23 | billing_suspension_reason | text | YES | — |
-| 24 | subscription_period | text | YES | — |
-| 25 | current_period_end | timestamptz | YES | — |
-| 26 | rep_team_subscription_item_id | text | YES | — |
-| 27 | pdf_settings | jsonb | YES | '{}' |
-| 28 | account_kind | text | NO | 'organization' |
-| 29 | team_workspace_status | text | YES | — |
-| 30 | is_discoverable | bool | NO | true |
-
-**Checks:** `account_kind IN ('organization','team_workspace')`; `subscription_period IN ('monthly','annual')`; `team_workspace_status IN ('active','linked','org_owned','archived') OR NULL`
-
-**Note:** `plan_id` values in use: `'tournament'`, `'team'`, `'tournament_plus'`, `'league'`, `'club'`. Default `'starter'` is legacy.
-
----
-
-### plan_config_overrides
-**Module:** Platform/Org Core | **RLS:** ENABLED | **Tenancy:** global (platform-admin only)
-
-| # | Column | Type | Nullable | Default |
-|---|---|---|---|---|
-| 1 | id | uuid | NO | gen_random_uuid() |
-| 2 | plan_id | text | NO | — |
-| 3 | tournament_limit | int4 | YES | — |
-| 4 | seat_limit | int4 | YES | — |
-| 5 | trial_days | int4 | YES | — |
-| 6 | updated_at | timestamptz | NO | now() |
-| 7 | updated_by_email | text | YES | — |
-| 8 | last_change_note | text | YES | — |
-
----
-
-### plan_gating
-**Module:** Platform/Org Core | **RLS:** ENABLED | **Tenancy:** global (platform-admin only)
-
-| # | Column | Type | Nullable | Default |
-|---|---|---|---|---|
-| 1 | plan_key | text | NO | — |
-| 2 | gating_status | text | NO | 'early_access' |
-| 3 | updated_at | timestamptz | YES | now() |
-| 4 | updated_by_email | text | YES | — |
-| 5 | last_change_note | text | YES | — |
-
-**Checks:** `plan_key IN ('tournament','team','tournament_plus','league','club')`; `gating_status IN ('live','early_access')`
-
----
-
-### platform_addon_catalog
-**Module:** Platform/Org Core | **RLS:** ENABLED | **Tenancy:** global (platform-admin only)
-
-| # | Column | Type | Nullable | Default |
-|---|---|---|---|---|
-| 1 | id | uuid | NO | gen_random_uuid() |
-| 2 | addon_key | text | NO | — |
-| 3 | label | text | NO | — |
-| 4 | description | text | YES | — |
-| 5 | module_key | text | YES | — |
-| 6 | status | text | NO | 'planned' |
-| 7 | default_included_plans | text[] | NO | '{}' |
-| 8 | pricing_model | text | NO | 'custom' |
-| 9 | monthly_price | numeric | YES | — |
-| 10 | annual_price | numeric | YES | — |
-| 11 | effective_at | timestamptz | YES | — |
-| 12 | notes | text | YES | — |
-| 13 | created_at | timestamptz | NO | now() |
-| 14 | updated_at | timestamptz | NO | now() |
-
-**Checks:** `status IN ('planned','draft','live','retired')`; `pricing_model IN ('included','flat','per_team','per_seat','custom')`
-
----
-
-### platform_admin_visits
-**Module:** Platform/Org Core | **RLS:** ENABLED | **Tenancy:** global (platform-admin only)
-
-| # | Column | Type | Nullable | Default |
-|---|---|---|---|---|
-| 1 | id | uuid | NO | gen_random_uuid() |
-| 2 | actor_user_id | uuid | YES | — |
-| 3 | actor_email | text | NO | — |
-| 4 | path | text | NO | '/platform-admin' |
-| 5 | visited_at | timestamptz | NO | now() |
-
----
-
-### platform_audit_log
-**Module:** Platform/Org Core | **RLS:** ENABLED | **Tenancy:** optional `org_id`
-
-| # | Column | Type | Nullable | Default |
-|---|---|---|---|---|
-| 1 | id | uuid | NO | gen_random_uuid() |
-| 2 | actor_email | text | NO | — |
-| 3 | org_id | uuid | YES | — |
-| 4 | action | text | NO | — |
-| 5 | field | text | YES | — |
-| 6 | old_value | jsonb | YES | — |
-| 7 | new_value | jsonb | YES | — |
-| 8 | created_at | timestamptz | NO | now() |
-
-**Foreign keys:** `org_id → organizations.id`
-
----
-
-### platform_bulk_operations
-**Module:** Platform/Org Core | **RLS:** ENABLED | **Tenancy:** global (platform-admin only)
-
-| # | Column | Type | Nullable | Default |
-|---|---|---|---|---|
-| 1 | id | uuid | NO | gen_random_uuid() |
-| 2 | action_type | text | NO | — |
-| 3 | status | text | NO | 'completed' |
-| 4 | target_count | int4 | NO | 0 |
-| 5 | success_count | int4 | NO | 0 |
-| 6 | failure_count | int4 | NO | 0 |
-| 7 | reason | text | NO | — |
-| 8 | parameters | jsonb | NO | '{}' |
-| 9 | result_summary | jsonb | NO | '{}' |
-| 10 | created_by_email | text | NO | — |
-| 11 | created_at | timestamptz | NO | now() |
-| 12 | completed_at | timestamptz | YES | — |
-
-**Checks:** `status IN ('completed','partial_failed','failed')`; `action_type IN ('subscription_status_override','comp_period','plan_change','module_addon_enablement')`
-
----
-
-### platform_catalog_campaigns
-**Module:** Platform/Org Core | **RLS:** ENABLED | **Tenancy:** global (platform-admin only)
-
-| # | Column | Type | Nullable | Default |
-|---|---|---|---|---|
-| 1 | id | uuid | NO | gen_random_uuid() |
-| 2 | campaign_key | text | NO | — |
-| 3 | title | text | NO | — |
-| 4 | campaign_type | text | NO | — |
-| 5 | status | text | NO | 'draft' |
-| 6 | target_plan_ids | text[] | NO | '{}' |
-| 7 | starts_at | timestamptz | YES | — |
-| 8 | ends_at | timestamptz | YES | — |
-| 9 | coupon_code | text | YES | — |
-| 10 | discount_summary | text | YES | — |
-| 11 | trial_days | int4 | YES | — |
-| 12 | notes | text | YES | — |
-| 13 | created_by_email | text | NO | — |
-| 14 | updated_by_email | text | YES | — |
-| 15 | created_at | timestamptz | NO | now() |
-| 16 | updated_at | timestamptz | NO | now() |
-
-**Checks:** `campaign_type IN ('coupon','promo','trial','launch','retention')`; `status IN ('draft','scheduled','active','paused','ended')`; `trial_days >= 0 OR NULL`
-
----
-
-### platform_catalog_change_applications
-**Module:** Platform/Org Core | **RLS:** ENABLED | **Tenancy:** global (platform-admin only)
-
-| # | Column | Type | Nullable | Default |
-|---|---|---|---|---|
-| 1 | id | uuid | NO | gen_random_uuid() |
-| 2 | change_request_id | uuid | NO | — |
-| 3 | surface | text | NO | — |
-| 4 | target_key | text | NO | — |
-| 5 | actor_email | text | NO | — |
-| 6 | applied_payload | jsonb | NO | '{}' |
-| 7 | applied_at | timestamptz | NO | now() |
-
-**Foreign keys:** `change_request_id → platform_catalog_change_requests.id`
-
-**Checks:** `surface IN ('plan_gating','plan_config','stripe_price','feature_matrix')`
-
----
-
-### platform_catalog_change_requests
-**Module:** Platform/Org Core | **RLS:** ENABLED | **Tenancy:** global (platform-admin only)
-
-| # | Column | Type | Nullable | Default |
-|---|---|---|---|---|
-| 1 | id | uuid | NO | gen_random_uuid() |
-| 2 | request_type | text | NO | — |
-| 3 | title | text | NO | — |
-| 4 | description | text | YES | — |
-| 5 | status | text | NO | 'draft' |
-| 6 | priority | text | NO | 'medium' |
-| 7 | target_plan_id | text | YES | — |
-| 8 | target_addon_key | text | YES | — |
-| 9 | target_version_id | uuid | YES | — |
-| 10 | effective_at | timestamptz | YES | — |
-| 11 | impact_summary | text | YES | — |
-| 12 | proposal | jsonb | NO | '{}' |
-| 13 | submitted_by_email | text | YES | — |
-| 14 | submitted_at | timestamptz | YES | — |
-| 15 | reviewed_by_email | text | YES | — |
-| 16 | reviewed_at | timestamptz | YES | — |
-| 17 | implementation_notes | text | YES | — |
-| 18 | created_by_email | text | NO | — |
-| 19 | updated_by_email | text | YES | — |
-| 20 | created_at | timestamptz | NO | now() |
-| 21 | updated_at | timestamptz | NO | now() |
-
-**Foreign keys:** `target_version_id → platform_plan_versions.id`
-
-**Checks:** `request_type IN ('plan_version','feature_matrix','addon','pricing','grandfathering','campaign','trial')`; `status IN ('draft','needs_review','approved','rejected','implemented','canceled')`; `priority IN ('low','medium','high','launch_blocker')`
-
----
-
-### platform_events
-**Module:** Platform/Org Core | **RLS:** ENABLED | **Tenancy:** optional `org_id`
-
-| # | Column | Type | Nullable | Default |
-|---|---|---|---|---|
-| 1 | id | uuid | NO | gen_random_uuid() |
-| 2 | event_type | text | NO | — |
-| 3 | source | text | NO | 'app' |
-| 4 | source_event_id | text | YES | — |
-| 5 | org_id | uuid | YES | — |
-| 6 | actor_user_id | uuid | YES | — |
-| 7 | actor_email | text | YES | — |
-| 8 | previous_plan_id | text | YES | — |
-| 9 | plan_id | text | YES | — |
-| 10 | previous_subscription_status | text | YES | — |
-| 11 | subscription_status | text | YES | — |
-| 12 | metadata | jsonb | NO | '{}' |
-| 13 | occurred_at | timestamptz | NO | now() |
-| 14 | created_at | timestamptz | NO | now() |
-
-**Foreign keys:** `org_id → organizations.id`
-
----
-
-### platform_metric_snapshots
-**Module:** Platform/Org Core | **RLS:** ENABLED | **Tenancy:** global (platform-admin only)
-
-| # | Column | Type | Nullable | Default |
-|---|---|---|---|---|
-| 1 | id | uuid | NO | gen_random_uuid() |
-| 2 | snapshot_date | date | NO | — |
-| 3 | metrics | jsonb | NO | '{}' |
-| 4 | source | text | NO | 'manual' |
-| 5 | created_by_email | text | YES | — |
-| 6 | created_at | timestamptz | NO | now() |
-
----
-
-### platform_plan_module_entitlements
-**Module:** Platform/Org Core | **RLS:** ENABLED | **Tenancy:** global (platform-admin only)
-
-| # | Column | Type | Nullable | Default |
-|---|---|---|---|---|
-| 1 | plan_id | text | NO | — |
-| 2 | module_key | text | NO | — |
-| 3 | included | bool | NO | false |
-| 4 | updated_by_email | text | YES | — |
-| 5 | updated_at | timestamptz | NO | now() |
-
-**Note:** Composite PK (plan_id, module_key). Defines which modules are included in each plan.
-
-**Checks:** `plan_id IN ('tournament','team','tournament_plus','league','club')`; `module_key IN ('module_tournaments','module_communications','module_members','module_public_site','module_house_league','module_accounting','module_rep_teams')`
-
----
-
-### platform_plan_versions
-**Module:** Platform/Org Core | **RLS:** ENABLED | **Tenancy:** global (platform-admin only)
-
-| # | Column | Type | Nullable | Default |
-|---|---|---|---|---|
-| 1 | id | uuid | NO | gen_random_uuid() |
-| 2 | version_key | text | NO | — |
-| 3 | title | text | NO | — |
-| 4 | description | text | YES | — |
-| 5 | status | text | NO | 'draft' |
-| 6 | effective_at | timestamptz | YES | — |
-| 7 | published_at | timestamptz | YES | — |
-| 8 | created_by_email | text | YES | — |
-| 9 | snapshot | jsonb | NO | '{}' |
-| 10 | notes | text | YES | — |
-| 11 | created_at | timestamptz | NO | now() |
-| 12 | updated_at | timestamptz | NO | now() |
-
-**Checks:** `status IN ('draft','published','scheduled','archived')`
-
----
-
-### platform_users
-**Module:** Platform/Org Core | **RLS:** ENABLED | **Tenancy:** global (platform-admin only)
-
-| # | Column | Type | Nullable | Default |
-|---|---|---|---|---|
-| 1 | id | uuid | NO | gen_random_uuid() |
-| 2 | email | text | NO | — |
-| 3 | display_name | text | YES | — |
-| 4 | role | text | NO | 'support' |
-| 5 | is_active | bool | NO | true |
-| 6 | invited_by | text | YES | — |
-| 7 | created_at | timestamptz | NO | now() |
-| 8 | updated_at | timestamptz | NO | now() |
-
-**Checks:** `role IN ('super_admin','support','billing','product','growth','read_only')`
-
----
+id (uuid), tournament_id (uuid) → tournaments.id, division_id (uuid) → divisions.id, home_team_id (uuid) → teams.id, away_team_id (uuid) → teams.id, game_date, game_time (time without time zone), location, diamond_id (uuid) → diamonds.id, home_score (integer), away_score (integer), status, is_playoff (boolean), bracket_id (uuid), bracket_code, home_placeholder, away_placeholder, notes, home_slot_id (uuid) → pool_slots.id, away_slot_id (uuid) → pool_slots.id, score_submitted_by_user_id (uuid), score_submitted_by_email, score_submitted_at, score_submission_source, venue_facility_id (uuid) → venue_facilities.id
+- Indexes: games_score_submitted_at_idx, games_venue_facility_id_idx, idx_games_away_slot_id, idx_games_home_slot_id
+
+### org_venue_facilities
+id (uuid), org_venue_id (uuid) → org_venues.id NOT NULL, org_id (uuid) → organizations.id NOT NULL, name NOT NULL, facility_type, display_order (integer), notes, created_at
+- Indexes: org_venue_facilities_org_id_idx, org_venue_facilities_org_venue_id_idx
+
+### org_venues
+id (uuid), org_id (uuid) → organizations.id NOT NULL, name NOT NULL, address, notes, is_active (boolean), created_at, updated_at
+- Indexes: org_venues_org_id_idx
 
 ### pool_slots
-**Module:** Tournament | **RLS:** ENABLED | **Tenancy:** via `tournament_id → tournaments.org_id`
-
-| # | Column | Type | Nullable | Default |
-|---|---|---|---|---|
-| 1 | id | uuid | NO | gen_random_uuid() |
-| 2 | pool_id | uuid | NO | — |
-| 3 | tournament_id | uuid | NO | — |
-| 4 | division_id | uuid | NO | — |
-| 5 | slot_number | int4 | NO | — |
-| 6 | display_name | text | NO | — |
-| 7 | team_id | uuid | YES | — |
-| 8 | created_at | timestamptz | YES | now() |
-
-**Foreign keys:** `pool_id → pools.id`, `tournament_id → tournaments.id`, `division_id → divisions.id`, `team_id → teams.id`
-
----
+id (uuid), pool_id (uuid) → pools.id NOT NULL, tournament_id (uuid) → tournaments.id NOT NULL, division_id (uuid) → divisions.id NOT NULL, slot_number (integer) NOT NULL, display_name NOT NULL, team_id (uuid) → teams.id, created_at
+- Indexes: idx_pool_slots_pool_id, idx_pool_slots_team_id, idx_pool_slots_tournament_id, pool_slots_pool_id_slot_number_key
 
 ### pools
-**Module:** Tournament | **RLS:** ENABLED | **Tenancy:** via `division_id → divisions.tournament_id → tournaments.org_id`
-
-| # | Column | Type | Nullable | Default |
-|---|---|---|---|---|
-| 1 | id | uuid | NO | gen_random_uuid() |
-| 2 | division_id | uuid | NO | — |
-| 3 | name | text | NO | — |
-| 4 | display_order | int4 | NO | 0 |
-| 5 | created_at | timestamptz | NO | now() |
-
-**Foreign keys:** `division_id → divisions.id`
-
----
-
-### rep_allocation_installments
-**Module:** Rep Teams | **RLS:** ENABLED | **Tenancy:** direct `org_id`
-
-| # | Column | Type | Nullable | Default |
-|---|---|---|---|---|
-| 1 | id | uuid | NO | gen_random_uuid() |
-| 2 | split_id | uuid | NO | — |
-| 3 | installment_number | int4 | NO | — |
-| 4 | amount | numeric | NO | — |
-| 5 | due_date | date | NO | — |
-| 6 | paid_at | timestamptz | YES | — |
-| 7 | paid_by | uuid | YES | — |
-| 8 | accounting_entry_id | uuid | YES | — |
-| 9 | created_at | timestamptz | NO | now() |
-| 10 | reminder_sent_at | timestamptz | YES | — |
-| 11 | org_id | uuid | NO | — |
-| 12 | team_id | uuid | YES | — |
-
-**Foreign keys:** `split_id → rep_allocation_splits.id`, `accounting_entry_id → accounting_entries.id`, `org_id → organizations.id`, `team_id → rep_teams.id`
-
-**Checks:** `amount > 0`
-
----
-
-### rep_allocation_splits
-**Module:** Rep Teams | **RLS:** ENABLED | **Tenancy:** direct `org_id`
-
-| # | Column | Type | Nullable | Default |
-|---|---|---|---|---|
-| 1 | id | uuid | NO | gen_random_uuid() |
-| 2 | allocation_id | uuid | NO | — |
-| 3 | team_id | uuid | NO | — |
-| 4 | program_year_id | uuid | NO | — |
-| 5 | org_id | uuid | NO | — |
-| 6 | amount | numeric | NO | — |
-| 7 | split_method | text | NO | — |
-| 8 | split_value | numeric | NO | — |
-| 9 | payment_schedule | text | NO | 'standard' |
-| 10 | notes | text | YES | — |
-| 11 | created_at | timestamptz | NO | now() |
-
-**Foreign keys:** `allocation_id → rep_cost_allocations.id`, `team_id → rep_teams.id`, `program_year_id → rep_program_years.id`, `org_id → organizations.id`
-
-**Checks:** `split_method IN ('percentage','sessions','fixed')`; `payment_schedule IN ('standard','custom')`; `amount > 0`
-
----
-
-### rep_budget_lines
-**Module:** Rep Teams | **RLS:** ENABLED | **Tenancy:** direct `org_id`
-
-| # | Column | Type | Nullable | Default |
-|---|---|---|---|---|
-| 1 | id | uuid | NO | gen_random_uuid() |
-| 2 | org_id | uuid | NO | — |
-| 3 | team_id | uuid | NO | — |
-| 4 | program_year_id | uuid | NO | — |
-| 5 | category_id | uuid | YES | — |
-| 6 | item_id | uuid | YES | — |
-| 7 | description | text | NO | — |
-| 8 | total_amount | numeric | NO | — |
-| 9 | notes | text | YES | — |
-| 10 | sort_order | int4 | NO | 0 |
-| 11 | created_at | timestamptz | NO | now() |
-| 12 | updated_at | timestamptz | NO | now() |
-
-**Foreign keys:** `org_id → organizations.id`, `team_id → rep_teams.id`, `program_year_id → rep_program_years.id`, `category_id → budget_categories.id`, `item_id → budget_items.id`
-
-**Checks:** `total_amount > 0`
-
----
-
-### rep_budget_periods
-**Module:** Rep Teams | **RLS:** ENABLED | **Tenancy:** via `budget_line_id → rep_budget_lines.org_id`
-
-| # | Column | Type | Nullable | Default |
-|---|---|---|---|---|
-| 1 | id | uuid | NO | gen_random_uuid() |
-| 2 | budget_line_id | uuid | NO | — |
-| 3 | period_label | text | NO | — |
-| 4 | period_date | date | YES | — |
-| 5 | amount | numeric | NO | — |
-| 6 | sort_order | int4 | NO | 0 |
-| 7 | created_at | timestamptz | NO | now() |
-
-**Foreign keys:** `budget_line_id → rep_budget_lines.id`
-
-**Checks:** `amount > 0`
-
----
-
-### rep_cost_allocations
-**Module:** Rep Teams | **RLS:** ENABLED | **Tenancy:** direct `org_id`
-
-| # | Column | Type | Nullable | Default |
-|---|---|---|---|---|
-| 1 | id | uuid | NO | gen_random_uuid() |
-| 2 | org_id | uuid | NO | — |
-| 3 | source_entry_id | uuid | YES | — |
-| 4 | description | text | NO | — |
-| 5 | total_amount | numeric | NO | — |
-| 6 | created_by | uuid | YES | — |
-| 7 | created_at | timestamptz | NO | now() |
-| 8 | source_budget_line_id | uuid | YES | — |
-
-**Foreign keys:** `org_id → organizations.id`, `source_entry_id → accounting_entries.id`, `source_budget_line_id → org_budget_lines.id`
-
-**Checks:** `total_amount > 0`
-
----
-
-### rep_document_templates
-**Module:** Rep Teams | **RLS:** ENABLED | **Tenancy:** direct `org_id`
-
-| # | Column | Type | Nullable | Default |
-|---|---|---|---|---|
-| 1 | id | uuid | NO | gen_random_uuid() |
-| 2 | org_id | uuid | NO | — |
-| 3 | team_id | uuid | YES | — |
-| 4 | name | text | NO | — |
-| 5 | document_type | text | NO | — |
-| 6 | storage_path | text | NO | — |
-| 7 | file_name | text | NO | — |
-| 8 | file_size | int8 | NO | — |
-| 9 | is_active | bool | NO | true |
-| 10 | published_by | uuid | YES | — |
-| 11 | created_at | timestamptz | NO | now() |
-
-**Foreign keys:** `org_id → organizations.id`, `team_id → rep_teams.id`
-
-**Checks:** `document_type IN ('waiver','medical_consent','code_of_conduct','other')`
-
----
-
-### rep_dues_credits
-**Module:** Rep Teams | **RLS:** ENABLED | **Tenancy:** via `program_year_id → rep_program_years.org_id`
-
-| # | Column | Type | Nullable | Default |
-|---|---|---|---|---|
-| 1 | id | uuid | NO | gen_random_uuid() |
-| 2 | program_year_id | uuid | NO | — |
-| 3 | player_id | uuid | NO | — |
-| 4 | amount | numeric | NO | — |
-| 5 | description | text | NO | — |
-| 6 | credit_date | date | NO | CURRENT_DATE |
-| 7 | credit_type | text | NO | 'contribution' |
-| 8 | notes | text | YES | — |
-| 9 | created_by | uuid | YES | — |
-| 10 | created_at | timestamptz | YES | now() |
-| 11 | fundraiser_entry_id | uuid | YES | — |
-
-**Foreign keys:** `program_year_id → rep_program_years.id`, `player_id → rep_roster_players.id`, `fundraiser_entry_id → rep_fundraiser_entries.id`
-
-**Checks:** `amount > 0`; `credit_type IN ('contribution','fundraiser','overpayment','other')`
-
----
-
-### rep_fundraiser_entries
-**Module:** Rep Teams | **RLS:** ENABLED | **Tenancy:** direct `org_id`
-
-| # | Column | Type | Nullable | Default |
-|---|---|---|---|---|
-| 1 | id | uuid | NO | gen_random_uuid() |
-| 2 | fundraiser_id | uuid | NO | — |
-| 3 | org_id | uuid | NO | — |
-| 4 | team_id | uuid | NO | — |
-| 5 | player_id | uuid | NO | — |
-| 6 | amount_raised | numeric | NO | — |
-| 7 | rebate_percent | numeric | NO | 0 |
-| 8 | rebate_amount | numeric | NO | 0 |
-| 9 | accounting_entry_id | uuid | YES | — |
-| 10 | credit_id | uuid | YES | — |
-| 11 | notes | text | YES | — |
-| 12 | created_at | timestamptz | NO | now() |
-| 13 | updated_at | timestamptz | NO | now() |
-
-**Foreign keys:** `fundraiser_id → rep_fundraisers.id`, `org_id → organizations.id`, `team_id → rep_teams.id`, `player_id → rep_roster_players.id`, `accounting_entry_id → accounting_entries.id`, `credit_id → rep_dues_credits.id` (constraint: `fk_fundraiser_entry_credit`)
-
-**Checks:** `amount_raised >= 0`
-
----
-
-### rep_fundraisers
-**Module:** Rep Teams | **RLS:** ENABLED | **Tenancy:** direct `org_id`
-
-| # | Column | Type | Nullable | Default |
-|---|---|---|---|---|
-| 1 | id | uuid | NO | gen_random_uuid() |
-| 2 | org_id | uuid | NO | — |
-| 3 | team_id | uuid | NO | — |
-| 4 | program_year_id | uuid | NO | — |
-| 5 | name | text | NO | — |
-| 6 | description | text | YES | — |
-| 7 | player_rebate_percent | numeric | NO | 0 |
-| 8 | start_date | date | YES | — |
-| 9 | end_date | date | YES | — |
-| 10 | is_active | bool | NO | true |
-| 11 | created_at | timestamptz | NO | now() |
-| 12 | updated_at | timestamptz | NO | now() |
-
-**Foreign keys:** `org_id → organizations.id`, `team_id → rep_teams.id`, `program_year_id → rep_program_years.id`
-
-**Checks:** `player_rebate_percent >= 0 AND player_rebate_percent <= 100`
-
----
-
-### rep_player_documents
-**Module:** Rep Teams | **RLS:** ENABLED | **Tenancy:** direct `org_id`
-
-| # | Column | Type | Nullable | Default |
-|---|---|---|---|---|
-| 1 | id | uuid | NO | gen_random_uuid() |
-| 2 | player_id | uuid | NO | — |
-| 3 | team_id | uuid | NO | — |
-| 4 | org_id | uuid | NO | — |
-| 5 | document_type | text | NO | — |
-| 6 | storage_path | text | NO | — |
-| 7 | file_name | text | NO | — |
-| 8 | file_size | int8 | NO | — |
-| 9 | template_id | uuid | YES | — |
-| 10 | uploaded_by | uuid | YES | — |
-| 11 | created_at | timestamptz | NO | now() |
-
-**Foreign keys:** `player_id → rep_roster_players.id`, `team_id → rep_teams.id`, `org_id → organizations.id`, `template_id → rep_document_templates.id`
-
-**Checks:** `document_type IN ('waiver','medical_consent','code_of_conduct','other')`
-
----
-
-### rep_player_dues_installments
-**Module:** Rep Teams | **RLS:** ENABLED | **Tenancy:** direct `org_id`
-
-| # | Column | Type | Nullable | Default |
-|---|---|---|---|---|
-| 1 | id | uuid | NO | gen_random_uuid() |
-| 2 | schedule_id | uuid | NO | — |
-| 3 | player_id | uuid | NO | — |
-| 4 | installment_number | int4 | NO | — |
-| 5 | amount | numeric | NO | — |
-| 6 | due_date | date | NO | — |
-| 7 | paid_at | timestamptz | YES | — |
-| 8 | reminder_sent_at | timestamptz | YES | — |
-| 9 | accounting_entry_id | uuid | YES | — |
-| 10 | created_at | timestamptz | NO | now() |
-| 11 | source | text | NO | 'manual' |
-| 12 | reminder_30_sent_at | timestamptz | YES | — |
-| 13 | reminder_7_sent_at | timestamptz | YES | — |
-| 14 | org_id | uuid | NO | — |
-| 15 | team_id | uuid | YES | — |
-
-**Foreign keys:** `schedule_id → rep_player_dues_schedules.id`, `player_id → rep_roster_players.id`, `accounting_entry_id → accounting_entries.id`, `org_id → organizations.id`, `team_id → rep_teams.id`
-
-**Checks:** `source IN ('manual','budget_generated')`; `amount > 0`
-
----
-
-### rep_player_dues_schedules
-**Module:** Rep Teams | **RLS:** ENABLED | **Tenancy:** direct `org_id`
-
-| # | Column | Type | Nullable | Default |
-|---|---|---|---|---|
-| 1 | id | uuid | NO | gen_random_uuid() |
-| 2 | program_year_id | uuid | NO | — |
-| 3 | player_id | uuid | NO | — |
-| 4 | team_id | uuid | NO | — |
-| 5 | org_id | uuid | NO | — |
-| 6 | total_amount | numeric | NO | — |
-| 7 | notes | text | YES | — |
-| 8 | created_at | timestamptz | NO | now() |
-| 9 | updated_at | timestamptz | NO | now() |
-| 10 | budget_line_id | uuid | YES | — |
-
-**Foreign keys:** `program_year_id → rep_program_years.id`, `player_id → rep_roster_players.id`, `team_id → rep_teams.id`, `org_id → organizations.id`, `budget_line_id → rep_budget_lines.id`
-
-**Checks:** `total_amount > 0`
-
----
-
-### rep_program_years
-**Module:** Rep Teams | **RLS:** ENABLED | **Tenancy:** direct `org_id`
-
-| # | Column | Type | Nullable | Default |
-|---|---|---|---|---|
-| 1 | id | uuid | NO | gen_random_uuid() |
-| 2 | team_id | uuid | NO | — |
-| 3 | org_id | uuid | NO | — |
-| 4 | name | text | NO | — |
-| 5 | year | int4 | NO | — |
-| 6 | status | text | NO | 'draft' |
-| 7 | tryout_open | bool | NO | false |
-| 8 | tryout_description | text | YES | — |
-| 9 | budget_amount | numeric | YES | — |
-| 10 | created_at | timestamptz | NO | now() |
-| 11 | updated_at | timestamptz | NO | now() |
-| 12 | auto_reminders_enabled | bool | NO | true |
-
-**Foreign keys:** `team_id → rep_teams.id`, `org_id → organizations.id`
-
-**Checks:** `status IN ('draft','active','completed','archived')`
-
----
-
-### rep_roster_players
-**Module:** Rep Teams | **RLS:** ENABLED | **Tenancy:** direct `org_id`
-
-| # | Column | Type | Nullable | Default |
-|---|---|---|---|---|
-| 1 | id | uuid | NO | gen_random_uuid() |
-| 2 | program_year_id | uuid | NO | — |
-| 3 | team_id | uuid | NO | — |
-| 4 | org_id | uuid | NO | — |
-| 5 | player_first_name | text | NO | — |
-| 6 | player_last_name | text | NO | — |
-| 7 | player_date_of_birth | date | YES | — |
-| 8 | player_number | text | YES | — |
-| 9 | guardian_first_name | text | NO | — |
-| 10 | guardian_last_name | text | NO | — |
-| 11 | guardian_email | text | NO | — |
-| 12 | guardian_phone | text | YES | — |
-| 13 | status | text | NO | 'active' |
-| 14 | source | text | NO | 'admin_manual' |
-| 15 | tryout_registration_id | uuid | YES | — |
-| 16 | notes | text | YES | — |
-| 17 | admin_notes | text | YES | — |
-| 18 | created_at | timestamptz | NO | now() |
-| 19 | updated_at | timestamptz | NO | now() |
-| 20 | primary_position | text | YES | — |
-| 21 | secondary_position | text | YES | — |
-
-**Foreign keys:** `program_year_id → rep_program_years.id`, `team_id → rep_teams.id`, `org_id → organizations.id`, `tryout_registration_id → rep_tryout_registrations.id`
-
-**Checks:** `status IN ('active','inactive')`; `source IN ('tryout','admin_manual')`
-
----
-
-### rep_season_surplus
-**Module:** Rep Teams | **RLS:** ENABLED | **Tenancy:** via `program_year_id → rep_program_years.org_id`
-
-| # | Column | Type | Nullable | Default |
-|---|---|---|---|---|
-| 1 | id | uuid | NO | gen_random_uuid() |
-| 2 | program_year_id | uuid | NO | — |
-| 3 | total_surplus | numeric | NO | 0 |
-| 4 | notes | text | YES | — |
-| 5 | created_by | uuid | YES | — |
-| 6 | created_at | timestamptz | YES | now() |
-| 7 | updated_at | timestamptz | YES | now() |
-
-**Foreign keys:** `program_year_id → rep_program_years.id`
-
-**Checks:** `total_surplus >= 0`
-
----
-
-### rep_team_coaches
-**Module:** Rep Teams | **RLS:** ENABLED | **Tenancy:** direct `org_id`
-
-| # | Column | Type | Nullable | Default |
-|---|---|---|---|---|
-| 1 | id | uuid | NO | gen_random_uuid() |
-| 2 | program_year_id | uuid | NO | — |
-| 3 | team_id | uuid | NO | — |
-| 4 | org_id | uuid | NO | — |
-| 5 | user_id | uuid | NO | — |
-| 6 | coach_role | text | NO | 'head_coach' |
-| 7 | created_at | timestamptz | NO | now() |
-
-**Foreign keys:** `program_year_id → rep_program_years.id`, `team_id → rep_teams.id`, `org_id → organizations.id`
-
-**Checks:** `coach_role IN ('head_coach','assistant_coach')`
-
----
-
-### rep_team_event_attendance
-**Module:** Rep Teams | **RLS:** ENABLED | **Tenancy:** direct `org_id`
-
-| # | Column | Type | Nullable | Default |
-|---|---|---|---|---|
-| 1 | id | uuid | NO | gen_random_uuid() |
-| 2 | event_id | uuid | NO | — |
-| 3 | player_id | uuid | NO | — |
-| 4 | program_year_id | uuid | NO | — |
-| 5 | team_id | uuid | NO | — |
-| 6 | org_id | uuid | NO | — |
-| 7 | status | text | NO | 'unknown' |
-| 8 | note | text | YES | — |
-| 9 | updated_by | uuid | YES | — |
-| 10 | created_at | timestamptz | NO | now() |
-| 11 | updated_at | timestamptz | NO | now() |
-
-**Foreign keys:** `event_id → rep_team_events.id`, `player_id → rep_roster_players.id`, `program_year_id → rep_program_years.id`, `team_id → rep_teams.id`, `org_id → organizations.id`
-
-**Checks:** `status IN ('unknown','attending','absent','late')`
-
----
-
-### rep_team_events
-**Module:** Rep Teams | **RLS:** ENABLED | **Tenancy:** direct `org_id`
-
-| # | Column | Type | Nullable | Default |
-|---|---|---|---|---|
-| 1 | id | uuid | NO | gen_random_uuid() |
-| 2 | program_year_id | uuid | NO | — |
-| 3 | team_id | uuid | NO | — |
-| 4 | org_id | uuid | NO | — |
-| 5 | event_type | text | NO | — |
-| 6 | name | text | NO | — |
-| 7 | description | text | YES | — |
-| 8 | starts_at | timestamptz | NO | — |
-| 9 | ends_at | timestamptz | YES | — |
-| 10 | location | text | YES | — |
-| 11 | opponent | text | YES | — |
-| 12 | home_away | text | YES | — |
-| 13 | home_score | int4 | YES | — |
-| 14 | away_score | int4 | YES | — |
-| 15 | result | text | YES | — |
-| 16 | parent_event_id | uuid | YES | — |
-| 17 | is_recurring | bool | NO | false |
-| 18 | recurrence_rule | jsonb | YES | — |
-| 19 | recurrence_parent_id | uuid | YES | — |
-| 20 | created_at | timestamptz | NO | now() |
-| 21 | updated_at | timestamptz | NO | now() |
-
-**Foreign keys:** `program_year_id → rep_program_years.id`, `team_id → rep_teams.id`, `org_id → organizations.id`, `parent_event_id → rep_team_events.id` (self), `recurrence_parent_id → rep_team_events.id` (self)
-
-**Checks:** `event_type IN ('external_tournament','tournament_game','scrimmage','league_game','practice','team_event')`; `result IN ('win','loss','tie') OR NULL`; `home_away IN ('home','away','neutral') OR NULL`
-
----
-
-### rep_team_expenses
-**Module:** Rep Teams | **RLS:** ENABLED | **Tenancy:** direct `org_id`
-
-| # | Column | Type | Nullable | Default |
-|---|---|---|---|---|
-| 1 | id | uuid | NO | gen_random_uuid() |
-| 2 | program_year_id | uuid | NO | — |
-| 3 | team_id | uuid | NO | — |
-| 4 | org_id | uuid | NO | — |
-| 5 | expense_type | text | NO | — |
-| 6 | description | text | NO | — |
-| 7 | category | text | YES | — |
-| 8 | amount | numeric | NO | — |
-| 9 | expense_paid_at | timestamptz | YES | — |
-| 10 | deposit_amount | numeric | YES | — |
-| 11 | deposit_due_date | date | YES | — |
-| 12 | deposit_paid_at | timestamptz | YES | — |
-| 13 | balance_amount | numeric | YES | — |
-| 14 | balance_due_date | date | YES | — |
-| 15 | balance_paid_at | timestamptz | YES | — |
-| 16 | event_id | uuid | YES | — |
-| 17 | accounting_entry_id | uuid | YES | — |
-| 18 | created_by | uuid | YES | — |
-| 19 | created_at | timestamptz | NO | now() |
-| 20 | updated_at | timestamptz | NO | now() |
-| 21 | payment_method | text | YES | — |
-| 22 | payee_id | uuid | YES | — |
-| 23 | payee_payer | text | YES | — |
-
-**Foreign keys:** `program_year_id → rep_program_years.id`, `team_id → rep_teams.id`, `org_id → organizations.id`, `event_id → rep_team_events.id`, `accounting_entry_id → accounting_entries.id`, `payee_id → org_payees.id`
-
-**Checks:** `expense_type IN ('expense','tournament_payable')`; `amount > 0`
-
----
-
-### rep_team_groups
-**Module:** Rep Teams | **RLS:** ENABLED | **Tenancy:** direct `org_id`
-
-| # | Column | Type | Nullable | Default |
-|---|---|---|---|---|
-| 1 | id | uuid | NO | gen_random_uuid() |
-| 2 | org_id | uuid | NO | — |
-| 3 | name | text | NO | — |
-| 4 | display_order | int4 | NO | 0 |
-| 5 | created_at | timestamptz | NO | now() |
-
-**Foreign keys:** `org_id → organizations.id`
-
-**Checks:** `char_length(TRIM(name)) > 0 AND char_length(name) <= 50`
-
----
-
-### rep_team_lineup_entries
-**Module:** Rep Teams | **RLS:** ENABLED | **Tenancy:** via `lineup_id → rep_team_lineups.org_id`
-
-| # | Column | Type | Nullable | Default |
-|---|---|---|---|---|
-| 1 | id | uuid | NO | gen_random_uuid() |
-| 2 | lineup_id | uuid | NO | — |
-| 3 | player_id | uuid | NO | — |
-| 4 | batting_order | int4 | YES | — |
-| 5 | starter | bool | NO | true |
-| 6 | inning_positions | jsonb | NO | '{}' |
-| 7 | notes | text | YES | — |
-| 8 | created_at | timestamptz | NO | now() |
-| 9 | updated_at | timestamptz | NO | now() |
-
-**Foreign keys:** `lineup_id → rep_team_lineups.id`, `player_id → rep_roster_players.id`
-
-**Checks:** `batting_order > 0 OR NULL`
-
----
-
-### rep_team_lineups
-**Module:** Rep Teams | **RLS:** ENABLED | **Tenancy:** direct `org_id`
-
-| # | Column | Type | Nullable | Default |
-|---|---|---|---|---|
-| 1 | id | uuid | NO | gen_random_uuid() |
-| 2 | event_id | uuid | NO | — |
-| 3 | program_year_id | uuid | NO | — |
-| 4 | team_id | uuid | NO | — |
-| 5 | org_id | uuid | NO | — |
-| 6 | lineup_mode | text | NO | 'everyone_bats' |
-| 7 | inning_count | int4 | NO | 7 |
-| 8 | notes | text | YES | — |
-| 9 | updated_by | uuid | YES | — |
-| 10 | created_at | timestamptz | NO | now() |
-| 11 | updated_at | timestamptz | NO | now() |
-
-**Foreign keys:** `event_id → rep_team_events.id`, `program_year_id → rep_program_years.id`, `team_id → rep_teams.id`, `org_id → organizations.id`
-
-**Checks:** `lineup_mode IN ('nine_player','everyone_bats')`; `inning_count >= 1 AND inning_count <= 12`
-
----
-
-### rep_team_payment_requests
-**Module:** Rep Teams | **RLS:** ENABLED | **Tenancy:** direct `org_id`
-
-| # | Column | Type | Nullable | Default |
-|---|---|---|---|---|
-| 1 | id | uuid | NO | gen_random_uuid() |
-| 2 | org_id | uuid | NO | — |
-| 3 | team_id | uuid | NO | — |
-| 4 | request_type | text | NO | — |
-| 5 | amount | numeric | NO | — |
-| 6 | description | text | NO | — |
-| 7 | payment_method | text | YES | — |
-| 8 | notes | text | YES | — |
-| 9 | status | text | NO | 'pending' |
-| 10 | denial_reason | text | YES | — |
-| 11 | budget_line_id | uuid | YES | — |
-| 12 | accounting_entry_id | uuid | YES | — |
-| 13 | created_by | uuid | NO | — |
-| 14 | reviewed_by | uuid | YES | — |
-| 15 | reviewed_at | timestamptz | YES | — |
-| 16 | created_at | timestamptz | NO | now() |
-| 17 | updated_at | timestamptz | NO | now() |
-
-**Foreign keys:** `org_id → organizations.id`, `team_id → rep_teams.id`, `budget_line_id → org_budget_lines.id`, `accounting_entry_id → accounting_entries.id`
-
-**Checks:** `request_type IN ('payment_to_org','charge_to_org')`; `status IN ('pending','approved','denied')`; `amount > 0`
-
----
-
-### rep_teams
-**Module:** Rep Teams | **RLS:** ENABLED | **Tenancy:** direct `org_id`
-
-| # | Column | Type | Nullable | Default |
-|---|---|---|---|---|
-| 1 | id | uuid | NO | gen_random_uuid() |
-| 2 | org_id | uuid | NO | — |
-| 3 | name | text | NO | — |
-| 4 | slug | text | NO | — |
-| 5 | sport | text | NO | 'softball' |
-| 6 | division | text | YES | — |
-| 7 | description | text | YES | — |
-| 8 | color | text | YES | — |
-| 9 | is_archived | bool | NO | false |
-| 10 | created_at | timestamptz | NO | now() |
-| 11 | updated_at | timestamptz | NO | now() |
-| 12 | group_id | uuid | YES | — |
-
-**Foreign keys:** `org_id → organizations.id`, `group_id → rep_team_groups.id`
-
----
-
-### rep_tryout_registrations
-**Module:** Rep Teams | **RLS:** ENABLED | **Tenancy:** direct `org_id`
-
-| # | Column | Type | Nullable | Default |
-|---|---|---|---|---|
-| 1 | id | uuid | NO | gen_random_uuid() |
-| 2 | program_year_id | uuid | NO | — |
-| 3 | team_id | uuid | NO | — |
-| 4 | org_id | uuid | NO | — |
-| 5 | player_first_name | text | NO | — |
-| 6 | player_last_name | text | NO | — |
-| 7 | player_date_of_birth | date | YES | — |
-| 8 | player_notes | text | YES | — |
-| 9 | guardian_first_name | text | NO | — |
-| 10 | guardian_last_name | text | NO | — |
-| 11 | guardian_email | text | NO | — |
-| 12 | guardian_phone | text | YES | — |
-| 13 | status | text | NO | 'pending_review' |
-| 14 | admin_notes | text | YES | — |
-| 15 | submitted_at | timestamptz | NO | now() |
-| 16 | updated_at | timestamptz | NO | now() |
-
-**Foreign keys:** `program_year_id → rep_program_years.id`, `team_id → rep_teams.id`, `org_id → organizations.id`
-
-**Checks:** `status IN ('pending_review','offered','accepted','declined','withdrawn')`
-
----
+id (uuid), division_id (uuid) → divisions.id NOT NULL, name NOT NULL, display_order (integer), created_at, settings (jsonb)
 
 ### resources
-**Module:** Tournament | **RLS:** ENABLED | **Tenancy:** via `tournament_id → tournaments.org_id`
-
-| # | Column | Type | Nullable | Default |
-|---|---|---|---|---|
-| 1 | id | uuid | NO | gen_random_uuid() |
-| 2 | tournament_id | uuid | YES | — |
-| 3 | label | text | NO | — |
-| 4 | url | text | NO | — |
-| 5 | display_order | int4 | NO | 0 |
-
-**Foreign keys:** `tournament_id → tournaments.id`
-
----
+id (uuid), tournament_id (uuid) → tournaments.id, label NOT NULL, url NOT NULL, display_order (integer)
 
 ### rule_items
-**Module:** Tournament | **RLS:** ENABLED | **Tenancy:** via `rule_id → rules.tournament_id → tournaments.org_id`
-
-| # | Column | Type | Nullable | Default |
-|---|---|---|---|---|
-| 1 | id | uuid | NO | gen_random_uuid() |
-| 2 | rule_id | uuid | NO | — |
-| 3 | content | text | NO | — |
-| 4 | display_order | int4 | NO | 0 |
-
-**Foreign keys:** `rule_id → rules.id`
-
----
+id (uuid), rule_id (uuid) → rules.id NOT NULL, content NOT NULL, display_order (integer)
 
 ### rules
-**Module:** Tournament | **RLS:** ENABLED | **Tenancy:** via `tournament_id → tournaments.org_id`
-
-| # | Column | Type | Nullable | Default |
-|---|---|---|---|---|
-| 1 | id | uuid | NO | gen_random_uuid() |
-| 2 | tournament_id | uuid | YES | — |
-| 3 | title | text | NO | — |
-| 4 | display_order | int4 | NO | 0 |
-| 5 | icon | text | YES | — |
-| 6 | division_ids | uuid[] | YES | — |
-
-**Foreign keys:** `tournament_id → tournaments.id`
-
----
-
-### stripe_prices
-**Module:** Platform/Org Core | **RLS:** ENABLED | **Tenancy:** global (platform-admin only)
-
-| # | Column | Type | Nullable | Default |
-|---|---|---|---|---|
-| 1 | id | uuid | NO | gen_random_uuid() |
-| 2 | plan_id | text | NO | — |
-| 3 | billing_cycle | text | NO | — |
-| 4 | environment | text | NO | — |
-| 5 | price_id | text | YES | — |
-| 6 | product_name | text | YES | — |
-| 7 | created_at | timestamptz | NO | now() |
-| 8 | updated_at | timestamptz | NO | now() |
-| 9 | last_change_note | text | YES | — |
-| 10 | updated_by_email | text | YES | — |
-
-**Checks:** `billing_cycle IN ('monthly','annual')`; `environment IN ('sandbox','live')`
-
----
-
-### team_entitlements
-**Module:** Standalone Team Workspace | **RLS:** ENABLED | **Tenancy:** direct `org_id`
-
-| # | Column | Type | Nullable | Default |
-|---|---|---|---|---|
-| 1 | id | uuid | NO | gen_random_uuid() |
-| 2 | team_workspace_id | uuid | YES | — |
-| 3 | org_id | uuid | NO | — |
-| 4 | rep_team_id | uuid | NO | — |
-| 5 | source | text | NO | — |
-| 6 | status | text | NO | 'active' |
-| 7 | starts_at | timestamptz | NO | now() |
-| 8 | ends_at | timestamptz | YES | — |
-| 9 | stripe_subscription_item_id | text | YES | — |
-| 10 | created_at | timestamptz | NO | now() |
-| 11 | updated_at | timestamptz | NO | now() |
-
-**Foreign keys:** `team_workspace_id → team_workspaces.id`, `org_id → organizations.id`, `rep_team_id → rep_teams.id`
-
-**Checks:** `source IN ('team_plan','org_team_addon','club_included','club_extra_team','platform_override')`; `status IN ('active','trialing','past_due','cancelled','canceled','expired')`
-
----
-
-### team_org_links
-**Module:** Standalone Team Workspace | **RLS:** ENABLED | **Tenancy:** via `linked_org_id` or `team_workspace_id`
-
-| # | Column | Type | Nullable | Default |
-|---|---|---|---|---|
-| 1 | id | uuid | NO | gen_random_uuid() |
-| 2 | team_workspace_id | uuid | NO | — |
-| 3 | rep_team_id | uuid | NO | — |
-| 4 | linked_org_id | uuid | NO | — |
-| 5 | status | text | NO | 'requested' |
-| 6 | link_type | text | NO | 'visibility' |
-| 7 | sharing_level | text | NO | 'basic' |
-| 8 | requested_by_user_id | uuid | YES | — |
-| 9 | approved_by_team_user_id | uuid | YES | — |
-| 10 | approved_by_org_user_id | uuid | YES | — |
-| 11 | billing_mode_after_approval | text | YES | — |
-| 12 | created_at | timestamptz | NO | now() |
-| 13 | updated_at | timestamptz | NO | now() |
-
-**Foreign keys:** `team_workspace_id → team_workspaces.id`, `rep_team_id → rep_teams.id`, `linked_org_id → organizations.id`
-
-**Checks:** `link_type IN ('visibility','billing','ownership')`; `status IN ('requested','invited','linked','ownership_pending','org_owned','declined','revoked')`; `sharing_level IN ('basic','roster_summary','financial_summary','full_org_owned')`
-
----
-
-### team_workspace_claims
-**Module:** Standalone Team Workspace | **RLS:** ENABLED | **Tenancy:** via `tournament_id → tournaments.org_id` (pre-claim) or `team_workspace_id`
-
-| # | Column | Type | Nullable | Default |
-|---|---|---|---|---|
-| 1 | id | uuid | NO | gen_random_uuid() |
-| 2 | tournament_id | uuid | NO | — |
-| 3 | tournament_team_id | uuid | YES | — |
-| 4 | contact_email | text | NO | — |
-| 5 | claim_token_hash | text | NO | — |
-| 6 | status | text | NO | 'available' |
-| 7 | team_workspace_id | uuid | YES | — |
-| 8 | claimed_by_user_id | uuid | YES | — |
-| 9 | expires_at | timestamptz | YES | — |
-| 10 | created_at | timestamptz | NO | now() |
-| 11 | claimed_at | timestamptz | YES | — |
-
-**Foreign keys:** `tournament_id → tournaments.id`, `team_workspace_id → team_workspaces.id`
-
-**Checks:** `status IN ('available','claimed','expired','revoked')`
-
----
-
-### team_workspaces
-**Module:** Standalone Team Workspace | **RLS:** ENABLED | **Tenancy:** via `workspace_org_id`
-
-| # | Column | Type | Nullable | Default |
-|---|---|---|---|---|
-| 1 | id | uuid | NO | gen_random_uuid() |
-| 2 | workspace_org_id | uuid | NO | — |
-| 3 | rep_team_id | uuid | NO | — |
-| 4 | active_program_year_id | uuid | YES | — |
-| 5 | primary_owner_user_id | uuid | YES | — |
-| 6 | source | text | NO | 'direct_signup' |
-| 7 | source_tournament_id | uuid | YES | — |
-| 8 | source_tournament_team_id | uuid | YES | — |
-| 9 | workspace_state | text | NO | 'independent' |
-| 10 | billing_mode | text | NO | 'team_direct' |
-| 11 | billing_owner_org_id | uuid | YES | — |
-| 12 | billing_owner_user_id | uuid | YES | — |
-| 13 | stripe_customer_id | text | YES | — |
-| 14 | stripe_subscription_id | text | YES | — |
-| 15 | subscription_status | text | NO | 'active' |
-| 16 | current_period_end | timestamptz | YES | — |
-| 17 | created_at | timestamptz | NO | now() |
-| 18 | updated_at | timestamptz | NO | now() |
-
-**Foreign keys:** `workspace_org_id → organizations.id`, `rep_team_id → rep_teams.id`, `active_program_year_id → rep_program_years.id`, `billing_owner_org_id → organizations.id`, `source_tournament_id → tournaments.id`
-
-**Checks:** `workspace_state IN ('independent','linked','org_owned','archived')`; `billing_mode IN ('team_direct','org_team_addon','club_included','club_extra_team','platform_override')`; `source IN ('direct_signup','tournament_claim','org_invite','platform_admin')`; `subscription_status IN ('active','trialing','past_due','canceled','incomplete','unpaid')`
-
----
+id (uuid), tournament_id (uuid) → tournaments.id, title NOT NULL, display_order (integer), icon, division_ids
 
 ### teams
-**Module:** Tournament | **RLS:** ENABLED | **Tenancy:** via `tournament_id → tournaments.org_id`
-
-| # | Column | Type | Nullable | Default |
-|---|---|---|---|---|
-| 1 | id | uuid | NO | gen_random_uuid() |
-| 2 | tournament_id | uuid | YES | — |
-| 3 | division_id | uuid | YES | — |
-| 4 | name | text | NO | — |
-| 5 | coach | text | YES | — |
-| 6 | email | text | YES | — |
-| 7 | players | jsonb | NO | '[]' |
-| 8 | status | text | NO | 'accepted' |
-| 9 | payment_status | text | NO | 'paid' |
-| 10 | registered_at | timestamptz | NO | now() |
-| 11 | admin_notes | text | YES | — |
-| 12 | pool_id | uuid | YES | — |
-| 13 | deposit_paid | numeric | NO | 0 |
-| 14 | total_paid | numeric | NO | 0 |
-| 15 | waitlist_position | int4 | YES | — |
-| 16 | slot_id | uuid | YES | — |
-
-**Foreign keys:** `tournament_id → tournaments.id`, `division_id → divisions.id`, `pool_id → pools.id`, `slot_id → pool_slots.id`
-
----
+id (uuid), tournament_id (uuid) → tournaments.id, division_id (uuid) → divisions.id, name NOT NULL, coach, email, players (jsonb), status, payment_status, registered_at, admin_notes, pool_id (uuid) → pools.id, deposit_paid (numeric), total_paid (numeric), waitlist_position (integer), slot_id (uuid) → pool_slots.id
+- Indexes: idx_teams_slot_id
 
 ### tournament_archives
-**Module:** Tournament | **RLS:** ENABLED | **Tenancy:** direct `org_id`
-
-| # | Column | Type | Nullable | Default |
-|---|---|---|---|---|
-| 1 | id | uuid | NO | gen_random_uuid() |
-| 2 | tournament_id | uuid | YES | — |
-| 3 | org_id | uuid | NO | — |
-| 4 | tournament_name | text | NO | — |
-| 5 | season | text | NO | — |
-| 6 | division | text | YES | — |
-| 7 | final_snapshot | jsonb | NO | — |
-| 8 | winner_team_id | uuid | YES | — |
-| 9 | winner_team_name | text | YES | — |
-| 10 | runner_up_name | text | YES | — |
-| 11 | total_teams | int4 | YES | — |
-| 12 | total_games | int4 | YES | — |
-| 13 | integrity_hash | text | NO | — |
-| 14 | sealed_at | timestamptz | NO | now() |
-| 15 | sealed_by | uuid | YES | — |
-
-**Foreign keys:** `org_id → organizations.id`, `tournament_id → tournaments.id`, `winner_team_id → teams.id`
-
----
+id (uuid), tournament_id (uuid) → tournaments.id, org_id (uuid) → organizations.id NOT NULL, tournament_name NOT NULL, season NOT NULL, division, final_snapshot (jsonb) NOT NULL, winner_team_id (uuid) → teams.id, winner_team_name, runner_up_name, total_teams (integer), total_games (integer), integrity_hash NOT NULL, sealed_at, sealed_by (uuid)
+- Indexes: tournament_archives_org_season, tournament_archives_tournament_id_unique
 
 ### tournament_registration_field_answers
-**Module:** Tournament | **RLS:** ENABLED | **Tenancy:** via `registration_id → teams.tournament_id → tournaments.org_id`
-
-| # | Column | Type | Nullable | Default |
-|---|---|---|---|---|
-| 1 | id | uuid | NO | gen_random_uuid() |
-| 2 | registration_id | uuid | NO | — |
-| 3 | field_id | uuid | NO | — |
-| 4 | value_text | text | YES | — |
-| 5 | value_json | jsonb | YES | — |
-| 6 | file_url | text | YES | — |
-| 7 | created_at | timestamptz | NO | now() |
-
-**Foreign keys:** `registration_id → teams.id`, `field_id → tournament_registration_fields.id`
-
----
+id (uuid), registration_id (uuid) → teams.id NOT NULL, field_id (uuid) → tournament_registration_fields.id NOT NULL, value_text, value_json (jsonb), file_url, created_at
+- Indexes: tournament_registration_field_answ_registration_id_field_id_key, tournament_registration_field_answers_field_idx, tournament_registration_field_answers_registration_idx
 
 ### tournament_registration_fields
-**Module:** Tournament | **RLS:** ENABLED | **Tenancy:** direct `org_id`
+id (uuid), tournament_id (uuid) → tournaments.id NOT NULL, org_id (uuid) → organizations.id NOT NULL, label NOT NULL, field_type NOT NULL, options (jsonb), required (boolean), sort_order (integer), is_archived (boolean), created_at, updated_at
+- Indexes: tournament_registration_fields_org_idx, tournament_registration_fields_tournament_idx
 
-| # | Column | Type | Nullable | Default |
-|---|---|---|---|---|
-| 1 | id | uuid | NO | gen_random_uuid() |
-| 2 | tournament_id | uuid | NO | — |
-| 3 | org_id | uuid | NO | — |
-| 4 | label | text | NO | — |
-| 5 | field_type | text | NO | — |
-| 6 | options | jsonb | NO | '[]' |
-| 7 | required | bool | NO | false |
-| 8 | sort_order | int4 | NO | 0 |
-| 9 | is_archived | bool | NO | false |
-| 10 | created_at | timestamptz | NO | now() |
-| 11 | updated_at | timestamptz | NO | now() |
+### tournaments
+id (uuid), year (integer) NOT NULL, name NOT NULL, slug, status, is_active (boolean), start_date, end_date, contact_email, fee_schedule_mode, deposit_amount (numeric), deposit_due_date, total_fee_amount (numeric), total_fee_due_date, logo_url, hero_banner_url, theme_preset, theme_primary, theme_accent, theme_font, theme_card_style, require_score_finalization (boolean), color_mode, created_at, notify_teams_on_complete (boolean), results_notified_at, results_notification_sent_count (integer), org_id (uuid) → organizations.id NOT NULL, settings (jsonb), default_contact_member_id (uuid) → organization_members.id, notify_mode
+- Indexes: idx_tournaments_created_at, idx_tournaments_results_notified_at, tournaments_org_id_idx, tournaments_org_slug_live_unique
 
-**Foreign keys:** `tournament_id → tournaments.id`, `org_id → organizations.id`
+### venue_facilities
+id (uuid), venue_id (uuid) → diamonds.id NOT NULL, tournament_id (uuid) → tournaments.id NOT NULL, name NOT NULL, facility_type, display_order (integer), notes, source_org_facility_id (uuid) → org_venue_facilities.id, created_at, settings (jsonb)
+- Indexes: venue_facilities_tournament_id_idx, venue_facilities_venue_id_idx
 
-**Checks:** `field_type IN ('short_text','long_text','dropdown','checkbox','file')`
+## Module: League
+
+### league_divisions
+id (uuid), season_id (uuid) → league_seasons.id NOT NULL, name NOT NULL, capacity (integer), sort_order (integer), created_at
+
+### league_email_log
+id (uuid), org_id (uuid) → organizations.id NOT NULL, season_id (uuid) → league_seasons.id NOT NULL, sent_by (uuid) NOT NULL, sent_at, subject NOT NULL, scope NOT NULL, audience NOT NULL, count_sent (integer), count_skipped (integer)
+
+### league_games
+id (uuid), season_id (uuid) → league_seasons.id NOT NULL, division_id (uuid) → league_divisions.id NOT NULL, home_team_id (uuid) → league_teams.id NOT NULL, away_team_id (uuid) → league_teams.id NOT NULL, scheduled_at, location, home_score (integer), away_score (integer), status, notes, created_at, updated_at, org_id (uuid) → organizations.id NOT NULL
+- Indexes: league_games_division_idx, league_games_org_idx, league_games_schedule_idx, league_games_season_idx
+
+### league_notification_log
+id (uuid), season_id (uuid) → league_seasons.id NOT NULL, sent_by (uuid), audience_type NOT NULL, audience_label, subject NOT NULL, recipient_count (integer) NOT NULL, sent_at
+
+### league_practices
+id (uuid), season_id (uuid) → league_seasons.id NOT NULL, division_id (uuid) → league_divisions.id, team_id (uuid) → league_teams.id NOT NULL, scheduled_at, ends_at, location, notes, status, recurrence_group_id (uuid), created_at, updated_at, org_id (uuid) → organizations.id NOT NULL
+- Indexes: league_practices_org_idx, league_practices_recurrence_idx, league_practices_schedule_idx, league_practices_season_idx, league_practices_team_idx
+
+### league_registrations
+id (uuid), season_id (uuid) → league_seasons.id NOT NULL, division_id (uuid) → league_divisions.id, player_first_name NOT NULL, player_last_name NOT NULL, player_date_of_birth, player_jersey_pref, player_position_pref, player_notes, guardian_first_name NOT NULL, guardian_last_name NOT NULL, guardian_email NOT NULL, guardian_phone, status, waitlist_position (integer), team_id (uuid) → league_teams.id, registration_fee_paid (boolean), fee_entry_id (uuid), admin_notes, source, registered_at, updated_at
+- Indexes: league_registrations_division_idx, league_registrations_guardian_idx, league_registrations_season_idx, league_registrations_status_idx
+
+### league_seasons
+id (uuid), org_id (uuid) → organizations.id NOT NULL, name NOT NULL, slug NOT NULL, sport, division, status, description, registration_fee (numeric), auto_generate_fees (boolean), auto_approve_under_capacity (boolean), auto_promote_waitlist (boolean), registration_open_at, registration_close_at, season_start_date, season_end_date, waiver_text, created_at, updated_at, draft_state (jsonb)
+- Indexes: league_seasons_org_id_slug_key
+
+### league_teams
+id (uuid), season_id (uuid) → league_seasons.id NOT NULL, division_id (uuid) → league_divisions.id NOT NULL, name NOT NULL, color, coach_name, sort_order (integer), created_at
+
+## Module: Rep Teams
+
+### rep_allocation_installments
+id (uuid), split_id (uuid) → rep_allocation_splits.id NOT NULL, installment_number (integer) NOT NULL, amount (numeric) NOT NULL, due_date NOT NULL, paid_at, paid_by (uuid), accounting_entry_id (uuid) → accounting_entries.id, created_at, reminder_sent_at, org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_teams.id
+- Indexes: rep_allocation_installments_org_idx, rep_allocation_installments_split_id_installment_number_key, rep_allocation_installments_team_idx
+
+### rep_allocation_splits
+id (uuid), allocation_id (uuid) → rep_cost_allocations.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, program_year_id (uuid) → rep_program_years.id NOT NULL, org_id (uuid) → organizations.id NOT NULL, amount (numeric) NOT NULL, split_method NOT NULL, split_value (numeric) NOT NULL, payment_schedule, notes, created_at
+- Indexes: rep_allocation_splits_allocation_id_team_id_key, rep_allocation_splits_team_idx
+
+### rep_budget_lines
+id (uuid), org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, program_year_id (uuid) → rep_program_years.id NOT NULL, category_id (uuid) → budget_categories.id, item_id (uuid) → budget_items.id, description NOT NULL, total_amount (numeric) NOT NULL, notes, sort_order (integer), created_at, updated_at
+- Indexes: rep_budget_lines_team_year_idx
+
+### rep_budget_periods
+id (uuid), budget_line_id (uuid) → rep_budget_lines.id NOT NULL, period_label NOT NULL, period_date, amount (numeric) NOT NULL, sort_order (integer), created_at
+- Indexes: rep_budget_periods_line_idx
+
+### rep_cost_allocations
+id (uuid), org_id (uuid) → organizations.id NOT NULL, source_entry_id (uuid) → accounting_entries.id, description NOT NULL, total_amount (numeric) NOT NULL, created_by (uuid), created_at, source_budget_line_id (uuid) → org_budget_lines.id
+- Indexes: rep_cost_allocations_budget_line_idx
+
+### rep_document_templates
+id (uuid), org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_teams.id, name NOT NULL, document_type NOT NULL, storage_path NOT NULL, file_name NOT NULL, file_size (bigint) NOT NULL, is_active (boolean), published_by (uuid), created_at
+- Indexes: rep_document_templates_org_idx
+
+### rep_dues_credits
+id (uuid), program_year_id (uuid) → rep_program_years.id NOT NULL, player_id (uuid) → rep_roster_players.id NOT NULL, amount (numeric) NOT NULL, description NOT NULL, credit_date, credit_type, notes, created_by (uuid), created_at, fundraiser_entry_id (uuid) → rep_fundraiser_entries.id
+
+### rep_fundraiser_entries
+id (uuid), fundraiser_id (uuid) → rep_fundraisers.id NOT NULL, org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, player_id (uuid) → rep_roster_players.id NOT NULL, amount_raised (numeric) NOT NULL, rebate_percent (numeric), rebate_amount (numeric), accounting_entry_id (uuid) → accounting_entries.id, credit_id (uuid) → rep_dues_credits.id, notes, created_at, updated_at
+- Indexes: rep_fundraiser_entries_fundraiser_id_player_id_key, rep_fundraiser_entries_fundraiser_idx, rep_fundraiser_entries_player_idx
+
+### rep_fundraisers
+id (uuid), org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, program_year_id (uuid) → rep_program_years.id NOT NULL, name NOT NULL, description, player_rebate_percent (numeric), start_date, end_date, is_active (boolean), created_at, updated_at
+- Indexes: rep_fundraisers_team_year_idx
+
+### rep_player_documents
+id (uuid), player_id (uuid) → rep_roster_players.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, org_id (uuid) → organizations.id NOT NULL, document_type NOT NULL, storage_path NOT NULL, file_name NOT NULL, file_size (bigint) NOT NULL, template_id (uuid) → rep_document_templates.id, uploaded_by (uuid), created_at
+- Indexes: rep_player_documents_player_idx, rep_player_documents_team_idx
+
+### rep_player_dues_installments
+id (uuid), schedule_id (uuid) → rep_player_dues_schedules.id NOT NULL, player_id (uuid) → rep_roster_players.id NOT NULL, installment_number (integer) NOT NULL, amount (numeric) NOT NULL, due_date NOT NULL, paid_at, reminder_sent_at, accounting_entry_id (uuid) → accounting_entries.id, created_at, source, reminder_30_sent_at, reminder_7_sent_at, org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_teams.id
+- Indexes: rep_player_dues_installments_due_idx, rep_player_dues_installments_org_idx, rep_player_dues_installments_schedule_id_installment_number_key, rep_player_dues_installments_team_idx
+
+### rep_player_dues_schedules
+id (uuid), program_year_id (uuid) → rep_program_years.id NOT NULL, player_id (uuid) → rep_roster_players.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, org_id (uuid) → organizations.id NOT NULL, total_amount (numeric) NOT NULL, notes, created_at, updated_at, budget_line_id (uuid) → rep_budget_lines.id
+- Indexes: rep_player_dues_schedules_program_year_id_player_id_key
+
+### rep_program_years
+id (uuid), team_id (uuid) → rep_teams.id NOT NULL, org_id (uuid) → organizations.id NOT NULL, name NOT NULL, year (integer) NOT NULL, status, tryout_open (boolean), tryout_description, budget_amount (numeric), created_at, updated_at, auto_reminders_enabled (boolean)
+- Indexes: rep_program_years_team_id_year_key
+
+### rep_roster_players
+id (uuid), program_year_id (uuid) → rep_program_years.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, org_id (uuid) → organizations.id NOT NULL, player_first_name NOT NULL, player_last_name NOT NULL, player_date_of_birth, player_number, guardian_first_name NOT NULL, guardian_last_name NOT NULL, guardian_email NOT NULL, guardian_phone, status, source, tryout_registration_id (uuid) → rep_tryout_registrations.id, notes, admin_notes, created_at, updated_at, primary_position, secondary_position
+- Indexes: rep_roster_players_email_idx, rep_roster_players_year_idx
+
+### rep_season_surplus
+id (uuid), program_year_id (uuid) → rep_program_years.id NOT NULL, total_surplus (numeric), notes, created_by (uuid), created_at, updated_at
+- Indexes: rep_season_surplus_program_year_id_key
+
+### rep_team_coaches
+id (uuid), program_year_id (uuid) → rep_program_years.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, org_id (uuid) → organizations.id NOT NULL, user_id (uuid) NOT NULL, coach_role, created_at
+- Indexes: rep_team_coaches_program_year_id_user_id_key, rep_team_coaches_user_idx
+
+### rep_team_event_attendance
+id (uuid), event_id (uuid) → rep_team_events.id NOT NULL, player_id (uuid) → rep_roster_players.id NOT NULL, program_year_id (uuid) → rep_program_years.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, org_id (uuid) → organizations.id NOT NULL, status, note, updated_by (uuid), created_at, updated_at
+- Indexes: rep_team_event_attendance_event_id_player_id_key, rep_team_event_attendance_event_idx, rep_team_event_attendance_player_idx, rep_team_event_attendance_team_idx
+
+### rep_team_events
+id (uuid), program_year_id (uuid) → rep_program_years.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, org_id (uuid) → organizations.id NOT NULL, event_type NOT NULL, name NOT NULL, description, starts_at NOT NULL, ends_at, location, opponent, home_away, home_score (integer), away_score (integer), result, parent_event_id (uuid) → rep_team_events.id, is_recurring (boolean), recurrence_rule (jsonb), recurrence_parent_id (uuid) → rep_team_events.id, created_at, updated_at
+- Indexes: rep_team_events_parent_idx, rep_team_events_year_idx
+
+### rep_team_expenses
+id (uuid), program_year_id (uuid) → rep_program_years.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, org_id (uuid) → organizations.id NOT NULL, expense_type NOT NULL, description NOT NULL, category, amount (numeric) NOT NULL, expense_paid_at, deposit_amount (numeric), deposit_due_date, deposit_paid_at, balance_amount (numeric), balance_due_date, balance_paid_at, event_id (uuid) → rep_team_events.id, accounting_entry_id (uuid) → accounting_entries.id, created_by (uuid), created_at, updated_at, payment_method, payee_id (uuid) → org_payees.id, payee_payer
+- Indexes: rep_team_expenses_year_idx
+
+### rep_team_groups
+id (uuid), org_id (uuid) → organizations.id NOT NULL, name NOT NULL, display_order (integer), created_at
+- Indexes: idx_rep_team_groups_org_name
+
+### rep_team_lineup_entries
+id (uuid), lineup_id (uuid) → rep_team_lineups.id NOT NULL, player_id (uuid) → rep_roster_players.id NOT NULL, batting_order (integer), starter (boolean), inning_positions (jsonb), notes, created_at, updated_at
+- Indexes: rep_team_lineup_entries_batting_order_idx, rep_team_lineup_entries_lineup_id_player_id_key, rep_team_lineup_entries_lineup_idx, rep_team_lineup_entries_player_idx
+
+### rep_team_lineups
+id (uuid), event_id (uuid) → rep_team_events.id NOT NULL, program_year_id (uuid) → rep_program_years.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, org_id (uuid) → organizations.id NOT NULL, lineup_mode, inning_count (integer), notes, updated_by (uuid), created_at, updated_at
+- Indexes: rep_team_lineups_event_id_key, rep_team_lineups_event_idx, rep_team_lineups_org_idx, rep_team_lineups_team_idx
+
+### rep_team_payment_requests
+id (uuid), org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, request_type NOT NULL, amount (numeric) NOT NULL, description NOT NULL, payment_method, notes, status, denial_reason, budget_line_id (uuid) → org_budget_lines.id, accounting_entry_id (uuid) → accounting_entries.id, created_by (uuid) NOT NULL, reviewed_by (uuid), reviewed_at, created_at, updated_at
+- Indexes: rep_team_payment_requests_org_status_idx, rep_team_payment_requests_team_status_idx
+
+### rep_teams
+id (uuid), org_id (uuid) → organizations.id NOT NULL, name NOT NULL, slug NOT NULL, sport, division, description, color, is_archived (boolean), created_at, updated_at, group_id (uuid) → rep_team_groups.id
+- Indexes: rep_teams_org_id_slug_key
+
+### rep_tryout_registrations
+id (uuid), program_year_id (uuid) → rep_program_years.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, org_id (uuid) → organizations.id NOT NULL, player_first_name NOT NULL, player_last_name NOT NULL, player_date_of_birth, player_notes, guardian_first_name NOT NULL, guardian_last_name NOT NULL, guardian_email NOT NULL, guardian_phone, status, admin_notes, submitted_at, updated_at
+- Indexes: rep_tryout_registrations_email_idx, rep_tryout_registrations_status_idx, rep_tryout_registrations_year_idx
+
+## Module: Standalone Team Workspace
+
+### basic_coach_team_registrations
+id (uuid), basic_coach_team_id (uuid) → basic_coach_teams.id NOT NULL, tournament_team_id (uuid) → teams.id NOT NULL, linked_by_user_id (uuid), link_source, created_at
+- Indexes: basic_coach_team_registrations_basic_team_idx, basic_coach_team_registrations_tournament_team_unique
+
+### basic_coach_team_users
+id (uuid), basic_coach_team_id (uuid) → basic_coach_teams.id NOT NULL, user_id (uuid) NOT NULL, role, status, created_at, updated_at
+- Indexes: basic_coach_team_users_team_user_unique, basic_coach_team_users_user_status_idx
+
+### team_entitlements
+id (uuid), team_workspace_id (uuid) → team_workspaces.id, org_id (uuid) → organizations.id NOT NULL, rep_team_id (uuid) → rep_teams.id NOT NULL, source NOT NULL, status, starts_at, ends_at, stripe_subscription_item_id, created_at, updated_at
+- Indexes: team_entitlements_active_source_unique, team_entitlements_org_team_idx, team_entitlements_workspace_idx
+
+### team_org_links
+id (uuid), team_workspace_id (uuid) → team_workspaces.id NOT NULL, rep_team_id (uuid) → rep_teams.id NOT NULL, linked_org_id (uuid) → organizations.id NOT NULL, status, link_type, sharing_level, requested_by_user_id (uuid), approved_by_team_user_id (uuid), approved_by_org_user_id (uuid), billing_mode_after_approval, created_at, updated_at
+- Indexes: team_org_links_active_unique, team_org_links_linked_org_idx, team_org_links_workspace_idx
+
+### team_workspace_claims
+id (uuid), tournament_id (uuid) → tournaments.id NOT NULL, tournament_team_id (uuid), contact_email NOT NULL, claim_token_hash NOT NULL, status, team_workspace_id (uuid) → team_workspaces.id, claimed_by_user_id (uuid), expires_at, created_at, claimed_at
+- Indexes: team_workspace_claims_contact_email_idx, team_workspace_claims_token_hash_unique, team_workspace_claims_tournament_idx
+
+### team_workspaces
+id (uuid), workspace_org_id (uuid) → organizations.id NOT NULL, rep_team_id (uuid) → rep_teams.id NOT NULL, active_program_year_id (uuid) → rep_program_years.id, primary_owner_user_id (uuid), source, source_tournament_id (uuid) → tournaments.id, source_tournament_team_id (uuid), workspace_state, billing_mode, billing_owner_org_id (uuid) → organizations.id, billing_owner_user_id (uuid), stripe_customer_id, stripe_subscription_id, subscription_status, current_period_end, created_at, updated_at, basic_coach_team_id (uuid) → basic_coach_teams.id
+- Indexes: team_workspaces_basic_coach_team_idx, team_workspaces_rep_team_unique, team_workspaces_source_tournament_idx, team_workspaces_state_idx, team_workspaces_workspace_org_unique
+
+## Module: Accounting
+
+### accounting_entries
+id (uuid), ledger_id (uuid) → accounting_ledgers.id NOT NULL, entry_date NOT NULL, description NOT NULL, amount (numeric) NOT NULL, entry_type NOT NULL, status, category, linked_entry_id (uuid) → accounting_entries.id, source_module, source_entity_id (uuid), created_by (uuid), created_at, updated_at, payment_method, payee_id (uuid) → org_payees.id, payee_payer, notes
+- Indexes: accounting_entries_entry_date_idx, accounting_entries_ledger_id_idx
+
+### accounting_ledgers
+id (uuid), org_id (uuid) → organizations.id NOT NULL, entity_type NOT NULL, entity_id (uuid), name NOT NULL, currency, is_archived (boolean), created_at
+- Indexes: accounting_ledgers_org_id_entity_type_entity_id_key
+
+### billing_retained_records
+id (uuid), intent_id (uuid) → billing_retention_intents.id NOT NULL, org_id (uuid) → organizations.id NOT NULL, record_type NOT NULL, record_id (uuid), display_name NOT NULL, retained_state, retained_at, retention_until NOT NULL, extension_count (integer), last_extended_at, last_extended_by, last_extension_reason, metadata (jsonb), warning_sent_at, pending_purge_at, purge_notice_sent_at
+- Indexes: idx_billing_retained_records_active_unique, idx_billing_retained_records_org, idx_billing_retained_records_pending_purge, idx_billing_retained_records_retention, idx_billing_retained_records_warning
+
+### billing_retention_intents
+id (uuid), org_id (uuid) → organizations.id NOT NULL, intent_type NOT NULL, status, from_plan, target_plan, keep_tournament_ids, effective_at, retention_until NOT NULL, reason, created_by (uuid), created_by_email, created_at, updated_at, applied_at
+- Indexes: idx_billing_retention_intents_org, idx_billing_retention_intents_retention
+
+### budget_categories
+id (uuid), org_id (uuid) → organizations.id, name NOT NULL, scope, sort_order (integer), is_default (boolean), created_at
+- Indexes: budget_categories_org_idx
+
+### budget_items
+id (uuid), category_id (uuid) → budget_categories.id NOT NULL, org_id (uuid) → organizations.id, name NOT NULL, suggested_amount (numeric), sort_order (integer), is_default (boolean), is_misc (boolean), created_at
+- Indexes: budget_items_category_idx, budget_items_org_idx, budget_items_unique_default_name, budget_items_unique_org_name
+
+### org_budget_lines
+id (uuid), org_id (uuid) → organizations.id NOT NULL, season_year (integer) NOT NULL, category_id (uuid) → budget_categories.id, item_id (uuid) → budget_items.id, description NOT NULL, total_amount (numeric) NOT NULL, notes, sort_order (integer), created_at, updated_at
+- Indexes: org_budget_lines_org_year_idx
+
+### org_budget_periods
+id (uuid), budget_line_id (uuid) → org_budget_lines.id NOT NULL, period_label NOT NULL, period_date, amount (numeric) NOT NULL, sort_order (integer), created_at
+- Indexes: org_budget_periods_line_idx
+
+### org_payees
+id (uuid), org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_teams.id, name NOT NULL, notes, is_active (boolean), created_by (uuid), created_at
+- Indexes: idx_org_payees_org_id, idx_org_payees_org_name, idx_org_payees_team_id, idx_org_payees_team_name
+
+## Module: Stripe / Billing
+
+### stripe_prices
+id (uuid), plan_id NOT NULL, billing_cycle NOT NULL, environment NOT NULL, price_id, product_name, created_at, updated_at, last_change_note, updated_by_email
+- Indexes: stripe_prices_plan_id_billing_cycle_environment_key
+
+## Module: Organization / Platform Core
+
+### org_audit_log
+id (uuid), org_id (uuid) → organizations.id NOT NULL, actor_id (uuid), target_id (uuid), action NOT NULL, payload (jsonb), created_at
+- Indexes: idx_audit_log_org
+
+### org_internal_notes
+id (uuid), org_id (uuid) → organizations.id NOT NULL, body NOT NULL, created_by_email NOT NULL, updated_by_email, created_at, updated_at, deleted_at, deleted_by_email
+- Indexes: idx_org_internal_notes_org_deleted_time, idx_org_internal_notes_org_time
+
+### org_member_rep_group_scopes
+member_id (uuid) → organization_members.id NOT NULL, group_id (uuid) → rep_team_groups.id NOT NULL
+- Indexes: idx_org_member_rep_group_scopes_member
+
+### org_member_tournament_assignments
+id (uuid), org_member_id (uuid) → organization_members.id NOT NULL, tournament_id (uuid) → tournaments.id NOT NULL, created_at
+- Indexes: idx_omta_org_member, idx_omta_tournament, org_member_tournament_assignmen_org_member_id_tournament_id_key
+
+### org_overrides
+id (uuid), org_id (uuid) → organizations.id NOT NULL, type NOT NULL, value, expires_at, reason NOT NULL, created_by NOT NULL, created_at, revoked_at, revoked_by
+- Indexes: idx_org_overrides_org
+
+### org_public_site_content
+id (uuid), org_id (uuid) → organizations.id NOT NULL, tagline, description, contact_email, social_instagram, social_facebook, social_x, social_website, show_upcoming_tournaments (boolean), show_archives_link (boolean), created_at, updated_at
+- Indexes: org_public_site_content_org_id_key
+
+### organization_members
+id (uuid), organization_id (uuid) → organizations.id NOT NULL, user_id (uuid) NOT NULL, role, invited_at, accepted_at, capabilities (jsonb), status, display_name, title
+- Indexes: organization_members_organization_id_user_id_key
+
+### organizations
+id (uuid), name NOT NULL, slug NOT NULL, logo_url, plan_id, stripe_customer_id, stripe_subscription_id, subscription_status, tournament_limit (integer), is_public (boolean), created_at, theme_preset, theme_primary, theme_accent, hero_banner_url, theme_font, theme_card_style, require_score_finalization (boolean), onboarding_completed_at, enabled_addons (jsonb), internal_notes, billing_suspended_at, billing_suspension_reason, subscription_period, current_period_end, rep_team_subscription_item_id, pdf_settings (jsonb), account_kind, team_workspace_status, is_discoverable (boolean), email_marketing_opt_out (boolean), email_opt_out_at
+- Indexes: idx_organizations_email_opt_out, organizations_slug_key
+
+## Module: Platform Admin
+
+### notification_preferences
+user_id (uuid) NOT NULL, org_id (uuid) → organizations.id NOT NULL, event_type NOT NULL, channel_bell (boolean), channel_push (boolean), channel_email (boolean), updated_at
+
+### notifications
+id (uuid), org_id (uuid) → organizations.id NOT NULL, user_id (uuid) NOT NULL, event_type NOT NULL, title NOT NULL, body, link, read_at, created_at, metadata (jsonb)
+- Indexes: notifications_org_idx, notifications_user_unread_idx
+
+### plan_config_overrides
+id (uuid), plan_id NOT NULL, tournament_limit (integer), seat_limit (integer), trial_days (integer), updated_at, updated_by_email, last_change_note
+- Indexes: plan_config_overrides_plan_id_key
+
+### plan_gating
+plan_key NOT NULL, gating_status, updated_at, updated_by_email, last_change_note
+
+### platform_addon_catalog
+id (uuid), addon_key NOT NULL, label NOT NULL, description, module_key, status, default_included_plans, pricing_model, monthly_price (numeric), annual_price (numeric), effective_at, notes, created_at, updated_at
+- Indexes: idx_platform_addon_catalog_status_label, platform_addon_catalog_addon_key_key
+
+### platform_admin_visits
+id (uuid), actor_user_id (uuid), actor_email NOT NULL, path, visited_at
+- Indexes: idx_platform_admin_visits_actor_time, idx_platform_admin_visits_path_time
+
+### platform_audit_log
+id (uuid), actor_email NOT NULL, org_id (uuid) → organizations.id, action NOT NULL, field, old_value (jsonb), new_value (jsonb), created_at
+- Indexes: idx_platform_audit_actor, idx_platform_audit_org
+
+### platform_bulk_operations
+id (uuid), action_type NOT NULL, status, target_count (integer), success_count (integer), failure_count (integer), reason NOT NULL, parameters (jsonb), result_summary (jsonb), created_by_email NOT NULL, created_at, completed_at
+- Indexes: idx_platform_bulk_operations_actor_time, idx_platform_bulk_operations_time
+
+### platform_catalog_campaigns
+id (uuid), campaign_key NOT NULL, title NOT NULL, campaign_type NOT NULL, status, target_plan_ids, starts_at, ends_at, coupon_code, discount_summary, trial_days (integer), notes, created_by_email NOT NULL, updated_by_email, created_at, updated_at
+- Indexes: idx_platform_catalog_campaigns_dates, idx_platform_catalog_campaigns_status_time, platform_catalog_campaigns_campaign_key_key
+
+### platform_catalog_change_applications
+id (uuid), change_request_id (uuid) → platform_catalog_change_requests.id NOT NULL, surface NOT NULL, target_key NOT NULL, actor_email NOT NULL, applied_payload (jsonb), applied_at
+- Indexes: idx_platform_catalog_change_applications_request_time, idx_platform_catalog_change_applications_surface_time
+
+### platform_catalog_change_requests
+id (uuid), request_type NOT NULL, title NOT NULL, description, status, priority, target_plan_id, target_addon_key, target_version_id (uuid) → platform_plan_versions.id, effective_at, impact_summary, proposal (jsonb), submitted_by_email, submitted_at, reviewed_by_email, reviewed_at, implementation_notes, created_by_email NOT NULL, updated_by_email, created_at, updated_at
+- Indexes: idx_platform_catalog_change_requests_effective, idx_platform_catalog_change_requests_status_time
+
+### platform_email_templates
+key NOT NULL, label NOT NULL, description NOT NULL, subject NOT NULL, heading NOT NULL, body NOT NULL, cta_label, cta_url_pattern, variables (jsonb), category, is_customised (boolean), updated_at, updated_by
+
+### platform_events
+id (uuid), event_type NOT NULL, source, source_event_id, org_id (uuid) → organizations.id, actor_user_id (uuid), actor_email, previous_plan_id, plan_id, previous_subscription_status, subscription_status, metadata (jsonb), occurred_at, created_at
+- Indexes: idx_platform_events_org_time, idx_platform_events_source_event, idx_platform_events_type_time
+
+### platform_metric_snapshots
+id (uuid), snapshot_date NOT NULL, metrics (jsonb), source, created_by_email, created_at
+- Indexes: idx_platform_metric_snapshots_date, platform_metric_snapshots_snapshot_date_key
+
+### platform_plan_module_entitlements
+plan_id NOT NULL, module_key NOT NULL, included (boolean), updated_by_email, updated_at
+
+### platform_plan_versions
+id (uuid), version_key NOT NULL, title NOT NULL, description, status, effective_at, published_at, created_by_email, snapshot (jsonb), notes, created_at, updated_at
+- Indexes: idx_platform_plan_versions_status_time, platform_plan_versions_version_key_key
+
+### platform_user_notes
+id (uuid), user_id (uuid) NOT NULL, body NOT NULL, created_by_email NOT NULL, created_at
+- Indexes: platform_user_notes_user_idx
+
+### platform_users
+id (uuid), email NOT NULL, display_name, role, is_active (boolean), invited_by, created_at, updated_at
+- Indexes: platform_users_email_key
+
+### push_subscriptions
+id (uuid), user_id (uuid) NOT NULL, endpoint NOT NULL, keys_p256dh NOT NULL, keys_auth NOT NULL, device_label, created_at, last_used_at
+- Indexes: push_subscriptions_endpoint_key, push_subscriptions_user_idx
+
+### tournament_notification_preferences
+user_id (uuid) NOT NULL, tournament_id (uuid) → tournaments.id NOT NULL, event_type NOT NULL, opted_out (boolean), updated_at
+- Indexes: tournament_notif_prefs_tournament_idx
+
+## Module: CRM / Leads
+
+### early_access_leads
+id (uuid), created_at, updated_at, last_submitted_at, submission_count (integer), status, name NOT NULL, email NOT NULL, email_normalized NOT NULL, organization_name, role, sports, plan_interest, features_interested, notes, source_path, user_agent, release_notifications_consent (boolean), metadata (jsonb), internal_status, internal_notes, last_contacted_at, last_contacted_by, converted_org_id (uuid) → organizations.id, converted_at, follow_up_due_at, next_action
+- Indexes: early_access_leads_email_normalized_key, idx_early_access_leads_converted_at, idx_early_access_leads_created_at, idx_early_access_leads_features_interested, idx_early_access_leads_follow_up_due_at, idx_early_access_leads_internal_status, idx_early_access_leads_plan_interest, idx_early_access_leads_status
+
+### email_batches
+id (uuid), email_key NOT NULL, subject NOT NULL, triggered_by NOT NULL, recipient_count (integer), suppressed_count (integer), sent_count (integer), failed_count (integer), status, started_at, completed_at, created_at
+- Indexes: idx_email_batches_email_key, idx_email_batches_status
+
+### email_sends
+id (uuid), email_key NOT NULL, subject NOT NULL, recipient_org_id (uuid) → organizations.id, recipient_email NOT NULL, recipient_name, status, suppression_reason, resend_message_id, batch_id (uuid) → email_batches.id, sent_at, created_at
+- Indexes: idx_email_sends_batch_id, idx_email_sends_email_key, idx_email_sends_org_id, idx_email_sends_status
+
+## Module: Other
+
+### basic_coach_teams
+id (uuid), name NOT NULL, normalized_name NOT NULL, primary_coach_name, primary_coach_email NOT NULL, sport, age_group, source, team_workspace_id (uuid) → team_workspaces.id, created_at, updated_at
+- Indexes: basic_coach_teams_primary_email_idx, basic_coach_teams_workspace_idx
 
 ---
 
-### tournaments
-**Module:** Tournament | **RLS:** ENABLED | **Tenancy:** direct `org_id`
+## Tables by count
 
-| # | Column | Type | Nullable | Default |
-|---|---|---|---|---|
-| 1 | id | uuid | NO | gen_random_uuid() |
-| 2 | year | int4 | NO | — |
-| 3 | name | text | NO | — |
-| 4 | slug | text | YES | — |
-| 5 | status | text | NO | 'draft' |
-| 6 | is_active | bool | NO | false |
-| 7 | start_date | date | YES | — |
-| 8 | end_date | date | YES | — |
-| 9 | contact_email | text | YES | — |
-| 11 | fee_schedule_mode | text | NO | 'tournament' |
-| 12 | deposit_amount | numeric | YES | — |
-| 13 | deposit_due_date | date | YES | — |
-| 14 | total_fee_amount | numeric | YES | — |
-| 15 | total_fee_due_date | date | YES | — |
-| 16 | logo_url | text | YES | — |
-| 17 | hero_banner_url | text | YES | — |
-| 18 | theme_preset | text | YES | — |
-| 19 | theme_primary | text | YES | — |
-| 20 | theme_accent | text | YES | — |
-| 21 | theme_font | text | YES | — |
-| 22 | theme_card_style | text | YES | — |
-| 23 | require_score_finalization | bool | YES | — |
-| 24 | color_mode | text | YES | — |
-| 25 | created_at | timestamptz | NO | now() |
-| 26 | notify_teams_on_complete | bool | NO | false |
-| 27 | results_notified_at | timestamptz | YES | — |
-| 28 | results_notification_sent_count | int4 | NO | 0 |
-| 29 | org_id | uuid | NO | — |
-| 30 | settings | jsonb | NO | '{}' |
+Total: **98 tables** across 10 modules.
 
-**Foreign keys:** `org_id → organizations.id`
-
-**Note:** No `pos=10` column — ordinal position 10 was dropped/skipped in migration history.
+- Tournament: 17 tables
+- League: 8 tables
+- Rep Teams: 25 tables
+- Standalone Team Workspace: 6 tables
+- Accounting: 9 tables
+- Stripe / Billing: 1 tables
+- Organization / Platform Core: 8 tables
+- Platform Admin: 20 tables
+- CRM / Leads: 3 tables
+- Other: 1 tables

@@ -18,6 +18,7 @@ import {
   COACHES_CLAIM_PATH,
   COACHES_START_PATH,
 } from '@/lib/coaches-portal-routes';
+import { PLAN_CONFIG, formatPriceAmount } from '@/lib/plan-config';
 import styles from './page.module.css';
 
 type BillingCycle = 'monthly' | 'annual';
@@ -126,7 +127,9 @@ export default function TeamSignupClient({ teamIsGated, claim = null }: TeamSign
   const parsedSeasonYear = Number.parseInt(seasonYear, 10);
   const validSeasonYear = Number.isInteger(parsedSeasonYear) && parsedSeasonYear >= 2000 && parsedSeasonYear <= 2100;
   const previewSlug = slugPreview(cleanTeamName) || 'your-team';
-  const planPrice = billingCycle === 'annual' ? '$290 CAD / season' : '$29 CAD / month';
+  const planPrice = billingCycle === 'annual'
+    ? `${formatPriceAmount(PLAN_CONFIG.team.annualPrice)} CAD / season`
+    : `${formatPriceAmount(PLAN_CONFIG.team.monthlyPrice)} CAD / month`;
   const accountReady = isAuthenticated || (email.trim() && password.length >= (authMode === 'signup' ? 8 : 1));
   const claimEmailMismatch = !!claim && isAuthenticated && !!email && email.trim().toLowerCase() !== claim.contactEmail.toLowerCase();
   const canSubmit = !teamIsGated && !claimEmailMismatch && cleanTeamName.length >= 2 && validSeasonYear && !!accountReady && !busy;
@@ -473,7 +476,7 @@ export default function TeamSignupClient({ teamIsGated, claim = null }: TeamSign
                 aria-pressed={billingCycle === 'annual'}
               >
                 Seasonal
-                <span>$290 CAD</span>
+                <span>{formatPriceAmount(PLAN_CONFIG.team.annualPrice)} CAD</span>
               </button>
               <button
                 type="button"
@@ -483,7 +486,7 @@ export default function TeamSignupClient({ teamIsGated, claim = null }: TeamSign
                 aria-pressed={billingCycle === 'monthly'}
               >
                 Monthly
-                <span>$29 CAD</span>
+                <span>{formatPriceAmount(PLAN_CONFIG.team.monthlyPrice)} CAD</span>
               </button>
             </div>
           </div>

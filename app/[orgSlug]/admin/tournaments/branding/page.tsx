@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { ChevronDown, Image as ImageIcon, Palette, Upload } from 'lucide-react';
 import { useTournament } from '@/lib/tournament-context';
 import { useOrg } from '@/lib/org-context';
+import { usePageTitle } from '@/lib/usePageTitle';
 import FeedbackModal from '@/components/FeedbackModal';
 import { TournamentAdminHeader, CompactUpsell } from '@/components/admin/tournament';
 import { PRESETS, FONT_OPTIONS, CARD_STYLE_OPTIONS, resolveTheme } from '@/lib/themes';
@@ -33,6 +34,7 @@ type SectionKey = 'publicPages' | 'logo' | 'theme' | 'heroBanner' | 'fontFamily'
 export default function TournamentBrandingPage() {
   const { currentTournament } = useTournament();
   const { currentOrg, userRole } = useOrg();
+  usePageTitle('Public Site');
   const base = `/${currentOrg?.slug ?? 'admin'}/admin/tournaments`;
 
   const [saved, setSaved] = useState<BrandingSettings | null>(null);

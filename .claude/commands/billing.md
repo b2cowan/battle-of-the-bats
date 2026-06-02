@@ -23,9 +23,9 @@ After reading, briefly confirm: _"Billing context loaded — [N] features in FEA
 | Plan ID | Display Name | Monthly | Annual | Key unlock |
 |---|---|---|---|---|
 | `tournament` | Tournament | Free | Free | 1 active tournament, 3 staff seats, manual scheduling |
-| `tournament_plus` | Tournament Plus | $39/mo | $390/yr | Auto-schedule, brackets, comms, archives, PDF exports |
-| `league` | League | $89/mo | $890/yr | Public org page, House League module, 10 staff seats |
-| `club` | Club | $179/mo | $1,790/yr | Accounting, Rep Teams, Unlimited seats, direct support |
+| `tournament_plus` | Tournament Plus | $39/mo | $390/yr | Auto-schedule, brackets, comms, archives, PDF exports, unlimited seats |
+| `league` | League | $89/mo | $890/yr | Public org page, House League module, unlimited seats |
+| `club` | Club | $179/mo | $1,790/yr | Accounting, Rep Teams, unlimited seats, direct support |
 
 **Plan IDs in code:** `tournament` | `tournament_plus` | `league` | `club`
 **Plan rank:** tournament=0, tournament_plus=1, league=2, club=3 (also `team`=0, a legacy/coach plan)

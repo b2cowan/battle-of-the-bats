@@ -40,7 +40,9 @@ export default async function LeagueIndexPage({
   const { orgSlug } = await params;
 
   const org = await getOrganizationBySlug(orgSlug);
-  if (!org) notFound();
+  // Private orgs and canceled subscriptions hide all public surfaces — mirror the org home page gates.
+  if (!org || !org.isPublic) notFound();
+  if (org.subscriptionStatus === 'canceled') notFound();
   if (!hasModuleEntitlement(org, 'module_house_league')) notFound();
 
   const allSeasons = await getLeagueSeasons(org.id);

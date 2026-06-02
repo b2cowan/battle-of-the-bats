@@ -1,11 +1,12 @@
 ﻿'use client';
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Calendar, Plus, Pencil, Trash2, X, Check, Sparkles, Trophy, MapPin, Clock, Send, Globe, EyeOff, RefreshCw, AlertTriangle } from 'lucide-react';
+import { Calendar, ChevronRight, ChevronDown, Plus, Pencil, Trash2, X, Check, Sparkles, SlidersHorizontal, Trophy, MapPin, Clock, Send, Globe, EyeOff, RefreshCw, AlertTriangle, AlertCircle, Lock, Wrench, FileSpreadsheet, FileText } from 'lucide-react';
 import { formatPoolName } from '@/lib/utils';
 import { saveGame, updateGame, deleteGame } from '@/lib/db';
 import { formatTime } from '@/lib/utils';
 import { useTournament } from '@/lib/tournament-context';
 import { useOrg } from '@/lib/org-context';
+import { usePageTitle } from '@/lib/usePageTitle';
 import { hasPlanFeature, requiresTournamentPlusCopy } from '@/lib/plan-features';
 import {
   downloadXLSX, generateCSV, downloadCSVBlob, downloadICS,
@@ -16,8 +17,10 @@ import ExportMenu from '@/components/admin/ExportMenu';
 import ScheduleGenerator from './Generator';
 import PlayoffWizard from './PlayoffWizard';
 import GameList from './components/GameList';
-import { Game, Team, Division, Venue, PoolSlot } from '@/lib/types';
+import ScheduleHealthPanel from './components/ScheduleHealthPanel';
+import { Game, Team, Division, Venue, PoolSlot, ScheduleFacilityLane } from '@/lib/types';
 import { checkVenueConflict, type ConflictResult } from '@/lib/schedule-conflict';
+import { buildScheduleMetrics } from '@/lib/schedule-metrics';
 import s from '../../admin-common.module.css';
 import styles from './schedule-admin.module.css';
 import FeedbackModal from '@/components/FeedbackModal';
@@ -30,8 +33,6 @@ import {
   ToolbarSelect,
   ToolbarSearch,
   ToolbarSegmentedControl,
-  ToolbarMenu,
-  ToolbarMenuItem,
 } from '@/components/admin/tournament/TournamentAdminUI';
 
 type ModalMode = 'add' | 'edit' | null;
@@ -69,14 +70,16 @@ const emptyForm = {
 };
 
 export default function AdminSchedulePage() {
-  const { currentTournament, loading: tournamentLoading } = useTournament();
+  const { currentTournament, isLocked, loading: tournamentLoading } = useTournament();
   const { currentOrg } = useOrg();
+  usePageTitle('Schedule');
   const tournamentId = currentTournament?.id;
   const orgSlug = currentOrg?.slug;
   const [games, setGames]       = useState<Game[]>([]);
   const [teams, setTeams]       = useState<Team[]>([]);
   const [divisions, setDivisions] = useState<Division[]>([]);
   const [venues, setVenues] = useState<Venue[]>([]);
+  const [facilityLanes, setFacilityLanes] = useState<ScheduleFacilityLane[]>([]);
   const [modalSlots, setModalSlots] = useState<PoolSlot[]>([]);
   const [modalSlotsLoading, setModalSlotsLoading] = useState(false);
   const [modal, setModal]       = useState<ModalMode>(null);
@@ -86,6 +89,12 @@ export default function AdminSchedulePage() {
   const [viewMode, setViewMode] = useState<'pool' | 'playoff'>('pool');
   const [groupMode, setGroupMode] = useState<'flat' | 'pools'>('pools');
   const [layoutMode, setLayoutMode] = useState<'list' | 'bracket'>('list');
+  const [mobileSettingsOpen, setMobileSettingsOpen] = useState(false);
+  const [venueModalOpen, setVenueModalOpen] = useState(false);
+  const [resolveFacilitiesOpen, setResolveFacilitiesOpen] = useState(false);
+  const [facilityLaneSelections, setFacilityLaneSelections] = useState<Record<string, string>>({});
+  const [resolvingFacilities, setResolvingFacilities] = useState(false);
+  const [resolveFacilitiesError, setResolveFacilitiesError] = useState<string | null>(null);
   const [showGenerator, setShowGenerator] = useState(false);
   const [showPlayoffWizard, setShowPlayoffWizard] = useState(false);
   const [search, setSearch] = useState('');
@@ -100,18 +109,16 @@ export default function AdminSchedulePage() {
     message: string;
     type: 'primary' | 'danger' | 'warning' | 'success' | 'info';
     confirmText?: string;
+    items?: Array<{ label: string; note?: string }>;
     onConfirm?: () => void;
   }>({ isOpen: false, title: '', message: '', type: 'primary' });
 
-  const [publishModal, setPublishModal] = useState<{
-    mode: 'single' | 'all';
-    divisionId?: string;
-  } | null>(null);
+  const [publishModal, setPublishModal] = useState<{ divisionId: string } | null>(null);
 
   // PDF settings — fetched once on mount; used in handleExportPDF
   const [pdfSettings, setPdfSettings] = useState<OrgPdfSettings | null>(null);
   const canUsePDF = currentOrg ? hasPlanFeature(currentOrg.planId, 'pdf_exports') : false;
-  const showPdfNudge = canUsePDF && pdfSettings !== null && Object.keys(pdfSettings).length === 0;
+  const [pdfWarningOpen, setPdfWarningOpen] = useState(false);
 
   // ── Real-time venue conflict check for the Add/Edit modal ────────────────
   // Pure computation from already-loaded state — no extra fetch required.
@@ -137,6 +144,7 @@ export default function AdminSchedulePage() {
         status: g.status ?? null,
         venueId: g.venueId ?? null,
         venueFacilityId: g.venueFacilityId ?? null,
+        scheduleFacilityLaneId: g.scheduleFacilityLaneId ?? null,
         divisionId: g.divisionId ?? null,
       })),
       divisions,
@@ -159,7 +167,7 @@ export default function AdminSchedulePage() {
 
   function openGenerator() {
     if (!canAutoGenerateSchedule) {
-      showScheduleUpgrade('Auto-Generate Requires Tournament Plus', 'auto_schedule');
+      showScheduleUpgrade('Round-Robin Generator Requires Tournament Plus', 'auto_schedule');
       return;
     }
     setShowGenerator(true);
@@ -167,14 +175,14 @@ export default function AdminSchedulePage() {
 
   function openPlayoffWizard() {
     if (!canGeneratePlayoffs) {
-      showScheduleUpgrade('Playoff Wizard Requires Tournament Plus', 'playoff_generator');
+      showScheduleUpgrade('Playoff Bracket Builder Requires Tournament Plus', 'playoff_generator');
       return;
     }
     if (!filterGroup) {
       setFeedback({
         isOpen: true,
         title: 'Choose a Division First',
-        message: 'Select a division before opening the Playoff Wizard.',
+        message: 'Select a division before opening the Playoff Bracket Builder.',
         type: 'info',
       });
       return;
@@ -189,27 +197,38 @@ export default function AdminSchedulePage() {
       setTeams([]);
       setDivisions([]);
       setVenues([]);
+      setFacilityLanes([]);
       return;
     }
     const orgParam = orgSlug ? `&orgSlug=${encodeURIComponent(orgSlug)}` : '';
 
-    const [gamesRes, teamsRes, groupsRes, venuesRes] = await Promise.all([
+    const [gamesRes, teamsRes, groupsRes, venuesRes, lanesRes] = await Promise.all([
       fetch(`/api/admin/games?tournamentId=${encodeURIComponent(tournamentId)}${orgParam}`),
       fetch(`/api/admin/teams?tournamentId=${encodeURIComponent(tournamentId)}${orgParam}`),
       fetch(`/api/admin/divisions?tournamentId=${encodeURIComponent(tournamentId)}${orgParam}`),
       fetch(`/api/admin/venues?tournamentId=${encodeURIComponent(tournamentId)}${orgParam}`),
+      fetch(`/api/admin/schedule-facility-lanes?tournamentId=${encodeURIComponent(tournamentId)}${orgParam}`),
     ]);
 
     const games = gamesRes.ok ? await gamesRes.json() : [];
     const allTeams = teamsRes.ok ? await teamsRes.json() : [];
     const groups = groupsRes.ok ? await groupsRes.json() : [];
     const venues = venuesRes.ok ? await venuesRes.json() : [];
+    const lanes = lanesRes.ok ? await lanesRes.json() : [];
 
     setGames(games);
     setTeams(allTeams.filter((t: any) => t.status === 'accepted'));
     setDivisions(groups);
-    setFilterGroup(prev => prev || (groups.length > 0 ? groups[0].id : ''));
+    setFilterGroup(prev => {
+      if (prev && groups.some((g: any) => g.id === prev)) return prev;
+      try {
+        const cachedGroup = (JSON.parse(localStorage.getItem(`flhq-schedule-${tournamentId}`) ?? '{}') as any).filterGroup as string | undefined;
+        if (cachedGroup && groups.some((g: any) => g.id === cachedGroup)) return cachedGroup;
+      } catch {}
+      return groups.length > 0 ? groups[0].id : '';
+    });
     setVenues(venues);
+    setFacilityLanes(lanes);
   }, [tournamentId, tournamentLoading, orgSlug]);
   
   useEffect(() => {
@@ -225,6 +244,37 @@ export default function AdminSchedulePage() {
       .catch(() => setPdfSettings(null));
   }, [orgSlug]);
 
+  // Restore filter state from localStorage when tournament changes.
+  useEffect(() => {
+    if (!tournamentId) return;
+    try {
+      const raw = localStorage.getItem(`flhq-schedule-${tournamentId}`);
+      if (!raw) return;
+      const cached = JSON.parse(raw) as Partial<{
+        viewMode: 'pool' | 'playoff';
+        groupMode: 'flat' | 'pools';
+        layoutMode: 'list' | 'bracket';
+        selectedStatuses: ScheduleStatusFilter[];
+        selectedVenueKeys: string[];
+      }>;
+      if (cached.viewMode === 'pool' || cached.viewMode === 'playoff') setViewMode(cached.viewMode);
+      if (cached.groupMode === 'flat' || cached.groupMode === 'pools') setGroupMode(cached.groupMode);
+      if (cached.layoutMode === 'list' || cached.layoutMode === 'bracket') setLayoutMode(cached.layoutMode);
+      if (Array.isArray(cached.selectedStatuses) && cached.selectedStatuses.length > 0) setSelectedStatuses(cached.selectedStatuses);
+      if (Array.isArray(cached.selectedVenueKeys)) setSelectedVenueKeys(cached.selectedVenueKeys);
+    } catch {}
+  }, [tournamentId]);
+
+  // Persist filter state. Guard: only write once divisions are loaded.
+  useEffect(() => {
+    if (!tournamentId || !filterGroup || divisions.length === 0) return;
+    try {
+      localStorage.setItem(`flhq-schedule-${tournamentId}`, JSON.stringify({
+        filterGroup, viewMode, groupMode, layoutMode, selectedStatuses, selectedVenueKeys,
+      }));
+    } catch {}
+  }, [tournamentId, filterGroup, viewMode, groupMode, layoutMode, selectedStatuses, selectedVenueKeys, divisions.length]);
+
   const groupTeams   = (id: string) => teams.filter(t => t.divisionId === id);
   const getTeamName  = (id: string) => teams.find(t => t.id === id)?.name ?? null;
   const resolveTeam  = (id: string, placeholder?: string) => getTeamName(id) ?? placeholder ?? 'TBD';
@@ -236,7 +286,11 @@ export default function AdminSchedulePage() {
     const facility = venue.facilities?.find(f => f.id === facilityId);
     return facility ? `${venue.name} — ${facility.name}` : venue.name;
   };
-  const getGameVenueKey = (g: Game) => g.venueId ? `venue:${g.venueId}` : `custom:${(g.location || '').trim() || '__none__'}`;
+  const getGameVenueKey = (g: Game) => {
+    if (g.venueId) return `venue:${g.venueId}`;
+    if (g.scheduleFacilityLaneId) return `lane:${g.scheduleFacilityLaneId}`;
+    return `custom:${(g.location || '').trim() || '__none__'}`;
+  };
   const getGameVenueDisplay = (g: Game): { name: string; sublabel?: string } => {
     if (g.venueId) {
       const venue = venues.find(v => v.id === g.venueId);
@@ -246,6 +300,10 @@ export default function AdminSchedulePage() {
         if (facility) return { name: venue.name, sublabel: facility.name };
       }
       return { name: venue.name };
+    }
+    if (g.scheduleFacilityLaneId) {
+      const lane = facilityLanes.find(item => item.id === g.scheduleFacilityLaneId);
+      return { name: lane?.label ?? g.scheduleFacilityLaneLabel ?? g.location ?? 'Temporary facility', sublabel: 'TBD facility' };
     }
     return { name: g.location?.trim() || 'No venue' };
   };
@@ -284,6 +342,30 @@ export default function AdminSchedulePage() {
           body: JSON.stringify({ action: 'set-visibility', data: { id: divisionId, scheduleVisibility: 'unpublished' } }),
         });
         setDivisions(prev => prev.map(g => g.id === divisionId ? { ...g, scheduleVisibility: 'unpublished' } : g));
+      },
+    });
+  }
+
+  function handleUnpublishAll() {
+    const published = divisions.filter(g => g.scheduleVisibility && g.scheduleVisibility !== 'unpublished');
+    if (published.length === 0) return;
+    setFeedback({
+      isOpen: true,
+      title: `Unpublish all ${published.length} divisions?`,
+      message: 'These divisions will be removed from the public schedule page. You can republish them at any time.',
+      items: published.map(g => ({ label: g.name })),
+      type: 'warning',
+      confirmText: `Unpublish All (${published.length})`,
+      onConfirm: async () => {
+        const orgQuery = orgSlug ? `?orgSlug=${encodeURIComponent(orgSlug)}` : '';
+        await Promise.all(published.map(g =>
+          fetch(`/api/admin/divisions${orgQuery}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'set-visibility', data: { id: g.id, scheduleVisibility: 'unpublished' } }),
+          })
+        ));
+        setDivisions(prev => prev.map(g => (g.scheduleVisibility && g.scheduleVisibility !== 'unpublished') ? { ...g, scheduleVisibility: 'unpublished' } : g));
       },
     });
   }
@@ -423,18 +505,43 @@ export default function AdminSchedulePage() {
     setAddVenueOpen(false);
   }
 
-  const scheduled = games;
+  const facilityLaneById = useMemo(() => new Map(facilityLanes.map(lane => [lane.id, lane])), [facilityLanes]);
+  const scheduled = useMemo(() => games.map(game => {
+    if (!game.scheduleFacilityLaneId || game.scheduleFacilityLaneLabel) return game;
+    const lane = facilityLaneById.get(game.scheduleFacilityLaneId);
+    return lane ? { ...game, scheduleFacilityLaneLabel: lane.label } : game;
+  }), [games, facilityLaneById]);
 
   // Division + view slice (no search, no status) — used for status chip counts
   const divisionGames = scheduled.filter(g =>
     g.divisionId === filterGroup &&
     (viewMode === 'playoff' ? g.isPlayoff : !g.isPlayoff)
   );
+  const unresolvedLaneGameCounts = divisionGames.reduce((map, game) => {
+    if (game.scheduleFacilityLaneId && !game.venueId && !game.venueFacilityId) {
+      map.set(game.scheduleFacilityLaneId, (map.get(game.scheduleFacilityLaneId) ?? 0) + 1);
+    }
+    return map;
+  }, new Map<string, number>());
+  const unresolvedFacilityLanes = facilityLanes
+    .filter(lane => lane.divisionId === filterGroup && !lane.resolvedVenueId && unresolvedLaneGameCounts.has(lane.id))
+    .sort((a, b) => a.sortOrder - b.sortOrder || a.label.localeCompare(b.label));
   const statusCounts: Record<string, number> = {
     scheduled: divisionGames.filter(g => g.status === 'scheduled').length,
     cancelled: divisionGames.filter(g => g.status === 'cancelled').length,
     completed: divisionGames.filter(g => g.status === 'completed').length,
   };
+  const savedScheduleMetrics = useMemo(() => {
+    if (!currentTournament || viewMode !== 'pool' || !filterGroup || divisionGames.length === 0) return null;
+    return buildScheduleMetrics({
+      games: divisionGames,
+      teams,
+      divisions,
+      venues,
+      tournament: currentTournament,
+      divisionId: filterGroup,
+    });
+  }, [currentTournament, viewMode, filterGroup, divisionGames, teams, divisions, venues]);
   const venueFilterOptions = Array.from(
     divisionGames.reduce((map, g) => {
       const key = getGameVenueKey(g);
@@ -448,6 +555,20 @@ export default function AdminSchedulePage() {
       return map;
     }, new Map<string, { key: string; label: string; sublabel?: string; count: number }>()),
   ).map(([, option]) => option).sort((a, b) => a.label.localeCompare(b.label));
+  const totalVenueCount = venueFilterOptions.reduce((t, o) => t + o.count, 0);
+
+  // Mobile settings sheet: venue label + summary strip text
+  const venueLabel = selectedVenueKeys.length === 0
+    ? 'All venues'
+    : selectedVenueKeys.length === 1
+      ? (venueFilterOptions.find(o => o.key === selectedVenueKeys[0])?.label ?? '1 venue')
+      : `${selectedVenueKeys.length} venues`;
+
+  const settingsSummary = [
+    viewMode === 'pool' ? 'Round Robin' : 'Playoffs',
+    viewMode === 'pool' ? (groupMode === 'pools' ? 'Pools' : 'Flat') : (layoutMode === 'list' ? 'List' : 'Bracket'),
+    venueFilterOptions.length > 1 ? venueLabel : null,
+  ].filter(Boolean).join(' · ');
 
   const filtered  = scheduled.filter(g => {
     const matchesDivision = g.divisionId === filterGroup;
@@ -473,7 +594,10 @@ export default function AdminSchedulePage() {
       division: getGroupName(g.divisionId),
       homeTeam: resolveTeam(g.homeTeamId, g.homePlaceholder),
       awayTeam: resolveTeam(g.awayTeamId, g.awayPlaceholder),
-      location: g.venueId ? getVenueName(g.venueId, g.venueFacilityId) : (g.location ?? ''),
+      location: (() => {
+        const display = getGameVenueDisplay(g);
+        return display.sublabel ? `${display.name} - ${display.sublabel}` : display.name;
+      })(),
       status:   g.status,
     }));
   }
@@ -504,7 +628,10 @@ export default function AdminSchedulePage() {
         title:    `${resolveTeam(g.homeTeamId, g.homePlaceholder)} vs ${resolveTeam(g.awayTeamId, g.awayPlaceholder)} — ${getGroupName(g.divisionId)}`,
         date:     g.date,
         time:     g.time || undefined,
-        location: g.venueId ? getVenueName(g.venueId, g.venueFacilityId) : (g.location || undefined),
+        location: (() => {
+          const display = getGameVenueDisplay(g);
+          return display.sublabel ? `${display.name} - ${display.sublabel}` : display.name;
+        })(),
         cancelled: g.status === 'cancelled',
       }));
     await downloadICS(
@@ -513,7 +640,7 @@ export default function AdminSchedulePage() {
     );
   }
 
-  async function handleExportPDF() {
+  async function doPdfExport() {
     const settings: OrgPdfSettings = {
       ...DEFAULT_PDF_SETTINGS,
       ...(pdfSettings && Object.keys(pdfSettings).length > 0 ? pdfSettings : {}),
@@ -530,11 +657,87 @@ export default function AdminSchedulePage() {
     await downloadPDF(filename, 'Tournament Schedule', currentTournament?.name, headers, rows, settings);
   }
 
+  async function handleExportPDF() {
+    if (
+      canUsePDF &&
+      pdfSettings !== null &&
+      Object.keys(pdfSettings).length === 0 &&
+      !localStorage.getItem('flhq-pdf-setup-warned')
+    ) {
+      setPdfWarningOpen(true);
+      return;
+    }
+    await doPdfExport();
+  }
+
   function statusBadge(status: string) {
     if (status === 'completed') return <span className="badge badge-success">Final</span>;
     if (status === 'cancelled') return <span className="badge badge-danger">Cancelled</span>;
     return <span className="badge badge-warning">Scheduled</span>;
   }
+
+  function openResolveFacilities() {
+    setResolveFacilitiesError(null);
+    setFacilityLaneSelections(Object.fromEntries(unresolvedFacilityLanes.map(lane => [
+      lane.id,
+      lane.resolvedVenueFacilityId
+        ? `facility:${lane.resolvedVenueFacilityId}`
+        : lane.resolvedVenueId
+          ? `venue:${lane.resolvedVenueId}`
+          : '',
+    ])));
+    setResolveFacilitiesOpen(true);
+  }
+
+  function parseFacilitySelection(value: string): { venueId: string | null; venueFacilityId: string | null } {
+    if (!value) return { venueId: null, venueFacilityId: null };
+    const [kind, id] = value.split(':');
+    if (kind === 'facility') {
+      const venue = venues.find(item => item.facilities?.some(facility => facility.id === id));
+      return { venueId: venue?.id ?? null, venueFacilityId: id };
+    }
+    return { venueId: id, venueFacilityId: null };
+  }
+
+  async function resolveTemporaryFacilities() {
+    setResolveFacilitiesError(null);
+    const mappings = unresolvedFacilityLanes.map(lane => ({
+      laneId: lane.id,
+      ...parseFacilitySelection(facilityLaneSelections[lane.id] ?? ''),
+    }));
+    if (mappings.some(mapping => !mapping.venueId)) {
+      setResolveFacilitiesError('Select a venue or facility for every temporary facility.');
+      return;
+    }
+
+    setResolvingFacilities(true);
+    try {
+      const orgQuery = orgSlug ? `?orgSlug=${encodeURIComponent(orgSlug)}` : '';
+      const res = await fetch(`/api/admin/schedule-facility-lanes${orgQuery}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'resolve',
+          tournamentId,
+          divisionId: filterGroup,
+          mappings,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to resolve temporary facilities');
+      if (Array.isArray(data.lanes)) setFacilityLanes(data.lanes);
+      setResolveFacilitiesOpen(false);
+      await refresh();
+    } catch (error) {
+      setResolveFacilitiesError(error instanceof Error ? error.message : 'Failed to resolve temporary facilities');
+    } finally {
+      setResolvingFacilities(false);
+    }
+  }
+
+  const activeDivision = divisions.find(g => g.id === filterGroup);
+  const publishedDivisionCount = divisions.filter(g => g.scheduleVisibility && g.scheduleVisibility !== 'unpublished').length;
+  const activeDivisionPublished = (activeDivision?.scheduleVisibility ?? 'unpublished') !== 'unpublished';
 
   return (
     <div className={s.page}>
@@ -553,22 +756,52 @@ export default function AdminSchedulePage() {
           </>
         ) : 'Plan tournament games'}
         mobileActionsInline
-        actions={
-          <button
-            className={`btn btn-lime btn-data ${styles.addGameButton}`}
-            onClick={openAdd}
-            disabled={!currentTournament}
-            aria-label="Add game"
-            title="Add game"
-          >
-            <Plus size={14} /> <span className={styles.addGameLabel}>Add Game</span>
-          </button>
-        }
+        locked={isLocked}
+        actions={(
+          <>
+            {(() => {
+              // Per-division publish status — read-only orientation, lives in the
+              // header (not the toolbar) so it doesn't compete with the view/action
+              // controls. "Published · …" (not "Live") to avoid colliding with the
+              // sidebar's tournament-level LIVE dot.
+              const ag = divisions.find(g => g.id === filterGroup);
+              // No single division selected (e.g. "All Divisions") → no single
+              // publish state to report, so show nothing.
+              if (!ag) return null;
+              const vis = ag.scheduleVisibility ?? 'unpublished';
+              if (vis === 'unpublished') {
+                return (
+                  <span className={`${styles.publishStatus} ${styles.publishStatusDraft}`}>
+                    <EyeOff size={10} />
+                    Not Published
+                  </span>
+                );
+              }
+              return (
+                <span className={styles.publishStatus}>
+                  <Globe size={10} />
+                  {vis === 'published_teams' ? 'Published · Teams' : 'Published · Placeholder'}
+                </span>
+              );
+            })()}
+            {!isLocked && (
+              <button
+                className={`btn btn-lime btn-data ${styles.addGameButton}`}
+                onClick={openAdd}
+                disabled={!currentTournament}
+                aria-label="Add game"
+                title="Add game"
+              >
+                <Plus size={14} /> <span className={styles.addGameLabel}>Add Game</span>
+              </button>
+            )}
+          </>
+        )}
       />
 
       <TournamentAdminToolbar ariaLabel="Schedule controls" className={styles.scheduleToolbar}>
         {/* ── Row 1 left: Division + view mode controls (grow) ── */}
-        <ToolbarGroup grow className={styles.scheduleDivisionGroup}>
+        <ToolbarGroup grow className={`${styles.scheduleDivisionGroup} ${styles.scheduleStartGroup}`}>
           {divisions.length > 0 && (
             <ToolbarSelect<string>
               className={styles.scheduleDivisionSelect}
@@ -621,85 +854,51 @@ export default function AdminSchedulePage() {
           )}
         </ToolbarGroup>
 
-        {/* ── Row 1 right: utility actions — Publish · Export · Tools ── */}
-        <ToolbarGroup align="end" className={styles.scheduleActionsGroup}>
-          {/* Mobile row 2: Round Robin | Flat — dedicated row, hidden on desktop */}
-          <div className={styles.mobileModePair}>
-            <label className={`${styles.mobileModeNative} ${styles.mobileViewModeSelect}`}>
-              <span className="sr-only">View</span>
-              <select
-                className={styles.mobileModeNativeSelect}
-                value={viewMode}
-                onChange={event => { setViewMode(event.target.value as 'pool' | 'playoff'); }}
-              >
-                <option value="pool">Round Robin</option>
-                <option value="playoff">Playoffs</option>
-              </select>
-            </label>
-            {viewMode === 'pool' && (
-              <label className={`${styles.mobileModeNative} ${styles.mobileSubModeSelect}`}>
-                <span className="sr-only">Group</span>
-                <select
-                  className={styles.mobileModeNativeSelect}
-                  value={groupMode}
-                  onChange={event => { setGroupMode(event.target.value as 'flat' | 'pools'); }}
-                >
-                  <option value="flat">Flat</option>
-                  <option value="pools">Pools</option>
-                </select>
-              </label>
-            )}
-            {viewMode === 'playoff' && (
-              <label className={`${styles.mobileModeNative} ${styles.mobileSubModeSelect}`}>
-                <span className="sr-only">Layout</span>
-                <select
-                  className={styles.mobileModeNativeSelect}
-                  value={layoutMode}
-                  onChange={event => { setLayoutMode(event.target.value as 'list' | 'bracket'); }}
-                >
-                  <option value="list">List</option>
-                  <option value="bracket">Bracket</option>
-                </select>
-              </label>
-            )}
-          </div>
-          {/* Mobile row 3: Venue | action buttons — order:2 flows below the mode pair */}
-          <div className={styles.scheduleVenueMobile}>
-            <VenueFilterMenu
-              options={venueFilterOptions}
-              selectedKeys={selectedVenueKeys}
-              onToggle={key => setSelectedVenueKeys(prev => prev.includes(key) ? prev.filter(value => value !== key) : [...prev, key])}
-              onClear={() => setSelectedVenueKeys([])}
-            />
-          </div>
+        {/* ── Row 1 right: utility actions — Publish · Auto · Export ── */}
+        <ToolbarGroup align="end" className={`${styles.scheduleActionsGroup} ${styles.scheduleEndGroup}`}>
           {/* Publish control — only for round-robin view */}
           {viewMode === 'pool' && (() => {
             const ag = divisions.find(g => g.id === filterGroup);
             const vis = ag?.scheduleVisibility ?? 'unpublished';
             const isPublished = vis !== 'unpublished';
-            const canPublish = Boolean(currentTournament) && !isPublished;
             return (
               <>
-                {isPublished && (
-                  <span className={styles.publishStatus}>
-                    <Globe size={10} />
-                    {vis === 'published_teams' ? 'Live · Teams' : 'Live · Generic'}
-                  </span>
+                {/* Status display moved to the page header (left of Add Game).
+                    The toolbar keeps only the Publish/Unpublish action. The
+                    Unpublish control splits into a menu (this division / all
+                    published) when 2+ divisions are live. */}
+                {!isLocked && isPublished && (
+                  <UnpublishControl
+                    className={styles.mobileIconButton}
+                    publishedCount={divisions.filter(g => g.scheduleVisibility && g.scheduleVisibility !== 'unpublished').length}
+                    currentLabel={ag?.name ?? 'this division'}
+                    onUnpublishOne={() => handleUnpublish(filterGroup)}
+                    onUnpublishAll={handleUnpublishAll}
+                  />
                 )}
-                <button
-                  className={`btn btn-lime btn-data ${styles.publishButton} ${styles.mobileIconButton}`}
-                  onClick={() => setPublishModal({ mode: 'single', divisionId: filterGroup })}
-                  disabled={!canPublish}
-                  data-live={isPublished ? 'true' : undefined}
-                  aria-label={isPublished ? 'Schedule already published' : 'Publish schedule'}
-                  title={isPublished ? 'Schedule is already published. Saved edits are visible publicly.' : 'Publish schedule'}
-                >
-                  <Globe size={10} />
-                  <span className={styles.mobileButtonLabel}>{isPublished ? 'Published' : 'Publish'}</span>
-                </button>
+                {!isLocked && !isPublished && (
+                  <button
+                    className={`btn btn-lime btn-data ${styles.publishButton} ${styles.mobileIconButton}`}
+                    onClick={() => setPublishModal({ divisionId: filterGroup })}
+                    disabled={!currentTournament}
+                    aria-label="Publish schedule"
+                    title="Publish schedule"
+                  >
+                    <Globe size={10} />
+                    <span className={styles.mobileButtonLabel}>Publish</span>
+                  </button>
+                )}
               </>
             );
           })()}
+          <ScheduleToolsMenu
+            className={styles.scheduleToolsMenu}
+            disabled={!currentTournament}
+            canAutoGenerate={canAutoGenerateSchedule}
+            canPlayoffWizard={canGeneratePlayoffs}
+            onAutoGenerate={openGenerator}
+            onPlayoffWizard={openPlayoffWizard}
+          />
           <ExportMenu
             className={styles.scheduleExportButton}
             formats={['xlsx', 'csv', 'ics', 'pdf']}
@@ -710,60 +909,36 @@ export default function AdminSchedulePage() {
             planId={currentOrg?.planId}
             disabled={filtered.length === 0}
           />
-          <ToolbarMenu label="Tools" className={styles.scheduleToolsMenu}>
-            {viewMode === 'pool' ? (
-              <ToolbarMenuItem
-                icon={<Sparkles size={14} />}
-                label="Auto-Generate"
-                hint="Create a round-robin schedule from pools"
-                locked={!canAutoGenerateSchedule}
-                lockTitle="Automated schedule generation is included with Tournament Plus, League, and Club."
-                disabled={!currentTournament}
-                onSelect={openGenerator}
-              />
-            ) : (
-              <ToolbarMenuItem
-                icon={<Trophy size={14} />}
-                label="Playoff Wizard"
-                hint="Generate a playoff bracket"
-                locked={!canGeneratePlayoffs}
-                lockTitle="The playoff bracket generator is included with Tournament Plus, League, and Club."
-                disabled={!currentTournament}
-                onSelect={openPlayoffWizard}
-              />
-            )}
-            {viewMode === 'pool' && (() => {
-              const publishable = divisions.filter(g => !g.scheduleVisibility || g.scheduleVisibility === 'unpublished');
-              if (publishable.length === 0) return null;
-              return (
-                <ToolbarMenuItem
-                  icon={<Globe size={14} />}
-                  label="Publish All Divisions"
-                  hint={`${publishable.length} division${publishable.length !== 1 ? 's' : ''} ready to publish`}
-                  disabled={!currentTournament}
-                  onSelect={() => setPublishModal({ mode: 'all' })}
-                />
-              );
-            })()}
-            {viewMode === 'pool' && (() => {
-              const ag = divisions.find(g => g.id === filterGroup);
-              const isPublished = (ag?.scheduleVisibility ?? 'unpublished') !== 'unpublished';
-              if (!isPublished) return null;
-              return (
-                <ToolbarMenuItem
-                  icon={<EyeOff size={14} />}
-                  label="Unpublish Division"
-                  hint="Remove this division from the public schedule"
-                  onSelect={() => handleUnpublish(filterGroup)}
-                />
-              );
-            })()}
-          </ToolbarMenu>
         </ToolbarGroup>
 
         {/* ── Row 2: search + venue + status filters ── */}
         <ToolbarGroup fullWidth className={styles.scheduleFilterGroup}>
           <ToolbarSearch className={styles.scheduleSearch} value={search} onChange={setSearch} placeholder="Search teams..." label="Search games" />
+          {/* Mobile-only: Publish/Auto/Export collapse into a single Tools menu so
+              the division selector can take the full first row. Hidden on desktop,
+              where the three controls remain separate (Row 1 right). */}
+          <MobileToolsMenu
+            className={styles.scheduleMobileTools}
+            showPublishSection={!isLocked && viewMode === 'pool'}
+            isPublished={activeDivisionPublished}
+            publishedCount={publishedDivisionCount}
+            currentDivisionLabel={activeDivision?.name ?? 'this division'}
+            canPublish={!!currentTournament}
+            onPublish={() => setPublishModal({ divisionId: filterGroup })}
+            onUnpublishOne={() => handleUnpublish(filterGroup)}
+            onUnpublishAll={handleUnpublishAll}
+            canAutoGenerate={canAutoGenerateSchedule}
+            canPlayoffWizard={canGeneratePlayoffs}
+            onAutoGenerate={openGenerator}
+            onPlayoffWizard={openPlayoffWizard}
+            exportDisabled={filtered.length === 0}
+            canExportPdf={canUsePDF}
+            pdfUpgradeCopy={requiresTournamentPlusCopy('pdf_exports')}
+            onExportXLSX={handleExportXLSX}
+            onExportCSV={handleExportCSV}
+            onExportICS={handleExportICS}
+            onExportPDF={handleExportPDF}
+          />
           <div className={styles.scheduleVenueDesktop}>
             <VenueFilterMenu
               options={venueFilterOptions}
@@ -798,25 +973,199 @@ export default function AdminSchedulePage() {
         </ToolbarGroup>
       </TournamentAdminToolbar>
 
-      {showPdfNudge && (
-        <HelpCallout
-          variant="info"
-          title="PDF settings not configured"
-          body="Your PDF export will use default styling. Set up your header, logo, and footer once and all future PDFs will use those settings."
-          cta={{ label: 'Configure PDF Settings', href: `/${currentOrg?.slug}/admin/tournaments/settings/pdf` }}
-          dismissible
-          localStorageKey="flhq-pdf-nudge-schedule"
-        />
+      {/* ── Mobile settings bottom sheet (Schedule) ────────── */}
+      {mobileSettingsOpen && (
+        <>
+          <div className={styles.sheetBackdrop} onClick={() => setMobileSettingsOpen(false)} aria-hidden />
+          <div className={styles.sheet} role="dialog" aria-modal="true" aria-label="View settings">
+            <div className={styles.sheetHandle} />
+            <div className={styles.sheetBody}>
+              <div className={styles.sheetSection}>
+                <div className={styles.sheetSectionLabel}>Stage</div>
+                <div className={styles.sheetSegments}>
+                  {(['pool', 'playoff'] as const).map(v => (
+                    <button key={v} type="button"
+                      className={`${styles.sheetSeg} ${viewMode === v ? styles.sheetSegActive : ''}`}
+                      onClick={() => setViewMode(v)}
+                    >
+                      {v === 'pool' ? 'Round Robin' : 'Playoffs'}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              {viewMode === 'pool' && (
+                <div className={styles.sheetSection}>
+                  <div className={styles.sheetSectionLabel}>Grouping</div>
+                  <div className={styles.sheetSegments}>
+                    {(['flat', 'pools'] as const).map(v => (
+                      <button key={v} type="button"
+                        className={`${styles.sheetSeg} ${groupMode === v ? styles.sheetSegActive : ''}`}
+                        onClick={() => setGroupMode(v)}
+                      >
+                        {v === 'flat' ? 'Flat' : 'Pools'}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {viewMode === 'playoff' && (
+                <div className={styles.sheetSection}>
+                  <div className={styles.sheetSectionLabel}>Layout</div>
+                  <div className={styles.sheetSegments}>
+                    {(['list', 'bracket'] as const).map(v => (
+                      <button key={v} type="button"
+                        className={`${styles.sheetSeg} ${layoutMode === v ? styles.sheetSegActive : ''}`}
+                        onClick={() => setLayoutMode(v)}
+                      >
+                        {v === 'list' ? 'List' : 'Bracket'}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {venueFilterOptions.length > 1 && (
+                <div className={styles.sheetSection}>
+                  <div className={styles.sheetSectionLabel}>Venue</div>
+                  <button
+                    type="button"
+                    className={`${styles.venueSheetBtn} ${selectedVenueKeys.length > 0 ? styles.venueSheetBtnActive : ''}`}
+                    onClick={() => setVenueModalOpen(true)}
+                  >
+                    <span>{venueLabel}</span>
+                    <ChevronRight size={13} aria-hidden />
+                  </button>
+                </div>
+              )}
+              <div className={styles.sheetSection}>
+                <div className={styles.sheetSectionLabel}>Game Status</div>
+                <div className={styles.sheetSegments}>
+                  {STATUS_FILTERS.map(({ key, label }) => (
+                    <button
+                      key={key}
+                      type="button"
+                      className={`${styles.sheetSeg} ${selectedStatuses.includes(key) ? styles.sheetSegActive : ''}`}
+                      onClick={() => setSelectedStatuses(prev =>
+                        prev.includes(key) ? prev.filter(s => s !== key) : [...prev, key]
+                      )}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <button type="button" className={styles.sheetDone} onClick={() => setMobileSettingsOpen(false)}>Done</button>
+            </div>
+          </div>
+
+          {/* Venue nested modal */}
+          {venueModalOpen && (
+            <>
+              <div className={styles.venueModalBackdrop} onClick={() => setVenueModalOpen(false)} aria-hidden />
+              <div className={styles.venueModal} role="dialog" aria-modal="true" aria-label="Filter by venue">
+                <div className={styles.venueModalHandle} />
+                <div className={styles.venueModalHeader}>
+                  <button type="button" className={styles.venueModalBack} onClick={() => setVenueModalOpen(false)}>← Back</button>
+                  <span className={styles.venueModalTitle}>Venue</span>
+                  {selectedVenueKeys.length > 0 && (
+                    <button type="button" className={styles.venueModalClear} onClick={() => setSelectedVenueKeys([])}>Clear</button>
+                  )}
+                </div>
+                <div className={styles.venueModalList}>
+                  <button type="button"
+                    className={`${styles.venueModalOption} ${selectedVenueKeys.length === 0 ? styles.venueModalOptionActive : ''}`}
+                    onClick={() => setSelectedVenueKeys([])}
+                  >
+                    <span>All venues</span>
+                    <span className={styles.venueModalCount}>{totalVenueCount}</span>
+                  </button>
+                  {venueFilterOptions.map(opt => (
+                    <button key={opt.key} type="button"
+                      className={`${styles.venueModalOption} ${selectedVenueKeys.includes(opt.key) ? styles.venueModalOptionActive : ''}`}
+                      onClick={() => setSelectedVenueKeys(prev => prev.includes(opt.key) ? prev.filter(k => k !== opt.key) : [...prev, opt.key])}
+                    >
+                      <span>{opt.label}{opt.sublabel ? <span className={styles.venueModalSublabel}> — {opt.sublabel}</span> : ''}</span>
+                      <span className={styles.venueModalCount}>{opt.count}</span>
+                    </button>
+                  ))}
+                </div>
+                <div className={styles.venueModalFooter}>
+                  <button type="button" className={styles.sheetDone} onClick={() => setVenueModalOpen(false)}>Done</button>
+                </div>
+              </div>
+            </>
+          )}
+        </>
       )}
+
+      {/* ── Active settings summary strip (mobile only) ──────── */}
+      {currentTournament && !mobileSettingsOpen && (
+        <button
+          type="button"
+          className={styles.activeSettingsSummary}
+          onClick={() => setMobileSettingsOpen(true)}
+          aria-label={`View settings: ${settingsSummary}`}
+        >
+          <span className={styles.activeSettingsSummaryText}>{settingsSummary}</span>
+          <span className={styles.summaryRight}>
+            <span className={styles.statusCountTally} aria-hidden>
+              {STATUS_FILTERS.map(({ key }) => (
+                <span
+                  key={key}
+                  className={[
+                    styles.tallyPill,
+                    key === 'scheduled' ? styles.tallyScheduled : '',
+                    key === 'cancelled' ? styles.tallyCancelled : '',
+                    key === 'completed' ? styles.tallyCompleted : '',
+                    !selectedStatuses.includes(key) ? styles.tallyInactive : '',
+                  ].filter(Boolean).join(' ')}
+                >
+                  <span className={styles.tallyDot} />
+                  {statusCounts[key] ?? 0}
+                </span>
+              ))}
+            </span>
+            <SlidersHorizontal size={12} className={styles.activeSettingsSummaryIcon} aria-hidden />
+          </span>
+        </button>
+      )}
+
 
       {currentTournament && games.length === 0 && (
         <HelpCallout
           variant="info"
           title="No games scheduled yet"
           body={canAutoGenerateSchedule
-            ? 'Build your schedule by adding games manually, or use Auto-Generate to create a round-robin schedule from your divisions and teams. For playoffs, use the Playoff Wizard.'
-            : 'Build your schedule by adding games manually. Auto-Generate and Playoff Wizard are available with Tournament Plus or higher.'}
+            ? 'Build your schedule by adding games manually, or use the Round-Robin Generator to auto-build games from your teams. For playoffs, use the Playoff Bracket Builder.'
+            : 'Build your schedule by adding games manually. The Round-Robin Generator and Playoff Bracket Builder are available with Tournament Plus or higher.'}
         />
+      )}
+
+      {savedScheduleMetrics && (
+        <ScheduleHealthPanel
+          metrics={savedScheduleMetrics}
+          subtitle={`${activeDivision?.name ?? 'Division'} · Saved round robin`}
+        />
+      )}
+
+      {unresolvedFacilityLanes.length > 0 && viewMode === 'pool' && (
+        <div className={styles.facilityResolveBanner}>
+          <div className={styles.facilityResolveCopy}>
+            <Wrench size={14} />
+            <div>
+              <strong>{unresolvedFacilityLanes.length} temporary {unresolvedFacilityLanes.length === 1 ? 'facility' : 'facilities'} unresolved</strong>
+              <span>{divisionGames.filter(g => g.scheduleFacilityLaneId && !g.venueId && !g.venueFacilityId).length} games are still using TBD facilities.</span>
+            </div>
+          </div>
+          <button
+            type="button"
+            className="btn btn-outline btn-data"
+            onClick={venues.length === 0 ? () => setAddVenueOpen(true) : openResolveFacilities}
+            disabled={isLocked}
+          >
+            <MapPin size={13} />
+            {venues.length === 0 ? 'Add Venue' : 'Resolve'}
+          </button>
+        </div>
       )}
 
       {tournamentLoading ? (
@@ -828,10 +1177,10 @@ export default function AdminSchedulePage() {
         <PlayoffBracketView
           games={filtered}
           teams={teams}
-          division={divisions.find(g => g.id === filterGroup)}
+          division={activeDivision}
           canGeneratePlayoffs={canGeneratePlayoffs}
-          onEdit={openEdit}
-          onDelete={handleDeleteRequest}
+          onEdit={isLocked ? undefined : openEdit}
+          onDelete={isLocked ? undefined : handleDeleteRequest}
           getGroupName={getGroupName}
           formatDate={formatDate}
           statusBadge={statusBadge}
@@ -851,16 +1200,74 @@ export default function AdminSchedulePage() {
               venues={venues}
               viewMode={viewMode}
               groupByPool={groupMode === 'pools'}
-              pools={divisions.find(g => g.id === filterGroup)?.pools}
-              onDelete={handleDeleteRequest}
-              onCancel={markCancelled}
-              onSchedule={markScheduled}
-              onSave={handleSaveGame}
+              pools={activeDivision?.pools}
+              onDelete={isLocked ? undefined : handleDeleteRequest}
+              onCancel={isLocked ? undefined : markCancelled}
+              onSchedule={isLocked ? undefined : markScheduled}
+              onSave={isLocked ? undefined : handleSaveGame}
               onCreateVenue={() => setAddVenueOpen(true)}
               mode="planning"
               tournament={currentTournament}
             />
           )}
+        </div>
+      )}
+
+      {resolveFacilitiesOpen && (
+        <div className="modal-overlay" onClick={() => setResolveFacilitiesOpen(false)}>
+          <div className="modal modal-lg" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3 style={{ fontFamily: 'var(--font-data)', fontSize: '0.95rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--logic-lime)', margin: 0 }}>
+                Resolve Temporary Facilities
+              </h3>
+              <button className="btn btn-ghost btn-data" onClick={() => setResolveFacilitiesOpen(false)}><X size={16} /></button>
+            </div>
+            <div className={styles.resolveFacilityList}>
+              {unresolvedFacilityLanes.map(lane => (
+                <div key={lane.id} className={styles.resolveFacilityRow}>
+                  <div>
+                    <strong>{lane.label}</strong>
+                    <span>{unresolvedLaneGameCounts.get(lane.id) ?? 0} games</span>
+                  </div>
+                  <select
+                    className={styles.formSelect}
+                    value={facilityLaneSelections[lane.id] ?? ''}
+                    onChange={e => setFacilityLaneSelections(prev => ({ ...prev, [lane.id]: e.target.value }))}
+                  >
+                    <option value="">Select venue or facility...</option>
+                    {venues.map(venue => (
+                      <React.Fragment key={venue.id}>
+                        <option value={`venue:${venue.id}`}>{venue.name}</option>
+                        {(venue.facilities?.length ?? 0) > 0 && (
+                          <optgroup label={venue.name}>
+                            {venue.facilities!.map(facility => (
+                              <option key={facility.id} value={`facility:${facility.id}`}>{facility.name}</option>
+                            ))}
+                          </optgroup>
+                        )}
+                      </React.Fragment>
+                    ))}
+                  </select>
+                </div>
+              ))}
+            </div>
+            {resolveFacilitiesError && (
+              <div className={styles.errorBanner} style={{ margin: '0.75rem 0 0' }}>
+                <AlertCircle size={16} /> {resolveFacilitiesError}
+              </div>
+            )}
+            <div className="modal-footer">
+              <button type="button" className="btn btn-ghost btn-data" onClick={() => setResolveFacilitiesOpen(false)}>Cancel</button>
+              <button
+                type="button"
+                className="btn btn-primary btn-data"
+                onClick={resolveTemporaryFacilities}
+                disabled={resolvingFacilities || unresolvedFacilityLanes.some(lane => !facilityLaneSelections[lane.id])}
+              >
+                {resolvingFacilities ? <><RefreshCw className="spin" size={14} /> Updating...</> : <><Check size={14} /> Update Games</>}
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
@@ -1155,7 +1562,7 @@ export default function AdminSchedulePage() {
 
       {showPlayoffWizard && filterGroup !== '' && canGeneratePlayoffs && (
         <PlayoffWizard
-          division={divisions.find(g => g.id === filterGroup)!}
+          division={activeDivision!}
           tournamentId={currentTournament?.id || ''}
           tournament={currentTournament}
           orgSlug={orgSlug ?? ''}
@@ -1179,8 +1586,7 @@ export default function AdminSchedulePage() {
 
       {publishModal && currentTournament && (
         <PublishScheduleModal
-          mode={publishModal.mode}
-          divisionId={publishModal.divisionId}
+          defaultDivisionId={publishModal.divisionId}
           divisions={divisions}
           tournament={currentTournament}
           canNotify={canNotify}
@@ -1193,6 +1599,16 @@ export default function AdminSchedulePage() {
       <FeedbackModal
         {...feedback}
         onClose={() => setFeedback(f => ({ ...f, isOpen: false, onConfirm: undefined }))}
+      />
+      <FeedbackModal
+        isOpen={pdfWarningOpen}
+        onClose={() => { localStorage.setItem('flhq-pdf-setup-warned', '1'); setPdfWarningOpen(false); }}
+        onConfirm={() => { localStorage.setItem('flhq-pdf-setup-warned', '1'); void doPdfExport(); }}
+        title="PDF settings not configured"
+        message="This export will use default FieldLogicHQ styling — no custom header, logo, or footer. Visit Org Settings → PDF Settings to customize all future exports."
+        confirmText="Download anyway"
+        cancelText="Not now"
+        type="info"
       />
     </div>
   );
@@ -1299,8 +1715,7 @@ function VenueFilterMenu({
 }
 
 function PublishScheduleModal({
-  mode,
-  divisionId,
+  defaultDivisionId,
   divisions,
   tournament,
   canNotify,
@@ -1308,8 +1723,7 @@ function PublishScheduleModal({
   onClose,
   onPublished,
 }: {
-  mode: 'single' | 'all';
-  divisionId?: string;
+  defaultDivisionId: string;
   divisions: import('@/lib/types').Division[];
   tournament: import('@/lib/types').Tournament;
   canNotify: boolean;
@@ -1317,20 +1731,28 @@ function PublishScheduleModal({
   onClose: () => void;
   onPublished: (updates: { id: string; scheduleVisibility: 'published_generic' | 'published_teams' }[]) => void;
 }) {
-  const targets = mode === 'single'
-    ? divisions.filter(g => g.id === divisionId)
-    : divisions.filter(g => !g.scheduleVisibility || g.scheduleVisibility === 'unpublished');
+  const publishable = divisions.filter(g => !g.scheduleVisibility || g.scheduleVisibility === 'unpublished');
 
-  const allClosed = targets.every(g => g.isClosed);
+  const [selectedIds, setSelectedIds] = React.useState<string[]>([defaultDivisionId]);
+
+  const targets = publishable.filter(g => selectedIds.includes(g.id));
   const someClosed = targets.some(g => g.isClosed);
+  const allClosed = targets.length > 0 && targets.every(g => g.isClosed);
+  const allUnpublishedSelected = publishable.length > 0 && publishable.every(d => selectedIds.includes(d.id));
 
-  const [nameMode, setNameMode] = React.useState<'generic' | 'teams'>(allClosed ? 'teams' : 'generic');
+  const [nameMode, setNameMode] = React.useState<'generic' | 'teams'>(
+    divisions.find(d => d.id === defaultDivisionId)?.isClosed ? 'teams' : 'generic'
+  );
   const [notify, setNotify] = React.useState(false);
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [result, setResult] = React.useState<{ notified: number } | null>(null);
 
-  const showTeamNamesOption = mode === 'single' ? targets[0]?.isClosed : someClosed;
+  const showTeamNamesOption = someClosed;
+
+  function toggleDivision(id: string) {
+    setSelectedIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+  }
 
   async function handleConfirm() {
     setLoading(true);
@@ -1339,9 +1761,9 @@ function PublishScheduleModal({
       const divisionIds = targets.map(g => g.id);
       const orgQuery = orgSlug ? `?orgSlug=${encodeURIComponent(orgSlug)}` : '';
 
-      // In "all" mode, smart-assign: closed divisions get team names if nameMode is 'teams',
-      // open divisions always get generic.
-      const allSameVisibility = mode === 'single' || !someClosed || nameMode === 'generic';
+      // Smart-assign: if nameMode is 'teams' and some divisions are still open,
+      // closed ones get team names while open ones get generic.
+      const allSameVisibility = !someClosed || nameMode === 'generic';
 
       if (allSameVisibility) {
         const visibility = nameMode === 'teams' ? 'published_teams' : 'published_generic';
@@ -1355,10 +1777,9 @@ function PublishScheduleModal({
         setResult({ notified: data.notified ?? 0 });
         onPublished(divisionIds.map(id => ({ id, scheduleVisibility: visibility })));
       } else {
-        // Mixed: closed → teams, open → generic (two separate requests)
+        // Mixed: closed → teams, open → generic
         const closedIds = targets.filter(g => g.isClosed).map(g => g.id);
         const openIds = targets.filter(g => !g.isClosed).map(g => g.id);
-
         const [r1, r2] = await Promise.all([
           closedIds.length ? fetch(`/api/admin/schedule-publish${orgQuery}`, {
             method: 'POST',
@@ -1371,18 +1792,14 @@ function PublishScheduleModal({
             body: JSON.stringify({ tournamentId: tournament.id, divisionIds: openIds, visibility: 'published_generic', notify: false }),
           }) : Promise.resolve(null),
         ]);
-
         if (r1 && !r1.ok) throw new Error((await r1.json()).error ?? 'Failed to publish');
         if (r2 && !r2.ok) throw new Error((await r2.json()).error ?? 'Failed to publish');
-
         const n1 = r1 ? (await r1.json()).notified ?? 0 : 0;
         setResult({ notified: n1 });
-
-        const updates = [
+        onPublished([
           ...closedIds.map(id => ({ id, scheduleVisibility: 'published_teams' as const })),
           ...openIds.map(id => ({ id, scheduleVisibility: 'published_generic' as const })),
-        ];
-        onPublished(updates);
+        ]);
       }
     } catch (e: any) {
       setError(e.message ?? 'Something went wrong');
@@ -1391,9 +1808,9 @@ function PublishScheduleModal({
     }
   }
 
-  const titleText = mode === 'single'
-    ? `Publish ${targets[0]?.name ?? 'Division'} Schedule`
-    : 'Publish All Divisions';
+  const titleText = targets.length === 0 ? 'Publish Schedule'
+    : targets.length === 1 ? `Publish ${targets[0].name}`
+    : `Publish ${targets.length} Divisions`;
 
   return (
     <div className="modal-overlay" onClick={result ? onClose : undefined}>
@@ -1405,44 +1822,89 @@ function PublishScheduleModal({
           <button className="btn btn-ghost btn-data" onClick={onClose}><X size={16} /></button>
         </div>
 
-        <div style={{ padding: '1.25rem 1.5rem' }}>
+        <div>
           {result ? (
-            <div style={{ textAlign: 'center', padding: '1rem 0' }}>
-              <div style={{ fontSize: '2rem', marginBottom: '0.75rem' }}>✓</div>
-              <p style={{ fontWeight: 700, color: 'var(--logic-lime)', marginBottom: '0.5rem' }}>Schedule Published!</p>
+            <div style={{ textAlign: 'center', padding: '0.5rem 0 0.25rem' }}>
+              <div style={{
+                width: '44px', height: '44px', margin: '0 auto 0.75rem',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                borderRadius: '50%', fontSize: '1.5rem', fontWeight: 700,
+                color: 'var(--success)',
+                background: 'rgba(var(--success-rgb),0.12)',
+                border: '1px solid rgba(var(--success-rgb),0.35)',
+              }}>✓</div>
+              <p style={{ fontWeight: 700, color: 'var(--logic-lime)', marginBottom: result.notified > 0 ? '0.35rem' : 0 }}>Schedule Published!</p>
               {result.notified > 0 && (
                 <p style={{ fontSize: '0.85rem', color: 'var(--white-60)' }}>
                   Notified {result.notified} team{result.notified !== 1 ? 's' : ''} by email.
                 </p>
               )}
-              <button className="btn btn-primary btn-data" onClick={onClose} style={{ marginTop: '1rem' }}>Done</button>
+              <button className="btn btn-primary btn-data" onClick={onClose} style={{ marginTop: '1.25rem', minWidth: '160px' }}>Done</button>
             </div>
           ) : (
             <>
-              <p style={{ color: 'var(--white-70)', fontSize: '0.88rem', marginBottom: '1.25rem', lineHeight: 1.55 }}>
-                {mode === 'single'
-                  ? 'This division\'s schedule will appear on your public tournament page. After publishing, saved schedule edits are visible automatically.'
-                  : `${targets.length} unpublished division${targets.length !== 1 ? 's' : ''} will appear on your public tournament page. After publishing, saved schedule edits are visible automatically.`}
-              </p>
-
-              {mode === 'all' && targets.length > 0 && (
-                <div style={{
-                  background: 'var(--white-5)', border: '1px solid var(--white-10)',
-                  borderRadius: '2px', padding: '0.75rem 1rem', marginBottom: '1.25rem',
-                }}>
-                  {targets.map(g => (
-                    <div key={g.id} style={{
-                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                      padding: '0.3rem 0', fontSize: '0.83rem', color: 'var(--white-70)',
-                    }}>
-                      <span style={{ fontWeight: 600 }}>{g.name}</span>
-                      <span style={{ fontSize: '0.73rem', color: g.isClosed ? 'var(--logic-lime)' : 'var(--white-40)' }}>
-                        {g.isClosed ? 'Registration closed' : 'Registration open'}
-                      </span>
-                    </div>
-                  ))}
+              {/* Division selector — shown only when there are multiple unpublished divisions */}
+              {publishable.length > 1 && (
+                <div style={{ marginBottom: '1.25rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                    <p style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--white-50)', textTransform: 'uppercase', letterSpacing: '0.06em', margin: 0 }}>
+                      Divisions
+                    </p>
+                    {!allUnpublishedSelected && (
+                      <button
+                        type="button"
+                        className="btn btn-ghost btn-data"
+                        style={{ fontSize: '0.65rem', padding: '2px 8px' }}
+                        onClick={() => setSelectedIds(publishable.map(d => d.id))}
+                      >
+                        Select all unpublished
+                      </button>
+                    )}
+                  </div>
+                  <div style={{ background: 'var(--white-5)', border: '1px solid var(--white-10)', borderRadius: '2px' }}>
+                    {divisions.map(g => {
+                      const isLive = g.scheduleVisibility && g.scheduleVisibility !== 'unpublished';
+                      const isChecked = selectedIds.includes(g.id);
+                      return (
+                        <label
+                          key={g.id}
+                          style={{
+                            display: 'flex', alignItems: 'center', gap: '0.65rem',
+                            padding: '0.5rem 0.75rem',
+                            borderBottom: '1px solid var(--white-5)',
+                            cursor: isLive ? 'default' : 'pointer',
+                            opacity: isLive ? 0.5 : 1,
+                          }}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={isLive ? false : isChecked}
+                            disabled={isLive}
+                            onChange={() => !isLive && toggleDivision(g.id)}
+                            style={{ flexShrink: 0 }}
+                          />
+                          <span style={{ flex: 1, fontWeight: 600, fontSize: '0.85rem', color: 'var(--fl-text)' }}>{g.name}</span>
+                          {isLive ? (
+                            <span style={{ fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.06em', color: 'var(--success)', background: 'rgba(var(--success-rgb),0.1)', border: '1px solid rgba(var(--success-rgb),0.25)', padding: '1px 6px', borderRadius: '2px' }}>LIVE</span>
+                          ) : (
+                            <span style={{ fontSize: '0.73rem', color: g.isClosed ? 'var(--logic-lime)' : 'var(--white-40)' }}>
+                              {g.isClosed ? 'Reg. closed' : 'Reg. open'}
+                            </span>
+                          )}
+                        </label>
+                      );
+                    })}
+                  </div>
                 </div>
               )}
+
+              <p style={{ color: 'var(--white-70)', fontSize: '0.88rem', marginBottom: '1.25rem', lineHeight: 1.55 }}>
+                {targets.length === 0
+                  ? 'Select at least one division to publish.'
+                  : targets.length === 1
+                    ? 'This division\'s schedule will appear on your public tournament page. Saved edits are visible automatically after publishing.'
+                    : `${targets.length} division${targets.length !== 1 ? 's' : ''} will appear on your public tournament page. Saved edits are visible automatically after publishing.`}
+              </p>
 
               <div style={{ marginBottom: '1.25rem' }}>
                 <p style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--white-50)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.6rem' }}>
@@ -1460,7 +1922,7 @@ function PublishScheduleModal({
                     <div style={{ fontWeight: 600, fontSize: '0.88rem', marginBottom: '0.2rem' }}>Placeholder names</div>
                     <div style={{ fontSize: '0.78rem', color: 'var(--white-50)', lineHeight: 1.45 }}>
                       Teams appear as "Team 1", "Team 2", etc.
-                      {mode === 'single' && !targets[0]?.isClosed ? ' Recommended — registration is still open.' : ''}
+                      {targets.length === 1 && !targets[0]?.isClosed ? ' Recommended — registration is still open.' : ''}
                     </div>
                   </div>
                 </label>
@@ -1483,7 +1945,7 @@ function PublishScheduleModal({
                     <div style={{ fontWeight: 600, fontSize: '0.88rem', marginBottom: '0.2rem' }}>Real team names</div>
                     <div style={{ fontSize: '0.78rem', color: 'var(--white-50)', lineHeight: 1.45 }}>
                       {showTeamNamesOption
-                        ? mode === 'all' && someClosed && !allClosed
+                        ? targets.length > 1 && someClosed && !allClosed
                           ? 'Divisions with closed registration will show team names. Open divisions will use placeholders.'
                           : 'Registered team names will be visible on the public schedule.'
                         : 'Close registration for this division first.'}
@@ -1534,7 +1996,7 @@ function PublishScheduleModal({
                 </div>
               )}
 
-              <div className="modal-footer" style={{ padding: 0, marginTop: 0 }}>
+              <div className="modal-footer">
                 <button className="btn btn-ghost btn-data" onClick={onClose} disabled={loading}>Cancel</button>
                 <button className="btn btn-primary btn-data" onClick={handleConfirm} disabled={loading || targets.length === 0}>
                   {loading ? 'Publishing…' : `Publish${targets.length > 1 ? ` ${targets.length} Divisions` : ''}`}
@@ -1544,6 +2006,438 @@ function PublishScheduleModal({
           )}
         </div>
       </div>
+    </div>
+  );
+}
+
+// ── Schedule Tools dropdown ────────────────────────────────────────────────────
+function UnpublishControl({
+  publishedCount,
+  currentLabel,
+  onUnpublishOne,
+  onUnpublishAll,
+  className,
+}: {
+  publishedCount: number;
+  currentLabel: string;
+  onUnpublishOne: () => void;
+  onUnpublishAll: () => void;
+  className?: string;
+}) {
+  const [open, setOpen] = React.useState(false);
+  const rootRef = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    if (!open) return;
+    function onPointerDown(e: MouseEvent) {
+      if (!rootRef.current?.contains(e.target as Node)) setOpen(false);
+    }
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') setOpen(false);
+    }
+    document.addEventListener('mousedown', onPointerDown);
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', onPointerDown);
+      document.removeEventListener('keydown', onKeyDown);
+    };
+  }, [open]);
+
+  // Only one division live → plain single-action button, no dropdown needed.
+  if (publishedCount <= 1) {
+    return (
+      <button
+        type="button"
+        className={`btn btn-ghost btn-data ${className ?? ''}`}
+        onClick={onUnpublishOne}
+        title="Remove this division from the public schedule"
+        aria-label="Unpublish division"
+      >
+        <EyeOff size={10} />
+        <span className={styles.mobileButtonLabel}>Unpublish</span>
+      </button>
+    );
+  }
+
+  const menuItem: React.CSSProperties = {
+    display: 'flex', alignItems: 'center', gap: '0.6rem', width: '100%',
+    padding: '0.55rem 0.85rem', background: 'none', border: 'none',
+    cursor: 'pointer', textAlign: 'left', fontFamily: 'var(--font-data)',
+    color: 'var(--fl-text)',
+  };
+
+  return (
+    <div ref={rootRef} style={{ position: 'relative', flexShrink: 0 }}>
+      <button
+        type="button"
+        className={`btn btn-ghost btn-data ${className ?? ''}`}
+        onClick={() => setOpen(v => !v)}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        title="Unpublish options"
+      >
+        <EyeOff size={10} />
+        <span className={styles.mobileButtonLabel}>Unpublish</span>
+        <ChevronDown size={10} style={{ opacity: 0.6 }} />
+      </button>
+      {open && (
+        <div
+          role="menu"
+          style={{
+            position: 'absolute', top: 'calc(100% + 4px)', right: 0, zIndex: 100,
+            background: 'var(--surface)', border: '1px solid rgba(var(--blueprint-blue-rgb), 0.3)',
+            borderRadius: '2px', minWidth: '230px', boxShadow: 'var(--shadow)',
+          }}
+        >
+          <button
+            role="menuitem"
+            style={menuItem}
+            onClick={() => { setOpen(false); onUnpublishOne(); }}
+            onMouseEnter={e => (e.currentTarget.style.background = 'rgba(var(--blueprint-blue-rgb),0.08)')}
+            onMouseLeave={e => (e.currentTarget.style.background = 'none')}
+          >
+            <EyeOff size={13} style={{ flexShrink: 0, color: 'var(--data-gray)' }} />
+            <span style={{ flex: 1 }}>
+              <div style={{ fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.04em' }}>This division</div>
+              <div style={{ fontSize: '0.65rem', color: 'var(--data-gray)', marginTop: '1px' }}>{currentLabel}</div>
+            </span>
+          </button>
+          <div style={{ height: '1px', background: 'rgba(var(--blueprint-blue-rgb),0.15)', margin: '0 0.75rem' }} />
+          <button
+            role="menuitem"
+            style={menuItem}
+            onClick={() => { setOpen(false); onUnpublishAll(); }}
+            onMouseEnter={e => (e.currentTarget.style.background = 'rgba(var(--blueprint-blue-rgb),0.08)')}
+            onMouseLeave={e => (e.currentTarget.style.background = 'none')}
+          >
+            <EyeOff size={13} style={{ flexShrink: 0, color: 'var(--data-gray)' }} />
+            <span style={{ flex: 1 }}>
+              <div style={{ fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.04em' }}>All published ({publishedCount})</div>
+              <div style={{ fontSize: '0.65rem', color: 'var(--data-gray)', marginTop: '1px' }}>Remove every division from the public page</div>
+            </span>
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function MobileToolsMenu({
+  className,
+  showPublishSection,
+  isPublished,
+  publishedCount,
+  currentDivisionLabel,
+  canPublish,
+  onPublish,
+  onUnpublishOne,
+  onUnpublishAll,
+  canAutoGenerate,
+  canPlayoffWizard,
+  onAutoGenerate,
+  onPlayoffWizard,
+  exportDisabled,
+  canExportPdf,
+  pdfUpgradeCopy,
+  onExportXLSX,
+  onExportCSV,
+  onExportICS,
+  onExportPDF,
+}: {
+  className?: string;
+  showPublishSection: boolean;
+  isPublished: boolean;
+  publishedCount: number;
+  currentDivisionLabel: string;
+  canPublish: boolean;
+  onPublish: () => void;
+  onUnpublishOne: () => void;
+  onUnpublishAll: () => void;
+  canAutoGenerate: boolean;
+  canPlayoffWizard: boolean;
+  onAutoGenerate: () => void;
+  onPlayoffWizard: () => void;
+  exportDisabled: boolean;
+  canExportPdf: boolean;
+  pdfUpgradeCopy: string;
+  onExportXLSX: () => void | Promise<void>;
+  onExportCSV: () => void | Promise<void>;
+  onExportICS: () => void | Promise<void>;
+  onExportPDF: () => void | Promise<void>;
+}) {
+  const [open, setOpen] = React.useState(false);
+  const rootRef = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    if (!open) return;
+    function onPointerDown(e: MouseEvent) {
+      if (!rootRef.current?.contains(e.target as Node)) setOpen(false);
+    }
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') setOpen(false);
+    }
+    document.addEventListener('mousedown', onPointerDown);
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', onPointerDown);
+      document.removeEventListener('keydown', onKeyDown);
+    };
+  }, [open]);
+
+  const menuItem: React.CSSProperties = {
+    display: 'flex', alignItems: 'center', gap: '0.6rem', width: '100%',
+    padding: '0.55rem 0.85rem', background: 'none', border: 'none',
+    cursor: 'pointer', textAlign: 'left', fontFamily: 'var(--font-data)',
+    color: 'var(--fl-text)',
+  };
+  const sectionLabel: React.CSSProperties = {
+    padding: '0.5rem 0.85rem 0.2rem', fontSize: '0.6rem', fontWeight: 700,
+    letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--data-gray)',
+    fontFamily: 'var(--font-data)',
+  };
+  const divider = <div style={{ height: '1px', background: 'rgba(var(--blueprint-blue-rgb),0.15)', margin: '0.35rem 0.75rem' }} />;
+  const hoverOn = (e: React.MouseEvent<HTMLButtonElement>) => (e.currentTarget.style.background = 'rgba(var(--blueprint-blue-rgb),0.08)');
+  const hoverOff = (e: React.MouseEvent<HTMLButtonElement>) => (e.currentTarget.style.background = 'none');
+
+  function act(fn: () => void | Promise<void>) {
+    setOpen(false);
+    void fn();
+  }
+
+  function row(opts: {
+    icon: React.ReactNode;
+    label: string;
+    sub?: string;
+    onClick?: () => void;
+    locked?: boolean;
+    lockTitle?: string;
+    disabled?: boolean;
+  }) {
+    const { icon, label, sub, onClick, locked, lockTitle, disabled } = opts;
+    const dim = disabled && !locked;
+    return (
+      <button
+        role="menuitem"
+        style={{ ...menuItem, opacity: dim ? 0.4 : 1, cursor: dim ? 'not-allowed' : 'pointer' }}
+        title={locked ? lockTitle : undefined}
+        onClick={() => { if (dim) return; onClick?.(); }}
+        onMouseEnter={hoverOn}
+        onMouseLeave={hoverOff}
+      >
+        <span style={{ flexShrink: 0, display: 'inline-flex' }}>{icon}</span>
+        <span style={{ flex: 1 }}>
+          <div style={{ fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.04em' }}>{label}</div>
+          {sub && <div style={{ fontSize: '0.65rem', color: 'var(--data-gray)', marginTop: '1px' }}>{sub}</div>}
+        </span>
+        {locked && <Lock size={11} style={{ flexShrink: 0, color: 'var(--blueprint-blue)' }} />}
+      </button>
+    );
+  }
+
+  return (
+    <div ref={rootRef} style={{ position: 'relative', flexShrink: 0 }} className={className}>
+      <button
+        type="button"
+        className="btn btn-ghost btn-data"
+        onClick={() => setOpen(v => !v)}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        title="Schedule tools"
+      >
+        <Wrench size={12} />
+        <span>Tools</span>
+        <ChevronDown size={10} style={{ opacity: 0.6 }} />
+      </button>
+      {open && (
+        <div
+          role="menu"
+          style={{
+            position: 'absolute', top: 'calc(100% + 4px)', right: 0, zIndex: 100,
+            background: 'var(--surface)', border: '1px solid rgba(var(--blueprint-blue-rgb), 0.3)',
+            borderRadius: '2px', minWidth: '240px', maxWidth: 'calc(100vw - 1.5rem)',
+            boxShadow: 'var(--shadow)',
+            paddingBottom: '0.35rem', maxHeight: '70vh', overflowY: 'auto',
+          }}
+        >
+          {showPublishSection && (
+            <>
+              <div style={sectionLabel}>Publish</div>
+              {!isPublished
+                ? row({
+                    icon: <Globe size={13} style={{ color: canPublish ? 'var(--logic-lime)' : 'var(--data-gray)' }} />,
+                    label: 'Publish schedule',
+                    sub: 'Make this division public',
+                    disabled: !canPublish,
+                    onClick: () => act(onPublish),
+                  })
+                : (
+                  <>
+                    {row({
+                      icon: <EyeOff size={13} style={{ color: 'var(--data-gray)' }} />,
+                      label: 'Unpublish this division',
+                      sub: currentDivisionLabel,
+                      onClick: () => act(onUnpublishOne),
+                    })}
+                    {publishedCount >= 2 && row({
+                      icon: <EyeOff size={13} style={{ color: 'var(--data-gray)' }} />,
+                      label: `Unpublish all (${publishedCount})`,
+                      sub: 'Remove every division from the public page',
+                      onClick: () => act(onUnpublishAll),
+                    })}
+                  </>
+                )}
+              {divider}
+            </>
+          )}
+
+          <div style={sectionLabel}>Generate</div>
+          {row({
+            icon: <Sparkles size={13} style={{ color: canAutoGenerate ? 'var(--logic-lime)' : 'var(--data-gray)' }} />,
+            label: 'Round-Robin Generator',
+            sub: 'Auto-build games from your teams',
+            locked: !canAutoGenerate,
+            lockTitle: 'Included with Tournament Plus and up',
+            onClick: () => act(onAutoGenerate),
+          })}
+          {row({
+            icon: <Trophy size={13} style={{ color: canPlayoffWizard ? 'var(--logic-lime)' : 'var(--data-gray)' }} />,
+            label: 'Playoff Bracket Builder',
+            sub: 'Auto-build brackets from pool results',
+            locked: !canPlayoffWizard,
+            lockTitle: 'Included with Tournament Plus and up',
+            onClick: () => act(onPlayoffWizard),
+          })}
+          {divider}
+
+          <div style={sectionLabel}>Export</div>
+          {row({
+            icon: <FileSpreadsheet size={13} style={{ color: 'var(--data-gray)' }} />,
+            label: 'Excel (.xlsx)',
+            disabled: exportDisabled,
+            onClick: () => act(onExportXLSX),
+          })}
+          {row({
+            icon: <FileText size={13} style={{ color: 'var(--data-gray)' }} />,
+            label: 'CSV',
+            disabled: exportDisabled,
+            onClick: () => act(onExportCSV),
+          })}
+          {row({
+            icon: <Calendar size={13} style={{ color: 'var(--data-gray)' }} />,
+            label: 'Calendar (.ics)',
+            disabled: exportDisabled,
+            onClick: () => act(onExportICS),
+          })}
+          {row({
+            icon: <FileText size={13} style={{ color: 'var(--data-gray)' }} />,
+            label: 'PDF report',
+            locked: !canExportPdf,
+            lockTitle: pdfUpgradeCopy,
+            disabled: exportDisabled,
+            onClick: () => { if (!canExportPdf) return; act(onExportPDF); },
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ScheduleToolsMenu({
+  disabled,
+  canAutoGenerate,
+  canPlayoffWizard,
+  onAutoGenerate,
+  onPlayoffWizard,
+  className,
+}: {
+  disabled: boolean;
+  canAutoGenerate: boolean;
+  canPlayoffWizard: boolean;
+  onAutoGenerate: () => void;
+  onPlayoffWizard: () => void;
+  className?: string;
+}) {
+  const [open, setOpen] = React.useState(false);
+  const rootRef = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    if (!open) return;
+    function onPointerDown(e: MouseEvent) {
+      if (!rootRef.current?.contains(e.target as Node)) setOpen(false);
+    }
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') setOpen(false);
+    }
+    document.addEventListener('mousedown', onPointerDown);
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', onPointerDown);
+      document.removeEventListener('keydown', onKeyDown);
+    };
+  }, [open]);
+
+  const menuItem: React.CSSProperties = {
+    display: 'flex', alignItems: 'center', gap: '0.6rem', width: '100%',
+    padding: '0.55rem 0.85rem', background: 'none', border: 'none',
+    cursor: 'pointer', textAlign: 'left', fontFamily: 'var(--font-data)',
+    color: 'var(--fl-text)',
+  };
+
+  return (
+    <div ref={rootRef} style={{ position: 'relative', flexShrink: 0 }} className={className}>
+      <button
+        type="button"
+        className="btn btn-ghost btn-data"
+        onClick={() => setOpen(v => !v)}
+        disabled={disabled}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        title="Schedule tools"
+      >
+        <Sparkles size={12} />
+        <span>Auto</span>
+        <ChevronDown size={10} style={{ opacity: 0.6 }} />
+      </button>
+      {open && (
+        <div
+          role="menu"
+          style={{
+            position: 'absolute', top: 'calc(100% + 4px)', right: 0, zIndex: 100,
+            background: 'var(--surface)', border: '1px solid rgba(var(--blueprint-blue-rgb), 0.3)',
+            borderRadius: '2px', minWidth: '210px', boxShadow: 'var(--shadow)',
+          }}
+        >
+          <button
+            role="menuitem"
+            style={menuItem}
+            onClick={() => { setOpen(false); onAutoGenerate(); }}
+            onMouseEnter={e => (e.currentTarget.style.background = 'rgba(var(--blueprint-blue-rgb),0.08)')}
+            onMouseLeave={e => (e.currentTarget.style.background = 'none')}
+          >
+            <Sparkles size={13} style={{ flexShrink: 0, color: canAutoGenerate ? 'var(--logic-lime)' : 'var(--data-gray)' }} />
+            <span style={{ flex: 1 }}>
+              <div style={{ fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.04em' }}>Round-Robin Generator</div>
+              <div style={{ fontSize: '0.65rem', color: 'var(--data-gray)', marginTop: '1px' }}>Auto-build games from your teams</div>
+            </span>
+            {!canAutoGenerate && <Lock size={11} style={{ flexShrink: 0, color: 'var(--blueprint-blue)' }} />}
+          </button>
+          <div style={{ height: '1px', background: 'rgba(var(--blueprint-blue-rgb),0.15)', margin: '0 0.75rem' }} />
+          <button
+            role="menuitem"
+            style={menuItem}
+            onClick={() => { setOpen(false); onPlayoffWizard(); }}
+            onMouseEnter={e => (e.currentTarget.style.background = 'rgba(var(--blueprint-blue-rgb),0.08)')}
+            onMouseLeave={e => (e.currentTarget.style.background = 'none')}
+          >
+            <Trophy size={13} style={{ flexShrink: 0, color: canPlayoffWizard ? 'var(--logic-lime)' : 'var(--data-gray)' }} />
+            <span style={{ flex: 1 }}>
+              <div style={{ fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.04em' }}>Playoff Bracket Builder</div>
+              <div style={{ fontSize: '0.65rem', color: 'var(--data-gray)', marginTop: '1px' }}>Auto-build brackets from pool results</div>
+            </span>
+            {!canPlayoffWizard && <Lock size={11} style={{ flexShrink: 0, color: 'var(--blueprint-blue)' }} />}
+          </button>
+        </div>
+      )}
     </div>
   );
 }
@@ -1778,7 +2672,7 @@ function PlayoffBracketView({ games, teams, division, canGeneratePlayoffs, onEdi
         <Trophy size={48} />
         <p>No playoff games scheduled for this division.</p>
         <p className="text-sm text-muted">
-          {canGeneratePlayoffs ? 'Use the Playoff Wizard to generate brackets.' : 'Add playoff games manually, or upgrade to generate brackets.'}
+          {canGeneratePlayoffs ? 'Use the Playoff Bracket Builder to generate brackets.' : 'Add playoff games manually, or upgrade to Tournament Plus to use the Playoff Bracket Builder.'}
         </p>
       </div>
     );

@@ -1,6 +1,7 @@
 'use client';
 
 import { Fragment, useState } from 'react';
+import { PLAN_CONFIG, formatPriceAmount } from '@/lib/plan-config';
 import { Loader } from 'lucide-react';
 // This file is kept for reference only — the page now redirects to /platform-admin/plans-pricing
 type PlanGatingRow = {
@@ -12,11 +13,11 @@ type PlanGatingRow = {
 import styles from './plans.module.css';
 
 const PLAN_META: Record<string, { label: string; price: string }> = {
-  tournament:      { label: 'Tournament',      price: 'Free'      },
-  team:            { label: 'Team',            price: '$29/mo'    },
-  tournament_plus: { label: 'Tournament Plus', price: '$39/mo'    },
-  league:          { label: 'League',          price: '$89/mo'    },
-  club:            { label: 'Club',            price: '$179/mo'   },
+  tournament:      { label: 'Tournament',      price: 'Free' },
+  team:            { label: 'Team',            price: `${formatPriceAmount(PLAN_CONFIG.team.monthlyPrice)}/mo` },
+  tournament_plus: { label: 'Tournament Plus', price: `${formatPriceAmount(PLAN_CONFIG.tournament_plus.monthlyPrice)}/mo` },
+  league:          { label: 'League',          price: `${formatPriceAmount(PLAN_CONFIG.league.monthlyPrice)}/mo` },
+  club:            { label: 'Club',            price: `${formatPriceAmount(PLAN_CONFIG.club.monthlyPrice)}/mo` },
 };
 
 const ORDER = ['tournament', 'team', 'tournament_plus', 'league', 'club'];

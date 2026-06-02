@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { Check } from 'lucide-react';
 import EarlyAccessModalTrigger from './EarlyAccessModalTrigger';
+import { PLAN_CONFIG, formatPriceAmount, formatAnnualSavings } from '@/lib/plan-config';
 import type { OrgPlan } from '@/lib/types';
 import styles from './PricingSection.module.css';
 
@@ -71,10 +72,10 @@ const PLANS: Plan[] = [
     key: 'tournament_plus',
     name: 'Tournament Plus',
     tagline: 'Run serious tournament operations with registration control, automation, branding, reporting, and repeat-event tools.',
-    monthlyPrice: '$39',
-    annualPrice: '$390',
-    annualTotal: '$390 CAD / year',
-    annualSavings: 'Save $78 - 2 months free. 14-day trial first',
+    monthlyPrice: formatPriceAmount(PLAN_CONFIG.tournament_plus.monthlyPrice),
+    annualPrice: formatPriceAmount(PLAN_CONFIG.tournament_plus.annualPrice),
+    annualTotal: `${formatPriceAmount(PLAN_CONFIG.tournament_plus.annualPrice)} CAD / year`,
+    annualSavings: `${formatAnnualSavings('tournament_plus')}. ${PLAN_CONFIG.tournament_plus.trialDays}-day trial first`,
     currency: 'CAD',
     period: '/mo',
     freeNote: 'Free through Dec 31, 2026 · no credit card required',
@@ -88,14 +89,14 @@ const PLANS: Plan[] = [
       'Advanced payment tracking and post-tournament reporting',
       'Full branding control — no FieldLogicHQ badge',
       'Permanent sealed archives, tournament cloning, and targeted announcements',
-      '10 staff / admin seats · unlimited officials',
+      'Unlimited staff / admin seats · unlimited officials',
     ],
     compactFeatures: [
       'Everything in Tournament',
       'Unlimited tournament slots',
       'Automated scheduling and bracket builder',
       'Full branding control',
-      '10 staff / admin seats · unlimited officials',
+      'Unlimited staff / admin seats · unlimited officials',
     ],
     cta: 'Start free — no credit card required',
     ctaHref: '/auth/signup',
@@ -104,10 +105,10 @@ const PLANS: Plan[] = [
     key: 'league',
     name: 'League',
     tagline: 'A preview of house league, registration, and public-site tools currently being refined.',
-    monthlyPrice: '$89',
-    annualPrice: '$890',
-    annualTotal: '$890 CAD / year',
-    annualSavings: 'Save $178 – 2 months free. 30-day trial first',
+    monthlyPrice: formatPriceAmount(PLAN_CONFIG.league.monthlyPrice),
+    annualPrice: formatPriceAmount(PLAN_CONFIG.league.annualPrice),
+    annualTotal: `${formatPriceAmount(PLAN_CONFIG.league.annualPrice)} CAD / year`,
+    annualSavings: `${formatAnnualSavings('league')}. ${PLAN_CONFIG.league.trialDays}-day trial first`,
     currency: 'CAD',
     period: '/mo',
     freeNote: '30-day trial. Payment details at signup',
@@ -120,14 +121,14 @@ const PLANS: Plan[] = [
       'Division and season management',
       'League-scoped communications',
       'Advanced member roles and permissions',
-      '10 staff / admin seats',
+      'Unlimited staff / admin seats',
     ],
     compactFeatures: [
       'Everything in Tournament Plus',
       'House League module',
       'Public organization page',
       'Registration workflows',
-      '10 staff / admin seats',
+      'Unlimited staff / admin seats',
     ],
     cta: 'Start Free Trial',
     ctaHref: '/auth/signup',
@@ -138,10 +139,10 @@ const PLANS: Plan[] = [
     key: 'club',
     name: 'Club',
     tagline: 'The complete operating system for established clubs — tournaments, house league, rep teams, accounting, and coaching staff, all in one place.',
-    monthlyPrice: '$179',
-    annualPrice: '$1,790',
-    annualTotal: '$1,790 CAD / year',
-    annualSavings: 'Save $358 – 2 months free. 90-day trial first',
+    monthlyPrice: formatPriceAmount(PLAN_CONFIG.club.monthlyPrice),
+    annualPrice: formatPriceAmount(PLAN_CONFIG.club.annualPrice),
+    annualTotal: `${formatPriceAmount(PLAN_CONFIG.club.annualPrice)} CAD / year`,
+    annualSavings: `${formatAnnualSavings('club')}. ${PLAN_CONFIG.club.trialDays}-day trial first`,
     currency: 'CAD',
     period: '/mo',
     freeNote: '90-day trial. Payment details at signup',
@@ -253,7 +254,7 @@ export default function PricingSection({ gatingMap, onChoosePlan, currentPlan, p
                 {!isGated && plan.key === 'tournament_plus' && (
                   <div className={styles.foundingSeasonBadge}>
                     <span className={styles.foundingSeasonBadgeLabel}>⬡ Founding Season — Free through Dec 31, 2026</span>
-                    <span className={styles.foundingSeasonBadgeSub}>Normally $39/month</span>
+                    <span className={styles.foundingSeasonBadgeSub}>Normally {formatPriceAmount(PLAN_CONFIG.tournament_plus.monthlyPrice)}/month</span>
                   </div>
                 )}
                 <p className={styles.planTagline}>{plan.tagline}</p>

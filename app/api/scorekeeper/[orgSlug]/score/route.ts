@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { GET as getOfficialScore } from '@/app/api/official/[orgSlug]/score/route';
-import { getAuthContextWithScope, unauthorized, scopeGuard } from '@/lib/api-auth';
+import { getAuthContextWithScope, unauthorized, scopeGuard, requireTournamentInOrg } from '@/lib/api-auth';
 import { hasCapability } from '@/lib/roles';
 import {
   loadTournamentScoreGame,
@@ -41,6 +41,9 @@ export async function PATCH(req: Request, { params }: Params) {
     const gameRow = await loadTournamentScoreGame(body.id);
     const denied = scopeGuard(ctx, gameRow.tournamentId);
     if (denied) return denied;
+
+    const wrongOrg = await requireTournamentInOrg(ctx, gameRow.tournamentId);
+    if (wrongOrg) return wrongOrg;
 
     const result = await submitTournamentScore({
       gameId: body.id,

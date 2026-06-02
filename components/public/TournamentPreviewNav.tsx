@@ -56,8 +56,8 @@ export default function TournamentPreviewNav({
 
         <div className={styles.actions}>
           {!hiddenPages.includes('register') && (
-            <Link href={`${previewBase}/register`} className="btn btn-primary btn-sm">
-              Registration
+            <Link href={`${previewBase}/register`} className="btn btn-lime btn-sm">
+              Register
             </Link>
           )}
         </div>

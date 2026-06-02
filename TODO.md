@@ -5,6 +5,9 @@ This file tracks the ongoing tasks for the FieldLogicHQ platform (multi-tenant s
 
 ---
 
+- [ ] **Dashboard Customize — In-Place Edit Mode** — separate customize panel replaced with in-place drag-to-reorder, per-card × remove, per-zone + Add menu (with phase-hidden notes), and click-to-edit stat icons; @dnd-kit wired on stat-card + analytics-panel zones (active & completed views); built 2026-06-01, awaiting browser verification (see [plan](docs/projects/active/DASHBOARD_CUSTOMIZE_INPLACE_PLAN.md) and [PM brief](docs/projects/active/DASHBOARD_CUSTOMIZE_INPLACE_PM_BRIEF.md))
+- [ ] **Public Tournament Pages — Mobile Polish** — design-review remediation: standings mobile table (Team + PTS frozen), empty-state contrast, schedule auto-jump to today, state-dependent home hero, custom-accent contrast floor; built 2026-06-01, awaiting browser verification (dev-server restart required) (see [plan](docs/projects/active/PUBLIC_TOURNAMENT_MOBILE_POLISH_PLAN.md) and [PM brief](docs/projects/active/PUBLIC_TOURNAMENT_MOBILE_POLISH_PM_BRIEF.md))
+- [ ] **Public Tournament Mobile Experience — Results & Standings** — mobile Standings is table-first with tie-breakers below the table, while public Schedule/result rows now mirror the admin Results & Scoring row pattern with followed-team stars replacing admin edit actions; built 2026-06-02, awaiting browser verification (see [plan](docs/projects/active/codex_PUBLIC_TOURNAMENT_MOBILE_EXPERIENCE_PLAN.md) and [PM brief](docs/projects/active/codex_PUBLIC_TOURNAMENT_MOBILE_EXPERIENCE_PM_BRIEF.md))
 - [x] **Tournament contact model refactor** — contacts table retired, staff member FKs in place, notify_mode routing live, Event Settings promoted to sidebar, member title field added, removal impact warning wired; migrations 088–090 applied dev + prod (see [plan](docs/projects/archive/TOURNAMENT_CONTACT_REFACTOR_PLAN.md) and [PM brief](docs/projects/archive/TOURNAMENT_CONTACT_REFACTOR_PM_BRIEF.md))
   - [x] Unified sign-in/context switcher foundation: `/home`, shared context resolver, `/auth/select-org` compatibility redirect, and same-org Coaches Portal shortcut scoping
 - [x] **Tournament Coach Portal** — authenticated coach accounts at registration, now routed through `/coaches/join` and `/coaches/tournaments` with legacy `/my` redirects, auth-destination routing, resend-access admin action, and workspace invite removed (see [plan](docs/projects/archive/TOURNAMENT_COACH_PORTAL_PLAN.md) and [PM brief](docs/projects/archive/TOURNAMENT_COACH_PORTAL_PM_BRIEF.md))
@@ -18,6 +21,7 @@ This file tracks the ongoing tasks for the FieldLogicHQ platform (multi-tenant s
   - [x] GameList inline editing — conflict check on time/venue change
   - [x] GameList read mode — conflict badges (red/amber) on rows
   - [x] Generator pre-population from tournament settings
+- [ ] **No-Cost Automated Schedule Generator** — Schedule Health, collapsible metrics, dashboard summary, scored draft selection, priority controls, facility-level selection, no-pool slot drafts, and temporary Facility lane resolution implemented; migration 104 applied dev + prod; remaining work covers presets, draft comparison, partial regeneration, and no-cost travel buffers (see [plan](docs/projects/active/AUTOMATED_SCHEDULE_GENERATOR_PLAN.md) and [PM brief](docs/projects/active/AUTOMATED_SCHEDULE_GENERATOR_PM_BRIEF.md))
 - [x] **Divisions UX Rework & Tournament Settings Inheritance** — scope controls for fees/game timing/tie-breakers at tournament level, dashboard activation gate, divisions modal inheritance model, table restructure (see [plan](docs/projects/active/DIVISIONS_UX_REWORK_PLAN.md))
   - [x] Phase 1 — PlayoffWizard: remove tie-breaker step (no effect on bracket generation)
   - [x] Phase 2 — DB & types: `game_timing_scope`, `tie_breakers`, `tie_breaker_scope`, `fee_scope` in `tournaments.settings`; migration 102; API patch-settings additions
@@ -35,7 +39,7 @@ This file tracks the ongoing tasks for the FieldLogicHQ platform (multi-tenant s
   - [x] Phase A — Migration 101 (notifications, push_subscriptions, notification_preferences, tournament_notification_preferences) + `lib/notify.ts` + `/api/notifications` route
   - [x] Phase B — `NotificationBell.tsx` + `NotificationPanel.tsx` + wire into AdminSidebar + CoachesSidebar
   - [x] Phase C — Wire `notify()` into existing API routes: `registration_new` (public + manual), `registration_status_changed` (accept/reject), `score_submitted`, `house_league_registration_new`
-  - [ ] Phase D — Preferences page (`/admin/org/notifications`) + API route + sidebar nav item
+  - [x] Phase D — Preferences page (`/admin/org/notifications`) + API route + sidebar nav item; per-tournament opt-out page + API route; tournament Setup nav "Notifications" link added
   - [x] **Phase D bug fix — Inverted toggle semantics** — per-event toggles show ON=muted (backwards); fix is UI-only, no DB/API changes (see [fix plan](docs/projects/archive/NOTIFICATION_TOGGLE_UX_FIX.md))
   - [x] Phase E — PWA manifest, service worker, VAPID keys, `lib/web-push.ts`, push subscribe/unsubscribe APIs, `PushPermissionPrompt.tsx`, push dispatch in `notify.ts`; `PushPermissionPrompt` wired into org prefs page; VAPID keys in `.env.local` (Amplify env vars required before deploying)
   - [ ] Phase F — Scheduled deadline reminders (deferred; decide cron mechanism first)
@@ -54,11 +58,14 @@ This file tracks the ongoing tasks for the FieldLogicHQ platform (multi-tenant s
   - [x] Public page: applies `rulesGridSingle` / `resourcesGrid` CSS variants
   - [x] Apply migration to dev + prod DB
   - [x] Browser verification
+- [ ] **Tournament Plus Repeat-Event Setup V2** — Summary-page, setup-wizard, draft-dashboard, tournament-list, configurable copy options, stale-source guidance, analytics metadata, and help alignment implemented; remaining V2 work is browser review (see [plan](docs/projects/active/TOURNAMENT_PLUS_REPEAT_EVENT_SETUP_PLAN.md) and [PM brief](docs/projects/active/TOURNAMENT_PLUS_REPEAT_EVENT_SETUP_PM_BRIEF.md))
+- [ ] **Registration Command Center V1** — Teams / Registrations page attention strip plus dashboard attention panel for pending review, waitlist, unpaid, past-due, missing intake, and unplaced registrations; implementation underway (see [plan](docs/projects/active/REGISTRATION_COMMAND_CENTER_V1_PLAN.md) and [PM brief](docs/projects/active/REGISTRATION_COMMAND_CENTER_V1_PM_BRIEF.md))
 - [ ] **Unified Coaches Portal** - one portal for tournament-only coach records, paid standalone Coaches Portal workspaces, org-billed coach access, Club coach access, upgrade, cancellation fallback, and legacy route migration into `/coaches` (see [project plan](docs/projects/active/COACHES_PORTAL_UNIFIED_PROJECT_PLAN.md) and [PM brief](docs/projects/active/COACHES_PORTAL_UNIFIED_PM_BRIEF.md))
   - [x] Phase 1 route migration: `/coaches/join`, `/coaches/tournaments`, `/coaches/start`, paid claim/checkout aliases, auth destinations, emails, nav, and `/my`/`/team` compatibility redirects
   - [x] Remaining copy/help/admin-support audit for old "Team workspace" language
   - [x] Phase 2B team-centric Basic Coaches Portal: persistent Basic coach team profiles, returning-coach team selector during tournament registration, registrations grouped by team, and upgrade path from Basic team history to Premium team management
   - [x] Phase 3 unified Premium workspace experience: `/coaches` coach-specific portal home, `/coaches/teams` premium selector, linked tournament history inside Premium team dashboards, upgrade CTA suppression for active Premium coaches, and entitlement/security confirmation
+  - [x] Billing shelf UX: subscription page now treats only Tournament -> Tournament Plus as a true upgrade; Coaches Portal, League, and Club are adjacent product options
   - [ ] Phase 4 billing/cancellation: Coaches Portal billing copy, Premium cancellation fallback to Basic records, canceled Premium access suppression, 90-day Premium retention, and duplicate-free reactivation implemented; remaining work is direct cancellation/payment-failure browser simulation
 - [ ] **Founding Season go-to-market** — Tournament Plus free through Dec 31, 2026 for founding orgs; homepage/pricing callouts, in-app billing banner, 4-email conversion sequence, platform admin tracking, January 2027 conversion flow (see [plan](docs/projects/active/FOUNDING_SEASON_PLAN.md) and [PM brief](docs/projects/active/FOUNDING_SEASON_PM_BRIEF.md))
   - [x] Phase 1A: Homepage founding season callout (hero eyebrow + pricing card)
@@ -67,11 +74,14 @@ This file tracks the ongoing tasks for the FieldLogicHQ platform (multi-tenant s
   - [x] Phase 1D: Qualifying question in onboarding wizard + API endpoint
   - [x] Phase 2A: Billing page founding season banner + API endpoint
   - [x] Phase 2B: Onboarding founding season welcome card
+  - [x] Billing upgrade bug fix: Tournament to Tournament Plus founding-season upgrades apply in-app without Stripe and stamp the comp-period marker
   - [x] Phase 4A: Auto-assign `comp_period` override on org signup
   - [x] Phase 4B: Platform admin founding season filter + cohort metric
   - [x] **Founding Season email infrastructure** — opt-out/unsubscribe (migrations 099–100, `lib/unsubscribe-token.ts`, `/unsubscribe` route + confirmed page), `lib/email-sender.ts`, `founding_welcome` template, platform admin `/platform-admin/email` dashboard (scheduled sends + sent history + opt-outs + preview modal + manual send trigger), `founding_welcome` wired into signup route; **migrations 099–100 need manual DB apply** (see [plan](docs/projects/active/FOUNDING_SEASON_EMAIL_INFRA_PLAN.md))
   - [x] Phase 3 + Phase 5: Founding season email templates (9 emails) — founding_checkin, founding_renewal, founding_final, spotlight_club/league/coaches_org/coaches_coach/club_last/full_picture; TEMPLATE_REGISTRY all built:true; audience functions for coach/club-last variants; dashboard previews all live
   - [ ] Phase 4C: January 2027 conversion flow — blocked on Stripe Phase G
+- [x] **Platform Admin: User Management Actions** — Ban/Unban, Confirm Email, Edit Info, Revoke Sessions, Delete User, Support Notes; migration 103 applied dev + prod (see [plan](docs/projects/active/CUSTOMER_USER_MANAGEMENT_PLAN.md))
+- [ ] **User Management UX — Tournament & Tournament Plus** — broken upgrade links, plan context in seat banner, empty state, role guide seat model, subtitle copy, manage modal clarity (see [plan](docs/projects/active/USER_MANAGEMENT_TOURNAMENT_UX_PLAN.md) and [PM brief](docs/projects/active/USER_MANAGEMENT_TOURNAMENT_PM_BRIEF.md))
 - [ ] **Brand Strategy** — umbrella positioning, four segment profiles, site architecture, Coach Portal bridge messaging (see [BRAND_STRATEGY.md](docs/agents/brand/BRAND_STRATEGY.md))
 - [ ] **Brand Foundations (GTM supplement)** — mission statement, elevator pitch, 0→50→500 acquisition sequencing, push+pull outreach plan, coach advocacy program, partnership motion, SEO content priorities, competitive differentiation framework (see [BRAND_FOUNDATIONS.md](docs/agents/brand/BRAND_FOUNDATIONS.md))
 - [x] **Persona landing pages** — built `/for-tournament-organizers`, `/for-leagues`, `/for-clubs`, `/for-coaches`; design QA pass complete 2026-05-25
@@ -126,7 +136,7 @@ This file tracks the ongoing tasks for the FieldLogicHQ platform (multi-tenant s
 
 - [x] **Standalone Team Phase 9** - Help documentation and launch cleanup complete: coach/org/platform-admin help explains Team, season rollover, local tournaments, linking, billing transfer, ownership transfer, Team add-ons versus Club, and owner launch readiness; stale Club extra-team pricing copy now shows $19/$190.
 
-- [ ] **Public tournament mobile experience** - Mobile-first plan and PM brief for public registration, schedule controls, hidden/empty states, post-event story, and first-viewport trust (see [implementation plan](docs/projects/active/codex_PUBLIC_TOURNAMENT_MOBILE_EXPERIENCE_PLAN.md) and [PM brief](docs/projects/active/codex_PUBLIC_TOURNAMENT_MOBILE_EXPERIENCE_PM_BRIEF.md))
+- [ ] **Public tournament mobile experience** - Coach/parent slices implemented and smoke-tested for registration review/waitlist, home data, schedule controls with live mobile search + view-filter bottom sheet, Follow My Team, Tournament Day Home Mode, public empty states, table-first Results/Standings, and public Schedule rows aligned to admin Results & Scoring with followed-team stars; remaining full hero/post-event story, analytics, and mobile visual UAT stay open (see [implementation plan](docs/projects/active/codex_PUBLIC_TOURNAMENT_MOBILE_EXPERIENCE_PLAN.md) and [PM brief](docs/projects/active/codex_PUBLIC_TOURNAMENT_MOBILE_EXPERIENCE_PM_BRIEF.md))
 - [ ] **Mobile app strategy** - PM brief for a focused FieldLogicHQ companion app versus mobile web, including level of effort, release path, store considerations, and MVP scope (see [PM brief](docs/projects/active/MOBILE_APP_STRATEGY_PM_BRIEF.md))
 
 - [x] **Help center platform-admin documentation UX** - Searchable customer help hub plus protected platform-admin SOP documentation for employee support workflows (see [implementation plan](docs/projects/archive/codex_HELP_CENTER_PLATFORM_ADMIN_PLAN.md) and [PM brief](docs/projects/archive/codex_HELP_CENTER_PLATFORM_ADMIN_PM_BRIEF.md))
@@ -152,6 +162,7 @@ This file tracks the ongoing tasks for the FieldLogicHQ platform (multi-tenant s
 
 ### ⚡ Next Priority After Design Review
 
+- [ ] **Architecture Hardening** — Phases 1–4 implemented on dev (cross-org write hole closed across 9 routes; structural tier boundary via org-layout + proxy.ts; UpgradeGate refactor; notify.ts guard; hygiene); `tsc` clean; pending dev-server restart + browser verification (see docs/projects/active/ARCHITECTURE_HARDENING_PLAN.md)
 - [ ] **Stripe Phase G — Go live** — Production Stripe cutover: create live products/prices in Stripe Dashboard, configure production webhook, enter live price IDs via Platform Admin, set Amplify master-branch env var overrides, run smoke checklist. **Target: complete before July 2026** — founding season orgs need billing live before the Dec 31 offer window closes. (See [Stripe Integration section below](#4-stripe-integration--end-to-end-billing--subscriptions) for the full checklist)
 
 ---

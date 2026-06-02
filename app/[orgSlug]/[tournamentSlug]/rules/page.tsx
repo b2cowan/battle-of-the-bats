@@ -1,4 +1,5 @@
 import { cookies } from 'next/headers';
+import Link from 'next/link';
 import { BookOpen, FileText, Shield, AlertCircle, CheckCircle, Download, ExternalLink } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { getOrganizationBySlug, getPublicTournamentBySlug, getRules, getResources, getDivisions } from '@/lib/db';
@@ -13,7 +14,6 @@ export const dynamic = 'force-dynamic';
 type DisplayRuleSection = Pick<RuleSection, 'title' | 'icon' | 'divisionIds'> & {
   items: Array<{ content: string }>;
 };
-type DisplayResource = Pick<Resource, 'label' | 'url'>;
 
 const ICON_MAP: Record<string, LucideIcon> = {
   Shield: Shield,
@@ -64,16 +64,19 @@ export default async function RulesPage({
     : allRules;
 
   const contactEmail = tournament?.contactEmail ?? org?.contactEmail ?? null;
+  const homeHref = `/${orgSlug}/${tournamentSlug}`;
+  const newsHref = `/${orgSlug}/${tournamentSlug}/news`;
+  const showNewsPage = isPublicPageEnabled(tournament, 'news');
 
   const rulesLayout     = tournament?.settings?.rulesLayout     ?? 'columns';
   const resourcesLayout = tournament?.settings?.resourcesLayout ?? 'list';
 
   return (
     <div className="page-content">
-      <div className={styles.pageHeader}>
+      <div className="public-page-header">
         <div className="container">
           <span className="eyebrow"><BookOpen size={12} /> Rules & Resources</span>
-          <h1 className="display-lg">Tournament Rules</h1>
+          <h1>Tournament Rules</h1>
           <p className="text-muted">
             Official rules, conduct guidelines, and resources for the tournament. All participants
             are expected to have read and understood these rules before game day.
@@ -86,7 +89,14 @@ export default async function RulesPage({
           {!hasContent && (
             <div className="card" style={{ textAlign: 'center', padding: '2rem' }}>
               <BookOpen size={32} style={{ margin: '0 auto 1rem', opacity: 0.3, display: 'block' }} />
-              <p className="text-muted">Rules and resources for this tournament haven&apos;t been published yet. Check back before game day.</p>
+              <p className="text-muted">
+                Rules and resources for this tournament haven&apos;t been published yet. Check back before game day.
+                {contactEmail ? <> Questions? Contact <a href={`mailto:${contactEmail}`}>{contactEmail}</a>.</> : null}
+              </p>
+              <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center', flexWrap: 'wrap', marginTop: '1rem' }}>
+                <Link href={homeHref} className="btn btn-ghost btn-sm">Tournament Home</Link>
+                {showNewsPage && <Link href={newsHref} className="btn btn-ghost btn-sm">News</Link>}
+              </div>
             </div>
           )}
 

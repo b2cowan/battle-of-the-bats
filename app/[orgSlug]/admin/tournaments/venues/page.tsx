@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { useTournament } from '@/lib/tournament-context';
 import { useOrg } from '@/lib/org-context';
+import { usePageTitle } from '@/lib/usePageTitle';
 import { getMapsUrl } from '@/components/LocationLink';
 import AddVenueModal from '@/components/admin/AddVenueModal';
 import ExportMenu from '@/components/admin/ExportMenu';
@@ -550,7 +551,11 @@ function TournamentVenueCard({
             <button className="btn btn-ghost btn-data" onClick={() => onEdit(venue)}>
               <Pencil size={12} /> Edit Venue
             </button>
-            <button className="btn btn-danger btn-data" onClick={() => onDelete(venue.id)}>
+            <button
+              className="btn btn-ghost btn-data"
+              style={{ color: 'rgba(var(--danger-rgb), 0.65)', borderColor: 'transparent' }}
+              onClick={() => onDelete(venue.id)}
+            >
               <Trash2 size={12} /> Delete
             </button>
           </div>
@@ -648,6 +653,7 @@ function TournamentVenueCard({
 export default function TournamentVenuesPage() {
   const { currentTournament } = useTournament();
   const { currentOrg }        = useOrg();
+  usePageTitle('Venues & Facilities');
   const orgSlug               = currentOrg?.slug;
 
   const [venues, setVenues]             = useState<Venue[]>([]);
