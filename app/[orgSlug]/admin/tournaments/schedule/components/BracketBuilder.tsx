@@ -1,12 +1,14 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Division, Team, Venue } from '@/lib/types';
-import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, TouchSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Plus, Trash2, GripVertical, Trophy } from 'lucide-react';
 import { formatPoolName } from '@/lib/utils';
+import { teamColor } from '@/lib/team-color';
+import BracketConnectors from './BracketConnectors';
 import styles from './BracketBuilder.module.css';
 
 interface Slot {
@@ -47,27 +49,36 @@ interface BracketBuilderProps {
   crossover?: string;
 }
 
-function SortableMatchup({ matchup, options, usedOptions, venues, onUpdateCode, onUpdate, onDelete }: {
+function SortableMatchup({ matchup, options, usedOptions, venues, isFinal, onUpdateCode, onUpdate, onDelete }: {
   matchup: Matchup,
   options: string[],
   usedOptions: Set<string>,
   venues: Venue[],
+  isFinal?: boolean,
   onUpdateCode: (newCode: string) => void,
   onUpdate: (m: Matchup) => void,
   onDelete: () => void
 }) {
-  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: matchup.id });
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: matchup.id });
 
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
+    ...(isDragging ? { zIndex: 100 } : {}),
   };
 
   const homeOptions = options.filter(opt => opt === matchup.home.label || !usedOptions.has(opt));
   const awayOptions = options.filter(opt => opt === matchup.away.label || !usedOptions.has(opt));
+  const homeIsTeam = !!matchup.home.label && !/^(?:winner|loser)\s/i.test(matchup.home.label);
+  const awayIsTeam = !!matchup.away.label && !/^(?:winner|loser)\s/i.test(matchup.away.label);
 
   return (
-    <div ref={setNodeRef} style={style} className={styles.matchupCard}>
+    <div
+      ref={setNodeRef}
+      style={style}
+      data-matchup-id={matchup.id}
+      className={`${styles.matchupCard} ${isDragging ? styles.matchupCardDragging : ''} ${isFinal ? styles.matchupCardFinal : ''}`}
+    >
       <div className={styles.matchupHeader}>
         <div className="flex items-center gap-2">
           <div {...attributes} {...listeners} className={styles.dragHandle}>
@@ -87,6 +98,7 @@ function SortableMatchup({ matchup, options, usedOptions, venues, onUpdateCode, 
       <div className={styles.matchupBody}>
         <div className={styles.teamRow}>
           <span className={styles.teamLabel}>Home</span>
+          {homeIsTeam && <span className={styles.teamColorDot} style={{ background: teamColor(matchup.home.label) }} aria-hidden />}
           <select
             value={matchup.home.label}
             onChange={e => onUpdate({ ...matchup, home: { label: e.target.value } })}
@@ -98,6 +110,7 @@ function SortableMatchup({ matchup, options, usedOptions, venues, onUpdateCode, 
         </div>
         <div className={styles.teamRow}>
           <span className={styles.teamLabel}>Away</span>
+          {awayIsTeam && <span className={styles.teamColorDot} style={{ background: teamColor(matchup.away.label) }} aria-hidden />}
           <select
             value={matchup.away.label}
             onChange={e => onUpdate({ ...matchup, away: { label: e.target.value } })}
@@ -196,6 +209,7 @@ export default function BracketBuilder({ division, teams, venues, defaultDate, t
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 8 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
 
@@ -362,6 +376,10 @@ export default function BracketBuilder({ division, teams, venues, defaultDate, t
   const isSplitMode = crossover === 'none' && (division.pools?.length || 0) > 0;
   const poolNames = division.pools?.map(p => p.name) || [];
 
+  const canvasRef = useRef<HTMLDivElement>(null);
+  const allMatchups = rounds.flatMap(r => r.matchups);
+  const finalRoundIds = new Set((rounds[rounds.length - 1]?.matchups ?? []).map(m => m.id));
+
   return (
     <div className={styles.builderContainer}>
       {isSplitMode ? (
@@ -450,11 +468,13 @@ export default function BracketBuilder({ division, teams, venues, defaultDate, t
           })}
         </div>
       ) : (
-        <div className={styles.canvas}>
+        <div ref={canvasRef} className={styles.canvas}>
+          <BracketConnectors canvasRef={canvasRef} matchups={allMatchups} finalIds={finalRoundIds} />
           {rounds.map((round, index) => {
             const previousMatchups = rounds.slice(0, index).flatMap(r => r.matchups);
             const previousOptions = previousMatchups.flatMap(m => m.code ? [`Winner ${m.code}`, `Loser ${m.code}`] : []);
             const roundOptions = Array.from(new Set([...baseOptions, ...previousOptions]));
+            const isFinalRound = index === rounds.length - 1;
 
             return (
               <div key={round.id} className={styles.roundColumn}>
@@ -482,6 +502,7 @@ export default function BracketBuilder({ division, teams, venues, defaultDate, t
                           options={roundOptions}
                           usedOptions={allUsedOptions}
                           venues={venues}
+                          isFinal={isFinalRound}
                           onUpdateCode={(newCode) => updateMatchupCode(m.id, m.code, newCode)}
                           onUpdate={(newM) => updateMatchup(round.id, newM)}
                           onDelete={() => deleteMatchup(round.id, m.id)}

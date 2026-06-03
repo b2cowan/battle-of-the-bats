@@ -1,4 +1,4 @@
-import { ImportParseError, type ParsedImportFile, type ParsedImportRow } from './types.ts';
+import { ImportParseError, type ImportFormat, type ParsedImportFile, type ParsedImportRow } from './types.ts';
 
 export function normalizeHeader(value: string): string {
   return value
@@ -17,7 +17,11 @@ export function isBlankRecord(values: Record<string, string>) {
   return Object.values(values).every(value => value.trim().length === 0);
 }
 
-export function matrixToParsedRows(matrix: unknown[][], maxRows: number): ParsedImportFile {
+export function matrixToParsedRows(
+  matrix: unknown[][],
+  maxRows: number,
+  options: { format?: ImportFormat; metadata?: Record<string, string> } = {},
+): ParsedImportFile {
   const headerRowIndex = matrix.findIndex(row => row.some(cell => String(cell ?? '').trim().length > 0));
   if (headerRowIndex < 0) throw new ImportParseError('The import file is empty.');
 
@@ -49,7 +53,11 @@ export function matrixToParsedRows(matrix: unknown[][], maxRows: number): Parsed
     }
   }
 
-  return { headers: headers.filter(Boolean), rows };
+  if (rows.length === 0) {
+    throw new ImportParseError('The import file has no data rows.');
+  }
+
+  return { format: options.format, headers: headers.filter(Boolean), metadata: options.metadata, rows };
 }
 
 export function getCell(row: ParsedImportRow, aliases: string[]): { value: string; present: boolean } {

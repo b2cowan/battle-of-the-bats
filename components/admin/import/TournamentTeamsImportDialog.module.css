@@ -230,6 +230,30 @@
   font-size: 0.78rem;
 }
 
+.noticeBox {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin-bottom: 0.85rem;
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.35);
+  background: rgba(var(--blueprint-blue-rgb), 0.08);
+  color: var(--white);
+  padding: 0.6rem 0.7rem;
+  font-size: 0.8rem;
+}
+
+.noticeBox svg {
+  color: var(--logic-lime);
+  flex-shrink: 0;
+}
+
+.noticeList {
+  display: grid;
+  gap: 0.25rem;
+  margin: 0;
+  padding-left: 1rem;
+}
+
 .batchId,
 .footerNote,
 .muted {

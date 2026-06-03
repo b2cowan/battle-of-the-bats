@@ -9,6 +9,7 @@
   gap: 1.5rem;
   width: max-content;
   margin: 0 auto;
+  position: relative;
 }
 
 .roundColumn {
@@ -16,6 +17,8 @@
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  position: relative;
+  z-index: 1;
 }
 
 .roundHeader {
@@ -60,6 +63,29 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
   display: flex;
   flex-direction: column;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease, opacity 0.15s ease;
+}
+
+/* Lifted card while dragging (C3) — mirrors the dashboard drag language. */
+.matchupCardDragging {
+  opacity: 0.55;
+  border-color: var(--logic-lime);
+  box-shadow: 0 0 0 1px var(--logic-lime), 0 12px 28px rgba(0, 0, 0, 0.45);
+}
+
+.matchupCardDragging .dragHandle {
+  color: var(--logic-lime);
+  cursor: grabbing;
+}
+
+/* Championship / final-round spotlight (C2). */
+.matchupCardFinal {
+  border-color: rgba(var(--logic-lime-rgb), 0.55);
+  box-shadow: 0 0 0 1px rgba(var(--logic-lime-rgb), 0.28), 0 6px 20px rgba(var(--logic-lime-rgb), 0.14);
+}
+
+.matchupCardFinal .matchupHeader {
+  background: rgba(var(--logic-lime-rgb), 0.08);
 }
 
 .matchupHeader {
@@ -78,6 +104,7 @@
   color: var(--white-40);
   padding: 0.25rem;
   border-radius: 2px;
+  touch-action: none;
 }
 
 .dragHandle:active {
@@ -141,6 +168,15 @@
   color: var(--white-40);
   font-weight: 800;
   width: 35px;
+}
+
+/* Team-color chip when a real team is assigned to a slot (C2). */
+.teamColorDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  flex-shrink: 0;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.3);
 }
 
 .teamInput {
@@ -285,4 +321,58 @@
   text-align: center;
   width: 100%;
   padding: 0.25rem;
+}
+
+/* Measured bracket connectors (C2) — desktop only; hidden in the mobile carousel. */
+.connectors {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: visible;
+}
+
+.connector {
+  stroke: rgba(var(--blueprint-blue-rgb), 0.45);
+  stroke-width: 1.5;
+}
+
+.connectorFinal {
+  stroke: rgba(var(--logic-lime-rgb), 0.7);
+  stroke-width: 2;
+}
+
+/* Mobile round-carousel (C1) — swipe one round at a time, peek the next. */
+@media (max-width: 768px) {
+  .builderContainer {
+    overflow-x: hidden;
+  }
+
+  .canvas {
+    width: auto;
+    max-width: 100%;
+    margin: 0;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    scroll-padding-left: 1rem;
+    padding-bottom: 0.5rem;
+  }
+
+  .roundColumn {
+    flex: 0 0 86vw;
+    width: 86vw;
+    scroll-snap-align: center;
+  }
+
+  .connectors {
+    display: none;
+  }
+
+  .poolSection {
+    width: auto;
+    min-width: 0;
+    padding: 1rem;
+  }
 }

@@ -16,6 +16,8 @@ import { readFollowedTeamId, clearFollowedTeam, isTournamentInProgress } from '@
 import { usePublicTournamentLive } from '@/lib/hooks/usePublicTournamentLive';
 import { downloadTeamScheduleICS } from '@/lib/team-calendar';
 import FollowAlertsToggle from '@/components/public/FollowAlertsToggle';
+import RollingNumber from '@/components/public/RollingNumber';
+import { teamAvatarHue, teamInitials } from '@/lib/team-color';
 
 // ── bracket helpers ───────────────────────────────────────────────────────────
 
@@ -32,20 +34,6 @@ type ScheduleStage = 'pool' | 'playoff';
 type BracketLayout = 'list' | 'bracket';
 
 // ── Scorebug helpers ──────────────────────────────────────────────────────────
-
-function teamInitials(name: string): string {
-  const words = name.trim().split(/\s+/);
-  if (words.length === 1) return name.slice(0, 2).toUpperCase();
-  return (words[0][0] + words[words.length - 1][0]).toUpperCase();
-}
-
-function teamAvatarHue(name: string): number {
-  let h = 0;
-  for (let i = 0; i < name.length; i++) h = name.charCodeAt(i) + ((h << 5) - h);
-  const hue = Math.abs(h) % 360;
-  // Shift away from lime-green (80-155) so avatar doesn't clash with the follow star
-  return hue < 80 ? hue : hue < 155 ? hue + 75 : hue;
-}
 
 function calcTeamRecord(teamId: string, allGames: Game[]) {
   let w = 0, l = 0, t = 0;
@@ -483,6 +471,26 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
     </div>
   );
 
+  function renderDateLabel(date: string, dayGames: Game[]) {
+    const total = dayGames.length;
+    const done = dayGames.filter(g =>
+      (g.status === 'completed' || g.status === 'submitted') &&
+      g.homeScore != null && g.awayScore != null
+    ).length;
+    return (
+      <div className={styles.dateLabel}>
+        <span className={styles.dateLabelText}>{formatDividerDate(date)}</span>
+        {date === today && <span className={styles.todayBadge}>Today</span>}
+        <span className={styles.dateLabelRule} />
+        {total > 0 && (
+          <span className={styles.dateProgress} data-complete={done === total ? 'true' : undefined}>
+            {done}/{total}
+          </span>
+        )}
+      </div>
+    );
+  }
+
   function renderGameCard(game: Game, extraClass: string, typeLabel: React.ReactNode) {
     const hasScore = (game.status === 'completed' || game.status === 'submitted') &&
       game.homeScore != null && game.awayScore != null;
@@ -600,14 +608,59 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
       </>
     );
 
+    // ── Broadcast card — the marquee treatment, reserved for LIVE games so a
+    //    finished day doesn't become a wall of giant cards. Final/scheduled keep
+    //    the dense row above.
+    const awayTotal = (game.awayScore ?? 0);
+    const homeTotal = (game.homeScore ?? 0);
+    const scoreSum = awayTotal + homeTotal;
+    const awayShare = scoreSum > 0 ? Math.round((awayTotal / scoreSum) * 100) : 50;
+    const awayHue = awayName !== 'TBD' ? `hsl(${teamAvatarHue(awayName)}, 58%, 42%)` : 'var(--white-20)';
+    const homeHue = homeName !== 'TBD' ? `hsl(${teamAvatarHue(homeName)}, 58%, 42%)` : 'var(--white-20)';
+
+    const broadcastContent = (
+      <>
+        <div className={styles.bcTop}>
+          <span className={styles.liveBadge}><span className={styles.liveDot} />LIVE</span>
+          <span className={styles.bcTime}>{game.time ? formatTime(game.time) : 'TBD'}</span>
+          {typeLabel && <span className={styles.bcType}>{typeLabel}</span>}
+          {isFollowedGame && <Star size={14} fill="currentColor" className={styles.bcStar} aria-label="Followed team game" />}
+        </div>
+        <div className={styles.bcBody}>
+          <div className={`${styles.bcTeam} ${winner === 'away' ? styles.bcLead : ''}`}>
+            <span className={styles.bcAvatar} style={{ background: awayHue }}>
+              {awayName !== 'TBD' ? teamInitials(awayName) : '?'}
+            </span>
+            <span className={styles.bcName} title={awayName}>{awayName}</span>
+            <RollingNumber value={game.awayScore ?? 0} className={styles.bcScore} />
+          </div>
+          <div className={`${styles.bcTeam} ${winner === 'home' ? styles.bcLead : ''}`}>
+            <span className={styles.bcAvatar} style={{ background: homeHue }}>
+              {homeName !== 'TBD' ? teamInitials(homeName) : '?'}
+            </span>
+            <span className={styles.bcName} title={homeName}>{homeName}</span>
+            <RollingNumber value={game.homeScore ?? 0} className={styles.bcScore} />
+          </div>
+        </div>
+        <div className={styles.bcBar} aria-hidden="true">
+          <span className={styles.bcBarSeg} style={{ width: `${awayShare}%`, background: awayHue }} />
+          <span className={styles.bcBarSeg} style={{ width: `${100 - awayShare}%`, background: homeHue }} />
+        </div>
+      </>
+    );
+
+    const broadcastClass = `${styles.broadcastCard} ${extraClass} ${isFollowedGame ? styles.followedBroadcast : ''} ${flippedGameIds.has(game.id) ? styles.scoreFlip : ''}`;
+    const wrapperClass = isLive ? broadcastClass : rowClassName;
+    const content = isLive ? broadcastContent : rowContent;
+
     if (isPreview) {
       return (
         <div
           key={game.id}
           data-status={game.status}
-          className={rowClassName}
+          className={wrapperClass}
         >
-          {rowContent}
+          {content}
         </div>
       );
     }
@@ -618,10 +671,10 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
         href={gameHref}
         prefetch={false}
         data-status={game.status}
-        className={rowClassName}
+        className={wrapperClass}
         aria-label={`View game details for ${gameLabel}`}
       >
-        {rowContent}
+        {content}
       </Link>
     );
   }
@@ -710,11 +763,9 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
                             <span className={styles.scorebugLiveDot} />LIVE
                           </span>
                           <div className={styles.scorebugScoreDisplay}>
-                            {followedCurrentGame.awayTeamId === followedTeamId ? (
-                              <>{followedCurrentGame.awayScore}<span className={styles.scorebugScoreDash}>-</span>{followedCurrentGame.homeScore}</>
-                            ) : (
-                              <>{followedCurrentGame.homeScore}<span className={styles.scorebugScoreDash}>-</span>{followedCurrentGame.awayScore}</>
-                            )}
+                            <RollingNumber value={followedCurrentGame.awayTeamId === followedTeamId ? followedCurrentGame.awayScore : followedCurrentGame.homeScore} />
+                            <span className={styles.scorebugScoreDash}>-</span>
+                            <RollingNumber value={followedCurrentGame.awayTeamId === followedTeamId ? followedCurrentGame.homeScore : followedCurrentGame.awayScore} />
                           </div>
                         </>
                       ) : followedNextGame ? (
@@ -1003,9 +1054,21 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
             />
           ) : loading ? (
             <div className={styles.skeletonContainer}>
-              <div className={`${styles.skeleton} ${styles.skeletonPulse}`} />
-              <div className={`${styles.skeleton} ${styles.skeletonPulse}`} />
-              <div className={`${styles.skeleton} ${styles.skeletonPulse}`} />
+              {[0, 1].map(group => (
+                <div key={group} className={styles.skelGroup}>
+                  <div className={`${styles.skelLabel} ${styles.skeletonPulse}`} />
+                  {[0, 1, 2].map(row => (
+                    <div key={row} className={styles.skelRow}>
+                      <div className={`${styles.skelAvatar} ${styles.skeletonPulse}`} />
+                      <div className={styles.skelLines}>
+                        <div className={`${styles.skelLineWide} ${styles.skeletonPulse}`} />
+                        <div className={`${styles.skelLineNarrow} ${styles.skeletonPulse}`} />
+                      </div>
+                      <div className={`${styles.skelScore} ${styles.skeletonPulse}`} />
+                    </div>
+                  ))}
+                </div>
+              ))}
             </div>
           ) : sortedDates.length === 0 && !(viewMode === 'playoff' && bracketLayout === 'bracket') && !(viewMode === 'pool' && pools.length >= 2) && !(viewMode === 'playoff' && hasPoolPlaceholders) ? (
             <PublicTournamentState
@@ -1099,10 +1162,7 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
                       <PoolHeader name={formatPoolName(pool.name)} />
                       {poolSortedDates.map(date => (
                         <div key={date} id={date === today ? 'schedule-today' : undefined} className={`${styles.dateGroup} ${date === today ? styles.todayGroup : ''}`}>
-                          <div className={styles.dateLabel}>
-                            {formatDividerDate(date)}
-                            {date === today && <span className={styles.todayBadge}>Today</span>}
-                          </div>
+                          {renderDateLabel(date, poolDateGroups[date])}
                           <div className={styles.gamesList}>
                             {poolDateGroups[date].map(game => renderGameCard(game, '', null))}
                           </div>
@@ -1131,10 +1191,7 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
                           <PoolHeader name={`${formatPoolName(pool.name)} Playoffs`} />
                           {poolSortedDates.map(date => (
                             <div key={date} id={date === today ? 'schedule-today' : undefined} className={`${styles.dateGroup} ${date === today ? styles.todayGroup : ''}`}>
-                              <div className={styles.dateLabel}>
-                                {formatDividerDate(date)}
-                                {date === today && <span className={styles.todayBadge}>Today</span>}
-                              </div>
+                              {renderDateLabel(date, poolDateGroups[date])}
                               <div className={styles.gamesList}>
                                 {poolDateGroups[date].map(game => renderGameCard(
                                   game,
@@ -1154,10 +1211,7 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
               // ── LIST VIEW — default / flat ────────────────────────────────
               return sortedDates.map(date => (
                 <div key={date} id={date === today ? 'schedule-today' : undefined} className={`${styles.dateGroup} ${date === today ? styles.todayGroup : ''}`}>
-                  <div className={styles.dateLabel}>
-                    {formatDividerDate(date)}
-                    {date === today && <span className={styles.todayBadge}>Today</span>}
-                  </div>
+                  {renderDateLabel(date, byDate[date])}
                   <div className={styles.gamesList}>
                     {byDate[date].map(game => renderGameCard(
                       game,
@@ -1216,11 +1270,9 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
                             <span className={styles.scorebugLiveDot} />LIVE
                           </span>
                           <div className={styles.railScoreNum}>
-                            {followedCurrentGame.awayTeamId === followedTeamId ? (
-                              <>{followedCurrentGame.awayScore}<span className={styles.railScoreDash}>-</span>{followedCurrentGame.homeScore}</>
-                            ) : (
-                              <>{followedCurrentGame.homeScore}<span className={styles.railScoreDash}>-</span>{followedCurrentGame.awayScore}</>
-                            )}
+                            <RollingNumber value={followedCurrentGame.awayTeamId === followedTeamId ? followedCurrentGame.awayScore : followedCurrentGame.homeScore} />
+                            <span className={styles.railScoreDash}>-</span>
+                            <RollingNumber value={followedCurrentGame.awayTeamId === followedTeamId ? followedCurrentGame.homeScore : followedCurrentGame.awayScore} />
                           </div>
                         </>
                       ) : followedNextGame ? (

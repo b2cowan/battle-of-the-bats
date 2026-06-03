@@ -11,8 +11,8 @@
     z-index: 300;
     /* var(--hud-surface) = #111827 = rgb(17,24,39) at 97% — preserves backdrop-filter frosted glass */
     background: rgba(17, 24, 39, 0.97);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: blur(var(--blur-bar));
+    -webkit-backdrop-filter: blur(var(--blur-bar));
     border-top: 1px solid rgba(var(--blueprint-blue-rgb), 0.3);
     padding: 0.4rem 0 calc(0.4rem + env(safe-area-inset-bottom));
     justify-content: space-around;
@@ -24,8 +24,10 @@
     display: flex;
     flex-direction: column;
     align-items: center;
+    justify-content: center;
     gap: 0.2rem;
     flex: 1;
+    min-height: var(--admin-tap-min);
     padding: 0.25rem 0.25rem;
     text-decoration: none;
     background: none;
@@ -65,6 +67,27 @@
     border-radius: 50%;
     background: var(--logic-lime);
     box-shadow: 0 0 6px rgba(var(--logic-lime-rgb), 0.5);
+  }
+
+  /* Worklist "needs-you" count (B5) — amber notification badge on the tab icon */
+  .tabCount {
+    position: absolute;
+    top: -3px;
+    right: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 0.95rem;
+    height: 0.95rem;
+    padding: 0 0.2rem;
+    border-radius: 999px;
+    background: var(--warning);
+    color: #0f1123;
+    font-family: var(--font-data);
+    font-size: 0.5rem;
+    font-weight: 800;
+    line-height: 1;
+    box-shadow: 0 0 0 2px var(--hud-surface);
   }
 
   .label {
@@ -260,6 +283,37 @@
 
   .dropLogout { color: #f87171; }
   .dropLogout:hover { background: rgba(239, 68, 68, 0.1); color: #f87171; }
+
+  /* ── Density toggle (Display section) ──────────────── */
+  .densityRow {
+    display: flex;
+    gap: 0.35rem;
+    padding: 0.3rem 1rem 0.7rem;
+  }
+
+  .densityBtn {
+    flex: 1;
+    min-height: 40px;
+    border: 1px solid rgba(var(--blueprint-blue-rgb), 0.28);
+    border-radius: 2px;
+    background: transparent;
+    color: var(--data-gray);
+    cursor: pointer;
+    font-family: var(--font-data);
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    transition: border-color 0.15s, background 0.15s, color 0.15s;
+  }
+
+  .densityBtn:active { transform: scale(0.97); }
+
+  .densityBtnActive {
+    border-color: rgba(var(--logic-lime-rgb), 0.5);
+    background: rgba(var(--logic-lime-rgb), 0.1);
+    color: var(--logic-lime);
+  }
 
   @keyframes slideUpMenu {
     from { opacity: 0; transform: translateY(12px); }

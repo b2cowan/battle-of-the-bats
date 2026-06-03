@@ -1,8 +1,8 @@
 ﻿'use client';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ChevronDown, ChevronUp, MapPin, Pencil, X, AlertCircle, Trash2, Check, AlertTriangle, Lock, Unlock } from 'lucide-react';
+import { ChevronDown, ChevronUp, MapPin, Pencil, X, AlertCircle, Trash2, Check, AlertTriangle, Lock, Unlock, Plus, Minus } from 'lucide-react';
 import { Game, Team, Division, Venue, Tournament } from '@/lib/types';
-import { checkVenueConflict, buildConflictMap, type ConflictResult, type ConflictKind } from '@/lib/schedule-conflict';
+import { checkVenueConflict, buildConflictMap, resolveGameTiming, type ConflictResult, type ConflictKind } from '@/lib/schedule-conflict';
 import { formatTime, formatPoolName } from '@/lib/utils';
 import { scoreSubmissionSummary } from '@/lib/tournament-score-audit';
 import { Pool } from '@/lib/types';
@@ -35,6 +35,17 @@ type EditFields = { date: string; time: string; venueId: string; venueFacilityId
 
 type ScoreFields = { home: string; away: string };
 
+type LiveState = 'live' | 'overdue' | 'next';
+
+/** Parse a game's local start timestamp from date (YYYY-MM-DD) + time (H:MM[:SS]). */
+function parseGameStart(date?: string | null, time?: string | null): number {
+  if (!date || !time) return NaN;
+  const [h, m] = time.split(':');
+  const hh = String(h ?? '').padStart(2, '0');
+  const mm = String(m ?? '0').padStart(2, '0');
+  return new Date(`${date}T${hh}:${mm}:00`).getTime();
+}
+
 export default function GameList({
   games, teams, divisions, venues, viewMode, groupByPool, pools: poolsProp,
   onEdit, onFinalize, onDelete, onCancel, onSchedule, onToggleGeneratorLock, onSave, onSaveScore, onCreateVenue, mode, tournament
@@ -49,6 +60,48 @@ export default function GameList({
   const [scoreState, setScoreState] = useState<Record<string, ScoreFields>>({});
   const [scoreSaving, setScoreSaving] = useState<Set<string>>(new Set());
   const [scoreErrors, setScoreErrors] = useState<Record<string, string>>({});
+
+  // ── Live game-row states (B3) — re-evaluate "now" each minute so live/overdue/next advance ──
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 60_000);
+    return () => clearInterval(id);
+  }, []);
+
+  const liveStates = useMemo(() => {
+    const map = new Map<string, LiveState>();
+    const d = new Date(now);
+    const todayStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    let nextId: string | null = null;
+    let nextStart = Infinity;
+    for (const g of games) {
+      // Only un-scored games carry time-based states (submitted already shows "Reviewing").
+      if (g.status !== 'scheduled') continue;
+      const start = parseGameStart(g.date, g.time);
+      if (Number.isNaN(start)) continue;
+      const division = divisions.find(dv => dv.id === g.divisionId);
+      const { durationMinutes } = resolveGameTiming(division, tournament);
+      const end = start + durationMinutes * 60_000;
+      if (now < start) {
+        if (g.date === todayStr && start < nextStart) { nextStart = start; nextId = g.id; }
+      } else if (now < end) {
+        map.set(g.id, 'live');
+      } else {
+        map.set(g.id, 'overdue');
+      }
+    }
+    if (nextId) map.set(nextId, 'next');
+    return map;
+  }, [games, divisions, tournament, now]);
+
+  // Thumb score steppers (B7) — bump a score without the keyboard; clamps at 0.
+  function bumpScore(id: string, side: 'home' | 'away', delta: number) {
+    setScoreState(prev => {
+      const cur = prev[id] ?? { home: '', away: '' };
+      const next = Math.max(0, (parseInt(cur[side], 10) || 0) + delta);
+      return { ...prev, [id]: { ...cur, [side]: String(next) } };
+    });
+  }
 
   const getTeamName = (id: string) => teams.find(t => t.id === id)?.name ?? null;
   const resolveTeam = (id: string, placeholder?: string) => getTeamName(id) ?? placeholder ?? 'TBD';
@@ -126,6 +179,18 @@ export default function GameList({
 
   function formatDate(d: string) {
     return new Date(d + 'T12:00:00').toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+
+  function renderLiveChip(id: string) {
+    const state = liveStates.get(id);
+    if (!state) return null;
+    const label = state === 'live' ? 'Now' : state === 'overdue' ? 'Overdue' : 'Next';
+    return (
+      <span className={styles.liveChip} data-live={state}>
+        {state === 'live' && <span className={styles.liveChipDot} aria-hidden />}
+        {label}
+      </span>
+    );
   }
 
   function formatShortDate(d: string) {
@@ -212,10 +277,14 @@ export default function GameList({
   }, [expanded, editState, games, divisions, tournament, mode]);
 
   function statusBadge(status: string) {
-    if (status === 'completed') return <span className="badge badge-success">Final</span>;
-    if (status === 'submitted') return <span className="badge badge-warning">Pending Review</span>;
-    if (status === 'cancelled') return <span className="badge badge-danger">Cancelled</span>;
-    return <span className="badge badge-neutral">Scheduled</span>;
+    // A passive status label — deliberately borderless (no button-like box) so it
+    // never reads as the clickable Finalize control beside it.
+    const cfg =
+      status === 'completed' ? { label: '✓ Final', tone: 'completed' }
+      : status === 'submitted' ? { label: '⚠ Pending Review', tone: 'submitted' }
+      : status === 'cancelled' ? { label: '✕ Cancelled', tone: 'cancelled' }
+      : { label: 'Scheduled', tone: 'scheduled' };
+    return <span className={styles.statusTag} data-status={cfg.tone}>{cfg.label}</span>;
   }
 
   const renderRow = (g: Game) => {
@@ -270,7 +339,7 @@ export default function GameList({
       };
 
       return (
-        <div key={g.id} className={`${s.row} ${styles.scoringRow}`} data-status={g.status}>
+        <div key={g.id} className={`${s.row} ${styles.scoringRow}`} data-status={g.status} data-live={liveStates.get(g.id) ?? undefined}>
           {/* ── Compact row — scores always visible inline with team names ── */}
           <div className={`${s.rowMain} ${styles.gameRowMain} ${styles.scoringGameRow}`} style={{ gap: '1rem' }}>
             {/* Date · Time · status + venue sub-line */}
@@ -288,6 +357,7 @@ export default function GameList({
                   </span>
                 )}
               </div>
+              {renderLiveChip(g.id)}
               {(g.venueId || g.location) && (() => {
                 const vp = g.venueId
                   ? getVenueParts(g.venueId, g.venueFacilityId)
@@ -305,7 +375,7 @@ export default function GameList({
             </div>
 
             {/* Matchup — symmetric: [W/L · score · Away]  VS  [Home · score · W/L] */}
-            <div className={`${s.gameColMatchup} ${styles.scoringMatchupCell}`} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem' }}>
+            <div className={`${s.gameColMatchup} ${styles.scoringMatchupCell}`} data-editing={isExpanded ? 'true' : undefined} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem' }}>
 
               {/* Away side — right-aligned: W/L · score/input · team name */}
               <div style={{ flex: '0 1 auto', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '0.5rem', minWidth: 0 }}>
@@ -317,15 +387,19 @@ export default function GameList({
                 )}
                 {/* Score or input */}
                 {isExpanded ? (
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    value={score.away}
-                    onChange={e => { const v = e.target.value; if (v === '' || /^\d+$/.test(v)) setScoreState(prev => ({ ...prev, [g.id]: { ...prev[g.id], away: v } })); }}
-                    className={styles.scoreInlineInput}
-                    placeholder="0"
-                    autoFocus
-                  />
+                  <span className={styles.scoreStepper}>
+                    <button type="button" className={styles.scoreStepBtn} onClick={e => { e.stopPropagation(); bumpScore(g.id, 'away', -1); }} aria-label="Decrease away score"><Minus size={16} /></button>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      value={score.away}
+                      onChange={e => { const v = e.target.value; if (v === '' || /^\d+$/.test(v)) setScoreState(prev => ({ ...prev, [g.id]: { ...prev[g.id], away: v } })); }}
+                      className={styles.scoreInlineInput}
+                      placeholder="0"
+                      autoFocus
+                    />
+                    <button type="button" className={styles.scoreStepBtn} onClick={e => { e.stopPropagation(); bumpScore(g.id, 'away', 1); }} aria-label="Increase away score"><Plus size={16} /></button>
+                  </span>
                 ) : hasScoredResult ? (
                   <span className={styles.scoreInlineValue} style={{ color: awayWon ? 'var(--success)' : isTie ? 'var(--warning)' : 'rgba(var(--danger-rgb), 0.65)' }}>
                     {g.awayScore}
@@ -347,14 +421,18 @@ export default function GameList({
                 </span>
                 {/* Score or input */}
                 {isExpanded ? (
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    value={score.home}
-                    onChange={e => { const v = e.target.value; if (v === '' || /^\d+$/.test(v)) setScoreState(prev => ({ ...prev, [g.id]: { ...prev[g.id], home: v } })); }}
-                    className={styles.scoreInlineInput}
-                    placeholder="0"
-                  />
+                  <span className={styles.scoreStepper}>
+                    <button type="button" className={styles.scoreStepBtn} onClick={e => { e.stopPropagation(); bumpScore(g.id, 'home', -1); }} aria-label="Decrease home score"><Minus size={16} /></button>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      value={score.home}
+                      onChange={e => { const v = e.target.value; if (v === '' || /^\d+$/.test(v)) setScoreState(prev => ({ ...prev, [g.id]: { ...prev[g.id], home: v } })); }}
+                      className={styles.scoreInlineInput}
+                      placeholder="0"
+                    />
+                    <button type="button" className={styles.scoreStepBtn} onClick={e => { e.stopPropagation(); bumpScore(g.id, 'home', 1); }} aria-label="Increase home score"><Plus size={16} /></button>
+                  </span>
                 ) : hasScoredResult ? (
                   <span className={styles.scoreInlineValue} style={{ color: homeWon ? 'var(--success)' : isTie ? 'var(--warning)' : 'rgba(var(--danger-rgb), 0.65)' }}>
                     {g.homeScore}
@@ -480,7 +558,7 @@ export default function GameList({
       : { name: g.location || '', facility: '' };
 
     return (
-      <div key={g.id} className={`${s.row} ${styles.planningRow} ${isExpanded ? styles.expanded : ''}`} data-status={g.status}>
+      <div key={g.id} className={`${s.row} ${styles.planningRow} ${isExpanded ? styles.expanded : ''}`} data-status={g.status} data-live={liveStates.get(g.id) ?? undefined}>
         {/* ── Compact planning row ── */}
         <div
           className={`${s.rowMain} ${styles.gameRowMain} ${styles.planningGameRow}`}
@@ -502,6 +580,7 @@ export default function GameList({
                 </span>
               )}
             </div>
+            {renderLiveChip(g.id)}
             {venueParts.name && (
               <div className={styles.venueInDate}>
                 <MapPin size={10} style={{ flexShrink: 0, marginTop: '2px', opacity: 0.55 }} />

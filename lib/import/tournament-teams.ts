@@ -4,6 +4,7 @@ import type { ImportPreview, ImportPreviewChange, ImportPreviewRow, ParsedImport
 
 export const TOURNAMENT_TEAM_IMPORT_TYPE = 'tournament_teams';
 export const TOURNAMENT_TEAM_IMPORT_MAX_ROWS = 1000;
+export const TOURNAMENT_TEAM_IMPORT_TEMPLATE_VERSION = '1';
 
 export const TOURNAMENT_TEAM_IMPORT_HEADERS = [
   'Team ID',
@@ -84,6 +85,21 @@ const PAYMENT_ALIASES: Record<string, PaymentStatus> = {
   yes: 'paid',
 };
 
+const HEADER_ALIASES = [
+  ['Team ID', 'team_id', 'ID'],
+  ['Team Name', 'team_name', 'Name'],
+  ['Division ID', 'division_id'],
+  ['Division Name', 'Division'],
+  ['Coach Name', 'Coach', 'Contact Name'],
+  ['Email', 'Contact Email'],
+  ['Status'],
+  ['Payment Status', 'payment_status'],
+  ['Deposit Paid', 'deposit_paid'],
+  ['Total Paid', 'total_paid'],
+  ['Waitlist Position', 'waitlist_position'],
+  ['Admin Notes', 'admin_notes', 'Notes'],
+];
+
 function hasHeader(headers: string[], aliases: string[]) {
   const normalized = new Set(headers.map(normalizeHeader));
   return aliases.some(alias => normalized.has(normalizeHeader(alias)));
@@ -98,6 +114,30 @@ export function validateTournamentTeamImportHeaders(headers: string[]): string[]
     errors.push('Missing required column: Division ID or Division Name');
   }
   return errors;
+}
+
+function fileNotices(parsed: ParsedImportFile): string[] {
+  const notices: string[] = [];
+  const knownHeaders = new Set(HEADER_ALIASES.flat().map(normalizeHeader));
+  const extraHeaders = parsed.headers.filter(header => !knownHeaders.has(normalizeHeader(header)));
+
+  if (extraHeaders.length > 0) {
+    notices.push(`Ignored extra column${extraHeaders.length === 1 ? '' : 's'}: ${extraHeaders.join(', ')}.`);
+  }
+  if (!hasHeader(parsed.headers, ['Team ID', 'team_id', 'ID'])) {
+    notices.push('Team ID column is missing. Updates can only match existing teams when Team Name and Division are unique.');
+  }
+
+  if (parsed.format === 'xlsx') {
+    const templateVersion = parsed.metadata?.[normalizeHeader('Template Version')];
+    if (!templateVersion) {
+      notices.push('This workbook does not include template version metadata. Preview can continue, but downloading a fresh template is safest.');
+    } else if (templateVersion !== TOURNAMENT_TEAM_IMPORT_TEMPLATE_VERSION) {
+      notices.push(`This workbook uses template version ${templateVersion}; the current version is ${TOURNAMENT_TEAM_IMPORT_TEMPLATE_VERSION}. Review the preview carefully or download a fresh template.`);
+    }
+  }
+
+  return notices;
 }
 
 function parseNullableNumber(value: string, label: string, errors: string[]) {
@@ -260,6 +300,7 @@ export function buildTournamentTeamImportPreview(
   batchId: string = crypto.randomUUID(),
 ): ImportPreview {
   const headerErrors = validateTournamentTeamImportHeaders(parsed.headers);
+  const notices = fileNotices(parsed);
   const existingById = new Map(context.existingTeams.map(team => [team.id, team]));
   const existingByDivisionName = new Map<string, TournamentTeamImportExistingTeam[]>();
   for (const team of context.existingTeams) {
@@ -350,6 +391,7 @@ export function buildTournamentTeamImportPreview(
   return {
     batchId,
     importType: TOURNAMENT_TEAM_IMPORT_TYPE,
+    notices,
     scope: { orgId: context.orgId, tournamentId: context.tournamentId },
     summary,
     rows,

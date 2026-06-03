@@ -14,13 +14,19 @@
     left: 0;
     right: 0;
     z-index: 200;
-    background: rgba(13, 11, 20, 0.92);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+    /* Token background flips for light mode; single --blur-bar source for frost. */
+    background: var(--nav-mobile-bg);
+    backdrop-filter: blur(var(--blur-bar));
+    -webkit-backdrop-filter: blur(var(--blur-bar));
     border-top: 1px solid var(--border);
     padding: 0.5rem 0 calc(0.5rem + env(safe-area-inset-bottom));
     justify-content: space-around;
     align-items: flex-start;
+  }
+
+  /* Solid fallback where the browser can't frost the bar. */
+  @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    .bottomNav { background: var(--bg); }
   }
 
   .tab {
@@ -31,8 +37,8 @@
     flex: 1;
     padding: 0.25rem 0.5rem;
     text-decoration: none;
-    color: rgba(255, 255, 255, 0.45);
-    transition: color 0.2s ease;
+    color: var(--white-45);
+    transition: color 0.2s ease, transform 0.12s ease;
     min-width: 0;
   }
 
@@ -42,6 +48,7 @@
 
   .tab:active {
     opacity: 0.7;
+    transform: scale(0.94);
   }
 
   .iconWrap {

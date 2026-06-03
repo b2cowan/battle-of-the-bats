@@ -38,7 +38,7 @@ export function parseCSV(content: string, maxRows: number): ParsedImportFile {
 
   row.push(current);
   rows.push(row);
-  return matrixToParsedRows(rows, maxRows);
+  return matrixToParsedRows(rows, maxRows, { format: 'csv' });
 }
 
 export function generateCSV(headers: string[], rows: (string | number | null | undefined)[][]): string {

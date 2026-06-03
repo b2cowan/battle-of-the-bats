@@ -6,7 +6,10 @@
     "dev": "node --max-old-space-size=3072 node_modules/next/dist/bin/next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "lint:focused": "eslint",
+    "typecheck": "tsc --noEmit --pretty false",
+    "verify:changed": "node scripts/verify-changed.mjs"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

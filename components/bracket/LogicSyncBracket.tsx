@@ -402,6 +402,12 @@ export function LogicSyncBracket({ games, teams, tournamentId, highlightTeamId, 
 
   if (nodes.length === 0) return null;
 
+  // Champion — the decided final's winner drives the spotlight banner.
+  const finalNode = nodes.find(n => /^FIN/i.test(n.bracketCode) && n.winnerId);
+  const championName = finalNode
+    ? ((finalNode.winnerId === finalNode.homeTeam?.id ? finalNode.homeTeam?.name : finalNode.awayTeam?.name) ?? null)
+    : null;
+
   // ── SVG layout dimensions ─────────────────────────────────────────────────
 
   const maxFirstCol = columns.length > 0 ? columns[0].games.length : 1;
@@ -416,7 +422,35 @@ export function LogicSyncBracket({ games, teams, tournamentId, highlightTeamId, 
     // outer: clips overflow and enables horizontal scroll
     // inner: width:fit-content + margin:auto centers when it fits the viewport,
     //        and naturally left-aligns when the scroll kicks in
-    <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }} className="py-4">
+    <div className="py-4">
+      {championName && (
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.75rem',
+            width: 'fit-content',
+            margin: '0 auto 1rem',
+            padding: '0.7rem 1.1rem',
+            border: '1px solid rgba(var(--warning-rgb), 0.4)',
+            borderRadius: 'var(--radius-md)',
+            background:
+              'linear-gradient(135deg, rgba(var(--warning-rgb), 0.16), transparent 72%), var(--surface)',
+            boxShadow: 'var(--highlight-top)',
+          }}
+        >
+          <Trophy size={20} style={{ color: 'var(--warning)', flexShrink: 0, filter: 'drop-shadow(0 0 10px rgba(var(--warning-rgb), 0.4))' }} />
+          <span style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.15 }}>
+            <span style={{ fontFamily: 'var(--font-data)', fontSize: '0.6rem', fontWeight: 900, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--warning)' }}>
+              Champion
+            </span>
+            <span style={{ fontFamily: 'var(--font-display)', fontSize: '1.05rem', fontWeight: 900, color: 'var(--white)' }}>
+              {championName}
+            </span>
+          </span>
+        </div>
+      )}
+      <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
       <div style={{ width: 'fit-content', margin: '0 auto' }}>
       <svg
         width={svgWidth}
@@ -499,6 +533,7 @@ export function LogicSyncBracket({ games, teams, tournamentId, highlightTeamId, 
           })
         )}
       </svg>
+      </div>
       </div>
     </div>
   );

@@ -51,6 +51,13 @@ export default async function AdminLayout({
     >
       <TournamentProvider orgSlug={orgSlug}>
         <LiveLogicProvider>
+          {/* No-flash admin density — set data-density on <html> before first paint */}
+          <script
+            dangerouslySetInnerHTML={{
+              __html:
+                "(function(){try{var k='fl_admin_density',v=null;try{v=localStorage.getItem(k);}catch(e){}if(v!=='comfortable'&&v!=='compact'){v=(window.matchMedia&&window.matchMedia('(pointer: coarse)').matches)?'comfortable':'compact';}document.documentElement.setAttribute('data-density',v);}catch(e){}})();",
+            }}
+          />
           <AdminChrome>
             {children}
           </AdminChrome>

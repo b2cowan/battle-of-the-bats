@@ -73,6 +73,7 @@ export default async function OrgLayout({
     `--border:        rgba(${theme.primaryRgb}, 0.25)`,
     `--glow:          0 0 32px rgba(${theme.primaryRgb}, 0.4)`,
     `--glow-sm:       0 0 16px rgba(${theme.primaryRgb}, 0.25)`,
+    `--on-primary:    ${theme.onPrimary}`,
     ...buildFontVars(org.themeFont),
   ].join('; ');
 

@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
+import CountUp from '@/components/admin/CountUp';
 import { useRouter } from 'next/navigation';
 import {
   AlertCircle, CheckCircle2, ChevronDown, ChevronUp, Copy, Info,
@@ -116,6 +117,7 @@ type DashboardStats = {
   communications: CommunicationsStats;
   scheduleHealth: ScheduleHealthDashboardStats;
   isTournamentDay: boolean;
+  isGameDay: boolean;
   gameDay: GameDayStats;
   publishChecklist: PublishChecklist;
   registration: {
@@ -249,6 +251,7 @@ const EMPTY_STATS: DashboardStats = {
     averageGamesPerParticipant: 0,
   },
   isTournamentDay: false,
+  isGameDay: false,
   gameDay: EMPTY_GAME_DAY,
   publishChecklist: {
     hasDates: false, hasDivisions: false, hasPublicContact: false, hasOpenDivision: false,
@@ -573,6 +576,7 @@ export default function AdminDashboard() {
           communications:  data?.communications  ?? EMPTY_STATS.communications,
           scheduleHealth:  data?.scheduleHealth  ?? EMPTY_STATS.scheduleHealth,
           isTournamentDay: data?.isTournamentDay ?? false,
+          isGameDay:       data?.isGameDay       ?? false,
           gameDay:         data?.gameDay         ?? EMPTY_GAME_DAY,
           publishChecklist: {
             hasDates:         data?.publishChecklist?.hasDates         ?? false,
@@ -710,6 +714,7 @@ export default function AdminDashboard() {
   const registrationAttention = visibleStats.registrationAttention;
   const gd            = visibleStats.gameDay;
   const isTournamentDay = visibleStats.isTournamentDay;
+  const isGameDay = visibleStats.isGameDay;
   const populateCopiedSummary = copiedSummary(populateCopied);
   const commandCenterAvailable = currentOrg ? hasPlanFeature(currentOrg.planId, 'payment_readiness_tools') : false;
   const registrationFollowUpBuckets = registrationAttention.buckets
@@ -722,13 +727,13 @@ export default function AdminDashboard() {
   const isPreEvent      = isActive && daysUntil !== null && daysUntil > 0;
   const isPostEventActive = isActive && !isTournamentDay && (daysUntil === null || daysUntil <= 0);
 
-  const statusLabel = isPreEvent ? 'Pre-Event' : isTournamentDay ? 'Live' : isPostEventActive ? 'Event Ended' : isCompleted ? 'Completed' : status.charAt(0).toUpperCase() + status.slice(1);
+  const statusLabel = (isActive && isGameDay) ? 'Live' : isPreEvent ? 'Pre-Event' : isPostEventActive ? 'Event Ended' : isCompleted ? 'Completed' : status.charAt(0).toUpperCase() + status.slice(1);
 
   // Cards that don't apply to the current tournament phase — suppressed regardless of saved layout
   const contextHidden = new Set<StatCardId>();
   if (isActive) {
-    if (isPreEvent) contextHidden.add('completed'); // no games played yet
-    else            contextHidden.add('days');      // countdown irrelevant once event starts
+    if (!isGameDay) contextHidden.add('completed'); // no games played yet
+    else            contextHidden.add('days');      // countdown irrelevant once underway
   }
 
   // Layout-derived
@@ -923,7 +928,7 @@ export default function AdminDashboard() {
         </div>
         <div className={styles.mainGauge}>
           <div className={styles.gaugeFigures}>
-            <span className={styles.gaugeMain}>{reg.totalAccepted}</span>
+            <span className={styles.gaugeMain}><CountUp value={reg.totalAccepted} /></span>
             {regCapacity > 0 && <span className={styles.gaugeOf}>/ {regCapacity}</span>}
             <span className={styles.gaugeLabel}>{regCapacity > 0 ? 'spots filled' : 'accepted'}</span>
           </div>
@@ -1068,7 +1073,7 @@ export default function AdminDashboard() {
               <>
                 <div className={styles.statIcon}><IconComp size={22} /></div>
                 <div>
-                  <div className={styles.statNum}>{value}</div>
+                  <div className={styles.statNum}>{typeof value === 'number' ? <CountUp value={value} /> : value}</div>
                   <div className={styles.statLabel}>{card.label}</div>
                   {subValue && <div className={styles.statSubValue}>{subValue}</div>}
                 </div>
@@ -1331,8 +1336,8 @@ export default function AdminDashboard() {
           {/* Stat cards — layout-driven, context-filtered */}
           {(renderedCards.length > 0 || isCustomizing) && renderStatZone(renderedCards)}
 
-          {/* ── TOURNAMENT DAY: game-day metrics ──────── */}
-          {isTournamentDay ? (
+          {/* ── GAME DAY: game-by-game metrics (within dates OR first game started) ── */}
+          {isGameDay ? (
             <div className={styles.analyticsGrid}>
               <section className={styles.analyticsPanel}>
                 <div className={styles.panelHeader}>
@@ -1344,7 +1349,7 @@ export default function AdminDashboard() {
                   <>
                     <div className={styles.mainGauge}>
                       <div className={styles.gaugeFigures}>
-                        <span className={styles.gaugeMain}>{gd.completed}</span>
+                        <span className={styles.gaugeMain}><CountUp value={gd.completed} /></span>
                         <span className={styles.gaugeOf}>/ {gd.totalGames}</span>
                         <span className={styles.gaugeLabel}>games complete</span>
                       </div>
@@ -1434,7 +1439,7 @@ export default function AdminDashboard() {
               </div>
               <div className={styles.mainGauge}>
                 <div className={styles.gaugeFigures}>
-                  <span className={styles.gaugeMain}>{reg.totalAccepted}</span>
+                  <span className={styles.gaugeMain}><CountUp value={reg.totalAccepted} /></span>
                   {reg.totalCapacity > 0 && <><span className={styles.gaugeOf}>/ {reg.totalCapacity}</span></>}
                   <span className={styles.gaugeLabel}>teams</span>
                 </div>

@@ -3147,3 +3147,326 @@
     min-height: 28px;
   }
 }
+
+/* ─── Live game-row states (B3) — game-day timeline cues ──────────────────────
+   Placed after the [data-status] stripe rules so equal-specificity wins. Only
+   un-scored (scheduled) games get these; the global prefers-reduced-motion guard
+   freezes the pulse. */
+.planningRow[data-live="live"],
+.scoringRow[data-live="live"] {
+  border-left: 3px solid var(--logic-lime);
+  background: rgba(var(--logic-lime-rgb), 0.04);
+}
+
+.planningRow[data-live="overdue"],
+.scoringRow[data-live="overdue"] {
+  border-left: 3px solid var(--warning);
+  background: rgba(var(--warning-rgb), 0.045);
+}
+
+.planningRow[data-live="next"],
+.scoringRow[data-live="next"] {
+  border-left: 3px solid rgba(var(--info-rgb), 0.7);
+}
+
+.liveChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.22rem;
+  margin-top: 0.18rem;
+  padding: 0.04rem 0.32rem;
+  border: 1px solid currentColor;
+  border-radius: 2px;
+  font-family: var(--font-data);
+  font-size: 0.5rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  line-height: 1.4;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.liveChip[data-live="live"]    { color: var(--logic-lime); background: rgba(var(--logic-lime-rgb), 0.1); }
+.liveChip[data-live="overdue"] { color: var(--warning);    background: rgba(var(--warning-rgb), 0.1); }
+.liveChip[data-live="next"]    { color: var(--info);       background: rgba(var(--info-rgb), 0.1); }
+
+.liveChipDot {
+  width: 5px;
+  height: 5px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: currentColor;
+  animation: liveChipPulse 2s ease-in-out infinite;
+}
+
+@keyframes liveChipPulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.3; }
+}
+
+/* ─── Game-row status label — passive, borderless (deliberately NOT a button) ──
+   Reads as a status, so the clickable Finalize button beside it is unambiguous. */
+.statusTag {
+  font-family: var(--font-data);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  line-height: 1.25;
+  text-align: right;
+  text-transform: uppercase;
+  color: var(--data-gray);
+}
+
+.statusTag[data-status="completed"] { color: var(--success); }
+.statusTag[data-status="submitted"] { color: var(--warning); }
+.statusTag[data-status="cancelled"] { color: var(--danger); }
+.statusTag[data-status="scheduled"] { color: var(--data-gray); }
+
+/* ─── B7: thumb score steppers (mobile only) ──────────────────────────────────
+   The − / + buttons are hidden on desktop (keyboard is fine there); on mobile the
+   scoring edit row stacks the two teams so each gets a full-width row + big steppers. */
+.scoreStepper {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.scoreStepBtn { display: none; }
+
+@media (max-width: 768px) {
+  .scoreStepBtn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    flex-shrink: 0;
+    border: 1px solid rgba(var(--blueprint-blue-rgb), 0.4);
+    border-radius: 2px;
+    background: rgba(var(--blueprint-blue-rgb), 0.08);
+    color: var(--fl-text);
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .scoreStepBtn:active {
+    background: rgba(var(--logic-lime-rgb), 0.14);
+    border-color: rgba(var(--logic-lime-rgb), 0.5);
+    color: var(--logic-lime);
+  }
+
+  /* Stack the two teams when editing → full-width rows, big steppers, name left */
+  .scoringMatchupCell[data-editing="true"] {
+    flex-direction: column;
+    align-items: stretch !important;
+    gap: 0.5rem;
+  }
+
+  .scoringMatchupCell[data-editing="true"] > div {
+    width: 100%;
+    justify-content: space-between !important;
+  }
+
+  .scoringMatchupCell[data-editing="true"] > div:nth-child(1) {
+    flex-direction: row-reverse; /* away: team name left, steppers right (matches home) */
+  }
+
+  .scoringMatchupCell[data-editing="true"] > div:nth-child(2) {
+    display: none; /* hide the VS divider when stacked */
+  }
+}
+
+/* ============================================================
+   Read-view bracket (committed games "Bracket" layout) — C2/C1
+   Hosts the measured BracketConnectors overlay (position: relative)
+   and becomes a swipeable round-carousel on mobile.
+   ============================================================ */
+.readBracketCanvas {
+  display: flex;
+  gap: 2.5rem;
+  overflow-x: auto;
+  padding: 1.5rem 0;
+  min-height: 300px;
+  position: relative;
+}
+
+.readBracketColumn {
+  display: flex;
+  flex-direction: column;
+  width: 210px;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 1;
+}
+
+@media (max-width: 768px) {
+  .readBracketCanvas {
+    gap: 1rem;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    scroll-padding-left: 1rem;
+  }
+
+  .readBracketColumn {
+    width: 86vw;
+    flex: 0 0 86vw;
+    scroll-snap-align: center;
+  }
+}
+
+/* ============================================================
+   Schedule Health chip + popover (C4) — always-visible glance in
+   the sticky toolbar; opens detail without moving scroll.
+   ============================================================ */
+.healthChipWrap {
+  position: relative;
+  display: inline-flex;
+}
+
+.healthChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  height: var(--admin-control-h, 34px);
+  padding: 0 0.55rem;
+  background: var(--white-03);
+  border: 1px solid var(--white-10);
+  border-radius: 2px;
+  color: var(--white-80);
+  cursor: pointer;
+  font-family: var(--font-data);
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.healthChip:hover {
+  background: var(--white-5);
+  border-color: var(--white-20);
+}
+
+.healthChipDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: var(--data-gray);
+}
+
+.healthChip[data-tone="good"] .healthChipDot {
+  background: var(--success);
+  box-shadow: 0 0 0 3px rgba(var(--success-rgb), 0.18);
+}
+
+.healthChip[data-tone="warning"] {
+  border-color: rgba(var(--warning-rgb), 0.4);
+}
+
+.healthChip[data-tone="warning"] .healthChipDot {
+  background: var(--warning);
+  box-shadow: 0 0 0 3px rgba(var(--warning-rgb), 0.18);
+}
+
+.healthChip[data-tone="danger"] {
+  border-color: rgba(var(--danger-rgb), 0.45);
+}
+
+.healthChip[data-tone="danger"] .healthChipDot {
+  background: var(--danger);
+  box-shadow: 0 0 0 3px rgba(var(--danger-rgb), 0.2);
+}
+
+.healthChipScore {
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: var(--white);
+  font-variant-numeric: tabular-nums;
+}
+
+.healthChipMax {
+  font-size: 0.6rem;
+  color: var(--white-40);
+  margin-left: -0.2rem;
+}
+
+.healthChipWarn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
+  margin-left: 0.1rem;
+  padding: 0 0.3rem;
+  height: 16px;
+  border-radius: 2px;
+  font-size: 0.6rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.healthChipWarn[data-tone="warning"] {
+  background: rgba(var(--warning-rgb), 0.15);
+  color: var(--warning);
+}
+
+.healthChipWarn[data-tone="danger"] {
+  background: rgba(var(--danger-rgb), 0.15);
+  color: var(--danger);
+}
+
+.healthChipCaret {
+  color: var(--white-40);
+}
+
+/* Desktop anchored popover (mobile uses the BottomSheet portal instead) */
+.healthPopover {
+  position: absolute;
+  top: calc(100% + 0.4rem);
+  right: 0;
+  z-index: 60;
+  width: 340px;
+  max-width: min(340px, calc(100vw - 2rem));
+  background: var(--hud-surface, var(--surface));
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.35);
+  border-radius: 4px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5), var(--highlight-top);
+  animation: healthPopIn 0.16s var(--ease-spring, ease);
+}
+
+@keyframes healthPopIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.healthPopoverHead {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.55rem 0.75rem;
+  border-bottom: 1px solid rgba(var(--blueprint-blue-rgb), 0.18);
+  color: rgba(var(--logic-lime-rgb), 0.8);
+  font-family: var(--font-data);
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.healthPopoverHead strong {
+  margin-left: auto;
+  font-size: 0.95rem;
+  color: var(--white);
+  font-variant-numeric: tabular-nums;
+}
+
+.healthPopoverHead strong small {
+  font-size: 0.6rem;
+  color: var(--white-40);
+}
+
+.healthPopoverHead strong[data-tone="good"] { color: var(--success); }
+.healthPopoverHead strong[data-tone="warning"] { color: var(--warning); }
+.healthPopoverHead strong[data-tone="danger"] { color: var(--danger); }
+
+.healthPopoverBody {
+  padding: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}

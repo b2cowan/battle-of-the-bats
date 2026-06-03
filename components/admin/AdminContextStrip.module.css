@@ -1,0 +1,69 @@
+/* Docked above the bottom nav (its positioned ancestor). The nav is mobile-only
+   (display:none >900px), so this is implicitly mobile-only too. */
+.strip {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  height: 44px;
+  padding: 0 0.4rem 0 0.85rem;
+  background: rgba(var(--logic-lime-rgb), 0.1);
+  border-top: 1px solid rgba(var(--blueprint-blue-rgb), 0.3);
+  border-bottom: 1px solid rgba(var(--logic-lime-rgb), 0.18);
+  backdrop-filter: blur(var(--blur-bar));
+  -webkit-backdrop-filter: blur(var(--blur-bar));
+}
+
+.action {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+  min-width: 0;
+  color: var(--logic-lime);
+  text-decoration: none;
+  font-family: var(--font-data);
+}
+
+.action:active { opacity: 0.65; }
+
+.icon {
+  display: inline-flex;
+  flex-shrink: 0;
+}
+
+.label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.arrow {
+  flex-shrink: 0;
+  opacity: 0.7;
+}
+
+.dismiss {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  border: none;
+  background: transparent;
+  color: var(--data-gray);
+  cursor: pointer;
+}
+
+.dismiss:hover { color: var(--fl-text); }
+.dismiss:active { opacity: 0.6; }

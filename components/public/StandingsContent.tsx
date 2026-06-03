@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import Link from 'next/link';
 import { Calendar, CalendarPlus, CheckCircle, ChevronDown, Clock, Star, Trophy, X } from 'lucide-react';
 import { getDivisionPref, setDivisionPref } from '@/lib/division-cookie';
@@ -74,6 +74,18 @@ function formatShortDate(date: string) {
   });
 }
 
+/** Column abbreviations explained beneath each standings table. */
+const STAT_LEGEND: { abbr: string; label: string }[] = [
+  { abbr: 'REC', label: 'Record (W-L-T)' },
+  { abbr: 'W',   label: 'Wins' },
+  { abbr: 'L',   label: 'Losses' },
+  { abbr: 'T',   label: 'Ties' },
+  { abbr: 'RF',  label: 'Runs For' },
+  { abbr: 'RA',  label: 'Runs Against' },
+  { abbr: 'RD',  label: 'Run Differential' },
+  { abbr: 'PTS', label: 'Points' },
+];
+
 export default function StandingsContent({ orgSlug, tournamentSlug, isPreview = false, initialData }: Props) {
   const [divisions, setDivisions]           = useState<Division[]>(() => initialData?.divisions ?? []);
   const [games, setGames]                   = useState<Game[]>(() => initialData?.games ?? []);
@@ -100,6 +112,36 @@ export default function StandingsContent({ orgSlug, tournamentSlug, isPreview = 
   const [standingsByDivision, setStandingsByDivision] = useState<Record<string, StandingResult[]>>(
     () => (initialData?.standingsByDivision as Record<string, StandingResult[]>) ?? {}
   );
+  // Transient ▲/▼ markers when a live result changes a team's pool rank.
+  const [rankChanges, setRankChanges] = useState<Map<string, 'up' | 'down'>>(() => new Map());
+  const prevRanksRef = useRef<Map<string, number>>(new Map());
+
+  useEffect(() => {
+    if (!activeGroup) return;
+    const group = divisions.find(g => g.id === activeGroup);
+    const groupPools = group?.pools || [];
+    const rows = standingsByDivision[activeGroup] ?? [];
+    const newRanks = new Map<string, number>();
+    if (groupPools.length >= 2) {
+      for (const p of groupPools) {
+        rows.filter(r => r.poolId === p.id).forEach((r, i) => newRanks.set(r.teamId, i));
+      }
+    } else {
+      rows.forEach((r, i) => newRanks.set(r.teamId, i));
+    }
+    const changes = new Map<string, 'up' | 'down'>();
+    for (const [id, rank] of newRanks) {
+      const prev = prevRanksRef.current.get(id);
+      if (prev !== undefined && prev !== rank) changes.set(id, rank < prev ? 'up' : 'down');
+    }
+    prevRanksRef.current = newRanks;
+    if (changes.size === 0) return;
+    // Transient animation flags driven by incoming live standings — intentional.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setRankChanges(changes);
+    const timer = window.setTimeout(() => setRankChanges(new Map()), 2400);
+    return () => window.clearTimeout(timer);
+  }, [standingsByDivision, activeGroup, divisions]);
 
   useEffect(() => {
     setFollowedTeamId(readFollowedTeamId(orgSlug, tournamentSlug));
@@ -542,6 +584,7 @@ export default function StandingsContent({ orgSlug, tournamentSlug, isPreview = 
                     if (poolStandings.length === 0) return null;
 
                     const hasPendingStandings = poolStandings.some(s => s.hasPendingGame);
+                    const maxAbsRd = Math.max(1, ...poolStandings.map(s => Math.abs(s.rd)));
                     const tieBreakerOrder = (currentGroup?.playoffConfig?.tieBreakers || ['h2h', 'rd', 'rf', 'ra'])
                       .map(b => b.toUpperCase());
 
@@ -580,8 +623,13 @@ export default function StandingsContent({ orgSlug, tournamentSlug, isPreview = 
                                 return (
                                   <tr key={team.id} className={isFirst ? styles.topRow : ''}>
                                     <td className={styles.stickyCol}>
-                                      <div className={styles.teamCell}>
+                                      <div className={`${styles.teamCell} ${rankChanges.get(team.id) ? styles.teamCellMoved : ''}`}>
                                         {isFirst && <Trophy size={14} className={styles.topIcon} />}
+                                        {rankChanges.get(team.id) && (
+                                          <span className={styles.rankArrow} data-dir={rankChanges.get(team.id)} aria-label={rankChanges.get(team.id) === 'up' ? 'Moved up' : 'Moved down'}>
+                                            {rankChanges.get(team.id) === 'up' ? '▲' : '▼'}
+                                          </span>
+                                        )}
                                         <span>{team.name}</span>
                                         {team.hasPendingGame ? <span className={styles.pendingTeamBadge}>Pending</span> : null}
                                       </div>
@@ -594,8 +642,17 @@ export default function StandingsContent({ orgSlug, tournamentSlug, isPreview = 
                                     <td className={`${styles.statValue} ${styles.statCenter} ${styles.desktopOnly}`}>{team.t}</td>
                                     <td className={`${styles.statCenter} ${styles.desktopOnly}`}>{team.rf}</td>
                                     <td className={`${styles.statCenter} ${styles.desktopOnly}`}>{team.ra}</td>
-                                    <td className={`${styles.statCenter} ${team.rd > 0 ? styles.rdPositive : team.rd < 0 ? styles.rdNegative : ''}`}>
-                                      {team.rd > 0 ? `+${team.rd}` : team.rd}
+                                    <td className={styles.statCenter}>
+                                      <span className={team.rd > 0 ? styles.rdPositive : team.rd < 0 ? styles.rdNegative : ''}>
+                                        {team.rd > 0 ? `+${team.rd}` : team.rd}
+                                      </span>
+                                      <span className={`${styles.rdBar} ${styles.desktopOnly}`} aria-hidden="true">
+                                        <span
+                                          className={styles.rdBarFill}
+                                          data-dir={team.rd >= 0 ? 'pos' : 'neg'}
+                                          style={{ width: `${(Math.abs(team.rd) / maxAbsRd) * 50}%` }}
+                                        />
+                                      </span>
                                     </td>
                                     <td className={`${styles.ptsCol} ${styles.statCenter}`}>
                                       <span className="badge badge-primary">{team.pts}</span>
@@ -608,6 +665,14 @@ export default function StandingsContent({ orgSlug, tournamentSlug, isPreview = 
                         </div>
 
                         <div className={styles.standingsFooter}>
+                          <dl className={styles.statLegend}>
+                            {STAT_LEGEND.map(item => (
+                              <div key={item.abbr} className={styles.statLegendItem}>
+                                <dt>{item.abbr}</dt>
+                                <dd>{item.label}</dd>
+                              </div>
+                            ))}
+                          </dl>
                           <p className={styles.tieBreakerNote}>
                             <span>Tie-breaker order</span>
                             <strong>{tieBreakerOrder.join(' > ')}</strong>

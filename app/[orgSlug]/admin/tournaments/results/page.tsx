@@ -421,9 +421,9 @@ export default function AdminResultsPage() {
   ];
 
   const statusChipClass: Record<ResultsFilter, string> = {
-    pending: s.chip_pending,
-    submitted: s.chip_waitlist,
-    completed: s.chip_accepted,
+    pending: s.chip_info,      // Unscored → info-blue (matches scheduled row stripe + tally)
+    submitted: s.chip_warning, // Reviewing → warning-amber (matches submitted row + tally)
+    completed: s.chip_success, // Completed → success-green
   };
 
   // Label shown in the venue button inside the sheet and in the summary strip
@@ -542,7 +542,7 @@ export default function AdminResultsPage() {
                   {
                     label: 'To Be Scored',
                     description: 'Game is scheduled but no score has been submitted yet.',
-                    tone: 'neutral',
+                    tone: 'info',
                   },
                   {
                     label: 'Pending Review',

@@ -6,68 +6,13 @@ import { formatTime } from '@/lib/utils';
 import { isPublicPageEnabled } from '@/lib/public-pages';
 import { hasPlanFeature } from '@/lib/plan-features';
 import { canUseAdvancedTournamentBranding } from '@/lib/tournament-branding';
+import { getRegistrationState } from '@/lib/registration-state';
 import LocationLink from '@/components/LocationLink';
 import MyTournamentCard from '@/components/public/MyTournamentCard';
 import PublicTournamentState from '@/components/public/PublicTournamentState';
+import CountUp from '@/components/public/CountUp';
+import Countdown from '@/components/public/Countdown';
 import styles from '@/app/[orgSlug]/Home.module.css';
-
-type RegistrationState = 'open' | 'waitlist' | 'closed' | 'not-open' | 'completed';
-
-function getRegistrationState(tournament: Tournament, divisions: Awaited<ReturnType<typeof getDivisions>>, registrations: Awaited<ReturnType<typeof getTeams>>): {
-  state: RegistrationState;
-  label: string;
-  detail: string;
-} {
-  if (tournament.status === 'completed') {
-    return {
-      state: 'completed',
-      label: 'Tournament completed',
-      detail: 'Registration is closed. View the schedule and results for this tournament.',
-    };
-  }
-  if (tournament.status !== 'active') {
-    return {
-      state: 'not-open',
-      label: 'Registration not open',
-      detail: 'This tournament is still being prepared by the organizer.',
-    };
-  }
-  if (divisions.length === 0) {
-    return {
-      state: 'not-open',
-      label: 'Registration opens soon',
-      detail: 'Divisions have not been published yet.',
-    };
-  }
-
-  const openGroups = divisions.filter(group => !group.isClosed);
-  if (openGroups.length === 0) {
-    return {
-      state: 'closed',
-      label: 'Registration closed',
-      detail: 'All divisions are currently closed. Contact the organizer for availability.',
-    };
-  }
-
-  const hasDirectOpenSpot = openGroups.some(group => {
-    const registered = registrations.filter(team => team.divisionId === group.id).length;
-    return !group.capacity || registered < group.capacity;
-  });
-
-  if (hasDirectOpenSpot) {
-    return {
-      state: 'open',
-      label: 'Registration is open',
-      detail: 'Teams can register for available divisions now.',
-    };
-  }
-
-  return {
-    state: 'waitlist',
-    label: 'Join the waitlist',
-    detail: 'Divisions are full, but teams can submit for waitlist consideration.',
-  };
-}
 
 export default async function TournamentHomeContent({
   orgSlug,
@@ -82,7 +27,6 @@ export default async function TournamentHomeContent({
   tournament: Tournament;
   isPreview?: boolean;
 }) {
-  const currentYear = tournament.year;
   const readOptions = { admin: true };
 
   const allAnnouncements = await getAnnouncements(tournament.id, readOptions);
@@ -183,6 +127,18 @@ export default async function TournamentHomeContent({
       countdownText = 'Tournament complete';
     }
   }
+
+  // Pre-event "first pitch in…" — counts down to the earliest scheduled game on or
+  // after the start date (falling back to the start date at a sensible default).
+  const isPreEvent = Boolean(startDate && now < startDate);
+  const firstScheduledGame = sortedGames.find(g => g.status === 'scheduled' && (!startDate || g.date >= startDate));
+  // `time` may arrive as "HH:MM" or "HH:MM:SS" — normalise to HH:MM:SS so the ISO
+  // string is always valid (otherwise the Countdown silently renders nothing).
+  const firstPitchISO = isPreEvent
+    ? (firstScheduledGame?.time
+        ? `${firstScheduledGame.date}T${firstScheduledGame.time.slice(0, 5)}:00`
+        : startDate ? `${startDate}T09:00:00` : null)
+    : null;
 
   const sortedDivisions = [...divisions].sort((a, b) => a.order - b.order);
   const ageRange = sortedDivisions.length > 0
@@ -572,14 +528,19 @@ export default async function TournamentHomeContent({
             <div className={styles.badgeText}>
               <span className={styles.dateLine}>
                 <Star size={12} fill="currentColor" />
-                {currentYear} Tournament - {dateDisplay}
+                {dateDisplay}
               </span>
-              {countdownText && (
+              {isPreEvent && firstPitchISO ? (
                 <span className={styles.countdown}>
-                  <span className={styles.badgeSeparator}> - </span>
+                  <span className={styles.badgeSeparator}>·</span>
+                  <Countdown target={firstPitchISO} prefix="First pitch in " whenPast={countdownText} />
+                </span>
+              ) : countdownText ? (
+                <span className={styles.countdown}>
+                  <span className={styles.badgeSeparator}>·</span>
                   {countdownText}
                 </span>
-              )}
+              ) : null}
             </div>
           </div>
 
@@ -615,12 +576,16 @@ export default async function TournamentHomeContent({
 
           <div className={styles.stats}>
             <div className={styles.stat}>
-              <span className={styles.statNum}>{divisions.length || 'TBA'}</span>
+              <span className={styles.statNum}>
+                {divisions.length ? <CountUp value={divisions.length} /> : 'TBA'}
+              </span>
               <span className={styles.statLabel}>Divisions</span>
             </div>
             <div className={styles.statDivider} />
             <div className={styles.stat}>
-              <span className={styles.statNum}>{teams.length || 'TBA'}</span>
+              <span className={styles.statNum}>
+                {teams.length ? <CountUp value={teams.length} /> : 'TBA'}
+              </span>
               <span className={styles.statLabel}>Teams</span>
             </div>
             <div className={styles.statDivider} />

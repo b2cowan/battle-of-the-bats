@@ -1,22 +1,26 @@
 'use client';
 
 import Link from 'next/link';
-import { useMemo, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import {
   AlertCircle,
   Calendar,
   CheckCircle2,
+  Clock,
   Database,
   Download,
   ExternalLink,
   FileSpreadsheet,
   FileText,
+  History,
   Lock,
   MapPin,
+  RefreshCw,
   Tag,
   Trophy,
   Upload,
   Users,
+  XCircle,
 } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { hasPlanFeature, requiresPlanCopy } from '@/lib/plan-features';
@@ -24,6 +28,7 @@ import { hasCapability } from '@/lib/roles';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { useTournament } from '@/lib/tournament-context';
 import TournamentTeamsImportDialog from '@/components/admin/import/TournamentTeamsImportDialog';
+import TournamentScheduleImportDialog from '@/components/admin/import/TournamentScheduleImportDialog';
 import {
   ToolbarGroup,
   ToolbarSelect,
@@ -36,6 +41,33 @@ import styles from './data-tools.module.css';
 type Notice = {
   type: 'success' | 'warning';
   message: string;
+};
+
+type ImportHistoryStatus = 'previewed' | 'committed' | 'failed' | 'expired';
+
+type ImportHistoryItem = {
+  id: string;
+  importLabel: string;
+  status: ImportHistoryStatus;
+  sourceFilename: string | null;
+  actorEmail: string | null;
+  createdAt: string;
+  committedAt: string | null;
+  expiresAt: string;
+  summary: {
+    totalRows: number;
+    creates: number;
+    updates: number;
+    unchanged: number;
+    warnings: number;
+    blocked: number;
+    commit: {
+      created: number;
+      updated: number;
+      unchanged: number;
+      skipped: number;
+    } | null;
+  };
 };
 
 type ActionButtonProps = {
@@ -70,9 +102,70 @@ function buildTemplateUrl(
   return `/api/admin/tournaments/${encodeURIComponent(tournamentId)}/registrations/import/template?mode=${mode}&format=${format}${orgParam}`;
 }
 
+function buildScheduleTemplateUrl(
+  tournamentId: string,
+  mode: 'current' | 'empty',
+  format: 'xlsx' | 'csv',
+  orgSlug?: string,
+) {
+  const orgParam = orgSlug ? `&orgSlug=${encodeURIComponent(orgSlug)}` : '';
+  return `/api/admin/tournaments/${encodeURIComponent(tournamentId)}/schedule/import/template?mode=${mode}&format=${format}${orgParam}`;
+}
+
 function buildRegistrationExportUrl(tournamentId: string, format: 'xlsx' | 'csv', orgSlug?: string) {
   const orgParam = orgSlug ? `&orgSlug=${encodeURIComponent(orgSlug)}` : '';
   return `/api/admin/tournaments/${encodeURIComponent(tournamentId)}/registrations/export?format=${format}${orgParam}`;
+}
+
+function buildImportHistoryUrl(tournamentId: string, orgSlug?: string) {
+  const orgParam = orgSlug ? `?orgSlug=${encodeURIComponent(orgSlug)}&limit=8` : '?limit=8';
+  return `/api/admin/tournaments/${encodeURIComponent(tournamentId)}/imports/history${orgParam}`;
+}
+
+function formatDateTime(value: string | null) {
+  if (!value) return 'Not applied';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return 'Unknown time';
+  return new Intl.DateTimeFormat(undefined, {
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  }).format(date);
+}
+
+function statusMeta(status: ImportHistoryStatus) {
+  switch (status) {
+    case 'committed':
+      return { label: 'Applied', icon: CheckCircle2, className: styles.historyStatusSuccess };
+    case 'failed':
+      return { label: 'Failed', icon: XCircle, className: styles.historyStatusDanger };
+    case 'expired':
+      return { label: 'Expired', icon: Clock, className: styles.historyStatusMuted };
+    case 'previewed':
+    default:
+      return { label: 'Preview only', icon: Clock, className: styles.historyStatusWarning };
+  }
+}
+
+function historyCountItems(item: ImportHistoryItem) {
+  if (item.status === 'committed' && item.summary.commit) {
+    return [
+      { label: 'created', value: item.summary.commit.created },
+      { label: 'updated', value: item.summary.commit.updated },
+      { label: 'unchanged', value: item.summary.commit.unchanged },
+      { label: 'skipped', value: item.summary.commit.skipped },
+    ].filter(count => count.value > 0 || count.label === 'unchanged');
+  }
+
+  return [
+    { label: 'rows', value: item.summary.totalRows },
+    { label: 'creates', value: item.summary.creates },
+    { label: 'updates', value: item.summary.updates },
+    { label: 'unchanged', value: item.summary.unchanged },
+    { label: 'warnings', value: item.summary.warnings },
+    { label: 'blocked', value: item.summary.blocked },
+  ].filter(count => count.value > 0 || count.label === 'rows');
 }
 
 function actionClass(variant: ActionButtonProps['variant'] = 'secondary') {
@@ -168,7 +261,11 @@ export default function TournamentDataToolsPage() {
     setCurrentTournament,
   } = useTournament();
   const [importOpen, setImportOpen] = useState(false);
+  const [scheduleImportOpen, setScheduleImportOpen] = useState(false);
   const [notice, setNotice] = useState<Notice | null>(null);
+  const [importHistory, setImportHistory] = useState<ImportHistoryItem[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [historyError, setHistoryError] = useState<string | null>(null);
 
   usePageTitle('Data Tools');
 
@@ -190,6 +287,11 @@ export default function TournamentDataToolsPage() {
   const canUseRegistrationExport = currentOrg ? hasPlanFeature(currentOrg.planId, 'registration_export') : false;
   const canManageTeamImports = userRole
     ? hasCapability(userRole, userCapabilities, 'manage_registrations') ||
+      hasCapability(userRole, userCapabilities, 'create_tournaments')
+    : false;
+  const canManageScheduleImports = userRole
+    ? hasCapability(userRole, userCapabilities, 'manage_schedule_structure') ||
+      hasCapability(userRole, userCapabilities, 'update_schedule') ||
       hasCapability(userRole, userCapabilities, 'create_tournaments')
     : false;
   const importPlanCopy = requiresPlanCopy('bulk_data_imports');
@@ -214,10 +316,66 @@ export default function TournamentDataToolsPage() {
     : !canUseRegistrationExport
       ? registrationExportCopy
       : null;
+  const scheduleTemplateUnavailableReason = contextLoading
+    ? 'Loading data tools.'
+    : !currentTournament
+    ? 'Choose a tournament before downloading schedule import templates.'
+    : !canUseTeamImports
+      ? importPlanCopy
+      : !canManageScheduleImports
+        ? 'Your role can view schedules, but cannot download schedule import templates.'
+        : null;
+  const scheduleImportUnavailableReason = scheduleTemplateUnavailableReason ??
+    (isLocked ? 'Completed tournaments are read-only. Set the tournament back to Active before importing schedule rows.' : null);
 
   const templateDisabled = Boolean(templateUnavailableReason);
   const importDisabled = Boolean(importUnavailableReason);
   const registrationExportDisabled = Boolean(registrationExportUnavailableReason);
+  const scheduleTemplateDisabled = Boolean(scheduleTemplateUnavailableReason);
+  const scheduleImportDisabled = Boolean(scheduleImportUnavailableReason);
+  const historyUnavailableReason = contextLoading
+    ? 'Loading import history.'
+    : !currentTournament
+    ? 'Choose a tournament before viewing import history.'
+    : !canUseTeamImports
+      ? importPlanCopy
+      : !canManageTeamImports && !canManageScheduleImports
+        ? 'Your role can view tournament data, but cannot view import history.'
+        : null;
+
+  const loadImportHistory = useCallback(async (signal?: AbortSignal) => {
+    if (!tournamentId || !orgSlug || historyUnavailableReason) {
+      setImportHistory([]);
+      setHistoryLoading(false);
+      setHistoryError(null);
+      return;
+    }
+
+    setHistoryLoading(true);
+    setHistoryError(null);
+    try {
+      const res = await fetch(buildImportHistoryUrl(tournamentId, orgSlug), {
+        credentials: 'same-origin',
+        signal,
+      });
+      const data = await res.json().catch(() => ({}));
+      if (signal?.aborted) return;
+      if (!res.ok) throw new Error(data.error ?? 'Import history could not be loaded.');
+      setImportHistory(Array.isArray(data.imports) ? data.imports as ImportHistoryItem[] : []);
+    } catch (error) {
+      if (signal?.aborted) return;
+      setImportHistory([]);
+      setHistoryError(error instanceof Error ? error.message : 'Import history could not be loaded.');
+    } finally {
+      if (!signal?.aborted) setHistoryLoading(false);
+    }
+  }, [historyUnavailableReason, orgSlug, tournamentId]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    void Promise.resolve().then(() => loadImportHistory(controller.signal));
+    return () => controller.abort();
+  }, [loadImportHistory]);
 
   function chooseTournament(tournamentIdValue: string) {
     const nextTournament = tournaments.find(tournament => tournament.id === tournamentIdValue);
@@ -234,6 +392,15 @@ export default function TournamentDataToolsPage() {
     }
     setNotice(null);
     setImportOpen(true);
+  }
+
+  function openScheduleImport() {
+    if (scheduleImportUnavailableReason) {
+      setNotice({ type: 'warning', message: scheduleImportUnavailableReason });
+      return;
+    }
+    setNotice(null);
+    setScheduleImportOpen(true);
   }
 
   return (
@@ -402,14 +569,84 @@ export default function TournamentDataToolsPage() {
                   </div>
                   <div>
                     <h3>Schedule</h3>
-                    <p>Open the schedule workspace to export XLSX, CSV, PDF, or iCal from the active schedule view.</p>
+                    <p>Add/update schedule rows, download schedule templates, or open the schedule workspace for exports.</p>
                   </div>
                 </div>
                 <div className={styles.cardBody}>
+                  <div className={styles.actionGroup}>
+                    <div className={styles.actionLabel}>
+                      <Upload size={14} aria-hidden />
+                      <span>Import</span>
+                    </div>
+                    <ActionButton
+                      variant="primary"
+                      icon={<Upload size={15} aria-hidden />}
+                      onClick={openScheduleImport}
+                      disabled={scheduleImportDisabled}
+                      title={scheduleImportUnavailableReason ?? undefined}
+                    >
+                      Add/update schedule
+                    </ActionButton>
+                    {scheduleImportUnavailableReason && (
+                      <p className={styles.lockedNote}>
+                        <Lock size={13} aria-hidden />
+                        <span>{scheduleImportUnavailableReason}</span>
+                      </p>
+                    )}
+                    <p className={styles.subtleNote}>Add/update only. Games missing from the file stay unchanged.</p>
+                  </div>
+
+                  <div className={styles.actionGroup}>
+                    <div className={styles.actionLabel}>
+                      <FileSpreadsheet size={14} aria-hidden />
+                      <span>Templates</span>
+                    </div>
+                    <div className={styles.buttonGrid}>
+                      <ActionLink
+                        href={tournamentId ? buildScheduleTemplateUrl(tournamentId, 'current', 'xlsx', orgSlug) : '#'}
+                        icon={<FileSpreadsheet size={15} aria-hidden />}
+                        disabled={scheduleTemplateDisabled}
+                        title={scheduleTemplateUnavailableReason ?? undefined}
+                      >
+                        Current XLSX
+                      </ActionLink>
+                      <ActionLink
+                        href={tournamentId ? buildScheduleTemplateUrl(tournamentId, 'current', 'csv', orgSlug) : '#'}
+                        icon={<FileText size={15} aria-hidden />}
+                        disabled={scheduleTemplateDisabled}
+                        title={scheduleTemplateUnavailableReason ?? undefined}
+                      >
+                        Current CSV
+                      </ActionLink>
+                      <ActionLink
+                        href={tournamentId ? buildScheduleTemplateUrl(tournamentId, 'empty', 'xlsx', orgSlug) : '#'}
+                        icon={<FileSpreadsheet size={15} aria-hidden />}
+                        disabled={scheduleTemplateDisabled}
+                        title={scheduleTemplateUnavailableReason ?? undefined}
+                      >
+                        Empty XLSX
+                      </ActionLink>
+                      <ActionLink
+                        href={tournamentId ? buildScheduleTemplateUrl(tournamentId, 'empty', 'csv', orgSlug) : '#'}
+                        icon={<FileText size={15} aria-hidden />}
+                        disabled={scheduleTemplateDisabled}
+                        title={scheduleTemplateUnavailableReason ?? undefined}
+                      >
+                        Empty CSV
+                      </ActionLink>
+                    </div>
+                  </div>
+
+                  <div className={styles.actionGroup}>
+                    <div className={styles.actionLabel}>
+                      <Download size={14} aria-hidden />
+                      <span>Export</span>
+                    </div>
+                    <p className={styles.subtleNote}>Open the schedule workspace to export XLSX, CSV, PDF, or iCal from the active schedule view.</p>
+                  </div>
                   <PageLink href={scheduleHref} icon={<ExternalLink size={15} aria-hidden />} disabled={!orgSlug}>
                     Open schedule exports
                   </PageLink>
-                  <p className={styles.subtleNote}>Schedule imports stay disabled until the add/update rules are ready for games, venues, pools, and playoff dependencies.</p>
                 </div>
               </article>
 
@@ -430,6 +667,83 @@ export default function TournamentDataToolsPage() {
                 </div>
               </article>
             </div>
+          </section>
+
+          <section className={styles.section} aria-labelledby="recent-imports-heading">
+            <div className={styles.sectionHeader}>
+              <div>
+                <h2 id="recent-imports-heading">Recent Imports</h2>
+                <p>Latest import previews and applies for the selected tournament.</p>
+              </div>
+              <ActionButton
+                variant="ghost"
+                icon={<RefreshCw size={15} aria-hidden />}
+                onClick={() => { void loadImportHistory(); }}
+                disabled={historyLoading || Boolean(historyUnavailableReason)}
+              >
+                Refresh
+              </ActionButton>
+            </div>
+
+            {contextLoading || historyLoading ? (
+              <div className={styles.historyState}>
+                <RefreshCw size={16} aria-hidden />
+                <span>Loading recent imports...</span>
+              </div>
+            ) : historyUnavailableReason ? (
+              <div className={styles.historyState}>
+                <Lock size={16} aria-hidden />
+                <span>{historyUnavailableReason}</span>
+              </div>
+            ) : historyError ? (
+              <div className={cx(styles.historyState, styles.historyStateWarning)}>
+                <AlertCircle size={16} aria-hidden />
+                <span>{historyError}</span>
+              </div>
+            ) : importHistory.length === 0 ? (
+              <div className={styles.historyState}>
+                <History size={16} aria-hidden />
+                <span>No import activity yet for this tournament.</span>
+              </div>
+            ) : (
+              <div className={styles.historyList}>
+                {importHistory.map(item => {
+                  const meta = statusMeta(item.status);
+                  const StatusIcon = meta.icon;
+                  return (
+                    <article key={item.id} className={styles.historyRow}>
+                      <div className={styles.historyMain}>
+                        <div className={styles.historyTitleRow}>
+                          <History size={15} aria-hidden />
+                          <strong>{item.importLabel}</strong>
+                          <span className={cx(styles.historyStatus, meta.className)}>
+                            <StatusIcon size={13} aria-hidden />
+                            {meta.label}
+                          </span>
+                        </div>
+                        <div className={styles.historyMeta}>
+                          <span className={styles.historyFile}>{item.sourceFilename || 'Uploaded spreadsheet'}</span>
+                          <span>Started {formatDateTime(item.createdAt)}</span>
+                          {item.status === 'committed' && <span>Applied {formatDateTime(item.committedAt)}</span>}
+                          {item.status === 'previewed' && <span>Expires {formatDateTime(item.expiresAt)}</span>}
+                        </div>
+                        <div className={styles.historyMeta}>
+                          <span>{item.actorEmail || 'Unknown admin'}</span>
+                        </div>
+                      </div>
+                      <div className={styles.historyCounts}>
+                        {historyCountItems(item).map(count => (
+                          <span key={count.label} className={styles.historyCount}>
+                            <strong>{count.value}</strong>
+                            <span>{count.label}</span>
+                          </span>
+                        ))}
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+            )}
           </section>
 
           <section className={styles.section} aria-labelledby="setup-tools-heading">
@@ -472,11 +786,32 @@ export default function TournamentDataToolsPage() {
         tournamentId={tournamentId}
         orgSlug={orgSlug}
         onClose={() => setImportOpen(false)}
-        onCommitted={() => {
+        onCommitted={async () => {
           setNotice({
             type: 'success',
             message: 'Teams updated. Templates and exports now use the latest tournament data.',
           });
+          await loadImportHistory();
+        }}
+      />
+      <TournamentScheduleImportDialog
+        open={scheduleImportOpen}
+        tournamentId={tournamentId}
+        orgSlug={orgSlug}
+        onClose={() => setScheduleImportOpen(false)}
+        onPreviewed={async () => {
+          setNotice({
+            type: 'success',
+            message: 'Schedule preview created. No schedule data was changed.',
+          });
+          await loadImportHistory();
+        }}
+        onCommitted={async () => {
+          setNotice({
+            type: 'success',
+            message: 'Schedule updated. Templates and exports now use the latest tournament data.',
+          });
+          await loadImportHistory();
         }}
       />
     </main>

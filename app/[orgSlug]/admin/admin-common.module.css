@@ -207,6 +207,17 @@
 .chipActive.chip_cancelled { border-color: rgba(239, 68, 68, 0.5);   background: rgba(239, 68, 68, 0.08);   color: #ef4444; }
 .chipActive.chip_completed { border-color: rgba(34, 197, 94, 0.5);   background: rgba(34, 197, 94, 0.08);   color: #22c55e; }
 
+/* ─── Semantic status filter chips (info / warning / success) ──────────────────
+   Match the game-row stripes + the results tally so a filter's colour equals its
+   rows' colour. Used by the Results filters (Unscored / Reviewing / Completed). */
+.chip_info::before    { background: var(--info); }
+.chip_warning::before { background: var(--warning); }
+.chip_success::before { background: var(--success); }
+
+.chipActive.chip_info    { border-color: rgba(var(--info-rgb), 0.5);    background: rgba(var(--info-rgb), 0.1);     color: var(--info); }
+.chipActive.chip_warning { border-color: rgba(var(--warning-rgb), 0.5); background: rgba(var(--warning-rgb), 0.08); color: var(--warning); }
+.chipActive.chip_success { border-color: rgba(var(--success-rgb), 0.5); background: rgba(var(--success-rgb), 0.08); color: var(--success); }
+
 /* ─── Search ──────────────────────────────────────────────────────────────── */
 .searchWrapper {
   position: relative;
@@ -343,7 +354,9 @@
 .row:last-child { border-bottom: none; }
 .rowSelected { background: rgba(var(--blueprint-blue-rgb), 0.05); }
 
-.rowMain { display: flex; align-items: center; padding: 0.38rem 1.5rem; min-height: 36px; }
+.rowMain { display: flex; align-items: center; padding: var(--admin-row-pad-y) 1.5rem; min-height: var(--admin-row-min); transition: background 0.12s ease; }
+/* Touch press feedback (compact stays visually unchanged — min-height dominates) */
+.rowMain:active { background: var(--white-5); }
 
 .primaryCell { font-family: var(--font-data); font-size: 0.8rem; color: var(--fl-text); font-weight: 500; letter-spacing: 0.02em; }
 .secondaryCell { font-family: var(--font-data); font-size: 0.72rem; color: var(--data-gray); letter-spacing: 0.02em; }

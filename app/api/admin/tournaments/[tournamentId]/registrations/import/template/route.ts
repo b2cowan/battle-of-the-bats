@@ -1,6 +1,7 @@
 import ExcelJS from 'exceljs';
 import {
   TOURNAMENT_TEAM_IMPORT_HEADERS,
+  TOURNAMENT_TEAM_IMPORT_TEMPLATE_VERSION,
   formatTournamentTeamTemplateRows,
 } from '@/lib/import/tournament-teams';
 import { generateCSV } from '@/lib/import/csv';
@@ -42,9 +43,10 @@ async function buildWorkbook(input: {
   const instructions = workbook.addWorksheet('Instructions');
   instructions.addRows([
     ['FieldLogicHQ Tournament Teams Import'],
+    ['Template Version', TOURNAMENT_TEAM_IMPORT_TEMPLATE_VERSION],
     ['Template type', input.mode === 'current' ? 'Current data' : 'Empty template'],
     ['Tournament', input.tournamentName],
-    ['Safe workflow', 'Upload creates a preview only. No data changes until a future commit step is confirmed.'],
+    ['Safe workflow', 'Upload creates a preview only. No data changes until Apply Add/Update is confirmed.'],
     ['Team ID', 'Keep this value for updates. Leave blank only when creating a new team.'],
     ['Division ID', 'Use the Reference sheet values when possible. Division Name can be used when unique.'],
     ['Status values', 'pending, accepted, rejected, waitlist'],
@@ -123,4 +125,3 @@ export async function GET(req: Request, { params }: RouteParams) {
     return json({ error: error instanceof Error ? error.message : 'Template could not be generated.' }, 500);
   }
 }
-

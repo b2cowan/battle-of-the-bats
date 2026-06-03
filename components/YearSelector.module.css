@@ -40,10 +40,10 @@
 .tab:hover { color: var(--white); background: var(--white-30); }
 
 .tab.active {
-  background: linear-gradient(135deg, var(--primary), var(--primary-light));
-  border-color: transparent;
-  color: var(--white);
-  box-shadow: var(--glow-sm);
+  background: var(--primary);
+  border-color: var(--primary);
+  color: var(--on-primary);
+  box-shadow: 0 2px 8px rgba(var(--primary-rgb), 0.35);
 }
 
 .liveDot {

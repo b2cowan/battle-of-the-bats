@@ -9,6 +9,7 @@ import {
   buildTournamentTeamUpdate,
   didImportDivisionChange,
   prepareTournamentTeamCommitRows,
+  rowsWithInvalidTournamentDivisions,
   summarizeTournamentTeamCommit,
   tournamentTeamImportIdentityKey,
   type PreparedTournamentTeamCommitRow,
@@ -56,6 +57,10 @@ type GameTeamRefRow = {
   id: string;
   home_team_id?: string | null;
   away_team_id?: string | null;
+};
+
+type DivisionRefRow = {
+  id: string;
 };
 
 function scopeTournamentId(scope: unknown) {
@@ -134,6 +139,25 @@ async function validateCurrentState(input: {
   updateRows: PreparedTournamentTeamCommitRow[];
   createRows: PreparedTournamentTeamCommitRow[];
 }) {
+  const { data: divisionRows, error: divisionError } = await supabaseAdmin
+    .from('divisions')
+    .select('id')
+    .eq('tournament_id', input.tournamentId);
+  if (divisionError) throw new Error(divisionError.message);
+
+  const validDivisionIds = new Set(((divisionRows ?? []) as DivisionRefRow[]).map(row => row.id));
+  const invalidDivisionRows = rowsWithInvalidTournamentDivisions(
+    [...input.createRows, ...input.updateRows],
+    validDivisionIds,
+  );
+  if (invalidDivisionRows.length > 0) {
+    throw new TournamentTeamImportCommitError(
+      'One or more rows reference a division that no longer belongs to this tournament. Run preview again before applying.',
+      409,
+      invalidDivisionRows.map(row => row.rowNumber),
+    );
+  }
+
   const updateIds = input.updateRows.map(row => row.targetId).filter((id): id is string => Boolean(id));
   const teamById = new Map<string, TeamRow>();
 

@@ -729,6 +729,37 @@ const tournamentsHelp: HelpPageContent = {
 
     // ── Exports cross-link ──────────────────────────────────────────────────
     {
+      id: 'data-tools-imports',
+      heading: 'Importing teams and schedules',
+      summary: 'Use Data Tools for spreadsheet templates, safe previews, and recent import history.',
+      keywords: ['import', 'data tools', 'xlsx', 'csv', 'spreadsheet', 'templates', 'teams', 'schedule'],
+      searchText:
+        'import data tools spreadsheet templates xlsx csv preview teams registrations schedule bulk add update recent imports',
+      links: [
+        { label: 'Data Tools', href: '../tournaments/data-tools' },
+      ],
+      content: (
+        <>
+          <p>
+            Open <strong>Data Tools</strong> when you need spreadsheet workflows. Download a
+            current-data template when you want to edit existing records, or an empty template
+            when you want to prepare new rows from scratch.
+          </p>
+          <ul>
+            <li><strong>Teams &amp; Registrations</strong> can be previewed and then applied as add/update rows. Missing spreadsheet rows do not delete teams.</li>
+            <li><strong>Schedule</strong> imports can be previewed and then applied as add/update rows. Missing spreadsheet rows do not delete games.</li>
+            <li><strong>Recent Imports</strong> shows who uploaded a file, when it was previewed or applied, and the row counts.</li>
+          </ul>
+          <p>
+            Schedule imports block scored, submitted, completed, generator-locked, playoff,
+            pool-slot structural, and facility-lane structural changes. Scores, delete imports,
+            and replace/wipe imports are not supported.
+          </p>
+        </>
+      ),
+    },
+
+    {
       id: 'exports',
       heading: 'Exporting data',
       summary: 'Export registrations, schedules, and results to Excel, CSV, iCal, and PDF.',

@@ -1,0 +1,48 @@
+/* Odometer wrapper — inline so it flows with surrounding score text; the
+   settled value defines the box, the rolling viewport is overlaid on top. */
+.roll {
+  position: relative;
+  display: inline-grid;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+/* While rolling, the settled value is kept for width but made invisible so the
+   animated viewport reads cleanly on top of it. */
+.hiddenValue {
+  visibility: hidden;
+}
+
+.viewport {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.outgoing,
+.incoming {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: inherit;
+}
+
+.outgoing {
+  animation: rollOut 0.38s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+.incoming {
+  animation: rollIn 0.38s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+@keyframes rollOut {
+  0%   { transform: translateY(0);     opacity: 1; }
+  100% { transform: translateY(-90%);  opacity: 0; }
+}
+
+@keyframes rollIn {
+  0%   { transform: translateY(90%);   opacity: 0; }
+  60%  { opacity: 1; }
+  100% { transform: translateY(0);     opacity: 1; }
+}

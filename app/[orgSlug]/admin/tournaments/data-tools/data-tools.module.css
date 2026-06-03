@@ -269,6 +269,169 @@
   color: var(--logic-lime);
 }
 
+.historyState {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 52px;
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.32);
+  border-radius: 8px;
+  background: rgba(var(--blueprint-blue-rgb), 0.04);
+  color: var(--data-gray);
+  padding: 0.8rem 0.9rem;
+  font-size: 0.82rem;
+  line-height: 1.4;
+}
+
+.historyState svg {
+  flex-shrink: 0;
+  color: var(--logic-lime);
+}
+
+.historyStateWarning {
+  border-color: rgba(var(--warning-rgb), 0.36);
+  background: rgba(var(--warning-rgb), 0.07);
+  color: var(--white);
+}
+
+.historyStateWarning svg {
+  color: var(--warning);
+}
+
+.historyList {
+  display: grid;
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.32);
+  border-radius: 8px;
+  background: rgba(var(--blueprint-blue-rgb), 0.04);
+  overflow: hidden;
+}
+
+.historyRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.8rem;
+  align-items: center;
+  padding: 0.85rem 0.95rem;
+}
+
+.historyRow + .historyRow {
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.historyMain {
+  display: grid;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.historyTitleRow {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-width: 0;
+}
+
+.historyTitleRow > svg {
+  flex-shrink: 0;
+  color: var(--logic-lime);
+}
+
+.historyTitleRow strong {
+  min-width: 0;
+  color: var(--white);
+  font-size: 0.9rem;
+  line-height: 1.25;
+}
+
+.historyStatus {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  flex-shrink: 0;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 999px;
+  padding: 0.15rem 0.45rem;
+  font-family: var(--font-data);
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.historyStatusSuccess {
+  border-color: rgba(var(--logic-lime-rgb), 0.34);
+  background: rgba(var(--logic-lime-rgb), 0.08);
+  color: var(--logic-lime);
+}
+
+.historyStatusWarning {
+  border-color: rgba(var(--warning-rgb), 0.34);
+  background: rgba(var(--warning-rgb), 0.08);
+  color: var(--warning);
+}
+
+.historyStatusDanger {
+  border-color: rgba(var(--danger-rgb), 0.34);
+  background: rgba(var(--danger-rgb), 0.08);
+  color: var(--danger);
+}
+
+.historyStatusMuted {
+  border-color: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--data-gray);
+}
+
+.historyMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.7rem;
+  min-width: 0;
+  color: var(--data-gray);
+  font-size: 0.76rem;
+  line-height: 1.35;
+}
+
+.historyFile {
+  max-width: min(360px, 100%);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.historyCounts {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.45rem;
+  max-width: 330px;
+}
+
+.historyCount {
+  display: grid;
+  min-width: 68px;
+  gap: 0.08rem;
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.28);
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.12);
+  padding: 0.35rem 0.45rem;
+  text-align: center;
+}
+
+.historyCount strong {
+  color: var(--white);
+  font-family: var(--font-data);
+  font-size: 0.9rem;
+  line-height: 1;
+}
+
+.historyCount span {
+  color: var(--data-gray);
+  font-size: 0.62rem;
+  line-height: 1.15;
+  text-transform: uppercase;
+}
+
 @media (max-width: 980px) {
   .toolGrid,
   .referenceGrid {
@@ -292,5 +455,19 @@
   .referenceItem .actionButton {
     grid-column: 1 / -1;
     width: 100%;
+  }
+
+  .historyRow {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+
+  .historyCounts {
+    justify-content: flex-start;
+    max-width: none;
+  }
+
+  .historyCount {
+    min-width: 0;
   }
 }

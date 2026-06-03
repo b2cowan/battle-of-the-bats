@@ -1,5 +1,5 @@
 ﻿'use client';
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Calendar, ChevronRight, ChevronDown, Plus, Pencil, Trash2, X, Check, Sparkles, SlidersHorizontal, Trophy, MapPin, Clock, Send, Globe, EyeOff, RefreshCw, AlertTriangle, AlertCircle, Lock, Wrench } from 'lucide-react';
 import { formatPoolName } from '@/lib/utils';
 import { saveGame, updateGame, deleteGame } from '@/lib/db';
@@ -18,6 +18,8 @@ import ScheduleGenerator from './Generator';
 import PlayoffWizard from './PlayoffWizard';
 import GameList from './components/GameList';
 import ScheduleHealthPanel from './components/ScheduleHealthPanel';
+import BracketConnectors from './components/BracketConnectors';
+import ScheduleHealthChip from './components/ScheduleHealthChip';
 import { Game, Team, Division, Venue, PoolSlot, ScheduleFacilityLane } from '@/lib/types';
 import { checkVenueConflict, type ConflictResult } from '@/lib/schedule-conflict';
 import { buildScheduleMetrics } from '@/lib/schedule-metrics';
@@ -988,6 +990,9 @@ export default function AdminSchedulePage() {
               );
             })}
           </div>
+          {savedScheduleMetrics && (
+            <ScheduleHealthChip metrics={savedScheduleMetrics} />
+          )}
         </ToolbarGroup>
       </TournamentAdminToolbar>
 
@@ -2524,16 +2529,21 @@ function BracketColumns({ columns, onEdit, onDelete, formatDate }: any) {
   const [titles, setTitles] = React.useState<Record<number, string>>(() =>
     Object.fromEntries(columns.map((c: any, i: number) => [i, c.title]))
   );
+  const canvasRef = useRef<HTMLDivElement>(null);
+  const connectorMatchups = columns.flatMap((c: any) => c.games).map((g: any) => ({
+    id: g.id,
+    code: g.bracketCode || '',
+    home: { label: g.homePlaceholder || '' },
+    away: { label: g.awayPlaceholder || '' },
+  }));
+  const finalCol = columns.find((c: any) => c.title === 'Finals') ?? columns[columns.length - 1];
+  const finalGameIds = new Set<string>((finalCol?.games ?? []).map((g: any) => g.id));
+
   return (
-    <div style={{
-      display: 'flex',
-      gap: '2.5rem',
-      overflowX: 'auto',
-      padding: '1.5rem 0',
-      minHeight: '300px',
-    }}>
+    <div ref={canvasRef} className={styles.readBracketCanvas}>
+      <BracketConnectors canvasRef={canvasRef} matchups={connectorMatchups} finalIds={finalGameIds} />
       {columns.map((col: any, idx: number) => (
-        <div key={idx} style={{ display: 'flex', flexDirection: 'column', width: '210px', flexShrink: 0 }}>
+        <div key={idx} className={styles.readBracketColumn}>
           <input
             value={titles[idx] ?? col.title}
             onChange={e => setTitles(prev => ({ ...prev, [idx]: e.target.value }))}
@@ -2566,21 +2576,20 @@ function BracketColumns({ columns, onEdit, onDelete, formatDate }: any) {
             flex: 1,
             gap: col.title === 'Finals' ? '2.5rem' : '1.5rem'
           }}>
-            {col.games.map((g: any) => (
+            {col.games.map((g: any) => {
+              const isFinalGame = finalGameIds.has(g.id);
+              return (
               <div key={g.id} style={{ position: 'relative' }}>
-                {idx < columns.length - 1 && (
-                  <div style={{
-                    position: 'absolute', right: '-2.5rem', top: '50%',
-                    width: '2.5rem', height: '1px',
-                    background: 'var(--blueprint-blue)', opacity: 0.3, zIndex: 0
-                  }} />
-                )}
-                <div className="card" style={{
+                <div className="card" data-matchup-id={g.id} style={{
                   padding: '0.75rem',
-                  border: '1px solid rgba(var(--blueprint-blue-rgb), 0.2)',
+                  border: isFinalGame
+                    ? '1px solid rgba(var(--logic-lime-rgb), 0.55)'
+                    : '1px solid rgba(var(--blueprint-blue-rgb), 0.2)',
                   background: 'var(--surface)',
                   position: 'relative', zIndex: 1,
-                  boxShadow: 'var(--shadow-sm)',
+                  boxShadow: isFinalGame
+                    ? '0 0 0 1px rgba(var(--logic-lime-rgb), 0.28), 0 6px 20px rgba(var(--logic-lime-rgb), 0.14)'
+                    : 'var(--shadow-sm)',
                   borderRadius: '2px'
                 }}>
                   <div className="flex-between" style={{ marginBottom: '7px' }}>
@@ -2644,7 +2653,8 @@ function BracketColumns({ columns, onEdit, onDelete, formatDate }: any) {
                   </div>
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       ))}
@@ -2710,13 +2720,7 @@ function PlayoffBracketView({ games, teams, division, canGeneratePlayoffs, onEdi
   // Standard flat layout
   const columns = buildBracketColumns(games);
   return (
-    <div style={{
-      display: 'flex',
-      gap: '2.5rem',
-      overflowX: 'auto',
-      padding: '2rem 0.75rem',
-      minHeight: '500px',
-    }}>
+    <div style={{ padding: '2rem 0.75rem 0' }}>
       <BracketColumns columns={columns} onEdit={onEdit} onDelete={onDelete} formatDate={formatDate} />
     </div>
   );

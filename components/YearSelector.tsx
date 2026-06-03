@@ -10,7 +10,14 @@ interface Props {
   currentPage: string;
 }
 
+// ⛔ Season picker is hidden on public tournament pages (2026-06-03) pending the
+// "Season"/edition IA spec — bare-year labelling breaks when two tournaments share
+// a year. Flip to `true` to restore once the spec defines the label/disambiguation
+// + when-to-show rules (see TODO "Public IA — Season/edition model rethink").
+const SEASON_PICKER_ENABLED = false;
+
 export default function YearSelector({ tournaments, orgSlug, currentTournamentSlug, currentPage }: Props) {
+  if (!SEASON_PICKER_ENABLED) return null;
   if (tournaments.length <= 1) return null;
 
   return (

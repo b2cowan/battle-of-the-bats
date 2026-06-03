@@ -6,6 +6,20 @@
   color: var(--white);
 }
 
+/* Tabular numerals — hero stats, countdowns, live scores and record figures
+   stay aligned and don't reflow as values change. */
+.statNum,
+.countdown,
+.scorePill,
+.quickGameTime,
+.myTeamLiveScore,
+.myTeamRecord strong,
+.myTeamCountdown,
+.recordStats strong,
+.recordListRow span {
+  font-variant-numeric: tabular-nums;
+}
+
 /* ── Hero ─────────────────────────────────────────────────────────────────── */
 .hero {
   position: relative;
@@ -14,6 +28,10 @@
   align-items: center;
   justify-content: center;
   overflow: hidden;
+  /* Reserve the fixed navbar so centered content is centred BELOW it and the
+     badge always clears the nav with a consistent gap (instead of the tall
+     full-viewport content being pulled up under the navbar). */
+  padding-top: var(--nav-height);
 }
 
 .heroBg {
@@ -34,12 +52,11 @@
 .heroBannerOverlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(
-    to bottom,
-    rgba(0, 0, 0, 0.55) 0%,
-    rgba(0, 0, 0, 0.35) 40%,
-    rgba(0, 0, 0, 0.65) 100%
-  );
+  /* Org-colour duotone wash (diagonal) over the dark legibility gradient — keeps
+     the banner on-brand even with a generic stock photo. */
+  background:
+    linear-gradient(125deg, rgba(var(--primary-rgb), 0.42) 0%, rgba(var(--primary-rgb), 0.1) 42%, transparent 70%),
+    linear-gradient(to bottom, rgba(0, 0, 0, 0.5) 0%, rgba(0, 0, 0, 0.32) 40%, rgba(0, 0, 0, 0.68) 100%);
   z-index: 1;
 }
 
@@ -82,7 +99,8 @@
   position: relative;
   z-index: 1;
   text-align: center;
-  padding-top: calc(var(--nav-height) + 2rem);
+  /* Nav clearance now lives on .hero (padding-top); this is just breathing room. */
+  padding-top: 2rem;
   padding-bottom: 4rem;
 }
 
@@ -147,8 +165,20 @@
 .heroTitle {
   color: var(--white);
   margin-bottom: 0.5rem;
+  /* Condensed, broadcast-style title: tighter tracking + line-height. */
+  letter-spacing: -0.02em;
+  line-height: 0.95;
+  text-wrap: balance;
   animation: fadeInUp 0.7s ease 0.1s both;
   text-shadow: 0 0 80px rgba(var(--primary-rgb),0.5);
+}
+
+/* On a banner photo the title always sits on a darkened image — keep it light
+   even in light mode (where --white flips to near-black). */
+.hero:has(.heroBanner) .heroTitle,
+.hero:has(.heroBanner) .heroSub,
+.hero:has(.heroBanner) .heroSub strong {
+  color: #fff;
 }
 
 .heroAccent {
@@ -301,7 +331,8 @@
 
 @media (max-width: 768px) {
   .heroCompact .heroContent {
-    padding-top: calc(var(--nav-height) + 1rem);
+    /* .hero already reserves --nav-height; this is the extra compact gap. */
+    padding-top: 1rem;
     padding-bottom: 2rem;
   }
   .heroCompact .heroTitle {

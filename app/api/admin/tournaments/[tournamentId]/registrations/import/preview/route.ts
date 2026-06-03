@@ -63,7 +63,7 @@ export async function POST(req: Request, { params }: RouteParams) {
       scope_json: { tournamentId },
       source_filename: uploaded.name,
       status: 'previewed',
-      summary_json: preview.summary,
+      summary_json: { ...preview.summary, notices: preview.notices ?? [] },
     });
     if (batchError) return json({ error: batchError.message }, 500);
 

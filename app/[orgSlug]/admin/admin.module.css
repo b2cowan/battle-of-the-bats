@@ -50,7 +50,19 @@
     /* min-height: 0 is required for flex-grow to shrink properly inside
        a fixed-height container (prevents the child from overflowing the parent). */
     min-height: 0;
-    padding: 1rem 1rem calc(80px + env(safe-area-inset-bottom));
+    /* Top padding clears the fixed mobile top app-bar (48px + safe-area). */
+    padding: calc(48px + env(safe-area-inset-top) + 0.5rem) 1rem calc(80px + env(safe-area-inset-bottom) + var(--admin-strip-h, 0px));
+    /* Quieter blueprint grid on small screens — lighter paint, less busy behind
+       dense content (desktop keeps the 40px / 0.09 grid). */
+    background-image:
+      linear-gradient(to right, rgba(30, 58, 138, 0.05) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(30, 58, 138, 0.05) 1px, transparent 1px);
+    background-size: 28px 28px;
+  }
+
+  /* Focused flows (onboarding/help) render no top bar — reset the top padding. */
+  .adminMainFocused {
+    padding-top: 1rem;
   }
 
 }

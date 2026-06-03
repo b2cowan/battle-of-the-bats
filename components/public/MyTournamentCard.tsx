@@ -139,7 +139,7 @@ export default function MyTournamentCard({
 
   // Live countdown to the next scheduled game (only when a start time exists)
   const countdownMs = nextGame?.time
-    ? new Date(`${nextGame.date}T${nextGame.time}:00`).getTime() - nowMs
+    ? new Date(`${nextGame.date}T${nextGame.time.slice(0, 5)}:00`).getTime() - nowMs
     : null;
 
   const liveScore = liveGame

@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ArrowLeft, Calendar, Clock, ExternalLink, Info, MapPin, Trophy } from 'lucide-react';
@@ -6,6 +7,7 @@ import type { Division, Game, Team, Venue } from '@/lib/types';
 import { formatTime } from '@/lib/utils';
 import PublicTournamentState from '@/components/public/PublicTournamentState';
 import GameDetailLiveRefresher from '@/components/public/GameDetailLiveRefresher';
+import ShareScoreButton from '@/components/public/ShareScoreButton';
 import styles from '@/app/[orgSlug]/schedule/schedule.module.css';
 
 const NIL_UUID = '00000000-0000-0000-0000-000000000000';
@@ -122,6 +124,37 @@ function getVenueDisplay(game: Game, venues: Venue[]): VenueDisplay | null {
   };
 }
 
+export async function generateMetadata({ params }: { params: GameDetailParams }): Promise<Metadata> {
+  try {
+    const { orgSlug, tournamentSlug, gameId } = await params;
+    const data = await getPublicTournamentPageData(orgSlug, tournamentSlug, 'schedule');
+    const game = data?.games.find(item => item.id === gameId);
+    if (!data?.tournament || !game) return {};
+
+    const away = getTeamDisplay(game, false, data.teams, data.divisions);
+    const home = getTeamDisplay(game, true, data.teams, data.divisions);
+    const hasScore = (game.status === 'completed' || game.status === 'submitted') &&
+      game.homeScore != null && game.awayScore != null;
+    const requireFinalization = data.organization.requireScoreFinalization ?? true;
+    const statusText = getStatusText(game, requireFinalization);
+    const title = hasScore
+      ? `${away} ${game.awayScore} – ${game.homeScore} ${home} · ${statusText}`
+      : `${away} vs ${home}`;
+    const description = [data.tournament.name, game.date ? formatFullDate(game.date) : null, game.location || null]
+      .filter(Boolean)
+      .join(' · ');
+
+    return {
+      title,
+      description,
+      openGraph: { title, description },
+      twitter: { card: 'summary_large_image', title, description },
+    };
+  } catch {
+    return {};
+  }
+}
+
 export default async function PublicGameDetailsPage({
   params,
 }: {
@@ -178,6 +211,11 @@ export default async function PublicGameDetailsPage({
     t.status === 'active' && t.startDate && t.endDate && today >= t.startDate && today <= t.endDate,
   );
 
+  const isLiveGame = game.status === 'submitted' && game.date === today;
+  const shareStatusLabel = game.status === 'completed'
+    ? 'FINAL'
+    : isLiveGame ? 'LIVE' : requireFinalization ? 'PENDING' : 'FINAL';
+
   return (
     <div className="page-content">
       <GameDetailLiveRefresher
@@ -211,6 +249,22 @@ export default async function PublicGameDetailsPage({
                 <div className={styles.detailRail}>
                   <span className="badge badge-primary">{gameType}</span>
                   {getStatusBadge(game, requireFinalization)}
+                  {hasScore && (
+                    <ShareScoreButton
+                      className="btn btn-outline btn-sm"
+                      gameHref={`/${orgSlug}/${tournamentSlug}/schedule/${gameId}`}
+                      tournamentName={data.tournament.name}
+                      awayName={awayName}
+                      homeName={homeName}
+                      awayScore={game.awayScore as number}
+                      homeScore={game.homeScore as number}
+                      statusLabel={shareStatusLabel}
+                      live={isLiveGame}
+                      dateLabel={formatFullDate(game.date)}
+                      venueLabel={venue?.venueLabel ?? null}
+                      gameType={gameType}
+                    />
+                  )}
                 </div>
               </div>
 

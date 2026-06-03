@@ -520,9 +520,9 @@
 .buttonGroup { display: flex; flex-wrap: wrap; gap: 0.75rem; }
 
 .teamRowMain {
-  min-height: 36px;
-  padding-top: 0.32rem;
-  padding-bottom: 0.32rem;
+  min-height: var(--admin-row-min);
+  padding-top: var(--admin-row-pad-y);
+  padding-bottom: var(--admin-row-pad-y);
 }
 
 .registrationNameCell {

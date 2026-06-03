@@ -13,7 +13,10 @@ import { signOut } from '@/lib/auth';
 import { useOrg } from '@/lib/org-context';
 import { useTournament } from '@/lib/tournament-context';
 import { useCurrentOrgCoachAccess } from '@/lib/use-current-org-coach-access';
+import { useAdminDensity } from '@/lib/admin-density';
+import { useAdminWorklist } from '@/lib/admin-worklist';
 import { TOUR_GROUPS, type TourNavItem } from './admin-nav-config';
+import AdminContextStrip from './AdminContextStrip';
 import styles from './AdminBottomNav.module.css';
 
 type NavItem = {
@@ -36,6 +39,8 @@ export default function AdminBottomNav() {
   const [moreOpen, setMoreOpen] = useState(false);
   const moreRef   = useRef<HTMLDivElement>(null);
   const { tournaments, currentTournament, setCurrentTournament } = useTournament();
+  const { density, setDensity } = useAdminDensity();
+  const worklist = useAdminWorklist();
   const tournamentIsLive = currentTournament?.status === 'active' || currentTournament?.status === 'completed';
   const tournamentPreviewLabel = tournamentIsLive ? 'View Site' : 'Preview Site';
   const tournamentPreviewTitle = tournamentIsLive
@@ -143,6 +148,7 @@ export default function AdminBottomNav() {
 
   return (
     <nav className={styles.bottomNav} aria-label="Admin mobile navigation">
+      {!modulePrimaryTabs && <AdminContextStrip />}
       {modulePrimaryTabs ? (
         modulePrimaryTabs.map(({ href, icon: Icon, label }) => {
           const active = href === base ? pathname === base : pathname === href || pathname.startsWith(href + '/');
@@ -165,6 +171,7 @@ export default function AdminBottomNav() {
         PRIMARY_KEYS.map(({ key, icon: Icon, label }) => {
           const href   = `${base}/${key}`;
           const active = pathname === href || pathname.startsWith(href + '/');
+          const count  = worklist[key.replace(/^tournaments\//, '')] ?? 0;
           return (
             <Link
               key={key}
@@ -175,6 +182,7 @@ export default function AdminBottomNav() {
               <span className={styles.iconWrap}>
                 <Icon size={22} strokeWidth={active ? 2.5 : 1.8} />
                 {active && <span className={styles.activeDot} />}
+                {count > 0 && <span className={styles.tabCount}>{count > 9 ? '9+' : count}</span>}
               </span>
               <span className={styles.label}>{label}</span>
             </Link>
@@ -257,6 +265,28 @@ export default function AdminBottomNav() {
 
             <div className={styles.dropSectionLabel}>Admin</div>
             {dropNavItems(adminMore)}
+
+            <div className={styles.dropDivider} />
+
+            <div className={styles.dropSectionLabel}>Display</div>
+            <div className={styles.densityRow}>
+              <button
+                type="button"
+                className={`${styles.densityBtn} ${density === 'comfortable' ? styles.densityBtnActive : ''}`}
+                onClick={() => setDensity('comfortable')}
+                aria-pressed={density === 'comfortable'}
+              >
+                Comfortable
+              </button>
+              <button
+                type="button"
+                className={`${styles.densityBtn} ${density === 'compact' ? styles.densityBtnActive : ''}`}
+                onClick={() => setDensity('compact')}
+                aria-pressed={density === 'compact'}
+              >
+                Compact
+              </button>
+            </div>
 
             <div className={styles.dropDivider} />
 

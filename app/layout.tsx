@@ -43,7 +43,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${inter.variable} ${barlow.variable} ${ibmPlexMono.variable}`} data-scroll-behavior="smooth">
+    <html lang="en" suppressHydrationWarning className={`${inter.variable} ${barlow.variable} ${ibmPlexMono.variable}`} data-scroll-behavior="smooth">
       <head>
         {/* PWA theme colour — also controls browser address bar tint on Android */}
         <meta name="theme-color" content="#0a0a0f" />

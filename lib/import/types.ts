@@ -7,7 +7,9 @@ export type ParsedImportRow = {
 };
 
 export type ParsedImportFile = {
+  format?: ImportFormat;
   headers: string[];
+  metadata?: Record<string, string>;
   rows: ParsedImportRow[];
 };
 
@@ -34,6 +36,7 @@ export type ImportPreviewRow = {
 export type ImportPreview = {
   batchId: string;
   importType: string;
+  notices?: string[];
   scope: Record<string, string>;
   summary: {
     totalRows: number;

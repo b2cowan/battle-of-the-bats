@@ -11,8 +11,14 @@
 
 .nav.scrolled {
   background: var(--nav-bg-scrolled);
-  backdrop-filter: blur(20px);
+  backdrop-filter: blur(var(--blur-bar));
+  -webkit-backdrop-filter: blur(var(--blur-bar));
   box-shadow: 0 1px 0 var(--border), 0 4px 32px rgba(0,0,0,0.3);
+}
+
+/* Solid fallback where the browser can't frost — keep the bar opaque/legible. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .nav.scrolled { background: var(--bg); }
 }
 
 .inner {
@@ -23,12 +29,14 @@
   gap: 2rem;
 }
 
-/* Logo */
+/* Logo — takes an equal flex share to the actions so the centred links land on
+   the true viewport centre even when there's no Register button on the right. */
 .logo {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  flex-shrink: 0;
+  flex: 1 1 0;
+  min-width: 0;
 }
 
 .logoImg {
@@ -80,12 +88,12 @@
   text-transform: uppercase;
 }
 
-/* Desktop links */
+/* Desktop links — natural width, centred between the two equal-flex sides. */
 .links {
   display: flex;
   align-items: center;
   gap: 0.25rem;
-  flex: 1;
+  flex: 0 1 auto;
   justify-content: center;
 }
 
@@ -125,12 +133,14 @@
 
 .link.active::after { width: 60%; }
 
-/* Actions */
+/* Actions — equal flex share to the logo, content right-aligned. */
 .actions {
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: 0.75rem;
-  flex-shrink: 0;
+  flex: 1 1 0;
+  min-width: 0;
 }
 
 /* Bottom nav (marketing pages, mobile only) */
@@ -142,9 +152,14 @@
   right: 0;
   z-index: 50;
   background: var(--nav-mobile-bg);
-  backdrop-filter: blur(20px);
+  backdrop-filter: blur(var(--blur-bar));
+  -webkit-backdrop-filter: blur(var(--blur-bar));
   border-top: 1px solid var(--border);
   padding-bottom: env(safe-area-inset-bottom);
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .bottomNav { background: var(--bg); }
 }
 
 .bottomNavLink {

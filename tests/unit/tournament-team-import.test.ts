@@ -3,6 +3,7 @@ import { describe, it } from 'node:test';
 import { parseCSV } from '../../lib/import/csv.ts';
 import {
   TOURNAMENT_TEAM_IMPORT_HEADERS,
+  TOURNAMENT_TEAM_IMPORT_TEMPLATE_VERSION,
   buildTournamentTeamImportPreview,
   type TournamentTeamImportContext,
 } from '../../lib/import/tournament-teams.ts';
@@ -10,11 +11,13 @@ import {
   TournamentTeamImportCommitError,
   buildTournamentTeamInsert,
   buildTournamentTeamUpdate,
+  parseTournamentTeamNormalizedRow,
   prepareTournamentTeamCommitRows,
+  rowsWithInvalidTournamentDivisions,
   summarizeTournamentTeamCommit,
   type StoredTournamentTeamImportRow,
 } from '../../lib/import/tournament-teams-commit.ts';
-import type { ParsedImportFile } from '../../lib/import/types.ts';
+import { ImportParseError, type ParsedImportFile } from '../../lib/import/types.ts';
 
 const context: TournamentTeamImportContext = {
   tournamentId: 'tournament-1',
@@ -153,6 +156,54 @@ describe('tournament team import preview', () => {
     assert.equal(parsedFile.rows[0].values['Team Name'], 'Comma, Team');
     assert.equal(parsedFile.rows[0].values['Division Name'], 'U11');
   });
+
+  it('rejects header-only import files', () => {
+    assert.throws(
+      () => parseCSV('Team Name,Division Name\n', 10),
+      (error: unknown) => error instanceof ImportParseError && error.message.includes('no data rows'),
+    );
+  });
+
+  it('adds file-level notices for extra columns, missing IDs, and old XLSX template metadata', () => {
+    const preview = buildTournamentTeamImportPreview({
+      format: 'xlsx',
+      headers: ['Team Name', 'Division Name', 'Mystery Column'],
+      metadata: { 'template version': '0' },
+      rows: [{
+        rowNumber: 2,
+        values: {
+          'Team Name': 'New Team',
+          'Division Name': 'U13',
+          'Mystery Column': 'ignored',
+        },
+      }],
+    }, context, 'batch-1');
+
+    assert(preview.notices?.some(notice => notice.includes('Ignored extra column')));
+    assert(preview.notices?.some(notice => notice.includes('Team ID column is missing')));
+    assert(preview.notices?.some(notice => notice.includes(`current version is ${TOURNAMENT_TEAM_IMPORT_TEMPLATE_VERSION}`)));
+  });
+
+  it('accepts current XLSX template metadata without a version notice', () => {
+    const preview = buildTournamentTeamImportPreview({
+      format: 'xlsx',
+      headers: [...TOURNAMENT_TEAM_IMPORT_HEADERS],
+      metadata: { 'template version': TOURNAMENT_TEAM_IMPORT_TEMPLATE_VERSION },
+      rows: [{
+        rowNumber: 2,
+        values: {
+          'Team ID': '',
+          'Team Name': 'New Team',
+          'Division ID': 'division-2',
+          'Division Name': 'U13',
+          Status: 'accepted',
+          'Payment Status': 'pending',
+        },
+      }],
+    }, context, 'batch-1');
+
+    assert(!preview.notices?.some(notice => notice.includes('template version')));
+  });
 });
 
 const normalized = {
@@ -210,6 +261,13 @@ describe('tournament team import commit helpers', () => {
     );
   });
 
+  it('rejects empty persisted batches before commit', () => {
+    assert.throws(
+      () => prepareTournamentTeamCommitRows([]),
+      (error: unknown) => error instanceof TournamentTeamImportCommitError && error.status === 409,
+    );
+  });
+
   it('rejects unsupported operations such as delete', () => {
     assert.throws(
       () => prepareTournamentTeamCommitRows([storedRow({ operation: 'delete' })]),
@@ -244,5 +302,25 @@ describe('tournament team import commit helpers', () => {
       waitlist_position: null,
       admin_notes: 'Imported',
     });
+  });
+
+  it('rejects invalid persisted normalized money and waitlist values', () => {
+    assert.throws(
+      () => parseTournamentTeamNormalizedRow({ ...normalized, depositPaid: -1 }, 2),
+      (error: unknown) => error instanceof TournamentTeamImportCommitError && error.rowNumbers.includes(2),
+    );
+    assert.throws(
+      () => parseTournamentTeamNormalizedRow({ ...normalized, waitlistPosition: 1.5 }, 3),
+      (error: unknown) => error instanceof TournamentTeamImportCommitError && error.rowNumbers.includes(3),
+    );
+  });
+
+  it('detects prepared rows whose division no longer belongs to the tournament', () => {
+    const prepared = prepareTournamentTeamCommitRows([
+      storedRow({ operation: 'create', normalized_json: { ...normalized, divisionId: 'division-2' } }),
+    ]);
+
+    const invalidRows = rowsWithInvalidTournamentDivisions(prepared.allRows, new Set(['division-1']));
+    assert.deepEqual(invalidRows.map(row => row.rowNumber), [2]);
   });
 });

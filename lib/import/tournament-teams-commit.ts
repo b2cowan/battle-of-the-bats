@@ -75,10 +75,18 @@ function nullableStringField(record: Record<string, unknown>, key: string) {
   return typeof value === 'string' && value.length > 0 ? value : null;
 }
 
-function nullableNumberField(record: Record<string, unknown>, key: string) {
+function nullableNonNegativeNumberField(record: Record<string, unknown>, key: string, rowNumber: number, label: string) {
   const value = record[key];
   if (value == null || value === '') return null;
-  return typeof value === 'number' && Number.isFinite(value) ? value : null;
+  if (typeof value === 'number' && Number.isFinite(value) && value >= 0) return value;
+  throw new TournamentTeamImportCommitError(`Row ${rowNumber} has invalid ${label} data. Run preview again.`, 409, [rowNumber]);
+}
+
+function nullablePositiveIntegerField(record: Record<string, unknown>, key: string, rowNumber: number, label: string) {
+  const value = record[key];
+  if (value == null || value === '') return null;
+  if (typeof value === 'number' && Number.isInteger(value) && value >= 1) return value;
+  throw new TournamentTeamImportCommitError(`Row ${rowNumber} has invalid ${label} data. Run preview again.`, 409, [rowNumber]);
 }
 
 function statusField(record: Record<string, unknown>) {
@@ -115,9 +123,9 @@ export function parseTournamentTeamNormalizedRow(value: unknown, rowNumber: numb
     email: nullableStringField(value, 'email'),
     status,
     paymentStatus,
-    depositPaid: nullableNumberField(value, 'depositPaid'),
-    totalPaid: nullableNumberField(value, 'totalPaid'),
-    waitlistPosition: nullableNumberField(value, 'waitlistPosition'),
+    depositPaid: nullableNonNegativeNumberField(value, 'depositPaid', rowNumber, 'Deposit Paid'),
+    totalPaid: nullableNonNegativeNumberField(value, 'totalPaid', rowNumber, 'Total Paid'),
+    waitlistPosition: nullablePositiveIntegerField(value, 'waitlistPosition', rowNumber, 'Waitlist Position'),
     adminNotes: nullableStringField(value, 'adminNotes'),
   };
 }
@@ -127,6 +135,10 @@ function rowErrors(value: unknown) {
 }
 
 export function prepareTournamentTeamCommitRows(rows: StoredTournamentTeamImportRow[]): TournamentTeamImportCommitPrepared {
+  if (rows.length === 0) {
+    throw new TournamentTeamImportCommitError('This import preview has no rows to apply. Run preview again before applying.', 409);
+  }
+
   const blockedRows: number[] = [];
   const unsupportedRows: number[] = [];
   const invalidStatusRows: number[] = [];
@@ -217,6 +229,10 @@ export function tournamentTeamImportIdentityKey(divisionId: string, teamName: st
 
 export function didImportDivisionChange(row: PreparedTournamentTeamCommitRow) {
   return typeof row.before?.divisionId === 'string' && row.before.divisionId !== row.normalized.divisionId;
+}
+
+export function rowsWithInvalidTournamentDivisions(rows: PreparedTournamentTeamCommitRow[], validDivisionIds: Set<string>) {
+  return rows.filter(row => !validDivisionIds.has(row.normalized.divisionId));
 }
 
 export function summarizeTournamentTeamCommit(input: TournamentTeamImportCommitPrepared): TournamentTeamImportCommitSummary {

@@ -11,6 +11,7 @@ The public page is the #1 reason organizers buy FieldLogicHQ and the thing paren
 - **Phase B — Signature mobile moments:** a "My Team" bar that follows you on game day with the live score/next-game countdown; bold broadcast scorecards with rolling score digits; standings you can read at a glance (recent-form dots, run-differential bars).
 - **Phase C — Depth & identity:** a bolder hero with a countdown to first pitch, polished swipeable brackets, and team pages that feel branded to each team.
 - **Phase D — Bigger bets:** one-tap shareable score/standings images (free distribution), pull-to-refresh, an offline-friendly installed app, and a desktop "control room" layout.
+- **Phase E — Final QA & cleanup:** a dedicated end-of-project pass (on top of fixing nits as we go) — every public page walked across mobile/desktop, dark/light, branded/default, and all card styles; accessibility + reduced-motion + token-compliance audits; dead-code removal; the accumulated polish backlog burned down; and a final sign-off checklist. The deliberate "land it in a genuinely finished state" step.
 
 ## Customer impact
 - **Parents/fans:** an experience that feels like a real app and is genuinely delightful on game day — more time-in-app, more shares.

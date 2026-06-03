@@ -1,6 +1,6 @@
 # Bulk Data Importer
 
-**Status:** In progress - Created 2026-06-02; Phase 1 tournament teams template, preview, add/update commit, and Data Tools hub built 2026-06-02
+**Status:** In progress - Created 2026-06-02; Phase 1 tournament teams template, preview, add/update commit, Data Tools hub, recent import history, team importer hardening, and schedule add/update import built through 2026-06-03
 **Owner surfaces:** Tournament admin first; later House League, Rep Teams, Coaches Portal, Accounting
 **PM brief:** [BULK_DATA_IMPORTER_PM_BRIEF.md](BULK_DATA_IMPORTER_PM_BRIEF.md)
 **Related foundation:** [Export Enhancements](../archive/MERGED_EXPORTS_IMPLEMENTATION_PLAN.md), [Export strategy memory](../../../memory/export-strategy.md)
@@ -16,7 +16,10 @@
 - 2026-06-02: Added add/update-only commit endpoint and modal apply step. Commit reuses persisted server-normalized preview rows, rejects blocked/expired/already-handled batches, rejects unsupported delete-like operations, blocks stale previews, blocks duplicate creates introduced after preview, and blocks division moves for teams already tied to slots or schedule games.
 - 2026-06-02: Full add/update browser smoke passed after dev-server restart: modal upload preview returned 1 create + 1 update, commit returned HTTP 200, registrations API showed the updated coach and new team, and console error capture was empty.
 - 2026-06-02: Added Tournament Admin > Data Tools as the central bulk-data workspace. Teams page import now routes to Data Tools; Data Tools exposes team templates, add/update import, team registration exports, and links to existing schedule/results export pages.
-- Remaining product work: expand validation edge cases from real customer templates, then start schedule import as a separate higher-risk surface.
+- 2026-06-02: Added read-only Recent Imports to Data Tools, backed by existing `import_batches` summaries and scoped through the same tournament/team importer authorization path.
+- 2026-06-02: Team importer hardening pass added XLSX template version metadata, preview notices for extra columns/missing Team ID/stale workbook metadata, empty-file/batch guards, persisted preview notices in batch summaries, commit-side non-negative/whole-number normalized value guards, and apply-time division rechecks before inserts/updates.
+- 2026-06-03: Added tournament schedule add/update import. Data Tools now exposes current/empty schedule XLSX and CSV templates, a schedule preview/apply dialog, generic Recent Imports history across team and schedule imports, and schedule preview/apply persistence in `import_batches`/`import_batch_rows`. Schedule import supports create/update classification by `Game ID`, file-level template notices, unique name matching warnings, venue overlap blocks, buffer warnings, and blocks submitted/completed/scored/generator-locked/playoff rows plus pool-slot/facility-lane structural changes. Schedule apply rechecks live tournament state before writing and remains add/update-only.
+- Remaining product work: expand validation edge cases from real customer templates, add API authorization coverage, and design any future destructive replace/wipe workflow separately.
 
 ## Product UX Summary
 
@@ -213,6 +216,7 @@ The preview response should contain:
 type ImportPreview = {
   batchId: string;
   importType: string;
+  notices?: string[];
   scope: Record<string, string>;
   summary: {
     totalRows: number;

@@ -75,6 +75,21 @@
   left: 248px;        /* same sidebar width */
 }
 
+/* Mobile (≤900px): no sidebar — anchor the panel under the admin top bar as a
+   near-full-width dropdown instead of off-screen to the right (left:248px). */
+@media (max-width: 900px) {
+  .panel,
+  .panelCoaches {
+    top: calc(48px + env(safe-area-inset-top) + 0.4rem);
+    left: 0.6rem;
+    right: 0.6rem;
+    width: auto;
+    max-width: none;
+    max-height: calc(100dvh - 48px - env(safe-area-inset-top) - 96px);
+    z-index: 260;
+  }
+}
+
 .panelHeader {
   display: flex;
   align-items: center;

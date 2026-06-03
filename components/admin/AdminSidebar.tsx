@@ -19,6 +19,8 @@ import { useTournament } from '@/lib/tournament-context';
 import { hasCapability, type Capability } from '@/lib/roles';
 import { useCurrentOrgCoachAccess } from '@/lib/use-current-org-coach-access';
 import { getBillingHref, isTournamentTier } from '@/lib/billing-urls';
+import { useAdminDensity } from '@/lib/admin-density';
+import { useAdminWorklist } from '@/lib/admin-worklist';
 import { TOUR_GROUPS, type TourNavItem, type TourGroup } from './admin-nav-config';
 import styles from './AdminSidebar.module.css';
 
@@ -42,6 +44,8 @@ export default function AdminSidebar() {
   const currentOrgSlug = currentOrg?.slug;
   const isCanceled = currentOrg?.subscriptionStatus === 'canceled';
   const { tournaments, currentTournament, setCurrentTournament, refresh: refreshTournaments } = useTournament();
+  const { density, setDensity } = useAdminDensity();
+  const worklist = useAdminWorklist();
 
   // Tournament / Tournament Plus tiers have no org-admin concept — never treat them as
   // being "in org admin" even if a URL slips through (proxy.ts + the org layout redirect them).
@@ -180,6 +184,7 @@ export default function AdminSidebar() {
 
   function navLink(key: string, icon: React.ElementType, label: string, href: string, active: boolean) {
     const Icon = icon;
+    const count = worklist[key] ?? 0;
     return (
       <Link
         key={key}
@@ -189,6 +194,11 @@ export default function AdminSidebar() {
       >
         <Icon size={17} />
         <span>{label}</span>
+        {count > 0 && (
+          <span className={styles.navCount} aria-label={`${count} need attention`}>
+            {count > 9 ? '9+' : count}
+          </span>
+        )}
         {active && <ChevronRight size={14} className={styles.navChevron} />}
       </Link>
     );
@@ -561,6 +571,26 @@ export default function AdminSidebar() {
 
         {/* Footer */}
         <div className={styles.footer}>
+          <div className={styles.densityToggle} role="group" aria-label="Display density">
+            <button
+              type="button"
+              className={`${styles.densityBtn} ${density === 'comfortable' ? styles.densityBtnActive : ''}`}
+              onClick={() => setDensity('comfortable')}
+              aria-pressed={density === 'comfortable'}
+              title="Comfortable density — larger rows and controls"
+            >
+              Comfortable
+            </button>
+            <button
+              type="button"
+              className={`${styles.densityBtn} ${density === 'compact' ? styles.densityBtnActive : ''}`}
+              onClick={() => setDensity('compact')}
+              aria-pressed={density === 'compact'}
+              title="Compact density — dense desktop layout"
+            >
+              Compact
+            </button>
+          </div>
           {isTournaments ? (
             tournamentPreviewHref ? (
               <Link

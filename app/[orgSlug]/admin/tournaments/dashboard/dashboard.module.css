@@ -13,9 +13,14 @@
   text-decoration: none;
   background: var(--hud-surface);
   border: 1px solid var(--blueprint-blue);
-  box-shadow: var(--glow-blue);
+  box-shadow: var(--glow-blue), var(--highlight-top);
   border-radius: 0;
-  transition: border-color 0.15s, box-shadow 0.15s;
+  transition: border-color 0.15s, box-shadow 0.15s, transform 0.12s;
+}
+
+/* Tap feedback — settles instantly under reduced motion */
+.statCard:active {
+  transform: scale(0.992);
 }
 
 .statCard:hover {
@@ -420,6 +425,8 @@
   padding: 1.25rem;
   border: 1px solid rgba(var(--blueprint-blue-rgb), 0.35);
   background: rgba(var(--blueprint-blue-rgb), 0.04);
+  /* Whisper-thin top edge for depth without breaking the flat 2px rule */
+  box-shadow: var(--highlight-top);
   display: flex;
   flex-direction: column;
   gap: 1rem;

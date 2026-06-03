@@ -24,9 +24,6 @@ export default function ScheduleHealthPanel({
   defaultOpen = true,
 }: ScheduleHealthPanelProps) {
   const [expanded, setExpanded] = useState(defaultOpen);
-  const topIssues = metrics.issues.slice(0, 2);
-  const remainingIssueCount = Math.max(0, metrics.issues.length - topIssues.length);
-  const warningCount = metrics.venueConflictCount + metrics.bufferConflictCount + metrics.travelBufferWarningCount;
   const scoreClass = metrics.healthTone === 'good'
     ? styles.healthScoreGood
     : metrics.healthTone === 'warning'
@@ -57,87 +54,110 @@ export default function ScheduleHealthPanel({
       </summary>
 
       <div className={styles.healthBody}>
-        <div className={styles.healthKpiGrid}>
-          <Metric
-            label="Teams"
-            value={String(metrics.participantCount)}
-            detail={formatGameRange(metrics)}
-            tone={metrics.expectedGamesPerParticipant && (metrics.teamsUnderTarget > 0 || metrics.teamsOverTarget > 0) ? 'warning' : 'neutral'}
-          />
-          <Metric
-            label="Back-to-back"
-            value={String(metrics.backToBackCount)}
-            detail={`Rest ${formatRestMinutes(metrics.minRestMinutes)}`}
-            tone={metrics.backToBackCount > 0 ? 'warning' : 'good'}
-          />
-          <Metric
-            label="Max/day"
-            value={String(metrics.maxGamesInDay)}
-            detail={`${metrics.venueChangeCount} venue moves`}
-            tone={metrics.maxGamesInDay > 2 ? 'warning' : 'good'}
-          />
-          <Metric
-            label="Warnings"
-            value={String(warningCount)}
-            detail={metrics.travelBufferWarningCount > 0 ? `${metrics.travelBufferWarningCount} travel buffer` : `${metrics.bufferConflictCount} venue buffer`}
-            tone={metrics.venueConflictCount > 0 ? 'danger' : warningCount > 0 ? 'warning' : 'good'}
-          />
-        </div>
-
-        {topIssues.length > 0 ? (
-          <div className={styles.healthIssues}>
-            {topIssues.map(issue => (
-              <IssueRow key={`${issue.code}-${issue.severity}`} issue={issue} />
-            ))}
-            {remainingIssueCount > 0 && (
-              <div className={`${styles.healthIssue} ${styles.healthIssueInfo}`}>
-                <Info size={14} />
-                <span>{remainingIssueCount} more schedule health item{remainingIssueCount === 1 ? '' : 's'} detected.</span>
-              </div>
-            )}
-          </div>
-        ) : (
-          <div className={`${styles.healthIssue} ${styles.healthIssueGood}`}>
-            <CheckCircle2 size={14} />
-            <span>No major schedule health issues found.</span>
-          </div>
-        )}
-
-        {showTeamTable && metrics.teamMetrics.length > 0 && (
-          <details className={styles.healthDetails}>
-            <summary className={styles.healthDetailsSummary}>Team detail</summary>
-            <div className={styles.healthTeamTableWrap}>
-              <table className={styles.healthTeamTable}>
-                <thead>
-                  <tr>
-                    <th>Team</th>
-                    <th>Games</th>
-                    <th>Max/day</th>
-                    <th>Back-to-back</th>
-                    <th>Rest</th>
-                    <th>Venue changes</th>
-                    <th>Tight moves</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {metrics.teamMetrics.map(team => (
-                    <tr key={team.participantKey}>
-                      <td>{team.label}</td>
-                      <td>{team.gameCount}</td>
-                      <td>{team.maxGamesInDay}</td>
-                      <td>{team.backToBackCount}</td>
-                      <td>{formatRestMinutes(team.minRestMinutes)}</td>
-                      <td>{team.venueChanges}</td>
-                      <td>{team.travelBufferWarnings}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </details>
-        )}
+        <ScheduleHealthContent metrics={metrics} showTeamTable={showTeamTable} />
       </div>
     </details>
+  );
+}
+
+/**
+ * The KPI grid + top issues (+ optional team table) — shared by the inline panel
+ * and the toolbar health chip's popover/bottom-sheet (C4). Carries no chrome of
+ * its own so each host wraps it (panel `.healthBody`, sheet body, popover body).
+ */
+export function ScheduleHealthContent({
+  metrics,
+  showTeamTable = false,
+}: {
+  metrics: ScheduleMetrics;
+  showTeamTable?: boolean;
+}) {
+  const topIssues = metrics.issues.slice(0, 2);
+  const remainingIssueCount = Math.max(0, metrics.issues.length - topIssues.length);
+  const warningCount = metrics.venueConflictCount + metrics.bufferConflictCount + metrics.travelBufferWarningCount;
+
+  return (
+    <>
+      <div className={styles.healthKpiGrid}>
+        <Metric
+          label="Teams"
+          value={String(metrics.participantCount)}
+          detail={formatGameRange(metrics)}
+          tone={metrics.expectedGamesPerParticipant && (metrics.teamsUnderTarget > 0 || metrics.teamsOverTarget > 0) ? 'warning' : 'neutral'}
+        />
+        <Metric
+          label="Back-to-back"
+          value={String(metrics.backToBackCount)}
+          detail={`Rest ${formatRestMinutes(metrics.minRestMinutes)}`}
+          tone={metrics.backToBackCount > 0 ? 'warning' : 'good'}
+        />
+        <Metric
+          label="Max/day"
+          value={String(metrics.maxGamesInDay)}
+          detail={`${metrics.venueChangeCount} venue moves`}
+          tone={metrics.maxGamesInDay > 2 ? 'warning' : 'good'}
+        />
+        <Metric
+          label="Warnings"
+          value={String(warningCount)}
+          detail={metrics.travelBufferWarningCount > 0 ? `${metrics.travelBufferWarningCount} travel buffer` : `${metrics.bufferConflictCount} venue buffer`}
+          tone={metrics.venueConflictCount > 0 ? 'danger' : warningCount > 0 ? 'warning' : 'good'}
+        />
+      </div>
+
+      {topIssues.length > 0 ? (
+        <div className={styles.healthIssues}>
+          {topIssues.map(issue => (
+            <IssueRow key={`${issue.code}-${issue.severity}`} issue={issue} />
+          ))}
+          {remainingIssueCount > 0 && (
+            <div className={`${styles.healthIssue} ${styles.healthIssueInfo}`}>
+              <Info size={14} />
+              <span>{remainingIssueCount} more schedule health item{remainingIssueCount === 1 ? '' : 's'} detected.</span>
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className={`${styles.healthIssue} ${styles.healthIssueGood}`}>
+          <CheckCircle2 size={14} />
+          <span>No major schedule health issues found.</span>
+        </div>
+      )}
+
+      {showTeamTable && metrics.teamMetrics.length > 0 && (
+        <details className={styles.healthDetails}>
+          <summary className={styles.healthDetailsSummary}>Team detail</summary>
+          <div className={styles.healthTeamTableWrap}>
+            <table className={styles.healthTeamTable}>
+              <thead>
+                <tr>
+                  <th>Team</th>
+                  <th>Games</th>
+                  <th>Max/day</th>
+                  <th>Back-to-back</th>
+                  <th>Rest</th>
+                  <th>Venue changes</th>
+                  <th>Tight moves</th>
+                </tr>
+              </thead>
+              <tbody>
+                {metrics.teamMetrics.map(team => (
+                  <tr key={team.participantKey}>
+                    <td>{team.label}</td>
+                    <td>{team.gameCount}</td>
+                    <td>{team.maxGamesInDay}</td>
+                    <td>{team.backToBackCount}</td>
+                    <td>{formatRestMinutes(team.minRestMinutes)}</td>
+                    <td>{team.venueChanges}</td>
+                    <td>{team.travelBufferWarnings}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </details>
+      )}
+    </>
   );
 }
 

@@ -3,6 +3,7 @@ import { useState, useEffect, use, type CSSProperties } from 'react';
 import Link from 'next/link';
 import { ChevronLeft, Star, AlertTriangle, Users, Clock } from 'lucide-react';
 import { formatTime } from '@/lib/utils';
+import { teamColor, teamInitials } from '@/lib/team-color';
 import styles from '../../../../teams/[id]/team-profile.module.css';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -72,25 +73,6 @@ function clearFollowedTeam(orgSlug: string, tournamentSlug: string) {
 }
 
 // ── Avatar helpers ────────────────────────────────────────────────────────────
-
-const AVATAR_COLORS = [
-  '#7C3AED', '#1D4ED8', '#DC2626', '#D97706',
-  '#059669', '#DB2777', '#0891B2', '#EA580C',
-  '#0D9488', '#4F46E5', '#65A30D', '#B45309',
-];
-
-function avatarColor(name: string): string {
-  let h = 0;
-  for (let i = 0; i < name.length; i++) h = name.charCodeAt(i) + ((h << 5) - h);
-  return AVATAR_COLORS[Math.abs(h) % AVATAR_COLORS.length];
-}
-
-function teamInitials(name: string): string {
-  const clean = name.replace(/\s*\(.*?\)\s*/g, '').trim();
-  const words = clean.split(/\s+/);
-  if (words.length >= 2) return (words[0][0] + words[words.length - 1][0]).toUpperCase();
-  return clean.slice(0, 2).toUpperCase();
-}
 
 function cleanName(name: string) {
   return name.replace(/\s*\(.*?\)\s*/g, '').trim();
@@ -177,7 +159,7 @@ export default function TeamProfilePage({
   const { team, divisionName, poolName, gameDurationMinutes, standings, games } = data;
   const cleanedName = cleanName(team.name);
   const initials = teamInitials(cleanedName);
-  const color = avatarColor(cleanedName);
+  const color = teamColor(cleanedName);
   const isFollowed = followedTeamId === team.id;
 
   const teamsHref = `/${orgSlug}/${tournamentSlug}/teams`;
@@ -225,6 +207,7 @@ export default function TeamProfilePage({
     <div className="page-content">
       <div className="section">
         <div className="container">
+         <div className={styles.profile} style={{ '--team-color': color } as CSSProperties}>
 
           {/* Back nav */}
           <Link href={teamsHref} className={styles.backNav}>
@@ -233,7 +216,7 @@ export default function TeamProfilePage({
           </Link>
 
           {/* Hero card */}
-          <div className={styles.heroCard} style={{ '--team-color': color } as CSSProperties}>
+          <div className={styles.heroCard}>
             <div className={styles.heroWatermark} aria-hidden>{initials}</div>
 
             <div className={styles.heroTop}>
@@ -365,7 +348,12 @@ export default function TeamProfilePage({
                   const live = isGameLive(g, gameDurationMinutes);
 
                   return (
-                    <div key={g.id} className={`${styles.gameRow} ${live ? styles.gameRowLive : ''}`}>
+                    <Link
+                      key={g.id}
+                      href={`/${orgSlug}/${tournamentSlug}/schedule/${g.id}`}
+                      prefetch={false}
+                      className={`${styles.gameRow} ${live ? styles.gameRowLive : ''}`}
+                    >
                       <div className={styles.gameDate}>
                         <strong>
                           {new Date(g.date + 'T12:00:00').toLocaleDateString('en-CA', {
@@ -405,7 +393,7 @@ export default function TeamProfilePage({
                           <span className={styles.upcomingBadge}>Upcoming</span>
                         )}
                       </div>
-                    </div>
+                    </Link>
                   );
                 })}
               </div>
@@ -419,6 +407,7 @@ export default function TeamProfilePage({
             </div>
           )}
 
+         </div>{/* /profile */}
         </div>
       </div>
     </div>

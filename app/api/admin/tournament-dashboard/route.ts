@@ -225,6 +225,19 @@ export async function GET(req: Request) {
 
   // ── Game-day stats ────────────────────────────────────────────────
   const activeGames = games.filter(g => g.status !== 'cancelled');
+
+  // Game-day boundary: within event dates OR the first game has started
+  // (any game submitted/completed, or its scheduled start time has passed).
+  const nowTime = new Date().toISOString().split('T')[1].slice(0, 8);
+  const firstGameStarted = activeGames.some(g =>
+    g.status === 'submitted' || g.status === 'completed' ||
+    (g.game_date != null && (
+      g.game_date < today ||
+      (g.game_date === today && g.game_time != null && g.game_time <= nowTime)
+    ))
+  );
+  const isGameDay = isTournamentDay || firstGameStarted;
+
   const poolGames   = activeGames.filter(g => !g.is_playoff);
   const playoffGames = activeGames.filter(g => g.is_playoff);
 
@@ -483,6 +496,7 @@ export async function GET(req: Request) {
     communications,
     scheduleHealth,
     isTournamentDay,
+    isGameDay,
     gameDay,
     publishChecklist: {
       hasDates,

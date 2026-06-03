@@ -8,18 +8,20 @@ export default function TournamentNavSync({
   tournamentName,
   colorMode,
   hiddenPages = [],
+  registerCta = null,
 }: {
   slug: string;
   tournamentName: string;
   colorMode?: 'dark' | 'light' | null;
   hiddenPages?: PublicPageKey[];
+  registerCta?: 'register' | 'waitlist' | null;
 }) {
   const { setTournamentNav } = useOrgNav();
 
   useEffect(() => {
-    setTournamentNav(slug, tournamentName, colorMode ?? 'dark', hiddenPages);
+    setTournamentNav(slug, tournamentName, colorMode ?? 'dark', hiddenPages, registerCta);
     return () => setTournamentNav(null, null);
-  }, [slug, tournamentName, colorMode, hiddenPages, setTournamentNav]);
+  }, [slug, tournamentName, colorMode, hiddenPages, registerCta, setTournamentNav]);
 
   return null;
 }

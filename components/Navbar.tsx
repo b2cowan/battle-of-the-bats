@@ -42,7 +42,7 @@ export default function Navbar() {
   const params   = useParams();
   const orgSlug           = (params?.orgSlug as string) || '';
   const urlTournamentSlug = params?.tournamentSlug as string | undefined;
-  const { logoUrl, orgName, tournamentSlug, tournamentName, tournamentColorMode, tournamentHiddenPages } = useOrgNav();
+  const { logoUrl, orgName, tournamentSlug, tournamentName, tournamentColorMode, tournamentHiddenPages, tournamentRegisterCta } = useOrgNav();
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
@@ -182,15 +182,16 @@ export default function Navbar() {
         </div>
 
         <div className={styles.actions}>
-          {!tournamentHiddenPages.includes('register') && (
+          {/* Only when registration is genuinely open/waitlisting (lifecycle +
+              capacity aware) — hidden once the event is live, complete, or full. */}
+          {!tournamentHiddenPages.includes('register') && tournamentRegisterCta && (
             <Link
               href={`/${orgSlug}/${tournamentSlug}/register`}
               className="btn btn-lime btn-sm"
               id="nav-register-btn"
             >
-              Register
+              {tournamentRegisterCta === 'waitlist' ? 'Join Waitlist' : 'Register'}
             </Link>
-
           )}
         </div>
       </div>

@@ -1,3 +1,39 @@
+/* Tabular numerals — keep stat columns, records and scores aligned and steady
+   through live refresh. Applies to the whole table cell (harmless on the team
+   name; only affects digits). */
+.standingsTable td,
+.statValue,
+.recordPill,
+.podiumPts,
+.raceRd,
+.raceRecord,
+.followFinalRank,
+.followRankBadge,
+.scoreTeam strong,
+.bracketScore {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Staggered entrance — table rows + score cards arrive in sequence on first
+   mount only. Stable React keys (team.id / game.id) mean live refresh reuses the
+   same DOM nodes and never replays this; changing division mounts new rows.
+   Opacity-only on <tr> avoids any table-layout jitter from transforms. */
+.standingsTable tbody tr { animation: fadeIn 0.4s ease both; }
+.standingsTable tbody tr:nth-child(1) { animation-delay: 0.03s; }
+.standingsTable tbody tr:nth-child(2) { animation-delay: 0.06s; }
+.standingsTable tbody tr:nth-child(3) { animation-delay: 0.09s; }
+.standingsTable tbody tr:nth-child(4) { animation-delay: 0.12s; }
+.standingsTable tbody tr:nth-child(5) { animation-delay: 0.15s; }
+.standingsTable tbody tr:nth-child(6) { animation-delay: 0.18s; }
+.standingsTable tbody tr:nth-child(n+7) { animation-delay: 0.20s; }
+
+.scoreList .scoreCard { animation: fadeInUp 0.42s ease both; }
+.scoreList .scoreCard:nth-child(1) { animation-delay: 0.03s; }
+.scoreList .scoreCard:nth-child(2) { animation-delay: 0.06s; }
+.scoreList .scoreCard:nth-child(3) { animation-delay: 0.09s; }
+.scoreList .scoreCard:nth-child(4) { animation-delay: 0.12s; }
+.scoreList .scoreCard:nth-child(n+5) { animation-delay: 0.15s; }
+
 .summarySection {
   margin: 0;
   background: var(--surface);
@@ -255,6 +291,36 @@
   flex-shrink: 0;
 }
 
+/* ── Live rank-change markers (game-day) ──────────────────────────────────────
+   The ▲/▼ + cell flash live on the team cell (not the <tr>) so they never collide
+   with the row's entrance animation. Both settle under reduced-motion. */
+.rankArrow {
+  display: inline-flex;
+  font-size: 0.6rem;
+  line-height: 1;
+  flex-shrink: 0;
+  animation: rankArrowPop 0.5s ease-out;
+}
+
+.rankArrow[data-dir="up"]   { color: var(--success); }
+.rankArrow[data-dir="down"] { color: var(--danger); }
+
+@keyframes rankArrowPop {
+  0%   { transform: translateY(3px); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+
+.teamCellMoved {
+  border-radius: var(--radius-sm);
+  animation: rankFlash 2.2s ease-out;
+}
+
+@keyframes rankFlash {
+  0%   { background: rgba(var(--primary-rgb), 0.16); }
+  60%  { background: rgba(var(--primary-rgb), 0.07); }
+  100% { background: transparent; }
+}
+
 .rdPositive {
   color: var(--success);
 }
@@ -262,6 +328,69 @@
 .rdNegative {
   color: var(--danger);
 }
+
+/* ── Column legend (key beneath each standings table) ─────────────────────── */
+.statLegend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem 0.85rem;
+  margin: 0;
+}
+
+.statLegendItem {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.3rem;
+}
+
+.statLegendItem dt {
+  font-family: var(--font-data);
+  font-size: 0.66rem;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  color: var(--white-75);
+}
+
+.statLegendItem dd {
+  margin: 0;
+  font-size: 0.68rem;
+  color: var(--white-45);
+}
+
+/* ── Diverging run-differential bar (desktop only) ────────────────────────────
+   Track with a centre tick; fill grows right (green) for +RD, left (red) for −RD,
+   scaled so the pool's largest |RD| fills half the bar. */
+.rdBar {
+  position: relative;
+  display: block;
+  width: 100%;
+  max-width: 58px;
+  height: 4px;
+  margin: 0.32rem auto 0;
+  border-radius: 999px;
+  background: var(--white-8);
+}
+
+.rdBar::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: -1px;
+  bottom: -1px;
+  width: 1px;
+  background: var(--white-20);
+}
+
+.rdBarFill {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  border-radius: 999px;
+  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.rdBarFill[data-dir="pos"] { left: 50%; background: var(--success); }
+.rdBarFill[data-dir="neg"] { right: 50%; background: var(--danger); }
 
 .standingsTable th {
   text-align: left;
@@ -272,6 +401,13 @@
   color: var(--data-gray);
   background: var(--white-03);
   border-bottom: 1px solid var(--border);
+}
+
+/* Stat-column headers center over their centered data — the base rule above
+   left-aligns every th, which only the Team column wants. */
+.standingsTable th.statCenter,
+.standingsTable th.recordCol {
+  text-align: center;
 }
 
 .standingsTable td {
@@ -664,16 +800,45 @@
    VIEW TOGGLE
 ═══════════════════════════════════════════════════════════════════════════ */
 
+/* Standard / Race-to-Playoffs toggle with a sliding indicator pill (two
+   segments, equal width via inline-grid so the CSS-only pill aligns). */
 .viewToggle {
-  display: inline-flex;
-  align-items: center;
+  position: relative;
+  display: inline-grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  align-items: stretch;
+  padding: 0.22rem;
   border: 1px solid var(--border-2);
   border-radius: var(--radius-sm);
   background: var(--white-5);
-  overflow: hidden;
+}
+
+.viewToggle::before {
+  content: '';
+  position: absolute;
+  z-index: 0;
+  top: 0.22rem;
+  bottom: 0.22rem;
+  left: 0.22rem;
+  width: calc((100% - 0.44rem) / 2);
+  border-radius: calc(var(--radius-sm) - 2px);
+  background: var(--primary);
+  box-shadow: 0 2px 8px rgba(var(--primary-rgb), 0.35);
+  transition: transform 0.28s var(--ease-spring);
+}
+
+.viewToggle:has(.viewToggleBtn:nth-child(2).viewToggleBtnActive)::before {
+  transform: translateX(100%);
 }
 
 .viewToggleBtn {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 30px;
   padding: 0.38rem 0.85rem;
   font-size: 0.78rem;
   font-weight: 700;
@@ -681,23 +846,17 @@
   background: transparent;
   border: none;
   cursor: pointer;
-  transition: background 0.15s, color 0.15s;
+  transition: color 0.18s;
   white-space: nowrap;
 }
 
-.viewToggleBtn:hover {
-  color: var(--white);
-  background: var(--white-5);
-}
+.viewToggleBtn:hover { color: var(--white); }
+.viewToggleBtn:active { transform: scale(0.97); }
 
-.viewToggleBtnActive {
-  background: var(--primary);
-  color: #fff;
-}
-
+.viewToggleBtnActive,
 .viewToggleBtnActive:hover {
-  background: var(--primary);
-  color: #fff;
+  background: transparent;
+  color: var(--on-primary);
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -879,7 +1038,7 @@
   padding: 0.2rem 0.5rem;
   border-radius: var(--radius-sm);
   background: var(--primary);
-  color: #fff;
+  color: var(--on-primary);
   font-family: var(--font-data);
   font-size: 0.65rem;
   font-weight: 900;
@@ -1118,6 +1277,74 @@
   text-transform: uppercase;
 }
 
+/* ── Champion spotlight (decided final) ───────────────────────────────────── */
+.bracketChampion {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  margin: 1rem 1.5rem 0;
+  padding: 0.85rem 1.1rem;
+  border: 1px solid rgba(var(--warning-rgb), 0.4);
+  border-radius: var(--radius-md);
+  background:
+    linear-gradient(135deg, rgba(var(--warning-rgb), 0.16), transparent 72%),
+    var(--bg-card);
+  box-shadow: var(--highlight-top);
+}
+
+.bracketChampionIcon {
+  color: var(--warning);
+  flex-shrink: 0;
+  filter: drop-shadow(0 0 10px rgba(var(--warning-rgb), 0.4));
+}
+
+.bracketChampionBody {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.bracketChampionLabel {
+  font-family: var(--font-data);
+  font-size: 0.6rem;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--warning);
+}
+
+.bracketChampionName {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 900;
+  color: var(--white);
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.bracketChampionBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  font-family: var(--font-data);
+  font-size: 0.62rem;
+  font-weight: 900;
+  color: #fff;
+  flex-shrink: 0;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+@media (max-width: 640px) {
+  .bracketChampion { margin: 0.85rem 0.85rem 0; }
+}
+
 /* Show/hide desktop vs mobile bracket */
 .bracketDesktop { display: block; }
 .bracketMobile  { display: none;  }
@@ -1322,20 +1549,37 @@
 
 /* ── Mobile bracket list ────────────────────────────────────────────────── */
 
+/* Swipeable round-by-round carousel — each round is a scroll-snap slide; the next
+   round peeks at 85% width so it reads as swipeable. */
 .bracketList {
   display: flex;
-  flex-direction: column;
-  gap: 0;
+  flex-direction: row;
+  gap: 0.7rem;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding: 0.85rem 1rem 1rem;
 }
 
+.bracketList::-webkit-scrollbar { display: none; }
+
 .bracketListRound {
-  padding: 0.85rem 1rem 0;
+  flex: 0 0 85%;
+  scroll-snap-align: start;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  padding: 0;
 }
 
 .bracketListRound:not(:first-child) {
-  border-top: 1px solid var(--border-2);
-  padding-top: 0.85rem;
+  border-top: none;
+  padding-top: 0;
 }
+
+/* Cards fill the slide rather than being capped at the desktop compact width. */
+.bracketMobile .bracketMatchupCompact { max-width: none; }
 
 .bracketListRoundLabel {
   font-family: var(--font-data);

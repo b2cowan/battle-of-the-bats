@@ -1,3 +1,25 @@
+/* Tabular numerals — stat tiles, records, scores and times stay aligned. */
+.heroStatValue,
+.statTileValue,
+.nextGameTime,
+.gameDate strong,
+.resultBadge strong {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Per-team identity ────────────────────────────────────────────────────────
+   `--team-color` is set inline on .profile (the team's auto hue). We derive a
+   legible text accent from it per colour-mode: lift toward white on dark, deepen
+   toward black on light. Everything below uses these two so the whole page reads
+   as the team's colour, not the org primary. */
+.profile {
+  --team-accent: color-mix(in srgb, var(--team-color, var(--primary)) 62%, #ffffff 38%);
+}
+
+[data-color-mode="light"] .profile {
+  --team-accent: color-mix(in srgb, var(--team-color, var(--primary)) 80%, #000000 20%);
+}
+
 /* ── Back nav ────────────────────────────────────────────────────────────────── */
 
 .backNav {
@@ -111,9 +133,9 @@
 }
 
 .followHeroBtnActive {
-  background: var(--primary);
-  border-color: var(--primary);
-  color: var(--bg-dark);
+  background: var(--team-color, var(--primary));
+  border-color: var(--team-color, var(--primary));
+  color: #fff;
 }
 
 /* Hero stats row */
@@ -142,7 +164,7 @@
 }
 
 .heroStatAccent {
-  color: var(--primary-light);
+  color: var(--team-accent);
 }
 
 .heroStatLabel {
@@ -202,7 +224,7 @@
 }
 
 .statTileAccent {
-  color: var(--primary-light);
+  color: var(--team-accent);
 }
 
 .statTileSub {
@@ -263,8 +285,8 @@
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  background: rgba(var(--primary-rgb), 0.12);
-  border: 1px solid rgba(var(--primary-rgb), 0.25);
+  background: color-mix(in srgb, var(--team-color, var(--primary)) 14%, transparent);
+  border: 1px solid color-mix(in srgb, var(--team-color, var(--primary)) 30%, transparent);
   border-radius: var(--radius-sm);
   padding: 0.625rem 0.875rem;
 }
@@ -278,7 +300,7 @@
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  color: var(--primary-light);
+  color: var(--team-accent);
 }
 
 .liveTag {
@@ -424,8 +446,8 @@
   letter-spacing: 0.06em;
   padding: 0.1rem 0.4rem;
   border-radius: 4px;
-  background: rgba(var(--primary-rgb), 0.2);
-  color: var(--primary-light);
+  background: color-mix(in srgb, var(--team-color, var(--primary)) 22%, transparent);
+  color: var(--team-accent);
 }
 
 .location {
@@ -471,8 +493,8 @@
   font-size: 0.7rem;
   font-weight: 700;
   text-transform: uppercase;
-  color: var(--primary-light);
-  background: var(--primary-faint);
+  color: var(--team-accent);
+  background: color-mix(in srgb, var(--team-color, var(--primary)) 12%, transparent);
   padding: 0.3rem 0.65rem;
   border-radius: 20px;
 }

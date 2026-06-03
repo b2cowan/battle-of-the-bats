@@ -1,6 +1,7 @@
 # FieldLogicHQ Memory Index
 
 - [Agent review workflow](agents/codex-subagent-coordination.md)
+- [Agent verification workflow](agent-verification-workflow.md)
 - [League onboarding wizard](league-onboarding-wizard.md)
 - [Tournament free-tier UX cleanup](tournament-free-tier-ux.md)
 - [Launch pricing positioning](launch-pricing-positioning.md)

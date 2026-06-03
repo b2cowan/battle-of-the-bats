@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useId, useRef, useState, useCallback } from 'react';
 import { Bell, BellDot } from 'lucide-react';
 import { createClient } from '@/lib/supabase-browser';
 import NotificationPanel from './NotificationPanel';
@@ -14,6 +14,7 @@ export default function NotificationBell({ orgId }: Props) {
   const [open,        setOpen]        = useState(false);
   const [userId,      setUserId]      = useState<string | null>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
+  const instanceId = useId();
 
   // ── Initial unread count ───────────────────────────────────────────────────
 
@@ -48,7 +49,7 @@ export default function NotificationBell({ orgId }: Props) {
     const supabase = createClient();
 
     const channel = supabase
-      .channel(`notifications:${userId}:${orgId}`)
+      .channel(`notifications:${userId}:${orgId}:${instanceId}`)
       .on(
         'postgres_changes',
         {

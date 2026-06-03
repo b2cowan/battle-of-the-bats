@@ -1,4 +1,5 @@
 'use client';
+import { Trophy } from 'lucide-react';
 import { Game, Team } from '@/lib/types';
 import { teamInitials, teamColorFromName } from '@/lib/teamBadge';
 import { formatTime } from '@/lib/utils';
@@ -231,19 +232,47 @@ function BracketList({ rounds, teams, requireFinalization }: {
 
 // ─── Public export ────────────────────────────────────────────────────────────
 
+// ─── Champion spotlight — the decided final's winner ─────────────────────────
+
+function getChampionName(playoffGames: Game[], teams: Team[]): string | null {
+  const finalGame = playoffGames.find(g => (g.bracketCode || '').toUpperCase() === 'FIN');
+  if (!finalGame) return null;
+  if (finalGame.status !== 'completed' && finalGame.status !== 'submitted') return null;
+  const outcome = getOutcome(finalGame);
+  if (!outcome || outcome === 'tie') return null;
+  const winnerId = outcome === 'home' ? finalGame.homeTeamId : finalGame.awayTeamId;
+  const placeholder = outcome === 'home' ? finalGame.homePlaceholder : finalGame.awayPlaceholder;
+  return winnerId ? teamName(teams, winnerId) : (placeholder ?? null);
+}
+
 export default function PublicBracketView({ games, teams, requireFinalization }: Props) {
   const playoffGames = games.filter(g => g.isPlayoff);
   if (playoffGames.length === 0) return null;
 
   const rounds = buildRounds(playoffGames);
+  const champion = getChampionName(playoffGames, teams);
 
   return (
     <>
+      {champion && (
+        <div className={styles.bracketChampion}>
+          <Trophy size={22} className={styles.bracketChampionIcon} />
+          <div className={styles.bracketChampionBody}>
+            <span className={styles.bracketChampionLabel}>Champion</span>
+            <span className={styles.bracketChampionName}>
+              <span className={styles.bracketChampionBadge} style={{ backgroundColor: teamColorFromName(champion) }}>
+                {teamInitials(champion)}
+              </span>
+              {champion}
+            </span>
+          </div>
+        </div>
+      )}
       {/* Desktop */}
       <div className={styles.bracketDesktop}>
         <BracketTree rounds={rounds} teams={teams} requireFinalization={requireFinalization} />
       </div>
-      {/* Mobile */}
+      {/* Mobile — swipeable round-by-round carousel */}
       <div className={styles.bracketMobile}>
         <BracketList rounds={rounds} teams={teams} requireFinalization={requireFinalization} />
       </div>

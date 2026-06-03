@@ -7,6 +7,9 @@ import AdminBottomNav from '@/components/admin/AdminBottomNav';
 import { CancellationGuard } from '@/components/admin/CancellationGuard';
 import { getBillingHref } from '@/lib/billing-urls';
 import { LiveLogicRail } from '@/components/live-logic/LiveLogicRail';
+import AdminMobileTopBar from '@/components/admin/AdminMobileTopBar';
+import { AdminDensityProvider } from '@/lib/admin-density';
+import { AdminWorklistProvider } from '@/lib/admin-worklist';
 import AdminTitleManager from './AdminTitleManager';
 import styles from './admin.module.css';
 
@@ -42,9 +45,13 @@ export default function AdminChrome({
     : `${styles.adminMain} ${isFocusedAdmin ? styles.adminMainFocused : ''}`;
 
   return (
-    <>
+    <AdminDensityProvider>
+      <AdminWorklistProvider>
       <CancellationGuard />
       <AdminTitleManager />
+      {/* Mobile-only top app-bar — tournament + live status + notification bell +
+          one-tap switcher. The sidebar (incl. its bell) is hidden <900px. */}
+      {!isFocused && <AdminMobileTopBar />}
       <div className={shellClassName}>
         {!isFocused && <AdminSidebar />}
         <main className={mainClassName}>
@@ -53,6 +60,7 @@ export default function AdminChrome({
       </div>
       {!isFocused && <AdminBottomNav />}
       {!isFocused && <LiveLogicRail />}
-    </>
+      </AdminWorklistProvider>
+    </AdminDensityProvider>
   );
 }

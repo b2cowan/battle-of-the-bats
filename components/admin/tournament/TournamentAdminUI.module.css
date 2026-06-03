@@ -119,7 +119,8 @@
   position: sticky;
   top: 0.75rem;
   z-index: 40;
-  backdrop-filter: blur(14px);
+  backdrop-filter: blur(var(--blur-bar));
+  -webkit-backdrop-filter: blur(var(--blur-bar));
 }
 
 .toolbarGroup {
@@ -165,7 +166,7 @@
 
 .select {
   min-width: 13rem;
-  height: 28px;
+  height: var(--admin-control-h);
   padding: 0 1.9rem 0 0.7rem;
   border: 1px solid rgba(var(--blueprint-blue-rgb), 0.25);
   border-radius: 2px;
@@ -197,7 +198,7 @@
 
 .searchInput {
   width: 100%;
-  height: 28px;
+  height: var(--admin-control-h);
   padding: 0 0.85rem 0 2.15rem;
   border: 1px solid rgba(var(--blueprint-blue-rgb), 0.25);
   border-radius: 2px;
@@ -218,7 +219,7 @@
 .segmented {
   display: inline-flex;
   align-items: center;
-  height: 28px;
+  height: var(--admin-control-h);
   padding: 2px;
   border: 1px solid rgba(var(--blueprint-blue-rgb), 0.25);
   border-radius: 2px;
@@ -231,7 +232,7 @@
   justify-content: center;
   gap: 0.35rem;
   min-width: 2.4rem;
-  height: 22px;
+  height: calc(var(--admin-control-h) - 6px);
   padding: 0 0.6rem;
   border: none;
   border-radius: 2px;
@@ -261,6 +262,12 @@
   border: 1px solid rgba(var(--logic-lime-rgb), 0.35);
 }
 
+/* Tap feedback on toolbar controls (settles instantly under reduced motion) */
+.segment:active:not(:disabled),
+.menuButton:active:not(:disabled) {
+  transform: scale(0.96);
+}
+
 .menuRoot {
   position: relative;
   display: inline-flex;
@@ -271,7 +278,7 @@
   align-items: center;
   justify-content: center;
   gap: 0.4rem;
-  height: 28px;
+  height: var(--admin-control-h);
   padding: 0 0.65rem;
   border: 1px solid rgba(var(--blueprint-blue-rgb), 0.25);
   border-radius: 2px;
@@ -539,7 +546,7 @@
 .legendDot[data-tone="success"] { background: var(--success); }
 .legendDot[data-tone="warning"] { background: var(--warning); }
 .legendDot[data-tone="danger"] { background: var(--danger); }
-.legendDot[data-tone="info"] { background: var(--blueprint-blue); }
+.legendDot[data-tone="info"] { background: var(--info); }
 .legendDot[data-tone="neutral"] { background: var(--white-30); }
 
 .legendContent {

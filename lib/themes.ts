@@ -86,8 +86,20 @@ function ensureLightTint(hex: string): string {
   return out;
 }
 
+/**
+ * Pick the legible text colour to sit on a saturated `--primary` fill (segmented
+ * pills, active toggles, count chips). A dark/medium brand colour wants white
+ * text; a light brand colour (pale gold, mint, sky) wants near-black. Threshold
+ * sits at the luminance where white vs. near-black contrast crosses ~4.5:1.
+ */
+function onPrimaryColor(hex: string): string {
+  if (!HEX_RE.test(hex)) return '#FFFFFF';
+  return relativeLuminance(hex) > 0.42 ? '#0F1123' : '#FFFFFF';
+}
+
 export interface ResolvedTheme extends ThemeVars {
   isLowContrast: boolean;
+  onPrimary:     string;
 }
 
 export function resolveTheme(
@@ -117,6 +129,7 @@ export function resolveTheme(
   }
 
   const isLowContrast = contrastRatio(primary) < 3;
+  const onPrimary     = onPrimaryColor(primary);
 
-  return { primary, primaryLight, primaryRgb, accent, isLowContrast };
+  return { primary, primaryLight, primaryRgb, accent, isLowContrast, onPrimary };
 }

@@ -1,7 +1,8 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getAuthContext } from '@/lib/api-auth';
-import { getOrganizationBySlug, getPublicTournamentBySlug } from '@/lib/db';
+import { getOrganizationBySlug, getPublicTournamentBySlug, getDivisions, getTeams } from '@/lib/db';
+import { getRegistrationState } from '@/lib/registration-state';
 import { resolveTheme } from '@/lib/themes';
 import { canUseAdvancedTournamentBranding } from '@/lib/tournament-branding';
 import { OrgNavSync } from '@/components/OrgNavSync';
@@ -9,6 +10,7 @@ import TournamentNavSync from '@/components/TournamentNavSync';
 import PoweredByBadge from '@/components/marketing/PoweredByBadge';
 import TournamentAcquisitionBanner from '@/components/marketing/TournamentAcquisitionBanner';
 import InstallAppPrompt from '@/components/InstallAppPrompt';
+import MyTeamDock from '@/components/public/MyTeamDock';
 
 export const dynamic = 'force-dynamic';
 
@@ -85,12 +87,38 @@ export default async function TournamentLayout({
       `--border:        rgba(${t.primaryRgb}, 0.25)`,
       `--glow:          0 0 32px rgba(${t.primaryRgb}, 0.4)`,
       `--glow-sm:       0 0 16px rgba(${t.primaryRgb}, 0.25)`,
+      `--on-primary:    ${t.onPrimary}`,
     ].join('; ');
   }
 
   const cardStyle = canUseAdvancedBranding
     ? tournament.themeCardStyle ?? org.themeCardStyle ?? 'default'
     : 'default';
+
+  // Game-day window — gates the My-Team dock (mirrors lib/follow isTournamentInProgress
+  // without importing the client module into this server component).
+  const todayISO = new Date().toISOString().split('T')[0];
+  const tournamentInProgress =
+    tournament.status === 'active' &&
+    !!tournament.startDate && !!tournament.endDate &&
+    todayISO >= tournament.startDate && todayISO <= tournament.endDate;
+
+  // Public Register CTA — only when registration is genuinely open/waitlisting
+  // (lifecycle + capacity aware). Skip the capacity queries entirely when the
+  // register page is hidden, since there's no CTA to show then.
+  const registerHidden = (tournament.publicHiddenPages ?? []).includes('register');
+  let registerCta: 'register' | 'waitlist' | null = null;
+  if (!registerHidden) {
+    const [regDivisions, regTeams] = await Promise.all([
+      getDivisions(tournament.id, { admin: true }),
+      getTeams(tournament.id, { admin: true }),
+    ]);
+    registerCta = getRegistrationState(
+      tournament,
+      regDivisions,
+      regTeams.filter(t => t.status !== 'rejected'),
+    ).cta;
+  }
 
   // Light mode: override :root tokens so body background and all descendants flip.
   const lightModeVars = effectiveColorMode === 'light' ? [
@@ -135,6 +163,7 @@ export default async function TournamentLayout({
         tournamentName={tournament.name}
         colorMode={effectiveColorMode}
         hiddenPages={tournament.publicHiddenPages ?? []}
+        registerCta={registerCta}
       />
       {isFreeTournamentPlan && (
         <PoweredByBadge
@@ -159,6 +188,13 @@ export default async function TournamentLayout({
       <div data-card-style={cardStyle} data-color-mode={effectiveColorMode}>
         {children}
       </div>
+      {/* Game-day "now playing" dock for the followed team (self-gates: followers
+          on game day only; mobile-only). */}
+      <MyTeamDock
+        orgSlug={orgSlug}
+        tournamentSlug={tournament.slug}
+        inProgress={tournamentInProgress}
+      />
       {/* Fan app install — this tournament's branded PWA (per-tournament manifest). */}
       <InstallAppPrompt
         appName={tournament.name}

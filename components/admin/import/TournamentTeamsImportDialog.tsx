@@ -202,6 +202,14 @@ export default function TournamentTeamsImportDialog({ open, tournamentId, orgSlu
                 <span className={styles.batchId}>Batch {preview.batchId.slice(0, 8)}</span>
               </div>
               <p className={styles.modeNote}>Add/update only. Teams missing from this file stay unchanged.</p>
+              {preview.notices && preview.notices.length > 0 && (
+                <div className={styles.noticeBox}>
+                  <AlertCircle size={15} aria-hidden />
+                  <ul className={styles.noticeList}>
+                    {preview.notices.map(notice => <li key={notice}>{notice}</li>)}
+                  </ul>
+                </div>
+              )}
               <div className={styles.summaryGrid}>
                 <span><strong>{preview.summary.totalRows}</strong> rows</span>
                 <span><strong>{preview.summary.creates}</strong> creates</span>
