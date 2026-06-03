@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { Users, X, RefreshCw, ChevronDown, ChevronUp, AlertCircle, Plus, SlidersHorizontal, Trash2, ArrowLeftRight, Mail, Pencil, ClipboardList, ExternalLink, ListChecks, Check } from 'lucide-react';
+import { Users, X, RefreshCw, ChevronDown, ChevronUp, AlertCircle, Plus, SlidersHorizontal, Trash2, ArrowLeftRight, Mail, Pencil, ClipboardList, ExternalLink, ListChecks, Check, Lock, Unlock } from 'lucide-react';
 import { formatPoolName } from '@/lib/utils';
 import { useTournament } from '@/lib/tournament-context';
 import { useOrg } from '@/lib/org-context';
@@ -738,6 +738,11 @@ export default function UnifiedTeamsPage() {
     resetAddTeamForm();
   }
 
+  function openDataTools() {
+    if (!currentOrg?.slug) return;
+    window.location.assign(`/${currentOrg.slug}/admin/tournaments/data-tools`);
+  }
+
   // ── Export handlers (server-side — registration data has custom fields) ──
   function guardExport(): boolean {
     if (!currentTournament) return false;
@@ -972,6 +977,44 @@ export default function UnifiedTeamsPage() {
   const today = new Date().toISOString().split('T')[0];
   const selectedGroup = divisions.find(g => g.id === selectedDivisionId);
   const slotConfigured = poolSlots.length > 0;
+
+  const [closingDivision, setClosingDivision] = useState(false);
+
+  async function doToggleRegistration(nextClosed: boolean) {
+    if (!selectedDivisionId) return;
+    setClosingDivision(true);
+    try {
+      const res = await fetch(`/api/admin/divisions${orgQuery}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'set-closed', id: selectedDivisionId, data: { isClosed: nextClosed } }),
+      });
+      if (!res.ok) throw new Error('Failed to update registration status');
+      setDivisions(prev => prev.map(d => d.id === selectedDivisionId ? { ...d, isClosed: nextClosed } : d));
+    } catch {
+      // silent — user can retry
+    } finally {
+      setClosingDivision(false);
+    }
+  }
+
+  function handleToggleRegistration() {
+    if (!selectedDivisionId || closingDivision) return;
+    const nextClosed = !selectedGroup?.isClosed;
+    // Warn before reopening a division whose schedule is already published with real names
+    if (!nextClosed && selectedGroup?.scheduleVisibility === 'published_teams') {
+      setFeedback({
+        isOpen: true,
+        title: 'Reopen Registration?',
+        message: 'The public schedule for this division is already showing real team names. Newly accepted teams won\'t appear on the schedule until they\'re assigned to games.',
+        type: 'warning',
+        confirmText: 'Reopen Registration',
+        onConfirm: () => doToggleRegistration(false),
+      });
+      return;
+    }
+    void doToggleRegistration(nextClosed);
+  }
   const waitlistAutomationAvailable = currentOrg ? hasPlanFeature(currentOrg.planId, 'waitlist_automation') : false;
   const paymentToolsAvailable = currentOrg ? hasPlanFeature(currentOrg.planId, 'payment_readiness_tools') : false;
   const commandCenterAvailable = paymentToolsAvailable;
@@ -1451,31 +1494,48 @@ export default function UnifiedTeamsPage() {
         subtitle="Manage all teams and signups in one place"
         mobileActionsInline
         locked={isLocked}
-        actions={!isLocked ? (
+        actions={(
           <>
-          {currentOrg && hasPlanFeature(currentOrg.planId, 'custom_registration_fields') && (
-            <Link
-              href={`/${currentOrg.slug}/admin/tournaments/settings/registration-fields?from=registrations`}
-              className="btn btn-ghost btn-data"
-              title="Configure registration questions"
-              aria-label="Configure registration questions"
-              style={{ borderColor: 'transparent', background: 'transparent', padding: '0.3rem 0.45rem', color: 'var(--logic-lime)' }}
-            >
-              <ClipboardList size={15} />
-            </Link>
-          )}
-          <button
-            className={`btn btn-lime btn-data ${styles.addTeamButton}`}
-            onClick={openAddTeamModal}
-            disabled={!currentTournament}
-            aria-label="Add team"
-            title="Add team"
-          >
-            <Plus size={14} />
-            <span className={styles.addTeamLabel}>Add Team</span>
-          </button>
+            <ExportMenu
+              className={styles.registrationUtilityStart}
+              formats={['xlsx', 'csv', 'pdf']}
+              onExportXLSX={handleExportXLSX}
+              onExportCSV={handleExportCSV}
+              onExportPDF={handleExportPDF}
+              planId={currentOrg?.planId}
+              pdfFeatureKey="pdf_exports"
+              disabled={!currentTournament}
+              exportDisabled={regs.length === 0}
+              hasImportOption
+              onImport={openDataTools}
+              importLabel="Data tools"
+              importHint="Templates, imports, and bulk exports"
+            />
+            {!isLocked && currentOrg && hasPlanFeature(currentOrg.planId, 'custom_registration_fields') && (
+              <Link
+                href={`/${currentOrg.slug}/admin/tournaments/settings/registration-fields?from=registrations`}
+                className="btn btn-ghost btn-data"
+                title="Configure registration questions"
+                aria-label="Configure registration questions"
+                style={{ borderColor: 'transparent', background: 'transparent', padding: '0.3rem 0.45rem', color: 'var(--logic-lime)' }}
+              >
+                <ClipboardList size={15} />
+              </Link>
+            )}
+            {!isLocked && (
+              <button
+                className={`btn btn-lime btn-data ${styles.addTeamButton}`}
+                onClick={openAddTeamModal}
+                disabled={!currentTournament}
+                aria-label="Add team"
+                title="Add team"
+              >
+                <Plus size={14} />
+                <span className={styles.addTeamLabel}>Add Team</span>
+              </button>
+            )}
           </>
-        ) : undefined}
+        )}
       />
 
 
@@ -1514,16 +1574,6 @@ export default function UnifiedTeamsPage() {
         </ToolbarGroup>
 
         <ToolbarGroup align="end" className={`${styles.registrationActionGroup} ${styles.teamsActionGroup}`}>
-          <ExportMenu
-            className={styles.registrationUtilityStart}
-            formats={['xlsx', 'csv', 'pdf']}
-            onExportXLSX={handleExportXLSX}
-            onExportCSV={handleExportCSV}
-            onExportPDF={handleExportPDF}
-            planId={currentOrg?.planId}
-            pdfFeatureKey="pdf_exports"
-            disabled={regs.length === 0}
-          />
           {visibleSelectableIds.length > 0 && (
             <button
               type="button"
@@ -1649,6 +1699,64 @@ export default function UnifiedTeamsPage() {
           </ToolbarGroup>
         )}
       </TournamentAdminToolbar>
+
+      {/* ── Division capacity + registration status strip (single row) ─── */}
+      {currentTournament && selectedGroup && !isLocked && (() => {
+        const accepted = paymentSummary.accepted;
+        const cap = selectedGroup.capacity;
+        const closed = !!selectedGroup.isClosed;
+        const atCap = cap != null && accepted >= cap;
+        const spotsLeft = cap != null ? Math.max(0, cap - accepted) : null;
+        const warnColor = '#fbbf24';
+        const rowStyle: React.CSSProperties = {
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem',
+          padding: '0.45rem 1.25rem',
+          borderBottom: '1px solid var(--border)',
+          background: atCap && !closed ? 'rgba(251,191,36,0.05)' : 'var(--white-3)',
+        };
+        const btnStyle: React.CSSProperties = {
+          background: 'none', border: 'none', cursor: 'pointer', padding: '0.15rem 0',
+          fontSize: '0.75rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.3rem',
+          color: atCap && !closed ? warnColor : 'var(--white-40)',
+          flexShrink: 0,
+        };
+        return (
+          <div style={rowStyle}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', fontSize: '0.8rem', minWidth: 0 }}>
+              {cap != null ? (
+                <span style={{ fontFamily: 'var(--font-data)', fontWeight: 700, color: atCap ? warnColor : 'var(--white-70)', whiteSpace: 'nowrap' }}>
+                  {accepted}/{cap}
+                </span>
+              ) : (
+                <span style={{ fontFamily: 'var(--font-data)', fontWeight: 700, color: 'var(--white-70)', whiteSpace: 'nowrap' }}>
+                  {accepted} accepted
+                </span>
+              )}
+              <span style={{ color: atCap && !closed ? warnColor : 'var(--white-40)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                {atCap && !closed
+                  ? 'Full — close registration to stop new submissions'
+                  : atCap && closed
+                    ? 'at capacity'
+                    : cap != null
+                      ? `${spotsLeft} spot${spotsLeft !== 1 ? 's' : ''} remaining`
+                      : ''}
+              </span>
+              {closed && (
+                <span style={{
+                  fontSize: '0.62rem', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase',
+                  color: 'var(--danger)', background: 'rgba(var(--danger-rgb),0.1)',
+                  border: '1px solid rgba(var(--danger-rgb),0.25)', padding: '1px 5px', borderRadius: '2px',
+                  flexShrink: 0,
+                }}>Closed</span>
+              )}
+            </div>
+            <button type="button" style={btnStyle} onClick={handleToggleRegistration} disabled={closingDivision}>
+              {closed ? <Unlock size={11} /> : <Lock size={11} />}
+              {closingDivision ? '…' : closed ? 'Reopen' : 'Close Registration'}
+            </button>
+          </div>
+        );
+      })()}
 
       {/* ── Filters / settings bottom sheet ─────────────────── */}
       {mobileSettingsOpen && (

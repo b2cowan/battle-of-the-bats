@@ -31,6 +31,11 @@ export interface ScheduleMetricTeam {
   status?: string | null;
 }
 
+export interface ManualTravelBufferSettings {
+  venueChangeMinutes?: number;
+  facilityChangeMinutes?: number;
+}
+
 export interface ScheduleIssue {
   severity: ScheduleIssueSeverity;
   code: string;
@@ -50,6 +55,7 @@ export interface TeamScheduleMetrics {
   minRestMinutes: number | null;
   venueChanges: number;
   facilityChanges: number;
+  travelBufferWarnings: number;
   earlyGames: number;
   lateGames: number;
 }
@@ -82,6 +88,7 @@ export interface ScheduleMetrics {
   lateGameCount: number;
   venueConflictCount: number;
   bufferConflictCount: number;
+  travelBufferWarningCount: number;
   unresolvedFacilityLaneCount: number;
   healthScore: number;
   healthTone: ScheduleHealthTone;
@@ -100,6 +107,7 @@ export interface BuildScheduleMetricsOptions {
   expectedGamesPerParticipant?: number;
   gameDurationMinutes?: number;
   bufferMinutes?: number;
+  manualTravelBuffers?: ManualTravelBufferSettings;
   maxGamesPerDay?: number;
   includePlayoffs?: boolean;
 }
@@ -135,6 +143,7 @@ export function buildScheduleMetrics(options: BuildScheduleMetricsOptions): Sche
     maxGamesPerDay = DEFAULT_MAX_GAMES_PER_DAY,
     includePlayoffs = false,
   } = options;
+  const manualTravelBuffers = resolveManualTravelBuffers(options, tournament);
 
   const scopedGames = options.games.filter(game => {
     if (divisionId && game.divisionId !== divisionId) return false;
@@ -176,7 +185,7 @@ export function buildScheduleMetrics(options: BuildScheduleMetricsOptions): Sche
   );
 
   const teamMetrics = allKeys.map(key =>
-    buildTeamMetrics(key, participantLabels.get(key) ?? key, participantGames.get(key) ?? [], options.bufferMinutes)
+    buildTeamMetrics(key, participantLabels.get(key) ?? key, participantGames.get(key) ?? [], options.bufferMinutes, manualTravelBuffers)
   );
 
   const conflictSummary = scanVenueConflicts(scopedGames, options, divisions, tournament);
@@ -211,6 +220,23 @@ export function formatRestMinutes(minutes: number | null): string {
   const hours = Math.floor(minutes / 60);
   const mins = minutes % 60;
   return mins ? `${hours}h ${mins}m` : `${hours}h`;
+}
+
+export function resolveManualTravelBuffers(
+  options: Pick<BuildScheduleMetricsOptions, 'manualTravelBuffers'>,
+  tournament?: Tournament | null,
+): Required<ManualTravelBufferSettings> {
+  const venueSetting = normalizeManualBufferMinutes(options.manualTravelBuffers?.venueChangeMinutes)
+    ?? normalizeManualBufferMinutes(tournament?.settings?.schedule_travel_venue_buffer_minutes)
+    ?? 0;
+  const facilitySetting = normalizeManualBufferMinutes(options.manualTravelBuffers?.facilityChangeMinutes)
+    ?? normalizeManualBufferMinutes(tournament?.settings?.schedule_travel_facility_buffer_minutes)
+    ?? 0;
+
+  return {
+    venueChangeMinutes: venueSetting,
+    facilityChangeMinutes: facilitySetting,
+  };
 }
 
 function aggregateMetrics(
@@ -249,6 +275,7 @@ function aggregateMetrics(
     lateGameCount: teamMetrics.reduce((total, team) => total + team.lateGames, 0),
     venueConflictCount: conflictSummary.venueConflictCount,
     bufferConflictCount: conflictSummary.bufferConflictCount,
+    travelBufferWarningCount: teamMetrics.reduce((total, team) => total + team.travelBufferWarnings, 0),
     unresolvedFacilityLaneCount: games.filter(hasUnresolvedFacilityLane).length,
     maxGamesPerDay,
   };
@@ -259,6 +286,7 @@ function buildTeamMetrics(
   label: string,
   games: ParticipantGame[],
   overrideBufferMinutes: number | undefined,
+  manualTravelBuffers: Required<ManualTravelBufferSettings>,
 ): TeamScheduleMetrics {
   const sortedGames = [...games].sort((a, b) => a.startAbsoluteMinutes - b.startAbsoluteMinutes);
   const gamesByDay: Record<string, number> = {};
@@ -266,6 +294,7 @@ function buildTeamMetrics(
   let minRestMinutes: number | null = null;
   let venueChanges = 0;
   let facilityChanges = 0;
+  let travelBufferWarnings = 0;
   let earlyGames = 0;
   let lateGames = 0;
 
@@ -283,8 +312,19 @@ function buildTeamMetrics(
     const backToBackThreshold = overrideBufferMinutes ?? DEFAULT_BUFFER_MINUTES;
     if (restMinutes >= 0 && restMinutes <= backToBackThreshold) backToBackCount += 1;
 
-    if (previous.venueKey && current.venueKey && previous.venueKey !== current.venueKey) venueChanges += 1;
-    if (previous.facilityKey && current.facilityKey && previous.facilityKey !== current.facilityKey) facilityChanges += 1;
+    const venueChanged = Boolean(previous.venueKey && current.venueKey && previous.venueKey !== current.venueKey);
+    const facilityChanged = Boolean(previous.facilityKey && current.facilityKey && previous.facilityKey !== current.facilityKey);
+    if (venueChanged) venueChanges += 1;
+    if (facilityChanged) facilityChanges += 1;
+
+    const requiredMoveBuffer = venueChanged
+      ? manualTravelBuffers.venueChangeMinutes
+      : facilityChanged
+        ? manualTravelBuffers.facilityChangeMinutes
+        : 0;
+    if (restMinutes >= 0 && requiredMoveBuffer > 0 && restMinutes < requiredMoveBuffer) {
+      travelBufferWarnings += 1;
+    }
   }
 
   return {
@@ -297,6 +337,7 @@ function buildTeamMetrics(
     minRestMinutes,
     venueChanges,
     facilityChanges,
+    travelBufferWarnings,
     earlyGames,
     lateGames,
   };
@@ -389,6 +430,18 @@ function buildIssues(
     });
   }
 
+  const tightTravelTeams = teamMetrics.filter(team => team.travelBufferWarnings > 0);
+  if (tightTravelTeams.length > 0) {
+    issues.push({
+      severity: 'warning',
+      code: 'manual_travel_buffer',
+      title: 'Tight travel/setup moves',
+      detail: `${aggregate.travelBufferWarningCount} move${aggregate.travelBufferWarningCount === 1 ? '' : 's'} have less than the organizer-entered buffer. ${formatParticipantList(tightTravelTeams)}`,
+      count: aggregate.travelBufferWarningCount,
+      participantKeys: tightTravelTeams.map(team => team.participantKey),
+    });
+  }
+
   const venueMoveTeams = teamMetrics.filter(team => team.venueChanges > 1);
   if (venueMoveTeams.length > 0) {
     issues.push({
@@ -424,7 +477,7 @@ function buildHealthBreakdown(
     gameBalance: expectedGamesPerParticipant ? clampScore(20 - targetDelta * 5) : 20,
     rest: clampScore(20 - aggregate.backToBackCount * 4),
     dayLoad: clampScore(15 - overloadedGameDays * 5),
-    movement: clampScore(15 - aggregate.venueChangeCount * 1.5 - aggregate.facilityChangeCount * 0.5),
+    movement: clampScore(15 - aggregate.venueChangeCount * 1.5 - aggregate.facilityChangeCount * 0.5 - aggregate.travelBufferWarningCount * 2),
     timeSlots: clampScore(15 - edgeRange * 3),
     conflicts: clampScore(15 - aggregate.venueConflictCount * 7 - aggregate.bufferConflictCount * 3 - aggregate.unresolvedFacilityLaneCount * 1.5),
   };
@@ -556,6 +609,12 @@ function getScheduleFacilityLaneKey(game: ScheduleMetricGame): string | null {
 
 function hasUnresolvedFacilityLane(game: ScheduleMetricGame): boolean {
   return Boolean((game.scheduleFacilityLaneId || game.scheduleFacilityLaneLabel) && !game.venueId && !game.venueFacilityId);
+}
+
+function normalizeManualBufferMinutes(value: unknown): number | undefined {
+  const n = Number(value);
+  if (!Number.isFinite(n) || n < 0) return undefined;
+  return Math.min(240, Math.round(n));
 }
 
 function timeToMinutes(time: string): number {

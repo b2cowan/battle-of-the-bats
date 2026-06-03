@@ -328,6 +328,10 @@ export async function GET(req: Request) {
     })),
     gameDurationMinutes: positiveNumber(tSettings.game_duration_minutes),
     bufferMinutes: positiveNumber(tSettings.buffer_minutes),
+    manualTravelBuffers: {
+      venueChangeMinutes: positiveNumber(tSettings.schedule_travel_venue_buffer_minutes),
+      facilityChangeMinutes: positiveNumber(tSettings.schedule_travel_facility_buffer_minutes),
+    },
     includePlayoffs: false,
   });
   const scheduleHealth = {
@@ -343,6 +347,7 @@ export async function GET(req: Request) {
     venueChanges: scheduleMetrics.venueChangeCount,
     facilityChanges: scheduleMetrics.facilityChangeCount,
     conflicts: scheduleMetrics.venueConflictCount + scheduleMetrics.bufferConflictCount,
+    travelBufferWarnings: scheduleMetrics.travelBufferWarningCount,
     unresolvedFacilities: scheduleMetrics.unresolvedFacilityLaneCount,
     minGamesPerParticipant: scheduleMetrics.minGamesPerParticipant,
     maxGamesPerParticipant: scheduleMetrics.maxGamesPerParticipant,

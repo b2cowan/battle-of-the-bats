@@ -1,17 +1,21 @@
 'use client';
 import { useState, useEffect, useMemo, useRef } from 'react';
 import Link from 'next/link';
-import { Calendar, Trophy, List, LayoutTemplate, Search, ChevronDown, Star, X, SlidersHorizontal, Info } from 'lucide-react';
-import { Game, Team, Division, Venue, Tournament } from '@/lib/types';
-import LocationLink from '@/components/LocationLink';
+import { Calendar, CalendarPlus, Trophy, List, LayoutTemplate, Search, ChevronDown, Star, X, Info } from 'lucide-react';
+import { Game, Team, Division, Tournament } from '@/lib/types';
 import { formatTime, formatPoolName } from '@/lib/utils';
 import { getDivisionPref, setDivisionPref } from '@/lib/division-cookie';
 import { isPublicPageEnabled } from '@/lib/public-pages';
 import YearSelector from '@/components/YearSelector';
+import PublicTournamentState from '@/components/public/PublicTournamentState';
 import styles from '@/app/[orgSlug]/schedule/schedule.module.css';
 import { LogicSyncBracket } from '@/components/bracket/LogicSyncBracket';
 import { fetchPublicTournamentData } from '@/lib/public-tournament-client';
 import type { PublicTournamentPageData } from '@/lib/public-tournament-data';
+import { readFollowedTeamId, clearFollowedTeam, isTournamentInProgress } from '@/lib/follow';
+import { usePublicTournamentLive } from '@/lib/hooks/usePublicTournamentLive';
+import { downloadTeamScheduleICS } from '@/lib/team-calendar';
+import FollowAlertsToggle from '@/components/public/FollowAlertsToggle';
 
 // ── bracket helpers ───────────────────────────────────────────────────────────
 
@@ -27,6 +31,65 @@ const NIL_UUID = '00000000-0000-0000-0000-000000000000';
 type ScheduleStage = 'pool' | 'playoff';
 type BracketLayout = 'list' | 'bracket';
 
+// ── Scorebug helpers ──────────────────────────────────────────────────────────
+
+function teamInitials(name: string): string {
+  const words = name.trim().split(/\s+/);
+  if (words.length === 1) return name.slice(0, 2).toUpperCase();
+  return (words[0][0] + words[words.length - 1][0]).toUpperCase();
+}
+
+function teamAvatarHue(name: string): number {
+  let h = 0;
+  for (let i = 0; i < name.length; i++) h = name.charCodeAt(i) + ((h << 5) - h);
+  const hue = Math.abs(h) % 360;
+  // Shift away from lime-green (80-155) so avatar doesn't clash with the follow star
+  return hue < 80 ? hue : hue < 155 ? hue + 75 : hue;
+}
+
+function calcTeamRecord(teamId: string, allGames: Game[]) {
+  let w = 0, l = 0, t = 0;
+  for (const g of allGames) {
+    if (g.status !== 'completed' && g.status !== 'submitted') continue;
+    if (g.homeScore == null || g.awayScore == null) continue;
+    if (g.isPlayoff) continue;
+    const isHome = g.homeTeamId === teamId;
+    const isAway = g.awayTeamId === teamId;
+    if (!isHome && !isAway) continue;
+    if (g.homeScore === g.awayScore) { t++; continue; }
+    const won = (isHome && g.homeScore > g.awayScore) || (isAway && g.awayScore > g.homeScore);
+    if (won) w++; else l++;
+  }
+  return { w, l, t };
+}
+
+interface StandingRow { teamId: string; name: string; w: number; l: number; t: number; pts: number; }
+
+function calcDivisionStandings(divisionId: string, allGames: Game[], allTeams: Team[]): StandingRow[] {
+  const divTeams = allTeams.filter(t => t.divisionId === divisionId && t.status !== 'rejected');
+  const map = new Map<string, StandingRow>();
+  for (const team of divTeams) map.set(team.id, { teamId: team.id, name: team.name, w: 0, l: 0, t: 0, pts: 0 });
+  for (const g of allGames) {
+    if (g.divisionId !== divisionId || g.isPlayoff) continue;
+    if (g.status !== 'completed' && g.status !== 'submitted') continue;
+    if (g.homeScore == null || g.awayScore == null) continue;
+    const home = map.get(g.homeTeamId);
+    const away = map.get(g.awayTeamId);
+    if (!home || !away) continue;
+    if (g.homeScore === g.awayScore) { home.t++; home.pts++; away.t++; away.pts++; }
+    else if (g.homeScore > g.awayScore) { home.w++; home.pts += 2; away.l++; }
+    else { away.w++; away.pts += 2; home.l++; }
+  }
+  return [...map.values()].sort((a, b) => b.pts - a.pts || b.w - a.w);
+}
+
+function ordinal(n: number): string {
+  if (n === 1) return '1st';
+  if (n === 2) return '2nd';
+  if (n === 3) return '3rd';
+  return `${n}th`;
+}
+
 // ── component ─────────────────────────────────────────────────────────────────
 
 interface Props {
@@ -36,32 +99,10 @@ interface Props {
   initialData?: PublicTournamentPageData;
 }
 
-function followKey(orgSlug: string, tournamentSlug: string) {
-  return `fl_follow_team_${orgSlug}_${tournamentSlug}`;
-}
-
-function readFollowedTeamId(orgSlug: string, tournamentSlug: string) {
-  if (typeof window === 'undefined') return null;
-  try {
-    const raw = window.localStorage.getItem(followKey(orgSlug, tournamentSlug));
-    if (!raw) return null;
-    const parsed = JSON.parse(raw) as { id?: string };
-    return parsed.id ?? null;
-  } catch {
-    return null;
-  }
-}
-
-function clearFollowedTeam(orgSlug: string, tournamentSlug: string) {
-  if (typeof window === 'undefined') return;
-  window.localStorage.removeItem(followKey(orgSlug, tournamentSlug));
-}
-
 export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = false, initialData }: Props) {
   const [games, setGames]           = useState<Game[]>(() => initialData?.games ?? []);
   const [teams, setTeams]           = useState<Team[]>(() => initialData?.teams ?? []);
   const [divisions, setDivisions]   = useState<Division[]>(() => initialData?.divisions ?? []);
-  const [venues, setVenues]         = useState<Venue[]>(() => initialData?.venues ?? []);
   const [allTournaments, setAllTournaments] = useState<Tournament[]>(() => initialData?.tournaments ?? []);
   const [selectedTournament, setSelectedTournament] = useState<Tournament | null>(() => initialData?.tournament ?? null);
   const [activeGroup, setActiveGroup]     = useState<string>(() => {
@@ -81,13 +122,9 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
     () => initialData?.tournament?.contactEmail ?? initialData?.organization?.contactEmail ?? null
   );
   const [teamSearch, setTeamSearch] = useState<string>('');
+  const [fanAlertsEnabled, setFanAlertsEnabled] = useState<boolean>(() => initialData?.fanAlertsEnabled ?? false);
   const [followedTeamId, setFollowedTeamId] = useState<string | null>(null);
   const [followedFilterApplied, setFollowedFilterApplied] = useState(false);
-  const [filterSheetOpen, setFilterSheetOpen] = useState(false);
-  const [draftViewMode, setDraftViewMode] = useState<ScheduleStage>('pool');
-  const [draftBracketLayout, setDraftBracketLayout] = useState<BracketLayout>('list');
-  const filterButtonRef = useRef<HTMLButtonElement | null>(null);
-  const sheetRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     // Browser-local preference hydrates after the public page renders.
@@ -106,11 +143,11 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
 
       setRequireFinalization(data?.organization.requireScoreFinalization ?? current?.requireScoreFinalization ?? true);
       setContactEmail(current?.contactEmail ?? data?.organization?.contactEmail ?? null);
+      setFanAlertsEnabled(data?.fanAlertsEnabled ?? false);
       setAllTournaments(data?.tournaments ?? []);
       setSelectedTournament(current);
       setGames(data?.games ?? []);
       setTeams(data?.teams ?? []);
-      setVenues(data?.venues ?? []);
       setDivisions(groups);
       if (groups.length > 0) {
         const pref = getDivisionPref(orgSlug);
@@ -121,6 +158,38 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
     }
     init();
   }, [orgSlug, tournamentSlug, initialData]);
+
+  // ── live refresh (game day only) ─────────────────────────────────────────────
+  usePublicTournamentLive({
+    orgSlug,
+    tournamentSlug,
+    section: 'schedule',
+    enabled: isTournamentInProgress(selectedTournament),
+    onData: data => {
+      setGames(data.games ?? []);
+      setTeams(data.teams ?? []);
+      setDivisions(data.divisions ?? []);
+    },
+  });
+
+  // Flash a score-flip animation on rows whose score/status just changed.
+  const prevScoreSigRef = useRef<Map<string, string>>(new Map());
+  const [flippedGameIds, setFlippedGameIds] = useState<Set<string>>(() => new Set());
+  useEffect(() => {
+    const changed = new Set<string>();
+    for (const g of games) {
+      const sig = `${g.homeScore ?? ''}:${g.awayScore ?? ''}:${g.status}`;
+      const prev = prevScoreSigRef.current.get(g.id);
+      if (prev !== undefined && prev !== sig) changed.add(g.id);
+      prevScoreSigRef.current.set(g.id, sig);
+    }
+    if (changed.size === 0) return;
+    // Transient animation flag driven by incoming live data — intentional.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setFlippedGameIds(changed);
+    const timer = window.setTimeout(() => setFlippedGameIds(new Set()), 1600);
+    return () => window.clearTimeout(timer);
+  }, [games]);
 
   // ── helper fns ─────────────────────────────────────────────────────────────
 
@@ -133,8 +202,6 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
     }
     return ph ?? 'TBD';
   };
-
-  const getVenue = (id?: string) => id ? venues.find(d => d.id === id) ?? null : null;
 
   function getWinner(game: Game): 'home' | 'away' | 'tie' | null {
     if (game.homeScore == null || game.awayScore == null) return null;
@@ -175,6 +242,8 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
     followedTeam && teamSearch.trim().toLowerCase() === followedTeam.name.toLowerCase()
       ? followedTeam.id
       : null;
+
+  const isMyTeamFilter = Boolean(followedTeamId && activeTeamFilterId === followedTeamId);
 
   const teamFiltered = teamSearch
     ? filtered.filter(g => {
@@ -235,12 +304,77 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
   const teamsHref = `/${orgSlug}/${tournamentSlug}/teams`;
   const canRegister = Boolean(selectedTournament && isPublicPageEnabled(selectedTournament, 'register'));
   const showTeamsPage = Boolean(selectedTournament && isPublicPageEnabled(selectedTournament, 'teams'));
-  const activeFilterCount =
-    (viewMode === 'playoff' ? 1 : 0) +
-    (viewMode === 'playoff' && bracketLayout === 'bracket' ? 1 : 0);
-  const activeViewSummary = viewMode === 'playoff'
-    ? `Playoffs - ${bracketLayout === 'bracket' ? 'Bracket' : 'List'}`
-    : 'Pool Play';
+  // ── Scorebug derived data ─────────────────────────────────────────────────
+
+  const followedRecord = useMemo(
+    () => (followedTeamId ? calcTeamRecord(followedTeamId, games) : null),
+    [followedTeamId, games]
+  );
+
+  const followedTeamDiv = followedTeam
+    ? divisions.find(d => d.id === followedTeam.divisionId) ?? null
+    : null;
+
+  const followedTeamPool = (followedTeam?.poolId && followedTeamDiv?.pools)
+    ? (followedTeamDiv.pools.find((p: { id: string; name: string }) => p.id === followedTeam.poolId) ?? null)
+    : null;
+
+  // Most recent submitted+scored game today — "live" game for the scorebug
+  const followedCurrentGame = useMemo(() => {
+    if (!followedTeamId) return null;
+    return games
+      .filter(g =>
+        g.date === today &&
+        g.status === 'submitted' &&
+        g.homeScore != null && g.awayScore != null &&
+        (g.homeTeamId === followedTeamId || g.awayTeamId === followedTeamId)
+      )
+      .sort((a, b) => (b.time ?? '').localeCompare(a.time ?? ''))[0] ?? null;
+  }, [followedTeamId, games, today]);
+
+  // Next upcoming scheduled game for the followed team
+  const followedNextGame = useMemo(() => {
+    if (!followedTeamId) return null;
+    return games
+      .filter(g =>
+        g.status === 'scheduled' &&
+        (g.homeTeamId === followedTeamId || g.awayTeamId === followedTeamId) &&
+        (g.date > today || g.date === today)
+      )
+      .sort((a, b) => {
+        if (a.date !== b.date) return a.date.localeCompare(b.date);
+        return (a.time ?? '').localeCompare(b.time ?? '');
+      })[0] ?? null;
+  }, [followedTeamId, games, today]);
+
+  const followedContextGame = followedCurrentGame ?? followedNextGame;
+  const followedOpponentRawId = followedContextGame
+    ? (followedContextGame.homeTeamId === followedTeamId
+        ? followedContextGame.awayTeamId
+        : followedContextGame.homeTeamId)
+    : null;
+  const followedOpponentTeam = followedOpponentRawId
+    ? (teams.find(t => t.id === followedOpponentRawId) ?? null)
+    : null;
+  const followedOpponentName = followedOpponentTeam?.name ??
+    (followedContextGame
+      ? (followedContextGame.homeTeamId === followedTeamId
+          ? followedContextGame.awayPlaceholder
+          : followedContextGame.homePlaceholder) ?? null
+      : null);
+
+  const divisionStandings = useMemo(
+    () => (followedTeam ? calcDivisionStandings(followedTeam.divisionId, games, teams) : []),
+    [followedTeam, games, teams]
+  );
+
+  const railStandings = followedTeamPool
+    ? divisionStandings.filter(s => teams.find(t => t.id === s.teamId)?.poolId === followedTeamPool.id)
+    : divisionStandings;
+
+  const followedStandingPos = followedTeamId
+    ? (railStandings.findIndex(s => s.teamId === followedTeamId) + 1)
+    : 0;
 
   function selectDivision(nextGroup: string, clearTeam = true) {
     setActiveGroup(nextGroup);
@@ -248,76 +382,16 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
     setDivisionPref(orgSlug, divisions.find(g => g.id === nextGroup)?.name ?? '');
   }
 
-  function openFilterSheet() {
-    setDraftViewMode(viewMode);
-    setDraftBracketLayout(bracketLayout);
-    setFilterSheetOpen(true);
-  }
-
-  function closeFilterSheet() {
-    setFilterSheetOpen(false);
-  }
-
-  function resetDraftFilters() {
-    setDraftViewMode('pool');
-    setDraftBracketLayout('list');
-  }
-
-  function applyDraftFilters() {
-    setViewMode(draftViewMode);
-    setBracketLayout(draftBracketLayout);
-    closeFilterSheet();
-  }
-
-  function handleSheetKeyDown(event: React.KeyboardEvent<HTMLDivElement>) {
-    if (event.key === 'Escape') {
-      event.preventDefault();
-      closeFilterSheet();
-      return;
-    }
-    if (event.key !== 'Tab') return;
-
-    const focusable = sheetRef.current?.querySelectorAll<HTMLElement>(
-      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-    );
-    const nodes = Array.from(focusable ?? []).filter(node => !node.hasAttribute('disabled'));
-    if (nodes.length === 0) return;
-    const first = nodes[0];
-    const last = nodes[nodes.length - 1];
-
-    if (event.shiftKey && document.activeElement === first) {
-      event.preventDefault();
-      last.focus();
-    } else if (!event.shiftKey && document.activeElement === last) {
-      event.preventDefault();
-      first.focus();
-    }
-  }
-
-  useEffect(() => {
-    if (!filterSheetOpen || typeof document === 'undefined') return;
-    const returnFocusTo = filterButtonRef.current;
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    const focusTimer = window.setTimeout(() => sheetRef.current?.focus(), 0);
-    return () => {
-      window.clearTimeout(focusTimer);
-      document.body.style.overflow = previousOverflow;
-      returnFocusTo?.focus();
-    };
-  }, [filterSheetOpen]);
 
   useEffect(() => {
     if (!followedTeam || followedFilterApplied) return;
     const followedDivision = divisions.find(g => g.id === followedTeam.divisionId);
     if (!followedDivision) return;
-    // Apply the browser-local team preference once after public data loads.
+    // Jump to the followed team's division; do NOT auto-filter by team name —
+    // stars on rows already highlight followed-team games.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setActiveGroup(followedDivision.id);
     setDivisionPref(orgSlug, followedDivision.name);
-    if ((followedDivision.scheduleVisibility ?? 'unpublished') !== 'published_generic') {
-      setTeamSearch(followedTeam.name);
-    }
     setFollowedFilterApplied(true);
   }, [divisions, followedFilterApplied, followedTeam, orgSlug]);
 
@@ -351,6 +425,19 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
     if (followedName && teamSearch.trim().toLowerCase() === followedName.toLowerCase()) {
       setTeamSearch('');
     }
+  }
+
+  function handleAddToCalendar() {
+    if (!followedTeam || !selectedTournament) return;
+    void downloadTeamScheduleICS({
+      team: followedTeam,
+      games,
+      teams,
+      divisions,
+      tournamentName: selectedTournament.name,
+      orgSlug,
+      tournamentSlug,
+    });
   }
 
   function inferPool(game: Game, allGames: Game[]): string | null {
@@ -400,6 +487,8 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
     const hasScore = (game.status === 'completed' || game.status === 'submitted') &&
       game.homeScore != null && game.awayScore != null;
     const winner = getWinner(game);
+    const awayName = getTeamDisplay(game, false);
+    const homeName = getTeamDisplay(game, true);
 
     const outcomeColor = {
       win: 'var(--success)',
@@ -415,53 +504,46 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
       : winner === 'away' ? { label: 'W', color: outcomeColor.win }
       : { label: 'L', color: outcomeColor.loss };
 
+    const isLive = game.status === 'submitted' && game.date === today;
     const statusBadge =
       game.status === 'cancelled' ? <span className="badge badge-danger">Cancelled</span>
       : game.status === 'completed' ? <span className="badge badge-success">Final</span>
-      : game.status === 'submitted' ? (requireFinalization
-          ? <span className="badge badge-warning">Pending</span>
-          : <span className="badge badge-success">Final</span>)
+      : game.status === 'submitted' ? (
+          isLive
+            ? <span className={styles.liveBadge}><span className={styles.liveDot} />LIVE</span>
+            : requireFinalization
+              ? <span className="badge badge-warning">Pending</span>
+              : <span className="badge badge-success">Final</span>
+        )
       : null;
 
     const isFollowedGame = Boolean(
       followedTeamId &&
       (game.homeTeamId === followedTeamId || game.awayTeamId === followedTeamId)
     );
+    const rowClassName = `${styles.gameRow} ${extraClass} ${isFollowedGame ? styles.followedGameRow : ''} ${flippedGameIds.has(game.id) ? styles.scoreFlip : ''}`;
+    const gameHref = `${homeHref}/schedule/${game.id}`;
+    const gameLabel = `${formatRowDate(game.date)} ${game.time ? formatTime(game.time) : 'TBD'} ${awayName} vs ${homeName}`;
 
-    const mobileStatusLabel =
-      game.status === 'cancelled' ? 'Cancelled'
-      : game.status === 'completed' || (game.status === 'submitted' && !requireFinalization) ? 'Final'
-      : game.status === 'submitted' ? 'Pending'
-      : 'Scheduled';
-
-    return (
-      <div
-        key={game.id}
-        data-status={game.status}
-        className={`${styles.gameRow} ${extraClass} ${isFollowedGame ? styles.followedGameRow : ''}`}
-      >
+    const rowContent = (
+      <>
+        {/* ── Desktop: flat VS row ─────────────────────────────────────── */}
         <div className={styles.timeCell}>
           <div className={styles.gameMetaLine}>
             <span className={styles.gameDateText}>{formatRowDate(game.date)}</span>
             <span className={styles.gameTimeText}>{game.time ? `- ${formatTime(game.time)}` : '- TBD'}</span>
           </div>
-          <span className={styles.mobileStatusText} data-status={game.status}>{mobileStatusLabel}</span>
         </div>
 
-        <div className={styles.locationCell}>
-          <LocationLink location={game.location} venue={getVenue(game.venueId)} size="sm" />
-        </div>
-
-        {/* Away on the left, home on the right; scores flank the team names. */}
         <div className={styles.matchupCell}>
           <div className={`${styles.matchSide} ${styles.matchAway}`}>
             {awayOutcome && <span className={styles.resultTag} style={{ color: awayOutcome.color }}>{awayOutcome.label}</span>}
             {hasScore && <span className={styles.matchScore} style={{ color: awayOutcome?.color }}>{game.awayScore}</span>}
-            <span className={styles.matchTeam}>{getTeamDisplay(game, false)}</span>
+            <span className={styles.matchTeam} title={awayName}>{awayName}</span>
           </div>
           <span className={styles.matchVs}>VS</span>
           <div className={`${styles.matchSide} ${styles.matchHome}`}>
-            <span className={styles.matchTeam}>{getTeamDisplay(game, true)}</span>
+            <span className={styles.matchTeam} title={homeName}>{homeName}</span>
             {hasScore && <span className={styles.matchScore} style={{ color: homeOutcome?.color }}>{game.homeScore}</span>}
             {homeOutcome && <span className={styles.resultTag} style={{ color: homeOutcome.color }}>{homeOutcome.label}</span>}
           </div>
@@ -469,14 +551,78 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
 
         <div className={styles.statusCell}>
           {typeLabel}
-          <span className={styles.desktopStatusSlot}>{statusBadge}</span>
+          <span className={styles.statusBadgeSlot}>{statusBadge}</span>
           <span className={styles.followStarSlot}>
             {isFollowedGame && <Star size={15} fill="currentColor" className={styles.followStar} aria-label="Followed team game" />}
           </span>
         </div>
 
-        {game.notes && <p className={styles.gameNotes}>{game.notes}</p>}
-      </div>
+        {/* ── Mobile: explicit named-area grid — no nested flex, avatars can't collapse ── */}
+        <div className={styles.mobileGameLayout}>
+          {/* col 1: time, spans both team rows */}
+          <div className={styles.mobileTimeCol}>
+            <span className={styles.mobileTimePrimary}>{game.time ? formatTime(game.time) : 'TBD'}</span>
+          </div>
+          {/* col 2: away avatar */}
+          <span
+            className={styles.mobileAvAway}
+            style={{ background: awayName !== 'TBD' ? `hsl(${teamAvatarHue(awayName)}, 58%, 38%)` : 'var(--white-10)' }}
+          >
+            {awayName !== 'TBD' ? teamInitials(awayName) : '?'}
+          </span>
+          {/* col 3: away name */}
+          <span className={styles.mobileNameAway}>
+            {awayName}{isFollowedGame && game.awayTeamId === followedTeamId ? ' ★' : ''}
+          </span>
+          {/* col 4: away score */}
+          <span className={styles.mobileScoreAway} style={{ color: awayOutcome?.color ?? 'var(--white-75)' }}>
+            {hasScore ? game.awayScore : ''}
+          </span>
+          {/* col 2: home avatar */}
+          <span
+            className={styles.mobileAvHome}
+            style={{ background: homeName !== 'TBD' ? `hsl(${teamAvatarHue(homeName)}, 58%, 38%)` : 'var(--white-10)' }}
+          >
+            {homeName !== 'TBD' ? teamInitials(homeName) : '?'}
+          </span>
+          {/* col 3: home name */}
+          <span className={styles.mobileNameHome}>
+            {homeName}{isFollowedGame && game.homeTeamId === followedTeamId ? ' ★' : ''}
+          </span>
+          {/* col 4: home score + status badge */}
+          <div className={styles.mobileScoreHome}>
+            <span className={styles.mobileScoreNum} style={{ color: homeOutcome?.color ?? 'var(--white-75)' }}>
+              {hasScore ? game.homeScore : ''}
+            </span>
+            <span className={styles.mobileRowStatus}>{statusBadge ?? typeLabel}</span>
+          </div>
+        </div>
+      </>
+    );
+
+    if (isPreview) {
+      return (
+        <div
+          key={game.id}
+          data-status={game.status}
+          className={rowClassName}
+        >
+          {rowContent}
+        </div>
+      );
+    }
+
+    return (
+      <Link
+        key={game.id}
+        href={gameHref}
+        prefetch={false}
+        data-status={game.status}
+        className={rowClassName}
+        aria-label={`View game details for ${gameLabel}`}
+      >
+        {rowContent}
+      </Link>
     );
   }
 
@@ -486,11 +632,13 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
       <div className="page-content">
         <div className="section">
           <div className="container">
-            <div className="empty-state">
-              <Calendar size={48} />
-              <p>Schedule is not available for this tournament.</p>
-              {!isPreview && <Link href={homeHref} className="btn btn-ghost btn-sm">Tournament Home</Link>}
-            </div>
+            <PublicTournamentState
+              icon={<Calendar size={40} />}
+              eyebrow="Schedule"
+              title="Schedule unavailable"
+              description="The organizer has hidden the schedule for this tournament."
+              actions={!isPreview ? [{ href: homeHref, label: 'Tournament Home', variant: 'ghost' as const }] : []}
+            />
           </div>
         </div>
       </div>
@@ -518,38 +666,131 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
             />
           )}
 
-          {!isPreview && followedTeam && (
-            <div className={styles.followBar}>
-              <div className={styles.followMain}>
-                <Star size={16} fill="currentColor" />
-                <span>Following</span>
-                <strong>{followedTeam.name}</strong>
+          {/* ── Scorebug strip (mobile) / follow prompt ── */}
+          {!isPreview && !loading && (
+            <>
+              <div className={styles.scorebugBar}>
+                {followedTeam ? (
+                  <>
+                    <div
+                      className={styles.scorebugAvatar}
+                      style={{ background: `hsl(${teamAvatarHue(followedTeam.name)}, 58%, 38%)` }}
+                    >
+                      {teamInitials(followedTeam.name)}
+                    </div>
+                    <div className={styles.scorebugBody}>
+                      <div className={styles.scorebugName}>
+                        <Star size={11} fill="currentColor" className={styles.scorebugStar} />
+                        {followedTeam.name}
+                      </div>
+                      <div className={styles.scorebugMeta}>
+                        <span>
+                          {followedRecord
+                            ? `${followedRecord.w}-${followedRecord.l}-${followedRecord.t}`
+                            : '0-0-0'}
+                        </span>
+                        {followedStandingPos > 0 && (
+                          <>
+                            <span className={styles.scorebugDot}>·</span>
+                            <span>
+                              {ordinal(followedStandingPos)}
+                              {followedTeamPool ? ` · ${followedTeamPool.name}` : ''}
+                            </span>
+                          </>
+                        )}
+                      </div>
+                      {followedOpponentName && (
+                        <div className={styles.scorebugOpp}>vs {followedOpponentName}</div>
+                      )}
+                    </div>
+                    <div className={styles.scorebugRight}>
+                      {followedCurrentGame ? (
+                        <>
+                          <span className={styles.scorebugLive}>
+                            <span className={styles.scorebugLiveDot} />LIVE
+                          </span>
+                          <div className={styles.scorebugScoreDisplay}>
+                            {followedCurrentGame.awayTeamId === followedTeamId ? (
+                              <>{followedCurrentGame.awayScore}<span className={styles.scorebugScoreDash}>-</span>{followedCurrentGame.homeScore}</>
+                            ) : (
+                              <>{followedCurrentGame.homeScore}<span className={styles.scorebugScoreDash}>-</span>{followedCurrentGame.awayScore}</>
+                            )}
+                          </div>
+                        </>
+                      ) : followedNextGame ? (
+                        <>
+                          <div className={styles.scorebugNextUp}>NEXT UP</div>
+                          <div className={styles.scorebugNextTime}>
+                            {followedNextGame.time ? formatTime(followedNextGame.time) : 'TBD'}
+                          </div>
+                        </>
+                      ) : null}
+                    </div>
+                    <button
+                      type="button"
+                      className={styles.scorebugStop}
+                      onClick={stopFollowing}
+                      aria-label={`Stop following ${followedTeam.name}`}
+                      title="Stop following"
+                    >
+                      <X size={13} />
+                    </button>
+                  </>
+                ) : (
+                  <div className={styles.noFollowPrompt}>
+                    <Star size={13} className={styles.noFollowStar} />
+                    <span>Follow a team to pin its score &amp; next game here.</span>
+                  </div>
+                )}
               </div>
-              <div className={styles.followActions}>
-                <button type="button" className="btn btn-lime btn-sm" onClick={showFollowedTeamGames}>
-                  <Calendar size={14} /> My Team Games
-                </button>
-                <button type="button" className="btn btn-ghost btn-sm" onClick={stopFollowing}>
-                  <X size={14} /> Clear
-                </button>
-              </div>
-            </div>
-          )}
-
-          {allUnpublished ? (
-            <div className="empty-state" style={{ padding: '2.5rem 0' }}>
-              <Calendar size={48} style={{ opacity: 0.3 }} />
-              <p>
-                The schedule for this tournament hasn&apos;t been published yet. Check back soon.
-                {contactEmail ? <> Questions? Contact <a href={`mailto:${contactEmail}`}>{contactEmail}</a>.</> : null}
-              </p>
-              {!isPreview && (
-                <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center', flexWrap: 'wrap' }}>
-                  {canRegister && <Link href={registerHref} className="btn btn-lime btn-sm">Register</Link>}
-                  {showTeamsPage && <Link href={teamsHref} className="btn btn-ghost btn-sm">View Teams</Link>}
+              {followedTeam && (
+                <div className={styles.followQuickActions}>
+                  {!isMyTeamFilter && (
+                    <button
+                      type="button"
+                      className={styles.myGamesLink}
+                      onClick={showFollowedTeamGames}
+                    >
+                      <Star size={11} /> My Team Games
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    className={styles.myGamesLink}
+                    onClick={handleAddToCalendar}
+                  >
+                    <CalendarPlus size={11} /> Add to Calendar
+                  </button>
+                  {fanAlertsEnabled && selectedTournament && (
+                    <FollowAlertsToggle
+                      orgSlug={orgSlug}
+                      tournamentSlug={tournamentSlug}
+                      tournamentId={selectedTournament.id}
+                      team={{ id: followedTeam.id, name: followedTeam.name }}
+                    />
+                  )}
                 </div>
               )}
-            </div>
+            </>
+          )}
+
+          {/* ── Desktop two-column layout when following a team ── */}
+          <div className={followedTeam && !loading ? styles.scheduleLayout : ''}>
+            <div className={followedTeam && !loading ? styles.scheduleMain : ''}>
+
+          {allUnpublished ? (
+            <PublicTournamentState
+              icon={<Calendar size={40} />}
+              eyebrow="Schedule"
+              title="Schedule coming soon"
+              description="The tournament schedule has not been published yet. Check back before game day."
+              contactEmail={contactEmail}
+              actions={!isPreview ? [
+                ...(canRegister ? [{ href: registerHref, label: 'Register', variant: 'lime' as const }] : []),
+                ...(showTeamsPage ? [{ href: teamsHref, label: 'View Teams', variant: 'ghost' as const }] : []),
+                { href: homeHref, label: 'Tournament Home', variant: 'ghost' as const },
+              ] : []}
+            />
           ) : (
           <>
 
@@ -572,40 +813,66 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
               ) : (
                 <div className={styles.mobileDivisionPill}>{activeG?.name ?? 'Division'}</div>
               )}
-              <button
-                ref={filterButtonRef}
-                type="button"
-                className={`btn btn-outline ${styles.mobileFilterButton}`}
-                onClick={openFilterSheet}
-                aria-haspopup="dialog"
-                aria-expanded={filterSheetOpen}
-              >
-                <SlidersHorizontal size={16} />
-                Filters
-                {activeFilterCount > 0 && <span className={styles.filterCount}>{activeFilterCount}</span>}
-              </button>
+              <div className={styles.mobileStageControl} role="group" aria-label="Schedule stage">
+                <button
+                  type="button"
+                  className={`${styles.mobileStageBtn} ${viewMode === 'pool' ? styles.mobileStageBtnActive : ''}`}
+                  aria-pressed={viewMode === 'pool'}
+                  onClick={() => setViewMode('pool')}
+                >
+                  Pool Play
+                </button>
+                <button
+                  type="button"
+                  className={`${styles.mobileStageBtn} ${viewMode === 'playoff' ? styles.mobileStageBtnActive : ''}`}
+                  aria-pressed={viewMode === 'playoff'}
+                  onClick={() => setViewMode('playoff')}
+                >
+                  Playoffs
+                </button>
+              </div>
             </div>
-            <p className={styles.mobileFilterSummary}>
-              View <strong>{activeViewSummary}</strong>
-            </p>
+            {/* Search + List/Bracket on the same row */}
             {activeVisibility !== 'unpublished' && (
-              <div className={`${styles.teamFilter} ${styles.mobileTeamFilter}`}>
-                <Search size={14} className={styles.teamFilterIcon} />
-                <input
-                  type="text"
-                  className="form-input"
-                  list="schedule-mobile-team-options"
-                  placeholder="Search team or coach..."
-                  value={teamSearch}
-                  onChange={e => setTeamSearch(e.target.value)}
-                />
-                <datalist id="schedule-mobile-team-options">
-                  {divisionTeams.map(team => (
-                    <option key={team.id} value={team.name}>{team.coach}</option>
-                  ))}
-                </datalist>
-                {teamSearch && (
-                  <button type="button" className={styles.clearFilter} onClick={() => setTeamSearch('')} aria-label="Clear team filter">x</button>
+              <div className={styles.mobileSearchBracketRow}>
+                <div className={`${styles.teamFilter} ${styles.mobileTeamFilter}`}>
+                  <Search size={14} className={styles.teamFilterIcon} />
+                  <input
+                    type="text"
+                    className="form-input"
+                    list="schedule-mobile-team-options"
+                    placeholder="Search team or coach..."
+                    value={teamSearch}
+                    onChange={e => setTeamSearch(e.target.value)}
+                  />
+                  <datalist id="schedule-mobile-team-options">
+                    {divisionTeams.map(team => (
+                      <option key={team.id} value={team.name}>{team.coach}</option>
+                    ))}
+                  </datalist>
+                  {teamSearch && (
+                    <button type="button" className={styles.clearFilter} onClick={() => setTeamSearch('')} aria-label="Clear team filter">x</button>
+                  )}
+                </div>
+                {viewMode === 'playoff' && (
+                  <div className={`${styles.segmentedControl} ${styles.mobileBracketInline}`} role="group" aria-label="Playoff view">
+                    <button
+                      type="button"
+                      className={`${styles.segmentButton} ${bracketLayout === 'list' ? styles.segmentActive : ''}`}
+                      aria-pressed={bracketLayout === 'list'}
+                      onClick={() => setBracketLayout('list')}
+                    >
+                      <List size={14} />
+                    </button>
+                    <button
+                      type="button"
+                      className={`${styles.segmentButton} ${bracketLayout === 'bracket' ? styles.segmentActive : ''}`}
+                      aria-pressed={bracketLayout === 'bracket'}
+                      onClick={() => setBracketLayout('bracket')}
+                    >
+                      <LayoutTemplate size={14} />
+                    </button>
+                  </div>
                 )}
               </div>
             )}
@@ -691,92 +958,25 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
             </div>
           </div>
 
-          {filterSheetOpen && (
-            <div className={styles.sheetLayer}>
+          {/* My Team Games banner — shown when filtering to followed team's games */}
+          {isMyTeamFilter && followedTeam && (
+            <div className={styles.myTeamBanner}>
+              <Star size={13} fill="currentColor" />
+              <span className={styles.myTeamBannerText}>
+                Showing <strong>{followedTeam.name}</strong> games only
+              </span>
+              <span className={styles.myTeamCount}>{teamFiltered.length}</span>
               <button
                 type="button"
-                className={styles.sheetBackdrop}
-                aria-label="Close filters"
-                onClick={closeFilterSheet}
-              />
-              <div
-                ref={sheetRef}
-                className={styles.filterSheet}
-                role="dialog"
-                aria-modal="true"
-                aria-labelledby="schedule-filter-sheet-title"
-                tabIndex={-1}
-                onKeyDown={handleSheetKeyDown}
+                className={styles.myTeamBannerClear}
+                onClick={() => setTeamSearch('')}
+                aria-label="Show all games"
               >
-                <div className={styles.sheetHandle} aria-hidden="true" />
-                <div className={styles.sheetHeader}>
-                  <div>
-                    <span>Schedule</span>
-                    <h2 id="schedule-filter-sheet-title">Filters</h2>
-                  </div>
-                  <button type="button" className={styles.sheetClose} onClick={closeFilterSheet} aria-label="Close filters">
-                    <X size={18} />
-                  </button>
-                </div>
-
-                <div className={styles.sheetBody}>
-                  <div className={styles.sheetField}>
-                    <span className={styles.sheetControlLabel}>Stage</span>
-                    <div className={`${styles.segmentedControl} ${styles.sheetSegmented}`} role="group" aria-label="Schedule stage">
-                      <button
-                        type="button"
-                        className={`${styles.segmentButton} ${draftViewMode === 'pool' ? styles.segmentActive : ''}`}
-                        aria-pressed={draftViewMode === 'pool'}
-                        onClick={() => setDraftViewMode('pool')}
-                      >
-                        Pool Play
-                      </button>
-                      <button
-                        type="button"
-                        className={`${styles.segmentButton} ${draftViewMode === 'playoff' ? styles.segmentActive : ''}`}
-                        aria-pressed={draftViewMode === 'playoff'}
-                        onClick={() => setDraftViewMode('playoff')}
-                      >
-                        Playoffs
-                      </button>
-                    </div>
-                  </div>
-
-                  {draftViewMode === 'playoff' && (
-                    <div className={styles.sheetField}>
-                      <span className={styles.sheetControlLabel}>Playoff view</span>
-                      <div className={`${styles.segmentedControl} ${styles.sheetSegmented}`} role="group" aria-label="Playoff view">
-                        <button
-                          type="button"
-                          className={`${styles.segmentButton} ${draftBracketLayout === 'list' ? styles.segmentActive : ''}`}
-                          aria-pressed={draftBracketLayout === 'list'}
-                          onClick={() => setDraftBracketLayout('list')}
-                        >
-                          <List size={14} /> List
-                        </button>
-                        <button
-                          type="button"
-                          className={`${styles.segmentButton} ${draftBracketLayout === 'bracket' ? styles.segmentActive : ''}`}
-                          aria-pressed={draftBracketLayout === 'bracket'}
-                          onClick={() => setDraftBracketLayout('bracket')}
-                        >
-                          <LayoutTemplate size={14} /> Bracket
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                <div className={styles.sheetFooter}>
-                  <button type="button" className="btn btn-ghost" onClick={resetDraftFilters}>Reset</button>
-                  <button type="button" className="btn btn-primary" onClick={applyDraftFilters}>Apply Filters</button>
-                </div>
-              </div>
+                <X size={12} />
+              </button>
             </div>
           )}
-
-          {/* Team filter active label */}
-          {teamSearch && (
+          {teamSearch && !isMyTeamFilter && (
             <p className={styles.filterLabel}>
               Filtering by: <strong>&ldquo;{teamSearch}&rdquo;</strong>
             </p>
@@ -793,13 +993,14 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
 
           {/* ── main content ── */}
           {activeVisibility === 'unpublished' ? (
-            <div className="empty-state" style={{ padding: '2.5rem 0' }}>
-              <Calendar size={48} style={{ opacity: 0.3 }} />
-              <p>
-                The schedule for this division hasn&apos;t been published yet. Check back soon.
-                {contactEmail ? <> Questions? Contact <a href={`mailto:${contactEmail}`}>{contactEmail}</a>.</> : null}
-              </p>
-            </div>
+            <PublicTournamentState
+              icon={<Calendar size={40} />}
+              eyebrow="Schedule"
+              title="Division schedule coming soon"
+              description="This division has not been published yet. Other divisions may already be available."
+              contactEmail={contactEmail}
+              compact
+            />
           ) : loading ? (
             <div className={styles.skeletonContainer}>
               <div className={`${styles.skeleton} ${styles.skeletonPulse}`} />
@@ -807,29 +1008,31 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
               <div className={`${styles.skeleton} ${styles.skeletonPulse}`} />
             </div>
           ) : sortedDates.length === 0 && !(viewMode === 'playoff' && bracketLayout === 'bracket') && !(viewMode === 'pool' && pools.length >= 2) && !(viewMode === 'playoff' && hasPoolPlaceholders) ? (
-            <div className="empty-state">
-              <Calendar size={48} />
-              <p>
-                {teamSearch
-                  ? 'No games found for the selected filter.'
-                  : `No ${viewMode === 'playoff' ? 'playoff ' : ''}games found. Check back soon.`}
-              </p>
+            <PublicTournamentState
+              icon={<Calendar size={40} />}
+              eyebrow="Schedule"
+              title={teamSearch ? 'No games match that search' : `No ${viewMode === 'playoff' ? 'playoff ' : ''}games yet`}
+              description={teamSearch ? 'Try another team name, coach name, or clear the search.' : 'Games will appear here once the organizer adds them.'}
+              actions={!teamSearch && !isPreview && showTeamsPage ? [{ href: teamsHref, label: 'View Teams', variant: 'ghost' as const }] : []}
+              compact
+            >
               {teamSearch ? (
                 <button type="button" className="btn btn-ghost btn-sm" onClick={() => setTeamSearch('')}>Clear Search</button>
-              ) : !isPreview ? (
-                showTeamsPage ? <Link href={teamsHref} className="btn btn-ghost btn-sm">View Teams</Link> : null
               ) : null}
-            </div>
+            </PublicTournamentState>
           ) : (
             (() => {
               // ── BRACKET VIEW ─────────────────────────────────────────────
               if (viewMode === 'playoff' && bracketLayout === 'bracket') {
                 if (bracketGames.length === 0) {
                   return (
-                    <div className="empty-state">
-                      <Trophy size={48} />
-                      <p>No playoff games scheduled yet. Check back soon.</p>
-                    </div>
+                    <PublicTournamentState
+                      icon={<Trophy size={40} />}
+                      eyebrow="Playoffs"
+                      title="No playoff games yet"
+                      description="Playoff games will appear here once they are scheduled."
+                      compact
+                    />
                   );
                 }
 
@@ -970,6 +1173,92 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
           )}
           </>
           )}
+            </div>{/* /scheduleMain */}
+
+            {/* ── Desktop right rail (scorebug card + standings) ── */}
+            {followedTeam && !loading && (
+              <div className={styles.scheduleRail}>
+                {/* Scorebug card */}
+                <div className={styles.railCard}>
+                  <div className={styles.railCardHeader}>
+                    <div
+                      className={styles.railAvatar}
+                      style={{ background: `hsl(${teamAvatarHue(followedTeam.name)}, 58%, 38%)` }}
+                    >
+                      {teamInitials(followedTeam.name)}
+                    </div>
+                    <div className={styles.railTeamInfo}>
+                      <div className={styles.railTeamName}>
+                        <Star size={11} fill="currentColor" className={styles.railTeamStar} />
+                        {followedTeam.name}
+                      </div>
+                      <div className={styles.railTeamMeta}>
+                        <span>
+                          {followedRecord
+                            ? `${followedRecord.w}-${followedRecord.l}-${followedRecord.t}`
+                            : '0-0-0'}
+                        </span>
+                        {followedStandingPos > 0 && (
+                          <>
+                            <span>·</span>
+                            <span>
+                              {ordinal(followedStandingPos)}
+                              {followedTeamPool ? ` · ${followedTeamPool.name}` : ''}
+                            </span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                    <div className={styles.railScoreArea}>
+                      {followedCurrentGame ? (
+                        <>
+                          <span className={styles.scorebugLive} style={{ fontSize: '0.52rem' }}>
+                            <span className={styles.scorebugLiveDot} />LIVE
+                          </span>
+                          <div className={styles.railScoreNum}>
+                            {followedCurrentGame.awayTeamId === followedTeamId ? (
+                              <>{followedCurrentGame.awayScore}<span className={styles.railScoreDash}>-</span>{followedCurrentGame.homeScore}</>
+                            ) : (
+                              <>{followedCurrentGame.homeScore}<span className={styles.railScoreDash}>-</span>{followedCurrentGame.awayScore}</>
+                            )}
+                          </div>
+                        </>
+                      ) : followedNextGame ? (
+                        <>
+                          <div className={styles.railNextUp}>NEXT UP</div>
+                          <div className={styles.railNextTime}>
+                            {followedNextGame.time ? formatTime(followedNextGame.time) : 'TBD'}
+                          </div>
+                        </>
+                      ) : null}
+                    </div>
+                  </div>
+                  {followedOpponentName && (
+                    <div className={styles.railCardBody}>
+                      <div className={styles.railOpp}>vs {followedOpponentName}</div>
+                    </div>
+                  )}
+                </div>
+
+                {fanAlertsEnabled && selectedTournament && (
+                  <FollowAlertsToggle
+                    orgSlug={orgSlug}
+                    tournamentSlug={tournamentSlug}
+                    tournamentId={selectedTournament.id}
+                    team={{ id: followedTeam.id, name: followedTeam.name }}
+                  />
+                )}
+
+                <button type="button" className={styles.railCalendarBtn} onClick={handleAddToCalendar}>
+                  <CalendarPlus size={13} /> Add My Games to Calendar
+                </button>
+
+                <button type="button" className={styles.stopFollowingBtn} onClick={stopFollowing}>
+                  <X size={12} /> Unfollow {followedTeam.name}
+                </button>
+              </div>
+            )}
+          </div>{/* /scheduleLayout */}
         </div>
       </div>
     </div>

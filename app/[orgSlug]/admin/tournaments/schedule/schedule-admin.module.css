@@ -35,17 +35,44 @@
 
 .generatorHeader h3 {
   margin: 0;
-  font-size: 1.25rem;
-  font-weight: 700;
+  font-family: var(--font-data);
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
   color: var(--logic-lime);
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.4rem;
 }
 
 .generatorForm, .generatorPreview {
   padding: 1.5rem;
   overflow-y: auto;
+}
+
+/* Bring global form-group/form-label/inputs into HUD data-font density */
+.generatorForm :global(.form-label) {
+  font-family: var(--font-data);
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--white-50);
+  margin-bottom: 0.3rem;
+}
+
+.generatorForm :global(.form-group) {
+  margin-bottom: 0.75rem;
+}
+
+.generatorForm :global(.form-input),
+.generatorForm :global(.form-select) {
+  height: 30px;
+  min-height: 30px;
+  font-size: 0.82rem;
+  padding-top: 0;
+  padding-bottom: 0;
 }
 
 .diamondGrid {
@@ -306,6 +333,50 @@
   text-transform: uppercase;
 }
 
+.presetRail {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.35rem;
+  margin-bottom: 0.45rem;
+}
+
+.presetButton {
+  min-width: 0;
+  min-height: 30px;
+  padding: 0.32rem 0.42rem;
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.2);
+  border-radius: 2px;
+  background: rgba(var(--blueprint-blue-rgb), 0.045);
+  color: var(--white-60);
+  font-family: var(--font-data);
+  font-size: 0.58rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  line-height: 1.18;
+  text-transform: uppercase;
+  cursor: pointer;
+  overflow-wrap: anywhere;
+  transition: border-color 0.15s, background 0.15s, color 0.15s;
+}
+
+.presetButton:hover {
+  border-color: rgba(var(--logic-lime-rgb), 0.35);
+  color: var(--white-85);
+}
+
+.presetButtonActive {
+  border-color: rgba(var(--logic-lime-rgb), 0.48);
+  background: rgba(var(--logic-lime-rgb), 0.09);
+  color: var(--logic-lime);
+}
+
+.presetHint {
+  margin: 0 0 0.75rem;
+  color: var(--white-45);
+  font-size: 0.68rem;
+  line-height: 1.35;
+}
+
 .prioritySection + .prioritySection {
   margin-top: 0.75rem;
   padding-top: 0.75rem;
@@ -442,14 +513,109 @@
   text-transform: uppercase;
 }
 
+.draftOptionGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.45rem;
+  margin: 0.55rem 0 0.75rem;
+}
+
+.draftOptionCard {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.22rem 0.45rem;
+  min-width: 0;
+  min-height: 62px;
+  padding: 0.5rem 0.55rem;
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.18);
+  border-radius: 2px;
+  background: var(--white-5);
+  color: var(--white-70);
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.15s, background 0.15s, color 0.15s;
+}
+
+.draftOptionCard:hover {
+  border-color: rgba(var(--logic-lime-rgb), 0.34);
+  color: var(--white-85);
+}
+
+.draftOptionCardActive {
+  border-color: rgba(var(--logic-lime-rgb), 0.5);
+  background: rgba(var(--logic-lime-rgb), 0.08);
+  color: var(--logic-lime);
+}
+
+.draftOptionCard span,
+.draftOptionCard strong,
+.draftOptionCard em {
+  min-width: 0;
+}
+
+.draftOptionCard span {
+  font-family: var(--font-data);
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  line-height: 1.25;
+  text-transform: uppercase;
+  overflow-wrap: anywhere;
+}
+
+.draftOptionCard strong {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.08rem;
+  color: var(--white-90);
+  font-family: var(--font-data);
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.draftOptionCardActive strong {
+  color: var(--logic-lime);
+}
+
+.draftOptionCard strong small {
+  color: var(--white-45);
+  font-size: 0.54rem;
+}
+
+.draftOptionCard em {
+  grid-column: 1 / -1;
+  color: var(--white-45);
+  font-style: normal;
+  font-size: 0.62rem;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+
 .previewStats {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.75rem 1rem;
+  gap: 0.75rem;
+  padding: 0.55rem 0.75rem;
   background: var(--bg-2);
   border-radius: 2px;
-  font-size: 0.9rem;
+  font-family: var(--font-data);
+  font-size: 0.78rem;
+  color: var(--white-70);
+}
+
+.previewStats strong {
+  color: var(--fl-text);
+  font-weight: 800;
+}
+
+.previewActions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.4rem;
+  flex-wrap: wrap;
 }
 
 .previewTableWrap {
@@ -467,18 +633,22 @@
 .previewTableWrap th {
   background: var(--bg-2);
   text-align: left;
-  padding: 0.75rem;
-  font-size: 0.8rem;
+  padding: 0.45rem 0.65rem;
+  font-family: var(--font-data);
+  font-size: 0.6rem;
+  font-weight: 800;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.08em;
   color: var(--white-40);
 }
 
 .previewTableWrap td {
-  padding: 0.75rem;
+  padding: 0.5rem 0.65rem;
   border-top: 1px solid rgba(var(--blueprint-blue-rgb), 0.15);
-  font-size: 0.9rem;
+  font-family: var(--font-data);
+  font-size: 0.78rem;
   color: var(--white-80);
+  vertical-align: middle;
 }
 
 .previewFooter {
@@ -882,6 +1052,36 @@
     grid-template-columns: 1fr;
   }
 
+  .presetRail {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .scopeStrip {
+    grid-template-columns: 1fr;
+    gap: 0.55rem;
+  }
+
+  .scopeButtons {
+    width: 100%;
+  }
+
+  .scopeButton {
+    flex: 1 1 0;
+  }
+
+  .partialPreviewSummary {
+    grid-template-columns: repeat(2, auto auto);
+    justify-content: start;
+  }
+
+  .partialPreviewSummary span {
+    grid-column: 1 / -1;
+  }
+
+  .draftOptionGrid {
+    grid-template-columns: 1fr;
+  }
+
   .prioritySectionHeader,
   .facilityPickerHeader,
   .facilityVenueName {
@@ -963,28 +1163,467 @@
   }
 }
 
+/* ─── Generator Segmented Mode Toggle ─────────────────────────────────────── */
+.generatorSegmented {
+  display: inline-flex;
+  width: fit-content;
+  gap: 0;
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.28);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-top: 0.35rem;
+}
+
+.generatorSegBtn {
+  height: 30px;
+  padding: 0 1rem;
+  border: none;
+  border-right: 1px solid rgba(var(--blueprint-blue-rgb), 0.28);
+  background: transparent;
+  color: var(--white-55);
+  font-family: var(--font-data);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+}
+
+.generatorSegBtn:last-child {
+  border-right: none;
+}
+
+.generatorSegBtn:hover:not(.generatorSegBtnActive) {
+  background: rgba(var(--blueprint-blue-rgb), 0.08);
+  color: var(--white-80);
+}
+
+.generatorSegBtnActive {
+  background: rgba(var(--logic-lime-rgb), 0.12);
+  border-right-color: rgba(var(--logic-lime-rgb), 0.3);
+  color: var(--logic-lime);
+  cursor: default;
+}
+
+.scopeStrip {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.75rem;
+  margin: -0.25rem 0 1rem;
+  padding: 0.55rem 0.65rem;
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.18);
+  background: rgba(var(--blueprint-blue-rgb), 0.045);
+}
+
+.scopeCopy {
+  min-width: 0;
+}
+
+.scopeCopy span,
+.partialPreviewSummary span {
+  display: block;
+  color: var(--logic-lime);
+  font-family: var(--font-data);
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.scopeCopy small {
+  display: block;
+  margin-top: 0.15rem;
+  color: var(--white-45);
+  font-size: 0.68rem;
+  line-height: 1.3;
+}
+
+.scopeButtons {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.25);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.scopeButton {
+  min-height: 30px;
+  padding: 0 0.7rem;
+  border: none;
+  border-right: 1px solid rgba(var(--blueprint-blue-rgb), 0.25);
+  background: transparent;
+  color: var(--white-55);
+  font-family: var(--font-data);
+  font-size: 0.58rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  line-height: 1.15;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.scopeButton:last-child {
+  border-right: none;
+}
+
+.scopeButton:hover:not(.scopeButtonActive) {
+  background: rgba(var(--blueprint-blue-rgb), 0.08);
+  color: var(--white-80);
+}
+
+.scopeButtonActive {
+  background: rgba(var(--logic-lime-rgb), 0.1);
+  color: var(--logic-lime);
+}
+
+.scopeWarning {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.35rem;
+  padding-top: 0.45rem;
+  border-top: 1px solid rgba(var(--warning-rgb), 0.18);
+  color: var(--warning);
+  font-family: var(--font-data);
+  font-size: 0.64rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  line-height: 1.35;
+  text-transform: uppercase;
+}
+
+.scopeWarning svg {
+  flex: 0 0 auto;
+  margin-top: 0.02rem;
+}
+
+.scopeWarning strong {
+  color: var(--fl-text);
+}
+
+.partialPreviewSummary {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) repeat(4, auto auto);
+  align-items: baseline;
+  gap: 0.22rem 0.42rem;
+  margin: 0.55rem 0 0.25rem;
+  padding: 0.45rem 0.65rem;
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.18);
+  background: rgba(var(--blueprint-blue-rgb), 0.045);
+  font-family: var(--font-data);
+}
+
+.partialPreviewSummary strong {
+  color: var(--fl-text);
+  font-size: 0.85rem;
+  line-height: 1;
+}
+
+.partialPreviewSummary small {
+  color: var(--white-45);
+  font-size: 0.58rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* ─── Date Slot List ──────────────────────────────────────────────────────── */
 .dateSlotList {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
-  margin-top: 0.5rem;
-  padding: 1rem;
-  background: var(--bg-2);
+  margin-top: 0.45rem;
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.18);
   border-radius: 2px;
+  overflow: hidden;
 }
 
 .dateSlotRow {
-  display: flex;
-  align-items: flex-start;
-  gap: 1rem;
-  background: var(--surface);
-  padding: 0.75rem;
-  border-radius: 2px;
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.2);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto auto auto;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.6rem;
+  background: var(--bg-2);
+  border-bottom: 1px solid rgba(var(--blueprint-blue-rgb), 0.12);
 }
 
-.dateSlotRow .formGroup {
-  margin-bottom: 0;
+.dateSlotRow:last-child {
+  border-bottom: none;
+}
+
+.dateSlotSelect {
+  width: 100%;
+  height: 28px;
+  padding: 0 0.5rem;
+  background: rgba(var(--blueprint-blue-rgb), 0.06);
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.22);
+  border-radius: 2px;
+  color: var(--fl-text);
+  font-family: var(--font-data);
+  font-size: 0.74rem;
+  cursor: pointer;
+  color-scheme: dark;
+}
+
+.dateSlotSelect:focus {
+  outline: none;
+  border-color: var(--blueprint-blue);
+}
+
+.dateSlotTime {
+  width: 104px;
+  height: 28px;
+  padding: 0 0.4rem;
+  background: rgba(var(--blueprint-blue-rgb), 0.06);
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.22);
+  border-radius: 2px;
+  color: var(--fl-text);
+  font-family: var(--font-data);
+  font-size: 0.74rem;
+  color-scheme: dark;
+  flex-shrink: 0;
+}
+
+.dateSlotTime:focus {
+  outline: none;
+  border-color: var(--blueprint-blue);
+}
+
+.dateSlotSep {
+  color: var(--white-25);
+  font-size: 0.7rem;
+  user-select: none;
+  flex-shrink: 0;
+}
+
+.dateSlotDel {
+  width: 26px !important;
+  min-width: 26px !important;
+  height: 26px !important;
+  padding: 0 !important;
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* ─── Compact Number Input (small integer fields) ─────────────────────────── */
+.compactNumberInput {
+  max-width: 80px;
+  text-align: center;
+}
+
+/* ─── Priority: Inline Limits Row ────────────────────────────────────────── */
+.limitsRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1.25rem;
+  margin-top: 0.35rem;
+}
+
+.limitItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  cursor: default;
+}
+
+.limitLabel {
+  color: var(--white-50);
+  font-family: var(--font-data);
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.limitInput {
+  width: 52px;
+  height: 26px;
+  padding: 0 0.3rem;
+  text-align: center;
+  background: rgba(var(--blueprint-blue-rgb), 0.08);
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.28);
+  border-radius: 2px;
+  color: var(--fl-text);
+  font-family: var(--font-data);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.limitInput:focus {
+  outline: none;
+  border-color: var(--blueprint-blue);
+}
+
+.limitUnit {
+  color: var(--white-35);
+  font-family: var(--font-data);
+  font-size: 0.6rem;
+  white-space: nowrap;
+}
+
+/* ─── Priority: Effort Row ────────────────────────────────────────────────── */
+.effortRow {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin-top: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.effortRow .form-select,
+.effortRow select {
+  width: 130px;
+  flex-shrink: 0;
+}
+
+.effortHint {
+  color: var(--white-40);
+  font-size: 0.66rem;
+  line-height: 1.3;
+  min-width: 0;
+}
+
+/* ─── Priority: Flat Preference Checkboxes ───────────────────────────────── */
+.prefChecks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1rem;
+  margin-top: 0.55rem;
+}
+
+.prefCheck {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.38rem;
+  color: var(--white-70);
+  font-family: var(--font-data);
+  font-size: 0.68rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.prefCheck:hover {
+  color: var(--fl-text);
+}
+
+.prefCheck input {
+  flex-shrink: 0;
+  margin: 0;
+}
+
+/* ─── Generate Button ────────────────────────────────────────────────────── */
+.generateBtnWrap {
+  text-align: right;
+  margin-top: 1.25rem;
+}
+
+/* ─── Generator Step Section Labels ─────────────────────────────────────── */
+.generatorSection {
+  margin-bottom: 1.5rem;
+}
+
+.generatorStepLabel {
+  margin: 0 0 0.75rem;
+  padding-bottom: 0.45rem;
+  border-bottom: 1px solid rgba(var(--blueprint-blue-rgb), 0.2);
+  color: rgba(var(--logic-lime-rgb), 0.65);
+  font-family: var(--font-data);
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+/* ─── Advanced Settings Drawer ───────────────────────────────────────────── */
+.advancedDrawer {
+  margin-top: 0.75rem;
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.18);
+  border-radius: 2px;
+}
+
+.advancedSummary {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.45rem 0.65rem;
+  cursor: pointer;
+  user-select: none;
+  list-style: none;
+  color: var(--white-50);
+  font-family: var(--font-data);
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: rgba(var(--blueprint-blue-rgb), 0.04);
+  transition: color 0.15s, background 0.15s;
+}
+
+.advancedSummary::-webkit-details-marker { display: none; }
+
+.advancedSummary:hover {
+  color: var(--white-70);
+  background: rgba(var(--blueprint-blue-rgb), 0.08);
+}
+
+.advancedDrawer[open] > .advancedSummary {
+  color: var(--logic-lime);
+  border-bottom: 1px solid rgba(var(--blueprint-blue-rgb), 0.18);
+}
+
+.advancedDrawerContent {
+  padding: 0.75rem 0.65rem 0.5rem;
+}
+
+/* ─── Field Hint Text (sub-label below form labels) ─────────────────────── */
+.fieldHint {
+  display: block;
+  margin-top: 0.2rem;
+  color: var(--white-35);
+  font-family: var(--font-data);
+  font-size: 0.64rem;
+  line-height: 1.3;
+}
+
+/* ─── Crossover Helper (reactive one-liner below select) ────────────────── */
+.crossoverHint {
+  margin-top: 0.35rem;
+  color: var(--white-40);
+  font-family: var(--font-data);
+  font-size: 0.68rem;
+  line-height: 1.35;
+}
+
+/* ─── Generator Mobile: bottom-sheet at ≤540px ───────────────────────────── */
+@media (max-width: 680px) {
+  .generatorOverlay {
+    padding: 1rem;
+  }
+}
+
+@media (max-width: 540px) {
+  .generatorOverlay {
+    padding: 0;
+    align-items: flex-end;
+  }
+
+  .generatorModal {
+    border-radius: 12px 12px 0 0;
+    max-height: 93vh;
+    width: 100%;
+    border-bottom: none;
+  }
+
+  .dateSlotTime {
+    width: 88px;
+  }
 }
 
 .mobileButtonLabel {
@@ -1710,28 +2349,64 @@
   }
 }
 
-/* ─── Scoring Mobile Status Tag (in date cell, below time) ─────────────────
-   Mirrors mobileStatusTag in planning mode. Hidden on desktop.             */
+/* ─── Scoring Mobile Status Tag (inline after time, non-default states only) ─
+   Hidden on desktop where the rail cell badge covers it. On mobile renders
+   inline as "· ✓ FINAL" or "· ⚠ REVIEWING" — no separate line needed.      */
 .scoringMobileStatus {
   display: none;
 }
 
 @media (max-width: 768px) {
   .scoringMobileStatus {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.2rem;
+    display: inline;
     font-family: var(--font-data);
-    font-size: 0.6rem;
+    font-size: 0.72rem;
     font-weight: 700;
-    letter-spacing: 0.06em;
+    letter-spacing: 0.04em;
     text-transform: uppercase;
     white-space: nowrap;
-    color: var(--info);
-    margin-top: 2px;
+    color: var(--warning);
+    margin-left: 0.3rem;
   }
-  .scoringMobileStatus[data-status="submitted"] { color: var(--warning); }
   .scoringMobileStatus[data-status="completed"] { color: var(--success); }
+}
+
+/* ─── Matchup Team Names — desktop reflow + 2-line wrap ──────────────────── */
+/* Long names (30+ chars) borrow the short opponent's slack (flex: 0 1 auto    */
+/* + justify-content: center on the matchup cell), then wrap to a 2nd line     */
+/* instead of truncating. Mirrors the venue cell's -webkit-box clamp.          */
+/* Mobile (≤768px) re-grids these via the .planningMatchup grid rules above.   */
+.planningTeamAway,
+.planningTeamHome {
+  flex: 0 1 auto;
+  min-width: 0;
+  font-family: var(--font-data);
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--fl-text);
+  overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  line-height: 1.25;
+}
+.planningTeamAway { text-align: right; }
+.planningTeamHome { text-align: left; }
+
+/* Scoring-mode name span (sits beside the inline score/W-L marker). */
+.scoringTeamName {
+  font-family: var(--font-data);
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--fl-text);
+  min-width: 0;
+  overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  line-height: 1.25;
 }
 
 /* ─── Planning Mode Status Cell ──────────────────────────────────────────── */
@@ -1745,6 +2420,26 @@
   flex-shrink: 0;
 }
 
+.generatorLockBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.22rem;
+  padding: 1px 5px;
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.32);
+  border-radius: 2px;
+  background: rgba(var(--logic-lime-rgb), 0.08);
+  color: var(--logic-lime);
+  font-family: var(--font-data);
+  font-size: 0.58rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  line-height: 1.2;
+}
+
+.generatorLockAction {
+  color: var(--logic-lime) !important;
+}
+
 @media (max-width: 768px) {
   .planningStatusCell {
     flex: 0 0 auto;
@@ -1753,29 +2448,36 @@
   }
 }
 
-/* ─── Planning Venue Cell — intentional mobile override ─────────────────── */
-/* admin-common hides .gameColVenue at ≤768px; this class re-enables it for  */
-/* planning rows so venue is always visible inline below the matchup.         */
-.planningVenueCell {
-  display: flex; /* baseline for desktop (admin-common controls flex sizing)  */
+/* ─── Venue sub-line inside the date cell (planning + scoring) ───────────── */
+/* Row 1 = venue name, row 2 = facility name (when set). Each line is short   */
+/* enough to fit in 155px without wrapping.                                   */
+.venueInDate {
+  display: flex;
+  align-items: flex-start;
+  gap: 3px;
+  font-family: var(--font-data);
+  font-size: 0.65rem;
+  color: var(--data-gray);
+  opacity: 0.75;
+  margin-top: 3px;
+  line-height: 1.3;
 }
 
-.planningVenueCell[data-empty="true"] {
-  visibility: hidden;
+.venueInDate > div {
+  min-width: 0;
+  overflow: hidden;
 }
 
-@media (max-width: 768px) {
-  .planningVenueCell {
-    display: flex !important; /* override admin-common display: none           */
-    grid-column: 1 / -1;     /* full width, below matchup row                 */
-    grid-row: 3;
-    font-size: 0.64rem;
-    padding-top: 0.05rem;
-  }
+.venueInDate > div > div {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 
-  .planningVenueCell[data-empty="true"] {
-    display: none !important;
-  }
+.facilityLine {
+  font-size: 0.6rem;
+  opacity: 0.75;
+  margin-top: 1px;
 }
 
 /* ─── Planning Row Status Stripe ─────────────────────────────────────────── */
@@ -1812,22 +2514,18 @@
 
 @media (max-width: 768px) {
   .mobileStatusTag {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.2rem;
+    display: inline;
     font-family: var(--font-data);
-    font-size: 0.54rem;
-    font-weight: 800;
-    letter-spacing: 0.06em;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
     text-transform: uppercase;
     white-space: nowrap;
+    color: var(--warning);
+    margin-left: 0.3rem;
   }
-  .mobileStatusTag[data-status="cancelled"] {
-    color: var(--danger);
-  }
-  .mobileStatusTag[data-status="completed"] {
-    color: var(--success);
-  }
+  .mobileStatusTag[data-status="cancelled"] { color: var(--danger); }
+  .mobileStatusTag[data-status="completed"] { color: var(--success); }
 }
 
 /* ─── Date Group Dividers ─────────────────────────────────────────────────── */
@@ -2411,7 +3109,7 @@
 
   .inlineFormActions {
     display: grid;
-    grid-template-columns: 1.25fr 1fr 1fr 0.9fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 0.42rem;
   }
 

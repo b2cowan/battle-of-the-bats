@@ -4,6 +4,12 @@
 
 Create a mobile-first public tournament experience for coaches, parents, players, and visitors. The work covers the public home page, registration, schedule, standings/results, teams, rules, news, hidden pages, empty states, and post-event public viewing.
 
+## Archive Status
+
+Archived on 2026-06-02 as implementation-complete. The public mobile experience now supports registration review/waitlist, Tournament Day home mode, Follow My Team, mobile schedule filters, compact schedule rows with game detail pages, table-first Results/Standings, completed-tournament public record value, and shared public empty/unavailable states.
+
+Browser visual/design refinements are intentionally split to a separate design project. Route-specific analytics surfaces remain future product work.
+
 The biggest changes are:
 
 - A compact mobile schedule control bar with a filter bottom sheet.
@@ -103,4 +109,10 @@ Tournament Day Home Mode is implemented as the next public-home slice:
 - Follow-up mobile review tightened the information split: Schedule now owns dense game-by-game score rows, while mobile Standings leads with the ranking table and uses only compact status/My Team context above it. The duplicate Recent Scores feed stays available for wider screens but is hidden on phones.
 - Follow-up visual hierarchy pass moved the standings tie-breaker order below the table and clarified the schedule row hierarchy so final scores, Pending/Cancelled state, and followed-team signals remain scannable.
 - Follow-up direction from product review: public Schedule/result rows now intentionally mirror the admin Results & Scoring row pattern. The public version keeps the compact date/status/matchup rhythm, preserves venue as muted public schedule context, and replaces the admin edit pencil rail with a followed-team star.
-- The full no-banner hero fallback redesign, post-event recap framing beyond Results/Standings, analytics surfaces, and mobile visual UAT remain open.
+- Follow-up density correction: compress supporting mobile chrome first, not the standings data table. Schedule follow controls, filters, TBD notice, and row metadata are tighter; Standings table text/padding was brought back up for phone readability.
+- Follow-up row cleanup: Scheduled is no longer repeated on every unscored game. Meaningful statuses stay in the top-right rail beside the followed-team star, and public venue context now splits parent venue and facility/surface into two compact lines.
+- Follow-up row/detail split: Schedule rows are now compact selectable game-index rows without venue text. Venue, facility/surface, Google Maps, notes, division, stage, status, and full matchup context live on a dedicated public game details page.
+- Completed tournament home now behaves as a final public record: the hero compacts, primary action prefers Final Standings, Schedule is labeled as Game Log, and a Final Public Record section shows score counts, top standings, latest finals, and game-log links.
+- Shared public empty and unavailable states now use one compact pattern across Schedule, Standings/Results, Teams, Registration, News, Rules, public game details, and public home fallbacks, with organizer contact and useful next links where available.
+- Browser visual testing and design-only refinements are closed out of this implementation project and should move to a separate design project.
+- Analytics surfaces remain open product work.

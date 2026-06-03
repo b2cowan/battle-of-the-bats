@@ -5,6 +5,12 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { hasPlanFeature, requiresTournamentPlusCopy, type PlanFeature } from '@/lib/plan-features';
 import { notify } from '@/lib/notify';
 import {
+  applyDivisionRoundRobinDeleteScope,
+  sanitizeGameIds,
+  validateReplaceablePlayoffRows,
+  validateReplaceableRoundRobinRows,
+} from '@/lib/game-delete-policy';
+import {
   finalizeTournamentScore,
   loadTournamentScoreGame,
   revertTournamentScore,
@@ -83,10 +89,13 @@ export async function GET(req: Request) {
     awayScore: g.away_score,
     status: g.status,
     isPlayoff: g.is_playoff,
+    generatorLocked: g.generator_locked ?? false,
     bracketId: g.bracket_id,
     bracketCode: g.bracket_code,
     homePlaceholder: g.home_placeholder,
     awayPlaceholder: g.away_placeholder,
+    homeSlotId: g.home_slot_id,
+    awaySlotId: g.away_slot_id,
     scoreSubmittedByUserId: g.score_submitted_by_user_id,
     scoreSubmittedByEmail: g.score_submitted_by_email,
     scoreSubmittedAt: g.score_submitted_at,
@@ -116,7 +125,7 @@ export async function POST(req: Request) {
     }
 
     const supabase = createClient(url, key);
-    const { action, games, tournamentId, divisionId } = await req.json();
+    const { action, games, tournamentId, divisionId, gameIds } = await req.json();
 
     // Scope check: scoped users may only write to their assigned tournaments
     if (tournamentId) {
@@ -138,40 +147,47 @@ export async function POST(req: Request) {
         return planFeatureForbidden(requiredFeature);
       }
 
-      // Verify every game in the batch belongs to a tournament in scope and is not locked
-      for (const g of games) {
-        if (g.tournamentId) {
-          const denied = scopeGuard(ctx, g.tournamentId);
-          if (denied) return denied;
-          const wrongOrg = await requireTournamentInOrg(ctx, g.tournamentId);
-          if (wrongOrg) return wrongOrg;
-        }
+      // Deduplicate tournament checks — all games in a batch typically share one tournament.
+      const batchTournamentIds = Array.from(new Set(
+        games.map((g: any) => g.tournamentId).filter(Boolean)
+      ));
+      for (const tid of batchTournamentIds) {
+        const denied = scopeGuard(ctx, tid);
+        if (denied) return denied;
+        const wrongOrg = await requireTournamentInOrg(ctx, tid);
+        if (wrongOrg) return wrongOrg;
+        if (await isTournamentLocked(tid)) return tournamentLockedResponse();
       }
-      if (tournamentId && await isTournamentLocked(tournamentId)) return tournamentLockedResponse();
 
       const usesFacilityLanes = games.some((g: any) => g.scheduleFacilityLaneId !== undefined);
       const rows = games.map((g: any) => {
         const row: Record<string, unknown> = {
-        tournament_id:    g.tournamentId,
-        division_id:     g.divisionId,
-        home_team_id:     g.homeTeamId   || null,
-        away_team_id:     g.awayTeamId   || null,
-        game_date:        g.date,
-        game_time:        g.time,
-        location:         g.location,
-        diamond_id:       g.venueId      || null,
-        venue_facility_id: g.venueFacilityId || null,
-        status:           g.status       || 'scheduled',
-        is_playoff:       g.isPlayoff    || false,
-        bracket_id:       g.bracketId    || null,
-        bracket_code:     g.bracketCode  || null,
-        home_placeholder: g.homePlaceholder || null,
-        away_placeholder: g.awayPlaceholder || null,
-        home_slot_id:     g.homeSlotId   || null,
-        away_slot_id:     g.awaySlotId   || null,
-        notes:            g.notes        || null,
+          tournament_id:    g.tournamentId,
+          division_id:     g.divisionId,
+          home_team_id:     g.homeTeamId   || null,
+          away_team_id:     g.awayTeamId   || null,
+          game_date:        g.date,
+          game_time:        g.time,
+          location:         g.location,
+          diamond_id:       g.venueId      || null,
+          venue_facility_id: g.venueFacilityId || null,
+          status:           g.status       || 'scheduled',
+          is_playoff:       g.isPlayoff    || false,
+          bracket_id:       g.bracketId    || null,
+          bracket_code:     g.bracketCode  || null,
+          home_placeholder: g.homePlaceholder || null,
+          away_placeholder: g.awayPlaceholder || null,
+          home_slot_id:     g.homeSlotId   || null,
+          away_slot_id:     g.awaySlotId   || null,
+          notes:            g.notes        || null,
         };
-        if (usesFacilityLanes) row.schedule_facility_lane_id = g.scheduleFacilityLaneId || null;
+        if (usesFacilityLanes) {
+          row.schedule_facility_lane_id = g.scheduleFacilityLaneId || null;
+          row.schedule_facility_lane_label = g.scheduleFacilityLaneLabel || null;
+        }
+        if (g.generatorLocked !== undefined) {
+          row.generator_locked = Boolean(g.generatorLocked);
+        }
         return row;
       });
 
@@ -199,7 +215,105 @@ export async function POST(req: Request) {
         return planFeatureForbidden('auto_schedule');
       }
 
-      const { error } = await supabase.from('games').delete().eq('division_id', divisionId);
+      const { error } = await applyDivisionRoundRobinDeleteScope(supabase.from('games').delete(), divisionId);
+      if (error) throw error;
+    }
+
+    else if (action === 'delete-games') {
+      const ids = sanitizeGameIds(gameIds);
+      if (!ids) {
+        return new Response(JSON.stringify({ error: 'Game IDs are required' }), { status: 400 });
+      }
+
+      if (ids.length === 0) {
+        return new Response(JSON.stringify({ success: true }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+
+      if (!hasPlanFeature(ctx.org.planId, 'auto_schedule')) {
+        return planFeatureForbidden('auto_schedule');
+      }
+
+      const { data: rows, error: lookupError } = await supabaseAdmin
+        .from('games')
+        .select('*')
+        .in('id', ids);
+
+      if (lookupError) throw lookupError;
+      if ((rows?.length ?? 0) !== ids.length) {
+        return new Response(JSON.stringify({ error: 'One or more games were not found' }), { status: 404 });
+      }
+
+      const validationError = validateReplaceableRoundRobinRows(rows ?? []);
+      if (validationError) {
+        return new Response(JSON.stringify({ error: validationError }), { status: 400 });
+      }
+
+      if (tournamentId && (rows ?? []).some(row => row.tournament_id !== tournamentId)) {
+        return new Response(JSON.stringify({ error: 'Game IDs must belong to the selected tournament' }), { status: 400 });
+      }
+
+      const tournamentIds = Array.from(new Set((rows ?? []).map(row => row.tournament_id).filter(Boolean)));
+      for (const id of tournamentIds) {
+        const denied = scopeGuard(ctx, id);
+        if (denied) return denied;
+        const wrongOrg = await requireTournamentInOrg(ctx, id);
+        if (wrongOrg) return wrongOrg;
+        if (await isTournamentLocked(id)) return tournamentLockedResponse();
+      }
+
+      const { error } = await supabase.from('games').delete().in('id', ids);
+      if (error) throw error;
+    }
+
+    else if (action === 'delete-playoff-games') {
+      const ids = sanitizeGameIds(gameIds);
+      if (!ids) {
+        return new Response(JSON.stringify({ error: 'Game IDs are required' }), { status: 400 });
+      }
+
+      if (ids.length === 0) {
+        return new Response(JSON.stringify({ success: true }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+
+      if (!hasPlanFeature(ctx.org.planId, 'playoff_generator')) {
+        return planFeatureForbidden('playoff_generator');
+      }
+
+      const { data: rows, error: lookupError } = await supabaseAdmin
+        .from('games')
+        .select('*')
+        .in('id', ids);
+
+      if (lookupError) throw lookupError;
+      if ((rows?.length ?? 0) !== ids.length) {
+        return new Response(JSON.stringify({ error: 'One or more playoff games were not found' }), { status: 404 });
+      }
+
+      const validationError = validateReplaceablePlayoffRows(rows ?? []);
+      if (validationError) {
+        return new Response(JSON.stringify({ error: validationError }), { status: 400 });
+      }
+
+      if (tournamentId && (rows ?? []).some(row => row.tournament_id !== tournamentId)) {
+        return new Response(JSON.stringify({ error: 'Game IDs must belong to the selected tournament' }), { status: 400 });
+      }
+
+      const tournamentIds = Array.from(new Set((rows ?? []).map(row => row.tournament_id).filter(Boolean)));
+      for (const id of tournamentIds) {
+        const denied = scopeGuard(ctx, id);
+        if (denied) return denied;
+        const wrongOrg = await requireTournamentInOrg(ctx, id);
+        if (wrongOrg) return wrongOrg;
+        if (await isTournamentLocked(id)) return tournamentLockedResponse();
+      }
+
+      const { error } = await supabase.from('games').delete().in('id', ids);
       if (error) throw error;
     }
 
@@ -291,6 +405,7 @@ export async function PATCH(req: Request) {
       if (body.notes            !== undefined) updates.notes              = body.notes;
       if (body.homeTeamId       !== undefined) updates.home_team_id       = body.homeTeamId || null;
       if (body.awayTeamId       !== undefined) updates.away_team_id       = body.awayTeamId || null;
+      if (body.generatorLocked  !== undefined) updates.generator_locked   = Boolean(body.generatorLocked);
 
       const { error } = await supabase.from('games').update(updates).eq('id', id);
       if (error) throw error;

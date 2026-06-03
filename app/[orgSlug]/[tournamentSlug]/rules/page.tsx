@@ -1,5 +1,4 @@
 import { cookies } from 'next/headers';
-import Link from 'next/link';
 import { BookOpen, FileText, Shield, AlertCircle, CheckCircle, Download, ExternalLink } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { getOrganizationBySlug, getPublicTournamentBySlug, getRules, getResources, getDivisions } from '@/lib/db';
@@ -7,6 +6,7 @@ import { notFound } from 'next/navigation';
 import { isPublicPageEnabled } from '@/lib/public-pages';
 import type { Division, Resource, RuleSection } from '@/lib/types';
 import DivisionFilterBar from '@/components/DivisionFilterBar';
+import PublicTournamentState from '@/components/public/PublicTournamentState';
 import styles from '../../rules/rules.module.css';
 
 export const dynamic = 'force-dynamic';
@@ -37,7 +37,34 @@ export default async function RulesPage({
 
   const org = await getOrganizationBySlug(orgSlug);
   const tournament = org ? await getPublicTournamentBySlug(org.id, tournamentSlug) : null;
-  if (!tournament || !isPublicPageEnabled(tournament, 'rules')) notFound();
+  if (!tournament) notFound();
+
+  const contactEmail = tournament.contactEmail ?? org?.contactEmail ?? null;
+  const homeHref = `/${orgSlug}/${tournamentSlug}`;
+  const newsHref = `/${orgSlug}/${tournamentSlug}/news`;
+  const showNewsPage = isPublicPageEnabled(tournament, 'news');
+
+  if (!isPublicPageEnabled(tournament, 'rules')) {
+    return (
+      <div className="page-content">
+        <div className="section">
+          <div className="container">
+            <PublicTournamentState
+              icon={<BookOpen size={40} />}
+              eyebrow="Rules"
+              title="Rules unavailable"
+              description="The organizer has hidden public rules and resources for this tournament."
+              contactEmail={contactEmail}
+              actions={[
+                { href: homeHref, label: 'Tournament Home', variant: 'ghost' as const },
+                ...(showNewsPage ? [{ href: newsHref, label: 'News', variant: 'ghost' as const }] : []),
+              ]}
+            />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   let allRules: RuleSection[] = [];
   let resources: Resource[] = [];
@@ -63,11 +90,6 @@ export default async function RulesPage({
     ? allRules.filter(r => !r.divisionIds?.length || r.divisionIds.includes(preferredGroup!.id))
     : allRules;
 
-  const contactEmail = tournament?.contactEmail ?? org?.contactEmail ?? null;
-  const homeHref = `/${orgSlug}/${tournamentSlug}`;
-  const newsHref = `/${orgSlug}/${tournamentSlug}/news`;
-  const showNewsPage = isPublicPageEnabled(tournament, 'news');
-
   const rulesLayout     = tournament?.settings?.rulesLayout     ?? 'columns';
   const resourcesLayout = tournament?.settings?.resourcesLayout ?? 'list';
 
@@ -87,17 +109,17 @@ export default async function RulesPage({
       <div className="section">
         <div className="container">
           {!hasContent && (
-            <div className="card" style={{ textAlign: 'center', padding: '2rem' }}>
-              <BookOpen size={32} style={{ margin: '0 auto 1rem', opacity: 0.3, display: 'block' }} />
-              <p className="text-muted">
-                Rules and resources for this tournament haven&apos;t been published yet. Check back before game day.
-                {contactEmail ? <> Questions? Contact <a href={`mailto:${contactEmail}`}>{contactEmail}</a>.</> : null}
-              </p>
-              <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center', flexWrap: 'wrap', marginTop: '1rem' }}>
-                <Link href={homeHref} className="btn btn-ghost btn-sm">Tournament Home</Link>
-                {showNewsPage && <Link href={newsHref} className="btn btn-ghost btn-sm">News</Link>}
-              </div>
-            </div>
+            <PublicTournamentState
+              icon={<BookOpen size={40} />}
+              eyebrow="Rules"
+              title="Rules coming soon"
+              description="Rules and resources have not been published yet. Check back before game day."
+              contactEmail={contactEmail}
+              actions={[
+                { href: homeHref, label: 'Tournament Home', variant: 'ghost' as const },
+                ...(showNewsPage ? [{ href: newsHref, label: 'News', variant: 'ghost' as const }] : []),
+              ]}
+            />
           )}
 
           {hasRules && (

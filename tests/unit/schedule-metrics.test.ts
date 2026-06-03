@@ -92,6 +92,27 @@ describe('buildScheduleMetrics', () => {
     assert.equal(metrics.venueChangeCount, 1);
   });
 
+  it('flags organizer-entered travel buffer warnings on tight venue moves', () => {
+    const metrics = buildScheduleMetrics({
+      teams: [team('a', 'A'), team('b', 'B'), team('c', 'C')],
+      games: [
+        game('g1', 'a', 'b', '2026-07-01', '09:00', 'v1'),
+        game('g2', 'a', 'c', '2026-07-01', '11:00', 'v2'),
+      ],
+      divisionId: 'd1',
+      gameDurationMinutes: 90,
+      bufferMinutes: 15,
+      manualTravelBuffers: {
+        venueChangeMinutes: 45,
+      },
+    });
+
+    const teamA = metrics.teamMetrics.find(metric => metric.label === 'A');
+    assert.equal(teamA?.travelBufferWarnings, 1);
+    assert.equal(metrics.travelBufferWarningCount, 1);
+    assert(metrics.issues.some(issue => issue.code === 'manual_travel_buffer'));
+  });
+
   it('ignores cancelled games', () => {
     const cancelled = game('g2', 'a', 'c', '2026-07-01', '12:00');
     cancelled.status = 'cancelled';

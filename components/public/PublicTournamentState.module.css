@@ -1,0 +1,71 @@
+.state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.8rem;
+  max-width: 620px;
+  margin: 0 auto;
+  padding: 2rem;
+  text-align: center;
+  background: rgba(15, 23, 42, 0.72);
+  border: 1px solid var(--white-10);
+  border-radius: 8px;
+}
+
+.compact {
+  padding: 1.5rem;
+}
+
+.icon {
+  display: inline-flex;
+  color: var(--lime);
+  opacity: 0.9;
+}
+
+.eyebrow {
+  color: var(--white-50);
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.title {
+  margin: 0;
+  color: var(--white);
+  font-size: clamp(1.15rem, 4vw, 1.55rem);
+  line-height: 1.15;
+}
+
+.description,
+.contact {
+  margin: 0;
+  color: var(--white-60);
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.contact a {
+  color: var(--lime);
+  font-weight: 700;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-top: 0.2rem;
+}
+
+@media (max-width: 640px) {
+  .state {
+    align-items: flex-start;
+    padding: 1.25rem;
+    text-align: left;
+  }
+
+  .actions {
+    justify-content: flex-start;
+  }
+}

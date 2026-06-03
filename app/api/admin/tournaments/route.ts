@@ -516,6 +516,8 @@ export async function POST(req: Request) {
         'resourcesLayout',
         'game_duration_minutes',
         'buffer_minutes',
+        'schedule_travel_venue_buffer_minutes',
+        'schedule_travel_facility_buffer_minutes',
         // Scope controls (Phase 2 — Divisions UX Rework)
         'game_timing_scope',
         'tie_breakers',
@@ -543,6 +545,12 @@ export async function POST(req: Request) {
         if (k === 'buffer_minutes') {
           const n = Number(v);
           if (!Number.isInteger(n) || n < 0 || n > 120) continue;
+          sanitized[k] = n;
+          continue;
+        }
+        if (k === 'schedule_travel_venue_buffer_minutes' || k === 'schedule_travel_facility_buffer_minutes') {
+          const n = Number(v);
+          if (!Number.isInteger(n) || n < 0 || n > 240) continue;
           sanitized[k] = n;
           continue;
         }

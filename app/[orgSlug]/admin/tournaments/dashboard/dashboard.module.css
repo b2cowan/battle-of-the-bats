@@ -611,7 +611,7 @@
 }
 
 .registrationStatusCount[data-status="accepted"] {
-  color: var(--logic-lime);
+  color: var(--success);
 }
 
 .registrationStatusCount[data-status="pending"] {
@@ -1169,7 +1169,7 @@
 }
 
 .payDivCell[data-tone="success"] { color: var(--success);         border-color: rgba(var(--success-rgb), 0.22); }
-.payDivCell[data-tone="info"]    { color: var(--blueprint-blue);  border-color: rgba(var(--blueprint-blue-rgb), 0.3); }
+.payDivCell[data-tone="info"]    { color: var(--info);  border-color: rgba(var(--info-rgb), 0.3); }
 .payDivCell[data-tone="warning"] { color: var(--warning);         border-color: rgba(245, 158, 11, 0.28); }
 .payDivCell[data-tone="danger"]  { color: var(--danger);          border-color: rgba(var(--danger-rgb), 0.28); }
 

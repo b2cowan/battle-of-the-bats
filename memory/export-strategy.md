@@ -57,6 +57,7 @@ Every durable operational table should have an explicit export decision. Default
 ## Shared UX expectations
 
 - Use one consistent `Export` control across admin, coaches, and platform-admin surfaces.
+- On tournament admin pages, place the page-level `ExportMenu` in the `TournamentAdminHeader` action area. When a page has a primary add/create button, the export control sits immediately to its left. Keep filters, view toggles, publish/generate tools, and multi-select actions in the toolbar.
 - Default action should be Excel `.xlsx`; CSV should remain available for compatibility.
 - Schedule/event pages can expose `Calendar (.ics)` in the export menu or as a nearby `Add to Calendar` action.
 - PDF should appear only when the page has a real report/print use case and the PDF settings/template foundation exists.

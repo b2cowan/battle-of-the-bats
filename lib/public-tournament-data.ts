@@ -29,6 +29,10 @@ export type PublicTournamentPageData = {
   teams: Team[];
   registrationFields: TournamentRegistrationField[];
   standingsByDivision: Record<string, Awaited<ReturnType<typeof getStandings>>>;
+  /** Whether the org's plan includes fan push score alerts (Tournament Plus+).
+   *  Optional so manual payload constructors (e.g. admin preview) don't have to
+   *  set it; the resolver always populates it and consumers treat undefined as false. */
+  fanAlertsEnabled?: boolean;
 };
 
 const PUBLIC_STATUSES = new Set<Tournament['status']>(['active', 'completed']);
@@ -91,6 +95,7 @@ export async function getPublicTournamentPageData(
     teams: [],
     registrationFields: [],
     standingsByDivision: {},
+    fanAlertsEnabled: hasPlanFeature(org.planId, 'fan_score_alerts'),
   };
 
   if (!tournament || !pageEnabled || section === 'context') {
@@ -108,11 +113,12 @@ export async function getPublicTournamentPageData(
   }
 
   if (section === 'teams') {
-    const [teams, divisions] = await Promise.all([
+    const [teams, divisions, games] = await Promise.all([
       getTeams(tournament.id, { admin: true }),
       getDivisions(tournament.id, { admin: true }),
+      getGames(tournament.id, { admin: true }),
     ]);
-    return { ...base, teams: teams.filter(t => t.status === 'accepted'), divisions };
+    return { ...base, teams: teams.filter(t => t.status === 'accepted'), divisions, games };
   }
 
   if (section === 'standings') {

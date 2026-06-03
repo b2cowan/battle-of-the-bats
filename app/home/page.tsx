@@ -12,6 +12,7 @@ import {
 import { createClient } from '@/lib/supabase-server';
 import { isPlatformAdminEmail } from '@/lib/platform-auth';
 import { getUserAccessContexts, type UserAccessContext } from '@/lib/user-contexts';
+import InstallAppPrompt from '@/components/InstallAppPrompt';
 import styles from './home.module.css';
 
 export const metadata = { title: 'Home - FieldLogicHQ' };
@@ -78,6 +79,11 @@ export default async function UserHomePage() {
           Signed in as {user.email}
         </footer>
       </div>
+      <InstallAppPrompt
+        appName="FieldLogicHQ"
+        subtitle="Your teams, schedules and scores — one tap away."
+        dismissKey="flhq-install-member"
+      />
     </div>
   );
 }

@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { getAuthContextWithRole } from '@/lib/api-auth';
 import { getOrganizationBySlug } from '@/lib/db';
 import { hasCapability } from '@/lib/roles';
+import InstallAppPrompt from '@/components/InstallAppPrompt';
 
 export async function generateMetadata({
   params,
@@ -112,6 +113,11 @@ export default async function ScorekeeperLayout({
       <main style={{ padding: '1.25rem' }}>
         {children}
       </main>
+      <InstallAppPrompt
+        appName="FieldLogicHQ"
+        subtitle="Your teams, schedules and scores — one tap away."
+        dismissKey="flhq-install-member"
+      />
     </div>
   );
 }

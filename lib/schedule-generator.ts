@@ -1,5 +1,7 @@
 import {
   buildScheduleMetrics,
+  resolveManualTravelBuffers,
+  type ManualTravelBufferSettings,
   type ScheduleMetricGame,
   type ScheduleMetrics,
   type ScheduleMetricTeam,
@@ -19,6 +21,7 @@ export interface ScheduleDraftMetricSide {
 }
 
 export interface ScheduleDraftMatchup<TPayload = unknown> {
+  matchupId?: string;
   homeParticipantId: string;
   awayParticipantId: string;
   homeLabel: string;
@@ -26,6 +29,8 @@ export interface ScheduleDraftMatchup<TPayload = unknown> {
   homeMetric?: ScheduleDraftMetricSide;
   awayMetric?: ScheduleDraftMetricSide;
   poolId?: string | null;
+  dependsOnMatchupIds?: string[];
+  dependencyMinRestMinutes?: number;
   payload: TPayload;
 }
 
@@ -65,50 +70,67 @@ export interface GenerateScoredScheduleOptions<TPayload = unknown> {
   matchups: ScheduleDraftMatchup<TPayload>[];
   slots: ScheduleDraftSlot[];
   participants: ScheduleDraftParticipant[];
+  fixedAssignments?: ScheduleDraftAssignment<unknown>[];
   expectedGamesPerParticipant?: number;
   gameDurationMinutes: number;
   bufferMinutes: number;
+  manualTravelBuffers?: ManualTravelBufferSettings;
   priorities: SchedulePrioritySettings;
+  draftSeed?: number;
+}
+
+interface CandidateAssignments<TPayload = unknown> {
+  generated: ScheduleDraftAssignment<TPayload>[];
+  all: ScheduleDraftAssignment<unknown>[];
 }
 
 export function generateScoredSchedule<TPayload = unknown>(
   options: GenerateScoredScheduleOptions<TPayload>,
 ): ScoredScheduleDraft<TPayload> | null {
-  if (options.matchups.length === 0 || options.slots.length < options.matchups.length) return null;
+  return generateScoredScheduleDrafts(options, 1)[0] ?? null;
+}
+
+export function generateScoredScheduleDrafts<TPayload = unknown>(
+  options: GenerateScoredScheduleOptions<TPayload>,
+  maxDrafts = 3,
+): ScoredScheduleDraft<TPayload>[] {
+  if (options.matchups.length === 0 || options.slots.length < options.matchups.length) return [];
 
   const passes = Math.max(1, Math.min(80, Math.round(options.priorities.candidateCount || 1)));
-  let best: ScoredScheduleDraft<TPayload> | null = null;
+  const seedOffset = Math.max(0, Math.round(options.draftSeed ?? 0)) * 9973;
+  const candidates: ScoredScheduleDraft<TPayload>[] = [];
+  const seen = new Set<string>();
 
   for (let pass = 0; pass < passes; pass++) {
-    const assignments = buildCandidateAssignments(options, pass);
-    if (!assignments) continue;
+    const candidateAssignments = buildCandidateAssignments(options, seedOffset + pass);
+    if (!candidateAssignments) continue;
+
+    const signature = draftSignature(candidateAssignments.generated);
+    if (seen.has(signature)) continue;
+    seen.add(signature);
 
     const metrics = buildScheduleMetrics({
-      games: assignments.map(assignment => toMetricGame(assignment, options)),
+      games: candidateAssignments.all.map(assignment => toMetricGame(assignment, options)),
       teams: options.participants.map(participantToMetricTeam),
       divisionId: options.divisionId,
       expectedGamesPerParticipant: options.expectedGamesPerParticipant,
       gameDurationMinutes: options.gameDurationMinutes,
       bufferMinutes: options.bufferMinutes,
+      manualTravelBuffers: options.manualTravelBuffers,
       maxGamesPerDay: options.priorities.maxGamesPerDay,
     });
     const score = scoreDraft(metrics, options.priorities);
     const candidate: ScoredScheduleDraft<TPayload> = {
-      assignments,
+      assignments: candidateAssignments.generated,
       metrics,
       score,
       candidateCount: passes,
     };
 
-    if (!best || candidate.score > best.score || (
-      candidate.score === best.score &&
-      candidate.metrics.healthScore > best.metrics.healthScore
-    )) {
-      best = candidate;
-    }
+    candidates.push(candidate);
   }
 
-  return best;
+  return candidates.sort(compareDrafts).slice(0, Math.max(1, Math.min(8, Math.round(maxDrafts) || 1)));
 }
 
 export function defaultSchedulePriorities(): SchedulePrioritySettings {
@@ -125,11 +147,13 @@ export function defaultSchedulePriorities(): SchedulePrioritySettings {
 function buildCandidateAssignments<TPayload>(
   options: GenerateScoredScheduleOptions<TPayload>,
   pass: number,
-): ScheduleDraftAssignment<TPayload>[] | null {
+): CandidateAssignments<TPayload> | null {
   const orderedMatchups = orderMatchups(options.matchups, pass);
   const orderedSlots = orderSlots(options.slots, pass);
-  const usedSlotKeys = new Set<string>();
-  const assignments: ScheduleDraftAssignment<TPayload>[] = [];
+  const fixedAssignments = [...(options.fixedAssignments ?? [])].sort(compareAssignments);
+  const usedSlotKeys = new Set(fixedAssignments.map(slotKey));
+  const allAssignments: ScheduleDraftAssignment<unknown>[] = [...fixedAssignments];
+  const generatedAssignments: ScheduleDraftAssignment<TPayload>[] = [];
 
   for (const matchup of orderedMatchups) {
     let bestSlot: { slot: ScheduleDraftSlot; slotIndex: number; penalty: number } | null = null;
@@ -139,7 +163,7 @@ function buildCandidateAssignments<TPayload>(
       const key = slotKey(slot);
       if (usedSlotKeys.has(key)) continue;
 
-      const penalty = scoreSlotFit(matchup, slot, assignments, options, pass, slotIndex);
+      const penalty = scoreSlotFit(matchup, slot, allAssignments, options, pass, slotIndex);
       if (!Number.isFinite(penalty)) continue;
       if (!bestSlot || penalty < bestSlot.penalty) {
         bestSlot = { slot, slotIndex, penalty };
@@ -148,20 +172,25 @@ function buildCandidateAssignments<TPayload>(
 
     if (!bestSlot) return null;
     usedSlotKeys.add(slotKey(bestSlot.slot));
-    assignments.push({
+    const assignment = {
       ...matchup,
       ...bestSlot.slot,
       slotIndex: bestSlot.slotIndex,
-    });
+    };
+    generatedAssignments.push(assignment);
+    allAssignments.push(assignment);
   }
 
-  return assignments.sort(compareAssignments);
+  return {
+    generated: generatedAssignments.sort(compareAssignments),
+    all: allAssignments.sort(compareAssignments),
+  };
 }
 
 function scoreSlotFit<TPayload>(
   matchup: ScheduleDraftMatchup<TPayload>,
   slot: ScheduleDraftSlot,
-  assignments: ScheduleDraftAssignment<TPayload>[],
+  assignments: ScheduleDraftAssignment<unknown>[],
   options: GenerateScoredScheduleOptions<TPayload>,
   pass: number,
   slotIndex: number,
@@ -169,7 +198,27 @@ function scoreSlotFit<TPayload>(
   const participants = [matchup.homeParticipantId, matchup.awayParticipantId];
   const start = absoluteMinutes(slot);
   const end = start + options.gameDurationMinutes;
+  const manualTravelBuffers = resolveManualTravelBuffers(options);
   let penalty = slotIndex * 0.02 + jitter(`${pass}:${slotKey(slot)}:${matchup.homeParticipantId}:${matchup.awayParticipantId}`) * 0.15;
+
+  const dependentCount = matchup.matchupId
+    ? options.matchups.filter(item => item.dependsOnMatchupIds?.includes(matchup.matchupId!)).length
+    : 0;
+  if (dependentCount > 0) {
+    penalty += dependentCount * slotIndex * 60;
+  }
+
+  if (matchup.dependsOnMatchupIds?.length) {
+    const minDependencyRest = Math.max(0, matchup.dependencyMinRestMinutes ?? options.bufferMinutes);
+    for (const dependencyId of matchup.dependsOnMatchupIds) {
+      const dependency = assignments.find(assignment => assignment.matchupId === dependencyId);
+      if (!dependency) return Number.POSITIVE_INFINITY;
+      const dependencyEnd = absoluteMinutes(dependency) + options.gameDurationMinutes;
+      const restAfterDependency = start - dependencyEnd;
+      if (restAfterDependency < minDependencyRest) return Number.POSITIVE_INFINITY;
+      penalty += Math.max(0, 40 - restAfterDependency / 5);
+    }
+  }
 
   for (const participantId of participants) {
     const current = assignments.filter(assignment =>
@@ -203,6 +252,11 @@ function scoreSlotFit<TPayload>(
       if (options.priorities.reduceVenueChanges && slotResourceKey(assignment) !== slotResourceKey(slot)) {
         penalty += assignment.date === slot.date ? 28 : 8;
       }
+
+      const requiredMoveBuffer = requiredManualMoveBuffer(assignment, slot, manualTravelBuffers);
+      if (requiredMoveBuffer > 0 && rest >= 0 && rest < requiredMoveBuffer) {
+        penalty += 180 + (requiredMoveBuffer - rest) * 3;
+      }
     }
   }
 
@@ -221,13 +275,16 @@ function scoreDraft(metrics: ScheduleMetrics, priorities: SchedulePrioritySettin
   if (metrics.maxGamesInDay > priorities.maxGamesPerDay) {
     score -= (metrics.maxGamesInDay - priorities.maxGamesPerDay) * 8;
   }
+  if (metrics.travelBufferWarningCount > 0) {
+    score -= metrics.travelBufferWarningCount * 3;
+  }
   if (!priorities.balanceTimeSlots) score += Math.max(0, 15 - metrics.healthBreakdown.timeSlots) * 0.4;
   return Math.round(score * 10) / 10;
 }
 
-function toMetricGame<TPayload>(
-  assignment: ScheduleDraftAssignment<TPayload>,
-  options: GenerateScoredScheduleOptions<TPayload>,
+function toMetricGame(
+  assignment: ScheduleDraftAssignment<unknown>,
+  options: Pick<GenerateScoredScheduleOptions, 'tournamentId' | 'divisionId'>,
 ): ScheduleMetricGame {
   return {
     tournamentId: options.tournamentId,
@@ -262,6 +319,10 @@ function orderMatchups<TPayload>(
   matchups: ScheduleDraftMatchup<TPayload>[],
   pass: number,
 ): ScheduleDraftMatchup<TPayload>[] {
+  if (matchups.some(matchup => matchup.dependsOnMatchupIds?.length)) {
+    return orderDependencyAwareMatchups(matchups, pass);
+  }
+
   if (pass === 0) return [...matchups];
   if (pass === 1) return [...matchups].reverse();
   const shuffled = deterministicShuffle(matchups, pass * 7919 + 17);
@@ -269,6 +330,49 @@ function orderMatchups<TPayload>(
     return shuffled.sort((a, b) => (a.poolId ?? '').localeCompare(b.poolId ?? ''));
   }
   return shuffled;
+}
+
+function orderDependencyAwareMatchups<TPayload>(
+  matchups: ScheduleDraftMatchup<TPayload>[],
+  pass: number,
+): ScheduleDraftMatchup<TPayload>[] {
+  const byId = new Map(matchups.filter(matchup => matchup.matchupId).map(matchup => [matchup.matchupId!, matchup]));
+  const depthCache = new Map<string, number>();
+  const inputIndex = new Map(matchups.map((matchup, index) => [matchup, index]));
+
+  const depthOf = (matchup: ScheduleDraftMatchup<TPayload>, stack = new Set<string>()): number => {
+    if (!matchup.matchupId) return 0;
+    const cached = depthCache.get(matchup.matchupId);
+    if (cached !== undefined) return cached;
+    if (stack.has(matchup.matchupId)) return 0;
+
+    stack.add(matchup.matchupId);
+    const dependencies = (matchup.dependsOnMatchupIds ?? [])
+      .map(id => byId.get(id))
+      .filter((item): item is ScheduleDraftMatchup<TPayload> => Boolean(item));
+    const depth = dependencies.length
+      ? Math.max(...dependencies.map(dependency => depthOf(dependency, stack))) + 1
+      : 0;
+    stack.delete(matchup.matchupId);
+    depthCache.set(matchup.matchupId, depth);
+    return depth;
+  };
+
+  const depthBuckets = new Map<number, ScheduleDraftMatchup<TPayload>[]>();
+  for (const matchup of matchups) {
+    const depth = depthOf(matchup);
+    depthBuckets.set(depth, [...(depthBuckets.get(depth) ?? []), matchup]);
+  }
+
+  return Array.from(depthBuckets.keys()).sort((a, b) => a - b).flatMap(depth => {
+    const bucket = depthBuckets.get(depth) ?? [];
+    const ordered = [...bucket].sort((a, b) =>
+      (a.poolId ?? '').localeCompare(b.poolId ?? '') ||
+      (a.matchupId ?? '').localeCompare(b.matchupId ?? '') ||
+      (inputIndex.get(a) ?? 0) - (inputIndex.get(b) ?? 0)
+    );
+    return pass % 3 === 1 ? deterministicShuffle(ordered, pass * 1867 + depth * 97) : ordered;
+  });
 }
 
 function orderSlots(slots: ScheduleDraftSlot[], pass: number): ScheduleDraftSlot[] {
@@ -289,6 +393,22 @@ function compareAssignments(a: ScheduleDraftAssignment, b: ScheduleDraftAssignme
   return a.date.localeCompare(b.date) || a.time.localeCompare(b.time) || a.venueName.localeCompare(b.venueName);
 }
 
+function compareDrafts(a: ScoredScheduleDraft, b: ScoredScheduleDraft): number {
+  return (
+    b.score - a.score ||
+    b.metrics.healthScore - a.metrics.healthScore ||
+    a.metrics.backToBackCount - b.metrics.backToBackCount ||
+    a.metrics.venueChangeCount + a.metrics.facilityChangeCount - (b.metrics.venueChangeCount + b.metrics.facilityChangeCount) ||
+    a.metrics.maxGamesInDay - b.metrics.maxGamesInDay
+  );
+}
+
+function draftSignature(assignments: ScheduleDraftAssignment[]): string {
+  return assignments.map(assignment =>
+    `${assignment.homeParticipantId}:${assignment.awayParticipantId}@${slotKey(assignment)}`
+  ).join('|');
+}
+
 function compareSlots(a: ScheduleDraftSlot, b: ScheduleDraftSlot): number {
   return a.date.localeCompare(b.date) || a.time.localeCompare(b.time) || a.venueName.localeCompare(b.venueName);
 }
@@ -299,6 +419,30 @@ function slotKey(slot: ScheduleDraftSlot): string {
 
 function slotResourceKey(slot: ScheduleDraftSlot): string {
   return slot.venueFacilityId ?? slot.venueId ?? slot.scheduleFacilityLaneId ?? slot.scheduleFacilityLaneLabel ?? slot.venueName;
+}
+
+function requiredManualMoveBuffer(
+  previous: ScheduleDraftSlot,
+  next: ScheduleDraftSlot,
+  manualTravelBuffers: Required<ManualTravelBufferSettings>,
+): number {
+  const previousVenue = slotVenueKey(previous);
+  const nextVenue = slotVenueKey(next);
+  const venueChanged = Boolean(previousVenue && nextVenue && previousVenue !== nextVenue);
+  if (venueChanged) return manualTravelBuffers.venueChangeMinutes;
+
+  const previousFacility = slotFacilityKey(previous);
+  const nextFacility = slotFacilityKey(next);
+  const facilityChanged = Boolean(previousFacility && nextFacility && previousFacility !== nextFacility);
+  return facilityChanged ? manualTravelBuffers.facilityChangeMinutes : 0;
+}
+
+function slotVenueKey(slot: ScheduleDraftSlot): string | null {
+  return slot.venueId ?? slot.scheduleFacilityLaneId ?? slot.scheduleFacilityLaneLabel ?? slot.venueName ?? null;
+}
+
+function slotFacilityKey(slot: ScheduleDraftSlot): string | null {
+  return slot.venueFacilityId ?? slot.scheduleFacilityLaneId ?? slot.scheduleFacilityLaneLabel ?? slotVenueKey(slot);
 }
 
 function absoluteMinutes(slot: Pick<ScheduleDraftSlot, 'date' | 'time'>): number {

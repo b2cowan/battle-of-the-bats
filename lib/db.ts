@@ -1507,6 +1507,7 @@ export async function getGames(tournamentId?: string, options: ReadOptions = {})
     awayScore: g.away_score,
     status: g.status,
     isPlayoff: g.is_playoff,
+    generatorLocked: g.generator_locked ?? false,
     bracketId: g.bracket_id,
     bracketCode: g.bracket_code,
     homePlaceholder: g.home_placeholder,
@@ -1541,6 +1542,7 @@ export async function saveGame(g: Omit<Game, 'id'>): Promise<void> {
     notes: g.notes
   };
   if (g.scheduleFacilityLaneId !== undefined) row.schedule_facility_lane_id = g.scheduleFacilityLaneId ?? null;
+  if (g.generatorLocked !== undefined) row.generator_locked = Boolean(g.generatorLocked);
   await authClient().from('games').insert(row);
 }
 
@@ -1560,6 +1562,7 @@ export async function updateGame(id: string, g: Partial<Game>, options: ReadOpti
   if (g.awayScore !== undefined) updates.away_score = g.awayScore;
   if (g.status !== undefined) updates.status = g.status;
   if (g.isPlayoff !== undefined) updates.is_playoff = g.isPlayoff;
+  if (g.generatorLocked !== undefined) updates.generator_locked = Boolean(g.generatorLocked);
   if (g.bracketId !== undefined) updates.bracket_id = g.bracketId;
   if (g.bracketCode !== undefined) updates.bracket_code = g.bracketCode;
   if (g.homePlaceholder !== undefined) updates.home_placeholder = g.homePlaceholder;

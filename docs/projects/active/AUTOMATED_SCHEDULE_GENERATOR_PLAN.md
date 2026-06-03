@@ -69,7 +69,7 @@ Out of scope:
 
 ### Data Model
 
-V1 avoids database migrations where possible, except for the durable temporary-facility lane model added on 2026-06-01. That model is intentionally persistent because organizers need to generate before real venues are known, then map "Facility 1" to a real venue/facility later and have every linked game update together.
+V1 avoids database migrations where possible, except for durable schedule concepts that need to survive across sessions: temporary-facility lanes and manual generator locks.
 
 - Draft metrics are computed in memory before commit.
 - Saved schedule metrics are computed from existing `games`.
@@ -78,6 +78,7 @@ V1 avoids database migrations where possible, except for the durable temporary-f
 - `schedule_facility_lanes` stores temporary schedule resources per tournament/division.
 - `games.schedule_facility_lane_id` links generated games to a temporary lane until it is resolved.
 - Resolving a lane updates the lane record plus all linked games' `diamond_id`, `venue_facility_id`, and display `location`.
+- `games.generator_locked` lets an organizer keep a scheduled round-robin game fixed during Build from current regeneration.
 
 Potential later no-cost persistence:
 
@@ -296,16 +297,14 @@ On the schedule page, add a compact Schedule Health surface:
 
 ### Partial Regeneration
 
-Later phase UX:
+Implemented UX:
 
 - "Regenerate schedule" can preserve existing games.
 - Organizer can choose:
   - Replace all games in division.
   - Keep completed/submitted games.
-  - Keep manually locked games.
-  - Fill unscheduled games only.
-
-No persistent lock model is required for the first pass. A later phase can add persistent locks if usage proves it is needed.
+  - Keep manually locked scheduled games.
+  - Replace only unlocked scheduled round-robin games.
 
 ## Implementation Phases
 
@@ -367,7 +366,7 @@ No persistent lock model is required for the first pass. A later phase can add p
 5. Build hard constraint checks. **Team/slot overlap hard-block implemented 2026-06-01.**
 6. Build soft penalty scoring. **Implemented for rest, daily load, back-to-back, venue movement, and early/late balance 2026-06-01.**
 7. Generate multiple draft candidates. **Implemented 2026-06-01.**
-8. Return best draft plus alternate drafts. **Best draft implemented; alternate draft picker remains Phase 7.**
+8. Return best draft plus alternate drafts. **Implemented 2026-06-02.**
 9. Replace `Generator.tsx` in-component generation with library calls. **Assignment/scoring moved; matchup construction remains in the component for now.**
 10. Add unit tests for constraints and scoring. **Initial tests implemented 2026-06-01.**
 
@@ -378,50 +377,53 @@ No persistent lock model is required for the first pass. A later phase can add p
 3. Add back-to-back policy control. **Implemented 2026-06-01.**
 4. Add venue movement preference control. **Implemented 2026-06-01.**
 5. Separate hard limits from scoring preferences and add plain-language effort descriptions. **Implemented 2026-06-01.**
-6. Add preset buttons.
-7. Display preset impact in plain language.
+6. Add preset buttons. **Implemented 2026-06-02.**
+7. Display preset impact in plain language. **Implemented 2026-06-02.**
 8. Store chosen values in local state for draft generation. **Implemented 2026-06-01.**
 
 ### Phase 7 - Draft Comparison
 
-1. Show up to 3 generated draft options.
+1. Show up to 3 generated draft options. **Implemented 2026-06-02.**
 2. Label options by strongest advantage:
    - Best balance
    - Shortest event
    - Fewest venue changes
-3. Show health score and top tradeoff per option.
-4. Allow selecting an option before commit.
-5. Allow "Generate another set" with a new seed.
+   **Implemented 2026-06-02 with best overall, fewest moves, rest/day/health labels.**
+3. Show health score and top tradeoff per option. **Implemented 2026-06-02.**
+4. Allow selecting an option before commit. **Implemented 2026-06-02.**
+5. Allow "Generate another set" with a new seed. **Implemented 2026-06-02.**
 
 ### Phase 8 - Partial Regeneration
 
-1. Add "Build from existing schedule" mode.
-2. Treat saved games as fixed slots when selected.
-3. Offer "keep completed/submitted games" by default.
-4. Allow organizer to select games to keep during the current generator session.
-5. Generate around fixed games.
-6. Show metrics comparing current schedule vs proposed schedule.
-7. Commit behavior should replace only the affected unsaved/unlocked division games.
+1. Add "Build from existing schedule" mode. **Implemented V1 2026-06-02 as Build from current.**
+2. Treat saved games as fixed slots when selected. **Implemented V1 2026-06-02 for protected saved games.**
+3. Offer "keep completed/submitted games" by default. **Implemented V1 2026-06-02; submitted, completed, cancelled, and playoff games are protected.**
+4. Allow organizer to select games to keep. **Implemented 2026-06-02 as durable game-level generator locks.**
+5. Generate around fixed games. **Implemented V1 2026-06-02.**
+6. Show metrics comparing current schedule vs proposed schedule. **Implemented V1 as proposed combined-schedule health plus kept/replaceable/new counts; full side-by-side comparison remains optional.**
+7. Commit behavior should replace only the affected unsaved/unlocked division games. **Implemented V1 2026-06-02 via selected game ID deletion for scheduled round-robin games.**
 
 ### Phase 9 - Manual Travel Buffers
 
 This phase stays no-cost by relying on organizer-entered estimates.
 
-1. Add optional manual travel buffer settings between venues.
-2. Store in `tournaments.settings` only if we choose to persist.
-3. Use manual buffers to flag venue changes that are too tight.
-4. Include manual buffer violations in health score.
+1. Add optional manual travel buffer settings between venues. **Implemented V1 2026-06-02 as global venue-move and facility-move buffers.**
+2. Store in `tournaments.settings` only if we choose to persist. **Implemented V1 2026-06-02 using `schedule_travel_venue_buffer_minutes` and `schedule_travel_facility_buffer_minutes`.**
+3. Use manual buffers to flag venue changes that are too tight. **Implemented V1 2026-06-02 for consecutive team/slot games.**
+4. Include manual buffer violations in health score. **Implemented V1 2026-06-02.**
 5. Do not calculate or imply real drive time.
-6. Label clearly as organizer-entered travel buffer.
+6. Label clearly as organizer-entered travel buffer. **Implemented V1 2026-06-02 in Event Settings and health issue copy.**
+7. Optional future refinement: pair-by-pair venue buffer overrides for tournaments with known venue-specific travel time.
 
 ## API and Persistence Notes
 
 - No new API is required for metrics.
 - Migration 104 adds `schedule_facility_lanes` and `games.schedule_facility_lane_id`; applied dev + prod.
+- Migration 105 adds `games.generator_locked` for durable manual generator locks; applied dev + prod.
 - New API: `/api/admin/schedule-facility-lanes` supports idempotent lane creation and lane resolution.
 - Phase 4 patched `/api/admin/games` bulk-save to persist `venueFacilityId`.
-- Phase 8 may need a safer bulk replacement API action if replacing only unlocked games becomes awkward with the current delete-division-games flow.
-- Phase 9 can use `tournaments.settings` via the existing `patch-settings` pattern if persistence is desired.
+- Phase 8 added `/api/admin/games` `delete-games`, scoped to selected unlocked scheduled non-playoff game IDs, so partial regeneration can preserve protected and manually locked games.
+- Phase 9 uses `tournaments.settings` via the existing `patch-settings` pattern; no migration is required for the new JSON settings keys.
 
 ## Testing Plan
 
@@ -468,6 +470,5 @@ Manual/browser scenarios are user-verified per workspace rules:
 - Map display.
 - Self-hosted routing.
 - Server-side optimization jobs.
-- Persistent game locks.
 - Coach availability conflicts across divisions.
 - Referee/official assignment optimization.

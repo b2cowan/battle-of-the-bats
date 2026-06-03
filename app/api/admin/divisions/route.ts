@@ -228,7 +228,6 @@ export async function POST(req: Request) {
         max_age:                 data.maxAge,
         display_order:           data.order,
         contact_member_id:       data.contactMemberId ?? null,
-        is_closed:               data.isClosed,
         capacity:                data.capacity,
         pool_count:              data.poolCount,
         pool_names:              data.poolNames,
@@ -305,6 +304,19 @@ export async function POST(req: Request) {
       } else {
         throw new Error('id or tournamentId required');
       }
+    }
+
+    else if (action === 'set-closed' && id) {
+      const { data: ag } = await supabaseAdmin.from('divisions').select('tournament_id').eq('id', id).single();
+      if (ag) {
+        const denied = scopeGuard(ctx, ag.tournament_id);
+        if (denied) return denied;
+        const wrongOrg = await requireTournamentInOrg(ctx, ag.tournament_id);
+        if (wrongOrg) return wrongOrg;
+        if (await isTournamentLocked(ag.tournament_id)) return tournamentLockedResponse();
+      }
+      const { error } = await supabaseAdmin.from('divisions').update({ is_closed: data.isClosed }).eq('id', id);
+      if (error) throw error;
     }
 
     else if (action === 'delete' && id) {

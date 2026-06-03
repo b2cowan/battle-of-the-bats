@@ -6,7 +6,6 @@ import Footer from '@/components/Footer';
 import BottomNav from '@/components/BottomNav';
 import { OrgNavProvider } from '@/components/OrgNavContext';
 import ServiceWorkerRegistration from '@/components/ServiceWorkerRegistration';
-import IOSInstallBanner from '@/components/IOSInstallBanner';
 
 const inter = Inter({ 
   subsets: ['latin'],
@@ -61,8 +60,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <Footer />
           <BottomNav />
         </OrgNavProvider>
-        {/* iOS install prompt — Safari and Chrome on iPhone/iPad */}
-        <IOSInstallBanner />
+        {/* Install prompts are mounted per-context, not globally: the fan prompt on
+            tournament pages and the member prompt in authenticated shells. The
+            marketing root no longer shows an install banner. */}
         {/* Service worker registration — browser-only, renders nothing */}
         <ServiceWorkerRegistration />
       </body>

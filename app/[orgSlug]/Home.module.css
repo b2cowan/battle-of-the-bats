@@ -346,6 +346,7 @@
 .myTeamCard {
   border-color: rgba(var(--primary-rgb),0.45);
   background: linear-gradient(135deg, rgba(var(--primary-rgb),0.12), var(--surface));
+  box-shadow: var(--shadow), var(--glow-sm);
 }
 
 .dayCardHeader {
@@ -479,6 +480,101 @@
   overflow-wrap: anywhere;
 }
 
+/* ── My Team card: record badge in header ──────────────────────────────────── */
+.myTeamRecord {
+  margin-left: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.06rem;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.myTeamRecord strong {
+  font-family: var(--font-data);
+  font-size: 0.95rem;
+  font-weight: 900;
+  color: var(--white);
+  line-height: 1;
+}
+
+.myTeamRecord span {
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--primary-light);
+  text-transform: uppercase;
+}
+
+/* ── My Team card: live state ──────────────────────────────────────────────── */
+.myTeamLive {
+  border-color: rgba(var(--danger-rgb), 0.4);
+  background: rgba(var(--danger-rgb), 0.08);
+}
+
+.myTeamLiveTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.myTeamLiveBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.12rem 0.45rem;
+  border: 1px solid rgba(var(--danger-rgb), 0.5);
+  border-radius: 2px;
+  background: rgba(var(--danger-rgb), 0.15);
+  color: var(--danger);
+  font-family: var(--font-data);
+  font-size: 0.58rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.myTeamLiveDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--danger);
+  animation: myTeamLivePulse 1.4s ease-in-out infinite;
+}
+
+@keyframes myTeamLivePulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.35; }
+}
+
+.myTeamLiveScore {
+  font-family: var(--font-data);
+  font-size: 1.5rem;
+  font-weight: 900;
+  color: var(--white);
+  line-height: 1;
+  letter-spacing: 0.04em;
+}
+
+/* ── My Team card: countdown chip on the next-game row ─────────────────────── */
+.myTeamCountdown {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  padding: 0.1rem 0.5rem;
+  border: 1px solid rgba(var(--primary-rgb), 0.35);
+  border-radius: var(--radius-xl);
+  background: rgba(var(--primary-rgb), 0.12);
+  color: var(--primary-light);
+  font-family: var(--font-data);
+  font-size: 0.66rem;
+  font-weight: 900;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+}
+
 .dayCardActions {
   display: flex;
   align-items: center;
@@ -512,20 +608,155 @@
   font-size: 0.85rem;
 }
 
+/* Completed tournament public record */
+.recordSection {
+  background: linear-gradient(180deg, var(--bg) 0%, var(--bg-2) 100%);
+}
+
+.recordHeader {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.recordHeader h2 {
+  margin-top: 0.35rem;
+}
+
+.recordHeader p {
+  max-width: 680px;
+  margin: 0.55rem 0 0;
+  color: var(--white-60);
+  line-height: 1.6;
+}
+
+.recordActions {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+  flex-shrink: 0;
+}
+
+.recordGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.recordCard {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  min-width: 0;
+}
+
+.recordWideCard {
+  grid-column: 1 / -1;
+}
+
+.recordStats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.65rem;
+}
+
+.recordStats div {
+  min-width: 0;
+  padding: 0.75rem;
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius-sm);
+  background: var(--white-5);
+}
+
+.recordStats strong {
+  display: block;
+  color: var(--white);
+  font-family: var(--font-data);
+  font-size: 1.35rem;
+  font-weight: 950;
+  line-height: 1;
+}
+
+.recordStats span {
+  display: block;
+  margin-top: 0.35rem;
+  color: var(--white-50);
+  font-size: 0.76rem;
+  font-weight: 750;
+  line-height: 1.25;
+}
+
+.recordList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.recordListRow {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.65rem;
+  min-height: 44px;
+  padding: 0.6rem 0.7rem;
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius-sm);
+  background: var(--white-5);
+}
+
+.recordListRow span {
+  color: var(--primary-light);
+  font-family: var(--font-data);
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+
+.recordListRow strong {
+  min-width: 0;
+  color: var(--white);
+  font-size: 0.86rem;
+  overflow-wrap: anywhere;
+}
+
+.recordListRow em {
+  color: var(--white-45);
+  font-size: 0.76rem;
+  font-style: normal;
+  white-space: nowrap;
+}
+
 @media (max-width: 860px) {
   .dayGrid {
     grid-template-columns: 1fr;
   }
+
+  .recordGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .recordStats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 640px) {
-  .dayPanelHeader {
+  .dayPanelHeader,
+  .recordHeader {
     align-items: stretch;
     flex-direction: column;
   }
 
-  .dayPanelHeader > a {
+  .dayPanelHeader > a,
+  .recordActions > * {
     justify-content: center;
+  }
+
+  .recordActions {
+    align-items: stretch;
+    flex-direction: column;
   }
 
   .quickGameRow {
@@ -540,6 +771,15 @@
   .dayCardActions > * {
     flex: 1;
     justify-content: center;
+  }
+
+  .recordListRow {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .recordListRow em {
+    grid-column: 2;
+    white-space: normal;
   }
 }
 

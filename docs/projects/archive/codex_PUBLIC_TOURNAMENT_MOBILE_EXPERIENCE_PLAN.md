@@ -6,6 +6,26 @@ Make public tournament pages excellent on mobile for coaches, parents, players, 
 
 This is a follow-up to the archived Tournament Experience Excellence work. Admin mobile hardening is complete through Phase H; this plan owns the remaining public and participant-facing mobile work.
 
+## Archive Status
+
+Archived on 2026-06-02 as implementation-complete for the public coach/parent mobile experience.
+
+Completed scope:
+
+- Public registration Info -> Review -> Next Steps, including waitlist handling.
+- Tournament Day public home mode and Follow My Team.
+- Mobile schedule controls with live team search and filter sheet.
+- Compact selectable schedule rows and public game detail pages.
+- Results/Standings mobile clarity and completed-tournament public record value.
+- Completed tournament public home record.
+- Shared public empty/unavailable state pattern across high-traffic public routes.
+
+Explicit deferrals:
+
+- Browser visual/design refinements move to a separate design project.
+- Route-specific analytics surfaces remain future product work.
+- Plus shareable post-event recap remains a separate product decision.
+
 ## Product Manager UX Summary
 
 After this work, a visitor opening a public tournament page on a phone should immediately understand the event: who is hosting it, when it runs, whether registration is open, what to tap next, and where to find schedule/results updates. Coaches registering a team should complete the form with confidence, review their details before submitting, and see clear next steps afterward. Tournament-day visitors should filter the schedule by division or team without fighting stacked controls.
@@ -27,7 +47,7 @@ Relevant archived findings:
 | --- | --- | --- |
 | JNY-03 | Public registration stepper promises Review but submits directly | Implemented 2026-05-29 |
 | JNY-12 | Public schedule controls likely wrap/overflow on mobile | Implemented 2026-06-01 |
-| JNY-15 | Free Tournament post-event story needs clearer framing | Open |
+| JNY-15 | Free Tournament post-event story needs clearer framing | Implemented 2026-06-02 |
 | JNY-16 | Public acquisition analytics surfaces are too coarse | Open |
 | JNY-17 | Public hidden/empty states need contact and next links | Partially addressed 2026-05-29 |
 | JNY-18 | Public hero fallback is too abstract when no Plus banner exists | Open |
@@ -248,17 +268,19 @@ Likely files:
 
 Tasks:
 
-- [ ] Add a shared unavailable/empty state component.
+- [x] Add a shared unavailable/empty state component.
 - [ ] Add a helper to derive visible next links from `publicHiddenPages`.
 - [ ] Ensure public page data exposes enough contact/context for all states.
-- [ ] Replace generic hidden-page messages on Schedule, Teams, Standings, Register, Rules, News, and Results.
-- [ ] Ensure direct hidden-page URLs still render a helpful page rather than a confusing dead end.
+- [x] Replace generic hidden-page messages on Schedule, Teams, Standings, Register, Rules, News, and Results.
+- [x] Ensure direct hidden-page URLs still render a helpful page rather than a confusing dead end.
 
 Acceptance criteria:
 
 - Hidden pages show organizer contact when available and at least Home plus two relevant public links when visible.
 - Empty states are specific to the route and state.
 - No free public feature becomes Plus-gated.
+
+2026-06-02 shared state note: `components/public/PublicTournamentState.tsx` now provides the shared public unavailable/empty pattern. It is used on Schedule, Standings, Teams, Register, Rules, News, public game details, and public home schedule/news fallbacks. Direct hidden URLs for News and Rules now show an unavailable state instead of falling straight through to not-found.
 
 ### Phase 2 - Public Schedule Mobile Controls
 
@@ -328,15 +350,15 @@ Likely files:
 
 Tasks:
 
-- [ ] Redesign mobile hero fallback around event facts rather than abstract-only decoration.
+- [ ] Redesign mobile hero fallback around event facts rather than abstract-only decoration. Deferred to separate design project.
 - [x] Add state-dependent tournament-day home mode so in-progress events lead with useful games/results/venue information.
 - [x] Reduce the in-progress mobile hero height so the tournament-day panel appears sooner.
 - [x] Add the browser-local followed-team home card when a visitor has saved a team on the device.
-- [ ] Keep Tournament Plus banner behavior intact.
-- [ ] Prefer Final Standings/Results CTA when tournament status is completed and those pages are visible.
-- [ ] Add free post-event public record framing.
-- [ ] Add Plus-branded completed-event recap treatment only where supported by current data.
-- [ ] Verify Powered by badge and acquisition banner do not obscure primary mobile actions.
+- [x] Keep Tournament Plus banner behavior intact.
+- [x] Prefer Final Standings/Results CTA when tournament status is completed and those pages are visible.
+- [x] Add free post-event public record framing.
+- [ ] Add Plus-branded completed-event recap treatment only where supported by current data. Deferred to separate design project.
+- [ ] Verify Powered by badge and acquisition banner do not obscure primary mobile actions. Browser visual verification closed out of this project.
 
 Acceptance criteria:
 
@@ -346,6 +368,8 @@ Acceptance criteria:
 - Plus branding remains visible but does not reduce basic usability.
 
 2026-06-01 implementation note: the first Phase 4 slice adds Tournament Day Home Mode for in-progress/public-schedule events. The public home now shows a day panel with Today's Games, Latest Finals, Field Shortcuts, Event Snapshot, and a browser-local My Team card when a visitor has followed a team. The full event-specific fallback hero redesign and completed-event recap framing remain open.
+
+2026-06-02 completed record note: completed tournament home now becomes a final public record instead of showing an empty upcoming-games block. The hero compacts, the primary action prefers Final Standings, Schedule is relabeled as Game Log, and a Final Public Record section shows score counts, pending-review/unscored counts, accepted teams, top standings by division, and latest final scores linking into public game details. Browser visual testing and design-only refinements are closed out of this project and should move to a separate design project.
 
 ### Phase 5 - Page-Specific Public Polish And Analytics Surfaces
 
@@ -363,7 +387,7 @@ Likely files:
 
 Tasks:
 
-- [ ] Standardize mobile empty states on Teams, Team Profile, Standings, Results, Rules, and News. First slice complete for Teams, Team Profile layout, Standings, Schedule, Rules, and News; Results still pending.
+- [x] Standardize mobile empty states on Teams, Standings/Results, Schedule, Register, Rules, News, game details, and public home schedule/news fallbacks. Team Profile loading/error microstates remain route-specific.
 - [x] Add browser-local Follow My Team preference across Teams, Team Profile, and Schedule.
 - [x] Improve public Results/Standings mobile clarity for final scores, pending-review scores, followed-team usefulness, and completed-tournament record value.
 - [ ] Add route-specific acquisition analytics surfaces such as `public_schedule`, `public_register`, `registration_confirmation`, and `public_powered_by_badge`.
@@ -381,6 +405,12 @@ Acceptance criteria:
 2026-06-02 density refinement note: after mobile review, the product split is Schedule owns game-by-game scores and Standings owns ranking/consequences. Mobile Standings now uses a compact `final / pending / remaining` line, a slim My Team strip, a reduced `Team / REC / RD / PTS` table, and hides the duplicate Recent Scores feed on phones. Mobile Schedule rows were tightened into dense game-log rows with time, matchup, score/status, and venue using less vertical space.
 
 2026-06-02 visual hierarchy refinement note: a follow-up mobile review found the standings header too cramped and the dense schedule rows too far from the admin Results & Scoring pattern. Standings now keeps tie-breaker order as footer context below the table instead of in the header. Public Schedule/result rows now mirror the admin scoring row structure: short date dividers, compact date/time plus status, centered W/L/T score matchups, muted venue context, and a followed-team star in the right rail instead of the admin edit pencil.
+
+2026-06-02 density correction note: after another mobile review, the rule is to compress supporting chrome before shrinking core data. Public Schedule mobile controls, followed-team bar, TBD notice, and score-row metadata were tightened. Mobile Standings table text and padding were increased again because the table was readable on phone; the surrounding summary/My Team chrome remains compact.
+
+2026-06-02 row cleanup note: public Schedule rows no longer show "Scheduled" on every unscored game. Final/Pending/Cancelled status badges stay in the top-right rail on the same row as date/time and render before the followed-team star. Venue display now uses two compact lines when data is available: parent venue first, facility/surface second, with the whole block still linking to maps.
+
+2026-06-02 row/detail split note: follow-up product review moved venue context out of the high-volume Schedule list. Public Schedule rows now act as compact selectable game-index rows with date/time, matchup, score/status, and followed-team star only. A new public game details route owns venue, facility/surface, Google Maps link, notes, division, stage, status, and full matchup context.
 
 ### Phase 6 - Verification, Docs, And Handoff
 
@@ -476,4 +506,4 @@ Public page scenarios:
 
 ## Final Recommendation
 
-Proceed in the phase order above. The schedule control and registration review work should ship before broader visual polish because they remove the most concrete mobile friction. Shared hidden/empty states should come first or in parallel because they lower risk across every public route.
+This project is closed and archived. Future work should start from a new plan for public visual/design refinement, analytics surfaces, or a Plus shareable post-event recap rather than reopening this implementation project.

@@ -23,7 +23,11 @@ export interface Matchup {
   time: string;
   venueId: string;
   venueFacilityId?: string;
+  scheduleFacilityLaneId?: string | null;
+  scheduleFacilityLaneLabel?: string | null;
+  location?: string;
   pool?: string;
+  sourceGameId?: string;
 }
 
 interface Round {
@@ -109,9 +113,13 @@ function SortableMatchup({ matchup, options, usedOptions, venues, onUpdateCode, 
         <input type="date" value={matchup.date} onChange={e => onUpdate({...matchup, date: e.target.value})} className={styles.dateInput} />
         <input type="time" value={matchup.time} onChange={e => onUpdate({...matchup, time: e.target.value})} className={styles.timeInput} />
         <select
-          value={matchup.venueFacilityId || matchup.venueId}
+          value={matchup.scheduleFacilityLaneId ? `lane:${matchup.scheduleFacilityLaneId}` : (matchup.venueFacilityId || matchup.venueId)}
           onChange={e => {
             const val = e.target.value;
+            if (val.startsWith('lane:')) {
+              onUpdate({ ...matchup, venueId: '', venueFacilityId: undefined });
+              return;
+            }
             let parentVenueId = '';
             let facilityId = '';
             for (const v of venues) {
@@ -119,11 +127,23 @@ function SortableMatchup({ matchup, options, usedOptions, venues, onUpdateCode, 
               if (fac) { parentVenueId = v.id; facilityId = fac.id; break; }
             }
             if (!parentVenueId && venues.find(v => v.id === val)) parentVenueId = val;
-            onUpdate({ ...matchup, venueId: parentVenueId, venueFacilityId: facilityId || undefined });
+            onUpdate({
+              ...matchup,
+              venueId: parentVenueId,
+              venueFacilityId: facilityId || undefined,
+              scheduleFacilityLaneId: null,
+              scheduleFacilityLaneLabel: null,
+              location: '',
+            });
           }}
           className={styles.fieldSelect}
         >
           <option value="">Field…</option>
+          {matchup.scheduleFacilityLaneId && (
+            <option value={`lane:${matchup.scheduleFacilityLaneId}`}>
+              {matchup.scheduleFacilityLaneLabel || matchup.location || 'TBD facility'}
+            </option>
+          )}
           {venues.filter(v => (v.facilities?.length ?? 0) > 0).map(v => (
             <optgroup key={v.id} label={v.name}>
               {v.facilities!.map(f => (
@@ -163,7 +183,12 @@ export default function BracketBuilder({ division, teams, venues, defaultDate, t
         date: p.date || defaultDate || '',
         time: p.time || '',
         venueId: p.venueId || '',
-        pool: p.pool
+        venueFacilityId: p.venueFacilityId || undefined,
+        scheduleFacilityLaneId: p.scheduleFacilityLaneId ?? null,
+        scheduleFacilityLaneLabel: p.scheduleFacilityLaneLabel ?? null,
+        location: p.location || '',
+        pool: p.pool,
+        sourceGameId: p.sourceGameId,
       }))
     }));
     setRounds(initialRounds);
@@ -185,7 +210,11 @@ export default function BracketBuilder({ division, teams, venues, defaultDate, t
         time:            m.time,
         venueId:         m.venueId,
         venueFacilityId: m.venueFacilityId,
+        scheduleFacilityLaneId: m.scheduleFacilityLaneId ?? null,
+        scheduleFacilityLaneLabel: m.scheduleFacilityLaneLabel ?? null,
+        location: m.location ?? '',
         pool:            m.pool,
+        sourceGameId:    m.sourceGameId,
       }))
     );
     onPreviewChange(preview);

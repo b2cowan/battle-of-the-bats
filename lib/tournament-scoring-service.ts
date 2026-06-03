@@ -1,5 +1,6 @@
 import { updateGame as updateGameRecord } from './db';
 import { getEffectiveScoreFinalization } from './tournament-score-policy';
+import { notifyFansForGame } from './fan-notify';
 import type { Game, GameStatus, OrgRole, ScoreSubmissionSource } from './types';
 import { supabaseAdmin } from './supabase-admin';
 
@@ -41,6 +42,12 @@ export type TournamentScoringServiceDependencies = {
     orgRequireScoreFinalization: boolean,
   ) => Promise<boolean>;
   now?: () => string;
+  /**
+   * Side-effect hook fired after a score is persisted. The production singleton
+   * wires this to the anonymous fan push fan-out (lib/fan-notify). Optional so
+   * unit tests can construct the service without triggering real notifications.
+   */
+  onScored?: (gameId: string, status: GameStatus) => void;
 };
 
 export class TournamentScoringError extends Error {
@@ -117,6 +124,9 @@ export function createTournamentScoringService(deps: TournamentScoringServiceDep
       scoreSubmissionSource: input.source,
     }, { admin: true });
 
+    // Fan score-alert fan-out (fire-and-forget; covers scorekeeper/official/admin).
+    deps.onScored?.(input.gameId, status);
+
     return { status };
   }
 
@@ -154,6 +164,7 @@ const tournamentScoringService = createTournamentScoringService({
   loadGame: loadTournamentScoreGameFromDb,
   updateGame: updateGameRecord,
   getEffectiveScoreFinalization,
+  onScored: (gameId, status) => { void notifyFansForGame(gameId, status); },
 });
 
 export const loadTournamentScoreGame = tournamentScoringService.loadTournamentScoreGame;

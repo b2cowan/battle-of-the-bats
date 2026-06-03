@@ -1,10 +1,28 @@
 'use client';
-import React, { useState, useEffect } from 'react';
-import { Trophy, Check, X, Calendar, AlertCircle } from 'lucide-react';
-import { Division, Team, Venue, PlayoffConfig, Tournament } from '@/lib/types';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Trophy, Check, X, Calendar, AlertCircle, Sparkles, Plus, Trash2, SlidersHorizontal, RefreshCw, Info } from 'lucide-react';
+import { Division, Team, Venue, PlayoffConfig, Tournament, Game } from '@/lib/types';
 import { formatPoolName } from '@/lib/utils';
+import { buildScheduleMetrics, resolveManualTravelBuffers } from '@/lib/schedule-metrics';
+import { resolveGameTiming } from '@/lib/schedule-conflict';
+import {
+  filterStartsAfterRoundRobinCompletion,
+  getRoundRobinCompletion,
+  startsBeforeRoundRobinCompletion,
+} from '@/lib/playoff-scheduling-guard';
+import {
+  defaultSchedulePriorities,
+  generateScoredSchedule,
+  type ScheduleDraftMatchup,
+  type ScheduleDraftAssignment,
+  type ScheduleDraftParticipant,
+  type ScheduleDraftSlot,
+  type SchedulePrioritySettings,
+} from '@/lib/schedule-generator';
 import BracketBuilder from './components/BracketBuilder';
+import ScheduleHealthPanel from './components/ScheduleHealthPanel';
 import FeedbackModal from '@/components/FeedbackModal';
+import styles from './schedule-admin.module.css';
 
 interface Props {
   division: Division;
@@ -13,6 +31,70 @@ interface Props {
   orgSlug?: string;
   onClose: () => void;
   onComplete: () => void;
+}
+
+interface DateSlot {
+  date: string;
+  startTime: string;
+  endTime: string;
+}
+
+interface ScheduleResource {
+  key: string;
+  venueId: string;
+  venueName: string;
+  venueFacilityId?: string | null;
+  label: string;
+}
+
+interface PlayoffPreviewRow {
+  round: string;
+  pool?: string;
+  home: string;
+  away: string;
+  code: string;
+  date: string;
+  time: string;
+  venueId: string;
+  venueFacilityId?: string;
+  scheduleFacilityLaneId?: string | null;
+  scheduleFacilityLaneLabel?: string | null;
+  location?: string;
+  sourceGameId?: string;
+}
+
+interface FacilityLaneEnsureRow {
+  id: string;
+  label: string;
+}
+
+interface DraftOptimizationSummary {
+  score: number;
+  healthScore: number;
+  candidateCount: number;
+}
+
+type PlayoffTemplateGame = Pick<PlayoffPreviewRow, 'round' | 'home' | 'away' | 'code'> & Partial<Pick<PlayoffPreviewRow, 'pool'>>;
+type GenerationScope = 'replace' | 'build';
+
+const EFFORT_DESCRIPTIONS: Record<number, string> = {
+  12: 'Fast checks fewer drafts and returns quicker.',
+  24: 'Balanced checks more drafts without making generation feel slow.',
+  40: 'Deep checks the most drafts for tougher brackets.',
+};
+
+function venueResourceKey(venueId: string) {
+  return `venue:${venueId}`;
+}
+
+function facilityResourceKey(facilityId: string) {
+  return `facility:${facilityId}`;
+}
+
+function getVenueResourceKeys(venue: Venue): string[] {
+  return venue.facilities?.length
+    ? venue.facilities.map(facility => facilityResourceKey(facility.id))
+    : [venueResourceKey(venue.id)];
 }
 
 export default function PlayoffWizard({ division, tournamentId, tournament = null, orgSlug, onClose, onComplete }: Props) {
@@ -27,14 +109,28 @@ export default function PlayoffWizard({ division, tournamentId, tournament = nul
       teamsQualifying: 4,
       tieBreakers: ['h2h', 'rd', 'rf', 'ra']
     };
-    return { ...defaults, ...(division.playoffConfig || {}) };
+    const merged = { ...defaults, ...(division.playoffConfig || {}) };
+    return merged.crossover === 'standard' && (division.pools?.length || 0) !== 2
+      ? { ...merged, crossover: 'reseed' }
+      : merged;
   });
-  const [activeTab, setActiveTab] = useState<'settings' | 'preview'>('settings');
   const [venues, setVenues] = useState<Venue[]>([]);
-  const [preview, setPreview] = useState<any[]>([]);
-  const [templatePreview, setTemplatePreview] = useState<any[]>([]);
+  const [existingGames, setExistingGames] = useState<Game[]>([]);
+  const [preview, setPreview] = useState<PlayoffPreviewRow[]>([]);
+  const [templatePreview, setTemplatePreview] = useState<PlayoffPreviewRow[]>([]);
   const [showConfirm, setShowConfirm] = useState(false);
   const [showWarning, setShowWarning] = useState(false);
+  const [autoSchedule, setAutoSchedule] = useState(true);
+  const [generationScope, setGenerationScope] = useState<GenerationScope>('replace');
+  const [gameLength, setGameLength] = useState(tournament?.settings?.game_duration_minutes ?? 90);
+  const [breakLength, setBreakLength] = useState(tournament?.settings?.buffer_minutes ?? 15);
+  const [dateSlots, setDateSlots] = useState<DateSlot[]>([
+    { date: tournament?.endDate || tournament?.startDate || '', startTime: '09:00', endTime: '20:30' },
+  ]);
+  const [selectedResourceKeys, setSelectedResourceKeys] = useState<Set<string>>(new Set());
+  const [temporaryFacilityCount, setTemporaryFacilityCount] = useState(2);
+  const [priorities, setPriorities] = useState<SchedulePrioritySettings>(() => defaultSchedulePriorities());
+  const [draftSummary, setDraftSummary] = useState<DraftOptimizationSummary | null>(null);
   const orgQuery = orgSlug ? `?orgSlug=${encodeURIComponent(orgSlug)}` : '';
   const orgParam = orgSlug ? `&orgSlug=${encodeURIComponent(orgSlug)}` : '';
 
@@ -42,22 +138,436 @@ export default function PlayoffWizard({ division, tournamentId, tournament = nul
     Promise.all([
       fetch(`/api/admin/venues?tournamentId=${encodeURIComponent(tournamentId)}${orgParam}`).then(r => r.ok ? r.json() : []),
       fetch(`/api/admin/teams?tournamentId=${encodeURIComponent(tournamentId)}${orgParam}`).then(r => r.ok ? r.json() : []),
-    ]).then(([ds, all]) => {
-      setVenues(ds);
-      setTeams((all as any[]).filter(t => t.divisionId === division.id && t.status === 'accepted'));
+      fetch(`/api/admin/games?tournamentId=${encodeURIComponent(tournamentId)}${orgParam}`).then(r => r.ok ? r.json() : []),
+    ]).then(([ds, all, games]) => {
+      const venueRows = ds as Venue[];
+      setVenues(venueRows);
+      setSelectedResourceKeys(current => (
+        current.size > 0 ? current : new Set(venueRows.flatMap(getVenueResourceKeys))
+      ));
+      setTeams((all as Team[]).filter(t => t.divisionId === division.id && t.status === 'accepted'));
+      setExistingGames((games as Game[]).filter(game => game.divisionId === division.id));
     });
   }, [tournamentId, division.id, orgParam]);
 
-  useEffect(() => {
-    if (config.crossover === 'standard' && (division.pools?.length || 0) !== 2) {
-      setConfig(prev => ({ ...prev, crossover: 'reseed' }));
+  const availableDates = useMemo(() => {
+    if (!tournament?.startDate || !tournament?.endDate) return [];
+    const start = new Date(tournament.startDate + 'T12:00:00');
+    const end = new Date(tournament.endDate + 'T12:00:00');
+    const dates: string[] = [];
+    const curr = new Date(start);
+    while (curr <= end) {
+      dates.push(curr.toISOString().split('T')[0]);
+      curr.setDate(curr.getDate() + 1);
     }
-  }, [division.pools?.length]);
+    return dates;
+  }, [tournament?.startDate, tournament?.endDate]);
+
+  const selectedResources = useMemo(() => {
+    const resources: ScheduleResource[] = [];
+    for (const venue of venues) {
+      if (venue.facilities?.length) {
+        for (const facility of venue.facilities) {
+          const key = facilityResourceKey(facility.id);
+          if (!selectedResourceKeys.has(key)) continue;
+          resources.push({
+            key,
+            venueId: venue.id,
+            venueName: venue.name,
+            venueFacilityId: facility.id,
+            label: `${venue.name} - ${facility.name}`,
+          });
+        }
+      } else {
+        const key = venueResourceKey(venue.id);
+        if (!selectedResourceKeys.has(key)) continue;
+        resources.push({
+          key,
+          venueId: venue.id,
+          venueName: venue.name,
+          venueFacilityId: null,
+          label: venue.name,
+        });
+      }
+    }
+    return resources;
+  }, [venues, selectedResourceKeys]);
+
+  const selectedResourceCount = selectedResources.length;
+  const totalResourceCount = venues.reduce((total, venue) => total + (venue.facilities?.length || 1), 0);
+  const currentEffortDescription = EFFORT_DESCRIPTIONS[priorities.candidateCount] ?? EFFORT_DESCRIPTIONS[24];
+  const manualTravelBuffers = useMemo(() => resolveManualTravelBuffers({}, tournament), [tournament]);
+  const roundRobinTiming = useMemo(() => resolveGameTiming(division, tournament), [division, tournament]);
+  const roundRobinCompletion = useMemo(
+    () => getRoundRobinCompletion(existingGames, roundRobinTiming.durationMinutes),
+    [existingGames, roundRobinTiming.durationMinutes],
+  );
+  const earliestPlayoffStartLabel = useMemo(
+    () => roundRobinCompletion
+      ? roundRobinCompletion.toLocaleString(undefined, {
+          weekday: 'short',
+          month: 'short',
+          day: 'numeric',
+          hour: 'numeric',
+          minute: '2-digit',
+        })
+      : null,
+    [roundRobinCompletion],
+  );
+  const currentPlayoffGames = useMemo(
+    () => existingGames.filter(game => game.isPlayoff),
+    [existingGames],
+  );
+  const replaceablePlayoffGames = useMemo(
+    () => currentPlayoffGames.filter(game => game.status === 'scheduled' && !game.generatorLocked),
+    [currentPlayoffGames],
+  );
+  const protectedPlayoffGames = useMemo(
+    () => currentPlayoffGames.filter(game => game.status !== 'scheduled' || game.generatorLocked),
+    [currentPlayoffGames],
+  );
+  const lockedPlayoffGameCount = useMemo(
+    () => currentPlayoffGames.filter(game => game.status === 'scheduled' && game.generatorLocked).length,
+    [currentPlayoffGames],
+  );
+  const canBuildFromCurrent = currentPlayoffGames.length > 0;
+  const protectedFixedAssignments = protectedPlayoffGames
+    .filter(game => game.date && game.time)
+    .map(gameToFixedAssignment);
+  const activeGenerationScope: GenerationScope = canBuildFromCurrent ? generationScope : 'replace';
+
+  const previewMetrics = useMemo(() => {
+    if (preview.length === 0) return null;
+    if (preview.some((p: PlayoffPreviewRow) => !p.date || !p.time)) return null;
+    return buildScheduleMetrics({
+      games: preview.map((p: PlayoffPreviewRow, index) => ({
+        id: `playoff-preview-${index}`,
+        tournamentId,
+        divisionId: division.id,
+        homePlaceholder: p.home,
+        awayPlaceholder: p.away,
+        date: p.date || null,
+        time: p.time || null,
+        venueId: p.venueId || null,
+        venueFacilityId: p.venueFacilityId || null,
+        scheduleFacilityLaneId: p.scheduleFacilityLaneId ?? null,
+        scheduleFacilityLaneLabel: p.scheduleFacilityLaneLabel ?? null,
+        location: p.location ?? null,
+        status: 'scheduled',
+        isPlayoff: true,
+      })),
+      teams,
+      divisions: [division],
+      venues,
+      tournament,
+      divisionId: division.id,
+      gameDurationMinutes: gameLength,
+      bufferMinutes: breakLength,
+      manualTravelBuffers,
+      maxGamesPerDay: priorities.maxGamesPerDay,
+      includePlayoffs: true,
+    });
+  }, [preview, tournamentId, division, teams, venues, tournament, gameLength, breakLength, manualTravelBuffers, priorities.maxGamesPerDay]);
 
 
+
+  function savedPlayoffKey(item: Pick<PlayoffPreviewRow, 'code' | 'home' | 'away'>) {
+    return `${item.code}:${item.home}:${item.away}`;
+  }
+
+  function gameToPreviewRow(game: Game): PlayoffPreviewRow {
+    return {
+      round: roundLabel(game.bracketCode || ''),
+      home: game.homePlaceholder || teamLabel(game.homeTeamId) || 'Home',
+      away: game.awayPlaceholder || teamLabel(game.awayTeamId) || 'Away',
+      code: game.bracketCode || game.id,
+      date: game.date || '',
+      time: game.time || '',
+      venueId: game.venueId || '',
+      venueFacilityId: game.venueFacilityId || undefined,
+      scheduleFacilityLaneId: game.scheduleFacilityLaneId ?? null,
+      scheduleFacilityLaneLabel: game.scheduleFacilityLaneLabel ?? null,
+      location: game.location || '',
+      sourceGameId: game.id,
+    };
+  }
+
+  function gameToFixedAssignment(game: Game): ScheduleDraftAssignment<unknown> {
+    const home = game.homePlaceholder || teamLabel(game.homeTeamId) || 'Home';
+    const away = game.awayPlaceholder || teamLabel(game.awayTeamId) || 'Away';
+    return {
+      matchupId: playoffMatchupKey({ code: game.bracketCode || game.id }),
+      homeParticipantId: participantKey(home),
+      awayParticipantId: participantKey(away),
+      homeLabel: home,
+      awayLabel: away,
+      homeMetric: game.homeTeamId ? { teamId: game.homeTeamId } : { placeholder: home },
+      awayMetric: game.awayTeamId ? { teamId: game.awayTeamId } : { placeholder: away },
+      payload: {},
+      date: game.date,
+      time: game.time,
+      venueId: game.venueId ?? null,
+      venueName: game.location || 'TBD',
+      venueFacilityId: game.venueFacilityId ?? null,
+      scheduleFacilityLaneId: game.scheduleFacilityLaneId ?? null,
+      scheduleFacilityLaneLabel: game.scheduleFacilityLaneLabel ?? null,
+      slotIndex: -1,
+    };
+  }
+
+  function teamLabel(teamId?: string | null) {
+    if (!teamId) return null;
+    return teams.find(team => team.id === teamId)?.name ?? null;
+  }
+
+  function roundLabel(code: string) {
+    const upper = code.toUpperCase();
+    if (upper.startsWith('QF')) return 'Quarterfinal';
+    if (upper.startsWith('SF')) return 'Semifinal';
+    if (upper === 'FIN') return 'Championship';
+    if (upper === '3RD') return '3rd Place';
+    return 'Playoff';
+  }
+
+  function addDateSlot() {
+    let nextDate = '';
+    if (availableDates.length > 0) {
+      nextDate = availableDates.find(d => !dateSlots.some(s => s.date === d)) || availableDates[0];
+    }
+    setDateSlots([...dateSlots, { date: nextDate, startTime: '09:00', endTime: '20:30' }]);
+  }
+
+  function removeDateSlot(idx: number) {
+    if (dateSlots.length <= 1) return;
+    setDateSlots(dateSlots.filter((_, i) => i !== idx));
+  }
+
+  function updateDateSlot(idx: number, updates: Partial<DateSlot>) {
+    const next = [...dateSlots];
+    next[idx] = { ...next[idx], ...updates };
+    setDateSlots(next);
+  }
+
+  function toggleResource(key: string) {
+    setSelectedResourceKeys(current => {
+      const next = new Set(current);
+      if (next.has(key)) next.delete(key); else next.add(key);
+      return next;
+    });
+  }
+
+  function toggleVenueResources(venue: Venue) {
+    const keys = getVenueResourceKeys(venue);
+    const allSelected = keys.every(key => selectedResourceKeys.has(key));
+    setSelectedResourceKeys(current => {
+      const next = new Set(current);
+      keys.forEach(key => {
+        if (allSelected) next.delete(key);
+        else next.add(key);
+      });
+      return next;
+    });
+  }
+
+  function selectAllResources() {
+    setSelectedResourceKeys(new Set(venues.flatMap(getVenueResourceKeys)));
+  }
+
+  function clearResources() {
+    setSelectedResourceKeys(new Set());
+  }
+
+  function updatePriorities(updates: Partial<SchedulePrioritySettings>) {
+    setPriorities(current => ({ ...current, ...updates }));
+  }
+
+  function buildTimeSlots(resourceList: ScheduleResource[]): ScheduleDraftSlot[] {
+    const totalSlots: ScheduleDraftSlot[] = [];
+    const sortedDates = [...dateSlots].sort((a, b) => a.date.localeCompare(b.date));
+    const roundTo5 = (d: Date) => { const ms = 1000 * 60 * 5; return new Date(Math.ceil(d.getTime() / ms) * ms); };
+    const temporaryFacilities = Array.from(
+      { length: Math.max(1, Math.min(16, Math.round(temporaryFacilityCount) || 1)) },
+      (_, idx) => ({
+        id: `draft-playoff-facility-${idx + 1}`,
+        label: `Playoff Facility ${idx + 1}`,
+      }),
+    );
+
+    sortedDates.forEach(slot => {
+      if (!slot.date || !slot.startTime || !slot.endTime) return;
+      let current = roundTo5(new Date(`${slot.date}T${slot.startTime}`));
+      const end = new Date(`${slot.date}T${slot.endTime}`);
+      while (current.getTime() + gameLength * 60000 <= end.getTime()) {
+        const timeStr = current.toTimeString().slice(0, 5);
+        if (resourceList.length === 0) {
+          temporaryFacilities.forEach(facility => totalSlots.push({
+            date: slot.date,
+            time: timeStr,
+            venueId: null,
+            venueName: facility.label,
+            venueFacilityId: null,
+            scheduleFacilityLaneId: facility.id,
+            scheduleFacilityLaneLabel: facility.label,
+          }));
+        } else {
+          resourceList.forEach(resource => {
+            totalSlots.push({
+              date: slot.date,
+              time: timeStr,
+              venueId: resource.venueId,
+              venueName: resource.label,
+              venueFacilityId: resource.venueFacilityId ?? null,
+            });
+          });
+        }
+        current = roundTo5(new Date(current.getTime() + (gameLength + breakLength) * 60000));
+      }
+    });
+
+    return filterStartsAfterRoundRobinCompletion(totalSlots, roundRobinCompletion);
+  }
+
+  function playoffMatchupKey(item: Pick<PlayoffPreviewRow, 'code' | 'pool'>) {
+    return `${item.pool ?? '__global__'}:${item.code}`;
+  }
+
+  function participantKey(label: string, pool?: string) {
+    return `${pool ?? '__global__'}:${label}`;
+  }
+
+  function extractDependencyCodes(label: string): string[] {
+    const match = label.match(/^(?:Winner|Loser)\s+([A-Za-z0-9_-]+)/);
+    return match ? [match[1]] : [];
+  }
+
+  function autoSchedulePreviewRows(rows: PlayoffPreviewRow[]): { rows: PlayoffPreviewRow[]; summary: DraftOptimizationSummary } | null {
+    const slots = buildTimeSlots(selectedResources);
+    if (slots.length < rows.length) {
+      setFeedback({
+        isOpen: true,
+        title: 'Not Enough Slots',
+        message: `The playoff bracket needs ${rows.length} game slot${rows.length === 1 ? '' : 's'}, but only ${slots.length} are available${earliestPlayoffStartLabel ? ` after round robin completes (${earliestPlayoffStartLabel})` : ''}. Add dates, extend the time window, or select more facilities.`,
+        type: 'warning',
+      });
+      return null;
+    }
+
+    const rowByKey = new Map(rows.map(row => [playoffMatchupKey(row), row]));
+    const participantLabels = new Map<string, string>();
+    const matchups: ScheduleDraftMatchup<PlayoffPreviewRow>[] = rows.map(row => {
+      const homeParticipantId = participantKey(row.home, row.pool);
+      const awayParticipantId = participantKey(row.away, row.pool);
+      participantLabels.set(homeParticipantId, row.home);
+      participantLabels.set(awayParticipantId, row.away);
+      const dependsOnMatchupIds = [...extractDependencyCodes(row.home), ...extractDependencyCodes(row.away)]
+        .map(code => playoffMatchupKey({ code, pool: row.pool }))
+        .filter(key => rowByKey.has(key));
+
+      return {
+        matchupId: playoffMatchupKey(row),
+        homeParticipantId,
+        awayParticipantId,
+        homeLabel: row.home,
+        awayLabel: row.away,
+        homeMetric: { placeholder: row.home },
+        awayMetric: { placeholder: row.away },
+        poolId: row.pool ?? null,
+        dependsOnMatchupIds,
+        dependencyMinRestMinutes: priorities.minRestMinutes,
+        payload: row,
+      };
+    });
+
+    const participants: ScheduleDraftParticipant[] = Array.from(participantLabels.entries()).map(([id, label]) => ({
+      id,
+      label,
+      divisionId: division.id,
+      status: 'accepted',
+    }));
+
+    const draft = generateScoredSchedule({
+      tournamentId,
+      divisionId: division.id,
+      matchups,
+      slots,
+      participants,
+      gameDurationMinutes: gameLength,
+      bufferMinutes: breakLength,
+      manualTravelBuffers,
+      priorities,
+      fixedAssignments: activeGenerationScope === 'build' ? protectedFixedAssignments : undefined,
+    });
+
+    if (!draft) {
+      setFeedback({
+        isOpen: true,
+        title: 'No Playoff Draft Found',
+        message: 'The selected windows could not satisfy bracket order and rest requirements. Try adding time, selecting more facilities, or lowering minimum rest.',
+        type: 'warning',
+      });
+      return null;
+    }
+
+    const scheduledRows = draft.assignments.map(assignment => ({
+      ...assignment.payload,
+      date: assignment.date,
+      time: assignment.time,
+      venueId: assignment.venueId || '',
+      venueFacilityId: assignment.venueFacilityId || undefined,
+      scheduleFacilityLaneId: assignment.scheduleFacilityLaneId ?? null,
+      scheduleFacilityLaneLabel: assignment.scheduleFacilityLaneLabel ?? null,
+      location: assignment.venueName,
+    }));
+
+    return {
+      rows: scheduledRows,
+      summary: {
+        score: draft.score,
+        healthScore: draft.metrics.healthScore,
+        candidateCount: draft.candidateCount,
+      },
+    };
+  }
+
+  async function materializeTemporaryFacilityLanes(rows: PlayoffPreviewRow[]): Promise<PlayoffPreviewRow[]> {
+    const labels = Array.from(new Set(
+      rows
+        .filter(row => row.scheduleFacilityLaneId?.startsWith('draft-playoff-facility-'))
+        .map(row => row.scheduleFacilityLaneLabel || row.location)
+        .filter(Boolean) as string[],
+    ));
+    if (labels.length === 0) return rows;
+
+    const res = await fetch(`/api/admin/schedule-facility-lanes${orgQuery}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'ensure',
+        tournamentId,
+        divisionId: division.id,
+        labels,
+      }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to prepare temporary playoff facilities');
+
+    const laneByLabel = new Map((data.lanes as FacilityLaneEnsureRow[]).map(lane => [lane.label, lane.id]));
+    return rows.map(row => {
+      if (!row.scheduleFacilityLaneId?.startsWith('draft-playoff-facility-')) return row;
+      const label = row.scheduleFacilityLaneLabel || row.location || 'Playoff Facility';
+      return {
+        ...row,
+        venueId: '',
+        venueFacilityId: undefined,
+        scheduleFacilityLaneId: laneByLabel.get(label) ?? row.scheduleFacilityLaneId,
+        scheduleFacilityLaneLabel: label,
+        location: label,
+      };
+    });
+  }
 
   function generatePreview() {
-    const games: any[] = [];
+    const games: PlayoffTemplateGame[] = [];
     const { crossover, hasThirdPlace, teamsQualifying } = config;
     const pools = division.pools || [];
     
@@ -134,12 +644,12 @@ export default function PlayoffWizard({ division, tournamentId, tournament = nul
       }
     }
 
-    setTemplatePreview(games.map(g => {
+    let nextPreview = games.map((g): PlayoffPreviewRow => {
       const existing = preview.find(p => p.code === g.code && p.pool === g.pool);
       // Prioritize tournament end date, fallback to today ONLY if we have no tournament info at all
       const tournamentEnd = tournament?.endDate;
       const today = new Date().toISOString().split('T')[0];
-      const defaultDate = tournamentEnd || today;
+      const defaultDate = autoSchedule ? (tournamentEnd || today) : '';
 
       return { 
         ...g, 
@@ -147,15 +657,65 @@ export default function PlayoffWizard({ division, tournamentId, tournament = nul
         // Otherwise, use the tournament end date if available.
         date: (existing?.date && existing.date !== today) ? existing.date : defaultDate, 
         time: existing?.time || '', 
-        venueId: existing?.venueId || '' 
+        venueId: existing?.venueId || '',
+        venueFacilityId: existing?.venueFacilityId || undefined,
+        scheduleFacilityLaneId: existing?.scheduleFacilityLaneId ?? null,
+        scheduleFacilityLaneLabel: existing?.scheduleFacilityLaneLabel ?? null,
+        location: existing?.location || '',
       };
-    }));
+    });
+
+    const protectedRows = activeGenerationScope === 'build'
+      ? protectedPlayoffGames.map(gameToPreviewRow)
+      : [];
+    const protectedCounts = protectedRows.reduce((map, row) => {
+      const key = savedPlayoffKey(row);
+      map.set(key, (map.get(key) ?? 0) + 1);
+      return map;
+    }, new Map<string, number>());
+    const rowsToGenerate = nextPreview.filter(row => {
+      const key = savedPlayoffKey(row);
+      const remaining = protectedCounts.get(key) ?? 0;
+      if (remaining <= 0) return true;
+      if (remaining === 1) protectedCounts.delete(key);
+      else protectedCounts.set(key, remaining - 1);
+      return false;
+    });
+
+    setDraftSummary(null);
+    if (autoSchedule) {
+      if (dateSlots.some(s => !s.date)) {
+        setFeedback({
+          isOpen: true,
+          title: 'Choose Playoff Dates',
+          message: 'Select a date for every playoff scheduling window before auto-assigning game slots.',
+          type: 'warning',
+        });
+        return;
+      }
+      if (rowsToGenerate.length > 0) {
+        const scheduled = autoSchedulePreviewRows(rowsToGenerate);
+        if (!scheduled) return;
+        nextPreview = [...protectedRows, ...scheduled.rows];
+        setDraftSummary(scheduled.summary);
+      } else {
+        nextPreview = protectedRows;
+      }
+    } else {
+      nextPreview = [...protectedRows, ...rowsToGenerate];
+    }
+
+    setTemplatePreview(nextPreview);
   }
 
-  // generatePreview is now triggered explicitly via the "Configure Brackets" button
+  // generatePreview is triggered explicitly from the preview action.
 
   async function handleCreate() {
-    setShowWarning(true);
+    if (currentPlayoffGames.length > 0) {
+      setShowWarning(true);
+    } else {
+      proceedAfterWarning();
+    }
   }
 
   const baseOptions = React.useMemo(() => {
@@ -185,7 +745,20 @@ export default function PlayoffWizard({ division, tournamentId, tournament = nul
     }
     const numSeeds = division.capacity || teams.length || 16;
     return Array.from({length: numSeeds}, (_, i) => `Seed #${i + 1}`);
-  }, [config.crossover, config.teamsQualifying, config.splitConfigs, division.pools, division.capacity, teams.length]);
+  }, [config.crossover, config.teamsQualifying, config.hasThirdPlace, config.splitConfigs, division.pools, division.capacity, teams.length]);
+
+  function validatePlayoffStartsAfterRoundRobin(rows: PlayoffPreviewRow[]) {
+    const earlyRows = rows.filter(row => startsBeforeRoundRobinCompletion(row, roundRobinCompletion));
+    if (earlyRows.length === 0) return true;
+
+    setFeedback({
+      isOpen: true,
+      title: 'Playoffs Start Too Early',
+      message: `Playoff games cannot start before round robin is complete. The earliest valid playoff start is ${earliestPlayoffStartLabel ?? 'after the last round-robin game'}. Update the playoff date/time windows and try again.`,
+      type: 'warning',
+    });
+    return false;
+  }
 
   function proceedAfterWarning() {
     setShowWarning(false);
@@ -204,7 +777,9 @@ export default function PlayoffWizard({ division, tournamentId, tournament = nul
       return;
     }
 
-    if (preview.some(p => !p.date || !p.venueId)) {
+    if (!validatePlayoffStartsAfterRoundRobin(preview)) return;
+
+    if (preview.some(p => !p.date || !p.time || (!p.venueId && !p.scheduleFacilityLaneId))) {
       setShowConfirm(true);
     } else {
       executeCreate();
@@ -212,6 +787,8 @@ export default function PlayoffWizard({ division, tournamentId, tournament = nul
   }
 
   async function executeCreate() {
+    if (!validatePlayoffStartsAfterRoundRobin(preview)) return;
+
     setLoading(true);
     setShowConfirm(false);
     try {
@@ -228,18 +805,23 @@ export default function PlayoffWizard({ division, tournamentId, tournament = nul
         }
       }
 
-      const gameRows = preview.map(p => {
+      const previewToCreate = activeGenerationScope === 'build'
+        ? preview.filter(row => !row.sourceGameId)
+        : preview;
+      const previewToSave = await materializeTemporaryFacilityLanes(previewToCreate);
+      const gameRows = previewToSave.map(p => {
         const bracketId = (config.crossover === 'none' && p.pool && poolBracketIds[p.pool])
           ? poolBracketIds[p.pool]
           : defaultBracketId;
         return {
           tournamentId,
           divisionId: division.id,
-          homeTeamId: null as any,
-          awayTeamId: null as any,
+          homeTeamId: null,
+          awayTeamId: null,
           date: p.date || null,
           time: p.time || null,
           location: (() => {
+            if (p.scheduleFacilityLaneId) return p.scheduleFacilityLaneLabel || p.location || 'TBD';
             const v = venues.find(d => d.id === p.venueId);
             if (!v) return 'TBD';
             const f = p.venueFacilityId ? v.facilities?.find(f => f.id === p.venueFacilityId) : null;
@@ -247,6 +829,8 @@ export default function PlayoffWizard({ division, tournamentId, tournament = nul
           })(),
           venueId:         p.venueId         || undefined,
           venueFacilityId: p.venueFacilityId || undefined,
+          scheduleFacilityLaneId: p.scheduleFacilityLaneId || undefined,
+          scheduleFacilityLaneLabel: p.scheduleFacilityLaneLabel || undefined,
           status: 'scheduled',
           isPlayoff: true,
           bracketId,
@@ -257,21 +841,36 @@ export default function PlayoffWizard({ division, tournamentId, tournament = nul
         };
       });
 
-      const deleteRes = await fetch(`/api/admin/games${orgQuery}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'delete-division-playoff-games', divisionId: division.id }),
-      });
-      const deleteData = await deleteRes.json();
-      if (!deleteRes.ok) throw new Error(deleteData.error || 'Failed to clear existing playoff games');
+      if (replaceablePlayoffGames.length > 0 ||
+          (activeGenerationScope === 'replace' && currentPlayoffGames.length > 0)) {
+        const deleteBody = activeGenerationScope === 'build'
+          ? {
+              action: 'delete-playoff-games',
+              tournamentId,
+              gameIds: replaceablePlayoffGames.map(game => game.id),
+            }
+          : {
+              action: 'delete-division-playoff-games',
+              divisionId: division.id,
+            };
+        const deleteRes = await fetch(`/api/admin/games${orgQuery}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(deleteBody),
+        });
+        const deleteData = await deleteRes.json();
+        if (!deleteRes.ok) throw new Error(deleteData.error || 'Failed to clear existing playoff games');
+      }
 
-      const saveRes = await fetch(`/api/admin/games${orgQuery}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'bulk-save', games: gameRows, tournamentId, divisionId: division.id }),
-      });
-      const saveData = await saveRes.json();
-      if (!saveRes.ok) throw new Error(saveData.error || 'Failed to save playoff bracket');
+      if (gameRows.length > 0) {
+        const saveRes = await fetch(`/api/admin/games${orgQuery}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'bulk-save', games: gameRows, tournamentId, divisionId: division.id }),
+        });
+        const saveData = await saveRes.json();
+        if (!saveRes.ok) throw new Error(saveData.error || 'Failed to save playoff bracket');
+      }
       onComplete();
     } catch (err) {
       console.error(err);
@@ -283,7 +882,7 @@ export default function PlayoffWizard({ division, tournamentId, tournament = nul
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal modal-lg" onClick={e => e.stopPropagation()} style={{ padding: 0, display: 'flex', flexDirection: 'column', maxHeight: '95vh', width: '90%', maxWidth: 'none' }}>
+      <div className="modal modal-lg" onClick={e => e.stopPropagation()} style={{ padding: 0, display: 'flex', flexDirection: 'column', maxHeight: '95vh', width: '100%', maxWidth: templatePreview.length > 0 && config.teamsQualifying >= 8 ? 'min(90%, 1080px)' : '700px' }}>
         
         {/* Header */}
         <div style={{ padding: '1.5rem 2rem', borderBottom: '1px solid var(--border)', background: 'var(--surface-2)' }}>
@@ -309,15 +908,20 @@ export default function PlayoffWizard({ division, tournamentId, tournament = nul
             
             {/* Step 1: Configuration */}
             <section>
-              <h4 className="text-label" style={{ marginBottom: '1rem', opacity: 0.5 }}>1. Bracket Configuration</h4>
+              <h4 className="text-label" style={{ marginBottom: '1rem', color: 'rgba(var(--logic-lime-rgb), 0.65)' }}>1. Bracket Configuration</h4>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.5rem' }}>
                 <div className="form-group">
                   <label className="form-label">Crossover Rules</label>
-                  <select className="form-select" value={config.crossover} onChange={e => setConfig({...config, crossover: e.target.value as any})}>
-                    {(division.pools?.length || 0) === 2 && <option value="standard">Standard (First A vs. Last B)</option>}
-                    <option value="reseed">Top vs Bottom Reseed (Global Seeding)</option>
-                    <option value="none">No Crossover (Split Pool Championship)</option>
+                  <select className="form-select" value={config.crossover} onChange={e => setConfig({...config, crossover: e.target.value as PlayoffConfig['crossover']})}>
+                    {(division.pools?.length || 0) === 2 && <option value="standard">Standard (Pool A vs. Pool B Crossover)</option>}
+                    <option value="reseed">Global Reseed (Top vs. Bottom Seeding)</option>
+                    <option value="none">No Crossover (Each Pool Plays Own Finals)</option>
                   </select>
+                  <small className={styles.crossoverHint}>
+                    {config.crossover === 'standard' && '1st in Pool A plays 2nd in Pool B, and vice versa. Requires exactly 2 pools.'}
+                    {config.crossover === 'reseed' && 'All qualifying teams are globally ranked. Seed #1 plays the lowest seed, #2 plays the second-lowest, etc.'}
+                    {config.crossover === 'none' && 'Each pool runs its own independent championship bracket with no cross-pool matchups.'}
+                  </small>
                 </div>
                 
                 {config.crossover !== 'none' ? (
@@ -389,20 +993,289 @@ export default function PlayoffWizard({ division, tournamentId, tournament = nul
               )}
             </section>
 
-            <div style={{ marginTop: '1.5rem', padding: '1.25rem', background: 'rgba(var(--blueprint-blue-rgb), 0.08)', borderRadius: '2px', border: '1px solid rgba(var(--blueprint-blue-rgb), 0.25)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div>
-                <h4 className="font-bold text-sm text-primary-light" style={{ marginBottom: '0.25rem' }}>Configure Brackets</h4>
-                <p className="text-muted text-xs">Generate the initial bracket layout based on your selections above. <br/><strong>Warning:</strong> Clicking this will reset the Custom Builder canvas.</p>
+            <section>
+              <h4 className="text-label" style={{ marginBottom: '1rem', color: 'rgba(var(--logic-lime-rgb), 0.65)' }}>2. Scheduling Options</h4>
+              {canBuildFromCurrent && (
+              <div className="form-group" style={{ marginBottom: '1rem' }}>
+                <label className="form-label">Regeneration Scope</label>
+                <div className={styles.generatorSegmented}>
+                  <button
+                    type="button"
+                    className={`${styles.generatorSegBtn} ${generationScope === 'replace' ? styles.generatorSegBtnActive : ''}`}
+                    onClick={() => setGenerationScope('replace')}
+                    title="Clears playoff games for this division before saving the bracket."
+                  >
+                    Replace bracket
+                  </button>
+                  <button
+                    type="button"
+                    className={`${styles.generatorSegBtn} ${generationScope === 'build' ? styles.generatorSegBtnActive : ''}`}
+                    onClick={() => setGenerationScope('build')}
+                    title="Keeps submitted, completed, cancelled, and manually kept playoff games while replacing unlocked scheduled playoff games."
+                  >
+                    Build from current
+                  </button>
+                </div>
+                {currentPlayoffGames.length > 0 && (
+                  <p className="text-muted text-xs" style={{ marginTop: '0.5rem' }}>
+                    {protectedPlayoffGames.length} protected
+                    {lockedPlayoffGameCount > 0 ? ` (${lockedPlayoffGameCount} manually kept)` : ''} · {replaceablePlayoffGames.length} scheduled replaceable
+                  </p>
+                )}
               </div>
-              <button className="btn btn-primary" onClick={generatePreview}>Configure Brackets</button>
+              )}
+
+              <div className="form-group" style={{ marginBottom: '1rem' }}>
+                <label className="form-label">Playoff Timing</label>
+                <div className={styles.generatorSegmented}>
+                  <button
+                    type="button"
+                    className={`${styles.generatorSegBtn} ${autoSchedule ? styles.generatorSegBtnActive : ''}`}
+                    onClick={() => setAutoSchedule(true)}
+                  >
+                    Auto-schedule dates & times
+                  </button>
+                  <button
+                    type="button"
+                    className={`${styles.generatorSegBtn} ${!autoSchedule ? styles.generatorSegBtnActive : ''}`}
+                    onClick={() => setAutoSchedule(false)}
+                  >
+                    Bracket structure only
+                  </button>
+                </div>
+                <p className="text-muted text-xs" style={{ marginTop: '0.5rem' }}>
+                  {autoSchedule
+                    ? 'Games are assigned to the date windows you set below. Team names are placeholders until standings are final after round robin.'
+                    : 'Creates the bracket matchup structure only — you assign dates and fields manually in the game slots below.'}
+                </p>
+              </div>
+
+              {autoSchedule && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  <div className="form-group">
+                    <label className="form-label" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      Playoff Dates
+                      <button type="button" className="btn btn-ghost btn-sm" onClick={addDateSlot} style={{ color: 'var(--logic-lime)' }}>
+                        <Plus size={14} /> Add Date
+                      </button>
+                    </label>
+                    {earliestPlayoffStartLabel && (
+                      <p className="text-muted text-xs" style={{ marginTop: '-0.25rem', marginBottom: '0.5rem' }}>
+                        Earliest playoff start: {earliestPlayoffStartLabel}, after the last round-robin game ends.
+                      </p>
+                    )}
+                    <div className={styles.dateSlotList}>
+                      {dateSlots.map((slot, idx) => (
+                        <div key={idx} className={styles.dateSlotRow}>
+                          <select className={styles.dateSlotSelect} value={slot.date} onChange={e => updateDateSlot(idx, { date: e.target.value })}>
+                            <option value="">Select date…</option>
+                            {availableDates.map(d => (
+                              <option key={d} value={d}>{new Date(d + 'T12:00:00').toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}</option>
+                            ))}
+                          </select>
+                          <input type="time" className={styles.dateSlotTime} value={slot.startTime} onChange={e => updateDateSlot(idx, { startTime: e.target.value })} />
+                          <span className={styles.dateSlotSep}>-</span>
+                          <input type="time" className={styles.dateSlotTime} value={slot.endTime} onChange={e => updateDateSlot(idx, { endTime: e.target.value })} />
+                          <button type="button" className={`btn btn-ghost btn-data ${styles.dateSlotDel}`} onClick={() => removeDateSlot(idx)} disabled={dateSlots.length === 1}>
+                            <Trash2 size={13} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="form-row form-row-2">
+                    <div className="form-group">
+                      <label className="form-label">Game Duration (min)</label>
+                      <input type="number" className={`form-input ${styles.compactNumberInput}`} min="1" max="480" step="5" value={gameLength} onChange={e => setGameLength(Number(e.target.value))} />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Turnover Time (min)</label>
+                      <input type="number" className={`form-input ${styles.compactNumberInput}`} min="0" max="120" step="5" value={breakLength} onChange={e => setBreakLength(Number(e.target.value))} />
+                      <small className={styles.fieldHint}>Gap between games at the same facility.</small>
+                    </div>
+                  </div>
+
+                  <div className={styles.priorityPanel}>
+                    <div className={styles.priorityHeader}>
+                      <span><Sparkles size={14} /> Scheduling Priorities</span>
+                      <small>Best of {priorities.candidateCount}</small>
+                    </div>
+                    <details className={styles.advancedDrawer}>
+                      <summary className={styles.advancedSummary}>
+                        <SlidersHorizontal size={11} /> Advanced Settings
+                      </summary>
+                      <div className={styles.advancedDrawerContent}>
+                        <div className={styles.prioritySection}>
+                          <div className={styles.prioritySectionHeader}>
+                            <span>Limits</span>
+                            <small>Used for playoff rest and daily load</small>
+                          </div>
+                          <div className={styles.limitsRow}>
+                            <label className={styles.limitItem} title="Caps how many games one placeholder or resolved team can play in a day.">
+                              <span className={styles.limitLabel}>Max / day</span>
+                              <input
+                                type="number"
+                                className={styles.limitInput}
+                                min="1"
+                                max="6"
+                                value={priorities.maxGamesPerDay}
+                                onChange={e => updatePriorities({ maxGamesPerDay: Number(e.target.value) })}
+                              />
+                              <small className={styles.limitUnit}>per team</small>
+                            </label>
+                            <label className={styles.limitItem} title="Minimum rest after a source game before a dependent playoff game can start.">
+                              <span className={styles.limitLabel}>Min rest</span>
+                              <input
+                                type="number"
+                                className={styles.limitInput}
+                                min="0"
+                                max="360"
+                                step="15"
+                                value={priorities.minRestMinutes}
+                                onChange={e => updatePriorities({ minRestMinutes: Number(e.target.value) })}
+                              />
+                              <small className={styles.limitUnit}>min between rounds</small>
+                            </label>
+                          </div>
+                        </div>
+                        <div className={styles.prioritySection}>
+                          <div className={styles.prioritySectionHeader}>
+                            <span>Preferences</span>
+                            <small>Scoring tradeoffs for better brackets</small>
+                          </div>
+                          <div className={styles.effortRow}>
+                            <span className={styles.limitLabel}>Effort</span>
+                            <select
+                              className="form-select"
+                              value={priorities.candidateCount}
+                              onChange={e => updatePriorities({ candidateCount: Number(e.target.value) })}
+                            >
+                              <option value={12}>Fast</option>
+                              <option value={24}>Balanced</option>
+                              <option value={40}>Deep</option>
+                            </select>
+                            <small className={styles.effortHint}>{currentEffortDescription}</small>
+                          </div>
+                          <div className={styles.prefChecks}>
+                            <label className={styles.prefCheck} title="Scores drafts higher when teams have rest between games.">
+                              <input
+                                type="checkbox"
+                                checked={priorities.avoidBackToBack}
+                                onChange={e => updatePriorities({ avoidBackToBack: e.target.checked })}
+                              />
+                              <span>Avoid back-to-back</span>
+                            </label>
+                            <label className={styles.prefCheck} title="Scores drafts higher when teams stay at the same selected facility.">
+                              <input
+                                type="checkbox"
+                                checked={priorities.reduceVenueChanges}
+                                onChange={e => updatePriorities({ reduceVenueChanges: e.target.checked })}
+                              />
+                              <span>Reduce facility moves</span>
+                            </label>
+                            <label className={styles.prefCheck} title="Scores drafts higher when early and late games are spread more evenly.">
+                              <input
+                                type="checkbox"
+                                checked={priorities.balanceTimeSlots}
+                                onChange={e => updatePriorities({ balanceTimeSlots: e.target.checked })}
+                              />
+                              <span>Balance early/late</span>
+                            </label>
+                          </div>
+                        </div>
+                      </div>
+                    </details>
+                  </div>
+
+                  <div className="form-group">
+                    <label className="form-label">Available Facilities</label>
+                    <small className={styles.fieldHint} style={{ display: 'block', marginBottom: '0.45rem' }}>Select which fields or diamonds the generator can assign playoff games to.</small>
+                    {venues.length > 0 && (
+                      <div className={styles.facilityPickerHeader}>
+                        <span>{selectedResourceCount} / {totalResourceCount} selected</span>
+                        <div className={styles.facilityPickerActions}>
+                          <button type="button" className="btn btn-ghost btn-sm" onClick={selectAllResources}>All</button>
+                          <button type="button" className="btn btn-ghost btn-sm" onClick={clearResources}>None</button>
+                        </div>
+                      </div>
+                    )}
+                    {venues.length > 0 && (
+                      <div className={styles.facilityPicker}>
+                        {venues.map(venue => {
+                          const resourceKeys = getVenueResourceKeys(venue);
+                          const selectedCount = resourceKeys.filter(key => selectedResourceKeys.has(key)).length;
+                          const allSelected = selectedCount === resourceKeys.length;
+                          const facilities = venue.facilities ?? [];
+                          return (
+                            <div key={venue.id} className={styles.facilityVenueGroup}>
+                              <label className={styles.facilityVenueCheck}>
+                                <input type="checkbox" checked={allSelected} onChange={() => toggleVenueResources(venue)} />
+                                <span className={styles.facilityVenueName}>
+                                  <strong>{venue.name}</strong>
+                                  <small>{selectedCount} / {resourceKeys.length} selected</small>
+                                </span>
+                              </label>
+                              {facilities.length > 0 ? (
+                                <div className={styles.facilityChildGrid}>
+                                  {facilities.map(facility => {
+                                    const key = facilityResourceKey(facility.id);
+                                    return (
+                                      <label key={facility.id} className={styles.facilityCheck}>
+                                        <input type="checkbox" checked={selectedResourceKeys.has(key)} onChange={() => toggleResource(key)} />
+                                        <span>{facility.name}</span>
+                                      </label>
+                                    );
+                                  })}
+                                </div>
+                              ) : (
+                                <p className={styles.facilityEmptyText}>No facilities listed. Selecting the venue uses one scheduling lane.</p>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                    {(venues.length === 0 || selectedResourceCount === 0) && (
+                      <div className={styles.temporaryFacilityPanel}>
+                        <div>
+                          <strong>Use temporary facilities</strong>
+                          <span>Playoff games can be resolved to real venues later.</span>
+                        </div>
+                        <label>
+                          <span>Facilities</span>
+                          <input
+                            type="number"
+                            className="form-input"
+                            min="1"
+                            max="16"
+                            value={temporaryFacilityCount}
+                            onChange={e => setTemporaryFacilityCount(Number(e.target.value))}
+                          />
+                        </label>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </section>
+
+            <div style={{ marginTop: '1.5rem', padding: '1.25rem', background: 'rgba(var(--blueprint-blue-rgb), 0.08)', borderRadius: '2px', border: '1px solid rgba(var(--blueprint-blue-rgb), 0.25)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem' }}>
+              <div>
+                <h4 className="font-bold text-sm text-primary-light" style={{ marginBottom: '0.25rem' }}>Preview Bracket</h4>
+                <p className="text-muted text-xs">Generates the bracket layout based on your configuration above. Resets the custom bracket canvas if you&apos;ve made manual edits.</p>
+              </div>
+              <button className="btn btn-lime btn-data" style={{ whiteSpace: 'nowrap', flexShrink: 0 }} onClick={generatePreview}>
+                <Sparkles size={13} /> Preview Bracket
+              </button>
             </div>
 
             <div className="divider"></div>
 
-            {/* Step 2: Game Slots */}
+            {/* Step 3: Game Slots */}
             <section>
-              <div className="flex-between" style={{ marginBottom: '1.5rem' }}>
-                <h4 className="text-label" style={{ opacity: 0.5 }}>2. Game Slots & Scheduling</h4>
+            <div className="flex-between" style={{ marginBottom: '1.5rem' }}>
+              <h4 className="text-label" style={{ color: 'rgba(var(--logic-lime-rgb), 0.65)' }}>3. Game Slots & Scheduling</h4>
                 <span className="badge badge-neutral">{preview.length} Games</span>
               </div>
 
@@ -411,20 +1284,58 @@ export default function PlayoffWizard({ division, tournamentId, tournament = nul
                   <div className="empty-icon"><Calendar size={32} /></div>
                   <h4 className="display-sm" style={{ marginBottom: '0.5rem' }}>No Matches Generated</h4>
                   <p className="text-muted" style={{ maxWidth: '400px', margin: '0 auto', fontSize: '0.9rem', lineHeight: '1.5' }}>
-                    Adjust your bracket configuration above and click <strong>Configure Brackets</strong> to generate the initial playoff schedule structure.
+                    Adjust your bracket configuration above, then create a bracket or schedule playoff windows.
                   </p>
                 </div>
               ) : (
-                <BracketBuilder 
-                  division={division} 
-                  teams={teams} 
-                  venues={venues}
-                  defaultDate={tournament?.endDate || new Date().toISOString().split('T')[0]} 
-                  templatePreview={templatePreview}
-                  baseOptions={baseOptions}
-                  onPreviewChange={setPreview} 
-                  crossover={config.crossover}
-                />
+                <>
+                  {activeGenerationScope === 'build' && protectedPlayoffGames.length > 0 && (
+                    <div className={styles.partialPreviewSummary}>
+                      <span>Build from current</span>
+                      <strong>{protectedPlayoffGames.length}</strong>
+                      <small>protected</small>
+                      <strong>{lockedPlayoffGameCount}</strong>
+                      <small>locked</small>
+                      <strong>{replaceablePlayoffGames.length}</strong>
+                      <small>replaceable</small>
+                    </div>
+                  )}
+
+                  {draftSummary && (
+                    <div className={styles.optimizationSummary}>
+                      <span><Sparkles size={13} /> Best of {draftSummary.candidateCount} playoff drafts</span>
+                      <strong>{draftSummary.score}</strong>
+                      <small>Health {draftSummary.healthScore}/100</small>
+                    </div>
+                  )}
+
+                  {previewMetrics && (
+                    <ScheduleHealthPanel
+                      metrics={previewMetrics}
+                      title="Playoff Draft Health"
+                      subtitle={`${division.name} · ${autoSchedule ? 'Scheduled playoff windows' : 'Bracket only'}`}
+                      showTeamTable
+                    />
+                  )}
+
+                  {autoSchedule && (
+                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', padding: '0.75rem 1rem', background: 'var(--white-5)', borderRadius: '2px', margin: '0.75rem 0', fontSize: '0.8rem', color: 'var(--white-60)', lineHeight: 1.5 }}>
+                      <Info size={14} style={{ marginTop: '1px', flexShrink: 0, color: 'var(--blueprint-blue)' }} />
+                      These windows use seed and winner placeholders until standings and bracket advancement resolve the actual teams.
+                    </div>
+                  )}
+
+                  <BracketBuilder
+                    division={division}
+                    teams={teams}
+                    venues={venues}
+                    defaultDate={tournament?.endDate || new Date().toISOString().split('T')[0]}
+                    templatePreview={templatePreview}
+                    baseOptions={baseOptions}
+                    onPreviewChange={setPreview}
+                    crossover={config.crossover}
+                  />
+                </>
               )}
             </section>
 
@@ -434,8 +1345,8 @@ export default function PlayoffWizard({ division, tournamentId, tournament = nul
         {/* Footer */}
         <div className="modal-footer" style={{ padding: '1.5rem 2rem', background: 'var(--surface-2)', margin: 0 }}>
           <button className="btn btn-ghost btn-data" onClick={onClose} disabled={loading}>Cancel</button>
-          <button className="btn btn-primary btn-data" onClick={handleCreate} disabled={loading || preview.length === 0} style={{ padding: '0.75rem 2rem' }}>
-            {loading ? 'Creating...' : <><Check size={18} /> Generate Playoff Bracket</>}
+          <button className="btn btn-lime btn-data" onClick={handleCreate} disabled={loading || preview.length === 0} style={{ padding: '0.75rem 2rem' }}>
+            {loading ? <><RefreshCw className="spin" size={14} /> Creating...</> : <><Check size={14} /> Generate Playoff Bracket</>}
           </button>
         </div>
 
@@ -465,13 +1376,23 @@ export default function PlayoffWizard({ division, tournamentId, tournament = nul
             <div className="flex-center mb-6" style={{ width: '70px', height: '70px', background: 'rgba(var(--danger-rgb),0.1)', borderRadius: '100%', margin: '0 auto', color: 'var(--danger)' }}>
               <AlertCircle size={36} />
             </div>
-            <h3 className="display-sm mb-3" style={{ fontSize: '1.4rem', color: 'var(--white)' }}>Replace Existing Bracket?</h3>
+            <h3 className="display-sm mb-3" style={{ fontSize: '1.4rem', color: 'var(--white)' }}>
+              {activeGenerationScope === 'build' ? 'Build From Current Bracket?' : 'Replace Existing Bracket?'}
+            </h3>
             <p className="text-muted" style={{ fontSize: '0.95rem', lineHeight: '1.6', marginBottom: '2.5rem' }}>
-              Generating a new playoff bracket will <strong style={{ color: 'var(--danger)' }}>delete all existing playoff games and scores</strong> for the {division.name} division. This action cannot be undone.
+              {activeGenerationScope === 'build' ? (
+                <>
+                  This will keep <strong>{protectedPlayoffGames.length}</strong> protected playoff games{lockedPlayoffGameCount > 0 ? <> (<strong>{lockedPlayoffGameCount}</strong> manually kept)</> : null}, replace <strong>{replaceablePlayoffGames.length}</strong> unlocked scheduled playoff games, and save the new bracket rows for the {division.name} division.
+                </>
+              ) : (
+                <>
+                  Generating a new playoff bracket will <strong style={{ color: 'var(--danger)' }}>delete all existing playoff games and scores</strong> for the {division.name} division. This action cannot be undone.
+                </>
+              )}
             </p>
             <div className="flex flex-col gap-3">
               <button className="btn btn-primary" style={{ background: 'var(--danger)', borderColor: 'var(--danger)' }} onClick={proceedAfterWarning}>
-                Yes, Delete and Replace
+                {activeGenerationScope === 'build' ? 'Build From Current' : 'Yes, Delete and Replace'}
               </button>
               <button className="btn btn-ghost" onClick={() => setShowWarning(false)}>
                 Cancel

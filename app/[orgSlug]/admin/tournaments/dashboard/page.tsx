@@ -100,6 +100,7 @@ type ScheduleHealthDashboardStats = {
   venueChanges: number;
   facilityChanges: number;
   conflicts: number;
+  travelBufferWarnings: number;
   unresolvedFacilities: number;
   minGamesPerParticipant: number;
   maxGamesPerParticipant: number;
@@ -241,6 +242,7 @@ const EMPTY_STATS: DashboardStats = {
     venueChanges: 0,
     facilityChanges: 0,
     conflicts: 0,
+    travelBufferWarnings: 0,
     unresolvedFacilities: 0,
     minGamesPerParticipant: 0,
     maxGamesPerParticipant: 0,
@@ -313,7 +315,7 @@ function computeDaysUntil(startDate: string | null | undefined): number | null {
 
 function GaugeBar({ value, max, danger }: { value: number; max: number; danger?: boolean }) {
   const pct = max > 0 ? Math.min(100, Math.round((value / max) * 100)) : 0;
-  const color = danger ? 'var(--danger)' : pct >= 100 ? 'var(--logic-lime)' : pct >= 75 ? 'var(--warning)' : 'var(--blueprint-blue)';
+  const color = danger ? 'var(--danger)' : pct >= 100 ? 'var(--success)' : pct >= 75 ? 'var(--warning)' : 'var(--blueprint-blue)';
   return (
     <div className={styles.gaugeWrap}>
       <div className={styles.gaugeTrack}>
@@ -832,6 +834,11 @@ export default function AdminDashboard() {
       : health.minGamesPerParticipant === health.maxGamesPerParticipant
         ? `${health.minGamesPerParticipant} games each`
         : `${health.minGamesPerParticipant}-${health.maxGamesPerParticipant} games`;
+    const attentionMetric = health.unresolvedFacilities > 0
+      ? { value: health.unresolvedFacilities, label: 'TBD facilities', tone: 'warning' as const }
+      : health.travelBufferWarnings > 0
+        ? { value: health.travelBufferWarnings, label: 'Travel buffer', tone: 'warning' as const }
+        : { value: health.conflicts, label: 'Conflicts', tone: health.conflicts > 0 ? 'danger' as const : 'good' as const };
 
     return (
       <section className={`${styles.analyticsPanel} ${styles.scheduleHealthPanel}`} data-tone={health.tone}>
@@ -869,9 +876,9 @@ export default function AdminDashboard() {
                 <strong>{health.venueChanges}</strong>
                 <small>Venue moves</small>
               </span>
-              <span className={styles.scheduleHealthMiniMetric} data-tone={health.unresolvedFacilities > 0 ? 'warning' : health.conflicts > 0 ? 'danger' : 'good'}>
-                <strong>{health.unresolvedFacilities > 0 ? health.unresolvedFacilities : health.conflicts}</strong>
-                <small>{health.unresolvedFacilities > 0 ? 'TBD facilities' : 'Conflicts'}</small>
+              <span className={styles.scheduleHealthMiniMetric} data-tone={attentionMetric.tone}>
+                <strong>{attentionMetric.value}</strong>
+                <small>{attentionMetric.label}</small>
               </span>
             </div>
 
@@ -898,6 +905,9 @@ export default function AdminDashboard() {
   }
 
   function renderRegistrationPanel() {
+    const divCapacity = reg.byDivision.reduce((sum, d) => d.capacity != null ? sum + d.capacity : sum, 0);
+    const regCapacity = reg.totalCapacity > 0 ? reg.totalCapacity : divCapacity;
+    const hasDivCapacity = reg.byDivision.some(d => d.capacity != null && d.capacity > 0);
     return (
       <section className={styles.analyticsPanel}>
         <div className={styles.panelHeader}>
@@ -911,14 +921,13 @@ export default function AdminDashboard() {
           )}
           <Link href={`${base}/registrations`} className={styles.panelLink}>View teams →</Link>
         </div>
-        <div className={styles.registrationOverview}>
-          <div className={styles.registrationHeadline}>
-            <span className={styles.registrationHeadlineCount}>{reg.totalAccepted}</span>
-            <span className={styles.registrationHeadlineText}>
-              accepted{reg.totalCapacity > 0 ? ` / ${reg.totalCapacity} spots` : ' total'}
-            </span>
+        <div className={styles.mainGauge}>
+          <div className={styles.gaugeFigures}>
+            <span className={styles.gaugeMain}>{reg.totalAccepted}</span>
+            {regCapacity > 0 && <span className={styles.gaugeOf}>/ {regCapacity}</span>}
+            <span className={styles.gaugeLabel}>{regCapacity > 0 ? 'spots filled' : 'accepted'}</span>
           </div>
-          {reg.totalCapacity > 0 && <GaugeBar value={reg.totalAccepted} max={reg.totalCapacity} />}
+          {regCapacity > 0 && <GaugeBar value={reg.totalAccepted} max={regCapacity} />}
         </div>
 
         {reg.byDivision.length > 0 && (
@@ -932,7 +941,9 @@ export default function AdminDashboard() {
             {reg.byDivision.map(d => (
               <div key={d.id} className={styles.registrationStatusRow}>
                 <span className={styles.registrationDivisionName}>{d.name}</span>
-                <Link href={`${base}/registrations?division=${encodeURIComponent(d.id)}`} className={styles.registrationStatusCount} data-status="accepted">{d.accepted}</Link>
+                <Link href={`${base}/registrations?division=${encodeURIComponent(d.id)}`} className={styles.registrationStatusCount} data-status="accepted">
+                  {hasDivCapacity && d.capacity != null ? `${d.accepted}/${d.capacity}` : d.accepted}
+                </Link>
                 <Link href={`${base}/registrations?division=${encodeURIComponent(d.id)}&attention=pending_review`} className={styles.registrationStatusCount} data-status="pending">{d.pending}</Link>
                 <Link href={`${base}/registrations?division=${encodeURIComponent(d.id)}&attention=waitlist`} className={styles.registrationStatusCount} data-status="waitlist">{d.waitlist}</Link>
               </div>
@@ -988,7 +999,7 @@ export default function AdminDashboard() {
             )}
             <div className={styles.paymentBreakdown}>
               {pay.counts.paid        > 0 && <div className={styles.payRow}><span className="badge badge-success">{pay.counts.paid}</span><span>Paid in full</span></div>}
-              {pay.counts.depositPaid > 0 && <div className={styles.payRow}><span className="badge badge-primary">{pay.counts.depositPaid}</span><span>Deposit paid</span></div>}
+              {pay.counts.depositPaid > 0 && <div className={styles.payRow}><span className="badge badge-info">{pay.counts.depositPaid}</span><span>Deposit paid</span></div>}
               {pay.counts.pending     > 0 && <div className={styles.payRow}><span className="badge badge-warning">{pay.counts.pending}</span><span>Pending</span></div>}
               {pay.counts.pastDue     > 0 && <div className={styles.payRow}><span className="badge badge-danger">{pay.counts.pastDue}</span><span>Past due</span></div>}
             </div>
@@ -999,8 +1010,8 @@ export default function AdminDashboard() {
                   <span>Division</span>
                   <span>Paid</span>
                   <span>Deposit</span>
-                  <span>Unpaid</span>
-                  <span>Due</span>
+                  <span>Pending</span>
+                  <span>Past Due</span>
                 </div>
                 {pay.byDivision.filter(d => d.total > 0).map(d => (
                   <div key={d.id} className={styles.payDivRow}>

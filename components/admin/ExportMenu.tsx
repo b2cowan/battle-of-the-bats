@@ -15,7 +15,7 @@
  */
 
 import { useState, useRef, useEffect, type CSSProperties } from 'react';
-import { Download, ChevronDown, FileSpreadsheet, FileText, Calendar, Lock } from 'lucide-react';
+import { Download, ChevronDown, FileSpreadsheet, FileText, Calendar, Lock, Upload } from 'lucide-react';
 import type { OrgPlan } from '@/lib/types';
 import type { PlanFeature } from '@/lib/plan-features';
 import { hasPlanFeature, requiresPlanCopy } from '@/lib/plan-features';
@@ -71,6 +71,19 @@ export interface ExportMenuProps {
    * The button renders at reduced opacity and does not open the dropdown.
    */
   disabled?: boolean;
+  /**
+   * Disable export actions while keeping the menu usable for non-export actions
+   * such as import templates.
+   */
+  exportDisabled?: boolean;
+  /** Show an import action in the dropdown. */
+  hasImportOption?: boolean;
+  /** Called when user selects the import action. */
+  onImport?: () => void | Promise<void>;
+  /** Import menu label. Default: 'Import teams'. */
+  importLabel?: string;
+  /** Import menu helper text. */
+  importHint?: string;
   /** Optional CSS class added to the root wrapper div. */
   className?: string;
 }
@@ -90,6 +103,11 @@ export default function ExportMenu({
   pdfFeatureKey = 'pdf_exports',
   label = 'Export',
   disabled = false,
+  exportDisabled = false,
+  hasImportOption = false,
+  onImport,
+  importLabel = 'Import teams',
+  importHint = 'Download a template, upload a file, preview changes',
   className,
 }: ExportMenuProps) {
   const [open, setOpen] = useState(false);
@@ -196,8 +214,13 @@ export default function ExportMenu({
     }
   }
 
+  function runExport(action: () => void | Promise<void>) {
+    if (exportDisabled) return;
+    run(action);
+  }
+
   function handlePrimaryClick() {
-    if (disabled || loading) return;
+    if (disabled || loading || exportDisabled) return;
     run(onExportXLSX);
   }
 
@@ -215,9 +238,9 @@ export default function ExportMenu({
           type="button"
           className={`btn btn-outline btn-data ${styles.primaryBtn}`}
           onClick={handlePrimaryClick}
-          disabled={disabled || loading}
+          disabled={disabled || loading || exportDisabled}
           aria-label={`${label} as Excel`}
-          title="Download Excel (.xlsx)"
+          title={exportDisabled ? 'No rows available to export' : 'Download Excel (.xlsx)'}
         >
           <Download size={14} aria-hidden />
           <span className={styles.primaryLabel}>{loading ? 'Exporting...' : label}</span>
@@ -229,8 +252,8 @@ export default function ExportMenu({
           disabled={disabled || loading}
           aria-haspopup="menu"
           aria-expanded={open}
-          aria-label="More export formats"
-          title="More export options"
+          aria-label={hasImportOption ? 'Export and import options' : 'More export formats'}
+          title={hasImportOption ? 'Export and import options' : 'More export options'}
         >
           <ChevronDown size={14} aria-hidden />
         </button>
@@ -243,31 +266,33 @@ export default function ExportMenu({
           className={styles.menu}
           style={menuStyle}
           role="menu"
-          aria-label="Export options"
+          aria-label={hasImportOption ? 'Export and import options' : 'Export options'}
         >
           {/* Always: Excel */}
           <button
             role="menuitem"
-            className={styles.menuItem}
-            onClick={() => run(onExportXLSX)}
+            className={`${styles.menuItem}${exportDisabled ? ` ${styles.menuItemDisabled}` : ''}`}
+            onClick={() => runExport(onExportXLSX)}
+            aria-disabled={exportDisabled}
           >
             <FileSpreadsheet size={14} className={styles.menuIcon} aria-hidden />
             <span>
               <span className={styles.menuItemLabel}>Excel (.xlsx)</span>
-              <span className={styles.menuItemHint}>Opens in Google Sheets, Excel, Numbers</span>
+              <span className={styles.menuItemHint}>{exportDisabled ? 'No rows available to export' : 'Opens in Google Sheets, Excel, Numbers'}</span>
             </span>
           </button>
 
           {/* Always: CSV */}
           <button
             role="menuitem"
-            className={styles.menuItem}
-            onClick={() => run(onExportCSV)}
+            className={`${styles.menuItem}${exportDisabled ? ` ${styles.menuItemDisabled}` : ''}`}
+            onClick={() => runExport(onExportCSV)}
+            aria-disabled={exportDisabled}
           >
             <FileText size={14} className={styles.menuIcon} aria-hidden />
             <span>
               <span className={styles.menuItemLabel}>CSV</span>
-              <span className={styles.menuItemHint}>Plain text — import into any tool</span>
+              <span className={styles.menuItemHint}>{exportDisabled ? 'No rows available to export' : 'Plain text - import into any tool'}</span>
             </span>
           </button>
 
@@ -280,13 +305,14 @@ export default function ExportMenu({
           {includesICS && onExportICS && (
             <button
               role="menuitem"
-              className={styles.menuItem}
-              onClick={() => run(onExportICS!)}
+              className={`${styles.menuItem}${exportDisabled ? ` ${styles.menuItemDisabled}` : ''}`}
+              onClick={() => runExport(onExportICS!)}
+              aria-disabled={exportDisabled}
             >
               <Calendar size={14} className={styles.menuIcon} aria-hidden />
               <span>
                 <span className={styles.menuItemLabel}>Calendar (.ics)</span>
-                <span className={styles.menuItemHint}>Add events to Google Calendar, Outlook, Apple Calendar</span>
+                <span className={styles.menuItemHint}>{exportDisabled ? 'No rows available to export' : 'Add events to Google Calendar, Outlook, Apple Calendar'}</span>
               </span>
             </button>
           )}
@@ -295,13 +321,13 @@ export default function ExportMenu({
           {includesPDF && (
             <button
               role="menuitem"
-              className={`${styles.menuItem}${!pdfAccessible ? ` ${styles.menuItemGated}` : ''}`}
+              className={`${styles.menuItem}${!pdfAccessible ? ` ${styles.menuItemGated}` : ''}${exportDisabled ? ` ${styles.menuItemDisabled}` : ''}`}
               onClick={() => {
-                if (!pdfAccessible) return; // tooltip handles the upsell nudge
-                if (onExportPDF) run(onExportPDF);
+                if (!pdfAccessible || exportDisabled) return; // tooltip handles the upsell nudge
+                if (onExportPDF) runExport(onExportPDF);
               }}
-              aria-disabled={!pdfAccessible}
-              title={pdfAccessible ? 'Download PDF report' : pdfUpgradeCopy}
+              aria-disabled={!pdfAccessible || exportDisabled}
+              title={pdfAccessible ? (exportDisabled ? 'No rows available to export' : 'Download PDF report') : pdfUpgradeCopy}
             >
               <FileText size={14} className={styles.menuIcon} aria-hidden />
               {!pdfAccessible && (
@@ -310,9 +336,11 @@ export default function ExportMenu({
               <span>
                 <span className={styles.menuItemLabel}>PDF report</span>
                 <span className={styles.menuItemHint}>
-                  {pdfAccessible
-                    ? 'Formatted, print-ready document'
-                    : pdfUpgradeCopy}
+                  {!pdfAccessible
+                    ? pdfUpgradeCopy
+                    : exportDisabled
+                      ? 'No rows available to export'
+                      : 'Formatted, print-ready document'}
                 </span>
               </span>
             </button>
@@ -327,13 +355,14 @@ export default function ExportMenu({
           {hasSensitiveOption && onExportXLSXWithSensitive && (
             <button
               role="menuitem"
-              className={styles.menuItem}
-              onClick={() => run(onExportXLSXWithSensitive!)}
+              className={`${styles.menuItem}${exportDisabled ? ` ${styles.menuItemDisabled}` : ''}`}
+              onClick={() => runExport(onExportXLSXWithSensitive!)}
+              aria-disabled={exportDisabled}
             >
               <FileSpreadsheet size={14} className={styles.menuIcon} aria-hidden />
               <span>
                 <span className={styles.menuItemLabel}>{sensitiveOptionLabel}</span>
-                <span className={styles.menuItemHint}>Includes additional contact columns</span>
+                <span className={styles.menuItemHint}>{exportDisabled ? 'No rows available to export' : 'Includes additional contact columns'}</span>
               </span>
             </button>
           )}
@@ -342,15 +371,33 @@ export default function ExportMenu({
           {hasServerExport && onServerExport && (
             <button
               role="menuitem"
-              className={styles.menuItem}
-              onClick={() => run(onServerExport!)}
+              className={`${styles.menuItem}${exportDisabled ? ` ${styles.menuItemDisabled}` : ''}`}
+              onClick={() => runExport(onServerExport!)}
+              aria-disabled={exportDisabled}
             >
               <Download size={14} className={styles.menuIcon} aria-hidden />
               <span>
                 <span className={styles.menuItemLabel}>All matching records</span>
-                <span className={styles.menuItemHint}>Full dataset — not just this page</span>
+                <span className={styles.menuItemHint}>{exportDisabled ? 'No rows available to export' : 'Full dataset - not just this page'}</span>
               </span>
             </button>
+          )}
+
+          {hasImportOption && onImport && (
+            <>
+              <div className={styles.divider} role="separator" />
+              <button
+                role="menuitem"
+                className={styles.menuItem}
+                onClick={() => run(onImport)}
+              >
+                <Upload size={14} className={styles.menuIcon} aria-hidden />
+                <span>
+                  <span className={styles.menuItemLabel}>{importLabel}</span>
+                  <span className={styles.menuItemHint}>{importHint}</span>
+                </span>
+              </button>
+            </>
           )}
         </div>
       )}

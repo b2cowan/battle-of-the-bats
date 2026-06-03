@@ -1,17 +1,18 @@
 'use client';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Users, Search, ChevronDown, Star, X, Calendar, Clock, Trophy } from 'lucide-react';
+import { Users, Search, ChevronDown, Star, X, Calendar } from 'lucide-react';
 import { getDivisionPref, setDivisionPref } from '@/lib/division-cookie';
 import { isPublicPageEnabled } from '@/lib/public-pages';
-import { Game, Team, Division, Tournament, Venue } from '@/lib/types';
+import { Game, Team, Division, Tournament } from '@/lib/types';
 import { formatTime } from '@/lib/utils';
 import YearSelector from '@/components/YearSelector';
-import LocationLink from '@/components/LocationLink';
+import PublicTournamentState from '@/components/public/PublicTournamentState';
 import styles from '@/app/[orgSlug]/teams/teams.module.css';
-import homeStyles from '@/app/[orgSlug]/Home.module.css';
 import { fetchPublicTournamentData } from '@/lib/public-tournament-client';
 import type { PublicTournamentPageData } from '@/lib/public-tournament-data';
+import { readFollowedTeamId, saveFollowedTeam, clearFollowedTeam, isTournamentInProgress } from '@/lib/follow';
+import { usePublicTournamentLive } from '@/lib/hooks/usePublicTournamentLive';
 
 interface Props {
   orgSlug: string;
@@ -20,157 +21,278 @@ interface Props {
   initialData?: PublicTournamentPageData;
 }
 
-function followKey(orgSlug: string, tournamentSlug: string) {
-  return `fl_follow_team_${orgSlug}_${tournamentSlug}`;
-}
-
-function readFollowedTeamId(orgSlug: string, tournamentSlug: string) {
-  if (typeof window === 'undefined') return null;
-  try {
-    const raw = window.localStorage.getItem(followKey(orgSlug, tournamentSlug));
-    if (!raw) return null;
-    const parsed = JSON.parse(raw) as { id?: string };
-    return parsed.id ?? null;
-  } catch {
-    return null;
-  }
-}
-
-function saveFollowedTeam(orgSlug: string, tournamentSlug: string, team: Pick<Team, 'id' | 'name' | 'divisionId'>) {
-  if (typeof window === 'undefined') return;
-  window.localStorage.setItem(followKey(orgSlug, tournamentSlug), JSON.stringify({
-    id: team.id,
-    name: team.name,
-    divisionId: team.divisionId,
-  }));
-}
-
-function clearFollowedTeam(orgSlug: string, tournamentSlug: string) {
-  if (typeof window === 'undefined') return;
-  window.localStorage.removeItem(followKey(orgSlug, tournamentSlug));
-}
+// ── Utilities ─────────────────────────────────────────────────────────────────
 
 function cleanTeamName(name: string) {
   return name.replace(/\s*\(.*?\)\s*/g, '').trim();
 }
 
-export function TournamentHomeFollowedTeamCard({
+function ordinal(n: number): string {
+  if (n === 1) return '1st';
+  if (n === 2) return '2nd';
+  if (n === 3) return '3rd';
+  return `${n}th`;
+}
+
+const AVATAR_COLORS = [
+  '#7C3AED', '#1D4ED8', '#DC2626', '#D97706',
+  '#059669', '#DB2777', '#0891B2', '#EA580C',
+  '#0D9488', '#4F46E5', '#65A30D', '#B45309',
+];
+
+function avatarColor(name: string): string {
+  let h = 0;
+  for (let i = 0; i < name.length; i++) h = name.charCodeAt(i) + ((h << 5) - h);
+  return AVATAR_COLORS[Math.abs(h) % AVATAR_COLORS.length];
+}
+
+function teamInitials(name: string): string {
+  const clean = name.replace(/\s*\(.*?\)\s*/g, '').trim();
+  const words = clean.split(/\s+/);
+  if (words.length >= 2) return (words[0][0] + words[words.length - 1][0]).toUpperCase();
+  return clean.slice(0, 2).toUpperCase();
+}
+
+// ── Standings computation ─────────────────────────────────────────────────────
+
+interface StandingsRow {
+  teamId: string;
+  poolId: string | undefined;
+  w: number; l: number; t: number;
+  pts: number; rf: number; ra: number; rd: number;
+}
+
+function computeStandings(divisionId: string, teams: Team[], games: Game[]): StandingsRow[] {
+  const divTeams = teams.filter(t => t.divisionId === divisionId);
+  const divGames = games.filter(
+    g =>
+      g.divisionId === divisionId &&
+      (g.status === 'completed' || g.status === 'submitted') &&
+      !g.isPlayoff,
+  );
+
+  return divTeams
+    .map(t => {
+      const tGames = divGames.filter(g => g.homeTeamId === t.id || g.awayTeamId === t.id);
+      let w = 0, l = 0, ti = 0, rf = 0, ra = 0;
+      tGames.forEach(g => {
+        const isHome = g.homeTeamId === t.id;
+        const tf = isHome ? (g.homeScore ?? 0) : (g.awayScore ?? 0);
+        const ta = isHome ? (g.awayScore ?? 0) : (g.homeScore ?? 0);
+        rf += tf; ra += ta;
+        if (tf > ta) w++; else if (tf < ta) l++; else ti++;
+      });
+      return { teamId: t.id, poolId: t.poolId, w, l, t: ti, pts: w * 2 + ti, rf, ra, rd: rf - ra };
+    })
+    .sort((a, b) => b.pts - a.pts || b.rd - a.rd || b.rf - a.rf);
+}
+
+// ── Live-game detection ───────────────────────────────────────────────────────
+
+function getGameDuration(division: Division, tournament: Tournament | null): number {
+  return division.settings?.game_duration_minutes
+    ?? tournament?.settings?.game_duration_minutes
+    ?? 90;
+}
+
+function isGameLive(game: Game, durationMinutes: number): boolean {
+  if (game.status !== 'scheduled') return false;
+  if (game.homeScore != null || game.awayScore != null) return false;
+  if (!game.time) return false;
+
+  const now = new Date();
+  const today = now.toISOString().split('T')[0];
+  if (game.date !== today) return false;
+
+  const [h, m] = game.time.split(':').map(Number);
+  const start = new Date(now);
+  start.setHours(h, m, 0, 0);
+  const end = new Date(start.getTime() + durationMinutes * 60_000);
+
+  return now >= start && now < end;
+}
+
+// ── Team Avatar ───────────────────────────────────────────────────────────────
+
+function TeamAvatar({ name, size = 48 }: { name: string; size?: number }) {
+  const bg = avatarColor(name);
+  const initials = teamInitials(name);
+  return (
+    <div
+      className={styles.teamAvatar}
+      style={{ background: bg, width: size, height: size, fontSize: size * 0.33 }}
+      aria-hidden
+    >
+      {initials}
+    </div>
+  );
+}
+
+// ── Team Card ─────────────────────────────────────────────────────────────────
+
+function TeamCard({
+  team,
+  division,
+  tournament,
+  games,
+  teams,
+  standings,
+  isFollowed,
+  isPreview,
   orgSlug,
   tournamentSlug,
-  teams,
-  games,
-  venues,
+  showSchedulePage,
   scheduleHref,
+  onFollow,
+  onUnfollow,
 }: {
+  team: Team;
+  division: Division;
+  tournament: Tournament | null;
+  games: Game[];
+  teams: Team[];
+  standings: StandingsRow[];
+  isFollowed: boolean;
+  isPreview: boolean;
   orgSlug: string;
   tournamentSlug: string;
-  teams: Team[];
-  games: Game[];
-  venues: Venue[];
+  showSchedulePage: boolean;
   scheduleHref: string;
+  onFollow: (team: Team) => void;
+  onUnfollow: () => void;
 }) {
-  const [followedTeamId, setFollowedTeamId] = useState<string | null>(null);
+  const name = cleanTeamName(team.name);
+  const stats = standings.find(s => s.teamId === team.id);
+  const record = stats ? `${stats.w}-${stats.l}-${stats.t}` : '0-0-0';
 
-  useEffect(() => {
-    // Browser-local preference hydrates after the public home renders.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setFollowedTeamId(readFollowedTeamId(orgSlug, tournamentSlug));
-  }, [orgSlug, tournamentSlug]);
+  // Pool rank
+  const poolRows = team.poolId
+    ? standings.filter(s => s.poolId === team.poolId)
+    : standings;
+  const rankIdx = poolRows.findIndex(s => s.teamId === team.id);
+  const rankLabel = rankIdx >= 0 ? ordinal(rankIdx + 1) : null;
+  const pts = stats?.pts ?? 0;
 
-  const followedTeam = followedTeamId ? teams.find(team => team.id === followedTeamId) ?? null : null;
-  if (!followedTeam) return null;
+  // Pool name
+  const poolName = division.pools?.find(p => p.id === team.poolId)?.name ?? null;
 
+  // Live / next game
+  const durationMin = getGameDuration(division, tournament);
+  const teamGames = games.filter(g => g.homeTeamId === team.id || g.awayTeamId === team.id);
+  const liveGame = teamGames.find(g => isGameLive(g, durationMin));
   const today = new Date().toISOString().split('T')[0];
-  const teamGames = games
-    .filter(game => game.homeTeamId === followedTeam.id || game.awayTeamId === followedTeam.id)
-    .sort((a, b) => {
-      if (a.date !== b.date) return a.date.localeCompare(b.date);
-      return (a.time || '').localeCompare(b.time || '');
-    });
-  const nextGame = teamGames.find(game => game.status === 'scheduled' && game.date >= today);
-  const latestResult = [...teamGames]
-    .filter(game => game.status === 'completed' && game.homeScore != null && game.awayScore != null)
-    .sort((a, b) => {
-      if (a.date !== b.date) return b.date.localeCompare(a.date);
-      return (b.time || '').localeCompare(a.time || '');
-    })[0];
-  const highlightGame = nextGame ?? latestResult ?? teamGames[0] ?? null;
-  const opponent = highlightGame
-    ? highlightGame.homeTeamId === followedTeam.id
-      ? teams.find(team => team.id === highlightGame.awayTeamId)?.name ?? highlightGame.awayPlaceholder ?? 'TBD'
-      : teams.find(team => team.id === highlightGame.homeTeamId)?.name ?? highlightGame.homePlaceholder ?? 'TBD'
+  const nextGame = !liveGame
+    ? teamGames
+        .filter(g => g.status === 'scheduled' && g.date >= today)
+        .sort((a, b) => a.date.localeCompare(b.date) || (a.time || '').localeCompare(b.time || ''))[0]
     : null;
-  const venue = highlightGame?.venueId ? venues.find(v => v.id === highlightGame.venueId) ?? null : null;
+
+  const liveOpponent = liveGame
+    ? liveGame.homeTeamId === team.id
+      ? teams.find(t => t.id === liveGame.awayTeamId)?.name ?? liveGame.awayPlaceholder ?? 'TBD'
+      : teams.find(t => t.id === liveGame.homeTeamId)?.name ?? liveGame.homePlaceholder ?? 'TBD'
+    : null;
+  const liveOpponentAbbr = liveOpponent ? teamInitials(liveOpponent) : null;
+
+  const nextOpponent = nextGame
+    ? nextGame.homeTeamId === team.id
+      ? teams.find(t => t.id === nextGame.awayTeamId)?.name ?? nextGame.awayPlaceholder ?? 'TBD'
+      : teams.find(t => t.id === nextGame.homeTeamId)?.name ?? nextGame.homePlaceholder ?? 'TBD'
+    : null;
+
+  const poolPlayDone =
+    !liveGame &&
+    !nextGame &&
+    teamGames.filter(g => !g.isPlayoff && (g.status === 'completed' || g.status === 'submitted')).length > 0 &&
+    teamGames.filter(g => !g.isPlayoff && g.status === 'scheduled').length === 0;
+
   return (
-    <div className={`card ${homeStyles.myTeamCard}`}>
-      <div className={homeStyles.dayCardHeader}>
-        <div className={homeStyles.dayCardIcon}><Star size={16} fill="currentColor" /></div>
-        <div>
-          <span className={homeStyles.dayCardKicker}>My Team</span>
-          <h3>{cleanTeamName(followedTeam.name)}</h3>
+    <div className={`${styles.teamCard} ${isFollowed ? styles.teamCardFollowed : ''}`}>
+      <div className={styles.cardTop}>
+        <TeamAvatar name={name} size={48} />
+        <div className={styles.cardMeta}>
+          <div className={styles.cardNameRow}>
+            <span className={styles.cardName}>{name}</span>
+            <span className={styles.cardRecord}>{record}</span>
+          </div>
+          <div className={styles.cardSubRow}>
+            {poolName && <span className={styles.cardPool}>· {poolName}</span>}
+            {rankLabel && (
+              <span className={styles.cardRank}>
+                {rankLabel} · {pts} {pts === 1 ? 'pt' : 'pts'}
+              </span>
+            )}
+          </div>
         </div>
       </div>
 
-      {highlightGame ? (
-        <div className={homeStyles.myTeamGame}>
-          <div className={homeStyles.myTeamGameTop}>
-            <Clock size={14} />
-            <span>
-              {new Date(highlightGame.date + 'T12:00:00').toLocaleDateString('en-CA', { month: 'short', day: 'numeric' })}
-              {' at '}
-              {formatTime(highlightGame.time)}
-            </span>
-          </div>
-          <strong>{nextGame ? 'Next game' : 'Latest result'} vs {opponent}</strong>
-          {latestResult && highlightGame.id === latestResult.id && (
-            <span className={homeStyles.scorePill}>
-              {latestResult.homeScore} - {latestResult.awayScore}
+      <div className={styles.cardBottom}>
+        <div className={styles.cardStatus}>
+          {liveGame && (
+            <span className={styles.liveBadge}>
+              <span className={styles.liveDot} />
+              LIVE vs {liveOpponentAbbr}
             </span>
           )}
-          <LocationLink location={highlightGame.location} venue={venue} size="sm" />
+          {!liveGame && nextGame && (
+            <span className={styles.nextGame}>
+              {formatTime(nextGame.time)} vs {nextOpponent ? cleanTeamName(nextOpponent) : 'TBD'}
+            </span>
+          )}
+          {poolPlayDone && (
+            <span className={styles.poolDone}>Pool play complete</span>
+          )}
         </div>
-      ) : (
-        <p className={homeStyles.dayCardSub}>No games are scheduled for this team yet.</p>
-      )}
 
-      <div className={homeStyles.dayCardActions}>
-        <Link href={scheduleHref} className="btn btn-lime btn-sm">
-          <Calendar size={14} /> Team Schedule
-        </Link>
-        <Link href={`/${orgSlug}/${tournamentSlug}/teams/${followedTeam.id}`} className="btn btn-ghost btn-sm">
-          <Trophy size={14} /> Team Profile
-        </Link>
+        {!isPreview && (
+          <div className={styles.cardActions}>
+            <button
+              type="button"
+              className={`${styles.followBtn} ${isFollowed ? styles.followBtnActive : ''}`}
+              onClick={() => isFollowed ? onUnfollow() : onFollow(team)}
+              aria-pressed={isFollowed}
+            >
+              <Star size={12} fill={isFollowed ? 'currentColor' : 'none'} />
+              {isFollowed ? 'Following' : 'Follow'}
+            </button>
+            <Link
+              href={`/${orgSlug}/${tournamentSlug}/teams/${team.id}`}
+              className={styles.teamLink}
+            >
+              Team <span aria-hidden>›</span>
+            </Link>
+          </div>
+        )}
       </div>
     </div>
   );
 }
 
+// ── Main component ────────────────────────────────────────────────────────────
+
 export default function TeamsContent({ orgSlug, tournamentSlug, isPreview = false, initialData }: Props) {
   const [teams, setTeams]           = useState<Team[]>(() => initialData?.teams ?? []);
   const [divisions, setDivisions]   = useState<Division[]>(() => initialData?.divisions ?? []);
+  const [games, setGames]           = useState<Game[]>(() => initialData?.games ?? []);
   const [allTournaments, setAllTournaments] = useState<Tournament[]>(() => initialData?.tournaments ?? []);
   const [selectedTournament, setSelectedTournament] = useState<Tournament | null>(() => initialData?.tournament ?? null);
   const [contactEmail, setContactEmail] = useState<string | null>(
     () => initialData?.tournament?.contactEmail ?? initialData?.organization?.contactEmail ?? null
   );
-  const [activeGroup, setActiveGroup] = useState<string>('all');
+  const [activeDivisionId, setActiveDivisionId] = useState<string>(() => {
+    const groups = initialData?.divisions ?? [];
+    if (groups.length === 0) return '';
+    const pref = getDivisionPref(orgSlug);
+    const preferred = pref ? groups.find(g => g.name === pref) : null;
+    return preferred?.id ?? groups[0]?.id ?? '';
+  });
   const [search, setSearch]         = useState('');
   const [followedTeamId, setFollowedTeamId] = useState<string | null>(null);
 
   useEffect(() => {
-    // Browser-local preference hydrates after the public page renders.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setFollowedTeamId(readFollowedTeamId(orgSlug, tournamentSlug));
   }, [orgSlug, tournamentSlug]);
-
-  // Set initial active group from cookie preference
-  useEffect(() => {
-    const groups = initialData?.divisions ?? [];
-    const pref = getDivisionPref(orgSlug);
-    const preferred = pref ? groups.find(g => g.name === pref) : null;
-    if (preferred) setActiveGroup(preferred.id);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   useEffect(() => {
     if (initialData) return;
@@ -181,23 +303,45 @@ export default function TeamsContent({ orgSlug, tournamentSlug, isPreview = fals
       setSelectedTournament(current);
       setContactEmail(current?.contactEmail ?? data?.organization?.contactEmail ?? null);
       setTeams(data?.teams ?? []);
+      setGames(data?.games ?? []);
       const groups = data?.divisions ?? [];
       setDivisions(groups);
-      const pref = getDivisionPref(orgSlug);
-      const preferred = pref ? groups.find(g => g.name === pref) : null;
-      if (preferred) setActiveGroup(preferred.id);
+      if (groups.length > 0) {
+        const pref = getDivisionPref(orgSlug);
+        const preferred = pref ? groups.find(g => g.name === pref) : null;
+        setActiveDivisionId(preferred?.id ?? groups[0]?.id ?? '');
+      }
     }
     init();
   }, [orgSlug, tournamentSlug, initialData]);
 
-  const filtered = (activeGroup === 'all' ? teams : teams.filter(t => t.divisionId === activeGroup))
+  // ── live refresh (game day only) ─────────────────────────────────────────────
+  usePublicTournamentLive({
+    orgSlug,
+    tournamentSlug,
+    section: 'teams',
+    enabled: isTournamentInProgress(selectedTournament),
+    onData: data => {
+      setTeams(data.teams ?? []);
+      setGames(data.games ?? []);
+      setDivisions(data.divisions ?? []);
+    },
+  });
+
+  const activeDivision = divisions.find(d => d.id === activeDivisionId) ?? divisions[0] ?? null;
+
+  const filtered = teams
+    .filter(t => !activeDivision || t.divisionId === activeDivision.id)
     .filter(t => {
+      if (!search) return true;
       const q = search.toLowerCase();
       return t.name.toLowerCase().includes(q) || (t.coach && t.coach.toLowerCase().includes(q));
     });
 
-  const countByGroup = Object.fromEntries(divisions.map(g => [g.id, teams.filter(t => t.divisionId === g.id).length]));
-  const totalCount = teams.length;
+  const divisionStandings = activeDivision
+    ? computeStandings(activeDivision.id, teams, games)
+    : [];
+
   const homeHref = `/${orgSlug}/${tournamentSlug}`;
   const registerHref = `/${orgSlug}/${tournamentSlug}/register`;
   const scheduleHref = `/${orgSlug}/${tournamentSlug}/schedule`;
@@ -209,7 +353,7 @@ export default function TeamsContent({ orgSlug, tournamentSlug, isPreview = fals
     saveFollowedTeam(orgSlug, tournamentSlug, team);
     setFollowedTeamId(team.id);
     if (team.divisionId) {
-      setActiveGroup(team.divisionId);
+      setActiveDivisionId(team.divisionId);
       setDivisionPref(orgSlug, divisions.find(g => g.id === team.divisionId)?.name ?? '');
     }
   }
@@ -224,29 +368,55 @@ export default function TeamsContent({ orgSlug, tournamentSlug, isPreview = fals
       <div className="page-content">
         <div className="section">
           <div className="container">
-            <div className="empty-state">
-              <Users size={48} />
-              <p>Teams are not available for this tournament.</p>
-              {!isPreview && <Link href={homeHref} className="btn btn-ghost btn-sm">Tournament Home</Link>}
-            </div>
+            <PublicTournamentState
+              icon={<Users size={40} />}
+              eyebrow="Teams"
+              title="Teams unavailable"
+              description="The organizer has hidden the public teams page for this tournament."
+              actions={!isPreview ? [{ href: homeHref, label: 'Tournament Home', variant: 'ghost' as const }] : []}
+            />
           </div>
         </div>
       </div>
     );
   }
 
+  // Build pool groups within the active division
+  const poolGroups: { poolId: string | null; poolName: string; teams: Team[] }[] = [];
+  if (activeDivision) {
+    const hasPools = (activeDivision.poolCount ?? 0) >= 2 && (activeDivision.pools?.length ?? 0) >= 2;
+    if (hasPools) {
+      (activeDivision.pools ?? []).forEach(p => {
+        const poolTeams = filtered.filter(t => t.poolId === p.id);
+        if (poolTeams.length > 0) poolGroups.push({ poolId: p.id, poolName: p.name, teams: poolTeams });
+      });
+      const poolIds = new Set((activeDivision.pools ?? []).map(p => p.id));
+      const unassigned = filtered.filter(t => !t.poolId || !poolIds.has(t.poolId));
+      if (unassigned.length > 0) poolGroups.push({ poolId: null, poolName: 'Awaiting Assignment', teams: unassigned });
+    } else {
+      if (filtered.length > 0) poolGroups.push({ poolId: null, poolName: '', teams: filtered });
+    }
+  }
+
+  const teamCardProps = {
+    tournament: selectedTournament,
+    games,
+    teams,
+    standings: divisionStandings,
+    isPreview,
+    orgSlug,
+    tournamentSlug,
+    showSchedulePage,
+    scheduleHref,
+    onFollow: followTeam,
+    onUnfollow: stopFollowing,
+  };
+
   return (
     <div className="page-content">
-      <div className="public-page-header">
-        <div className="container">
-          <span className="eyebrow"><Users size={12} /> Teams</span>
-          <h1>Registered Teams</h1>
-          <p className="text-muted">Browse participating teams by age division.</p>
-        </div>
-      </div>
-
       <div className="section">
         <div className="container">
+
           {!isPreview && (
             <YearSelector
               tournaments={allTournaments}
@@ -256,43 +426,60 @@ export default function TeamsContent({ orgSlug, tournamentSlug, isPreview = fals
             />
           )}
 
+          {/* Page heading */}
+          <div className={styles.pageHeading}>
+            <h1 className={styles.pageTitle}>
+              <Users size={20} />
+              Teams
+              {teams.length > 0 && <span className={styles.teamCount}>· {teams.length}</span>}
+            </h1>
+          </div>
+
+          {/* Following banner */}
           {!isPreview && followedTeam && (
             <div className={styles.followBar}>
               <div className={styles.followMain}>
-                <Star size={16} fill="currentColor" />
-                <span>Following</span>
-                <strong>{cleanTeamName(followedTeam.name)}</strong>
+                <Star size={14} fill="currentColor" />
+                <span className={styles.followLabel}>Following</span>
+                <strong className={styles.followName}>{cleanTeamName(followedTeam.name)}</strong>
               </div>
               <div className={styles.followActions}>
-                {showSchedulePage && <Link href={scheduleHref} className="btn btn-lime btn-sm">Team Schedule</Link>}
+                {showSchedulePage && (
+                  <Link href={scheduleHref} className="btn btn-lime btn-sm">
+                    <Calendar size={13} /> Team Schedule
+                  </Link>
+                )}
                 <button type="button" className="btn btn-ghost btn-sm" onClick={stopFollowing}>
-                  <X size={14} /> Clear
+                  <X size={13} /> Clear
                 </button>
               </div>
             </div>
           )}
 
-          <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
+          {/* Division filter + search */}
+          <div className={styles.filterRow}>
             {divisions.length > 1 && (
-              <div className="select-wrapper" style={{ minWidth: '160px' }}>
+              <div className={`select-wrapper ${styles.divisionSelect}`}>
                 <select
                   className="form-select"
-                  value={activeGroup}
+                  value={activeDivisionId}
                   onChange={e => {
-                    setActiveGroup(e.target.value);
-                    if (e.target.value !== 'all') setDivisionPref(orgSlug, divisions.find(g => g.id === e.target.value)?.name ?? '');
+                    setActiveDivisionId(e.target.value);
+                    const div = divisions.find(d => d.id === e.target.value);
+                    if (div) setDivisionPref(orgSlug, div.name);
                   }}
                 >
-                  <option value="all">All Divisions ({totalCount})</option>
-                  {divisions.map(g => (
-                    <option key={g.id} value={g.id}>{g.name} ({countByGroup[g.id] || 0})</option>
+                  {divisions.map(d => (
+                    <option key={d.id} value={d.id}>
+                      {d.name} ({teams.filter(t => t.divisionId === d.id).length})
+                    </option>
                   ))}
                 </select>
                 <ChevronDown size={16} className="select-icon" />
               </div>
             )}
-            <div className={styles.searchRow} style={{ flex: 1, minWidth: '200px', marginBottom: 0 }}>
-              <Search size={16} className={styles.searchIcon} />
+            <div className={styles.searchWrap}>
+              <Search size={15} className={styles.searchIcon} />
               <input
                 type="text"
                 placeholder="Search teams or coaches..."
@@ -303,101 +490,50 @@ export default function TeamsContent({ orgSlug, tournamentSlug, isPreview = fals
             </div>
           </div>
 
+          {/* Content */}
           {filtered.length === 0 ? (
-            <div className="empty-state">
-              <Users size={48} />
-              <p>
-                {search
-                  ? 'No teams match that search.'
+            <PublicTournamentState
+              icon={<Users size={40} />}
+              eyebrow="Teams"
+              title={search ? 'No teams match that search' : 'No approved teams yet'}
+              description={
+                search
+                  ? 'Try another team name, coach name, or clear the search.'
                   : canRegister
-                    ? 'No approved teams are listed yet. Coaches can register from the tournament navigation.'
-                    : 'No approved teams are listed yet. Check back after teams are confirmed.'}
-                {contactEmail ? (
-                  <> Questions? Contact <a href={`mailto:${contactEmail}`}>{contactEmail}</a>.</>
-                ) : null}
-              </p>
-              {!isPreview && (
-                <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center', flexWrap: 'wrap' }}>
-                  {canRegister && <Link href={registerHref} className="btn btn-lime btn-sm">Register</Link>}
-                  {showSchedulePage && <Link href={scheduleHref} className="btn btn-ghost btn-sm">View Schedule</Link>}
-                </div>
-              )}
-            </div>
-          ) : (
+                    ? 'Approved teams will appear here after registration review.'
+                    : 'Teams will appear here after the organizer confirms them.'
+              }
+              contactEmail={contactEmail}
+              actions={!isPreview ? [
+                ...(!search && canRegister ? [{ href: registerHref, label: 'Register', variant: 'lime' as const }] : []),
+                ...(showSchedulePage ? [{ href: scheduleHref, label: 'View Schedule', variant: 'ghost' as const }] : []),
+              ] : []}
+              compact
+            />
+          ) : activeDivision ? (
             <div className={styles.divisionLayout}>
-              {divisions.filter(g => activeGroup === 'all' || g.id === activeGroup).map(group => {
-                const groupTeams = filtered.filter(t => t.divisionId === group.id);
-                if (groupTeams.length === 0) return null;
-
-                const groupPools = (group.poolCount || 0) >= 2 ? (group.pools || []) : [];
-                const poolIds = groupPools.map(p => p.id);
-
-                const poolGroups: { name: string; teams: Team[] }[] = [];
-
-                if (groupPools.length >= 2) {
-                  groupPools.forEach(p => {
-                    const teamsInPool = groupTeams.filter(t => t.poolId === p.id);
-                    if (teamsInPool.length > 0) {
-                      poolGroups.push({ name: p.name, teams: teamsInPool });
-                    }
-                  });
-                  const unassigned = groupTeams.filter(t => !t.poolId || !poolIds.includes(t.poolId));
-                  if (unassigned.length > 0) {
-                    poolGroups.push({ name: 'Awaiting Assignment', teams: unassigned });
-                  }
-                } else {
-                  poolGroups.push({ name: '', teams: groupTeams });
-                }
-
-                return (
-                  <div key={group.id} className={styles.groupSection}>
-                    <h2 className={styles.groupTitle}>{group.name}</h2>
-                    <div className={styles.poolGrid}>
-                      {poolGroups.map(pg => (
-                        <div key={pg.name} className={styles.poolCard}>
-                          {pg.name && (
-                            <h3 className={styles.poolName}>
-                              {pg.name.replace(/^Pool\s+/i, '').trim()} Pool
-                            </h3>
-                          )}
-                          <div className={styles.teamList}>
-                            {pg.teams.map(team => {
-                              const cleanName = cleanTeamName(team.name);
-                              const isFollowed = followedTeamId === team.id;
-                              return (
-                                <div key={team.id} className={`${styles.teamRow} ${isFollowed ? styles.followedTeamRow : ''}`}>
-                                  <div className={styles.teamMain}>
-                                    <div>
-                                      <h4 className={styles.teamName}>{cleanName}</h4>
-                                      {team.coach && <span className={styles.coach}>Coach: {team.coach}</span>}
-                                    </div>
-                                  </div>
-                                  {!isPreview && (
-                                    <div className={styles.teamActions}>
-                                      <button
-                                        type="button"
-                                        className={`${styles.followButton} ${isFollowed ? styles.followButtonActive : ''}`}
-                                        onClick={() => isFollowed ? stopFollowing() : followTeam(team)}
-                                        aria-pressed={isFollowed}
-                                      >
-                                        <Star size={13} fill={isFollowed ? 'currentColor' : 'none'} />
-                                        {isFollowed ? 'Following' : 'Follow'}
-                                      </button>
-                                      <Link href={`/${orgSlug}/${tournamentSlug}/teams/${team.id}`} className={styles.viewLink}>Profile</Link>
-                                    </div>
-                                  )}
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
+              {poolGroups.map(pg => (
+                <div key={pg.poolId ?? '__none'} className={styles.poolSection}>
+                  {pg.poolName && (
+                    <h2 className={styles.poolHeading}>
+                      {pg.poolName.replace(/^Pool\s+/i, '').trim()} Pool
+                    </h2>
+                  )}
+                  <div className={styles.teamGrid}>
+                    {pg.teams.map(team => (
+                      <TeamCard
+                        key={team.id}
+                        team={team}
+                        isFollowed={followedTeamId === team.id}
+                        {...teamCardProps}
+                        division={activeDivision}
+                      />
+                    ))}
                   </div>
-                );
-              })}
+                </div>
+              ))}
             </div>
-          )}
+          ) : null}
         </div>
       </div>
     </div>

@@ -2,10 +2,24 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
+// Static top-level routes that live outside the org-slug space and should show the footer.
+const STATIC_ROOTS = new Set(['discover', 'pricing', 'auth', 'coaches', 'status', 'docs', 'contact', 'blog']);
+
 export default function Footer() {
   const pathname = usePathname();
-  const isAdmin = /^\/[^/]+\/admin(\/|$)/.test(pathname) || pathname.startsWith('/admin');
-  if (isAdmin || pathname.startsWith('/platform-admin') || pathname.startsWith('/home')) return null;
+  const firstSegment = pathname.split('/')[1] ?? '';
+
+  // Always hide on admin shells, platform-admin, and the /home context-switcher.
+  if (
+    /^\/[^/]+\/admin(\/|$)/.test(pathname) ||
+    pathname.startsWith('/admin') ||
+    pathname.startsWith('/platform-admin') ||
+    pathname.startsWith('/home')
+  ) return null;
+
+  // Hide on all org-slug pages (/{orgSlug}/...) — public tournament pages, coaches portal,
+  // org home — while keeping the footer on known top-level marketing/auth routes.
+  if (firstSegment && !STATIC_ROOTS.has(firstSegment)) return null;
 
   return (
     <footer className="border-t border-blueprint-blue/30 bg-pitch-black mt-24">

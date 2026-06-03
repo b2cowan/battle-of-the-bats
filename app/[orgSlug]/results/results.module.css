@@ -56,9 +56,14 @@
   font-size: 1.3rem;
   font-weight: 800;
   color: var(--white-60);
+  min-width: 0;
+  /* Wrap to 2 lines instead of truncating so 30+ char names show in full. */
+  overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  line-height: 1.2;
 }
 
 .away .scoreName { text-align: right; }

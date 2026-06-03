@@ -1,11 +1,11 @@
 import { cookies } from 'next/headers';
-import Link from 'next/link';
 import { Megaphone, Star, Calendar } from 'lucide-react';
 import { getAnnouncements, getOrganizationBySlug, getPublicTournamentBySlug, getDivisions } from '@/lib/db';
 import { notFound } from 'next/navigation';
 import { isPublicPageEnabled } from '@/lib/public-pages';
 import { Announcement } from '@/lib/types';
 import DivisionFilterBar from '@/components/DivisionFilterBar';
+import PublicTournamentState from '@/components/public/PublicTournamentState';
 import styles from '../../news/news.module.css';
 
 export const dynamic = 'force-dynamic';
@@ -25,7 +25,37 @@ export default async function NewsPage({
 
   const org = await getOrganizationBySlug(orgSlug);
   const tournament = org ? await getPublicTournamentBySlug(org.id, tournamentSlug) : null;
-  if (!tournament || !isPublicPageEnabled(tournament, 'news')) notFound();
+  if (!tournament) notFound();
+
+  const contactEmail = tournament.contactEmail ?? org?.contactEmail ?? null;
+  const homeHref = `/${orgSlug}/${tournamentSlug}`;
+  const scheduleHref = `/${orgSlug}/${tournamentSlug}/schedule`;
+  const rulesHref = `/${orgSlug}/${tournamentSlug}/rules`;
+  const showSchedulePage = isPublicPageEnabled(tournament, 'schedule');
+  const showRulesPage = isPublicPageEnabled(tournament, 'rules');
+
+  if (!isPublicPageEnabled(tournament, 'news')) {
+    return (
+      <div className="page-content">
+        <div className="section">
+          <div className="container">
+            <PublicTournamentState
+              icon={<Megaphone size={40} />}
+              eyebrow="News"
+              title="News unavailable"
+              description="The organizer has hidden public announcements for this tournament."
+              contactEmail={contactEmail}
+              actions={[
+                { href: homeHref, label: 'Tournament Home', variant: 'ghost' as const },
+                ...(showSchedulePage ? [{ href: scheduleHref, label: 'View Schedule', variant: 'ghost' as const }] : []),
+                ...(showRulesPage ? [{ href: rulesHref, label: 'Tournament Rules', variant: 'ghost' as const }] : []),
+              ]}
+            />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const [allAnnouncements, divisions] = await Promise.all([
     getAnnouncements(tournament.id, { admin: true }),
@@ -50,13 +80,6 @@ export default async function NewsPage({
 
   const pinned = announcements.filter(a => a.pinned);
   const regular = announcements.filter(a => !a.pinned);
-  const contactEmail = tournament.contactEmail ?? org?.contactEmail ?? null;
-  const homeHref = `/${orgSlug}/${tournamentSlug}`;
-  const scheduleHref = `/${orgSlug}/${tournamentSlug}/schedule`;
-  const rulesHref = `/${orgSlug}/${tournamentSlug}/rules`;
-  const showSchedulePage = isPublicPageEnabled(tournament, 'schedule');
-  const showRulesPage = isPublicPageEnabled(tournament, 'rules');
-
   return (
     <div className="page-content">
       <div className="public-page-header">
@@ -81,22 +104,24 @@ export default async function NewsPage({
           )}
 
           {announcements.length === 0 ? (
-            <div className="empty-state">
-              <Megaphone size={48} />
-              <p>
-                {isFiltering ? `No announcements for ${prefName}.` : 'No announcements yet. Check back soon.'}
-                {contactEmail ? <> Questions? Contact <a href={`mailto:${contactEmail}`}>{contactEmail}</a>.</> : null}
-              </p>
-              <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center', flexWrap: 'wrap' }}>
-                {isFiltering ? (
-                  <Link href={`/${orgSlug}/${tournamentSlug}/news?view=all`} className="btn btn-ghost btn-sm">View All News</Link>
-                ) : (
-                  <Link href={homeHref} className="btn btn-ghost btn-sm">Tournament Home</Link>
-                )}
-                {showSchedulePage && <Link href={scheduleHref} className="btn btn-ghost btn-sm">View Schedule</Link>}
-                {showRulesPage && <Link href={rulesHref} className="btn btn-ghost btn-sm">Tournament Rules</Link>}
-              </div>
-            </div>
+            <PublicTournamentState
+              icon={<Megaphone size={40} />}
+              eyebrow="News"
+              title={isFiltering ? `No announcements for ${prefName}` : 'No announcements yet'}
+              description={
+                isFiltering
+                  ? 'There are no announcements tagged to this division.'
+                  : 'Tournament announcements will appear here when the organizer posts them.'
+              }
+              contactEmail={contactEmail}
+              actions={[
+                isFiltering
+                  ? { href: `/${orgSlug}/${tournamentSlug}/news?view=all`, label: 'View All News', variant: 'ghost' as const }
+                  : { href: homeHref, label: 'Tournament Home', variant: 'ghost' as const },
+                ...(showSchedulePage ? [{ href: scheduleHref, label: 'View Schedule', variant: 'ghost' as const }] : []),
+                ...(showRulesPage ? [{ href: rulesHref, label: 'Tournament Rules', variant: 'ghost' as const }] : []),
+              ]}
+            />
           ) : (
             <>
               {pinned.length > 0 && (

@@ -446,6 +446,32 @@ export default function AdminResultsPage() {
         icon={<Trophy size={20} />}
         title="Results & Scoring"
         subtitle={currentTournament ? `${currentTournament.name} (${currentTournament.year})` : 'Enter scores and finalize tournament outcomes'}
+        mobileActionsInline
+        actions={(
+          <>
+            <ExportMenu
+              className={styles.resultsExportMenu}
+              formats={['xlsx', 'csv', 'pdf']}
+              onExportXLSX={handleExportXLSX}
+              onExportCSV={handleExportCSV}
+              onExportPDF={handleExportPDF}
+              planId={currentOrg?.planId}
+              disabled={filtered.length === 0}
+            />
+            {currentOrg?.slug && (
+              <button
+                type="button"
+                className={`btn btn-ghost btn-data ${styles.mobileIconButton}`}
+                onClick={() => window.open(`/${currentOrg!.slug}/scorekeeper`, '_blank', 'noopener,noreferrer')}
+                title="Open scorekeeper view"
+                aria-label="Open scorekeeper view"
+              >
+                <ExternalLink size={12} />
+                <span className={styles.mobileButtonLabel}>Scorekeeper</span>
+              </button>
+            )}
+          </>
+        )}
       />
 
       <TournamentAdminToolbar ariaLabel="Results controls" className={styles.resultsToolbar}>
@@ -481,31 +507,6 @@ export default function AdminResultsPage() {
               onChange={setGroupMode}
               ariaLabel="Grouping mode"
             />
-          )}
-        </ToolbarGroup>
-
-        {/* ── Row 1 right: utility actions — Export · Tools ── */}
-        <ToolbarGroup align="end" className={styles.resultsActionGroup}>
-          <ExportMenu
-            className={styles.resultsExportMenu}
-            formats={['xlsx', 'csv', 'pdf']}
-            onExportXLSX={handleExportXLSX}
-            onExportCSV={handleExportCSV}
-            onExportPDF={handleExportPDF}
-            planId={currentOrg?.planId}
-            disabled={filtered.length === 0}
-          />
-          {currentOrg?.slug && (
-            <button
-              type="button"
-              className={`btn btn-ghost btn-data ${styles.mobileIconButton}`}
-              onClick={() => window.open(`/${currentOrg!.slug}/scorekeeper`, '_blank', 'noopener,noreferrer')}
-              title="Open scorekeeper view"
-              aria-label="Open scorekeeper view"
-            >
-              <ExternalLink size={12} />
-              <span className={styles.mobileButtonLabel}>Scorekeeper</span>
-            </button>
           )}
         </ToolbarGroup>
 

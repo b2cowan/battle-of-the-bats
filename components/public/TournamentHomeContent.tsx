@@ -1,12 +1,14 @@
 import Link from 'next/link';
 import { Calendar, Trophy, ChevronRight, Megaphone, Star, Eye, Clock, MapPin, CheckCircle } from 'lucide-react';
-import { getAnnouncements, getGames, getTeams, getDivisions, getVenues } from '@/lib/db';
+import { getAnnouncements, getGames, getTeams, getDivisions, getVenues, getStandings } from '@/lib/db';
 import type { Organization, Tournament } from '@/lib/types';
 import { formatTime } from '@/lib/utils';
 import { isPublicPageEnabled } from '@/lib/public-pages';
+import { hasPlanFeature } from '@/lib/plan-features';
 import { canUseAdvancedTournamentBranding } from '@/lib/tournament-branding';
 import LocationLink from '@/components/LocationLink';
-import { TournamentHomeFollowedTeamCard } from '@/components/public/TeamsContent';
+import MyTournamentCard from '@/components/public/MyTournamentCard';
+import PublicTournamentState from '@/components/public/PublicTournamentState';
 import styles from '@/app/[orgSlug]/Home.module.css';
 
 type RegistrationState = 'open' | 'waitlist' | 'closed' | 'not-open' | 'completed';
@@ -112,6 +114,16 @@ export default async function TournamentHomeContent({
   const showSchedulePage = isPublicPageEnabled(tournament, 'schedule');
   const showStandingsPage = isPublicPageEnabled(tournament, 'standings');
   const showRulesPage = isPublicPageEnabled(tournament, 'rules');
+  const contactEmail = tournament.contactEmail ?? org.contactEmail ?? null;
+  const standingsEntries = showStandingsPage
+    ? await Promise.all(
+        divisions.map(async division => [
+          division.id,
+          await getStandings(division.id, division.playoffConfig, readOptions, tournament.settings),
+        ] as const)
+      )
+    : [];
+  const standingsByDivision = new Map(standingsEntries);
   const previewLabel = tournament.status === 'draft'
     ? 'Admin preview. This draft tournament is not publicly visible until it is activated.'
     : 'Admin preview. You are viewing this tournament page from inside the admin workspace.';
@@ -121,7 +133,10 @@ export default async function TournamentHomeContent({
   const primaryBase = usePreviewLinks ? previewBase : publicBase;
   const primaryCta = (() => {
     if (registration.state === 'completed' && showStandingsPage) {
-      return { href: `${primaryBase}/standings`, label: 'View Results' };
+      return { href: `${primaryBase}/standings`, label: 'Final Standings' };
+    }
+    if (registration.state === 'completed' && showSchedulePage) {
+      return { href: `${primaryBase}/schedule`, label: 'Game Log' };
     }
     if (showSchedulePage) return { href: `${primaryBase}/schedule`, label: 'View Schedule' };
     if (showStandingsPage) return { href: `${primaryBase}/standings`, label: 'View Standings' };
@@ -137,6 +152,7 @@ export default async function TournamentHomeContent({
   // live, the home page leads with games and the full-viewport marketing hero
   // collapses (binding 2026-06-01: home page is state-dependent).
   const isInProgress = Boolean(startDate && endDate && now >= startDate && now <= endDate);
+  const isCompletedTournament = tournament.status === 'completed';
 
   const dateDisplay = (startDate && endDate)
     ? (() => {
@@ -198,6 +214,25 @@ export default async function TournamentHomeContent({
       return (b.time || '').localeCompare(a.time || '');
     })
     .slice(0, 4);
+  const finalGames = [...sortedGames].filter(game =>
+    game.status === 'completed' && game.homeScore != null && game.awayScore != null
+  );
+  const pendingScoreGames = [...sortedGames].filter(game =>
+    game.status === 'submitted' && game.homeScore != null && game.awayScore != null
+  );
+  const remainingScheduledGames = sortedGames.filter(game => game.status === 'scheduled');
+  const completedDivisionLeaders = sortedDivisions
+    .map(division => {
+      const divisionStandings = standingsByDivision.get(division.id) ?? [];
+      const leader = divisionStandings.find(row => row.gp > 0) ?? divisionStandings[0] ?? null;
+      if (!leader) return null;
+      return { division, leader };
+    })
+    .filter(Boolean)
+    .slice(0, 6) as Array<{
+      division: (typeof sortedDivisions)[number];
+      leader: Awaited<ReturnType<typeof getStandings>>[number];
+    }>;
   const venueShortcuts = todayGames.reduce<Array<{ key: string; label: string; location: string; venue: ReturnType<typeof getVenue> }>>((acc, game) => {
     const venue = getVenue(game.venueId);
     const label = venue?.name ?? game.location;
@@ -212,6 +247,11 @@ export default async function TournamentHomeContent({
     if (status === 'completed') return 'Final';
     if (status === 'submitted') return 'Pending';
     return 'Scheduled';
+  }
+
+  function getGameHref(gameId: string) {
+    if (usePreviewLinks) return scheduleHref;
+    return `${scheduleHref}/${gameId}`;
   }
 
   const tournamentDayPanel = hasTournamentDayPanel ? (
@@ -229,13 +269,18 @@ export default async function TournamentHomeContent({
 
         <div className={styles.dayGrid}>
           {!isPreview && (
-            <TournamentHomeFollowedTeamCard
+            <MyTournamentCard
               orgSlug={orgSlug}
               tournamentSlug={tournamentSlug}
+              tournamentId={tournament.id}
+              tournamentName={tournament.name}
               teams={teams}
               games={allGames}
+              divisions={divisions}
               venues={venues}
+              standingsByDivision={Object.fromEntries(standingsByDivision)}
               scheduleHref={scheduleHref}
+              fanAlertsEnabled={hasPlanFeature(org.planId, 'fan_score_alerts')}
             />
           )}
 
@@ -336,6 +381,117 @@ export default async function TournamentHomeContent({
     </section>
   ) : null;
 
+  const completedRecordPanel = isCompletedTournament ? (
+    <section className={`section ${styles.recordSection}`} id="final-record">
+      <div className="container">
+        <div className={styles.recordHeader}>
+          <div>
+            <span className="eyebrow"><Trophy size={12} /> Final Public Record</span>
+            <h2 className="display-md">Tournament Complete</h2>
+            <p>
+              Final standings, posted scores, and the game log remain available for coaches,
+              parents, and visitors after the event.
+            </p>
+          </div>
+          <div className={styles.recordActions}>
+            {showStandingsPage && (
+              <Link href={`${primaryBase}/standings`} className="btn btn-primary btn-sm">
+                Final Standings <ChevronRight size={14} />
+              </Link>
+            )}
+            {showSchedulePage && (
+              <Link href={scheduleHref} className="btn btn-outline btn-sm">
+                Game Log <ChevronRight size={14} />
+              </Link>
+            )}
+          </div>
+        </div>
+
+        <div className={styles.recordGrid}>
+          <div className={`card ${styles.recordCard}`}>
+            <div className={styles.dayCardHeader}>
+              <div className={styles.dayCardIcon}><CheckCircle size={16} /></div>
+              <div>
+                <span className={styles.dayCardKicker}>Record</span>
+                <h3>Event Summary</h3>
+              </div>
+            </div>
+            <div className={styles.recordStats}>
+              <div>
+                <strong>{finalGames.length}</strong>
+                <span>final scores</span>
+              </div>
+              <div>
+                <strong>{pendingScoreGames.length}</strong>
+                <span>pending review</span>
+              </div>
+              <div>
+                <strong>{remainingScheduledGames.length}</strong>
+                <span>unscored games</span>
+              </div>
+              <div>
+                <strong>{teams.length}</strong>
+                <span>accepted teams</span>
+              </div>
+            </div>
+          </div>
+
+          {showStandingsPage && (
+            <div className={`card ${styles.recordCard}`}>
+              <div className={styles.dayCardHeader}>
+                <div className={styles.dayCardIcon}><Trophy size={16} /></div>
+                <div>
+                  <span className={styles.dayCardKicker}>Standings</span>
+                  <h3>Top Standings</h3>
+                </div>
+              </div>
+              {completedDivisionLeaders.length === 0 ? (
+                <p className={styles.dayCardSub}>Final standings will appear once scores have been posted.</p>
+              ) : (
+                <div className={styles.recordList}>
+                  {completedDivisionLeaders.map(({ division, leader }) => (
+                    <div key={division.id} className={styles.recordListRow}>
+                      <span>{division.name}</span>
+                      <strong>{leader.teamName}</strong>
+                      <em>{leader.w}-{leader.l}-{leader.t} - {leader.pts} pts</em>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {showSchedulePage && (
+            <div className={`card ${styles.recordCard} ${styles.recordWideCard}`}>
+              <div className={styles.dayCardHeader}>
+                <div className={styles.dayCardIcon}><Calendar size={16} /></div>
+                <div>
+                  <span className={styles.dayCardKicker}>Scores</span>
+                  <h3>Latest Finals</h3>
+                </div>
+              </div>
+              {latestResults.length === 0 ? (
+                <p className={styles.dayCardSub}>No final scores have been posted yet.</p>
+              ) : (
+                <div className={styles.quickGameList}>
+                  {latestResults.map(game => (
+                    <Link key={game.id} href={getGameHref(game.id)} className={styles.quickGameRow}>
+                      <span className={styles.scorePill}>{game.homeScore} - {game.awayScore}</span>
+                      <span className={styles.quickGameTeams}>
+                        {getTeamName(game.homeTeamId)} vs {getTeamName(game.awayTeamId)}
+                      </span>
+                      <span className={styles.quickGameMeta}>{formatDate(game.date)}</span>
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    </section>
+  ) : null;
+
   // Extracted so it can lead the page when the tournament is in progress, or sit
   // after announcements otherwise.
   const scheduleBlock = showSchedulePage ? (
@@ -348,10 +504,15 @@ export default async function TournamentHomeContent({
         </div>
 
         {upcomingGames.length === 0 ? (
-          <div className="empty-state">
-            <Calendar size={40} />
-            <p>No upcoming games scheduled yet. Check back soon!</p>
-          </div>
+          <PublicTournamentState
+            icon={<Calendar size={36} />}
+            eyebrow="Schedule"
+            title="No upcoming games yet"
+            description="Games will appear here once the organizer publishes the schedule."
+            contactEmail={contactEmail}
+            actions={[{ href: scheduleHref, label: 'View Schedule', variant: 'ghost' as const }]}
+            compact
+          />
         ) : (
           <div className={styles.gamesGrid}>
             {upcomingGames.map(game => (
@@ -386,7 +547,7 @@ export default async function TournamentHomeContent({
 
   return (
     <div className={styles.page}>
-      <section className={`${styles.hero} ${isInProgress ? styles.heroCompact : ''}`} id="preview-home">
+      <section className={`${styles.hero} ${isInProgress || isCompletedTournament ? styles.heroCompact : ''}`} id="preview-home">
         {heroBanner ? (
           <>
             <div className={styles.heroBanner} style={{ backgroundImage: `url(${heroBanner})` }} />
@@ -435,9 +596,14 @@ export default async function TournamentHomeContent({
           </div>
 
           <div className={styles.heroCta}>
+            {isCompletedTournament && showStandingsPage && (
+              <Link href={`${primaryBase}/standings`} className="btn btn-primary btn-lg" id="hero-standings-btn">
+                <Trophy size={18} /> Final Standings
+              </Link>
+            )}
             {showSchedulePage && (
               <Link href={scheduleHref} className="btn btn-outline btn-lg" id="hero-schedule-btn">
-                <Calendar size={18} /> View Schedule
+                <Calendar size={18} /> {isCompletedTournament ? 'Game Log' : 'View Schedule'}
               </Link>
             )}
             {showNewsPage && (
@@ -470,6 +636,7 @@ export default async function TournamentHomeContent({
         </div>
       </section>
 
+      {completedRecordPanel}
       {tournamentDayPanel}
       {isInProgress && scheduleBlock}
 
@@ -482,10 +649,14 @@ export default async function TournamentHomeContent({
           </div>
 
           {announcements.length === 0 ? (
-            <div className="empty-state">
-              <Megaphone size={40} />
-              <p>No announcements yet.</p>
-            </div>
+            <PublicTournamentState
+              icon={<Megaphone size={36} />}
+              eyebrow="News"
+              title="No announcements yet"
+              description="Tournament announcements will appear here when the organizer posts them."
+              actions={[{ href: newsHref, label: 'View News', variant: 'ghost' as const }]}
+              compact
+            />
           ) : (
             <div className={styles.annGrid}>
               {announcements.map((ann, i) => (
@@ -520,15 +691,19 @@ export default async function TournamentHomeContent({
       </section>
       )}
 
-      {!isInProgress && scheduleBlock}
+      {!isInProgress && !isCompletedTournament && scheduleBlock}
 
       <section className={styles.ctaSection}>
         <div className={styles.ctaBg} />
         <div className="container">
           <div className={styles.ctaContent}>
             <Trophy size={40} className={styles.ctaIcon} />
-            <h2 className="display-md">Follow the Tournament</h2>
-            <p>Follow tournament updates from the available public pages.</p>
+            <h2 className="display-md">{isCompletedTournament ? 'Tournament Record' : 'Follow the Tournament'}</h2>
+            <p>
+              {isCompletedTournament
+                ? 'Review the final public record from the available tournament pages.'
+                : 'Follow tournament updates from the available public pages.'}
+            </p>
             <div className={styles.ctaButtons}>
               {showPrimaryCta && (
                 <Link href={primaryCta!.href} className="btn btn-primary btn-lg" id="cta-primary-btn">

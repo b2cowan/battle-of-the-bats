@@ -528,6 +528,8 @@
 .registrationNameCell {
   flex: 2;
   min-width: 0;
+  /* Long names wrap (no truncation); anywhere covers rare no-space tokens. */
+  overflow-wrap: anywhere;
 }
 
 .registrationCoachCell {

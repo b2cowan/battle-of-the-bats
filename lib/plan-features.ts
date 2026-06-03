@@ -9,6 +9,7 @@ export type PlanFeature =
   | 'schedule_notification'
   | 'custom_registration_fields'
   | 'registration_export'
+  | 'bulk_data_imports'
   | 'bulk_registration_actions'
   | 'waitlist_collection'
   | 'waitlist_automation'
@@ -33,7 +34,16 @@ export type PlanFeature =
   /** All export formats for rep teams + accounting module — club only */
   | 'club_exports'
   /** Multi-sheet combined workbook (registrations + schedule + results) — tournament_plus+ */
-  | 'bulk_operational_workbook';
+  | 'bulk_operational_workbook'
+  // ── Public fan experience (Phase 2) ──────────────────────────────────────
+  /** Real-time public-page refresh on game day — free on all plans */
+  | 'live_score_refresh'
+  /** Anonymous fan "follow a team" — free on all plans */
+  | 'fan_following'
+  /** PWA install prompts on public pages — free on all plans */
+  | 'pwa_install'
+  /** Anonymous fan push score alerts — tournament_plus and above (the signature halo feature) */
+  | 'fan_score_alerts';
 
 export const PLAN_RANK: Record<OrgPlan, number> = {
   tournament:      0,
@@ -52,6 +62,7 @@ export const FEATURE_MIN_PLAN: Record<PlanFeature, OrgPlan> = {
   schedule_notification:             'tournament_plus',
   custom_registration_fields:        'tournament_plus',
   registration_export:               'tournament_plus',
+  bulk_data_imports:                  'tournament_plus',
   bulk_registration_actions:         'tournament',
   waitlist_collection:                'tournament',
   waitlist_automation:               'tournament_plus',
@@ -69,6 +80,11 @@ export const FEATURE_MIN_PLAN: Record<PlanFeature, OrgPlan> = {
   league_exports:                    'league',
   club_exports:                      'club',
   bulk_operational_workbook:         'tournament_plus',
+  // ── Public fan experience (Phase 2) ──────────────────────────────────────
+  live_score_refresh:                'tournament',
+  fan_following:                     'tournament',
+  pwa_install:                       'tournament',
+  fan_score_alerts:                  'tournament_plus',
 };
 
 export function hasPlanFeature(planId: OrgPlan, feature: PlanFeature): boolean {
@@ -94,12 +110,22 @@ export function requiresPlanCopy(feature: PlanFeature): string {
       return 'Data exports for rep teams and accounting are included with Club.';
     case 'bulk_operational_workbook':
       return 'Full tournament export workbooks (registrations, schedule, and results in one file) are included with Tournament Plus, League, and Club.';
+    case 'bulk_data_imports':
+      return 'Spreadsheet imports are included with Tournament Plus, League, and Club.';
     case 'schedule_xlsx_export':
     case 'results_xlsx_export':
     case 'ical_export':
       // Free on all plans — this copy should not appear in practice, but
       // provides a safe fallback if called unexpectedly.
       return 'Schedule, results, and calendar exports are available on all plans.';
+    // ── Public fan experience ─────────────────────────────────────────────
+    case 'fan_score_alerts':
+      return 'Live score alerts to fans who follow a team are included with Tournament Plus, League, and Club.';
+    case 'live_score_refresh':
+    case 'fan_following':
+    case 'pwa_install':
+      // Free on all plans — safe fallback if called unexpectedly.
+      return 'Live public pages, team following, and home-screen install are available on all plans.';
     // ── Existing features — delegate ──────────────────────────────────────
     default:
       return requiresTournamentPlusCopy(feature);
@@ -127,6 +153,8 @@ export function requiresTournamentPlusCopy(feature: PlanFeature): string {
       return 'Custom registration questions and file collection are included with Tournament Plus, League, and Club.';
     case 'registration_export':
       return 'Registration CSV export for insurance, check-in, and reporting is included with Tournament Plus, League, and Club.';
+    case 'bulk_data_imports':
+      return 'Spreadsheet imports are included with Tournament Plus, League, and Club.';
     case 'bulk_registration_actions':
       return 'Basic selected-row registration updates are available on all tournament plans.';
     case 'waitlist_collection':

@@ -170,11 +170,16 @@ Layout: four equal-width cards in a horizontal row. Club card is visually elevat
 
 **Feature List:**
 - Manual tournament scheduling
-- Manual score entry
-- Basic standings
-- Field and diamond management
+- Basic standard team registration
+- Waitlist management and team status tracking
+- Score entry and results
+- Standings
+- Venue management
+- Public news posts
+- Basic team/contact email
+- Default FieldLogicHQ styling
 - 3 staff / admin seats
-- 1 active tournament
+- 1 tournament slot
 
 **"What's next" upgrade nudge (bottom of card):**
 > Need automated scheduling or bracket tools? → Tournament Plus
@@ -206,7 +211,7 @@ Layout: four equal-width cards in a horizontal row. Club card is visually elevat
 - Bracket generator
 - Email announcements and communications
 - Tournament archives and history
-- 3 non-archived tournament slots
+- Unlimited tournament slots
 - Unlimited staff / admin seats
 - Unlimited officials seats
 
@@ -240,10 +245,9 @@ Layout: four equal-width cards in a horizontal row. Club card is visually elevat
 **Feature List:**
 - Everything in Tournament Plus
 - Public organization page (branded, tournament-listed)
-- House League module — registration, divisions, seasons, scheduling, standings
+- House League — registration, divisions, seasons, and standings
 - League-scoped communications
 - Advanced member roles and permissions
-- Unlimited staff / admin seats
 
 **"What's next" upgrade nudge:**
 > Managing finances, tryouts, or competitive teams? → Club
@@ -273,9 +277,9 @@ Layout: four equal-width cards in a horizontal row. Club card is visually elevat
 
 **Feature List:**
 - Everything in League
-- Accounting module — org ledger, team invoicing, payment reconciliation, expense tracking
-- Rep Teams module — tryouts, rosters, player documents, coaches portal, team finances
-- Unlimited staff / admin seats
+- Accounting — org ledger, invoicing, expense tracking, and payment reconciliation
+- Rep Teams — tryouts, rosters, player documents, and season history
+- Coaches Portal — 3 team accounts included; additional accounts at $19/mo
 
 **"Why most popular" blurb (shown within or beneath the card):**
 > Most organizations choose Club because of what they stop doing: hunting down payments, managing tryouts over email, reconciling team finances in spreadsheets. Club eliminates the manual work that takes up treasurer and executive time all season. If your organization runs rep teams or manages money, it pays for itself quickly.
@@ -297,7 +301,7 @@ Full breakdown, grouped by category. Shown below the pricing cards with a "Compa
 
 | Feature | Tournament | Tournament Plus | League | Club |
 |---------|-----------|-----------------|--------|------|
-| Non-archived tournament slots | 1 | 3 | Unlimited | Unlimited |
+| Non-archived tournament slots | 1 | Unlimited | Unlimited | Unlimited |
 | Manual scheduling | ✓ | ✓ | ✓ | ✓ |
 | Automated schedule generation | — | ✓ | ✓ | ✓ |
 | Bracket generator | — | ✓ | ✓ | ✓ |
@@ -457,7 +461,7 @@ Short text fragments for use in banners, tooltips, and inline upgrade prompts th
 ### In-app upgrade banners (by feature gate)
 
 **When a user hits the 1-tournament limit (Tournament plan):**
-> Running more than one event? Tournament Plus gives you up to 3 non-archived tournament slots.
+> Running more than one event? Tournament Plus removes the single-tournament limit — run as many as you need.
 
 **When a user tries to add a 4th staff member (Tournament free plan):**
 > You've reached the 3-seat staff limit on the free Tournament plan. Upgrade to Tournament Plus for unlimited staff seats.
@@ -690,7 +694,7 @@ These are intended as guidance for sourcing real testimonials or writing represe
 | Annual savings | — | $78 (~2 months) | $178 (~2 months) | $358 (~2 months) |
 | Staff seats | 3 | Unlimited | Unlimited | Unlimited |
 | Officials seats | Counted toward 3-seat limit | Unlimited | Unlimited | Unlimited |
-| Non-archived tournament slots | 1 | 3 | Unlimited | Unlimited |
+| Non-archived tournament slots | 1 | Unlimited | Unlimited | Unlimited |
 | Automated scheduling | — | ✓ | ✓ | ✓ |
 | Bracket generator | — | ✓ | ✓ | ✓ |
 | Communications | — | ✓ | ✓ | ✓ |

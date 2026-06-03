@@ -1,0 +1,348 @@
+.modal {
+  width: min(880px, calc(100vw - 2rem));
+  max-width: min(880px, calc(100vw - 2rem));
+}
+
+.titleRow,
+.sectionHeader,
+.previewTitle,
+.uploadRow {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.titleRow svg,
+.sectionHeader svg,
+.previewTitle svg {
+  color: var(--logic-lime);
+}
+
+.titleBlock {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.titleRow h3 {
+  margin: 0;
+}
+
+.titleBlock p {
+  max-width: 680px;
+  margin: 0;
+  color: var(--data-gray);
+  font-size: 0.82rem;
+  line-height: 1.4;
+}
+
+.body {
+  display: grid;
+  gap: 1.1rem;
+  padding: 1rem 1.25rem;
+}
+
+.templateSection,
+.uploadSection,
+.previewPanel {
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.35);
+  background: rgba(var(--blueprint-blue-rgb), 0.04);
+  padding: 0.9rem 1rem;
+}
+
+.sectionHeader {
+  margin-bottom: 0.7rem;
+  font-family: var(--font-data);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--white);
+}
+
+.templateRows {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.templateRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.65rem 0;
+}
+
+.templateRow + .templateRow {
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.templateCopy {
+  display: grid;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.templateCopy strong {
+  color: var(--white);
+  font-size: 0.9rem;
+}
+
+.templateCopy span {
+  color: var(--data-gray);
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+
+.templateActions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.templateButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  min-width: 74px;
+  min-height: 34px;
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.65);
+  background: rgba(var(--blueprint-blue-rgb), 0.08);
+  color: var(--logic-lime);
+  padding: 0.45rem 0.65rem;
+  font-family: var(--font-data);
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  text-decoration: none;
+}
+
+.templateButton:hover {
+  border-color: var(--logic-lime);
+  background: rgba(var(--blueprint-blue-rgb), 0.18);
+}
+
+.uploadRow {
+  align-items: center;
+}
+
+.filePicker {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  flex: 1;
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.35);
+  background: rgba(0, 0, 0, 0.16);
+  min-height: 40px;
+}
+
+.filePicker:focus-within {
+  border-color: var(--logic-lime);
+  box-shadow: 0 0 0 1px rgba(var(--logic-lime-rgb), 0.25);
+}
+
+.fileInput {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.filePickerButton {
+  display: inline-flex;
+  align-items: center;
+  align-self: stretch;
+  gap: 0.4rem;
+  border-right: 1px solid rgba(var(--blueprint-blue-rgb), 0.35);
+  background: rgba(var(--blueprint-blue-rgb), 0.18);
+  color: var(--logic-lime);
+  padding: 0 0.85rem;
+  font-family: var(--font-data);
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.fileName {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: 0 0.8rem;
+  color: var(--white);
+  font-size: 0.82rem;
+}
+
+.uploadRow button {
+  flex-shrink: 0;
+}
+
+.uploadRow input {
+  min-width: 0;
+}
+
+.errorBox {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  color: var(--danger-light);
+  font-size: 0.82rem;
+}
+
+.successBox {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin-bottom: 0.85rem;
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.35);
+  background: rgba(var(--logic-lime-rgb), 0.08);
+  color: var(--white);
+  padding: 0.6rem 0.7rem;
+  font-size: 0.82rem;
+}
+
+.successBox svg {
+  color: var(--logic-lime);
+  flex-shrink: 0;
+}
+
+.summaryHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.85rem;
+}
+
+.previewTitle {
+  font-family: var(--font-data);
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.modeNote {
+  margin: -0.35rem 0 0.8rem;
+  color: var(--data-gray);
+  font-size: 0.78rem;
+}
+
+.batchId,
+.footerNote,
+.muted {
+  color: var(--data-gray);
+  font-size: 0.74rem;
+}
+
+.summaryGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.55rem;
+  margin-bottom: 1rem;
+}
+
+.summaryGrid span {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 0.55rem;
+  color: var(--white);
+  font-family: var(--font-data);
+  font-size: 0.72rem;
+}
+
+.tableWrap {
+  max-height: min(48vh, 520px);
+  overflow: auto;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.previewTable {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 820px;
+  font-size: 0.78rem;
+}
+
+.previewTable th,
+.previewTable td {
+  padding: 0.65rem 0.7rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  text-align: left;
+  vertical-align: top;
+}
+
+.previewTable th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--hud-surface);
+  color: var(--data-gray);
+  font-family: var(--font-data);
+  font-size: 0.68rem;
+  text-transform: uppercase;
+}
+
+.previewTable tr[data-blocked="true"] td {
+  background: rgba(var(--danger-rgb), 0.08);
+}
+
+.operation {
+  display: inline-block;
+  min-width: 74px;
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.35);
+  padding: 0.2rem 0.35rem;
+  font-family: var(--font-data);
+  font-size: 0.66rem;
+  text-transform: uppercase;
+  text-align: center;
+}
+
+.changeList,
+.noteList {
+  display: grid;
+  gap: 0.25rem;
+  margin: 0;
+  padding-left: 1rem;
+}
+
+.changeList strong {
+  color: var(--white);
+}
+
+.errorNote {
+  color: var(--danger-light);
+}
+
+@media (max-width: 760px) {
+  .modal {
+    max-width: calc(100vw - 1rem);
+    width: calc(100vw - 1rem);
+  }
+
+  .body {
+    padding: 0.85rem;
+  }
+
+  .templateRow {
+    grid-template-columns: 1fr;
+    gap: 0.65rem;
+  }
+
+  .templateActions {
+    justify-content: flex-start;
+  }
+
+  .uploadRow {
+    display: grid;
+  }
+
+  .filePicker {
+    min-width: 0;
+  }
+
+  .summaryGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

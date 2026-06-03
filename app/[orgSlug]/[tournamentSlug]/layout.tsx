@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getAuthContext } from '@/lib/api-auth';
 import { getOrganizationBySlug, getPublicTournamentBySlug } from '@/lib/db';
@@ -7,8 +8,43 @@ import { OrgNavSync } from '@/components/OrgNavSync';
 import TournamentNavSync from '@/components/TournamentNavSync';
 import PoweredByBadge from '@/components/marketing/PoweredByBadge';
 import TournamentAcquisitionBanner from '@/components/marketing/TournamentAcquisitionBanner';
+import InstallAppPrompt from '@/components/InstallAppPrompt';
 
 export const dynamic = 'force-dynamic';
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ orgSlug: string; tournamentSlug: string }>;
+}): Promise<Metadata> {
+  const { orgSlug, tournamentSlug } = await params;
+  const base = `/${orgSlug}/${tournamentSlug}`;
+
+  // Resolve a friendly label for the iOS home-screen icon; fall back gracefully.
+  let appleTitle = 'Tournament';
+  try {
+    const org = await getOrganizationBySlug(orgSlug);
+    if (org && org.subscriptionStatus !== 'canceled') {
+      const tournament = await getPublicTournamentBySlug(org.id, tournamentSlug);
+      if (tournament) appleTitle = tournament.name;
+    }
+  } catch {
+    /* fall back to the generic label */
+  }
+
+  return {
+    // Per-tournament PWA manifest — an installed app opens straight to this event.
+    manifest: `${base}/manifest.webmanifest`,
+    // `other` replaces the root value for tournament pages — keep the base PWA
+    // flags and set the iOS home-screen label to the event name.
+    other: {
+      'mobile-web-app-capable': 'yes',
+      'apple-mobile-web-app-capable': 'yes',
+      'apple-mobile-web-app-status-bar-style': 'black-translucent',
+      'apple-mobile-web-app-title': appleTitle,
+    },
+  };
+}
 
 export default async function TournamentLayout({
   params,
@@ -123,6 +159,12 @@ export default async function TournamentLayout({
       <div data-card-style={cardStyle} data-color-mode={effectiveColorMode}>
         {children}
       </div>
+      {/* Fan app install — this tournament's branded PWA (per-tournament manifest). */}
+      <InstallAppPrompt
+        appName={tournament.name}
+        subtitle="Live scores, schedule &amp; alerts — add to your home screen."
+        dismissKey={`flhq-install-fan-${tournament.slug}`}
+      />
     </>
   );
 }

@@ -74,7 +74,16 @@
   cursor: default;
 }
 
+.menuItemDisabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
 .menuItemGated:hover {
+  background: transparent;
+}
+
+.menuItemDisabled:hover {
   background: transparent;
 }
 

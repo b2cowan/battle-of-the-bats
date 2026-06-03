@@ -1,6 +1,6 @@
 ﻿'use client';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ChevronDown, ChevronUp, MapPin, Pencil, X, AlertCircle, Trash2, Check, AlertTriangle } from 'lucide-react';
+import { ChevronDown, ChevronUp, MapPin, Pencil, X, AlertCircle, Trash2, Check, AlertTriangle, Lock, Unlock } from 'lucide-react';
 import { Game, Team, Division, Venue, Tournament } from '@/lib/types';
 import { checkVenueConflict, buildConflictMap, type ConflictResult, type ConflictKind } from '@/lib/schedule-conflict';
 import { formatTime, formatPoolName } from '@/lib/utils';
@@ -22,6 +22,7 @@ interface GameListProps {
   onDelete?: (id: string) => void;
   onCancel?: (id: string) => void;
   onSchedule?: (id: string) => void;
+  onToggleGeneratorLock?: (id: string, nextLocked: boolean) => void;
   onSave?: (gameId: string, data: { date: string; time: string; venueId: string; venueFacilityId: string; notes: string; homeTeamId: string; awayTeamId: string }) => Promise<void>;
   onSaveScore?: (gameId: string, homeScore: number, awayScore: number) => Promise<void>;
   onCreateVenue?: () => void;
@@ -36,7 +37,7 @@ type ScoreFields = { home: string; away: string };
 
 export default function GameList({
   games, teams, divisions, venues, viewMode, groupByPool, pools: poolsProp,
-  onEdit, onFinalize, onDelete, onCancel, onSchedule, onSave, onSaveScore, onCreateVenue, mode, tournament
+  onEdit, onFinalize, onDelete, onCancel, onSchedule, onToggleGeneratorLock, onSave, onSaveScore, onCreateVenue, mode, tournament
 }: GameListProps) {
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [editState, setEditState] = useState<Record<string, EditFields>>({});
@@ -57,6 +58,12 @@ export default function GameList({
     if (!facilityId) return venue.name;
     const facility = venue.facilities?.find(f => f.id === facilityId);
     return facility ? `${venue.name} — ${facility.name}` : venue.name;
+  };
+  const getVenueParts = (venueId?: string, facilityId?: string): { name: string; facility: string } => {
+    const venue = venueId ? venues.find(d => d.id === venueId) : null;
+    if (!venue) return { name: '', facility: '' };
+    const facility = facilityId ? venue.facilities?.find(f => f.id === facilityId) : null;
+    return { name: venue.name, facility: facility?.name ?? '' };
   };
 
   useEffect(() => {
@@ -266,7 +273,7 @@ export default function GameList({
         <div key={g.id} className={`${s.row} ${styles.scoringRow}`} data-status={g.status}>
           {/* ── Compact row — scores always visible inline with team names ── */}
           <div className={`${s.rowMain} ${styles.gameRowMain} ${styles.scoringGameRow}`} style={{ gap: '1rem' }}>
-            {/* Date · Time on one line (matches planning mode); status sub-line below on mobile */}
+            {/* Date · Time · status + venue sub-line */}
             <div className={`${s.gameColDate} ${styles.scoringDateCell}`} style={{ fontFamily: 'var(--font-data)' }}>
               <div style={{ whiteSpace: 'nowrap' }}>
                 <span style={{ fontWeight: 700, fontSize: '0.8rem', color: 'var(--fl-text)', letterSpacing: '0.01em' }}>
@@ -275,31 +282,33 @@ export default function GameList({
                 <span style={{ fontSize: '0.72rem', color: 'var(--data-gray)', marginLeft: '0.4rem' }}>
                   {g.time ? `· ${formatTime(g.time)}` : '· —'}
                 </span>
+                {!isExpanded && (g.status === 'completed' || g.status === 'submitted') && (
+                  <span className={styles.scoringMobileStatus} data-status={g.status}>
+                    {g.status === 'completed' ? '· ✓ FINAL' : '· ⚠ REVIEWING'}
+                  </span>
+                )}
               </div>
-              {!isExpanded && (
-                <span className={styles.scoringMobileStatus} data-status={g.status}>
-                  {g.status === 'completed' ? '✓ FINAL'
-                    : g.status === 'submitted' ? '⚠ REVIEWING'
-                    : 'SCHEDULED'}
-                </span>
-              )}
-            </div>
-
-            {/* Location — wider column, 2-line wrap */}
-            <div className={s.gameColVenue}>
-              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '4px', fontSize: '0.72rem', color: 'var(--data-gray)', fontFamily: 'var(--font-data)' }}>
-                <MapPin size={11} style={{ flexShrink: 0, marginTop: '2px' }} />
-                <span style={{ overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', lineHeight: '1.35' }}>
-                  {g.venueId ? getVenueName(g.venueId, g.venueFacilityId) : (g.location || 'TBD')}
-                </span>
-              </div>
+              {(g.venueId || g.location) && (() => {
+                const vp = g.venueId
+                  ? getVenueParts(g.venueId, g.venueFacilityId)
+                  : { name: g.location || '', facility: '' };
+                return vp.name ? (
+                  <div className={styles.venueInDate}>
+                    <MapPin size={10} style={{ flexShrink: 0, marginTop: '2px' }} />
+                    <div>
+                      <div>{vp.name}</div>
+                      {vp.facility && <div className={styles.facilityLine}>{vp.facility}</div>}
+                    </div>
+                  </div>
+                ) : null;
+              })()}
             </div>
 
             {/* Matchup — symmetric: [W/L · score · Away]  VS  [Home · score · W/L] */}
             <div className={`${s.gameColMatchup} ${styles.scoringMatchupCell}`} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem' }}>
 
               {/* Away side — right-aligned: W/L · score/input · team name */}
-              <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '0.5rem', minWidth: 0 }}>
+              <div style={{ flex: '0 1 auto', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '0.5rem', minWidth: 0 }}>
                 {/* W/L indicator — outer left, only in view mode */}
                 {hasScoredResult && !isExpanded && (
                   <span style={{ fontFamily: 'var(--font-data)', fontSize: '1rem', fontWeight: 900, flexShrink: 0, color: awayWon ? 'var(--success)' : isTie ? 'var(--warning)' : 'rgba(var(--danger-rgb), 0.6)' }}>
@@ -323,7 +332,7 @@ export default function GameList({
                   </span>
                 ) : null}
                 {/* Team name */}
-                <span style={{ fontFamily: 'var(--font-data)', fontSize: '0.85rem', fontWeight: 700, color: 'var(--fl-text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                <span className={styles.scoringTeamName} style={{ textAlign: 'right' }} title={resolveTeam(g.awayTeamId, g.awayPlaceholder)}>
                   {resolveTeam(g.awayTeamId, g.awayPlaceholder)}
                 </span>
               </div>
@@ -331,9 +340,9 @@ export default function GameList({
               <div style={{ color: 'var(--white-30)', fontFamily: 'var(--font-data)', fontWeight: 900, fontSize: '0.6rem', letterSpacing: '0.12em', flexShrink: 0 }}>VS</div>
 
               {/* Home side — left-aligned: team name · score/input · W/L */}
-              <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: '0.5rem', minWidth: 0 }}>
+              <div style={{ flex: '0 1 auto', display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: '0.5rem', minWidth: 0 }}>
                 {/* Team name */}
-                <span style={{ fontFamily: 'var(--font-data)', fontSize: '0.85rem', fontWeight: 700, color: 'var(--fl-text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                <span className={styles.scoringTeamName} title={resolveTeam(g.homeTeamId, g.homePlaceholder)}>
                   {resolveTeam(g.homeTeamId, g.homePlaceholder)}
                 </span>
                 {/* Score or input */}
@@ -463,7 +472,12 @@ export default function GameList({
     const isCompleted = g.status === 'completed';
     const isCancelled = g.status === 'cancelled';
     const locksEditing = isCompleted;
+    const isGeneratorLocked = Boolean(g.generatorLocked);
+    const canToggleGeneratorLock = Boolean(onToggleGeneratorLock && g.status === 'scheduled');
     const venueLabel = g.venueId ? getVenueName(g.venueId, g.venueFacilityId) : (g.location || '');
+    const venueParts = g.venueId
+      ? getVenueParts(g.venueId, g.venueFacilityId)
+      : { name: g.location || '', facility: '' };
 
     return (
       <div key={g.id} className={`${s.row} ${styles.planningRow} ${isExpanded ? styles.expanded : ''}`} data-status={g.status}>
@@ -473,7 +487,7 @@ export default function GameList({
           onClick={locksEditing ? undefined : () => toggleExpand(g.id, g)}
           style={{ cursor: locksEditing ? 'default' : 'pointer', gap: '1rem' }}
         >
-          {/* Date + Time — single line; status tag shown below on mobile */}
+          {/* Date + Time + venue sub-line */}
           <div className={`${s.gameColDate} ${styles.planningDateCell}`} style={{ fontFamily: 'var(--font-data)' }}>
             <div style={{ whiteSpace: 'nowrap' }}>
               <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--fl-text)' }}>
@@ -482,37 +496,30 @@ export default function GameList({
               <span style={{ fontSize: '0.75rem', color: 'var(--data-gray)', marginLeft: '0.4rem' }}>
                 {g.time ? `· ${formatTime(g.time)}` : '· —'}
               </span>
-            </div>
-            {g.status !== 'scheduled' && (
-              <span className={styles.mobileStatusTag} data-status={g.status}>
-                {g.status === 'completed' ? '✓ Final' : g.status === 'submitted' ? '⚠ Pending' : '✕ Cancelled'}
-              </span>
-            )}
-          </div>
-
-          <div
-            className={`${s.gameColVenue} ${styles.planningVenueCell}`}
-            data-empty={venueLabel ? undefined : 'true'}
-            aria-hidden={venueLabel ? undefined : true}
-            style={{ alignItems: 'flex-start', gap: '4px', fontFamily: 'var(--font-data)', fontSize: '0.72rem', color: 'var(--data-gray)' }}
-          >
-            {venueLabel && (
-              <>
-                <MapPin size={11} style={{ flexShrink: 0, opacity: 0.55, marginTop: '2px' }} />
-                <span style={{ overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', lineHeight: '1.35' }}>
-                  {venueLabel}
+              {g.status !== 'scheduled' && (
+                <span className={styles.mobileStatusTag} data-status={g.status}>
+                  {g.status === 'completed' ? '· ✓ Final' : g.status === 'submitted' ? '· ⚠ Pending' : '· ✕ Cancelled'}
                 </span>
-              </>
+              )}
+            </div>
+            {venueParts.name && (
+              <div className={styles.venueInDate}>
+                <MapPin size={10} style={{ flexShrink: 0, marginTop: '2px', opacity: 0.55 }} />
+                <div>
+                  <div>{venueParts.name}</div>
+                  {venueParts.facility && <div className={styles.facilityLine}>{venueParts.facility}</div>}
+                </div>
+              </div>
             )}
           </div>
 
           {/* Matchup */}
           <div className={`${s.gameColMatchup} ${styles.planningMatchup}`} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.65rem' }}>
-            <div className={styles.planningTeamAway} style={{ flex: 1, textAlign: 'right', fontFamily: 'var(--font-data)', fontSize: '0.82rem', fontWeight: 700, color: 'var(--fl-text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            <div className={styles.planningTeamAway} title={resolveTeam(g.awayTeamId, g.awayPlaceholder)}>
               {resolveTeam(g.awayTeamId, g.awayPlaceholder)}
             </div>
             <div className={styles.planningVs} style={{ fontFamily: 'var(--font-data)', fontSize: '0.58rem', fontWeight: 900, color: 'var(--white-25)', letterSpacing: '0.1em', flexShrink: 0 }}>VS</div>
-            <div className={styles.planningTeamHome} style={{ flex: 1, fontFamily: 'var(--font-data)', fontSize: '0.82rem', fontWeight: 700, color: 'var(--fl-text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            <div className={styles.planningTeamHome} title={resolveTeam(g.homeTeamId, g.homePlaceholder)}>
               {resolveTeam(g.homeTeamId, g.homePlaceholder)}
             </div>
           </div>
@@ -524,6 +531,11 @@ export default function GameList({
             )}
             {(g.homeSlotId || g.awaySlotId) && !g.isPlayoff && (
               <span className="badge badge-neutral" style={{ fontSize: '0.6rem', letterSpacing: '0.04em' }}>SLOT</span>
+            )}
+            {isGeneratorLocked && g.status === 'scheduled' && !g.isPlayoff && (
+              <span className={styles.generatorLockBadge} title="Kept during Build from current regeneration">
+                <Lock size={9} /> KEPT
+              </span>
             )}
             {/* Conflict badge — read mode only (not while editing) */}
             {!isExpanded && (() => {
@@ -732,6 +744,17 @@ export default function GameList({
             {/* Footer */}
             <div className={styles.inlineFormFooter}>
               <div className={styles.inlineFormActions}>
+                {canToggleGeneratorLock && (
+                  <button
+                    type="button"
+                    className={`btn btn-ghost btn-data ${styles.generatorLockAction}`}
+                    title={isGeneratorLocked ? 'Allow the generator to replace this game in Build from current mode' : 'Keep this game fixed during Build from current regeneration'}
+                    onClick={() => onToggleGeneratorLock?.(g.id, !isGeneratorLocked)}
+                  >
+                    {isGeneratorLocked ? <Unlock size={13} /> : <Lock size={13} />}
+                    {isGeneratorLocked ? 'Release' : 'Keep'}
+                  </button>
+                )}
                 {onCancel && g.status === 'scheduled' && (
                   <button className={`btn btn-ghost btn-data ${styles.inlineCancelButton}`} onClick={() => onCancel(g.id)}>
                     <X size={13} /> Cancel Game
@@ -788,8 +811,7 @@ export default function GameList({
   return (
     <div className={s.flatList}>
       <div className={s.tableHeader} style={{ gap: '1rem' }}>
-        <div className={s.gameColDate}>Date</div>
-        <div className={s.gameColVenue}>Location</div>
+        <div className={s.gameColDate}>Date / Location</div>
         <div className={s.gameColMatchup} style={{ textAlign: 'center' }}>Matchup</div>
         <div style={{ flex: '0 0 96px' }} />
         <div style={{ flex: '0 0 28px' }} />

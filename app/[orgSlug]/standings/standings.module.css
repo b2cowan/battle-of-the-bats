@@ -98,12 +98,11 @@
 }
 
 .followBar {
-  display: grid;
-  grid-template-columns: minmax(0, 1.3fr) auto minmax(180px, 0.8fr) auto;
+  display: flex;
   align-items: center;
-  gap: 0.85rem;
+  gap: 1rem;
   margin: 0 0 1.25rem;
-  padding: 0.9rem;
+  padding: 0.9rem 1rem;
   border: 1px solid rgba(var(--warning-rgb), 0.35);
   border-radius: var(--radius-md);
   background: rgba(var(--warning-rgb), 0.08);
@@ -424,11 +423,17 @@
 
 .scoreTeamName {
   min-width: 0;
+  /* Wrap to 2 lines instead of truncating so 30+ char names show in full. */
+  overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  line-height: 1.25;
   font-weight: 800;
+  text-align: right;
 }
+.scoreTeamHome .scoreTeamName { text-align: left; }
 
 .scoreTeam strong {
   flex-shrink: 0;
@@ -514,7 +519,7 @@
 
   .resultsSummaryLine {
     gap: 0.3rem;
-    margin-bottom: 0.55rem;
+    margin-bottom: 0.45rem;
     font-size: 0.72rem;
   }
 
@@ -529,40 +534,20 @@
   }
 
   .followBar {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 0.45rem;
-    margin-bottom: 0.75rem;
-    padding: 0.6rem 0.7rem;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+    margin-bottom: 0.65rem;
+    padding: 0.65rem 0.75rem;
   }
 
-  .followStats,
-  .followActions {
-    justify-content: flex-start;
-  }
-
-  .followMain span {
-    display: none;
-  }
-
-  .followMain strong {
-    font-size: 0.9rem;
-  }
-
-  .followStats span {
-    padding: 0.18rem 0.4rem;
-    font-size: 0.72rem;
-  }
-
-  .followResult {
-    flex-direction: row;
-    align-items: center;
-    gap: 0.4rem;
+  .followBarRight {
     flex-wrap: wrap;
+    gap: 0.5rem;
   }
 
-  .followResult span,
-  .followResult strong {
-    font-size: 0.74rem;
+  .followFinalPos {
+    align-items: flex-start;
   }
 
   .followActions {
@@ -570,9 +555,9 @@
   }
 
   .followActions :global(.btn) {
-    min-height: 34px;
-    padding: 0.35rem 0.55rem;
-    font-size: 0.72rem;
+    min-height: 32px;
+    padding: 0.32rem 0.5rem;
+    font-size: 0.7rem;
   }
 
   .summaryHeaderMain { gap: 0.5rem; }
@@ -587,13 +572,13 @@
 
   .standingsTable th,
   .standingsTable td {
-    padding: 0.48rem 0.5rem;
+    padding: 0.58rem 0.55rem;
   }
   .standingsTable th {
-    font-size: 0.62rem;
+    font-size: 0.68rem;
     letter-spacing: 0.03em;
   }
-  .standingsTable td { font-size: 0.8rem; }
+  .standingsTable td { font-size: 0.9rem; }
   .summaryHeader { padding: 0.75rem 0.85rem; }
   .summaryTitle h2 { font-size: 1rem; }
   .standingsFooter { padding: 0.55rem 0.75rem 0.65rem; }
@@ -603,7 +588,10 @@
     line-height: 1.35;
   }
   .tieBreakerNote strong { font-size: 0.72rem; }
-  .teamCell { gap: 0.35rem; }
+  .teamCell {
+    gap: 0.4rem;
+    font-size: 0.9rem;
+  }
   .pendingTeamBadge {
     min-height: 20px;
     padding: 0.15rem 0.35rem;
@@ -670,4 +658,797 @@
   /* Top (qualifying) row keeps its warning tint everywhere except the two frozen
      cells, which must stay opaque so scrolled columns don't bleed through. */
   .topRow .ptsCol { background: var(--surface); }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   VIEW TOGGLE
+═══════════════════════════════════════════════════════════════════════════ */
+
+.viewToggle {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius-sm);
+  background: var(--white-5);
+  overflow: hidden;
+}
+
+.viewToggleBtn {
+  padding: 0.38rem 0.85rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--white-60);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  white-space: nowrap;
+}
+
+.viewToggleBtn:hover {
+  color: var(--white);
+  background: var(--white-5);
+}
+
+.viewToggleBtnActive {
+  background: var(--primary);
+  color: #fff;
+}
+
+.viewToggleBtnActive:hover {
+  background: var(--primary);
+  color: #fff;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   RACE TO PLAYOFFS
+═══════════════════════════════════════════════════════════════════════════ */
+
+.raceHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1.1rem 1.5rem 0.75rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.raceHeaderIcon {
+  color: var(--warning);
+  flex-shrink: 0;
+}
+
+.raceHeaderTitle {
+  font-family: var(--font-data);
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  color: var(--white);
+  text-transform: uppercase;
+}
+
+.raceHeaderSub {
+  font-size: 0.78rem;
+  color: var(--white-50);
+}
+
+.raceSectionLabel {
+  margin: 0 0 0.35rem;
+  padding: 0.5rem 1.25rem 0;
+  font-family: var(--font-data);
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--white-40);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+/* ── Podium ─────────────────────────────────────────────────────────────── */
+
+.raceSection {
+  padding-bottom: 0.5rem;
+}
+
+.podium {
+  display: grid;
+  grid-template-columns: 1fr 1.12fr 1fr;
+  align-items: flex-end;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem 0;
+}
+
+.podiumSlotEmpty {
+  /* placeholder when a position doesn't exist */
+  min-height: 160px;
+}
+
+.podiumCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 1rem 0.75rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg-card);
+  text-align: center;
+  min-height: 200px;
+  justify-content: center;
+}
+
+.podiumCard[data-pos="1"] {
+  min-height: 240px;
+  border-color: rgba(var(--warning-rgb), 0.4);
+  background: rgba(var(--warning-rgb), 0.05);
+}
+
+.podiumCard[data-you] {
+  border-color: rgba(var(--primary-rgb), 0.5);
+  background: rgba(var(--primary-rgb), 0.07);
+}
+
+.podiumCard[data-pos="1"][data-you] {
+  border-color: rgba(var(--primary-rgb), 0.5);
+  background: rgba(var(--primary-rgb), 0.08);
+}
+
+.podiumPosition {
+  font-family: var(--font-data);
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.podiumTrophy {
+  color: var(--warning);
+  margin-top: -0.2rem;
+}
+
+/* Team badge sizes */
+.podiumBadgeLg,
+.podiumBadge,
+.podiumBadgeSm {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-data);
+  font-weight: 900;
+  color: #fff;
+  flex-shrink: 0;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.4);
+}
+
+.podiumBadgeLg {
+  width: 56px;
+  height: 56px;
+  font-size: 1.1rem;
+}
+
+.podiumBadge {
+  width: 40px;
+  height: 40px;
+  font-size: 0.9rem;
+}
+
+.podiumBadgeSm {
+  width: 28px;
+  height: 28px;
+  font-size: 0.7rem;
+}
+
+.podiumName {
+  font-size: 0.9rem;
+  font-weight: 800;
+  color: var(--white);
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  line-height: 1.2;
+}
+
+.podiumPtsRow {
+  display: flex;
+  align-items: baseline;
+  gap: 0.25rem;
+}
+
+.podiumPts {
+  font-family: var(--font-data);
+  font-size: 2rem;
+  font-weight: 900;
+  line-height: 1;
+  color: var(--white);
+}
+
+.podiumPtsLabel {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--white-50);
+  text-transform: uppercase;
+}
+
+.podiumRecord {
+  font-size: 0.72rem;
+  color: var(--white-55);
+}
+
+.youChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: var(--radius-sm);
+  background: var(--primary);
+  color: #fff;
+  font-family: var(--font-data);
+  font-size: 0.65rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-top: 0.1rem;
+}
+
+/* ── Below-podium list rows ─────────────────────────────────────────────── */
+
+.raceList {
+  padding: 0.5rem 0 0.25rem;
+}
+
+.raceRow {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.6rem 1.25rem;
+  border-bottom: 1px solid var(--border-2);
+}
+
+.raceRow:last-child {
+  border-bottom: none;
+}
+
+.raceRowYou {
+  background: rgba(var(--primary-rgb), 0.06);
+  border-left: 3px solid rgba(var(--primary-rgb), 0.5);
+  padding-left: calc(1.25rem - 3px);
+}
+
+.raceRank {
+  font-family: var(--font-data);
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--white-40);
+  width: 18px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.raceName {
+  flex: 1;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--white);
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.raceRecord {
+  font-family: var(--font-data);
+  font-size: 0.78rem;
+  color: var(--white-50);
+  white-space: nowrap;
+}
+
+.raceRd {
+  font-family: var(--font-data);
+  font-size: 0.82rem;
+  font-weight: 700;
+  white-space: nowrap;
+  min-width: 36px;
+  text-align: right;
+}
+
+.raceYouStar {
+  color: var(--primary-light);
+  flex-shrink: 0;
+}
+
+/* ── Playoff cutoff bar ─────────────────────────────────────────────────── */
+
+.playoffCutoff {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem 1.25rem;
+  margin: 0.1rem 0;
+}
+
+.playoffCutoff::before {
+  content: '';
+  position: absolute;
+  left: 1.25rem;
+  right: 1.25rem;
+  top: 50%;
+  border-top: 1.5px dashed rgba(var(--danger-rgb), 0.45);
+}
+
+.playoffCutoffInner {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0 0.75rem;
+  background: var(--surface);
+  position: relative;
+  z-index: 1;
+}
+
+.playoffCutoffX {
+  font-family: var(--font-data);
+  font-size: 0.65rem;
+  font-weight: 900;
+  color: var(--danger);
+}
+
+.playoffCutoffLabel {
+  font-family: var(--font-data);
+  font-size: 0.65rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--danger);
+}
+
+.playoffCutoffCount {
+  font-family: var(--font-data);
+  font-size: 0.65rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--success);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   FOLLOW BAR — REDESIGNED (Standard view)
+═══════════════════════════════════════════════════════════════════════════ */
+
+.followBarLeft {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.followLabel {
+  font-size: 0.68rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--white-40);
+}
+
+.followTeamName {
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--white);
+  overflow-wrap: anywhere;
+}
+
+.followRankBadge {
+  display: inline-block;
+  padding: 0.12rem 0.45rem;
+  border-radius: var(--radius-sm);
+  background: rgba(var(--warning-rgb), 0.15);
+  border: 1px solid rgba(var(--warning-rgb), 0.3);
+  color: var(--warning);
+  font-family: var(--font-data);
+  font-size: 0.72rem;
+  font-weight: 900;
+  margin-left: 0.4rem;
+}
+
+.followRecord {
+  font-size: 0.78rem;
+  color: var(--white-55);
+}
+
+.followBarRight {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-shrink: 0;
+}
+
+.followFinalPos {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.05rem;
+}
+
+.followFinalLabel {
+  font-family: var(--font-data);
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--success);
+}
+
+.followFinalRank {
+  font-family: var(--font-data);
+  font-size: 1.1rem;
+  font-weight: 900;
+  color: var(--success);
+  line-height: 1;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   PLAYOFF BRACKET SECTION
+═══════════════════════════════════════════════════════════════════════════ */
+
+.bracketSection {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: 0 10px 30px -10px rgba(0,0,0,0.3);
+}
+
+.bracketSectionHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 1.1rem 1.5rem;
+  background: rgba(var(--primary-rgb),0.05);
+  border-bottom: 1px solid var(--border);
+}
+
+.bracketSectionIcon {
+  color: var(--primary-light);
+  flex-shrink: 0;
+}
+
+.bracketSectionTitle {
+  font-family: var(--font-data);
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  color: var(--white);
+  text-transform: uppercase;
+}
+
+/* Show/hide desktop vs mobile bracket */
+.bracketDesktop { display: block; }
+.bracketMobile  { display: none;  }
+
+/* ── Desktop bracket tree ───────────────────────────────────────────────── */
+
+.bracketTreeOuter {
+  padding: 1.25rem 1.5rem 1.5rem;
+  overflow-x: auto;
+}
+
+.bracketTree {
+  display: grid;
+  grid-template-columns: repeat(var(--bracket-rounds, 2), minmax(180px, 220px));
+  gap: 0;
+  min-width: fit-content;
+}
+
+.bracketRound {
+  display: flex;
+  flex-direction: column;
+  padding: 0 24px 0 0;
+  position: relative;
+}
+
+.bracketRoundLabel {
+  font-family: var(--font-data);
+  font-size: 0.65rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--white-35);
+  margin-bottom: 0.85rem;
+  padding-left: 2px;
+}
+
+.bracketRoundGames {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  flex: 1;
+  justify-content: space-around;
+}
+
+/* Branch: wraps a pair of matchups that feed into the same next-round game */
+.bracketBranch {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  position: relative;
+}
+
+/* Right horizontal stub from each matchup */
+.bracketBranch .bracketMatchup::after {
+  content: '';
+  position: absolute;
+  right: -24px;
+  top: 50%;
+  width: 24px;
+  border-top: 1px solid var(--border);
+}
+
+/* Vertical connecting line between the two matchups in a connected branch.
+   Runs from 50% of the first card down to 50% of the second card. */
+.bracketBranchConnected {
+  /* Override default gap so the JS-free CSS calc works reliably */
+  gap: 0.75rem;
+}
+
+.bracketBranchConnected::before {
+  content: '';
+  position: absolute;
+  right: -24px;
+  top: 25%;
+  height: 50%;
+  border-right: 1px solid var(--border);
+}
+
+/* Outgoing horizontal line from branch midpoint to next round */
+.bracketBranchConnected::after {
+  content: '';
+  position: absolute;
+  right: -24px;
+  top: 50%;
+  width: 24px;
+  border-top: 1px solid var(--border);
+}
+
+/* Single-game branch (last round) gets no right connector */
+.bracketBranch[data-single] .bracketMatchup::after { display: none; }
+
+/* ── Matchup card ───────────────────────────────────────────────────────── */
+
+.bracketMatchup {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg-card);
+  overflow: hidden;
+  position: relative;
+  min-width: 160px;
+}
+
+.bracketMatchupCompact {
+  max-width: 220px;
+}
+
+.bracketMatchupStatus {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.6rem;
+  border-bottom: 1px solid var(--border-2);
+  background: var(--white-03);
+  font-size: 0.68rem;
+  flex-wrap: wrap;
+}
+
+.bracketMatchupDate {
+  color: var(--white-45);
+  font-size: 0.68rem;
+}
+
+.bracketDivider {
+  height: 1px;
+  background: var(--border-2);
+}
+
+.bracketTeam {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.6rem;
+  font-size: 0.82rem;
+  color: var(--white-60);
+}
+
+.bracketTeamWon {
+  color: var(--primary-light);
+  font-weight: 700;
+}
+
+.bracketTeamTbd {
+  color: var(--white-30);
+  font-style: italic;
+}
+
+.bracketTeamBadge {
+  width: 22px;
+  height: 22px;
+  border-radius: 3px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-data);
+  font-size: 0.55rem;
+  font-weight: 900;
+  color: #fff;
+  flex-shrink: 0;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.4);
+}
+
+.bracketTeamName {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  line-height: 1.25;
+}
+
+.bracketScore {
+  font-family: var(--font-data);
+  font-size: 0.9rem;
+  font-weight: 900;
+  flex-shrink: 0;
+  margin-left: auto;
+  padding-left: 0.35rem;
+}
+
+.bracketScoreWon  { color: var(--primary-light); }
+.bracketScoreLost { color: var(--white-40); }
+
+/* ── Third place section ────────────────────────────────────────────────── */
+
+.bracketThirdPlace {
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px dashed var(--border-2);
+}
+
+.bracketThirdLabel {
+  font-family: var(--font-data);
+  font-size: 0.65rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--white-35);
+  margin-bottom: 0.65rem;
+}
+
+/* ── Mobile bracket list ────────────────────────────────────────────────── */
+
+.bracketList {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.bracketListRound {
+  padding: 0.85rem 1rem 0;
+}
+
+.bracketListRound:not(:first-child) {
+  border-top: 1px solid var(--border-2);
+  padding-top: 0.85rem;
+}
+
+.bracketListRoundLabel {
+  font-family: var(--font-data);
+  font-size: 0.65rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--white-35);
+  margin-bottom: 0.5rem;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   RESPONSIVE OVERRIDES — new components
+═══════════════════════════════════════════════════════════════════════════ */
+
+@media (max-width: 640px) {
+  /* Follow bar: stack vertically */
+  .followBar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+  }
+
+  .followBarRight {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .followFinalPos {
+    align-items: flex-start;
+  }
+
+  /* Race view */
+  .podium {
+    gap: 0.4rem;
+    padding: 0.75rem 0.75rem 0;
+  }
+
+  .podiumCard {
+    padding: 0.65rem 0.45rem;
+    min-height: 160px;
+    gap: 0.25rem;
+  }
+
+  .podiumCard[data-pos="1"] {
+    min-height: 190px;
+  }
+
+  .podiumBadgeLg {
+    width: 40px;
+    height: 40px;
+    font-size: 0.82rem;
+  }
+
+  .podiumPts {
+    font-size: 1.5rem;
+  }
+
+  .podiumName {
+    font-size: 0.72rem;
+  }
+
+  .podiumRecord {
+    font-size: 0.62rem;
+  }
+
+  .raceRow {
+    padding: 0.5rem 0.85rem;
+    gap: 0.45rem;
+  }
+
+  .raceName {
+    font-size: 0.82rem;
+  }
+
+  .raceRecord {
+    font-size: 0.7rem;
+  }
+
+  /* Bracket: swap desktop/mobile */
+  .bracketDesktop { display: none;  }
+  .bracketMobile  { display: block; }
+
+  .bracketTreeOuter {
+    padding: 0.75rem 0.85rem 1rem;
+  }
+
+  /* Controls */
+  .viewToggle {
+    width: 100%;
+  }
+
+  .viewToggleBtn {
+    flex: 1;
+    text-align: center;
+    font-size: 0.72rem;
+    padding: 0.38rem 0.5rem;
+  }
+
+  /* Race header */
+  .raceHeader {
+    padding: 0.85rem 1rem 0.6rem;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+  }
+
+  .raceHeaderTitle {
+    font-size: 0.72rem;
+  }
+
+  .raceHeaderSub {
+    font-size: 0.72rem;
+    width: 100%;
+    padding-left: 1.5rem;
+  }
 }

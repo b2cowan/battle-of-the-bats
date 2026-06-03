@@ -14,6 +14,7 @@
 - [Tournament scorekeeper experience](tournament-scorekeeper-experience.md)
 - [Automated schedule generator](automated-schedule-generator.md)
 - [Export strategy](export-strategy.md)
+- [Import strategy](import-strategy.md)
 - [Help documentation planning rule](help-documentation-planning.md)
 - [Standalone Team workspace](standalone-team-workspace.md)
 - [Coaches Portal unified product](coaches-portal-unified-product.md)

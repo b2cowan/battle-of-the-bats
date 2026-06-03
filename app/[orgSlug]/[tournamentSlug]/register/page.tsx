@@ -5,6 +5,7 @@ import { UserPlus, AlertCircle, ChevronDown, RefreshCw, CreditCard, CheckCircle 
 import { useParams } from 'next/navigation';
 import { isPublicPageEnabled } from '@/lib/public-pages';
 import { Division, Tournament, TournamentRegistrationField } from '@/lib/types';
+import PublicTournamentState from '@/components/public/PublicTournamentState';
 import styles from '../../register/register.module.css';
 import { fetchPublicTournamentData } from '@/lib/public-tournament-client';
 
@@ -295,10 +296,18 @@ export default function RegisterPage() {
       <div className="page-content">
         <div className="section">
           <div className="container">
-            <div className="empty-state">
-              <UserPlus size={48} />
-              <p>Registration is not available for this tournament.</p>
-            </div>
+            <PublicTournamentState
+              icon={<UserPlus size={40} />}
+              eyebrow="Registration"
+              title="Registration unavailable"
+              description="The organizer is not accepting public registration for this tournament."
+              contactEmail={contactEmail}
+              actions={[
+                { href: homeHref, label: 'Tournament Home', variant: 'ghost' as const },
+                ...(isPublicPageEnabled(tournament, 'schedule') ? [{ href: scheduleHref, label: 'View Schedule', variant: 'ghost' as const }] : []),
+                ...(isPublicPageEnabled(tournament, 'rules') ? [{ href: rulesHref, label: 'Tournament Rules', variant: 'ghost' as const }] : []),
+              ]}
+            />
           </div>
         </div>
       </div>

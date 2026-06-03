@@ -4,6 +4,49 @@ Newest entries first. All decisions here are binding in future sessions unless e
 
 ---
 
+### 2026-06-02 - Tournament admin export placement: header actions
+
+**Decision:** Page-level tournament admin exports belong in `TournamentAdminHeader.actions`, immediately to the left of the primary add/create button when one exists. Applied to Teams, Schedule, Results, and already-matching Venues. Toolbars should retain context selectors, filters, publish/generate tools, mobile action overflow, and multi-select controls, but not the main page export dropdown.
+
+**Rationale:** Exports are page-level utilities, not view/filter controls. Keeping them in the header creates a consistent scan path across Teams, Schedule, Results, and Venues, and avoids each page placing Export in a different toolbar cluster. On mobile, the shared `ExportMenu` already collapses to icon-only, so Schedule no longer needs a duplicate Export section inside `MobileToolsMenu`.
+
+**Supersedes:** The 2026-06-01 Schedule toolbar mobile decision that placed Export inside the mobile Tools menu, and older Results reformat notes that moved Export into the toolbar.
+
+---
+
+### 2026-06-02 — Schedule Generator: full density + compliance overhaul
+
+**Decision:** Applied comprehensive design system alignment to the Schedule Generator modal (`Generator.tsx` + `schedule-admin.module.css`):
+
+1. **Modal header** — `.generatorHeader h3` changed from `1.25rem sans-serif` to `font-data 0.82rem 800 uppercase letter-spacing:0.08em`, matching the binding `.modal-header h3` HUD standard.
+2. **Mode toggle** — replaced `btn btn-sm btn-primary / btn-ghost` pair with a `.generatorSegmented` control: `border: 1px solid blueprint-blue`, no-gap inline buttons, active state = `var(--primary)` solid fill + `#fff` text. (`btn-primary` outside a modal is banned by prior decision.)
+3. **Date slot rows** — stripped the double-boxed card structure (container `1rem padding bg-2` + per-row `0.75rem border card`). New layout: `.dateSlotList` = a bordered wrapper with no internal padding; `.dateSlotRow` = a flat 5-column grid (`1fr auto auto auto auto`) at `0.35rem 0.6rem` padding. Inputs (`.dateSlotSelect`, `.dateSlotTime`) are 28px compact, same visual weight as the inline edit form. Separator is `–` plain text not a full-width center div.
+4. **Priority limits** — replaced two `.priorityField` card-boxed inputs with a `.limitsRow` inline row: `MAX / DAY [52] per team  ·  MIN REST [60] min between games`. Inputs are 52px wide, `font-data 0.82rem 700`. No cards, no labels inside boxes.
+5. **Preference checkboxes** — replaced `.priorityCheck` card cells (border + bg + `min-height:100%` stretch) with `.prefChecks` + `.prefCheck`: a flex-wrap row of simple inline `[☑] label` pairs. No boxes, no borders, no height matching. Effort select moved to a compact `.effortRow` with an inline hint.
+6. **Number inputs** — `gamesPerTeam`, `gameLength`, `breakLength` now use `.compactNumberInput` (`max-width: 80px; text-align: center`) so 1–3 digit values don't span half the modal width.
+7. **Generate button** — changed from `btn btn-primary btn-lg` (two violations: btn-primary banned outside modals; btn-lg not admin standard) to `btn btn-lime btn-data` + `.generateBtn` (full-width, `min-height: 34px`).
+8. **Mobile overlay** — at ≤540px the generator becomes a bottom sheet: `padding:0; align-items:flex-end`; modal gets `border-radius: 12px 12px 0 0; max-height:93vh`. At ≤680px overlay padding reduces to 1rem.
+
+**Rationale:** The generator violated five separate binding design decisions simultaneously. The date slot double-boxing wasted ~120px of vertical space per row. The preference checkbox cards grew to match the Effort select height, making three simple toggles look like a decision matrix. btn-primary + btn-lg on the generate button were both violations; the lime data button is both brand-correct and proportional to the form.
+
+**Applies to:** `app/[orgSlug]/admin/tournaments/schedule/Generator.tsx`, `schedule-admin.module.css` (new classes: `.generatorSegmented`, `.generatorSegBtn`, `.generatorSegBtnActive`, `.dateSlotList`, `.dateSlotRow`, `.dateSlotSelect`, `.dateSlotTime`, `.dateSlotSep`, `.dateSlotDel`, `.compactNumberInput`, `.limitsRow`, `.limitItem`, `.limitLabel`, `.limitInput`, `.limitUnit`, `.effortRow`, `.effortHint`, `.prefChecks`, `.prefCheck`, `.generateBtn`). Pattern is binding for any future generator-style wizard modal.
+
+---
+
+### 2026-06-02 — Team names reflow (2-line wrap) instead of truncating in matchup rows
+
+**Decision:** Long team names (30+ chars) must never be cut off with an ellipsis where games/teams are listed. The fix pattern, applied everywhere a matchup or score pair renders:
+1. **Reflow, don't split rigidly.** The two sides of a matchup use `flex: 0 1 auto` (admin) / drop `flex: 1` (public) inside a `justify-content: center` matchup cell, so a long name borrows the slack a short opponent isn't using and the pair stays anchored around the centred "VS".
+2. **Wrap to 2 lines, never truncate.** Team-name elements use the venue-cell clamp pattern — `overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.2–1.25` — replacing `white-space: nowrap; text-overflow: ellipsis`. A name reflows to a second line (row grows only for that row) rather than hiding characters.
+3. **`title` tooltip safety net** on the dense admin/public schedule matchup names for the rare >2-line case.
+Page width kept at 1100px (no widening) — reflow handles it within the existing layout.
+
+**Rationale:** Equal `flex: 1` halves truncated a long name even when its opponent was short and there was free space (the "Halton Hawks U11 Jr (…" screenshot). Truncation also violates the principle *"never hide critical admin data — reflow, stack, or scroll instead."* Two 30-char names can't co-exist on one line at any realistic matchup-column width, so wrapping is the only thing that guarantees the 30-char requirement. Standings `.teamCell` and the public Teams card already wrapped — this brings the matchup/score surfaces in line.
+
+**Applies to:** `schedule/components/GameList.tsx` (planning + scoring matchup — admin Schedule AND admin Results, which reuses GameList) + `schedule-admin.module.css` (`.planningTeamAway/.planningTeamHome` base rules, new `.scoringTeamName`); public `schedule.module.css` (`.matchSide`, `.matchTeam`) + `ScheduleContent.tsx` (title attrs); `standings.module.css` (`.scoreTeamName`) and legacy `results.module.css` (`.scoreName`); `teams-admin.module.css` (`.registrationNameCell` hardened with `overflow-wrap: anywhere`). Pattern is binding for any future matchup/score-pair rendering.
+
+---
+
 ### 2026-06-01 — Rules admin mobile: data-density pass (cards + section headers)
 
 **Decision:** Comprehensive mobile tightening of `RulesAdmin.tsx` at `≤720px`:

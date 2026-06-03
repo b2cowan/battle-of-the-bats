@@ -5,7 +5,14 @@ import { getOrganizationBySlug } from '@/lib/db';
 import { TournamentProvider } from '@/lib/tournament-context';
 import { OrgProvider } from '@/lib/org-context';
 import { LiveLogicProvider } from '@/components/live-logic/LiveLogicProvider';
+import InstallAppPrompt from '@/components/InstallAppPrompt';
 import AdminChrome from './AdminChrome';
+
+const MEMBER_INSTALL = {
+  appName: 'FieldLogicHQ',
+  subtitle: 'Your teams, schedules and scores — one tap away.',
+  dismissKey: 'flhq-install-member',
+} as const;
 
 export async function generateMetadata({
   params,
@@ -47,6 +54,7 @@ export default async function AdminLayout({
           <AdminChrome>
             {children}
           </AdminChrome>
+          <InstallAppPrompt {...MEMBER_INSTALL} />
         </LiveLogicProvider>
       </TournamentProvider>
     </OrgProvider>

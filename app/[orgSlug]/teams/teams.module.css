@@ -1,19 +1,94 @@
-﻿.divisionLayout {
-  display: flex;
-  flex-direction: column;
-  gap: 3rem;
-  margin-top: 2rem;
+/* ── Page heading ──────────────────────────────────────────────────────────── */
+
+.pageHeading {
+  margin-bottom: 1.25rem;
 }
 
-.searchRow {
-  position: relative;
-  max-width: 400px;
+.pageTitle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--font-display);
+  font-size: 1.75rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--white);
+}
+
+.teamCount {
+  color: var(--white-40);
+  font-weight: 700;
+}
+
+/* ── Following banner ──────────────────────────────────────────────────────── */
+
+.followBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
   margin-bottom: 1rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid rgba(var(--primary-rgb), 0.4);
+  border-radius: var(--radius-sm);
+  background: rgba(var(--primary-rgb), 0.08);
+  flex-wrap: wrap;
+}
+
+.followMain {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--primary-light);
+  min-width: 0;
+}
+
+.followLabel {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--white-50);
+  font-weight: 700;
+}
+
+.followName {
+  color: var(--white);
+  font-size: 0.95rem;
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+
+.followActions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+/* ── Filter row ────────────────────────────────────────────────────────────── */
+
+.filterRow {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.divisionSelect {
+  min-width: 160px;
+}
+
+.searchWrap {
+  flex: 1;
+  min-width: 200px;
+  position: relative;
 }
 
 .searchIcon {
   position: absolute;
-  left: 1rem;
+  left: 0.9rem;
   top: 50%;
   transform: translateY(-50%);
   color: var(--white-40);
@@ -25,246 +100,280 @@
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 999px;
-  padding: 0.6rem 1rem 0.6rem 2.5rem;
+  padding: 0.6rem 1rem 0.6rem 2.4rem;
   color: var(--white);
-  font-size: 0.9rem;
+  font-size: 0.875rem;
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 
 .searchInput:focus {
   outline: none;
   border-color: var(--primary);
-  box-shadow: 0 0 0 2px rgba(var(--primary-rgb),0.2);
+  box-shadow: 0 0 0 2px rgba(var(--primary-rgb), 0.2);
 }
 
-.tabCount {
-  opacity: 0.65;
-  font-size: 0.7rem;
-  background: var(--white-10);
-  padding: 1px 6px;
-  border-radius: 999px;
-  margin-left: 4px;
-}
+/* ── Division layout ───────────────────────────────────────────────────────── */
 
-.groupSection {
+.divisionLayout {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 2.5rem;
 }
 
-.groupTitle {
+.poolSection {
   display: flex;
-  align-items: center;
-  gap: 0.5rem;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.poolHeading {
   font-family: var(--font-display);
-  font-size: 1rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--primary-light);
   padding-bottom: 0.5rem;
   border-bottom: 1px solid var(--border);
-  margin-bottom: 0;
 }
 
-.poolGrid {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-}
+/* ── Team grid ─────────────────────────────────────────────────────────────── */
 
-.poolCard {
-  display: flex;
-  flex-direction: column;
+.teamGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
   gap: 0.75rem;
 }
 
-.poolName {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  font-family: var(--font-display);
-  font-size: 1.1rem;
-  font-weight: 800;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  color: var(--primary-light);
-  margin-bottom: 1rem;
-  white-space: nowrap;
+@media (max-width: 900px) {
+  .teamGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
-.poolName::before {
-  content: '';
-  flex: 1;
-  height: 1px;
-  background: linear-gradient(to right, transparent, var(--primary));
+@media (max-width: 580px) {
+  .teamGrid {
+    grid-template-columns: 1fr;
+  }
 }
 
-.poolName::after {
-  content: '';
-  flex: 1;
-  height: 1px;
-  background: linear-gradient(to left, transparent, var(--primary));
-}
+/* ── Team card ─────────────────────────────────────────────────────────────── */
 
-.teamList {
+.teamCard {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
-}
-
-.teamRow {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.75rem;
+  padding: 0.875rem;
   background: var(--white-5);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  transition: var(--transition);
+}
+
+.teamCard:hover {
+  background: var(--white-8, var(--white-10));
+  border-color: var(--border-2);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-sm);
+}
+
+.teamCardFollowed {
+  border-color: rgba(var(--primary-rgb), 0.6);
+  background: rgba(var(--primary-rgb), 0.06);
+  box-shadow: var(--glow-sm);
+}
+
+.teamCardFollowed:hover {
+  border-color: var(--primary);
+  background: rgba(var(--primary-rgb), 0.1);
+}
+
+/* Avatar */
+.teamAvatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   border-radius: var(--radius-sm);
-  transition: all 0.2s ease;
+  font-family: var(--font-display);
+  font-weight: 900;
+  color: #fff;
+  letter-spacing: 0.02em;
+  flex-shrink: 0;
+  line-height: 1;
 }
 
-.teamRow:hover {
-  background: var(--white-10);
-  transform: translateX(4px);
-}
-
-.teamMain {
+/* Card top section */
+.cardTop {
   display: flex;
-  align-items: center;
-  gap: 1rem;
+  gap: 0.625rem;
+  align-items: flex-start;
 }
 
-
-
-.teamName {
-  font-size: 1rem;
-  font-weight: 700;
-  color: var(--white);
-  margin-bottom: 0.15rem;
-}
-
-.coach {
-  font-size: 0.75rem;
-  color: var(--white-30);
-}
-
-.viewLink {
-  font-size: 0.75rem;
-  color: var(--primary-light);
-  font-weight: 600;
-  opacity: 0.6;
-  transition: opacity 0.2s ease;
-}
-
-.viewLink:hover {
-  opacity: 1;
-}
-
-.followBar {
+.cardMeta {
+  flex: 1;
+  min-width: 0;
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.cardNameRow {
+  display: flex;
+  align-items: flex-start;
   justify-content: space-between;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-  padding: 0.85rem 1rem;
-  border: 1px solid rgba(var(--primary-rgb),0.35);
-  border-radius: var(--radius-sm);
-  background: rgba(var(--primary-rgb),0.08);
-}
-
-.followMain {
-  display: flex;
-  align-items: center;
   gap: 0.5rem;
-  min-width: 0;
-  color: var(--primary-light);
-  font-size: 0.85rem;
+}
+
+.cardName {
+  font-size: 0.95rem;
   font-weight: 800;
-}
-
-.followMain span {
-  color: var(--white-50);
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-}
-
-.followMain strong {
-  min-width: 0;
   color: var(--white);
+  line-height: 1.2;
   overflow-wrap: anywhere;
 }
 
-.followActions,
-.teamActions {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
+.cardRecord {
+  font-family: var(--font-data, var(--font-display));
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--white);
+  white-space: nowrap;
   flex-shrink: 0;
 }
 
-.followButton {
+.cardSubRow {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.cardPool {
+  font-size: 0.75rem;
+  color: var(--white-40);
+  font-weight: 500;
+}
+
+.cardRank {
+  font-size: 0.72rem;
+  color: var(--white-50);
+  font-weight: 600;
+  margin-left: auto;
+}
+
+/* Card bottom section */
+.cardBottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.cardStatus {
+  min-width: 0;
+  flex: 1;
+}
+
+/* Live badge */
+.liveBadge {
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
-  min-height: 34px;
+  background: #EF4444;
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  padding: 0.2rem 0.5rem;
+  border-radius: 999px;
+  text-transform: uppercase;
+}
+
+.liveDot {
+  width: 6px;
+  height: 6px;
+  background: #fff;
+  border-radius: 50%;
+  animation: pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.nextGame {
+  font-size: 0.72rem;
+  color: var(--white-40);
+  font-weight: 500;
+}
+
+.poolDone {
+  font-size: 0.72rem;
+  color: var(--white-30);
+  font-style: italic;
+}
+
+/* Card action buttons */
+.cardActions {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-shrink: 0;
+}
+
+.followBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  min-height: 30px;
   border: 1px solid var(--border-2);
   border-radius: var(--radius-sm);
   background: var(--white-5);
   color: var(--white-60);
-  padding: 0.35rem 0.65rem;
-  font-size: 0.72rem;
+  padding: 0.25rem 0.6rem;
+  font-size: 0.7rem;
   font-weight: 800;
   cursor: pointer;
   transition: var(--transition);
+  white-space: nowrap;
 }
 
-.followButton:hover {
-  border-color: rgba(var(--primary-rgb),0.5);
+.followBtn:hover {
+  border-color: rgba(var(--primary-rgb), 0.5);
   color: var(--white);
 }
 
-.followButtonActive {
-  border-color: rgba(var(--primary-rgb),0.55);
-  background: rgba(var(--primary-rgb),0.12);
+.followBtnActive {
+  border-color: rgba(var(--primary-rgb), 0.6);
+  background: rgba(var(--primary-rgb), 0.14);
   color: var(--primary-light);
 }
 
-.followedTeamRow {
-  border: 1px solid rgba(var(--primary-rgb),0.4);
-  background: rgba(var(--primary-rgb),0.08);
+.teamLink {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--primary-light);
+  white-space: nowrap;
+  opacity: 0.8;
+  transition: opacity 0.15s;
 }
 
-/* --- Mobile Responsiveness --- */
+.teamLink:hover {
+  opacity: 1;
+}
+
+/* ── Mobile tweaks ─────────────────────────────────────────────────────────── */
 
 @media (max-width: 768px) {
-  .divisionLayout {
-    gap: 2.5rem;
-  }
-
-  .poolGrid {
-    gap: 1rem;
-  }
-
-  .teamRow {
-    align-items: flex-start;
-    gap: 0.75rem;
-    padding: 0.75rem;
-  }
-
-  .teamActions {
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 0.45rem;
-  }
-
   .followBar {
-    align-items: stretch;
     flex-direction: column;
+    align-items: stretch;
   }
 
   .followActions {
-    align-items: stretch;
+    justify-content: stretch;
   }
 
   .followActions > * {
@@ -272,16 +381,12 @@
     justify-content: center;
   }
 
-
-
-  .teamName {
-    font-size: 0.9rem;
-  }
-
-  .viewLink {
-    font-size: 0.7rem;
+  .divisionLayout {
+    gap: 2rem;
   }
 }
+
+/* ── Retained roster helpers (in case still referenced elsewhere) ──────────── */
 
 .playerCount { text-align: center; }
 
@@ -299,32 +404,4 @@
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--white-60);
-}
-
-.rosterToggle {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  width: 100%;
-  padding: 0.5rem 0.75rem;
-  background: var(--white-10);
-  border: 1px solid var(--border-2);
-  border-radius: var(--radius-sm);
-  color: var(--white-60);
-  font-size: 0.875rem;
-  font-weight: 600;
-  transition: var(--transition);
-}
-
-.rosterToggle:hover { background: var(--primary-faint); color: var(--primary-light); }
-
-.rosterTable { animation: fadeInUp 0.25s ease; }
-
-.jerseyNum {
-  display: inline-block;
-  min-width: 28px;
-  text-align: center;
-  font-family: var(--font-display);
-  font-weight: 700;
-  color: var(--primary-light);
 }

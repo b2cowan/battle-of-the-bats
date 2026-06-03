@@ -33,6 +33,15 @@ export interface TournamentSettings {
    * Buffer-zone violations are soft warnings; true overlap is a hard block. Default: 15.
    */
   buffer_minutes?: number;
+  /**
+   * Organizer-entered estimate for how much rest a team should have when it changes parent venues.
+   * This is a no-cost manual buffer; it is not calculated from maps or drive-time APIs.
+   */
+  schedule_travel_venue_buffer_minutes?: number;
+  /**
+   * Organizer-entered estimate for how much rest a team should have when it changes facilities inside a venue.
+   */
+  schedule_travel_facility_buffer_minutes?: number;
 
   // ── Scope controls (Phase 2 — Divisions UX Rework) ─────────────────────────
   /**
@@ -382,6 +391,7 @@ export interface Game {
   awayScore?: number | null;
   status: GameStatus;
   isPlayoff?: boolean;
+  generatorLocked?: boolean;
   bracketId?: string;
   bracketCode?: string;
   homePlaceholder?: string;

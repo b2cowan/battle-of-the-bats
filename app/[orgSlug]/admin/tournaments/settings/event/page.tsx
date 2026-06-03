@@ -70,6 +70,8 @@ export default function TournamentEventSettingsPage() {
   const [gameTimingScope, setGameTimingScope] = useState<GameTimingScope | null>('tournament');
   const [gameDurationMinutes, setGameDurationMinutes] = useState(90);
   const [bufferMinutes, setBufferMinutes] = useState(15);
+  const [venueMoveBufferMinutes, setVenueMoveBufferMinutes] = useState(0);
+  const [facilityMoveBufferMinutes, setFacilityMoveBufferMinutes] = useState(0);
 
   // Tie-breakers
   const [tieBreakerScope, setTieBreakerScope] = useState<TieBreakerScope | null>('tournament');
@@ -96,6 +98,8 @@ export default function TournamentEventSettingsPage() {
     gameTimingScope: 'tournament' as GameTimingScope | null,
     gameDurationMinutes: 90,
     bufferMinutes: 15,
+    venueMoveBufferMinutes: 0,
+    facilityMoveBufferMinutes: 0,
     tieBreakerScope: 'tournament' as TieBreakerScope | null,
     tieBreakers: ['h2h', 'rd', 'rf', 'ra'] as TieBreaker[],
     scorePolicyMode: 'review' as ScorePolicyMode,
@@ -156,6 +160,8 @@ export default function TournamentEventSettingsPage() {
         const nm = (t.notify_mode === 'assigned' ? 'assigned' : 'all') as 'all' | 'assigned';
         const gd = typeof t.settings?.game_duration_minutes === 'number' ? t.settings.game_duration_minutes : 90;
         const buf = typeof t.settings?.buffer_minutes === 'number' ? t.settings.buffer_minutes : 15;
+        const venueMoveBuf = typeof t.settings?.schedule_travel_venue_buffer_minutes === 'number' ? t.settings.schedule_travel_venue_buffer_minutes : 0;
+        const facilityMoveBuf = typeof t.settings?.schedule_travel_facility_buffer_minutes === 'number' ? t.settings.schedule_travel_facility_buffer_minutes : 0;
 
         const rawFeeScope = t.settings?.fee_scope;
         const validFeeScopes = new Set<string>(['tournament', 'allow_override', 'per_division', 'free']);
@@ -191,6 +197,8 @@ export default function TournamentEventSettingsPage() {
         setGameTimingScope(gts);
         setGameDurationMinutes(gd);
         setBufferMinutes(buf);
+        setVenueMoveBufferMinutes(venueMoveBuf);
+        setFacilityMoveBufferMinutes(facilityMoveBuf);
         setTieBreakerScope(tbs);
         setTieBreakers(safeTb);
         setNotifyTeamsOnComplete(notify);
@@ -203,6 +211,7 @@ export default function TournamentEventSettingsPage() {
           feeScope: fs,
           depositAmount: da, depositDueDate: dd, totalFeeAmount: tf, totalFeeDueDate: td,
           gameTimingScope: gts, gameDurationMinutes: gd, bufferMinutes: buf,
+          venueMoveBufferMinutes: venueMoveBuf, facilityMoveBufferMinutes: facilityMoveBuf,
           tieBreakerScope: tbs, tieBreakers: safeTb,
           notifyTeamsOnComplete: notify, defaultContactMemberId: contactId, notifyMode: nm,
         }));
@@ -315,6 +324,8 @@ export default function TournamentEventSettingsPage() {
                 settings: {
                   game_duration_minutes: gameDurationMinutes,
                   buffer_minutes: bufferMinutes,
+                  schedule_travel_venue_buffer_minutes: venueMoveBufferMinutes,
+                  schedule_travel_facility_buffer_minutes: facilityMoveBufferMinutes,
                   game_timing_scope: gameTimingScope,
                   tie_breakers: tieBreakers,
                   tie_breaker_scope: tieBreakerScope,
@@ -362,6 +373,7 @@ export default function TournamentEventSettingsPage() {
           startDate, endDate, feeScope,
           depositAmount, depositDueDate, totalFeeAmount, totalFeeDueDate,
           gameTimingScope, gameDurationMinutes, bufferMinutes,
+          venueMoveBufferMinutes, facilityMoveBufferMinutes,
           tieBreakerScope, tieBreakers: [...tieBreakers],
           scorePolicyMode, notifyTeamsOnComplete, defaultContactMemberId, notifyMode,
         }));
@@ -377,10 +389,10 @@ export default function TournamentEventSettingsPage() {
   }, [
     bufferMinutes, currentTournament, defaultContactMemberId, depositAmount,
     depositDueDate, endDate, feeScope, gameDurationMinutes, gameTimingScope,
-    notifyMode, notifyTeamsOnComplete, orgParam, orgQuery, refreshTournaments,
+    facilityMoveBufferMinutes, notifyMode, notifyTeamsOnComplete, orgParam, orgQuery, refreshTournaments,
     saved.slug, scorePolicyMode, startDate, tieBreakerScope, tieBreakers,
     totalFeeAmount, totalFeeDueDate, tournamentId, tournamentName,
-    tournamentYear,
+    tournamentYear, venueMoveBufferMinutes,
   ]);
 
   // ── Auto-save effect — fires 1.2 s after any non-status, non-slug change ──
@@ -397,6 +409,7 @@ export default function TournamentEventSettingsPage() {
     tournamentName, tournamentYear, startDate, endDate,
     feeScope, depositAmount, depositDueDate, totalFeeAmount, totalFeeDueDate,
     gameTimingScope, gameDurationMinutes, bufferMinutes,
+    venueMoveBufferMinutes, facilityMoveBufferMinutes,
     tieBreakers, tieBreakerScope,
     scorePolicyMode, notifyTeamsOnComplete, defaultContactMemberId, notifyMode,
   ]);
@@ -680,6 +693,42 @@ export default function TournamentEventSettingsPage() {
                 Each division must configure its own game timing before the tournament can be activated.
               </p>
             )}
+
+            <div style={{ marginTop: '1rem' }}>
+              <p className={styles.subSectionLabel}>Travel &amp; Setup Buffers</p>
+              <p className={styles.descriptionText}>
+                Optional organizer-entered estimates used by Schedule Health and the generator when teams move between facilities. FieldLogicHQ does not calculate drive time.
+              </p>
+              <div className="form-row form-row-2" style={{ marginTop: '0.75rem' }}>
+                <div className="form-group">
+                  <label className="form-label">Venue Move Buffer (minutes)</label>
+                  <input
+                    className="form-input"
+                    type="number"
+                    min="0"
+                    max="240"
+                    step="5"
+                    value={venueMoveBufferMinutes}
+                    onChange={e => { const n = parseInt(e.target.value, 10); if (!isNaN(n) && n >= 0) setVenueMoveBufferMinutes(n); }}
+                  />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Facility Move Buffer (minutes)</label>
+                  <input
+                    className="form-input"
+                    type="number"
+                    min="0"
+                    max="240"
+                    step="5"
+                    value={facilityMoveBufferMinutes}
+                    onChange={e => { const n = parseInt(e.target.value, 10); if (!isNaN(n) && n >= 0) setFacilityMoveBufferMinutes(n); }}
+                  />
+                </div>
+              </div>
+              <p className={styles.inheritNote} style={{ marginTop: '0.35rem' }}>
+                Set 0 to ignore that move type. These buffers score tight team moves; they do not create hard venue conflicts.
+              </p>
+            </div>
           </div>
 
           <hr className={styles.cardDivider} />
@@ -839,7 +888,7 @@ export default function TournamentEventSettingsPage() {
             <p className={styles.subSectionLabel}>Public Contact</p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
               <p className={styles.descriptionText}>
-                This member's email appears in coach-facing registration emails and on the public tournament page.
+                This member&apos;s email appears in coach-facing registration emails and on the public tournament page.
                 Defaults to the organization owner if not set.
               </p>
               <div className="form-group">

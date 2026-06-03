@@ -7,6 +7,7 @@ import { CoachesProvider } from '@/lib/coaches-context';
 import { isTeamWorkspaceOrg } from '@/lib/team-workspace-entitlements';
 import CoachesSidebar from '@/components/coaches/CoachesSidebar';
 import CoachesBottomNav from '@/components/coaches/CoachesBottomNav';
+import InstallAppPrompt from '@/components/InstallAppPrompt';
 import styles from './coaches.module.css';
 
 export default async function CoachesLayout({
@@ -65,6 +66,11 @@ export default async function CoachesLayout({
           </main>
         </div>
         <CoachesBottomNav />
+        <InstallAppPrompt
+          appName="FieldLogicHQ"
+          subtitle="Your teams, schedules and scores — one tap away."
+          dismissKey="flhq-install-member"
+        />
       </CoachesProvider>
     </OrgProvider>
   );

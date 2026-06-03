@@ -26,7 +26,6 @@ type DivisionFormPayload = {
   order: number;
   contactMemberId?: string | null;
   capacity?: number;
-  isClosed: boolean;
   poolCount: number;
   poolNames?: string;
   requiresPoolSelection: boolean;
@@ -87,7 +86,7 @@ export default function DivisionsPage() {
   const [editing, setEditing] = useState<Division | null>(null);
   const [form, setForm] = useState({
     name: '', minAge: '', maxAge: '', order: '', contactMemberId: '',
-    capacity: '', isClosed: false, poolCount: '0', poolNames: '',
+    capacity: '', poolCount: '0', poolNames: '',
     requiresPoolSelection: false, usePools: false,
     tieBreakers: ['h2h', 'rd', 'rf', 'ra'],
     depositAmount: '', depositDueDate: '', totalFeeAmount: '', totalFeeDueDate: '',
@@ -123,7 +122,7 @@ export default function DivisionsPage() {
   function openAdd() {
     setForm({
       name: '', minAge: '', maxAge: '', order: String(groups.length + 1),
-      contactMemberId: '', capacity: '', isClosed: false, poolCount: '0', poolNames: '',
+      contactMemberId: '', capacity: '', poolCount: '0', poolNames: '',
       requiresPoolSelection: false, usePools: false,
       tieBreakers: ['h2h', 'rd', 'rf', 'ra'],
       depositAmount: '', depositDueDate: '', totalFeeAmount: '', totalFeeDueDate: '',
@@ -141,7 +140,7 @@ export default function DivisionsPage() {
       minAge: g.minAge === null || g.minAge === undefined ? '' : String(g.minAge),
       maxAge: g.maxAge === null || g.maxAge === undefined ? '' : String(g.maxAge),
       order: String(g.order), contactMemberId: g.contactMemberId || '',
-      capacity: g.capacity ? String(g.capacity) : '', isClosed: !!g.isClosed,
+      capacity: g.capacity ? String(g.capacity) : '',
       poolCount: String(g.poolCount || 0), poolNames: g.poolNames || '',
       requiresPoolSelection: !!g.requiresPoolSelection,
       usePools: (g.poolCount || 0) >= 2,
@@ -200,7 +199,6 @@ export default function DivisionsPage() {
       order: modal === 'add' ? groups.length + 1 : Number(form.order),
       contactMemberId: form.contactMemberId || null,
       capacity: form.capacity ? Number(form.capacity) : undefined,
-      isClosed: form.isClosed,
       poolCount: Number(form.poolCount),
       poolNames: form.poolNames.trim() || undefined,
       requiresPoolSelection: form.requiresPoolSelection,
@@ -395,25 +393,14 @@ export default function DivisionsPage() {
                 </div>
               </div>
 
-              {/* Capacity + Close Registration — fixed-width side by side, never wraps */}
-              <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'flex-start', marginBottom: '1.5rem' }}>
-                <div style={{ flex: '0 0 110px' }}>
-                  <label className="form-label">Capacity</label>
-                  <input className="form-input" type="number" placeholder="e.g. 8" value={form.capacity}
-                    onChange={e => setForm(f => ({ ...f, capacity: e.target.value }))} />
-                  <p style={{ fontSize: '0.72rem', color: 'var(--white-30)', marginTop: '0.3rem', lineHeight: 1.4 }}>
-                    No limit if blank.
-                  </p>
-                </div>
-                <div style={{ flex: 1, paddingTop: '1.35rem' }}>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
-                    <input type="checkbox" checked={form.isClosed} onChange={e => setForm(f => ({ ...f, isClosed: e.target.checked }))} />
-                    <span style={{ fontWeight: 500 }}>Close Registration</span>
-                  </label>
-                  <p style={{ fontSize: '0.72rem', color: 'var(--white-30)', marginTop: '0.3rem', lineHeight: 1.4 }}>
-                    Blocks all new registrations immediately.
-                  </p>
-                </div>
+              {/* Capacity */}
+              <div style={{ marginBottom: '1.5rem' }}>
+                <label className="form-label">Capacity</label>
+                <input className="form-input" type="number" placeholder="e.g. 8" value={form.capacity}
+                  onChange={e => setForm(f => ({ ...f, capacity: e.target.value }))} style={{ maxWidth: '110px' }} />
+                <p style={{ fontSize: '0.72rem', color: 'var(--white-30)', marginTop: '0.3rem', lineHeight: 1.4 }}>
+                  No limit if blank. Registration status is managed from the Registrations page.
+                </p>
               </div>
 
               {/* ── Pools ── */}

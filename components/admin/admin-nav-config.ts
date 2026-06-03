@@ -1,7 +1,7 @@
 import {
   LayoutDashboard, Users, Calendar, Trophy, Mail,
   Settings2, MapPin, Tag, BookOpen, Paintbrush,
-  Settings, Archive,
+  Settings, Archive, Database,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -49,8 +49,9 @@ export const TOUR_GROUPS: TourGroup[] = [
     label: 'Admin',
     defaultOpenFor: [],
     items: [
-      { key: 'settings', icon: Settings, label: 'Settings & Access' },
-      { key: 'archives', icon: Archive,  label: 'Past Tournaments'  },
+      { key: 'data-tools', icon: Database, label: 'Data Tools'       },
+      { key: 'settings',   icon: Settings, label: 'Settings & Access' },
+      { key: 'archives',   icon: Archive,  label: 'Past Tournaments'  },
     ],
   },
 ];

@@ -3,6 +3,8 @@ import { describe, it } from 'node:test';
 import {
   defaultSchedulePriorities,
   generateScoredSchedule,
+  generateScoredScheduleDrafts,
+  type ScheduleDraftAssignment,
   type ScheduleDraftMatchup,
   type ScheduleDraftParticipant,
   type ScheduleDraftSlot,
@@ -132,5 +134,199 @@ describe('generateScoredSchedule', () => {
     assert.equal(draft.assignments.length, 2);
     assert(draft.assignments.every(assignment => assignment.scheduleFacilityLaneId));
     assert.equal(draft.metrics.unresolvedFacilityLaneCount, 2);
+  });
+
+  it('schedules new games around fixed assignments from the existing schedule', () => {
+    const fixed: ScheduleDraftAssignment = {
+      ...matchup('a', 'c'),
+      ...slot('2026-07-01', '09:00', 'v1'),
+      slotIndex: -1,
+    };
+
+    const draft = generateScoredSchedule({
+      tournamentId: 't1',
+      divisionId: 'd1',
+      participants,
+      matchups: [
+        matchup('a', 'b'),
+      ],
+      slots: [
+        slot('2026-07-01', '09:00', 'v1'),
+        slot('2026-07-01', '11:00', 'v1'),
+      ],
+      fixedAssignments: [fixed],
+      expectedGamesPerParticipant: 1,
+      gameDurationMinutes: 90,
+      bufferMinutes: 15,
+      priorities: defaultSchedulePriorities(),
+    });
+
+    assert(draft);
+    assert.equal(draft.assignments.length, 1);
+    assert.equal(draft.assignments[0].time, '11:00');
+  });
+
+  it('returns selectable draft options sorted by score', () => {
+    const options = {
+      tournamentId: 't1',
+      divisionId: 'd1',
+      participants,
+      matchups: [
+        matchup('a', 'b'),
+        matchup('c', 'd'),
+        matchup('a', 'c'),
+        matchup('b', 'd'),
+      ],
+      slots: [
+        slot('2026-07-01', '09:00', 'v1'),
+        slot('2026-07-01', '11:00', 'v1'),
+        slot('2026-07-01', '13:00', 'v2'),
+        slot('2026-07-02', '09:00', 'v1'),
+        slot('2026-07-02', '11:00', 'v2'),
+        slot('2026-07-02', '13:00', 'v2'),
+      ],
+      expectedGamesPerParticipant: 2,
+      gameDurationMinutes: 90,
+      bufferMinutes: 15,
+      priorities: {
+        ...defaultSchedulePriorities(),
+        candidateCount: 24,
+      },
+    };
+    const drafts = generateScoredScheduleDrafts(options, 3);
+    const nextSet = generateScoredScheduleDrafts({ ...options, draftSeed: 1 }, 3);
+
+    assert(drafts.length >= 1);
+    assert(drafts.length <= 3);
+    assert(nextSet.length >= 1);
+    assert(nextSet.length <= 3);
+    assert.equal(drafts[0].assignments.length, 4);
+    for (let i = 1; i < drafts.length; i++) {
+      assert(drafts[i - 1].score >= drafts[i].score);
+    }
+  });
+
+  it('keeps dependent playoff rounds after their source games and rest window', () => {
+    const draft = generateScoredSchedule({
+      tournamentId: 't1',
+      divisionId: 'd1',
+      participants: [
+        { id: 'seed-1', label: 'Seed #1', divisionId: 'd1' },
+        { id: 'seed-4', label: 'Seed #4', divisionId: 'd1' },
+        { id: 'seed-2', label: 'Seed #2', divisionId: 'd1' },
+        { id: 'seed-3', label: 'Seed #3', divisionId: 'd1' },
+        { id: 'winner-sf1', label: 'Winner SF1', divisionId: 'd1' },
+        { id: 'winner-sf2', label: 'Winner SF2', divisionId: 'd1' },
+      ],
+      matchups: [
+        {
+          matchupId: 'SF1',
+          homeParticipantId: 'seed-1',
+          awayParticipantId: 'seed-4',
+          homeLabel: 'Seed #1',
+          awayLabel: 'Seed #4',
+          payload: {},
+        },
+        {
+          matchupId: 'SF2',
+          homeParticipantId: 'seed-2',
+          awayParticipantId: 'seed-3',
+          homeLabel: 'Seed #2',
+          awayLabel: 'Seed #3',
+          payload: {},
+        },
+        {
+          matchupId: 'FIN',
+          homeParticipantId: 'winner-sf1',
+          awayParticipantId: 'winner-sf2',
+          homeLabel: 'Winner SF1',
+          awayLabel: 'Winner SF2',
+          dependsOnMatchupIds: ['SF1', 'SF2'],
+          dependencyMinRestMinutes: 60,
+          payload: {},
+        },
+      ],
+      slots: [
+        slot('2026-07-01', '09:00', 'v1'),
+        slot('2026-07-01', '09:00', 'v2'),
+        slot('2026-07-01', '10:30', 'v1'),
+        slot('2026-07-01', '12:00', 'v1'),
+      ],
+      gameDurationMinutes: 90,
+      bufferMinutes: 15,
+      priorities: {
+        ...defaultSchedulePriorities(),
+        minRestMinutes: 60,
+        candidateCount: 12,
+      },
+    });
+
+    assert(draft);
+    const final = draft.assignments.find(assignment => assignment.matchupId === 'FIN');
+    assert(final);
+    assert.equal(final.time, '12:00');
+  });
+
+  it('keeps dependent playoff rounds after fixed protected source games', () => {
+    const fixedSemi: ScheduleDraftAssignment = {
+      matchupId: 'SF1',
+      homeParticipantId: 'seed-1',
+      awayParticipantId: 'seed-4',
+      homeLabel: 'Seed #1',
+      awayLabel: 'Seed #4',
+      payload: {},
+      ...slot('2026-07-01', '09:00', 'v1'),
+      slotIndex: -1,
+    };
+
+    const draft = generateScoredSchedule({
+      tournamentId: 't1',
+      divisionId: 'd1',
+      participants: [
+        { id: 'seed-2', label: 'Seed #2', divisionId: 'd1' },
+        { id: 'seed-3', label: 'Seed #3', divisionId: 'd1' },
+        { id: 'winner-sf1', label: 'Winner SF1', divisionId: 'd1' },
+        { id: 'winner-sf2', label: 'Winner SF2', divisionId: 'd1' },
+      ],
+      fixedAssignments: [fixedSemi],
+      matchups: [
+        {
+          matchupId: 'SF2',
+          homeParticipantId: 'seed-2',
+          awayParticipantId: 'seed-3',
+          homeLabel: 'Seed #2',
+          awayLabel: 'Seed #3',
+          payload: {},
+        },
+        {
+          matchupId: 'FIN',
+          homeParticipantId: 'winner-sf1',
+          awayParticipantId: 'winner-sf2',
+          homeLabel: 'Winner SF1',
+          awayLabel: 'Winner SF2',
+          dependsOnMatchupIds: ['SF1', 'SF2'],
+          dependencyMinRestMinutes: 60,
+          payload: {},
+        },
+      ],
+      slots: [
+        slot('2026-07-01', '09:00', 'v1'),
+        slot('2026-07-01', '09:00', 'v2'),
+        slot('2026-07-01', '10:30', 'v1'),
+        slot('2026-07-01', '12:00', 'v1'),
+      ],
+      gameDurationMinutes: 90,
+      bufferMinutes: 15,
+      priorities: {
+        ...defaultSchedulePriorities(),
+        minRestMinutes: 60,
+        candidateCount: 12,
+      },
+    });
+
+    assert(draft);
+    const final = draft.assignments.find(assignment => assignment.matchupId === 'FIN');
+    assert(final);
+    assert.equal(final.time, '12:00');
   });
 });

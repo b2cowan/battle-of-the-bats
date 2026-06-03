@@ -26,6 +26,7 @@ export default function ScheduleHealthPanel({
   const [expanded, setExpanded] = useState(defaultOpen);
   const topIssues = metrics.issues.slice(0, 2);
   const remainingIssueCount = Math.max(0, metrics.issues.length - topIssues.length);
+  const warningCount = metrics.venueConflictCount + metrics.bufferConflictCount + metrics.travelBufferWarningCount;
   const scoreClass = metrics.healthTone === 'good'
     ? styles.healthScoreGood
     : metrics.healthTone === 'warning'
@@ -76,10 +77,10 @@ export default function ScheduleHealthPanel({
             tone={metrics.maxGamesInDay > 2 ? 'warning' : 'good'}
           />
           <Metric
-            label="Conflicts"
-            value={String(metrics.venueConflictCount + metrics.bufferConflictCount)}
-            detail={`${metrics.bufferConflictCount} buffer`}
-            tone={metrics.venueConflictCount > 0 ? 'danger' : metrics.bufferConflictCount > 0 ? 'warning' : 'good'}
+            label="Warnings"
+            value={String(warningCount)}
+            detail={metrics.travelBufferWarningCount > 0 ? `${metrics.travelBufferWarningCount} travel buffer` : `${metrics.bufferConflictCount} venue buffer`}
+            tone={metrics.venueConflictCount > 0 ? 'danger' : warningCount > 0 ? 'warning' : 'good'}
           />
         </div>
 
@@ -115,6 +116,7 @@ export default function ScheduleHealthPanel({
                     <th>Back-to-back</th>
                     <th>Rest</th>
                     <th>Venue changes</th>
+                    <th>Tight moves</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -126,6 +128,7 @@ export default function ScheduleHealthPanel({
                       <td>{team.backToBackCount}</td>
                       <td>{formatRestMinutes(team.minRestMinutes)}</td>
                       <td>{team.venueChanges}</td>
+                      <td>{team.travelBufferWarnings}</td>
                     </tr>
                   ))}
                 </tbody>

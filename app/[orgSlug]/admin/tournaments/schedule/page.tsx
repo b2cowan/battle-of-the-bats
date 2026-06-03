@@ -1,6 +1,6 @@
 ﻿'use client';
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Calendar, ChevronRight, ChevronDown, Plus, Pencil, Trash2, X, Check, Sparkles, SlidersHorizontal, Trophy, MapPin, Clock, Send, Globe, EyeOff, RefreshCw, AlertTriangle, AlertCircle, Lock, Wrench, FileSpreadsheet, FileText } from 'lucide-react';
+import { Calendar, ChevronRight, ChevronDown, Plus, Pencil, Trash2, X, Check, Sparkles, SlidersHorizontal, Trophy, MapPin, Clock, Send, Globe, EyeOff, RefreshCw, AlertTriangle, AlertCircle, Lock, Wrench } from 'lucide-react';
 import { formatPoolName } from '@/lib/utils';
 import { saveGame, updateGame, deleteGame } from '@/lib/db';
 import { formatTime } from '@/lib/utils';
@@ -327,6 +327,10 @@ export default function AdminSchedulePage() {
     // Modal stays open to show success state; user closes it with "Done"
   }
 
+  function handleDivisionClosed(id: string) {
+    setDivisions(prev => prev.map(g => g.id === id ? { ...g, isClosed: true } : g));
+  }
+
   function handleUnpublish(divisionId: string) {
     setFeedback({
       isOpen: true,
@@ -455,6 +459,26 @@ export default function AdminSchedulePage() {
     refresh();
   }
 
+  async function toggleGeneratorLock(id: string, nextLocked: boolean) {
+    const orgParam = orgSlug ? `?orgSlug=${encodeURIComponent(orgSlug)}` : '';
+    const res = await fetch(`/api/admin/games${orgParam}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'update', id, generatorLocked: nextLocked }),
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      setFeedback({
+        isOpen: true,
+        title: nextLocked ? 'Could Not Keep Game' : 'Could Not Release Game',
+        message: data.error || 'The schedule could not be updated. Confirm the latest schedule migration has been applied, then try again.',
+        type: 'warning',
+      });
+      return;
+    }
+    refresh();
+  }
+
   async function handleSaveGame(gameId: string, data: { date: string; time: string; venueId: string; venueFacilityId: string; notes: string; homeTeamId: string; awayTeamId: string }) {
     const orgParam = orgSlug ? `?orgSlug=${encodeURIComponent(orgSlug)}` : '';
     const venue    = data.venueId ? venues.find(d => d.id === data.venueId) : null;
@@ -532,7 +556,7 @@ export default function AdminSchedulePage() {
     completed: divisionGames.filter(g => g.status === 'completed').length,
   };
   const savedScheduleMetrics = useMemo(() => {
-    if (!currentTournament || viewMode !== 'pool' || !filterGroup || divisionGames.length === 0) return null;
+    if (!currentTournament || !filterGroup || divisionGames.length === 0) return null;
     return buildScheduleMetrics({
       games: divisionGames,
       teams,
@@ -540,6 +564,7 @@ export default function AdminSchedulePage() {
       venues,
       tournament: currentTournament,
       divisionId: filterGroup,
+      includePlayoffs: viewMode === 'playoff',
     });
   }, [currentTournament, viewMode, filterGroup, divisionGames, teams, divisions, venues]);
   const venueFilterOptions = Array.from(
@@ -784,6 +809,16 @@ export default function AdminSchedulePage() {
                 </span>
               );
             })()}
+            <ExportMenu
+              className={styles.scheduleExportButton}
+              formats={['xlsx', 'csv', 'ics', 'pdf']}
+              onExportXLSX={handleExportXLSX}
+              onExportCSV={handleExportCSV}
+              onExportICS={handleExportICS}
+              onExportPDF={handleExportPDF}
+              planId={currentOrg?.planId}
+              disabled={filtered.length === 0}
+            />
             {!isLocked && (
               <button
                 className={`btn btn-lime btn-data ${styles.addGameButton}`}
@@ -854,7 +889,7 @@ export default function AdminSchedulePage() {
           )}
         </ToolbarGroup>
 
-        {/* ── Row 1 right: utility actions — Publish · Auto · Export ── */}
+        {/* ── Row 1 right: utility actions — Publish · Tools ── */}
         <ToolbarGroup align="end" className={`${styles.scheduleActionsGroup} ${styles.scheduleEndGroup}`}>
           {/* Publish control — only for round-robin view */}
           {viewMode === 'pool' && (() => {
@@ -899,24 +934,14 @@ export default function AdminSchedulePage() {
             onAutoGenerate={openGenerator}
             onPlayoffWizard={openPlayoffWizard}
           />
-          <ExportMenu
-            className={styles.scheduleExportButton}
-            formats={['xlsx', 'csv', 'ics', 'pdf']}
-            onExportXLSX={handleExportXLSX}
-            onExportCSV={handleExportCSV}
-            onExportICS={handleExportICS}
-            onExportPDF={handleExportPDF}
-            planId={currentOrg?.planId}
-            disabled={filtered.length === 0}
-          />
         </ToolbarGroup>
 
         {/* ── Row 2: search + venue + status filters ── */}
         <ToolbarGroup fullWidth className={styles.scheduleFilterGroup}>
           <ToolbarSearch className={styles.scheduleSearch} value={search} onChange={setSearch} placeholder="Search teams..." label="Search games" />
-          {/* Mobile-only: Publish/Auto/Export collapse into a single Tools menu so
+          {/* Mobile-only: publish/generate tools stay in one menu so
               the division selector can take the full first row. Hidden on desktop,
-              where the three controls remain separate (Row 1 right). */}
+              where those controls remain separate (Row 1 right). */}
           <MobileToolsMenu
             className={styles.scheduleMobileTools}
             showPublishSection={!isLocked && viewMode === 'pool'}
@@ -931,13 +956,6 @@ export default function AdminSchedulePage() {
             canPlayoffWizard={canGeneratePlayoffs}
             onAutoGenerate={openGenerator}
             onPlayoffWizard={openPlayoffWizard}
-            exportDisabled={filtered.length === 0}
-            canExportPdf={canUsePDF}
-            pdfUpgradeCopy={requiresTournamentPlusCopy('pdf_exports')}
-            onExportXLSX={handleExportXLSX}
-            onExportCSV={handleExportCSV}
-            onExportICS={handleExportICS}
-            onExportPDF={handleExportPDF}
           />
           <div className={styles.scheduleVenueDesktop}>
             <VenueFilterMenu
@@ -1143,11 +1161,12 @@ export default function AdminSchedulePage() {
       {savedScheduleMetrics && (
         <ScheduleHealthPanel
           metrics={savedScheduleMetrics}
-          subtitle={`${activeDivision?.name ?? 'Division'} · Saved round robin`}
+          subtitle={`${activeDivision?.name ?? 'Division'} · ${viewMode === 'playoff' ? 'Saved playoffs' : 'Saved round robin'}`}
+          defaultOpen={false}
         />
       )}
 
-      {unresolvedFacilityLanes.length > 0 && viewMode === 'pool' && (
+      {unresolvedFacilityLanes.length > 0 && (
         <div className={styles.facilityResolveBanner}>
           <div className={styles.facilityResolveCopy}>
             <Wrench size={14} />
@@ -1204,6 +1223,7 @@ export default function AdminSchedulePage() {
               onDelete={isLocked ? undefined : handleDeleteRequest}
               onCancel={isLocked ? undefined : markCancelled}
               onSchedule={isLocked ? undefined : markScheduled}
+              onToggleGeneratorLock={isLocked ? undefined : toggleGeneratorLock}
               onSave={isLocked ? undefined : handleSaveGame}
               onCreateVenue={() => setAddVenueOpen(true)}
               mode="planning"
@@ -1552,6 +1572,7 @@ export default function AdminSchedulePage() {
           divisions={divisions}
           teams={teams}
           venues={venues}
+          existingGames={games}
           onCancel={() => setShowGenerator(false)}
           onComplete={() => {
             setShowGenerator(false);
@@ -1593,6 +1614,7 @@ export default function AdminSchedulePage() {
           orgSlug={currentOrg?.slug ?? ''}
           onClose={() => setPublishModal(null)}
           onPublished={handlePublishDone}
+          onDivisionClosed={handleDivisionClosed}
         />
       )}
 
@@ -1722,6 +1744,7 @@ function PublishScheduleModal({
   orgSlug,
   onClose,
   onPublished,
+  onDivisionClosed,
 }: {
   defaultDivisionId: string;
   divisions: import('@/lib/types').Division[];
@@ -1730,82 +1753,70 @@ function PublishScheduleModal({
   orgSlug: string;
   onClose: () => void;
   onPublished: (updates: { id: string; scheduleVisibility: 'published_generic' | 'published_teams' }[]) => void;
+  onDivisionClosed: (id: string) => void;
 }) {
   const publishable = divisions.filter(g => !g.scheduleVisibility || g.scheduleVisibility === 'unpublished');
 
   const [selectedIds, setSelectedIds] = React.useState<string[]>([defaultDivisionId]);
-
-  const targets = publishable.filter(g => selectedIds.includes(g.id));
-  const someClosed = targets.some(g => g.isClosed);
-  const allClosed = targets.length > 0 && targets.every(g => g.isClosed);
-  const allUnpublishedSelected = publishable.length > 0 && publishable.every(d => selectedIds.includes(d.id));
-
-  const [nameMode, setNameMode] = React.useState<'generic' | 'teams'>(
-    divisions.find(d => d.id === defaultDivisionId)?.isClosed ? 'teams' : 'generic'
-  );
+  const [nameMode, setNameMode] = React.useState<'generic' | 'teams'>('generic');
   const [notify, setNotify] = React.useState(false);
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [result, setResult] = React.useState<{ notified: number } | null>(null);
+  const [showRegCloseWarning, setShowRegCloseWarning] = React.useState(false);
 
-  const showTeamNamesOption = someClosed;
+  const targets = publishable.filter(g => selectedIds.includes(g.id));
+  const allUnpublishedSelected = publishable.length > 0 && publishable.every(d => selectedIds.includes(d.id));
+  const openTargets = targets.filter(g => !g.isClosed);
+  const willCloseOnPublish = nameMode === 'teams' && openTargets.length > 0;
 
   function toggleDivision(id: string) {
     setSelectedIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
   }
 
-  async function handleConfirm() {
+  async function doPublish() {
     setLoading(true);
     setError(null);
     try {
-      const divisionIds = targets.map(g => g.id);
       const orgQuery = orgSlug ? `?orgSlug=${encodeURIComponent(orgSlug)}` : '';
+      const divisionIds = targets.map(g => g.id);
+      const visibility = nameMode === 'teams' ? 'published_teams' : 'published_generic';
 
-      // Smart-assign: if nameMode is 'teams' and some divisions are still open,
-      // closed ones get team names while open ones get generic.
-      const allSameVisibility = !someClosed || nameMode === 'generic';
-
-      if (allSameVisibility) {
-        const visibility = nameMode === 'teams' ? 'published_teams' : 'published_generic';
-        const res = await fetch(`/api/admin/schedule-publish${orgQuery}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ tournamentId: tournament.id, divisionIds, visibility, notify }),
-        });
-        if (!res.ok) throw new Error((await res.json()).error ?? 'Failed to publish');
-        const data = await res.json();
-        setResult({ notified: data.notified ?? 0 });
-        onPublished(divisionIds.map(id => ({ id, scheduleVisibility: visibility })));
-      } else {
-        // Mixed: closed → teams, open → generic
-        const closedIds = targets.filter(g => g.isClosed).map(g => g.id);
-        const openIds = targets.filter(g => !g.isClosed).map(g => g.id);
-        const [r1, r2] = await Promise.all([
-          closedIds.length ? fetch(`/api/admin/schedule-publish${orgQuery}`, {
+      // Close any still-open divisions before publishing with real names
+      if (nameMode === 'teams' && openTargets.length > 0) {
+        await Promise.all(openTargets.map(g =>
+          fetch(`/api/admin/divisions${orgQuery}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ tournamentId: tournament.id, divisionIds: closedIds, visibility: 'published_teams', notify }),
-          }) : Promise.resolve(null),
-          openIds.length ? fetch(`/api/admin/schedule-publish${orgQuery}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ tournamentId: tournament.id, divisionIds: openIds, visibility: 'published_generic', notify: false }),
-          }) : Promise.resolve(null),
-        ]);
-        if (r1 && !r1.ok) throw new Error((await r1.json()).error ?? 'Failed to publish');
-        if (r2 && !r2.ok) throw new Error((await r2.json()).error ?? 'Failed to publish');
-        const n1 = r1 ? (await r1.json()).notified ?? 0 : 0;
-        setResult({ notified: n1 });
-        onPublished([
-          ...closedIds.map(id => ({ id, scheduleVisibility: 'published_teams' as const })),
-          ...openIds.map(id => ({ id, scheduleVisibility: 'published_generic' as const })),
-        ]);
+            body: JSON.stringify({ action: 'set-closed', id: g.id, data: { isClosed: true } }),
+          })
+        ));
+        openTargets.forEach(g => onDivisionClosed(g.id));
       }
+
+      const res = await fetch(`/api/admin/schedule-publish${orgQuery}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tournamentId: tournament.id, divisionIds, visibility, notify }),
+      });
+      if (!res.ok) throw new Error((await res.json()).error ?? 'Failed to publish');
+      const data = await res.json();
+      setResult({ notified: data.notified ?? 0 });
+      onPublished(divisionIds.map(id => ({ id, scheduleVisibility: visibility })));
     } catch (e: any) {
       setError(e.message ?? 'Something went wrong');
+      setShowRegCloseWarning(false);
     } finally {
       setLoading(false);
     }
+  }
+
+  function handleConfirm() {
+    if (willCloseOnPublish) {
+      setShowRegCloseWarning(true);
+      return;
+    }
+    void doPublish();
   }
 
   const titleText = targets.length === 0 ? 'Publish Schedule'
@@ -1840,6 +1851,36 @@ function PublishScheduleModal({
                 </p>
               )}
               <button className="btn btn-primary btn-data" onClick={onClose} style={{ marginTop: '1.25rem', minWidth: '160px' }}>Done</button>
+            </div>
+          ) : showRegCloseWarning ? (
+            /* ── Registration close confirmation screen ── */
+            <div>
+              <p style={{ fontWeight: 700, fontSize: '0.95rem', marginBottom: '0.65rem', color: 'var(--fl-text)' }}>
+                Close registration and publish?
+              </p>
+              <p style={{ fontSize: '0.85rem', color: 'var(--white-60)', lineHeight: 1.55, marginBottom: openTargets.length > 1 ? '0.75rem' : '1.25rem' }}>
+                {openTargets.length === 1
+                  ? `Registration for ${openTargets[0].name} is still open. Publishing with real team names will close it — stopping new submissions from the public page.`
+                  : `Registration is still open for ${openTargets.length} divisions. Publishing with real team names will close them — stopping new submissions from the public page.`}
+              </p>
+              {openTargets.length > 1 && (
+                <div style={{ marginBottom: '1.25rem', background: 'var(--white-5)', border: '1px solid var(--white-8)', borderRadius: '2px', padding: '0.5rem 0.75rem' }}>
+                  {openTargets.map(g => (
+                    <div key={g.id} style={{ fontSize: '0.83rem', color: 'var(--white-70)', padding: '0.2rem 0' }}>{g.name}</div>
+                  ))}
+                </div>
+              )}
+              {error && (
+                <div style={{ marginBottom: '1rem', padding: '0.6rem 0.75rem', background: 'rgba(var(--danger-rgb),0.1)', border: '1px solid rgba(var(--danger-rgb),0.3)', borderRadius: '2px', fontSize: '0.82rem', color: '#f87171' }}>
+                  {error}
+                </div>
+              )}
+              <div className="modal-footer">
+                <button className="btn btn-ghost btn-data" onClick={() => setShowRegCloseWarning(false)} disabled={loading}>Go Back</button>
+                <button className="btn btn-primary btn-data" onClick={() => void doPublish()} disabled={loading}>
+                  {loading ? 'Publishing…' : 'Close Registration & Publish'}
+                </button>
+              </div>
             </div>
           ) : (
             <>
@@ -1887,7 +1928,7 @@ function PublishScheduleModal({
                           {isLive ? (
                             <span style={{ fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.06em', color: 'var(--success)', background: 'rgba(var(--success-rgb),0.1)', border: '1px solid rgba(var(--success-rgb),0.25)', padding: '1px 6px', borderRadius: '2px' }}>LIVE</span>
                           ) : (
-                            <span style={{ fontSize: '0.73rem', color: g.isClosed ? 'var(--logic-lime)' : 'var(--white-40)' }}>
+                            <span style={{ fontSize: '0.73rem', color: g.isClosed ? 'var(--logic-lime)' : 'var(--white-30)' }}>
                               {g.isClosed ? 'Reg. closed' : 'Reg. open'}
                             </span>
                           )}
@@ -1921,34 +1962,23 @@ function PublishScheduleModal({
                   <div>
                     <div style={{ fontWeight: 600, fontSize: '0.88rem', marginBottom: '0.2rem' }}>Placeholder names</div>
                     <div style={{ fontSize: '0.78rem', color: 'var(--white-50)', lineHeight: 1.45 }}>
-                      Teams appear as "Team 1", "Team 2", etc.
-                      {targets.length === 1 && !targets[0]?.isClosed ? ' Recommended — registration is still open.' : ''}
+                      Teams appear as "Team 1", "Team 2", etc. Registration stays open.
                     </div>
                   </div>
                 </label>
                 <label style={{
                   display: 'flex', alignItems: 'flex-start', gap: '0.65rem',
-                  padding: '0.75rem', borderRadius: '2px',
-                  cursor: showTeamNamesOption ? 'pointer' : 'not-allowed',
-                  opacity: showTeamNamesOption ? 1 : 0.45,
+                  padding: '0.75rem', borderRadius: '2px', cursor: 'pointer',
                   background: nameMode === 'teams' ? 'rgba(var(--logic-lime-rgb),0.06)' : 'transparent',
                   border: nameMode === 'teams' ? '1px solid rgba(var(--logic-lime-rgb),0.25)' : '1px solid transparent',
                 }}>
-                  <input
-                    type="radio"
-                    checked={nameMode === 'teams'}
-                    onChange={() => showTeamNamesOption && setNameMode('teams')}
-                    disabled={!showTeamNamesOption}
-                    style={{ marginTop: '2px', flexShrink: 0 }}
-                  />
+                  <input type="radio" checked={nameMode === 'teams'} onChange={() => setNameMode('teams')} style={{ marginTop: '2px', flexShrink: 0 }} />
                   <div>
                     <div style={{ fontWeight: 600, fontSize: '0.88rem', marginBottom: '0.2rem' }}>Real team names</div>
                     <div style={{ fontSize: '0.78rem', color: 'var(--white-50)', lineHeight: 1.45 }}>
-                      {showTeamNamesOption
-                        ? targets.length > 1 && someClosed && !allClosed
-                          ? 'Divisions with closed registration will show team names. Open divisions will use placeholders.'
-                          : 'Registered team names will be visible on the public schedule.'
-                        : 'Close registration for this division first.'}
+                      {willCloseOnPublish
+                        ? 'Registration will be closed when you publish.'
+                        : 'Registered team names will be visible on the public schedule.'}
                     </div>
                   </div>
                 </label>
@@ -2136,13 +2166,6 @@ function MobileToolsMenu({
   canPlayoffWizard,
   onAutoGenerate,
   onPlayoffWizard,
-  exportDisabled,
-  canExportPdf,
-  pdfUpgradeCopy,
-  onExportXLSX,
-  onExportCSV,
-  onExportICS,
-  onExportPDF,
 }: {
   className?: string;
   showPublishSection: boolean;
@@ -2157,13 +2180,6 @@ function MobileToolsMenu({
   canPlayoffWizard: boolean;
   onAutoGenerate: () => void;
   onPlayoffWizard: () => void;
-  exportDisabled: boolean;
-  canExportPdf: boolean;
-  pdfUpgradeCopy: string;
-  onExportXLSX: () => void | Promise<void>;
-  onExportCSV: () => void | Promise<void>;
-  onExportICS: () => void | Promise<void>;
-  onExportPDF: () => void | Promise<void>;
 }) {
   const [open, setOpen] = React.useState(false);
   const rootRef = React.useRef<HTMLDivElement>(null);
@@ -2306,35 +2322,6 @@ function MobileToolsMenu({
             locked: !canPlayoffWizard,
             lockTitle: 'Included with Tournament Plus and up',
             onClick: () => act(onPlayoffWizard),
-          })}
-          {divider}
-
-          <div style={sectionLabel}>Export</div>
-          {row({
-            icon: <FileSpreadsheet size={13} style={{ color: 'var(--data-gray)' }} />,
-            label: 'Excel (.xlsx)',
-            disabled: exportDisabled,
-            onClick: () => act(onExportXLSX),
-          })}
-          {row({
-            icon: <FileText size={13} style={{ color: 'var(--data-gray)' }} />,
-            label: 'CSV',
-            disabled: exportDisabled,
-            onClick: () => act(onExportCSV),
-          })}
-          {row({
-            icon: <Calendar size={13} style={{ color: 'var(--data-gray)' }} />,
-            label: 'Calendar (.ics)',
-            disabled: exportDisabled,
-            onClick: () => act(onExportICS),
-          })}
-          {row({
-            icon: <FileText size={13} style={{ color: 'var(--data-gray)' }} />,
-            label: 'PDF report',
-            locked: !canExportPdf,
-            lockTitle: pdfUpgradeCopy,
-            disabled: exportDisabled,
-            onClick: () => { if (!canExportPdf) return; act(onExportPDF); },
           })}
         </div>
       )}
