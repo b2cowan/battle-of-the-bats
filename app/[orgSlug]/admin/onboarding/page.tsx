@@ -395,8 +395,12 @@ export default function OnboardingPage() {
   }
 
   function getWizardResumeStep(progress: StartupProgress | null, resumeIncomplete: boolean): StartupTaskId {
-    if (!progress || !resumeIncomplete) return 'plan';
-    return 'tournament';
+    if (!progress) return 'plan';
+    // Skip the plan step once a plan is already chosen, or when resuming an incomplete setup:
+    // the plan picker can't be advanced when you're already on your current plan (the card is
+    // a disabled "Current plan" and the step has no Continue), so showing it again is a dead end.
+    if (resumeIncomplete || progress.tasks.plan === 'complete') return 'tournament';
+    return 'plan';
   }
 
   const refreshStartup = useCallback(async () => {
@@ -489,7 +493,7 @@ export default function OnboardingPage() {
     const activePlan = normalizePlanId(currentOrg.planId);
     if (activePlan !== 'tournament' && activePlan !== 'tournament_plus') return;
 
-    const shouldResumeAfterPlan = planSelectionSucceeded;
+    const shouldResumeAfterPlan = planSelectionSucceeded || continueSetup;
     void showWizardStep(getWizardResumeStep(startupProgress, shouldResumeAfterPlan));
   }, [loading, currentOrg, userRole, planChoiceRequired, continueSetup, planSelectionSucceeded, startupProgress, activeModal, planChooserOpen, wizardDismissed, workflowRedirecting]);
 
