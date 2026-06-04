@@ -247,6 +247,7 @@ export async function POST(req: Request) {
           subject: "You're on Tournament Plus — free through Dec 31",
           html: tournamentPlusWelcomeHtml({
             orgName: auth.org.name,
+            firstName: auth.user.user_metadata?.first_name as string | undefined,
             dashboardUrl: `${SITE_URL}/${auth.org.slug}/admin`,
             unsubscribeUrl: buildUnsubscribeUrl(auth.org.id),
           }),

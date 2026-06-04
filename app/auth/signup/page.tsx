@@ -21,6 +21,8 @@ function SignupForm() {
   const [orgName, setOrgName]   = useState('');
   const [publicSlug, setPublicSlug] = useState('');
   const [slugEdited, setSlugEdited] = useState(false);
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName]   = useState('');
   const [email, setEmail]       = useState('');
   const [password, setPassword] = useState('');
   const [showPw, setShowPw]     = useState(false);
@@ -46,6 +48,10 @@ function SignupForm() {
     e.preventDefault();
     const orgSlug = slugify(publicSlug);
 
+    if (!firstName.trim() || !lastName.trim()) {
+      setError('Enter your first and last name.');
+      return;
+    }
     if (password.length < 8) {
       setError('Password must be at least 8 characters.');
       return;
@@ -62,7 +68,7 @@ function SignupForm() {
     const res = await fetch('/api/auth/signup', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password, orgName, orgSlug }),
+      body: JSON.stringify({ email, password, orgName, orgSlug, firstName: firstName.trim(), lastName: lastName.trim() }),
     });
 
     const json = await res.json();
@@ -169,6 +175,35 @@ function SignupForm() {
           </div>
 
           <div className={styles.divider}>account credentials</div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+            <div className="form-group">
+              <label className="form-label" htmlFor="signup-first-name">First Name</label>
+              <input
+                id="signup-first-name"
+                type="text"
+                className="form-input"
+                value={firstName}
+                onChange={e => setFirstName(e.target.value)}
+                placeholder="Jordan"
+                required
+                autoComplete="given-name"
+              />
+            </div>
+            <div className="form-group">
+              <label className="form-label" htmlFor="signup-last-name">Last Name</label>
+              <input
+                id="signup-last-name"
+                type="text"
+                className="form-input"
+                value={lastName}
+                onChange={e => setLastName(e.target.value)}
+                placeholder="Lee"
+                required
+                autoComplete="family-name"
+              />
+            </div>
+          </div>
 
           <div className="form-group">
             <label className="form-label" htmlFor="signup-email">Email</label>

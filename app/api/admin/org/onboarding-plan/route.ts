@@ -109,6 +109,7 @@ export async function POST(req: Request) {
         subject: 'Tournament Plus is free this season — here’s what you’re missing',
         html: tournamentPlusUpsellHtml({
           orgName: ctx.org.name,
+          firstName: ctx.user.user_metadata?.first_name as string | undefined,
           upgradeUrl: `${SITE_URL}${getBillingHref(ctx.org.slug, 'tournament')}`,
         }),
         scheduledAt,

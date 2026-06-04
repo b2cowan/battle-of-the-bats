@@ -43,20 +43,33 @@ export async function POST(req: Request) {
   let orgId: string | null = null;
 
   try {
-    const { email, password, orgName, orgSlug } = await req.json();
+    const { email, password, orgName, orgSlug, firstName, lastName } = await req.json();
 
-    if (!email || !password || !orgName) {
+    if (!email || !password || !orgName || !firstName || !lastName) {
       return NextResponse.json({ error: 'Missing required fields.' }, { status: 400 });
     }
 
     const normalizedEmail = String(email).trim().toLowerCase();
     const normalizedPassword = String(password);
     const normalizedOrgName = String(orgName).trim();
+    const normalizedFirstName = String(firstName).trim();
+    const normalizedLastName = String(lastName).trim();
+    const fullName = `${normalizedFirstName} ${normalizedLastName}`.trim();
     const slug = slugify(typeof orgSlug === 'string' && orgSlug.trim() ? orgSlug : normalizedOrgName);
 
-    if (!normalizedEmail || !normalizedOrgName) {
+    if (!normalizedEmail || !normalizedOrgName || !normalizedFirstName || !normalizedLastName) {
       return NextResponse.json({ error: 'Missing required fields.' }, { status: 400 });
     }
+
+    // Stored on the auth user so platform-admin support views (which read
+    // user_metadata.display_name / full_name) and the welcome/upsell emails
+    // (which greet by first_name) have the person's real name.
+    const userMetadata = {
+      first_name: normalizedFirstName,
+      last_name: normalizedLastName,
+      full_name: fullName,
+      display_name: fullName,
+    };
     if (normalizedPassword.length < 8) {
       return NextResponse.json({ error: 'Password must be at least 8 characters.' }, { status: 400 });
     }
@@ -85,6 +98,7 @@ export async function POST(req: Request) {
         email: normalizedEmail,
         password: normalizedPassword,
         options: {
+          data: userMetadata,
           redirectTo: `${origin}/auth/callback?next=${encodeURIComponent(`/${slug}/admin/onboarding?choosePlan=1`)}`,
         },
       });
@@ -101,6 +115,7 @@ export async function POST(req: Request) {
         email: normalizedEmail,
         password: normalizedPassword,
         email_confirm: true,
+        user_metadata: userMetadata,
       });
 
       if (authError || !authData.user) {
@@ -165,7 +180,7 @@ export async function POST(req: Request) {
       await sendEmail(
         normalizedEmail,
         'Verify your FieldLogicHQ email',
-        signupVerificationHtml({ orgName: normalizedOrgName, verifyUrl })
+        signupVerificationHtml({ orgName: normalizedOrgName, verifyUrl, firstName: normalizedFirstName })
       );
 
       return NextResponse.json({

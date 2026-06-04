@@ -617,10 +617,12 @@ export function platformPasswordResetHtml(resetLink: string) {
 export function signupVerificationHtml(p: {
   orgName: string;
   verifyUrl: string;
+  firstName?: string;
 }) {
+  const greeting = p.firstName ? `Hi ${p.firstName} — welcome to <strong>FieldLogicHQ</strong>.` : 'Welcome to <strong>FieldLogicHQ</strong>.';
   return wrap(`
     <h2 style="color:#fff;font-size:1.4rem;margin:0 0 1rem;">Verify Your Email</h2>
-    <p>Welcome to <strong>FieldLogicHQ</strong>.</p>
+    <p>${greeting}</p>
     <p>Confirm your email address to continue setting up <strong>${p.orgName}</strong>.</p>
     <a href="${p.verifyUrl}" style="display:inline-block;background:#D9F99D;color:#0b0f14;padding:0.75rem 1.75rem;border-radius:2px;text-decoration:none;font-weight:800;font-size:0.82rem;letter-spacing:0.06em;margin:1.5rem 0;">Verify Email &rarr;</a>
     <p style="color:rgba(241,245,249,0.35);font-size:0.82rem;">If you did not create this account, you can safely ignore this email.</p>
