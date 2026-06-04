@@ -78,6 +78,13 @@ export interface SendEmailOptions {
    * of consent status.
    */
   skipOptOutCheck?: boolean;
+  /**
+   * Optional ISO 8601 timestamp (or Resend natural-language string like "in 1 day")
+   * to schedule the send for later via Resend's native `scheduled_at`. When omitted
+   * the email sends immediately. Used for the post-plan-selection welcome / upsell
+   * emails — no cron required.
+   */
+  scheduledAt?: string;
 }
 
 export type SendResult = 'sent' | 'suppressed' | 'failed';
@@ -96,6 +103,7 @@ export async function sendMarketingEmail(opts: SendEmailOptions): Promise<SendRe
     html,
     batchId,
     skipOptOutCheck = false,
+    scheduledAt,
   } = opts;
 
   // ── 1. Opt-out check ───────────────────────────────────────────────────────
@@ -153,6 +161,7 @@ export async function sendMarketingEmail(opts: SendEmailOptions): Promise<SendRe
         html: htmlWithFooter,
         text: htmlToText(htmlWithFooter),
         reply_to: 'hello@fieldlogichq.ca',
+        ...(scheduledAt ? { scheduled_at: scheduledAt } : {}),
       }),
     });
 

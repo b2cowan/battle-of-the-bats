@@ -65,6 +65,22 @@
     padding-top: 1rem;
   }
 
+  /* Focused flows switch the shell to display:block (see .adminShellFocused above),
+     which defeats the flex app-shell scroll pattern. Without this override the shell
+     keeps the 100dvh / overflow:hidden viewport lock and clips any content past the
+     fold — on the onboarding plan-select screen that made the lower plan cards (and
+     their CTAs) unreachable on phones. Let focused flows grow and use natural document
+     scroll instead. Placed AFTER the mobile .adminShell / .adminMain rules so it wins. */
+  .adminShellFocused {
+    height: auto;
+    min-height: 100dvh;
+    overflow: visible;
+  }
+
+  .adminMainFocused {
+    overflow-y: visible;
+  }
+
 }
 
 /* ── Override global utility classes within admin shell ── */

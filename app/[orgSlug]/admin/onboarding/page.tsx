@@ -1367,6 +1367,8 @@ export default function OnboardingPage() {
           disabledPlans={disabledPlans}
           initialBilling={searchParams.get('billing') === 'annual' ? 'annual' : 'monthly'}
           compact={embedded}
+          order={['tournament_plus', 'tournament', 'league', 'club']}
+          featuredPlan="tournament_plus"
           ctaLabel={(planKey) => {
             if (required && planKey === 'tournament') return 'Start with Tournament';
             if (!required && planKey === 'tournament' && planKey !== activePlanId) return 'Continue free';

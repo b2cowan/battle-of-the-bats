@@ -8,8 +8,13 @@ import { getStripePriceId } from '@/lib/stripe-prices';
 import { getPlanGatingMap } from '@/lib/plan-gating-server';
 import { isRecoveryTransition, writePlatformEvent } from '@/lib/platform-events';
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { sendEmail, welcomeBackHtml, SITE_URL } from '@/lib/email';
+import { sendEmail, welcomeBackHtml, tournamentPlusWelcomeHtml, SITE_URL } from '@/lib/email';
+import { sendMarketingEmail } from '@/lib/email-sender';
+import { buildUnsubscribeUrl } from '@/lib/unsubscribe-token';
 import type { OrgPlan } from '@/lib/types';
+
+/** Welcome email fires this many days after a user selects Tournament Plus at onboarding. */
+const PLUS_WELCOME_DELAY_DAYS = 1;
 
 function appendSuccess(url: string) {
   return `${url}${url.includes('?') ? '&' : '?'}success=1`;
@@ -220,6 +225,30 @@ export async function POST(req: Request) {
 
     const restoreResult = await restoreRetainedDowngradeTournaments(auth.org.id, mergedConfig.tournamentLimit);
     await resetStartupTasksForEditableOnboarding(auth.org.id, isOnboardingPlanSelection);
+
+    // Schedule the Tournament Plus welcome email for ~1 day later — only when this
+    // founding-season upgrade happens during first-run onboarding plan selection.
+    // Non-fatal: never block the plan selection on an email failure.
+    if (isOnboardingPlanSelection && auth.user.email) {
+      try {
+        const scheduledAt = new Date(Date.now() + PLUS_WELCOME_DELAY_DAYS * 86_400_000).toISOString();
+        await sendMarketingEmail({
+          emailKey: 'tournament_plus_welcome',
+          orgId: auth.org.id,
+          toEmail: auth.user.email,
+          subject: "You're on Tournament Plus — free through Dec 31",
+          html: tournamentPlusWelcomeHtml({
+            orgName: auth.org.name,
+            dashboardUrl: `${SITE_URL}/${auth.org.slug}/admin`,
+            unsubscribeUrl: buildUnsubscribeUrl(auth.org.id),
+          }),
+          skipOptOutCheck: true, // transactional welcome
+          scheduledAt,
+        });
+      } catch (err) {
+        console.error('[create-checkout] tournament_plus_welcome schedule failed (non-fatal):', err);
+      }
+    }
 
     if (isRecoveryTransition(auth.org.subscriptionStatus, 'active')) {
       await writePlatformEvent({

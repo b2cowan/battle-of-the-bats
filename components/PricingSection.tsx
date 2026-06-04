@@ -175,10 +175,22 @@ interface PricingSectionProps {
   initialBilling?: Billing;
   /** Use condensed 5-item feature list and tighter spacing — for wizard/modal contexts */
   compact?: boolean;
+  /** Optional display order by plan key. Plans omitted here fall to the end in default order. */
+  order?: OrgPlan[];
+  /** Optional plan key to visually feature (highlighted border). */
+  featuredPlan?: OrgPlan;
 }
 
-export default function PricingSection({ gatingMap, onChoosePlan, currentPlan, planLoading, disabledPlans, ctaLabel, initialBilling = 'monthly', compact = false }: PricingSectionProps) {
+export default function PricingSection({ gatingMap, onChoosePlan, currentPlan, planLoading, disabledPlans, ctaLabel, initialBilling = 'monthly', compact = false, order, featuredPlan }: PricingSectionProps) {
   const [billing, setBilling] = useState<Billing>(initialBilling);
+
+  const orderedPlans = order
+    ? [...PLANS].sort((a, b) => {
+        const ia = order.indexOf(a.key);
+        const ib = order.indexOf(b.key);
+        return (ia === -1 ? PLANS.length : ia) - (ib === -1 ? PLANS.length : ib);
+      })
+    : PLANS;
 
   function getSignupHref(plan: Plan) {
     if (plan.key === 'tournament') return plan.ctaHref;
@@ -217,10 +229,11 @@ export default function PricingSection({ gatingMap, onChoosePlan, currentPlan, p
 
       {/* Plan cards */}
       <div className={`${styles.pricingGrid} ${compact ? styles.pricingGridCompact : ''}`}>
-        {PLANS.map(plan => {
+        {orderedPlans.map(plan => {
           const isGated = gatingMap[plan.key] ?? false;
           const isCurrent = !!onChoosePlan && currentPlan === plan.key;
           const isIncluded = !!onChoosePlan && (disabledPlans?.includes(plan.key) ?? false);
+          const isFeatured = !isGated && featuredPlan === plan.key;
           const isAnnual = !isGated && billing === 'annual' && plan.annualPrice;
           const displayPrice = isGated ? 'Coming soon' : (isAnnual ? plan.annualPrice! : plan.monthlyPrice);
           const displayNote = isGated
@@ -228,7 +241,7 @@ export default function PricingSection({ gatingMap, onChoosePlan, currentPlan, p
             : (isAnnual ? (plan.annualSavings ?? plan.trialNote) : plan.freeNote);
 
           return (
-            <div key={plan.key} className={`${styles.planCard} ${isGated ? styles.planCardPending : ''} ${isCurrent ? styles.planCardCurrent : ''}`}>
+            <div key={plan.key} className={`${styles.planCard} ${isGated ? styles.planCardPending : ''} ${isCurrent ? styles.planCardCurrent : ''} ${isFeatured ? styles.planCardFeatured : ''}`}>
               {/* Band 1: header */}
               <div className={styles.planHeader}>
                 <div className={styles.planHeaderTop}>

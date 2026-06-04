@@ -1,9 +1,15 @@
 import { NextResponse } from 'next/server';
 import { getAuthContextWithRole, unauthorized } from '@/lib/api-auth';
-import { PLAN_CONFIG } from '@/lib/plan-config';
+import { PLAN_CONFIG, isFoundingSeasonActive } from '@/lib/plan-config';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { tournamentPlusUpsellHtml, SITE_URL } from '@/lib/email';
+import { sendMarketingEmail } from '@/lib/email-sender';
+import { getBillingHref } from '@/lib/billing-urls';
 
 const STARTUP_TASK_IDS = ['tournament', 'divisions', 'welcome', 'venues', 'contacts'];
+
+/** Free-tier → Tournament Plus upsell fires this many days after choosing the free plan. */
+const UPSELL_DELAY_DAYS = 7;
 
 function isMissingStartupTasksColumn(error: { code?: string; message?: string } | null) {
   if (!error) return false;
@@ -86,6 +92,30 @@ export async function POST(req: Request) {
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  // Queue the Tournament Plus upsell for ~1 week later. This route only runs for a
+  // first-run free-Tournament selection (guarded above), so it targets exactly the
+  // users we want to nudge. Marketing email — respects opt-out, unsubscribe footer
+  // auto-injected. Non-fatal: never block plan selection on an email failure.
+  // Only worth sending while the founding-season free offer is still active.
+  if (isFoundingSeasonActive() && ctx.user.email) {
+    try {
+      const scheduledAt = new Date(Date.now() + UPSELL_DELAY_DAYS * 86_400_000).toISOString();
+      await sendMarketingEmail({
+        emailKey: 'tournament_plus_upsell',
+        orgId: ctx.org.id,
+        toEmail: ctx.user.email,
+        subject: 'Tournament Plus is free this season — here’s what you’re missing',
+        html: tournamentPlusUpsellHtml({
+          orgName: ctx.org.name,
+          upgradeUrl: `${SITE_URL}${getBillingHref(ctx.org.slug, 'tournament')}`,
+        }),
+        scheduledAt,
+      });
+    } catch (err) {
+      console.error('[onboarding-plan] tournament_plus_upsell schedule failed (non-fatal):', err);
+    }
   }
 
   return NextResponse.json({ success: true });

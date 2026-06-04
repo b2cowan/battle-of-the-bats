@@ -830,6 +830,109 @@ export function foundingWelcomeHtml(p: {
   `);
 }
 
+/**
+ * tournament_plus_welcome — fires ~1 day AFTER the user selects Tournament Plus on
+ * the onboarding plan-select screen (not at signup). Transactional welcome — bypasses
+ * the opt-out check, so the unsubscribe footer is NOT auto-injected; a courtesy
+ * unsubscribe block is included inline.
+ *
+ * Intentionally has NO "set up your first tournament" CTA — the setup wizard already
+ * runs immediately after the user picks the plan. The CTA points to the admin dashboard.
+ */
+export function tournamentPlusWelcomeHtml(p: {
+  orgName: string;
+  firstName?: string;
+  dashboardUrl: string;
+  unsubscribeUrl?: string;
+}) {
+  const greeting = p.firstName ? `Hi ${p.firstName},` : 'Hi there,';
+  const unsubscribeBlock = p.unsubscribeUrl
+    ? `<div style="margin-top:2rem;padding-top:1.25rem;border-top:1px solid rgba(217,249,157,0.1);">
+        <p style="margin:0;color:rgba(241,245,249,0.3);font-size:0.72rem;line-height:1.55;">
+          You're receiving this because you signed up for FieldLogicHQ.&nbsp;
+          <a href="${p.unsubscribeUrl}" style="color:rgba(217,249,157,0.5);text-decoration:underline;">Unsubscribe</a>
+          &nbsp;·&nbsp; FieldLogicHQ · Canada
+        </p>
+      </div>`
+    : '';
+
+  return wrap(`
+    <h2 style="color:#D9F99D;font-size:1.35rem;font-weight:800;margin:0 0 1.25rem;letter-spacing:-0.01em;">
+      You're on Tournament Plus.
+    </h2>
+    <p style="margin:0 0 1rem;">${greeting}</p>
+    <p style="margin:0 0 1.25rem;line-height:1.7;">
+      <strong>${p.orgName}</strong> is now running <strong>Tournament Plus</strong>, free as a
+      founding organization through <strong>December 31, 2026</strong>. No credit card required.
+    </p>
+
+    <div style="background:#0F172A;border:1px solid rgba(217,249,157,0.2);border-left:3px solid rgba(217,249,157,0.5);padding:1.25rem;margin:1.5rem 0;">
+      <p style="margin:0 0 0.75rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#D9F99D;">What you've unlocked</p>
+      <ul style="margin:0;padding-left:1.25rem;line-height:1.9;color:rgba(241,245,249,0.8);">
+        <li>Unlimited tournaments and automated scheduling</li>
+        <li>Single &amp; double-elimination bracket builder</li>
+        <li>Custom registration, exports, and payment tracking</li>
+        <li>Full branding control — no FieldLogicHQ badge</li>
+        <li>Sealed archives, cloning, and targeted announcements</li>
+      </ul>
+    </div>
+
+    <a href="${p.dashboardUrl}" style="display:inline-block;background:#D9F99D;color:#0b0f14;text-decoration:none;font-weight:800;padding:0.8rem 1.5rem;font-size:0.82rem;letter-spacing:0.06em;">Open your dashboard →</a>
+
+    <p style="margin:1.75rem 0 0;line-height:1.7;color:rgba(241,245,249,0.65);">
+      If anything doesn't work the way you'd expect, reply to this email. We read everything.
+    </p>
+    <p style="margin:0.75rem 0 0;color:rgba(241,245,249,0.65);">— The FieldLogicHQ team</p>
+    ${unsubscribeBlock}
+  `);
+}
+
+/**
+ * tournament_plus_upsell — fires ~1 week AFTER the user chooses the free Tournament
+ * plan during onboarding. Marketing email (respects opt-out); the unsubscribe footer
+ * is auto-injected by email-sender.ts, so none is included inline here.
+ *
+ * Promotes that Tournament Plus is free through Dec 31 and highlights what the free
+ * Tournament tier is missing. CTA → upgrade.
+ */
+export function tournamentPlusUpsellHtml(p: {
+  orgName: string;
+  firstName?: string;
+  upgradeUrl: string;
+}) {
+  const greeting = p.firstName ? `Hi ${p.firstName},` : 'Hi there,';
+
+  return wrap(`
+    <h2 style="color:#D9F99D;font-size:1.35rem;font-weight:800;margin:0 0 1.25rem;letter-spacing:-0.01em;">
+      Tournament Plus is free this season.
+    </h2>
+    <p style="margin:0 0 1rem;">${greeting}</p>
+    <p style="margin:0 0 1.25rem;line-height:1.7;">
+      <strong>${p.orgName}</strong> is on the free Tournament plan — that's a great place to start.
+      But as a founding organization you can run <strong>Tournament Plus free through
+      December 31, 2026</strong> ($39/month after), and it unlocks the tools that save the most time.
+    </p>
+
+    <div style="background:#0F172A;border:1px solid rgba(217,249,157,0.2);border-left:3px solid rgba(217,249,157,0.5);padding:1.25rem;margin:1.5rem 0;">
+      <p style="margin:0 0 0.75rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#D9F99D;">What you're missing on the free plan</p>
+      <ul style="margin:0;padding-left:1.25rem;line-height:1.9;color:rgba(241,245,249,0.8);">
+        <li>Unlimited tournaments (free plan is limited to one)</li>
+        <li>Automated schedule generation across fields &amp; time slots</li>
+        <li>Single &amp; double-elimination bracket builder</li>
+        <li>Custom registration fields, exports, and payment tracking</li>
+        <li>Full branding control — no FieldLogicHQ badge</li>
+      </ul>
+    </div>
+
+    <a href="${p.upgradeUrl}" style="display:inline-block;background:#D9F99D;color:#0b0f14;text-decoration:none;font-weight:800;padding:0.8rem 1.5rem;font-size:0.82rem;letter-spacing:0.06em;">Switch to Tournament Plus — free →</a>
+
+    <p style="margin:1.75rem 0 0;line-height:1.7;color:rgba(241,245,249,0.65);">
+      Staying on the free plan is totally fine too — you can upgrade anytime before January 1.
+    </p>
+    <p style="margin:0.75rem 0 0;color:rgba(241,245,249,0.65);">— The FieldLogicHQ team</p>
+  `);
+}
+
 // ── Founding season email templates 2–9 ──────────────────────────────────────
 
 export function foundingCheckinHtml(p: {

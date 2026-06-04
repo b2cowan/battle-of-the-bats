@@ -240,6 +240,13 @@
   background: rgba(var(--blueprint-blue-rgb), 0.06);
 }
 
+/* Featured plan (e.g. Tournament Plus on the onboarding plan-select screen) —
+   lime highlight to draw the eye to the founding-season free offer. */
+.planCardFeatured {
+  border-color: rgba(var(--logic-lime-rgb), 0.55);
+  box-shadow: inset 0 0 0 1px rgba(var(--logic-lime-rgb), 0.3);
+}
+
 .currentBadge {
   display: inline-flex;
   align-items: center;

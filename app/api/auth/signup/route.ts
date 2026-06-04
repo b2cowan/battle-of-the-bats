@@ -1,9 +1,7 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { createOrganization, createOrganizationMember } from '@/lib/db';
-import { sendEmail, signupVerificationHtml, foundingWelcomeHtml } from '@/lib/email';
-import { sendMarketingEmail, createEmailBatch, finalizeBatch } from '@/lib/email-sender';
-import { buildUnsubscribeUrl } from '@/lib/unsubscribe-token';
+import { sendEmail, signupVerificationHtml } from '@/lib/email';
 
 function slugify(name: string) {
   return name
@@ -148,50 +146,13 @@ export async function POST(req: Request) {
       }
     }
 
-    // ── Founding Season: send founding_welcome email ──────────────────────────
-    // Fires immediately at signup for every org created during the founding window.
-    // This is a transactional welcome email — it bypasses the opt-out check.
-    // Non-fatal: a Resend error or missing API key does not block the signup response.
-    if (new Date() < new Date(FOUNDING_SEASON_EXPIRES_AT)) {
-      try {
-        const setupUrl = `${origin}/${org.slug}/admin/onboarding`;
-        const unsubscribeUrl = buildUnsubscribeUrl(org.id);
-        const welcomeHtml = foundingWelcomeHtml({
-          orgName: normalizedOrgName,
-          setupUrl,
-          unsubscribeUrl,
-        });
-
-        // Create a single-send batch so it appears in the email dashboard
-        const batchId = await createEmailBatch({
-          emailKey: 'founding_welcome',
-          subject: 'Your founding season starts now — Tournament Plus is free through Dec 31',
-          triggeredBy: 'signup',
-          recipientCount: 1,
-        });
-
-        const result = await sendMarketingEmail({
-          emailKey: 'founding_welcome',
-          orgId: org.id,
-          toEmail: normalizedEmail,
-          subject: 'Your founding season starts now — Tournament Plus is free through Dec 31',
-          html: welcomeHtml,
-          batchId: batchId ?? undefined,
-          skipOptOutCheck: true, // transactional — always send regardless of opt-out
-        });
-
-        if (batchId) {
-          await finalizeBatch(batchId, result === 'failed' ? 'failed' : 'complete');
-        }
-
-        if (result === 'failed') {
-          console.warn('[signup] founding_welcome send failed — signup continues');
-        }
-      } catch (welcomeErr) {
-        // Never block signup on email failure
-        console.error('[signup] founding_welcome error (non-fatal):', welcomeErr);
-      }
-    }
+    // Note: the founding-season welcome email is NOT sent here. The org is created
+    // on the free `tournament` plan and the user has not verified their email or
+    // chosen a plan yet — sending "you have Tournament Plus" at this point is
+    // premature. The welcome email now fires ~1 day after the user actually selects
+    // Tournament Plus on the plan-select screen (see app/api/billing/create-checkout),
+    // and a free-tier upsell fires ~1 week after choosing the free plan (see
+    // app/api/admin/org/onboarding-plan). Only the verification email goes out now.
 
     if (requireVerification) {
       if (!actionLink) {
