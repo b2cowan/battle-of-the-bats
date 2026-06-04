@@ -325,3 +325,60 @@ export async function finalizeBatch(
     console.error('[email-sender] Failed to finalize batch:', error);
   }
 }
+
+/**
+ * Cancel a still-scheduled email for an org by email_key (best-effort, never throws).
+ *
+ * Used for cancel-on-upgrade: when a free-tier org upgrades, cancel the pending
+ * `tournament_plus_upsell` (scheduled ~7 days out via Resend `scheduled_at`) so they
+ * don't receive a now-stale "here's what you're missing" nudge after they've upgraded.
+ *
+ * We don't store the Resend id separately — `sendMarketingEmail` already logged it to
+ * `email_sends.resend_message_id`. We look up recent sends for this org + key and call
+ * Resend's cancel endpoint. Rows are marked suppressed afterwards so a later upgrade
+ * doesn't retry them. If the email already went out (cancel window passed), Resend
+ * returns an error which we swallow — there's nothing left to cancel.
+ */
+export async function cancelScheduledEmail(orgId: string, emailKey: string): Promise<void> {
+  try {
+    const { data: rows, error } = await supabaseAdmin
+      .from('email_sends')
+      .select('id, resend_message_id')
+      .eq('recipient_org_id', orgId)
+      .eq('email_key', emailKey)
+      .eq('status', 'sent')
+      .not('resend_message_id', 'is', null)
+      .order('sent_at', { ascending: false })
+      .limit(5);
+
+    if (error || !rows || rows.length === 0) return;
+
+    const apiKey = process.env.RESEND_API_KEY;
+    if (!apiKey) return;
+
+    for (const row of rows) {
+      try {
+        const res = await fetch(`${RESEND_API}/${row.resend_message_id}/cancel`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${apiKey}` },
+        });
+        if (!res.ok) {
+          // Already delivered or already cancelled — nothing more to do.
+          const txt = await res.text().catch(() => '');
+          console.warn(`[email-sender] cancel ${emailKey} for org ${orgId}: ${res.status} ${txt}`);
+        }
+      } catch (err) {
+        console.error(`[email-sender] cancel ${emailKey} request error (non-fatal):`, err);
+      }
+
+      // Mark suppressed regardless of the Resend outcome so we don't retry this row
+      // on every future upgrade.
+      await supabaseAdmin
+        .from('email_sends')
+        .update({ status: 'suppressed', suppression_reason: 'cancelled_on_upgrade' })
+        .eq('id', row.id);
+    }
+  } catch (err) {
+    console.error('[email-sender] cancelScheduledEmail error (non-fatal):', err);
+  }
+}

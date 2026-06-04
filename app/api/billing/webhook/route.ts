@@ -10,6 +10,7 @@ import {
 } from '@/lib/team-checkout';
 import { completeOrgTeamAddonBillingFromMetadata } from '@/lib/team-org-billing';
 import { sendEmail, trialEndingHtml, welcomeBackHtml, teamWorkspaceCancelledHtml, SITE_URL } from '@/lib/email';
+import { cancelScheduledEmail } from '@/lib/email-sender';
 import { notify } from '@/lib/notify';
 import type { OrgPlan } from '@/lib/types';
 import type Stripe from 'stripe';
@@ -240,6 +241,12 @@ export async function POST(req: Request) {
 
         if (updatedOrg) {
           const restoreResult = await restoreRetainedDowngradeTournaments(updatedOrg.id, cfg.tournamentLimit);
+
+          // Moved onto a paid plan — cancel any pending free-tier upsell email so the
+          // org doesn't get a now-stale "you're missing Tournament Plus" nudge.
+          if (planKey !== 'tournament') {
+            await cancelScheduledEmail(updatedOrg.id, 'tournament_plus_upsell');
+          }
 
           const previousPlan = currentOrg?.plan_id as OrgPlan | undefined;
           const previousStatus = currentOrg?.subscription_status as string | null | undefined;

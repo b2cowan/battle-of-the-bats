@@ -9,7 +9,7 @@ import { getPlanGatingMap } from '@/lib/plan-gating-server';
 import { isRecoveryTransition, writePlatformEvent } from '@/lib/platform-events';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { sendEmail, welcomeBackHtml, tournamentPlusWelcomeHtml, SITE_URL } from '@/lib/email';
-import { sendMarketingEmail } from '@/lib/email-sender';
+import { sendMarketingEmail, cancelScheduledEmail } from '@/lib/email-sender';
 import { buildUnsubscribeUrl } from '@/lib/unsubscribe-token';
 import type { OrgPlan } from '@/lib/types';
 
@@ -151,6 +151,11 @@ export async function POST(req: Request) {
     const restoreResult = await restoreRetainedDowngradeTournaments(auth.org.id, plan.tournamentLimit);
     await resetStartupTasksForEditableOnboarding(auth.org.id, isOnboardingPlanSelection);
 
+    // Upgraded off the free Tournament plan — cancel any pending upsell email.
+    if (planKey !== 'tournament') {
+      await cancelScheduledEmail(auth.org.id, 'tournament_plus_upsell');
+    }
+
     if (isRecoveryTransition(auth.org.subscriptionStatus, 'trialing')) {
       await writePlatformEvent({
         eventType: 'subscription_recovered',
@@ -225,6 +230,9 @@ export async function POST(req: Request) {
 
     const restoreResult = await restoreRetainedDowngradeTournaments(auth.org.id, mergedConfig.tournamentLimit);
     await resetStartupTasksForEditableOnboarding(auth.org.id, isOnboardingPlanSelection);
+
+    // Upgraded off the free Tournament plan onto Plus — cancel any pending upsell email.
+    await cancelScheduledEmail(auth.org.id, 'tournament_plus_upsell');
 
     // Schedule the Tournament Plus welcome email for ~1 day later — only when this
     // founding-season upgrade happens during first-run onboarding plan selection.
