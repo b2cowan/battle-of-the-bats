@@ -297,8 +297,8 @@ id (uuid), org_member_id (uuid) → organization_members.id NOT NULL, tournament
 - Indexes: idx_omta_org_member, idx_omta_tournament, org_member_tournament_assignmen_org_member_id_tournament_id_key
 
 ### org_overrides
-id (uuid), org_id (uuid) → organizations.id NOT NULL, type NOT NULL, value, expires_at, reason NOT NULL, created_by NOT NULL, created_at, revoked_at, revoked_by
-- Indexes: idx_org_overrides_org
+id (uuid), org_id (uuid) → organizations.id NOT NULL, type NOT NULL, value, expires_at, reason NOT NULL, created_by NOT NULL, created_at, revoked_at, revoked_by, target (jsonb), starts_at, suppress_billing (boolean)
+- Indexes: idx_org_overrides_org, idx_org_overrides_org_active
 
 ### org_public_site_content
 id (uuid), org_id (uuid) → organizations.id NOT NULL, tagline, description, contact_email, social_instagram, social_facebook, social_x, social_website, show_upcoming_tournaments (boolean), show_archives_link (boolean), created_at, updated_at

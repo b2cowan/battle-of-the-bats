@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { headers } from 'next/headers';
-import { getPlatformAuthContext } from '@/lib/platform-auth';
+import { getPlatformAdminContext } from '@/lib/platform-auth';
 import PlatformAdminNav from './PlatformAdminNav';
 import PlatformVisitRecorder from './PlatformVisitRecorder';
 import styles from './platform-admin.module.css';
@@ -22,8 +22,8 @@ export default async function PlatformAdminLayout({
     return <>{children}</>;
   }
 
-  const user = await getPlatformAuthContext();
-  if (!user) {
+  const auth = await getPlatformAdminContext();
+  if (!auth) {
     redirect('/platform-admin/login?next=/platform-admin');
   }
 
@@ -38,7 +38,7 @@ export default async function PlatformAdminLayout({
 
   return (
     <div className={styles.shell}>
-      <PlatformAdminNav sessionEmail={user.email ?? ''} />
+      <PlatformAdminNav sessionEmail={auth.user.email ?? ''} role={auth.role} />
       <main className={styles.main}>
         <PlatformVisitRecorder />
         {children}

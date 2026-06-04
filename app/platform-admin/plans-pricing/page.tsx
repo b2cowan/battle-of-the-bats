@@ -3,7 +3,7 @@ import { getAllStripePrices } from '@/lib/stripe-prices';
 import { getAllPlanConfigOverrideRows } from '@/lib/plan-config-db';
 import { PLAN_CONFIG } from '@/lib/plan-config';
 import { getFeatureMatrixRows, PLAN_ORDER } from '@/lib/plan-module-entitlements';
-import { getPlatformAdminContext, hasPlatformPermission } from '@/lib/platform-auth';
+import { getPlatformAdminContext, hasPlatformPermission, requirePlatformAreaView } from '@/lib/platform-auth';
 import PlansPricingClient from './PlansPricingClient';
 
 export type { FeatureMatrixRow } from '@/lib/plan-module-entitlements';
@@ -148,6 +148,7 @@ function buildPlanImpacts(rows: OrgPlanImpactRow[]): PlanImpact[] {
 }
 
 export default async function PlansPricingPage() {
+  await requirePlatformAreaView('plans_pricing');
   const auth = await getPlatformAdminContext();
   const [
     gatingResult,

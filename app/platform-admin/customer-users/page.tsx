@@ -1,5 +1,7 @@
 import type { User } from '@supabase/supabase-js';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { getPlatformUsers } from '@/lib/db';
+import { getBootstrapAdminEmails } from '@/lib/platform-auth';
 import CustomerUsersClient, { type CustomerUserRow } from './CustomerUsersClient';
 
 export const metadata = { title: 'Customer Users - Platform Admin' };
@@ -44,20 +46,35 @@ async function getCustomerUsers(
   query: string,
   page: number,
 ): Promise<{ rows: CustomerUserRow[]; total: number }> {
-  const [authRes, membersRes] = await Promise.all([
+  const [authRes, membersRes, platformUsers] = await Promise.all([
     supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1000 }),
     supabaseAdmin
       .from('organization_members')
       .select('user_id, role, status, organizations(id, name, slug, plan_id, subscription_status)')
       .limit(3000),
+    getPlatformUsers(),
   ]);
 
   const authUsers = authRes.data?.users ?? [];
-  const userMap = new Map(authUsers.map(user => [user.id, user]));
+
+  // Exclude FieldLogicHQ employees (platform/company users + bootstrap admins).
+  // Customer Users is a customer-support surface — staff accounts don't belong here.
+  const employeeEmails = new Set(
+    [...getBootstrapAdminEmails(), ...platformUsers.map(u => u.email)]
+      .map(email => email.toLowerCase()),
+  );
+  const employeeUserIds = new Set(
+    authUsers
+      .filter(user => user.email && employeeEmails.has(user.email.toLowerCase()))
+      .map(user => user.id),
+  );
+  const customerAuthUsers = authUsers.filter(user => !employeeUserIds.has(user.id));
+
+  const userMap = new Map(customerAuthUsers.map(user => [user.id, user]));
   const hasQuery = query.length >= 2;
   const matchingAuthIds = hasQuery
-    ? new Set(authUsers.filter(user => userMatches(user, query)).map(user => user.id))
-    : new Set(authUsers.map(user => user.id));
+    ? new Set(customerAuthUsers.filter(user => userMatches(user, query)).map(user => user.id))
+    : new Set(customerAuthUsers.map(user => user.id));
   const rowsByUser = new Map<string, CustomerUserRow>();
 
   function ensureRow(userId: string): CustomerUserRow {
@@ -78,6 +95,7 @@ async function getCustomerUsers(
   }
 
   for (const member of ((membersRes.data ?? []) as unknown as MemberRow[])) {
+    if (employeeUserIds.has(member.user_id)) continue;
     const org = Array.isArray(member.organizations) ? member.organizations[0] : member.organizations;
     const orgMatches = hasQuery && org
       ? `${org.name} ${org.slug}`.toLowerCase().includes(query)

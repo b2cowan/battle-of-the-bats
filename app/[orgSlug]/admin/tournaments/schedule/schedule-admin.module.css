@@ -3517,3 +3517,32 @@
     min-width: 0;
   }
 }
+
+/* ── "All divisions" List view — per-division section headers ─────────────── */
+.allDivisionHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.4rem 0.2rem 0.55rem;
+  margin-bottom: 0.25rem;
+  border-bottom: 1px solid rgba(var(--blueprint-blue-rgb), 0.18);
+}
+
+.allDivisionName {
+  font-family: var(--font-data);
+  font-size: 0.85rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--logic-lime);
+}
+
+.allDivisionCount {
+  font-family: var(--font-data);
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--data-gray);
+  background: var(--white-5);
+  border-radius: 999px;
+  padding: 0.1rem 0.5rem;
+}

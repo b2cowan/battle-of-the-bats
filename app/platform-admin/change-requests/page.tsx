@@ -1,11 +1,12 @@
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { getPlatformAdminContext, hasPlatformPermission } from '@/lib/platform-auth';
+import { getPlatformAdminContext, hasPlatformPermission, requirePlatformAreaView } from '@/lib/platform-auth';
 import ChangeRequestsClient from './ChangeRequestsClient';
 import type { PlatformChangeApplicationRow, PlatformChangeRequestRow } from './types';
 
 export const metadata = { title: 'Change Requests - Platform Admin' };
 
 export default async function ChangeRequestsPage() {
+  await requirePlatformAreaView('change_requests');
   const auth = await getPlatformAdminContext();
   const [requestsResult, applicationsResult] = await Promise.all([
     supabaseAdmin

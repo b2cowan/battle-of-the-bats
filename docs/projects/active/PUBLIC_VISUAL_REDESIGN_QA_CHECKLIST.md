@@ -26,14 +26,18 @@
 | Card style | `glass` · `outlined` · `flat` (`data-card-style`) |
 | Motion | one pass with **prefers-reduced-motion: reduce** on |
 
-## Test data
+## Test data — four tournaments in `dev-test-org` (toggle by slug)
 
-| Scenario | URL / how |
-|---|---|
-| Default theme, **pre-event** (countdown) | `/dev-test-org/dev-tournament-2026` |
-| **Live game day** (LIVE games, full bracket) | `/dev-test-org/live-demo` |
-| **Branded org + Light mode** | a tournament with advanced branding + `colorMode=light` (set theme + light mode in admin → tournament settings, or use a branded org). *Flagged: confirm we have one seeded; if not, set it on a dev tournament for this pass.* |
-| Card styles | toggle `data-card-style` (admin theme setting) and re-walk a couple of surfaces |
+| Slug | Theme | Mode | Cards | Phase | Covers |
+|---|---|---|---|---|---|
+| `dev-tournament-2026` | Default (blue) | Dark | default | Upcoming (countdown) | default · dark · pre-event hero |
+| `live-demo` | Default (blue) | Dark | default | **Live game day** | default · dark · live (broadcast/ticker/dock/bracket) |
+| `branded-light` | **Crimson** | **Light** | **glass** | Upcoming | **branded · light** · glass · countdown hero |
+| `branded-dark` | **Battle Purple** | Dark | **outlined** | **Live game day** | **branded · dark** · outlined · live elements |
+
+> Seeded via `node --env-file=.env.local scripts/seed-theme-variants.mjs` (idempotent). **dev-test-org is already on `tournament_plus`** (verified 2026-06-04) so the script did **not** change the plan — advanced branding has always been active here.
+> **Acquisition-banner caveat:** because dev-test-org is a paid plan, the **free-plan acquisition banner / PoweredBy badge never show here** — that checklist item must be tested on a **separate free-plan org** (or temporarily set `dev-test-org.plan_id='tournament'`).
+> For more combos (e.g. branded+light+**live**, or the third `flat` card style), toggle `color_mode` / `theme_card_style` on any of these in admin → tournament settings.
 
 ---
 

@@ -11,6 +11,7 @@ type OverrideRow = {
   id: string;
   type: string;
   value: string | null;
+  target: { addons?: string[] } | null;
   expires_at: string | null;
   reason: string;
   created_by: string;
@@ -124,6 +125,7 @@ async function getOverrides(orgId: string) {
     id:         r.id as string,
     type:       r.type as string,
     value:      r.value as string | null,
+    target:     (r.target as { addons?: string[] } | null) ?? null,
     expiresAt:  r.expires_at as string | null,
     reason:     r.reason as string,
     createdBy:  r.created_by as string,

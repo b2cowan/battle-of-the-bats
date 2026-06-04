@@ -170,13 +170,13 @@ export default async function PlatformOverviewPage() {
         <div className={styles.alertGrid}>
           <AlertItem label="Past due orgs" value={stats.alerts.pastDue} href="/platform-admin/orgs?status=past_due" tone={stats.alerts.pastDue > 0 ? 'warn' : 'neutral'} />
           <AlertItem label="Past due since visit" value={stats.alerts.newPastDueSinceLastVisit} href="/platform-admin/orgs?status=past_due" tone={stats.alerts.newPastDueSinceLastVisit > 0 ? 'warn' : 'neutral'} />
-          <AlertItem label="Trials ending soon" value={stats.alerts.trialEndingSoon} tone={stats.alerts.trialEndingSoon > 0 ? 'warn' : 'neutral'} />
+          <AlertItem label="Trials ending soon" value={stats.alerts.trialEndingSoon} href="/platform-admin/orgs?filter=trial_ending" tone={stats.alerts.trialEndingSoon > 0 ? 'warn' : 'neutral'} />
           <AlertItem label="New leads" value={stats.alerts.newEarlyAccessLeads} href="/platform-admin/early-access" tone={stats.alerts.newEarlyAccessLeads > 0 ? 'warn' : 'neutral'} />
           <AlertItem label="Retention records" value={stats.alerts.retentionAlertCount} href="/platform-admin/retention" tone={stats.alerts.retentionAlertCount > 0 ? 'warn' : 'neutral'} />
           <AlertItem label="Price approvals" value={pendingPricingRequests} href="/platform-admin/change-requests" tone={pendingPricingRequests > 0 ? 'warn' : 'neutral'} />
-          <AlertItem label="Expired overrides" value={stats.alerts.expiredOverrides} tone={stats.alerts.expiredOverrides > 0 ? 'warn' : 'neutral'} />
-          <AlertItem label="Missing owners" value={stats.alerts.orgsWithoutOwner} tone={stats.alerts.orgsWithoutOwner > 0 ? 'warn' : 'neutral'} />
-          <AlertItem label="Owner inactive" value={stats.alerts.orgsWithInactiveOwner} tone={stats.alerts.orgsWithInactiveOwner > 0 ? 'warn' : 'neutral'} />
+          <AlertItem label="Expired overrides" value={stats.alerts.expiredOverrides} href="/platform-admin/orgs?filter=expired_overrides" tone={stats.alerts.expiredOverrides > 0 ? 'warn' : 'neutral'} />
+          <AlertItem label="Missing owners" value={stats.alerts.orgsWithoutOwner} href="/platform-admin/orgs?filter=no_owner" tone={stats.alerts.orgsWithoutOwner > 0 ? 'warn' : 'neutral'} />
+          <AlertItem label="Owner inactive" value={stats.alerts.orgsWithInactiveOwner} href="/platform-admin/orgs?filter=owner_inactive" tone={stats.alerts.orgsWithInactiveOwner > 0 ? 'warn' : 'neutral'} />
         </div>
       </section>
 

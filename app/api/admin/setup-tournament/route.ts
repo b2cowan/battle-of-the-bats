@@ -91,6 +91,9 @@ export async function POST(req: Request) {
   const denied = await requireCapability(auth, 'create_tournaments');
   if (denied) return denied;
 
+  // Tracked so the outer catch can roll back a half-created tournament.
+  let createdTournamentId: string | null = null;
+
   try {
     const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -229,6 +232,7 @@ export async function POST(req: Request) {
       throw tntError;
     }
     const tid = newTnt.id;
+    createdTournamentId = tid;
     log('Created Tournament', tid);
 
     // 2. Initialize Divisions & Pools
@@ -549,7 +553,34 @@ export async function POST(req: Request) {
     });
   } catch (err: unknown) {
     console.error('Setup Tournament Error:', err);
-    const message = err instanceof Error ? err.message : 'Unknown server error';
+
+    // Roll back the orphaned draft so a failed step (e.g. divisions insert)
+    // doesn't leave a contentless tournament behind that blocks retries on the
+    // name/slug uniqueness check.
+    if (createdTournamentId) {
+      try {
+        const cleanupUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+        const cleanupKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+        if (cleanupUrl && cleanupKey) {
+          await createClient(cleanupUrl, cleanupKey)
+            .from('tournaments')
+            .delete()
+            .eq('id', createdTournamentId)
+            .eq('org_id', auth.org.id);
+        }
+      } catch (cleanupErr) {
+        console.error('Setup Tournament cleanup failed:', cleanupErr);
+      }
+    }
+
+    // Supabase/Postgrest errors are plain objects, not Error instances — pull
+    // their message through so callers see the real cause, not a generic 500.
+    const message =
+      err instanceof Error
+        ? err.message
+        : err && typeof err === 'object' && 'message' in err && typeof (err as { message: unknown }).message === 'string'
+          ? (err as { message: string }).message
+          : 'Unknown server error';
     return new Response(JSON.stringify({ error: message }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' }

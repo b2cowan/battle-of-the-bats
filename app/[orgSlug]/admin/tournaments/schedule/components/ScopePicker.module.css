@@ -1,0 +1,95 @@
+.wrap {
+  position: relative;
+  display: inline-flex;
+}
+
+.trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  height: var(--admin-control-h, 38px);
+  min-width: 180px;
+  max-width: 280px;
+  padding: 0 0.6rem;
+  background: var(--bg-2);
+  border: 1px solid var(--border-2);
+  border-radius: 4px;
+  color: var(--white-80);
+  font-family: var(--font-data);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+}
+.trigger:hover { border-color: var(--white-20); }
+.trigger[aria-expanded="true"] { border-color: rgba(var(--logic-lime-rgb), 0.5); }
+
+.triggerLabel {
+  flex: 1;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.caret { color: var(--logic-lime); flex-shrink: 0; }
+
+.popover {
+  position: absolute;
+  top: calc(100% + 0.35rem);
+  left: 0;
+  z-index: 60;
+  min-width: 230px;
+  max-width: 300px;
+  max-height: 60vh;
+  overflow-y: auto;
+  padding: 0.35rem;
+  background: var(--hud-surface, var(--surface));
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.35);
+  border-radius: 4px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5), var(--highlight-top);
+}
+
+.group {
+  border-top: 1px solid rgba(var(--blueprint-blue-rgb), 0.12);
+  padding-top: 0.1rem;
+  margin-top: 0.1rem;
+}
+.group:first-of-type { border-top: none; margin-top: 0; }
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.32rem 0.4rem;
+  border: none;
+  background: transparent;
+  color: var(--white-80);
+  font-family: var(--font-data);
+  font-size: 0.8rem;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+  border-radius: 3px;
+}
+.row:hover { background: var(--white-5); color: var(--fl-text); }
+.row[data-level="all"] { font-weight: 600; }
+
+.box {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  border: 1px solid var(--white-40);
+  border-radius: 3px;
+  background: var(--white-5);
+  color: var(--bg);
+}
+.box[data-state="on"] { background: var(--logic-lime); border-color: var(--logic-lime); }
+.box[data-state="some"] { background: rgba(var(--logic-lime-rgb), 0.4); border-color: var(--logic-lime); color: var(--fl-text); }
+
+.leafDot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
+
+.rowLabel { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

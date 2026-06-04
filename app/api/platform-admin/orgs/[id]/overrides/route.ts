@@ -37,13 +37,16 @@ export async function POST(
   const body = await req.json() as {
     type?: string;
     value?: string;
+    target?: { addons?: string[] } | null;
     expires_at?: string;
+    suppress_billing?: boolean;
     reason?: string;
   };
 
-  const { type, value, expires_at, reason } = body;
+  const { type, value, target, expires_at, suppress_billing, reason } = body;
 
-  if (!type || !['subscription_status', 'comp_period'].includes(type)) {
+  // plan_tier is schema-valid but not yet enforced (needs effective plan-rank) — block creation.
+  if (!type || !['subscription_status', 'comp_period', 'module_addon'].includes(type)) {
     return NextResponse.json({ error: 'Invalid type' }, { status: 400 });
   }
   if (type === 'subscription_status' && !value) {
@@ -52,6 +55,20 @@ export async function POST(
   if (type === 'subscription_status' && !['active', 'trialing', 'past_due', 'canceled'].includes(value!)) {
     return NextResponse.json({ error: 'Invalid status value' }, { status: 400 });
   }
+
+  const ADDON_KEYS = ['module_public_site', 'module_house_league', 'module_accounting', 'module_rep_teams'];
+  let normalizedTarget: Record<string, unknown> | null = null;
+  if (type === 'module_addon') {
+    const addons = target?.addons ?? [];
+    if (!Array.isArray(addons) || addons.length === 0) {
+      return NextResponse.json({ error: 'Select at least one module to grant' }, { status: 400 });
+    }
+    if (addons.some(a => !ADDON_KEYS.includes(a))) {
+      return NextResponse.json({ error: 'Invalid module key' }, { status: 400 });
+    }
+    normalizedTarget = { addons };
+  }
+
   if (!reason?.trim()) {
     return NextResponse.json({ error: 'reason is required' }, { status: 400 });
   }
@@ -62,7 +79,9 @@ export async function POST(
       org_id:     id,
       type,
       value:      value ?? null,
+      target:     normalizedTarget,
       expires_at: expires_at ?? null,
+      suppress_billing: suppress_billing ?? false,
       reason,
       created_by: auth.user.email!,
     })
@@ -80,7 +99,7 @@ export async function POST(
     'create_override',
     'type',
     null,
-    { type, value, expires_at, reason },
+    { type, value, target: normalizedTarget, expires_at, suppress_billing, reason },
   );
 
   return NextResponse.json({ override: created });

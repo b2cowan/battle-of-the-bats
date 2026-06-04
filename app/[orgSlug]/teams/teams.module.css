@@ -280,7 +280,7 @@
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
-  background: #EF4444;
+  background: var(--danger);
   color: #fff;
   font-size: 0.7rem;
   font-weight: 800;

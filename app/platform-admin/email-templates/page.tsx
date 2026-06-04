@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { requirePlatformAreaView } from '@/lib/platform-auth';
 import styles from './email-templates.module.css';
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -24,6 +25,7 @@ type Template = {
 };
 
 export default async function EmailTemplatesPage() {
+  await requirePlatformAreaView('email_templates');
   const { data, error } = await supabaseAdmin
     .from('platform_email_templates')
     .select('key, label, description, category, is_customised, updated_at, updated_by')

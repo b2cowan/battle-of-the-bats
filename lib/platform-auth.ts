@@ -1,9 +1,11 @@
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
+import { redirect } from 'next/navigation';
 import { NextResponse } from 'next/server';
 import type { User } from '@supabase/supabase-js';
 import { supabaseAdmin } from './supabase-admin';
 import { getAuthenticatedUser } from './api-auth';
+import { canViewPlatformArea, type PlatformArea } from './platform-areas';
 
 export type PlatformRole = 'super_admin' | 'support' | 'billing' | 'product' | 'growth' | 'read_only';
 
@@ -95,6 +97,19 @@ export async function getPlatformAdminContext(): Promise<PlatformAuthContext | n
 export async function getPlatformAuthContext(): Promise<User | null> {
   const auth = await getPlatformAdminContext();
   return auth?.user ?? null;
+}
+
+/**
+ * Server-component guard for a platform-admin area. Redirects to the login page
+ * if there is no platform session, or to the Overview if the signed-in role is
+ * not permitted to view this area (see lib/platform-areas.ts). Returns the auth
+ * context for the caller to reuse.
+ */
+export async function requirePlatformAreaView(area: PlatformArea): Promise<PlatformAuthContext> {
+  const auth = await getPlatformAdminContext();
+  if (!auth) redirect('/platform-admin/login?next=/platform-admin');
+  if (!canViewPlatformArea(auth.role, area)) redirect('/platform-admin');
+  return auth;
 }
 
 export async function requirePlatformAdmin(): Promise<

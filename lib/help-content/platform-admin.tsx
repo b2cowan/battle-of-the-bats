@@ -81,6 +81,51 @@ const platformAdminHelp: HelpPageContent = {
       ],
     },
     {
+      id: 'manage-customer-user-access',
+      group: 'Support SOP',
+      heading: 'How to manage a customer user\'s access and details',
+      summary: 'Ban, unban, sign out, confirm email, edit details, or add support notes for a single user from Customer Users.',
+      keywords: ['ban user', 'unban', 'revoke sessions', 'sign out', 'confirm email', 'verify email', 'edit user', 'change email', 'display name', 'user notes', 'lock account', 'suspend'],
+      searchText: 'ban a user unban suspend lock account revoke sessions sign out all devices force logout confirm verify email change a user email display name edit user info user support notes customer users actions menu',
+      links: [
+        { label: 'Customer Users', href: '/platform-admin/customer-users' },
+      ],
+      content: (
+        <>
+          <p>These actions all live behind the <strong>Actions</strong> menu on a user&apos;s row in <strong>Customer Users</strong>. Confirm you have the right person — check the email and organization memberships — before using them. Each action affects the user&apos;s single FieldLogicHQ login across all of their org memberships.</p>
+          <ul>
+            <li><strong>Ban User</strong> immediately blocks sign-in. Use it for abuse, fraud, or a security hold. The user keeps their data but cannot log in. Choose <strong>Unban User</strong> to restore access.</li>
+            <li><strong>Revoke Sessions</strong> signs the user out of all devices and invalidates active sessions without banning them. Use it after a suspected account compromise or when the user asks to be logged out everywhere.</li>
+            <li><strong>Confirm Email</strong> force-confirms an unconfirmed email so the user can proceed without the verification message. It only appears when the user&apos;s auth status is <code>unconfirmed</code>. Verify you are talking to the real account holder first.</li>
+            <li><strong>Edit Info</strong> corrects a user&apos;s email address or display name. Changing the email changes the address they sign in with — confirm the new address with the customer first.</li>
+            <li><strong>Notes</strong> opens <strong>Support Notes</strong> for that user, for person-level context. These are separate from an organization&apos;s internal notes: use org notes for account history and user notes for person-specific history.</li>
+          </ul>
+          <p>For password recovery use <strong>Reset Password</strong> (see <em>How to reset a customer password</em>). For permanent removal use <strong>Delete User</strong> (see <em>How to delete a user</em>). Ban, unban, and revoke-sessions each ask for confirmation, and all of these actions are audit-logged.</p>
+        </>
+      ),
+      faqs: [
+        {
+          id: 'faq-ban-vs-revoke',
+          question: 'Should I ban the user or just revoke their sessions?',
+          answer: (
+            <p>Revoke sessions when you only need to sign them out everywhere — for example a lost device — because they can sign back in afterward. Ban when they should not be able to sign in at all until you lift it. Neither action deletes any data.</p>
+          ),
+          answerText: 'Revoke sessions signs them out but they can sign back in. Ban blocks sign-in entirely until lifted. Neither deletes data.',
+          keywords: ['ban vs revoke', 'sign out', 'block login'],
+          popular: true,
+        },
+        {
+          id: 'faq-confirm-email-safe',
+          question: 'Is it safe to use Confirm Email for a customer who never received the verification email?',
+          answer: (
+            <p>Yes, once you have verified you are speaking with the real account holder. Confirm Email marks the address as verified so they can continue. If you cannot verify their identity, have them use the normal resend/verification flow instead.</p>
+          ),
+          answerText: 'Yes, after verifying you are speaking with the real account holder. Otherwise use the normal resend/verification flow.',
+          keywords: ['confirm email', 'verification', 'unconfirmed'],
+        },
+      ],
+    },
+    {
       id: 'billing-overrides',
       group: 'Billing SOP',
       heading: 'How to temporarily override billing access',
@@ -157,6 +202,44 @@ const platformAdminHelp: HelpPageContent = {
           ),
           answerText: 'Check the org entitlement and the member role/capability. The customer should refresh after changes.',
           keywords: ['not visible', 'capability', 'role', 'refresh'],
+          popular: true,
+        },
+      ],
+    },
+    {
+      id: 'org-ownership-transfer',
+      group: 'Support SOP',
+      heading: 'How to transfer organization ownership',
+      summary: 'Reassign an organization to a new owner — for example when the current owner has left the company.',
+      keywords: ['transfer ownership', 'make owner', 'owner left', 'reassign owner', 'change owner', 'new owner', 'demote owner'],
+      searchText: 'owner left the company transfer organization ownership reassign make owner change account owner demote current owner promote member to owner',
+      links: [
+        { label: 'Organizations', href: '/platform-admin/orgs' },
+        { label: 'Audit Log', href: '/platform-admin/audit' },
+      ],
+      content: (
+        <>
+          <p>Use this when an account needs a different owner — most often when the current owner has left the company and another existing member should take over. The new owner must already be an <strong>active member</strong> of the organization.</p>
+          <ol>
+            <li>Open <strong>Organizations</strong> and open the customer account.</li>
+            <li>Open the <strong>People &amp; Tournaments</strong> tab and review the <strong>Members</strong> table.</li>
+            <li>Find the member who should become the owner. If they are not listed, have them invited into the org and accept first — they must be an active member before you can transfer ownership.</li>
+            <li>Click <strong>Make Owner</strong> on that member&apos;s row.</li>
+            <li>Enter a reason and click <strong>Confirm Transfer</strong>.</li>
+            <li>Add an internal note on the <strong>Support</strong> tab recording who requested the change and why.</li>
+          </ol>
+          <p>The selected member becomes the owner and <strong>all previous owners are demoted to admin</strong>. The change is audit-logged and cannot be reversed from this screen — to undo it, run another transfer. This is different from <em>Coaches Portal Ownership Transfers</em> on the same Support tab, which moves a Coaches Portal Premium team into an organization (see <em>How to complete Coaches Portal ownership transfer</em>).</p>
+        </>
+      ),
+      faqs: [
+        {
+          id: 'faq-org-transfer-no-member',
+          question: 'The intended new owner is not a member of the org yet. What do I do?',
+          answer: (
+            <p>Make Owner only lists existing active members. The new owner must first be invited to the organization and accept, or otherwise be added as an active member, before you can transfer ownership to them. Do not delete the departing owner until a new owner is in place.</p>
+          ),
+          answerText: 'Make Owner only lists existing active members. Invite or add the new owner first, then transfer. Do not delete the old owner until a new owner exists.',
+          keywords: ['not a member', 'no member', 'invite owner'],
           popular: true,
         },
       ],
@@ -431,11 +514,11 @@ const platformAdminHelp: HelpPageContent = {
           <p><strong>Before deleting a user, check their organization memberships.</strong></p>
           <ol>
             <li>Go to <strong>Customer Users</strong> and search for the user.</li>
-            <li>Expand their row and review the <strong>Organization Memberships</strong> section.</li>
+            <li>Review the <strong>Organizations</strong> column on the user's row to see which orgs they belong to and their role in each.</li>
             <li>If the user is the <strong>sole owner</strong> of one or more organizations, handle those orgs first:
               <ul>
-                <li>If the org should be kept: transfer ownership by inviting another member as owner in the org admin, or update the org manually. Do not delete the user until another owner exists.</li>
-                <li>If the org should be closed: cancel the subscription if active (see <strong>How to cancel a customer subscription</strong>), then delete the org data before deleting the user.</li>
+                <li>If the org should be kept: transfer ownership to another active member first (see <strong>How to transfer organization ownership</strong>). Do not delete the user until another owner exists.</li>
+                <li>If the org should be closed: cancel the subscription if active (see <strong>How to cancel a customer subscription</strong>), then delete the org (see <strong>How to delete an organization</strong>) before deleting the user.</li>
               </ul>
             </li>
             <li>Once org ownership is resolved, return to <strong>Customer Users</strong> and click <strong>Delete</strong> on the user&apos;s row.</li>

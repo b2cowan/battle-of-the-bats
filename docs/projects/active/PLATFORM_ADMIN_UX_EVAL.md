@@ -1,6 +1,6 @@
 # Platform Admin — Employee UX Evaluation
 
-**Status:** Evaluation complete (2026-06-04). Findings + prioritised list below; no code changes made. This is a review/triage document — the user decides what to action. See the companion [PM brief](PLATFORM_ADMIN_UX_EVAL_PM_BRIEF.md).
+**Status:** Evaluation complete (2026-06-04). **Shipped 2026-06-04:** H1, H2, H3, H4, H5, H6, H7 (see ✅ markers in §8), plus an as-we-go fix excluding FieldLogicHQ staff (platform/company users + bootstrap admins) from the Customer Users list. **Remaining:** H8 (timed comps/trials) — now scoped as its own project in [TIMED_ENTITLEMENTS_PLAN.md](TIMED_ENTITLEMENTS_PLAN.md) (+ [PM brief](TIMED_ENTITLEMENTS_PM_BRIEF.md)). See the companion [eval PM brief](PLATFORM_ADMIN_UX_EVAL_PM_BRIEF.md).
 
 ## Context
 
@@ -131,14 +131,14 @@ Tags: **[copy]** trivial copy/label · **[reorg]** UI reorganisation · **[featu
 ### High impact
 | # | Fix | Tag |
 |---|-----|-----|
-| H1 | Add an SOP for org **Transfer Ownership / Make Owner** and **fix the stale delete-user ownership guidance** to point at it. Covers the undocumented "owner left the company" scenario. | [copy] |
-| H2 | Make org ownership transfer **discoverable** — surface "Make Owner" beyond the People table (header action or a Support "Account lifecycle" entry) and align the naming. | [reorg] |
-| H3 | Add SOPs for the **undocumented Customer-Users actions** (ban/unban, revoke sessions, confirm email, edit info, user notes). | [copy] |
-| H4 | **Role-aware nav + consistent "you don't have permission" messaging** wherever a control is hidden today (Identity, Delete Org, Notes textarea, Add Override, Cancel Subscription). Removes the "missing feature vs not allowed vs bug" ambiguity. | [reorg] |
-| H5 | **Cross-link org Members → Customer Users** so password reset / user management is reachable from the org you're already on. | [reorg] |
-| H6 | Rename **"Team Ownership Transfers" → "Coaches Portal Ownership Transfers"** (match help; disambiguate from org-owner transfer). | [copy] |
-| H7 | Make the **dead dashboard alerts** (Trials ending soon, Expired overrides, Missing owners, Owner inactive) drill through to filtered org lists. | [reorg] |
-| H8 | **Time-boxed, auto-reverting comps & trials** (see §7). The comp/override system records intent but does not enforce expiry or auto-revert; add-ons have no expiry at all. Build a timed-entitlement grant model so "free until a date" and "try League on top of Tournament Plus, then auto-revert" actually work. Stated requirement. | [feature] |
+| H1 | ✅ **Done 2026-06-04.** Added "How to transfer organization ownership" SOP and fixed the stale delete-user ownership guidance to point at it. Covers the undocumented "owner left the company" scenario. | [copy] |
+| H2 | ✅ **Done 2026-06-04.** Added an **Account Ownership** section to the Support tab: shows current owner(s), lets support pick any active member and **Transfer ownership…** (reuses the guarded confirm + reason), with a "invite the new owner first" hint when no member is eligible. Make Owner stays on the People tab too. | [reorg] |
+| H3 | ✅ **Done 2026-06-04.** Added "How to manage a customer user's access and details" SOP covering ban/unban, revoke sessions, confirm email, edit info, and user notes. | [copy] |
+| H4 | ✅ **Done 2026-06-04.** Implemented a **hybrid hidden/read/write access matrix** (new `lib/platform-areas.ts` = single source of truth; matrix in §H4-matrix below). Nav hides areas a role can't view and marks view-only areas with an eye icon; every gated page now enforces view access server-side via `requirePlatformAreaView()` (new guard in `lib/platform-auth.ts`); org-detail shows "Requires X access" stubs where controls were silently hidden (Identity/Ownership, Notes-add, Billing tab, Entitlements, Delete Org). Audit found pages were view-all (not dead-ends), so this *adds* real least-privilege gating. | [reorg] |
+| H5 | ✅ **Done 2026-06-04.** Each member row in People & Tournaments now has a **User record** link to that person in Customer Users (pre-searched by email); password reset / ban / notes are reachable without leaving the org. | [reorg] |
+| H6 | ✅ **Done 2026-06-04.** Renamed **"Team Ownership Transfers" → "Coaches Portal Ownership Transfers"** (section + empty state) to match help and disambiguate from the org-owner transfer. | [copy] |
+| H7 | ✅ **Done 2026-06-04.** The four alerts now link to the org list filtered via `?filter=trial_ending\|expired_overrides\|no_owner\|owner_inactive` (predicates mirror the dashboard counts); the list shows a clearable filter pill. | [reorg] |
+| H8 | **Time-boxed, auto-reverting comps & trials** (see §7). The comp/override system records intent but does not enforce expiry or auto-revert; add-ons have no expiry at all. Build a timed-entitlement grant model so "free until a date" and "try League on top of Tournament Plus, then auto-revert" actually work. Stated requirement. **Planned 2026-06-04 → [TIMED_ENTITLEMENTS_PLAN.md](TIMED_ENTITLEMENTS_PLAN.md) + [PM brief](TIMED_ENTITLEMENTS_PM_BRIEF.md).** | [feature] |
 
 ### Medium impact
 | # | Fix | Tag |
@@ -162,3 +162,23 @@ Tags: **[copy]** trivial copy/label · **[reorg]** UI reorganisation · **[featu
 | L5 | Make org **Activity rows expandable** with old/new JSON like the global audit log. | [reorg] |
 | L6 | Add an SOP for the **Change Requests** approval workflow. | [copy] |
 | L7 | Refresh **"Where to work first"** to list every nav surface. | [copy] |
+
+---
+
+## H4 access matrix (adopted & shipped 2026-06-04)
+
+Encoded in [lib/platform-areas.ts](../../../lib/platform-areas.ts) as the single source of truth (nav + page guards + in-context messaging all read from it). `✅` = write, `👁` = read-only, `—` = hidden. **super_admin always has full access.** Write is still enforced at the API routes; this matrix governs *view* + nav visibility.
+
+| Area | billing | support | product | growth | read-only |
+|---|---|---|---|---|---|
+| Overview, Organizations, Audit Log, Help | 👁 | 👁 | 👁 | 👁 | 👁 |
+| Customer Users | ✅ | ✅ | 👁 | 👁 | 👁 |
+| Retention | ✅ | 👁 | — | — | — |
+| Bulk Operations | ✅ | — | ✅ | — | — |
+| Plans & Pricing | 👁 | — | ✅ | — | — |
+| Change Requests | 👁 | — | ✅ | — | — |
+| Email Templates | — | — | ✅ | — | — |
+| Early Access, Email | — | — | ✅ | ✅ | — |
+| Platform Users, Dev Tools | — | — | — | — | — |
+
+Note: `product` also holds `manage_growth`; `billing` also holds `manage_support` — reflected above (e.g. billing can write Customer Users).

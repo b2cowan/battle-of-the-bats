@@ -1,6 +1,6 @@
 import EarlyAccessClient from './EarlyAccessClient';
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { getPlatformAdminContext, hasPlatformPermission } from '@/lib/platform-auth';
+import { getPlatformAdminContext, hasPlatformPermission, requirePlatformAreaView } from '@/lib/platform-auth';
 
 async function getOrganizationOptions() {
   const { data, error } = await supabaseAdmin
@@ -20,6 +20,7 @@ async function getOrganizationOptions() {
 }
 
 export default async function EarlyAccessPage() {
+  await requirePlatformAreaView('early_access');
   const [auth, organizations] = await Promise.all([
     getPlatformAdminContext(),
     getOrganizationOptions(),

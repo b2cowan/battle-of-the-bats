@@ -92,6 +92,13 @@
   background: rgba(var(--logic-lime-rgb), 0.08);
 }
 
+.navViewOnly {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  color: var(--white-35, rgba(255, 255, 255, 0.35));
+}
+
 .sidebarFooter {
   padding: 1rem 1.25rem 1.5rem;
   border-top: 1px solid rgba(var(--logic-lime-rgb), 0.15);

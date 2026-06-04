@@ -1,5 +1,6 @@
 import { supabaseAdmin } from './supabase-admin';
 import { getEffectiveTournamentLimit } from './plan-config';
+import { applyEntitlementGrants } from './entitlement-grants';
 import type { Organization } from './types';
 
 type OrganizationRow = {
@@ -66,5 +67,5 @@ export async function getOrganizationBySlugForServer(slug: string): Promise<Orga
     .maybeSingle<OrganizationRow>();
 
   if (error || !data) return null;
-  return mapOrganization(data);
+  return applyEntitlementGrants(mapOrganization(data));
 }

@@ -7,6 +7,7 @@ import { hasCapability } from './roles';
 import type { Capability } from './roles';
 import { assertSafeSupabaseServerEnvironment } from './supabase-safety';
 import { getEffectiveTournamentLimit } from './plan-config';
+import { applyEntitlementGrants } from './entitlement-grants';
 
 export interface AuthContext {
   user: User;
@@ -114,7 +115,7 @@ export async function getAuthContext(options: AuthContextOptions = {}): Promise<
     isDiscoverable: orgRow.is_discoverable ?? true,
   };
 
-  return { user, org };
+  return { user, org: await applyEntitlementGrants(org) };
 }
 
 export interface AuthContextWithRole extends AuthContext {

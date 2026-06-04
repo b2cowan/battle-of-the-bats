@@ -1,4 +1,4 @@
-import { getPlatformAdminContext, hasPlatformPermission } from '@/lib/platform-auth';
+import { getPlatformAdminContext, hasPlatformPermission, requirePlatformAreaView } from '@/lib/platform-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import BulkOperationsClient from './BulkOperationsClient';
 
@@ -61,6 +61,7 @@ async function getRecentOperations(): Promise<BulkOperationRow[]> {
 }
 
 export default async function BulkOperationsPage() {
+  await requirePlatformAreaView('bulk_operations');
   const [auth, orgs, recentOperations] = await Promise.all([
     getPlatformAdminContext(),
     getOrgs(),

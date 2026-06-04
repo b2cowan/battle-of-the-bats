@@ -315,7 +315,7 @@
   display: inline-flex;
   align-items: center;
   gap: 0.3rem;
-  background: #EF4444;
+  background: var(--danger);
   color: #fff;
   font-size: 0.6rem;
   font-weight: 800;
@@ -397,7 +397,7 @@
 }
 
 .gameRowLive {
-  border-color: #EF4444;
+  border-color: var(--danger);
   background: rgba(239, 68, 68, 0.05);
 }
 
@@ -511,7 +511,7 @@
   display: inline-flex;
   align-items: center;
   gap: 0.3rem;
-  background: #EF4444;
+  background: var(--danger);
   color: #fff;
   font-size: 0.65rem;
   font-weight: 800;

@@ -31,11 +31,32 @@ interface OrgRow {
   enabledAddons: string[];
   internalNotes: string | null;
   isFoundingSeason: boolean;
+  missingOwner: boolean;
+  ownerInactive: boolean;
+  expiredOverride: boolean;
+  trialEndingSoon: boolean;
 }
 
 interface Props {
   orgs: OrgRow[];
   initialStatus: string;
+  initialFilter: string;
+}
+
+// Attention filters drilled into from the dashboard Action Queue (?filter=…)
+const ATTENTION_LABELS: Record<string, string> = {
+  trial_ending:      'Trials ending soon',
+  expired_overrides: 'Expired overrides',
+  no_owner:          'Missing owner',
+  owner_inactive:    'Owner inactive',
+};
+
+function matchesAttentionFilter(org: OrgRow, filter: string): boolean {
+  if (filter === 'trial_ending')      return org.trialEndingSoon;
+  if (filter === 'expired_overrides') return org.expiredOverride;
+  if (filter === 'no_owner')          return org.missingOwner;
+  if (filter === 'owner_inactive')    return org.ownerInactive;
+  return true;
 }
 
 const PLANS = ['tournament', 'team', 'tournament_plus', 'league', 'club'] as const;
@@ -62,11 +83,14 @@ function statusClass(status: string) {
   return styles.badgeMuted;
 }
 
-export default function OrgsClient({ orgs, initialStatus }: Props) {
+export default function OrgsClient({ orgs, initialStatus, initialFilter }: Props) {
   const [search,              setSearch]              = useState('');
   const [planFilter,          setPlanFilter]          = useState('');
   const [statusFilter,        setStatusFilter]        = useState(initialStatus);
   const [foundingSeasonOnly,  setFoundingSeasonOnly]  = useState(false);
+  const [attentionFilter,     setAttentionFilter]     = useState(
+    ATTENTION_LABELS[initialFilter] ? initialFilter : '',
+  );
 
   const statusCounts = orgs.reduce<Record<string, number>>((acc, org) => {
     acc[org.subscriptionStatus] = (acc[org.subscriptionStatus] ?? 0) + 1;
@@ -86,6 +110,7 @@ export default function OrgsClient({ orgs, initialStatus }: Props) {
     if (planFilter         && o.planId             !== planFilter)   return false;
     if (statusFilter       && o.subscriptionStatus !== statusFilter) return false;
     if (foundingSeasonOnly && !o.isFoundingSeason)                   return false;
+    if (attentionFilter    && !matchesAttentionFilter(o, attentionFilter)) return false;
     return true;
   });
 
@@ -230,10 +255,20 @@ export default function OrgsClient({ orgs, initialStatus }: Props) {
             />
             Founding Season only
           </label>
-          {(search || planFilter || statusFilter || foundingSeasonOnly) && (
+          {attentionFilter && (
+            <button
+              type="button"
+              className={styles.attentionBtn}
+              onClick={() => setAttentionFilter('')}
+              title="Clear attention filter"
+            >
+              {ATTENTION_LABELS[attentionFilter]} ✕
+            </button>
+          )}
+          {(search || planFilter || statusFilter || foundingSeasonOnly || attentionFilter) && (
             <button
               className={styles.filterClear}
-              onClick={() => { setSearch(''); setPlanFilter(''); setStatusFilter(''); setFoundingSeasonOnly(false); }}
+              onClick={() => { setSearch(''); setPlanFilter(''); setStatusFilter(''); setFoundingSeasonOnly(false); setAttentionFilter(''); }}
             >
               Clear
             </button>

@@ -3,6 +3,7 @@ import { supabaseAdmin } from './supabase-admin';
 import { getEffectiveTournamentLimit, PLAN_CONFIG } from './plan-config';
 import { createClient as createBrowserSupabaseClient } from './supabase-browser';
 import { getActiveTeamEntitledRepTeamIds } from './team-workspace-entitlements';
+import { applyEntitlementGrants } from './entitlement-grants';
 import { Tournament, TournamentStatus, Venue, VenueFacility, OrgVenue, OrgVenueFacility, FacilityType, Division, Pool, PoolSlot, Team, Game, Announcement, PlayoffConfig, RuleSection, RuleItem, Resource, Organization, OrganizationMember, OrgPlan, OrgRole, TournamentArchive, OrgPublicSiteContent, AccountingLedger, AccountingEntry, LedgerSummary, AccountingEntryStatus, AccountingEntryType, LeagueSeason, LeagueDivision, LeagueTeam, LeagueRegistration, LeagueGame, LeagueStandingsRow, LeagueSeasonSummary, LeagueRegistrationStatus, LeagueSeasonStatus, LeaguePractice, LeaguePracticeStatus, RepTeam, RepProgramYear, RepProgramYearStatus, RepTeamCoach, RepTryoutRegistration, RepTryoutRegistrationStatus, RepRosterPlayer, RepRosterStatus, RepTeamEvent, RepEventType, RepTeamEventAttendance, RepAttendanceStatus, RepLineupMode, RepTeamLineup, RepTeamLineupEntry, RepDocumentTemplate, RepDocumentType, RepPlayerDocument, RepCostAllocation, RepAllocationSplit, RepAllocationInstallment, RepPlayerDuesSchedule, RepPlayerDuesInstallment, RepTeamExpense, OrgPayee, TournamentRegistrationField, TournamentRegistrationFieldAnswer, TournamentRegistrationFieldType } from './types';
 
 // Use the SSR browser client (cookie-based session) for writes that need auth;
@@ -2263,7 +2264,7 @@ export async function getOrganizationBySlug(slug: string): Promise<Organization 
     .eq('slug', slug)
     .single();
   if (error || !data) return null;
-  return mapOrg(data);
+  return applyEntitlementGrants(mapOrg(data));
 }
 
 export async function getOrganizationByUserId(userId: string): Promise<Organization | null> {
@@ -2274,7 +2275,7 @@ export async function getOrganizationByUserId(userId: string): Promise<Organizat
     .single();
   if (error || !data) return null;
   const org = (data as any).organizations;
-  return org ? mapOrg(org) : null;
+  return org ? applyEntitlementGrants(mapOrg(org)) : null;
 }
 
 export async function getOrgMembership(

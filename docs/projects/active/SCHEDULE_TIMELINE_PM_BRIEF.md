@@ -35,10 +35,14 @@ value), then drag, then mobile.
 - Works on a phone (one facility at a time, swipe between fields).
 - No regression to List/Bracket; respects tournament lock + plan gating.
 
-## Decisions needed from product
-1. Is Timeline a **base** feature or **Tournament-Plus** (generator/wizard are Plus)?
-2. On a clashing drop: **warn-and-allow** (recommended) or hard-block?
-3. Division behavior in Timeline: **all divisions with the picker as a highlight** (recommended)
-   or a hard one-division scope?
+## Decisions (resolved 2026-06-04)
+1. **Tournament-Plus** gated (consistent with generator/wizard).
+2. Clashing drop: **warn-and-allow**.
+3. Division behavior: **two modes** — All divisions (picker as highlight) + Single division (only
+   that division's games + only its facilities), with cross-division conflict alerts (incl. faded
+   "ghost" blocks for the colliding foreign-division game) **always on**.
+
+**Deferred enhancement:** a **date-range filter** (defaults to whole tournament, narrowable),
+possibly shared across List / Bracket / Timeline.
 
 See `SCHEDULE_TIMELINE_PLAN.md` for the technical spec, phases, and reuse map.

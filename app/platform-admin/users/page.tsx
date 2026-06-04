@@ -1,9 +1,10 @@
 import { getPlatformUsers } from '@/lib/db';
-import { getBootstrapAdminEmails, getPlatformAdminContext, hasPlatformPermission } from '@/lib/platform-auth';
+import { getBootstrapAdminEmails, getPlatformAdminContext, hasPlatformPermission, requirePlatformAreaView } from '@/lib/platform-auth';
 import type { PlatformUser } from '@/lib/types';
 import CompanyUsersClient from './CompanyUsersClient';
 
 export default async function CompanyUsersPage() {
+  await requirePlatformAreaView('platform_users');
   const auth = await getPlatformAdminContext();
   const users = await getPlatformUsers();
   const bootstrapEmails = getBootstrapAdminEmails();

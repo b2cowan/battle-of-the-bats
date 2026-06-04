@@ -1,5 +1,6 @@
 import HelpCallout from '@/components/help/HelpCallout';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { requirePlatformAreaView } from '@/lib/platform-auth';
 import RetentionQueueClient from './RetentionQueueClient';
 import styles from '../audit/audit.module.css';
 
@@ -57,6 +58,7 @@ async function getRetentionRows() {
 }
 
 export default async function RetentionQueuePage() {
+  await requirePlatformAreaView('retention');
   const rows = await getRetentionRows();
 
   return (

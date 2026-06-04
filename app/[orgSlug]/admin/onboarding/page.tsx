@@ -20,14 +20,18 @@ import styles from './onboarding.module.css';
 
 const PLAN_ORDER: OrgPlan[] = ['tournament', 'team', 'tournament_plus', 'league', 'club'];
 const STARTUP_ORDER = ['tournament', 'divisions', 'welcome', 'venues'] as const;
-const WIZARD_ORDER = ['plan', 'qualifying', ...STARTUP_ORDER, 'review'] as const;
+// Plan selection is a standalone gate (reached via ?choosePlan=1), NOT a numbered
+// wizard step. The wizard is the 6-step tournament setup flow.
+const WIZARD_ORDER = ['qualifying', ...STARTUP_ORDER, 'review'] as const;
 const LEAGUE_STARTUP_ORDER = ['league_season', 'league_divisions', 'league_registration', 'league_tournament'] as const;
 const LEAGUE_WIZARD_ORDER = ['league-season', 'league-divisions', 'league-registration', 'league-tournament', 'league-review'] as const;
 
 type StartupActionTaskId = typeof STARTUP_ORDER[number];
 type LeagueStartupActionTaskId = typeof LEAGUE_STARTUP_ORDER[number];
 type StartupProgressTaskId = 'plan' | StartupActionTaskId | LeagueStartupActionTaskId;
-type StartupTaskId = typeof WIZARD_ORDER[number];
+// 'plan' is a gate, not part of WIZARD_ORDER, but it stays in the union so legacy
+// guards (activeModal === 'plan', markStartupTask('plan', …)) still type-check.
+type StartupTaskId = 'plan' | typeof WIZARD_ORDER[number];
 type LeagueWizardTaskId = typeof LEAGUE_WIZARD_ORDER[number];
 type StartupTaskStatus = 'pending' | 'complete' | 'skipped';
 type ActiveModal = StartupTaskId | LeagueWizardTaskId | null;
@@ -394,13 +398,10 @@ export default function OnboardingPage() {
     return [...STARTUP_ORDER, ...LEAGUE_STARTUP_ORDER].every(taskId => progress.tasks[taskId] !== 'complete');
   }
 
-  function getWizardResumeStep(progress: StartupProgress | null, resumeIncomplete: boolean): StartupTaskId {
-    if (!progress) return 'plan';
-    // Skip the plan step once a plan is already chosen, or when resuming an incomplete setup:
-    // the plan picker can't be advanced when you're already on your current plan (the card is
-    // a disabled "Current plan" and the step has no Continue), so showing it again is a dead end.
-    if (resumeIncomplete || progress.tasks.plan === 'complete') return 'tournament';
-    return 'plan';
+  function getWizardResumeStep(): StartupTaskId {
+    // Plan selection is handled by a standalone gate (?choosePlan=1) before the wizard,
+    // so the wizard always resumes at its first setup step.
+    return 'qualifying';
   }
 
   const refreshStartup = useCallback(async () => {
@@ -493,9 +494,17 @@ export default function OnboardingPage() {
     const activePlan = normalizePlanId(currentOrg.planId);
     if (activePlan !== 'tournament' && activePlan !== 'tournament_plus') return;
 
-    const shouldResumeAfterPlan = planSelectionSucceeded || continueSetup;
-    void showWizardStep(getWizardResumeStep(startupProgress, shouldResumeAfterPlan));
-  }, [loading, currentOrg, userRole, planChoiceRequired, continueSetup, planSelectionSucceeded, startupProgress, activeModal, planChooserOpen, wizardDismissed, workflowRedirecting]);
+    // Plan selection is a standalone gate. If a plan-less org reaches the wizard without
+    // going through it (no ?choosePlan=1 / ?continueSetup=1 / ?success=1), send them to the
+    // gate first rather than letting the wizard open with no plan chosen.
+    const planChosen = startupProgress.tasks.plan === 'complete';
+    if (!planChosen && !planSelectionSucceeded && !continueSetup) {
+      router.replace(`/${currentOrg.slug}/admin/onboarding?choosePlan=1`);
+      return;
+    }
+
+    void showWizardStep(getWizardResumeStep());
+  }, [loading, currentOrg, userRole, planChoiceRequired, continueSetup, planSelectionSucceeded, startupProgress, activeModal, planChooserOpen, wizardDismissed, workflowRedirecting, router]);
 
   useEffect(() => {
     if (
@@ -1433,15 +1442,8 @@ export default function OnboardingPage() {
   }
 
   function renderActiveModal() {
-    if (activeModal === 'plan') {
-      return renderModalFrame(
-        'Start free or choose an upgrade',
-        'Start free for one small tournament, or upgrade when you need registration control, branding, automation, and repeat-event tools.',
-        renderPlanChooser(false, true),
-        { stepId: 'plan', saveLabel: 'Continue', onSave: () => advanceWizard('plan'), hidePrimaryAction: true, wide: true }
-      );
-    }
-
+    // Plan selection is a standalone gate (?choosePlan=1), not a wizard step — the wizard
+    // starts at 'qualifying'. (The old in-wizard 'plan' step was removed in the decouple.)
     if (activeModal === 'qualifying') {
       const QUALIFYING_OPTIONS = [
         { value: '1', label: '1', sub: 'Just getting started' },

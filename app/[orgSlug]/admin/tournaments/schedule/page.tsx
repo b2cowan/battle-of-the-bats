@@ -19,6 +19,8 @@ import PlayoffWizard from './PlayoffWizard';
 import GameList from './components/GameList';
 import ScheduleHealthPanel from './components/ScheduleHealthPanel';
 import BracketConnectors from './components/BracketConnectors';
+import ScheduleTimeline from './components/ScheduleTimeline';
+import ScopePicker from './components/ScopePicker';
 import { Game, Team, Division, Venue, PoolSlot, ScheduleFacilityLane } from '@/lib/types';
 import { checkVenueConflict, type ConflictResult } from '@/lib/schedule-conflict';
 import { buildScheduleMetrics } from '@/lib/schedule-metrics';
@@ -31,7 +33,6 @@ import {
   TournamentAdminHeader,
   TournamentAdminToolbar,
   ToolbarGroup,
-  ToolbarSelect,
   ToolbarSearch,
   ToolbarSegmentedControl,
 } from '@/components/admin/tournament/TournamentAdminUI';
@@ -86,10 +87,9 @@ export default function AdminSchedulePage() {
   const [modal, setModal]       = useState<ModalMode>(null);
   const [editing, setEditing]   = useState<Game | null>(null);
   const [form, setForm]         = useState(emptyForm);
-  const [filterGroup, setFilterGroup] = useState('');
+  const [selection, setSelection] = useState<Set<string> | null>(null); // null = all divisions/pools
   const [viewMode, setViewMode] = useState<'pool' | 'playoff'>('pool');
-  const [groupMode, setGroupMode] = useState<'flat' | 'pools'>('pools');
-  const [layoutMode, setLayoutMode] = useState<'list' | 'bracket'>('list');
+  const [layout, setLayout] = useState<'list' | 'bracket' | 'timeline'>('list');
   const [mobileSettingsOpen, setMobileSettingsOpen] = useState(false);
   const [conflictsOnly, setConflictsOnly] = useState(false);
   const [venueModalOpen, setVenueModalOpen] = useState(false);
@@ -180,11 +180,11 @@ export default function AdminSchedulePage() {
       showScheduleUpgrade('Playoff Bracket Builder Requires Tournament Plus', 'playoff_generator');
       return;
     }
-    if (!filterGroup) {
+    if (filterGroup === 'all') {
       setFeedback({
         isOpen: true,
         title: 'Choose a Division First',
-        message: 'Select a division before opening the Playoff Bracket Builder.',
+        message: 'Select a single division before opening the Playoff Bracket Builder.',
         type: 'info',
       });
       return;
@@ -221,14 +221,6 @@ export default function AdminSchedulePage() {
     setGames(games);
     setTeams(allTeams.filter((t: any) => t.status === 'accepted'));
     setDivisions(groups);
-    setFilterGroup(prev => {
-      if (prev && groups.some((g: any) => g.id === prev)) return prev;
-      try {
-        const cachedGroup = (JSON.parse(localStorage.getItem(`flhq-schedule-${tournamentId}`) ?? '{}') as any).filterGroup as string | undefined;
-        if (cachedGroup && groups.some((g: any) => g.id === cachedGroup)) return cachedGroup;
-      } catch {}
-      return groups.length > 0 ? groups[0].id : '';
-    });
     setVenues(venues);
     setFacilityLanes(lanes);
   }, [tournamentId, tournamentLoading, orgSlug]);
@@ -254,14 +246,12 @@ export default function AdminSchedulePage() {
       if (!raw) return;
       const cached = JSON.parse(raw) as Partial<{
         viewMode: 'pool' | 'playoff';
-        groupMode: 'flat' | 'pools';
-        layoutMode: 'list' | 'bracket';
+        layout: 'list' | 'bracket' | 'timeline';
         selectedStatuses: ScheduleStatusFilter[];
         selectedVenueKeys: string[];
       }>;
       if (cached.viewMode === 'pool' || cached.viewMode === 'playoff') setViewMode(cached.viewMode);
-      if (cached.groupMode === 'flat' || cached.groupMode === 'pools') setGroupMode(cached.groupMode);
-      if (cached.layoutMode === 'list' || cached.layoutMode === 'bracket') setLayoutMode(cached.layoutMode);
+      if (cached.layout === 'list' || cached.layout === 'bracket' || cached.layout === 'timeline') setLayout(cached.layout);
       if (Array.isArray(cached.selectedStatuses) && cached.selectedStatuses.length > 0) setSelectedStatuses(cached.selectedStatuses);
       if (Array.isArray(cached.selectedVenueKeys)) setSelectedVenueKeys(cached.selectedVenueKeys);
     } catch {}
@@ -269,13 +259,18 @@ export default function AdminSchedulePage() {
 
   // Persist filter state. Guard: only write once divisions are loaded.
   useEffect(() => {
-    if (!tournamentId || !filterGroup || divisions.length === 0) return;
+    if (!tournamentId || divisions.length === 0) return;
     try {
       localStorage.setItem(`flhq-schedule-${tournamentId}`, JSON.stringify({
-        filterGroup, viewMode, groupMode, layoutMode, selectedStatuses, selectedVenueKeys,
+        viewMode, layout, selectedStatuses, selectedVenueKeys,
       }));
     } catch {}
-  }, [tournamentId, filterGroup, viewMode, groupMode, layoutMode, selectedStatuses, selectedVenueKeys, divisions.length]);
+  }, [tournamentId, viewMode, layout, selectedStatuses, selectedVenueKeys, divisions.length]);
+
+  // Scope is stage-specific (pools belong to round robin) — reset it when the stage flips.
+  useEffect(() => { setSelection(null); }, [viewMode]);
+  // Bracket only exists under Playoffs — fall back to List if the stage flips to round robin.
+  useEffect(() => { if (viewMode === 'pool' && layout === 'bracket') setLayout('list'); }, [viewMode, layout]);
 
   const groupTeams   = (id: string) => teams.filter(t => t.divisionId === id);
   const getTeamName  = (id: string) => teams.find(t => t.id === id)?.name ?? null;
@@ -377,7 +372,7 @@ export default function AdminSchedulePage() {
   }
 
   function openAdd() {
-    const divisionId = filterGroup || (divisions[0]?.id ?? '');
+    const divisionId = (filterGroup !== 'all' ? filterGroup : '') || (divisions[0]?.id ?? '');
     setForm({ ...emptyForm, divisionId });
     setVenueSearch('');
     setEditing(null);
@@ -508,6 +503,24 @@ export default function AdminSchedulePage() {
     await refresh();
   }
 
+  // Drag-to-move on the Timeline (D2.2) — optimistic, then persist + re-sync via handleSaveGame.
+  async function handleMoveGame(gameId: string, target: { date: string; time: string; venueId: string; venueFacilityId: string }) {
+    const game = games.find(g => g.id === gameId);
+    if (!game) return;
+    setGames(prev => prev.map(g => g.id === gameId
+      ? { ...g, date: target.date || g.date, time: target.time, venueId: target.venueId || undefined, venueFacilityId: target.venueFacilityId || undefined }
+      : g));
+    await handleSaveGame(gameId, {
+      date: target.date || game.date,
+      time: target.time,
+      venueId: target.venueId,
+      venueFacilityId: target.venueFacilityId,
+      notes: game.notes ?? '',
+      homeTeamId: game.homeTeamId,
+      awayTeamId: game.awayTeamId,
+    });
+  }
+
   function handleDeleteRequest(id: string) {
     setFeedback({
       isOpen: true,
@@ -538,9 +551,33 @@ export default function AdminSchedulePage() {
     return lane ? { ...game, scheduleFacilityLaneLabel: lane.label } : game;
   }), [games, facilityLaneById]);
 
+  // ── Scope (divisions) derivations ─────────────────────────────────────────────
+  // `selection` (null = all) holds the selected division ids and drives visibility;
+  // `filterGroup` is derived for the per-division features ('all' unless exactly one).
+  const stageGames = useMemo(
+    () => scheduled.filter(g => (viewMode === 'playoff' ? g.isPlayoff : !g.isPlayoff)),
+    [scheduled, viewMode],
+  );
+  const scopeDivisions = useMemo(() => {
+    const present = new Set(stageGames.map(g => g.divisionId));
+    return divisions.filter(d => present.has(d.id)).map(d => ({ id: d.id, name: d.name }));
+  }, [divisions, stageGames]);
+  const isGameInScope = (g: Game) => selection === null || selection.has(g.divisionId || '');
+  const selectedDivisionIds = selection === null ? new Set(divisions.map(d => d.id)) : selection;
+  const filterGroup = selectedDivisionIds.size === 1 ? Array.from(selectedDivisionIds)[0] : 'all';
+
+  // Bracket is per-division — when it's selected while 'all' is in scope, snap to the first division.
+  useEffect(() => {
+    if (layout === 'bracket' && filterGroup === 'all') {
+      const first = scopeDivisions[0];
+      if (first) setSelection(new Set([first.id]));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [layout, filterGroup, scopeDivisions]);
+
   // Division + view slice (no search, no status) — used for status chip counts
   const divisionGames = scheduled.filter(g =>
-    g.divisionId === filterGroup &&
+    isGameInScope(g) &&
     (viewMode === 'playoff' ? g.isPlayoff : !g.isPlayoff)
   );
   const unresolvedLaneGameCounts = divisionGames.reduce((map, game) => {
@@ -550,7 +587,7 @@ export default function AdminSchedulePage() {
     return map;
   }, new Map<string, number>());
   const unresolvedFacilityLanes = facilityLanes
-    .filter(lane => lane.divisionId === filterGroup && !lane.resolvedVenueId && unresolvedLaneGameCounts.has(lane.id))
+    .filter(lane => selectedDivisionIds.has(lane.divisionId) && !lane.resolvedVenueId && unresolvedLaneGameCounts.has(lane.id))
     .sort((a, b) => a.sortOrder - b.sortOrder || a.label.localeCompare(b.label));
   const statusCounts: Record<string, number> = {
     scheduled: divisionGames.filter(g => g.status === 'scheduled').length,
@@ -558,7 +595,7 @@ export default function AdminSchedulePage() {
     completed: divisionGames.filter(g => g.status === 'completed').length,
   };
   const savedScheduleMetrics = useMemo(() => {
-    if (!currentTournament || !filterGroup || divisionGames.length === 0) return null;
+    if (!currentTournament || !filterGroup || filterGroup === 'all' || divisionGames.length === 0) return null;
     return buildScheduleMetrics({
       games: divisionGames,
       teams,
@@ -597,12 +634,12 @@ export default function AdminSchedulePage() {
       : `${selectedVenueKeys.length} venues`;
 
   const settingsSummary = [
-    viewMode === 'pool' ? (groupMode === 'pools' ? 'Pools' : 'Flat') : (layoutMode === 'list' ? 'List' : 'Bracket'),
+    layout === 'list' ? 'List' : layout === 'bracket' ? 'Bracket' : 'Timeline',
     venueFilterOptions.length > 1 ? venueLabel : null,
   ].filter(Boolean).join(' · ');
 
   const filtered  = scheduled.filter(g => {
-    const matchesDivision = g.divisionId === filterGroup;
+    const matchesDivision = isGameInScope(g);
     const matchesView = viewMode === 'playoff' ? g.isPlayoff : !g.isPlayoff;
     const matchesStatus = selectedStatuses.length === 0 || selectedStatuses.includes(g.status as ScheduleStatusFilter);
     const matchesVenue = selectedVenueKeys.length === 0 || selectedVenueKeys.includes(getGameVenueKey(g));
@@ -844,18 +881,14 @@ export default function AdminSchedulePage() {
         {/* ── Row 1 left: Division + view mode controls (grow) ── */}
         <ToolbarGroup grow className={`${styles.scheduleDivisionGroup} ${styles.scheduleStartGroup}`}>
           {divisions.length > 0 && (
-            <ToolbarSelect<string>
-              className={styles.scheduleDivisionSelect}
-              label="Division"
-              value={filterGroup}
-              options={divisions.map(g => ({ value: g.id, label: g.name }))}
-              onChange={value => {
-                setFilterGroup(value);
-              }}
+            <ScopePicker
+              divisions={scopeDivisions}
+              value={selection}
+              onChange={setSelection}
+              singleSelect={layout === 'bracket'}
             />
           )}
-          {/* Mobile: prominent stage toggle pulled out of the settings sheet
-              (desktop keeps the segmented control below) */}
+          {/* Mobile: prominent stage toggle (desktop keeps the segmented control below) */}
           <div className={styles.mobileStageToggle} role="group" aria-label="Stage">
             {(['pool', 'playoff'] as const).map(v => (
               <button
@@ -869,7 +902,7 @@ export default function AdminSchedulePage() {
               </button>
             ))}
           </div>
-          {/* Desktop: segmented controls; Mobile: compact selects */}
+          {/* Stage: Round Robin | Playoffs */}
           <ToolbarSegmentedControl<'pool' | 'playoff'>
             className={styles.desktopModeControl}
             value={viewMode}
@@ -878,42 +911,24 @@ export default function AdminSchedulePage() {
               { value: 'playoff', label: 'Playoffs' },
             ]}
             onChange={value => { setViewMode(value); }}
-            ariaLabel="View mode"
+            ariaLabel="Stage"
           />
-          {viewMode === 'pool' && (
-            <>
-              <ToolbarSegmentedControl<'flat' | 'pools'>
-                className={styles.desktopModeControl}
-                value={groupMode}
-                options={[
-                  { value: 'flat', label: 'Flat' },
-                  { value: 'pools', label: 'Pools' },
-                ]}
-                onChange={setGroupMode}
-                ariaLabel="Grouping mode"
-              />
-            </>
-          )}
-          {viewMode === 'playoff' && (
-            <>
-              <ToolbarSegmentedControl<'list' | 'bracket'>
-                className={styles.desktopModeControl}
-                value={layoutMode}
-                options={[
-                  { value: 'list', label: 'List' },
-                  { value: 'bracket', label: 'Bracket' },
-                ]}
-                onChange={setLayoutMode}
-                ariaLabel="Layout mode"
-              />
-            </>
-          )}
+          {/* View: stage-dependent (Round Robin → List/Timeline, Playoffs → List/Bracket/Timeline) */}
+          <ToolbarSegmentedControl<'list' | 'bracket' | 'timeline'>
+            className={styles.desktopModeControl}
+            value={layout}
+            options={viewMode === 'playoff'
+              ? [{ value: 'list', label: 'List' }, { value: 'bracket', label: 'Bracket' }, { value: 'timeline', label: 'Timeline' }]
+              : [{ value: 'list', label: 'List' }, { value: 'timeline', label: 'Timeline' }]}
+            onChange={setLayout}
+            ariaLabel="View"
+          />
         </ToolbarGroup>
 
         {/* ── Row 1 right: utility actions — Publish · Tools ── */}
         <ToolbarGroup align="end" className={`${styles.scheduleActionsGroup} ${styles.scheduleEndGroup}`}>
           {/* Publish control — only for round-robin view */}
-          {viewMode === 'pool' && (() => {
+          {viewMode === 'pool' && filterGroup !== 'all' && (() => {
             const ag = divisions.find(g => g.id === filterGroup);
             const vis = ag?.scheduleVisibility ?? 'unpublished';
             const isPublished = vis !== 'unpublished';
@@ -957,7 +972,8 @@ export default function AdminSchedulePage() {
           />
         </ToolbarGroup>
 
-        {/* ── Row 2: search + venue + status filters ── */}
+        {/* ── Row 2: search + venue + status filters (hidden in Timeline — it has its own Day + Scope) ── */}
+        {layout !== 'timeline' && (
         <ToolbarGroup fullWidth className={styles.scheduleFilterGroup}>
           <ToolbarSearch className={styles.scheduleSearch} value={search} onChange={setSearch} placeholder="Search teams..." label="Search games" />
           {/* Mobile-only: publish/generate tools stay in one menu so
@@ -965,7 +981,7 @@ export default function AdminSchedulePage() {
               where those controls remain separate (Row 1 right). */}
           <MobileToolsMenu
             className={styles.scheduleMobileTools}
-            showPublishSection={!isLocked && viewMode === 'pool'}
+            showPublishSection={!isLocked && viewMode === 'pool' && filterGroup !== 'all'}
             isPublished={activeDivisionPublished}
             publishedCount={publishedDivisionCount}
             currentDivisionLabel={activeDivision?.name ?? 'this division'}
@@ -1023,6 +1039,7 @@ export default function AdminSchedulePage() {
             </button>
           )}
         </ToolbarGroup>
+        )}
       </TournamentAdminToolbar>
 
       {/* ── Mobile settings bottom sheet (Schedule) ────────── */}
@@ -1045,36 +1062,19 @@ export default function AdminSchedulePage() {
                   ))}
                 </div>
               </div>
-              {viewMode === 'pool' && (
-                <div className={styles.sheetSection}>
-                  <div className={styles.sheetSectionLabel}>Grouping</div>
-                  <div className={styles.sheetSegments}>
-                    {(['flat', 'pools'] as const).map(v => (
-                      <button key={v} type="button"
-                        className={`${styles.sheetSeg} ${groupMode === v ? styles.sheetSegActive : ''}`}
-                        onClick={() => setGroupMode(v)}
-                      >
-                        {v === 'flat' ? 'Flat' : 'Pools'}
-                      </button>
-                    ))}
-                  </div>
+              <div className={styles.sheetSection}>
+                <div className={styles.sheetSectionLabel}>View</div>
+                <div className={styles.sheetSegments}>
+                  {(viewMode === 'playoff' ? (['list', 'bracket', 'timeline'] as const) : (['list', 'timeline'] as const)).map(v => (
+                    <button key={v} type="button"
+                      className={`${styles.sheetSeg} ${layout === v ? styles.sheetSegActive : ''}`}
+                      onClick={() => setLayout(v)}
+                    >
+                      {v === 'list' ? 'List' : v === 'bracket' ? 'Bracket' : 'Timeline'}
+                    </button>
+                  ))}
                 </div>
-              )}
-              {viewMode === 'playoff' && (
-                <div className={styles.sheetSection}>
-                  <div className={styles.sheetSectionLabel}>Layout</div>
-                  <div className={styles.sheetSegments}>
-                    {(['list', 'bracket'] as const).map(v => (
-                      <button key={v} type="button"
-                        className={`${styles.sheetSeg} ${layoutMode === v ? styles.sheetSegActive : ''}`}
-                        onClick={() => setLayoutMode(v)}
-                      >
-                        {v === 'list' ? 'List' : 'Bracket'}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
+              </div>
               {venueFilterOptions.length > 1 && (
                 <div className={styles.sheetSection}>
                   <div className={styles.sheetSectionLabel}>Venue</div>
@@ -1230,7 +1230,24 @@ export default function AdminSchedulePage() {
           <RefreshCw size={32} className="spin" style={{ opacity: 0.4 }} />
           <p>Loading tournament...</p>
         </div>
-      ) : viewMode === 'playoff' && layoutMode === 'bracket' ? (
+      ) : layout === 'timeline' ? (
+        <ScheduleTimeline
+          games={stageGames}
+          venues={venues}
+          divisions={divisions}
+          teams={teams}
+          tournament={currentTournament}
+          selection={selection}
+          stage={viewMode}
+          onMove={isLocked ? undefined : handleMoveGame}
+          onCreateVenue={() => setAddVenueOpen(true)}
+        />
+      ) : layout === 'bracket' && filterGroup === 'all' ? (
+        <div className="empty-state">
+          <Calendar size={40} style={{ opacity: 0.2 }} />
+          <p>Brackets are per division — pick a division above to view its bracket.</p>
+        </div>
+      ) : layout === 'bracket' ? (
         <PlayoffBracketView
           games={filtered}
           teams={teams}
@@ -1242,6 +1259,45 @@ export default function AdminSchedulePage() {
           formatDate={formatDate}
           statusBadge={statusBadge}
         />
+      ) : filterGroup === 'all' ? (
+        <div className={s.compactList}>
+          {filtered.length === 0 ? (
+            <div className="empty-state">
+              <Calendar size={40} style={{ opacity: 0.2 }} />
+              <p>{currentTournament ? 'No games found.' : 'No tournament selected.'}</p>
+            </div>
+          ) : (
+            divisions
+              .map(div => ({ div, divGames: filtered.filter(g => g.divisionId === div.id) }))
+              .filter(({ divGames }) => divGames.length > 0)
+              .map(({ div, divGames }) => (
+                <div key={div.id} className={styles.allDivisionSection}>
+                  <div className={styles.allDivisionHeader}>
+                    <span className={styles.allDivisionName}>{div.name}</span>
+                    <span className={styles.allDivisionCount}>{divGames.length}</span>
+                  </div>
+                  <GameList
+                    games={divGames}
+                    teams={teams}
+                    divisions={divisions}
+                    venues={venues}
+                    viewMode={viewMode}
+                    groupByPool={true}
+                    pools={div.pools}
+                    onDelete={isLocked ? undefined : handleDeleteRequest}
+                    onCancel={isLocked ? undefined : markCancelled}
+                    onSchedule={isLocked ? undefined : markScheduled}
+                    onToggleGeneratorLock={isLocked ? undefined : toggleGeneratorLock}
+                    onSave={isLocked ? undefined : handleSaveGame}
+                    onCreateVenue={() => setAddVenueOpen(true)}
+                    mode="planning"
+                    conflictsOnly={conflictsOnly}
+                    tournament={currentTournament}
+                  />
+                </div>
+              ))
+          )}
+        </div>
       ) : (
         <div className={s.compactList}>
           {filtered.length === 0 ? (
@@ -1256,7 +1312,7 @@ export default function AdminSchedulePage() {
               divisions={divisions}
               venues={venues}
               viewMode={viewMode}
-              groupByPool={groupMode === 'pools'}
+              groupByPool={true}
               pools={activeDivision?.pools}
               onDelete={isLocked ? undefined : handleDeleteRequest}
               onCancel={isLocked ? undefined : markCancelled}
@@ -1620,7 +1676,7 @@ export default function AdminSchedulePage() {
         />
       )}
 
-      {showPlayoffWizard && filterGroup !== '' && canGeneratePlayoffs && (
+      {showPlayoffWizard && filterGroup !== 'all' && canGeneratePlayoffs && (
         <PlayoffWizard
           division={activeDivision!}
           tournamentId={currentTournament?.id || ''}

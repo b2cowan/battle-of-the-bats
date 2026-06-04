@@ -9,7 +9,8 @@
     "lint": "eslint",
     "lint:focused": "eslint",
     "typecheck": "tsc --noEmit --pretty false",
-    "verify:changed": "node scripts/verify-changed.mjs"
+    "verify:changed": "node scripts/verify-changed.mjs && node scripts/check-public-tokens.mjs",
+    "check:tokens": "node scripts/check-public-tokens.mjs"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

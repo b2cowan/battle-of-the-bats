@@ -1,7 +1,7 @@
 # FieldLogicHQ — Database Architecture Review
 
 > **Maintained by:** `/dba` agent  
-> **Last reviewed:** 2026-05-24 (schema rebuilt from live dump — 85 tables; residual games FK duplicates found (Finding #21); migration 082 written)  
+> **Last reviewed:** 2026-06-04 (H8 Timed Entitlement Grants pre-implementation review — Findings #22–24: extend `org_overrides` not a new table, embed-not-flag for the hot path, reuse existing billing-suspension columns. Schema now 102 tables.)  
 > **Schema source:** `memory/reference_db_schema.md` — rebuilt 2026-05-24 from `docs/schema-snapshots/schema_dumps.json` (live dev + prod queries)  
 > **Tables reviewed:** 85 across 9 modules (tournament, league, rep teams, standalone team workspace, accounting, stripe, org/platform core, platform admin, CRM)  
 > **Validation:** `docs/validate_db_state.sql` — checks 17–18 added (pools); check 19 added (games FK duplicates). Will FAIL on prod until migrations 081 Part B and 082 applied.
@@ -21,6 +21,41 @@
 ---
 
 ## Open Findings
+
+---
+
+### [2026-06-04] — Finding #22: Timed Entitlement Grants (H8) — **extend `org_overrides`, do not create a parallel `platform_entitlement_grants` table**
+
+**Severity:** High (pre-implementation architecture decision)
+**Finding:** The H8 plan ([TIMED_ENTITLEMENTS_PLAN.md](../../projects/active/TIMED_ENTITLEMENTS_PLAN.md)) proposes a new `platform_entitlement_grants` table to drive time-boxed comps/trials. A near-identical table already exists and is endorsed in this log: **`org_overrides`** (`org_id`, `type` CHECK, `value`, `expires_at`, `reason`, `created_by`, `created_at`, soft-revoke via `revoked_at`/`revoked_by`; index `idx_org_overrides_org`). The 2026-05-23 advisory note says explicitly: *"This pattern should be followed for any future override or feature-flag tables."* A second parallel table would (a) duplicate the exact override/expiry/soft-revoke shape, (b) collide conceptually with the **existing `team_entitlements`** table (team-workspace entitlements with `source`/`status`/`starts_at`/`ends_at`), and (c) force the plan's awkward "migrate founding comps vs. dual-read" decision — because founding-season `comp_period` rows **already live in `org_overrides`**.
+**Tables affected:** `org_overrides`, `organizations`
+**Recommendation:**
+- **Extend `org_overrides`** with additive, backward-compatible columns: `target jsonb` (e.g. `{"addons":["module_house_league"]}` / `{"plan":"league"}` / `{"status":"active"}`), `starts_at timestamptz NOT NULL DEFAULT now()`, `suppress_billing boolean NOT NULL DEFAULT false`. Widen the `type` CHECK to add `module_addon` and `plan_tier` (drop + re-add the explicitly-named constraint; existing rows unaffected).
+- This **eliminates the founding-season migration/dual-read question** (Finding addresses plan §Phase 1): the entitlement layer reads one table and simply ignores `comp_period` rows for *module access* (founding comp is a billing concern, not an access grant).
+- If a separate table is insisted upon despite the above, name it **`org_entitlement_grants`** (parallel to `org_overrides`/`org_internal_notes`/`org_audit_log`), **not** `platform_entitlement_grants`, and never bare "entitlements" (reserved for `team_entitlements`).
+- Add a partial index **`idx_org_overrides_org_active ON org_overrides(org_id) WHERE revoked_at IS NULL`** to keep the active-grant lookup tight as the table grows.
+- Keep reads **service-role only** (org_overrides has no client RLS policies today — consistent; do not expose comp reasons to customers).
+**Status:** Open — recommendation issued 2026-06-04; pending implementation.
+
+---
+
+### [2026-06-04] — Finding #23: H8 hot-path enforcement — use a PostgREST embed, **drop the `has_active_grants` flag**
+
+**Severity:** Medium
+**Finding:** The plan adds a denormalized `has_active_grants boolean` on `organizations` to short-circuit the entitlement hot path (the 4 org loaders run on nearly every authenticated request). Two problems: (1) it's **drift-prone** — a grant *expiring* fires no DB write, so the flag goes stale (true forever) and the short-circuit erodes; (2) during the current **founding-season** GTM push most orgs already carry an `org_overrides` row, so a naive flag is true for most orgs and saves nothing.
+**Tables affected:** `organizations`, `org_overrides`
+**Recommendation:** Don't add the column. Instead fetch active overrides **in the same query** via a PostgREST embed — the loaders already use nested selects (e.g. [user-contexts.ts](../../../lib/user-contexts.ts) does `organizations(...)`). Embed `org_overrides(type,value,target,expires_at,starts_at,revoked_at)` on the org select and filter "active" in JS (per-org row count is tiny). This is **one round-trip, always correct, no denormalization, no reconciliation burden**. Only revisit a cached flag if profiling shows the embed is a measurable cost. Note: `hasModuleEntitlement()` checks `subscriptionStatus === 'canceled'` *first* — compute effective `subscriptionStatus` (status grants) **before** that guard, or a status grant on a canceled org won't take effect.
+**Status:** Open — recommendation issued 2026-06-04; pending implementation.
+
+---
+
+### [2026-06-04] — Finding #24: Scenario A billing should reuse existing `organizations.billing_suspended_at` / `billing_suspension_reason`
+
+**Severity:** Advisory
+**Finding:** `organizations` already has `billing_suspended_at` and `billing_suspension_reason` columns. The plan's Scenario A (`suppress_billing` comps) should relate to / reuse these rather than inventing a parallel billing-state representation, to avoid two sources of truth for "is this org currently being billed." This is primarily a `/billing` concern but flagged here so the schema isn't duplicated.
+**Tables affected:** `organizations`, `org_overrides`
+**Recommendation:** During Scenario A design (`/billing`), decide whether a `suppress_billing` grant *sets* `billing_suspended_at` (single source of truth) or whether billing suspension is derived from active grants at read time. Do not store overlapping billing-suspension state in two places without a documented owner.
+**Status:** Open — flag for `/billing` review (plan Phase 4).
 
 ---
 

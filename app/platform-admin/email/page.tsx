@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { getPlatformAdminContext } from '@/lib/platform-auth';
+import { getPlatformAdminContext, requirePlatformAreaView } from '@/lib/platform-auth';
 import EmailDashboardClient from './EmailDashboardClient';
 
 export const metadata: Metadata = {
@@ -99,6 +99,7 @@ export type OptOutOrg = {
 };
 
 export default async function EmailDashboardPage() {
+  await requirePlatformAreaView('email');
   const auth = await getPlatformAdminContext();
   const { batches, optOuts, recipientCount, optOutCount } = await getInitialData();
 

@@ -8,6 +8,7 @@ interface Override {
   id: string;
   type: string;
   value: string | null;
+  target: { addons?: string[] } | null;
   expiresAt: string | null;
   reason: string;
   createdBy: string;
@@ -177,6 +178,11 @@ function fmtLimit(limit: number) {
 function isExpired(expiresAt: string | null) {
   if (!expiresAt) return false;
   return new Date(expiresAt) < new Date();
+}
+
+function daysLeftLabel(iso: string) {
+  const days = Math.ceil((new Date(iso).getTime() - Date.now()) / 86_400_000);
+  return days > 0 ? ` (${days}d left)` : '';
 }
 
 function tournamentStatusClass(status: string, styles: Record<string, string>) {
@@ -489,8 +495,9 @@ export default function OrgDetailClient({
   const [revoking, setRevoking] = useState<Record<string, boolean>>({});
 
   const [showForm, setShowForm] = useState(false);
-  const [formType, setFormType] = useState<'subscription_status' | 'comp_period'>('subscription_status');
+  const [formType, setFormType] = useState<'subscription_status' | 'comp_period' | 'module_addon'>('subscription_status');
   const [formValue, setFormValue] = useState('active');
+  const [formAddons, setFormAddons] = useState<string[]>([]);
   const [formExpires, setFormExpires] = useState('');
   const [formReason, setFormReason] = useState('');
   const [formSaving, setFormSaving] = useState(false);
@@ -627,6 +634,7 @@ export default function OrgDetailClient({
   const [transferOwnerSaving, setTransferOwnerSaving] = useState(false);
   const [transferOwnerError, setTransferOwnerError] = useState('');
   const [transferOwnerDone, setTransferOwnerDone] = useState('');
+  const [ownerPickId, setOwnerPickId] = useState('');
 
   async function handleTransferOwnership() {
     if (!transferOwnerModal || !transferOwnerReason.trim()) {
@@ -651,6 +659,7 @@ export default function OrgDetailClient({
         setTransferOwnerDone(transferOwnerModal.email);
         setTransferOwnerModal(null);
         setTransferOwnerReason('');
+        setOwnerPickId('');
         router.refresh();
       }
     } catch {
@@ -662,6 +671,8 @@ export default function OrgDetailClient({
 
   const activeOverrides = overrides.filter(o => !o.revokedAt);
   const historicalOverrides = overrides.filter(o => o.revokedAt);
+  const currentOwners = members.filter(m => m.role === 'owner');
+  const eligibleNewOwners = members.filter(m => m.role !== 'owner' && m.status === 'active');
   const selectedPlan = planOptions.find(plan => plan.id === planId) ?? initialPlan;
   const parsedTournamentLimit = Number(tournamentLimit);
   const wouldBeOverLimit = Number.isFinite(parsedTournamentLimit) &&
@@ -698,14 +709,19 @@ export default function OrgDetailClient({
       setFormError('Reason is required');
       return;
     }
+    if (formType === 'module_addon' && formAddons.length === 0) {
+      setFormError('Select at least one module to grant');
+      return;
+    }
     setFormSaving(true);
     setFormError('');
     try {
-      const body: Record<string, string> = {
+      const body: Record<string, unknown> = {
         type: formType,
         reason: formReason,
       };
       if (formType === 'subscription_status') body.value = formValue;
+      if (formType === 'module_addon') body.target = { addons: formAddons };
       if (formExpires) body.expires_at = new Date(formExpires).toISOString();
 
       const res = await fetch(`/api/platform-admin/orgs/${orgId}/overrides`, {
@@ -724,6 +740,7 @@ export default function OrgDetailClient({
         id: created.id,
         type: created.type,
         value: created.value ?? null,
+        target: created.target ?? null,
         expiresAt: created.expires_at ?? null,
         reason: created.reason,
         createdBy: created.created_by,
@@ -736,6 +753,7 @@ export default function OrgDetailClient({
       setFormReason('');
       setFormExpires('');
       setFormValue('active');
+      setFormAddons([]);
       setFormType('subscription_status');
     } catch {
       setFormError('Network error');
@@ -797,6 +815,9 @@ export default function OrgDetailClient({
                     {notesError && <span className={styles.rowError}>{notesError}</span>}
                   </div>
                 </>
+              )}
+              {!canManageSupport && (
+                <p className={styles.emptyNote}>Requires support access to add or edit notes. The timeline below is read-only.</p>
               )}
 
               <div className={styles.noteTimeline}>
@@ -919,13 +940,78 @@ export default function OrgDetailClient({
               </section>
             )}
 
+            {canManageSupport && (
+              <section className={styles.section}>
+                <h3 className={styles.sectionTitle}>Account Ownership</h3>
+                <p className={styles.emptyNote}>
+                  Current owner{currentOwners.length === 1 ? '' : 's'}:{' '}
+                  {currentOwners.length > 0 ? currentOwners.map(o => o.email).join(', ') : 'none assigned'}.
+                </p>
+                {eligibleNewOwners.length === 0 ? (
+                  <p className={styles.warningNote}>
+                    No other active members to transfer to. Invite the new owner to this organization and
+                    have them accept first, then return here. (You can also use Make Owner on the
+                    People &amp; Tournaments tab.)
+                  </p>
+                ) : (
+                  <div className={styles.formRow}>
+                    <label className={styles.formLabel}>Transfer ownership to</label>
+                    <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
+                      <select
+                        className={styles.formSelect}
+                        value={ownerPickId}
+                        onChange={e => setOwnerPickId(e.target.value)}
+                      >
+                        <option value="">Select a member…</option>
+                        {eligibleNewOwners.map(m => (
+                          <option key={m.userId} value={m.userId}>
+                            {m.displayName ? `${m.displayName} (${m.email})` : m.email}
+                          </option>
+                        ))}
+                      </select>
+                      <button
+                        type="button"
+                        className={styles.saveBtn}
+                        disabled={!ownerPickId}
+                        onClick={() => {
+                          const m = members.find(x => x.userId === ownerPickId);
+                          if (!m) return;
+                          setTransferOwnerDone('');
+                          setTransferOwnerError('');
+                          setTransferOwnerReason('');
+                          setTransferOwnerModal({ userId: m.userId, email: m.email, displayName: m.displayName });
+                        }}
+                      >
+                        Transfer ownership…
+                      </button>
+                    </div>
+                    <p className={styles.warningNote}>
+                      The selected member becomes the owner and all current owners are demoted to admin.
+                    </p>
+                  </div>
+                )}
+                {transferOwnerDone && (
+                  <p className={styles.savedIndicator}>Ownership transferred to {transferOwnerDone}</p>
+                )}
+              </section>
+            )}
+
+            {!canManageSupport && (
+              <section className={styles.section}>
+                <h3 className={styles.sectionTitle}>Organization Identity &amp; Ownership</h3>
+                <p className={styles.emptyNote}>
+                  Requires support access to rename the organization, change its slug, or transfer ownership.
+                </p>
+              </section>
+            )}
+
             <section className={styles.section}>
               <div className={styles.sectionHeader}>
-                <h3 className={styles.sectionTitle}>Team Ownership Transfers</h3>
+                <h3 className={styles.sectionTitle}>Coaches Portal Ownership Transfers</h3>
                 {pendingOwnershipTransfers.length > 0 && <span className={styles.savedIndicator}>{pendingOwnershipTransfers.length} pending</span>}
               </div>
               {pendingOwnershipTransfers.length === 0 ? (
-                <p className={styles.emptyNote}>No Team ownership transfers are waiting for platform completion.</p>
+                <p className={styles.emptyNote}>No Coaches Portal ownership transfers are waiting for platform completion.</p>
               ) : (
                 <div className={styles.noteTimeline}>
                   {pendingOwnershipTransfers.map(transfer => (
@@ -1109,11 +1195,28 @@ export default function OrgDetailClient({
                 )}
               </section>
             )}
+
+            {!isSuperAdmin && (
+              <section className={styles.section}>
+                <div className={styles.sectionHeader}>
+                  <h3 className={styles.sectionTitle}>Delete Organization</h3>
+                  <span className={styles.overrideType}>super admin only</span>
+                </div>
+                <p className={styles.emptyNote}>
+                  Requires super admin access. Escalate to a super admin to permanently delete an organization.
+                </p>
+              </section>
+            )}
           </div>
         )}
 
         {activeTab === 'billing' && (
           <div className={styles.workflowGrid}>
+            {!canManageBilling && (
+              <p className={styles.warningNote}>
+                View-only — requires billing access to change the plan, apply overrides, or cancel the subscription.
+              </p>
+            )}
             <section className={styles.section}>
               <div className={styles.sectionHeader}>
                 <h3 className={styles.sectionTitle}>
@@ -1227,8 +1330,28 @@ export default function OrgDetailClient({
                   >
                     <option value="subscription_status">Subscription Status</option>
                     <option value="comp_period">Comp Period</option>
+                    <option value="module_addon">Module Trial (timed)</option>
                   </select>
                 </div>
+
+                {formType === 'module_addon' && (
+                  <div className={styles.formRow}>
+                    <label className={styles.formLabel}>Modules to grant</label>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem' }}>
+                      {Object.keys(ADDON_MODULE_LABELS).map(m => (
+                        <label key={m} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', cursor: 'pointer' }}>
+                          <input
+                            type="checkbox"
+                            checked={formAddons.includes(m)}
+                            onChange={e => setFormAddons(prev => e.target.checked ? [...prev, m] : prev.filter(x => x !== m))}
+                          />
+                          {ADDON_MODULE_LABELS[m]}
+                        </label>
+                      ))}
+                    </div>
+                    <p className={styles.warningNote}>Access turns on now and auto-reverts at the expiry below. Leave expiry blank for an open-ended grant.</p>
+                  </div>
+                )}
 
                 {formType === 'subscription_status' && (
                   <div className={styles.formRow}>
@@ -1284,9 +1407,16 @@ export default function OrgDetailClient({
                     <div className={styles.overrideMeta}>
                       <span className={styles.overrideType}>{o.type.replace('_', ' ')}</span>
                       {o.value && <span className={styles.overrideValue}>{o.value}</span>}
+                      {o.type === 'module_addon' && o.target?.addons && o.target.addons.length > 0 && (
+                        <span className={styles.overrideValue}>
+                          {o.target.addons.map(a => ADDON_MODULE_LABELS[a] ?? a).join(', ')}
+                        </span>
+                      )}
                       {o.expiresAt && (
                         <span className={styles.overrideExpiry}>
-                          expires {fmtDate(o.expiresAt)}
+                          {isExpired(o.expiresAt)
+                            ? `expired ${fmtDate(o.expiresAt)}`
+                            : `reverts ${fmtDate(o.expiresAt)}${daysLeftLabel(o.expiresAt)}`}
                         </span>
                       )}
                       <span className={styles.overrideReason}>{o.reason}</span>
@@ -1391,6 +1521,9 @@ export default function OrgDetailClient({
         {activeTab === 'entitlements' && (
           <section className={styles.section}>
             <h3 className={styles.sectionTitle}>Module Overrides</h3>
+            {!canManageProduct && (
+              <p className={styles.emptyNote}>Requires product access to change module overrides.</p>
+            )}
             {overrideableModules.length === 0 ? (
               <p className={styles.emptyNote}>All add-on modules are included in this org&apos;s plan.</p>
             ) : (
@@ -1448,7 +1581,7 @@ export default function OrgDetailClient({
                         <th>Role</th>
                         <th>Status</th>
                         <th>Last Sign In</th>
-                        {canManageSupport && <th></th>}
+                        <th></th>
                       </tr>
                     </thead>
                     <tbody>
@@ -1461,9 +1594,18 @@ export default function OrgDetailClient({
                           <td className={styles.dimText}>
                             {m.lastSignIn ? fmtDate(m.lastSignIn) : '-'}
                           </td>
-                          {canManageSupport && (
-                            <td>
-                              {m.role !== 'owner' && m.status === 'active' && (
+                          <td>
+                            <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
+                              {m.email && m.email !== '(unknown)' && (
+                                <a
+                                  href={`/platform-admin/customer-users?q=${encodeURIComponent(m.email)}`}
+                                  className={styles.adminLink}
+                                  title="Open this person in Customer Users (password reset, ban, notes)"
+                                >
+                                  User record
+                                </a>
+                              )}
+                              {canManageSupport && m.role !== 'owner' && m.status === 'active' && (
                                 <button
                                   type="button"
                                   className={styles.historyToggle}
@@ -1477,8 +1619,8 @@ export default function OrgDetailClient({
                                   Make Owner
                                 </button>
                               )}
-                            </td>
-                          )}
+                            </div>
+                          </td>
                         </tr>
                       ))}
                     </tbody>
