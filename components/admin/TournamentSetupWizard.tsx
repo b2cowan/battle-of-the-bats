@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { AlertCircle, ArrowRight, Copy, Plus, Trash2, X } from 'lucide-react';
 import styles from './TournamentSetupWizard.module.css';
 
-const WIZARD_ORDER = ['tournament', 'divisions', 'welcome', 'venues', 'contacts', 'review'] as const;
+const WIZARD_ORDER = ['tournament', 'divisions', 'welcome', 'venues', 'review'] as const;
 const CANADIAN_PROVINCES = ['AB', 'BC', 'MB', 'NB', 'NL', 'NS', 'NT', 'NU', 'ON', 'PE', 'QC', 'SK', 'YT'];
 const DIVISION_PRESETS: Record<Exclude<DivisionPreset, 'custom'>, string[]> = {
   youth: ['U9', 'U11', 'U13', 'U15', 'U17', 'U19'],
@@ -76,13 +76,6 @@ type ExistingTournament = {
   status?: string | null;
 };
 
-type ContactDraft = {
-  name: string;
-  email: string;
-  phone?: string;
-  role?: string;
-};
-
 type SkippedState = Record<SkippableStep, boolean>;
 
 type PastTournament = {
@@ -118,7 +111,6 @@ type PreStepMode = 'choose' | 'clone-name';
 type CloneNameForm = {
   name: string;
   slug: string;
-  year: string;
   startDate: string;
   endDate: string;
   autoSlug: boolean;
@@ -230,7 +222,6 @@ function getUniqueTournamentName(baseName: string, existingNames: string[]) {
 function getDefaultTournamentForm(existingNames: string[] = [], year = new Date().getFullYear()) {
   const defaultName = getUniqueTournamentName(`${year} Tournament`, existingNames);
   return {
-    year: String(year),
     name: defaultName,
     slug: generateSlug(defaultName),
     startDate: '',
@@ -252,7 +243,6 @@ function getRepeatNameForm(tournament: PastTournament): CloneNameForm {
   return {
     name: repeat.name,
     slug: generateSlug(repeat.name),
-    year: String(repeat.year),
     startDate: '',
     endDate: '',
     autoSlug: true,
@@ -358,7 +348,6 @@ function getDefaultSkipped(): SkippedState {
     divisions: false,
     welcome: false,
     venues: false,
-    contacts: false,
   };
 }
 
@@ -475,7 +464,7 @@ export default function TournamentSetupWizard({
   const orgParam = orgSlug ? `&orgSlug=${encodeURIComponent(orgSlug)}` : '';
   const [cloneSource, setCloneSource] = useState<PastTournament | null>(null);
   const [cloneNameForm, setCloneNameForm] = useState<CloneNameForm>({
-    name: '', slug: '', year: String(new Date().getFullYear() + 1),
+    name: '', slug: '',
     startDate: '', endDate: '', autoSlug: true,
   });
   const [cloneCopyOptions, setCloneCopyOptions] = useState<CloneCopyOptions>(DEFAULT_CLONE_COPY_OPTIONS);
@@ -507,12 +496,6 @@ export default function TournamentSetupWizard({
   const [venueDraft, setVenueDraft] = useState<VenueFields>(buildVenueDraft);
   const [venueQueue, setVenueQueue] = useState<QueuedVenue[]>([]);
   const [closeConfirmOpen, setCloseConfirmOpen] = useState(false);
-  const [contactForm, setContactForm] = useState({
-    name: '',
-    email: orgContactEmail ?? '',
-    phone: '',
-    role: '',
-  });
 
   useEffect(() => {
     if (!isOpen) return;
@@ -529,7 +512,7 @@ export default function TournamentSetupWizard({
     } else {
       setPreStep(hasPast ? 'choose' : null);
       setCloneSource(null);
-      setCloneNameForm({ name: '', slug: '', year: String(new Date().getFullYear() + 1), startDate: '', endDate: '', autoSlug: true });
+      setCloneNameForm({ name: '', slug: '', startDate: '', endDate: '', autoSlug: true });
       setCloneCopyOptions(DEFAULT_CLONE_COPY_OPTIONS);
     }
     setCloneWorking(false);
@@ -555,7 +538,6 @@ export default function TournamentSetupWizard({
     setVenueQueue([]);
     setCloseConfirmOpen(false);
     setDataLoading(true);
-    setContactForm({ name: '', email: orgContactEmail ?? '', phone: '', role: '' });
     Promise.all([
       requestJson<ExistingVenue[]>(`/api/admin/venues?scope=org${orgParam}`).catch(() => []),
       requestJson<ExistingTournament[]>(`/api/admin/tournaments${orgQuery}`).catch(() => []),
@@ -577,11 +559,21 @@ export default function TournamentSetupWizard({
   if (!isOpen) return null;
 
   function updateTournamentStartDate(startDate: string) {
-    setTournamentForm(form => ({
-      ...form,
-      startDate,
-      endDate: startDate ? addDaysToDateValue(startDate, 2) : '',
-    }));
+    setTournamentForm(form => {
+      const endDate = startDate ? addDaysToDateValue(startDate, 2) : '';
+      // Year is derived from the start date. If the name is still the auto-generated
+      // "<year> Tournament", re-sync it (and the slug) to the new year.
+      const autoNamed = /^\d{4} Tournament(?: \d+)?$/.test(form.name);
+      if (!startDate || !autoNamed) return { ...form, startDate, endDate };
+      const name = getUniqueTournamentName(`${startDate.slice(0, 4)} Tournament`, existingTournamentNames);
+      return {
+        ...form,
+        startDate,
+        endDate,
+        name,
+        ...(slugEdited ? {} : { slug: generateSlug(name) }),
+      };
+    });
   }
 
   function updateTournamentEndDate(endDate: string) {
@@ -680,27 +672,28 @@ export default function TournamentSetupWizard({
 
   function getTournamentDraft(): TournamentDraft {
     const slug = tournamentForm.slug || generateSlug(tournamentForm.name);
-    const year = Number(tournamentForm.year);
     const name = tournamentForm.name.trim();
 
-    if (!Number.isInteger(year) || year < 1900) throw new Error('Enter a valid tournament year.');
     if (!name) throw new Error('Enter a tournament name before continuing.');
     if (existingTournamentNames.some(existingName => normalizeTournamentName(existingName) === normalizeTournamentName(name))) {
       throw new Error(`A tournament named "${name}" already exists. Use a different name, such as "${getUniqueTournamentName(name, existingTournamentNames)}".`);
     }
     if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) throw new Error('Use a valid public link before continuing.');
-    if (tournamentForm.endDate && !tournamentForm.startDate) throw new Error('Choose a start date before setting an end date.');
-    if (tournamentForm.startDate && tournamentForm.startDate < getTodayDateValue()) throw new Error('Start date cannot be before today.');
-    if (tournamentForm.startDate && tournamentForm.endDate && tournamentForm.endDate < tournamentForm.startDate) {
+    if (!tournamentForm.startDate || !tournamentForm.endDate) {
+      throw new Error('Add start and end dates. You can change them later if they are still being finalized.');
+    }
+    if (tournamentForm.startDate < getTodayDateValue()) throw new Error('Start date cannot be before today.');
+    if (tournamentForm.endDate < tournamentForm.startDate) {
       throw new Error('End date cannot be before the start date.');
     }
 
+    // Year is derived from the start date — the wizard no longer asks for it separately.
     return {
-      year,
+      year: Number(tournamentForm.startDate.slice(0, 4)),
       name,
       slug,
-      startDate: tournamentForm.startDate || null,
-      endDate: tournamentForm.endDate || null,
+      startDate: tournamentForm.startDate,
+      endDate: tournamentForm.endDate,
     };
   }
 
@@ -748,18 +741,6 @@ export default function TournamentSetupWizard({
       throw new Error('Click "Create" before continuing, or clear the venue form.');
     }
     return venueQueue;
-  }
-
-  function getContactDraft(): ContactDraft {
-    const email = contactForm.email.trim().toLowerCase();
-    if (!contactForm.name.trim() || !email) throw new Error('Add a contact name and email, or skip this step.');
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error('Enter a valid public contact email.');
-    return {
-      name: contactForm.name.trim(),
-      email,
-      phone: contactForm.phone.trim() || undefined,
-      role: contactForm.role.trim() || undefined,
-    };
   }
 
   function getNextStep(step: WizardStep) {
@@ -814,10 +795,6 @@ export default function TournamentSetupWizard({
         if (venueQueue.length === 0) throw new Error('Select or add at least one venue, or skip this step.');
         setSkipped(prev => ({ ...prev, venues: false }));
       }
-      if (step === 'contacts') {
-        getContactDraft();
-        setSkipped(prev => ({ ...prev, contacts: false }));
-      }
       setStepError('');
       advance(step);
     } catch (err) {
@@ -832,7 +809,6 @@ export default function TournamentSetupWizard({
         divisions: true,
         welcome: true,
         venues: true,
-        contacts: true,
       });
       setActiveStep('review');
       return;
@@ -858,7 +834,6 @@ export default function TournamentSetupWizard({
       const divisions = skipped.divisions ? [] : getDivisionDraftRows();
       const announcement = !skipped.welcome && useWelcomeMsg ? { body: welcomeMsg.trim() } : null;
       const allVenues = skipped.venues ? [] : venueQueue;
-      const contact = skipped.contacts ? null : getContactDraft();
 
       const created = await requestJson<CreatedTournament & { success: boolean }>(`/api/admin/setup-tournament${orgQuery}`, {
         method: 'POST',
@@ -886,30 +861,6 @@ export default function TournamentSetupWizard({
           }),
         })),
       ]);
-
-      if (contact) {
-        await requestJson<{ success: boolean }>(`/api/admin/contacts${orgQuery}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            action: 'save',
-            data: {
-              tournamentId: created.id,
-              ...contact,
-            },
-          }),
-        });
-
-        await requestJson<{ success: boolean }>(`/api/admin/tournaments${orgQuery}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            action: 'set-contact-email',
-            id: created.id,
-            data: { contactEmail: contact.email },
-          }),
-        });
-      }
 
       await onCreated({ id: created.id, name: created.name, slug: created.slug, creationMethod: 'blank' });
     } catch (err) {
@@ -1101,7 +1052,8 @@ export default function TournamentSetupWizard({
     const selectedCopyGroups = REUSE_COPY_OPTION_GROUPS
       .filter(option => cloneCopyOptions[option.key])
       .map(option => option.key);
-    const cloneDraftYear = Number(cloneNameForm.year);
+    // Year is derived from the start date — the clone form no longer asks for it separately.
+    const cloneDraftYear = cloneNameForm.startDate ? Number(cloneNameForm.startDate.slice(0, 4)) : NaN;
     const reuseWarnings = getReuseSetupWarnings(cloneSource, cloneDraftYear, cloneCopyOptions);
     const toggleCopyOption = (key: CloneCopyOptionKey) => {
       setCloneCopyOptions(options => ({ ...options, [key]: !options[key] }));
@@ -1112,16 +1064,16 @@ export default function TournamentSetupWizard({
       if (!cloneSource) return;
       const name = cloneNameForm.name.trim();
       const slug = cloneNameForm.slug.trim();
-      const year = Number(cloneNameForm.year);
       if (!name) { setCloneError('Enter a tournament name.'); return; }
       if (!slug || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) { setCloneError('Enter a valid URL slug (lowercase letters, numbers, hyphens).'); return; }
-      if (!Number.isInteger(year) || year < 2000 || year > 2100) { setCloneError('Enter a valid year.'); return; }
-      if (cloneNameForm.startDate && cloneNameForm.startDate < getTodayDateValue()) { setCloneError('Start date cannot be before today.'); return; }
-      if (cloneNameForm.endDate && !cloneNameForm.startDate) { setCloneError('Choose a start date before setting an end date.'); return; }
-      if (cloneNameForm.startDate && cloneNameForm.endDate && cloneNameForm.endDate < cloneNameForm.startDate) {
+      if (!cloneNameForm.startDate || !cloneNameForm.endDate) { setCloneError('Add start and end dates. You can change them later if they are still being finalized.'); return; }
+      if (cloneNameForm.startDate < getTodayDateValue()) { setCloneError('Start date cannot be before today.'); return; }
+      if (cloneNameForm.endDate < cloneNameForm.startDate) {
         setCloneError('End date cannot be before the start date.');
         return;
       }
+      // Year is derived from the start date.
+      const year = Number(cloneNameForm.startDate.slice(0, 4));
       if (selectedCopyCount === 0) {
         setCloneError('Choose at least one setup area to reuse, or start a blank tournament.');
         return;
@@ -1207,17 +1159,6 @@ export default function TournamentSetupWizard({
                 />
               </label>
               <label className={styles.fieldLabel}>
-                Year *
-                <input
-                  className="form-input"
-                  type="number"
-                  min="2000"
-                  max="2100"
-                  value={cloneNameForm.year}
-                  onChange={e => setCloneNameForm(f => ({ ...f, year: e.target.value }))}
-                />
-              </label>
-              <label className={styles.fieldLabel}>
                 Public link *
                 <input
                   className="form-input"
@@ -1231,7 +1172,7 @@ export default function TournamentSetupWizard({
                 />
               </label>
               <label className={styles.fieldLabel}>
-                Start date <span style={{ fontWeight: 400, color: 'var(--white-40)' }}>optional</span>
+                Start date *
                 <input
                   className="form-input"
                   type="date"
@@ -1245,16 +1186,20 @@ export default function TournamentSetupWizard({
                 />
               </label>
               <label className={styles.fieldLabel}>
-                End date <span style={{ fontWeight: 400, color: 'var(--white-40)' }}>optional</span>
+                End date *
                 <input
                   className="form-input"
                   type="date"
                   value={cloneNameForm.endDate}
                   min={cloneNameForm.startDate || getTodayDateValue()}
+                  disabled={!cloneNameForm.startDate}
                   onChange={e => setCloneNameForm(f => ({ ...f, endDate: e.target.value }))}
                 />
               </label>
             </div>
+            <p className={styles.fieldHint}>
+              Start and end dates are required. You can change them later if they are still being finalized.
+            </p>
 
             <div className={styles.reuseCopyGrid}>
               <div className={styles.reuseCopyPanel}>
@@ -1340,27 +1285,7 @@ export default function TournamentSetupWizard({
       'Create your tournament',
       'Start with core tournament details. The tournament stays private as a draft.',
       (
-        <div className={styles.modalGridTwo}>
-          <label className={styles.fieldLabel}>
-            Tournament year
-            <input
-              className="form-input"
-              type="number"
-              min="2000"
-              max="2100"
-              value={tournamentForm.year}
-              onChange={e => {
-                markFormTouched();
-                const year = e.target.value;
-                setTournamentForm(form => {
-                  const name = /^\d{4} Tournament(?: \d+)?$/.test(form.name)
-                    ? getUniqueTournamentName(`${year} Tournament`, existingTournamentNames)
-                    : form.name;
-                  return { ...form, year, name, ...(!slugEdited ? { slug: generateSlug(name) } : {}) };
-                });
-              }}
-            />
-          </label>
+        <>
           <label className={styles.fieldLabel}>
             Tournament name
             <input
@@ -1374,14 +1299,19 @@ export default function TournamentSetupWizard({
               placeholder="e.g. Spring Classic 2026"
             />
           </label>
-          <label className={styles.fieldLabel}>
-            Start date optional
-            <input className="form-input" type="date" value={tournamentForm.startDate} min={getTodayDateValue()} onChange={e => { markFormTouched(); updateTournamentStartDate(e.target.value); }} />
-          </label>
-          <label className={styles.fieldLabel}>
-            End date optional
-            <input className="form-input" type="date" value={tournamentForm.endDate} min={tournamentForm.startDate || getTodayDateValue()} onChange={e => { markFormTouched(); updateTournamentEndDate(e.target.value); }} />
-          </label>
+          <div className={styles.modalGridTwo}>
+            <label className={styles.fieldLabel}>
+              Start date
+              <input className="form-input" type="date" value={tournamentForm.startDate} min={getTodayDateValue()} onChange={e => { markFormTouched(); updateTournamentStartDate(e.target.value); }} />
+            </label>
+            <label className={styles.fieldLabel}>
+              End date
+              <input className="form-input" type="date" value={tournamentForm.endDate} min={tournamentForm.startDate || getTodayDateValue()} disabled={!tournamentForm.startDate} onChange={e => { markFormTouched(); updateTournamentEndDate(e.target.value); }} />
+            </label>
+          </div>
+          <p className={styles.fieldHint}>
+            Start and end dates are required. You can change them later if they are still being finalized.
+          </p>
           <label className={styles.fieldLabel}>
             Public link
             <input
@@ -1395,7 +1325,7 @@ export default function TournamentSetupWizard({
               placeholder="spring-classic-2026"
             />
           </label>
-        </div>
+        </>
       ),
       { step: 'tournament', saveLabel: 'Next', onSave: () => validateAndAdvance('tournament'), hideBack: true },
     );
@@ -1647,26 +1577,9 @@ export default function TournamentSetupWizard({
     );
   }
 
-  if (activeStep === 'contacts') {
-    return renderFrame(
-      'Add public contact',
-      'This contact is used as the tournament contact email coaches can rely on.',
-      (
-        <div className={styles.modalGridTwo}>
-          <label className={styles.fieldLabel}>Name *<input className="form-input" value={contactForm.name} onChange={e => setContactForm(form => ({ ...form, name: e.target.value }))} placeholder="Jane Doe" /></label>
-          <label className={styles.fieldLabel}>Role<input className="form-input" value={contactForm.role} onChange={e => setContactForm(form => ({ ...form, role: e.target.value }))} placeholder="Tournament Director" /></label>
-          <label className={styles.fieldLabel}>Email *<input className="form-input" type="email" value={contactForm.email} onChange={e => setContactForm(form => ({ ...form, email: e.target.value }))} placeholder="director@example.com" /></label>
-          <label className={styles.fieldLabel}>Phone<input className="form-input" value={contactForm.phone} onChange={e => setContactForm(form => ({ ...form, phone: e.target.value }))} placeholder="Optional" /></label>
-        </div>
-      ),
-      { step: 'contacts', saveLabel: 'Next', onSave: () => validateAndAdvance('contacts'), allowSkip: true },
-    );
-  }
-
   const divisionCount = skipped.divisions ? 0 : divisionRows.filter(row => row.name.trim()).length;
   const venueCount = skipped.venues ? 0 : venueQueue.length;
   const welcomeIncluded = !skipped.welcome && useWelcomeMsg && !!welcomeMsg.trim();
-  const contactIncluded = !skipped.contacts && !!contactForm.name.trim() && !!contactForm.email.trim();
 
   return renderFrame(
     skipped.tournament ? 'Finish setup' : 'Review and save',
@@ -1675,7 +1588,7 @@ export default function TournamentSetupWizard({
       : 'Saving keeps the tournament hidden from the public. You can activate it later from Manage Tournaments.',
     skipped.tournament ? (
       <div className={styles.reviewPanel}>
-        <div className={styles.emptyModalState}>You skipped tournament creation, so no tournament, divisions, venues, or contacts will be created.</div>
+        <div className={styles.emptyModalState}>You skipped tournament creation, so no tournament, divisions, or venues will be created.</div>
       </div>
     ) : (
       <div className={styles.reviewPanel}>
@@ -1683,7 +1596,7 @@ export default function TournamentSetupWizard({
         <div className={styles.reviewItem}><span>Divisions</span><strong>{divisionCount > 0 ? `${divisionCount} included` : 'Skipped'}</strong></div>
         <div className={styles.reviewItem}><span>Welcome message</span><strong>{welcomeIncluded ? 'Included' : 'Skipped'}</strong></div>
         <div className={styles.reviewItem}><span>Venues</span><strong>{venueCount > 0 ? `${venueCount} included` : 'Skipped'}</strong></div>
-        <div className={styles.reviewItem}><span>Public contact</span><strong>{contactIncluded ? contactForm.email.trim().toLowerCase() : 'Skipped'}</strong></div>
+        <div className={styles.reviewItem}><span>Public contact</span><strong>You (editable in Event Settings)</strong></div>
         <div className={styles.reviewItem}><span>Public visibility</span><strong>Not live yet</strong></div>
         <div className={styles.emptyModalState}>
           After saving, only admins can work on this tournament. Registration stays closed and the public page is not live until you activate it.

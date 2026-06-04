@@ -19,7 +19,7 @@ import PricingSection from '@/components/PricingSection';
 import styles from './onboarding.module.css';
 
 const PLAN_ORDER: OrgPlan[] = ['tournament', 'team', 'tournament_plus', 'league', 'club'];
-const STARTUP_ORDER = ['tournament', 'divisions', 'welcome', 'venues', 'contacts'] as const;
+const STARTUP_ORDER = ['tournament', 'divisions', 'welcome', 'venues'] as const;
 const WIZARD_ORDER = ['plan', 'qualifying', ...STARTUP_ORDER, 'review'] as const;
 const LEAGUE_STARTUP_ORDER = ['league_season', 'league_divisions', 'league_registration', 'league_tournament'] as const;
 const LEAGUE_WIZARD_ORDER = ['league-season', 'league-divisions', 'league-registration', 'league-tournament', 'league-review'] as const;
@@ -140,10 +140,8 @@ function generateSlug(name: string): string {
 }
 
 function getDefaultTournamentForm() {
-  const nextYear = new Date().getFullYear();
-  const defaultName = `${nextYear} Tournament`;
+  const defaultName = `${new Date().getFullYear()} Tournament`;
   return {
-    year: String(nextYear),
     name: defaultName,
     slug: generateSlug(defaultName),
     startDate: '',
@@ -178,7 +176,6 @@ function getDefaultDraftSkipped(): DraftSkippedState {
     divisions: false,
     welcome: false,
     venues: false,
-    contacts: false,
   };
 }
 
@@ -379,7 +376,6 @@ export default function OnboardingPage() {
 
   const [venueDraft, setVenueDraft] = useState<VenueFields>(buildVenueDraft);
   const [venueRows, setVenueRows] = useState<VenueRow[]>([]);
-  const [contactForm, setContactForm] = useState({ email: '' });
   const [leagueSeasonForm, setLeagueSeasonForm] = useState<LeagueSeasonForm>(getDefaultLeagueSeasonForm);
   const [leagueSlugEdited, setLeagueSlugEdited] = useState(false);
   const [leagueDivisionPreset, setLeagueDivisionPreset] = useState<LeagueDivisionPreset>('youth');
@@ -649,7 +645,6 @@ export default function OnboardingPage() {
     resetLeagueSetupDraft();
     setVenueDraft(buildVenueDraft());
     setVenueRows([]);
-    setContactForm({ email: currentOrg?.contactEmail ?? '' });
     setStepError('');
   }
 
@@ -808,11 +803,21 @@ export default function OnboardingPage() {
   }
 
   function updateTournamentStartDate(startDate: string) {
-    setTournamentForm(form => ({
-      ...form,
-      startDate,
-      endDate: startDate ? addDaysToDateValue(startDate, 2) : '',
-    }));
+    setTournamentForm(form => {
+      const endDate = startDate ? addDaysToDateValue(startDate, 2) : '';
+      // The tournament year is derived from the start date. If the name is still the
+      // auto-generated "<year> Tournament", re-sync it (and the slug) to the new year.
+      const autoNamed = /^\d{4} Tournament$/.test(form.name);
+      if (!startDate || !autoNamed) return { ...form, startDate, endDate };
+      const name = `${startDate.slice(0, 4)} Tournament`;
+      return {
+        ...form,
+        startDate,
+        endDate,
+        name,
+        ...(slugEdited ? {} : { slug: generateSlug(name) }),
+      };
+    });
   }
 
   function updateTournamentEndDate(endDate: string) {
@@ -845,34 +850,31 @@ export default function OnboardingPage() {
 
   function getTournamentDraft() {
     const slug = tournamentForm.slug || generateSlug(tournamentForm.name);
-    const year = Number(tournamentForm.year);
     const name = tournamentForm.name.trim();
 
-    if (!Number.isInteger(year) || year < 1900) {
-      throw new Error('Enter a valid tournament year.');
-    }
     if (!name) {
       throw new Error('Enter a tournament name before continuing.');
     }
     if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) {
       throw new Error('Use a valid public link before continuing.');
     }
-    if (tournamentForm.endDate && !tournamentForm.startDate) {
-      throw new Error('Choose a start date before setting an end date.');
+    if (!tournamentForm.startDate || !tournamentForm.endDate) {
+      throw new Error('Add start and end dates. You can change them later if they are still being finalized.');
     }
-    if (tournamentForm.startDate && tournamentForm.startDate < getTodayDateValue()) {
+    if (tournamentForm.startDate < getTodayDateValue()) {
       throw new Error('Start date cannot be before today.');
     }
-    if (tournamentForm.startDate && tournamentForm.endDate && tournamentForm.endDate < tournamentForm.startDate) {
+    if (tournamentForm.endDate < tournamentForm.startDate) {
       throw new Error('End date cannot be before the start date.');
     }
 
+    // Year is derived from the start date — the wizard no longer asks for it separately.
     return {
-      year,
+      year: Number(tournamentForm.startDate.slice(0, 4)),
       name,
       slug,
-      startDate: tournamentForm.startDate || null,
-      endDate: tournamentForm.endDate || null,
+      startDate: tournamentForm.startDate,
+      endDate: tournamentForm.endDate,
     };
   }
 
@@ -933,13 +935,6 @@ export default function OnboardingPage() {
       throw new Error('Each added venue needs a venue name. Address details are optional.');
     }
     return rows;
-  }
-
-  function getContactDraft() {
-    const email = contactForm.email.trim().toLowerCase();
-    if (!email) return null;
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error('Enter a valid public contact email, or skip this step.');
-    return { email };
   }
 
   function getLeagueSeasonDraft() {
@@ -1053,17 +1048,6 @@ export default function OnboardingPage() {
     }
   }
 
-  async function saveContactsStep() {
-    try {
-      getContactDraft(); // validates email format; returns null if empty (both are fine to advance)
-      setDraftSkipped(prev => ({ ...prev, contacts: false }));
-      setStepError('');
-      await advanceWizard('contacts');
-    } catch (err) {
-      setStepError(err instanceof Error ? err.message : 'Unable to continue.');
-    }
-  }
-
   async function saveLeagueSeasonStep() {
     try {
       const draft = getLeagueSeasonDraft();
@@ -1121,9 +1105,6 @@ export default function OnboardingPage() {
     if (taskId === 'venues') {
       setVenueDraft(buildVenueDraft());
       setVenueRows([]);
-    }
-    if (taskId === 'contacts') {
-      setContactForm({ email: '' });
     }
   }
 
@@ -1199,7 +1180,6 @@ export default function OnboardingPage() {
       const divisions = draftSkipped.divisions ? [] : getDivisionDraftRows();
       const announcement = !draftSkipped.welcome && useWelcomeMsg ? { body: welcomeMsg.trim() } : null;
       const venues = draftSkipped.venues ? [] : getVenueDraftRows();
-      const contact = draftSkipped.contacts ? null : getContactDraft();
 
       const created = await requestJson<{ success: boolean; id: string; slug: string; name: string }>('/api/admin/setup-tournament', {
         method: 'POST',
@@ -1225,19 +1205,6 @@ export default function OnboardingPage() {
           },
         }),
       })));
-
-      if (contact) {
-        // contacts table retired (migration 090) — only the tournament contact_email is persisted
-        await requestJson<{ success: boolean }>('/api/admin/tournaments', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            action: 'set-contact-email',
-            id: created.id,
-            data: { contactEmail: contact.email },
-          }),
-        });
-      }
 
       await requestJson<{ ok: boolean }>('/api/admin/org/complete-onboarding', { method: 'POST' });
       await refreshTournamentContext();
@@ -1822,26 +1789,23 @@ export default function OnboardingPage() {
         'Start with core tournament details. The tournament stays private as a draft.',
         (
           <>
+            <label className={styles.fieldLabel}>
+              Tournament name
+              <input
+                className="form-input"
+                value={tournamentForm.name}
+                onChange={e => {
+                  const name = e.target.value;
+                  setTournamentForm(form => ({
+                    ...form,
+                    name,
+                    slug: slugEdited ? form.slug : generateSlug(name),
+                  }));
+                }}
+              />
+            </label>
+
             <div className={styles.modalGridTwo}>
-              <label className={styles.fieldLabel}>
-                Year
-                <input className="form-input" value={tournamentForm.year} onChange={e => setTournamentForm(form => ({ ...form, year: e.target.value }))} />
-              </label>
-              <label className={styles.fieldLabel}>
-                Tournament name
-                <input
-                  className="form-input"
-                  value={tournamentForm.name}
-                  onChange={e => {
-                    const name = e.target.value;
-                    setTournamentForm(form => ({
-                      ...form,
-                      name,
-                      slug: slugEdited ? form.slug : generateSlug(name),
-                    }));
-                  }}
-                />
-              </label>
               <label className={styles.fieldLabel}>
                 Start date
                 <input
@@ -1864,6 +1828,9 @@ export default function OnboardingPage() {
                 />
               </label>
             </div>
+            <p className={styles.fieldHint}>
+              Start and end dates are required. You can change them later if they are still being finalized.
+            </p>
 
             <label className={styles.fieldLabel}>
               Public link
@@ -2173,33 +2140,10 @@ export default function OnboardingPage() {
       );
     }
 
-    if (activeModal === 'contacts') {
-      return renderModalFrame(
-        'Set public contact email',
-        'This email is shown to coaches and teams as the tournament contact. You can update it later from tournament settings.',
-        (
-          <div>
-            <label className={styles.fieldLabel}>
-              Contact email <span style={{ color: 'var(--white-40)', fontWeight: 400 }}>optional</span>
-              <input
-                className="form-input"
-                type="email"
-                value={contactForm.email}
-                onChange={e => setContactForm(form => ({ ...form, email: e.target.value }))}
-                placeholder="director@example.com"
-              />
-            </label>
-          </div>
-        ),
-        { stepId: 'contacts', saveLabel: 'Next', onSave: saveContactsStep, taskId: 'contacts', allowSkip: true }
-      );
-    }
-
     if (activeModal === 'review') {
       const divisionCount = draftSkipped.divisions ? 0 : divisionRows.filter(row => row.name.trim()).length;
       const venueCount = draftSkipped.venues ? 0 : venueRows.filter(row => hasVenueContent(row)).length;
       const welcomeIncluded = !draftSkipped.welcome && useWelcomeMsg && !!welcomeMsg.trim();
-      const contactIncluded = !draftSkipped.contacts && !!contactForm.email.trim();
 
       return renderModalFrame(
         draftSkipped.tournament ? 'Finish setup' : 'Review and save',
@@ -2232,7 +2176,7 @@ export default function OnboardingPage() {
             </div>
             <div className={styles.reviewItem}>
               <span>Public contact</span>
-              <strong>{contactIncluded ? contactForm.email.trim().toLowerCase() : 'Skipped'}</strong>
+              <strong>You (editable in Event Settings)</strong>
             </div>
             <div className={styles.reviewItem}>
               <span>Public visibility</span>

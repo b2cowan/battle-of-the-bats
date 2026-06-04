@@ -180,11 +180,15 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
   const slug = typeof body.slug === 'string' && body.slug.trim()
     ? slugify(body.slug)
     : slugify(name);
-  const year = typeof body.year === 'number'
-    ? body.year
-    : Number.parseInt(String(body.year ?? new Date().getFullYear()), 10);
   const startDate = normalizeDate(body.startDate);
   const endDate = normalizeDate(body.endDate);
+  // Year is derived from the start date when present (the setup wizard no longer asks for it
+  // separately); fall back to an explicitly provided year for older callers.
+  const year = typeof startDate === 'string' && startDate
+    ? Number.parseInt(startDate.slice(0, 4), 10)
+    : typeof body.year === 'number'
+      ? body.year
+      : Number.parseInt(String(body.year ?? new Date().getFullYear()), 10);
 
   if (!name) return json({ error: 'Tournament name is required.' }, 400);
   if (!slug || !SLUG_RE.test(slug)) return json({ error: 'Tournament URL must contain lowercase letters, numbers, and hyphens.' }, 400);

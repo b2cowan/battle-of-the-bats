@@ -242,6 +242,8 @@ export async function cloneTournament(
       start_date: options.startDate ?? null,
       end_date: options.endDate ?? null,
       contact_email: source.contact_email ?? null,
+      // Inherit the source event's public contact so the cloned draft is never contactless.
+      default_contact_member_id: source.default_contact_member_id ?? null,
       require_score_finalization: source.require_score_finalization ?? null,
     };
 

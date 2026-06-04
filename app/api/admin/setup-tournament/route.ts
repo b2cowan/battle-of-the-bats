@@ -192,17 +192,33 @@ export async function POST(req: Request) {
       }
     }
 
+    // Year is derived from the start date when present — the setup wizards no longer ask for it
+    // separately. Callers without dates (e.g. the League/Club org modal) may still pass a year.
+    const derivedYear = startDate ? Number(startDate.slice(0, 4)) : Number(tournament?.year);
+    if (!Number.isInteger(derivedYear) || derivedYear < 1900) {
+      return Response.json({ error: 'A valid start date (or tournament year) is required.' }, { status: 400 });
+    }
+
+    // Public contact defaults to the member creating the tournament; editable later in Event Settings.
+    const { data: creatorMember } = await supabase
+      .from('organization_members')
+      .select('id')
+      .eq('organization_id', auth.org.id)
+      .eq('user_id', auth.user.id)
+      .maybeSingle();
+
     // 1. Create Tournament (always starts as draft; activate explicitly from the Tournaments page)
     const { data: newTnt, error: tntError } = await supabase
       .from('tournaments')
       .insert({
-        year:            tournament.year,
+        year:            derivedYear,
         name:            tournamentName,
         slug,
         status:          'draft',
         is_active:       false,
         start_date:      startDate,
         end_date:        endDate,
+        default_contact_member_id: creatorMember?.id ?? null,
         org_id: auth.org.id,
       })
       .select()
