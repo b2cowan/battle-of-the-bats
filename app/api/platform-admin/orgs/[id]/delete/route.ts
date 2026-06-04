@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requirePlatformAdmin } from '@/lib/platform-auth';
 import { supabaseAdmin, getOrgOwnerEmail } from '@/lib/supabase-admin';
 import { writePlatformAuditLog } from '@/lib/platform-audit';
-import { sendEmail, SITE_URL } from '@/lib/email';
+import { sendEmail, orgClosedHtml } from '@/lib/email';
 import { stripe } from '@/lib/stripe';
 import { PLAN_CONFIG } from '@/lib/plan-config';
 import type { OrgPlan } from '@/lib/types';
@@ -152,8 +152,7 @@ export async function DELETE(
       await sendEmail(
         ownerEmail,
         `Your ${org.name} account has been closed`,
-        `<p>Your FieldLogicHQ account for <strong>${org.name}</strong> (${planLabel}) has been permanently closed.</p>` +
-        `<p>If you have questions, please contact us at <a href="mailto:support@fieldlogichq.ca">support@fieldlogichq.ca</a>.</p>`,
+        orgClosedHtml({ orgName: org.name, planLabel, contactEmail: 'support@fieldlogichq.ca' }),
       );
     }
   }

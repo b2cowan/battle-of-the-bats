@@ -765,6 +765,22 @@ export function welcomeBackHtml(p: {
   `);
 }
 
+export function orgClosedHtml(p: {
+  orgName: string;
+  planLabel: string;
+  contactEmail?: string;
+}) {
+  const contact = p.contactEmail ?? ADMIN_EMAIL;
+  return wrap(`
+    <h2 style="color:#F1F5F9;font-size:1.3rem;font-weight:700;margin:0 0 1rem;">Account closed</h2>
+    <p style="margin:0 0 1rem;">Your FieldLogicHQ account for <strong>${p.orgName}</strong> (${p.planLabel}) has been permanently closed.</p>
+    <div style="background:#0F172A;border:1px solid rgba(245,158,11,0.3);border-left:3px solid rgba(245,158,11,0.5);padding:1.25rem;margin:1.5rem 0;">
+      <p style="margin:0;line-height:1.75;color:rgba(241,245,249,0.8);">The tournaments, registrations, and other data tied to this organization have been removed. This can't be undone.</p>
+    </div>
+    <p style="color:rgba(241,245,249,0.7);margin:0;">If you have questions or this was unexpected, contact us at <a href="mailto:${contact}" style="color:#D9F99D;">${contact}</a>.</p>
+  `);
+}
+
 // ── Founding Season email templates ──────────────────────────────────────────
 
 /**
