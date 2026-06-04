@@ -781,6 +781,72 @@ export function orgClosedHtml(p: {
   `);
 }
 
+export function orgInviteHtml(p: {
+  orgName: string;
+  roleLabel: string;
+  inviteUrl: string;
+  ctaLabel: string;
+  scorekeeperNote?: boolean;
+}) {
+  const note = p.scorekeeperNote
+    ? `<p style="color:rgba(241,245,249,0.7);">As a scorekeeper, you'll have access to the scorekeeper app to submit game results from your assigned tournaments. After setup, you'll land directly in Scorekeeper View.</p>`
+    : '';
+  return wrap(`
+    <h2 style="color:#fff;font-size:1.4rem;margin:0 0 1rem;">You're invited</h2>
+    <p>You've been invited to join <strong>${p.orgName}</strong> on <strong>FieldLogicHQ</strong> as a ${p.roleLabel}.</p>
+    ${note}
+    <p style="color:rgba(241,245,249,0.7);">Click below to accept your invitation and set up your account.</p>
+    <a href="${p.inviteUrl}" style="display:inline-block;background:#D9F99D;color:#0b0f14;padding:0.75rem 1.75rem;border-radius:2px;text-decoration:none;font-weight:800;font-size:0.82rem;letter-spacing:0.06em;margin:1.25rem 0;">${p.ctaLabel} &rarr;</a>
+    <p style="color:rgba(241,245,249,0.35);font-size:0.82rem;">This link expires in 24 hours. If you weren't expecting this invitation, you can safely ignore this email.</p>
+  `);
+}
+
+export function orgMemberAddedHtml(p: {
+  orgName: string;
+  roleLabel: string;
+  signInUrl: string;
+  ctaLabel: string;
+  scorekeeperNote?: boolean;
+}) {
+  const note = p.scorekeeperNote
+    ? 'Sign in to open Scorekeeper View and submit assigned game results.'
+    : 'No action is required — just sign in to get started.';
+  return wrap(`
+    <h2 style="color:#fff;font-size:1.4rem;margin:0 0 1rem;">You've been added to ${p.orgName}</h2>
+    <p>You now have access to <strong>${p.orgName}</strong> on <strong>FieldLogicHQ</strong> as a ${p.roleLabel}.</p>
+    <p style="color:rgba(241,245,249,0.7);">${note}</p>
+    <a href="${p.signInUrl}" style="display:inline-block;background:#D9F99D;color:#0b0f14;padding:0.75rem 1.75rem;border-radius:2px;text-decoration:none;font-weight:800;font-size:0.82rem;letter-spacing:0.06em;margin:1.25rem 0;">${p.ctaLabel} &rarr;</a>
+    <p style="color:rgba(241,245,249,0.35);font-size:0.82rem;">If you weren't expecting this, you can safely ignore this email.</p>
+  `);
+}
+
+export function orgDeletionRequestHtml(p: {
+  orgName: string;
+  orgSlug: string;
+  orgId: string;
+  ownerEmail: string;
+  planLabel: string;
+  reason: string;
+  requestedAt: string;
+}) {
+  const row = (label: string, value: string) =>
+    `<tr><td style="padding:0.4rem 1rem 0.4rem 0;color:rgba(241,245,249,0.45);white-space:nowrap;vertical-align:top;">${label}</td><td style="padding:0.4rem 0;color:rgba(241,245,249,0.85);">${value}</td></tr>`;
+  return wrap(`
+    <h2 style="color:#fff;font-size:1.4rem;margin:0 0 1rem;">Organization Deletion Request</h2>
+    <div style="background:#0F172A;border:1px solid rgba(30,58,138,0.25);border-left:3px solid rgba(30,58,138,0.5);padding:1.25rem;margin:1.25rem 0;">
+      <table style="border-collapse:collapse;width:100%;font-size:0.88rem;line-height:1.5;">
+        ${row('Organization', `<strong>${p.orgName}</strong>`)}
+        ${row('Slug', p.orgSlug)}
+        ${row('Org ID', `<span style="font-family:monospace;font-size:0.8rem;">${p.orgId}</span>`)}
+        ${row('Owner', p.ownerEmail)}
+        ${row('Plan', p.planLabel)}
+        ${row('Reason', p.reason || '<em>No reason provided</em>')}
+        ${row('Requested at', p.requestedAt)}
+      </table>
+    </div>
+  `);
+}
+
 // ── Founding Season email templates ──────────────────────────────────────────
 
 /**

@@ -1,15 +1,9 @@
 import { NextResponse } from 'next/server';
-import { Resend } from 'resend';
 import { getAuthContext, unauthorized, requireCapability } from '@/lib/api-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { PLAN_CONFIG } from '@/lib/plan-config';
+import { sendEmail, orgInviteHtml, orgMemberAddedHtml } from '@/lib/email';
 import type { OrgRole } from '@/lib/types';
-
-let _resend: import('resend').Resend | null = null;
-function getResend() {
-  if (!_resend) _resend = new Resend(process.env.RESEND_API_KEY);
-  return _resend;
-}
 
 function getActionLink(data: unknown) {
   return (data as { properties?: { action_link?: string | null } }).properties?.action_link ?? null;
@@ -80,16 +74,12 @@ export async function POST(req: Request) {
   const existingUser = usersData?.users.find(u => u.email?.toLowerCase() === email);
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://fieldlogichq.ca';
-  const fromAddress = process.env.RESEND_FROM ?? 'noreply@fieldlogichq.ca';
   const roleLabel = ROLE_EMAIL_LABEL[role] ?? role;
   const signInPath = role === 'official'
     ? `/auth/login?next=${encodeURIComponent(`/${org.slug}/scorekeeper`)}`
     : '/auth/login';
   const signInUrl = `${appUrl}${signInPath}`;
   const signInAction = role === 'official' ? 'Open Scorekeeper View' : 'Sign In';
-  const existingUserNote = role === 'official'
-    ? 'Sign in to open Scorekeeper View and submit assigned game results.'
-    : 'No action is required - just sign in to get started:';
 
   if (existingUser) {
     // Check they're not already in THIS org
@@ -140,33 +130,11 @@ export async function POST(req: Request) {
     });
 
     // Notify the existing user that they now have access to this org.
-    await getResend().emails.send({
-      from: fromAddress,
-      to: email,
-      subject: `You've been added to ${org.name} on FieldLogicHQ`,
-      html: `
-<!DOCTYPE html>
-<html>
-<body style="font-family: sans-serif; max-width: 480px; margin: 0 auto; padding: 2rem; color: #1a1a2e;">
-  <h2 style="margin-top: 0;">You've been added to ${org.name}</h2>
-  <p>You now have access to <strong>${org.name}</strong> on <strong>FieldLogicHQ</strong> as a ${roleLabel}.</p>
-  <p>${existingUserNote}</p>
-  <p style="margin: 1.5rem 0;">
-    <a href="${signInUrl}"
-       style="background: #7c3aed; color: #fff; padding: 0.75rem 1.5rem; border-radius: 8px; text-decoration: none; font-weight: 700; display: inline-block;">
-      ${signInAction}
-    </a>
-  </p>
-  <p style="font-size: 0.85rem; color: #666;">If you weren't expecting this, you can safely ignore this email.</p>
-</body>
-</html>`,
-      text: `You've been added to ${org.name} on FieldLogicHQ as a ${roleLabel}.
-
-${existingUserNote}
-${signInUrl}
-
-If you weren't expecting this, you can safely ignore this email.`,
-    });
+    await sendEmail(
+      email,
+      `You've been added to ${org.name} on FieldLogicHQ`,
+      orgMemberAddedHtml({ orgName: org.name, roleLabel, signInUrl, ctaLabel: signInAction, scorekeeperNote: role === 'official' }),
+    );
 
     return NextResponse.json({ ok: true, added: true });
   }
@@ -208,45 +176,12 @@ If you weren't expecting this, you can safely ignore this email.`,
   // Send invite email via Resend
   const inviteUrl = getActionLink(linkData);
 
-  const officialNote = role === 'official'
-    ? `<p>As a scorekeeper, you'll have access to the scorekeeper app to submit game results from your assigned tournaments. After setup, you'll land directly in Scorekeeper View.</p>`
-    : '';
-  const officialNoteText = role === 'official'
-    ? `As a scorekeeper, you'll have access to the scorekeeper app to submit game results from your assigned tournaments. After setup, you'll land directly in Scorekeeper View.\n\n`
-    : '';
   const inviteAction = role === 'official' ? 'Accept Scorekeeper Invite' : 'Accept Invitation';
-  await getResend().emails.send({
-    from: fromAddress,
-    to: email,
-    subject: `You've been invited to ${org.name} on FieldLogicHQ`,
-    html: `
-<!DOCTYPE html>
-<html>
-<body style="font-family: sans-serif; max-width: 480px; margin: 0 auto; padding: 2rem; color: #1a1a2e;">
-  <h2 style="margin-top: 0;">You're invited!</h2>
-  <p>You've been invited to join <strong>${org.name}</strong> on <strong>FieldLogicHQ</strong> as a ${roleLabel}.</p>
-  ${officialNote}
-  <p>Click the button below to accept your invitation and set up your account:</p>
-  <p style="margin: 1.5rem 0;">
-    <a href="${inviteUrl}"
-       style="background: #7c3aed; color: #fff; padding: 0.75rem 1.5rem; border-radius: 8px; text-decoration: none; font-weight: 700; display: inline-block;">
-      ${inviteAction}
-    </a>
-  </p>
-  <p style="font-size: 0.85rem; color: #666;">If you weren't expecting this invitation, you can safely ignore this email.</p>
-  <p style="font-size: 0.85rem; color: #666;">This link will expire in 24 hours.</p>
-</body>
-</html>`,
-    text: `You're invited!
-
-You've been invited to join ${org.name} on FieldLogicHQ as a ${roleLabel}.
-
-${officialNoteText}Accept your invitation here:
-${inviteUrl}
-
-If you weren't expecting this invitation, you can safely ignore this email.
-This link will expire in 24 hours.`,
-  });
+  await sendEmail(
+    email,
+    `You've been invited to ${org.name} on FieldLogicHQ`,
+    orgInviteHtml({ orgName: org.name, roleLabel, inviteUrl: inviteUrl ?? appUrl, ctaLabel: inviteAction, scorekeeperNote: role === 'official' }),
+  );
 
   return NextResponse.json({ ok: true, added: false });
 }
