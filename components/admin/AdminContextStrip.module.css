@@ -10,11 +10,12 @@
   gap: 0.4rem;
   height: 44px;
   padding: 0 0.4rem 0 0.85rem;
-  background: rgba(var(--logic-lime-rgb), 0.1);
+  /* Opaque chrome base + lime tint — the strip overlays the game list, so a
+     translucent background made the label hard to read. */
+  background-color: var(--hud-surface);
+  background-image: linear-gradient(rgba(var(--logic-lime-rgb), 0.14), rgba(var(--logic-lime-rgb), 0.14));
   border-top: 1px solid rgba(var(--blueprint-blue-rgb), 0.3);
   border-bottom: 1px solid rgba(var(--logic-lime-rgb), 0.18);
-  backdrop-filter: blur(var(--blur-bar));
-  -webkit-backdrop-filter: blur(var(--blur-bar));
 }
 
 .action {

@@ -352,6 +352,172 @@ const platformAdminHelp: HelpPageContent = {
       ),
     },
     {
+      id: 'cancel-subscription',
+      group: 'Billing SOP',
+      heading: 'How to cancel a customer subscription',
+      summary: 'Cancel a Stripe subscription on behalf of a customer from the org detail billing tab.',
+      keywords: ['cancel subscription', 'unsubscribe', 'stripe cancel', 'billing cancel', 'terminate account', 'end subscription'],
+      searchText: 'how do i cancel a subscription for a customer unsubscribe stripe billing terminate account end subscription on behalf',
+      links: [
+        { label: 'Organizations', href: '/platform-admin/orgs' },
+        { label: 'Retention', href: '/platform-admin/retention' },
+        { label: 'Audit Log', href: '/platform-admin/audit' },
+      ],
+      content: (
+        <>
+          <p>Use this when a customer has explicitly asked to cancel and either cannot complete the self-serve flow or has contacted support directly. Confirm the request with the account owner before taking action.</p>
+          <ol>
+            <li>Go to <strong>Organizations</strong> and open the customer account.</li>
+            <li>Confirm the subscription status in Account Context is not already <code>canceled</code>.</li>
+            <li>Open <strong>Billing &amp; Access</strong>.</li>
+            <li>Scroll to <strong>Cancel Subscription</strong> at the bottom of the tab. This section only appears when a Stripe subscription ID is on file and the account is not already canceled.</li>
+            <li>Click <strong>Cancel Subscription…</strong>.</li>
+            <li>Review the preflight: modules shutting down and the number of tournaments that will be archived.</li>
+            <li>Enter a reason that explains why the cancellation is being initiated by platform staff rather than the customer. This appears in the audit log.</li>
+            <li>Check <strong>Send cancellation confirmation email to org owner</strong> if the customer expects a confirmation email.</li>
+            <li>Click <strong>Confirm Cancel Subscription</strong>.</li>
+            <li>Add an internal note on the <strong>Support</strong> tab with the customer-facing context: what was discussed, who approved, and any retention or resubscription commitments.</li>
+          </ol>
+          <p>After cancellation the account moves to <code>canceled</code> status, the public site is unpublished, all non-archived tournaments are archived, and data is retained for 90 days. The Stripe subscription is canceled immediately. If Stripe cancellation fails but the in-app state succeeded, you will see a warning — complete the Stripe cancellation manually from the <strong>Open Stripe</strong> link on the org detail page.</p>
+          <p>Check the <strong>Retention</strong> queue after cancellation and extend the deadline if the customer has negotiated additional time.</p>
+        </>
+      ),
+      faqs: [
+        {
+          id: 'faq-cancel-stripe-fails',
+          question: 'The cancellation succeeded in FieldLogicHQ but shows a Stripe warning. What do I do?',
+          answer: (
+            <p>The account is already canceled in FieldLogicHQ. Open Stripe from the <strong>Open Stripe</strong> link on the org detail page, find the subscription, and cancel it manually. Document the manual action in the org&apos;s internal notes.</p>
+          ),
+          answerText: 'The account is already canceled in FieldLogicHQ. Open Stripe from the org detail page and cancel the subscription manually. Document in internal notes.',
+          keywords: ['stripe warning', 'stripe fails', 'manual stripe'],
+          popular: true,
+        },
+        {
+          id: 'faq-cancel-no-stripe-id',
+          question: 'The Cancel Subscription section is not showing. Why?',
+          answer: (
+            <p>The section only appears when the org has a Stripe subscription ID on file and the account is not already canceled. If the subscription was already canceled in Stripe but the FieldLogicHQ status was not updated, use a <strong>Subscription Status Override</strong> in the Active Overrides section to set it to canceled, or change the base plan to the free Tournament tier.</p>
+          ),
+          answerText: 'The section only appears when a Stripe subscription ID is on file and status is not canceled. Use a billing override or plan change if the section is missing.',
+          keywords: ['cancel section missing', 'no stripe id', 'already canceled'],
+        },
+        {
+          id: 'faq-cancel-vs-override',
+          question: 'Should I cancel the subscription or just add a canceled status override?',
+          answer: (
+            <p>If the customer wants their billing to stop and the account permanently closed, use <strong>Cancel Subscription</strong>. This cancels the Stripe subscription so no further charges occur. A status override only changes the display state in FieldLogicHQ and does not stop Stripe from billing.</p>
+          ),
+          answerText: 'Cancel Subscription stops Stripe billing. A status override only changes FieldLogicHQ display — it does not stop Stripe charges.',
+          keywords: ['cancel vs override', 'status override', 'stop billing'],
+          popular: true,
+        },
+      ],
+    },
+    {
+      id: 'delete-user',
+      group: 'Support SOP',
+      heading: 'How to delete a user',
+      summary: 'Permanently remove a user account from FieldLogicHQ, including their auth record.',
+      keywords: ['delete user', 'remove user', 'gdpr', 'data deletion', 'user removal', 'account delete'],
+      searchText: 'how do i delete a user remove user account permanently gdpr data deletion right to erasure customer users',
+      links: [
+        { label: 'Customer Users', href: '/platform-admin/customer-users' },
+        { label: 'Organizations', href: '/platform-admin/orgs' },
+      ],
+      content: (
+        <>
+          <p>User deletion is permanent. The Supabase auth record is removed and the user can no longer sign in. Organization data and tournaments the user created are <strong>not</strong> automatically deleted — only their personal auth record and associated user metadata are removed.</p>
+          <p><strong>Before deleting a user, check their organization memberships.</strong></p>
+          <ol>
+            <li>Go to <strong>Customer Users</strong> and search for the user.</li>
+            <li>Expand their row and review the <strong>Organization Memberships</strong> section.</li>
+            <li>If the user is the <strong>sole owner</strong> of one or more organizations, handle those orgs first:
+              <ul>
+                <li>If the org should be kept: transfer ownership by inviting another member as owner in the org admin, or update the org manually. Do not delete the user until another owner exists.</li>
+                <li>If the org should be closed: cancel the subscription if active (see <strong>How to cancel a customer subscription</strong>), then delete the org data before deleting the user.</li>
+              </ul>
+            </li>
+            <li>Once org ownership is resolved, return to <strong>Customer Users</strong> and click <strong>Delete</strong> on the user&apos;s row.</li>
+            <li>Type the user&apos;s email to confirm and click <strong>Delete</strong>.</li>
+            <li>Write an entry in the platform audit log by adding an internal note to any affected organizations explaining the deletion and its reason.</li>
+          </ol>
+          <p>The delete action is audit-logged as <code>delete_user</code>. If the deletion was requested for GDPR or data erasure reasons, document the request source and date in the internal notes of each affected organization before deleting the user.</p>
+        </>
+      ),
+      faqs: [
+        {
+          id: 'faq-delete-user-org-data',
+          question: 'Does deleting a user also delete their organization or tournament data?',
+          answer: (
+            <p>No. Deleting the user removes their Supabase auth record and login. Organization memberships, tournaments, and org-level data persist until the organization itself is deleted. Review each org the user owned before proceeding.</p>
+          ),
+          answerText: 'No — deleting a user only removes their auth record and login. Org memberships and tournament data persist until the org is deleted.',
+          keywords: ['org data', 'tournament data', 'org deleted', 'what gets deleted'],
+          popular: true,
+        },
+        {
+          id: 'faq-delete-user-sole-owner',
+          question: 'What happens if I delete the only owner of an organization?',
+          answer: (
+            <p>The organization record persists but becomes ownerless. No customer will be able to access the admin or billing without a new owner being assigned manually in the database. Resolve org ownership before deleting the user.</p>
+          ),
+          answerText: 'The org persists but becomes ownerless. Resolve ownership before deleting the sole owner.',
+          keywords: ['sole owner', 'ownerless org', 'no owner'],
+          popular: true,
+        },
+      ],
+    },
+    {
+      id: 'delete-organization',
+      group: 'Support SOP',
+      heading: 'How to delete an organization',
+      summary: 'Permanently remove an organization and all its data from FieldLogicHQ.',
+      keywords: ['delete organization', 'delete org', 'remove organization', 'gdpr', 'data deletion', 'hard delete', 'purge org'],
+      searchText: 'how do i delete an organization permanently remove org data gdpr data erasure hard delete purge account',
+      links: [
+        { label: 'Organizations', href: '/platform-admin/orgs' },
+        { label: 'Retention', href: '/platform-admin/retention' },
+        { label: 'Audit Log', href: '/platform-admin/audit' },
+      ],
+      content: (
+        <>
+          <p>Organization deletion is irreversible. All org data is permanently removed: tournaments, registrations, members, accounting records, notes, and audit history. This action requires super admin access (both billing and support permissions).</p>
+          <p><strong>Before deleting an organization, complete these steps in order:</strong></p>
+          <ol>
+            <li><strong>Confirm the request.</strong> Get written confirmation from the account owner or a documented internal approval. For GDPR erasure requests, note the request date and source in internal notes before proceeding.</li>
+            <li><strong>Cancel the subscription.</strong> If the org has an active Stripe subscription, cancel it first using the <strong>Cancel Subscription</strong> action in <strong>Billing &amp; Access</strong>. This stops billing and creates a retention record. See <em>How to cancel a customer subscription</em>.</li>
+            <li><strong>Check retention records.</strong> If data is currently in the <strong>Retention</strong> queue for this org, review whether it should be purged immediately or allowed to expire normally.</li>
+            <li><strong>Delete the organization.</strong> Open the org in <strong>Organizations</strong>, go to the <strong>Support</strong> tab, scroll to <strong>Delete Organization</strong>, and follow the confirmation steps. You will be required to type the org slug and enter a mandatory reason.</li>
+            <li><strong>Delete user accounts if required.</strong> If the deletion is part of a data erasure request and the users have no other organizations, delete their user accounts from <strong>Customer Users</strong> after the org is removed.</li>
+          </ol>
+          <p>Organization deletion is a super admin action. If you do not see the <strong>Delete Organization</strong> section on the Support tab, your platform role does not have super admin access — escalate to a super admin to complete the deletion.</p>
+        </>
+      ),
+      faqs: [
+        {
+          id: 'faq-delete-org-stripe',
+          question: 'Do I need to cancel Stripe separately before deleting the org?',
+          answer: (
+            <p>Yes. The org deletion process does not automatically cancel Stripe subscriptions. Cancel the subscription from <strong>Billing &amp; Access</strong> first so billing stops before the org record is removed.</p>
+          ),
+          answerText: 'Yes. Cancel the Stripe subscription from Billing & Access before deleting the org — the deletion does not stop Stripe billing automatically.',
+          keywords: ['stripe', 'cancel before delete', 'billing'],
+          popular: true,
+        },
+        {
+          id: 'faq-delete-org-retention',
+          question: 'Does org deletion immediately erase data or is it retained for 90 days?',
+          answer: (
+            <p>Canceling a subscription creates a 90-day retention window before data is purged. Hard-deleting the org bypasses retention and removes data immediately. Use the retention queue for standard cancellations, and hard deletion only for GDPR or explicitly approved data erasure requests.</p>
+          ),
+          answerText: 'Cancellation creates a 90-day retention window. Hard deletion bypasses retention and removes data immediately — use it only for GDPR or approved erasure requests.',
+          keywords: ['retention', '90 days', 'immediate deletion', 'gdpr'],
+          popular: true,
+        },
+      ],
+    },
+    {
       id: 'platform-users',
       group: 'System SOP',
       heading: 'How to manage platform employee access',

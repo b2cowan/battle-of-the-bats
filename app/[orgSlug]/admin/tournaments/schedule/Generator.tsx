@@ -4,6 +4,7 @@ import { Sparkles, Check, X, RefreshCw, AlertCircle, Plus, Trash2, Info, Sliders
 import { Team, Division, Venue, Game, Tournament } from '@/lib/types';
 import { formatTime } from '@/lib/utils';
 import { buildScheduleMetrics, resolveManualTravelBuffers } from '@/lib/schedule-metrics';
+import NumberStepper from '@/components/admin/NumberStepper';
 import {
   defaultSchedulePriorities,
   generateScoredScheduleDrafts,
@@ -1247,13 +1248,12 @@ export default function ScheduleGenerator({ tournament, orgSlug, divisions, team
               </div>
               <div className="form-group">
                 <label className="form-label">Games per {generationMode === 'slot' ? 'Slot' : 'Team'}</label>
-                <input
-                  type="number"
-                  className={`form-input ${styles.compactNumberInput}`}
-                  min="1"
-                  max="10"
+                <NumberStepper
                   value={gamesPerTeam}
-                  onChange={e => setGamesPerTeam(Number(e.target.value))}
+                  min={1}
+                  max={10}
+                  onChange={setGamesPerTeam}
+                  ariaLabel="Games per team"
                 />
               </div>
             </div>
@@ -1266,13 +1266,12 @@ export default function ScheduleGenerator({ tournament, orgSlug, divisions, team
                   <div className={styles.slotControlGrid}>
                     <label className={styles.slotCountControl}>
                       <span>{currentGroup?.name ?? 'Division'} slots</span>
-                      <input
-                        type="number"
-                        className="form-input"
-                        min="2"
-                        max="32"
+                      <NumberStepper
                         value={slotCountOverride[DIVISION_SLOT_POOL_ID] ?? defaultSlotCount(DIVISION_SLOT_POOL_ID)}
-                        onChange={e => setSlotCountOverride(prev => ({ ...prev, [DIVISION_SLOT_POOL_ID]: Number(e.target.value) }))}
+                        min={2}
+                        max={32}
+                        onChange={v => setSlotCountOverride(prev => ({ ...prev, [DIVISION_SLOT_POOL_ID]: v }))}
+                        ariaLabel="Division slots"
                       />
                       <small>One placeholder team per slot.</small>
                     </label>
@@ -1282,13 +1281,12 @@ export default function ScheduleGenerator({ tournament, orgSlug, divisions, team
                     {poolList.map(pool => (
                       <label key={pool.id} className={styles.slotCountControl}>
                         <span>{pool.name}</span>
-                        <input
-                          type="number"
-                          className="form-input"
-                          min="2"
-                          max="16"
+                        <NumberStepper
                           value={slotCountOverride[pool.id] ?? defaultSlotCount(pool.id)}
-                          onChange={e => setSlotCountOverride(prev => ({ ...prev, [pool.id]: Number(e.target.value) }))}
+                          min={2}
+                          max={16}
+                          onChange={v => setSlotCountOverride(prev => ({ ...prev, [pool.id]: v }))}
+                          ariaLabel={`${pool.name} teams`}
                         />
                         <small>Placeholder teams in this pool.</small>
                       </label>
@@ -1334,11 +1332,11 @@ export default function ScheduleGenerator({ tournament, orgSlug, divisions, team
             <div className="form-row form-row-2" style={{ marginTop: '0.75rem' }}>
               <div className="form-group">
                 <label className="form-label">Game Duration (min)</label>
-                <input type="number" className={`form-input ${styles.compactNumberInput}`} value={gameLength} onChange={e => setGameLength(Number(e.target.value))} />
+                <NumberStepper value={gameLength} min={5} step={5} onChange={setGameLength} ariaLabel="Game duration in minutes" />
               </div>
               <div className="form-group">
                 <label className="form-label">Turnover Time (min)</label>
-                <input type="number" className={`form-input ${styles.compactNumberInput}`} value={breakLength} onChange={e => setBreakLength(Number(e.target.value))} />
+                <NumberStepper value={breakLength} min={0} step={5} onChange={setBreakLength} ariaLabel="Turnover time in minutes" />
                 <small className={styles.fieldHint}>Gap between games at the same facility.</small>
               </div>
             </div>
@@ -1382,26 +1380,24 @@ export default function ScheduleGenerator({ tournament, orgSlug, divisions, team
                     <div className={styles.limitsRow}>
                       <label className={styles.limitItem} title="Caps how many games one team or slot can play in a day.">
                         <span className={styles.limitLabel}>Max / day</span>
-                        <input
-                          type="number"
-                          className={styles.limitInput}
-                          min="1"
-                          max="6"
+                        <NumberStepper
                           value={priorities.maxGamesPerDay}
-                          onChange={e => updatePriorities({ maxGamesPerDay: Number(e.target.value) })}
+                          min={1}
+                          max={6}
+                          onChange={v => updatePriorities({ maxGamesPerDay: v })}
+                          ariaLabel="Max games per day"
                         />
                         <small className={styles.limitUnit}>per team</small>
                       </label>
                       <label className={styles.limitItem} title="Minimum time between games for the same team or slot.">
                         <span className={styles.limitLabel}>Min rest</span>
-                        <input
-                          type="number"
-                          className={styles.limitInput}
-                          min="0"
-                          max="360"
-                          step="15"
+                        <NumberStepper
                           value={priorities.minRestMinutes}
-                          onChange={e => updatePriorities({ minRestMinutes: Number(e.target.value) })}
+                          min={0}
+                          max={360}
+                          step={15}
+                          onChange={v => updatePriorities({ minRestMinutes: v })}
+                          ariaLabel="Minimum rest minutes"
                         />
                         <small className={styles.limitUnit}>min between games</small>
                       </label>

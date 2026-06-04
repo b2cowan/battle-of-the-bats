@@ -201,8 +201,8 @@ export function buildTournamentTeamInsert(
     email: normalized.email,
     status: normalized.status,
     payment_status: normalized.paymentStatus,
-    deposit_paid: normalized.depositPaid,
-    total_paid: normalized.totalPaid,
+    deposit_paid: normalized.depositPaid ?? 0,
+    total_paid: normalized.totalPaid ?? 0,
     waitlist_position: normalized.waitlistPosition,
     admin_notes: normalized.adminNotes,
   };
@@ -216,8 +216,8 @@ export function buildTournamentTeamUpdate(normalized: TournamentTeamImportNormal
     email: normalized.email,
     status: normalized.status,
     payment_status: normalized.paymentStatus,
-    deposit_paid: normalized.depositPaid,
-    total_paid: normalized.totalPaid,
+    deposit_paid: normalized.depositPaid ?? 0,
+    total_paid: normalized.totalPaid ?? 0,
     waitlist_position: normalized.waitlistPosition,
     admin_notes: normalized.adminNotes,
   };

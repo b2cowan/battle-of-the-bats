@@ -247,6 +247,13 @@ export interface GameConflictStatus {
   kind: ConflictKind;
 }
 
+/** Conflict status for one game, including the clashing partner (for list badges). */
+export interface ConflictInfo {
+  kind: ConflictKind;
+  partnerId: string;
+  partnerTime: string | null;
+}
+
 /**
  * Scans all games in a tournament and returns conflict status for every game
  * that has at least one conflict. Used to render conflict badges in GameList.
@@ -258,8 +265,8 @@ export function buildConflictMap(
   allGames: ConflictGame[],
   divisions: Division[],
   tournament: Tournament | null | undefined,
-): Map<string, ConflictKind> {
-  const result = new Map<string, ConflictKind>();
+): Map<string, ConflictInfo> {
+  const result = new Map<string, ConflictInfo>();
 
   for (const game of allGames) {
     if (game.status === 'cancelled') continue;
@@ -276,8 +283,12 @@ export function buildConflictMap(
     if (conflict) {
       // Escalate: if already marked 'buffer', upgrade to 'overlap' if needed.
       const existing = result.get(game.id);
-      if (!existing || (existing === 'buffer' && conflict.kind === 'overlap')) {
-        result.set(game.id, conflict.kind);
+      if (!existing || (existing.kind === 'buffer' && conflict.kind === 'overlap')) {
+        result.set(game.id, {
+          kind: conflict.kind,
+          partnerId: conflict.conflictingGame.id,
+          partnerTime: conflict.conflictingGame.startTime ?? null,
+        });
       }
     }
   }

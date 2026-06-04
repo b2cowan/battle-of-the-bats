@@ -252,6 +252,8 @@ export default async function PublicGameDetailsPage({
                   {hasScore && (
                     <ShareScoreButton
                       className="btn btn-outline btn-sm"
+                      menuAlign="right"
+                      menuPlacement="down"
                       gameHref={`/${orgSlug}/${tournamentSlug}/schedule/${gameId}`}
                       tournamentName={data.tournament.name}
                       awayName={awayName}

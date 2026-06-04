@@ -229,25 +229,7 @@
 }
 
 /* Share live score — the prominent action in the panel when a game is live. */
+/* Positioning wrapper for the share menu (compact Share button + popover). */
 .expandShare {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.4rem;
-  width: 100%;
   margin-top: 0.5rem;
-  padding: 0.55rem;
-  border-radius: var(--radius-sm);
-  border: 1px solid rgba(var(--primary-rgb), 0.45);
-  background: rgba(var(--primary-rgb), 0.18);
-  color: var(--primary-light);
-  font-family: var(--font-data);
-  font-size: 0.72rem;
-  font-weight: 800;
-  cursor: pointer;
-  transition: transform 0.12s ease, background 0.15s ease;
 }
-
-.expandShare:hover { background: rgba(var(--primary-rgb), 0.26); }
-.expandShare:active { transform: scale(0.99); }
-.expandShare:disabled { opacity: 0.6; cursor: default; }

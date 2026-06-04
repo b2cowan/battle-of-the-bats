@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { getAuthContext } from '@/lib/api-auth';
@@ -9,6 +10,16 @@ import CoachesSidebar from '@/components/coaches/CoachesSidebar';
 import CoachesBottomNav from '@/components/coaches/CoachesBottomNav';
 import InstallAppPrompt from '@/components/InstallAppPrompt';
 import styles from './coaches.module.css';
+
+export const metadata: Metadata = {
+  manifest: '/manifest.json',
+  other: {
+    'mobile-web-app-capable': 'yes',
+    'apple-mobile-web-app-capable': 'yes',
+    'apple-mobile-web-app-status-bar-style': 'black-translucent',
+    'apple-mobile-web-app-title': 'FieldLogicHQ',
+  },
+};
 
 export default async function CoachesLayout({
   params,

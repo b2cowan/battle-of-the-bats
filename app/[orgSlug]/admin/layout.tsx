@@ -21,7 +21,16 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { orgSlug } = await params;
   const org = await getOrganizationBySlug(orgSlug);
-  return { title: { default: 'Admin', template: `%s | ${org?.name ?? 'Admin'}` } };
+  return {
+    title: { default: 'Admin', template: `%s | ${org?.name ?? 'Admin'}` },
+    manifest: '/manifest.json',
+    other: {
+      'mobile-web-app-capable': 'yes',
+      'apple-mobile-web-app-capable': 'yes',
+      'apple-mobile-web-app-status-bar-style': 'black-translucent',
+      'apple-mobile-web-app-title': 'FieldLogicHQ',
+    },
+  };
 }
 
 export default async function AdminLayout({

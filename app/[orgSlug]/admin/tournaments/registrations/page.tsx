@@ -23,6 +23,7 @@ import s from '../../admin-common.module.css';
 import styles from './teams-admin.module.css';
 import FeedbackModal from '@/components/FeedbackModal';
 import ExportMenu from '@/components/admin/ExportMenu';
+import TeamAvatar from '@/components/TeamAvatar';
 import {
   SelectionActionBar,
   ToolbarGroup,
@@ -266,6 +267,14 @@ export default function UnifiedTeamsPage() {
   const [stableSortedIds, setStableSortedIds] = useState<string[]>([]);
   const [hasLoadedInitial, setHasLoadedInitial] = useState(false);
   const [viewMode, setViewMode] = useState<'flat' | 'pools'>('pools');
+  const [regView, setRegView] = useState<'list' | 'cards'>('list');
+  useEffect(() => {
+    const saved = typeof window !== 'undefined' ? localStorage.getItem('fl_reg_view') : null;
+    if (saved === 'cards' || saved === 'list') setRegView(saved);
+  }, []);
+  useEffect(() => {
+    if (typeof window !== 'undefined') localStorage.setItem('fl_reg_view', regView);
+  }, [regView]);
   const [feeMode, setFeeMode] = useState<FeeMode>('tournament');
   const [feeSchedule, setFeeSchedule] = useState<FeeSchedule>({ depositAmount: null, depositDueDate: null, totalFeeAmount: null, totalFeeDueDate: null });
   const [poolSlots, setPoolSlots] = useState<PoolSlot[]>([]);
@@ -1413,7 +1422,7 @@ export default function UnifiedTeamsPage() {
     const paymentSteps = getPaymentSymbolSteps(r, effectiveFee, today);
 
     return (
-      <div key={r.id} className={`${s.row} ${isSelected ? s.rowSelected : ''}`}>
+      <div key={r.id} className={`${s.row} ${styles.regRow} ${isSelected ? s.rowSelected : ''}`}>
         <div className={`${s.rowMain} ${styles.teamRowMain} ${selectionModeActive ? styles.teamRowSelecting : ''}`}>
           {selectionModeActive && (
             <div className={styles.selectionCell}>
@@ -1426,7 +1435,10 @@ export default function UnifiedTeamsPage() {
               />
             </div>
           )}
-          <div className={`${s.primaryCell} ${styles.registrationNameCell}`}><strong>{r.name}</strong></div>
+          <div className={`${s.primaryCell} ${styles.registrationNameCell}`}>
+            <TeamAvatar name={r.name} size={26} />
+            <strong>{r.name}</strong>
+          </div>
           <div className={`${s.secondaryCell} ${styles.registrationCoachCell}`}>{r.coach}</div>
           <div className={styles.registrationStatusCell}>
             <span
@@ -1437,7 +1449,7 @@ export default function UnifiedTeamsPage() {
             >
               {APPROVAL_STATUS_INITIAL[r.status]}
             </span>
-            <span className={`badge badge-${r.status === 'accepted' ? 'neutral' : r.status === 'rejected' ? 'danger' : 'warning'} ${styles.desktopStatusBadge}`}>
+            <span className={`badge badge-${r.status === 'accepted' ? 'success' : r.status === 'rejected' ? 'danger' : 'warning'} ${styles.desktopStatusBadge}`}>
               {r.status}
             </span>
           </div>
@@ -1509,7 +1521,11 @@ export default function UnifiedTeamsPage() {
               hasImportOption
               onImport={openDataTools}
               importLabel="Data tools"
-              importHint="Templates, imports, and bulk exports"
+              importHint={
+                currentOrg && !hasPlanFeature(currentOrg.planId, 'bulk_data_imports')
+                  ? 'Tournament Plus imports and registration exports'
+                  : 'Templates, imports, and bulk exports'
+              }
             />
             {!isLocked && currentOrg && hasPlanFeature(currentOrg.planId, 'custom_registration_fields') && (
               <Link
@@ -1571,6 +1587,15 @@ export default function UnifiedTeamsPage() {
               />
             </div>
           )}
+          <ToolbarSegmentedControl
+            ariaLabel="Registration layout"
+            value={regView}
+            options={[
+              { value: 'list', label: 'List' },
+              { value: 'cards', label: 'Cards' },
+            ]}
+            onChange={setRegView}
+          />
         </ToolbarGroup>
 
         <ToolbarGroup align="end" className={`${styles.registrationActionGroup} ${styles.teamsActionGroup}`}>
@@ -2023,7 +2048,7 @@ export default function UnifiedTeamsPage() {
             <div className={s.compactList}>
               {/* Column header + rows wrapped in flatList so compactList's
                   gap:2.5rem applies to the whole table block, not each row */}
-              <div className={styles.flatList}>
+              <div className={`${styles.flatList} ${regView === 'cards' ? styles.cardView : ''}`}>
                 {/* ── Column headers ── */}
                 <div className={styles.colHeader}>
                   {selectionModeActive && <div className={styles.selectionCell} />}

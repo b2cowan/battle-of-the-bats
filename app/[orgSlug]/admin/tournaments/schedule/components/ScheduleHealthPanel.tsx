@@ -14,6 +14,9 @@ interface ScheduleHealthPanelProps {
   subtitle?: string;
   showTeamTable?: boolean;
   defaultOpen?: boolean;
+  sticky?: boolean;
+  /** When provided and conflicts exist, the summary shows a tappable jump chip. */
+  onJumpToConflict?: () => void;
 }
 
 export default function ScheduleHealthPanel({
@@ -22,8 +25,11 @@ export default function ScheduleHealthPanel({
   subtitle,
   showTeamTable = false,
   defaultOpen = true,
+  sticky = false,
+  onJumpToConflict,
 }: ScheduleHealthPanelProps) {
   const [expanded, setExpanded] = useState(defaultOpen);
+  const conflictTotal = metrics.venueConflictCount + metrics.bufferConflictCount;
   const scoreClass = metrics.healthTone === 'good'
     ? styles.healthScoreGood
     : metrics.healthTone === 'warning'
@@ -32,7 +38,7 @@ export default function ScheduleHealthPanel({
 
   return (
     <details
-      className={styles.healthPanel}
+      className={`${styles.healthPanel} ${sticky ? styles.healthPanelSticky : ''}`}
       open={expanded}
       onToggle={event => setExpanded(event.currentTarget.open)}
     >
@@ -42,6 +48,18 @@ export default function ScheduleHealthPanel({
             <h4>{title}</h4>
             {subtitle && <p>{subtitle}</p>}
           </div>
+          {onJumpToConflict && conflictTotal > 0 && (
+            <button
+              type="button"
+              className={styles.healthJumpChip}
+              data-tone={metrics.venueConflictCount > 0 ? 'danger' : 'warning'}
+              onClick={event => { event.preventDefault(); event.stopPropagation(); onJumpToConflict(); }}
+              title="Jump to the first conflicting game"
+            >
+              <AlertTriangle size={12} aria-hidden />
+              {conflictTotal}
+            </button>
+          )}
         </div>
         <div className={`${styles.healthScore} ${scoreClass}`}>
           <span>{metrics.healthScore}</span>

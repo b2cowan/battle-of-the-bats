@@ -6,6 +6,8 @@ import { usePathname, useParams } from 'next/navigation';
 import { useOrgNav } from './OrgNavContext';
 import { cn } from '@/lib/utils';
 import type { PublicPageKey } from '@/lib/public-pages';
+import TournamentNavStatus from '@/components/public/TournamentNavStatus';
+import SharePageButton from '@/components/public/SharePageButton';
 import styles from './Navbar.module.css';
 
 const MARKETING_NAV_LINKS = [
@@ -165,6 +167,12 @@ export default function Navbar() {
           ) : null}
         </Link>
 
+        {/* Desktop top-bar context (status pill + dates, live ticker on game day).
+            Hidden ≤1023px; takes the left flex share where the logo sits on mobile. */}
+        <div className={styles.navStatusSlot}>
+          <TournamentNavStatus />
+        </div>
+
         <div className={styles.links}>
           {TOURNAMENT_NAV_KEYS.filter(l => !tournamentHiddenPages.includes(l.key as PublicPageKey)).map(l => {
             const href = `/${orgSlug}/${tournamentSlug}/${l.key}`;
@@ -182,6 +190,17 @@ export default function Navbar() {
         </div>
 
         <div className={styles.actions}>
+          {/* Desktop-only: share the event from any page (≥1024px). */}
+          {tournamentSlug && tournamentName && (
+            <span className={styles.navShareSlot}>
+              <SharePageButton
+                url={`/${orgSlug}/${tournamentSlug}`}
+                title={tournamentName}
+                text="Live on FieldLogicHQ"
+                className="btn btn-outline btn-sm"
+              />
+            </span>
+          )}
           {/* Only when registration is genuinely open/waitlisting (lifecycle +
               capacity aware) — hidden once the event is live, complete, or full. */}
           {!tournamentHiddenPages.includes('register') && tournamentRegisterCta && (

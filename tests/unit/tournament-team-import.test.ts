@@ -93,6 +93,37 @@ describe('tournament team import preview', () => {
     assert(preview.rows[0].warnings.some(warning => warning.includes('Matched existing team')));
   });
 
+  it('blocks ambiguous team name matches when Team ID is omitted', () => {
+    const ambiguousContext: TournamentTeamImportContext = {
+      ...context,
+      existingTeams: [
+        ...context.existingTeams,
+        {
+          ...context.existingTeams[0],
+          id: 'team-duplicate',
+        },
+      ],
+    };
+    const preview = buildTournamentTeamImportPreview(parsed([{
+      'Team ID': '',
+      'Team Name': 'Blue Jays',
+      'Division ID': 'division-1',
+      'Division Name': 'U11',
+      'Coach Name': '',
+      Email: '',
+      Status: 'pending',
+      'Payment Status': 'pending',
+      'Deposit Paid': '',
+      'Total Paid': '',
+      'Waitlist Position': '',
+      'Admin Notes': '',
+    }]), ambiguousContext, 'batch-1');
+
+    assert.equal(preview.summary.blocked, 1);
+    assert.equal(preview.rows[0].operation, 'blocked');
+    assert(preview.rows[0].errors.some(error => error.includes('multiple existing teams')));
+  });
+
   it('blocks rows with invalid division and invalid status', () => {
     const preview = buildTournamentTeamImportPreview(parsed([{
       'Team ID': '',
@@ -112,6 +143,43 @@ describe('tournament team import preview', () => {
     assert.equal(preview.summary.blocked, 1);
     assert(preview.rows[0].errors.some(error => error.includes('Division ID')));
     assert(preview.rows[0].errors.some(error => error.includes('Status')));
+  });
+
+  it('accepts alias headers in any order and normalizes Excel-style currency', () => {
+    const parsedFile = parseCSV(
+      'Division,Name,payment_status,deposit_paid,total_paid,Status\nU13,Money Team,paid,"$1,234.50","1,250",accepted\n',
+      10,
+    );
+    const preview = buildTournamentTeamImportPreview(parsedFile, context, 'batch-1');
+
+    assert.equal(preview.rows[0].operation, 'create');
+    assert.equal(preview.rows[0].normalized.teamName, 'Money Team');
+    assert.equal(preview.rows[0].normalized.divisionId, 'division-2');
+    assert.equal(preview.rows[0].normalized.depositPaid, 1234.5);
+    assert.equal(preview.rows[0].normalized.totalPaid, 1250);
+    assert.equal(preview.rows[0].normalized.paymentStatus, 'paid');
+  });
+
+  it('blocks invalid money and waitlist values during preview', () => {
+    const preview = buildTournamentTeamImportPreview(parsed([{
+      'Team ID': '',
+      'Team Name': 'New Team',
+      'Division ID': 'division-2',
+      'Division Name': 'U13',
+      'Coach Name': '',
+      Email: '',
+      Status: 'accepted',
+      'Payment Status': 'pending',
+      'Deposit Paid': '-1',
+      'Total Paid': 'not money',
+      'Waitlist Position': '1.5',
+      'Admin Notes': '',
+    }]), context, 'batch-1');
+
+    assert.equal(preview.summary.blocked, 1);
+    assert(preview.rows[0].errors.some(error => error.includes('Deposit Paid')));
+    assert(preview.rows[0].errors.some(error => error.includes('Total Paid')));
+    assert(preview.rows[0].errors.some(error => error.includes('Waitlist Position')));
   });
 
   it('blocks duplicate create rows in the same division', () => {
@@ -286,7 +354,7 @@ describe('tournament team import commit helpers', () => {
       status: 'accepted',
       payment_status: 'pending',
       deposit_paid: 25,
-      total_paid: null,
+      total_paid: 0,
       waitlist_position: null,
       admin_notes: 'Imported',
     });
@@ -298,7 +366,7 @@ describe('tournament team import commit helpers', () => {
       status: 'accepted',
       payment_status: 'pending',
       deposit_paid: 25,
-      total_paid: null,
+      total_paid: 0,
       waitlist_position: null,
       admin_notes: 'Imported',
     });

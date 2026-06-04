@@ -13,7 +13,16 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { orgSlug } = await params;
   const org = await getOrganizationBySlug(orgSlug);
-  return { title: org?.name ? `${org.name} Scorekeeper` : 'Scorekeeper' };
+  return {
+    title: org?.name ? `${org.name} Scorekeeper` : 'Scorekeeper',
+    manifest: '/manifest.json',
+    other: {
+      'mobile-web-app-capable': 'yes',
+      'apple-mobile-web-app-capable': 'yes',
+      'apple-mobile-web-app-status-bar-style': 'black-translucent',
+      'apple-mobile-web-app-title': 'FieldLogicHQ',
+    },
+  };
 }
 
 export default async function ScorekeeperLayout({

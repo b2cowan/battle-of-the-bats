@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { ChevronLeft, Star, AlertTriangle, Users, Clock } from 'lucide-react';
 import { formatTime } from '@/lib/utils';
 import { teamColor, teamInitials } from '@/lib/team-color';
+import SharePageButton from '@/components/public/SharePageButton';
 import styles from '../../../../teams/[id]/team-profile.module.css';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -231,15 +232,23 @@ export default function TeamProfilePage({
                   {team.coach && <> · {team.coach}</>}
                 </p>
               </div>
-              <button
-                type="button"
-                className={`${styles.followHeroBtn} ${isFollowed ? styles.followHeroBtnActive : ''}`}
-                onClick={toggleFollow}
-                aria-pressed={isFollowed}
-              >
-                <Star size={14} fill={isFollowed ? 'currentColor' : 'none'} />
-                {isFollowed ? 'Following' : 'Follow'}
-              </button>
+              <div className={styles.heroActions}>
+                <button
+                  type="button"
+                  className={`${styles.followHeroBtn} ${isFollowed ? styles.followHeroBtnActive : ''}`}
+                  onClick={toggleFollow}
+                  aria-pressed={isFollowed}
+                >
+                  <Star size={14} fill={isFollowed ? 'currentColor' : 'none'} />
+                  {isFollowed ? 'Following' : 'Follow'}
+                </button>
+                <SharePageButton
+                  url={`/${orgSlug}/${tournamentSlug}/teams/${id}`}
+                  title={cleanedName}
+                  text={`Follow ${cleanedName} on FieldLogicHQ`}
+                  className={styles.followHeroBtn}
+                />
+              </div>
             </div>
 
             <div className={styles.heroStats}>

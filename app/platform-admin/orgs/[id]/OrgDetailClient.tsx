@@ -71,6 +71,28 @@ interface PlanOption {
   defaultTournamentLimit: number;
 }
 
+type CancelSubPreflight = {
+  planLabel: string;
+  activeTournamentCount: number;
+  tournaments: Array<{ id: string; name: string; status: string }>;
+  shutsDown: string[];
+  retentionDays: number;
+};
+
+type DeleteOrgPreflight = {
+  orgName: string;
+  orgSlug: string;
+  planLabel: string;
+  subscriptionStatus: string | null;
+  stripeSubscriptionId: string | null;
+  stripeCustomerId: string | null;
+  hasActiveSubscription: boolean;
+  memberCount: number;
+  tournamentCount: number;
+  coachesLinkCount: number;
+  retentionRecordCount: number;
+};
+
 interface Props {
   orgId: string;
   orgName: string;
@@ -90,6 +112,9 @@ interface Props {
   auditEvents: AuditEvent[];
   auditHref: string;
   pendingOwnershipTransfers: PendingOwnershipTransfer[];
+  stripeSubscriptionId: string | null;
+  subscriptionStatus: string;
+  isSuperAdmin: boolean;
 }
 
 type TabId = 'support' | 'billing' | 'entitlements' | 'people' | 'activity';
@@ -180,6 +205,9 @@ export default function OrgDetailClient({
   auditEvents,
   auditHref,
   pendingOwnershipTransfers: initialPendingOwnershipTransfers,
+  stripeSubscriptionId,
+  subscriptionStatus,
+  isSuperAdmin,
 }: Props) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<TabId>('support');
@@ -467,6 +495,170 @@ export default function OrgDetailClient({
   const [formReason, setFormReason] = useState('');
   const [formSaving, setFormSaving] = useState(false);
   const [formError, setFormError] = useState('');
+
+  const [cancelSubModalOpen, setCancelSubModalOpen] = useState(false);
+  const [cancelSubPreflight, setCancelSubPreflight] = useState<CancelSubPreflight | null>(null);
+  const [cancelSubPreflightLoading, setCancelSubPreflightLoading] = useState(false);
+  const [cancelSubReason, setCancelSubReason] = useState('');
+  const [cancelSubNotifyOwner, setCancelSubNotifyOwner] = useState(false);
+  const [cancelSubSaving, setCancelSubSaving] = useState(false);
+  const [cancelSubError, setCancelSubError] = useState('');
+  const [cancelSubDone, setCancelSubDone] = useState(false);
+
+  async function handleOpenCancelModal() {
+    setCancelSubModalOpen(true);
+    setCancelSubPreflight(null);
+    setCancelSubPreflightLoading(true);
+    setCancelSubError('');
+    try {
+      const res = await fetch(`/api/platform-admin/orgs/${orgId}/cancel-subscription`);
+      const data = await res.json().catch((): ApiErrorBody => ({}));
+      if (!res.ok) {
+        setCancelSubError((data as ApiErrorBody).error ?? 'Failed to load account details');
+      } else {
+        setCancelSubPreflight(data as CancelSubPreflight);
+      }
+    } catch {
+      setCancelSubError('Network error');
+    } finally {
+      setCancelSubPreflightLoading(false);
+    }
+  }
+
+  async function handleCancelSubscription() {
+    if (!cancelSubReason.trim()) {
+      setCancelSubError('Reason is required');
+      return;
+    }
+    setCancelSubSaving(true);
+    setCancelSubError('');
+    try {
+      const res = await fetch(`/api/platform-admin/orgs/${orgId}/cancel-subscription`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reason: cancelSubReason, notifyOwner: cancelSubNotifyOwner }),
+      });
+      const data = await res.json().catch((): ApiErrorBody => ({}));
+      if (!res.ok) {
+        setCancelSubError((data as ApiErrorBody).error ?? 'Cancellation failed');
+      } else {
+        setCancelSubModalOpen(false);
+        setCancelSubDone(true);
+        const d = data as { stripeWarning?: string };
+        if (d.stripeWarning) {
+          setCancelSubError(`Canceled in FieldLogicHQ — Stripe needs manual action: ${d.stripeWarning}`);
+        }
+        router.refresh();
+      }
+    } catch {
+      setCancelSubError('Network error');
+    } finally {
+      setCancelSubSaving(false);
+    }
+  }
+
+  function handleCloseCancelModal() {
+    setCancelSubModalOpen(false);
+    setCancelSubReason('');
+    setCancelSubNotifyOwner(false);
+    setCancelSubError('');
+  }
+
+  const [deleteOrgSlug, setDeleteOrgSlug] = useState('');
+  const [deleteOrgReason, setDeleteOrgReason] = useState('');
+  const [deleteOrgNotifyOwner, setDeleteOrgNotifyOwner] = useState(false);
+  const [deleteOrgDeleteStripeCustomer, setDeleteOrgDeleteStripeCustomer] = useState(false);
+  const [deleteOrgSaving, setDeleteOrgSaving] = useState(false);
+  const [deleteOrgError, setDeleteOrgError] = useState('');
+  const [deleteOrgPreflight, setDeleteOrgPreflight] = useState<DeleteOrgPreflight | null>(null);
+  const [deleteOrgPreflightLoading, setDeleteOrgPreflightLoading] = useState(false);
+
+  async function handleLoadDeletePreflight() {
+    setDeleteOrgPreflightLoading(true);
+    setDeleteOrgError('');
+    try {
+      const res = await fetch(`/api/platform-admin/orgs/${orgId}/delete`);
+      const data = await res.json().catch((): ApiErrorBody => ({}));
+      if (!res.ok) {
+        setDeleteOrgError((data as ApiErrorBody).error ?? 'Failed to load preflight.');
+      } else {
+        setDeleteOrgPreflight(data as DeleteOrgPreflight);
+      }
+    } catch {
+      setDeleteOrgError('Network error.');
+    } finally {
+      setDeleteOrgPreflightLoading(false);
+    }
+  }
+
+  async function handleDeleteOrg() {
+    setDeleteOrgSaving(true);
+    setDeleteOrgError('');
+    try {
+      const res = await fetch(`/api/platform-admin/orgs/${orgId}/delete`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          reason: deleteOrgReason,
+          confirmSlug: deleteOrgSlug,
+          notifyOwner: deleteOrgNotifyOwner,
+          deleteStripeCustomer: deleteOrgDeleteStripeCustomer,
+        }),
+      });
+      const data = await res.json().catch((): ApiErrorBody => ({}));
+      if (!res.ok) {
+        setDeleteOrgError((data as ApiErrorBody).error ?? 'Delete failed.');
+      } else {
+        router.push('/platform-admin/orgs');
+      }
+    } catch {
+      setDeleteOrgError('Network error.');
+    } finally {
+      setDeleteOrgSaving(false);
+    }
+  }
+
+  const [transferOwnerModal, setTransferOwnerModal] = useState<{
+    userId: string;
+    email: string;
+    displayName: string;
+  } | null>(null);
+  const [transferOwnerReason, setTransferOwnerReason] = useState('');
+  const [transferOwnerSaving, setTransferOwnerSaving] = useState(false);
+  const [transferOwnerError, setTransferOwnerError] = useState('');
+  const [transferOwnerDone, setTransferOwnerDone] = useState('');
+
+  async function handleTransferOwnership() {
+    if (!transferOwnerModal || !transferOwnerReason.trim()) {
+      setTransferOwnerError('Reason is required');
+      return;
+    }
+    setTransferOwnerSaving(true);
+    setTransferOwnerError('');
+    try {
+      const res = await fetch(`/api/platform-admin/orgs/${orgId}/transfer-ownership`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          newOwnerUserId: transferOwnerModal.userId,
+          reason: transferOwnerReason,
+        }),
+      });
+      const data = await res.json().catch((): ApiErrorBody => ({}));
+      if (!res.ok) {
+        setTransferOwnerError((data as ApiErrorBody).error ?? 'Transfer failed');
+      } else {
+        setTransferOwnerDone(transferOwnerModal.email);
+        setTransferOwnerModal(null);
+        setTransferOwnerReason('');
+        router.refresh();
+      }
+    } catch {
+      setTransferOwnerError('Network error');
+    } finally {
+      setTransferOwnerSaving(false);
+    }
+  }
 
   const activeOverrides = overrides.filter(o => !o.revokedAt);
   const historicalOverrides = overrides.filter(o => o.revokedAt);
@@ -778,6 +970,145 @@ export default function OrgDetailClient({
                 </div>
               )}
             </section>
+
+            {isSuperAdmin && (
+              <section className={styles.section}>
+                <div className={styles.sectionHeader}>
+                  <h3 className={styles.sectionTitle}>Delete Organization</h3>
+                  <span className={styles.overrideType}>super admin only</span>
+                </div>
+
+                {!deleteOrgPreflight && !deleteOrgPreflightLoading && (
+                  <>
+                    <p className={styles.warningNote}>
+                      Permanently removes this organization and all its data. Load a preflight
+                      summary before proceeding.
+                    </p>
+                    {deleteOrgError && <p className={styles.rowError}>{deleteOrgError}</p>}
+                    <div className={styles.notesActions}>
+                      <button
+                        type="button"
+                        className={styles.revokeBtn}
+                        onClick={handleLoadDeletePreflight}
+                      >
+                        Load Delete Preflight…
+                      </button>
+                    </div>
+                  </>
+                )}
+
+                {deleteOrgPreflightLoading && (
+                  <p className={styles.emptyNote}>Loading account summary…</p>
+                )}
+
+                {deleteOrgPreflight && (
+                  <>
+                    {deleteOrgPreflight.hasActiveSubscription ? (
+                      <p className={styles.warningNote}>
+                        This organization has an active Stripe subscription. Cancel it first using{' '}
+                        <button
+                          type="button"
+                          className={styles.historyToggle}
+                          onClick={() => setActiveTab('billing')}
+                        >
+                          Cancel Subscription in Billing &amp; Access
+                        </button>
+                        , then reload the preflight here.
+                      </p>
+                    ) : (
+                      <>
+                        <div className={styles.modalPreview}>
+                          <strong>What will be permanently deleted:</strong>
+                          <ul style={{ margin: '0.4rem 0 0', paddingLeft: '1.2rem' }}>
+                            <li>{deleteOrgPreflight.memberCount} member{deleteOrgPreflight.memberCount !== 1 ? 's' : ''}</li>
+                            <li>{deleteOrgPreflight.tournamentCount} non-archived tournament{deleteOrgPreflight.tournamentCount !== 1 ? 's' : ''}</li>
+                            {deleteOrgPreflight.retentionRecordCount > 0 && (
+                              <li>{deleteOrgPreflight.retentionRecordCount} billing retention record{deleteOrgPreflight.retentionRecordCount !== 1 ? 's' : ''}</li>
+                            )}
+                            {deleteOrgPreflight.coachesLinkCount > 0 && (
+                              <li>{deleteOrgPreflight.coachesLinkCount} Coaches Portal link{deleteOrgPreflight.coachesLinkCount !== 1 ? 's' : ''} — verify these are safe to remove</li>
+                            )}
+                            {deleteOrgPreflight.stripeCustomerId && (
+                              <li>Stripe customer <code>{deleteOrgPreflight.stripeCustomerId}</code> — invoice history remains in Stripe</li>
+                            )}
+                          </ul>
+                        </div>
+                        <p className={styles.warningNote}>
+                          This cannot be undone. Ensure the customer has been offered a data
+                          export and that any GDPR request details are documented in internal notes.
+                        </p>
+                        <div className={styles.formRow}>
+                          <label className={styles.formLabel}>
+                            Type <strong>{orgSlug}</strong> to confirm
+                          </label>
+                          <input
+                            className={styles.formInput}
+                            value={deleteOrgSlug}
+                            onChange={e => { setDeleteOrgSlug(e.target.value); setDeleteOrgError(''); }}
+                            placeholder={orgSlug}
+                            autoComplete="off"
+                          />
+                        </div>
+                        <div className={styles.formRow}>
+                          <label className={styles.formLabel}>Reason *</label>
+                          <textarea
+                            className={styles.formTextarea}
+                            value={deleteOrgReason}
+                            onChange={e => { setDeleteOrgReason(e.target.value); setDeleteOrgError(''); }}
+                            rows={2}
+                            placeholder="Why is this organization being permanently deleted?"
+                          />
+                        </div>
+                        <div className={styles.formRow}>
+                          <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                            <input
+                              type="checkbox"
+                              checked={deleteOrgNotifyOwner}
+                              onChange={e => setDeleteOrgNotifyOwner(e.target.checked)}
+                            />
+                            Send account closure notification to org owner
+                          </label>
+                        </div>
+                        {deleteOrgPreflight.stripeCustomerId && (
+                          <div className={styles.formRow}>
+                            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                              <input
+                                type="checkbox"
+                                checked={deleteOrgDeleteStripeCustomer}
+                                onChange={e => setDeleteOrgDeleteStripeCustomer(e.target.checked)}
+                              />
+                              Delete Stripe customer record (GDPR erasure only — removes billing history from Stripe)
+                            </label>
+                          </div>
+                        )}
+                        {deleteOrgError && <p className={styles.rowError}>{deleteOrgError}</p>}
+                        <div className={styles.notesActions}>
+                          <button
+                            type="button"
+                            className={styles.historyToggle}
+                            onClick={() => { setDeleteOrgPreflight(null); setDeleteOrgSlug(''); setDeleteOrgReason(''); setDeleteOrgError(''); }}
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            type="button"
+                            className={styles.revokeBtn}
+                            onClick={handleDeleteOrg}
+                            disabled={
+                              deleteOrgSaving ||
+                              deleteOrgSlug !== orgSlug ||
+                              !deleteOrgReason.trim()
+                            }
+                          >
+                            {deleteOrgSaving ? 'Deleting…' : 'Delete Organization'}
+                          </button>
+                        </div>
+                      </>
+                    )}
+                  </>
+                )}
+              </section>
+            )}
           </div>
         )}
 
@@ -1028,6 +1359,32 @@ export default function OrgDetailClient({
               </div>
             )}
             </section>
+
+            {canManageBilling && stripeSubscriptionId && subscriptionStatus !== 'canceled' && (
+              <section className={styles.section}>
+                <div className={styles.sectionHeader}>
+                  <h3 className={styles.sectionTitle}>Cancel Subscription</h3>
+                </div>
+                <p className={styles.warningNote}>
+                  Cancels the Stripe subscription, sets this account to canceled, and archives non-archived tournaments.
+                  Account data is retained for 90 days. Add an internal note after canceling to document the customer-facing context.
+                </p>
+                {cancelSubDone ? (
+                  <p className={styles.savedIndicator}>Subscription canceled — refresh to see updated account state.</p>
+                ) : (
+                  <button
+                    type="button"
+                    className={styles.revokeBtn}
+                    onClick={handleOpenCancelModal}
+                  >
+                    Cancel Subscription…
+                  </button>
+                )}
+                {cancelSubError && !cancelSubModalOpen && (
+                  <p className={styles.rowError}>{cancelSubError}</p>
+                )}
+              </section>
+            )}
           </div>
         )}
 
@@ -1073,7 +1430,12 @@ export default function OrgDetailClient({
         {activeTab === 'people' && (
           <div className={styles.workflowGrid}>
             <section className={styles.section}>
-              <h3 className={styles.sectionTitle}>Members</h3>
+              <div className={styles.sectionHeader}>
+                <h3 className={styles.sectionTitle}>Members</h3>
+                {transferOwnerDone && (
+                  <span className={styles.savedIndicator}>Ownership transferred to {transferOwnerDone}</span>
+                )}
+              </div>
               {members.length === 0 ? (
                 <p className={styles.emptyNote}>No members found.</p>
               ) : (
@@ -1086,6 +1448,7 @@ export default function OrgDetailClient({
                         <th>Role</th>
                         <th>Status</th>
                         <th>Last Sign In</th>
+                        {canManageSupport && <th></th>}
                       </tr>
                     </thead>
                     <tbody>
@@ -1098,6 +1461,24 @@ export default function OrgDetailClient({
                           <td className={styles.dimText}>
                             {m.lastSignIn ? fmtDate(m.lastSignIn) : '-'}
                           </td>
+                          {canManageSupport && (
+                            <td>
+                              {m.role !== 'owner' && m.status === 'active' && (
+                                <button
+                                  type="button"
+                                  className={styles.historyToggle}
+                                  onClick={() => {
+                                    setTransferOwnerDone('');
+                                    setTransferOwnerError('');
+                                    setTransferOwnerReason('');
+                                    setTransferOwnerModal({ userId: m.userId, email: m.email, displayName: m.displayName });
+                                  }}
+                                >
+                                  Make Owner
+                                </button>
+                              )}
+                            </td>
+                          )}
                         </tr>
                       ))}
                     </tbody>
@@ -1181,6 +1562,136 @@ export default function OrgDetailClient({
           </section>
         )}
       </div>
+
+      {cancelSubModalOpen && (
+        <div className={styles.modalBackdrop} role="presentation">
+          <section
+            className={styles.confirmModal}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="cancel-sub-title"
+          >
+            <div>
+              <div className={styles.sectionTitle} id="cancel-sub-title">Cancel Subscription</div>
+              {cancelSubPreflightLoading && (
+                <p className={styles.emptyNote}>Loading account details…</p>
+              )}
+              {!cancelSubPreflightLoading && cancelSubPreflight && (
+                <>
+                  <p className={styles.modalCopy}>
+                    Cancels the Stripe subscription and sets this account to canceled.
+                    All non-archived tournaments will be archived and data retained for {cancelSubPreflight.retentionDays} days.
+                    This cannot be undone without resubscribing.
+                  </p>
+                  {cancelSubPreflight.shutsDown.length > 0 && (
+                    <div className={styles.modalPreview}>
+                      <strong>Will shut down:</strong>
+                      <ul style={{ margin: '0.4rem 0 0', paddingLeft: '1.2rem' }}>
+                        {cancelSubPreflight.shutsDown.map(item => (
+                          <li key={item}>{item}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {cancelSubPreflight.tournaments.length > 0 && (
+                    <p className={styles.warningNote}>
+                      {cancelSubPreflight.tournaments.length} tournament{cancelSubPreflight.tournaments.length !== 1 ? 's' : ''} will be archived.
+                    </p>
+                  )}
+                </>
+              )}
+              <div className={styles.formRow} style={{ marginTop: '1rem' }}>
+                <label className={styles.formLabel}>Reason *</label>
+                <textarea
+                  className={styles.formTextarea}
+                  value={cancelSubReason}
+                  onChange={e => setCancelSubReason(e.target.value)}
+                  rows={3}
+                  placeholder="Why is this subscription being canceled? (recorded in audit log)"
+                />
+              </div>
+              <div className={styles.formRow}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                  <input
+                    type="checkbox"
+                    checked={cancelSubNotifyOwner}
+                    onChange={e => setCancelSubNotifyOwner(e.target.checked)}
+                  />
+                  Send cancellation confirmation email to org owner
+                </label>
+              </div>
+            </div>
+            {cancelSubError && <span className={styles.rowError}>{cancelSubError}</span>}
+            <div className={styles.modalActions}>
+              <button
+                type="button"
+                className={styles.cancelBtn}
+                onClick={handleCloseCancelModal}
+                disabled={cancelSubSaving}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className={styles.confirmBtn}
+                onClick={handleCancelSubscription}
+                disabled={cancelSubSaving || cancelSubPreflightLoading}
+              >
+                {cancelSubSaving ? 'Canceling…' : 'Confirm Cancel Subscription'}
+              </button>
+            </div>
+          </section>
+        </div>
+      )}
+
+      {transferOwnerModal && (
+        <div className={styles.modalBackdrop} role="presentation">
+          <section
+            className={styles.confirmModal}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="transfer-owner-title"
+          >
+            <div>
+              <div className={styles.sectionTitle} id="transfer-owner-title">Transfer Ownership</div>
+              <p className={styles.modalCopy}>
+                <strong>{transferOwnerModal.displayName || transferOwnerModal.email}</strong> will
+                become the owner. All current owners will be demoted to admin.
+                This is audit-logged and cannot be reversed from here.
+              </p>
+              <div className={styles.formRow} style={{ marginTop: '1rem' }}>
+                <label className={styles.formLabel}>Reason *</label>
+                <textarea
+                  className={styles.formTextarea}
+                  value={transferOwnerReason}
+                  onChange={e => setTransferOwnerReason(e.target.value)}
+                  rows={2}
+                  placeholder="Why is ownership being transferred? (recorded in audit log)"
+                />
+              </div>
+            </div>
+            {transferOwnerError && <span className={styles.rowError}>{transferOwnerError}</span>}
+            <div className={styles.modalActions}>
+              <button
+                type="button"
+                className={styles.cancelBtn}
+                onClick={() => { setTransferOwnerModal(null); setTransferOwnerReason(''); setTransferOwnerError(''); }}
+                disabled={transferOwnerSaving}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className={styles.confirmBtn}
+                onClick={handleTransferOwnership}
+                disabled={transferOwnerSaving || !transferOwnerReason.trim()}
+              >
+                {transferOwnerSaving ? 'Transferring…' : 'Confirm Transfer'}
+              </button>
+            </div>
+          </section>
+        </div>
+      )}
 
       {notePendingDelete && (
         <div className={styles.modalBackdrop} role="presentation">

@@ -44,14 +44,22 @@ const { data: srcDivs }  = await db.from('divisions').select('*').eq('tournament
 const { data: srcPools } = await db.from('pools').select('*').in('division_id', srcDivs.map(d => d.id));
 const { data: srcTeams } = await db.from('teams').select('*').eq('tournament_id', srcT.id);
 const { data: srcGames } = await db.from('games').select('*').eq('tournament_id', srcT.id);
-console.log(`Source: ${srcDivs.length} divisions, ${srcPools.length} pools, ${srcTeams.length} teams, ${srcGames.length} games`);
+const { data: srcDiamonds } = await db.from('diamonds').select('*').eq('tournament_id', srcT.id);
+const srcDiamondIds = (srcDiamonds ?? []).map(d => d.id);
+const { data: srcFacilities } = srcDiamondIds.length
+  ? await db.from('venue_facilities').select('*').in('venue_id', srcDiamondIds)
+  : { data: [] };
+console.log(`Source: ${srcDivs.length} divisions, ${srcPools.length} pools, ${srcTeams.length} teams, ${srcGames.length} games, ${(srcDiamonds ?? []).length} venues, ${(srcFacilities ?? []).length} facilities`);
 
 // ── wipe any prior live-demo (idempotent) ────────────────────────────────────
 const { data: existing } = await db.from('tournaments').select('id').eq('org_id', orgId).eq('slug', NEW_SLUG);
 if (existing?.length) {
   const oldId = existing[0].id;
   const { data: oldDivs } = await db.from('divisions').select('id').eq('tournament_id', oldId);
+  const { data: oldDiamonds } = await db.from('diamonds').select('id').eq('tournament_id', oldId);
   await db.from('games').delete().eq('tournament_id', oldId);
+  if (oldDiamonds?.length) await db.from('venue_facilities').delete().in('venue_id', oldDiamonds.map(d => d.id));
+  await db.from('diamonds').delete().eq('tournament_id', oldId);
   await db.from('teams').delete().eq('tournament_id', oldId);
   if (oldDivs?.length) await db.from('pools').delete().in('division_id', oldDivs.map(d => d.id));
   await db.from('divisions').delete().eq('tournament_id', oldId);
@@ -96,6 +104,24 @@ for (const t of srcTeams) {
   const row = { ...t, id: nid, tournament_id: newTid, division_id: divMap[t.division_id], pool_id: t.pool_id ? poolMap[t.pool_id] ?? null : null };
   await chk('insert team', await db.from('teams').insert(row));
 }
+
+// ── venues (diamonds) + facilities ────────────────────────────────────────────
+// Clone the source tournament's venues so games stay LINKED (production never
+// stores free-text venues — they always reference the venues table).
+const diamondMap = {};
+for (const d of srcDiamonds ?? []) {
+  const nid = randomUUID(); diamondMap[d.id] = nid;
+  const row = { ...d, id: nid, tournament_id: newTid }; delete row.created_at;
+  await chk('insert venue', await db.from('diamonds').insert(row));
+}
+const facilityMap = {};
+for (const f of srcFacilities ?? []) {
+  if (!diamondMap[f.venue_id]) continue;
+  const nid = randomUUID(); facilityMap[f.id] = nid;
+  const row = { ...f, id: nid, tournament_id: newTid, venue_id: diamondMap[f.venue_id] }; delete row.created_at;
+  await chk('insert facility', await db.from('venue_facilities').insert(row));
+}
+
 const divNameById = Object.fromEntries(srcDivs.map(d => [d.id, d.name]));
 
 // ── scoring rules for day-1 (today) U11 games ────────────────────────────────
@@ -120,8 +146,11 @@ for (const g of srcGames) {
     home_team_id: g.home_team_id ? teamMap[g.home_team_id] ?? null : null,
     away_team_id: g.away_team_id ? teamMap[g.away_team_id] ?? null : null,
     game_date: newDate,
-    // Drop venue/slot FKs (point at source-scoped rows); keep the display text.
-    diamond_id: null, venue_facility_id: null, schedule_facility_lane_id: null,
+    // Remap venue FKs onto the cloned tournament-scoped venues so games stay
+    // linked and the venue dropdown lists/pre-selects them (matches production).
+    diamond_id: g.diamond_id ? diamondMap[g.diamond_id] ?? null : null,
+    venue_facility_id: g.venue_facility_id ? facilityMap[g.venue_facility_id] ?? null : null,
+    schedule_facility_lane_id: null,
     home_slot_id: null, away_slot_id: null,
     score_submitted_by_user_id: null, score_submitted_by_email: null,
   };
@@ -135,7 +164,7 @@ for (const g of srcGames) {
 }
 
 console.log(`\n✅ Seeded "${NEW_NAME}"`);
-console.log(`   ${srcDivs.length} divisions · ${srcTeams.length} teams · ${srcGames.length} games`);
+console.log(`   ${srcDivs.length} divisions · ${srcTeams.length} teams · ${srcGames.length} games · ${(srcDiamonds ?? []).length} venues`);
 console.log(`   Window: ${todayISO} → ${newT.end_date} (status=active, day 1 = today)`);
 console.log(`   Day-1 scores: ${finalCount} final, ${liveCount} LIVE (submitted today)`);
 console.log(`\n   Public URL:  /${ORG_SLUG}/${NEW_SLUG}/schedule`);

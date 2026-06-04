@@ -156,7 +156,9 @@ export default function MyTeamDock({ orgSlug, tournamentSlug, inProgress }: Prop
           )}
           {shareGame && (
             <ShareScoreButton
-              className={styles.expandShare}
+              wrapClassName={styles.expandShare}
+              menuPlacement="up"
+              menuAlign="left"
               gameHref={`/${orgSlug}/${tournamentSlug}/schedule/${shareGame.id}`}
               tournamentName={tournamentName}
               awayName={shareAwayName}

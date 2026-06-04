@@ -528,7 +528,15 @@
 .registrationNameCell {
   flex: 2;
   min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
   /* Long names wrap (no truncation); anywhere covers rare no-space tokens. */
+  overflow-wrap: anywhere;
+}
+
+.registrationNameCell strong {
+  min-width: 0;
   overflow-wrap: anywhere;
 }
 
@@ -1926,4 +1934,63 @@
   .attentionSheetBuckets {
     grid-template-columns: 1fr;
   }
+}
+
+/* ── Registrations card view (C6) — reuses renderFlatRow + its expand panel ──
+   Drives a card layout from a class on .flatList; overrides the compact-row /
+   mobile-marker rules with higher specificity. */
+.cardView {
+  border: none;
+  border-radius: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.cardView .colHeader { display: none; }
+
+.cardView .regRow {
+  background: var(--surface);
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.22);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.cardView .teamRowMain {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 0.7rem;
+  padding: 0.7rem 0.8rem;
+}
+
+/* Team name spans the top line of the card */
+.cardView .registrationNameCell {
+  flex: 1 1 100%;
+  font-size: 0.95rem;
+}
+
+/* Coach stays visible (even on mobile, where the row view hides it) */
+.cardView .registrationCoachCell {
+  display: block !important;
+  flex: 1 1 auto;
+  color: var(--data-gray);
+  font-size: 0.8rem;
+}
+
+/* Show the full status/payment badges; hide the compact row markers */
+.cardView .desktopStatusBadge,
+.cardView .desktopPaymentBadge { display: inline-flex !important; }
+.cardView .mobileStatusMarker,
+.cardView .paymentSymbolGroup { display: none !important; }
+
+.cardView .registrationStatusCell,
+.cardView .registrationPaymentCell {
+  width: auto;
+  padding-left: 0;
+}
+
+.cardView .registrationExpandCell {
+  width: auto;
+  margin-left: auto;
 }

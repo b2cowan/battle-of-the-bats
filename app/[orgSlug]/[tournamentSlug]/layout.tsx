@@ -11,6 +11,8 @@ import PoweredByBadge from '@/components/marketing/PoweredByBadge';
 import TournamentAcquisitionBanner from '@/components/marketing/TournamentAcquisitionBanner';
 import InstallAppPrompt from '@/components/InstallAppPrompt';
 import MyTeamDock from '@/components/public/MyTeamDock';
+import TournamentSideRail from '@/components/public/TournamentSideRail';
+import railStyles from '@/components/public/TournamentSideRail.module.css';
 
 export const dynamic = 'force-dynamic';
 
@@ -24,17 +26,29 @@ export async function generateMetadata({
 
   // Resolve a friendly label for the iOS home-screen icon; fall back gracefully.
   let appleTitle = 'Tournament';
+  let ogTitle = 'Tournament';
+  let ogDescription = 'Live scores, schedule and standings on FieldLogicHQ.';
   try {
     const org = await getOrganizationBySlug(orgSlug);
     if (org && org.subscriptionStatus !== 'canceled') {
       const tournament = await getPublicTournamentBySlug(org.id, tournamentSlug);
-      if (tournament) appleTitle = tournament.name;
+      if (tournament) {
+        appleTitle = tournament.name;
+        ogTitle = tournament.name;
+        ogDescription = `Live scores, schedule and standings · Hosted by ${org.name} on FieldLogicHQ.`;
+      }
     }
   } catch {
     /* fall back to the generic label */
   }
 
   return {
+    title: ogTitle,
+    description: ogDescription,
+    // The branded OG image is auto-wired from `opengraph-image.tsx` in this
+    // segment (event card), overridden by nested routes (game score card, team card).
+    openGraph: { title: ogTitle, description: ogDescription, type: 'website' },
+    twitter: { card: 'summary_large_image', title: ogTitle, description: ogDescription },
     // Per-tournament PWA manifest — an installed app opens straight to this event.
     manifest: `${base}/manifest.webmanifest`,
     // `other` replaces the root value for tournament pages — keep the base PWA
@@ -164,6 +178,9 @@ export default async function TournamentLayout({
         colorMode={effectiveColorMode}
         hiddenPages={tournament.publicHiddenPages ?? []}
         registerCta={registerCta}
+        startDate={tournament.startDate ?? null}
+        endDate={tournament.endDate ?? null}
+        status={tournament.status ?? null}
       />
       {isFreeTournamentPlan && (
         <PoweredByBadge
@@ -185,7 +202,9 @@ export default async function TournamentLayout({
       {lightModeVars && (
         <style dangerouslySetInnerHTML={{ __html: `:root { ${lightModeVars} }` }} />
       )}
-      <div data-card-style={cardStyle} data-color-mode={effectiveColorMode}>
+      {/* Desktop-only (≥1024px) persistent left nav rail — self-hides below that. */}
+      <TournamentSideRail />
+      <div className={railStyles.shell} data-card-style={cardStyle} data-color-mode={effectiveColorMode}>
         {children}
       </div>
       {/* Game-day "now playing" dock for the followed team (self-gates: followers

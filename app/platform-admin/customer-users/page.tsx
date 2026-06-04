@@ -4,6 +4,8 @@ import CustomerUsersClient, { type CustomerUserRow } from './CustomerUsersClient
 
 export const metadata = { title: 'Customer Users - Platform Admin' };
 
+const PAGE_SIZE = 50;
+
 type MemberRow = {
   user_id: string;
   role: string;
@@ -38,9 +40,10 @@ function userMatches(user: User, query: string) {
   return email.includes(query) || name.includes(query) || user.id.toLowerCase().includes(query);
 }
 
-async function getCustomerUsers(query: string): Promise<CustomerUserRow[]> {
-  if (query.length < 2) return [];
-
+async function getCustomerUsers(
+  query: string,
+  page: number,
+): Promise<{ rows: CustomerUserRow[]; total: number }> {
   const [authRes, membersRes] = await Promise.all([
     supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1000 }),
     supabaseAdmin
@@ -51,7 +54,10 @@ async function getCustomerUsers(query: string): Promise<CustomerUserRow[]> {
 
   const authUsers = authRes.data?.users ?? [];
   const userMap = new Map(authUsers.map(user => [user.id, user]));
-  const matchingAuthIds = new Set(authUsers.filter(user => userMatches(user, query)).map(user => user.id));
+  const hasQuery = query.length >= 2;
+  const matchingAuthIds = hasQuery
+    ? new Set(authUsers.filter(user => userMatches(user, query)).map(user => user.id))
+    : new Set(authUsers.map(user => user.id));
   const rowsByUser = new Map<string, CustomerUserRow>();
 
   function ensureRow(userId: string): CustomerUserRow {
@@ -73,7 +79,7 @@ async function getCustomerUsers(query: string): Promise<CustomerUserRow[]> {
 
   for (const member of ((membersRes.data ?? []) as unknown as MemberRow[])) {
     const org = Array.isArray(member.organizations) ? member.organizations[0] : member.organizations;
-    const orgMatches = org
+    const orgMatches = hasQuery && org
       ? `${org.name} ${org.slug}`.toLowerCase().includes(query)
       : false;
 
@@ -95,25 +101,31 @@ async function getCustomerUsers(query: string): Promise<CustomerUserRow[]> {
 
   for (const userId of matchingAuthIds) ensureRow(userId);
 
-  return [...rowsByUser.values()].sort((a, b) =>
-    a.email.localeCompare(b.email, undefined, { sensitivity: 'base' })
+  const allRows = [...rowsByUser.values()].sort((a, b) =>
+    a.email.localeCompare(b.email, undefined, { sensitivity: 'base' }),
   );
+  const total = allRows.length;
+  const start = (page - 1) * PAGE_SIZE;
+  return { rows: allRows.slice(start, start + PAGE_SIZE), total };
 }
 
 export default async function CustomerUsersPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string }>;
+  searchParams: Promise<{ q?: string; page?: string }>;
 }) {
   const sp = await searchParams;
   const query = cleanQuery(sp.q);
-  const rows = await getCustomerUsers(query);
+  const page = Math.max(1, parseInt(sp.page ?? '1', 10) || 1);
+  const { rows, total } = await getCustomerUsers(query, page);
 
   return (
     <CustomerUsersClient
       initialRows={rows}
       query={sp.q ?? ''}
-      searched={query.length >= 2}
+      total={total}
+      page={page}
+      pageSize={PAGE_SIZE}
     />
   );
 }

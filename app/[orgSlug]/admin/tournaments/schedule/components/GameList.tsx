@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ChevronDown, ChevronUp, MapPin, Pencil, X, AlertCircle, Trash2, Check, AlertTriangle, Lock, Unlock, Plus, Minus } from 'lucide-react';
 import { Game, Team, Division, Venue, Tournament } from '@/lib/types';
-import { checkVenueConflict, buildConflictMap, resolveGameTiming, type ConflictResult, type ConflictKind } from '@/lib/schedule-conflict';
+import { checkVenueConflict, buildConflictMap, resolveGameTiming, type ConflictResult, type ConflictInfo } from '@/lib/schedule-conflict';
 import { formatTime, formatPoolName } from '@/lib/utils';
 import { scoreSubmissionSummary } from '@/lib/tournament-score-audit';
 import { Pool } from '@/lib/types';
@@ -27,6 +27,8 @@ interface GameListProps {
   onSaveScore?: (gameId: string, homeScore: number, awayScore: number) => Promise<void>;
   onCreateVenue?: () => void;
   mode: 'planning' | 'scoring';
+  /** When true, only render games that currently have a venue conflict (planning triage). */
+  conflictsOnly?: boolean;
   /** Tournament context used for conflict detection timing resolution. */
   tournament?: Tournament | null;
 }
@@ -48,7 +50,7 @@ function parseGameStart(date?: string | null, time?: string | null): number {
 
 export default function GameList({
   games, teams, divisions, venues, viewMode, groupByPool, pools: poolsProp,
-  onEdit, onFinalize, onDelete, onCancel, onSchedule, onToggleGeneratorLock, onSave, onSaveScore, onCreateVenue, mode, tournament
+  onEdit, onFinalize, onDelete, onCancel, onSchedule, onToggleGeneratorLock, onSave, onSaveScore, onCreateVenue, mode, conflictsOnly = false, tournament
 }: GameListProps) {
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [editState, setEditState] = useState<Record<string, EditFields>>({});
@@ -206,20 +208,12 @@ export default function GameList({
     return 5; // Custom/manually-added rounds appear after standard rounds
   };
 
-  const sortedGames = [...games].sort((a, b) => {
-    if (a.date !== b.date) return (a.date || '9999').localeCompare(b.date || '9999');
-    if (a.time !== b.time) return (a.time || '99:99').localeCompare(b.time || '99:99');
-    if (viewMode === 'playoff') {
-      return getPlayoffPriority(a.bracketCode) - getPlayoffPriority(b.bracketCode);
-    }
-    return 0;
-  });
-
   const today = useMemo(() => new Date().toISOString().split('T')[0], []);
 
   // ── Conflict maps ─────────────────────────────────────────────────────────
-  // Read-mode badges: which saved games already conflict with each other.
-  const conflictMap = useMemo((): Map<string, ConflictKind> => {
+  // Read-mode badges: which saved games already conflict with each other,
+  // including the clashing partner (for "double-booked with…" labels).
+  const conflictMap = useMemo((): Map<string, ConflictInfo> => {
     if (!tournament || mode !== 'planning') return new Map();
     return buildConflictMap(
       games.map(g => ({
@@ -236,6 +230,21 @@ export default function GameList({
       tournament,
     );
   }, [games, divisions, tournament, mode]);
+
+  // Feature 5: optionally show only games that have a conflict (planning triage).
+  const sortedGames = [...games]
+    .filter(g => !conflictsOnly || conflictMap.has(g.id))
+    .sort((a, b) => {
+      if (a.date !== b.date) return (a.date || '9999').localeCompare(b.date || '9999');
+      if (a.time !== b.time) return (a.time || '99:99').localeCompare(b.time || '99:99');
+      if (viewMode === 'playoff') {
+        return getPlayoffPriority(a.bracketCode) - getPlayoffPriority(b.bracketCode);
+      }
+      return 0;
+    });
+
+  // Feature 4: the first conflicting row gets a stable id so the health bar can scroll to it.
+  const firstConflictId = sortedGames.find(g => conflictMap.has(g.id))?.id;
 
   // Inline-edit conflicts: conflict result for any currently expanded+editing row.
   const inlineConflicts = useMemo((): Map<string, ConflictResult | null> => {
@@ -558,7 +567,14 @@ export default function GameList({
       : { name: g.location || '', facility: '' };
 
     return (
-      <div key={g.id} className={`${s.row} ${styles.planningRow} ${isExpanded ? styles.expanded : ''}`} data-status={g.status} data-live={liveStates.get(g.id) ?? undefined}>
+      <div
+        key={g.id}
+        id={g.id === firstConflictId ? 'schedule-first-conflict' : undefined}
+        className={`${s.row} ${styles.planningRow} ${isExpanded ? styles.expanded : ''}`}
+        data-status={g.status}
+        data-live={liveStates.get(g.id) ?? undefined}
+        data-conflict={conflictMap.get(g.id)?.kind ?? undefined}
+      >
         {/* ── Compact planning row ── */}
         <div
           className={`${s.rowMain} ${styles.gameRowMain} ${styles.planningGameRow}`}
@@ -577,6 +593,11 @@ export default function GameList({
               {g.status !== 'scheduled' && (
                 <span className={styles.mobileStatusTag} data-status={g.status}>
                   {g.status === 'completed' ? '· ✓ Final' : g.status === 'submitted' ? '· ⚠ Pending' : '· ✕ Cancelled'}
+                </span>
+              )}
+              {!isExpanded && conflictMap.has(g.id) && (
+                <span className={styles.mobileConflictTag} data-kind={conflictMap.get(g.id)!.kind}>
+                  {conflictMap.get(g.id)!.kind === 'overlap' ? '· ⚠ Conflict' : '· ⚠ Buffer'}
                 </span>
               )}
             </div>
@@ -616,23 +637,19 @@ export default function GameList({
                 <Lock size={9} /> KEPT
               </span>
             )}
-            {/* Conflict badge — read mode only (not while editing) */}
+            {/* Conflict badge — read mode only (not while editing). Tokenized + names the clash. */}
             {!isExpanded && (() => {
-              const kind = conflictMap.get(g.id);
-              if (!kind) return null;
-              const isOverlap = kind === 'overlap';
+              const info = conflictMap.get(g.id);
+              if (!info) return null;
+              const isOverlap = info.kind === 'overlap';
+              const partner = games.find(x => x.id === info.partnerId);
+              const partnerName = partner ? (partner.bracketCode || resolveTeam(partner.homeTeamId, partner.homePlaceholder)) : '';
+              const partnerTime = info.partnerTime ? formatTime(info.partnerTime) : '';
+              const title = partner
+                ? `${isOverlap ? 'Double-booked with' : 'Too close to'} ${partnerName}${partnerTime ? ` · ${partnerTime}` : ''}`
+                : (isOverlap ? 'Venue conflict: game windows overlap' : 'Buffer zone warning: games are too close together');
               return (
-                <span
-                  title={isOverlap ? 'Venue conflict: game windows overlap' : 'Buffer zone warning: games are too close together'}
-                  style={{
-                    display: 'inline-flex', alignItems: 'center', gap: '0.2rem',
-                    fontSize: '0.62rem', fontWeight: 700, letterSpacing: '0.04em',
-                    color: isOverlap ? '#f87171' : '#fbbf24',
-                    background: isOverlap ? 'rgba(239,68,68,0.1)' : 'rgba(251,191,36,0.1)',
-                    border: `1px solid ${isOverlap ? 'rgba(239,68,68,0.35)' : 'rgba(251,191,36,0.3)'}`,
-                    borderRadius: '2px', padding: '1px 5px',
-                  }}
-                >
+                <span className={styles.conflictBadge} data-kind={info.kind} title={title}>
                   <AlertTriangle size={9} />
                   {isOverlap ? 'CONFLICT' : 'BUFFER'}
                 </span>
@@ -677,6 +694,27 @@ export default function GameList({
         {/* ── Inline edit panel ── */}
         {isExpanded && !isCancelled && (
           <div className={styles.inlineForm}>
+            {(() => {
+              const info = conflictMap.get(g.id);
+              if (!info) return null;
+              const isOverlap = info.kind === 'overlap';
+              const partner = games.find(x => x.id === info.partnerId);
+              const partnerName = partner
+                ? (partner.bracketCode || `${resolveTeam(partner.awayTeamId, partner.awayPlaceholder)} vs ${resolveTeam(partner.homeTeamId, partner.homePlaceholder)}`)
+                : 'another game';
+              const partnerTime = info.partnerTime ? formatTime(info.partnerTime) : '';
+              return (
+                <div className={styles.conflictBanner} data-kind={info.kind}>
+                  <AlertTriangle size={13} style={{ flexShrink: 0 }} />
+                  <span>
+                    {isOverlap ? 'Double-booked with ' : 'Too close to '}
+                    <strong>{partnerName}</strong>
+                    {partnerTime ? ` · ${partnerTime}` : ''}
+                    {isOverlap ? ' at this venue.' : ' — buffer too short.'}
+                  </span>
+                </div>
+              );
+            })()}
             <div className={styles.inlineFormBody}>
               {/* Date */}
               <div className={styles.formField}>
@@ -731,7 +769,7 @@ export default function GameList({
                   {venues.filter(v => (v.facilities?.length ?? 0) > 0).map(v => (
                     <optgroup key={v.id} label={v.name}>
                       {v.facilities!.map(f => (
-                        <option key={f.id} value={f.id}>{f.name}</option>
+                        <option key={f.id} value={f.id}>{v.name} — {f.name}</option>
                       ))}
                     </optgroup>
                   ))}
@@ -814,7 +852,7 @@ export default function GameList({
                     style={{ fontSize: '0.75rem', height: '26px', padding: '0 0.5rem', whiteSpace: 'nowrap' }}
                     onClick={() => setEditState(prev => ({ ...prev, [g.id]: { ...prev[g.id], time: inlineConflict.availableAt } }))}
                   >
-                    Use {inlineConflict.availableAt} ↑
+                    Use {formatTime(inlineConflict.availableAt)} ↑
                   </button>
                 </div>
               </div>

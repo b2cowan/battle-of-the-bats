@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
+import { parseCSV } from '../../lib/import/csv.ts';
 import {
   TOURNAMENT_SCHEDULE_IMPORT_HEADERS,
   TOURNAMENT_SCHEDULE_IMPORT_TEMPLATE_VERSION,
@@ -164,6 +165,70 @@ describe('tournament schedule import preview', () => {
     assert(preview.rows[0].warnings.some(warning => warning.includes('Venue matched by name')));
   });
 
+  it('accepts alias headers in any order and normalizes Excel decimal time values', () => {
+    const parsedFile = parseCSV(
+      'Division,Home,Away,Date,Time,Venue,Facility,Status\nU11,Blue Jays,Red Hawks,2026-07-13,0.5,Lions Park,Diamond 1,scheduled\n',
+      10,
+    );
+    const preview = buildTournamentScheduleImportPreview(parsedFile, context, 'batch-1');
+
+    assert.equal(preview.summary.creates, 1);
+    assert.equal(preview.rows[0].operation, 'create');
+    assert.equal(preview.rows[0].normalized.startTime, '12:00');
+    assert(preview.rows[0].warnings.some(warning => warning.includes('Home Team matched by name')));
+    assert(preview.notices?.some(notice => notice.includes('Game ID column is missing')));
+  });
+
+  it('blocks invalid date, time, status, and game type values', () => {
+    const preview = buildTournamentScheduleImportPreview(parsed([
+      baseRow({
+        'Game Type': 'scrimmage',
+        'Game Date': '2026-02-30',
+        'Start Time': '24:00',
+        Status: 'postponed',
+      }),
+    ]), context, 'batch-1');
+
+    assert.equal(preview.summary.blocked, 1);
+    assert(preview.rows[0].errors.some(error => error.includes('calendar date')));
+    assert(preview.rows[0].errors.some(error => error.includes('24-hour time')));
+    assert(preview.rows[0].errors.some(error => error.includes('Status')));
+    assert(preview.rows[0].errors.some(error => error.includes('Game Type')));
+  });
+
+  it('blocks ambiguous team and venue name matches when IDs are omitted', () => {
+    const ambiguousContext: TournamentScheduleImportContext = {
+      ...context,
+      teams: [
+        ...context.teams,
+        {
+          id: 'team-duplicate',
+          divisionId: 'division-1',
+          name: 'Blue Jays',
+          status: 'accepted',
+        },
+      ],
+      venues: [
+        ...context.venues,
+        {
+          id: 'venue-duplicate',
+          name: 'Lions Park',
+          facilities: [{ id: 'facility-duplicate', venueId: 'venue-duplicate', name: 'Diamond 2' }],
+        },
+      ],
+    };
+    const preview = buildTournamentScheduleImportPreview(parsed([
+      baseRow({
+        'Home Team ID': '',
+        'Venue ID': '',
+      }),
+    ]), ambiguousContext, 'batch-1');
+
+    assert.equal(preview.summary.blocked, 1);
+    assert(preview.rows[0].errors.some(error => error.includes('Home Team name is ambiguous')));
+    assert(preview.rows[0].errors.some(error => error.includes('Venue Name is ambiguous')));
+  });
+
   it('blocks venue overlaps and warns on buffer conflicts', () => {
     const preview = buildTournamentScheduleImportPreview(parsed([
       baseRow({ 'Game Date': '2026-07-10', 'Start Time': '10:00' }),
@@ -217,6 +282,29 @@ describe('tournament schedule import preview', () => {
     assert.equal(preview.rows[0].operation, 'blocked');
     assert(preview.rows[0].errors.some(error => error.includes('Pool-slot games cannot change')));
     assert.equal(preview.canCommit, false);
+  });
+
+  it('adds file-level notices for extra columns, missing IDs, and old XLSX template metadata', () => {
+    const preview = buildTournamentScheduleImportPreview({
+      format: 'xlsx',
+      headers: ['Division Name', 'Home Team', 'Away Team', 'Game Date', 'Start Time', 'Mystery Column'],
+      metadata: { 'template version': '0' },
+      rows: [{
+        rowNumber: 2,
+        values: {
+          'Division Name': 'U11',
+          'Home Team': 'Blue Jays',
+          'Away Team': 'Red Hawks',
+          'Game Date': '2026-07-13',
+          'Start Time': '09:00',
+          'Mystery Column': 'ignored',
+        },
+      }],
+    }, context, 'batch-1');
+
+    assert(preview.notices?.some(notice => notice.includes('Ignored extra column')));
+    assert(preview.notices?.some(notice => notice.includes('Game ID column is missing')));
+    assert(preview.notices?.some(notice => notice.includes(`current schedule template version is ${TOURNAMENT_SCHEDULE_IMPORT_TEMPLATE_VERSION}`)));
   });
 });
 

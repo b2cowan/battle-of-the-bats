@@ -5,6 +5,7 @@ import { Division, Team, Venue, PlayoffConfig, Tournament, Game } from '@/lib/ty
 import { formatPoolName } from '@/lib/utils';
 import { buildScheduleMetrics, resolveManualTravelBuffers } from '@/lib/schedule-metrics';
 import { resolveGameTiming } from '@/lib/schedule-conflict';
+import NumberStepper from '@/components/admin/NumberStepper';
 import {
   filterStartsAfterRoundRobinCompletion,
   getRoundRobinCompletion,
@@ -1087,11 +1088,11 @@ export default function PlayoffWizard({ division, tournamentId, tournament = nul
                   <div className="form-row form-row-2">
                     <div className="form-group">
                       <label className="form-label">Game Duration (min)</label>
-                      <input type="number" className={`form-input ${styles.compactNumberInput}`} min="1" max="480" step="5" value={gameLength} onChange={e => setGameLength(Number(e.target.value))} />
+                      <NumberStepper value={gameLength} min={1} max={480} step={5} onChange={setGameLength} ariaLabel="Game duration in minutes" />
                     </div>
                     <div className="form-group">
                       <label className="form-label">Turnover Time (min)</label>
-                      <input type="number" className={`form-input ${styles.compactNumberInput}`} min="0" max="120" step="5" value={breakLength} onChange={e => setBreakLength(Number(e.target.value))} />
+                      <NumberStepper value={breakLength} min={0} max={120} step={5} onChange={setBreakLength} ariaLabel="Turnover time in minutes" />
                       <small className={styles.fieldHint}>Gap between games at the same facility.</small>
                     </div>
                   </div>
@@ -1114,26 +1115,24 @@ export default function PlayoffWizard({ division, tournamentId, tournament = nul
                           <div className={styles.limitsRow}>
                             <label className={styles.limitItem} title="Caps how many games one placeholder or resolved team can play in a day.">
                               <span className={styles.limitLabel}>Max / day</span>
-                              <input
-                                type="number"
-                                className={styles.limitInput}
-                                min="1"
-                                max="6"
+                              <NumberStepper
                                 value={priorities.maxGamesPerDay}
-                                onChange={e => updatePriorities({ maxGamesPerDay: Number(e.target.value) })}
+                                min={1}
+                                max={6}
+                                onChange={v => updatePriorities({ maxGamesPerDay: v })}
+                                ariaLabel="Max games per day"
                               />
                               <small className={styles.limitUnit}>per team</small>
                             </label>
                             <label className={styles.limitItem} title="Minimum rest after a source game before a dependent playoff game can start.">
                               <span className={styles.limitLabel}>Min rest</span>
-                              <input
-                                type="number"
-                                className={styles.limitInput}
-                                min="0"
-                                max="360"
-                                step="15"
+                              <NumberStepper
                                 value={priorities.minRestMinutes}
-                                onChange={e => updatePriorities({ minRestMinutes: Number(e.target.value) })}
+                                min={0}
+                                max={360}
+                                step={15}
+                                onChange={v => updatePriorities({ minRestMinutes: v })}
+                                ariaLabel="Minimum rest minutes"
                               />
                               <small className={styles.limitUnit}>min between rounds</small>
                             </label>
@@ -1244,13 +1243,12 @@ export default function PlayoffWizard({ division, tournamentId, tournament = nul
                         </div>
                         <label>
                           <span>Facilities</span>
-                          <input
-                            type="number"
-                            className="form-input"
-                            min="1"
-                            max="16"
+                          <NumberStepper
                             value={temporaryFacilityCount}
-                            onChange={e => setTemporaryFacilityCount(Number(e.target.value))}
+                            min={1}
+                            max={16}
+                            onChange={setTemporaryFacilityCount}
+                            ariaLabel="Temporary facility count"
                           />
                         </label>
                       </div>

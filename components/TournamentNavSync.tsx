@@ -9,19 +9,29 @@ export default function TournamentNavSync({
   colorMode,
   hiddenPages = [],
   registerCta = null,
+  startDate = null,
+  endDate = null,
+  status = null,
 }: {
   slug: string;
   tournamentName: string;
   colorMode?: 'dark' | 'light' | null;
   hiddenPages?: PublicPageKey[];
   registerCta?: 'register' | 'waitlist' | null;
+  startDate?: string | null;
+  endDate?: string | null;
+  status?: string | null;
 }) {
-  const { setTournamentNav } = useOrgNav();
+  const { setTournamentNav, setTournamentStatus } = useOrgNav();
 
   useEffect(() => {
     setTournamentNav(slug, tournamentName, colorMode ?? 'dark', hiddenPages, registerCta);
-    return () => setTournamentNav(null, null);
-  }, [slug, tournamentName, colorMode, hiddenPages, registerCta, setTournamentNav]);
+    setTournamentStatus(startDate, endDate, status);
+    return () => {
+      setTournamentNav(null, null);
+      setTournamentStatus(null, null, null);
+    };
+  }, [slug, tournamentName, colorMode, hiddenPages, registerCta, startDate, endDate, status, setTournamentNav, setTournamentStatus]);
 
   return null;
 }

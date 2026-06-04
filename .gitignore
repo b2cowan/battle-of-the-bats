@@ -2,6 +2,7 @@
 
 # local dev logs
 .next-dev.log
+.dev-server*.log
 
 # dependencies
 /node_modules

@@ -102,7 +102,7 @@
 
 .clearLink:hover { color: var(--fl-text); }
 
-.tableWrap { overflow-x: auto; }
+.tableWrap { }
 
 .table {
   width: 100%;
@@ -286,6 +286,32 @@
   color: var(--fl-text);
   margin-bottom: 0.75rem;
 }
+
+.modalWarning {
+  font-family: var(--font-data);
+  font-size: 0.75rem;
+  color: var(--fl-text);
+  background: rgba(var(--danger-rgb, 220, 53, 69), 0.08);
+  border: 1px solid rgba(var(--danger-rgb, 220, 53, 69), 0.25);
+  border-radius: 4px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+  line-height: 1.5;
+}
+
+.modalWarningList {
+  margin: 0.4rem 0 0;
+  padding-left: 1.2rem;
+}
+
+.modalWarningList li { margin-bottom: 0.25rem; }
+
+.modalWarningList a {
+  color: var(--logic-lime);
+  text-decoration: none;
+}
+
+.modalWarningList a:hover { text-decoration: underline; }
 
 .modalBody {
   font-family: var(--font-data);
@@ -521,4 +547,44 @@
   margin-top: 0.45rem;
   color: var(--danger);
   font-size: 0.62rem;
+}
+
+/* ── Pagination ────────────────────────────────────────────────────────────── */
+
+.pagination {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+  font-family: var(--font-data);
+  font-size: 0.65rem;
+}
+
+.pageBtn {
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--font-data);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.38rem 0.7rem;
+  background: rgba(var(--logic-lime-rgb), 0.06);
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.3);
+  color: var(--logic-lime);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.pageBtn:hover { background: rgba(var(--logic-lime-rgb), 0.14); }
+
+.pageBtnDisabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.pageInfo {
+  color: var(--data-gray);
+  letter-spacing: 0.06em;
 }

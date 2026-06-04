@@ -20,6 +20,174 @@
   margin-top: 0.08rem;
 }
 
+.guidanceStrip {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.75rem;
+  align-items: start;
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.28);
+  border-radius: 8px;
+  background:
+    linear-gradient(135deg, rgba(var(--logic-lime-rgb), 0.1), rgba(var(--blueprint-blue-rgb), 0.04)),
+    rgba(0, 0, 0, 0.12);
+  padding: 0.9rem;
+}
+
+.guidanceIcon {
+  display: inline-grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.32);
+  border-radius: 6px;
+  background: rgba(var(--logic-lime-rgb), 0.08);
+  color: var(--logic-lime);
+}
+
+.guidanceBody {
+  display: grid;
+  gap: 0.65rem;
+  min-width: 0;
+}
+
+.guidanceHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.guidanceHeader h2 {
+  margin: 0;
+  color: var(--white);
+  font-size: 0.98rem;
+  line-height: 1.25;
+}
+
+.guidanceHeader p {
+  margin: 0.2rem 0 0;
+  color: var(--data-gray);
+  font-size: 0.82rem;
+  line-height: 1.4;
+}
+
+.guidanceLink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  min-height: 34px;
+  min-width: max-content;
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.5);
+  border-radius: 4px;
+  background: rgba(var(--blueprint-blue-rgb), 0.08);
+  color: var(--logic-lime);
+  padding: 0.45rem 0.65rem;
+  font-family: var(--font-data);
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  line-height: 1;
+  text-decoration: none;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.guidanceLink:hover:not(:disabled) {
+  border-color: var(--logic-lime);
+  background: rgba(var(--blueprint-blue-rgb), 0.16);
+}
+
+.guidanceLink:disabled {
+  color: rgba(255, 255, 255, 0.42);
+  cursor: not-allowed;
+}
+
+.guidancePoints {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
+.guidancePoints span {
+  min-width: 0;
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.28);
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.12);
+  color: rgba(255, 255, 255, 0.78);
+  padding: 0.45rem 0.55rem;
+  font-size: 0.74rem;
+  line-height: 1.35;
+}
+
+.planGateStrip {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 0.75rem;
+  align-items: center;
+  border: 1px solid rgba(var(--warning-rgb), 0.36);
+  border-radius: 8px;
+  background: rgba(var(--warning-rgb), 0.07);
+  padding: 0.85rem 0.9rem;
+}
+
+.planGateIcon {
+  display: inline-grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid rgba(var(--warning-rgb), 0.4);
+  border-radius: 6px;
+  background: rgba(var(--warning-rgb), 0.1);
+  color: var(--warning);
+}
+
+.planGateBody {
+  min-width: 0;
+}
+
+.planGateBody h2 {
+  margin: 0;
+  color: var(--white);
+  font-size: 0.92rem;
+  line-height: 1.25;
+}
+
+.planGateBody p {
+  margin: 0.18rem 0 0;
+  color: rgba(255, 255, 255, 0.76);
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
+.planGateLink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  min-height: 34px;
+  min-width: max-content;
+  border: 1px solid rgba(var(--warning-rgb), 0.45);
+  border-radius: 4px;
+  background: rgba(var(--warning-rgb), 0.12);
+  color: var(--white);
+  padding: 0.45rem 0.65rem;
+  font-family: var(--font-data);
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  line-height: 1;
+  text-decoration: none;
+  text-transform: uppercase;
+  transition: border-color 160ms ease, background 160ms ease, color 160ms ease;
+}
+
+.planGateLink:hover {
+  border-color: var(--warning);
+  background: rgba(var(--warning-rgb), 0.18);
+  color: var(--white);
+}
+
 .noticeSuccess {
   border-color: rgba(var(--logic-lime-rgb), 0.35);
   background: rgba(var(--logic-lime-rgb), 0.08);
@@ -434,7 +602,8 @@
 
 @media (max-width: 980px) {
   .toolGrid,
-  .referenceGrid {
+  .referenceGrid,
+  .guidancePoints {
     grid-template-columns: 1fr;
   }
 
@@ -444,6 +613,20 @@
 }
 
 @media (max-width: 640px) {
+  .guidanceStrip,
+  .planGateStrip {
+    grid-template-columns: 1fr;
+  }
+
+  .guidanceHeader {
+    display: grid;
+  }
+
+  .guidanceLink,
+  .planGateLink {
+    width: 100%;
+  }
+
   .buttonGrid {
     grid-template-columns: 1fr;
   }

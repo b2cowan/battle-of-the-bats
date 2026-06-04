@@ -12,6 +12,7 @@ import MyTournamentCard from '@/components/public/MyTournamentCard';
 import PublicTournamentState from '@/components/public/PublicTournamentState';
 import CountUp from '@/components/public/CountUp';
 import Countdown from '@/components/public/Countdown';
+import SharePageButton from '@/components/public/SharePageButton';
 import styles from '@/app/[orgSlug]/Home.module.css';
 
 export default async function TournamentHomeContent({
@@ -571,6 +572,15 @@ export default async function TournamentHomeContent({
               <Link href={newsHref} className="btn btn-outline btn-lg" id="hero-news-btn">
                 <Megaphone size={18} /> Announcements
               </Link>
+            )}
+            {!isPreview && (
+              <SharePageButton
+                url={publicBase}
+                title={tournament.name}
+                text={`Hosted by ${org.name} · Live on FieldLogicHQ`}
+                label="Share event"
+                className="btn btn-outline btn-lg"
+              />
             )}
           </div>
 

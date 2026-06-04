@@ -303,59 +303,64 @@ export default function DivisionsPage() {
           )}
         </div>
       ) : (
-        <div className="table-wrap">
-          <table>
-            <thead className={styles.tableHead}>
-              <tr>
-                <th className={styles.colDivision}>Division</th>
-                <th className={styles.colAge}>Age Range</th>
-                <th className={styles.colTeams}>Teams</th>
-                <th className={styles.colPools}>Pools</th>
-                <th className={styles.colStatus}>Status</th>
-                <th className={styles.colActions}>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {groups.map(g => (
-                <tr key={g.id}>
-                  <td className={styles.colDivision}>
-                    <span className={styles.divisionName}>{g.name}</span>
-                    <div className={styles.divisionMeta}>
-                      {formatAgeRange(g.minAge, g.maxAge)} · {g.capacity ? `${g.acceptedCount ?? 0}/${g.capacity}` : `${g.acceptedCount ?? 0} teams`}
+        <div className={styles.divisionBoard}>
+          {groups.map(g => {
+            const accepted = g.acceptedCount ?? 0;
+            const cap = g.capacity ?? 0;
+            const hasCap = cap > 0;
+            const pct = hasCap ? Math.min(1, accepted / cap) : 0;
+            const fill = !hasCap ? 'none'
+              : accepted === 0 ? 'empty'
+              : accepted >= cap ? 'full'
+              : pct >= 0.8 ? 'almost'
+              : 'filling';
+            const fillLabel = !hasCap ? `${accepted} team${accepted === 1 ? '' : 's'}`
+              : fill === 'full' ? 'Full'
+              : fill === 'almost' ? 'Almost full'
+              : fill === 'empty' ? 'No teams yet'
+              : 'Filling';
+            return (
+              <div key={g.id} className={styles.divisionCard} data-fill={fill}>
+                <div className={styles.divisionCardHead}>
+                  <span className={styles.divisionName}>{g.name}</span>
+                  {g.isClosed
+                    ? <span className="badge badge-danger">Closed</span>
+                    : <span className="badge badge-success">Open</span>}
+                </div>
+                <div className={styles.divisionCardAge}>{formatAgeRange(g.minAge, g.maxAge)}</div>
+
+                <div className={styles.gaugeRow}>
+                  <div className={styles.gaugeTrack}>
+                    <div
+                      className={styles.gaugeFill}
+                      data-fill={fill}
+                      style={{ width: hasCap ? `${pct * 100}%` : '0%' }}
+                    />
+                  </div>
+                  <span className={styles.gaugeValue}>{hasCap ? `${accepted} / ${cap}` : accepted}</span>
+                </div>
+                <div className={styles.gaugeLabel} data-fill={fill}>{fillLabel}</div>
+
+                <div className={styles.divisionCardFoot}>
+                  {(g.poolCount || 0) >= 2 && g.pools && g.pools.length > 0 ? (
+                    <div className={styles.poolChips}>
+                      {g.pools.map(p => (
+                        <span key={p.id} className={styles.poolChip}>{p.name}</span>
+                      ))}
                     </div>
-                  </td>
-                  <td className={styles.colAge}>{formatAgeRange(g.minAge, g.maxAge)}</td>
-                  <td className={styles.colTeams}>
-                    {g.capacity
-                      ? `${g.acceptedCount ?? 0} / ${g.capacity}`
-                      : `${g.acceptedCount ?? 0} teams`}
-                  </td>
-                  <td className={styles.colPools}>
-                    {(g.poolCount || 0) >= 2 && g.pools && g.pools.length > 0 ? (
-                      <div className={styles.poolChips}>
-                        {g.pools.map(p => (
-                          <span key={p.id} className={styles.poolChip}>{p.name}</span>
-                        ))}
-                      </div>
-                    ) : (
-                      <span className={styles.mutedCell}>—</span>
-                    )}
-                  </td>
-                  <td className={styles.colStatus}>
-                    {g.isClosed ? <span className="badge badge-danger">Closed</span> : <span className="badge badge-success">Open</span>}
-                  </td>
-                  <td className={styles.colActions}>
-                    {!isLocked && (
-                      <div className={styles.rowActions}>
-                        <button className="btn btn-ghost btn-data" onClick={() => openEdit(g)} id={`edit-division-${g.id}`}><Pencil size={13} /></button>
-                        <button className="btn btn-danger btn-data" onClick={() => setDeleteId(g.id)} id={`delete-division-${g.id}`}><Trash2 size={13} /></button>
-                      </div>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                  ) : (
+                    <span className={styles.mutedCell}>No pools</span>
+                  )}
+                  {!isLocked && (
+                    <div className={styles.rowActions}>
+                      <button className="btn btn-ghost btn-data" onClick={() => openEdit(g)} id={`edit-division-${g.id}`}><Pencil size={13} /></button>
+                      <button className="btn btn-danger btn-data" onClick={() => setDeleteId(g.id)} id={`delete-division-${g.id}`}><Trash2 size={13} /></button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
 

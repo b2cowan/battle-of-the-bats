@@ -143,6 +143,13 @@
   min-width: 0;
 }
 
+/* Desktop app-shell top-bar additions (status/ticker on the left, Share by
+   Register on the right) — shown only ≥1024px (see the media block below). */
+.navStatusSlot,
+.navShareSlot {
+  display: none;
+}
+
 /* Bottom nav (marketing pages, mobile only) */
 .bottomNav {
   display: none;
@@ -190,4 +197,26 @@
 @media (max-width: 900px) {
   .links { display: none; }
   .bottomNav { display: flex; }
+}
+
+/* Desktop app shell: the persistent left rail (TournamentSideRail) replaces the
+   top bar's horizontal section links at ≥1024px. Tablet (901–1023px) keeps them.
+   The rail also owns the tournament identity (logo + name) in its header, so the
+   top bar's duplicate logo/name is hidden — Register stays right via .actions. */
+@media (min-width: 1024px) {
+  .links { display: none; }
+  .nav[data-color-mode] .logo { display: none; }
+  /* Offset the tournament top bar past the full-height rail so its content
+     (status pill / ticker on the left, Share + Register on the right) clears the
+     rail and aligns with the page content beside it. Rail is 248px wide. */
+  .nav[data-color-mode] {
+    left: 248px;
+  }
+  .navStatusSlot {
+    display: flex;
+    align-items: center;
+    flex: 1 1 0;
+    min-width: 0;
+  }
+  .navShareSlot { display: inline-flex; }
 }

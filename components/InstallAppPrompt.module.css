@@ -1,9 +1,9 @@
 .banner {
   position: fixed;
-  bottom: 0;
+  bottom: calc(var(--bottom-nav-height, 0px) + var(--admin-strip-h, 0px));
   left: 0;
   right: 0;
-  z-index: 201;
+  z-index: 400;
   display: flex;
   align-items: center;
   gap: 0.75rem;

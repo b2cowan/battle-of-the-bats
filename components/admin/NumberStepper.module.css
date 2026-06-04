@@ -1,0 +1,76 @@
+.stepper {
+  display: inline-flex;
+  align-items: stretch;
+  border: 1px solid var(--border-2);
+  border-radius: 4px;
+  overflow: hidden;
+  background: var(--bg-2);
+}
+
+.stepBtn {
+  /* Steppers are a mobile affordance; on desktop it's just a compact number field. */
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  flex-shrink: 0;
+  border: none;
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--data-gray);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.stepBtn:hover:not(:disabled) {
+  background: var(--white-10);
+  color: var(--logic-lime);
+}
+
+.stepBtn:active:not(:disabled) {
+  background: rgba(var(--logic-lime-rgb), 0.16);
+}
+
+.stepBtn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.input {
+  width: 56px;
+  min-width: 0;
+  padding: 0.4rem 0.45rem;
+  border: none;
+  background: transparent;
+  color: var(--fl-text);
+  text-align: center;
+  font-family: var(--font-data);
+  font-weight: 700;
+  font-size: 0.9rem;
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+.input::-webkit-outer-spin-button,
+.input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.input:focus {
+  outline: none;
+}
+
+/* Thumb-size on mobile (40–44px targets) */
+@media (max-width: 768px) {
+  .stepper {
+    min-height: 44px;
+  }
+  .stepBtn {
+    display: inline-flex;
+  }
+  .input {
+    width: 60px;
+    font-size: 1rem;
+    padding: 0 0.3rem;
+  }
+}

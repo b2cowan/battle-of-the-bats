@@ -1,6 +1,6 @@
 # Bulk Data Importer
 
-**Status:** In progress - Created 2026-06-02; Phase 1 tournament teams template, preview, add/update commit, Data Tools hub, recent import history, team importer hardening, and schedule add/update import built through 2026-06-03
+**Status:** V1 complete - Created 2026-06-02; tournament team and schedule add/update imports are built, paywalled, documented, and smoke-tested through 2026-06-04. Future import types and destructive replace/wipe flows are separate follow-up work.
 **Owner surfaces:** Tournament admin first; later House League, Rep Teams, Coaches Portal, Accounting
 **PM brief:** [BULK_DATA_IMPORTER_PM_BRIEF.md](BULK_DATA_IMPORTER_PM_BRIEF.md)
 **Related foundation:** [Export Enhancements](../archive/MERGED_EXPORTS_IMPLEMENTATION_PLAN.md), [Export strategy memory](../../../memory/export-strategy.md)
@@ -19,7 +19,14 @@
 - 2026-06-02: Added read-only Recent Imports to Data Tools, backed by existing `import_batches` summaries and scoped through the same tournament/team importer authorization path.
 - 2026-06-02: Team importer hardening pass added XLSX template version metadata, preview notices for extra columns/missing Team ID/stale workbook metadata, empty-file/batch guards, persisted preview notices in batch summaries, commit-side non-negative/whole-number normalized value guards, and apply-time division rechecks before inserts/updates.
 - 2026-06-03: Added tournament schedule add/update import. Data Tools now exposes current/empty schedule XLSX and CSV templates, a schedule preview/apply dialog, generic Recent Imports history across team and schedule imports, and schedule preview/apply persistence in `import_batches`/`import_batch_rows`. Schedule import supports create/update classification by `Game ID`, file-level template notices, unique name matching warnings, venue overlap blocks, buffer warnings, and blocks submitted/completed/scored/generator-locked/playoff rows plus pool-slot/facility-lane structural changes. Schedule apply rechecks live tournament state before writing and remains add/update-only.
-- Remaining product work: expand validation edge cases from real customer templates, add API authorization coverage, and design any future destructive replace/wipe workflow separately.
+- 2026-06-03: Added targeted UAT route-hardening smoke for schedule import preview/apply. Coverage includes unauthenticated denial, completed-tournament preview/apply denial, actor mismatch, wrong importer type, wrong tournament scope, already-handled preview, expired preview status update, and blocked-row force-apply denial.
+- 2026-06-04: Added Data Tools safe-import guidance strip with a direct Help link, and expanded the tournament Help article with current-vs-empty templates, XLSX-vs-CSV, warnings-vs-blocked rows, add/update-only behavior, completed-tournament locks, and related FAQs.
+- 2026-06-04: Added targeted UAT route-hardening parity smoke for team import preview/apply. Coverage includes unauthenticated denial, completed-tournament preview/apply denial, actor mismatch, wrong importer type, wrong tournament scope, already-handled preview, expired preview status update, blocked-row force-apply denial, stale preview denial, duplicate team introduced after preview, deleted division after preview, and scheduled-team division-move denial.
+- 2026-06-04: Added focused unit validation pack for CSV/tabular parsing, team previews, and schedule previews. Coverage includes blank leading rows, blank records, source row numbers, escaped quotes, embedded line breaks, duplicate normalized headers, row limits, reordered alias headers, Excel-style money/decimal time values, invalid money/waitlist/date/time/status/game-type values, ambiguous name matches, and schedule file notices.
+- 2026-06-04: Completed Tournament Plus paywall enforcement pass for V1 importer/export surfaces. Server gates were verified for team import, schedule import, import history, and registration exports; Data Tools now shows a direct Tournament Plus upgrade strip when bulk imports or registration exports are locked; the Teams page Data Tools shortcut clarifies the paid import/export capability on base plans.
+- 2026-06-04: Added and passed combined Data Tools UAT smoke. Coverage downloads team/schedule templates, applies one team create/update import, applies one schedule create/update import, verifies Recent Imports contains both committed batches, and verifies the base-plan Tournament Plus upgrade strip. The smoke exposed and fixed a team apply bug where blank money fields on create rows committed as null against non-null DB columns; commit payloads now write blank payment amounts as zero.
+- 2026-06-04: V1 release-readiness close-out completed. Tournament team and schedule add/update imports are considered functionally complete for launch; remaining work is future enhancement scope, not V1 launch debt.
+- Future enhancement backlog: customer-template validation refinements, destructive replace/wipe workflow design, supporting reference imports, and future league/club import surfaces.
 
 ## Product UX Summary
 
@@ -54,6 +61,8 @@ The danger is that a careless import could silently damage schedules, score hist
 - **Commercial packaging:** Treat customer-facing bulk import as a paid productivity feature by default: Tournament Plus for tournament imports, League for house-league imports, Club for rep/accounting/team imports. Revisit before implementation if team/schedule import is needed as a free onboarding accelerator.
 
 ## V1 Scope
+
+The sections below are retained as implementation reference. P0-P2 are complete for tournament teams and schedule; P3/P4 remain future expansion tracks.
 
 ### P0: Shared Import Foundation
 

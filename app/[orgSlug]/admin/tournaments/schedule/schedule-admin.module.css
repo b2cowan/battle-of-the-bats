@@ -3169,6 +3169,136 @@
   border-left: 3px solid rgba(var(--info-rgb), 0.7);
 }
 
+/* ─── Conflict visualization (C5) ────────────────────────────────────────────
+   Placed AFTER the live-state rules so a conflict stripe outranks the live
+   stripe (overlap = hard venue double-book, buffer = scheduled too close).
+   Same specificity as the live rules → later source order wins. */
+.planningRow[data-conflict="buffer"] {
+  border-left: 3px solid var(--warning);
+  background: rgba(var(--warning-rgb), 0.05);
+}
+
+.planningRow[data-conflict="overlap"] {
+  border-left: 3px solid var(--danger);
+  background: rgba(var(--danger-rgb), 0.06);
+}
+
+/* Tokenized conflict badge (desktop status cell) */
+.conflictBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 1px 5px;
+  border-radius: 2px;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.conflictBadge[data-kind="overlap"] {
+  color: var(--danger);
+  background: rgba(var(--danger-rgb), 0.1);
+  border: 1px solid rgba(var(--danger-rgb), 0.35);
+}
+
+.conflictBadge[data-kind="buffer"] {
+  color: var(--warning);
+  background: rgba(var(--warning-rgb), 0.1);
+  border: 1px solid rgba(var(--warning-rgb), 0.3);
+}
+
+/* Mobile conflict tag (sits in the date cell beside the status tag) */
+.mobileConflictTag {
+  display: none;
+}
+
+/* Clash banner at the top of the expanded edit panel — names the partner so
+   mobile users (no hover/tooltip) can see exactly what it collides with. */
+.conflictBanner {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0 0 0.6rem;
+  padding: 0.4rem 0.6rem;
+  border-radius: 3px;
+  font-size: 0.72rem;
+  line-height: 1.3;
+}
+
+.conflictBanner[data-kind="overlap"] {
+  color: var(--danger);
+  background: rgba(var(--danger-rgb), 0.08);
+  border: 1px solid rgba(var(--danger-rgb), 0.25);
+}
+
+.conflictBanner[data-kind="buffer"] {
+  color: var(--warning);
+  background: rgba(var(--warning-rgb), 0.08);
+  border: 1px solid rgba(var(--warning-rgb), 0.22);
+}
+
+.conflictBanner strong { font-weight: 800; }
+
+@media (max-width: 768px) {
+  /* On mobile the desktop status-cell badge is hidden; show a compact inline
+     tag in the date cell instead. */
+  .conflictBadge { display: none; }
+
+  .mobileConflictTag {
+    display: inline;
+    margin-left: 0.4rem;
+    font-size: 0.7rem;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
+  .mobileConflictTag[data-kind="overlap"] { color: var(--danger); }
+  .mobileConflictTag[data-kind="buffer"] { color: var(--warning); }
+}
+
+/* Conflicts-only filter chip (toolbar) */
+.conflictFilterChip {
+  color: var(--danger);
+  border-color: rgba(var(--danger-rgb), 0.4) !important;
+}
+
+.conflictFilterChip[data-active="true"] {
+  background: rgba(var(--danger-rgb), 0.15) !important;
+  border-color: rgba(var(--danger-rgb), 0.6) !important;
+  color: var(--danger) !important;
+}
+
+/* Health-bar "jump to first conflict" chip (C5 feature 4) */
+.healthJumpChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  margin-left: 0.6rem;
+  padding: 0.12rem 0.4rem;
+  border-radius: 2px;
+  font-family: var(--font-data);
+  font-size: 0.62rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.healthJumpChip[data-tone="danger"] {
+  border: 1px solid rgba(var(--danger-rgb), 0.45);
+  background: rgba(var(--danger-rgb), 0.12);
+  color: var(--danger);
+}
+
+.healthJumpChip[data-tone="danger"]:hover { background: rgba(var(--danger-rgb), 0.2); }
+
+.healthJumpChip[data-tone="warning"] {
+  border: 1px solid rgba(var(--warning-rgb), 0.45);
+  background: rgba(var(--warning-rgb), 0.12);
+  color: var(--warning);
+}
+
+.healthJumpChip[data-tone="warning"]:hover { background: rgba(var(--warning-rgb), 0.2); }
+
 .liveChip {
   display: inline-flex;
   align-items: center;
@@ -3314,159 +3444,76 @@
   }
 }
 
-/* ============================================================
-   Schedule Health chip + popover (C4) — always-visible glance in
-   the sticky toolbar; opens detail without moving scroll.
-   ============================================================ */
-.healthChipWrap {
-  position: relative;
-  display: inline-flex;
+/* ── Sticky Schedule Health bar (C4 revision) ────────────────
+   Pins the full-width panel under the chrome as you scroll; default-collapsed
+   so it rides as a slim bar. `.healthPanel` already has an opaque bg so game
+   rows scroll under it cleanly. The mobile top bar is fixed (48px) outside the
+   .adminMain scroll container, so the bar must clear it on mobile. */
+.healthPanelSticky {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.18);
 }
 
-.healthChip {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  height: var(--admin-control-h, 34px);
-  padding: 0 0.55rem;
-  background: var(--white-03);
-  border: 1px solid var(--white-10);
-  border-radius: 2px;
-  color: var(--white-80);
-  cursor: pointer;
-  font-family: var(--font-data);
-  transition: border-color 0.15s ease, background 0.15s ease;
+@media (max-width: 900px) {
+  .healthPanelSticky {
+    top: calc(48px + env(safe-area-inset-top));
+  }
 }
 
-.healthChip:hover {
-  background: var(--white-5);
-  border-color: var(--white-20);
+/* ── Mobile-visible stage toggle (Round Robin / Playoffs) ────
+   Pulled out of the settings sheet onto the Division row so the most important
+   context switch is one tap. Desktop keeps the segmented control. */
+.mobileStageToggle {
+  display: none;
 }
 
-.healthChipDot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  flex-shrink: 0;
-  background: var(--data-gray);
-}
+@media (max-width: 900px) {
+  .mobileStageToggle {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-self: flex-end;
+    overflow: hidden;
+    border: 1px solid var(--border-2);
+    border-radius: 4px;
+    background: var(--white-03);
+  }
 
-.healthChip[data-tone="good"] .healthChipDot {
-  background: var(--success);
-  box-shadow: 0 0 0 3px rgba(var(--success-rgb), 0.18);
-}
+  .mobileStageBtn {
+    height: 34px;
+    padding: 0 0.6rem;
+    border: none;
+    background: transparent;
+    color: var(--data-gray);
+    font-family: var(--font-data);
+    font-size: 0.62rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+  }
 
-.healthChip[data-tone="warning"] {
-  border-color: rgba(var(--warning-rgb), 0.4);
-}
+  .mobileStageBtn + .mobileStageBtn {
+    border-left: 1px solid var(--border-2);
+  }
 
-.healthChip[data-tone="warning"] .healthChipDot {
-  background: var(--warning);
-  box-shadow: 0 0 0 3px rgba(var(--warning-rgb), 0.18);
-}
+  .mobileStageActive {
+    background: rgba(var(--logic-lime-rgb), 0.14);
+    color: var(--logic-lime);
+  }
 
-.healthChip[data-tone="danger"] {
-  border-color: rgba(var(--danger-rgb), 0.45);
-}
+  /* Keep Division + Stage on one row */
+  .scheduleStartGroup {
+    flex-wrap: nowrap;
+    align-items: flex-end;
+    gap: 0.5rem;
+  }
 
-.healthChip[data-tone="danger"] .healthChipDot {
-  background: var(--danger);
-  box-shadow: 0 0 0 3px rgba(var(--danger-rgb), 0.2);
-}
-
-.healthChipScore {
-  font-size: 0.8rem;
-  font-weight: 800;
-  color: var(--white);
-  font-variant-numeric: tabular-nums;
-}
-
-.healthChipMax {
-  font-size: 0.6rem;
-  color: var(--white-40);
-  margin-left: -0.2rem;
-}
-
-.healthChipWarn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.15rem;
-  margin-left: 0.1rem;
-  padding: 0 0.3rem;
-  height: 16px;
-  border-radius: 2px;
-  font-size: 0.6rem;
-  font-weight: 800;
-  font-variant-numeric: tabular-nums;
-}
-
-.healthChipWarn[data-tone="warning"] {
-  background: rgba(var(--warning-rgb), 0.15);
-  color: var(--warning);
-}
-
-.healthChipWarn[data-tone="danger"] {
-  background: rgba(var(--danger-rgb), 0.15);
-  color: var(--danger);
-}
-
-.healthChipCaret {
-  color: var(--white-40);
-}
-
-/* Desktop anchored popover (mobile uses the BottomSheet portal instead) */
-.healthPopover {
-  position: absolute;
-  top: calc(100% + 0.4rem);
-  right: 0;
-  z-index: 60;
-  width: 340px;
-  max-width: min(340px, calc(100vw - 2rem));
-  background: var(--hud-surface, var(--surface));
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.35);
-  border-radius: 4px;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5), var(--highlight-top);
-  animation: healthPopIn 0.16s var(--ease-spring, ease);
-}
-
-@keyframes healthPopIn {
-  from { opacity: 0; transform: translateY(-4px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-
-.healthPopoverHead {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0.55rem 0.75rem;
-  border-bottom: 1px solid rgba(var(--blueprint-blue-rgb), 0.18);
-  color: rgba(var(--logic-lime-rgb), 0.8);
-  font-family: var(--font-data);
-  font-size: 0.6rem;
-  font-weight: 800;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-}
-
-.healthPopoverHead strong {
-  margin-left: auto;
-  font-size: 0.95rem;
-  color: var(--white);
-  font-variant-numeric: tabular-nums;
-}
-
-.healthPopoverHead strong small {
-  font-size: 0.6rem;
-  color: var(--white-40);
-}
-
-.healthPopoverHead strong[data-tone="good"] { color: var(--success); }
-.healthPopoverHead strong[data-tone="warning"] { color: var(--warning); }
-.healthPopoverHead strong[data-tone="danger"] { color: var(--danger); }
-
-.healthPopoverBody {
-  padding: 0.75rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.65rem;
+  .scheduleStartGroup .scheduleDivisionSelect {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
 }

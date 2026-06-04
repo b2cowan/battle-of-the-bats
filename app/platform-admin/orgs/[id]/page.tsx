@@ -501,6 +501,9 @@ export default async function OrgDetailPage({
         auditEvents={auditEvents}
         auditHref={`/platform-admin/audit?q=${encodeURIComponent(org.name as string)}`}
         pendingOwnershipTransfers={pendingOwnershipTransfers}
+        stripeSubscriptionId={(org.stripe_subscription_id as string | null) ?? null}
+        subscriptionStatus={subscriptionStatus}
+        isSuperAdmin={auth?.role === 'super_admin'}
       />
     </div>
   );

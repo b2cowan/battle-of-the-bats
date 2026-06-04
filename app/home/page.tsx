@@ -15,7 +15,16 @@ import { getUserAccessContexts, type UserAccessContext } from '@/lib/user-contex
 import InstallAppPrompt from '@/components/InstallAppPrompt';
 import styles from './home.module.css';
 
-export const metadata = { title: 'Home - FieldLogicHQ' };
+export const metadata = {
+  title: 'Home - FieldLogicHQ',
+  manifest: '/manifest.json',
+  other: {
+    'mobile-web-app-capable': 'yes',
+    'apple-mobile-web-app-capable': 'yes',
+    'apple-mobile-web-app-status-bar-style': 'black-translucent',
+    'apple-mobile-web-app-title': 'FieldLogicHQ',
+  },
+};
 
 const ICONS: Record<UserAccessContext['kind'], LucideIcon> = {
   organization: Building2,

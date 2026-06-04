@@ -44,7 +44,9 @@ export type CustomerUserRow = {
 type Props = {
   initialRows: CustomerUserRow[];
   query: string;
-  searched: boolean;
+  total: number;
+  page: number;
+  pageSize: number;
 };
 
 type ResetState = { link?: string; error?: string; copied?: boolean };
@@ -113,7 +115,7 @@ function statusClass(value: string, s: Record<string, string>) {
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
-export default function CustomerUsersClient({ initialRows, query, searched }: Props) {
+export default function CustomerUsersClient({ initialRows, query, total, page, pageSize }: Props) {
   const router = useRouter();
 
   // ── Core busy / error state ───────────────────────────────────────────────
@@ -418,10 +420,12 @@ export default function CustomerUsersClient({ initialRows, query, searched }: Pr
             formats={['xlsx', 'csv']}
             onExportXLSX={handleExportXLSX}
             onExportCSV={handleExportCSV}
-            disabled={!searched || initialRows.length === 0}
+            disabled={initialRows.length === 0}
           />
           <div className={styles.count}>
-            {searched ? `${initialRows.length} result${initialRows.length === 1 ? '' : 's'}` : 'Search required'}
+            {query.length >= 2
+              ? `${total} result${total === 1 ? '' : 's'}`
+              : `${total} user${total === 1 ? '' : 's'}`}
           </div>
         </div>
       </header>
@@ -454,11 +458,10 @@ export default function CustomerUsersClient({ initialRows, query, searched }: Pr
             </tr>
           </thead>
           <tbody>
-            {!searched && (
-              <tr><td colSpan={5} className={styles.emptyCell}>Search at least two characters to look up customer users.</td></tr>
-            )}
-            {searched && initialRows.length === 0 && (
-              <tr><td colSpan={5} className={styles.emptyCell}>No customer users match this search.</td></tr>
+            {initialRows.length === 0 && (
+              <tr><td colSpan={5} className={styles.emptyCell}>
+                {query.length >= 2 ? 'No customer users match this search.' : 'No users found.'}
+              </td></tr>
             )}
             {initialRows.map(row => {
               const reset    = resetState[row.userId] ?? {};
@@ -595,6 +598,28 @@ export default function CustomerUsersClient({ initialRows, query, searched }: Pr
         </table>
       </div>
 
+      {/* ── Pagination ─────────────────────────────────────────────────────────── */}
+      {total > pageSize && (() => {
+        const totalPages = Math.ceil(total / pageSize);
+        const buildHref = (p: number) => {
+          const params = new URLSearchParams();
+          if (query) params.set('q', query);
+          params.set('page', String(p));
+          return `/platform-admin/customer-users?${params.toString()}`;
+        };
+        return (
+          <div className={styles.pagination}>
+            {page > 1
+              ? <Link href={buildHref(page - 1)} className={styles.pageBtn}>← Prev</Link>
+              : <span className={`${styles.pageBtn} ${styles.pageBtnDisabled}`}>← Prev</span>}
+            <span className={styles.pageInfo}>Page {page} of {totalPages}</span>
+            {page < totalPages
+              ? <Link href={buildHref(page + 1)} className={styles.pageBtn}>Next →</Link>
+              : <span className={`${styles.pageBtn} ${styles.pageBtnDisabled}`}>Next →</span>}
+          </div>
+        );
+      })()}
+
       {/* ── Ban / Unban / Revoke-sessions confirmation modal ─────────────────── */}
       {confirmModal && (
         <div className={styles.modalOverlay}>
@@ -672,44 +697,63 @@ export default function CustomerUsersClient({ initialRows, query, searched }: Pr
       )}
 
       {/* ── Delete user modal ────────────────────────────────────────────────── */}
-      {deleteModal && (
-        <div className={styles.modalOverlay}>
-          <div className={styles.modalBox}>
-            <h2 className={styles.modalTitle}>Delete User</h2>
-            <p className={styles.modalBody}>
-              This permanently deletes <strong>{deleteModal.email}</strong> and all their data.
-              This cannot be undone. Type the user&apos;s email to confirm.
-            </p>
-            <div className={styles.formGroup}>
-              <input
-                className={styles.fieldInput}
-                type="text"
-                placeholder={deleteModal.email}
-                value={deleteConfirmText}
-                onChange={e => setDeleteConfirmText(e.target.value)}
-                autoFocus
-              />
-            </div>
-            <div className={styles.modalActions}>
-              <button
-                className={styles.modalCancel}
-                type="button"
-                onClick={() => { setDeleteModal(null); setDeleteConfirmText(''); }}
-              >
-                Cancel
-              </button>
-              <button
-                className={styles.modalConfirmDanger}
-                type="button"
-                disabled={deleteConfirmText.trim().toLowerCase() !== deleteModal.email.toLowerCase()}
-                onClick={handleDeleteUser}
-              >
-                Delete Permanently
-              </button>
+      {deleteModal && (() => {
+        const deleteRow = initialRows.find(r => r.userId === deleteModal.userId);
+        const ownedOrgs = deleteRow?.memberships.filter(m => m.role === 'owner') ?? [];
+        return (
+          <div className={styles.modalOverlay}>
+            <div className={styles.modalBox}>
+              <h2 className={styles.modalTitle}>Delete User</h2>
+              {ownedOrgs.length > 0 && (
+                <div className={styles.modalWarning}>
+                  <strong>Owner of {ownedOrgs.length} organization{ownedOrgs.length !== 1 ? 's' : ''}:</strong>
+                  <ul className={styles.modalWarningList}>
+                    {ownedOrgs.map(m => (
+                      <li key={m.orgId}>
+                        <a href={`/platform-admin/orgs/${m.orgId}`} target="_blank" rel="noreferrer">
+                          {m.orgName}
+                        </a>
+                        {' '}— verify ownership is transferred or the org is deleted before proceeding.
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              <p className={styles.modalBody}>
+                This permanently removes <strong>{deleteModal.email}</strong> from FieldLogicHQ.
+                Organization data is not deleted automatically. Type the user&apos;s email to confirm.
+              </p>
+              <div className={styles.formGroup}>
+                <input
+                  className={styles.fieldInput}
+                  type="text"
+                  placeholder={deleteModal.email}
+                  value={deleteConfirmText}
+                  onChange={e => setDeleteConfirmText(e.target.value)}
+                  autoFocus
+                />
+              </div>
+              <div className={styles.modalActions}>
+                <button
+                  className={styles.modalCancel}
+                  type="button"
+                  onClick={() => { setDeleteModal(null); setDeleteConfirmText(''); }}
+                >
+                  Cancel
+                </button>
+                <button
+                  className={styles.modalConfirmDanger}
+                  type="button"
+                  disabled={deleteConfirmText.trim().toLowerCase() !== deleteModal.email.toLowerCase()}
+                  onClick={handleDeleteUser}
+                >
+                  Delete Permanently
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* ── Notes modal ──────────────────────────────────────────────────────── */}
       {notesModal && (

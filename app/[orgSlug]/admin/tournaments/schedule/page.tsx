@@ -19,7 +19,6 @@ import PlayoffWizard from './PlayoffWizard';
 import GameList from './components/GameList';
 import ScheduleHealthPanel from './components/ScheduleHealthPanel';
 import BracketConnectors from './components/BracketConnectors';
-import ScheduleHealthChip from './components/ScheduleHealthChip';
 import { Game, Team, Division, Venue, PoolSlot, ScheduleFacilityLane } from '@/lib/types';
 import { checkVenueConflict, type ConflictResult } from '@/lib/schedule-conflict';
 import { buildScheduleMetrics } from '@/lib/schedule-metrics';
@@ -92,6 +91,7 @@ export default function AdminSchedulePage() {
   const [groupMode, setGroupMode] = useState<'flat' | 'pools'>('pools');
   const [layoutMode, setLayoutMode] = useState<'list' | 'bracket'>('list');
   const [mobileSettingsOpen, setMobileSettingsOpen] = useState(false);
+  const [conflictsOnly, setConflictsOnly] = useState(false);
   const [venueModalOpen, setVenueModalOpen] = useState(false);
   const [resolveFacilitiesOpen, setResolveFacilitiesOpen] = useState(false);
   const [facilityLaneSelections, setFacilityLaneSelections] = useState<Record<string, string>>({});
@@ -569,6 +569,11 @@ export default function AdminSchedulePage() {
       includePlayoffs: viewMode === 'playoff',
     });
   }, [currentTournament, viewMode, filterGroup, divisionGames, teams, divisions, venues]);
+  const conflictCount = (savedScheduleMetrics?.venueConflictCount ?? 0) + (savedScheduleMetrics?.bufferConflictCount ?? 0);
+  const hasConflicts = conflictCount > 0;
+  useEffect(() => {
+    if (!hasConflicts && conflictsOnly) setConflictsOnly(false);
+  }, [hasConflicts, conflictsOnly]);
   const venueFilterOptions = Array.from(
     divisionGames.reduce((map, g) => {
       const key = getGameVenueKey(g);
@@ -592,7 +597,6 @@ export default function AdminSchedulePage() {
       : `${selectedVenueKeys.length} venues`;
 
   const settingsSummary = [
-    viewMode === 'pool' ? 'Round Robin' : 'Playoffs',
     viewMode === 'pool' ? (groupMode === 'pools' ? 'Pools' : 'Flat') : (layoutMode === 'list' ? 'List' : 'Bracket'),
     venueFilterOptions.length > 1 ? venueLabel : null,
   ].filter(Boolean).join(' · ');
@@ -850,6 +854,21 @@ export default function AdminSchedulePage() {
               }}
             />
           )}
+          {/* Mobile: prominent stage toggle pulled out of the settings sheet
+              (desktop keeps the segmented control below) */}
+          <div className={styles.mobileStageToggle} role="group" aria-label="Stage">
+            {(['pool', 'playoff'] as const).map(v => (
+              <button
+                key={v}
+                type="button"
+                className={`${styles.mobileStageBtn} ${viewMode === v ? styles.mobileStageActive : ''}`}
+                onClick={() => setViewMode(v)}
+                aria-pressed={viewMode === v}
+              >
+                {v === 'pool' ? 'Round Robin' : 'Playoffs'}
+              </button>
+            ))}
+          </div>
           {/* Desktop: segmented controls; Mobile: compact selects */}
           <ToolbarSegmentedControl<'pool' | 'playoff'>
             className={styles.desktopModeControl}
@@ -990,8 +1009,18 @@ export default function AdminSchedulePage() {
               );
             })}
           </div>
-          {savedScheduleMetrics && (
-            <ScheduleHealthChip metrics={savedScheduleMetrics} />
+          {hasConflicts && (
+            <button
+              type="button"
+              className={`${s.filterChip} ${styles.conflictFilterChip}`}
+              data-active={conflictsOnly || undefined}
+              onClick={() => setConflictsOnly(v => !v)}
+              title="Show only games with a venue conflict"
+            >
+              <AlertTriangle size={11} />
+              CONFLICTS
+              <span className={s.chipCount}>{conflictCount}</span>
+            </button>
           )}
         </ToolbarGroup>
       </TournamentAdminToolbar>
@@ -1168,6 +1197,10 @@ export default function AdminSchedulePage() {
           metrics={savedScheduleMetrics}
           subtitle={`${activeDivision?.name ?? 'Division'} · ${viewMode === 'playoff' ? 'Saved playoffs' : 'Saved round robin'}`}
           defaultOpen={false}
+          sticky
+          onJumpToConflict={() => {
+            document.getElementById('schedule-first-conflict')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }}
         />
       )}
 
@@ -1232,6 +1265,7 @@ export default function AdminSchedulePage() {
               onSave={isLocked ? undefined : handleSaveGame}
               onCreateVenue={() => setAddVenueOpen(true)}
               mode="planning"
+              conflictsOnly={conflictsOnly}
               tournament={currentTournament}
             />
           )}

@@ -1,0 +1,85 @@
+.wrap {
+  position: relative;
+  display: inline-flex;
+}
+
+/* Default compact trigger (consumers may override via the `className` prop). */
+.trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.8rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-2);
+  background: var(--white-5);
+  color: var(--white-85);
+  font-family: var(--font-data);
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+.trigger:hover { background: var(--white-8); }
+.trigger:active { transform: scale(0.98); }
+
+/* Popover menu */
+.menu {
+  position: absolute;
+  z-index: 60;
+  min-width: 12rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.3rem;
+  background: var(--surface);
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  animation: shareMenuIn 0.12s ease;
+}
+
+.menuDown { top: calc(100% + 6px); }
+.menuUp { bottom: calc(100% + 6px); }
+.menuLeft { left: 0; }
+.menuRight { right: 0; }
+
+@keyframes shareMenuIn {
+  from { opacity: 0; transform: translateY(var(--share-menu-shift, -4px)); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.menuUp { --share-menu-shift: 4px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .menu { animation: none; }
+}
+
+.menuItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  width: 100%;
+  padding: 0.55rem 0.7rem;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--white-85);
+  font-family: var(--font-data);
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+.menuItem:hover { background: var(--white-8); }
+.menuItem:disabled { opacity: 0.6; cursor: default; }
+.menuItem svg { flex-shrink: 0; color: var(--primary-light); }
+
+.menuSub {
+  display: block;
+  font-size: 0.66rem;
+  font-weight: 600;
+  color: var(--white-50);
+  letter-spacing: 0.01em;
+}

@@ -121,3 +121,107 @@
   .divisionMeta { display: block; }
   .tableHead { display: none; }
 }
+
+/* ── Division fill board (C6) ──────────────────────────────────────────────── */
+.divisionBoard {
+  display: grid;
+  /* auto-fit (not auto-fill) collapses empty tracks so a few divisions don't get
+     stranded on the left; the max cap keeps cards readable instead of stretching
+     into giant bars; centering balances the leftover space on wide screens. */
+  grid-template-columns: repeat(auto-fit, minmax(300px, 420px));
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.divisionCard {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.85rem;
+  background: var(--surface);
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.22);
+  border-left: 3px solid rgba(var(--blueprint-blue-rgb), 0.3);
+  border-radius: 4px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.divisionCard:hover { border-color: rgba(var(--blueprint-blue-rgb), 0.4); }
+
+.divisionCard[data-fill="filling"] { border-left-color: var(--logic-lime); }
+.divisionCard[data-fill="almost"]  { border-left-color: var(--warning); }
+.divisionCard[data-fill="full"]    { border-left-color: var(--danger); }
+
+.divisionCardHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.divisionCardAge {
+  font-size: 0.72rem;
+  color: var(--data-gray);
+}
+
+.gaugeRow {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: 0.15rem;
+}
+
+.gaugeTrack {
+  flex: 1;
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(var(--blueprint-blue-rgb), 0.16);
+  overflow: hidden;
+}
+
+.gaugeFill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.4s ease;
+  background: rgba(var(--blueprint-blue-rgb), 0.5);
+}
+
+.gaugeFill[data-fill="filling"] { background: var(--logic-lime); }
+.gaugeFill[data-fill="almost"]  { background: var(--warning); }
+.gaugeFill[data-fill="full"]    { background: var(--danger); }
+
+.gaugeValue {
+  flex-shrink: 0;
+  font-family: var(--font-data);
+  font-size: 0.8rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--white);
+}
+
+.gaugeLabel {
+  font-family: var(--font-data);
+  font-size: 0.58rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--data-gray);
+}
+
+.gaugeLabel[data-fill="filling"] { color: var(--logic-lime); }
+.gaugeLabel[data-fill="almost"]  { color: var(--warning); }
+.gaugeLabel[data-fill="full"]    { color: var(--danger); }
+
+.divisionCardFoot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-top: 0.35rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--white-5);
+}
+
+@media (max-width: 640px) {
+  .divisionBoard { grid-template-columns: 1fr; }
+}

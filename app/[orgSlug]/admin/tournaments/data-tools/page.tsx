@@ -12,6 +12,7 @@ import {
   ExternalLink,
   FileSpreadsheet,
   FileText,
+  HelpCircle,
   History,
   Lock,
   MapPin,
@@ -23,6 +24,7 @@ import {
   XCircle,
 } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
+import { getBillingHref } from '@/lib/billing-urls';
 import { hasPlanFeature, requiresPlanCopy } from '@/lib/plan-features';
 import { hasCapability } from '@/lib/roles';
 import { usePageTitle } from '@/lib/usePageTitle';
@@ -283,7 +285,9 @@ export default function TournamentDataToolsPage() {
   const resultsHref = orgSlug ? `/${orgSlug}/admin/tournaments/results` : '#';
   const divisionsHref = orgSlug ? `/${orgSlug}/admin/tournaments/divisions` : '#';
   const venuesHref = orgSlug ? `/${orgSlug}/admin/tournaments/venues` : '#';
-  const canUseTeamImports = currentOrg ? hasPlanFeature(currentOrg.planId, 'bulk_data_imports') : false;
+  const helpHref = orgSlug ? `/${orgSlug}/admin/help/tournaments#data-tools-imports` : '#';
+  const billingHref = currentOrg ? getBillingHref(currentOrg.slug, currentOrg.planId) : '#';
+  const canUseBulkImports = currentOrg ? hasPlanFeature(currentOrg.planId, 'bulk_data_imports') : false;
   const canUseRegistrationExport = currentOrg ? hasPlanFeature(currentOrg.planId, 'registration_export') : false;
   const canManageTeamImports = userRole
     ? hasCapability(userRole, userCapabilities, 'manage_registrations') ||
@@ -297,12 +301,13 @@ export default function TournamentDataToolsPage() {
   const importPlanCopy = requiresPlanCopy('bulk_data_imports');
   const registrationExportCopy = requiresPlanCopy('registration_export');
   const contextLoading = loading || orgLoading;
+  const showPlanGate = Boolean(currentOrg && (!canUseBulkImports || !canUseRegistrationExport));
 
   const templateUnavailableReason = contextLoading
     ? 'Loading data tools.'
     : !currentTournament
     ? 'Choose a tournament before downloading team import templates.'
-    : !canUseTeamImports
+    : !canUseBulkImports
       ? importPlanCopy
       : !canManageTeamImports
         ? 'Your role can view tournament data, but cannot download import templates.'
@@ -320,7 +325,7 @@ export default function TournamentDataToolsPage() {
     ? 'Loading data tools.'
     : !currentTournament
     ? 'Choose a tournament before downloading schedule import templates.'
-    : !canUseTeamImports
+    : !canUseBulkImports
       ? importPlanCopy
       : !canManageScheduleImports
         ? 'Your role can view schedules, but cannot download schedule import templates.'
@@ -337,7 +342,7 @@ export default function TournamentDataToolsPage() {
     ? 'Loading import history.'
     : !currentTournament
     ? 'Choose a tournament before viewing import history.'
-    : !canUseTeamImports
+    : !canUseBulkImports
       ? importPlanCopy
       : !canManageTeamImports && !canManageScheduleImports
         ? 'Your role can view tournament data, but cannot view import history.'
@@ -424,6 +429,53 @@ export default function TournamentDataToolsPage() {
           />
         </ToolbarGroup>
       </TournamentAdminToolbar>
+
+      <section className={styles.guidanceStrip} aria-labelledby="import-guidance-heading">
+        <div className={styles.guidanceIcon}>
+          <CheckCircle2 size={20} aria-hidden />
+        </div>
+        <div className={styles.guidanceBody}>
+          <div className={styles.guidanceHeader}>
+            <div>
+              <h2 id="import-guidance-heading">Safe spreadsheet imports</h2>
+              <p>Uploads create a preview first. Tournament data changes only after an admin applies a clean preview.</p>
+            </div>
+            {orgSlug ? (
+              <Link className={styles.guidanceLink} href={helpHref}>
+                <HelpCircle size={15} aria-hidden />
+                <span>Import guide</span>
+              </Link>
+            ) : (
+              <button type="button" className={styles.guidanceLink} disabled>
+                <HelpCircle size={15} aria-hidden />
+                <span>Import guide</span>
+              </button>
+            )}
+          </div>
+          <div className={styles.guidancePoints}>
+            <span>Current templates include IDs for safer updates.</span>
+            <span>Empty templates are for new rows.</span>
+            <span>Blocked rows must be fixed before apply.</span>
+            <span>Plan, role, and completed-tournament locks are enforced server-side.</span>
+          </div>
+        </div>
+      </section>
+
+      {showPlanGate && (
+        <section className={styles.planGateStrip} aria-label="Tournament Plus data tools">
+          <div className={styles.planGateIcon}>
+            <Lock size={18} aria-hidden />
+          </div>
+          <div className={styles.planGateBody}>
+            <h2>Unlock import/export workflows</h2>
+            <p>{importPlanCopy} Registration exports are also included with Tournament Plus and higher.</p>
+          </div>
+          <Link className={styles.planGateLink} href={billingHref}>
+            <span>Review Tournament Plus</span>
+            <ExternalLink size={14} aria-hidden />
+          </Link>
+        </section>
+      )}
 
       {notice && (
         <div className={cx(styles.notice, notice.type === 'success' ? styles.noticeSuccess : styles.noticeWarning)} role="status">

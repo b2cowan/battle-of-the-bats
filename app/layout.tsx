@@ -31,14 +31,10 @@ export const metadata: Metadata = {
     template: '%s | FieldLogicHQ',
   },
   description: 'The all-in-one platform for Canadian sports organizations — tournaments, house leagues, rep teams, and accounting in one place.',
-  manifest: '/manifest.json',
-  other: {
-    // PWA meta tags
-    'mobile-web-app-capable':             'yes',
-    'apple-mobile-web-app-capable':        'yes',
-    'apple-mobile-web-app-status-bar-style': 'black-translucent',
-    'apple-mobile-web-app-title':          'FieldLogicHQ',
-  },
+  // manifest and apple-mobile-web-app-* are intentionally NOT set here.
+  // They are added only in the layouts/pages that mount InstallAppPrompt
+  // (admin, scorekeeper, coaches, /home, auth) so that the browser's native
+  // install prompt does NOT fire on the public marketing pages.
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

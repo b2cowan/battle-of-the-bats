@@ -4,6 +4,13 @@ Newest entries first. All decisions here are binding in future sessions unless e
 
 ---
 
+### 2026-06-03 — Venue/facility select: full label in closed state
+**Decision:** Facility `<option>` elements inside a venue `<optgroup>` must include the parent venue name in their text: `{venue.name} — {facility.name}` (e.g. "Milton Diamond — diamond #1"). The `<optgroup label>` is invisible when the `<select>` is closed; facility names alone (e.g. "diamond #1") are not self-identifying. When open, the optgroup still groups by venue name — minor redundancy, standard grouped-select pattern.
+**Rationale:** User-reported: "diamond #1" with no venue name is not specific enough and wastes the available width.
+**Applies to:** `app/[orgSlug]/admin/tournaments/schedule/components/GameList.tsx` venue/facility select. Apply the same pattern to any other grouped facility selects added in future (Generator date-slot venue select, if it ever becomes a `<select>` instead of checkboxes).
+
+---
+
 ### 2026-06-02 - Tournament admin export placement: header actions
 
 **Decision:** Page-level tournament admin exports belong in `TournamentAdminHeader.actions`, immediately to the left of the primary add/create button when one exists. Applied to Teams, Schedule, Results, and already-matching Venues. Toolbars should retain context selectors, filters, publish/generate tools, mobile action overflow, and multi-select controls, but not the main page export dropdown.
